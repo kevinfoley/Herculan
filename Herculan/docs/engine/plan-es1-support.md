@@ -2,11 +2,11 @@
 
 Reverse-engineering *Metaltech: Earthsiege* (ES1) and running it on this engine alongside Earthsiege 2, from the retail files in `ES1/` (git-ignored, like `ES2/`).
 
-This is a plan, not a record of something built. Nothing here is implemented. It is in three phases: **phase 0** builds the tooling and measures how much of ES2's work carries over, **phase 1** is the reverse-engineering, and **phase 2** is the engine work. Phase 0 is meant to start now. Phases 1 and 2 wait on phase 0's numbers and on the ES2 simulation settling.
+This is a plan. Of it, step 0.2 is built; nothing else is. It is in three phases: **phase 0** builds the tooling and measures how much of ES2's work carries over, **phase 1** is the reverse-engineering, and **phase 2** is the engine work. Phase 0 is meant to start now. Phases 1 and 2 wait on phase 0's numbers and on the ES2 simulation settling.
 
 ## What the survey established
 
-A header-and-strings survey of the install, with no disassembly behind it. Each fact below was read from the files.
+A header-and-strings survey of the install, with step 0.2's disassembly of the loader and of `util\ovl.cpp`'s asserting function added. Each fact below was read from the files.
 
 ### The binaries
 
@@ -17,9 +17,9 @@ A header-and-strings survey of the install, with no disassembly behind it. Each 
 | `ESCD.EXE`, `DETECT.EXE` | 44,461 / 189,781 | 1994-10-21 | launcher and hardware detection |
 | `PLAYFLIC.EXE` | 168,170 | 1994-10-17 | plays `FLIC\*.DFL` |
 
-**Both game executables are 32-bit protected-mode programs**, not 16-bit real-mode ones. Each opens with the same 1,341-byte real-mode stub, whose strings are `Fatal error, 80386 processor is required`, `Fatal error, DPMI host does not support 32 bit applications` and `DOS extender Copyright 1991-1994 by Doug Huffman`. That is the FlashTek X-32 extender family. A second `MZ` header follows the stub at file offset `0x53d`, and the runtime carries `__X386_VM_DISABLED` in a page-fault message. Ghidra has no loader for this format.
+**Both game executables are 32-bit protected-mode programs**, not 16-bit real-mode ones. Each is the same 1,341-byte real-mode stub, a 16-bit DOS-extender kernel of the FlashTek X-32 family (`DOS extender Copyright 1991-1994 by Doug Huffman`) and a flat 32-bit program image that runs at address 0 of its own segment, as [`../es1/formats/x32-executable.md`](../es1/formats/x32-executable.md) lays out.
 
-**Neither is a Borland build.** ES2's `DBSIM.EXE` and `VSHELL.EXE` both carry `Borland C++ - Copyright 1995 Borland Intl.`; no Borland, Watcom, Microsoft, MetaWare, Zortech or Symantec banner appears in either ES1 executable's strings. The `__X386` prefix is Zortech/Symantec C++'s naming for X-32, but X-32 also served other compilers, so the compiler is [Open](#open). Whatever it is, it decides calling conventions, `this` passing, vtable and class layout, RTTI and code idioms, which are the things the ES2 tooling is built around.
+**Neither is a Borland build.** ES2's `DBSIM.EXE` and `VSHELL.EXE` both carry `Borland C++ - Copyright 1995 Borland Intl.`; no Borland, Watcom, Microsoft, MetaWare, Zortech or Symantec banner appears in either ES1 executable's strings. `__X386_VM_DISABLED`, whose prefix reads like Zortech/Symantec C++'s naming for X-32, is a string of the extender's kernel, not of the program image, so it says nothing about the program's compiler, which is [Open](#open). Whatever it is, it decides calling conventions, `this` passing, vtable and class layout, RTTI and code idioms, which are the things the ES2 tooling is built around.
 
 **The executables embed their source paths**, which gives a module map before any function is read:
 
@@ -27,6 +27,8 @@ A header-and-strings survey of the install, with no disassembly behind it. Each 
 - `GO.EXE`, under `src\`: `alert`, `cal_alrt`, `career`, `dialog`, `inventor`, `main`, `mechman`, `memory`, `mg`, `mission`, `shell`, `shellmap`, `system`; under `C:\P\M\s\util\`: `mods`, `my_math`, `ovl`.
 
 ES2's `DBSIM.EXE` names `bullet`, `collide`, `damage`, `debris`, `flyersys`, `libio` and `mechsys` too. The two simulators share 292 identical strings of six characters or more, among them the `TS*` shape classes (`TSShape`, `TSBSPPart`, `TSCellAnimPart`, `TSTexture4Poly`, …), the `GL*` bitmap, font and palette classes, the `AN*` animation classes, the `Assert::` messages, the HERC part names (`LEFT_SHIN`, `RIGHT_SHOULDER`, …), the chassis names and the `WEAPON 1`–`WEAPON 10` labels. ES1's `DBSIM.EXE` also names `data\script.dat`, `data\results.dat` and `data\restore.dat`, files of the same names as ES2 keeps in `data\`, along with `data\prefs.cfg`, `keyjoy.cfg` and `exit.cfg`.
+
+`util\ovl.cpp`'s one asserting function (`ES1DBSIM 000654bc`, `ES1GO 00051918`) opens a named file and reads rows × columns bytes of it into the caller's buffer, asserting at lines 21 and 23; `DBSIM.EXE` calls it from two places, each for 1 × `0xc0` bytes, and `GO.EXE` from eight. Both images also name the HMI driver files `hmidrv.386`, `hmidet.386` and `hmimdrv.386`, which the install keeps in `SOS\`.
 
 ### The data
 
@@ -76,7 +78,7 @@ A source module (`collide.cpp`, `career.cpp`, …) is done when every item below
 
 ## Decisions to make before phase 0
 
-Each is a recommendation for the user to accept or change.
+The user has accepted 2 and 3, and the step 0.2 tooling uses them. The others are recommendations for the user to accept or change.
 
 1. **Same repository.** `HercWorks.Core` and `HercWorks.Vol` are the largest reusable body of work, and the formats overlap heavily; two repositories would mean fixing a reader twice. The rules, hooks and tools in this repository are also the workflow ES1 needs from its first session.
 2. **Binary identifiers.** Both games have a `DBSIM.EXE`, so `DBSIM` stops being unambiguous. Proposed: `ES1DBSIM` and `ES1GO` as the `binary` value in symbol entries, in tool arguments and in `-process`, with files `known_symbols_es1dbsim.json` and `known_symbols_es1go.json`. ES2's identifiers stay as they are. `CLAUDE.md`'s "name the binary when it is not DBSIM" then covers ES1 citations, as `ES1DBSIM` followed by the address.
@@ -90,7 +92,7 @@ No naming and no porting. Each step has an exit test, and a step is done when it
 
 **0.1 Ground truth.** Get ES1 running in DOSBox-X, with a launch recipe like ES2's. Retail ES2 runs under Windows through cnc-ddraw; DOSBox-X has a built-in debugger that breaks on protected-mode addresses and reads memory, so retail ES1 can be inspected directly rather than inferred. Find the manual. *Exit:* a mission starts from the shell, a demo tape plays, and a breakpoint on an address from 0.2 fires in the debugger.
 
-**0.2 The loader.** Extract the 32-bit image from the X-32 container: load address, segments, entry point and relocations, in a form Ghidra imports (a raw binary at a known base with a script that applies the relocations, or a Ghidra loader). *Exit:* every embedded source-path string has a code reference landing inside a function, and the entry point disassembles as the extender hands control to it.
+**0.2 The loader.** `tools/scripts/es1_x32_extract.py` checks a file against the layout in [`x32-executable.md`](../es1/formats/x32-executable.md), refusing any other stub or kernel, and writes the image to `tools/analysis_out/ES1DBSIM` or `ES1GO` with a `_layout.json` beside it. The image is flat at address 0 and carries no relocations. With `--import` the script loads it raw at base 0 into the `ES1Recon` Ghidra project, running `ES1SetupX32Image` before auto-analysis (the uninitialised tail up to the memory size, the entry point, and the reference analyzers' subroutine option off, since at base 0 every constant below the end of the code reads as a code address) and `ES1SeedFunctionStarts` after it (a function at every prologue that follows a `ret` or `jmp`, which finds the code reached only through pointers). *Exit:* every embedded source-path string has a code reference landing inside a function, and the entry point disassembles as the extender hands control to it. Both hold: the references land inside functions for all 41 strings in `ES1DBSIM` and all 42 in `ES1GO`, and the code at `0xd` reads the command tail through `FS`, the PSP selector the kernel hands over, and zero-fills from the end of the file bytes to the memory size.
 
 **0.3 Tooling by binary, not by name.** Every script that names `DBSIM` or `VSHELL` — `es2_symbols.py`, `es2_xref.py`, `es2_classes.py`, `es2_fieldscan.py`, `es2_late_entries.py`, `es2_naming.py`, `es2_unnamed_callees.py`, `ghidra_full_decomp.py`, `ghidra_apply_all.sh`, `doc_lint.py`, `truncated_enumeration_guard.py` and the three `ES2Apply*` scripts — takes its binaries from one registry, which also records each binary's container format and compiler. The compiler-specific tools need more than a new entry:
 
@@ -103,7 +105,7 @@ No naming and no porting. Each step has an exit test, and a step is done when it
 
 *Exit:* each tool runs on an ES1 binary with a positive control that fires, and a tool that cannot apply to a binary refuses with an error. A tool that silently returns nothing on a binary it does not understand produces a false negative that reads exactly like a real one.
 
-**0.4 Compiler and runtime library.** Identify the compiler from its runtime library and code generation, then the conventions it implies: calling conventions, `this` register, vtable placement, name mangling, RTTI. If the library can be obtained, build Ghidra Function ID signatures from it so library functions are named before the backlog is counted. *Exit:* a `docs/es1/formats/` page on the compiler's conventions, playing the part `borland-rtti.md` plays for ES2, and a count of library functions against game functions.
+**0.4 Compiler and runtime library.** Identify the compiler from its runtime library and code generation, then the conventions it implies: calling conventions, `this` register, vtable placement, name mangling, RTTI. If the library can be obtained, build Ghidra Function ID signatures from it so library functions are named before the backlog is counted. Set the `ES1Recon` programs' compiler spec to match; 0.2 imported them as `gcc`. *Exit:* a `docs/es1/formats/` page on the compiler's conventions, playing the part `borland-rtti.md` plays for ES2, and a count of library functions against game functions.
 
 **0.5 Full dumps.** The `analysis_out/` disassembly, decompile, function list and vtable dumps for both ES1 binaries. *Exit:* the dump files exist and `ghidra_full_decomp.py` regenerates them.
 
@@ -144,9 +146,10 @@ How the seam is built — a game profile object, per-game subclasses, separate a
 
 ## Open
 
-- **Open:** the compiler that built `DBSIM.EXE` and `GO.EXE`. `__X386_VM_DISABLED` points at Zortech/Symantec C++; 0.4 settles it.
-- **Open:** which X-32 variant the stub belongs to, and the layout of the container behind the second `MZ` header at `0x53d`.
-- **Open:** what `util\ovl.cpp`, present in both executables, does. If ES1 loads code overlays at run time, part of the code is outside the image 0.2 extracts.
+- **Open:** the compiler that built the two program images; 0.4 settles it.
+- **Open:** what `util\ovl.cpp` does beyond its asserting function.
+- **Open:** whether the program loads and runs code from the HMI driver files in `SOS\`. If it does, that code is outside the images 0.2 extracts.
+- **Open:** 82 of `ES1SeedFunctionStarts`' seeds in `ES1DBSIM` and 14 in `ES1GO` fall inside a function Ghidra had already made. All but two (`ES1DBSIM 00034ee3` in `00034ec4`, `00035038` in `00034f3c`) are 1–3 bytes past that function's entry, which Ghidra placed on the padding before the prologue; 0.3's entry-repair tooling settles them. Ghidra also leaves 25 and 18 disassembly conflicts, on data it typed inside code, and functions over zero-filled data at `ES1DBSIM 000a21b8` and `000a2594` and `ES1GO 0008e720`, `0008eafc` and `000a09c8`.
 - **Open:** whether `DBSIM.EXE` and `GO.EXE` are the October 1994 release build. Their dates match the archives they read; comparing hashes against another ES1 copy settles it.
 - **Open:** whether ES1's `.TAP` files follow ES2's bundle-then-stream layout beyond the first dword.
 - **Open:** what `ESSR10-1.PDF` is. It has six pages and its title metadata reads `ES sr`.

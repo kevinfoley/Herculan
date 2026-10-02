@@ -51,4 +51,4 @@ tools/scripts/__pycache__/
 tools/scripts/rename_symbol/bin/
 tools/scripts/rename_symbol/obj/
 *.csproj.user
-ES1/
+/ES1/
