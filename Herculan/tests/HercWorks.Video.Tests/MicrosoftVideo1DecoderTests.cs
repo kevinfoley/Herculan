@@ -122,7 +122,6 @@ public sealed class MicrosoftVideo1DecoderTests {
 
 		MoviePlayback playback = MoviePlayback.Open(File.ReadAllBytes(path))!;
 		Assert.Equal(19, playback.FrameCount);
-		Assert.False(playback.IsPlaceholder);
 
 		playback.Advance(playback.Duration);
 		Assert.False(playback.HasFailed);

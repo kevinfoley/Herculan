@@ -32,9 +32,9 @@ The in-memory slot table is a 94-byte (`0x5e`) stride at `00482610`: filename at
 
 ## Writing a slot
 
-`Game_SaveSlot(slot, label)` (`0040e37b`) writes nothing while `DAT_0048260a` is clear. That is the game-in-progress flag: the shell's startup clears it (`FUN_0040e17e`), and `Game_LoadSlot` and `Game_NewCareer` set it. Otherwise, once slot 10 has become 11 in training:
+`Game_SaveSlot(slot, label)` (`0040e37b`) writes nothing while `DAT_0048260a` is clear. That is the game-in-progress flag: the shell's startup clears it (`Shell_InitGameState`, `0040e17e`), and `Game_LoadSlot` and `Game_NewCareer` set it. Otherwise, once slot 10 has become 11 in training:
 
-1. `FUN_0040e115` copies `label` over the slot's label when the slot is below 10, sets the slot's in-use byte whatever the slot, and writes `GAMEFILE.STR` out whole (`GameFileStr_Write`, `0040df4b`). Slots 10 and 11 keep `RESUME` and `TRAINING`.
+1. `Game_SetSlotInUse` (`0040e115`) copies `label` over the slot's label when the slot is below 10, sets the slot's in-use byte whatever the slot, and writes `GAMEFILE.STR` out whole (`GameFileStr_Write`, `0040df4b`). Slots 10 and 11 keep `RESUME` and `TRAINING`.
 2. `sav\` and the slot's filename are opened and the [blocks](#savgame_sav--block-order) written in order, `Career_SaveSlot` copying [the slot handoff](#the-slot-handoff) out as it writes block 3.
 
 The save screen's `ACCEPT` is the one caller that passes a label: the row's own string, its `"%2d. "` prefix included ([`../shell/screen-layout.md`](../shell/screen-layout.md#saving-is-a-rename)). Every autosave passes slot 10 and `NULL`.
@@ -57,7 +57,7 @@ This is observable in retail data. `GAME_4.SAV` carries 164 bytes past its last 
 - `GAMEFILE.STR`'s leading length is `lseek(fd, 0, SEEK_END) - 4` taken *after* writing (`FileRWStream_GetSize`, `0044e518`), so it measures the physical file including stale tail, not the payload.
 - Where the game needs a clean file it deletes first: `Game_ExportMissionHandoff` (`0040f0d4`) calls `_remove` on its output path before opening it for write.
 
-The exports and copies use a different stream class whose open is `_open(path, 0x8301, 0x180)` — `O_BINARY | O_CREAT | O_TRUNC | O_WRONLY` — so they do truncate. Stale tails are a property of the save files here, not of everything the shell writes.
+The exports and copies use a different stream class whose open is `_open(path, 0x8301, 0x180)` — `O_BINARY | O_CREAT | O_TRUNC | O_WRONLY` — so they do truncate. Stale tails are a property of the save files here and of `data\script.dat` and `data\mission.str`, whose writers (`WriteScriptDatFile`, `MissionStr_Write`) also open through `FileRWStream_Open`.
 
 ## `sav\GAME_?.SAV` — block order
 

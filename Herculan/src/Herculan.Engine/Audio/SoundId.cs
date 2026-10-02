@@ -9,7 +9,7 @@ namespace Herculan.Engine.Audio;
 /// rather than writing the 10 out.</para>
 ///
 /// <para>Only the ids some ported code names as a literal are given constants here. The ones that
-/// arrive from a data table — <c>PROJ.DAT</c>'s fire sound, <c>ROCKETS.DAT</c>'s, an
+/// arrive from a data table — <c>BULLETS.DAT</c>'s fire sound, <c>ROCKETS.DAT</c>'s, an
 /// <c>EXPLOS.DAT</c> row's impact sound — are not named, because the table decides them.</para>
 /// </summary>
 public static class SoundId {
@@ -76,10 +76,10 @@ public static class SoundId {
 	/// </summary>
 	public const int Throttle = 0x2c;
 
-	/// <summary><c>herceng1.wav</c> — the HERC engine hum, looped for the machine's whole life.</summary>
+	/// <summary><c>herceng1.wav</c> — the engine hum, looped for the machine's whole life. Only a flyer starts it; see docs/formats/audio.md, "The cockpit power-up".</summary>
 	public const int EngineLoop = 0x2d;
 
-	/// <summary><c>shield1.wav</c> — the shield loop.</summary>
+	/// <summary><c>shield1.wav</c> — the shield sound. Despite the name its row plays once (loop count 1).</summary>
 	public const int ShieldLoop = 0x2e;
 
 	/// <summary><c>podin2.wav</c> — a drop pod falling.</summary>

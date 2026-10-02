@@ -33,8 +33,9 @@ namespace Herculan.Engine.Input;
 /// which the original does whenever a lever exists and is bound to anything at all.
 /// </param>
 /// <param name="ClaimedButton">
-/// The button, 0-based, whose press took this tick's one action slot — whatever it is bound to, FIRE
-/// and OFF included, as those consume the slot too. -1 when none did. An input tape records it.
+/// The button, 0-based, whose press took this tick's one action slot — whatever it is bound to, OFF
+/// and FIRE included, except the button the trigger scan withholds, which never takes it. -1 when none
+/// did. An input tape records it.
 /// </param>
 public readonly record struct JoystickPilotInput(
 		PilotAxes Axes,

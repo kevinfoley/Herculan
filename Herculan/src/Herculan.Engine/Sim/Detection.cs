@@ -98,24 +98,25 @@ public static class Detection {
 	private const short TimerJitter = 1000;
 
 	/// <summary>
+	/// The 50000 inside which <see cref="Sweep"/> and <see cref="ShareContact"/> mark an object
+	/// <see cref="SimObject.Engaged"/> and activate engagement actions — well inside
+	/// <see cref="VisualRange"/>. Which objects each one marks is in
+	/// docs/simulation/mission-deployment.md, "An object's own two actions".
+	/// </summary>
+	public const int EngagementRange = 50000;
+
+	/// <summary>
 	/// Whether an object takes part in the sensor model at all.
 	///
-	/// <para>Two of the three tests are the original's: it skips anything whose group is still waiting
-	/// on its arrival action, and the engine adds removal to that. The third is not — DBSIM's
-	/// live-object list only ever holds the three combat classes, because
-	/// <c>ObjectList_Add</c> is called from their constructors and nothing else's, whereas
-	/// <see cref="SimWorld"/> also carries the observer camera. An object with no
+	/// <para>Only the arrival test is the original's: it skips anything whose group is still waiting
+	/// on its arrival action (<c>group+0x14</c>). The other two exclude what DBSIM's live-object list
+	/// never holds. Removal has no listed state there, and the list only ever holds the three combat
+	/// classes, because <c>ObjectList_Add</c> is called from their constructors and nothing else's,
+	/// whereas <see cref="SimWorld"/> also carries the observer camera. An object with no
 	/// <see cref="Sim.TargetClass"/> is therefore not in the list as far as this file is concerned:
 	/// it neither sees nor is seen, and — the part that matters — it does not sweep, which would
 	/// otherwise have a free camera spotting for the player's side.</para>
 	/// </summary>
-	/// <summary>
-	/// How close a hostile that already has contact has to come for both parties to count as
-	/// <see cref="SimObject.Engaged"/> and to fire their engagement actions — the sweep's own 50000,
-	/// well inside <see cref="VisualRange"/>.
-	/// </summary>
-	public const int EngagementRange = 50000;
-
 	private static bool InSensorModel(SimObject simObject) =>
 		!simObject.Removed && !simObject.AwaitingDeployment
 			&& simObject.TargetClass != TargetClass.None;
@@ -130,12 +131,8 @@ public static class Detection {
 	/// <item><b>The sweeps.</b> Every live human-side object looks for Cybrids — except the machine
 	/// the player is flying, which is held back and swept last, so that contacts its squadmates make
 	/// this tick have already been shared to it by the time it looks.</item>
-	/// <item><b>A per-object byte</b> the original touches at the end (<c>obj+0xa2</c>, which gates
-	/// the engagement action in <see cref="Sweep"/>). Its one setter is the ECM block of
-	/// <c>Mech_PerTickSystemsUpdate</c>, which raises it on a jamming machine's own selected target —
-	/// in practice the player's alone, since an AI machine's pod never fills the field the block
-	/// reads. Nothing is modelled here regardless, because the gate cannot change the outcome — see
-	/// <see cref="SimObject.ActivateEngagementAction"/>.</item>
+	/// <item><b>The ECM gate</b> (<see cref="SimObject.EngagementActionHeld"/>) cleared on
+	/// everything, for the per-mech systems pass that follows to raise again.</item>
 	/// </list>
 	/// </summary>
 	public static void Tick(SimWorld world) {
@@ -173,6 +170,10 @@ public static class Detection {
 
 		if (player != null) {
 			Sweep(world, player);
+		}
+
+		for (int i = 0; i < objects.Count; i++) {
+			objects[i].EngagementActionHeld = false;
 		}
 	}
 
@@ -260,7 +261,10 @@ public static class Detection {
 	/// <summary>
 	/// <c>Detection_ShareContact</c> (<c>00412704</c>) — a new contact passed to everyone on the spotter's side within
 	/// <see cref="ContactShareRange"/>, the spotter included. Nothing is shared to the other side, and
-	/// a spotter and a contact on the same side is not a contact at all.
+	/// a spotter and a contact on the same side is not a contact at all. Within
+	/// <see cref="EngagementRange"/> the <i>contact</i> is marked engaged and the <i>ally</i>
+	/// activates its own engagement action — docs/simulation/mission-deployment.md, "An object's own
+	/// two actions".
 	/// </summary>
 	internal static void ShareContact(SimWorld world, SimObject spotter, SimObject contact) {
 		if (spotter.Side == contact.Side) {
@@ -274,8 +278,14 @@ public static class Detection {
 				continue;
 			}
 
-			if (ally.Position.ApproxDistanceTo(contact.Position) < ContactShareRange) {
+			int distance = ally.Position.ApproxDistanceTo(contact.Position);
+			if (distance < ContactShareRange) {
 				ally.SetDetects(contact, true);
+
+				if (distance < EngagementRange) {
+					contact.Engaged = true;
+					ally.ActivateEngagementAction(world);
+				}
 			}
 		}
 	}

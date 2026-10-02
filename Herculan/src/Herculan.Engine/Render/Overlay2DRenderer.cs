@@ -70,10 +70,16 @@ public sealed class Overlay2DRenderer : IDisposable {
 	/// its cross, or null to leave that screen on its flood. The same texture the Heads-Down Display's
 	/// command display takes.
 	/// </param>
+	/// <param name="missileView">
+	/// Draws the world into the MFD's MISSILE CAM screen: handed the screen's rect in framebuffer
+	/// pixels (x, y from the bottom left, width, height) and the camera to draw it from, and expected
+	/// to leave the scissor off. Null leaves the screen on its flood under the cross.
+	/// </param>
 	public void Draw(int viewportX, int viewportY, int viewportWidth, int viewportHeight,
 			GpuTexture cockpitTexture, int cockpitTextureWidth, int cockpitTextureHeight,
 			bool mirrorHorizontally, CockpitArt? hud, GpuTexture? spriteTexture = null,
-			CockpitHudState? hudState = null, GpuTexture? mapTexture = null) {
+			CockpitHudState? hudState = null, GpuTexture? mapTexture = null,
+			Action<int, int, int, int, Camera>? missileView = null) {
 		_gl.Viewport(viewportX, viewportY, (uint)Math.Max(viewportWidth, 1), (uint)Math.Max(viewportHeight, 1));
 		_gl.Disable(EnableCap.DepthTest);
 		_gl.Enable(EnableCap.Blend);
@@ -139,7 +145,37 @@ public sealed class Overlay2DRenderer : IDisposable {
 					_vertices.Clear();
 				}
 
-				AddWidgets(hud, sprites, scale, quadX0, hudState ?? CockpitHudState.Default, DrawNavMapTerrain);
+				// The MISSILE CAM's world the same way, between the screen's flood and the cross over it.
+				// The scene pass leaves its own GL state behind, so the overlay's is put back after it.
+				void DrawMissileView(float left, float top, float right, float bottom, Camera view) {
+					if (missileView == null) {
+						return;
+					}
+
+					_shader.SetSamplerTexture("uTexture", spriteTexture.Handle, 0);
+					_mesh.SubmitAndDraw(System.Runtime.InteropServices.CollectionsMarshal.AsSpan(_vertices));
+					_vertices.Clear();
+
+					int x0 = (int)MathF.Floor(left);
+					int y0 = (int)MathF.Floor(viewportHeight - bottom);
+					int width = Math.Max((int)MathF.Ceiling(right) - x0, 0);
+					int height = Math.Max((int)MathF.Ceiling(viewportHeight - top) - y0, 0);
+					if (width == 0 || height == 0) {
+						return;
+					}
+
+					missileView(viewportX + x0, viewportY + y0, width, height, view);
+
+					_gl.Viewport(viewportX, viewportY, (uint)Math.Max(viewportWidth, 1), (uint)Math.Max(viewportHeight, 1));
+					_gl.Disable(EnableCap.DepthTest);
+					_gl.Enable(EnableCap.Blend);
+					_gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+					_shader.Use();
+					_shader.SetVector2("uViewportSize", new Vector2(viewportWidth, viewportHeight));
+				}
+
+				AddWidgets(hud, sprites, scale, quadX0, hudState ?? CockpitHudState.Default, DrawNavMapTerrain,
+					DrawMissileView);
 			}
 
 			if (_vertices.Count > 0) {
@@ -592,8 +628,8 @@ public sealed class Overlay2DRenderer : IDisposable {
 	///
 	/// <para>A row is a <c>.PDG</c> region rather than a table entry: the update walks the view's region
 	/// vector in file order and uses each region's id to index both the name group and the readout
-	/// buffer. The two orders differ — every retail internal view lists its regions 0,1,2,5,6,7,8,3,4,9
-	/// — so reading the group top to bottom would mislabel the rows. The percentage column's width is
+	/// buffer. The two orders differ in every retail internal view — a pilotable chassis lists its regions
+	/// 0,1,2,5,6,7,8,3,4,9 — so reading the group top to bottom would mislabel the rows. The percentage column's width is
 	/// the measured width of the literal "100", which the constructor reserves before placing either
 	/// label, so an undamaged component fills its column exactly. Both labels are re-fonted together
 	/// from the row's state, giving the manual's green through red plus grey for inoperative — see
@@ -985,7 +1021,8 @@ public sealed class Overlay2DRenderer : IDisposable {
 	/// authored for exact pixels.
 	/// </summary>
 	private void AddWidgets(CockpitArt hud, HudSpriteSheet sprites, float scale, float quadX0,
-			CockpitHudState state, NavMapTerrainWriter? drawNavMapTerrain = null) {
+			CockpitHudState state, NavMapTerrainWriter? drawNavMapTerrain = null,
+			MissileViewWriter? drawMissileView = null) {
 		const float S = CockpitArt.GauToPixelScale;
 		var gau = hud.Gau;
 		float Px(int gauX) => quadX0 + gauX * S * scale;
@@ -1154,7 +1191,9 @@ public sealed class Overlay2DRenderer : IDisposable {
 		AddMfd(hud, state, BlitDevice, BlitRotatedDevice, DrawRun,
 			(x0, y0, x1, y1, color) => AddFilledRect(Dx(x0), Dy(y0), Dx(x1), Dy(y1), color),
 			drawNavMapTerrain is null ? null : (x0, y0, x1, y1, centre, navMap) => drawNavMapTerrain(
-				Dx(x0), Dy(y0), Dx(x1), Dy(y1), new Vector2(Dx(centre.X), Dy(centre.Y)), navMap));
+				Dx(x0), Dy(y0), Dx(x1), Dy(y1), new Vector2(Dx(centre.X), Dy(centre.Y)), navMap),
+			drawMissileView is null ? null : (x0, y0, x1, y1, view) => drawMissileView(
+				Dx(x0), Dy(y0), Dx(x1), Dy(y1), view));
 
 		// The front-window HUD — the gunsight complex and everything its paint draws after its children
 		// — skips its whole paint while the sensor dropout has it dark.
@@ -2011,19 +2050,20 @@ public sealed class Overlay2DRenderer : IDisposable {
 	/// <c>MfdButton_Repaint</c> (<c>004474e4</c>)'s own choice: it picks <c>ColorSchemePanels[12]</c> when the button's
 	/// <c>+0x40</c> lit flag is set and <c>[10]</c> when it is clear.</para>
 	///
-	/// <para><b>Four of the six screens draw their own content.</b> STATUS and TARGET STATUS share one
+	/// <para><b>Each screen draws its own content.</b> STATUS and TARGET STATUS share one
 	/// method off one <see cref="MfdStatusSubject"/> — the machine being flown for F1, the current
 	/// selection for F5 — SCANNER plots live contacts, and FLASH COMM lists the string table's order
 	/// rows. NAV MAP draws the terrain raster turned to the machine's heading, through
-	/// <paramref name="drawNavMapTerrain"/>, and its centre cross; MISSILE CAM draws its screen and
-	/// buttons only.</para>
+	/// <paramref name="drawNavMapTerrain"/>, and its centre cross; MISSILE CAM draws whatever its
+	/// screen last painted, the world from the round going through <paramref name="drawMissileView"/>.</para>
 	/// </summary>
 	private static void AddMfd(CockpitArt hud, CockpitHudState state,
 			Action<string, int, float, float> blitDevice,
 			Action<string, int, float, float, short> blitRotatedDevice,
 			MfdTextWriter drawText,
 			Action<float, float, float, float, Vector3> fillRect,
-			NavMapTerrainWriter? drawNavMapTerrain = null) {
+			NavMapTerrainWriter? drawNavMapTerrain = null,
+			MissileViewWriter? drawMissileView = null) {
 		if (hud.Sprites is not { } sprites || MfdLayout.InsetOrigin(hud.Gau) is not { } inset) {
 			return;
 		}
@@ -2126,20 +2166,26 @@ public sealed class Overlay2DRenderer : IDisposable {
 				// Its background is flooded above, before the buttons and title go down over it. A
 				// transmission skips the screen's paint altogether, so the relief is not drawn under it.
 				if (state.Transmission is null && sprites.Sprite(MfdLayout.Bank, 0) is { } mapScreen
-					&& MfdNavMap.Centre(hud.Gau) is { } mapCentre) {
+					&& MfdLayout.ScreenCentre(hud.Gau) is { } mapCentre) {
 					AddMfdNavMap(hud, state.NavMap, drawNavMapTerrain, fillRect,
 						insetX, insetY, mapScreen.Width, mapScreen.Height, mapCentre);
 				}
 
+				break;
+			case MfdMode.MissileCam:
+				AddMfdMissileCam(hud, state.MissileCam, fillRect, DrawLabel, drawMissileView, insetX, insetY, X, Y);
 				break;
 		}
 
 		// A squadmate answering takes the whole screen: MfdDisplay_Update floods the inset and blits
 		// the transmitting comm box's own frame there before it ever reaches the current screen's
 		// update slot, so the order list is simply not drawn while a reply is coming in.
-		// The power-up returns from MfdDisplay_Update before the transmission is drawn, too.
-		if (state.Transmission is { } transmission && state.MfdPowerUpFrame is null) {
+		// The power-up returns from MfdDisplay_Update before the transmission is drawn, too, and the
+		// update draws none while the display has switched itself to the missile camera.
+		bool transmissionShown = false;
+		if (state.Transmission is { } transmission && state.MfdPowerUpFrame is null && !state.MissileCamHolding) {
 			AddMfdTransmission(hud, transmission, blitDevice, DrawLabel, fillRect, insetX, insetY, X, Y);
+			transmissionShown = true;
 		}
 
 		// The title goes down last, after the screen has painted — the repaint's own order, so a
@@ -2152,8 +2198,7 @@ public sealed class Overlay2DRenderer : IDisposable {
 		// past the screen update — the caption comes back with the full repaint the display queues
 		// when the transmission ends. A display still powering up never reaches that branch, so it
 		// keeps its title.
-		if ((state.Transmission is null || state.MfdPowerUpFrame is not null)
-				&& MfdLayout.Title(strings, state.Mfd) is { Length: > 0 } title) {
+		if (!transmissionShown && MfdLayout.Title(strings, state.Mfd) is { Length: > 0 } title) {
 			DrawLabel("WHITE", title,
 				X(MfdLayout.TitleRect.X0), Y(MfdLayout.TitleRect.Y0),
 				X(MfdLayout.TitleRect.X1), Y(MfdLayout.TitleRect.Y1), LabelAlign.Left);
@@ -2187,6 +2232,99 @@ public sealed class Overlay2DRenderer : IDisposable {
 			float arm = MfdNavMap.CrossArm * CockpitArt.GauToPixelScale;
 			fillRect(centreX - arm, centreY, centreX + arm + 1f, centreY + 1f, crossColor);
 			fillRect(centreX, centreY - arm, centreX + 1f, centreY + arm + 1f, crossColor);
+		}
+	}
+
+	/// <summary>
+	/// Receives the MISSILE CAM's screen rect — device pixels in <see cref="AddMfd"/>, panel pixels by
+	/// the time it reaches <see cref="Draw"/> — and the camera to draw the world from.
+	/// </summary>
+	private delegate void MissileViewWriter(float x0, float y0, float x1, float y1, Camera view);
+
+	/// <summary>
+	/// F6's MISSILE CAM, as <see cref="MfdMissileCamScreen"/> last painted it: a flash, the world from
+	/// the round under its cross and ring, or the labels. See <see cref="MfdMissileCam"/>.
+	///
+	/// <para>The floods take the screen chrome's 196x122 extent, as the display's other floods do here;
+	/// the view's own flood stops one column short of the inset rect's right edge in the original.</para>
+	/// </summary>
+	private static void AddMfdMissileCam(CockpitArt hud, MfdMissileCamState cam,
+			Action<float, float, float, float, Vector3> fillRect, MfdLabelWriter drawLabel,
+			MissileViewWriter? drawView, float insetX, float insetY, Func<int, float> x, Func<int, float> y) {
+		if (hud.Sprites?.Sprite(MfdLayout.Bank, MfdLayout.ScreenFrame) is not { } screen) {
+			return;
+		}
+
+		float right = insetX + screen.Width;
+		float bottom = insetY + screen.Height;
+
+		switch (cam.Picture) {
+			case MfdMissileCamPicture.Flash:
+				if (hud.LogicalColor(cam.FlashColorId) is { } flash) {
+					fillRect(insetX, insetY, right, bottom, flash);
+				}
+
+				break;
+
+			case MfdMissileCamPicture.View:
+				if (MfdLayout.ScreenCentre(hud.Gau) is not { } centre) {
+					break;
+				}
+
+				if (hud.LogicalColor(MfdMissileCam.BackgroundColorId) is { } background) {
+					fillRect(insetX, insetY, right - 1f, bottom, background);
+				}
+
+				drawView?.Invoke(insetX, insetY, right, bottom,
+					MfdMissileCam.CameraFor(cam.View, screen.Width, screen.Height, centre));
+
+				// Two Raster_DrawLine calls through the projection centre, the full width and the full
+				// height of the context, then a one-pixel Raster_DrawEllipse ring about it.
+				if (hud.LogicalColor(MfdMissileCam.MarkColorId) is { } mark) {
+					float centreX = insetX + centre.X;
+					float centreY = insetY + centre.Y;
+					fillRect(centreX - centre.X, centreY, centreX + centre.X + 1f, centreY + 1f, mark);
+					fillRect(centreX, centreY - centre.Y, centreX + 1f, centreY + centre.Y + 1f, mark);
+					AddCircleOutline(centreX, centreY, MfdMissileCam.RingRadius(hud.Gau), mark, fillRect);
+				}
+
+				break;
+
+			case MfdMissileCamPicture.Labels:
+				if (hud.PaletteEntry(MfdLayout.ScreenFillPaletteIndex) is { } flood) {
+					fillRect(insetX, insetY, right, bottom, flood);
+				}
+
+				var strings = hud.Strings;
+
+				// Label_SetText fills a label's plate before its text when the label carries a colour.
+				void Label(int label, int entry, string font, int plateColorId = -1) {
+					var rect = MfdMissileCam.LabelRects[label];
+					if (plateColorId >= 0 && hud.LogicalColor(plateColorId) is { } plate) {
+						fillRect(x(rect.X0), y(rect.Y0), x(rect.X1 + 1), y(rect.Y1 + 1), plate);
+					}
+
+					if (strings?.Text(MfdMissileCam.StringGroup, entry) is { Length: > 0 } text) {
+						drawLabel(font, text, x(rect.X0), y(rect.Y0), x(rect.X1), y(rect.Y1), LabelAlign.Center, 0f);
+					}
+				}
+
+				if (cam.ReadyToLaunch) {
+					Label(MfdMissileCam.ReadyToLabel, MfdMissileCam.ReadyToEntry, MfdMissileCam.LabelFont);
+					Label(MfdMissileCam.LaunchLabel, MfdMissileCam.LaunchEntry, MfdMissileCam.LabelFont);
+				} else {
+					Label(MfdMissileCam.LaunchLabel, MfdMissileCam.NoneEntry, MfdMissileCam.LabelFont);
+				}
+
+				if (cam.Locked) {
+					Label(MfdMissileCam.LockLabel, MfdMissileCam.LockEntry, MfdMissileCam.LockFont,
+						cam.LockBlinkLit ? MfdMissileCam.LockLitPlateColorId : MfdMissileCam.MarkColorId);
+				} else {
+					Label(MfdMissileCam.LockLabel, MfdMissileCam.LockEntry, MfdMissileCam.LockIdleFont,
+						MfdMissileCam.LockIdlePlateColorId);
+				}
+
+				break;
 		}
 	}
 
@@ -2651,7 +2789,7 @@ public sealed class Overlay2DRenderer : IDisposable {
 	///
 	/// <para>Two of those are worth spelling out. The <b>wedge</b> is one sprite rotated about its own
 	/// corner, which sits on the plot centre — see <c>BlitRotatedDevice</c> inside
-	/// <see cref="AddWidgets"/>. The <b>ring</b> is the only circle the cockpit draws: it appears only
+	/// <see cref="AddWidgets"/>. The <b>ring</b> appears only
 	/// while the machine is passive and only on the 1200 m setting, because the paint tests both the
 	/// mode and <c>140000 &lt; range</c> before drawing it.</para>
 	///
@@ -2741,8 +2879,8 @@ public sealed class Overlay2DRenderer : IDisposable {
 	/// <summary>
 	/// A one-device-pixel circle outline, stamped a pixel at a time by the midpoint algorithm. The
 	/// original rasterizes it through its general ellipse routine (<c>Raster_DrawEllipse</c>, <c>00488070</c>) with the brush
-	/// in outline mode; this reproduces the same aliased ring without a second drawing primitive, and
-	/// is the only place the cockpit needs one.
+	/// in outline mode; this reproduces the same aliased ring without a second drawing primitive. The
+	/// scanner's passive-range ring and the MISSILE CAM's sight ring are its two uses.
 	/// </summary>
 	private static void AddCircleOutline(float centerX, float centerY, int radius, Vector3 color,
 			Action<float, float, float, float, Vector3> fillRect) {

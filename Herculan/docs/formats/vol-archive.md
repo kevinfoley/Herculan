@@ -51,6 +51,8 @@ Entry stride is therefore `size + 10`, and the last entry's trailer is the archi
 
 The retail install's own override tree is content-only. `DATA\MAT0.DAT` (244 bytes) and `DATA\MFORMS.DAT` (142 bytes) are byte-identical to the content of the `dat\MAT0.DAT` and `dat\MFORMS.DAT` entries in SIMVOL0.VOL, whose size fields read 244 and 142 — no prefix, no trailer. So does `DATA\script.dat`, which the game reads straight off disk at offset 0.
 
+**A loose file at an entry's own path takes precedence over the archive.** With a content-only `DAT\PROJ.DAT` in the game folder, beside `DBSIM.EXE`, DBSIM loaded it in place of `SIMVOL0.VOL`'s `dat\PROJ.DAT`: the record table it built in memory (`004a9980`) held the loose file's values. The retail install ships no `DAT` folder; this was a file placed there for the test ([`proj-dat.md`](proj-dat.md#lookup)).
+
 What does carry a prefix is anything unpacked by a tool that copies the archive bytes wholesale. `ES2/VOL/extractVol.py` slices each entry from its offset to the next entry's offset, so every file under `ES2/VOL/simvol0/`, `ES2/VOL/ZONES/` and `ES2/VOL/SHELL0/` is `prefix + content + trailer`, ten bytes longer than the file the game reads.
 
 That extraction is uniform. Comparing all 1,672 entries of those three archives against their extracted counterparts, byte for byte, against each entry's content as the directory and prefix delimit it: 1,672 are `prefix + content + trailer`, none are content-only, none differ otherwise, none are missing. A `ES2/VOL/<name>/` file is always ten bytes longer than its content, never sometimes.
@@ -62,3 +64,7 @@ That extraction is uniform. Comparing all 1,672 entries of those three archives 
 | The 4 bytes at `+5` are an opaque magic number | They are a packed MS-DOS date and time, so the value differs between files built at different times. |
 | The trailer is padding or alignment | The gap is exactly one byte for every entry regardless of size, and its value is the content's last byte, not zero. |
 | Entries are compressed, because `+0` is a compression type | Type 2 is stored: the content is verbatim, and 723 WAVs match their own RIFF length. |
+
+## Open
+
+- **Open:** where DBSIM's resource open checks for a loose file before the archives, whether that holds for every resource it opens, and whether VSHELL does the same. Only `DAT\PROJ.DAT` has been seen to override.

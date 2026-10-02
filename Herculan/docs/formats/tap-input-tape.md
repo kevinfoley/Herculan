@@ -15,11 +15,11 @@ The main menu's `VIEW DEMO` plays one — see [Reaching it](#reaching-it). The f
 | `-D` | Play a tape chosen at random by `DemoTape_PickRandom`, and additionally set `004d25b4` — demo mode |
 | `-d` | Open the checkpoint file `<name>.dmp` beside the tape — see [The checkpoint file](#the-checkpoint-file) |
 
-The extension is forced to `tap` in the first three cases, so `<name>` is a bare stem: a tape in `tapes\` is named as `tapes\demo1`. `-d` takes no name of its own: it reads the stem and the recording flag the others left, so it only works after `-r` or `-p` on the line.
+The extension is forced to `tap` in the first three cases, so `<name>` is a bare stem: a tape in `tapes\` is named as `tapes\demo1`. `-d` takes no name of its own: it reads the stem and the recording flag the others left, so it only works after `-r`, `-p` or `-D` on the line.
 
 `DemoTape_PickRandom` (`0045ce9c`) loads group `0x14` of `tapes\demolist.str` and returns entry `time() % count`, or entry 0 when the table holds one name. The retail table holds `DEMO1`, `DEMO2`, `DEMO3`.
 
-Demo mode is playback plus an abort: with `004d25b4` set, any key the player presses that makes a command code, the first axis key (`Input_KeyjoyAxisKey`'s opening test), closing the window (`WM_CLOSE` in the window procedure) or a `WM_QUIT` raises `004d25b6`, which the mission loop and `StatusAlertPanel_RunModal` read to leave the mission. That is attract-mode behaviour — run until somebody touches something. The command-code test reads the live keyboard's command word, which `Input_PollDeviceBlock` (`0045ba8c`) builds at `004d247a` each frame, not the tape's — see [Rejected readings](#rejected-readings).
+Demo mode is playback plus an abort: with `004d25b4` set, any key the player presses that makes a command code, the first axis key (`Input_KeyjoyAxisKey`'s opening test) or closing the window (`WM_CLOSE` in the window procedure) raises `004d25b6`, as does the tape running out ([below](#where-it-runs)); a `WM_QUIT` reaching the input build raises it in any mission, demo or not. The flag is what the mission loop and `StatusAlertPanel_RunModal` read to leave the mission. That is attract-mode behaviour — run until somebody touches something. The command-code test reads the live keyboard's command word, which `Input_PollDeviceBlock` (`0045ba8c`) builds at `004d247a` each frame, not the tape's — see [Rejected readings](#rejected-readings).
 
 ## File layout
 
@@ -43,11 +43,11 @@ The three retail tapes are three different missions — `script.dat` byte 0, the
 
 **A replay is not fully determined by the tape.** Three things come from the playing machine's install:
 
-- **Six preference bytes.** `-p` reads `data\prefs.cfg` and `tapes\prefs.cfg`, copies bytes 0-3 and 8-10 of the former over the latter — sound, music, the two message modes, terrain texture and the two detail settings ([`../simulation/preferences.md`](../simulation/preferences.md#what-each-byte-is)) — and writes `tapes\prefs.cfg` back. EFFECTS DETAIL is one of them, and a collapsing structure's smoke and a debris piece's burst read it, so the playing machine's setting reaches the simulation. It also stores that path in the preferences path `Prefs_Path` (`0049e844`), which the loader otherwise fills with `data\prefs.cfg`, so the simulator runs from the reconciled copy.
+- **Seven preference bytes.** `-p` reads `data\prefs.cfg` and `tapes\prefs.cfg`, copies bytes 0-3 and 8-10 of the former over the latter — sound, music, the two message modes, terrain texture and the two detail settings ([`../simulation/preferences.md`](../simulation/preferences.md#what-each-byte-is)) — and writes `tapes\prefs.cfg` back. EFFECTS DETAIL is one of them, and a collapsing structure's smoke and a debris piece's burst read it, so the playing machine's setting reaches the simulation. It also stores that path in the preferences path `Prefs_Path` (`0049e844`), which the loader otherwise fills with `data\prefs.cfg`, so the simulator runs from the reconciled copy.
 - **The keyjoy switches.** `Keyjoy_LoadConfig` (`0045b78c`) always reads `data\keyjoy.cfg`, so the tape's own copy in `tapes\` is never read. Its `Backturn` applies to the replayed axes: it is applied after the point where a frame is recorded, and playback runs that code too.
 - **Everything the bundle does not carry**, which is whatever `data\` already holds — the mission's text in `mission.str` among it.
 
-When a playback mission ends with `004d255a` still set — `-D` aborted, or the mission left before the tape ran out — the teardown in `FUN_0045f144` deletes `tapes\prefs.cfg` and `tapes\keyjoy.cfg` (`OpenFile` with `OF_DELETE`). A tape played to its end leaves them.
+When a playback mission ends with `004d255a` still set — `-D` aborted, or the mission left before the tape ran out — the teardown in `Sim_Run` (`0045f144`) deletes `tapes\prefs.cfg` and `tapes\keyjoy.cfg` (`OpenFile` with `OF_DELETE`). A tape played to its end leaves them.
 
 ### The stream
 
@@ -71,7 +71,7 @@ Then one 24-byte header per frame, plus its variable tail:
 
 **Buttons 5-8 are not recorded.** Only `004d2360`-`004d2363` reach the header, and playback's `memset` of the input block leaves the other four zero. The four bits are written after the press-once latch has masked the build ([`joystick-input.md`](joystick-input.md#the-buttons)), so each is set on the one frame its action fires, and the trigger's own button is zero because the trigger is extracted from it. The hat bytes are zero under HAT = 2, which writes the hat onto the turret axes and clears them before they are recorded.
 
-The raw bank at `+0x0d` is read back into locals that the playback path never uses. In the retail tapes its bit 0, the stick's trigger button, is set on exactly as many frames as the trigger bit — 180, 200 and 204.
+The raw bank at `+0x0d` is read back into locals that only the recording branch reads. In the retail tapes its bit 0, the stick's trigger button, is set on 180, 116 and 185 frames, every one of them a frame whose trigger bit is set; the trigger bit is set on 180, 200 and 204.
 
 The command word is the one key event the build took off the keyboard ring, releases included: a press and its `0x80` release sit in two different frames, and a held key's auto-repeat arrives as a run of presses with one release at the end. The command queue carries presses of its seven keys only, their releases reaching the ring and so the command word. The three retail tapes run 1499, 1901 and 3660 frames. The only codes in their queues are `0x0c`, `0x0d` and `0x1b` — `-`, `=` and `]`, three of the seven scancodes on `SimCommandWantedCodes`.
 
@@ -85,7 +85,7 @@ Both directions live in `Input_BuildPlayerDevice` (`0045a7f4`), the per-frame in
 
 **Live mouse input is shut off while a tape plays.** `CockpitMouse_OnEvent` queues nothing unless `004d1e5a` is set, and that byte is clear for the duration, so the tape's recorded events are the only ones the cockpit sees. The end of the tape sets it. A mouse event's position is in the game's screen space: `Mouse_DispatchEvent` (`0048083c`) scales a client position by `(backBufferWidth << 15) / clientWidth` through a Q16 multiply, which is half the back buffer and so the viewport — 640x480, or 320x240 in the low-resolution mode.
 
-**A modal panel reads the tape too.** `Sim_MainTick` is not the only caller of `Input_BuildPlayerDevice`: the loops of all four alert panels call it once per pass — `StatusAlertPanel_RunModal` (`00455fe4`), `ObjectivesPanel_RunModal` (`00457ae4`), `PreferencesPanel_Run` (`00456d4c`) and `ControlsPanel_Run` (`00458650`) — and so does `AlertPanel_SetFocus` (`00454c7c`) when it adopts the widget under the pointer. So a recording goes on writing frames while a panel is up, and a playback goes on reading them: the keystrokes and clicks that answered the panel are on the tape and answer it again. A panel's loop never calls `Time_BeginSimTick`, so its frames come at the loop's own rate and carry the stale `SimTickDelta` of the frame before the panel; the retail tapes' mouse timestamps put that rate at 5-7 ms a frame.
+**A modal panel reads the tape too.** `Sim_MainTick` is not the only caller of `Input_BuildPlayerDevice`: all four alert-panel modal loops call it once per pass — `StatusAlertPanel_RunModal` (`00455fe4`, which the pause panel runs too), `ObjectivesPanel_RunModal` (`00457ae4`), `PreferencesPanel_Run` (`00456d4c`) and `ControlsPanel_Run` (`00458650`) — and so does `AlertPanel_SetFocus` (`00454c7c`) when it adopts the widget under the pointer. So a recording goes on writing frames while a panel is up, and a playback goes on reading them: the keystrokes and clicks that answered the panel are on the tape and answer it again. A panel's loop never calls `Time_BeginSimTick`, so its frames come at the loop's own rate and carry the stale `SimTickDelta` of the frame before the panel; the retail tapes' mouse timestamps put that rate at 5-7 ms a frame.
 
 A panel raised by a frame's own command runs from inside that frame's tick. `Sim_MainTick` builds the input, ticks the effect pools and the groups, and then calls `Sim_PollPlayerInput`, which dispatches the command word first — so the panel comes up there, and the rest of the tick, the machines included, waits for it. After it, the control laws read their axes from the shared input block, which now holds the panel's last build. The mission's own status alert comes up at the very end of a tick, after `Mission_PollStatus`.
 
@@ -97,21 +97,21 @@ All three retail tapes end in a panel, each a run of one repeated delta:
 | `DEMO2` | 1587-1900 | 221 | `Q`, command `0x10` | `Enter` on 1899 |
 | `DEMO3` | 3349-3659 | 249 | `Q` | left clicks at (375, 310) and (376, 306) |
 
-Playback ends on a short read — any of the three header reads returning 0 — or when the player presses `[Ctrl]+[E]` (command `0x412`, tested on the live command word). Either way the file is closed, `004d255a` clears, live mouse input is restored and the live command word is zeroed; under `-D` the abort flag is raised as well. The live command word also still reaches `Sim_HandleWindowKey` (`0045fd60`), so `Alt+Enter` and `-B`'s `Ctrl+B` work during playback ([`../command-line.md`](../command-line.md#dbsim)).
+Playback ends on a short read — any of the three header reads returning 0 — or when the player presses `[Ctrl]+[E]` (command `0x412`, tested on the live command word). Either way the file is closed, `004d255a` clears, live mouse input is restored and the live command word is zeroed; under `-D` the abort flag is raised as well. The live command word also still reaches `Sim_HandleWindowKey` (`0045fd60`), so `-B`'s `Ctrl+B` works during playback, and so does `Alt+Enter` unless `-B` is on the line ([`../command-line.md`](../command-line.md#dbsim)).
 
 ### Timing
 
-**Playback is not paced.** The mission loop in `FUN_0045f144` calls `Time_BeginSimTick` (`004677bc`) — the spin until 40 ms have passed, and the only place `SimTickDelta` is measured — only while `004d255a` is clear. During playback `Sim_MainTick` (`0045f464`) instead copies the frame record's `SimTickDelta` into the global. The simulation therefore advances by exactly the time that passed when the tape was recorded, and frames come as fast as the machine can draw them: on a modern computer a demo finishes in a fraction of its recorded length.
+**Playback is not paced.** The mission loop in `Sim_Run` (`0045f144`) calls `Time_BeginSimTick` (`004677bc`) — the spin until 40 ms have passed, and the only place `SimTickDelta` is measured — only while `004d255a` is clear. During playback `Sim_MainTick` (`0045f464`) instead copies the frame record's `SimTickDelta` into the global. The simulation therefore advances by exactly the time that passed when the tape was recorded, and frames come as fast as the machine can draw them: on a modern computer a demo finishes in a fraction of its recorded length. The low-resolution mode's present does wait: below 640 wide, `Screen_PresentFrame` (`00465524`) ends with `Flip(NULL, DDFLIP_WAIT)`, which DirectDraw synchronises with the display's vertical retrace, so frames come at most once a refresh. The 640-wide modes copy into the locked primary surface, and the windowed path `StretchBlt`s, without a wait.
 
-The recorded deltas are far from the 25 Hz cap's 81. The three retail tapes were made on a machine running at about 7-9 frames a second:
+The recorded deltas are far from the 25 Hz cap's 81. Counting only the frames that ticked the simulation — each tape up to and including the frame that raised its closing [panel](#where-it-runs), 1015, 1587 and 3349 — the three retail tapes were made at 7.6, 6.5 and 8.7 frames per second of recorded length:
 
-| Tape | Frames | `SimTickDelta` min / median / max | Frames at the `0x1c2` clamp | Recorded length |
-|---|---|---|---|---|
-| `DEMO1` | 1499 | 155 / 225 / 450 | 89 | 187 s |
-| `DEMO2` | 1901 | 90 / 272 / 450 | 267 | 278 s |
-| `DEMO3` | 3660 | 92 / 231 / 450 | 51 | 422 s |
+| Tape | Frames | Simulation frames | Their `SimTickDelta` min / median / max | Frames at the `0x1c2` clamp | Recorded length |
+|---|---|---|---|---|---|
+| `DEMO1` | 1499 | 1016 | 155 / 235 / 450 | 89 | 134 s |
+| `DEMO2` | 1901 | 1588 | 90 / 301 / 450 | 267 | 245 s |
+| `DEMO3` | 3660 | 3350 | 92 / 227 / 450 | 51 | 384 s |
 
-The recorded length is the sum of the deltas at 125/256 ms per count. A frame that took longer than the clamp's 220 ms is recorded as 220 ms, so that sum is the time the simulation saw, which is shorter than the wall time of the recording session.
+The recorded length is the sum of the simulation frames' deltas at 125/256 ms per count. The panel frames after them carry the raising frame's delta, which only `Sim_MainTick` copies into `SimTickDelta`, so it never reaches the simulation. A frame that took longer than the clamp's 220 ms is recorded as 220 ms, so the sum is the time the simulation saw, which is shorter than the wall time of the recording session.
 
 ## The checkpoint file
 
@@ -120,11 +120,13 @@ The recorded length is the sum of the deltas at 125/256 ms per count. A frame th
 - **Recording:** copies `size` bytes from `ptr` onto the end of a buffer at `004a8580`, advancing the cursor `00497078` and the total `0049707c`.
 - **Playback:** reads `size` bytes from the `.dmp` into that same buffer, `memcmp`s them against `ptr`, and on a mismatch sets `00497080` and formats `label` into a stack buffer that is then discarded.
 
-The design is a state snapshot per checkpoint, compared on replay to detect drift. Nothing found writes the buffer out, so a recording's `.dmp` is left empty, and nothing found calls the routine; see [Open](#open). What `-d` is known to do in retail is create an empty `<stem>.dmp` when recording and hold one open when playing back.
+The buffer goes out once a frame. The static initialiser at `00401ef8` registers `00401e5c` with `RegisterSubsystemLoader` (`00401d64`) as a phase-6 subsystem, which `Sim_Run` runs after every frame. While recording with the `.dmp` handle set, it opens `<stem>.dmp` in mode `ab` (a failed open reports as `vcr.cpp:47`), writes the buffer's total bytes, closes the file, and resets the cursor to `004a8580` and the total to 0; in playback it does nothing.
+
+The design is a state snapshot per checkpoint, compared on replay to detect drift. What calls the checkpoint routine is [Open](#open). Unless something calls it, the total stays 0 and each frame's flush appends nothing, so what `-d` is known to do in retail is create an empty `<stem>.dmp` when recording and hold one open when playing back.
 
 ## Reaching it
 
-The main menu's `VIEW DEMO` button (`FUN_0043156f`, VSHELL) exits the shell with code 5, and `ES.EXE` answers that code by starting `dbsim` with `-D`; the tape's end returns exit code 6 and the shell comes back. `ES.EXE -r<name>` passes `-r<name>` through to every mission it launches. Nothing passes `-p`. See [`../command-line.md`](../command-line.md#the-loop), which also covers the unreferenced argument list in VSHELL that ends in `-D`.
+The main menu's `VIEW DEMO` button (`MainMenu_OnViewDemo`, `0043156f`, VSHELL) exits the shell with code 5, and `ES.EXE` answers that code by starting `dbsim` with `-D`; the tape's end returns exit code 6 and the shell comes back. `ES.EXE -r<name>` passes `-r<name>` through to every mission it launches. `ES.EXE` has no `-p` case, and neither it nor `VSHELL.EXE` contains a `-p` string. See [`../command-line.md`](../command-line.md#the-loop), which also covers the unreferenced argument list in VSHELL that ends in `-D`.
 
 `dbsim -eggplant -ptapes\demo1` replays a retail tape directly.
 
@@ -145,6 +147,8 @@ The main menu's `VIEW DEMO` button (`FUN_0043156f`, VSHELL) exits the shell with
 | `Input_PollDeviceBlock` | `0045ba8c` | Builds the live device block at `004d247a`, whose head is the live command word the stop and abort tests read |
 | `Time_BeginSimTick` | `004677bc` | The 40 ms frame cap and `SimTickDelta` measurement; skipped during playback |
 | `FUN_00401dc0` | `00401dc0` | The checkpoint: buffers a snapshot when recording, compares one when playing back |
+| — | `00401e5c` | The checkpoint flush: appends the recording buffer to `<stem>.dmp` once a frame, as subsystem phase 6 |
+| — | `00401ef8` | Static initialiser registering `00401e5c` for phase 6 |
 | — | `004d2562` | The open `.dmp` checkpoint file's `FILE*` |
 | `Config_BuildPath` | `0045eea4` | Prefixes `data\`, or `tapes\` during playback, onto `prefs.cfg` and `keyjoy.cfg` |
 | `Keyjoy_LoadConfig` | `0045b78c` | Reads `data\keyjoy.cfg` whatever is playing |
@@ -158,8 +162,8 @@ The main menu's `VIEW DEMO` button (`FUN_0043156f`, VSHELL) exits the shell with
 
 ## Open
 
-- **Open:** what calls the checkpoint routine `FUN_00401dc0`, and what would write its recording buffer to the `.dmp`. `es2_xref.py` finds no branch or stored pointer reaching `00401dc0` (its neighbour `Subsystem_RunPhase` returns seven callers under the same sweep), none reaching the unused `dmp` and `ab` strings at `00497088` and `0049708c` beside its own format string, and an absolute-operand search finds no reader of the mismatch flag `00497080`.
-
+- **Open:** what calls the checkpoint routine `FUN_00401dc0`. `es2_xref.py` finds no branch or stored pointer reaching `00401dc0`, whose prologue is its first byte (its neighbour `Subsystem_RunPhase` returns seven callers under the same sweep, and the flush `00401e5c` its one registration), and an absolute-operand search finds no reader of the mismatch flag `00497080`.
+- **Open:** the flush `00401e5c` and its registration `00401ef8` sit in the undefined bytes after `FUN_00401dc0` and have no function entries in the Ghidra project, so the decompile dumps lack them.
 - **Open:** whether the retail tapes' missions are the `DEMO`, `DEMO_01` and `DEMO_02` entries in the campaign's own mission table ([`../shell/campaign-loop.md`](../shell/campaign-loop.md)), or the `DEMO*.MSN` files — a tape carries `script.dat`, a save formatted from a `.MSN` rather than the mission file itself, so the two are not matched up.
-- **Open:** which panel `DEMO1`'s last 484 frames were recorded under. No command on the tape raises one, which leaves the status alert `Sim_MainTick` raises when the mission is decided as the candidate.
+- **Open:** which panel `DEMO1`'s closing run of frames (1015-1498) was recorded under. No command on the tape raises one, which leaves the status alert `Sim_MainTick` raises when the mission is decided as the candidate.
 - **Unported:** the checkpoint file (`-d`).

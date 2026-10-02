@@ -44,7 +44,7 @@ public enum MissionObjectiveSubject {
 /// </param>
 /// <param name="Point">
 /// Record <c>+0x08</c> resolved to a block-1 coordinate, or null. Carried because the record carries
-/// it; no condition reads it.
+/// it; no reader is found (see docs/simulation/mission-objectives.md#open).
 /// </param>
 /// <param name="RouteRef">
 /// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.RouteRef"/>

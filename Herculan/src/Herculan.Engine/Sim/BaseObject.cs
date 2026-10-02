@@ -301,6 +301,18 @@ public sealed partial class BaseObject : SimObject {
 	public override bool Neutralised => Destroyed;
 
 	/// <inheritdoc />
+	public override bool OutOfAction => Neutralised || Disarmed;
+
+	/// <summary>
+	/// <c>obj+0xa5</c> — this structure has nothing to fight with. <c>Base_Construct</c> sets it at
+	/// spawn for the <see cref="StructureClass.Plain"/> and <see cref="StructureClass.Radar"/> classes
+	/// and no other, so an unarmed building is out of the AI's fight from birth
+	/// (docs/simulation/structure-behaviour.md, "Five classes, one switch"). The triple turret's own
+	/// latch goes with its tick, which is unported.
+	/// </summary>
+	public bool Disarmed => Class is StructureClass.Plain or StructureClass.Radar;
+
+	/// <inheritdoc />
 	public override bool Invulnerable => Type.Invulnerable;
 
 	/// <summary>

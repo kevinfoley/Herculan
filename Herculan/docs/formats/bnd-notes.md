@@ -55,7 +55,7 @@ Hardcoded instruction immediates in `dbsim-physics-notes.md` (rocket steering) a
 - `ROCKET.BND` at content offsets 6-7, 8-9, 14-15: `1280`, `3072`, `40000`
 - `PWEAPONS.BND` at content offsets 58-65: `120, 360, 180, 1800` (contiguous), `WeaponGauge_Ctor`'s dark and shown ranges
 
-**Conclusion:** `.BND` files are human/build-tool source format (likely compiled by `ES2/BATCH.EXE`) whose values are baked directly into `DBSIM.EXE`'s code at build time. The retail game never opens `.bnd` files; there is no runtime loader.
+**Conclusion:** `.BND` files are human/build-tool source format whose values are baked directly into `DBSIM.EXE`'s code at build time. The retail game never opens `.bnd` files; there is no runtime loader.
 
 ## Not applicable to runtime
 

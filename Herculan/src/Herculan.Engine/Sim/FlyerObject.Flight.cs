@@ -17,10 +17,11 @@ public sealed partial class FlyerObject : IFlightBody {
 	private const int InitialAirSpeed = 1000;
 
 	/// <summary>
-	/// <c>flyer+0x261</c>'s literal — half throttle, and the only value it ever holds. <b>Nothing
-	/// moves a Cybrid flyer's throttle.</b> The control law fills a five-element command array and
-	/// leaves the throttle element zero at every site, so the flight model's rate branch never steps
-	/// the setting; the one field the AI does write a throttle-shaped figure into
+	/// <c>flyer+0x261</c>'s literal, on the model's ±0x400 throttle scale, and the only value it holds
+	/// here (<see cref="ApplyFlightCommand"/> has the retail branch that can overwrite it). <b>Nothing
+	/// a Cybrid flyer decides moves its throttle.</b> The control law fills a five-element command
+	/// array and leaves the throttle element zero on every call, so the flight model's rate branch
+	/// never steps the setting; the one field the AI does write a throttle-shaped figure into
 	/// (<c>flyer+0x21c</c>, <c>Flyer_FormationThrottle</c> (<c>00422260</c>)'s own accumulator) is
 	/// never handed to the model. So a SKIMMER cruises at the airspeed
 	/// 0x200 asks for — 875 of its 500-1000 range — biased only by its own pitch attitude.
@@ -94,7 +95,10 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// </summary>
 	private const short RudderTurnLimit = 2000;
 
-	/// <summary>Bank angle past which even a small correction gets no rudder — the wings come level first.</summary>
+	/// <summary>
+	/// Bank angle from which even a small correction gets no rudder — the wings come level first. The
+	/// test is signed, so a bank to the negative side never blocks the rudder.
+	/// </summary>
 	private const short RudderRollLimit = 800;
 
 	/// <summary>Q16 gain from the steering command to that rudder input.</summary>
@@ -188,9 +192,8 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// </summary>
 	internal void MovementTick(SimWorld world) {
 		// The velocity goes on RAW, not through Math_IntegrateRateOverTick — three plain ADDs at
-		// 0042190a. That is the one place a flyer's move differs in kind from Razor_MovementTick's,
-		// and it is what makes a flyer fast: its world velocity is a per-tick step where the RAZOR's
-		// is a rate. Integrating it here scales it down by the tick fraction and leaves a SKIMMER
+		// 0042190a. That is what makes a flyer fast: its world velocity is a per-tick step where
+		// Razor_MovementTick's is a rate. Integrating it here scales it down by the tick fraction and leaves a SKIMMER
 		// crawling.
 		var velocity = _flight.WorldVelocity;
 		Position = new Vec3i(
@@ -326,8 +329,9 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// <para>The original opens with a branch on <c>flyer+0xae</c> that substitutes a pitch derived
 	/// from <c>flyer+0x23c</c> instead. Both fields belong to the walking machine's obstacle
 	/// avoidance and leg placement (see docs/simulation/ai-navigation.md and
-	/// docs/simulation/mech-locomotion.md); nothing on any flyer path writes either, so the
-	/// substitution cannot fire on an aircraft and is not reproduced.</para>
+	/// docs/simulation/mech-locomotion.md); the flyer pool is zero-filled and no flyer path that
+	/// writes <c>flyer+0xae</c> is known (docs/simulation/ai-flyers.md, Open), so the substitution
+	/// is not reproduced.</para>
 	/// </summary>
 	private int PitchToAltitude(int altitude) =>
 		PitchCommand((short)SimTrig.Atan2Guarded(altitude - Position.Z, PitchAltitudeRun));
@@ -363,8 +367,10 @@ public sealed partial class FlyerObject : IFlightBody {
 	///
 	/// <para>The throttle axis is passed as zero and the analogue-throttle branch is refused. The
 	/// original shares one input-preferences global with the player's own path, so a configured
-	/// throttle device would read the AI's zero axis as a <i>position</i> and pin every Cybrid flyer
-	/// at idle; the rate branch is the behaviour the AI was written against.</para>
+	/// throttle device would read the AI's zero axis as a <i>position</i> and set every Cybrid
+	/// flyer's throttle to 0, the middle of its range (750 for a SKIMMER, where the rate branch
+	/// leaves it at 875 — docs/simulation/ai-flyers.md, "A flyer cannot change speed"); the rate
+	/// branch is the behaviour the AI was written against.</para>
 	/// </summary>
 	private void ApplyFlightCommand(ref FlightCommand command) {
 		if (Flight is not { } flight) {
@@ -391,8 +397,8 @@ public sealed partial class FlyerObject : IFlightBody {
 	}
 
 	/// <summary>
-	/// <c>Flyer_SteerAndFly</c> (<c>004222fc</c>) — the flyer's whole steering channel, and the one function every think
-	/// ends in. It turns a heading error into a bank, decides whether the aircraft may hold that
+	/// <c>Flyer_SteerAndFly</c> (<c>004222fc</c>) — the flyer's whole steering channel, and the one function every
+	/// movement step ends in. It turns a heading error into a bank, decides whether the aircraft may hold that
 	/// bank, and runs the flight model.
 	///
 	/// <list type="number">
@@ -402,14 +408,15 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// (less a hysteresis band) the aircraft is <b>held at the limit</b> instead, and only in the
 	/// direction that would take it further over.</item>
 	/// <item>A <b>small</b> steering error is answered with rudder and level wings rather than a bank
-	/// at all — and the rudder is refused if the aircraft is already rolled, so the wings come level
-	/// first.</item>
+	/// at all — and the rudder is refused while the roll is <see cref="RudderRollLimit"/> or more
+	/// (a signed test), so the wings come level first.</item>
 	/// <item>Anything larger is flown as a bank.</item>
 	/// </list>
 	///
 	/// <para>The original also has a leader term in the bank command, scaled by the leader's
-	/// <c>+0x1f8</c>. That field is read here and written nowhere in the image, so the term
-	/// contributes nothing and the branch is not reproduced.</para>
+	/// <c>+0x1f8</c>. The flyer pool is zero-filled and no writer of that field is known
+	/// (docs/simulation/ai-flyers.md, Open), so the term contributes nothing and the branch is not
+	/// reproduced.</para>
 	/// </summary>
 	private void SteerAndFly(SimWorld world, short turn, int elevator) {
 		short maxBank = MaxBankAngle;

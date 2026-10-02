@@ -16,12 +16,43 @@ The HERCULAN Engine is intended to eventually be a playable cross-platform moder
 
 _Earthsiege 2_ is a copyrighted work. While a legal owner of the copyright has previously released the game for free, I do not have a license to distribute the original game files and they are not included in this repository. To use the HERCULAN Engine, you will need a copy of the original game files, which you can acquire from abandonware websites or by purchasing an original retail CD-ROM. I am not aware of any digital marketplace that sells _Earthsiege 2_.
 
+#### Telling the engine where the game files are
+
+HERCULAN Engine needs a folder containing an Earthsiege 2 installation in order to run. It tries to find the Earthsiege 2 directory using several methods. In order:
+
+1. **A path on the command line**, e.g. `Herculan.Engine.Host "D:\Games\ES2"`. If that folder has no `VOL` folder in it, the engine stops with an error rather than looking anywhere else.
+2. **The `ES2_GAME_PATH` environment variable.**
+3. **The folder it used last time.** The engine remembers whichever folder it ran with in `install-path.txt`, in its settings folder (`%APPDATA%\Herculan\` on Windows). If that folder has since been moved or deleted, the engine skips it.
+4. **A folder named `ES2`** beside the engine or in any folder above it. This is what finds the game files when running the engine from a checkout of this repository.
+5. **Asking you.** If none of the above works, the engine opens a small window where you can browse for the folder with your system's folder picker, or type or paste its path. On Linux the picker needs `zenity` or `kdialog` to be installed; without either, you type the path.
+
+To switch to a different copy of the game, pass its path on the command line once; the engine then remembers it. Deleting `install-path.txt` makes the engine search again.
+
+Run `Herculan.Engine.Host --help` for the rest of the command line, or see [`Herculan/docs/engine/host-flags.md`](Herculan/docs/engine/host-flags.md).
+
+#### Building a release that runs without .NET installed
+
+Building the engine needs the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0). A normal build also needs the .NET 8 runtime on any machine that runs it. To build a copy that runs on a Windows machine with no .NET installed, publish it with the `win-x64` profile, from the `Herculan` folder:
+
+```
+dotnet publish src/Herculan.Engine.Host -p:PublishProfile=win-x64
+```
+
+The result lands in `Herculan/src/Herculan.Engine.Host/bin/publish/win-x64/`. Copy that whole folder; it contains:
+
+- `Herculan.Engine.Host.exe`, with the .NET runtime built into it
+- `glfw3.dll`, `soft_oal.dll` and `cimgui.dll`, the window, audio and debug-UI libraries
+- the `Localization` folder, whose `.lang` files hold the engine's menu text and can be edited or added to after install
+- the `Assets` folder, with the font the engine's menus use
+
+The `.pdb` files in the folder are debugging symbols; the engine runs without them. For another platform, publish with a different runtime instead of the profile, e.g. `dotnet publish src/Herculan.Engine.Host -c Release -r linux-x64 --self-contained`.
+
 ### What the engine is not
 
-HERCULAN Engine is a reimplementation of _Earthsiege 2_, not a remake. There are currently no plans for any of the following:
+HERCULAN Engine is a reimplementation of _Earthsiege 2_, **not** a remake. There are currently no plans for any of the following:
 
 - Enhanced graphics (other than basic quality of life changes like support for higher resolutions and widescreen displays)
-- Gameplay changes or balance adjustments
+- Gameplay changes or balance adjustments (other than bug fixes)
 - New Hercs, weapons, or missions
 
 ## Screenshots

@@ -17,9 +17,8 @@ namespace Herculan.Engine.Audio;
 /// <list type="bullet">
 /// <item>The loop is polled rather than notified — <see cref="Update"/>.</item>
 /// <item>The drive can be named — <see cref="TryCreate"/>. The original names none; it opens the
-/// device type alone, which is whichever CD drive MCI picks first. Nothing in either executable
-/// reads a drive letter from anywhere: there is no <c>GetDriveType</c>, no <c>GetLogicalDrives</c>
-/// and no configuration key for one, in DBSIM or in VSHELL.</item>
+/// device type alone, which is whichever CD drive MCI picks first — see docs/formats/audio.md,
+/// "No drive is named".</item>
 /// </list>
 /// </summary>
 public sealed class MciCdAudio : ICdAudio {

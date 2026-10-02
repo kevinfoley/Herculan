@@ -16,9 +16,9 @@ The message channels themselves — the computer's ticker and the pilot/squad co
 
 `Sos_BindLibrary` (`004957f1`) picks the DLL by `GetVersion()` — Win32s (high bit set, major <= 3) gets `sos32s03.dll`, everything else `sos9503.dll` — then walks a self-describing binding table at `004a6ab4`: `0x24`-byte records of `{ void **destination, char name[0x20] }`, terminated by a NULL destination. **100 entry points** are bound this way: 44 `sosDIGI*`, 45 `sosMIDI*`, 8 `sosTIMER*`, plus `sosGetErrorString`, `sosPrepare32Memory`, `sosUnPrepare32Memory`. It refcounts (`004a6ab0`), so repeated calls bind once.
 
-Only `sos9503.dll` ships. `sos32s03.dll` does not.
+The v1.0 install ships `sos9503.dll` and not `sos32s03.dll`. The later GoldGames multilingual build carries both, `sos32s03.dll` as `VER31\SOS32S03.DLL`.
 
-Digital output covers samples and `.hmp` MIDI songs; the `.hmp` path is present but no `.hmp` file ships with DBSIM. VSHELL carries a hardcoded `.\sos\song.hmp`, and no `sos\` directory ships either.
+Digital output covers samples and `.hmp` MIDI songs; the `.hmp` path is present but no `.hmp` file ships in any v1.0 archive or on the GoldGames disc. VSHELL carries a hardcoded `.\sos\song.hmp`, and the `SOS` directory `SHELL0.VOL` lists is empty.
 
 ### CD audio
 
@@ -33,9 +33,9 @@ Music is Red Book, driven straight through MCI on device `cdaudio` — not throu
 | `Music_ResumeAt` (`00473cc0`) | Same open/set/play, but `MCI_FROM` is a saved TMSF position rather than a track start, and `MCI_TO` is whatever `Music_TrackLength` already holds — it never re-queries |
 | `Music_IsIdle` (`00473b2c`) | No command; the device id against -1 |
 
-The device is held open only while a track is sounding: every entry point opens it, and every failure path closes it again.
+The device is held open only while a track is sounding: `Music_PlayTrack` and `Music_ResumeAt` open it, the other entry points use the id already held, and each failure after an open calls `Music_Stop` to close it again.
 
-The track is meant to loop: `sfxWndProc` re-issues `Music_PlayTrack` on `MM_MCINOTIFY` (`0x3b9`) with `MCI_NOTIFY_SUCCESSFUL`. The notify is addressed to `Music_NotifyWindow` (`006b560c`), the handle `Sos_InitBackend` was given.
+The track is meant to loop: on `MM_MCINOTIFY` (`0x3b9`) with `MCI_NOTIFY_SUCCESSFUL`, and only while `Music_CdEnabled` is set, `sfxWndProc` calls `Sfx_StopMusic` and then `Sfx_PlayMusicTrack` with `Music_CdTrack`. The notify is addressed to `Music_NotifyWindow` (`006b560c`), the handle `Sos_InitBackend` was given.
 
 **On Windows 11 it plays once.** The `mcicda` driver never reports the end of a play: once the play head reaches `MCI_TO` the device goes on answering `MCI_MODE_PLAY` with the position frozen there, and no `MM_MCINOTIFY` is ever posted. So the restart never happens, and retail's mission music falls silent after one pass of its track.
 
@@ -54,7 +54,7 @@ The retail disc's table of contents, as `IOCTL_CDROM_READ_TOC` reports it:
 | 7 | audio | 234006 | 2:26.92 |
 | lead-out | | 245025 | |
 
-Track 7 is music in its own right, distinct from the other five, and **the game never plays it**: the track formula below reaches 2 to 6 only.
+Track 7 is music in its own right, distinct from the other five, and **DBSIM never plays it**: the track formula below reaches 2 to 6 only, or below 2 for a negative `-R`. VSHELL has its own MCI play routine; see [Open](#open).
 
 #### Which track, and whether there is one
 
@@ -64,11 +64,11 @@ Track 7 is music in its own right, distinct from the other five, and **the game 
 Music_CdTrack = Music_TrackSelect % 5 + 2
 ```
 
-`Music_TrackSelect` (`004d25f7`) is the `-R` command-line switch, parsed with `atol` at `0045e824`. **Nothing else in DBSIM picks a track**, and the switch defaults to 0. `ES.EXE` passes `-R<n>` with `n` counting the simulator launches of its own run from 0, so retail's missions play tracks 2, 3, 4, 5, 6, 2… in the order they are flown ([`../command-line.md`](../command-line.md#the-loop)). The remainder is a signed `IDIV`, so a negative `-R` would ask MCI for a track below 2.
+`Music_TrackSelect` (`004d25f7`) is the `-R` command-line switch, parsed with `atol` at `0045e824`; it is byte `+0xb7` of the `0xc3`-byte block at `004d2540` that `Main_StaticInit` clears, so it defaults to 0 ([Open](#open)). `ES.EXE` passes `-R<n>` with `n` counting the simulator launches of its own run from 0, so retail's missions play tracks 2, 3, 4, 5, 6, 2… in the order they are flown ([`../command-line.md`](../command-line.md#the-loop)). The remainder is a signed `IDIV`, so a negative `-R` would ask MCI for a track below 2.
 
 The whole arm is skipped when `TrainingMissionNumber` (`004aa7ac`) is nonzero, so **a training mission runs without music**. That value is the copy of `script.dat` header offset 8 taken at the end of `DBSim_LoadScriptDat` (`00425321`); it also selects the larger pilot and squad message port and supplies the digit of the `TM<n>_` instructor voice template — see [`script-dat.md`](script-dat.md#header-format).
 
-`Music_CdEnabled` has exactly one reader, `Sound_SuspendAll`, which is why a mute saves no position unless a track is set but a suspend tests both.
+`Music_CdEnabled` is set at `00461cb0` and read by `sfxWndProc` before its loop restart and by `Sound_SuspendAll` before it saves the position. A mute tests `Music_CdTrack` alone.
 
 #### The mission session overrides the MUSIC preference
 
@@ -76,7 +76,7 @@ The whole arm is skipped when `TrainingMissionNumber` (`004aa7ac`) is nonzero, s
 
 #### No drive is named
 
-`Music_PlayTrack` opens the device type and nothing else: `MCI_OPEN_TYPE` with the string `cdaudio`, no `MCI_OPEN_ELEMENT`, so MCI answers with whichever CD drive it picks. Neither executable reads a drive letter from anywhere — there is no `GetDriveType`, no `GetLogicalDrives`, and no key for one in `SOUND.CFG` or any other configuration file. Nor is the disc checked: any audio CD in the drive plays.
+`Music_PlayTrack` opens the device type and nothing else: `MCI_OPEN_TYPE` with the string `cdaudio`, no `MCI_OPEN_ELEMENT`, so MCI answers with whichever CD drive it picks. Neither executable imports or names `GetDriveType` or `GetLogicalDrives`, and `SOUND.CFG` has no key for a drive. Both read `data\drive.cfg`, a directory path with a drive letter, but only to prefix the paths of movies and of the training voice clips ([`cockpit-messages.md`](cockpit-messages.md#the-training-port)); it never reaches MCI. Nor is the disc checked: any audio CD in the drive plays.
 
 ### `sfxWndProc` (`00462294`)
 
@@ -97,7 +97,7 @@ Plain INI, read with `GetPrivateProfileString` by `Sfx_ReadConfig` (`00463698`) 
 
 ## The `SFX` manager
 
-One instance, `0x4c` bytes, at `0049f904`. Its method names survive as assertion strings in VSHELL (DBSIM's copy is stripped down to `setVolume` and `cache`): `open`, `close`, `cache`, `play`, `stop`, `stopAll`, `isDone`, `setVolume`, `setPan`, `setPitch`, `setPriority`, `setLooping`, `setCallback`, `getAttributes`, `setAttributes`, `getSampleData`.
+One instance, a `0x4c`-byte heap object (`Mem_New(0x4c)`) whose pointer is `SfxManager` (`0049f904`). Its method names survive as `SFX::` assertion strings, all sixteen in both executables: `open`, `close`, `cache`, `play`, `stop`, `stopAll`, `isDone`, `setVolume`, `setPan`, `setPitch`, `setPriority`, `setLooping`, `setCallback`, `getAttributes`, `setAttributes`, `getSampleData`.
 
 `Sfx_Init` (`00463590`) is called as `(memoryCap, 60, 90)` — **60 resource slots, 90 voice slots**.
 
@@ -143,7 +143,7 @@ A *resource* is one file; a *voice* is one playable instance bound to a resource
 +0x24  uint16  backend handle
 ```
 
-Flag bits, all set by the setters as a side effect of a non-default value:
+Flag bits. `Sfx_Open` sets `0x0001` and `0x1000` from its open type, `Sfx_Play` sets `0x0100` and `Sfx_Stop`/`Sfx_StopAll` clear it, and the setters raise the other three as a side effect of a non-default value:
 
 | Bit | Meaning |
 |---|---|
@@ -158,24 +158,24 @@ Flag bits, all set by the setters as a side effect of a non-default value:
 
 `Sfx_Play` (`00463f34`) never tests flag `0x100` before starting. It caches the resource if it has to and goes straight to `Sos_StartVoice` (`0047378c`), whose sample path zeroes the voice record's backend handle (`+0x24`) and hands that field to `sosDIGIStartSample` as an out-parameter. Every call is therefore given a **new** SOS handle, and the one it replaces is neither stopped nor reused: playing a catalog id that is already sounding starts a second concurrent copy on another driver channel.
 
-The record's bookkeeping is one deep and does not follow. It keeps only the newest handle, so `Sfx_Stop` and `Sfx_StopAll` (`004647dc`) — both through `sosDIGIStopSample` — can no longer reach the older copies, and the manager's playing-sample count (`+0x3c`) is bumped once per start against one completion callback per copy. The drift is inert: DBSIM binds `sosDIGISamplesPlaying` and `sosDIGISampleDone` but calls neither, and nothing else reads the count.
+The record's bookkeeping is one deep and does not follow. It keeps only the newest handle, so `Sfx_Stop` and `Sfx_StopAll` (`004647dc`) — both through `sosDIGIStopSample` — can no longer reach the older copies, and `Sfx_IsDone` asks `sosDIGISampleDone` (through `Sos_VoiceIsDone`) about the newest copy alone. The manager's playing-sample count (`+0x3c`) goes up once per start, in `Sfx_Play`, and down once when `Sfx_Stop` or `Sfx_StopAll` clears the record's playing flag, so every layered copy leaves it one higher. Those and its initialisation in `Sfx_ReadConfig` are the accesses to it that are known, and none of them reads it ([Open](#open)).
 
 Because the settings belong to the record and not to the copy, **placing a new copy retunes the one already sounding**. `Sound_Place` sets volume and pan for the sound it is about to start, and `Sfx_SetVolume` (`00464514`) writes the record and then applies it through `Sos_ApplyVolume` (`004739e0`) to the handle at `+0x24` whenever the record is marked playing — which, until the new start overwrites it, is the previous copy. A near footstep therefore takes on the placement of the distant one that follows it.
 
-[The play-request gate](#the-play-request-gate) is what would have thinned this, and it is dead code in the shipped binary — so nothing does.
+[The play-request gate](#the-play-request-gate) is what would have thinned this, and neither play entry point goes through it.
 
 ### Binding the SOS DLL
 
-`Sos_BindLibrary` (`004957f1`) loads `sos9503.dll` on the NT-family branch of its `GetVersion` test and `sos32s03.dll` otherwise, then walks `SosBindingTable` (`004a6ab4`) calling `GetProcAddress` for each entry. The table is 100 records of `0x24` bytes, terminated by a null destination:
+`Sos_BindLibrary` (`004957f1`) loads the DLL its `GetVersion` test picks ([HMI SOS](#hmi-sos)), then walks `SosBindingTable` (`004a6ab4`) calling `GetProcAddress` for each entry. The table is 100 records of `0x24` bytes, terminated by a null destination:
 
 ```
 +0x00  void**  destination slot   -- one of the pointers at 006cbde4-006cbf70
 +0x04  char    exportName[0x20]   -- inline, not a pointer
 ```
 
-Each slot has a one-line thunk in `00495xxx` that does nothing but call through it, so a thunk's meaning is recovered by reading its slot address out of the disassembly and finding that address in the table. The pointers live in BSS and are written only by this loop, which is why nothing in the disassembly appears to assign them.
+Each slot has a one-line thunk in `00495xxx`-`00496xxx` (77 and 23 of them) that does nothing but call through it, so a thunk's meaning is recovered by reading its slot address out of the disassembly and finding that address in the table. The pointers live in BSS and this loop writes them through the destination field, which is why no instruction names a slot as a store target.
 
-`Sfx_Open` (`00463910`) chooses the path from its third argument: 0 = `.hmp` song, 1 = sample, 2 = the streamed type. The caller decides by searching the filename for `.hmp` / `.wav`.
+`Sfx_Open` (`00463910`) chooses the path from its third argument: 0 = `.hmp` song, 1 = sample, 2 = the streamed type. `SoundCatalog_Load` decides by searching the filename for `.hmp` / `.wav`.
 
 ### Memory budget and eviction
 
@@ -194,7 +194,7 @@ so an idle, uncached, low-priority voice goes first and a looping playing one go
 
 ### Backend volume and panning
 
-`Sos_ApplyVolume` (`004739e0`) converts the voice's 0-100 volume to SOS's range as `volume * masterVolume * 0x7fff / 10000`, duplicated into both 16-bit halves for left and right, and for a MIDI song as `volume * 0x7f / 100`. `masterVolume` (`004a0e48`) is a constant 100 — its setter (`004739a8`) has no callers.
+`Sos_ApplyVolume` (`004739e0`) converts the voice's 0-100 volume to SOS's range as `volume * masterVolume * 0x7fff / 10000`, duplicated into both 16-bit halves for left and right, and for a MIDI song as `volume * 0x7f / 100`. `masterVolume` (`004a0e48`) is 100 in the image, and its one known writer is its setter `Sos_SetMasterVolume` (`004739a8`), which has no known caller ([Open](#open)).
 
 ## The sound catalog — `str\SOUNDS.STR`
 
@@ -202,7 +202,7 @@ The game addresses sounds by a small integer, 0-56. The mapping lives in `SOUNDS
 
 `SoundCatalog_Load` (`00462448`) walks the group into three parallel arrays — names (`004d2b0c`), attribute pointers (`004d2bfc`), voice handles (`004d2cfc`) — and for each entry opens a voice, sets priority 5, applies the attributes, then fixes up defaults.
 
-The code treats the blob as **ten** bytes. The file supplies seven; the last three are runtime scratch that the loader initialises in place.
+The code treats the blob as **ten** bytes. The file supplies seven; the last three are runtime scratch written in place, byte 8 by the loader and bytes 7 and 9 by the suspend and the request counter.
 
 | Byte | Meaning |
 |---|---|
@@ -223,13 +223,13 @@ Because `.STR` attribute blobs point directly into the loaded file buffer, bytes
 
 ### Ids 0-9 are music
 
-`Sound_IsCategoryEnabled` (`00462680`) splits the catalog at 10: ids below 10 answer to the music enable flag (`0049f90c`), ids 10 and up to the effects flag (`0049f910`). Every mute/unmute pair in the module respects the same boundary.
+`Sound_IsCategoryEnabled` (`00462680`) splits the catalog at 10: ids below 10 answer to the music enable flag (`0049f90c`), ids 10 and up to the effects flag (`0049f910`). `Sound_MuteMusic`/`Sound_MuteEffects` and their unmute pair respect the same boundary. A second pair, `00462d20` and `00462e70`, does not: each mutes or unmutes the single id it is given and then clears or raises *both* flags. Neither has a known caller ([Open](#open)).
 
 All ten music entries name `battle1.wav`, and **no `battle1.wav` ships in any archive**, so the digital-music path is dead in retail — music is the CD. `Sound_ShiftMusicSet` (`00462fbc`) offsets one character of each of the ten filenames by a delta and re-opens them, which is how a different set would have been selected.
 
 ### Sample banks
 
-`Sound_ResolveSamplePath` (`00462238`) prefixes the catalog's filename with `HMI\` normally and `HMX\` in the low-memory mode. `SIMSOUND.VOL` carries both: 43 files under `hmi\` and 42 under `hmx\`, each `hmx\` file roughly half the size of its `hmi\` twin — the same content at half the sample rate.
+`Sound_ResolveSamplePath` (`00462238`) prefixes the catalog's filename with `HMI\` normally and `HMX\` in the low-memory mode. `SIMSOUND.VOL` carries both: 43 files under `hmi\` and 42 under `hmx\`. Every `hmx\` file is 8-bit mono 11,025 Hz. Of the 42 `hmi\` twins, 38 are 8-bit 22,050 Hz (twice the `hmx\` size); `TRGLOC`, `XPLMLT2` and `XPLMLT4` are 16-bit 22,050 Hz (four times); and `BACANN4` is 8-bit 11,025 Hz in both banks, the same size with different bytes.
 
 **`EXPLO5.WAV` exists only in `hmi\`.** Catalog id `0x22` names it, so in low-memory mode that one sound fails to open.
 
@@ -277,7 +277,7 @@ All ten music entries name `battle1.wav`, and **no `battle1.wav` ships in any ar
 | 0x2b | `lsrhit2.wav` | 1 | 8 | 0 | 4 | - | - | 1 |
 | 0x2c | `throtl.wav` | 1 | 100 | 0 | 0 | - | - | 1 |
 | 0x2d | `herceng1.wav` | forever | 50 | 1 | 5 | 5 | 50 | 1 |
-| 0x2e | `shield1.wav` | forever | 80 | 1 | 4 | 0 | 25 | 1 |
+| 0x2e | `shield1.wav` | 1 | 80 | 1 | 4 | 0 | 25 | 1 |
 | 0x2f | `podin2.wav` | 1 | 70 | 0 | 1 | - | - | 1 |
 | 0x30 | `podland.wav` | 1 | 70 | 0 | 1 | - | - | 1 |
 | 0x31 | `flyby1.wav` | 1 | 90 | 0 | 4 | - | - | 1 |
@@ -290,7 +290,7 @@ All ten music entries name `battle1.wav`, and **no `battle1.wav` ships in any ar
 
 `0x33` is not the flamer: it is the burning-object loop, started by the first live [`FireEffect`](../simulation/destruction-effects.md#fire) and stopped by the last, and kept positioned on whichever fire is nearest the camera — see [`../simulation/destruction-effects.md`](../simulation/destruction-effects.md#where-the-shared-sound-is-heard) for how that one is picked.
 
-This resolves the sound ids scattered through the other docs: `0x0b` is `laser1.wav`, the beam muzzle sound of [`../simulation/weapon-firing.md`](../simulation/weapon-firing.md); `0x16` the target-lost tone of [`../simulation/missile-lock.md`](../simulation/missile-lock.md); `0x21` the drop-in lift's rumble ([`../simulation/mission-deployment.md`](../simulation/mission-deployment.md#the-ride--liftstart_rise-0045d840)), which the turret's servo helpers test but never start ([`../simulation/torso-aim.md`](../simulation/torso-aim.md#the-servo-sound-helpers)); `0x2f` and `0x30` the drop pod's fall and landing in [`../simulation/mission-deployment.md`](../simulation/mission-deployment.md). The `+ 10` seen at every data-driven call site — `record.SoundId + 10` in `PROJ.DAT`, `ROCKETS.DAT`, `EXPLOS.DAT` — is exactly the music/effects split: those tables index the effects half of the catalog from zero.
+This resolves the sound ids scattered through the other docs: `0x0b` is `laser1.wav`, the beam muzzle sound of [`../simulation/weapon-firing.md`](../simulation/weapon-firing.md); `0x16` the target-lost tone of [`../simulation/missile-lock.md`](../simulation/missile-lock.md); `0x21` the drop-in lift's rumble ([`../simulation/mission-deployment.md`](../simulation/mission-deployment.md#the-ride--liftstart_rise-0045d840)), which the turret's servo helpers test but never start ([`../simulation/torso-aim.md`](../simulation/torso-aim.md#the-servo-sound-helpers)); `0x2f` and `0x30` the drop pod's fall and landing in [`../simulation/mission-deployment.md`](../simulation/mission-deployment.md). The `+ 10` seen at the three data-driven call sites — `record.SoundId + 10` from `BULLETS.DAT` (`Bullet_Fire`, record `+0x8`), `ROCKETS.DAT` (`Rocket_Fire`, `+0xc`) and `EXPLOS.DAT` (`Explosion_Construct`, `+0x24`) — is exactly the music/effects split: those tables index the effects half of the catalog from zero.
 
 ## Playing a sound
 
@@ -314,13 +314,13 @@ volume = volume * attr[8] / 100
 
 The rolloff divides by `maxRange`, not by `maxRange - minRange`, so a sound at exactly `minRange` is already attenuated rather than at full volume.
 
-Pan comes from the horizontal bearing, `a = Math_Atan2Bam(viewX, viewY)`, as `(-2a) & 0xffff` for `a < 0x8000` and `2a & 0xffff` otherwise — a full sweep of the pan range over half a turn, mirrored front to back.
+Pan comes from the horizontal bearing, `a = Math_Atan2Bam(viewX, viewY)`, as `(-2a) & 0xffff` for `a < 0x8000` and `2a & 0xffff` otherwise — a full sweep of the pan range over half a turn, mirrored front to back. At `a = 0` — a source dead abeam on the right, since `Math_Atan2Bam`'s 0 is view `+x` — the front-half formula gives 0, the hard-left end, while bearings on either side give values near `0xffff`, the hard-right end. Dead abeam on the left (`a = 0x8000`) is continuous.
 
 At 166.667 world units per metre ([`../engine/planning.md`](../engine/planning.md)), a `max` of 40 is about 245 m, and the largest — `herceng1`'s 50 — about 307 m.
 
 ### The play-request gate
 
-`Sound_ConsumeRequest` (`004626c4`) exists so that a sound fired by many objects at once does not play once per object. **Nothing in DBSIM calls it**: there is no `CALL` to it anywhere in the code section, and its address is stored nowhere, so it is not reached indirectly either. The authored divisors in attribute byte 3 are therefore inert in the shipped game, and every play goes through:
+`Sound_ConsumeRequest` (`004626c4`) exists so that a sound fired by many objects at once does not play once per object. `Sound_Play` and `Sound_PlayAt` do not call it, so the authored divisors in attribute byte 3 do not thin a play made through either, and no other caller of it is known ([Open](#open)). What it computes:
 
 ```
 interval = (2 - detailSetting) * attr[3]
@@ -334,7 +334,7 @@ else:              attr[9]++;  play only when attr[9] % interval == 0
 
 `Sound_MuteMusic` / `Sound_MuteEffects` (`00462c74` / `00462cd8`) zero the volume of their half of the catalog and clear the enable flag; the unmute pair restores each id's own `Q16Multiply(vol, 65000) * byte8 / 100`. Music mutes by stopping the CD instead when a track is set.
 
-`Sound_SuspendAll` (`00463078`) records which voices are playing into attribute byte 7, saves the CD position, and stops everything through `Sfx_StopAll`. That sweep is bounded by the manager's resource slot count (`+0x10`, 60) rather than its voice count (`+0x14`, 90), but `Sfx_Open` fills voice slots lowest first and DBSIM never holds more than 58 open — 53 catalog voices and the 5 speech slots — so every voice is still reached. `Sound_ResumeAll` (`00463134`) replays exactly those and resumes the CD from the saved TMSF position.
+`Sound_SuspendAll` (`00463078`) sets attribute byte 7 for each catalog voice that both loops forever (loop count `+0x18` is 0) and is marked playing (flag `0x100`), and clears it for every other; saves the CD position; and stops everything through `Sfx_StopAll`. A one-shot or a finite repeat cut off by the suspend is therefore not restarted, and neither is speech. That sweep is bounded by the manager's resource slot count (`+0x10`, 60) rather than its voice count (`+0x14`, 90), but `Sfx_Open` fills voice slots lowest first, and the voices opened are the 53 catalog voices and the 5 speech slots, 58 in all, so every voice is reached. `Sound_ShiftMusicSet` would open ten more without closing any, and it has no known caller ([Open](#open)). `Sound_ResumeAll` (`00463134`) replays the marked voices through `Sfx_Play`, at the volume, pan and pitch their records still hold, and resumes the CD from the saved TMSF position.
 
 `Sound_SetCategoryVolume` (`00462f5c`) writes attribute byte 8, the per-sound category scale every volume computation multiplies through.
 
@@ -365,7 +365,7 @@ Two toggles play a confirmation directly rather than through any data table:
 | Heads-down display transmit (`0044cc40`) | The same pair, reused as its accepted/rejected blip. |
 | `Widget_ClickSound` (`00438e2c`) | `0x11` `gm_69`, the console click. |
 
-The mode-change tone is the [R] path only. The scanner screen's PASS/ACTIVE buttons write `mech+0x96` directly and play nothing. The radar toggle also announces the new mode in the computer's voice — see [`cockpit-messages.md`](cockpit-messages.md#posters).
+The mode-change tone is the [R] path only. The scanner screen's PASS/ACTIVE buttons write `mech+0x96` directly and play no mode tone; the only sound they make is the console click below, which their class `MFDStateGadget` carries. The radar toggle also announces the new mode in the computer's voice — see [`cockpit-messages.md`](cockpit-messages.md#posters).
 
 `Widget_ClickSound` is the whole of the click: `push 0x11; call Sound_Play; ret`, and it is the image's only reference to that id. Nothing calls it directly — it sits in **fifteen widget vtables**, `PanelGadget`'s own and the fourteen button classes that inherit it, so a widget clicks because of what kind of widget it is and not because its handler did anything. That is why a button wired to nothing still clicks.
 
@@ -389,23 +389,23 @@ Squadmate and commander speech does not go through the catalog. It has its own f
 +0x3e  uint32  SFX voice handle
 ```
 
-`Voice_Acquire` (`00462a98`) looks the requested `.wav` name up across the five slots; a miss evicts the least recently used one (`00462a2c`), copies the name in, opens an `SFX` voice at **priority `0xff`** so the catalog's priority-5 voices can never evict it, caches it, and loads the matching `.SNC` script. Speech is gated on its own enable flag (`0049f97e`). What the `.SNC` script drives is the comm portrait, not the audio — see [`heads-down-display.md`](heads-down-display.md#snc--portrait-lip-sync-scripts).
+`Voice_Acquire` (`00462a98`) looks the requested `.wav` name up across the five slots; a miss evicts the least recently used one (`00462a2c`), copies the name in, opens an `SFX` voice at **priority `0xff`**, caches it, and loads the matching `.SNC` script. Speech is gated on its own enable flag (`0049f97e`). What the `.SNC` script drives is the comm portrait, not the audio — see [`heads-down-display.md`](heads-down-display.md#snc--portrait-lip-sync-scripts).
 
 ### File naming
 
-`CommBox_BeginMessage` (`0044afc8`) builds two names from the speaker's squad slot and the message id:
+`CommBox_BeginMessage` (`0044afc8`) builds two names from the comm box's portrait number (gauge `+0x135`, see [`heads-down-display.md`](heads-down-display.md)) and the message id:
 
 ```
 suffix = "_" + 2-digit message id + 3-digit variant     e.g. "_01000"
-wav    = "P" + voiceBank + suffix        in simvoice/simvoicf/simvoicg
-snc    = "P" + ('A' + slot) + suffix     in snc/
+wav    = "P" + voiceBank + suffix          in simvoice/simvoicf/simvoicg
+snc    = "P" + ('A' + portrait) + suffix   in snc/
 ```
 
-`voiceBank` is `(slot >> 2) + 1`, with 3 remapped to 4 — so twelve squad slots share three recorded voices, `P1_`, `P2_`, `P4_`. That is the same 1/2/4 grouping as the channel's own message sets ([`cockpit-messages.md`](cockpit-messages.md#its-message-sets)). `SIMVOICE.VOL` holds 147 `P*_*.WAV` and 66 `CVM_*.WAV`, the cockpit computer's own lines.
+`voiceBank` is `Pilot_VoiceBankOf` (`00434260`): `(portrait >> 2) + 1`, with 3 remapped to 4 — so twelve portraits share three recorded voices, `P1_`, `P2_`, `P4_`. That is the same 1/2/4 grouping as the channel's own message sets ([`cockpit-messages.md`](cockpit-messages.md#its-message-sets)). `SIMVOICE.VOL` holds 147 `P*_*.WAV` and 66 `CVM_*.WAV`, the cockpit computer's own lines. `SIMSOUND.VOL`'s `snc\` holds 556 scripts across the twelve portraits `PA` to `PL`, 46 or 47 each.
 
 The three name templates live together in DATA as literals the loader patches digits into: `BC_00000`, `TMx_0000`, `CVM_0000`. `TMx_` is the training instructor's, and its clips are loose files rather than archive entries — see [`cockpit-messages.md`](cockpit-messages.md#the-training-port).
 
-The archive is chosen by `Voice_ArchiveName` (`0045ef68`), which patches the last character of the literal `simvoice` with the language byte — `SIMVOICE` / `SIMVOICF` / `SIMVOICG`. All three are the same size, carry the same `SIMVOICE` folder label inside, and differ only in their recordings.
+The archive is chosen by `Voice_ArchiveName` (`0045ef68`), which patches the last character of the literal `simvoice` with the language byte — `SIMVOICE` / `SIMVOICF` / `SIMVOICG`. In the v1.0 install the three files are byte-identical (7,042,407 bytes each), so every language plays the English recordings. The GoldGames multilingual build carries real translations: `SIMVOICF.VOL` (7,261,567 bytes) and `SIMVOICG.VOL` (6,610,094 bytes) carry their own folder labels and the same 213 entry names, with 57 and 53 of the recordings replaced.
 
 ## Rejected readings
 
@@ -417,12 +417,16 @@ The archive is chosen by `Voice_ArchiveName` (`0045ef68`), which patches the las
 | The `battle1.wav` entries are the real music | The file ships in no archive. The ten slots are a stub; music is Red Book CD audio through MCI. |
 | A `.wav` name resolves under one directory | It resolves under `HMI\` or `HMX\` depending on the low-memory flag, and the two banks are not identical — `EXPLO5.WAV` is missing from `HMX\`. |
 | `herceng1` is the HERC engine hum | The name says so and the sample is one, but the only thing that starts it gates on type record `+0x50` — the flyer flag, the RAZOR. A walking HERC never plays it. |
+| A speech voice's priority `0xff` protects it from eviction | Priority is one term of the [victim score](#memory-budget-and-eviction). A cached idle speech voice scores 355 and goes before any playing catalog voice (at least 1005); `0xff` wins only against catalog voices in the same cached and playing state. |
 | One voice per catalog id means one copy of that sound at a time | The voice record is bookkeeping, not a hardware channel. `Sfx_Play` starts a fresh `sosDIGIStartSample` every call without testing the `0x100` playing flag, so the copies overlap — see [A repeated play layers; it does not restart](#a-repeated-play-layers-it-does-not-restart). |
 
 ## Open
 
 - **Unported:** the `.hmp` MIDI path. No `.hmp` ships, so nothing is lost in play.
-- **Unported:** `ES.EXE`'s track rotation.
 - **Unported:** reading `SOUND.CFG`.
 - **Open:** which word of the `sosDIGIInitDriver` argument block at `006b5614` is retail's channel count.
-- **Open:** whether any `Sfx_Open` caller in DBSIM passes open type 2, the streamed voice behind flag `0x1000`. A text search finds none, which does not settle it.
+- **Open:** no `Sfx_Open` call passing open type 2, the streamed voice behind flag `0x1000`, is known. `es2_xref.py` finds three callers — `SoundCatalog_Load` (1 for `.wav`, 0 for `.hmp`), `Voice_Acquire` (1) and `Sound_ShiftMusicSet` (0) — and no stored pointer.
+- **Open:** whether VSHELL plays CD music, and which tracks. It has its own MCI play routine (`0042dcef`), reached only through the thunk `0042d5d1`, and `es2_xref.py --binary VSHELL` finds no reference to that thunk.
+- **Open:** no writer of `Music_TrackSelect` but the `-R` parse and the static clear, and no store to `Music_CdTrack` but `00461caa`, found by `es2_fieldscan.py` over the `004d2540` block (`+0xb7`) and `es2_xref.py`.
+- **Open:** no reader of the playing-sample count `SfxManager+0x3c` found by `es2_fieldscan.py`, and no reference to `Sos_SamplesPlaying` (`00495d4f`), the `sosDIGISamplesPlaying` thunk, found by `es2_xref.py`.
+- **Open:** no caller found by `es2_xref.py` (and no late function start near them by `es2_late_entries.py`) for `Sound_ConsumeRequest` (`004626c4`), `Sound_ShiftMusicSet` (`00462fbc`), `Sos_SetMasterVolume` (`004739a8`), or the single-id mute pair `00462d20`/`00462e70`.

@@ -60,26 +60,22 @@ public sealed class MoviePlayback {
 	public bool HasFailed { get; private set; }
 
 	/// <summary>
-	/// Whether the frames are <see cref="PlaceholderDecoder"/>'s rather than the movie's own.
+	/// The exception a decoder threw, when that is why <see cref="HasFailed"/> is set; null when the
+	/// decoder reported the packet malformed itself, or nothing has failed.
 	/// </summary>
-	public bool IsPlaceholder => _codec is PlaceholderDecoder;
+	public Exception? DecodeException { get; private set; }
 
 	/// <summary>
 	/// Opens a movie for playback, or returns null when the file will not parse or its codec is not
-	/// one this assembly implements. With <paramref name="placeholderForUnimplemented"/>, a codec
-	/// <see cref="CodecRegistry.IsUnimplemented"/> names plays through <see cref="PlaceholderDecoder"/>
-	/// instead of failing.
+	/// one this assembly implements.
 	/// </summary>
-	public static MoviePlayback? Open(byte[] bytes, VideoLimits? limits = null, bool placeholderForUnimplemented = false) {
+	public static MoviePlayback? Open(byte[] bytes, VideoLimits? limits = null) {
 		AviFile? file = AviFile.Open(bytes, limits);
 		if (file?.VideoFormat is null) {
 			return null;
 		}
 
-		IVideoCodec? codec = CodecRegistry.Create(file.VideoFormat, file.Limits)
-			?? (placeholderForUnimplemented && CodecRegistry.IsUnimplemented(file.VideoFormat.Compression)
-				? new PlaceholderDecoder()
-				: null);
+		IVideoCodec? codec = CodecRegistry.Create(file.VideoFormat, file.Limits);
 		if (codec is null) {
 			return null;
 		}
@@ -97,6 +93,11 @@ public sealed class MoviePlayback {
 	/// <para>Frames are decoded in sequence and never skipped, even when the caller is late enough
 	/// that several are due at once: each one is the previous one plus a delta, so skipping would
 	/// corrupt every frame after it. A host that falls far behind drops presentation, not decoding.</para>
+	///
+	/// <para>A decoder that throws is treated as one that returned false. Every decoder here is meant
+	/// to reject bad input rather than throw, so an exception is a bounds bug in this assembly; the
+	/// CLR has already stopped it doing harm, and catching it here keeps one damaged movie from taking
+	/// the host down with it. The fuzz tests call the decoders directly, so they still see it.</para>
 	/// </summary>
 	public bool Advance(TimeSpan delta) {
 		if (HasFailed || FrameCount == 0) {
@@ -117,7 +118,7 @@ public sealed class MoviePlayback {
 		}
 
 		for (int index = _decodedThrough + 1; index <= due; index++) {
-			if (!_codec.DecodeFrame(_file.PacketData(_file.VideoPackets[index]), Frame)) {
+			if (!TryDecode(index)) {
 				HasFailed = true;
 				_decodedThrough = index;
 				Frame.Touch();
@@ -130,10 +131,23 @@ public sealed class MoviePlayback {
 		return true;
 	}
 
+	// The exceptions a missed bounds or arithmetic check raises in managed code. Anything else —
+	// out of memory, a bug in the caller's own code — is not the packet's fault and propagates.
+	private bool TryDecode(int index) {
+		try {
+			return _codec.DecodeFrame(_file.PacketData(_file.VideoPackets[index]), Frame);
+		} catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentException
+			or ArithmeticException or InvalidOperationException or InvalidDataException) {
+			DecodeException = ex;
+			return false;
+		}
+	}
+
 	/// <summary>Rewinds to before the first frame. The frame buffer keeps its pixels until the next advance.</summary>
 	public void Rewind() {
 		_elapsed = TimeSpan.Zero;
 		_decodedThrough = -1;
 		HasFailed = false;
+		DecodeException = null;
 	}
 }

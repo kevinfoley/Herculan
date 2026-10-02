@@ -12,8 +12,9 @@ namespace HercWorks.UI;
 /// screen prints; the capacity the game equips comes from a table in VSHELL's code (see HercLUT). On open it loads the copy GamePaths'
 /// GAM search order finds — a loose override, an unpacked SHELL0 tree, or the entry inside
 /// SHELL0.VOL — and always saves to a loose .DAT (there's no VOL repacker yet), which the game
-/// reads in preference to its packed copy per the technique documented in the original project's
-/// README. Control layout lives in
+/// reads in preference to its packed copy. Save As writes the content-only shape VSHELL reads from
+/// that loose override; Save As With VOL Prefix keeps the 9-byte entry prefix of an unpacked archive
+/// copy (see VolEntryPrefixCodec). Control layout lives in
 /// HercStatsForm.Designer.cs so the form can be opened in the WinForms visual designer; this file
 /// holds only state and event-handler logic.
 /// </summary>
@@ -22,16 +23,6 @@ public partial class HercStatsForm : Form {
 	private readonly HercInfoTransformer _transformer = new();
 
 	private GameFile? _loadedFile;
-
-	/// <summary>
-	/// Original VOL entry prefix (compression type + magic, plus whether a trailing marker byte
-	/// was present) captured from the file this editor last loaded — null/false if the loaded
-	/// file didn't have one. Round-tripped on save so exports stay retail-compatible instead of
-	/// silently dropping header bytes the game (or a byte-exact diff) might care about.
-	/// </summary>
-	private byte? _originalCompressionType;
-	private byte[]? _originalMagicPrefix;
-	private bool _originalHadTrailingByte;
 
 	public HercStatsForm() {
 		InitializeComponent();
@@ -43,7 +34,7 @@ public partial class HercStatsForm : Form {
 
 	/// <summary>
 	/// Distinct per-form/file-type identity — see CampaignResourcesForm's DialogClientGuid for the
-	/// full explanation. Shared between Open and Save As since both deal with HERC_INF.DAT.
+	/// full explanation. Shared by Open and both saves since all three deal with HERC_INF.DAT.
 	/// </summary>
 	private static readonly Guid DialogClientGuid = new("3a72675c-7fc2-4cda-a293-de65df2ee1b0");
 
@@ -112,12 +103,9 @@ public partial class HercStatsForm : Form {
 			}
 
 			_loadedFile = file;
-			_originalCompressionType = file.CompressionType;
-			_originalMagicPrefix = file.MagicPrefix;
-			_originalHadTrailingByte = file.HadTrailingByte;
+			_saveWithPrefixMenuItem.Enabled = file.CompressionType.HasValue && file.MagicPrefix != null;
 
-			string prefixNote = file.CompressionType.HasValue
-				? " (VOL entry prefix detected — will be preserved on save)" : "";
+			string prefixNote = file.CompressionType.HasValue ? " (VOL entry prefix detected)" : "";
 			_statusLabel.Text = $"Loaded {file.Location} — {_rows.Count} hercs.{prefixNote}";
 		} catch (Exception ex) {
 			MessageBox.Show(this, $"Failed to load file:\n{ex.Message}", "Error",
@@ -125,7 +113,15 @@ public partial class HercStatsForm : Form {
 		}
 	}
 
-	private void OnSaveAs(object? sender, EventArgs e) {
+	private void OnSaveAs(object? sender, EventArgs e) =>
+		Save(withPrefix: false, GamePaths.InitialDirectoryFor("GAM"));
+
+	private void OnSaveWithPrefix(object? sender, EventArgs e) =>
+		Save(withPrefix: true, _loadedFile?.LoosePath is { } loosePath
+			? Path.GetDirectoryName(loosePath)!
+			: GamePaths.GamInitialDirectory);
+
+	private void Save(bool withPrefix, string initialDirectory) {
 		if (_rows.Count == 0) {
 			MessageBox.Show(this, "Open a HERC_INF.DAT file first.", "Nothing to save",
 				MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -134,14 +130,10 @@ public partial class HercStatsForm : Form {
 
 		using var dialog = new SaveFileDialog {
 			Filter = "HERC_INF.DAT|HERC_INF.DAT|DAT files (*.dat)|*.dat|All files (*.*)|*.*",
-			Title = "Save HERC_INF.DAT",
+			Title = withPrefix ? "Save HERC_INF.DAT with VOL entry prefix" : "Save HERC_INF.DAT",
 			FileName = _loadedFile?.FileName ?? DefaultFileName,
 			ClientGuid = DialogClientGuid,
-			// A file read out of the packed VOL has no folder of its own to save back beside, so it
-			// falls through to the same GAM override folder the message below points at.
-			InitialDirectory = _loadedFile?.LoosePath is { } loosePath
-				? Path.GetDirectoryName(loosePath)!
-				: GamePaths.GamInitialDirectory
+			InitialDirectory = initialDirectory
 		};
 
 		if (dialog.ShowDialog(this) != DialogResult.OK) {
@@ -166,23 +158,21 @@ public partial class HercStatsForm : Form {
 			}
 
 			byte[] content = _transformer.Write(hercInf)!;
-			byte[] outBytes;
-			string formatNote;
+			string message;
 
-			if (_originalCompressionType.HasValue && _originalMagicPrefix != null) {
-				outBytes = VolEntryPrefixCodec.Wrap(
-					content, _originalCompressionType.Value, _originalMagicPrefix, _originalHadTrailingByte);
-				formatNote = "retail-compatible format — the original VOL entry prefix (compression type, magic) was preserved, with the size field updated for the edited content";
+			if (withPrefix) {
+				File.WriteAllBytes(dialog.FileName, VolEntryPrefixCodec.Wrap(content,
+					_loadedFile!.CompressionType!.Value, _loadedFile.MagicPrefix!, _loadedFile.HadTrailingByte));
+				message = "Saved with the original VOL entry prefix, size field updated — the shape of an " +
+					"unpacked archive copy. The game reads a loose override without it; use Save As for that.";
 			} else {
-				outBytes = content;
-				formatNote = "content-only format — this file wasn't loaded with a VOL entry prefix to preserve, so no prefix could be reconstructed for this export";
+				File.WriteAllBytes(dialog.FileName, content);
+				message = "Saved in the content-only format the game reads from a loose file.\n\n" +
+					"VSHELL opens gam\\herc_inf.dat relative to the install folder before it searches its VOLs, " +
+					"so a copy at GAM\\HERC_INF.DAT in your ES2 install overrides the packed one.";
 			}
 
-			File.WriteAllBytes(dialog.FileName, outBytes);
-
-			MessageBox.Show(this,
-				$"Saved in {formatNote}.\n\nDrop this file into your ES2 install's GAM\\ folder to override the packed VOL copy.",
-				"Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			MessageBox.Show(this, message, "Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
 		} catch (Exception ex) {
 			MessageBox.Show(this, $"Failed to save file:\n{ex.Message}", "Error",
 				MessageBoxButtons.OK, MessageBoxIcon.Error);

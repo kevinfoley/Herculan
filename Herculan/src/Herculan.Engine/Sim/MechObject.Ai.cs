@@ -103,7 +103,8 @@ public partial class MechObject {
 	/// <item><b>A mission group order</b> maps verbs 0-6 onto seven states. A null order slot reads as
 	/// verb <c>0x0b</c> and matches no case, so no descriptor is installed and the machine keeps the
 	/// state it already had — <b>which is not what the original does</b>: there the descriptor to
-	/// install is a register nothing on that path wrote, and it is zero, so the original faults. See
+	/// install is a register nothing on that path wrote — zero through the reassess dispatcher, 4 through
+	/// the re-entry after a destroyed engage target — so the original faults. See
 	/// docs/simulation/ai-goals.md, "A group with no order at all". No retail mission reaches it.</item>
 	/// </list>
 	///
@@ -381,8 +382,8 @@ public partial class MechObject {
 	/// </summary>
 	/// <param name="attacker">The object whose shot this was.</param>
 	/// <param name="damage">The shot's damage, which only feeds the accumulator below.</param>
-	public void OnTakingFire(SimWorld world, SimObject? attacker, short damage) {
-		if (attacker == null || Behaviour.State is not { } state) {
+	public override void OnTakingFire(SimWorld world, SimObject attacker, short damage) {
+		if (Behaviour.State is not { } state) {
 			return;
 		}
 
@@ -393,11 +394,12 @@ public partial class MechObject {
 			FriendlyFireComplaint(world);
 		}
 
-		if (attacker.Neutralised || attacker.Side == Side) {
+		if (attacker.OutOfAction || attacker.Side == Side) {
 			return;
 		}
 
-		// Being shot is a way of being spotted: the whole side near the attacker learns where it is.
+		// Being shot is a way of being spotted: the whole side near the attacker learns where it is,
+		// and inside engagement range the attacker is engaged.
 		Detection.ShareContact(world, this, attacker);
 
 		UnderFireWindow = UnderFireWindowReload;
@@ -526,7 +528,7 @@ public partial class MechObject {
 			: Group?.OrderTargetPosition ?? Position;
 
 	/// <summary>
-	/// <c>Mech_AiFriendlyFireComplaint</c> (<c>0041f790</c>) — squad message 8, on a 40 s cooldown.
+	/// <c>Mech_AiFriendlyFireComplaint</c> (<c>0041f790</c>) — squad message 8, on the <see cref="ComplaintCooldownReload"/> cooldown.
 	/// </summary>
 	internal void FriendlyFireComplaint(SimWorld world) {
 		if (ComplaintCooldown != 0) {
@@ -591,8 +593,10 @@ public partial class MechObject {
 	/// entirely their guns, their armour and their damage.</para>
 	///
 	/// <para>The original caches it at <c>mech+0x29e</c> behind the <c>mech+0x94</c> dirty flag and
-	/// recomputes it from <c>Mech_PerTickSystemsUpdate</c>. Computing it on demand is the same value
-	/// with the cache left out.</para>
+	/// recomputes it from <c>Mech_PerTickSystemsUpdate</c> while the flag is clear; the one clear
+	/// found is <c>Mech_DirectFireHitTest</c>'s, on a hit. Computing it on demand gives the same value
+	/// on the tick after a hit, but can see a magazine running low, or damage from another path,
+	/// before the original would — docs/simulation/ai-targeting.md, "Open".</para>
 	/// </summary>
 	public int CombatRating {
 		get {
@@ -683,8 +687,8 @@ public partial class MechObject {
 
 	/// <summary>
 	/// <c>mech+0x27d</c> — the under-fire window. Its expiry is what clears
-	/// <see cref="DamageFromPlayerGroup"/>, so the accumulator is a rolling 30 s total rather than a
-	/// lifetime one.
+	/// <see cref="DamageFromPlayerGroup"/>, so the accumulator is a rolling total over
+	/// <see cref="UnderFireWindowReload"/> rather than a lifetime one.
 	/// </summary>
 	public int UnderFireWindow { get; private set; }
 

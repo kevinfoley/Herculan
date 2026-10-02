@@ -53,7 +53,7 @@ Runs once per tick from `Sim_MainTick`, **after** every object update and the in
 
 1. **Timers.** `obj+0x1e2` (LOS cache) and `obj+0x1e5` (contact decay) tick; an expired decay runs `Detection_DecayContacts` (`0041251c`) on the spot, reloading at `10000 + rand(1000)`.
 2. **Sweeps.** `Detection_Sweep` (`004128f8`) for each live human-side object, over Cybrid objects only — but it writes *both* objects' tables, so a Cybrid learns without sweeping. The locally-piloted machine (`obj+0xa3`) is held back and swept **last**, so squadmates' contacts have already been shared to it.
-3. Clears `obj+0xa2`, a per-tick latch for engagement actions.
+3. Clears `obj+0xa2`, the ECM gate on engagement actions ([`mission-deployment.md`](mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6)).
 
 ### `Detection_Sweep` (`004128f8`) ranges
 
@@ -64,7 +64,7 @@ Runs once per tick from `Sim_MainTick`, **after** every object update and the in
 | < 80000 | The looking half runs at all |
 | < 50000 | Sets `obj+0x9e` and fires the engagement action |
 
-Looking: bearing plus aim twist against the ±`0x3800` sensor arc (`SimObject_BearingInSensorArc` (`00411acc`), vtable `+0x44`), then LOS. The sweep dispatches the arc through each object's own table, and all five structure classes install `Base_BearingInSensorArc_Always` (`00405308`) there, so a structure has no arc and sees all round. An AI machine's contact goes to `Detection_ShareContact` (`00412704`), which shares it to everything on its side within 100000; the player's machine keeps it to itself. The reciprocal bearing is tested from the other object's arc in the same pass.
+Looking: bearing plus aim twist against the ±`0x3800` sensor arc (`SimObject_BearingInSensorArc` (`00411acc`), vtable `+0x44`), then LOS. The sweep dispatches the arc through each object's own table, and all five structure classes install `Base_BearingInSensorArc_Always` (`00405308`) there, so a structure has no arc and sees all round. An AI machine's contact goes to `Detection_ShareContact` (`00412704`), which shares it to everything on its side within 100000 and engages within 50000 ([`mission-deployment.md`](mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6)); the player's machine keeps it to itself. The reciprocal bearing is tested from the other object's arc in the same pass.
 
 Decay (`Detection_DecayContacts`, `0041251c`) drops a contact past **100001** measured **on the ground plane only** (`Math_FastMagnitude2D`, where every other range here is the 3D approximation) or with no LOS, mutually.
 

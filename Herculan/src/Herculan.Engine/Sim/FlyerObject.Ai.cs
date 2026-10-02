@@ -11,9 +11,10 @@ namespace Herculan.Engine.Sim;
 // is; docs/simulation/ai-dispatch.md owns that shared dispatch model.
 public sealed partial class FlyerObject {
 	/// <summary>
-	/// How long a leader waits between target sweeps — the 10000 both acquiring thinks reload
-	/// <c>flyer+0x5b</c> with, which in <see cref="SimMath.CountdownTimerTick"/>'s unit is about
-	/// 4.9 seconds.
+	/// The 10000 both acquiring thinks reload <c>flyer+0x5b</c> with after a sweep. It never runs
+	/// out: the countdown is behaviour-block scratch that <see cref="SetBehaviourState"/> zeroes, and
+	/// the state's own 5000-count dwell reinstalls it first, so the leader sweeps at every reassess
+	/// instead (docs/simulation/ai-flyers.md, "The thinks").
 	/// </summary>
 	private const short TargetSweepInterval = 10000;
 
@@ -127,7 +128,25 @@ public sealed partial class FlyerObject {
 	/// starts in <c>deciding</c>, which has no think and no move, and waits for the reassess to read
 	/// its group's order.
 	/// </summary>
-	internal void InstallInitialBehaviour() => Behaviour.SetState(FlyerBehaviourState.Deciding);
+	internal void InstallInitialBehaviour() => SetBehaviourState(FlyerBehaviourState.Deciding);
+
+	/// <summary>
+	/// <c>Behaviour_SetState</c> (<c>00413e50</c>) as the aircraft sees it: the descriptor and its
+	/// countdown go into <see cref="Behaviour"/>, and the block's <c>0x28</c>-byte scratch from
+	/// <c>flyer+0x5a</c> — which here is <see cref="_missileFired"/> and
+	/// <see cref="_targetSweepTimer"/> — is zeroed. So every attack starts with its missile, and a
+	/// leader sweeps on the first tick of every state it is put in.
+	///
+	/// <para>Every flyer state change goes through this rather than through
+	/// <see cref="FlyerBehaviourBlock.SetState"/> directly, as a machine's go through
+	/// <c>MechObject.SetBehaviourState</c>.</para>
+	/// </summary>
+	private void SetBehaviourState(FlyerBehaviourState state) {
+		_missileFired = false;
+		_targetSweepTimer = 0;
+
+		Behaviour.SetState(state);
+	}
 
 	/// <summary>
 	/// <c>Mech_AiTick</c> (<c>00411cec</c>) as an aircraft runs it. Identical in shape to
@@ -188,23 +207,24 @@ public sealed partial class FlyerObject {
 	///
 	/// <para><b>Sleeping and scouting latch <see cref="SimObject.OutOfAction"/>.</b> That is not a
 	/// side effect — it is what keeps an aircraft that was sent somewhere rather than sent to fight
-	/// from counting as something the other side has to contest, and nothing ever clears it.</para>
+	/// from counting as something the other side has to contest, and no write that clears it is
+	/// known (docs/simulation/ai-flyers.md, Open).</para>
 	/// </summary>
 	private void SelectBehaviour() {
 		switch (Group?.OrderVerb ?? MissionGroup.NoOrder) {
 			case MissionOrder.VerbSearchDestroy:
-				Behaviour.SetState(FlyerBehaviourState.SearchAndDestroy);
+				SetBehaviourState(FlyerBehaviourState.SearchAndDestroy);
 				break;
 			case MissionOrder.VerbPatrol:
-				Behaviour.SetState(FlyerBehaviourState.Patrolling);
+				SetBehaviourState(FlyerBehaviourState.Patrolling);
 				break;
 			case MissionOrder.VerbSleep:
 				Disarmed = true;
-				Behaviour.SetState(FlyerBehaviourState.Sleeping);
+				SetBehaviourState(FlyerBehaviourState.Sleeping);
 				break;
 			case MissionOrder.VerbTravel:
 				Disarmed = true;
-				Behaviour.SetState(FlyerBehaviourState.Scouting);
+				SetBehaviourState(FlyerBehaviourState.Scouting);
 				break;
 		}
 	}
@@ -306,7 +326,7 @@ public sealed partial class FlyerObject {
 	/// loop; a wingman reached from it does no more than change state.</para>
 	/// </summary>
 	private void EngageWithFlight() {
-		Behaviour.SetState(FlyerBehaviourState.Attacking);
+		SetBehaviourState(FlyerBehaviourState.Attacking);
 
 		if (!IsFlightLeader || Group is not { } group) {
 			return;
@@ -461,13 +481,13 @@ public sealed partial class FlyerObject {
 	/// close enough to shoot.</para>
 	///
 	/// <para><b>The first shot of a pass is a missile.</b> A flag on the aircraft (<c>flyer+0x5a</c>,
-	/// cleared every time it goes back to extending) lets one round off the rail inside
+	/// cleared every tick it spends extending and on entering <c>attacking</c>) lets one round off the rail inside
 	/// <see cref="MissileRange"/>, and every shot after it on that pass is a pair of gun rounds from
 	/// the mirrored muzzle points.</para>
 	///
 	/// <para>One gate is not reproduced: the original also requires <c>|flyer+0x1f4| &lt; 10</c>, a
-	/// field read here and written nowhere in the image, so it is zero and the gate always
-	/// passes.</para>
+	/// field the zero-filled flyer pool leaves at 0 and no known code writes
+	/// (docs/simulation/ai-flyers.md, Open), so the gate passes.</para>
 	/// </summary>
 	private void AttackRun(SimWorld world, SimObject target) {
 		var aim = target.Position;
@@ -571,7 +591,7 @@ public sealed partial class FlyerObject {
 
 	// flyer+0x1fe, +0x5a, +0x5b and +0x21f. The sweep timer and the missile flag share a word in the
 	// original, which writes the flag two bytes wide over the timer's own low byte; they are separate
-	// here because no state runs both.
+	// here because no state runs both and SetBehaviourState zeroes both.
 	private short _attackPhase;
 	private bool _missileFired;
 	private short _targetSweepTimer;

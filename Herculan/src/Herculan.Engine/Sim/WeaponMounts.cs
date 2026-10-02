@@ -354,7 +354,16 @@ public sealed class WeaponMounts {
 		}
 
 		Selected = mountIndex;
+		ElectroOpticalFired = false;
 	}
+
+	/// <summary>
+	/// <c>DAT_004d25ac</c> — the armed mount launched an electro-optical round and the selection has
+	/// not moved since. Set by <see cref="FireTick"/> beside <see cref="SimWorld.MissileFlown"/> and
+	/// cleared by any change of selection; while it is set and no round is being flown,
+	/// <see cref="PerFrameUpdate"/> steps the selection on. See docs/simulation/weapon-firing.md.
+	/// </summary>
+	public bool ElectroOpticalFired { get; private set; }
 
 	/// <summary>
 	/// <c>WeaponMounts_StepSelection</c> (<c>0041074c</c>): step the armed mount one place through the current fire chain —
@@ -479,12 +488,24 @@ public sealed class WeaponMounts {
 	/// weapon that cannot reach the selected target is not ready, so the chain steps past it and its
 	/// row lights red. The armed weapon still fires — <see cref="FireTick"/> asks the mount alone
 	/// and never consults this.</para>
+	///
+	/// <para><b>An electro-optical round holds the chain.</b> While one is being flown
+	/// (<paramref name="missileFlown"/>) the advance does not run at all — <c>WeaponMounts_ChainReady</c>
+	/// (<c>00410a04</c>) answers ready without asking, as it does for <see cref="SingleFire"/>. Once
+	/// the flight is over, <see cref="ElectroOpticalFired"/> steps the selection on by one and gives
+	/// the chain the selection back, before anything else in the pass.</para>
 	/// </summary>
 	/// <param name="targetRange">
 	/// Distance to the selected target in world units, or zero when nothing is selected — see
 	/// <see cref="TargetRange"/>.
 	/// </param>
-	public void PerFrameUpdate(int targetRange = 0) {
+	/// <param name="missileFlown"><see cref="SimWorld.MissileFlown"/>.</param>
+	public void PerFrameUpdate(int targetRange = 0, bool missileFlown = false) {
+		if (ElectroOpticalFired && !missileFlown) {
+			StepSelection(1);
+			SingleFire = false;
+		}
+
 		TargetRange = targetRange;
 		foreach (var mount in Mounts.ToList()) {
 			if (!mount.Linked || PartnerOf(mount) is not { } partner) {
@@ -498,7 +519,7 @@ public sealed class WeaponMounts {
 			}
 		}
 
-		if (Selected < 0 || SingleFire || CanFireNow(Selected)) {
+		if (Selected < 0 || SingleFire || missileFlown || CanFireNow(Selected)) {
 			return;
 		}
 
@@ -566,8 +587,11 @@ public sealed class WeaponMounts {
 	/// weapon armed by hand keeps the selection until its shot leaves it unready, and then the chain
 	/// takes over again on the next <see cref="PerFrameUpdate"/>.</para>
 	///
-	/// <para>One thing in the original is not here: it asks the armed mount for its ammunition type
-	/// and raises an alert flag for type 3, which an energy mount can never report.</para>
+	/// <para>When the armed mount's <see cref="WeaponMount.AmmoType"/> is
+	/// <see cref="Rocket.PlayerFlownSubtype"/> — it has just launched an electro-optical round — the
+	/// shot raises <see cref="ElectroOpticalFired"/> and <see cref="SimWorld.MissileFlown"/>, so the
+	/// controls go to the round from the next tick. Only the locally piloted machine's trigger reaches
+	/// this in the original, which is what the owner test stands for here.</para>
 	/// </summary>
 	/// <param name="owner">The machine firing, which the shot's geometry and the raycast both need.</param>
 	/// <param name="world">The world the shot is resolved against.</param>
@@ -601,6 +625,12 @@ public sealed class WeaponMounts {
 		bool freeShot = owner.LocallyPiloted && world.UnlimitedAmmunition;
 
 		armed.Fire(owner, world, freeShot);
+
+		if (owner.LocallyPiloted && armed.AmmoType == Rocket.PlayerFlownSubtype) {
+			ElectroOpticalFired = true;
+			world.MissileFlown = true;
+		}
+
 		partner?.Fire(owner, world, freeShot);
 
 		// The original re-tests the armed mount after each of the two shots, and the partner's shot

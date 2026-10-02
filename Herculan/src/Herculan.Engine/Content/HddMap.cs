@@ -449,8 +449,8 @@ public static class HddMap {
 
 	/// <summary>
 	/// The frame a rotating icon group shows at <paramref name="heading"/>, and the nudge that goes
-	/// with it. A destroyed object takes the group's base frame with no nudge, which is the paint's
-	/// own <c>+0x99</c> branch.
+	/// with it. A destroyed object takes the group's base frame but keeps its octant's nudge: the
+	/// paint adds the nudge before its own <c>+0x99</c> branch.
 	/// </summary>
 	public static (int Frame, int NudgeX, int NudgeY) RotatedFrame(int baseFrame, int heading, bool destroyed) {
 		int octant = Octant(heading);

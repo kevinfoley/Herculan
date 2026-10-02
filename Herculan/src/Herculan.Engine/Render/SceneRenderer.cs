@@ -86,6 +86,14 @@ public sealed class SceneItem {
 	/// <c>+0x12</c>), which is already what a small object per-pixel amounts to.
 	/// </summary>
 	public bool CellQuantisedFog { get; set; }
+
+	/// <summary>
+	/// Whether this item is the terrain, whose untextured cells fill the way
+	/// <c>Terrain_FillCellUntextured</c> (<c>0046bb40</c>) fills them rather than as a flat solid face
+	/// — see <see cref="TerrainMeshBuilder"/>. Both carry a palette index per vertex; the two read
+	/// different rows of the theater ramp, and only the terrain's is fogged through it.
+	/// </summary>
+	public bool GroundFill { get; set; }
 }
 
 /// <summary>
@@ -135,6 +143,7 @@ public sealed class SceneRenderer : IDisposable {
 	private int _paletteRampRows;
 	private int _paletteRampShadeRows;
 	private int _paletteRampUnlitRow;
+	private int _paletteRampGroundRow;
 	private int _depthSlices;
 	private int _shadeRampRows;
 	private int _shadeRampGouraudRow;
@@ -220,6 +229,7 @@ public sealed class SceneRenderer : IDisposable {
 		_paletteRampRows = table?.Height ?? 0;
 		_paletteRampShadeRows = table?.ShadeRows ?? 0;
 		_paletteRampUnlitRow = table?.UnlitRow ?? 0;
+		_paletteRampGroundRow = table?.GroundRow ?? 0;
 		_depthSlices = table?.DepthSlices ?? _depthSlices;
 	}
 
@@ -248,6 +258,7 @@ public sealed class SceneRenderer : IDisposable {
 		_impactPaletteRampTexture = paletteRamp != null && paletteRamp.Height == _paletteRampRows
 			&& paletteRamp.ShadeRows == _paletteRampShadeRows
 			&& paletteRamp.UnlitRow == _paletteRampUnlitRow
+			&& paletteRamp.GroundRow == _paletteRampGroundRow
 			? new GpuTexture(_gl, paletteRamp.Pixels, PaletteRampTable.Width, paletteRamp.Height)
 			: null;
 	}
@@ -433,6 +444,7 @@ public sealed class SceneRenderer : IDisposable {
 			_shader.SetFloat("uShadeLevels", _paletteRampShadeRows);
 			_shader.SetFloat("uPaletteRampRows", _paletteRampRows);
 			_shader.SetFloat("uPaletteRampUnlitRow", _paletteRampUnlitRow);
+			_shader.SetFloat("uPaletteRampGroundRow", _paletteRampGroundRow);
 		} else {
 			_shader.SetInt("uPaletteRampEnabled", 0);
 		}
@@ -519,6 +531,7 @@ public sealed class SceneRenderer : IDisposable {
 			}
 
 			_shader.SetInt("uFullbright", item.Fullbright ? 1 : 0);
+			_shader.SetInt("uGroundFill", item.GroundFill ? 1 : 0);
 			_shader.SetFloat("uFogDepthBias", item.CellQuantisedFog ? cellFogBias : 0f);
 
 			// Bind texture if available, otherwise use flat shading.

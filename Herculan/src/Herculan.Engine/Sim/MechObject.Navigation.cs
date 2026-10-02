@@ -597,7 +597,7 @@ public partial class MechObject {
 	}
 
 	/// <summary>
-	/// The tail <see cref="TravelThink"/> and <see cref="FollowThink"/> share: on the same 10 s clock,
+	/// The tail <see cref="TravelThink"/> and <see cref="FollowThink"/> share: on the same 10000-count (about 4.9 s) clock,
 	/// pick something worth watching into <see cref="LookAt"/> and point the turret at it.
 	///
 	/// <para><b>It is not a target.</b> The original never writes it to <c>mech+0x1a4</c> — but it

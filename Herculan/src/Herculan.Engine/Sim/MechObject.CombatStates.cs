@@ -39,8 +39,8 @@ public sealed partial class MechObject {
 		public short AspectMagnitude;
 
 		/// <summary>
-		/// <c>+0x0a</c> — the <b>3D</b> range. Every navigation range in the AI is the ground-plane
-		/// one; this is not.
+		/// <c>+0x0a</c> — the <b>3D</b> range. Every range a navigation steer is computed from is the
+		/// ground-plane one; this is not.
 		/// </summary>
 		public int Range;
 
@@ -505,6 +505,7 @@ public sealed partial class MechObject {
 	/// </summary>
 	private void SetBehaviourState(BehaviourState state) {
 		_navDecisionTimer = 0;
+		LookAt = null;
 		_fleeingFrom = null;
 		_fleeSideTimer = 0;
 		_fleeToTheLeft = false;

@@ -36,7 +36,8 @@ public class BulletType {
 
 	/// <summary>
 	/// <c>+0x0c</c> — nonzero arms a per-lifetime rate at the object's <c>+0x61</c> whose reader is
-	/// open (docs/simulation/projectiles.md#open); 1 on the three autocannon records and zero elsewhere.
+	/// open (docs/simulation/projectiles.md#open); 1 on records 0–2 (ATC20/35/50) and zero on the other
+	/// nine, <c>ATC75</c>'s and <c>ATC100</c>'s own records 10 and 11 included.
 	/// </summary>
 	public short LifetimeRateFlag { get; set; }
 }

@@ -15,11 +15,13 @@ namespace HercWorks.Help;
 /// Unbounded, two compressed longs ask for an allocation of several exabytes.</item>
 /// <item>Strings end at a NUL the file may never supply, so every string read stops at
 /// <see cref="MaxStringBytes"/>.</item>
+/// <item>The readme <see cref="WriteDocument"/> reads is held whole and its text embedded in the page,
+/// so its size is capped too.</item>
 /// </list>
 ///
 /// <para>The defaults sit well clear of the retail corpus — 9 MB files, 103 topics, a 344x432
-/// largest picture — and are set to be uncontroversial for any plausible help file rather than to be
-/// tight.</para>
+/// largest picture, a 37 KB readme — and are set to be uncontroversial for any plausible help file
+/// rather than to be tight.</para>
 /// </summary>
 public sealed record HelpLimits {
 	/// <summary>The limits used when a caller does not supply any.</summary>
@@ -42,4 +44,7 @@ public sealed record HelpLimits {
 
 	/// <summary>Longest accepted NUL-terminated string, in bytes.</summary>
 	public int MaxStringBytes { get; init; } = 64 * 1024;
+
+	/// <summary>Largest accepted readme, a Write document, in bytes.</summary>
+	public int MaxReadmeBytes { get; init; } = 1024 * 1024;
 }

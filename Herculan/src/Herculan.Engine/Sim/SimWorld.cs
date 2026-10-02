@@ -593,6 +593,67 @@ public sealed class SimWorld {
 	public IReadOnlyList<Rocket> RocketsInFlight => _rockets;
 
 	/// <summary>
+	/// <c>DAT_004d25aa</c> — an electro-optical missile is being flown. <see cref="Tick"/> clears it
+	/// just before it walks the rounds, and a player-flown round raises it again every tick it is
+	/// steered (<see cref="Rocket"/>); <see cref="WeaponMounts.FireTick"/> raises it on the tick that
+	/// launches one. While it is up the controls go to the round rather than to the machine, and the
+	/// weapon chain holds still. See docs/simulation/rockets.md#the-missile-camera.
+	/// </summary>
+	public bool MissileFlown { get; internal set; }
+
+	/// <summary>
+	/// The two axes and the trigger <c>Rocket_PlayerSteer</c> reads out of the player input block —
+	/// what the host built from the controls this frame. It is read, never consumed: the original
+	/// rebuilds the block every tick, so zeroing it would cost a second tick in the same host frame its
+	/// input. What the steer's own clearing of the trigger does is <see cref="PlayerTriggerCleared"/>.
+	/// </summary>
+	public MissileSteerInput MissileSteer { get; set; }
+
+	/// <summary>
+	/// The trigger byte <c>DAT_004d2357</c> cleared part-way through a tick — by the steer, and when a
+	/// flown round ends — so the machine's own fire path, which reads it later in the same tick, sees it
+	/// released. Reset at the top of every tick, as the original rebuilds the byte.
+	/// </summary>
+	internal bool PlayerTriggerCleared { get; set; }
+
+	/// <summary>
+	/// <c>DAT_0049c394</c> — the last round the locally piloted machine launched, whatever its
+	/// subtype, which the MFD's missile camera rides. <see cref="FireRocket"/> sets it; the camera
+	/// screen clears it the first time it paints and finds the round gone from
+	/// <see cref="RocketsInFlight"/>.
+	/// </summary>
+	public Rocket? PlayerMissile { get; set; }
+
+	/// <summary>
+	/// <c>DAT_0049c398</c> — <see cref="PlayerMissile"/> ended before its lifetime ran out, which is to
+	/// say it struck something. The camera screen flashes on it and clears it.
+	/// </summary>
+	public bool PlayerMissileStruck { get; set; }
+
+	/// <summary>
+	/// The <c>Input_LatchButton(1, 1)</c> a flown round makes as it ends: the input layer's press-once
+	/// latch on the first button row, which is the host's to hold. Read and cleared by
+	/// <see cref="TakeFireRowLatch"/>.
+	/// </summary>
+	private bool _fireRowLatchRequested;
+
+	/// <summary>
+	/// Whether a flown round asked for the first button row to be latched since the last call — see
+	/// docs/simulation/rockets.md#flight--rocket_tickupdate-0040a538.
+	/// </summary>
+	public bool TakeFireRowLatch() {
+		bool requested = _fireRowLatchRequested;
+		_fireRowLatchRequested = false;
+		return requested;
+	}
+
+	/// <summary>A flown round has ended: the trigger byte is cleared and row 0 latched.</summary>
+	internal void EndFlownRound() {
+		PlayerTriggerCleared = true;
+		_fireRowLatchRequested = true;
+	}
+
+	/// <summary>
 	/// Every travelling shot that struck something during the tick just completed, as the shot record
 	/// the raycast left behind. Cleared at the top of each <see cref="Tick"/>, exactly as
 	/// <see cref="Beams"/> is, and not part of the original for the same reason.
@@ -638,7 +699,7 @@ public sealed class SimWorld {
 		}
 
 		_effects.Add(new ImpactEffect(
-			typeId, record, Explosions.FrameCount(record.ShapeIndex), position, EffectLights, this));
+			typeId, Explosions, record, Explosions.FrameCount(record.ShapeIndex), position, EffectLights, this));
 
 		if (playSound && record.SoundId >= 0) {
 			// Math_RandomBelow(0x32) on the presentation generator, whose result the constructor throws
@@ -1072,21 +1133,22 @@ public sealed class SimWorld {
 			}
 
 			// "Something just shot at me", on the candidate's own +0x50 slot. The original puts it
-			// exactly here — past the hit test, so only what the ray actually reached hears about it,
-			// and gated on the object being alive. It applies no damage; what it decides is whether
-			// the machine answers, and how. See docs/simulation/ai-targeting.md.
-			if (candidate is MechObject { Destroyed: false } struck
-					&& (candidate.Side == shot.Owner?.Side || !candidate.Neutralised)) {
-				// The player hitting someone else's machine on his own side is complained about by
-				// whichever of that machine's group is nearest it, not by the machine he hit.
-				if (ReferenceEquals(shot.Owner, PlayerMech) && candidate.Side == shot.Owner?.Side
-						&& !ReferenceEquals(candidate.Group, shot.Owner?.Group)
-						&& candidate.Group?.NearestLiveMember(candidate) is MechObject witness
-						&& witness.Position.ApproxDistanceTo(candidate.Position) < 30000) {
+			// exactly here — past the hit test, so only what the ray actually reached hears about it —
+			// and skips it for a destroyed candidate, or an enemy one that is out of action. It applies
+			// no damage. See docs/simulation/hit-detection.md.
+			if (shot.Owner is { } owner && !candidate.Destroyed
+					&& (candidate.Side == owner.Side || !candidate.OutOfAction)) {
+				// The player hitting anything on his own side outside his own group, structures
+				// included: the player's own nearest squadmate complains, if it is close enough to
+				// him to have seen it (docs/simulation/ai-targeting.md, "Radio callouts").
+				if (owner.LocallyPiloted && candidate.Side == owner.Side
+						&& !ReferenceEquals(candidate.Group, owner.Group)
+						&& owner.Group?.NearestLiveMember(owner) is MechObject witness
+						&& witness.Position.ApproxDistanceTo(owner.Position) < FriendlyFireWitnessRange) {
 					witness.FriendlyFireComplaint(this);
 				}
 
-				struck.OnTakingFire(this, shot.Owner, shot.DamageArmor);
+				candidate.OnTakingFire(this, owner, shot.DamageArmor);
 			}
 
 			shot.Distance = struckAt;
@@ -1330,6 +1392,9 @@ public sealed class SimWorld {
 	/// <para>The <i>node</i> half of the lock is not attached — <c>+0x5a</c>, which the original fills
 	/// from the target's own vtable <c>+0x54</c> so the round steers at a specific part rather than at
 	/// the object's origin.</para>
+	///
+	/// <para>Every round the locally piloted machine launches becomes <see cref="PlayerMissile"/>, the
+	/// one the MFD's missile camera rides.</para>
 	/// </summary>
 	/// <param name="projectile">The firing <c>PROJ.DAT</c> record.</param>
 	/// <param name="muzzle">The world muzzle point the fire prologue worked out.</param>
@@ -1347,6 +1412,10 @@ public sealed class SimWorld {
 
 		// ROCKETS.DAT's layout is not BULLETS.DAT's: the launch sound is at +0x0c, not the guns' +0x08.
 		PlayTableSound(record.FireSoundId, muzzle);
+
+		if (owner is { LocallyPiloted: true }) {
+			PlayerMissile = round;
+		}
 
 		if (owner is MechObject launching
 				&& (launching.MissileLocked(projectile.SubtypeId)
@@ -1388,6 +1457,7 @@ public sealed class SimWorld {
 		SimMath.TickDelta = tickDelta;
 		_beams.Clear();
 		_impacts.Clear();
+		PlayerTriggerCleared = false;
 
 		if (PlayerMech is { Removed: false, AwaitingDeployment: false } player) {
 			player.FrozenTick(this);
@@ -1433,6 +1503,7 @@ public sealed class SimWorld {
 		SimMath.TickDelta = tickDelta;
 		_beams.Clear();
 		_impacts.Clear();
+		PlayerTriggerCleared = false;
 
 		// The effect pool goes first, as it does in Sim_MainTick, where it is walked ahead of the
 		// machine list. That ordering is what gives a tracer a full tick on screen: one spawned while
@@ -1446,6 +1517,10 @@ public sealed class SimWorld {
 				_effects.RemoveAt(i);
 			}
 		}
+
+		// Sim_MainTick drops the missile-flown flag immediately before it walks the pool these three
+		// share, so it stays up only for as long as a round raises it again.
+		MissileFlown = false;
 
 		for (int i = _tracers.Count - 1; i >= 0; i--) {
 			if (_tracers[i].Tick()) {
@@ -1565,10 +1640,11 @@ public sealed class SimWorld {
 
 		// And then the per-mech systems pass, which is where Sim_MainTick puts it — immediately after
 		// the sensor sweep, because the lock gate reads the line-of-sight cache that sweep maintains.
-		// Only the missile-lock half runs from here; the reactor and shield half is inside
-		// MechObject.Tick, where its inputs are last tick's and its position is free.
+		// Only the missile-lock half and the ECM's engagement gate run from here; the reactor and shield
+		// half is inside MechObject.Tick, where its inputs are last tick's and its position is free.
 		for (int i = 0; i < _objects.Count; i++) {
 			if (_objects[i] is MechObject { Removed: false, AwaitingDeployment: false, Destroyed: false } mech) {
+				mech.RaiseTargetEngagementGate();
 				mech.AiTimersTick();
 				mech.MissileLockTick(this);
 			}
@@ -1580,6 +1656,10 @@ public sealed class SimWorld {
 		if (PlayerMech is { Removed: false, Destroyed: false } pilot) {
 			PollMission(pilot);
 		}
+
+		// The light handles ended effects queued come back at the top of the next Sim_RenderFrame,
+		// which the original runs straight after each Sim_MainTick.
+		EffectLights.FlushReleases();
 
 		TickCount++;
 		ElapsedMilliseconds += elapsedMilliseconds;
@@ -1598,4 +1678,11 @@ public sealed class SimWorld {
 	/// docs/simulation/ai-combat-states.md.
 	/// </summary>
 	private const int BlockedLineOfFireArc = 0x2000;
+
+	/// <summary>
+	/// How near the player the squadmate <see cref="Raycast"/> picks must be for it to complain about
+	/// the player's shot at a friendly outside the group. See docs/simulation/ai-targeting.md,
+	/// "Radio callouts".
+	/// </summary>
+	private const int FriendlyFireWitnessRange = 30000;
 }

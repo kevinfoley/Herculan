@@ -11,7 +11,8 @@ namespace Herculan.Engine.Content;
 /// <c>Snc_Load</c> (<c>00463270</c>) appends is not in the file, so a script that runs out is simply
 /// finished — which is what <see cref="Frame"/> reports as -1.</para>
 ///
-/// <para>The twelve per-speaker copies of a message are byte-identical; only the filename differs.</para>
+/// <para>Each speaker has its own scripts: the per-speaker copies of a message differ, so the
+/// speaker letter in the filename selects real data.</para>
 /// </summary>
 public sealed class SncScript {
 	/// <summary>The resource folder the scripts live in.</summary>

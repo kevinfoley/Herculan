@@ -29,14 +29,14 @@ public class MissionOrder22 : MapObject {
 	public short Verb { get; set; }
 	public const int VerbWord = 0x08 / 2;
 
-	/// <summary>0x0A — the formation VSHELL's briefing map stands the squad in; DBSIM copies it and never reads it.</summary>
+	/// <summary>0x0A — the formation VSHELL's briefing map stands the squad in; DBSIM copies it, and no DBSIM reader has been found (docs/simulation/ai-goals.md#open).</summary>
 	public short FormationId { get; set; }
 
-	/// <summary>0x0C — ref into row #6 (<see cref="MapPoint22"/>); DBSIM resolves it and never reads it.</summary>
+	/// <summary>0x0C — ref into row #6 (<see cref="MapPoint22"/>); DBSIM resolves it, and no DBSIM reader has been found (docs/simulation/ai-goals.md#open).</summary>
 	public short PointRef { get; set; }
 	public const int PointRefWord = 0x0C / 2;
 
-	/// <summary>0x0E — ref into row #8 (<see cref="WaypointGroup"/>): the route. Only a group's first order's is used.</summary>
+	/// <summary>0x0E — ref into row #8 (<see cref="WaypointGroup"/>): the route. Only a group's first order's is walked; the objective layer matches every slot's (docs/simulation/ai-goals.md#what-else-reads-an-order).</summary>
 	public short RouteRef { get; set; }
 	public const int RouteRefWord = 0x0E / 2;
 

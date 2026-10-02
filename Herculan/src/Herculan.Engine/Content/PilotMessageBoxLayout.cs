@@ -16,8 +16,8 @@ namespace Herculan.Engine.Content;
 /// half survives — the box's y pair is the <c>.GAU</c>'s, its x pair is recomputed.</para>
 ///
 /// <para><b>The colours are the speaker's, not the port's.</b> A message from a squadmate fills with
-/// that pilot's own comm-box colour — <see cref="HudColorTable.PilotColorId"/>, the same green, cyan
-/// and so on their markers wear on the [F7] map — and frames it in the palette entry <i>one below</i>
+/// that pilot's own comm-box colour — <see cref="HudColorTable.PilotColorId"/>, in retail green for
+/// slot 0 and yellow for slot 1, the colours their markers wear on the [F7] map — and frames it in the palette entry <i>one below</i>
 /// the fill. That subtraction is raw palette arithmetic on the already-resolved index, not a second
 /// <c>COLORS.DAT</c> id, and it is what puts a yellow frame (palette 13) around slot 0's green
 /// (palette 14). Only a message with no squadmate behind it falls back to the computer's own black

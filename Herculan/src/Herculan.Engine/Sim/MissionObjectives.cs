@@ -434,10 +434,11 @@ public sealed class MissionObjectives {
 		return true;
 	}
 
-	/// <summary><c>obj+0xa5</c> on its own — only the two machine classes can carry it.</summary>
+	/// <summary><c>obj+0xa5</c> on its own, which each of the three shootable classes answers.</summary>
 	private static bool IsDisarmed(SimObject subject) => subject switch {
 		MechObject mech => mech.Disarmed,
 		FlyerObject flyer => flyer.Disarmed,
+		BaseObject structure => structure.Disarmed,
 		_ => false
 	};
 

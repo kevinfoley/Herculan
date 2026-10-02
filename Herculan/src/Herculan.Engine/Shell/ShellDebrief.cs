@@ -18,7 +18,7 @@ namespace Herculan.Engine.Shell;
 /// <param name="SalvageAwarded">The <c>results.dat</c> salvage award added to the pool, in kilograms.</param>
 /// <param name="SalvageItems">The salvage pairs read plus the weapon units the campaign grants added.</param>
 /// <param name="PilotsLost"><c>Squad_ProgressAll</c>'s count, <c>00482aef</c>: the player if at 0 condition, and each squad member replaced.</param>
-/// <param name="MachinesScrapped">How many machines the debrief scrapped, the hangar's <c>+0x24</c> count's rise.</param>
+/// <param name="MachinesScrapped">How many machines the debrief scrapped, the hangar's <c>+0x24</c> count (<c>00482ae7</c>), which every hangar load zeroes; the original keeps it on the hangar, and here it is the debrief's own tally.</param>
 /// <param name="Debrief">The flown mission's debrief text, when <c>Career_Advance</c> reloaded it.</param>
 /// <param name="Report">The figures <c>Debrief_WriteReport</c> writes, when it ran: a campaign debrief the player survived.</param>
 public sealed record ShellDebriefResult(short? State, short Outcome, int SalvageAwarded, int SalvageItems, int PilotsLost,
@@ -54,6 +54,14 @@ public static class ShellDebrief {
 	public const short CampaignWonState = 1;
 	public const short NextMissionState = 2;
 	public const short CampaignOverState = 3;
+
+	/// <summary>
+	/// The campaign flags the debrief writes from its own counts, which the flown mission's <c>.ENG</c> debrief
+	/// lines test (docs/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7): 8 the machines
+	/// it scrapped, 9 the pilots <c>Squad_ProgressAll</c> counted lost.
+	/// </summary>
+	private const int MachinesScrappedFlag = 8;
+	private const int PilotsLostFlag = 9;
 
 	/// <summary>
 	/// Runs the debrief on <paramref name="game"/> and <paramref name="hangar"/>, the hangar read from it,
@@ -110,13 +118,18 @@ public static class ShellDebrief {
 		}
 
 		int pilotsLost = ProgressAll(game, hangar);
+		flags[PilotsLostFlag] = (short)pilotsLost;
 		short? state = null;
 		int granted = 0;
 		MissionDebriefText? debrief = null;
 		ShellDebriefReport? report = null;
 		if (game.PlayerPilot?.Condition == 0) {
 			state = CampaignOverState;
-		} else if (campaign) {
+		} else {
+			flags[MachinesScrappedFlag] = (short)scrapped;
+		}
+
+		if (state == null && campaign) {
 			// Game_DeliverWeaponQueue (0040f324): the build queue delivered and charged.
 			hangar.SalvageKilograms -= hangar.DeliverQueue(catalog.PriceKilograms);
 			Repair(hangar, costs, repairMode);

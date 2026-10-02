@@ -161,8 +161,8 @@ public static class PaperDollDamage {
 	/// <summary>
 	/// One damage-detail row's printed reading: armour component <c>1 + id</c> for the structural
 	/// view, dependent <c>id</c> for the internal one. Rows are in the <c>.PDG</c> view's own region
-	/// order, which is not the string table's — the internal view lists its regions 0,1,2,5,6,7,8,3,4,9
-	/// — and each region's id is the index into both the name group and this buffer.
+	/// order, which is not the string table's — a pilotable chassis's internal view lists its regions
+	/// 0,1,2,5,6,7,8,3,4,9 — and each region's id is the index into both the name group and this buffer.
 	/// </summary>
 	public static int RowReading(HddDamageView view, int regionId, IReadOnlyList<short> readouts) =>
 		view == HddDamageView.Internal

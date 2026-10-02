@@ -86,7 +86,7 @@ The controls panel pairs its save with `Prefs_CommitOptions` (`00459878`) one in
 
 No instruction in either image addresses options 48-53 by name, and they are zero in a retail file; only the loops that walk the whole array touch them.
 
-**The file is shared with VSHELL**, which keeps the same 54-byte array (`DAT_004824b8`), the same load-time shadow (`004824ee`) and the same handler table (`00482524`), and reads and writes the same path: `ShellOptions_Load` (`0040d6a3`) and `ShellOptions_SaveAll` (`0040d752`), with the same step, step-back and commit trio (`ShellOptions_StepOption`, `ShellOptions_StepOptionBack`, `ShellOptions_Commit`). Options 4, 5 and 37-47 are its side of that sharing, and of those the simulator reads only 4 and 6, both straight from the file at startup and 6 again from the array at shutdown ([below](#the-video-mode-and-full-screen-bytes)). The shell's own screens that edit them are [`../shell/screen-layout.md`](../shell/screen-layout.md#the-preferences-screen) and [the practice missions screen](../shell/screen-layout.md#the-parameters); options 0 and 1, the two sound bytes, are edited by both programs.
+**The file is shared with VSHELL**, which keeps the same 54-byte array (`DAT_004824b8`), the same load-time shadow (`004824ee`) and the same handler table (`00482524`), and reads and writes the same path: `ShellOptions_Load` (`0040d6a3`) and `ShellOptions_SaveAll` (`0040d752`), with the same step, step-back and commit trio (`ShellOptions_StepOption`, `ShellOptions_StepOptionBack`, `ShellOptions_Commit`). Options 4, 5 and 37-47 are its side of that sharing, and of those the simulator reads 4 and 6 ([Open](#open)), both straight from the file at startup and 6 again from the array at shutdown ([below](#the-video-mode-and-full-screen-bytes)). The shell's own screens that edit them are [`../shell/screen-layout.md`](../shell/screen-layout.md#the-preferences-screen) and [the practice missions screen](../shell/screen-layout.md#the-parameters); options 0 and 1, the two sound bytes, are edited by both programs.
 
 ### The video-mode and full-screen bytes
 
@@ -252,3 +252,7 @@ That function also carries an arm that zeroes the block, taken when the capabili
 | RECOMMEND leaves every row on the recommended action | It writes the code held by the slot it *found*, and a code the row does not offer resolves to slot 0. Walking, `NEXT WEAPON` is recommended for BUTTON 6 and is not in that row's list, so retail's own RECOMMEND binds it to `LINK WEAPON` |
 | A binding the readout shows is a binding its option list can reach | Rows alternate between a `NEXT WEAPON` list and a `PREV WEAPON` one, and nothing rejects a write of the other. A retail install can sit on a binding its own list cannot step to |
 | `0049e9cd` is a dead constant because it is zero in the image | `Voice_ArchiveExists` writes it at startup from whether the localised `simvoice` archive opens |
+
+## Open
+
+- **Open:** no DBSIM reference to options 37-41 (`004d1fe1`-`004d1fe5`) or `004d1fe6`-`004d1fe9` found by `es2_xref.py` (control: `004d1fc2` has one), so no simulator reader of them is known beyond 4 and 6.

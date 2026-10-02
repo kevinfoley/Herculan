@@ -97,6 +97,33 @@
       "source": "docs/simulation/ai-combat-states.md"
     },
     {
+      "address": "00401dc0",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vcr_Checkpoint",
+      "description": "(ptr, size, label): recording appends size bytes of ptr to the buffer 004a8580 (cursor 00497078, total 0049707c); playback freads size bytes from the -d .dmp (004d2562), memcmps against ptr and sets 00497080 on a mismatch. Module vcr.cpp. No caller found by es2_xref.",
+      "source": "docs/formats/tap-input-tape.md"
+    },
+    {
+      "address": "00401e5c",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vcr_FlushCheckpoints",
+      "description": "Phase-6 subsystem, run every frame: while recording with the -d handle set, appends the checkpoint buffer's total bytes to <stem>.dmp (mode ab, Assert vcr.cpp:47) and resets cursor and total. Registered by Vcr_StaticInit. Ghidra has no function here.",
+      "source": "docs/formats/tap-input-tape.md"
+    },
+    {
+      "address": "00401ef8",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vcr_StaticInit",
+      "description": "Static initialiser (Borland init table 004a7a64): RegisterSubsystemLoader(6, Vcr_FlushCheckpoints). Ghidra has no function here.",
+      "source": "docs/formats/tap-input-tape.md"
+    },
+    {
       "address": "00401f08",
       "binary": "DBSIM",
       "type": "function",
@@ -820,7 +847,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LightManager_ClaimSlot",
-      "description": "Claims the first free effect-light slot for a world point: marks it busy, copies the position, seeds intensity 0xff, copies A/B from the manager, appends the slot to the live array at mgr+0x1c and recomputes the cull radius. Returns the slot index. NO FULL-TABLE GUARD -- with all 20 busy it writes the slot record through the caller's own worldPoint pointer and returns 0x14; see KNOWN_ISSUES.md.",
+      "description": "Claims the first free effect-light slot for a world point: marks it busy, copies the position, seeds intensity 0xff, copies A/B from the manager, appends the slot to the live array at mgr+0x1c and recomputes the cull radius. Returns the slot index. NO FULL-TABLE GUARD -- with all 20 busy it writes the slot record through the caller's own worldPoint pointer and returns 0x14; unreachable in retail: EffectLightPool holds three handles.",
       "source": "docs/formats/effect-lights.md"
     },
     {
@@ -847,7 +874,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LightManager_SetSlotIntensity",
-      "description": "Writes a slot's intensity to BOTH +0x0d (int16) and +0x1b (int32) and recomputes the cull radius. The only writer of +0x1b, which is the field every consumer actually reads.",
+      "description": "Writes a slot's intensity to BOTH +0x0d (int16) and +0x1b (int32) and recomputes the cull radius. ClaimSlot leaves +0x1b alone; +0x1b is what the per-object selection reads, +0x0d what the cull radius reads.",
       "source": "docs/formats/effect-lights.md"
     },
     {
@@ -874,7 +901,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LightManager_SelectLightsUnconditional",
-      "description": "Dead: zero callers. A cull-by-fixed-distance variant of LightManager_SelectLightsForObject that always builds a point light, with no directional approximation.",
+      "description": "No reference found by es2_xref. A cull-by-fixed-distance variant of LightManager_SelectLightsForObject that always builds a point light, with no directional approximation.",
       "source": "docs/formats/effect-lights.md"
     },
     {
@@ -892,7 +919,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "Light_GetOrCreateDirectional",
-      "description": "Pooled-object getter/constructor for a type=1 (directional) light: recycles from a small free-list at param_1+0x35c/+0x360 if available, otherwise allocates+constructs (vtable &PTR_LAB_0049f8d8, type field at +0x16 set to 1), then registers it via Light_Register (FUN_0048bd44). Its callers are not traced.",
+      "description": "Pooled-object getter/constructor for a type=1 (directional) light: recycles from a small free-list at param_1+0x35c/+0x360 if available, otherwise allocates+constructs (vtable &PTR_LAB_0049f8d8, type field at +0x16 set to 1), then registers it via Light_Register (FUN_0048bd44). Called by LightManager_SelectLightsForObject.",
       "source": "flat-shaded lighting RE"
     },
     {
@@ -901,7 +928,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "Light_GetOrCreatePoint",
-      "description": "Same pooled-object pattern as Light_GetOrCreateDirectional (FUN_00407388) but for a type=2 (point) light (vtable &PTR_LAB_00497ac8, type field +0x16 set to 2). Its callers are not traced.",
+      "description": "Same pooled-object pattern as Light_GetOrCreateDirectional (FUN_00407388) but for a type=2 (point) light (vtable &PTR_LAB_00497ac8, type field +0x16 set to 2). Called by LightManager_SelectLightsForObject and LightManager_SelectLightsUnconditional.",
       "source": "flat-shaded lighting RE"
     },
     {
@@ -1443,7 +1470,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Rocket_PlayerSteer",
-      "description": "The electro-optical missile's nose-camera control, not a ballistic variant. Reads two axis accumulators out of the global player control block at 0x4d234a, steers by Math_Q8Multiply(0x500, axis) per tick with no rate limit or deadband, and zeroes them. Gate 0x4d2357 is the fire trigger (input device +0x0d); with it set the function also clears it, so the player's fire path never sees the trigger while a round is flown; with it clear the function drops the round's target and rewrites its subtype id to 0.",
+      "description": "The electro-optical missile's player steer, not a ballistic variant. Gate input+0x0d is the fire trigger (0x4d2357). Held: reads the two axes the block's camera-axis pointers +0x22 and +0x26 address (the steering and throttle axes while DAT_004d25aa routes the controls to the round), subtracts Math_IntegrateRateOverTick(Math_Q8Multiply(0x500, *+0x22)) from the heading (+0x10) and adds the same of *+0x26 to the pitch (+0x0c), with no rate limit or deadband, marks the frame stale (+0x32 = 0) and zeroes the trigger and both axes, so the player's fire path never sees the trigger while a round is flown. Released: drops the round's target (+0x56) and rewrites its subtype id (+0x41) to 0. See docs/simulation/rockets.md.",
       "source": "docs/simulation/rockets.md"
     },
     {
@@ -1452,7 +1479,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Rocket_TickUpdate",
-      "description": "Per-tick launcher-round update, vtable +0x14. Steps the shape cell-anim frame on ROCKETS.DAT +0x08/+0x0a (the exhaust flame, NOT a seeker reacquire); age +1 vs record +0x02 in ticks; damped burn speed += Math_IntegrateRateOverTick(record +0x04) averaged with the opening speed, capped at PROJ.DAT Speed; Rocket_PlayerSteer for a locally-simulated subtype 3 else Rocket_HomingSteer; Sim_RaycastObjectList over this tick step with record +0x06 as slack. Last, on every tick: for a round whose owner is not locally piloted (owner+0xa3 clear), sound 0x32 within 40000 of ViewObjectPtr, latched at round+0x06 and re-armed when the round leaves that range.",
+      "description": "Per-tick launcher-round update, vtable +0x14. Steps the shape cell-anim frame on ROCKETS.DAT +0x08/+0x0a (the exhaust flame, NOT a seeker reacquire); age +1 vs record +0x02 in ticks; damped burn speed += Math_IntegrateRateOverTick(record +0x04) averaged with the opening speed, capped at PROJ.DAT Speed; Rocket_PlayerSteer for a locally-simulated subtype 3, raising DAT_004d25aa, else Rocket_HomingSteer; Sim_RaycastObjectList over this tick step with record +0x06 as slack. When the round ends (lifetime or hit): a locally-simulated subtype 3 round calls Input_LatchButton(1, 1) and clears the trigger 004d2357; the round in DAT_0049c394 ending before its lifetime raises DAT_0049c398. Last, on every tick: for a round whose owner is not locally piloted (owner+0xa3 clear), sound 0x32 within 40000 of ViewObjectPtr, latched at round+0x06 and re-armed when the round leaves that range.",
       "source": "docs/simulation/rockets.md"
     },
     {
@@ -1479,7 +1506,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Rocket_Fire",
-      "description": "Rocket_Fire(subtypeId, muzzleWorldPoint, aimEulerTriple, launcher, ownerTravelSpeed) -- spawns one PROJ.DAT Type-0 rocket from the effect pool DAT_004a9746. Always builds via Rocket_Construct; Grenade_Construct is never called. Speed = ownerTravelSpeed + literal 500. Attaches the launcher's +0x1a4 (selected target) when the launcher is not locally simulated (+0xa3 clear) and the subtype is 3, or else when the launcher's vtable +0x6c returns nonzero -- Mech_MissileLockState for a machine, SimObject_MissileLockState_Always (1) for a flyer or a structure. Plays ROCKETS.DAT +0x0c + 10.",
+      "description": "Rocket_Fire(subtypeId, muzzleWorldPoint, aimEulerTriple, launcher, ownerTravelSpeed) -- spawns one PROJ.DAT Type-0 rocket from the effect pool DAT_004a9746. Always builds via Rocket_Construct; it never calls Grenade_Construct. Speed = ownerTravelSpeed + literal 500. Attaches the launcher's +0x1a4 (selected target) when the launcher is not locally simulated (+0xa3 clear) and the subtype is 3, or else when the launcher's vtable +0x6c returns nonzero -- Mech_MissileLockState for a machine, SimObject_MissileLockState_Always (1) for a flyer or a structure. Plays ROCKETS.DAT +0x0c + 10.",
       "source": "docs/simulation/rockets.md"
     },
     {
@@ -1497,7 +1524,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Grenade_Construct",
-      "description": "DEAD CODE, and the class is GRENADE -- its Borland class record at 0040acdc names it, with PROJECTILE (0040c2d0) as its one base, as for ROCKET and BULLET. See docs/formats/borland-rtti.md. Constructs a PROJ.DAT Type-3 object. A whole-image scan for 0040ac3c -- every section, bare LE dword and E8/E9 rel32 targets -- finds it nowhere but its own prologue, so nothing calls it; its vtable GrenadeVtable (004984fc) has Grenade_TickNoOp (return 0) in the per-tick slot, so an instance would never move or die. Retail Type-3 records are unreachable data for a cut grenade weapon.",
+      "description": "No reference found (es2_xref UNREFERENCED, no late start nearby), and the class is GRENADE -- its Borland class record at 0040acdc names it, with PROJECTILE (0040c2d0) as its one base, as for ROCKET and BULLET. See docs/formats/borland-rtti.md. Constructs a PROJ.DAT Type-3 object. A whole-image scan for 0040ac3c -- every section, bare LE dword and E8/E9 rel32 targets -- finds it nowhere but its own prologue, so no caller is found; its vtable GrenadeVtable (004984fc) has Grenade_TickNoOp (return 0) in the per-tick slot, so an instance would never move or die. No weapon template's PROJ.DAT index names the retail Type-3 records 7-9, and GrenadeMount_FireDispatch calls Grenade_FireNoOp instead; see docs/formats/proj-dat.md#open.",
       "source": "docs/simulation/rockets.md"
     },
     {
@@ -2816,7 +2843,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Proj_LookupRecordByIndex",
-      "description": "index * 0x24 + ProjDat_RecordTable -- direct flat-array index into PROJ.DAT's in-memory table, distinct from Proj_LookupRecord's (category,subtypeId) linear search. Called by MechLoadout_ConstructWeaponMounts with the value read from a WeaponMountTemplate's PROJ.DAT index (in-memory +0x3e), which is what resolves a real catalog weapon id to its PROJ.DAT damage record for 21 of 32 real weapons directly. See docs/formats/weapons-dat-sim.md.",
+      "description": "index * 0x24 + ProjDat_RecordTable -- direct flat-array index into PROJ.DAT's in-memory table, distinct from Proj_LookupRecord's (category,subtypeId) linear search. Called by MechLoadout_ConstructWeaponMounts with the value read from a WeaponMountTemplate's PROJ.DAT index (in-memory +0x3e), which is what resolves a real catalog weapon id to its PROJ.DAT damage record for 21 of 32 real weapons directly. Base_ArmedThinkTick and Flyer_AttackRun also call it with the literal 2, for the speed they lead by. See docs/formats/weapons-dat-sim.md.",
       "source": "docs/simulation/dbsim-physics-notes.md; docs/formats/weapons-dat-sim.md"
     },
     {
@@ -3518,7 +3545,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_IsTargetable",
-      "description": "Whether an AI machine may target a candidate: not the same side (group+0x12), not destroyed (+0x99), collapsed (+0xb4) or invulnerable (+0xb7), currently known through Ai_KnowsObject, not a dead flyer, not the player's own selection while this machine's +0x9a is set, and with mask bit 0x10 not this machine's own object class.",
+      "description": "Whether an AI machine may target a candidate: not the same side (group+0x12), not destroyed (+0x99), collapsed (+0xb4) or invulnerable (+0xb7), currently known through Ai_KnowsObject, not an out-of-action flyer (+0xa5/+0xa4/+0x99), not the player's own selection while this machine's +0x9a is set, and with mask bit 0x10 not this machine's own object class.",
       "source": "docs/simulation/ai-targeting.md"
     },
     {
@@ -3527,7 +3554,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_SelectTarget",
-      "description": "The sim's one AI target-acquisition routine, used by mechs and structures: (this, mask, coneLimit) walks the live object list and returns the best-scoring candidate. Candidates pass Ai_IsTargetable, then a tier bar of 2*designated+alive; range caps at 1000000 for the group order's designated target and 100000 otherwise. Score starts at Q10(70, 0x1000 - (bearingError >> 3)), is overridden inside 60000 by a range term, then multiplied by four Q10 weight tables at 0049933c/00499342/00499348/0049934e and divided by the number of other holders. Mask: 0x01 restrict the designated bonus, 0x02 drop the shooting-at-me weight, 0x04 drop the crowding divisor, 0x10 reject own class, 0x20 ignore bearing.",
+      "description": "The AI's general target acquisition, used by mechs, flyers and armed structures: (this, mask, coneLimit) walks the live object list and returns the best-scoring candidate. Candidates pass Ai_IsTargetable, then a tier bar of 2*designated+alive; range caps at 1000000 for the group order's designated target and 100000 otherwise. Score starts at Q10(70, 0x1000 - (bearingError >> 3)), is overridden inside 60000 by a range term, then multiplied by four Q10 weight tables at 0049933c/00499342/00499348/0049934e and divided by the number of other holders. Mask: 0x01 restrict the designated bonus, 0x02 drop the shooting-at-me weight, 0x04 drop the crowding divisor, 0x10 reject own class, 0x20 ignore bearing.",
       "source": "docs/simulation/ai-targeting.md"
     },
     {
@@ -3563,8 +3590,8 @@
       "type": "function",
       "confidence": "high",
       "name": "Detection_ShareContact",
-      "description": "Passes a new contact to every object on the spotter's own side within 100000 units, the spotter included, and sets the contact's +0x9e engagement flag inside 50000. Nothing is shared to the other side and a same-side pair is not a contact at all.",
-      "source": "docs/simulation/target-selection.md"
+      "description": "(spotter, contact). Passes a new contact to every deployed object (group+0x14 clear) on the spotter's own side within 100000 units, the spotter included. Inside 50000 it also sets the CONTACT's +0x9e engagement flag and activates that same-side object's OWN +0x1b2 engagement action through Action_Activate unless its +0xa2 ECM gate is raised; the two writes land on different objects (EDI vs EBX, 004127a7/004127ab). Nothing is shared to the other side and a same-side pair is not a contact at all. Called from Detection_Sweep and, with the shooter as contact, from Mech_ShareContact.",
+      "source": "docs/simulation/mission-deployment.md"
     },
     {
       "address": "004127f8",
@@ -3581,7 +3608,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiEnemySighted",
-      "description": "Mech vtable +0x48, the enemy-detected callout. For a machine in the player's group, posts squad message 1 through Ai_PostSquadMessage the first time anyone on that side holds a contact on a given object, latched per object in DAT_004a9b84[obj+0x4b] and rate-limited to one per 10 s by DAT_004a9be9. The local player's own machine sets the latch without calling out.",
+      "description": "Mech vtable +0x48, the enemy-detected callout. For a machine in the player's group, posts squad message 1 through Ai_PostSquadMessage for an object that is not class 1, not yet radar-visible (+0x95), and held as a contact by neither this machine nor the player, latched per object in DAT_004a9b84[obj+0x4b] (set even when the rate limit swallows the callout). DAT_004a9be9 is re-armed to 10000 on each callout and stepped by this function's own Math_CountdownTimerTick(004a9be8) on every non-player call, so it runs down per call-in, not per tick. The local player's own machine sets the latch without calling out.",
       "source": "docs/simulation/ai-targeting.md"
     },
     {
@@ -4668,7 +4695,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_ShouldAbandonTarget",
-      "description": "Whether a combat state should drop its target. Under squad order verb 4, when Ai_TargetStateTier exceeds the order's threshold at mech+0x250. For the group order's designated target, dead or crippled on the human side but only +0x99 destroyed on the Cybrid side. Otherwise dead or dying. Called from the think functions of attacking, flanking, facing off and driving off en.",
+      "description": "Whether a combat state should drop its target. Under squad order verb 4, when Ai_TargetStateTier exceeds the order's threshold at mech+0x250. For the group order's designated target, dead or crippled on the human side but only +0x99 destroyed on the Cybrid side. Otherwise out of action (+0xa5, +0xa4 or +0x99). Called from the think functions of attacking, flanking, facing off and driving off en.",
       "source": "docs/simulation/ai-targeting.md"
     },
     {
@@ -4740,7 +4767,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiSelectAimComponent",
-      "description": "Chooses the component slot the AI aims at and writes it to mech+0x2a2, or -1. One rand & 0x7f picks a band: slots 7-18 under 0x28 or whenever a targeting computer at mech+0x30b reads under 0xaa at its +0x7f, the weapon-mount slots 19..19+mountCount under 0x50, else the chassis slots 0-6; a collapsed target (+0xb4) narrows it to slot 0. Within the band it skips slots the target no longer has (target+0x20e) and takes the highest Component_ReadDamagePercent + (rand & 0x3f). RETAIL BUG: the damage is read from this+0x206, the shooter's own components, while the occupancy array walked is the target's.",
+      "description": "Chooses the component slot the AI aims at and writes it to mech+0x2a2, or -1. One rand & 0x7f picks a band: slots 7-18 under 0x28 or whenever a targeting computer at mech+0x30b reads under 0xaa at its +0x7f, the weapon-mount slots 19..18+mountCount, mountCount read from the shooter's own manager (this+0x202) under 0x50, else the chassis slots 0-6; a collapsed target (+0xb4) narrows it to slot 0. Within the band it skips slots the target no longer has (target+0x20e) and takes the highest Component_ReadDamagePercent + (rand & 0x3f). RETAIL BUG: the damage is read from this+0x206, the shooter's own components, while the occupancy array walked is the target's.",
       "source": "docs/simulation/ai-targeting.md"
     },
     {
@@ -4976,7 +5003,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_AimAndFireAtMech",
-      "description": "Ai_AimAndFire's machine branch. Refuses the shot and centres the turret when the bearing error exceeds the chassis' torso-twist limit (typeRec+0x22, 14000 fleet-wide). Aims at the chosen component (mech+0x2a2) only when the 3D range is in [5000, 20000); otherwise at the target's aim node origin. Ends in Ai_FireAtPoint.",
+      "description": "Ai_AimAndFire's machine branch. Refuses the shot and centres the turret when the bearing error exceeds the chassis' torso-twist limit (typeRec+0x22: 14000 on 20 of the 21 chassis; PITBULL's 32767 passes every error but 0x7fff and -0x8000). Aims at the chosen component (mech+0x2a2) only when the 3D range is in [5000, 20000); otherwise at the target's aim node origin. Ends in Ai_FireAtPoint.",
       "source": "docs/simulation/ai-weapons.md"
     },
     {
@@ -5003,7 +5030,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ComputeCombatRating",
-      "description": "Writes the combat rating at mech+0x29e and latches the cache flag mech+0x94, which Mech_PerTickSystemsUpdate clears to force a recompute. Rating = (typeRec+0x44 base + each live weapon mount's value scaled by its condition, for the mounts whose vtable +0x54 answers non-zero -- an ammunition mount only above an eighth of its magazine + each of 19 components' maximum scaled by its condition - a penalty per system over 70% damaged) >> 4, so it falls as the machine is shot apart or runs low.",
+      "description": "Writes the combat rating at mech+0x29e and latches the cache flag mech+0x94, which Mech_DirectFireHitTest (00418ba8) clears on a hit and Mech_PerTickSystemsUpdate tests to recompute. Rating = (typeRec+0x44 base + each live weapon mount's value scaled by its condition, for the mounts whose vtable +0x54 answers non-zero -- an ammunition mount only above an eighth of its magazine + each of 19 components' maximum scaled by its condition - a penalty per system over 70% damaged) >> 4, so it falls as the machine is shot apart or runs low.",
       "source": "docs/simulation/ai-targeting.md"
     },
     {
@@ -5039,7 +5066,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiFriendlyFireComplaint",
-      "description": "Posts squad message 8 when the player shoots a machine in the player's own group, on a 40 s cooldown at mech+0x278.",
+      "description": "Posts squad message 8 when the player shoots a machine in the player's own group, on a 40000-count (about 19.5 s) cooldown at mech+0x278.",
       "source": "docs/simulation/ai-targeting.md"
     },
     {
@@ -5048,7 +5075,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiOnTakingFire",
-      "description": "Mech vtable +0x50, called with (attacker, damage) when something hits this machine. Applies no damage. Shares the attacker as a contact through Detection_ShareContact, opens the 30 s under-fire window at +0x27d, and for a machine in the player's group accumulates the damage at +0x281 and ignores it until the total passes 8000. Otherwise, on a 10 s retarget cooldown at +0x273, it reacts by the current state's descriptor flag bits: bit 2 (guarding, driving off en) defends the post via Ai_SelectDefenceTarget around Mech_AiGoalPosition, bit 3 (sleeping, ramming, bulldog travel) ignores fire entirely, and anything else re-acquires with Ai_SelectTarget(this, 0x24, 0). Also posts squad message 3, and Mech_AiFriendlyFireComplaint when the player is the shooter.",
+      "description": "Mech vtable +0x50, called with (attacker, damage) when something hits this machine. Applies no damage. Shares the attacker as a contact through Detection_ShareContact, opens the 30000-count (about 14.6 s) under-fire window at +0x27d, and for a machine in the player's group accumulates the damage at +0x281 and ignores it until the total passes 8000. Otherwise, on a 10000-count (about 4.9 s) retarget cooldown at +0x273, it reacts by the current state's descriptor flag bits: bit 2 (guarding, driving off en) defends the post via Ai_SelectDefenceTarget around Mech_AiGoalPosition (a verb-4 squad order replaces the pick unless the pick is shooting at it; failing both, the attacker), bit 3 (sleeping, ramming, bulldog travel) ignores fire entirely, and anything else re-acquires with Ai_SelectTarget(this, 0x24, 0). Also posts squad message 3, and Mech_AiFriendlyFireComplaint when the player is the shooter.",
       "source": "docs/simulation/ai-targeting.md"
     },
     {
@@ -5193,7 +5220,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ReceiveSquadOrder",
-      "description": "Mech vtable +0x28. One machine receiving one transmitted squad order: switches on the record's verb (STRINGS0 group 0, 0-0x11) over thirteen cases and installs the standing order at mech+0x23e, its destination at +0x240, its target at +0x248, its guard subject at +0x24c and its abandon tier at +0x250. Verbs 0xd/0xe write patrol and move, 0/2/0xb write engage, 0xc writes guard; 3/0xa/0xf clear the order and reinstall patrolling; 4/0x10 and 7/0x11 are the radar pair, writing mech+0xb2 and mech+0x96; 5 and 8 are the FIRE AT WILL / HOLD YOUR FIRE pair, writing mech+0xb6; 1 sets the ignore-the-player's-selection latch at mech+0x9a, which 0, 5 and 0xb clear. Returns 1 when the order was taken. Each case picks a reply id for Ai_PostSquadMessage, posted only when priorReply is 0, or 1 with an accepted order. Args derived from disassembly: [EBP+8], [EBP+0xc], [EBP+0x10]; the vtable call site at 0043164d pushes three and does ADD ESP,0xc.",
+      "description": "Mech vtable +0x28. One machine receiving one transmitted squad order: switches on the record's verb (STRINGS0 group 0, 0-0x11) over twelve jump-table arms covering sixteen verbs (6, 9 and anything above 0x11 take the default) and installs the standing order at mech+0x23e, its destination at +0x240, its target at +0x248, its guard subject at +0x24c and its abandon tier at +0x250. Verbs 0xd/0xe write patrol and move, 0/2/0xb write engage, 0xc writes guard; 3/0xa/0xf clear the order and reinstall patrolling; 4/0x10 and 7/0x11 are the radar pair, writing mech+0xb2 and mech+0x96; 5 and 8 are the FIRE AT WILL / HOLD YOUR FIRE pair, writing mech+0xb6; 1 sets the ignore-the-player's-selection latch at mech+0x9a, which 0, 5 and 0xb clear. Returns 1 when the order was taken. Each case picks a reply id for Ai_PostSquadMessage, posted only when priorReply is 0, or 1 with an accepted order. Args derived from disassembly: [EBP+8], [EBP+0xc], [EBP+0x10]; the vtable call site at 0043164d pushes three and does ADD ESP,0xc.",
       "source": "docs/simulation/ai-squadmates.md",
       "signature": "short __cdecl Mech_ReceiveSquadOrder(MechObject *mech, SquadOrderRecord *order, short priorReply)"
     },
@@ -5339,7 +5366,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_PitchToAltitude",
-      "description": "Elevator command that flies the aircraft to a world Z: Math_Atan2Guarded(targetZ - flyer.z, 10000) into Flyer_PitchCommand. The 10000 is a fixed horizontal run, so the demanded angle depends on the height error alone. Its other arm, gated on flyer+0xae and reading flyer+0x23c, belongs to the walking machine's obstacle avoidance and leg placement and cannot fire on a flyer: nothing on any flyer path writes either field.",
+      "description": "Elevator command that flies the aircraft to a world Z: Math_Atan2Guarded(targetZ - flyer.z, 10000) into Flyer_PitchCommand. The 10000 is a fixed horizontal run, so the demanded angle depends on the height error alone. Its other arm, gated on flyer+0xae and reading flyer+0x23c, belongs to the walking machine's obstacle avoidance and leg placement and is not known to fire on a flyer: the flyer pool is zero-filled and no flyer path that writes either field has been found.",
       "source": "docs/simulation/ai-dispatch.md; flyer AI slice"
     },
     {
@@ -5366,7 +5393,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_FormationThrottle",
-      "description": "Works a throttle figure out of the station error, the bearing to the leader and the two chassis' +0x233 speeds, folds it into the previous value of flyer+0x21c and clamps the sum to [0x8c,0x100]. The field's only reader is this function; the control law leaves FlightModel_Step's throttle element zero at every site, so nothing a Cybrid flyer decides can change its airspeed.",
+      "description": "Works a throttle figure out of the station error, the bearing to the leader and the two chassis' +0x233 speeds, folds it into the previous value of flyer+0x21c and clamps the sum to [0x8c,0x100]. No other reader of the field is known. The control law leaves FlightModel_Step's throttle element zero on every call, so nothing a Cybrid flyer decides changes its airspeed (the player's RAZOR THROTTLE binding can: FlightModel_Step's position branch then writes the setting to 0).",
       "source": "docs/simulation/ai-dispatch.md; flyer AI slice"
     },
     {
@@ -5375,7 +5402,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_SteerAndFly",
-      "description": "The flyer's steering channel and the function every think ends in. Builds a 16-bit bank command from Q16(-turn,2500) + Q16(bankTurnRate at flyer+0x287, 32000) + Q16(rollRate,-5000); holds the aircraft at +/-(typeRecord+0x0e, the maximum bank angle) with a 1500 hysteresis band when the bank would take it further over; answers a steering command under 2000 with rudder (Q16(-turn,4000)) and level wings instead of a bank, and only if the roll is already under 800. Fills the command array's fifth element with the terrain height under the aircraft, which is FlightModel_Step's ceiling reference. Its leader term reads leader+0x1f8, a field written nowhere in the image.",
+      "description": "The flyer's steering channel and the function every movement step (route step, station keeping, attack run) ends in. Builds a 16-bit bank command from Q16(-turn,2500) + Q16(bankTurnRate at flyer+0x287, 32000) + Q16(rollRate,-5000); holds the aircraft at +/-(typeRecord+0x0e, the maximum bank angle) with a 1500 hysteresis band when the bank would take it further over; answers a steering command under 2000 with rudder (Q16(-turn,4000)) and level wings instead of a bank, and only if the roll is already under 800. Fills the command array's fifth element with the terrain height under the aircraft, which is FlightModel_Step's ceiling reference. Its leader term reads leader+0x1f8, a field for which no writer is known (es2_fieldscan.py, decompile grep); the flyer pool is zero-filled.",
       "source": "docs/simulation/ai-dispatch.md; flyer AI slice"
     },
     {
@@ -5420,7 +5447,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_BehaviourSearchDestroyThink",
-      "description": "search and destroy's think. Flyer_FollowStep, then for the flight leader only and only once the flyer+0x5b countdown expires (reloaded with 10000): Ai_SelectTarget with mask 0x11 (mission target only, reject own class), checked against Group_IsOrderTarget before it is taken, then Flyer_EngageWithFlight.",
+      "description": "search and destroy's think. Flyer_FollowStep, then for the flight leader only and when the flyer+0x5b countdown reads 0. The sweep reloads it with 10000, but Behaviour_SetState zeroes +0x5a..+0x81 at every reassess, so in practice the sweep runs on the state's first tick and after each 5000-count dwell: Ai_SelectTarget with mask 0x11 (mission target only, reject own class), checked against Group_IsOrderTarget before it is taken, then Flyer_EngageWithFlight.",
       "source": "docs/simulation/ai-dispatch.md; flyer AI slice"
     },
     {
@@ -5569,7 +5596,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_BroadcastOrder",
-      "description": "The MFD FLASH COMM page's transmit: sends one order to the whole of the player's group, best-suited machine first. Each pass scores every member not yet told -- verbs 0/2/5 prefer a machine whose behaviour descriptor +0x09 (committed) is clear, 1/8/0xf one where it is set, 4 and 7 one not already in the radar mode being asked for -- keeps the highest score and breaks ties on range to the issuer, then calls that machine's vtable +0x28 with the reply so far, so only the first recipient or the first to accept says anything. Verbs 0 and 2 stop at the first acceptance; the rest go round until everyone has been told. The score local is not initialised, so a verb with no case leaves every member tied and the group is walked in range order. Args derived from disassembly: [EBP+8], [EBP+0xc].",
+      "description": "The MFD FLASH COMM page's transmit: sends one order to the whole of the player's group, best-suited machine first. Each pass scores every member not yet told -- verbs 0/2/5 prefer a machine whose behaviour descriptor +0x09 (committed) is clear, 1/8/0xf one where it is set, 4 and 7 one not already in the radar mode being asked for -- keeps the highest score and breaks ties on range to the issuer, then calls that machine's vtable +0x28 with the reply so far, so only the first recipient or the first to accept says anything. Verbs 0 and 2 stop at the first acceptance; the rest go round until everyone has been told. The score local is not initialised, so for a verb with no case every member carries the same leftover stack value ([EBP-0x1c]): range order when it is -1 or more, nobody told when it is below. Args derived from disassembly: [EBP+8], [EBP+0xc].",
       "source": "docs/simulation/ai-squadmates.md",
       "signature": "bool __cdecl Squad_BroadcastOrder(int group, SquadOrderRecord *order)"
     },
@@ -5658,7 +5685,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_OrderTargetPosition",
-      "description": "The position the group's current order works to: the order object's +0x26 origin, falling back to the group's own stored point when the order names nothing.",
+      "description": "The position the group's current order works to: the order object's +0x26 origin, falling back to the first waypoint of the group's route (**(*(group+6)+2)), read with no null check, when the slot is empty or names no subject.",
       "source": "docs/simulation/ai-targeting.md"
     },
     {
@@ -5669,6 +5696,15 @@
       "name": "Group_IsOrderTarget",
       "description": "Whether an object is what the group's current order names: for the order's +0xc == 0 the order holds a group and the test is group identity, for 1-3 it holds the object itself.",
       "source": "docs/simulation/ai-targeting.md"
+    },
+    {
+      "address": "00423960",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_OrderSubjectPtr",
+      "description": "(group): the current order's +0x0e subject pointer -- the row-15 link at group+0x44 indexed by group+0x6c -- read without testing the slot for null. es2_xref finds no rel32 branch or stored pointer to it.",
+      "source": "DBSIM decompile at 00423960; docs/simulation/ai-goals.md"
     },
     {
       "address": "00423974",
@@ -5694,7 +5730,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_OrderTick",
-      "description": "Per-frame tick for a group that has entered the mission (the branch Sim_MainTick takes when group+0x14 is null). Runs the group's current order -- the row-15 link at group+0x44 indexed by the current-order index at group+0x6c -- and advances to the next when FUN_004239fc reports it complete or its own action has activated, flagging the finished order in the byte array at group+0x70 and clearing each member's +0x52. Then ticks every member via FUN_00411cec.",
+      "description": "Per-frame tick for a group that has entered the mission (the branch Sim_MainTick takes when group+0x14 is null). Runs the group's current order -- the row-15 link at group+0x44 indexed by the current-order index at group+0x6c -- and advances to the next when Group_IsOrderComplete reports it complete or its own action has activated, flagging the finished order in the byte array at group+0x70 and clearing each member's +0x52. Then ticks every member via Mech_AiTick.",
       "source": "docs/simulation/mission-deployment.md"
     },
     {
@@ -5769,6 +5805,15 @@
       "name": "Meteor_Dtor",
       "description": "METEOR vtable +0x08 (004982b8), the destructor its class record names: (this, flags). Debris_Dtor's body: installs TSObjVtable, deletes the shape instance at +0x34 through its own vtable +0x18 with flags 3, and Mem_Deletes this on flags bit 0.",
       "source": "DBSIM disassembly at 00424034; class record at 00423fe4"
+    },
+    {
+      "address": "004240e4",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MissionGroup_ElementCtor",
+      "description": "Rtl_VectorNew's per-element constructor for MissionGroups_Allocate's 0x7a-byte group records (its only reference is that PUSH at 00423d4b): zeroes the route cursor's index word at group+0x04 and nothing else. Ghidra has no function here; it is filed under Group_ReportIfAllOutOfAction's tail.",
+      "source": "DBSIM disassembly at 004240e4, 00423d4b"
     },
     {
       "address": "004240f4",
@@ -6653,7 +6698,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_ToggleImpact",
-      "description": "Swaps the saved and active palettes and flips 0049aef3, so repeated calls alternate between the theater palette and its impact palette. Called once per HitShakeNextToggleTick expiry while the shake runs.",
+      "description": "Swaps the saved and active palettes and flips 0049aef3, so repeated calls alternate between the theater palette and its impact palette -- unless Palette_RestoreFromImpact ran while the impact palette was active, which leaves the saved slot 004cfd8c on the theater palette, so later toggles swap it with itself. Called once per HitShakeNextToggleTick expiry while the shake runs.",
       "source": "docs/simulation/mech-locomotion.md"
     },
     {
@@ -7430,7 +7475,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_StartHitShake",
-      "description": "Starts (or restarts) the cockpit's damage shake: swaps the active palette to the theater's impact palette (ImpactPaletteObject, 0049aef8), seeds the view-offset band through CockpitView_SetShakeBand(5 << VideoMode_YCoordShift) and arms the two timers -- HitShakeEndTick at now + 0x3c coarse ticks and HitShakeNextToggleTick at now + rand%10. Returns immediately in view mode 4. Its two callers are Mech_ApplyDirectFireDamage (a hit on either of the player's own two cockpit components, while that component still reads under 0x64 damaged) and Mech_CollisionTest (the landing at the bottom of a long slide). Restarting over a running shake restores the palette and clears the view band, then skips the arm block because HitShakeNextToggleTick is still set -- so it extends the window without putting either back.",
+      "description": "Starts (or restarts) the cockpit's damage shake: swaps the active palette to the theater's impact palette (ImpactPaletteObject, 0049aef8), seeds the view-offset band through CockpitView_SetShakeBand(5 << VideoMode_YCoordShift) and arms the two timers -- HitShakeEndTick at now + 0x3c coarse ticks and HitShakeNextToggleTick at now + rand%10. Returns immediately in view mode 4. Its two callers are Mech_ApplyDirectFireDamage (a hit on either of the player's own two cockpit components, while that component still reads under 0x64 damaged) and Mech_CollisionTest (the landing at the bottom of a long slide). Restarting over a running shake restores the palette and clears the view band, then skips the arm block because HitShakeNextToggleTick is still set -- so it extends the window without re-seeding the band; the flash continues only if the restart landed on a theater-palette phase (see Palette_ToggleImpact).",
       "source": "docs/simulation/mech-locomotion.md"
     },
     {
@@ -7493,7 +7538,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HudColorTable_Get",
-      "description": "Returns HudColorTable[DAT_0049b040[i]] -- resolves a logical colour id held in an initialised id array to a palette index.",
+      "description": "Returns HudColorTable[DAT_0049b040[i]] -- resolves a logical colour id held in an initialised id array to a palette index. The array at 0049b040 holds three ids, 12, 15, 26 -- the squad comm-box slot colours (palette 14, 13, 5).",
       "source": "docs/formats/cockpit-hud-widgets.md (dat\\COLORS.DAT)"
     },
     {
@@ -7523,6 +7568,15 @@
       "name": "Player_DependentCondition",
       "description": "Condition 0-4 of the player machine's dependent (internal) component n: Mech_ReadEntryDamage -> Component_ReadEntryDamage kind 0 gives damage << 8 / max, bucketed by Damage_ToConditionState. The sensor dropout's callers pass 2, SENSOR ARRAY.",
       "source": "docs/formats/cockpit-hud-widgets.md"
+    },
+    {
+      "address": "00434310",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_FindArmedMountGauge",
+      "description": "(cockpitView): the weapon gauge among the view's ten at +0x70 (count +0x98) whose mount (+0xbd) is the viewing machine's armed mount -- view+0x203 is the machine, its +0x202 the mount manager, whose +0x1d index into +4 is the armed mount, or 0 with the index negative -- or 0 when no gauge has it. MfdDisplay_SyncMissileCamMode's condition asks it first.",
+      "source": "DBSIM decompile at 00434310"
     },
     {
       "address": "00434368",
@@ -7623,7 +7677,7 @@
       "type": "function",
       "confidence": "high",
       "name": "NavMarker_Position",
-      "description": "Accessor for the cockpit nav marker's position: view+0x25e while the flag at view+0x26a is set, otherwise null. Read only by gunsight child 7's paint.",
+      "description": "Accessor for the cockpit nav marker's position: view+0x25e while the flag at view+0x26a is set, otherwise null. Called by Hud_UpdateWaypointIndicator (gunsight child 7's paint) and HddCommandScreen_DrawMap.",
       "source": "docs/simulation/player-waypoints.md",
       "signature": "int * __cdecl NavMarker_Position(void)"
     },
@@ -7698,7 +7752,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_Enqueue",
-      "description": "Fills one queued record from a SYSTEM.STR entry's eight attribute bytes: id at +0x00, filename digit at +0x16, priority at +0x17, and the four timings at +0x1c/+0x20/+0x24/+0x28, each multiplied by 0x3c coarse ticks. minTime/maxTime stay durations until the message is shown; minWait/maxWait get the post tick added at once. The insert stops at the first queued entry of strictly higher priority, so low sorts first.",
+      "description": "Fills one queued record from a SYSTEM.STR entry's eight attribute bytes: id at +0x00, filename digit at +0x16, priority at +0x17, and the four timings at +0x1c/+0x20/+0x24/+0x28, each multiplied by 0x3c coarse ticks. Bytes 7-11 go to +0x2c..+0x30: byte 7 is the clip number, and bytes 8-11 lie past the eight the file supplies. minTime/maxTime stay durations until the message is shown; minWait/maxWait get the post tick added at once. The insert stops at the first queued entry of strictly higher priority, so low sorts first.",
       "source": "docs/formats/audio.md"
     },
     {
@@ -8008,7 +8062,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_Show",
-      "description": "Puts the current message up. Swallows a repeat of the same id inside 300 coarse ticks (about 4.8 s), and a swallowed repeat refreshes that window rather than leaving it. Otherwise latches the line, restores the box rect, publishes the scroll origin, repaints, plays an alert tone picked by a switch on the id (0x00/0x13 -> 0x19 strcfail; 0x0c/0x0f/0x10/0x14/0x15 -> 0x18 wrnwoop2; everything else 0x1a gnract -- the switch names a dozen further ids that all reach the default arm's tone), then speaks the line. Message 0x36 TRANSFERRING DATA is armed to blink here.",
+      "description": "Puts the current message up. Swallows a repeat of the same id inside 300 coarse ticks (about 4.8 s), and a swallowed repeat refreshes that window rather than leaving it. Otherwise latches the line, restores the box rect, publishes the scroll origin, repaints, plays an alert tone picked by a switch on the id (0x00/0x13 -> 0x19 strcfail; 0x0c/0x0f/0x10/0x14/0x15 -> 0x18 wrnwoop2; everything else 0x1a gnract -- the switch names fourteen further ids (0x17, 0x19, 0x1d-0x1f, 0x2a-0x2f, 0x34, 0x37, 0x38) that all reach the default arm's tone, and 0x36, whose arm also sets the blink latch +0x4d3), then speaks the line. Message 0x36 TRANSFERRING DATA is armed to blink here.",
       "source": "docs/formats/audio.md"
     },
     {
@@ -8625,7 +8679,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdStatusScreen_Paint",
-      "description": "Paint for the MFD status screen shared by F1 and F5. Latches the subject from the display's shared block (+0xb9), then branches on its target class: a HERC gets its .PDG paper doll and a twelve-dependent condition scan, a flyer gets flyers-bank frame 0, a structure gets bases/vehicles frame BASES.DAT+0x28. ID: versus TARGET: follows whether the subject is the viewing object or a squadmate; the name label's font and the integrity-versus-range choice for label 4 both follow the subject's mission-group side byte. This is the paint-time font override.",
+      "description": "Paint for the MFD status screen shared by F1 and F5. Latches the subject from the display's shared block (+0xb9), then branches on its target class: a HERC gets its .PDG paper doll and a twelve-dependent condition scan, a flyer gets flyers-bank frame 0, a structure gets bases/vehicles frame BASES.DAT+0x28. ID: versus TARGET: follows whether the subject is the viewing object or a squadmate; the integrity-versus-range choice for label 4 follows the subject's mission-group side byte, as does the name label's font in the HERC branch; the flyer and structure branches set no font, so that label keeps the last one written (the ctor's [14] RED at first).",
       "source": "docs/formats/mfd.md"
     },
     {
@@ -8891,7 +8945,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hud_UpdateWaypointIndicator",
-      "description": "Paint shared by gunsight children 7 and 8. The +0x45 flag picks the subject: set, NavMarker_Position and colour id 15; clear, the waypoint after the player group's route cursor with colour table entry 0, or -- on a branch gated by DAT_004d2af0, which nothing writes -- the player's selected target. Takes the ground range with Vec2_DistanceBetween and the bearing as Math_Atan2Guarded(dx, dy) - 0x4000, then draws the error (mech.heading - bearing) as a filled diamond on the tape within +/-0xe38 and as a filled arrow past the rect's right or left end beyond it. Child 8 also composes 'WAYPOINT ' + cursor+1 + ': ' + Hud_WorldUnitsToMetres(range) + ' M.' into its label.",
+      "description": "Paint shared by gunsight children 7 and 8. The +0x45 flag picks the subject: set, NavMarker_Position and colour id 15; clear, the waypoint after the player group's route cursor with colour table entry 0, or -- on a branch gated by DAT_004d2af0, with no writer found by es2_xref.py -- the player's selected target. Takes the ground range with Vec2_DistanceBetween and the bearing as Math_Atan2Guarded(dx, dy) - 0x4000, then draws the error (mech.heading - bearing) as a filled diamond on the tape within +/-0xe38 and as a filled arrow past the rect's right or left end beyond it. Child 8 also composes 'WAYPOINT ' + cursor+1 + ': ' + Hud_WorldUnitsToMetres(range) + ' M.' into its label.",
       "source": "docs/formats/cockpit-gunsight-hud.md",
       "signature": "void __cdecl Hud_UpdateWaypointIndicator(void *widget)"
     },
@@ -8928,7 +8982,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_UpdateAndPaint",
-      "description": "The roving gunsight's vtable +8, called once a frame from Sim_RenderFrame. Copies CockpitView+0x26c..+0x27e (target, world aim point, component id) into the widget's state block at +0xb7..+0xc9, adds the target's heading (+0xc7), its shape radius from vtable +0x10 (+0xcd) and a literal 2000 (+0xd1), drives child 1, the heading tape, with the NEGATED viewing object's heading -- the sign that makes the compass strip run the same way the simulation's own bearings do -- then runs every child's slot +4 and repaints the whole complex. While the armed byte +0x8c is set and the done byte +0x8d clear, child 1 is given the power-up wind-up ramp (coarseTicks - +0x90) * 0x32 as a ushort instead: climbing from zero for a heading <= 0x8000, counting down from zero above it, latching +0x8d the frame it reaches the heading.",
+      "description": "The roving gunsight's vtable +8, called once a frame from Sim_RenderFrame. Copies CockpitView+0x26c..+0x27e (target, world aim point, pod present flag) into the widget's state block at +0xb7..+0xc9, adds the target's heading (+0xc7), its shape radius from vtable +0x10 (+0xcd) and a literal 2000 (+0xd1), drives child 1, the heading tape, with the NEGATED viewing object's heading -- the sign that makes the compass strip run the same way the simulation's own bearings do -- then runs every child's slot +4 and repaints the whole complex. While the armed byte +0x8c is set and the done byte +0x8d clear, child 1 is given the power-up wind-up ramp (coarseTicks - +0x90) * 0x32 as a ushort instead: climbing from zero for a heading <= 0x8000, counting down from zero above it, latching +0x8d the frame it reaches the heading.",
       "source": "docs/formats/hud-target-indicator.md"
     },
     {
@@ -9126,7 +9180,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashCommScreen_Ctor",
-      "description": "Constructor for the MFD's FLASH COMM screen (mode 1). Builds six order rows: rect inset+(2,0xd)-(0x60,0x3a) GAU with the top-left nudged in and bottom-right out by 1<<XCoordShift, stepping 7<<YCoordShift per row. Font ColorSchemePanels[1] CPGREEN with [2] CPRED as the alternate at +0x21, background colour id 0x11, text margin 2<<XCoordShift. Rows list the first six of STRINGS0.STR group 0's 18 squadmate orders. See docs/formats/mfd.md.",
+      "description": "Constructor for the MFD's FLASH COMM screen (mode 1). Builds six order rows: rect inset+(2,0xd)-(0x60,0x3a) GAU with both corners nudged in by 1<<XCoordShift, stepping 7<<YCoordShift per row. Font ColorSchemePanels[1] CPGREEN with [2] CPRED as the alternate at +0x21, background colour id 0x11, text margin 2<<XCoordShift. The six rows are positions over STRINGS0.STR group 0's orders: rows 4 and 5 switch to verbs 7 and 8 when their state byte's bit 1 is set (MfdFlashComm_SelectedVerb). See docs/formats/mfd.md.",
       "source": "docs/formats/mfd.md"
     },
     {
@@ -9158,6 +9212,15 @@
       "signature": "int __cdecl MfdFlashComm_SelectedVerb(int flashComm)"
     },
     {
+      "address": "0043f9b8",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_SetScreenRow",
+      "description": "(screen, row) copies screen +0x32 into the previous-row word +0x37, then stores row at +0x32. Seven calls from MfdFlashComm_HandleAltKey.",
+      "source": "docs/formats/mfd.md"
+    },
+    {
       "address": "0043f9d0",
       "binary": "DBSIM",
       "type": "function",
@@ -9165,6 +9228,24 @@
       "name": "MfdFlashComm_ToggleRowVariant",
       "description": "(screen): for selected row (+0x32) 4 or 5 only, flips bit 1 of that row's state byte at screen+0x2c+row and sets +0x36; any other row is left alone. MfdFlashComm_SelectedVerb adds 3 to the verb of a row with that bit set. MfdFlashComm_Transmit calls it.",
       "source": "DBSIM decompile at 0043f9d0"
+    },
+    {
+      "address": "0043f9f4",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_ResetRow",
+      "description": "(screen, row) ANDs the row state byte +0x2c+row with 1 (clears the second-verb bit 1, keeps bit 0) and restores the row label's hotkey font +0x21 to ColorSchemePanels[2] CPRED (0049b0b4). No reference found by es2_xref.",
+      "source": "docs/formats/mfd.md#open"
+    },
+    {
+      "address": "0043fa14",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_DisableRow",
+      "description": "(screen, row) ORs bit 0 into the row state byte +0x2c+row and sets the row label's hotkey font +0x21 to ColorSchemePanels[6] CPOFF (0049b0c4). No reference found by es2_xref.",
+      "source": "docs/formats/mfd.md#open"
     },
     {
       "address": "0043fa34",
@@ -9190,7 +9271,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdMissileViewScreen_Paint",
-      "description": "The MISSILE CAM screen's draw: the code pointer stored first in the vtable at 0049c449 that MfdMissileViewScreen_Ctor installs. Driven by two globals. A nonzero DAT_0049c398 starts a flash: when it differs from the screen's copy at +0x45 it stamps a deadline 0x1e coarse ticks ahead at +0x46, and until then each paint toggles the byte at +0x20 and fills the screen rect (DAT_004d1ac8) with DAT_004d3c20 or DAT_004d3c26 alternately and returns; at the deadline it clears the copy and DAT_0049c398. With DAT_0049c394 set it walks the effect pool (Pool_Prev) for that round: when the round is gone it clears DAT_0049c394 and keeps the camera pose last stored at +0x21..+0x31; otherwise the camera takes the round's position (+0x26/+0x2a/+0x2e) and heading (+0xc/+0x10), pushed 500 units forward along the heading, and the world is drawn from there into the screen's own render context (fill DAT_004d3c20, Scene_SubmitFrameObjects, Terrain_SetupVisibleRegion and Scene_DrawTerrain with TerrainTexturingEnabled forced off), followed by a cross through the centre made of two Raster_DrawLine calls and a Raster_DrawEllipse call over a rect centred on the origin. With DAT_0049c394 clear it instead fills the rect with colour 0x11 and sets the screen's labels. See docs/simulation/rockets.md, 'The missile camera'.",
+      "description": "The MISSILE CAM screen's draw: the code pointer stored first in the vtable at 0049c449 that MfdMissileViewScreen_Ctor installs. A nonzero DAT_0049c398 starts a flash: when it differs from the screen's copy at +0x45 it stamps a deadline 0x1e coarse ticks ahead at +0x46, and until then each paint toggles the byte at +0x20 and fills the screen rect (DAT_004d1ac8) with COLORS.DAT id 16 (DAT_004d3c20) or id 19 (DAT_004d3c26) alternately and returns; at the deadline it clears the copy and DAT_0049c398. With DAT_0049c394 set it walks the effect pool (Pool_Prev) for that round: gone, it clears DAT_0049c394; found, the camera takes the round's position (+0x26/+0x2a/+0x2e) plus Q14(500, cos h) in x and Q14(500, cos(h - 0x4000)) in y, h being the heading at +0x10 -- 500 units along the round's own X axis, to its right, not along its heading -- and the round's euler triple (+0xc/+0x10), and the world is drawn from there into the screen's own render context: fill id 16 one column short of the rect's right edge, Scene_SubmitFrameObjects with ViewObjectPtr swapped to the camera, Terrain_SetupVisibleRegion and Scene_DrawTerrain with TerrainTexturingEnabled forced 0 and shade mode 004aab30 forced 1, then two Raster_DrawLine calls through the centre (full width, full height) and a ring-mode Raster_DrawEllipse of radius half the centre's y, all in id 19, with the cockpit shake offset taken out of the context rect for the pass. With DAT_0049c394 clear it fills the rect with palette index 0x11 and sets the labels from STRINGS0 group 35: NONE in label 1 when CockpitView_SumLauncherCounts is 0, else READY TO and LAUNCH in labels 0 and 1; LOCK in label 3, in ColorSchemePanels[0] on id 4 while the gunsight's +0xd6 (mech+0x9b, lock) is clear, else in [3] on id 19 or id 9 by coarse-tick bit 0x20. See docs/formats/mfd.md, 'MFDMissileView -- mode 5'.",
       "source": "docs/simulation/rockets.md; docs/formats/mfd.md"
     },
     {
@@ -9210,6 +9291,15 @@
       "name": "CockpitView_SumLauncherCounts",
       "description": "Over CockpitViewInstance's weapon gauges (+0x70 array, count +0x98), sums the int16 each mount (gauge+0xbd) writes through its vtable +0x60 when that call returns a subtype other than 5, not a launcher; returns the sum. MfdMissileViewScreen_Paint shows the label 004d16f4 when it is 0.",
       "source": "DBSIM disassembly at 00440348"
+    },
+    {
+      "address": "004403bc",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdMissileViewScreen_BlinkLockLabel",
+      "description": "(screen): flips the MISSILE CAM screen's +0x44 with coarse-tick bit 0x20 and, on each flip, re-fonts label 3 (+0x3f) in ColorSchemePanels[3] on a plate of COLORS.DAT id 9 (bit set) or id 19 (bit clear), returning 1; 0 when nothing changed. The same blink MfdMissileViewScreen_Paint applies to the LOCK label, latched in a byte. es2_xref.py finds no branch to it and no stored pointer.",
+      "source": "DBSIM decompile at 004403bc; es2_xref.py 004403bc"
     },
     {
       "address": "00440494",
@@ -9248,6 +9338,24 @@
       "name": "WeaponGauge_Ctor",
       "description": "Constructor for a weapon hardpoint gauge. Lazily loads the `pweapons` (DAT_0049c4d0) and `wpn_dmg` (DAT_0049c4d4) sprite banks, folder selected off DAT_004d25f0, builds the two-sequence WPN_DMG frame table (frames 1-9 and 9-1, one tick each) into _DAT_004d1adc, gives the gauge its own sequencer over it at +0x6c, and sets the sensor-dropout ranges to 120-360 dark and 180-1800 shown.",
       "source": "docs/formats/cockpit-hud-widgets.md (HUD sprite art)"
+    },
+    {
+      "address": "00440a14",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponGauge_MountProjectileType",
+      "description": "(gauge): the Type (int16 +0) of the PROJ.DAT record the gauge's mount (+0xbd) holds at +0x20, or -1 with no mount or no record. MfdDisplay_SyncMissileCamMode tests it for 0, Rocket.",
+      "source": "DBSIM decompile at 00440a14"
+    },
+    {
+      "address": "00440a3c",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponGauge_MountProjectileSubtype",
+      "description": "(gauge): the subtype id (int16 +2) of the PROJ.DAT record the gauge's mount (+0xbd) holds at +0x20, or -1 with no mount or no record. MfdDisplay_SyncMissileCamMode tests it for 3, the electro-optical missile.",
+      "source": "DBSIM decompile at 00440a3c"
     },
     {
       "address": "00440a68",
@@ -10152,6 +10260,24 @@
       "source": "DBSIM decompile at 00446fec"
     },
     {
+      "address": "00447014",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_NextAvailableRow",
+      "description": "(display) steps display+0xb1 forward with wrap 5->0, skipping rows whose state byte has bit 0, then MfdDisplay_SetSharedRow. The . key (0x34) via MfdDisplay_KeyDispatch.",
+      "source": "docs/formats/mfd.md"
+    },
+    {
+      "address": "00447048",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_PrevAvailableRow",
+      "description": "(display) as MfdFlashComm_NextAvailableRow but backwards, wrapping 0->5. The , key (0x33) via MfdDisplay_KeyDispatch.",
+      "source": "docs/formats/mfd.md"
+    },
+    {
       "address": "0044707c",
       "binary": "DBSIM",
       "type": "function",
@@ -10185,7 +10311,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdDisplay_SyncMissileCamMode",
-      "description": "(mfd): switches the MFD to mode 5 (MISSILE CAM) and back on a condition: 00434310(CockpitViewInstance) returns an object for which 00440a14 is 0 and 00440a3c is 3. When it holds and g_MfdMissileCamMode is -1: with g_MfdMissileCamArmed set it saves the current mode (+0xc1) in g_MfdMissileCamSavedMode and MfdDisplay_SetMode(5); either way g_MfdMissileCamMode becomes 5 and the flag is set. When it no longer holds and g_MfdMissileCamMode is not -1, MfdDisplay_SetMode(saved mode) and the flag is set. MfdDisplay_SetMode clears both whenever it runs with g_MfdMissileCamMode not -1, so a mode chosen by hand while the condition holds stays until the condition ends, when the saved mode is restored over it. MfdDisplay_Update calls it.",
+      "description": "(mfd): switches the MFD to mode 5 (MISSILE CAM) and back while an electro-optical launcher is armed: the condition is that CockpitView_FindArmedMountGauge(CockpitViewInstance) returns a gauge for which WeaponGauge_MountProjectileType is 0 (Rocket) and WeaponGauge_MountProjectileSubtype is 3. When it holds and g_MfdMissileCamMode is -1: with g_MfdMissileCamArmed set it saves the current mode (+0xc1) in g_MfdMissileCamSavedMode and MfdDisplay_SetMode(5); either way g_MfdMissileCamMode becomes 5 and the flag is set. When it no longer holds and g_MfdMissileCamMode is not -1, MfdDisplay_SetMode(saved mode) and the flag is set. MfdDisplay_SetMode clears both whenever it changes the mode with g_MfdMissileCamMode not -1, so a mode chosen by hand while the condition holds stays until the condition ends, when the saved mode is restored over it; a saved mode equal to the current one changes nothing and leaves the switch held. MfdDisplay_Update calls it, and while g_MfdMissileCamMode is not -1 draws no transmission. See docs/formats/mfd.md, 'Modes'.",
       "source": "DBSIM decompile at 00447164 and MfdDisplay_SetMode's writes at 00446e8e-00446e98"
     },
     {
@@ -10511,7 +10637,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddDisplay_Update",
-      "description": "Heads-Down Display per-frame update: records the selected target for the damage page, runs HddDisplay_HandleWidgetPress, then (outside the external view) the sensor dropout with the PanelGauge_Ctor default ranges and no sequencer, flagging the current page for a full repaint when +0x76 changes, then the widgets' and the page's updates.",
+      "description": "Heads-Down Display per-frame update: records the selected target for the damage page, runs HddDisplay_HandleWidgetPress, then (outside the external view) the sensor dropout with the PanelGauge_Ctor default ranges and no sequencer, flagging the current page for a full repaint when +0x76 changes, then the widgets' and the page's updates. It also sets the comms-out latch (gauge +0x147) of every destroyed squadmate while the view manager's transition flag +0x1c is set and its view +0x14 is 4, and forces every destroyed, latched comm box to state 1.",
       "source": "docs/formats/cockpit-hud-widgets.md"
     },
     {
@@ -10566,7 +10692,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddDisplay_SetPage",
-      "description": "Switches the display between its two pages (0 = command display [F7], 1 = damage detail [F8]): unlights the old page button, hides the old page object, shows the new one, lights its button, then applies the 2x15 widget visibility table at HddPageWidgetVisibility -- a 0 sets the widget's state to 2, the value HddButton_Paint refuses to draw at.",
+      "description": "Switches the display between its two pages (0 = command display [F7], 1 = damage detail [F8]): unlights the old page button, hides the old page object, shows the new one, lights its button, then applies the 2x15 widget visibility table at HddPageWidgetVisibility -- a 0 moves a widget at state 0 to 2, the value HddButton_Paint refuses to draw at, and a 1 moves one at state 2 back to 0.",
       "source": "docs/formats/heads-down-display.md"
     },
     {
@@ -10731,7 +10857,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddDamageScreen_SetSubjectCaption",
-      "description": "Sets the damage screen's subject caption from the display's five-entry name array at +0x548 (the player's 'YOU', three squadmate names, then 'TARGET') indexed by the subject selector at +0x55c. The player draws in ColorSchemePanels[3] on colour id 6, a squadmate in [2] on that pilot's own COLORS.DAT entry, and the target in [2] on id 15.",
+      "description": "Sets the damage screen's subject caption from the display's five-entry name array at +0x548 (the player's 'YOU', three squadmate names, then 'TARGET') indexed by the subject selector at +0x55c. The player draws in ColorSchemePanels[3] on colour id 6, a squadmate in [2] on HudColorTable_Get(slot) (ids 12, 15, 26), and the target in [2] on id 15.",
       "source": "docs/formats/heads-down-display.md"
     },
     {
@@ -10876,7 +11002,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_Show",
-      "description": "Command display vtable +0xc, run by HddDisplay_SetPage on the incoming page. Clears the state byte on three widgets: the order-column list gadget at screen+0x35, and the display's XMIT and CANCEL buttons. It does NOT touch the map viewport gadget at screen+0x39 -- nothing in the display's or the screen's translation unit ever writes that widget's state, so the map region is registered at state 0 and stays hit-testable on the damage detail page too.",
+      "description": "Command display vtable +0xc, run by HddDisplay_SetPage on the incoming page. Clears the state byte on three widgets: the order-column list gadget at screen+0x35, and the display's XMIT and CANCEL buttons. It does NOT touch the map viewport gadget at screen+0x39 -- no writer of state 2 into that widget is found (the cockpit's press code writes only 1 and 0 through the shared clickable list), so the map region is registered at state 0 and stays hit-testable on the damage detail page too.",
       "source": "docs/formats/cockpit-input.md",
       "signature": "void __cdecl HddCommandScreen_Show(int screen)"
     },
@@ -11005,7 +11131,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_HandleListClick",
-      "description": "Drains the pending list click and branches on which gadget it was. Order column (screen+0x35): walks the eight row rects and stops at the first hit, using STRICT inequalities on all four edges -- unlike every other rect test in the cockpit -- so a row's own boundary lines are dead. With no pilot selected it prints the SELECT PILOT message instead; a hit on the row already armed presses XMIT; any other row calls HddCommandScreen_SelectOrder. Map viewport (screen+0x39): stores the point as the map cursor at +0x11d and sets the armed flag at +0x11c.",
+      "description": "Drains the pending list click and branches on which gadget it was. Order column (screen+0x35): walks the eight row rects and stops at the first hit, using STRICT inequalities on all four edges -- unlike Widget_HitTest's inclusive test -- so a row's own boundary lines are dead. With no pilot selected it prints the SELECT PILOT message instead; a hit on the row already armed presses XMIT; any other row calls HddCommandScreen_SelectOrder. Map viewport (screen+0x39): stores the point as the map cursor at +0x11d and sets the armed flag at +0x11c.",
       "source": "docs/formats/cockpit-input.md",
       "signature": "void __cdecl HddCommandScreen_HandleListClick(int screen)"
     },
@@ -11070,7 +11196,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_FillOrderRecord",
-      "description": "Copies the armed order's committed pick into the transmit record: a gridpoint pick into the record's x/y/z at +0x06/+0x0a/+0x0e, a unit pick into its subject pointer at +0x12. Which of the two is decided by the per-order pick-kind field the previous call to HddCommandScreen_CommitPick latched. This is what settles the record's layout. Args derived from disassembly: [EBP+8], [EBP+0xc].",
+      "description": "Copies the armed order's committed pick into the transmit record: a gridpoint pick into the record's x/y/z at +0x06/+0x0a/+0x0e, a unit pick into its subject pointer at +0x12. Which of the two is decided by the pick kind latched in the selected pilot's pick slot (three 0x2a-byte slots at +0x85, indexed by +0x105). CommitPick latches a kind only for an order that wants a pick, so an order with no pick writes that pilot's last pick again. This is what settles the record's layout. Args derived from disassembly: [EBP+8], [EBP+0xc].",
       "source": "docs/formats/heads-down-display.md",
       "signature": "void __cdecl HddCommandScreen_FillOrderRecord(int commandScreen, SquadOrderRecord *order)"
     },
@@ -11080,7 +11206,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_CommitPick",
-      "description": "Promotes the armed order's pending map pick to its committed one -- the point triple or the subject pointer, per the order's pick kind -- and latches that kind alongside it, so the following HddCommandScreen_FillOrderRecord knows which to copy. XMIT calls the pair in that order. Args derived from disassembly: [EBP+8] only.",
+      "description": "Promotes the selected pilot's pending map pick (slot +0x85 + pilot*0x2a) to its committed one -- the point triple or the subject pointer, per the order's pick kind -- and latches that kind alongside it, so the following HddCommandScreen_FillOrderRecord knows which to copy. XMIT calls the pair in that order. Args derived from disassembly: [EBP+8] only.",
       "source": "docs/formats/heads-down-display.md",
       "signature": "void __cdecl HddCommandScreen_CommitPick(int commandScreen)"
     },
@@ -11144,7 +11270,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_BuildMapMarkers",
-      "description": "Rebuilds the map's marker gadgets: up to 9 waypoint markers from the player's own route (icons 0x4e+), then one per object in the three global object lists, then the player's own marker (icon 0x57). Gadgets past the last used one, out of the 140 allocated, are released.",
+      "description": "Rebuilds the map's marker gadgets: up to 9 waypoint markers from the player's own route (icons 0x4e+), then one per object in the three global object lists, then a gadget for the player's dropped nav marker (icon 0x57), built every time; HddCommandScreen_DrawMap positions and paints it only while NavMarker_Position returns one. Gadgets past the last used one, out of the 140 allocated, are released.",
       "source": "docs/formats/heads-down-display.md"
     },
     {
@@ -12998,7 +13124,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_BuildKeyboardAxes",
-      "description": "Builds the keyboard's contribution to the input axes: TWO signed pairs, not four independent axes. Held keys 0-7 accumulate into the first pair at 004d2445/004d2449 and keys 8-13 into the second at 004d244d/004d2451, each adding its own (dx, dy) entry from the table at 0049eb6d shifted left 7, i.e. +/-0x80 per key. That table is all zeroes in the image and no writer to it is known, so no key-to-axis mapping can be read out of the executable. The pairs are sources, not destinations: Input_BuildSourceTable registers them alongside the joystick axes in the source-pointer table at 004d2394, and the binding config chooses which source each game axis reads.",
+      "description": "Builds the keyboard's contribution to the input axes: TWO signed pairs, not four independent axes. Held keys 0-7 accumulate into the first pair at 004d2445/004d2449, except that the first held diagonal (flags at 0049eb65: keypad 7, 9, 1, 3) zeroes the pair, adds its own entry and ends the group. Of keys 8-13 only the first held key counts, into the second pair at 004d244d/004d2451. Each entry comes from the table at 0049eb6d, shifted left 7 (+/-0x80). That table is filled at startup by the static initialiser at 0045b888. The pairs are sources, not destinations: Input_BuildSourceTable registers them alongside the joystick axes in the source-pointer table at 004d2394, and the binding config chooses which source each game axis reads.",
       "source": "docs/formats/joystick-input.md"
     },
     {
@@ -13016,7 +13142,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_BuildPlayerDevice",
-      "description": "The per-frame input build: reads the twelve controls-block bytes at ControlsOptionBase and routes the joystick's four normalised axes, hat and eight buttons into the device struct at DAT_004d234a that Sim_PollPlayerInput consumes. Each axis row's byte selects a DESTINATION pair (0 unassigned, 1 the movement pair, 2 the turret pair), not a source; a control whose destination is taken falls to a second rank that wins when both have moved, and the keyboard pairs are the last fallback. Also: pulls the FIRE-bound button out to +0x0d and zeroes its byte (using a hardcoded 0x11 rather than ControlsOptionBase+4, so a RAZOR finds its trigger through the walker's block), applies the press-once button latch FUN_0045b718 sets, writes the hat over the turret pair at 0xc0 under HAT=2, and applies keyjoy.cfg's Backturn and Rudder reversals. It also owns the command queue at DAT_004d2148: it drains each code through Sim_DispatchCommand after masking with DAT_0049eae0 = 0x47ff (which discards the Shift bank, folding a shifted key onto the plain one) and then resets the count. It is the input-tape record and playback point too -- see docs/formats/tap-input-tape.md.",
+      "description": "The per-frame input build: reads the twelve controls-block bytes at ControlsOptionBase and routes the joystick's four normalised axes, hat and eight buttons into the device struct at DAT_004d234a that Sim_PollPlayerInput consumes. Each axis row's byte selects a DESTINATION pair (0 unassigned, 1 the movement pair, 2 the turret pair), not a source; a control whose destination is taken falls to a second rank that wins when both have moved, and the keyboard pairs are the last fallback. Also: pulls the first FIRE-bound button of the walker's block out to +0x0d and zeroes its byte (using a hardcoded 0x11 rather than ControlsOptionBase+4, so a RAZOR finds its trigger through the walker's block), applies the press-once button latch Input_LatchButton sets, writes the hat over the turret pair at 0xc0 under HAT=2, and applies keyjoy.cfg's Backturn and Rudder reversals. It also owns the command queue at DAT_004d2148: it drains each code through Sim_DispatchCommand after masking with DAT_0049eae0 = 0x47ff (which discards the Shift bank, folding a shifted key onto the plain one) and then resets the count. It is the input-tape record and playback point too -- see docs/formats/tap-input-tape.md.",
       "source": "docs/formats/joystick-input.md"
     },
     {
@@ -13062,8 +13188,17 @@
       "type": "function",
       "confidence": "high",
       "name": "Keyjoy_LoadConfig",
-      "description": "Reads data\\keyjoy.cfg once at input init: four GetPrivateProfileStringA calls against section [Keyjoy] for Tilt, Backturn, Missile and Rudder, each a case-insensitive compare against the word Reverse setting DAT_0049eab8/eabc/eac0/eac4. Anything else, the shipped Default included, leaves the flag clear. Nothing writes the file.",
+      "description": "Reads data\\keyjoy.cfg once at input init: four GetPrivateProfileStringA calls against section [Keyjoy] for Tilt, Backturn, Missile and Rudder, each a case-insensitive compare against the word Reverse setting DAT_0049eab8/eabc/eac0/eac4. Anything else, the shipped Default included, leaves the flag clear. DBSIM's only profile import is GetPrivateProfileStringA.",
       "source": "docs/formats/joystick-input.md"
+    },
+    {
+      "address": "0045b888",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_InitKeyboardAxisTable",
+      "description": "Static initialiser (Borland _INIT_ entry 004a7b64, priority 0x20) that writes the 28-byte (dx,dy) table KeyboardAxisDeltas (0049eb6d) read by Input_BuildKeyboardAxes. Ghidra has no function here (gap 0045b888-0045ba8c).",
+      "source": "docs/formats/joystick-input.md#the-keyboard"
     },
     {
       "address": "0045ba8c",
@@ -13989,6 +14124,15 @@
       "source": "docs/formats/audio.md"
     },
     {
+      "address": "00462d20",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sound_MuteOne",
+      "description": "(id): zeroes one catalog id's volume and clears both the music and effects flags. No reference found by es2_xref.",
+      "source": "docs/formats/audio.md#open"
+    },
+    {
       "address": "00462d54",
       "binary": "DBSIM",
       "type": "function",
@@ -14005,6 +14149,15 @@
       "name": "Sound_UnmuteEffects",
       "description": "Restores ids 10 and up to their own volumes and sets the effects enable flag.",
       "source": "docs/formats/audio.md"
+    },
+    {
+      "address": "00462e70",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sound_UnmuteOne",
+      "description": "(id): the counterpart of Sound_MuteOne -- restores the id's attribute volume and raises both the music and effects flags. No reference found by es2_xref.",
+      "source": "docs/formats/audio.md#open"
     },
     {
       "address": "00462edc",
@@ -14066,7 +14219,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sound_SuspendAll",
-      "description": "Records which catalog voices are playing into attribute byte 7, saves the CD position into 0049f91c, stops the CD and services the backend. Paired with Sound_ResumeAll.",
+      "description": "Sets attribute byte 7 for each catalog voice that loops forever (record +0x18 == 0) and is playing (flag 0x100), clearing it for the rest; saves the CD position into 0049f91c when music is on; stops the CD, every voice (Sfx_StopAll) and releases the driver (Sfx_ReleaseDriver). Paired with Sound_ResumeAll.",
       "source": "docs/formats/audio.md"
     },
     {
@@ -14237,7 +14390,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sfx_Play",
-      "description": "(manager, voiceHandle). Caches the resource on demand, starts it through Sos_StartVoice, sets the playing flag 0x100 and bumps the manager's playing-sample (+0x3c) or playing-song (+0x40) count. It does NOT test the 0x100 flag first: playing a voice that is already sounding starts a second concurrent copy on another SOS channel rather than restarting or being ignored, and the voice record keeps only the newest handle (+0x20), so Sfx_Stop can no longer reach the older copies.",
+      "description": "(manager, voiceHandle). Caches the resource on demand, starts it through Sos_StartVoice, sets the playing flag 0x100 and bumps the manager's playing-sample (+0x3c) or playing-song (+0x40) count. It does NOT test the 0x100 flag first: playing a voice that is already sounding starts a second concurrent copy on another SOS channel rather than restarting or being ignored, and the voice record keeps only the newest handle (+0x24), so Sfx_Stop can no longer reach the older copies.",
       "source": "docs/formats/audio.md"
     },
     {
@@ -14694,7 +14847,7 @@
       "type": "function",
       "confidence": "high",
       "name": "FlightModel_Step",
-      "description": "The flight model. Settles, in order: the throttle setting at state+0x1e, the airspeed it demands (throttle interpolated across the type's minimum..maximum airspeed, biased by pitch attitude at Q10 250 nose-down against 62 nose-up), sideslip drag, the three angular rates, the new attitude, and the velocity vector in that attitude. It moves nothing -- it produces the world velocity Razor_MovementTick integrates. Turning is bank-driven: the heading rate is -roll >> fm[30] and is applied on top of the integrated attitude. Attitude is integrated as a rotation MATRIX from the mean of this tick's rates and last tick's, with the eulers read back out, so a vertical climb does not gimbal. The fifth argument, a literal 1 at the one call site, is never read.",
+      "description": "The flight model. Settles, in order: the throttle setting at state+0x1e, the airspeed it demands (throttle interpolated across the type's minimum..maximum airspeed, biased by pitch attitude at Q10 250 nose-down against 62 nose-up), sideslip drag, the three angular rates, the new attitude, and the velocity vector in that attitude. It moves nothing -- it produces the world velocity Razor_MovementTick integrates. Turning is bank-driven: the heading rate is -roll >> fm[30] and is applied on top of the integrated attitude. Attitude is integrated as a rotation MATRIX from the mean of this tick's rates and last tick's, with the eulers read back out, so a vertical climb does not gimbal. The fifth argument, a literal 1 at both call sites (Razor_ApplyFlightInput, Flyer_ApplyFlightCommand), is never read.",
       "source": "docs/simulation/razor-flight.md",
       "signature": "void __cdecl FlightModel_Step(int *input, int *state, short *flightModel, int *wingDestroyed, int unused)"
     },
@@ -14706,6 +14859,15 @@
       "name": "Time_GetCoarseTicks",
       "description": "(GetTickCount() - startTick) >> 4, i.e. elapsed time in 16 ms units (62.5 Hz). The mission clock gadget (HudClock_Tick) advances one displayed second per 0x3c=60 of these units, so the original's clock runs ~4% fast. This is the coarse UI/event timebase and is NOT the same thing as SimTickDelta, which Sim_MainTick reads from a separate per-frame timing struct.",
       "source": "docs/engine/planning.md (world scale recovery)"
+    },
+    {
+      "address": "00467734",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Time_AdvanceCoarseTick",
+      "description": "Subtracts 0x10 from Time_GetCoarseTicks' start tick (004d3bfc), moving the 16 ms clock on by one tick. Ghidra had no function here. The DBSIM copy of VSHELL's Time_AdvanceCoarseTick (00465a2c).",
+      "source": "DBSIM bytes at 00467734 (capstone)"
     },
     {
       "address": "0046773c",
@@ -14746,6 +14908,51 @@
       "signature": "short __cdecl Math_IntegrateRateOverTick(short ratePerTick)"
     },
     {
+      "address": "00467858",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_IntegrateRateOverTick2",
+      "description": "(rate): Math_Q8Multiply(004d3bea, rate) clamped to +/-0x7fff: Math_IntegrateRateOverTick with the second Q8 delta, the one Time_BeginSimTick computes with unit 004d3bee. The DBSIM copy of VSHELL's Math_IntegrateRateOverTick2 (00465b50).",
+      "source": "DBSIM decompile at 00467858; compared with VSHELL 00465b50"
+    },
+    {
+      "address": "00467890",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_RateFromTickDelta",
+      "description": "(delta): (delta << 8) / SimTickDelta, the inverse of Math_IntegrateRateOverTick: the per-unit rate that yields delta this tick. The DBSIM copy of VSHELL's Math_RateFromTickDelta (00465b84).",
+      "source": "DBSIM decompile at 00467890"
+    },
+    {
+      "address": "004678a8",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_IntegrateRateWithRemainder",
+      "description": "(value, remainder): value = clamp(value * SimTickDelta >> 8, +/-0x7fff) in place, and remainder = the low 8 bits of |value * SimTickDelta| shifted left 2, or 0x3ff when the product overflows, with value's sign. The DBSIM copy of VSHELL's Math_IntegrateRateWithRemainder (00465ba4).",
+      "source": "DBSIM decompile at 004678a8; compared with VSHELL 00465ba4"
+    },
+    {
+      "address": "00467918",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_MulTickDelta64",
+      "description": "(x): (int64)x * SimTickDelta. The DBSIM copy of VSHELL's Math_MulTickDelta64 (00465c08).",
+      "source": "DBSIM decompile at 00467918"
+    },
+    {
+      "address": "0046792c",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_CountupTimerTick",
+      "description": "(rec): the short at rec+1 += SimTickDelta; returns it. Math_CountdownTimerTick's mirror. The DBSIM copy of VSHELL's Math_CountupTimerTick (00465c1c).",
+      "source": "DBSIM decompile at 0046792c; es2_naming.py match against VSHELL 00465c1c"
+    },
+    {
       "address": "00467944",
       "binary": "DBSIM",
       "type": "function",
@@ -14754,6 +14961,24 @@
       "description": "Countdown-timer tick over a 3-byte packed record. THE COUNTER IS THE SHORT AT +1 FROM THE PASSED POINTER, NOT AT +0: rec[+1] -= SimTickDelta, clamped at 0, returns the new value in AX. Verified across all 40 call sites -- each passes a base whose sibling code reads or writes the short one byte higher (mech+0x258 with the word at +0x259, mount+0x30 with the refire counter at +0x31, rocket+0x5c with the counter at +0x5d). Records sit in stride-3 runs: mech+0x258/0x25b/0x25e and +0x264/0x267/0x26a, globals 0x4a9ee6/0x4a9ee9. The leading byte is untouched by this function, and for all four global instances (0x4a9be8, 0x4a9bec, 0x4a9ee6, 0x4a9ee9) is never read or written anywhere in DBSIM -- only ever address-taken -- so its meaning is still OPEN, not settled as padding. Rocket_TickUpdate's use reloads the counter from ROCKETS.DAT +0x08, which is the exhaust-flame cell-anim and NOT a seeker target-reacquire.",
       "source": "docs/simulation/dbsim-physics-notes.md; disassembly of 00467944 + all 40 call sites",
       "signature": "short __cdecl Math_CountdownTimerTick(void *timerRecord)"
+    },
+    {
+      "address": "0046796c",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_SetShort",
+      "description": "(rec, value): the short at rec+1 = value * 004d3bf6 * 0x100. The DBSIM copy of VSHELL's Timer_SetShort (00465c5c).",
+      "source": "DBSIM decompile at 0046796c"
+    },
+    {
+      "address": "0046798c",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_CountUp",
+      "description": "(rec): the int at rec+1 += SimTickDelta; returns it. Timer_CountDown's mirror. The DBSIM copy of VSHELL's Timer_CountUp (00465c84).",
+      "source": "DBSIM decompile at 0046798c; es2_naming.py match against VSHELL 00465c84"
     },
     {
       "address": "004679a4",
@@ -16856,7 +17081,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Joystick_NormaliseAxes",
-      "description": "Maps each of the four raw joyGetPosEx axes onto a signed byte: (raw << 8) / 0xffff - 0x80, giving -0x80..+0x7f. The width comes from the device object's resolution field +0x16, which JoystickDevice_CtorBase sets to 7. No JOYCAPS min/max is consulted -- the game leans entirely on Windows' own calibration.",
+      "description": "Maps each of the four raw joyGetPosEx axes onto a signed byte: (raw << 8) / 0xffff - 0x80, giving -0x80..+0x80. Joystick_ReadWithResponse takes the width as 1 << the resolution field +0x16, which JoystickDevice_CtorBase sets to 7. No JOYCAPS min/max is consulted -- the game leans entirely on Windows' own calibration.",
       "source": "docs/formats/joystick-input.md"
     },
     {
@@ -16874,7 +17099,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_QueryCapabilities",
-      "description": "Rebuilds the eight-byte joystick capability block at 006bb72c on every call and returns it: +0 is 2 or 1 and never 0, +2 the button count (DAT_006bb438 + DAT_006bb5cc clamped to 8), and +4/+5/+6 whether a throttle, rudder and hat are present, from the device flag word's bits 0, 1 and 4. The controls panel greys its rows against it, and Input_SetThrottleLeverMode reads +4.",
+      "description": "Rebuilds the eight-byte joystick capability block at 006bb72c on every call and returns it: +0 is 2 when stick 1 enumerated (DAT_006bb728 zero), otherwise 1, never 0, +2 the button count (DAT_006bb438 + DAT_006bb5cc clamped to 8), and +4/+5/+6 whether a throttle, rudder and hat are present, from the device flag word's bits 0, 1 and 4. The controls panel greys its rows against it, and Input_SetThrottleLeverMode reads +4.",
       "source": "docs/simulation/preferences.md"
     },
     {
@@ -17197,6 +17422,24 @@
       "source": "docs/simulation/mech-locomotion.md"
     },
     {
+      "address": "00478c54",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_PushModelTransform",
+      "description": "(shapeInst, scratch, root): saves g_ModelTransformPtr, Transform_Concat(root, saved, scratch), installs scratch with Raster_SetModelTransform and returns the saved pointer. ANShapeInstance_Render brackets TSShapeInstance_Render with it and ShapeInst_PopModelTransform. The DBSIM copy of VSHELL's ShapeInst_PushModelTransform (004635a4).",
+      "source": "DBSIM decompile at 00478c54"
+    },
+    {
+      "address": "00478c84",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_PopModelTransform",
+      "description": "(shapeInst, saved): Raster_SetModelTransform(saved) when saved is non-null. The DBSIM copy of VSHELL's ShapeInst_PopModelTransform (004635d0).",
+      "source": "DBSIM decompile at 00478c84"
+    },
+    {
       "address": "00478c98",
       "binary": "DBSIM",
       "type": "function",
@@ -17340,6 +17583,15 @@
       "name": "AnimThread_EvalNodeLocals",
       "description": "The keyframe interpolator. For each animated column of the playing sequence, reads the transform-pool index at (sequence, frame) and at (nextSequence, nextFrame); if the two indices match, copies the 12-byte local transform straight; otherwise calls Anim_BlendKeyframeTransforms (00492600) with a Q10 interpolant of ((frameAccumulator * 0x400 + frameDuration/2) / frameDuration) -- the SAME elapsed-frame fraction AnimThread_ReadRootScaled already ramps root motion by. Writes into the shape instance's per-node local array (shapeInst+0x12, stride 0xc, indexed by transform id) and sets that node's dirty byte in shapeInst+0xe. Columns whose part id is 0 are skipped entirely, so transform 0 keeps its default and never takes an animated pose. Thread field offsets confirmed here: +4 sequence, +6 frame, +8 nextSequence, +10 nextFrame, +0x1c frameAccumulator, +0x1e frameDuration.",
       "source": "docs/simulation/mech-locomotion.md; Herculan AnimationThread.NodeTransform"
+    },
+    {
+      "address": "00479aec",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_Ctor",
+      "description": "(assert): Assert_Emit(0, 1, 0, 0, 0), counts the object live and returns it. The static initialiser 00479c40 builds the assert logger 006c574c with it. The DBSIM copy of VSHELL's Assert_Ctor (0044de50).",
+      "source": "DBSIM decompile at 00479aec"
     },
     {
       "address": "00479b48",
@@ -18026,6 +18278,15 @@
       "source": "DBSIM decompile and disassembly at 0047b260"
     },
     {
+      "address": "0047b294",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MemRWStream_SetOverrunStatus",
+      "description": "(stream, writing): status 2 (end of data) when the cursor +0x10 is at the end +0xc and writing is 0, otherwise 1 (I/O error). Returns 0. The DBSIM copy of VSHELL's MemRWStream_SetOverrunStatus (0044edac).",
+      "source": "DBSIM decompile at 0047b294"
+    },
+    {
       "address": "0047b2c8",
       "binary": "DBSIM",
       "type": "function",
@@ -18314,6 +18575,96 @@
       "source": "DBSIM decompile and disassembly at 0047bbd0"
     },
     {
+      "address": "0047bc80",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_EncodeChar",
+      "description": "(coder, c): walks the parent links (+8) from leaf c up to the root (0x272) collecting the code bits, writes them with LZHuffman_PutCode, then LZHuffman_Update(c). Okumura's LZHUF EncodeChar. The DBSIM copy of VSHELL's LZHuffman_EncodeChar (0044f78c).",
+      "source": "DBSIM decompile at 0047bc80; es2_naming.py diff against VSHELL 0044f78c"
+    },
+    {
+      "address": "0047bcd4",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_EncodePosition",
+      "description": "(coder, pos): LZHuffman_PutCode with the top six bits' length and code from the encode tables, then the low six bits in 6 bits. LZHUF's EncodePosition. The DBSIM copy of VSHELL's LZHuffman_EncodePosition (0044f7e0).",
+      "source": "DBSIM decompile at 0047bcd4; es2_naming.py diff against VSHELL 0044f7e0"
+    },
+    {
+      "address": "0047bd18",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_DecodeChar",
+      "description": "(coder): walks the child links (+0xc) from the root (+0x4e4) one LZHuffman_GetBit at a time until a leaf (>= 0x273), LZHuffman_Update's it and returns leaf - 0x273. LZHUF's DecodeChar; LZHRStream_Read calls it. The DBSIM copy of VSHELL's LZHuffman_DecodeChar (0044f824).",
+      "source": "DBSIM decompile at 0047bd18; es2_naming.py diff against VSHELL 0044f824"
+    },
+    {
+      "address": "0047bd68",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_DecodePosition",
+      "description": "(coder): reads a byte with LZHuffman_GetByte, takes the upper six bits and the extra bit count from the decode tables, reads those bits with LZHuffman_GetBit and returns the 12-bit position. LZHUF's DecodePosition; LZHRStream_Read calls it. The DBSIM copy of VSHELL's LZHuffman_DecodePosition (0044f874).",
+      "source": "DBSIM decompile at 0047bd68; es2_naming.py diff against VSHELL 0044f874"
+    },
+    {
+      "address": "0047bdbc",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_EncodeEnd",
+      "description": "(coder): writes the top byte of the bit buffer (+0x13) when bits are pending (+0x15), then a zero byte. LZHUF's EncodeEnd with a trailing 0. The DBSIM copy of VSHELL's LZHuffman_EncodeEnd (0044f8c8).",
+      "source": "DBSIM decompile at 0047bdbc; es2_naming.py diff against VSHELL 0044f8c8"
+    },
+    {
+      "address": "0047bdec",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_GetBit",
+      "description": "(coder): refills the 16-bit input buffer (+0x10, bit count +0x12) a byte at a time with Stream_ReadByte from the source (+0) while it holds fewer than 9 bits (0 at end of data), then shifts out and returns the top bit. LZHUF's GetBit. The DBSIM copy of VSHELL's LZHuffman_GetBit (0044f8f8).",
+      "source": "DBSIM decompile at 0047bdec; es2_naming.py diff against VSHELL 0044f8f8"
+    },
+    {
+      "address": "0047be4c",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_GetByte",
+      "description": "(coder): LZHuffman_GetBit's refill, then shifts out and returns the top 8 bits. LZHUF's GetByte. The DBSIM copy of VSHELL's LZHuffman_GetByte (0044f954).",
+      "source": "DBSIM decompile at 0047be4c; es2_naming.py diff against VSHELL 0044f954"
+    },
+    {
+      "address": "0047beac",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_PutCode",
+      "description": "(coder, len, code): ORs the code's top len bits into the output buffer (+0x13, count +0x15) and writes each completed byte to the stream. LZHUF's Putcode. The DBSIM copy of VSHELL's LZHuffman_PutCode (0044f9b0).",
+      "source": "DBSIM decompile at 0047beac; es2_naming.py diff against VSHELL 0044f9b0"
+    },
+    {
+      "address": "0047bf20",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_Reconstruct",
+      "description": "(coder): rebuilds the adaptive Huffman tree: halves the leaf frequencies (+4), rebuilds the internal nodes in frequency order and relinks the parents (+8). LZHUF's reconst; LZHuffman_Update calls it when the root frequency reaches 0x8000. The DBSIM copy of VSHELL's LZHuffman_Reconstruct (0044fa24).",
+      "source": "DBSIM decompile at 0047bf20; es2_naming.py diff against VSHELL 0044fa24"
+    },
+    {
+      "address": "0047c054",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_Update",
+      "description": "(coder, c): LZHuffman_Reconstruct when the root frequency is 0x8000, then increments the frequencies from leaf c to the root, swapping a node past its lower-frequency successors to keep the order. LZHUF's update. The DBSIM copy of VSHELL's LZHuffman_Update (0044fb58).",
+      "source": "DBSIM decompile at 0047c054; es2_naming.py diff against VSHELL 0044fb58"
+    },
+    {
       "address": "0047c13c",
       "binary": "DBSIM",
       "type": "function",
@@ -18393,6 +18744,24 @@
       "name": "BuffWStream_Read",
       "description": "The DBSIM copy of VSHELL's BuffWStream_Read (0044ff08).",
       "source": "es2_naming.py diff DBSIM 0047c400 VSHELL 0044ff08: identical after normalisation; RTTI BuffWStream vtable slot"
+    },
+    {
+      "address": "0047c414",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuffWStream_GrowBuffer",
+      "description": "(stream, extra): adds extra to the buffer size +0xe, rounds it up to a multiple of 100 and reallocs the buffer +0x12. The DBSIM copy of VSHELL's BuffWStream_GrowBuffer (0044ff1c).",
+      "source": "DBSIM decompile at 0047c414"
+    },
+    {
+      "address": "0047c464",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuffWStream_SyncStatus",
+      "description": "(stream): status 6 (no target) when +8 is null, else the target's Stream_GetStatus. Returns 0. The DBSIM copy of VSHELL's BuffWStream_SyncStatus (0044ff6c).",
+      "source": "DBSIM decompile at 0047c464"
     },
     {
       "address": "0047c538",
@@ -18600,6 +18969,15 @@
       "name": "Stream_ReadDword2",
       "description": "(stream, dst): reads 4 bytes through the stream's read slot (vtable +0x18); a second copy of Stream_ReadDword.",
       "source": "DBSIM decompile at 0047cfb1"
+    },
+    {
+      "address": "0047d058",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Str_TrimRight",
+      "description": "(s): cuts s after its last character above a space (code > 0x20), dropping trailing blanks and control characters; returns s. The DBSIM copy of VSHELL's Str_TrimRight (00450428).",
+      "source": "DBSIM decompile at 0047d058"
     },
     {
       "address": "0047d08c",
@@ -20721,6 +21099,42 @@
       "source": "DBSIM decompile at 0048982e and 00486d70"
     },
     {
+      "address": "004898a0",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_BlitClipped",
+      "description": "Slot 26 of raster driver 3's routine table, the blit Bitmap_BlitClipDispatch calls: (bitmap, point, clipRect, flags) clips the bitmap at point to clipRect {x0, y0, x1, y1} inclusive, or to the surface when clipRect is null, then copies it in one of four orientations by flags bits 0-1: opaque when the bitmap's byte +5 has bit 0x10, otherwise skipping colour 0.",
+      "source": "DBSIM decompile at 004898a0"
+    },
+    {
+      "address": "0048a0c8",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_OpenDisplay",
+      "description": "Slot 11 of raster driver 3's routine table (g_RasterRoutines_Driver3), which RasterDriver_OpenDisplay calls with (bitmapHeader, info): allocates the surface's row-offset table into info+0, takes the width and height from the one-shot overrides when they are not negative (resetting them to -1) or else from the header, fills the rest of info and sets Display_ScreenRect and the origin to 0. The DBSIM copy of VSHELL's Driver3_OpenDisplay (004281fb).",
+      "source": "DBSIM decompile at 0048a0c8; es2_naming.py diff against VSHELL 004281fb"
+    },
+    {
+      "address": "0048a218",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_Slot7NoOp",
+      "description": "Slot 7 of raster driver 3's routine table (g_RasterRoutines_Driver3): returns at once. RasterDriver_OpenDisplay and GLDisplay_SetAttribute call slot 7.",
+      "source": "DBSIM decompile at 0048a218"
+    },
+    {
+      "address": "0048a220",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_CloseDisplay",
+      "description": "Slot 12 of raster driver 3's routine table, which RasterDriver_CloseDisplay calls: (info) frees the row-offset table at info+0 that Driver3_OpenDisplay allocated.",
+      "source": "DBSIM decompile at 0048a220"
+    },
+    {
       "address": "0048a234",
       "binary": "DBSIM",
       "type": "function",
@@ -20737,6 +21151,24 @@
       "name": "Raster_PutPixel",
       "description": "Driver 3's g_RasterRoutines slot 5: (point, value) stores the byte at the address Raster_GetPixel reads.",
       "source": "DBSIM disassembly at 0048a255; driver-3 table at 004a5898"
+    },
+    {
+      "address": "0048a382",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_SpanCopy",
+      "description": "Slot 22 of raster driver 3's routine table, Raster_SpanCopy's: (pixels, y, x0, x1) copies x1 - x0 + 1 bytes from pixels into row y at x0 through the surface's row-offset table, dwords then bytes; nothing when x0 > x1.",
+      "source": "DBSIM decompile at 0048a382"
+    },
+    {
+      "address": "0048a4a7",
+      "binary": "DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_SpanFill",
+      "description": "Slot 24 of raster driver 3's routine table, Raster_SpanFill's: (colour, y, x0, x1) fills x0..x1 of row y with the colour byte, dwords then bytes; nothing when x0 > x1.",
+      "source": "DBSIM decompile at 0048a4a7"
     },
     {
       "address": "0048a818",
@@ -20930,7 +21362,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Light_Register",
-      "description": "Adds a light object pointer to the active light list (DAT_006c6130, 10-slot max, dedups by pointer identity). Only 4 call sites in the whole binary: FUN_00407388/FUN_00407444 (pooled directional/point light getters, see their own entries), Light_ReregisterPersistent (re-registers a persistent light list Light_PersistentList into the active manager), and Sim_InitMissionSession (FUN_004614fc, inlines the same directional-light-creation logic as FUN_00407388 and calls this directly).",
+      "description": "Adds a light object pointer to the active light list (DAT_006c6130, 10-slot max, dedups by pointer identity). Four call sites found by es2_xref: FUN_00407388/FUN_00407444 (pooled directional/point light getters, see their own entries), Light_ReregisterPersistent (re-registers a persistent light list Light_PersistentList into the active manager), and Light_CreateMissionSun (00461240).",
       "source": "flat-shaded lighting RE"
     },
     {
@@ -21501,7 +21933,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Light_EnableModelSpaceTransform",
-      "description": "Sets DAT_006cbc88, the gate on the per-node light-to-model-space transform. Called unconditionally by Light_ResetSystem, so it is always on inside a mission.",
+      "description": "Sets DAT_006cbc88, the gate on the per-node light-to-model-space transform. Called unconditionally by Light_ResetSystem; no store of 0 found (docs/formats/effect-lights.md#open).",
       "source": "docs/formats/effect-lights.md"
     },
     {
@@ -24989,6 +25421,15 @@
       "source": "docs/simulation/mech-locomotion.md"
     },
     {
+      "address": "0049ac45",
+      "binary": "DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitShakeReseedAfterSlide",
+      "description": "Byte. Set by CockpitView_ApplyViewState when a view change clears an armed shake band, cleared on a change to view 4; while set, CockpitView_StepViewTransition ends every slide with CockpitView_SetShakeBand(10).",
+      "source": "docs/formats/cockpit-canopy-palette.md#the-damage-shake"
+    },
+    {
       "address": "0049ac48",
       "binary": "DBSIM",
       "type": "data",
@@ -25367,6 +25808,24 @@
       "source": "docs/formats/cockpit-input.md"
     },
     {
+      "address": "0049eb65",
+      "binary": "DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "KeyboardAxisDiagonalFlags",
+      "description": "8 bytes, 01 00 01 00 00 01 00 01: marks keyboard axis keys 0-7 that are diagonals (keypad 7, 9, 1, 3). In Input_BuildKeyboardAxes the first held diagonal zeroes the first pair, adds its own entry and ends the group.",
+      "source": "docs/formats/joystick-input.md#the-keyboard"
+    },
+    {
+      "address": "0049eb6d",
+      "binary": "DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "KeyboardAxisDeltas",
+      "description": "28-byte table of signed (dx, dy) pairs for the fourteen keyboard axis keys, zero in the image and filled at startup by Input_InitKeyboardAxisTable; Input_BuildKeyboardAxes shifts each left 7 (+/-0x80).",
+      "source": "docs/formats/joystick-input.md#the-keyboard"
+    },
+    {
       "address": "0049eff4",
       "binary": "DBSIM",
       "type": "data",
@@ -25588,7 +26047,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Music_CdEnabled",
-      "description": "CD music enable byte, written by Sim_InitMissionSession.",
+      "description": "CD music enable byte, written by Sim_InitMissionSession (00461cb0); read by sfxWndProc before the loop restart and by Sound_SuspendAll.",
       "source": "docs/formats/audio.md"
     },
     {
@@ -25984,7 +26443,7 @@
       "type": "data",
       "confidence": "high",
       "name": "EffectLightPool",
-      "description": "The effect-light handle pool LightManager_InitSubsystem builds; Explosion_Construct allocates from it, EffectLightPool_FlushDeletes drains its delete queue (004a9686), and 004078c8 zeroes it.",
+      "description": "The effect-light handle pool LightManager_InitSubsystem builds; Explosion_Construct allocates from it, EffectLightPool_FlushDeletes drains its delete queue (004a9686), and 004078c8 zeroes it. Three entries of 0xe bytes (Pool_Init(pool, 3, 0xe)).",
       "source": "DBSIM decompile at 004077e8 and LightManager_InitSubsystem"
     },
     {
@@ -26785,7 +27244,7 @@
       "type": "data",
       "confidence": "high",
       "name": "maybe_CockpitLayoutMode",
-      "description": "Alternate cockpit layout selector at +0x7c of the video-mode block at 004d2540, and always zero: its only write is Main_StaticInit's (memset, then a 0 store through EBX). All 23 absolute occurrences of 004d25bc are MOVSX reads, and over the 18 functions that hold the block base (in a register or as a pushed argument) es2_fieldscan finds only one other access to +0x7c, a read in Sim_InitMissionSession. Both branches the readers test for are therefore unreachable. Value 1 would make view 0 also blit the view-1 (heads-down) bitmap at y+0xc5 and disable view 1 as a standalone view, and it is defective besides -- its second load reuses the unmodified local folder buffer and corrupts the global 'dba' literal. Value 2 would route blits through Bitmap_BlitClipped and put the view origin in DAT_004d25da/de instead of DAT_004cfa24/28; the only stores to DAT_004d25da/de (CockpitView_SetView, 0042a1d8/0042a1e1) are on that path, so the offset Widget_OnMouseDown and Widget_OnMouseUp add from them is always zero.",
+      "description": "Alternate cockpit layout selector at +0x7c of the video-mode block at 004d2540, and zero in every run found: its only write is Main_StaticInit's (memset, then a 0 store through EBX). All 23 absolute occurrences of 004d25bc are MOVSX reads, and over the 18 functions that hold the block base (in a register or as a pushed argument) es2_fieldscan finds only one other access to +0x7c, a read in Sim_InitMissionSession. Both branches the readers test for are therefore unreachable. Value 1 would make view 0 also blit the view-1 (heads-down) bitmap at y+0xc5 and disable view 1 as a standalone view, and it is defective besides -- its second load reuses the unmodified local folder buffer and corrupts the global 'dba' literal. Value 2 would route blits through Bitmap_BlitClipped and put the view origin in DAT_004d25da/de instead of DAT_004cfa24/28; the only stores to DAT_004d25da/de (CockpitView_SetView, 0042a1d8/0042a1e1) are on that path, so the offset Widget_OnMouseDown and Widget_OnMouseUp add from them is always zero.",
       "source": "cockpit rendering RE session"
     },
     {
@@ -26866,7 +27325,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Music_TrackSelect",
-      "description": "The -R command-line switch's value, parsed with atol at 0045e824. Sim_InitMissionSession derives the mission's CD track from it as value % 5 + 2, so 0-4 select tracks 2-6 and an absent switch leaves every mission on track 2. Nothing else selects a track.",
+      "description": "The -R command-line switch's value, parsed with atol at 0045e824. Sim_InitMissionSession derives the mission's CD track from it as value % 5 + 2, so 0-4 select tracks 2-6 and an absent switch leaves every mission on track 2.",
       "source": "docs/formats/audio.md"
     },
     {
@@ -27028,7 +27487,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Display_ScreenRect",
-      "description": "int[4] {x0, y0, x1, y1}: the viewport's rect on screen, {0, 0, w-1, h-1}, set by driver 3's surface setup FUN_0048a0c8. Display_Present's destination rect.",
+      "description": "int[4] {x0, y0, x1, y1}: the viewport's rect on screen, {0, 0, w-1, h-1}, set by driver 3's surface setup Driver3_OpenDisplay. Display_Present's destination rect.",
       "source": "docs/formats/cockpit-views.md"
     },
     {
@@ -27037,7 +27496,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Display_OriginX",
-      "description": "x of the viewport window's top-left in the back buffer, with Display_OriginY at 004d30a0. Written only by Display_SetOrigin and zeroed by driver 3's surface setup FUN_0048a0c8. Display_Present passes it to Screen_PresentFrame as the source point.",
+      "description": "x of the viewport window's top-left in the back buffer, with Display_OriginY at 004d30a0. Written only by Display_SetOrigin and zeroed by driver 3's surface setup Driver3_OpenDisplay. Display_Present passes it to Screen_PresentFrame as the source point.",
       "source": "docs/formats/cockpit-views.md"
     },
     {
@@ -27091,7 +27550,7 @@
       "type": "data",
       "confidence": "high",
       "name": "SimTickDelta",
-      "description": "Global simulation timestep, read (never written) by the fixed-point math toolkit. Confirms DBSIM runs a discrete fixed/semi-fixed timestep simulation.",
+      "description": "Global simulation timestep, Q8 with 1.0 = 125 ms: Time_InitSimClock sets 0x100 and Time_BeginSimTick recomputes it every frame, except during tape playback, when Sim_MainTick copies each frame record's delta into it instead; the time module's integrate, countdown and count-up helpers read it.",
       "source": "docs/simulation/dbsim-physics-notes.md"
     },
     {

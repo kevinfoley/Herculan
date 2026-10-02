@@ -77,14 +77,16 @@ public sealed class InputTapeRecorder : IDisposable {
 	}
 
 	/// <summary>
-	/// <c>Input_QueryCapabilities</c>' eight bytes for <paramref name="capabilities"/>: <c>+0</c> 1 for
-	/// a stick and 2 for none, the button count at <c>+2</c>, and the throttle, rudder and hat flags at
-	/// <c>+4</c>, <c>+5</c> and <c>+6</c> — the hat as <c>JOYCAPS_HASPOV</c>'s own <c>0x10</c>, which
-	/// is what the retail tapes carry.
+	/// <c>Input_QueryCapabilities</c>' eight bytes for <paramref name="capabilities"/>: <c>+0</c>, the button
+	/// count at <c>+2</c>, and the throttle, rudder and hat flags at <c>+4</c>, <c>+5</c> and <c>+6</c> —
+	/// the hat as <c>JOYCAPS_HASPOV</c>'s own <c>0x10</c>, which is what the retail tapes carry.
+	///
+	/// <para><c>+0</c> is 2 when the original enumerated a second stick and 1 otherwise, with or
+	/// without a first; this engine reads one device, so it is always 1.</para>
 	/// </summary>
 	public static byte[] CapabilityBlock(JoystickCapabilities capabilities) {
 		var block = new byte[InputTape.CapabilityBlockSize];
-		block[0] = (byte)(capabilities.Present ? 1 : 2);
+		block[0] = SingleStickFlag;
 		if (capabilities.Present) {
 			block[2] = (byte)Math.Min(capabilities.ButtonCount, JoystickCapabilities.MaxButtons);
 			block[4] = (byte)(capabilities.HasThrottle ? 1 : 0);
@@ -94,6 +96,9 @@ public sealed class InputTapeRecorder : IDisposable {
 
 		return block;
 	}
+
+	/// <summary>Capability <c>+0</c> with no second stick enumerated.</summary>
+	private const byte SingleStickFlag = 1;
 
 	/// <summary>
 	/// Queues one key press as a command code: a set-1 scancode, with <see cref="InputTapePlayer.AltBit"/>

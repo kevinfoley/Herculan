@@ -28,7 +28,7 @@ public class MissionAction82 : MapObject {
 	public short[] AreaRefs { get; set; } = new short[8];
 	public const int AreaRefsWord = 0x0A / 2;
 
-	/// <summary>0x1A — <c>0</c> in retail and not exported to <c>script.dat</c>.</summary>
+	/// <summary>0x1A — how many of <see cref="CounterPairs"/> are filled, from the front; not exported to <c>script.dat</c>. See docs/formats/msn-mission-file.md, "Row #10 field decode".</summary>
 	public short Unk1A { get; set; }
 
 	/// <summary>

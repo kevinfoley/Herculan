@@ -12,9 +12,9 @@ Its whole body is a switch on the target's target class (`obj+0x1a8`, [`target-s
 
 | Class | Aim point |
 |---|---|
-| 0, a machine | `Ai_AimAndFireAtMech`, below — the only branch that can pick a component |
+| 0, a machine | `Ai_AimAndFireAtMech`, below — the only branch that uses the shooter's aim component |
 | 1, a structure | The base's **first surviving component**: vtable `+0x54` (`Base_FirstLiveComponent`, `00406868`) with a null second argument returns the first index whose damage word is non-zero, and vtable `+0x58` places it |
-| anything else | The object's own aim offset — vtable `+0x30`, the type record's `+0x68`/`+0x6a` — added to its position |
+| anything else | The object's own aim offset, vtable `+0x30`'s second triple, added to its position. A GroundVehicle (class 3) is built as a structure and answers with its `BASES.DAT +0x2c` height (`Base_GetAimPoint`, [`structure-behaviour.md`](structure-behaviour.md#what-a-structure-is-aimed-at)); a flyer (class 2) answers zero (`SimObject_GetAimPointZero`), so it is shot at its origin |
 
 The last two go straight to `Ai_FireAtPoint`. Only the first has a turret gate.
 
@@ -22,16 +22,17 @@ The last two go straight to `Ai_FireAtPoint`. Only the first has a turret gate.
 
 ```
 bearingError = Math_HeadingToward(target, mech) - mech.heading
-if (|bearingError| >= typeRec+0x22) { Mech_CenterTorsoTick(mech, 0); return }
+lim = typeRec+0x22
+if ((uint16)(bearingError + lim) >= (uint16)(2 * lim)) { Mech_CenterTorsoTick(mech, 0); return }   // |error| >= lim
 range = Math_DistanceBetweenPoints(mech, target)                    // 3D, unlike navigation
 if (aimComponent >= 0 && 5000 <= range < 20000)  point = target.ComponentPosition(aimComponent)
 else                                             point = target.AimNodeTransform origin, in world
 Ai_FireAtPoint(mech, point, aspect, target)
 ```
 
-- **The turret has to be able to reach it.** `typeRec+0x22` is the torso-twist limit, 14000 across the whole fleet, so a target more than ~77° off the hull's nose is not shot at — the turret is centred instead, which also zeroes the [gun convergence](weapon-firing.md#gun-convergence--mech_convergegunsonrange-0041a74c). The machine keeps walking; the steering that brings the target back round is [`ai-navigation.md`](ai-navigation.md)'s.
+- **The turret has to be able to reach it.** `typeRec+0x22` is the shooter's own torso-twist limit, 14000 on twenty of the 21 chassis ([`mech-locomotion.md`](mech-locomotion.md#mech-type-record)), so a target more than ~77° off the hull's nose is not shot at — the turret is centred instead, which also zeroes the [gun convergence](weapon-firing.md#gun-convergence--mech_convergegunsonrange-0041a74c). The machine keeps walking; the steering that brings the target back round is [`ai-navigation.md`](ai-navigation.md)'s. The PITBULL states 32767, the sentinel for a turret with no stop, and the unsigned test then passes every bearing error but `0x7fff` and `-0x8000`: it shoots at anything short of dead astern.
 - **The aim component is only used at conversational range**, 5000 to 20000 units — 30 m to 120 m. Outside that band the AI shoots at the target's aim node and takes whatever component the hit test gives it. `Mech_AiSelectAimComponent` picks the component; see [`ai-targeting.md`](ai-targeting.md).
-- Range here is `Math_DistanceBetweenPoints`, the 3D form, and it decides nothing but the component band above. Every *navigation* range in the AI is the ground-plane one, and so is the range `Ai_FireAtPoint` weighs weapons against, measured to the chosen point.
+- Range here is `Math_DistanceBetweenPoints`, the 3D form, and it decides nothing but the component band above. Every range a navigation steer is computed from is the ground-plane one ([`ai-navigation.md`](ai-navigation.md#drive-to-a-point--ai_drivetopoint-0041fac4)), and so is the range `Ai_FireAtPoint` weighs weapons against, measured to the chosen point.
 
 ## The fire decision — `Ai_FireAtPoint` (`0041f5a0`)
 
@@ -64,11 +65,11 @@ Six things it settles.
 
 **Only a travelling shot gets a lead.** `range × targetSpeed ÷ projectileSpeed` along the target's own heading, from the `PROJ.DAT` record's `Speed` at `+0x0a`. A `Beam` record carries speed 0 and so takes no lead, which is right; a structure returns speed 0 from vtable `+0x38` and takes none either.
 
-**The scatter is Cybrid-only and one-sided.** `group+0x12` is the group's side, so a machine in the *player's* squad never has its aim perturbed at all. The table at `0049a30c` is indexed by the mission difficulty (`004a9ee0`, the same global `Damage_ScaleByDifficulty` reads) — the enemy shoots straighter the harder the game is set. Its entries and where the difficulty comes from are [`difficulty.md`](difficulty.md#what-the-difficulty-changes)'s. `Math_RandomBelow` draws in `[0, bound)`, so all three components are displaced in the **positive** direction only; see [`KNOWN_ISSUES.md`](../../KNOWN_ISSUES.md).
+**The scatter is Cybrid-only and one-sided.** `group+0x12` is the group's side, and the scatter is added whenever it is not 0, the human side — so no human machine, the player's squad or an allied group, has its aim perturbed at all. The table at `0049a30c` is indexed by the mission difficulty (`004a9ee0`, the same global `Damage_ScaleByDifficulty` reads) — the enemy shoots straighter the harder the game is set. Its entries and where the difficulty comes from are [`difficulty.md`](difficulty.md#what-the-difficulty-changes)'s. `Math_RandomBelow` draws in `[0, bound)`, so all three components are displaced in the **positive** direction only; see [`KNOWN_ISSUES.md`](../../KNOWN_ISSUES.md).
 
 **`mech+0x2ac` is the ELF latch.** Only weapon ids 6 and 22 are kept, and only while the mount stays ready and in range — `WeaponMount_RangeAllows` ([`weapon-mounts.md`](weapon-mounts.md#readiness--weaponmounts_mountisready-00410970)) asked with the ground-plane range to the point, not the 3D range `Ai_AimAndFireAtMech` measured a moment earlier. That is what lets an AI machine sustain an ELF burst across ticks instead of re-rolling its choice each one — `ElfMount_CanFire`'s sustain clause needs the mount fired on the previous tick.
 
-**`mech+0xb5` costs exactly one selection.** Its only setter is `Rocket_HomingSteer` for a subtype-3 (EO) missile, once per tick of flight — see [`rockets.md`](rockets.md#guidance--rocket_homingsteer-0040a254). So an AI machine that has an EO missile in the air fires nothing else while it steers, which is the machine's equivalent of the pilot flying it. It does not stop a *latched* weapon: the flag is only tested on the path that re-chooses.
+**`mech+0xb5` costs exactly one selection.** `Rocket_HomingSteer` sets it on the launching machine for a subtype-3 (EO) missile, once per tick of flight — see [`rockets.md`](rockets.md#guidance--rocket_homingsteer-0040a254) — and the branch above clears it (other writers: [Open](#open)). So an AI machine that has an EO missile in the air fires nothing else while it steers, which is the machine's equivalent of the pilot flying it. It does not stop a *latched* weapon: the flag is only tested on the path that re-chooses.
 
 ## Choosing a weapon — `Ai_ChooseWeapon` (`0041f358`)
 
@@ -80,7 +81,7 @@ frontal = -0x4000 <= aspect < 0x4000                              // a boolean, 
 shield = target.ShieldByHeading(frontal)                          // vtable +0x34, which wants a heading
 jitter = target.TargetClass == 0 ? 35 : 30
 for each mount:
-    if (mount.Destroyed) continue
+    if (mount == 0 || mount.IsSpent()) continue                       // vtable +0x5c
     kind = mount.AmmoType
     inRange = WeaponMount_RangeAllows(mount, range)
     if (kind == 0 && inRange && !mech.Scanner && mech+0x26b == 0) mech.Scanner = true     // radar ACTIVE
@@ -95,15 +96,15 @@ for each mount:
     if (score > best) { best = score; chosen = mount }
 ```
 
-**The floor is the machine's fear.** `mech+0x2aa` is written by `Mech_AiFleeCheck` alone — 0 at construction, then 1000, 600 or 300 as it climbs ([`ai-targeting.md`](ai-targeting.md#the-flee-check--mech_aifleecheck-0041cb94)). Mapped through `[0, 1024] → [150, −100]`, a calm machine needs a score over 150 and a frightened one will fire almost anything. **A tick where nothing clears the floor is a tick where the machine aims and does not shoot**, so the floor is the AI's rate of fire as much as its taste.
+**The floor is the machine's fear.** `mech+0x2aa` is 0 from `Mech_Constructor`, then 1000, 600 or 300 from `Mech_AiFleeCheck` as it climbs ([`ai-targeting.md`](ai-targeting.md#the-flee-check--mech_aifleecheck-0041cb94); other writers: [Open](#open)). Mapped through `[0, 1024] → [150, −100]`, a calm machine needs a score over 150 and a frightened one will fire almost anything. **A tick where nothing clears the floor is a tick where the machine aims and does not shoot**, so the floor is the AI's rate of fire as much as its taste.
 
-**The +10000 is the whole scoring model.** Retail costs at `template+0x34` run 500–600 for a launcher, 150 for a beam, 10–30 for an autocannon, 5 for an ELF; the damage term is scaled by 100/1024 while the cost is scaled by 1000/1024, so a launcher's ~156 of damage credit against its ~488 of cost is deeply negative. **A launcher is only ever worth firing on the shot that breaks the shield**, which is exactly when the bonus applies. Once the shields are down the AI falls back to guns, whose costs are small enough to stay positive on armour damage alone.
+**The +10000 is what pays for a missile.** Retail costs at `template+0x34` are 500 for the `MSL` launchers and 600 for `BMSL`; 150 for the EMP cannons, the particle beams and `PLAS`/`MFAC`; 10, 20 and 30 for the autocannons and lasers by size; 5 for the ELFs; and 1 for `BEMP` ([`proj-dat.md`](../formats/proj-dat.md#the-retail-records) has the damage figures). The damage term is scaled by 100/1024 while the cost is scaled by 1000/1024, so an `MSL` launcher's 156 of armour credit against its 488 of cost leaves it at −332 before the jitter, and −449 while the target's shield holds and the credit is the 400 shield figure. On the shot that breaks the shield the bonus lifts it to +644. **Off that shot a launcher fires only when the jitter rescues it**: a calm machine shooting at a HERC clears its floor of 150 with an `MSL` alone about one tick in five against bare armour and one in seven against a holding shield. `BMSL` is the exception, its 7200 armour damage keeping it at +118 on armour alone. With the shield down every autocannon, laser and ELF stays positive on armour damage, as do `PLAS`/`MFAC`, `BPBW` and `BEMP`; the EMP cannons (−107), `PBW` (−49) and `PBW2` (−10) go negative and fire on the jitter.
 
-**The score reads the mount's own `PROJ.DAT` record, which is not always the record a shot applies.** ATC75, ATC100, L400 and L500 are each shadowed by an earlier record with the same `(Type, id)`, so the AI scores them on their own larger figures while the shot applies the earlier weapon's ([`proj-dat.md`](../formats/proj-dat.md#lookup); the lookup has not been confirmed in retail play, [Open](../formats/proj-dat.md#open)).
+**The score reads the mount's own `PROJ.DAT` record, which is not always the record a shot applies.** ATC75, ATC100, L400 and L500 are each shadowed by an earlier record with the same `(Type, id)`, so the AI scores them on their own larger figures while the shot applies the earlier weapon's ([`proj-dat.md`](../formats/proj-dat.md#lookup)).
 
-**The jitter is larger than the signal.** Two independent draws below 35 multiplied together average 289 against deterministic terms in the tens. The choice is therefore mostly noise, biased by the damage-versus-cost term and decided outright by the shield-break bonus.
+**The jitter is as large as the signal.** Two independent draws below 35 multiplied together average 289 and reach 1156; against anything but a HERC the draws are below 30, for 210 and 841. The deterministic terms outside the bonus run from −449 (`MSL` against a holding shield) to +781 (`BEMP` against one), and for the autocannons, the ELFs and the lighter lasers they are in the tens. The choice is therefore mostly noise, biased by the damage-versus-cost term and all but decided by the shield-break bonus: across the retail arsenal, a weapon whose shot would break the shield outscores every weapon whose shot would not by at least 629 before the jitter.
 
-**Missile lock is a hard gate on scoring.** `manager+0x0a` is the per-subtype lock array ([`missile-lock.md`](missile-lock.md)); every launcher needs its own subtype's flag up before it can even be scored, except subtype 3 (EO) and the non-launcher class 5, which skip the test. No flag is ever raised for an EO missile — the pilot flies it — so without the exemption an AI machine could never fire one. This is `Ai_ChooseWeapon`'s own test. `Rocket_Fire` applies a separate gate at launch, and its subtype 3 exemption is for any machine the player is not flying ([`rockets.md`](rockets.md#spawning--rocket_fire-0040a9c4)); the cockpit's readiness predicate has the same two exemptions as the scoring ([`weapon-mounts.md`](weapon-mounts.md#readiness--weaponmounts_mountisready-00410970)).
+**Missile lock is a hard gate on scoring.** `manager+0x0a` is the per-subtype lock array ([`missile-lock.md`](missile-lock.md)); every launcher needs its own subtype's flag up before it can even be scored, except subtype 3 (EO) and the non-launcher class 5, which skip the test. The lock block keeps no countdown for an EO missile and raises only the other four subtypes' flags ([`missile-lock.md`](missile-lock.md#the-mechanism)) — the pilot flies it — so the exemption is what lets an AI machine score one. This is `Ai_ChooseWeapon`'s own test. `Rocket_Fire` applies a separate gate at launch, and its subtype 3 exemption is for any machine the player is not flying ([`rockets.md`](rockets.md#spawning--rocket_fire-0040a9c4)); the cockpit's readiness predicate has the same two exemptions as the scoring ([`weapon-mounts.md`](weapon-mounts.md#readiness--weaponmounts_mountisready-00410970)).
 
 **A SARH launcher in range lights the radar.** Any unspent subtype-0 mount whose window covers the range switches the machine's radar to ACTIVE, ready or not, unless the radar-silence timer is running — that class of missile needs its own illumination. The rest of the AI's radar policy is in [`target-selection.md`](target-selection.md#how-an-ai-machines-radar-is-set).
 
@@ -126,3 +127,5 @@ if (MissionPollTimer_Count < 1000) MissionPollTimer_Count = 1000
 ## Open
 
 - **Open:** the units of `template+0x34`. It is plainly a per-shot cost the AI weighs against damage, and the retail values order the arsenal sensibly, but `Ai_ChooseWeapon` is the only reader `es2_fieldscan.py` finds among the weapon functions, so nothing else pins what it is measured in ([`../formats/weapons-dat-sim.md`](../formats/weapons-dat-sim.md)).
+- **Open:** whether anything else writes `mech+0x2aa`. `es2_fieldscan.py` over the whole image and a grep of the decompile find four stores, `Mech_Constructor`'s 0 and `Mech_AiFleeCheck`'s three; no `memset`/`memcpy` sweep has been run for it.
+- **Open:** whether anything else sets `mech+0xb5`. On a machine, `es2_fieldscan.py` over the whole image and a grep of the decompile find `Rocket_HomingSteer`'s store of 1 and `Ai_FireAtPoint`'s clear; the offset's other hits are cockpit widgets and the `004d2540` block.

@@ -104,7 +104,7 @@ public sealed class ShellTextBox {
 	/// <c>TextBox_SetText</c>: clears the box, which hides it and puts it back on page 0, wraps the text to
 	/// the box's width and counts its pages. The page count is <c>lines / perPage</c>, plus one unless
 	/// <c>lines + 1 == perPage</c> — so a text exactly filling its pages gains an empty one, and a text one
-	/// line short of a page has none, which leaves the page buttons inert on it.
+	/// line short of filling its first page has none, which leaves the page buttons inert on it.
 	/// </summary>
 	public void SetText(string? text, HudFont? font) {
 		Visible = false;

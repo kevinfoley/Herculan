@@ -26,6 +26,9 @@ namespace HercWorks.UI;
 /// <para>Herc types are named, via <see cref="HercTypeOption"/>'s HercLUT-to-MECHS.NAM
 /// equivalence; weapon names come from <c>WeaponLUT</c>, whose ids are the same ones these arrays
 /// carry.</para>
+///
+/// <para>Save As writes the content-only shape DBSIM reads; Save As With VOL Prefix keeps the 9-byte
+/// entry prefix of a file that was opened with one (see VolEntryPrefixCodec).</para>
 /// </summary>
 public partial class PlayerSquadForm : Form {
 	private readonly MecFileTransformer _transformer = new();
@@ -33,12 +36,7 @@ public partial class PlayerSquadForm : Form {
 	private readonly BindingList<PlayerWeaponSlotRow> _slotRows = new();
 
 	private MecFile? _loaded;
-	private string? _loadedPath;
-
-	/// <summary>Original VOL entry prefix, round-tripped on save — see VolEntryPrefixCodec.</summary>
-	private byte? _originalCompressionType;
-	private byte[]? _originalMagicPrefix;
-	private bool _originalHadTrailingByte;
+	private GameFile? _loadedFile;
 
 	public PlayerSquadForm() {
 		InitializeComponent();
@@ -51,7 +49,7 @@ public partial class PlayerSquadForm : Form {
 	/// <summary>
 	/// Distinct per-form/file-type identity so Windows remembers this dialog's last-visited folder
 	/// separately from every other Open/Save dialog in the app — see CampaignResourcesForm's
-	/// DialogClientGuid for the full explanation.
+	/// DialogClientGuid for the full explanation. Shared by Open and both saves.
 	/// </summary>
 	private static readonly Guid DialogClientGuid = new("2d84f7a0-5b93-4e18-9a6c-8f3d1c07b562");
 
@@ -86,9 +84,8 @@ public partial class PlayerSquadForm : Form {
 
 	private void LoadFile(string path) {
 		try {
-			byte[] rawBytes = File.ReadAllBytes(path);
-			var prefix = VolEntryPrefixCodec.StripIfPresent(rawBytes);
-			var squad = (MecFile?)_transformer.Parse(prefix.Content);
+			var file = GameFile.FromLooseFile(path);
+			var squad = (MecFile?)_transformer.Parse(file.Content);
 
 			if (squad == null) {
 				MessageBox.Show(this, "File was empty or could not be parsed.", "Error",
@@ -109,14 +106,12 @@ public partial class PlayerSquadForm : Form {
 			UpdatePlayerSlotRange();
 			_playerSlotInput.Value = Math.Clamp(squad.PlayerEntryIndex, _playerSlotInput.Minimum, _playerSlotInput.Maximum);
 
-			_loadedPath = path;
-			_originalCompressionType = prefix.HadPrefix ? prefix.CompressionType : null;
-			_originalMagicPrefix = prefix.MagicPrefix;
-			_originalHadTrailingByte = prefix.HadTrailingByte;
+			_loadedFile = file;
+			_saveWithPrefixMenuItem.Enabled = file.CompressionType.HasValue && file.MagicPrefix != null;
 
-			string prefixNote = prefix.HadPrefix ? " (VOL entry prefix detected — will be preserved on save)" : "";
+			string prefixNote = file.CompressionType.HasValue ? " (VOL entry prefix detected)" : "";
 			_statusLabel.Text =
-				$"Loaded {Path.GetFileName(path)} — {squad.Entries.Length} entries, " +
+				$"Loaded {file.FileName} —{squad.Entries.Length} entries, " +
 				$"player pilots #{squad.PlayerEntryIndex}.{prefixNote}";
 		} catch (Exception ex) {
 			MessageBox.Show(this, $"Failed to load file:\n{ex.Message}", "Error",
@@ -376,7 +371,11 @@ public partial class PlayerSquadForm : Form {
 		BindLoadout();
 	}
 
-	private void OnSaveAs(object? sender, EventArgs e) {
+	private void OnSaveAs(object? sender, EventArgs e) => Save(withPrefix: false);
+
+	private void OnSaveWithPrefix(object? sender, EventArgs e) => Save(withPrefix: true);
+
+	private void Save(bool withPrefix) {
 		if (_loaded == null) {
 			MessageBox.Show(this, "Open a player.mec file first.", "Nothing to save",
 				MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -412,12 +411,12 @@ public partial class PlayerSquadForm : Form {
 
 		using var dialog = new SaveFileDialog {
 			Filter = "Player squad files (*.mec)|*.mec|All files (*.*)|*.*",
-			Title = "Save player squad file",
-			FileName = _loadedPath == null ? "PLAYER.MEC" : Path.GetFileName(_loadedPath),
+			Title = withPrefix ? "Save player squad file with VOL entry prefix" : "Save player squad file",
+			FileName = _loadedFile?.FileName ?? "PLAYER.MEC",
 			ClientGuid = DialogClientGuid,
-			InitialDirectory = _loadedPath == null
-				? GamePaths.InitialDirectoryFor("DATA")
-				: Path.GetDirectoryName(_loadedPath)!
+			InitialDirectory = _loadedFile?.LoosePath is { } loosePath
+				? Path.GetDirectoryName(loosePath)!
+				: GamePaths.InitialDirectoryFor("DATA")
 		};
 
 		if (dialog.ShowDialog(this) != DialogResult.OK) {
@@ -426,22 +425,19 @@ public partial class PlayerSquadForm : Form {
 
 		try {
 			byte[] content = _transformer.Write(_loaded)!;
-			byte[] outBytes;
-			string formatNote;
+			string message;
 
-			if (_originalCompressionType.HasValue && _originalMagicPrefix != null) {
-				outBytes = VolEntryPrefixCodec.Wrap(
-					content, _originalCompressionType.Value, _originalMagicPrefix, _originalHadTrailingByte);
-				formatNote = "retail-compatible format — the original VOL entry prefix (compression type, magic) was preserved, with the size field updated for the edited content";
+			if (withPrefix) {
+				File.WriteAllBytes(dialog.FileName, VolEntryPrefixCodec.Wrap(content,
+					_loadedFile!.CompressionType!.Value, _loadedFile.MagicPrefix!, _loadedFile.HadTrailingByte));
+				message = "Saved with the original VOL entry prefix, size field updated. DBSIM reads " +
+					"data\\player.mec without it; use Save As for that.";
 			} else {
-				outBytes = content;
-				formatNote = "content-only format — this file wasn't loaded with a VOL entry prefix to preserve, so no prefix could be reconstructed for this export";
+				File.WriteAllBytes(dialog.FileName, content);
+				message = "Saved in the content-only format DBSIM reads from data\\player.mec.";
 			}
 
-			File.WriteAllBytes(dialog.FileName, outBytes);
-
-			MessageBox.Show(this, $"Saved in {formatNote}.",
-				"Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			MessageBox.Show(this, message, "Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
 		} catch (Exception ex) {
 			MessageBox.Show(this, $"Failed to save file:\n{ex.Message}", "Error",
 				MessageBoxButtons.OK, MessageBoxIcon.Error);

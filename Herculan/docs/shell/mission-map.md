@@ -6,7 +6,7 @@ The picture inside the mission tab's `Mission Map` panel in the briefing view ([
 
 `ShellMap_Build` (`0040e1a7`) destroys the map there is and constructs a new one of `0x3c5` bytes over the canvas rect `{0x123, 0x43, 0x249, 0x124}`, then builds its relief. It runs from `Game_LoadSlot` and from the two paths that load a mission, `Career_LoadCurrentMission` (`0044d4cc`) and `Msn_BuildPath` (`0044d5bd`), so a map belongs to one loaded mission and lasts until the next.
 
-`ShellMap_Constructor` (`00423f43`) is built on its base class `Map` (vtable `0047195e`, by its RTTI name), whose constructor `Map_Ctor` (`0041fdc8`) keeps the rect's width and height at `+0x46`/`+0x4a` (right minus left, bottom minus top: 294 and 225), its own drawing context at `+4` whose centre is the rect's left plus `width >> 1` and top plus `height >> 1` — canvas (438, 180) — and a 3Space camera at `+0xc` with focal shift 7 and no rotation. The camera's position is `+0x12`/`+0x16`, its altitude `+0x1a`.
+`ShellMap_Constructor` (`00423f43`) is built on its base class `Map` (vtable `0047195e`, by its RTTI name), whose constructor `Map_Ctor` (`0041fdc8`) keeps the rect's width and height at `+0x46`/`+0x4a` (right minus left, bottom minus top: 294 and 225), its own drawing context at `+4` whose centre is the rect's left less `-width >> 1` and top less `-height >> 1`, half the size rounded up — canvas (438, 180) — and a 3Space camera at `+0xc` with focal shift 7 and no rotation. The camera's position is `+0x12`/`+0x16`, its altitude `+0x1a`.
 
 The vtable at `004721b0`:
 
@@ -32,13 +32,13 @@ The vtable at `004721b0`:
 | `data\player.mec` | `ShellMap_ReadSquadHeader` (`00424db0`) | the second `int16`, the squad size, at `+0x80` |
 | `data\mforms.dat` | the same | the formation record the squad stands in |
 
-**The bounds** are every block-1 point's, widened by 10000 on each side (`DAT_00471c1c`): `+0x19f`/`+0x1a3` the low corner, `+0x1ab`/`+0x1af` the high. Every point in the retail saves has height 0.
+**The bounds** are every block-1 point's, widened by 10000 on each side (`DAT_00471c1c`): `+0x19f`/`+0x1a3` the low corner, `+0x1ab`/`+0x1af` the high. Of the 2,661 points in the 62 retail missions one has a non-zero height, `C1_03.MSN`'s GUID 15 at 35400, the spawn point of a flyer group, which the map does not draw.
 
 **The nav path** at `+0x66` is a waypoint group from block 3: block 11 record 0 is the player's squad, its first order (`+0x5a`, into block 10) names the group at `+6`, and the map has no path when either is `-1`.
 
 **The bases** are block 9 kept whole, `0x34` bytes a record in the file's own layout, in an array at `+0x62`. The loader then walks block 11: every record whose discriminator `+0x28` is 2 writes its own `+0x9a` (the `.msn` group's map-shown field) into `+0x1a` of each base its twenty member slots (`+0x32`) name, and its side `+0x6e` into their `+0x1c`, and moves each to its own point `+0x2c` — or, when that is `-1` and its route `+0x30` is not, to the route's first point (`00424940`-`004249ad`). A member ref is not checked against the block's count, and a later group overwrites an earlier one.
 
-In the file, `+0x1a` and `+0x1c` are the first two operations of the structure's out-of-action report ([`../formats/script-dat.md`](../formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps)). The writes reach only this copy, which nothing writes back, so DBSIM still reads the record's own operations; a base no type-2 group names would be shown by its first operation. Every GUID-carrying base record in the 62 retail missions is named by a type-2 group, and those groups carry `-1` (465), 0 (71) or 1 (1). `+0x1a` is what [shows a base](#bases); no reader of `+0x1c` in the map's copy has been found ([Open](#open)).
+In the file, `+0x1a` and `+0x1c` are the first two operations of the structure's out-of-action report ([`../formats/script-dat.md`](../formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps)). The writes reach only this copy, which nothing writes back, so DBSIM still reads the record's own operations; a base no type-2 group names would be shown by its first operation. No retail mission has one under any campaign flags or variant roll: each of the 1,937 GUID-carrying base records in the 62 missions is named by a type-2 group record with no condition, and the only conditional group records that share such a group's GUID, and so [overlay](../formats/msn-mission-file.md#repeated-guids) it, are one each in `C4_09.MSN` and `C4_10.MSN`, of type 2 with no members. The 537 type-2 group records carry `-1` (465), 0 (71) or 1 (1). `+0x1a` is what [shows a base](#bases); no reader of `+0x1c` in the map's copy has been found ([Open](#open)).
 
 **The heights.** `ShellMap_LoadZone` reads the `.dat`'s first two `int32` and discards them, keeps the third as the cell shift (`+0x104`) and the fourth as the height scale, and loads the `.dba` through `HeightGrid_Load` (`00429010`) and `HeightGrid_FromBitmap` (`00428d5b`), the shell's copy of the simulator's zone loader ([`../formats/terrain-heightmap.md`](../formats/terrain-heightmap.md)): each pixel byte is one cell's height, the bitmap's rows running north to south.
 
@@ -63,7 +63,7 @@ Three camera positions are derived at construction:
 
 | | Set by | Centre | Altitude |
 |---|---|---|---|
-| full view, `+0x187`/`+0x18b`/`+399` | `ShellMap_FitBounds` (`0042524e`) | the bounds' centre | the larger of `(halfWidth << 7) / (294 >> 1)` and `(halfHeight << 7) / (225 >> 1)`, also stored as the altitude limit `+0x3bd` |
+| full view, `+0x187`/`+0x18b`/`+0x18f` | `ShellMap_FitBounds` (`0042524e`) | the bounds' centre | the larger of `(halfWidth << 7) / (294 >> 1)` and `(halfHeight << 7) / (225 >> 1)`, also stored as the altitude limit `+0x3bd` |
 | squad view, `+0x193`/`+0x197`/`+0x19b` | `ShellMap_FitSquad` (`004252e1`) | the squad's positions widened by 250000 (`DAT_00471c34`) | the same fit |
 | start | `Map_Ctor` | 0, 0 | 200000 (`DAT_00471870`) |
 
@@ -73,7 +73,7 @@ The squad view takes the first `+0x80` slots — the count `player.mec` gives �
 
 ### The six buttons
 
-The six map buttons ([`screen-layout.md`](screen-layout.md#the-mission-screen)) are `FUN_00444ee7` to `FUN_004452f2`, one each; each calls its method and then the paint.
+The six map buttons ([`screen-layout.md`](screen-layout.md#the-mission-screen)) are `Mission_OnMapUp` (`00444ee7`) to `Mission_OnMapZoomOut` (`004452f2`), one each; each calls its method and then the paint, one to four times by its auto-repeat count ([`screen-layout.md`](screen-layout.md#the-three-views)).
 
 | Button | Art | Method | Effect |
 |---|---|---|---|
@@ -102,7 +102,7 @@ Nothing re-derives it when the intro sets the altitude, so until the first zoom 
 
 `ShellMap_BuildRelief` (`00426fe0`) draws the ground under the bounds once, into an 8-bit bitmap the paint stretches. It takes the cells from `(low - 100000) >> cellShift` to `(high + 100000) >> cellShift` on each axis and gives each `min(640 / columns, 400 / rows)` pixels (`DAT_00471c24`, `DAT_00471c26`), so the bitmap is `columns * perCell` by `rows * perCell`, cleared to 0.
 
-A height becomes a colour as `min(height, 0x7f) / 5 + 0xd1` — 128 heights in 24 steps of five from palette index `0xd1`, and each briefing palette `br_w1`-`br_w5` carries its own ramp there. The rows run from the highest cell row down, each drawn as the band between its row and the one above; each cell is two triangles, `(left, bottom)`-`(left, top)`-`(right, top)` and `(left, bottom)`-`(right, top)`-`(right, bottom)`, whose corners take the colours of the heights at `(x, y)`, `(x, y + 1)`, `(x + 1, y + 1)` and `(x + 1, y)`. The last row and column of cells are never drawn, so the bitmap's right and bottom `perCell` pixels stay 0. A cell off the grid has all four corners at 0. A cell on the grid's last row reads the row above it past the end of the height array.
+A height becomes a colour as `min(height, 0x7f) / 5 + 0xd1` — the divisor is `0x80 / 0x18`, so the 128 heights fall in 26 steps, palette indices `0xd1` to `0xea`, and each briefing palette `br_w1`-`br_w5` carries its own ramp there. The rows run from the highest cell row down, each drawn as the band between its row and the one above; each cell is two triangles, `(left, bottom)`-`(left, top)`-`(right, top)` and `(left, bottom)`-`(right, top)`-`(right, bottom)`, whose corners take the colours of the heights at `(x, y)`, `(x, y + 1)`, `(x + 1, y + 1)` and `(x + 1, y)`. The last row and column of cells are never drawn, so the bitmap's right and bottom `perCell` pixels stay 0. A cell off the grid has all four corners at 0. A cell on the grid's last row reads the row above it past the end of the height array.
 
 **The triangles are banded, not shaded** — `Gfx_BandedTriangle` (`00457aa8`), the 8-bit renderer's "Gouraud" fill. With its corners' colours `high >= mid >= low`, the edge from the high corner to the low one is cut into `high - low` steps (`point = from + (to - from) * i / steps`, truncating), and so are the two edges through the middle corner, `high - mid` and `mid - low` steps. The band between steps `i` and `i + 1` is a quadrilateral filled flat with `high - i` through the polygon filler (`Gfx_FillPolygon`, `00455798`; its span rules are in [`../polygon-fill.md`](../polygon-fill.md#scan-conversion)), closed along the first edge through the middle corner for the upper bands and the second for the lower, which are coloured `mid - i`. A triangle whose corners share a colour is filled flat; one with two corners on one pixel draws nothing.
 
@@ -147,9 +147,9 @@ A base is shown when its `+0x1a` is non-zero if it is friendly, and only when it
 
 ## The intro
 
-`Mission_Show` (`004441e3`) sets `DAT_0046c075` every time it shows the briefing. The shell's main loop then calls `ShellMap_RunIntro` (`0040146a`), which installs the briefing palette and loops `ShellMap_IntroStep` (`00425c7b`) until it returns false, presenting the frame (`Display_PresentStoredRect` (`00405cd8`)) and dispatching Windows messages (`Shell_PumpMessages` (`00405d9c`)) on each pass. It empties the keyboard ring before the loop (`Keyboard_FlushKeys` (`004052e1`)) and takes one key off it per pass (`Keyboard_PopKey` (`00404781`)), so a key the loop reads is gone from the ring and never posted as a shell event. A key reading 1 or `0x39` (Esc, Space), or either mouse button going down while the loop runs (`DAT_0046c078`, set in the window procedure), calls `ShellMap_SkipIntro` (`004253ef`), which moves a state below `0x12` to `0x11`.
+`Mission_Show` (`004441e3`) sets `DAT_0046c075` every time it shows the briefing. The shell's main loop then calls `ShellMap_RunIntro` (`0040146a`), which installs the briefing palette and loops `ShellMap_IntroStep` (`00425c7b`) until it returns false, presenting the frame (`Display_PresentStoredRect` (`00405cd8`)) and dispatching Windows messages (`Shell_PumpMessages` (`00405d9c`)) on each pass. It empties the keyboard ring before the loop (`Keyboard_FlushKeys` (`004052e1`)) and takes one key off it per pass (`Keyboard_PopKey` (`00404781`)), so a key the loop reads is gone from the ring and never posted as a shell event. A key reading 1 or `0x39` (Esc, Space), or either mouse button going down while the loop runs (`DAT_0046c07c`, which the window procedure sets while the loop's own flag `DAT_0046c078` is up), calls `ShellMap_SkipIntro` (`004253ef`), which moves a state below `0x12` to `0x11`.
 
-The timer is `GetTickCount() >> 4` (`FUN_00465a1c`), a tick of 16 ms. The state is `+0x172`, a deadline `+0x176`, the state a wait returns to `+0x174`; the revealed counts are `+0x183` (squad), `+0x184` (path points) and `+0x185` (nav markers).
+The timer is `GetTickCount() >> 4` (`Shell_TimerTicks`, `00465a1c`), a tick of 16 ms. The state is `+0x172`, a deadline `+0x176`, the state a wait returns to `+0x174`; the revealed counts are `+0x183` (squad), `+0x184` (path points) and `+0x185` (nav markers).
 
 | State | Does |
 |---|---|
@@ -180,5 +180,4 @@ The map object keeps its state, so the next time the briefing is shown the loop 
 - **Open:** what the two `maplabel.str` groups the constructor reads are for. None of the paint passes read here draws them.
 - **Open:** the texel stepping of the textured quad (`Bitmap_BlitRotatedScaled`, `00458f68`) and the scaled blit (`Bitmap_BlitScaledClipDispatch`, `00458e78`). Against the retail capture the relief's bands differ along their edges by a pixel.
 - **Open:** whether a click that skips the intro also reaches the widget under it afterwards. The window procedure queues the button's events while the loop runs, and nothing in the loop runs the shell's event queue (`Shell_PumpEvents` (`0046814c`)), so they are still queued when it ends; what the main loop's next pump delivers them to is unread.
-- **Open:** whether any campaign flag state leaves a block 9 record that no surviving type-2 group names, so the map shows it by its own first operation (2 or `-1`: a friendly base shown, a hostile one hidden). With flags and the variant roll at 0, none of the 62 missions does.
 - **Open:** whether anything reads the side the loader writes at a base's `+0x1c` in the map's copy. Neither `es2_fieldscan.py` over `00423f43`-`00427b80` nor a grep for `map+0x62` finds one, and the fieldscan also misses the loader's own indexed write, so it does not settle indexed reads.

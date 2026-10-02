@@ -25,10 +25,10 @@ public class MissionStringFile {
 		/// <summary>The id the <c>.MSN</c> rows' text refs name.</summary>
 		public short Guid { get; set; }
 
-		/// <summary>Condition ref, as in the <c>.MSN</c> rows; -1 throughout retail.</summary>
+		/// <summary>Condition ref, as in the <c>.MSN</c> rows, or <c>-1</c>.</summary>
 		public short ConditionRef { get; set; }
 
-		/// <summary>-1 throughout retail.</summary>
+		/// <summary><c>-99</c> beside a condition, <c>-1</c> otherwise (docs/formats/msn-mission-file.md#the-eng-string-table).</summary>
 		public short ParentRef { get; set; }
 
 		/// <summary>The text's length, including its NUL.</summary>

@@ -60,6 +60,40 @@ public sealed class ExplosionCatalog {
 	public ExplosionTypeEntry? Type(int typeId) =>
 		_table.Types is { } types && typeId >= 0 && typeId < types.Length ? types[typeId] : null;
 
+	/// <summary>
+	/// The int16 <c>Explosion_TickUpdate</c> (<c>0040813c</c>) reads as frame <paramref name="frame"/>'s light
+	/// intensity: the word at <c>row + 0x08 + frame * 2</c>, unbounded. Past the twelve ramp entries
+	/// that is the row's proximity radius (low word, then high), its sound id and its object class,
+	/// then the next row's fields — docs/simulation/impact-effects.md, "Tick". Past the end of the
+	/// table it answers 0, which is this engine's: the original reads whatever follows the table in
+	/// memory, and no retail shape's flipbook runs that far.
+	/// </summary>
+	public short RampWord(int typeId, int frame) {
+		int offset = typeId * TypeRowSize + RampOffset + frame * 2;
+		if (offset < 0 || Type(offset / TypeRowSize) is not { } row) {
+			return 0;
+		}
+
+		int field = offset % TypeRowSize;
+		return field switch {
+			0x00 => row.ShapeIndex,
+			0x02 => row.FrameInterval,
+			0x04 => row.GroundShape,
+			0x06 => row.LightMode,
+			< 0x20 => row.FrameIntensity[(field - RampOffset) / 2],
+			0x20 => (short)row.ProximityRadius,
+			0x22 => (short)(row.ProximityRadius >> 16),
+			0x24 => row.SoundId,
+			_ => row.ObjectClass,
+		};
+	}
+
+	/// <summary>A type row's size, <c>Explosion_GetTypeRecord</c> (<c>00407b20</c>)'s stride.</summary>
+	private const int TypeRowSize = 0x28;
+
+	/// <summary>Where a type row's intensity ramp starts.</summary>
+	private const int RampOffset = 0x08;
+
 	/// <summary>The shape row for <paramref name="shapeIndex"/>, or null when it is outside the table.</summary>
 	public ExplosionShapeEntry? Shape(int shapeIndex) =>
 		_table.Shapes is { } shapes && shapeIndex >= 0 && shapeIndex < shapes.Length ? shapes[shapeIndex] : null;

@@ -3,8 +3,8 @@ using HercWorks.Core.Data.Struct.Vshell.Hercs;
 namespace HercWorks.Core.Data.File.Dat.Shell;
 
 /// <summary>
-/// FILE - /SHELL/GAM/INI_[herc].DAT — the stock weapon fit a newly built chassis of this type is
-/// delivered with, one file per type. A bare HERC catalog record (<see cref="ShellHercData"/>) with
+/// FILE - /SHELL/GAM/INI_[herc].DAT — the stock weapon fit a practice mission's player machine is
+/// built with when the practice screen chooses its chassis, one file per type. A bare HERC catalog record (<see cref="ShellHercData"/>) with
 /// no leading hangar slot: type, build percent (100), build missions remaining (0), hardpoint count,
 /// then per occupied hardpoint its index and a weapon unit (id, condition, ammo type; 5 = none).
 ///

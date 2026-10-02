@@ -23,7 +23,9 @@ public sealed class ProjectileType {
 
 	public static readonly ProjectileType Beam = new("BEAM", 4);
 
-	private static readonly IReadOnlyList<ProjectileType> All = new[] { Rocket, Bullet, Grenade, Beam };
+	/// <summary>The four types, in id order.</summary>
+	public static IReadOnlyList<ProjectileType> All { get; } = new[] { Rocket, Bullet, Grenade, Beam };
+
 	private static readonly Dictionary<short, ProjectileType> ById = All.ToDictionary(p => p.Val);
 
 	public string Type { get; }

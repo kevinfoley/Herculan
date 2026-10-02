@@ -9,8 +9,8 @@ namespace Herculan.Engine.Audio;
 /// <para><c>Sound_ResolveSamplePath</c> (<c>00462238</c>) is the whole of the path rule: the
 /// catalog stores a bare filename and the loader prefixes it with <c>HMI\</c>, or with <c>HMX\</c>
 /// when the low-memory mode is on. <c>SIMSOUND.VOL</c> carries both banks — <c>hmx</c> being the
-/// same recordings at half the sample rate — so <see cref="LowMemoryBank"/> selects between them
-/// the same way.</para>
+/// same recordings as 8-bit mono 11,025 Hz (docs/formats/audio.md, "Sample banks") — so
+/// <see cref="LowMemoryBank"/> selects between them the same way.</para>
 ///
 /// <para>Unlike the original this loads every named sample up front instead of honouring the
 /// per-row preload attribute and caching the rest on first play. The whole <c>hmi</c> bank is about
@@ -27,7 +27,7 @@ public sealed class SoundBank {
 
 	/// <summary>
 	/// Low-memory sample folder, selected by the original when it is started with <c>-l</c> or finds
-	/// under 12 MB of physical memory. Half-rate copies of the same recordings.
+	/// under 12 MB of physical memory. The same recordings as 8-bit mono 11,025 Hz.
 	/// </summary>
 	public const string LowMemoryBank = "HMX";
 

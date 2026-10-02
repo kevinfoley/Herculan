@@ -87,11 +87,14 @@ public sealed class HudColorTable {
 
 	/// <summary>
 	/// The colour a squad comm box paints its pilot's name on, and the same colour that pilot's own
-	/// map marker and order link take: <c>HddGauge_LoadPilotFrames</c> indexes this table by the slot
-	/// number itself, so the id is the slot. See "Squad comm boxes" in
-	/// docs/formats/heads-down-display.md.
+	/// map marker and order link take: <c>HudColorTable_Get</c> (<c>00434280</c>) reads the slot's id
+	/// from its own array at <c>0049b040</c>. See "The gauge" in docs/formats/heads-down-display.md.
+	/// A slot outside the squad answers -1, which resolves to no colour.
 	/// </summary>
-	public static int PilotColorId(int slot) => slot;
+	public static int PilotColorId(int slot) =>
+		slot >= 0 && slot < PilotColorIds.Length ? PilotColorIds[slot] : -1;
+
+	private static readonly int[] PilotColorIds = [12, 15, 26];
 
 	private readonly int[] _entries;
 

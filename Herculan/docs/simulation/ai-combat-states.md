@@ -31,7 +31,7 @@ return 0
 | `+0x04` | `int16` | Its magnitude, saturating `-0x8000` at `0x7fff` |
 | `+0x06` | `int16` | The target's **aspect**: the bearing back to this machine in the target's turret frame |
 | `+0x08` | `int16` | Its magnitude |
-| `+0x0a` | `int32` | **3D** range, `Math_DistanceBetweenPoints`. Every navigation range in the AI is the ground-plane one; this is not |
+| `+0x0a` | `int32` | **3D** range, `Math_DistanceBetweenPoints`. Every range a navigation steer is computed from is the ground-plane one; this is not |
 | `+0x0e` | `int16` | **Approach flag**: `1` forward, `-1` reverse, `0` stand. Starts 0 |
 | `+0x10` | `int32` | Near standoff. Starts 15000 |
 | `+0x14` | `int32` | Far standoff. Starts 30000 |

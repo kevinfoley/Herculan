@@ -1,6 +1,6 @@
 # .MSN mission file (ZONES.VOL/MSN/*.msn) and its VSHELL load path
 
-**Macro-structure: revision field + 17 array/skip rows in order (14 fully field-decoded), verified against all 62 real retail `.MSN` files.** Reversed from `VSHELL.EXE` disassembly and validated against real data.
+**Macro-structure: revision field + 17 array/skip rows in order, verified against all 62 real retail `.MSN` files (one truncated — see [Verification note](#verification-note)).** Reversed from `VSHELL.EXE` disassembly and validated against real data.
 
 ## Call chain — confirmed
 
@@ -11,11 +11,11 @@
 
 ## `MsnGen_ParseMsnFile` (`00417b67`) — the raw `.MSN` parser
 
-Opens the stream (`VolRStream_CtorFromPath` (`00402ad9`)), then **asserts a revision field equals `5`**. It reads row 1, the conditions; row 2, the header patches; the mission's [`.ENG` text](#the-eng-string-table) (`Msn_LoadEngText` (`0041768c`)); then rows 3 to 17 in order, each `[uint16 count] → array of fixed-size records`, with row 5 skipped. The parser does campaign-state-aware filtering *while* loading: every record goes through a condition test and survivors are **compacted in place**, and each ref into another row is renumbered to the index `script.dat` gives its target — the count of records before it whose GUID is not `-1`. A ref into a row not loaded yet waits: an order's group subject and an action's target are resolved in two passes after row 16.
+Opens the stream (`VolRStream_CtorFromPath` (`00402ad9`)), then **asserts a revision field equals `5`**. It reads row 1, the conditions; row 2, the header patches; the mission's [`.ENG` text](#the-eng-string-table) (`Msn_LoadEngText` (`0041768c`)); then rows 3 to 17 in order, each `[uint16 count]` and that many records (fixed-size but for row 8's), with row 5 skipped. The parser does campaign-state-aware filtering *while* loading: every record goes through a condition test and survivors are **compacted in place**, and each ref into another row is renumbered to the index `script.dat` gives its target — the count of records before it whose GUID is not `-1`. A ref into a row not loaded yet waits: an order's group subject and an action's target are resolved in two passes after row 16.
 
 ### The conditions — row 1
 
-Every record in the file but row 2's carries a condition ref, `0x02` (row 4's and row 17's is at `0x00`). `Msn_ConditionFilterGate` (`00417610`) passes a record whose condition is `-1` or names a surviving row-1 record; any other record is dropped. Row 1 is filtered by its own records as it is read, each against the survivors before it, and a row-1 record survives by its type:
+Every record in the file carries a condition ref, at `0x02` (rows 2, 4, 5 and 17 carry it at `0x00`). `Msn_ConditionFilterGate` (`00417610`) passes a record whose condition is `-1` or names a surviving row-1 record; any other record is dropped. Row 1 is filtered by its own records as it is read, each against the survivors before it, and a row-1 record survives by its type:
 
 | type | fields | survives when |
 |---|---|---|
@@ -51,7 +51,7 @@ The draws are VSHELL's generator's, described in [`../shell/campaign-loop.md`](.
 
 Rows 6, 7, 8, 12, 13, 14 and 15 carry a variant key at `0x04`. A record whose key is `-1` resolves its own refs. Any other key names a type-3 row-1 record by its `0x06`: `Msn_PickVariant` (`00415fc3`) draws below that record's `0x0a`, stores the draw at its `0x0c`, and takes the type-2 child whose range holds it; the record then copies its payload from the first record of its own row, loaded before it, whose condition is that child's GUID (`Msn_VariantSourceRow6` (`00416120`) for row 6, and a sibling per row). It draws again for every record that asks, so two records sharing a key can land on different variants.
 
-The records a variant copies from are ordinary records whose GUID is usually `-1`, so they are never exported themselves: a mission authors each alternative once, conditioned on its type-2 child, and every record that wants a random pick among them names the key. What each row copies:
+The records a variant copies from are ordinary records whose GUID is `-1` — all 783 retail records conditioned on a type-2 child are — so they are never exported themselves: a mission authors each alternative once, conditioned on its type-2 child, and every record that wants a random pick among them names the key. What each row copies:
 
 | row | copied from the variant |
 |---|---|
@@ -71,7 +71,7 @@ A record whose GUID an earlier survivor already has does not add a record. Rows 
 
 ### The header patch — row 2
 
-82 bytes read into one reused buffer and never kept: a condition, ten header words and thirty flag indices. The ten header words (`DAT_00485446` upward) are reset once row 1 is read — the first to 1, the rest to 0 — and each row-2 record whose condition passes writes every header word that is not its unset value, 1 for the first and 0 for the rest, and every flag index that is not `-1` into the clear list at `DAT_0048545a`. Then every flag the clear list names is zeroed (`Msn_ClearPatchedFlags` (`00417659`)). The clear list is never reset, and starts at zero, so a load clears flag 0 thirty times over until a patch names something else. The header words are [`script-dat.md`](script-dat.md#header-format)'s, and every retail mission sets its zone this way.
+82 bytes read into one reused buffer and never kept: a condition, ten header words and thirty flag indices. The ten header words (`DAT_00485446` upward) are reset once row 1 is read — the first to 1, the rest to 0 — and each row-2 record whose condition passes writes every header word that is not its unset value, 1 for the first and 0 for the rest, and every flag index that is not `-1` into the clear list at `DAT_0048545a`. Then every flag the clear list names is zeroed (`Msn_ClearPatchedFlags` (`00417659`)). The clear list lies in VSHELL's uninitialised data, so it starts at zero, and no reset of it has been found ([Open](#open)); a load therefore clears flag 0 thirty times over until a patch names something else. No retail patch names a flag: none of the 145 row-2 records in the 62 files sets a flag index, so every retail load clears flag 0 and nothing more. The header words are [`script-dat.md`](script-dat.md#header-format)'s, and every retail mission sets its zone this way: each of the 62 has a row-2 record with a non-zero zone word.
 
 ### Record-array table — **empirically confirmed byte-exact against 61/62 real `.MSN` files**
 
@@ -87,8 +87,8 @@ Two shapes need care:
 | 3 | `DAT_00470666` | 8 bytes/record | `DAT_0047063c` | referenced by #4 | **decoded — see "Row #3 field decode" below.** A small campaign-variant value lookup: GUID + condition + payload, where the same GUID can carry several condition-gated payload variants and the last to survive wins |
 | 4 | `DAT_00470668` | 144 (`0x90`) bytes/record | `DAT_00470640` | 3 sub-arrays (10, 30, 30 shorts) of `.ENG` string ids; 1 ref into #3 | **decoded — see "Row #4 field decode" below.** The mission's objective, briefing and intelligence text and its briefing movie. No GUID/identity field at all (offset `0x00` is the condition ref instead); nothing else in the file references this row |
 | 5 | `DAT_0047066a` | **skip-only**, `count * 0x40` bytes, nothing stored | — | — | skipped by this load; the debrief's reload keeps it — see [Row #5](#row-5--the-debrief) |
-| 6 | `DAT_0047064e` | 22 (`0x16`) bytes/record | `DAT_0047060c` | self (variant, sum) | **decoded — see "Row #6 field decode" below. A 3D world-position/waypoint record**: GUID + 3 dead fields + an int32 X/Y/Z triple. This is the record every row #9 link/reward ref, and several other rows' refs, ultimately resolve to |
-| 7 | `DAT_00470650` | 10 bytes/record | `DAT_00470610` | self | **decoded — see "Row #7 field decode" below.** A minimal record: GUID + 3 fully-dead fields + one small discrete payload (`0`/`1`/`10`) — the simplest record type in the file, unreferenced by anything else |
+| 6 | `DAT_0047064e` | 22 (`0x16`) bytes/record | `DAT_0047060c` | self (variant, sum) | **decoded — see "Row #6 field decode" below. A 3D world-position/waypoint record**: GUID + 3 dead fields + an int32 X/Y/Z triple. This is the record every row #9 corner and centre ref (492 in retail, all resolving), and several other rows' refs, ultimately resolve to |
+| 7 | `DAT_00470650` | 10 bytes/record | `DAT_00470610` | self | **decoded — see "Row #7 field decode" below.** A minimal record: GUID + 3 fully-dead fields + one small discrete payload (`0`/`1`/`10`) — the simplest record type in the file. Rows #12, #13, #14 and #16 name it as a heading |
 | 8 | `DAT_00470656` | **variable**: 10 fixed bytes/record + (nested-count × 2) bytes | `DAT_0047061c` | #6 (nested entries) | **decoded — see "Row #8 field decode" below.** A named, orderable list of row #6 world positions — a patrol route/waypoint chain, with real evidence of both spatial coherence and closed-loop (patrol circuit) structure |
 | 9 | `DAT_0047065e` | 12 (`0xc`) bytes/record | `DAT_0047062c` | #6, self | **decoded — see "Row #9 field decode" below.** A **trigger area**, `script.dat` block 4: a box between two row-#6 points when its shape field is 0, otherwise a circle about one point with a radius in tens of units |
 | 10 | `DAT_00470660` | 82 (`0x52`) bytes/record | `DAT_00470630` | #9 (8 shorts), `.ENG` text (5 shorts at `0x44`), and a target resolved after row 16 by the action's type (7/8/9/10 → #12/#13/#14/#16) | the mission **action**, `script.dat` block 5. The objective record is row #17 |
@@ -140,7 +140,7 @@ Ordered waypoint list, heavily referenced by row #15 (470 real instances across 
 | nested | ref→row #6 | 2 bytes/entry; resolved to row #6 GUIDs |
 
 
-Spatial validation: consecutive waypoints have median distance ~191k units (tighter than random pairs ~310k), confirming authored path structure. 24% of records form closed loops (first = last waypoint).
+Spatial validation: consecutive waypoints have median distance 191,245 units, against 323,406 for every pair of row-6 points in the same mission, confirming authored path structure. 109 of the 446 records with two or more waypoints (24%) form closed loops (first = last waypoint).
 
 ## Row #15 field decode — the order record (`DAT_00470658`, 22 bytes/record)
 
@@ -153,9 +153,9 @@ Spatial validation: consecutive waypoints have median distance ~191k units (tigh
 | `0x04` | variant key | **dead** — always `-1` |
 | `0x06` | condition operand | correlates 100% with real `0x02`; values {1, -99} |
 | `0x08` | **the verb** | range 0–6, the whole span DBSIM switches on: search/destroy, ram, guard, patrol, sleep, travel, follow |
-| `0x0A` | formation | range 0–3. DBSIM copies it into the order record and never reads it; VSHELL's briefing map stands the squad in it ([`../shell/mission-map.md`](../shell/mission-map.md)) |
-| `0x0C` | ref→row #6 | 7% real — a point; resolved into the order record and never read |
-| `0x0E` | ref→row #8 | **94% real** — the route. Only the group's first order's is ever used |
+| `0x0A` | formation | range 0–3. DBSIM copies it into the order record, and no DBSIM reader has been found ([`../simulation/ai-goals.md`](../simulation/ai-goals.md#open)); VSHELL's briefing map stands the squad in it ([`../shell/mission-map.md`](../shell/mission-map.md)) |
+| `0x0C` | ref→row #6 | 7% real — a point; resolved into the order record, and no reader has been found ([`../simulation/ai-goals.md`](../simulation/ai-goals.md#open)) |
+| `0x0E` | ref→row #8 | **94% real** — the route. Only the group's first order's is walked; the objective layer reads every slot's ([`../simulation/ai-goals.md`](../simulation/ai-goals.md#what-else-reads-an-order)) |
 | `0x10` | discriminator | what `0x12` names: `-1` nothing, 0 a group (row #16), 1 a HERC (#12), 3 a structure (#14). `2` (a flyer, #13) never occurs |
 | `0x12` | discriminated ref | **the order's subject** — what to hunt, guard or follow |
 | `0x14` | ref→row #10 | 2% real — an action that, when it fires, moves the group to its next order |
@@ -184,13 +184,13 @@ The mission action — `script.dat` block 5, laid out in [`../simulation/mission
 | `0x00` | GUID | identity key |
 | `0x02` | condition ref | **dead** — always `-1` |
 | `0x04` | ? | **dead** — always `-1` |
-| `0x06` | type | whose position the trigger areas test, and for 7-10 what `0x50` names. 0/1/3/4/7/9 seen; `8`/`10` never occur |
-| `0x08` | verb | how a group gated on this action arrives; 0–3 |
+| `0x06` | type | whose position the trigger areas test, and for 7-10 what `0x50` names. 0/1/2/3/4/7/9 seen (142/170/3/15/4/3/1 of 338); `8`/`10` never occur |
+| `0x08` | verb | how a group gated on this action arrives; 0–3 (one record `-1`) |
 | `0x0A–0x11` | ref[0..3]→row #9 | the trigger areas; only 4 real slots |
 | `0x12–0x19` | ref[4..7]→row #9 | **dead** — always `-1` |
-| `0x1A` | ? | not exported to `script.dat` |
-| `0x1C–0x43` | 10 (counter ref, operation) pairs | the mission counters the action writes when it activates, exported as `script.dat` block 5's two 10-short spans. 337 of 338 retail records carry `0` at `0x1A` and `-1` throughout the pairs |
-| `0x44–0x45` | text ref | 1% real; renumbered into `mission.str` like every other text ref |
+| `0x1A` | pair count | how many of the pairs below are filled, from the front: `1` in 66 records, `0` in the other 272. Not exported to `script.dat` |
+| `0x1C–0x43` | 10 (counter ref, operation) pairs | the mission counters the action writes when it activates, exported as `script.dat` block 5's two 10-short spans. 66 of 338 retail records, all in `TRAIN1`–`TRAIN4`, fill the first pair, every one with counter 0 and operation 6; the other 272 are `-1` throughout |
+| `0x44–0x45` | text ref | 1 of 338 real; renumbered into `mission.str` like every other text ref |
 | `0x46–0x4D` | text refs [1..4] | **dead** — always `-1` |
 | `0x4E` | message | the mission message the action posts, **plus one**; 0 for none. `script.dat` block 5 `0x4E` carries it through and DBSIM subtracts the one at load ([`../simulation/mission-deployment.md`](../simulation/mission-deployment.md#the-four-ways-an-action-activates)). 66 real instances: 65 in the four `TRAIN*.MSN` and one in `C1_02.MSN` |
 | `0x50` | target | 1% real. The load resolves it only for types 7-10, into rows #12/#13/#14/#16; any other type keeps it as authored |
@@ -203,7 +203,7 @@ Condition-gated variant table; same GUID with different conditions/payloads (194
 | offset | field | notes |
 |---|---|---|
 | `0x00` | GUID | identity (multiple instances per GUID possible) |
-| `0x02` | condition ref | 44% real; second-highest condition usage in file (after row #1) |
+| `0x02` | condition ref | 86 of 194 real (44%), the highest condition usage of any row (row #1 43.4%, row #12 43.1%) |
 | `0x04` | ? | compound pair: `-1` or `-99`; `-99` correlates 100% with real `0x02` |
 | `0x06` | payload | 54 distinct values; fetched by row #4 |
 
@@ -262,12 +262,12 @@ All three arrays are ids into the mission's own [`.ENG` table](#the-eng-string-t
 - **row 4** skipped;
 - **row 5**, each record gated on its condition, its thirty text refs renumbered into `mission.str` lines and its row-3 ref replaced by that record's value, as row 4's is.
 
-Records are read into the slot the survivor count names, so the first survivor holds slot 0; with none, slot 0 holds the last record read. `Msn_LoadDebrief` hands slot 0 by value to `Career_SetDebriefLines` (`00413386`), which copies the thirty lines to `0048407c` and the row-3 value, the debrief movie, to `004840ba`. `Career_BuildDebriefText` (`004133d2`) then assembles the mission tab's debrief from those lines ([`../shell/screen-layout.md`](../shell/screen-layout.md#the-summary-text-box)). None of this reaches the save, whose career block ends before `0048407c` ([`save-games.md`](save-games.md#career-block--152-bytes)). What lasts is the draws: the next mission's load starts that many generator steps further on.
+Records are read into the slot the survivor count names, so the first survivor holds slot 0; with none, slot 0 holds the last record read. `Msn_LoadDebrief` hands slot 0 by value to `Career_SetDebriefLines` (`00413386`), which copies the thirty lines to `0048407c` and the row-3 value, the debrief movie, to `004840ba`. `Career_BuildDebriefText` (`004133d2`) then assembles the mission tab's debrief from those lines ([`../shell/screen-layout.md`](../shell/screen-layout.md#the-summary-text-box)). None of this reaches the save: the career block ([`save-games.md`](save-games.md#career-block--152-bytes)) holds the briefing's arrays and movie id, field by field, and neither `0048407c`'s lines nor `004840ba`'s movie. What lasts is the draws: the next mission's load starts that many generator steps further on.
 
 
 ## Row #13 field decode — the flyer record (`DAT_00470654`, 102 bytes/record)
 
-The flyer roster, `script.dat` block 8; condition and variant are both well used (24%/30% real — the highest combined rates in the file). 124 instances.
+The flyer roster, `script.dat` block 8; condition and variant are both well used (24%/30% real, second only to row #12's 43%/48%). 124 instances.
 
 | offset | field | notes |
 |---|---|---|
@@ -288,7 +288,7 @@ The flyer roster, `script.dat` block 8; condition and variant are both well used
 
 ## Row #14 field decode — the base roster record (`DAT_0047065c`, 62 bytes/record)
 
-The base roster, `script.dat` block 9. Largest sample (1,949 instances); clear `0x08`/`0x3C` correlation.
+The base roster, `script.dat` block 9. The largest roster (1,949 instances); clear `0x08`/`0x3C` correlation.
 
 | offset | field | notes |
 |---|---|---|
@@ -303,7 +303,7 @@ The base roster, `script.dat` block 9. Largest sample (1,949 instances); clear `
 | `0x10–0x36` | 10 (counter ref, operation) pairs | 698 of 1,949 records fill the first pair and 58 of those a second; slots 2–9 are always `-1`, and every filled operation is 2 (increment). The structure's [out-of-action report](../simulation/mission-deployment.md#the-out-of-action-report), exported as `script.dat` block 9's `0x06`/`0x1a` |
 | `0x38` | engaged action, ref→row #10 | 0.4% real; block 9's `0x2e` |
 | `0x3A` | defeated action, ref→row #10 | 0.1% real; block 9's `0x30` |
-| `0x3C` | starting condition, per cent | 100%: `100` (71%) or `0` (29%); **100% correlates with `0x08` real**; block 9's `0x32`, read by `Base_Construct` ([`../simulation/structure-behaviour.md`](../simulation/structure-behaviour.md)) |
+| `0x3C` | starting condition, per cent | 100%: `100` (71%) or `0` (29%); `100` goes with a real `0x08` in 1,931 of 1,949 records (9 have `100` and no type, 9 a type and `0`); block 9's `0x32`, read by `Base_Construct` ([`../simulation/structure-behaviour.md`](../simulation/structure-behaviour.md)) |
 
 
 ## Row #16 field decode — the group record (`DAT_0047065a`, 164 bytes/record)
@@ -323,7 +323,7 @@ The mission group, `script.dat` block 11; how DBSIM places it is [`script-dat.md
 | `0x32` | ref→row #6 | 37% real — **the group's spawn point** |
 | `0x34` | ref→row #7 | 45% real — **the group's heading** |
 | `0x36` | ref→row #8 | 43% real — the group's patrol route |
-| `0x38–0x5E` | 20 member refs | the roster slots the group activates, into the row `0x2E` names; slot 0: 89% real → slot 8: 0.6% → slots 9–19: never used |
+| `0x38–0x5E` | 20 member refs | the roster slots the group activates, into the row `0x2E` names; slot 0: 89% real → slot 8: 4.7% → slot 14: 0.6%; slots 15–19 never used |
 | `0x60–0x72` | 10-entry ref→row #15 | **the group's orders**, worked through in slot order — slot 0: 47% real → slot 3+: never used. Slot 0's is also where the group's route and its spawn-point fallback come from |
 | `0x74` | side | 0 human, 1 Cybrid; `-1` in 11% |
 | `0x76` | deployment action, ref→row #10 | 31% real. While set, the group is not in the mission until that action fires ([`../simulation/mission-deployment.md`](../simulation/mission-deployment.md#the-deployment-gate--group0x14)) |
@@ -348,10 +348,10 @@ The HERC roster, `script.dat` block 7; highest variant usage (48%). Three-way id
 | `0x30` | **mech type** | 47% real; range 0–20 — an index into `nam\MECHS.NAM`; DBSIM asserts "Invalid mech type" on it |
 | `0x32–0x44` | **weapon fit**, 10 slots | **real workhorse**: slot 0: 46% real → slot 9: 0.1%; bursty population. Resolved via `script.dat`: DBSIM hands this array straight to `Mech_ConfigureLoadout`, the same call the player's own fit from `player.mec` goes through |
 | `0x46` | ref→row #6 | 0.1% populated in `.msn` data, but **not dead** — this is the spawn-position override DBSIM reads per mech (see `script-dat.md`); unset means "use the group's point" |
-| `0x48` | ref→row #7 | same, for heading |
+| `0x48` | ref→row #7 | the same override, for heading; set in none of the 1,683 retail records |
 | `0x4A` | pair count | how many of the pairs below are filled, from the front; 0–4 (84% `0`). Not exported; a variant does not copy it |
-| `0x4C–0x72` | 10 (counter ref, operation) pairs | sparse; slot 0 15.9% → slot 4 0.5%. The machine's [out-of-action report](../simulation/mission-deployment.md#the-out-of-action-report), exported as `script.dat` block 7's `0x42`/`0x56` |
-| `0x74–0x87` | **ammunition type**, 10 slots | 100% real; values 0–5, the filler `5` on every slot that is not a launcher. The second array `Mech_ConfigureLoadout` takes alongside the weapon fit — [`script-dat.md`](script-dat.md)'s block 7 `0x6a` |
+| `0x4C–0x72` | 10 (counter ref, operation) pairs | sparse; slot 0 15.9% → slot 3 0.5%; slots 4–9 never used. The machine's [out-of-action report](../simulation/mission-deployment.md#the-out-of-action-report), exported as `script.dat` block 7's `0x42`/`0x56` |
+| `0x74–0x87` | **ammunition type**, 10 slots | 100% real; values 0, 1, 2 and 5, the filler `5` on every slot that is not a launcher. The second array `Mech_ConfigureLoadout` takes alongside the weapon fit — [`script-dat.md`](script-dat.md)'s block 7 `0x6a` |
 | `0x88` | constant | always `2` |
 | `0x8A` | engaged action, ref→row #10 | 0.7% real; block 7's `0x80` |
 | `0x8C` | defeated action, ref→row #10 | 2.4% real; block 7's `0x82` |
@@ -370,12 +370,12 @@ The HERC roster, `script.dat` block 7; highest variant usage (48%). Three-way id
 | `0x04` | **condition code** | 100% real; values 0–4, 6 and 7 (5 and 8–10 never occur); mode `1` (53%). The simulator has cases for 0–4 and 6–10 — [`mission-objectives.md`](../simulation/mission-objectives.md#what-each-condition-asks) |
 | `0x06` | **subject kind** | 0/1/3 (72%/17%/10%); `2` (flyer) never occurs |
 | `0x08` | subject ref | → rows #16/#12/#13/#14 per `0x06` — group / mech / flyer / base |
-| `0x0A` | ref→row #6 | **dead** — always `-1`; no condition reads it |
+| `0x0A` | ref→row #6 | **dead** — `-1` in all 127 records |
 | `0x0C` | ref→row #8 | 23% real — the waypoint group condition 0 asks about |
 | `0x0E` | **failure text** → `.ENG` id | **93% dominant**; first of three consecutive lines |
 | `0x10–0x39` (42 bytes) | nested pair-count array | `0x10`: count (0/1/2), not exported; pairs at `0x12`/`0x14`, `0x16`/`0x18` |
 
-**Nested pairs** are the mission counters the objective writes: first element the counter index (20–360, 15 distinct values), second the operation, `{6, 7}` only — increment and decrement out of the objective layer's four codes. Declared capacity (7+ pairs) never populated; actual max 2.
+**Nested pairs** are the mission counters the objective writes: first element the counter index (20–360, 17 distinct values), second the operation, `{6, 7}` only — increment and decrement out of the objective layer's four codes. Of the declared 10 pairs, retail fills at most 2.
 
 ## The `.ENG` string table
 
@@ -385,27 +385,42 @@ Every `.MSN` has a same-named `.ENG` beside it in `ZONES.VOL`, and it holds the 
 int16 count
 count x {
     int16 id
-    int16 conditionRef      -- -1 throughout the corpus
-    int16 parentRef         -- -1 throughout the corpus
+    int16 conditionRef      -- a row-1 GUID, or -1
+    int16 word              -- -99 beside a condition, -1 otherwise
     int16 length            -- includes the NUL terminator
     byte[length] text
 }
 ```
 
-**Verified byte-exact**: all 62 files consume to their declared content length with zero slack, 1,111 records, ids 42-253.
+**Verified byte-exact**: all 62 files consume to their declared content length with zero slack, 1,111 records, ids 42-253. 468 records in 45 files carry a condition.
 
 A line ending `" \n"` is authored to break there; the reader that copies these into a mission strips one trailing newline.
 
 `Msn_LoadEngText` (`0041768c`) loads it between rows 2 and 3, from the mission's path with everything from its first `.` replaced by the language's extension — `.eng`, or `.fre`/`.ger` by the value in `0048227a`, which a command-line switch sets. A record whose condition fails is skipped, and one whose id is already loaded replaces that entry's text. `MissionStr_Write` (`004179f0`) writes every record that stays into `data\mission.str` as an ordinary [`.STR`](str-strings.md) of one group — the length of the rest, the count, then each line's length with its NUL, the line, and an attribute count of 0 — and rows #4, #10 and #17 have their ids renumbered to match, which is why `script.dat`'s refs are small where these are not.
+
+A conditioned record is how a mission varies a line: an unconditioned record of the id comes first and later records of the same id replace it, so the line reads as the last record whose condition held.
+
+### The debrief's loss line
+
+The 30 missions of chapters 1 to 3 and `DEMO_01` and `DEMO_02` give one line of their row-5 debrief the same eleven records: a blank, then ten replacements keyed on three [campaign flags](../shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store) — 8, the machines the debrief scrapped; 9, the pilots it counted lost; 10, the squadmates the player put out of the fight ([`../simulation/mission-deployment.md`](../simulation/mission-deployment.md#the-mission-counters--dat_004a9ef4)).
+
+| order | condition | line |
+|---|---|---|
+| 1-3 | flag 8 `== 1`, `== 2`, `> 2` | one Herc, two Hercs, "a bunch of Hercs" lost |
+| 4-6 | flag 9 `== 1`, `== 2`, `> 2` | one squadmate, two, the whole squad lost |
+| 7-8 | flag 10 `== 1`, then a type-1 draw below 11: 0-9, 10 | the player caused a pilot's death; the rarer draw is the harsher line |
+| 9-10 | flag 10 `== 2`, twice | "You killed TWO squadmates!", then a line opening with a space, " Good luck in the Brig, soldier." |
+
+All ten share the id, so the debrief carries **one** of them: a squadmate killed by the player outranks a squadmate lost, which outranks a Herc lost. Record 10 replaces record 9 rather than following it, so two squadmates killed by the player read only the Brig line. Three or more match none of records 7-10, so the line reports the last Herc-lost or squadmate-lost record that holds, and stays blank when none does. Chapters 4 and 5, `DEMO`, `DEMO2` and the training missions carry no loss line, and the two demo missions run in training mode, whose debrief never reloads the mission's text ([`../shell/campaign-loop.md`](../shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7)).
 
 
 ## Recurring patterns
 
 - **Recurring pattern: most declared array/discriminator capacity goes unused in retail.**
 
-- **Recurring pattern: `0x02`/`0x0X` "compound condition" pairs** — second field is real only when `0x02` is, drawn from a narrow set including sentinel `-99`. Confirmed in rows #12/#15/#16.
+- **Recurring pattern: `0x02`/`0x0X` "compound condition" pairs** — second field is real only when `0x02` is, drawn from a narrow set including sentinel `-99`. Confirmed in rows #3/#12/#15/#16 and the `.ENG` records.
 
-- **Recurring pattern: a pair count in front of the counter pairs** — rows #12 (`0x4A`), #13 (`0x36`), #14 (`0x0E`) and #16 (`0x78`) hold the number of filled (counter ref, operation) pairs, filled from slot 0 without gaps. It equals the filled count in every retail record of the four rows; the load writes every pair regardless, so the count is never consumed. Row #17's `0x10` is the same idiom for its nested pairs.
+- **Recurring pattern: a pair count in front of the counter pairs** — rows #10 (`0x1A`), #12 (`0x4A`), #13 (`0x36`), #14 (`0x0E`) and #16 (`0x78`) hold the number of filled (counter ref, operation) pairs, filled from slot 0 without gaps. It equals the filled count in every retail record of the five rows; `WriteScriptDatFile` exports all ten pairs whatever the count and does not export the count. Row #17's `0x10` is the same idiom for its nested pairs, and equals its filled count in all 127 records.
 
 - **Recurring pattern: trailing scalar fields that are almost always a specific constant** — row #13's `0x64` (always `100`), row #14's `0x3C` (`100`/`0`), row #12's `0x8E` (`100` or `50`).
 
@@ -421,4 +436,5 @@ A line ending `" \n"` is authored to break there; the reader that copies these i
 
 ## Open
 
+- **Open:** no reset of the row-2 clear list (`DAT_0048545a`) found by `es2_xref.py --binary VSHELL`: its three references are `Msn_ApplyHeaderPatch`'s write and `Msn_ClearPatchedFlags`'s two reads, and no other address from `00485440` to `00485495` but the header words is referenced.
 - **Open:** what reads row #13's 20-short flag span at `0x08–0x2F` and its constant `100` at `0x64`. The mech and base rows end in a starting-condition percentage of the same shape, but no flyer path is traced reading one.

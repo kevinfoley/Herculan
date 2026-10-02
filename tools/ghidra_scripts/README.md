@@ -72,6 +72,7 @@ Struct-instance offsets (`mech+0x222`) belong in `known_structs.json`, which own
 | --- | --- | --- |
 | `ES2DumpAsmBatch` | `addrs(+)` `maxInsn` `out` | Whole-function disassembly for many functions per run; stops at each body end rather than running into the next function. |
 | `ES2DisasmRange` | `start` `len` `out` | Already-disassembled instructions in an address range, plus the containing function. |
+| `ES2DisassembleFrom` | `out` `lo` `hi` `starts...` | Disassembles undefined bytes by following flow from each start address, then lists the instructions in `[lo, hi)`. For hand-written assembly reached only through jump tables, such as `IR41_32.DLL`'s decoder. Writes code units unless run `-readOnly`. |
 | `ES2DumpFullAsm` | `out` `[-keepundef]` | Whole-program disassembly; collapses runs of untyped bytes into one line unless `-keepundef`. |
 | `ES2DecompileContaining` | `addr` `out` | Decompiles the function containing an address. |
 | `ES2DecompileContainingBatch` | `spec` | Same for many addresses, deduped by function. |

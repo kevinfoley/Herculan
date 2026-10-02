@@ -56,8 +56,8 @@ public class HardpointOverlayTests {
 	}
 
 	/// <summary>
-	/// Every area is a well-formed inclusive rect inside the 640x480 canvas. The all-zero areas two of
-	/// the repair groups pad their tails with are the one exception, and they are counted rather than
+	/// Every area is a well-formed inclusive rect inside the 640x480 canvas. The all-zero areas 1 and 2
+	/// of the Tomahawk's and Maverick's repair groups are the one exception, and they are counted rather than
 	/// waved past, so a parse that silently produced more of them would fail here.
 	/// </summary>
 	[Theory]

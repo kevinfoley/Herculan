@@ -45,7 +45,7 @@ public sealed class ShellMovieHooks {
 	/// </summary>
 	public required Action HideLocationPicture { get; init; }
 
-	/// <summary>A movie that played through the placeholder, or could not be opened: its file name and why.</summary>
+	/// <summary>A movie that could not be opened, or stopped on a frame it could not decode: its file name and why.</summary>
 	public Action<string, string>? Report { get; init; }
 }
 
@@ -92,8 +92,8 @@ public sealed class ShellMovieRun : IDisposable {
 	// The run's bVar1: the music was started again at a location picture, so the end of the run does not.
 	private bool _musicRestarted;
 
-	// MovieQueue_IntroSkipped (00470fe0): a click or Esc or Space during an intro movie skips the intro's other part. Nothing
-	// clears it.
+	// MovieQueue_IntroSkipped (00470fe0): a click or Esc or Space during an intro movie skips the intro's other part. No store
+	// clearing it is known.
 	private bool _introSkipped;
 	private long _locationShownAt;
 
@@ -164,6 +164,14 @@ public sealed class ShellMovieRun : IDisposable {
 				}
 
 				_player.Update(gl, delta);
+				if (_player.HasFailed) {
+					int id = _entry!.Id;
+					string name = ShellMovieQueue.FileName(id) ?? $"movie 0x{id:x}";
+					_hooks.Report?.Invoke(name, _player.DecodeException is { } ex
+						? $"stopped on a decoder fault ({ex.GetType().Name}: {ex.Message})"
+						: "stopped on a frame it could not decode");
+				}
+
 				if (stopPressed || _player.IsFinished || _player.HasFailed) {
 					EndMovie();
 					if (AfterMovie()) {
@@ -242,13 +250,9 @@ public sealed class ShellMovieRun : IDisposable {
 	private bool Begin(ShellMovieEntry entry) {
 		string? name = ShellMovieQueue.FileName(entry.Id);
 		byte[]? bytes = name == null ? null : _hooks.ReadMovie(name);
-		if (name == null || bytes == null || MoviePlayer.Open(bytes, placeholderForUnimplemented: true) is not { } player) {
+		if (name == null || bytes == null || MoviePlayer.Open(bytes) is not { } player) {
 			_hooks.Report?.Invoke(name ?? $"movie 0x{entry.Id:x}", "could not be opened, and is skipped");
 			return false;
-		}
-
-		if (player.IsPlaceholder) {
-			_hooks.Report?.Invoke(name, "has no decoder yet, and plays as a placeholder");
 		}
 
 		_player = player;

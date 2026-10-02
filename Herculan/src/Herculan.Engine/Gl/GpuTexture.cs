@@ -32,6 +32,7 @@ public sealed class GpuTexture : IDisposable {
 	/// <c>Content.CockpitArt</c>'s doc comment).
 	/// </summary>
 	public GpuTexture(GL gl, ReadOnlySpan<byte> rgbaPixels, int width, int height) {
+		CheckSize(rgbaPixels, width, height);
 		_gl = gl;
 		Handle = _gl.GenTexture();
 
@@ -66,6 +67,7 @@ public sealed class GpuTexture : IDisposable {
 	/// baked into the canopy bitmap (see <c>Content.CockpitArt.UpdateShieldRings</c>).
 	/// </summary>
 	public void Update(ReadOnlySpan<byte> rgbaPixels, int width, int height) {
+		CheckSize(rgbaPixels, width, height);
 		_gl.BindTexture(TextureTarget.Texture2D, Handle);
 
 		unsafe {
@@ -79,4 +81,19 @@ public sealed class GpuTexture : IDisposable {
 	}
 
 	public void Dispose() => _gl.DeleteTexture(Handle);
+
+	/// <summary>
+	/// GL reads <c>width * height * 4</c> bytes through the pointer it is handed, with no idea how
+	/// long the span behind it is. A short buffer would be a read past the end of a managed array, so
+	/// it is refused here rather than trusted to every caller — one of which, the movie player, sizes
+	/// its frames from a file.
+	/// </summary>
+	private static void CheckSize(ReadOnlySpan<byte> rgbaPixels, int width, int height) {
+		ArgumentOutOfRangeException.ThrowIfNegative(width);
+		ArgumentOutOfRangeException.ThrowIfNegative(height);
+		if (rgbaPixels.Length < (long)width * height * 4) {
+			throw new ArgumentException(
+				$"{rgbaPixels.Length} bytes cannot hold a {width}x{height} RGBA8 image.", nameof(rgbaPixels));
+		}
+	}
 }

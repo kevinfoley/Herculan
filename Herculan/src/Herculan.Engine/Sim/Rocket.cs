@@ -38,8 +38,9 @@ namespace Herculan.Engine.Sim;
 /// </list>
 ///
 /// <para>Only <c>PROJ.DAT</c> <see cref="ProjectileType.Rocket"/> records reach here.
-/// <see cref="ProjectileType.Grenade"/> (type 3) records exist in retail data and are unreachable:
-/// <c>Grenade_Construct</c> (<c>0040ac3c</c>) builds their class and nothing calls it, and its
+/// <see cref="ProjectileType.Grenade"/> (type 3) records exist in retail data and no weapon template
+/// names them: <c>Grenade_Construct</c> (<c>0040ac3c</c>) builds their class and no reference to it is
+/// found (docs/formats/proj-dat.md#open), and its
 /// vtable's per-tick slot is <c>Grenade_TickNoOp</c> (<c>0040acb4</c>), a bare <c>return 0</c>, so an instance would never
 /// move and never die. The ammunition dispatch tests for type 0 and nothing else. What settles the
 /// class name and the unreachability is in docs/simulation/weapon-damage-types.md, "Type — a
@@ -219,14 +220,25 @@ public sealed class Rocket {
 	/// otherwise, and the whole climb is capped at the <c>PROJ.DAT</c> record's <c>Speed</c>. Kept
 	/// literally: it is what the burn curve is.</para>
 	///
-	/// <para><b>What the original does when a round ends is left out.</b> The pair of globals that
-	/// track the missile the player is flying (<c>DAT_0049c394</c> and <c>DAT_0049c398</c>) exist to
-	/// tell the cockpit that its missile view is over, and the trigger release and press-once latch
-	/// that follow a player-flown round's end belong to flying it; there is no missile view.</para>
+	/// <para><b>When the round ends</b>, by burning out or by striking something, a round the player
+	/// is still flying releases the trigger and latches the first button row
+	/// (<see cref="SimWorld.EndFlownRound"/>), and <see cref="SimWorld.PlayerMissile"/> ending short of
+	/// its lifetime raises <see cref="SimWorld.PlayerMissileStruck"/> for the missile camera.</para>
 	/// </summary>
 	/// <returns>Whether the round is finished and should be freed.</returns>
 	internal bool Tick(SimWorld world) {
 		bool finished = FlightTick(world);
+
+		if (finished) {
+			if (SubtypeId == PlayerFlownSubtype && Owner is { LocallyPiloted: true }) {
+				world.EndFlownRound();
+			}
+
+			if (ReferenceEquals(this, world.PlayerMissile) && _age < _record.Lifetime) {
+				world.PlayerMissileStruck = true;
+			}
+		}
+
 		InboundWarningTick(world);
 		return finished;
 	}
@@ -326,27 +338,59 @@ public sealed class Rocket {
 	/// <see cref="PlayerFlownSubtype"/> round whose owner is locally piloted, <see cref="HomingTick"/>
 	/// for everything else.
 	///
-	/// <para>The player flies the round only while the fire trigger is held. Once it is released the
-	/// round drops its target and becomes <see cref="ReleasedSubtype"/>, reading that subtype's
+	/// <para>The player flies the round only while the fire trigger is held, turning it by
+	/// <see cref="PlayerSteerRate"/> times each axis of <see cref="SimWorld.MissileSteer"/> per
+	/// 125 ms, with no rate limit and no deadband: the steering axis turns the heading (right is a
+	/// falling heading) and the throttle axis the pitch. Once the trigger is released the round drops
+	/// its target and becomes <see cref="ReleasedSubtype"/>, reading that subtype's
 	/// <c>ROCKETS.DAT</c> record from then on and seeking with nothing to seek, so it flies straight
-	/// on. See docs/simulation/rockets.md ("<c>Rocket_PlayerSteer</c>").</para>
+	/// on. Either way it raises <see cref="SimWorld.MissileFlown"/>. See docs/simulation/rockets.md
+	/// ("<c>Rocket_PlayerSteer</c>").</para>
 	/// </summary>
 	private void GuidanceTick(SimWorld world) {
-		if (SubtypeId == PlayerFlownSubtype && Owner is MechObject { LocallyPiloted: true } pilot) {
-			if (pilot.Controls.Fire) {
-				// PLACEHOLDER: the steer by the stick from the missile's nose camera is unported (there is
-				// no missile view), so a round flown with the trigger held keeps its heading.
-				return;
-			}
+		if (SubtypeId == PlayerFlownSubtype && Owner is { LocallyPiloted: true }) {
+			PlayerSteerTick(world);
+			world.MissileFlown = true;
+			return;
+		}
 
+		HomingTick();
+	}
+
+	/// <summary>
+	/// <c>Rocket_PlayerSteer</c>'s per-tick turn for full deflection of an axis, before
+	/// <see cref="SimMath.Q8Multiply"/> scales it by the axis: <c>0x500</c> per 125 ms, the seeker's
+	/// <see cref="HomingTurnRate"/> again.
+	/// </summary>
+	public const short PlayerSteerRate = 0x500;
+
+	/// <summary><c>Rocket_PlayerSteer</c> (<c>0040a488</c>).</summary>
+	private void PlayerSteerTick(SimWorld world) {
+		var input = world.MissileSteer;
+
+		if (!input.Trigger) {
 			Target = null;
 			_subtype = ReleasedSubtype;
 			_record = world.Rockets?.Record(ReleasedSubtype) ?? _record;
 			return;
 		}
 
-		HomingTick();
+		int yaw = SimMath.IntegrateRateOverTick((short)SimMath.Q8Multiply(PlayerSteerRate, input.Steer));
+		int pitch = SimMath.IntegrateRateOverTick((short)SimMath.Q8Multiply(PlayerSteerRate, input.Pitch));
+		_eulerX = (short)(_eulerX + pitch);
+		_eulerZ = (short)(_eulerZ - yaw);
+		_frameStale = true;
+
+		// It clears the trigger byte and both axes it read. The axes are rebuilt before anything else
+		// would act on them; the trigger is not, so the machine's own fire path sees it released.
+		world.PlayerTriggerCleared = true;
 	}
+
+	/// <summary>
+	/// The round's euler triple, <c>+0x0c</c>/<c>+0x0e</c>/<c>+0x10</c>: pitch, roll and heading.
+	/// The missile camera takes all three.
+	/// </summary>
+	public (short X, short Y, short Z) Euler => (_eulerX, _eulerY, _eulerZ);
 
 	/// <summary>
 	/// <c>Rocket_HomingSteer</c> (<c>0040a254</c>) — the seeker, which is a steer of the round's euler
@@ -466,3 +510,14 @@ public sealed class Rocket {
 		_frameStale = false;
 	}
 }
+
+/// <summary>
+/// What <c>Rocket_PlayerSteer</c> reads out of the player input block (<c>0x4d234a</c>): the two values
+/// its camera-axis pointers at <c>+0x22</c> and <c>+0x26</c> address, and the trigger byte at
+/// <c>+0x0d</c>. While the round has the controls the pointers address the steering and throttle
+/// axes; otherwise they follow the JOYSTICK row — see docs/formats/joystick-input.md.
+/// </summary>
+/// <param name="Steer">The <c>+0x22</c> axis, which turns the heading.</param>
+/// <param name="Pitch">The <c>+0x26</c> axis, which pitches the nose.</param>
+/// <param name="Trigger">The fire trigger, held.</param>
+public readonly record struct MissileSteerInput(short Steer, short Pitch, bool Trigger);

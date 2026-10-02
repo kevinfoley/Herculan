@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Decodes an IV41 movie with the retail IR41_32.DLL and with HercWorks.Video's Indeo 4 decoder,
+       and compares their YUV planes sample by sample. See Program.cs. -->
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <!-- IR41_32.DLL is a 32-bit Windows DLL, so this process must be 32-bit. No x86 SDK is needed:
+         the normal dotnet build produces an x86 executable, which runs on the x86 runtime. -->
+    <PlatformTarget>x86</PlatformTarget>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Indeo4Reference</RootNamespace>
+    <AssemblyName>Indeo4Reference</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Herculan\src\HercWorks.Video\HercWorks.Video.csproj" />
+  </ItemGroup>
+
+</Project>

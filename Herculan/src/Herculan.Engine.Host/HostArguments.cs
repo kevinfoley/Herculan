@@ -2,7 +2,7 @@ namespace Herculan.Engine.Host;
 
 /// <summary>
 /// The command line's value readers and its <c>--help</c> text. Program.cs owns the flags themselves;
-/// docs/engine/host-flags.md describes each one.
+/// docs/engine/herculan-command-line.md describes each one.
 ///
 /// <para>A malformed command line is an error rather than a guess. Anything the parser does not claim
 /// would otherwise land in the positional arguments, so <c>--mfd abc</c> would take <c>abc</c> as the
@@ -67,7 +67,8 @@ static class HostArguments {
 	public const string Usage = """
 		Usage: Herculan.Engine.Host [<install>] [<mission>] [options]
 
-		  <install>   the Earthsiege 2 folder; default ES2_GAME_PATH, then an ES2 folder above the executable
+		  <install>   the Earthsiege 2 folder; default ES2_GAME_PATH, then the last one used, then an ES2 folder
+		              above the executable, then a window asking for it
 		  <mission>   a script.dat, a SAV\script*.dat, or a mission's .MSN name (C1_03); default DATA\script.dat in the install
 
 		What runs (default: fly the mission)
@@ -104,6 +105,6 @@ static class HostArguments {
 
 		  --help, -h, -?              this text
 
-		Every option is described in Herculan/docs/engine/host-flags.md.
+		Every option is described in Herculan/docs/engine/herculan-command-line.md.
 		""";
 }

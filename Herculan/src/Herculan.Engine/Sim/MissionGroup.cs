@@ -91,21 +91,22 @@ public sealed partial class MissionGroup {
 
 	/// <summary>
 	/// The current order's verb, or <see cref="NoOrder"/> when the slot is empty — the
-	/// "<c>or 0x0b</c>" idiom every reader of the order array spells out inline.
+	/// "<c>or 0x0b</c>" idiom the original's verb readers spell out inline.
 	/// </summary>
 	public short OrderVerb => CurrentOrder?.Verb ?? NoOrder;
 
 	/// <summary>
 	/// <c>group+0x06</c> — the waypoint group the route cursor runs over. Loaded once, from order
-	/// slot 0, and never re-pointed however many orders the group works through; see
-	/// docs/simulation/ai-goals.md.
+	/// slot 0, and kept however many orders the group works through: no writer that re-points it has
+	/// been found. See docs/simulation/ai-goals.md#the-route-cursor-is-loaded-once.
 	/// </summary>
 	public IReadOnlyList<Vec3i> Route { get; }
 
 	/// <summary>
-	/// <c>group+0x04</c> — the index of the waypoint last reached, shared by the whole group. Both
-	/// <c>Ai_FollowRoute</c> and the player's own think advance it; see
-	/// docs/simulation/player-waypoints.md.
+	/// <c>group+0x04</c> — the index of the waypoint last reached, shared by the whole group. The four
+	/// callers of <c>Route_AdvanceCursor</c> advance it — <c>Ai_FollowRoute</c>, the player's own
+	/// think, and the flyer and ground-vehicle leaders' route steps — and moving on to the next order
+	/// does not reset it; see docs/simulation/player-waypoints.md.
 	/// </summary>
 	public int RouteCursor { get; private set; }
 
@@ -149,8 +150,9 @@ public sealed partial class MissionGroup {
 
 	/// <summary>
 	/// <c>group+0x70</c> — whether the order in that slot has been flagged finished. Set only by the
-	/// completion path, not by a mission action firing under an unfinished order. Nothing in the AI
-	/// reads it; it is kept because it is the only record of which orders a group got through.
+	/// completion path, not by a mission action firing under an unfinished order. The objective layer
+	/// reads it through <see cref="OrderCompletedForRoute"/>; no AI reader has been found — see
+	/// docs/simulation/ai-goals.md#open.
 	/// </summary>
 	public bool OrderCompleted(int slot) =>
 		slot >= 0 && slot < _completed.Length && _completed[slot];
@@ -225,8 +227,8 @@ public sealed partial class MissionGroup {
 
 	/// <summary>
 	/// <c>Group_NearestLiveMember</c> (<c>00423974</c>) — the live member nearest a given object, within 100000 units, excluding
-	/// that object itself. The raycast's friendly-fire path uses it to pick who complains when the
-	/// player shoots someone else's machine.
+	/// that object itself. The raycast's friendly-fire path asks the player's own group for the member
+	/// nearest the player, to pick who complains when he shoots a friendly outside the group.
 	/// </summary>
 	public SimObject? NearestLiveMember(SimObject excluding) {
 		SimObject? best = null;

@@ -56,6 +56,14 @@ public sealed class PaletteRampTable {
 	public int UnlitRow { get; private init; }
 
 	/// <summary>
+	/// The row an untextured terrain cell reads — <see cref="TerrainMeshBuilder.UntexturedRowShade"/>'s
+	/// row in slice 0. Unlike
+	/// <see cref="UnlitRow"/> it is fogged: the cell's depth slice is added to it, as
+	/// <c>Raster_ShadeRampRow</c> adds the fade <c>Terrain_DrawCellQuad</c> installed.
+	/// </summary>
+	public int GroundRow { get; private init; }
+
+	/// <summary>
 	/// The ramp's own rows — <see cref="ShadeRamp.ShadeLevels"/>, 32 in every retail theater. The
 	/// shade byte selects among these; <see cref="FullbrightRow"/> sits past them.
 	/// </summary>
@@ -134,6 +142,7 @@ public sealed class PaletteRampTable {
 
 		return new PaletteRampTable(pixels, shadeRows, slices) {
 			UnlitRow = ramp.RowFor(ShadeRamp.UnlitShade),
+			GroundRow = ramp.RowFor(TerrainMeshBuilder.UntexturedRowShade),
 		};
 	}
 }

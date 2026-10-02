@@ -50,9 +50,9 @@ public readonly record struct SelectedEffectLight(bool Directional, Vector3 Vect
 /// </summary>
 public static class EffectLightSelection {
 	/// <summary>
-	/// How many effect lights one object can be lit by. <c>Light_Register</c> caps the active list at
-	/// ten and the mission sun holds one of them, so a busy frame silently drops the rest — which is
-	/// the original's behaviour and not a budget chosen here.
+	/// How many effect lights one object can be lit by: the room <c>Light_Register</c>'s ten-entry active
+	/// list leaves beside the mission sun. Never reached: the handle pool allows
+	/// <see cref="EffectLightField.HandleCount"/> effect lights at once.
 	/// </summary>
 	public const int MaxPerObject = 9;
 
@@ -78,7 +78,7 @@ public static class EffectLightSelection {
 	/// Fills <paramref name="selected"/> with the lights that reach an object of radius
 	/// <paramref name="shapeRadius"/> standing at <paramref name="position"/>, and returns how many.
 	/// Slots are taken in index order and the surplus past <paramref name="selected"/>'s length is
-	/// dropped, as the original's ten-slot cap drops it.
+	/// dropped (see <see cref="MaxPerObject"/>).
 	/// </summary>
 	/// <param name="position">The object's position in world units — <c>SimObject.Position</c>.</param>
 	/// <param name="shapeRadius">

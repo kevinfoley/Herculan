@@ -15,7 +15,7 @@ Its own ints:
 | `[0]`,`[1]` | 1088, 1092 | Origin added to every child rect. Zero in all 9 retail files |
 | `[2]`,`[3]` | 1096, 1100 | The complex's own bottom-right — `320, 117` or `320, 157` |
 | `[4..7]` | 1104-1116 | **Heading tape** rect. `100,y - 220,y+17` in every file, so 120x17 centred on the 320-wide HUD. The rotation indicator is derived from it, below |
-| `[8]`,`[0xa]`,`[0xb]` | 1120, 1128, 1132 | Speed and time readout anchors — see below |
+| `[8..0xb]` | 1120-1132 | Speed and time readout anchors — see below |
 | `[0xc]`,`[0xd]` | 1136, 1140 | Reticle point |
 | `[0xe]` | 1144 | Half-extent of child 4's rect about the reticle point. Zero in all 9 retail files, and unread by that child's paint |
 | `[0xf..0x12]` | 1148-1163 | Rect shared by children 0, 5 and 6 — the gunsight area, the target arrow's safe area |
@@ -25,7 +25,7 @@ Its own ints:
 
 The complex also builds two `ColorSchemePanels[12]` (`dark`) labels of its own, at `+0x103` and `+0x107`. The first is the manual's **`ATT` legend** — see [below](#the-att-legend).
 
-`Gunsight_AddChild` (`0043d5a4`) appends to a pointer array at the widget's `+0xd7`, so construction order *is* child index. `Gunsight_Paint` (`0043d5c8`) walks that array calling each child's slot 0, then draws two things that are not children at all: the **floating scanner repeater** (`Gunsight_PaintHudScanner` (`0043e0ec`) into `HudScanner_Paint` (`0043f2b0`)) and the [RAZOR's altitude scale](#the-razors-altitude-scale), which works from a second derived point at the widget's `+0x113` — the reticle plus `(0x46, -0x12)` device.
+`Gunsight_AddChild` (`0043d5a4`) appends to a pointer array at the widget's `+0xd7`, so construction order *is* child index. `Gunsight_Paint` (`0043d5c8`) walks that array calling each child's slot 0, then draws what sits outside it: the [`ATT` legend](#the-att-legend), the [speed and time readouts](#speed-and-time-readouts), the **floating scanner repeater** (`Gunsight_PaintHudScanner` (`0043e0ec`) into `HudScanner_Paint` (`0043f2b0`)) and the [RAZOR's altitude scale](#the-razors-altitude-scale), which works from a second derived point at the widget's `+0x113` — the reticle plus `(0x46, -0x12)` device.
 
 All nine children derive from `GunsightChild_CtorBase` (`0043b344`), a bare rect holder. Children 4, 5 and 6 additionally receive the 38-byte state block described in [`hud-target-indicator.md`](hud-target-indicator.md), at `+0x14`.
 
@@ -44,7 +44,7 @@ Children 4 and 5: [`hud-target-indicator.md`](hud-target-indicator.md).
 
 ### Live values
 
-`Player_PerFrameCockpitUpdate` (`0041b130`) calls `Gunsight_SetValues` (`0043d98c`) once a frame with three shorts — `mech+0x10` (heading), `mech+0x298` (twist angle), `mech+0x29a` (pitch angle). The widget caches them at `+0xb1`/`+0xb3`/`+0xb5` and forwards each one's **delta** to a child's `AddDelta` slot (`+0xc`):
+`Player_PerFrameCockpitUpdate` (`0041b130`) calls `Gunsight_SetValues` (`0043d98c`) once a frame with three shorts — `mech+0x10` (heading), `mech+0x298` (twist angle), `mech+0x29a` (pitch angle). Heading and twist are refreshed only while the machine's immobilised byte (`+0xa4`) is clear; once it is set they keep the values last cached. The widget caches them at `+0xb1`/`+0xb3`/`+0xb5` and forwards each one's **delta** to a child's `AddDelta` slot (`+0xc`):
 
 | value | child | delta sent |
 |---|---|---|
@@ -56,7 +56,7 @@ Children 2 and 3 are slide bars, and `HudSlideBar_AddDelta` (`0043b3f8`) does `v
 
 **The heading's delta reaches a waypoint indicator, and does nothing.** Child 7 overrides slot `+0xc` with `HudWaypointIndicator_ShiftLimits` (`0043c3d0`), which adds the delta to `+0x24` and `+0x26` rather than to a value — and `Hud_UpdateWaypointIndicator` reads neither, only the range `+0x2c` that an equal shift of both leaves alone. The heading tape, child 1, is not driven from here at all.
 
-The same call copies the whole 38-byte state block into children 4 and 5. Everything in it past the three angles is filled by the gunsight's own update slot, `Gunsight_UpdateAndPaint` (`0043d6dc`), from the target block at `CockpitView+0x26c` — see [`hud-target-indicator.md`](hud-target-indicator.md). That slot also drives child 1 and runs each child's slot `+4`.
+The same call copies the whole 38-byte state block into children 4 and 5. The target's fields in it — the object, its aim point, heading, pod flag and radius — are filled by the gunsight's own update slot, `Gunsight_UpdateAndPaint` (`0043d6dc`), from the target block at `CockpitView+0x26c`; the indicator-armed and missile-lock bytes have writers of their own — see [`hud-target-indicator.md`](hud-target-indicator.md). That slot also drives child 1 and runs each child's slot `+4`.
 
 ### Rotation indicator
 
@@ -71,7 +71,7 @@ bar:    frame 13 while |value| <= 299, frame 12 otherwise
         y = rect.y0
 ```
 
-Frame 13 is green and 12 yellow; the 299 threshold is about 1.6°, so any deliberate movement trips it. The trailing `-15` undoes the `+15` the rect carries, which centres the 31-unit-wide bar on the mapped point. The ±`0x38e3` limit is about 80°, deliberately wider than any herc's own 14000 twist limit, so the bar never reaches the ends of its track.
+Frame 13 is green and 12 yellow; the 299 threshold is about 1.6°, so any deliberate movement trips it. The trailing `-15` undoes the `+15` the rect carries, which centres the 31-unit-wide bar on the mapped point. The ±`0x38e3` limit is about 80°, wider than the 14000 twist limit every player chassis states, so the bar never reaches the ends of its track.
 
 ### Heading tape
 
@@ -84,7 +84,7 @@ frame   = total / rectWidth,  offset = total % rectWidth   // both wrapped at ba
 +0x48   = bank[frame],  +0x4c = bank[frame + 1]
 ```
 
-The paint (`0043b6dc`) narrows the canvas clip to the rect and blits those two frames at `+0x44` and `+0x44 + rectWidth`, so the tape is a strip of full-width frames sliding through a window: the whole compass, degree labels included, is art, and the angle picks which slice of it shows. Retail's bank is nine 256x16 frames against a 240-device-pixel window, so the pair always covers it with no seam.
+The paint (`0043b6dc`) narrows the canvas clip to the rect and blits those two frames at `+0x44` and `+0x44 + rectWidth`, so the tape is a strip of full-width frames sliding through a window: the whole compass, degree labels included, is art, and the angle picks which slice of it shows. Retail's bank is nine 256x16 frames against a 240-device-pixel window (the low-resolution `.DBA`, nine 128x8 against 120), so the pair always covers it with no seam.
 
 **The angle is the heading negated.** `Gunsight_UpdateAndPaint` reads the viewing object's `mech+0x10` and calls child 1's `+0xc` with `-heading`. Without that sign the strip would run opposite to the simulation's own bearings, and a tick would slide one way while the waypoint diamond naming the same bearing slid the other. Because the art's degrees rise left to right, the negation is also what makes the readout count *up* as the machine turns right, the ordinary compass convention, out of headings that run counter-clockwise.
 
@@ -103,7 +103,7 @@ heading >  0x8000:  angle = -ramp,  done when -ramp <= heading
 **Two things stop it, which is why it is not seen every mission.**
 
 - **A flyer never winds up.** A RAZOR's cockpit skips the [whole sequence](cockpit-hud-widgets.md#power-up-sequence), so its compass reads true from the first frame.
-- **A heading past half a turn never winds up either.** The descending branch is done as soon as `-ramp <= heading`, and on the frame the widget is armed `ramp` is still zero — which is at or below every heading in that half. The arm and the first paint fall in the same pass, so a machine facing anywhere past `0x8000` is done before it has moved. The climbing branch survives that frame, since a climbing zero is below every heading but zero itself. Listed in [`../../KNOWN_ISSUES.md`](../../KNOWN_ISSUES.md).
+- **A heading past half a turn finishes on its first frame.** The descending branch is done as soon as `-ramp <= heading`, and a zero `ramp` is at or below every heading in that half. `Sim_RenderFrame` (`0045fb9c`) arms the widget in `CockpitView_PerFrameUpdate` (`004327ac`) and runs `Gunsight_UpdateAndPaint` later in the same pass, after the world draw, reading the clock again; unless a 16 ms coarse tick falls between the two reads (or the gunsight's update is skipped that frame), `ramp` is zero and a machine facing anywhere past `0x8000` is done before it has moved. The climbing branch survives that frame, since a climbing zero is below every heading but zero itself. Listed in [`../../KNOWN_ISSUES.md`](../../KNOWN_ISSUES.md).
 
 Only the tape is ramped. The waypoint indicators over it go on reading the true heading throughout, so they and the compass visibly disagree for as long as the wind-up lasts.
 
@@ -114,11 +114,11 @@ Children 7 and 8, the manual's Waypoint Indicator. Both are `HudWaypointIndicato
 | Child | `+0x45` | Subject | Colour id | Caption |
 |---|---|---|---|---|
 | 7 | 1 | `NavMarker_Position` (`0043495c`) | `DAT_004d3c1e`, id 15 → palette 13 yellow | none |
-| 8 | 0 | The waypoint after the player group's route cursor, or `mech+0x1a4` on a branch that is never taken | table entry 0 → palette 14 green | `WAYPOINT n: d M.` |
+| 8 | 0 | The waypoint after the player group's route cursor, or `mech+0x1a4` while `DAT_004d2af0` is set | table entry 0 → palette 14 green | `WAYPOINT n: d M.` |
 
 What each points at, and how the player's route and the nav marker behave, is [`../simulation/player-waypoints.md`](../simulation/player-waypoints.md).
 
-**Child 8 never points at the player's selected target.** The branch exists, gated on `DAT_004d2af0`, but `es2_xref.py` finds exactly one reference to that global in the image: the read that tests it. Its two `.bss` neighbours `DAT_004d2aec` and `DAT_004d2af4` are each written by name, so the region is individually addressed and nothing reaches it through a base-plus-offset either. It is zero for the whole run, so the route is always the subject.
+**Child 8 follows the route.** Its branch to the player's selected target is gated on `DAT_004d2af0`, a `.bss` dword with no writer found — see [Open](#open).
 
 `Hud_UpdateWaypointIndicator` (`0043c3e4`) is the shared paint. It takes the ground range with `Vec2_DistanceBetween` and the bearing with the `Math_Atan2Guarded(dx, dy) - 0x4000` that `Math_HeadingToward` is, then works the error `mech.heading - bearing` as an unsigned short:
 
@@ -165,3 +165,4 @@ Both heights map linearly from the zone's height range, `grid+0x110` at the foot
 ## Open
 
 - **Unported:** the RAZOR's altitude scale ([above](#the-razors-altitude-scale)).
+- **Open:** no writer of `DAT_004d2af0`, which would point [waypoint indicator](#waypoint-indicators) child 8 at `mech+0x1a4` instead of the route, found by `es2_xref.py` (one reference in the image, the `CMP` in `Hud_UpdateWaypointIndicator` at `0043c448`) or by a scan of `all_asm.txt` for block bases below it: its neighbours `DAT_004d2aec` and `DAT_004d2af4` are written by name, the nearest pushed base `0x4d2adc` is a `Timer_CountDown` block that touches only `+1`..`+4`, and `0x4d29dc` is a 256-byte string buffer.

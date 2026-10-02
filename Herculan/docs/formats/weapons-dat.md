@@ -175,7 +175,7 @@ for id in 0..32:
 
 The slot is cleared whether or not it matched, so a flag holding the wrong value at one debrief is spent. Once a weapon is unlocked its slot is no longer tested or cleared. The slots sit directly below the chassis grant's `0x3c`–`0x3f`.
 
-**Unit grants.** For each flag slot `s` from `0x15` to `0x31`, the debrief adds `flags[s]` new units of the weapon `0046f8e0[s - 0x15]` names to the armory stock, each through `Armory_AddNewUnit` (`0041229d`) — the helper the `results.dat` salvage pairs use — as `{ id, 100, 100, 5 }`: condition 100 and ammo type 5 whatever the weapon, missile racks included. It never clears these slots, so a flag the mission leaves set grants again at every later debrief until a mission or a header patch zeroes it. The function returns the number of units added, which the debrief adds to the salvage-pair count it hands the report (`Debrief_WriteReport` (`0040f34c`)).
+**Unit grants.** For each flag slot `s` from `0x15` to `0x31`, the debrief adds `flags[s]` new units of the weapon `0046f8e0[s - 0x15]` names to the armory stock, each through `Armory_AddNewUnit` (`0041229d`) — the helper the `results.dat` salvage pairs use — as `{ id, 100, 100, 5 }`: condition 100 and ammo type 5 whatever the weapon, missile racks included. It never clears these slots, but the simulator's mission load zeroes `0x15`–`0x2a` ([`../simulation/mission-deployment.md`](../simulation/mission-deployment.md#the-mission-counters--dat_004a9ef4)), so each debrief grants what the mission just flown left there and the save keeps those values until the next launch. The function returns the number of units added, which the debrief adds to the salvage-pair count it hands the report (`Debrief_WriteReport` (`0040f34c`)).
 
 | Slot | Weapon | Slot | Weapon |
 |---|---|---|---|
@@ -193,7 +193,7 @@ The slot is cleared whether or not it matched, so a flag holding the wrong value
 
 A granted unit does not unlock its weapon: the stock and `+0x17` count grow, and the armory row stays disabled until the unlock pass sets `+0x16`.
 
-**The loop overruns the table.** It runs to slot `0x31`, seven entries past the 22 the table holds, and those seven words — `10169`, `65`, `8199`, `0`, `-4`, `-1`, `0` — are not weapon ids. A nonzero flag in `0x2b`, `0x2c`, `0x2d`, `0x2f` or `0x30` would append a unit to a list outside the record array; one in `0x2e` or `0x31` would stock `NONE`. No retail save holds any of the seven nonzero ([Open](#open)).
+**The loop overruns the table.** It runs to slot `0x31`, seven entries past the 22 the table holds, and those seven words — `10169`, `65`, `8199`, `0`, `-4`, `-1`, `0` — are not weapon ids. A nonzero flag in `0x2b`, `0x2c`, `0x2d`, `0x2f` or `0x30` would append a unit to a list outside the record array; one in `0x2e` or `0x31` would stock `NONE`, and since the mission load does not zero these seven, at every debrief after. No retail campaign reaches it. The flag array starts a career zeroed, and none of the 1,358 counter pairs in the 62 `.MSN` files' actions, rosters, groups and objectives names one of the seven, nor does any header patch, whose clear lists are all empty ([`msn-mission-file.md`](msn-mission-file.md#the-header-patch--row-2)). Neither executable addresses them directly, and all nine retail saves hold them at 0.
 
 The retail saves agree with both passes. Across `GAME_0`–`GAME_6` the only locked weapons to turn unlocked are table entries — `ATC75`, `ATC100`, `L400`, `L500` and `TARG` by `GAME_2`, `TURB` by `GAME_4`, `SHLD` by `GAME_5` — and every unlock slot from `0x32` to `0x3b` holds 0. The unit-grant slots persist: `0x16` and `0x1c` hold 1 in all seven saves, and the `ATC50` and `MSL10` stocks those slots feed grow from 4 to 79 and from 2 to 65 over them.
 
@@ -234,7 +234,3 @@ The trailing block is the **armory's starting stock**: `LoadWeaponsDat` allocate
 Both files are fully decoded and safe to write transformers for directly. `WEAPONS.BIN` is the smaller win — 579 bytes, a trivial indexed string table, and the same shape for all six `.BIN` files, so one reader serves them all.
 
 `WEAPONS.DAT` needs a transformer that keeps two things straight. The 29-byte in-memory record is **not** the on-disk record: only `0x00`–`0x16` come from the file, the code block is length-prefixed and variable, and the rank lives in a parallel array rather than in the struct. And the file does not end with the catalog — a round-trip that drops the 39-unit starting stock loses the player's opening inventory silently, since nothing about the file's length gives it away.
-
-## Open
-
-- **Open:** whether any retail mission can leave a nonzero value in campaign flags `0x2b`–`0x31`, the seven slots `Armory_GrantCampaignWeapons` reads past its unit table. The nine retail saves hold none; the `.msn` actions and header patches that write flags have not been scanned for them.

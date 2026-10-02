@@ -57,7 +57,7 @@ The docs state what is true now. How the project got there belongs in `git log`.
    departures from retail go in doc comments on the C# that implements them, citing the doc
    section, so an engine change never has to hunt for prose to update (rule 5 decides which is
    which). A retail doc may link to an engine doc, but it does not name C# types. The engine docs are
-   `docs/engine/`, `host-flags.md`, `key-bindings.md`, `cut-content.md`, `KNOWN_ISSUES.md`,
+   `docs/engine/`, `herculan-command-line.md`, `key-bindings.md`, `cut-content.md`, `KNOWN_ISSUES.md`,
    `ROADMAP.md` and `README.md`.
 
 `tools/scripts/doc_lint.py` enforces 1, 4, 6 and 8, and runs automatically after any edit under

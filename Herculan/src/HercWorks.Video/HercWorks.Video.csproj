@@ -8,7 +8,7 @@
     <AssemblyName>HercWorks.Video</AssemblyName>
     <!-- Deliberately no AllowUnsafeBlocks. Every byte this assembly touches came out of a file on
          disk, so the CLR's bounds checks are the last line of defence and are not given up for
-         speed. See docs/formats/avi-video.md, "Security posture". -->
+         speed. See docs/engine/video-playback.md, "Security posture". -->
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 
@@ -16,6 +16,8 @@
     <!-- The Indeo 3 codebook tests check the expansion against the seed area and against the retail
          DLL, neither of which is reachable through CodecRegistry. -->
     <InternalsVisibleTo Include="HercWorks.Video.Tests" />
+    <!-- tools/scripts/indeo4_reference compares the Indeo 4 decoder's planes with IR41_32.DLL's. -->
+    <InternalsVisibleTo Include="Indeo4Reference" />
   </ItemGroup>
 
   <!-- No PackageReference and no ProjectReference, on purpose. This assembly parses hostile input,

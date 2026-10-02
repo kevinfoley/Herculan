@@ -62,6 +62,13 @@ public static class TweakSettingDefinitions {
 	/// instead of the PILOT MESSAGE preference.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixComputerMessagePreference = new("tweak.fix_computer_message_pref", TweakCategory.Cosmetic, false, true);
+
+	/// <summary>
+	/// A second hit on the cockpit inside the damage shake keeps the palette flash going for the rest
+	/// of the shake. Retail stops the flash when the second hit lands while the impact palette is
+	/// showing. See <see cref="Render.CockpitHitShake.FlashSurvivesRestart"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FlashThroughSecondHit = new("tweak.flash_through_second_hit", TweakCategory.Cosmetic, false);
 	#endregion
 
 	#region FUNCTIONAL
@@ -93,7 +100,8 @@ public static class TweakSettingDefinitions {
 	/// Each weapon's shots apply its own <c>PROJ.DAT</c> record. Retail applies the first record that
 	/// shares its type and subtype id, so <c>ATC75</c> and <c>ATC100</c> hit like <c>ATC35</c> and
 	/// <c>ATC50</c>, <c>LAS500</c> like <c>LAS300</c>, and <c>LAS400</c> like <c>LAS200</c> at a
-	/// higher power.
+	/// higher power. The four also take their own <c>BULLETS.DAT</c> and <c>BEAM.DAT</c> records, so
+	/// <c>ATC75</c> and <c>ATC100</c> rounds expire sooner and the two lasers draw wider.
 	/// <para>Defaults on, an exception to the retail-by-default rule. See <see cref="Sim.WeaponMount.ShotProjectile"/>.</para>
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixWeaponDamageRecords = new("tweak.fix_weapon_damage_records", TweakCategory.Functional, true);
@@ -111,7 +119,8 @@ public static class TweakSettingDefinitions {
 	/// <summary>Every defined <c>bool</c> tweak setting, keyed by ID for <see cref="TweakSettings"/> save/load.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
 		ShowCorrectStats, ShowAccurateSpeed, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
-		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, SmootherTurretMovement,
-		MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords, ChargeBarPowerLevel,
+		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
+		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
+		ChargeBarPowerLevel, FlashThroughSecondHit,
 	};
 }

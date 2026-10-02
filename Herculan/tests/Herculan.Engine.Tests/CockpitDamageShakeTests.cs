@@ -146,9 +146,10 @@ public class CockpitDamageShakeTests {
 	}
 
 	/// <summary>
-	/// And it extends the window all the same, so the flash outlives the first hit's 0.96 s even
-	/// though the view has stopped. Both halves of the quirk, since either alone would look like a
-	/// plain restart or a plain no-op.
+	/// And it extends the window all the same. Both halves of the quirk, since either alone would look
+	/// like a plain restart or a plain no-op. The flash cannot show the extension, since it may have
+	/// stopped too, so a third hit does: past where the first window would have closed it finds the
+	/// second still running and seeds no band, where a closed window would have let it arm a fresh one.
 	/// </summary>
 	[Fact]
 	public void ASecondHitStillExtendsTheWindow() {
@@ -160,12 +161,76 @@ public class CockpitDamageShakeTests {
 		shake.Update(Frame, cockpitHits: 2);
 
 		// Past where the first window would have closed, and still inside the second.
-		Advance(shake, CockpitHitShake.DurationSeconds - intoFirst + Frame * 2);
-		Assert.True(shake.FlashActive || FlashSeenOver(shake, frames: 12, hits: 2),
-			"the flash should still be toggling after the first window would have closed");
+		Advance(shake, CockpitHitShake.DurationSeconds - intoFirst + Frame * 2, hits: 2);
+		shake.Update(Frame, cockpitHits: 3);
+		Assert.All(OffsetsOver(shake, frames: 20, hits: 3), offset => Assert.Equal(0, offset));
 
-		Advance(shake, CockpitHitShake.DurationSeconds);
+		Advance(shake, CockpitHitShake.DurationSeconds, hits: 3);
 		Assert.False(shake.FlashActive);
+	}
+
+	/// <summary>
+	/// <b>The flash half of the quirk.</b> A second hit while the impact palette is up restores the
+	/// theater palette without touching the toggle's saved partner, which the last toggle left holding
+	/// the theater palette too — so every later toggle swaps the theater palette with itself and the
+	/// flash stays off for the rest of the window.
+	/// </summary>
+	[Fact]
+	public void ASecondHitOnAnImpactPhaseStopsTheFlash() {
+		var shake = new CockpitHitShake();
+		Assert.True(AdvanceToFlashPhase(shake, flashActive: true), "the flash should come up");
+
+		shake.Update(Frame, cockpitHits: 2);
+
+		Assert.False(shake.FlashActive);
+		Assert.False(FlashSeenOver(shake, frames: 55, hits: 2),
+			"the flash should stay off for the rest of the window");
+	}
+
+	/// <summary>
+	/// A second hit while the theater palette is up leaves the impact palette as the toggle's partner,
+	/// so the flash carries on.
+	/// </summary>
+	[Fact]
+	public void ASecondHitOnATheaterPhaseKeepsTheFlash() {
+		var shake = new CockpitHitShake();
+		Assert.True(AdvanceToFlashPhase(shake, flashActive: false), "the flash should go off between toggles");
+
+		shake.Update(Frame, cockpitHits: 2);
+
+		Assert.True(FlashSeenOver(shake, frames: 30, hits: 2), "the flash should carry on");
+	}
+
+	/// <summary>
+	/// The <c>FlashThroughSecondHit</c> tweak: the flash carries on from an impact phase as well.
+	/// </summary>
+	[Fact]
+	public void UnderTheTweakASecondHitOnAnImpactPhaseKeepsTheFlash() {
+		var shake = new CockpitHitShake { FlashSurvivesRestart = true };
+		Assert.True(AdvanceToFlashPhase(shake, flashActive: true), "the flash should come up");
+
+		shake.Update(Frame, cockpitHits: 2);
+
+		Assert.True(FlashSeenOver(shake, frames: 30, hits: 2), "the flash should carry on");
+	}
+
+	/// <summary>
+	/// A hit taken while an outside view is up is dropped, not held: <c>Cockpit_StartHitShake</c>
+	/// returns at once in view mode 4, so coming back into the cockpit afterwards starts nothing.
+	/// </summary>
+	[Fact]
+	public void AHitTakenOutsideDoesNotShakeOnReturn() {
+		var shake = new CockpitHitShake();
+
+		for (int frame = 0; frame < 10; frame++) {
+			shake.Reset(cockpitHits: frame < 5 ? 0 : 1);
+		}
+
+		for (int frame = 0; frame < 60; frame++) {
+			shake.Update(Frame, cockpitHits: 1);
+			Assert.Equal(0, shake.OffsetPixels);
+			Assert.False(shake.FlashActive);
+		}
 	}
 
 	/// <summary>
@@ -196,7 +261,7 @@ public class CockpitDamageShakeTests {
 		shake.Update(Frame, cockpitHits: 1);
 		Advance(shake, Frame * 5);
 
-		shake.Reset();
+		shake.Reset(cockpitHits: 1);
 
 		Assert.Equal(0, shake.OffsetPixels);
 		Assert.False(shake.FlashActive);
@@ -451,7 +516,7 @@ public class CockpitDamageShakeTests {
 	/// The HUD's own colours follow the flash. <c>COLORS.DAT</c> ids and raw palette slots are both
 	/// resolved at load, so without a second resolution the instruments would keep their colours while
 	/// the world went red — which is the one way a partial flash reads as a fault rather than an
-	/// effect. Twenty of the twenty-seven ids move under a retail impact palette.
+	/// effect. Twenty of the twenty-seven ids move under <c>IMPACT1</c>, the palette loaded here.
 	/// </summary>
 	[Fact]
 	public void TheHudsOwnColoursFollowTheFlash() {
@@ -591,6 +656,23 @@ public class CockpitDamageShakeTests {
 		}
 
 		return reversals;
+	}
+
+	/// <summary>
+	/// Starts a shake with hit 1 and runs it until <see cref="CockpitHitShake.FlashActive"/> reads
+	/// <paramref name="flashActive"/>, inside the window. False if it never does.
+	/// </summary>
+	private static bool AdvanceToFlashPhase(CockpitHitShake shake, bool flashActive) {
+		shake.Update(Frame, cockpitHits: 1);
+		for (int frame = 0; frame < 30; frame++) {
+			if (shake.FlashActive == flashActive) {
+				return true;
+			}
+
+			shake.Update(Frame, cockpitHits: 1);
+		}
+
+		return false;
 	}
 
 	private static void Advance(CockpitHitShake shake, double seconds, int hits = 1) {

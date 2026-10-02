@@ -88,7 +88,7 @@ static class ShellHost {
 		Console.WriteLine($"Mounted archives: {string.Join(", ", content.MountedArchives)}");
 
 		// The mission tab's palette depends on the campaign stage, the career's own 1-5, and on which of its
-		// views the tab opens: the map while the campaign map's once-per-load flag (DAT_004778aa) is
+		// views the tab opens: the map while the campaign map's first-show flag (DAT_004778aa) is
 		// clear and the mission-within-stage counter is zero, the briefing otherwise
 		// (TabHandler_Mission, 0043a6ca). All three come from the loaded game below.
 		int campaignStage = 1;
@@ -378,7 +378,7 @@ static class ShellHost {
 			StartSound();
 			movies = new ShellMovieRun(movieQueue, MovieHooks(), sound, audio);
 
-			// The startup (FUN_00406507) goes full screen when option 6 is set, before the shell's screens
+			// The startup (Shell_WinMain, 00406507) goes full screen when option 6 is set, before the shell's screens
 			// are built. --shell-windowed keeps the window, which retail's -d does not.
 			if (shellOptions[DisplayModeOption] != 0 && !startWindowed) {
 				ToggleFullScreen();
@@ -785,7 +785,7 @@ static class ShellHost {
 		}
 
 		// What a tab's entry does beyond showing it. The mission tab's map view sets the campaign map's
-		// once-per-load flag (Mission_Show, 004441e3), so the next visit opens the briefing.
+		// first-show flag (Mission_Show, 004441e3), so the next visit opens the briefing.
 		void EnterTab(int id) {
 			// The repair and build screens quote the pool net of the queue, which the armory tab changes.
 			repairScreen.QueuedKilograms = armoryCatalog.QueuedTotal(hangar);
@@ -1038,7 +1038,7 @@ static class ShellHost {
 		// CONTINUE GAME, MainMenu_OnContinue (004313e4): campaign mode, slot 10 loaded and selected on the save
 		// screen, then the bare frame when the game goes on (state 2) and the END OF GAME alert over the menu
 		// otherwise (EndOfGame_Show (0044cecf)). Unlike RESTORE it neither autosaves nor clears the campaign map's
-		// once-per-load flag. The original wraps the load in the hourglass, which a load inside one update,
+		// first-show flag. The original wraps the load in the hourglass, which a load inside one update,
 		// with no message pumped, would never show.
 		void ContinueGame() {
 			SetMode(ShellCampaignMode.Campaign);
@@ -1091,7 +1091,7 @@ static class ShellHost {
 		}
 
 		// ACCEPT, Registration_OnAccept (0043c0fb): gam\herc_inf.dat reloaded, the screen hidden, the campaign
-		// map's once-per-load flag (DAT_004778aa, missionMapShown) cleared, Game_NewCareer(name, skill) in
+		// map's first-show flag (DAT_004778aa, missionMapShown) cleared, Game_NewCareer(name, skill) in
 		// campaign mode, and MissionScreenView from the position — the map, on stage 1 mission 0. The career's
 		// position step posts the developer's mission-name dialog's Use Default click, which the original
 		// delivers once the handler has returned and which runs Career_LoadCurrentMission; this goes straight
@@ -1190,7 +1190,7 @@ static class ShellHost {
 		ShellMovieHooks MovieHooks() => new() {
 			ReadMovie = name => {
 				string path = Path.Combine(installRoot, MovieHost.MovieFolderName, name);
-				return File.Exists(path) ? File.ReadAllBytes(path) : null;
+				return File.Exists(path) ? MovieHost.ReadMovieFile(path) : null;
 			},
 			InstallPalette = index => {
 				InstallPalette(index);
@@ -1563,7 +1563,7 @@ static class ShellHost {
 
 		// RESTORE, SaveScreen_OnRestore (00437d03): load the selected slot and write it straight back out as
 		// the slot-10 autosave, then leave exactly as EXIT does on the tab-strip path, whichever way the
-		// screen was entered. It clears the campaign map's once-per-load flag (DAT_004778aa), which
+		// screen was entered. It clears the campaign map's first-show flag (DAT_004778aa), which
 		// missionMapShown is.
 		void RestoreSelectedSlot() {
 			int slot = saveScreen.SelectedSlot;
@@ -2060,7 +2060,7 @@ static class ShellHost {
 		}
 
 		// Tab 7's entry, Mission_Show (004441e3), in the view the tab handler picks, or the debrief's. The map
-		// view queues the stage's two movies and sets the once-per-load flag whether or not they play; the
+		// view queues the stage's two movies and sets the map's first-show flag whether or not they play; the
 		// briefing queues the career's briefing movie once per load, and the debrief its debrief movie, both
 		// into the Telecomm picture through the view's palette. The main loop's pass plays them.
 		void EnterMission() {

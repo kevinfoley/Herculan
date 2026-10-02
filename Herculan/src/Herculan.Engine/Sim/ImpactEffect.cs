@@ -23,9 +23,8 @@ namespace Herculan.Engine.Sim;
 /// <para>A row with a nonzero <see cref="ExplosionTypeEntry.LightMode"/> also claims a dynamic
 /// light for as long as the flipbook runs — <see cref="EffectLightField"/>, whose slot this drives
 /// from the row's per-frame intensity ramp. <c>LightMode</c> 1 and 2 reach the same code; the
-/// original tests the field only against zero. A ramp read past the row's twelve entries yields 0,
-/// where the original runs off the end of the row into <c>ProximityRadius</c>; no retail shape has a
-/// flipbook long enough to reach it.</para>
+/// original tests the field only against zero. A flipbook longer than the row's twelve ramp entries
+/// reads on into the row's later fields, as the original does — <see cref="ExplosionCatalog.RampWord"/>.</para>
 ///
 /// <para>A row with a nonzero <see cref="ExplosionTypeEntry.GroundShape"/> lays a
 /// <see cref="Sim.GroundShape"/> under the effect for as long as it runs, stepping its cell with the
@@ -34,11 +33,13 @@ namespace Herculan.Engine.Sim;
 /// </summary>
 public sealed class ImpactEffect {
 	private readonly ExplosionTypeEntry _record;
+	private readonly ExplosionCatalog _catalog;
 	private readonly int _frameCount;
 	private readonly EffectLightField? _lights;
 	private short _timer;
 
 	/// <param name="typeId">The <c>EXPLOS.DAT</c> type row, which is what a <c>PROJ.DAT</c> <c>ImpactFX</c> array holds.</param>
+	/// <param name="catalog">The table the row is in, which the light's ramp can read past the row into.</param>
 	/// <param name="record">That row.</param>
 	/// <param name="frameCount">How many frames the row's shape has — see <see cref="ExplosionCatalog.FrameCount"/>.</param>
 	/// <param name="position">Where the shot landed, in world units.</param>
@@ -49,9 +50,10 @@ public sealed class ImpactEffect {
 	/// The world a row asking for a ground shape takes it from, or null to run the effect without one.
 	/// </param>
 	internal ImpactEffect(
-			short typeId, ExplosionTypeEntry record, int frameCount, Vec3i position,
+			short typeId, ExplosionCatalog catalog, ExplosionTypeEntry record, int frameCount, Vec3i position,
 			EffectLightField? lights = null, SimWorld? world = null) {
 		TypeId = typeId;
+		_catalog = catalog;
 		_record = record;
 		_frameCount = frameCount;
 		Position = position;
@@ -147,13 +149,10 @@ public sealed class ImpactEffect {
 	}
 
 	/// <summary>
-	/// The type row's intensity ramp at one frame, as the original reads it — the entry's low byte,
-	/// and 0 for a frame past the twelve the row has room for. A shape with a longer flipbook than
-	/// that runs the original off the end of the row into <c>ProximityRadius</c>; stopping at the
-	/// ramp's own length is this engine's, and it only differs for data no retail shape supplies.
+	/// The type row's intensity ramp at one frame, as the original reads it — the word's low byte,
+	/// read past the ramp's twelve entries when the flipbook is longer.
 	/// </summary>
-	private int FrameIntensity(int frame) =>
-		frame >= 0 && frame < _record.FrameIntensity.Length ? _record.FrameIntensity[frame] & 0xff : 0;
+	private int FrameIntensity(int frame) => _catalog.RampWord(TypeId, frame) & 0xff;
 
 	/// <summary>
 	/// What the effect's end hands back: the light slot (<c>EffectLight_Destruct</c>,

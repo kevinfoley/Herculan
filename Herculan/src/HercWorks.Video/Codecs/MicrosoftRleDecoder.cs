@@ -48,7 +48,7 @@ internal sealed class MicrosoftRleDecoder : IVideoCodec {
 
 			if (count > 0) {
 				WriteRun(frame, x, row, count, value);
-				x += count;
+				x = Step(x, count, frame.Width);
 				continue;
 			}
 
@@ -69,7 +69,7 @@ internal sealed class MicrosoftRleDecoder : IVideoCodec {
 
 					// Deltas move right and *up the picture*, which for bottom-up rows means
 					// forward through the stream's row order — the same direction end-of-row moves.
-					x += packet[at];
+					x = Step(x, packet[at], frame.Width);
 					row += packet[at + 1];
 					at += 2;
 					break;
@@ -85,7 +85,7 @@ internal sealed class MicrosoftRleDecoder : IVideoCodec {
 						Plot(frame, x + i, row, packet[at + i]);
 					}
 
-					x += literal;
+					x = Step(x, literal, frame.Width);
 					// Literal runs are padded to an even length.
 					at += literal + (literal & 1);
 					break;
@@ -102,11 +102,23 @@ internal sealed class MicrosoftRleDecoder : IVideoCodec {
 		return true;
 	}
 
+	/// <summary>
+	/// Writes a run, stopping at the right edge. Every pixel past it would be clipped anyway, so this
+	/// changes no output; it bounds the work a packet can ask for, which is otherwise 255 writes for
+	/// every two bytes of input.
+	/// </summary>
 	private void WriteRun(VideoFrame frame, int x, int row, int count, byte index) {
-		for (int i = 0; i < count; i++) {
+		for (int i = 0; i < count && x + i < frame.Width; i++) {
 			Plot(frame, x + i, row, index);
 		}
 	}
+
+	/// <summary>
+	/// Moves the cursor right, pinned at the frame's right edge. Nothing past the edge is drawn and
+	/// only end-of-row brings the cursor back, so pinning it changes no output; it keeps a packet of
+	/// millions of runs from wrapping the cursor past <c>int.MaxValue</c> back into the frame.
+	/// </summary>
+	private static int Step(int x, int by, int width) => Math.Min(x + by, width);
 
 	/// <summary>
 	/// Plots one palette index, converting the stream's row number to a frame row.

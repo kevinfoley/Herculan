@@ -1,5 +1,6 @@
 using HercWorks.Video.Avi;
 using HercWorks.Video.Codecs.Indeo3;
+using HercWorks.Video.Codecs.Indeo4;
 using HercWorks.Video.Riff;
 
 namespace HercWorks.Video.Codecs;
@@ -52,12 +53,6 @@ public static class CodecRegistry {
 	public static uint Indeo4 { get; } = RiffReader.FourCc('I', 'V', '4', '1');
 
 	/// <summary>
-	/// Whether <paramref name="compression"/> is one the retail corpus uses and this assembly has no
-	/// decoder for yet — the ones <see cref="PlaceholderDecoder"/> stands in for.
-	/// </summary>
-	public static bool IsUnimplemented(uint compression) => compression == Indeo4;
-
-	/// <summary>
 	/// Creates a decoder for <paramref name="format"/>, or returns null when its compression is one
 	/// this assembly does not implement.
 	///
@@ -87,9 +82,10 @@ public static class CodecRegistry {
 			return CinepakDecoder.Create(format);
 		}
 
-		// Indeo 4 is not implemented. Returning null means a player reports the stream
-		// as unsupported rather than showing a frame this assembly guessed at, unless it asks for
-		// PlaceholderDecoder; see docs/formats/avi-video.md#open.
+		if (cc == Indeo4) {
+			return Indeo4Decoder.Create(format, limits);
+		}
+
 		return null;
 	}
 }

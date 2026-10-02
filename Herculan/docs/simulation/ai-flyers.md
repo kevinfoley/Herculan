@@ -18,9 +18,11 @@ Retail ships one flyer chassis with data: `SKIMMER` ("Landskimmer"). `nam\FLYERS
 | 5 | `scouting` | `00422bdc` | `004218c4` | `00422d00` | 5000 | `0x00` |
 | 6 | `dead` | — | — | — | 500 | `0x01` |
 
-The dwell is in the simulation's timer unit, not milliseconds ([`dbsim-physics-notes.md`](dbsim-physics-notes.md#timer-units)): 5000 is about 2.4 seconds and 50000 about 24. Only flag bit 0 is ever set, and it means what it means for a machine: `Mech_AiTick` skips the dwell countdown. `attacking`, `sleeping` and `dead` therefore never time out; `attacking` ends when its think reports finished, and the other two end only by a reassess that they do not have.
+The dwell is in the simulation's timer unit, not milliseconds ([`dbsim-physics-notes.md`](dbsim-physics-notes.md#timer-units)): 5000 is about 2.4 seconds and 50000 about 24. Only flag bit 0 is ever set, and it means what it means for a machine: `Mech_AiTick` skips the dwell countdown. `attacking`, `sleeping` and `dead` therefore never time out. `attacking` reaches its reassess when its think reports finished or when an order advance zeroes the countdown; `sleeping` and `dead` have no reassess to reach.
 
 **Five states reassess, all through `Flyer_AiSelectBehaviour`.** There is no combat form: an aircraft picks its target inside its think and changes state from there. `sleeping` and `dead` carry a null reassess triple, so `Flyer_DispatchReassess` returns without calling anything — a sleeping aircraft stays asleep whatever its group's next order says, because an order advance only zeroes the countdown that would let a reassess run.
+
+Four of `Behaviour_SetState`'s 30 call sites install a flyer state: `Flyer_Constructor` (`deciding`), `Flyer_AiSelectBehaviour`, `Flyer_ComponentDamageWrite` (`dead`) and `Flyer_EngageWithFlight` (`attacking`). The slots through which a machine reacts to being shot (`+0x50`) or to a squad order (`+0x28`) hold `Mech_ShareContact` (`00411aec`) and a refusal stub in the flyer's vtable, and neither changes a state. So an aircraft leaves `sleeping` only by being destroyed or through `Flyer_EngageWithFlight`, which only the flight leader's `patrolling` or `search and destroy` think calls — and a sleeping flight's leader is asleep too, because an order advance zeroes every member's countdown and the whole flight reassesses onto the same order in the same pass.
 
 ### Dispatch
 
@@ -39,7 +41,7 @@ The reassess maps the group's current order verb onto a state. The verb set is [
 
 **Verbs 1, 2 and 6, and an empty slot, install the function's own code as a descriptor.** The switch has no default, and the descriptor it hands `Behaviour_SetState` lives in `ECX`, which nothing on that path writes. That is the same shape of defect `Mech_AiSelectBehaviour` has for an empty order slot ([`ai-goals.md`](ai-goals.md#a-group-with-no-order-at-all)), but the register does not hold zero here. `Flyer_DispatchReassess` decides whether to call by OR-ing the reassess triple's three words into `ECX`, and the callee inherits the result: the triple is `{00422d00, 0, 0}` in every state that has one, so `ECX` is `00422d00`, `Flyer_AiSelectBehaviour`'s own address. The "descriptor" the aircraft is put in is that function's opcode bytes. Its flag byte at `+0x08` is nonzero, so no countdown runs, and its move triple at `+0x24` is `{83c0bf0f, 4d7705f8, …}`, so the same tick's move dispatch calls a wild address. No retail mission reaches this: the 76 flyer groups in the 62 `.MSN` missions all have an order in their first slot, and the verbs they use are `search/destroy` (0), `patrol` (3) and `sleep` (4). Seven of them have a second order, always `search/destroy` after a `search/destroy`.
 
-`flyer+0xa5` is the third byte of the out-of-the-fight triple ([`component-damage.md`](component-damage.md#the-three-out-of-the-fight-bytes--0x99-0xa4-0xa5)), and nothing clears it. A flight ordered to travel or to sleep stops counting as something the other side has to contest, which is the point.
+`flyer+0xa5` is the third byte of the out-of-the-fight triple ([`component-damage.md`](component-damage.md#the-three-out-of-the-fight-bytes--0x99-0xa4-0xa5)), and no write that clears it is known ([Open](#open)). A flight ordered to travel or to sleep stops counting as something the other side has to contest, which is the point.
 
 ## The thinks
 
@@ -48,7 +50,7 @@ Three of the four open with the same movement step, `Flyer_FollowStep` (`00422a5
 The leader's half is `Flyer_LeadRouteStep` (`004224c4`). It steers at the waypoint one past the group's route cursor, as a walking machine does ([`ai-goals.md`](ai-goals.md#the-route-cursor-is-loaded-once)), and steps the cursor once that waypoint is inside 15000 ground units; with no waypoint past the cursor it keeps steering at the cursor's own, so a flight at the end of an open route never stops flying at its last point. Altitude is held at 30000 and the steering command is `Q16(bearing error, 28000)`. The wingmen's half is [station keeping](#station-keeping).
 
 - **`scouting`** (`00422bdc`) is that step and nothing else.
-- **`patrolling`** (`00422b34`) adds a target sweep, for the leader alone and only when the `flyer+0x5b` countdown expires (reloaded with 10000, about five seconds — [`dbsim-physics-notes.md`](dbsim-physics-notes.md#timer-units)): `Ai_SelectTarget` with mask `0x10` (reject own class), so a flight on patrol takes any machine or structure but not another aircraft.
+- **`patrolling`** (`00422b34`) adds a target sweep for the leader alone, gated on the `flyer+0x5b` countdown: `Ai_SelectTarget` with mask `0x10` (reject own class), so a flight on patrol takes any machine or structure but not another aircraft. A sweep reloads the countdown with 10000, about five seconds ([`dbsim-physics-notes.md`](dbsim-physics-notes.md#timer-units)), but the countdown lies in the `0x28` bytes from `flyer+0x5a` that `Behaviour_SetState` zeroes, and the state's own reassess reinstalls it at the end of every 5000-count dwell. So the leader sweeps on the state's first tick and again after every reassess, about every 2.4 seconds, and the 10000 reload never runs out.
 - **`search and destroy`** (`00422a80`) is the same with mask `0x11`, and what it finds must also pass `Group_IsOrderTarget` — a flight under this order engages only what the mission named.
 - **`attacking`** (`00422ca8`) reports **finished** as soon as the target is immobilised or destroyed, which zeroes the dwell and sends the aircraft back through the reassess. Otherwise the leader flies the attack run and the rest hold station.
 
@@ -73,15 +75,15 @@ So a flight keeps coming round rather than trying to stay on something that can 
 
 **The aim is led.** The target's position is offset along its own heading by `(range>>3) * (targetSpeed*8) / shotSpeed`, with the range capped at 200000; `shotSpeed` is the aircraft's own travel speed until the run is close enough to shoot, and `PROJ.DAT` row 2's speed from then on.
 
-Firing needs bearing and pitch both within ±1000, `flyer+0x1f4` within ±10, and the countdown handed at `flyer+0x21e` expired. **The first shot of each pass is a missile** — a flag at `flyer+0x5a`, cleared on every tick spent in phase 0, lets one `Rocket_Fire(0)` off the `(500, 200, -100)` muzzle inside 30000 units — and every shot after it on that pass is a pair of `Bullet_Fire(2)` rounds from that point and its mirror. The countdown reloads with 1500, about 0.7 seconds ([`dbsim-physics-notes.md`](dbsim-physics-notes.md#timer-units)).
+Firing needs bearing and pitch both within ±1000, `flyer+0x1f4` within ±10, and the countdown handed at `flyer+0x21e` expired. **The first shot of each pass is a missile** — a flag at `flyer+0x5a`, cleared on every tick spent in phase 0 and by `Behaviour_SetState` when the aircraft enters `attacking`, lets one `Rocket_Fire(0)` off the `(500, 200, -100)` muzzle inside 30000 units — and every shot after it on that pass is a pair of `Bullet_Fire(2)` rounds from that point and its mirror. The countdown reloads with 1500, about 0.7 seconds ([`dbsim-physics-notes.md`](dbsim-physics-notes.md#timer-units)).
 
-`flyer+0x1f4` is read here and written nowhere in the image, and the flyer pool is zero-filled when it is built, so the gate always passes. The flag is a `short` at `+0x5a`, so its second byte lands on the low byte of the `+0x5b` count the target sweep steps. Every write to the flag zeroes that byte, which shortens the sweep interval in progress by up to 255 counts; no sweep runs while the aircraft is attacking, so it only touches the first interval after a pass.
+The flyer pool is zero-filled when it is built and `Flyer_Constructor` does not write `flyer+0x1f4`, so the gate passes unless something else writes that field; no writer is known ([Open](#open)). The flag is a `short` at `+0x5a`, so its second byte is the low byte of the `+0x5b` count the target sweep steps. The overlap changes nothing: the attack run and the sweep belong to different states, and `Behaviour_SetState` zeroes `+0x5a` through `+0x81` on every state change, so neither value carries into the other's state.
 
 A flyer's missiles always have a lock: the gate is the launcher's vtable `+0x6c`, and the `Flyer` class' slot is a `return 1` stub. See [`rockets.md`](rockets.md).
 
 ## The control law
 
-Every think ends in `Flyer_SteerAndFly` (`004222fc`), which turns a heading error into a bank and runs the flight model. The bank command is a 16-bit accumulator:
+Every movement step — the leader's route step, station keeping and the attack run — ends in `Flyer_SteerAndFly` (`004222fc`), which turns a heading error into a bank and runs the flight model. The bank command is a 16-bit accumulator:
 
 ```
 bank = Q16(-turn, 2500) + Q16(bankTurnRate, 32000) + Q16(rollRate, -5000)
@@ -90,10 +92,10 @@ bank = Q16(-turn, 2500) + Q16(bankTurnRate, 32000) + Q16(rollRate, -5000)
 where `bankTurnRate` is `flyer+0x287` — the heading rate the current bank is already producing, which is the term that stops a turn once it is actually coming round. Three arms follow:
 
 - Past the chassis' bank limit (type record `+0x0e`, 14000 on `SKIMMER`) less a 1500 hysteresis band, and only in the direction that would take it further over, the aircraft is **held at the limit**.
-- A steering command **under 2000** is answered with rudder (`Q16(-turn, 4000)`) and level wings rather than a bank at all — and the rudder is refused while the roll is still over 800, so the wings come level first.
+- A steering command **under 2000** is answered with rudder (`Q16(-turn, 4000)`) and level wings rather than a bank at all — and the rudder is refused while the roll is 800 or more, so the wings come level first. The test is signed: a bank of any size to the negative side does not block the rudder.
 - Anything larger is flown as a bank.
 
-The pitch channel is `Flyer_PitchToAltitude` (`00422108`) into `Flyer_PitchCommand` (`00422098`): a height error becomes a pitch demand against a **fixed 10000-unit horizontal run**, so the angle asked for depends on the error alone; the demand is then scaled, resolved through the current bank, and damped by the pitch rate. Cruise altitude is a flat 30000 world units. `Flyer_PitchToAltitude`'s other arm, gated on `flyer+0xae` and reading `flyer+0x23c`, belongs to the walking machine's obstacle avoidance and leg placement ([`ai-navigation.md`](ai-navigation.md), [`mech-locomotion.md`](mech-locomotion.md)); only mech code writes either field (`es2_fieldscan.py`), and the flyer pool is zero-filled, so the arm never fires for an aircraft. `flyer+0x1f8`, which scales the leader term in the bank command, is read here and written nowhere in the image, so that term contributes nothing.
+The pitch channel is `Flyer_PitchToAltitude` (`00422108`) into `Flyer_PitchCommand` (`00422098`): a height error becomes a pitch demand against a **fixed 10000-unit horizontal run**, so the angle asked for depends on the error alone; the demand is then scaled, resolved through the current bank, and damped by the pitch rate. Cruise altitude is a flat 30000 world units. `Flyer_PitchToAltitude`'s other arm, gated on `flyer+0xae` and reading `flyer+0x23c`, belongs to the walking machine's obstacle avoidance and leg placement ([`ai-navigation.md`](ai-navigation.md), [`mech-locomotion.md`](mech-locomotion.md)); the flyer pool is zero-filled, so the arm is live for an aircraft only if something writes `flyer+0xae`, and no flyer path that does is known ([Open](#open)). The leader term in the bank command is scaled by the leader's `flyer+0x1f8`, which is zero on the same terms: no writer is known.
 
 `Flyer_ApplyFlightCommand` (`004221a8`) hands the result to `FlightModel_Step` (`00466a54`) — see [`razor-flight.md`](razor-flight.md#control-law-flightmodel_step) for the model itself. Two things it does on the way:
 
@@ -102,15 +104,17 @@ The pitch channel is `Flyer_PitchToAltitude` (`00422108`) into `Flyer_PitchComma
 
 ### A flyer cannot change speed
 
-The command array's throttle element is **never written** — `Flyer_SteerAndFly` zeroes it at every site — so the flight model's rate branch never steps the setting and it stays at `Flyer_Constructor`'s `0x200`, half. A `SKIMMER` therefore cruises at the airspeed half throttle asks for, 875 of its 500–1000 range, biased only by its own pitch attitude.
+The command array's throttle element is **zero on every call**: `Flyer_SteerAndFly` zeroes it before any of its three arms and none of them writes it, so the flight model's rate branch never steps the setting. The setting starts at `Flyer_Constructor`'s `0x200` on the model's ±`0x400` scale, and with `SKIMMER.FM`'s 500–1000 airspeed range that asks for 875, biased only by the aircraft's own pitch attitude.
 
-`Flyer_FormationThrottle` (`00422260`) does work a throttle figure out of the station error and the leader's speed: it adds the correction to the previous value, clamps the sum to `[0x8c, 0x100]` and stores it in `flyer+0x21c`. **That function is the field's only reader**, so it is a private accumulator and nothing carries it into the flight command. The route step and the attack run reload it with `0xb4`, and `Flyer_FormationStep` with `0x100` while the station is more than 15000 away. `FUN_00422a3c` (`00422a3c`) zeroes it and returns 0; `es2_xref.py` finds no branch, stored pointer or vtable slot that references it.
+The model's other throttle branch is chosen by the player's controls, not by the aircraft. `FlightModel_Step` (`00466a54`) reads the throttle element as a position, `axis << 3` ([`razor-flight.md`](razor-flight.md#throttle)), when the joystick capability block's `+4` reports a throttle and `004d1fd6` is 2 — option 26, the RAZOR block's THROTTLE row ([`preferences.md`](preferences.md#the-bindings-are-twelve-bytes-of-the-same-file)). It tests both whatever it is flying, so under that binding every Cybrid flyer's setting is written to 0 on each step and a `SKIMMER` cruises at 750.
+
+`Flyer_FormationThrottle` (`00422260`) does work a throttle figure out of the station error and the leader's speed: it adds the correction to the previous value, clamps the sum to `[0x8c, 0x100]` and stores it in `flyer+0x21c`. That figure is not the command array's throttle element, and no other reader of `flyer+0x21c` is known ([Open](#open)), so it acts as a private accumulator. The route step and the attack run reload it with `0xb4`, and `Flyer_FormationStep` with `0x100` while the station is more than 15000 away. `FUN_00422a3c` (`00422a3c`) zeroes it and returns 0; what calls it is [Open](#open).
 
 ## The move — `Flyer_MovementTick` (`004218c4`)
 
 The `+0x24` slot of the four states that have one.
 
-**The world velocity is added to the position raw**, three plain `ADD`s at `0042190a`, with no `Math_IntegrateRateOverTick`. That is the one place a flyer's move differs in kind from `Razor_MovementTick`'s, and it is what makes a flyer fast: its world velocity is a **per-tick step** where the RAZOR's is a rate. Integrating it leaves a `SKIMMER` moving at a fraction of its speed.
+**The world velocity is added to the position raw**, three plain `ADD`s at `0042190a`, with no `Math_IntegrateRateOverTick`. That is what makes a flyer fast: its world velocity is a **per-tick step** where `Razor_MovementTick`'s is a rate. Integrating it leaves a `SKIMMER` moving at a fraction of its speed.
 
 Then four terrain probes, in the airframe's own frame:
 
@@ -129,7 +133,7 @@ Finally the origin is clamped to `terrainHeight + 500`, and the flyby loop (soun
 
 ## Death
 
-`Flyer_ComponentDamageWrite` (`00421bb4`) loses the aircraft on component 0: the health record is one component with one dependent ([`component-damage.md`](component-damage.md#the-component-damage-system)), so destroying it sets `obj+0x99`, runs the aircraft's out-of-action report and defeat action ([`mission-deployment.md`](mission-deployment.md#the-out-of-action-report)) and credits the kill to the attacker through the attacker's vtable `+0x60`. It also stops the flyby loop, which the `dead` state's missing move can no longer do. Past the flag it installs the `dead` descriptor, which has neither think nor move, and **writes -100000 into `flyer+0x2e`**, the object's world Z. The wreck drops straight out of the world; nothing moves it afterwards because the state it is now in has no move slot to clamp it back to the ground.
+`Flyer_ComponentDamageWrite` (`00421bb4`) loses the aircraft on component 0: the health record is one component with one dependent ([`component-damage.md`](component-damage.md#the-component-damage-system)), so destroying it sets `obj+0x99`, runs the aircraft's out-of-action report and defeat action ([`mission-deployment.md`](mission-deployment.md#the-out-of-action-report)) and credits the kill to the attacker through the attacker's vtable `+0x60`. It also stops the flyby loop, which the `dead` state's missing move can no longer do. Past the flag it installs the `dead` descriptor, which has neither think nor move, and **writes -100000 into `flyer+0x2e`**, the object's world Z. The wreck drops straight out of the world, and its own move cannot clamp it back to the ground, because the state it is now in has no move slot.
 
 For the length of that call the debris carrier global `004a96e4` points at the aircraft's own world velocity, so wreckage the component cascade sheds keeps the speed it was doing — see [`destruction-effects.md`](destruction-effects.md). The hit test's own throw happens after the clear and gets nothing.
 
@@ -145,9 +149,18 @@ An aircraft is drawn by **cell** rather than by node — it loses components lik
 | --- | --- |
 | A flyer is driven by its own tick, separate from the mech AI | It is the same `Mech_AiTick`. Only the three dispatchers and the descriptor table differ |
 | The flyer behaviour table is the mech's, indexed differently | Two tables, different addresses, different strides, different names. `00499cf8` and `004993a4` share only their shape |
-| `Flyer_MovementTick` integrates its velocity like `Razor_MovementTick` | It adds it raw. The two functions look alike and this is the one difference that matters |
+| `Flyer_MovementTick` integrates its velocity like `Razor_MovementTick` | It adds it raw. The two functions look alike, and integrating would leave a `SKIMMER` at a fraction of its speed |
 | `flyer+0x2e`'s `-100000` on death is a fall rate | It is the Z position. There is no fall: the aircraft is simply put below the world |
-| `Flyer_FormationThrottle`'s output controls the flight | `flyer+0x21c` is read only by that function itself, and the model's throttle input is zero at every call site |
+| `Flyer_FormationThrottle`'s output controls the flight | The model's throttle input is the command array's fourth element, which `Flyer_SteerAndFly` zeroes on every call; `flyer+0x21c` is not handed to the model |
+| A flight leader sweeps for targets every 10000 counts, the figure the sweep reloads | The countdown is in the bytes `Behaviour_SetState` zeroes, and the state's reassess reinstalls it every 5000-count dwell, before the reload can run out. The leader sweeps at every reassess |
 | A flyer's own radar is what paints it | It zeroes `flyer+0x96` every non-combat tick. A flight is painted by the other side's scanner or not at all |
 | All seven states share one reassess, so a sleeping aircraft wakes when its group's order changes | `sleeping` and `dead` carry a null reassess triple; the dispatcher returns without calling. The other five carry `00422d00` |
 | An empty order slot, or verb 1, 2 or 6, leaves the aircraft in the state it had | The descriptor argument is `ECX`, which holds `00422d00` on that path, and the aircraft is put in a "state" made of that function's code |
+
+## Open
+
+- **Open:** no write that clears `flyer+0xa5` is known. `es2_fieldscan.py a5 --writes-only` finds stores of 1 on sim objects (`Flyer_AiSelectBehaviour`, `Ai_ChooseWeapon`, `Base_Construct`, `Base_TripleTurretThinkTick`) and stores of 0 only to the command screen's own `+0xa5`; a grep of the decompile for the offset finds no other.
+- **Open:** no writer of `flyer+0x1f4` (the attack run's fire gate) or `flyer+0x1f8` (the leader-term gain) is known. `es2_fieldscan.py` over the whole image finds each field's one read and no write, a grep of the decompile for both offsets and their `int`-indexed forms finds nothing more, and `Flyer_Constructor`, 402 undefined bytes in the disassembly, writes neither in the decompile.
+- **Open:** no flyer path that writes `flyer+0xae` or `flyer+0x23c` is known. `es2_fieldscan.py` finds their writes in `Mech_LocomotionTick`, `Mech_MovementTick`, `Mech_Constructor` and `Mech_ComponentDamageWrite` alone.
+- **Open:** no reader of `flyer+0x21c` but `Flyer_FormationThrottle` is known. `es2_fieldscan.py` finds that read and the five writes named above; the field's other hits are other classes' `+0x21c`.
+- **Open:** what calls `FUN_00422a3c`, which zeroes `flyer+0x21c` and returns 0 — the shape of a think. `es2_xref.py` finds no branch, stored pointer or vtable slot holding its address, and its `PUSH EBP` follows `Flyer_AttackRun`'s `RET` directly, so its entry is not late.

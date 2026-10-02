@@ -132,6 +132,7 @@ public sealed class WeaponMount {
 		_lookedUpProjectile = Projectile is { Type: { } type } own
 			? catalog.Lookup(type, own.SubtypeId) ?? own
 			: Projectile;
+		_correctedProjectile = catalog.CorrectedProjectile(weaponId, secondaryKey);
 		_template = catalog.Template(weaponId);
 
 		switch (Kind) {
@@ -281,19 +282,21 @@ public sealed class WeaponMount {
 	public ProjectileData.Projectile? Projectile { get; }
 
 	/// <summary>
-	/// The record a shot from this mount applies its damage, splash and impact effects from. Retail's
-	/// shot constructors look the record up again by type and subtype id
-	/// (<see cref="WeaponCatalog.Lookup"/>) and take the first match, which for <c>ATC75</c>,
-	/// <c>ATC100</c>, <c>LAS400</c> and <c>LAS500</c> is an earlier weapon's record. With
-	/// <see cref="TweakSettingDefinitions.FixWeaponDamageRecords"/> on, the shot applies
-	/// <see cref="Projectile"/> instead. See docs/formats/proj-dat.md#lookup.
+	/// The record a shot from this mount applies its damage, splash and impact effects from, and whose
+	/// subtype id picks its <c>BULLETS.DAT</c> or <c>BEAM.DAT</c> record. Retail's shot constructors
+	/// look the record up again by type and subtype id (<see cref="WeaponCatalog.Lookup"/>) and take
+	/// the first match, which for <c>ATC75</c>, <c>ATC100</c>, <c>LAS400</c> and <c>LAS500</c> is an
+	/// earlier weapon's record. With <see cref="TweakSettingDefinitions.FixWeaponDamageRecords"/> on,
+	/// the shot is <see cref="Projectile"/> under its corrected subtype id
+	/// (<see cref="WeaponCatalog.CorrectedProjectile"/>). See docs/formats/proj-dat.md#lookup.
 	/// </summary>
 	public ProjectileData.Projectile? ShotProjectile =>
 		TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FixWeaponDamageRecords)
-			? Projectile
+			? _correctedProjectile
 			: _lookedUpProjectile;
 
 	private readonly ProjectileData.Projectile? _lookedUpProjectile;
+	private readonly ProjectileData.Projectile? _correctedProjectile;
 
 	/// <summary>
 	/// The magazine size — the template's field at <c>+0x3a</c>, which <c>WeaponMount_CtorAmmunition</c> (<c>0040e140</c>) reads as
@@ -1215,8 +1218,9 @@ public sealed class WeaponMount {
 	/// its hit synchronously and is over inside this call; a <see cref="ProjectileType.Bullet"/>
 	/// record becomes a travelling <see cref="Projectile"/>; a <see cref="ProjectileType.Rocket"/>
 	/// record becomes a <see cref="Rocket"/>. <see cref="ProjectileType.Grenade"/> is the fourth value
-	/// and no dispatch tests for it — its class is built by a constructor nothing calls, so those
-	/// records are unreachable in the original too.</para>
+	/// and no dispatch tests for it — no weapon template names those records, and their class is
+	/// built by <c>Grenade_Construct</c> (<c>0040ac3c</c>), to which no reference is found
+	/// (docs/formats/proj-dat.md#open).</para>
 	///
 	/// <para>Both dispatches also set a flag at <c>mount+0x44</c> whenever the hardpoint's mounting
 	/// code says it is visible (<c>.GL +6 &lt; 4</c>). It is the muzzle flash, and nothing here draws
@@ -1431,9 +1435,9 @@ public sealed class WeaponMount {
 
 	/// <summary>
 	/// The template's <c>+0x34</c> — what firing this weapon costs the AI in
-	/// <see cref="MechObject.ChooseWeapon"/>'s score. 500-600 for a launcher down to 5 for an ELF, and
-	/// large enough against the damage credit that heavy ordnance is only ever worth the shot that
-	/// breaks a shield. See docs/simulation/ai-weapons.md.
+	/// <see cref="MechObject.ChooseWeapon"/>'s score, weighed at ten times the damage credit's gain.
+	/// The retail values and what they do to the choice are in docs/simulation/ai-weapons.md
+	/// ("Choosing a weapon").
 	/// </summary>
 	public short AiShotCost =>
 		_template?.Tail is { Length: >= 0x14 } tail ? BitConverter.ToInt16(tail, 0x12) : (short)0;

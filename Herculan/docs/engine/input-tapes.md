@@ -1,6 +1,6 @@
 # Input tapes: `--play` and `--record`
 
-How HERCULAN plays and records DBSIM's `.TAP` input tapes. The format, and what retail's `-p`, `-r` and `-D` do with it, is [`formats/tap-input-tape.md`](../formats/tap-input-tape.md); the flags are in [`host-flags.md`](host-flags.md).
+How HERCULAN plays and records DBSIM's `.TAP` input tapes. The format, and what retail's `-p`, `-r` and `-D` do with it, is [`formats/tap-input-tape.md`](../formats/tap-input-tape.md); the flags are in [`herculan-command-line.md`](herculan-command-line.md).
 
 `--play <tape>` is `-p`, `--demo` is `-D` and `--record <tape>` is `-r`; `--demo` with `--play` plays that tape in demo mode. `HercWorks.Core`'s `InputTapeTransformer` reads and writes the format, byte-identical on the three retail tapes.
 

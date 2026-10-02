@@ -119,6 +119,46 @@ public sealed class WeaponCatalog {
 	}
 
 	/// <summary>
+	/// The subtype ids four <c>PROJ.DAT</c> records should carry, by <c>PROJ.DAT</c> index:
+	/// <c>ATC75</c> and <c>ATC100</c> take <c>BULLETS.DAT</c> 10 and 11, <c>LAS400</c> and
+	/// <c>LAS500</c> take <c>BEAM.DAT</c> 8 and 9. Retail gives them 1, 2, 4 and 5, the ids of
+	/// <c>ATC35</c>, <c>ATC50</c>, <c>LAS200</c> and <c>LAS300</c>. See
+	/// docs/formats/proj-dat.md#lookup.
+	/// </summary>
+	private static readonly IReadOnlyDictionary<int, short> CorrectedSubtypeIds = new Dictionary<int, short> {
+		[23] = 10, [24] = 11, [25] = 8, [26] = 9,
+	};
+
+	/// <summary>
+	/// <see cref="Projectile"/> with the subtype id <see cref="CorrectedSubtypeIds"/> names, for the
+	/// <c>FixWeaponDamageRecords</c> tweak: the shot then finds its own record when it looks it up again,
+	/// and flies and draws as its own <c>BULLETS.DAT</c> or <c>BEAM.DAT</c> record. A record that
+	/// no earlier one shadows, or whose corrected id another record of its type already carries, is
+	/// returned as it stands, so edited data is left alone.
+	/// </summary>
+	public ProjectileData.Projectile? CorrectedProjectile(int weaponId, short secondaryKey) {
+		if (Projectile(weaponId, secondaryKey) is not { Type: { } type } own
+			|| Template(weaponId)?.ProjDatIndex is not { } index
+			|| !CorrectedSubtypeIds.TryGetValue(index, out short subtypeId)
+			|| Lookup(type, own.SubtypeId) == own
+			|| Lookup(type, subtypeId) != null) {
+			return Projectile(weaponId, secondaryKey);
+		}
+
+		return new ProjectileData.Projectile {
+			Type = own.Type,
+			SubtypeId = subtypeId,
+			DamageShield = own.DamageShield,
+			DamageArmor = own.DamageArmor,
+			SplashFactor = own.SplashFactor,
+			Speed = own.Speed,
+			ImpactFXShield = own.ImpactFXShield,
+			ImpactFXArmor = own.ImpactFXArmor,
+			ImpactFXGround = own.ImpactFXGround,
+		};
+	}
+
+	/// <summary>
 	/// <c>Proj_LookupRecordByIndex</c> (<c>0040ffb0</c>) — a <c>PROJ.DAT</c> record by its flat
 	/// position in the table, which is a different thing from the <c>(category, subtype)</c> search
 	/// <see cref="Lookup"/> performs. The flyer AI's lead calculation is handed a flat index.

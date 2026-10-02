@@ -425,6 +425,11 @@ public partial class MainForm : Form {
 		form.ShowDialog(this);
 	}
 
+	private void OnOpenProjectiles(object? sender, EventArgs e) {
+		using var form = new ProjectileDataForm();
+		form.ShowDialog(this);
+	}
+
 	private void OnOpenCampaignResources(object? sender, EventArgs e) {
 		using var form = new CampaignResourcesForm();
 		form.ShowDialog(this);

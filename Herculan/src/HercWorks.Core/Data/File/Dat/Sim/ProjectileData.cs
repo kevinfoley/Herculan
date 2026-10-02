@@ -35,7 +35,7 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 /// rather than as a travelling instance. <c>Bullet</c> (2) covers both the ATC progression and the
 /// EMP-shaped high-shield entries: real flight time, and <see cref="Projectile.SplashFactor"/> 0
 /// throughout — except one. <c>Rocket</c> (0) is the splash-capable guided weapon; <c>Grenade</c>
-/// (3) is a cut class whose records are never looked up.</para>
+/// (3) is a cut class whose records no weapon template names (docs/formats/proj-dat.md#open).</para>
 ///
 /// <para><b>The Plasma cannon is index 22</b>, the single <c>Bullet</c> record that breaks the
 /// no-splash rule (<see cref="Projectile.SubtypeId"/> 9, 3000/3000, SplashFactor 1000). DBSIM's

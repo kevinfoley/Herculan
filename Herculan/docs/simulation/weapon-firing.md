@@ -29,7 +29,7 @@ The device byte is `DAT_004d2357`, taken from whichever button the input configu
 
 It also passes each fire dispatch the "this shot is free" flag of the unlimited-ammunition setting ([`difficulty.md`](difficulty.md#the-two-sibling-cheats)), which only the ammunition class reads ([below](#the-ammunition-dispatch)).
 
-After the armed mount fires, a `+0x60` subtype of 3 — the electro-optical missile, which the pilot flies — sets `DAT_004d25ac` and `DAT_004d25aa`. `WeaponMounts_ChainReady` (`00410a04`) tests the second, so the chain does not step while the missile is in flight; `WeaponMounts_PerFrameUpdate` tests both. An energy mount always reports 5 and never sets them.
+After the armed mount fires, a `+0x60` subtype of 3 — the electro-optical missile, which the pilot flies — sets `DAT_004d25ac` and `DAT_004d25aa`, "an electro-optical missile is being flown" ([`rockets.md`](rockets.md#the-missile-camera)). An energy mount always reports 5 and never sets them. `WeaponMounts_ChainReady` (`00410a04`) answers ready while `DAT_004d25aa` is up, so the chain advance does not step while the missile is in flight. `DAT_004d25ac` holds until the selection moves — `WeaponMounts_SetSelection` (`00410708`) clears it on any change — and `WeaponMounts_PerFrameUpdate` opens with it: set with `DAT_004d25aa` down, the flight is over, so it steps the selection on with `WeaponMounts_StepSelection(1)` and clears single fire. The launcher that fired the round therefore hands the selection to the next mount in the chain once the round stops being flown.
 
 ## The fire dispatch — vtable `+0x28`
 
@@ -190,4 +190,3 @@ The ray record's `+0x08` is passed along as a walk radius, but the thin-ray terr
 
 - **Unported:** [the charge bar](#the-charge-bar)'s round trip, which leaves an energy mount's charge target one or two units below what its constructor or the keys set.
 - **Open:** whether a gauge push (`Player_PerFrameCockpitUpdate`) always falls between a mount's first two pool turns (`WeaponMounts_ArbitrateEnergy`). The power-up hand-off relies on it: two pool turns first would clear `+0x34` with the 960 seed still in the slider, and the read-back would make the target 960 × 1200 >> 10 = 1125.
-- **Unported:** the flags `WeaponMounts_FireTrigger` sets on firing an electro-optical missile (`DAT_004d25ac`, `DAT_004d25aa`): the player never flies the missile, so nothing sets them and the chain advance never pauses for one.

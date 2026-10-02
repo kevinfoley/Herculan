@@ -16,7 +16,7 @@ The message goes to the **pilot and squad** port (`view+0x207`, through `Cockpit
 |---|---|---|
 | its own trigger areas | `Actions_EvaluateTriggers` (`00426b70`) | a subject stands in one of them |
 | an action timer | `ActionTimer_Tick` (`004230a4`) | the timer's delay runs out |
-| an object being engaged | `Detection_Sweep` (`004128f8`) | that object's `+0x1b2`, at 50000 units |
+| an object being engaged | three sites below | that object's `+0x1b2` |
 | an object being defeated | four sites below | that object's `+0x1b6` |
 
 **None of these is the primary and the others fallbacks.** One action commonly carries two routes — in `TRAIN8.MSN`, action 0 has both a trigger area and a machine whose death activates it, and whichever happens first wins.
@@ -80,9 +80,24 @@ Chaining two of them staggers a sequence: `script6.dat` has action 1 arm a 92-se
 
 Every mech, flyer and structure carries two action pointers, resolved by `DBSim_SpawnMissionObjects` from its roster record's own refs ([`script-dat.md`](../formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps) has the offsets in blocks 7-9).
 
-**`+0x1b2` — engaged.** Two routes. `Detection_Sweep` activates it when a hostile that already has contact on this object closes to 50000 units; both parties latch `+0x9e` and both activate their own. And a shot that reaches the shooter's own selected target raises the *shooter's* `+0x9e` (`0042671f`) and activates the *struck* object's action, from the tail of `Sim_RaycastObjectList` ([`hit-detection.md`](hit-detection.md#the-sweep--sim_raycastobjectlist-00426528)) — so shooting at what you have boxed engages it with nothing in detection range of it, the other way into mission-objective condition 6 ([`mission-objectives.md`](mission-objectives.md)).
+**`+0x1b2` — engaged.** Three sites activate it, and each also latches an `+0x9e`, the flag mission-objective condition 6 reads ([`mission-objectives.md`](mission-objectives.md)). Which object's flag is latched depends on the site:
 
-Both routes are gated on the struck object's `obj+0xa2` being clear. That byte is a per-tick latch: `Mech_PerTickSystemsUpdate` raises it (`0041abd8`) on the machine's own selected target while its ECM pod's switch is on, which only the player's ever is ([`equipment-pods.md`](equipment-pods.md#what-each-class-actually-overrides)), and `Sim_DetectionTick` clears it on everything at the end of the pass ([`target-selection.md`](target-selection.md)). `Action_Activate` is itself one-shot, so the gate can only suppress a duplicate inside one tick.
+| site | when | whose action activates | whose `+0x9e` is latched |
+|---|---|---|---|
+| `Detection_Sweep` (`004128f8`) | a pair that already have contact on each other are within 50000 units | both objects' | both |
+| `Detection_ShareContact` (`00412704`) | a contact is passed to the spotter's side | each object of that side within 50000 of the contact | the contact's |
+| `Sim_RaycastObjectList` (`00426528`) | a shot reaches the shooter's own selected target | the struck object's | the shooter's (`0042671f`) |
+
+The raycast's route is the tail of the sweep in [`hit-detection.md`](hit-detection.md#the-sweep--sim_raycastobjectlist-00426528). Shooting at what you have boxed engages it with nothing in detection range of it.
+
+`Detection_ShareContact` takes a spotter and a contact and does nothing if they are on the same side (`group+0x12`). Otherwise it walks the live-object list. Each object on the spotter's side whose group has arrived (`group+0x14` clear), the spotter included, is measured to the contact with `Math_DistanceBetweenPoints`. Within 100000 it gets the contact ([`target-selection.md`](target-selection.md#the-sensor-model--sim_detectiontick-004123ac)). Within 50000 the function also raises the **contact's** `+0x9e` (`004127a7`, through `EDI`, the second argument) and activates the **list object's own** `+0x1b2` (`004127ab`-`004127c2`, through `EBX`). The `+0x9e` write does not depend on the list object having an action. Two things call it:
+
+- **A new contact in the sweep.** One that a human-side object other than the player's machine makes, and the reciprocal one that a Cybrid object makes. A contact the player's own machine makes is not shared ([`target-selection.md`](target-selection.md#passes)).
+- **A shot striking an object**, with the struck object as spotter and the shooter as contact. The struck object's vtable `+0x50` makes the call: `Mech_ShareContact` (`00411aec`) for a structure, flyer or base object, `Mech_AiOnTakingFire` for a HERC past its own gates ([`ai-targeting.md`](ai-targeting.md#passing-a-contact-on)).
+
+So an engagement action does not wait for a mutual contact. It activates as soon as an object within 50000 of a hostile first spots it, or is shot by it from within 50000.
+
+Each site activates an object's action only while that object's own `obj+0xa2` is clear. `Mech_PerTickSystemsUpdate` raises the byte (`0041abd8`) on the machine's own selected target while its ECM pod's switch is on, which only the player's ever is ([`equipment-pods.md`](equipment-pods.md#what-each-class-actually-overrides)). `Sim_DetectionTick` clears it on everything at the end of its pass ([`target-selection.md`](target-selection.md#passes)). Those are the only two writers `es2_fieldscan.py` finds. `Sim_MainTick` runs the per-mech systems pass straight after the detection tick (`0045f775`, then `0045f7a0`), so the byte is raised again before the next tick's object updates and sweep read it. **Jamming a target holds back its engagement action** for as long as the jammer stays on it. No site gates `+0x9e`, so the target still counts as engaged.
 
 **`+0x1b6` — defeated.** Four sites, and they are the four ways an object stops being a threat. The first three run the object's [out-of-action report](#the-out-of-action-report) just before it; the fourth does not:
 
@@ -253,6 +268,8 @@ The Cybrid HERCs' chassis are not fixed. Each of the eight roster records names 
 | `obj+0x1b6` is a death action | It is also activated when a machine runs out of weapons |
 | The load's zeroing of slots 21-42 misses the last seven weapon grants | The debrief's grant loop reads to slot 49, but its unit table ends at 42. The seven slots past it name no weapon |
 | A disarmed machine counts as out of the fight for the out-of-action report | `+0xa5` sits beside the two damage latches, but the weapons-out branch runs no report and `Group_ReportIfAllOutOfAction` tests only `+0x99` and `+0xa4` |
+| `Detection_ShareContact` engages the object whose action it activates, as `Detection_Sweep` does | The `+0x9e` write goes to the contact (`EDI`) and the activation to the list object (`EBX`), so the two land on opposite sides |
+| `obj+0xa2` can only suppress a duplicate activation within one tick, since `Action_Activate` is one-shot and the detection tick clears the byte | The per-mech systems pass raises it again straight after the clear, so it is up at every gate for as long as a jammer holds the target |
 | An action's message is a `data\mission.str` line | That file holds the objective text, and the id looks like a ref into it. The port it is posted to resolves a speakerless id in `COMMAND<n>.STR` |
 
 ## Open

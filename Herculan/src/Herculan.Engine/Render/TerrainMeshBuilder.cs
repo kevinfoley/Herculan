@@ -1,4 +1,5 @@
 using System.Numerics;
+using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Terrain;
 
@@ -16,7 +17,16 @@ namespace Herculan.Engine.Render;
 /// <para>Flat-shaded lighting: one normal per triangle, no smoothing — which is what the original's
 /// per-polygon terrain fill does, and keeps the mesh honest about the geometry actually being tested
 /// against. Surface <i>colour</i> comes from the theater's texture bank when one is supplied (see
-/// <see cref="TerrainTextureBank"/>) and from a height/slope ramp when it is not.</para>
+/// <see cref="TerrainTextureBank"/>).</para>
+///
+/// <para><b>Every triangle also carries its untextured colour</b>, as the palette index
+/// <c>Terrain_FillCellUntextured</c> (<c>0046bb40</c>) fills it with when terrain texturing is off —
+/// TERRAIN TEXTURE in the preferences, and always in the MFD's missile camera. That fill ignores the
+/// cell's material: it takes the palette's own material ramp <see cref="UntexturedRamp"/> at the
+/// triangle's baked shade, and reads the result through the theater ramp's row for
+/// <see cref="UntexturedRowShade"/> plus the cell's depth slice, which the shader does
+/// (<see cref="SceneItem.GroundFill"/>). That is <c>Raster_ShadeRampRow(0x4b)[Palette_ShadeRampLookup(2,
+/// shade)]</c>, the original's arm for shade mode 1, the one its draw runs in.</para>
 ///
 /// <para><b>The light is baked here, not at draw time.</b> The original lights terrain exactly once,
 /// at zone load: <c>Terrain_BuildSurface</c> walks every cell, normalises its two face normals to
@@ -42,8 +52,14 @@ public static class TerrainMeshBuilder {
 	/// cell whose material or frame does not resolve keeps the untextured ramp colour, which is why
 	/// <see cref="MeshVertex.Textured"/> is per-vertex.</para>
 	/// </summary>
+	/// <param name="shading">
+	/// The theater's ramp and palette, which bake the shade and resolve the untextured fill. Without
+	/// them the mesh is drawn unshaded and an untextured cell takes
+	/// <see cref="SurfaceColor"/>'s placeholder.
+	/// </param>
 	public static MeshVertex[] Build(HeightGrid grid, TerrainTextureBank? bank = null,
-			bool bakeShade = false) {
+			SurfaceShading? shading = null) {
+		bool bakeShade = shading != null;
 		int quadsX = grid.Width - 1;
 		int quadsY = grid.Height - 1;
 		var vertices = new List<MeshVertex>(quadsX * quadsY * 6);
@@ -70,14 +86,14 @@ public static class TerrainMeshBuilder {
 
 				if (grid.DiagonalSelectorAt(cellX, cellY) == 2) {
 					// Split along the c00-c11 diagonal, matching the height query's selector-2 case.
-					AddTriangle(vertices, c00, c10, c11, t00, t10, t11, textured, peak, bakeShade);
-					AddTriangle(vertices, c00, c11, c01, t00, t11, t01, textured, peak, bakeShade);
+					AddTriangle(vertices, c00, c10, c11, t00, t10, t11, textured, peak, shading);
+					AddTriangle(vertices, c00, c11, c01, t00, t11, t01, textured, peak, shading);
 				} else {
 					// Selector 0 splits along c01-c10. Selector 1 is a coplanar quad and selector 3 has
 					// no observed producer; the height query treats both as a single plane through
 					// c00/c10/c01, which this same split renders.
-					AddTriangle(vertices, c00, c10, c01, t00, t10, t01, textured, peak, bakeShade);
-					AddTriangle(vertices, c10, c11, c01, t10, t11, t01, textured, peak, bakeShade);
+					AddTriangle(vertices, c00, c10, c01, t00, t10, t01, textured, peak, shading);
+					AddTriangle(vertices, c10, c11, c01, t10, t11, t01, textured, peak, shading);
 				}
 			}
 		}
@@ -93,7 +109,8 @@ public static class TerrainMeshBuilder {
 
 	private static void AddTriangle(List<MeshVertex> vertices, Vector3 a, Vector3 b, Vector3 c,
 			Vector2 uvA, Vector2 uvB, Vector2 uvC, bool textured, float peak,
-			bool bakeShade) {
+			SurfaceShading? shading) {
+		bool bakeShade = shading != null;
 		Vector3 normal = Vector3.Cross(b - a, c - a);
 		normal = normal.LengthSquared() > 1e-12f ? Vector3.Normalize(normal) : Vector3.UnitY;
 
@@ -103,7 +120,6 @@ public static class TerrainMeshBuilder {
 			normal = -normal;
 		}
 
-		Vector3 color = SurfaceColor((a.Y + b.Y + c.Y) / 3f, normal, peak);
 
 		// One shade per triangle, from the triangle's own normal — the same granularity the original
 		// bakes, which stores a byte per cell triangle rather than per corner. The normals differ in
@@ -116,16 +132,35 @@ public static class TerrainMeshBuilder {
 		// stand-in for that per-texel lookup, and is gone.
 		float shade = bakeShade ? MissionSun.ShadeFor(normal) : 255f;
 
-		vertices.Add(new MeshVertex(a, normal, color, uvA, textured, bakeShade, shade));
-		vertices.Add(new MeshVertex(b, normal, color, uvB, textured, bakeShade, shade));
-		vertices.Add(new MeshVertex(c, normal, color, uvC, textured, bakeShade, shade));
+		// The untextured fill's palette index for this triangle, and the colour it resolves to unfogged
+		// for a renderer with no ramp table bound.
+		int fillIndex = shading?.RampedPaletteIndex(UntexturedRamp, (int)shade) ?? -1;
+		Vector3 color = fillIndex >= 0
+				&& shading!.Ramp.Resolve(fillIndex, UntexturedRowShade, shading.Palette) is { } fill
+			? fill
+			: SurfaceColor((a.Y + b.Y + c.Y) / 3f, normal, peak);
+
+		vertices.Add(new MeshVertex(a, normal, color, uvA, textured, bakeShade, shade, solidPaletteIndex: fillIndex));
+		vertices.Add(new MeshVertex(b, normal, color, uvB, textured, bakeShade, shade, solidPaletteIndex: fillIndex));
+		vertices.Add(new MeshVertex(c, normal, color, uvC, textured, bakeShade, shade, solidPaletteIndex: fillIndex));
 	}
 
 	/// <summary>
-	/// The fallback when a cell's material or frame does not resolve: low ground reads sandy, high
-	/// ground reads grey-rocky, and steep faces darken. Presentation only — a cell that resolves takes
-	/// its colour from the material index it carries (<see cref="HeightGrid.MaterialIndexAt"/>) and
-	/// the theater frame that selects, through <see cref="TerrainTextureBank"/>.
+	/// The palette material ramp <c>Terrain_FillCellUntextured</c> fills every untextured cell from,
+	/// whatever the cell's material: its literal <c>2</c> to <c>Palette_ShadeRampLookup</c>.
+	/// </summary>
+	public const int UntexturedRamp = 2;
+
+	/// <summary>
+	/// The fixed shade <c>Terrain_FillCellUntextured</c> passes <c>Raster_ShadeRampRow</c>: its
+	/// literal <c>0x4b</c>, where a flat solid face passes <see cref="ShadeRamp.UnlitShade"/>.
+	/// </summary>
+	public const int UntexturedRowShade = 0x4b;
+
+	/// <summary>
+	/// PLACEHOLDER: the untextured colour of a theater whose palette carries no shade ramps, which no
+	/// retail theater lacks — low ground sandy, high ground grey-rocky, steep faces darker. Not
+	/// retail's.
 	/// </summary>
 	private static Vector3 SurfaceColor(float renderHeight, Vector3 normal, float peak) {
 		float elevation = System.Math.Clamp(renderHeight / peak, 0f, 1f);

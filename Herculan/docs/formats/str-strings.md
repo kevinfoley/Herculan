@@ -44,7 +44,7 @@ Groups referenced by decoded code:
 | 5 | 13 | MFD captions: `STATUS`, `FLASH COMM`, `NAV MAP`, `SCANNER`, `TARGET`, `MISSILE CAM`, `MODE`, `SELECT`, `RANGE`, `TARGET`, `XMIT`, `PASS`, `ACTIVE`. Entries 0-5 are the screen titles, 6-12 the aux button captions. |
 | 8 | 1 | `HQ` — the name the pilot and squad channel signs a speakerless line with ([`cockpit-messages.md`](cockpit-messages.md#its-speakerless-set)) |
 | 9 | 3 | `XMIT`, `CANCEL`, `EXIT` — the Heads-Down Display's transmit buttons |
-| 10 | 5 | `OK`, `INT DMG`, `SHLD DWN`, `CRITICAL`, `WASTED` — **dead data**: `SimStrings_LoadAll` is the only reference to `DAT_004d1440` in the image. Group 28 is the live condition table. |
+| 10 | 5 | `OK`, `INT DMG`, `SHLD DWN`, `CRITICAL`, `WASTED` — not the condition table, which is group 28; no reader of `DAT_004d1440` other than `SimStrings_LoadAll` has been found ([`mfd.md`](mfd.md#open)). |
 | 11 | 2 | `MAP`, `DAMAGE` — the Heads-Down Display's page-0 title |
 | 12 | 3 | `" STRUCT DAMAGE"`, `" INTERN DAMAGE"`, `" WEAPON DAMAGE"` — its page-1 title, indexed by damage category rather than by page |
 | 13 | 19 | Structural component names, walker variant |

@@ -16,6 +16,12 @@ Subcommands (BIN is DBSIM or VSHELL):
       Unified diff of two decompiled bodies with names substituted and the remaining FUN_/DAT_
       labels, locals and Ghidra variable numbers normalised: whether one binary's function is a
       copy of the other's, and where the two differ.
+  match BIN BIN2 [--min N] [--fuzzy R] [--all]
+      BIN's unnamed functions (every function with --all) of at least N instructions (default 6)
+      whose disassembly, with every in-image operand value masked, equals a BIN2 function's; with
+      --fuzzy R, the three closest named BIN2 functions at a difflib ratio of at least R when there
+      is no exact match. Under a unique exact named match it lists the unnamed BIN callees and
+      globals that pair, operand by operand, with named BIN2 ones. Confirm a candidate with diff.
   callers BIN addr... [-n CTX] [--max M]
       Every decompile line naming FUN_/DAT_<addr> (or its known name), with the enclosing function.
   precheck BIN addr...
@@ -801,7 +807,90 @@ def cmd_fixentry(args):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-COMMANDS = {"triage": cmd_triage, "body": cmd_body, "callers": cmd_callers, "precheck": cmd_precheck,
+INSN = re.compile(r"^([0-9a-f]{8})   [0-9a-f]+\s+(\S+)(?: (.*?))?\s*(?:;.*)?$")
+
+
+def insn_streams(binary):
+    """{function address: [(insn address, normalised insn, absolute operand values)]} from the disasm
+    dump. Every operand value inside the image (0x400000..0x7fffff) becomes 'A' and is kept in the
+    third field, so a function compiled into both EXEs compares equal whatever its callees, globals
+    and jump targets were relocated to."""
+    src = os.path.join(ANALYSIS, f"{binary}_disasm_full.txt")
+    cache = os.path.join(CACHE, f"{binary}_insns.pkl")
+    os.makedirs(CACHE, exist_ok=True)
+    if os.path.exists(cache) and os.path.getmtime(cache) > max(os.path.getmtime(src), os.path.getmtime(__file__)):
+        with open(cache, "rb") as f:
+            return pickle.load(f)
+    absv = re.compile(r"0x0*([4-7][0-9a-f]{5})\b")
+    d, cur = {}, None
+    with open(src, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            if line.startswith("; FUNCTION "):
+                cur = d.setdefault(line.rstrip().rsplit("@ ", 1)[1], [])
+                continue
+            m = INSN.match(line)
+            if cur is None or not m:
+                continue
+            ops = m.group(3) or ""
+            vals = [v for v in absv.findall(ops)]
+            cur.append((m.group(1), m.group(2) + " " + absv.sub("A", ops), vals))
+    with open(cache, "wb") as f:
+        pickle.dump(d, f)
+    return d
+
+
+def cmd_match(args):
+    """match BIN BIN2 [--min N] [--fuzzy R] [--all]: BIN's unnamed functions whose normalised
+    instruction stream equals (or, with --fuzzy, is at least R similar to) a named BIN2 function's,
+    with the BIN2 name and the callee/global names that pair up position by position."""
+    import difflib
+    b1, b2 = args[0], args[1]
+    mn = int(args[args.index("--min") + 1]) if "--min" in args else 6
+    fz = float(args[args.index("--fuzzy") + 1]) if "--fuzzy" in args else None
+    k1, k2 = names(b1), names(b2)
+    s1, s2 = insn_streams(b1), insn_streams(b2)
+    by_key = {}
+    for a, ins in s2.items():
+        by_key.setdefault(tuple(i[1] for i in ins), []).append(a)
+    todo = [a for a in sorted(s1) if ("--all" in args or a not in k1) and len(s1[a]) >= mn]
+    for a in todo:
+        key = tuple(i[1] for i in s1[a])
+        hits = [(x, 1.0) for x in by_key.get(key, [])]
+        if not hits and fz:
+            best = []
+            for x, ins in s2.items():
+                if x not in k2 or abs(len(ins) - len(key)) > len(key) * (1 - fz) + 1:
+                    continue
+                sm = difflib.SequenceMatcher(None, key, [i[1] for i in ins], autojunk=False)
+                if sm.real_quick_ratio() >= fz and sm.quick_ratio() >= fz and sm.ratio() >= fz:
+                    best.append((x, sm.ratio()))
+            hits = sorted(best, key=lambda h: -h[1])[:3]
+        if not hits:
+            continue
+        named = [h for h in hits if h[0] in k2]
+        tag = "EXACT" if hits[0][1] == 1.0 else f"{hits[0][1]:.2f}"
+        print(f"{a} {k1.get(a, '')} ({len(key)} insns) {tag}: "
+              + ", ".join(f"{k2.get(x, 'FUN_' + x)} ({x}{'' if r == 1.0 else f' {r:.2f}'})" for x, r in hits[:4])
+              + (f" +{len(hits) - 4}" if len(hits) > 4 else ""))
+        if len(named) == 1 and named[0][1] == 1.0:
+            x = named[0][0]
+            pairs, clash, lo, hi = {}, set(), s1[a][0][0], s1[a][-1][0]
+            for (_, _, v1), (_, _, v2) in zip(s1[a], s2[x]):
+                for p, q in zip(v1, v2):
+                    p, q = p.zfill(8), q.zfill(8)
+                    if lo <= p <= hi:
+                        continue
+                    if p not in k1 and q in k2:
+                        pairs[p] = q
+                    elif p in k1 and q in k2 and k1[p] != k2[q]:
+                        clash.add(f"{k1[p]} vs {k2[q]}")
+            for p, q in sorted(pairs.items()):
+                print(f"    {p} <- {k2[q]} ({q})")
+            for c in sorted(clash):
+                print(f"    differs: {c}")
+
+
+COMMANDS = {"match": cmd_match, "triage": cmd_triage, "body": cmd_body, "callers": cmd_callers, "precheck": cmd_precheck,
             "sym": cmd_sym, "rtti": cmd_rtti, "vtables": cmd_vtables, "diff": cmd_diff, "insert": cmd_insert, "edit": cmd_edit,
             "mentions": cmd_mentions, "relink": cmd_relink, "fixrefs": cmd_fixrefs, "repl": cmd_repl, "apply": cmd_apply,
             "fixentry": cmd_fixentry}

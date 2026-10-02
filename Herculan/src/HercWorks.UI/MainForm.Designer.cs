@@ -31,6 +31,7 @@ partial class MainForm {
 		_editMenuItem = new ToolStripMenuItem();
 		_hercStatsMenuItem = new ToolStripMenuItem();
 		_itemStatsMenuItem = new ToolStripMenuItem();
+		_projectilesMenuItem = new ToolStripMenuItem();
 		_campaignResourcesMenuItem = new ToolStripMenuItem();
 		_missionScriptMenuItem = new ToolStripMenuItem();
 		_playerSquadMenuItem = new ToolStripMenuItem();
@@ -116,7 +117,7 @@ partial class MainForm {
 		// 
 		// _editMenuItem
 		// 
-		_editMenuItem.DropDownItems.AddRange(new ToolStripItem[] { _hercStatsMenuItem, _itemStatsMenuItem, _campaignResourcesMenuItem, _missionScriptMenuItem, _playerSquadMenuItem, _missionFilesMenuItem });
+		_editMenuItem.DropDownItems.AddRange(new ToolStripItem[] { _hercStatsMenuItem, _itemStatsMenuItem, _projectilesMenuItem, _campaignResourcesMenuItem, _missionScriptMenuItem, _playerSquadMenuItem, _missionFilesMenuItem });
 		_editMenuItem.Name = "_editMenuItem";
 		_editMenuItem.Size = new Size(39, 20);
 		_editMenuItem.Text = "&Edit";
@@ -134,6 +135,13 @@ partial class MainForm {
 		_itemStatsMenuItem.Size = new Size(220, 22);
 		_itemStatsMenuItem.Text = "Item Stats...";
 		_itemStatsMenuItem.Click += OnOpenItemStats;
+		// 
+		// _projectilesMenuItem
+		// 
+		_projectilesMenuItem.Name = "_projectilesMenuItem";
+		_projectilesMenuItem.Size = new Size(220, 22);
+		_projectilesMenuItem.Text = "Projectiles (PROJ.DAT)...";
+		_projectilesMenuItem.Click += OnOpenProjectiles;
 		// 
 		// _campaignResourcesMenuItem
 		// 
@@ -295,6 +303,7 @@ partial class MainForm {
 	private ToolStripMenuItem _editMenuItem;
 	private ToolStripMenuItem _hercStatsMenuItem;
 	private ToolStripMenuItem _itemStatsMenuItem;
+	private ToolStripMenuItem _projectilesMenuItem;
 	private ToolStripMenuItem _campaignResourcesMenuItem;
 	private ToolStripMenuItem _missionScriptMenuItem;
 	private ToolStripMenuItem _playerSquadMenuItem;

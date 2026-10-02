@@ -1,5 +1,4 @@
 using System.Numerics;
-using HercWorks.Core.Data.File.Gau;
 using Herculan.Engine.Render;
 using Herculan.Engine.Sim;
 
@@ -39,15 +38,6 @@ public static class MfdNavMap {
 
 	/// <summary>How far each arm of the cross reaches from the centre, GAU units.</summary>
 	public const int CrossArm = 1;
-
-	/// <summary>
-	/// The map's centre, device pixels from the inset origin: half the shifted inset rect, which is
-	/// the GAU span itself.
-	/// </summary>
-	public static (int X, int Y)? Centre(GAUFile gau) =>
-		gau.MfdPanel is { } panel
-			? (panel.Size.Width - MfdLayout.ScreenInsetX, panel.Size.Height)
-			: null;
 
 	/// <summary>What the screen draws this frame for <paramref name="viewer"/>.</summary>
 	public static MfdNavMapState Build(SimObject viewer, HddMapRaster? raster) =>

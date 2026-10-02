@@ -216,10 +216,11 @@ public static class SquadOrders {
 	/// that <b>is</b>, and the two radar orders prefer a machine not already in the mode being asked
 	/// for. Everything else scores zero for everyone, so the group is simply walked in range order.
 	///
-	/// <para>The original's score is a stack local it only assigns inside that switch, so a verb with
-	/// no case leaves every member carrying whatever the previous one scored — which ties them all
-	/// and walks the group in range order too. Zero reproduces that without reading uninitialised
-	/// memory.</para>
+	/// <para>The original's score is a stack local it only assigns inside that switch, so for a verb
+	/// with no case every member carries whatever the stack held before the call. That ties them all
+	/// and walks the group in range order when the leftover is -1 or more, and tells nobody when it
+	/// is below. Zero takes the first outcome without reading uninitialised memory; which one retail
+	/// lands on is open — docs/simulation/ai-squadmates.md, "Open".</para>
 	/// </summary>
 	private static int Suitability(SquadCommand verb, MechObject member) {
 		bool committed = member.Behaviour.State is { Committed: true };

@@ -525,6 +525,17 @@ public static class MfdLayout {
 		PanelOrigin(gau) is { } panel ? (panel.X + ScreenInsetX, panel.Y) : null;
 
 	/// <summary>
+	/// The origin of the offscreen context the NAV MAP and MISSILE CAM constructors each build over
+	/// the inset, device pixels from the inset origin: <c>-((x1 - x0) &gt;&gt; 1)</c>,
+	/// <c>-((y1 - y0) &gt;&gt; 1)</c> of the shifted inset rect, which is the GAU span itself — 97, 60
+	/// on every retail herc. The map centres on it and the missile camera projects about it.
+	/// </summary>
+	public static (int X, int Y)? ScreenCentre(GAUFile gau) =>
+		gau.MfdPanel is { } panel
+			? (panel.Size.Width - ScreenInsetX, panel.Size.Height)
+			: null;
+
+	/// <summary>
 	/// The title for <paramref name="mode"/> — "STATUS", "FLASH COMM", "NAV MAP", "SCANNER",
 	/// "TARGET", "MISSILE CAM" — or null when the string table is absent. Modes index
 	/// <see cref="CaptionGroup"/> directly, which is what <c>MfdDisplay_Update</c> (<c>00446328</c>) does.

@@ -31,36 +31,10 @@ import re
 import subprocess
 import sys
 
-# The checkout being linted. The hook runs the main checkout's copy of this script for an edit in any
-# worktree, so hook_mode rebinds it to the checkout that holds the edited file; every path test below
-# is relative to it.
+# The checkout every relative path below is resolved against. The hook rebinds it to the checkout
+# holding the edited file, which may be a worktree while this script runs from the main checkout.
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DEFAULT_TARGETS = [os.path.join("Herculan", "docs")]
-
-
-def checkout_root(path: str) -> str | None:
-    """The working tree holding `path`: the nearest directory with a `.git` dir, or a worktree's `.git` file."""
-    d = os.path.dirname(os.path.abspath(path))
-    while True:
-        if os.path.exists(os.path.join(d, ".git")):
-            return d
-        parent = os.path.dirname(d)
-        if parent == d:
-            return None
-        d = parent
-
-
-def main_checkout(root: str) -> str:
-    """The main working tree a linked worktree belongs to, or `root` itself.
-
-    Ignored files — the retail binaries under ES2/ — exist only in the main checkout.
-    """
-    git = os.path.join(root, ".git")
-    if not os.path.isfile(git):
-        return root
-    with open(git, encoding="utf-8") as fh:
-        m = re.match(r"gitdir:\s*(.+?)[\\/]+\.git[\\/]+worktrees[\\/]", fh.read().strip())
-    return os.path.normpath(os.path.join(root, m.group(1))) if m else root
 
 # Files that are allowed to read as a log. Handoffs are explicitly ephemeral
 # scratchpads, and the review reports are records of a point in time.
@@ -214,7 +188,7 @@ OUTSIDE_OPEN_RULES: list[tuple[str, re.Pattern[str], str]] = [
 # original — lives in the C# that implements it, which cites the doc section, so an engine change
 # never has to go looking for prose to update. Only these docs are about the engine itself.
 ENGINE_DOC_BASENAMES = {
-    "host-flags.md", "KNOWN_ISSUES.md", "ROADMAP.md", "README.md", "cut-content.md", "key-bindings.md",
+    "herculan-command-line.md", "KNOWN_ISSUES.md", "ROADMAP.md", "README.md", "cut-content.md", "key-bindings.md",
 }
 ENGINE_DOC_DIRS = [os.path.join("Herculan", "docs", "engine")]
 
@@ -246,8 +220,8 @@ ENGINE_RULES: list[tuple[str, re.Pattern[str], str]] = [
 # rename never touches a doc. A backticked token is flagged when it is declared in one of these
 # projects and is not also a retail name: a known_*.json name, the class prefix of one
 # (`Text` from `Text_LoadDataFile`), or an identifier in a retail binary — the 3Space class names the
-# HercWorks DTS model reuses are strings in DBSIM.EXE. The binaries are gitignored, so a worktree
-# reads them from its main checkout, and a clone without ES2/ reports those few class names too.
+# HercWorks DTS model reuses are strings in DBSIM.EXE. The binaries are gitignored, so a checkout
+# without ES2/ reports those few class names too.
 CSHARP_SOURCE_DIRS = [os.path.join("Herculan", "src", p) for p in ("HercWorks.Core", "Herculan.Engine")]
 RETAIL_JSON_FILES = [os.path.join("tools", "ghidra_scripts", f"known_{k}.json")
                      for k in ("symbols_dbsim", "symbols_vshell", "structs", "vtables")]
@@ -321,15 +295,37 @@ def name_sets() -> tuple[set[str], set[str], set[str]]:
         except (OSError, ValueError):
             pass
     for rel in RETAIL_BINARIES:
-        for root in dict.fromkeys((REPO_ROOT, main_checkout(REPO_ROOT))):
-            try:
-                with open(os.path.join(root, rel), "rb") as fh:
-                    retail.update(m.decode() for m in re.findall(rb"[A-Za-z_]\w{2,}", fh.read()))
-                break
-            except OSError:
-                pass
+        path = os.path.join(REPO_ROOT, rel)
+        if not os.path.isfile(path):
+            path = os.path.join(main_checkout(), rel)
+        try:
+            with open(path, "rb") as fh:
+                retail.update(m.decode() for m in re.findall(rb"[A-Za-z_]\w{2,}", fh.read()))
+        except OSError:
+            pass
     _name_sets = (types, names, retail)
     return _name_sets
+
+
+def checkout_root(path: str) -> str | None:
+    """The checkout holding path: the nearest directory with a .git entry (a worktree's is a file)."""
+    d = os.path.dirname(os.path.abspath(path))
+    while True:
+        if os.path.exists(os.path.join(d, ".git")):
+            return d
+        parent = os.path.dirname(d)
+        if parent == d:
+            return None
+        d = parent
+
+
+def main_checkout() -> str:
+    """The main checkout behind REPO_ROOT. A worktree lacks the gitignored ES2/ binaries."""
+    out = subprocess.run(
+        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
+        cwd=REPO_ROOT, capture_output=True, text=True, check=False,
+    ).stdout.strip()
+    return os.path.dirname(os.path.normpath(out)) if out else REPO_ROOT
 
 
 def csharp_mention(token: str) -> str | None:
@@ -506,7 +502,6 @@ def hook_mode() -> int:
     Emits the hook's own JSON response so the findings are fed straight back to the
     model that just wrote them, while the edit itself still stands.
     """
-    global REPO_ROOT
     import json
 
     # Claude Code writes UTF-8; sys.stdin would decode it with the Windows codepage, so a written
@@ -521,9 +516,9 @@ def hook_mode() -> int:
     path = tool_response.get("filePath") or tool_input.get("file_path") or ""
     if not path:
         return 0
-    root = checkout_root(path)
-    if root and os.path.isdir(os.path.join(root, "Herculan", "docs")):
-        REPO_ROOT = root
+
+    global REPO_ROOT
+    REPO_ROOT = checkout_root(path) or REPO_ROOT
 
     norm = path.replace("\\", "/")
     if not (norm.lower().endswith(".md") and "/docs/" in norm.lower()) and not is_retail_json(path):

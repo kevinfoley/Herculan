@@ -10,7 +10,7 @@ The game's full-motion video sits loose in `ES2/AVI/` as 93 `.AVI` files — mis
 | `CRAM` — Microsoft Video 1 | 6 | 292x200, 640x480 | yes |
 | `BI_RLE8` — Microsoft RLE | 4 | 295x226 | yes |
 | `cvid` — Cinepak | 2 | 576x360, 288x180 | yes |
-| `IV41` — Indeo Video 4.1 | 1 | 288x180 | [Open](#open) |
+| `IV41` — Indeo Video 4.1 | 1 | 288x180 | yes, see `docs/formats/indeo4.md` |
 
 Video runs at 15 fps except the Microsoft Video 1 files, which are 10 fps, and `ESTAB2.AVI`, which is three frames at 1 fps. Audio, where present, is format tag 1 — uncompressed PCM — as either 8-bit stereo at 11025 Hz or 16-bit mono at 22050 Hz. The four MS-RLE thumbnails and all six Microsoft Video 1 files have no audio stream at all.
 
@@ -113,7 +113,3 @@ Decoding both files this way matches Windows' own Cinepak codec, `iccvid.dll`, p
 | A Cinepak strip's top and bottom are rows of the picture | Every strip in `CREDITS` reads top 0, bottom 120, so taken as picture rows all three strips paint the top third. The bottom is the strip's height, and strips stack in order. |
 | Cinepak follows the DIB row order like the other codecs | Cinepak's rows are top-down regardless of the format header, so flipping it by the sign of `biHeight`, as Microsoft RLE and Microsoft Video 1 need, turns the credits upside down. |
 | A positive `biHeight` means top-down rows | It means bottom-up, which is the DIB convention and what every file in this corpus uses. A negative height is the top-down case. Reading the sign the other way renders every frame vertically mirrored — recognisable, so it survives a careless glance. |
-
-## Open
-
-- **Unported:** the `IV41` (Indeo Video 4.1) decoder, 1 file.

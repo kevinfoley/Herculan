@@ -99,7 +99,7 @@ public sealed class ShellSaveScreen {
 
 	/// <summary>
 	/// Each row's <c>+0xbf</c>, which lets it take a character and a command. The builder clears it and
-	/// only a rename sets it, on that slot's row; nothing clears it again.
+	/// only a rename sets it, on that slot's row; neither ACCEPT, CANCEL nor SaveScreen_Enter clears it again.
 	/// </summary>
 	private readonly bool[] _caretEnabled = new bool[RowCount];
 

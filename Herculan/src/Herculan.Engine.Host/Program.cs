@@ -6,6 +6,7 @@ using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Host;
 using Herculan.Engine.Host.Debugging;
+using Herculan.Engine.Host.Install;
 using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Host.Settings;
 using Herculan.Engine.Input;
@@ -396,7 +397,19 @@ if (argumentErrors.Count > 0) {
 var localization = new LocalizationTable();
 TweakSettings.Current.LoadFromDisk();
 
+// The one font every ImGui window the host opens is drawn in.
+string imguiFontPath = Path.Combine(AppContext.BaseDirectory,
+	"Assets", "Fonts", "Open_Sans", "static", "OpenSans-Regular.ttf");
+
+// An install named on the command line is never second-guessed, and a --screenshot run has nobody to ask,
+// so only a search that came up empty asks the player.
 string? installRoot = GameInstall.Locate(positional.Count > 0 ? positional[0] : null);
+if (installRoot == null && positional.Count == 0 && screenshotPath == null) {
+	installRoot = InstallPrompt.Run(localization, imguiFontPath);
+	if (installRoot == null) {
+		return 1;
+	}
+}
 if (installRoot == null) {
 	Console.Error.WriteLine(
 		"Could not find an Earthsiege 2 installation.\n" +
@@ -404,6 +417,7 @@ if (installRoot == null) {
 		$"The path should be the folder containing the '{GameInstall.ArchiveFolderName}' directory.");
 	return 1;
 }
+GameInstall.Remember(installRoot);
 
 // --movie shares even less: no archives, no zone, no shell art — one file and a quad. See MovieHost.
 if (moviePath != null) {
@@ -481,8 +495,7 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 			Path.Combine(installRoot, MissionLoader.DataFolderName));
 
 		var frames = tapePlayer.Tape.Frames;
-		double recordedSeconds = frames.Sum(frame => InputTapePlayer.SecondsOf(frame.TickDelta));
-		Console.WriteLine($"Tape {tapePlayer.Name}: {frames.Count} frames, {recordedSeconds:0.0} s as recorded, "
+		Console.WriteLine($"Tape {tapePlayer.Name}: {frames.Count} frames, {tapePlayer.RecordedSeconds:0.0} s as recorded, "
 			+ $"unpacked to {Path.GetDirectoryName(tapeScriptPath)}. "
 			+ (demoTape ? "Any key ends the demo." : "Ctrl+E stops it and hands the controls over."));
 		foreach (var (first, last) in tapePlayer.InferredPanelSpans) {
@@ -1040,6 +1053,24 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 		hudState = hudState with { Mfd = startMfdMode };
 	}
 
+	// The MFD switching itself to the missile camera, and the camera screen itself — see MfdMissileCam.
+	// Every change of screen goes through SetMfdMode, which is how the switch learns of one made by hand.
+	var missileCamSwitch = new MfdMissileCamSwitch();
+	var missileCamScreen = new MfdMissileCamScreen();
+	bool missileCamUpdatedLastFrame = false;
+
+	// Input_LatchButton(1, 1), the first button row — always FIRE — held masked until it is let go, which
+	// also holds the axes still. Two things latch it: a flown round ending, and AlertPanel_Enter (00454630)
+	// opening any modal panel. The joystick's own latches are JoystickBindings'; this one also masks
+	// [Space], the row's key. DAT_0049ebe5 is the keyboard hold that goes with it — see
+	// docs/formats/joystick-input.md. Live input only: what a replay does with a latch is that doc's Open.
+	bool fireRowLatched = false;
+	int missileKeyboardHold = 0;
+
+	void SetMfdMode(MfdMode requested) => hudState = hudState with {
+		Mfd = missileCamSwitch.SetMode(hudState.Mfd, requested),
+	};
+
 	// The weapon panel, off the piloted machine's own mounts, which are already built, in cockpit-row
 	// order. See WeaponRowState.
 	if (cockpitArt?.Gau is { } weaponGau && scene.PlayerMech is { } armedMech) {
@@ -1152,9 +1183,6 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 			+ "controls off, Ctrl+Alt+,/. pick a component, Ctrl+Alt+D damages it, Ctrl+Alt+N hits a Cybrid.");
 	}
 	bool tapeEscapeDown = false;
-
-	string debugFontPath = Path.Combine(AppContext.BaseDirectory,
-		"Assets", "Fonts", "Open_Sans", "static", "OpenSans-Regular.ttf");
 
 	// The front window's TIME: readout. It is driven from the frames the gunsight is painted on,
 	// which is what stalls it in the external view, exactly as the original's does.
@@ -1313,7 +1341,7 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 		renderer.ImpactPaletteActive = active;
 
 		// The HUD's own colours — the resolved COLORS.DAT ids and raw palette slots every widget draws
-		// through. Twenty of the twenty-seven move under the impact palette, so without this the
+		// through. Most of the twenty-seven move under the impact palette, so without this the
 		// instruments would be the one part of the screen refusing to flash.
 		if (cockpitArt != null) {
 			cockpitArt.FlashActive = active;
@@ -1509,7 +1537,7 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 		// built, so this is unconditional where the beam renderer is not.
 		sprites = new SpriteRenderer(gl);
 
-		imgui = new ImGuiController(gl, window.View, input, new ImGuiFontConfig(debugFontPath, 16));
+		imgui = new ImGuiController(gl, window.View, input, new ImGuiFontConfig(imguiFontPath, 16));
 
 		terrainMesh = new GpuMesh(gl, scene.TerrainMesh);
 		terrainTexture = scene.TerrainBank != null ? new GpuTexture(gl, scene.TerrainBank.Atlas, indexed: true) : null;
@@ -1585,6 +1613,7 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 
 		terrainItem = new SceneItem(terrainMesh, Matrix4x4.Identity, TerrainTextureHandle()) {
 			CellQuantisedFog = true,
+			GroundFill = true,
 		};
 		groundLayer = new GroundShapeLayer(terrainItem, scene.World.Terrain);
 		var built = new List<SceneItem> { terrainItem };
@@ -1959,7 +1988,7 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 		// A modal takes the player's input away entirely — the stick as well as the keyboard, and not just
 		// the command keys the key handler already gates. Each of these panels runs a loop of its own in
 		// the original (AlertPanel_Enter, poll the device, present) and that loop never calls Sim_MainTick,
-		// so Sim_PollPlayerInput and its twenty-case action switch do not run at all while one is up.
+		// so Sim_PollPlayerInput and its action switch do not run at all while one is up.
 		// Nothing the player does on the stick reaches the machine, which is what makes pressing a button
 		// on the CONTROLS panel safe: it picks that button's row and does not also fire what it is bound to.
 		//
@@ -1974,6 +2003,7 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 			joystickInput = JoystickPilotInput.None;
 			joystickCenterBody = false;
 			joystickBindings.Suspend(joystick?.Read() ?? JoystickReading.Neutral);
+			fireRowLatched = true;
 
 			allStopKeyDown = controls.IsKeyPressed(Key.Keypad5);
 			shieldRearKeyDown = controls.IsKeyPressed(Key.LeftBracket);
@@ -2139,12 +2169,30 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 			joystickBindings.Suspend(joystick?.Read() ?? JoystickReading.Neutral);
 		}
 
+		// What a round the player is flying reads out of the input block: the two axes its camera-axis
+		// pointers address and the trigger. While the controls are on a camera, or on the round, they are
+		// the steering and throttle axes; otherwise they follow the JOYSTICK row, as Input_BuildPlayerDevice
+		// sets them at its tail. Built from the controls just made, before the machine is handed none of
+		// them below.
+		if (pilotInput && pilotMech != null) {
+			var built = pilotMech.Controls;
+			scene.World.MissileSteer = !ControlsOnCamera() && StickTurretPair()
+				? new MissileSteerInput(built.TorsoTwist, built.TorsoPitch, built.Fire)
+				: new MissileSteerInput(built.Turn, built.Throttle, built.Fire);
+		} else {
+			scene.World.MissileSteer = default;
+		}
+
 		// The controls on the camera — the outside view's default, [Enter]'s swap and [Ctrl+T]'s hand-off —
-		// over whichever of the two above built them: Sim_PollPlayerInput gives the machine none of the
-		// four axes and skips Mech_PlayerFireTick, and Mech_ApplyThrottleInput ignores a lever. The axes
-		// went to viewCameraAxes instead. The two centring commands are dispatcher cases and still reach
-		// the machine.
-		if (pilotInput && pilotMech != null && ControlsDriveCamera()) {
+		// or on an electro-optical round in flight, over whichever of the two above built them. The axes
+		// went to viewCameraAxes and the round instead; the two centring commands are dispatcher cases and
+		// still reach the machine. In the original, Sim_PollPlayerInput's camera branch tests
+		// InputDrivesCamera alone: under it the machine gets no steering, throttle or twist, skips
+		// Mech_PlayerFireTick and Mech_ApplyThrottleInput ignores a lever, but its pitch still reads a
+		// lever (docs/formats/joystick-input.md, "While the camera has the controls"), which this does
+		// not port. A round flown with InputDrivesCamera clear takes the original's ordinary branch, which
+		// this neutralises as well.
+		if (pilotInput && pilotMech != null && ControlsOnCamera()) {
 			pilotMech.Controls = MechControls.Neutral with {
 				CenterTorso = pilotMech.Controls.CenterTorso,
 				CenterBody = pilotMech.Controls.CenterBody,
@@ -2184,6 +2232,21 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 		// stick reaches at all is the twelve binding bytes' business — see JoystickBindings.
 		void PilotFromLiveInput(MechObject mech, IKeyState keys, bool hddHasArrows, bool commandHasKeys,
 				JoystickReading stickReading) {
+			// The first button row's latch: a flown round's end and a modal panel ask for it, and letting go
+			// of the row — [Space] and the stick's first button — drops it. While it holds, the trigger reads
+			// released and the axes are held below.
+			if (scene.World.TakeFireRowLatch()) {
+				fireRowLatched = true;
+			}
+
+			if (fireRowLatched && !keys.IsKeyPressed(Key.Space) && !stickReading.Button(0)) {
+				fireRowLatched = false;
+			}
+
+			bool fireRowIsTrigger = joystickBindings.Action(simulatorPreferences, 0) == JoystickAction.Fire;
+			bool rowZeroLatched = fireRowLatched
+				|| (joystickBindings.ButtonLatched(0) && !fireRowIsTrigger);
+
 			// Under the developer flag an arrow held with Ctrl or Alt is a move or turn key, and this engine
 			// takes it off the steering and throttle axes. Retail keeps it on them — see KNOWN_ISSUES.md.
 			bool arrowsAreCommands = developerKeys.Enabled && (CtrlHeld(keys) || AltHeld(keys));
@@ -2199,12 +2262,46 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 				TurretAxis(Axis(keys, Key.K, Key.J), heldTwist),
 				TurretAxis(Axis(keys, Key.I, Key.M), heldPitch));
 
-			// While the controls drive the camera the stick is re-pointed first, and what the tape records
-			// is that — the device's own axes, which the camera reads.
-			var recordedAxes = ControlsDriveCamera()
+			// DAT_0049ebe5: the keyboard's first pair goes dead from the moment the first button row is
+			// latched while a round is being flown until that row is let go, so the arrows steering the
+			// round do not walk the machine off once it has gone.
+			if (scene.World.MissileFlown) {
+				missileKeyboardHold = 1;
+			}
+
+			if (rowZeroLatched && missileKeyboardHold == 1) {
+				missileKeyboardHold = 2;
+			} else if (!rowZeroLatched) {
+				missileKeyboardHold = 0;
+			}
+
+			if (missileKeyboardHold != 0) {
+				keyboardAxes = keyboardAxes with { Steer = 0, Throttle = 0 };
+			}
+
+			// Flying the round, the keyboard's pitch is the other way up unless keyjoy.cfg's Missile says
+			// Reverse. The stick's is left alone.
+			if (scene.World.MissileFlown && !joystickBindings.Keyjoy.ReverseMissile) {
+				keyboardAxes = keyboardAxes with { Throttle = (short)-keyboardAxes.Throttle };
+			}
+
+			// While the controls drive the camera or the round the stick is re-pointed first, and what the
+			// tape records is that — the device's own axes, which the camera and the round read.
+			bool onCamera = ControlsOnCamera();
+			var recordedAxes = onCamera
 				? joystickBindings.CombineForCamera(stickReading, StickCapabilities(), simulatorPreferences, keyboardAxes)
 				: joystickBindings.CombineBeforeBackturn(joystickInput, keyboardAxes);
-			var axes = joystickBindings.ApplyBackturn(recordedAxes);
+
+			// The first button row latched holds the pair the camera axes point at still until it is let
+			// go — after the tape has the axes, as the original zeroes them after it records.
+			var held = recordedAxes;
+			if (!onCamera && rowZeroLatched) {
+				held = StickTurretPair()
+					? held with { TorsoTwist = 0, TorsoPitch = 0 }
+					: held with { Steer = 0, Throttle = 0 };
+			}
+
+			var axes = joystickBindings.ApplyBackturn(held);
 
 			mech.Controls = new MechControls(
 				axes.Steer,
@@ -2221,7 +2318,8 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 				// [Space] is held, not pressed — see MechControls.Fire. Holding it keeps the armed weapon
 				// firing as fast as its refire delay and its capacitor allow. So is the joystick trigger,
 				// for the same reason and through the same byte.
-				Fire: heldFire || joystickInput.Fire || keys.IsKeyPressed(Key.Space));
+				Fire: heldFire || (joystickInput.Fire && !(fireRowLatched && fireRowIsTrigger))
+					|| (keys.IsKeyPressed(Key.Space) && !fireRowLatched));
 			TakeCameraAxes(mech.Controls);
 
 			// A tape records the axes ahead of Backturn, which playback applies again.
@@ -2234,7 +2332,7 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 		// Heads-Down Display ("select an MFD screen [F1]-[F6], press [Esc], or click the top of the
 		// screen") and matches view command 1, the "up" half of the pair at 0042a3f4.
 		if (controls != null && !CockpitWidgetsOff() && ReadMfdMode(controls) is { } requestedMfdMode) {
-			hudState = hudState with { Mfd = requestedMfdMode };
+			SetMfdMode(requestedMfdMode);
 			RequestHeadsDown(headsDown: false);
 		}
 
@@ -2757,11 +2855,13 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 
 		if (piloting && pilotMech != null) {
 			// The kick and the shake are the pilot's own, so they run only from inside the cockpit. The
-			// original's view mode 4 drops a shake in progress rather than pausing it, which is what
-			// Reset does here.
+			// original's view mode 4 drops a shake in progress rather than pausing it, and ignores the hits
+			// taken meanwhile, which is what Reset does here.
+			cockpitHitShake.FlashSurvivesRestart =
+				TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FlashThroughSecondHit);
 			if (ExternalViewActive()) {
 				cockpitViewKick.Reset();
-				cockpitHitShake.Reset();
+				cockpitHitShake.Reset(pilotMech.CockpitHits);
 			} else {
 				cockpitViewKick.Update(deltaSeconds, pilotMech.Footfalls);
 				cockpitHitShake.Update(deltaSeconds, pilotMech.CockpitHits);
@@ -2856,7 +2956,7 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 			int targetRange = pilotMech.Target is { } weaponTarget
 				? pilotMech.Position.ApproxDistanceTo(weaponTarget.Position)
 				: 0;
-			pilotMech.Weapons.PerFrameUpdate(targetRange);
+			pilotMech.Weapons.PerFrameUpdate(targetRange, scene.World.MissileFlown);
 
 			// The pods' own tick runs from inside that pass in the original, and only ever for the machine
 			// the cockpit belongs to. It is what carries the ECM and Turbo rows' buttons into the sim.
@@ -2990,6 +3090,33 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 				RouteWaypoint = WaypointMark.ForRoute(pilotMech),
 				NavMarker = WaypointMark.ForNavMarker(pilotMech, navMarker),
 			};
+
+			// MfdDisplay_Update's share of the missile camera, run only while the display updates at all —
+			// up on the cockpit view, not panned away, lit and powered up. The switch goes first; then the
+			// screen's own update, unless a transmission has the display, which it can only while the
+			// switch does not hold. The first frame the screen updates after not doing so stands for the
+			// display's full repaint.
+			int weaponRows = cockpitArt.Gau.WeaponListTotal;
+			bool mfdUpdating = !ExternalViewActive() && !cockpitPan.AtHeadsDown
+				&& !hudState.Dropout.MfdHidden && hudState.MfdPowerUpFrame is null;
+			if (mfdUpdating) {
+				hudState = hudState with {
+					Mfd = missileCamSwitch.Sync(hudState.Mfd,
+						MfdMissileCamSwitch.Condition(pilotMech.Weapons, weaponRows)),
+				};
+			}
+
+			bool missileCamUpdating = mfdUpdating && hudState.Mfd == MfdMode.MissileCam
+				&& (missileCamSwitch.Holding || squadComm.Transmission is null);
+			var missileCam = hudState.MissileCam;
+			if (missileCamUpdating && scene.World is { } camWorld) {
+				missileCam = missileCamScreen.Update(camWorld, pilotMech.LockAcquired,
+					MfdMissileCam.LauncherRounds(pilotMech.Weapons, weaponRows), audio.CoarseTicks,
+					repaint: !missileCamUpdatedLastFrame);
+			}
+
+			missileCamUpdatedLastFrame = missileCamUpdating;
+			hudState = hudState with { MissileCam = missileCam, MissileCamHolding = missileCamSwitch.Holding };
 		}
 	};
 
@@ -3715,8 +3842,48 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 			var viewport = surface.Viewport;
 			overlay!.Draw(viewport.X, viewport.Y, viewport.Width, viewport.Height, texture,
 				surface.ArtWidth, surface.ArtHeight, mirrorHorizontally, hud,
-				spriteTexture: hudSpriteTexture, hudState: hudState, mapTexture: hddMapTexture);
+				spriteTexture: hudSpriteTexture, hudState: hudState, mapTexture: hddMapTexture,
+				missileView: hud == null ? null : (x, y, width, height, view) => DrawMissileView(gl, x, y, width, height, view));
 		}
+	}
+
+	// The MFD's MISSILE CAM, from inside the overlay's pass over the forward panel: the world as
+	// MfdMissileViewScreen_Paint draws it, from the camera the screen placed, into the screen's own rect.
+	// It is the cockpit view's draw again with three things changed, all of them the paint's own: no sky —
+	// the overlay has already flooded the rect with the colour the paint floods it with — the terrain
+	// untextured whatever TERRAIN TEXTURE says, and every object submitted, the machine being flown among
+	// them, since the view object is the camera and not the cockpit.
+	void DrawMissileView(GL gl, int x, int y, int width, int height, Camera view) {
+		view.FarPlane = camera.FarPlane;
+
+		gl.Enable(EnableCap.ScissorTest);
+		gl.Scissor(x, y, (uint)width, (uint)height);
+		gl.Clear(ClearBufferMask.DepthBufferBit);
+		gl.Enable(EnableCap.DepthTest);
+		gl.Disable(EnableCap.Blend);
+
+		var sky = renderer!.Sky;
+		renderer.Sky = null;
+		uint? terrainTexture = terrainItem?.TextureHandle;
+		if (terrainItem is not null) {
+			terrainItem.TextureHandle = null;
+		}
+
+		renderer.Render(view, (items ?? Array.Empty<SceneItem>())
+				.Concat(projectileItems)
+				.Concat(weaponItems)
+				.Concat(debrisItems)
+				.Concat(dropPodItems),
+			groundLayer, x, y, width, height);
+		DrawBeams(view, width, height);
+		DrawSprites(view, width, height);
+
+		if (terrainItem is not null) {
+			terrainItem.TextureHandle = terrainTexture;
+		}
+
+		renderer.Sky = sky;
+		gl.Disable(EnableCap.ScissorTest);
 	}
 
 	// Confines the 3D pass for one panel to that view's .VUE viewport rect, or to the panel itself when
@@ -3857,7 +4024,7 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 			case CockpitWidgetKind.MfdButton when click.Id.Index < MfdLayout.ModeCount:
 				// Button i of the F-key column dispatches SetMode(i), and picking a screen pans back up —
 				// the manual's own rule for leaving the Heads-Down Display.
-				hudState = hudState with { Mfd = (MfdMode)click.Id.Index };
+				SetMfdMode((MfdMode)click.Id.Index);
 				RequestHeadsDown(headsDown: false);
 				break;
 
@@ -4527,6 +4694,15 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 	// where the mouse does.
 	bool ControlsDriveCamera() => viewChain is { InputDrivesCamera: true } && !MouseOutsideView();
 
+	// The controls go to a camera or to an electro-optical round: InputDrivesCamera or DAT_004d25aa, the
+	// pair Input_BuildPlayerDevice tests together.
+	bool ControlsOnCamera() => ControlsDriveCamera() || scene.World.MissileFlown;
+
+	// The JOYSTICK row on the turret pair, with a stick there to bind — when the camera-axis pointers,
+	// and the first button row's hold, take the turret pair rather than the movement pair.
+	bool StickTurretPair() => StickCapabilities().Present
+		&& joystickBindings.Assignment(simulatorPreferences, 0) == JoystickAxisAssignment.Turret;
+
 	// The camera's half of the input, from the controls just built for the machine: the steering and
 	// throttle axes after Backturn, and the trigger.
 	void TakeCameraAxes(MechControls built) {
@@ -4568,8 +4744,8 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 	// The terrain's texture, or none when the player has TERRAIN TEXTURE off — prefs option 8, which in
 	// the original reaches the draw as TerrainTexturingEnabled (004aab2c) and is tested per triangle by
 	// Terrain_DrawCellQuad. The mesh here is built once at zone load and carries both treatments already:
-	// every vertex holds the height/slope ramp colour beside its atlas UV, and the shader falls back to
-	// the colour when no texture is bound. So the switch is the texture binding and nothing else, and it
+	// every vertex holds the untextured fill's palette index beside its atlas UV (see TerrainMeshBuilder),
+	// and the shader fills from it when no texture is bound. So the switch is the texture binding and nothing else, and it
 	// applies on the frame it is thrown, as the original's does.
 	uint? TerrainTextureHandle() =>
 		simulatorPreferences[Prefs.TerrainTextureOption] != 0
@@ -4697,18 +4873,15 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 		});
 	}
 
-	// The stick's discrete half onto the tape: the button that fired and the hat's views. The trigger's
-	// own button is left out, as retail extracts the trigger from it before the frame is written.
+	// The stick's discrete half onto the tape: the button that fired and the hat's views. The trigger
+	// scan's own button never claims the slot, so it is already absent, as retail zeroes its byte before
+	// the frame is written.
 	void RecordStick(JoystickPilotInput input) {
 		if (tapeRecorder == null || TapePlaying()) {
 			return;
 		}
 
-		int fired = input.ClaimedButton >= 0
-			&& joystickBindings.Action(simulatorPreferences, input.ClaimedButton) != JoystickAction.Fire
-				? input.ClaimedButton
-				: -1;
-		tapeRecorder.SetDiscreteStick(fired, input.Views);
+		tapeRecorder.SetDiscreteStick(input.ClaimedButton, input.Views);
 	}
 
 	// Takes the replay's next frame once it is due, before any handler reads input this host frame, and
@@ -4997,11 +5170,12 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 		}
 	}
 
-	// One joystick button's action — Sim_PollPlayerInput's own twenty-case switch (00460764), which it
-	// runs over SimOptions[ControlsOptionBase + 4 + button] once per pressed button per tick.
+	// One joystick button's action — Sim_PollPlayerInput's own switch (00460764), nineteen cases for codes
+	// 2-20, which it runs over SimOptions[ControlsOptionBase + 4 + button] for the one button that claims
+	// the tick's slot.
 	//
-	// FIRE is not here: it is read as a held state one step earlier and never reaches the switch. Nor is
-	// OFF, which is what a row displays when its byte is zero rather than something it can be set to.
+	// FIRE and OFF have no case, there or here; JoystickBindings keeps both out of Pressed while still
+	// letting them claim the slot (docs/formats/joystick-input.md#the-buttons).
 	//
 	// Every case reaches the same code a key or a click does, which is also true in the original — the
 	// switch is almost entirely made of calls into the widget tree and the mech's own command handler
@@ -5024,9 +5198,11 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 				mech.LatchCenterTorso();
 				break;
 
-			// The lever's sense, and only when there is a lever bound to the throttle — the original tests
-			// the capability block's +4 and the THROTTLE row together before it will move the mode, so on a
-			// stick without one this button does nothing at all.
+			// The lever's sense, and only when there is a lever bound to the throttle, so on a stick without
+			// one this button does nothing at all. The original tests the capability block's +4 and the
+			// walker's THROTTLE row through a literal, even in a RAZOR (docs/formats/joystick-input.md,
+			// "The buttons"); this tests the current machine's row, which differs from it in a RAZOR whose
+			// THROTTLE row is not the walker's.
 			case JoystickAction.ChangeDirection
 				when joystickBindings.ThrottleLeverMode(StickCapabilities(), simulatorPreferences) != 0:
 				joystickBindings.ThrottleLeverInverted = !joystickBindings.ThrottleLeverInverted;
@@ -5053,11 +5229,8 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 				audio.Director?.Play(SoundId.ButtonClick);
 				break;
 
-			// The original picks between entering the heads-down display and leaving it on CockpitViewManager_Published (00429820)'s
-			// return, a global object pointer whose relation to the current view is not decoded — the two
-			// branches send F7 and [Esc], which together are plainly a toggle, so that is what this is.
-			// Both send a scancode to CockpitWidgets_HandleCommand, which ignores everything while the
-			// widgets are off — so neither does anything from the external view.
+			// The original's two branches both send a scancode to CockpitWidgets_HandleCommand, which ignores
+			// everything while the widgets are off — so neither does anything from the external view.
 			case JoystickAction.HddView when !CockpitWidgetsOff():
 				// A toggle, which is what the action's two branches were plainly meant to be. The original
 				// tests the view manager's pointer rather than the view, so it can only ever leave the HDD
@@ -5076,7 +5249,7 @@ int RunMission(ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
 			// MfdDisplay_CycleMode (00446e14): step the MFD's mode, wrapping at six. Selecting a screen also pans back up,
 			// which is the manual's own rule for leaving the heads-down display.
 			case JoystickAction.MfdDisplays:
-				hudState = hudState with { Mfd = (MfdMode)(((int)hudState.Mfd + 1) % MfdLayout.ModeCount) };
+				SetMfdMode((MfdMode)(((int)hudState.Mfd + 1) % MfdLayout.ModeCount));
 				RequestHeadsDown(headsDown: false);
 				break;
 

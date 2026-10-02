@@ -26,6 +26,15 @@ that the base register really holds the object you mean -- the same `+0x38` is
 a SimObject flag, a structure type record's field and a weapon-mount vtable
 slot. Use --range to cut the search to the code that handles your class.
 
+**Two kinds of access it cannot see, and neither shows as a warning:**
+- Code Ghidra left undisassembled (`; ... N undefined bytes` in the dump; e.g.
+  `Mech_BehaviourDriveOffThink`, `Flyer_Constructor`). Grep the range a claim
+  depends on for that marker, and cross-check DBSIM_decomp_full.c, which covers
+  those functions and folds the rebases back (`*(char *)((int)this + 0xb1)`).
+- Bulk writes. Only `[reg + disp]` forms match, so a memset/memcpy over the
+  field is invisible; sweep their call sites for destinations on your class.
+A field holding a meaningful value is therefore never proven unread by this.
+
 Usage:
     python tools/scripts/es2_fieldscan.py 9e
     python tools/scripts/es2_fieldscan.py 222 224 226 228 22a

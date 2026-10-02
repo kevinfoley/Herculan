@@ -104,15 +104,15 @@ The three state indices and their think are [`ai-combat-states.md`](ai-combat-st
 
 ### The three out-of-the-fight bytes — `+0x99`, `+0xa4`, `+0xa5`
 
-Read together by `Group_IsWipedOut` (`00412be4`) and `Ai_IsTargetable` (`00411e80`), and separately by everything else. They are **three different conditions, not three damage latches**, and each has its own writers:
+Which tests read which of them is the last paragraph below. They are **three different conditions, not three damage latches**, and each has its own writers:
 
 | Byte | Condition | Written by |
 |---|---|---|
 | `+0x99` | **Destroyed** | The three classes' damage-write paths, and nothing else: `Mech_ComponentDamageWrite` (`00417de4`) when a core component reaches full damage, `Flyer_ComponentDamageWrite`, `Base_ApplyDamage`. `Base_Construct` also sets it for a structure spawned already destroyed |
 | `+0xa4` | **Immobilised** — cannot move under its own power | `Mech_ComponentDamageWrite` when half or more legs reach full damage; `Razor_MovementTick` (`004198f4`) when the airframe loses its nose or belly |
-| `+0xa5` | **Disarmed** — has nothing left to fight with | `Ai_ChooseWeapon` (`0041f358`) the first time it walks a machine's whole mount list and finds every mount absent or spent — destroyed, out of rounds, or a pod ([`ai-weapons.md`](ai-weapons.md#running-dry--mech0xa5)); `Base_Construct` at spawn, for a structure type that has no weapons ([`structure-behaviour.md`](structure-behaviour.md#five-classes-one-switch)); `Flyer_AiSelectBehaviour` for a flight ordered to sleep or travel ([`ai-flyers.md`](ai-flyers.md#orders--flyer_aiselectbehaviour-00422d00)) |
+| `+0xa5` | **Disarmed** — has nothing left to fight with | `Ai_ChooseWeapon` (`0041f358`) the first time it walks a machine's whole mount list and finds every mount absent or spent — destroyed, out of rounds, or a pod ([`ai-weapons.md`](ai-weapons.md#running-dry--mech0xa5)); `Base_Construct` at spawn, for a structure type that has no weapons ([`structure-behaviour.md`](structure-behaviour.md#five-classes-one-switch)); `Base_TripleTurretThinkTick` (`004045c8`) once every component but the first is at full damage ([`structure-behaviour.md`](structure-behaviour.md#the-triple-turret--004045c8)); `Flyer_AiSelectBehaviour` for a flight ordered to sleep or travel ([`ai-flyers.md`](ai-flyers.md#orders--flyer_aiselectbehaviour-00422d00)) |
 
-None of the three means "removed from the simulation". Which subset a test reads is the behaviour: the detection sweep, the player's target selection and `Group_ConditionTier` read `+0x99` and `+0xa4` only; the AI's own tests add `+0xa5`, which is why a disarmed machine flees and is abandoned as a target while remaining a legal player target. `Group_IsWipedOut` reads all three, so its name overstates what it asks — [`ai-goals.md`](ai-goals.md#no-rival-group-is-still-working-to-it--group_norivalorderonsubject-00412e74).
+None of the three means "removed from the simulation". Which subset a test reads is the behaviour: the detection sweep, the player's target selection and `Group_ConditionTier` read `+0x99` and `+0xa4` only; the AI's own tests add `+0xa5`, which is why a disarmed machine flees and is abandoned as a target while remaining a legal player target, and why an unarmed building is the AI's last choice of target. `Sim_RaycastObjectList`'s gate on the struck object's `+0x50` slot, `Mission_IsClearOfThreats`, `Mech_ApplyOutnumberedDamage` and `Group_IsWipedOut` read all three as well; the last one's name overstates what it asks — [`ai-goals.md`](ai-goals.md#no-rival-group-is-still-working-to-it--group_norivalorderonsubject-00412e74).
 
 ### What the attacker is told — `Mech_CreditNeutralisedTarget` (`00415710`)
 

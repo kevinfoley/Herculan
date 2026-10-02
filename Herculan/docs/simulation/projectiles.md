@@ -20,7 +20,7 @@ Like a tracer, a bullet lives in the effect pool (`DAT_004a9746`) that `Sim_Main
 | `+0x0a` | **firing scatter**, in binary-angle units |
 | `+0x0c` | nonzero arms a per-lifetime rate at `obj+0x61` ([Open](#open)) |
 
-Retail (12 records; the five not listed are unreachable — no `Bullet` record carries their id):
+Retail (12 records; the five not listed are unreachable — no `Bullet` record carries their id). Two of the five, 10 and 11, are `ATC75`'s and `ATC100`'s own records, which their `PROJ.DAT` records do not name: [`../formats/proj-dat.md`](../formats/proj-dat.md#lookup).
 
 | id | Weapons | Shape | Life | Radius | Anim | Scatter |
 |---|---|---|---|---|---|---|

@@ -43,8 +43,9 @@ public sealed class JoystickBindings {
 	public bool PilotingRazor { get; set; }
 
 	/// <summary>
-	/// The four axis-sense switches from <c>data\keyjoy.cfg</c>. <see cref="Keyjoy.ReverseMissile"/> is
-	/// carried and not applied: this engine has no missile camera.
+	/// The four axis-sense switches from <c>data\keyjoy.cfg</c>. Three are applied here;
+	/// <see cref="Keyjoy.ReverseMissile"/> is the host's, which builds the keyboard axes a flown round
+	/// reads.
 	/// </summary>
 	public Keyjoy Keyjoy { get; set; } = new Keyjoy();
 
@@ -93,6 +94,13 @@ public sealed class JoystickBindings {
 
 	/// <summary>Drops every latch, so a held button fires once more.</summary>
 	public void ResetLatches() => Array.Clear(_latched);
+
+	/// <summary>
+	/// Whether button <paramref name="index"/> is latched, waiting for a release. While the first row is,
+	/// the original holds the pair of axes its camera pointers address still — see
+	/// docs/formats/joystick-input.md#the-buttons.
+	/// </summary>
+	public bool ButtonLatched(int index) => index >= 0 && index < ButtonCount && _latched[index];
 
 	/// <summary>
 	/// Latches everything currently held, so nothing fires when the pilot's controls come back. Call it
@@ -327,7 +335,9 @@ public sealed class JoystickBindings {
 	/// <c>SimOptions[0x11 + i]</c> — a literal <c>0x11</c> at <c>0045b22b</c>, the walking block's
 	/// first button row, where the dispatch loop one step later correctly uses
 	/// <c>ControlsOptionBase + 4</c>. So a RAZOR finds its trigger through the <i>walker's</i>
-	/// bindings. This engine uses the current block on both paths; see KNOWN_ISSUES.</para>
+	/// bindings. This engine reads the trigger from the current block, which differs only with bindings the CONTROLS panel cannot set — docs/formats/joystick-input.md#the-buttons. Which button
+	/// the scan keeps out of the dispatch still follows the walker's block, as
+	/// <see cref="TriggerScanRow"/> says.</para>
 	/// </summary>
 	private bool ResolveFire(JoystickReading reading, SimulatorPreferences preferences) {
 		for (int i = 0; i < ButtonCount; i++) {
@@ -349,6 +359,11 @@ public sealed class JoystickBindings {
 	/// first pressed button claims the only usable slot. It costs nothing visible, because the button
 	/// that fired is latched immediately and the next tick lets the one behind it through. Two buttons
 	/// pressed together therefore act one tick apart rather than together.</para>
+	///
+	/// <para>The slot is claimed, and the button latched, before its action is looked at, so a button
+	/// with no case (OFF, or FIRE on any row but <see cref="TriggerScanRow"/>'s) claims it too. The
+	/// trigger scan's own button never does: the original zeroes its byte before the loop —
+	/// docs/formats/joystick-input.md#the-buttons.</para>
 	/// </summary>
 	private IReadOnlyList<JoystickAction> ResolveButtons(JoystickReading reading,
 			JoystickCapabilities capabilities, SimulatorPreferences preferences, out int claimedButton) {
@@ -356,6 +371,7 @@ public sealed class JoystickBindings {
 		bool claimed = false;
 		claimedButton = -1;
 		int live = Math.Min(capabilities.ButtonCount, ButtonCount);
+		int triggerRow = TriggerScanRow(preferences);
 
 		for (int i = 0; i < ButtonCount; i++) {
 			bool held = i < live && reading.Button(i);
@@ -369,7 +385,9 @@ public sealed class JoystickBindings {
 				continue;
 			}
 
-			if (!held || claimed) {
+			// The latch above sees the trigger scan's button as held, as the original's latch pass runs
+			// before the scan zeroes its byte; past this point it reads released.
+			if (!held || claimed || i == triggerRow) {
 				continue;
 			}
 
@@ -379,14 +397,30 @@ public sealed class JoystickBindings {
 
 			var action = Action(preferences, i);
 
-			// FIRE is read as a held state elsewhere and has no case in the dispatch switch; OFF has
-			// none either. Both still consume the tick's one slot, as they do in the original.
 			if (action is not (JoystickAction.Off or JoystickAction.Fire)) {
 				(pressed ??= new List<JoystickAction>(1)).Add(action);
 			}
 		}
 
 		return pressed ?? (IReadOnlyList<JoystickAction>)Array.Empty<JoystickAction>();
+	}
+
+	/// <summary>
+	/// The button the original's trigger scan takes out of the dispatch, or -1 when no row is FIRE: the
+	/// first FIRE row of the <b>walker's</b> block, whichever machine is being piloted, because the scan
+	/// reads <c>SimOptions[0x11 + i]</c> through a literal (<c>0045b22b</c>). In a RAZOR that is the
+	/// button on the walker's FIRE row, whatever the RAZOR binds it to, and a RAZOR FIRE row on another
+	/// button reaches the dispatch — docs/formats/joystick-input.md#the-buttons.
+	/// </summary>
+	private static int TriggerScanRow(SimulatorPreferences preferences) {
+		for (int i = 0; i < ButtonCount; i++) {
+			if ((JoystickAction)preferences[Prefs.HercControlsBase + Prefs.ControlsAxisCount + i]
+					== JoystickAction.Fire) {
+				return i;
+			}
+		}
+
+		return -1;
 	}
 
 	/// <summary>Puts <paramref name="value"/> in the first free rank of destination <paramref name="axis"/>.</summary>

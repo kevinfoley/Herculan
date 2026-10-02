@@ -69,7 +69,7 @@ public partial class MechObject {
 
 	/// <summary>
 	/// <c>Mech_ReceiveSquadOrder</c> (<c>00420ad4</c>, mech vtable <c>+0x28</c>) — one machine
-	/// receiving one order. Eighteen verbs over thirteen cases; the pairs that the FLASH COMM page
+	/// receiving one order. Sixteen of the eighteen verbs over twelve cases; the pairs that the FLASH COMM page
 	/// and the [F7] command display both carry share a case.
 	///
 	/// <para>Every case ends by choosing a reply id, and the machine says it on the squad channel

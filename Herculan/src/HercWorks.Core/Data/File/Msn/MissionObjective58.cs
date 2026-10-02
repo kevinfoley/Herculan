@@ -31,7 +31,7 @@ public class MissionObjective58 {
 	public short SubjectRef { get; set; }
 	public const int SubjectRefWord = 0x08 / 2;
 
-	/// <summary>0x0A — ref into row #6 (<see cref="MapPoint22"/>); no condition reads it.</summary>
+	/// <summary>0x0A — ref into row #6 (<see cref="MapPoint22"/>); no reader is found (see docs/simulation/mission-objectives.md#open).</summary>
 	public short PointRef { get; set; }
 	public const int PointRefWord = 0x0A / 2;
 

@@ -24,6 +24,7 @@ if (installRoot == null) {
 		$"The path should be the folder containing the '{GameInstall.ArchiveFolderName}' directory.");
 	return 1;
 }
+GameInstall.Remember(installRoot);
 
 string scriptPath = args.Length > 1 ? args[1] : MissionLoader.DefaultScriptPath(installRoot);
 if (!File.Exists(scriptPath)) {
@@ -162,7 +163,7 @@ window.Load += (gl, input) => {
 
 	// The terrain, and the only item the measuring grid is painted onto.
 	var built = new List<SceneItem> {
-		new(terrainMesh, Matrix4x4.Identity, terrainTexture?.Handle) { ShowGrid = settings.ShowGrid, CellQuantisedFog = true }
+		new(terrainMesh, Matrix4x4.Identity, terrainTexture?.Handle) { ShowGrid = settings.ShowGrid, CellQuantisedFog = true, GroundFill = true }
 	};
 
 	foreach (var sceneObject in scene.Objects) {

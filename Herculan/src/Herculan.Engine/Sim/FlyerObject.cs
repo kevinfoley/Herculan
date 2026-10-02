@@ -127,7 +127,8 @@ public sealed partial class FlyerObject : SimObject {
 
 	/// <summary>
 	/// <c>flyer+0xa5</c> — this aircraft is not contesting anything. Latched by the reassess on the
-	/// two orders that send a flight somewhere rather than send it to fight, and never cleared. Read
+	/// two orders that send a flight somewhere rather than send it to fight; no write in the original
+	/// that clears it is known (docs/simulation/ai-flyers.md, Open), and nothing here clears it. Read
 	/// by <c>Group_IsWipedOut</c> through <see cref="OutOfAction"/>.
 	/// </summary>
 	public bool Disarmed { get; set; }
@@ -297,7 +298,7 @@ public sealed partial class FlyerObject : SimObject {
 		bool wasDestroyed = _destroyed;
 		_destroyed = true;
 		LastAttacker = attacker;
-		Behaviour.SetState(Ai.FlyerBehaviourState.Dead);
+		SetBehaviourState(Ai.FlyerBehaviourState.Dead);
 		Position = new Vec3i(Position.X, Position.Y, WreckDropHeight);
 		StopFlybySound(world);
 

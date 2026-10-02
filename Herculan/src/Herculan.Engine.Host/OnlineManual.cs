@@ -18,6 +18,12 @@ internal static class OnlineManual {
 	/// <summary>The help file's name inside each language folder.</summary>
 	public const string FileName = "ES2GUIDE.HLP";
 
+	/// <summary>
+	/// The readme inside each language folder, which the help file's <c>Readme</c> action opens
+	/// (docs/formats/winhelp.md#macros, docs/engine/online-manual.md#the-page).
+	/// </summary>
+	public const string ReadmeName = "README.WRI";
+
 	private static readonly object Gate = new();
 	private static string? _page;
 	private static bool _converting;
@@ -104,9 +110,36 @@ internal static class OnlineManual {
 			"HERCULAN", "manual");
 		Directory.CreateDirectory(directory);
 		string page = Path.Combine(directory, folder + ".html");
-		File.WriteAllText(page, HelpHtmlWriter.Write(help, code));
+		File.WriteAllText(page, HelpHtmlWriter.Write(help, code, Readme(Path.Combine(installRoot, folder, ReadmeName))));
 		Console.WriteLine($"On-line manual: {source} written as {page}.");
 		return page;
+	}
+
+	// The readme's text for the page, or null — and the page's note in its place — when it is missing or
+	// unreadable. A bad readme never stops the manual opening.
+	private static string? Readme(string path) {
+		try {
+			var info = new FileInfo(path);
+			if (!info.Exists) {
+				Console.WriteLine($"No {path} — the on-line manual's Readme shows a note.");
+				return null;
+			}
+
+			if (info.Length > HelpLimits.Default.MaxReadmeBytes) {
+				Console.WriteLine($"{path} is {info.Length} bytes, over the {HelpLimits.Default.MaxReadmeBytes}-byte limit.");
+				return null;
+			}
+
+			if (WriteDocument.ReadText(File.ReadAllBytes(path), out string? error) is not { } text) {
+				Console.WriteLine($"{path} cannot be shown: {error}.");
+				return null;
+			}
+
+			return text;
+		} catch (Exception e) when (e is IOException or UnauthorizedAccessException) {
+			Console.WriteLine($"{path} could not be read: {e.Message}");
+			return null;
+		}
 	}
 
 	// The page is this class's own file at a path it built, so handing it to the shell opens it in

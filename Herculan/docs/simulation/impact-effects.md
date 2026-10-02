@@ -25,7 +25,7 @@ timer = row[+0x02];                       // into effect+0x4b
 return alive;
 ```
 
-`Sim_MainTick` calls it directly, once per pool entry, and queues a finished effect for deletion; the effect class's vtable slot `+0x14` is a stub, not this function. Nothing moves the effect and nothing else can stop it. The frame count comes off the loaded shape (`shape+0x20`'s per-sequence array), not off the table. The intensity ramp has twelve entries; a flipbook longer than that would read on into the proximity radius at `+0x20`, and no retail shape is.
+`Sim_MainTick` calls it directly, once per pool entry, and queues a finished effect for deletion; the effect class's vtable slot `+0x14` is a stub, not this function. Nothing moves the effect and nothing else can stop it. The frame count comes off the loaded shape (`shape+0x20`'s per-sequence array), not off the table. The intensity ramp has twelve entries, and a longer flipbook reads on past it into the proximity radius at `+0x20` and the sound id at `+0x24`. In `EXPLOS.DAT` with `EXPLOS.DTS` two light-bearing rows do: row 7 (root 18, 15 frames) reads 0, 0 and 30 on its last three frames, and row 16 (root 5, 14 frames) reads 32 and 0 on its last two.
 
 The tick argument is the record base, not the counter: `Math_CountdownTimerTick` reads the `short` at `+1` from the pointer it is given. See the countdown-timer entry in [`dbsim-physics-notes.md`](dbsim-physics-notes.md).
 

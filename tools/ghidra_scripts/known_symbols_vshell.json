@@ -331,6 +331,15 @@
       "source": "VSHELL decompile and disassembly at 00403b5d"
     },
     {
+      "address": "00403b98",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_RegisterBucket",
+      "description": "(entries, count): appends an {entries, count} bucket to VshellClassItem_RegistryBuckets (count at 0046d1cc) unless count is 0. The static initialisers at 004529b8, 0045fa04 (g_TSObjectTypeRegistry), 0046370c and 00468168 register their class-item tables with it. The VSHELL copy of DBSIM's ClassItem_RegisterBucket (00479fac).",
+      "source": "VSHELL decompile at 00403b98; es2_naming.py diff against DBSIM 00479fac"
+    },
+    {
       "address": "00403c1f",
       "binary": "VSHELL",
       "type": "function",
@@ -547,6 +556,15 @@
       "source": "VSHELL disassembly at 0040541b"
     },
     {
+      "address": "00405470",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "MouseDriver_SetBounds",
+      "description": "(driver, record): sets the bounds rect at driver+0xe..+0x1a from the record's first four ints and the shorts at driver+0x1e/+0x20/+0x22 from its +0x10/+0x12/+0x14. DVMouse_Init passes the driver's own +0xe record, DVMouse_Shutdown the one at +0x24. The VSHELL copy of DBSIM's MouseDriver_SetBounds (00480658).",
+      "source": "VSHELL decompile at 00405470; es2_naming.py diff against DBSIM 00480658"
+    },
+    {
       "address": "004054dc",
       "binary": "VSHELL",
       "type": "function",
@@ -601,6 +619,24 @@
       "source": "VSHELL decompile and disassembly at 00405d9c"
     },
     {
+      "address": "00405dfd",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Display_ResetGlobals",
+      "description": "Zeroes the back-buffer globals (bitmap header 00481864, display 00481868, bits 0048186c, memory DC 00481878, DIB 0048187c, palette 00481870, sound timer id 00481e4c), sets the size to 640 x 480 (00481884, 00481888) and the BITMAPINFOHEADER at 00481890 to size 0x28, one plane, 8 bits. Shell_CreateMainWindow runs it first.",
+      "source": "VSHELL decompile at 00405dfd"
+    },
+    {
+      "address": "00405ea8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Display_Init",
+      "description": "Shell_CreateMainWindow's display setup once the window exists: GL_RegisterClassItems, Light_ResetSystem and AN_RegisterClassItems; the 15 ms sound-service timer (id 1, sfxWndProc, id kept at 00481e4c); a memory DC (00481878); the system palette into 004818b8 with red and blue swapped in each entry; a top-down 8-bit DIB section of the back buffer's size (bits 0048186c; 'Bad WinGBitmap' when it fails) selected into the DC; a 0xe-byte bitmap header over it (00481864); a GLDisplay of kind 'BMP 8' on that header (00481868), reopened by GLDisplay_OpenWithSize with half the width and height; then Gfx_SelectRenderTarget and GLDisplay_SetAttribute(9, 0).",
+      "source": "VSHELL decompile at 00405ea8"
+    },
+    {
       "address": "004062af",
       "binary": "VSHELL",
       "type": "function",
@@ -615,8 +651,44 @@
       "type": "function",
       "confidence": "high",
       "name": "SfxTimer_Kill",
-      "description": "KillTimer on the shell's sound-service timer: the 15 ms timer (id 1, callback sfxWndProc) that 00405ea8 creates on window 00481e54 and whose id it keeps at 00481e4c; nothing when that id is 0. Display_ToggleFullScreen calls it.",
+      "description": "KillTimer on the shell's sound-service timer: the 15 ms timer (id 1, callback sfxWndProc) that Display_Init creates on window 00481e54 and whose id it keeps at 00481e4c; nothing when that id is 0. Display_ToggleFullScreen calls it.",
       "source": "VSHELL decompile and disassembly at 004062b0"
+    },
+    {
+      "address": "004062cb",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_RegisterWindowClass",
+      "description": "(hInstance): loads BWCC.DLL and registers the window class 'shell': MainWndProc, icon 'es2icon', the arrow cursor, no background brush. Shell_WinMain calls it when there is no previous instance.",
+      "source": "VSHELL decompile at 004062cb"
+    },
+    {
+      "address": "00406339",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_CreateMainWindow",
+      "description": "(hInstance, nCmdShow): Display_ResetGlobals, then creates the 'EarthSiege II' window of class 'shell' centred on the desktop with a 640 x 480 client area, or the whole screen and topmost when 0046d740 (option 6, full screen) is set. On failure SfxTimer_Kill and returns 0; otherwise Display_Init, ShowWindow, UpdateWindow unless full screen, and returns 1.",
+      "source": "VSHELL decompile at 00406339"
+    },
+    {
+      "address": "00406486",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_SplitCommandLine",
+      "description": "(cmdLine, argv): argv[0] = 'dbsim', then each space-separated word copied into a Mem_NewArray block; returns the count. Shell_WinMain passes the result to Shell_Main.",
+      "source": "VSHELL decompile at 00406486"
+    },
+    {
+      "address": "00406507",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_WinMain",
+      "description": "(hInstance, hPrevInstance, cmdLine, nCmdShow): Shell_SplitCommandLine; Shell_RegisterWindowClass for a first instance; a -d or /d argument clears 0046d740, which ShellOptions_Init's option 6 (ShellOption_DisplayMode) then overwrites; Shell_CreateMainWindow ('Unable to initialize Instance' on failure); the joystick count and capabilities with threshold 0x200; Display_ToggleFullScreen when 0046d740 is set; Shell_BlankScreen; Shell_Main with the split arguments; Shell_PumpMessages until WM_QUIT; Display_ReleaseDirectDraw; returns Shell_GetExitCode.",
+      "source": "VSHELL decompile at 00406507"
     },
     {
       "address": "0040664a",
@@ -752,6 +824,15 @@
       "name": "Shell_CommitPalette",
       "description": "Installs the palette loaded by Shell_InstallPalette to the display when 0046dcd8 is set, then clears it.",
       "source": "docs/shell/screen-layout.md#the-palette"
+    },
+    {
+      "address": "0040779f",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellRandom_StaticInitMain",
+      "description": "Static initialiser (stored pointer at 00480fc4): ShellRandom_Reset(0x482325), the main shell generator. Ghidra has no function here. ShellRandom_Seed resets the state again before any campaign draw.",
+      "source": "docs/shell/campaign-loop.md"
     },
     {
       "address": "004077c5",
@@ -984,7 +1065,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_GetExitCode",
-      "description": "Returns the int16 exit code at 0046e210 that Shell_SetExitCode stores (the decompile drops the return). Shell_Main and 00406507 read it.",
+      "description": "Returns the int16 exit code at 0046e210 that Shell_SetExitCode stores (the decompile drops the return). Shell_Main and Shell_WinMain read it.",
       "source": "VSHELL disassembly at 00408778"
     },
     {
@@ -1128,7 +1209,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WinConsumer_HandleEvent",
-      "description": "WinConsumer vtable 0046e7d0 slot 0 (consumer, event): traces the event to the mono debug monitor (Mono_Printf: cursor position, event type, then Mouse/Key/Command type) and turns command events (0x100) into pointer actions by the code at +0x24: 4/5/6/7 move the pointer 8 pixels left, up, right and down (Display_GetCursorPos, then Pointer_MoveTo); 10 posts a left-down mouse event (sub-code 2) and 0x1d a left-up (1) at the pointer state's position (DAT_005ddbd0 +1) through Event_Post; 0x11 runs Pointer_Unlock and Alert_Show(DAT_0048d0fc). Then posts the event on with Event_Post.",
+      "description": "WinConsumer vtable 0046e7d0 slot 0 (consumer, event): traces the event to the mono debug monitor (Mono_Printf: cursor position, event type, then Mouse/Key/Command type) and turns command events (0x100) into pointer actions by the code at +0x24: 4/5/6/7 move the pointer 8 pixels left, up, right and down (Display_GetCursorPos, then Pointer_MoveTo); 10 posts a left-down mouse event (sub-code 2) and 0x1d a left-up (1) at the pointer state's position (DAT_005ddbd0 +1) through Event_Post; 0x11 runs Pointer_Unlock and Alert_Show(QuitAlert). Then posts the event on with Event_Post.",
       "source": "VSHELL decompile of 004093e6; vtable 0046e7d0 (RTTI WinConsumer)"
     },
     {
@@ -1362,7 +1443,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ESAlert_HandleEvent",
-      "description": "ESAlert vtable 0046ebe0 slot 0 (alert, event). Event 1 (show): Window_BeginPaint, then Bitmap_GrabClipDispatch reads the screen under the alert into the buffer bitmap at +0x75 (its +4), at {0, 0}. Event 2 (hide): Window_BeginPaint, then Bitmap_BlitClipDispatch puts that bitmap back. Event 4: repaints through vtable +4. Every event is then deleted through its vtable +0x18. The alert takes no clicks of its own; its buttons are child widgets.",
+      "description": "ESAlert vtable 0046ebe0 slot 0 (alert, event). Event 1 (show): Window_BeginPaint, then Bitmap_GrabClipDispatch reads the screen under the alert into the buffer bitmap at +0x75 (its +4), at {0, 0}. Event 2 (hide): Window_BeginPaint, then Bitmap_BlitClipDispatch puts that bitmap back. Event 4: repaints through vtable +4. Every event is then deleted through its vtable +0x18. ESAlert_Ctor adds 0x60 to the mask, so a click on the alert's body reaches this handler and is dropped; its buttons are child widgets.",
       "source": "VSHELL decompile of 0040b143; vtable 0046ebe0 (RTTI ESAlert)"
     },
     {
@@ -1807,6 +1888,24 @@
       "source": "VSHELL decompile and disassembly at 0040d4d5"
     },
     {
+      "address": "0040d686",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellOptions_Load_Thunk",
+      "description": "ShellOptions_Load(). ShellOptions_Init calls it.",
+      "source": "VSHELL decompile at 0040d686"
+    },
+    {
+      "address": "0040d68c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellOptions_Init",
+      "description": "Clears the 0x36 entries of ShellOptionHandlers, then loads prefs.cfg through ShellOptions_Load_Thunk. Shell_WinMain calls it before reading option 6. DBSIM's Prefs_Init (0045a19c) registers five handlers and applies options here instead.",
+      "source": "VSHELL decompile at 0040d68c; es2_naming.py diff against DBSIM 0045a19c"
+    },
+    {
       "address": "0040d6a3",
       "binary": "VSHELL",
       "type": "function",
@@ -1886,6 +1985,15 @@
       "name": "ShellOptions_SaveSome",
       "description": "(count, indices): copies ShellOptions, reads data\\prefs.cfg over the copy when it opens, puts the current value of each of the count listed option indices into it, and writes the 0x36 bytes back to data\\prefs.cfg. So only the listed options change on disk.",
       "source": "VSHELL decompile at 0040d9eb"
+    },
+    {
+      "address": "0040db25",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_RegisterOptionHandler",
+      "description": "(option, handler): ShellOptionHandlers[option] = handler. The VSHELL copy of DBSIM's Prefs_RegisterOptionHandler (00459c58).",
+      "source": "VSHELL decompile at 0040db25; es2_naming.py diff against DBSIM 00459c58"
     },
     {
       "address": "0040db38",
@@ -2478,7 +2586,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_HasSingleDeployable",
-      "description": "True when exactly one of the eight bays holds a machine that is occupied, fully built and flightworthy (FUN_00410a9d). The repair screen's SCRAP button is dead while it holds.",
+      "description": "True when exactly one of the eight bays holds a machine that is occupied, fully built and flightworthy (Herc_IsDeployable, 00410a9d). The repair and build screens' SCRAP buttons are dead while it holds, whichever bay that machine is in.",
       "source": "docs/shell/screen-layout.md#what-the-buttons-are-gated-on"
     },
     {
@@ -4224,7 +4332,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Window_MoveRect",
-      "description": "Moves a widget after construction: rewrites the parent-relative rect at +0x25, rederives the absolute one and repaints. The only mover in the shell, and it is called on one widget (0048d7dc) -- so every other screen's geometry is exactly what its builder passed.",
+      "description": "Moves a widget after construction: rewrites the parent-relative rect at +0x25, rederives the absolute one and repaints. Called on one widget (0048d7dc). Window_SetPosition (0041ee1d) also moves widgets (the repair diagrams and bay pictures), and Window_SetWidth resizes them.",
       "source": "docs/shell/screen-layout.md#how-a-widget-paints"
     },
     {
@@ -5042,7 +5150,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_ReadSquadHeader",
-      "description": "shellmap.cpp (source line 0x1f5). The only place VSHELL reads data\\player.mec back, and it takes just the two leading int16 -- the player entry index and the squad size -- before closing it and opening data\\mforms.dat for formation layout. Establishes that the rest of player.mec, including the trailing weapon-unlock table, is write-only as far as the shell is concerned.",
+      "description": "shellmap.cpp (source line 0x1f5). The only VSHELL function found that parses data\\player.mec (Career_SaveSlot and Career_LoadSlot copy it whole); it takes just the two leading int16 -- the player entry index and the squad size -- before closing it and opening data\\mforms.dat for formation layout. No VSHELL reader of the rest of player.mec, including the trailing weapon-unlock table, was found by a literal-reference sweep.",
       "source": "docs/shell/campaign-loop.md"
     },
     {
@@ -5325,6 +5433,51 @@
       "source": "VSHELL decompile and disassembly at 0042808e"
     },
     {
+      "address": "004281f4",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_Slot8ReturnsZero",
+      "description": "Slot 8 of raster driver 3's routine table (0047e600): returns 0, so RasterDriver_OpenDisplay's slot-8 check of the bitmap header always passes. DBSIM's slot 8 is the same (0048a0c0).",
+      "source": "VSHELL decompile at 004281f4; table dump at 0047e600"
+    },
+    {
+      "address": "004281fb",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_OpenDisplay",
+      "description": "Slot 11 of raster driver 3's routine table (0047e600), which RasterDriver_OpenDisplay calls with (bitmapHeader, info): keeps the header at 00481834, allocates a row-offset table (base, then one offset per row) into info+0 (freeing the previous one, 0046d73c), takes the width and height from GLDisplay_OpenWithSize's one-shot overrides (0046d734, 0046d738, reset to -1) or else from the header, fills the rest of info (+0x24/+0x28 the header's own size, 8 bits, 256 colours) and sets the screen rect and origin globals. The VSHELL copy of DBSIM's 0048a0c8.",
+      "source": "VSHELL decompile at 004281fb; es2_naming.py diff against DBSIM 0048a0c8"
+    },
+    {
+      "address": "0042837a",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_Slot7NoOp",
+      "description": "Slot 7 of raster driver 3's routine table (0047e600): returns at once. RasterDriver_OpenDisplay and GLDisplay_SetAttribute call slot 7. The VSHELL copy of DBSIM's Driver3_Slot7NoOp (0048a218).",
+      "source": "VSHELL decompile at 0042837a; es2_naming.py diff against DBSIM 0048a218"
+    },
+    {
+      "address": "0042837f",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_CloseDisplay",
+      "description": "Slot 12 of raster driver 3's routine table (0047e600), which RasterDriver_CloseDisplay calls: (info) frees the row-offset table at info+0 that Driver3_OpenDisplay allocated. The VSHELL copy of DBSIM's Driver3_CloseDisplay (0048a220).",
+      "source": "VSHELL decompile at 0042837f; es2_naming.py diff against DBSIM 0048a220"
+    },
+    {
+      "address": "00428390",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLDisplay_OpenWithSize",
+      "description": "(display, bitmapHeader, width, height): stores width at 0046d734 and height at 0046d738 when not negative, GLDisplay_Open, then on success selects the display as the render target, sets its attributes +0x88 = 0 and +0x8c = 1 (publishing them when it is the current target), and sets its page offsets (0, 200, 400, 600 for kind 'VGA 8', zero otherwise). Driver 3's open routine (004281fb) takes the stored width and height once, in place of the header's, then resets them to -1. Display_Init and ShellMap_BuildRelief call it.",
+      "source": "VSHELL decompile at 00428390 and 004281fb"
+    },
+    {
       "address": "0042870b",
       "binary": "VSHELL",
       "type": "function",
@@ -5442,6 +5595,15 @@
       "source": "VSHELL decompile and disassembly at 0042c923"
     },
     {
+      "address": "0042cce0",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sfx_Service",
+      "description": "Sos_Service(0, 0, 0, 0): the library service call with no window message. 00404895 calls it. The VSHELL copy of DBSIM's Sfx_Service (0046415c).",
+      "source": "VSHELL decompile at 0042cce0; es2_naming.py diff against DBSIM 0046415c"
+    },
+    {
       "address": "0042ce58",
       "binary": "VSHELL",
       "type": "function",
@@ -5467,6 +5629,15 @@
       "name": "Sfx_SetLooping",
       "description": "SFX::setLooping (assert file .\\inc\\sfx_fix.h): (sfx, handle, loops). Validates the handle like Sfx_Play, clears flag 0x80 for a count of 1 and sets it otherwise, stores the count at slot +0x18 and applies it now (0042dc6e) when the slot is playing.",
       "source": "VSHELL decompile and disassembly at 0042d36f"
+    },
+    {
+      "address": "0042d5d1",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sfx_PlayMusicTrack",
+      "description": "SFX-level thunk to Music_PlayTrack (0042dcef), the copy of DBSIM's. No reference found by es2_xref.",
+      "source": "docs/formats/audio.md#open"
     },
     {
       "address": "0042d6a5",
@@ -5523,6 +5694,15 @@
       "source": "VSHELL decompile at 0042d8a8"
     },
     {
+      "address": "0042d8b9",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sos_Service",
+      "description": "(hwnd, msg, wParam, lParam): Sos_UserService(Sos_GetDriverHandle()), then Sos_HandleWindowMessage with the message when hwnd is non-null. Returns 0. The VSHELL copy of DBSIM's Sos_Service (004736cc).",
+      "source": "VSHELL decompile at 0042d8b9; es2_naming.py diff against DBSIM 004736cc"
+    },
+    {
       "address": "0042d906",
       "binary": "VSHELL",
       "type": "function",
@@ -5550,6 +5730,15 @@
       "source": "VSHELL decompile at 0042da8c"
     },
     {
+      "address": "0042db36",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sos_VoiceIsDone",
+      "description": "(voice): Sos_MidiSongDone(+0x20) for a MIDI song (flags +4 bit 0), otherwise Sos_SampleDone(Sos_GetDriverHandle(), +0x20). 0042cc1e asks it. The VSHELL copy of DBSIM's Sos_VoiceIsDone (00473950).",
+      "source": "VSHELL decompile at 0042db36; es2_naming.py diff against DBSIM 00473950"
+    },
+    {
       "address": "0042db88",
       "binary": "VSHELL",
       "type": "function",
@@ -5568,6 +5757,24 @@
       "source": "VSHELL decompile at 0042dbba"
     },
     {
+      "address": "0042dc1e",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sos_ApplyVoicePitch",
+      "description": "(voice): for a digital sample (flags +4 bit 0 clear), Sos_SetSampleRate(Sos_GetDriverHandle(), +0x20, (+0x1c * 11025) >> 16); nothing for a MIDI song. The VSHELL copy of DBSIM's Sos_ApplyVoicePitch (00473a48).",
+      "source": "VSHELL decompile at 0042dc1e; es2_naming.py diff against DBSIM 00473a48"
+    },
+    {
+      "address": "0042dc49",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sos_ApplyVoicePan",
+      "description": "(voice): for a digital sample (flags +4 bit 0 clear), Sos_SetPanLocation(Sos_GetDriverHandle(), +0x20, +0x18); nothing for a MIDI song. The VSHELL copy of DBSIM's Sos_ApplyVoicePan (00473a74).",
+      "source": "VSHELL decompile at 0042dc49; es2_naming.py diff against DBSIM 00473a74"
+    },
+    {
       "address": "0042dc6e",
       "binary": "VSHELL",
       "type": "function",
@@ -5575,6 +5782,15 @@
       "name": "Sfx_ApplyLoopingNoOp",
       "description": "Empty body. Sfx_SetLooping calls it when the voice is playing.",
       "source": "VSHELL disassembly at 0042dc6e"
+    },
+    {
+      "address": "0042dcef",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Music_PlayTrack",
+      "description": "The copy of DBSIM's Music_PlayTrack: plays one Red Book CD track through MCI (cdaudio, TMSF, MCI_PLAY with MCI_NOTIFY). Reached only through Sfx_PlayMusicTrack.",
+      "source": "docs/formats/audio.md"
     },
     {
       "address": "0042e31c",
@@ -5593,6 +5809,15 @@
       "name": "Sos_GetLastError",
       "description": "MOV EAX,[00473180]; RET -- returns Sos_LastError. Sfx_StartVoice reads it when Sos_StartSample fails.",
       "source": "VSHELL disassembly at 0042e447"
+    },
+    {
+      "address": "0042e44d",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sos_AnyDriverActive",
+      "description": "Returns (00473184 & 00473188) | (00473186 & 0047318a): whether the digital driver is open and was requested, or the MIDI driver is. Sos_HandleWindowMessage asks it on WM_TIMER. The VSHELL copy of DBSIM's Sos_AnyDriverActive (00474220).",
+      "source": "VSHELL decompile at 0042e44d; es2_naming.py diff against DBSIM 00474220"
     },
     {
       "address": "0042e46f",
@@ -5620,6 +5845,33 @@
       "name": "Sos_StartFileStream",
       "description": "(path, arg, handleOut): plays a file as an SOS stream: Sos_StreamAcquire with a raw 8-bit mono 11025 Hz header, opens the file with _lopen (the plain file system), reads eight 0x8000-byte buffers into GlobalAlloc'd memory, prepares and queues each that read anything (Sos_StreamPrepareBuffer, Sos_StreamAddBuffer) and Sos_StreamStart, storing the stream handle in *handleOut. Returns 0, or 1 when the stream, the file or an allocation fails. Sfx_StartVoice's path for a sample flagged 0x1000.",
       "source": "VSHELL decompile at 0042e846"
+    },
+    {
+      "address": "0042ead2",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sos_RefillStreamBuffer",
+      "description": "(streamId, bufferHeader): _hread's up to 0x8000 bytes from the stream's file into the header's data (+2), stores the count at +0xe and, when it is non-zero, requeues the buffer with Sos_StreamAddBuffer. Returns 0. The VSHELL copy of DBSIM's Sos_RefillStreamBuffer (00474880).",
+      "source": "VSHELL decompile at 0042ead2; es2_naming.py diff against DBSIM 00474880"
+    },
+    {
+      "address": "0042eb13",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sos_StopStream",
+      "description": "(streamId): Sos_StreamStop and Sos_StreamRelease, _lclose's the stream's file, then for each of its eight buffers Sos_StreamUnPrepareBuffer, Sos_UnPrepare32Memory on both prepared handles and GlobalUnlock/GlobalFree. Returns 0. Sfx_StopVoice and Sos_HandleWindowMessage call it. The VSHELL copy of DBSIM's Sos_StopStream (004748c4).",
+      "source": "VSHELL decompile at 0042eb13; es2_naming.py diff against DBSIM 004748c4"
+    },
+    {
+      "address": "0042ebea",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sos_HandleWindowMessage",
+      "description": "(hwnd, msg, wParam, lParam): WM_DESTROY kills timer 1; WM_INITDIALOG (0x110) sets timer 1 at 1 ms; WM_TIMER runs Sos_UserService on the driver handle (0048aa26) when Sos_AnyDriverActive says so; message 0xa000 hands wParam 0xa000 to Sos_RefillStreamBuffer and 0xa002 to Sos_StopStream. Returns 0. The VSHELL copy of DBSIM's Sos_HandleWindowMessage (00474994).",
+      "source": "VSHELL decompile at 0042ebea; es2_naming.py diff against DBSIM 00474994"
     },
     {
       "address": "0042ec7c",
@@ -5937,6 +6189,33 @@
       "source": "docs/shell/screen-layout.md#the-main-menu"
     },
     {
+      "address": "00431918",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "QuitAlert_Build",
+      "description": "Builds the Alt+F4 (key code 0x23e) QUIT alert QuitAlert (0048d0fc): caption estext 0x12 QUIT, buttons 0x11 CANCEL (QuitAlert_OnCancel) and 0x10 ACCEPT (QuitAlert_OnAccept).",
+      "source": "docs/shell/screen-layout.md#quit"
+    },
+    {
+      "address": "00431b31",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "QuitAlert_OnCancel",
+      "description": "The QUIT alert's CANCEL button handler.",
+      "source": "docs/shell/screen-layout.md#quit"
+    },
+    {
+      "address": "00431ba7",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "QuitAlert_OnAccept",
+      "description": "The QUIT alert's ACCEPT handler: sets Shell_QuitFlag.",
+      "source": "docs/shell/screen-layout.md#quit"
+    },
+    {
       "address": "00431f3c",
       "binary": "VSHELL",
       "type": "function",
@@ -5960,7 +6239,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Repair_Enter",
-      "description": "Brings the repair screen up: shows the content panel and both list panels, sets the mode readout from DAT_004824e4, moves the bay selection to the first built machine when the current bay holds nothing workable, fills both lists (00433caf), snapshots the pool and the machine (Repair_Snapshot, 004338f6) and seeds the selection at (0, 0).",
+      "description": "Brings the repair screen up: shows the content panel and both list panels, sets the mode readout from DAT_004824e4, calls Squad_SelectBay(Herc_FirstBuiltBay) when the current bay holds nothing workable -- before TabHandler_Repair stores 3, so that call takes the previous tab's arm, fills both lists (00433caf), snapshots the pool and the machine (Repair_Snapshot, 004338f6) and seeds the selection at (0, 0).",
       "source": "docs/shell/screen-layout.md#the-repair-screen"
     },
     {
@@ -6050,7 +6329,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Repair_SetComponentNames",
-      "description": "Writes the fifteen component names into the two lists' name columns from one of two fifteen-entry estext index tables, at 00474000 for a walker and 0047401e when the machine's chassis type is 8, the Razor. Driven by a bay change (0043d64d), not by screen entry.",
+      "description": "Writes the fifteen component names into the two lists' name columns from one of two fifteen-entry estext index tables, at 00474000 for a walker and 0047401e when the machine's chassis type is 8, the Razor. Called only from Squad_SelectBay's repair arm (0043d753); a bay change on another tab, and Repair_Enter's reselection (which runs under the previous tab's arm), leave the names as they were.",
       "source": "docs/shell/screen-layout.md#which-names-a-chassis-shows"
     },
     {
@@ -7005,7 +7284,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_Show",
-      "description": "Puts the mission tab up in a view: 0 campaign map, 1 briefing, 4 debrief. Retitles the map panel, moves the summary, fills and shows the text boxes, shows or hides the map buttons, bar and page buttons, and enqueues the view's movie once per load.",
+      "description": "Puts the mission tab up in a view: 0 campaign map, 1 briefing, 4 debrief. Retitles the map panel, moves the summary, fills and shows the text boxes, shows or hides the map buttons, bar and page buttons, and enqueues the view's movie once: the map's while its first-show flag DAT_004778aa is clear (RESTORE and a new career clear it), the briefing's and debrief's once per load.",
       "source": "docs/shell/screen-layout.md#the-mission-screen"
     },
     {
@@ -8051,6 +8330,15 @@
       "source": "docs/shell/screen-layout.md#starting-a-practice-mission"
     },
     {
+      "address": "0044de50",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_Ctor",
+      "description": "(assert): Assert_Emit(0, 1, 0, 0, 0), counts the object live (*005ddec0) and returns it. Assert_StaticInit builds the shell's assert logger 0048dc24 with it. The VSHELL copy of DBSIM's 00479aec.",
+      "source": "VSHELL decompile and disassembly at 0044de50; es2_naming.py match against DBSIM 00479aec"
+    },
+    {
       "address": "0044deac",
       "binary": "VSHELL",
       "type": "function",
@@ -8076,6 +8364,15 @@
       "name": "Assert_AddHook",
       "description": "Pushes a callback onto the hook list at 0048dc34; aborts with an assert_abort_notify message if the allocation fails.",
       "source": "VSHELL decompile; class names from the Borland type-name strings FileRWStream (0044e64e), FileRStream (0044e9ce) and FileWStream (0044ed45) that close each class's code block"
+    },
+    {
+      "address": "0044df94",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_StaticInit",
+      "description": "Static initialiser: Assert_Ctor on the shell's assert logger 0048dc24, the one Assert_Report reports through.",
+      "source": "VSHELL decompile at 0044df94"
     },
     {
       "address": "0044e018",
@@ -8600,6 +8897,15 @@
       "source": "VSHELL decompile and disassembly at 0044ed78"
     },
     {
+      "address": "0044edac",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "MemRWStream_SetOverrunStatus",
+      "description": "(stream, writing): the status for a transfer that ran past the data: 2 (end of data) when the cursor +0x10 is at the end +0xc and writing is 0, otherwise 1 (I/O error). Returns 0. MemRWStream_Read and MemRWStream_SetPosition pass 0, MemRWStream_Write 1. The VSHELL copy of DBSIM's 0047b294.",
+      "source": "VSHELL decompile at 0044edac"
+    },
+    {
       "address": "0044ede0",
       "binary": "VSHELL",
       "type": "function",
@@ -8753,6 +9059,15 @@
       "source": "VSHELL decompile of 0044f10c"
     },
     {
+      "address": "0044f22c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Stream_ReadCopy",
+      "description": "(stream, count, buffer): calls the stream's read slot (vtable +0x18); a copy of Stream_Read in the RLERStream unit. RLERStream_SetPosition reads through it.",
+      "source": "VSHELL decompile at 0044f22c"
+    },
+    {
       "address": "0044f248",
       "binary": "VSHELL",
       "type": "function",
@@ -8861,6 +9176,15 @@
       "source": "VSHELL decompile of 0044f5d0"
     },
     {
+      "address": "0044f641",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Stream_ReadCopy2",
+      "description": "(stream, count, buffer): calls the stream's read slot (vtable +0x18); a copy of Stream_Read in the LZHRStream unit. LZHRStream_SetPosition reads through it.",
+      "source": "VSHELL decompile at 0044f641"
+    },
+    {
       "address": "0044f65c",
       "binary": "VSHELL",
       "type": "function",
@@ -8888,6 +9212,96 @@
       "source": "VSHELL decompile and disassembly at 0044f6dc"
     },
     {
+      "address": "0044f78c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_EncodeChar",
+      "description": "(coder, c): walks the parent links (+8) from leaf c up to the root (0x272) collecting the code bits, writes them with LZHuffman_PutCode, then LZHuffman_Update(c). Okumura's LZHUF EncodeChar. The VSHELL copy of DBSIM's 0047bc80.",
+      "source": "VSHELL decompile at 0044f78c; es2_naming.py diff against DBSIM 0047bc80"
+    },
+    {
+      "address": "0044f7e0",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_EncodePosition",
+      "description": "(coder, pos): LZHuffman_PutCode with the top six bits' length and code from the encode tables, then the low six bits in 6 bits. LZHUF's EncodePosition. The tables are 0047a780/0047a7c0 (encode) and 0047a800/0047a900 (decode). The VSHELL copy of DBSIM's 0047bcd4.",
+      "source": "VSHELL decompile at 0044f7e0; es2_naming.py diff against DBSIM 0047bcd4"
+    },
+    {
+      "address": "0044f824",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_DecodeChar",
+      "description": "(coder): walks the child links (+0xc) from the root (+0x4e4) one LZHuffman_GetBit at a time until a leaf (>= 0x273), LZHuffman_Update's it and returns leaf - 0x273. LZHUF's DecodeChar; LZHRStream_Read calls it. The VSHELL copy of DBSIM's 0047bd18.",
+      "source": "VSHELL decompile at 0044f824; es2_naming.py diff against DBSIM 0047bd18"
+    },
+    {
+      "address": "0044f874",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_DecodePosition",
+      "description": "(coder): reads a byte with LZHuffman_GetByte, takes the upper six bits and the extra bit count from the decode tables, reads those bits with LZHuffman_GetBit and returns the 12-bit position. LZHUF's DecodePosition; LZHRStream_Read calls it. The tables are 0047a780/0047a7c0 (encode) and 0047a800/0047a900 (decode). The VSHELL copy of DBSIM's 0047bd68.",
+      "source": "VSHELL decompile at 0044f874; es2_naming.py diff against DBSIM 0047bd68"
+    },
+    {
+      "address": "0044f8c8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_EncodeEnd",
+      "description": "(coder): writes the top byte of the bit buffer (+0x13) when bits are pending (+0x15), then a zero byte. LZHUF's EncodeEnd with a trailing 0. The VSHELL copy of DBSIM's 0047bdbc.",
+      "source": "VSHELL decompile at 0044f8c8; es2_naming.py diff against DBSIM 0047bdbc"
+    },
+    {
+      "address": "0044f8f8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_GetBit",
+      "description": "(coder): refills the 16-bit input buffer (+0x10, bit count +0x12) a byte at a time with Stream_ReadByte from the source (+0) while it holds fewer than 9 bits (0 at end of data), then shifts out and returns the top bit. LZHUF's GetBit. The VSHELL copy of DBSIM's 0047bdec.",
+      "source": "VSHELL decompile at 0044f8f8; es2_naming.py diff against DBSIM 0047bdec"
+    },
+    {
+      "address": "0044f954",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_GetByte",
+      "description": "(coder): LZHuffman_GetBit's refill, then shifts out and returns the top 8 bits. LZHUF's GetByte. The VSHELL copy of DBSIM's 0047be4c.",
+      "source": "VSHELL decompile at 0044f954; es2_naming.py diff against DBSIM 0047be4c"
+    },
+    {
+      "address": "0044f9b0",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_PutCode",
+      "description": "(coder, len, code): ORs the code's top len bits into the output buffer (+0x13, count +0x15) and writes each completed byte to the stream. LZHUF's Putcode. The VSHELL copy of DBSIM's 0047beac.",
+      "source": "VSHELL decompile at 0044f9b0; es2_naming.py diff against DBSIM 0047beac"
+    },
+    {
+      "address": "0044fa24",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_Reconstruct",
+      "description": "(coder): rebuilds the adaptive Huffman tree: halves the leaf frequencies (+4), rebuilds the internal nodes in frequency order and relinks the parents (+8). LZHUF's reconst; LZHuffman_Update calls it when the root frequency reaches 0x8000. The VSHELL copy of DBSIM's 0047bf20.",
+      "source": "VSHELL decompile at 0044fa24; es2_naming.py diff against DBSIM 0047bf20"
+    },
+    {
+      "address": "0044fb58",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_Update",
+      "description": "(coder, c): LZHuffman_Reconstruct when the root frequency is 0x8000, then increments the frequencies from leaf c to the root, swapping a node past its lower-frequency successors to keep the order. LZHUF's update. The VSHELL copy of DBSIM's 0047c054.",
+      "source": "VSHELL decompile at 0044fb58; es2_naming.py diff against DBSIM 0047c054"
+    },
+    {
       "address": "0044fc40",
       "binary": "VSHELL",
       "type": "function",
@@ -8906,6 +9320,15 @@
       "source": "VSHELL decompile of 0044fc78"
     },
     {
+      "address": "0044fcb8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuffWStream_InitBuffer",
+      "description": "(stream, size, buffer): clears the target +8; size 0 means a growable 100-byte buffer (+0xc = 1), else size at +0xe with +0xc = 0; +0xd records whether the stream owns the buffer (buffer null), which it then Mem_HeapAlloc's; the buffer goes to +0x12. BuffWStream_Ctor and BuffWStream_CtorOnTarget call it.",
+      "source": "VSHELL decompile at 0044fcb8"
+    },
+    {
       "address": "0044fd08",
       "binary": "VSHELL",
       "type": "function",
@@ -8913,6 +9336,15 @@
       "name": "BuffWStream_Dtor",
       "description": "BuffWStream vtable 0047aa0c slot 0 (stream, flags): decrements *005ddec0, restores the vtable, BuffWStream_Close, frees the buffer +0x12 when the stream owns it (+0xd), Stream_BaseDtor(stream, 0), then Mem_Delete when flags bit 0 is set.",
       "source": "VSHELL decompile of 0044fd08"
+    },
+    {
+      "address": "0044fd54",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuffWStream_SetTarget",
+      "description": "(stream, target): BuffWStream_Close, stores target at +8, zeroes +0x16 and the buffered count +0x1a, then BuffWStream_SyncStatus. BuffWStream_CtorOnTarget calls it.",
+      "source": "VSHELL decompile at 0044fd54"
     },
     {
       "address": "0044fd7c",
@@ -8976,6 +9408,33 @@
       "name": "BuffWStream_Read",
       "description": "BuffWStream slot +0x18: sets status 4 and returns 0; the stream is write-only.",
       "source": "VSHELL decompile of 0044ff08"
+    },
+    {
+      "address": "0044ff1c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuffWStream_GrowBuffer",
+      "description": "(stream, extra): adds extra to the buffer size +0xe, rounds it up to a multiple of 100 and reallocs the buffer +0x12. BuffWStream_Write calls it for a growable buffer. The VSHELL copy of DBSIM's 0047c414.",
+      "source": "VSHELL decompile at 0044ff1c"
+    },
+    {
+      "address": "0044ff6c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuffWStream_SyncStatus",
+      "description": "(stream): status 6 (no target) when +8 is null, else the target's Stream_GetStatus. Returns 0. BuffRStream_SyncStatus's write-side twin. The VSHELL copy of DBSIM's 0047c464.",
+      "source": "VSHELL decompile at 0044ff6c"
+    },
+    {
+      "address": "0044ffe8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Stream_WriteCopy",
+      "description": "(stream, count, buffer): calls the stream's write slot (vtable +0x14); a copy of Stream_Write in the BuffWStream unit. BuffWStream_Flush writes through it.",
+      "source": "VSHELL decompile at 0044ffe8"
     },
     {
       "address": "0045003c",
@@ -9077,6 +9536,15 @@
       "source": "VSHELL decompile of 004502a8"
     },
     {
+      "address": "004502bc",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuffRStream_FillAt",
+      "description": "(stream, pos): seeks the source (+8, its vtable +8) to pos and reads a buffer's worth (+0xc) into the buffer +0x14 with Stream_ReadCopy3; a short read at the source's end of data keeps what came (the count at +0x19), or sets status 2 when nothing did. On success the window starts at pos (+0x10) with the cursor +0x1d at 0 and it returns 1; a failed seek or read returns BuffRStream_SyncStatus. BuffRStream_SetPosition and BuffRStream_Read call it.",
+      "source": "VSHELL decompile at 004502bc"
+    },
+    {
       "address": "00450354",
       "binary": "VSHELL",
       "type": "function",
@@ -9093,6 +9561,24 @@
       "name": "Stream_GetStatus",
       "description": "Returns a stream's status word at +4. Stream status codes at +4 seen in these classes: 0 ok, 1 I/O error, 2 end of data, 3 close failed, 4 write to a read-only stream, 5 no file, 6 filter stream not attached.",
       "source": "VSHELL decompile and disassembly at 004503d0"
+    },
+    {
+      "address": "004503db",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Stream_ReadCopy3",
+      "description": "(stream, count, buffer): calls the stream's read slot (vtable +0x18); a copy of Stream_Read in the BuffRStream unit. BuffRStream_FillAt reads through it.",
+      "source": "VSHELL decompile at 004503db"
+    },
+    {
+      "address": "00450428",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Str_TrimRight",
+      "description": "(s): cuts s after its last character above a space (code > 0x20), dropping trailing blanks and control characters; returns s. The VSHELL copy of DBSIM's 0047d058.",
+      "source": "VSHELL decompile at 00450428"
     },
     {
       "address": "0045045c",
@@ -9122,6 +9608,15 @@
       "source": "docs/shell/mission-map.md"
     },
     {
+      "address": "00450684",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_AsinBam",
+      "description": "Arcsine of a Q14 sine as a binary angle: below 0xe00 * 4 the coarse table at 0047ac5c, above it the fine table at 004793dc, the sign restored at the end. 0042bc4e calls it. The VSHELL copy of DBSIM's Math_AsinBam (0047d940).",
+      "source": "VSHELL decompile at 00450684; es2_naming.py diff against DBSIM 0047d940"
+    },
+    {
       "address": "004506f7",
       "binary": "VSHELL",
       "type": "function",
@@ -9147,6 +9642,15 @@
       "name": "Math_DivMod64",
       "description": "(out{quotient, remainder}, int64 *n, d): IDIV of n by d, storing n / d and n % d as two int32s; returns out. The VSHELL copy of DBSIM's Math_DivMod64.",
       "source": "VSHELL decompile and disassembly at 0045083d"
+    },
+    {
+      "address": "0045085c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_FastMagnitude2D",
+      "description": "(dx, dy): max(|dx|,|dy|) + min(|dx|,|dy|)/2, the octagonal estimate. TSBSPPart_RenderNode calls it. The VSHELL copy of DBSIM's Math_FastMagnitude2D (0047dd40).",
+      "source": "VSHELL decompile at 0045085c; es2_naming.py diff against DBSIM 0047dd40"
     },
     {
       "address": "00450882",
@@ -9176,6 +9680,15 @@
       "source": "VSHELL decompile and disassembly at 00450958"
     },
     {
+      "address": "00450970",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_ISqrt",
+      "description": "(n) -> floor(sqrt(n)) for unsigned n, bit by bit: BSR for the top bit, then trial additions of halving powers of two against the running square. 0 for 0. The VSHELL copy of DBSIM's Math_ISqrt (0047de90).",
+      "source": "VSHELL decompile at 00450970; es2_naming.py diff against DBSIM 0047de90"
+    },
+    {
       "address": "004509c4",
       "binary": "VSHELL",
       "type": "function",
@@ -9192,6 +9705,15 @@
       "name": "FixedDivQ16",
       "description": "Q16 fixed-point divide, ((int64)a << 16) / b.",
       "source": "VSHELL decompile and disassembly at 00450a3c"
+    },
+    {
+      "address": "00450a51",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "FixedMulQ16Copy",
+      "description": "Q16 fixed-point multiply, (int64)a*b >> 16: byte-identical to FixedMulQ16, which follows it. 0045add8 calls it. The VSHELL copy of DBSIM's Math_Q16Multiply2 (0047df71), which sits in the same place before its own Q16, Q8, Q10 and Q14 multiplies.",
+      "source": "VSHELL decompile at 00450a51; es2_naming.py match against DBSIM"
     },
     {
       "address": "00450a61",
@@ -9219,6 +9741,15 @@
       "name": "FixedMulQ10",
       "description": "Q10 fixed-point multiply, (a * b) >> 10 through a 64-bit intermediate. The scale step behind every value damage.dat expands.",
       "source": "docs/formats/herc-catalogs.md"
+    },
+    {
+      "address": "00450a94",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "FixedMulQ14",
+      "description": "(int a, int16 b): Q14 fixed-point multiply, (int64)a*b >> 14, after FixedMulQ16, FixedMulQ8 and FixedMulQ10. 004657e1 calls it. The VSHELL copy of DBSIM's Math_Q14Multiply (0047dfb4).",
+      "source": "VSHELL decompile at 00450a94; es2_naming.py diff against DBSIM 0047dfb4"
     },
     {
       "address": "00450fe0",
@@ -9284,6 +9815,15 @@
       "source": "VSHELL decompile and disassembly at 00451500"
     },
     {
+      "address": "00451588",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuildEulerRotationMatrixQ14",
+      "description": "(euler short[3], out): builds a 3x3 Q14 rotation matrix plus a mode byte from three binary-angle Euler angles through the sine table, with a fast path when angles are zero. TSBSPPart_RenderNode and BuildEulerRotationMatrixQ14_Thunk call it. The VSHELL copy of DBSIM's BuildEulerRotationMatrixQ14 (0047eaac).",
+      "source": "VSHELL decompile at 00451588; es2_naming.py diff against DBSIM 0047eaac"
+    },
+    {
       "address": "00451a28",
       "binary": "VSHELL",
       "type": "function",
@@ -9309,6 +9849,15 @@
       "name": "Math_Rotate2DPoint",
       "description": "(point int[2], m short[4], out int[2]): out.x = (x*m0 + y*m2 + 0x2000) >> 14, out.y = (x*m1 + y*m3 + 0x2000) >> 14 with 64-bit intermediates. The VSHELL copy of DBSIM's Math_Rotate2DPoint (0047fedc). ShellMap_PaintRelief calls it.",
       "source": "VSHELL decompile at 00451ff0"
+    },
+    {
+      "address": "00452058",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform2D_ApplyToPoint",
+      "description": "(point int[2], xf, out int[2]): out = the point through the 2x2 Q14 matrix at xf (rounded by +0x2000 >> 14) plus the int translation at xf+8/+0xc. 0042b7c7 calls it. The VSHELL copy of DBSIM's Transform2D_ApplyToPoint (0047ff44).",
+      "source": "VSHELL decompile at 00452058; es2_naming.py diff against DBSIM 0047ff44"
     },
     {
       "address": "004520c8",
@@ -9408,6 +9957,15 @@
       "name": "GLDisplay_SetClipBlock",
       "description": "(display, block): stores block at display+0x44 and, when display is GLDisplay_GetCurrent's current one, installs it with Gfx_SetClipBlock. Gfx_SetCurrentContext calls it.",
       "source": "VSHELL decompile at 00452993"
+    },
+    {
+      "address": "004529b8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "GL_RegisterClassItems",
+      "description": "Static initialiser: ClassItem_RegisterBucket(0047bcd0, [0047bd3c]), the GL class-item table. Display_Init calls it first. The VSHELL copy of DBSIM's GL_RegisterClassItems (00480de8).",
+      "source": "VSHELL decompile at 004529b8"
     },
     {
       "address": "004529cc",
@@ -10454,6 +11012,15 @@
       "source": "VSHELL decompile and disassembly at 00457838"
     },
     {
+      "address": "0045794d",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "SpanList_ClipToRect",
+      "description": "(rect, spans, out): clips a span list {int16 top row, int16 row count, {x0, x1} per row} to rect {x0, y0, x1, y1}, dropping rows outside it and clamping x ranges. Gfx_FillSpanList calls it twice. The VSHELL copy of DBSIM's SpanList_ClipToRect (00486c09).",
+      "source": "VSHELL decompile at 0045794d; es2_naming.py diff against DBSIM 00486c09"
+    },
+    {
       "address": "00457aa8",
       "binary": "VSHELL",
       "type": "function",
@@ -10524,6 +11091,15 @@
       "name": "Bitmap_BlitRotatedScaled",
       "description": "(bitmapDims, position, flip, size, angle): the VSHELL copy of DBSIM's Bitmap_BlitRotatedScaled: source quad (0,0), (cols-1,0), (cols-1,rows-1), (0,rows-1), mirrored in x by flip bit 2 and in y by bit 1; destination quad (0,0), (w,0), (w,h), (0,h) from size, each corner rotated by the binary angle (00459196, Math_Rotate2DPoint_Thunk) and translated by position; filled with Gfx_FillPolygon through a type-5 bitmap fill {5, 4, source quad, bitmap} installed at the context's +0x228 and restored after. GLDisplay_DrawBitmapStretched calls it.",
       "source": "VSHELL decompile at 00458f68, compared with DBSIM 00488a8c"
+    },
+    {
+      "address": "00459196",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_BuildRotation2DInto",
+      "description": "(out, angle): Math_BuildRotation2D(angle, out), the arguments the other way round. Bitmap_BlitRotatedScaled calls it. The VSHELL copy of DBSIM's Math_BuildRotation2DInto (00488cbb).",
+      "source": "VSHELL decompile at 00459196; es2_naming.py diff against DBSIM 00488cbb"
     },
     {
       "address": "004591ac",
@@ -10731,6 +11307,33 @@
       "name": "Gfx_PlotPixel",
       "description": "Plots one pixel at an {x, y} pair. Every checkerboard dither in the shell is a double loop over this, which is what proves it is a plot rather than a line-to.",
       "source": "docs/shell/screen-layout.md#how-a-widget-paints"
+    },
+    {
+      "address": "00459d5c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_BlitClipped",
+      "description": "Slot 26 of raster driver 3's routine table, the blit Bitmap_BlitClipDispatch calls: (bitmap, point, clipRect, flags) clips the bitmap at point to clipRect {x0, y0, x1, y1} inclusive, or to the surface (0047c40a width, 0047c40e height) when clipRect is null, then copies it in one of four orientations by flags bits 0-1 (bit 0 flips vertically, bit 1 horizontally): opaque when the bitmap's byte +5 has bit 0x10, otherwise skipping colour 0. The VSHELL copy of DBSIM's Driver3_BlitClipped (004898a0).",
+      "source": "VSHELL decompile at 00459d5c; es2_naming.py diff against DBSIM 004898a0"
+    },
+    {
+      "address": "0045a686",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_SpanCopy",
+      "description": "Slot 22 of raster driver 3's routine table, Raster_SpanCopy's: (pixels, y, x0, x1) copies x1 - x0 + 1 bytes from pixels into row y at x0, through the surface's row-offset table (0047c3e6: base, then row offsets), dwords then bytes; nothing when x0 > x1. The VSHELL copy of DBSIM's Driver3_SpanCopy (0048a382).",
+      "source": "VSHELL decompile at 0045a686; es2_naming.py diff against DBSIM 0048a382"
+    },
+    {
+      "address": "0045a7ab",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Driver3_SpanFill",
+      "description": "Slot 24 of raster driver 3's routine table, Raster_SpanFill's: (colour, y, x0, x1) fills x0..x1 of row y with the colour byte, dwords then bytes; nothing when x0 > x1. The VSHELL copy of DBSIM's Driver3_SpanFill (0048a4a7).",
+      "source": "VSHELL decompile at 0045a7ab; es2_naming.py diff against DBSIM 0048a4a7"
     },
     {
       "address": "0045b6d8",
@@ -10958,6 +11561,15 @@
       "source": "VSHELL decompile of 0045d957"
     },
     {
+      "address": "0045d984",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Stream_ReadCopy4",
+      "description": "(stream, count, buffer): calls the stream's read slot (vtable +0x18); a copy of Stream_Read. 0045d698 reads 0x10000 bytes into 00497f20 through it.",
+      "source": "VSHELL decompile at 0045d984"
+    },
+    {
       "address": "0045d9a0",
       "binary": "VSHELL",
       "type": "function",
@@ -11001,6 +11613,15 @@
       "name": "Light_TransformToModelSpace",
       "description": "(light, transform): transforms the light's position (+4, int32) by the transform and rotates its direction (+0x10) into the model-space copies at +0x22 and +0x2e. Raster_SetModelTransform calls it per light. The VSHELL copy of DBSIM's Light_TransformToModelSpace.",
       "source": "VSHELL decompile and disassembly at 0045da5c"
+    },
+    {
+      "address": "0045dacc",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_TSOmniLight_SetIntensity",
+      "description": "(light, value): stores value at +0x1a as maybe_TSLight_SetIntensity does, and also value * light+0x38 at +0x3c. The VSHELL copy of DBSIM's maybe_TSOmniLight_SetIntensity (0048bc60), whose name it takes.",
+      "source": "VSHELL decompile at 0045dacc; es2_naming.py diff against DBSIM 0048bc60"
     },
     {
       "address": "0045dae4",
@@ -11208,6 +11829,15 @@
       "name": "Vec2_Subtract",
       "description": "(a, b): a.x -= b.x, a.y -= b.y on int32 pairs. The VSHELL copy of DBSIM's Vec2_Subtract.",
       "source": "VSHELL disassembly at 0045f6b3"
+    },
+    {
+      "address": "0045f6c8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vec3_Subtract",
+      "description": "(a, b): subtracts b from a in place, z first and then x and y through Vec2_Subtract; returns a. Light_Register (0045dc30) and 0045dec4 call it. The VSHELL copy of DBSIM's Vec3_Subtract (00492952).",
+      "source": "VSHELL decompile at 0045f6c8; es2_naming.py diff against DBSIM 00492952"
     },
     {
       "address": "0045f6e7",
@@ -11525,6 +12155,15 @@
       "source": "VSHELL decompile of 0045f9fc"
     },
     {
+      "address": "0045fa04",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_ResetSystem",
+      "description": "Clears the ten light slots (005d8058) and their counters, Light_EnableModelSpaceTransform, numbers the 32 shorts at 005d8014, zeroes 0x5b30 bytes at 005d8080, registers g_TSObjectTypeRegistry with ClassItem_RegisterBucket, and installs the identity (Transform_Reset on 005d7fa8) as both 005d7fa0 and the model transform 005d7fa4. Display_Init calls it. The VSHELL copy of DBSIM's Light_ResetSystem (0048dbfc).",
+      "source": "VSHELL decompile at 0045fa04; es2_naming.py diff against DBSIM 0048dbfc"
+    },
+    {
       "address": "0045fb27",
       "binary": "VSHELL",
       "type": "function",
@@ -11532,6 +12171,15 @@
       "name": "RectI_Ctor",
       "description": "Constructs the two 8-byte corner points at +0 and +8 (Rtl_ReturnArg, a no-op) and returns the object. GLViewport_Ctor builds its rect at +0x210 with it.",
       "source": "VSHELL decompile and disassembly at 0045fb27"
+    },
+    {
+      "address": "0045fb68",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_EnableModelSpaceTransform",
+      "description": "Sets 005ddbb0, the gate Raster_SetModelTransform tests before moving the lights into model space. Light_ResetSystem calls it. The VSHELL copy of DBSIM's Light_EnableModelSpaceTransform (0048dd64).",
+      "source": "VSHELL decompile at 0045fb68"
     },
     {
       "address": "0045fb70",
@@ -12722,6 +13370,15 @@
       "source": "VSHELL decompile and disassembly at 00462da5"
     },
     {
+      "address": "00462dd8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_LocalPointDotNormal",
+      "description": "(point, transform, normal): subtracts the transform's int32 translation from the point, rotates the difference by the transform's Q14 matrix and returns its dot product with the int16 normal as a 64-bit value. TSBSPPart_RenderNode calls it. The VSHELL copy of DBSIM's Transform_LocalPointDotNormal (004910b4).",
+      "source": "VSHELL decompile at 00462dd8; es2_naming.py diff against DBSIM 004910b4"
+    },
+    {
       "address": "00462eb8",
       "binary": "VSHELL",
       "type": "function",
@@ -12752,17 +13409,19 @@
       "address": "0046301c",
       "binary": "VSHELL",
       "type": "function",
-      "confidence": "low",
-      "description": "ANSequence vtable 0047f720 slot +0x28 (sequence, a, b, c), int16 arguments: returns 1 when a < b, or when a == b and c is 0; else 0. Slot +0x2c is the mirror test (b < a). ANCyclicSequence's two are constant 1. What its callers ask with it is Open. DBSIM's copy is 00478680.",
-      "source": "VSHELL decompile of 0046301c"
+      "confidence": "high",
+      "name": "ANSequence_FrameShortOfTarget",
+      "description": "ANSequence vtable 0047f720 slot +0x28, (seq, frame, target, flag): 1 when frame < target, or frame == target and flag is 0; otherwise 0. AnimThread_FindTransition asks it of a transition's destination sequence for forward play, through ANSequence_FrameShortOfTargetDir, with the thread's +0x1c as the flag. The VSHELL copy of DBSIM's ANSequence_FrameShortOfTarget (00478680).",
+      "source": "VSHELL decompile at 0046301c and 00465836; es2_naming.py diff against DBSIM 00478680"
     },
     {
       "address": "00463048",
       "binary": "VSHELL",
       "type": "function",
-      "confidence": "low",
-      "description": "ANSequence vtable 0047f720 slot +0x2c (sequence, a, b, c), int16 arguments: returns 1 when b < a, or when a == b and c is 0; else 0, the mirror of slot +0x28 (0046301c). DBSIM's copy is 004786ac.",
-      "source": "VSHELL decompile of 00463048"
+      "confidence": "high",
+      "name": "ANSequence_FrameShortOfTargetBackward",
+      "description": "ANSequence vtable 0047f720 slot +0x2c, ANSequence_FrameShortOfTarget's mirror for backward play: 1 when frame > target, or frame == target and flag is 0. ANSequence_FrameShortOfTargetDir calls it when the thread plays backward. The VSHELL copy of DBSIM's ANSequence_FrameShortOfTargetBackward (004786ac).",
+      "source": "VSHELL decompile at 00463048 and 00465836; es2_naming.py diff against DBSIM 004786ac"
     },
     {
       "address": "00463074",
@@ -12786,17 +13445,19 @@
       "address": "004630b0",
       "binary": "VSHELL",
       "type": "function",
-      "confidence": "low",
-      "description": "ANCyclicSequence vtable 0047f6e4 slot +0x28: returns 1 whatever its arguments; ANSequence's slot +0x28 (0046301c) compares them. DBSIM's copy is 00478714.",
-      "source": "VSHELL decompile of 004630b0"
+      "confidence": "high",
+      "name": "ANCyclicSequence_FrameShortOfTarget_Always",
+      "description": "ANCyclicSequence vtable 0047f6e4 slot +0x28: returns 1 whatever its arguments, where ANSequence_FrameShortOfTarget compares them. The VSHELL copy of DBSIM's ANCyclicSequence_FrameShortOfTarget_Always (00478714).",
+      "source": "VSHELL decompile at 004630b0"
     },
     {
       "address": "004630bc",
       "binary": "VSHELL",
       "type": "function",
-      "confidence": "low",
-      "description": "ANCyclicSequence vtable 0047f6e4 slot +0x2c: returns 1 whatever its arguments; ANSequence's slot +0x2c (00463048) compares them. DBSIM's copy is 00478720.",
-      "source": "VSHELL decompile of 004630bc"
+      "confidence": "high",
+      "name": "ANCyclicSequence_FrameShortOfTargetBackward_Always",
+      "description": "ANCyclicSequence vtable 0047f6e4 slot +0x2c: returns 1 whatever its arguments, where ANSequence_FrameShortOfTargetBackward compares them. The VSHELL copy of DBSIM's ANCyclicSequence_FrameShortOfTargetBackward_Always (00478720).",
+      "source": "VSHELL decompile at 004630bc"
     },
     {
       "address": "004630c8",
@@ -12815,6 +13476,132 @@
       "name": "ANShapeInstance_Dtor",
       "description": "ANShapeInstance vtable 0047f420 slot +0x18 (inst, flags): decrements *005ddec0, restores the vtable, frees +0xe, +0x12 and +0x16, TSShapeInstance_Dtor(inst, 0), then Mem_Delete when flags bit 0 is set.",
       "source": "VSHELL decompile of 004631bc"
+    },
+    {
+      "address": "00463210",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_CountThreads",
+      "description": "(shapeInst): returns how many of the ten thread slots from shapeInst+0x1a are filled, counting up to the first null. The VSHELL copy of DBSIM's ShapeInst_CountThreads (004788a4).",
+      "source": "VSHELL decompile at 00463210; es2_naming.py diff against DBSIM 004788a4"
+    },
+    {
+      "address": "00463230",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_SortThreadsByPriority",
+      "description": "(shapeInst): bubble-sorts the filled thread slots at shapeInst+0x1a by AnimThread_SequencePriority. The VSHELL copy of DBSIM's ShapeInst_SortThreadsByPriority (004788c4).",
+      "source": "VSHELL decompile at 00463230; es2_naming.py diff against DBSIM 004788c4"
+    },
+    {
+      "address": "0046329c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_RegisterThread",
+      "description": "(shapeInst, thread): stores thread in the first empty of the ten slots at shapeInst+0x1a and re-sorts them with ShapeInst_SortThreadsByPriority; returns 1, or 0 when all ten are taken. The VSHELL copy of DBSIM's ShapeInst_RegisterThread (00478930).",
+      "source": "VSHELL decompile at 0046329c; es2_naming.py diff against DBSIM 00478930"
+    },
+    {
+      "address": "004632d0",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_RemoveThread",
+      "description": "(shapeInst, thread): finds thread in the ten slots at shapeInst+0x1a, shifts the slots after it down by one and zeroes the tenth; returns 1, or 0 when thread is not registered. The VSHELL copy of DBSIM's ShapeInst_RemoveThread (00478964).",
+      "source": "VSHELL decompile at 004632d0; es2_naming.py diff against DBSIM 00478964"
+    },
+    {
+      "address": "0046330c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_StepAll",
+      "description": "(shapeInst, dt): AnimThread_Advance on every thread, last slot first over ShapeInst_CountThreads slots, then ShapeInst_SortThreadsByPriority, then, when there is a first thread, AnimThread_ReadRootTransform of it into world slot 0 (shapeInst+0x16). ShapeInstance_StepAnimation calls it. The VSHELL copy of DBSIM's AnimThread_StepAll (004789a0).",
+      "source": "VSHELL decompile at 0046330c; compared with DBSIM 004789a0"
+    },
+    {
+      "address": "00463360",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_EvalAllNodeLocals",
+      "description": "(shapeInst): AnimThread_EvalNodeLocals on every thread, last first, with the local-transform array (+0x12) and the dirty flags (+0xe). ShapeInstance_StepAnimation calls it. The VSHELL copy of DBSIM's ShapeInst_EvalAllNodeLocals (004789f4).",
+      "source": "VSHELL decompile at 00463360; compared with DBSIM 004789f4"
+    },
+    {
+      "address": "0046339c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_ReadRootTransform",
+      "description": "(shapeInst, out): AnimThread_ReadRootTransform of the first thread into out (through AnimThread_ReadRootTransform_Thunk), or Transform_Reset(out) when the instance has none. The VSHELL copy of DBSIM's ShapeInst_ReadRootTransform (00478a30).",
+      "source": "VSHELL decompile at 0046339c; compared with DBSIM 00478a30"
+    },
+    {
+      "address": "004633c4",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_SeedRootTransform",
+      "description": "(shapeInst, transform): when the instance has a thread, AnimThread_WriteRootTransform(first thread, transform) and copies the 0x20-byte transform into world slot 0 (shapeInst+0x16). The VSHELL copy of DBSIM's ShapeInst_SeedRootTransform (00478a70).",
+      "source": "VSHELL decompile at 004633c4; compared with DBSIM 00478a70"
+    },
+    {
+      "address": "00463410",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_ComposeChildTransform",
+      "description": "(local, parentWorld, out): expands the 12-byte local record (Euler shorts, then translation shorts widened) with Transform_FromEulerTranslation and concatenates it onto the parent's world transform into out. ShapeInst_BuildWorldTransforms calls it for a node with a parent. The VSHELL copy of DBSIM's ShapeInst_ComposeChildTransform (00478ab8).",
+      "source": "VSHELL decompile at 00463410; compared with DBSIM 00478ab8"
+    },
+    {
+      "address": "00463468",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_ExpandRootTransform",
+      "description": "(local, out): expands one 12-byte local record into a 0x20-byte transform with no parent: Transform_FromEulerTranslation over the three Euler shorts and the three translation shorts widened to ints. ShapeInst_BuildWorldTransforms calls it for a root node. The VSHELL copy of DBSIM's ShapeInst_ExpandRootTransform (00478b10).",
+      "source": "VSHELL decompile at 00463468; compared with DBSIM 00478b10"
+    },
+    {
+      "address": "004634a4",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_BuildWorldTransforms",
+      "description": "(shapeInst): walks the shape's relation list ({parent, node} short pairs at animList+0xc, count at +0xa) and rebuilds each node's world transform (+0x16, stride 0x20) whose local is dirty (flag bit 0 at +0xe) or whose parent was rebuilt (bit 1): ShapeInst_ExpandRootTransform for parent -1, else ShapeInst_ComposeChildTransform; marks the node bit 1, then clears every flag. ANShapeInstance_Ctor and ShapeInstance_StepAnimation call it. The VSHELL copy of DBSIM's ShapeInst_BuildWorldTransforms (00478b58).",
+      "source": "VSHELL decompile at 004634a4; compared with DBSIM 00478b58"
+    },
+    {
+      "address": "0046357c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInstance_StepAnimation",
+      "description": "(shapeInst, dt): AnimThread_StepAll, ShapeInst_EvalAllNodeLocals, ShapeInst_BuildWorldTransforms. The VSHELL copy of DBSIM's ShapeInstance_StepAnimation (00478c2c).",
+      "source": "VSHELL decompile at 0046357c; compared with DBSIM 00478c2c"
+    },
+    {
+      "address": "004635a4",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_PushModelTransform",
+      "description": "(shapeInst, scratch, root): saves Raster_GetModelTransform, concatenates root onto it into scratch, installs scratch with Raster_SetModelTransform and returns the saved pointer. ANShapeInstance_Render brackets TSShapeInstance_Render with it and ShapeInst_PopModelTransform. DBSIM's copy is 00478c54.",
+      "source": "VSHELL decompile and disassembly at 004635a4"
+    },
+    {
+      "address": "004635d0",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_PopModelTransform",
+      "description": "(shapeInst, saved): Raster_SetModelTransform(saved) when saved is non-null, restoring what ShapeInst_PushModelTransform replaced. DBSIM's copy is 00478c84.",
+      "source": "VSHELL decompile at 004635d0"
     },
     {
       "address": "004635e4",
@@ -12842,6 +13629,33 @@
       "name": "TSShapeInstance_GetShape",
       "description": "(inst): returns the shape at +4. ANShapeInstance_Ctor and ANShapeInstance_Render reach the ANShape through it.",
       "source": "VSHELL decompile of 0046368d"
+    },
+    {
+      "address": "00463698",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_ReadRootTransform_Thunk",
+      "description": "(thread, out): AnimThread_ReadRootTransform(thread, out). ShapeInst_ReadRootTransform calls it.",
+      "source": "VSHELL decompile at 00463698"
+    },
+    {
+      "address": "004636ad",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_GetModelTransform",
+      "description": "Returns 005d7fa4, the model transform Raster_SetModelTransform installed. ShapeInst_PushModelTransform saves it.",
+      "source": "VSHELL disassembly at 004636ad"
+    },
+    {
+      "address": "0046370c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AN_RegisterClassItems",
+      "description": "Static initialiser: ClassItem_RegisterBucket(0047f750, [0047f780]), the AN class-item table (ANSequence, ANCyclicSequence, ANShape and the rest). The VSHELL copy of DBSIM's AN_RegisterClassItems (004912d0).",
+      "source": "VSHELL decompile at 0046370c; the table address from VshellANSequenceVtable's GetClassTag slot note"
     },
     {
       "address": "00463720",
@@ -13132,6 +13946,132 @@
       "source": "VSHELL decompile of 004649ca"
     },
     {
+      "address": "00464a40",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_SequencePriority",
+      "description": "(thread): returns the int16 at +6 of the sequence the thread is playing (shape->sequences[thread+4]), the sequence's priority. ShapeInst_SortThreadsByPriority orders by it. The VSHELL copy of DBSIM's AnimThread_SequencePriority (00478d80).",
+      "source": "VSHELL decompile at 00464a40; es2_naming.py diff of 00463230 against DBSIM 004788c4"
+    },
+    {
+      "address": "00464a58",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_ElapsedTicks",
+      "description": "(thread): the ticks played into the current sequence: the durations (+0 of each 6-byte frame record) of the frames from 0, stepping with the sequence's vtable +0x20, up to the current frame (+6), plus the intra-frame offset +0x1c.",
+      "source": "VSHELL decompile at 00464a58"
+    },
+    {
+      "address": "00464aa8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_LoadFrameGroundMovement",
+      "description": "(thread, sequence, frame): when the sequence's ground-movement flag (+8) is set, AnimThread_LoadGroundTransform with the root node's transform index for the frame (+0x16 indices, frame * +0x10 parts); otherwise clears thread+0x20. The VSHELL copy of DBSIM's AnimThread_LoadFrameGroundMovement (00478de8), which inlines the load.",
+      "source": "VSHELL decompile at 00464aa8; compared with DBSIM 00478de8"
+    },
+    {
+      "address": "00464af4",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_CommitGroundMovement",
+      "description": "(thread): when thread+0x20 is set, folds the frame's ground transform (translation +0x22, rotation +0x28) into the stored transform at +0x2e. AnimThread_Advance runs it on each frame passed forward. The VSHELL copy of DBSIM's AnimThread_CommitGroundMovement (00478e60).",
+      "source": "VSHELL decompile at 00464af4; compared with DBSIM 00478e60"
+    },
+    {
+      "address": "00464b88",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_UncommitGroundMovement",
+      "description": "(thread): AnimThread_CommitGroundMovement with the ground transform inverted (Transform_InvertRigid), for backward play. The VSHELL copy of DBSIM's AnimThread_UncommitGroundMovement (00478ee8).",
+      "source": "VSHELL decompile at 00464b88; compared with DBSIM 00478ee8"
+    },
+    {
+      "address": "00464c28",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_ReadRootTransform",
+      "description": "(thread, out): the stored transform (+0x2e) when there is no ground movement (+0x20 clear), otherwise the ground transform scaled by +0x1c / +0x1e (the fraction of the frame played) concatenated onto it. The VSHELL copy of DBSIM's AnimThread_ReadRootTransform (00478fa8).",
+      "source": "VSHELL decompile at 00464c28; compared with DBSIM 00478fa8"
+    },
+    {
+      "address": "00464d14",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_WriteRootTransform",
+      "description": "(thread, transform): the inverse of AnimThread_ReadRootTransform: stores transform at +0x2e, or the inverted scaled ground transform concatenated with it when +0x20 is set. ShapeInst_SeedRootTransform calls it. The VSHELL copy of DBSIM's AnimThread_WriteRootTransform (00479088).",
+      "source": "VSHELL decompile at 00464d14; compared with DBSIM 00479088"
+    },
+    {
+      "address": "00464e08",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_SetSequence",
+      "description": "(thread, sequence, frame, offset): cuts a thread straight to a sequence and frame: sequence at +4 and +8, frame at +6, the sequence's vtable +0x20 answer at +0xa, offset at +0x1c, the frame's duration at +0x1e, AnimThread_LoadFrameGroundMovement; then clears the target (+0x16 and +0x18 = -1, +0x1a = 0), sets +0xc = -1 and stores 1 (at target) in the flags at +0x50. The VSHELL copy of DBSIM's AnimThread_SetSequence (004791a0).",
+      "source": "VSHELL decompile at 00464e08; compared with DBSIM 004791a0"
+    },
+    {
+      "address": "00464eac",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_SeekToPosition",
+      "description": "(thread, sequence, position): sums the sequence's frame durations, scales the Q14 position by total - 1 (FixedMulQ14_Thunk), walks the frames subtracting durations and AnimThread_SetSequence's the frame and remainder. The VSHELL copy of DBSIM's AnimThread_SeekToPosition (00479238).",
+      "source": "VSHELL decompile at 00464eac; compared with DBSIM 00479238"
+    },
+    {
+      "address": "00464f38",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_FindTransition",
+      "description": "(thread): walks the current sequence's frames from the current frame (+6) when playing backward (rate +0x4e < 0) or the next frame (+0xa) otherwise, stepping with the sequence's vtable +0x24 or +0x20 until it laps, and takes the first transition (AnimThread_FrameTransitionFirst/Count) into the target sequence +0x16 that ANSequence_FrameShortOfTargetDir accepts, storing its fields at +0xe..+0x14 with the frame it leaves in +0xc; +0xc = -1 when none does. The VSHELL copy of DBSIM's AnimThread_FindTransition (004792c8), with the transition-table reads and the direction test out of line.",
+      "source": "VSHELL decompile at 00464f38; compared with DBSIM 004792c8"
+    },
+    {
+      "address": "00465168",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_SetTarget",
+      "description": "(thread, sequence, frame, flags): stores the target at +0x16/+0x18/+0x1a and clears the at-target bit (+0x50 bit 0); runs AnimThread_FindTransition unless the target is -1 or is already the current sequence and frame with no offset, in which case it sets the bit and +0xc = -1. The VSHELL copy of DBSIM's AnimThread_SetTarget (00479570).",
+      "source": "VSHELL decompile at 00465168; compared with DBSIM 00479570"
+    },
+    {
+      "address": "004651c4",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_SetPlaybackRate",
+      "description": "(thread, rate): stores rate at +0x4e and, when its sign flips, re-runs AnimThread_SetTarget with the current target. The VSHELL copy of DBSIM's AnimThread_SetPlaybackRate (004795cc).",
+      "source": "VSHELL decompile at 004651c4; compared with DBSIM 004795cc"
+    },
+    {
+      "address": "0046520c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_Advance",
+      "description": "(thread, dt): unless parked at its target, advances the intra-frame offset by dt * rate (+0x4e) >> 8, crossing frames forward (AnimThread_CommitGroundMovement) or backward (AnimThread_UncommitGroundMovement), taking a found transition at its frame (AnimThread_LoadGroundTransform) and setting the at-target bit on reaching the target. AnimThread_StepAll calls it. The VSHELL copy of DBSIM's AnimThread_Advance (00479614).",
+      "source": "VSHELL decompile at 0046520c; compared with DBSIM 00479614"
+    },
+    {
+      "address": "00465574",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_EvalNodeLocals",
+      "description": "(thread, locals, dirty): for each animated column of the playing sequence, the transform-pool index at (sequence, frame) and at (next sequence, next frame): equal indices copy the 12-byte record, different ones Anim_BlendKeyframeTransforms by offset/duration in Q10; marks the node dirty. ShapeInst_EvalAllNodeLocals calls it. The VSHELL copy of DBSIM's AnimThread_EvalNodeLocals (004799a4).",
+      "source": "VSHELL decompile at 00465574; compared with DBSIM 004799a4"
+    },
+    {
       "address": "004656b9",
       "binary": "VSHELL",
       "type": "function",
@@ -13195,6 +14135,69 @@
       "source": "VSHELL decompile and disassembly at 00465769"
     },
     {
+      "address": "00465778",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_Reset",
+      "description": "(xf): memsets the 0x20-byte transform and stores 0x4000 at +0, +6 and +0x10, the identity; returns xf. 0045fa04 resets 005d7fa8 (Raster_SetModelTransform's identity), ANShapeInstance_Ctor its world slot 0 and ShapeInst_ReadRootTransform its output. The VSHELL copy of DBSIM's Transform_Reset (0048dd6c).",
+      "source": "VSHELL decompile at 00465778; compared with DBSIM 0048dd6c"
+    },
+    {
+      "address": "004657a0",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_LoadGroundTransform",
+      "description": "(thread, index): loads transform-pool record index (animList+0x12, stride 0xc) into the thread's ground translation (+0x22..+0x26, from the record's +6) and rotation (+0x28..+0x2c, from +0) and sets +0x20 = 1. AnimThread_LoadFrameGroundMovement and AnimThread_Advance call it; DBSIM inlines it.",
+      "source": "VSHELL decompile at 004657a0"
+    },
+    {
+      "address": "004657e1",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "FixedMulQ14_Thunk",
+      "description": "(a, b): FixedMulQ14(a, b) on int16 arguments. AnimThread_SeekToPosition calls it. The VSHELL copy of DBSIM's Math_Q14Multiply_Thunk (004929e1).",
+      "source": "VSHELL decompile at 004657e1"
+    },
+    {
+      "address": "004657f8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_FrameTransitionCount",
+      "description": "(animList, sequence, frame): the int16 at +2 of the frame's 6-byte record (sequence +0xc), the number of transitions leaving the frame. AnimThread_FindTransition calls it; DBSIM inlines it.",
+      "source": "VSHELL decompile at 004657f8"
+    },
+    {
+      "address": "00465817",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_FrameTransitionFirst",
+      "description": "(animList, sequence, frame): the int16 at +4 of the frame's 6-byte record, the index of its first transition in the 8-byte table at animList+0x1e. AnimThread_FindTransition calls it; DBSIM inlines it.",
+      "source": "VSHELL decompile at 00465817"
+    },
+    {
+      "address": "00465836",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANSequence_FrameShortOfTargetDir",
+      "description": "(seq, frame, target, flag, rate): the sequence's vtable +0x28 (ANSequence_FrameShortOfTarget) when rate is not negative, else +0x2c (ANSequence_FrameShortOfTargetBackward). AnimThread_FindTransition calls it; DBSIM inlines the choice.",
+      "source": "VSHELL decompile at 00465836"
+    },
+    {
+      "address": "0046586c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anim_BlendKeyframeTransforms",
+      "description": "(a, b, t, out): blends two 12-byte ANAnimList transform records (3 Euler shorts then 3 translation shorts) by a Q10 factor (0x400 is all b), the rotations along the shortest arc. 00465574 calls it. The VSHELL copy of DBSIM's Anim_BlendKeyframeTransforms (00492600).",
+      "source": "VSHELL decompile at 0046586c; es2_naming.py diff against DBSIM 00492600"
+    },
+    {
       "address": "00465950",
       "binary": "VSHELL",
       "type": "function",
@@ -13256,6 +14259,177 @@
       "name": "Shell_TimerTicks",
       "description": "(GetTickCount() - base) >> 4: the timer the map intro runs on, one tick 16 ms.",
       "source": "docs/shell/mission-map.md"
+    },
+    {
+      "address": "00465a2c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Time_AdvanceCoarseTick",
+      "description": "Subtracts 0x10 from Shell_TimerTicks' base (005ddbcc), moving the 16 ms clock on by one tick. Ghidra had no function here. The VSHELL copy of DBSIM's Time_AdvanceCoarseTick (00467734).",
+      "source": "VSHELL bytes at 00465a2c (capstone)"
+    },
+    {
+      "address": "00465a34",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Time_InitSimClock",
+      "description": "005ddbb8 = 005ddbba = 0x100, 005ddbc4 = 1000, 005ddbc6 = 005ddbbc = 005ddbbe = 1000 / 10 = 100 and 005ddbc0 = 100, then 005ddbc8 and Shell_TimerTicks' base 005ddbcc = GetTickCount(). DBSIM's copy, Time_InitSimClock (0046773c), divides by 8, so its unit is 125 ms where this one's is 100 ms. Ghidra had no function here.",
+      "source": "VSHELL bytes at 00465a34 (capstone)"
+    },
+    {
+      "address": "00465a8c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Time_ElapsedToQ8Clamped",
+      "description": "(unit, elapsed): (elapsed << 8) / unit clamped to [0x40, 0x1c2], returned in AX. Time_BeginSimTick computes both Q8 deltas through it. The VSHELL copy of DBSIM's Time_ElapsedToQ8Clamped (00467790).",
+      "source": "VSHELL decompile at 00465a8c; compared with DBSIM 00467790"
+    },
+    {
+      "address": "00465ab8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Time_BeginSimTick",
+      "description": "Spins until 2 ms have passed since 005ddbc8, stores the elapsed ms at 005ddbc0, sets 005ddbb8 = Time_ElapsedToQ8Clamped(005ddbbc, elapsed) and 005ddbba = Time_ElapsedToQ8Clamped(005ddbbe, elapsed), and advances 005ddbc8 by the elapsed time. DBSIM's copy, Time_BeginSimTick (004677bc), waits 40 ms. Ghidra had no function here.",
+      "source": "VSHELL bytes at 00465ab8 (capstone)"
+    },
+    {
+      "address": "00465b1c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_IntegrateRateOverTick",
+      "description": "(rate): FixedMulQ8_Swapped(rate, 005ddbb8), clamped to +/-0x7fff. The VSHELL copy of DBSIM's Math_IntegrateRateOverTick (00467820).",
+      "source": "VSHELL decompile at 00465b1c; compared with DBSIM 00467820"
+    },
+    {
+      "address": "00465b50",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_IntegrateRateOverTick2",
+      "description": "(rate): Math_IntegrateRateOverTick with the second Q8 delta, 005ddbba. DBSIM's copy is Math_IntegrateRateOverTick2 (00467858).",
+      "source": "VSHELL decompile at 00465b50; compared with DBSIM 00467858"
+    },
+    {
+      "address": "00465b84",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_RateFromTickDelta",
+      "description": "(delta): Math_DivInt(delta << 8, 005ddbb8), the inverse of Math_IntegrateRateOverTick: the per-unit rate that yields delta this tick. DBSIM's copy is Math_RateFromTickDelta (00467890).",
+      "source": "VSHELL decompile at 00465b84; compared with DBSIM 00467890"
+    },
+    {
+      "address": "00465ba4",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_IntegrateRateWithRemainder",
+      "description": "(value, remainder): value = clamp(value * 005ddbb8 >> 8, +/-0x7fff) in place, and remainder = the low 8 bits of |value * delta| (Math_AbsShortSaturating) shifted left 2, or 0x3ff when the product overflows, with value's sign. DBSIM's copy is Math_IntegrateRateWithRemainder (004678a8).",
+      "source": "VSHELL decompile at 00465ba4; compared with DBSIM 004678a8"
+    },
+    {
+      "address": "00465c08",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_MulTickDelta64",
+      "description": "(x): (int64)x * 005ddbb8. DBSIM's copy is Math_MulTickDelta64 (00467918).",
+      "source": "VSHELL decompile at 00465c08; compared with DBSIM 00467918"
+    },
+    {
+      "address": "00465c1c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_CountupTimerTick",
+      "description": "(rec): the short at rec+1 += 005ddbb8; returns it. Math_CountdownTimerTick's mirror. DBSIM's copy is Math_CountupTimerTick (0046792c).",
+      "source": "VSHELL decompile at 00465c1c; es2_naming.py match against DBSIM 0046792c"
+    },
+    {
+      "address": "00465c34",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_CountdownTimerTick",
+      "description": "(rec): the short at rec+1 -= 005ddbb8, clamped at 0; returns it. The VSHELL copy of DBSIM's Math_CountdownTimerTick (00467944).",
+      "source": "VSHELL decompile at 00465c34; compared with DBSIM 00467944"
+    },
+    {
+      "address": "00465c5c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_SetShort",
+      "description": "(rec, value): the short at rec+1 = Math_MulShortInt64(value, 005ddbc6 << 8). DBSIM's copy is Timer_SetShort (0046796c).",
+      "source": "VSHELL decompile at 00465c5c; compared with DBSIM 0046796c"
+    },
+    {
+      "address": "00465c84",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_CountUp",
+      "description": "(rec): the int at rec+1 += 005ddbb8; returns it. Timer_CountDown's mirror. DBSIM's copy is Timer_CountUp (0046798c).",
+      "source": "VSHELL decompile at 00465c84; es2_naming.py match against DBSIM 0046798c"
+    },
+    {
+      "address": "00465c9c",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_CountDown",
+      "description": "(rec): the int at rec+1 -= 005ddbb8, clamped at 0; returns it. The VSHELL copy of DBSIM's Timer_CountDown (004679a4).",
+      "source": "VSHELL decompile at 00465c9c; compared with DBSIM 004679a4"
+    },
+    {
+      "address": "00465cb8",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_SetInt",
+      "description": "(rec, value): the int at rec+1 = Math_MulShortInt64(value, 005ddbc6 << 8). It sits where DBSIM has ActionTimer_SetDelay (004679c0), which stores value << 11 instead.",
+      "source": "VSHELL decompile at 00465cb8"
+    },
+    {
+      "address": "00465cdd",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_AbsShortSaturating",
+      "description": "(x): |x| for an int16, 0x7fff for -0x8000. Math_IntegrateRateWithRemainder calls it; DBSIM inlines it.",
+      "source": "VSHELL decompile at 00465cdd"
+    },
+    {
+      "address": "00465d01",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "FixedMulQ8_Swapped",
+      "description": "(a, b): FixedMulQ8(b, a). Math_IntegrateRateOverTick and Math_IntegrateRateOverTick2 call it; DBSIM calls Math_Q8Multiply directly.",
+      "source": "VSHELL decompile at 00465d01"
+    },
+    {
+      "address": "00465d16",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_DivInt",
+      "description": "(a, b): a / b, signed. 00465b84 calls it. The VSHELL copy of DBSIM's Math_DivInt (004929f8).",
+      "source": "VSHELL decompile at 00465d16; es2_naming.py diff against DBSIM 004929f8"
+    },
+    {
+      "address": "00465d22",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_MulShortInt64",
+      "description": "(int16 a, int b): (int64)a * b. Timer_SetShort and Timer_SetInt call it.",
+      "source": "VSHELL decompile at 00465d22"
     },
     {
       "address": "00465d39",
@@ -13330,6 +14504,15 @@
       "source": "VSHELL disassembly at 00467df4"
     },
     {
+      "address": "00467e23",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_FromEulerTranslation",
+      "description": "(out, euler short[3], translation int[3]): stores the translation at out+0x14/+0x18/+0x1c and builds the rotation with BuildEulerRotationMatrixQ14_Thunk(out, euler); returns out. View_BuildTransform, the ShapeInst root and child expansions and the AnimThread ground-movement functions call it.",
+      "source": "VSHELL decompile at 00467e23"
+    },
+    {
       "address": "00467e53",
       "binary": "VSHELL",
       "type": "function",
@@ -13337,6 +14520,15 @@
       "name": "Point3I_Negate",
       "description": "Negates an int32 point in place (z, then x and y through Point2I_Negate) and returns it.",
       "source": "VSHELL decompile and disassembly at 00467e53"
+    },
+    {
+      "address": "00467e69",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuildEulerRotationMatrixQ14_Thunk",
+      "description": "(matrix, euler): BuildEulerRotationMatrixQ14(euler, matrix), the arguments exchanged. 00467e23 calls it. The VSHELL copy of DBSIM's BuildEulerRotationMatrixQ14_Thunk (004950e0).",
+      "source": "VSHELL decompile at 00467e69; es2_naming.py diff against DBSIM 004950e0"
     },
     {
       "address": "00467e7e",
@@ -13355,6 +14547,24 @@
       "name": "Dword_Swap",
       "description": "(a, b): exchanges the dwords at a and b. Every direct caller swaps the in and out point-list pointers after a Poly_SplitByPlane pass.",
       "source": "VSHELL decompile and disassembly at 00467e9e"
+    },
+    {
+      "address": "00467eb3",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Plane_IsVertical",
+      "description": "(plane) -> 1 when the normal's Z is 0 and X, Y are not both 0; 0 otherwise. 00467ac4 asks it. The VSHELL copy of DBSIM's Plane_IsVertical (0049512a).",
+      "source": "VSHELL decompile at 00467eb3; es2_naming.py diff against DBSIM 0049512a"
+    },
+    {
+      "address": "00467ed1",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Plane_ShiftAlongZ",
+      "description": "(plane, v): plane.d -= v * plane.nz. 00467ac4 calls it twice. The VSHELL copy of DBSIM's Plane_ShiftAlongZ (00495148).",
+      "source": "VSHELL decompile at 00467ed1; es2_naming.py diff against DBSIM 00495148"
     },
     {
       "address": "00467ee4",
@@ -14140,6 +15350,15 @@
       "source": "VSHELL decompile and disassembly at 0046a410"
     },
     {
+      "address": "0046a480",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_SetFlag",
+      "description": "(on): DarkMono_SetFlag on g_Mono when on is 1, DarkMono_ClearFlag otherwise. The VSHELL copy of DBSIM's Mono_SetFlag (00495494).",
+      "source": "VSHELL decompile at 0046a480; es2_naming.py diff against DBSIM 00495494"
+    },
+    {
       "address": "0046a4a4",
       "binary": "VSHELL",
       "type": "function",
@@ -14176,6 +15395,24 @@
       "source": "VSHELL decompile and disassembly at 0046a4f4"
     },
     {
+      "address": "0046a540",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_Ioctl4",
+      "description": "(byte): DarkMono_Ioctl4(g_Mono, byte). The VSHELL copy of DBSIM's Mono_Ioctl4 (00495554).",
+      "source": "VSHELL decompile at 0046a540; es2_naming.py diff against DBSIM 00495554"
+    },
+    {
+      "address": "0046a560",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_Ioctl2Or3",
+      "description": "(on): DarkMono_Ioctl2(g_Mono) when on is non-zero, DarkMono_Ioctl3 otherwise. The VSHELL copy of DBSIM's Mono_Ioctl2Or3 (00495574).",
+      "source": "VSHELL decompile at 0046a560; es2_naming.py diff against DBSIM 00495574"
+    },
+    {
       "address": "0046a584",
       "binary": "VSHELL",
       "type": "function",
@@ -14192,6 +15429,33 @@
       "name": "DarkMono_IsOpen",
       "description": "Returns whether the DarkMono object's handle at +0 is not INVALID_HANDLE_VALUE. Every DarkMono output call does nothing when it is false, so on a machine without DARKMONO.VXD all debug-monitor output is dropped.",
       "source": "VSHELL decompile and disassembly at 0046a5c4"
+    },
+    {
+      "address": "0046a5d5",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "DarkMono_GetFlag",
+      "description": "(mono): returns mono+4, the flag DarkMono_SetFlag and DarkMono_ClearFlag write. Between DarkMono_IsOpen and DarkMono_SetFlag, where DBSIM has its copy, MonoDevice_GetFlag (004955e9).",
+      "source": "VSHELL decompile at 0046a5d5; es2_naming.py match against DBSIM"
+    },
+    {
+      "address": "0046a5e0",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "DarkMono_SetFlag",
+      "description": "(mono): mono+4 = 1. Mono_SetFlag calls it. The VSHELL copy of DBSIM's MonoDevice_SetFlag (004955f4).",
+      "source": "VSHELL decompile at 0046a5e0; es2_naming.py diff against DBSIM 004955f4"
+    },
+    {
+      "address": "0046a5ef",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "DarkMono_ClearFlag",
+      "description": "(mono): mono+4 = 0. Mono_SetFlag calls it. The VSHELL copy of DBSIM's MonoDevice_ClearFlag (00495603).",
+      "source": "VSHELL decompile at 0046a5ef; es2_naming.py match against DBSIM"
     },
     {
       "address": "0046a5fc",
@@ -14219,6 +15483,33 @@
       "name": "DarkMono_PutString",
       "description": "(mono, a, b, text): sends DeviceIoControl code 7 with a 0x58-byte packet {a, b, length, text}: 16-bit words, then the text truncated to 80 characters. Mono_Print and Mono_Printf pass (y, x) as (a, b).",
       "source": "VSHELL decompile and disassembly at 0046a673"
+    },
+    {
+      "address": "0046a70a",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "DarkMono_Ioctl4",
+      "description": "(mono, byte): when DarkMono_IsOpen, DeviceIoControl(mono+0, 4, &byte, 1, 0, 0, 0, 0). Mono_Ioctl4 calls it. The VSHELL copy of DBSIM's MonoDevice_Ioctl4 (0049571e).",
+      "source": "VSHELL decompile at 0046a70a; es2_naming.py diff against DBSIM 0049571e"
+    },
+    {
+      "address": "0046a73f",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "DarkMono_Ioctl2",
+      "description": "(mono): when DarkMono_IsOpen, DeviceIoControl(mono+0, 2) with no buffers. Mono_Ioctl2Or3 calls it. The VSHELL copy of DBSIM's MonoDevice_Ioctl2 (00495753).",
+      "source": "VSHELL decompile at 0046a73f; es2_naming.py diff against DBSIM 00495753"
+    },
+    {
+      "address": "0046a76a",
+      "binary": "VSHELL",
+      "type": "function",
+      "confidence": "high",
+      "name": "DarkMono_Ioctl3",
+      "description": "(mono): when DarkMono_IsOpen, DeviceIoControl(mono+0, 3) with no buffers. Mono_Ioctl2Or3 calls it. The VSHELL copy of DBSIM's MonoDevice_Ioctl3 (0049577e).",
+      "source": "VSHELL decompile at 0046a76a; es2_naming.py diff against DBSIM 0049577e"
     },
     {
       "address": "0046a7dd",
@@ -15521,7 +16812,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MovieQueue_IntroSkipped",
-      "description": "Set by a mouse button down (MainWndProc) or Esc/Space (Avi_Play) while MovieQueue_PlayingIntro is set; Movie_PlayQueue then skips any further intro part. Nothing clears it.",
+      "description": "Set by a mouse button down (MainWndProc) or Esc/Space (Avi_Play) while MovieQueue_PlayingIntro is set; Movie_PlayQueue then skips any further intro part. No store clearing it found (three stores, each 1).",
       "source": "docs/shell/screen-layout.md#the-shells-movies"
     },
     {
@@ -16137,12 +17428,30 @@
       "source": "docs/shell/screen-layout.md#the-arming-and-repair-hotspots"
     },
     {
+      "address": "00482ae7",
+      "binary": "VSHELL",
+      "type": "data",
+      "confidence": "high",
+      "name": "Hangar_DebriefScrapCount",
+      "description": "int16 at +0x24 of the hangar at 00482ac3: machines the debrief scrapped. HercsDat_Clear zeroes it at every hangar load, Herc_SettleAfterMission adds one per scrap (INC at 00410d21), and Game_ProcessMissionResults copies it into campaign flag 8 (0040eef6), which the mission's .ENG debrief loss line tests.",
+      "source": "docs/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7"
+    },
+    {
+      "address": "00482aef",
+      "binary": "VSHELL",
+      "type": "data",
+      "confidence": "high",
+      "name": "Debrief_PilotsLost",
+      "description": "int16: Squad_ProgressAll's count of pilots lost, the player included when at 0 condition, stored at 0040eea9. Game_ProcessMissionResults copies it into campaign flag 9 and hands it to Debrief_WriteReport as the Losses figure.",
+      "source": "docs/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7"
+    },
+    {
       "address": "00482af4",
       "binary": "VSHELL",
       "type": "data",
       "confidence": "high",
       "name": "CareerSalvage",
-      "description": "The career salvage pool, int32 -- the game's single currency, held in kilograms and printed in tons. Seeded to rand(0..10)*1000 + 100000, credited from results.dat, debited by repairs and armory purchases. Immediately precedes the campaign flag array in memory and in the save file.",
+      "description": "The career salvage pool, int32 -- the game's single currency, held in kilograms; printed in tons by the crew and Herc Construction screens and in kilograms by the repair detail panel and armory readout. Seeded to rand(0..10)*1000 + 100000, credited from results.dat, debited by repairs and armory purchases. Immediately precedes the campaign flag array in memory and in the save file.",
       "source": "docs/formats/save-games.md"
     },
     {
@@ -16223,7 +17532,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Avi_PaletteHandle",
-      "description": "The HPALETTE Avi_Play hands each movie; 0 until Avi_BuildPalette runs, which Movie_PlayQueue's startup call (argument 0) skips.",
+      "description": "The HPALETTE Avi_Play hands each movie; 0 until Avi_BuildPalette runs, which Movie_PlayQueue's startup call (argument 0) skips. Also stored at 0041deea by an undisassembled routine at 0041dea8 (236-entry palette) with no reference found.",
       "source": "docs/shell/screen-layout.md#the-shells-movies"
     },
     {
@@ -16288,6 +17597,15 @@
       "name": "StartupAnimWidget",
       "description": "The startup sequence widget MainMenu_BuildScreen builds over the whole window, frames dbm\\bay2a_80 to bay2a_84, the last twice.",
       "source": "docs/shell/screen-layout.md#the-main-menu"
+    },
+    {
+      "address": "0048d0fc",
+      "binary": "VSHELL",
+      "type": "data",
+      "confidence": "high",
+      "name": "QuitAlert",
+      "description": "The Alt+F4 QUIT alert widget QuitAlert_Build creates.",
+      "source": "docs/shell/screen-layout.md#quit"
     },
     {
       "address": "0048d1f8",

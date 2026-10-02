@@ -111,7 +111,9 @@ public sealed class SoundDirector : IDisposable {
 
 	/// <summary>
 	/// <c>Music_CdEnabled</c> (<c>0049f918</c>) - raised beside <see cref="CdTrack"/> when a mission
-	/// session starts. Only <see cref="SuspendAll"/> reads it.
+	/// session starts. <see cref="SuspendAll"/> reads it, and so does retail's <c>sfxWndProc</c>
+	/// (<c>00462294</c>) before restarting a finished track, which <see cref="ICdAudio.Update"/>
+	/// stands in for.
 	/// </summary>
 	public bool CdEnabled { get; private set; }
 
@@ -401,7 +403,7 @@ public sealed class SoundDirector : IDisposable {
 		// image mirror front to back — a stereo field cannot tell the two apart anyway.
 		//
 		// One deliberate deviation, at exactly one input. The original computes the front half as
-		// `(ushort)(bearing * -2)`, which for a bearing of zero — a source precisely abeam — is zero,
+		// `(ushort)(bearing * -2)`, which for a bearing of zero — a source precisely abeam on the right — is zero,
 		// the hard-left end, while every neighbouring bearing on both sides lands at the hard-right
 		// end. The continuous value there is 0x10000, and it is only the truncation to sixteen bits
 		// that turns it into its opposite. Reproducing that would put an audible snap to the far
@@ -507,15 +509,17 @@ public sealed class SoundDirector : IDisposable {
 	}
 
 	/// <summary>
-	/// <c>Sound_SuspendAll</c> (<c>00463078</c>) — records what is playing and stops it, so the
-	/// matching <see cref="ResumeAll"/> can put back exactly that set. The original does this when
-	/// the window loses focus.
+	/// <c>Sound_SuspendAll</c> (<c>00463078</c>) — stops everything, marking for the matching
+	/// <see cref="ResumeAll"/> only the ids that loop forever and are playing. A one-shot or a
+	/// finite repeat cut off by the suspend is not restarted, and its outstanding repeats are
+	/// dropped. The original does this when the window loses focus. See docs/formats/audio.md,
+	/// "Mute, suspend and resume".
 	/// </summary>
 	public void SuspendAll() {
 		_suspended = true;
 
-		// The CD arm comes first, as it does in the original, and is the one place Music_CdEnabled is
-		// read. The position is saved only when music is on; the disc stops either way.
+		// The CD arm comes first, as it does in the original. The position is saved only when music is
+		// on; the disc stops either way.
 		SavedMusicPosition = 0;
 		if (CdTrack != 0 && CdEnabled) {
 			if (MusicEnabled) {
@@ -527,7 +531,8 @@ public sealed class SoundDirector : IDisposable {
 
 		for (int id = 0; id < _samples.Length; id++) {
 			var entry = _bank.Catalog.Entries[id];
-			entry.WasPlaying = IsPlaying(id);
+			entry.WasPlaying = entry.LoopCount == 0 && _backend.IsPlaying(_current[id]);
+			_repeatsLeft[id] = 0;
 			_backend.Stop(_current[id]);
 			_current[id] = -1;
 		}
@@ -575,11 +580,10 @@ public sealed class SoundDirector : IDisposable {
 	/// re-triggered here as each pass finishes. A count of 0 is endless and is the backend's own
 	/// looping flag instead, so it never reaches this.</para>
 	///
-	/// <para>It does nothing between a <see cref="SuspendAll"/> and its <see cref="ResumeAll"/>. A
-	/// suspended voice is a stopped voice, so without that gate the first serviced frame of a pause
-	/// reads every outstanding repeat as a pass that has just finished and starts the next one —
-	/// audibly, and spending the count that <see cref="ResumeAll"/> is holding for after the
-	/// pause.</para>
+	/// <para>It does nothing between a <see cref="SuspendAll"/> and its <see cref="ResumeAll"/>.
+	/// The suspend drops every outstanding repeat, as the original's <c>Sfx_StopAll</c> ends a
+	/// finite loop for good; the gate keeps a repeat requested during the pause from being
+	/// serviced until the resume.</para>
 	/// </summary>
 	public void Update() {
 		// Standing in for the MM_MCINOTIFY that re-issues the play in retail; see ICdAudio.Update.

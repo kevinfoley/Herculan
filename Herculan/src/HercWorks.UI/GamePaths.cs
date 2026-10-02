@@ -67,9 +67,22 @@ public static class GamePaths {
 		new[] { "VOL", "SHELL0", "GAM" }
 	};
 
-	private const string ShellVolDirectory = "VOL";
+	/// <summary>
+	/// Where a simulator <c>dat\</c> file can live, in the same preference order as
+	/// <see cref="GamSearchDirectories"/>: DBSIM opens <c>dat\name.dat</c> as a loose file before it
+	/// searches its volumes (<c>VolRStream_Open</c>, see docs/formats/vol-archive.md), then an unpacked
+	/// SIMVOL0 tree, then the packed VOL.
+	/// </summary>
+	private static readonly string[][] SimDatSearchDirectories = {
+		new[] { "DAT" },
+		new[] { "VOL", "simvol0", "dat" }
+	};
+
+	private const string VolDirectory = "VOL";
 	private const string ShellVolName = "SHELL0.VOL";
+	private const string SimVolName = "SIMVOL0.VOL";
 	private const string GamDirectoryLabel = "GAM";
+	private const string SimDatDirectoryLabel = "dat";
 
 	/// <summary>
 	/// Parsed VOLs, keyed by path. SHELL0.VOL is ~8 MB and every GAM lookup that falls through to it
@@ -81,14 +94,33 @@ public static class GamePaths {
 	/// Finds a SHELL <c>GAM\</c> file by name over <see cref="GamSearchDirectories"/> and then inside
 	/// SHELL0.VOL, or null if no game directory is configured and the file is nowhere in it.
 	/// </summary>
-	public static GameFile? FindGamFile(string fileName) {
-		foreach (string[] directory in GamSearchDirectories) {
+	public static GameFile? FindGamFile(string fileName) =>
+		FindFile(fileName, GamSearchDirectories, ShellVolName, GamDirectoryLabel);
+
+	/// <summary>
+	/// Finds a simulator <c>dat\</c> file by name over <see cref="SimDatSearchDirectories"/> and then
+	/// inside SIMVOL0.VOL, or null if no game directory is configured and the file is nowhere in it.
+	/// </summary>
+	public static GameFile? FindSimDatFile(string fileName) =>
+		FindFile(fileName, SimDatSearchDirectories, SimVolName, SimDatDirectoryLabel);
+
+	/// <summary>
+	/// Starting folder for a GAM file dialog: the first loose GAM directory that exists, falling back
+	/// to the install root (the packed VOL isn't a folder a dialog can open into).
+	/// </summary>
+	public static string GamInitialDirectory => InitialDirectoryOver(GamSearchDirectories);
+
+	/// <summary>Starting folder for a simulator <c>dat\</c> file dialog, as <see cref="GamInitialDirectory"/>.</summary>
+	public static string SimDatInitialDirectory => InitialDirectoryOver(SimDatSearchDirectories);
+
+	private static GameFile? FindFile(string fileName, string[][] searchDirectories, string volName, string dirLabel) {
+		foreach (string[] directory in searchDirectories) {
 			if (Resolve(directory.Append(fileName).ToArray()) is { } path) {
 				return GameFile.FromLooseFile(path);
 			}
 		}
 
-		if (Resolve(ShellVolDirectory, ShellVolName) is not { } volPath) {
+		if (Resolve(VolDirectory, volName) is not { } volPath) {
 			return null;
 		}
 
@@ -96,18 +128,14 @@ public static class GamePaths {
 		// literal directory name, while Dir is a FileType the reader maps it onto and is null for any
 		// folder that has no matching enum member.
 		var entry = ReadVol(volPath)?.Folders.Values
-			.FirstOrDefault(dir => string.Equals(dir.Label, GamDirectoryLabel, StringComparison.OrdinalIgnoreCase))
+			.FirstOrDefault(dir => string.Equals(dir.Label, dirLabel, StringComparison.OrdinalIgnoreCase))
 			?.Files.FirstOrDefault(file => string.Equals(file.FileName, fileName, StringComparison.OrdinalIgnoreCase));
 
-		return entry == null ? null : GameFile.FromVolEntry(entry, Path.GetFileName(volPath), GamDirectoryLabel);
+		return entry == null ? null : GameFile.FromVolEntry(entry, Path.GetFileName(volPath), dirLabel);
 	}
 
-	/// <summary>
-	/// Starting folder for a GAM file dialog: the first loose GAM directory that exists, falling back
-	/// to the install root (the packed VOL isn't a folder a dialog can open into).
-	/// </summary>
-	public static string GamInitialDirectory =>
-		GamSearchDirectories.Select(Resolve).FirstOrDefault(path => path != null)
+	private static string InitialDirectoryOver(string[][] searchDirectories) =>
+		searchDirectories.Select(Resolve).FirstOrDefault(path => path != null)
 		?? (IsConfigured ? GameDirectory! : string.Empty);
 
 	private static Voln? ReadVol(string volPath) {

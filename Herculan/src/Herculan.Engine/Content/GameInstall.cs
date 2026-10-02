@@ -13,12 +13,23 @@ public static class GameInstall {
 	public const string ArchiveFolderName = "VOL";
 
 	/// <summary>
+	/// Where the last install used is remembered: <c>%APPDATA%\Herculan\install-path.txt</c> on Windows,
+	/// and the platform's equivalent user-config directory elsewhere. One line, the path.
+	/// </summary>
+	public static string RememberedPathFile => Path.Combine(
+		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData,
+			Environment.SpecialFolderOption.DoNotVerify),
+		"Herculan", "install-path.txt");
+
+	/// <summary>
 	/// Resolves an install root, in order: an explicit <paramref name="explicitPath"/> (a command
-	/// line argument), the <c>ES2_GAME_PATH</c> environment variable, then a short list of paths
-	/// relative to the running binary that cover a sibling install checked out beside this
-	/// repo, reached from <c>src/Herculan.Engine.Host/bin/...</c>.
-	/// Returns null when nothing matched, so the caller can print something more useful than a
-	/// stack trace.
+	/// line argument), the <c>ES2_GAME_PATH</c> environment variable, the install last used (see
+	/// <see cref="Remember"/>), then an <c>ES2</c> folder beside the running binary or any folder above
+	/// it, which covers a sibling install checked out beside this repo, reached from
+	/// <c>src/Herculan.Engine.Host/bin/...</c>.
+	/// Returns null when nothing matched, so the caller can ask the player or print something more
+	/// useful than a stack trace. An explicit path that is not an install is null too, without trying
+	/// the rest: a path the player typed is never silently swapped for another.
 	/// </summary>
 	public static string? Locate(string? explicitPath = null) {
 		if (!string.IsNullOrWhiteSpace(explicitPath)) {
@@ -28,6 +39,11 @@ public static class GameInstall {
 		string? fromEnvironment = Environment.GetEnvironmentVariable(PathVariable);
 		if (!string.IsNullOrWhiteSpace(fromEnvironment) && IsInstallRoot(fromEnvironment)) {
 			return Path.GetFullPath(fromEnvironment);
+		}
+
+		// A remembered install that has since moved or been deleted falls through to the search.
+		if (LoadRemembered() is { } remembered && IsInstallRoot(remembered)) {
+			return Path.GetFullPath(remembered);
 		}
 
 		// Walk up from the binary looking for a sibling ES2 folder — covers running straight out
@@ -44,10 +60,35 @@ public static class GameInstall {
 		return null;
 	}
 
+	/// <summary>
+	/// Records <paramref name="installRoot"/> as the install last used, which <see cref="Locate"/> tries
+	/// before searching. A failed write is logged and otherwise ignored: the next launch searches again.
+	/// </summary>
+	public static void Remember(string installRoot) {
+		string path = RememberedPathFile;
+		try {
+			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+			File.WriteAllText(path, Path.GetFullPath(installRoot));
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			Console.Error.WriteLine($"Could not write {path}: {ex.Message}");
+		}
+	}
+
 	/// <summary>The <c>VOL</c> archive directory inside an install root.</summary>
 	public static string ArchiveDirectory(string installRoot) =>
 		Path.Combine(installRoot, ArchiveFolderName);
 
-	private static bool IsInstallRoot(string path) =>
+	/// <summary>Whether <paramref name="path"/> is an install root: a directory holding the archive directory.</summary>
+	public static bool IsInstallRoot(string path) =>
 		Directory.Exists(path) && Directory.Exists(ArchiveDirectory(path));
+
+	private static string? LoadRemembered() {
+		string path = RememberedPathFile;
+		try {
+			return File.Exists(path) ? File.ReadAllText(path).Trim() : null;
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			Console.Error.WriteLine($"Could not read {path} ({ex.Message}); searching for the install instead.");
+			return null;
+		}
+	}
 }

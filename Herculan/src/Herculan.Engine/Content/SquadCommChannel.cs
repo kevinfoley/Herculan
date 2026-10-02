@@ -37,8 +37,8 @@ public enum CommBoxState {
 /// <param name="OffsetY"><inheritdoc cref="OffsetX"/></param>
 /// <param name="Name">The speaker's name, for the caption plate.</param>
 /// <param name="NameColorId">
-/// The <c>COLORS.DAT</c> id the plate is filled with — the speaker's own comm-box colour, which is
-/// their slot number: ids 0, 1 and 2, the same colours their markers use on the map.
+/// The <c>COLORS.DAT</c> id the plate is filled with — the speaker's own comm-box colour,
+/// <see cref="HudColorTable.PilotColorId"/>, the same colour their marker uses on the map.
 /// </param>
 /// <param name="ShowName">
 /// Whether the caption is drawn. The MFD writes it only while the box is <see cref="CommBoxState.Talking"/>,
@@ -238,9 +238,11 @@ public sealed class SquadCommChannel {
 	/// service loop reads as a message ends to latch the box's comms out. The owner of the machines
 	/// keeps it in step each frame.
 	///
-	/// <para>It is <b>not</b> the comms-out latch itself (<c>gauge+0x147</c>): that is set only by
-	/// the service loop, when a message ends with the machine destroyed or when the death scream
-	/// ends. The difference matters for the scream, which is posted as the machine is destroyed and
+	/// <para>It is <b>not</b> the comms-out latch itself (<c>gauge+0x147</c>): the service loop sets
+	/// that when a message ends with the machine destroyed or when the death scream ends. Retail's
+	/// <c>HddDisplay_Update</c> also sets it for a destroyed squadmate during an external-view
+	/// transition, which this class does not model — docs/formats/heads-down-display.md#the-death-scream.
+	/// The difference matters for the scream, which is posted as the machine is destroyed and
 	/// would never get past the opening static if the latch followed the flag.</para>
 	/// </summary>
 	public void SetDestroyed(int slot, bool destroyed) {
@@ -570,7 +572,7 @@ public sealed class SquadCommChannel {
 			portrait ? box.PortraitFrame : box.StaticFrame,
 			offsetX, offsetY,
 			box.Name,
-			slot,
+			HudColorTable.PilotColorId(slot),
 			talking);
 	}
 
@@ -586,7 +588,7 @@ public sealed class SquadCommChannel {
 		public SquadMessagePort.Queued? Message;
 		public long Deadline;
 
-		/// <summary><c>gauge+0x147</c> — the comms-out latch. Set only by the service loop.</summary>
+		/// <summary><c>gauge+0x147</c> — the comms-out latch, set here by the service loop — see <see cref="SetDestroyed"/>.</summary>
 		public bool CommsOut;
 
 		/// <summary>The machine's own destroyed flag, mirrored — see <see cref="SetDestroyed"/>.</summary>

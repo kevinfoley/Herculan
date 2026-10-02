@@ -14,7 +14,7 @@ An objective is **one condition asked of one subject**, plus what satisfying it 
 | `+0x02` | which condition is asked |
 | `+0x04` | subject kind: 0 group, 1 mech, 2 flyer, 3 base |
 | `+0x06` | the resolved subject |
-| `+0x0a` | a block-1 point. No condition reads it, and it is `-1` in all 62 retail missions |
+| `+0x0a` | a block-1 point, `-1` in all 62 retail missions; no reader found ([Open](#open)) |
 | `+0x0e` | a block-3 waypoint group — which of the subject group's ten orders condition 0 is about |
 | `+0x12` | the resolved failure text, four `char*` |
 | `+0x24`/`+0x38` | ten mission-counter refs and ten operations |
@@ -89,7 +89,7 @@ Four statuses carry a `SYSTEM.STR` line, posted on the **change** rather than ea
 | 8 | `0x20` RULES OF ENGAGEMENT VIOLATED. MISSION ABORTED. |
 | 9 | `0x17` MISSION SUCCESSFUL |
 
-After a post the answer is held still for 500 ms so the caller's next poll cannot queue the line twice; the running baseline catches up on the first evaluation after that, which is what sequences the spoken line ahead of the alert panel. `MISSION OBJECTIVES COMPLETE`, `PRIMARY OBJECTIVE COMPLETE` and `SECONDARY OBJECTIVE COMPLETE` are recorded but posted by nothing — see [`../formats/cockpit-messages.md`](../formats/cockpit-messages.md#posters).
+After a post the answer is held still for 500 ms so the caller's next poll cannot queue the line twice; the running baseline catches up on the first evaluation after that, which is what sequences the spoken line ahead of the alert panel. `MISSION OBJECTIVES COMPLETE`, `PRIMARY OBJECTIVE COMPLETE` and `SECONDARY OBJECTIVE COMPLETE` are recorded but have no poster found — see [`../formats/cockpit-messages.md`](../formats/cockpit-messages.md#posters).
 
 ## The poll — `Mission_PollStatus` (`004131ac`)
 
@@ -229,5 +229,6 @@ The exit code follows, into `004d283c`; the codes are [`../command-line.md`](../
 
 ## Open
 
+- **Open:** no reader of objective `+0x0a` found by `es2_fieldscan.py a --range 00413280-004135e5` over `Mission_EvaluateObjectives` (controls `+0x06` and `+0x0e` fire).
 - **Open:** whether anything reaches the group report cluster (`Group_StatusLineIndex`, `Group_OrderSubjectEngaged`, `Group_OrderSubjectRouteExhausted`) through a static-initialiser registration. `es2_xref.py` finds no branch, pointer or vtable slot for any of the three, but a registered function can be absent from that sweep, and `RegisterSubsystemLoader` (`00401d64`) has many callers.
 - **Open:** what the working register holds when `Mission_Status` and `Mission_WriteResults` call `Mission_EvaluateObjectives`. It decides how a code-5 or out-of-range-kind record answers when it is first in the array; no retail mission has such a record.

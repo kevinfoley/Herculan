@@ -12,9 +12,9 @@ namespace HercWorks.UI;
 /// — one row per weapon. The file's trailing section, the armory's starting stock
 /// (StartingWeapons), isn't shown here, but its bytes are carried through unchanged on save so
 /// nothing is lost. Follows the same pattern as HercStatsForm: opens whichever copy GamePaths' GAM
-/// search order finds and saves to a loose .DAT override, uses the shared VolEntryPrefixCodec via
-/// GameFile so exports stay retail-compatible, and keeps layout in
-/// WeaponStatsForm.Designer.cs for the WinForms visual designer.
+/// search order finds. Save As writes the content-only shape VSHELL reads from a loose override;
+/// Save As With VOL Prefix keeps the 9-byte entry prefix of an unpacked archive copy (see
+/// VolEntryPrefixCodec). Layout lives in WeaponStatsForm.Designer.cs for the WinForms visual designer.
 /// </summary>
 public partial class WeaponStatsForm : Form {
 	private readonly BindingList<WeaponStatRow> _rows = new();
@@ -26,11 +26,6 @@ public partial class WeaponStatsForm : Form {
 	private short _loadedStartWeaponTotal;
 	private UiWeaponEntry[]? _loadedStartingWeapons;
 
-	/// <summary>Original VOL entry prefix, round-tripped on save — see VolEntryPrefixCodec.</summary>
-	private byte? _originalCompressionType;
-	private byte[]? _originalMagicPrefix;
-	private bool _originalHadTrailingByte;
-
 	public WeaponStatsForm() {
 		InitializeComponent();
 	}
@@ -41,7 +36,7 @@ public partial class WeaponStatsForm : Form {
 
 	/// <summary>
 	/// Distinct per-form/file-type identity — see CampaignResourcesForm's DialogClientGuid for the
-	/// full explanation. Shared between Open and Save As since both deal with WEAPONS.DAT.
+	/// full explanation. Shared by Open and both saves since all three deal with WEAPONS.DAT.
 	/// </summary>
 	private static readonly Guid DialogClientGuid = new("b5228457-50b0-4667-b328-07a17f72c4d1");
 
@@ -115,12 +110,9 @@ public partial class WeaponStatsForm : Form {
 			_loadedStartingWeapons = weaponsDat.StartingWeapons;
 
 			_loadedFile = file;
-			_originalCompressionType = file.CompressionType;
-			_originalMagicPrefix = file.MagicPrefix;
-			_originalHadTrailingByte = file.HadTrailingByte;
+			_saveWithPrefixMenuItem.Enabled = file.CompressionType.HasValue && file.MagicPrefix != null;
 
-			string prefixNote = file.CompressionType.HasValue
-				? " (VOL entry prefix detected — will be preserved on save)" : "";
+			string prefixNote = file.CompressionType.HasValue ? " (VOL entry prefix detected)" : "";
 			_statusLabel.Text = $"Loaded {file.Location} — {_rows.Count} weapons.{prefixNote}";
 		} catch (Exception ex) {
 			MessageBox.Show(this, $"Failed to load file:\n{ex.Message}", "Error",
@@ -128,7 +120,15 @@ public partial class WeaponStatsForm : Form {
 		}
 	}
 
-	private void OnSaveAs(object? sender, EventArgs e) {
+	private void OnSaveAs(object? sender, EventArgs e) =>
+		Save(withPrefix: false, GamePaths.InitialDirectoryFor("GAM"));
+
+	private void OnSaveWithPrefix(object? sender, EventArgs e) =>
+		Save(withPrefix: true, _loadedFile?.LoosePath is { } loosePath
+			? Path.GetDirectoryName(loosePath)!
+			: GamePaths.GamInitialDirectory);
+
+	private void Save(bool withPrefix, string initialDirectory) {
 		if (_rows.Count == 0) {
 			MessageBox.Show(this, "Open a WEAPONS.DAT file first.", "Nothing to save",
 				MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -150,14 +150,10 @@ public partial class WeaponStatsForm : Form {
 
 		using var dialog = new SaveFileDialog {
 			Filter = "WEAPONS.DAT|WEAPONS.DAT|DAT files (*.dat)|*.dat|All files (*.*)|*.*",
-			Title = "Save WEAPONS.DAT",
+			Title = withPrefix ? "Save WEAPONS.DAT with VOL entry prefix" : "Save WEAPONS.DAT",
 			FileName = _loadedFile?.FileName ?? DefaultFileName,
 			ClientGuid = DialogClientGuid,
-			// A file read out of the packed VOL has no folder of its own to save back beside, so it
-			// falls through to the same GAM override folder the message below points at.
-			InitialDirectory = _loadedFile?.LoosePath is { } loosePath
-				? Path.GetDirectoryName(loosePath)!
-				: GamePaths.GamInitialDirectory
+			InitialDirectory = initialDirectory
 		};
 
 		if (dialog.ShowDialog(this) != DialogResult.OK) {
@@ -184,23 +180,21 @@ public partial class WeaponStatsForm : Form {
 			}
 
 			byte[] content = _transformer.Write(weaponsDat)!;
-			byte[] outBytes;
-			string formatNote;
+			string message;
 
-			if (_originalCompressionType.HasValue && _originalMagicPrefix != null) {
-				outBytes = VolEntryPrefixCodec.Wrap(
-					content, _originalCompressionType.Value, _originalMagicPrefix, _originalHadTrailingByte);
-				formatNote = "retail-compatible format — the original VOL entry prefix (compression type, magic) was preserved, with the size field updated for the edited content";
+			if (withPrefix) {
+				File.WriteAllBytes(dialog.FileName, VolEntryPrefixCodec.Wrap(content,
+					_loadedFile!.CompressionType!.Value, _loadedFile.MagicPrefix!, _loadedFile.HadTrailingByte));
+				message = "Saved with the original VOL entry prefix, size field updated — the shape of an " +
+					"unpacked archive copy. The game reads a loose override without it; use Save As for that.";
 			} else {
-				outBytes = content;
-				formatNote = "content-only format — this file wasn't loaded with a VOL entry prefix to preserve, so no prefix could be reconstructed for this export";
+				File.WriteAllBytes(dialog.FileName, content);
+				message = "Saved in the content-only format the game reads from a loose file.\n\n" +
+					"VSHELL opens gam\\weapons.dat relative to the install folder before it searches its VOLs, " +
+					"so a copy at GAM\\WEAPONS.DAT in your ES2 install overrides the packed one.";
 			}
 
-			File.WriteAllBytes(dialog.FileName, outBytes);
-
-			MessageBox.Show(this,
-				$"Saved in {formatNote}.\n\nDrop this file into your ES2 install's GAM\\ folder to override the packed VOL copy.",
-				"Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			MessageBox.Show(this, message, "Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
 		} catch (Exception ex) {
 			MessageBox.Show(this, $"Failed to save file:\n{ex.Message}", "Error",
 				MessageBoxButtons.OK, MessageBoxIcon.Error);

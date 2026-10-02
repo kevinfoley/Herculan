@@ -69,8 +69,8 @@ public class InputTapeRecorderTests : IDisposable {
 	}
 
 	[Fact]
-	public void AStickThatIsNotThereIsRecordedAsNone() {
-		Assert.Equal(new byte[] { 2, 0, 0, 0, 0, 0, 0, 0 },
+	public void AStickThatIsNotThereIsRecordedWithNoCapabilities() {
+		Assert.Equal(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0 },
 			InputTapeRecorder.CapabilityBlock(JoystickCapabilities.None));
 	}
 }

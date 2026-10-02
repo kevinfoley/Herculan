@@ -24,11 +24,11 @@ Nine chassis, addressed by a `0`–`8` type id that every file in this cluster a
 
 The three per-chassis file families are each reached through a nine-entry pointer table of literal filenames, all three beginning at `OUTL` — `0046ff2c` (`arm_`), `0046fe94` (`rpr_`) and `004706fc` (`ini_`) — which is the same ordering read a second way.
 
-**Hardpoint capacity comes from the code, not the data.** `Herc_CapacityForType` (`00410d54`) maps the type through `00410d30` — an identity search over the nine-entry table at `0046f728` — and returns `0046f73a[type]`, the column above. `herc_inf.dat` carries its own hardpoint field and the two disagree for the Raptor II; see [Rejected readings](#rejected-readings).
+**Hardpoint capacity comes from the code, not the data.** `Herc_CapacityForType` (`00410d54`) maps the type through `Herc_TypeToIndex` (`00410d30`) — an identity search over the nine-entry table at `0046f728` — and returns `0046f73a[type]`, the column above. `herc_inf.dat` carries its own hardpoint field and the two disagree for the Raptor II; see [Rejected readings](#rejected-readings).
 
 ## `gam\hercs.dat` — the starting hangar
 
-`LoadHercsDat` (`004104ed`, `herclist.cpp`) fills the hangar object at `00482ac3` at new-career time. The hangar is eight pointer slots at `+0x00`, an occupied count at `+0x20` and the selected bay at `+0x22` (`00482ae3` and `00482ae5` reached directly) — the bay the squad panel shows, and the one the build screen buys into and the scrap dialog scraps ([`../shell/screen-layout.md`](../shell/screen-layout.md#the-scrap-dialog)).
+`LoadHercsDat` (`004104ed`, `herclist.cpp`) fills the hangar object at `00482ac3` at new-career time. The hangar is eight pointer slots at `+0x00`, an occupied count at `+0x20`, the selected bay at `+0x22` — the bay the squad panel shows, and the one the build screen buys into and the scrap dialog scraps ([`../shell/screen-layout.md`](../shell/screen-layout.md#the-scrap-dialog)) — and [the debrief's scrap count](../shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7) at `+0x24`; `00482ae3`, `00482ae5` and `00482ae7` reach the last three directly. `HercsDat_Clear` (`0041048b`) empties all of it before every load.
 
 ```
 int16   count
@@ -61,7 +61,7 @@ int16   +0x4e   hardpoints occupied
         that many { int16 hardpoint index; weapon unit, 6 bytes }
 ```
 
-Everything else comes from the constructor (`00410d7a`) or is derived after the read: `+0x4c` from `Herc_CapacityForType`, `+0x02` from `00410d30`, the name pointer at `+0x04` from `estext.bin`, and the whole 66-byte status block left at the constructor's uniform 100. A chassis loaded from one of these files is therefore always at full condition.
+Everything else comes from the constructor (`00410d7a`) or is derived after the read: `+0x4c` from `Herc_CapacityForType`, `+0x02` from `Herc_TypeToIndex`, the name pointer at `+0x04` from `estext.bin`, and the whole 66-byte status block left at the constructor's uniform 100. A chassis loaded from one of these files is therefore always at full condition.
 
 For the full 122-byte record and the status block's three condition arrays see [`save-games.md`](save-games.md#herc-record--122-bytes-0x7a-in-memory).
 
@@ -83,11 +83,11 @@ Two file forms share it. The `gam\*.dat` form is six bytes — `+0x00`, `+0x06`,
 
 `Weapon_ClassIndexForId` searches the thirty-entry table at `0046f868` for the id and returns its position. That table holds ids `0`–`18` and `22`–`32`: **every id except the three Bull weapons**, which therefore resolve to `-1`. It is an independent statement of the same exclusion `arm_weap.dat` makes below.
 
-Ammo type `0`–`3` are the guidance kinds `SARH`, `ARH`, `ARM`, `EO`; `5` means the hardpoint carries nothing guided. The weapons screen's four buttons caption them `ARM`, `ARH`, `SARH`, `EO` (`estext.bin` `0xa1`–`0xa4`), which is not the kinds' order: each button passes its own kind ([`../shell/screen-layout.md`](../shell/screen-layout.md#guidance-kinds)). Retail data holds `5` everywhere except the missile racks, `Armory_DeliverQueue` (`00412428`) writes `1` for ids 13–16 and `5` for everything else, and the weapons screen rewrites it when it fits a unit or a guidance button is pressed. The `5` that [`../simulation/weapon-mounts.md`](../simulation/weapon-mounts.md) observes in every non-launcher slot originates here.
+Ammo type `0`–`3` are the guidance kinds `SARH`, `ARH`, `ARM`, `EO`; `5` means the hardpoint carries nothing guided. The weapons screen's four buttons caption them `ARM`, `ARH`, `SARH`, `EO` (`estext.bin` `0xa1`–`0xa4`), which is not the kinds' order: each button passes its own kind ([`../shell/screen-layout.md`](../shell/screen-layout.md#guidance-kinds)). Retail data holds `5` on every unit that is not a missile rack, and the racks vary by file: the eight in `weapons.dat`'s starting stock (two each of ids 13–16) hold `0`, `hercs.dat`'s one `MSL8` holds `1`, and the four fitted in the `ini_*.dat` files and the four in `trn_herc.dat` hold `5`. `Armory_DeliverQueue` (`00412428`) writes `1` for ids 13–16 and `5` for everything else, and the weapons screen rewrites it when it fits a unit or a guidance button is pressed. The `5` that [`../simulation/weapon-mounts.md`](../simulation/weapon-mounts.md) observes in every non-launcher slot originates here.
 
 ## `gam\ini_*.dat` — the stock fit per chassis
 
-Nine files, one per type, each a **bare HERC catalog record** with no leading hangar slot. This is the fit a newly built chassis is delivered with. All nine consume exactly, and each file's leading type field matches its filename stem.
+Nine files, one per type, each a **bare HERC catalog record** with no leading hangar slot. `MsnGen_BuildPlayerHerc` (`0041c58d`) reads one, through the nine-entry table at `004706fc`, to build a practice mission's player machine when the practice screen's Herc Type option chooses the chassis ([`../shell/screen-layout.md`](../shell/screen-layout.md#starting-a-practice-mission)). A chassis bought in the campaign is not fitted from it: `Herc_Order` builds the record with no hardpoints occupied ([`../shell/armory.md`](../shell/armory.md#buying-a-chassis--herc_order-00411019)). All nine consume exactly, and each file's leading type field matches its filename stem.
 
 ## `gam\trn_herc.dat` — a second stock-fit set
 
@@ -121,7 +121,7 @@ per record, 16 bytes:
   int16   +0x04   top speed, kph
   int16   +0x06   hardpoints
   int16   +0x08   price, in tons -- x1000 gives the salvage cost
-  int16   +0x0a   no reader traced
+  int16   +0x0a   meaning open -- see Open
   int16   +0x0c   build time, in missions
   int16   +0x0e   availability flag
 ```
@@ -179,17 +179,17 @@ int16       count -- 33
 count x int16   per-weapon scrap value
 ```
 
-The loader (`hercdisp.cpp`, the function opening `s_gam_damage_dat_0046fdb4`) expands it against `herc_inf.dat`'s prices through `FixedMulQ10` (`00450a84`), a Q10 fixed-point multiply — `(a * b) >> 10`:
+The loader, `LoadDamageDat_Shell` (`00413628`, `hercdisp.cpp`), expands it against `herc_inf.dat`'s prices through `FixedMulQ10` (`00450a84`), a Q10 fixed-point multiply — `(a * b) >> 10`:
 
 ```
 for each chassis type t, price = herc_inf[t].+0x08 * 1000:
-  DAT_004840cc[t][g] = (800 * ((external[g] * price) >> 10)) >> 10    for g in 0..5
-  DAT_004840e6[t][i] = (800 * ((internal[i] * price) >> 10)) >> 10    for i in 0..8
-for each weapon id w:
-  DAT_0048431e[w] = (1000 * weaponValue[w]) >> 10
+  HercExternalGroupValues[t][g] = (800 * ((external[g] * price) >> 10)) >> 10    for g in 0..5
+  HercInternalValues[t][i]      = (800 * ((internal[i] * price) >> 10)) >> 10    for i in 0..8
+for each weapon id w in 0..32:
+  WeaponScrapValues[w] = (1000 * weaponValue[w]) >> 10
 ```
 
-`DAT_004840cc` is a 9 × 33 `int16` table and `DAT_004840e6` is its column 13; the two together end exactly where the 33-entry weapon table `DAT_0048431e` begins. The six external and nine internal figures are the units the whole cost model works in — see [`../shell/armory.md`](../shell/armory.md#repairing-and-scrapping).
+`HercExternalGroupValues` (`004840cc`) is a 9 × 33 `int16` table and `HercInternalValues` (`004840e6`) is its column 13; the two together end exactly where the 33-entry weapon table `WeaponScrapValues` (`0048431e`) begins. The six external and nine internal figures are the units the whole cost model works in — see [`../shell/armory.md`](../shell/armory.md#repairing-and-scrapping).
 
 The per-weapon column is **the weapon's `weapons.dat` price times 100**, holding for all thirty non-Bull ids, with the three Bull weapons deliberately zeroed where `weapons.dat` prices them at 50. Since the catalog price times 1000 is the cost in kg, a weapon scraps for a tenth of what it cost.
 
@@ -258,7 +258,7 @@ layout record, 22 bytes on disk into a 26-byte struct:
 
 The group records' four `int32` are each incremented by one as they are read — a one-pixel inset applied at load; the two leading records' are not.
 
-`Squad_BuildBayPictures` (`00414e5b`) places the two leading records as the top and bottom halves of the squad panel's bay picture and a fitted weapon's group record as its part, by id `slot + 2` ([`../shell/screen-layout.md`](../shell/screen-layout.md#the-bay-picture)). The second x, y is where `FUN_004155db`, on the arming screen, draws a mount's frame from the chassis's `_out` bank. Every retail file puts the two halves in parts 0 and 1, at `(1, 1)` and `(1, 140)`.
+`Squad_BuildBayPictures` (`00414e5b`) places the two leading records as the top and bottom halves of the squad panel's bay picture and a fitted weapon's group record as its part, by id `slot + 2` ([`../shell/screen-layout.md`](../shell/screen-layout.md#the-bay-picture)). The second x, y is where `Arming_MarkHardpoint` (`004155db`), on the arming screen, draws a mount's frame from the chassis's `_out` bank. Every retail file puts the two halves in parts 0 and 1, at `(1, 1)` and `(1, 140)`.
 
 ### `gam\arm_hots.dat` and `gam\rpr_hots.dat` — the clickable regions
 
@@ -277,7 +277,7 @@ Both walk exactly to EOF — 998 and 902 bytes of content.
 
 Each area becomes one `Panel` parented to that chassis's picture, and **the area's index within its group is what selects the panel's click handler**: the builder holds a table of handler pointers at `0048d53c` and passes `table[areaIndex]`. So these files carry position only; which hardpoint or which body location an area *is* comes from its ordering.
 
-`arm_hots.dat` carries the weapon hardpoints — counts 3, 5, 5, 8, 9, 9, 10, 4, 7 across the nine chassis, 60 in all, matching each chassis's mount capacity, and the widest at 10 is exactly the length of the arming screen's handler table. `rpr_hots.dat` carries six areas for every chassis, the HERC's damage locations; the repair screen's handler table is 16 long because it covers those six *and* up to ten weapon mounts, which the same loop places from `rpr_*.dat` geometry starting at index 6. Two of the nine repair groups pad their tail with all-zero rects, for chassis with fewer distinct parts.
+`arm_hots.dat` carries the weapon hardpoints — counts 3, 5, 5, 8, 9, 9, 10, 4, 7 across the nine chassis, 60 in all, matching each chassis's mount capacity, and the widest at 10 is exactly the length of the arming screen's handler table. `rpr_hots.dat` carries six areas for every chassis, the HERC's damage locations; the repair screen's handler table is 16 long because it covers those six *and* up to ten weapon mounts, which the same loop places from `rpr_*.dat` geometry starting at index 6. Two of the nine repair groups, the Tomahawk's and the Maverick's — the two chassis whose `rpr_*.dat` lists four components — hold all-zero rects in areas 1 and 2. The repair tab places all six areas of a group whatever they hold.
 
 The four `int32` are an inclusive rect and not a position and a size: the 16 bytes go straight to `ESRect_Ctor` as its rect argument, which is `{x0, y0, x1, y1}` everywhere else in the executable ([`../shell/screen-layout.md`](../shell/screen-layout.md#the-canvas-is-640x480-and-rects-are-inclusive)), and the first chassis's first two arming areas — `(37, 94, 70, 125)` and `(157, 94, 191, 125)` — are a left and right hardpoint mirrored about x≈114, which only holds read as two corners.
 
@@ -286,7 +286,7 @@ The four `int32` are an inclusive rect and not a position and a size: the 16 byt
 | Reading | Why it is wrong |
 |---|---|
 | An `*_hots.dat` area is a position and a size — `{x, y, w, h}` | Four `int32` beginning with what reads as a top-left corner invites it, and the retail values stay inside the canvas read either way, so a parse alone will not settle it. They are two inclusive corners: the bytes are handed straight to `ESRect_Ctor`, and the left/right hardpoint pairs are only mirror images when read that way |
-| `herc_inf.dat` `+0x06` gives a chassis's hardpoint count | It is what the Herc Construction screen *prints*, and for the Raptor II it prints 4 where the machine the player receives has 5. `Herc_CapacityForType` reads the in-code table at `0046f73a`, and that is the figure `+0x4c` and every hardpoint loop use. The other eight chassis agree, so a reader checking one file will not notice |
+| `herc_inf.dat` `+0x06` gives a chassis's hardpoint count | It is what the Herc Construction screen *prints*, and for the Raptor II it prints 4 where the machine the player receives has 5. `Herc_CapacityForType` reads the in-code table at `0046f73a`, and that is the figure the record's `+0x4c` holds and `Hotspots_BuildOverlay` bounds both tabs' mount loops on. The other eight chassis agree, so a reader checking one file will not notice |
 | The 26 bytes at HERC status block `+0x00` are opaque | They are 13 `int16` component conditions, initialized to 100 alongside the other two arrays by `HercStatus_InitAll` (`00411b88`) and averaged with them by `HercStatus_OverallCondition` (`00411bd4`), whose divisor is `13 + 9 + hardpoints`. See [`save-games.md`](save-games.md#the-66-byte-status-block) |
 | `hercs.dat`'s fifth entry is a wrecked Razor | Its `+0x4a` of 0 is build progress, not condition. The status block a `gam\*.dat` chassis carries is never read from the file and stays at the constructor's uniform 100 |
 | The `+0x4a`/`+0x78` pair is repair state | `Herc_Order` sets them when a chassis is *bought*, from `herc_inf.dat` `+0x0c`, and `Herc_BuildTick` drives them one mission at a time until delivery. Repair works on the status block instead |
@@ -296,4 +296,4 @@ The four `int32` are an inclusive rect and not a position and a size: the 16 byt
 ## Open
 
 - **Open:** whether anything loads `trn_herc.dat`. No reader is named in either executable's string data, but a runtime-assembled path cannot be ruled out from that alone.
-- **Open:** what `herc_inf.dat`'s `+0x0a` field holds. No consumer has been identified for it.
+- **Open:** what `herc_inf.dat`'s `+0x0a` field holds. No reader found by `es2_xref.py --binary VSHELL 00483b5e` or by a scan of VSHELL's code for any dword addressing the table (`00483b40`–`00483bf0`): every other field is addressed directly, and the base `00483b54` only by `LoadHercInfDat`'s bulk read and `Herc_GrantUnlocks`'s `+0x00` test. DBSIM does not name `herc_inf.dat`.

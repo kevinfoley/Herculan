@@ -29,6 +29,16 @@ namespace Herculan.Engine.Render;
 /// window clears the band and restores the palette, then re-arms only if no shake was running, which
 /// it was. So the timer is extended while the view goes still for the rest of it. That is the
 /// original's own behaviour, not a simplification; see KNOWN_ISSUES.md.</para>
+///
+/// <para><b>What the flash does after a restart depends on its phase</b>, as in the original: the
+/// restore leaves the toggle's swap partner alone, so a restart on a theater phase carries on
+/// flashing and one on an impact phase leaves the theater palette in both slots, and the flash stops.
+/// <see cref="FlashSurvivesRestart"/> is the
+/// <see cref="Settings.TweakSettingDefinitions.FlashThroughSecondHit"/> tweak, under which the flash
+/// carries on from either phase.</para>
+///
+/// <para>The original's view slides can also re-seed a disarmed band, which this class has no
+/// counterpart for. See docs/formats/cockpit-canopy-palette.md, "The damage shake".</para>
 /// </summary>
 public sealed class CockpitHitShake {
 	/// <summary>
@@ -69,6 +79,13 @@ public sealed class CockpitHitShake {
 	private bool _toggleArmed;
 	private double _toggleRemainingSeconds;
 
+	/// <summary>
+	/// Whether the palette <c>Palette_ToggleImpact</c> would swap in is the impact one — the saved slot
+	/// at <c>004cfd8c</c>, which the arm fills with the palette it replaces and the restore never
+	/// touches.
+	/// </summary>
+	private bool _swapPartnerIsImpact;
+
 	private bool _banded;
 	private int _offset;
 
@@ -90,6 +107,14 @@ public sealed class CockpitHitShake {
 	/// timer and not the shake's.
 	/// </summary>
 	public bool FlashActive { get; private set; }
+
+	/// <summary>
+	/// The <see cref="Settings.TweakSettingDefinitions.FlashThroughSecondHit"/> tweak, which the host
+	/// sets: a restart over a running shake hands the toggle the impact palette whatever phase it
+	/// landed on, so the flash carries on for the rest of the window. Off, the restart leaves the swap
+	/// partner where the toggles left it, as the original does.
+	/// </summary>
+	public bool FlashSurvivesRestart { get; set; }
 
 	/// <summary>
 	/// Advances the shake and starts one on each new cockpit hit. <paramref name="cockpitHits"/> is
@@ -114,6 +139,10 @@ public sealed class CockpitHitShake {
 		// timer still armed, so it does not seed a new band. The offset stays where the clear put it.
 		if (_running) {
 			FlashActive = false;
+			if (FlashSurvivesRestart) {
+				_swapPartnerIsImpact = true;
+			}
+
 			ClearBand();
 		}
 
@@ -123,6 +152,10 @@ public sealed class CockpitHitShake {
 		if (!_toggleArmed) {
 			_toggleArmed = true;
 			_toggleRemainingSeconds = NextToggleSeconds();
+
+			// Palette_ActivateImpact (0042ea44): the impact palette in, and the one it replaced saved
+			// as the toggle's partner.
+			_swapPartnerIsImpact = FlashActive;
 			FlashActive = true;
 			SetBand();
 		}
@@ -143,7 +176,9 @@ public sealed class CockpitHitShake {
 
 			_toggleRemainingSeconds -= deltaSeconds;
 			if (_toggleRemainingSeconds <= 0) {
-				FlashActive = !FlashActive;
+				// Palette_ToggleImpact (0042ea70) swaps the active palette with its partner, which after
+				// a restart on an impact phase is the theater palette too.
+				(FlashActive, _swapPartnerIsImpact) = (_swapPartnerIsImpact, FlashActive);
 				_toggleRemainingSeconds = NextToggleSeconds();
 			}
 
@@ -161,9 +196,14 @@ public sealed class CockpitHitShake {
 
 	/// <summary>
 	/// Drops a shake in progress and everything it put in place — the original's view mode 4, which
-	/// clears the end tick outright so leaving the cockpit ends a shake rather than pausing it.
+	/// clears the end tick outright so leaving the cockpit ends a shake rather than pausing it. The
+	/// host calls it every frame an outside view is up, in place of <see cref="Update"/>.
+	/// <paramref name="cockpitHits"/> is the same count <see cref="Update"/> takes: it is taken as
+	/// seen, so a hit that lands while outside never shakes the cockpit on the way back in, as
+	/// <c>Cockpit_StartHitShake</c> returns at once in view mode 4.
 	/// </summary>
-	public void Reset() {
+	public void Reset(int cockpitHits) {
+		_lastHits = cockpitHits;
 		_running = false;
 		_toggleArmed = false;
 		FlashActive = false;

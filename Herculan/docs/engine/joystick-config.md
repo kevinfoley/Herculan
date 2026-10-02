@@ -1,6 +1,6 @@
 # Joystick configuration: `data\herculan-joystick.cfg`
 
-How HERCULAN maps a modern stick onto the retail game's joystick bindings. What the retail bindings are, and how DBSIM applies them, is [`formats/joystick-input.md`](../formats/joystick-input.md). The flags named here are in [`host-flags.md`](host-flags.md#settings-and-input-devices).
+How HERCULAN maps a modern stick onto the retail game's joystick bindings. What the retail bindings are, and how DBSIM applies them, is [`formats/joystick-input.md`](../formats/joystick-input.md). The flags named here are in [`herculan-command-line.md`](herculan-command-line.md#settings-and-input-devices).
 
 ## Why the file exists
 

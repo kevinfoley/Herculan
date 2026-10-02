@@ -1,8 +1,8 @@
 # ES2GUIDE.HLP — the on-line manual
 
-The "On-Line Manual" is a Windows Help file, one per language: `ENGLISH\ES2GUIDE.HLP`, `FRENCH\ES2GUIDE.HLP` and `GERMAN\ES2GUIDE.HLP`, 8.6 to 8.7 MB each. Both executables open it the same way: DBSIM's `?` key and right-hand system button reach `OnlineManual_Raise` (`0045f054`) and `Help_Show` (`004668c0`), and VSHELL's `ONLINE MANUAL` reaches `004317ea` (see [screen-layout.md](../shell/screen-layout.md#the-main-menu)). Each calls `WinHelpA(hwnd, path, HELP_CONTENTS, 0)` and nothing else: no context id, no keyword, no macro. Everything below the contents topic is reached from inside the help file.
+The "On-Line Manual" is a Windows Help file, one per language: `ENGLISH\ES2GUIDE.HLP`, `FRENCH\ES2GUIDE.HLP` and `GERMAN\ES2GUIDE.HLP`, 8.6 MiB each; v1.0 and the GoldGames build ship the same three files byte for byte. Both executables open it the same way: DBSIM's `?` key and right-hand system button reach `OnlineManual_Raise` (`0045f054`) and `Help_Show` (`004668c0`), and VSHELL's `ONLINE MANUAL` reaches `OnlineManual_Open` (VSHELL `004317ea`) and `Shell_OpenHelp` (VSHELL `004073a2`) (see [screen-layout.md](../shell/screen-layout.md#the-main-menu)). Each calls `WinHelpA(hwnd, path, HELP_CONTENTS, 0)`, the one `WinHelpA` call in its executable: no context id, no keyword, no macro. Everything below the contents topic is reached from inside the help file.
 
-This doc describes the format as these three files use it. They were compiled by the Windows 95 help compiler (`|SYSTEM` minor version 33) and share one feature set; WinHelp features they do not use are listed under [Not in the corpus](#not-in-the-corpus).
+This doc describes the format as these three files use it. They were compiled by the Windows 95 help compiler (`|SYSTEM` minor version 33) and share one feature set; WinHelp features they do not use are listed under [Not in the corpus](#not-in-the-corpus). The GoldGames build also carries Windows 3.1 versions under `VER31\`, about 3 MB each, from the older compiler (`|SYSTEM` minor version 21, LZ77-compressed topics, 35 of the pictures stored under file names such as `256_OUTL.BMP`, and no `Readme` button); this doc does not describe them.
 
 Multi-byte fields are little-endian. Text is Windows-1252.
 
@@ -21,7 +21,7 @@ The file is a set of named internal files. Each starts with a 9-byte header — 
 
 ### B+ trees
 
-The internal directory and four of the internal files are B+ trees. The tree starts with a 38-byte header:
+The internal directory and three of the internal files are B+ trees. The tree starts with a 38-byte header:
 
 | Offset | Size | Field |
 |---|---|---|
@@ -70,7 +70,7 @@ A 12-byte header — magic `0x036C` (2), minor version 33 (2), major version 1 (
 | 1 | title: `EarthSiege 2 On-Line Manual`, `EarthSiege 2 Manuel En Ligne`, `EarthSiege 2 On-Line Handbuch` |
 | 2 | copyright: `EarthSiege 2 (c)1996 Sierra On-Line, Inc.` |
 | 3 | topic offset of the contents topic: 0 |
-| 4 | a startup macro; five of them, see [Macros](#macros) |
+| 4 | a startup macro; six of them, see [Macros](#macros) |
 | 6 | a window definition; three of them, below |
 | 9 | 10 bytes ending in language id `0x0409` (in all three files) |
 | 11 | 8 bytes, `00 00 02 00 00 00 00 00` |
@@ -109,7 +109,7 @@ Two kinds of position point into the topic text.
 
 A **topic position** names a byte: block number × `0x4000` + offset within the block, counting the 12-byte header. Topic links point at each other with these, and so do the block headers and the topic header's region fields. The stream offset is block × 4084 + (offset − 12).
 
-A **topic offset** names a character: block number × `0x8000` + a character count. The block is the one the record starts in, and the count is the sum of the *text length* fields of the paragraph and table records that start earlier in that block; topic headers count zero. `|CONTEXT`, `|TTLBTREE`, `|KWDATA`, the browse fields and `|SYSTEM` type 3 use topic offsets. Every `|CONTEXT` and `|TTLBTREE` target and every browse field lands on a topic header computed this way. Keyword targets land inside topics as well, often in the middle of a record.
+A **topic offset** names a character: block number × `0x8000` + a character count. The block is the one the record starts in, and the count is the sum of the *text length* fields of the paragraph and table records that start earlier in that block; topic headers count zero. `|CONTEXT`, `|TTLBTREE`, `|KWDATA`, the browse fields and `|SYSTEM` type 3 use topic offsets. Every `|TTLBTREE` target and every browse field lands on a topic header computed this way, and so does every `|CONTEXT` target but one: French topic 74's header is the last link in block 43 and its text starts block 44, and `|CONTEXT` points at that first paragraph, `0x160000`, where the header computes to `0x158A7C`. Both offsets fall inside topic 74. Keyword targets land inside topics as well, often in the middle of a record.
 
 ### Topic links
 
@@ -124,7 +124,7 @@ A **topic offset** names a character: block number × `0x8000` + a character cou
 
 The first data part follows the 21 bytes, the second follows that. The chain starts at block 0's first-link field.
 
-The record types are 2, a topic header; `0x20`, a paragraph run; and `0x23`, a table. The corpus has 103 topics and, across the three languages, 1942 paragraph and table records.
+The record types are 2, a topic header; `0x20`, a paragraph run; and `0x23`, a table. Each file has 103 topics, and the three together have 1942 paragraph and table records.
 
 ### Topic header
 
@@ -169,7 +169,7 @@ The paragraph format is a compressed signed long (always 0 in a paragraph run), 
 | `0x0400` | right-aligned | none |
 | `0x0800` | centred | none |
 
-The format applies to every paragraph the run's commands contain. The values in the corpus: space above 4 or 6, space below 6, 8 or 12, left indent 108 or 504, first-line indent −35, −107 or −503, tab stops at 0, 108 or 504. The unit is [Open](#open).
+The format applies to every paragraph the run's commands contain. The values in the corpus: space above 4 or 6, space below 6, 8 or 12, left indent 108 or 504, first-line indent −35, −107 or −503, tab stops at 0, 108 or 504, except that the one paragraph indented 108 / −107 in English and German is indented 180 / −179 with a tab stop at 180 in French. The unit is [Open](#open).
 
 The second data part is the text: NUL-terminated strings, one before each command, the `0xFF` included. A string may be empty.
 
@@ -189,9 +189,9 @@ The second data part is the text: NUL-terminated strings, one before each comman
 | `0xEF` | jump hotspot into a window, no font change | length (2), then type 1 (1), context hash (4), window number (1) |
 | `0xFF` | end of commands | none |
 
-A hotspot runs from its opening command to the next `0x89`. "No font change" means the hotspot is drawn in the font the text already has, and these files style every link through the font: link text is a bold underlined cyan descriptor. The window number in `0xEF` indexes the `|SYSTEM` window definitions in order. The corpus uses 0, `main`, and 2, `overview`; the `overview` targets are the 31 untitled topics, and no jump opens `useguide`.
+A hotspot runs from its opening command to the next `0x89`. "No font change" means the hotspot is drawn in the font the text already has, and these files style every link through the font: link text is a bold underlined cyan descriptor. The window number in `0xEF` indexes the `|SYSTEM` window definitions in order. The corpus uses 0, `main`, and 2, `overview`; in each file 31 jumps open `overview`, at five untitled topics, and no jump opens `useguide`. Each file has 46 untitled topics: those five, the 39 pop-ups that [picture hotspots](#hotspots) open, and two more.
 
-The picture commands share one layout: a type byte, the picture data's size as a compressed signed long, a hotspot count as a compressed unsigned short when the type is `0x22`, then the picture data. Type `0x22` and type 3 data are 4 bytes, a zero word and the picture number: `|bm` plus that number in decimal. Type 5 is an [embedded button](#embedded-buttons).
+The picture commands share one layout: a type byte, the picture data's size as a compressed signed long, a hotspot count as a compressed unsigned short when the type is `0x22`, then the picture data. Every picture command in the corpus is type `0x22` or type 5. Type `0x22` data is 4 bytes, a zero word and the picture number: `|bm` plus that number in decimal. Type 5 is an [embedded button](#embedded-buttons).
 
 ### Tables
 
@@ -205,7 +205,7 @@ The first data part of a `0x23` record starts like a paragraph run's — format 
 
 and then cells, each a column number (2), a word and a byte (3), a paragraph format and commands up to `0xFF`. Column number `-1` ends the record. The cell's paragraph format begins with a compressed signed long that is often non-zero, where a paragraph run's is always zero. A column number may repeat: two cells in a row for column 0 are two paragraphs in that column.
 
-A `0x23` record is one row; consecutive records make a taller table. Every row has 2 or 3 columns, and the second value is 1 for the first column and 11 for the others in every row. English widths are 30 + 828 and 31 + 828 (55 rows, holding the heading banners), 174 + 349, 210 + 637, 210 + 313, 318 + 565 (the contents topic) and 271 + 277 + 277; the translations retune the narrower pairs.
+A `0x23` record is one row; consecutive records make a taller table. Every row has 2 or 3 columns, and the second value is 1 for the first column and 11 for the others in every row. English widths are 30 + 828 and 31 + 828 (55 rows, holding the heading banners), 174 + 349, 210 + 637, 210 + 313, 318 + 565 (the contents topic) and 271 + 277 + 277. The translations keep the banner, contents and three-column widths and change the others, except that German keeps 210 + 637.
 
 ### Embedded buttons
 
@@ -231,7 +231,7 @@ Face names are 32-byte NUL-padded strings: `MS Sans Serif`, `Tms Rmn`, `Symbol`,
 | 5 | 3 | text colour, R G B |
 | 8 | 3 | background colour, `01 01 00` in every descriptor |
 
-The text uses Arial and Times New Roman only, in white, silver (`#C0C0C0`), cyan for links, and a few others for headings and the HERC data sheets. Text colour `01 01 00` appears on spaces and punctuation only.
+The text uses Arial and Times New Roman only, in white, silver (`#C0C0C0`), cyan for links, and a few others for headings and the HERC data sheets. Text colour `01 01 00` appears on spaces and punctuation, and on one word, `(DONE)` in the English `Controls` topic.
 
 ## Context hashes
 
@@ -264,9 +264,9 @@ The 64 context strings each file spells out — the targets of `JI` in buttons a
 | `CB(`btn_close',`Close',`CW(...)')` | `\|CF1`, `\|CF2` | a `Close` button in each secondary window |
 | `JI(`',`context')` | buttons, menu items | jump to a context string in this file |
 | `JK(`',`keyword')` | `0xCC` hotspots | jump to the topic a keyword names |
-| `SH(`Notepad',`esreadme.txt',-1)` | `0xCC` hotspots, 9 of them | the `Readme` action again |
+| `SH(`Notepad',`esreadme.txt',-1)` | `0xCC` hotspots, three in each file | the `Readme` action again |
 
-The menu and button labels are translated; the macros' arguments are not. `SH` is `ShortCut`: switch to a running Notepad, else start `esreadme.txt`. No retail install has that file; see [KNOWN_ISSUES](../../KNOWN_ISSUES.md).
+The menu and button labels are translated; the macros' arguments are not. `SH` is `ShortCut`: switch to a running Notepad, else start `esreadme.txt`. The installer is what creates that file: `SIERRA.INF` runs `BATCH.EXE` with the source and install directories and the language letter, and v1.0's `BATCH.EXE` copies `<install>\<language>\README.WRI` byte for byte to `<install>\esreadme.txt`, a Write document under a `.txt` name. v1.0's three `README.WRI` are the same 37,120-byte English document: its text is hard-wrapped at about 72 columns with CRLF line ends, holds no other control character than tab, and is followed by its formatting. The GoldGames build ships the same help files, but its `BATCH.EXE` names the copy `readme.txt`, and nothing else in that build is named `esreadme.txt`; see [KNOWN_ISSUES](../../KNOWN_ISSUES.md).
 
 ## Pictures
 
@@ -305,7 +305,7 @@ then, per hotspot, two NUL-terminated strings: a name (`Hotspot 1` …) and the 
 
 ## Not in the corpus
 
-WinHelp features these files do not use, so nothing above describes them: LZ77-compressed topic blocks, the `|Phrases` and `|PhrIndex`/`|PhrImage` phrase tables, the version 3.0 topic layout, `|FTS` full-text search, `.CNT` contents files, pictures of type 5 (device-dependent bitmaps) or 8 (metafiles), palettes, LZ77-packed pictures, more than one picture per `|bm` file, left-margin pictures (`0x87`), the hotspot commands that change the font (`0xE2`, `0xE3`) or open a pop-up (`0xE2`, `0xE6`) from text, jumps into another help file (`0xEA`, `0xEB`, `0xEE`), macro hotspots with a font change (`0xC8`), non-breaking spaces and hyphens (`0x8B`, `0x8C`), paragraph borders, and decimal or right tab stops.
+WinHelp features these files do not use, so nothing above describes them: LZ77-compressed topic blocks, the `|Phrases` and `|PhrIndex`/`|PhrImage` phrase tables, the version 3.0 topic layout, `|FTS` full-text search, `.CNT` contents files, pictures of type 5 (device-dependent bitmaps) or 8 (metafiles), palettes, LZ77-packed pictures, more than one picture per `|bm` file, picture commands of type 3, left-margin pictures (`0x87`), the hotspot commands that change the font (`0xE2`, `0xE3`) or open a pop-up (`0xE2`, `0xE6`) from text, jumps into another help file (`0xEA`, `0xEB`, `0xEE`), macro hotspots with a font change (`0xC8`), non-breaking spaces and hyphens (`0x8B`, `0x8C`), paragraph borders, and decimal or right tab stops.
 
 ## Open
 
@@ -315,6 +315,7 @@ WinHelp features these files do not use, so nothing above describes them: LZ77-c
 - **Open:** the third word of an embedded button.
 - **Open:** a hotspot's bytes 1–2, always 4 and 0.
 - **Open:** the fifth word of a window definition, and flag bits `0x0800` (set on `useguide` only) and `0x1000`.
+- **Open:** font attribute bits `0x10` (set on two descriptors in each file) and `0x40` (on three).
 - **Open:** the font descriptors' background colour, `01 01 00` throughout, and whether the text colour `01 01 00` is a literal colour or a marker for the default.
 - **Open:** the 4-byte compressed signed long's bias.
 - **Open:** the context hash's values for characters other than letters, digits and `_`.

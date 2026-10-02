@@ -198,6 +198,10 @@ uniform float uPaletteRampRows;
 // The row a flat solid face reads: ShadeRamp.UnlitShade's row in slice 0, the fixed shade
 // TSSolidPoly_Render passes. See PaletteRampTable.UnlitRow.
 uniform float uPaletteRampUnlitRow;
+// The row an untextured terrain cell reads, before its depth slice: TerrainMeshBuilder.UntexturedRowShade's
+// row in slice 0. See PaletteRampTable.GroundRow.
+uniform float uPaletteRampGroundRow;
+uniform bool uGroundFill;
 uniform float uDepthSlices;
 uniform float uFogDepthBias;
 uniform bool uFullbright;
@@ -368,6 +372,15 @@ void main() {
 
 		lit = texture(uShadeRampTable,
 			vec2((floor(shade) + 0.5) / 256.0, (row + 0.5) / uShadeRampRows)).rgb;
+	} else if (uGroundFill && uPaletteRampEnabled && vSolidPaletteIndex >= 0.0) {
+		// A terrain cell drawn without its texture, Terrain_FillCellUntextured's flat fill: the
+		// palette index the cell's material ramp 2 reaches at its baked shade, read through the ramp
+		// row for a fixed shade of 0x4b plus the depth slice the cell's fade installed. The mesh
+		// carries the index; see TerrainMeshBuilder.
+		float row = uPaletteRampGroundRow + slice * uShadeLevels;
+		lit = texture(uPaletteRamp,
+			vec2((floor(vSolidPaletteIndex + 0.5) + 0.5) / 256.0, (row + 0.5) / uPaletteRampRows)).rgb;
+		rampFogged = true;
 	} else if (uPaletteRampEnabled && vSolidPaletteIndex >= 0.0) {
 		// A plain TSSolidPoly. Its surface value is a palette INDEX, and the original resolves it
 		// as rampRow(UnlitShade)[index] — one fixed row of the same table a lit textured texel is

@@ -233,10 +233,12 @@ public sealed class HddCommandScreen {
 	///
 	/// <para><b>The point and subject are the mission's one order record</b> (<c>DAT_004d0458</c>),
 	/// which nothing clears: <c>HddCommandScreen_FillOrderRecord</c> (<c>0044db24</c>) writes only the
-	/// half the pick names, and an order with no pick writes neither. So a DEFEND POSITION on bare
-	/// ground carries the unit of whichever earlier order last named one, and the receiver guards that
-	/// unit. With <see cref="TweakSettingDefinitions.FixDefendPositionOrder"/> on, each order is built
-	/// fresh instead, and a unit pick also fills the point with the unit's position. See
+	/// half the pick names. So a DEFEND POSITION on bare ground carries the unit the record last held,
+	/// and the receiver guards that unit. With the tweak off, an order with no pick writes neither half
+	/// here; the original writes that pilot's last pick back into the record again, which only changes
+	/// which unit a later bare-ground DEFEND POSITION inherits. With
+	/// <see cref="TweakSettingDefinitions.FixDefendPositionOrder"/> on, each order is built fresh
+	/// instead, and a unit pick also fills the point with the unit's position. See
 	/// docs/simulation/ai-squadmates.md, "The order record — 22 bytes".</para>
 	/// </summary>
 	public bool Transmit() {

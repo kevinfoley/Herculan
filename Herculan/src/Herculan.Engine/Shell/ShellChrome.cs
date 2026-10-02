@@ -143,7 +143,7 @@ public static class ShellChrome {
 	/// <c>ESAlert_Ctor</c> (<c>0040afe0</c>).
 	/// </param>
 	/// <param name="headerChrome">
-	/// The widget's <c>+0x65</c>, set by the constructor and never cleared: whether to draw the hatch,
+	/// The widget's <c>+0x65</c>, set by the constructor and cleared on seven panels by their builders right after it: whether to draw the hatch,
 	/// the title plate and the header's own side edges. Without it the strip is a flat band.
 	/// </param>
 	/// <param name="plateFirst">The widget's <c>+0x6d</c> — where the title's clear plate starts.</param>

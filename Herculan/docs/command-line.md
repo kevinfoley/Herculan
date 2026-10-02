@@ -1,6 +1,6 @@
 # Command lines: ES.EXE, VSHELL and DBSIM
 
-How the three retail executables start one another and what every switch each one parses does. The player-facing summary is [`launch-options.md`](launch-options.md); HERCULAN's own flags are in [`engine/host-flags.md`](engine/host-flags.md). Addresses name their binary; `ES.EXE` is not in the Ghidra project, and its 2.5 KB of code was read whole from a direct disassembly. <!-- doc-lint: ok -->
+How the three retail executables start one another and what every switch each one parses does. The player-facing summary is [`launch-options.md`](launch-options.md); HERCULAN's own flags are in [`engine/herculan-command-line.md`](engine/herculan-command-line.md). Addresses name their binary; `ES.EXE` is not in the Ghidra project, and its 2.5 KB of code was read whole from a direct disassembly. <!-- doc-lint: ok -->
 
 ## ES.EXE — the supervisor
 
@@ -69,7 +69,7 @@ DBSIM returns its code from `WinMain` out of `004d283c`, written in `Sim_Shutdow
 | `-l` | `00482280` = 0 | Read only by the unreferenced function at `0042f2e8`; no effect |
 | `-v`, `-?` | `00482272` = 0 | `printf` the version or the usage text, turn sound off, and call `Shell_ShutdownDevicesAndSound` (`004092dc`). The parse runs before `Shell_Main` (`00401525`) builds `devices.cpp`'s viewport (`Devices_Init`, `0040db38`) and the sound manager, so that call releases nothing, and the parse goes on to the next argument |
 
-`-d`, tested separately in `FUN_00406507` (VSHELL), clears `0046d740`, which the same function overwrites from `ShellOption_DisplayMode` before anything reads it.
+`-d`, tested separately in VSHELL's `Shell_WinMain` (`00406507`), clears `0046d740`, which the same function overwrites from `ShellOption_DisplayMode` before anything reads it.
 
 ### `-@`: the mission picker
 
@@ -101,7 +101,7 @@ Two parsers. `FUN_0045e6b0` (DBSIM) runs first from `WinMain`, after `VideoMode_
 | `-T<n>`, `-V<n>`, `-W<n>` | block `+0x5a`, `+0x56`, `+0x58` | `Main_StaticInit` sets all three to -1 |
 | `-a` | block `+0x7d` = 0 | `Main_StaticInit` sets it to 1 |
 | `-c` | block `+0x72` = 1 | |
-| `-X<n>` | `004d283c` | Zeroed by `FUN_0045f144` before `Sim_ParseCommandLine` runs; no effect |
+| `-X<n>` | `004d283c` | Zeroed by `Sim_Run` (`0045f144`) before `Sim_ParseCommandLine` runs; no effect |
 
 "Block" is the `0xc3`-byte global block at `004d2540` ([`formats/cockpit-views.md`](formats/cockpit-views.md#video-modes)). For `-T`, `-V`, `-W`, `-a` and `-c`, three searches find only the stores above ([Open](#open)): `es2_xref.py` on the five addresses, which finds one dword each in the whole PE, the parser's own; every absolute operand from `004d2590` to `004d25bf`, which also rules out a wider load overlapping one of these fields; and the displacements off the base in the fifteen register holders and the three blit helpers it is pushed to, none of which spills, copies or rebases it. The same searches find the reads of the neighbouring `+0x54`, `+0x7b` and `+0x7c`. No `.EXE` on the disc passes any of the five: `ES.EXE`'s simulator list above has none of them, and VSHELL's unreferenced list below has none either.
 

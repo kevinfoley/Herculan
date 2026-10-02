@@ -90,13 +90,6 @@ public sealed partial class MechObject {
 	private const int CockpitShakeDamageLimit = 100;
 
 	/// <summary>
-	/// Whether the reconstructed <c>DAMAGE LEVEL CRITICAL</c> announcement is raised. Always false:
-	/// retail cannot reach that line, so raising it is a divergence, and it waits on the
-	/// Tweaks menu to become the player's choice. See <see cref="ApplyDirectFireDamage"/>.
-	/// </summary>
-	private const bool FixDamageLevelCriticalPost = false;
-
-	/// <summary>
 	/// <c>Mech_PlayerFireTick</c> (<c>00415608</c>), the player's own fire path, called once a frame from
 	/// <c>Sim_PollPlayerInput</c> with the input device struct.
 	///
@@ -117,7 +110,9 @@ public sealed partial class MechObject {
 	/// docs/simulation/ai-navigation.md.</para>
 	/// </summary>
 	private void FireTick(SimWorld world) {
-		bool fired = Weapons.FireTick(this, world, Controls.Fire);
+		// A round the player is flying clears the device's trigger byte before this reads it.
+		bool trigger = Controls.Fire && !(LocallyPiloted && world.PlayerTriggerCleared);
+		bool fired = Weapons.FireTick(this, world, trigger);
 
 		if (!IsPlayer) {
 			return;
@@ -594,7 +589,7 @@ public sealed partial class MechObject {
 		// machine, when a shot lands with less than 500 points of charge left across both facings.
 		// It plays alert 0x15 here and is released again in PowerTick once the array rebuilds past
 		// 1500 - and it is what the MFD status screen reads for its SHIELDS DN condition, which is
-		// why a target never shows that state.
+		// why a HERC target never shows that state.
 		if (LocallyPiloted && !ShieldsDownAlert && Shields.Total < ShieldsDownAlertCharge) {
 			ShieldsDownAlert = true;
 			world.Sounds?.Say(SystemMessages.ShieldsCritical);
@@ -714,8 +709,8 @@ public sealed partial class MechObject {
 	/// retail <c>PROJ.DAT</c> record can make the write negative, so the line is unreachable — see
 	/// docs/formats/cockpit-messages.md, "Posters". The cockpit jolt that shares its gate is a
 	/// separate effect and is raised, through <see cref="CockpitHits"/>. What the test reads as
-	/// having been meant is implemented beside that jolt under
-	/// <see cref="FixDamageLevelCriticalPost"/>.</para>
+	/// having been meant is implemented beside that jolt under the
+	/// <see cref="TweakSettingDefinitions.CriticalDamageMessage"/> tweak.</para>
 	/// </summary>
 	private void ApplyDirectFireDamage(SimWorld world, short componentIndex, WeaponShot shot, Vec3i hitPoint) {
 		if (_damage == null) {

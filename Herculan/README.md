@@ -1,4 +1,4 @@
-# HercWorks MDK — C# / WinForms port (in progress)
+# HercWorks MDK — C# / WinForms port (beta)
 
 Porting [herc-works-mdk](https://github.com/Subject9x/herc-works-mdk) (Earthsiege 2
 modding toolkit, MIT licensed) from Java to C#/.NET 8 + WinForms. Original project is

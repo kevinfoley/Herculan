@@ -706,7 +706,7 @@
           "type": "short",
           "name": "throttle",
           "confidence": "high",
-          "description": "+0x1e -- the flight throttle, a separate field from a walker's mech+0x290. On a mech, Razor_ApplyFlightInput copies it onto +0x290 and sets the +0x93 dirty flag, and Player_PerFrameCockpitUpdate writes both under the type record's flyer flag -- the only path by which the cockpit slider reaches a RAZOR. Flyer_Constructor seeds a flyer's with 0x200 and nothing changes it."
+          "description": "+0x1e -- the flight throttle, a separate field from a walker's mech+0x290. On a mech, Razor_ApplyFlightInput copies it onto +0x290 and sets the +0x93 dirty flag, and Player_PerFrameCockpitUpdate writes both under the type record's flyer flag -- the only path by which the cockpit slider reaches a RAZOR. Flyer_Constructor seeds a flyer's with 0x200; only FlightModel_Step's position branch, taken under the player's RAZOR THROTTLE binding 2 with a throttle-capable stick, changes it (to 0)."
         },
         {
           "offset": 32,
@@ -1335,7 +1335,7 @@
           "type": "short",
           "name": "fireGate",
           "confidence": "high",
-          "description": "+0x1f4 -- Flyer_AttackRun fires only while |value| < 10. Read once and written nowhere in the image, so the gate always passes."
+          "description": "+0x1f4 -- Flyer_AttackRun fires only while |value| < 10. Read once; no writer known (es2_fieldscan.py, decompile grep) and the pool is zero-filled, so the gate passes."
         },
         {
           "offset": 504,
@@ -1343,7 +1343,7 @@
           "type": "short",
           "name": "leaderBankGain",
           "confidence": "high",
-          "description": "+0x1f8 -- scales the leader term in Flyer_SteerAndFly's bank command. Read once and written nowhere in the image, so the term contributes nothing."
+          "description": "+0x1f8 -- scales the leader term in Flyer_SteerAndFly's bank command. Read once; no writer known (es2_fieldscan.py, decompile grep) and the pool is zero-filled, so the term contributes nothing."
         },
         {
           "offset": 506,
@@ -1375,7 +1375,7 @@
           "type": "short",
           "name": "formationThrottle",
           "confidence": "high",
-          "description": "+0x21c -- what Flyer_FormationThrottle computes from the station error and the leader's speed. Nothing in the image reads it."
+          "description": "+0x21c -- what Flyer_FormationThrottle computes from the station error and the leader's speed. Read only by Flyer_FormationThrottle itself, as the previous value it accumulates onto; no other reader known."
         },
         {
           "offset": 542,

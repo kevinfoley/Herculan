@@ -38,9 +38,9 @@ public sealed partial class MechObject {
 					structure);
 				return;
 
-			// Everything else takes its own aim offset over its position — the original's vtable +0x30,
-			// which is the type record's own pair. No engine class answers TargetClass.Flyer yet, so in
-			// practice this is the ground vehicle branch.
+			// Everything else takes its own aim offset over its position — the original's vtable +0x30:
+			// a ground vehicle's BASES.DAT +0x2c height (Base_GetAimPoint), zero for a flyer. No engine
+			// class answers TargetClass.Flyer yet, so in practice this is the ground vehicle branch.
 			default:
 				FireAtPoint(world, target.AimPoint, aspect, target);
 				return;
@@ -68,8 +68,8 @@ public sealed partial class MechObject {
 			return;
 		}
 
-		// The one weapon range in the AI measured in three dimensions; every navigation range is the
-		// ground-plane form.
+		// The one weapon range in the AI measured in three dimensions; every range a navigation steer
+		// is computed from is the ground-plane form.
 		int range = Position.ApproxDistanceTo(target.Position);
 
 		var point = AimComponent >= 0
@@ -148,12 +148,14 @@ public sealed partial class MechObject {
 	/// <c>[0, 0x400] → [150, −100]</c>: a calm machine needs a real reason to shoot and a frightened
 	/// one will fire anything it has.</item>
 	/// <item><b>The score is damage against cost</b>, and the <see cref="ShieldBreakBonus"/> is what
-	/// makes anything expensive worth using — a launcher's cost swamps its damage credit except on the
-	/// shot that will break the target's shield outright.</item>
-	/// <item><b>The jitter is larger than the signal.</b> Two draws below 35 multiplied together
-	/// average 289 against deterministic terms in the tens, so the pick is mostly noise with a
-	/// bias.</item>
+	/// pays for a missile: off the shield-breaking shot an <c>MSL</c> launcher scores well below
+	/// zero and fires only when the jitter rescues it.</item>
+	/// <item><b>The jitter is as large as the signal.</b> Two draws below 35 multiplied together
+	/// average 289, so the pick is mostly noise with a bias.</item>
 	/// </list>
+	///
+	/// <para>The retail figures behind both are in docs/simulation/ai-weapons.md
+	/// ("Choosing a weapon").</para>
 	/// </summary>
 	private WeaponMount? ChooseWeapon(SimWorld world, short aspect, int range, SimObject target) {
 		int best = SimMath.MapRange(Fear, 0, FearFloorSpan, WeaponScoreFloor, WeaponScoreFloorAfraid);
@@ -255,9 +257,9 @@ public sealed partial class MechObject {
 
 
 	/// <summary>
-	/// <c>mech+0xb5</c> — skip the next weapon selection. Its only writer is the seeker of an
-	/// electro-optical round in flight, once per tick it steers, so a machine that has one in the air
-	/// fires nothing else while it flies. See docs/simulation/rockets.md.
+	/// <c>mech+0xb5</c> — skip the next weapon selection. Set by the seeker of an electro-optical
+	/// round in flight, once per tick it steers, so a machine that has one in the air fires nothing
+	/// else while it flies. See docs/simulation/rockets.md.
 	/// </summary>
 	public bool WeaponSelectionSuppressed { get; set; }
 
@@ -320,8 +322,8 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// <c>AiAimScatterByDifficulty</c> (<c>0049a30c</c>) — how far a Cybrid machine's aim is thrown off, by
-	/// <see cref="SimWorld.Difficulty"/>. The enemy shoots straighter the harder the game is set, and
-	/// a machine in the player's own squad is never perturbed at all.
+	/// <see cref="SimWorld.Difficulty"/>, for any group whose side is not 0. The enemy shoots
+	/// straighter the harder the game is set, and no machine on the human side is perturbed at all.
 	/// </summary>
 	public static readonly short[] AiAimScatter = { 1000, 800, 400, 200 };
 }

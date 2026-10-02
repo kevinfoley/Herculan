@@ -31,8 +31,8 @@ public enum MissionOrderSubject {
 /// the layout and docs/simulation/ai-goals.md for what each verb means;
 /// <see cref="Sim.MissionGroup"/> is what runs them.
 ///
-/// <para>The two record fields with no reader — the order's own point and the short beside the verb
-/// — are not carried here.</para>
+/// <para>The two record fields with no reader found — the order's own point and the short beside the
+/// verb (docs/simulation/ai-goals.md#open) — are not carried here.</para>
 /// </summary>
 /// <param name="Verb">
 /// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptOrder.Verb"/>

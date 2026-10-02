@@ -14,7 +14,8 @@ namespace HercWorks.Help.Html;
 /// formats. Font names map through a fixed table, colours and sizes are written from integers, link
 /// targets are topic numbers this class assigned, and pictures are PNGs this class encoded. No path,
 /// URL or file name read from the help file is emitted as a link, and no macro is run: the handful the
-/// manual uses are recognised and mapped to fixed actions, and the rest are left as plain text.</para>
+/// manual uses are recognised and mapped to fixed actions, and the rest are left as plain text. The
+/// readme a caller supplies is likewise HTML-encoded text, one more topic in a monospace block.</para>
 /// </summary>
 public static class HelpHtmlWriter {
 	/// <summary>
@@ -25,19 +26,20 @@ public static class HelpHtmlWriter {
 
 	/// <summary>
 	/// Writes the page. <paramref name="language"/> is the page's <c>lang</c>, a two- or three-letter
-	/// code; anything else is left out.
+	/// code; anything else is left out. <paramref name="readme"/> is the text the help file's <c>SH</c>
+	/// action shows, from <see cref="WriteDocument.ReadText"/>; without it that action shows a note.
 	/// </summary>
-	public static string Write(HelpFile help, string? language = null) {
+	public static string Write(HelpFile help, string? language = null, string? readme = null) {
 		ArgumentNullException.ThrowIfNull(help);
 		bool valid = language is { Length: 2 or 3 } && language.All(char.IsAsciiLetterLower);
-		return new Writer(help, valid ? language : null).Write();
+		return new Writer(help, valid ? language : null, readme).Write();
 	}
 
 	/// <summary>The Content-Security-Policy hash of the page's script, as the page's own policy names it.</summary>
 	internal static string ScriptHash() =>
 		"sha256-" + Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(ManualScript.Text)));
 
-	private sealed class Writer(HelpFile help, string? language) {
+	private sealed class Writer(HelpFile help, string? language, string? readme) {
 		private readonly StringBuilder _html = new();
 		private readonly Dictionary<int, (HelpPicture Picture, string Uri)?> _pictures = [];
 		private readonly Dictionary<string, int> _keywordIndex = new(StringComparer.Ordinal);
@@ -84,6 +86,7 @@ public static class HelpHtmlWriter {
 			}
 
 			WriteIndex();
+			WriteReadme();
 			_html.Append("<script>").Append(ManualScript.Text).Append("</script>\n</body></html>\n");
 			return _html.ToString();
 		}
@@ -129,6 +132,9 @@ public static class HelpHtmlWriter {
 				.Append("table{border-collapse:collapse;table-layout:fixed;}\ntd{vertical-align:top;padding:0;overflow:visible;}\n")
 				.Append(".tab{display:inline-block;text-indent:0;}\n")
 				.Append(".index{padding:8px 16px;color:#c0c0c0;font:10pt Arial,sans-serif;}\n.index a{color:#0ff;display:block;}\n")
+				// The readme has no colours of its own. It takes the light grey of the retail manual's body
+				// text, which sits on the main window's black, so it reads as part of the manual.
+				.Append(".readme{margin:0;font:10pt 'Courier New',Courier,monospace;white-space:pre;color:#c0c0c0;}\n")
 				.Append(".noscript{color:#fff;padding:16px;}\n");
 
 			for (int i = 0; i < help.Fonts.Count; i++) {
@@ -331,6 +337,16 @@ public static class HelpHtmlWriter {
 			}
 		}
 
+		// The readme as one more main-window topic, its line breaks kept and nothing in it made a link.
+		// A newline straight after <pre> is dropped by the HTML parser, so one is written there for it to
+		// drop rather than the text's own.
+		private void WriteReadme() {
+			if (readme != null) {
+				_html.Append("<template id=\"readme\"><div class=\"scroll\"><pre class=\"readme\">\n").Append(Encode(readme))
+					.Append("</pre></div></template>\n");
+			}
+		}
+
 		private string KeywordTarget(int keyword) {
 			var targets = help.Keywords[keyword].Targets;
 			if (targets.Count == 1 && help.Locate(targets[0]) is { } at) {
@@ -345,8 +361,9 @@ public static class HelpHtmlWriter {
 
 		/// <summary>
 		/// The opening tag for a macro, or null when the macro is not one this viewer acts on. JI jumps to
-		/// a context string in this file, JK to a keyword's topics, and CW closes a window; SH, which
-		/// starts a program, becomes a note saying it is not started.
+		/// a context string in this file, JK to a keyword's topics, and CW closes a window. SH, which
+		/// starts a program, opens the readme topic in the main window, or without a readme shows a note
+		/// saying the program is not started.
 		/// </summary>
 		private string? MacroAnchor(string macro, int? inWindow) {
 			if (HelpMacro.Parse(macro) is not [var call]) {
@@ -363,10 +380,12 @@ public static class HelpHtmlWriter {
 				case "CW" or "CloseWindow" when call.Arguments.Count == 1 && WindowIndex(call.Arguments[0]) == inWindow && inWindow != null:
 					return "<a href=\"#\" data-go=\"close\">";
 				case "SH" or "ShortCut" when call.Arguments.Count >= 2:
-					// PLACEHOLDER: retail WinHelp starts the named program. This viewer starts nothing, so the
-					// link says so instead; docs/engine/online-manual.md#open.
-					return "<a href=\"#\" data-go=\"note\" data-note=\"" + Encode("This manual's viewer does not start programs. The help file asks for "
-						+ call.Arguments[1] + ".") + "\">";
+					// Retail WinHelp starts the named program, the readme in every retail file. This viewer
+					// starts nothing: it shows the readme's text, or says why not; docs/engine/online-manual.md#the-page.
+					return readme != null
+						? "<a href=\"#\" data-go=\"readme\" data-w=\"0\">"
+						: "<a href=\"#\" data-go=\"note\" data-note=\"" + Encode("This manual's viewer does not start programs. The help file asks for "
+							+ call.Arguments[1] + ".") + "\">";
 				default:
 					return null;
 			}

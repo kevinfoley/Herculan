@@ -60,7 +60,7 @@ public static class AiTargeting {
 	/// <summary>
 	/// <c>Ai_IsTargetable</c> (<c>00411e80</c>) — whether an AI object may target a candidate at all.
 	/// The tests, in the original's order: not the same side, not destroyed, collapsed or
-	/// invulnerable, currently <see cref="Knows"/>n, not a dead flyer, and with
+	/// invulnerable, currently <see cref="Knows"/>n, not an out-of-action flyer, and with
 	/// <see cref="TargetFilter.RejectOwnClass"/> not the asking object's own class.
 	///
 	/// <para>One of the original's tests is the mission objective layer reaching into the AI: on a
@@ -93,8 +93,8 @@ public static class AiTargeting {
 			return false;
 		}
 
-		// A flyer gets the extra liveness test the original spells out for target class 2 alone.
-		if (candidate.TargetClass == TargetClass.Flyer && candidate.Neutralised) {
+		// A flyer gets the extra out-of-action test the original spells out for target class 2 alone.
+		if (candidate.TargetClass == TargetClass.Flyer && candidate.OutOfAction) {
 			return false;
 		}
 
@@ -112,15 +112,15 @@ public static class AiTargeting {
 	}
 
 	/// <summary>
-	/// <c>Ai_SelectTarget</c> (<c>00411fa0</c>) — the sim's one AI target-acquisition routine, shared
-	/// by machines and by base turrets. Walks the live object list and returns the best-scoring
-	/// candidate, or null.
+	/// <c>Ai_SelectTarget</c> (<c>00411fa0</c>) — the AI's general target acquisition, shared by
+	/// machines, aircraft and armed structures. Walks the live object list and returns the
+	/// best-scoring candidate, or null.
 	///
 	/// <para>Two bars come before the score. The <b>tier</b> is <c>2 * designated + alive</c>, where
 	/// designated means the candidate is what the group's current order names <i>and</i> that order's
 	/// verb is 0; it starts at 1 and drops to 0 under order verb 3, so with
 	/// <see cref="TargetFilter.MissionTargetOnly"/> clear every candidate clears it and with the bit
-	/// set only a live one does. The <b>range cap</b> is <see cref="DesignatedRange"/> for the
+	/// set only one not <see cref="SimObject.OutOfAction"/> does. The <b>range cap</b> is <see cref="DesignatedRange"/> for the
 	/// designated target and <see cref="OrdinaryRange"/> for everything else. A candidate that is
 	/// crippled (<c>+0xa4</c>) is skipped outright unless it is designated and this object is Cybrid
 	/// — human-side machines leave a crippled target alone, Cybrids finish it.</para>
@@ -137,12 +137,6 @@ public static class AiTargeting {
 	/// An optional bearing limit in binary-angle units, rejecting anything outside it. Zero means no
 	/// limit; a base turret passes <c>0x3000</c>.
 	/// </param>
-	/// <summary>
-	/// What vtable <c>+0x4c</c> answers for an asker that is not a HERC — the literal 1 both the
-	/// structure and the flyer tables return.
-	/// </summary>
-	private const int NonMechCombatRating = 1;
-
 	public static SimObject? SelectTarget(SimWorld world, SimObject self, TargetFilter filter,
 			short coneLimit = 0) {
 		short orderVerb = self.Group?.OrderVerb ?? MissionGroup.NoOrder;
@@ -162,7 +156,7 @@ public static class AiTargeting {
 				&& self.Group is { } group && group.IsOrderTarget(candidate);
 
 			bool counts = designated || !filter.HasFlag(TargetFilter.MissionTargetOnly);
-			int tier = (counts ? 2 : 0) + (candidate.Neutralised ? 0 : 1);
+			int tier = (counts ? 2 : 0) + (candidate.OutOfAction ? 0 : 1);
 
 			// The crippled skip. `designated && Cybrid` is the only way past it, so on the human side
 			// it reads as "never bother with something that cannot move".
@@ -280,7 +274,7 @@ public static class AiTargeting {
 				continue;
 			}
 
-			bool alive = !candidate.Neutralised;
+			bool alive = !candidate.OutOfAction;
 			if (!alive && bestAlive) {
 				continue;
 			}
@@ -335,7 +329,7 @@ public static class AiTargeting {
 	/// answers in order: under a squad order with a target, when the target's
 	/// <see cref="TargetStateTier"/> passes the order's threshold; for the group order's designated
 	/// target, dead or crippled on the human side but only destroyed on the Cybrid side; otherwise
-	/// dead or dying.
+	/// <see cref="SimObject.OutOfAction"/>, which includes a target that has only run out of weapons.
 	///
 	/// <para>The squad-order branch is what makes an ordered kill stick: the tier the order was given
 	/// at is latched on the machine, so the target has to get further along than it already was.</para>
@@ -353,7 +347,7 @@ public static class AiTargeting {
 			return self.Side == World.MissionSide.Human ? target.Neutralised : target.Destroyed;
 		}
 
-		return target.Neutralised;
+		return target.OutOfAction;
 	}
 
 	/// <summary>
@@ -361,6 +355,12 @@ public static class AiTargeting {
 	/// </summary>
 	private static short BearingError(SimObject self, SimObject candidate) =>
 		(short)(Detection.HeadingToward(candidate.Position, self.Position) - self.Heading);
+
+	/// <summary>
+	/// What vtable <c>+0x4c</c> answers for an asker that is not a HERC — the literal 1 both the
+	/// structure and the flyer tables return.
+	/// </summary>
+	private const int NonMechCombatRating = 1;
 
 	/// <summary>The group order verb that designates a target for the tier bonus — search/destroy.</summary>
 	private const short SearchDestroyOrderVerb = 0;

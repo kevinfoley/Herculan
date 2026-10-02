@@ -12,8 +12,9 @@ namespace HercWorks.UI;
 /// Editor for a player's .sav file. Covers Salvage Total, the 5 Workshop Slots, Herc Unlocks,
 /// Squadmates + Player Pilot, Weapon Inventory, and Herc Bay (flat fields directly, per-part
 /// health/equipped-weapons via HercBayEditorForm — too deeply nested for a flat grid row).
-/// Follows the same pattern as HercStatsForm/WeaponStatsForm: works against a loose .sav file,
-/// uses the shared VolEntryPrefixCodec so exports stay retail-compatible, and keeps layout in
+/// Follows the same pattern as HercStatsForm/WeaponStatsForm: works against a loose .sav file.
+/// Save As writes the content-only shape VSHELL reads a save in; Save As With VOL Prefix keeps the
+/// 9-byte entry prefix of a file that was opened with one (see VolEntryPrefixCodec). Layout lives in
 /// CampaignResourcesForm.Designer.cs for the WinForms visual designer.
 /// </summary>
 public partial class CampaignResourcesForm : Form {
@@ -26,12 +27,7 @@ public partial class CampaignResourcesForm : Form {
 	private readonly BindingList<CampaignFlagRow> _flagRows = new();
 
 	private PlayerSave? _loadedSave;
-	private string? _loadedPath;
-
-	/// <summary>Original VOL entry prefix, round-tripped on save — see VolEntryPrefixCodec.</summary>
-	private byte? _originalCompressionType;
-	private byte[]? _originalMagicPrefix;
-	private bool _originalHadTrailingByte;
+	private GameFile? _loadedFile;
 
 	public CampaignResourcesForm() {
 		InitializeComponent();
@@ -61,8 +57,8 @@ public partial class CampaignResourcesForm : Form {
 	/// Distinct per-form/file-type identity so Windows remembers this dialog's last-visited folder
 	/// separately from every other Open/Save dialog in the app — without an explicit ClientGuid,
 	/// the common file dialog falls back to a shared default identity and all such dialogs end up
-	/// remembering the same last folder. Shared between Open and Save As here since both deal with
-	/// the same .sav file type, so remembering the same folder for both is the expected behavior.
+	/// remembering the same last folder. Shared by Open and both saves here since all three deal with
+	/// the same .sav file type, so remembering the same folder for them is the expected behavior.
 	/// </summary>
 	private static readonly Guid DialogClientGuid = new("9b52ab66-f6b6-4d5f-b24d-9640df321083");
 
@@ -78,9 +74,8 @@ public partial class CampaignResourcesForm : Form {
 		}
 
 		try {
-			byte[] rawBytes = File.ReadAllBytes(dialog.FileName);
-			var prefix = VolEntryPrefixCodec.StripIfPresent(rawBytes);
-			var save = (PlayerSave?)_transformer.Parse(prefix.Content);
+			var file = GameFile.FromLooseFile(dialog.FileName);
+			var save = (PlayerSave?)_transformer.Parse(file.Content);
 
 			if (save == null) {
 				MessageBox.Show(this, "File was empty or could not be parsed.", "Error",
@@ -137,13 +132,11 @@ public partial class CampaignResourcesForm : Form {
 
 			LoadCareer(save);
 
-			_loadedPath = dialog.FileName;
-			_originalCompressionType = prefix.HadPrefix ? prefix.CompressionType : null;
-			_originalMagicPrefix = prefix.MagicPrefix;
-			_originalHadTrailingByte = prefix.HadTrailingByte;
+			_loadedFile = file;
+			_saveWithPrefixMenuItem.Enabled = file.CompressionType.HasValue && file.MagicPrefix != null;
 
-			string prefixNote = prefix.HadPrefix ? " (VOL entry prefix detected — will be preserved on save)" : "";
-			_statusLabel.Text = $"Loaded {Path.GetFileName(dialog.FileName)}.{prefixNote}";
+			string prefixNote = file.CompressionType.HasValue ? " (VOL entry prefix detected)" : "";
+			_statusLabel.Text = $"Loaded {file.FileName}.{prefixNote}";
 		} catch (Exception ex) {
 			MessageBox.Show(this, $"Failed to load file:\n{ex.Message}", "Error",
 				MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -238,7 +231,11 @@ public partial class CampaignResourcesForm : Form {
 				.Select(socket => $"Bay {row.BayId}: weapon in socket {socket}, capacity {row.HardpointMax}."))
 			.ToList();
 
-	private void OnSaveAs(object? sender, EventArgs e) {
+	private void OnSaveAs(object? sender, EventArgs e) => Save(withPrefix: false);
+
+	private void OnSaveWithPrefix(object? sender, EventArgs e) => Save(withPrefix: true);
+
+	private void Save(bool withPrefix) {
 		if (_loadedSave == null) {
 			MessageBox.Show(this, "Open a save file first.", "Nothing to save",
 				MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -257,8 +254,8 @@ public partial class CampaignResourcesForm : Form {
 
 		using var dialog = new SaveFileDialog {
 			Filter = "Save files (*.sav)|*.sav|All files (*.*)|*.*",
-			Title = "Save player save file",
-			FileName = _loadedPath == null ? "PLAYER.SAV" : Path.GetFileName(_loadedPath),
+			Title = withPrefix ? "Save player save file with VOL entry prefix" : "Save player save file",
+			FileName = _loadedFile?.FileName ?? "PLAYER.SAV",
 			ClientGuid = DialogClientGuid
 		};
 
@@ -323,23 +320,19 @@ public partial class CampaignResourcesForm : Form {
 			}
 
 			byte[] content = _transformer.Write(_loadedSave)!;
-			byte[] outBytes;
-			string formatNote;
+			string message;
 
-			if (_originalCompressionType.HasValue && _originalMagicPrefix != null) {
-				outBytes = VolEntryPrefixCodec.Wrap(
-					content, _originalCompressionType.Value, _originalMagicPrefix, _originalHadTrailingByte);
-				formatNote = "retail-compatible format — the original VOL entry prefix (compression type, magic) was preserved, with the size field updated for the edited content";
+			if (withPrefix) {
+				File.WriteAllBytes(dialog.FileName, VolEntryPrefixCodec.Wrap(content,
+					_loadedFile!.CompressionType!.Value, _loadedFile.MagicPrefix!, _loadedFile.HadTrailingByte));
+				message = "Saved with the original VOL entry prefix, size field updated. The game reads a save " +
+					"without it; use Save As for that.";
 			} else {
-				outBytes = content;
-				formatNote = "content-only format — this file wasn't loaded with a VOL entry prefix to preserve, so no prefix could be reconstructed for this export";
+				File.WriteAllBytes(dialog.FileName, content);
+				message = "Saved in the content-only format the game reads a save in.";
 			}
 
-			File.WriteAllBytes(dialog.FileName, outBytes);
-
-			MessageBox.Show(this,
-				$"Saved in {formatNote}.",
-				"Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			MessageBox.Show(this, message, "Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
 		} catch (Exception ex) {
 			MessageBox.Show(this, $"Failed to save file:\n{ex.Message}", "Error",
 				MessageBoxButtons.OK, MessageBoxIcon.Error);

@@ -69,7 +69,8 @@ public class BaseRosterEntry62 : MapObject {
 	/// <summary>
 	/// 0x3C — the structure's starting condition, per cent: exported as block 9's <c>0x32</c>, which
 	/// <c>Base_Construct</c> (<c>00405314</c>) reads (docs/simulation/structure-behaviour.md). 100 or 0
-	/// in retail, 100 where <see cref="TypeIndex"/> is set.
+	/// in retail, almost always 100 where <see cref="TypeIndex"/> is set (docs/formats/msn-mission-file.md,
+	/// "Row #14 field decode").
 	/// </summary>
 	public short StartingCondition { get; set; }
 	public const int StartingConditionWord = 0x3C / 2;

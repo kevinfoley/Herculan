@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Security.Cryptography;
 using System.Text;
 using HercWorks.Help.Html;
 using Xunit;
@@ -124,6 +125,20 @@ public class HostileInputTests {
 		Assert.DoesNotContain("<img src=x", html);
 		Assert.Equal(1, Count(html, "<script"));
 		Assert.Contains("script-src '" + HelpHtmlWriter.ScriptHash() + "'", html);
+	}
+
+	[Fact]
+	public void ThePolicyAdmitsTheScriptAsTheBrowserReadsIt() {
+		if (RetailManuals.Read("ENGLISH") is not { } bytes) {
+			return;
+		}
+
+		// The browser hashes an inline script after its parser has turned CRLF and lone CR into LF.
+		string html = HelpHtmlWriter.Write(HelpFile.Parse(bytes, out _)!, "en", "Readme\r\ntext\n");
+		int open = html.IndexOf("<script>", StringComparison.Ordinal) + "<script>".Length;
+		string script = html[open..html.IndexOf("</script>", open, StringComparison.Ordinal)].Replace("\r\n", "\n").Replace('\r', '\n');
+		Assert.Equal(ManualScript.Text, script);
+		Assert.Contains("script-src 'sha256-" + Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(script))) + "'", html);
 	}
 
 	[Fact]

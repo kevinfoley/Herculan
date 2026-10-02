@@ -55,6 +55,9 @@ public sealed class MoviePlayer : IDisposable {
 	/// </summary>
 	public bool HasFailed => _playback.HasFailed;
 
+	/// <inheritdoc cref="MoviePlayback.DecodeException"/>
+	public Exception? DecodeException => _playback.DecodeException;
+
 	/// <summary>
 	/// Opens a movie file, or returns null when it will not parse or uses a codec the decoder does
 	/// not implement.
@@ -63,13 +66,10 @@ public sealed class MoviePlayer : IDisposable {
 	/// <c>ES2/AVI/</c> today but nothing here should care whether they came from a directory or an
 	/// archive.</para>
 	/// </summary>
-	public static MoviePlayer? Open(byte[] bytes, bool placeholderForUnimplemented = false) {
-		MoviePlayback? playback = MoviePlayback.Open(bytes, placeholderForUnimplemented: placeholderForUnimplemented);
+	public static MoviePlayer? Open(byte[] bytes) {
+		MoviePlayback? playback = MoviePlayback.Open(bytes);
 		return playback is null ? null : new MoviePlayer(playback);
 	}
-
-	/// <summary>Whether the frames are a placeholder standing in for a codec not yet decoded.</summary>
-	public bool IsPlaceholder => _playback.IsPlaceholder;
 
 	/// <summary>
 	/// Starts the soundtrack, if the movie has one and the backend is available.

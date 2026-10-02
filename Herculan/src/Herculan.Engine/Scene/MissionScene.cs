@@ -160,8 +160,8 @@ public sealed class MissionScene {
 
 	/// <summary>
 	/// The terrain's packed texture bank, or null when the theater's <c>.DBA</c> could not be loaded
-	/// — in which case <see cref="TerrainMesh"/>'s vertices are all flagged untextured and fall back
-	/// to the height/slope ramp.
+	/// — in which case <see cref="TerrainMesh"/>'s vertices are all flagged untextured and draw
+	/// the untextured fill — see <see cref="TerrainMeshBuilder"/>.
 	/// </summary>
 	public TerrainTextureBank? TerrainBank { get; }
 
@@ -507,7 +507,7 @@ public sealed class MissionScene {
 		// way the original relights the grid at the end of the same pass -- see TerrainMeshBuilder.
 		// The same theater ramp that colours a flat solid face supplies the brightness curve the
 		// baked shade bytes are read through.
-		var terrainMesh = TerrainMeshBuilder.Build(terrain, terrainBank, models.Shading != null);
+		var terrainMesh = TerrainMeshBuilder.Build(terrain, terrainBank, models.Shading);
 
 		var bulletModels = new Dictionary<int, SceneModel>();
 		for (int subtype = 0; bullets != null && subtype < bullets.Count; subtype++) {

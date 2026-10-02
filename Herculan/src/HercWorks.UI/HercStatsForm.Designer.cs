@@ -23,6 +23,7 @@ partial class HercStatsForm {
 		_fileMenuItem = new ToolStripMenuItem();
 		_openMenuItem = new ToolStripMenuItem();
 		_saveAsMenuItem = new ToolStripMenuItem();
+		_saveWithPrefixMenuItem = new ToolStripMenuItem();
 		_fileMenuSeparator = new ToolStripSeparator();
 		_closeMenuItem = new ToolStripMenuItem();
 		_grid = new DataGridView();
@@ -53,7 +54,7 @@ partial class HercStatsForm {
 		// _fileMenuItem
 		//
 		_fileMenuItem.DropDownItems.AddRange(new ToolStripItem[] {
-			_openMenuItem, _saveAsMenuItem, _fileMenuSeparator, _closeMenuItem
+			_openMenuItem, _saveAsMenuItem, _saveWithPrefixMenuItem, _fileMenuSeparator, _closeMenuItem
 		});
 		_fileMenuItem.Name = "_fileMenuItem";
 		_fileMenuItem.Text = "&File";
@@ -69,6 +70,13 @@ partial class HercStatsForm {
 		_saveAsMenuItem.Name = "_saveAsMenuItem";
 		_saveAsMenuItem.Text = "&Save As...";
 		_saveAsMenuItem.Click += OnSaveAs;
+		//
+		// _saveWithPrefixMenuItem
+		//
+		_saveWithPrefixMenuItem.Enabled = false;
+		_saveWithPrefixMenuItem.Name = "_saveWithPrefixMenuItem";
+		_saveWithPrefixMenuItem.Text = "Save As With &VOL Prefix...";
+		_saveWithPrefixMenuItem.Click += OnSaveWithPrefix;
 		//
 		// _fileMenuSeparator
 		//
@@ -199,6 +207,7 @@ partial class HercStatsForm {
 	private ToolStripMenuItem _fileMenuItem;
 	private ToolStripMenuItem _openMenuItem;
 	private ToolStripMenuItem _saveAsMenuItem;
+	private ToolStripMenuItem _saveWithPrefixMenuItem;
 	private ToolStripSeparator _fileMenuSeparator;
 	private ToolStripMenuItem _closeMenuItem;
 	private DataGridView _grid;

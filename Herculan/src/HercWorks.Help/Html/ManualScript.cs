@@ -7,7 +7,7 @@ namespace HercWorks.Help.Html;
 /// Content-Security-Policy admits this script by its hash and nothing else.
 ///
 /// <para>A link's <c>data-go</c> is <c>t</c><i>topic</i>[<c>.</c><i>block</i>] for a jump, <c>k</c><i>n</i>
-/// for a keyword's topic list, <c>index</c>, <c>p</c><i>topic</i> for a pop-up, <c>back</c>, <c>prev</c>,
+/// for a keyword's topic list, <c>index</c>, <c>readme</c>, <c>p</c><i>topic</i> for a pop-up, <c>back</c>, <c>prev</c>,
 /// <c>next</c>, <c>close</c> (the window it sits in), <c>raise</c> (the window <c>data-w</c> names),
 /// <c>smaller</c>, <c>larger</c>, or <c>note</c> (show the link's <c>data-note</c> in the pop-up).
 /// <c>data-w</c> on a jump sends it to a secondary window instead of the one the link is in. Jumps in
@@ -20,15 +20,19 @@ namespace HercWorks.Help.Html;
 /// <para>The stage is drawn at a zoom: the reader's choice, 2 until they change it, remembered in the
 /// browser's storage for this page, and reduced whenever the stage and the bar above it would not fit
 /// the window. The bar is as wide as the zoomed stage.</para>
+///
+/// <para>The text has LF line ends whatever this source file's are. The browser hashes an inline script
+/// after its parser has turned CRLF into LF, so a script written with CRLF, as a Windows checkout of
+/// this file gives the raw string, misses its own hash and is blocked.</para>
 /// </summary>
 internal static class ManualScript {
-	public const string Text = """
+	public static readonly string Text = """
 'use strict';
 (() => {
 	const $ = id => document.getElementById(id);
 	const main = $('main'), pop = $('popup'), stage = $('stage'), desk = $('desk'), bar = $('bar'), body = document.body;
 	const contents = 't' + body.dataset.contents;
-	const pattern = /^(t\d+|k\d+|index)(?:\.(\d+))?$/;
+	const pattern = /^(t\d+|k\d+|index|readme)(?:\.(\d+))?$/;
 	const levels = [1, 1.25, 1.5, 2, 2.5, 3, 4];
 	const width = +stage.dataset.width, height = +stage.dataset.height;
 	let chosen = 2, zoom = 1;
@@ -162,5 +166,5 @@ internal static class ManualScript {
 	applyZoom();
 	route();
 })();
-""";
+""".ReplaceLineEndings("\n");
 }

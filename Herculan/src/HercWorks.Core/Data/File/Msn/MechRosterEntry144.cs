@@ -99,9 +99,9 @@ public class MechRosterEntry144 : MapObject {
 	/// <summary>
 	/// 0x8A — ref into row #10 (<see cref="MissionAction82"/>): the mission action this machine fires
 	/// when it is <b>engaged</b>, <c>-1</c> for none. <c>DBSim_SpawnMissionObjects</c>
-	/// (<c>004253d8</c>) resolves it into <c>mech+0x1b2</c>, and <c>Detection_Sweep</c>
-	/// (<c>004128f8</c>) fires it once a hostile that already has contact on this machine closes to
-	/// 50,000 units.
+	/// (<c>004253d8</c>) resolves it into <c>mech+0x1b2</c>. It fires once a hostile is within
+	/// 50,000 units and one side has spotted or shot the other; the three sites that fire it are in
+	/// docs/simulation/mission-deployment.md, "An object's own two actions".
 	/// </summary>
 	public short EngagementActionRef { get; set; }
 	public const int EngagementActionRefWord = 0x8A / 2;

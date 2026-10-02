@@ -693,12 +693,12 @@
         {"offset": 28, "name": "Render", "description": "TSBase_Render; a sequence draws nothing."},
         {"offset": 32, "name": "NextFrame", "description": "(this, frame): the frame after frame: ANSequence_NextFrame holds at the last, ANCyclicSequence_NextFrame wraps."},
         {"offset": 36, "name": "PrevFrame", "description": "(this, frame): the frame before: ANSequence_PrevFrame holds at 0, ANCyclicSequence_PrevFrame wraps."},
-        {"offset": 40, "name": "slot_0x28", "description": "(this, a, b, c): ANSequence's returns 1 when a < b or when a == b and c is 0; ANCyclicSequence's returns 1. What it asks is Open."},
-        {"offset": 44, "name": "slot_0x2c", "description": "(this, a, b, c): the mirror of slot +0x28 (b < a); ANCyclicSequence's returns 1."}
+        {"offset": 40, "name": "FrameShortOfTarget", "description": "(this, frame, target, flag): whether a thread playing forward has not yet passed target: ANSequence_FrameShortOfTarget returns 1 when frame < target or when frame == target and flag is 0; ANCyclicSequence's returns 1. AnimThread_FindTransition asks it of a transition's destination sequence through ANSequence_FrameShortOfTargetDir."},
+        {"offset": 44, "name": "FrameShortOfTargetBackward", "description": "(this, frame, target, flag): the mirror of slot +0x28 for backward play (frame > target); ANCyclicSequence's returns 1."}
       ],
       "instances": [
-        {"address": "0047f720", "label": "ANSequenceVtable", "description": "RTTI ANSequence: ANSequence_GetClassTag, ANSequence_GetStreamSize, ANSequence_GetMemorySize, ANSequence_ReadFromStream, ANSequence_WriteToStream, ANSequence_DebugPrint, ANSequence_Dtor, TSBase_Render, ANSequence_NextFrame, ANSequence_PrevFrame, 0046301c, 00463048."},
-        {"address": "0047f6e4", "label": "ANCyclicSequenceVtable", "description": "RTTI ANCyclicSequence: ANCyclicSequence_GetClassTag, ANSequence_GetStreamSize, ANSequence_GetMemorySize, ANSequence_ReadFromStream, ANSequence_WriteToStream, ANSequence_DebugPrint, ANCyclicSequence_Dtor, TSBase_Render, ANCyclicSequence_NextFrame, ANCyclicSequence_PrevFrame, 004630b0, 004630bc."}
+        {"address": "0047f720", "label": "ANSequenceVtable", "description": "RTTI ANSequence: ANSequence_GetClassTag, ANSequence_GetStreamSize, ANSequence_GetMemorySize, ANSequence_ReadFromStream, ANSequence_WriteToStream, ANSequence_DebugPrint, ANSequence_Dtor, TSBase_Render, ANSequence_NextFrame, ANSequence_PrevFrame, ANSequence_FrameShortOfTarget, ANSequence_FrameShortOfTargetBackward."},
+        {"address": "0047f6e4", "label": "ANCyclicSequenceVtable", "description": "RTTI ANCyclicSequence: ANCyclicSequence_GetClassTag, ANSequence_GetStreamSize, ANSequence_GetMemorySize, ANSequence_ReadFromStream, ANSequence_WriteToStream, ANSequence_DebugPrint, ANCyclicSequence_Dtor, TSBase_Render, ANCyclicSequence_NextFrame, ANCyclicSequence_PrevFrame, ANCyclicSequence_FrameShortOfTarget_Always, ANCyclicSequence_FrameShortOfTargetBackward_Always."}
       ]
     },
     {

@@ -21,8 +21,8 @@ namespace Herculan.Engine.Content;
 /// gunsight complex the machine's heading, twist angle and pitch angle each frame, and the complex
 /// forwards each one's <i>delta</i> to a child. This is the twist angle's child, so its value tracks
 /// <c>mech+0x298</c> exactly, clamped to the <see cref="Limit"/> its constructor is given — wider
-/// than any retail herc's own twist limit of 14000, so the bar never actually reaches its end
-/// stops.</para>
+/// than the 14000 twist limit every player chassis states, so the bar never actually reaches its
+/// end stops.</para>
 ///
 /// <para><b>Units.</b> Device pixels, the 640-wide space the sprite banks and the rest of the
 /// cockpit art live in: the loader shifts the whole <c>.GAU</c> block by the video mode's coordinate
@@ -43,8 +43,8 @@ public readonly struct RotationIndicator {
 
 	/// <summary>
 	/// The travel the bar's span maps onto, <c>±0x38e3</c> (about 80°) — the pair
-	/// <c>Gau_RovingGunsightWidget</c> hands the bar's <c>SetLimits</c> slot. It is deliberately
-	/// wider than any herc's twist limit, so the ends of the track are never reached.
+	/// <c>Gau_RovingGunsightWidget</c> hands the bar's <c>SetLimits</c> slot. It is wider than any
+	/// player chassis' twist limit, so the ends of the track are never reached.
 	/// </summary>
 	public const short Limit = 0x38e3;
 

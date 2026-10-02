@@ -16,7 +16,8 @@ namespace HercWorks.Core.Data.File.Dat.Shell;
 /// <para><b>Both retail files parse exactly to EOF.</b> <c>ARM_HOTS</c> carries 60 areas over counts
 /// 3, 5, 5, 8, 9, 9, 10, 4, 7 — a chassis's mount capacity, and the 10 the widest chassis needs is
 /// exactly the length of the arming screen's hotspot handler table. <c>RPR_HOTS</c> carries six for
-/// every chassis, the HERC's damage locations, and two of the nine pad the tail with all-zero rects.
+/// every chassis, the HERC's damage locations; the Tomahawk's and the Maverick's hold all-zero rects
+/// in areas 1 and 2.
 /// </para>
 ///
 /// <para><b>The four int32s are an inclusive rect, not a position and a size.</b>

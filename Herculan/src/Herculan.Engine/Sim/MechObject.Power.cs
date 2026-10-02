@@ -76,8 +76,8 @@ public sealed partial class MechObject {
 	/// <c>mech+0xb0</c> - the shields-down alert latch, and the one alert latch that re-arms. The hit
 	/// test raises it below <see cref="ShieldsDownAlertCharge"/> and plays alert <c>0x15</c>;
 	/// <see cref="PowerTick"/> releases it above <see cref="ShieldsDownAlertClearCharge"/>. Only the
-	/// player's own machine touches it, which is why the MFD status screen's SHIELDS DN condition
-	/// only ever appears on F1. The two thresholds and what the gap between them buys are in
+	/// player's own machine touches it, which is why a HERC on the MFD TARGET screen (F5) never reads
+	/// SHIELDS DN; a flyer or structure there can, through its damage band. The two thresholds and what the gap between them buys are in
 	/// docs/simulation/component-damage.md, "What the endpoint announces".
 	/// </summary>
 	public bool ShieldsDownAlert { get; internal set; }

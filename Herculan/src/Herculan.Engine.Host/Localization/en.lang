@@ -14,6 +14,8 @@ tweak.show_squadmate_number.display_name       Show squadmate number
 tweak.show_squadmate_number.description        On the Heads Down Display, shows each squadmate's number (corresponding to the number key used to select them) using a label that is unused and hidden in retail
 tweak.fix_computer_message_pref.display_name   Fix COMPUTER MESSAGE Preference
 tweak.fix_computer_message_pref.description    Cockpit computer voiceover is controlled by the COMPUTER MESSAGE preference instead of the PILOT MESSAGE preference.
+tweak.flash_through_second_hit.display_name   Keep damage flash on a second hit
+tweak.flash_through_second_hit.description    A second hit on your cockpit while the screen is still shaking from the first keeps the red damage flash going until the shake ends. In retail, a second hit that lands while the screen is red stops the flash for the rest of the shake.
 tweak.smoother_turret_movement.display_name    Smoother turret movement
 tweak.smoother_turret_movement.description     Smooth turret rotation when aiming with a joystick or other analog input. Retail rounds the rotation value, causing stutter at slow aiming speeds. Has no effect when aiming with the keyboard.
 tweak.mouse_external_view.display_name        Mouse-controlled outside view
@@ -21,6 +23,17 @@ tweak.mouse_external_view.description         Swing the outside view [V] round y
 tweak.fix_defend_position_order.display_name  Fix DEFEND POSITION order
 tweak.fix_defend_position_order.description   A squadmate ordered to DEFEND POSITION on open ground guards that ground. In retail it can guard a unit named by an earlier order instead, because the Heads Down Display never clears its last order.
 tweak.fix_weapon_damage_records.display_name  Fix weapon damage
-tweak.fix_weapon_damage_records.description   ATC75, ATC100, LAS400 and LAS500 deal the damage listed for them. In retail each one deals a smaller weapon's damage: ATC75 and ATC100 hit exactly like ATC35 and ATC50, LAS500 exactly like LAS300, and LAS400 only slightly harder than LAS200.
+tweak.fix_weapon_damage_records.description   ATC75, ATC100, LAS400 and LAS500 deal the damage listed for them, and fire their own rounds and beams. In retail each one deals a smaller weapon's damage: ATC75 and ATC100 hit exactly like ATC35 and ATC50, LAS500 exactly like LAS300, and LAS400 only slightly harder than LAS200. Each also fires that weapon's round or beam, so ATC75 and ATC100 rounds fly as far as ATC35 and ATC50 rounds, and the LAS400 and LAS500 beams are as narrow as the LAS200 and LAS300 beams.
 tweak.charge_bar_power_level.display_name  Interactive Charge Bar
 tweak.charge_bar_power_level.description   Set an energy weapon's power level by clicking or dragging its charge bar on the weapon panel: the bar then fills to where you let go. The [-] and [=] keys keep working. Retail builds the bar for this, but the weapon row's own button covers it, so it never takes a click.
+install_prompt.window_title    HERCULAN Engine — Find Earthsiege 2
+install_prompt.message         HERCULAN could not find Earthsiege 2. Choose the Earthsiege 2 folder: the one that holds the {0} folder.
+install_prompt.path_hint       Earthsiege 2 folder
+install_prompt.browse          Browse...
+install_prompt.picker_title    Choose the Earthsiege 2 folder
+install_prompt.picker_open     Waiting for the folder picker...
+install_prompt.picker_failed   The folder picker could not be opened. Type or paste the folder's path instead.
+install_prompt.use_folder      Use This Folder
+install_prompt.quit            Quit
+install_prompt.no_path         Type or paste the path to the Earthsiege 2 folder.
+install_prompt.not_an_install  {0} is not an Earthsiege 2 folder: it has no {1} folder in it.

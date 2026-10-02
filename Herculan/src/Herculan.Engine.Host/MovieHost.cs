@@ -40,7 +40,11 @@ static class MovieHost {
 			return 1;
 		}
 
-		byte[] bytes = File.ReadAllBytes(path);
+		if (ReadMovieFile(path) is not { } bytes) {
+			Console.Error.WriteLine(
+				$"{Path.GetFileName(path)} is larger than the {HercWorks.Video.VideoLimits.Default.MaxFileBytes:N0} bytes a movie may be.");
+			return 1;
+		}
 
 		// Report what the container says even when the codec is one that cannot be decoded, because
 		// that is the answer to "why will this file not play".
@@ -59,8 +63,8 @@ static class MovieHost {
 
 		if (MoviePlayer.Open(bytes) is not { } player) {
 			Console.Error.WriteLine(
-				$"No decoder for compression {fourCc}. Implemented: BI_RLE8 (the *_TH.AVI thumbnails).\n"
-				+ "See docs/formats/avi-video.md for what the corpus uses and what is left to write.");
+				$"No decoder for compression {fourCc}, or a frame size it cannot code.\n"
+				+ "See docs/formats/avi-video.md for what the corpus uses.");
 			return 1;
 		}
 
@@ -70,6 +74,23 @@ static class MovieHost {
 
 			return Present(player, screenshotPath, silentAudio);
 		}
+	}
+
+	/// <summary>
+	/// Reads a movie file whole, or returns null when it is larger than
+	/// <see cref="HercWorks.Video.VideoLimits.MaxFileBytes"/>. The length is checked on the open
+	/// stream before anything is allocated, so an oversized file is refused rather than read into
+	/// memory first (or, past 2 GB, made to throw) and only then rejected by the parser.
+	/// </summary>
+	public static byte[]? ReadMovieFile(string path) {
+		using FileStream stream = File.OpenRead(path);
+		if (stream.Length > HercWorks.Video.VideoLimits.Default.MaxFileBytes) {
+			return null;
+		}
+
+		var bytes = new byte[stream.Length];
+		stream.ReadExactly(bytes);
+		return bytes;
 	}
 
 	/// <summary>

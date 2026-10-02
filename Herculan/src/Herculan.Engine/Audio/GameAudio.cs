@@ -210,7 +210,7 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// The generator the variation roll draws on — pass the world's
 	/// <see cref="Sim.SimWorld.PresentationRandom"/>, as the original does.
 	/// </param>
-	/// <param name="lowMemory">Select the half-rate <c>hmx</c> sample bank.</param>
+	/// <param name="lowMemory">Select the low-memory <c>hmx</c> sample bank.</param>
 	/// <param name="silent">
 	/// Skip the output device and run on <see cref="NullAudioBackend"/> even where one would open.
 	/// Everything above the device behaves as it does on a machine without one. It silences the CD

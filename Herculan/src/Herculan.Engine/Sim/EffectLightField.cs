@@ -16,11 +16,17 @@ namespace Herculan.Engine.Sim;
 /// </summary>
 public sealed class EffectLightField {
 	/// <summary>
-	/// Slots the manager has, the <c>Rtl_VectorNew</c> count at <c>mgr+0x6c</c>. A claim past the
-	/// last one fails here; the original overruns instead, which is a retail bug and not reproduced.
-	/// See KNOWN_ISSUES.md.
+	/// Slots the manager has, the <c>Rtl_VectorNew</c> count at <c>mgr+0x6c</c>. The original's
+	/// allocator has no full-table guard; <see cref="HandleCount"/> keeps it from being reached.
 	/// </summary>
 	public const int SlotCount = 20;
+
+	/// <summary>
+	/// <c>EffectLightPool</c> (<c>004a9682</c>), the handle pool an effect allocates from before it
+	/// claims a slot: three, so at most three effect lights exist at once and a fourth light-bearing
+	/// effect runs dark. See docs/formats/effect-lights.md, "Claiming a slot".
+	/// </summary>
+	public const int HandleCount = 3;
 
 	/// <summary>
 	/// <c>A</c>, the denominator offset of both falloffs — <c>mgr+0x10</c>.
@@ -47,27 +53,36 @@ public sealed class EffectLightField {
 	public const int MaxIntensity = 255;
 
 	private readonly EffectLight[] _slots = new EffectLight[SlotCount];
+	private readonly List<int> _pendingReleases = new(HandleCount);
+	private int _handlesInUse;
 
 	/// <summary>
-	/// Every slot, live and free alike — index is the handle <see cref="Claim"/> returns. Read
-	/// <see cref="EffectLight.IsLive"/> before using one.
+	/// Every slot, claimed and free alike — index is the handle <see cref="Claim"/> returns. Read
+	/// <see cref="EffectLight.IsLive"/> before lighting with one.
 	/// </summary>
 	public IReadOnlyList<EffectLight> Slots => _slots;
 
 	/// <summary>
-	/// <c>LightManager_ClaimSlot</c> (<c>00406f38</c>) — claims the first free slot for a light at <paramref name="position"/>
-	/// with <paramref name="intensity"/>, returning its handle, or -1 when all twenty are busy.
+	/// <c>EffectLight_Construct</c> (<c>00407604</c>) and <c>LightManager_ClaimSlot</c> (<c>00406f38</c>) — takes a handle
+	/// and claims the first free slot for a light at <paramref name="position"/> with
+	/// <paramref name="intensity"/>, returning its index, or -1 when all <see cref="HandleCount"/>
+	/// handles are out and the effect runs without a light.
 	///
 	/// <para>The original seeds the intensity to 255 and lets <c>LightManager_SetSlotIntensity</c> (<c>00407048</c>) overwrite it a
 	/// call later; the two are folded together here because no caller can observe the gap.</para>
 	/// </summary>
 	public int Claim(Vec3i position, int intensity) {
+		if (_handlesInUse >= HandleCount) {
+			return -1;
+		}
+
 		for (int i = 0; i < _slots.Length; i++) {
-			if (_slots[i].IsLive) {
+			if (_slots[i].Claimed) {
 				continue;
 			}
 
-			_slots[i] = new EffectLight(position, ClampIntensity(intensity));
+			_handlesInUse++;
+			_slots[i] = new EffectLight(position, ClampIntensity(intensity), Claimed: true);
 			return i;
 		}
 
@@ -79,22 +94,45 @@ public sealed class EffectLightField {
 	/// A handle of -1 does nothing, so a caller that failed to claim needs no branch of its own.
 	/// </summary>
 	public void SetIntensity(int handle, int intensity) {
-		if (handle < 0 || handle >= _slots.Length || !_slots[handle].IsLive) {
+		if (handle < 0 || handle >= _slots.Length || !_slots[handle].Claimed) {
 			return;
 		}
 
-		_slots[handle] = new EffectLight(_slots[handle].Position, ClampIntensity(intensity));
+		_slots[handle] = _slots[handle] with { Intensity = ClampIntensity(intensity) };
 	}
 
-	/// <summary><c>LightManager_ReleaseSlot</c> (<c>00406fbc</c>) — frees a slot. A handle of -1 does nothing.</summary>
+	/// <summary>
+	/// An ended effect's light, queued for <see cref="FlushReleases"/> the way <c>Explosion_Destruct</c>
+	/// (<c>00407e48</c>) queues its handle with <c>ObjectPool_QueueForDelete</c>. The slot stays claimed,
+	/// and the handle out of the pool, until then. A handle of -1 does nothing.
+	/// </summary>
 	public void Release(int handle) {
-		if (handle >= 0 && handle < _slots.Length) {
-			_slots[handle] = default;
+		if (handle >= 0 && handle < _slots.Length && _slots[handle].Claimed && !_pendingReleases.Contains(handle)) {
+			_pendingReleases.Add(handle);
 		}
 	}
 
-	/// <summary>Frees every slot, for a mission teardown.</summary>
-	public void Clear() => Array.Clear(_slots);
+	/// <summary>
+	/// <c>EffectLightPool_FlushDeletes</c> (<c>004077e8</c>) — runs <c>EffectLight_Destruct</c> (<c>0040765c</c>) on every
+	/// queued handle, which frees its slot (<c>LightManager_ReleaseSlot</c>, <c>00406fbc</c>), and returns the
+	/// handles to the pool. The original runs it from the top of <c>Sim_RenderFrame</c>, between one
+	/// <c>Sim_MainTick</c> and the next.
+	/// </summary>
+	public void FlushReleases() {
+		foreach (int handle in _pendingReleases) {
+			_slots[handle] = default;
+			_handlesInUse--;
+		}
+
+		_pendingReleases.Clear();
+	}
+
+	/// <summary>Frees every slot and handle, for a mission teardown.</summary>
+	public void Clear() {
+		Array.Clear(_slots);
+		_pendingReleases.Clear();
+		_handlesInUse = 0;
+	}
 
 	private static int ClampIntensity(int intensity) => Math.Clamp(intensity, 0, MaxIntensity);
 }
@@ -105,17 +143,20 @@ public sealed class EffectLightField {
 /// </summary>
 /// <param name="Position">Where it sits, in world units. Nothing moves an effect light.</param>
 /// <param name="Intensity">
-/// Brightness, 0-255 — <c>slot+0x1b</c>, the field every consumer reads. An
+/// Brightness, 0-255 — <c>slot+0x1b</c>, the field the per-object selection reads. An
 /// <see cref="ImpactEffect"/> drives it from its type row's per-frame ramp.
 /// </param>
-public readonly record struct EffectLight(Vec3i Position, int Intensity) {
+/// <param name="Claimed">
+/// Whether an effect holds the slot — the inverse of the slot's free flag at <c>+0x00</c>, which only
+/// <c>LightManager_ClaimSlot</c> (<c>00406f38</c>) and <c>LightManager_ReleaseSlot</c> (<c>00406fbc</c>) write. A claimed
+/// slot at intensity 0 is dark, not free.
+/// </param>
+public readonly record struct EffectLight(Vec3i Position, int Intensity, bool Claimed) {
 	/// <summary>
-	/// Whether the slot holds a light at all. An intensity of zero reads as free, which is also
-	/// what the original's own consumers do — <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) skips a slot whose
-	/// <c>+0x1b</c> is 0 before it looks at anything else, so a ramp entry of 0 puts the light out
-	/// for that frame.
+	/// Whether the slot lights anything this frame: claimed, with a nonzero intensity.
+	/// <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) skips a slot whose <c>+0x1b</c> is 0.
 	/// </summary>
-	public bool IsLive => Intensity > 0;
+	public bool IsLive => Claimed && Intensity > 0;
 
 	/// <summary>
 	/// <c>LightManager_RecomputeCullRadius</c> (<c>0040735c</c>) — how far this light reaches, past which

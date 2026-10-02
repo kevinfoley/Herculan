@@ -15,10 +15,10 @@ The round's type table, indexed by the firing `PROJ.DAT` record's subtype id, an
 - **The aim triple goes in verbatim.** No `ROCKETS.DAT` field is a scatter and the spawn draws no random numbers — a launcher does not disperse.
 - **Launch speed is a literal 500** plus the machine's own travel speed (mech vtable `+0x38`). The record's `Speed` is not read here; it is the ceiling the burn climbs toward.
 - **The target is captured once, at launch**, into `+0x56` — the launcher's selected target at `+0x1a4`, and only when the launcher's vtable `+0x6c` returns nonzero — for a machine `Mech_MissileLockState` (`004155ac`); every other class, flyer and structure alike, installs `SimObject_MissileLockState_Always` (`00411b04`), so a missile tower's round always takes its target. The mech's reads the per-subtype *lock* flag, not an ammunition count ([`missile-lock.md`](missile-lock.md#manager0x0a-is-the-lock-state-not-an-ammunition-count)). The one bypass: a machine other than the locally piloted one (`mech+0xa3` clear) firing subtype 3 skips the gate outright, so an AI's electro-optical missile always locks. That bypass is `Rocket_Fire`'s own and is not the AI's weapon-scoring exemption from the lock test ([`ai-weapons.md`](ai-weapons.md#choosing-a-weapon--ai_chooseweapon-0041f358)). A lock also asks the target for a node handle (target vtable `+0x54`) into `+0x5a`, which is the point the seeker steers at.
-- **A locally piloted owner's round is remembered** in `DAT_0049c394` whatever its subtype, for the missile camera ([Flight](#flight--rocket_tickupdate-0040a538)).
+- **A locally piloted owner's round is remembered** in `DAT_0049c394` whatever its subtype, for [the missile camera](#the-missile-camera).
 - Plays `record[+0x0c] + 10` at the muzzle point.
 
-Only the `Type == 0` class is ever built. The `Type == 3` class, `Grenade_Construct` (`0040ac3c`), is never called — [`weapon-damage-types.md`](weapon-damage-types.md#type--a-firing-mechanism-selector) and [`../cut-content.md`](../cut-content.md#projectiles).
+`Rocket_Fire` builds only the `Type == 0` class. No caller of the `Type == 3` class's constructor, `Grenade_Construct` (`0040ac3c`), is found — [`weapon-damage-types.md`](weapon-damage-types.md#type--a-firing-mechanism-selector) and [`../cut-content.md`](../cut-content.md#projectiles).
 
 ## Flight — `Rocket_TickUpdate` (`0040a538`)
 
@@ -32,9 +32,7 @@ Vtable `+0x14` of `RocketVtable` (`00498448`); draw is `Bullet_Draw`, shared wit
 
 **Damage is never power-scaled**: a rocket comes off a rack, not a capacitor, so the `PROJ.DAT` figures apply at face value. The shot record's `+0x12` carries the subtype id where a bullet hardcodes 5 ([`weapon-firing.md`](weapon-firing.md#the-shot-record)).
 
-**When the round ends**, a subtype 3 round of a locally piloted owner clears the trigger byte `004d2357` and calls `Input_LatchButton(1, 1)`, the press-once latch ([`../formats/joystick-input.md`](../formats/joystick-input.md#the-buttons)); and if the round is the one in `DAT_0049c394` and ended before its lifetime, `DAT_0049c398` is raised.
-
-**The missile camera.** `DAT_004d25aa`, "an electro-optical missile is being flown", is zeroed by `Sim_MainTick` just before it walks the effect pool and raised again by this tick's player-steer call; `WeaponMounts_FireTrigger` also raises it on the firing tick ([`weapon-firing.md`](weapon-firing.md#weaponmounts_firetrigger-in-order)). It hands the controls to the camera, as `InputDrivesCamera` does ([`../formats/joystick-input.md`](../formats/joystick-input.md#while-the-camera-has-the-controls)). `DAT_0049c394` and `DAT_0049c398` are read by the MFD's missile-camera screen (`MfdMissileViewScreen_Paint`, `0043fe1c`; [`../formats/mfd.md`](../formats/mfd.md)), which draws from the tracked round and, once `DAT_0049c398` is raised, flashes its panel for 30 coarse ticks before clearing it ([Open](#open)).
+**When the round ends**, by burning out or by striking something, a subtype 3 round of a locally piloted owner — one still being flown — clears the trigger byte `004d2357` and calls `Input_LatchButton(1, 1)`, latching the first button row, the trigger's, until it is let go ([`../formats/joystick-input.md`](../formats/joystick-input.md#the-buttons)); and if the round is the one in `DAT_0049c394` and ended before its lifetime, `DAT_0049c398` is raised.
 
 **The proximity beep.** A round fired by a machine that is **not** locally piloted (`mech+0xa3` clear) plays sound `0x32` when it comes within 40000 units of the camera (`ViewObjectPtr`, the camera position); a latch at `+0x06` holds it to once per approach and re-arms when the round leaves that range. The player's own rounds never beep.
 
@@ -52,9 +50,15 @@ A steer of the euler angles, not of a velocity, as the plasma round's is — but
 
 ## `Rocket_PlayerSteer` (`0040a488`) — the player flying the missile
 
-Not a "non-homing variant": the pilot flies the electro-optical missile from its nose camera. It reads two axis values through pointers in the **player input block** at `0x4d234a` ([`../formats/tap-input-tape.md`](../formats/tap-input-tape.md)) — one turns the round's yaw, the other its pitch — steers by `Q8Multiply(0x500, axis)` per tick with no rate limit and no deadband, and zeroes them. It also clears the trigger byte itself. `Sim_MainTick` rebuilds the byte with `Input_BuildPlayerDevice` before it walks the effect pool and reads it in `Sim_PollPlayerInput` after, so while the player flies a round the trigger never reaches the fire path and the machine fires nothing.
+Not a "non-homing variant": the pilot flies the electro-optical missile from [the missile camera](#the-missile-camera). It reads two axis values through the camera-axis pointers `+0x22` and `+0x26` of the **player input block** at `0x4d234a` ([`../formats/tap-input-tape.md`](../formats/tap-input-tape.md)), which address the steering and throttle axes while the round has the controls ([`../formats/joystick-input.md`](../formats/joystick-input.md#while-the-camera-has-the-controls)). Each turns the round by `Math_IntegrateRateOverTick(Q8Multiply(0x500, axis))` a tick — `0x500` per 125 ms at full deflection, with no rate limit and no deadband: the `+0x22` axis is subtracted from the heading (`+0x10`), so steering right turns the round right, and the `+0x26` axis is added to the pitch (`+0x0c`). It marks the frame for rebuild (`+0x32 = 0`) and zeroes both axes and the trigger byte. `Sim_MainTick` rebuilds the byte with `Input_BuildPlayerDevice` before it walks the effect pool and reads it in `Sim_PollPlayerInput` after, so while the player flies a round the trigger never reaches the fire path and the machine fires nothing.
 
 The gate is the block's `+0x0d`, `0x4d2357`: **the fire trigger** ([`weapon-firing.md`](weapon-firing.md#the-trigger-is-polled-not-dispatched)), so the round is flown only while the trigger is held. With the trigger released the function drops the round's target and rewrites its subtype id to 0, and the round flies straight on as an unguided subtype 0 round (`Rocket_TickUpdate` then sends it to `Rocket_HomingSteer`, which has no target to steer at).
+
+## The missile camera
+
+`DAT_004d25aa`, "an electro-optical missile is being flown", is zeroed by `Sim_MainTick` just before it walks the effect pool and raised again by every tick that sends a round to `Rocket_PlayerSteer`, the tick that releases it included; `WeaponMounts_FireTrigger` also raises it on the firing tick ([`weapon-firing.md`](weapon-firing.md#weaponmounts_firetrigger-in-order)). The next input build hands the controls to the round, as `InputDrivesCamera` hands them to a camera ([`../formats/joystick-input.md`](../formats/joystick-input.md#while-the-camera-has-the-controls)), and the weapon chain holds still until the flag drops.
+
+The pilot sees the flight on the MFD. `DAT_0049c394` is the round its MISSILE CAM screen rides and `DAT_0049c398` the strike that screen flashes for ([`../formats/mfd.md`](../formats/mfd.md#mfdmissileview--mode-5)); the display switches itself to that screen while an electro-optical launcher is armed ([`../formats/mfd.md`](../formats/mfd.md#modes)).
 
 ## The exhaust flame
 
@@ -62,8 +66,6 @@ The shape is a static body plus a two-cell animation of flame cones at the tail 
 
 ## Open
 
-- **Unported:** the missile camera and flying the round from it: `Rocket_PlayerSteer`'s held-trigger branch (the stick steer and its clearing of the trigger), `DAT_004d25aa`, the trigger clear and press-once latch when a player-flown round ends, and the two globals `DAT_0049c394`/`DAT_0049c398` with their reader `MfdMissileViewScreen_Paint`. A round flown with the trigger held keeps its heading; the release branch is ported.
 - **Unported:** the node handle (`+0x5a`) a homing round steers at.
 - **Unported:** the ECM wobble on a homing round's steer.
 - **Unported:** the selection gate on a locally piloted owner's homing round.
-- **Open:** the missile-camera screen's draw, `MfdMissileViewScreen_Paint`: its behaviour beyond the two global reads is not documented ([`../formats/mfd.md`](../formats/mfd.md#open)).

@@ -21,7 +21,7 @@ Eight attribute bytes, all read by `MessagePort_Enqueue` (`00434e8c`) into the q
 
 The four timings are stored as `byte * 0x3c` coarse ticks, so at 16 ms a tick their units read as seconds. Every line carries `3, 6, 0, 0x14` — up for 3 to 6 seconds, no delay, gone in 20 if it never got its turn — except `TRANSFERRING DATA`, which carries `0x0a, 0x14, 0, 0x14`. The names come from the port's own trace string, and the enqueue settles the order: bytes 3 and 4 stay durations until the message is shown and have the show tick added in then, while 5 and 6 have the post tick added immediately.
 
-The record reads four bytes past the eight the file supplies. As with `SOUNDS.STR`, attribute blobs point into the loaded file buffer, so those four overlap the next entry — and nothing reads them back.
+The record reads four bytes past the eight the file supplies. As with `SOUNDS.STR`, attribute blobs point into the loaded file buffer, so those four overlap the next entry. They land at record `+0x2d`-`+0x30`, which have no reader found ([Open](#open)).
 
 Byte 7 is a field and not an offset from the id: the numbering runs 1 to 66 across the 63 messages, skipping 0x1c, 0x2d and 0x2f, and the archive holds exactly 66 clips — so three are recorded lines no message claims.
 
@@ -33,7 +33,7 @@ Messages reach the cockpit's message port through a vtable call. The cockpit vie
 
 The byte gates the two halves separately: the display runs when it is not 1 and the voice when it is not 0 — three behaviours for three settings, which is why that row offers no OFF. The voice has a second gate both ports share: PILOT MESSAGE's handler writes `Sound_SpeechEnabled`, which every clip goes through ([`../simulation/preferences.md`](../simulation/preferences.md#dataprefscfg--the-option-array)), so with PILOT MESSAGE on TEXT ONLY the computer is silent whatever COMPUTER MESSAGE says. With the display off the port still runs the whole lifecycle and only skips the drawing — `port+0x4d2`, the suppression flag every paint entry point tests alongside `port+0x49e`, "a line is up".
 
-Two further gates sit on the display half, both fields of the cockpit view manager, which `CockpitViewManager_Published` (`00429820`) hands back ([`cockpit-views.md`](cockpit-views.md#object-model)). Its `+0x14` is the **current view index**: the show refuses to display while it reads 4 — the value outside the four canopy views — and suppresses the line exactly as TEXT OFF does, lifecycle and all. Its `+0x1c` is a byte the paint tests first and returns on ([Open](#open)).
+Two further gates sit on the display half, both fields of the cockpit view manager, which `CockpitViewManager_Published` (`00429820`) hands back ([`cockpit-views.md`](cockpit-views.md#object-model)). Its `+0x14` is the **current view index**: the show refuses to display while it reads 4, the external view, and suppresses the line exactly as TEXT OFF does, lifecycle and all, alert tone included. Its `+0x1c` is the **view-change flag**, which `CockpitView_ProcessViewCommand` sets as it stages a change and `CockpitView_StepViewTransition` clears as the slide begins ([`cockpit-views.md`](cockpit-views.md#heads-down-pan--cockpitview_stepviewtransition-0042a9c0)): both ports' paints, and the pilot and squad channel's show, erase and background restore, test it and return, so neither box is painted while a view change is pending.
 
 Both boxes are the herc's own, the last two fields of its `.GAU`: the pilot channel's at content offset 1668, `0,y - 320,y+10`, of which only the height is ever drawn ([below](#its-box)), and the ticker's at 1684, `100,y - 220,y+9` — a 120x9 box centred horizontally, at `y = 34` in seven cockpits, 43 in APOCA's and 100 in RAZOR's. Both are coordinate-shifted into device pixels by the `.GAU` loader's caller (`Gau_BuildCockpitWidgets`, `00431bf8`) before the constructor sees them.
 
@@ -60,7 +60,7 @@ Each tick first drops every *queued* message past index 0 whose `maxWait` has pa
 | `0x0c`, `0x0f`, `0x10` (shield generator / powerplant / weapon destroyed), `0x14` `SHIELDS LOW`, `0x15` `SHIELDS CRITICAL` | `0x18` `wrnwoop2` |
 | everything else | `0x1a` `gnract` |
 
-The switch names twelve further ids explicitly — `0x17`, `0x19`, `0x1d`-`0x1f`, `0x2a`-`0x2f` and `0x34` — and gives every one of them the same `gnract` its default arm gives, so it is wider than its behaviour. Speech goes last, and only then: the voice is a consequence of the line going up, not a separate event. See [`audio.md`](audio.md) for the tones themselves.
+The switch names fourteen further ids explicitly — `0x17`, `0x19`, `0x1d`-`0x1f`, `0x2a`-`0x2f`, `0x34`, `0x37` and `0x38` — and gives every one of them the same `gnract` its default arm gives, so it is wider than its behaviour. `0x36` has an arm of its own: `gnract` too, plus the blink latch `port+0x4d3` ([below](#the-ticker)). Speech goes last, and only then: the voice is a consequence of the line going up, not a separate event. See [`audio.md`](audio.md) for the tones themselves.
 
 `MessagePort_Withdraw` (`00435ac8`) is the withdraw. A match on the current message sets its cancel latch unless the message is due (`+0x4c9`), that is, past its delay and waiting to go up; that one is left alone and the call returns 0. The show clears the due latch, so a line already on screen is cancelled and comes down on the next tick. A match anywhere else is removed from the queue. It matches on the id **and** the record's `+0x02` subject pointer, so the same message about two machines is two entries.
 
@@ -72,13 +72,13 @@ The switch names twelve further ids explicitly — `0x17`, `0x19`, `0x1d`-`0x1f`
 
 The text **scrolls**. `MessageTicker_ScrollText` (`00436f70`) recomputes its x every frame as `port+0x4af - (0x23 << VideoMode_XCoordShift) * elapsed / 0x3c` — starting at the box's right edge and travelling left at `0x23` authored units every `0x3c` ticks — about 36 units, 73 device pixels, a second in the 640-wide mode. There is no wrap: a line that outlives its own width simply leaves, and against a 120-unit box the 3-to-6-second display time is matched so a long line crosses about once.
 
-`TRANSFERRING DATA` (`0x36`) is the one exception, and the only reason the port tests a message id outside the tone switch: it is centred in the box instead of scrolling, and it blinks on `Time_GetCoarseTicks() & 0x20`. Its 10-and-20-second timings are what make that readable.
+`TRANSFERRING DATA` (`0x36`) is the one exception, and the one id the port tests outside the tone switch: the paint compares the id with `0x36` and centres that line in the box instead of scrolling it, and draws it only on `Time_GetCoarseTicks() & 0x20` while the latch `port+0x4d3`, which the switch's `0x36` arm sets and the erase clears, is up — so it blinks. Its 10-and-20-second timings are what make that readable.
 
 Vertically the line is centred by cell rather than by ink: the paint anchors at `((height - cellHeight) >> 1) + inkHeight + 1` and the glyph blitter (`HudFont_DrawGlyph`, `00482428`) subtracts `inkHeight` straight back off. That is **not** `Label_SetRect`'s rule (see [`mfd.md`](mfd.md#label-placement)), which centres `inkHeight`; the ticker is not a label.
 
 ### Posters
 
-**This is every poster.** The port is constructed once, in `Gau_BuildCockpitWidgets`, and stored at `view+0x20b`, so anything that posts has to load that displacement; there are eighteen such loads in the image and five of the functions holding them post. `Computer_PostMessage` (`00420a68`) is the shared helper the first row stands for.
+**These are the posters.** The port is constructed once, in `Gau_BuildCockpitWidgets`, and stored at `view+0x20b`, so anything that posts has to load that displacement; besides that store there are seventeen loads of it in the image, and six of the functions holding them post — the six rows below. The rest pause, resume, erase or paint it. `Computer_PostMessage` (`00420a68`) is the shared helper the first row stands for. A copy of the pointer kept anywhere else would escape this count ([Open](#open)).
 
 | Poster | Messages |
 |---|---|
@@ -89,17 +89,15 @@ Vertically the line is centred by cell rather than by ink: the paint anchors at 
 | `Mech_ToggleRadarMode` (`0041b468`) | Withdraws **both** `0x2c` `ACTIVE RADAR MODE` and `0x2d` `PASSIVE RADAR MODE`, then posts the one the mode just became — so flipping twice quickly announces where it ended up rather than reading out the sequence |
 | `ConsoleButtons_ToggleAutoTrack` (`00441f7c`) | The same shape with `0x26` `AUTO TRACKING ENGAGED` and `0x27` `AUTO TRACKING DISABLED` |
 
-**`0x12` `DAMAGE LEVEL CRITICAL` has a call site it cannot reach.** In `Mech_ApplyDirectFireDamage` (`004188c8`) the struck component's damage percent is read before the write and again after, and the post needs the **later** read under 100 and the earlier one over it — the reading would have to have fallen. It only falls if the write is negative, which needs the shot's diverted splash share to exceed its own armour damage; the largest splash factor in retail `PROJ.DAT` is 1000 against the Q10 unit of 1024, so it never is. The cockpit jolt (`Cockpit_StartHitShake`, `00434010`) shares the gate, sits above the test and does fire. A hand-edited `PROJ.DAT` would reach the line.
+**`0x12` `DAMAGE LEVEL CRITICAL` has a call site it cannot reach.** In `Mech_ApplyDirectFireDamage` (`004188c8`) the struck component's damage percent is read before the write and again after, and the post needs the **later** read under 100 and the earlier one over it — the reading would have to have fallen. It only falls if the write is negative, which needs the shot's diverted splash share to exceed its own armour damage; the largest splash factor among retail `PROJ.DAT`'s 27 records is 1000 against the Q10 unit of 1024, so it never is. The cockpit jolt (`Cockpit_StartHitShake`, `00434010`) shares the gate, sits above the test and does fire. A hand-edited `PROJ.DAT` would reach the line.
 
-Those ids are the whole set, so **over half the file's sixty-three lines are posted by nothing** — among them `MISSION OBJECTIVES COMPLETE` (`0x1a`), `PRIMARY OBJECTIVE COMPLETE` (`0x1b`), `SECONDARY OBJECTIVE COMPLETE` (`0x1c`), `MISSION ABORTED` (`0x18`), `FRIENDLY TARGET DESTROYED` (`0x30`), `AUTO PILOT ENGAGED`/`DISABLED`, `FOLLOW MODE ENGAGED`/`DISABLED` and the `10...9...8...` countdown. Every one has a recorded `CVM` clip, and `MessagePort_Show`'s tone switch names several of them — the switch is written wider than the game reaches.
+Those rows post 29 distinct ids, so **34 of the file's sixty-three lines have no poster** — among them `MISSION OBJECTIVES COMPLETE` (`0x1a`), `PRIMARY OBJECTIVE COMPLETE` (`0x1b`), `SECONDARY OBJECTIVE COMPLETE` (`0x1c`), `MISSION ABORTED` (`0x18`), `FRIENDLY TARGET DESTROYED` (`0x30`), `AUTO PILOT ENGAGED`/`DISABLED`, `FOLLOW MODE ENGAGED`/`DISABLED` and the `10...9...8...` countdown. Every one has a recorded `CVM` clip, and `MessagePort_Show`'s tone switch names four of them (`0x00`, `0x0f`, `0x14`, `0x1f`) — the switch is written wider than the game reaches.
 
-**`0x2e` and `0x2f` do not test sides.** Their guard is only that the player fired the killing shot and that the victim is the player's own selected target (`mech+0x1a4`), so destroying a friendly you had boxed announces `ENEMY TARGET DESTROYED` and the two `FRIENDLY` lines are unreachable.
+**`0x2e` and `0x2f` do not test sides.** Their guard is only that the player fired the killing shot and that the victim is the player's own selected target (`mech+0x1a4`), so destroying a friendly you had boxed announces `ENEMY TARGET DESTROYED`, and the two `FRIENDLY` lines are among those with no poster.
 
 The damage set's own guards — which reading of what, and which latch byte stops each line repeating — are [`../simulation/component-damage.md`](../simulation/component-damage.md#what-the-endpoint-announces)'s.
 
 At 16 ms a coarse tick the power-up announcement lands 3.2 s in, inside `start3`'s five seconds rather than after them.
-
-`0x12` is unreachable in retail, and the rest of `SYSTEM.STR`'s sixty-three lines have no poster in the original.
 
 ## The pilot and squad channel
 
@@ -113,7 +111,7 @@ A squadmate's line is posted by `Ai_PostSquadMessage` (`00420a98`) as `{id, mach
 
 Unlike the computer's, **the variant roll is live here**: ids `0x02`, `0x1e` and `0x1f` carry two or three recordings apiece, and `MessagePort_PickVariant` chooses between them.
 
-**Only banks 1, 2 and 4 are ever loaded.** The bank a slot takes is `(slot >> 2) + 1` with 3 remapped to 4, which never yields 0, so `PILOT0.STR` ships and is never read — and it is the only one of the four that differs in shape rather than in wording: it stores seven attribute bytes per entry where the other three store an eighth that is zero throughout, it carries id `0x24` which no other bank has and lacks `0x2a` which every other bank has, and its two-recording ids are `0x05` and `0x06` rather than `0x02`. Read it as the early draft it is, not as a fourth voice.
+**Only banks 1, 2 and 4 are ever loaded.** The bank a squadmate takes is `(portrait >> 2) + 1` with 3 remapped to 4 (`Pilot_VoiceBankOf`, `00434260`), its portrait being its pilot index over three, 0 to 11 across `PILOTS.STR`'s 36 pilots ([`heads-down-display.md`](heads-down-display.md#who-is-in-it)). That never yields 0, so `PILOT0.STR` ships and is never read — and it is the only one of the four that differs in shape rather than in wording: it stores seven attribute bytes per entry where the other three store an eighth that is zero throughout, it carries id `0x24` which no other bank has and lacks `0x2a` which every other bank has, and its two-recording ids are `0x05` and `0x06` rather than `0x02`. Read it as the early draft it is, not as a fourth voice.
 
 ### Its speakerless set
 
@@ -131,11 +129,11 @@ The composer signs it `HQ` — `STRINGS0.STR` group 8, the one string at `DAT_00
 
 Byte 7 is 1 on all three, and it lands at the queued record's `+0x2c`, which gates two things. The port's per-frame update (`PilotMessagePort_Update`, `004361cc`, vtable `+0x10`) sets the ready latch for a due message only when it is set; a squadmate's line, whose byte 7 is 0, is instead made ready by the comm box as its portrait starts talking (`MessagePort_MarkReady`, `00435b14`, from `HddDisplay_ServiceCommBoxes` (`0044b5f8`)), and cancelled when the portrait's script runs out (`MessagePort_Cancel`, `00435b38`). So byte 7 is what lets a line up with no comm box behind it — without it a speakerless line would wait out its `maxWait` and drop unshown. The same byte gates `PilotMessagePort_Speak`'s voice arm, which patches `id + 1` and the variant digit into `BC_00000` and hands the name to `Voice_PlayNamed`. No `BC_*` clip ships in any archive, so an action's line is text only.
 
-Across the retail missions (`.MSN` row #10 `0x4E`, the message id plus one) exactly one campaign action posts from this set: `C1_02.MSN`'s, with id 1, `MAYDAY!`. Ids 0 and 2 are never posted.
+Across the 62 retail missions (`.MSN` row #10 `0x4E`, the message id plus one) exactly one action outside `TRAIN1`-`TRAIN4` posts a message: `C1_02.MSN`'s, with id 1, `MAYDAY!`. No retail mission posts ids 0 and 2.
 
 ### The training port
 
-A training mission builds a different class for `view+0x207` (vtable `0049baa8`, constructor `TrainingMessagePort_Ctor`, `00436244`, a `0x4ef`-byte instance) and indexes `COMMAND<n>.STR` into it, `n` the training mission number. `COMMAND1.STR`-`COMMAND4.STR` are the four instructors' scripts, and every retail training mission's actions post from them — 10 to 21 each.
+A training mission builds a different class for `view+0x207` (vtable `0049baa8`, constructor `TrainingMessagePort_Ctor`, `00436244`, a `0x4ef`-byte instance) and indexes `COMMAND<n>.STR` into it, `n` the training mission number. `COMMAND1.STR`-`COMMAND4.STR` are the four instructors' scripts. Only `TRAIN1.MSN`-`TRAIN4.MSN` set a training mission number, 1 to 4; `TRAIN5`-`TRAIN8` leave it 0 and run on the ordinary port with `COMMAND0.STR`, and none of their actions posts a message. The four post from their scripts: 15 of `TRAIN1`'s 16 actions, and all of `TRAIN2`'s 21, `TRAIN3`'s 19 and `TRAIN4`'s 10.
 
 **Its post (`TrainingMessagePort_Post`, `004362e4`) ignores the subject.** Every id resolves in the `COMMAND<n>` table, and the first entry is enqueued without a variant roll. In these files several consecutive entries share an id: they are the sentences of one instruction, attribute byte 1 counting 0, 1, 2 through them, and only the first carries timings.
 
@@ -186,7 +184,7 @@ Its per-frame update (`TrainingMessagePort_Update`, `004365d0`) sets the ready l
 | `0x1c` | `ROGER THAT! PREPARING TO OPEN FIRE!` | `FIRE AT WILL` taken |
 | `0x1d` | `WHAT?!` | `HELP ME OUT!` refused: nothing is shooting at the player; `ATTACK ENEMY` refused: the subject is already neutralised |
 | `0x1e` | `AFFIRMATIVE!` / `YES SIR.` / `ROGER.` | the generic yes — `JOIN ON ME` from inside formation range, and `IGNORE MY TARGET` from a machine that is out of action |
-| `0x1f` | `NEGATIVE.` / `SORRY SIR.` / `UNABLE TO COMPLY.` | the generic no. Nothing in the simulator posts it |
+| `0x1f` | `NEGATIVE.` / `SORRY SIR.` / `UNABLE TO COMPLY.` | the generic no; no poster found |
 | `0x20` | `ALREADY GOTCHA COVERED.` | the order names a post this machine already holds; `FIRE AT WILL` to a machine already in a fight |
 | `0x21` | `PLEASE STAND BY...` | — |
 | `0x22` | `STANDING BY...` | — |
@@ -198,7 +196,7 @@ Its per-frame update (`TrainingMessagePort_Update`, `004365d0`) sets the ready l
 | `0x29` | `NEGATIVE. IT'S TRASHED.` | — |
 | `0x2a` | `ON MY WAY.` | `PATROL GRIDPOINT` / `GOTO GRIDPOINT` taken |
 
-`0x15` is in no bank at all. The em-dashed ids are recorded but have no poster found ([Open](#open)); which arm of `Mech_ReceiveSquadOrder` raises each of the rest is [`../simulation/ai-squadmates.md`](../simulation/ai-squadmates.md#receiving-one--mech_receivesquadorder-00420ad4-mech-vtable-0x28)'s case table.
+`0x15` is in no bank at all. The em-dashed ids and `0x1f` are recorded but have no poster found ([Open](#open)); which arm of `Mech_ReceiveSquadOrder` raises each of the rest is [`../simulation/ai-squadmates.md`](../simulation/ai-squadmates.md#receiving-one--mech_receivesquadorder-00420ad4-mech-vtable-0x28)'s case table.
 
 **`0x1e` is the yes and `0x1f` the no.** Mistaking them is easy because one refusal arm of `Mech_ReceiveSquadOrder` posts `0x1e`: a squadmate too shot up to comply with `IGNORE MY TARGET` answers affirmatively, which is correct and reads as a bug in a table of refusals.
 
@@ -206,7 +204,7 @@ Its per-frame update (`TrainingMessagePort_Update`, `004365d0`) sets the ready l
 
 `PilotMessagePort_Speak` (`00435d9c`) paints it, and it looks nothing like the ticker. The box is **sized to its line and centred on the screen**: the paint measures the composed text, sets `x0 = (screen / 2) - (width / 2) - (10 << XCoordShift)` and `x1 = x0 + width + (0x14 << XCoordShift)`, and takes y from the `.GAU` rect unchanged. Every retail file authors that rect as `0,y - 320,y+10`, so the authored width is discarded and only the height reaches the screen. The line sits at `(screen / 2) - (width / 2)`, vertically at `bottom - ((height - inkHeight) >> 1)` — the **ink** centred in the box, where the ticker centres the cell.
 
-**The colours are the speaker's.** The paint resolves the message record's `+0x02` through `Squad_IndexOf` and, for a squadmate, fills with that slot's own `COLORS.DAT` colour and frames it in the palette entry **one below** the fill:
+**The colours are the speaker's.** The paint resolves the message record's `+0x02` through `Squad_IndexOf` and, for a squadmate, fills with that slot's colour, `HudColorTable_Get(slot)` (ids 12, 15, 26 — [`heads-down-display.md`](heads-down-display.md#the-gauge)), and frames it in the palette entry **one below** the fill:
 
 ```
 slot   = record->speaker ? Squad_IndexOf(record->speaker) : -1
@@ -214,7 +212,7 @@ fill   = slot < 0 ? COLORS.DAT[19] : HudColorTable_Get(slot)
 border = slot < 0 ? COLORS.DAT[9]  : fill - 1
 ```
 
-That subtraction is arithmetic on the already-resolved palette index, not a second logical id — slot 0's id 0 lands on palette 14, green, and its frame on palette 13, yellow. Only a message with no squadmate behind it falls back to the computer's black and red. The text is `ColorSchemePanels[2]` `CPRED` either way, so red on green is what a squadmate's reply looks like.
+That subtraction is arithmetic on the already-resolved palette index, not a second logical id — slot 0's id 12 lands on palette 14, green, and its frame on palette 13, yellow. Only a message with no squadmate behind it falls back to the computer's black and red. The text is `ColorSchemePanels[2]` `CPRED` either way, so red on green is what a squadmate's reply looks like.
 
 `PilotMessagePort_ComposeLine` (`00435d0c`) builds the line: the speaker's name from their comm box (`Squad_PilotName` (`00434298`) into `HddGauge_Name` (`0044b900`), the gauge's own `+0x137`), or `HQ` from `PilotMessagePort_GetHqName` (`004342b8`) when the record names no object; then `": "`; then the message text, `strncat`ed at 0x4a characters.
 
@@ -230,7 +228,8 @@ The speaker's own portrait, alongside this box, is driven separately — see [`h
 
 ## Open
 
-- **Unported:** the display's two further gates — the refusal to draw while the cockpit view manager's `+0x14` reads 4, and the paint's `+0x1c` byte.
-- **Open:** what the cockpit view manager's `+0x1c` byte is.
-- **Open:** whether anything posts the pilot ids the table marks with an em dash. A text search finds no poster, which does not settle it.
+- **Unported:** the display's two further gates — the computer's line suppressed, tone and all, while the cockpit view manager's `+0x14` reads 4 (the external view), and both ports' paints skipped while its view-change flag `+0x1c` is set.
+- **Open:** no poster of the computer's port outside the six in [Posters](#posters) found by `es2_fieldscan.py 20b` (seventeen loads of `view+0x20b`); a copy of the port pointer held elsewhere would escape that scan, and the 34 lines with no poster rest on it.
+- **Open:** no reader of the queued record's `+0x2d`-`+0x30` (attribute bytes 8-11) found by `es2_fieldscan.py 2d 2e 2f 30` over the port's code (`00434e50`-`00437300`); the comm box also reads the current record.
+- **Open:** whether anything posts the pilot ids the table marks with an em dash, or `0x1f`. No poster found among `Ai_PostSquadMessage`'s six callers (`Mech_ReceiveSquadOrder` included), `Action_Activate`, or the other callers of `CockpitView_GetSquadMessagePort`, which does not settle it.
 - **Open:** no retail capture of TRAIN1-TRAIN4 has been checked against the raised training box (top 45 to 55 units for a walker); the lift is read from code and `.GAU` data only.

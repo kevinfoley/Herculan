@@ -206,7 +206,8 @@ public sealed class ShellBuildScreen {
 	/// <c>Build_GateButtons</c> (<c>004469d4</c>). An empty bay can be built into and not scrapped, and
 	/// BUILD is live only while the salvage available is <i>more</i> than the selected chassis's price —
 	/// a pool exactly equal to it is not enough. An occupied bay can be scrapped and not built into, and
-	/// SCRAP is dead when it holds the only deployable machine or one whose chassis is not available —
+	/// SCRAP is dead while the hangar holds exactly one deployable machine, whichever bay it is in, or when
+	/// the bay's chassis is not available —
 	/// the repair screen's SCRAP test (docs/shell/screen-layout.md#what-the-buttons-are-gated-on).
 	///
 	/// <para>With no bay selected the original reads the dword before the eight-pointer array as the

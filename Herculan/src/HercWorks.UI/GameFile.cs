@@ -5,8 +5,10 @@ namespace HercWorks.UI;
 /// <summary>
 /// A game data file the editors have opened, from wherever it was found: a loose file on disk or an
 /// entry still packed inside a .VOL. Carries the content with the 9-byte VOL entry prefix already
-/// stripped, plus the prefix fields themselves so a save can rebuild a retail-shaped file — see
-/// VolEntryPrefixCodec, which loose copies need just as much as packed ones do.
+/// stripped, plus the prefix fields themselves so a save can rebuild the archive-entry shape on
+/// request — see VolEntryPrefixCodec. The game reads a loose file content-only, from offset 0
+/// (docs/formats/vol-archive.md#loose-files-on-disk-carry-no-prefix), so the prefix only belongs on
+/// a file headed back into an unpacked archive tree.
 /// </summary>
 public sealed class GameFile {
 	/// <summary>Bare file name, e.g. <c>HERC_INF.DAT</c>.</summary>

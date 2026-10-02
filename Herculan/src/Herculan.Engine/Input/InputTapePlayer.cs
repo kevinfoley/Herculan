@@ -111,6 +111,26 @@ public sealed class InputTapePlayer {
 	/// </summary>
 	public IReadOnlyList<(int First, int Last)> InferredPanelSpans { get; }
 
+	/// <summary>
+	/// The tape's recorded length, for the log: <see cref="SecondsOf"/> summed over the frames that
+	/// ticked the simulation, which leaves out every frame of an <see cref="InferredPanelSpans"/> run
+	/// after its first, the frame whose tick raised the panel. It rests on the same heuristic as the
+	/// spans. See docs/formats/tap-input-tape.md, "Timing".
+	/// </summary>
+	public double RecordedSeconds {
+		get {
+			var frames = Tape.Frames;
+			double seconds = frames.Sum(frame => SecondsOf(frame.TickDelta));
+			foreach (var (first, last) in InferredPanelSpans) {
+				for (int i = first + 1; i <= last; i++) {
+					seconds -= SecondsOf(frames[i].TickDelta);
+				}
+			}
+
+			return seconds;
+		}
+	}
+
 	/// <summary>Reads a tape. Null when the file is not one.</summary>
 	public static InputTapePlayer? Load(string path, bool demoMode) {
 		var tape = new InputTapeTransformer().Parse(File.ReadAllBytes(path));

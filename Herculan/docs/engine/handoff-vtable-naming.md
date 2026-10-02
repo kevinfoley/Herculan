@@ -26,10 +26,6 @@ Each named for its body only:
 - `TexPoly_Slot28NoOp` (`TexPoly` `+0x28`) and `CTLWindow_Slot00NoOp` (`CTLWindow` `+0x00`).
 - The flag `HddDamageScreen_Repaint` (0) and `HddDamageScreen_Tick` (1) pass to `HddDamageScreen_Update`.
 
-## VSHELL
-
-- Its four comment-only entries for `ANSequence`/`ANCyclicSequence` `+0x28`/`+0x2c` (`0046301c`, `00463048`, `004630b0`, `004630bc`) decompile identically to DBSIM's `ANSequence_FrameShortOfTarget`, `ANSequence_FrameShortOfTargetBackward` and the two `ANCyclicSequence_..._Always` stubs. Promote them under the same names once VSHELL's `AnimThread_FindTransition` is confirmed to call them the same way, and replace the "What it asks is Open" text on `VshellANSequenceVtable`'s two slots in `known_vtables.json`.
-
 ## `known_vtables.json` shapes still missing for DBSIM
 
 Slot meanings for these families live only in the per-function entries: the TS part family (`TSPartBase`, `TSPartList`, `TSGroup`, `TSBSPGroup`, `TSBSPPart`, `TSDetailPart`, `TSCellAnimPart`, `TSBitmapPart`, `TSShape`, `ANShape`, `GridShape`, `hzline`, `CONFIG_PART`), the `TSBase` and poly family, the AN sequences, the GL and stream classes (VSHELL has shapes for all three; DBSIM's tables are unlabelled), the owning cockpit displays (`PanelGauge` and below, `HUDGauge` and below, `MFDisplay`, `HDDisplay`), the message ports, the bar graphs and the alert panels.

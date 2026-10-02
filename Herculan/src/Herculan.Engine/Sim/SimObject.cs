@@ -210,15 +210,28 @@ public abstract class SimObject {
 
 	/// <summary>
 	/// The AI's own "out of the fight" test: <c>+0x99</c>, <c>+0xa4</c> and <c>+0xa5</c> together,
-	/// where <see cref="Neutralised"/> is the first two. Only a HERC can answer the third — it is the
-	/// no-weapons-left latch — so everything else answers the same as <see cref="Neutralised"/>.
+	/// where <see cref="Neutralised"/> is the first two. The third is the nothing-to-fight-with latch,
+	/// which <see cref="MechObject"/>, <see cref="FlyerObject"/> and <see cref="BaseObject"/> each
+	/// answer from their own <c>Disarmed</c>.
 	///
 	/// <para>Deliberately not folded into <see cref="Neutralised"/>: the detection sweep, the player's
 	/// target selection and a group's condition tier all read that one, and none of them consults
-	/// <c>+0xa5</c> in the original. The one place that does is a guard order's rival test — see
-	/// <c>MissionGroup.IsWipedOut</c>, which is why that reads this and not <see cref="Neutralised"/>.</para>
+	/// <c>+0xa5</c> in the original. The AI's target tests do (docs/simulation/ai-targeting.md), and
+	/// so does a guard order's rival test — see <c>MissionGroup.IsWipedOut</c>, which is why that
+	/// reads this and not <see cref="Neutralised"/>.</para>
 	/// </summary>
 	public virtual bool OutOfAction => Neutralised;
+
+	/// <summary>
+	/// Vtable <c>+0x50</c> — a shot from <paramref name="attacker"/> just struck this object, made by
+	/// <see cref="SimWorld.Raycast"/>. Every class but the HERC installs <c>Mech_ShareContact</c>
+	/// (<c>00411aec</c>), which does nothing but share the attacker with this object's side
+	/// (<see cref="Detection.ShareContact"/>); the HERC overrides it with its reaction
+	/// (docs/simulation/ai-targeting.md, "Passing a contact on").
+	/// </summary>
+	/// <param name="damage">The shot's damage, which only a HERC's reaction reads.</param>
+	public virtual void OnTakingFire(SimWorld world, SimObject attacker, short damage) =>
+		Detection.ShareContact(world, this, attacker);
 
 	/// <summary>
 	/// Vtable <c>+0x34</c> — the shield facing <paramref name="heading"/> points at, front within
@@ -346,9 +359,10 @@ public abstract class SimObject {
 	public int PilotIndex { get; set; } = -1;
 
 	/// <summary>
-	/// <c>obj+0x1b2</c> — the mission action this object fires when it is <b>engaged</b>: a hostile
-	/// that already has contact on it has closed to <see cref="Detection.EngagementRange"/>. Set from
-	/// its roster record's own ref; see <c>ScriptMechRecord.EngagementActionRef</c>.
+	/// <c>obj+0x1b2</c> — the mission action this object fires when it is <b>engaged</b>: a hostile is
+	/// within <see cref="Detection.EngagementRange"/> of it and one side has spotted or shot the
+	/// other. The three sites are in docs/simulation/mission-deployment.md, "An object's own two
+	/// actions". Set from its roster record's own ref; see <c>ScriptMechRecord.EngagementActionRef</c>.
 	/// </summary>
 	public MissionActionState? EngagementAction { get; set; }
 
@@ -364,12 +378,12 @@ public abstract class SimObject {
 	public MissionActionState? DefeatAction { get; set; }
 
 	/// <summary>
-	/// <c>obj+0x9e</c> — whether this object has been closed with by an enemy that can see it. Two
-	/// setters: <see cref="Detection.Sweep"/> raises it on both objects of a pair that have closed to
-	/// <see cref="Detection.EngagementRange"/>, and <see cref="SimWorld.Raycast"/> raises it on the
-	/// shooter alone. Read by <see cref="MissionObjective.ConditionEngaged"/> and its negation. Why
-	/// the two mark different parties is in docs/simulation/mission-deployment.md, "An object's own
-	/// two actions".
+	/// <c>obj+0x9e</c> — whether this object has been engaged. Three setters:
+	/// <see cref="Detection.Sweep"/> raises it on both objects of a pair that have closed to
+	/// <see cref="Detection.EngagementRange"/>, <see cref="Detection.ShareContact"/> on the contact
+	/// being shared, and <see cref="SimWorld.Raycast"/> on the shooter alone. Read by
+	/// <see cref="MissionObjective.ConditionEngaged"/> and its negation. Why they mark different
+	/// parties is in docs/simulation/mission-deployment.md, "An object's own two actions".
 	/// </summary>
 	public bool Engaged { get; internal set; }
 
@@ -400,12 +414,23 @@ public abstract class SimObject {
 	};
 
 	/// <summary>
-	/// Activates <see cref="EngagementAction"/>, if there is one. The original also gates this on
-	/// <c>obj+0xa2</c>, a per-tick latch that cannot change the outcome because
-	/// <see cref="MissionActionState.Activate"/> is one-shot already — see
-	/// docs/simulation/mission-deployment.md, "An object's own two actions".
+	/// <c>obj+0xa2</c> — the ECM gate on <see cref="EngagementAction"/>. Raised on a machine's
+	/// selected target by <see cref="MechObject.RaiseTargetEngagementGate"/> and cleared on everything
+	/// at the end of <see cref="Detection.Tick"/>; see docs/simulation/mission-deployment.md, "An
+	/// object's own two actions".
 	/// </summary>
-	internal void ActivateEngagementAction(SimWorld world) => EngagementAction?.Activate(world);
+	internal bool EngagementActionHeld;
+
+	/// <summary>
+	/// Activates <see cref="EngagementAction"/>, if there is one and <see cref="EngagementActionHeld"/>
+	/// is clear. Every site that activates it goes through here, and every one of them is gated in the
+	/// original.
+	/// </summary>
+	internal void ActivateEngagementAction(SimWorld world) {
+		if (!EngagementActionHeld) {
+			EngagementAction?.Activate(world);
+		}
+	}
 
 	/// <summary>
 	/// Activates <see cref="DefeatAction"/>, if there is one. Every site guards on the object not already

@@ -162,9 +162,10 @@ public sealed class CockpitArt {
 	///
 	/// <para>Two of these are built — one against the live palette, one against the damage-flash
 	/// palette — and <see cref="FlashActive"/> picks between them. Retail's flash swaps the whole
-	/// palette, and these colours are its HUD half: twenty of <c>COLORS.DAT</c>'s twenty-seven entries
-	/// move, most of them a long way, so a HUD that kept its own colours through a flash would be the
-	/// one part of the screen visibly refusing to.</para>
+	/// palette, and these colours are its HUD half: in eight of the ten theaters most of
+	/// <c>COLORS.DAT</c>'s twenty-seven entries move, most of them a long way, so a HUD that kept its
+	/// own colours through a flash would be the one part of the screen visibly refusing to. The
+	/// per-theater counts are in docs/formats/cockpit-canopy-palette.md, "The damage shake".</para>
 	/// </summary>
 	private sealed record PaletteColors(
 		(Vector3, Vector3, Vector3)? Gauge,

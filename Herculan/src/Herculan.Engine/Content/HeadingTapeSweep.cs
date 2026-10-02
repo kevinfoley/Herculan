@@ -13,7 +13,10 @@ namespace Herculan.Engine.Content;
 /// heading past <see cref="HalfTurn"/> finishes on its first frame. Both of those, and the ramp's
 /// derivation, are docs/formats/cockpit-gunsight-hud.md's power-up wind-up section. The second is reproduced
 /// here rather than coded around — <see cref="Angle"/> arms and evaluates in one call, as the
-/// original's tick and paint do in one pass, so it falls out of the arithmetic.</para>
+/// original's tick and paint do in one pass, so it falls out of the arithmetic. The original reads
+/// the clock once to arm and again after the world draw to evaluate; this reads it once, so the
+/// arming frame's ramp is always zero, where retail's is zero unless a coarse tick falls during that
+/// draw.</para>
 /// </summary>
 public sealed class HeadingTapeSweep {
 	/// <summary>

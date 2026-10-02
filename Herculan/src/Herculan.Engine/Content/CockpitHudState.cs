@@ -139,6 +139,11 @@
 /// <see cref="Settings.TweakSettingDefinitions.ChargeBarPowerLevel"/>, carried here so the widget list
 /// can be built without the settings. See <see cref="CockpitWidgets.VisibleWeaponRows"/>.
 /// </param>
+/// <param name="MissileCam">What F6's MISSILE CAM screen last painted — see <see cref="MfdMissileCamScreen"/>.</param>
+/// <param name="MissileCamHolding">
+/// Whether the display switched itself to the missile camera and still holds it
+/// (<see cref="MfdMissileCamSwitch.Holding"/>), which keeps a transmission off the screen.
+/// </param>
 public readonly record struct CockpitHudState(
 	IReadOnlyList<WeaponRowState> Weapons,
 	int ShieldFront,
@@ -172,7 +177,9 @@ public readonly record struct CockpitHudState(
 	TrainingMessageBox? TrainingMessage = null,
 	int? MfdPowerUpFrame = null,
 	CockpitDropoutState Dropout = default,
-	bool ChargeBarsDraggable = false) {
+	bool ChargeBarsDraggable = false,
+	MfdMissileCamState MissileCam = default,
+	bool MissileCamHolding = false) {
 
 	/// <summary>
 	/// Power-up state: an even shield balance printing 100/100 the way <c>ShieldsGauge_UpdateReadouts</c>

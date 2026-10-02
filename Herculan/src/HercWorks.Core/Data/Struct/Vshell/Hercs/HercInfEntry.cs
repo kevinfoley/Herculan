@@ -29,7 +29,7 @@ public class HercInfEntry {
 	public short SalvageReq { get; set; }
 
 	/// <summary>
-	/// <c>+0x0a</c>, meaning unknown: no reader traced. Retail holds 40, 50, 60, 95, 110, 100, 125, 30
+	/// <c>+0x0a</c>, meaning open (<c>docs/formats/herc-catalogs.md#open</c>). Retail holds 40, 50, 60, 95, 110, 100, 125, 30
 	/// and 70 across the nine chassis.
 	/// </summary>
 	public short Unknown0A { get; set; }

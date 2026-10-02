@@ -11,7 +11,9 @@ namespace HercWorks.UI;
 /// contains and where it stands. Backed by HercWorks.Core's ScriptDatTransformer (byte-exact
 /// round-trip verified against all 10 real sample files); see docs/formats/script-dat.md for the
 /// format itself. Follows the same shape as CampaignResourcesForm: a tab per block, loose-file
-/// Open/Save As, shared VolEntryPrefixCodec handling, layout in MissionScriptForm.Designer.cs.
+/// Open/Save As, layout in MissionScriptForm.Designer.cs. Save As writes the content-only shape
+/// DBSIM reads; Save As With VOL Prefix keeps the 9-byte entry prefix of a file that was opened with
+/// one (see VolEntryPrefixCodec).
 ///
 /// <para><b>Records are edited in place, not added or removed.</b> Every block past the first two
 /// addresses the others by array index — a group's member list indexes the Herc roster, a roster
@@ -49,12 +51,7 @@ public partial class MissionScriptForm : Form {
 	private readonly BindingList<ScriptObjectiveLineRow> _unlockRows = new();
 
 	private ScriptDat? _loaded;
-	private string? _loadedPath;
-
-	/// <summary>Original VOL entry prefix, round-tripped on save — see VolEntryPrefixCodec.</summary>
-	private byte? _originalCompressionType;
-	private byte[]? _originalMagicPrefix;
-	private bool _originalHadTrailingByte;
+	private GameFile? _loadedFile;
 
 	public MissionScriptForm() {
 		InitializeComponent();
@@ -80,7 +77,7 @@ public partial class MissionScriptForm : Form {
 	/// <summary>
 	/// Distinct per-form/file-type identity so Windows remembers this dialog's last-visited folder
 	/// separately from every other Open/Save dialog in the app — see CampaignResourcesForm's
-	/// DialogClientGuid for the full explanation. Shared between Open and Save As here since both
+	/// DialogClientGuid for the full explanation. Shared by Open and both saves here since all three
 	/// deal with the same script.dat file type.
 	/// </summary>
 	private static readonly Guid DialogClientGuid = new("6c1e0d54-3a7b-4f92-8c1d-2f5b7a9e4d31");
@@ -116,9 +113,8 @@ public partial class MissionScriptForm : Form {
 
 	private void LoadFile(string path) {
 		try {
-			byte[] rawBytes = File.ReadAllBytes(path);
-			var prefix = VolEntryPrefixCodec.StripIfPresent(rawBytes);
-			var script = (ScriptDat?)_transformer.Parse(prefix.Content);
+			var file = GameFile.FromLooseFile(path);
+			var script = (ScriptDat?)_transformer.Parse(file.Content);
 
 			if (script == null) {
 				MessageBox.Show(this, "File was empty or could not be parsed.", "Error",
@@ -129,14 +125,12 @@ public partial class MissionScriptForm : Form {
 			_loaded = script;
 			Populate(script);
 
-			_loadedPath = path;
-			_originalCompressionType = prefix.HadPrefix ? prefix.CompressionType : null;
-			_originalMagicPrefix = prefix.MagicPrefix;
-			_originalHadTrailingByte = prefix.HadTrailingByte;
+			_loadedFile = file;
+			_saveWithPrefixMenuItem.Enabled = file.CompressionType.HasValue && file.MagicPrefix != null;
 
-			string prefixNote = prefix.HadPrefix ? " (VOL entry prefix detected — will be preserved on save)" : "";
+			string prefixNote = file.CompressionType.HasValue ? " (VOL entry prefix detected)" : "";
 			_statusLabel.Text =
-				$"Loaded {Path.GetFileName(path)} — {script.Coordinates.Length} points, " +
+				$"Loaded {file.FileName} —{script.Coordinates.Length} points, " +
 				$"{script.Mechs.Length} hercs, {script.Flyers.Length} flyers, " +
 				$"{script.Bases.Length} bases, {script.Groups.Length} groups.{prefixNote}";
 		} catch (Exception ex) {
@@ -320,7 +314,11 @@ public partial class MissionScriptForm : Form {
 		}
 	}
 
-	private void OnSaveAs(object? sender, EventArgs e) {
+	private void OnSaveAs(object? sender, EventArgs e) => Save(withPrefix: false);
+
+	private void OnSaveWithPrefix(object? sender, EventArgs e) => Save(withPrefix: true);
+
+	private void Save(bool withPrefix) {
 		if (_loaded == null) {
 			MessageBox.Show(this, "Open a script.dat file first.", "Nothing to save",
 				MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -344,12 +342,12 @@ public partial class MissionScriptForm : Form {
 
 		using var dialog = new SaveFileDialog {
 			Filter = "Mission script files (*.dat)|*.dat|All files (*.*)|*.*",
-			Title = "Save mission script file",
-			FileName = _loadedPath == null ? "SCRIPT.DAT" : Path.GetFileName(_loadedPath),
+			Title = withPrefix ? "Save mission script file with VOL entry prefix" : "Save mission script file",
+			FileName = _loadedFile?.FileName ?? "SCRIPT.DAT",
 			ClientGuid = DialogClientGuid,
-			InitialDirectory = _loadedPath == null
-				? GamePaths.InitialDirectoryFor("DATA")
-				: Path.GetDirectoryName(_loadedPath)!
+			InitialDirectory = _loadedFile?.LoosePath is { } loosePath
+				? Path.GetDirectoryName(loosePath)!
+				: GamePaths.InitialDirectoryFor("DATA")
 		};
 
 		if (dialog.ShowDialog(this) != DialogResult.OK) {
@@ -358,26 +356,24 @@ public partial class MissionScriptForm : Form {
 
 		try {
 			byte[] content = _transformer.Write(_loaded)!;
-			byte[] outBytes;
-			string formatNote;
-
-			if (_originalCompressionType.HasValue && _originalMagicPrefix != null) {
-				outBytes = VolEntryPrefixCodec.Wrap(
-					content, _originalCompressionType.Value, _originalMagicPrefix, _originalHadTrailingByte);
-				formatNote = "retail-compatible format — the original VOL entry prefix (compression type, magic) was preserved, with the size field updated for the edited content";
-			} else {
-				outBytes = content;
-				formatNote = "content-only format — this file wasn't loaded with a VOL entry prefix to preserve, so no prefix could be reconstructed for this export";
-			}
+			byte[] outBytes = withPrefix
+				? VolEntryPrefixCodec.Wrap(content,
+					_loadedFile!.CompressionType!.Value, _loadedFile.MagicPrefix!, _loadedFile.HadTrailingByte)
+				: content;
 
 			File.WriteAllBytes(dialog.FileName, outBytes);
+
+			string formatNote = withPrefix
+				? "Saved with the original VOL entry prefix, size field updated. DBSIM reads data\\script.dat " +
+					"without it; use Save As for that."
+				: "Saved in the content-only format DBSIM reads from data\\script.dat.";
 
 			// The retail file is a fixed 13,520-byte preallocated buffer whose tail is stale
 			// leftovers; DBSIM stops at block 13's declared end and ignores the rest, so the shorter
 			// unpadded write is correct — worth saying, since the size differing from retail's is
 			// otherwise an alarming thing to notice.
 			MessageBox.Show(this,
-				$"Saved in {formatNote}.\n\n" +
+				$"{formatNote}\n\n" +
 				$"Written as {outBytes.Length:N0} bytes — the game's own files are padded out to a fixed " +
 				"13,520-byte buffer with stale trailing data, which readers stop short of and ignore.",
 				"Done", MessageBoxButtons.OK, MessageBoxIcon.Information);

@@ -12,7 +12,7 @@ public enum ShellRepairButton {
 	/// <summary>Rebuilds the whole machine to 100. Gated on affording that.</summary>
 	RepairAll = 1,
 
-	/// <summary>Scraps the machine for salvage. Dead while it is the only one that can fly.</summary>
+	/// <summary>Scraps the machine for salvage. Dead while exactly one machine in the hangar can deploy, whichever it is.</summary>
 	Scrap = 2,
 
 	/// <summary>Puts the pool and the machine back as they stood when the bay was selected. It does not leave the screen.</summary>
@@ -210,6 +210,10 @@ public sealed class ShellRepairScreen {
 	/// that holds nothing or holds something still under construction gives way to the first bay holding
 	/// a finished machine, the snapshot CANCEL restores is taken and the selection goes back to
 	/// <c>(0, 0)</c>.
+	///
+	/// <para>The original selects that bay through <c>Squad_SelectBay</c> under the previous tab's rule,
+	/// as <c>Arming_Enter</c> does (docs/shell/screen-layout.md#entering-the-weapons-screen); this engine
+	/// applies the repair tab's.</para>
 	/// </summary>
 	public void Enter() {
 		if (RepairMode == AutoRepairMode) {
@@ -591,6 +595,10 @@ public sealed class ShellRepairScreen {
 	/// Which <c>estext.bin</c> word names one component. <c>Repair_SetComponentNames</c> (<c>00433cdf</c>) holds two fifteen-entry
 	/// tables — six group names then nine internal names — and picks the second whenever the machine is
 	/// chassis type 8, the Razor, whose parts are nacelles and wings rather than torsos and legs.
+	///
+	/// <para>The original runs it only from <c>Squad_SelectBay</c>'s repair arm, so a machine selected on
+	/// another tab keeps the names this tab last set; this engine names every machine by its own chassis
+	/// (docs/shell/screen-layout.md#which-names-a-chassis-shows).</para>
 	/// </summary>
 	public static int ComponentNameText(int chassisType, ShellRepairCategory category, int index) {
 		int[] table = chassisType == FlyerChassisType ? FlyerComponentNames : WalkerComponentNames;

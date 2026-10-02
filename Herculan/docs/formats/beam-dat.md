@@ -25,11 +25,11 @@ Retail, frame 0 throughout:
 | 1 | ELFW | 30 | 104 |
 | 2 | BPBW | 120 | 10 |
 | 3 | L100 | 20 | 88 |
-| 4 | L200 / L400 | 25 | 88 |
-| 5 | L300 / L500 | 30 | 88 |
+| 4 | L200, L400 | 25 | 88 |
+| 5 | L300, L500 | 30 | 88 |
 | 6 | PBW2 | 75 | 1 |
 | 7 | ELF2 | 45 | 99 |
-| 8-9 | unused | 35, 40 | 88 |
+| 8-9 | none: L400's and L500's own records, which their `PROJ.DAT` records do not name ([`proj-dat.md`](proj-dat.md#lookup)) | 35, 40 | 88 |
 
 ## `dba\BEAMTEX.DBA`
 

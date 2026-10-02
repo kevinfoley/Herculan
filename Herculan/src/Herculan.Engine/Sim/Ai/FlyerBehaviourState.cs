@@ -90,9 +90,10 @@ public sealed class FlyerBehaviourState {
 	/// <summary>
 	/// Bit 0 — <see cref="FlyerObject.AiTick"/> does not run the dwell countdown. The flyer table sets
 	/// it on exactly the three states whose dwell would otherwise decide something:
-	/// <c>attacking</c>, <c>sleeping</c> and <c>dead</c>. The four that <i>do</i> count down all
-	/// reassess back into themselves while the order stands, so the clock is what re-reads the order
-	/// rather than what ends a state.
+	/// <c>attacking</c>, <c>sleeping</c> and <c>dead</c>. The four that <i>do</i> count down reassess
+	/// when it runs out — <c>deciding</c> into its group's order, the other three back into themselves
+	/// while the order stands — so the clock is what re-reads the order rather than what ends a
+	/// state.
 	/// </summary>
 	public bool SuppressesDwell => (Flags & 0x01) != 0;
 
@@ -151,7 +152,9 @@ public struct FlyerBehaviourBlock {
 	/// <c>Behaviour_SetState</c> (<c>00413e50</c>) — installs a descriptor and arms its countdown at
 	/// the descriptor's dwell plus the shared 0-15 count jitter. The jitter global is process-wide and
 	/// stepped by every state change in the mission, aircraft and machines alike, which is why it
-	/// lives on <see cref="BehaviourBlock"/> rather than being duplicated here.
+	/// lives on <see cref="BehaviourBlock"/> rather than being duplicated here. The scratch the
+	/// original zeroes alongside is held on the aircraft; <c>FlyerObject.SetBehaviourState</c> zeroes
+	/// it and is the only caller.
 	/// </summary>
 	public void SetState(FlyerBehaviourState state) {
 		State = state;

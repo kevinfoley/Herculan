@@ -12,7 +12,7 @@ Normally only ES.EXE is started by hand, and it passes the right options on to t
 
 Letter case matters for ES.EXE and the simulator: `-s` and `-S` are different options there. The front end ignores case and also accepts `/` in place of `-`.
 
-This page is for players. The technical detail behind each option is in [`command-line.md`](command-line.md) and the docs it links. HERCULAN's own options are in [`engine/host-flags.md`](engine/host-flags.md). <!-- doc-lint: ok -->
+This page is for players. The technical detail behind each option is in [`command-line.md`](command-line.md) and the docs it links. HERCULAN's own options are in [`engine/herculan-command-line.md`](engine/herculan-command-line.md). <!-- doc-lint: ok -->
 
 ## Launcher — ES.EXE
 
@@ -101,7 +101,7 @@ The simulator can record everything the player does during a mission to a file a
 | `-r<name>` | Records the mission to `<name>.tap`. |
 | `-p<name>` | Plays `<name>.tap` back. |
 | `-D` | Plays one of the shipped demo recordings, chosen at random. Player input stops it. This is what VIEW DEMO does. |
-| `-d` | Checkpoints, placed after `-r` or `-p`. Built to save snapshots of the game's state beside the recording and compare against them during playback, to catch a replay that has drifted from the original. In the released game it only creates an empty `<name>.dmp` when recording; see [Open](#open). |
+| `-d` | Checkpoints, placed after `-r`, `-p` or `-D`. Built to save snapshots of the game's state beside the recording and compare against them during playback, to catch a replay that has drifted from the original. In the released game it only creates an empty `<name>.dmp` when recording; see [Open](#open). |
 
 ### Developer mode: `-SPRUNKNOWN`
 

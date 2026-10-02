@@ -598,8 +598,8 @@ public sealed class HddLayout {
 	/// whose rows are the mech's own fitted weapon names rather than a fixed table.
 	///
 	/// <para>A row's name is <b>not</b> this list read top to bottom: rows follow the <c>.PDG</c>
-	/// view's own region order and each region's id indexes here, which is why the internal page lists
-	/// its systems 0,1,2,5,6,7,8,3,4,9.</para>
+	/// view's own region order and each region's id indexes here, which is why a pilotable chassis's internal page
+	/// lists its systems 0,1,2,5,6,7,8,3,4,9 (other chassis differ — docs/formats/heads-down-display.md#damage-detail--page-1).</para>
 	/// </summary>
 	public static IReadOnlyList<StringFile.Entry> ComponentNames(StringFile? strings, HddDamageView view,
 			bool flyer = false) =>

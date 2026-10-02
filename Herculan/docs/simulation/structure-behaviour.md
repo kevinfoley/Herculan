@@ -159,6 +159,8 @@ and finishes with `SimObject_ApplyRootMotionIfEnabled(this, 100)`, which is what
 
 Type `0x22` alone, and the only object in the game that **aims three turrets from one object**: it rewrites its own heading field to `heading + 0x1555`, evaluates three turrets `0x5554` (120°) apart, and restores the original heading at the end. Each turret runs three weapon slots against `DAT_004a9640`, an 11-`short` descriptor table: slot 0 fires `Rocket_Fire(3, …)` and slots 1 and 2 `Bullet_FireBurst(3, …)` through `WeaponMountTemplate_GetByWeaponId(8)`. Its acquisition is `Ai_SelectTarget(this, 0x10, 0x3000)` — **the `0x3000` bearing cone** [`ai-targeting.md`](ai-targeting.md) names as the base turret's.
 
+Once every component but the first is at full damage, the tick sets `+0xa5` ([disarmed](component-damage.md#the-three-out-of-the-fight-bytes--0x99-0xa4-0xa5)), so a triple turret shot down to its base leaves the AI's fight without being destroyed.
+
 A slot only fires while its own component is undamaged, and the missile slot installs the target on `this+0x1a4` across the `Rocket_Fire` call and clears it again straight after, purely so the round picks up a lock — the object holds no target otherwise.
 
 Type `0x22` states no animation threads, so whatever it aims, it does not aim it by seeking one.
@@ -258,4 +260,5 @@ Spawn-time health comes from the block-9 record's starting condition (`+0x32`, [
 - **Unported:** the kill credit a destroyed structure hands its attacker (vtable `+0x60`).
 - **Unported:** spawn-time component health from the mission record.
 - **Open:** why the generator (type 3) and the transports (`0x0a`, `0x22`) state an armament of 1 when none of them reaches a tick that fires it. The AI's danger flag ([`ai-combat-states.md`](ai-combat-states.md#basesdat-0x2e)) reads all three as armed.
+- **Open:** a tower's ranges against retail play. At `Hud_WorldUnitsToMetres` (`00434228`)'s confirmed scale of `(units / 1000) * 6`, the armed tick's 40000-unit fire gate is 240 m and its 60000-unit target drop 360 m, but retail towers are seen aiming from about 320 m and firing from about 200 m, short of both by a margin the scale does not account for.
 - **Open:** the ground vehicle follower arm: no `script.dat` handoff examined places a second mobile vehicle for it to hold station on. The campaign's `.MSN` files are where to look for one.

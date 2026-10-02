@@ -58,8 +58,8 @@ public sealed class ShellMap {
 	private const int ReliefMaxHeight = 400;
 
 	/// <summary>
-	/// The relief's colours: a height is capped below <c>0x80</c>, divided into <c>0x18</c> steps of five,
-	/// and added to <c>0xd2 - 1</c>.
+	/// The relief's colours: a height is capped below <c>0x80</c>, divided by <c>0x80 / 0x18</c> (five, so
+	/// 26 steps), and added to <c>0xd2 - 1</c>.
 	/// </summary>
 	private const int ReliefHeightCap = 0x80;
 	private const int ReliefSteps = 0x18;
@@ -113,7 +113,7 @@ public sealed class ShellMap {
 	public int MaxX { get; private set; }
 	public int MaxY { get; private set; }
 
-	/// <summary><c>+0x187</c>, <c>+0x18b</c>, <c>+399</c>: the whole mission in view, which is also the altitude limit, <c>+0x3bd</c>.</summary>
+	/// <summary><c>+0x187</c>, <c>+0x18b</c>, <c>+0x18f</c>: the whole mission in view, which is also the altitude limit, <c>+0x3bd</c>.</summary>
 	public (int X, int Y, int Z) FullView { get; private set; }
 
 	/// <summary><c>+0x193</c>, <c>+0x197</c>, <c>+0x19b</c>: the squad in view, which the intro zooms to first.</summary>
