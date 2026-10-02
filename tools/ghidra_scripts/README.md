@@ -1,6 +1,6 @@
 # Ghidra scripts
 
-Headless scripts driving the `ES2Recon` Ghidra project over `DBSIM.EXE` and `VSHELL.EXE`.
+Headless scripts driving the `ES2Recon` Ghidra project over `DBSIM.EXE` and `VSHELL.EXE`, and the `ES1Recon` project over ES1's `ES1DBSIM` and `ES1GO` images.
 
 ## Running one
 
@@ -171,6 +171,15 @@ Code Ghidra never made a function of is listed by `es2_naming.py stats BIN --lis
 | `ES2RedefineFunction` | `clearStart` `trueEntry` `out` | Clears from `clearStart`, recreates at `trueEntry`, and decompiles the result. |
 | `ES2CheckFunctionEntries` | `out` `addrs...` | Read-only: whether a function starts exactly at each address, and what contains it. Run after any of the above. |
 | `ES2RemoveVtableType` | `names...` | Removes the `/ES2/<Name>` struct and slot category `ES2ApplyVtables` built for a vtable shape `known_vtables.json` no longer defines (renamed or dropped); refuses a struct still applied anywhere, so run it after `ES2ApplyVtables`. |
+
+### ES1 import
+
+`tools/scripts/es1_x32_extract.py --import` runs both, around Ghidra's auto-analysis, when it imports an ES1 image raw at base 0 (`Herculan/docs/es1/formats/x32-executable.md`).
+
+| Script | Args | Does |
+| --- | --- | --- |
+| `ES1SetupX32Image` | `memSize` `entry` | Pre-analysis: makes the image block read/write/execute, adds the uninitialised block up to the memory size, marks the entry point, and turns off the reference analyzers' subroutine option, which at base 0 disassembles at any constant that falls in the code. |
+| `ES1SeedFunctionStarts` | — | Post-analysis: creates a function at every `push ebp / mov ebp,esp` or `enter` prologue that follows a `ret` or `jmp`, clearing a pointer Ghidra typed over one, and re-runs analysis. Reports seeds that fall inside an existing function rather than creating them. |
 
 ### Signatures and analysis state
 
