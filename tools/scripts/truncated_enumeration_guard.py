@@ -10,7 +10,9 @@ truncator (head, tail, `sed -n A,Bp`, `sed Nq`, `awk 'NR<=N'`,
 `Select-Object -First/-Last/-Index`), with no `wc` in between.
 
 It applies only where completeness matters: the RE and docs corpora listed in
-SCOPE. A search is in scope when a path operand lies under one of them, when a
+SCOPE, in the main checkout and in every linked worktree, since the hook always
+runs the main checkout's copy of this script. A search is in scope when a path
+operand lies under one of them, when a
 recursive search (rg, git grep, grep -r, findstr /s, or `find … | xargs grep`)
 starts at a directory containing one, when the search reads stdin from an
 in-scope file (`cat X | grep …`, `grep … < X`), or when it has no path at all and
@@ -180,7 +182,36 @@ def norm(path: str, cwd: str) -> str:
     return os.path.normcase(os.path.normpath(path))
 
 
-SCOPE_ROOTS = [norm(s, REPO_ROOT) for s in SCOPE]
+def checkouts(root: str) -> list[str]:
+    """Every working tree of this repository: the main checkout, then each linked worktree.
+
+    Read from git's own registry, `.git/worktrees/<name>/gitdir`, which holds the path of the
+    worktree's `.git` file; no git process runs on every tool call.
+    """
+    main = root
+    git = os.path.join(root, ".git")
+    if os.path.isfile(git):  # run from a linked worktree's copy
+        with open(git, encoding="utf-8") as fh:
+            m = re.match(r"gitdir:\s*(.+?)[\\/]+\.git[\\/]+worktrees[\\/]", fh.read().strip())
+        if m:
+            main = os.path.normpath(os.path.join(root, m.group(1)))
+    roots = [main]
+    registry = os.path.join(main, ".git", "worktrees")
+    try:
+        names = sorted(os.listdir(registry))
+    except OSError:
+        names = []
+    for name in names:
+        try:
+            with open(os.path.join(registry, name, "gitdir"), encoding="utf-8") as fh:
+                roots.append(os.path.dirname(os.path.join(registry, name, fh.read().strip())))
+        except OSError:
+            pass
+    return roots
+
+
+CHECKOUTS = checkouts(REPO_ROOT)
+SCOPE_ROOTS = [norm(s, root) for root in CHECKOUTS for s in SCOPE]
 
 
 def under(path: str, root: str) -> bool:
@@ -494,14 +525,29 @@ SELF_TESTS = [
 ]
 
 
+def worktree_tests() -> list[tuple[str, str, str, bool]]:
+    """The scope cases again from inside a linked worktree, when one exists to test against."""
+    if len(CHECKOUTS) < 2:
+        print("skip linked-worktree cases: no linked worktree registered")
+        return []
+    wt = CHECKOUTS[1].replace("\\", "/")
+    return [
+        ("Bash", "grep -n Mech_LocomotionTick Herculan/docs/x.md | head -3", wt, True),
+        ("Bash", "rg -n 0x4d2540 | head", wt + "/Herculan/src", True),
+        ("Bash", f"grep -n foo {wt}/Herculan/docs/x.md | head", ".", True),
+        ("Bash", "grep -rn Foo tools/scripts | head", wt, False),
+    ]
+
+
 def self_test() -> int:
     failures = 0
-    for tool, command, rel_cwd, expect in SELF_TESTS:
+    cases = SELF_TESTS + worktree_tests()
+    for tool, command, rel_cwd, expect in cases:
         got = denied(command, tool, os.path.join(REPO_ROOT, rel_cwd))
         mark = "ok  " if got == expect else "FAIL"
         failures += got != expect
         print(f"{mark} {'deny ' if expect else 'allow'} [{tool}, cwd={rel_cwd}] {command}")
-    print(f"{len(SELF_TESTS) - failures}/{len(SELF_TESTS)} passed")
+    print(f"{len(cases) - failures}/{len(cases)} passed")
     return 1 if failures else 0
 
 

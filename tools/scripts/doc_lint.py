@@ -31,8 +31,36 @@ import re
 import subprocess
 import sys
 
+# The checkout being linted. The hook runs the main checkout's copy of this script for an edit in any
+# worktree, so hook_mode rebinds it to the checkout that holds the edited file; every path test below
+# is relative to it.
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DEFAULT_TARGETS = [os.path.join("Herculan", "docs")]
+
+
+def checkout_root(path: str) -> str | None:
+    """The working tree holding `path`: the nearest directory with a `.git` dir, or a worktree's `.git` file."""
+    d = os.path.dirname(os.path.abspath(path))
+    while True:
+        if os.path.exists(os.path.join(d, ".git")):
+            return d
+        parent = os.path.dirname(d)
+        if parent == d:
+            return None
+        d = parent
+
+
+def main_checkout(root: str) -> str:
+    """The main working tree a linked worktree belongs to, or `root` itself.
+
+    Ignored files — the retail binaries under ES2/ — exist only in the main checkout.
+    """
+    git = os.path.join(root, ".git")
+    if not os.path.isfile(git):
+        return root
+    with open(git, encoding="utf-8") as fh:
+        m = re.match(r"gitdir:\s*(.+?)[\\/]+\.git[\\/]+worktrees[\\/]", fh.read().strip())
+    return os.path.normpath(os.path.join(root, m.group(1))) if m else root
 
 # Files that are allowed to read as a log. Handoffs are explicitly ephemeral
 # scratchpads, and the review reports are records of a point in time.
@@ -218,8 +246,8 @@ ENGINE_RULES: list[tuple[str, re.Pattern[str], str]] = [
 # rename never touches a doc. A backticked token is flagged when it is declared in one of these
 # projects and is not also a retail name: a known_*.json name, the class prefix of one
 # (`Text` from `Text_LoadDataFile`), or an identifier in a retail binary — the 3Space class names the
-# HercWorks DTS model reuses are strings in DBSIM.EXE. The binaries are gitignored, so a checkout
-# without ES2/ reports those few class names too.
+# HercWorks DTS model reuses are strings in DBSIM.EXE. The binaries are gitignored, so a worktree
+# reads them from its main checkout, and a clone without ES2/ reports those few class names too.
 CSHARP_SOURCE_DIRS = [os.path.join("Herculan", "src", p) for p in ("HercWorks.Core", "Herculan.Engine")]
 RETAIL_JSON_FILES = [os.path.join("tools", "ghidra_scripts", f"known_{k}.json")
                      for k in ("symbols_dbsim", "symbols_vshell", "structs", "vtables")]
@@ -293,11 +321,13 @@ def name_sets() -> tuple[set[str], set[str], set[str]]:
         except (OSError, ValueError):
             pass
     for rel in RETAIL_BINARIES:
-        try:
-            with open(os.path.join(REPO_ROOT, rel), "rb") as fh:
-                retail.update(m.decode() for m in re.findall(rb"[A-Za-z_]\w{2,}", fh.read()))
-        except OSError:
-            pass
+        for root in dict.fromkeys((REPO_ROOT, main_checkout(REPO_ROOT))):
+            try:
+                with open(os.path.join(root, rel), "rb") as fh:
+                    retail.update(m.decode() for m in re.findall(rb"[A-Za-z_]\w{2,}", fh.read()))
+                break
+            except OSError:
+                pass
     _name_sets = (types, names, retail)
     return _name_sets
 
@@ -476,10 +506,13 @@ def hook_mode() -> int:
     Emits the hook's own JSON response so the findings are fed straight back to the
     model that just wrote them, while the edit itself still stands.
     """
+    global REPO_ROOT
     import json
 
+    # Claude Code writes UTF-8; sys.stdin would decode it with the Windows codepage, so a written
+    # line with an em-dash would never match the file and its findings would be dropped.
     try:
-        payload = json.load(sys.stdin)
+        payload = json.loads(sys.stdin.buffer.read().decode("utf-8"))
     except (json.JSONDecodeError, ValueError):
         return 0
 
@@ -488,6 +521,9 @@ def hook_mode() -> int:
     path = tool_response.get("filePath") or tool_input.get("file_path") or ""
     if not path:
         return 0
+    root = checkout_root(path)
+    if root and os.path.isdir(os.path.join(root, "Herculan", "docs")):
+        REPO_ROOT = root
 
     norm = path.replace("\\", "/")
     if not (norm.lower().endswith(".md") and "/docs/" in norm.lower()) and not is_retail_json(path):
@@ -502,7 +538,7 @@ def hook_mode() -> int:
     written += [e.get("new_string") for e in tool_input.get("edits") or [] if isinstance(e, dict)]
     touched = {ln.strip() for chunk in written if isinstance(chunk, str) for ln in chunk.split("\n")}
     touched.discard("")
-    with open(path, encoding="utf-8") as fh:
+    with open(path, encoding="utf-8-sig") as fh:
         file_lines = fh.read().replace("\r\n", "\n").split("\n")
     hits = [h for h in hits
             if h[1] not in ENGINE_RULE_IDS or file_lines[h[0] - 1].strip() in touched]
