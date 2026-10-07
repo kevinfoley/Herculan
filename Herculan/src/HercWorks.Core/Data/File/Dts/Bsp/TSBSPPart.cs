@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.File.Dts.Bsp;
 
 /// <summary>
 /// A part list whose children are drawn through a BSP tree: <see cref="TSPartList.Parts"/> is a pool
-/// the tree's leaves index, not a list drawn in order. See docs/formats/dts-texture-binding.md,
+/// the tree's leaves index, not a list drawn in order. See docs/retail/formats/dts-texture-binding.md,
 /// "TSBSPPart child selection".
 /// </summary>
 public class TSBSPPart : TSPartList {

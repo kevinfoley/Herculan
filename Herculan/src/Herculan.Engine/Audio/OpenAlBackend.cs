@@ -3,7 +3,7 @@ using Silk.NET.OpenAL;
 namespace Herculan.Engine.Audio;
 
 /// <summary>
-/// <see cref="IAudioBackend"/> on OpenAL, through Silk.NET — the backend docs/engine/planning.md
+/// <see cref="IAudioBackend"/> on OpenAL, through Silk.NET — the backend docs/herculan/planning.md
 /// picks for audio.
 ///
 /// <para><b>OpenAL's own 3D model is switched off.</b> <see cref="DistanceModel.None"/> is set
@@ -16,7 +16,7 @@ namespace Herculan.Engine.Audio;
 /// <para><b>One buffer per sample, sources from a pool.</b> A play claims a free source, binds the
 /// sample's buffer to it and starts it, so the same sample sounding twice occupies two sources and
 /// is heard twice — the original's arrangement, where <c>Sfx_Play</c> starts a fresh
-/// <c>sosDIGIStartSample</c> on every call. See docs/formats/audio.md, "A repeated play layers; it
+/// <c>sosDIGIStartSample</c> on every call. See docs/retail/formats/audio.md, "A repeated play layers; it
 /// does not restart".</para>
 ///
 /// <para>A dropped endpoint (unplugged headphones, a changed default device) leaves it silent for
@@ -254,7 +254,7 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 
 	/// <summary>
 	/// Packs a slot and its generation into one handle, the way the original's own <c>SFX</c> layer
-	/// does (<c>generation &lt;&lt; 16 | slotIndex</c>, docs/formats/audio.md). The generation is
+	/// does (<c>generation &lt;&lt; 16 | slotIndex</c>, docs/retail/formats/audio.md). The generation is
 	/// masked to fifteen bits so a handle is never negative and never collides with -1.
 	/// </summary>
 	private int Handle(int slot) => ((_generation[slot] & 0x7fff) << 16) | slot;

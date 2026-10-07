@@ -1,4 +1,3 @@
-﻿using Herculan.Engine.Audio;
 using Herculan.Engine.Numerics;
 
 namespace Herculan.Engine.Sim;
@@ -7,8 +6,8 @@ namespace Herculan.Engine.Sim;
 // drives, and the per-tick move. Ported from Flyer_MovementTick (004218c4, the flyer's descriptor
 // +0x24 slot), Flyer_ApplyFlightCommand / Flyer_CommandRoll / Flyer_SteerAndFly (the control law)
 // and Flyer_PitchCommand / Flyer_PitchToAltitude (the pitch channel). See
-// docs/simulation/ai-flyers.md; the flight model itself is shared with the player's RAZOR, in
-// FlightPhysics — docs/simulation/razor-flight.md.
+// docs/retail/simulation/ai-flyers.md; the flight model itself is shared with the player's RAZOR, in
+// FlightPhysics — docs/retail/simulation/razor-flight.md.
 public sealed partial class FlyerObject : IFlightBody {
 	/// <summary>
 	/// The airspeed a flyer powers up at — <c>Flyer_Constructor</c>'s literal into
@@ -326,12 +325,10 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// height error is turned into a pitch demand against a fixed <see cref="PitchAltitudeRun"/>
 	/// horizontal run, so the demanded angle is a function of the error alone.
 	///
-	/// <para>The original opens with a branch on <c>flyer+0xae</c> that substitutes a pitch derived
-	/// from <c>flyer+0x23c</c> instead. Both fields belong to the walking machine's obstacle
-	/// avoidance and leg placement (see docs/simulation/ai-navigation.md and
-	/// docs/simulation/mech-locomotion.md); the flyer pool is zero-filled and no flyer path that
-	/// writes <c>flyer+0xae</c> is known (docs/simulation/ai-flyers.md, Open), so the substitution
-	/// is not reproduced.</para>
+	/// <para>Not reproduced: the original opens with a branch on the base object's <c>+0xae</c> that
+	/// asks for the current pitch plus a figure from <c>flyer+0x23c</c> instead. The flyer pool is
+	/// zero-filled and no flyer path that writes <c>+0xae</c> has been found, so the branch never runs
+	/// (docs/retail/simulation/ai-flyers.md, "The control law" and Open).</para>
 	/// </summary>
 	private int PitchToAltitude(int altitude) =>
 		PitchCommand((short)SimTrig.Atan2Guarded(altitude - Position.Z, PitchAltitudeRun));
@@ -369,7 +366,7 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// original shares one input-preferences global with the player's own path, so a configured
 	/// throttle device would read the AI's zero axis as a <i>position</i> and set every Cybrid
 	/// flyer's throttle to 0, the middle of its range (750 for a SKIMMER, where the rate branch
-	/// leaves it at 875 — docs/simulation/ai-flyers.md, "A flyer cannot change speed"); the rate
+	/// leaves it at 875 — docs/retail/simulation/ai-flyers.md, "A flyer cannot change speed"); the rate
 	/// branch is the behaviour the AI was written against.</para>
 	/// </summary>
 	private void ApplyFlightCommand(ref FlightCommand command) {
@@ -415,7 +412,7 @@ public sealed partial class FlyerObject : IFlightBody {
 	///
 	/// <para>The original also has a leader term in the bank command, scaled by the leader's
 	/// <c>+0x1f8</c>. The flyer pool is zero-filled and no writer of that field is known
-	/// (docs/simulation/ai-flyers.md, Open), so the term contributes nothing and the branch is not
+	/// (docs/retail/simulation/ai-flyers.md, Open), so the term contributes nothing and the branch is not
 	/// reproduced.</para>
 	/// </summary>
 	private void SteerAndFly(SimWorld world, short turn, int elevator) {

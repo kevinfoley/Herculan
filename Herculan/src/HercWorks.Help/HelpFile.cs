@@ -3,14 +3,14 @@ using HercWorks.Help.Internal;
 namespace HercWorks.Help;
 
 /// <summary>
-/// A window definition from <c>|SYSTEM</c> (docs/formats/winhelp.md#system). Colours are
+/// A window definition from <c>|SYSTEM</c> (docs/retail/formats/winhelp.md#system). Colours are
 /// <c>0xRRGGBB</c>, null when the definition leaves them unset.
 /// </summary>
 public sealed record HelpWindow(
 	string Type, string Name, string Caption, int X, int Y, int Width, int Height,
 	int? Background, int? NonScrollingBackground);
 
-/// <summary>A font descriptor from <c>|FONT</c> (docs/formats/winhelp.md#font). <paramref name="Colour"/> is <c>0xRRGGBB</c>.</summary>
+/// <summary>A font descriptor from <c>|FONT</c> (docs/retail/formats/winhelp.md#font). <paramref name="Colour"/> is <c>0xRRGGBB</c>.</summary>
 public sealed record HelpFont(byte Attributes, int HalfPoints, byte Family, string Face, int Colour) {
 	public bool Bold => (Attributes & 0x01) != 0;
 
@@ -29,10 +29,10 @@ public sealed record HelpKeyword(string Keyword, IReadOnlyList<uint> Targets);
 /// <see cref="TryGetPicture"/> decodes on request.
 ///
 /// <para>This reads the subset of WinHelp the three retail files use, described in
-/// docs/formats/winhelp.md. A file that uses anything outside it — LZ77 or phrase compression, a
+/// docs/retail/formats/winhelp.md. A file that uses anything outside it — LZ77 or phrase compression, a
 /// command or picture type not in that doc, a 4-byte compressed signed long — is rejected with a
 /// reason rather than read on a guess. The format notes list what the rest of WinHelp would add
-/// (docs/formats/winhelp.md#not-in-the-corpus).</para>
+/// (docs/retail/formats/winhelp.md#not-in-the-corpus).</para>
 ///
 /// <para>Parsing is total: a malformed file yields null and a reason, never an exception. Nothing in
 /// this assembly opens a file, resolves a path or starts a process; it is handed bytes. The topic
@@ -179,7 +179,7 @@ public sealed class HelpFile {
 		return new ByteCursor(_bytes, range.Start, range.End);
 	}
 
-	// The container header and the directory tree (docs/formats/winhelp.md#container).
+	// The container header and the directory tree (docs/retail/formats/winhelp.md#container).
 	private static Dictionary<string, (int, int)> ReadDirectory(byte[] bytes, HelpLimits limits) {
 		var header = new ByteCursor(bytes, 0, bytes.Length);
 		if (header.U32() != FileMagic) {
@@ -390,7 +390,7 @@ public sealed class HelpFile {
 	}
 
 	/// <summary>
-	/// The topic chain (docs/formats/winhelp.md#topic): joins the blocks into one stream, follows the
+	/// The topic chain (docs/retail/formats/winhelp.md#topic): joins the blocks into one stream, follows the
 	/// links, and turns each record into a <see cref="HelpTopic"/> header or a block of one.
 	/// </summary>
 	private sealed class TopicReader(HelpFile help) {
@@ -495,7 +495,7 @@ public sealed class HelpFile {
 			return topics.Select(t => t.Build()).ToList();
 		}
 
-		// A topic position to an offset in the joined stream (docs/formats/winhelp.md#positions).
+		// A topic position to an offset in the joined stream (docs/retail/formats/winhelp.md#positions).
 		private int StreamOffset(uint position) {
 			int block = (int)(position >> 14);
 			int within = (int)(position & 0x3FFF);

@@ -18,7 +18,7 @@ namespace Herculan.Engine.Sim;
 /// EMP cannon and the plasma cannon fire one.</para>
 ///
 /// <para>Like a tracer it is <b>not</b> a <see cref="SimObject"/> in the original either: it is
-/// allocated from the same effect pool (<c>DAT_004a9746</c>) that tracers come from, which
+/// allocated from the same effect pool (<c>g_ProjectilePool</c> (<c>004a9746</c>)) that tracers come from, which
 /// <c>Sim_MainTick</c> walks ahead of the machine list, and it is not in the list the shared raycast
 /// sweeps. So a bullet cannot be shot down and cannot be shot at, only shot with.</para>
 ///

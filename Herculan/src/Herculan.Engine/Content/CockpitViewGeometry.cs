@@ -5,7 +5,7 @@ namespace Herculan.Engine.Content;
 
 /// <summary>
 /// One herc's <c>vue\&lt;HERC&gt;.VUE</c> — where each cockpit view's window sits inside the cockpit
-/// canvas, in device pixels. See docs/formats/cockpit-views.md.
+/// canvas, in device pixels. See docs/retail/formats/cockpit-views.md.
 ///
 /// <para><b>The canvas is the mechanism behind the heads-down pan.</b> DBSIM's cockpit lives in a
 /// virtual space taller than the screen — 320x480 in the low-res mode, 640x960 in the two 640x480
@@ -109,18 +109,19 @@ public sealed class CockpitViewGeometry {
 	/// 186-row 3D rect would put at its own middle, and 45 rows above where the middle of the full
 	/// 240-row window would be.</para>
 	///
-	/// <para><b>The negation is the original's.</b> The file stores (-160, -95), and
-	/// <c>CockpitView_ApplyViewState</c> (<c>00429e60</c>) installs the pair at the render context's
-	/// <c>+0x220</c> with the view's canvas origin added, after which
-	/// <c>Raster_InstallViewProjection</c> (<c>0048c1d8</c>) computes the centre as
-	/// <c>rectTopLeft - that</c>. With every retail rect starting at (0,0), this returns the negated
-	/// pair — the centre in the forward and heads-down views' own windows. A side glance's centre also
-	/// carries its canvas origin, which puts it at the forward view's reticle rather than in its own
-	/// window; see docs/formats/cockpit-views.md, "The side glances are one image plane".</para>
+	/// <para><b>This is the original's arithmetic, canvas origin included.</b>
+	/// <c>CockpitView_ApplyViewState</c> (<c>00429e60</c>) installs the stored pair with the view's
+	/// canvas origin added, and <c>Raster_InstallViewProjection</c> (<c>0048c1d8</c>) takes the centre as
+	/// the rect's top-left less that. For the forward view the origin is (0,0) and this is the stored
+	/// pair negated. Every other view's centre lands where the forward view's does on the canvas, off its
+	/// own window — above it for the RAZOR's heads-down view, beside it for a glance — because all of them
+	/// are windows onto one image plane: docs/retail/formats/cockpit-views.md, "The projection centre is not the
+	/// middle of the view".</para>
 	/// </summary>
 	public (int X, int Y) ProjectionCenter(int viewIndex) =>
 		Entry(viewIndex) is { } e
-			? (-e.CenterX << CoordShift, -e.CenterY << CoordShift)
+			? ((e.ViewportX0 - (e.CenterX + e.CanvasOriginX)) << CoordShift,
+				(e.ViewportY0 - (e.CenterY + e.CanvasOriginY)) << CoordShift)
 			: (DefaultProjectionCenterX, DefaultProjectionCenterY);
 
 	/// <summary>This view's canvas origin x in device pixels, or 0 when the view is not declared.</summary>
@@ -131,8 +132,10 @@ public sealed class CockpitViewGeometry {
 
 	/// <summary>
 	/// True when this view declares a non-empty 3D viewport rect. Every retail herc but RAZOR gives
-	/// the heads-down view a zero-size rect, which is exactly why the heads-down display shows no live
-	/// world behind its panels.
+	/// the heads-down view a zero-size rect, which is why that view shows no live world behind its
+	/// panels. <c>CockpitView_ShowsWorld</c> (<c>0042db18</c>), the gate <c>Sim_RenderFrame</c> draws the
+	/// world under, tests only that the rect's bottom edge is at least 1; the two agree on every retail
+	/// file.
 	/// </summary>
 	public bool HasWorldViewport(int viewIndex) =>
 		Entry(viewIndex) is { } e && e.ViewportX1 > e.ViewportX0 && e.ViewportY1 > e.ViewportY0;

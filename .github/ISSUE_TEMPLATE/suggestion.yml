@@ -1,0 +1,35 @@
+name: Suggestion
+description: Suggest a fix, a quality-of-life improvement, or a missing retail feature.
+labels: ["suggestion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        HERCULAN aims to match the original game's behavior and graphics, with minor quality-of-life improvements. Before suggesting something, please read [What the engine is not](https://github.com/kevinfoley/Herculan/blob/main/README.MD#what-the-engine-is-not). Suggestions that are out of scope may be closed.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of suggestion?
+      options:
+        - Something the original game does that HERCULAN doesn't do yet
+        - A quality-of-life improvement
+        - A new Tweak (an optional fix for an original-game bug)
+        - HercWorks CSharp (the data file tools)
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Your suggestion
+      description: What you would like to see, and why.
+    validations:
+      required: true
+
+  - type: textarea
+    id: retail
+    attributes:
+      label: How the original game handles this
+      description: If it relates to the original game, describe what it does. Screenshots or videos are welcome.

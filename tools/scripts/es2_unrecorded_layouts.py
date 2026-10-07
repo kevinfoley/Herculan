@@ -15,7 +15,7 @@ its own tools (es2_xref.py, es2_fieldscan.py).
 Structs: a markdown table whose first column is a byte offset (`+0x1c`, `0x1c-0x1f`)
 is a candidate layout. It counts as RECORDED when its heading or the prose above it
 names a struct in known_structs.json, or when most of its offsets are fields of one.
-Formats under docs/formats/ usually describe an on-disk record rather than an
+Formats under docs/retail/formats/ usually describe an on-disk record rather than an
 in-memory object; they are listed, tagged [file], since a file record can still be
 worth a Ghidra type.
 
@@ -312,7 +312,7 @@ IN_MEMORY = re.compile(r"in memory|\bDAT_[0-9a-f]{8}|\bmech\+0x|\bobj\+0x", re.I
 
 
 def is_file_only(tbl):
-    """A table under docs/formats/ is an on-disk record unless the doc says it is also held in memory
+    """A table under docs/retail/formats/ is an on-disk record unless the doc says it is also held in memory
     (a Ghidra type applies to the in-memory copy, not to bytes in a file)."""
     rel = os.path.relpath(tbl.path, REPO_ROOT).replace("\\", "/")
     return "/formats/" in rel and not IN_MEMORY.search(f"{tbl.heading} {tbl.prose}")

@@ -31,6 +31,8 @@ VARYING float vShade;
 VARYING float vShadeRamp;
 // The palette index a flat solid face names, or -1. See MeshVertex.SolidPaletteIndex.
 VARYING float vSolidPaletteIndex;
+// The fill ramp a shaded poly's outline is tested against, or -1. See MeshVertex.OutlineFillRamp.
+VARYING float vOutlineFillRamp;
 VARYING float vLightShade;
 VARYING float vViewDistance;
 
@@ -53,6 +55,9 @@ layout (location = 7) in float aShadeRamp;
 layout (location = 8) in vec3 aFaceNormal;
 layout (location = 9) in float aUvWeight;
 layout (location = 10) in float aSolidPaletteIndex;
+layout (location = 11) in vec3 aFaceCenter;
+layout (location = 12) in float aSide;
+layout (location = 13) in float aOutlineFillRamp;
 
 uniform mat4 uModel;
 uniform mat4 uView;
@@ -61,7 +66,7 @@ uniform vec3 uLightDirection;
 
 // The impact effects' dynamic lights, as they apply to the object being drawn — FUN_00407098 picks
 // them per render entry and the renderer uploads its answer here. See EffectLightSelection, and
-// docs/formats/effect-lights.md for the two shade terms below.
+// docs/retail/formats/effect-lights.md for the two shade terms below.
 //
 // Nine of them, because the original registers these into the same ten-slot active list the mission
 // sun already occupies and drops the surplus. uEffectLights[i].xyz is the direction the light
@@ -85,14 +90,27 @@ void main() {
 	// aNormal is the shape's own per-corner normal, which for a TSGouraudPoly differs between
 	// the three corners; aFaceNormal is the flat one they share.
 	vec3 normal = normalize(mat3(uModel) * aNormal);
-	vec3 faceNormal = normalize(mat3(uModel) * aFaceNormal);
 
 	// The face is turned to meet the eye before it is lit, exactly as the original does it:
 	// every poly renderer runs TSPoly_FrontBackVisibilityTest (0048c620) on the poly's own
 	// stored normal and centre, and negates the poly's normals when the answer is "back". The
-	// test is on the FACE normal so all three corners agree — in view space the camera is the
-	// origin, so a face is turned away when its normal and its position point the same way.
-	float sideSign = dot(mat3(uView) * faceNormal, viewPosition.xyz) > 0.0 ? -1.0 : 1.0;
+	// test is on the FACE normal and centre, which every corner of one poly carries alike, so all
+	// of them agree — in view space the camera is the origin, so a face is turned away when its
+	// normal and its centre point the same way. A product of exactly zero answers "back", as the
+	// original's does, which is every answer a poly with a zero stored normal gets. Left
+	// unnormalized, since only the sign is read and a zero normal has no direction to normalize.
+	vec3 viewCenter = (uView * (uModel * vec4(aFaceCenter, 1.0))).xyz;
+	vec3 viewFaceNormal = mat3(uView) * (mat3(uModel) * aFaceNormal);
+	float sideSign = dot(viewFaceNormal, viewCenter) >= 0.0 ? -1.0 : 1.0;
+
+	// A copy built for one side only (MeshVertex.Side) is dropped while the eye is on the other:
+	// the format's "do not draw this face" pair, and a side whose pair differs from the other's.
+	// Every corner of the poly reaches the same answer, so the whole triangle, line or point lands
+	// on one spot past the far plane and rasterizes nothing.
+	if (aSide != 0.0 && aSide != sideSign) {
+		gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+		return;
+	}
 
 	// The shade byte Light_ComputeShadeForFace (0048bedc) gives this corner:
 	//     t = (dot - 0x400000) >> 1;  if (t < 0) shade -= (0x100 * t) >> 22
@@ -153,6 +171,7 @@ void main() {
 	vShade = aShade;
 	vShadeRamp = aShadeRamp;
 	vSolidPaletteIndex = aSolidPaletteIndex;
+	vOutlineFillRamp = aOutlineFillRamp;
 	// Depth along the view axis, not distance from the eye. That is the quantity the original
 	// fogs against: its view space is (across, depth, up) — Raster_PerspectiveDivide (0048c4f0)
 	// divides components 0 and 2 by component 1 to project — and Terrain_DrawCellQuad hands
@@ -370,8 +389,22 @@ void main() {
 			rampFogged = true;
 		}
 
-		lit = texture(uShadeRampTable,
-			vec2((floor(shade) + 0.5) / 256.0, (row + 0.5) / uShadeRampRows)).rgb;
+		vec4 cell = texture(uShadeRampTable,
+			vec2((floor(shade) + 0.5) / 256.0, (row + 0.5) / uShadeRampRows));
+
+		// A TSShadedPoly's outline: TSShadedPoly_Render resolves its line entry through the same
+		// lookups as the fill, at the same shade and slice, and PolyFill_FillThenOutline draws the
+		// edge loop only when the two palette bytes differ. The table's alpha is that byte.
+		if (vOutlineFillRamp >= 0.0 && chainRamp < 256.0) {
+			float fillRow = vOutlineFillRamp + slice * 256.0;
+			float fillByte = texture(uShadeRampTable,
+				vec2((floor(shade) + 0.5) / 256.0, (fillRow + 0.5) / uShadeRampRows)).a;
+			if (floor(fillByte * 255.0 + 0.5) == floor(cell.a * 255.0 + 0.5)) {
+				discard;
+			}
+		}
+
+		lit = cell.rgb;
 	} else if (uGroundFill && uPaletteRampEnabled && vSolidPaletteIndex >= 0.0) {
 		// A terrain cell drawn without its texture, Terrain_FillCellUntextured's flat fill: the
 		// palette index the cell's material ramp 2 reaches at its baked shade, read through the ramp

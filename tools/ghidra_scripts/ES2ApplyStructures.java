@@ -2,6 +2,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import ghidra.app.decompiler.DecompInterface;
+import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.data.ArrayDataType;
@@ -9,11 +11,13 @@ import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.CategoryPath;
 import ghidra.program.model.data.CharDataType;
 import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
 import ghidra.program.model.data.DataTypeConflictHandler;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.IntegerDataType;
 import ghidra.program.model.data.PointerDataType;
 import ghidra.program.model.data.ShortDataType;
+import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.StructureDataType;
 import ghidra.program.model.data.Undefined1DataType;
 import ghidra.program.model.data.Undefined2DataType;
@@ -24,6 +28,8 @@ import ghidra.program.model.data.VoidDataType;
 import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.FunctionManager;
 import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.pcode.HighFunctionDBUtil;
+import ghidra.program.model.pcode.HighFunctionDBUtil.ReturnCommitOption;
 import ghidra.program.model.symbol.SourceType;
 import java.io.FileReader;
 import java.util.HashMap;
@@ -52,12 +58,23 @@ import java.util.Map;
 // typed SimObject* is what turns *(char *)(param_2 + 0x99) into param_2->destroyed, and -- given
 // the vtable types ES2ApplyVtables built -- an indirect call through field 0 into a named method.
 //
+// An "inline" field copies a base struct's components into this one instead of embedding it, so
+// that a field of the base -- in practice its vtable pointer -- can be retyped: the explicit fields
+// are placed first, and an inlined component is placed where its bytes are free, dropped where an
+// explicit field covers all of them, and opened up into its own components where one covers part.
+//
+// A listed function whose stored prototype is too short for the parameter -- most often none, the
+// analyser having never committed one -- gets the decompiler's parameters committed at ANALYSIS,
+// the tier every other prototype in the database has, and is then typed.
+//
 // Idempotent: data types are resolved with REPLACE_HANDLER and a parameter already carrying the
 // right type is left alone. Safe to re-run after known_structs.json grows.
 public class ES2ApplyStructures extends GhidraScript {
+    private static final byte FREE = 0, EXPLICIT = 1, INLINED = 2;
     private DataTypeManager dtm;
     private final Map<String, DataType> defined = new HashMap<>();
     private int errors = 0;
+    private DecompInterface decomp;
 
     @Override
     public void run() throws Exception {
@@ -102,10 +119,13 @@ public class ES2ApplyStructures extends GhidraScript {
 
             // One byte, one owner. Two fields sharing a byte would make the second silently
             // truncate the first, and the run could never reach a fixed point.
-            boolean[] taken = new boolean[size];
+            byte[] owner = new byte[size];
             int placed = 0;
             for (JsonElement fieldEl : def.getAsJsonArray("fields")) {
                 JsonObject field = fieldEl.getAsJsonObject();
+                if (field.has("inline") && field.get("inline").getAsBoolean()) {
+                    continue;
+                }
                 int offset = field.get("offset").getAsInt();
                 int width = field.get("width").getAsInt();
                 String typeText = field.get("type").getAsString();
@@ -123,7 +143,7 @@ public class ES2ApplyStructures extends GhidraScript {
                 }
                 boolean clash = false;
                 for (int i = offset; i < offset + width; i++) {
-                    if (taken[i]) {
+                    if (owner[i] != FREE) {
                         fail(name + " field at " + hex(offset) + " overlaps one already placed at "
                             + hex(i) + ".");
                         clash = true;
@@ -149,12 +169,34 @@ public class ES2ApplyStructures extends GhidraScript {
                 try {
                     struct.replaceAtOffset(offset, dt, width, fieldName, fieldDesc);
                     for (int i = offset; i < offset + width; i++) {
-                        taken[i] = true;
+                        owner[i] = EXPLICIT;
                     }
                     placed++;
                 } catch (Exception e) {
                     fail(name + " field at " + hex(offset) + ": " + e.getMessage());
                 }
+            }
+            for (JsonElement fieldEl : def.getAsJsonArray("fields")) {
+                JsonObject field = fieldEl.getAsJsonObject();
+                if (!field.has("inline") || !field.get("inline").getAsBoolean()) {
+                    continue;
+                }
+                int offset = field.get("offset").getAsInt();
+                int width = field.get("width").getAsInt();
+                String typeText = field.get("type").getAsString();
+                DataType dt = resolveType(typeText);
+                if (!(dt instanceof Structure)) {
+                    fail(name + " inline field at " + hex(offset) + ": '" + typeText
+                        + "' is not a struct defined earlier.");
+                    continue;
+                }
+                if (dt.getLength() != width || offset < 0 || offset + width > size) {
+                    fail(name + " inline field at " + hex(offset) + ": declared width " + width
+                        + ", '" + typeText + "' is " + dt.getLength() + " bytes, struct is "
+                        + hex(size) + ".");
+                    continue;
+                }
+                placed += inline(struct, owner, (Structure) dt, offset, name);
             }
 
             DataType resolved = dtm.addDataType(struct, DataTypeConflictHandler.REPLACE_HANDLER);
@@ -165,7 +207,7 @@ public class ES2ApplyStructures extends GhidraScript {
                 + " fields placed)");
         }
 
-        int typed = 0, alreadyTyped = 0, skippedNoTarget = 0;
+        int typed = 0, alreadyTyped = 0, skippedNoTarget = 0, committed = 0;
         FunctionManager fm = currentProgram.getFunctionManager();
         for (JsonElement el : root.getAsJsonArray("applications")) {
             JsonObject app = el.getAsJsonObject();
@@ -178,6 +220,11 @@ public class ES2ApplyStructures extends GhidraScript {
                 continue;
             }
 
+            if (app.has("binary")
+                && !progName.contains(app.get("binary").getAsString().toUpperCase())) {
+                skippedOtherBinary++;
+                continue;
+            }
             String addrText = app.get("function").getAsString();
             int index = app.get("parameter").getAsInt();
             Address addr = currentProgram.getAddressFactory().getAddress(addrText);
@@ -186,6 +233,9 @@ public class ES2ApplyStructures extends GhidraScript {
                 println("WARN: no function at " + addrText + " -- skipping.");
                 skippedNoTarget++;
                 continue;
+            }
+            if (index >= f.getParameterCount() && commitPrototype(f)) {
+                committed++;
             }
             if (index < 0 || index >= f.getParameterCount()) {
                 println("WARN: " + f.getName() + " has " + f.getParameterCount()
@@ -201,6 +251,12 @@ public class ES2ApplyStructures extends GhidraScript {
                 alreadyTyped++;
                 continue;
             }
+            if (p.isAutoParameter()) {
+                println("WARN: " + f.getName() + " parameter " + index + " is an auto-parameter of "
+                    + f.getCallingConventionName() + " -- skipping.");
+                skippedNoTarget++;
+                continue;
+            }
             try {
                 p.setDataType(ptr, SourceType.USER_DEFINED);
                 typed++;
@@ -210,10 +266,67 @@ public class ES2ApplyStructures extends GhidraScript {
             }
         }
 
+        if (decomp != null) {
+            decomp.dispose();
+        }
         println("ES2ApplyStructures: types=" + typesBuilt + " fields=" + fieldsPlaced
             + " params typed=" + typed + " params already correct=" + alreadyTyped
+            + " prototypes committed=" + committed
             + " skipped(other binary)=" + skippedOtherBinary
             + " skipped(no target)=" + skippedNoTarget + " errors=" + errors);
+    }
+
+    private boolean commitPrototype(Function f) {
+        if (decomp == null) {
+            decomp = new DecompInterface();
+            decomp.openProgram(currentProgram);
+        }
+        DecompileResults res = decomp.decompileFunction(f, 60, monitor);
+        if (res == null || res.getHighFunction() == null) {
+            return false;
+        }
+        try {
+            HighFunctionDBUtil.commitParamsToDatabase(res.getHighFunction(), true,
+                ReturnCommitOption.NO_COMMIT, SourceType.ANALYSIS);
+            return true;
+        } catch (Exception e) {
+            fail("committing " + f.getName() + "'s prototype: " + e.getMessage());
+            return false;
+        }
+    }
+
+    // Places base's components at offset + their own offsets; returns how many were placed.
+    private int inline(StructureDataType struct, byte[] owner, Structure base, int offset,
+            String structName) {
+        int placed = 0;
+        for (DataTypeComponent c : base.getDefinedComponents()) {
+            int at = offset + c.getOffset();
+            int len = c.getLength();
+            int free = 0, explicit = 0;
+            for (int i = at; i < at + len; i++) {
+                free += owner[i] == FREE ? 1 : 0;
+                explicit += owner[i] == EXPLICIT ? 1 : 0;
+            }
+            if (free == len) {
+                try {
+                    struct.replaceAtOffset(at, c.getDataType(), len, c.getFieldName(), c.getComment());
+                    for (int i = at; i < at + len; i++) {
+                        owner[i] = INLINED;
+                    }
+                    placed++;
+                } catch (Exception e) {
+                    fail(structName + " inlined component at " + hex(at) + ": " + e.getMessage());
+                }
+            } else if (explicit == len) {
+                continue;
+            } else if (c.getDataType() instanceof Structure && free + explicit == len) {
+                placed += inline(struct, owner, (Structure) c.getDataType(), at, structName);
+            } else {
+                fail(structName + " inlined component " + c.getFieldName() + " at " + hex(at)
+                    + " is partly covered by another field.");
+            }
+        }
+        return placed;
     }
 
     private void fail(String message) {

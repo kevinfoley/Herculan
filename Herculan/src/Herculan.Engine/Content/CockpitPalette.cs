@@ -12,7 +12,7 @@ namespace Herculan.Engine.Content;
 /// <see cref="CockpitSchemeLength"/>-1 (42..65) take <c>COCKPIT.DPL</c> entries
 /// <c>[32 + 24*schemeIndex, +24)</c>. There is no merge of two half-palettes, and every slot outside
 /// that window is the theater's. The derivation, the corroborating measurements and the nine-herc
-/// scheme table are in docs/formats/cockpit-canopy-palette.md, "Palette".</para>
+/// scheme table are in docs/retail/formats/cockpit-canopy-palette.md, "Palette".</para>
 ///
 /// <para><c>schemeIndex</c> is the mech type record's <c>+0x52</c>, i.e. offset 80 of
 /// <c>dat\&lt;MECH&gt;.DAT</c> —
@@ -65,7 +65,7 @@ public static class CockpitPalette {
 	/// <summary>
 	/// The damage flash's live palette: the theater's <c>IMPACT&lt;n&gt;.DPL</c> as the base with this
 	/// herc's scheme out of <see cref="ImpactCockpitPaletteName"/> over the same 24 slots. The
-	/// original builds it the same way and from the same pair — see docs/formats/cockpit-canopy-palette.md,
+	/// original builds it the same way and from the same pair — see docs/retail/formats/cockpit-canopy-palette.md,
 	/// "The damage shake".
 	/// </summary>
 	public static DynamixPalette? LoadImpact(GameContent content, string? impactPaletteName,
@@ -126,7 +126,7 @@ public static class CockpitPalette {
 	/// <para><b>The shield meter is not drawn — it is lit.</b> The nested concentric rings live in the
 	/// herc's own canopy art in palette indices 66-71; the widget draws no geometry at all, it
 	/// recolours those six slots every frame, so rings go dark as charge drops. The ramp formula, the
-	/// two colour immediates and the screenshot match are in docs/formats/cockpit-hud-widgets.md, "Ring ramp
+	/// two colour immediates and the screenshot match are in docs/retail/formats/cockpit-hud-widgets.md, "Ring ramp
 	/// — <c>ShieldsGauge_UpdateRingPalette</c> (<c>004438f0</c>)".</para>
 	///
 	/// <para>Slot order follows the original's stack layout, which the install reads upward from the

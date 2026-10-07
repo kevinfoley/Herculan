@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dts.Anim;
 
 /// <summary>
 /// An animation sequence that plays once and holds its last frame; <see cref="ANCyclicSequence"/> is
-/// the looping kind. See docs/formats/dts-node-posing.md, "Cyclic and one-shot sequences".
+/// the looping kind. See docs/retail/formats/dts-node-posing.md, "Cyclic and one-shot sequences".
 /// </summary>
 public class ANSequence : TSObject {
 	/// <summary>Meaning not established.</summary>
@@ -13,13 +13,13 @@ public class ANSequence : TSObject {
 	/// <summary>
 	/// The sequence's rank among the threads playing on one shape: the lowest wins a node two of them
 	/// animate, and equal ranks keep the order the threads were added in. See
-	/// docs/formats/dts-node-posing.md, "Several threads on one shape".
+	/// docs/retail/formats/dts-node-posing.md, "Several threads on one shape".
 	/// </summary>
 	public short Priority { get; set; }
 
 	/// <summary>
 	/// Non-zero when column 0's transform is root motion — a ground displacement applied to the
-	/// object — rather than a pose. See docs/simulation/mech-locomotion.md.
+	/// object — rather than a pose. See docs/retail/simulation/mech-locomotion.md.
 	/// </summary>
 	public short GroundMovement { get; set; }
 

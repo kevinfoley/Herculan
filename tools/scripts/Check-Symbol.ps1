@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
 Show every place this repo records a fact about one symbol, so disagreements are visible at a glance.
 
@@ -127,9 +127,17 @@ if ($matched.Count -eq 0) {
         if (-not $label) { $label = '<unnamed, comment-only>' }
         Write-Host "  $($e.address) [$($e.binary)/$($e.type)/$($e.confidence)] $label"
         if ($e.signature) { Write-Host "    signature: $($e.signature)" -ForegroundColor Green }
+        # A stamped description has been checked against the body, so it is shown whole: it is the answer,
+        # and cutting it would send the reader back to the decompile. See es2_stamp.py.
+        if ($e.verified) {
+            Write-Host "    VERIFIED ($($e.verified.scope), $($e.verified.bytes)) - what the description says this code does is checked; claims about other code only as the negatives below" -ForegroundColor Green
+            foreach ($n in @($e.verified.negatives)) {
+                if ($n) { Write-Host "    negative [$($n.evidence)]: $($n.claim) -- $($n.how)" -ForegroundColor Green }
+            }
+        }
         if ($e.description) {
             $d = $e.description
-            if ($d.Length -gt 300) { $d = $d.Substring(0, 300) + ' ...' }
+            if (-not $e.verified -and $d.Length -gt 300) { $d = $d.Substring(0, 300) + ' ...' }
             Write-Host "    $d" -ForegroundColor DarkGray
         }
         if ($e.source) { Write-Host "    source: $($e.source)" -ForegroundColor DarkGray }

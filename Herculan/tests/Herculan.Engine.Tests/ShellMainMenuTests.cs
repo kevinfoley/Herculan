@@ -6,7 +6,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// The main menu's startup sequence, CONTINUE GAME's END OF GAME alert, INSTANT ACTION's rows past the
-/// practice list, and the strip the menu hides. See docs/shell/screen-layout.md#the-main-menu.
+/// practice list, and the strip the menu hides. See docs/retail/shell/screen-layout.md#the-main-menu.
 /// </summary>
 public class ShellMainMenuTests {
 	private const long Start = 10_000;

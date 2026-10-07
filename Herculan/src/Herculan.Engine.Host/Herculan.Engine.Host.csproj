@@ -1,12 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <!-- No console window of its own; HostLog attaches to a terminal it is started from, and keeps a log. -->
+    <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <RootNamespace>Herculan.Engine.Host</RootNamespace>
-    <AssemblyName>Herculan.Engine.Host</AssemblyName>
+    <AssemblyName>Herculan</AssemblyName>
+    <!-- The name Windows shows in Explorer's file properties and Task Manager. -->
+    <AssemblyTitle>HERCULAN Engine</AssemblyTitle>
+    <!-- The icon Explorer and shortcuts show for the exe. The artwork is not MIT-licensed; see Branding/README.md. -->
+    <ApplicationIcon>..\..\..\Branding\HE Icon.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,15 +19,15 @@
     <ProjectReference Include="..\HercWorks.Help\HercWorks.Help.csproj" />
   </ItemGroup>
 
-  <!-- The debug panel only. Nothing the game itself draws goes through ImGui — the cockpit and its
-       HUD are the original's own art and its own font (see Overlay2DRenderer, HudFont). -->
-  <ItemGroup>
-    <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.23.0" />
-  </ItemGroup>
-
   <!-- Linked from the editor host rather than copied: one font file, two hosts. -->
   <ItemGroup>
     <None Include="..\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- The window icon (WindowIcon), linked from Branding/ like the font above: loose files, since the artwork is not
+       MIT-licensed and stays covered by Branding/README.md. -->
+  <ItemGroup>
+    <None Include="..\..\..\Branding\HE Icon *.png" LinkBase="Assets\Icon" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- Loose files, not EmbeddedResource: Localization scans this folder at runtime, so a player can

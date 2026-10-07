@@ -39,7 +39,7 @@ namespace Herculan.Engine.Render;
 /// painted one quad at a time through the shape renderer's point-list path instead, and that fill is
 /// <b>flat-coloured with no texture</b>: the record's colour index is the rasterizer's fill brush.
 /// The quads are not turned to face the viewer either — the width is a z offset baked into the
-/// geometry, so an ELF seen from directly above is edge-on. See docs/simulation/beam-visuals.md,
+/// geometry, so an ELF seen from directly above is edge-on. See docs/retail/simulation/beam-visuals.md,
 /// "ELF and ELF2 — the jagged branch".</para>
 ///
 /// <para><b>The muzzle stub is retail's, not a bug here.</b> The jagged branch falls through into the
@@ -111,9 +111,14 @@ public sealed class BeamRenderer : IDisposable {
 	/// Draws every tracer in <paramref name="tracers"/> into the viewport already set by whoever drew
 	/// the world — call this straight after <see cref="SceneRenderer.Render"/> for the same panel,
 	/// passing that panel's own camera and pixel size.
+	///
+	/// <para>With <paramref name="filing"/>, the table that pass filed its objects in, each span of a
+	/// straight beam is drawn only where its own tracer would be — filed by its start point with no
+	/// radius, as <c>Scene_SubmitObject</c> (<c>004282d8</c>) files every object of the tracer pool — and
+	/// a chain only where its one tracer would be. See <see cref="BeamTracer.Span"/>.</para>
 	/// </summary>
 	public void Render(Camera camera, IReadOnlyList<BeamTracer> tracers,
-			int viewportWidth, int viewportHeight) {
+			int viewportWidth, int viewportHeight, ObjectDrawTable? filing = null) {
 		if (tracers.Count == 0) {
 			return;
 		}
@@ -126,7 +131,7 @@ public sealed class BeamRenderer : IDisposable {
 		// is drawn into the 3D view after them.
 		_gl.DepthMask(false);
 
-		DrawChains(camera, projection, tracers);
+		DrawChains(camera, projection, tracers, filing);
 
 		_shader.Use();
 		_shader.SetMatrix("uView", camera.ViewMatrix);
@@ -139,7 +144,7 @@ public sealed class BeamRenderer : IDisposable {
 		_gl.BindBuffer(BufferTargetARB.ArrayBuffer, _vertexBuffer);
 
 		foreach (var tracer in tracers) {
-			Draw(tracer, camera.ViewMatrix, camera.NearPlane);
+			Draw(tracer, camera.ViewMatrix, camera.NearPlane, filing);
 		}
 
 		_gl.BindVertexArray(0);
@@ -151,11 +156,12 @@ public sealed class BeamRenderer : IDisposable {
 	/// <c>BEAM.DAT</c> colour. One draw call per tracer, since the colour is a uniform and a frame
 	/// never holds many.
 	/// </summary>
-	private void DrawChains(Camera camera, Matrix4x4 projection, IReadOnlyList<BeamTracer> tracers) {
+	private void DrawChains(Camera camera, Matrix4x4 projection, IReadOnlyList<BeamTracer> tracers,
+			ObjectDrawTable? filing) {
 		bool started = false;
 
 		foreach (var tracer in tracers) {
-			if (!tracer.IsJagged || tracer.QuadCount == 0) {
+			if (!tracer.IsJagged || tracer.QuadCount == 0 || !SpanDrawn(filing, tracer.Start)) {
 				continue;
 			}
 
@@ -194,7 +200,11 @@ public sealed class BeamRenderer : IDisposable {
 		}
 	}
 
-	private void Draw(BeamTracer tracer, Matrix4x4 view, float nearPlane) {
+	/// <summary>Whether the tracer filed at <paramref name="start"/> is drawn this pass — true with no table.</summary>
+	private static bool SpanDrawn(ObjectDrawTable? filing, Numerics.Vec3i start) =>
+		filing?.WouldDraw(start, 0, ObjectTypeTag.Projectile) ?? true;
+
+	private void Draw(BeamTracer tracer, Matrix4x4 view, float nearPlane, ObjectDrawTable? filing) {
 		int halfWidth = _appearance.HalfWidth(tracer.SubtypeId);
 		if (halfWidth <= 0 || Profile(tracer.SubtypeId) is not { } profile) {
 			return;
@@ -203,10 +213,24 @@ public sealed class BeamRenderer : IDisposable {
 		// A chain tracer reaches here too, because the original's jagged branch falls through into
 		// this code rather than returning — and it draws the tracer's first two points, which for a
 		// chain are node zero's pair and not the muzzle and the hit. See the class remarks.
-		var (from, to) = tracer.IsJagged && tracer.Points.Count >= 2
-			? (tracer.Points[0], tracer.Points[1])
-			: (tracer.Start, tracer.End);
+		if (tracer.IsJagged && tracer.Points.Count >= 2) {
+			if (SpanDrawn(filing, tracer.Start)) {
+				DrawSegment(tracer.Points[0], tracer.Points[1], halfWidth, profile, view, nearPlane);
+			}
 
+			return;
+		}
+
+		for (int span = 0; span < tracer.SpanCount; span++) {
+			var (from, to) = tracer.Span(span);
+			if (SpanDrawn(filing, from)) {
+				DrawSegment(from, to, halfWidth, profile, view, nearPlane);
+			}
+		}
+	}
+
+	private void DrawSegment(Numerics.Vec3i from, Numerics.Vec3i to, int halfWidth, GpuTexture profile,
+			Matrix4x4 view, float nearPlane) {
 		var start = WorldScale.ToRender(from);
 		var end = WorldScale.ToRender(to);
 		var axis = end - start;

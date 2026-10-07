@@ -1,4 +1,4 @@
-using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Shell;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Io.Transform.Common;
@@ -10,7 +10,7 @@ namespace Herculan.Engine.Tests;
 /// <c>sav\GAMEFILE.STR</c> — the save screen's slot list.
 ///
 /// <para>The synthetic case builds the bytes by hand from the layout in
-/// <c>docs/formats/save-games.md</c> rather than from the transformer's own writer, so the two
+/// <c>docs/retail/formats/save-games.md</c> rather than from the transformer's own writer, so the two
 /// disagreeing shows up as a failure instead of cancelling out. What it pins is the shape that is
 /// easy to get wrong: two independently counted blocks, a stored length that counts each string's own
 /// NUL, and a trailing byte per entry that is padding in the first block and the in-use flag in the

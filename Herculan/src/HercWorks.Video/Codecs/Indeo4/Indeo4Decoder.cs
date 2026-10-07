@@ -7,7 +7,7 @@ namespace HercWorks.Video.Codecs.Indeo4;
 ///
 /// <para>Each plane is one band of 16-bit samples, cut into macroblocks: 16x16 for luma, coded as
 /// four 8x8 Haar blocks, and 4x4 for chroma, one 4x4 slant block each. A frame decodes into one of
-/// three buffers, predicting from another; see docs/formats/indeo4.md.</para>
+/// three buffers, predicting from another; see docs/retail/formats/indeo4.md.</para>
 ///
 /// <para>The buffers keep the codec's own sample order, in which each 32-bit word holds two samples
 /// a block width apart, because motion compensation and the stores write whole words or single
@@ -16,7 +16,7 @@ namespace HercWorks.Video.Codecs.Indeo4;
 ///
 /// <para>Only what <c>ES2DROP3.AVI</c> exercises is decoded: one tile, one band per plane, 4:1:0
 /// chroma, full-pel motion, and frame types 0, 1, 2 and 4. Anything else is refused rather than
-/// guessed at; see docs/formats/indeo4.md#open.</para>
+/// guessed at; see docs/retail/formats/indeo4.md#open.</para>
 /// </summary>
 internal sealed class Indeo4Decoder : IVideoCodec {
 	private const uint SyncCode = 0x3FFF8;
@@ -114,7 +114,7 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 		}
 
 		// The codec checks where the bands ended against the header's data size, counting the
-		// version string an intra frame carries after them. See docs/formats/indeo4.md#frame-layout.
+		// version string an intra frame carries after them. See docs/retail/formats/indeo4.md#frame-layout.
 		const int VersionStringBytes = 0x13;
 		int end = position + (picture.Type == FrameIntra ? VersionStringBytes : 0);
 		if (picture.DataSize != 0 && ((end + 8) & ~3) != picture.DataSize) {
@@ -231,7 +231,7 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 
 		int runValueMap = bits.ReadBit() == 1 ? (int)bits.Read(3) : 8;
 
-		bits.ReadBit(); // set throughout the corpus; see docs/formats/indeo4.md#open
+		bits.ReadBit(); // set throughout the corpus; see docs/retail/formats/indeo4.md#open
 		bool quantiserEveryMacroblock = bits.ReadBit() == 1;
 		bits.Skip(5); // a picture quantiser; the decode uses each band's own
 
@@ -403,7 +403,7 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 		}
 
 		if (bits.ReadBit() == 1) {
-			bits.Skip(16); // see docs/formats/indeo4.md#open
+			bits.Skip(16); // see docs/retail/formats/indeo4.md#open
 		}
 
 		int macroblock = (int)bits.Read(2) switch { 0 => 16, 1 => 8, 2 => 4, _ => 0 };
@@ -545,7 +545,7 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 
 	/// <summary>
 	/// Builds a symbol's run and level code from a run/value map and the band's swaps. See
-	/// docs/formats/indeo4.md#runvalue-maps.
+	/// docs/retail/formats/indeo4.md#runvalue-maps.
 	/// </summary>
 	private static bool BuildRunValues(int index, List<(int A, int B)> swaps, out int[] run, out int[] level, out int endOfBlock, out int escape) {
 		run = new int[256];
@@ -738,7 +738,7 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 
 				if (bits.ReadBit() == 1) {
 					// A skipped macroblock: no coefficients, and in an inter frame a copy of the
-					// reference at the same place. See docs/formats/indeo4.md#skipped-macroblocks.
+					// reference at the same place. See docs/retail/formats/indeo4.md#skipped-macroblocks.
 					intra = intraFrame;
 					field = 0;
 					if (quantiserForced) {
@@ -847,7 +847,7 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 	/// <summary>
 	/// Rescales an inherited motion vector to a band whose macroblocks are smaller by 2^-<paramref name="shift"/>,
 	/// byte by byte as the codec does it, rounding half away from zero. See
-	/// docs/formats/indeo4.md#inherited-type-motion-and-quantiser.
+	/// docs/retail/formats/indeo4.md#inherited-type-motion-and-quantiser.
 	/// </summary>
 	private static uint ScaleMotion(uint motion, int shift) {
 		if (shift == 0) {
@@ -894,7 +894,7 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 
 	/// <summary>
 	/// The block pass for one tile: runs of uncoded blocks are filled, and coded blocks are decoded a
-	/// pair at a time, predicted, transformed and stored. See docs/formats/indeo4.md#blocks.
+	/// pair at a time, predicted, transformed and stored. See docs/retail/formats/indeo4.md#blocks.
 	/// </summary>
 	private bool DecodeBlocks(ReadOnlySpan<byte> packet, int start, BandContext band, List<Entry> entries, out int end) {
 		end = 0;
@@ -1039,7 +1039,7 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 
 	/// <summary>
 	/// Adds the running DC prediction to the DC of each intra block of a pair, in left then right
-	/// order, and returns the updated prediction. See docs/formats/indeo4.md#dc-prediction.
+	/// order, and returns the updated prediction. See docs/retail/formats/indeo4.md#dc-prediction.
 	/// </summary>
 	private static int PredictDc(Span<uint> buffer, Entry left, Entry right, uint fill, int predictor) {
 		int fillLow = (int)(fill & 0xFFFF);
@@ -1073,7 +1073,7 @@ internal sealed class Indeo4Decoder : IVideoCodec {
 	/// Writes a transformed pair into the current buffer, choosing per lane between replacing the
 	/// samples (intra) and adding to the prediction already there (inter). The choice follows the
 	/// codec's routine at <c>100212a0</c> case by case, including the cases where a lane is written
-	/// that the obvious reading would leave alone; see docs/formats/indeo4.md#stores.
+	/// that the obvious reading would leave alone; see docs/retail/formats/indeo4.md#stores.
 	/// </summary>
 	private void Store(BandContext band, Entry a, Entry b, Span<uint> buffer) {
 		bool pair = b.High;

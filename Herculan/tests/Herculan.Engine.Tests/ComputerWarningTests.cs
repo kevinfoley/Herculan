@@ -1,8 +1,8 @@
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Io.Transform.Dbsim;
-using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Sim;
 using Herculan.Engine.Terrain;
@@ -19,7 +19,7 @@ namespace Herculan.Engine.Tests;
 /// <para>The latches these rest on are not the warnings' own bookkeeping: <c>+0xa8</c>/<c>+0xa9</c>
 /// are also the two speed penalties and <c>+0xaa</c>/<c>+0xab</c> the reactor's output grades, so a
 /// warning that repeated would mean one of those had come unlatched. See
-/// docs/simulation/component-damage.md.</para>
+/// docs/retail/simulation/component-damage.md.</para>
 ///
 /// <para>Every test skips silently when no Earthsiege 2 install can be found.</para>
 /// </summary>
@@ -283,11 +283,11 @@ public class ComputerWarningTests {
 
 		public void Play(int id) { }
 
-		public void PlayAt(int id, Vec3i position) { }
+		public void PlayAt(int id, Vec3i position, SoundReach? reach, object? source) { }
 
 		public void Stop(int id) { }
 
-		public void MoveTo(int id, Vec3i position) { }
+		public void MoveTo(int id, Vec3i position, SoundReach? reach, object? source) { }
 
 		public void SetPitch(int id, int rate) { }
 
@@ -347,6 +347,6 @@ public class ComputerWarningTests {
 
 	internal static GameContent? Content() {
 		string? root = GameInstall.Locate(null);
-		return root != null ? GameContent.Mount(GameInstall.ArchiveDirectory(root)) : null;
+		return root != null ? GameContent.MountSimulator(root) : null;
 	}
 }

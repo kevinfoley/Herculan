@@ -9,7 +9,8 @@ namespace Herculan.Engine.Sim;
 /// that moves. Its fighting half
 /// is borrowed whole from the armed tower; everything in this file is the moving half: a route
 /// follow, a formation keep, one steering primitive, and a terrain conform that is the only thing
-/// in the simulation that writes a structure's pitch and roll.
+/// in the simulation that writes a structure's pitch and roll
+/// (docs/retail/simulation/ground-vehicles.md).
 ///
 /// <para><b>Nothing here is scaled by the tick length.</b> The original's steer, speed slew and
 /// forward step are all per-call constants, the same way <see cref="SeekTurret"/>'s are — the
@@ -51,7 +52,7 @@ public sealed partial class BaseObject {
 			if (Target == null) {
 				// Both axes end up driven negative: the elevation is handed in negated and the
 				// traverse is negated inside the seek, so an idle turret walks back to centre.
-				SeekTurret((short)-_turretAngle[0], _turretAngle[1]);
+				SeekTurret(world, (short)-_turretAngle[0], _turretAngle[1]);
 			}
 		}
 
@@ -271,7 +272,9 @@ public sealed partial class BaseObject {
 			return true;
 		}
 
-		return Deployment.StructureInTheWay(world, position);
+		// The vehicle is itself a structure with a collision volume, and passes itself as the
+		// gather's exclusion so it is not stopped by its own footprint.
+		return Deployment.StructureInTheWay(world, position, this);
 	}
 
 	/// <summary>

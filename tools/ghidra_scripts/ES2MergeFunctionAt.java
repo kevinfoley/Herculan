@@ -27,7 +27,10 @@ import java.util.List;
 // every other function; ES2ApplyStructures and ES2ApplySymbolNames then type it as before.
 // args[0] = trueEntry (hex), args[1] = byte length to sweep (decimal), or "auto": through the end
 // of the last body of any function entered in [trueEntry, trueEntry+16), which covers a prologue
-// of up to 16 bytes and never reaches a function entered after it. args[2] = output path.
+// of up to 16 bytes and never reaches a function entered after it. "auto" also repairs an early
+// start: a function entered up to 16 bytes before trueEntry whose body contains it (Ghidra began
+// it on the fill bytes before the prologue) is removed and the sweep starts at its entry.
+// args[2] = output path.
 public class ES2MergeFunctionAt extends GhidraScript {
     private static final int AUTO_WINDOW = 16;
 
@@ -40,8 +43,16 @@ public class ES2MergeFunctionAt extends GhidraScript {
         try (PrintWriter pw = new PrintWriter(new FileWriter(outPath))) {
             FunctionManager fm = currentProgram.getFunctionManager();
             Address end;
+            Address start = entry;
             if (lengthArg.equals("auto")) {
                 end = null;
+                Function early = fm.getFunctionContaining(entry);
+                if (early != null && early.getEntryPoint().compareTo(entry) < 0
+                        && entry.subtract(early.getEntryPoint()) < AUTO_WINDOW) {
+                    start = early.getEntryPoint();
+                    end = early.getBody().getMaxAddress();
+                    pw.println("early start " + early.getName() + " @ " + start);
+                }
                 Address windowEnd = entry.add(AUTO_WINDOW - 1);
                 FunctionIterator w = fm.getFunctions(entry, true);
                 while (w.hasNext()) {
@@ -67,7 +78,7 @@ public class ES2MergeFunctionAt extends GhidraScript {
                     println("wrote merge result to " + outPath);
                     return;
                 }
-                pw.println("auto length " + (end.subtract(entry) + 1) + " (" + entry + ".." + end + ")");
+                pw.println("auto length " + (end.subtract(start) + 1) + " (" + start + ".." + end + ")");
             } else {
                 end = entry.add(Integer.parseInt(lengthArg) - 1);
             }
@@ -78,7 +89,7 @@ public class ES2MergeFunctionAt extends GhidraScript {
             while (it.hasNext()) {
                 Function f = it.next();
                 Address e = f.getEntryPoint();
-                if (e.compareTo(entry) >= 0 && e.compareTo(end) <= 0) {
+                if (e.compareTo(start) >= 0 && e.compareTo(end) <= 0) {
                     pw.println("removing " + f.getName() + " @ " + e + " body=" + f.getBody());
                     doomed.add(e);
                 }
@@ -103,7 +114,7 @@ public class ES2MergeFunctionAt extends GhidraScript {
                 }
             }
 
-            listing.clearCodeUnits(entry, end, false);
+            listing.clearCodeUnits(start, end, false);
             disassemble(entry);
             createFunction(entry, null);
 

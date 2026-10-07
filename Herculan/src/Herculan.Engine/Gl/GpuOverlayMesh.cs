@@ -5,7 +5,7 @@ namespace Herculan.Engine.Gl;
 /// <summary>
 /// A dynamic, non-indexed triangle mesh of <see cref="Overlay2DVertex"/>, re-uploaded every draw —
 /// the 2D-overlay counterpart to <see cref="GpuMesh"/>, which is static. Dynamic because
-/// <see cref="Render.Overlay2DRenderer"/> draws a different vertex list per panel (mirrored vs. not,
+/// <see cref="Render.Overlay2DRenderer"/> submits a different vertex list per panel (mirrored vs. not,
 /// widgets vs. none), and the vertex counts involved (one quad plus a couple dozen widget outlines)
 /// are far too small for re-uploading each frame to matter.
 /// </summary>

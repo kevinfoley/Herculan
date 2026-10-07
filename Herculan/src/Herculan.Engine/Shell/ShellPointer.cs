@@ -12,7 +12,7 @@ public enum ShellMouseButton {
 /// <summary>
 /// Which event handler a widget's class runs. They disagree about which button acts, and on which
 /// edge, so a widget's class decides how a click on it behaves
-/// (docs/shell/screen-layout.md#which-widget-a-click-reaches).
+/// (docs/retail/shell/screen-layout.md#which-widget-a-click-reaches).
 /// </summary>
 public enum ShellHandler {
 	/// <summary>
@@ -163,7 +163,7 @@ public readonly record struct ShellHit(ShellWidget Widget, ShellHandler Handler,
 /// class decides what happens (<see cref="ShellHandler"/>); nothing is handed on to a parent.
 ///
 /// <para>The state is the original's: the pointer's target, its lock (<c>+0x1f</c> of the pointer
-/// state at <c>DAT_005ddbd0</c>), the lit flag <c>+0x45</c> of whichever content widget a press lit,
+/// state at <c>g_EventQueue</c> (<c>005ddbd0</c>)), the lit flag <c>+0x45</c> of whichever content widget a press lit,
 /// and an edit field's focus flag <c>+0xa7</c>. The strip's lit flags live on its
 /// <see cref="ShellButton"/>s, because they are also the tab latch.</para>
 ///

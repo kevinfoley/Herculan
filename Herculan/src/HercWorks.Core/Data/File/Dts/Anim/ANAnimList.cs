@@ -6,7 +6,7 @@ namespace HercWorks.Core.Data.File.Dts.Anim;
 /// <summary>
 /// A shape root's animation data: its sequences and the pools they index. Every root of a
 /// multi-root shape carries its own, with its own node numbering. See
-/// docs/formats/mech-shape-drawing.md, "Each root numbers its own nodes".
+/// docs/retail/formats/mech-shape-drawing.md, "Each root numbers its own nodes".
 /// </summary>
 public class ANAnimList : TSObject {
 	/// <summary><see cref="ANSequence"/> and <see cref="ANCyclicSequence"/> chunks.</summary>

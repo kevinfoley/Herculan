@@ -6,7 +6,7 @@ namespace Herculan.Engine.Sim;
 
 /// <summary>
 /// The squadmate slice: the standing order a machine in the player's own group carries, and the
-/// handler that installs one. Derivation is docs/simulation/ai-squadmates.md.
+/// handler that installs one. Derivation is docs/retail/simulation/ai-squadmates.md.
 ///
 /// <para>A standing squad order sits <i>above</i> the mission group's order array — see
 /// <see cref="SelectBehaviour"/>, where a nonzero <see cref="SquadOrderVerb"/> takes its own path
@@ -446,7 +446,7 @@ public partial class MechObject {
 	private const int HelpRange = 60000;
 
 	// The reply ids. They index the pilot-and-squad channel's own catalog (Content.SquadMessages);
-	// the names below say what raises each one rather than what it reads out, and docs/formats/
+	// the names below say what raises each one rather than what it reads out, and docs/retail/formats/
 	// cockpit-messages.md carries the line each one speaks. ReplyAffirmative is the one whose line
 	// and whose arms disagree: one of the arms that post it is a refusal (IGNORE MY TARGET from a
 	// machine out of action), and the line is "AFFIRMATIVE!". See PostSquadMessage.

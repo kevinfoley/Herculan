@@ -1,5 +1,5 @@
-using Herculan.Engine.Audio;
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
 
 namespace Herculan.Engine.Sim;
 
@@ -150,9 +150,20 @@ public sealed class MeteorObject {
 
 			Pitch = (short)SimTrig.Atan2(_velocity.Z, HorizontalSpeed);
 
+			// The original plays both sounds at the camera itself, not at the pod; the tweak moves them
+			// onto it. See TweakSoundReach.
+			bool fromPod = world.Tweaks.GetSettingValue(TweakSettingDefinitions.DropPodSoundFromPod);
+
 			if (!WhistlePlayed && next.Z < WhistleAltitude) {
-				world.Sounds?.PlayAt(SoundId.PodFalling, world.ListenerPosition);
+				if (fromPod) {
+					world.Sounds?.PlayAt(SoundId.PodFalling, next, TweakSoundReach, this);
+				} else {
+					world.Sounds?.PlayAt(SoundId.PodFalling, world.ListenerPosition);
+				}
+
 				WhistlePlayed = true;
+			} else if (WhistlePlayed && fromPod) {
+				world.Sounds?.MoveTo(SoundId.PodFalling, next, TweakSoundReach, this);
 			}
 
 			int ground = world.GroundHeightAt(next);
@@ -161,7 +172,11 @@ public sealed class MeteorObject {
 				Pitch = 0;
 				next = new Vec3i(next.X, next.Y, ground);
 
-				world.Sounds?.PlayAt(SoundId.PodLanded, world.ListenerPosition);
+				if (fromPod) {
+					world.Sounds?.PlayAt(SoundId.PodLanded, next, TweakSoundReach);
+				} else {
+					world.Sounds?.PlayAt(SoundId.PodLanded, world.ListenerPosition);
+				}
 
 				// The pod passes no attacker, so anything it kills on the way down is nobody's kill. The
 				// answer is "was anything in range", not "was anything hurt" -- see BlastObstructed.
@@ -185,7 +200,7 @@ public sealed class MeteorObject {
 
 		// A pod that carried a group leaves its mark on the ground whether or not it delivered it —
 		// the flat set's root 3 at the landing point, for the rest of the mission. It keeps no pointer
-		// to it. See docs/simulation/ground-shapes.md.
+		// to it. See docs/retail/simulation/ground-shapes.md.
 		if (Group != null) {
 			world.SpawnGroundShape(GroundShape.DropPodShapeIndex, Position);
 		}
@@ -212,6 +227,30 @@ public sealed class MeteorObject {
 
 	/// <summary>The absolute height the descent whistle starts at.</summary>
 	public const int WhistleAltitude = 50000;
+
+	/// <summary>
+	/// The volume and range both pod sounds are placed with under
+	/// <see cref="Settings.TweakSettingDefinitions.DropPodSoundFromPod"/>. Not the original's, which
+	/// plays them at the camera by their catalog rows: volume 70, rolloff from 5 × 1024 world units
+	/// (31 m) to a cutoff at 100 × 1024 (614 m).
+	///
+	/// <para>A pod lands about 150,000 units (900 m) from the player
+	/// (<see cref="MissionGroup.PodDistance"/>) and starts up to <see cref="RunInBase"/> +
+	/// <see cref="RunInSpread"/> further out in a random direction, so the whistle can begin about
+	/// 1.5 km away. The rows' 614 m cutoff would leave most pods unheard, so the cutoff here is 4 km,
+	/// at 1000 units per 6 m (<see cref="Render.WorldScale.WorldUnitsPerMeter"/>), and the volume is
+	/// the catalog's full 100. Rolloff starts where the rows' does. The director's rolloff is linear to the cutoff, so a pod is heard at
+	/// about 74 at 1 km and 77 at a typical landing, against the 69 retail plays both sounds at
+	/// wherever the pod is.</para>
+	///
+	/// <para>The pod falls for 1.4 to 1.9 seconds and covers up to 95,000 units across in that time,
+	/// so the whistle is moved with it every tick rather than left where it started. The pod passes
+	/// itself as the whistle's source, so only the pod whose whistle is the newest copy moves it.</para>
+	/// </summary>
+	public static readonly SoundReach TweakSoundReach = new(
+		Volume: 100,
+		MinRange: null,
+		MaxRange: 4000 * 1000 / 6);
 
 	/// <summary>How far the landing blast reaches.</summary>
 	public const int BlastRadius = 3000;

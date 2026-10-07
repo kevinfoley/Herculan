@@ -5,16 +5,16 @@ using Herculan.Engine.World;
 
 namespace Herculan.Engine.Sim;
 
-// A Cybrid flyer's AI — docs/simulation/ai-flyers.md. The Flyer class has a behaviour table of its
-// own, seven states at 00499cf8 built by Flyer_BuildStateTable (00414c65), reached through its own
+// A Cybrid flyer's AI — docs/retail/simulation/ai-flyers.md. The Flyer class has a behaviour table of its
+// own, seven states at 00499cf8 built by Flyer_BuildStateTable (00414c68), reached through its own
 // three descriptor dispatchers and so driven by the same Mech_AiTick (00411cec) a walking machine
-// is; docs/simulation/ai-dispatch.md owns that shared dispatch model.
+// is; docs/retail/simulation/ai-dispatch.md owns that shared dispatch model.
 public sealed partial class FlyerObject {
 	/// <summary>
 	/// The 10000 both acquiring thinks reload <c>flyer+0x5b</c> with after a sweep. It never runs
 	/// out: the countdown is behaviour-block scratch that <see cref="SetBehaviourState"/> zeroes, and
 	/// the state's own 5000-count dwell reinstalls it first, so the leader sweeps at every reassess
-	/// instead (docs/simulation/ai-flyers.md, "The thinks").
+	/// instead (docs/retail/simulation/ai-flyers.md, "The thinks").
 	/// </summary>
 	private const short TargetSweepInterval = 10000;
 
@@ -203,12 +203,12 @@ public sealed partial class FlyerObject {
 	/// original's switch has no default and hands <c>Behaviour_SetState</c> whatever <c>ECX</c> holds
 	/// — its own address, which puts the aircraft in a "state" made of opcode bytes and calls a wild
 	/// address on the same tick. This engine leaves the aircraft in the state it has instead. See
-	/// docs/simulation/ai-flyers.md, "Orders", and KNOWN_ISSUES.md.</para>
+	/// docs/retail/simulation/ai-flyers.md, "Orders", and KNOWN_ISSUES.md.</para>
 	///
 	/// <para><b>Sleeping and scouting latch <see cref="SimObject.OutOfAction"/>.</b> That is not a
 	/// side effect — it is what keeps an aircraft that was sent somewhere rather than sent to fight
 	/// from counting as something the other side has to contest, and no write that clears it is
-	/// known (docs/simulation/ai-flyers.md, Open).</para>
+	/// known (docs/retail/simulation/ai-flyers.md, Open).</para>
 	/// </summary>
 	private void SelectBehaviour() {
 		switch (Group?.OrderVerb ?? MissionGroup.NoOrder) {
@@ -368,7 +368,7 @@ public sealed partial class FlyerObject {
 	/// <para><b>The last waypoint is never reached.</b> The advance only runs on the look-ahead
 	/// waypoint, so once there is nothing past the cursor the flight steers at the final point
 	/// forever — and, since the route cursor is the group's, that is also what ends a movement order.
-	/// See docs/simulation/ai-goals.md.</para>
+	/// See docs/retail/simulation/ai-goals.md.</para>
 	///
 	/// <para>A group with no route at all leaves the original dereferencing a null waypoint. Here the
 	/// aircraft flies straight and holds its altitude instead.</para>
@@ -411,7 +411,7 @@ public sealed partial class FlyerObject {
 	///
 	/// <para>Not reproduced: <c>Flyer_FormationThrottle</c> (<c>00422260</c>), which accumulates a
 	/// throttle figure into <c>flyer+0x21c</c>. Nothing feeds that field to the flight model, so
-	/// nothing a Cybrid flyer decides can change its airspeed — docs/simulation/ai-flyers.md, "A flyer
+	/// nothing a Cybrid flyer decides can change its airspeed — docs/retail/simulation/ai-flyers.md, "A flyer
 	/// cannot change speed", and <see cref="InitialThrottle"/>.</para>
 	/// </summary>
 	private void FormationStep(SimWorld world) {
@@ -485,9 +485,10 @@ public sealed partial class FlyerObject {
 	/// <see cref="MissileRange"/>, and every shot after it on that pass is a pair of gun rounds from
 	/// the mirrored muzzle points.</para>
 	///
-	/// <para>One gate is not reproduced: the original also requires <c>|flyer+0x1f4| &lt; 10</c>, a
-	/// field the zero-filled flyer pool leaves at 0 and no known code writes
-	/// (docs/simulation/ai-flyers.md, Open), so the gate passes.</para>
+	/// <para>Two tests are not reproduced, each on a field the zero-filled flyer pool leaves at 0 and
+	/// for which no writer has been found (docs/retail/simulation/ai-flyers.md, Open): the fire gate
+	/// <c>|flyer+0x1f4| &lt; 10</c>, which therefore passes, and the run-in's test of the base
+	/// object's <c>+0xae</c>, which therefore always aims at the target.</para>
 	/// </summary>
 	private void AttackRun(SimWorld world, SimObject target) {
 		var aim = target.Position;

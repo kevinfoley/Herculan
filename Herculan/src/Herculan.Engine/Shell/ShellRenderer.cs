@@ -13,10 +13,9 @@ namespace Herculan.Engine.Shell;
 ///
 /// <para>It shares <see cref="Render.Overlay2DRenderer"/>'s shader and vertex format rather than
 /// having its own — both draw textured and flat-coloured quads in pixel space with the origin at the
-/// top left, which is the whole of what either needs — but not its code: that renderer's every entry
-/// point is a cockpit surface with a herc's <c>.GAU</c> behind it, and the shell has neither. Like it,
-/// this disables depth test and enables alpha blending for its own draw and restores both, since the
-/// 3D pass assumes depth test is always on.</para>
+/// top left, which is the whole of what either needs. Like it, this disables depth test and enables
+/// alpha blending for its own draw and restores both, since the 3D pass assumes depth test is always
+/// on.</para>
 ///
 /// <para>Two texture binds per frame at most: the backdrop is a single <c>.DBM</c> of its own, and
 /// everything else — button plates, icons and every glyph of every caption — is packed into the one
@@ -42,7 +41,7 @@ public sealed class ShellRenderer : IDisposable {
 		_shader = ShaderProgram.Load(gl, "Overlay2D.glsl");
 		_mesh = new GpuOverlayMesh(gl);
 		_backdrop = new GpuTexture(gl, art.Backdrop.Pixels, art.Backdrop.Width, art.Backdrop.Height);
-		_sprites = art.Sprites is { } sheet ? new GpuTexture(gl, sheet.Atlas) : null;
+		_sprites = art.Sprites is { } sheet ? sheet.Atlas.Upload(gl) : null;
 	}
 
 	/// <summary>

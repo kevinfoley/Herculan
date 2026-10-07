@@ -24,7 +24,7 @@ namespace Herculan.Engine.Sim;
 /// the first hit — after which <c>Mech_ComponentDamageWrite</c> hands every mount its component's
 /// new reading, so the two never part company. <b>They are still not interchangeable</b>: the live
 /// reading is a function of the damage model at the instant it is asked, and the cache is only as
-/// current as the last write. See docs/simulation/target-selection.md.</para>
+/// current as the last write. See docs/retail/simulation/target-selection.md.</para>
 ///
 /// <para><b>Nothing here is reached for an AI machine.</b> All three drivers hang off the player's
 /// per-frame cockpit update or the <c>[Tab]</c> command, so an AI machine carrying a pod uses it for

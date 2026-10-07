@@ -1,102 +1,168 @@
 ﻿using HercWorks.Vol;
 using HercWorks.Vol.Io;
+using Herculan.Engine.Install;
 
 namespace Herculan.Engine.Content;
 
 /// <summary>
-/// The engine's resource layer: mounts a set of the game's own <c>.VOL</c> archives and resolves
+/// The engine's resource layer: mounts the game's own <c>.VOL</c> archives and resolves
 /// <c>folder\name</c> lookups against them, which is how DBSIM addresses everything it loads
 /// (<c>dat\zone504</c>, <c>dba\zone504.dba</c>, <c>dts\samson.dts</c>, ...). DBSIM builds each such
 /// path with <c>ResourcePath_BuildFolderName</c> (<c>00492ae0</c>).
 ///
-/// Mount order follows the VOL header's own load-precedence byte (<c>VolOrderNum</c>: 0x05 for
-/// "first loaded", 0x0A for "load second", e.g. SIMPATCH.VOL) — archives are mounted in ascending
-/// order and a later mount shadows an earlier one for the same <c>folder\name</c>, so the retail
-/// patch VOL wins over the base VOL exactly as it does in the original.
+/// <para><see cref="MountInstall"/> mounts what the program would: every <c>vol\*.vol</c> in the
+/// install and then in the <c>drive.cfg</c> directory whose program mask shares a bit with the
+/// program's, in descending order of search precedence (<see cref="Voln.VolOrderNum"/>), the first
+/// archive holding a <c>folder\name</c> answering for it (docs/retail/formats/vol-archive.md, "Which
+/// archives are mounted").</para>
+///
+/// <para>It also carries the program's <see cref="Language"/>, which the readers of translated resources take
+/// their folder or extension from.</para>
 ///
 /// Parsing is delegated wholesale to <see cref="VolFileReader"/> in HercWorks.Vol; this type adds
-/// only the index and the load-order rule. Per docs/engine/planning.md's repo-structure decision
+/// only the index and the load-order rule. Per docs/herculan/planning.md's repo-structure decision
 /// the engine talks to HercWorks.Core/HercWorks.Vol directly.
 /// </summary>
 public sealed class GameContent {
-	/// <summary>
-	/// The archives DBSIM needs for a terrain-and-one-mech scene: the main simulator archive, the
-	/// alert panels' own art and text, its retail patch, the zone heightmaps, the effect sample bank
-	/// and the English voice archive.
-	///
-	/// <para>SIMALERT.VOL carries the four modal panels DBSIM puts over the cockpit — <c>gnl_alrt</c>,
-	/// <c>ctl_alrt</c>, <c>obj_alrt</c> and <c>prf_alrt</c> — as a plate bank and a string table each,
-	/// plus the shared <c>ALERT</c> button bank. Its folder labels are the same <c>hba</c>/<c>dba</c>/
-	/// <c>str</c> the main archive uses, so nothing but the mount changes for a caller; it also carries
-	/// French and German string folders (<c>stf</c>, <c>stg</c>) which nothing here reads.</para>
-	///
-	/// <para>The two other voice archives are the same recordings in French and German —
-	/// <c>Voice_ArchiveName</c> (<c>0045ef68</c>) picks between them by patching the last character
-	/// of the literal <c>simvoice</c>, and all three carry the same <c>SIMVOICE</c> folder label
-	/// inside. Mounting more than one would therefore shadow rather than merge, so a language
-	/// selection means changing which name is in this list, not adding to it.</para>
-	/// </summary>
-	public static readonly string[] SimulatorArchives =
-		{ "SIMVOL0.VOL", "SIMALERT.VOL", "SIMPATCH.VOL", "ZONES.VOL", "SIMSOUND.VOL", "SIMVOICE.VOL" };
+	/// <summary>The most archives a program's volume group holds (<c>VolumeGroup_SetGroup</c>, <c>00467bd4</c>).</summary>
+	public const int MaxArchives = 0x1e;
+
+	/// <summary>The archive file pattern both programs scan for.</summary>
+	public const string ArchivePattern = "*.vol";
 
 	private readonly Dictionary<string, VolEntry> _entries = new(StringComparer.OrdinalIgnoreCase);
-	private readonly List<Voln> _mounted = new();
+	private readonly List<Voln> _mounted;
 
-	/// <summary>Directory the archives were mounted from (the game's <c>VOL</c> folder).</summary>
-	public string ArchiveDirectory { get; }
-
-	private GameContent(string archiveDirectory) {
-		ArchiveDirectory = archiveDirectory;
+	private GameContent(List<Voln> searchOrder, GameLanguage language, bool isV110) {
+		_mounted = searchOrder;
+		Language = language;
+		IsV110 = isV110;
+		foreach (var vol in searchOrder) {
+			foreach (var entry in vol.FilesSet) {
+				// Folder labels come out of the VOL header already stripped of their '\' separator
+				// (see VolFileReader.GenerateFolderList), so the key is just "dir\name".
+				if (entry.FileName != null && vol.Folders.TryGetValue(entry.DirIdx, out var folder)) {
+					_entries.TryAdd(Key(folder.Label, entry.FileName), entry);
+				}
+			}
+		}
 	}
 
-	/// <summary>Names of the archives actually mounted, in the order they were applied.</summary>
+	/// <summary>
+	/// The language the program runs in: <see cref="LauncherLanguage.Simulator"/> for DBSIM's mount and
+	/// <see cref="LauncherLanguage.Shell"/> for VSHELL's.
+	/// </summary>
+	public GameLanguage Language { get; }
+
+	/// <summary>
+	/// Whether the install is v1.10's (<see cref="LauncherLanguage.IsV110"/>). v1.10's shell takes the folder of
+	/// <c>campaign.str</c> and of the intro movies from <see cref="Language"/>, where v1.0's names English ones whatever
+	/// its language (docs/retail/retail-builds.md#v110s-shell-reads-the-language-twice-more).
+	/// </summary>
+	public bool IsV110 { get; }
+
+	/// <summary>Names of the archives mounted, in the order they are searched.</summary>
 	public IReadOnlyList<string> MountedArchives =>
 		_mounted.Select(v => v.FileName ?? "<unnamed>").ToList();
 
+	/// <summary>What DBSIM mounts of the install; see <see cref="MountInstall"/>.</summary>
+	public static GameContent MountSimulator(string installRoot) => MountInstall(installRoot, Voln.DbsimProgram);
+
+	/// <summary>What VSHELL mounts of the install; see <see cref="MountInstall"/>.</summary>
+	public static GameContent MountShell(string installRoot) => MountInstall(installRoot, Voln.VshellProgram);
+
+	/// <summary>What DBSIM mounts of the install and its open disc; see <see cref="MountInstall(string, GameDisc?, uint)"/>.</summary>
+	public static GameContent MountSimulator(string installRoot, GameDisc? disc) =>
+		MountInstall(installRoot, disc, Voln.DbsimProgram);
+
+	/// <summary>What VSHELL mounts of the install and its open disc; see <see cref="MountInstall(string, GameDisc?, uint)"/>.</summary>
+	public static GameContent MountShell(string installRoot, GameDisc? disc) =>
+		MountInstall(installRoot, disc, Voln.VshellProgram);
+
 	/// <summary>
-	/// Mounts the named archives out of <paramref name="archiveDirectory"/> (the game's <c>VOL</c>
-	/// folder). Missing archives are skipped rather than fatal — SIMPATCH.VOL in particular is a
-	/// patch, and an unpatched install legitimately won't have it.
+	/// Mounts what <paramref name="program"/> — <see cref="Voln.DbsimProgram"/> or
+	/// <see cref="Voln.VshellProgram"/> — would of the install at <paramref name="installRoot"/>.
+	///
+	/// <para><c>VolumeGroup_SetGroup</c> (<c>00467bd4</c>) scans <c>vol\*.vol</c> under the current
+	/// directory, which is the install, and then under the <c>drive.cfg</c> directory, here the disc
+	/// <see cref="GameInstall.OpenDisc"/> opens: both programs pass 0 for its directory-first
+	/// argument. It skips a file whose name an archive already loaded carries, and
+	/// <c>VolumeGroup_AddVolume</c> (<c>00467e90</c>) inserts each loaded archive after every one of
+	/// equal or higher precedence, so of two equal archives the first loaded is searched first.
+	/// <c>findfirst</c> lists a directory in the file system's order; this lists it by name, which
+	/// changes nothing for retail data: every <c>folder\name</c> two equal-precedence archives of one
+	/// program share has the same content in both, in v1.0 and in v1.10. Names are compared ignoring
+	/// case, where retail's comparison is exact.</para>
+	///
+	/// <para>Retail stops before scanning when the group already holds <see cref="MaxArchives"/>, but
+	/// adding past that during a scan writes beyond its array; this stops adding at the limit and says
+	/// so.</para>
 	/// </summary>
-	public static GameContent Mount(string archiveDirectory, IEnumerable<string>? archiveNames = null) {
-		if (!Directory.Exists(archiveDirectory)) {
-			throw new DirectoryNotFoundException($"Game archive directory not found: {archiveDirectory}");
-		}
-
-		var content = new GameContent(archiveDirectory);
-
-		var found = (archiveNames ?? SimulatorArchives)
-			.Select(name => Path.Combine(archiveDirectory, name))
-			.Where(File.Exists)
-			.Select(VolFileReader.ParseVolFile)
-			.OrderBy(vol => vol.VolOrderNum)
-			.ToList();
-
-		foreach (var vol in found) {
-			content.Apply(vol);
-		}
-
-		if (content._mounted.Count == 0) {
-			throw new FileNotFoundException(
-				$"No game archives could be mounted from {archiveDirectory}. Expected at least one of: " +
-				string.Join(", ", archiveNames ?? SimulatorArchives));
-		}
-
-		return content;
+	public static GameContent MountInstall(string installRoot, uint program) {
+		using var disc = GameInstall.OpenDisc(installRoot);
+		return MountInstall(installRoot, disc, program);
 	}
 
-	private void Apply(Voln vol) {
-		_mounted.Add(vol);
+	/// <summary>
+	/// <see cref="MountInstall(string, uint)"/> with the disc already open, which may be an image
+	/// (<see cref="GameDisc"/>); null mounts the install alone. Every archive is read into memory, so the disc
+	/// can be closed once this returns.
+	/// </summary>
+	public static GameContent MountInstall(string installRoot, GameDisc? disc, uint program) {
+		var loaded = new List<Voln>();
+		var options = new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive };
 
-		foreach (var entry in vol.FilesSet) {
-			if (entry.FileName == null || !vol.Folders.TryGetValue(entry.DirIdx, out var folder)) {
-				continue;
+		bool Admit(string name, string where) {
+			if (loaded.Any(vol => string.Equals(vol.FileName, name, StringComparison.OrdinalIgnoreCase))) {
+				return false;
 			}
 
-			// Folder labels come out of the VOL header already stripped of their '\' separator
-			// (see VolFileReader.GenerateFolderList), so the key is just "dir\name".
-			_entries[Key(folder.Label, entry.FileName)] = entry;
+			if (loaded.Count == MaxArchives) {
+				Console.Error.WriteLine($"Not mounting {where}: a program holds at most {MaxArchives} archives.");
+				return false;
+			}
+
+			return true;
 		}
+
+		string installArchives = GameInstall.ArchiveDirectory(installRoot);
+		if (Directory.Exists(installArchives)) {
+			foreach (string path in Directory.GetFiles(installArchives, ArchivePattern, options)
+					.OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)) {
+				if ((VolFileReader.ReadProgramMask(path) & program) is not (null or 0) && Admit(Path.GetFileName(path), path)) {
+					loaded.Add(VolFileReader.ParseVolFile(path));
+				}
+			}
+		}
+
+		if (disc != null) {
+			foreach (string name in disc.ArchiveNames().Order(StringComparer.OrdinalIgnoreCase)) {
+				string relative = Path.Combine(GameInstall.ArchiveFolderName, name);
+				using var stream = disc.OpenRead(relative);
+				if (stream == null || (VolFileReader.ReadProgramMask(stream) & program) is null or 0
+						|| !Admit(name, disc.Describe(relative))) {
+					continue;
+				}
+
+				var bytes = new byte[stream.Length];
+				stream.Position = 0;
+				stream.ReadExactly(bytes);
+				loaded.Add(VolFileReader.ParseVolBytes(name, bytes, disc.Describe(relative)));
+			}
+		}
+
+		if (loaded.Count == 0) {
+			throw new FileNotFoundException(
+				$"No game archives for program mask 0x{program:x} in {installArchives}"
+				+ (disc != null ? $" or {disc.Describe(GameInstall.ArchiveFolderName)}." : "."));
+		}
+
+		// OrderByDescending is stable, which keeps load order among equal precedences.
+		var language = (program & Voln.DbsimProgram) != 0
+			? LauncherLanguage.Simulator(installRoot)
+			: LauncherLanguage.Shell(installRoot);
+		return new GameContent(loaded.OrderByDescending(vol => vol.VolOrderNum).ToList(), language,
+			LauncherLanguage.IsV110(installRoot));
 	}
 
 	/// <summary>

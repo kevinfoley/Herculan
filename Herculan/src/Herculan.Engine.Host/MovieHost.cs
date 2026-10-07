@@ -1,6 +1,9 @@
 using System.Numerics;
 using Herculan.Engine.Audio;
+using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
+using Herculan.Engine.Install;
+using Herculan.Engine.Platform;
 using Herculan.Engine.Video;
 using Silk.NET.OpenGL;
 
@@ -8,13 +11,13 @@ namespace Herculan.Engine.Host;
 
 /// <summary>
 /// Plays one <c>.AVI</c> cutscene in a window instead of running a mission or the front end —
-/// <c>--movie</c>. The same thin-host arrangement as <see cref="ShellHost"/>: everything here is
+/// <c>--movie</c>. The same thin-host arrangement as <see cref="Shell.ShellHost"/>: everything here is
 /// wiring, and every rule about how a movie decodes lives in <c>HercWorks.Video</c>.
 ///
 /// <para>It exists so a decoder can be looked at. A codec that is subtly wrong still returns frames
 /// and still passes a unit test that only checks it did not throw; the failure mode is a picture
 /// that is skewed, mirrored or mis-coloured, and the only reliable way to catch that is to put it on
-/// the screen. See docs/formats/avi-video.md.</para>
+/// the screen. See docs/retail/formats/avi-video.md.</para>
 ///
 /// <para>The frame is letterboxed at its own aspect ratio rather than stretched, and sampled
 /// nearest-neighbour, for the reason <see cref="GpuTexture"/> gives: these are 240x180-ish pictures
@@ -22,25 +25,28 @@ namespace Herculan.Engine.Host;
 /// </summary>
 static class MovieHost {
 	/// <summary>
-	/// Frames to let pass before <c>--screenshot</c> fires, matching <see cref="ShellHost"/>: the
+	/// Frames to let pass before <c>--screenshot</c> fires, matching <see cref="FrontEndWindow"/>: the
 	/// window manager can hand back a stale or part-sized framebuffer for the first frame or two.
 	/// </summary>
 	private const int ScreenshotFrame = 5;
 
-	/// <summary>The folder cutscenes sit in, beside the archive directory rather than inside it.</summary>
-	public const string MovieFolderName = "AVI";
+	/// <summary>
+	/// The folder cutscenes sit in, on the disc beside the archive directory rather than inside it;
+	/// paths under it go through <see cref="GameInstall.OpenDiscFile"/>.
+	/// </summary>
+	public const string MovieFolderName = Herculan.Engine.Shell.ShellMovieQueue.MovieFolder;
 
-	public static int Run(string installRoot, string movieName, string? screenshotPath = null,
+	public static int Run(string installRoot, GameDisc? disc, string movieName, string? screenshotPath = null,
 			bool silentAudio = false) {
-		string path = Resolve(installRoot, movieName);
-		if (!File.Exists(path)) {
+		using var stream = Open(installRoot, disc, movieName, out string path);
+		if (stream == null) {
 			Console.Error.WriteLine(
-				$"No such movie: {path}\n"
-				+ $"Pass a path, or a file name to be looked up in {Path.Combine(installRoot, MovieFolderName)}.");
+				$"No such movie: {movieName}\n"
+				+ $"Pass a path, or a file name to be looked up in the disc's or the install's {MovieFolderName} folder.");
 			return 1;
 		}
 
-		if (ReadMovieFile(path) is not { } bytes) {
+		if (ReadMovie(stream) is not { } bytes) {
 			Console.Error.WriteLine(
 				$"{Path.GetFileName(path)} is larger than the {HercWorks.Video.VideoLimits.Default.MaxFileBytes:N0} bytes a movie may be.");
 			return 1;
@@ -64,7 +70,7 @@ static class MovieHost {
 		if (MoviePlayer.Open(bytes) is not { } player) {
 			Console.Error.WriteLine(
 				$"No decoder for compression {fourCc}, or a frame size it cannot code.\n"
-				+ "See docs/formats/avi-video.md for what the corpus uses.");
+				+ "See docs/retail/formats/avi-video.md for what the corpus uses.");
 			return 1;
 		}
 
@@ -77,13 +83,12 @@ static class MovieHost {
 	}
 
 	/// <summary>
-	/// Reads a movie file whole, or returns null when it is larger than
+	/// Reads a movie whole, or returns null when it is larger than
 	/// <see cref="HercWorks.Video.VideoLimits.MaxFileBytes"/>. The length is checked on the open
 	/// stream before anything is allocated, so an oversized file is refused rather than read into
 	/// memory first (or, past 2 GB, made to throw) and only then rejected by the parser.
 	/// </summary>
-	public static byte[]? ReadMovieFile(string path) {
-		using FileStream stream = File.OpenRead(path);
+	public static byte[]? ReadMovie(Stream stream) {
 		if (stream.Length > HercWorks.Video.VideoLimits.Default.MaxFileBytes) {
 			return null;
 		}
@@ -95,21 +100,24 @@ static class MovieHost {
 
 	/// <summary>
 	/// Takes the argument as a path when it names a file, and otherwise as a name to look up in the
-	/// install's movie folder, so <c>--movie ALPH_TH.AVI</c> works without a full path.
+	/// movie folder, so <c>--movie ALPH_TH.AVI</c> works without a full path. <paramref name="path"/> is
+	/// what was opened, for messages.
 	/// </summary>
-	private static string Resolve(string installRoot, string movieName) {
+	private static Stream? Open(string installRoot, GameDisc? disc, string movieName, out string path) {
+		path = movieName;
 		if (File.Exists(movieName)) {
-			return movieName;
-		}
-
-		string named = Path.Combine(installRoot, MovieFolderName, movieName);
-		if (File.Exists(named)) {
-			return named;
+			return File.OpenRead(movieName);
 		}
 
 		// Let the caller name a movie without its extension.
-		string suffixed = Path.Combine(installRoot, MovieFolderName, movieName + ".AVI");
-		return File.Exists(suffixed) ? suffixed : named;
+		foreach (string name in new[] { movieName, movieName + ".AVI" }) {
+			path = Path.Combine(MovieFolderName, name);
+			if (GameInstall.OpenDiscFile(installRoot, disc, path) is { } stream) {
+				return stream;
+			}
+		}
+
+		return null;
 	}
 
 	private static int Present(MoviePlayer player, string? screenshotPath, bool silentAudio) {

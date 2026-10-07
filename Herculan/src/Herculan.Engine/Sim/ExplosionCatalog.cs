@@ -64,7 +64,7 @@ public sealed class ExplosionCatalog {
 	/// The int16 <c>Explosion_TickUpdate</c> (<c>0040813c</c>) reads as frame <paramref name="frame"/>'s light
 	/// intensity: the word at <c>row + 0x08 + frame * 2</c>, unbounded. Past the twelve ramp entries
 	/// that is the row's proximity radius (low word, then high), its sound id and its object class,
-	/// then the next row's fields — docs/simulation/impact-effects.md, "Tick". Past the end of the
+	/// then the next row's fields — docs/retail/simulation/impact-effects.md, "Tick". Past the end of the
 	/// table it answers 0, which is this engine's: the original reads whatever follows the table in
 	/// memory, and no retail shape's flipbook runs that far.
 	/// </summary>

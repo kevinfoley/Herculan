@@ -4,7 +4,7 @@ namespace Herculan.Engine.Shell;
 /// The six-frame sequence that first brings the main menu up — an <c>esanim2.cpp</c> widget over the
 /// whole window (<c>StartupAnimWidget</c> (<c>0048d0c0</c>), class <c>ESAnim2_Ctor</c> (<c>0040c85c</c>), event handler <c>ESAnim2_HandleEvent</c> (<c>0040c8b3</c>)) that
 /// <c>MainMenu_BuildScreen</c> fills with <c>dbm\bay2a_80</c> to <c>bay2a_84</c>, the last twice, and the
-/// startup shows once its movies are done. See docs/shell/screen-layout.md#the-main-menu.
+/// startup shows once its movies are done. See docs/retail/shell/screen-layout.md#the-main-menu.
 ///
 /// <para>Shown, it paints frame 0 and installs a 500 ms alarm; each tick advances <c>+0x6d</c>, wrapping
 /// at the frame count, paints that frame and runs the builder's handler, <c>004311b8</c>, which plays the

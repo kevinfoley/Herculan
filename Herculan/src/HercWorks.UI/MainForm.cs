@@ -261,7 +261,7 @@ public partial class MainForm : Form {
 	}
 
 	/// <summary>
-	/// "View Asset" is enabled only for types that actually have a viewer: DTS (3D model),
+	/// "View Asset" is enabled only for types that actually have a viewer: DTS and DGS (3D model),
 	/// DBA/DBM/HBA/HB0-2/DB0-2 (texture — the HBx/DBx types are byte-identical to the DBA container
 	/// format, see TransformerRegistry's doc comment), and WAV (sound — see SoundPlayerForm). A DPL
 	/// alone isn't a texture, so it's intentionally excluded here.
@@ -269,7 +269,7 @@ public partial class MainForm : Form {
 	private void UpdateViewAssetButtonState() {
 		if (_selectedEntry != null && _selectedEntry.RawBytes?.Length > 0) {
 			var entry = _selectedEntry;
-			_viewAssetButton.Enabled = entry.Ext is FileType.Dts or FileType.Dba or FileType.Dbm or FileType.Hba or FileType.Hb0 or FileType.Hb1 or FileType.Hb2
+			_viewAssetButton.Enabled = entry.Ext is FileType.Dts or FileType.Dgs or FileType.Dba or FileType.Dbm or FileType.Hba or FileType.Hb0 or FileType.Hb1 or FileType.Hb2
 				or FileType.Db0 or FileType.Db1 or FileType.Db2 or FileType.Wav;
 
 			if (entry.Ext is FileType.Wav) {
@@ -315,7 +315,7 @@ public partial class MainForm : Form {
 
 	/// <summary>
 	/// Opens the currently selected VOL-tree entry in whichever viewer matches its type — the
-	/// 3D model viewer for DTS, the texture viewer for DBA/DBM — or, for WAV, plays it directly
+	/// 3D model viewer for DTS and the DGS structure libraries, the texture viewer for DBA/DBM — or, for WAV, plays it directly
 	/// rather than opening a viewer window (see PlaySelectedWav). _viewAssetButton.Enabled already
 	/// guarantees _selectedEntry and _currentVol are usable here (see UpdateViewAssetButtonState).
 	/// </summary>
@@ -324,7 +324,7 @@ public partial class MainForm : Form {
 			return;
 		}
 
-		if (_selectedEntry.Ext == FileType.Dts) {
+		if (_selectedEntry.Ext is FileType.Dts or FileType.Dgs) {
 			using var form = new Model3DViewerForm();
 			form.LoadFromVolEntry(_selectedEntry, _currentVol);
 			form.ShowDialog(this);

@@ -2,7 +2,9 @@ using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Render;
+using Herculan.Engine.View;
 using Herculan.Engine.World;
 using System.Numerics;
 using Xunit;
@@ -11,7 +13,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// The cockpit damage shake — the view band's walk, the flash's own timer, and the resources the
-/// flash swaps to. See docs/formats/cockpit-canopy-palette.md, "The damage shake".
+/// flash swaps to. See docs/retail/formats/cockpit-canopy-palette.md, "The damage shake".
 ///
 /// <para>The walk needs no Earthsiege 2 install: it is the original's arithmetic over its own
 /// constants. The palette tests do need one, and are skipped without it — what they pin is the
@@ -698,6 +700,6 @@ public class CockpitDamageShakeTests {
 
 	private static GameContent? Content() {
 		string? root = GameInstall.Locate(null);
-		return root != null ? GameContent.Mount(GameInstall.ArchiveDirectory(root)) : null;
+		return root != null ? GameContent.MountSimulator(root) : null;
 	}
 }

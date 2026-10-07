@@ -75,7 +75,7 @@ partial class Model3DViewerForm {
 		// _openDtsMenuItem
 		//
 		_openDtsMenuItem.Name = "_openDtsMenuItem";
-		_openDtsMenuItem.Text = "&Open DTS...";
+		_openDtsMenuItem.Text = "&Open Model...";
 		_openDtsMenuItem.Click += OnOpenDts;
 		//
 		// _fileMenuSeparator

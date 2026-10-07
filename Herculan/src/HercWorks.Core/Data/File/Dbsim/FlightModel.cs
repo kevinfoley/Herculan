@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// (<c>FlightModel_Step</c>, <c>00466a54</c>) is the only thing that reads them.
 ///
 /// <para>The names here are the roles that function gives each field. The layout, the roles and the
-/// readings that mislead are in docs/formats/flight-model-fm.md.</para>
+/// readings that mislead are in docs/retail/formats/flight-model-fm.md.</para>
 ///
 /// <para>Bytes 14-17 are a slot the loader fills in with the ceiling slope. It is a derived figure
 /// rather than file content, so it is not a field of this type — see the engine's

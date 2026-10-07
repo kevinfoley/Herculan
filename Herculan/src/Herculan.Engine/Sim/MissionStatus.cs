@@ -9,7 +9,7 @@ namespace Herculan.Engine.Sim;
 /// <para><b>Nothing here is decided by the objectives alone.</b> Every conclusive value is gated on
 /// the player being clear of hostiles as well — see <see cref="MissionObjectives.IsClearOfThreats"/>
 /// — which is why a mission whose objectives are all met does not end while something is still
-/// shooting at the player. See docs/simulation/mission-objectives.md.</para>
+/// shooting at the player. See docs/retail/simulation/mission-objectives.md.</para>
 /// </summary>
 public enum MissionStatus {
 	/// <summary>Not yet evaluated. Not one of the original's values; it is the <c>-1</c> the poll returns.</summary>

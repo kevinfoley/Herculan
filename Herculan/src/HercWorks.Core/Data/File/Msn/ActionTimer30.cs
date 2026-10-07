@@ -2,8 +2,8 @@ namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
 /// Row #11 (30 bytes/record) — a mission timer, <c>script.dat</c> block 6: an action that arms it, a
-/// delay, and up to ten actions fired when the delay runs out. See docs/formats/msn-mission-file.md,
-/// "Row #11 field decode", and docs/simulation/mission-deployment.md.
+/// delay, and up to ten actions fired when the delay runs out. See docs/retail/formats/msn-mission-file.md,
+/// "Row #11 field decode", and docs/retail/simulation/mission-deployment.md.
 /// </summary>
 public class ActionTimer30 : MapObject {
 	/// <summary>0x02 — condition ref.</summary>

@@ -11,7 +11,7 @@ namespace Herculan.Engine.Numerics;
 /// think about a rendering concern.
 ///
 /// Kept as a readonly struct with integer arithmetic rather than wrapping System.Numerics.Vector3:
-/// per docs/engine/planning.md's "Math" decision the simulation stays in the original's fixed-point
+/// per docs/herculan/planning.md's "Math" decision the simulation stays in the original's fixed-point
 /// domain, and a float vector type would quietly reintroduce the drift that decision exists to
 /// avoid.
 /// </summary>

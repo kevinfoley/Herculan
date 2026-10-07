@@ -15,7 +15,7 @@ public class ANAnimListTransition {
 
 	/// <summary>
 	/// The root motion covered while the transition plays, as an index into
-	/// <see cref="ANAnimList.Transforms"/>. See docs/simulation/mech-locomotion.md.
+	/// <see cref="ANAnimList.Transforms"/>. See docs/retail/simulation/mech-locomotion.md.
 	/// </summary>
 	public short TransformIndex { get; set; }
 

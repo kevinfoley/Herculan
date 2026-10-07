@@ -10,7 +10,7 @@ namespace Herculan.Engine.Sim.Ai;
 /// each pair its own case where they differ.
 ///
 /// <para>Two entries have no text and no case: 6 and 9, and neither screen can send them. See
-/// docs/simulation/ai-squadmates.md.</para>
+/// docs/retail/simulation/ai-squadmates.md.</para>
 /// </summary>
 public enum SquadCommand {
 	/// <summary>0 <c>ATTACK MY TARGET</c> — engage whatever the player currently has selected.</summary>
@@ -98,7 +98,7 @@ public enum SquadOrderReply {
 /// The two ways an order leaves the cockpit. Both end in the same per-machine handler; what differs
 /// is who hears it.
 ///
-/// <para>Derivation: docs/simulation/ai-squadmates.md.</para>
+/// <para>Derivation: docs/retail/simulation/ai-squadmates.md.</para>
 /// </summary>
 public static class SquadOrders {
 	/// <summary>
@@ -115,7 +115,7 @@ public static class SquadOrders {
 	/// <para>Whether or not the order is delivered, the slot's machine then has any
 	/// <see cref="StandingByMessage"/> about it withdrawn from the pilot-and-squad port.</para>
 	/// </summary>
-	/// <returns>Whether the order reached a recipient at all — what the XMIT blip is chosen on.</returns>
+	/// <returns>Whether the order reached a recipient at all.</returns>
 	public static bool SendToSlot(SimWorld world, IReadOnlyList<SimObject> squad, int slot,
 			SquadOrderMessage message) {
 		ArgumentNullException.ThrowIfNull(world);
@@ -220,7 +220,7 @@ public static class SquadOrders {
 	/// with no case every member carries whatever the stack held before the call. That ties them all
 	/// and walks the group in range order when the leftover is -1 or more, and tells nobody when it
 	/// is below. Zero takes the first outcome without reading uninitialised memory; which one retail
-	/// lands on is open — docs/simulation/ai-squadmates.md, "Open".</para>
+	/// lands on is open — docs/retail/simulation/ai-squadmates.md, "Open".</para>
 	/// </summary>
 	private static int Suitability(SquadCommand verb, MechObject member) {
 		bool committed = member.Behaviour.State is { Committed: true };

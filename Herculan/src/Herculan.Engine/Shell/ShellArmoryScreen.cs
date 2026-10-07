@@ -145,7 +145,7 @@ public sealed class ShellArmoryCatalog {
 /// entered by <c>Armory_Enter</c> (<c>004494f7</c>) and hidden by <c>Armory_Leave</c>
 /// (<c>004495b6</c>), its rows gated by <c>Armory_RefreshRows</c> (<c>00449329</c>), its row moved by
 /// <c>Armory_ClickRow</c> (<c>0044969f</c>) and its figures refilled by <c>Armory_RefreshReadout</c>
-/// (<c>00449cab</c>). See docs/shell/screen-layout.md, "The armory screen".
+/// (<c>00449cab</c>). See docs/retail/shell/screen-layout.md, "The armory screen".
 ///
 /// <para><b>Every rect here is a literal in the executable</b>, kept parent-relative as the builder
 /// writes them: the content panel in the canvas, which it spans edge to edge because this tab has no

@@ -6,7 +6,7 @@ namespace Herculan.Engine.Render;
 /// <summary>
 /// The one place where the simulation's integer world units become floating-point render units,
 /// and where the original's Z-up axes become the renderer's Y-up ones. Simulation code never does
-/// either conversion: per docs/engine/planning.md's math decision, anything that feeds back into
+/// either conversion: per docs/herculan/planning.md's math decision, anything that feeds back into
 /// simulation state stays in the original's fixed-point domain, so the float boundary is here and
 /// nowhere else.
 /// </summary>
@@ -14,7 +14,7 @@ public static class WorldScale {
 	/// <summary>
 	/// How many DBSIM world units make up one metre of rendered space: 1000 world units are 6 metres,
 	/// so a world unit is 6 mm. This is the original's own constant, recovered from
-	/// <c>Hud_WorldUnitsToMetres</c> (<c>00434228</c>) — see docs/engine/planning.md, "World scale —
+	/// <c>Hud_WorldUnitsToMetres</c> (<c>00434228</c>) — see docs/herculan/planning.md, "World scale —
 	/// recovered", for the derivation and its corroborations.
 	///
 	/// <para>The original's own <i>displayed</i> distance is coarser than this constant in two ways
@@ -26,7 +26,7 @@ public static class WorldScale {
 
 	/// <summary>
 	/// How many world units one raw DTS model unit spans — one, i.e. model coordinates are world
-	/// coordinates with no conversion at all. Confirmed from game data; see docs/engine/planning.md,
+	/// coordinates with no conversion at all. Confirmed from game data; see docs/herculan/planning.md,
 	/// "World scale — recovered", for the evidence.
 	///
 	/// <para>Note this differs from the WinForms model viewer, which scales DTS points by 1/10 —

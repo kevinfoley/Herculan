@@ -124,7 +124,7 @@ public class HercSimDataTransformer : ByteTransformer<HercSimDat> {
 		Skip(14);
 
 		data.ShieldMaxTotal = IndexShortLE();
-		data.Unk192_val = IndexShortLE();
+		data.HudTopSpeed = IndexShortLE();
 		data.StrideScaleDivisor = IndexShortLE();
 		data.StrideScaleNumerator = IndexShortLE();
 
@@ -282,7 +282,7 @@ public class HercSimDataTransformer : ByteTransformer<HercSimDat> {
 		}
 
 		Emit(outStream, WriteShortLE(data.ShieldMaxTotal));
-		Emit(outStream, WriteShortLE(data.Unk192_val));
+		Emit(outStream, WriteShortLE(data.HudTopSpeed));
 		Emit(outStream, WriteShortLE(data.StrideScaleDivisor));
 		Emit(outStream, WriteShortLE(data.StrideScaleNumerator));
 

@@ -9,8 +9,8 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// Retail mechs carry 22 internals and 29 components; SKIMMER carries 1 and 1.
 ///
 /// <para>The component and internal index spaces, the piece record and what each piece's dependent
-/// list holds per chassis are in docs/formats/dmg-damage-file.md; what the simulator does with them
-/// is docs/simulation/component-damage.md.</para>
+/// list holds per chassis are in docs/retail/formats/dmg-damage-file.md; what the simulator does with them
+/// is docs/retail/simulation/component-damage.md.</para>
 /// </summary>
 public class HercSimDamage {
 	/// <summary>
@@ -32,7 +32,7 @@ public class HercSimDamage {
 	public HercPiece NewHercPiece() => new();
 	public InternalsTarget NewInternalsTarget() => new();
 
-	/// <summary>One component's record. See docs/formats/dmg-damage-file.md#the-piece-record.</summary>
+	/// <summary>One component's record. See docs/retail/formats/dmg-damage-file.md#the-piece-record.</summary>
 	public class HercPiece {
 		/// <summary><c>+0x00</c> — the component's own maximum.</summary>
 		public short Armor { get; set; }
@@ -40,7 +40,7 @@ public class HercSimDamage {
 		/// <summary>
 		/// Record offsets <c>+0x02</c> (the debris group the piece throws) and <c>+0x03</c> (the
 		/// shape sequence it drives), each <c>-1</c> for none, read as one <c>short</c>. See
-		/// docs/formats/dmg-damage-file.md#the-piece-record.
+		/// docs/retail/formats/dmg-damage-file.md#the-piece-record.
 		/// </summary>
 		public short DebrisFlags { get; set; }
 
@@ -53,7 +53,7 @@ public class HercSimDamage {
 		/// <summary>
 		/// <c>+0x05</c> — destruction flags. The bit meanings, from <c>Component_ApplyDamageAndCascade</c>
 		/// (<c>0040da38</c>) and <c>Component_DestroyAndCascade</c> (<c>0040d434</c>), are in
-		/// docs/formats/dmg-damage-file.md#the-piece-record.
+		/// docs/retail/formats/dmg-damage-file.md#the-piece-record.
 		/// </summary>
 		public byte DestructionFlags { get; set; }
 

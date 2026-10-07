@@ -7,7 +7,7 @@ using Herculan.Engine.World;
 namespace Herculan.Engine.Render;
 
 /// <summary>
-/// The terrain side of the texturing chain in docs/formats/terrain-texturing.md: a theater's packed
+/// The terrain side of the texturing chain in docs/retail/formats/terrain-texturing.md: a theater's packed
 /// <c>.DBA</c> plus the shared <c>dat\mat0</c> table, together able to answer "which rect of the
 /// atlas does this cell wear".
 ///
@@ -82,7 +82,7 @@ public sealed class TerrainTextureBank {
 	/// <para><b>Corner order is the original's too, and V1 is the smaller value.</b> <c>u</c> rises
 	/// with <c>cellX</c> but <c>v</c> falls with <c>cellY</c>, and <see cref="AtlasRect.V1"/> is the V
 	/// at corner <c>cellY + 1</c>. Handing the pair over the other way mirrors every cell against the
-	/// row below it. See docs/formats/terrain-texturing.md, "Which quad corner takes which UV", for
+	/// row below it. See docs/retail/formats/terrain-texturing.md, "Which quad corner takes which UV", for
 	/// how the mapping is read off <c>Terrain_DrawCellQuad</c>.</para>
 	/// </summary>
 	public AtlasRect? CellRect(HeightGrid grid, int cellX, int cellY) {

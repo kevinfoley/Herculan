@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>
 /// FILE - (Mission).ENG, .GER, .FRE — a mission's text, records keyed by id. The mission load reads
 /// it itself (<see cref="Io.Transform.Common.MissionGenerator"/>) and writes the survivors to
-/// <c>data\mission.str</c>. See docs/formats/msn-mission-file.md#the-eng-string-table.
+/// <c>data\mission.str</c>. See docs/retail/formats/msn-mission-file.md#the-eng-string-table.
 /// </summary>
 public class MissionStringFile {
 	public int TotalSize { get; set; }
@@ -28,7 +28,7 @@ public class MissionStringFile {
 		/// <summary>Condition ref, as in the <c>.MSN</c> rows, or <c>-1</c>.</summary>
 		public short ConditionRef { get; set; }
 
-		/// <summary><c>-99</c> beside a condition, <c>-1</c> otherwise (docs/formats/msn-mission-file.md#the-eng-string-table).</summary>
+		/// <summary><c>-99</c> beside a condition, <c>-1</c> otherwise (docs/retail/formats/msn-mission-file.md#the-eng-string-table).</summary>
 		public short ParentRef { get; set; }
 
 		/// <summary>The text's length, including its NUL.</summary>

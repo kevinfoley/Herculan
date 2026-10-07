@@ -14,7 +14,7 @@ namespace HercWorks.Video.Codecs.Indeo3;
 /// 256-entry sub-tables, at <c>+0x000</c> and <c>+0x400</c>. Which of the 24 blocks a cell reads is
 /// chosen per frame by the bitstream header's <c>cb_offset</c> and <c>alt_quant</c> fields.</para>
 ///
-/// <para>See <c>docs/formats/indeo3.md</c>, "Codebooks", for the derivation and its evidence.</para>
+/// <para>See <c>docs/retail/formats/indeo3.md</c>, "Codebooks", for the derivation and its evidence.</para>
 /// </summary>
 internal sealed class Indeo3Codebooks {
 	/// <summary>Length of the expanded image, in 32-bit words.</summary>

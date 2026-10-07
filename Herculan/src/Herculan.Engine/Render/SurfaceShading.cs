@@ -33,7 +33,7 @@ public sealed record SurfaceShading(ShadeRamp Ramp, DynamixPalette? Palette) {
 	/// <c>TSShadedPoly_Render</c> (<c>0047542c</c>)'s colour resolution, which is two lookups and
 	/// not one:
 	/// <code>
-	/// paletteIndex = Palette_ShadeRampLookup(surface.FrontColor, shade)   // 00430e34
+	/// paletteIndex = Palette_ShadeRampLookup(surface.value, shade)        // 00430e34
 	/// byte         = Raster_ShadeRampRow(0x80)[paletteIndex]              // 00468054
 	/// </code>
 	///
@@ -47,7 +47,7 @@ public sealed record SurfaceShading(ShadeRamp Ramp, DynamixPalette? Palette) {
 	/// it, or when the resolved byte has no palette entry — callers fall back to their own colour
 	/// rather than to a made-up one.</para>
 	/// </summary>
-	/// <param name="rampNumber">The surface's <c>FrontColor</c>, masked to a byte as the original does.</param>
+	/// <param name="rampNumber">The drawn side's surface value, masked to a byte as the original does.</param>
 	/// <param name="shade">The face's light level, 0-255 — see <see cref="MissionSun.ShadeForFace"/>.</param>
 	/// <param name="depthSlice">
 	/// Which of the <c>.RMP</c>'s depth slices the second lookup reads — the original's distance fog,
@@ -60,6 +60,17 @@ public sealed record SurfaceShading(ShadeRamp Ramp, DynamixPalette? Palette) {
 			: null;
 
 	/// <summary>
+	/// The palette byte <see cref="ShadedColor"/> resolves to — what <c>TSShadedPoly_Render</c>
+	/// compares between its fill and its line before drawing the outline. Null where
+	/// <see cref="RampedPaletteIndex"/> is.
+	/// </summary>
+	/// <inheritdoc cref="ShadedColor" path="/param"/>
+	public byte? ShadedByte(int rampNumber, int shade, int depthSlice = 0) =>
+		RampedPaletteIndex(rampNumber, shade) is { } index
+			? Ramp.Lookup(index, ShadeRamp.UnlitShade, depthSlice)
+			: null;
+
+	/// <summary>
 	/// The colour a <c>TSGouraudPoly</c> surface draws at one light level — <b>the material ramp's
 	/// entry straight through the palette, with no <c>.RMP</c> step at all</b>.
 	///
@@ -69,7 +80,7 @@ public sealed record SurfaceShading(ShadeRamp Ramp, DynamixPalette? Palette) {
 	/// <c>TSShadedPoly_Render</c> calls it with the literal <c>0x80</c> before every fill: the ramp
 	/// lookup moves into the span so it can vary per pixel, and the fixed <c>.RMP</c> row is not part
 	/// of this path. The trace and the retail capture that distinguishes the two chains are in
-	/// docs/formats/dts-texture-binding.md's "<c>TSGouraudPoly</c> — same ramp number, per-vertex
+	/// docs/retail/formats/dts-texture-binding.md's "<c>TSGouraudPoly</c> — same ramp number, per-vertex
 	/// light, no <c>.RMP</c> row".</para>
 	/// </summary>
 	/// <inheritdoc cref="ShadedColor" path="/param"/>

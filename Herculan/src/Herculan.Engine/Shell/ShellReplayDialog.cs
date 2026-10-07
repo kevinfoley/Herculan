@@ -16,7 +16,7 @@ public enum ShellReplayButton {
 /// <c>ReplayDialog_Show(state)</c> (<c>0044ca57</c>). <c>Yes</c> (<c>ReplayDialog_OnYes</c>, <c>0044cb44</c>) takes it down,
 /// loads slot 10 again and flies the mission from it; <c>No</c> (<c>ReplayDialog_OnNo</c>, <c>0044cbbd</c>) saves
 /// slot 10, takes it down and shows the main menu. Both are the host's to do. See
-/// docs/shell/campaign-loop.md#where-the-debrief-goes-next.
+/// docs/retail/shell/campaign-loop.md#where-the-debrief-goes-next.
 /// </summary>
 public sealed class ShellReplayDialog {
 	/// <summary>The titled panel, in the canvas: the backdrop picture it sits on is the whole display.</summary>

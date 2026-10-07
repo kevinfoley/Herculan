@@ -64,9 +64,17 @@ public readonly record struct GridShapeCollision(
 /// <param name="Geometry">
 /// The shape's drawable geometry, or null for the rare record with no child object.
 /// </param>
+/// <param name="SequenceList">
+/// Frame count per cell-animation sequence (<c>shape+0x20</c>), the same field
+/// <see cref="TSShape.SequenceList"/> carries for a <c>.DTS</c> root: a <c>GridShape</c> is a
+/// <c>TSShape</c>, so the record holds it itself rather than its <see cref="Geometry"/> child. Its
+/// length is also the size of the cell-frame array a shape instance built on this shape gets.
+/// </param>
+/// <param name="NodeTransforms">The shape's own node transforms (<c>shape+0x18</c>); empty in every retail record.</param>
 /// <param name="Collision">The shape's collision volume — see <see cref="GridShapeCollision"/>.</param>
 public readonly record struct GridShape(
-	short BoundingRadius, TSObject? Geometry, GridShapeCollision Collision);
+	short BoundingRadius, TSObject? Geometry, short[]? SequenceList, TSShapeNodeTransform[]? NodeTransforms,
+	GridShapeCollision Collision);
 
 /// <summary>
 /// <c>dgs\BASES.DGS</c> / <c>dgs\BHULKS.DGS</c> — the static-structure shape library <c>dat\BASES.DAT</c>

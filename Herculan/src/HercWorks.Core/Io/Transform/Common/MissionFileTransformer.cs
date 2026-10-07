@@ -5,7 +5,7 @@ namespace HercWorks.Core.Io.Transform.Common;
 /// <summary>
 /// Transforms byte[] data to and from .MSN mission files (<see cref="MissionFile"/>): the revision
 /// word, then the 17 rows in order, row #5 kept raw and row #8's waypoints 2 bytes each. See
-/// docs/formats/msn-mission-file.md.
+/// docs/retail/formats/msn-mission-file.md.
 /// </summary>
 public class MissionFileTransformer : ByteTransformer<MissionFile> {
 	public override MissionFile? Parse(byte[]? inputArray) {
@@ -261,7 +261,7 @@ public class MissionFileTransformer : ByteTransformer<MissionFile> {
 
 	/// <summary>
 	/// Reads row #17, stopping at the end of the file if it ends inside a record — retail's DEMO2.MSN
-	/// does, 42 bytes short (docs/formats/msn-mission-file.md#verification-note). The bytes that are
+	/// does, 42 bytes short (docs/retail/formats/msn-mission-file.md#verification-note). The bytes that are
 	/// there go to <see cref="MissionFile.TruncatedRow17Tail"/> so a write reproduces the file.
 	/// </summary>
 	private void ParseRow17(MissionFile data) {

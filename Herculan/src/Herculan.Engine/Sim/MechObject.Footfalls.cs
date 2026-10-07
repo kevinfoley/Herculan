@@ -1,10 +1,9 @@
-using Herculan.Engine.Audio;
 using Herculan.Engine.Numerics;
 
 namespace Herculan.Engine.Sim;
 
 // Mech_PlaceLegsOnGround (004195c8): the shadows under the machine's parts, and footfall
-// detection. See docs/simulation/mech-locomotion.md and docs/simulation/ground-shapes.md.
+// detection. See docs/retail/simulation/mech-locomotion.md and docs/retail/simulation/ground-shapes.md.
 public sealed partial class MechObject {
 	/// <summary>
 	/// <c>mech+0x238</c>, count <c>mech+0x23c</c> — the machine's shadows, one <see cref="GroundShape"/>

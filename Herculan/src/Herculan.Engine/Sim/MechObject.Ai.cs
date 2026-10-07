@@ -7,8 +7,8 @@ namespace Herculan.Engine.Sim;
 /// <summary>
 /// The machine's half of the AI targeting slice: the behaviour block and its tick, the combat
 /// reassess and the three decisions hanging off it, and the combat rating everything weighs
-/// candidates by. The derivation is docs/simulation/ai-targeting.md and the dispatch model it cites
-/// is docs/simulation/ai-dispatch.md.
+/// candidates by. The derivation is docs/retail/simulation/ai-targeting.md and the dispatch model it cites
+/// is docs/retail/simulation/ai-dispatch.md.
 /// </summary>
 public partial class MechObject {
 	/// <summary><c>mech+0x4d</c> — the behaviour block. See <see cref="BehaviourBlock"/>.</summary>
@@ -105,7 +105,7 @@ public partial class MechObject {
 	/// state it already had — <b>which is not what the original does</b>: there the descriptor to
 	/// install is a register nothing on that path wrote — zero through the reassess dispatcher, 4 through
 	/// the re-entry after a destroyed engage target — so the original faults. See
-	/// docs/simulation/ai-goals.md, "A group with no order at all". No retail mission reaches it.</item>
+	/// docs/retail/simulation/ai-goals.md, "A group with no order at all". No retail mission reaches it.</item>
 	/// </list>
 	///
 	/// <para><b>Every path ends by dropping the target</b>, which is the original's own behaviour and
@@ -520,7 +520,7 @@ public partial class MechObject {
 	/// to work to leaves the machine standing where it is, which is the post a guard holds anyway.
 	///
 	/// <para>Verbs 3 and 5 have arms here too, and nothing writes either verb — see
-	/// docs/simulation/ai-squadmates.md.</para>
+	/// docs/retail/simulation/ai-squadmates.md.</para>
 	/// </summary>
 	private Vec3i GoalPosition() =>
 		SquadOrderVerb == SquadOrderGuard
@@ -540,14 +540,46 @@ public partial class MechObject {
 	}
 
 	/// <summary>
+	/// <c>Mech_AiEnemySighted</c> (<c>00412800</c>, mech vtable <c>+0x48</c>) — the "enemy detected"
+	/// callout, squad message <see cref="SquadMessageEnemySighted"/>, at most once per enemy for the
+	/// whole player group. The latch and the rate limit are the world's
+	/// (<see cref="SimWorld.SightingCalledIn"/>, <see cref="SimWorld.SightingCalloutTimer"/>); which
+	/// enemy qualifies, and why the limit runs down per call rather than per tick, is
+	/// docs/retail/simulation/ai-targeting.md, "Radio callouts".
+	/// </summary>
+	internal override void EnemySighted(SimWorld world, SimObject enemy) {
+		if (LocallyPiloted) {
+			world.LatchSighting(enemy);
+			return;
+		}
+
+		SimMath.CountdownTimerTick(ref world.SightingCalloutTimer);
+
+		if (enemy.TargetClass == TargetClass.Structure
+				|| world.PlayerMech is not { } player || Group == null || !ReferenceEquals(Group, player.Group)
+				|| world.SightingCalledIn(enemy) || enemy.RadarVisible
+				|| Detects(enemy) || player.Detects(enemy)) {
+			return;
+		}
+
+		// Latched before the rate limit is consulted, so a callout the limit swallows is lost.
+		world.LatchSighting(enemy);
+
+		if (world.SightingCalloutTimer == 0) {
+			PostSquadMessage(world, SquadMessageEnemySighted);
+			world.SightingCalloutTimer = SightingCalloutInterval;
+		}
+	}
+
+	/// <summary>
 	/// <c>Ai_PostSquadMessage</c> (<c>00420a98</c>) — posts to the pilot-and-squad message port, the
 	/// second instance of the port the cockpit computer uses. A destroyed machine says nothing unless
 	/// <paramref name="force"/> is set, which is how a machine gets to cry out as it dies — see
 	/// <see cref="CreditNeutralised"/>, the original's only caller that sets it.
 	///
-	/// <para>The id is also kept, because it is observable without a sound device and the tests read
-	/// it — the port itself decides whether anything is heard, and drops the post entirely for a
-	/// machine that is not one of the player's three squadmates.</para>
+	/// <para>The id is also kept (<see cref="LastSquadMessage"/>) — the port itself decides whether
+	/// anything is heard, and drops the post entirely for a machine that is not one of the player's
+	/// three squadmates.</para>
 	/// </summary>
 	private void PostSquadMessage(SimWorld world, int messageId, bool force = false) {
 		if (Destroyed && !force) {
@@ -596,7 +628,7 @@ public partial class MechObject {
 	/// recomputes it from <c>Mech_PerTickSystemsUpdate</c> while the flag is clear; the one clear
 	/// found is <c>Mech_DirectFireHitTest</c>'s, on a hit. Computing it on demand gives the same value
 	/// on the tick after a hit, but can see a magazine running low, or damage from another path,
-	/// before the original would — docs/simulation/ai-targeting.md, "Open".</para>
+	/// before the original would — docs/retail/simulation/ai-targeting.md, "Open".</para>
 	/// </summary>
 	public int CombatRating {
 		get {
@@ -702,7 +734,7 @@ public partial class MechObject {
 	/// <summary>
 	/// <c>mech+0x26b</c> — a countdown that holds the radar off. <c>Mech_DirectFireHitTest</c> loads it
 	/// with <see cref="RadarSilenceOnArmHit"/> when an anti-radiation round lands: the machine goes
-	/// dark and stays dark long enough for the seeker to lose it. See docs/simulation/target-selection.md
+	/// dark and stays dark long enough for the seeker to lose it. See docs/retail/simulation/target-selection.md
 	/// ("How an AI machine's radar is set").
 	/// </summary>
 	public short RadarSilenceTimer { get; private set; }
@@ -732,8 +764,8 @@ public partial class MechObject {
 	}
 
 	/// <summary>
-	/// The last id handed to <c>Ai_PostSquadMessage</c>, kept so the callouts are observable while the
-	/// squad channel itself is unported.
+	/// The last id handed to <c>Ai_PostSquadMessage</c>, kept so the callouts are observable without a
+	/// sound device; the host's squad-order report prints it.
 	/// </summary>
 	public int LastSquadMessage { get; private set; }
 
@@ -859,6 +891,15 @@ public partial class MechObject {
 
 	/// <summary>Squad order verb 6 — guard the order's post.</summary>
 	public const short SquadOrderGuard = 6;
+
+	/// <summary>Squad message 1 — an enemy sighted.</summary>
+	public const int SquadMessageEnemySighted = 1;
+
+	/// <summary>
+	/// What <see cref="EnemySighted"/> re-arms <see cref="SimWorld.SightingCalloutTimer"/> to on each
+	/// callout, in <see cref="SimMath.CountdownTimerTick"/>'s unit.
+	/// </summary>
+	private const short SightingCalloutInterval = 10000;
 
 	/// <summary>Squad message 3 — taking fire.</summary>
 	public const int SquadMessageTakingFire = 3;

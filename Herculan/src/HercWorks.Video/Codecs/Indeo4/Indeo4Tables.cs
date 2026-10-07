@@ -2,7 +2,7 @@ namespace HercWorks.Video.Codecs.Indeo4;
 
 /// <summary>
 /// The constant tables of <c>IR41_32.DLL</c> that Indeo 4 decoding reads, copied out of the retail
-/// file. Each one names the address it was read from; see <c>docs/formats/indeo4.md</c> for what
+/// file. Each one names the address it was read from; see <c>docs/retail/formats/indeo4.md</c> for what
 /// each table means. The codec rewrites the scan orders and the step tables when it loads; the
 /// copies here are the file's, and the decoder applies the same rewrite.
 /// </summary>

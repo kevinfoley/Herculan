@@ -9,7 +9,7 @@ namespace Herculan.Engine.Content;
 /// <summary>
 /// What a beam looks like: <c>dat\BEAM.DAT</c> (<see cref="BeamData"/>) and <c>dba\BEAMTEX.DBA</c>,
 /// the two resources <c>Beam_LoadResourceTables</c> (<c>0040b6e0</c>) loads once at startup. The
-/// layouts and the retail records are in docs/formats/beam-dat.md.
+/// layouts and the retail records are in docs/retail/formats/beam-dat.md.
 ///
 /// <para>Retail's one <c>BEAMTEX.DBA</c> frame is a pure cross-section, every row one constant
 /// palette index, so this class keeps it as a profile of <see cref="ProfileTexels"/> RGBA samples
@@ -17,7 +17,7 @@ namespace Herculan.Engine.Content;
 /// record's subtype id, not by weapon id.</para>
 ///
 /// <para>Only the record's width differs per straight beam. Its colour index reaches the screen
-/// through the jagged (ELF) path alone — see <see cref="Color"/> and docs/simulation/beam-visuals.md,
+/// through the jagged (ELF) path alone — see <see cref="Color"/> and docs/retail/simulation/beam-visuals.md,
 /// "<c>BEAM.DAT</c>'s colour index is the fill brush". A beam has no alpha and is an opaque ribbon
 /// over whatever it crosses.</para>
 /// </summary>

@@ -62,12 +62,12 @@ public readonly record struct MissionTriggerArea(
 /// offered to <see cref="Areas"/> every frame; the first area that catches its subject fires the
 /// action, once and for good. What firing then means is read by whoever is watching: a mission group
 /// waiting to arrive reads <see cref="Verb"/> for how it turns up, and a group working its orders
-/// moves to the next one. See docs/simulation/mission-deployment.md.</para>
+/// moves to the next one. See docs/retail/simulation/mission-deployment.md.</para>
 ///
 /// <para><b>The field-to-offset mapping is the load pass's read order</b>, which is the only place
 /// it is stated: two shorts into <c>+0x00</c>/<c>+0x02</c>, sixteen bytes of block-4 refs into a
 /// stack buffer, twenty bytes into <c>+0x0c</c>, twenty more into <c>+0x20</c>, ten bytes read and
-/// dropped, then <c>+0x34</c> and <c>+0x36</c>. See docs/formats/script-dat.md.</para>
+/// dropped, then <c>+0x34</c> and <c>+0x36</c>. See docs/retail/formats/script-dat.md.</para>
 /// </summary>
 /// <param name="Type">
 /// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.Type"/>
@@ -94,7 +94,7 @@ public readonly record struct MissionTriggerArea(
 /// Record <c>+0x34</c>, <b>already decremented</b> — the load pass subtracts one from the stored
 /// value, so this is the index the message port is handed, and <c>-1</c> means the action says
 /// nothing. It names a <c>str\COMMAND0.STR</c> line, not a <c>data\mission.str</c> one — see
-/// docs/simulation/mission-deployment.md.
+/// docs/retail/simulation/mission-deployment.md.
 /// </param>
 /// <param name="TargetRef">
 /// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptAction.TargetRef"/>

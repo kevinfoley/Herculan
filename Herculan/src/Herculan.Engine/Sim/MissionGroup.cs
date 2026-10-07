@@ -12,8 +12,8 @@ namespace Herculan.Engine.Sim;
 /// <c>Mech_AiTick</c>'s sole caller is <c>Group_OrderTick</c> (<c>00423a74</c>), which runs it over
 /// every member of a group that has entered the mission — so a machine that is not a live group
 /// member never thinks at all. That function also walks the group through its orders, which is what
-/// gives each member a state to be in; see docs/simulation/ai-goals.md for the whole layer and
-/// docs/simulation/ai-dispatch.md for what a verb turns into.</para>
+/// gives each member a state to be in; see docs/retail/simulation/ai-goals.md for the whole layer and
+/// docs/retail/simulation/ai-dispatch.md for what a verb turns into.</para>
 /// </summary>
 public sealed partial class MissionGroup {
 	/// <summary>
@@ -98,7 +98,7 @@ public sealed partial class MissionGroup {
 	/// <summary>
 	/// <c>group+0x06</c> — the waypoint group the route cursor runs over. Loaded once, from order
 	/// slot 0, and kept however many orders the group works through: no writer that re-points it has
-	/// been found. See docs/simulation/ai-goals.md#the-route-cursor-is-loaded-once.
+	/// been found. See docs/retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once.
 	/// </summary>
 	public IReadOnlyList<Vec3i> Route { get; }
 
@@ -106,7 +106,7 @@ public sealed partial class MissionGroup {
 	/// <c>group+0x04</c> — the index of the waypoint last reached, shared by the whole group. The four
 	/// callers of <c>Route_AdvanceCursor</c> advance it — <c>Ai_FollowRoute</c>, the player's own
 	/// think, and the flyer and ground-vehicle leaders' route steps — and moving on to the next order
-	/// does not reset it; see docs/simulation/player-waypoints.md.
+	/// does not reset it; see docs/retail/simulation/player-waypoints.md.
 	/// </summary>
 	public int RouteCursor { get; private set; }
 
@@ -152,7 +152,7 @@ public sealed partial class MissionGroup {
 	/// <c>group+0x70</c> — whether the order in that slot has been flagged finished. Set only by the
 	/// completion path, not by a mission action firing under an unfinished order. The objective layer
 	/// reads it through <see cref="OrderCompletedForRoute"/>; no AI reader has been found — see
-	/// docs/simulation/ai-goals.md#open.
+	/// docs/retail/simulation/ai-goals.md#open.
 	/// </summary>
 	public bool OrderCompleted(int slot) =>
 		slot >= 0 && slot < _completed.Length && _completed[slot];
@@ -361,7 +361,7 @@ public sealed partial class MissionGroup {
 	/// <c>Group_IsOrderComplete</c> (<c>004239fc</c>) — switched on the verb. Verbs 1 and 4 have no
 	/// test at all and can only be ended by their action firing; the three movement verbs end when
 	/// the route runs out; the two subject verbs end when the subject does. See
-	/// docs/simulation/ai-goals.md for the table.
+	/// docs/retail/simulation/ai-goals.md for the table.
 	/// </summary>
 	private bool IsOrderComplete(SimWorld world, MissionOrder order) => order.Verb switch {
 		MissionOrder.VerbSearchDestroy => SubjectCondition() == ConditionDestroyed,
@@ -476,7 +476,7 @@ public sealed partial class MissionGroup {
 	/// of the question rather than an oversight: the only caller asks whether an enemy group can
 	/// still contest a guard post, and a disarmed machine cannot. Despite the name this is not a
 	/// "has this group been destroyed" test and must not be reused as one — see
-	/// docs/simulation/ai-goals.md.</para>
+	/// docs/retail/simulation/ai-goals.md.</para>
 	/// </summary>
 	private bool IsWipedOut() {
 		for (int i = 0; i < _members.Count; i++) {

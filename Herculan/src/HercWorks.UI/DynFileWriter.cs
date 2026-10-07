@@ -11,7 +11,7 @@ namespace HercWorks.UI;
 /// HercWorks.Core: it dumps parsed .DBM data to real .png/.bmp files on disk for a human to look
 /// at, which is an MDK export feature the future engine port will never call — the engine
 /// consumes DynamixBitmap/DynamixPalette data directly, not files written back to disk. Core's
-/// ColorBytes carries a cross-platform-safe RgbaColor internally (see docs/engine/planning.md's
+/// ColorBytes carries a cross-platform-safe RgbaColor internally (see docs/herculan/planning.md's
 /// "Known technical debt" section), converted to a real System.Drawing.Color here at the UI
 /// boundary, since this project (net8.0-windows, WinForms) is free to use GDI+ directly — same
 /// pattern as DynamixImageRenderer.cs.

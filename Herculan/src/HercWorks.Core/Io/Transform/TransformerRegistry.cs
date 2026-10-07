@@ -19,7 +19,7 @@ namespace HercWorks.Core.Io.Transform;
 /// HercSimDataTransformer's target ("dat\[herc].dat") can't be distinguished from other .DAT
 /// files by name/path, so it's matched instead by the 4-byte VolEntry.MagicPrefix observed on
 /// real herc data files: 41 20 00 7A or 41 20 01 7A. Those bytes are the source files' MS-DOS
-/// date and time (docs/formats/vol-archive.md), so the match holds only for unmodified retail
+/// date and time (docs/retail/formats/vol-archive.md), so the match holds only for unmodified retail
 /// archives.
 /// </summary>
 public static class TransformerRegistry {
@@ -43,7 +43,7 @@ public static class TransformerRegistry {
 		new("Training Hercs", e => NameIs(e, "TRN_HERCS.DAT"), () => new Shell.TrainingHercsTransform()),
 		new("Weapons Catalog", e => NameIs(e, "WEAPONS.DAT") && DirIs(e, FileType.Gam), () => new Shell.WeaponsDatTransformer()),
 
-		// --- bnd (per-subsystem tuning blobs, see docs/formats/bnd-notes.md — every file has its
+		// --- bnd (per-subsystem tuning blobs, see docs/retail/formats/bnd-notes.md — every file has its
 		// own unrelated record shape, so these are matched by exact name, not by extension) ---
 		new("Camera Config", e => NameIs(e, "CAM.BND"), () => new Bnd.CamTransformer()),
 
@@ -59,10 +59,12 @@ public static class TransformerRegistry {
 		new("Herc Damage Data", e => ExtIs(e, FileType.Dmg), () => new Dbsim.HercDamageFileTransformer()),
 		new("Bullet Data", e => NameIs(e, "BULLETS.DAT"), () => new Dbsim.BulletDataTransformer()),
 		new("Rocket Data", e => NameIs(e, "ROCKETS.DAT"), () => new Dbsim.RocketDataTransformer()),
+		new("Transport Weapon Slots", e => NameIs(e, "LC_WPNS.DAT"), () => new Dbsim.LcWeaponDataTransformer()),
 		new("Weapons Paper Diagram", e => NameIs(e, "WEAPONS.PDG"), () => new Dbsim.WeaponPDGTransformer()),
 		new("Paper Diagram Graphic", e => ExtIs(e, FileType.Pdg) && !NameIs(e, "WEAPONS.PDG"), () => new Dbsim.PaperDiagramGraphTransformer()),
 		new("Projectile Data", e => NameIs(e, "PROJ.DAT"), () => new Dbsim.ProjectileDataTransformer()),
 		new("Weapon Mount Templates", e => NameIs(e, "WEAPONS.DAT") && DirIs(e, FileType.Dat), () => new Dbsim.WeaponsSimTransformer()),
+		new("Structure Types", e => NameIs(e, "BASES.DAT") && DirIs(e, FileType.Dat), () => new Dbsim.BasesDatTransformer()),
 		new("Herc Sim Data", e => MagicIs(e, "4120007A") || MagicIs(e, "4120017A"), () => new Dbsim.HercSimDataTransformer()),
 		// Only known sample is SKIMMER.DAT, whose magic prefix doesn't match either Herc value above
 		// (7C1F640E) — matched by exact name for now rather than guessing a magic-based rule from a
@@ -75,7 +77,7 @@ public static class TransformerRegistry {
 		new("Explosion Types", e => NameIs(e, "EXPLOS.DAT"), () => new Dbsim.ExplosionDataTransformer()),
 		new("Zone Header", e => NameStartsWith(e, "ZONE") && ExtIs(e, FileType.Dat), () => new Common.ZoneDatTransformer()),
 		// Structure shape libraries. Matched by name: the .DGS container is documented for these two
-		// files only (docs/formats/dgs-hd0-notes.md).
+		// files only (docs/retail/formats/dgs-hd0-notes.md).
 		new("Structure Shape Library", e => NameIs(e, "BASES.DGS") || NameIs(e, "BHULKS.DGS"),
 			() => new Dbsim.BasesDgsTransformer()),
 
@@ -87,9 +89,9 @@ public static class TransformerRegistry {
 		new("Player Save", e => ExtIs(e, FileType.Sav), () => new Common.PlayerSaveTransform()),
 		new("String Table", e => ExtIs(e, FileType.Str), () => new Common.StringFileTransformer()),
 		// LANG0.VOL's six .BIN files — weapons, estext, esnames, missions, wpn_info, wpn_desc — share
-		// one container (docs/formats/weapons-dat.md, "The .BIN string tables").
+		// one container (docs/retail/formats/weapons-dat.md, "The .BIN string tables").
 		new("Indexed String Table", e => ExtIs(e, FileType.Bin), () => new Common.BinStringFileTransformer()),
-		// A mission's text, beside its .MSN in ZONES.VOL (docs/formats/msn-mission-file.md).
+		// A mission's text, beside its .MSN in ZONES.VOL (docs/retail/formats/msn-mission-file.md).
 		new("Mission Text", e => ExtIs(e, FileType.Eng), () => new Common.MissionStringFileTransformer()),
 		new("Sound", e => ExtIs(e, FileType.Wav), () => new Common.WavInfoTransformer()),
 

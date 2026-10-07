@@ -6,7 +6,7 @@ namespace HercWorks.Core.Data.File.Dat.Shell;
 /// FILE - /SHELL/GAM/WEAPONS.DAT — the shell's weapon catalog: a <c>UINT16</c> count (33), then per
 /// weapon its id, a length-prefixed NUL-terminated catalog code, price, unlock flag and rank; then a
 /// <c>UINT16</c> count and the armory's starting stock as weapon units (id, condition, ammo type).
-/// See docs/formats/weapons-dat.md#file-level-format; the 29-byte in-memory record this loads into
+/// See docs/retail/formats/weapons-dat.md#file-level-format; the 29-byte in-memory record this loads into
 /// is not the same shape as the on-disk one.
 /// </summary>
 public class WeaponsDat {
@@ -41,8 +41,8 @@ public class WeaponsDat {
 		/// The rank: the order <c>Armory_AutoFillQueue</c> walks the catalog in, low first, queueing a
 		/// weapon that is unlocked and owned fewer than twice. Ranks 1-28 run advanced-to-basic (PLAS 1,
 		/// MSL6 28); NONE and the three Bull weapons hold 99, MFAC 0. Stored in a parallel array rather
-		/// than inside the 29-byte record. See docs/shell/armory.md and
-		/// docs/formats/weapons-dat.md#the-rank-byte-and-what-retail-actually-fits.
+		/// than inside the 29-byte record. See docs/retail/shell/armory.md and
+		/// docs/retail/formats/weapons-dat.md#the-rank-byte-and-what-retail-actually-fits.
 		/// </summary>
 		public short AutobuildPriority { get; set; }
 	}

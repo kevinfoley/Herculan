@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.Struct;
 /// <summary>
 /// A <c>career.dat</c> stage's campaign index. 0-4 are the five campaign chapters, named by the
 /// shell's sector words; 5 is the practice-and-demo stage, which the record sheet labels with the
-/// word before them, <c>Razor</c>. See docs/shell/campaign-loop.md#the-campaign-table--gamcareerdat.
+/// word before them, <c>Razor</c>. See docs/retail/shell/campaign-loop.md#the-campaign-table--gamcareerdat.
 /// </summary>
 public sealed class MissionSector {
 	public static readonly MissionSector Razr = new("RAZR", 5);

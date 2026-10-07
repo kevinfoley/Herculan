@@ -18,7 +18,7 @@ public enum ShellBuildButton {
 /// Built once by <c>Build_BuildScreen</c> (<c>00445758</c>), entered by <c>Build_Enter</c>
 /// (<c>0044690d</c>), its chassis moved by <c>Build_SelectChassis</c> (<c>00446c3b</c>), its figures
 /// filled by <c>Herc_BuildScreenRefresh</c> (<c>00446cfa</c>) and its buttons gated by
-/// <c>Build_GateButtons</c> (<c>004469d4</c>). See docs/shell/screen-layout.md, "The build screen".
+/// <c>Build_GateButtons</c> (<c>004469d4</c>). See docs/retail/shell/screen-layout.md, "The build screen".
 ///
 /// <para><b>Every rect here is a literal in the executable</b>, kept parent-relative as the builder
 /// writes them: the two top-level panels in the canvas, the blueprints, the list, the stats box and
@@ -164,7 +164,7 @@ public sealed class ShellBuildScreen {
 
 	/// <summary>
 	/// <c>Build_SelectChassis</c> (<c>00446c3b</c>), a row's handler through nine thunks from
-	/// <c>00446fbf</c>: unlights the old row and hides its blueprint, lights the new one and shows its
+	/// <c>Build_OnChassisRow0</c> (<c>00446fbf</c>): unlights the old row and hides its blueprint, lights the new one and shows its
 	/// blueprint, then regates the buttons and refreshes the figures. Returns whether the selection moved;
 	/// the chassis already selected is a no-op.
 	/// </summary>
@@ -208,10 +208,10 @@ public sealed class ShellBuildScreen {
 	/// a pool exactly equal to it is not enough. An occupied bay can be scrapped and not built into, and
 	/// SCRAP is dead while the hangar holds exactly one deployable machine, whichever bay it is in, or when
 	/// the bay's chassis is not available —
-	/// the repair screen's SCRAP test (docs/shell/screen-layout.md#what-the-buttons-are-gated-on).
+	/// the repair screen's SCRAP test (docs/retail/shell/screen-layout.md#what-the-buttons-are-gated-on).
 	///
 	/// <para>With no bay selected the original reads the dword before the eight-pointer array as the
-	/// bay's machine (docs/shell/screen-layout.md#scrapping-and-building-are-gated-on-the-bay); this engine
+	/// bay's machine (docs/retail/shell/screen-layout.md#scrapping-and-building-are-gated-on-the-bay); this engine
 	/// greys both buttons instead, which is its own choice.</para>
 	/// </summary>
 	public bool IsEnabled(ShellBuildButton button) {

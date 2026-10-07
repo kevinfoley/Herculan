@@ -95,19 +95,39 @@ public class HercDamageFileTransformer : ByteTransformer<HercSimDamage> {
 		Emit(outStream, WriteShortLE((short)data.ComponentData!.Length));
 
 		foreach (var piece in data.ComponentData) {
-			Emit(outStream, WriteShortLE(piece.Armor));
-			Emit(outStream, WriteShortLE(piece.DebrisFlags));
-			outStream.WriteByte(piece.ParentComponent);
-			outStream.WriteByte(piece.DestructionFlags);
-			Emit(outStream, WriteShortLE((short)piece.MappedInternals!.Length));
-
-			foreach (var t in piece.MappedInternals) {
-				Emit(outStream, WriteShortLE(t.SpillWeight));
-				Emit(outStream, WriteShortLE(t.InternalsId!.Id));
-			}
+			WritePiece(outStream, piece);
 		}
 
 		return outStream.ToArray();
+	}
+
+	/// <summary>
+	/// One piece record — <c>HercPiece_ReadRecord</c> (<c>0040cff8</c>) itself, which the sim
+	/// <c>WEAPONS.DAT</c> reader runs too (see <see cref="WeaponsSimTransformer"/>). Advances
+	/// <paramref name="offset"/> past everything it read.
+	/// </summary>
+	public HercSimDamage.HercPiece ReadPiece(byte[] bytes, ref int offset) {
+		SetBytes(bytes);
+		Index = offset;
+		var piece = ParseHercPiece(new HercSimDamage());
+		offset = Index;
+		return piece;
+	}
+
+	/// <summary>The write side of <see cref="ReadPiece"/>: 8 bytes, then 4 per dependent.</summary>
+	public void WritePiece(Stream outStream, HercSimDamage.HercPiece piece) {
+		var internals = piece.MappedInternals ?? Array.Empty<HercSimDamage.InternalsTarget>();
+
+		Emit(outStream, WriteShortLE(piece.Armor));
+		Emit(outStream, WriteShortLE(piece.DebrisFlags));
+		outStream.WriteByte(piece.ParentComponent);
+		outStream.WriteByte(piece.DestructionFlags);
+		Emit(outStream, WriteShortLE((short)internals.Length));
+
+		foreach (var t in internals) {
+			Emit(outStream, WriteShortLE(t.SpillWeight));
+			Emit(outStream, WriteShortLE(t.InternalsId!.Id));
+		}
 	}
 
 	private HercSimDamage.HercPiece ParseHercPiece(HercSimDamage data) {
@@ -127,5 +147,5 @@ public class HercDamageFileTransformer : ByteTransformer<HercSimDamage> {
 		return piece;
 	}
 
-	private static void Emit(MemoryStream outArr, byte[] data) => outArr.Write(data, 0, data.Length);
+	private static void Emit(Stream outArr, byte[] data) => outArr.Write(data, 0, data.Length);
 }

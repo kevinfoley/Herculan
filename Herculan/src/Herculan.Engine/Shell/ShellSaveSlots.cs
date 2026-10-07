@@ -19,7 +19,7 @@ namespace Herculan.Engine.Shell;
 /// <para>Built here from a parsed <see cref="PlayerSave"/> rather than by reproducing the original's
 /// skip-walk: the walk exists because VSHELL wants eleven summaries without eleven full loads, and
 /// this engine already has a whole-file reader. The walk is still worth knowing — its skip counts are
-/// an independent statement of every block length in <c>docs/formats/save-games.md</c>.</para>
+/// an independent statement of every block length in <c>docs/retail/formats/save-games.md</c>.</para>
 /// </summary>
 public sealed record ShellSaveSummary(
 	string PilotName,
@@ -69,23 +69,36 @@ public sealed record ShellSaveSlot(string FileName, string Label, bool InUse, Sh
 /// <c>data\player.mec</c> in the original, which <c>Career_LoadSlot</c> fills from a slot's
 /// <c>sav\script%d.dat</c>, <c>sav\missn%d.str</c> and <c>sav\player%d.mec</c>, <c>Rock &amp; Roll</c>'s
 /// export rewrites <c>player.mec</c> in, and <c>Career_SaveSlot</c> copies out to the slot being saved.
-///
-/// <para>This engine leaves the install's <c>data\</c> alone. Until a mission is handed over the files
-/// are byte for byte the loaded slot's own, so those are read where they are; the handoff then names
-/// its own <c>player.mec</c>. Null when there is none.</para>
+/// Null when there is none.
 /// </summary>
 public sealed record ShellWorkingFiles(string? Script, string? Text, string? Player) {
-	/// <summary>The files a slot's load puts in <c>data\</c>, read in place.</summary>
+	/// <summary>
+	/// A slot's own three files in <c>sav\</c>, read where they are: the slot the shell opens at startup for the
+	/// repair screen, which the original has no load for, so nothing is copied into <c>data\</c>.
+	/// </summary>
 	public static ShellWorkingFiles ForSlot(string installRoot, int slot) {
 		string folder = ShellSaveSlots.Directory(installRoot);
 		return new ShellWorkingFiles(Path.Combine(folder, ShellSaveSlots.ScriptFile(slot)),
 			Path.Combine(folder, ShellSaveSlots.TextFile(slot)), Path.Combine(folder, ShellSaveSlots.PlayerFile(slot)));
 	}
 
-	/// <summary>The three files under their <c>data\</c> names in <paramref name="directory"/>, where a mission load writes them.</summary>
+	/// <summary>The three files in the install's <c>data\</c>, where the original keeps them.</summary>
+	public static ShellWorkingFiles InData(string installRoot) => In(DataDirectory(installRoot));
+
+	/// <summary>The install's <c>data\</c>, which holds the working files and the mission handoff.</summary>
+	public static string DataDirectory(string installRoot) => Path.Combine(installRoot, MissionLoader.DataFolderName);
+
+	/// <summary>The three files under their <c>data\</c> names in <paramref name="directory"/>.</summary>
 	public static ShellWorkingFiles In(string directory) =>
 		new(Path.Combine(directory, MissionLoader.ScriptFileName), Path.Combine(directory, MissionLoader.TextFileName),
 			Path.Combine(directory, MissionLoader.PlayerFileName));
+
+	/// <summary>
+	/// <c>data\script.dat</c> or <c>data\mission.str</c> written as <c>WriteScriptDatFile</c> and <c>MissionStr_Write</c>
+	/// (<c>004179f0</c>) write them, through <c>FileRWStream_Open</c> (<c>0044e46c</c>), which does not truncate: a
+	/// shorter mission leaves the longer one's tail in place (docs/retail/formats/save-games.md#streams-never-truncate).
+	/// </summary>
+	public static void WriteMissionFile(string path, byte[] bytes) => ShellSaveSlots.WriteInPlace(path, bytes);
 }
 
 /// <summary>
@@ -155,10 +168,8 @@ public static class ShellSaveSlots {
 	/// written. Slot 10 is slot 11 in training. A player slot (0-9) takes <paramref name="label"/> as its
 	/// label; every slot is marked in use, and the whole directory is written back
 	/// (<c>Game_SetSlotInUse</c> (<c>0040e115</c>)). The save follows, and <c>Career_SaveSlot</c> (<c>00412a71</c>) copies the
-	/// three working files beside it. See docs/formats/save-games.md.
-	///
-	/// <para>The working files are <c>data\</c>'s, which this engine does not keep: see
-	/// <see cref="ShellWorkingFiles"/>. A missing one is skipped, where the original's copy asserts.</para>
+	/// three working files beside it. See docs/retail/formats/save-games.md. A missing working file is skipped,
+	/// where the original's copy asserts.
 	///
 	/// <para>The summary is not restaged here: only <c>ACCEPT</c> does that, through
 	/// <c>Stats_StageCurrentGame</c>.</para>
@@ -222,15 +233,34 @@ public static class ShellSaveSlots {
 
 	public static string PlayerFile(int slot) => $"player{slot}.mec";
 
+	/// <summary>
+	/// <c>Career_LoadSlot</c> (<c>00412bbf</c>)'s copies: the slot's <c>sav\script%d.dat</c>, <c>sav\missn%d.str</c>
+	/// and <c>sav\player%d.mec</c> copied whole over <c>data\script.dat</c>, <c>data\mission.str</c> and
+	/// <c>data\player.mec</c>. Returns the <c>data\</c> files. A missing one is skipped, where the original's copy
+	/// asserts.
+	/// </summary>
+	public static ShellWorkingFiles CopyWorkingFilesIn(string installRoot, int slot) {
+		var slotFiles = ShellWorkingFiles.ForSlot(installRoot, slot);
+		var data = ShellWorkingFiles.InData(installRoot);
+		System.IO.Directory.CreateDirectory(ShellWorkingFiles.DataDirectory(installRoot));
+		foreach (var (from, to) in new[] { (slotFiles.Script, data.Script), (slotFiles.Text, data.Text), (slotFiles.Player, data.Player) }) {
+			if (File.Exists(from)) {
+				File.Copy(from, to!, overwrite: true);
+			}
+		}
+
+		return data;
+	}
+
 	/// <summary>The save's last three blocks: 2000 bytes of flags, 2 of game state and 20 more.</summary>
 	private const int SaveTailLength = PlayerSave.CampaignFlagCount * 2 + 2 + 20;
 
 	/// <summary>
 	/// Writes over whatever is at <paramref name="path"/> without truncating it, as
 	/// <c>FileRWStream_Open</c> (<c>0044e46c</c>) opens every save: a shorter payload leaves the old tail
-	/// in place (docs/formats/save-games.md#streams-never-truncate).
+	/// in place (docs/retail/formats/save-games.md#streams-never-truncate).
 	/// </summary>
-	private static void WriteInPlace(string path, byte[] bytes) {
+	internal static void WriteInPlace(string path, byte[] bytes) {
 		using var stream = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write);
 		stream.Write(bytes);
 	}

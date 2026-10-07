@@ -5,11 +5,11 @@ namespace HercWorks.Core.Data.File.Dts.Part;
 /// <summary>
 /// BmpTag is a plain zero-based frame index into whichever DBA bitmap-array is bound to the owning
 /// TSShape at render time; OfsX/OfsY are the anchor pixel the part's centre lands on. The
-/// rest of the blit — scale, rotation and the vertical squash — is in docs/formats/dts-billboards.md.
+/// rest of the blit — scale, rotation and the vertical squash — is in docs/retail/formats/dts-billboards.md.
 ///
 /// <para>Which DBA is bound is not recorded in the .DTS or the .DBA: for a mech it is chosen by
 /// <c>HercSimDat.TextureGroup</c> (file offset 148) through a 7-entry group table, which
-/// docs/formats/dts-texture-binding.md carries under "DBSIM's mech-to-texture mapping".</para>
+/// docs/retail/formats/dts-texture-binding.md carries under "DBSIM's mech-to-texture mapping".</para>
 /// </summary>
 public class TSBitmapPart : TSBasePart {
 	public short BmpTag { get; set; }

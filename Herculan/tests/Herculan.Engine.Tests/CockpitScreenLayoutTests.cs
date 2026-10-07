@@ -1,3 +1,4 @@
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Render;
 using Xunit;
@@ -7,7 +8,7 @@ namespace Herculan.Engine.Tests;
 /// <summary>
 /// <see cref="CockpitScreenLayout"/> is the one place window pixels and cockpit-art pixels are
 /// related, and it is what a mouse hit test will run backwards through
-/// (docs/formats/cockpit-input.md). Everything it does is pure geometry with no GL involved, so it
+/// (docs/retail/formats/cockpit-input.md). Everything it does is pure geometry with no GL involved, so it
 /// can be pinned exactly — which matters because the failure mode it guards against, a click region
 /// sitting a few pixels off the button it belongs to, is invisible until someone misses a click.
 /// </summary>

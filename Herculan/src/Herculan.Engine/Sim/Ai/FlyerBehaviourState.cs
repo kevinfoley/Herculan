@@ -22,7 +22,7 @@ public enum FlyerThinkSlot {
 
 /// <summary>
 /// One of the <b>seven</b> behaviour state descriptors the <c>Flyer</c> class has of its own — the
-/// <c>0x3c</c>-byte records at <c>00499cf8</c> that <c>Flyer_BuildStateTable</c> (<c>00414c65</c>) fills at startup, which is
+/// <c>0x3c</c>-byte records at <c>00499cf8</c> that <c>Flyer_BuildStateTable</c> (<c>00414c68</c>) fills at startup, which is
 /// the flyer's counterpart of <c>Behaviour_BuildStateTable</c>'s 22-entry mech table
 /// (<see cref="BehaviourState"/>). The two tables share nothing but their shape: a flyer's states
 /// have their own names, their own dwell times and their own thinks, and the stride is two bytes
@@ -33,13 +33,13 @@ public enum FlyerThinkSlot {
 /// <c>+0x14</c>/<c>+0x18</c>/<c>+0x1c</c> (<c>Flyer_DispatchMove</c> (<c>004217fc</c>), <c>Flyer_DispatchThink</c> (<c>0042184c</c>),
 /// <c>Flyer_DispatchReassess</c> (<c>00421888</c>)) are the same three descriptor dispatchers a machine has, so
 /// <c>Mech_AiTick</c> (<c>00411cec</c>) drives an aircraft exactly as it drives a HERC. See
-/// docs/simulation/ai-dispatch.md for the model and docs/simulation/ai-flyers.md for this
+/// docs/retail/simulation/ai-dispatch.md for the model and docs/retail/simulation/ai-flyers.md for this
 /// table.</para>
 ///
 /// <para><b>Five of the seven reassess, all through one function</b> — <c>Flyer_AiSelectBehaviour</c>
 /// (<c>00422d00</c>), which maps the group's current order verb onto a state. <c>sleeping</c> and
 /// <c>dead</c> carry a null reassess triple. There is no combat reassess: an aircraft picks its
-/// target inside its think and leaves the state alone. See docs/simulation/ai-flyers.md, "The
+/// target inside its think and leaves the state alone. See docs/retail/simulation/ai-flyers.md, "The
 /// seven states".</para>
 /// </summary>
 public sealed class FlyerBehaviourState {
@@ -66,7 +66,7 @@ public sealed class FlyerBehaviourState {
 	/// </summary>
 	public int Dwell { get; }
 
-	/// <summary>Descriptor <c>+0x08</c> as the 16-bit mask <c>Flyer_BuildStateTable</c> (<c>00414c65</c>) writes.</summary>
+	/// <summary>Descriptor <c>+0x08</c> as the 16-bit mask <c>Flyer_BuildStateTable</c> (<c>00414c68</c>) writes.</summary>
 	public int Flags { get; }
 
 	/// <inheritdoc cref="FlyerThinkSlot"/>
@@ -100,7 +100,7 @@ public sealed class FlyerBehaviourState {
 	/// <inheritdoc />
 	public override string ToString() => Name;
 
-	// The table, in index order. Names, dwell times and flag masks are the immediates Flyer_BuildStateTable (00414c65)
+	// The table, in index order. Names, dwell times and flag masks are the immediates Flyer_BuildStateTable (00414c68)
 	// writes; the think and move columns are which functions each state's source block at 00499e9c
 	// names.
 	public static readonly FlyerBehaviourState Deciding =

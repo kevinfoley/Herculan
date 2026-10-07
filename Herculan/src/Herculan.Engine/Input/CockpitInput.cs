@@ -1,3 +1,4 @@
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Render;
 
@@ -25,8 +26,13 @@ public enum CockpitMouseButtons {
 /// gridpoint or to whatever unit is under the pointer.
 /// </param>
 /// <param name="ArtY">The same on y.</param>
+/// <param name="DoubleClick">
+/// Whether the release came within <see cref="CockpitInput.DoubleClickSeconds"/> of the same button's
+/// previous release, wherever that one landed — <c>CockpitMouse_DoubleClick</c> (<c>0049dbe0</c>). The two
+/// list shortcuts that press XMIT need it, and the MFD's XMIT ignores a press that carries it.
+/// </param>
 public readonly record struct CockpitClick(CockpitWidgetId Id, CockpitMouseButtons Button,
-	float ArtX = 0f, float ArtY = 0f);
+	float ArtX = 0f, float ArtY = 0f, bool DoubleClick = false);
 
 /// <summary>
 /// Where a captured pointer is on the widget it is dragging, in that surface's art pixels.
@@ -45,16 +51,16 @@ public readonly record struct CockpitDrag(CockpitWidgetId Id, CockpitSurface Sur
 
 /// <summary>
 /// The cockpit's mouse pipeline: raw window events in, completed widget clicks out.
-/// Reverse-engineered from DBSIM — see docs/formats/cockpit-input.md, whose section numbers this
+/// Reverse-engineered from DBSIM — see docs/retail/formats/cockpit-input.md, whose section numbers this
 /// file's comments refer to.
 ///
 /// <para><b>What is reproduced.</b> Events are queued as they arrive and processed once per frame
 /// rather than handled in the callback (§3-4), because that is what keeps input aligned to the sim
 /// tick. A <i>left</i> press arms a widget; a release completes the click only if it lands back on
-/// the widget that was pressed (§7) and within <see cref="ClickHoldSeconds"/> of the press (§4) — the
-/// original's click-vs-drag gate, which is player-visible: hold a cockpit button down for half a
-/// second and releasing it does nothing at all. A right click arms nothing and fires on whatever its
-/// release is over, which is the original's own asymmetry rather than a simplification.</para>
+/// the widget that was pressed (§7), however long the button was held. A right click arms nothing and
+/// fires on whatever its release is over, which is the original's own asymmetry rather than a
+/// simplification. A release that follows the same button's previous one inside
+/// <see cref="DoubleClickSeconds"/> marks its click a <see cref="CockpitClick.DoubleClick"/> (§4).</para>
 ///
 /// <para>A held button's widget draws depressed while the pointer is on it and pops back up when the
 /// pointer leaves — see <see cref="Depressed"/>. There is deliberately <b>no hover state</b>: the
@@ -80,20 +86,21 @@ public readonly record struct CockpitDrag(CockpitWidgetId Id, CockpitSurface Sur
 /// <para><b>Where the timing differs.</b> The original stamps each event as it arrives and debounces
 /// pushes to one per ~16ms coarse tick; this stamps events with the frame they are processed in, and
 /// does not debounce. At any sane frame rate the two resolutions are comparable, and stamping at
-/// drain time keeps the whole class free of an ambient clock — the gate is then measured in whole
-/// frames, which is also the granularity the original's own tick gives it in practice.</para>
+/// drain time keeps the whole class free of an ambient clock — the double-click window is then
+/// measured in whole frames, which is also the granularity the original's own tick gives it in
+/// practice.</para>
+///
+/// <para><b>The double-click flag lasts one click here.</b> The original's global is cleared only as
+/// the queue drains its next record, so a key that presses the MFD's XMIT before then finds it still
+/// set. Recorded as a divergence in KNOWN_ISSUES.md; the mechanism is
+/// docs/retail/formats/cockpit-input.md#4-once-per-frame-the-real-clickpressdrag-logic.</para>
 /// </summary>
 public sealed class CockpitInput {
 	/// <summary>
-	/// The original's click-vs-drag gate, <c>DAT_004d1e70</c> — <c>0x1e</c> coarse UI ticks of roughly
-	/// 16ms each. A release later than this after its press is a drag that ended, not a click, and
-	/// fires nothing.
-	///
-	/// <para>The literal is <c>0x1e</c> in the disassembly, the same value as
-	/// <c>CockpitMouse_Init</c>'s mouse-event mask; they are unrelated fields that happen to share a
-	/// number (§3).</para>
+	/// The original's double-click window, <c>CockpitMouse_DoubleClickTicks</c> (<c>004d1e70</c>) —
+	/// <c>0x1e</c> coarse UI ticks of 16ms each, between a button's release and its previous one.
 	/// </summary>
-	public const float ClickHoldSeconds = 30 * 0.016f;
+	public const float DoubleClickSeconds = (float)(30 * Audio.GameAudio.CoarseTickSeconds);
 
 	/// <summary>
 	/// How many unprocessed events are kept before further ones are dropped. The original's queue caps
@@ -107,8 +114,11 @@ public sealed class CockpitInput {
 
 	private CockpitWidgetId? _pressed;
 	private CockpitSurface _pressedSurface;
-	private float _pressedAtSeconds;
 	private bool _capturing;
+
+	// Each button's previous release, 0049dbe4 and 0049dbe8.
+	private float _leftReleasedAtSeconds = float.NegativeInfinity;
+	private float _rightReleasedAtSeconds = float.NegativeInfinity;
 
 	private readonly List<CockpitClick> _clicks = new();
 	private readonly List<CockpitDrag> _drags = new();
@@ -179,7 +189,7 @@ public sealed class CockpitInput {
 	/// frame. The original re-reads its list as handlers run and so would; with one pointer at frame
 	/// rate, two clicks in one frame does not arise.</para>
 	/// </summary>
-	/// <param name="deltaSeconds">Real time since the previous drain, for the click-hold gate.</param>
+	/// <param name="deltaSeconds">Real time since the previous drain, for the double-click window.</param>
 	/// <param name="layout">This frame's placement, for window-to-art conversion.</param>
 	/// <param name="art">The cockpit whose widgets to test against.</param>
 	/// <param name="state">The HUD state deciding which widgets are visible, and so hit-testable.</param>
@@ -198,12 +208,12 @@ public sealed class CockpitInput {
 	/// Drains a frame's queued events against an arbitrary hit test — the form the cockpit overload
 	/// above is built on.
 	///
-	/// <para>The split is where the two halves of this pipeline meet: press/release edges and the hold
-	/// gate are one problem, and "which widget is under this window point" is a wholly separate one
+	/// <para>The split is where the two halves of this pipeline meet: press/release edges and the
+	/// double-click window are one problem, and "which widget is under this window point" is a wholly separate one
 	/// owned by <see cref="CockpitScreenLayout"/> and <see cref="CockpitWidgets"/>. Keeping the seam
 	/// open also lets the state machine be exercised without a loaded cockpit.</para>
 	/// </summary>
-	/// <param name="deltaSeconds">Real time since the previous drain, for the click-hold gate.</param>
+	/// <param name="deltaSeconds">Real time since the previous drain, for the double-click window.</param>
 	/// <param name="hitTest">Window x and y to the widget under them, or null for bare art.</param>
 	/// <param name="toArt">
 	/// Window x and y to a named surface's art pixels, unclamped — how a captured drag is positioned
@@ -237,14 +247,9 @@ public sealed class CockpitInput {
 			var releasedNow = _lastButtons & ~e.Buttons;
 			_lastButtons = e.Buttons;
 
-			// Either button starts the hold clock — the gate is on the queued records' own timestamps,
-			// not on which button moved — but only the left one presses. CockpitMouse_ProcessQueue
-			// calls Widget_OnMouseDown for a left press and not a right one, so a right press arms
-			// nothing and lights nothing, and a right click works entirely off its own release below.
-			if (pressedNow != CockpitMouseButtons.None) {
-				_pressedAtSeconds = _elapsedSeconds;
-			}
-
+			// Only the left button presses. CockpitMouse_ProcessQueue calls Widget_OnMouseDown for a left
+			// press and not a right one, so a right press arms nothing and lights nothing, and a right
+			// click works entirely off its own release below.
 			if (pressedNow.HasFlag(CockpitMouseButtons.Left)) {
 				OnPress(hit);
 			}
@@ -264,7 +269,7 @@ public sealed class CockpitInput {
 					? over.Surface
 					: _pressedSurface;
 				var (releaseX, releaseY) = toArt?.Invoke(surface, e.X, e.Y) ?? (e.X, e.Y);
-				OnRelease(hit, releasedNow, releaseX, releaseY);
+				OnRelease(hit, releasedNow, releaseX, releaseY, DoubleClicked(releasedNow));
 			}
 		}
 
@@ -286,8 +291,20 @@ public sealed class CockpitInput {
 	}
 
 	/// <summary>
-	/// §7's <c>Widget_OnMouseDown</c>: a press on a widget arms it and starts the hold clock, and on a
-	/// draggable one also latches the pointer capture.
+	/// Lets <paramref name="id"/> back up if the pointer is holding it down: a press flash on that button
+	/// ending, which writes the state byte the held press set back to 0 (see
+	/// <see cref="PressFlashes{TId}.Service"/>). The press stays armed, and the next pointer event over the
+	/// button depresses it again, as <c>Widget_TrackPressedWidget</c> does.
+	/// </summary>
+	public void PopUp(CockpitWidgetId id) {
+		if (!_capturing && Depressed == id) {
+			Depressed = null;
+		}
+	}
+
+	/// <summary>
+	/// §7's <c>Widget_OnMouseDown</c>: a press on a widget arms it, and on a draggable one also latches
+	/// the pointer capture.
 	/// </summary>
 	private void OnPress(CockpitWidget? hit) {
 		if (hit is not { } widget) {
@@ -299,14 +316,33 @@ public sealed class CockpitInput {
 
 		_pressed = widget.Id;
 		_pressedSurface = widget.Surface;
-		_pressedAtSeconds = _elapsedSeconds;
 		Depressed = widget.Id;
 		_capturing = widget.Draggable;
 	}
 
 	/// <summary>
-	/// §7's <c>Widget_OnMouseUp</c>, gated by §4's hold timer. The release re-hit-tests, and what it
-	/// does with the answer depends on which button came up:
+	/// §4's double-click test on a release edge: each button that came up is measured against its own
+	/// previous release, which this release then replaces. Either one inside the window sets the flag,
+	/// captured release or not.
+	/// </summary>
+	private bool DoubleClicked(CockpitMouseButtons released) {
+		bool doubleClick = false;
+		if (released.HasFlag(CockpitMouseButtons.Left)) {
+			doubleClick |= _elapsedSeconds - _leftReleasedAtSeconds < DoubleClickSeconds;
+			_leftReleasedAtSeconds = _elapsedSeconds;
+		}
+
+		if (released.HasFlag(CockpitMouseButtons.Right)) {
+			doubleClick |= _elapsedSeconds - _rightReleasedAtSeconds < DoubleClickSeconds;
+			_rightReleasedAtSeconds = _elapsedSeconds;
+		}
+
+		return doubleClick;
+	}
+
+	/// <summary>
+	/// §7's <c>Widget_OnMouseUp</c>. The release re-hit-tests, and what it does with the answer depends
+	/// on which button came up:
 	///
 	/// <list type="bullet">
 	/// <item><b>Left:</b> the click fires only if the release landed back on the widget the press
@@ -320,7 +356,8 @@ public sealed class CockpitInput {
 	/// <para>A captured widget ends its drag here and fires nothing — the original's release path
 	/// takes the capture branch instead of the click one.</para>
 	/// </summary>
-	private void OnRelease(CockpitWidget? hit, CockpitMouseButtons released, float artX, float artY) {
+	private void OnRelease(CockpitWidget? hit, CockpitMouseButtons released, float artX, float artY,
+			bool doubleClick) {
 		if (_capturing) {
 			_capturing = false;
 			_pressed = null;
@@ -332,21 +369,25 @@ public sealed class CockpitInput {
 		_pressed = null;
 		Depressed = null;
 
-		if (_elapsedSeconds - _pressedAtSeconds > ClickHoldSeconds || hit is not { } widget) {
+		if (hit is not { } widget) {
 			return;
 		}
 
 		bool rightRelease = released.HasFlag(CockpitMouseButtons.Right);
 		if (rightRelease || (widget.Id == armed && widget.Surface == _pressedSurface)) {
-			_clicks.Add(new CockpitClick(widget.Id, released, artX, artY));
+			_clicks.Add(new CockpitClick(widget.Id, released, artX, artY, doubleClick));
 		}
 	}
 
-	// The side strips go after every art widget for the same reason the bottom one goes last in
-	// CockpitWidgets.Visible: the original registers all three strips after the gauges.
+	// The system buttons go first because SystemButtons_Ctor (00434368) registers them before every
+	// gauge, and the side strips after every art widget for the same reason the bottom one goes last in
+	// CockpitWidgets.Visible: the original registers all three strips after the gauges. In a 4:3 window
+	// the right-hand system button and the right strip contest a few columns at the top of the screen,
+	// as they do in retail, and the button takes them.
 	private static CockpitWidget? HitTest(CockpitScreenLayout layout, CockpitArt art,
 			CockpitHudState state, float windowX, float windowY) =>
-		(layout.WindowToArt(windowX, windowY) is { } surfaceHit
+		SystemButtons.At(layout.WindowWidth, layout.WindowHeight, windowX, windowY)
+		?? (layout.WindowToArt(windowX, windowY) is { } surfaceHit
 			? CockpitWidgets.HitTest(art, state, surfaceHit.Surface, surfaceHit.ArtX, surfaceHit.ArtY)
 			: null)
 		?? layout.SideViewEdgeAt(windowX, windowY);

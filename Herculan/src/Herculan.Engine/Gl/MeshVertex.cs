@@ -9,7 +9,7 @@ namespace Herculan.Engine.Gl;
 ///
 /// <para><see cref="Textured"/> is per-vertex rather than per-draw because both meshes that carry
 /// textures are mixed: a mech mesh has a handful of texture polys whose frame index does not resolve
-/// (see docs/formats/dts-texture-binding.md's fleet audit), and a terrain mesh can have cells whose
+/// (see docs/retail/formats/dts-texture-binding.md's fleet audit), and a terrain mesh can have cells whose
 /// material selects a frame the theater's bank does not have. Those fall back to
 /// <see cref="Color"/> while their neighbours sample the atlas, which a single per-draw flag cannot
 /// express — it would either sample garbage UVs for the strays or drop the whole mesh's texturing.
@@ -84,9 +84,10 @@ public struct MeshVertex {
 	///
 	/// <para>It exists for the front/back decision, which the original makes once per poly rather
 	/// than per pixel: <c>TSPoly_FrontBackVisibilityTest</c> takes the poly's stored normal and
-	/// centre, and every renderer negates <i>all</i> of the poly's normals together when the answer
-	/// is "back". Making that call from the smoothed normal instead would let one corner of a
-	/// Gouraud poly flip while another did not, which shows up as a seam along a silhouette.</para>
+	/// centre (<see cref="FaceCenter"/>), and every renderer negates <i>all</i> of the poly's normals
+	/// together when the answer is "back". Making that call from the smoothed normal instead would let
+	/// one corner of a Gouraud poly flip while another did not, which shows up as a seam along a
+	/// silhouette.</para>
 	///
 	/// <para>Defaults to <see cref="Normal"/>, which is right for every flat poly — there the two
 	/// are the same vector.</para>
@@ -128,9 +129,49 @@ public struct MeshVertex {
 	/// </summary>
 	public float SolidPaletteIndex;
 
+	/// <summary>
+	/// The <b>face's</b> own centre point, identical across every corner of one poly — the other half
+	/// of the front/back decision <see cref="FaceNormal"/> is the first half of.
+	///
+	/// <para><c>TSPoly_FrontBackVisibilityTest</c> (<c>0048c620</c>) measures the eye against the
+	/// poly's stored centre (<c>poly+6</c>, a point index like the normal), not against a corner, and
+	/// the two differ because a stored centre need not lie on its poly's plane
+	/// (docs/retail/formats/dts-texture-binding.md, "<c>TSPoly_FrontBackVisibilityTest</c>"). It also makes
+	/// the answer the same at every corner of the poly, which <see cref="Side"/> relies on.</para>
+	///
+	/// <para>Defaults to <see cref="Position"/>, which leaves every surface that is not a shape poly —
+	/// terrain — measured at its own corner.</para>
+	/// </summary>
+	public Vector3 FaceCenter;
+
+	/// <summary>
+	/// Which side of its poly this vertex's copy draws: <c>+1</c> only while the poly faces the eye,
+	/// <c>-1</c> only while it faces away, <c>0</c> either way — the default.
+	///
+	/// <para>A shape poly resolves a surface pair per side, and either side's pair can say "do not
+	/// draw" — the format's back-face culling; see <see cref="Render.DtsMeshBuilder"/>. A poly whose two
+	/// sides resolve alike goes to the GPU once with <c>0</c>; otherwise once per side it draws, and the
+	/// shader drops the copy whose side the eye is not on.</para>
+	/// </summary>
+	public float Side;
+
+	/// <summary>
+	/// For one end of a <c>TSShadedPoly</c>'s outline, the material ramp of the fill it outlines; -1
+	/// for every other vertex — the default.
+	///
+	/// <para><c>TSShadedPoly_Render</c> (<c>0047542c</c>) resolves its line entry through the same two
+	/// lookups as its fill, at the same shade, and <c>PolyFill_FillThenOutline</c> (<c>0048d518</c>)
+	/// draws the edge loop only when the two resolved palette bytes differ. The shade is the face's
+	/// light, which only the shader knows, so the outline carries both ramps — its own in
+	/// <see cref="ShadeRamp"/>, the fill's here — and the shader drops the fragment where the two
+	/// bytes agree. See <see cref="Render.SurfaceRampTable"/>.</para>
+	/// </summary>
+	public float OutlineFillRamp;
+
 	public MeshVertex(Vector3 position, Vector3 normal, Vector3 color, Vector2 uv = default,
 			bool textured = false, bool unlit = false, float shade = 1f, int shadeRamp = -1,
-			Vector3? faceNormal = null, float uvWeight = 0f, int solidPaletteIndex = -1) {
+			Vector3? faceNormal = null, float uvWeight = 0f, int solidPaletteIndex = -1,
+			Vector3? faceCenter = null, int side = 0, int outlineFillRamp = -1) {
 		Position = position;
 		Normal = normal;
 		FaceNormal = faceNormal ?? normal;
@@ -142,8 +183,11 @@ public struct MeshVertex {
 		ShadeRamp = shadeRamp;
 		UvWeight = uvWeight;
 		SolidPaletteIndex = solidPaletteIndex;
+		FaceCenter = faceCenter ?? position;
+		Side = side;
+		OutlineFillRamp = outlineFillRamp;
 	}
 
 	/// <summary>Bytes per vertex, used as the vertex-attribute stride.</summary>
-	public const uint SizeInBytes = 20 * sizeof(float);
+	public const uint SizeInBytes = 25 * sizeof(float);
 }

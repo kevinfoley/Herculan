@@ -11,7 +11,7 @@ namespace Herculan.Engine.Shell;
 /// The repair screen's damage diagram: the machine drawn as parts on a blue grid down the left of the
 /// canvas, each part recoloured by its component's damage band, with clickable areas over it. Two
 /// pictures share the rect — the exploded external one while the selection is in the external list
-/// and the internals one while it is in the internals list. See docs/shell/screen-layout.md, "The
+/// and the internals one while it is in the internals list. See docs/retail/shell/screen-layout.md, "The
 /// damage diagram".
 ///
 /// <para><b>Both pictures are <see cref="ShellGrid"/> widgets</b>, whose remap pairs are what colour
@@ -152,7 +152,7 @@ public sealed class ShellRepairDiagrams {
 	///
 	/// <para>Where panels overlap, the one built last answers, and a point off the picture reaches none of
 	/// them: the builder makes the six areas and then the weapons, so the test runs weapons from the
-	/// highest mount down and then areas from 5 down. See docs/shell/screen-layout.md#which-widget-a-click-reaches.</para>
+	/// highest mount down and then areas from 5 down. See docs/retail/shell/screen-layout.md#which-widget-a-click-reaches.</para>
 	/// </summary>
 	public int? HotspotAt(ShellBayMachine? machine, float canvasX, float canvasY) {
 		if (machine == null || !ExternalPictureRect.Contains(canvasX, canvasY)) {

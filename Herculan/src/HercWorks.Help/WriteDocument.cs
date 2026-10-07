@@ -6,7 +6,7 @@ namespace HercWorks.Help;
 
 /// <summary>
 /// The text of a Windows Write document, the format of each language folder's <c>README.WRI</c>, which
-/// the help file's <c>Readme</c> action names (docs/formats/winhelp.md#macros).
+/// the help file's <c>Readme</c> action names (docs/retail/formats/winhelp.md#macros).
 ///
 /// <para>A Write file is a 128-byte header, the text, then the formatting: character and paragraph
 /// runs, pictures and OLE objects. Only the text is read. The header's word 0 is the magic

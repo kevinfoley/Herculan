@@ -1,4 +1,5 @@
 using System.Numerics;
+using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using ImGuiNET;
 
@@ -40,7 +41,7 @@ public static class CompassGizmo {
 	/// <summary>
 	/// Draws the gizmo into its own borderless, input-transparent overlay window whose top-left
 	/// corner is <paramref name="topLeft"/> and whose extent is <paramref name="size"/> pixels
-	/// square. Input-transparent matters: the editor picks objects with a viewport click, and a
+	/// square, its lines and discs scaled to the display (<see cref="ScaledImGui.Scaled(float)"/>). Input-transparent matters: the editor picks objects with a viewport click, and a
 	/// window that swallowed the mouse would put a dead square over the scene.
 	/// </summary>
 	public static void Draw(Camera camera, Vector2 topLeft, float size) {
@@ -70,7 +71,7 @@ public static class CompassGizmo {
 
 		// Straight up, so the gizmo still reads as an orientation when looking along the horizon and
 		// the ring collapses to a line.
-		drawList.AddLine(center, Project(new Vector3(0f, 1f, 0f)), UpColor, 1.5f);
+		drawList.AddLine(center, Project(new Vector3(0f, 1f, 0f)), UpColor, ScaledImGui.Scaled(1.5f));
 
 		// Back to front, so a point behind the camera passes under the ones in front of it rather
 		// than over them — the whole reason this is projected rather than drawn as a flat rose.
@@ -89,7 +90,7 @@ public static class CompassGizmo {
 			drawList.AddLine(
 				project(new Vector3(MathF.Sin(from), 0f, -MathF.Cos(from))),
 				project(new Vector3(MathF.Sin(to), 0f, -MathF.Cos(to))),
-				RingColor, 1f);
+				RingColor, ScaledImGui.Scaled(1f));
 		}
 	}
 
@@ -97,14 +98,14 @@ public static class CompassGizmo {
 			bool facingCamera) {
 		bool north = label == "N";
 
-		drawList.AddLine(center, tip, north ? NorthColor : SpokeColor, north ? 2f : 1f);
+		drawList.AddLine(center, tip, north ? NorthColor : SpokeColor, ScaledImGui.Scaled(north ? 2f : 1f));
 
 		// North gets a solid disc at any angle; the other three only when they face the camera, so
 		// the far side of the compass stays quiet.
 		if (north || facingCamera) {
-			drawList.AddCircleFilled(tip, north ? 9f : 7f, north ? NorthColor : MinorPointColor);
+			drawList.AddCircleFilled(tip, ScaledImGui.Scaled(north ? 9f : 7f), north ? NorthColor : MinorPointColor);
 		} else {
-			drawList.AddCircle(tip, 7f, MinorPointColor, 0, 1f);
+			drawList.AddCircle(tip, ScaledImGui.Scaled(7f), MinorPointColor, 0, ScaledImGui.Scaled(1f));
 		}
 
 		var labelSize = ImGui.CalcTextSize(label);

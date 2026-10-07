@@ -1,3 +1,4 @@
+using Herculan.Engine.Install;
 using System.Security.Cryptography;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
@@ -19,7 +20,7 @@ namespace Herculan.Engine.Tests;
 /// content, since neither writer truncates, so each digest covers the file up to the length this
 /// path writes. The match covers the mission load, the order of every random draw, the roster, and
 /// the squad build down to the last wingman staying behind. See
-/// docs/shell/screen-layout.md#starting-a-practice-mission.</para>
+/// docs/retail/shell/screen-layout.md#starting-a-practice-mission.</para>
 /// </summary>
 public class TrainingLaunchTests {
 	private const int RetailSeed = 19;
@@ -64,7 +65,7 @@ public class TrainingLaunchTests {
 
 	/// <summary>
 	/// The career the launch leaves in progress, as the shell's exit writes it to slot 11: the whole save, the
-	/// career it carries over from no earlier game included (docs/shell/screen-layout.md#starting-a-practice-mission).
+	/// career it carries over from no earlier game included (docs/retail/shell/screen-layout.md#starting-a-practice-mission).
 	/// </summary>
 	[Fact]
 	public void ReproducesTheRetailTrainingAutosave() {
@@ -90,7 +91,7 @@ public class TrainingLaunchTests {
 			return null;
 		}
 
-		var content = GameContent.Mount(GameInstall.ArchiveDirectory(root), ShellArt.Archives);
+		var content = GameContent.MountShell(root);
 		var options = SimulatorPreferences.Defaults();
 		options.Set(DifficultyOption, Veteran);
 		options.Set(ShellPracticeScreen.HercTypeOption, Colossus);
@@ -114,7 +115,7 @@ public class TrainingLaunchTests {
 			return;
 		}
 
-		var content = GameContent.Mount(GameInstall.ArchiveDirectory(root), ShellArt.Archives);
+		var content = GameContent.MountShell(root);
 		var missions = content.ListFolder("MSN").Where(name => name.EndsWith(".MSN", StringComparison.OrdinalIgnoreCase)).ToList();
 		if (missions.Count == 0) {
 			return;

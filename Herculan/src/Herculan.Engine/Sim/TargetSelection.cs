@@ -1,5 +1,3 @@
-using Herculan.Engine.Numerics;
-
 namespace Herculan.Engine.Sim;
 
 /// <summary>
@@ -33,7 +31,7 @@ namespace Herculan.Engine.Sim;
 ///
 /// <para>Each of the three ends by pushing the new target into the gunsight widget
 /// (<c>Gunsight_SetValues</c>), which draws the HUD target box —
-/// see <see cref="Content.TargetBox"/> and docs/formats/hud-target-indicator.md.</para>
+/// see <see cref="Cockpit.TargetBox"/> and docs/retail/formats/hud-target-indicator.md.</para>
 /// </summary>
 public sealed class TargetSelection {
 	/// <summary>
@@ -69,7 +67,7 @@ public sealed class TargetSelection {
 	/// <para>The original picks between this and a second object (<c>ViewChain_Viewed</c> (<c>004d2708</c>)) on the
 	/// <c>DAT_0049ef5c</c> flag, which is set while the player is watching a machine other than their
 	/// own. There is no such mode here, so this is always the pilot's machine. See
-	/// docs/simulation/external-views.md, "The spectator flag".</para>
+	/// docs/retail/simulation/external-views.md, "The spectator flag".</para>
 	/// </param>
 	public TargetSelection(SimWorld world, SimObject viewer) {
 		_world = world;

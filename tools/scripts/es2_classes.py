@@ -4,7 +4,7 @@
 Each record names its class, so this recovers the authentic class names, with
 the object size, every base and its subobject offset, and the vtable pointer's
 offset in the object. The record layout and the vtable block that points back
-at it are documented in Herculan/docs/formats/borland-rtti.md.
+at it are documented in Herculan/docs/retail/formats/borland-rtti.md.
 
 `--vtables` resolves each record to its primary vtable through the record
 pointer stored at vtable-0xc.
@@ -104,15 +104,19 @@ def scan(img: Image):
             bases.append((b, sub))
             p += 12
         dtor = struct.unpack_from("<I", d, rec + 0x28)[0] if name_off == 0x30 else 0
+        opdel = struct.unpack_from("<I", d, rec + 0x14)[0] if mask == 3 else 0
         out[va] = {"name": name, "size": size, "vptr": vptr, "bases": bases,
-                   "base": bases[0][0] if bases else 0, "dtor": dtor}
+                   "base": bases[0][0] if bases else 0, "dtor": dtor, "opdel": opdel}
     return out
 
 
 def find_vtables(img: Image, recs):
-    """record VA -> the primary vtable whose preceding dword points at it."""
+    """record VA -> the primary vtable whose preceding dword points at it. A record whose +0x08 says
+    the class has no vtable pointer is skipped: a hit for it is another record's field."""
     out = {}
     for va in recs:
+        if recs[va]["vptr"] < 0:
+            continue
         for m in re.finditer(re.escape(struct.pack("<I", va)), img.data):
             hit = img.va_of(m.start())
             if hit is None:

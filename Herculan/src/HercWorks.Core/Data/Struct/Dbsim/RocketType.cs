@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.Struct.Dbsim;
 /// One 14-byte record of ROCKETS.DAT, the launcher round's type, indexed by the firing
 /// <c>PROJ.DAT</c> record's subtype id. Shares its stride and first two fields with
 /// <see cref="BulletType"/> and nothing else: the rocket's readers take the rest at offsets of
-/// their own. See docs/formats/rockets-dat.md.
+/// their own. See docs/retail/formats/rockets-dat.md.
 /// </summary>
 public class RocketType {
 	/// <summary><c>+0x00</c> — which root of <c>ROCKETS.DTS</c> the round is drawn as.</summary>

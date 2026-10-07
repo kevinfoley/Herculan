@@ -3,7 +3,7 @@ using HercWorks.Video.Avi;
 namespace HercWorks.Video.Codecs;
 
 /// <summary>
-/// Cinepak (<c>cvid</c>). The bitstream is described in docs/formats/avi-video.md#cinepak; this
+/// Cinepak (<c>cvid</c>). The bitstream is described in docs/retail/formats/avi-video.md#cinepak; this
 /// class owns the codebook storage and the pixel writing.
 ///
 /// <para>Only the 24-bit colour form is handled. The 8-bit palettised form and the luma-only

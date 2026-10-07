@@ -76,7 +76,7 @@ public sealed record BaseFormationLayout(int MaterialIndex, int Dimension,
 ///
 /// <para>Read from the base-group-attach chain: <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>)
 /// carries the group's formation id (script.dat block-11's <c>FormationId</c> field, raw msn
-/// offset <c>0x30</c> — see <c>docs/formats/msn-mission-file.md</c>'s row #16 decode) into
+/// offset <c>0x30</c> — see <c>docs/retail/formats/msn-mission-file.md</c>'s row #16 decode) into
 /// <c>Base_AttachToGroup</c> (<c>00405c3c</c>), which stores it at the attached object's group-relative member index
 /// (<c>+0x49</c>, the object's position within the group's <c>MemberRefs</c> array — <b>not</b>
 /// a compacted live-member count) and then unconditionally calls the object's own vtable
@@ -103,7 +103,7 @@ public sealed record BaseFormationLayout(int MaterialIndex, int Dimension,
 /// (<see cref="BaseFormationLayout.SnapAnchor"/>), and the same tile is painted with the
 /// formation's material by <see cref="Herculan.Engine.Terrain.HeightGrid.PaintFormationPad"/>.
 /// The two go together: the move is what puts the structures on the pad. Trailer layout, the
-/// derivation and the evidence are in docs/formats/script-dat.md, "Base formation terrain".</para>
+/// derivation and the evidence are in docs/retail/formats/script-dat.md, "Base formation terrain".</para>
 /// </summary>
 public sealed class BaseFormationTable {
 	/// <summary>VOL folder and name of the table.</summary>

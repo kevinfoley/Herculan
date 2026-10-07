@@ -2,7 +2,7 @@ namespace Herculan.Engine.Shell;
 
 /// <summary>
 /// Which campaign the shell is running — <c>CampaignModeFlag</c> (<c>0048260c</c>), the flag that also picks
-/// <c>GAME_R.SAV</c> over <c>GAME_T.SAV</c> (docs/formats/save-games.md). It is what gates three of
+/// <c>GAME_R.SAV</c> over <c>GAME_T.SAV</c> (docs/retail/formats/save-games.md). It is what gates three of
 /// the eight tabs; see <see cref="ShellScreen.ApplyTabGate"/>.
 /// </summary>
 public enum ShellCampaignMode {

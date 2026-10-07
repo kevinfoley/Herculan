@@ -6,7 +6,7 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 /// SubtypeId when its type is Beam:
 ///   0 PBW I, 1 ELF I, 2 BPBW, 3 LAS100, 4 LAS200/LAS400, 5 LAS300/LAS500, 6 PBW II, 7 ELF II,
 ///   8 and 9 unused.
-/// Layout and the retail records: docs/formats/beam-dat.md.
+/// Layout and the retail records: docs/retail/formats/beam-dat.md.
 /// </summary>
 public class BeamData {
 	public short Total { get; set; }

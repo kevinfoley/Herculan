@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.Struct.Dbsim;
 /// <summary>
 /// One 14-byte record of BULLETS.DAT, the travelling gun round's type, indexed by the firing
 /// <c>PROJ.DAT</c> record's subtype id. Shares its stride and first two fields with
-/// <see cref="RocketType"/> and nothing else. See docs/simulation/projectiles.md.
+/// <see cref="RocketType"/> and nothing else. See docs/retail/simulation/projectiles.md.
 /// </summary>
 public class BulletType {
 	/// <summary><c>+0x00</c> — which root of <c>BULLETS.DTS</c> the round is drawn as.</summary>
@@ -36,7 +36,7 @@ public class BulletType {
 
 	/// <summary>
 	/// <c>+0x0c</c> — nonzero arms a per-lifetime rate at the object's <c>+0x61</c> whose reader is
-	/// open (docs/simulation/projectiles.md#open); 1 on records 0–2 (ATC20/35/50) and zero on the other
+	/// open (docs/retail/simulation/projectiles.md#open); 1 on records 0–2 (ATC20/35/50) and zero on the other
 	/// nine, <c>ATC75</c>'s and <c>ATC100</c>'s own records 10 and 11 included.
 	/// </summary>
 	public short LifetimeRateFlag { get; set; }

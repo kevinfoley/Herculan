@@ -1,5 +1,6 @@
 using Herculan.Engine.Content;
 using HercWorks.Core.Data.File;
+using Herculan.Engine.Sim;
 
 namespace Herculan.Engine.Audio;
 

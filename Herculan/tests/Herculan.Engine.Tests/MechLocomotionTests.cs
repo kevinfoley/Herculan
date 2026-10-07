@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
 using Herculan.Engine.Sim;
@@ -319,6 +320,79 @@ public class MechLocomotionTests {
 		Assert.True(run > walk * 1.5, $"run {run:F0} was not well clear of walk {walk:F0}");
 	}
 
+	/// <summary>
+	/// The accurate-speed readout leaves the run gait at retail's figure and brings the walk gait to
+	/// the ground the machine actually covers — the gait retail's readout overstates about twofold.
+	/// The walk is held at four fifths of the machine's own gait threshold, clear of the crawl below 60
+	/// where the playback rate is held up. The margin is retail's own run calibration error, up to
+	/// about 10%, plus the motion each tick's whole-animation-tick step drops at walking rates — APOCA
+	/// at speed 66 advances 7 animation ticks where 7.99 are due, and reads 26% high. Three
+	/// chassis span the fleet: OUTLAW, the fastest; APOCA, the longest stride; SCARAB, the slowest.
+	/// </summary>
+	[Theory]
+	[InlineData("OUTLAW", false)]
+	[InlineData("OUTLAW", true)]
+	[InlineData("APOCA", false)]
+	[InlineData("APOCA", true)]
+	[InlineData("SCARAB", false)]
+	[InlineData("SCARAB", true)]
+	public void GroundSpeedMatchesTheGroundCovered(string herc, bool running) {
+		if (Content() is not { } content || Spawn(content, herc) is not { } mech) {
+			return;
+		}
+
+		double throttleFraction = running ? 1.0 : 0.8 * mech.Type.GaitThreshold / mech.Type.MaxForward;
+		double kph = SteadySpeed(mech, throttleFraction)
+			* SimWorld.TicksPerSecond / WorldScale.WorldUnitsPerMeter * 3.6;
+
+		if (running) {
+			Assert.Equal(mech.DisplaySpeedKph, mech.GroundSpeedKph);
+			return;
+		}
+
+		Assert.True(mech.Speed >= 60, $"{herc} walked at speed {mech.Speed}, inside the crawl");
+		Assert.InRange(mech.GroundSpeedKph / kph, 0.8, 1.3);
+
+		// And the walk cases really are walking: retail's figure is well over the real one.
+		Assert.True(mech.DisplaySpeedKph > 1.5 * mech.GroundSpeedKph,
+			$"{herc} reads {mech.DisplaySpeedKph} against a ground speed of {mech.GroundSpeedKph}");
+	}
+
+	/// <summary>
+	/// Easing the throttle up from a standstill never makes the accurate-speed readout fall, though
+	/// the machine itself slows as its speed rises through 45 — the playback rate is held at 60 below
+	/// that (docs/retail/simulation/mech-locomotion.md, "Control law").
+	/// </summary>
+	[Fact]
+	public void GroundSpeedRisesSteadilyAtACrawl() {
+		if (Content() is not { } content || Spawn(content, "OUTLAW") is not { } mech) {
+			return;
+		}
+
+		var world = FlatWorld(mech);
+		int previous = 0;
+		int previousRate = 0;
+		bool rateFell = false;
+		for (int i = 0; i < 400; i++) {
+			// One throttle step every fourth tick, held otherwise, up to under a third of the range.
+			short axis = i % 4 == 0 && mech.Throttle < 0x140 ? (short)-0x10 : (short)0;
+			mech.Controls = new MechControls(0, axis);
+			world.Tick();
+
+			int reading = mech.GroundSpeedKph;
+			Assert.True(reading >= previous, $"tick {i}: {previous} fell to {reading} at speed {mech.Speed}");
+			previous = reading;
+
+			rateFell |= mech.AnimRate < previousRate;
+			previousRate = mech.AnimRate;
+		}
+
+		// The run up did cross the stretch where the machine itself slows.
+		Assert.True(rateFell, "the playback rate never fell");
+
+		Assert.True(mech.Speed > 60, $"only reached speed {mech.Speed}");
+	}
+
 	private static double SteadySpeed(MechObject mech, double throttleFraction) {
 		var world = FlatWorld(mech);
 		short axis = (short)-(MechControls.AxisFull * throttleFraction);
@@ -377,6 +451,6 @@ public class MechLocomotionTests {
 
 	private static GameContent? Content() {
 		string? root = GameInstall.Locate(null);
-		return root != null ? GameContent.Mount(GameInstall.ArchiveDirectory(root)) : null;
+		return root != null ? GameContent.MountSimulator(root) : null;
 	}
 }

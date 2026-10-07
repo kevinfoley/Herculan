@@ -17,7 +17,7 @@ namespace Herculan.Engine.Terrain;
 ///
 /// <para>The tile geometry, why the layout map is a levelling mask rather than the pad's shape,
 /// what the two inputs add up to on the ground, and the evidence for all of it are in
-/// docs/formats/terrain-texturing.md, "Base formation pads".</para>
+/// docs/retail/formats/terrain-texturing.md, "Base formation pads".</para>
 /// </summary>
 public sealed partial class HeightGrid {
 	/// <summary>

@@ -9,7 +9,7 @@ namespace Herculan.Engine.Audio;
 /// Reads the disc's audio tracks digitally — <c>IOCTL_CDROM_RAW_READ</c> in CD-DA mode against the
 /// raw drive device — so that <see cref="StreamedCdAudio"/> can play them through OpenAL rather than
 /// asking the drive to play them. <b>The transport is this engine's own</b>; retail drives the disc
-/// through MCI, and why this engine does not is in docs/formats/audio.md's "CD audio".
+/// through MCI, and why this engine does not is in docs/retail/formats/audio.md's "CD audio".
 ///
 /// <para>Windows-only, because the ioctls are. It needs no elevation: the raw device opens for
 /// <c>GENERIC_READ</c> as an ordinary user.</para>

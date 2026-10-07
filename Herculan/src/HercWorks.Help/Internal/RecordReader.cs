@@ -1,7 +1,7 @@
 namespace HercWorks.Help.Internal;
 
 /// <summary>
-/// Reads one paragraph run (<c>0x20</c>) or table row (<c>0x23</c>) — docs/formats/winhelp.md#paragraph-runs
+/// Reads one paragraph run (<c>0x20</c>) or table row (<c>0x23</c>) — docs/retail/formats/winhelp.md#paragraph-runs
 /// and #tables. The first data part holds the format and the commands; the second holds the text, one
 /// NUL-terminated string before each command.
 ///

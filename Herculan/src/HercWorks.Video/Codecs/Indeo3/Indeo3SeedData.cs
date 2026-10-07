@@ -14,7 +14,7 @@ namespace HercWorks.Video.Codecs.Indeo3;
 /// <c>Indeo3CodebookTests.SeedAreaMatchesRetailDll</c> checks the two against each other whenever the
 /// file is present.</para>
 ///
-/// <para>See <c>docs/formats/indeo3.md</c>, "Codebooks".</para>
+/// <para>See <c>docs/retail/formats/indeo3.md</c>, "Codebooks".</para>
 /// </summary>
 internal static class Indeo3SeedData {
 	/// <summary>Virtual address of the seed area in <c>IR32_32.DLL</c>, whose image base is <c>10000000</c>.</summary>

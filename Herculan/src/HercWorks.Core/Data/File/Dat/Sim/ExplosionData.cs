@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 /// <para>Two length-prefixed tables back to back: one <see cref="ExplosionShapeEntry"/> per root of
 /// <c>dts\EXPLOS.DTS</c>, then the <see cref="ExplosionTypeEntry"/> effect table proper, indexed by
 /// the effect type ids that <see cref="ProjectileData.Projectile"/>'s three <c>ImpactFX</c> arrays hold. The byte
-/// layout and how the loader binds the banks are in docs/formats/explos-dat.md.</para>
+/// layout and how the loader binds the banks are in docs/retail/formats/explos-dat.md.</para>
 /// </summary>
 public class ExplosionData {
 	public ExplosionShapeEntry[]? Shapes { get; set; }
@@ -55,7 +55,7 @@ public class ExplosionTypeEntry {
 	/// <c>+0x04</c> — nonzero lays a ground shape under the effect: root 1 of the theater's flat set,
 	/// whose cell steps with the effect's frame and which goes when the effect does. Zero on every
 	/// row of both <c>EXPLOS.DAT</c> and <c>EXPLOS2.DAT</c>, so nothing in retail data reaches it.
-	/// See docs/simulation/ground-shapes.md.
+	/// See docs/retail/simulation/ground-shapes.md.
 	/// </summary>
 	public short GroundShape { get; set; }
 
@@ -79,7 +79,7 @@ public class ExplosionTypeEntry {
 	/// <c>+0x20</c>, an int32 — the radius the effect's proximity test (<c>Explosion_ProximityTest</c>,
 	/// <c>00408100</c>) reports a hit inside. Either 0 or 20000 in retail data. That test has no
 	/// reference in the image, so the field has no effect in a mission; see
-	/// docs/formats/explos-dat.md#type-row-0x28-bytes.
+	/// docs/retail/formats/explos-dat.md#type-row-0x28-bytes.
 	/// </summary>
 	public int ProximityRadius { get; set; }
 

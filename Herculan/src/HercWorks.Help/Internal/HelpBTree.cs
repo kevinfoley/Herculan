@@ -1,7 +1,7 @@
 namespace HercWorks.Help.Internal;
 
 /// <summary>
-/// Walks a B+ tree's leaf chain in key order (docs/formats/winhelp.md#b-trees). The tree is only
+/// Walks a B+ tree's leaf chain in key order (docs/retail/formats/winhelp.md#b-trees). The tree is only
 /// ever read whole, so the pages above the leaves are used for nothing but finding the first leaf.
 /// </summary>
 internal static class HelpBTree {

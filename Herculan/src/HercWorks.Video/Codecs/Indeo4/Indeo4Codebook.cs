@@ -1,7 +1,7 @@
 namespace HercWorks.Video.Codecs.Indeo4;
 
 /// <summary>
-/// A variable-length code built from a row descriptor; see docs/formats/indeo4.md#codebooks.
+/// A variable-length code built from a row descriptor; see docs/retail/formats/indeo4.md#codebooks.
 /// Row <c>r</c>'s codes are <c>r</c> one bits, then a zero bit unless it is the last row, then
 /// the row's suffix bits most significant first.
 /// </summary>

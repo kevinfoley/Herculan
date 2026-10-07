@@ -3,8 +3,8 @@ namespace Herculan.Engine.Numerics;
 /// <summary>
 /// Direct port of DBSIM.EXE's shared fixed-point math toolkit — the primitives every other
 /// simulation subsystem builds on. Each method below corresponds 1:1 to a specific
-/// reverse-engineered function; see docs/simulation/dbsim-physics-notes.md ("Fixed-point math
-/// toolkit") for the full writeup, and docs/engine/planning.md's "Math" decision for why the
+/// reverse-engineered function; see docs/retail/simulation/dbsim-physics-notes.md ("Fixed-point math
+/// toolkit") for the full writeup, and docs/herculan/planning.md's "Math" decision for why the
 /// engine ports these rather than using floating-point System.Numerics throughout.
 ///
 /// These are deliberately literal translations, quantization and clamping included — a naive
@@ -50,7 +50,7 @@ public static class SimMath {
 	/// <c>0xa</c>, sitting immediately adjacent in the binary. Its domain is the simulation's
 	/// normalized scalars: throttle and speed (<c>Mech_GetSpeed</c>, <c>00415498</c>, is
 	/// <c>Q10(2000, mech+0x28e)</c>), reactor and shield rates, and a shot's damage against its
-	/// capacitor charge. See docs/simulation/dbsim-physics-notes.md, "Fixed-point math toolkit".
+	/// capacitor charge. See docs/retail/simulation/dbsim-physics-notes.md, "Fixed-point math toolkit".
 	/// </summary>
 	public static int Q10Multiply(int a, int b) => (int)(((long)a * b) >> 10);
 
@@ -164,7 +164,7 @@ public static class SimMath {
 	/// +1 byte offset inside its owner); the engine passes the field by reference instead, which
 	/// is the same operation without the unaligned-pointer arithmetic.
 	/// The owning record is 3 bytes and the meaning of its leading byte is still open — see
-	/// <c>docs/simulation/dbsim-physics-notes.md</c>.
+	/// <c>docs/retail/simulation/dbsim-physics-notes.md</c>.
 	///
 	/// <para><b>These counters are not in milliseconds.</b> What is subtracted is
 	/// <see cref="TickDelta"/>, which is Q8 with 1.0 = 125 ms, so one count is 125/256 ms ≈ 0.49 ms

@@ -7,7 +7,7 @@ namespace Herculan.Engine.Input;
 
 /// <summary>
 /// One <c>.TAP</c> input tape being recorded — DBSIM's <c>-r</c>. The format, and what DBSIM writes
-/// into each field, are docs/formats/tap-input-tape.md's; this class assembles frames out of the
+/// into each field, are docs/retail/formats/tap-input-tape.md's; this class assembles frames out of the
 /// engine's own input types and appends them. The host decides when a frame goes out, because only the
 /// host knows when a tick ran and when a modal panel is up.
 ///

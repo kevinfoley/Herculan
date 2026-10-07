@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// (<see cref="Script.ScriptMechRecord"/>): its type, weapon fit, AI settings, optional placement,
 /// out-of-action report and action links. The member names match <see cref="Script.ScriptMechRecord"/>'s
 /// and the engine's <c>MissionPlacement</c> where they are the same datum.
-/// See docs/formats/msn-mission-file.md, "Row #12 field decode".
+/// See docs/retail/formats/msn-mission-file.md, "Row #12 field decode".
 /// </summary>
 public class MechRosterEntry144 : MapObject {
 	/// <summary>0x02 — condition ref.</summary>
@@ -14,7 +14,7 @@ public class MechRosterEntry144 : MapObject {
 
 	/// <summary>
 	/// 0x04 — variant key: unless <c>-1</c>, everything from 0x08 to 0x8F except <see cref="PairCount"/>
-	/// is copied from a randomly picked variant (docs/formats/msn-mission-file.md#variants).
+	/// is copied from a randomly picked variant (docs/retail/formats/msn-mission-file.md#variants).
 	/// </summary>
 	public short VariantKey { get; set; }
 	public const int VariantKeyWord = 0x04 / 2;
@@ -32,7 +32,7 @@ public class MechRosterEntry144 : MapObject {
 
 	/// <summary>
 	/// 0x0A — the speed the machine's AI walks at, copied to <c>mech+0x252</c>. Zero, which is 91% of
-	/// retail records, means the AI's own default. See <c>docs/simulation/ai-navigation.md</c>.
+	/// retail records, means the AI's own default. See <c>docs/retail/simulation/ai-navigation.md</c>.
 	/// </summary>
 	public short AiCruiseSpeed { get; set; }
 
@@ -48,7 +48,7 @@ public class MechRosterEntry144 : MapObject {
 	/// hands it to <c>Mech_ConfigureLoadout</c>.
 	/// <para><b>Slot positions are load-bearing.</b> Each hardpoint picks its slot by index, so
 	/// compacting the array fits the wrong weapon to the wrong hardpoint and a slot no hardpoint
-	/// addresses contributes nothing. See docs/simulation/weapon-mounts.md, "The join".</para>
+	/// addresses contributes nothing. See docs/retail/simulation/weapon-mounts.md, "The join".</para>
 	/// </summary>
 	public short[] WeaponRefs { get; set; } = new short[10];
 	public const int WeaponRefsWord = 0x32 / 2;
@@ -71,7 +71,7 @@ public class MechRosterEntry144 : MapObject {
 	/// and <see cref="Script.ScriptMechRecord.CounterOps"/>, and <c>DBSim_SpawnMissionObjects</c>
 	/// (<c>004253d8</c>) copies the refs to <c>mech+0x1ba</c> through
 	/// <c>SimObject_SetOutOfActionCounters</c> (<c>00411b90</c>). See
-	/// docs/simulation/mission-deployment.md#the-out-of-action-report.
+	/// docs/retail/simulation/mission-deployment.md#the-out-of-action-report.
 	/// </summary>
 	public short[] OutOfActionReport { get; set; } = new short[20];
 	public const int OutOfActionReportWord = 0x4C / 2;
@@ -101,7 +101,7 @@ public class MechRosterEntry144 : MapObject {
 	/// when it is <b>engaged</b>, <c>-1</c> for none. <c>DBSim_SpawnMissionObjects</c>
 	/// (<c>004253d8</c>) resolves it into <c>mech+0x1b2</c>. It fires once a hostile is within
 	/// 50,000 units and one side has spotted or shot the other; the three sites that fire it are in
-	/// docs/simulation/mission-deployment.md, "An object's own two actions".
+	/// docs/retail/simulation/mission-deployment.md, "An object's own two actions".
 	/// </summary>
 	public short EngagementActionRef { get; set; }
 	public const int EngagementActionRefWord = 0x8A / 2;
@@ -114,7 +114,7 @@ public class MechRosterEntry144 : MapObject {
 	///
 	/// <para><b>This is how a retail mission chains its reinforcements.</b> The shipped
 	/// <c>script.dat</c> has five of its ten mech records naming one, which is what brings each wave
-	/// in as the last is beaten — see docs/simulation/mission-deployment.md.</para>
+	/// in as the last is beaten — see docs/retail/simulation/mission-deployment.md.</para>
 	/// </summary>
 	public short DefeatActionRef { get; set; }
 	public const int DefeatActionRefWord = 0x8C / 2;
@@ -125,7 +125,7 @@ public class MechRosterEntry144 : MapObject {
 	/// <c>Mech_ApplyStartingCondition</c> (<c>004178e8</c>) before it ever takes a shot, in four
 	/// widening bands at 80 / 60 / 40 / 20. Below 20 the machine is placed as a <b>wreck</b>: a leg
 	/// destroyed outright, immobilised and collapsed where it stands. See
-	/// docs/simulation/component-damage.md#starting-condition--mech_applystartingcondition-004178e8.
+	/// docs/retail/simulation/component-damage.md#starting-condition--mech_applystartingcondition-004178e8.
 	/// </summary>
 	public short StartingCondition { get; set; }
 	public const int StartingConditionWord = 0x8E / 2;

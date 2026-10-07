@@ -28,9 +28,6 @@ namespace Herculan.Engine.Sim;
 /// only at Cybrid ones — but the pass writes both objects' tables, so a Cybrid machine ends up
 /// knowing about the human that spotted it without ever running a sweep of its own. Half the loops
 /// are missing because they are not needed, not because they were dropped here.</para>
-///
-/// <para><b>Not ported:</b> the "enemy detected" callout each new contact plays (mech vtable
-/// <c>+0x48</c>, <c>Mech_AiEnemySighted</c> (<c>00412800</c>), which is sound plus a once-per-contact latch).</para>
 /// </summary>
 public static class Detection {
 	/// <summary>
@@ -101,7 +98,7 @@ public static class Detection {
 	/// The 50000 inside which <see cref="Sweep"/> and <see cref="ShareContact"/> mark an object
 	/// <see cref="SimObject.Engaged"/> and activate engagement actions — well inside
 	/// <see cref="VisualRange"/>. Which objects each one marks is in
-	/// docs/simulation/mission-deployment.md, "An object's own two actions".
+	/// docs/retail/simulation/mission-deployment.md, "An object's own two actions".
 	/// </summary>
 	public const int EngagementRange = 50000;
 
@@ -193,6 +190,10 @@ public static class Detection {
 	/// machine is shared to its side by <see cref="ShareContact"/>; one made by the player's own
 	/// machine is kept to itself.</item>
 	/// </list>
+	///
+	/// <para>Just before it paints the Cybrid, and just before it makes a contact of its own, the sweep
+	/// calls the sweeping object's <see cref="SimObject.EnemySighted"/> — the "enemy detected"
+	/// callout, which tests the state those two writes are about to change.</para>
 	/// </summary>
 	private static void Sweep(SimWorld world, SimObject self) {
 		var objects = world.Objects;
@@ -212,6 +213,7 @@ public static class Detection {
 					&& distance < ScannerRange
 					&& LineOfSight(world, self, other)) {
 				if (other.ScannerActive || distance < PassiveRadarRange) {
+					self.EnemySighted(world, other);
 					other.RadarVisible = true;
 				}
 
@@ -242,6 +244,8 @@ public static class Detection {
 
 			if (InSensorArc(self, (short)(bearing + self.AimTwist))
 					&& LineOfSight(world, self, other)) {
+				self.EnemySighted(world, other);
+
 				if (self.LocallyPiloted) {
 					self.SetDetects(other, true);
 				} else {
@@ -263,7 +267,7 @@ public static class Detection {
 	/// <see cref="ContactShareRange"/>, the spotter included. Nothing is shared to the other side, and
 	/// a spotter and a contact on the same side is not a contact at all. Within
 	/// <see cref="EngagementRange"/> the <i>contact</i> is marked engaged and the <i>ally</i>
-	/// activates its own engagement action — docs/simulation/mission-deployment.md, "An object's own
+	/// activates its own engagement action — docs/retail/simulation/mission-deployment.md, "An object's own
 	/// two actions".
 	/// </summary>
 	internal static void ShareContact(SimWorld world, SimObject spotter, SimObject contact) {

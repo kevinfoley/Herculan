@@ -13,6 +13,10 @@ namespace Herculan.Engine.Render;
 /// <para>Why a table rather than a bake: the shade a face is drawn at comes from its <b>world</b>
 /// normal (<see cref="MissionSun.ShadeForFace"/>), and one built mesh is shared by every object of a
 /// type standing at its own heading. See <see cref="Gl.MeshVertex.ShadeRamp"/>.</para>
+///
+/// <para>The shaded chain's alpha channel carries the palette byte itself
+/// (<see cref="SurfaceShading.ShadedByte"/>), which is what a <c>TSShadedPoly</c>'s outline is
+/// tested on — see <see cref="Gl.MeshVertex.OutlineFillRamp"/>. The Gouraud block's alpha is 255.</para>
 /// </summary>
 public sealed class SurfaceRampTable {
 	/// <summary>Light levels across — one column per shade byte.</summary>
@@ -93,7 +97,7 @@ public sealed class SurfaceRampTable {
 				pixels[at] = color is { } c ? Quantise(c.X) : (byte)128;
 				pixels[at + 1] = color is { } c1 ? Quantise(c1.Y) : (byte)128;
 				pixels[at + 2] = color is { } c2 ? Quantise(c2.Z) : (byte)128;
-				pixels[at + 3] = 255;
+				pixels[at + 3] = gouraud ? (byte)255 : shading.ShadedByte(ramp, shade, block) ?? 255;
 			}
 		}
 

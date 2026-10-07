@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>HercWorks.Query</RootNamespace>
+    <AssemblyName>HercWorks.Query</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="HercWorks.Query.Tests" />
+  </ItemGroup>
+
+  <!-- Every file is parsed by HercWorks.Core; this project only searches the models. -->
+  <ItemGroup>
+    <ProjectReference Include="..\HercWorks.Core\HercWorks.Core.csproj" />
+    <ProjectReference Include="..\HercWorks.Vol\HercWorks.Vol.csproj" />
+  </ItemGroup>
+
+</Project>

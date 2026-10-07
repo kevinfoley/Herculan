@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Data.Struct;
+using HercWorks.Core.Data.Struct.Herc;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Vol;
 
@@ -190,8 +191,8 @@ public partial class PlayerSquadForm : Form {
 	}
 
 	/// <summary>
-	/// Grows both arrays to <paramref name="length"/>, filling new slots with the empty weapon and
-	/// the filler ammunition value.
+	/// Resizes both arrays to <paramref name="length"/>, dropping slots past it and filling new ones
+	/// with the empty weapon and the filler ammunition value.
 	/// </summary>
 	private static void ResizeSlots(MecEntry entry, int length) {
 		int wasWeapons = entry.WeaponRefs.Length;
@@ -286,10 +287,33 @@ public partial class PlayerSquadForm : Form {
 		_playerSlotInput.Maximum = Math.Max(0, _rows.Count - 1);
 	}
 
-	/// <summary>Slots is derived from the weapon list's length, so it has to follow the edit.</summary>
+	/// <summary>
+	/// Slots is derived from the weapon list's length, so it has to follow the edit. A new Herc type
+	/// brings its own slot count, which VSHELL writes as the bay's mount capacity, so the slots are
+	/// resized to it — keeping the weapons that still fit — for the nine player chassis, whose
+	/// capacity is traced. Any other type keeps its slots for the user to set by hand.
+	/// </summary>
 	private void OnSquadCellChanged(object? sender, DataGridViewCellEventArgs e) {
-		if (e.RowIndex >= 0) {
-			_squadGrid.InvalidateRow(e.RowIndex);
+		if (e.RowIndex < 0) {
+			return;
+		}
+
+		var row = _rows[e.RowIndex];
+		if (e.ColumnIndex == _hercTypeColumn.Index
+			&& HercLUT.GetById(row.HercType) is { IsPlayerChassis: true } herc
+			&& herc.HardpointMax != row.Source.WeaponRefs.Length) {
+			ResizeSlots(row.Source, herc.HardpointMax);
+			RefreshAfterSlotChange(row);
+			return;
+		}
+
+		_squadGrid.InvalidateRow(e.RowIndex);
+	}
+
+	/// <summary>Commits a Herc type pick at once, so the slots follow it without leaving the cell.</summary>
+	private void OnSquadCellDirtyStateChanged(object? sender, EventArgs e) {
+		if (_squadGrid.IsCurrentCellDirty && _squadGrid.CurrentCell?.ColumnIndex == _hercTypeColumn.Index) {
+			_squadGrid.CommitEdit(DataGridViewDataErrorContexts.Commit);
 		}
 	}
 

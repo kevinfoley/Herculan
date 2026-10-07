@@ -4,6 +4,7 @@ using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Render;
 using Herculan.Engine.World;
 using Xunit;
@@ -11,7 +12,7 @@ using Xunit;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// The sky backdrop against retail's <c>hzline</c>: docs/formats/distance-fog-and-sky.md, "The sky —
+/// The sky backdrop against retail's <c>hzline</c>: docs/retail/formats/distance-fog-and-sky.md, "The sky —
 /// hzline".
 /// </summary>
 public class SkyGradientTests {
@@ -133,7 +134,7 @@ public class SkyGradientTests {
 			return;
 		}
 
-		var content = GameContent.Mount(GameInstall.ArchiveDirectory(root));
+		var content = GameContent.MountSimulator(root);
 		for (int worldIndex = 0; worldIndex < TheaterDescriptor.Count; worldIndex++) {
 			var theater = TheaterDescriptor.LoadByWorldIndex(content, worldIndex);
 			var palette = new DynamixPaletteTransformer().Parse(content.Read("dpl", theater.PaletteName + ".DPL")!) as DynamixPalette;

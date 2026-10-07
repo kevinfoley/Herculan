@@ -40,7 +40,7 @@ public partial class HercBayEditorForm : Form {
 			}
 			var part = entry.InternalConditions?.GetValueOrDefault(internalPart) ?? new ShellHercPart(internalPart.Id, internalPart.Label);
 			// In the save, index 9 is the machine's overall condition rather than a component
-			// (docs/formats/save-games.md); HercInternals' own label for it serves the sim's .DMG files.
+			// (docs/retail/formats/save-games.md); HercInternals' own label for it serves the sim's .DMG files.
 			string label = internalPart == HercInternals.Pilot ? "Overall condition" : internalPart.Label;
 			_internalsRows.Add(new HercPartRow { Id = internalPart.Id, Label = label, Health = part.Health });
 		}

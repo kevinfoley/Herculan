@@ -3,7 +3,7 @@ using HercWorks.Core.Data.Struct;
 namespace HercWorks.Core.Data.File.Gau;
 
 /// <summary>
-/// One weapon-row rect of <see cref="GAUFile.Weapons"/>. See docs/formats/cockpit-hud-widgets.md,
+/// One weapon-row rect of <see cref="GAUFile.Weapons"/>. See docs/retail/formats/cockpit-hud-widgets.md,
 /// "Weapon hardpoint rows".
 /// </summary>
 public class HWeaponPanelItem : WidgetBase {

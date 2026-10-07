@@ -6,7 +6,7 @@ namespace HercWorks.Core.Io.Transform.Common;
 /// Transforms byte[] data to and from <c>data\script.dat</c> (<see cref="ScriptDat"/>): the 20-byte
 /// header and the 13 count-prefixed blocks, stopping at block 13's end — bytes past it are a
 /// longer earlier mission's leftovers, and a write does not pad to any fixed length. See
-/// docs/formats/script-dat.md.
+/// docs/retail/formats/script-dat.md.
 /// </summary>
 public class ScriptDatTransformer : ByteTransformer<ScriptDat> {
 	public override ScriptDat? Parse(byte[]? inputArray) {

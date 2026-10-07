@@ -4,7 +4,7 @@
 Opens the game read-only (ReadProcessMemory; it never writes, pauses or injects),
 finds every structure object in memory, picks one, and logs each change to its
 component damage. A logged change is exactly what one hit wrote, after the
-difficulty scale, which is how docs/formats/proj-dat.md#lookup measured which
+difficulty scale, which is how docs/retail/formats/proj-dat.md#lookup measured which
 PROJ.DAT record a shot applies.
 
 Finding the objects: structures live in a pool whose stride is 0x26d, so they are

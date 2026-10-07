@@ -5,7 +5,7 @@ namespace HercWorks.Core.Io.Transform.Common;
 
 /// <summary>
 /// Reads and writes .STR string tables (<see cref="StringFile"/>), every group with its attribute
-/// bytes. See docs/formats/str-strings.md#layout.
+/// bytes. See docs/retail/formats/str-strings.md#layout.
 /// </summary>
 public class StringFileTransformer : ByteTransformer<StringFile> {
 	/// <summary>

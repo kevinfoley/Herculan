@@ -1,4 +1,6 @@
-﻿using HercWorks.Core.Data.File.Dbsim;
+﻿using HercWorks.Core.Data.File.Dat.Sim;
+using HercWorks.Core.Data.File.Dbsim;
+using HercWorks.Core.Data.Struct.Herc;
 using Herculan.Engine.Numerics;
 
 namespace Herculan.Engine.Sim;
@@ -24,7 +26,8 @@ namespace Herculan.Engine.Sim;
 /// <para>The maxima are not here: they are the <c>dmg\&lt;NAME&gt;.DMG</c> file, which supplies both
 /// an 18-byte record per main component (its armour, its bone group, its destruction flags, and its
 /// weighted list of dependents) and a flat maximum per dependent. That file is
-/// <see cref="HercSimDamage"/>, already parsed by HercWorks.Core.</para>
+/// <see cref="HercSimDamage"/>, already parsed by HercWorks.Core. A weapon mount is the exception:
+/// its fitted weapon brings its own record and maximum (<see cref="FitWeapon"/>).</para>
 ///
 /// <para><b>Overflow spills sideways.</b> A hit that finishes a main component does not stop there:
 /// the excess is handed to <see cref="SpillIntoDependents"/>, which picks one of the component's
@@ -58,14 +61,19 @@ public sealed class ComponentDamage {
 	/// <summary>The damage-finished-it flag <c>Component_SpillIntoDependents</c> (<c>0040cf44</c>) pours in on destruction — its own literal.</summary>
 	private const short FinishOffDependents = 32000;
 
-	private readonly HercSimDamage _model;
+	private readonly HercSimDamage.HercPiece[] _pieces;
+	private readonly short[] _dependentMaxima;
 	private readonly short[] _damage;
 	private readonly short[] _dependentDamage;
 	private readonly bool[] _active;
 	private readonly List<int> _pendingCascade = new();
 	private readonly SimRandom _random;
 
-	/// <param name="model">The type's <c>dmg\&lt;NAME&gt;.DMG</c>.</param>
+	/// <param name="model">
+	/// The type's <c>dmg\&lt;NAME&gt;.DMG</c>, shared by every object of the type. Its pieces and maxima
+	/// are copied, because a fitted weapon replaces its mount's in this object alone — see
+	/// <see cref="FitWeapon"/>.
+	/// </param>
 	/// <param name="componentCount">
 	/// Main component slots. <b>Not read from the file</b> — the original hard-codes 29 for a mech and
 	/// 1 for a flyer at the allocation site, and a file that disagrees simply leaves slots unusable.
@@ -73,7 +81,10 @@ public sealed class ComponentDamage {
 	/// <param name="dependentCount">Dependent sub-piece slots, likewise hard-coded.</param>
 	/// <param name="random">The simulation's generator, for the weighted spill pick.</param>
 	public ComponentDamage(HercSimDamage model, int componentCount, int dependentCount, SimRandom random) {
-		_model = model;
+		_pieces = (HercSimDamage.HercPiece[]?)model.ComponentData?.Clone() ?? Array.Empty<HercSimDamage.HercPiece>();
+		_dependentMaxima = (model.Internals ?? Array.Empty<HercSimDamage.InternalsHealth>())
+			.Select(internals => internals?.Armor ?? 0)
+			.ToArray();
 		_random = random;
 		_damage = new short[componentCount];
 		_dependentDamage = new short[dependentCount];
@@ -106,10 +117,65 @@ public sealed class ComponentDamage {
 		}
 	}
 
-	/// <summary>The <c>.DMG</c> record for one main component, or null when the file has no such slot.</summary>
-	public HercSimDamage.HercPiece? Piece(int index) {
-		var pieces = _model.ComponentData;
-		return pieces != null && index >= 0 && index < pieces.Length ? pieces[index] : null;
+	/// <summary>
+	/// The <c>.DMG</c> record for one main component, or null when the file has no such slot — or, for
+	/// a weapon mount, the record its fitted weapon put there (<see cref="FitWeapon"/>).
+	/// </summary>
+	public HercSimDamage.HercPiece? Piece(int index) =>
+		index >= 0 && index < _pieces.Length ? _pieces[index] : null;
+
+	/// <summary>
+	/// The damage half of <c>Mech_ConfigureLoadout</c> (<c>004175dc</c>)'s per-mount step: the weapon
+	/// template's own piece replaces the mount component's (<c>HercPiece_ReplacePieces</c>,
+	/// <c>0040d240</c>), keeping the chassis piece's parent, with its first internal pointed at the
+	/// fit slot's own, and that internal takes the template's maximum
+	/// (<c>HercPiece_SetInternalMaxima</c>, <c>0040d128</c>). Every retail <c>.DMG</c> ships the ten
+	/// mount pieces as placeholders — armour 1, no internals — so this is where a mount's armour comes
+	/// from. See docs/retail/formats/dmg-damage-file.md#a-fitted-weapon-replaces-its-mounts-piece.
+	/// </summary>
+	/// <param name="component">The mount's component, its fit slot plus 19.</param>
+	/// <param name="weapon">The template's piece, <see cref="Weapons.WeaponMountTemplate.Piece"/>.</param>
+	/// <param name="fitSlot">The hardpoint's fit slot, <c>.GL +0x17</c>.</param>
+	/// <param name="internalMaximum">The template's <see cref="Weapons.WeaponMountTemplate.InternalMaximum"/>.</param>
+	internal void FitWeapon(int component, HercSimDamage.HercPiece weapon, int fitSlot, short internalMaximum) {
+		if (component < 0 || component >= _pieces.Length) {
+			return;
+		}
+
+		short internalSlot = (short)(HercInternals.FirstWeaponMountId + fitSlot);
+		var internals = (weapon.MappedInternals ?? Array.Empty<HercSimDamage.InternalsTarget>())
+			.Select((entry, i) => new HercSimDamage.InternalsTarget {
+				SpillWeight = entry.SpillWeight,
+				InternalsId = i == 0 ? HercInternals.GetById(internalSlot) : entry.InternalsId,
+			})
+			.ToArray();
+
+		_pieces[component] = new HercSimDamage.HercPiece {
+			Armor = weapon.Armor,
+			DebrisFlags = weapon.DebrisFlags,
+			ParentComponent = _pieces[component].ParentComponent,
+			DestructionFlags = weapon.DestructionFlags,
+			MappedInternals = internals,
+		};
+
+		if (internalSlot < _dependentMaxima.Length) {
+			_dependentMaxima[internalSlot] = internalMaximum;
+		}
+	}
+
+	/// <summary>
+	/// <c>Mech_ConfigureLoadout</c>'s occupancy pass, after the mounts are fitted: every component of
+	/// the first 29 whose piece lists no internal has its active flag cleared, so it is never struck,
+	/// targeted or written to. That takes out every empty hardpoint, and on retail data the
+	/// shoulders and every chassis' unused slots. See
+	/// docs/retail/simulation/component-damage.md#the-component-damage-system.
+	/// </summary>
+	internal void ClearUnoccupied() {
+		for (int i = 0; i < MechComponentCount && i < _active.Length && i < _pieces.Length; i++) {
+			if ((_pieces[i].MappedInternals?.Length ?? 0) == 0) {
+				_active[i] = false;
+			}
+		}
 	}
 
 	/// <summary>
@@ -446,7 +512,7 @@ public sealed class ComponentDamage {
 	/// <see cref="DefaultDebrisGroup"/> when it names none.</para>
 	///
 	/// <para>The blank cell is stepped to in <see cref="CellFrames"/>, which the renderer reads to
-	/// pick which cell of each sequence is on screen. See docs/formats/mech-shape-drawing.md.</para>
+	/// pick which cell of each sequence is on screen. See docs/retail/formats/mech-shape-drawing.md.</para>
 	/// </summary>
 	private void DestroyAndCascade(int index, SimWorld? world, SimObject? owner,
 			DebrisDatabase? debris) {
@@ -466,9 +532,8 @@ public sealed class ComponentDamage {
 		// The field is a signed byte in the original and 0xff means "no parent", so it is read as one
 		// here: as an unsigned byte the sentinel would simply never match, which is the right answer
 		// by accident rather than the right comparison.
-		var pieces = _model.ComponentData ?? Array.Empty<HercSimDamage.HercPiece>();
-		for (int i = 0; i < _active.Length && i < pieces.Length; i++) {
-			if (_active[i] && (sbyte)pieces[i].ParentComponent == index) {
+		for (int i = 0; i < _active.Length && i < _pieces.Length; i++) {
+			if (_active[i] && (sbyte)_pieces[i].ParentComponent == index) {
 				_pendingCascade.Add(i);
 			}
 		}
@@ -529,7 +594,7 @@ public sealed class ComponentDamage {
 				type = MajorExplosion;
 			}
 
-			world.SpawnImpactEffect(type, point);
+			world.SpawnImpactEffect(type, point, owner);
 		}
 
 		short group = DebrisGroupOf(piece.DebrisFlags);
@@ -548,7 +613,7 @@ public sealed class ComponentDamage {
 	/// And the record's <c>+0x03</c> byte — which <c>TSCellAnimPart</c> sequence of the machine's
 	/// shape this component drives, <c>-1</c> for a component with no geometry of its own. It is the
 	/// gate on the fire as well as the map to the blank cell; see
-	/// docs/formats/mech-shape-drawing.md.
+	/// docs/retail/formats/mech-shape-drawing.md.
 	/// </summary>
 	public static short SubShapeSequenceOf(short debrisFlags) => (sbyte)((debrisFlags >> 8) & 0xff);
 
@@ -689,7 +754,7 @@ public sealed class ComponentDamage {
 	/// <c>Mech_ApplySquadCondition</c> (<c>00415068</c>) — writes a squad machine's carried-over
 	/// condition straight into the main and dependent arrays, each entry becoming
 	/// <c>(100 - condition) * maximum / 100</c>. Which entry comes from which span, and what is
-	/// zeroed, is docs/simulation/component-damage.md#a-squad-machines-condition--mech_applysquadcondition-00415068.
+	/// zeroed, is docs/retail/simulation/component-damage.md#a-squad-machines-condition--mech_applysquadcondition-00415068.
 	///
 	/// <para>Like <see cref="SetDependentDamage"/> it states the condition rather than damaging the
 	/// machine into it: no cascade, no death gate, no announcement, and the active flags are left
@@ -772,13 +837,10 @@ public sealed class ComponentDamage {
 	internal short DependentMax(int slot) => DependentMaximum(slot);
 
 	/// <summary>
-	/// One dependent's maximum, out of the <c>.DMG</c>'s flat leading array. Every retail HERC states
-	/// 22 of these and the skimmer one, matching the slot counts the constructors allocate.
+	/// One dependent's maximum, out of the <c>.DMG</c>'s flat leading array, or the fitted weapon's
+	/// for a mount's internal (<see cref="FitWeapon"/>). Every retail HERC states 22 of these and the
+	/// skimmer one, matching the slot counts the constructors allocate.
 	/// </summary>
-	private short DependentMaximum(int slot) {
-		var internals = _model.Internals;
-		return internals != null && slot >= 0 && slot < internals.Length
-			? internals[slot]?.Armor ?? 0
-			: (short)0;
-	}
+	private short DependentMaximum(int slot) =>
+		slot >= 0 && slot < _dependentMaxima.Length ? _dependentMaxima[slot] : (short)0;
 }

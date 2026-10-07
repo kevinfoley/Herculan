@@ -10,7 +10,7 @@ namespace HercWorks.UI;
 /// System.Drawing.Bitmap images, for previewing and PNG export. Kept in the UI project rather
 /// than Core, since producing GDI+ bitmaps is a rendering concern, not a file-format concern —
 /// Core's ColorBytes carries a cross-platform-safe <see cref="RgbaColor"/> internally (Core has
-/// no System.Drawing.Common dependency — see docs/engine/planning.md's "Known technical debt"
+/// no System.Drawing.Common dependency — see docs/herculan/planning.md's "Known technical debt"
 /// section), converted to a real System.Drawing.Color here at the UI boundary, since this
 /// project (net8.0-windows, WinForms) is free to use GDI+ directly.
 /// </summary>

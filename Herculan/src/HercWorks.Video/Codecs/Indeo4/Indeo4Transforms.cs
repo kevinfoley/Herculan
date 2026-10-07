@@ -4,7 +4,7 @@ namespace HercWorks.Video.Codecs.Indeo4;
 /// The inverse transforms and the stores that write their output, on the codec's packed form: each
 /// 32-bit word carries two 16-bit lanes, the low lane for one block and the high lane for the block
 /// paired with it, every value biased so the lanes stay apart. See
-/// docs/formats/indeo4.md#transforms.
+/// docs/retail/formats/indeo4.md#transforms.
 ///
 /// <para>The arithmetic is the codec's, constant for constant, on whole words. Carries and borrows
 /// between the lanes are therefore exactly the codec's too, which is what makes the output match

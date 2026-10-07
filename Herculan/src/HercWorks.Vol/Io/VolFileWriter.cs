@@ -39,7 +39,7 @@ public static class VolFileWriter {
 		fout.WriteByte(0x00);
 		fout.WriteByte(0x00);
 
-		// VOL load-order precedence flag: 0x05 (first), 0x0A (observed in SHELL1.vol)
+		// Search precedence, see Voln.VolOrderNum.
 		fout.WriteByte(vol.VolOrderNum);
 
 		// Directory count

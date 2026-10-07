@@ -9,7 +9,7 @@ namespace HercWorks.Video.Codecs.Indeo3;
 /// against the retail DLL whenever that file is present. The division truncates toward zero, as C's
 /// does, which is what makes rows 3 and 4 start at 4 rather than going negative.</para>
 ///
-/// <para>See <c>docs/formats/indeo3.md</c>, "The requantisation table".</para>
+/// <para>See <c>docs/retail/formats/indeo3.md</c>, "The requantisation table".</para>
 /// </summary>
 internal static class Indeo3Requant {
 	/// <summary>Virtual address of the table in <c>IR32_32.DLL</c>.</summary>

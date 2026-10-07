@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Sim;
 using Herculan.Engine.Sim.Anim;
@@ -138,6 +139,6 @@ public class SkeletonPoseTests {
 
 	private static GameContent? Content() {
 		string? root = GameInstall.Locate(null);
-		return root != null ? GameContent.Mount(GameInstall.ArchiveDirectory(root)) : null;
+		return root != null ? GameContent.MountSimulator(root) : null;
 	}
 }

@@ -1,13 +1,14 @@
-﻿using System.Numerics;
-using HercWorks.Core.Data.File.Dat.Sim;
+﻿using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.Struct;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
+using Herculan.Engine.Settings;
 using Herculan.Engine.Sim;
 using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
+using System.Numerics;
 
 namespace Herculan.Engine.Scene;
 
@@ -39,7 +40,7 @@ public sealed record SceneObject(SimObject Object, SceneModel? Model, MissionPla
 /// <summary>
 /// Assembles a playable scene from a real mission: the zone and theater the mission names, its
 /// terrain, and one simulation object per unit the mission places — see
-/// docs/engine/planning.md, "Milestone 4".
+/// docs/herculan/planning.md, "Milestone 4".
 ///
 /// <para>Nothing here is configured by hand. The zone, the theater and its variant come out of
 /// <c>script.dat</c>'s header; the units, their types, positions and headings come out of its
@@ -320,7 +321,8 @@ public sealed class MissionScene {
 			Difficulty = mission.Header.Difficulty,
 			UnlimitedAmmunition = mission.Header.UnlimitedAmmunition,
 			PlayerInvulnerable = mission.Header.PlayerInvulnerable,
-			Theater = mission.Header.TheaterIndex
+			Theater = mission.Header.TheaterIndex,
+			Tweaks = TweakSettings.Current
 		};
 		world.LoadMissionCounters(mission.Counters);
 		var models = new SceneModelLibrary(content, theater);
@@ -349,10 +351,16 @@ public sealed class MissionScene {
 			content.Read(WeaponCatalog.ResourceFolder, WeaponCatalog.TemplateResource),
 			content.Read(WeaponCatalog.ResourceFolder, WeaponCatalog.ProjectileResource));
 
+		// And the transport's weapon slots, which Base_LoadResources reads between BFORMS.DAT and
+		// BASES.DAT. Every transport in the mission shares the one table.
+		var transportArmament = TransportArmament.Load(
+			content.Read(TransportArmament.ResourceFolder, TransportArmament.SlotResource), weapons);
+
 		var objects = new List<SceneObject>(mission.Placements.Count);
 		SceneObject? playerObject = null;
 		foreach (var placement in mission.Placements) {
-			var spawned = Spawn(placement, models, baseTypes, baseCollision, weapons, world.Random);
+			var spawned = Spawn(placement, models, baseTypes, baseCollision, weapons, transportArmament,
+				world.Random, world.Tweaks);
 			if (spawned == null) {
 				continue;
 			}
@@ -377,8 +385,8 @@ public sealed class MissionScene {
 			spawned.Object.Position = new Vec3i(spawned.Object.Position.X, spawned.Object.Position.Y,
 				spawned.Object switch {
 					FlyerObject => spawned.Object.Position.Z,
-					MechObject mech => terrain.HeightAtWorld(
-						spawned.Object.Position.X, spawned.Object.Position.Y) + mech.Type.RideHeight,
+					MechObject mech => MechSpawnHeight(terrain, mech,
+						placement.GroundPoint ?? spawned.Object.Position),
 					_ => terrain.HeightAtWorld(spawned.Object.Position.X, spawned.Object.Position.Y)
 				});
 
@@ -446,7 +454,7 @@ public sealed class MissionScene {
 		// bounding box the two boundary statuses test is block 1's own extent, which the loader has
 		// already read.
 		world.SetObjectives(BuildObjectives(mission, groups, objects));
-		world.MissionBounds = Content.HddMapBounds.Of(mission.Coordinates);
+		world.MissionBox = MissionBox.Of(mission.Coordinates);
 
 		// Each object's own two actions -- the one it fires when an enemy closes on it and the one it
 		// fires when it dies. DBSim_SpawnMissionObjects resolves both as it builds the object; here
@@ -457,17 +465,23 @@ public sealed class MissionScene {
 			placed.Object.DefeatAction = ActionAt(actions, placed.Placement.DefeatActionRef);
 			placed.Object.OutOfActionReport = placed.Placement.OutOfActionReport ?? OutOfActionReport.None;
 
-			// And the condition the mission says it starts in, which for anything under 80% means it
-			// spawns already damaged -- or, under 20%, already a wreck. DBSim_SpawnMissionObjects
+			// And the condition the mission says a machine starts in, which for anything under 80% means
+			// it spawns already damaged -- or, under 20%, already a wreck. DBSim_SpawnMissionObjects
 			// makes this call in the same place, immediately after resolving the two actions, and the
 			// order matters for the wreck grade: writing a leg off can fire the death gate, and the
-			// defeat action has to be attached before it can go off.
+			// defeat action has to be attached before it can go off. A structure's was applied by its
+			// constructor, as Base_Construct applies it.
 			if (placed.Object is MechObject spawned) {
 				spawned.ApplyStartingCondition(world, placed.Placement.StartingCondition);
 			}
 		}
 
 		world.PlayerMech = playerObject?.Object as MechObject;
+
+		// Sim_InitMissionSession builds the player's cockpit, whose weapon rows each seed a charge bar from
+		// their mount, and runs one Player_PerFrameCockpitUpdate before the first tick.
+		world.PlayerMech?.Weapons.BuildGauges();
+		world.PlayerMech?.Weapons.PushGaugeStates();
 
 		// Each base group that carries a formation layout repaints the ground it stands on with that
 		// formation's own material, which is what puts a base on a marked concrete pad instead of on
@@ -556,7 +570,7 @@ public sealed class MissionScene {
 			var radii = new int[count];
 			for (int i = 0; i < count; i++) {
 				shapes[i] = models.Debris(library, i, bankName);
-				radii[i] = shapes[i]?.RadiusWorldUnits ?? 0;
+				radii[i] = shapes[i]?.ShapeRadius ?? 0;
 			}
 
 			debrisModels[library] = shapes;
@@ -587,7 +601,7 @@ public sealed class MissionScene {
 			for (int i = 0; i < count; i++) {
 				shapes[i] = models.Debris(WeaponMount.DebrisShapeLibraryName, i,
 					SceneModelLibrary.MechWeaponBankName);
-				radii[i] = shapes[i]?.RadiusWorldUnits ?? 0;
+				radii[i] = shapes[i]?.ShapeRadius ?? 0;
 			}
 
 			debrisModels[WeaponMount.DebrisShapeLibraryName] = shapes;
@@ -697,7 +711,7 @@ public sealed class MissionScene {
 	///
 	/// <para><b>No bounding-box lift</b>, deliberately: a shape's origin is already its ground contact
 	/// point, so raising an object by its mesh's lowest point sinks the one shape authored off the
-	/// ground. See docs/formats/dgs-hd0-notes.md, "Shape origin".</para>
+	/// ground. See docs/retail/formats/dgs-hd0-notes.md, "Shape origin".</para>
 	/// </summary>
 	/// <summary>
 	/// A group's order slots, or ten empty ones for a block-11 record the mission carries no orders
@@ -865,6 +879,21 @@ public sealed class MissionScene {
 		WorldScale.ToRenderMatrix(sceneObject.Object.WorldFrame);
 
 	/// <summary>
+	/// A mech's spawn height — <c>Mech_AttachToGroup</c> (<c>00417aa8</c>): the ground under
+	/// <paramref name="groundPoint"/> plus the chassis' ride height, and <see cref="FlyerSpawnLift"/>
+	/// more for a flyer. See docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 5.
+	/// </summary>
+	private static int MechSpawnHeight(HeightGrid terrain, MechObject mech, Vec3i groundPoint) =>
+		terrain.HeightAtWorld(groundPoint.X, groundPoint.Y) + mech.Type.RideHeight
+			+ (mech.Type.IsFlyer ? FlyerSpawnLift : 0);
+
+	/// <summary>
+	/// How much higher than a walker a flyer chassis (the RAZOR) starts: <c>Mech_AttachToGroup</c>'s
+	/// literal, added when <c>typeRec+0x50</c> is set.
+	/// </summary>
+	private const int FlyerSpawnLift = 5000;
+
+	/// <summary>
 	/// Builds and positions the simulation object for one placement. Returns null when the placement
 	/// names a type the install has nothing at all for — an out-of-range index in a hand-edited
 	/// mission — since an object with no identity has nothing to stand in for. A known type whose
@@ -872,8 +901,9 @@ public sealed class MissionScene {
 	/// </summary>
 	private static SceneObject? Spawn(MissionPlacement placement, SceneModelLibrary models,
 			BaseTypeTable baseTypes, BaseCollisionTable baseCollision, WeaponCatalog? weapons,
-			SimRandom random) {
-		var (simObject, model, detail) = Create(placement, models, baseTypes, baseCollision, weapons, random);
+			TransportArmament? transportArmament, SimRandom random, TweakSettings tweaks) {
+		var (simObject, model, detail) = Create(placement, models, baseTypes, baseCollision, weapons,
+			transportArmament, random, tweaks);
 		if (simObject == null) {
 			return null;
 		}
@@ -935,7 +965,8 @@ public sealed class MissionScene {
 	private static (SimObject? Object, SceneModel? Model, ShapeDetailChain? Detail) Create(
 			MissionPlacement placement,
 			SceneModelLibrary models, BaseTypeTable baseTypes, BaseCollisionTable baseCollision,
-			WeaponCatalog? weapons, SimRandom random) {
+			WeaponCatalog? weapons, TransportArmament? transportArmament, SimRandom random,
+			TweakSettings tweaks) {
 		switch (placement.Kind) {
 			case MissionUnitKind.Mech: {
 				if (placement.TypeName == null || models.MechData(placement.TypeName) is not { } simData) {
@@ -947,7 +978,7 @@ public sealed class MissionScene {
 				var roots = models.MechDetailRoots(placement.TypeName);
 				var model = roots.Count > 0 ? roots[0] : null;
 				return (
-					new MechObject(placement.TypeName, simData, model?.RadiusWorldUnits ?? 0,
+					new MechObject(placement.TypeName, simData, model?.ShapeRadius ?? 0,
 						new MechLoadout(
 							placement.WeaponRefs.Select(id => (int)id).ToArray(),
 							placement.WeaponSecondary),
@@ -973,7 +1004,7 @@ public sealed class MissionScene {
 				var model = models.Flyer(placement.TypeName);
 				return (
 					new FlyerObject(placement.TypeName, models.FlyerData(placement.TypeName),
-						model?.RadiusWorldUnits ?? 0,
+						model?.ShapeRadius ?? 0,
 						models.Collision(placement.TypeName),
 						ComponentDamageFor(models, placement.TypeName,
 							ComponentDamage.FlyerComponentCount, ComponentDamage.FlyerDependentCount, random),
@@ -997,12 +1028,15 @@ public sealed class MissionScene {
 				var (boundingRadius, volume) = models.GridShapeCollision(type);
 				return (
 					new BaseObject(type, volume, baseCollision[type.Index], boundingRadius,
-						models.BaseAnimCellCount(type), models.BaseAnimation(type)) {
+						models.BaseAnimCellCount(type), models.BaseAnimation(type),
+						placement.StartingCondition, models.HulkCollision(type),
+						tweaks.GetSettingValue(TweakSettingDefinitions.SmootherTurretMovement)) {
 						// The two PROJ.DAT rows the armed structure's tick names by literal, the same
 						// way the flyer AI does — see BaseObject.ArmedThinkTick.
 						GunProjectile = weapons?.ProjectileAt(BaseObject.GunProjectileIndex),
 						MissileProjectile = weapons?.Lookup(
-							ProjectileType.Rocket, BaseObject.MissileSubtype)
+							ProjectileType.Rocket, BaseObject.MissileSubtype),
+						TransportArmament = transportArmament
 					},
 					model, null);
 			}

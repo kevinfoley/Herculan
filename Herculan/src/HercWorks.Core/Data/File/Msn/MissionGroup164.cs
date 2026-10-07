@@ -3,8 +3,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>
 /// Row #16 (164 bytes/record) — a mission group, <c>script.dat</c> block 11: the roster slots it
 /// activates, where they stand, the orders they work through, and the action that brings them into
-/// the mission. See docs/formats/msn-mission-file.md, "Row #16 field decode", and
-/// docs/formats/script-dat.md#placement--the-actual-rule.
+/// the mission. See docs/retail/formats/msn-mission-file.md, "Row #16 field decode", and
+/// docs/retail/formats/script-dat.md#placement--the-actual-rule.
 /// </summary>
 public class MissionGroup164 : MapObject {
 	/// <summary>0x02 — condition ref.</summary>
@@ -16,7 +16,7 @@ public class MissionGroup164 : MapObject {
 
 	/// <summary>
 	/// 0x06 — for a base group, set when the group stands on and paints its formation's terrain tile
-	/// (docs/formats/script-dat.md#base-formation-terrain).
+	/// (docs/retail/formats/script-dat.md#base-formation-terrain).
 	/// </summary>
 	public short PaintsGround { get; set; }
 	public const int PaintsGroundWord = 0x06 / 2;
@@ -64,7 +64,7 @@ public class MissionGroup164 : MapObject {
 
 	/// <summary>
 	/// 0x76 — ref into row #10 (<see cref="MissionAction82"/>): when set, the group is not in the mission
-	/// until that action fires (docs/simulation/mission-deployment.md#the-deployment-gate--group0x14).
+	/// until that action fires (docs/retail/simulation/mission-deployment.md#the-deployment-gate--group0x14).
 	/// </summary>
 	public short DeploymentActionRef { get; set; }
 	public const int DeploymentActionRefWord = 0x76 / 2;
@@ -78,12 +78,12 @@ public class MissionGroup164 : MapObject {
 	/// The export separates them into <see cref="Script.ScriptGroup.CounterRefs"/> and
 	/// <see cref="Script.ScriptGroup.CounterOps"/>, and <c>DBSim_BuildGroupRecord</c>
 	/// (<c>00423b34</c>) copies the refs to <c>group+0x1c</c> and the operations to
-	/// <c>group+0x30</c>. See docs/simulation/mission-deployment.md#the-out-of-action-report.
+	/// <c>group+0x30</c>. See docs/retail/simulation/mission-deployment.md#the-out-of-action-report.
 	/// </summary>
 	public short[] OutOfActionReport { get; set; } = new short[20];
 	public const int OutOfActionReportWord = 0x7A / 2;
 
-	/// <summary>0xA2 — for a base group, what VSHELL's briefing map writes into each member's shown field (docs/shell/mission-map.md).</summary>
+	/// <summary>0xA2 — for a base group, what VSHELL's briefing map writes into each member's shown field (docs/retail/shell/mission-map.md).</summary>
 	public short MapShown { get; set; }
 	public const int MapShownWord = 0xA2 / 2;
 }

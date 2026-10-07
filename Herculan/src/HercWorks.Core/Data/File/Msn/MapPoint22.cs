@@ -2,7 +2,7 @@ namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
 /// Row #6 (22 bytes/record) — a world position, <c>script.dat</c> block 1. Every positional ref in
-/// the file names one of these. See docs/formats/msn-mission-file.md, "Row #6 field decode", and
+/// the file names one of these. See docs/retail/formats/msn-mission-file.md, "Row #6 field decode", and
 /// <see cref="VariantKey"/>/<see cref="SumFlag"/> for the two ways a point is computed at load.
 /// </summary>
 public class MapPoint22 : MapObject {
@@ -12,7 +12,7 @@ public class MapPoint22 : MapObject {
 
 	/// <summary>
 	/// 0x04 — variant key: unless <c>-1</c>, the coordinates are copied from a randomly picked
-	/// variant (docs/formats/msn-mission-file.md#variants). Unused in retail.
+	/// variant (docs/retail/formats/msn-mission-file.md#variants). Unused in retail.
 	/// </summary>
 	public short VariantKey { get; set; }
 	public const int VariantKeyWord = 0x04 / 2;

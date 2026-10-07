@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dts.Poly;
 
 /// <summary>
 /// An unlit poly whose surface value is a palette index, drawn as a fill plus an outline. See
-/// docs/formats/dts-texture-binding.md, "TSSolidPoly — palette index, unlit, fill plus outline".
+/// docs/retail/formats/dts-texture-binding.md, "TSSolidPoly — palette index, unlit, fill plus outline".
 /// </summary>
 public class TSSolidPoly : TSPoly {
 	/// <summary>

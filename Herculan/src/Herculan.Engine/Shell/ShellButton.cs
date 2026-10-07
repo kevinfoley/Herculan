@@ -26,7 +26,7 @@ public readonly record struct ShellSprite(string Bank, int Frame);
 /// <see cref="ShowsLit"/> is what the paint read from it the last time it ran. They differ because
 /// <c>ESButtonBitmap_HandleEvent</c> (<c>00409df2</c>) zeroes the flag on a left release without
 /// repainting, which is what leaves the active tab drawn lit after the click that latched it
-/// (docs/shell/screen-layout.md#which-widget-a-click-reaches).</para>
+/// (docs/retail/shell/screen-layout.md#which-widget-a-click-reaches).</para>
 /// </summary>
 public sealed class ShellButton {
 	public ShellButton(int id, ShellRect rect, ShellSprite unlit, ShellSprite lit,

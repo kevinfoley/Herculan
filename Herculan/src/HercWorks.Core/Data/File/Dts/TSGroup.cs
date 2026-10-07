@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.File.Dts;
 
 /// <summary>
 /// A geometry group: a point pool, an index list into it, a surface table, and the polys that
-/// reference all three. See docs/formats/dts-texture-binding.md, "Normals live in the point list".
+/// reference all three. See docs/retail/formats/dts-texture-binding.md, "Normals live in the point list".
 /// </summary>
 public class TSGroup : TSBasePart {
 	/// <summary>Point indices, which a poly's <c>VertexList</c> and <c>NormalList</c> are offsets into.</summary>

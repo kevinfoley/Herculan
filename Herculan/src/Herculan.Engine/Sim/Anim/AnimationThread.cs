@@ -1,5 +1,4 @@
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Settings;
 
 namespace Herculan.Engine.Sim.Anim;
 
@@ -12,7 +11,7 @@ namespace Herculan.Engine.Sim.Anim;
 /// thread holds the current frame's whole ground displacement and hands out the ramped fraction of
 /// it that has elapsed. Seeding <see cref="ReadRoot"/>'s source to identity, stepping, then reading
 /// back yields exactly the displacement covered by that step — which is how a HERC moves, since
-/// HERCs have no velocity vector (see docs/simulation/mech-locomotion.md). The second is the
+/// HERCs have no velocity vector (see docs/retail/simulation/mech-locomotion.md). The second is the
 /// <b>transition search</b>: asking for a target sequence does not cut to it, it looks for a
 /// transition frame that leads there and plays through it.</para>
 /// </summary>
@@ -322,13 +321,14 @@ public sealed class AnimationThread {
 	/// setting a position in the sequence <i>is</i> setting an angle. See
 	/// <see cref="MechObject.TorsoTwistTick"/>.</para>
 	///
-	/// <para>Not retail, behind <see cref="TweakSettingDefinitions.SmootherTurretMovement"/>: the
-	/// sub-tick remainder the original's Q14 scale-down truncates away is kept, and
+	/// <para>Not retail, with <paramref name="keepFraction"/> set — the
+	/// <see cref="Settings.TweakSettingDefinitions.SmootherTurretMovement"/> tweak: the sub-tick
+	/// remainder the original's Q14 scale-down truncates away is kept, and
 	/// <see cref="FrameFraction"/> spends it, so a seeked pose is no longer quantised to a whole
-	/// animation tick (docs/simulation/torso-aim.md, "Angle to pose"). On OUTLAW that is
+	/// animation tick (docs/retail/simulation/torso-aim.md, "Angle to pose"). On OUTLAW that is
 	/// 1747 drawn twist poses from centre to limit where retail has 170, and the drawn view moves
-	/// every tick from half stick up rather than from three quarters. Clearing the tweak restores the
-	/// original's arithmetic exactly. Playback is untouched: only a seek produces a remainder, and the
+	/// every tick from half stick up rather than from three quarters. Clear, it is the original's
+	/// arithmetic exactly. Playback is untouched: only a seek produces a remainder, and the
 	/// locomotion thread is never seeked.</para>
 	///
 	/// <para>What stepping is left comes from the cosine table, not the animation.
@@ -337,7 +337,8 @@ public sealed class AnimationThread {
 	/// is fine enough to carry the fraction past that point: one Q10 unit is 8 binary angle across a
 	/// torso sweep's 45° keyframe interval.</para>
 	/// </summary>
-	public void SeekToPosition(int sequence, short position) {
+	/// <param name="keepFraction">Keep the sub-tick remainder; false is the original's truncation.</param>
+	public void SeekToPosition(int sequence, short position, bool keepFraction) {
 		var target = _animation.Sequences[sequence];
 
 		int total = 0;
@@ -352,7 +353,7 @@ public sealed class AnimationThread {
 		int scaled = position * (short)(total - 1);
 		int remaining = scaled >> SeekFractionBits;
 		// The tweak keeps the sub-tick remainder rather than truncating to a whole animation tick.
-		int fraction = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.SmootherTurretMovement) ? scaled & ((1 << SeekFractionBits) - 1) : 0;
+		int fraction = keepFraction ? scaled & ((1 << SeekFractionBits) - 1) : 0;
 
 		int frame = 0;
 		while (frame < target.FrameCount - 1 && remaining >= target.FrameDurations[frame]) {

@@ -4,7 +4,7 @@
 // takes in the original's cell walk. SceneRenderer draws the terrain mesh through this into an
 // unsigned-integer target, and a ground shape's fragments are then kept only where the ground
 // under them was painted no later than the shape's own cell. See TerrainPaintRankBuffer and
-// docs/formats/terrain-drawing.md.
+// docs/retail/formats/terrain-drawing.md.
 
 #if defined(VERTEX_SHADER)
 	#define VARYING out

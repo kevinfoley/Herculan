@@ -1,10 +1,12 @@
+using Herculan.Engine.Content;
+
 namespace Herculan.Engine.Shell;
 
 /// <summary>
 /// Where a shell movie plays, in canvas pixels: the rect <c>Avi_Play</c> (<c>0041e01c</c>) hands
 /// <c>MoveWindow</c> for the movie's window, as its left, top, width and height. The movie is drawn
 /// stretched to fill it, which the rects' sizes indicate and retail has not been checked for
-/// (docs/shell/screen-layout.md#open).
+/// (docs/retail/shell/screen-layout.md#open).
 /// </summary>
 public readonly record struct ShellMovieRect(int X, int Y, int Width, int Height);
 
@@ -18,7 +20,7 @@ public sealed record ShellMovieEntry(int Id, ShellMovieRect Rect, int? Palette, 
 /// <summary>
 /// VSHELL's movie queue, <c>avi.cpp</c>'s ten-entry ring at <c>00485668</c> — which movie each id is,
 /// the rects its callers pass, and <c>Movie_Enqueue</c> (<c>0041e29c</c>). <see cref="ShellMovieRun"/>
-/// plays it out. See docs/shell/screen-layout.md#the-shells-movies.
+/// plays it out. See docs/retail/shell/screen-layout.md#the-shells-movies.
 /// </summary>
 public sealed class ShellMovieQueue {
 	/// <summary>How many entries the ring holds.</summary>
@@ -52,6 +54,9 @@ public sealed class ShellMovieQueue {
 	/// <summary>The mission screen's map panel: the map view's second movie.</summary>
 	public static readonly ShellMovieRect MapPanelRect = new(0x122, 0x43, 0x127, 0xe2);
 
+	/// <summary>The disc folder the table's paths name.</summary>
+	public const string MovieFolder = "AVI";
+
 	/// <summary>
 	/// The table at <c>00470e74</c>: 86 <c>avi\</c> paths indexed by movie id, with the folder left off.
 	/// An id is used as an index unchecked.
@@ -83,13 +88,22 @@ public sealed class ShellMovieQueue {
 	private int _writeIndex;
 	private int _readIndex;
 
-	/// <param name="enabled">Whether movies are on, <c>DAT_00482275</c>, which <c>-a</c> clears.</param>
-	public ShellMovieQueue(bool enabled = true) {
+	/// <param name="enabled">Whether movies are on, <c>Shell_MoviesEnabled</c> (<c>00482275</c>), which <c>-a</c> clears.</param>
+	/// <param name="introLanguage">The language whose folder the intro is read from; see <see cref="IntroLanguage"/>.</param>
+	public ShellMovieQueue(bool enabled = true, GameLanguage introLanguage = GameLanguage.English) {
 		Enabled = enabled;
+		IntroLanguage = introLanguage;
 	}
 
-	/// <summary><c>DAT_00482275</c>: while it is clear nothing is queued and nothing plays.</summary>
+	/// <summary><c>Shell_MoviesEnabled</c> (<c>00482275</c>): while it is clear nothing is queued and nothing plays.</summary>
 	public bool Enabled { get; }
+
+	/// <summary>
+	/// The language whose folder the intro's two parts are read from: the shell's language in v1.10, whose
+	/// <c>Movie_PlayQueue</c> rewrites their <c>avi\</c> to <c>avf\</c> or <c>avg\</c>, and English in v1.0
+	/// (docs/retail/retail-builds.md#v110s-shell-reads-the-language-twice-more).
+	/// </summary>
+	public GameLanguage IntroLanguage { get; }
 
 	/// <summary>
 	/// <c>MovieQueue_Running</c> (<c>00470e70</c>): set while <see cref="ShellMovieRun"/> plays the
@@ -103,6 +117,18 @@ public sealed class ShellMovieQueue {
 
 	/// <summary>The movie file an id names, or null for an id past the table.</summary>
 	public static string? FileName(int id) => id >= 0 && id < FileNames.Length ? FileNames[id] : null;
+
+	/// <summary>The disc folder <paramref name="language"/>'s intro is read from.</summary>
+	public static string IntroFolder(GameLanguage language) => language switch {
+		GameLanguage.French => "AVF",
+		GameLanguage.German => "AVG",
+		_ => MovieFolder,
+	};
+
+	/// <summary>The movie an id names as a path under the disc, or null for an id past the table.</summary>
+	public string? MoviePath(int id) => FileName(id) is { } name
+		? Path.Combine(id is IntroPart1 or IntroPart2 ? IntroFolder(IntroLanguage) : MovieFolder, name)
+		: null;
 
 	/// <summary>
 	/// <c>Movie_Enqueue</c> (<c>0041e29c</c>): writes an entry at the write index and moves it on,

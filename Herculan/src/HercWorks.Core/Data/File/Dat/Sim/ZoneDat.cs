@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 /// <summary>
 /// FILE - /ZONE/DAT/ZONEXXXX.DAT — the 16-byte per-zone header <c>Terrain_LoadZone</c> reads beside
 /// the zone's heightmap, four little-endian <c>INT32</c>s, read by
-/// <see cref="Io.Transform.Common.ZoneDatTransformer"/>. See docs/formats/terrain-heightmap.md.
+/// <see cref="Io.Transform.Common.ZoneDatTransformer"/>. See docs/retail/formats/terrain-heightmap.md.
 /// </summary>
 public class ZoneDat : DataFile {
 	/// <summary>

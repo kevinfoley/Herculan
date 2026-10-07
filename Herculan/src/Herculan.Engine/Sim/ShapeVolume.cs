@@ -5,7 +5,7 @@ namespace Herculan.Engine.Sim;
 
 /// <summary>
 /// A structure shape's collision volume, and the two queries the simulation runs against it: the
-/// height under a point (<see cref="HeightAround"/>) and the ray march that walks the grid looking
+/// height under a point (<see cref="HeightAt"/>) and the ray march that walks the grid looking
 /// for one (<see cref="Raycast"/>). The data itself is <see cref="GridShapeCollision"/>, read out of the
 /// shape's <c>.DGS</c> record.
 ///
@@ -17,8 +17,8 @@ namespace Herculan.Engine.Sim;
 ///
 /// <para>The grid's own units are shape space, i.e. world units around the model's origin. The
 /// origin cell is not cell zero: a point is shifted by the grid's origin <i>in world units</i>
-/// before it is divided down, so the footprint straddles the model. The shift belongs to the
-/// caller — see <see cref="HeightAround"/>.</para>
+/// before it is divided down, so the footprint straddles the model. Both queries apply it, so a
+/// walker and a shot meet the same footprint.</para>
 /// </summary>
 public sealed class ShapeVolume {
 	private readonly GridShapeCollision _grid;
@@ -61,8 +61,8 @@ public sealed class ShapeVolume {
 			return false;
 		}
 
-		int offsetX = _grid.OriginColumn << _grid.CellShift;
-		int offsetY = _grid.OriginRow << _grid.CellShift;
+		int offsetX = OriginOffsetX;
+		int offsetY = OriginOffsetY;
 
 		int x = start.X + offsetX;
 		int y = start.Y + offsetY;
@@ -99,18 +99,31 @@ public sealed class ShapeVolume {
 	}
 
 	/// <summary>
+	/// <c>GridShape_HeightAt</c> (<c>00427360</c>) — the height under a point in shape space: the
+	/// point shifted by the grid origin, then <see cref="HeightAround"/>. Zero for a volume with no
+	/// cells. The walk test (<see cref="BaseObject.BlocksWalker"/>) asks this at radius 0.
+	/// </summary>
+	/// <param name="x">Point X, in shape space.</param>
+	/// <param name="y">Point Y, in shape space.</param>
+	/// <param name="radius">How wide a footprint to sample.</param>
+	public int HeightAt(int x, int y, int radius) =>
+		_grid.IsSolid ? HeightAround(x + OriginOffsetX, y + OriginOffsetY, radius) : 0;
+
+	// The grid origin in world units, which both queries add before dividing a point down to a cell.
+	// Kept to the original's 16-bit shift.
+	private int OriginOffsetX => (short)(_grid.OriginColumn << _grid.CellShift);
+	private int OriginOffsetY => (short)(_grid.OriginRow << _grid.CellShift);
+
+	/// <summary>
 	/// <c>GridShape_HeightAround</c> (<c>00427238</c>) — the tallest column within <paramref name="radius"/> of a point, or the column the point is in when the radius is
 	/// smaller than half a cell. Both forms return zero for a point off the grid, which is what makes
-	/// the volume end at its own edges.
-	///
-	/// <para><b>It does not apply the grid origin.</b> That is the caller's job, and the original's
-	/// two callers disagree about it: <see cref="Raycast"/> shifts the point and the walk test
-	/// (<see cref="BaseObject.BlocksWalker"/>) does not. Both are reproduced as written.</para>
+	/// the volume end at its own edges. The point is already shifted by the grid origin;
+	/// <see cref="HeightAt"/> and <see cref="Raycast"/> do that.
 	/// </summary>
 	/// <param name="x">Point X, in the grid's own indexing frame.</param>
 	/// <param name="y">Point Y, in the grid's own indexing frame.</param>
 	/// <param name="radius">How wide a footprint to sample — the shot's clearance.</param>
-	public int HeightAround(int x, int y, int radius) {
+	private int HeightAround(int x, int y, int radius) {
 		int shift = _grid.CellShift;
 
 		// The narrow case is not an optimisation the engine adds: the original tests the radius

@@ -1,6 +1,7 @@
-﻿using System.Buffers.Binary;
-using HercWorks.Core.Data.File.Dyn;
+﻿using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.Struct;
+using Herculan.Engine.Cockpit;
+using System.Buffers.Binary;
 
 namespace Herculan.Engine.Content;
 
@@ -11,15 +12,14 @@ namespace Herculan.Engine.Content;
 /// <para>HUD data files never name a palette index directly. A <c>.PDG</c> damage region, a gauge
 /// constructor, a text label: each carries a small id, and DBSIM resolves it once at load time
 /// through this table, in place (<c>arr[i] = table[arr[i]]</c>). The table itself lives at
-/// <c>HudColorTable</c> (<c>004d3c00</c>) in DBSIM's .bss; no code in the image materialises that address to write it,
-/// and the file supplies exactly the 27 entries the code's observed access range and id values
-/// require.</para>
+/// <c>HudColorTable</c> (<c>004d3c00</c>) in DBSIM's .bss, which <c>HudColor_LoadResources</c>
+/// (<c>00467a60</c>) fills straight from the file — the 27 entries this loads.</para>
 ///
 /// <para>Independently verified: the heads-down display's damage screen resolves ids 19, 9, 15, 12,
 /// which this table maps to palette 16, 10, 13, 14 — black, red, yellow and green in the assembled
 /// palette (see <see cref="CockpitPalette"/>). That the four land on exactly the colours a damage
 /// readout wears is what corroborates the table; it is <b>not</b> where those readouts get their
-/// colour, which is a font — see docs/formats/heads-down-display.md, Rejected readings.</para>
+/// colour, which is a font — see docs/retail/formats/heads-down-display.md, Rejected readings.</para>
 ///
 /// <para>The indirection is what makes the ids theater-independent: entries point into both the
 /// fixed 0-15 system colours and the theater-owned 16-31 ramp, so the same data file yields
@@ -42,7 +42,7 @@ public sealed class HudColorTable {
 	/// colour — a one-pixel vertical pinstripe. Ids 6 and 5 resolve to palette 98 and 97, two shades
 	/// of blue — <c>(0,116,204)</c> and <c>(0,40,160)</c> — which interleaved read as a single shaded
 	/// fill rather than two colours. Field <c>0x2c</c> is the even columns, <c>0x30</c> the odd. See
-	/// docs/formats/cockpit-hud-widgets.md, "LED gauges".</para>
+	/// docs/retail/formats/cockpit-hud-widgets.md, "LED gauges".</para>
 	/// </summary>
 	public const int GaugeFillEvenId = 6;
 
@@ -88,7 +88,7 @@ public sealed class HudColorTable {
 	/// <summary>
 	/// The colour a squad comm box paints its pilot's name on, and the same colour that pilot's own
 	/// map marker and order link take: <c>HudColorTable_Get</c> (<c>00434280</c>) reads the slot's id
-	/// from its own array at <c>0049b040</c>. See "The gauge" in docs/formats/heads-down-display.md.
+	/// from its own array at <c>0049b040</c>. See "The gauge" in docs/retail/formats/heads-down-display.md.
 	/// A slot outside the squad answers -1, which resolves to no colour.
 	/// </summary>
 	public static int PilotColorId(int slot) =>

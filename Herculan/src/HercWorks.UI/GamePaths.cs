@@ -70,7 +70,7 @@ public static class GamePaths {
 	/// <summary>
 	/// Where a simulator <c>dat\</c> file can live, in the same preference order as
 	/// <see cref="GamSearchDirectories"/>: DBSIM opens <c>dat\name.dat</c> as a loose file before it
-	/// searches its volumes (<c>VolRStream_Open</c>, see docs/formats/vol-archive.md), then an unpacked
+	/// searches its volumes (<c>VolRStream_Open</c>, see docs/retail/formats/vol-archive.md), then an unpacked
 	/// SIMVOL0 tree, then the packed VOL.
 	/// </summary>
 	private static readonly string[][] SimDatSearchDirectories = {

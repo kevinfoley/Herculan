@@ -1,8 +1,8 @@
 namespace Herculan.Engine.Host;
 
 /// <summary>
-/// The command line's value readers and its <c>--help</c> text. Program.cs owns the flags themselves;
-/// docs/engine/herculan-command-line.md describes each one.
+/// The command line's value readers and its <c>--help</c> text. <see cref="HostOptions"/> owns the flags themselves;
+/// docs/herculan/herculan-command-line.md describes each one.
 ///
 /// <para>A malformed command line is an error rather than a guess. Anything the parser does not claim
 /// would otherwise land in the positional arguments, so <c>--mfd abc</c> would take <c>abc</c> as the
@@ -69,16 +69,16 @@ static class HostArguments {
 
 		  <install>   the Earthsiege 2 folder; default ES2_GAME_PATH, then the last one used, then an ES2 folder
 		              above the executable, then a window asking for it
-		  <mission>   a script.dat, a SAV\script*.dat, or a mission's .MSN name (C1_03); default DATA\script.dat in the install
+		  <mission>   a script.dat with its mission.var and player.mec, or a mission's .MSN name (C1_03); default DATA\script.dat in the install
 
-		What runs (default: fly the mission)
-		  --shell                     the front end
+		What runs (default: the front end)
+		  --mission                   one mission, without the front end; a named <mission> implies it
 		  --movie <name>              one cutscene, by path or AVI folder name
-		  --play <tape>               replay an input tape, by path or TAPES folder stem
-		  --demo                      a demo tape from TAPES\demolist.str, as VIEW DEMO plays it
-		  --record <tape>             record this mission's input to <tape>.tap
+		  --play <tape>               replay an input tape, by path or TAPES folder stem; implies --mission
+		  --demo                      a demo tape from TAPES\demolist.str, as VIEW DEMO plays it; implies --mission
+		  --record <tape>             record the mission's input to <tape>.tap
 
-		Front end (each implies --shell)
+		Front end (none combines with --mission)
 		  --shell-tab <0-7>  --shell-bay <0-7>  --shell-training  --shell-practice
 		  --shell-windowed  --shell-no-movies
 		  --shell-palette <name>
@@ -89,12 +89,19 @@ static class HostArguments {
 		  --cd-drive <drive>  --music-dir <dir>
 
 		Settings and input devices
-		  --no-write-prefs  --joystick [0-8]  --joystick-probe  --write-joystick-map
+		  --ask-install               ask for the install at once, and remember none
+		  --windowed  --no-write-prefs  --joystick [0-8]  --joystick-probe  --write-joystick-map
+
+		Installing
+		  --install <disc> <folder>   install from a disc folder or disc image (.iso, .bin, .cue), then exit
+		  --install-size minimum|medium|maximum         default maximum
+		  --install-language english|french|german      default english
 
 		Developer
 		  --developer                 the developer keys
 
 		Screenshots and staged state
+		  --save-prtscn               also save each full-screen [PrtScn] capture to <install>\Screenshots
 		  --screenshot <file>         capture after 30 frames (or what the options below wait for), then exit
 		  --mfd <0-5>  --hdd [0|1]  --hdd-damage <0-2>  --external
 		  --objectives  --quit [0-19]  --preferences  --controls  --hit-shake
@@ -105,6 +112,6 @@ static class HostArguments {
 
 		  --help, -h, -?              this text
 
-		Every option is described in Herculan/docs/engine/herculan-command-line.md.
+		Every option is described in Herculan/docs/herculan/herculan-command-line.md.
 		""";
 }

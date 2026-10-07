@@ -9,7 +9,7 @@ namespace Herculan.Engine.World;
 /// group, the flyer twin of <see cref="MechFormationTable"/> and <see cref="BaseFormationTable"/>.
 ///
 /// <para>The layout, the accessor's arithmetic and how a flight uses the offset are
-/// docs/formats/script-dat.md, section "The flyer formation table".</para>
+/// docs/retail/formats/script-dat.md, section "The flyer formation table".</para>
 ///
 /// <para>Byte-exact against the retail file: 2-byte count (5) + 5 × 0x12 consumes all 92 content
 /// bytes with nothing left over.</para>

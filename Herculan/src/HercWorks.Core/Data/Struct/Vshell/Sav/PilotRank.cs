@@ -10,7 +10,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Sav;
 /// rank from four in — so a single 0-7 enum will appear to display correctly while conflating two
 /// fields the game keeps apart and caps independently.</para>
 ///
-/// See <c>docs/formats/save-games.md</c> and <c>docs/shell/campaign-loop.md</c>.
+/// See <c>docs/retail/formats/save-games.md</c> and <c>docs/retail/shell/campaign-loop.md</c>.
 /// </summary>
 public sealed class PilotRank {
 	public static readonly PilotRank Lieutenant = new(0, "Lieutenant");

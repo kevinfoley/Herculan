@@ -188,9 +188,9 @@ OUTSIDE_OPEN_RULES: list[tuple[str, re.Pattern[str], str]] = [
 # original — lives in the C# that implements it, which cites the doc section, so an engine change
 # never has to go looking for prose to update. Only these docs are about the engine itself.
 ENGINE_DOC_BASENAMES = {
-    "herculan-command-line.md", "KNOWN_ISSUES.md", "ROADMAP.md", "README.md", "cut-content.md", "key-bindings.md",
+    "KNOWN_ISSUES.md", "ROADMAP.md", "README.md",
 }
-ENGINE_DOC_DIRS = [os.path.join("Herculan", "docs", "engine")]
+ENGINE_DOC_DIRS = [os.path.join("Herculan", "docs", "herculan")]
 
 ENGINE_RULES: list[tuple[str, re.Pattern[str], str]] = [
     (
@@ -496,6 +496,30 @@ def lint_file(path: str, include_code: bool) -> list[tuple[int, str, str, str, s
     return hits
 
 
+def unstamped_mentions(lines: set[str]) -> list[str]:
+    """The known_symbols functions named in backticks on these lines that carry no verification stamp.
+
+    What a doc says about such a function rests on its description, which is a lead until someone has
+    read the body and stamped it (tools/ghidra_scripts/README.md, "Verification stamps"). Advisory:
+    an unreadable symbol file yields nothing rather than failing the hook.
+    """
+    try:
+        import es2_symbols
+        functions: set[str] = set()
+        stamped: set[str] = set()
+        for binary in es2_symbols.BINARIES:
+            for e in es2_symbols.entries(binary):
+                name = e.get("name")
+                if e.get("type") == "function" and name:
+                    functions.add(name)
+                    if "verified" in e:
+                        stamped.add(name)
+    except Exception:
+        return []
+    found = {tok for ln in lines for tok in re.findall(r"`([A-Za-z_][A-Za-z0-9_]*)`", ln)}
+    return sorted(found & functions - stamped)
+
+
 def hook_mode() -> int:
     """PostToolUse hook: read Claude Code's hook JSON on stdin, lint the edited file.
 
@@ -537,10 +561,27 @@ def hook_mode() -> int:
         file_lines = fh.read().replace("\r\n", "\n").split("\n")
     hits = [h for h in hits
             if h[1] not in ENGINE_RULE_IDS or file_lines[h[0] - 1].strip() in touched]
-    if not hits:
+    unstamped = unstamped_mentions(touched) if norm.lower().endswith(".md") else []
+    if not hits and not unstamped:
         return 0
 
     rel = os.path.relpath(path, REPO_ROOT).replace("\\", "/")
+    stamp_note = [
+        "Unstamped functions named in the lines this edit wrote: " + ", ".join(unstamped) + ". "
+        "Anything these lines say about one of them must come from its body, read this session (then "
+        "stamp it: tools/scripts/es2_stamp.py), or be written as an Open item. Its known_symbols "
+        "description, an engine comment or another doc is only a lead.",
+    ] if unstamped else []
+    if not hits:
+        json.dump({
+            "systemMessage": f"doc-lint: {len(unstamped)} unstamped function(s) named in {rel}",
+            "hookSpecificOutput": {
+                "hookEventName": "PostToolUse",
+                "additionalContext": "\n".join(stamp_note),
+            },
+        }, sys.stdout)
+        return 0
+
     lines = [
         f"doc-lint flagged {len(hits)} issue(s) in {rel}. This is a reference document: it states "
         "what is true now, and the change history belongs in the commit message.",
@@ -566,6 +607,8 @@ def hook_mode() -> int:
         "the token is a retail name that only happens to match one, add it to known_symbols_<binary>.json "
         "or known_structs.json if it belongs there, otherwise append <!-- doc-lint: ok -->.",
     ]
+    if stamp_note:
+        lines += [""] + stamp_note
 
     json.dump({
         "systemMessage": f"doc-lint: {len(hits)} issue(s) in {rel}",

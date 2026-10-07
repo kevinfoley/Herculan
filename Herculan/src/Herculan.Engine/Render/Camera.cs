@@ -40,7 +40,7 @@ public sealed class Camera {
 	/// shift <i>is</i> the focal length: <c>2^shift</c> pixels.
 	///
 	/// <para>Which shift the mode picks, and the trace from there to <c>view+0x1a</c>, are in
-	/// docs/formats/cockpit-views.md. 512 is the 640x480 modes' value; the 320x240 mode's 256 is the
+	/// docs/retail/formats/cockpit-views.md. 512 is the 640x480 modes' value; the 320x240 mode's 256 is the
 	/// same angle over half the rows.</para>
 	/// </summary>
 	public const float FocalLengthPixels = 512f;

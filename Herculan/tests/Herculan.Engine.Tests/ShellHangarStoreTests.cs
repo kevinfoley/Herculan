@@ -1,4 +1,4 @@
-using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Shell;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Data.Struct.Vshell.Sav;
@@ -16,7 +16,7 @@ namespace Herculan.Engine.Tests;
 /// comes back as a default and the next load reads it without complaint. An unchanged hangar stored
 /// back has to give the file's own bytes, with one exception: every weapon's stock comes back in the
 /// opposite order, because <c>Armory_Write</c> walks the list from the head and the reader pushes onto
-/// it (docs/formats/save-games.md#armory-stock-record). The expected bytes are the file's with each
+/// it (docs/retail/formats/save-games.md#armory-stock-record). The expected bytes are the file's with each
 /// stock reversed in the parsed model, so the reversal is pinned rather than tolerated.</para>
 /// </summary>
 public class ShellHangarStoreTests {

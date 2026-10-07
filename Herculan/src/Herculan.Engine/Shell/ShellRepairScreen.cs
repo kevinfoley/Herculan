@@ -29,7 +29,7 @@ public enum ShellRepairButton {
 /// <para><b>Every rect here is a literal in the executable</b>, four immediates on the builder's own
 /// stack, and they are kept parent-relative exactly as it writes them — the content panel in the
 /// canvas, the two list panels and the three readout panels in that, and each list's rows in its own
-/// panel. See docs/shell/screen-layout.md.</para>
+/// panel. See docs/retail/shell/screen-layout.md.</para>
 ///
 /// <para><b>A selection is a <c>(column, row)</c> pair and it resolves into a category.</b> Column 0's
 /// sixteen rows are the six external component groups and then ten hardpoints; column 1's nine are
@@ -136,7 +136,7 @@ public sealed class ShellRepairScreen {
 	/// <summary>
 	/// <c>ShellOption_RepairMode</c> (<c>004824e4</c>), <c>prefs.cfg</c> option 44: 0 repairs every machine
 	/// automatically at debrief, 1 and 2 leave the player's own machine to this screen
-	/// (docs/simulation/preferences.md). Only the preferences screen changes it.
+	/// (docs/retail/simulation/preferences.md). Only the preferences screen changes it.
 	/// </summary>
 	public int RepairMode { get; set; } = AutoRepairMode;
 
@@ -153,8 +153,8 @@ public sealed class ShellRepairScreen {
 	private int _modeText = ManualRepairText;
 
 	/// <summary>
-	/// <c>Repair_Snapshot</c> (<c>004338f6</c>)'s copies, <c>DAT_0048d25c</c> and the 66 bytes at
-	/// <c>DAT_0048d260</c>: the pool and the selected machine's status block as they stood when the screen
+	/// <c>Repair_Snapshot</c> (<c>004338f6</c>)'s copies, <c>RepairSnapshotSalvage</c> (<c>0048d25c</c>) and the 66 bytes at
+	/// <c>RepairSnapshotStatus</c> (<c>0048d260</c>): the pool and the selected machine's status block as they stood when the screen
 	/// was entered or the bay last changed. CANCEL puts both back.
 	/// </summary>
 	private int _snapshotSalvage;
@@ -212,7 +212,7 @@ public sealed class ShellRepairScreen {
 	/// <c>(0, 0)</c>.
 	///
 	/// <para>The original selects that bay through <c>Squad_SelectBay</c> under the previous tab's rule,
-	/// as <c>Arming_Enter</c> does (docs/shell/screen-layout.md#entering-the-weapons-screen); this engine
+	/// as <c>Arming_Enter</c> does (docs/retail/shell/screen-layout.md#entering-the-weapons-screen); this engine
 	/// applies the repair tab's.</para>
 	/// </summary>
 	public void Enter() {
@@ -269,7 +269,7 @@ public sealed class ShellRepairScreen {
 	/// CANCEL, <c>Repair_OnCancel</c> (<c>00434d73</c>): the pool goes back to the snapshot outright, so
 	/// anything else that moved it since is undone too, and the snapshot's status block is copied over
 	/// the selected machine. With no machine selected the original copies it over whatever
-	/// <c>00482abf</c> points at; this engine restores only the pool (docs/shell/screen-layout.md#open).
+	/// <c>00482abf</c> points at; this engine restores only the pool (docs/retail/shell/screen-layout.md#open).
 	/// </summary>
 	public void Cancel() {
 		_hangar.SalvageKilograms = _snapshotSalvage;
@@ -314,7 +314,7 @@ public sealed class ShellRepairScreen {
 	/// The <c>(column, row)</c> a canvas point selects, or null: a row of either list, or a hotspot over
 	/// the external picture, which is only there to click while that picture is the one up. Rows overlap
 	/// by their border line, which goes to the lower row because it was built later
-	/// (docs/shell/screen-layout.md#which-widget-a-click-reaches).
+	/// (docs/retail/shell/screen-layout.md#which-widget-a-click-reaches).
 	/// </summary>
 	public (int Column, int Row)? RowAt(float canvasX, float canvasY) {
 		if (_column == 0 && _diagrams?.HotspotAt(Machine, canvasX, canvasY) is { } hotspot) {
@@ -544,7 +544,7 @@ public sealed class ShellRepairScreen {
 		// The condition word is drawn in the readout grey like every other box, not in its damage band's
 		// colour. Repair_RefreshDetail (00433445) does look the band colour up and write it to the widget's +0xb5 — and then
 		// calls ESMessage_SetString with 0x17, which overwrites +0xb5 before the paint. The write is dead; see
-		// docs/shell/screen-layout.md, "The repair screen".
+		// docs/retail/shell/screen-layout.md, "The repair screen".
 		PaintReadout(surface, font, Inside(panel, ItemConditionReadoutRect),
 			text?.Text(ConditionWordText(SelectionCondition)));
 		PaintButton(surface, font, text?.Text(RepairText), ShellRepairButton.Repair);
@@ -598,7 +598,7 @@ public sealed class ShellRepairScreen {
 	///
 	/// <para>The original runs it only from <c>Squad_SelectBay</c>'s repair arm, so a machine selected on
 	/// another tab keeps the names this tab last set; this engine names every machine by its own chassis
-	/// (docs/shell/screen-layout.md#which-names-a-chassis-shows).</para>
+	/// (docs/retail/shell/screen-layout.md#which-names-a-chassis-shows).</para>
 	/// </summary>
 	public static int ComponentNameText(int chassisType, ShellRepairCategory category, int index) {
 		int[] table = chassisType == FlyerChassisType ? FlyerComponentNames : WalkerComponentNames;
@@ -748,7 +748,7 @@ public sealed class ShellRepairScreen {
 	/// The condition words, which the screen indexes by damage level. The run is four words long —
 	/// <c>Nominal</c>, <c>Light</c>, <c>Moderate</c>, <c>Heavy</c> — for six levels, so level 4 reads
 	/// <c>0x6c</c> <c>% Complete</c> and level 5 <c>0x6d</c> <c>Unassigned</c>, the two unrelated
-	/// entries that follow. See Herculan/KNOWN_ISSUES.md and docs/shell/screen-layout.md, "The Condition
+	/// entries that follow. See Herculan/KNOWN_ISSUES.md and docs/retail/shell/screen-layout.md, "The Condition
 	/// readout".
 	/// </summary>
 	private const int FirstConditionWordText = 0x68;

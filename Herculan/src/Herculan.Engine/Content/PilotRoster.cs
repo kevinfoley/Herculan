@@ -1,5 +1,5 @@
-using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Io.Transform.Dbsim;
+using Herculan.Engine.Cockpit;
 
 namespace Herculan.Engine.Content;
 
@@ -111,12 +111,14 @@ public sealed class PilotRoster {
 
 	/// <summary>
 	/// Reads the roster out of the mounted archives, or null when <c>PILOTS.STR</c> is absent or does
-	/// not parse.
+	/// not parse. It is <c>str\PILOTS.STR</c> in every language: <c>HddDisplay_Ctor</c> (<c>00448cc8</c>) builds the path
+	/// with <c>ResourcePath_BuildFolderName</c>, not the language's folder, so v1.10's <c>stf\</c> and <c>stg\</c>
+	/// copies are never read.
 	/// </summary>
 	public static PilotRoster? Load(GameContent content) {
 		ArgumentNullException.ThrowIfNull(content);
 
-		if (SimStrings.Load(content, ResourceName) is not { } table) {
+		if (SimStrings.LoadUntranslated(content, ResourceName) is not { } table) {
 			return null;
 		}
 

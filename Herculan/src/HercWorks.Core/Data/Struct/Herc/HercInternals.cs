@@ -4,13 +4,14 @@ namespace HercWorks.Core.Data.Struct.Herc;
 /// A HERC's internal components by index. Two index spaces share it:
 ///
 /// <para>DBSIM's <c>.DMG</c> files carry 22 internal slots: 0-8 the nine components, 9 the pilot,
-/// 10 and 11 the rear leg servos of a four-legged chassis, and 12-21 unused
-/// (<c>docs/formats/dmg-damage-file.md#the-two-index-spaces</c>).</para>
+/// 10 and 11 the rear leg servos of a four-legged chassis, and 12-21 the ten weapon mounts' own
+/// internals, maximum 0 in every file until a fitted weapon gives its slot one
+/// (<c>docs/retail/formats/dmg-damage-file.md#the-two-index-spaces</c>).</para>
 ///
 /// <para>The shell's HERC status block carries only ids 0-9: 0-8 the same nine components, and 9 the
 /// machine's overall condition — the mean the debrief copies into the pilot's own condition — under
 /// the <see cref="Pilot"/> entry. Shell readers and editors therefore stop at
-/// <see cref="ServosLegLeftRear"/> (<c>docs/formats/save-games.md#the-66-byte-status-block</c>).</para>
+/// <see cref="ServosLegLeftRear"/> (<c>docs/retail/formats/save-games.md#the-66-byte-status-block</c>).</para>
 /// </summary>
 public sealed class HercInternals {
 	public static readonly HercInternals ServosLegLeft = new(0, "Left Leg Servos");
@@ -25,13 +26,22 @@ public sealed class HercInternals {
 	public static readonly HercInternals Pilot = new(9, "Pilot");
 	public static readonly HercInternals ServosLegLeftRear = new(10, "Rear Left Leg Servos");
 	public static readonly HercInternals ServosLegRightRear = new(11, "Rear Right Leg Servos");
-	public static readonly HercInternals Unused = new(12, "Unused");
+	/// <summary>The first weapon mount's internal; fit slot <c>n</c>'s is this plus <c>n</c>.</summary>
+	public const short FirstWeaponMountId = 12;
+
+	/// <summary>
+	/// Ids 12-21, one per weapon-mount fit slot: the internal a fitted weapon's piece lists behind
+	/// its mount component (docs/retail/formats/dmg-damage-file.md#a-fitted-weapon-replaces-its-mounts-piece).
+	/// </summary>
+	public static readonly IReadOnlyList<HercInternals> WeaponMounts = Enumerable.Range(0, 10)
+		.Select(slot => new HercInternals((short)(FirstWeaponMountId + slot), $"Weapon Mount {slot + 1}"))
+		.ToArray();
 
 	private static readonly IReadOnlyList<HercInternals> All = new[]
 	{
 		ServosLegLeft, ServosLegRight, SensorArray, TargComp, ShieldGen, Engine, Hydraulics,
-		Stabilizers, LifeSupport, Pilot, ServosLegLeftRear, ServosLegRightRear, Unused
-	};
+		Stabilizers, LifeSupport, Pilot, ServosLegLeftRear, ServosLegRightRear
+	}.Concat(WeaponMounts).ToArray();
 
 	private static readonly Dictionary<short, HercInternals> ById = All.ToDictionary(e => e.Id);
 

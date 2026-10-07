@@ -8,7 +8,7 @@ namespace HercWorks.Core.Io.Transform.Shell;
 ///
 /// <para>The values are left exactly as they are on disk. Expanding them against a chassis price is
 /// the loader's job and belongs with the cost model, not here — see
-/// <c>Herculan.Engine.Shell.ShellRepairCosts</c>. See <c>docs/formats/herc-catalogs.md</c>.</para>
+/// <c>Herculan.Engine.Shell.ShellRepairCosts</c>. See <c>docs/retail/formats/herc-catalogs.md</c>.</para>
 /// </summary>
 public class DamageRepairCostTransformer : ByteTransformer<DamageRepairCost> {
 	public override DamageRepairCost? Parse(byte[]? inputArray) {

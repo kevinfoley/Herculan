@@ -2,7 +2,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Hercs;
 
 /// <summary>
 /// One 16-byte record of <c>gam\herc_inf.dat</c>, the chassis stat table. See
-/// <c>docs/formats/herc-catalogs.md#gamherc_infdat--the-chassis-stat-table</c>.
+/// <c>docs/retail/formats/herc-catalogs.md#gamherc_infdat--the-chassis-stat-table</c>.
 /// </summary>
 public class HercInfEntry {
 	public const short OutlawHercId = 0;
@@ -21,7 +21,7 @@ public class HercInfEntry {
 	/// <c>+0x06</c>, printed bare by the Herc Construction screen — but <b>not</b> what the game equips. Capacity
 	/// comes from a nine-entry table in VSHELL's code, and the two disagree for the Raptor II: this
 	/// field says 4 where the delivered machine has 5. Treat it as display text, not as the
-	/// hardpoint count. See <c>docs/formats/herc-catalogs.md#rejected-readings</c>.
+	/// hardpoint count. See <c>docs/retail/formats/herc-catalogs.md#rejected-readings</c>.
 	/// </summary>
 	public short HardpointTotal { get; set; }
 
@@ -29,7 +29,7 @@ public class HercInfEntry {
 	public short SalvageReq { get; set; }
 
 	/// <summary>
-	/// <c>+0x0a</c>, meaning open (<c>docs/formats/herc-catalogs.md#open</c>). Retail holds 40, 50, 60, 95, 110, 100, 125, 30
+	/// <c>+0x0a</c>, meaning open (<c>docs/retail/formats/herc-catalogs.md#open</c>). Retail holds 40, 50, 60, 95, 110, 100, 125, 30
 	/// and 70 across the nine chassis.
 	/// </summary>
 	public short Unknown0A { get; set; }

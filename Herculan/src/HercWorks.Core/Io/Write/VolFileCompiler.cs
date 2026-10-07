@@ -120,7 +120,7 @@ public static class VolFileCompiler {
 		volStream.WriteByte(0x00);
 		volStream.WriteByte(0x00);
 
-		// VOL load-order precedence flag, 05 (first), 0A (observed in SHELL1.vol)
+		// Search precedence, see Voln.VolOrderNum.
 		volStream.WriteByte(0x0A); // TODO (carried over from Java)
 
 		// Directory count

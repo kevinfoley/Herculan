@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>
 /// FILE - /ZONES.VOL/MSN/*.MSN — a mission, as authored: a revision word (always 5) followed by 17
 /// rows in a fixed order, most a <c>[uint16 count]</c> then that many fixed-size records. See
-/// docs/formats/msn-mission-file.md.
+/// docs/retail/formats/msn-mission-file.md.
 ///
 /// <para>This is the editing model: it round-trips a file byte for byte and keeps every record as
 /// authored, refs as GUIDs, resolved on demand by the lookups below. It does not apply the
@@ -28,7 +28,7 @@ public class MissionFile {
 
 	/// <summary>
 	/// Row #5 — the debrief text, 64 bytes per record, which the mission load skips and the campaign
-	/// debrief reads (docs/formats/msn-mission-file.md#row-5--the-debrief). Kept raw.
+	/// debrief reads (docs/retail/formats/msn-mission-file.md#row-5--the-debrief). Kept raw.
 	/// </summary>
 	public byte[]? DebriefBytes { get; set; }
 

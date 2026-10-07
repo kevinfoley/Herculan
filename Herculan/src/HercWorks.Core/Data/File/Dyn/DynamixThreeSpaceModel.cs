@@ -8,7 +8,7 @@ namespace HercWorks.Core.Data.File.Dyn;
 /// <summary>
 /// A <c>.DTS</c> ThreeSpace shape file: a sequence of root chunks. A machine's roots are complete
 /// alternate models, one per level of detail; a shape library's are unrelated shapes. See
-/// docs/formats/mech-shape-drawing.md, "The LOD root is chosen per frame, per object".
+/// docs/retail/formats/mech-shape-drawing.md, "The LOD root is chosen per frame, per object".
 /// </summary>
 public class DynamixThreeSpaceModel {
 	/// <summary>
@@ -31,7 +31,7 @@ public class DynamixThreeSpaceModel {
 
 	/// <summary>
 	/// Not in the file: a <c>.DTS</c> names no texture, so a caller that wants one bound sets these.
-	/// Which bank retail binds is in docs/formats/dts-texture-binding.md, "DBA binding".
+	/// Which bank retail binds is in docs/retail/formats/dts-texture-binding.md, "DBA binding".
 	/// </summary>
 	public string? TextureName { get; set; }
 

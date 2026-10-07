@@ -6,7 +6,7 @@ namespace Herculan.Engine.Sim;
 /// <summary>
 /// The <c>ramming</c> behaviour state (17) — the one state whose move slot is not
 /// <c>Mech_MovementTick</c>, and the only deliberate suicide in the simulation. The derivation is
-/// docs/simulation/ai-combat-states.md, "`ramming` (17)".
+/// docs/retail/simulation/ai-combat-states.md, "`ramming` (17)".
 /// </summary>
 public sealed partial class MechObject {
 	/// <summary>How long a target selection holds before the think looks again — the original's own literal.</summary>

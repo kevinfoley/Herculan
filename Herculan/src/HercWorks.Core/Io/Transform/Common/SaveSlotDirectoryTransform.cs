@@ -4,7 +4,7 @@ namespace HercWorks.Core.Io.Transform.Common;
 
 /// <summary>
 /// <c>sav\GAMEFILE.STR</c> — the twelve-slot save directory. Reader <c>GameFileStr_Read</c> (<c>0040ddc8</c>), writer
-/// <c>GameFileStr_Write</c> (<c>0040df4b</c>); the layout is in <c>docs/formats/save-games.md</c>.
+/// <c>GameFileStr_Write</c> (<c>0040df4b</c>); the layout is in <c>docs/retail/formats/save-games.md</c>.
 ///
 /// <para>Two blocks of the same shape, each preceded by its own count: the filenames, whose trailing
 /// byte is always zero, then the labels, whose trailing byte is the slot's in-use flag. Both strings

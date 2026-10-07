@@ -4,7 +4,7 @@ namespace HercWorks.Video.Codecs;
 
 /// <summary>
 /// Microsoft Video 1 (<c>CRAM</c>/<c>msvc</c>), 16 bits per pixel. The bitstream is described in
-/// docs/formats/avi-video.md#microsoft-video-1; this class owns only the pixel writing.
+/// docs/retail/formats/avi-video.md#microsoft-video-1; this class owns only the pixel writing.
 ///
 /// <para>Only the 16-bit form is handled. The 8-bit palettised form appears nowhere in the retail
 /// corpus, so <see cref="Create"/> refuses it rather than guessing at it, as it does a picture whose

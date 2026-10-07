@@ -13,7 +13,7 @@ namespace Herculan.Engine.Terrain;
 /// self-index — but it is <b>a frame index into the zone's terrain texture bank</b>.
 /// <c>Terrain_ResolveCellTexture</c> uses it as <c>descriptorTable[Index * 0x14]</c> against the
 /// same 20-byte-per-frame descriptor table the mech texture path uses. See
-/// docs/formats/terrain-texturing.md.
+/// docs/retail/formats/terrain-texturing.md.
 /// </param>
 /// <param name="BlockShift">
 /// Second field, with two distinct consumers.

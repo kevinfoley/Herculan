@@ -1,4 +1,5 @@
 using System.Numerics;
+using Herculan.Engine.Platform;
 using ImGuiNET;
 
 namespace Herculan.Engine.Host.Editor;
@@ -12,6 +13,7 @@ namespace Herculan.Engine.Host.Editor;
 /// the snapshot and closes, and closing the window by its title-bar button is a Cancel.</para>
 /// </summary>
 public sealed class EditorSettingsPanel {
+	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 300f;
 
 	private readonly EditorSettings _settings;
@@ -39,7 +41,7 @@ public sealed class EditorSettingsPanel {
 
 		// A zero component means "fit the content", so the panel keeps a fixed width and grows to
 		// whatever height its settings need.
-		ImGui.SetNextWindowSize(new Vector2(PanelWidth, 0f));
+		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), 0f));
 		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
 
 		bool stayOpen = true;

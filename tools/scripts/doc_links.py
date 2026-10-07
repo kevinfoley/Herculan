@@ -53,7 +53,7 @@ SKIP_DIRS = {"obj", "bin", ".git", "node_modules"}
 # that fails to load is visible, so it is not the silent failure this is for.
 LINK = re.compile(r"(?<!\!)\[(?:[^\]\[]|\[[^\]]*\])*\]\(\s*([^)\s]+)(?:\s+\"[^\"]*\")?\s*\)")
 
-# A doc path written bare in a C# doc comment, e.g. docs/simulation/mech-locomotion.md.
+# A doc path written bare in a C# doc comment, e.g. docs/retail/simulation/mech-locomotion.md.
 CODE_PATH = re.compile(r"\b((?:\.\./)*(?:Herculan/)?docs/[A-Za-z0-9_./-]+\.md)")
 
 EXTERNAL = re.compile(r"^(?:[a-z][a-z0-9+.-]*:|//)", re.IGNORECASE)
@@ -196,8 +196,8 @@ def check_file(path: str, anchor_cache: dict[str, set[str]]) -> list[tuple[int, 
         if is_code:
             # A C# doc comment names the doc as a bare path, not as a markdown link,
             # and never relative to the .cs. Both spellings are in use -- most write
-            # "docs/simulation/foo.md" as addressed from Herculan/, a few write
-            # "Herculan/docs/simulation/foo.md" as addressed from the repo root -- so
+            # "docs/retail/simulation/foo.md" as addressed from Herculan/, a few write
+            # "Herculan/docs/retail/simulation/foo.md" as addressed from the repo root -- so
             # the base is chosen per path rather than fixed. Resolving every one
             # against Herculan/ reports the repo-root spelling as missing.
             raws = [m.group(1) for m in CODE_PATH.finditer(line)]

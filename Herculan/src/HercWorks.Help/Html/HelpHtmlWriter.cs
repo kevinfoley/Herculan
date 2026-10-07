@@ -7,8 +7,8 @@ namespace HercWorks.Help.Html;
 
 /// <summary>
 /// Turns a <see cref="HelpFile"/> into one self-contained HTML page that a browser shows in place of
-/// WinHelp. The design and its security rules are docs/engine/online-manual.md; the format is
-/// docs/formats/winhelp.md.
+/// WinHelp. The design and its security rules are docs/herculan/online-manual.md; the format is
+/// docs/retail/formats/winhelp.md.
 ///
 /// <para>Nothing from the file reaches the page except as HTML-encoded text or as a number this class
 /// formats. Font names map through a fixed table, colours and sizes are written from integers, link
@@ -20,7 +20,7 @@ namespace HercWorks.Help.Html;
 public static class HelpHtmlWriter {
 	/// <summary>
 	/// File units per CSS point for spacing, indents, tab stops and column widths. The unit is an Open
-	/// item in docs/formats/winhelp.md; this takes it as the half-point the font sizes use.
+	/// item in docs/retail/formats/winhelp.md; this takes it as the half-point the font sizes use.
 	/// </summary>
 	private const double UnitsPerPoint = 2;
 
@@ -381,7 +381,7 @@ public static class HelpHtmlWriter {
 					return "<a href=\"#\" data-go=\"close\">";
 				case "SH" or "ShortCut" when call.Arguments.Count >= 2:
 					// Retail WinHelp starts the named program, the readme in every retail file. This viewer
-					// starts nothing: it shows the readme's text, or says why not; docs/engine/online-manual.md#the-page.
+					// starts nothing: it shows the readme's text, or says why not; docs/herculan/online-manual.md#the-page.
 					return readme != null
 						? "<a href=\"#\" data-go=\"readme\" data-w=\"0\">"
 						: "<a href=\"#\" data-go=\"note\" data-note=\"" + Encode("This manual's viewer does not start programs. The help file asks for "

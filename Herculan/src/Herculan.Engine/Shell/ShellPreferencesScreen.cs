@@ -9,46 +9,46 @@ namespace Herculan.Engine.Shell;
 /// then the two buttons. Each checkbox's handler is named against it.
 /// </summary>
 public enum ShellPreferencesWidget {
-	/// <summary><c>Music</c>, <c>00436cc1</c>: option 0.</summary>
+	/// <summary><c>Music</c>, <c>PreferencesScreen_OnMusic</c> (<c>00436cc1</c>): option 0.</summary>
 	Music = 0,
 
-	/// <summary><c>Sound Effects</c>, <c>00436d22</c>: option 1.</summary>
+	/// <summary><c>Sound Effects</c>, <c>PreferencesScreen_OnSoundEffects</c> (<c>00436d22</c>): option 1.</summary>
 	SoundEffects = 1,
 
-	/// <summary><c>AutoRepair All Hercs</c>, <c>00436d83</c>: option 44 to 0.</summary>
+	/// <summary><c>AutoRepair All Hercs</c>, <c>PreferencesScreen_OnAutoRepairAll</c> (<c>00436d83</c>): option 44 to 0.</summary>
 	AutoRepairAll = 2,
 
-	/// <summary><c>Manually Repair My Herc</c>, <c>00436de4</c>: option 44 to 1.</summary>
+	/// <summary><c>Manually Repair My Herc</c>, <c>PreferencesScreen_OnManualRepairMine</c> (<c>00436de4</c>): option 44 to 1.</summary>
 	ManualRepairMine = 3,
 
-	/// <summary><c>Manually Repair All Hercs</c>, <c>00436e45</c>: option 44 to 2.</summary>
+	/// <summary><c>Manually Repair All Hercs</c>, <c>PreferencesScreen_OnManualRepairAll</c> (<c>00436e45</c>): option 44 to 2.</summary>
 	ManualRepairAll = 4,
 
-	/// <summary><c>AutoBuild Weapons</c>, <c>00436ea6</c>: option 45 to 0.</summary>
+	/// <summary><c>AutoBuild Weapons</c>, <c>PreferencesScreen_OnAutoBuildWeapons</c> (<c>00436ea6</c>): option 45 to 0.</summary>
 	AutoBuildWeapons = 5,
 
-	/// <summary><c>Manually Build Weapons</c>, <c>00437006</c>: option 45 to 1.</summary>
+	/// <summary><c>Manually Build Weapons</c>, <c>PreferencesScreen_OnManualBuild</c> (<c>00437006</c>): option 45 to 1.</summary>
 	ManualBuildWeapons = 6,
 
-	/// <summary><c>High Res (640x480)</c>, <c>004370c8</c>: option 4 to 0.</summary>
+	/// <summary><c>High Res (640x480)</c>, <c>PreferencesScreen_OnHighRes</c> (<c>004370c8</c>): option 4 to 0.</summary>
 	HighRes = 7,
 
-	/// <summary><c>Low Res (320x240)</c>, <c>00437067</c>: option 4 to 1.</summary>
+	/// <summary><c>Low Res (320x240)</c>, <c>PreferencesScreen_OnLowRes</c> (<c>00437067</c>): option 4 to 1.</summary>
 	LowRes = 8,
 
-	/// <summary><c>Window</c>, <c>00436f07</c>: option 6 to 0.</summary>
+	/// <summary><c>Window</c>, <c>PreferencesScreen_OnWindow</c> (<c>00436f07</c>): option 6 to 0.</summary>
 	Window = 9,
 
-	/// <summary><c>Full Screen</c>, <c>00436f78</c>: puts up the <c>Alert!</c> dialog.</summary>
+	/// <summary><c>Full Screen</c>, <c>PreferencesScreen_OnFullScreen</c> (<c>00436f78</c>): puts up the <c>Alert!</c> dialog.</summary>
 	FullScreen = 10,
 
-	/// <summary><c>Cancel</c>, <c>00436b90</c>.</summary>
+	/// <summary><c>Cancel</c>, <c>PreferencesScreen_OnCancel</c> (<c>00436b90</c>).</summary>
 	Cancel = 11,
 
-	/// <summary><c>Accept</c>, <c>00436c51</c>.</summary>
+	/// <summary><c>Accept</c>, <c>PreferencesScreen_OnAccept</c> (<c>00436c51</c>).</summary>
 	Accept = 12,
 
-	/// <summary>The <c>Alert!</c> dialog's <c>ACCEPT</c>, <c>FUN_00436fe8</c>.</summary>
+	/// <summary>The <c>Alert!</c> dialog's <c>ACCEPT</c>, <c>FullScreenAlert_OnAccept</c> (<c>00436fe8</c>).</summary>
 	AlertAccept = 13,
 }
 
@@ -56,16 +56,15 @@ public enum ShellPreferencesWidget {
 /// The screen the main menu's <c>PREFERENCES</c> opens — five boxes of checkboxes over six
 /// <c>prefs.cfg</c> options, and <c>Cancel</c> and <c>Accept</c>. Built once at startup by
 /// <c>PreferencesScreen_Build</c> (<c>00434f08</c>), put up by <c>PreferencesScreen_Enter</c>
-/// (<c>004366b5</c>) and taken down by <c>FUN_00436717</c>. See
-/// docs/shell/screen-layout.md#the-preferences-screen.
+/// (<c>004366b5</c>) and taken down by <c>PreferencesScreen_Hide</c> (<c>00436717</c>). See
+/// docs/retail/shell/screen-layout.md#the-preferences-screen.
 ///
 /// <para>Every rect is a literal in the executable, kept parent-relative as the builder writes it: the
 /// content panel in the canvas, the five boxes and the two buttons in the panel, and the rest in whichever
 /// box holds them. The alert's panel is in a window the size of the display, so its rect is a canvas
 /// rect.</para>
 ///
-/// <para>While the alert is up this engine hit-tests nothing but its <c>ACCEPT</c>, as it does for the
-/// scrap dialog. That is this engine's choice.</para>
+/// <para>HERCULAN treats the alert as modal, a divergence from retail.</para>
 /// </summary>
 public sealed class ShellPreferencesScreen {
 	/// <summary>The bank the checkboxes draw: frame 0 ticked, frame 1 empty.</summary>
@@ -151,7 +150,7 @@ public sealed class ShellPreferencesScreen {
 	private readonly Action _toggleFullScreen;
 
 	/// <summary>Builds the screen over the shell's option array and the <see cref="CheckBoxBank"/> frames.</summary>
-	/// <param name="isFullScreen"><c>DAT_00481e68</c>, the shell's full-screen flag.</param>
+	/// <param name="isFullScreen"><c>Display_FullScreen</c> (<c>00481e68</c>), the shell's full-screen flag.</param>
 	/// <param name="toggleFullScreen"><c>Display_ToggleFullScreen</c> (<c>00407085</c>), which takes the shell into full screen or out of it.</param>
 	public ShellPreferencesScreen(SimulatorPreferences options, DynamixBitmap[]? checkBoxFrames,
 			Func<bool> isFullScreen, Action toggleFullScreen) {
@@ -166,13 +165,13 @@ public sealed class ShellPreferencesScreen {
 
 	/// <summary>
 	/// Runs a widget's handler. Returns true for <c>Cancel</c> and <c>Accept</c>, whose handlers then take
-	/// the screen down (<c>FUN_00436717</c>) and put the main menu up, which is the caller's. The fades go
+	/// the screen down (<c>PreferencesScreen_Hide</c> (<c>00436717</c>)) and put the main menu up, which is the caller's. The fades go
 	/// to <paramref name="sound"/>, and do nothing without one, as the original's do with no sound
 	/// manager.
 	/// </summary>
 	public bool Click(ShellPreferencesWidget widget, ShellSound? sound) {
 		switch (widget) {
-			// FUN_00436841(0): MUSIC on then the fade in, or the fade out then MUSIC off.
+			// PreferencesScreen_ToggleAudioOption (00436841)(0): MUSIC on then the fade in, or the fade out then MUSIC off.
 			case ShellPreferencesWidget.Music when _options[MusicOption] == 0:
 				_options.Toggle(MusicOption);
 				sound?.FadeIn();
@@ -182,7 +181,7 @@ public sealed class ShellPreferencesScreen {
 				_options.Toggle(MusicOption);
 				break;
 
-			// FUN_00436841(1).
+			// PreferencesScreen_ToggleAudioOption (00436841)(1).
 			case ShellPreferencesWidget.SoundEffects:
 				_options.Toggle(SoundsOption);
 				break;
@@ -201,7 +200,7 @@ public sealed class ShellPreferencesScreen {
 				_options.Set(ResolutionOption, (byte)(widget - ShellPreferencesWidget.HighRes));
 				break;
 
-			// 00436f07: out of full screen if it is in it, then PreferencesScreen_SetDisplayMode(0) (00436b70).
+			// PreferencesScreen_OnWindow (00436f07): out of full screen if it is in it, then PreferencesScreen_SetDisplayMode(0) (00436b70).
 			case ShellPreferencesWidget.Window:
 				if (_isFullScreen()) {
 					_toggleFullScreen();
@@ -210,7 +209,7 @@ public sealed class ShellPreferencesScreen {
 				_options.Set(DisplayModeOption, 0);
 				break;
 
-			// 00436f78: the alert's window, only while windowed.
+			// PreferencesScreen_OnFullScreen (00436f78): the alert's window, only while windowed.
 			case ShellPreferencesWidget.FullScreen:
 				if (!_isFullScreen()) {
 					AlertOpen = true;
@@ -218,14 +217,14 @@ public sealed class ShellPreferencesScreen {
 
 				break;
 
-			// FUN_00436fe8: the window hidden, into full screen, then PreferencesScreen_SetDisplayMode(1) (00436b70).
+			// FullScreenAlert_OnAccept (00436fe8): the window hidden, into full screen, then PreferencesScreen_SetDisplayMode(1) (00436b70).
 			case ShellPreferencesWidget.AlertAccept:
 				AlertOpen = false;
 				_toggleFullScreen();
 				_options.Set(DisplayModeOption, 1);
 				break;
 
-			// 00436b90: every option back to the shadow with no handler run, the window put where option
+			// PreferencesScreen_OnCancel (00436b90): every option back to the shadow with no handler run, the window put where option
 			// 6 says, and the fade MUSIC calls for — a fade out under MUSIC turned on for its length.
 			case ShellPreferencesWidget.Cancel:
 				_options.Revert(apply: false);
@@ -243,7 +242,7 @@ public sealed class ShellPreferencesScreen {
 
 				return true;
 
-			// 00436c51: ShellOptions_Commit(0), then ShellOptions_SaveAll.
+			// PreferencesScreen_OnAccept (00436c51): ShellOptions_Commit(0), then ShellOptions_SaveAll.
 			case ShellPreferencesWidget.Accept:
 				_options.Commit(apply: false);
 				_options.Save(Enumerable.Range(0, Prefs.Length).ToArray());

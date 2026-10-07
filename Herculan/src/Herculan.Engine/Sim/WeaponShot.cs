@@ -163,7 +163,7 @@ public sealed class WeaponShot {
 	/// <c>Bullet_FireBurst</c> writes a literal 5 for every beam and every travelling round, so only a
 	/// launcher's own hit carries anything else: <c>Rocket_TickUpdate</c> writes the round's
 	/// <c>PROJ.DAT</c> subtype here. Its one reader is <c>Mech_DirectFireHitTest</c>'s radar reaction
-	/// — see <see cref="MechObject.RadarSilenceOnArmHit"/> and docs/simulation/target-selection.md
+	/// — see <see cref="MechObject.RadarSilenceOnArmHit"/> and docs/retail/simulation/target-selection.md
 	/// ("How an AI machine's radar is set").
 	/// </summary>
 	public short WeaponClass { get; init; } = WeaponMount.NotAMissile;
@@ -290,7 +290,7 @@ public sealed class WeaponShot {
 	/// that writes it: they sweep a ray out of the aircraft's own wingtip and have to ignore the
 	/// aircraft, while crediting the resulting damage to nobody at all. Every weapon path leaves it
 	/// null, which is the intent but not quite what the original does — see
-	/// docs/simulation/hit-detection.md, "The sweep".</para>
+	/// docs/retail/simulation/hit-detection.md, "The sweep".</para>
 	/// </summary>
 	public SimObject? Excluded { get; }
 

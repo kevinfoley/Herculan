@@ -7,8 +7,8 @@ using Herculan.Engine.Numerics;
 namespace Herculan.Engine.World;
 
 /// <summary>
-/// Turns the game's own mission handoff — <c>DATA\script.dat</c>, plus <c>DATA\player.mec</c> when
-/// it is there — into a <see cref="Mission"/>.
+/// Turns the game's own mission handoff — <c>DATA\script.dat</c>, with the <c>mission.var</c> and
+/// <c>player.mec</c> beside it — into a <see cref="Mission"/>.
 ///
 /// <para><b>The two-pass structure below is DBSIM's, not an invention.</b> It is easy to read
 /// <c>DBSim_LoadScriptDat</c> (<c>00424308</c>) and conclude the format throws its placement data
@@ -59,7 +59,7 @@ namespace Herculan.Engine.World;
 /// they arrive somewhere else entirely.</para>
 ///
 /// <para><b>Arrival</b> is <c>Group_DeploymentCheck</c> (<c>004236c4</c>), whose per-verb rules —
-/// drop pod, on foot, or in place — are in docs/simulation/mission-deployment.md and implemented in
+/// drop pod, on foot, or in place — are in docs/retail/simulation/mission-deployment.md and implemented in
 /// <see cref="Sim.MissionGroup.DeploymentCheck"/>. What this loader owes it is <b>which</b> action a
 /// group waits on, not merely that it waits on one: the same record carries the verb the group
 /// arrives on.</para>
@@ -140,8 +140,9 @@ public static class MissionLoader {
 	/// Loads the mission at <paramref name="scriptPath"/>. <paramref name="content"/> supplies the
 	/// type-name lists, which live in the archives rather than beside the mission.
 	///
-	/// <para><c>player.mec</c> is looked for next to the script and is optional: without it the
-	/// mission still loads, just with no <see cref="Mission.Player"/>.</para>
+	/// <para><c>mission.var</c> and <c>player.mec</c> are looked for next to the script, and the load
+	/// throws <see cref="MissingHandoffFileException"/> when either is not there, as the original
+	/// asserts on each.</para>
 	/// </summary>
 	public static Mission Load(GameContent content, string scriptPath) {
 		byte[] scriptBytes = File.ReadAllBytes(scriptPath);
@@ -163,7 +164,7 @@ public static class MissionLoader {
 			placements);
 
 		var counters = LoadCounters(Path.Combine(Path.GetDirectoryName(scriptPath) ?? ".", CountersFileName));
-		var player = LoadPlayerLance(scriptPath, groups, mechFormations, mechNames, placements);
+		var player = LoadPlayerLance(scriptPath, script, groups, mechFormations, mechNames, placements);
 		var basePads = ResolveBasePads(groups, claims[MissionUnitKind.Base], baseFormations, placements);
 
 		var coordinates = new List<Vec3i>(script.Coordinates.Length);
@@ -210,19 +211,20 @@ public static class MissionLoader {
 	/// The mission counters' starting values — <c>DBSim_LoadScriptDat</c> (<c>00424308</c>) reads
 	/// 2,000 bytes of <c>data\mission.var</c> straight into <c>DAT_004a9ef4</c>, then zeroes slot 20,
 	/// slot 10 and slots 21 to 42, before it opens <c>player.mec</c>. See
-	/// docs/simulation/mission-deployment.md#the-mission-counters--dat_004a9ef4.
+	/// docs/retail/simulation/mission-deployment.md#the-mission-counters--dat_004a9ef4.
 	///
-	/// <para>Looked for beside the script, as <c>player.mec</c> is. A missing file loads as all zeros,
-	/// which is this engine's choice: the original asserts, so a mission launched without the shell
-	/// still loads here.</para>
+	/// <para>Looked for beside the script, as <c>player.mec</c> is. A missing one throws
+	/// <see cref="MissingHandoffFileException"/>, as the original asserts on it — see
+	/// docs/retail/formats/script-dat.md#call-chain--confirmed.</para>
 	/// </summary>
 	private static short[] LoadCounters(string countersPath) {
-		var counters = new short[Sim.SimWorld.MissionCounterSlots];
-
-		if (File.Exists(countersPath)) {
-			byte[] bytes = File.ReadAllBytes(countersPath);
-			Buffer.BlockCopy(bytes, 0, counters, 0, Math.Min(bytes.Length, counters.Length * 2));
+		if (!File.Exists(countersPath)) {
+			throw new MissingHandoffFileException(countersPath);
 		}
+
+		var counters = new short[Sim.SimWorld.MissionCounterSlots];
+		byte[] bytes = File.ReadAllBytes(countersPath);
+		Buffer.BlockCopy(bytes, 0, counters, 0, Math.Min(bytes.Length, counters.Length * 2));
 
 		counters[SalvageBonusCounter] = 0;
 		counters[SquadmatesDownedCounter] = 0;
@@ -489,7 +491,7 @@ public static class MissionLoader {
 	/// The record's ten row-15 links resolved into order records, nulls kept in the slots it left
 	/// unset — <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>) copies the array position for position
 	/// into <c>group+0x44</c>, and <c>Group_OrderTick</c> reads it by index. See
-	/// docs/simulation/ai-goals.md.
+	/// docs/retail/simulation/ai-goals.md.
 	/// </param>
 	private readonly record struct Group(int Index, MissionUnitKind Kind, Vec3i Position, int Heading,
 		int FormationId, int DeploymentAction, MissionSide Side, bool PaintsGround,
@@ -628,8 +630,8 @@ public static class MissionLoader {
 			var group = claim.Group;
 			var record = script.Mechs[slot];
 			var offset = mechFormations.OffsetFor(group.FormationId, claim.MemberIndex);
-			var position = Coordinate(script, record.PositionRef)
-				?? OffsetFromGroup(group, mechFormations, claim.MemberIndex);
+			var ownPoint = Coordinate(script, record.PositionRef);
+			var position = ownPoint ?? OffsetFromGroup(group, mechFormations, claim.MemberIndex);
 
 			placements.Add(new MissionPlacement(
 				MissionUnitKind.Mech,
@@ -648,7 +650,8 @@ public static class MissionLoader {
 				EngagementActionRef: ActionRef(script, record.EngagementActionRef),
 				DefeatActionRef: ActionRef(script, record.DefeatActionRef),
 				StartingCondition: record.StartingCondition,
-				OutOfActionReport: new OutOfActionReport(record.CounterRefs, record.CounterOps)));
+				OutOfActionReport: new OutOfActionReport(record.CounterRefs, record.CounterOps),
+				GroundPoint: ownPoint == null ? group.Position : null));
 		}
 
 		var flyerClaims = claims[MissionUnitKind.Flyer];
@@ -705,6 +708,7 @@ public static class MissionLoader {
 				FormationOffset: offset is { } o ? (o.X, o.Y) : null,
 				EngagementActionRef: ActionRef(script, record.EngagementActionRef),
 				DefeatActionRef: ActionRef(script, record.DefeatActionRef),
+				StartingCondition: record.StartingCondition,
 				OutOfActionReport: new OutOfActionReport(record.CounterRefs, record.CounterOps)));
 		}
 	}
@@ -782,16 +786,29 @@ public static class MissionLoader {
 	/// the unset-position sentinel and writes the entries into record 0's member array in file
 	/// order, so <c>DBSim_BuildGroupRecord</c> (<c>00423b34</c>) attaches entry <i>i</i> as member
 	/// slot <i>i</i> and <c>Mech_ApplyFormationOffset</c> (<c>00417898</c>) spreads every slot past
-	/// the first. Before this the whole squad stood on one point, which pinned the player against
-	/// their own wingmen — <c>Mech_CollisionTest</c> refuses a position that overlaps another
-	/// machine, so nothing could take its first step.</para>
+	/// the first. The same offset is the squadmate's post every tick it keeps formation on the
+	/// player (<see cref="Sim.MechObject.FormationOffset"/>); without it the post is the player's own
+	/// position, and <c>Mech_CollisionTest</c> refuses a position that overlaps another machine.</para>
+	///
+	/// <para>Entry <i>i</i> takes as its <see cref="MissionPlacement.SlotIndex"/> the block-7 slot that
+	/// record 0's member ref <i>i</i> names, or -1 when that ref is unset, so the mission's own mech
+	/// refs to that slot resolve to it. The squad is added after the roster, so where a live group
+	/// names the same slot the squad member wins. See
+	/// docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 6.</para>
+	///
+	/// <para>A missing <c>player.mec</c> throws <see cref="MissingHandoffFileException"/>, as the
+	/// original asserts on it — see docs/retail/formats/script-dat.md#call-chain--confirmed.</para>
 	/// </summary>
-	private static MissionPlacement? LoadPlayerLance(string scriptPath, Group[] groups,
+	private static MissionPlacement? LoadPlayerLance(string scriptPath, ScriptDat script, Group[] groups,
 			MechFormationTable mechFormations, UnitTypeNames mechNames,
 			List<MissionPlacement> placements) {
 		string playerPath = PlayerPathFor(scriptPath);
 
-		if (groups.Length == 0 || !File.Exists(playerPath)) {
+		if (!File.Exists(playerPath)) {
+			throw new MissingHandoffFileException(playerPath);
+		}
+
+		if (groups.Length == 0) {
 			return null;
 		}
 
@@ -800,15 +817,21 @@ public static class MissionLoader {
 		}
 
 		var spawn = groups[PlayerGroupIndex];
+		var squadRefs = script.Groups[PlayerGroupIndex].MemberRefs;
 		MissionPlacement? player = null;
 
 		for (int i = 0; i < lance.Entries.Length; i++) {
 			var entry = lance.Entries[i];
+			int slot = i < GroupMemberSlots && i < squadRefs.Length && squadRefs[i] >= 0
+				? squadRefs[i]
+				: -1;
+			var offset = mechFormations.OffsetFor(spawn.FormationId, i);
+
 			var placement = new MissionPlacement(
 				MissionUnitKind.Mech,
 				entry.MechType,
 				mechNames[entry.MechType],
-				i,
+				slot,
 				PlayerGroupIndex,
 				OffsetFromGroup(spawn, mechFormations, i),
 				spawn.Heading,
@@ -817,7 +840,9 @@ public static class MissionLoader {
 				IsPlayerLance: true,
 				PilotIndex: entry.PilotNameIndex,
 				Side: spawn.Side,
-				SquadCondition: SquadCondition.Of(entry));
+				FormationOffset: offset is { } o ? (o.X, o.Y) : null,
+				SquadCondition: SquadCondition.Of(entry),
+				GroundPoint: spawn.Position);
 
 			placements.Add(placement);
 			if (i == lance.PlayerEntryIndex) {
@@ -901,7 +926,7 @@ public static class MissionLoader {
 	/// <para><b>Slot 0's route, and only slot 0's.</b> <c>DBSim_BuildGroupRecord</c>
 	/// (<c>00423b34</c>) loads the group's route cursor from the first order and nothing re-points
 	/// it, so a group that advances to a later order keeps walking this one — see
-	/// docs/simulation/ai-goals.md.</para>
+	/// docs/retail/simulation/ai-goals.md.</para>
 	/// </summary>
 	private static IReadOnlyList<Vec3i> Route(MissionOrder?[] orders) =>
 		orders[0]?.Route ?? Array.Empty<Vec3i>();

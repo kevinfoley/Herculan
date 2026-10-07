@@ -8,13 +8,33 @@ namespace HercWorks.Vol;
 public class Voln : DataFile {
 	public const int FileListHeaderLen = 18;
 
+	/// <summary>The <see cref="ProgramMask"/> bit DBSIM loads archives with.</summary>
+	public const uint DbsimProgram = 0x1;
+
+	/// <summary>The <see cref="ProgramMask"/> bit VSHELL loads archives with.</summary>
+	public const uint VshellProgram = 0x100;
+
 	// Order-specific data captured during VOL load/parse from a compiled VOL file.
 	public string? DestPath { get; set; }
 	public ExeUse ExeType { get; set; }
+
+	/// <summary>
+	/// The header's program mask: a program loads the archive only when this shares a bit with its own
+	/// (<see cref="DbsimProgram"/>, <see cref="VshellProgram"/>). See docs/retail/formats/vol-archive.md,
+	/// "Which archives are mounted".
+	/// </summary>
+	public uint ProgramMask { get; set; }
+
+	/// <summary>Whether <see cref="ProgramMask"/> has <see cref="DbsimProgram"/>; what the writers emit as byte 4.</summary>
 	public bool DbsimFlag { get; set; }
+
+	/// <summary>Whether <see cref="ProgramMask"/> has <see cref="VshellProgram"/>; what the writers emit as byte 5.</summary>
 	public bool VshellFlag { get; set; }
 
-	/// <summary>0x05 for 'first loaded', 0x0A 'load second' (e.g. SHELL1.vol, SIMPATCH.vol).</summary>
+	/// <summary>
+	/// The search precedence: 0x0A (SHELL1.vol, SIMPATCH.vol) is searched before 0x05, so its entries
+	/// hide same-named ones. See docs/retail/formats/vol-archive.md, "Which archives are mounted".
+	/// </summary>
 	public byte VolOrderNum { get; set; }
 
 	public byte DirCount { get; set; }
@@ -90,13 +110,7 @@ public class Voln : DataFile {
 	/// simvol0   56 4F 4C 4E 01 00 00 00 05 27 C1 00  len: 1D63B29
 	/// zones     56 4F 4C 4E 01 01 00 00 05 03 0F 00  len: 208969
 	///
-	/// The first four bytes ("VOLN" in ASCII) indicate an ES volume file (magic bytes).
-	/// The 5th byte is 0x01 if the file is used in the simulator, 0x00 if used in the shell.
-	/// The 6th byte is 0x01 if the file is used in the shell, 0x00 if used in the simulator.
-	/// Two bytes are ignored and always zero.
-	/// The 9th byte is some kind of counter (currently unknown).
-	/// The 10th byte is the directory count (how many directories are in the volume).
-	/// The 11th and 12th bytes determine how many bytes the directory list has (little-endian).
+	/// The fields are laid out in docs/retail/formats/vol-archive.md, "File layout".
 	/// </summary>
 	public static class ByteHeader {
 		public static readonly byte[] Voln = { 0x56, 0x4F, 0x4C, 0x4E };

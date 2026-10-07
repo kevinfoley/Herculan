@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Bnd;
 /// <summary>
 /// FILE - SIMVOL0\BND\CAM.BND — 24 content bytes, every one mapped to a field, offset 0 first; what
 /// the fields mean is open. <c>.BND</c> is a build-time source format DBSIM never opens. Values
-/// below are the retail file's. See <c>docs/formats/bnd-notes.md#cambnds-full-24-byte-record</c>.
+/// below are the retail file's. See <c>docs/retail/formats/bnd-notes.md#cambnds-full-24-byte-record</c>.
 /// </summary>
 public class Cam {
 	/// <summary>Offset 0, unknown. 54 (0x36).</summary>

@@ -9,7 +9,7 @@ namespace HercWorks.Help.Tests;
 /// <summary>
 /// Damaged and doctored copies of the English manual: the parser reports failure rather than
 /// throwing or looping, and nothing in the file reaches the page as markup
-/// (docs/engine/online-manual.md#security-posture).
+/// (docs/herculan/online-manual.md#security-posture).
 /// </summary>
 public class HostileInputTests {
 	[Fact]

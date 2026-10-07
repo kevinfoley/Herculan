@@ -1,4 +1,4 @@
-using Herculan.Engine.Content;
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Input;
 using Herculan.Engine.Render;
 using Xunit;
@@ -79,34 +79,39 @@ public class CockpitInputTests {
 	}
 
 	/// <summary>
-	/// §4's click-vs-drag gate, the player-visible half of this pipeline: hold past
-	/// <see cref="CockpitInput.ClickHoldSeconds"/> and the release fires nothing even though it landed
-	/// on the widget that was pressed.
+	/// §4 times releases, not holds: <c>Widget_OnMouseUp</c> runs on every release, so a button held for a
+	/// second still clicks.
 	/// </summary>
 	[Fact]
-	public void HoldingPastTheGateFiresNothing() {
+	public void HoldingLongStillClicks() {
 		var input = new CockpitInput();
 		Press(input, 50);
 		Frame(input);
 
-		// Well past the ~480ms gate.
 		Frame(input, deltaSeconds: 1.0);
 
 		Release(input, 50);
-		Assert.Empty(Frame(input));
+		Assert.Single(Frame(input));
 	}
 
-	/// <summary>A hold just inside the gate still clicks — the boundary is a limit, not a hair trigger.</summary>
+	/// <summary>
+	/// §4's double-click flag: a release inside <see cref="CockpitInput.DoubleClickSeconds"/> of the previous
+	/// one marks its click, and one after the window does not.
+	/// </summary>
 	[Fact]
-	public void HoldingJustInsideTheGateStillClicks() {
+	public void ASecondReleaseInsideTheWindowIsADoubleClick() {
 		var input = new CockpitInput();
 		Press(input, 50);
-		Frame(input);
-
-		Frame(input, deltaSeconds: CockpitInput.ClickHoldSeconds * 0.9f);
-
 		Release(input, 50);
-		Assert.Single(Frame(input));
+		Assert.False(Assert.Single(Frame(input)).DoubleClick);
+
+		Press(input, 50);
+		Release(input, 50);
+		Assert.True(Assert.Single(Frame(input, deltaSeconds: CockpitInput.DoubleClickSeconds * 0.9f)).DoubleClick);
+
+		Press(input, 50);
+		Release(input, 50);
+		Assert.False(Assert.Single(Frame(input, deltaSeconds: CockpitInput.DoubleClickSeconds * 1.1f)).DoubleClick);
 	}
 
 	/// <summary>A press held across frames stays armed until it is released.</summary>
@@ -211,7 +216,8 @@ public class CockpitInputTests {
 
 	/// <summary>
 	/// Events queue up between drains rather than being handled as they arrive (§3), so a whole click
-	/// enqueued mid-frame is still one click when the frame gets to it.
+	/// enqueued mid-frame is still one click when the frame gets to it. The second release follows the
+	/// first inside the double-click window, so it is a double-click on whichever widget it lands.
 	/// </summary>
 	[Fact]
 	public void EventsAreProcessedOnlyOnDrain() {
@@ -224,7 +230,7 @@ public class CockpitInputTests {
 		Assert.Equal(
 			new[] {
 				new CockpitClick(A, CockpitMouseButtons.Left, 50f, 10f),
-				new CockpitClick(B, CockpitMouseButtons.Left, 150f, 10f),
+				new CockpitClick(B, CockpitMouseButtons.Left, 150f, 10f, DoubleClick: true),
 			},
 			Frame(input));
 	}

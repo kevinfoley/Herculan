@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Hercs;
 /// One entry of a HERC's 66-byte status block — an external facet, an internal component or a
 /// hardpoint — with its condition, 0-100. The <see cref="Id"/> is the entry's index within its
 /// array, which follows <see cref="Herc.HercExternals"/> and <see cref="Herc.HercInternals"/>
-/// rather than reading front-to-back. See <c>docs/formats/save-games.md#the-66-byte-status-block</c>.
+/// rather than reading front-to-back. See <c>docs/retail/formats/save-games.md#the-66-byte-status-block</c>.
 /// </summary>
 public class ShellHercPart {
 	public short Id { get; set; }

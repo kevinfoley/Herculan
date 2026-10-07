@@ -8,6 +8,9 @@
     <Nullable>enable</Nullable>
     <RootNamespace>HercWorks.UI</RootNamespace>
     <AssemblyName>HercWorksMDK</AssemblyName>
+    <!-- The name Windows shows in Explorer's file properties and Task Manager. -->
+    <AssemblyTitle>HercWorks CSharp</AssemblyTitle>
+    <Product>HercWorks CSharp</Product>
     <ApplicationIcon />
   </PropertyGroup>
 

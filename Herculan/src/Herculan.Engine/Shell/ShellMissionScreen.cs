@@ -32,8 +32,8 @@ public enum ShellMissionArrow {
 /// The career's three mission texts as <c>Career_BuildBriefingText</c> (<c>00412f97</c>) assembles them:
 /// each the concatenation of the <c>mission.str</c> lines one of the career block's arrays names, in
 /// array order, skipping <c>-1</c>. The shell reads <c>data\mission.str</c>, which
-/// <c>Career_LoadSlot</c> copies from the slot's <c>sav\missn%d.str</c> and a mission load writes; this
-/// engine reads the working file where it lies (<see cref="ShellWorkingFiles"/>), which is the same bytes.
+/// <c>Career_LoadSlot</c> copies from the slot's <c>sav\missn%d.str</c> and a mission load writes
+/// (<see cref="ShellWorkingFiles"/>).
 /// </summary>
 public sealed record ShellMissionTexts(string Briefing, string Objectives, string Intelligence) {
 	public static readonly ShellMissionTexts Empty = new(string.Empty, string.Empty, string.Empty);
@@ -75,7 +75,7 @@ public sealed record ShellMissionTexts(string Briefing, string Objectives, strin
 /// into one <c>Text</c> child of its parent per line and shows one page of them at a time. Built by
 /// <c>TextBox_Ctor</c> (<c>0040cc0c</c>), filled by <c>TextBox_SetText</c> (<c>0040cc81</c>), and paged by
 /// <c>TextBox_PageUp</c> (<c>0040d237</c>) and <c>TextBox_PageDown</c> (<c>0040d258</c>). See
-/// docs/shell/screen-layout.md, "The summary text box".
+/// docs/retail/shell/screen-layout.md, "The summary text box".
 /// </summary>
 public sealed class ShellTextBox {
 	private List<string> _lines = new();
@@ -220,12 +220,14 @@ public sealed class ShellTextBox {
 
 /// <summary>
 /// The career's text for the campaign map view: <c>Campaign_LoadStageText</c> (<c>0040f775</c>) reads
-/// <c>eng\campaign.str</c> and keeps string <c>stage - 1</c> of its first group. See
-/// docs/shell/screen-layout.md, "The summary text box".
+/// <c>campaign.str</c> and keeps string <c>stage - 1</c> of its first group. See
+/// docs/retail/shell/screen-layout.md, "The summary text box".
+///
+/// <para>v1.0 reads it from <c>LANG0.VOL</c>'s <c>ENG</c> folder, its literal at <c>0046f5be</c>; v1.10 from the
+/// shell language's folder. v1.10 appends the folder to a buffer it never clears, which can leave the file unfound
+/// (docs/retail/retail-builds.md#v110s-shell-reads-the-language-twice-more); this names the folder alone.</para>
 /// </summary>
 public static class ShellCampaignText {
-	/// <summary>The path's two halves as the literal at <c>0046f5be</c> names them, <c>LANG0.VOL</c>'s <c>ENG</c> folder.</summary>
-	private const string Folder = "ENG";
 	private const string ResourceName = "CAMPAIGN.STR";
 
 	/// <summary>
@@ -234,8 +236,12 @@ public static class ShellCampaignText {
 	/// <c>TextBox_SetText</c>; what that does with it is not read, and here the box stays empty.
 	/// </summary>
 	public static string? Load(GameContent content, int stage) =>
-		content.Read(Folder, ResourceName) is { } bytes && SimStrings.Parse(bytes) is { } table
+		content.Read(Folder(content), ResourceName) is { } bytes && SimStrings.Parse(bytes) is { } table
 			? table.Text(0, stage - 1) : null;
+
+	/// <summary>The <c>LANG0.VOL</c> folder <c>campaign.str</c> is read from.</summary>
+	internal static string Folder(GameContent content) =>
+		content.IsV110 ? ShellText.LanguageFolder(content.Language) : ShellText.EnglishFolder;
 }
 
 /// <summary>The mission tab's banks: the arrow faces, the <c>TERRA DEFENSE</c> plate and the campaign map's two pictures.</summary>
@@ -276,7 +282,7 @@ public sealed class ShellMissionArt {
 /// a taller summary; the debrief shows the page buttons alone, the flown mission's debrief text, and the
 /// mission report's twenty texts in the map panel. Built once by <c>Mission_BuildScreen</c>
 /// (<c>00442534</c>), put up in a view by <c>Mission_Show</c> (<c>004441e3</c>) and taken down by
-/// <c>Mission_Leave</c> (<c>00444a05</c>). See docs/shell/screen-layout.md, "The mission screen".
+/// <c>Mission_Leave</c> (<c>00444a05</c>). See docs/retail/shell/screen-layout.md, "The mission screen".
 ///
 /// <para><b>Every rect here is a literal in the executable</b>, kept parent-relative as the builder
 /// writes them: the four panels in the canvas, everything else in the panel holding it.</para>
@@ -293,7 +299,7 @@ public sealed class ShellMissionScreen {
 
 	/// <summary>
 	/// The map panel. The builder starts it on row <c>0x2b</c> in a window and on <c>0x2a</c> when the
-	/// shell runs full-screen (<c>DAT_00481e68</c>); this engine's shell is a window.
+	/// shell runs full-screen (<c>Display_FullScreen</c> (<c>00481e68</c>)); this engine's shell is a window.
 	/// </summary>
 	public static readonly ShellRect MapRect = new(0x117, 0x2b, 0x278, 0x12b);
 
@@ -430,7 +436,7 @@ public sealed class ShellMissionScreen {
 	/// <c>0x146 + outcome</c>, <c>Failure</c> or <c>Success</c>; the salvage <c>"%d %s"</c> of the award in tons
 	/// and <c>0x149</c> <c>Tons</c>; the rest <c>"%d"</c>. The first three are left-aligned beside their labels
 	/// and the rest right-aligned under the column heads, all in <c>0x29</c>
-	/// (docs/shell/screen-layout.md#the-mission-report).
+	/// (docs/retail/shell/screen-layout.md#the-mission-report).
 	/// </summary>
 	public void WriteReport(ShellDebriefReport report, ShellText? text) {
 		void Set(int index, string? value, ShellTextAlign align) {
@@ -487,7 +493,7 @@ public sealed class ShellMissionScreen {
 	/// <summary>
 	/// What the pointer hits: a button or an arrow. The four panels are built disabled —
 	/// <c>ESTitle_Ctor</c> clears <c>+0x49</c> and the builder clears the button bar's — and the
-	/// Telecomm picture's handler (<c>FUN_00444e28</c>) returns at once, so a click anywhere else is
+	/// Telecomm picture's handler (<c>Mission_OnTelecommPicture</c> (<c>00444e28</c>)) returns at once, so a click anywhere else is
 	/// swallowed, which here is the same as hitting nothing.
 	/// </summary>
 	public ShellHit? HitAt(float canvasX, float canvasY) {

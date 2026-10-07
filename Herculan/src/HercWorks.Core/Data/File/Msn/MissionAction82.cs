@@ -3,8 +3,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>
 /// Row #10 (82 bytes/record) — a mission action, <c>script.dat</c> block 5: a one-shot latch that,
 /// when activated, writes mission counters and posts a message, and that groups and orders wait on.
-/// See docs/formats/msn-mission-file.md, "Row #10 field decode", and
-/// docs/simulation/mission-deployment.md for what activates one and what it does.
+/// See docs/retail/formats/msn-mission-file.md, "Row #10 field decode", and
+/// docs/retail/simulation/mission-deployment.md for what activates one and what it does.
 /// </summary>
 public class MissionAction82 : MapObject {
 	/// <summary>0x02 — condition ref.</summary>
@@ -28,7 +28,7 @@ public class MissionAction82 : MapObject {
 	public short[] AreaRefs { get; set; } = new short[8];
 	public const int AreaRefsWord = 0x0A / 2;
 
-	/// <summary>0x1A — how many of <see cref="CounterPairs"/> are filled, from the front; not exported to <c>script.dat</c>. See docs/formats/msn-mission-file.md, "Row #10 field decode".</summary>
+	/// <summary>0x1A — how many of <see cref="CounterPairs"/> are filled, from the front; not exported to <c>script.dat</c>. See docs/retail/formats/msn-mission-file.md, "Row #10 field decode".</summary>
 	public short Unk1A { get; set; }
 
 	/// <summary>

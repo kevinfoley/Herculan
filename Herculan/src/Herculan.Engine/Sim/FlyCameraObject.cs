@@ -1,5 +1,4 @@
 using Herculan.Engine.Numerics;
-using Herculan.Engine.Render;
 
 namespace Herculan.Engine.Sim;
 
@@ -31,7 +30,7 @@ public struct CameraInput {
 /// <summary>
 /// A free-flying observer camera, implemented as a <see cref="SimObject"/> so it moves through the
 /// ported fixed-point math rather than around it — the explicit goal of the first milestone (see
-/// docs/engine/planning.md, "First milestone": <i>get a camera moving through it using the actual
+/// docs/herculan/planning.md, "First milestone": <i>get a camera moving through it using the actual
 /// ported physics/math</i>).
 ///
 /// <para>Concretely, every part of its motion goes through the toolkit: speeds ramp toward their
@@ -136,14 +135,6 @@ public sealed class FlyCameraObject : SimObject {
 		}
 
 		Position = moved;
-	}
-
-	/// <summary>Copies this tick's pose onto a camera for rendering.</summary>
-	public void ApplyTo(Camera camera) {
-		camera.Position = Position;
-		camera.Yaw = Heading;
-		camera.Pitch = Pitch;
-		camera.Roll = 0;
 	}
 
 	private static int Clamp(int axis) => axis < 0 ? -1 : axis > 0 ? 1 : 0;

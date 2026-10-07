@@ -1,4 +1,4 @@
-using Herculan.Engine.Content;
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Input;
 
 using Silk.NET.Input;
@@ -29,7 +29,7 @@ namespace Herculan.Engine.Host;
 /// map is derived lazily, from whatever the device is reporting now, and re-derived whenever that
 /// changes; deriving one at load time maps nothing at all.</para>
 /// </summary>
-sealed class JoystickSource {
+sealed class JoystickSource : IJoystickSource {
 	private readonly IInputContext _input;
 
 	/// <summary>The map read from the install, or null to derive one from the device.</summary>
@@ -45,6 +45,8 @@ sealed class JoystickSource {
 	private readonly bool _probe;
 	private readonly float[] _lastAxes = Array.Empty<float>();
 	private readonly bool[] _lastButtons = Array.Empty<bool>();
+
+	private bool _announced;
 
 	private JoystickSource(IInputContext input, JoystickDeviceMap? configured, bool probe) {
 		_input = input;
@@ -132,7 +134,7 @@ sealed class JoystickSource {
 	public JoystickCapabilities Capabilities =>
 		Device is null || Map is not { } map ? JoystickCapabilities.None : map.Capabilities();
 
-	/// <summary>This frame's reading, already deadzoned and through the response curve.</summary>
+	/// <inheritdoc/>
 	public JoystickReading Read() {
 		if (Device is not { } device || Map is not { } map) {
 			return JoystickReading.Neutral;
@@ -148,6 +150,49 @@ sealed class JoystickSource {
 			map.HatIndex >= 0 && map.HatIndex < device.Hats.Count
 				? HatOf(device.Hats[map.HatIndex].Position)
 				: JoystickHat.None);
+	}
+
+	/// <summary>
+	/// Says what the stick can do, once — and not before it will answer. Silk.NET's GLFW backend publishes a
+	/// connected device a frame before it publishes that device's axis, button and hat counts, so this waits
+	/// for a map to exist rather than running at load. Anything keyed off the device's shape has to wait with
+	/// it: the derived map itself, the CONTROLS panel's capabilities, and --write-joystick-map.
+	/// </summary>
+	public void Announce(JoystickBindings bindings, ControlsPanel? controlsPanel, bool writeMap, string? dataDirectory) {
+		if (_announced || Map is not { } map) {
+			return;
+		}
+
+		_announced = true;
+
+		foreach (string line in Describe()) {
+			Console.WriteLine(line);
+		}
+
+		// The lever's mode lives in the map but is read through the bindings, the control law having no
+		// route to the map. Derived maps never set it, so this only ever carries a file's own choice.
+		bindings.BipolarThrottle = map.BipolarThrottle;
+
+		// Only when a stick really answered: with none attached the panel keeps whatever --joystick staged,
+		// which is the whole point of that flag.
+		if (controlsPanel is not null && Capabilities.Present) {
+			controlsPanel.Capabilities = Capabilities;
+		}
+
+		if (_probe) {
+			Console.WriteLine("Move one control at a time; put what it prints into "
+				+ $"data\\{JoystickDeviceMap.FileName}.");
+		}
+
+		if (writeMap && dataDirectory is not null) {
+			string mapPath = Path.Combine(dataDirectory, JoystickDeviceMap.FileName);
+			try {
+				map.Save(mapPath);
+				Console.WriteLine($"Wrote {mapPath}.");
+			} catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+				Console.WriteLine($"Could not write {mapPath}: {error.Message}");
+			}
+		}
 	}
 
 	/// <summary>

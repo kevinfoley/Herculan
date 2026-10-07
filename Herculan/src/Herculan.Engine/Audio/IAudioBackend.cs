@@ -8,12 +8,12 @@ namespace Herculan.Engine.Audio;
 /// <para><b>A sample is not a channel.</b> <see cref="CreateSample"/> registers one decoded
 /// recording; <see cref="Start"/> begins a playback of it and returns a handle to <i>that
 /// playback</i>. Starting the same sample twice gives two handles and two concurrent copies, which
-/// is what the original does — see docs/formats/audio.md, "A repeated play layers; it does not
+/// is what the original does — see docs/retail/formats/audio.md, "A repeated play layers; it does not
 /// restart". Channels are finite, so <see cref="Start"/> can refuse.</para>
 ///
 /// <para><b>Deliberately not a 3D audio API.</b> Distance rolloff, panning and the audible cutoff
 /// are the original's own rules and are computed in <see cref="SoundDirector.Place"/> before
-/// anything reaches here — see docs/formats/audio.md.</para>
+/// anything reaches here — see docs/retail/formats/audio.md.</para>
 ///
 /// <para>The abstraction will enable building different audio backends for different platforms. It
 /// is also what lets the simulation and its tests run with no audio device

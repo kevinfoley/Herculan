@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File;
 /// FILE - .STR — a string table (<c>simvol0\str\*.STR</c>, <c>LANG0\ENG\CAMPAIGN.STR</c>,
 /// <c>tapes\demolist.str</c>, <c>data\mission.str</c>): an <c>int32</c> content length, then groups of
 /// <c>{ int16 count; count x { int16 length incl. NUL; text; uint8 attributeCount; attributes } }</c>
-/// until the content runs out. See docs/formats/str-strings.md#layout.
+/// until the content runs out. See docs/retail/formats/str-strings.md#layout.
 ///
 /// <para>A group's index is its position in the file, which is how the simulator registers them
 /// (<c>SimStrings_LoadAll</c>, <c>00437598</c>) and how <see cref="Group"/> hands them out.</para>

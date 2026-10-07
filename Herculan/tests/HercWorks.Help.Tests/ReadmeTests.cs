@@ -8,7 +8,7 @@ namespace HercWorks.Help.Tests;
 /// <summary>
 /// The readme behind the manual's <c>Readme</c> action: <see cref="WriteDocument"/> against the retail
 /// files and damaged or doctored copies, and the page it lands in
-/// (docs/engine/online-manual.md#security-posture).
+/// (docs/herculan/online-manual.md#security-posture).
 /// </summary>
 public class ReadmeTests {
 	// v1.0's README.WRI: the text runs from 128 to fcMac, 30997, in a 37,120-byte file.

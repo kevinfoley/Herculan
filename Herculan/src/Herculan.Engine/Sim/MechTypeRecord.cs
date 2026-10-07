@@ -20,7 +20,7 @@ namespace Herculan.Engine.Sim;
 /// <para>What it normalises is the designer's speed points against the model's actual stride length,
 /// so that <c>maxSpeed x strideLengthPerTick</c> lands on the same real speed for every machine.
 /// Verified across all 18 HERCs by predicting run-gait top speed from the animation data alone —
-/// see docs/simulation/mech-locomotion.md. Without it, APOCA comes out 2x wrong.</para>
+/// see docs/retail/simulation/mech-locomotion.md. Without it, APOCA comes out 2x wrong.</para>
 ///
 /// <para>Only non-flyers are rescaled; the Razor (<see cref="IsFlyer"/>) keeps its raw numbers and
 /// takes different code paths throughout.</para>
@@ -43,9 +43,14 @@ public sealed class MechTypeRecord {
 		int gaitThreshold = data.GaitThreshold;
 		int reverseGaitThreshold = data.GaitThresholdReverse;
 
+		// A walker's HUD scale is computed before the rescale, which is why its readout always tops
+		// out at 315 * rawMax / 1024 no matter what the scale does to the simulated speed. A flyer
+		// keeps the file's own figure.
+		HudSpeedScale = IsFlyer
+			? data.HudTopSpeed
+			: (short)SimMath.Q10Multiply(HudSpeedConstant, RawMaxForward);
+
 		if (!IsFlyer && data.StrideScaleDivisor != 0) {
-			// The HUD scale is computed before the rescale, which is why the readout always tops out
-			// at 315 * rawMax / 1024 no matter what the scale does to the simulated speed.
 			int scale = SimMath.Q16Divide(data.StrideScaleNumerator * 400, data.StrideScaleDivisor);
 			maxReverse = (short)SimMath.Q16Multiply(maxReverse, scale);
 			maxForward = (short)SimMath.Q16Multiply(maxForward, scale);
@@ -60,7 +65,6 @@ public sealed class MechTypeRecord {
 		MaxForward = (short)maxForward;
 		GaitThreshold = (short)gaitThreshold;
 		ReverseGaitThreshold = (short)reverseGaitThreshold;
-		HudSpeedScale = (short)SimMath.Q10Multiply(HudSpeedConstant, RawMaxForward);
 	}
 
 	/// <summary>The parsed file this record was derived from.</summary>
@@ -111,7 +115,7 @@ public sealed class MechTypeRecord {
 	/// frame and in world units. The X component is always zero: the mech vtable's <c>+0x30</c>
 	/// accessor (<c>004155c4</c>) builds the point as <c>(0, +0x64, +0x66)</c>, and the cockpit
 	/// branch of <c>Cam_Update</c> (<c>004011a0</c>) puts it through the node's world matrix to get
-	/// the eye. Values per chassis: docs/simulation/mech-locomotion.md, "Mech type record".
+	/// the eye. Values per chassis: docs/retail/simulation/mech-locomotion.md, "Mech type record".
 	///
 	/// <para>The lift is the load-bearing half. Retail states 0-820 for it across the fleet bar the PITBULL's 2000, which on
 	/// OUTLAW moves the eye from 44% of the model's height to 82% — waist to cockpit. It is also what
@@ -128,7 +132,7 @@ public sealed class MechTypeRecord {
 	/// outside view orbits, in the machine's own frame: the mech vtable's <c>+0x30</c> accessor
 	/// (<c>004155c4</c>) builds it as <c>(0, +0x68, +0x6a)</c> beside the eye offset. The fore/aft half
 	/// is 0 on every retail chassis and the height 800-2600 (0 on the RAZOR). Per chassis:
-	/// docs/simulation/mech-locomotion.md, "Mech type record"; use: docs/simulation/external-views.md.
+	/// docs/retail/simulation/mech-locomotion.md, "Mech type record"; use: docs/retail/simulation/external-views.md.
 	/// </summary>
 	public short OrbitCentreY => Data.OrbitCentreY;
 
@@ -249,7 +253,7 @@ public sealed class MechTypeRecord {
 	/// <c>Mech_Constructor</c>'s count into <c>mech+0x23c</c>. Entry <c>i</c> is flat-set shape
 	/// <see cref="LegKind"/>(<c>i</c>), a <see cref="GroundShape"/>, laid under part
 	/// <see cref="LegPartId"/>(<c>i</c>). See
-	/// docs/simulation/ground-shapes.md and <see cref="GroundShape"/>.
+	/// docs/retail/simulation/ground-shapes.md and <see cref="GroundShape"/>.
 	/// </summary>
 	public int ShadowCount => Data.LegKinds.Length;
 
@@ -307,7 +311,7 @@ public sealed class MechTypeRecord {
 	/// <c>typeRecord+0x06</c> — <see cref="RawMaxForward"/>. So the gate is on forward speed: an
 	/// outgunned machine flanks if it is fast enough to get round, and squares up into
 	/// <c>facing off</c> if it is not. Retail speeds run 140 to 325, so 13 of the 21 chassis pass.
-	/// See docs/simulation/ai-targeting.md.</para>
+	/// See docs/retail/simulation/ai-targeting.md.</para>
 	/// </summary>
 	public short FlankingGate => RawMaxForward;
 
@@ -408,16 +412,18 @@ public sealed class MechTypeRecord {
 	public short TurnInPlaceSequence => Data.AnimId_TurnInPlace;
 
 	/// <summary>
-	/// The HUD's speed divisor, set at load to <c>Q10(315 x rawMaxForward)</c>. The readout is
-	/// <c>speed * HudSpeedScale / MaxForward</c>, so the simulated maximum always displays the same
-	/// number whatever <see cref="StrideScale"/> did to it.
+	/// <c>typeRec+0xc2</c>, the km/h the HUD shows at this chassis' top speed. A walker's is set at
+	/// load to <c>Q10(315 x rawMaxForward)</c> and its readout is <c>speed * HudSpeedScale /
+	/// MaxForward</c>, so the simulated maximum always displays the same number whatever
+	/// <see cref="StrideScale"/> did to it. A flyer's is <see cref="HercSimDat.HudTopSpeed"/>, which
+	/// the loader leaves alone.
 	/// </summary>
 	public short HudSpeedScale { get; }
 
 	/// <summary>
 	/// The speed readout for a given speed scalar, in km/h — the walker branch of
 	/// <c>Mech_GetDisplaySpeedKph</c> (<c>0041bb3c</c>). Calibrated for the run gait only; see
-	/// docs/simulation/mech-locomotion.md, "Walk/run gait discontinuity".
+	/// docs/retail/simulation/mech-locomotion.md, "Walk/run gait discontinuity".
 	/// </summary>
 	public int DisplaySpeedKph(int speed) =>
 		MaxForward != 0 ? speed * HudSpeedScale / MaxForward : 0;

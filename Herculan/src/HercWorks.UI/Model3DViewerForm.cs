@@ -1,5 +1,7 @@
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Dbsim;
+using HercWorks.Core.Data.File.Dgs;
+using HercWorks.Core.Data.File.Dts;
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
@@ -13,15 +15,27 @@ namespace HercWorks.UI;
 /// Model3DViewerControl for the rasterizer). That needs three inputs: a theater palette (.DPL), the
 /// same theater's ramp (.RMP, found by the palette's basename) and, for textured polys, the bank
 /// the shape is bound to. A mech's bank comes from its sim .DAT's TextureGroup — the seven shared
-/// atlases in docs/formats/dts-texture-binding.md's "DBSIM's mech-to-texture mapping"; same-basename
+/// atlases in docs/retail/formats/dts-texture-binding.md's "DBSIM's mech-to-texture mapping"; same-basename
 /// DBAs like SAMSON.DBA are 2D damage-readout art, not mesh textures. Whatever is missing falls back
 /// to placeholder colours. TSBitmapPart billboards are not built.
+///
+/// <para>It also opens the two .DGS structure libraries, dgs\BASES.DGS and dgs\BHULKS.DGS, whose
+/// records each wrap one ordinary DTS object (see BasesDgsTransformer). Each record becomes a part,
+/// labelled with its record index, which is the shape index BASES.DAT's +0x02 (or its wreck index
+/// +0x04, for BHULKS) selects. Their default bank is BASETEX, which the simulation binds to every
+/// wreck and to every structure type whose BASES.DAT +0x32 is zero; the ground vehicles' VEHTEX is
+/// in the bank selector.</para>
 /// </summary>
 public partial class Model3DViewerForm : Form {
 	private readonly DTSModelTransformer _dtsTransformer = new();
 	private readonly DynamixBitmapArrayTransformer _dbaTransformer = new();
 	private readonly DynamixPaletteTransformer _dplTransformer = new();
 	private readonly HercSimDataTransformer _hercSimDataTransformer = new();
+	private readonly BasesDgsTransformer _dgsTransformer = new();
+
+	// For a .DGS library, the record index of each part, so the selector names a part by the index
+	// BASES.DAT uses for it. Null for a .DTS, whose parts are just numbered.
+	private int[]? _recordIndices;
 
 	// Kept around (rather than discarded after the initial Build()) so the Detail Level combo can
 	// re-walk a single root's own tree on demand — see RefreshDetailLevelSelector/
@@ -84,8 +98,9 @@ public partial class Model3DViewerForm : Form {
 
 	private void OnOpenDts(object? sender, EventArgs e) {
 		using var dialog = new OpenFileDialog {
-			Filter = "DTS 3D Model files (*.dts)|*.dts|All files (*.*)|*.*",
-			Title = "Open DTS file",
+			Filter = "3D Model files (*.dts;*.dgs)|*.dts;*.dgs|DTS 3D Model files (*.dts)|*.dts|"
+				+ "DGS structure libraries (*.dgs)|*.dgs|All files (*.*)|*.*",
+			Title = "Open 3D model",
 			ClientGuid = OpenDtsClientGuid
 		};
 
@@ -97,7 +112,8 @@ public partial class Model3DViewerForm : Form {
 			byte[] rawBytes = File.ReadAllBytes(dialog.FileName);
 			var prefix = VolEntryPrefixCodec.StripIfPresent(rawBytes);
 
-			var model = (DynamixThreeSpaceModel?)_dtsTransformer.Parse(prefix.Content);
+			bool library = string.Equals(Path.GetExtension(dialog.FileName), ".dgs", StringComparison.OrdinalIgnoreCase);
+			var model = ParseModel(prefix.Content, library);
 			if (model == null) {
 				MessageBox.Show(this, "File was empty or could not be parsed.", "Error",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -123,7 +139,7 @@ public partial class Model3DViewerForm : Form {
 	/// </summary>
 	public void LoadFromVolEntry(VolEntry entry, Voln sourceVol) {
 		try {
-			var model = (DynamixThreeSpaceModel?)_dtsTransformer.Parse(entry.RawBytes);
+			var model = ParseModel(entry.RawBytes, entry.Ext == FileType.Dgs);
 			if (model == null) {
 				MessageBox.Show(this, "File was empty or could not be parsed.", "Error",
 					MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -137,6 +153,43 @@ public partial class Model3DViewerForm : Form {
 				MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 	}
+
+	/// <summary>
+	/// Parses a .DTS, or a .DGS library into a model whose roots are its records' DTS objects, which
+	/// is all the rest of the viewer needs. Sets <see cref="_recordIndices"/> to match. A record with
+	/// no geometry is left out; no retail record lacks it.
+	/// </summary>
+	private DynamixThreeSpaceModel? ParseModel(byte[]? content, bool library) {
+		if (!library) {
+			var model = (DynamixThreeSpaceModel?)_dtsTransformer.Parse(content);
+			if (model != null) {
+				_recordIndices = null;
+			}
+			return model;
+		}
+
+		if (_dgsTransformer.Parse(content) is not GridShapeLibrary { Shapes: { } shapes }) {
+			return null;
+		}
+
+		var roots = new List<TSObject>();
+		var indices = new List<int>();
+		for (int i = 0; i < shapes.Length; i++) {
+			if (shapes[i].Geometry is { } geometry) {
+				roots.Add(geometry);
+				indices.Add(i);
+			}
+		}
+
+		_recordIndices = indices.ToArray();
+		return new DynamixThreeSpaceModel { Roots = roots };
+	}
+
+	/// <summary>How the selector and the status line name a part.</summary>
+	private string PartName(int partIndex) =>
+		_recordIndices != null && partIndex < _recordIndices.Length
+			? $"Record {_recordIndices[partIndex]}"
+			: $"Part {partIndex}";
 
 	private static readonly Guid OpenTextureBankClientGuid = new("2c9a2e9f-4b1a-4b6a-9e3a-6f6e0a2e6a1d");
 	private static readonly Guid OpenTexturePaletteClientGuid = new("7d4e8c2a-1f9b-4a3d-8c7e-2b5f9d1e4a6c");
@@ -450,10 +503,16 @@ public partial class Model3DViewerForm : Form {
 	/// newhercs). Silent best-effort, same convention as TryLoadDefaultPalette: only runs for
 	/// VOL-sourced loads, and any failure (no matching .DAT, unmapped TextureGroup, missing .DBA)
 	/// just leaves _loadedTextureBank null so the model still renders with the flat placeholder
-	/// color — Load Texture Bank remains available as a manual override or fallback.
+	/// color — Load Texture Bank remains available as a manual override or fallback. A .DGS
+	/// library takes <see cref="StructureBankName"/> instead.
 	/// </summary>
 	private void TryLoadDefaultTextureBank() {
 		if (_sourceVol == null || _loadedDisplayName == null) {
+			return;
+		}
+
+		if (_recordIndices != null) {
+			TryLoadTextureBankNamed(StructureBankName);
 			return;
 		}
 
@@ -478,8 +537,20 @@ public partial class Model3DViewerForm : Form {
 			return;
 		}
 
+		TryLoadTextureBankNamed(groupName);
+	}
+
+	/// <summary>The bank the structure libraries default to — see the class summary.</summary>
+	private const string StructureBankName = "BASETEX";
+
+	/// <summary>Loads the source VOL's .DBA of this basename, silently leaving the bank unset on any failure.</summary>
+	private void TryLoadTextureBankNamed(string baseName) {
+		if (_sourceVol == null) {
+			return;
+		}
+
 		var dbaEntry = FindVolEntries(_sourceVol, FileType.Dba).FirstOrDefault(e =>
-			string.Equals(Path.GetFileNameWithoutExtension(e.FileName ?? ""), groupName,
+			string.Equals(Path.GetFileNameWithoutExtension(e.FileName ?? ""), baseName,
 				StringComparison.OrdinalIgnoreCase));
 		if (dbaEntry?.RawBytes is not { Length: > 0 } dbaBytes) {
 			return;
@@ -534,7 +605,7 @@ public partial class Model3DViewerForm : Form {
 
 		_partSelector.Items.Clear();
 		for (int i = 0; i < roots.Count; i++) {
-			_partSelector.Items.Add($"Part {i} — {roots[i].Triangles.Count} triangles");
+			_partSelector.Items.Add($"{PartName(i)} — {roots[i].Triangles.Count} triangles");
 		}
 
 		_partSelector.SelectedIndexChanged += OnPartSelectionChanged;
@@ -656,7 +727,7 @@ public partial class Model3DViewerForm : Form {
 			return;
 		}
 
-		var rebuilt = DtsGeometryBuilder.BuildRoot(meshes[partIndex], $"Part {partIndex}", lodIndex, RenderContext());
+		var rebuilt = DtsGeometryBuilder.BuildRoot(meshes[partIndex], PartName(partIndex), lodIndex, RenderContext());
 		_viewerControl.ReplaceRoot(partIndex, rebuilt);
 		UpdateStatusForCurrentSelection();
 	}
@@ -680,6 +751,6 @@ public partial class Model3DViewerForm : Form {
 			: "";
 		textureNote = paletteNote + textureNote;
 		_statusLabel.Text =
-			$"Loaded {_loadedDisplayName} — part {partIndex} of {_viewerControl.Roots.Count}{lodNote}, {triangleCount} triangle(s).{textureNote}";
+			$"Loaded {_loadedDisplayName} — {PartName(partIndex).ToLowerInvariant()} ({partIndex + 1} of {_viewerControl.Roots.Count}){lodNote}, {triangleCount} triangle(s).{textureNote}";
 	}
 }

@@ -7,7 +7,7 @@ namespace Herculan.Engine.Sim;
 /// pull the trigger. Everything below the turret — the turret ticks, the mount's own fire dispatch —
 /// is the same machinery the player's trigger reaches, which is the original's own arrangement.
 ///
-/// <para>Derived in docs/simulation/ai-weapons.md.</para>
+/// <para>Derived in docs/retail/simulation/ai-weapons.md.</para>
 /// </summary>
 public sealed partial class MechObject {
 	/// <summary>
@@ -31,16 +31,14 @@ public sealed partial class MechObject {
 				return;
 
 			// A structure is shot at its first surviving component: the original's vtable +0x54
-			// (Base_FirstLiveComponent, 00406868) returns the first index whose damage word is non-zero when it is handed a
-			// null second argument, which is what Ai_AimAndFire passes.
+			// (Base_FirstLiveComponent, 00406868) with the null second argument Ai_AimAndFire passes.
 			case BaseObject structure when structure.TargetClass == TargetClass.Structure:
-				FireAtPoint(world, structure.ComponentPosition(FirstLiveComponent(structure)), aspect,
+				FireAtPoint(world, structure.ComponentPosition(structure.FirstLiveComponent()), aspect,
 					structure);
 				return;
 
 			// Everything else takes its own aim offset over its position — the original's vtable +0x30:
-			// a ground vehicle's BASES.DAT +0x2c height (Base_GetAimPoint), zero for a flyer. No engine
-			// class answers TargetClass.Flyer yet, so in practice this is the ground vehicle branch.
+			// a ground vehicle's BASES.DAT +0x2c height (Base_GetAimPoint), zero for a flyer.
 			default:
 				FireAtPoint(world, target.AimPoint, aspect, target);
 				return;
@@ -64,7 +62,7 @@ public sealed partial class MechObject {
 		short bearingError = (short)(Detection.HeadingToward(target.Position, Position) - (short)Heading);
 
 		if (Abs(bearingError) >= Type.TorsoTwistLimit) {
-			CenterTorsoTick();
+			CenterTorsoTick(world);
 			return;
 		}
 
@@ -102,7 +100,7 @@ public sealed partial class MechObject {
 		}
 
 		if (weapon == null) {
-			TrackWorldPoint(point);
+			TrackWorldPoint(world, point);
 			return;
 		}
 
@@ -124,7 +122,7 @@ public sealed partial class MechObject {
 				point.Z + world.Random.NextBelow(spread));
 		}
 
-		var (yaw, pitch) = TrackWorldPoint(point);
+		var (yaw, pitch) = TrackWorldPoint(world, point);
 
 		// A launcher fires the moment it is chosen — the round steers itself. Only a gun waits for the
 		// turret to arrive.
@@ -154,7 +152,7 @@ public sealed partial class MechObject {
 	/// average 289, so the pick is mostly noise with a bias.</item>
 	/// </list>
 	///
-	/// <para>The retail figures behind both are in docs/simulation/ai-weapons.md
+	/// <para>The retail figures behind both are in docs/retail/simulation/ai-weapons.md
 	/// ("Choosing a weapon").</para>
 	/// </summary>
 	private WeaponMount? ChooseWeapon(SimWorld world, short aspect, int range, SimObject target) {
@@ -241,25 +239,11 @@ public sealed partial class MechObject {
 	public short AspectOf(SimObject target) => (short)(
 		Detection.HeadingToward(Position, target.Position) - (short)target.Heading + target.AimTwist);
 
-	/// <summary>
-	/// <c>Base_FirstLiveComponent</c> (<c>00406868</c>) with a null second argument: the first component of a structure that is
-	/// still standing, or −1 when none is.
-	/// </summary>
-	private static int FirstLiveComponent(BaseObject structure) {
-		for (int i = 0; i < structure.Type.Components.Length; i++) {
-			if (structure.ComponentAlive(i)) {
-				return i;
-			}
-		}
-
-		return -1;
-	}
-
 
 	/// <summary>
 	/// <c>mech+0xb5</c> — skip the next weapon selection. Set by the seeker of an electro-optical
 	/// round in flight, once per tick it steers, so a machine that has one in the air fires nothing
-	/// else while it flies. See docs/simulation/rockets.md.
+	/// else while it flies. See docs/retail/simulation/rockets.md.
 	/// </summary>
 	public bool WeaponSelectionSuppressed { get; set; }
 

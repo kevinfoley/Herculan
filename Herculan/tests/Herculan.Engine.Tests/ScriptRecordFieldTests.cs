@@ -6,7 +6,7 @@ namespace Herculan.Engine.Tests;
 /// <summary>
 /// The named views over script.dat roster records' raw spans are settable, so an editor can change
 /// them without giving up the byte-exact round trip. These pin where each one writes, against the
-/// exported offsets in <c>docs/formats/script-dat.md</c>: a mech's head starts at exported 0x00 and
+/// exported offsets in <c>docs/retail/formats/script-dat.md</c>: a mech's head starts at exported 0x00 and
 /// its tail at 0x42; a flyer's and a base's actions sit at the same place in their tails.
 /// </summary>
 public class ScriptRecordFieldTests {

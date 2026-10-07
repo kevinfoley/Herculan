@@ -28,7 +28,7 @@ public class SaveSlotEntry {
 /// mode flag. Both counts are written as a literal 12, so the slot count is fixed in code and this
 /// file cannot widen it.</para>
 ///
-/// <para>See <c>docs/formats/save-games.md</c> for the byte layout and for why the leading length
+/// <para>See <c>docs/retail/formats/save-games.md</c> for the byte layout and for why the leading length
 /// field measures the physical file rather than the payload.</para>
 /// </summary>
 public class SaveSlotDirectory {

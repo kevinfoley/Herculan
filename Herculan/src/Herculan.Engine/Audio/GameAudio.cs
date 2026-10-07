@@ -1,3 +1,5 @@
+using HercWorks.Core.Data.File.Cfg;
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Sim;
@@ -28,7 +30,7 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// <summary>
 	/// <c>Time_GetCoarseTicks</c> as this session has counted it — the same clock the message port
 	/// runs on, and the one the cockpit's power-up animations are timed against. Exposed because the
-	/// compass's wind-up is stamped and ramped in it; see <see cref="Content.HeadingTapeSweep"/>.
+	/// compass's wind-up is stamped and ramped in it; see <see cref="HeadingTapeSweep"/>.
 	/// </summary>
 	public long CoarseTicks => (long)_messageTicks;
 
@@ -86,7 +88,7 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// speech — but it lives here because this is where a posted message arrives: the simulation
 	/// reaches it through <see cref="ISoundSink.Say"/>, which knows nothing about either half. A
 	/// renderer reads <see cref="MessagePort.Ticker"/> from it; see
-	/// <see cref="Content.MessageTickerLayout"/>.
+	/// <see cref="MessageTickerLayout"/>.
 	/// </summary>
 	public MessagePort Messages { get; }
 
@@ -110,13 +112,15 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	void ISoundSink.Play(int id) => _director?.Play(id);
 
 	/// <inheritdoc />
-	void ISoundSink.PlayAt(int id, Vec3i position) => _director?.PlayAt(id, position);
+	void ISoundSink.PlayAt(int id, Vec3i position, SoundReach? reach, object? source) =>
+		_director?.PlayAt(id, position, reach, source);
 
 	/// <inheritdoc />
 	void ISoundSink.Stop(int id) => _director?.Stop(id);
 
 	/// <inheritdoc />
-	void ISoundSink.MoveTo(int id, Vec3i position) => _director?.UpdatePosition(id, position);
+	void ISoundSink.MoveTo(int id, Vec3i position, SoundReach? reach, object? source) =>
+		_director?.UpdatePosition(id, position, reach, source);
 
 	/// <inheritdoc />
 	void ISoundSink.SetPitch(int id, int rate) => _director?.SetPitch(id, rate);
@@ -144,10 +148,10 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	public SquadCommChannel? Squad { get; private set; }
 
 	/// <summary>
-	/// Where a training mission's instructor clips are read from — see <see cref="InstructorVoice"/>.
-	/// Null leaves the instructor silent.
+	/// Reads a training mission's instructor clip, given the training mission and the message id — see
+	/// <see cref="InstructorVoice.ReadClip"/>. Null leaves the instructor silent.
 	/// </summary>
-	public string? InstructorVoiceDirectory { get; set; }
+	public Func<int, int, byte[]?>? InstructorClip { get; set; }
 
 	/// <summary>
 	/// Hands this the mission's comm boxes and connects their two outputs: the recorded line goes to
@@ -170,16 +174,16 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 		if (squad.Port.Training) {
 			squad.Port.Shown += message => {
 				if (squad.Port.Mode != MessageChannelMode.TextOnly && SpeechEnabled
-						&& InstructorVoiceDirectory is { } directory) {
-					SquadSpeech?.SpeakFile(Path.Combine(directory,
-						InstructorVoice.ClipName(squad.TrainingMission, message.Id)));
+						&& InstructorClip is { } readClip) {
+					int training = squad.TrainingMission;
+					SquadSpeech?.SpeakClip(InstructorVoice.ClipName(training, message.Id), () => readClip(training, message.Id));
 				}
 			};
 		}
 
 		// CommBox_OnMessageBegin tests whether the hiss is already running before starting it, so a
 		// second box opening under the first does not layer a second copy — see the note on
-		// Sound_Play in docs/formats/audio.md.
+		// Sound_Play in docs/retail/formats/audio.md.
 		squad.Hiss += id => {
 			if (_director is { } director && !director.IsPlaying(id)) {
 				director.Play(id);
@@ -224,8 +228,17 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// A directory of <c>TrackNN.wav</c> files to play instead of the disc; see
 	/// <see cref="WaveFileMusicSource"/>.
 	/// </param>
+	/// <param name="discImage">
+	/// The install's disc, when it is an image, whose audio tracks are preferred to a CD drive's; see
+	/// <see cref="ImageMusicSource"/>.
+	/// </param>
+	/// <param name="soundCfg">
+	/// The install's <c>data\sound.cfg</c>, applied through <see cref="SoundCfgBackend"/>; null takes the shipped
+	/// settings.
+	/// </param>
 	public static GameAudio Create(GameContent content, SimRandom? random = null, bool lowMemory = false,
-			bool silent = false, string? cdDrive = null, string? musicDirectory = null) {
+			bool silent = false, string? cdDrive = null, string? musicDirectory = null,
+			HercWorks.Disc.DiscImage? discImage = null, SoundCfg? soundCfg = null) {
 		// Read first and unconditionally: the message port's display half needs nothing but the text,
 		// so the ticker still runs on a machine with no sound device and in an install with no
 		// SIMSOUND.VOL.
@@ -244,14 +257,15 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 		}
 
 		string? deviceFailure = null;
-		var backend = (silent ? null : (IAudioBackend?)OpenAlBackend.TryCreate(out deviceFailure))
-			?? new NullAudioBackend();
+		var backend = new SoundCfgBackend(
+			(silent ? null : (IAudioBackend?)OpenAlBackend.TryCreate(out deviceFailure)) ?? new NullAudioBackend(),
+			soundCfg ?? new SoundCfg());
 		// Music is Red Book CD audio and never went through SOS, so it gets a stream of its own on the
 		// device rather than a pool channel: failing to find a disc leaves the effects half exactly as
 		// it was.
 		var cd = silent
 			? new NullCdAudio("silenced by request")
-			: CdAudio.Open(backend, cdDrive, musicDirectory);
+			: CdAudio.Open(backend, cdDrive, musicDirectory, discImage: discImage);
 		var director = new SoundDirector(bank, backend, random) { Cd = cd };
 		var voice = new ComputerVoice(content, messages, backend);
 		var squadVoice = new SquadVoice(content, backend);
@@ -346,11 +360,11 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// <para><b>The hum is the flyer's, not the walker's</b>, despite the sample being called
 	/// <c>herceng1</c>. The original gates it on the type record's <c>+0x50</c> — file offset 78,
 	/// <c>FlyerFlag</c>, set on the RAZOR alone — so a HERC powers up without one and its
-	/// running noise is its footsteps. See docs/simulation/mech-locomotion.md's type-record table.</para>
+	/// running noise is its footsteps. See docs/retail/simulation/mech-locomotion.md's type-record table.</para>
 	///
 	/// <para><b>A flyer gets the hum and nothing else.</b> <c>start3</c> and the announcement both
 	/// sit behind <c>cockpit+0x245</c>, which <c>Gau_BuildCockpitWidgets</c> sets for a flyer before
-	/// this runs; see docs/formats/audio.md, "The cockpit power-up".</para>
+	/// this runs; see docs/retail/formats/audio.md, "The cockpit power-up".</para>
 	/// </summary>
 	public void PowerUp(MechObject pilot) {
 		_pilot = pilot;
@@ -462,7 +476,7 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// <summary>
 	/// Whether the power-up announces <see cref="SystemMessages.PowerUpDamaged"/>: true when any of
 	/// the first <see cref="PowerUpCheckedInternals"/> internals reads any damage at all, which is
-	/// <c>Cockpit_PowerUpTick</c>'s test as docs/formats/cockpit-messages.md, "Posters", derives it.
+	/// <c>Cockpit_PowerUpTick</c>'s test as docs/retail/formats/cockpit-messages.md, "Posters", derives it.
 	///
 	/// <para>The original's reading (<c>Mech_ReadEntryDamage</c>, <c>0041b514</c>) takes a zero
 	/// maximum as fully damaged where <see cref="ComponentDamage.DependentPercent"/> reads it as 0;

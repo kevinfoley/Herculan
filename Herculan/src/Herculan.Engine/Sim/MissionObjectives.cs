@@ -16,7 +16,7 @@ namespace Herculan.Engine.Sim;
 /// throttle — the status is only worked out every <see cref="PollInterval"/>, and an alert-worthy
 /// one has to hold for <see cref="AlertDelay"/> before it is handed up.</para>
 ///
-/// <para>See docs/simulation/mission-objectives.md.</para>
+/// <para>See docs/retail/simulation/mission-objectives.md.</para>
 /// </summary>
 public sealed class MissionObjectives {
 	private readonly MissionObjectiveState[] _objectives;
@@ -114,7 +114,7 @@ public sealed class MissionObjectives {
 	/// <summary>
 	/// <c>Ai_ChooseWeapon</c>'s write to <c>MissionPollTimer_Count</c> (<c>004a9ee7</c>): put the next
 	/// poll at least <paramref name="minimum"/> away, leaving one already further off alone. See
-	/// docs/simulation/ai-weapons.md, "Running dry".
+	/// docs/retail/simulation/ai-weapons.md, "Running dry".
 	/// </summary>
 	internal void DeferPoll(short minimum) {
 		if (_pollInterval < minimum) {
@@ -214,8 +214,10 @@ public sealed class MissionObjectives {
 	/// flag. Either way an answer of yes applies that record's counters, once.</para>
 	///
 	/// <para>The three outcomes are then each split by whether the player is
-	/// <see cref="IsClearOfThreats">clear</see>, and the not-clear side of all three is the same
-	/// value: the mission does not conclude while the player is still in a fight.</para>
+	/// <see cref="IsClearOfThreats">clear</see>. A failure and a success share their not-clear value,
+	/// <see cref="MissionStatus.DecidedButEngaged"/>, so the mission does not conclude while the player
+	/// is still in a fight; an undecided mission answers <see cref="MissionStatus.InProgressEngaged"/>
+	/// there.</para>
 	///
 	/// <para>Besides <see cref="Evaluate"/>, <see cref="MissionResults.Write"/> calls it directly as the
 	/// mission ends, and <see cref="MissionStatus.Complete"/> is the only answer that wins.</para>
@@ -234,8 +236,8 @@ public sealed class MissionObjectives {
 			// condition 5, which has no case in either of its two switches -- so such a record
 			// silently reuses the previous record's answer. Carried rather than corrected: nothing
 			// here should quietly disagree with the original about a mission that reaches it. For the
-			// first record the original carries whatever its caller left in the register; starting
-			// from false is this engine's choice.
+			// first record the original carries whatever its caller left in the register; HERCULAN starts
+			// from false, which is a divergence from retail.
 			if ((uint)objective.Record.SubjectKind <= (uint)MissionObjectiveSubject.Base
 					&& Test(world, player, objective) is bool answer) {
 				satisfied = answer;
@@ -257,13 +259,11 @@ public sealed class MissionObjectives {
 			}
 		}
 
-		if (!IsClearOfThreats(world, player)) {
-			return MissionStatus.DecidedButEngaged;
-		}
+		bool clear = IsClearOfThreats(world, player);
 
-		return lost ? MissionStatus.Failed
-			: allMet ? MissionStatus.Complete
-			: MissionStatus.InProgress;
+		return lost || allMet
+			? clear ? lost ? MissionStatus.Failed : MissionStatus.Complete : MissionStatus.DecidedButEngaged
+			: clear ? MissionStatus.InProgress : MissionStatus.InProgressEngaged;
 	}
 
 	/// <summary>
@@ -271,7 +271,7 @@ public sealed class MissionObjectives {
 	/// case (5, or outside 0-10), which leaves the running answer alone. The original writes the cases
 	/// out twice, once for a group subject and once for an object one; they are the same ten questions
 	/// and only the subject differs, so they are folded here. See
-	/// docs/simulation/mission-objectives.md, "What each condition asks".
+	/// docs/retail/simulation/mission-objectives.md, "What each condition asks".
 	/// </summary>
 	private static bool? Test(SimWorld world, MechObject player, MissionObjectiveState objective) {
 		var record = objective.Record;
@@ -444,10 +444,10 @@ public sealed class MissionObjectives {
 
 	/// <summary>
 	/// <c>Mission_IsOutsideBox</c> (<c>0041373c</c>) — whether a position is outside the mission's bounding box, grown by
-	/// <paramref name="margin"/> on every side. See <see cref="SimWorld.MissionBounds"/>.
+	/// <paramref name="margin"/> on every side. See <see cref="SimWorld.MissionBox"/>.
 	/// </summary>
 	private static bool IsOutsideMissionBox(SimWorld world, SimObject subject, int margin) {
-		var box = world.MissionBounds;
+		var box = world.MissionBox;
 
 		if (box.IsEmpty) {
 			return false;

@@ -16,10 +16,10 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 /// (<c>MecEntry.WeaponAmmoTypes</c>, or <c>script.dat</c> block 7 offset <c>0x72</c>), which picks
 /// among the <c>Rocket</c> records. Seven catalog ids (<c>NONE</c>, <c>LAEW</c>, <c>MINE</c>, <c>TARG</c>,
 /// <c>SHLD</c>, <c>TURB</c>, <c>ENRG</c>) carry an all-zero placeholder template whose mount
-/// constructors never consume the index 0 it reads. See docs/simulation/weapon-mounts.md.</para>
+/// constructors never consume the index 0 it reads. See docs/retail/simulation/weapon-mounts.md.</para>
 ///
 /// <para>The retail records, index by index, are tabulated in
-/// docs/formats/proj-dat.md#the-retail-records, which also says how a fired shot resolves its
+/// docs/retail/formats/proj-dat.md#the-retail-records, which also says how a fired shot resolves its
 /// record a second time by (Type, SubtypeId).</para>
 ///
 /// <para><b>Damage scaling.</b> A shot's power level — the capacitor charge it was fired at,
@@ -27,7 +27,7 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 /// absorption, and against DamageArmor before the damage-application step;
 /// <see cref="Projectile.SplashFactor"/>'s own multiplier one step further down is Q10 as well.
 /// DamageShield/DamageArmor are the weapon's own base stats, not abstract multipliers. See
-/// docs/simulation/weapon-firing.md and docs/formats/proj-dat.md#layout.</para>
+/// docs/retail/simulation/weapon-firing.md and docs/retail/formats/proj-dat.md#layout.</para>
 ///
 /// <para><b><see cref="Projectile.Type"/> is a firing-mechanism selector</b>, not a cosmetic tag —
 /// each value builds a different class; see <see cref="ProjectileType"/>. Every <c>Beam</c> (4)
@@ -35,7 +35,7 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 /// rather than as a travelling instance. <c>Bullet</c> (2) covers both the ATC progression and the
 /// EMP-shaped high-shield entries: real flight time, and <see cref="Projectile.SplashFactor"/> 0
 /// throughout — except one. <c>Rocket</c> (0) is the splash-capable guided weapon; <c>Grenade</c>
-/// (3) is a cut class whose records no weapon template names (docs/formats/proj-dat.md#open).</para>
+/// (3) is a cut class whose records no weapon template names (docs/retail/formats/proj-dat.md#open).</para>
 ///
 /// <para><b>The Plasma cannon is index 22</b>, the single <c>Bullet</c> record that breaks the
 /// no-splash rule (<see cref="Projectile.SubtypeId"/> 9, 3000/3000, SplashFactor 1000). DBSIM's
@@ -61,7 +61,7 @@ public class ProjectileData {
 		/// <summary>
 		/// The Q10 fraction of this hit's shield-absorbed armour damage that <c>Mech_ApplyDirectFireDamage</c>
 		/// (<c>004188c8</c>) diverts into a 500-unit secondary explosion on the struck object instead of
-		/// the struck component's health. Zero means none. See docs/simulation/damage-system.md.
+		/// the struck component's health. Zero means none. See docs/retail/simulation/damage-system.md.
 		/// </summary>
 		public short SplashFactor { get; set; }
 
@@ -70,7 +70,7 @@ public class ProjectileData {
 		/// <summary>
 		/// <c>EXPLOS.DAT</c> effect types for a shot the shields fully absorbed — impact group 0, one of
 		/// the four drawn at random. The file order is shield, ground, armour. See
-		/// docs/simulation/impact-effects.md.
+		/// docs/retail/simulation/impact-effects.md.
 		/// </summary>
 		public short[] ImpactFXShield { get; set; } = new short[4];
 

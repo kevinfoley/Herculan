@@ -6,7 +6,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Hercs;
 /// The six-byte <c>gam\*.dat</c> form of a weapon unit (<c>WeaponUnit_ReadCatalogForm</c>,
 /// <c>00411a36</c>): record <c>+0x00</c>, <c>+0x06</c> and <c>+0x08</c>. The hardpoint it sits on
 /// is the parent's key. <see cref="Sav.ShellWeaponEntry"/> is the full save form. See
-/// <c>docs/formats/herc-catalogs.md#the-weapon-unit-record</c>.
+/// <c>docs/retail/formats/herc-catalogs.md#the-weapon-unit-record</c>.
 /// </summary>
 public class UiWeaponEntry {
 	/// <summary>The weapon catalog id.</summary>

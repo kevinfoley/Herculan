@@ -2,7 +2,7 @@ using Xunit;
 
 namespace HercWorks.Help.Tests;
 
-/// <summary>The decoder against the three retail files (docs/formats/winhelp.md).</summary>
+/// <summary>The decoder against the three retail files (docs/retail/formats/winhelp.md).</summary>
 public class RetailManualTests {
 	[Theory]
 	[MemberData(nameof(RetailManuals.All), MemberType = typeof(RetailManuals))]

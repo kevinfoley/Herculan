@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Hercs;
 
 /// <summary>
 /// A screen-layout record with its part id, and — in the <c>gam\arm_*.dat</c> form — a second
-/// corner. See <c>docs/formats/herc-catalogs.md#the-screen-layout-families</c>.
+/// corner. See <c>docs/retail/formats/herc-catalogs.md#the-screen-layout-families</c>.
 /// </summary>
 public class UiHardpointGraphic : UiImageDBA {
 	/// <summary>

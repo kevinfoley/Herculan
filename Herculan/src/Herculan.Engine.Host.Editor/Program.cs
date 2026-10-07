@@ -1,5 +1,6 @@
+using Herculan.Engine.Install;
+using Herculan.Engine.Platform;
 using System.Numerics;
-using Herculan.Engine;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Host.Editor;
@@ -9,12 +10,11 @@ using Herculan.Engine.Scene;
 using Herculan.Engine.World;
 using ImGuiNET;
 using Silk.NET.Input;
-using Silk.NET.OpenGL.Extensions.ImGui;
 
 // The mission editor: a second thin host next to Herculan.Engine.Host, sharing every loading and
 // rendering utility but running a different loop — no sim ticking, so placed objects stand still,
 // plus a free editor camera, click-to-select, and an ImGui Properties panel. This is the "possible
-// future mission editor" docs/engine/planning.md's host/library split was kept open for.
+// future mission editor" docs/herculan/planning.md's host/library split was kept open for.
 
 string? installRoot = GameInstall.Locate(args.Length > 0 ? args[0] : null);
 if (installRoot == null) {
@@ -31,14 +31,22 @@ if (!File.Exists(scriptPath)) {
 	Console.Error.WriteLine(
 		$"No mission at {scriptPath}.\n" +
 		$"Pass one as the second argument — {MissionLoader.ScriptFileName} from the install's " +
-		$"{MissionLoader.DataFolderName} folder, or any of the SAV\\script*.dat snapshots.");
+		$"{MissionLoader.DataFolderName} folder, with the {MissionLoader.CountersFileName} and " +
+		$"{MissionLoader.PlayerFileName} beside it.");
 	return 1;
 }
 
 Console.WriteLine($"HERCULAN Mission Editor — loading {scriptPath} from {installRoot}");
 
-var content = GameContent.Mount(GameInstall.ArchiveDirectory(installRoot));
-var scene = MissionScene.Load(content, scriptPath);
+var content = GameContent.MountSimulator(installRoot);
+MissionScene scene;
+try {
+	scene = MissionScene.Load(content, scriptPath);
+} catch (MissingHandoffFileException missing) {
+	Console.Error.WriteLine($"Cannot load {scriptPath}: {missing.Message}");
+	return 1;
+}
+
 var mission = scene.Mission;
 
 Console.WriteLine(
@@ -49,11 +57,9 @@ Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift 
 // Pickable set: everything drawn, i.e. everything with a model — matches what the renderer
 // actually puts on screen. Objects don't move in the editor, so this is computed once.
 //
-// Deliberately NOT SceneModel.RadiusWorldUnits: that's the sim's coarse collision radius, a
-// horizontal footprint (max(extent.X, extent.Z) * 0.5, see SceneModelLibrary.BuildFromRoot) meant
-// for ground-plane proximity checks. Centered near the model's base, it's far smaller than a tall
-// mech's silhouette, so clicking the torso, head, or raised arms would miss it. Instead this
-// computes each model's own bounding-sphere radius from its mesh once (cached per model key,
+// Deliberately NOT SceneModel.ShapeRadius: that is the shape file's own radius about the model's
+// origin, which sits near a mech's base, so a sphere of it there need not cover the torso, head or
+// raised arms. Instead this computes each model's own bounding-sphere radius from its mesh once (cached per model key,
 // several objects share a model) and transforms the sphere's center by the object's full
 // rotation+translation — a sphere is rotation-invariant, so the local-space radius stays correct
 // after that.
@@ -91,7 +97,7 @@ using var window = new EngineWindow($"HERCULAN Mission Editor — zone {mission.
 
 SceneRenderer? renderer = null;
 WireframeRenderer? wireframe = null;
-ImGuiController? imgui = null;
+ScaledImGui? imgui = null;
 GpuMesh? terrainMesh = null;
 GpuTexture? terrainTexture = null;
 var modelMeshes = new Dictionary<string, GpuMesh>();
@@ -104,7 +110,8 @@ IMouse? mouse = null;
 var settings = EditorSettings.Load();
 var settingsPanel = new EditorSettingsPanel(settings);
 
-// Where the orientation gizmo sits: inset from the window's top-left corner, below the menu bar.
+// Where the orientation gizmo sits: inset from the window's top-left corner, below the menu bar, in pixels on a 100%
+// display (ScaledImGui.Scaled).
 const float CompassSize = 108f;
 const float CompassMargin = 12f;
 
@@ -149,12 +156,12 @@ window.Load += (gl, input) => {
 	wireframe = new WireframeRenderer(gl);
 
 	terrainMesh = new GpuMesh(gl, scene.TerrainMesh);
-	terrainTexture = scene.TerrainBank != null ? new GpuTexture(gl, scene.TerrainBank.Atlas, indexed: true) : null;
+	terrainTexture = scene.TerrainBank != null ? scene.TerrainBank.Atlas.Upload(gl, indexed: true) : null;
 
 	foreach (var model in scene.Models) {
-		modelMeshes[model.Key] = new GpuMesh(gl, model.Mesh, model.TriangleVertexCount);
+		modelMeshes[model.Key] = new GpuMesh(gl, model.Mesh, model.TriangleVertexCount, model.PointVertexCount);
 		if (model.Atlas != null) {
-			modelTextures[model.Key] = new GpuTexture(gl, model.Atlas, indexed: true);
+			modelTextures[model.Key] = model.Atlas.Upload(gl, indexed: true);
 		}
 	}
 
@@ -183,7 +190,7 @@ window.Load += (gl, input) => {
 	// is backface-culled.
 	gl.Disable(Silk.NET.OpenGL.EnableCap.CullFace);
 
-	imgui = new ImGuiController(gl, window.View, input, new ImGuiFontConfig(fontPath, 16));
+	imgui = new ScaledImGui(gl, window, input, fontPath);
 
 	if (mouse != null) {
 		mouse.MouseDown += (m, button) => {
@@ -275,7 +282,8 @@ window.Render += (_, gl) => {
 	}
 
 	float menuBarHeight = BuildMenuBar();
-	CompassGizmo.Draw(camera, new Vector2(CompassMargin, menuBarHeight + CompassMargin), CompassSize);
+	float compassMargin = ScaledImGui.Scaled(CompassMargin);
+	CompassGizmo.Draw(camera, new Vector2(compassMargin, menuBarHeight + compassMargin), ScaledImGui.Scaled(CompassSize));
 	BuildPropertiesPanel(size.X, size.Y, menuBarHeight, selected);
 	settingsPanel.Draw();
 	imgui?.Render();
@@ -350,10 +358,10 @@ float BuildMenuBar() {
 }
 
 void BuildPropertiesPanel(int width, int height, float menuBarHeight, SceneObject? sel) {
-	const float PanelWidth = 320f;
+	float panelWidth = ScaledImGui.Scaled(320f);
 
-	ImGui.SetNextWindowPos(new Vector2(width - PanelWidth, menuBarHeight));
-	ImGui.SetNextWindowSize(new Vector2(PanelWidth, height - menuBarHeight));
+	ImGui.SetNextWindowPos(new Vector2(width - panelWidth, menuBarHeight));
+	ImGui.SetNextWindowSize(new Vector2(panelWidth, height - menuBarHeight));
 	ImGui.Begin("Properties", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse);
 
 	if (sel != null) {

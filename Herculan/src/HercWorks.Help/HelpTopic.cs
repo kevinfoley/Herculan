@@ -2,7 +2,7 @@ namespace HercWorks.Help;
 
 /// <summary>
 /// One topic: its header and the paragraph runs and table rows that follow it in the topic chain
-/// (docs/formats/winhelp.md#topic-header).
+/// (docs/retail/formats/winhelp.md#topic-header).
 /// </summary>
 /// <param name="Number">The topic number, 0 upward in chain order.</param>
 /// <param name="Title">The title; empty for the untitled pop-up and <c>overview</c> topics.</param>
@@ -26,7 +26,7 @@ public abstract record HelpBlock(uint Offset);
 public sealed record HelpParagraphRun(uint Offset, HelpParagraphFormat Format, IReadOnlyList<HelpInline> Inlines)
 	: HelpBlock(Offset);
 
-/// <summary>A <c>0x23</c> record: one table row (docs/formats/winhelp.md#tables).</summary>
+/// <summary>A <c>0x23</c> record: one table row (docs/retail/formats/winhelp.md#tables).</summary>
 public sealed record HelpTableRow(uint Offset, IReadOnlyList<HelpColumn> Columns, IReadOnlyList<HelpCell> Cells)
 	: HelpBlock(Offset);
 
@@ -45,7 +45,7 @@ public enum HelpAlignment {
 
 /// <summary>
 /// A paragraph format. Spacing, indents and tab stops are in the file's own unit, which
-/// docs/formats/winhelp.md#open lists as unresolved; a field the format leaves unset is 0.
+/// docs/retail/formats/winhelp.md#open lists as unresolved; a field the format leaves unset is 0.
 /// </summary>
 public sealed record HelpParagraphFormat(
 	int SpaceAbove, int SpaceBelow, int LineSpacing, int LeftIndent, int RightIndent, int FirstLineIndent,
@@ -78,7 +78,7 @@ public enum HelpPicturePlacement {
 /// <summary>A picture command naming <c>|bm</c><paramref name="Number"/>.</summary>
 public sealed record HelpPictureRef(HelpPicturePlacement Placement, int Number) : HelpInline;
 
-/// <summary>A type 5 picture: a button with a label that runs a macro (docs/formats/winhelp.md#embedded-buttons).</summary>
+/// <summary>A type 5 picture: a button with a label that runs a macro (docs/retail/formats/winhelp.md#embedded-buttons).</summary>
 public sealed record HelpButton(string Label, string Macro) : HelpInline;
 
 /// <summary>The start of a hotspot, which runs to the next <see cref="HelpHotspotEnd"/>.</summary>

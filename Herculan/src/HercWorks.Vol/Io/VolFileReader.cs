@@ -7,12 +7,12 @@ namespace HercWorks.Vol.Io;
 /// Ported from org.hercworks.voln.io.VolFileReader.
 /// </summary>
 public static class VolFileReader {
-	private const int OffsetDBSimFlag = 4;
-	private const int OffsetVShellFlag = 5;
+	private static readonly byte[] Magic = "VOLN"u8.ToArray();
 
-	// Set to 0x05 in every observed file, though this might actually be a VOL 'type' or
-	// 'load precedence' value: SHELL1.vol and SIMPATCH.vol use 0x0A instead, which might mean
-	// 'load this vol second', similar to how Quake loads numbered .pak files.
+	private const int OffsetProgramMask = 4;
+
+	// The search precedence: SHELL1.vol and SIMPATCH.vol carry 0x0A, every other archive 0x05, and
+	// retail searches 0x0A archives first. See docs/retail/formats/vol-archive.md, "Which archives are mounted".
 	private const int OffsetVolOrderNum = 8;
 
 	private const int OffsetDirCount = 9;
@@ -21,18 +21,50 @@ public static class VolFileReader {
 
 	// File list follows directory data; file bytes follow the file list.
 
-	public static Voln ParseVolFile(string volPath) {
-		byte[] data = File.ReadAllBytes(volPath);
+	/// <summary>
+	/// The program mask from a <c>.VOL</c>'s header, reading only its first eight bytes, or null when the
+	/// file is too short or does not start with <c>VOLN</c>. Lets a caller skip an archive meant for the
+	/// other program without reading it whole, as <c>Volume_LoadVolume</c> (<c>0047c9a4</c>) does.
+	/// </summary>
+	public static uint? ReadProgramMask(string volPath) {
+		using FileStream stream = File.OpenRead(volPath);
+		return ReadProgramMask(stream);
+	}
 
+	/// <summary>
+	/// <see cref="ReadProgramMask(string)"/> for an archive that is not a file of its own, such as one inside a
+	/// disc image, reading the first eight bytes from <paramref name="stream"/>'s current position.
+	/// </summary>
+	public static uint? ReadProgramMask(Stream stream) {
+		Span<byte> header = stackalloc byte[OffsetProgramMask + 4];
+		if (stream.ReadAtLeast(header, header.Length, throwOnEndOfStream: false) < header.Length) {
+			return null;
+		}
+
+		return header[..Magic.Length].SequenceEqual(Magic)
+			? System.Buffers.Binary.BinaryPrimitives.ReadUInt32LittleEndian(header[OffsetProgramMask..])
+			: null;
+	}
+
+	public static Voln ParseVolFile(string volPath) =>
+		ParseVolBytes(Path.GetFileName(volPath), File.ReadAllBytes(volPath), volPath);
+
+	/// <summary>
+	/// Parses an archive already read into memory, for one that is not a file of its own, such as one inside a
+	/// disc image. <paramref name="fileName"/> is its name, <paramref name="filePath"/> where it came from, for
+	/// <see cref="Voln.FilePath"/>.
+	/// </summary>
+	public static Voln ParseVolBytes(string fileName, byte[] data, string? filePath = null) {
 		var volFile = new Voln.VolnBuilder()
-			.SetFileName(DataFile.MakeFileName(Path.GetFileName(volPath)))
+			.SetFileName(DataFile.MakeFileName(fileName))
 			.SetRawBytes(data)
 			.Build();
 
-		volFile.FilePath = volPath;
+		volFile.FilePath = filePath;
 
-		volFile.DbsimFlag = data[OffsetDBSimFlag] == 1;
-		volFile.VshellFlag = data[OffsetVShellFlag] == 1;
+		volFile.ProgramMask = (uint)ByteOps.ReadInt32LE(data, OffsetProgramMask);
+		volFile.DbsimFlag = (volFile.ProgramMask & Voln.DbsimProgram) != 0;
+		volFile.VshellFlag = (volFile.ProgramMask & Voln.VshellProgram) != 0;
 
 		volFile.VolOrderNum = data[OffsetVolOrderNum];
 

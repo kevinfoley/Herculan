@@ -16,7 +16,7 @@ namespace Herculan.Engine.Tests;
 /// pin is the arithmetic and, more importantly, <b>where</b> it happens — the scale sits at the top
 /// of the raycast in the original, and three separate behaviours fall out of that placement: a shot
 /// with no attacker is never scaled, a plasma round is scaled once rather than twice, and the
-/// stashed figure a structure reads back is the unscaled one. See docs/simulation/difficulty.md.</para>
+/// stashed figure a structure reads back is the unscaled one. See docs/retail/simulation/difficulty.md.</para>
 /// </summary>
 [Collection(SimTimestepCollection.Name)]
 public class DifficultyTests {

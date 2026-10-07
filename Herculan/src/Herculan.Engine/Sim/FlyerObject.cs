@@ -128,7 +128,7 @@ public sealed partial class FlyerObject : SimObject {
 	/// <summary>
 	/// <c>flyer+0xa5</c> — this aircraft is not contesting anything. Latched by the reassess on the
 	/// two orders that send a flight somewhere rather than send it to fight; no write in the original
-	/// that clears it is known (docs/simulation/ai-flyers.md, Open), and nothing here clears it. Read
+	/// that clears it is known (docs/retail/simulation/ai-flyers.md, Open), and nothing here clears it. Read
 	/// by <c>Group_IsWipedOut</c> through <see cref="OutOfAction"/>.
 	/// </summary>
 	public bool Disarmed { get; set; }
@@ -143,8 +143,8 @@ public sealed partial class FlyerObject : SimObject {
 	private bool _destroyed;
 
 	/// <summary>
-	/// Who landed the shot that finished it, for the kill credit the original passes back through the
-	/// shooter's own vtable <c>+0x60</c>.
+	/// Who landed the shot that finished it — the shooter <see cref="ApplyComponentDamage"/> credits
+	/// with the kill.
 	/// </summary>
 	public SimObject? LastAttacker { get; private set; }
 
@@ -184,7 +184,7 @@ public sealed partial class FlyerObject : SimObject {
 	/// carries.</para>
 	///
 	/// <para>Wreckage follows every hit, and the hit that brings the aircraft down throws a different
-	/// group — see docs/simulation/hit-detection.md, "<c>Flyer_DirectFireHitTest</c>".</para>
+	/// group — see docs/retail/simulation/hit-detection.md, "<c>Flyer_DirectFireHitTest</c>".</para>
 	/// </summary>
 	public override int DirectFireHitTest(SimWorld world, WeaponShot shot) {
 		var muzzle = new Vec3i(shot.Muzzle.X, shot.Muzzle.Y, shot.Muzzle.Z);
@@ -208,7 +208,9 @@ public sealed partial class FlyerObject : SimObject {
 		ApplyDamage(struck.ComponentIndex, shot.DamageArmor, shot.Owner, world);
 
 		var point = shot.Muzzle.TransformPoint(0, struckAt, 0);
-		world.SpawnImpactEffect(Destroyed ? WreckHitEffect : effect, point);
+		// With no owner, unlike the mech and structure hit tests: an effect on a flyer is drawn whatever
+		// the camera is attached to.
+		world.SpawnImpactEffect(Destroyed ? WreckHitEffect : effect, point, owner: null);
 
 		// And wreckage off the same point, with the same substitution: an ordinary hit sheds
 		// HitDebrisGroup, and the hit that brings the aircraft down sheds WreckDebrisGroup instead.
@@ -231,7 +233,7 @@ public sealed partial class FlyerObject : SimObject {
 	/// value at point-blank range.</para>
 	///
 	/// <para>There is no range test. The sweep has already made it, so the numerator cannot come out
-	/// negative. See docs/simulation/damage-system.md, "A flyer".</para>
+	/// negative. See docs/retail/simulation/damage-system.md, "A flyer".</para>
 	/// </summary>
 	public override void ExplosiveDamage(SimWorld world, short damage, Vec3i hitPoint, int blastRadius,
 			SimObject? attacker) {
@@ -264,11 +266,10 @@ public sealed partial class FlyerObject : SimObject {
 	///
 	/// <para>The wreckage the cascade sheds inherits the aircraft's world velocity, through the
 	/// global <see cref="SimWorld.DebrisCarrierVelocity"/> the original points at
-	/// <c>flyer+0x24f</c> for the length of this call. Two things here belong to systems that are not
-	/// in the engine: the kill credit through the shooter's <c>+0x60</c> slot (recorded on
-	/// <see cref="LastAttacker"/> instead). The alert it plays when the player's own selected target
-	/// is what just went down is here, on the guard all three damage endpoints share, and so is the
-	/// mission action it fires — see <see cref="SimObject.DefeatAction"/>.</para>
+	/// <c>flyer+0x24f</c> for the length of this call. The loss also plays the alert for the player's
+	/// own selected target going down, on the guard all three damage endpoints share, credits the
+	/// shooter through its <c>+0x60</c> slot (<see cref="MechObject.CreditNeutralised"/>), and fires
+	/// the flyer's mission action — see <see cref="SimObject.DefeatAction"/>.</para>
 	/// </summary>
 	public override void ApplyComponentDamage(SimWorld world, int componentIndex, short damage,
 			SimObject? attacker) =>
@@ -296,17 +297,26 @@ public sealed partial class FlyerObject : SimObject {
 		}
 
 		bool wasDestroyed = _destroyed;
+
+		// Flyer_ComponentDamageWrite's own order: the announcement and the shooter's kill credit go
+		// out before the destroyed flag is set, the mission action after the drop, and the dead state
+		// and the flyby stop last.
+		if (!wasDestroyed && world != null) {
+			AnnounceNeutralised(world, attacker, this, SystemMessages.EnemyTargetDestroyed);
+			(attacker as MechObject)?.CreditNeutralised(world, this, wasImmobilised: false);
+		}
+
 		_destroyed = true;
 		LastAttacker = attacker;
-		SetBehaviourState(Ai.FlyerBehaviourState.Dead);
 		Position = new Vec3i(Position.X, Position.Y, WreckDropHeight);
-		StopFlybySound(world);
 
 		if (!wasDestroyed && world != null) {
 			ReportOutOfAction(world);
 			ActivateDefeatAction(world);
-			AnnounceNeutralised(world, attacker, this, SystemMessages.EnemyTargetDestroyed);
 		}
+
+		SetBehaviourState(Ai.FlyerBehaviourState.Dead);
+		StopFlybySound(world);
 	}
 
 	/// <summary>

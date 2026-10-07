@@ -13,14 +13,14 @@ namespace Herculan.Engine.Sim;
 /// the mounts and the <c>bool</c>s are derived.</para>
 ///
 /// <para>The slot/id table, why the ids are the shell catalog's, why slot order is not id order, and
-/// the shared pod damage curve are in docs/simulation/equipment-pods.md. The
+/// the shared pod damage curve are in docs/retail/simulation/equipment-pods.md. The
 /// constants below are the ids that document names; the last mount in hardpoint order wins a slot,
 /// which is reproduced here.</para>
 /// </summary>
 /// <param name="EcmMount">Slot 0, <c>mech+0x307</c> — the ECM pod (catalog id 18).</param>
 /// <param name="TargetingMount">
 /// Slot 1, <c>mech+0x30b</c> — the Targeting Pod (id 29), which lets [Tab] single out one component
-/// of the selected machine; see docs/simulation/target-selection.md.
+/// of the selected machine; see docs/retail/simulation/target-selection.md.
 /// </param>
 /// <param name="ShieldPodMount">
 /// Slot 2, <c>mech+0x30f</c> — the Shield Pod (id 30). Read by <c>Mech_ComputeShieldCapacity</c>,
@@ -94,7 +94,7 @@ public readonly record struct MechPods(
 	/// <see cref="TargetingPodLock.ComponentDamage"/>. The two agree in practice, from a zeroed
 	/// pod block at spawn and a per-mount notification on every damage write, but they are reached
 	/// by different code and only one of them is what the pod's readers test. See
-	/// docs/simulation/equipment-pods.md.</para>
+	/// docs/retail/simulation/equipment-pods.md.</para>
 	/// </summary>
 	public static short DamageOf(WeaponMount? pod, ComponentDamage? damage) =>
 		pod == null || damage == null

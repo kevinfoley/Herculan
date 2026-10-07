@@ -1,0 +1,138 @@
+name: Bug report
+description: Something in HERCULAN Engine or HercWorks CSharp doesn't work, or behaves differently from the original game.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Please be as specific as you can; "it broke" is rarely enough to find the problem.
+
+        **Do not attach original game files** (VOL files, ISOs, or files extracted from them). Saved games are fine.
+
+  - type: checkboxes
+    id: known-issues
+    attributes:
+      label: Known issues
+      description: Some bugs are faithful copies of bugs in the original game, and some are already known.
+      options:
+        - label: I checked [KNOWN_ISSUES.md](https://github.com/kevinfoley/Herculan/blob/main/Herculan/KNOWN_ISSUES.md) and this bug isn't listed there.
+          required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which program?
+      options:
+        - HERCULAN Engine (playing the game)
+        - HercWorks CSharp (the data file tools)
+    validations:
+      required: true
+
+  - type: input
+    id: herculan-version
+    attributes:
+      label: HERCULAN version
+      description: The release you downloaded, or the commit you built from.
+      placeholder: e.g. a release name, or commit c4b9bd4
+    validations:
+      required: true
+
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system / device
+      placeholder: e.g. Windows 11, Steam Deck (Proton)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: game-release
+    attributes:
+      label: Earthsiege 2 release
+      description: Which copy of the original game files you are using.
+      options:
+        - 1.0 (original retail CD)
+        - 1.0 (Hi-Rez Studios release)
+        - 1.10 (GoldGames release)
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: game-language
+    attributes:
+      label: Game language
+      options:
+        - English
+        - French
+        - German
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: How the game files are installed
+      options:
+        - HERCULAN installer, Minimum
+        - HERCULAN installer, Medium
+        - HERCULAN installer, Maximum
+        - Copied or installed some other way
+        - Not sure
+    validations:
+      required: true
+
+  - type: textarea
+    id: tweaks
+    attributes:
+      label: Tweaks enabled
+      description: List any options you turned on in the Tweaks menu, or write "none". Tweaks change behavior on purpose, so this matters.
+      placeholder: none
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What went wrong, and what you expected instead.
+      placeholder: A Cybrid Herc walked through the terrain!
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: What you were doing when it happened, such as which mission and what you did in it.
+      placeholder: |
+        1. Start a new campaign
+        2. Play the second mission
+        3. ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: error
+    attributes:
+      label: Error message
+      description: If an error appeared, paste its full text here. If you can't copy it, attach a screenshot.
+      render: text
+
+  - type: dropdown
+    id: retail
+    attributes:
+      label: Does the same thing happen in the original game?
+      description: Reports that compare HERCULAN with the original game are especially helpful.
+      options:
+        - I haven't checked
+        - "No, the original game behaves differently"
+        - "Yes, the original game does the same thing"
+    validations:
+      required: true
+
+  - type: textarea
+    id: attachments
+    attributes:
+      label: Screenshots, videos, or saved games
+      description: Drag files here. A saved game from just before the bug is often the fastest way to reproduce it.

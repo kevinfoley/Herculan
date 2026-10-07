@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Dts.Bsp;
 /// verbatim. <see cref="Coeff"/> is the plane constant, <see cref="Poly"/> the poly whose stored
 /// normal is the plane and which is drawn between the two children, and <see cref="Front"/> and
 /// <see cref="Back"/> the children (below zero none, bit <c>0x4000</c> a poly index, otherwise a
-/// node index). See docs/formats/dts-texture-binding.md, "TSBSPGroup poly order".
+/// node index). See docs/retail/formats/dts-texture-binding.md, "TSBSPGroup poly order".
 /// </summary>
 public class TSBSPGroupNode {
 	public int Index { get; set; }

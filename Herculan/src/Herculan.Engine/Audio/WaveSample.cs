@@ -34,7 +34,7 @@ public sealed class WaveSample {
 	/// <summary>Signed 16-bit mono PCM.</summary>
 	public short[] Samples { get; }
 
-	/// <summary>Frames per second, as the file declared it.</summary>
+	/// <summary>Frames per second, as the file declared it, or as <see cref="Downsample"/> made it.</summary>
 	public int SampleRate { get; }
 
 	/// <summary>How long the sample runs.</summary>
@@ -93,6 +93,108 @@ public sealed class WaveSample {
 			16 => new WaveSample(FromSigned16(bytes, dataAt, dataLength), sampleRate),
 			_ => null,
 		};
+	}
+
+	/// <summary>
+	/// What the simulator's sample loader, <c>Sos_LoadWaveSample</c> (<c>00474254</c>), makes of a file: a
+	/// RIFF/WAVE file through <see cref="Decode"/>, and anything not starting <c>RIFF</c> as raw 8-bit unsigned mono
+	/// at <see cref="RawSampleRate"/>. A <c>.hmp</c> song named in <c>SOUNDS.STR</c> ends up here, because the
+	/// catalog opens every row as a sample — see docs/retail/formats/audio.md, "Opening a catalog row".
+	///
+	/// <para>The RIFF half is this engine's chunk walk rather than the original's fixed offsets, so a RIFF file
+	/// <see cref="Decode"/> refuses is null here where the original would play it as its header reads.</para>
+	/// </summary>
+	public static WaveSample? DecodeForSimulator(byte[] bytes) {
+		if (bytes.Length >= 4 && bytes[0] == 'R' && bytes[1] == 'I' && bytes[2] == 'F' && bytes[3] == 'F') {
+			return Decode(bytes);
+		}
+
+		return bytes.Length > 0 ? new WaveSample(FromUnsigned8(bytes, 0, bytes.Length), RawSampleRate) : null;
+	}
+
+	/// <summary>The rate <see cref="DecodeForSimulator"/> gives a file that is not RIFF.</summary>
+	public const int RawSampleRate = 11025;
+
+	/// <summary>
+	/// This sample band-limited and resampled to <paramref name="sampleRate"/>, or this sample itself when it is
+	/// not faster than that already.
+	///
+	/// <para><b>The filter is this engine's.</b> It stands in for SOS mixing a faster sample into a slower output
+	/// (docs/retail/formats/audio.md, "DATA\SOUND.CFG"). How SOS converts happens inside <c>sos9503.dll</c> and
+	/// has not been read, so this is a clean conversion and not a copy of it: a windowed-sinc low-pass with its
+	/// cutoff just under the new Nyquist rate. It removes the top of the old sample's band and adds no
+	/// aliasing.</para>
+	/// </summary>
+	public WaveSample Downsample(int sampleRate) {
+		if (sampleRate <= 0 || SampleRate <= sampleRate || Samples.Length == 0) {
+			return this;
+		}
+
+		double step = (double)SampleRate / sampleRate;
+		double cutoff = 0.5 / step * PassbandFraction;
+		double half = ZeroCrossings * step;
+		var kernel = KernelTable(cutoff, half);
+
+		var output = new short[(int)(Samples.Length / step)];
+		for (int n = 0; n < output.Length; n++) {
+			double centre = n * step;
+			int first = Math.Max(0, (int)Math.Ceiling(centre - half));
+			int last = Math.Min(Samples.Length - 1, (int)Math.Floor(centre + half));
+
+			double sum = 0, weights = 0;
+			for (int k = first; k <= last; k++) {
+				double w = KernelAt(kernel, Math.Abs(k - centre));
+				sum += Samples[k] * w;
+				weights += w;
+			}
+
+			// Dividing by the weights rather than by the kernel's ideal area keeps the gain at 1 at the ends,
+			// where the kernel runs off the sample.
+			output[n] = (short)Math.Clamp(Math.Round(weights != 0 ? sum / weights : 0), short.MinValue, short.MaxValue);
+		}
+
+		return new WaveSample(output, sampleRate);
+	}
+
+	/// <summary>Where <see cref="Downsample"/>'s cutoff sits, as a fraction of the new Nyquist rate.</summary>
+	private const double PassbandFraction = 0.9;
+
+	/// <summary><see cref="Downsample"/>'s kernel half-width, in periods of the new rate.</summary>
+	private const int ZeroCrossings = 16;
+
+	/// <summary>Kernel samples per input frame in <see cref="KernelTable"/>, interpolated between.</summary>
+	private const int KernelResolution = 256;
+
+	/// <summary>
+	/// A Blackman-windowed sinc low-pass, cutoff in cycles per input frame, tabulated from 0 to
+	/// <paramref name="half"/> input frames and zero beyond.
+	/// </summary>
+	private static double[] KernelTable(double cutoff, double half) {
+		var table = new double[(int)Math.Ceiling(half * KernelResolution) + 2];
+		for (int i = 0; i < table.Length; i++) {
+			double x = (double)i / KernelResolution;
+			if (x >= half) {
+				break;
+			}
+
+			double phase = 2 * Math.PI * cutoff * x;
+			double sinc = x == 0 ? 1 : Math.Sin(phase) / phase;
+			double window = 0.42 + 0.5 * Math.Cos(Math.PI * x / half) + 0.08 * Math.Cos(2 * Math.PI * x / half);
+			table[i] = sinc * window;
+		}
+
+		return table;
+	}
+
+	private static double KernelAt(double[] table, double distance) {
+		double position = distance * KernelResolution;
+		int index = (int)position;
+		if (index + 1 >= table.Length) {
+			return 0;
+		}
+
+		double fraction = position - index;
+		return table[index] + (table[index + 1] - table[index]) * fraction;
 	}
 
 	private const int PcmFormatTag = 1;

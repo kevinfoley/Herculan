@@ -16,7 +16,7 @@ instead:
 
 A clean sweep across all three is the strongest available evidence that code is
 unreachable. It is still a null result -- see docs rule 6 and
-docs/simulation/weapon-damage-types.md, "Type -- a firing-mechanism selector", for a
+docs/retail/simulation/weapon-damage-types.md, "Type -- a firing-mechanism selector", for a
 case where this is what settled the question.
 
 Usage:

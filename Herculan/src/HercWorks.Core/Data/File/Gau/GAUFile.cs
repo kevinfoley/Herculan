@@ -8,7 +8,7 @@ namespace HercWorks.Core.Data.File.Gau;
 /// (<c>0x6a4</c>) record of rects in the 320-wide HUD space. A rect is four <c>int32</c>s
 /// <c>X1,Y1,X2,Y2</c> (top-left, bottom-right), which
 /// <see cref="Io.Transform.Dbsim.GauFileTransformer"/> converts to each widget's Origin/Size. Who
-/// reads which offset is in docs/formats/cockpit-hud-widgets.md, ".GAU widget tree", and the docs it
+/// reads which offset is in docs/retail/formats/cockpit-hud-widgets.md, ".GAU widget tree", and the docs it
 /// links. Offsets are content offsets:
 ///   0 - <see cref="HudOrigin"/>, an origin offset added to every widget rect; (0,0) in retail.
 ///   8 - <see cref="HudScreenSize"/>, e.g. (320,400).
@@ -27,7 +27,7 @@ namespace HercWorks.Core.Data.File.Gau;
 ///     cockpit has an altimeter here instead.
 ///   696 - <see cref="RemainderBeforeMfdPanel"/>, 256 bytes, zero in every retail file. 728 starts
 ///     the MFD block: an origin offset, then 13 rect-shaped slots no constructor reads
-///     (docs/formats/mfd.md, "Geometry").
+///     (docs/retail/formats/mfd.md, "Geometry").
 ///   952 - <see cref="MfdPanel"/>.
 ///   968-1015 - zero in every retail file; 1000 starts the throttle gauge's record, whose first two
 ///     ints are an origin offset.
@@ -39,10 +39,10 @@ namespace HercWorks.Core.Data.File.Gau;
 ///     - 1072: <see cref="HThrottle.TickOffsetX"/>.
 ///     - 1076-1087: zero in every retail file.
 ///     - 1088-1103: the head of the gunsight complex's record — an origin offset, then the complex's
-///       own bottom-right (320, 117 or 157). See docs/formats/cockpit-gunsight-hud.md.
+///       own bottom-right (320, 117 or 157). See docs/retail/formats/cockpit-gunsight-hud.md.
 ///   1104 - <see cref="HeadingTape"/>.
 ///   1120 - <see cref="RemainderBeforeReticle"/>, 16 bytes: the time readout's anchor at 1120 and the
-///     speed caption's at 1128 (docs/formats/cockpit-gunsight-hud.md, "Speed and time readouts").
+///     speed caption's at 1128 (docs/retail/formats/cockpit-gunsight-hud.md, "Speed and time readouts").
 ///   1136 - <see cref="Reticle"/>, a single (X,Y) point.
 ///   1144 - <see cref="Remainder"/>, 556 bytes to the end of the file:
 ///     - 1144: the half-extent of the reticle child's rect about <see cref="Reticle"/>; zero in
@@ -53,7 +53,7 @@ namespace HercWorks.Core.Data.File.Gau;
 ///     - 1196-1203: <see cref="HudScanner"/>.
 ///     - 1204-1211: no widget constructor reads this span.
 ///     - 1212-~1589: the Heads-Down Display's block (<c>HddDisplay_Ctor</c>, <c>00448cc8</c>); see
-///       docs/formats/heads-down-display.md, ".GAU block at 1212".
+///       docs/retail/formats/heads-down-display.md, ".GAU block at 1212".
 ///     - 1664: <see cref="HPilotMessagePort.TrainingLift"/>.
 ///     - 1668-1683: <see cref="PilotMessagePort"/>.
 ///     - 1684-1699: <see cref="MessageTicker"/>.

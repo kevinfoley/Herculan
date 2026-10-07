@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// Row #4 (144 bytes/record) — the mission's text: its objective, briefing and intelligence lines
 /// as <c>.ENG</c> string ids, and its briefing movie. No GUID; a campaign load hands the first
 /// surviving record to the career block, and its objective lines become <c>script.dat</c> block 13
-/// (<see cref="Script.ScriptDat.ObjectiveTextRefs"/>). See docs/formats/msn-mission-file.md,
+/// (<see cref="Script.ScriptDat.ObjectiveTextRefs"/>). See docs/retail/formats/msn-mission-file.md,
 /// "Row #4 field decode".
 /// </summary>
 public class MissionText144 {

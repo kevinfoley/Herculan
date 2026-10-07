@@ -10,7 +10,7 @@ namespace Herculan.Engine.World;
 ///
 /// <para>Decoded from <c>maybe_World_LoadTheater</c> (<c>0042e010</c>), which reads this file
 /// field-by-field off a stream and finishes by handing one of its strings to
-/// <c>Terrain_BindTextureBank</c>. See docs/formats/terrain-texturing.md.</para>
+/// <c>Terrain_BindTextureBank</c>. See docs/retail/formats/terrain-texturing.md.</para>
 ///
 /// <para><b>There are ten descriptors for five theaters.</b> The original builds the base name as
 /// <c>world&lt;theaterIndex * 2 + variant&gt;</c>, and retail data pairs up exactly:
@@ -53,7 +53,7 @@ public sealed class TheaterDescriptor {
 	/// <c>dba\&lt;name&gt;.DBA</c> bound to every root — <c>FlatObj_LoadResources</c>
 	/// (<c>004097a8</c>)'s <c>flat</c> for a zero <see cref="WorldData.FlatSetSelector"/> and
 	/// <c>flat2</c> otherwise. Every retail descriptor selects <c>FLAT2</c>, the only set that ships.
-	/// See docs/simulation/ground-shapes.md.
+	/// See docs/retail/simulation/ground-shapes.md.
 	/// </summary>
 	public string FlatSetName { get; }
 

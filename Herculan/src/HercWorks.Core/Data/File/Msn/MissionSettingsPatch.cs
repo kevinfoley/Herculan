@@ -16,7 +16,7 @@ namespace HercWorks.Core.Data.File.Msn;
 ///
 /// <para>Kept here as raw words so a file round-trips unchanged; the load that applies them is
 /// <see cref="Io.Transform.Common.MissionGenerator"/>, and the rules are
-/// docs/formats/msn-mission-file.md#the-header-patch--row-2.</para>
+/// docs/retail/formats/msn-mission-file.md#the-header-patch--row-2.</para>
 /// </summary>
 public class MissionSettingsPatch {
 	/// <summary>Raw 41-short (82-byte) record, preserved verbatim for round-trip fidelity.</summary>

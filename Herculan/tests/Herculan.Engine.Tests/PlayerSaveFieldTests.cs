@@ -5,7 +5,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// <see cref="PlayerSave"/>'s named fields are views over the raw arrays the transformer fills, so
-/// these pin which short or byte each reaches against <c>docs/formats/save-games.md</c>.
+/// these pin which short or byte each reaches against <c>docs/retail/formats/save-games.md</c>.
 /// </summary>
 public class PlayerSaveFieldTests {
 	[Fact]

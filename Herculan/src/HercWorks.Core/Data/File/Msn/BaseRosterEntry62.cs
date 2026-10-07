@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// Row #14 (62 bytes/record) — one structure the mission can place, exported as <c>script.dat</c>
 /// block 9 (<see cref="Script.ScriptBaseRecord"/>). The member names match
 /// <see cref="Script.ScriptBaseRecord"/>'s and the engine's <c>MissionPlacement</c> where they are
-/// the same datum. See docs/formats/msn-mission-file.md, "Row #14 field decode".
+/// the same datum. See docs/retail/formats/msn-mission-file.md, "Row #14 field decode".
 /// </summary>
 public class BaseRosterEntry62 : MapObject {
 	/// <summary>0x02 — condition ref.</summary>
@@ -13,7 +13,7 @@ public class BaseRosterEntry62 : MapObject {
 
 	/// <summary>
 	/// 0x04 — variant key: unless <c>-1</c>, everything from 0x08 to 0x3D except <see cref="PairCount"/>
-	/// is copied from a randomly picked variant (docs/formats/msn-mission-file.md#variants).
+	/// is copied from a randomly picked variant (docs/retail/formats/msn-mission-file.md#variants).
 	/// </summary>
 	public short VariantKey { get; set; }
 	public const int VariantKeyWord = 0x04 / 2;
@@ -45,7 +45,7 @@ public class BaseRosterEntry62 : MapObject {
 	/// goes out of the fight. The export separates them
 	/// into <see cref="Script.ScriptBaseRecord.CounterRefs"/> and <see cref="Script.ScriptBaseRecord.CounterOps"/>.
 	/// The briefing map writes over the exported first two operations in its own copy only
-	/// (docs/shell/mission-map.md#what-it-reads).
+	/// (docs/retail/shell/mission-map.md#what-it-reads).
 	/// </summary>
 	public short[] OutOfActionReport { get; set; } = new short[20];
 	public const int OutOfActionReportWord = 0x10 / 2;
@@ -68,8 +68,8 @@ public class BaseRosterEntry62 : MapObject {
 
 	/// <summary>
 	/// 0x3C — the structure's starting condition, per cent: exported as block 9's <c>0x32</c>, which
-	/// <c>Base_Construct</c> (<c>00405314</c>) reads (docs/simulation/structure-behaviour.md). 100 or 0
-	/// in retail, almost always 100 where <see cref="TypeIndex"/> is set (docs/formats/msn-mission-file.md,
+	/// <c>Base_Construct</c> (<c>00405314</c>) reads (docs/retail/simulation/structure-behaviour.md). 100 or 0
+	/// in retail, almost always 100 where <see cref="TypeIndex"/> is set (docs/retail/formats/msn-mission-file.md,
 	/// "Row #14 field decode").
 	/// </summary>
 	public short StartingCondition { get; set; }

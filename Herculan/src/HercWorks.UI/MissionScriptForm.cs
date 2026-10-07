@@ -9,7 +9,7 @@ namespace HercWorks.UI;
 /// Editor for <c>data\script.dat</c> — the file VSHELL writes after parsing a mission's <c>.msn</c>
 /// and DBSIM reads to actually build the world, so this is the handoff that decides what a mission
 /// contains and where it stands. Backed by HercWorks.Core's ScriptDatTransformer (byte-exact
-/// round-trip verified against all 10 real sample files); see docs/formats/script-dat.md for the
+/// round-trip verified against all 10 real sample files); see docs/retail/formats/script-dat.md for the
 /// format itself. Follows the same shape as CampaignResourcesForm: a tab per block, loose-file
 /// Open/Save As, layout in MissionScriptForm.Designer.cs. Save As writes the content-only shape
 /// DBSIM reads; Save As With VOL Prefix keeps the 9-byte entry prefix of a file that was opened with
@@ -384,7 +384,7 @@ public partial class MissionScriptForm : Form {
 	}
 
 	/// <summary>
-	/// Writes the edited header fields back into the raw 20 bytes — see docs/formats/script-dat.md's
+	/// Writes the edited header fields back into the raw 20 bytes — see docs/retail/formats/script-dat.md's
 	/// header table. +4 (DBSIM stores 0 over it before anything reads it) and +16 (never read) are
 	/// left exactly as loaded.
 	/// </summary>
@@ -516,7 +516,7 @@ public partial class MissionScriptForm : Form {
 
 	/// <summary>
 	/// What an action's target indexes: types 7/8/9/10 name a herc, flyer, base or group
-	/// (docs/simulation/mission-deployment.md#trigger-areas--actions_evaluatetriggers-00426b70). Null
+	/// (docs/retail/simulation/mission-deployment.md#trigger-areas--actions_evaluatetriggers-00426b70). Null
 	/// for any other type, whose target DBSIM zeroes, so it goes unchecked.
 	/// </summary>
 	private static int? TargetCount(ScriptDat script, short type) => type switch {

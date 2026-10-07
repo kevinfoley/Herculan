@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.Struct;
 /// <summary>
 /// The 0-32 weapon id space shared by the shell catalog, DBSIM's mount templates and
 /// <c>player.mec</c>, hardcoded with each id's catalog code. See
-/// docs/formats/weapons-dat.md#the-weapon-id-space--three-spellings-per-weapon.
+/// docs/retail/formats/weapons-dat.md#the-weapon-id-space--three-spellings-per-weapon.
 /// </summary>
 public sealed class WeaponLUT {
 	public static readonly WeaponLUT None = new(0, "NONE", 0);

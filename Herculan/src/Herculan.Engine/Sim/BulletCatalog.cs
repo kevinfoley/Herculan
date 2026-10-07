@@ -22,7 +22,7 @@ namespace Herculan.Engine.Sim;
 /// <para>Retail ships twelve records, of which only seven subtype ids are reachable — ids 3, 4, 5, 10
 /// and 11 are carried by no <c>Bullet</c> record. (They do exist on <c>Beam</c> records, which read
 /// <c>BEAM.DAT</c> instead.) The field map and the retail table are in
-/// docs/simulation/projectiles.md.</para>
+/// docs/retail/simulation/projectiles.md.</para>
 /// </summary>
 public sealed class BulletCatalog {
 	/// <summary>The resource folder and name <c>Bullet_LoadResources</c> (<c>0040ade0</c>) opens, by the literal name <c>bullets</c>.</summary>

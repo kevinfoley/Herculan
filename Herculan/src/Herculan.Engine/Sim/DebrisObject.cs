@@ -198,7 +198,7 @@ public sealed class DebrisObject {
 		}
 
 		if (DestroyEffect >= 0) {
-			world.SpawnImpactEffect(DestroyEffect, Position);
+			world.SpawnImpactEffect(DestroyEffect, Position, owner: null);
 		}
 
 		// The burst re-installs the database this piece was thrown out of, so its child group is read

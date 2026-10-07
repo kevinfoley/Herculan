@@ -3,7 +3,7 @@
 namespace Herculan.Engine.Terrain;
 
 /// <summary>
-/// The ray-versus-terrain query — <c>maybe_Terrain_RayWalk</c> (<c>0046e87c</c>), the terrain
+/// The ray-versus-terrain query — <c>Terrain_RayWalk</c> (<c>0046e87c</c>), the terrain
 /// module's largest function, plus the two helpers it resolves a hit with. This is what stops a
 /// shot passing through a hillside: <c>Sim_RaycastTerrain</c> (<c>00428048</c>) runs it before
 /// <c>Sim_RaycastObjectList</c> tests a single object, and clips the ray to the ground hit.
@@ -12,9 +12,9 @@ namespace Herculan.Engine.Terrain;
 /// ray, reports the ground wherever the segment is at or below the surface. Mode 1
 /// (<see cref="RayWalkVolume"/>) instead asks whether the face the segment is crossing is one
 /// movement can pass — a <b>slope test</b>, so a segment sliding along rolling ground reports
-/// nothing and only a wall stops it. That difference is the whole reason the AI can walk anywhere:
-/// its obstacle probes lie flat on the ground and mode 0 would have every one of them graze.</para>
-
+/// nothing and only a wall stops it. See docs/retail/formats/terrain-heightmap.md ("Mode 1 — the slope
+/// walk").</para>
+///
 /// <para>The setup — the delta clamp, the four slopes, the octant code and the cell stepping — is
 /// shared; only the per-step surface test differs.</para>
 /// </summary>
@@ -44,18 +44,17 @@ public sealed partial class HeightGrid {
 		Walk(start, end, volume: false, out hitPoint);
 
 	/// <summary>
-	/// <c>Terrain_RayWalk</c>'s mode 1 — the movement-collision body
-	/// (<c>Terrain_FaceBlocksAt</c> (<c>0046fe84</c>) / <c>Terrain_EdgeFaceBlocks</c> (<c>0046ff74</c>) / <c>Terrain_FaceBlocksMovement</c> (<c>0046fe40</c>)). The same walk, with the
-	/// "is this point under the ground" test replaced by "is the face this step crosses too steep to
-	/// walk", so it answers what blocks a machine rather than what a bullet would hit.
+	/// <c>Terrain_RayWalk</c>'s mode 1, the slope walk (<c>Terrain_FaceBlocksAt</c>
+	/// (<c>0046fe84</c>) / <c>Terrain_EdgeFaceBlocks</c> (<c>0046ff74</c>) /
+	/// <c>Terrain_FaceBlocksMovement</c> (<c>0046fe40</c>)). The same walk, with the "is this point
+	/// under the ground" test replaced by "is the face this step crosses too steep to walk", so it
+	/// answers what blocks a machine rather than what a bullet would hit. Its two callers are the AI's
+	/// obstacle probes and its line-of-sight test.
 	/// </summary>
 	/// <param name="hitPoint">
-	/// Where the segment met the blocking face. The original refines this with
-	/// <c>Terrain_FindDiagonalCrossing</c> (<c>0046fcac</c>): where the step crosses its cell's
-	/// diagonal, found by bisection, with <c>z</c> set to 0, or the step's first point when it does
-	/// not cross. The walk's own point for that step stands in here; its <c>x</c> and <c>y</c> are
-	/// within a cell of the original's, and it is all either caller — the AI's obstacle probes and
-	/// its line-of-sight test — measures a range from.
+	/// Where the segment met the blocking face, its <c>z</c> 0 when the point came from
+	/// <see cref="DiagonalCrossing"/>. Only the obstacle probes read it, and only its <c>x</c> and
+	/// <c>y</c>.
 	/// </param>
 	public bool RayWalkVolume(Vec3i start, Vec3i end, out Vec3i hitPoint) =>
 		Walk(start, end, volume: true, out hitPoint);
@@ -76,11 +75,12 @@ public sealed partial class HeightGrid {
 			deltaZ >>= 1;
 		}
 
-		// Mode 1 tests faces against the segment's own direction, scaled to a normal's length so the
-		// dot product below is in the same units the face normals are.
-		int dirX = deltaX, dirY = deltaY, dirZ = deltaZ;
+		// Mode 1 tests faces against the segment's own direction, packed into three shorts and scaled
+		// to a normal's length by the same normaliser the face normals went through, so the dot
+		// product below is in their units.
+		int dirX = 0, dirY = 0, dirZ = 0;
 		if (volume) {
-			SimMath.ScaleToLength(ref dirX, ref dirY, ref dirZ, NormalOne);
+			(dirX, dirY, dirZ) = Normalize((short)deltaX, (short)deltaY, (short)deltaZ);
 		}
 
 		// The four slopes, in Q16: two per unit of X travelled and two per unit of Y. A zero
@@ -252,19 +252,21 @@ public sealed partial class HeightGrid {
 					return true;
 				}
 
+				// A face in this cell reports where the step entered the triangle it ends in; one across
+				// the exit edge reports the exit point.
 				if (lastStep) {
 					if (!FaceBlocksAt(exitX, exitY, dirX, dirY, dirZ)) {
 						return false;
 					}
 
-					hitPoint = new Vec3i(exitX, exitY, exitZ);
+					hitPoint = DiagonalCrossing(cellX, cellY, curX, curY, curZ, exitX, exitY);
 					return true;
 				}
 
 				int blocked = EdgeFaceBlocks(cellX, cellY, edge, dirX, dirY, dirZ);
 				if (blocked != 0) {
 					hitPoint = blocked == BlockedThisCell
-						? new Vec3i(curX, curY, curZ)
+						? DiagonalCrossing(cellX, cellY, curX, curY, curZ, exitX, exitY)
 						: new Vec3i(exitX, exitY, exitZ);
 					return true;
 				}
@@ -573,11 +575,6 @@ public sealed partial class HeightGrid {
 	}
 
 	/// <summary>
-	/// <c>Terrain_FaceBlocksAt</c> (<c>0046fe84</c>) — the same test applied at a world point: find its cell, pick which of the
-	/// cell's two triangles the point falls in by the same diagonal split the height query uses, and
-	/// ask <see cref="FaceBlocks"/>. A point off the grid blocks, as the original's null cell does.
-	/// </summary>
-	/// <summary>
 	/// <c>Terrain_FaceBlocksAt</c> (<c>0046fe84</c>) asked with no direction, which is how
 	/// <c>Deployment_PickPointNearPlayer</c> (<c>0042354c</c>) asks it: a zero direction makes the
 	/// head-on dot product zero, so the test reduces to the steepness of the face under the point,
@@ -586,17 +583,21 @@ public sealed partial class HeightGrid {
 	public bool BlocksMovementAt(int worldX, int worldY) =>
 		FaceBlocksAt(worldX, worldY, 0, 0, 0);
 
+	/// <summary>
+	/// <c>Terrain_FaceBlocksAt</c> (<c>0046fe84</c>) — the same test applied at a world point: find its cell, pick which of the
+	/// cell's two triangles the point falls in by the same diagonal split the height query uses, and
+	/// ask <see cref="FaceBlocks"/>. A point off the grid blocks, as the original's null cell does —
+	/// "off the grid" by the original's flat index, so a point just past the west or east edge reads
+	/// the cell at the far end of the neighbouring row, the wrap <see cref="CornerIndex"/> carries.
+	/// </summary>
 	private bool FaceBlocksAt(int worldX, int worldY, int dirX, int dirY, int dirZ) {
-		int cellX = worldX >> CellShift;
-		int cellY = worldY >> CellShift;
-
-		if (cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height) {
+		int cell = CornerIndex(worldX >> CellShift, worldY >> CellShift);
+		if (cell < 0) {
 			return true;
 		}
 
-		int cell = cellX + (cellY << WidthShift);
-		int fracX = worldX - (cellX << CellShift);
-		int fracY = worldY - (cellY << CellShift);
+		int fracX = worldX & ((1 << CellShift) - 1);
+		int fracY = worldY & ((1 << CellShift) - 1);
 
 		int split = _diagonals[cell] & 3;
 		bool farTriangle = split switch {
@@ -613,7 +614,8 @@ public sealed partial class HeightGrid {
 	/// the triangle on this side of the edge first and the neighbouring cell's triangle second, so a
 	/// segment is stopped by whichever face it meets. Which of a cell's two triangles borders which
 	/// edge depends on the diagonal, which is why the north and south arms consult it and the east
-	/// and west arms do not.
+	/// and west arms do not. The neighbour is found by the original's flat index, so across the west
+	/// or east edge of the grid it is the far end of the neighbouring row.
 	/// </summary>
 	/// <returns>
 	/// <see cref="NotBlocked"/>, <see cref="BlockedThisCell"/> when this cell's own face stops it, or
@@ -630,38 +632,87 @@ public sealed partial class HeightGrid {
 			_ => (0, 0, cellX, cellY - 1, true)
 		};
 
-		if (CellNormals(cellX, cellY) is not { } here) {
+		int here = CornerIndex(cellX, cellY);
+		if (here < 0) {
 			return BlockedNextCell;
 		}
 
-		int nearAt = byDiagonal
-			? here + ((_diagonals[cellX + (cellY << WidthShift)] & 3) == 0
+		int nearAt = here * 6 + (byDiagonal
+			? (_diagonals[here] & 3) == 0
 				? edge == EdgeNorth ? 3 : 0
-				: edge == EdgeNorth ? 0 : 3)
-			: here + nearOffset;
+				: edge == EdgeNorth ? 0 : 3
+			: nearOffset);
 
 		if (FaceBlocks(nearAt, dirX, dirY, dirZ)) {
 			return BlockedThisCell;
 		}
 
-		if (CellNormals(neighbourX, neighbourY) is not { } there) {
+		int there = CornerIndex(neighbourX, neighbourY);
+		if (there < 0) {
 			return BlockedNextCell;
 		}
 
-		int farAt = byDiagonal
-			? there + ((_diagonals[neighbourX + (neighbourY << WidthShift)] & 3) == 0
+		int farAt = there * 6 + (byDiagonal
+			? (_diagonals[there] & 3) == 0
 				? edge == EdgeNorth ? 0 : 3
-				: edge == EdgeNorth ? 3 : 0)
-			: there + farOffset;
+				: edge == EdgeNorth ? 3 : 0
+			: farOffset);
 
 		return FaceBlocks(farAt, dirX, dirY, dirZ) ? BlockedNextCell : NotBlocked;
 	}
 
-	/// <summary>Where a cell's two face normals start in <c>_normals</c>, or null off the grid.</summary>
-	private int? CellNormals(int cellX, int cellY) =>
-		cellX < 0 || cellX >= Width || cellY < 0 || cellY >= Height
-			? null
-			: (cellX + (cellY << WidthShift)) * 6;
+	/// <summary>
+	/// <c>Terrain_FindDiagonalCrossing</c> (<c>0046fcac</c>) — where a step from
+	/// (<paramref name="fromX"/>, <paramref name="fromY"/>) to (<paramref name="toX"/>,
+	/// <paramref name="toY"/>) inside one cell enters the triangle its far end lies in: the step's own
+	/// start when both ends are on the same side of the cell's diagonal, otherwise the point where it
+	/// crosses the diagonal, found by at most eight bisections and reported with <c>z</c> 0.
+	///
+	/// <para>The test is done in cell-local coordinates with <c>x</c> mirrored across the cell for the
+	/// anti-diagonal split (selector 0), so one comparison, <c>y &lt; x</c>, serves both
+	/// diagonals.</para>
+	/// </summary>
+	private Vec3i DiagonalCrossing(int cellX, int cellY, int fromX, int fromY, int fromZ, int toX, int toY) {
+		int cellSize = 1 << CellShift;
+		int originX = cellX << CellShift;
+		int originY = cellY << CellShift;
+		bool antiDiagonal = (_diagonals[CornerIndex(cellX, cellY)] & 3) == 0;
+
+		int nearX = fromX - originX, nearY = fromY - originY;
+		int farX = toX - originX, farY = toY - originY;
+		if (antiDiagonal) {
+			nearX = cellSize - nearX;
+			farX = cellSize - farX;
+		}
+
+		bool nearBelow = nearY < nearX;
+		if (farY < farX == nearBelow) {
+			return new Vec3i(fromX, fromY, fromZ);
+		}
+
+		int midX = 0, midY = 0;
+		for (int i = 0; i < 8; i++) {
+			midX = (farX + nearX) >> 1;
+			midY = (farY + nearY) >> 1;
+			if (midY == midX) {
+				break;
+			}
+
+			if (midY < midX == nearBelow) {
+				nearX = midX;
+				nearY = midY;
+			} else {
+				farX = midX;
+				farY = midY;
+			}
+		}
+
+		if (antiDiagonal) {
+			midX = cellSize - midX;
+		}
+
+		return new Vec3i(midX + originX, midY + originY, 0);
+	}
 
 	/// <summary>
 	/// The upward component, at <see cref="NormalOne"/> scale, below which a face is a wall movement

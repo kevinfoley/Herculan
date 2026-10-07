@@ -19,7 +19,7 @@ namespace Herculan.Engine.Content;
 /// <para><b>The rows are not a 0..1 fade.</b> Row <c>0</c> lands at <b>0.36x</b> the source colour
 /// and row <c>31</c> at <b>1.16x</b> — the ramp brightens as well as darkens, and passes through
 /// unity around row 23, so the neutral row is not the top one. Measured in
-/// docs/formats/terrain-lighting.md's "The ramp rows are not a 0..1 fade".
+/// docs/retail/formats/terrain-lighting.md's "The ramp rows are not a 0..1 fade".
 /// <see cref="Render.PaletteRampTable"/> is that table, expanded through the palette at load.</para>
 ///
 /// <para>The consumer is <c>Raster_ShadeRampRow</c> (<c>00468054</c>), which is the whole of the address arithmetic:</para>
@@ -34,7 +34,7 @@ namespace Herculan.Engine.Content;
 ///
 /// <para><b>Who gets faded:</b> terrain cells and every drawn object, projectiles included, each
 /// from its own range. A flat solid face is <i>not</i> pinned to row 15 at distance. The three
-/// callers and the trace behind that are docs/formats/distance-fog-and-sky.md's "What gets
+/// callers and the trace behind that are docs/retail/formats/distance-fog-and-sky.md's "What gets
 /// faded".</para>
 ///
 /// <para>The engine renders that fade the same way, as a ramp row: both
@@ -46,7 +46,7 @@ namespace Herculan.Engine.Content;
 /// <para>What has no ramp row to bias — a <c>TSGouraudPoly</c>, or any surface in a theater whose
 /// ramp did not load — falls back to <see cref="Render.SceneRenderer"/>'s blend toward
 /// <see cref="FogColor"/> over the same interval, which is a poorer likeness than it looks — why is
-/// in docs/formats/distance-fog-and-sky.md's "Rejected readings".</para>
+/// in docs/retail/formats/distance-fog-and-sky.md's "Rejected readings".</para>
 /// </summary>
 public sealed class ShadeRamp {
 	/// <summary>The folder the theater loader opens this from.</summary>
@@ -174,7 +174,7 @@ public sealed class ShadeRamp {
 	/// distinct bytes, one of them covering the large majority.</para>
 	///
 	/// <para>How it compares, per theater, with the colour retail's sky paints at the horizon is
-	/// docs/formats/distance-fog-and-sky.md's "Where the two meet".</para>
+	/// docs/retail/formats/distance-fog-and-sky.md's "Where the two meet".</para>
 	/// </summary>
 	public Vector3? FogColor(DynamixPalette? palette) {
 		if (palette == null) {

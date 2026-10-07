@@ -1,6 +1,6 @@
 """Extract ESTEXT.BIN out of LANG0.VOL and dump all its strings with their indices.
 
-VOL container and .BIN string table per docs/formats/weapons-dat.md; the .BIN header layout is
+VOL container and .BIN string table per docs/retail/formats/weapons-dat.md; the .BIN header layout is
 confirmed here by asserting 8 + count*2 + poolSize == file length, which the doc says holds for
 all six files.
 """

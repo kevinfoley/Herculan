@@ -9,7 +9,7 @@ namespace HercWorks.Core.Data.Struct;
 ///
 /// <para>The C++ class behind each is named by the binary itself — `0` is <c>ROCKET</c>, `2` is
 /// <c>BULLET</c>, `3` is <c>GRENADE</c>, `4` has no class at all. See
-/// docs/simulation/weapon-damage-types.md, "Type — a firing-mechanism selector".</para>
+/// docs/retail/simulation/weapon-damage-types.md, "Type — a firing-mechanism selector".</para>
 /// </summary>
 public sealed class ProjectileType {
 	public static readonly ProjectileType Rocket = new("ROCKET", 0);

@@ -9,9 +9,9 @@ namespace HercWorks.Core.Io.Transform.Common;
 /// <c>MsnGen_ParseMsnFile</c> (<c>00417b67</c>) with the <c>.ENG</c> load (<c>Msn_LoadEngText</c> (<c>0041768c</c>)) it makes
 /// between rows 2 and 3, <see cref="WriteScriptDat"/> is <c>WriteScriptDatFile</c> (<c>0041ac54</c>) and
 /// <see cref="WriteMissionText"/> is <c>MissionStr_Write</c> (<c>004179f0</c>). What the rows mean, and the condition,
-/// variant and merge rules, are docs/formats/msn-mission-file.md's.
+/// variant and merge rules, are docs/retail/formats/msn-mission-file.md's.
 ///
-/// <para>Loads all 62 retail missions. At the generator state docs/shell/campaign-loop.md, "The
+/// <para>Loads all 62 retail missions. At the generator state docs/retail/shell/campaign-loop.md, "The
 /// shell's generator", describes, it reproduces two retail training handoffs of TRAIN5 — each a
 /// <c>script11.dat</c> and <c>missn11.str</c> that retail wrote to save slot 11 — byte for byte
 /// through their content.</para>
@@ -121,7 +121,7 @@ public sealed class MissionGenerator {
 
 	/// <summary>
 	/// <c>Msn_LoadDebriefRows</c> (<c>0041ca4e</c>) and <c>Msn_LoadDebrief</c> (<c>0041d2c3</c>), the debrief's reload of the mission
-	/// just flown (docs/formats/msn-mission-file.md#row-5--the-debrief): row 1 against <paramref name="flags"/>,
+	/// just flown (docs/retail/formats/msn-mission-file.md#row-5--the-debrief): row 1 against <paramref name="flags"/>,
 	/// drawing from <paramref name="roll"/> as <see cref="Load"/> does; row 2 skipped, so no flag is cleared;
 	/// the <c>.ENG</c> text; row 3; row 4 skipped; and row 5. Returns row 5's first slot — its thirty
 	/// <c>mission.str</c> lines and its row-3 value, the debrief movie — with the <c>mission.str</c> it writes,
@@ -1087,7 +1087,7 @@ public sealed class MissionGenerator {
 	/// <summary>
 	/// <c>WriteScriptDatFile</c> (<c>0041ac54</c>): the header, with a literal 1 as its third word, then
 	/// each row's records whose GUID is set, cut to what the simulator reads — the layout is
-	/// docs/formats/script-dat.md's — then row 17 whole, then the objective lines of row 4's slot 0.
+	/// docs/retail/formats/script-dat.md's — then row 17 whole, then the objective lines of row 4's slot 0.
 	/// </summary>
 	public byte[] WriteScriptDat() {
 		using var stream = new MemoryStream();

@@ -8,7 +8,7 @@
     <AssemblyName>HercWorks.Help</AssemblyName>
     <!-- Deliberately no AllowUnsafeBlocks. Every byte this assembly touches came out of a help file,
          so the CLR's bounds checks are the last line of defence and are not given up for speed. See
-         docs/engine/online-manual.md, "Security posture". -->
+         docs/herculan/online-manual.md, "Security posture". -->
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 

@@ -5,8 +5,8 @@ namespace HercWorks.Core.Data.File.Dyn;
 /// <summary>
 /// A <c>.DPL</c> palette: a header, the colour entries, and — in the theater palettes — a shade-ramp
 /// table. Entries are <c>[R][G][B][flag]</c> with 6-bit channels; see
-/// docs/formats/cockpit-canopy-palette.md for the file layout and
-/// docs/formats/dts-texture-binding.md, "The .DPL shade-ramp table", for the tail.
+/// docs/retail/formats/cockpit-canopy-palette.md for the file layout and
+/// docs/retail/formats/dts-texture-binding.md, "The .DPL shade-ramp table", for the tail.
 /// </summary>
 public class DynamixPalette {
 	/// <summary>The 4-byte type marker every <c>.DPL</c> starts with.</summary>
@@ -35,7 +35,7 @@ public class DynamixPalette {
 	/// the table, each a run of palette indices from darkest to brightest. A shaded surface's value
 	/// names a ramp, not a colour, and the face's light level picks the step along it
 	/// (<c>Palette_ShadeRampLookup</c>, <c>00430e34</c>). Layout and lookup are in
-	/// docs/formats/dts-texture-binding.md, "The .DPL shade-ramp table" and "TSShadedPoly — shade-ramp
+	/// docs/retail/formats/dts-texture-binding.md, "The .DPL shade-ramp table" and "TSShadedPoly — shade-ramp
 	/// number, per-face light, fixed .RMP row".
 	///
 	/// <para>Empty when the file carries no tail — the shell palettes are colours only.</para>

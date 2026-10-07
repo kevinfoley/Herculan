@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dts.Part;
 
 /// <summary>
 /// One piece of a shape at several levels of detail; one part is drawn, chosen by projected size.
-/// See docs/formats/dts-texture-binding.md, "TSDetailPart level selection and STRUCTURE DETAIL".
+/// See docs/retail/formats/dts-texture-binding.md, "TSDetailPart level selection and STRUCTURE DETAIL".
 /// </summary>
 public class TSDetailPart : TSPartList {
 	/// <summary>

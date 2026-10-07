@@ -50,7 +50,7 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 	/// <see cref="BasesDgsTransformer"/> to parse the DTS subtree a <c>dgs\BASES.DGS</c>/
 	/// <c>BHULKS.DGS</c> structure record wraps — confirmed to be an ordinary TSObjectHeader-family
 	/// chunk, byte-identical in format to a plain <c>.DTS</c> file's own chunks (see
-	/// docs/formats/dgs-hd0-notes.md), so it reuses this same reader rather than a new one.
+	/// docs/retail/formats/dgs-hd0-notes.md), so it reuses this same reader rather than a new one.
 	/// </summary>
 	public TSObject? ReadOneObject(byte[] bytes, ref int index) {
 		Bytes = bytes;
@@ -59,6 +59,21 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 		var chunk = LoadChunkByType(null);
 		index = Index;
 		return chunk;
+	}
+
+	/// <summary>
+	/// Reads the part of a <see cref="TSShape"/> that follows its part list — the per-sequence frame
+	/// counts and the node transforms — starting at <paramref name="index"/>, and advances
+	/// <paramref name="index"/> past it. Used by <see cref="BasesDgsTransformer"/>, whose
+	/// <c>GridShape</c> records are <c>TSShape</c>s that keep their part list and this tail in the
+	/// record itself (see docs/retail/formats/dgs-hd0-notes.md).
+	/// </summary>
+	public (short[] Sequences, TSShapeNodeTransform[] Transforms) ReadShapeTail(byte[] bytes, ref int index) {
+		Bytes = bytes;
+		Index = index;
+		var tail = ReadTSShapeTail();
+		index = Index;
+		return tail;
 	}
 
 	/// <summary>
@@ -457,7 +472,14 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 			link.Parent = parent;
 		}
 		link = (TSShape)ReadTSPartList(link, parent);
+		(link.SequenceList, link.NodeTransforms) = ReadTSShapeTail();
 
+		return link;
+	}
+
+	// What TSShape_ReadFromStream (00490d5c) reads after its part list: both counts first, then the
+	// per-sequence frame counts (shape+0x20), then the node transforms (shape+0x18).
+	private (short[] Sequences, TSShapeNodeTransform[] Transforms) ReadTSShapeTail() {
 		short transformTotal = IndexShortLE();
 		short sequenceTotal = IndexShortLE();
 
@@ -465,15 +487,30 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 		for (int s = 0; s < sequences.Length; s++) {
 			sequences[s] = IndexShortLE();
 		}
-		link.SequenceList = sequences;
 
-		var transforms = new short[transformTotal];
+		var transforms = new TSShapeNodeTransform[transformTotal];
 		for (int t = 0; t < transforms.Length; t++) {
-			transforms[t] = IndexShortLE();
+			transforms[t] = ReadTSShapeNodeTransform();
 		}
-		link.TransformList = transforms;
 
-		return link;
+		return (sequences, transforms);
+	}
+
+	private TSShapeNodeTransform ReadTSShapeNodeTransform() {
+		var transform = new TSShapeNodeTransform {
+			Index = Index
+		};
+
+		for (int m = 0; m < transform.Matrix.Length; m++) {
+			transform.Matrix[m] = IndexShortLE();
+		}
+		transform.Rank = IndexByte();
+		transform.Byte13 = IndexByte();
+		transform.X = IndexIntLE();
+		transform.Y = IndexIntLE();
+		transform.Z = IndexIntLE();
+
+		return transform;
 	}
 
 	private ANSequenceFrame ReadANSequenceFrame() {
@@ -778,15 +815,22 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 	private void WriteTSShape(TSShape shape, MemoryStream bos) {
 		WriteTSPartList(shape, bos);
 
-		Emit(bos, WriteShortLE((short)shape.TransformList!.Length));
+		Emit(bos, WriteShortLE((short)shape.NodeTransforms!.Length));
 		Emit(bos, WriteShortLE((short)shape.SequenceList!.Length));
 
 		foreach (var s in shape.SequenceList) {
 			Emit(bos, WriteShortLE(s));
 		}
 
-		foreach (var t in shape.TransformList) {
-			Emit(bos, WriteShortLE(t));
+		foreach (var t in shape.NodeTransforms) {
+			foreach (var m in t.Matrix) {
+				Emit(bos, WriteShortLE(m));
+			}
+			bos.WriteByte(t.Rank);
+			bos.WriteByte(t.Byte13);
+			Emit(bos, WriteIntLE(t.X));
+			Emit(bos, WriteIntLE(t.Y));
+			Emit(bos, WriteIntLE(t.Z));
 		}
 	}
 

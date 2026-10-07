@@ -15,13 +15,12 @@ public enum ShellScrapDialogButton {
 /// (<c>00447711</c>) and taken down by <c>ScrapDialog_Hide</c> (<c>00447795</c>) — and
 /// <see cref="Weapons"/> its twin, the armory's, on the lit weapon's whole stock: <c>WeaponScrapDialog_Build</c>
 /// (<c>004477ae</c>), <c>_Show</c> (<c>00447b97</c>) and <c>_Hide</c> (<c>00447c1d</c>). The twin differs
-/// only in its caption. See docs/shell/screen-layout.md, "The scrap dialog".
+/// only in its caption. See docs/retail/shell/screen-layout.md, "The scrap dialog".
 ///
 /// <para>The rects are the builder's literals. The panel is placed in a window the size of the whole
 /// display, so its rect is a canvas rect; everything else is in the panel.</para>
 ///
-/// <para>While it is up this engine hit-tests nothing but its two buttons, so it is modal. That is this
-/// engine's choice.</para>
+/// <para>HERCULAN treats this dialog as modal, a divergence from retail.</para>
 /// </summary>
 public sealed class ShellScrapDialog {
 	/// <summary>The machine scrap dialog, captioned <c>0xcc</c> <c>This herc will yield</c>.</summary>
@@ -80,7 +79,7 @@ public sealed class ShellScrapDialog {
 	public static ShellRect ButtonRect(ShellScrapDialogButton button) =>
 		Inside(PanelRect, button == ShellScrapDialogButton.Cancel ? CancelRect : AcceptRect);
 
-	/// <summary>A button under a canvas point, or null — a click anywhere else is swallowed, as retail's full-display window swallows it (docs/shell/screen-layout.md, "The scrap dialog").</summary>
+	/// <summary>A button under a canvas point, or null — a click anywhere else is swallowed, as retail's full-display window swallows it (docs/retail/shell/screen-layout.md, "The scrap dialog").</summary>
 	public ShellHit? HitAt(float canvasX, float canvasY) {
 		foreach (var button in Enum.GetValues<ShellScrapDialogButton>()) {
 			if (ButtonRect(button).Contains(canvasX, canvasY)) {

@@ -11,7 +11,7 @@ namespace Herculan.Engine.Sim;
 /// <see cref="Turn"/> as the aileron, <see cref="Throttle"/> as the elevator,
 /// <see cref="TorsoTwist"/> as the rudder and <see cref="TorsoPitch"/> as the throttle. The field
 /// names here are the walker's roles, which are also the device axes' own names. See
-/// docs/simulation/razor-flight.md.</para>
+/// docs/retail/simulation/razor-flight.md.</para>
 /// </summary>
 /// <param name="Turn">
 /// Stick X. Negative is left, positive right — a joystick's own sign convention. The control law
@@ -39,13 +39,13 @@ namespace Herculan.Engine.Sim;
 /// either mode read upside down.
 ///
 /// <para>This is the original's <c>ThrottleLeverMode</c> (<c>0049a06e</c>), which is <b>not</b> a forward/reverse gear
-/// selector despite the name in the symbol table — docs/simulation/mech-locomotion.md carries the
+/// selector despite the name in the symbol table — docs/retail/simulation/mech-locomotion.md carries the
 /// argument. What matters here is that it gates the throttle clamp: at 0 the setting is free to
 /// take either sign, and with a unipolar lever present the clamp closes to one side of zero.</para>
 ///
 /// <para><b><see cref="ThrottleLeverBipolar"/> is this engine's invention, not retail behaviour.</b>
 /// DBSIM has only the unipolar mode: its lever spends its whole travel on one direction and
-/// <c>CHANGE DIRECTION</c> flips which. See docs/formats/joystick-input.md.</para>
+/// <c>CHANGE DIRECTION</c> flips which. See docs/retail/formats/joystick-input.md.</para>
 /// </param>
 /// <param name="TorsoTwist">
 /// The turret axis, left/right. Full deflection at ±0x100, as the two above. It is a
@@ -105,7 +105,7 @@ public readonly record struct MechControls(short Turn, short Throttle, int Throt
 	/// accumulating <c>direction * 0x80</c> per held key, where the direction pair is the ±1
 	/// components the key binding carries, so a cardinal key reaches <c>0x80</c> on its axis and
 	/// nothing reaches <c>0x100</c>. The joystick hat is a third value again (<c>0xc0</c>); only an
-	/// analogue stick spans the full range. See docs/formats/joystick-input.md#the-keyboard.</para>
+	/// analogue stick spans the full range. See docs/retail/formats/joystick-input.md#the-keyboard.</para>
 	///
 	/// <para>It is load-bearing for steering, because the turn rate is
 	/// <c>Q8(tentRate, axis)</c> — <b>linear</b> in the axis. At <see cref="AxisFull"/> a keyboard

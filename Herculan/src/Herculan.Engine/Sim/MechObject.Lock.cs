@@ -1,4 +1,3 @@
-using Herculan.Engine.Audio;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.World;
 
@@ -9,7 +8,7 @@ namespace Herculan.Engine.Sim;
 /// after the reactor and shield bookkeeping <see cref="PowerTick"/> ports.
 ///
 /// <para>What <c>manager+0x0a</c> is, how a lock is built, each subtype's hold condition and the ECM
-/// roll are in docs/simulation/missile-lock.md. The genuine ammunition count is the separate array
+/// roll are in docs/retail/simulation/missile-lock.md. The genuine ammunition count is the separate array
 /// <see cref="WeaponMounts.RoundsByMissileType"/> fills, which this block uses only to decide which
 /// timers to run. The anti-radiation subtype's flags are the pair its guidance homes on (see
 /// <see cref="Rocket"/>); subtype 3 is never locked, because the pilot flies it — see
@@ -357,7 +356,7 @@ public sealed partial class MechObject {
 
 		// A Targeting Pod on THIS machine — the one holding the lock, not the one jamming it — cuts
 		// the weight to a quarter while its own cached damage is under TargetingPodLock.EcmAssistLimit.
-		// docs/simulation/target-selection.md has all four of the pod's thresholds.
+		// docs/retail/simulation/target-selection.md has all four of the pod's thresholds.
 		int weight = Pods.TargetingMount?.ComponentLock is { ComponentDamage: < TargetingPodLock.EcmAssistLimit }
 			? EcmRollWeightWithPod
 			: EcmRollWeight;

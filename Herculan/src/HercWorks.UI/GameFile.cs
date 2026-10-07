@@ -7,7 +7,7 @@ namespace HercWorks.UI;
 /// entry still packed inside a .VOL. Carries the content with the 9-byte VOL entry prefix already
 /// stripped, plus the prefix fields themselves so a save can rebuild the archive-entry shape on
 /// request — see VolEntryPrefixCodec. The game reads a loose file content-only, from offset 0
-/// (docs/formats/vol-archive.md#loose-files-on-disk-carry-no-prefix), so the prefix only belongs on
+/// (docs/retail/formats/vol-archive.md#loose-files-on-disk-carry-no-prefix), so the prefix only belongs on
 /// a file headed back into an unpacked archive tree.
 /// </summary>
 public sealed class GameFile {

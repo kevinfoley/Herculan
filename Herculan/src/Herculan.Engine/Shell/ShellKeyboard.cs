@@ -4,7 +4,7 @@ namespace Herculan.Engine.Shell;
 
 /// <summary>
 /// One keystroke as VSHELL's widgets see it: a character (event <c>0x40</c>) or a command (event
-/// <c>0x100</c>), each delivered to the pointer's target (docs/shell/screen-layout.md#typing-into-a-row).
+/// <c>0x100</c>), each delivered to the pointer's target (docs/retail/shell/screen-layout.md#typing-into-a-row).
 /// </summary>
 public readonly record struct ShellKey(char? Character, int? Command) {
 	/// <summary>Backspace's command.</summary>
@@ -19,7 +19,7 @@ public readonly record struct ShellKey(char? Character, int? Command) {
 
 /// <summary>
 /// VSHELL's keyboard: the three tables that turn a key into the events its widgets receive. See
-/// docs/shell/screen-layout.md#typing-into-a-row.
+/// docs/retail/shell/screen-layout.md#typing-into-a-row.
 ///
 /// <para><c>MainWndProc</c> (<c>00404a2c</c>) turns a <c>WM_KEYDOWN</c>/<c>WM_KEYUP</c>'s virtual-key
 /// code into its position in the table at <c>0046d384</c>, a set-1 scancode, and drops a key that is
@@ -88,7 +88,7 @@ public static class ShellKeyboard {
 	///
 	/// <para>With Shift, Ctrl or Alt down, retail indexes the command table with the modifier bits still
 	/// in the code, past the table's end, where no byte in the image is an editing command; this engine
-	/// sends no command for those (docs/shell/screen-layout.md#open). Ctrl+Q posts an event of its own
+	/// sends no command for those (docs/retail/shell/screen-layout.md#open). Ctrl+Q posts an event of its own
 	/// rather than a character, which no widget ported here takes, so it sends nothing.</para>
 	/// </summary>
 	public static ShellKey? Event(int index, bool released, bool shift, bool ctrl, bool alt) {

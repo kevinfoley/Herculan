@@ -6,7 +6,7 @@ namespace Herculan.Engine.Gl;
 /// <summary>
 /// A compiled and linked GLSL program, with uniform lookups cached by name.
 ///
-/// <para>Kept deliberately thin. Per docs/engine/planning.md's rendering decision the engine starts
+/// <para>Kept deliberately thin. Per docs/herculan/planning.md's rendering decision the engine starts
 /// on OpenGL concretely and does <i>not</i> build a backend abstraction up front — an abstraction
 /// designed against GL alone tends to bake in assumptions (implicit state, no explicit
 /// synchronisation) that don't survive contact with Vulkan. This type is a convenience over raw GL

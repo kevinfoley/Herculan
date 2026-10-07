@@ -13,7 +13,7 @@ namespace Herculan.Engine.World;
 /// the end after 65 types, and the geometry reads as deliberate hand-authored hitboxes — a
 /// three-component bunker with a sphere cluster per section, a gun tower with a separate cluster per
 /// barrel. Types whose <see cref="BaseType.HasCollisionModel"/> is false state a count of zero, with
-/// three exceptions that carry a full model the type flag leaves unused.</para>
+/// one exception, type 3, which carries a model the type flag leaves unused.</para>
 ///
 /// <para><b>Not the whole system.</b> Mechs and flyers have collision models of their own, loaded
 /// by name from <c>col\&lt;NAME&gt;.COL</c> through the same reader rather than from this one

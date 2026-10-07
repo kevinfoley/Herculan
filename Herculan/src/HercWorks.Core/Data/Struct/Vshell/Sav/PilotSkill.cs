@@ -11,7 +11,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Sav;
 /// strings, skill from the start and rank from four in, which is the only sense in which they share
 /// a numbering.</para>
 ///
-/// See <c>docs/formats/save-games.md</c> and <c>docs/shell/campaign-loop.md</c>.
+/// See <c>docs/retail/formats/save-games.md</c> and <c>docs/retail/shell/campaign-loop.md</c>.
 /// </summary>
 public sealed class PilotSkill {
 	public static readonly PilotSkill Rookie = new(0, "Rookie");

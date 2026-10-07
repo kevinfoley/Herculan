@@ -13,7 +13,7 @@ public readonly record struct VolEntryPrefixResult(
 /// Handles the same 9-byte per-entry prefix (1-byte compression type + 4-byte little-endian content
 /// size + 4-byte MS-DOS date/time) that <see cref="VolEntry"/> carries when parsed out of a packed
 /// .VOL, plus the single trailing byte that follows an entry's content in the archive — see
-/// docs/formats/vol-archive.md.
+/// docs/retail/formats/vol-archive.md.
 ///
 /// <para>A loose file on disk may be either shape: the retail game's own overrides are
 /// content-only, while anything unpacked by a tool that copies archive bytes wholesale (such as

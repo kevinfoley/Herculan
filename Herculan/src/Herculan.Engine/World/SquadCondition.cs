@@ -7,7 +7,7 @@ namespace Herculan.Engine.World;
 /// The condition a machine of the player's squad carries into a mission — its <c>player.mec</c>
 /// entry's three condition spans, read as <c>int16</c> percentages. A squad machine has no roster
 /// record and so no starting condition; this is what it starts in instead. See
-/// docs/simulation/component-damage.md#a-squad-machines-condition--mech_applysquadcondition-00415068;
+/// docs/retail/simulation/component-damage.md#a-squad-machines-condition--mech_applysquadcondition-00415068;
 /// <see cref="Sim.ComponentDamage.ApplySquadCondition"/> writes it.
 /// </summary>
 /// <param name="External"><inheritdoc cref="MecEntry.ExternalConditions"/></param>

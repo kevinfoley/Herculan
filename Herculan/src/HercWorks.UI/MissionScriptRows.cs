@@ -106,7 +106,7 @@ internal sealed class ScriptTriggerAreaRow : ScriptRow {
 /// Block 5 — a mission action. <see cref="MessageId"/> is the message it posts plus one (0 for
 /// none), <see cref="AreaRefs"/> its block-4 trigger areas, and the two counter arrays the mission
 /// counters it writes when it activates; DBSIM reads <see cref="TextRefs"/> and throws it away. See
-/// docs/formats/script-dat.md and docs/simulation/mission-deployment.md.
+/// docs/retail/formats/script-dat.md and docs/retail/simulation/mission-deployment.md.
 /// </summary>
 internal sealed class ScriptActionRow : ScriptRow {
 	public required ScriptAction Source { get; init; }
@@ -282,7 +282,7 @@ internal sealed class ScriptBaseRow : ScriptRow {
 /// <see cref="Verb"/> is search/destroy, ram, guard, patrol, sleep, travel or follow, the
 /// subject pair what it is about, and <see cref="ActionRef"/> an action that moves the
 /// group on to its next order. A group's route and its fallback spawn point come from its slot-0
-/// order's <see cref="RouteRef"/>. See docs/simulation/ai-goals.md.
+/// order's <see cref="RouteRef"/>. See docs/retail/simulation/ai-goals.md.
 /// </summary>
 internal sealed class ScriptOrderRow : ScriptRow {
 	public required ScriptOrder Source { get; init; }
@@ -362,7 +362,7 @@ internal sealed class ScriptGroupRow : ScriptRow {
 
 /// <summary>
 /// Block 12 — a mission objective. DBSIM's first pass discards it and the spawn pass comes back to
-/// build the objectives from it; see docs/simulation/mission-objectives.md.
+/// build the objectives from it; see docs/retail/simulation/mission-objectives.md.
 /// </summary>
 internal sealed class ScriptObjectiveRow : ScriptRow {
 	public required ScriptObjective Source { get; init; }

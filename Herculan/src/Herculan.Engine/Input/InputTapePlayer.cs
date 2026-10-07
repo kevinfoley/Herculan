@@ -10,15 +10,14 @@ namespace Herculan.Engine.Input;
 /// <summary>
 /// One <c>.TAP</c> input tape being played back — DBSIM's <c>-p</c>, and <c>-D</c> when
 /// <see cref="DemoMode"/> is set. The tape is read a frame at a time; what each frame means and how
-/// DBSIM consumes it are docs/formats/tap-input-tape.md's, and this class only decodes it into the
+/// DBSIM consumes it are docs/retail/formats/tap-input-tape.md's, and this class only decodes it into the
 /// engine's own input types. The host owns the loop that feeds it, because only the host knows when a
 /// modal panel is up.
 ///
 /// <para><b>Paced, where retail is not.</b> DBSIM skips its 40 ms frame wait for the whole of a
 /// playback and runs as fast as it can draw, so a retail demo is over in a fraction of its recorded
 /// length. This plays each simulation frame for the time its own <c>SimTickDelta</c> says it took
-/// (<see cref="SecondsOf"/>), which is the recording's own real time — this engine's choice, not the
-/// original's.</para>
+/// (<see cref="SecondsOf"/>), which is the recording's own real time — a divergence from retail.</para>
 /// </summary>
 public sealed class InputTapePlayer {
 	/// <summary>The folder inside an install root that the shipped tapes and their list sit in.</summary>
@@ -115,7 +114,7 @@ public sealed class InputTapePlayer {
 	/// The tape's recorded length, for the log: <see cref="SecondsOf"/> summed over the frames that
 	/// ticked the simulation, which leaves out every frame of an <see cref="InferredPanelSpans"/> run
 	/// after its first, the frame whose tick raised the panel. It rests on the same heuristic as the
-	/// spans. See docs/formats/tap-input-tape.md, "Timing".
+	/// spans. See docs/retail/formats/tap-input-tape.md, "Timing".
 	/// </summary>
 	public double RecordedSeconds {
 		get {

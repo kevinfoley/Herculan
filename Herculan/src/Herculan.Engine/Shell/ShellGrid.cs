@@ -12,7 +12,7 @@ public sealed record ShellGridPart(DynamixBitmap Frame, int X, int Y, int Flags,
 /// The <c>Grid</c> widget (<c>ESGrid_Ctor</c>, <c>0040b7e0</c>) every picture of a machine in the shell is:
 /// a filled panel with 16-pixel grid lines and thirty part slots, each a bitmap, a position, blit flags
 /// and ten colour remap pairs. The squad panel's bay pictures and the repair screen's damage diagrams
-/// are both one. See docs/shell/screen-layout.md, "The damage diagram".
+/// are both one. See docs/retail/shell/screen-layout.md, "The damage diagram".
 /// </summary>
 public static class ShellGrid {
 	/// <summary>The part slots a grid carries, and the range <c>ESGrid_SetPart</c> asserts.</summary>

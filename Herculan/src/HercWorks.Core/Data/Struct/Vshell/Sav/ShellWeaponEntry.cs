@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Sav;
 /// <summary>
 /// The save form of a weapon unit, all five shorts of the ten-byte in-memory record, in on-disk
 /// order. <see cref="Hercs.UiWeaponEntry"/> is the six-byte <c>gam\*.dat</c> form of the same
-/// record. See <c>docs/formats/herc-catalogs.md#the-weapon-unit-record</c>.
+/// record. See <c>docs/retail/formats/herc-catalogs.md#the-weapon-unit-record</c>.
 /// </summary>
 public class ShellWeaponEntry {
 	/// <summary><c>+0x00</c>, the weapon catalog id.</summary>

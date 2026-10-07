@@ -193,6 +193,47 @@ public sealed class ShapeAnimation {
 		DefaultTransforms = defaultTransforms;
 		ParentTransform = parentTransform;
 		PartTransformIds = partTransformIds;
+
+		_meanForwardTravel = new double[sequences.Length];
+		for (int i = 0; i < sequences.Length; i++) {
+			_meanForwardTravel[i] = MeanForwardTravel(sequences[i], transforms);
+		}
+	}
+
+	private readonly double[] _meanForwardTravel;
+
+	/// <summary>
+	/// How far a sequence's root motion carries the object along its own forward axis (+Y) per
+	/// animation tick, averaged over the whole sequence: every frame's ground translation over every
+	/// frame's duration. Zero for a sequence with no ground movement, and for turn-in-place, which
+	/// carries rotation only.
+	///
+	/// <para><b>Not something the original computes.</b> It is the stride the
+	/// <see cref="Settings.TweakSettingDefinitions.ShowAccurateSpeed"/> readout reads
+	/// (<see cref="MechObject.GroundSpeedKph"/>). The real motion pulses from frame to frame within a
+	/// stride; this is the stride's mean. See docs/retail/simulation/mech-locomotion.md, "Resulting
+	/// speed".</para>
+	/// </summary>
+	public double MeanForwardTravelPerTick(int sequenceId) =>
+		sequenceId >= 0 && sequenceId < _meanForwardTravel.Length ? _meanForwardTravel[sequenceId] : 0;
+
+	private static double MeanForwardTravel(AnimSequence sequence, AnimTransform[] transforms) {
+		if (!sequence.GroundMovement || sequence.PartCount == 0) {
+			return 0;
+		}
+
+		long travel = 0;
+		long duration = 0;
+		for (int frame = 0; frame < sequence.FrameCount; frame++) {
+			int index = sequence.TransformIndices[frame * sequence.PartCount];
+			if (index >= 0 && index < transforms.Length) {
+				travel += transforms[index].Y;
+			}
+
+			duration += sequence.FrameDurations[frame];
+		}
+
+		return duration > 0 ? travel / (double)duration : 0;
 	}
 
 	/// <summary>The shape's sequences, indexed by the sequence ids the mech type record names.</summary>
@@ -376,17 +417,16 @@ public sealed class ShapeAnimation {
 	/// does — true when every <c>(parent, child)</c> pair in its own relation list appears, with the
 	/// same parent, in the reference's.
 	///
-	/// <para><b>Each root of a multi-root shape carries its own <c>ANAnimList</c>, and a node id is
-	/// only meaningful inside the root that declares it.</b> <c>ShapeInst_BuildWorldTransforms</c>
-	/// (<c>00478b58</c>) reads its relation list from <c>shapeInst-&gt;shape-&gt;animList</c>
-	/// (<c>shape+0x2a</c>) — the <i>currently selected</i> root, which
-	/// <c>Shape_DrawAtDetailLevel</c> swaps — so the original poses each root through that root's own
-	/// node tree. Posing one root's geometry with another's transforms lands a part on whatever joint
-	/// happens to share its number.</para>
+	/// <para><b>Each root of a multi-root shape carries its own <c>ANAnimList</c>, and in the file a
+	/// node id is only meaningful inside the root that declares it.</b> The original poses every root
+	/// through root 0's pose array, after renumbering the crude roots onto root 0's nodes at load
+	/// (docs/retail/formats/mech-shape-drawing.md, "The pose array is root 0's" and "The crude roots
+	/// are renumbered at load"). Posing one root's geometry, as loaded, with another's transforms
+	/// lands a part on whatever joint happens to share its number.</para>
 	///
 	/// <para>This is the test a caller needs before drawing one root with another's pose: it is
 	/// satisfied when a root merely drops nodes (a dropped id is never reused), and fails when it
-	/// compacts the numbering to close the gap. See docs/formats/mech-shape-drawing.md, "Each root
+	/// compacts the numbering to close the gap. See docs/retail/formats/mech-shape-drawing.md, "Each root
 	/// numbers its own nodes".</para>
 	/// </summary>
 	public static bool SharesNodeNumbering(TSObject? root, TSObject? reference) {

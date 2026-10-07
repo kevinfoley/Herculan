@@ -3,8 +3,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>
 /// Row #9 (12 bytes/record) — a trigger area, <c>script.dat</c> block 4: a ground-plane box between
 /// two points or a circle about one. A mission action (<see cref="MissionAction82.AreaRefs"/>)
-/// activates when its subject stands in one. See docs/formats/msn-mission-file.md, "Row #9 field
-/// decode", and docs/simulation/mission-deployment.md#the-areas--block-4-resolved-by-triggerarea_resolve-00423358.
+/// activates when its subject stands in one. See docs/retail/formats/msn-mission-file.md, "Row #9 field
+/// decode", and docs/retail/simulation/mission-deployment.md#the-areas--block-4-resolved-by-triggerarea_resolve-00423358.
 /// </summary>
 public class TriggerArea12 : MapObject {
 	/// <summary>0x02 — condition ref.</summary>

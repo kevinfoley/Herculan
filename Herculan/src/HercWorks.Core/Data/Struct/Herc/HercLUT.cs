@@ -2,7 +2,7 @@ namespace HercWorks.Core.Data.Struct.Herc;
 
 /// <summary>
 /// Mech types by id. Ids 0-8 are the nine player chassis in the shell's type order
-/// (<c>docs/formats/herc-catalogs.md#the-chassis-type-space</c>); ids 0-20 follow retail
+/// (<c>docs/retail/formats/herc-catalogs.md#the-chassis-type-space</c>); ids 0-20 follow retail
 /// <c>nam\MECHS.NAM</c> one-for-one, and <see cref="AbbrevDat"/> is that name, the stem of the
 /// mech's DBSIM data files (<c>OUTLAW.DMG</c>). Id 21, <see cref="Skimmer"/>, is not in
 /// <c>MECHS.NAM</c>: it is <c>FLYERS.NAM</c> index 0.
@@ -46,11 +46,14 @@ public sealed class HercLUT {
 	/// Mount capacity. For the nine player chassis (ids 0-8) this is VSHELL's in-code table that
 	/// <c>Herc_CapacityForType</c> (<c>00410d54</c>) reads, which is what a save's <c>+0x4c</c> holds
 	/// — not <c>herc_inf.dat</c>'s display figure, which says 4 for the Raptor II. See
-	/// <c>docs/formats/herc-catalogs.md#rejected-readings</c>. The figures for ids 9-21 have no
+	/// <c>docs/retail/formats/herc-catalogs.md#rejected-readings</c>. The figures for ids 9-21 have no
 	/// traced source.
 	/// </summary>
 	public short HardpointMax { get; set; }
 	public string AbbrevDat { get; set; }
+
+	/// <summary>Ids 0-8, the nine chassis the shell builds — the ones whose <see cref="HardpointMax"/> is traced.</summary>
+	public bool IsPlayerChassis => Id <= Razor.Id;
 
 	private HercLUT(short id, string name, short hardpointMax, string abbrevDat) {
 		Name = name;

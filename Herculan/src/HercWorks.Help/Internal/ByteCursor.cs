@@ -13,7 +13,7 @@ internal sealed class MalformedHelpException(string message) : Exception(message
 /// A read position inside a window of a byte array. Every read is bounds-checked against the
 /// window, so a length or offset taken from the file can at worst end the parse.
 ///
-/// <para>The compressed integers are those described in docs/formats/winhelp.md#compressed-integers;
+/// <para>The compressed integers are those described in docs/retail/formats/winhelp.md#compressed-integers;
 /// <see cref="CompressedSignedLong"/> rejects the 4-byte form, whose bias is an Open item there and
 /// which no retail file uses.</para>
 /// </summary>

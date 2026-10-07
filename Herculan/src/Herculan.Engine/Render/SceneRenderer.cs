@@ -41,6 +41,14 @@ public sealed class SceneItem {
 	/// </summary>
 	public bool DetailSelected { get; set; } = true;
 
+	/// <summary>
+	/// How the object this item draws is filed by terrain cell, which is a third reason for it not to
+	/// be drawn: <see cref="DrawEntry.Drawn"/>, settled per pass by the <see cref="ObjectDrawTable"/> of
+	/// the <see cref="GroundShapeLayer"/> it is drawn with. Every item of one object shares one entry.
+	/// Null for the terrain, which is not filed.
+	/// </summary>
+	public DrawEntry? Filing { get; set; }
+
 	/// <summary>Optional texture for this item. If null, flat-shaded rendering is used.</summary>
 	public uint? TextureHandle { get; set; }
 
@@ -81,7 +89,7 @@ public sealed class SceneItem {
 	/// Whether this item takes its fog distance a cell at a time the way <c>Terrain_DrawCellQuad</c>
 	/// does rather than a pixel at a time — see <see cref="SceneRenderer.FogCellSize"/>. Set on the
 	/// terrain, and on the ground shapes, which the original draws under the fade their cell's quad
-	/// installed (docs/simulation/ground-shapes.md, "The draw pass"). Every other drawn thing is
+	/// installed (docs/retail/simulation/ground-shapes.md, "The draw pass"). Every other drawn thing is
 	/// fogged from one distance of its own (<c>ObjList_DrawEntryRender</c> passes the render entry's
 	/// <c>+0x12</c>), which is already what a small object per-pixel amounts to.
 	/// </summary>
@@ -94,6 +102,16 @@ public sealed class SceneItem {
 	/// different rows of the theater ramp, and only the terrain's is fogged through it.
 	/// </summary>
 	public bool GroundFill { get; set; }
+
+	/// <summary>
+	/// The <c>TSBSPPart</c> this item draws a child of, or null for geometry under none — see
+	/// <see cref="BspDrawGroup"/>. The renderer paints a group's items together, in the tree's order
+	/// for the eye, rather than where the item list puts them.
+	/// </summary>
+	public BspDrawGroup? BspGroup { get; set; }
+
+	/// <summary>Which child of <see cref="BspGroup"/> — the <see cref="BspLeaf.Index"/> its geometry was built under.</summary>
+	public int BspLeaf { get; set; }
 }
 
 /// <summary>
@@ -177,7 +195,33 @@ public sealed class SceneRenderer : IDisposable {
 
 		_gl.Enable(EnableCap.DepthTest);
 		_gl.DepthFunc(DepthFunction.Less);
+
+		// The default framebuffer's stencil, which BSP children are painted through — see
+		// DrawBspGroup. EngineWindow asks for eight bits.
+		_gl.GetFramebufferAttachmentParameter(GLEnum.Framebuffer, GLEnum.Stencil,
+			GLEnum.FramebufferAttachmentStencilSize, out int stencilBits);
+		_stencilBits = stencilBits;
+		if (stencilBits == 0) {
+			Console.Error.WriteLine(
+				"WARNING: the framebuffer has no stencil buffer; a BSP part's children are drawn " +
+				"on the depth test alone, so a later child does not reliably cover an earlier one.");
+		}
 	}
+
+	/// <summary>How many stencil bits the framebuffer has; zero leaves BSP children painted without one.</summary>
+	private readonly int _stencilBits;
+
+	/// <summary>Numbers <see cref="Render"/>'s passes, so a <see cref="BspDrawGroup"/> knows when to forget the last one.</summary>
+	private int _pass;
+
+	/// <summary>The top-level BSP groups a pass has touched, in the order it first touched them.</summary>
+	private readonly List<BspDrawGroup> _bspRoots = new();
+
+	/// <summary>The stencil value the pass has handed out last — see DrawBspGroup.</summary>
+	private int _stencilUsed;
+
+	/// <summary>Whether this pass has cleared the stencil yet. It does so before its first group.</summary>
+	private bool _stencilCleared;
 
 	/// <summary>
 	/// Direction the sun's light travels, in render space — <see cref="MissionSun.Direction"/>.
@@ -289,7 +333,7 @@ public sealed class SceneRenderer : IDisposable {
 	///
 	/// <para>Deliberately <b>not</b> <see cref="FogColor"/> — the sky and the
 	/// colour distant terrain fades into are separate things in the original, which match in seven
-	/// theaters of ten (docs/formats/distance-fog-and-sky.md, "Where the two meet").</para>
+	/// theaters of ten (docs/retail/formats/distance-fog-and-sky.md, "Where the two meet").</para>
 	/// </summary>
 	public Vector3 SkyColor { get; set; } = new(0.55f, 0.60f, 0.68f);
 
@@ -304,7 +348,7 @@ public sealed class SceneRenderer : IDisposable {
 
 	/// <summary>
 	/// The zone's cell size in render units, which is the grain the terrain's fog is measured at.
-	/// Retail fogs a whole cell from its nearest corner (docs/formats/distance-fog-and-sky.md); the
+	/// Retail fogs a whole cell from its nearest corner (docs/retail/formats/distance-fog-and-sky.md); the
 	/// renderer spends that rule as its mean instead. Over a cell's four corners the minimum of
 	/// <c>i*a + j*b</c> is <c>min(0,a) + min(0,b)</c> and the centre is <c>(a+b)/2</c>, so centre to
 	/// nearest corner is exactly <c>(|a| + |b|)/2</c>, with <c>a</c> and <c>b</c> the depth one cell
@@ -365,7 +409,7 @@ public sealed class SceneRenderer : IDisposable {
 	///
 	/// <para>The original paints each ground shape straight after its own cell's ground, so the
 	/// ground of every cell its walk paints later covers it and it covers everything painted
-	/// before (docs/simulation/ground-shapes.md, "The draw pass"). Here each shape is filed under the
+	/// before (docs/retail/simulation/ground-shapes.md, "The draw pass"). Here each shape is filed under the
 	/// cell <see cref="HeightGrid.PickDrawCell"/> picks, as the original's submit files it, takes that
 	/// cell's <see cref="TerrainPaintOrder.Rank"/>, and is drawn with depth testing off, keeping only
 	/// the pixels where the ground showing ranks no later — <see cref="TerrainPaintRankBuffer"/>. Where
@@ -377,16 +421,24 @@ public sealed class SceneRenderer : IDisposable {
 	/// <para>Everything else is drawn afterwards with the depth test, so a machine stands over its
 	/// own shadow. The original also paints a shape over an object filed under a cell painted earlier
 	/// where the two overlap on screen; that is not reproduced here — every object is drawn over every
-	/// shape — and is listed as Unported in docs/simulation/ground-shapes.md.</para>
+	/// shape — and is listed as Unported in docs/retail/simulation/ground-shapes.md.</para>
+	///
+	/// <para>Before any of it, the pass rebuilds the zone's visible region for its own view, as
+	/// <c>Terrain_SetupVisibleRegion</c> does before the submit, and files <paramref name="ground"/>'s
+	/// <see cref="GroundShapeLayer.Objects"/> by it; an item whose <see cref="SceneItem.Filing"/> that
+	/// leaves undrawn, and a ground shape filed under a cell the draw does not reach, are skipped. The
+	/// billboards and beams drawn after this call for the same pass read the same answers.</para>
 	/// </summary>
 	public void Render(Camera camera, IEnumerable<SceneItem> items, GroundShapeLayer? ground,
 			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
 		float aspect = (float)viewportWidth / System.Math.Max(viewportHeight, 1);
 		var projection = camera.ProjectionMatrix(aspect);
 
+		var order = ground != null ? FileObjects(camera, aspect, ground) : default;
+
 		// Before anything is drawn into the frame, because it draws into a target of its own.
 		var groundShapes = ground is { Shapes.Count: > 0 }
-			? RankGroundShapes(camera, aspect, projection, ground,
+			? RankGroundShapes(camera, projection, ground, order,
 				viewportX, viewportY, viewportWidth, viewportHeight)
 			: null;
 
@@ -492,14 +544,135 @@ public sealed class SceneRenderer : IDisposable {
 			_gl.Enable(EnableCap.DepthTest);
 		}
 
+		// A child of a BSP part is held back and painted with the rest of its part, in the walk's order
+		// — see DrawBspGroup.
+		int pass = ++_pass;
+		var eyeWorld = WorldScale.ToRender(camera.Position);
+		_bspRoots.Clear();
+		_stencilCleared = false;
+
 		foreach (var item in items) {
-			if (ground == null || !ReferenceEquals(item, ground.Terrain)) {
+			if (ground != null && ReferenceEquals(item, ground.Terrain)) {
+				continue;
+			}
+
+			if (item.BspGroup is { } group) {
+				if (Drawn(item) && item.BspLeaf >= 0 && item.BspLeaf < group.Tree.LeafCount) {
+					Touch(group).Items[item.BspLeaf].Add(item);
+				}
+			} else {
 				Draw(item);
 			}
 		}
 
+		foreach (var root in _bspRoots) {
+			DrawBspGroup(root);
+		}
+
+		// Readies a group for this pass the first time the pass reaches it, and files it under the
+		// child of its parent it is drawn inside, or as a top-level group.
+		BspDrawGroup Touch(BspDrawGroup group) {
+			if (group.Pass != pass) {
+				group.BeginPass(pass, eyeWorld);
+				if (group.Parent is { } parent && group.ParentLeaf >= 0
+						&& group.ParentLeaf < parent.Tree.LeafCount) {
+					Touch(parent).Children[group.ParentLeaf].Add(group);
+				} else {
+					_bspRoots.Add(group);
+				}
+			}
+
+			return group;
+		}
+
+		// The original paints a TSBSPPart's children one after another in its tree's order, back to
+		// front from the eye, with no depth buffer: wherever two children overlap on screen, the one
+		// the walk reaches later is what shows, whichever is nearer. That is docs/retail/formats/
+		// dts-texture-binding.md's "TSBSPPart child selection". The rest of this scene is depth-
+		// buffered, between objects and between the polys of one child, so the part's own order is
+		// laid over the depth test with the stencil buffer:
+		//
+		// - The children are drawn in REVERSE paint order, each with its own stencil value, the
+		//   later-painted child the higher value, and a fragment passes only where the stencil holds
+		//   no more than its child's value (GEQUAL), writing that value where it lands. A child the
+		//   original paints later has therefore already claimed every pixel it covers, and nothing
+		//   painted before it can land there, nearer or not.
+		// - Within one child the depth test alone decides, and against the rest of the scene too.
+		//
+		// A coplanar marking or insignia in a later child wins its pixels outright, with no depth
+		// precision involved. Polygon offset by walk rank or a depth-equal test would only settle
+		// exact ties; retail's later child also covers an earlier one that is genuinely nearer
+		// wherever a part's planes do not separate its children, and only the painted order
+		// reproduces that.
+		//
+		// A group drawn inside a child (a weapon in its hardpoint slot) takes stencil values under
+		// that child's own and is painted in its turn, so it stands to the machine's other children
+		// exactly as that child does. Values are handed out in increasing blocks over the pass, so
+		// a later group always passes over an earlier one's marks; the stencil is cleared before the
+		// first group of a pass and whenever the eight bits run out. With no stencil buffer the
+		// children are drawn in paint order on the depth test alone.
+		void DrawBspGroup(BspDrawGroup root) {
+			int span = root.StencilSpan();
+			int maxValue = _stencilBits >= 8 ? 255 : (1 << _stencilBits) - 1;
+			if (span > maxValue) {
+				DrawPainted(root);
+				return;
+			}
+
+			if (!_stencilCleared || _stencilUsed + span > maxValue) {
+				_gl.ClearStencil(0);
+				_gl.Clear(ClearBufferMask.StencilBufferBit);
+				_stencilCleared = true;
+				_stencilUsed = 0;
+			}
+
+			_gl.Enable(EnableCap.StencilTest);
+			_gl.StencilOp(StencilOp.Keep, StencilOp.Keep, StencilOp.Replace);
+			DrawStenciled(root, _stencilUsed + span);
+			_gl.Disable(EnableCap.StencilTest);
+			_stencilUsed += span;
+		}
+
+		// Paints a group's children from the last-painted to the first, the child at `top` and the
+		// ones before it below, each child's nested groups under its own value.
+		void DrawStenciled(BspDrawGroup group, int top) {
+			int count = group.Tree.PaintOrder(group.EyeInFrame, group.Order);
+			for (int k = count - 1; k >= 0; k--) {
+				int leaf = group.Order[k];
+				_gl.StencilFunc(StencilFunction.Gequal, top, 0xff);
+				foreach (var item in group.Items[leaf]) {
+					Draw(item);
+				}
+
+				int below = top - 1;
+				foreach (var child in group.Children[leaf]) {
+					DrawStenciled(child, below);
+					below -= child.StencilSpan();
+				}
+
+				top -= group.ChildSpan(leaf);
+			}
+		}
+
+		void DrawPainted(BspDrawGroup group) {
+			int count = group.Tree.PaintOrder(group.EyeInFrame, group.Order);
+			for (int k = 0; k < count; k++) {
+				int leaf = group.Order[k];
+				foreach (var child in group.Children[leaf]) {
+					DrawPainted(child);
+				}
+
+				foreach (var item in group.Items[leaf]) {
+					Draw(item);
+				}
+			}
+		}
+
+		bool Drawn(SceneItem item) =>
+			item.Visible && item.DetailSelected && item.Filing is not { Drawn: false };
+
 		void Draw(SceneItem item) {
-			if (!item.Visible || !item.DetailSelected) {
+			if (!Drawn(item)) {
 				return;
 			}
 
@@ -550,23 +723,39 @@ public sealed class SceneRenderer : IDisposable {
 	private const int PaintRankUnit = 3;
 
 	/// <summary>
-	/// This pass's side of the original's submit and walk, for the ground shapes: rebuilds the
-	/// zone's visible region for the pass's view, as <c>Terrain_SetupVisibleRegion</c> does before
-	/// the submit; files each shape under the cell <see cref="HeightGrid.PickDrawCell"/> picks and
-	/// takes that cell's rank in this view's walk; and draws the terrain's ranks for the shapes'
-	/// fragments to test against. Returns the shapes in the order to draw them.
+	/// This pass's side of the original's submit: rebuilds the zone's visible region for the pass's
+	/// view, as <c>Terrain_SetupVisibleRegion</c> does before the submit, and files the layer's objects
+	/// by it. Returns the walk's order, which the ground shapes are ranked by.
 	/// </summary>
-	private List<(SceneItem Item, uint Rank)> RankGroundShapes(Camera camera, float aspect,
-			Matrix4x4 projection, GroundShapeLayer ground,
-			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
+	private static TerrainPaintOrder FileObjects(Camera camera, float aspect, GroundShapeLayer ground) {
 		var grid = ground.Grid;
 		var viewer = camera.Position;
 		ground.Region.Update(grid, viewer, camera.ViewRotation, camera.EdgeSlopes(aspect));
 		var order = TerrainPaintOrder.For(grid, viewer, camera.SimHeading);
+		ground.Objects.File(grid, ground.Region, viewer, order);
+		return order;
+	}
+
+	/// <summary>
+	/// The ground shapes' side of it: files each shape under the cell
+	/// <see cref="HeightGrid.PickDrawCell"/> picks, drops it when this pass's draw does not reach that
+	/// cell (<see cref="ObjectDrawTable.CellDrawn"/>), takes the cell's rank in this view's walk, and
+	/// draws the terrain's ranks for the shapes' fragments to test against. Returns the shapes in the
+	/// order to draw them.
+	/// </summary>
+	private List<(SceneItem Item, uint Rank)> RankGroundShapes(Camera camera, Matrix4x4 projection,
+			GroundShapeLayer ground, TerrainPaintOrder order,
+			int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
+		var grid = ground.Grid;
+		var viewer = camera.Position;
 
 		var ranked = new List<(SceneItem Item, uint Rank)>(ground.Shapes.Count);
 		foreach (var shape in ground.Shapes) {
 			var cell = grid.PickDrawCell(shape.Position, shape.Radius, viewer, ground.Region);
+			if (cell is { } filed && !ground.Objects.CellDrawn(filed)) {
+				continue;
+			}
+
 			ranked.Add((shape.Item, cell is { } picked
 				? order.Rank(picked.X, picked.Y)
 				: TerrainPaintOrder.AfterTerrain));

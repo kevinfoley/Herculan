@@ -5,7 +5,7 @@
 /// (<c>ShellMap</c>) reads it. Written by the mission load
 /// (<see cref="Io.Transform.Common.MissionGenerator.WriteScriptDat"/>) after it applies the
 /// <c>.MSN</c>'s conditions and variants: each block is one <see cref="MissionFile"/> row's surviving
-/// records, refs renumbered to block indices, some fields dropped. See docs/formats/script-dat.md.
+/// records, refs renumbered to block indices, some fields dropped. See docs/retail/formats/script-dat.md.
 ///
 /// <b>DBSIM reads this file twice.</b> <c>DBSim_LoadScriptDat</c> counts live objects and sizes its
 /// pools, keeping little more than each roster record's type field; <c>DBSim_SpawnMissionObjects</c>
@@ -14,14 +14,14 @@
 /// gives the wrong answer for most of them — see the format doc's "The two-pass read".
 ///
 /// Bytes past block 13's end are a longer earlier mission's leftovers, since the writer does not
-/// truncate (docs/formats/script-dat.md#fixed-size-file-structure). This model round-trips through
+/// truncate (docs/retail/formats/script-dat.md#fixed-size-file-structure). This model round-trips through
 /// block 13 only.
 /// </summary>
 public class ScriptDat {
 	/// <summary>
 	/// The 20-byte header, ten shorts, kept raw so the two fields nothing reads (offsets 4 and 16)
 	/// round-trip as loaded; the named properties below are views over it. See
-	/// docs/formats/script-dat.md#header-format.
+	/// docs/retail/formats/script-dat.md#header-format.
 	/// </summary>
 	public byte[] HeaderBytes { get; set; } = new byte[HeaderSize];
 
@@ -40,7 +40,7 @@ public class ScriptDat {
 	/// the goal position, 3 or 7 the data-link sequence. Type 3 also takes the data-link subject out
 	/// of the AI's candidate set, so the player's squad does not shoot the thing they came to read.
 	///
-	/// <para>Which missions patch it is in docs/formats/script-dat.md#header-format.</para>
+	/// <para>Which missions patch it is in docs/retail/formats/script-dat.md#header-format.</para>
 	/// </summary>
 	public short ObjectiveType { get => ReadHeader(6); set => WriteHeader(6, value); }
 
@@ -49,7 +49,7 @@ public class ScriptDat {
 	/// is not one. The <c>.MSN</c> header patch sets it: <c>TRAIN1</c>-<c>TRAIN4</c> carry 1-4, every
 	/// other mission 0. It selects the cockpit's training message port and the instructor's
 	/// <c>COMMAND&lt;n&gt;.STR</c> and <c>TM&lt;n&gt;_</c> clips, and silences the music. See
-	/// docs/formats/script-dat.md#the-training-mission-number.
+	/// docs/retail/formats/script-dat.md#the-training-mission-number.
 	/// </summary>
 	public short TrainingMissionNumber { get => ReadHeader(8); set => WriteHeader(8, value); }
 
@@ -58,7 +58,7 @@ public class ScriptDat {
 	/// says exactly 1. The shell's practice missions screen sets it; a campaign forces it to 0. It acts
 	/// on the player's machine alone, in two ways: a shot spends no ammunition, and the weapon mounts
 	/// hand the Master Energy Pool back everything they drew this tick. See
-	/// docs/simulation/difficulty.md.
+	/// docs/retail/simulation/difficulty.md.
 	/// </summary>
 	public short UnlimitedAmmunition { get => ReadHeader(10); set => WriteHeader(10, value); }
 
@@ -73,7 +73,7 @@ public class ScriptDat {
 	/// Header offset 14 — <c>MissionDifficulty</c> (<c>004a9ee0</c>), the <b>mission difficulty</b>, 0-3. The shell writes
 	/// the player pilot's own skill here in a campaign and the practice missions screen's setting
 	/// outside one, which is why every retail file carries 2 (<c>VETERAN</c>). Four things in the
-	/// original index a four-entry table with it — see docs/simulation/difficulty.md.
+	/// original index a four-entry table with it — see docs/retail/simulation/difficulty.md.
 	/// </summary>
 	public short Difficulty { get => ReadHeader(14); set => WriteHeader(14, value); }
 
@@ -209,7 +209,7 @@ public class ScriptTriggerArea {
 /// Block 5 entry — 74 bytes, row #10 (<see cref="MissionAction82"/>) less its GUID, condition, 0x04
 /// and 0x1A, with its counter pairs split into <see cref="CounterRefs"/> then <see cref="CounterOps"/>
 /// and refs as block indices. What DBSIM keeps of it is
-/// docs/formats/script-dat.md#block-5-in-memory--58-bytes-0x3a.
+/// docs/retail/formats/script-dat.md#block-5-in-memory--58-bytes-0x3a.
 /// </summary>
 public class ScriptAction {
 	/// <inheritdoc cref="MissionAction82.Type"/>
@@ -258,7 +258,7 @@ public class ScriptActionTimer {
 ///
 /// <para><c>DBSim_SpawnMissionObjects</c> (<c>004253d8</c>) builds one mech per live slot from
 /// this record. <c>DBSim_LoadScriptDat</c>'s first pass keeps only <see cref="TypeIndex"/>, to count
-/// and allocate (docs/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps).</para>
+/// and allocate (docs/retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps).</para>
 /// </summary>
 public class ScriptMechRecord {
 	public byte[] HeadBytes { get; set; } = new byte[40];
@@ -495,7 +495,7 @@ public class ScriptBaseRecord {
 	/// <summary>Exported offset <c>0x06</c> — the counter ref of each of <see cref="BaseRosterEntry62.OutOfActionReport"/>'s ten pairs.</summary>
 	public short[] CounterRefs => ScriptActionRefs.ReadSlots(TailBytes, ScriptActionRefs.CounterRefs);
 
-	/// <summary>Exported offset <c>0x1a</c> — the operation of each of those pairs, slot for slot with <see cref="CounterRefs"/>. The file always carries the row's own operations; the briefing map reuses the first two slots in its own copy of the block (docs/shell/mission-map.md#what-it-reads).</summary>
+	/// <summary>Exported offset <c>0x1a</c> — the operation of each of those pairs, slot for slot with <see cref="CounterRefs"/>. The file always carries the row's own operations; the briefing map reuses the first two slots in its own copy of the block (docs/retail/shell/mission-map.md#what-it-reads).</summary>
 	public short[] CounterOps => ScriptActionRefs.ReadSlots(TailBytes, ScriptActionRefs.CounterOps);
 
 	/// <inheritdoc cref="BaseRosterEntry62.StartingCondition"/>
@@ -522,8 +522,8 @@ public class ScriptBaseRecord {
 
 /// <summary>
 /// Block 10 entry — 14 bytes, row #15 (<see cref="MissionOrder22"/>)'s 0x08-0x15: <b>one
-/// mission-group order</b>, refs as block indices. See docs/formats/script-dat.md#block-10-in-memory--22-bytes-0x16
-/// and docs/simulation/ai-goals.md.
+/// mission-group order</b>, refs as block indices. See docs/retail/formats/script-dat.md#block-10-in-memory--22-bytes-0x16
+/// and docs/retail/simulation/ai-goals.md.
 /// </summary>
 public class ScriptOrder {
 	/// <inheritdoc cref="MissionOrder22.Verb"/>
@@ -605,7 +605,7 @@ public class ScriptGroup {
 /// Block 12 entry — 54 bytes, row #17 (<see cref="MissionObjective58"/>) less its condition and pair
 /// count, with its counter pairs split into <see cref="CounterRefs"/> then <see cref="CounterOps"/>
 /// and refs as block indices. What DBSIM builds from it is
-/// docs/formats/script-dat.md#block-12-in-memory--76-bytes-0x4c.
+/// docs/retail/formats/script-dat.md#block-12-in-memory--76-bytes-0x4c.
 /// </summary>
 public class ScriptObjective {
 	/// <inheritdoc cref="MissionObjective58.Required"/>

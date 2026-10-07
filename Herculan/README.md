@@ -113,11 +113,19 @@ src/
     Io/VolFileReader.cs
     Io/VolFileWriter.cs
     Util/ByteOps.cs       little-endian byte helpers (replaces the Java favre 'Bytes' lib)
+  HercWorks.Disc/         class library — reads CD images in place: .iso, raw .bin, cue sheets with
+                          audio tracks; the ISO 9660 (and Joliet) file system and Red Book PCM
   HercWorks.UI/           WinForms shell (net8.0-windows)
     Program.cs
     MainForm.cs
+  HercWorks.Query/        console tool — searches the retail .MSN missions through HercWorks.Core:
+                          which missions place a structure, mech or flyer type, what tests or
+                          writes a campaign flag, and what orders each group carries (`--help` lists
+                          the commands)
 tests/
   HercWorks.Vol.Tests/    xUnit round-trip test against a hand-built synthetic .vol
+  HercWorks.Query.Tests/  the queries against the retail missions, when ES2/ is present
+  HercWorks.Disc.Tests/   hand-built and deliberately corrupted images, and the v1.10 disc image when present
 ```
 
 ## Building

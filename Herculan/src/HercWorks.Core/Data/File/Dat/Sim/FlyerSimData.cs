@@ -8,7 +8,7 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 ///
 /// <para>DBSIM reads the payload straight into the first 0x2e bytes of its 0x70-byte flyer type
 /// record (<c>FlyerType_LoadResources</c>, <c>00422ed0</c>), so the offsets here are that record's
-/// offsets too. See docs/simulation/ai-flyers.md.</para>
+/// offsets too. See docs/retail/simulation/ai-flyers.md.</para>
 /// </summary>
 public class FlyerSimData {
 	public short SpeedTurn { get; set; }

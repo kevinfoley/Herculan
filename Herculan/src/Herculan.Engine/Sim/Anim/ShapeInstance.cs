@@ -104,7 +104,7 @@ public sealed class ShapeInstance {
 	/// list sorted.</para>
 	///
 	/// <para>On retail data it decides nothing: the sequences a type record names cover disjoint
-	/// nodes on every chassis. See docs/formats/dts-node-posing.md, "Several threads on one
+	/// nodes on every chassis. See docs/retail/formats/dts-node-posing.md, "Several threads on one
 	/// shape".</para>
 	/// </summary>
 	private AnimTransform? LocalOf(int transformId) {

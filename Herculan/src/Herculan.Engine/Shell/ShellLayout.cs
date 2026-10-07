@@ -3,7 +3,7 @@ namespace Herculan.Engine.Shell;
 /// <summary>
 /// One widget's box in shell-canvas pixels, with <b>both corners inclusive</b> — VSHELL's own
 /// convention, and the reason the full-screen panel is <c>{0, 0, 0x27f, 0x1df}</c> rather than
-/// <c>{0, 0, 640, 480}</c>. See docs/shell/screen-layout.md.
+/// <c>{0, 0, 640, 480}</c>. See docs/retail/shell/screen-layout.md.
 /// </summary>
 public readonly record struct ShellRect(int X0, int Y0, int X1, int Y1) {
 	/// <summary>Width in pixels, inclusive of both edges.</summary>
@@ -23,7 +23,7 @@ public readonly record struct ShellRect(int X0, int Y0, int X1, int Y1) {
 /// every widget rect as four immediates onto its own stack and hands the block to a widget
 /// constructor; no builder opens a file. The <c>gam\arm_*.dat</c> / <c>gam\rpr_*.dat</c> layout
 /// records are the exception and cover only the arming and service-bay content panels, not the frame
-/// around them. The derivation and the addresses are in docs/shell/screen-layout.md.</para>
+/// around them. The derivation and the addresses are in docs/retail/shell/screen-layout.md.</para>
 ///
 /// <para>The canvas is fixed at 640x480 and scaled to the window by
 /// <see cref="ShellScreenLayout"/> — "fixed layout, scaled to fit" rather than a reflowing UI, which

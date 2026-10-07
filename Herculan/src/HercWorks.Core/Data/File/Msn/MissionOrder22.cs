@@ -3,8 +3,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>
 /// Row #15 (22 bytes/record) — one order a mission group works through, <c>script.dat</c> block 10:
 /// a verb, the route it walks, what it is about, and optionally an action that ends it. Row #16 names
-/// up to ten and runs them in slot order. See docs/formats/msn-mission-file.md, "Row #15 field
-/// decode", and docs/simulation/ai-goals.md.
+/// up to ten and runs them in slot order. See docs/retail/formats/msn-mission-file.md, "Row #15 field
+/// decode", and docs/retail/simulation/ai-goals.md.
 /// </summary>
 public class MissionOrder22 : MapObject {
 	/// <summary>0x02 — condition ref.</summary>
@@ -13,7 +13,7 @@ public class MissionOrder22 : MapObject {
 
 	/// <summary>
 	/// 0x04 — variant key: unless <c>-1</c>, 0x08-0x15 are copied from a randomly picked variant
-	/// (docs/formats/msn-mission-file.md#variants). Unused in retail.
+	/// (docs/retail/formats/msn-mission-file.md#variants). Unused in retail.
 	/// </summary>
 	public short VariantKey { get; set; }
 	public const int VariantKeyWord = 0x04 / 2;
@@ -29,14 +29,14 @@ public class MissionOrder22 : MapObject {
 	public short Verb { get; set; }
 	public const int VerbWord = 0x08 / 2;
 
-	/// <summary>0x0A — the formation VSHELL's briefing map stands the squad in; DBSIM copies it, and no DBSIM reader has been found (docs/simulation/ai-goals.md#open).</summary>
+	/// <summary>0x0A — the formation VSHELL's briefing map stands the squad in; DBSIM copies it, and no DBSIM reader has been found (docs/retail/simulation/ai-goals.md#open).</summary>
 	public short FormationId { get; set; }
 
-	/// <summary>0x0C — ref into row #6 (<see cref="MapPoint22"/>); DBSIM resolves it, and no DBSIM reader has been found (docs/simulation/ai-goals.md#open).</summary>
+	/// <summary>0x0C — ref into row #6 (<see cref="MapPoint22"/>); DBSIM resolves it, and no DBSIM reader has been found (docs/retail/simulation/ai-goals.md#open).</summary>
 	public short PointRef { get; set; }
 	public const int PointRefWord = 0x0C / 2;
 
-	/// <summary>0x0E — ref into row #8 (<see cref="WaypointGroup"/>): the route. Only a group's first order's is walked; the objective layer matches every slot's (docs/simulation/ai-goals.md#what-else-reads-an-order).</summary>
+	/// <summary>0x0E — ref into row #8 (<see cref="WaypointGroup"/>): the route. Only a group's first order's is walked; the objective layer matches every slot's (docs/retail/simulation/ai-goals.md#what-else-reads-an-order).</summary>
 	public short RouteRef { get; set; }
 	public const int RouteRefWord = 0x0E / 2;
 

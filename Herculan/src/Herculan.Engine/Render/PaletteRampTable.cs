@@ -86,7 +86,7 @@ public sealed class PaletteRampTable {
 	/// shape render and restores it after, which is what makes a round's textured polys fullbright.
 	/// The one retail shape it reaches is <c>BULLETS.DTS</c> root 8, the plasma cannon's round; every
 	/// other projectile shape is untextured. See <see cref="SceneItem.Fullbright"/> and
-	/// docs/formats/dts-texture-binding.md's "<c>TSTexture4Poly</c> — frame index, ramp row by light,
+	/// docs/retail/formats/dts-texture-binding.md's "<c>TSTexture4Poly</c> — frame index, ramp row by light,
 	/// fullbright on demand".</para>
 	///
 	/// <para>It sits past every depth slice, and there is only one of it: a fill that skips the ramp

@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Sav;
 /// <summary>
 /// Block 1 of <see cref="File.Sav.PlayerSave"/>, the armory stock: one <see cref="InventoryItem"/>
 /// per <c>weapons.dat</c> catalog id, all 33 written. See
-/// <c>docs/formats/save-games.md#armory-stock-record</c>.
+/// <c>docs/retail/formats/save-games.md#armory-stock-record</c>.
 /// </summary>
 public class Inventory {
 	public InventoryItem[]? Items { get; set; }

@@ -7,7 +7,7 @@ namespace Herculan.Engine.Sim;
 /// <summary>
 /// The nine behaviour thinks that are not navigation: the five a machine fights in, the two it
 /// disengages in, and the two it stands still in. The derivation is
-/// docs/simulation/ai-combat-states.md.
+/// docs/retail/simulation/ai-combat-states.md.
 ///
 /// <para><b>A combat state decides where to stand and nothing else.</b> Every one of them ends in
 /// <see cref="CombatMoveStep"/> and <see cref="AimAndFire"/>, and differs only in the steering and
@@ -385,7 +385,7 @@ public sealed partial class MechObject {
 
 		short bearing = Detection.HeadingToward(point, Position);
 		LocomotionTick(world, SteerToward(bearing), MechControls.AxisFull);
-		CenterTorsoTick();
+		CenterTorsoTick(world);
 		return false;
 	}
 
@@ -542,7 +542,7 @@ public sealed partial class MechObject {
 
 	/// <summary>
 	/// <c>Ai_LineOfSightBlocked</c> (<c>0041dc24</c>)'s three answers. See
-	/// docs/simulation/ai-combat-states.md.
+	/// docs/retail/simulation/ai-combat-states.md.
 	/// </summary>
 	private enum LineOfSight {
 		/// <summary>Nothing in the way.</summary>

@@ -1,6 +1,5 @@
-using Herculan.Engine.Content;
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Input;
-using Herculan.Engine.Render;
 using Herculan.Engine.Sim;
 using Xunit;
 

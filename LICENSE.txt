@@ -1,7 +1,9 @@
 MIT License
 
 - Original herc-works-mdk Copyright (c) 2023 Subject9x. See https://github.com/Subject9x/herc-works-mdk
-- HercWorks CSharp and the HERCULAN Engine by Kevin Foley, 2026. No copyrighted asserted. Development powered substantially by AI; see README for disclosure.
+- HercWorks CSharp and the HERCULAN Engine Copyright (c) 2026 Kevin Foley.
+
+This license does not cover the HERCULAN Engine logo and icon artwork (the files in Branding/). See Branding/README.md.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

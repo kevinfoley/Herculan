@@ -1,7 +1,7 @@
 """Patch retail DBSIM.EXE so .TAP playback runs in real time.
 
 Retail's mission loop skips Time_BeginSimTick (004677bc) while a tape plays, so frames come as fast
-as the machine draws them (docs: Herculan/docs/formats/tap-input-tape.md#timing). This patch hooks
+as the machine draws them (docs: Herculan/docs/retail/formats/tap-input-tape.md#timing). This patch hooks
 the playback branch of Input_BuildPlayerDevice (0045a7f4) where it stores the frame's recorded
 SimTickDelta, and spins on GetTickCount until that frame's time has passed:
 

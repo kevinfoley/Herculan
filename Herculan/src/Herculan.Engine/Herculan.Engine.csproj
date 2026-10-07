@@ -23,18 +23,23 @@
 
   <ItemGroup>
     <ProjectReference Include="..\HercWorks.Core\HercWorks.Core.csproj" />
+    <ProjectReference Include="..\HercWorks.Disc\HercWorks.Disc.csproj" />
     <ProjectReference Include="..\HercWorks.Vol\HercWorks.Vol.csproj" />
     <ProjectReference Include="..\HercWorks.Video\HercWorks.Video.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Silk.NET.Input" Version="2.23.0" />
-    <!-- Audio, per docs/engine/planning.md. The Soft.Native package carries the OpenAL runtime, so
+    <!-- Audio, per docs/herculan/planning.md. The Soft.Native package carries the OpenAL runtime, so
          a machine without one installed still gets sound; OpenAlBackend falls back to silence if
          even that fails to load. -->
     <PackageReference Include="Silk.NET.OpenAL" Version="2.23.0" />
     <PackageReference Include="Silk.NET.OpenAL.Soft.Native" Version="1.23.1" />
     <PackageReference Include="Silk.NET.OpenGL" Version="2.23.0" />
+    <!-- The hosts' own menus and panels, built through ScaledImGui. Nothing the game itself draws goes
+         through ImGui: the cockpit and its HUD are the original's own art and its own font (Render/Cockpit,
+         Content/HudFont). -->
+    <PackageReference Include="Silk.NET.OpenGL.Extensions.ImGui" Version="2.23.0" />
     <PackageReference Include="Silk.NET.Windowing" Version="2.23.0" />
   </ItemGroup>
 

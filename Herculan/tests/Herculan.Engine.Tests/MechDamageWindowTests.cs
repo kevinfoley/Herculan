@@ -7,7 +7,7 @@ namespace Herculan.Engine.Tests;
 /// <summary>
 /// <see cref="MechObject.DamageTaken"/> is a window, not a running total: the systems pass zeroes it
 /// each time <see cref="MechObject.DamageWindowTimer"/> runs out. See
-/// docs/simulation/ai-combat-states.md ("The circling step").
+/// docs/retail/simulation/ai-combat-states.md ("The circling step").
 ///
 /// <para>Every test skips silently when no Earthsiege 2 install can be found.</para>
 /// </summary>

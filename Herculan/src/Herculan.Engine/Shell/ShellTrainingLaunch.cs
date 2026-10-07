@@ -22,7 +22,7 @@ public sealed record ShellTrainingHandoff(string ScriptPath, string MissionPath,
 /// (<c>Game_NewCareer</c>, <c>0040e2ed</c>) on stage 0 at the lit row, that mission loaded
 /// (<c>MsnGen_LoadMission</c>, <c>0041c73d</c>) with the squad built from its own group 0, and the
 /// handoff exported (<c>Game_ExportMissionHandoff</c>, <c>0040f0d4</c>). The sequence is
-/// docs/shell/screen-layout.md#starting-a-practice-mission's; the mission load is
+/// docs/retail/shell/screen-layout.md#starting-a-practice-mission's; the mission load is
 /// <see cref="MissionGenerator"/>.
 ///
 /// <para>Every random draw goes through the one generator VSHELL keeps for its whole run, in the
@@ -61,7 +61,7 @@ public static class ShellTrainingLaunch {
 
 	/// <summary>
 	/// The nine stock fits a chosen chassis is built from — the table at <c>004706fc</c>, in type order.
-	/// See docs/formats/herc-catalogs.md.
+	/// See docs/retail/formats/herc-catalogs.md.
 	/// </summary>
 	private static readonly string[] StockFits = {
 		"INI_OUTL.DAT", "INI_RAPT.DAT", "INI_TOMA.DAT", "INI_SAMS.DAT", "INI_COLO.DAT",
@@ -114,8 +114,8 @@ public static class ShellTrainingLaunch {
 
 		Directory.CreateDirectory(directory);
 		string scriptPath = Path.Combine(directory, MissionLoader.ScriptFileName);
-		File.WriteAllBytes(scriptPath, mission.WriteScriptDat());
-		File.WriteAllBytes(Path.Combine(directory, MissionLoader.TextFileName), mission.WriteMissionText());
+		ShellWorkingFiles.WriteMissionFile(scriptPath, mission.WriteScriptDat());
+		ShellWorkingFiles.WriteMissionFile(Path.Combine(directory, MissionLoader.TextFileName), mission.WriteMissionText());
 
 		int positions = mission.SquadPositions;
 		hangar.SetPositionsInPlay(positions);
@@ -159,7 +159,7 @@ public static class ShellTrainingLaunch {
 
 	/// <summary>
 	/// Flag 3's source, <c>00482606</c>, which the startup memset from <c>MissionScreenView</c> clears.
-	/// Whether anything writes it is open — see docs/shell/campaign-loop.md#open.
+	/// Whether anything writes it is open — see docs/retail/shell/campaign-loop.md#open.
 	/// </summary>
 	private const short UnknownFlag3 = 0;
 
@@ -193,8 +193,8 @@ public static class ShellTrainingLaunch {
 
 	/// <summary>
 	/// A mission and its text as <c>MsnGen_ParseMsnFile</c> opens them: the <c>.MSN</c> at
-	/// <paramref name="missionPath"/>, and the <c>.ENG</c> <c>Msn_LoadEngText</c> (<c>0041768c</c>) finds by
-	/// swapping everything from the name's first <c>.</c> for the language's extension, or null text when
+	/// <paramref name="missionPath"/>, and the text <c>Msn_LoadEngText</c> (<c>0041768c</c>) finds by
+	/// swapping everything from the name's first <c>.</c> for the shell language's extension, or null text when
 	/// there is none. Null when the mission itself is not in the archives.
 	/// </summary>
 	internal static (byte[] Msn, byte[]? Text)? ReadMission(GameContent content, string missionPath) {
@@ -206,8 +206,16 @@ public static class ShellTrainingLaunch {
 		}
 
 		int dot = name.IndexOf('.');
-		return (msn, content.Read(folder, (dot < 0 ? name : name[..dot]) + ".ENG"));
+		string stem = dot < 0 ? name : name[..dot];
+		return (msn, content.Read(folder, stem + MissionTextExtension(content.Language)));
 	}
+
+	/// <summary><c>Msn_LoadEngText</c>'s extension for <paramref name="language"/>'s mission text.</summary>
+	internal static string MissionTextExtension(GameLanguage language) => language switch {
+		GameLanguage.French => ".FRE",
+		GameLanguage.German => ".GER",
+		_ => ".ENG",
+	};
 
 	/// <summary>
 	/// <c>Squad_GenerateRoster</c> (<c>0040fa31</c>) — three squads of twelve, each from a shuffle of four
@@ -215,7 +223,7 @@ public static class ShellTrainingLaunch {
 	/// record with its rank seeded from the skill and <c>Pilot_SetDefaults</c> (<c>0040fd17</c>)'s bay
 	/// <c>-1</c>, off strength, position <c>-1</c> and condition 100. The records come back in the save's
 	/// order, squad by squad and row by row. See
-	/// docs/shell/campaign-loop.md#the-pilot-roster-is-generated-not-authored--squad_generateroster-0040fa31.
+	/// docs/retail/shell/campaign-loop.md#the-pilot-roster-is-generated-not-authored--squad_generateroster-0040fa31.
 	/// </summary>
 	internal static PilotEntry[] GenerateRoster(ShellText? names, Func<short, int> roll) {
 		var records = new PilotEntry[SquadCount * PilotsPerSquad];

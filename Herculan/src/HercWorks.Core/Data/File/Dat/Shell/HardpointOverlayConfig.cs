@@ -27,7 +27,7 @@ namespace HercWorks.Core.Data.File.Dat.Shell;
 /// first chassis's first two arming areas are <c>(37, 94, 70, 125)</c> and <c>(157, 94, 191, 125)</c>,
 /// a left and right hardpoint mirrored about x≈114, which is only true read as two corners.</para>
 ///
-/// See docs/formats/herc-catalogs.md#gamarm_hotsdat-and-gamrpr_hotsdat--the-clickable-regions.
+/// See docs/retail/formats/herc-catalogs.md#gamarm_hotsdat-and-gamrpr_hotsdat--the-clickable-regions.
 /// </summary>
 public class HardpointOverlayConfig {
 	public Herc[]? Entries { get; set; }

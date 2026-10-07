@@ -4,7 +4,7 @@ namespace HercWorks.Video.Codecs.Indeo4;
 
 /// <summary>
 /// Quantisation: the step tables and the value a coded level stands for at a given step. See
-/// docs/formats/indeo4.md#dequantisation.
+/// docs/retail/formats/indeo4.md#dequantisation.
 /// </summary>
 internal static class Indeo4Dequant {
 	/// <summary>Quantisation matrices the codec carries; index 31 in a band header means a custom one.</summary>

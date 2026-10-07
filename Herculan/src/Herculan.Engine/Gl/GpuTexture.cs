@@ -1,36 +1,20 @@
-using Herculan.Engine.Render;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Gl;
 
 /// <summary>
-/// An RGBA8 texture on the GPU, uploaded from a CPU-side <see cref="TextureAtlas"/>.
+/// An RGBA8 texture on the GPU, uploaded from CPU-side pixels.
 ///
 /// <para>Sampling is <b>nearest-neighbour with no mipmaps</b>, which is a deliberate fidelity call
 /// rather than a shortcut: the original is a 1996 software rasterizer that point-samples its
 /// texels, so bilinear filtering would render something visibly softer than the game ever looked.
-/// Per docs/engine/planning.md's "vanilla by default" principle, filtering and mipmapping belong in
-/// the opt-in enhancement bucket alongside the other precision upgrades, not in the default path.
-/// It also means the one-pixel gutter <see cref="TextureAtlas"/> leaves between frames is belt and
-/// braces — nearest sampling inside an exact frame rect cannot reach a neighbour regardless.</para>
+/// Per docs/herculan/planning.md's "vanilla by default" principle, filtering and mipmapping belong in
+/// the opt-in enhancement bucket alongside the other precision upgrades, not in the default path.</para>
 /// </summary>
 public sealed class GpuTexture : IDisposable {
 	private readonly GL _gl;
 
-	/// <param name="indexed">
-	/// Upload <see cref="TextureAtlas.IndexPixels"/> — palette index in red — rather than the
-	/// expanded colour. That is what a <b>lit</b> surface has to sample, because the original resolves
-	/// a lit texel as <c>rampRow(shade)[index]</c>; see <see cref="PaletteRampTable"/>. Callers that
-	/// blit a frame unlit (the HUD sprite sheets, the billboard renderer) want the colour.
-	/// </param>
-	public GpuTexture(GL gl, TextureAtlas atlas, bool indexed = false)
-		: this(gl, indexed ? atlas.IndexPixels : atlas.Pixels, atlas.Width, atlas.Height) { }
-
-	/// <summary>
-	/// Uploads a plain RGBA8 image with no atlas packing — for a single-frame source like
-	/// <see cref="Content.CockpitFrame"/>, where packing would be pure overhead (see
-	/// <c>Content.CockpitArt</c>'s doc comment).
-	/// </summary>
+	/// <summary>Uploads an RGBA8 image of <c>width * height * 4</c> bytes.</summary>
 	public GpuTexture(GL gl, ReadOnlySpan<byte> rgbaPixels, int width, int height) {
 		CheckSize(rgbaPixels, width, height);
 		_gl = gl;

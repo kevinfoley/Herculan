@@ -10,7 +10,7 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// <c>dat\BASECOL.DAT</c>, read through
 /// <see cref="Io.Transform.Dbsim.HercColliderTransformer.ReadNodes"/>, which is the same walk with
 /// an offset. The layout, the readers, the evidence that the elements are spheres and the retail
-/// verification are in <c>docs/formats/collision-spheres.md</c>; the 22 retail files round-trip
+/// verification are in <c>docs/retail/formats/collision-spheres.md</c>; the 22 retail files round-trip
 /// byte-exact through <c>HercColliderTransformer</c>.</para>
 ///
 /// <para>The node/cluster/sphere types are top-level (see <see cref="ColliderNode"/>) rather than

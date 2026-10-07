@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Hercs;
 /// <summary>
 /// The shared core of the shell's screen-layout records (<c>gam\arm_*.dat</c>, <c>gam\rpr_*.dat</c>,
 /// <c>gam\arm_weap.dat</c>): a top-left corner, a frame of the matching <c>dba\</c> sheet, and blit
-/// flags. See <c>docs/formats/herc-catalogs.md#the-screen-layout-families</c>.
+/// flags. See <c>docs/retail/formats/herc-catalogs.md#the-screen-layout-families</c>.
 /// </summary>
 public class UiImageDBA {
 	public DynamixBitmapArray? Dba { get; set; }

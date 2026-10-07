@@ -123,7 +123,7 @@ public sealed class WeaponCatalog {
 	/// <c>ATC75</c> and <c>ATC100</c> take <c>BULLETS.DAT</c> 10 and 11, <c>LAS400</c> and
 	/// <c>LAS500</c> take <c>BEAM.DAT</c> 8 and 9. Retail gives them 1, 2, 4 and 5, the ids of
 	/// <c>ATC35</c>, <c>ATC50</c>, <c>LAS200</c> and <c>LAS300</c>. See
-	/// docs/formats/proj-dat.md#lookup.
+	/// docs/retail/formats/proj-dat.md#lookup.
 	/// </summary>
 	private static readonly IReadOnlyDictionary<int, short> CorrectedSubtypeIds = new Dictionary<int, short> {
 		[23] = 10, [24] = 11, [25] = 8, [26] = 9,

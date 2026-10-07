@@ -3,7 +3,7 @@ namespace Herculan.Engine.Audio;
 /// <summary>
 /// The <c>Music_*</c> layer: Red Book CD audio, which in the original is driven straight through
 /// Win32 <c>mciSendCommand</c> on device <c>cdaudio</c> and does not touch HMI SOS at all. See
-/// docs/formats/audio.md's "CD audio".
+/// docs/retail/formats/audio.md's "CD audio".
 ///
 /// <para>It is an interface because the transport is not the original's decision to keep: this
 /// engine plays the disc's audio through its own mixer (<see cref="StreamedCdAudio"/>), keeps

@@ -22,7 +22,7 @@ namespace Herculan.Engine.Sim;
 /// <para><b>The record layout is not <c>BULLETS.DAT</c>'s.</b> The two files share a stride and their
 /// first two fields and nothing else — the readers are different functions reading different offsets,
 /// which is why a rocket's record is its own <see cref="RocketType"/>. The field map and the retail
-/// table are in docs/formats/rockets-dat.md.</para>
+/// table are in docs/retail/formats/rockets-dat.md.</para>
 ///
 /// <para>Retail ships five records, one per <c>Rocket</c> subtype id, four of them identical: every
 /// launcher round flies for 80 ticks (3.2 s) and accelerates at the same figure, and the BMSL round

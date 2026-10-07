@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// Row #13 (102 bytes/record) — one flyer the mission can field, exported as <c>script.dat</c> block 8
 /// (<see cref="Script.ScriptFlyerRecord"/>). The member names match <see cref="Script.ScriptFlyerRecord"/>'s
 /// and the engine's <c>MissionPlacement</c> where they are the same datum.
-/// See docs/formats/msn-mission-file.md, "Row #13 field decode".
+/// See docs/retail/formats/msn-mission-file.md, "Row #13 field decode".
 /// </summary>
 public class FlyerRosterEntry102 : MapObject {
 	/// <summary>0x02 — condition ref.</summary>
@@ -13,7 +13,7 @@ public class FlyerRosterEntry102 : MapObject {
 
 	/// <summary>
 	/// 0x04 — variant key: unless <c>-1</c>, everything from 0x08 to 0x65 except <see cref="PairCount"/>
-	/// is copied from a randomly picked variant (docs/formats/msn-mission-file.md#variants).
+	/// is copied from a randomly picked variant (docs/retail/formats/msn-mission-file.md#variants).
 	/// </summary>
 	public short VariantKey { get; set; }
 	public const int VariantKeyWord = 0x04 / 2;
@@ -21,7 +21,7 @@ public class FlyerRosterEntry102 : MapObject {
 	/// <summary>0x06 — always -1 in retail; the load does not read it.</summary>
 	public short Unk06 { get; set; }
 
-	/// <summary>0x08-0x2F — 20 shorts, each 0 or 1. What reads them is open (docs/formats/msn-mission-file.md#open).</summary>
+	/// <summary>0x08-0x2F — 20 shorts, each 0 or 1. What reads them is open (docs/retail/formats/msn-mission-file.md#open).</summary>
 	public short[] FlagSpan { get; set; } = new short[20];
 	public const int FlagSpanWord = 0x08 / 2;
 
@@ -64,7 +64,7 @@ public class FlyerRosterEntry102 : MapObject {
 	public short DefeatActionRef { get; set; }
 	public const int DefeatActionRefWord = 0x62 / 2;
 
-	/// <summary>0x64 — always 100 in retail; what reads it is open (docs/formats/msn-mission-file.md#open).</summary>
+	/// <summary>0x64 — always 100 in retail; what reads it is open (docs/retail/formats/msn-mission-file.md#open).</summary>
 	public short UnkVal_100 { get; set; }
 	public const int UnkVal_100Word = 0x64 / 2;
 }

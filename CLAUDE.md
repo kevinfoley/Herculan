@@ -3,14 +3,16 @@
 Reimplementation of Earthsiege 2 (1996) in C#, reverse-engineered from the retail `DBSIM.EXE` and
 `VSHELL.EXE`. `HercWorks.*` is the data-file toolkit; `Herculan.Engine` is the game engine.
 
-- `Herculan/docs/formats/` — file formats
-- `Herculan/docs/simulation/` — simulation behaviour (DBSIM)
-- `Herculan/docs/shell/` — shell behaviour (VSHELL): campaign, career, armory, front end
-- `Herculan/docs/engine/planning.md` — architecture decisions and their rationale
+- `Herculan/docs/retail/formats/` — file formats
+- `Herculan/docs/retail/simulation/` — simulation behaviour (DBSIM)
+- `Herculan/docs/retail/shell/` — shell behaviour (VSHELL): campaign, career, armory, front end
+- `Herculan/docs/herculan/planning.md` — architecture decisions and their rationale
 - `Herculan/KNOWN_ISSUES.md` — retail bugs, and where this engine diverges from retail
 
 Build: `dotnet build Herculan/HerculanEngine.sln` (engine) and `Herculan/HercWorksMDK.sln` (toolkit).
 Tests: `dotnet test Herculan/HerculanEngine.sln`. Keep both at 0 warnings.
+
+Questions about the retail missions — which place a structure, mech or flyer type, what tests or writes a campaign flag, what orders a group carries, per-row record counts — go to `Herculan/src/HercWorks.Query` (`--help`), not a throwaway scanner. It reads through HercWorks.Core, so a wrong answer is a Core bug to fix there.
 
 ## Reading files
 
@@ -52,13 +54,12 @@ The docs state what is true now. How the project got there belongs in `git log`.
    ("plausibly", "unconfirmed") — a hypothesis is an Open item. `KNOWN_ISSUES.md`, `ROADMAP.md` and
    `README.md` keep their own structure.
 
-9. **Retail docs describe retail.** `formats/`, `simulation/`, `shell/` and the top-level docs say
-   what the original does, not what HERCULAN does. The engine's types, file layout, tweaks and
+9. **Retail docs describe retail.** `docs/retail/` says what the original does, not what HERCULAN
+   does. The engine's types, file layout, tweaks and
    departures from retail go in doc comments on the C# that implements them, citing the doc
    section, so an engine change never has to hunt for prose to update (rule 5 decides which is
    which). A retail doc may link to an engine doc, but it does not name C# types. The engine docs are
-   `docs/engine/`, `herculan-command-line.md`, `key-bindings.md`, `cut-content.md`, `KNOWN_ISSUES.md`,
-   `ROADMAP.md` and `README.md`.
+   `docs/herculan/`, `KNOWN_ISSUES.md`, `ROADMAP.md` and `README.md`.
 
 `tools/scripts/doc_lint.py` enforces 1, 4, 6 and 8, and runs automatically after any edit under
 `Herculan/docs/` or to a `known_*.json`. `/doc-lint` runs it over the whole set. It cannot catch 2,
@@ -76,7 +77,7 @@ the lines an edit wrote. "The engine" also matches a HERC's own engine component
 links in files the rename never touched; that is why it has no `--staged` mode and always checks the
 whole set. `--code` adds the doc paths named in C# doc comments.
 
-Handoff docs (`docs/engine/handoff-*.md`) are exempt: ephemeral scratchpads, never authoritative for
+Handoff docs (`docs/herculan/handoff-*.md`) are exempt: ephemeral scratchpads, never authoritative for
 status. Drain them into topic docs and delete what you moved.
 
 ## Reverse-engineering conventions
@@ -88,6 +89,8 @@ status. Drain them into topic docs and delete what you moved.
   (`tools/scripts/es2_unnamed_callees.py --caller <Name>` lists them). Don't read further down to do
   it: a callee you can describe from its own body gets a name for what it does; one you can't gets no
   entry and stays in the backlog.
+- **Stamp what you settle, and trust stamps.** When a task reads a function's whole body, check its `known_symbols` description against it, correct it, and stamp it with `tools/scripts/es2_stamp.py` (what a stamp covers: `tools/ghidra_scripts/README.md`, "Verification stamps"). A stamped description is the answer, and `Check-Symbol.ps1` shows it; it is not re-derived. An unstamped description, and doc prose, is a lead, re-read only when the current task depends on it, so the stamped set grows with the work rather than through an audit. A stamp never carries a search result: whatever its positive control, a sweep that found nothing is written as what was searched and found nothing ("no caller found by `es2_xref`"), an Open item, in the description and the doc alike. Run `es2_stamp.py check` after regenerating `tools/analysis_out/`. Before reporting a task, every function the task's doc lines, descriptions and code comments describe is one you read this session or one that is stamped; the doc-lint hook names the unstamped ones in each doc edit, which it sees only when the edit goes through Edit or Write, so a scripted doc edit is followed by a `doc_lint.py` run. When a body you read contradicts something you wrote earlier in the task, correct it then.
+- How hard to chase a negative claim is a judgement on what overturning it would change. One a port rests on gets the sweep and positive control below; one the data already settles (a field that is -1 in every retail file) needs nothing more; one that turns up while reading for another reason is recorded when it does.
 - Say plainly when something is this engine's invention rather than read from the binary, so it is
   not later mistaken for vanilla behaviour.
 - **Never write "nothing calls this", "nothing reads this" or "dead code" from a failed grep.** A

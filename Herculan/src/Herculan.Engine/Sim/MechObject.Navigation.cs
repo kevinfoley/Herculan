@@ -7,7 +7,7 @@ namespace Herculan.Engine.Sim;
 /// <summary>
 /// The AI navigation slice: the four movement primitives every walking state is built out of, the
 /// obstacle avoidance the control law folds into them, and the five behaviour thinks that are
-/// navigation rather than combat. The derivation is docs/simulation/ai-navigation.md.
+/// navigation rather than combat. The derivation is docs/retail/simulation/ai-navigation.md.
 ///
 /// <para><b>Movement is the think slot's job.</b> The move slot 18 of the 22 states share is
 /// <c>Mech_MovementTick</c>, which integrates and collides and decides nothing; every steering
@@ -44,7 +44,7 @@ public partial class MechObject {
 		}
 
 		UpdateRadarMode();
-		CenterTorsoTick();
+		CenterTorsoTick(world);
 	}
 
 	/// <summary>
@@ -203,11 +203,11 @@ public partial class MechObject {
 	/// player's line of fire</b>: the distance threshold that gates the override is zero for the
 	/// other two sources, so terrain and machines are steered around at unchanged throttle.</para>
 	///
-	/// <para>Two of the original's three obstruction sources are here. The two body-space probes test
-	/// terrain but not shapes — <c>Sim_RaycastShapes</c> (<c>00404ca0</c>) collects static structures
-	/// and <i>wrecked</i> animated ones, the exact set whose <see cref="SimObject.CollisionRadius"/>
-	/// is zero, and the engine has no swept-shape cast, so a wreck is left to the collision test and
-	/// a structure is picked up by the proximity sweep instead at a coarser resolution.</para>
+	/// <para>The two body-space probes are cast against the structures' collision volumes
+	/// (<see cref="SimWorld.RaycastShapes"/>), which sees every structure but a standing animated one,
+	/// and the machine sweep after them reads <see cref="SimObject.CollisionRadius"/>, which is
+	/// non-zero for exactly that one kind of structure and for every HERC — so no structure is
+	/// counted twice and none is missed.</para>
 	///
 	/// <para>The terrain half goes through <see cref="Terrain.HeightGrid.RayWalkVolume"/>, the
 	/// original's own mode 1, and it has to: the probes lie flat on the ground, so the thin-ray query
@@ -336,7 +336,9 @@ public partial class MechObject {
 		start = new Vec3i(start.X, start.Y, ground);
 		end = new Vec3i(end.X, end.Y, ground);
 
-		ProbeShapes(world, start, end, ref nearest);
+		if (world.RaycastShapes(start, end, out int shapeRange, out _) && shapeRange < nearest) {
+			nearest = shapeRange;
+		}
 
 		if (world.Terrain.RayWalkVolume(start, end, out var hit)) {
 			int range = SimMath.FastMagnitude2D(hit.X - start.X, hit.Y - start.Y);
@@ -347,77 +349,9 @@ public partial class MechObject {
 	}
 
 	/// <summary>
-	/// The shape half of a probe — <c>Sim_RaycastShapes</c> (<c>00404ca0</c>). The candidate filter is
-	/// the original's and it is the interesting part: <b>a structure always counts and a machine
-	/// counts only when it is destroyed</b>, because live machines are handled by the proximity sweep
-	/// instead. So what this finds is buildings and wrecks.
-	///
-	/// <para>The original then casts a swept volume against each candidate's shape. The engine has no
-	/// such cast, so this stops at the coarse reject the original's own cast opens with: the
-	/// candidate's bounding radius against the segment's closest approach. It reports a structure from
-	/// slightly further out than the shape itself would, which errs toward steering earlier.</para>
-	///
-	/// <para>It has to be here, not only as a fidelity matter: an animated structure's
-	/// <see cref="SimObject.CollisionRadius"/> is zero — it blocks by its volume instead — so the
-	/// proximity sweep cannot see one at all, and without this a machine walks into a building and
-	/// stands there for the rest of the mission.</para>
-	/// </summary>
-	private void ProbeShapes(SimWorld world, Vec3i start, Vec3i end, ref int nearest) =>
-		ProbeShapes(world, start, end, ref nearest, out _);
-
-	/// <inheritdoc cref="ProbeShapes(SimWorld, Vec3i, Vec3i, ref int)"/>
-	/// <param name="struck">
-	/// The nearest candidate the segment reached, which <see cref="LineOfSightToTarget"/> needs and
-	/// the avoidance probe does not — the original's raycast context carries it either way.
-	/// </param>
-	private void ProbeShapes(SimWorld world, Vec3i start, Vec3i end, ref int nearest,
-			out SimObject? struck) {
-		struck = null;
-		int spanX = end.X - start.X;
-		int spanY = end.Y - start.Y;
-		int spanLength = SimMath.FastMagnitude2D(spanX, spanY);
-
-		if (spanLength == 0) {
-			return;
-		}
-
-		var objects = world.Objects;
-		for (int i = 0; i < objects.Count; i++) {
-			var other = objects[i];
-
-			if (other.Removed || other.AwaitingDeployment || ReferenceEquals(other, this)
-					|| (other is MechObject machine && !machine.Destroyed)) {
-				continue;
-			}
-
-			int reach = other.ShapeRadius != 0 ? other.ShapeRadius : other.HitRadius;
-			if (reach == 0) {
-				continue;
-			}
-
-			// Where along the segment the candidate is nearest it, clamped to the segment's ends.
-			long along = ((long)(other.Position.X - start.X) * spanX
-				+ (long)(other.Position.Y - start.Y) * spanY) / spanLength;
-			int range = along <= 0 ? 0 : along >= spanLength ? spanLength : (int)along;
-
-			int atX = start.X + (int)((long)spanX * range / spanLength);
-			int atY = start.Y + (int)((long)spanY * range / spanLength);
-
-			if (SimMath.FastMagnitude2D(other.Position.X - atX, other.Position.Y - atY) >= reach) {
-				continue;
-			}
-
-			if (range < nearest) {
-				nearest = range;
-				struck = other;
-			}
-		}
-	}
-
-	/// <summary>
 	/// <c>Ai_LineOfSightBlocked</c> (<c>0041dc24</c>) — whether this machine can see its target, and
 	/// the trigger for <c>skirting</c>. Both endpoints are lifted to their objects' aim-node heights
-	/// before the cast. See docs/simulation/ai-navigation.md.
+	/// before the cast. See docs/retail/simulation/ai-navigation.md.
 	///
 	/// <para><b>The two nonzero answers are not "shape" and "terrain".</b>
 	/// <see cref="LineOfSight.BlockedByShape"/> is anything the machine cannot get past — a shape, or
@@ -436,10 +370,9 @@ public partial class MechObject {
 
 		bool tooSteep = world.Terrain.RayWalkVolume(from, to, out _);
 
-		int nearest = int.MaxValue;
-		ProbeShapes(world, from, to, ref nearest, out var struck);
-
-		if (struck != null && !ReferenceEquals(struck, target)) {
+		// A structure the machine is aiming at is no obstruction to itself; the ray stopping on
+		// anything else is.
+		if (world.RaycastShapes(from, to, out _, out var struck) && !ReferenceEquals(struck, target)) {
 			return LineOfSight.BlockedByShape;
 		}
 
@@ -455,7 +388,7 @@ public partial class MechObject {
 	/// mission-file field that feeds it. A machine in the player's squad takes its mode from
 	/// <see cref="RadarForcedActive"/>, which is what SCAN FOR HOSTILES and EMCON write; everything
 	/// else from <see cref="RadarOrder"/>, the mission file's own standing setting. See
-	/// docs/simulation/target-selection.md ("How an AI machine's radar is set").
+	/// docs/retail/simulation/target-selection.md ("How an AI machine's radar is set").
 	/// </summary>
 	private void UpdateRadarMode() =>
 		Scanner = Group is { LedByPlayer: true } ? RadarForcedActive : RadarOrder;
@@ -602,7 +535,7 @@ public partial class MechObject {
 	///
 	/// <para><b>It is not a target.</b> The original never writes it to <c>mech+0x1a4</c> — but it
 	/// does shoot at it: the state closes with <see cref="AimAndFire"/>, the same tail the combat
-	/// states use. See docs/simulation/ai-weapons.md.</para>
+	/// states use. See docs/retail/simulation/ai-weapons.md.</para>
 	/// </summary>
 	private void LookAtTick(SimWorld world) {
 		if (SimMath.TimerCountDown(ref _navDecisionTimer) == 0) {
@@ -644,11 +577,11 @@ public partial class MechObject {
 			if (!holdsPost) {
 				KeepFormation(world);
 				UpdateRadarMode();
-				CenterTorsoTick();
+				CenterTorsoTick(world);
 				return false;
 			}
 
-			CenterTorsoTick();
+			CenterTorsoTick(world);
 			UpdateRadarMode();
 
 			int range = GroundDistanceTo(post);
@@ -751,7 +684,7 @@ public partial class MechObject {
 
 	/// <summary>
 	/// Range at which <c>following</c> stops short of what it is following. Three-dimensional, unlike
-	/// every range a steer is computed from — see docs/simulation/ai-navigation.md.
+	/// every range a steer is computed from — see docs/retail/simulation/ai-navigation.md.
 	/// </summary>
 	private const int FollowStandoffRange = 25000;
 

@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.File.Dat.Shell;
 /// <summary>
 /// FILE - /SHELL/GAM/ARM_[HERC].dat — the armory layout for one chassis: two leading layout records
 /// (the top and bottom halves of the squad panel's bay picture), then per-weapon groups of hardpoint
-/// layout records keyed by weapon id. See docs/formats/herc-catalogs.md#gamarm_dat--armory-layout.
+/// layout records keyed by weapon id. See docs/retail/formats/herc-catalogs.md#gamarm_dat--armory-layout.
 /// </summary>
 public class ArmHerc {
 	/// <summary>Part id of the top half within its picture — 0 in every retail file.</summary>

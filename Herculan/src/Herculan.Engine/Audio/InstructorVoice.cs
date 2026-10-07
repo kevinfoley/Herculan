@@ -1,11 +1,11 @@
-using HercWorks.Core.Data.File.Cfg;
-using HercWorks.Core.Io.Transform.Common;
+using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 
 namespace Herculan.Engine.Audio;
 
 /// <summary>
 /// Where a training mission's instructor clips are — the one voice the original reads as loose files
-/// rather than out of an archive. See docs/formats/audio.md, "File naming".
+/// rather than out of an archive. See docs/retail/formats/audio.md, "File naming".
 ///
 /// <para>The training port's paint (<c>PilotMessagePort_Paint</c>, <c>0043660c</c>) patches the
 /// training number and <b>the posted id plus one</b> into <c>TMx_0000</c>, puts the voice folder
@@ -15,31 +15,21 @@ namespace Herculan.Engine.Audio;
 /// the path <c>Sim_Run</c> (<c>0045f144</c>) reads at startup). One clip per instruction, not per sentence.</para>
 /// </summary>
 public static class InstructorVoice {
+	/// <summary>
+	/// The largest clip read. The longest retail clip is 268,058 bytes; this only keeps a damaged or foreign
+	/// file from being read into memory whole.
+	/// </summary>
+	public const long MaxClipBytes = 16 << 20;
+
 	/// <summary>The clip for instruction <paramref name="messageId"/> of training mission <paramref name="trainingMission"/>.</summary>
 	public static string ClipName(int trainingMission, int messageId) =>
 		$"TM{trainingMission}_{messageId + 1:0000}.WAV";
 
 	/// <summary>
-	/// The folder the clips are in: <paramref name="voiceFolder"/> under the first token of
-	/// <c>drive.cfg</c> (<see cref="Drive"/>, read by <c>Sim_Run</c> (<c>0045f144</c>) at startup), or under the install root (the data folder's parent) when that file is
-	/// missing or empty.
+	/// That clip's bytes: <paramref name="voiceFolder"/>\<see cref="ClipName"/> through
+	/// <see cref="GameInstall.ReadDiscFile"/>, or null when there is none.
 	/// </summary>
-	/// <param name="dataDirectory">The install's data folder — where <c>script.dat</c> came from.</param>
-	/// <param name="voiceFolder">
-	/// <c>SIMVOICE</c>, <c>SIMVOICF</c> or <c>SIMVOICG</c> — the mounted voice archive's own stem.
-	/// </param>
-	public static string? Directory(string? dataDirectory, string voiceFolder) {
-		if (string.IsNullOrEmpty(dataDirectory)) {
-			return null;
-		}
-
-		string? root = null;
-		string config = Path.Combine(dataDirectory, Drive.FileName);
-		if (File.Exists(config)) {
-			root = new DriveTransformer().Parse(File.ReadAllBytes(config))?.Directory;
-		}
-
-		root ??= Path.GetDirectoryName(Path.GetFullPath(dataDirectory));
-		return root == null ? null : Path.Combine(root, voiceFolder);
-	}
+	/// <param name="voiceFolder"><c>SIMVOICE</c>, <c>SIMVOICF</c> or <c>SIMVOICG</c>.</param>
+	public static byte[]? ReadClip(string installRoot, GameDisc? disc, string voiceFolder, int trainingMission, int messageId) =>
+		GameInstall.ReadDiscFile(installRoot, disc, Path.Combine(voiceFolder, ClipName(trainingMission, messageId)), MaxClipBytes);
 }

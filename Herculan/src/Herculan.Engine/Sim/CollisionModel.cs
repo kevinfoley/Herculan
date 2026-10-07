@@ -51,13 +51,14 @@ public static class CollisionModel {
 	/// for "this shape has no such node" — which the original answers with an identity transform
 	/// (<c>DAT_006c572c</c>) rather than by skipping the cluster. Only consulted for a cluster whose
 	/// <see cref="ColliderNode.NodeIndex"/> is non-negative; passing no resolver at all leaves those
-	/// clusters in the object frame, which is what a static object wants.
+	/// clusters in the object frame, which is the same answer for an object with no animated shape.
+	/// <see cref="SimObject.NodeFrame"/> is the resolver.
 	///
 	/// <para><b>This is the whole of a HERC's hit geometry.</b> A mech <c>.COL</c> places every one
 	/// of its clusters on a node — SPIDER has thirteen, PITBULL ten — with spheres of radius 40 to
 	/// 600 world units sitting in node-local space, so the hit volume walks with the legs and swings
-	/// with the torso. A structure's model is the opposite: almost all of it is in the object
-	/// frame.</para>
+	/// with the torso. A structure's model is the opposite: its body is in the object frame, and only
+	/// six animated types put a cluster on a node.</para>
 	/// </param>
 	/// <returns>The nearest component struck, or null for a miss.</returns>
 	public static Hit? Test(ColliderNode[] model, in Transform3 toMuzzleSpace, int distance,
@@ -70,9 +71,7 @@ public static class CollisionModel {
 			if (node.NodeIndex != CollisionModelReader.ObjectFrameNode) {
 				// The original composes the node's posed transform with the object-to-muzzle one, so
 				// the spheres are read in the node's frame and land wherever the animation has put it.
-				// With no resolver — a structure, whose node transforms the engine does not have —
-				// the cluster is left in the object frame, which is where the eight animated
-				// structure types' handful of node-placed clusters sit anyway when they are at rest.
+				// A part the shape does not have reads as identity, which is the object frame.
 				if (nodeFrame?.Invoke(node.NodeIndex) is { } posed) {
 					frame = Transform3.Concat(posed, toMuzzleSpace);
 				}
@@ -103,6 +102,43 @@ public static class CollisionModel {
 		}
 
 		return best;
+	}
+
+	/// <summary>
+	/// <c>Collision_ReplaceClusters</c> (<c>0040cec0</c>) with the count of one
+	/// <c>Mech_ConfigureLoadout</c> passes it: the first cluster, node by node, whose component is
+	/// <paramref name="componentIndex"/> takes copies of <paramref name="spheres"/>, each centre moved by
+	/// <paramref name="offset"/> in 16 bits and its radius kept (<c>Collision_CopyClusterSpheres</c>,
+	/// <c>0040c834</c>), and its bound is derived again. A model with no such cluster comes back as it
+	/// went in. See docs/retail/formats/collision-spheres.md#a-fitted-weapon-brings-its-own-spheres.
+	///
+	/// <para>The model passed in is the type's, shared by every object of it, so the node and cluster
+	/// arrays the replacement touches are copied rather than written.</para>
+	/// </summary>
+	public static ColliderNode[] ReplaceCluster(ColliderNode[] model, short componentIndex,
+			ColliderSphere[] spheres, Vec3i offset) {
+		for (int n = 0; n < model.Length; n++) {
+			var clusters = model[n].Clusters;
+			for (int c = 0; c < clusters.Length; c++) {
+				if (clusters[c].ComponentIndex != componentIndex) {
+					continue;
+				}
+
+				var moved = spheres
+					.Select(s => new ColliderSphere(
+						(short)(s.X + offset.X), (short)(s.Y + offset.Y), (short)(s.Z + offset.Z), s.Radius))
+					.ToArray();
+
+				var replaced = (ColliderCluster[])clusters.Clone();
+				replaced[c] = new ColliderCluster(componentIndex, moved, CollisionModelReader.BoundOf(moved));
+
+				var copy = (ColliderNode[])model.Clone();
+				copy[n] = model[n] with { Clusters = replaced };
+				return copy;
+			}
+		}
+
+		return model;
 	}
 
 	/// <summary>

@@ -7,7 +7,7 @@ namespace Herculan.Engine.Shell;
 /// <summary>
 /// VSHELL's sound: the shell music, the two click sounds and the startup switch, out of <c>SHLSOUND.VOL</c>, with the
 /// gates, the fade and the focus stop the original puts round them
-/// (docs/shell/screen-layout.md#sound).
+/// (docs/retail/shell/screen-layout.md#sound).
 ///
 /// <para>The original's fades are loops that hold the shell until they finish. This one steps once per
 /// <see cref="Update"/> under the same rule, so the window keeps drawing, and <see cref="Fading"/> is

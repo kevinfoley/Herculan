@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.File.Cfg;
 /// <summary>
 /// <c>data\keyjoy.cfg</c> — the four axis-sense switches, the only part of the retail input
 /// configuration outside <c>prefs.cfg</c>. Read by <see cref="Io.Transform.Common.KeyjoyTransformer"/>.
-/// See docs/formats/joystick-input.md.
+/// See docs/retail/formats/joystick-input.md.
 ///
 /// <para><c>Keyjoy_LoadConfig</c> (<c>0045b78c</c>) reads it once during input init with four
 /// <c>GetPrivateProfileStringA</c> calls against section <c>[Keyjoy]</c>, each a case-insensitive

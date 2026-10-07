@@ -8,7 +8,7 @@
     <AssemblyName>HercWorks.Video</AssemblyName>
     <!-- Deliberately no AllowUnsafeBlocks. Every byte this assembly touches came out of a file on
          disk, so the CLR's bounds checks are the last line of defence and are not given up for
-         speed. See docs/engine/video-playback.md, "Security posture". -->
+         speed. See docs/herculan/video-playback.md, "Security posture". -->
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
   </PropertyGroup>
 

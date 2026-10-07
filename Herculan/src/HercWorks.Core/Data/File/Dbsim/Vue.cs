@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// <summary>
 /// FILE - /SIMVOL0/VUE/(herc).VUE — one record per cockpit view, read by
 /// <c>CockpitViewManager_LoadViews</c> (<c>00429834</c>) and installed into the render context by
-/// <c>CockpitView_ApplyViewState</c> (<c>00429e60</c>). See docs/formats/cockpit-views.md.
+/// <c>CockpitView_ApplyViewState</c> (<c>00429e60</c>). See docs/retail/formats/cockpit-views.md.
 ///   0 - UINT32 - view count (4 in every retail file)
 ///   4 - SEQ_0 (INT32 each): 3D viewport rect x0/y0/x1/y1, view centre cx/cy, canvas origin x/y.
 /// All coordinates are authored in the 320-wide space; the loader shifts them by
@@ -23,7 +23,12 @@ public class Vue {
 		public int ViewportX1 { get; set; }
 		public int ViewportY1 { get; set; }
 
-		/// <summary>Projection centre, the same value for every view of a herc.</summary>
+		/// <summary>
+		/// Projection centre, stored negated and before the canvas origin is added — the same pair in
+		/// every view of a herc. The centre in a view's own window is the rect's top-left less (this +
+		/// canvas origin); see docs/retail/formats/cockpit-views.md, "The projection centre is not the middle of
+		/// the view".
+		/// </summary>
 		public int CenterX { get; set; }
 		public int CenterY { get; set; }
 

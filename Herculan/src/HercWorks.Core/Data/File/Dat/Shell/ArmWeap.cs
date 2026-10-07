@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.File.Dat.Shell;
 /// <summary>
 /// FILE - /SHELL/GAM/ARM_WEAP.DAT — the weapons screen's panel layout against
 /// <c>dba\arm_weap.dba</c>: one panel per weapon the armory offers (26 in retail), then one per
-/// guidance kind (4). See docs/formats/herc-catalogs.md#gamarm_weapdat.
+/// guidance kind (4). See docs/retail/formats/herc-catalogs.md#gamarm_weapdat.
 /// </summary>
 public class ArmWeap {
 	public short TotalWeapons { get; set; }

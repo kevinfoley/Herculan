@@ -3,7 +3,7 @@ namespace Herculan.Engine.World;
 /// <summary>
 /// The ten mission-counter writes an object or a group makes when it goes out of the fight — an
 /// object's <c>+0x1ba</c>/<c>+0x1ce</c> and a group's <c>+0x1c</c>/<c>+0x30</c>, both read from its
-/// own <c>script.dat</c> record. See docs/simulation/mission-deployment.md#the-out-of-action-report;
+/// own <c>script.dat</c> record. See docs/retail/simulation/mission-deployment.md#the-out-of-action-report;
 /// <see cref="Sim.SimObject.ReportOutOfAction"/> runs them.
 /// </summary>
 /// <param name="CounterRefs">Which counter each slot writes, <c>-1</c> for a slot that writes none.</param>

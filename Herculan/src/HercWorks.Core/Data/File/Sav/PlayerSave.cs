@@ -13,7 +13,7 @@ namespace HercWorks.Core.Data.File.Sav;
 /// <para>There is no header, no magic and no length field — the file is a bare concatenation of the
 /// blocks in the property order below, so it must be parsed by structure. Its writer opens without
 /// <c>O_TRUNC</c>, so a shorter save over a longer one leaves a stale tail that is not a parse
-/// failure. See <c>docs/formats/save-games.md#savgame_sav--block-order</c>.</para>
+/// failure. See <c>docs/retail/formats/save-games.md#savgame_sav--block-order</c>.</para>
 /// </summary>
 public class PlayerSave {
 	/// <summary>Block 1, the armory stock: one record per weapon catalog id.</summary>
@@ -35,7 +35,7 @@ public class PlayerSave {
 	/// actual mission from the slot's own <c>script.dat</c>. The named views below read it.
 	///
 	/// <para>Size is load-bearing: 152 bytes is the only length that leaves the 36 pilot records
-	/// following it aligned. See <c>docs/formats/save-games.md#career-block--152-bytes</c>.</para>
+	/// following it aligned. See <c>docs/retail/formats/save-games.md#career-block--152-bytes</c>.</para>
 	/// </summary>
 	public short[] CareerBlock { get; set; } = new short[76];
 
@@ -58,7 +58,7 @@ public class PlayerSave {
 
 	/// <summary>
 	/// Block 7, the nine chassis availability flags — <c>herc_inf.dat</c> record <c>+0x0e</c> for each
-	/// chassis type. See <c>docs/formats/herc-catalogs.md#gamherc_infdat--the-chassis-stat-table</c>.
+	/// chassis type. See <c>docs/retail/formats/herc-catalogs.md#gamherc_infdat--the-chassis-stat-table</c>.
 	/// </summary>
 	public Dictionary<HercLUT, short> ChassisAvailability { get; set; } = new();
 
@@ -74,7 +74,7 @@ public class PlayerSave {
 
 	// ---- Named views over the raw arrays above -------------------------------------------------
 	// The arrays stay the storage, so the round trip is unchanged; these name the fields
-	// docs/formats/save-games.md decodes.
+	// docs/retail/formats/save-games.md decodes.
 
 	/// <summary>
 	/// Career block short 0 — the campaign stage, <c>0046fb18</c> as the shell runs it: 0 for training and

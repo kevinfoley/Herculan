@@ -1,0 +1,138 @@
+language.name Français
+general.save    Enregistrer
+general.cancel  Annuler
+general.close   Fermer
+tweak.target_distance_meters.display_name      Afficher la distance de la cible en mètres
+tweak.target_distance_meters.description       Sur le MFD, affiche la distance de la cible en mètres sur l'écran F5 TARGET. Le jeu original affiche la distance en unités du moteur sur cet écran uniquement.
+tweak.show_correct_stats.display_name          Afficher les statistiques correctes
+tweak.show_correct_stats.description           Corrige les statistiques des HERC et des armes que le jeu original affichait de façon incorrecte dans VSHELL, comme la vitesse maximale de l'Outlaw et le nombre de points d'emport du Raptor II.
+tweak.show_accurate_speed.display_name         Afficher la vitesse exacte
+tweak.show_accurate_speed.description          Affiche la vraie vitesse de déplacement du HERC sur le HUD. Le jeu original affiche environ le double de la vitesse réelle pendant la marche. La valeur en course est inchangée.
+tweak.show_even_shield_balance.display_name    Arrondir la répartition des boucliers
+tweak.show_even_shield_balance.description     Chaque pression sur une touche de répartition des boucliers change les nombres affichés d'exactement 20 : une pression vers l'avant depuis le centre affiche 120/80. Le jeu original arrondit le nombre avant vers le bas, et une pression le déplace d'un peu moins de 20, si bien que la même pression affiche 119/81.
+tweak.fix_nacelle_impact_position.display_name Corriger la position de l'effet d'impact sur les nacelles
+tweak.fix_nacelle_impact_position.description  Affiche l'effet d'impact d'un tir sur la nacelle droite du Razor du bon côté, au lieu de toujours sur la nacelle gauche.
+tweak.preserve_sound_position.display_name     Préserver la position des sons
+tweak.preserve_sound_position.description      Empêche un nouvel effet sonore d'écraser le volume et la position d'un effet sonore du même type déjà en cours de lecture.
+tweak.critical_damage_message.display_name     Message « Damage Level Critical »
+tweak.critical_damage_message.description      Joue « Damage Level Critical » lorsque le joueur subit des dégâts critiques. Ne fonctionne pas dans le jeu original à cause d'une faute de frappe dans le code.
+tweak.show_squadmate_number.display_name       Afficher le numéro des coéquipiers
+tweak.show_squadmate_number.description        Sur le Heads Down Display, affiche le numéro de chaque coéquipier (correspondant à la touche numérique servant à le sélectionner) à l'aide d'une étiquette inutilisée et masquée dans le jeu original
+tweak.fix_computer_message_pref.display_name   Corriger la préférence COMPUTER MESSAGE
+tweak.fix_computer_message_pref.description    La voix de l'ordinateur de bord est contrôlée par la préférence COMPUTER MESSAGE au lieu de la préférence PILOT MESSAGE.
+tweak.flash_through_second_hit.display_name    Maintenir le flash de dégâts lors d'un second impact
+tweak.flash_through_second_hit.description     Un second impact sur votre cockpit alors que l'écran tremble encore du premier prolonge le flash rouge de dégâts jusqu'à la fin du tremblement. Dans le jeu original, un second impact qui survient pendant que l'écran est rouge arrête le flash pour le reste du tremblement.
+tweak.show_altitude_tape.display_name          Afficher la bande d'altitude du Razor
+tweak.show_altitude_tape.description           Dessine la bande graduée qui défile avec votre altitude à côté de l'échelle d'altitude du Razor. Le jeu original dessine les crochets, la colonne et le repère de l'échelle, mais place la bande hors de sa propre zone de découpage, si bien qu'elle n'apparaît jamais.
+tweak.drop_pod_sound_from_pod.display_name    Sons des capsules de largage depuis la capsule
+tweak.drop_pod_sound_from_pod.description     Entendez le sifflement d'une capsule de largage en chute provenir de la capsule elle-même, en la suivant dans sa descente, et son atterrissage provenir de son point d'impact. Les sons sont plus forts et portent sur des kilomètres. Le jeu original joue les deux sons à votre propre position, si bien qu'ils n'indiquent jamais où se trouve la capsule.
+tweak.smoother_turret_movement.display_name   Mouvement de tourelle plus fluide
+tweak.smoother_turret_movement.description     Fluidifie la rotation de la tourelle lors de la visée au joystick ou avec une autre commande analogique. Le jeu original arrondit la valeur de rotation, ce qui provoque des saccades aux faibles vitesses de visée. Sans effet lors de la visée au clavier.
+tweak.mouse_external_view.display_name         Vue extérieure à la souris
+tweak.mouse_external_view.description          Faites pivoter la vue extérieure [V] autour de votre HERC en faisant glisser la souris avec le bouton gauche, tout en gardant le contrôle du HERC et des touches du cockpit. Le jeu original oriente la caméra avec le joystick ou les touches fléchées, et [Entrée] les fait basculer entre la caméra et le HERC.
+tweak.fix_defend_position_order.display_name  Corriger l'ordre DEFEND POSITION
+tweak.fix_defend_position_order.description   Un coéquipier qui reçoit l'ordre DEFEND POSITION en terrain découvert garde ce terrain. Dans le jeu original, il peut à la place garder une unité désignée par un ordre précédent, car le Heads Down Display n'efface jamais son dernier ordre.
+tweak.fix_weapon_damage_records.display_name  Corriger les dégâts des armes
+tweak.fix_weapon_damage_records.description   Les ATC75, ATC100, LAS400 et LAS500 infligent les dégâts indiqués pour elles et tirent leurs propres obus et rayons. Dans le jeu original, chacune inflige les dégâts d'une arme plus petite : les ATC75 et ATC100 frappent exactement comme les ATC35 et ATC50, le LAS500 exactement comme le LAS300, et le LAS400 à peine plus fort que le LAS200. Chacune tire aussi l'obus ou le rayon de cette arme, si bien que les obus des ATC75 et ATC100 portent aussi loin que ceux des ATC35 et ATC50, et que les rayons des LAS400 et LAS500 sont aussi étroits que ceux des LAS200 et LAS300.
+tweak.charge_bar_power_level.display_name  Barre de charge interactive
+tweak.charge_bar_power_level.description   Réglez le niveau de puissance d'une arme à énergie en cliquant sur sa barre de charge dans le panneau des armes ou en la faisant glisser : la barre se remplit alors jusqu'à l'endroit où vous relâchez. Les touches [-] et [=] fonctionnent toujours. Le jeu original prévoit la barre pour cela, mais le bouton de la ligne de l'arme la recouvre, si bien qu'elle ne reçoit jamais de clic.
+tweaks.title                   Ajustements
+tweaks.category.cosmetic       Cosmétique
+tweaks.category.ai             IA
+tweaks.category.functional     Fonctionnel
+tweaks.category.input          Commandes
+tweaks.none                    Aucun
+tweaks.defaults                Par défaut
+tweaks.recommended             Recommandés
+tweaks.all                     Tous
+install_prompt.window_title    HERCULAN Engine — Trouver Earthsiege 2
+install_prompt.message         HERCULAN n'a pas trouvé Earthsiege 2. Choisissez le dossier d'Earthsiege 2 : celui qui contient le dossier {0}.
+install_prompt.path_hint       Dossier d'Earthsiege 2
+install_prompt.browse          Parcourir...
+install_prompt.picker_title    Choisissez le dossier d'Earthsiege 2
+install_prompt.picker_open     En attente du sélecteur de dossier...
+install_prompt.picker_failed   Le sélecteur de dossier n'a pas pu s'ouvrir. Tapez ou collez plutôt le chemin du dossier.
+install_prompt.accept          Utiliser ce dossier
+install_prompt.install         Installer depuis un disque...
+install_prompt.quit            Quitter
+install_prompt.no_path         Tapez ou collez le chemin du dossier d'Earthsiege 2.
+install_prompt.not_an_install  {0} n'est pas un dossier d'Earthsiege 2 : il ne contient aucun dossier {1}.
+mission_load.window_title      HERCULAN Engine — Erreur
+mission_load.missing_file      La mission ne peut pas démarrer : {0} est manquant. Lancez la mission depuis les menus, qui écrivent ce fichier.
+crash.window_title            HERCULAN Engine — Erreur
+crash.message                 HERCULAN s'est arrêté à cause d'une erreur : {0} Les détails se trouvent dans {1}.
+menu.debug                     Débogage
+menu.tweaks                    Ajustements
+menu.settings                  Paramètres
+settings.title                 Paramètres
+settings.folders               Dossiers d'Earthsiege 2
+settings.install_folder        Dossier d'installation
+settings.install_message       Choisissez le dossier d'Earthsiege 2 : celui qui contient le dossier {0}. L'interface de jeu redémarre sur la nouvelle installation.
+settings.install_from_disc     Installer depuis un disque ou une image...
+settings.disc_folder           Dossier du disque (data\drive.cfg)
+settings.no_disc               Aucun : data\drive.cfg est manquant ou vide
+settings.image_overrides       Inutilisé tant qu'une image disque est définie.
+settings.disc_image            Image disque (HERCULAN uniquement)
+settings.no_disc_image         Aucune
+settings.change                Modifier...
+settings.remove                Retirer
+settings.in_mission            Revenez à l'interface de jeu pour modifier ceci.
+settings.languages             Langues
+settings.game_language         Langue du jeu
+settings.interface_language    Langue de l'interface HERCULAN
+settings.write_failed          Impossible d'écrire {0} : {1}
+disc_prompt.message            Choisissez le dossier du disque d'Earthsiege 2, comme le lecteur de CD ou une copie du disque. Il est enregistré dans le fichier data\{0} de l'installation, que le jeu original lit aussi, et l'interface de jeu redémarre.
+disc_prompt.path_hint          Dossier du disque
+disc_prompt.picker_title       Choisissez le dossier du disque d'Earthsiege 2
+disc_prompt.accept             Utiliser ce dossier
+disc_prompt.no_path            Tapez ou collez le chemin du dossier du disque.
+disc_prompt.missing            {0} n'existe pas.
+disc_prompt.whitespace         {0} contient un espace, et le jeu original ne lit {1} que jusqu'au premier espace.
+disc_prompt.not_latin1         {0} contient des caractères que le jeu original ne peut pas lire depuis {1}.
+image_prompt.message           Choisissez une image disque d'Earthsiege 2 (.iso, .bin ou .cue). HERCULAN lit le disque depuis cette image à la place du dossier du disque. Elle est enregistrée sur une ligne du fichier data\{0} de l'installation que le jeu original ne lit pas, et l'interface de jeu redémarre.
+image_prompt.path_hint         Image disque
+image_prompt.picker_title      Choisissez une image disque d'Earthsiege 2
+image_prompt.accept            Utiliser cette image
+image_prompt.no_path           Tapez ou collez le chemin de l'image disque.
+image_prompt.missing           {0} n'existe pas.
+image_prompt.unreadable        {0} ne peut pas être lu comme une image disque : {1}
+image_prompt.not_es2           {0} n'est pas un disque d'Earthsiege 2 : il ne contient pas d'archives du jeu ou pas de vidéo d'introduction.
+install.window_title           HERCULAN Engine — Installer Earthsiege 2
+install.title                  Installer depuis un disque ou une image
+install.message                Installez Earthsiege 2 depuis un disque du commerce dans un nouveau dossier, en copiant ce que copie l'installateur d'origine. Le disque peut être un lecteur de CD, une copie du disque ou une image disque (.iso, .bin ou .cue). Rien sur le disque n'est exécuté.
+install.source                 Disque
+install.source_hint            Dossier du disque ou image disque
+install.browse_folder          Dossier...
+install.browse_image           Image...
+install.picker_folder_title    Choisissez le dossier du disque d'Earthsiege 2
+install.picker_image_title     Choisissez une image disque d'Earthsiege 2
+install.image_filter           Images disque
+install.source_missing         {0} n'existe pas.
+install.source_unreadable      {0} ne peut pas être lu comme une image disque : {1}
+install.no_script              {0} n'est pas un disque d'Earthsiege 2 : il ne contient pas {1}.
+install.unknown_version        {0} contient une version d'Earthsiege 2 que cet installateur ne connaît pas ({1}).
+install.found                  Earthsiege 2 {0}
+install.size                   Taille
+install.size_minimum           Minimale ({0:N0} Mo)
+install.size_medium            Moyenne ({0:N0} Mo)
+install.size_maximum           Maximale ({0:N0} Mo)
+install.size_note              Une installation plus petite laisse une plus grande partie du jeu sur le disque, qui doit donc rester à sa place.
+install.language               Langue
+install.language_english       English (anglais)
+install.language_french        Français
+install.language_german        Deutsch (allemand)
+install.destination            Dossier d'installation
+install.destination_hint       Un dossier nouveau ou vide
+install.picker_destination_title  Choisissez le dossier d'installation
+install.no_destination         Tapez ou collez le dossier d'installation.
+install.destination_file       {0} est un fichier.
+install.destination_not_empty  {0} n'est pas vide.
+install.destination_inside_disc  {0} se trouve dans le dossier du disque.
+install.no_space               L'installation nécessite {0:N0} Mo, mais seuls {1:N0} Mo sont libres à cet emplacement.
+install.retail_note            Les programmes du jeu original sont aussi copiés, mais ils ne fonctionneront pas depuis cette installation : HERCULAN omet les codecs vidéo, DirectX et le reste de la configuration système qu'effectuait l'installateur d'origine, et le jeu original ne peut pas lire une image disque. Jouez à cette installation avec HERCULAN.
+install.install                Installer
+install.copying                Copie de {0} ({1} sur {2})
+install.cancelled              L'installation a été annulée, et ce qu'elle avait copié a été supprimé.
+install.failed                 L'installation a échoué, et ce qu'elle avait copié a été supprimé : {0}
+install.done                   Earthsiege 2 est installé dans {0}.
+install.use                    Utiliser cette installation

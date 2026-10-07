@@ -5,7 +5,7 @@ namespace Herculan.Engine.Terrain;
 /// beside the point of a pyramid. A zone's heightmap marks each ground vehicle with one raised sample,
 /// which as a corner sample is an apex at the cell's corner rather than a mound at its centre;
 /// DBSIM levels the marked cells to their own average at spawn time instead. The derivation, the
-/// data evidence and the call chain are in docs/formats/terrain-heightmap.md, "Structure footprints
+/// data evidence and the call chain are in docs/retail/formats/terrain-heightmap.md, "Structure footprints
 /// — the flattening pass"; this file is the port of <c>Terrain_MarkStructureFootprint</c> (<c>00470dc8</c>) and <c>Terrain_FlattenStructureFootprints</c> (<c>00471190</c>) and
 /// the two recursions they drive.
 /// </summary>
@@ -21,7 +21,7 @@ public sealed partial class HeightGrid {
 	/// engine has no per-cell object dispatch. The original reuses the same bytes every frame as a
 	/// pending-object count and gets away with it by <c>memset</c>ting the array at the top of each
 	/// frame — anything added here that counts into these bytes needs that reset first, or it will
-	/// read a flattened base's footprint marks as counts. See docs/formats/terrain-heightmap.md,
+	/// read a flattened base's footprint marks as counts. See docs/retail/formats/terrain-heightmap.md,
 	/// "Structure footprints — the flattening pass".</para>
 	/// </summary>
 	private readonly byte[] _cellScratch;

@@ -1,11 +1,12 @@
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
 
 namespace Herculan.Engine.Sim;
 
 /// <summary>
 /// A structure's turret — the same mechanism a HERC's torso uses, and not a rotation: each axis'
 /// angle is a <i>position</i> within a one-sweep animation sequence, seeked rather than played (see
-/// <see cref="MechObject.TorsoTwistTick"/> and docs/simulation/torso-aim.md). The two sequences are
+/// <see cref="MechObject.TorsoTwistTick"/> and docs/retail/simulation/torso-aim.md). The two sequences are
 /// the two <c>BaseType.AnimThreadCount</c> asks for, and the two threads the constructor builds for
 /// them are what the seek drives.
 /// </summary>
@@ -43,7 +44,7 @@ public sealed partial class BaseObject {
 	/// the result is the aim error, and <see cref="SeekTurret"/> is what acts on it.</para>
 	/// </summary>
 	/// <returns>Elevation and traverse error, in binary angle — the original's static pair.</returns>
-	public (short Elevation, short Traverse) AimTurret(Vec3i point) {
+	public (short Elevation, short Traverse) AimTurret(SimWorld world, Vec3i point) {
 		int node = Animation?.TransformIdOfPart(TurretPartId) ?? -1;
 		var turret = node >= 0 ? NodeTransform(node) : Transform3.Identity;
 
@@ -53,7 +54,7 @@ public sealed partial class BaseObject {
 		var local = inTurret.TransformPoint(onObject.X, onObject.Y, onObject.Z);
 		var (elevation, _, traverse) = SimTrig.EulerToward(local, default);
 
-		SeekTurret(elevation, traverse);
+		SeekTurret(world, elevation, traverse);
 		return (elevation, traverse);
 	}
 
@@ -72,7 +73,7 @@ public sealed partial class BaseObject {
 	/// binary angle: a base turret traverses freely and only the elevation is stopped, at
 	/// <see cref="TurretClampUpper"/>'s ±4000 — a little over 20°.</para>
 	/// </summary>
-	private void SeekTurret(short elevation, short traverse) {
+	private void SeekTurret(SimWorld world, short elevation, short traverse) {
 		// The traverse is the negated one, not the elevation: axis 0 takes EulerToward's pitch
 		// straight and axis 1 takes its yaw negated.
 		var demand = new[] { ClampAxis(elevation >> 3), (short)-ClampAxis(traverse >> 3) };
@@ -91,7 +92,8 @@ public sealed partial class BaseObject {
 				: moved <= TurretClampLower[axis] ? TurretClampLower[axis]
 				: (short)moved;
 
-			_threads[axis]?.SeekToPosition(axis, (short)((ushort)_turretAngle[axis] >> 2));
+			_threads[axis]?.SeekToPosition(axis, (short)((ushort)_turretAngle[axis] >> 2),
+				world.Tweaks.GetSettingValue(TweakSettingDefinitions.SmootherTurretMovement));
 		}
 	}
 

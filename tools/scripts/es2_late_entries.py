@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""List functions Ghidra starts past their frame prologue.
+"""List functions Ghidra starts past their frame prologue, or early, on the fill bytes before their code.
 
 A late start puts a function's name and plate comment on an address nothing calls, so
 `es2_xref.py` reports the named function UNREFERENCED, and the decompile reads the frame through
@@ -17,6 +17,9 @@ Shapes it sorts the hits into:
   INVERSE     the name is already on the true entry; Ghidra's function there is only the prologue
               and the body is a stray FUN_ at the late address.
   UNNAMED     neither address is named.
+  EARLY       the opposite case: the function starts on fill bytes (00 or 90) before its code, and
+              the first byte after the fill is what a branch or stored pointer reaches. The "true"
+              address is the one after the fill; re-address a known_symbols entry to it.
 
 `es2_naming.py fixentry BIN addr+addr...` repairs the true entries. The dumps lag the database,
 so a hit already repaired shows here until the dumps are regenerated; the fixentry dry run's
@@ -58,6 +61,28 @@ def refs(img: X.Image, va: int) -> str:
     return f"{len(X.rel32_sites(img, va))} branch/{len(X.dword_sites(img, va))} dword"
 
 
+def early(img: X.Image, binary: str, va: int, first: bytes, known, dump, xref: bool) -> int:
+    """An entry on a run of 00/90 fill whose first byte past the fill is referenced and the entry
+    itself is not: Ghidra began the function early. Returns 1 when it reports one."""
+    if first[0] not in (0x00, 0x90):
+        return 0
+    run = read(img, va, 16) or b""
+    k = len(run) - len(run.lstrip(bytes((0x00, 0x90))))
+    if not 0 < k < 16:
+        return 0
+    true = va + k
+    if X.rel32_sites(img, va) or X.dword_sites(img, va):
+        return 0
+    if not (X.rel32_sites(img, true) or X.dword_sites(img, true)):
+        return 0
+    line = (f"{binary} {'EARLY':10} true {true:08x} known={known.get(true)} dump={dump.get(true)}"
+            f" | early {va:08x} known={known.get(va)} dump={dump.get(va)} | {k} fill bytes")
+    if xref:
+        line += f" | refs true {refs(img, true)}, early {refs(img, va)}"
+    print(line)
+    return 1
+
+
 def scan(binary: str, entries, xref: bool) -> int:
     img = X.Image(X.BINARIES[binary])
     dump = {}
@@ -87,7 +112,9 @@ def scan(binary: str, entries, xref: bool) -> int:
             print(line)
             hits += 1
             break
-    print(f"{binary}: {len(cands)} entries checked, {hits} late-start candidates")
+        else:
+            hits += early(img, binary, va, first, known, dump, xref)
+    print(f"{binary}: {len(cands)} entries checked, {hits} late- or early-start candidates")
     return hits
 
 

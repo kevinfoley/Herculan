@@ -98,7 +98,7 @@ public sealed record ShapeRenderContext(
 
 /// <summary>
 /// Extracts renderable geometry from a parsed DTS model tree, coloured the way DBSIM colours it:
-/// docs/formats/dts-texture-binding.md's "Poly types and their colour mechanisms", through
+/// docs/retail/formats/dts-texture-binding.md's "Poly types and their colour mechanisms", through
 /// <see cref="ShapeShading"/>.
 ///
 /// <list type="bullet">
@@ -118,12 +118,13 @@ public sealed record ShapeRenderContext(
 /// format's back-face culling — is not drawn. Normals are the stored point-list ones, which oppose
 /// the corner winding.</para>
 ///
-/// <para>Not reproduced: <c>TSBitmapPart</c> billboards (<c>docs/formats/dts-billboards.md</c>), the
-/// <c>TSBSPPart</c> tree walk (children are drawn in file order, which agrees on retail data), and
-/// distance fog. <c>TSCellAnimPart</c> shows its first cell.</para>
+/// <para>Not reproduced: <c>TSBitmapPart</c> billboards (<c>docs/retail/formats/dts-billboards.md</c>), the
+/// <c>TSBSPPart</c> tree walk (every child is shown, including the few retail children no node
+/// reaches and DBSIM never draws — docs/retail/formats/dts-texture-binding.md's "<c>TSBSPPart</c> child
+/// selection"), and distance fog. <c>TSCellAnimPart</c> shows its first cell.</para>
 ///
 /// <para>Multi-part placement is the translation-only transform chain: no retail shape's rest pose
-/// carries a rotation (docs/formats/dts-node-posing.md). Each root is an independent top-level
+/// carries a rotation (docs/retail/formats/dts-node-posing.md). Each root is an independent top-level
 /// object; the real in-file LOD mechanism is <c>TSDetailPart</c>, one level down (see
 /// CollectDetailLevel).</para>
 /// </summary>
@@ -138,7 +139,7 @@ public static class DtsGeometryBuilder {
 	private const int HiddenFlagHighByte = 0x14;
 
 	// Vertex-order UV corners for a TSTexture4Poly — top-left/top-right/bottom-right/bottom-left, per
-	// docs/formats/dts-texture-binding.md's "Render path and UV generation". A three-vertex poly takes
+	// docs/retail/formats/dts-texture-binding.md's "Render path and UV generation". A three-vertex poly takes
 	// the first three.
 	private static readonly Vector2[] QuadUvCorners = {
 		new(0f, 0f), new(1f, 0f), new(1f, 1f), new(0f, 1f)
@@ -294,7 +295,7 @@ public static class DtsGeometryBuilder {
 	/// Real DTS meshes stack a textured poly exactly on a flat-shaded twin — 186 pairs in SAMSON's
 	/// first root — and the depth tie between them flickers. Keep one per coincident group by
 	/// <see cref="DtsTriangle.Rank"/>: an in-range texture beats a real flat colour, which beats a
-	/// placeholder. docs/formats/dts-texture-binding.md's "Coincident twins".
+	/// placeholder. docs/retail/formats/dts-texture-binding.md's "Coincident twins".
 	/// </summary>
 	private static List<DtsTriangle> DropCoincidentTwins(List<DtsTriangle> triangles) {
 		var best = new Dictionary<(int, int, int, int, int, int), int>();
@@ -402,7 +403,7 @@ public static class DtsGeometryBuilder {
 	/// <summary>
 	/// <c>TSDetailPart.Parts</c> is one piece of the shape at several levels of detail, index-aligned
 	/// with the ascending <c>Details</c> thresholds, so part 0 is the coarsest
-	/// (docs/formats/dts-texture-binding.md's "<c>TSDetailPart</c> level selection"). With no level
+	/// (docs/retail/formats/dts-texture-binding.md's "<c>TSDetailPart</c> level selection"). With no level
 	/// requested the finest — the one paired with the largest threshold — is shown; a requested
 	/// level is clamped to this part's own range.
 	/// </summary>
@@ -449,7 +450,7 @@ public static class DtsGeometryBuilder {
 
 		foreach (var polyObject in group.Polys) {
 			// A plain TSPoly carries no colour field and has no renderer of its own; the original draws
-			// nothing for it (docs/formats/dts-texture-binding.md). One-vertex polys are single pixels
+			// nothing for it (docs/retail/formats/dts-texture-binding.md). One-vertex polys are single pixels
 			// in the original and are left out here.
 			if (polyObject is not TSPoly poly || poly.VertexCount < 2 || polyObject.GetType() == typeof(TSPoly)) {
 				continue;
@@ -523,8 +524,8 @@ public static class DtsGeometryBuilder {
 				? state.Shading.Solid(p.Line)
 				: null;
 			// A line poly has no fill for a matching outline to vanish into, so it draws its fill
-			// colour when it names no distinct line — the engine's reading, docs/formats/
-			// dts-texture-binding.md's Open.
+			// colour when it names no distinct line, as the original's fill pass does — docs/retail/formats/
+			// dts-texture-binding.md's "TSSolidPoly — palette index, unlit, fill plus outline".
 			if (poly.VertexCount == 2) {
 				line ??= fill;
 			}
@@ -609,7 +610,10 @@ public static class DtsGeometryBuilder {
 			triangles.Add(new DtsTriangle {
 				A = points[corners[0]], B = points[corners[i + 1]], C = points[corners[i + 2]],
 				FaceNormal = faceNormal, Front = front, Back = back,
-				UvA = QuadUvCorners[0], UvB = QuadUvCorners[i + 1], UvC = QuadUvCorners[i + 2],
+				// Only a textured poly has UVs, and it has at most four corners; a lit poly can have more.
+				UvA = textured ? QuadUvCorners[0] : default,
+				UvB = textured ? QuadUvCorners[i + 1] : default,
+				UvC = textured ? QuadUvCorners[i + 2] : default,
 				UvWeights = weights,
 				Rank = front.Texture != null ? 2 : front.Lit ? 1 : 0
 			});
@@ -618,7 +622,7 @@ public static class DtsGeometryBuilder {
 
 	/// <summary>
 	/// The poly's stored normal — <see cref="TSPoly.Normal"/> is a point index into the same list as
-	/// the corners (docs/formats/dts-texture-binding.md's "Normals live in the point list"). When it
+	/// the corners (docs/retail/formats/dts-texture-binding.md's "Normals live in the point list"). When it
 	/// does not resolve, the winding stands in, negated, since the two are exactly opposed.
 	/// </summary>
 	private static Vector3 ResolveFaceNormal(TSPoly poly, TSGroup group, Vector3[] points, int[] corners) {
@@ -677,7 +681,7 @@ public static class DtsGeometryBuilder {
 	/// The four corners' homogeneous UV weights for a textured quad, or null when its diagonals do
 	/// not cross inside it. With the crossing at fraction <c>s</c> along <c>p0→p2</c> and <c>t</c>
 	/// along <c>p1→p3</c> the corners take <c>1/(1-s), 1/(1-t), 1/s, 1/t</c> — the engine's
-	/// <c>DtsMeshBuilder.QuadUvWeights</c>; docs/formats/dts-texture-binding.md's "Quad mapping on
+	/// <c>DtsMeshBuilder.QuadUvWeights</c>; docs/retail/formats/dts-texture-binding.md's "Quad mapping on
 	/// triangle hardware". Solved least-squares, since a DTS quad need not be planar.
 	/// </summary>
 	private static float[]? QuadUvWeights(Vector3[] points, int[] corners) {

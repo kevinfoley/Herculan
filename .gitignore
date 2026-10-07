@@ -1,4 +1,5 @@
 ES2/
+ES2v110/
 herc-works-mdk-main/
 *.zip
 tools/*
@@ -33,7 +34,7 @@ Design/
 imgui.ini
 Herculan/src/HercWorks.TransferApi/obj/
 MusicRip/
-Herculan/docs/shell/handoff-vshell-re.md
+Herculan/docs/retail/shell/handoff-vshell-re.md
 .vs/
 tools/ghidra_scripts/known_symbols.json.bak
 tools/ghidra_scripts/known_structs.json.bak
@@ -46,6 +47,10 @@ Herculan/src/HercWorks.Help/bin/
 Herculan/src/HercWorks.Help/obj/
 Herculan/tests/HercWorks.Help.Tests/bin/
 Herculan/tests/HercWorks.Help.Tests/obj/
+Herculan/src/HercWorks.Query/bin/
+Herculan/src/HercWorks.Query/obj/
+Herculan/tests/HercWorks.Query.Tests/bin/
+Herculan/tests/HercWorks.Query.Tests/obj/
 Herculan/.obsidian/
 tools/scripts/__pycache__/
 tools/scripts/rename_symbol/bin/
@@ -54,3 +59,10 @@ tools/scripts/indeo4_reference/bin/
 tools/scripts/indeo4_reference/obj/
 *.csproj.user
 /ES1/
+Herculan/src/HercWorks.Disc/bin/
+Herculan/src/HercWorks.Disc/obj/
+Herculan/tests/HercWorks.Disc.Tests/bin/
+Herculan/tests/HercWorks.Disc.Tests/obj/
+MoreImages/
+Publishing.md
+Screenshots/

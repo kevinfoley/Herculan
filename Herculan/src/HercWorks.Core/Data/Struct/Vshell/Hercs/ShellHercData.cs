@@ -9,7 +9,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Hercs;
 /// <c>{ int16 hardpoint; </c><see cref="UiWeaponEntry"/><c> }</c>.
 ///
 /// <para>The two build fields are construction state, not damage. See
-/// <c>docs/formats/herc-catalogs.md#the-herc-catalog-record</c>.</para>
+/// <c>docs/retail/formats/herc-catalogs.md#the-herc-catalog-record</c>.</para>
 /// </summary>
 public class ShellHercData {
 	/// <summary><c>+0x00</c>, the chassis type, 0-8.</summary>

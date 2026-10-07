@@ -12,12 +12,9 @@ namespace Herculan.Engine.Settings;
 public sealed class TweakSettings {
 
 	private static TweakSettings? current;
-	public static TweakSettings Current {
-		get {
-			if (current == null) current = new TweakSettings();
-			return current;
-		}
-	}
+
+	/// <summary>The player's settings, which the hosts load from <see cref="FilePath"/> and the menus edit.</summary>
+	public static TweakSettings Current => current ??= new TweakSettings();
 
 	private static readonly JsonSerializerOptions SerializerOptions = new() {
 		WriteIndented = true,
@@ -26,8 +23,8 @@ public sealed class TweakSettings {
 
 	private readonly Dictionary<TweakSettingDefinition<bool>, bool> _bools = new();
 
-	private TweakSettings() {
-		current = this;
+	/// <summary>Every setting at its default.</summary>
+	public TweakSettings() {
 	}
 
 	public bool GetSettingValue(TweakSettingDefinition<bool> setting)

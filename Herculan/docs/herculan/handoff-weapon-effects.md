@@ -1,0 +1,11 @@
+# Handoff — outstanding combat and effects work
+
+> **This file is a scratchpad, not a status record.** It is ephemeral: it may hold the newest lead > before that lead reaches a topic doc, but it is never the authority on what is or is not done. > For that, read the topic doc that owns the subsystem, or `KNOWN_ISSUES.md` for behavioural > divergences. Anything here that becomes settled should move out into a topic doc and be deleted > from this file.
+
+Addresses below are starting points to decompile, not settled findings — check anything load-bearing. What *is* settled is in [`../retail/simulation/projectiles.md`](../retail/simulation/projectiles.md), [`../retail/simulation/rockets.md`](../retail/simulation/rockets.md), [`../retail/simulation/weapon-firing.md`](../retail/simulation/weapon-firing.md), [`../retail/simulation/weapon-mounts.md`](../retail/simulation/weapon-mounts.md), [`../retail/simulation/beam-visuals.md`](../retail/simulation/beam-visuals.md), [`../retail/simulation/impact-effects.md`](../retail/simulation/impact-effects.md), [`../retail/simulation/hit-detection.md`](../retail/simulation/hit-detection.md), [`../retail/simulation/damage-system.md`](../retail/simulation/damage-system.md), [`../retail/simulation/component-damage.md`](../retail/simulation/component-damage.md), [`../retail/simulation/weapon-damage-types.md`](../retail/simulation/weapon-damage-types.md), [`../retail/formats/hud-target-indicator.md`](../retail/formats/hud-target-indicator.md), [`../retail/formats/mfd-scanner.md`](../retail/formats/mfd-scanner.md), [`../retail/formats/dts-billboards.md`](../retail/formats/dts-billboards.md), [`../retail/formats/dts-texture-binding.md`](../retail/formats/dts-texture-binding.md), [`../retail/formats/mech-shape-drawing.md`](../retail/formats/mech-shape-drawing.md) and [`../retail/formats/distance-fog-and-sky.md`](../retail/formats/distance-fog-and-sky.md).
+
+## Not built
+
+_ These are not organized in any particular order; this may not be the best order to complete these tasks in._
+
+- **Structures clip.** Projectiles and impact effects visibly sink into buildings, which retail does not do. **Hit geometry is ruled out** — measured, see [`../retail/simulation/hit-detection.md`](../retail/simulation/hit-detection.md), "Measured: hit geometry versus the drawn mesh". Remaining suspect is render layering.

@@ -10,7 +10,7 @@ namespace HercWorks.UI;
 /// facets), <see cref="MecEntry.InternalConditions"/> (the nine internals, then the machine's overall condition)
 /// and <see cref="MecEntry.HardpointConditions"/> (one per hardpoint, in weapon-slot order). They are the HERC
 /// record's 66-byte status block, which VSHELL copies into the export verbatim; see
-/// docs/formats/save-games.md. Each value is 0-100. Edits are written back only on OK.
+/// docs/retail/formats/save-games.md. Each value is 0-100. Edits are written back only on OK.
 /// </summary>
 public partial class MachineConditionsForm : Form {
 	private const int ExternalCount = 13;

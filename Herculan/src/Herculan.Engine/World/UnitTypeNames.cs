@@ -1,22 +1,17 @@
-using System.Text;
+using HercWorks.Core.Data.File;
+using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 
 namespace Herculan.Engine.World;
 
-/// <summary>
-/// The lists that turn a mission's numeric unit types into resource names — <c>nam\MECHS.NAM</c> and
-/// <c>nam\FLYERS.NAM</c>, each a flat run of NUL-terminated ASCII names indexed by type.
-///
-/// <para>This is the missing half of <c>script.dat</c>'s mech roster: block 7's
-/// <c>TypeIndex</c> is a mech type, but nothing in <c>script.dat</c> says what type 13 is.
-/// <c>MechType_InitOne</c> (<c>004201a8</c>) answers it — its first act is
-/// <c>nameTable[typeIndex]</c> followed by joining that name to the <c>dat\</c>, <c>dts\</c> and
-/// <c>bnd\</c> folder prefixes, so the name is simultaneously the mech's stats file, its model and
-/// its collision data. Cross-checked against the retail install: <c>MECHS.NAM</c> holds exactly 21
-/// names and every one has a matching <c>dat\&lt;name&gt;.DAT</c> and <c>dts\&lt;name&gt;.DTS</c>,
-/// which also matches the 0-20 range <c>msn-mission-file.md</c> measured for row #12's type
-/// field.</para>
-/// </summary>
+/// <inheritdoc cref="NameList"/>
+/// <remarks>
+/// The engine's handle on <c>nam\MECHS.NAM</c> and <c>nam\FLYERS.NAM</c>, parsed by
+/// <see cref="NameListTransformer"/>. Cross-checked against the retail install: <c>MECHS.NAM</c>
+/// holds exactly 21 names and every one has a matching <c>dat\&lt;name&gt;.DAT</c> and
+/// <c>dts\&lt;name&gt;.DTS</c>, which also matches the 0-20 range <c>msn-mission-file.md</c> measured
+/// for row #12's type field.
+/// </remarks>
 public sealed class UnitTypeNames {
 	/// <summary>VOL folder both lists live in.</summary>
 	public const string ResourceFolder = "nam";
@@ -51,25 +46,6 @@ public sealed class UnitTypeNames {
 
 	public static UnitTypeNames LoadFlyers(GameContent content) => Load(content, FlyerListName);
 
-	private static UnitTypeNames Load(GameContent content, string resourceName) {
-		byte[] bytes = content.ReadRequired(ResourceFolder, resourceName);
-
-		// One NUL-terminated name after another. The retail files end with a stray newline after the
-		// last terminator, which splitting on NUL leaves as a trailing whitespace-only fragment.
-		var names = new List<string>();
-		int start = 0;
-		for (int i = 0; i < bytes.Length; i++) {
-			if (bytes[i] != 0) {
-				continue;
-			}
-
-			string name = Encoding.ASCII.GetString(bytes, start, i - start).Trim();
-			if (name.Length > 0) {
-				names.Add(name.ToUpperInvariant());
-			}
-			start = i + 1;
-		}
-
-		return new UnitTypeNames(names.ToArray());
-	}
+	private static UnitTypeNames Load(GameContent content, string resourceName) =>
+		new(new NameListTransformer().Parse(content.ReadRequired(ResourceFolder, resourceName))!.Names);
 }

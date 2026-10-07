@@ -1,9 +1,9 @@
-using Herculan.Engine.Content;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Data.Struct.Herc;
 using HercWorks.Core.Data.Struct.Vshell.Sav;
 using HercWorks.Core.Io.Transform.Common;
+using Herculan.Engine.Install;
 using Xunit;
 
 namespace Herculan.Engine.Tests;
@@ -12,7 +12,7 @@ namespace Herculan.Engine.Tests;
 /// Byte-for-byte round trips through <see cref="PlayerSaveTransform"/>.
 ///
 /// <para>The synthetic cases build the bytes by hand from the layout in
-/// <c>docs/formats/save-games.md</c> rather than from the transformer's own writer, so a
+/// <c>docs/retail/formats/save-games.md</c> rather than from the transformer's own writer, so a
 /// disagreement between the two shows up as a failure instead of cancelling out. What they pin is
 /// the pilot record's field count — three shorts before the name (roster id, esnames index, length)
 /// and eleven after the on-strength byte — and the 152-byte career block. Getting either wrong

@@ -11,7 +11,7 @@ namespace Herculan.Engine.Render;
 /// painted in the original straight after its own cell's ground, so every later cell's ground
 /// covers it and every earlier cell's is covered by it; with this target, the shape's fragment
 /// shader keeps a pixel exactly when the ground there ranks no later than the shape's cell. See
-/// <see cref="SceneRenderer"/>, which draws with it, and docs/simulation/ground-shapes.md, "The draw
+/// <see cref="SceneRenderer"/>, which draws with it, and docs/retail/simulation/ground-shapes.md, "The draw
 /// pass".
 ///
 /// <para>This is how this engine reproduces a painter's order it does not otherwise have: the

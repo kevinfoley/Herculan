@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dat.Shell;
 /// FILE - /SHELL/GAM/DAMAGE.DAT — 102 bytes, the unit values the repair bay and the scrap screen
 /// price against. Read whole at load by <c>hercdisp.cpp</c> and immediately expanded against
 /// <c>herc_inf.dat</c>'s chassis prices into the three in-memory tables the cost model actually uses;
-/// see <c>docs/formats/herc-catalogs.md</c>.
+/// see <c>docs/retail/formats/herc-catalogs.md</c>.
 ///
 /// <para><b>The percentages are Q10 fractions, not percentages.</b> Both scale factors go through a
 /// fixed-point multiply that shifts right by 10, so <see cref="ChassisScale"/> 800 is 800/1024 and

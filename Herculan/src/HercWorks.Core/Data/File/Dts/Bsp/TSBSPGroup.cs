@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dts.Bsp;
 
 /// <summary>
 /// A <see cref="TSGroup"/> with a BSP tree over its own polys appended, which orders their drawing;
-/// see <see cref="TSBSPGroupNode"/> and docs/formats/dts-texture-binding.md, "TSBSPGroup poly order".
+/// see <see cref="TSBSPGroupNode"/> and docs/retail/formats/dts-texture-binding.md, "TSBSPGroup poly order".
 /// </summary>
 public class TSBSPGroup : TSGroup {
 	public TSBSPGroupNode[]? GroupNodes { get; set; }

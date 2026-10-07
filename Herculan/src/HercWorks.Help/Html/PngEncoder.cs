@@ -5,12 +5,14 @@ namespace HercWorks.Help.Html;
 
 /// <summary>
 /// Writes a 24-bit RGB PNG — the one format the browser needs for the manual's pictures, and small
-/// enough to write here rather than take a dependency for.
+/// enough to write here rather than take a dependency for. Public for the engine host's PrtScn files, so there is
+/// one encoder rather than two.
 /// </summary>
-internal static class PngEncoder {
+public static class PngEncoder {
 	private static readonly byte[] Signature = [0x89, (byte)'P', (byte)'N', (byte)'G', 0x0D, 0x0A, 0x1A, 0x0A];
 	private static readonly uint[] CrcTable = BuildCrcTable();
 
+	/// <summary>The PNG of <paramref name="rgb"/>: rows top-down, three bytes a pixel in R, G, B order, no padding.</summary>
 	public static byte[] Encode(int width, int height, byte[] rgb) {
 		using var output = new MemoryStream();
 		output.Write(Signature);

@@ -4,7 +4,7 @@ namespace Herculan.Engine.Terrain;
 /// Port of DBSIM's <c>HeightGrid</c> — the loaded terrain of one zone. The original is a 0x129-byte
 /// struct built by <c>HeightGrid_Constructor</c> (<c>0046bdf8</c>) and installed as the global
 /// <c>ActiveHeightGrid</c> by <c>Terrain_LoadZone</c> (<c>0042789c</c>); see
-/// docs/formats/terrain-heightmap.md, "The HeightGrid struct", for the full field map.
+/// docs/retail/formats/terrain-heightmap.md, "The HeightGrid struct", for the full field map.
 ///
 /// <para>Storage differs from the original in one deliberate way: DBSIM allocates a single array of
 /// 16-byte cells, where this holds parallel arrays. Of the 16 bytes, the loaders write <c>+0x0</c>
@@ -78,7 +78,7 @@ public sealed partial class HeightGrid {
 	/// <c>Raster_SetVisibilityRange(grid[0x10c] &lt;&lt; grid[0x108])</c> (<c>00467fdc</c>) to install the visibility range the
 	/// distance fog is measured against (see <see cref="VisibilityRange"/>). The field's writer and
 	/// its other readers — draw-region and view-distance setup — are in
-	/// docs/formats/terrain-texturing.md's "<c>grid+0x10c</c> — the LOD / draw-radius field".
+	/// docs/retail/formats/terrain-texturing.md's "<c>grid+0x10c</c> — the LOD / draw-radius field".
 	/// </summary>
 	public int DetailLod { get; }
 
@@ -279,7 +279,7 @@ public sealed partial class HeightGrid {
 	/// bounds-checks only the *flat* cell index of each of the four corners, not the cell x+1
 	/// separately, so a query in the last column reads the next row's first cell as its east
 	/// neighbour. That wrap is reproduced rather than fixed: it is exactly the kind of original-game
-	/// quirk docs/engine/planning.md's "vanilla by default" principle says to keep by default.</para>
+	/// quirk docs/herculan/planning.md's "vanilla by default" principle says to keep by default.</para>
 	/// </summary>
 	public int HeightAtWorld(int worldX, int worldY) {
 		int cellX = worldX >> CellShift;

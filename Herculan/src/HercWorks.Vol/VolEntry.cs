@@ -18,7 +18,7 @@ namespace HercWorks.Vol;
 ///   Then <c>size</c> content bytes, then one trailing byte that repeats the last content byte.
 ///
 /// The prefix and the trailing byte belong to the archive, not to the file: what the game reads
-/// is the content alone. See docs/formats/vol-archive.md for the evidence.
+/// is the content alone. See docs/retail/formats/vol-archive.md for the evidence.
 ///
 /// Ported from org.hercworks.voln.VolEntry.
 /// </summary>

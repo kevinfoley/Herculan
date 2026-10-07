@@ -14,7 +14,7 @@ namespace HercWorks.Core.Data.File.Gau;
 /// 320-wide space).
 ///
 /// Read out of <see cref="GAUFile.Remainder"/>, which is still what the write path emits.
-/// See `Herculan.Engine.Content.TargetBox` and docs/formats/cockpit-gunsight-hud.md.
+/// See `Herculan.Engine.Content.TargetBox` and docs/retail/formats/cockpit-gunsight-hud.md.
 /// </summary>
 public class HGunsightArea : WidgetBase {
 }

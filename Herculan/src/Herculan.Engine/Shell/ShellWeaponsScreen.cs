@@ -72,7 +72,7 @@ public sealed class ShellWeaponsArt {
 /// <c>Hard Points</c> steppers. Built once by <c>Arming_BuildScreen</c> (<c>0043e52c</c>,
 /// <c>warmingi.cpp</c>), entered by <c>Arming_Enter</c> (<c>0043f548</c>), its row moved by
 /// <c>Arming_SelectRow</c> (<c>0043f71c</c>) and its guidance kind by <c>Arming_ShowGuidance</c>
-/// (<c>0043fd69</c>). See docs/shell/screen-layout.md, "The weapons screen".
+/// (<c>0043fd69</c>). See docs/retail/shell/screen-layout.md, "The weapons screen".
 ///
 /// <para><b>Every rect here is a literal in the executable</b>, kept parent-relative as the builder
 /// writes them: the content panel in the canvas; the picture box, the list and the steppers in the
@@ -274,7 +274,7 @@ public sealed class ShellWeaponsScreen {
 
 	/// <summary>
 	/// <c>Arming_SelectRow</c> (<c>0043f71c</c>). A row's own handler, through the 27 thunks from
-	/// <c>00440300</c>, is the only caller that passes <paramref name="fit"/> — the thunk's
+	/// <c>Arming_OnRow00</c> (<c>00440300</c>), is the only caller that passes <paramref name="fit"/> — the thunk's
 	/// <c>Arming_FitArmed</c> — so a selection made by the entry, a bay change, a hardpoint or the rack
 	/// button fits nothing.
 	///
@@ -330,8 +330,8 @@ public sealed class ShellWeaponsScreen {
 	}
 
 	/// <summary>
-	/// <c>Arming_SelectHardpoint</c> (<c>0043dbb2</c>), a hotspot's handler through the ten thunks from
-	/// <c>0043e15f</c>, and what both steppers call: a no-op for the hardpoint already selected, otherwise
+	/// <c>Arming_SelectHardpoint</c> (<c>0043dbb2</c>), a hotspot's handler through the ten thunks
+	/// <c>Arming_OnHardpoint0</c>-<c>Arming_OnHardpoint9</c> (<c>0043e15f</c>-<c>0043e4c8</c>), and what both steppers call: a no-op for the hardpoint already selected, otherwise
 	/// it selects the row of the weapon the mount carries — <c>None</c>'s for an empty one — without
 	/// fitting it, and outlines the socket. Returns whether the hardpoint moved.
 	///
@@ -350,14 +350,14 @@ public sealed class ShellWeaponsScreen {
 	}
 
 	/// <summary>
-	/// <c>&gt;</c>'s handler (<c>004402a2</c>), <c>Arming_NextHardpoint</c> (<c>0043dd09</c>): the next mount
+	/// <c>&gt;</c>'s handler (<c>Arming_OnNextHardpoint</c>, <c>004402a2</c>), <c>Arming_NextHardpoint</c> (<c>0043dd09</c>): the next mount
 	/// modulo the capacity, so the first with none selected.
 	/// </summary>
 	public bool NextHardpoint() =>
 		Machine is { MountCapacity: > 0 } machine && SelectHardpoint((SelectedHardpoint + 1) % machine.MountCapacity);
 
 	/// <summary>
-	/// <c>&lt;</c>'s handler (<c>00440244</c>), <c>Arming_PreviousHardpoint</c> (<c>0043dd49</c>): the mount
+	/// <c>&lt;</c>'s handler (<c>Arming_OnPreviousHardpoint</c>, <c>00440244</c>), <c>Arming_PreviousHardpoint</c> (<c>0043dd49</c>): the mount
 	/// before, wrapping from the first — or from none — to the last.
 	/// </summary>
 	public bool PreviousHardpoint() =>

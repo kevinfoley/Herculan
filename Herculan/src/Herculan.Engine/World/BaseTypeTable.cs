@@ -1,4 +1,4 @@
-﻿using System.Buffers.Binary;
+﻿using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 
@@ -9,7 +9,7 @@ public enum BaseShapeSource {
 	/// <summary>
 	/// <c>dgs\BASES.DGS</c> — the static-structure library, covering 57 of the 65 structure types.
 	/// Read by <see cref="HercWorks.Core.Io.Transform.Dbsim.BasesDgsTransformer"/> — see
-	/// docs/formats/dgs-hd0-notes.md for the format.
+	/// docs/retail/formats/dgs-hd0-notes.md for the format.
 	/// </summary>
 	StaticLibrary,
 
@@ -162,7 +162,7 @@ public readonly record struct BaseComponentType(
 /// slots carry it: <c>+0x24</c> (<c>Base_GetAimNodeTransform</c>, <c>00403548</c>) as the translation of
 /// a node transform, and <c>+0x30</c> (<c>Base_GetAimPoint</c>, <c>0040351c</c>) as the Z of an offset
 /// triple that the tower ticks add to the target's position unrotated while the camera attach
-/// rotates it (docs/simulation/structure-behaviour.md, "What a structure is aimed at"). All 65 retail
+/// rotates it (docs/retail/simulation/structure-behaviour.md, "What a structure is aimed at"). All 65 retail
 /// types state one, 1000 to 2000, so a building is never shot at its own ground origin.
 /// </param>
 /// <param name="Armament">
@@ -189,7 +189,7 @@ public readonly record struct BaseComponentType(
 /// <c>+0x2e != 0</c> — the AI treats this type as dangerous. Nonzero on the two armed structures
 /// (gun tower, missile tower), the mobile missile vehicle, the generator and the transport, and it
 /// changes two decisions: a crippled machine flees from one instead of pressing the attack, and an
-/// attacking machine circles one instead of standing off. See docs/simulation/ai-combat-states.md.
+/// attacking machine circles one instead of standing off. See docs/retail/simulation/ai-combat-states.md.
 /// </param>
 /// <param name="AnimCellSequence">
 /// <c>+0x24</c> — which cell sequence <c>Base_ThinkTick</c> (<c>00403ca8</c>) steps to animate the
@@ -252,8 +252,8 @@ public readonly record struct BaseType(
 /// other side — exactly eight types select the animated library, and <c>BASES_AN.DTS</c> holds
 /// exactly eight roots, numbered 0-7 the way those eight types reference them.</para>
 ///
-/// <para>Fields still unread are left as skips rather than guessed at: <c>+0x00</c> and <c>+0x18</c>
-/// (6 bytes).</para>
+/// <para>The file is parsed by <see cref="BasesDatTransformer"/>; this table carries every field but
+/// the two nothing traced reads, <c>+0x00</c> and <c>+0x18</c> (6 bytes).</para>
 /// </summary>
 public sealed class BaseTypeTable {
 	/// <summary>VOL folder and name of the table.</summary>
@@ -268,9 +268,6 @@ public sealed class BaseTypeTable {
 	/// <summary>The static library, read via <see cref="HercWorks.Core.Io.Transform.Dbsim.BasesDgsTransformer"/>.</summary>
 	public const string StaticLibraryName = "BASES.DGS";
 
-	/// <summary>Bytes per entry of a type's nested component array.</summary>
-	private const int ComponentRecordLength = 30;
-
 	private readonly BaseType[] _types;
 
 	private BaseTypeTable(BaseType[] types) {
@@ -284,82 +281,43 @@ public sealed class BaseTypeTable {
 	public BaseType? this[int typeIndex] =>
 		typeIndex >= 0 && typeIndex < _types.Length ? _types[typeIndex] : null;
 
+	/// <summary>Reads the table through <see cref="BasesDatTransformer"/>, which throws when the walk does not consume the file exactly.</summary>
 	public static BaseTypeTable Load(GameContent content) {
-		byte[] bytes = content.ReadRequired(ResourceFolder, ResourceName);
-		int offset = 0;
+		var file = new BasesDatTransformer().Parse(content.ReadRequired(ResourceFolder, ResourceName))
+			?? throw new InvalidDataException($"{ResourceFolder}\\{ResourceName} is empty.");
 
-		short Next() {
-			short value = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset));
-			offset += 2;
-			return value;
-		}
+		static Vec3i Vec(short[] xyz) => new(xyz[0], xyz[1], xyz[2]);
 
-		int count = Next();
-		var types = new BaseType[count];
-
-		for (int i = 0; i < count; i++) {
-			Next();                          // +0x00 — unread here
-			short shapeIndex = Next();       // +0x02 — index into the selected library
-			short hulkTypeIndex = Next();    // +0x04
-			short animated = Next();         // +0x06 — how many animation threads, 0 for none
-			short fireShape = Next();        // +0x08
-			var firePoint = new Vec3i(Next(), Next(), Next());   // +0x0a
-			short destroyedEffect = Next();  // +0x10
-			short componentCount = Next();   // +0x12 — count of the nested component array
-
-			var components = new BaseComponentType[componentCount < 0 ? 0 : componentCount];
-			for (int c = 0; c < components.Length; c++) {
-				int at0 = offset;
-				short At(int at) => BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(at0 + at));
-
-				components[c] = new BaseComponentType(
-					At(0x00), At(0x02), At(0x04), At(0x06), At(0x08),
-					new Vec3i(At(0x0a), At(0x0c), At(0x0e)),
-					new Vec3i(At(0x10), At(0x12), At(0x14)),
-					new Vec3i(At(0x16), At(0x18), At(0x1a)),
-					At(0x1c));
-				offset += ComponentRecordLength;
-			}
-
-			offset += 6;                     // +0x18
-			short invulnerable = Next();     // +0x1e
-			var threadRates = new[] { Next(), Next() };   // +0x20 - one playback rate per thread
-			short animCellSequence = Next(); // +0x24 - which cell sequence the idle flipbook steps
-			short animCellInterval = Next(); // +0x26 - and how long each of its frames holds
-			short silhouette = Next();       // +0x28 - silhouette frame and type-name index
-			short hitRadius = Next();        // +0x2a
-			short aimPointHeight = Next();   // +0x2c - how far up the structure a shooter aims
-			short threatens = Next();        // +0x2e
-			short collisionModel = Next();   // +0x30
-			short textureSelector = Next();  // +0x32
+		var types = new BaseType[file.Types.Length];
+		for (int i = 0; i < types.Length; i++) {
+			var record = file.Types[i];
+			var components = record.Components
+				.Select(c => new BaseComponentType(
+					c.MaxDamage, c.DestroyedSubShape, c.DestroyedEffect, c.FireShapeIndex, c.DebrisGroup,
+					Vec(c.EmitPoint), Vec(c.Position), Vec(c.SmokeSpread), c.ParentComponent))
+				.ToArray();
 
 			types[i] = new BaseType(
 				i,
-				shapeIndex,
-				animated == 0 ? BaseShapeSource.StaticLibrary : BaseShapeSource.AnimatedLibrary,
-				textureSelector == 0 ? "BASETEX" : i == 0x34 ? "RAZORTEX" : "VEHTEX",
-				hulkTypeIndex,
-				hitRadius,
-				invulnerable != 0,
-				collisionModel != 0,
-				silhouette,
-				textureSelector != 0,
-				fireShape,
-				firePoint,
-				destroyedEffect,
-				aimPointHeight,
-				(BaseArmament)threatens,
-				animCellSequence,
-				animCellInterval,
-				animated,
-				threadRates,
+				record.ShapeIndex,
+				record.AnimThreadCount == 0 ? BaseShapeSource.StaticLibrary : BaseShapeSource.AnimatedLibrary,
+				record.TextureSelector == 0 ? "BASETEX" : i == 0x34 ? "RAZORTEX" : "VEHTEX",
+				record.HulkTypeIndex,
+				record.HitRadius,
+				record.Invulnerable != 0,
+				record.CollisionModel != 0,
+				record.SilhouetteIndex,
+				record.TextureSelector != 0,
+				record.FireShapeIndex,
+				Vec(record.FirePoint),
+				record.DestroyedEffect,
+				record.AimPointHeight,
+				(BaseArmament)record.Armament,
+				record.AnimCellSequence,
+				record.AnimCellInterval,
+				record.AnimThreadCount,
+				record.AnimThreadRates,
 				components);
-		}
-
-		if (offset != bytes.Length) {
-			throw new InvalidDataException(
-				$"{ResourceFolder}\\{ResourceName}: walked {offset} of {bytes.Length} bytes across " +
-				$"{count} records — the record shape does not match this file.");
 		}
 
 		return new BaseTypeTable(types);

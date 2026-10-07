@@ -6,7 +6,7 @@ namespace Herculan.Engine.Sim;
 /// <summary>
 /// A flat shape lying on the ground — DBSIM's <c>FlatObj</c> class (vtable <c>FlatObj_Vtable</c>,
 /// <c>0049a262</c>), out of the 150-entry pool at <c>g_FlatObjPool</c>
-/// (docs/simulation/ground-shapes.md).
+/// (docs/retail/simulation/ground-shapes.md).
 ///
 /// <para>Three things lay one, each choosing a root of the theater's flat set
 /// (<see cref="World.TheaterDescriptor.FlatSetName"/>): a HERC, whose shadows these are — one per

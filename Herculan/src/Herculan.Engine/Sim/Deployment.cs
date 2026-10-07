@@ -50,7 +50,7 @@ public static class Deployment {
 	/// still awaiting deployment are skipped, so a group never lands on one that has not arrived, and
 	/// an object with no collision radius is skipped too.</item>
 	/// <item><b>Structures</b>, through the same volume sweep a walking machine is stopped by.</item>
-	/// <item><b>The ground</b>, through the movement-collision face test — anything too steep to
+	/// <item><b>The ground</b>, through the terrain slope walk's face test — anything too steep to
 	/// stand on, or off the grid entirely.</item>
 	/// </list>
 	///
@@ -131,15 +131,23 @@ public static class Deployment {
 	/// and hands the lot to <see cref="BaseObject.BlocksWalker"/>.
 	///
 	/// <para>Shared, because three sweeps in the original make this same call: the deployment probe
-	/// here, <c>Mech_CollisionTest</c> (<c>00418f74</c>) and the ground vehicle's own
-	/// <c>0046a510</c>.</para>
+	/// here, <c>Mech_CollisionTest</c> (<c>00418f74</c>) and <c>GroundVehicle_CollisionTest</c>
+	/// (<c>0046a510</c>).</para>
+	///
+	/// <para>A structure whose group has not arrived is gathered like any other, as in the original,
+	/// whose gather makes no group-action test: it blocks while it is not drawn. See
+	/// docs/retail/simulation/mission-deployment.md ("The deployment gate") and KNOWN_ISSUES.md.</para>
 	/// </summary>
-	internal static bool StructureInTheWay(SimWorld world, Vec3i point) {
+	/// <param name="excluded">
+	/// The gather's third argument, one structure it passes over: a ground vehicle names itself, so it
+	/// is not stopped by its own volume. The other two callers pass none.
+	/// </param>
+	internal static bool StructureInTheWay(SimWorld world, Vec3i point, SimObject? excluded = null) {
 		var objects = world.Objects;
 
 		for (int i = 0; i < objects.Count; i++) {
-			if (objects[i] is BaseObject structure && !structure.Removed
-					&& !structure.AwaitingDeployment && structure.BlocksWalker(point)) {
+			if (objects[i] is BaseObject structure && !ReferenceEquals(structure, excluded)
+					&& !structure.Removed && structure.BlocksWalker(point)) {
 				return true;
 			}
 		}

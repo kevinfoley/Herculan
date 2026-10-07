@@ -1,5 +1,7 @@
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.Struct;
+using Herculan.Engine.Gl;
+using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Render;
 
@@ -21,13 +23,13 @@ public readonly record struct AtlasRect(float U0, float V0, float U1, float V1);
 ///
 /// <para>Packing is purely a relocation — a frame's UV corners still span its own full extent, so
 /// the RE-confirmed corner order in <see cref="DtsMeshBuilder"/> is unaffected (see
-/// docs/formats/dts-texture-binding.md's "Render path and UV generation"; the exe builds the same
+/// docs/retail/formats/dts-texture-binding.md's "Render path and UV generation"; the exe builds the same
 /// rect-corner mapping from a per-frame descriptor whose top-left is assumed, not confirmed, to be
 /// (0,0)). Frames are padded apart by one pixel, and sampling is nearest-neighbour at the GL end,
 /// so neighbours cannot bleed into each other.</para>
 ///
-/// <para>CPU-side on purpose, touching no GL, so <see cref="Scene.MissionScene"/> stays buildable
-/// headlessly — <see cref="Gl.GpuTexture"/> does the upload.</para>
+/// <para>CPU-side on purpose: nothing but <see cref="Upload"/> touches GL, so
+/// <see cref="Scene.MissionScene"/> stays buildable headlessly.</para>
 /// </summary>
 public sealed class TextureAtlas {
 	/// <summary>Blank pixels between packed frames, so no filtering or rounding can sample a neighbour.</summary>
@@ -99,6 +101,17 @@ public sealed class TextureAtlas {
 
 	public int Height { get; }
 
+	/// <summary>Uploads the packed image as a <see cref="GpuTexture"/>.</summary>
+	/// <param name="gl">The context to upload into.</param>
+	/// <param name="indexed">
+	/// Upload <see cref="IndexPixels"/> — palette index in red — rather than the expanded colour. That
+	/// is what a <b>lit</b> surface has to sample, because the original resolves a lit texel as
+	/// <c>rampRow(shade)[index]</c>; see <see cref="PaletteRampTable"/>. Callers that blit a frame
+	/// unlit (the HUD sprite sheets, the billboard renderer) want the colour.
+	/// </param>
+	public GpuTexture Upload(GL gl, bool indexed = false) =>
+		new(gl, indexed ? IndexPixels : Pixels, Width, Height);
+
 	/// <summary>How many frame slots the source DBA had — including any that failed to pack.</summary>
 	public int FrameCount => _frames.Length;
 
@@ -131,7 +144,7 @@ public sealed class TextureAtlas {
 	///
 	/// <para><paramref name="transparentIndex0"/> decodes palette index 0 to alpha 0 instead of an
 	/// opaque colour. Off by default because most banks want index 0 opaque; sprite banks and the
-	/// structure banks, whose cutout frames are documented in docs/formats/dts-texture-binding.md,
+	/// structure banks, whose cutout frames are documented in docs/retail/formats/dts-texture-binding.md,
 	/// both ask for it — see <c>Scene.SceneModelLibrary.LoadAtlas</c>. The 2D HUD sprite banks
 	/// (<c>Content.HudSpriteSheet</c>) treat 0 as "leave the console art showing through", the same
 	/// sentinel role index 0 plays in <c>Content.CockpitArt</c>.</para>

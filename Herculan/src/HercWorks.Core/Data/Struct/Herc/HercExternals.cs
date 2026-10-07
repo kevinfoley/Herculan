@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.Struct.Herc;
 /// <summary>
 /// The 13 external facets of a HERC's status block, by index. The shell names and prices them in six
 /// groups (cockpit, each torso, chassis, each leg), not one by one. See
-/// <c>docs/formats/save-games.md#the-66-byte-status-block</c>.
+/// <c>docs/retail/formats/save-games.md#the-66-byte-status-block</c>.
 /// </summary>
 public sealed class HercExternals {
 	public static readonly HercExternals CockpitFront = new(0, "Cockpit Front");

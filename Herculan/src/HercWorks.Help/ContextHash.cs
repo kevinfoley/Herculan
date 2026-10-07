@@ -1,7 +1,7 @@
 namespace HercWorks.Help;
 
 /// <summary>
-/// The hash a jump names its target by (docs/formats/winhelp.md#context-hashes). Only letters, digits
+/// The hash a jump names its target by (docs/retail/formats/winhelp.md#context-hashes). Only letters, digits
 /// and <c>_</c> have known values; a context string with any other character has no hash here.
 /// </summary>
 public static class ContextHash {

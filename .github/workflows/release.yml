@@ -1,0 +1,76 @@
+# Builds a release from a version tag and attaches the zips to a draft GitHub Release.
+#   git tag v0.9.0
+#   git push origin v0.9.0
+# The tag must match <Version> in Herculan/Directory.Build.props, so the number in the files and the number on
+# the release cannot drift apart. The release is created as a draft: review it on GitHub, then publish it.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: Herculan
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Check tag matches Directory.Build.props
+        id: version
+        run: |
+          $tag = "${{ github.ref_name }}".TrimStart('v')
+          $props = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.Version
+          if ($tag -ne $props) {
+            Write-Error "Tag $tag does not match <Version>$props</Version> in Herculan/Directory.Build.props."
+            exit 1
+          }
+          "version=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Build
+        run: |
+          dotnet build HerculanEngine.sln -c Release -warnaserror
+          dotnet build HercWorksMDK.sln -c Release -warnaserror
+
+      - name: Test
+        run: |
+          dotnet test HerculanEngine.sln -c Release --no-build
+          dotnet test HercWorksMDK.sln -c Release --no-build
+
+      - name: Publish engine
+        run: dotnet publish src/Herculan.Engine.Host -p:PublishProfile=win-x64 -o ../out/HERCULAN
+
+      # No publish profile yet; these match the engine's win-x64 profile.
+      - name: Publish toolkit
+        run: dotnet publish src/HercWorks.UI -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o ../out/HercWorksCSharp
+
+      - name: Package
+        working-directory: out
+        run: |
+          $v = "${{ steps.version.outputs.version }}"
+          foreach ($app in "HERCULAN", "HercWorksCSharp") {
+            Copy-Item ../LICENSE.txt, ../README.MD $app
+            # LICENSE.txt points here for the terms of the logo and icon artwork.
+            New-Item -ItemType Directory "$app/Branding" | Out-Null
+            Copy-Item ../Branding/README.md "$app/Branding"
+            Compress-Archive -Path "$app/*" -DestinationPath "$app-$v-win-x64.zip"
+          }
+
+      - name: Create draft release
+        working-directory: out
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >
+          gh release create "${{ github.ref_name }}" --draft --generate-notes
+          --title "HERCULAN ${{ steps.version.outputs.version }}"
+          "HERCULAN-${{ steps.version.outputs.version }}-win-x64.zip"
+          "HercWorksCSharp-${{ steps.version.outputs.version }}-win-x64.zip"

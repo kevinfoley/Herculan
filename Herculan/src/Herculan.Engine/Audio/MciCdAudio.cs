@@ -7,7 +7,7 @@ namespace Herculan.Engine.Audio;
 /// <summary>
 /// <c>Music_PlayTrack</c> and its three siblings, as the original spells them: Win32
 /// <c>mciSendCommand</c> against MCI device type <c>cdaudio</c>, time format TMSF, play from a
-/// track's start to that track's own length. See docs/formats/audio.md's "CD audio".
+/// track's start to that track's own length. See docs/retail/formats/audio.md's "CD audio".
 ///
 /// <para><b>The fallback transport.</b> <see cref="CdAudio.Open"/> prefers
 /// <see cref="StreamedCdAudio"/> and comes here only for a drive that refuses raw CD-DA reads or a
@@ -17,7 +17,7 @@ namespace Herculan.Engine.Audio;
 /// <list type="bullet">
 /// <item>The loop is polled rather than notified — <see cref="Update"/>.</item>
 /// <item>The drive can be named — <see cref="TryCreate"/>. The original names none; it opens the
-/// device type alone, which is whichever CD drive MCI picks first — see docs/formats/audio.md,
+/// device type alone, which is whichever CD drive MCI picks first — see docs/retail/formats/audio.md,
 /// "No drive is named".</item>
 /// </list>
 /// </summary>

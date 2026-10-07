@@ -4,7 +4,7 @@ namespace HercWorks.Core.Io.Transform.Dbsim;
 
 /// <summary>
 /// Transforms byte[] data to and from .TAP input tapes (see <see cref="InputTape"/> for the model and
-/// docs/formats/tap-input-tape.md for the format). New: no Java equivalent, not a ported format — read
+/// docs/retail/formats/tap-input-tape.md for the format). New: no Java equivalent, not a ported format — read
 /// from DBSIM's own writer.
 ///
 /// <para>The frame stream has no count and no terminator: DBSIM reads until a header read comes up

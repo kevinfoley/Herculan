@@ -5,7 +5,7 @@ namespace Herculan.Engine.Audio;
 /// <summary>
 /// A squadmate's speaking voice — the <c>P&lt;bank&gt;_nnnnn.WAV</c> clips in the voice archive, the
 /// other half of the five-slot speech pool <see cref="ComputerVoice"/> draws on. See
-/// docs/formats/audio.md, "Speech and the comm portraits".
+/// docs/retail/formats/audio.md, "Speech and the comm portraits".
 ///
 /// <para><b>The comm box opens the clip, not the port.</b> <c>CommBox_BeginMessage</c>
 /// (<c>0044afc8</c>) builds the <c>.WAV</c> name and the matching <c>.SNC</c> portrait script
@@ -13,17 +13,15 @@ namespace Herculan.Engine.Audio;
 /// priority <c>0xff</c> so no catalog effect can evict it. Keeping the two in one call is what makes
 /// the portrait's mouth agree with the recording.</para>
 ///
-/// <para>The name is <c>"P" + voiceBank + "_" + 2-digit message id + 3-digit variant</c>, and the
-/// three language archives all carry the <c>SIMVOICE</c> folder label, so which language is heard is
-/// which archive is mounted.</para>
+/// <para>The name is <c>"P" + voiceBank + "_" + 2-digit message id + 3-digit variant</c>, looked up
+/// under the language's voice folder, <see cref="ComputerVoice.VoiceFolder"/>.</para>
 /// </summary>
 public sealed class SquadVoice {
-	/// <summary>The archive folder the clips live in — shared with <see cref="ComputerVoice"/>.</summary>
-	public const string ResourceFolder = ComputerVoice.ResourceFolder;
-
 	private readonly GameContent _content;
+	private readonly string _folder;
 	private readonly IAudioBackend _backend;
 	private readonly Dictionary<string, int> _samples = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Dictionary<string, int> _looseSamples = new(StringComparer.OrdinalIgnoreCase);
 
 	private int _speaking = -1;
 
@@ -32,6 +30,7 @@ public sealed class SquadVoice {
 	public SquadVoice(GameContent content, IAudioBackend backend) {
 		_content = content ?? throw new ArgumentNullException(nameof(content));
 		_backend = backend ?? throw new ArgumentNullException(nameof(backend));
+		_folder = ComputerVoice.VoiceFolder(content.Language);
 	}
 
 	/// <summary>Speech gain, 0 to 1.</summary>
@@ -59,7 +58,7 @@ public sealed class SquadVoice {
 
 	/// <summary>Whether the archive actually holds that recording.</summary>
 	public bool Has(int voiceBank, int messageId, int variant) =>
-		_content.Contains(ResourceFolder, ClipName(voiceBank, messageId, variant));
+		_content.Contains(_folder, ClipName(voiceBank, messageId, variant));
 
 	/// <summary>
 	/// Plays one recording, cutting off anything the channel was already saying. The original's pool
@@ -78,17 +77,18 @@ public sealed class SquadVoice {
 	}
 
 	/// <summary>
-	/// Plays a loose <c>.WAV</c> off disk on the same channel — the training instructor's clips,
-	/// which ship outside any archive (<see cref="InstructorVoice"/>). A missing file plays nothing.
+	/// Plays a loose <c>.WAV</c> on the same channel — the training instructor's clips, which ship outside
+	/// any archive (<see cref="InstructorVoice"/>). <paramref name="read"/> supplies the file the first time
+	/// <paramref name="name"/> is asked for; a clip it has no bytes for plays nothing.
 	/// </summary>
-	public void SpeakFile(string path) {
-		if (!_samples.TryGetValue(path, out int sample)) {
+	public void SpeakClip(string name, Func<byte[]?> read) {
+		if (!_looseSamples.TryGetValue(name, out int sample)) {
 			sample = -1;
-			if (File.Exists(path) && WaveSample.Decode(File.ReadAllBytes(path)) is { } decoded) {
+			if (read() is { } bytes && WaveSample.Decode(bytes) is { } decoded) {
 				sample = _backend.CreateSample(decoded);
 			}
 
-			_samples[path] = sample;
+			_looseSamples[name] = sample;
 		}
 
 		if (sample < 0) {
@@ -97,7 +97,7 @@ public sealed class SquadVoice {
 
 		Stop();
 		_speaking = _backend.Start(sample, _volume, 0f, 1f, looping: false);
-		Speaking = _speaking >= 0 ? Path.GetFileName(path) : null;
+		Speaking = _speaking >= 0 ? name : null;
 	}
 
 	/// <summary>Notices when the running clip has finished. Call once a frame.</summary>
@@ -128,7 +128,7 @@ public sealed class SquadVoice {
 		}
 
 		int id = -1;
-		if (_content.Read(ResourceFolder, name) is { } bytes && WaveSample.Decode(bytes) is { } sample) {
+		if (_content.Read(_folder, name) is { } bytes && WaveSample.Decode(bytes) is { } sample) {
 			id = _backend.CreateSample(sample);
 		}
 

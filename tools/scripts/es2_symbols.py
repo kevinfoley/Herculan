@@ -19,7 +19,7 @@ import re
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SCRIPTS = os.path.join(REPO, "tools", "ghidra_scripts")
 BINARIES = ("DBSIM", "VSHELL")
-FIELDS = ["address", "binary", "type", "confidence", "name", "description", "source", "signature"]
+FIELDS = ["address", "binary", "type", "confidence", "name", "description", "source", "signature", "verified"]
 BOM = b"\xef\xbb\xbf"
 ENTRY_BLOCK = re.compile(r"    \{\n(?:      .*\n)*?    \}")
 ENTRY_ADDRESS = re.compile(r'^      "address": "([0-9a-fA-F]{8})"', re.M)

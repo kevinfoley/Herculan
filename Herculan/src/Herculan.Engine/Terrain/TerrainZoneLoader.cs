@@ -9,7 +9,7 @@ namespace Herculan.Engine.Terrain;
 /// Port of DBSIM's zone-loading pipeline — <c>Terrain_LoadZone</c> (<c>0042789c</c>),
 /// <c>TerrainZone_LoadHeightmap</c> (<c>0046c650</c>) and <c>TerrainZone_PopulateFromBitmap</c>
 /// (<c>0046c3c0</c>) — producing a ready <see cref="HeightGrid"/>. See
-/// docs/formats/terrain-heightmap.md for the byte-level verification of
+/// docs/retail/formats/terrain-heightmap.md for the byte-level verification of
 /// each step against the real files in <c>ES2/VOL/ZONES.VOL</c>.
 ///
 /// <para>Two files per zone, both keyed off the same <c>zoneNNNN</c> base name the original builds

@@ -1,11 +1,14 @@
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Sim.Anim;
 
 namespace Herculan.Engine.Sim;
 
-// The HERC control law: input to throttle, throttle to a desired speed, and the gait state machine
-// that keeps the animation thread playing the right sequence at the right rate. Ported from
-// Mech_ApplyThrottleInput (004160dc), Mech_LocomotionTick (00416a04) and
-// Mech_ApplyTerrainSlopeToSpeed (0041693c). See docs/simulation/mech-locomotion.md.
+// The HERC control law and the move it drives: input to throttle, throttle to a desired speed, the
+// gait state machine that keeps the animation thread playing the right sequence at the right rate,
+// and the root motion that sequence carries. Ported from Mech_ApplyThrottleInput (004160dc),
+// Mech_LocomotionTick (00416a04), Mech_ApplyTerrainSlopeToSpeed (0041693c) and Mech_MovementTick
+// (0041a360). The collision test that can refuse the move is MechObject.Collision.cs.
+// See docs/retail/simulation/mech-locomotion.md.
 public sealed partial class MechObject {
 	/// <summary>Throttle movement per tick at full stick deflection, Q8 against the axis.</summary>
 	private const int ThrottleRate = 0x91;
@@ -55,6 +58,51 @@ public sealed partial class MechObject {
 
 	/// <summary>Divisor turning the slope/heading dot product into a speed adjustment.</summary>
 	private const int SlopeSpeedDivisor = 0x960;
+
+	/// <summary>
+	/// Animation time per unit of sim time, Q8 against the tick delta — the 100 in
+	/// <c>Mech_IntegrateMotion</c>'s <c>Q8(SimTickDelta, 100)</c>.
+	/// </summary>
+	private const short AnimationTimeRate = 100;
+
+	/// <summary>
+	/// <b>Not retail.</b> The speed readout the HUD shows in place of <see cref="DisplaySpeedKph"/>
+	/// under the <see cref="Settings.TweakSettingDefinitions.ShowAccurateSpeed"/> tweak. Retail's
+	/// readout is the speed scalar through a ratio calibrated for the run gait, and a walk stride
+	/// covers about half the ground at the same scalar, so a walking HERC reads about twice its real
+	/// speed — docs/retail/simulation/mech-locomotion.md, "Walk/run gait discontinuity".
+	///
+	/// <para>Running, this is retail's figure unchanged. Otherwise retail's figure is scaled by the
+	/// walk stride over the run stride, each the mean forward travel per animation tick of its
+	/// sequence (<see cref="Anim.ShapeAnimation.MeanForwardTravelPerTick"/>), so the walk gait is
+	/// calibrated the way retail calibrates the run, error of up to about 10% included. Walking it also
+	/// reads high by the part of an animation tick each sim tick drops (<see cref="Anim.AnimationThread.Advance"/>
+	/// truncates the step), which at walking rates is up to about an eighth. It is scaled
+	/// from the speed scalar rather than measured from the playback rate on purpose: below 60 the
+	/// playback rate is held up at a crawl, so the HERC really does slow as the speed rises through
+	/// 45 (same doc, "Control law"), and a readout of the motion itself dips there.</para>
+	///
+	/// <para>Like <see cref="DisplaySpeedKph"/> it is worked out from the machine's current state each
+	/// time it is read, so the tweak takes effect the frame it is toggled. A flyer has a real airspeed
+	/// and keeps <see cref="DisplaySpeedKph"/>.</para>
+	/// </summary>
+	public int GroundSpeedKph {
+		get {
+			var type = Type;
+			if (Flight != null || Thread is not { } thread || Animation is not { } animation
+				|| thread.Sequence == type.RunSequence || type.MaxForward == 0) {
+				return DisplaySpeedKph;
+			}
+
+			double run = animation.MeanForwardTravelPerTick(type.RunSequence);
+			if (run <= 0) {
+				return DisplaySpeedKph;
+			}
+
+			double strideRatio = animation.MeanForwardTravelPerTick(type.WalkSequence) / run;
+			return (int)System.Math.Round(Speed * (double)type.HudSpeedScale / type.MaxForward * strideRatio);
+		}
+	}
 
 	/// <summary>
 	/// <c>Mech_ApplyThrottleInput</c> (<c>004160dc</c>) — turns this tick's stick position into a
@@ -455,6 +503,169 @@ public sealed partial class MechObject {
 		return flipped ? (short)0 : adjusted;
 	}
 
+	/// <summary>
+	/// <c>Mech_MovementTick</c> (<c>0041a360</c>) — advances the animation, takes whatever ground
+	/// movement that produced, drops the machine onto the terrain, and undoes the step if it turned
+	/// out to be blocked.
+	///
+	/// <para>The undo is the interesting part. A blocked step restores the position <i>and</i> the
+	/// animation thread, reverses the speed scalar and the playback rate, and tries again — so a
+	/// HERC that walks into something takes a step backwards rather than sticking. If that step is
+	/// blocked too, it gives up and stops. Note the restore puts back the rotation <i>matrix</i> but
+	/// not the euler angles, so the heading change a blocked step made survives while its
+	/// translation does not; that is the original's behaviour, not an oversight here.</para>
+	/// </summary>
+	private void MovementTick(SimWorld world) {
+		ResolveMovement(world);
+
+		// Last thing in the tick, as it is in the original — it reads the pose the move settled on.
+		PlaceLegsOnGround(world);
+	}
+
+	/// <summary>Everything Mech_MovementTick does before its closing Mech_PlaceLegsOnGround call.</summary>
+	private void ResolveMovement(SimWorld world) {
+		if (Thread == null) {
+			Position = new Vec3i(Position.X, Position.Y,
+				world.GroundHeightAt(Position) + Type.RideHeight);
+			return;
+		}
+
+		var startPosition = Position;
+		if (IsPlayer) {
+			_slideOrigin = startPosition;
+		}
+
+		var saved = Capture();
+		IntegrateMotion();
+
+		var moved = Position;
+		int x = moved.X;
+		int y = moved.Y;
+		if (IsPlayer && _sliding) {
+			x += _slideX;
+			y += _slideY;
+		}
+
+		Position = new Vec3i(x, y, world.Terrain.HeightAtWorld(x, y) + Type.RideHeight);
+
+		if (!CollisionTest(world)) {
+			return;
+		}
+
+		Restore(saved);
+
+		if (!IsPlayer) {
+			_backoffTimer = CollisionBackoffTime;
+			_backoffSide = (world.Random.NextMasked(1) == 0) ? CollisionBackoffSide : (short)-CollisionBackoffSide;
+			_backoffReverse = Speed > 0;
+		}
+
+		AllStop();
+
+		if (Thread.InTransition) {
+			// Mid-transition there is no sensible step to reverse, so the machine is cut straight
+			// into its stop animation instead.
+			Thread.SetSequence(Type.StopForwardSequence, 0, 0);
+			return;
+		}
+
+		int reversed = -Speed;
+		if (reversed >= Type.MaxForward) {
+			reversed = Type.MaxForward;
+		} else if (reversed <= Type.ReverseGaitThreshold) {
+			reversed = Type.ReverseGaitThreshold;
+		}
+
+		Speed = (short)reversed;
+		AnimRate = (short)-AnimRate;
+
+		IntegrateMotion();
+
+		// The retry is not terrain-clamped before being tested, and the original has only one save
+		// slot — so a second refusal restores the same tick-start state again.
+		if (CollisionTest(world)) {
+			Restore(saved);
+			Speed = 0;
+		}
+	}
+
+	/// <summary>
+	/// <c>Mech_IntegrateMotion</c> (<c>00418f40</c>) + <c>SimObject_ApplyRootMotion</c>
+	/// (<c>0040250c</c>) — the whole of a HERC's translation and turn-in-place rotation.
+	///
+	/// <para>Seed the thread's root transform to identity, step the animation by this tick's worth
+	/// of animation time, then read the root back: what comes out is exactly the ground movement
+	/// that step covered, ramped within the current frame and committed whole at each frame
+	/// boundary. Rotate it into world space, add it on, and reset.</para>
+	///
+	/// <para>This seeds and reads the locomotion thread throughout. The original seeds the shape's
+	/// first thread (<c>ShapeInst_SeedRootTransform</c>, <c>00478a70</c>) and reads the first one
+	/// after <c>AnimThread_StepAll</c>'s priority re-sort, which is the twist thread while
+	/// locomotion plays a stop/step-off sequence — see docs/retail/formats/dts-node-posing.md, "Several
+	/// threads on one shape".</para>
+	/// </summary>
+	private void IntegrateMotion() {
+		if (Thread == null) {
+			return;
+		}
+
+		Thread.Rate = AnimRate;
+
+		// dt is the timestep in animation ticks: Q8(SimTickDelta, 100), where the 100 is the
+		// original's own animation-time-per-sim-time constant.
+		short delta = (short)SimMath.IntegrateRateOverTick(AnimationTimeRate);
+
+		Thread.WriteRoot(Transform3.Identity);
+		Thread.Advance(delta);
+		var motion = Thread.ReadRoot();
+
+		var rotation = Rotation();
+		var moved = rotation.TransformPoint(motion.X, motion.Y, motion.Z);
+		Position = moved;
+
+		var euler = motion.ToEuler();
+		Pitch = (short)(Pitch + euler.X);
+		Roll = (short)(Roll + euler.Y);
+		Heading = (Heading + euler.Z) & 0xffff;
+		_rotationValid = false;
+	}
+
+	/// <summary>
+	/// The developer keys' move — <c>Mech_HandleCommand</c> (<c>004157c8</c>), codes <c>0x248</c>,
+	/// <c>0x250</c>, <c>0x24b</c> and <c>0x24d</c>: the machine's own frame applied to the offset, and
+	/// the result written straight over its position. Nothing is tested on the way, so it goes through
+	/// terrain, structures and other machines alike. See docs/retail/key-bindings.md.
+	/// </summary>
+	/// <param name="across">Along the machine's own X axis, to its right.</param>
+	/// <param name="along">Along its own Y axis, forward.</param>
+	public void Displace(short across, short along) {
+		Position = Rotation().TransformPoint(across, along, 0);
+	}
+
+	/// <summary>
+	/// The developer keys' turn on the spot — codes <c>0x44b</c> and <c>0x44d</c> of the same handler,
+	/// which add to the euler triple's Z and mark the cached frame stale.
+	/// </summary>
+	public void TurnBy(int angle) {
+		Heading = (Heading + angle) & 0xffff;
+		_rotationValid = false;
+	}
+
+
+	private readonly record struct Snapshot(
+		Vec3i Position, Transform3 Rotation, bool RotationValid, AnimationThread.State Thread);
+
+	/// <summary><c>SimObject_PushTransform</c> (<c>00402628</c>), narrowed to what a HERC needs.</summary>
+	private Snapshot Capture() => new(Position, Rotation(), true, Thread!.Capture());
+
+	/// <summary><c>SimObject_PopTransform</c> (<c>004027fc</c>).</summary>
+	private void Restore(in Snapshot snapshot) {
+		Position = snapshot.Position;
+		_rotation = snapshot.Rotation;
+		_rotationValid = snapshot.RotationValid;
+		Thread!.Restore(snapshot.Thread);
+	}
+
 	/// <summary>The animation rate the fall is entered at — the original's own literal.</summary>
 	private const short FallAnimRate = 100;
 
@@ -507,7 +718,7 @@ public sealed partial class MechObject {
 			if (!Collapsed && thread.Frame == thread.NextFrame) {
 				Collapsed = true;
 				SpreadImpactDamage(world, CollapseImpactDamage, CollapseImpactOdds);
-				world.Sounds?.PlayAt(Audio.SoundId.Collision, Position);
+				world.Sounds?.PlayAt(SoundId.Collision, Position);
 			}
 
 			return;
@@ -521,7 +732,7 @@ public sealed partial class MechObject {
 			thread.SetTarget(type.DeathSequence, -1, 0);
 
 			if (!Collapsed) {
-				world.Sounds?.PlayAt(Audio.SoundId.LocomotionCallA, Position);
+				world.Sounds?.PlayAt(SoundId.LocomotionCallA, Position);
 			}
 		}
 
@@ -630,4 +841,98 @@ public sealed partial class MechObject {
 
 		SpreadImpactDamage(world, spread, (short)(spread + 0x19));
 	}
+
+	/// <summary>
+	/// Current speed scalar (<c>mech+0x28e</c>) — <b>not</b> a velocity. It scales the animation
+	/// rate, and the animation's root motion is what actually moves the machine.
+	/// </summary>
+	public short Speed { get; set; }
+
+	/// <summary>Current turn rate (<c>mech+0x28c</c>), in BAM per tick, added straight to the heading.</summary>
+	public short TurnRate { get; set; }
+
+	/// <summary>
+	/// Throttle setting (<c>mech+0x290</c>), Q10 over ±0x400. Its sign is the direction of travel —
+	/// there is no separate gear — and only a physical throttle lever closes the range to one side.
+	/// </summary>
+	public short Throttle { get; set; }
+
+	/// <summary>
+	/// Set when input moved <see cref="Throttle"/> this frame (<c>mech+0x93</c>). The original uses
+	/// it to arbitrate between the stick and the cockpit's own throttle gauge, which are two-way
+	/// bound — dragging the gauge works because whichever moved last wins.
+	/// </summary>
+	public bool ThrottleDirty { get; set; }
+
+	/// <summary>
+	/// The cockpit's throttle-gauge exchange, once per frame — the part of
+	/// <c>Player_PerFrameCockpitUpdate</c> (<c>0041b130</c>) that reads the gauge's own value out of
+	/// <c>gauge+0xb5</c> and settles which of the two moved last.
+	///
+	/// <para>Whichever side moved wins, and the loser is brought to it: with the dirty flag clear the
+	/// gauge drives <see cref="Throttle"/>, and with it set the machine's throttle is handed back for
+	/// the gauge to follow. Either way both hold the same number when this returns, which is what
+	/// makes the slider track the keyboard and the keyboard pick up where a drag left off.</para>
+	///
+	/// <para><b>A flyer takes the gauge's value twice.</b> The original's own line here is gated on
+	/// the type record's flyer flag and writes <c>mech+0x2d7</c> as well as <c>mech+0x290</c> —
+	/// <see cref="FlightThrottle"/> as well as <see cref="Throttle"/> — because the flight model
+	/// reads its own copy and nothing else would ever reach it. So the cockpit slider is a working
+	/// throttle on a RAZOR, and on a chassis with no keyboard throttle binding it is the <i>only</i>
+	/// one.</para>
+	///
+	/// <para>The gauge's <b>speed</b> half is a different matter: the original feeds it
+	/// <c>mech+0x28e</c>, the walker speed scalar, which no flight path ever writes. A RAZOR's
+	/// throttle bar therefore moves and its speed bar does not — a retail quirk, not an omission
+	/// here. <see cref="DisplaySpeedKph"/> takes the flyer branch and does read airspeed.</para>
+	/// </summary>
+	/// <param name="gaugeThrottle">The gauge's current value, Q10 in the same ±0x400 range.</param>
+	/// <returns>The value both should now read.</returns>
+	public short ExchangeCockpitThrottle(short gaugeThrottle) {
+		if (ThrottleDirty) {
+			ThrottleDirty = false;
+			return Throttle;
+		}
+
+		if (Flight != null) {
+			FlightThrottle = gaugeThrottle;
+		}
+
+		Throttle = gaugeThrottle;
+		return gaugeThrottle;
+	}
+
+	/// <summary>
+	/// All stop — the keypad <c>[5]</c> command, case 7 of <c>Sim_PollPlayerInput</c>'s key switch
+	/// (<c>00460764</c>): zero the throttle and mark it dirty, so the gauge follows the machine
+	/// rather than putting the old setting straight back.
+	/// </summary>
+	public void AllStop() {
+		Throttle = 0;
+		ThrottleDirty = true;
+	}
+
+	/// <summary>Animation playback rate (<c>mech+0x2a0</c>). In steady state it equals <see cref="Speed"/>.</summary>
+	public short AnimRate { get; set; }
+
+	/// <summary>
+	/// The speed the HUD would read for this machine, in km/h. <c>Mech_GetDisplaySpeedKph</c>
+	/// (<c>0041bb3c</c>) branches on the flyer flag: a walker's speed scalar goes through a fixed
+	/// ratio, while a flyer's <see cref="AirSpeed"/> is remapped from its own speed range onto the
+	/// same readout scale, so both chassis kinds fill the same gauge.
+	/// </summary>
+	public int DisplaySpeedKph => Flight is { } flight
+		? Type.DisplayAirSpeedKph(AirSpeed, flight.Data.AirSpeedMax)
+		: Type.DisplaySpeedKph(Speed);
+
+	/// <summary>
+	/// The mech vtable's <c>+0x38</c> speed accessor (<c>00415498</c>): the speed scalar in the units
+	/// the rest of the simulation quotes distances in. The control law above reads only its sign; a
+	/// travelling shot adds the whole of it to its own speed, so a round fired from a machine running
+	/// forward flies faster than one fired standing still (see <see cref="Projectile.Speed"/>).
+	/// </summary>
+	public override short TravelSpeed => (short)SimMath.Q10Multiply(TravelSpeedScale, Speed);
+
+	/// <summary>The accessor's own Q10 factor.</summary>
+	private const int TravelSpeedScale = 2000;
 }

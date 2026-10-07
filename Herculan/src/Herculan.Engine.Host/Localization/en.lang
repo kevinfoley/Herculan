@@ -1,9 +1,15 @@
+language.name English
+general.save    Save
+general.cancel  Cancel
+general.close   Close
 tweak.target_distance_meters.display_name      Show target distance in meters
 tweak.target_distance_meters.description       On the MFD, show target distance in meters on the MFD F5 TARGET screen. Retail shows distance in engine units on this screen only.
 tweak.show_correct_stats.display_name          Show correct stats
 tweak.show_correct_stats.description           Fix HERC and weapon stats that vanilla displayed incorrectly in VSHELL, such as the Outlaw's top speed and the Raptor II's hardpoint count.
 tweak.show_accurate_speed.display_name         Show accurate speed
-tweak.show_accurate_speed.description          Show the HERC's true movement speed on the HUD. Retail shows an inaccurate reading while walking.
+tweak.show_accurate_speed.description          Show the HERC's true movement speed on the HUD. Retail shows about twice the real speed while walking. Running readings are unchanged.
+tweak.show_even_shield_balance.display_name    Round shield balance readout
+tweak.show_even_shield_balance.description     Each press of [ or ] moves the shield balance numbers by exactly 20, so one press forward from the centre reads 120/80. Retail rounds the front number down, and a press moves it slightly less than 20, so the same press reads 119/81.
 tweak.fix_nacelle_impact_position.display_name Fix nacelle impact effect position
 tweak.fix_nacelle_impact_position.description  Draw the impact effect for a hit on the Razor's right nacelle at the correct side, instead of always at the left nacelle.
 tweak.preserve_sound_position.display_name     Preserve sound position
@@ -14,18 +20,31 @@ tweak.show_squadmate_number.display_name       Show squadmate number
 tweak.show_squadmate_number.description        On the Heads Down Display, shows each squadmate's number (corresponding to the number key used to select them) using a label that is unused and hidden in retail
 tweak.fix_computer_message_pref.display_name   Fix COMPUTER MESSAGE Preference
 tweak.fix_computer_message_pref.description    Cockpit computer voiceover is controlled by the COMPUTER MESSAGE preference instead of the PILOT MESSAGE preference.
-tweak.flash_through_second_hit.display_name   Keep damage flash on a second hit
-tweak.flash_through_second_hit.description    A second hit on your cockpit while the screen is still shaking from the first keeps the red damage flash going until the shake ends. In retail, a second hit that lands while the screen is red stops the flash for the rest of the shake.
-tweak.smoother_turret_movement.display_name    Smoother turret movement
+tweak.flash_through_second_hit.display_name    Keep damage flash on a second hit
+tweak.flash_through_second_hit.description     A second hit on your cockpit while the screen is still shaking from the first keeps the red damage flash going until the shake ends. In retail, a second hit that lands while the screen is red stops the flash for the rest of the shake.
+tweak.show_altitude_tape.display_name          Show Razor altitude tape
+tweak.show_altitude_tape.description           Draw the tick tape that scrolls with your height beside the Razor's altitude scale. Retail draws the scale's brackets, column and marker, but places the tape outside its own clipping area, so it never appears.
+tweak.drop_pod_sound_from_pod.display_name    Drop pod sounds from the pod
+tweak.drop_pod_sound_from_pod.description     Hear a falling drop pod's whistle from the pod itself, following it down, and its landing from where it lands. The sounds are louder and carry for kilometres. Retail plays both sounds at your own position, so they never tell you where the pod is.
+tweak.smoother_turret_movement.display_name   Smoother turret movement
 tweak.smoother_turret_movement.description     Smooth turret rotation when aiming with a joystick or other analog input. Retail rounds the rotation value, causing stutter at slow aiming speeds. Has no effect when aiming with the keyboard.
-tweak.mouse_external_view.display_name        Mouse-controlled outside view
-tweak.mouse_external_view.description         Swing the outside view [V] round your HERC by dragging with the left mouse button, while you keep control of the HERC and the cockpit keys keep working. Retail steers the camera with the joystick or arrow keys instead, and [Enter] switches them between the camera and the HERC.
+tweak.mouse_external_view.display_name         Mouse-controlled outside view
+tweak.mouse_external_view.description          Swing the outside view [V] round your HERC by dragging with the left mouse button, while you keep control of the HERC and the cockpit keys keep working. Retail steers the camera with the joystick or arrow keys instead, and [Enter] switches them between the camera and the HERC.
 tweak.fix_defend_position_order.display_name  Fix DEFEND POSITION order
 tweak.fix_defend_position_order.description   A squadmate ordered to DEFEND POSITION on open ground guards that ground. In retail it can guard a unit named by an earlier order instead, because the Heads Down Display never clears its last order.
 tweak.fix_weapon_damage_records.display_name  Fix weapon damage
 tweak.fix_weapon_damage_records.description   ATC75, ATC100, LAS400 and LAS500 deal the damage listed for them, and fire their own rounds and beams. In retail each one deals a smaller weapon's damage: ATC75 and ATC100 hit exactly like ATC35 and ATC50, LAS500 exactly like LAS300, and LAS400 only slightly harder than LAS200. Each also fires that weapon's round or beam, so ATC75 and ATC100 rounds fly as far as ATC35 and ATC50 rounds, and the LAS400 and LAS500 beams are as narrow as the LAS200 and LAS300 beams.
 tweak.charge_bar_power_level.display_name  Interactive Charge Bar
 tweak.charge_bar_power_level.description   Set an energy weapon's power level by clicking or dragging its charge bar on the weapon panel: the bar then fills to where you let go. The [-] and [=] keys keep working. Retail builds the bar for this, but the weapon row's own button covers it, so it never takes a click.
+tweaks.title                   Tweaks
+tweaks.category.cosmetic       Cosmetic
+tweaks.category.ai             AI
+tweaks.category.functional     Functional
+tweaks.category.input          Input
+tweaks.none                    None
+tweaks.defaults                Defaults
+tweaks.recommended             Recommended
+tweaks.all                     All
 install_prompt.window_title    HERCULAN Engine — Find Earthsiege 2
 install_prompt.message         HERCULAN could not find Earthsiege 2. Choose the Earthsiege 2 folder: the one that holds the {0} folder.
 install_prompt.path_hint       Earthsiege 2 folder
@@ -33,7 +52,87 @@ install_prompt.browse          Browse...
 install_prompt.picker_title    Choose the Earthsiege 2 folder
 install_prompt.picker_open     Waiting for the folder picker...
 install_prompt.picker_failed   The folder picker could not be opened. Type or paste the folder's path instead.
-install_prompt.use_folder      Use This Folder
+install_prompt.accept          Use This Folder
+install_prompt.install         Install from a Disc...
 install_prompt.quit            Quit
 install_prompt.no_path         Type or paste the path to the Earthsiege 2 folder.
 install_prompt.not_an_install  {0} is not an Earthsiege 2 folder: it has no {1} folder in it.
+mission_load.window_title      HERCULAN Engine — Error
+mission_load.missing_file      The mission cannot start: {0} is missing. Start the mission from the menus, which write this file.
+crash.window_title            HERCULAN Engine — Error
+crash.message                 HERCULAN stopped because of an error: {0} The details are in {1}.
+menu.debug                     Debug
+menu.tweaks                    Tweaks
+menu.settings                  Settings
+settings.title                 Settings
+settings.folders               Earthsiege 2 folders
+settings.install_folder        Install folder
+settings.install_message       Choose the Earthsiege 2 folder: the one that holds the {0} folder. The front end restarts on the new install.
+settings.install_from_disc     Install from a Disc or Image...
+settings.disc_folder           Disc folder (data\drive.cfg)
+settings.no_disc               None: data\drive.cfg is missing or empty
+settings.image_overrides       Not used while a disc image is set.
+settings.disc_image            Disc image (HERCULAN only)
+settings.no_disc_image         None
+settings.change                Change...
+settings.remove                Remove
+settings.in_mission            Return to the front end to change this.
+settings.languages             Languages
+settings.game_language         Game language
+settings.interface_language    HERCULAN UI language
+settings.write_failed          Could not write {0}: {1}
+disc_prompt.message            Choose the Earthsiege 2 disc folder, such as the CD drive or a copy of the disc. It is written to the install's data\{0}, which the original game reads too, and the front end restarts.
+disc_prompt.path_hint          Disc folder
+disc_prompt.picker_title       Choose the Earthsiege 2 disc folder
+disc_prompt.accept             Use This Folder
+disc_prompt.no_path            Type or paste the path to the disc folder.
+disc_prompt.missing            {0} does not exist.
+disc_prompt.whitespace         {0} has a space in it, and the original game reads {1} only up to the first space.
+disc_prompt.not_latin1         {0} has characters the original game cannot read from {1}.
+image_prompt.message           Choose an Earthsiege 2 disc image (.iso, .bin or .cue). HERCULAN reads the disc from it in place of the disc folder. It is written to a line of the install's data\{0} that the original game does not read, and the front end restarts.
+image_prompt.path_hint         Disc image
+image_prompt.picker_title      Choose an Earthsiege 2 disc image
+image_prompt.accept            Use This Image
+image_prompt.no_path           Type or paste the path to the disc image.
+image_prompt.missing           {0} does not exist.
+image_prompt.unreadable        {0} cannot be read as a disc image: {1}
+image_prompt.not_es2           {0} is not an Earthsiege 2 disc: it has no game archives or no intro movie.
+install.window_title           HERCULAN Engine — Install Earthsiege 2
+install.title                  Install from a Disc or Image
+install.message                Install Earthsiege 2 from a retail disc into a new folder, copying what the original installer copies. The disc can be a CD drive, a copy of the disc, or a disc image (.iso, .bin or .cue). Nothing on the disc is run.
+install.source                 Disc
+install.source_hint            Disc folder or disc image
+install.browse_folder          Folder...
+install.browse_image           Image...
+install.picker_folder_title    Choose the Earthsiege 2 disc folder
+install.picker_image_title     Choose an Earthsiege 2 disc image
+install.image_filter           Disc images
+install.source_missing         {0} does not exist.
+install.source_unreadable      {0} cannot be read as a disc image: {1}
+install.no_script              {0} is not an Earthsiege 2 disc: it has no {1}.
+install.unknown_version        {0} holds a version of Earthsiege 2 this installer does not know ({1}).
+install.found                  Earthsiege 2 {0}
+install.size                   Size
+install.size_minimum           Minimum ({0:N0} MB)
+install.size_medium            Medium ({0:N0} MB)
+install.size_maximum           Maximum ({0:N0} MB)
+install.size_note              A smaller install leaves more of the game on the disc, so the disc must stay where it is.
+install.language               Language
+install.language_english       English
+install.language_french        Français (French)
+install.language_german        Deutsch (German)
+install.destination            Install folder
+install.destination_hint       A new or empty folder
+install.picker_destination_title  Choose the folder to install into
+install.no_destination         Type or paste the folder to install into.
+install.destination_file       {0} is a file.
+install.destination_not_empty  {0} is not empty.
+install.destination_inside_disc  {0} is inside the disc folder.
+install.no_space               The install needs {0:N0} MB, but only {1:N0} MB are free there.
+install.retail_note            The original game's programs are copied too, but they will not run from this install: HERCULAN leaves out the video codecs, DirectX and the rest of the system setup the original installer did, and the original game cannot read a disc image. Play this install with HERCULAN.
+install.install                Install
+install.copying                Copying {0} ({1} of {2})
+install.cancelled              The install was cancelled, and what it had copied was removed.
+install.failed                 The install failed, and what it had copied was removed: {0}
+install.done                   Earthsiege 2 is installed in {0}.
+install.use                    Use This Install

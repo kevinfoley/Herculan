@@ -12,8 +12,9 @@ namespace Herculan.Engine.Render;
 public readonly record struct GroundShapeDraw(SceneItem Item, Vec3i Position, int Radius);
 
 /// <summary>
-/// The ground and what is painted with it: the terrain item, its grid, and the ground shapes to
-/// draw in the terrain's paint order — see <see cref="SceneRenderer.Render(Camera, IEnumerable{SceneItem}, GroundShapeLayer?, int, int, int, int)"/>.
+/// The ground and what is painted with it: the terrain item, its grid, the ground shapes to draw in
+/// the terrain's paint order, and the table every other object is filed in by terrain cell — see
+/// <see cref="SceneRenderer.Render(Camera, IEnumerable{SceneItem}, GroundShapeLayer?, int, int, int, int)"/>.
 /// One per loaded zone, holding the zone's <see cref="TerrainVisibleRegion"/> between frames as the
 /// original's grid holds its own.
 /// </summary>
@@ -34,4 +35,11 @@ public sealed class GroundShapeLayer {
 
 	/// <summary>The shapes to draw this frame, in the order the original submits them: oldest first.</summary>
 	public List<GroundShapeDraw> Shapes { get; } = new();
+
+	/// <summary>
+	/// Every other object, filed by terrain cell each pass to decide whether it is drawn. An item or a
+	/// billboard whose <see cref="DrawEntry"/> is not among <see cref="ObjectDrawTable.Entries"/> is drawn
+	/// as it was last filed.
+	/// </summary>
+	public ObjectDrawTable Objects { get; } = new();
 }

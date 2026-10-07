@@ -10,7 +10,7 @@ public sealed partial class HeightGrid {
 	/// share. The move is undone on both axes when the terrain face under
 	/// <paramref name="position"/> turns away from <paramref name="viewer"/>, and on each axis whose
 	/// new cell lies one past <paramref name="region"/>'s bounding box. Null off the grid, which is
-	/// the original's no-cell bucket. See docs/formats/terrain-drawing.md,
+	/// the original's no-cell bucket. See docs/retail/formats/terrain-drawing.md,
 	/// "<c>HeightGrid_PickDrawCell</c>".
 	/// </summary>
 	public (int X, int Y)? PickDrawCell(Vec3i position, int radius, Vec3i viewer,

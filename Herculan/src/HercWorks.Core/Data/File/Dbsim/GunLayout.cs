@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// <summary>
 /// FILE - /SIMVOL0/GL/{herc}.GL — 'Gun Layout', the chassis' hardpoint list: an <c>int16</c> count,
 /// then that many 26-byte <see cref="HardpointEntry"/> records. Layout and field roles:
-/// docs/formats/gun-layout-gl.md.
+/// docs/retail/formats/gun-layout-gl.md.
 /// </summary>
 public class GunLayout {
 	public short TotalGuns { get; set; }
@@ -24,7 +24,7 @@ public class GunLayout {
 
 		/// <summary>
 		/// <c>+0x02</c> — convergence pitch node. Negative on every retail chassis, which is what lets
-		/// gun convergence apply. See docs/formats/gun-layout-gl.md#record.
+		/// gun convergence apply. See docs/retail/formats/gun-layout-gl.md#record.
 		/// </summary>
 		public short ConvergencePitchNode { get; set; }
 
@@ -40,7 +40,7 @@ public class GunLayout {
 		/// <summary><c>+0x07</c> — the cockpit weapon row this mount owns; the panel prints it as <c>n+1</c>.</summary>
 		public byte FireChainNumber { get; set; }
 
-		/// <summary><c>+0x08</c>-<c>+0x0f</c> — no assigned role; see docs/formats/gun-layout-gl.md#open.</summary>
+		/// <summary><c>+0x08</c>-<c>+0x0f</c> — no assigned role; see docs/retail/formats/gun-layout-gl.md#open.</summary>
 		public short Unk3_0or_Neg5000 { get; set; }
 
 		/// <inheritdoc cref="Unk3_0or_Neg5000"/>
@@ -69,7 +69,7 @@ public class GunLayout {
 
 		/// <summary>
 		/// <c>+0x18</c> — the pitch the gun's model is thrown at when the mount is destroyed. See
-		/// docs/simulation/destruction-effects.md.
+		/// docs/retail/simulation/destruction-effects.md.
 		/// </summary>
 		public short DebrisPitch { get; set; }
 	}

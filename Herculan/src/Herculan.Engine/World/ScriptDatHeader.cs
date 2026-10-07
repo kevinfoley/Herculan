@@ -4,7 +4,7 @@ namespace Herculan.Engine.World;
 
 /// <summary>
 /// The 20-byte header of <c>data\script.dat</c>, the mission handoff VSHELL writes and DBSIM reads
-/// (see docs/formats/script-dat.md for the 13 record blocks that follow it).
+/// (see docs/retail/formats/script-dat.md for the 13 record blocks that follow it).
 ///
 /// <para>Two of its fields are what a scene needs before anything else, and both are decoded
 /// from <c>DBSim_LoadScriptDat</c> (<c>00424308</c>), which reads the header into one global and then

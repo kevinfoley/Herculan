@@ -3,8 +3,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>
 /// Row #17 (58 bytes/record) — a mission objective, <c>script.dat</c> block 12: a condition the
 /// simulation tests about a subject, the failure text, and the mission counters it writes. No GUID;
-/// nothing names one. See docs/formats/msn-mission-file.md, "Row #17 field decode", and
-/// docs/simulation/mission-objectives.md.
+/// nothing names one. See docs/retail/formats/msn-mission-file.md, "Row #17 field decode", and
+/// docs/retail/simulation/mission-objectives.md.
 /// </summary>
 public class MissionObjective58 {
 	/// <summary>0x00 — condition ref. Not exported to <c>script.dat</c>.</summary>
@@ -20,7 +20,7 @@ public class MissionObjective58 {
 	public short Required { get; set; }
 	public const int RequiredWord = 0x02 / 2;
 
-	/// <summary>0x04 — the condition code the objective tests: the simulator has cases for 0-4 and 6-10; retail files use 0-4, 6 and 7. See docs/simulation/mission-objectives.md, "What each condition asks".</summary>
+	/// <summary>0x04 — the condition code the objective tests: the simulator has cases for 0-4 and 6-10; retail files use 0-4, 6 and 7. See docs/retail/simulation/mission-objectives.md, "What each condition asks".</summary>
 	public short ConditionCode { get; set; }
 
 	/// <summary>0x06 — what <see cref="SubjectRef"/> names: 0 a group (row #16), 1 a mech (#12), 2 a flyer (#13), 3 a base (#14).</summary>
@@ -31,7 +31,7 @@ public class MissionObjective58 {
 	public short SubjectRef { get; set; }
 	public const int SubjectRefWord = 0x08 / 2;
 
-	/// <summary>0x0A — ref into row #6 (<see cref="MapPoint22"/>); no reader is found (see docs/simulation/mission-objectives.md#open).</summary>
+	/// <summary>0x0A — ref into row #6 (<see cref="MapPoint22"/>); no reader is found (see docs/retail/simulation/mission-objectives.md#open).</summary>
 	public short PointRef { get; set; }
 	public const int PointRefWord = 0x0A / 2;
 

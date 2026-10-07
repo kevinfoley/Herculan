@@ -92,7 +92,7 @@ public sealed partial class BaseObject {
 			}
 		}
 
-		var (elevationError, traverseError) = AimTurret(aim);
+		var (elevationError, traverseError) = AimTurret(world, aim);
 
 		if (SimMath.CountdownTimerTick(ref _fireWindowTimer) == 0) {
 			_fireWindowOpen = !_fireWindowOpen;

@@ -1,0 +1,38 @@
+# Builds both solutions and runs their tests on every push and pull request.
+# Windows, because HercWorksMDK is WinForms (net8.0-windows). -warnaserror holds both solutions at 0 warnings.
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: Herculan
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build engine
+        run: dotnet build HerculanEngine.sln -c Release -warnaserror
+
+      - name: Build toolkit
+        run: dotnet build HercWorksMDK.sln -c Release -warnaserror
+
+      - name: Test engine
+        run: dotnet test HerculanEngine.sln -c Release --no-build
+
+      - name: Test toolkit
+        run: dotnet test HercWorksMDK.sln -c Release --no-build

@@ -9,7 +9,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// 0 a flag comparison, 1 a random draw, 2 a range over its parent's draw, 3 a variant key's parent —
 /// and type 3 is what the other rows' variant keys name. The load is
 /// <see cref="Io.Transform.Common.MissionGenerator"/>; the rules are
-/// docs/formats/msn-mission-file.md#the-conditions--row-1.
+/// docs/retail/formats/msn-mission-file.md#the-conditions--row-1.
 /// </summary>
 public class MissionCondition14 : MapObject {
 	/// <summary>0x02 — this record's own condition; for type 2, its parent.</summary>

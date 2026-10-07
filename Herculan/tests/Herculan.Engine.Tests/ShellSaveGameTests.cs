@@ -95,7 +95,7 @@ public class ShellSaveGameTests : IDisposable {
 
 	/// <summary>
 	/// The save is written in place without truncating, as <c>FileRWStream_Open</c> opens it, so a longer
-	/// file already there keeps its tail (docs/formats/save-games.md#streams-never-truncate).
+	/// file already there keeps its tail (docs/retail/formats/save-games.md#streams-never-truncate).
 	/// </summary>
 	[Fact]
 	public void WritesTheSaveInPlaceWithoutTruncating() {
@@ -133,6 +133,42 @@ public class ShellSaveGameTests : IDisposable {
 		Assert.Equal(new byte[] { 1, 2, 3 }, File.ReadAllBytes(Path.Combine(Sav, "script6.dat")));
 		Assert.False(File.Exists(Path.Combine(Sav, "missn6.str")));
 		Assert.Equal(new byte[] { 4, 5 }, File.ReadAllBytes(player));
+	}
+
+	/// <summary>
+	/// A slot's load copies its three files over the install's <c>data\</c> ones, as <c>Career_LoadSlot</c> does,
+	/// leaving the one the slot lacks as it was, and names the <c>data\</c> files as the working files.
+	/// </summary>
+	[Fact]
+	public void LoadCopiesTheSlotsWorkingFilesIntoData() {
+		Directory.CreateDirectory(Sav);
+		File.WriteAllBytes(Path.Combine(Sav, ShellSaveSlots.ScriptFile(3)), new byte[] { 1, 2 });
+		File.WriteAllBytes(Path.Combine(Sav, ShellSaveSlots.PlayerFile(3)), new byte[] { 3 });
+		var data = ShellWorkingFiles.InData(_root);
+		Directory.CreateDirectory(ShellWorkingFiles.DataDirectory(_root));
+		File.WriteAllBytes(data.Script!, new byte[] { 9, 9, 9, 9 });
+		File.WriteAllBytes(data.Text!, new byte[] { 8 });
+
+		var working = ShellSaveSlots.CopyWorkingFilesIn(_root, 3);
+
+		Assert.Equal(data, working);
+		Assert.Equal(new byte[] { 1, 2 }, File.ReadAllBytes(data.Script!));
+		Assert.Equal(new byte[] { 8 }, File.ReadAllBytes(data.Text!));
+		Assert.Equal(new byte[] { 3 }, File.ReadAllBytes(data.Player!));
+	}
+
+	/// <summary>
+	/// <c>data\script.dat</c> and <c>data\mission.str</c> are written in place, so a shorter mission keeps the
+	/// longer one's tail.
+	/// </summary>
+	[Fact]
+	public void WritesAMissionFileWithoutTruncating() {
+		string path = Path.Combine(_root, "script.dat");
+		File.WriteAllBytes(path, new byte[] { 7, 7, 7, 7, 7 });
+
+		ShellWorkingFiles.WriteMissionFile(path, new byte[] { 1, 2 });
+
+		Assert.Equal(new byte[] { 1, 2, 7, 7, 7 }, File.ReadAllBytes(path));
 	}
 
 	/// <summary>A slot the directory does not list, or a file that cannot be opened, writes nothing and says why.</summary>

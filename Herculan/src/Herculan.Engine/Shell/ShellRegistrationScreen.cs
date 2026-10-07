@@ -18,7 +18,7 @@ public enum ShellRegistrationButton {
 /// What <c>START NEW GAME</c> opens: a pilot name and a skill for a new campaign career. Built once at
 /// startup by <c>Registration_BuildScreen</c> (<c>0043b69e</c>), put up by <c>Registration_Show</c>
 /// (<c>0043bc0a</c>) and hidden by <c>Registration_Hide</c> (<c>0043bcb9</c>). See
-/// docs/shell/screen-layout.md#the-registration-screen.
+/// docs/retail/shell/screen-layout.md#the-registration-screen.
 ///
 /// <para>Every rect is a literal in the executable, kept parent-relative as the builder writes it: the
 /// panel in the canvas, the box and the two outer buttons in the panel, the rest in the box, and the

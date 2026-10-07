@@ -98,7 +98,7 @@ public sealed class JoystickBindings {
 	/// <summary>
 	/// Whether button <paramref name="index"/> is latched, waiting for a release. While the first row is,
 	/// the original holds the pair of axes its camera pointers address still — see
-	/// docs/formats/joystick-input.md#the-buttons.
+	/// docs/retail/formats/joystick-input.md#the-buttons.
 	/// </summary>
 	public bool ButtonLatched(int index) => index >= 0 && index < ButtonCount && _latched[index];
 
@@ -139,6 +139,12 @@ public sealed class JoystickBindings {
 	/// <paramref name="capabilities"/> what it can do; a row whose control the device does not have is
 	/// skipped exactly as the original skips it, so a stick with no rudder cannot be steered by a
 	/// RUDDER binding left over from one that had.
+	///
+	/// <para>With no stick present this returns <see cref="JoystickPilotInput.None"/> and the keyboard
+	/// keeps the movement pair. The original goes on applying the bindings after a stick fails to
+	/// enumerate, so a JOYSTICK row of 1 moves the keyboard off steering and throttle, which in a RAZOR
+	/// is pitch and roll — docs/retail/formats/joystick-input.md#a-stick-that-does-not-enumerate. Not
+	/// reproduced.</para>
 	/// </summary>
 	public JoystickPilotInput Resolve(JoystickReading reading, JoystickCapabilities capabilities,
 			SimulatorPreferences preferences) {
@@ -147,34 +153,13 @@ public sealed class JoystickBindings {
 			return JoystickPilotInput.None;
 		}
 
-		var axes = ResolveSources(reading, capabilities, preferences, out var stickRow, out var throttleRow);
+		var axes = ApplyHat(ResolveSources(reading, capabilities, preferences, out var stickRow, out var throttleRow),
+			reading, preferences);
 
-		// The hat, which is not an axis source but writes straight over the turret pair. Only one
-		// direction can apply: the original tests north, south, east then west and stops at the first,
-		// so a hat reporting two at once resolves to the earliest of them.
-		var views = JoystickHat.None;
-
-		switch (Assignment(preferences, 3)) {
-			case JoystickAxisAssignment.Turret:
-				if (reading.Hat.HasFlag(JoystickHat.North)) {
-					axes = axes with { TorsoPitch = HatAxis };
-				} else if (reading.Hat.HasFlag(JoystickHat.South)) {
-					axes = axes with { TorsoPitch = -HatAxis };
-				} else if (reading.Hat.HasFlag(JoystickHat.East)) {
-					axes = axes with { TorsoTwist = HatAxis };
-				} else if (reading.Hat.HasFlag(JoystickHat.West)) {
-					axes = axes with { TorsoTwist = -HatAxis };
-				}
-
-				break;
-
-			// Under VIEWS the four bytes pass through untouched to CockpitView_PollViewDevice
-			// (00432b14), which queues view commands 1, 0, 5 and 4 off them. Under either other
-			// setting the original zeroes them first, so the view path sees nothing.
-			case JoystickAxisAssignment.Movement:
-				views = reading.Hat;
-				break;
-		}
+		// Under VIEWS the four hat bytes pass through untouched to CockpitView_PollViewDevice (00432b14), which
+		// queues view commands 1, 0, 5 and 4 off them. Under either other setting the original zeroes them
+		// first, so the view path sees nothing.
+		var views = Assignment(preferences, 3) == JoystickAxisAssignment.Movement ? reading.Hat : JoystickHat.None;
 
 		var pressed = ResolveButtons(reading, capabilities, preferences, out int claimed);
 		return new JoystickPilotInput(axes, ResolveFire(reading, preferences), pressed, views,
@@ -185,15 +170,19 @@ public sealed class JoystickBindings {
 	}
 
 	/// <summary>
-	/// The steering and throttle pair while the controls drive a camera rather than the machine —
+	/// The four axes while the controls drive a camera rather than the machine —
 	/// <c>Input_BuildPlayerDevice</c>'s <c>InputDrivesCamera</c> arm, short of Backturn. The stick stops
 	/// feeding its bound axes: wherever it has moved, its X and Y replace the keyboard's first pair,
-	/// which stays on the steering and throttle axes rather than moving to the turret. A lever and a
-	/// rudder go on feeding their bindings, but only on a stick that has a lever; on one without, both
-	/// are zeroed. The camera reads the result's first two axes.
+	/// which stays on the steering and throttle axes rather than moving to the turret, and the keyboard's
+	/// second pair is zeroed. A lever and a rudder go on feeding their bindings, but only on a stick that
+	/// has a lever; on one without, both are zeroed. The hat under HAT = 2 writes over the turret pair as
+	/// it does outside this arm. The camera reads the first two axes; the turret pitch is what
+	/// <c>Sim_PollPlayerInput</c> still hands the machine — docs/retail/formats/joystick-input.md#while-the-camera-has-the-controls.
 	/// </summary>
 	public PilotAxes CombineForCamera(JoystickReading reading, JoystickCapabilities capabilities,
 			SimulatorPreferences preferences, PilotAxes keyboard) {
+		keyboard = keyboard with { TorsoTwist = 0, TorsoPitch = 0 };
+
 		if (!capabilities.Present) {
 			return keyboard;
 		}
@@ -206,7 +195,30 @@ public sealed class JoystickBindings {
 		var axes = capabilities.HasThrottle
 			? ResolveSources(reading with { StickX = 0, StickY = 0 }, capabilities, preferences, out _, out _)
 			: PilotAxes.Centred;
-		return axes.Or(keyboard);
+		return ApplyHat(axes.Or(keyboard), reading, preferences);
+	}
+
+	// The hat under HAT = 2, which is not an axis source but writes straight over the turret pair at HatAxis.
+	// Only one direction can apply: the original tests north, south, east then west and stops at the first,
+	// so a hat reporting two at once resolves to the earliest of them.
+	private PilotAxes ApplyHat(PilotAxes axes, JoystickReading reading, SimulatorPreferences preferences) {
+		if (Assignment(preferences, 3) != JoystickAxisAssignment.Turret) {
+			return axes;
+		}
+
+		if (reading.Hat.HasFlag(JoystickHat.North)) {
+			return axes with { TorsoPitch = HatAxis };
+		}
+
+		if (reading.Hat.HasFlag(JoystickHat.South)) {
+			return axes with { TorsoPitch = -HatAxis };
+		}
+
+		if (reading.Hat.HasFlag(JoystickHat.East)) {
+			return axes with { TorsoTwist = HatAxis };
+		}
+
+		return reading.Hat.HasFlag(JoystickHat.West) ? axes with { TorsoTwist = -HatAxis } : axes;
 	}
 
 	// The four axis sources, in destination order, and a second rank behind them. A control whose
@@ -335,7 +347,7 @@ public sealed class JoystickBindings {
 	/// <c>SimOptions[0x11 + i]</c> — a literal <c>0x11</c> at <c>0045b22b</c>, the walking block's
 	/// first button row, where the dispatch loop one step later correctly uses
 	/// <c>ControlsOptionBase + 4</c>. So a RAZOR finds its trigger through the <i>walker's</i>
-	/// bindings. This engine reads the trigger from the current block, which differs only with bindings the CONTROLS panel cannot set — docs/formats/joystick-input.md#the-buttons. Which button
+	/// bindings. This engine reads the trigger from the current block, which differs only with bindings the CONTROLS panel cannot set — docs/retail/formats/joystick-input.md#the-buttons. Which button
 	/// the scan keeps out of the dispatch still follows the walker's block, as
 	/// <see cref="TriggerScanRow"/> says.</para>
 	/// </summary>
@@ -363,7 +375,7 @@ public sealed class JoystickBindings {
 	/// <para>The slot is claimed, and the button latched, before its action is looked at, so a button
 	/// with no case (OFF, or FIRE on any row but <see cref="TriggerScanRow"/>'s) claims it too. The
 	/// trigger scan's own button never does: the original zeroes its byte before the loop —
-	/// docs/formats/joystick-input.md#the-buttons.</para>
+	/// docs/retail/formats/joystick-input.md#the-buttons.</para>
 	/// </summary>
 	private IReadOnlyList<JoystickAction> ResolveButtons(JoystickReading reading,
 			JoystickCapabilities capabilities, SimulatorPreferences preferences, out int claimedButton) {
@@ -410,9 +422,9 @@ public sealed class JoystickBindings {
 	/// first FIRE row of the <b>walker's</b> block, whichever machine is being piloted, because the scan
 	/// reads <c>SimOptions[0x11 + i]</c> through a literal (<c>0045b22b</c>). In a RAZOR that is the
 	/// button on the walker's FIRE row, whatever the RAZOR binds it to, and a RAZOR FIRE row on another
-	/// button reaches the dispatch — docs/formats/joystick-input.md#the-buttons.
+	/// button reaches the dispatch — docs/retail/formats/joystick-input.md#the-buttons.
 	/// </summary>
-	private static int TriggerScanRow(SimulatorPreferences preferences) {
+	public static int TriggerScanRow(SimulatorPreferences preferences) {
 		for (int i = 0; i < ButtonCount; i++) {
 			if ((JoystickAction)preferences[Prefs.HercControlsBase + Prefs.ControlsAxisCount + i]
 					== JoystickAction.Fire) {

@@ -156,7 +156,7 @@ public static class SimTrig {
 	/// a quarter turn, because the sim's forward axis is model Y and not model X; the pitch is taken
 	/// against the ground-plane distance with the simulation's own sqrt-free magnitude, so it carries
 	/// the same few-percent bias every other range in the simulation does. Retail reading:
-	/// docs/simulation/dbsim-physics-notes.md, "Fixed-point math toolkit".
+	/// docs/retail/simulation/dbsim-physics-notes.md, "Fixed-point math toolkit".
 	///
 	/// <para>Both guidance paths read it — the plasma round's (<c>Bullet_HomingSteer</c>) and a
 	/// launcher's (<c>Rocket_HomingSteer</c>) — and both pass the target first and the shot second,
@@ -191,12 +191,18 @@ public static class SimTrig {
 	/// <c>Math_OffsetPointByBearing</c> (<c>004928f0</c>) — moves a point <paramref name="distance"/>
 	/// along a bearing on the ground plane, the bearing quarter-turned back because the simulation's
 	/// forward axis is model Y. Z is untouched.
+	///
+	/// <para><b>The offset is 16-bit.</b> The distance is cut to its low word and each product to a
+	/// <c>short</c>, so a distance past ±32767 wraps — see
+	/// docs/retail/simulation/ground-vehicles.md#the-control-law--0046a798-and-0046a854 for the
+	/// caller that depends on it.</para>
 	/// </summary>
 	public static Vec3i OffsetPointByBearing(Vec3i point, short bearing, int distance) {
 		short turned = (short)(bearing + BinaryAngle.QuarterTurn);
+		short length = unchecked((short)distance);
 		return new Vec3i(
-			point.X + SimMath.Q14Multiply(distance, Cos(turned)),
-			point.Y + SimMath.Q14Multiply(distance, Sin(turned)),
+			point.X + unchecked((short)SimMath.Q14Multiply(length, Cos(turned))),
+			point.Y + unchecked((short)SimMath.Q14Multiply(length, Sin(turned))),
 			point.Z);
 	}
 }

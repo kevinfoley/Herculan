@@ -5,8 +5,8 @@ namespace HercWorks.Core.Data.Struct.Vshell.Sav;
 /// squadmates and for the player. Variable-length on disk, 31 bytes plus the name; VSHELL reads it
 /// with <c>Pilot_Read</c> (<c>0040fefc</c>) and writes it with <c>Pilot_Write</c> (<c>0040fd5f</c>).
 /// The offsets below are the 59-byte in-memory record's. See
-/// <c>docs/formats/save-games.md#pilot-record--59-bytes-0x3b-in-memory</c>, and
-/// <c>docs/shell/campaign-loop.md#pilot-progression</c> for how skill and rank advance.
+/// <c>docs/retail/formats/save-games.md#pilot-record--59-bytes-0x3b-in-memory</c>, and
+/// <c>docs/retail/shell/campaign-loop.md#pilot-progression</c> for how skill and rank advance.
 /// </summary>
 public class PilotEntry {
 	/// <summary><c>+0x00</c>, roster id 0-11: squad index x 4 plus a per-squad shuffle.</summary>

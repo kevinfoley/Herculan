@@ -30,7 +30,7 @@ public enum ShellRepairCategory {
 /// 9 x 6 external table, a 9 x 9 internal table and a 33-entry weapon table by multiplying each share
 /// by the chassis price through <see cref="Q10"/>. Every later cost is a plain percentage of one of
 /// those unit values, which is why the whole model can live behind three small functions. See
-/// docs/formats/herc-catalogs.md and docs/shell/armory.md.</para>
+/// docs/retail/formats/herc-catalogs.md and docs/retail/shell/armory.md.</para>
 ///
 /// <para><b>Two different targets, two different functions.</b> <see cref="HercCost"/> is
 /// <c>Repair_HercCost</c> and prices a rebuild to a target the caller names — 100 everywhere the
@@ -242,7 +242,7 @@ public sealed class ShellRepairCosts {
 
 	/// <summary>
 	/// <c>Herc_ScrapValue</c> (<c>00413b50</c>) — what scrapping a machine yields, in kilograms
-	/// (docs/shell/armory.md#scrapping): each external group and internal at its condition's share of
+	/// (docs/retail/shell/armory.md#scrapping): each external group and internal at its condition's share of
 	/// its unit value, and each mount below <see cref="ShellHangar.ReturnToStockCondition"/> likewise
 	/// against its weapon's value. Every term truncates on its own. A machine not yet built is worth
 	/// <c>(100 - built) / 100</c> of its price, divided first as the original does, so nothing between 1%

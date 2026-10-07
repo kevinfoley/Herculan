@@ -47,7 +47,11 @@ public enum MissionSide {
 /// The resolved resource base name (<c>HYPERION</c>, <c>SKIMMER</c>) for mechs and flyers, or null
 /// for bases, which are named by table index rather than by string.
 /// </param>
-/// <param name="SlotIndex">Its record index within its <c>script.dat</c> block, for diagnostics.</param>
+/// <param name="SlotIndex">
+/// The roster slot the mission's refs name it by: its record index within its <c>script.dat</c>
+/// block, or for a machine of the player's squad the block-7 slot block 11 record 0 names in its
+/// position, -1 when none. Order subjects, action targets and objective subjects resolve through it.
+/// </param>
 /// <param name="GroupIndex">The block-11 record that activated and placed it.</param>
 /// <param name="Position">Spawn position in world units. Z is left at zero — the ground under a
 /// spawn point is a terrain query the scene does once the zone is loaded, exactly as DBSIM does.</param>
@@ -99,8 +103,12 @@ public enum MissionSide {
 /// outside block 5 read as <c>-1</c>. See <see cref="Herculan.Engine.Sim.SimObject.DefeatAction"/>.
 /// </param>
 /// <param name="StartingCondition">
-/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.StartingCondition"/>
-/// <see cref="PristineCondition"/> for anything but a mission-roster mech.
+/// The roster record's starting condition, per cent —
+/// <see cref="HercWorks.Core.Data.File.Msn.Script.ScriptMechRecord.StartingCondition"/> or
+/// <see cref="HercWorks.Core.Data.File.Msn.Script.ScriptBaseRecord.StartingCondition"/>, which the
+/// two classes read differently: see <see cref="Sim.MechObject.ApplyStartingCondition"/> and
+/// <see cref="Sim.BaseObject.ApplyStartingCondition"/>. <see cref="PristineCondition"/> for anything
+/// else.
 /// </param>
 /// <param name="FormationOffset">
 /// This member's unrotated spread offset out of <c>MFORMS.DAT</c>, or null for the group's slot 0
@@ -120,6 +128,12 @@ public enum MissionSide {
 /// The flyer twin of <paramref name="FormationOffset"/>, out of <c>FFORMS.DAT</c> and carrying a Z
 /// as well — see <see cref="FlyerFormationTable"/>. A flyer wingman re-reads it every tick it holds
 /// station, through <see cref="Sim.FlyerObject.FormationOffset"/>.
+/// </param>
+/// <param name="GroundPoint">
+/// Where a mech's spawn height is read off the terrain: its group's point, before the formation
+/// spread — <c>Mech_AttachToGroup</c> (<c>00417aa8</c>) queries the ground there and keeps that Z for
+/// every member. Null for anything else, and for a mech whose roster record names its own point,
+/// which the scene settles on the ground under that point.
 /// </param>
 public sealed record MissionPlacement(
 	MissionUnitKind Kind,
@@ -142,7 +156,8 @@ public sealed record MissionPlacement(
 	int DefeatActionRef = -1,
 	short StartingCondition = 100,
 	OutOfActionReport? OutOfActionReport = null,
-	SquadCondition? SquadCondition = null) {
+	SquadCondition? SquadCondition = null,
+	Vec3i? GroundPoint = null) {
 
 	/// <summary>
 	/// The condition a machine the mission says nothing about starts in — full health, and the
@@ -229,7 +244,7 @@ public sealed class Mission {
 	/// spawn points, waypoints and route legs all reference. Kept whole because the block's
 	/// <i>extent</i> is a fact in its own right: <c>DBSim_LoadScriptDat</c> accumulates the bounding
 	/// box as it reads and the Heads-Down Display's map is framed by it end to end. See
-	/// <see cref="Herculan.Engine.Content.HddMapBounds"/>.
+	/// <see cref="MissionBox"/>.
 	/// </summary>
 	public IReadOnlyList<Vec3i> Coordinates { get; }
 

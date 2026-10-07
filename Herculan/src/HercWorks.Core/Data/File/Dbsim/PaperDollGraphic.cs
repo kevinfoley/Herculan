@@ -6,7 +6,7 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// FILE - /SIMVOL0/PDG/{herc}.PDG — the paper-doll damage diagram: three views, each an origin/size
 /// pair and a list of damage regions over that view's frame of <c>{herc}.HBA</c>/<c>.DBA</c>, then
 /// the weapon-icon anchors. Coordinates are in the 320-wide space. Read by <c>PaperDoll_Load</c>
-/// (<c>004379cc</c>); see docs/formats/cockpit-hud-widgets.md#pdg--paper-doll-damage-diagram.
+/// (<c>004379cc</c>); see docs/retail/formats/cockpit-hud-widgets.md#pdg--paper-doll-damage-diagram.
 /// </summary>
 public class PaperDollGraphic {
 	public int TotalViews { get; set; }
@@ -32,14 +32,14 @@ public class PaperDollGraphic {
 		/// <summary>The <c>COLORS.DAT</c> id the art drew this body part in — the pixels the tint replaces.</summary>
 		public int ColorId { get; set; }
 
-		/// <summary>Recolour mode, 0-3. 0 in every retail region. See docs/formats/cockpit-hud-widgets.md#tinting.</summary>
+		/// <summary>Recolour mode, 0-3. 0 in every retail region. See docs/retail/formats/cockpit-hud-widgets.md#tinting.</summary>
 		public int RecolorMode { get; set; }
 	}
 
 	/// <summary>
 	/// Where one weapon icon sits around the doll — entry <c>n</c> places the icon of the hardpoint
 	/// whose <c>.GL</c> slot byte (<see cref="GunLayout.HardpointEntry.LoadoutSlot"/>) is <c>n</c>.
-	/// See docs/formats/cockpit-hud-widgets.md#weapon-icons.
+	/// See docs/retail/formats/cockpit-hud-widgets.md#weapon-icons.
 	/// </summary>
 	public class HardpointEntry {
 		/// <summary>The anchor point, relative to the view's origin, in the 320-wide space.</summary>

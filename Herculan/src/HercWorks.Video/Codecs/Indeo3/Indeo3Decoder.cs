@@ -13,7 +13,7 @@ namespace HercWorks.Video.Codecs.Indeo3;
 /// top of the one before it. Each buffer carries one extra row above the picture, filled with
 /// <c>0x40</c>, which is what intra cells on the top edge predict from.</para>
 ///
-/// <para>See <c>docs/formats/indeo3.md</c> for the frame layout, the cell tree, the cell modes and
+/// <para>See <c>docs/retail/formats/indeo3.md</c> for the frame layout, the cell tree, the cell modes and
 /// the codebooks.</para>
 /// </summary>
 internal sealed class Indeo3Decoder : IVideoCodec {

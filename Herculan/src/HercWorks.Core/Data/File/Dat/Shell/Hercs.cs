@@ -9,7 +9,7 @@ namespace HercWorks.Core.Data.File.Dat.Shell;
 ///
 /// <para>Retail ships four Outlaws in bays 0-3 and, in bay 4, a Razor at 0% with three missions
 /// left to build — the state a freshly ordered chassis is left in, not a damaged one. See
-/// docs/formats/herc-catalogs.md#gamhercsdat--the-starting-hangar.</para>
+/// docs/retail/formats/herc-catalogs.md#gamhercsdat--the-starting-hangar.</para>
 /// </summary>
 public class Hercs {
 	public Entry[]? Data { get; set; }

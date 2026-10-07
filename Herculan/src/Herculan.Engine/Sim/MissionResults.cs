@@ -6,14 +6,14 @@ namespace Herculan.Engine.Sim;
 /// What the simulator leaves the shell as a mission ends: <c>data\results.dat</c> and the mission counters
 /// written back over <c>data\mission.var</c>, both by <c>Mission_WriteResults</c> (<c>0042412c</c>), and the
 /// exit code <c>Sim_Shutdown</c> (<c>00461eec</c>) returns. See
-/// docs/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c for the file and
-/// docs/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7 for its reader.
+/// docs/retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c for the file and
+/// docs/retail/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7 for its reader.
 /// </summary>
 public static class MissionResults {
 	/// <summary>The results file's name, written beside <c>mission.var</c>.</summary>
 	public const string FileName = "results.dat";
 
-	/// <summary><c>Sim_Shutdown</c>'s exit codes (docs/command-line.md#exit-codes).</summary>
+	/// <summary><c>Sim_Shutdown</c>'s exit codes (docs/retail/command-line.md#exit-codes).</summary>
 	public const int QuitExitCode = 0;
 	public const int DebriefExitCode = 3;
 	public const int DemoExitCode = 6;

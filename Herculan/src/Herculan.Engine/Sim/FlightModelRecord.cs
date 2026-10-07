@@ -37,7 +37,7 @@ public sealed class FlightModelRecord {
 
 	/// <summary>
 	/// How high above the ground this airframe may fly at a given airspeed, in world units. The
-	/// flight model does not clamp against it. See docs/simulation/razor-flight.md#the-flight-ceiling.
+	/// flight model does not clamp against it. See docs/retail/simulation/razor-flight.md#the-flight-ceiling.
 	/// </summary>
 	public int Ceiling(int airSpeed) =>
 		SimMath.Q16Multiply(airSpeed - Data.AirSpeedMin, CeilingPerSpeed) + Data.CeilingAtMinSpeed;

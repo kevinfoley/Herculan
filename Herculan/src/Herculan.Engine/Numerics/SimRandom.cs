@@ -16,7 +16,7 @@ namespace Herculan.Engine.Numerics;
 /// starting point. That is only half of replay parity: a given roll's result also depends on how
 /// many times the generator was advanced before it, and this engine does not yet make the same
 /// number of draws in the same order as the original. Treat a specific roll as replay-faithful only
-/// once the call history is matched too — see docs/simulation/random-generator.md.</para>
+/// once the call history is matched too — see docs/retail/simulation/random-generator.md.</para>
 /// </summary>
 public sealed class SimRandom {
 	/// <summary>Table length, from the original's <c>== '8'</c> (0x38) cursor wrap test.</summary>

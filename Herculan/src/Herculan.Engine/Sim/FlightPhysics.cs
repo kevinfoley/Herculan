@@ -90,7 +90,7 @@ public struct FlightBlock {
 /// <c>FlightModel_Step</c> (<c>00466a54</c>) — the simulation's one flight model, shared by the
 /// player's RAZOR and by every Cybrid flyer. It settles, in this order: the throttle setting and the
 /// airspeed it asks for, the sideslip drag, the three angular rates, the new attitude, and finally
-/// the velocity vector in that new attitude. See docs/simulation/razor-flight.md.
+/// the velocity vector in that new attitude. See docs/retail/simulation/razor-flight.md.
 ///
 /// <para><b>Nothing here moves the aircraft.</b> What it produces is
 /// <see cref="FlightBlock.WorldVelocity"/>, which each class' own move tick integrates.</para>

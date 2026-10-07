@@ -89,7 +89,23 @@ public class ConfigAndStringFileTests {
 		Drive parsed = Assert.IsType<Drive>(new DriveTransformer().Parse(Encoding.ASCII.GetBytes("  D:\\ES2\r\nignored")));
 
 		Assert.Equal("D:\\ES2", parsed.Directory);
+		Assert.Equal("ignored", parsed.InstallDirectory);
 		Assert.Null(new DriveTransformer().Parse(Encoding.ASCII.GetBytes(" \r\n"))!.Directory);
+	}
+
+	[Fact]
+	public void DriveWritesOneDirectoryPerLineAndRefusesWhitespace() {
+		var transformer = new DriveTransformer();
+
+		Assert.Equal("D:\\\r\nC:\\SIERRA\\ES2", Encoding.ASCII.GetString(
+			transformer.Write(new Drive { Directory = "D:\\", InstallDirectory = "C:\\SIERRA\\ES2" })!));
+		Assert.Equal("D:\\", Encoding.ASCII.GetString(transformer.Write(new Drive { Directory = "D:\\" })!));
+		Assert.Throws<ArgumentException>(() => transformer.Write(new Drive { Directory = "C:\\Program Files\\ES2" }));
+
+		// The install's line is discarded by the readers, so its spaces survive a round trip.
+		var spaced = transformer.Parse(Encoding.ASCII.GetBytes("D:\\\r\nC:\\Program Files\\ES2"))!;
+		Assert.Equal("C:\\Program Files\\ES2", spaced.InstallDirectory);
+		Assert.Equal("D:\\\r\nC:\\Program Files\\ES2", Encoding.ASCII.GetString(transformer.Write(spaced)!));
 	}
 
 	[Fact]

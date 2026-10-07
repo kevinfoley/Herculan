@@ -5,12 +5,18 @@ namespace HercWorks.Core.Io.Transform.Dbsim;
 
 /// <summary>
 /// Transforms byte[] data to and from simvol0/dat/WEAPONS.DAT (see <see cref="Weapons"/> and
-/// docs/formats/weapons-dat-sim.md for the full field-by-field writeup). No Java equivalent existed
-/// beyond a bare Total field — cracked from DBSIM.EXE disassembly. Records are
-/// variable-length; every byte is preserved even where semantics aren't decoded yet, so this
-/// round-trips byte-exact — verified against the real retail file.
+/// docs/retail/formats/weapons-dat-sim.md for the full field-by-field writeup). No Java equivalent existed
+/// beyond a bare Total field — cracked from DBSIM.EXE disassembly. Records are variable-length:
+/// each opens with a <c>.DMG</c> piece and a <c>.COL</c> cluster, which this reads and writes through
+/// <see cref="HercDamageFileTransformer"/> and <see cref="HercColliderTransformer"/>, the formats'
+/// own walks, exactly as <c>Weapons_LoadResourceTables</c> (<c>0040fc8c</c>) calls
+/// <c>HercPiece_ReadRecord</c> and <c>Collision_ReadCluster</c>. Round-trips byte-exact against the
+/// retail file.
 /// </summary>
 public class WeaponsSimTransformer : ByteTransformer<Weapons> {
+	private readonly HercDamageFileTransformer _pieces = new();
+	private readonly HercColliderTransformer _clusters = new();
+
 	public override Weapons? Parse(byte[]? inputArray) {
 		if (inputArray == null || inputArray.Length <= 0) {
 			return null;
@@ -26,19 +32,10 @@ public class WeaponsSimTransformer : ByteTransformer<Weapons> {
 		for (int i = 0; i < data.Total; i++) {
 			var t = data.NewWeaponMountTemplate();
 
-			t.Field0 = IndexShortLE();
-			t.Field1 = IndexShortLE();
-			t.Field2 = IndexShortLE();
-			short depCount = IndexShortLE();
-			t.DependentRaw = IndexShortLEArray(depCount * 2);
-
-			t.ClusterComponent = IndexShortLE();
-			t.SphereCountRaw = IndexShortLE();
-
-			t.FiringSequence = new short[t.FiringSequenceCount][];
-			for (int s = 0; s < t.FiringSequenceCount; s++) {
-				t.FiringSequence[s] = IndexShortLEArray(4);
-			}
+			int offset = Index;
+			t.Piece = _pieces.ReadPiece(inputArray, ref offset);
+			t.Cluster = _clusters.ReadCluster(inputArray, ref offset);
+			Index = offset;
 
 			t.Tail = IndexSegment(0x30);
 
@@ -52,32 +49,14 @@ public class WeaponsSimTransformer : ByteTransformer<Weapons> {
 
 		using var outStream = new MemoryStream();
 
-		void WriteShort(short s) {
-			var b = WriteShortLE(s);
-			outStream.Write(b, 0, b.Length);
-		}
-
-		WriteShort(data.Total);
+		var total = WriteShortLE(data.Total);
+		outStream.Write(total, 0, total.Length);
 
 		for (int i = 0; i < data.Templates!.Length; i++) {
 			var t = data.Templates[i];
 
-			WriteShort(t.Field0);
-			WriteShort(t.Field1);
-			WriteShort(t.Field2);
-			WriteShort((short)(t.DependentRaw.Length / 2));
-			foreach (short v in t.DependentRaw) {
-				WriteShort(v);
-			}
-
-			WriteShort(t.ClusterComponent);
-			WriteShort(t.SphereCountRaw);
-			foreach (var seq in t.FiringSequence) {
-				foreach (short v in seq) {
-					WriteShort(v);
-				}
-			}
-
+			_pieces.WritePiece(outStream, t.Piece);
+			_clusters.WriteCluster(outStream, t.Cluster);
 			outStream.Write(t.Tail, 0, t.Tail.Length);
 		}
 

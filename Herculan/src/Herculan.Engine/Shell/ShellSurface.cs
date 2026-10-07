@@ -19,7 +19,7 @@ namespace Herculan.Engine.Shell;
 /// filled with it. That is load-bearing rather than a convenience: a <c>TitledPanel</c> whose body
 /// fill is switched off dithers its body in a single colour and leaves the alternate pixels
 /// untouched, so the backdrop showing through at 50% is the effect the original gets from not
-/// painting them. See docs/shell/screen-layout.md.</para>
+/// painting them. See docs/retail/shell/screen-layout.md.</para>
 ///
 /// <para>Every primitive clips to the surface, so a widget may draw outside its own rect or off the
 /// canvas without a bounds check of its own — which the title bar's hatch does, starting five pixels
@@ -180,7 +180,7 @@ public sealed class ShellSurface {
 	/// </summary>
 	/// <param name="flags">
 	/// The blitter's flag word. 2 mirrors left to right, as DBSIM's glance view uses it
-	/// (docs/formats/cockpit-views.md), and every left/right pair in <c>gam\rpr_*.dat</c> is one frame
+	/// (docs/retail/formats/cockpit-views.md), and every left/right pair in <c>gam\rpr_*.dat</c> is one frame
 	/// placed twice with 0 and 2. 1 is taken as the top-to-bottom mirror, which no shell layout record
 	/// uses.
 	/// </param>

@@ -1,4 +1,5 @@
 using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Shell;
 using HercWorks.Core.Data.File.Dat.Shell;
 using HercWorks.Core.Io.Transform.Shell;
@@ -27,7 +28,7 @@ public class HardpointOverlayTests {
 			return null;
 		}
 
-		var content = GameContent.Mount(GameInstall.ArchiveDirectory(root), new[] { "SHELL0.VOL" });
+		var content = GameContent.MountShell(root);
 		return content.Read("gam", name) is { } bytes
 			? new HardpointOverlayTransformer().Parse(bytes)
 			: null;
@@ -141,7 +142,7 @@ public class HardpointOverlayTests {
 			return;
 		}
 
-		var content = GameContent.Mount(GameInstall.ArchiveDirectory(root), new[] { "SHELL0.VOL" });
+		var content = GameContent.MountShell(root);
 		if (content.Read("gam", name) is not { } original) {
 			return;
 		}

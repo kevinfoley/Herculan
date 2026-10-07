@@ -41,20 +41,7 @@ public class HercColliderTransformer : ByteTransformer<HercCollider> {
 
 			var clusters = new ColliderCluster[NonNegative(IndexShortLE())];
 			for (int c = 0; c < clusters.Length; c++) {
-				short componentIndex = IndexShortLE();
-
-				// The original tests the count as `value & 0x1fff` but allocates and reads it
-				// unmasked, so the mask is only a zero-test. Reproduced as written.
-				short sphereCount = IndexShortLE();
-				var spheres = new ColliderSphere[
-					(sphereCount & SphereCountMask) != 0 ? NonNegative(sphereCount) : 0];
-
-				for (int s = 0; s < spheres.Length; s++) {
-					spheres[s] = new ColliderSphere(
-						IndexShortLE(), IndexShortLE(), IndexShortLE(), IndexShortLE());
-				}
-
-				clusters[c] = new ColliderCluster(componentIndex, spheres);
+				clusters[c] = ParseCluster();
 			}
 
 			nodes[n] = new ColliderNode(nodeIndex, clusters);
@@ -62,6 +49,51 @@ public class HercColliderTransformer : ByteTransformer<HercCollider> {
 
 		offset = Index;
 		return nodes;
+	}
+
+	/// <summary>
+	/// One cluster — <c>Collision_ReadCluster</c> (<c>0040cc14</c>) itself, which the sim
+	/// <c>WEAPONS.DAT</c> reader runs too (see <see cref="WeaponsSimTransformer"/>). Advances
+	/// <paramref name="offset"/> past everything it read.
+	/// </summary>
+	public ColliderCluster ReadCluster(byte[] bytes, ref int offset) {
+		SetBytes(bytes);
+		Index = offset;
+		var cluster = ParseCluster();
+		offset = Index;
+		return cluster;
+	}
+
+	/// <summary>The write side of <see cref="ReadCluster"/>.</summary>
+	public void WriteCluster(Stream outStream, ColliderCluster cluster) {
+		var spheres = cluster.Spheres ?? Array.Empty<ColliderSphere>();
+
+		Emit(outStream, WriteShortLE(cluster.ComponentIndex));
+		Emit(outStream, WriteShortLE((short)spheres.Length));
+
+		foreach (var sphere in spheres) {
+			Emit(outStream, WriteShortLE(sphere.X));
+			Emit(outStream, WriteShortLE(sphere.Y));
+			Emit(outStream, WriteShortLE(sphere.Z));
+			Emit(outStream, WriteShortLE(sphere.Radius));
+		}
+	}
+
+	private ColliderCluster ParseCluster() {
+		short componentIndex = IndexShortLE();
+
+		// The original tests the count as `value & 0x1fff` but allocates and reads it
+		// unmasked, so the mask is only a zero-test. Reproduced as written.
+		short sphereCount = IndexShortLE();
+		var spheres = new ColliderSphere[
+			(sphereCount & SphereCountMask) != 0 ? NonNegative(sphereCount) : 0];
+
+		for (int s = 0; s < spheres.Length; s++) {
+			spheres[s] = new ColliderSphere(
+				IndexShortLE(), IndexShortLE(), IndexShortLE(), IndexShortLE());
+		}
+
+		return new ColliderCluster(componentIndex, spheres);
 	}
 
 	public override byte[]? Write(HercCollider col) {
@@ -76,17 +108,7 @@ public class HercColliderTransformer : ByteTransformer<HercCollider> {
 			Emit(outStream, WriteShortLE((short)clusters.Length));
 
 			foreach (var cluster in clusters) {
-				var spheres = cluster.Spheres ?? Array.Empty<ColliderSphere>();
-
-				Emit(outStream, WriteShortLE(cluster.ComponentIndex));
-				Emit(outStream, WriteShortLE((short)spheres.Length));
-
-				foreach (var sphere in spheres) {
-					Emit(outStream, WriteShortLE(sphere.X));
-					Emit(outStream, WriteShortLE(sphere.Y));
-					Emit(outStream, WriteShortLE(sphere.Z));
-					Emit(outStream, WriteShortLE(sphere.Radius));
-				}
+				WriteCluster(outStream, cluster);
 			}
 		}
 
@@ -102,5 +124,5 @@ public class HercColliderTransformer : ByteTransformer<HercCollider> {
 	/// </summary>
 	private static int NonNegative(short count) => count < 0 ? 0 : count;
 
-	private static void Emit(MemoryStream outArr, byte[] data) => outArr.Write(data, 0, data.Length);
+	private static void Emit(Stream outArr, byte[] data) => outArr.Write(data, 0, data.Length);
 }

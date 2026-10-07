@@ -7,19 +7,19 @@ namespace Herculan.Engine.Shell;
 /// the builder constructs them, then the two under the boxes.
 /// </summary>
 public enum ShellPracticeButton {
-	/// <summary><c>Damage</c>, <c>0044bf29</c>: steps option <c>0x26</c>, <c>Vulnerable</c>/<c>Invulnerable</c>.</summary>
+	/// <summary><c>Damage</c>, <c>PracticeScreen_OnDamage</c> (<c>0044bf29</c>): steps option <c>0x26</c>, <c>Vulnerable</c>/<c>Invulnerable</c>.</summary>
 	Damage = 0,
 
-	/// <summary><c>Ammo</c>, <c>0044bfe6</c>: steps option <c>0x25</c>, <c>Limited</c>/<c>Unlimited</c>.</summary>
+	/// <summary><c>Ammo</c>, <c>PracticeScreen_OnAmmo</c> (<c>0044bfe6</c>): steps option <c>0x25</c>, <c>Limited</c>/<c>Unlimited</c>.</summary>
 	Ammo = 1,
 
-	/// <summary><c>Mission Difficulty</c>, <c>0044c0a3</c>: steps option <c>0x27</c>, <c>ROOKIE</c> to <c>ELITE</c>.</summary>
+	/// <summary><c>Mission Difficulty</c>, <c>PracticeScreen_OnDifficulty</c> (<c>0044c0a3</c>): steps option <c>0x27</c>, <c>ROOKIE</c> to <c>ELITE</c>.</summary>
 	Difficulty = 2,
 
-	/// <summary><c>Time of Day</c>, <c>0044c160</c>: steps option <c>0x29</c>, <c>Day</c>/<c>Night</c>.</summary>
+	/// <summary><c>Time of Day</c>, <c>PracticeScreen_OnTimeOfDay</c> (<c>0044c160</c>): steps option <c>0x29</c>, <c>Day</c>/<c>Night</c>.</summary>
 	TimeOfDay = 3,
 
-	/// <summary><c>Herc Type</c>, <c>0044c21d</c>: steps option <c>0x28</c> through the nine chassis. Live from row 4 down.</summary>
+	/// <summary><c>Herc Type</c>, <c>PracticeScreen_OnHercType</c> (<c>0044c21d</c>): steps option <c>0x28</c> through the nine chassis. Live from row 4 down.</summary>
 	HercType = 4,
 
 	/// <summary><c>Main Menu</c>, <c>0044c2da</c>: hides the screen and puts the main menu back up.</summary>
@@ -35,7 +35,7 @@ public enum ShellPracticeButton {
 /// <c>PracticeScreen_Build</c> (<c>0044ac80</c>), put up by <c>PracticeScreen_Show</c>
 /// (<c>0044bc92</c>) and taken down by <c>PracticeScreen_Hide</c> (<c>0044bcb3</c>); its selection is
 /// moved by <c>PracticeScreen_SelectRow</c> (<c>0044bd7c</c>). See
-/// docs/shell/screen-layout.md#the-practice-missions-screen.
+/// docs/retail/shell/screen-layout.md#the-practice-missions-screen.
 ///
 /// <para>Every rect is a literal in the executable, kept parent-relative as the builder writes it: the
 /// content panel in the canvas, the two boxes and the two lower buttons in the panel, and the rest in
@@ -93,7 +93,7 @@ public sealed class ShellPracticeScreen {
 	/// <summary>
 	/// The <c>prefs.cfg</c> option each parameter steps, its modulus, and the first <c>estext.bin</c>
 	/// entry of the run its readout prints — the value is added to it. Indexed by
-	/// <see cref="ShellPracticeButton"/>. See docs/shell/screen-layout.md, "The parameters".
+	/// <see cref="ShellPracticeButton"/>. See docs/retail/shell/screen-layout.md, "The parameters".
 	/// </summary>
 	private static readonly (int Option, int Modulus, int FirstText)[] Parameters = {
 		(0x26, 2, 0x128),

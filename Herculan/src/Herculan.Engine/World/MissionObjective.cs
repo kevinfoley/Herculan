@@ -33,7 +33,7 @@ public enum MissionObjectiveSubject {
 ///
 /// <para><b>The field-to-offset mapping is the spawn pass's read order</b>, which is the only
 /// statement of it: seven shorts, then ten counter refs, then ten operations. See
-/// docs/simulation/mission-objectives.md.</para>
+/// docs/retail/simulation/mission-objectives.md.</para>
 /// </summary>
 /// <param name="Required"><inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.Required"/></param>
 /// <param name="ConditionCode">Record <c>+0x02</c> — which question is asked. See the constants below.</param>
@@ -44,7 +44,7 @@ public enum MissionObjectiveSubject {
 /// </param>
 /// <param name="Point">
 /// Record <c>+0x08</c> resolved to a block-1 coordinate, or null. Carried because the record carries
-/// it; no reader is found (see docs/simulation/mission-objectives.md#open).
+/// it; no reader is found (see docs/retail/simulation/mission-objectives.md#open).
 /// </param>
 /// <param name="RouteRef">
 /// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.RouteRef"/>

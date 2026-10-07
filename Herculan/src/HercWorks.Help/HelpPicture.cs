@@ -9,14 +9,14 @@ namespace HercWorks.Help;
 public sealed record HelpPicture(int Width, int Height, byte[] Rgb, IReadOnlyList<HelpHotspot> Hotspots);
 
 /// <summary>
-/// A picture's clickable region (docs/formats/winhelp.md#hotspots). <paramref name="Kind"/> is the
+/// A picture's clickable region (docs/retail/formats/winhelp.md#hotspots). <paramref name="Kind"/> is the
 /// command byte, <c>0xE6</c> — a pop-up — throughout the corpus.
 /// </summary>
 public sealed record HelpHotspot(byte Kind, int Left, int Top, int Width, int Height, uint Hash, string Name, string Context);
 
 /// <summary>
 /// Decodes the one picture layout the corpus uses: a single 24-bit device-independent bitmap, unpacked
-/// or run-length packed (docs/formats/winhelp.md#pictures).
+/// or run-length packed (docs/retail/formats/winhelp.md#pictures).
 /// </summary>
 internal static class PictureReader {
 	private const ushort Magic = 0x706C;
@@ -91,7 +91,7 @@ internal static class PictureReader {
 		return new ByteCursor(bytes, pictureStart + (int)at, pictureStart + (int)at + (int)size);
 	}
 
-	// Run-length packing (docs/formats/winhelp.md#pictures). The output is clamped to the bitmap, which
+	// Run-length packing (docs/retail/formats/winhelp.md#pictures). The output is clamped to the bitmap, which
 	// some retail pictures overrun with padding, and input left over once it is full is ignored.
 	private static byte[] Unpack(ByteCursor packed, int length) {
 		var output = new byte[length];

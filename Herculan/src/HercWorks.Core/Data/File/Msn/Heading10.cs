@@ -2,7 +2,7 @@ namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
 /// Row #7 (10 bytes/record) — a heading, <c>script.dat</c> block 2. See
-/// docs/formats/msn-mission-file.md, "Row #7 field decode".
+/// docs/retail/formats/msn-mission-file.md, "Row #7 field decode".
 /// </summary>
 public class Heading10 : MapObject {
 	/// <summary>0x02 — condition ref.</summary>

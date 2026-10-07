@@ -24,7 +24,7 @@ public enum LabelAlign {
 /// <summary>
 /// A <c>.DFN</c>/<c>.HFN</c> bitmap font — DBSIM's only HUD text mechanism. The header layout, the
 /// per-font ink indices and the verification against all 54 retail font files are in
-/// docs/formats/dfn-hfn-dci.md, "<c>.DFN</c> / <c>.HFN</c> — bitmap font".
+/// docs/retail/formats/dfn-hfn-dci.md, "<c>.DFN</c> / <c>.HFN</c> — bitmap font".
 ///
 /// <para>Two consequences this class is built around. Each glyph is <c>width x cellHeight</c> bytes,
 /// one palette index per pixel with 0 transparent and exactly one ink value, so the 18
@@ -70,7 +70,7 @@ public sealed class HudFont {
 	/// <c>.DFN</c> against a 10-row one. <b>Not</b> <see cref="CellHeight"/>, which is what the glyph
 	/// art occupies: it is the ink-tall band that gets centred in a label's rect, with the two cell
 	/// rows past it hanging below as descender space. Centring the full cell instead sits every label
-	/// a pixel and a half high. See docs/formats/dfn-hfn-dci.md, "<c>inkHeight</c> and label
+	/// a pixel and a half high. See docs/retail/formats/dfn-hfn-dci.md, "<c>inkHeight</c> and label
 	/// placement".
 	/// </summary>
 	public int InkHeight { get; }
@@ -109,7 +109,7 @@ public sealed class HudFont {
 	/// <c>Label_SetRect</c> (<c>00438884</c>) and <c>Label_SetText</c> (<c>00438920</c>) place it
 	/// between them. Every HUD label in the game goes through that pair, so this is the one placement
 	/// rule the cockpit, the MFD and the Heads-Down Display all share. The formula is in
-	/// docs/formats/mfd.md, "Label placement"; there is no vertical alignment flag, so it is
+	/// docs/retail/formats/mfd.md, "Label placement"; there is no vertical alignment flag, so it is
 	/// <see cref="InkHeight"/> that gets centred.
 	///
 	/// <para>All of it is integer arithmetic in the original, including both <c>&gt;&gt; 1</c>s, and

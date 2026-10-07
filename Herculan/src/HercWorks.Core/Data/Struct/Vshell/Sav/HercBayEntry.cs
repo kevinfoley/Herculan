@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.Struct.Vshell.Sav;
 /// One hangar bay's HERC record in <see cref="File.Sav.PlayerSave"/> — the save form, written by
 /// <c>Herc_Write</c> (<c>0041123e</c>), in the order the properties appear. The <c>gam\*.dat</c>
 /// catalogs carry a shorter form of the same record, <see cref="ShellHercData"/>. See
-/// <c>docs/formats/save-games.md#herc-record--122-bytes-0x7a-in-memory</c>.
+/// <c>docs/retail/formats/save-games.md#herc-record--122-bytes-0x7a-in-memory</c>.
 /// </summary>
 public class HercBayEntry {
 	/// <summary><c>+0x00</c>, the chassis type, 0-8.</summary>

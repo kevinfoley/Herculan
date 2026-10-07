@@ -4,7 +4,7 @@ namespace HercWorks.Help;
 public sealed record HelpMacroCall(string Name, IReadOnlyList<string> Arguments);
 
 /// <summary>
-/// Splits a macro string into calls (docs/formats/winhelp.md#macros). The syntax is
+/// Splits a macro string into calls (docs/retail/formats/winhelp.md#macros). The syntax is
 /// <c>Name(arg, arg);Name(...)</c>, where a string argument is quoted <c>`like this'</c> and quotes
 /// nest, so <c>`JI(`',`ctx')'</c> is one argument holding a macro of its own.
 ///

@@ -3,7 +3,7 @@
 /// <summary>
 /// Which of the two reassess implementations a behaviour state installs in its <c>+0x30</c> slot.
 /// The roster splits cleanly in two and there is no third — see
-/// docs/simulation/ai-dispatch.md, "The 22 states".
+/// docs/retail/simulation/ai-dispatch.md, "The 22 states".
 /// </summary>
 public enum ReassessSlot {
 	/// <summary>No reassess at all: the player's two states, <c>in limbo</c>, <c>dead</c>, <c>disabled</c>.</summary>
@@ -18,8 +18,8 @@ public enum ReassessSlot {
 
 /// <summary>
 /// Which think function a behaviour state installs in its <c>+0x18</c> slot. <see cref="None"/> is
-/// the two states that genuinely have none — see docs/simulation/ai-navigation.md,
-/// docs/simulation/ai-combat-states.md and docs/simulation/ai-dispatch.md.
+/// the two states that genuinely have none — see docs/retail/simulation/ai-navigation.md,
+/// docs/retail/simulation/ai-combat-states.md and docs/retail/simulation/ai-dispatch.md.
 /// </summary>
 public enum ThinkSlot {
 	/// <summary>No think: <c>deciding</c> and <c>in limbo</c>.</summary>
@@ -28,7 +28,7 @@ public enum ThinkSlot {
 	/// <summary>
 	/// <c>Mech_BehaviourPlayerThink</c> (<c>0041c194</c>), shared by <c>player</c> and
 	/// <c>player fly</c>: the mission-progress slot the machine the player is flying runs in place of
-	/// an AI one. See docs/simulation/player-waypoints.md.
+	/// an AI one. See docs/retail/simulation/player-waypoints.md.
 	/// </summary>
 	Player,
 
@@ -85,7 +85,7 @@ public enum ThinkSlot {
 /// One of DBSIM's 22 behaviour state descriptors — the <c>0x3e</c>-byte records at
 /// <c>BehaviourStateTable</c> (<c>004993a4</c>) that <c>Behaviour_BuildStateTable</c>
 /// (<c>00413ed4</c>) fills at startup. Field meanings, the flag-bit consumers and the whole
-/// dispatch model are in docs/simulation/ai-dispatch.md; this is a transcription of the table the
+/// dispatch model are in docs/retail/simulation/ai-dispatch.md; this is a transcription of the table the
 /// initialiser writes, read out of the disassembly rather than out of any data file.
 ///
 /// <para><b>The move slot is not modelled as a slot.</b> Each descriptor carries one, and it is
@@ -214,7 +214,7 @@ public sealed class BehaviourState {
 /// The behaviour block embedded in every machine at <c>mech+0x4d</c> — <c>0x45</c> bytes running to
 /// <c>mech+0x91</c>, of which the three fields below are what the dispatch layer reads.
 /// <c>Behaviour_SetState</c> (<c>00413e50</c>) is the only writer, and it has 30 call sites, which
-/// are the state machine's edge list. See docs/simulation/ai-dispatch.md.
+/// are the state machine's edge list. See docs/retail/simulation/ai-dispatch.md.
 /// </summary>
 public struct BehaviourBlock {
 	/// <summary>Block <c>+0x00</c> — the installed descriptor. Null before the constructor installs one.</summary>
@@ -249,7 +249,7 @@ public struct BehaviourBlock {
 	/// <summary>
 	/// <c>Behaviour_CountTick</c> (<c>00413eb0</c>), the last step of every AI tick: the first call
 	/// after <see cref="SetState"/> only clears <see cref="JustInstalled"/>, every later one counts.
-	/// See docs/simulation/ai-dispatch.md#the-mechs-behaviour-block--mech0x4d.
+	/// See docs/retail/simulation/ai-dispatch.md#the-mechs-behaviour-block--mech0x4d.
 	/// </summary>
 	public void CountTick() {
 		if (JustInstalled) {

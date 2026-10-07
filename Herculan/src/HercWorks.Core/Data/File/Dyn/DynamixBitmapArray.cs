@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dyn;
 
 /// <summary>
 /// A <c>.DBA</c> bitmap array — also <c>.HBA</c>, <c>.HB0</c>-<c>.HB2</c> and <c>.DB0</c>-<c>.DB2</c>:
-/// a short header, then one <see cref="DynamixBitmap"/> per frame. See docs/formats/dfn-hfn-dci.md,
+/// a short header, then one <see cref="DynamixBitmap"/> per frame. See docs/retail/formats/dfn-hfn-dci.md,
 /// "The shared "Dynamix resource" envelope".
 /// </summary>
 public class DynamixBitmapArray {

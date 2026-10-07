@@ -48,7 +48,7 @@ public partial class WeaponStatsForm : Form {
 
 	/// <summary>
 	/// The longest catalog code the game can hold: VSHELL reads it, NUL included, into the 16-byte
-	/// head of its in-memory record. See <c>docs/formats/weapons-dat.md</c>.
+	/// head of its in-memory record. See <c>docs/retail/formats/weapons-dat.md</c>.
 	/// </summary>
 	private const int MaxCodeLength = 15;
 

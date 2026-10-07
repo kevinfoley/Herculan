@@ -78,10 +78,12 @@ public static class CollisionModelReader {
 	/// circumscribing.
 	///
 	/// <para>The original seeds the box at ±10000 and does not special-case an empty cluster, which
-	/// would leave it inverted; nothing in the retail data has one, and an empty bound here is
-	/// returned as a zero sphere so the test simply misses.</para>
+	/// leaves it inverted. Every mech <c>.COL</c> has empty clusters, its weapon mounts', and an
+	/// empty hardpoint keeps one. Whatever the original's inverted bound does at the coarse test, the
+	/// empty sphere list under it strikes nothing, so an empty bound here is a zero sphere that misses
+	/// at the first test instead, with the same result.</para>
 	/// </summary>
-	private static ColliderSphere BoundOf(ColliderSphere[]? spheres) {
+	internal static ColliderSphere BoundOf(ColliderSphere[]? spheres) {
 		if (spheres == null || spheres.Length == 0) {
 			return default;
 		}

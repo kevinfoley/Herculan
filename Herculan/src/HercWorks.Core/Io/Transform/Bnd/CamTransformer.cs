@@ -11,7 +11,7 @@ namespace HercWorks.Core.Io.Transform.Bnd;
 /// <para>Reads the entry's content, offset 0 first. A loose <c>.BND</c> unpacked with a tool that
 /// keeps the VOL entry prefix carries nine extra leading bytes that are no part of the format —
 /// strip them with <see cref="HercWorks.Vol.VolEntryPrefixCodec"/> before parsing, as the editors
-/// do. See docs/formats/vol-archive.md.</para>
+/// do. See docs/retail/formats/vol-archive.md.</para>
 /// </summary>
 public class CamTransformer : ByteTransformer<Cam> {
 	public override Cam? Parse(byte[]? inputArray) {

@@ -17,7 +17,7 @@ namespace HercWorks.Core.Data.File.Sav;
 /// <para>VSHELL writes it in <c>Game_ExportMissionHandoff</c> (<c>0040f0d4</c>) and closes it with
 /// <c>PlayerMec_WriteUnlockTable</c> (<c>00412253</c>): <c>int16 33</c> and then 33 bytes, one per
 /// weapon catalog id, the <see cref="WeaponFlags"/>. See
-/// <c>docs/shell/campaign-loop.md#launching-a-mission--game_exportmissionhandoff-0040f0d4</c>.</para>
+/// <c>docs/retail/shell/campaign-loop.md#launching-a-mission--game_exportmissionhandoff-0040f0d4</c>.</para>
 /// </summary>
 public class MecFile {
 	/// <summary>
@@ -103,7 +103,7 @@ public class MecEntry {
 	/// <summary>
 	/// 26 bytes copied to the mech record at <c>+0x3c</c> — thirteen <c>int16</c> external facet
 	/// conditions, 0-100, by <see cref="Struct.Herc.HercExternals"/> index. See
-	/// <c>docs/formats/save-games.md#the-66-byte-status-block</c>.
+	/// <c>docs/retail/formats/save-games.md#the-66-byte-status-block</c>.
 	/// </summary>
 	public byte[] ExternalConditions { get; set; } = new byte[26];
 

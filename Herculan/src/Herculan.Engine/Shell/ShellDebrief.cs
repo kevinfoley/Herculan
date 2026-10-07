@@ -42,7 +42,7 @@ public sealed record ShellDebriefReport(short Outcome, int SalvageAwarded, int W
 
 /// <summary>
 /// <c>Game_ProcessMissionResults</c> (<c>0040eae7</c>), the shell's half of the debrief: what DBSIM's
-/// <c>mission.var</c> and <c>results.dat</c> do to the career (docs/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7).
+/// <c>mission.var</c> and <c>results.dat</c> do to the career (docs/retail/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7).
 /// It leaves out what the original does to the screen — the report texts, which it returns as figures, the
 /// debrief view, the dialogs and the ending movies — and what follows it: the autosave to slot 10 when the
 /// campaign is won, and the next mission's load when it goes on, which are <see cref="ShellDebriefResult.State"/>'s
@@ -57,7 +57,7 @@ public static class ShellDebrief {
 
 	/// <summary>
 	/// The campaign flags the debrief writes from its own counts, which the flown mission's <c>.ENG</c> debrief
-	/// lines test (docs/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7): 8 the machines
+	/// lines test (docs/retail/shell/campaign-loop.md#the-debrief--game_processmissionresults-0040eae7): 8 the machines
 	/// it scrapped, 9 the pilots <c>Squad_ProgressAll</c> counted lost.
 	/// </summary>
 	private const int MachinesScrappedFlag = 8;
@@ -67,7 +67,7 @@ public static class ShellDebrief {
 	/// Runs the debrief on <paramref name="game"/> and <paramref name="hangar"/>, the hangar read from it,
 	/// and stores the hangar back into the game. <paramref name="campaign"/> is <c>CampaignModeFlag == 1</c>;
 	/// <paramref name="repairMode"/> is <c>prefs.cfg</c> option 44 and <paramref name="manualBuild"/> option 45
-	/// set (docs/simulation/preferences.md). <paramref name="roll"/> is <c>ShellRandom_Below</c> (<c>004659ec</c>),
+	/// set (docs/retail/simulation/preferences.md). <paramref name="roll"/> is <c>ShellRandom_Below</c> (<c>004659ec</c>),
 	/// which the flown mission's text reload draws from. Null, with the reason, when the install lacks a
 	/// catalog the original reads.
 	/// </summary>
@@ -253,7 +253,7 @@ public static class ShellDebrief {
 	/// <c>Pilot_Progress</c> (<c>00410066</c>) — nothing for a pilot off strength; otherwise, with divisors 20 kills
 	/// and 10 missions for position 0 and 10 and 15 for any other, a skill step for a non-player whose career
 	/// Herc and Flyer kills are a multiple of the kill divisor, and a rank step when missions flown are a
-	/// multiple of the mission divisor, each capped at 3 (docs/shell/campaign-loop.md#pilot-progression).
+	/// multiple of the mission divisor, each capped at 3 (docs/retail/shell/campaign-loop.md#pilot-progression).
 	/// </summary>
 	private static void Progress(PilotEntry pilot, bool isPlayer) {
 		if (pilot.OnStrength == 0) {

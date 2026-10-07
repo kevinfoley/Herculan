@@ -35,6 +35,17 @@
             "statusMessage": "Checking docs for journal-style writing"
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit|Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"${CLAUDE_PROJECT_DIR:-.}/tools/scripts/engine_choice_guard.py\"",
+            "timeout": 10,
+            "statusMessage": "Checking for \"this engine's choice\""
+          }
+        ]
       }
     ],
     "SessionStart": [

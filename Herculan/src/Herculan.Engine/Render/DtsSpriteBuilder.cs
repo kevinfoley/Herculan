@@ -1,5 +1,6 @@
 using System.Numerics;
 using HercWorks.Core.Data.File.Dts;
+using HercWorks.Core.Data.File.Dts.Bsp;
 using HercWorks.Core.Data.File.Dts.Part;
 
 namespace Herculan.Engine.Render;
@@ -97,6 +98,14 @@ public static class DtsSpriteBuilder {
 
 			case TSCellAnimPart cellAnim:
 				CollectCells(cellAnim, frames, everyFrame, depth);
+				break;
+
+			// A child the tree never reaches is never drawn — see DtsMeshBuilder.ReachableParts.
+			case TSBSPPart bspPart:
+				foreach (var part in DtsMeshBuilder.ReachableParts(bspPart)) {
+					Collect(part, frames, everyFrame, depth + 1);
+				}
+
 				break;
 
 			case TSPartList partList:

@@ -10,22 +10,28 @@ namespace Herculan.Engine.Shell;
 /// nothing here hardcodes a tab's name: the original does not either, and reading them is what makes
 /// the strip say what the game says.
 ///
-/// <para>The container is the <c>.BIN</c> string table described in docs/formats/weapons-dat.md, and
+/// <para>The container is the <c>.BIN</c> string table described in docs/retail/formats/weapons-dat.md, and
 /// <see cref="BinStringFileTransformer"/> already parses it. VSHELL reaches it through
 /// <c>WeaponsBin_LookupName</c> (<c>00408240</c>) against the handle at <c>0046dcc0</c>, opened by
-/// literal filename in the shell's global init (<c>esglobal.cpp</c>, <c>004073bc</c>).</para>
+/// literal filename in the shell's global init (<c>EsGlobal_Init</c> (<c>004073bc</c>), <c>esglobal.cpp</c>).</para>
 ///
-/// <para>It lives in <c>LANG0.VOL</c>, not <c>SHELL0.VOL</c>, under one folder per language. Retail
-/// picks one by <c>prefs.cfg</c> option 43; this tries them in turn instead, which reaches the same
-/// file because the three folders are byte-identical in the retail build — so the setting changes
-/// nothing until somebody ships a translated archive.</para>
+/// <para>It lives in <c>LANG0.VOL</c>, not <c>SHELL0.VOL</c>, under one folder per language, which
+/// <c>WeaponsBin_Open</c> (<c>00408605</c>) picks by the shell's language (docs/retail/formats/weapons-dat.md, "The
+/// <c>.BIN</c> string tables").</para>
 /// </summary>
 public sealed class ShellText {
 	/// <summary>The shell's own string table.</summary>
 	public const string ResourceName = "ESTEXT.BIN";
 
-	/// <summary>Folders inside <c>LANG0.VOL</c> a <c>.BIN</c> may live under, in the order tried.</summary>
-	public static readonly string[] LanguageFolders = { "ENG", "FRE", "GER" };
+	/// <summary>The folder of the English tables.</summary>
+	public const string EnglishFolder = "ENG";
+
+	/// <summary>The <c>LANG0.VOL</c> folder of <paramref name="language"/>'s tables.</summary>
+	public static string LanguageFolder(GameLanguage language) => language switch {
+		GameLanguage.French => "FRE",
+		GameLanguage.German => "GER",
+		_ => EnglishFolder,
+	};
 
 	private readonly string[] _values;
 
@@ -43,26 +49,22 @@ public sealed class ShellText {
 		index >= 0 && index < _values.Length && _values[index].Length > 0 ? _values[index] : null;
 
 	/// <summary>
-	/// Loads one <c>.BIN</c> table out of whichever language folder has it. Returns null when no
+	/// Loads one <c>.BIN</c> table out of the content's language folder. Returns null when no
 	/// mounted archive carries the file, in which case the shell draws its art and no words.
 	/// </summary>
 	public static ShellText? Load(GameContent content, string resourceName = ResourceName) {
-		foreach (string folder in LanguageFolders) {
-			if (content.Read(folder, resourceName) is not { } bytes
-				|| new BinStringFileTransformer().Parse(bytes) is not StringBinaryFile { Values: { } values }) {
-				continue;
-			}
-
-			// The transformer slices each entry up to the next offset, so every string but the last
-			// carries its own NUL terminator, and Trim() does not consider NUL whitespace.
-			var trimmed = new string[values.Length];
-			for (int i = 0; i < values.Length; i++) {
-				trimmed[i] = values[i].Trim('\0').Trim();
-			}
-
-			return new ShellText(trimmed);
+		if (content.Read(LanguageFolder(content.Language), resourceName) is not { } bytes
+			|| new BinStringFileTransformer().Parse(bytes) is not StringBinaryFile { Values: { } values }) {
+			return null;
 		}
 
-		return null;
+		// The transformer slices each entry up to the next offset, so every string but the last
+		// carries its own NUL terminator, and Trim() does not consider NUL whitespace.
+		var trimmed = new string[values.Length];
+		for (int i = 0; i < values.Length; i++) {
+			trimmed[i] = values[i].Trim('\0').Trim();
+		}
+
+		return new ShellText(trimmed);
 	}
 }

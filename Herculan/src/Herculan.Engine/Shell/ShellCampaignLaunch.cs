@@ -14,7 +14,7 @@ namespace Herculan.Engine.Shell;
 /// <summary>
 /// The career block's text fields as <c>Career_SetBriefing</c> (<c>00412ece</c>) fills them from a loaded
 /// mission: the objective, briefing and intelligence <c>mission.str</c> lines, <c>-1</c> for an empty slot,
-/// and the briefing movie id. See docs/formats/save-games.md#career-block--152-bytes.
+/// and the briefing movie id. See docs/retail/formats/save-games.md#career-block--152-bytes.
 /// </summary>
 public sealed record ShellCareerBriefing(short[] Objectives, short[] Briefing, short[] Intelligence, short BriefingMovie) {
 	/// <summary>The words of row 4's slot 0, as <see cref="MissionGenerator.TextPackage"/> gives them.</summary>
@@ -31,8 +31,8 @@ public sealed record ShellCampaignMission(string ScriptPath, string MissionPath,
 /// (<see cref="MissionGenerator"/>), the header's theater, cheat and difficulty fields set, <c>script.dat</c>
 /// and <c>mission.str</c> written, and the career block's text taken from row 4. Unlike the training half
 /// (<see cref="ShellTrainingLaunch"/>) it builds no machines: a campaign flies the hangar it has, with its
-/// squad positions in play set from the mission's group 0. See docs/shell/campaign-loop.md and
-/// docs/formats/script-dat.md#the-training-fields.
+/// squad positions in play set from the mission's group 0. See docs/retail/shell/campaign-loop.md and
+/// docs/retail/formats/script-dat.md#the-training-fields.
 /// </summary>
 public static class ShellCampaignLaunch {
 	/// <summary>
@@ -71,8 +71,8 @@ public static class ShellCampaignLaunch {
 
 		Directory.CreateDirectory(directory);
 		string scriptPath = Path.Combine(directory, MissionLoader.ScriptFileName);
-		File.WriteAllBytes(scriptPath, loaded.WriteScriptDat());
-		File.WriteAllBytes(Path.Combine(directory, MissionLoader.TextFileName), loaded.WriteMissionText());
+		ShellWorkingFiles.WriteMissionFile(scriptPath, loaded.WriteScriptDat());
+		ShellWorkingFiles.WriteMissionFile(Path.Combine(directory, MissionLoader.TextFileName), loaded.WriteMissionText());
 
 		// The original asserts row 4 is there before it copies slot 0 into the career block.
 		var briefing = loaded.TextPackage is { } package ? ShellCareerBriefing.From(package) : null;
@@ -86,8 +86,8 @@ public static class ShellCampaignLaunch {
 	/// VSHELL's memory. In a campaign it is <c>Registration_OnAccept</c> (<c>0043c0fb</c>)'s, after
 	/// <c>LoadHercInfDat</c> (<c>0041181c</c>); in training, <c>Begin Mission</c>'s and
 	/// <c>INSTANT ACTION</c>'s, which read no <c>gam\hercs.dat</c> and leave the career position for the
-	/// caller to set. See docs/shell/screen-layout.md#starting-a-campaign and
-	/// docs/shell/campaign-loop.md#starting-a-campaign--game_newcareer-0040e2ed.
+	/// caller to set. See docs/retail/shell/screen-layout.md#starting-a-campaign and
+	/// docs/retail/shell/campaign-loop.md#starting-a-campaign--game_newcareer-0040e2ed.
 	///
 	/// <para>Each weapon's units are listed in the order <c>gam\weapons.dat</c> gives them, which
 	/// <see cref="ShellHangar.From"/> pushes back onto the head one by one, so the hangar it builds holds the
@@ -206,7 +206,7 @@ public static class ShellCampaignLaunch {
 	/// the squad positions in play set in <paramref name="hangar"/>, and <c>Game_ExportMissionHandoff</c>
 	/// (<c>0040f0d4</c>)'s <c>mission.var</c> and <c>player.mec</c> beside the mission. Null, with the reason,
 	/// when the install lacks a file or the mission has no row 4 — where the original asserts. See
-	/// docs/shell/campaign-loop.md#loading-the-careers-mission.
+	/// docs/retail/shell/campaign-loop.md#loading-the-careers-mission.
 	/// </summary>
 	public static ShellCampaignMission? LoadCareerMission(string directory, GameContent content, PlayerSave game,
 			ShellHangar hangar, short[] clearList, Func<short, int> roll, out string? failure) {
@@ -251,7 +251,7 @@ public static class ShellCampaignLaunch {
 		return loaded;
 	}
 
-	/// <summary>Where the career block keeps each text array's count, the array following it (docs/formats/save-games.md#career-block--152-bytes).</summary>
+	/// <summary>Where the career block keeps each text array's count, the array following it (docs/retail/formats/save-games.md#career-block--152-bytes).</summary>
 	private const int ObjectivesCountIndex = 2;
 	private const int BriefingCountIndex = 13;
 	private const int IntelligenceCountIndex = 44;

@@ -25,7 +25,7 @@ public enum ShellTextAlign {
 /// box, a line-filled box, an image panel, a label and an edit field. The <c>Grid</c> picture is
 /// <see cref="ShellGrid"/>'s.
 /// The screen builders place them and set their colour fields; the derivation and the field offsets
-/// are in docs/shell/screen-layout.md.
+/// are in docs/retail/shell/screen-layout.md.
 ///
 /// <para><b>Widget-local coordinates run 0 to <c>Width - 1</c>.</b> Every paint here works in the
 /// original's own terms, where the extent it draws against is <c>+0x2d - +0x25</c> — the difference of

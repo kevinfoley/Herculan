@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Dbsim;
 ///   0 - INT32 - frame count
 ///   then count x { INT32 width, INT32 height }, in the 320-wide space.
 /// Read by DBSIM's <c>PaperDoll_InitTables</c> (<c>004378d8</c>), which shifts each pair by
-/// <c>VideoMode_X/YCoordShift</c>. See docs/formats/cockpit-hud-widgets.md#weapon-icons.
+/// <c>VideoMode_X/YCoordShift</c>. See docs/retail/formats/cockpit-hud-widgets.md#weapon-icons.
 /// </summary>
 public class WeaponPaperDiagram {
 	public Entry[]? Entries { get; set; }

@@ -195,6 +195,7 @@ partial class PlayerSquadForm {
 		_squadGrid.TabIndex = 0;
 		_squadGrid.DataError += OnGridDataError;
 		_squadGrid.CellValueChanged += OnSquadCellChanged;
+		_squadGrid.CurrentCellDirtyStateChanged += OnSquadCellDirtyStateChanged;
 		_squadGrid.SelectionChanged += OnSquadSelectionChanged;
 		//
 		// _indexColumn

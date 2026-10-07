@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Dbsim;
 ///
 /// The layout is DBSIM's own writer and reader,
 /// <c>Tape_PackFile</c> (<c>0045cc88</c>) for the bundle and <c>Input_BuildPlayerDevice</c>
-/// (<c>0045a7f4</c>) for the rest. See docs/formats/tap-input-tape.md for what each field is and how
+/// (<c>0045a7f4</c>) for the rest. See docs/retail/formats/tap-input-tape.md for what each field is and how
 /// the simulator consumes it.
 /// </summary>
 public class InputTape {

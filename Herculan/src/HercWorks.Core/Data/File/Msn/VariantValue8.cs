@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// Row #3 (8 bytes/record) — a condition-gated value. Several records may share a GUID with
 /// different conditions; the load keeps the last one to survive. Rows #4 and #5 name one by GUID
 /// and are given its <see cref="Value"/> — the briefing or debrief movie id.
-/// See docs/formats/msn-mission-file.md, "Row #3 field decode".
+/// See docs/retail/formats/msn-mission-file.md, "Row #3 field decode".
 /// </summary>
 public class VariantValue8 : MapObject {
 	/// <summary>0x02 — condition ref.</summary>

@@ -26,7 +26,7 @@ public sealed record ShellCrewPortraits(DynamixBitmap[]? Pilots, DynamixBitmap[]
 /// and the pilot's name, skill and machine. Built by <c>Crew_BuildScreen</c> (<c>00440eb8</c>,
 /// <c>wcrewi.cpp</c>), entered by <c>Crew_Enter</c> (<c>00441a01</c>), its rows coloured by
 /// <c>Crew_ColourRows</c> (<c>00441857</c>), matched to pilots by <c>Crew_MatchRowPilots</c> (<c>00441b08</c>), selected by <c>Crew_SelectRow</c> (<c>00441b85</c>) and
-/// filled by <c>Crew_FillRows</c> (<c>00441c4f</c>). See docs/shell/screen-layout.md, "The crew screen".
+/// filled by <c>Crew_FillRows</c> (<c>00441c4f</c>). See docs/retail/shell/screen-layout.md, "The crew screen".
 ///
 /// <para><b>The screen's widgets are built once and outlive a visit</b>, so one instance serves every
 /// entry: <see cref="Enter"/> is the tab's entry, and a lit squad portrait stays lit across visits
@@ -120,7 +120,7 @@ public sealed class ShellCrewScreen {
 	/// <c>SelectedBaySlot</c> (<c>00482ae5</c>), the bay the squad panel shows. <b>Entering the screen leaves it on the last
 	/// bay that holds a finished machine</b>: after selecting the player's row, the entry offers every
 	/// occupied bay in turn to <c>Squad_SelectBay</c> (<c>0043d64d</c>), and the crew arm accepts each finished one — so the
-	/// readout is not the player's until the player's row is clicked. See docs/shell/screen-layout.md,
+	/// readout is not the player's until the player's row is clicked. See docs/retail/shell/screen-layout.md,
 	/// "The crew screen".
 	/// </summary>
 	public int SelectedBay { get; private set; }
@@ -178,7 +178,7 @@ public sealed class ShellCrewScreen {
 	public bool ClickRoster(int bay) => SelectBay(bay, rosterClick: true);
 
 	/// <summary>
-	/// A squad portrait's handler (<c>FUN_00442151</c>, <c>FUN_004421fc</c>, <c>FUN_004422a7</c>): lights
+	/// A squad portrait's handler (<c>Crew_OnSquadPortrait0</c> (<c>00442151</c>), <c>Crew_OnSquadPortrait1</c> (<c>004421fc</c>), <c>Crew_OnSquadPortrait2</c> (<c>004422a7</c>)): lights
 	/// portrait <paramref name="member"/> and unlights the other two, then
 	/// <c>Crew_AssignSquadMember(member)</c> (<c>00441eb8</c>). On the player's row the portrait
 	/// lights and nothing else happens. On a squad row, whoever holds the row's position gives it up,
@@ -278,7 +278,7 @@ public sealed class ShellCrewScreen {
 	/// <summary>
 	/// The row under a canvas point, or null — its panel and everything drawn in it: the texts take no mouse
 	/// events, so a click on one reaches the row, and the portrait carries the row's own handler
-	/// (docs/shell/screen-layout.md#which-widget-a-click-reaches).
+	/// (docs/retail/shell/screen-layout.md#which-widget-a-click-reaches).
 	/// </summary>
 	public static int? RowAt(float canvasX, float canvasY) {
 		for (int row = 0; row < RowCount; row++) {

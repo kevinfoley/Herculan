@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using Herculan.Engine.Cockpit;
+using System.Numerics;
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.File.Dyn;
@@ -38,8 +39,8 @@ public sealed record CockpitFrame(byte[] Pixels, int Width, int Height) {
 }
 
 /// <summary>
-/// A herc's cockpit canopy art and HUD widget layout — see docs/formats/cockpit-canopy-palette.md and
-/// docs/formats/cockpit-hud-widgets.md (Milestone 8
+/// A herc's cockpit canopy art and HUD widget layout — see docs/retail/formats/cockpit-canopy-palette.md and
+/// docs/retail/formats/cockpit-hud-widgets.md (Milestone 8
 /// Phase 0) for the RE and the real-data verification behind every constant here.
 ///
 /// <para><see cref="Front"/> is <c>(herc).HB0</c> (the center/front view) and <see cref="Side"/> is
@@ -72,7 +73,7 @@ public sealed class CockpitArt {
 	/// console graphic at this scale, and no other tried combination (1x, 2x/1x, 2x/1.2x) fits more
 	/// than one widget at once. The original's mechanism is <c>VideoMode_XCoordShift</c>
 	/// (<c>004d25be</c>) and its Y twin, a shift of 1 in the 640-wide mode. See
-	/// docs/formats/cockpit-hud-widgets.md, "<c>.GAU</c> widget tree".
+	/// docs/retail/formats/cockpit-hud-widgets.md, "<c>.GAU</c> widget tree".
 	/// </summary>
 	public const float GauToPixelScale = 2f;
 
@@ -106,11 +107,13 @@ public sealed class CockpitArt {
 	/// They come from SIMALERT.VOL rather than the main archive, and
 	/// the original loads each when its panel is constructed rather than up front; packing them with
 	/// the rest costs one atlas entry each and keeps a panel to a single texture bind.</para>
+	/// <para><c>SYSBUTTN</c> is the two system buttons' art (<see cref="SystemButtons"/>).</para>
 	public static readonly string[] HudBankNames = {
 		"HUD", "HUDHTICK", "MFD", SensorDropout.MfdBank, "RADAR", "THROTTLE", SensorDropout.RowBank, "PWEAPONS",
 		"HDD", "BASES", "VEHICLES", PaperDollDamage.WeaponIconBank,
 		"ICONS", ObjectivesPanel.BackgroundBank, StatusAlertPanelLayout.PlateBank,
 		AlertPanelLayout.ButtonBank, PreferencesPanelLayout.PlateBank, ControlsPanelLayout.PlateBank,
+		SystemButtons.Bank,
 	};
 
 	/// <summary>
@@ -165,7 +168,7 @@ public sealed class CockpitArt {
 	/// palette, and these colours are its HUD half: in eight of the ten theaters most of
 	/// <c>COLORS.DAT</c>'s twenty-seven entries move, most of them a long way, so a HUD that kept its
 	/// own colours through a flash would be the one part of the screen visibly refusing to. The
-	/// per-theater counts are in docs/formats/cockpit-canopy-palette.md, "The damage shake".</para>
+	/// per-theater counts are in docs/retail/formats/cockpit-canopy-palette.md, "The damage shake".</para>
 	/// </summary>
 	private sealed record PaletteColors(
 		(Vector3, Vector3, Vector3)? Gauge,
@@ -181,7 +184,7 @@ public sealed class CockpitArt {
 	/// <summary>
 	/// Whether the HUD draws through the damage-flash palette. The host sets it from
 	/// <c>CockpitHitShake.FlashActive</c>; it does nothing when the theater supplied no impact
-	/// palette. See docs/formats/cockpit-canopy-palette.md, "The damage shake".
+	/// palette. See docs/retail/formats/cockpit-canopy-palette.md, "The damage shake".
 	/// </summary>
 	public bool FlashActive { get; set; }
 
@@ -301,16 +304,16 @@ public sealed class CockpitArt {
 	/// The Heads-Down Display's background — <c>(herc).HB1</c>, DBSIM's view 1. Null when the file is
 	/// missing, in which case the pan has nothing to pan to and the caller should stay forward.
 	///
-	/// <para>No 3D-viewport hole is punched into it, unlike <see cref="Front"/> and
-	/// <see cref="Side"/>. That is what the data says rather than a simplification: every herc's
-	/// <c>.HD1</c> region file is 16 bytes of zeroes and its <c>.VUE</c> view-1 rect is zero-size, so
-	/// the heads-down view shows no live world. RAZOR is the sole exception — a 2368-byte <c>.HD1</c>
-	/// and a real <c>0,0-320,181</c> viewport rect — and rendering that is left for the pass that
-	/// gives the HDD live content, since a hole cut now would only expose cleared background.</para>
+	/// <para>Its 3D-viewport hole is punched from the herc's <c>.HD1</c> like the other views', and
+	/// for every herc but RAZOR that file lists no spans, so the art stays whole. RAZOR's opens two
+	/// lower side windows and the two top corners, which the host fills with the world. A missing
+	/// <c>.HD1</c> leaves the art whole rather than falling back to <see cref="CutViewportHoleByColor"/>,
+	/// which would guess windows into eight hercs' heads-down art that has none. See docs/retail/formats/cockpit-views.md,
+	/// "<c>.HD0</c>-<c>.HD3</c> / <c>.ED0</c>-<c>.ED3</c> — 3D-viewport clip regions".</para>
 	/// </summary>
 	public CockpitFrame? HeadsDown { get; }
 
-	/// <summary>The HUD widget layout to overlay on <see cref="Front"/> — center panel only (see Overlay2DRenderer).</summary>
+	/// <summary>The HUD widget layout to overlay on <see cref="Front"/> — center panel only (see Render.Cockpit.CanopyPanelPainter).</summary>
 	public GAUFile Gau { get; }
 
 	/// <summary>
@@ -453,6 +456,10 @@ public sealed class CockpitArt {
 
 		bool clipped = CutViewportHole(content, hercName, ForwardViewIndex, front)
 			& CutViewportHole(content, hercName, SideViewIndex, side);
+		if (headsDown != null
+			&& CockpitClipRegions.Load(content, hercName, CockpitViewGeometry.HeadsDownViewIndex) is { } headsDownRegions) {
+			PunchSpans(headsDownRegions, headsDown);
+		}
 
 		// The hole is punched into the alpha channel after the expansion, and both cutout paths write
 		// only the ordinary buffer — one of them by reading the art's colour, which is the ordinary
@@ -757,7 +764,7 @@ public sealed class CockpitArt {
 	/// <see cref="CutViewportHoleByColor"/> had to infer one instead.
 	///
 	/// <para>A file that parses to zero spans is honoured as zero spans, not treated as a failure: that
-	/// is a legitimate "this view shows no 3D" (the heads-down view's file is 16 bytes of zeroes). The
+	/// is a legitimate "this view shows no 3D" (every heads-down file but RAZOR's is 16 bytes of zeroes). The
 	/// forward and side views this class loads both have real spans, so a zero-span result here would
 	/// mean something else is wrong — but silently substituting a guessed mask would hide it.</para>
 	/// </summary>
@@ -767,6 +774,12 @@ public sealed class CockpitArt {
 			return false;
 		}
 
+		PunchSpans(regions, frame);
+		return true;
+	}
+
+	/// <summary>Sets every pixel <paramref name="regions"/> lists to alpha 0 — the viewport hole.</summary>
+	private static void PunchSpans(CockpitClipRegions regions, CockpitFrame frame) {
 		byte[] pixels = frame.Pixels;
 		int rows = Math.Min(regions.RowCount, frame.Height);
 		for (int y = 0; y < rows; y++) {
@@ -778,8 +791,6 @@ public sealed class CockpitArt {
 				}
 			}
 		}
-
-		return true;
 	}
 
 	/// <summary>

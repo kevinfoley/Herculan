@@ -9,7 +9,7 @@ namespace Herculan.Engine.Content;
 /// <c>Hzline_Draw</c> (<c>0042ebe8</c>) paints behind the terrain every frame: a run of bands from
 /// the horizon colour up to the zenith colour above a projected horizon line, and the horizon colour
 /// over everything below it. The draw, the fields and the rolled-view geometry are in
-/// docs/formats/distance-fog-and-sky.md, "The sky — hzline".
+/// docs/retail/formats/distance-fog-and-sky.md, "The sky — hzline".
 ///
 /// <para>The renderer evaluates it per pixel rather than filling rects and quads, from
 /// <see cref="Place"/>'s line and <see cref="BandAt"/>'s rule, which give the same band at every

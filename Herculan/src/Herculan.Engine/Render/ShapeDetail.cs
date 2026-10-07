@@ -6,7 +6,7 @@
 ///
 /// <para>A machine's <c>.DTS</c> roots are complete alternate models of one chassis, descending in
 /// polygon count, and the original swaps the shape instance's root for one of them every frame from
-/// the shape's projected size on screen. See docs/formats/mech-shape-drawing.md for the chain this
+/// the shape's projected size on screen. See docs/retail/formats/mech-shape-drawing.md for the chain this
 /// sits in and for why it is a machine's selection alone: only <c>Mech_Constructor</c>
 /// (<c>00415bb0</c>) installs a detail table on an object, so a flyer, a structure and everything
 /// else draw the one root they are built with.</para>
@@ -14,7 +14,7 @@
 /// <para>The sibling mechanism inside a shape is <see cref="DtsMeshBuilder"/>'s
 /// <c>TSDetailPart</c> handling, which selects between alternate representations of one <i>part</i>
 /// on the same projected-size measure but with the table ascending rather than descending — see
-/// docs/formats/dts-texture-binding.md.</para>
+/// docs/retail/formats/dts-texture-binding.md.</para>
 /// </summary>
 public static class ShapeDetail {
 	/// <summary>

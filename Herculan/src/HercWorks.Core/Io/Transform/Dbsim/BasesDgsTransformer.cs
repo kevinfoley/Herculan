@@ -8,7 +8,7 @@ namespace HercWorks.Core.Io.Transform.Dbsim;
 /// structure shape library <c>dat\BASES.DAT</c>'s <c>ShapeIndex</c> field selects into for the 57
 /// of 65 structure types that aren't in <c>dts\BASES_AN.DTS</c>.
 ///
-/// <para><b>RE summary</b> (DBSIM.EXE, see docs/formats/dgs-hd0-notes.md for the full derivation).
+/// <para><b>RE summary</b> (DBSIM.EXE, see docs/retail/formats/dgs-hd0-notes.md for the full derivation).
 /// <c>BaseType_LoadShape</c> (<c>00405ebc</c>) resolves a shape by index through
 /// <c>BaseType_ResolveShape</c> (<c>00474cd8</c>), which reopens <c>dgs\bases</c> and calls the generic polymorphic resource
 /// loader <c>ClassItem_LoadResource</c> (<c>0047a038</c>) once per record until it reaches the
@@ -30,11 +30,10 @@ namespace HercWorks.Core.Io.Transform.Dbsim;
 /// chunk format, so it is read with <see cref="DTSModelTransformer.ReadOneObject"/> rather than a
 /// new reader. This is the key finding that makes the format usable: no new mesh format, just a
 /// new envelope around the existing one.</item>
-/// <item>an <c>int16</c> count and a per-entry 32-byte record (a per-vertex table, likely
-/// BSP-plane-classification data judging by its consumers — <c>TSBSPPart_RenderNode</c> (<c>00476a1c</c>)'s BSP walk reads a
-/// point from an array at this same stride) — read but not modelled, the engine has no use for it.</item>
-/// <item>an <c>int16</c> count and that many <c>int16</c> values (a parallel index/remap array) —
-/// read but not modelled.</item>
+/// <item>the rest of the <c>TSShape</c>: a node-transform count, a sequence count, the
+/// per-sequence frame counts and the 32-byte node transforms, read by
+/// <see cref="DTSModelTransformer.ReadShapeTail"/> into <see cref="GridShape.SequenceList"/> and
+/// <see cref="GridShape.NodeTransforms"/>.</item>
 /// <item>the shape's collision volume — 5 <c>int16</c> scalars, a fixed 1024-byte height table,
 /// then one row of height codes per grid row. <b>This is the part that invites a plausible
 /// misreading</b>: walking the tail as "a sub-record size, a sub-record count, three undecoded
@@ -136,10 +135,9 @@ public class BasesDgsTransformer : ByteTransformer<GridShapeLibrary> {
 			geometry ??= child; // retail data has exactly one child; first one wins if that ever changes.
 		}
 
-		short vertexCount = IndexShortLE();
-		short indexCount = IndexShortLE();
-		Index += indexCount * 2;   // parallel int16 array -- unmodelled
-		Index += vertexCount * 32; // per-vertex table -- unmodelled
+		int tailIndex = Index;
+		var (sequences, transforms) = dtsReader.ReadShapeTail(GetBytes(), ref tailIndex);
+		Index = tailIndex;
 
 		var collision = ReadCollision();
 
@@ -149,7 +147,7 @@ public class BasesDgsTransformer : ByteTransformer<GridShapeLibrary> {
 				"-- the record shape does not match this file.");
 		}
 
-		return new GridShape(boundingRadius, geometry, collision);
+		return new GridShape(boundingRadius, geometry, sequences, transforms, collision);
 	}
 
 	/// <summary>

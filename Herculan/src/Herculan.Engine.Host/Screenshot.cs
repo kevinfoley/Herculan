@@ -6,7 +6,7 @@ namespace Herculan.Engine.Host;
 /// Writes the framebuffer to a file, so a run can be checked without somebody watching it.
 ///
 /// <para>Dependency-free 24bpp BMP — no System.Drawing, no ImageSharp, per Herculan.Engine's
-/// no-imaging-dependency precedent (docs/engine/planning.md). It reads straight out of the
+/// no-imaging-dependency precedent (docs/herculan/planning.md). It reads straight out of the
 /// framebuffer with <c>glReadPixels</c>, and BMP's bottom-up row order happens to match GL's
 /// bottom-left origin, so no row flip is needed.</para>
 ///
@@ -15,13 +15,16 @@ namespace Herculan.Engine.Host;
 /// </summary>
 static class Screenshot {
 	public static void Capture(GL gl, int width, int height, string path) {
-		int rowSize = width * 3;
-		int rowPadding = (4 - rowSize % 4) % 4;
-		int paddedRowSize = rowSize + rowPadding;
-		int pixelDataSize = paddedRowSize * height;
+		// A pack alignment of 4 pads each row GL writes as a BMP's rows are padded, so the pixels are read straight
+		// into place.
+		int stride = (width * 3 + 3) & ~3;
+		int pixelDataSize = stride * height;
 
-		var pixels = new byte[width * height * 3];
+		var pixels = new byte[pixelDataSize];
+		gl.GetInteger(GetPName.PackAlignment, out int packAlignment);
+		gl.PixelStore(PixelStoreParameter.PackAlignment, 4);
 		gl.ReadPixels(0, 0, (uint)width, (uint)height, PixelFormat.Bgr, PixelType.UnsignedByte, pixels.AsSpan());
+		gl.PixelStore(PixelStoreParameter.PackAlignment, packAlignment);
 
 		using var file = new FileStream(path, FileMode.Create, FileAccess.Write);
 		using var writer = new BinaryWriter(file);
@@ -44,13 +47,7 @@ static class Screenshot {
 		writer.Write(0); // colors used
 		writer.Write(0); // important colors
 
-		var padding = new byte[rowPadding];
-		for (int row = 0; row < height; row++) {
-			writer.Write(pixels, row * rowSize, rowSize);
-			if (rowPadding > 0) {
-				writer.Write(padding);
-			}
-		}
+		writer.Write(pixels);
 
 		Console.WriteLine($"Wrote screenshot to {path} ({width}x{height}).");
 	}

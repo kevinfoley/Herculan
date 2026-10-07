@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Io.Transform.Common;
+using Herculan.Engine.Cockpit;
 
 namespace Herculan.Engine.Content;
 
@@ -89,7 +90,7 @@ public sealed class SimulatorPreferences {
 	/// Installs option <paramref name="index"/>'s handler — <c>Prefs_RegisterOptionHandler</c>
 	/// (<c>00459c58</c>), into the table at <c>Prefs_OptionHandlers</c> (<c>004d2060</c>). <c>Prefs_Init</c> fills five slots
 	/// and leaves the rest empty; an option with no handler is read where it is used instead. See
-	/// docs/simulation/preferences.md.
+	/// docs/retail/simulation/preferences.md.
 	/// </summary>
 	public void RegisterHandler(int index, Action<byte> handler) {
 		ArgumentNullException.ThrowIfNull(handler);
@@ -169,7 +170,7 @@ public sealed class SimulatorPreferences {
 	}
 
 	/// <summary>
-	/// VSHELL's <c>FUN_0040d7fe</c>, the reverse of <see cref="Commit"/>: every option that differs from
+	/// VSHELL's <c>ShellOptions_RevertAll</c> (<c>0040d7fe</c>), the reverse of <see cref="Commit"/>: every option that differs from
 	/// the shadow takes the shadow's value back, and with <paramref name="apply"/> set its handler runs.
 	/// The preferences screen's <c>Cancel</c> passes it clear.
 	/// </summary>

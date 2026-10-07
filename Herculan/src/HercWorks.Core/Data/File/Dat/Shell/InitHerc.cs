@@ -10,7 +10,7 @@ namespace HercWorks.Core.Data.File.Dat.Shell;
 ///
 /// <para>Hardpoints serialize sparsely, each preceded by its index, so the count is authoritative
 /// and the indices need not be contiguous: INI_APOC fits 0-5 and 7. See
-/// docs/formats/herc-catalogs.md#gamini_dat--the-stock-fit-per-chassis.</para>
+/// docs/retail/formats/herc-catalogs.md#gamini_dat--the-stock-fit-per-chassis.</para>
 /// </summary>
 public class InitHerc {
 	/// <summary>

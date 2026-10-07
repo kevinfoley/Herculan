@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Dat.Shell;
 /// layout records for the chassis' own components (drawn from <c>dba\rpr_[herc].dba</c>), one record
 /// for the internals diagram (from <c>dba\[herc]_int.dba</c>), then per-weapon groups of hardpoint
 /// layout records keyed by weapon id. Each record is part id, x, y, frame and blit flags. See
-/// docs/formats/herc-catalogs.md#gamrpr_dat--repair-bay-layout.
+/// docs/retail/formats/herc-catalogs.md#gamrpr_dat--repair-bay-layout.
 /// </summary>
 public class RprHerc {
 	public short BodyImgTotal { get; set; }

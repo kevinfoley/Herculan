@@ -17,14 +17,13 @@ namespace Herculan.Engine.Host;
 /// row past the practice list, with the practice options <c>data\prefs.cfg</c> holds.</item>
 /// <item>Any other takes the campaign half, <see cref="ShellCampaignLaunch"/>, with a career that has no
 /// history: an empty campaign flag array, which the load then seeds with the position, and the player's
-/// lance and skill taken from the install's <c>DATA\player.mec</c> — the last handoff retail wrote — in
-/// place of the export a career's hangar would make.</item>
+/// lance and skill taken from the install's <c>DATA\player.mec</c> — the last handoff written — in
+/// place of the export a career's hangar would make, and left there as the handoff's own.</item>
 /// </list>
+///
+/// <para>The handoff is written into the install's <c>DATA\</c>, as the shell's is.</para>
 /// </summary>
 static class MissionFileLaunch {
-	/// <summary>Where the handoff is written, so the install's own <c>DATA\</c> is left alone.</summary>
-	public static string HandoffDirectory => Path.Combine(Path.GetTempPath(), "herculan-msn");
-
 	/// <summary>
 	/// Whether the mission argument names a mission file rather than a <c>script.dat</c>: not a file that
 	/// exists, and either a <c>.MSN</c> or a bare name with no extension.
@@ -37,24 +36,24 @@ static class MissionFileLaunch {
 	public static string? Write(string installRoot, string name, out string? failure) {
 		// The career table, the name tables and the catalogs are the shell's, and the missions are in ZONES.VOL,
 		// which the shell mounts with them.
-		var content = GameContent.Mount(GameInstall.ArchiveDirectory(installRoot), ShellArt.Archives);
+		var content = GameContent.MountShell(installRoot);
 		if (ShellCampaignLaunch.Find(content, name) is not var (stage, mission)) {
 			failure = $"{name} is not a mission gam\\career.dat lists.";
 			return null;
 		}
 
-		string dataDirectory = Path.Combine(installRoot, MissionLoader.DataFolderName);
+		string dataDirectory = ShellWorkingFiles.DataDirectory(installRoot);
 		var random = ShellTrainingLaunch.StartupRandom();
 		var clearList = new short[MissionGenerator.ClearListLength];
 
 		if (stage == 0) {
 			var options = SimulatorPreferences.Load(dataDirectory) ?? SimulatorPreferences.Defaults();
 			options.SaveEnabled = false;
-			var training = ShellTrainingLaunch.Write(HandoffDirectory, content, options, mission,
+			var training = ShellTrainingLaunch.Write(dataDirectory, content, options, mission,
 				instantAction: mission >= ShellPracticeScreen.RowCount, random, clearList, held: null, out failure);
 			if (training != null) {
 				Console.WriteLine($"{training.MissionPath}: stage 0 row {mission}, loaded as a training mission — "
-					+ $"{training.SquadPositions} squad position(s), handoff written to {HandoffDirectory}.");
+					+ $"{training.SquadPositions} squad position(s), handoff written to {dataDirectory}.");
 			}
 
 			return training?.ScriptPath;
@@ -67,20 +66,19 @@ static class MissionFileLaunch {
 		}
 
 		var flags = new short[MissionGenerator.CampaignFlagCount];
-		var campaign = ShellCampaignLaunch.Write(HandoffDirectory, content, stage, mission, player.Skill, flags, clearList,
+		var campaign = ShellCampaignLaunch.Write(dataDirectory, content, stage, mission, player.Skill, flags, clearList,
 			bound => random.NextBelow(bound), out failure);
 		if (campaign == null) {
 			return null;
 		}
 
-		File.Copy(playerPath, Path.Combine(HandoffDirectory, MissionLoader.PlayerFileName), overwrite: true);
 		var flagBytes = new byte[flags.Length * 2];
 		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
-		File.WriteAllBytes(Path.Combine(HandoffDirectory, ShellMissionLaunch.MissionVarFileName), flagBytes);
+		File.WriteAllBytes(Path.Combine(dataDirectory, ShellMissionLaunch.MissionVarFileName), flagBytes);
 
 		Console.WriteLine($"{campaign.MissionPath}: stage {stage} mission {mission}, loaded as a campaign mission at "
 			+ $"skill {player.Skill} — {campaign.SquadPositions} squad position(s), the lance from {playerPath}, "
-			+ $"handoff written to {HandoffDirectory}.");
+			+ $"handoff written to {dataDirectory}.");
 		return campaign.ScriptPath;
 	}
 }

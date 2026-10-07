@@ -8,7 +8,7 @@
 ///
 /// <para>The layout is <c>debris.cpp</c>'s own loader, <c>Debris_LoadDatabase</c> and
 /// <c>Debris_LoadPieceList</c>: a count of <see cref="Group"/>s, each a throw count, a piece count, and
-/// that many 14-byte <see cref="Piece"/> records. See docs/formats/debris-dat.md.</para>
+/// that many 14-byte <see cref="Piece"/> records. See docs/retail/formats/debris-dat.md.</para>
 ///
 /// <para><b>Angles are stored in degrees.</b> <c>Debris_LoadPieceList</c> multiplies
 /// <see cref="Piece.OrientationYaw"/> and <see cref="Piece.ThrowYaw"/> by 182 as it reads them

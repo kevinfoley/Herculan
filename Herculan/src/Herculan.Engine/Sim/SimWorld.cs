@@ -1,8 +1,9 @@
 ﻿using HercWorks.Core.Data.File.Dat.Sim;
-using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
 using Herculan.Engine.Terrain;
+using Herculan.Engine.World;
 
 namespace Herculan.Engine.Sim;
 
@@ -12,7 +13,7 @@ namespace Herculan.Engine.Sim;
 /// global timestep from a timer and then walks each global object list calling every live object's
 /// per-tick update.
 ///
-/// <para>Deliberately holds no rendering state. Per docs/engine/planning.md's "library core + thin
+/// <para>Deliberately holds no rendering state. Per docs/herculan/planning.md's "library core + thin
 /// front-end host" decision, a world can be ticked by a game loop, a future mission editor, or a
 /// headless test with no assumption that a window exists.</para>
 /// </summary>
@@ -113,7 +114,7 @@ public sealed class SimWorld {
 	/// discarded draw on it, and the host hands it to the sound director, the squad comm channel
 	/// (message variants, the scream's roll, the portrait paint's discarded draw), the cockpit hit
 	/// shake and the sensor dropout. Seeded beside it to the same vanilla state — see
-	/// docs/simulation/random-generator.md#the-presentation-generator.
+	/// docs/retail/simulation/random-generator.md#the-presentation-generator.
 	/// </summary>
 	public SimRandom PresentationRandom { get; } = new();
 
@@ -126,7 +127,7 @@ public sealed class SimWorld {
 	/// <para>Three things index it: <see cref="DamageScaleFor"/>, which every direct-fire shot and
 	/// the plasma round's blast pass through, and <see cref="MechObject.AiAimScatter"/>. The fourth
 	/// consumer in the original is <c>Mech_CollisionTest</c>'s slide-landing damage, which is not
-	/// implemented at all. See docs/simulation/difficulty.md.</para>
+	/// implemented at all. See docs/retail/simulation/difficulty.md.</para>
 	/// </summary>
 	public int Difficulty { get; set; }
 
@@ -135,7 +136,7 @@ public sealed class SimWorld {
 	/// <see cref="World.ScriptDatHeader.UnlimitedAmmunition"/>. It reaches two places, both of them
 	/// the locally piloted machine's mounts: <see cref="WeaponMounts.FireTick"/> passes it to the
 	/// shot as its free-shot flag, and <see cref="WeaponMounts.ChargeTick"/> refunds the whole tick's
-	/// draw to the Master Energy Pool. See docs/simulation/difficulty.md.
+	/// draw to the Master Energy Pool. See docs/retail/simulation/difficulty.md.
 	/// </summary>
 	public bool UnlimitedAmmunition { get; set; }
 
@@ -180,6 +181,12 @@ public sealed class SimWorld {
 	public ISoundSink? Sounds { get; set; }
 
 	/// <summary>
+	/// The tweak settings the simulation's non-retail switches read. A world given none reads every
+	/// setting at its default.
+	/// </summary>
+	public TweakSettings Tweaks { get; set; } = new();
+
+	/// <summary>
 	/// Where the camera is, in world units — the original's own view object (<c>ViewObjectPtr</c> (<c>004d256e</c>)),
 	/// which simulation code legitimately reads.
 	///
@@ -205,7 +212,7 @@ public sealed class SimWorld {
 	/// straight out of its copy of the header (<c>ScriptDatHeader</c>). The simulation asks it one
 	/// question, whether this is <see cref="MoonTheater"/>, and asks it twice: in a debris piece's
 	/// gravity (<see cref="DebrisObject"/>) and in which fires light and for how long
-	/// (<see cref="SpawnFire"/>). See docs/simulation/destruction-effects.md.
+	/// (<see cref="SpawnFire"/>). See docs/retail/simulation/destruction-effects.md.
 	/// </summary>
 	public int Theater { get; set; }
 
@@ -295,7 +302,7 @@ public sealed class SimWorld {
 	private readonly List<MissionActionState> _actions = new();
 
 	/// <summary>
-	/// <c>DAT_004a9ebc</c>, count <c>DAT_004a9eb8</c> — the mission's block-6 timers. See
+	/// <c>ActionTimer_Array</c> (<c>004a9ebc</c>), count <c>ActionTimer_Count</c> (<c>004a9eb8</c>) — the mission's block-6 timers. See
 	/// <see cref="MissionActionTimerState"/>.
 	/// </summary>
 	public IReadOnlyList<MissionActionTimerState> ActionTimers => _actionTimers;
@@ -319,12 +326,11 @@ public sealed class SimWorld {
 	public void SetObjectives(MissionObjectives objectives) => Objectives = objectives;
 
 	/// <summary>
-	/// <c>Mission_Box</c> (<c>004aa6c4</c>-<c>d0</c>) — the mission's bounding box, which
-	/// <c>DBSim_LoadScriptDat</c> accumulates over block 1 as it reads the coordinates. Two things
-	/// read it: the Heads-Down Display's map frames itself on it, and the objective layer's two
-	/// boundary statuses are the player leaving it. An empty box turns both off.
+	/// The mission's <see cref="World.MissionBox"/>. Two things read it: the Heads-Down Display's map
+	/// frames itself on it, and the objective layer's two boundary statuses are the player leaving it.
+	/// An empty box turns both off.
 	/// </summary>
-	public HddMapBounds MissionBounds { get; set; } =
+	public MissionBox MissionBox { get; set; } =
 		new(int.MaxValue, int.MaxValue, int.MinValue, int.MinValue);
 
 	/// <summary>
@@ -338,7 +344,7 @@ public sealed class SimWorld {
 	/// <c>DAT_004a9ef4</c> — the mission counters, which are the campaign's flag array for the length
 	/// of a mission: they start from <c>mission.var</c> (<see cref="LoadMissionCounters"/>) and
 	/// <c>Mission_WriteResults</c> (<c>0042412c</c>) writes them back to it as the mission ends (<see cref="MissionResults"/>). See
-	/// docs/simulation/mission-deployment.md#the-mission-counters--dat_004a9ef4.
+	/// docs/retail/simulation/mission-deployment.md#the-mission-counters--dat_004a9ef4.
 	///
 	/// <para>Written by an action firing (<see cref="MissionActionState.Activate"/>), an objective
 	/// (<see cref="MissionObjectiveState"/>), the player downing a squadmate
@@ -423,7 +429,7 @@ public sealed class SimWorld {
 	/// each surviving mount of an enemy wreck at the mission's end (<see cref="MechObject.SalvageValue"/>).
 	///
 	/// <para>The original's list is a fixed block the append never checks, and a long enough list
-	/// writes past it (docs/simulation/component-damage.md#what-a-wreck-is-worth--mech_salvagevalue-00418e60).
+	/// writes past it (docs/retail/simulation/component-damage.md#what-a-wreck-is-worth--mech_salvagevalue-00418e60).
 	/// This list grows instead.</para>
 	/// </summary>
 	internal void QueueSalvage(short weaponId, short condition) => _salvage.Add((weaponId, condition));
@@ -571,14 +577,14 @@ public sealed class SimWorld {
 	public IReadOnlyList<WeaponShot> Beams => _beams;
 
 	/// <summary>
-	/// The live beam tracers — the original's <c>DAT_004a9746</c> pool. Unlike <see cref="Beams"/>
+	/// The live beam tracers — the original's <c>g_ProjectilePool</c> (<c>004a9746</c>) pool. Unlike <see cref="Beams"/>
 	/// these outlive the tick that made them (by exactly one tick, see
 	/// <see cref="BeamTracer.InitialLife"/>) and are what a renderer draws.
 	/// </summary>
 	public IReadOnlyList<BeamTracer> Tracers => _tracers;
 
 	/// <summary>
-	/// The travelling shots in flight — the same <c>DAT_004a9746</c> pool <see cref="Tracers"/> comes
+	/// The travelling shots in flight — the same <c>g_ProjectilePool</c> (<c>004a9746</c>) pool <see cref="Tracers"/> comes
 	/// from. Unlike a tracer these live for as long as their <c>BULLETS.DAT</c> lifetime or until
 	/// they hit something, and they move and do damage while they do.
 	/// </summary>
@@ -597,7 +603,7 @@ public sealed class SimWorld {
 	/// just before it walks the rounds, and a player-flown round raises it again every tick it is
 	/// steered (<see cref="Rocket"/>); <see cref="WeaponMounts.FireTick"/> raises it on the tick that
 	/// launches one. While it is up the controls go to the round rather than to the machine, and the
-	/// weapon chain holds still. See docs/simulation/rockets.md#the-missile-camera.
+	/// weapon chain holds still. See docs/retail/simulation/rockets.md#the-missile-camera.
 	/// </summary>
 	public bool MissileFlown { get; internal set; }
 
@@ -639,7 +645,7 @@ public sealed class SimWorld {
 
 	/// <summary>
 	/// Whether a flown round asked for the first button row to be latched since the last call — see
-	/// docs/simulation/rockets.md#flight--rocket_tickupdate-0040a538.
+	/// docs/retail/simulation/rockets.md#flight--rocket_tickupdate-0040a538.
 	/// </summary>
 	public bool TakeFireRowLatch() {
 		bool requested = _fireRowLatchRequested;
@@ -665,13 +671,18 @@ public sealed class SimWorld {
 	/// of its own that <c>Sim_MainTick</c> walks in the same effect-pool pass as the one
 	/// <see cref="Tracers"/> and <see cref="Projectiles"/> come from. An
 	/// entry lives for exactly one pass of its shape's flipbook; see <see cref="ImpactEffect"/>.
+	///
+	/// <para>An effect that plays out during a tick stays in this list, holding its slot against every
+	/// later spawn in the same tick, until the render-time flush at the end of the tick removes it —
+	/// <c>ExplosionPool_FlushDeletes</c> (<c>00407b3c</c>), a phase-5 hook of the <c>Sim_RenderFrame</c> the original
+	/// runs after each <c>Sim_MainTick</c>. So between ticks every entry here is live.</para>
 	/// </summary>
 	public IReadOnlyList<ImpactEffect> Effects => _effects;
 
 	/// <summary>
 	/// The dynamic lights impact effects are currently casting — the effect light manager
 	/// <c>DAT_004a968c</c>. The renderer reads it to decide what each drawn object is lit by; see
-	/// <see cref="EffectLightField"/> and docs/formats/effect-lights.md.
+	/// <see cref="EffectLightField"/> and docs/retail/formats/effect-lights.md.
 	/// </summary>
 	public EffectLightField EffectLights { get; } = new();
 
@@ -682,24 +693,32 @@ public sealed class SimWorld {
 	/// find something nearer), and from the tail of <see cref="Raycast"/> itself for a shot that ends
 	/// on the ground.
 	///
+	/// <para>Every site allocates from the pool before it builds, and with <see cref="ImpactEffect.PoolSize"/>
+	/// slots taken the spawn does nothing at all: no effect, no light, no sound.</para>
+	///
 	/// <para>Silently does nothing when the table did not load or the id is outside it. A retail
 	/// <c>ImpactFX</c> array can hold an id no type row exists for, and the original bounds nothing
 	/// here — reading past the table is not a behaviour worth reproducing.</para>
 	/// </summary>
 	/// <param name="typeId">The <c>EXPLOS.DAT</c> type, out of a <c>PROJ.DAT</c> <c>ImpactFX</c> array.</param>
 	/// <param name="position">Where the shot landed, in world units.</param>
+	/// <param name="owner">
+	/// <c>Explosion_Construct</c>'s owner argument, the object the effect belongs to for drawing — see
+	/// <see cref="ImpactEffect.Owner"/>.
+	/// </param>
 	/// <param name="playSound">
 	/// The constructor's own last argument, which gates the row's <c>SoundId</c> and nothing else.
 	/// Every object-hit spawn passes true; the ground hit at the tail of <see cref="Raycast"/> is the
 	/// one site that passes false.
 	/// </param>
-	internal void SpawnImpactEffect(short typeId, Vec3i position, bool playSound = true) {
-		if (Explosions?.Type(typeId) is not { } record) {
+	internal void SpawnImpactEffect(short typeId, Vec3i position, SimObject? owner, bool playSound = true) {
+		if (ImpactEffectPoolFull || Explosions?.Type(typeId) is not { } record) {
 			return;
 		}
 
 		_effects.Add(new ImpactEffect(
-			typeId, Explosions, record, Explosions.FrameCount(record.ShapeIndex), position, EffectLights, this));
+			typeId, Explosions, record, Explosions.FrameCount(record.ShapeIndex), position, owner, EffectLights,
+			this));
 
 		if (playSound && record.SoundId >= 0) {
 			// Math_RandomBelow(0x32) on the presentation generator, whose result the constructor throws
@@ -716,6 +735,23 @@ public sealed class SimWorld {
 	/// </summary>
 	internal short PickImpactEffect(short[]? effects) =>
 		effects is { Length: > 0 } ? effects[Random.NextMasked(3) % effects.Length] : (short)0;
+
+	/// <summary>
+	/// <see cref="SpawnImpactEffect"/> with the id drawn from <paramref name="effects"/> by
+	/// <see cref="PickImpactEffect"/> only once a pool slot is known to be free. This is the order of the
+	/// ground hit and of the mech and structure hit tests, whose <c>Math_RandomNext</c> sits inside the
+	/// allocation's null test, so a full pool leaves the generator where it was. The flyer's hit test
+	/// draws before it allocates and goes through <see cref="PickImpactEffect"/> itself.
+	/// </summary>
+	internal void SpawnPickedImpactEffect(short[]? effects, Vec3i position, SimObject? owner,
+			bool playSound = true) {
+		if (!ImpactEffectPoolFull) {
+			SpawnImpactEffect(PickImpactEffect(effects), position, owner, playSound);
+		}
+	}
+
+	/// <summary><c>Pool_Alloc</c> (<c>00471a24</c>) on <c>g_ExplosionPool</c> would return nothing.</summary>
+	private bool ImpactEffectPoolFull => _effects.Count >= ImpactEffect.PoolSize;
 
 	/// <summary>
 	/// The debris databases — <c>DEF_DEB</c> and whatever else has been asked for. Null when the
@@ -933,7 +969,8 @@ public sealed class SimWorld {
 	/// <summary>
 	/// Tells the world how large each root of one debris shape file is, which is what a thrown piece
 	/// clears the ground by: <c>Debris_TickUpdate</c> settles a piece at the terrain height plus its
-	/// shape's own bounding radius scaled by <see cref="DebrisObject.GroundClearanceScale"/>.
+	/// shape's own bounding radius (vtable <c>+0x10</c>, the root's <c>shape+8</c>, which is
+	/// <see cref="Scene.SceneModel.ShapeRadius"/>) scaled by <see cref="DebrisObject.GroundClearanceScale"/>.
 	///
 	/// <para>Supplied rather than read here for the reason
 	/// <see cref="ExplosionCatalog.BindFrameCounts"/> is: the radius is a property of the shape file,
@@ -1065,7 +1102,36 @@ public sealed class SimWorld {
 		for (int i = 0; i < _objects.Count; i++) {
 			_objects[i].EnsureTableSize(_objects.Count);
 		}
+
+		if (_sightingCalledIn.Length < _objects.Count) {
+			Array.Resize(ref _sightingCalledIn, _objects.Count);
+		}
 	}
+
+	/// <summary>
+	/// <c>DAT_004a9b84[obj+0x4b]</c> — whether the player's group has already had its chance to call
+	/// <paramref name="enemy"/> in, a per-object latch indexed by <see cref="SimObject.ListIndex"/>
+	/// and never cleared during a mission. Written only by <see cref="MechObject.EnemySighted"/>.
+	/// </summary>
+	internal bool SightingCalledIn(SimObject enemy) =>
+		enemy.ListIndex >= 0 && enemy.ListIndex < _sightingCalledIn.Length && _sightingCalledIn[enemy.ListIndex];
+
+	/// <summary>Raises <see cref="SightingCalledIn"/> for <paramref name="enemy"/>.</summary>
+	internal void LatchSighting(SimObject enemy) {
+		if (enemy.ListIndex >= 0 && enemy.ListIndex < _sightingCalledIn.Length) {
+			_sightingCalledIn[enemy.ListIndex] = true;
+		}
+	}
+
+	private bool[] _sightingCalledIn = Array.Empty<bool>();
+
+	/// <summary>
+	/// The counter of the countdown record at <c>004a9be8</c> — the rate limit on the "enemy detected"
+	/// callout. Stepped and re-armed by <see cref="MechObject.EnemySighted"/>, once per call from any
+	/// machine but the player's, and by nothing else — whether retail steps it anywhere else is an
+	/// Open item of docs/retail/simulation/ai-targeting.md.
+	/// </summary>
+	internal short SightingCalloutTimer;
 
 	/// <summary>
 	/// <c>Sim_RaycastObjectList</c> (<c>00426528</c>) — the shared ray-versus-live-object query, which
@@ -1124,7 +1190,7 @@ public sealed class SimWorld {
 			}
 
 			// The engagement pair, and the two halves land on opposite objects: the shooter is marked
-			// engaged, the struck object's action fires. See docs/simulation/mission-deployment.md, "An
+			// engaged, the struck object's action fires. See docs/retail/simulation/mission-deployment.md, "An
 			// object's own two actions".
 			if (shot.Owner is { } firer
 					&& ReferenceEquals(candidate, SimObject.SelectedTargetOf(firer))) {
@@ -1135,12 +1201,12 @@ public sealed class SimWorld {
 			// "Something just shot at me", on the candidate's own +0x50 slot. The original puts it
 			// exactly here — past the hit test, so only what the ray actually reached hears about it —
 			// and skips it for a destroyed candidate, or an enemy one that is out of action. It applies
-			// no damage. See docs/simulation/hit-detection.md.
+			// no damage. See docs/retail/simulation/hit-detection.md.
 			if (shot.Owner is { } owner && !candidate.Destroyed
 					&& (candidate.Side == owner.Side || !candidate.OutOfAction)) {
 				// The player hitting anything on his own side outside his own group, structures
 				// included: the player's own nearest squadmate complains, if it is close enough to
-				// him to have seen it (docs/simulation/ai-targeting.md, "Radio callouts").
+				// him to have seen it (docs/retail/simulation/ai-targeting.md, "Radio callouts").
 				if (owner.LocallyPiloted && candidate.Side == owner.Side
 						&& !ReferenceEquals(candidate.Group, owner.Group)
 						&& owner.Group?.NearestLiveMember(owner) is MechObject witness
@@ -1170,9 +1236,10 @@ public sealed class SimWorld {
 		// with no owner and with the sound suppressed (the constructor's last argument is 0 here and 1
 		// at every other site).
 		if (hit && shot.HitObject == null) {
-			SpawnImpactEffect(
-				PickImpactEffect(shot.ImpactFx(WeaponShot.ImpactFxGroup.Ground)),
+			SpawnPickedImpactEffect(
+				shot.ImpactFx(WeaponShot.ImpactFxGroup.Ground),
 				shot.Muzzle.TransformPoint(0, shot.Distance, 0),
+				owner: null,
 				playSound: false);
 		}
 
@@ -1205,6 +1272,68 @@ public sealed class SimWorld {
 
 		return hit ? shot.Distance + 1 : 0;
 	}
+
+	/// <summary>
+	/// <c>Sim_RaycastShapes</c> (<c>00404ca0</c>) and the <c>Sim_RaycastShapeList</c>
+	/// (<c>00404bc0</c>) it ends in — a ray between two world points against the structures' collision
+	/// volumes, and nothing else: no terrain, no machines, no damage, no effects. It is the AI's shape
+	/// probe, called by <see cref="MechObject"/>'s obstacle avoidance and its line-of-sight test (see
+	/// docs/retail/simulation/hit-detection.md, "The shape probe").
+	///
+	/// <para>The ray is built as a shot's is — pointed from <paramref name="from"/> at
+	/// <paramref name="to"/> by <see cref="SimTrig.EulerToward"/>, starting at
+	/// <paramref name="from"/>, as long as the sqrt-free distance between them — and each candidate
+	/// is tested by <see cref="BaseObject.VolumeRaycast"/>. Candidates are every structure
+	/// <see cref="BaseObject.InShapeList"/> admits, oldest first as <c>Pool_Prev</c> walks the
+	/// structure pool. The original gathers them with no deployment test, so a structure whose group
+	/// has not arrived is one.</para>
+	///
+	/// <para>The sweep shortens the ray to each hit and stops at one inside
+	/// <see cref="WeaponShot.MinimumScanDistance"/>, as <see cref="Raycast"/> does, so what it reports
+	/// is the last structure struck: the nearest, unless an earlier one was inside that distance.</para>
+	///
+	/// <para>The original takes a clearance and a side filter as well. All three of its callers pass a
+	/// clearance of 0 and a side of −1, "any", so neither is a parameter here.</para>
+	/// </summary>
+	/// <param name="from">Where the ray starts, in world units.</param>
+	/// <param name="to">Where it ends.</param>
+	/// <param name="distance">How far along the ray the struck structure's volume was entered.</param>
+	/// <param name="struck">The structure struck, or null for a miss.</param>
+	/// <returns>Whether any structure was struck.</returns>
+	internal bool RaycastShapes(Vec3i from, Vec3i to, out int distance, out BaseObject? struck) {
+		var (pitch, roll, yaw) = SimTrig.EulerToward(to, from);
+		var muzzle = Transform3.FromEuler(pitch, roll, yaw);
+		muzzle.X = from.X;
+		muzzle.Y = from.Y;
+		muzzle.Z = from.Z;
+
+		var muzzleInverse = muzzle.Inverted();
+		int length = to.ApproxDistanceTo(from);
+
+		distance = 0;
+		struck = null;
+
+		for (int i = 0; i < _objects.Count; i++) {
+			if (_objects[i] is not BaseObject { Removed: false, InShapeList: true } candidate
+					|| !candidate.VolumeRaycast(muzzle, muzzleInverse, length, ShapeProbeClearance,
+						out int struckAt)) {
+				continue;
+			}
+
+			length = struckAt;
+			distance = struckAt;
+			struck = candidate;
+
+			if (struckAt < WeaponShot.MinimumScanDistance) {
+				break;
+			}
+		}
+
+		return struck != null;
+	}
+
+	/// <summary>The clearance every caller of <see cref="RaycastShapes"/> passes.</summary>
+	private const int ShapeProbeClearance = 0;
 
 	/// <summary>
 	/// <c>Damage_ExplosiveBlastSweep</c> (<c>00426a20</c>) — the area-of-effect counterpart of
@@ -1326,7 +1455,9 @@ public sealed class SimWorld {
 			shot.Muzzle.TransformPoint(0, travelled, 0),
 			shot.SubtypeId,
 			BeamTable?.HalfWidth(shot.SubtypeId) ?? 0,
-			Random));
+			Random,
+			shot.Muzzle.RotateVector(0, BeamTracer.SpanLength, 0),
+			travelled));
 
 		_beams.Add(shot);
 	}
@@ -1389,9 +1520,8 @@ public sealed class SimWorld {
 	/// subtype is the missile the player flies by hand and so never builds a lock — which is how an
 	/// AI opponent's electro-optical missile still tracks.</para>
 	///
-	/// <para>The <i>node</i> half of the lock is not attached — <c>+0x5a</c>, which the original fills
-	/// from the target's own vtable <c>+0x54</c> so the round steers at a specific part rather than at
-	/// the object's origin.</para>
+	/// <para>A target, once attached, is asked which of its components the round locks on to
+	/// (<see cref="Rocket.LockComponent"/>).</para>
 	///
 	/// <para>Every round the locally piloted machine launches becomes <see cref="PlayerMissile"/>, the
 	/// one the MFD's missile camera rides.</para>
@@ -1420,12 +1550,12 @@ public sealed class SimWorld {
 		if (owner is MechObject launching
 				&& (launching.MissileLocked(projectile.SubtypeId)
 					|| (!launching.LocallyPiloted && projectile.SubtypeId == Rocket.PlayerFlownSubtype))) {
-			round.Target = launching.Target;
+			round.Lock(launching.Target);
 		} else if (owner is not null and not MechObject) {
 			// The lock gate is the launcher's own vtable +0x6c, and every class but the mech installs a
 			// `return 1` stub (SimObject_MissileLockState_Always (00411b04)) -- so a Cybrid flyer's or a
 			// missile tower's round is always given the launcher's selected target.
-			round.Target = owner.Target;
+			round.Lock(owner.Target);
 		}
 
 		_rockets.Add(round);
@@ -1466,13 +1596,38 @@ public sealed class SimWorld {
 		if (PlayerMech is { Removed: false, Destroyed: false } pilot) {
 			PollMission(pilot);
 		}
+
+		// Sim_RenderFrame still runs under the freeze, and with it the phase-5 flushes and the charge-bar
+		// exchange.
+		FlushRenderFrameDeletes();
+		PlayerMech?.Weapons.PushGaugeStates();
+	}
+
+	/// <summary>
+	/// The pool flushes among the phase-5 subsystem hooks the top of <c>Sim_RenderFrame</c> runs
+	/// (<c>Subsystem_RunPhase</c>, <c>00401d94</c>), in their registration order: the effect lights'
+	/// (<c>EffectLightPool_FlushDeletes</c>, <c>004077e8</c>) before the impact effects'
+	/// (<c>ExplosionPool_FlushDeletes</c>, <c>00407b3c</c>). The second is what queues an ended effect's light
+	/// handle, so the first does not return it until the next frame — see
+	/// docs/retail/formats/effect-lights.md#claiming-a-slot.
+	/// </summary>
+	private void FlushRenderFrameDeletes() {
+		EffectLights.FlushReleases();
+
+		for (int i = 0; i < _effects.Count; i++) {
+			if (_effects[i].Finished) {
+				_effects[i].Destruct();
+			}
+		}
+
+		_effects.RemoveAll(effect => effect.Finished);
 	}
 
 	/// <summary>
 	/// <c>Sim_MainTick</c>'s mission poll: <see cref="MissionObjectives.Poll"/>, and on
 	/// <see cref="MissionStatus.PlayerImmobilised"/> the outnumbered damage on the player's group first,
 	/// which turns the answer into <see cref="MissionStatus.ImmobilisedThenDestroyed"/> when it kills the
-	/// player. See docs/simulation/mission-objectives.md#the-poll--mission_pollstatus-004131ac.
+	/// player. See docs/retail/simulation/mission-objectives.md#the-poll--mission_pollstatus-004131ac.
 	/// </summary>
 	private void PollMission(MechObject pilot) {
 		var alert = Objectives.Poll(this, pilot);
@@ -1512,10 +1667,9 @@ public sealed class SimWorld {
 		// next one.
 		// Impact effects share that deal, and want it more: one is spawned from inside a hit test, so
 		// it is created part-way through this same tick and must not be counted down until the next.
+		// One that plays out keeps its slot until FlushRenderFrameDeletes, at the end of the tick.
 		for (int i = _effects.Count - 1; i >= 0; i--) {
-			if (_effects[i].Tick()) {
-				_effects.RemoveAt(i);
-			}
+			_effects[i].Tick();
 		}
 
 		// Sim_MainTick drops the missile-flown flag immediately before it walks the pool these three
@@ -1657,9 +1811,11 @@ public sealed class SimWorld {
 			PollMission(pilot);
 		}
 
-		// The light handles ended effects queued come back at the top of the next Sim_RenderFrame,
-		// which the original runs straight after each Sim_MainTick.
-		EffectLights.FlushReleases();
+		FlushRenderFrameDeletes();
+
+		// And that frame's Player_PerFrameCockpitUpdate exchanges the power levels with the charge bars, one
+		// push to each tick; see WeaponMounts.PushGaugeStates.
+		PlayerMech?.Weapons.PushGaugeStates();
 
 		TickCount++;
 		ElapsedMilliseconds += elapsedMilliseconds;
@@ -1675,13 +1831,13 @@ public sealed class SimWorld {
 	/// <summary>
 	/// Half-arc, either side of the bearing to the target, inside which a shot that stopped short
 	/// counts as the shooter's own line of fire being blocked. 45°; see
-	/// docs/simulation/ai-combat-states.md.
+	/// docs/retail/simulation/ai-combat-states.md.
 	/// </summary>
 	private const int BlockedLineOfFireArc = 0x2000;
 
 	/// <summary>
 	/// How near the player the squadmate <see cref="Raycast"/> picks must be for it to complain about
-	/// the player's shot at a friendly outside the group. See docs/simulation/ai-targeting.md,
+	/// the player's shot at a friendly outside the group. See docs/retail/simulation/ai-targeting.md,
 	/// "Radio callouts".
 	/// </summary>
 	private const int FriendlyFireWitnessRange = 30000;

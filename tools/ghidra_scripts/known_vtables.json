@@ -1,8 +1,7 @@
 ﻿{
   "schema_version": 1,
   "_readme": [
-    "Vtable layouts for DBSIM.EXE's simulation objects and cockpit widgets, and for VSHELL.EXE's",
-    "class-item (ThreeSpace, GL, animation, event), stream, widget, display and map classes --",
+    "Vtable layouts for every class with a vtable in DBSIM.EXE and VSHELL.EXE --",
     "applied to the Ghidra project by ES2ApplyVtables.java",
     "(tools/ghidra_scripts/). Re-run that script after adding entries here -- it is idempotent.",
     "",
@@ -50,7 +49,16 @@
     "NO SIGNATURES. Each slot becomes a function definition with the default (undefined) return and",
     "no declared parameters -- the least the shape can claim. Argument",
     "lists are a separate, per-function finding: record one in known_symbols_<binary>.json's 'signature'",
-    "field, under the rule stated there, not here."
+    "field, under the rule stated there, not here.",
+    "",
+    "GENERATED SHAPES. tools/scripts/es2_skeletons.py gives every class record's primary vtable a",
+    "shape: its base's when the table is as long as the base's; in DBSIM, a copy of the VSHELL",
+    "namesake's when every slot's function has the same name in both binaries; otherwise a new one",
+    "whose first slots are its parent shape's. A new slot is named for the role its implementations'",
+    "names agree on -- the part after the first '_', less a trailing NoOp or None -- and is",
+    "slot_0xNN where they disagree or none is named; its description lists the implementations.",
+    "The slot count of such a shape is the run of code pointers up to the next class's type",
+    "descriptor."
   ],
   "vtables": [
     {
@@ -92,14 +100,14 @@
       "slots": [
         { "offset": 0,   "name": "Draw",                  "description": "Draw the object. Base installs Shape_DrawAtDetailLevel (004033e4); the mech overrides with Mech_Draw (004174c8)." },
         { "offset": 4,   "name": "GetPosition",           "description": "SimObject_GetPosition (0046b801), returning obj+0x26, in every table seen -- base, mech, flyer and all four projectile classes. Scene_SubmitObjectWithRadius (0042837c) and ObjList_DrawCellObjects (00428c60) call it for the object's position." },
-        { "offset": 8,   "name": "Destructor",            "description": "The deleting destructor, (this, flags): SimObject_Dtor (00427081), Mech_Dtor (00427127), Flyer_Dtor (004271bf), Base_Dtor (00406dab), Base_RadarDtor (00406df3), Base_ArmedDtor (00406d5c), GroundVehicle_Dtor (00406d05), Base_TripleTurretDtor (00406caf). Each counts the RTL destructor counter down once per class level it inlines, runs AnimObj_Dtor (00402400) with flags 0, and on flags bit 0 takes the object off maybe_GlobalLiveObjectList with ObjList_SwapRemove (00411e1c) instead of freeing it." },
+        { "offset": 8,   "name": "Destructor",            "description": "The deleting destructor, (this, flags): SimObject_Dtor (00427081), Mech_Dtor (00427127), Flyer_Dtor (004271bf), Base_Dtor (00406dab), Base_RadarDtor (00406df3), Base_ArmedDtor (00406d5c), GroundVehicle_Dtor (00406d05), Base_TransportDtor (00406caf). Each counts the RTL destructor counter down once per class level it inlines, runs AnimObj_Dtor (00402400) with flags 0, and on flags bit 0 takes the object off maybe_GlobalLiveObjectList with ObjList_SwapRemove (00411e1c) instead of freeing it." },
         { "offset": 12,  "name": "slot_0x0c",             "description": "Stub_ReturnZero (004785bf) in every table seen. Role not established." },
-        { "offset": 16,  "name": "GetShapeRadius",        "description": "SimObject_GetShapeRadius (0046b80c) in every table -- reads the radius off the instanced shape rather than any type record. See docs/simulation/hit-detection.md." },
+        { "offset": 16,  "name": "GetShapeRadius",        "description": "SimObject_GetShapeRadius (0046b80c) in every table -- reads the radius off the instanced shape rather than any type record. See docs/retail/simulation/hit-detection.md." },
         { "offset": 20,  "name": "Tick",                  "description": "The object's per-tick update. The mech installs Behaviour_DispatchMove (00415afc), which forwards to the current behaviour class rather than moving anything itself; the projectile classes install their own TickUpdate in the same slot. The ACTOR base and the five structure tables install SimObject_TickNoOp (00411ab4), which returns 1." },
-        { "offset": 24,  "name": "ThinkTick",             "description": "Mech: Behaviour_DispatchThink (00415b38). Second of the three behaviour-class dispatchers; see docs/simulation/ai-dispatch.md." },
+        { "offset": 24,  "name": "ThinkTick",             "description": "Mech: Behaviour_DispatchThink (00415b38). Second of the three behaviour-class dispatchers; see docs/retail/simulation/ai-dispatch.md." },
         { "offset": 28,  "name": "ReassessTick",          "description": "Mech: Behaviour_DispatchReassess (00415b74). Third behaviour-class dispatcher. The five structure tables install Base_ReassessTickNoOp (00406cfe), which returns 0." },
-        { "offset": 32,  "name": "DirectFireHitTest",     "description": "Hit test AND damage application in one call, offered to each candidate by Sim_RaycastObjectList (00426528). Mech_DirectFireHitTest (00418ba8), Flyer_DirectFireHitTest (00421c8c), Base_DirectFireHitTest (00405038); the ACTOR base's slot is pure virtual (Rtl_PureVirtualCalled, 00496684). See docs/simulation/damage-system.md and hit-detection.md." },
-        { "offset": 36,  "name": "GetAimNodeTransform",   "description": "The node transform a shot aims at: its +0x14 is the aim point and its +0x1c the sight height. Mech_GetAimNodeTransform (00417b98); base and flyer both install SimObject_GetAimNodeTransform_None (00411a9c), which returns 0 so every caller falls back to the raw origin. See docs/simulation/target-selection.md, 'Aim point'." },
+        { "offset": 32,  "name": "DirectFireHitTest",     "description": "Hit test AND damage application in one call, offered to each candidate by Sim_RaycastObjectList (00426528). Mech_DirectFireHitTest (00418ba8), Flyer_DirectFireHitTest (00421c8c), Base_DirectFireHitTest (00405038); the ACTOR base's slot is pure virtual (Rtl_PureVirtualCalled, 00496684). See docs/retail/simulation/damage-system.md and hit-detection.md." },
+        { "offset": 36,  "name": "GetAimNodeTransform",   "description": "The node transform a shot aims at: its +0x14 is the aim point and its +0x1c the sight height. Mech_GetAimNodeTransform (00417b98); base and flyer both install SimObject_GetAimNodeTransform_None (00411a9c), which returns 0 so every caller falls back to the raw origin. See docs/retail/simulation/target-selection.md, 'Aim point'." },
         { "offset": 40,  "name": "ReceiveSquadOrder",     "description": "One machine receiving one transmitted squad order; 1 when the order was taken. Mech_ReceiveSquadOrder (00420ad4); the ACTOR base, the flyer and the five structure tables install SimObject_ReceiveSquadOrder_Refuse (00411a64), which returns 0." },
         { "offset": 44,  "name": "HandleCommand",         "description": "Mech_HandleCommand (004157c8). The ACTOR base and the structures install SimObject_HandleCommandNoOp (00411a6c), the flyer its own Flyer_HandleCommandNoOp (004215c0); both return 0." },
         { "offset": 48,  "name": "GetAimPoint",           "description": "Two out triples: the eye point and the outside view's orbit centre. Mech_GetAimPoint (004155c4); the ACTOR base and the flyer install SimObject_GetAimPointZero (00411a74), the structures Base_GetAimPoint (0040351c)." },
@@ -110,20 +118,20 @@
         { "offset": 68,  "name": "BearingInSensorArc",    "description": "SimObject_BearingInSensorArc (00411acc) in the ACTOR base, the mech and the flyer. All five structure tables override it with Base_BearingInSensorArc_Always (00405308), which answers 1 for any bearing." },
         { "offset": 72,  "name": "AiEnemySighted",        "description": "Mech_AiEnemySighted (00412800); every other table installs SimObject_AiEnemySightedNoOp (004127f8). Called out of the detection sweep." },
         { "offset": 76,  "name": "CompareCombatRating",   "description": "Mech_CompareCombatRating (0041cabc). Every other table answers SimObject_CompareCombatRatingStub (00411ac0)." },
-        { "offset": 80,  "name": "AiOnTakingFire",        "description": "Called with (attacker, damage) when something hits this object; applies no damage of its own. Mech_AiOnTakingFire (0041f7b8). Base and flyer install Mech_ShareContact (00411aec), which does the contact-sharing half only. See docs/simulation/ai-targeting.md." },
-        { "offset": 84,  "name": "ComponentNearestAim",   "description": "Which component a shot or a seeker should aim at. Mech_ComponentNearestAim (0041b534); the rocket seeker calls it through the target to fill its steer point (docs/simulation/rockets.md), and a structure's implementation returns its first surviving component (docs/simulation/ai-weapons.md). The ACTOR base and the flyer answer -1 (SimObject_ComponentNearestAim_None, 00411a44)." },
+        { "offset": 80,  "name": "AiOnTakingFire",        "description": "Called with (attacker, damage) when something hits this object; applies no damage of its own. Mech_AiOnTakingFire (0041f7b8). Base and flyer install Mech_ShareContact (00411aec), which does the contact-sharing half only. See docs/retail/simulation/ai-targeting.md." },
+        { "offset": 84,  "name": "ComponentNearestAim",   "description": "Which component a shot or a seeker should aim at. Mech_ComponentNearestAim (0041b534); the rocket seeker calls it through the target to fill its steer point (docs/retail/simulation/rockets.md), and a structure's implementation returns its first surviving component (docs/retail/simulation/ai-weapons.md). The ACTOR base and the flyer answer -1 (SimObject_ComponentNearestAim_None, 00411a44)." },
         { "offset": 88,  "name": "ComponentPosition",     "description": "Places the component ComponentNearestAim chose, in world space. Mech_ComponentPosition (0041b60c), Base_ComponentPosition (00406808). Also the per-component position the explosive falloff measures from. The ACTOR base and the flyer install SimObject_ComponentPositionNoOp (00411a3c), which leaves the out-parameter unwritten." },
-        { "offset": 92,  "name": "GetBodyRadius",         "description": "Mech_GetBodyRadius (00415518) -- the flat 750 body radius every retail HERC's .DAT states at offset 110. Base_GetBodyRadius (004035a4); SimObject_GetBodyRadiusZero (00411aa4) for the ACTOR base and the flyer. Distinct from GetShapeRadius. See docs/simulation/hit-detection.md, 'The three radius slots'." },
-        { "offset": 96,  "name": "OnTargetNeutralised",    "description": "Mech_CreditNeutralisedTarget (00415710); every other table installs SimObject_CreditNeutralisedTargetNoOp (00411b2c), an empty body. Called on the ATTACKER by Mech_ComponentDamageWrite when its victim goes out of the fight, carrying the victim and the victim's immobilised reading from before the change -- kill credit and the two squad callouts. See docs/simulation/component-damage.md." },
-        { "offset": 100, "name": "AiOnLineOfFireBlocked", "description": "Mech_AiOnLineOfFireBlocked (0041dd2c): copies the machine's current target position to mech+0x31e and sets mech+0xad. Called from the tail of Sim_RaycastObjectList. Every other table installs SimObject_AiOnLineOfFireBlockedNoOp (00411b34), an empty body. See docs/simulation/ai-combat-states.md." },
+        { "offset": 92,  "name": "GetBodyRadius",         "description": "Mech_GetBodyRadius (00415518) -- the flat 750 body radius every retail HERC's .DAT states at offset 110. Base_GetBodyRadius (004035a4); SimObject_GetBodyRadiusZero (00411aa4) for the ACTOR base and the flyer. Distinct from GetShapeRadius. See docs/retail/simulation/hit-detection.md, 'The three radius slots'." },
+        { "offset": 96,  "name": "OnTargetNeutralised",    "description": "Mech_CreditNeutralisedTarget (00415710); every other table installs SimObject_CreditNeutralisedTargetNoOp (00411b2c), an empty body. Called on the ATTACKER by Mech_ComponentDamageWrite when its victim goes out of the fight, carrying the victim and the victim's immobilised reading from before the change -- kill credit and the two squad callouts. See docs/retail/simulation/component-damage.md." },
+        { "offset": 100, "name": "AiOnLineOfFireBlocked", "description": "Mech_AiOnLineOfFireBlocked (0041dd2c): copies the machine's current target position to mech+0x31e and sets mech+0xad. Called from the tail of Sim_RaycastObjectList. Every other table installs SimObject_AiOnLineOfFireBlockedNoOp (00411b34), an empty body. See docs/retail/simulation/ai-combat-states.md." },
         { "offset": 104, "name": "SetRunInto",            "description": "SimObject_SetRunInto (0042200c) in all eight instances, with no override: obj+0xb1 = 1, \"something ran into me\". Two callers, both collision sweeps naming whatever blocked a move -- Mech_CollisionTest and GroundVehicle_CollisionTest (0046a510), the sweep in StructureGroundVehicleVtable's tick slot. Mech_BehaviourRamTick is the only reader and nothing clears the byte." },
         { "offset": 108, "name": "MissileLockState",      "description": "Mech_MissileLockState (004155ac): returns the per-missile-subtype LOCK flag, NOT an ammunition count. Asked of the launcher: Rocket_Fire will not attach a target without it. Every other table installs SimObject_MissileLockState_Always (00411b04), which returns 1, so a flyer's or a structure's missile always gets the launcher's selected target. See known_symbols_dbsim.json's entry for 004155ac." },
-        { "offset": 112, "name": "ApplyExplosiveDamage",  "description": "What an explosion does to this object, called on every object the blast sweep finds in range. Mech_ApplyExplosiveDamage (004187d0); base and flyer share SimObject_ApplyExplosiveDamage (00411b3c). See docs/simulation/damage-system.md, 'Explosive damage'." },
+        { "offset": 112, "name": "ApplyExplosiveDamage",  "description": "What an explosion does to this object, called on every object the blast sweep finds in range. Mech_ApplyExplosiveDamage (004187d0); base and flyer share SimObject_ApplyExplosiveDamage (00411b3c). See docs/retail/simulation/damage-system.md, 'Explosive damage'." },
         { "offset": 116, "name": "ComponentDamageWrite",  "description": "The shared component-health write every damage path funnels into. Mech_ComponentDamageWrite (00417de4), Flyer_ComponentDamageWrite (00421bb4); both of the mech's death branches fire the object's defeat action from here. The structures install Base_ApplyDamage (00404d70); the ACTOR base's slot is pure virtual (Rtl_PureVirtualCalled, 00496684)." },
-        { "offset": 120, "name": "ApplyFormationOffset",  "description": "Places a group member at its formation offset from the leader. Mech_ApplyFormationOffset (00417898); run over every non-leader member by Group_DeploymentCheck for the walk-on arrival verbs. See docs/simulation/mission-deployment.md." },
-        { "offset": 124, "name": "GetCollisionRadius",    "description": "This object's half of the collision gap a walking machine measures against it; the mover contributes its own GetBodyRadius. Mech_GetCollisionRadius (0041552c), Base_GetCollisionRadius (004035b8); SimObject_GetCollisionRadiusZero (00411aac) for the ACTOR base and the flyer. See docs/simulation/hit-detection.md, 'The three radius slots'." },
-        { "offset": 128, "name": "NextTargetableComponent", "description": "(this, cursor, int *componentId) -- step a targeting-pod component lock to the next component this object still has, answering the new cursor and writing the component id out. Mech_NextTargetableComponent (00415558) walks a fixed seven-slot rotation, Base_NextTargetableComponent (00403624) walks the structure type's whole component list, and the base class answers -1. The targeting pod is the only caller; see docs/simulation/target-selection.md." },
-        { "offset": 132, "name": "ComponentPresent",        "description": "(this, componentId) -- whether this object still has that component, from its occupancy array. Mech_ComponentPresent (00415540), Base_ComponentPresent (0040360c); the base class answers 1 for anything. Asked only by the targeting pod, to notice that the component it had locked has been shot off. See docs/simulation/target-selection.md." }
+        { "offset": 120, "name": "ApplyFormationOffset",  "description": "Places a group member at its formation offset from the leader. Mech_ApplyFormationOffset (00417898); run over every non-leader member by Group_DeploymentCheck for the walk-on arrival verbs. See docs/retail/simulation/mission-deployment.md." },
+        { "offset": 124, "name": "GetCollisionRadius",    "description": "This object's half of the collision gap a walking machine measures against it; the mover contributes its own GetBodyRadius. Mech_GetCollisionRadius (0041552c), Base_GetCollisionRadius (004035b8); SimObject_GetCollisionRadiusZero (00411aac) for the ACTOR base and the flyer. See docs/retail/simulation/hit-detection.md, 'The three radius slots'." },
+        { "offset": 128, "name": "NextTargetableComponent", "description": "(this, cursor, int *componentId) -- step a targeting-pod component lock to the next component this object still has, answering the new cursor and writing the component id out. Mech_NextTargetableComponent (00415558) walks a fixed seven-slot rotation, Base_NextTargetableComponent (00403624) walks the structure type's whole component list, and the base class answers -1. The targeting pod is the only caller; see docs/retail/simulation/target-selection.md." },
+        { "offset": 132, "name": "ComponentPresent",        "description": "(this, componentId) -- whether this object still has that component, from its occupancy array. Mech_ComponentPresent (00415540), Base_ComponentPresent (0040360c); the base class answers 1 for anything. Asked only by the targeting pod, to notice that the component it had locked has been shot off. See docs/retail/simulation/target-selection.md." }
       ],
       "instances": [
         {
@@ -163,8 +171,8 @@
         },
         {
           "address": "00497784",
-          "label": "StructureType0x22Vtable",
-          "description": "RTTI 'LC_BASE', 0x266 bytes: BASES.DAT type 0x22 alone. Derived from StructureVtable, overriding the destructor and the think (Base_TripleTurretThinkTick, 004045c8), which latches disarmed (+0xa5) once every one of the type's components has been destroyed -- so this class starts armed and can lose it, where a plain building is born disarmed. It does not override the aim angle. The role of the type is not established; the label names the type index rather than guessing one."
+          "label": "StructureTransportVtable",
+          "description": "RTTI 'LC_BASE', 0x266 bytes: BASES.DAT type 0x22 alone, the TRANSPORT (its MFD name), a landed drop pod with three fixed weapon stations. Derived from StructureVtable, overriding the destructor and the think (Base_TransportThinkTick, 004045c8), which latches disarmed (+0xa5) once every component after the first is at full damage -- so this class starts armed and can lose it, where a plain building is born disarmed. It does not override the aim angle."
         }
       ]
     },
@@ -173,12 +181,12 @@
       "binary": "DBSIM",
       "description": "The six-slot table the projectile classes carry, and the interface SimObjectVtable's first six slots extend -- which is what lets the draw pass and the raycast walk a projectile and a machine the same way. SIX IS ESTABLISHED, not a floor, on four independent grounds. (1) No code in the class family's own region (0040a100-0040c500: all five constructors, destructors, tick and draw functions) calls any slot above +0x14 on itself. (2) The six CALL dword ptr [reg + 0x18] sites in that region are all the same deleting-destructor call on the MEMBER object at this+0x34, under a null check and with the flag argument 3 -- Bullet_Construct's destructor at 0040b6af and the base's at 0040c38d are byte-for-byte the same sequence -- so +0x18 belongs to that member's class, not this one. (3) The word after +0x14 is not a code pointer in two of the five tables: 00000001 in the bullet's, 00000000 in the beam tracer's. (4) Where it does look like one it is descriptor data -- the base's 0040c3d8 sits inside a class-descriptor record next to the string 'BEAM *', and the rocket's 0046b7c8 at the head of one whose name string is 'TSShapeInstance'; neither address has a function prologue and neither is reached by any call. TS_OBJ (004a0b98), which the projectile base derives from, has five slots -- DrawableVtable's shape -- so +0x14 is PROJECTILE's own addition.",
       "slots": [
-        { "offset": 0,  "name": "Draw",           "description": "Bullet_Draw (0040a120) for the launcher round and the gun round alike; BeamTracer_Draw (0040bc14) for the beam class. See docs/simulation/beam-visuals.md." },
+        { "offset": 0,  "name": "Draw",           "description": "Bullet_Draw (0040a120) for the launcher round and the gun round alike; BeamTracer_Draw (0040bc14) for the beam class. See docs/retail/simulation/beam-visuals.md." },
         { "offset": 4,  "name": "GetPosition",    "description": "SimObject_GetPosition (0046b801), as in SimObjectVtable." },
         { "offset": 8,  "name": "Destructor",     "description": "The deleting destructor: Rocket_Dtor (0040ab8d), Bullet_Dtor (0040b64d), BeamTracer_Dtor (0040ba94), Grenade_Dtor (0040ad2c), ProjectileBase_Dtor (0040c324). Takes a flags argument whose low bit asks it to free the object, which it does through 0047743c." },
         { "offset": 12, "name": "slot_0x0c",      "description": "Stub_ReturnZero (004785bf), as in SimObjectVtable. Role not established." },
         { "offset": 16, "name": "GetShapeRadius", "description": "SimObject_GetShapeRadius (0046b80c), shared with the full simulation objects." },
-        { "offset": 20, "name": "Tick",           "description": "Rocket_TickUpdate (0040a538), Bullet_TickUpdate (0040b124), BeamTracer_LifeTick (0040c2a0), Grenade_TickNoOp (0040acb4). PROJECTILE's own slot is pure virtual (Rtl_PureVirtualCalled, 00496684). See docs/simulation/rockets.md and projectiles.md." }
+        { "offset": 20, "name": "Tick",           "description": "Rocket_TickUpdate (0040a538), Bullet_TickUpdate (0040b124), BeamTracer_LifeTick (0040c2a0), Grenade_TickNoOp (0040acb4). PROJECTILE's own slot is pure virtual (Rtl_PureVirtualCalled, 00496684). See docs/retail/simulation/rockets.md and projectiles.md." }
       ],
       "instances": [
         {
@@ -189,17 +197,17 @@
         {
           "address": "00498448",
           "label": "RocketVtable",
-          "description": "The launcher round -- PROJ.DAT Type 0, 14-byte type table out of ROCKETS.DAT. Installed by Rocket_Construct (0040a948) at 0040a99c. See docs/simulation/rockets.md."
+          "description": "The launcher round -- PROJ.DAT Type 0, 14-byte type table out of ROCKETS.DAT. Installed by Rocket_Construct (0040a948) at 0040a99c. See docs/retail/simulation/rockets.md."
         },
         {
           "address": "00498628",
           "label": "BulletVtable",
-          "description": "The travelling gun round -- PROJ.DAT Type 2, own 14-byte type table out of BULLETS.DAT. Installed by Bullet_Construct (0040af6c) at 0040afbe. See docs/simulation/projectiles.md."
+          "description": "The travelling gun round -- PROJ.DAT Type 2, own 14-byte type table out of BULLETS.DAT. Installed by Bullet_Construct (0040af6c) at 0040afbe. See docs/retail/simulation/projectiles.md."
         },
         {
           "address": "004987c4",
           "label": "BeamTracerVtable",
-          "description": "The beam tracer -- PROJ.DAT Type 3, both the straight beam and the jagged ELF/ELF2 chain. See docs/simulation/beam-visuals.md."
+          "description": "The beam tracer -- PROJ.DAT Type 3, both the straight beam and the jagged ELF/ELF2 chain. See docs/retail/simulation/beam-visuals.md."
         },
         {
           "address": "004984fc",
@@ -211,7 +219,7 @@
     {
       "name": "WeaponMountVtable",
       "binary": "DBSIM",
-      "description": "The 27-slot table of a weapon mount: GUN_STATE (RTTI, 0x77 bytes, derived from CONFIG_PART, which is a TSPartBase with a SHAPE_INST at +0x10 holding the weapon model) and the ten classes below it. Slots +0x00-+0x24 are the TSPartBase part interface; +0x28 on are the mount's own. Built by WeaponMount_CtorBase and the class constructors; MechLoadout_ConstructWeaponMounts picks the class, overwriting the energy class's table with ELF_WPN's for the ELFs. 27 IS ESTABLISHED: in ten of the eleven instances the word at +0x6c is the next block's class-record pointer. See docs/simulation/weapon-mounts.md and equipment-pods.md.",
+      "description": "The 27-slot table of a weapon mount: GUN_STATE (RTTI, 0x77 bytes, derived from CONFIG_PART, which is a TSPartBase with a SHAPE_INST at +0x10 holding the weapon model) and the ten classes below it. Slots +0x00-+0x24 are the TSPartBase part interface; +0x28 on are the mount's own. Built by WeaponMount_CtorBase and the class constructors; MechLoadout_ConstructWeaponMounts picks the class, overwriting the energy class's table with ELF_WPN's for the ELFs. 27 IS ESTABLISHED: in ten of the eleven instances the word at +0x6c is the next block's class-record pointer. See docs/retail/simulation/weapon-mounts.md and equipment-pods.md.",
       "slots": [
         { "offset": 0,   "name": "GetClassTag",          "description": "ConfigPart_GetClassTagZero (00420729), returning 0, in every instance." },
         { "offset": 4,   "name": "GetStreamSize",        "description": "TSPartBase_GetStreamSize (0048f87c) in every instance." },
@@ -226,7 +234,7 @@
         { "offset": 40,  "name": "Fire",                 "description": "The fire dispatch. GUN_STATE WeaponMount_PrepareShot (0040e788); WeaponMount_FireDispatch_GunBeam (0040ea58), WeaponMount_FireDispatch_Missile (0040e964), ElfMount_FireDispatch (0040ec64), GrenadeMount_FireDispatch (0040ea04); the pods Pod_FireNoOp (0040e95c)." },
         { "offset": 44,  "name": "CanFire",              "description": "Readiness, which WeaponMounts_FireTrigger tests before the trigger slot. WeaponMount_EnergyCanFire (0040ecdc), WeaponMount_AmmoCanFire (0040ed6c), ElfMount_CanFire (0040eda0); the pods Pod_CanFireNever (0040ecd4); GUN_STATE's is pure virtual (Rtl_PureVirtualCalled, 00496684)." },
         { "offset": 48,  "name": "TriggerHeld",          "description": "Whether the trigger asks for a shot this tick. WeaponMount_TriggerHeld (0040f8ad); ElfMount_TriggerHeld (0040e680), a spin-up; GrenadeMount_TriggerHeld (0040e71c), a hold-to-throw charge; the pods Pod_TriggerHeldNever (0040e678)." },
-        { "offset": 52,  "name": "PoolTurn",             "description": "The mount's turn at the energy pool, (mount, budget), returning what it leaves. WeaponMount_RefireTick (0040ef94) for GUN_STATE, the ammunition classes and four pods; WeaponMount_ChargeCapacitor (0040f00c); ElfMount_SpinUpAndChargeTick (0040f3d8); TurboPod_ChargeTick (0040f0d0). See docs/simulation/reactor-energy-pool.md." },
+        { "offset": 52,  "name": "PoolTurn",             "description": "The mount's turn at the energy pool, (mount, budget), returning what it leaves. WeaponMount_RefireTick (0040ef94) for GUN_STATE, the ammunition classes and four pods; WeaponMount_ChargeCapacitor (0040f00c); ElfMount_SpinUpAndChargeTick (0040f3d8); TurboPod_ChargeTick (0040f0d0). See docs/retail/simulation/reactor-energy-pool.md." },
         { "offset": 56,  "name": "AdjustPowerLevel",     "description": "WeaponMount_AdjustPowerLevel (0040f48c) for the energy classes; WeaponMount_AdjustPowerLevelNoOp (004111ce) for the rest." },
         { "offset": 60,  "name": "WakeCapacitor",        "description": "WeaponMount_WakeCapacitor (0040f4d8) for the energy classes; WeaponMount_WakeCapacitorNoOp (004111d3) for the rest." },
         { "offset": 64,  "name": "DemandFullCharge",     "description": "WeaponMount_DemandFullCharge (0040f4f0) for the energy classes; WeaponMount_DemandFullChargeNoOp (004111d8) for the rest." },
@@ -258,7 +266,7 @@
     {
       "name": "CockpitWidgetVtable",
       "binary": "DBSIM",
-      "description": "The seven-slot table every clickable cockpit widget on the CTLButtonControl branch carries, at object +0x17 -- the offset the class's own Borland descriptor record states, so a widget's primary vtable is always reached the same way. SEVEN IS ESTABLISHED, and on a concrete class the block states it outright: the second of the two constants after the table is the byte offset of the mixin's vtable from the start of the primary one, so slot count = (constant - 8) / 4, and every button class carries 0x24. The three input functions that call through the table fix the slot numbers independently (Widget_OnMouseUp (00452870) reads +0x10 then calls +0x08, Widget_OnMouseDown (004527a0) calls +0x18, Widget_Repaint (00452a90) calls +0x04), and the word at +0x1c is not an eighth slot -- in every table on this branch it is either the next class's descriptor pointer (the [descriptor][0][0][vtable] block header this linker emits), the first of the two constants, or padding. Four of those next-class pointers disassemble as code and would read as a confirmed slot. The slider branch is a separate shape with a genuine +0x1c; see CockpitSliderWidgetVtable. Each class's table is found from its name, and each address here from its table, by tools/scripts/es2_classes.py --vtables, which reads the descriptor record stored 12 bytes before every table. See docs/formats/cockpit-input.md.",
+      "description": "The seven-slot table every clickable cockpit widget on the CTLButtonControl branch carries, at object +0x17 -- the offset the class's own Borland descriptor record states, so a widget's primary vtable is always reached the same way. SEVEN IS ESTABLISHED, and on a concrete class the block states it outright: the second of the two constants after the table is the byte offset of the mixin's vtable from the start of the primary one, so slot count = (constant - 8) / 4, and every button class carries 0x24. The three input functions that call through the table fix the slot numbers independently (Widget_OnMouseUp (00452870) reads +0x10 then calls +0x08, Widget_OnMouseDown (004527a0) calls +0x18, Widget_Repaint (00452a90) calls +0x04), and the word at +0x1c is not an eighth slot -- in every table on this branch it is either the next class's descriptor pointer (the [descriptor][0][0][vtable] block header this linker emits), the first of the two constants, or padding. Four of those next-class pointers disassemble as code and would read as a confirmed slot. The slider branch is a separate shape with a genuine +0x1c; see CockpitSliderWidgetVtable. Each class's table is found from its name, and each address here from its table, by tools/scripts/es2_classes.py --vtables, which reads the descriptor record stored 12 bytes before every table. See docs/retail/formats/cockpit-input.md.",
       "slots": [
         { "offset": 0,   "name": "Paint",              "description": "Redraw the widget's own content -- re-resolve its caption, pick its frame and colour. Called by slot +0x0c's stage 2, never directly by the input layer. CTLControl's table holds the empty 00452ab2; CTLButtonControl installs 00455545." },
         { "offset": 4,   "name": "Invalidate",         "description": "Widget_Repaint (00452a90) calls this and nothing else, so no widget paints inside its own click. The PanelSelectGadget branch installs Widget_InvalidateDeferred (00455524), whose whole body is this->[0x1f] = 2; CTLControl's default (00452ab7) is empty." },
@@ -297,7 +305,7 @@
         {
           "address": "0049b774",
           "label": "SystemGadgetVtable",
-          "description": "A console button, 0x60 bytes, built in pairs by maybe_SysButtonPair_Ctor; see SystemGadget_Ctor (00434664)."
+          "description": "A system button, 0x60 bytes; SystemButtons_Ctor (00434368) builds the pair through SystemGadget_Ctor (00434664). Its OnClick (SystemGadget_OnClick, 00434910) is a call to SystemButtons_OnChildClick and nothing else, so a click does not reach the mixin's click-sound slot."
         },
         {
           "address": "0049b7b4",
@@ -307,7 +315,7 @@
         {
           "address": "0049c188",
           "label": "HUDRovingGunsightGadgetVtable",
-          "description": "The click surface over the 3D view, built by Gunsight_ClickSurface_Ctor (0043c120); see docs/formats/hud-target-indicator.md. No PanelGadget subobject, so it is silent."
+          "description": "The click surface over the 3D view, built by Gunsight_ClickSurface_Ctor (0043c120); see docs/retail/formats/hud-target-indicator.md. No PanelGadget subobject, so it is silent."
         },
         {
           "address": "0049c758",
@@ -317,12 +325,12 @@
         {
           "address": "0049c7dc",
           "label": "ChainedWeaponSelectGadgetVtable",
-          "description": "A weapon row, from EnergyWeaponGauge_Ctor and AmmoWeaponGauge_Ctor; see docs/simulation/weapon-mounts.md."
+          "description": "A weapon row, from EnergyWeaponGauge_Ctor and AmmoWeaponGauge_Ctor; see docs/retail/simulation/weapon-mounts.md."
         },
         {
           "address": "0049c81c",
           "label": "WeaponSelectGadgetVtable",
-          "description": "A pod row -- the weapon-row class without chain membership, built only by PodGauge_Ctor; see docs/simulation/equipment-pods.md."
+          "description": "A pod row -- the weapon-row class without chain membership, built only by PodGauge_Ctor; see docs/retail/simulation/equipment-pods.md."
         },
         {
           "address": "0049c9dd",
@@ -337,7 +345,7 @@
         {
           "address": "0049cf20",
           "label": "MFDStateGadgetVtable",
-          "description": "An MFD latching button; MFDStateGadget_Ctor (0044741c). See docs/formats/mfd.md."
+          "description": "An MFD latching button; MFDStateGadget_Ctor (0044741c). See docs/retail/formats/mfd.md."
         },
         {
           "address": "0049cf60",
@@ -352,7 +360,7 @@
         {
           "address": "0049d60c",
           "label": "HDDSelectGadgetVtable",
-          "description": "A Heads-Down Display button; HddButton_Ctor (0044baac). See docs/formats/heads-down-display.md."
+          "description": "A Heads-Down Display button; HddButton_Ctor (0044baac). See docs/retail/formats/heads-down-display.md."
         },
         {
           "address": "0049d944",
@@ -367,14 +375,14 @@
         {
           "address": "0049e01c",
           "label": "AlertSelectGadgetVtable",
-          "description": "An alert-panel option row; PanelButton_Ctor (00454f64). See docs/simulation/preferences.md."
+          "description": "An alert-panel option row; PanelButton_Ctor (00454f64). See docs/retail/simulation/preferences.md."
         }
       ]
     },
     {
       "name": "CockpitSliderWidgetVtable",
       "binary": "DBSIM",
-      "description": "The eight-slot table the CTLSliderControl branch carries at object +0x17: CockpitWidgetVtable's seven slots with the same roles and the same call sites, plus +0x1c. The extra slot is present from CTLSliderControl down and absent from every button class, which is the one place the family's shape is not uniform. EIGHT IS ESTABLISHED the same way as seven: a concrete slider's second constant is 0x28, i.e. (0x28 - 8) / 4 = 8 slots, and the word at +0x20 is the subobject-offset constant 0x3e on a concrete slider and the next class's descriptor pointer on an abstract one, never a code address. See docs/formats/cockpit-input.md.",
+      "description": "The eight-slot table the CTLSliderControl branch carries at object +0x17: CockpitWidgetVtable's seven slots with the same roles and the same call sites, plus +0x1c. The extra slot is present from CTLSliderControl down and absent from every button class, which is the one place the family's shape is not uniform. EIGHT IS ESTABLISHED the same way as seven: a concrete slider's second constant is 0x28, i.e. (0x28 - 8) / 4 = 8 slots, and the word at +0x20 is the subobject-offset constant 0x3e on a concrete slider and the next class's descriptor pointer on an abstract one, never a code address. See docs/retail/formats/cockpit-input.md.",
       "slots": [
         { "offset": 0,   "name": "Paint",              "description": "Redraw the widget's own content -- re-resolve its caption, pick its frame and colour. Called by slot +0x0c's stage 2, never directly by the input layer. CTLControl's table holds the empty 00452ab2; CTLButtonControl installs 00455545." },
         { "offset": 4,   "name": "Invalidate",         "description": "Widget_Repaint (00452a90) calls this and nothing else, so no widget paints inside its own click. The PanelSelectGadget branch installs Widget_InvalidateDeferred (00455524), whose whole body is this->[0x1f] = 2; CTLControl's default (00452ab7) is empty." },
@@ -414,7 +422,7 @@
         {
           "address": "0049d12c",
           "label": "ThrottleVSliderGadgetVtable",
-          "description": "The throttle slider every one of the nine retail .GAU files uses; ThrottleSlider_CtorV (00447e24). Overrides +0x00 through +0x0c. See docs/formats/cockpit-input.md."
+          "description": "The throttle slider every one of the nine retail .GAU files uses; ThrottleSlider_CtorV (00447e24). Overrides +0x00 through +0x0c. See docs/retail/formats/cockpit-input.md."
         },
         {
           "address": "0049d0e8",
@@ -436,11 +444,11 @@
     {
       "name": "PanelGadgetMixinVtable",
       "binary": "DBSIM",
-      "description": "The four-slot table of the PanelGadget mixin -- the second base every concrete cockpit widget carries alongside CTLButtonControl or CTLHSlider/CTLVSlider, and the reason a widget has two vtable pointers. The descriptor records name it: PanelGadget is 8 bytes with its vptr at +0x00, PanelSliderGadget derives from it, and the subobject constant that precedes each table (0x20 for a button, 0x3e for a slider) is where that base sits inside the object -- exactly the amount the table's adjustor thunks subtract. THE MIXIN ADDS NO BEHAVIOUR of its own: three of the four slots thunk straight back into the primary table, and the fourth is the console click. It is not a second interface to implement but the single switch that decides whether a control makes a sound. A class with no mixin table -- CTLControl, CTLButtonControl, CTLSliderControl, CTLHSlider, CTLVSlider, ScrollTrigger, HDDisplayGadget, HDDMapGadget and HUDRovingGunsightGadget -- is silent for want of the base, not for want of an override. The block layout is [descriptor ptr][0][0][primary vtable][subobject offset][mixin vtable offset][this table], and the second constant is that last offset: the distance in bytes from the start of the primary vtable to this one, 0x24 for a button (7 slots * 4 + 8) against 0x28 for a slider (8 * 4 + 8). It holds in all 22 blocks in DBSIM that carry the pair, the two outside the widget family included -- REG_OBJ and TS_REG_OBJ declare a mixin at +0x0c with the constant 0x1c, which is the same arithmetic over a five-slot primary table. The pair is declared by whichever class first mixes the second base in and inherited unchanged by everything below it, so it varies with the branch and not with the leaf. VSHELL's own CTL family carries no such pair anywhere: its widgets are singly inherited and have no mixin. See docs/formats/cockpit-input.md.",
+      "description": "The four-slot table of the PanelGadget mixin -- the second base every concrete cockpit widget carries alongside CTLButtonControl or CTLHSlider/CTLVSlider, and the reason a widget has two vtable pointers. The descriptor records name it: PanelGadget is 8 bytes with its vptr at +0x00, PanelSliderGadget derives from it, and the subobject constant that precedes each table (0x20 for a button, 0x3e for a slider) is where that base sits inside the object -- exactly the amount the table's adjustor thunks subtract. THE MIXIN ADDS NO BEHAVIOUR of its own: three of the four slots thunk straight back into the primary table, and the fourth is the console click. It is not a second interface to implement but the single switch that decides whether a control makes a sound. A class with no mixin table -- CTLControl, CTLButtonControl, CTLSliderControl, CTLHSlider, CTLVSlider, ScrollTrigger, HDDisplayGadget, HDDMapGadget and HUDRovingGunsightGadget -- is silent for want of the base, not for want of an override. The block layout is [descriptor ptr][0][0][primary vtable][subobject offset][mixin vtable offset][this table], and the second constant is that last offset: the distance in bytes from the start of the primary vtable to this one, 0x24 for a button (7 slots * 4 + 8) against 0x28 for a slider (8 * 4 + 8). It holds in all 22 blocks in DBSIM that carry the pair, the two outside the widget family included -- REG_OBJ and TS_REG_OBJ declare a mixin at +0x0c with the constant 0x1c, which is the same arithmetic over a five-slot primary table. The pair is declared by whichever class first mixes the second base in and inherited unchanged by everything below it, so it varies with the branch and not with the leaf. VSHELL's own CTL family carries no such pair anywhere: its widgets are singly inherited and have no mixin. See docs/retail/formats/cockpit-input.md.",
       "slots": [
         { "offset": 0,   "name": "Paint",              "description": "Adjustor thunk onto the primary table's +0x00: ADD dword ptr [ESP+4], -<subobject offset>; JMP <primary implementation>. The two abstract mixin tables hold the 00496684 stub instead." },
         { "offset": 4,   "name": "FlushDeferredPaint", "description": "Adjustor thunk onto the primary table's +0x0c." },
-        { "offset": 8,   "name": "ClickSound",         "description": "Widget_ClickSound (00438e2c) in PanelGadget's table and in every class that derives from it -- push 0x11; call Sound_Play, ignoring the pointer it is handed. PanelSliderGadget replaces it with 00439014, an empty stub, and every slider inherits that. A widget therefore clicks or stays silent according to which of the two mixins it carries, and a class with no mixin at all makes no sound. See docs/formats/audio.md." },
+        { "offset": 8,   "name": "ClickSound",         "description": "Widget_ClickSound (00438e2c) in PanelGadget's table and in every class that derives from it -- push 0x11; call Sound_Play, ignoring the pointer it is handed. PanelSliderGadget replaces it with 00439014, an empty stub, and every slider inherits that. A widget therefore clicks or stays silent according to which of the two mixins it carries, and a class with no mixin at all makes no sound. See docs/retail/formats/audio.md." },
         { "offset": 12,  "name": "OnClick",            "description": "Adjustor thunk onto the primary table's +0x08." }
       ],
       "instances": [
@@ -663,7 +671,7 @@
         {"offset": 24, "name": "Dtor", "description": "(this, flags): the virtual destructor. Decrements the live-object counter at *005ddec0 once per class level, restores each level's vtable and frees what that level owns, then Mem_Delete when flags bit 0 is set. A container deletes its children through their own slot."},
         {"offset": 28, "name": "Render", "description": "As VshellTSBaseVtable's: TSPartList_Render draws the children in order, TSGroup_RenderPolys and TSBSPGroup_Render the polys, TSDetailPart_Render one level of detail, TSCellAnimPart_Render one cell, TSShape_Render the whole shape."},
         {"offset": 32, "name": "FindPart", "description": "(this, id): the part whose id (+6) is id, searching children (TSPartList_FindPart) or not (TSPartBase_FindPart)."},
-        {"offset": 36, "name": "FindPartSlot", "description": "(this, id): the address of the child-array entry holding the part whose id is id (TSPartList_FindPartSlot); a leaf answers 0. See docs/formats/mech-shape-drawing.md."}
+        {"offset": 36, "name": "FindPartSlot", "description": "(this, id): the address of the child-array entry holding the part whose id is id (TSPartList_FindPartSlot); a leaf answers 0. See docs/retail/formats/mech-shape-drawing.md."}
       ],
       "instances": [
         {"address": "0047f0f8", "label": "TSPartBaseVtable", "description": "RTTI TSPartBase: TSPartBase_GetClassTag, TSPartBase_GetStreamSize, TSPartBase_GetMemorySize, TSPartBase_ReadFromStream, TSPartBase_WriteToStream, TSPartBase_DebugPrint, TSPartBase_Dtor, TSBase_Render, TSPartBase_FindPart, TSPartBase_FindPartSlot."},
@@ -756,7 +764,7 @@
       "binary": "VSHELL",
       "description": "The shell widget classes that stop at the event handler, at object +1 (the class records state vptr +1): Window and the ESWindow subclasses that do not derive from WinButton. The word after the slot is a pointer type's descriptor (e.g. 'ESMessage *').",
       "slots": [
-        {"offset": 0, "name": "HandleEvent", "description": "(widget, event): Event_Deliver calls it for the first widget up the parent chain whose event mask takes the event; it consumes and deletes the event. Window's is Window_DispatchCallback. See docs/shell/screen-layout.md, The widget that takes a click decides what it does."}
+        {"offset": 0, "name": "HandleEvent", "description": "(widget, event): Event_Deliver calls it for the first widget up the parent chain whose event mask takes the event; it consumes and deletes the event. Window's is Window_DispatchCallback. See docs/retail/shell/screen-layout.md, The widget that takes a click decides what it does."}
       ],
       "instances": [
         {"address": "004717dc", "label": "WindowVtable", "description": "RTTI Window: Window_DispatchCallback."},
@@ -774,7 +782,7 @@
       "description": "VshellWindowVtable plus a paint slot: WinButton and the shell's button, panel and grid classes derived from it.",
       "slots": [
         {"offset": 0, "name": "HandleEvent", "description": "As VshellWindowVtable's: WinButton_HandleEvent for the panels, ESButtonFont_HandleEvent, ESButtonBitmap_HandleEvent, ESRadioButton_HandleEvent, ESBitmap_HandleEvent, ESArm_HandleEvent, ESAlert_HandleEvent."},
-        {"offset": 4, "name": "Paint", "description": "(widget): repaint the widget; the handlers call it through the vtable after changing the lit flag. WinButton's own is Rtl_PureError. See docs/shell/screen-layout.md, How a widget paints."}
+        {"offset": 4, "name": "Paint", "description": "(widget): repaint the widget; the handlers call it through the vtable after changing the lit flag. WinButton's own is Rtl_PureError. See docs/retail/shell/screen-layout.md, How a widget paints."}
       ],
       "instances": [
         {"address": "0046e810", "label": "WinButtonVtable", "description": "RTTI WinButton: WinButton_HandleEvent, Rtl_PureError."},
@@ -794,7 +802,7 @@
     {
       "name": "VshellMapVtable",
       "binary": "VSHELL",
-      "description": "The briefing map's camera interface: Map (Map_Ctor) and ShellMap. See docs/shell/mission-map.md.",
+      "description": "The briefing map's camera interface: Map (Map_Ctor) and ShellMap. See docs/retail/shell/mission-map.md.",
       "slots": [
         {"offset": 0, "name": "Paint", "description": "ShellMap_Paint; Map's own is Rtl_PureError."},
         {"offset": 4, "name": "ZoomIn", "description": "Map_ZoomIn."},
@@ -891,6 +899,473 @@
       "instances": [
         {"address": "00471854", "label": "WinCursorVtable", "description": "RTTI WinCursor: Rtl_PureError."},
         {"address": "00471844", "label": "WinWin95CursorVtable", "description": "RTTI WinWin95Cursor: 0041f65e."}
+      ]
+    },
+    {
+      "name": "ClassItemVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'ClassItem' (004a6a08) and of the 1 class derived from it that keep its length: 6 slots, read from the image up to the next class's type descriptor. Each slot's function has the same name as in VSHELL's VshellClassItemVtable, whose slot names these are.",
+      "slots": [
+        {"offset": 0, "name": "GetClassTag", "description": "The role of VshellClassItemVtable +0x00 (VSHELL). Implementations: Rtl_PureVirtualCalled (00496684), GLBitmapArray_GetClassTag (00482cf0)."},
+        {"offset": 4, "name": "GetStreamSize", "description": "The role of VshellClassItemVtable +0x04 (VSHELL). Implementations: Rtl_PureVirtualCalled (00496684), GLBitmapArray_GetStreamSize (00482cfc)."},
+        {"offset": 8, "name": "GetMemorySize", "description": "The role of VshellClassItemVtable +0x08 (VSHELL). Implementations: Rtl_PureVirtualCalled (00496684), GLBitmapArray_GetMemorySize (00482d3c)."},
+        {"offset": 12, "name": "ReadFromStream", "description": "The role of VshellClassItemVtable +0x0c (VSHELL). Implementations: Rtl_PureVirtualCalled (00496684), GLBitmapArray_ReadFromStream (00482d70)."},
+        {"offset": 16, "name": "WriteToStream", "description": "The role of VshellClassItemVtable +0x10 (VSHELL). Implementations: Rtl_PureVirtualCalled (00496684), GLBitmapArray_WriteToStream (00482dc4)."},
+        {"offset": 20, "name": "DebugPrint", "description": "The role of VshellClassItemVtable +0x14 (VSHELL). Implementations: ClassItem_DebugPrintType (0047a488)."}
+      ],
+      "instances": [
+        {"address": "004a6a08", "label": "ClassItemVtable", "description": "RTTI 'ClassItem', 0x4 bytes."},
+        {"address": "004a3304", "label": "GLBitmapArrayVtable", "description": "RTTI 'GLBitmapArray', 0xc bytes."}
+      ]
+    },
+    {
+      "name": "TSBaseVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'TSBase' (004a6a2c) and of the 15 classes derived from it that keep its length: 8 slots, read from the image up to the next class's type descriptor. Each slot's function has the same name as in VSHELL's VshellTSBaseVtable, whose slot names these are.",
+      "slots": [
+        {"offset": 0, "name": "GetClassTag", "description": "The role of VshellTSBaseVtable +0x00 (VSHELL). Implementations: TSBase_GetClassTag (0048dbd4), ANAnimList_GetClassTag (004919d8), TSNullObj_GetClassTag (0048de28), TSPoly_GetClassTag (0048defc), TSSolidPoly_GetClassTag (0048e120), TSAliasSolidPoly_GetClassTag (0048e5f8), TSGouraudPoly_GetClassTag (0048e450), TSShadedPoly_GetClassTag (0048e38c), and 3 more."},
+        {"offset": 4, "name": "GetStreamSize", "description": "The role of VshellTSBaseVtable +0x04 (VSHELL). Implementations: TSBase_GetStreamSize (0048dbdc), ANAnimList_GetStreamSize (004919e4), TSNullObj_GetStreamSize (0048de34), TSPoly_GetStreamSize (0048df08), TSSolidPoly_GetStreamSize (0048e12c), TSGouraudPoly_GetStreamSize (0048e45c)."},
+        {"offset": 8, "name": "GetMemorySize", "description": "The role of VshellTSBaseVtable +0x08 (VSHELL). Implementations: TSBase_GetMemorySize (0048dbe4), ANAnimList_GetMemorySize (00491a44), TSNullObj_GetMemorySize (0048de3c), TSPoly_GetMemorySize (0048df14), TSSolidPoly_GetMemorySize (0048e140), TSGouraudPoly_GetMemorySize (0048e470)."},
+        {"offset": 12, "name": "ReadFromStream", "description": "The role of VshellTSBaseVtable +0x0c (VSHELL). Implementations: TSBase_ReadFromStream (0048dbec), ANAnimList_ReadFromStream (00491aa4), TSNullObj_ReadFromStream (0048de48), TSPoly_ReadFromStream (0048df20), TSSolidPoly_ReadFromStream (0048e14c), TSGouraudPoly_ReadFromStream (0048e47c)."},
+        {"offset": 16, "name": "WriteToStream", "description": "The role of VshellTSBaseVtable +0x10 (VSHELL). Implementations: TSBase_WriteToStream (0048dbf4), ANAnimList_WriteToStream (00491c0c), TSNullObj_WriteToStream (0048de50), TSPoly_WriteToStream (0048df64), TSSolidPoly_WriteToStream (0048e178), TSGouraudPoly_WriteToStream (0048e4a8)."},
+        {"offset": 20, "name": "DebugPrint", "description": "The role of VshellTSBaseVtable +0x14 (VSHELL). Implementations: ClassItem_DebugPrintType (0047a488), ANAnimList_DebugPrint (00491ce4), TSPoly_DebugPrint (0048dfac), TSSolidPoly_DebugPrint (0048e1a4), TSGouraudPoly_DebugPrint (0048e4d4)."},
+        {"offset": 24, "name": "Dtor", "description": "The role of VshellTSBaseVtable +0x18 (VSHELL). Implementations: TSBase_Dtor (0048bd14), ANAnimList_Dtor (00492570), HeightGrid_Dtor (0046be78), TSGroupItem_Dtor (0048f08f), TSNullObj_Dtor (0048f7a0), TSShapeInstance_Dtor (00490ad0), VectorTable_Dtor (004953ab), ANShapeInstance_Dtor (00478850), and 8 more."},
+        {"offset": 28, "name": "Render", "description": "The role of VshellTSBaseVtable +0x1c (VSHELL). Implementations: TSBase_Render (0048bd3c), TSNullObj_Render (00474da4), TSShapeInstance_Render (00490b10), ANShapeInstance_Render (00478c98), TSPoly_Render (00474dac), TSSolidPoly_Render (00474db4), TSAliasSolidPoly_Render (00475bc4), TSGouraudPoly_Render (004755c8), and 4 more."}
+      ],
+      "instances": [
+        {"address": "004a6a2c", "label": "TSBaseVtable", "description": "RTTI 'TSBase', 0x4 bytes."},
+        {"address": "004a67fc", "label": "ANAnimListVtable", "description": "RTTI 'ANAnimList', 0x22 bytes."},
+        {"address": "004a6305", "label": "TSShapeInstanceVtable", "description": "RTTI 'TSShapeInstance', 0xc bytes."},
+        {"address": "004a14dc", "label": "ANShapeInstanceVtable", "description": "RTTI 'ANShapeInstance', 0x42 bytes."},
+        {"address": "004a0c8c", "label": "HeightGridVtable", "description": "RTTI 'HeightGrid', 0x129 bytes."},
+        {"address": "004a5ea0", "label": "TSGroupItemVtable", "description": "RTTI 'TSGroupItem', 0x4 bytes."},
+        {"address": "004a5ecc", "label": "TSPolyVtable", "description": "RTTI 'TSPoly', 0xc bytes."},
+        {"address": "004a5ef8", "label": "TSSolidPolyVtable", "description": "RTTI 'TSSolidPoly', 0xe bytes."},
+        {"address": "004a5fd4", "label": "TSGouraudPolyVtable", "description": "RTTI 'TSGouraudPoly', 0x10 bytes."},
+        {"address": "004a5f50", "label": "TSAliasGouraudPolyVtable", "description": "RTTI 'TSAliasGouraudPoly', 0x10 bytes."},
+        {"address": "004a6000", "label": "TSShadedPolyVtable", "description": "RTTI 'TSShadedPoly', 0xe bytes."},
+        {"address": "004a5f7c", "label": "TSAliasShadedPolyVtable", "description": "RTTI 'TSAliasShadedPoly', 0xe bytes."},
+        {"address": "004a5fa8", "label": "TSAliasSolidPolyVtable", "description": "RTTI 'TSAliasSolidPoly', 0xe bytes."},
+        {"address": "004a602c", "label": "TSNullObjVtable", "description": "RTTI 'TSNullObj', 0x4 bytes."},
+        {"address": "004a5f24", "label": "TSTexture4PolyVtable", "description": "RTTI 'TSTexture4Poly', 0xe bytes."},
+        {"address": "004a6a58", "label": "VectorTableVtable", "description": "RTTI 'VectorTable', 0x1c bytes."}
+      ]
+    },
+    {
+      "name": "ANSequenceVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'ANSequence' (004a6864) and of the 1 class derived from it that keep its length: 12 slots, read from the image up to the next class's type descriptor. Each slot's function has the same name as in VSHELL's VshellANSequenceVtable, whose slot names these are.",
+      "slots": [
+        {"offset": 0, "name": "GetClassTag", "description": "The role of VshellANSequenceVtable +0x00 (VSHELL). Implementations: ANSequence_GetClassTag (00491378), ANCyclicSequence_GetClassTag (00491938)."},
+        {"offset": 4, "name": "GetStreamSize", "description": "The role of VshellANSequenceVtable +0x04 (VSHELL). Implementations: ANSequence_GetStreamSize (00491384)."},
+        {"offset": 8, "name": "GetMemorySize", "description": "The role of VshellANSequenceVtable +0x08 (VSHELL). Implementations: ANSequence_GetMemorySize (004913b4)."},
+        {"offset": 12, "name": "ReadFromStream", "description": "The role of VshellANSequenceVtable +0x0c (VSHELL). Implementations: ANSequence_ReadFromStream (004913e4)."},
+        {"offset": 16, "name": "WriteToStream", "description": "The role of VshellANSequenceVtable +0x10 (VSHELL). Implementations: ANSequence_WriteToStream (004914d0)."},
+        {"offset": 20, "name": "DebugPrint", "description": "The role of VshellANSequenceVtable +0x14 (VSHELL). Implementations: ANSequence_DebugPrint (00491568)."},
+        {"offset": 24, "name": "Dtor", "description": "The role of VshellANSequenceVtable +0x18 (VSHELL). Implementations: ANSequence_Dtor (004925d2), ANCyclicSequence_Dtor (0049259d)."},
+        {"offset": 28, "name": "Render", "description": "The role of VshellANSequenceVtable +0x1c (VSHELL). Implementations: TSBase_Render (0048bd3c)."},
+        {"offset": 32, "name": "NextFrame", "description": "The role of VshellANSequenceVtable +0x20 (VSHELL). Implementations: ANSequence_NextFrame (00478654), ANCyclicSequence_NextFrame (004786d8)."},
+        {"offset": 36, "name": "PrevFrame", "description": "The role of VshellANSequenceVtable +0x24 (VSHELL). Implementations: ANSequence_PrevFrame (00478670), ANCyclicSequence_PrevFrame (004786f8)."},
+        {"offset": 40, "name": "FrameShortOfTarget", "description": "The role of VshellANSequenceVtable +0x28 (VSHELL). Implementations: ANSequence_FrameShortOfTarget (00478680), ANCyclicSequence_FrameShortOfTarget_Always (00478714)."},
+        {"offset": 44, "name": "FrameShortOfTargetBackward", "description": "The role of VshellANSequenceVtable +0x2c (VSHELL). Implementations: ANSequence_FrameShortOfTargetBackward (004786ac), ANCyclicSequence_FrameShortOfTargetBackward_Always (00478720)."}
+      ],
+      "instances": [
+        {"address": "004a6864", "label": "ANSequenceVtable", "description": "RTTI 'ANSequence', 0x1a bytes."},
+        {"address": "004a6828", "label": "ANCyclicSequenceVtable", "description": "RTTI 'ANCyclicSequence', 0x1a bytes."}
+      ]
+    },
+    {
+      "name": "TSPartBaseVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'TSPartBase' (004a6268) and of the 12 classes derived from it that keep its length: 10 slots, read from the image up to the next class's type descriptor. Each slot's function has the same name as in VSHELL's VshellTSPartBaseVtable, whose slot names these are.",
+      "slots": [
+        {"offset": 0, "name": "GetClassTag", "description": "The role of VshellTSPartBaseVtable +0x00 (VSHELL). Implementations: TSPartBase_GetClassTag (0048f870), ConfigPart_GetClassTagZero (00420729), TSBitmapPart_GetClassTag (0048fc6c), TSGroup_GetClassTag (0048e818), TSPartList_GetClassTag (0048fd00), TSBSPGroup_GetClassTag (0048ed78), TSBSPPart_GetClassTag (004902f0), TSCellAnimPart_GetClassTag (0048ff6c), and 4 more."},
+        {"offset": 4, "name": "GetStreamSize", "description": "The role of VshellTSPartBaseVtable +0x04 (VSHELL). Implementations: TSPartBase_GetStreamSize (0048f87c), TSBitmapPart_GetStreamSize (0048fc78), TSGroup_GetStreamSize (0048e824), TSPartList_GetStreamSize (0048fd0c), TSBSPGroup_GetStreamSize (0048ed84), TSBSPPart_GetStreamSize (004902fc), TSCellAnimPart_GetStreamSize (0048ff78), TSDetailPart_GetStreamSize (00490114), and 3 more."},
+        {"offset": 8, "name": "GetMemorySize", "description": "The role of VshellTSPartBaseVtable +0x08 (VSHELL). Implementations: TSPartBase_GetMemorySize (0048f888), TSBitmapPart_GetMemorySize (0048fc60), TSGroup_GetMemorySize (0048e884), TSPartList_GetMemorySize (0048fd54), TSBSPGroup_GetMemorySize (0048eda8), TSBSPPart_GetMemorySize (00490328), TSCellAnimPart_GetMemorySize (0048ff90), TSDetailPart_GetMemorySize (00490134), and 3 more."},
+        {"offset": 12, "name": "ReadFromStream", "description": "The role of VshellTSPartBaseVtable +0x0c (VSHELL). Implementations: TSPartBase_ReadFromStream (0048f894), TSBitmapPart_ReadFromStream (0048fbd4), TSGroup_ReadFromStream (0048e8e4), TSPartList_ReadFromStream (0048fd94), TSBSPGroup_ReadFromStream (0048ee14), TSBSPPart_ReadFromStream (0049037c), TSCellAnimPart_ReadFromStream (0048ffd0), TSDetailPart_ReadFromStream (0049017c), and 3 more."},
+        {"offset": 16, "name": "WriteToStream", "description": "The role of VshellTSPartBaseVtable +0x10 (VSHELL). Implementations: TSPartBase_WriteToStream (0048f8dc), TSBitmapPart_WriteToStream (0048fc18), TSGroup_WriteToStream (0048ea20), TSPartList_WriteToStream (0048fe00), TSBSPGroup_WriteToStream (0048ee78), TSBSPPart_WriteToStream (00490424), TSCellAnimPart_WriteToStream (0048fffc), TSDetailPart_WriteToStream (004901c8), and 3 more."},
+        {"offset": 20, "name": "DebugPrint", "description": "The role of VshellTSPartBaseVtable +0x14 (VSHELL). Implementations: TSPartBase_DebugPrint (0048f924), TSBitmapPart_DebugPrint (0048fb18), TSGroup_DebugPrint (0048eae0), TSPartList_DebugPrint (0048fe54), TSBSPGroup_DebugPrint (0048eebc), TSBSPPart_DebugPrint (0049047c), TSCellAnimPart_DebugPrint (00490028), TSDetailPart_DebugPrint (004901f8), and 2 more."},
+        {"offset": 24, "name": "Dtor", "description": "The role of VshellTSPartBaseVtable +0x18 (VSHELL). Implementations: TSPartBase_Dtor (0049224b), ConfigPart_Dtor (00420730), TSBitmapPart_Dtor (004908f3), TSGroup_Dtor (004757f4), TSPartList_Dtor (00476648), TSBSPGroup_Dtor (004759e0), TSBSPPart_Dtor (004769d4), TSCellAnimPart_Dtor (004908c6), and 5 more."},
+        {"offset": 28, "name": "Render", "description": "The role of VshellTSPartBaseVtable +0x1c (VSHELL). Implementations: TSBase_Render (0048bd3c), ConfigPart_Render (0040316c), TSBitmapPart_Render (004762e8), TSGroup_RenderPolys (004758c8), TSPartList_Render (004766fc), TSBSPGroup_Render (00475af8), TSBSPPart_Render (00476b0c), TSCellAnimPart_Render (004767e4), and 3 more."},
+        {"offset": 32, "name": "FindPart", "description": "The role of VshellTSPartBaseVtable +0x20 (VSHELL). Implementations: TSPartBase_FindPart (00476120), TSPartList_FindPart (00476744)."},
+        {"offset": 36, "name": "FindPartSlot", "description": "The role of VshellTSPartBaseVtable +0x24 (VSHELL). Implementations: TSPartBase_FindPartSlot (00476134), TSPartList_FindPartSlot (00476784)."}
+      ],
+      "instances": [
+        {"address": "004a6268", "label": "TSPartBaseVtable", "description": "RTTI 'TSPartBase', 0x10 bytes."},
+        {"address": "004a10d4", "label": "TSPartListVtable", "description": "RTTI 'TSPartList', 0x16 bytes."},
+        {"address": "004a6331", "label": "TSShapeVtable", "description": "RTTI 'TSShape', 0x2a bytes."},
+        {"address": "004a67c8", "label": "ANShapeVtable", "description": "RTTI 'ANShape', 0x2e bytes."},
+        {"address": "0049a494", "label": "CONFIG_PARTVtable", "description": "RTTI 'CONFIG_PART', 0x18 bytes."},
+        {"address": "0049aaa0", "label": "GridShapeVtable", "description": "RTTI 'GridShape', 0x438 bytes."},
+        {"address": "004a0fd7", "label": "TSGroupVtable", "description": "RTTI 'TSGroup', 0x28 bytes."},
+        {"address": "004a0fa3", "label": "TSBSPGroupVtable", "description": "RTTI 'TSBSPGroup', 0x2e bytes."},
+        {"address": "004a106c", "label": "TSBSPPartVtable", "description": "RTTI 'TSBSPPart', 0x20 bytes."},
+        {"address": "004a62d0", "label": "TSBitmapPartVtable", "description": "RTTI 'TSBitmapPart', 0x14 bytes."},
+        {"address": "004a629c", "label": "TSCellAnimPartVtable", "description": "RTTI 'TSCellAnimPart', 0x18 bytes."},
+        {"address": "004a10a0", "label": "TSDetailPartVtable", "description": "RTTI 'TSDetailPart', 0x1a bytes."},
+        {"address": "0049afb0", "label": "hzlineVtable", "description": "RTTI 'hzline', 0x7a bytes."}
+      ]
+    },
+    {
+      "name": "AlertVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'Alert' (0049e05c) and of the 5 classes derived from it that keep its length: 6 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "Paint", "description": "Implementations: Rtl_PureVirtualCalled (00496684), ControlsPanel_Paint (00458c68), StatusAlertPanel_Paint (00456068), ObjectivesPanel_Paint (00457b58), PreferencesPanel_Paint (004570e0)."},
+        {"offset": 4, "name": "SetTitleText", "description": "Implementations: AlertPanel_SetTitleText (00454b58)."},
+        {"offset": 8, "name": "slot_0x08", "description": "Implementations: Rtl_PureVirtualCalled (00496684), ControlsPanel_Run (00458650), StatusAlertPanel_RunModal (00455fe4), ObjectivesPanel_RunModal (00457ae4), PreferencesPanel_Run (00456d4c)."},
+        {"offset": 12, "name": "slot_0x0c", "description": "Implementations: AlertPanel_OnChildClickNoOp (004558cb), ControlsPanel_OnClick (00458ebc), StatusAlertPanel_OnChildClick (00456160), ObjectivesPanel_OnChildClick (00457c30), PreferencesPanel_OnClick (004573a8)."},
+        {"offset": 16, "name": "HandleEvent", "description": "Implementations: AlertPanel_HandleEvent (00454e10), ControlsPanel_HandleEvent (00458f9c)."},
+        {"offset": 20, "name": "slot_0x14", "description": "Implementations: Rtl_PureVirtualCalled (00496684), ControlsPanel_CaptionAt (0045912c), StatusAlertPanel_GetButtonCaption (004561ac), ObjectivesPanel_GetButtonCaption (00457c6c), PreferencesPanel_GetButtonCaption (0045743c)."}
+      ],
+      "instances": [
+        {"address": "0049e05c", "label": "AlertVtable", "description": "RTTI 'Alert', 0x332 bytes."},
+        {"address": "0049e82c", "label": "ControlsAlertVtable", "description": "RTTI 'ControlsAlert', 0x47e bytes."},
+        {"address": "0049e148", "label": "GeneralAlertVtable", "description": "RTTI 'GeneralAlert', 0x57e bytes."},
+        {"address": "0049e20c", "label": "GeneralSmallAlertVtable", "description": "RTTI 'GeneralSmallAlert', 0x57e bytes."},
+        {"address": "0049e4f8", "label": "ObjectiveAlertVtable", "description": "RTTI 'ObjectiveAlert', 0x3b8 bytes."},
+        {"address": "0049e40c", "label": "PrefsAlertVtable", "description": "RTTI 'PrefsAlert', 0x3c7 bytes."}
+      ]
+    },
+    {
+      "name": "BarGraphVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'BarGraph' (0049bd78) and of the 6 classes derived from it that keep its length: 3 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "PaintToValue", "description": "Implementations: Rtl_PureVirtualCalled (00496684), BarGraphH_PaintToValue (00439118), BarGraphV_PaintToValue (00439398), LedBmBarGraphH_PaintToValue (00439b8c), LedBmBarGraphV_PaintToValue (00439eb4), LedBarGraph_PaintToValue (004395e8), LedBarGraphV_PaintToValue (00439858)."},
+        {"offset": 4, "name": "slot_0x04", "description": "Implementations: Rtl_PureVirtualCalled (00496684), BarGraphH_RepaintSpan (004391e0), BarGraphV_RepaintSpan (00439460), LedBmBarGraphH_RepaintNoOp (00439c40), LedBmBarGraphV_RepaintNoOp (00439f68), LedBarGraph_RepaintToValue (004396a8), LedBarGraphV_Repaint (00439918)."},
+        {"offset": 8, "name": "ResetToEmpty", "description": "Implementations: Rtl_PureVirtualCalled (00496684), BarGraphH_ResetToEmpty (0043a211), BarGraphV_ResetToEmpty (0043a190)."}
+      ],
+      "instances": [
+        {"address": "0049bd78", "label": "BarGraphVtable", "description": "RTTI 'BarGraph', 0x2c bytes."},
+        {"address": "0049bd60", "label": "BarGraphHVtable", "description": "RTTI 'BarGraphH', 0x2c bytes."},
+        {"address": "0049bd48", "label": "BarGraphVVtable", "description": "RTTI 'BarGraphV', 0x2c bytes."},
+        {"address": "0049bd00", "label": "LEDBMBarGraphHVtable", "description": "RTTI 'LEDBMBarGraphH', 0x68 bytes."},
+        {"address": "0049bce8", "label": "LEDBMBarGraphVVtable", "description": "RTTI 'LEDBMBarGraphV', 0x68 bytes."},
+        {"address": "0049bd30", "label": "LEDBarGraphHVtable", "description": "RTTI 'LEDBarGraphH', 0x34 bytes."},
+        {"address": "0049bd18", "label": "LEDBarGraphVVtable", "description": "RTTI 'LEDBarGraphV', 0x3c bytes."}
+      ]
+    },
+    {
+      "name": "StreamIOVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'StreamIO' (004a1700) and of the 9 classes derived from it that keep its length: 7 slots, read from the image up to the next class's type descriptor. Each slot's function has the same name as in VSHELL's VshellStreamIOVtable, whose slot names these are.",
+      "slots": [
+        {"offset": 0, "name": "Dtor", "description": "The role of VshellStreamIOVtable +0x00 (VSHELL). Implementations: Stream_BaseDtor (0047a798), BuffRStream_Dtor (0047c578), BuffWStream_Dtor (0047c208), FileRStream_Dtor (0047ac6c), FileRWStream_Dtor (0047a8c4), FileWStream_Dtor (0047af90), LZHRStream_Dtor (0047b80c), MemRWStream_Dtor (004819de), and 2 more."},
+        {"offset": 4, "name": "GetPosition", "description": "The role of VshellStreamIOVtable +0x04 (VSHELL). Implementations: StreamIO_GetPosition (0047a7e8), BuffRStream_GetPosition (0047c6b0), BuffWStream_GetPosition (0047c2dc), FileRStream_Tell (0047ada4), FileRWStream_Tell (0047a9fc), FileWStream_Tell (0047b0d8), LZHRStream_GetPosition (0047baac), MemRWStream_GetPosition (0047b2f4), and 2 more."},
+        {"offset": 8, "name": "SetPosition", "description": "The role of VshellStreamIOVtable +0x08 (VSHELL). Implementations: StreamIO_SetPosition (0047a7f0), BuffRStream_SetPosition (0047c6cc), BuffWStream_SetPosition (0047c300), FileRStream_Seek (0047adc0), FileRWStream_Seek (0047aa18), FileWStream_Seek (0047b0f4), LZHRStream_SetPosition (0047b910), MemRWStream_SetPosition (0047b304), and 2 more."},
+        {"offset": 12, "name": "GetCapabilities", "description": "The role of VshellStreamIOVtable +0x0c (VSHELL). Implementations: StreamIO_GetCapabilities (0047a7c8), BuffRStream_GetCapabilities (0047c680), BuffWStream_GetCapabilities (0047c2a0), FileRStream_GetCapabilities (0047aca8), FileRWStream_GetCapabilities (0047a900), FileWStream_GetCapabilities (0047afcc), LZHRStream_GetCapabilities (0047b8e4), MemRWStream_GetCapabilities (0047b2c8), and 2 more."},
+        {"offset": 16, "name": "Flush", "description": "The role of VshellStreamIOVtable +0x10 (VSHELL). Implementations: StreamIO_Flush (0047a7f8), BuffRStream_Flush (0047c70c), BuffWStream_Flush (0047c338), FileRStream_Flush (0047ae4c), FileRWStream_Flush (0047aaa4), FileWStream_Flush (0047b180), LZHRStream_Flush (0047ba98), MemRWStream_Flush (0047b348), and 2 more."},
+        {"offset": 20, "name": "Write", "description": "The role of VshellStreamIOVtable +0x14 (VSHELL). Implementations: StreamIO_Write (0047a800), BuffRStream_Write (0047c7a4), BuffWStream_Write (0047c378), FileRStream_Write (0047ae78), FileRWStream_Write (0047aad0), FileWStream_Write (0047b1ac), LZHRStream_Write (0047bac4), MemRWStream_Write (0047b350), and 2 more."},
+        {"offset": 24, "name": "Read", "description": "The role of VshellStreamIOVtable +0x18 (VSHELL). Implementations: StreamIO_Read (0047a808), BuffRStream_Read (0047c720), BuffWStream_Read (0047c400), FileRStream_Read (0047ae8c), FileRWStream_Read (0047ab10), FileWStream_Read (0047b1ec), LZHRStream_Read (0047b9ac), MemRWStream_Read (0047b3a8), and 2 more."}
+      ],
+      "instances": [
+        {"address": "004a1700", "label": "StreamIOVtable", "description": "RTTI 'StreamIO', 0x8 bytes."},
+        {"address": "004a1af0", "label": "BuffRStreamVtable", "description": "RTTI 'BuffRStream', 0x21 bytes."},
+        {"address": "004a1ac8", "label": "BuffWStreamVtable", "description": "RTTI 'BuffWStream', 0x1e bytes."},
+        {"address": "004a1750", "label": "FileRStreamVtable", "description": "RTTI 'FileRStream', 0xb bytes."},
+        {"address": "004a1728", "label": "FileRWStreamVtable", "description": "RTTI 'FileRWStream', 0xb bytes."},
+        {"address": "004a1778", "label": "FileWStreamVtable", "description": "RTTI 'FileWStream', 0xc bytes."},
+        {"address": "004a1820", "label": "LZHRStreamVtable", "description": "RTTI 'LZHRStream', 0x28 bytes."},
+        {"address": "004a17a0", "label": "MemRWStreamVtable", "description": "RTTI 'MemRWStream', 0x14 bytes."},
+        {"address": "004a17c8", "label": "RLERStreamVtable", "description": "RTTI 'RLERStream', 0x92 bytes."},
+        {"address": "004a0e28", "label": "VolRStreamVtable", "description": "RTTI 'VolRStream', 0x2f bytes."}
+      ]
+    },
+    {
+      "name": "TSContextVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'TSContext' (004a5b51) and of the 3 classes derived from it that keep its length: 1 slots, read from the image up to the next class's type descriptor. Each slot's function has the same name as in VSHELL's VshellTSContextVtable, whose slot names these are.",
+      "slots": [
+        {"offset": 0, "name": "Dtor", "description": "The role of VshellTSContextVtable +0x00 (VSHELL). Implementations: TSContext_Dtor (0048bbb8), TSCamera_Dtor (0048d841), Cam_Dtor (00462150), TSOrthoCamera_Dtor (0048db9e)."}
+      ],
+      "instances": [
+        {"address": "004a5b51", "label": "TSContextVtable", "description": "RTTI 'TSContext', 0x16 bytes."},
+        {"address": "004a5b41", "label": "TSCameraVtable", "description": "RTTI 'TSCamera', 0x22 bytes."},
+        {"address": "0049f900", "label": "CAMVtable", "description": "RTTI 'CAM', 0x4e bytes."},
+        {"address": "004a5b31", "label": "TSOrthoCameraVtable", "description": "RTTI 'TSOrthoCamera', 0x26 bytes."}
+      ]
+    },
+    {
+      "name": "CTLWindowVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'CTLWindow' (0049db7a): 1 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "slot_0x00", "description": "Implementations: CTLWindow_Slot00NoOp (00452aad)."}
+      ],
+      "instances": [
+        {"address": "0049db7a", "label": "CTLWindowVtable", "description": "RTTI 'CTLWindow', 0x398 bytes."}
+      ]
+    },
+    {
+      "name": "PanelGaugeVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'PanelGauge' (0049bc6c) and of the 8 classes derived from it that keep its length: 4 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "slot_0x00", "description": "Implementations: PanelGauge_OnChildClickNoOp (0045233f), EnergyPoolGauge_OnChildClickNoOp (00445108), HddDisplay_OnChildClick (0044a14c), MfdButton_OnClick (0044681c), ShieldsGauge_OnClick (0044380c), ThrottleGauge_OnChildValue (00447de0), ConsoleButtons_OnChildClick (0044212c)."},
+        {"offset": 4, "name": "slot_0x04", "description": "Implementations: Rtl_PureVirtualCalled (00496684), EnergyPoolGauge_Paint (00444f20), HddDisplay_Repaint (00449a50), Gunsight_Paint (0043d5c8), MfdDisplay_Repaint (00446138), PanelAmbience_Paint (004520a0), ShieldsGauge_Paint (00443730), ThrottleGauge_Paint (00447d38), and 1 more."},
+        {"offset": 8, "name": "slot_0x08", "description": "Implementations: Rtl_PureVirtualCalled (00496684), EnergyPoolGauge_Update (00444fe0), HddDisplay_Update (00449bd0), Gunsight_UpdateAndPaint (0043d6dc), MfdDisplay_Update (00446328), PanelAmbience_Update (004520b0), ShieldsGauge_Update (00443748), ThrottleGauge_Update (00447d6c), and 1 more."},
+        {"offset": 12, "name": "slot_0x0c", "description": "Implementations: PanelGauge_KeyDispatchNone (00452344), HddDisplay_KeyDispatch (00449fcc), MfdDisplay_KeyDispatch (004469c0), ConsoleButtons_HandleCommand (004421a0)."}
+      ],
+      "instances": [
+        {"address": "0049bc6c", "label": "PanelGaugeVtable", "description": "RTTI 'PanelGauge', 0xb1 bytes."},
+        {"address": "0049cabc", "label": "EnergyPoolGaugeVtable", "description": "RTTI 'EnergyPoolGauge', 0xc3 bytes."},
+        {"address": "0049d64c", "label": "HDDGaugeVtable", "description": "RTTI 'HDDGauge', 0x78a bytes."},
+        {"address": "0049c138", "label": "HUDVtable", "description": "RTTI 'HUD', 0x11b bytes."},
+        {"address": "0049cfa0", "label": "MFDGaugeVtable", "description": "RTTI 'MFDGauge', 0x349 bytes."},
+        {"address": "0049db5c", "label": "PanelAmbienceVtable", "description": "RTTI 'PanelAmbience', 0xc1 bytes."},
+        {"address": "0049ca1d", "label": "ShieldsGaugeVtable", "description": "RTTI 'ShieldsGauge', 0xd4 bytes."},
+        {"address": "0049d1e0", "label": "ThrottleGaugeVtable", "description": "RTTI 'ThrottleGauge', 0xca bytes."},
+        {"address": "0049c85c", "label": "WeaponRangeGaugeVtable", "description": "RTTI 'WeaponRangeGauge', 0xb5 bytes."}
+      ]
+    },
+    {
+      "name": "WeaponGaugeVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'WeaponGauge' (0049c95c) and of the 3 classes derived from it that keep its length: 5 slots, read from the image up to the next class's type descriptor. The first 4 slots are PanelGaugeVtable's. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "slot_0x00", "description": "As PanelGaugeVtable +0x00. Implementations: PanelGauge_OnChildClickNoOp (0045233f), EnergyWeaponGauge_OnChildClick (00440ef0), AmmoWeaponGauge_OnChildClick (004414b4)."},
+        {"offset": 4, "name": "slot_0x04", "description": "As PanelGaugeVtable +0x04. Implementations: Rtl_PureVirtualCalled (00496684), EnergyWeaponGauge_Paint (00440c68), AmmoWeaponGauge_Paint (004411b4)."},
+        {"offset": 8, "name": "slot_0x08", "description": "As PanelGaugeVtable +0x08. Implementations: Rtl_PureVirtualCalled (00496684), EnergyWeaponGauge_Update (00440c90), AmmoWeaponGauge_Update (00441268)."},
+        {"offset": 12, "name": "slot_0x0c", "description": "As PanelGaugeVtable +0x0c. Implementations: PanelGauge_KeyDispatchNone (00452344)."},
+        {"offset": 16, "name": "SetState", "description": "Implementations: WeaponGauge_SetStateNoOp (00443417), EnergyWeaponGauge_SetState (00440d4c), AmmoWeaponGauge_SetState (004413f4)."}
+      ],
+      "instances": [
+        {"address": "0049c95c", "label": "WeaponGaugeVtable", "description": "RTTI 'WeaponGauge', 0xc2 bytes."},
+        {"address": "0049c93c", "label": "ChainedWeaponGaugeVtable", "description": "RTTI 'ChainedWeaponGauge', 0xdb bytes."},
+        {"address": "0049c91c", "label": "EnergyWeaponGaugeVtable", "description": "RTTI 'EnergyWeaponGauge', 0xdf bytes."},
+        {"address": "0049c8fc", "label": "ProjectileWeaponGaugeVtable", "description": "RTTI 'ProjectileWeaponGauge', 0xef bytes."}
+      ]
+    },
+    {
+      "name": "MsgPortVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'MsgPort' (0049bb00) and of the 3 classes derived from it that keep its length: 8 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "slot_0x00", "description": "Implementations: MessagePort_PostNoOp (0043556c), PilotMessagePort_Post (00435c48), MessagePort_PickVariant (00436a3c), TrainingMessagePort_Post (004362e4)."},
+        {"offset": 4, "name": "slot_0x04", "description": "Implementations: Rtl_PureVirtualCalled (00496684), PilotMessagePort_Speak (00435d9c), MessagePort_Show (00436abc), PilotMessagePort_Paint (0043660c)."},
+        {"offset": 8, "name": "slot_0x08", "description": "Implementations: Rtl_PureVirtualCalled (00496684), PilotMessagePort_ComposeLine (00435d0c), MessagePort_SetText (00436a0c), PilotMessagePort_WrapText (00436318)."},
+        {"offset": 12, "name": "Erase", "description": "Implementations: Rtl_PureVirtualCalled (00496684), PilotMessagePort_Erase (00436130), MessagePort_Erase (00436fd0)."},
+        {"offset": 16, "name": "slot_0x10", "description": "Implementations: MessagePort_Tick (00435610), PilotMessagePort_Update (004361cc), MessageTicker_ScrollText (00436f70), TrainingMessagePort_Update (004365d0)."},
+        {"offset": 20, "name": "slot_0x14", "description": "Implementations: MessagePort_UnpaintNoOp (0043757e), PilotMessagePort_RestoreBackground (00437044)."},
+        {"offset": 24, "name": "slot_0x18", "description": "Implementations: MessagePort_PaintNoOp (00437590), PilotMessagePort_RedrawFromSaveUnder (00437094), MessageTicker_Paint (00436cec)."},
+        {"offset": 28, "name": "GetRect", "description": "Implementations: MessagePort_GetRect (00437583)."}
+      ],
+      "instances": [
+        {"address": "0049bb00", "label": "MsgPortVtable", "description": "RTTI 'MsgPort', 0x4d3 bytes."},
+        {"address": "0049bad4", "label": "DialogPortVtable", "description": "RTTI 'DialogPort', 0x4df bytes."},
+        {"address": "0049baa8", "label": "CommandPortVtable", "description": "RTTI 'CommandPort', 0x4ef bytes."},
+        {"address": "0049ba7c", "label": "EventPortVtable", "description": "RTTI 'EventPort', 0x4ea bytes."}
+      ]
+    },
+    {
+      "name": "PodWeaponGaugeVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'PodWeaponGauge' (0049c8d0) and of the 2 classes derived from it that keep its length: 8 slots, read from the image up to the next class's type descriptor. The first 5 slots are WeaponGaugeVtable's. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "slot_0x00", "description": "As WeaponGaugeVtable +0x00. Implementations: PodGauge_OnClick (00441988), TogglePodGauge_OnClick (004419fc), TurboPodGauge_OnClick (00441bdc)."},
+        {"offset": 4, "name": "slot_0x04", "description": "As WeaponGaugeVtable +0x04. Implementations: PodGauge_Paint (0044171c), TurboPodGauge_Paint (00441c14)."},
+        {"offset": 8, "name": "slot_0x08", "description": "As WeaponGaugeVtable +0x08. Implementations: PodGauge_Update (00441850), TurboPodGauge_Update (00441d78)."},
+        {"offset": 12, "name": "slot_0x0c", "description": "As WeaponGaugeVtable +0x0c. Implementations: PanelGauge_KeyDispatchNone (00452344)."},
+        {"offset": 16, "name": "SetState", "description": "As WeaponGaugeVtable +0x10. Implementations: WeaponGauge_SetStateNoOp (00443417)."},
+        {"offset": 20, "name": "SetStateBlock", "description": "Implementations: PodGauge_SetStateBlock (00441948), TogglePodGauge_SetStateBlock (004419c4), TurboPodGauge_SetStateBlock (00441b84)."},
+        {"offset": 24, "name": "GetStateBlock", "description": "Implementations: PodGauge_GetStateBlock (00441978)."},
+        {"offset": 28, "name": "slot_0x1c", "description": "Implementations: PodGauge_PowerUpFillDone (0044341c), TurboPodGauge_PowerUpFill (00441d88)."}
+      ],
+      "instances": [
+        {"address": "0049c8d0", "label": "PodWeaponGaugeVtable", "description": "RTTI 'PodWeaponGauge', 0xde bytes."},
+        {"address": "0049c8a4", "label": "TogglePodGaugeVtable", "description": "RTTI 'TogglePodGauge', 0xde bytes."},
+        {"address": "0049c878", "label": "EnergyPodGaugeVtable", "description": "RTTI 'EnergyPodGauge', 0xe6 bytes."}
+      ]
+    },
+    {
+      "name": "GLBaseVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'GLBase' (004a3380) and of the 7 classes derived from it that keep its length: 7 slots, read from the image up to the next class's type descriptor. Each slot's function has the same name as in VSHELL's VshellGLBaseVtable, whose slot names these are.",
+      "slots": [
+        {"offset": 0, "name": "GetClassTag", "description": "The role of VshellGLBaseVtable +0x00 (VSHELL). Implementations: GLBase_GetClassTag (00480dfc), GLCursor_GetClassTag (004832dc), GLFont_GetClassTag (00482764), GLPalette_GetClassTag (0048203c), GLEdgeTableRegion_GetClassTag (00482fcc), GLRectangleRegion_GetClassTag (00482efc)."},
+        {"offset": 4, "name": "GetStreamSize", "description": "The role of VshellGLBaseVtable +0x04 (VSHELL). Implementations: GLBase_GetStreamSize (00480e04), GLCursor_GetStreamSize (004832e8), GLFont_GetStreamSize (00482770), GLPalette_GetStreamSize (00482048), GLEdgeTableRegion_GetStreamSize (00482fd8), GLRectangleRegion_GetStreamSize (00482f08)."},
+        {"offset": 8, "name": "GetMemorySize", "description": "The role of VshellGLBaseVtable +0x08 (VSHELL). Implementations: GLBase_GetMemorySize (00480e0c), GLCursor_GetMemorySize (00483308), GLFont_GetMemorySize (004827ac), GLPalette_GetMemorySize (00482084), GLEdgeTableRegion_GetMemorySize (00482ffc), GLRectangleRegion_GetMemorySize (00482f14)."},
+        {"offset": 12, "name": "ReadFromStream", "description": "The role of VshellGLBaseVtable +0x0c (VSHELL). Implementations: GLBase_ReadFromStream (00480e14), GLCursor_ReadFromStream (00483320), GLFont_ReadFromStream (00482908), GLPalette_ReadFromStream (004820c0), GLEdgeTableRegion_ReadFromStream (00483020), GLRectangleRegion_ReadFromStream (00482f20)."},
+        {"offset": 16, "name": "WriteToStream", "description": "The role of VshellGLBaseVtable +0x10 (VSHELL). Implementations: GLBase_WriteToStream (00480e1c), GLCursor_WriteToStream (0048334c), GLFont_WriteToStream (004827e8), GLPalette_WriteToStream (004821c0), GLEdgeTableRegion_WriteToStream (00483098), GLRectangleRegion_WriteToStream (00482f3c)."},
+        {"offset": 20, "name": "DebugPrint", "description": "The role of VshellGLBaseVtable +0x14 (VSHELL). Implementations: ClassItem_DebugPrintType (0047a488)."},
+        {"offset": 24, "name": "Dtor", "description": "The role of VshellGLBaseVtable +0x18 (VSHELL). Implementations: GLBase_Dtor (004837f1), GLCursor_Dtor (004834bc), GLFont_Dtor (00482304), GLPalette_Dtor (00481e60), GLRegion_Dtor (00483818), GLViewport_Dtor (00480cc3), GLEdgeTableRegion_Dtor (004836f8), GLRectangleRegion_Dtor (00483161)."}
+      ],
+      "instances": [
+        {"address": "004a3380", "label": "GLBaseVtable", "description": "RTTI 'GLBase', 0x4 bytes."},
+        {"address": "004a3358", "label": "GLCursorVtable", "description": "RTTI 'GLCursor', 0x10 bytes."},
+        {"address": "004a33a8", "label": "GLRegionVtable", "description": "RTTI 'GLRegion', 0x8 bytes."},
+        {"address": "004a33d0", "label": "GLEdgeTableRegionVtable", "description": "RTTI 'GLEdgeTableRegion', 0xc bytes."},
+        {"address": "004a31c4", "label": "GLFontVtable", "description": "RTTI 'GLFont', 0x32 bytes."},
+        {"address": "004a3110", "label": "GLPaletteVtable", "description": "RTTI 'GLPalette', 0x14 bytes."},
+        {"address": "004a327c", "label": "GLRectangleRegionVtable", "description": "RTTI 'GLRectangleRegion', 0x18 bytes."},
+        {"address": "004a2e28", "label": "GLViewportVtable", "description": "RTTI 'GLViewport', 0x239 bytes."}
+      ]
+    },
+    {
+      "name": "GLPrimitiveVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'GLPrimitive' (004a3058) and of the 2 classes derived from it that keep its length: 8 slots, read from the image up to the next class's type descriptor. Each slot's function has the same name as in VSHELL's VshellGLPrimitiveVtable, whose slot names these are.",
+      "slots": [
+        {"offset": 0, "name": "GetClassTag", "description": "The role of VshellGLPrimitiveVtable +0x00 (VSHELL). Implementations: GLBase_GetClassTag (00480dfc), GLBitmap_GetClassTag (00481c44)."},
+        {"offset": 4, "name": "GetStreamSize", "description": "The role of VshellGLPrimitiveVtable +0x04 (VSHELL). Implementations: GLBase_GetStreamSize (00480e04), GLBitmap_GetStreamSize (00481c50)."},
+        {"offset": 8, "name": "GetMemorySize", "description": "The role of VshellGLPrimitiveVtable +0x08 (VSHELL). Implementations: GLBase_GetMemorySize (00480e0c), GLBitmap_GetMemorySize (00481c68)."},
+        {"offset": 12, "name": "ReadFromStream", "description": "The role of VshellGLPrimitiveVtable +0x0c (VSHELL). Implementations: GLBase_ReadFromStream (00480e14), GLBitmap_ReadFromStream (00481c80)."},
+        {"offset": 16, "name": "WriteToStream", "description": "The role of VshellGLPrimitiveVtable +0x10 (VSHELL). Implementations: GLBase_WriteToStream (00480e1c), GLBitmap_WriteToStream (00481d8c)."},
+        {"offset": 20, "name": "DebugPrint", "description": "The role of VshellGLPrimitiveVtable +0x14 (VSHELL). Implementations: ClassItem_DebugPrintType (0047a488)."},
+        {"offset": 24, "name": "Dtor", "description": "The role of VshellGLPrimitiveVtable +0x18 (VSHELL). Implementations: GLPrimitive_Dtor (00483684), GLBitmap_Dtor (004814ac), GLRect_Dtor (0045068d)."},
+        {"offset": 28, "name": "Draw", "description": "The role of VshellGLPrimitiveVtable +0x1c (VSHELL). Implementations: GLPrimitive_Draw (00482b9c), GLBitmap_DrawAtOrigin (00481b85), GLRect_Fill (00482be0)."}
+      ],
+      "instances": [
+        {"address": "004a3058", "label": "GLPrimitiveVtable", "description": "RTTI 'GLPrimitive', 0x4 bytes."},
+        {"address": "004a3084", "label": "GLBitmapVtable", "description": "RTTI 'GLBitmap', 0x1a bytes."},
+        {"address": "0049d984", "label": "GLRectVtable", "description": "RTTI 'GLRect', 0x14 bytes."}
+      ]
+    },
+    {
+      "name": "GUNLISTVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'GUNLIST' (00499338) and of the 1 class derived from it that keep its length: 1 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "slot_0x00", "description": "Implementations: WeaponMounts_ArbitrateEnergyNoSelection (00411a1d), WeaponMounts_ArbitrateEnergyWithSelection (0041194a)."}
+      ],
+      "instances": [
+        {"address": "00499338", "label": "GUNLISTVtable", "description": "RTTI 'GUNLIST', 0x14 bytes."},
+        {"address": "00499238", "label": "PLAYER_GUNLISTVtable", "description": "RTTI 'PLAYER_GUNLIST', 0x35 bytes."}
+      ]
+    },
+    {
+      "name": "HDDisplayVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'HDDisplay' (0049d668) and of the 2 classes derived from it that keep its length: 5 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "Repaint", "description": "Implementations: Rtl_PureVirtualCalled (00496684), HddDamageScreen_Repaint (00450b2c), HddCommandScreen_Repaint (0044c894)."},
+        {"offset": 4, "name": "slot_0x04", "description": "Implementations: Rtl_PureVirtualCalled (00496684), HddDamageScreen_Tick (00450b4c), HddCommandScreen_Update (0044c960)."},
+        {"offset": 8, "name": "Hide", "description": "Implementations: HDDisplay_HideNoOp (00451e86), HddCommandScreen_Hide (0044cf28)."},
+        {"offset": 12, "name": "Show", "description": "Implementations: HDDisplay_ShowNoOp (0044c1eb), HddDamageScreen_Show (00451d94), HddCommandScreen_Show (0044cee8)."},
+        {"offset": 16, "name": "KeyDispatch", "description": "Implementations: HddDamageScreen_KeyDispatch (00451e8b), HddCommandScreen_KeyDispatch (0044cc40)."}
+      ],
+      "instances": [
+        {"address": "0049d668", "label": "HDDisplayVtable", "description": "RTTI 'HDDisplay', 0x10 bytes."},
+        {"address": "0049dab0", "label": "HDDDamageVtable", "description": "RTTI 'HDDDamage', 0xf4 bytes."},
+        {"address": "0049d9d8", "label": "HDDMapVtable", "description": "RTTI 'HDDMap', 0x382 bytes."}
+      ]
+    },
+    {
+      "name": "HUDGaugeVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'HUDGauge' (0049c26c) and of the 5 classes derived from it that keep its length: 2 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "slot_0x00", "description": "Implementations: Rtl_PureVirtualCalled (00496684), Gunsight_ReticlePaint (0043b7e0), Gunsight_TargetIndicatorPaint (0043b950), Gunsight_ClickSurface_Paint (0043c1dc), Gunsight_UnusedChild_Paint (0043c260)."},
+        {"offset": 4, "name": "slot_0x04", "description": "Implementations: Rtl_PureVirtualCalled (00496684), Gunsight_ReticleRepaint (0043e5e7), Gunsight_TargetIndicatorRepaint (0043e629), Gunsight_ClickSurface_Repaint (0043e61b), Gunsight_UnusedChild_Repaint (0043e603)."}
+      ],
+      "instances": [
+        {"address": "0049c26c", "label": "HUDGaugeVtable", "description": "RTTI 'HUDGauge', 0x14 bytes."},
+        {"address": "0049c1d8", "label": "HUDGunsightVtable", "description": "RTTI 'HUDGunsight', 0x4a bytes."},
+        {"address": "0049c124", "label": "HUDCrosshairGunsightVtable", "description": "RTTI 'HUDCrosshairGunsight', 0x4a bytes."},
+        {"address": "0049c1c4", "label": "HUDLockingGunsightVtable", "description": "RTTI 'HUDLockingGunsight', 0x5a bytes."},
+        {"address": "0049c174", "label": "HUDPipperVtable", "description": "RTTI 'HUDPipper', 0x5a bytes."},
+        {"address": "0049c1b0", "label": "HUDRovingGunsightVtable", "description": "RTTI 'HUDRovingGunsight', 0x4e bytes."}
+      ]
+    },
+    {
+      "name": "RotationGaugeVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'RotationGauge' (0049c24c) and of the 4 classes derived from it that keep its length: 5 slots, read from the image up to the next class's type descriptor. The first 2 slots are HUDGaugeVtable's. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "slot_0x00", "description": "As HUDGaugeVtable +0x00. Implementations: Rtl_PureVirtualCalled (00496684), HudRotationIndicator_Paint (0043b4a4), HudSlideBarHidden_PaintNoOp (0043b574), Hud_UpdateWaypointIndicator (0043c3e4), HudHeadingTape_Paint (0043b6dc)."},
+        {"offset": 4, "name": "slot_0x04", "description": "As HUDGaugeVtable +0x04. Implementations: Rtl_PureVirtualCalled (00496684), HudRotationIndicator_Repaint (0043e685), HudSlideBarHidden_Repaint (0043e677), HudWaypointIndicator_Repaint (0043e5f5), HudHeadingTape_Repaint (0043b7a4)."},
+        {"offset": 8, "name": "Recompute", "description": "Implementations: Rtl_PureVirtualCalled (00496684), HudRotationIndicator_Recompute (0043b460), HudSlideBarHidden_RecomputeNoOp (0043b56c), HudHeadingTape_Recompute (0043b5dc)."},
+        {"offset": 12, "name": "slot_0x0c", "description": "Implementations: HudSlideBar_AddDelta (0043b3f8), HudWaypointIndicator_ShiftLimits (0043c3d0), HudHeadingTape_SetHeading (0043b654)."},
+        {"offset": 16, "name": "SetLimits", "description": "Implementations: HudSlideBar_SetLimits (0043b3c0), HudHeadingTape_SetLimits (0043b7b4)."}
+      ],
+      "instances": [
+        {"address": "0049c24c", "label": "RotationGaugeVtable", "description": "RTTI 'RotationGauge', 0x3c bytes."},
+        {"address": "0049c22c", "label": "HFixRotationGaugeVtable", "description": "RTTI 'HFixRotationGauge', 0x3c bytes."},
+        {"address": "0049c154", "label": "HNavGaugeVtable", "description": "RTTI 'HNavGauge', 0x52 bytes."},
+        {"address": "0049c1ec", "label": "HRevRotationGaugeVtable", "description": "RTTI 'HRevRotationGauge', 0x54 bytes."},
+        {"address": "0049c20c", "label": "VFixRotationGaugeVtable", "description": "RTTI 'VFixRotationGauge', 0x3c bytes."}
+      ]
+    },
+    {
+      "name": "IMJoystickVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'IMJoystick' (0049ec9c): 2 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "Dtor", "description": "Implementations: JoystickDevice_Dtor (0045c2c4)."},
+        {"offset": 4, "name": "ReadWithResponse", "description": "Implementations: Joystick_ReadWithResponse (0045c314)."}
+      ],
+      "instances": [
+        {"address": "0049ec9c", "label": "IMJoystickVtable", "description": "RTTI 'IMJoystick', 0x2c bytes."}
+      ]
+    },
+    {
+      "name": "MFDisplayVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'MFDisplay' (0049cfbc) and of the 5 classes derived from it that keep its length: 2 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "Paint", "description": "Implementations: Rtl_PureVirtualCalled (00496684), MfdFlashCommScreen_Paint (0043f7a4), MfdMissileViewScreen_Paint (0043fe1c), MfdMapScreen_PaintNoOp (004405dc), MfdRadarScreen_Paint (0043eecc), MfdStatusScreen_Paint (0043a5a0)."},
+        {"offset": 4, "name": "slot_0x04", "description": "Implementations: Rtl_PureVirtualCalled (00496684), MfdFlashCommScreen_Update (0043f878), MfdMissileViewScreen_Update (004402ec), MfdMapScreen_Paint (004405e4), MfdRadarScreen_UpdateAndPaint (0043eeb4), MfdStatusScreen_Update (0043b210)."}
+      ],
+      "instances": [
+        {"address": "0049cfbc", "label": "MFDisplayVtable", "description": "RTTI 'MFDisplay', 0x10 bytes."},
+        {"address": "0049c36c", "label": "MFDFlashCommVtable", "description": "RTTI 'MFDFlashComm', 0x49 bytes."},
+        {"address": "0049c449", "label": "MFDMissileViewVtable", "description": "RTTI 'MFDMissileView', 0x4a bytes."},
+        {"address": "0049c4be", "label": "MFDNavMapVtable", "description": "RTTI 'MFDNavMap', 0x28 bytes."},
+        {"address": "0049c328", "label": "MFDRadarVtable", "description": "RTTI 'MFDRadar', 0x524 bytes."},
+        {"address": "0049be40", "label": "MFDStatusVtable", "description": "RTTI 'MFDStatus', 0x42 bytes."}
+      ]
+    },
+    {
+      "name": "SortableVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'Sortable' (0049ac18) and of the 2 classes derived from it that keep its length: 1 slots, read from the image up to the next class's type descriptor. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "DrawEntryRender", "description": "Implementations: Rtl_PureVirtualCalled (00496684), ObjList_DrawEntryRender (0042876c)."}
+      ],
+      "instances": [
+        {"address": "0049ac18", "label": "SortableVtable", "description": "RTTI 'Sortable', 0x18 bytes."},
+        {"address": "0049ac28", "label": "SortableLineVtable", "description": "RTTI 'SortableLine', 0x32 bytes."},
+        {"address": "0049ac38", "label": "SortObjVtable", "description": "RTTI 'SortObj', 0x36 bytes."}
+      ]
+    },
+    {
+      "name": "TSLightVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'TSLight' (0049f8ec) and of the 3 classes derived from it that keep its length: 2 slots, read from the image up to the next class's type descriptor. Each slot's function has the same name as in VSHELL's VshellTSLightVtable, whose slot names these are.",
+      "slots": [
+        {"offset": 0, "name": "Dtor", "description": "The role of VshellTSLightVtable +0x00 (VSHELL). Implementations: TSLight_Dtor (0046209e), TSAmbientLight_Dtor (0040798c), TSOmniLight_Dtor (004075c1), TSSunLight_Dtor (00462003)."},
+        {"offset": 4, "name": "slot_0x04", "description": "The role of VshellTSLightVtable +0x04 (VSHELL). Implementations: maybe_TSLight_SetIntensity (0048bbe0), maybe_TSOmniLight_SetIntensity (0048bc60)."}
+      ],
+      "instances": [
+        {"address": "0049f8ec", "label": "TSLightVtable", "description": "RTTI 'TSLight', 0x34 bytes."},
+        {"address": "00497adc", "label": "TSAmbientLightVtable", "description": "RTTI 'TSAmbientLight', 0x34 bytes."},
+        {"address": "00497ac8", "label": "TSOmniLightVtable", "description": "RTTI 'TSOmniLight', 0x40 bytes."},
+        {"address": "0049f8d8", "label": "TSSunLightVtable", "description": "RTTI 'TSSunLight', 0x34 bytes."}
+      ]
+    },
+    {
+      "name": "TexPolyVtable",
+      "binary": "DBSIM",
+      "description": "The vtable of RTTI 'TexPoly' (0049afe6): 14 slots, read from the image up to the next class's type descriptor. The first 8 slots are TSBaseVtable's. A slot is named for the role its implementations' names agree on, and is slot_0xNN where they disagree or none is named.",
+      "slots": [
+        {"offset": 0, "name": "GetClassTag", "description": "As TSBaseVtable +0x00. Implementations: TSTexture4Poly_GetClassTag (0048e2c8)."},
+        {"offset": 4, "name": "GetStreamSize", "description": "As TSBaseVtable +0x04. Implementations: TSSolidPoly_GetStreamSize (0048e12c)."},
+        {"offset": 8, "name": "GetMemorySize", "description": "As TSBaseVtable +0x08. Implementations: TSSolidPoly_GetMemorySize (0048e140)."},
+        {"offset": 12, "name": "ReadFromStream", "description": "As TSBaseVtable +0x0c. Implementations: TSSolidPoly_ReadFromStream (0048e14c)."},
+        {"offset": 16, "name": "WriteToStream", "description": "As TSBaseVtable +0x10. Implementations: TSSolidPoly_WriteToStream (0048e178)."},
+        {"offset": 20, "name": "DebugPrint", "description": "As TSBaseVtable +0x14. Implementations: TSSolidPoly_DebugPrint (0048e1a4)."},
+        {"offset": 24, "name": "Dtor", "description": "As TSBaseVtable +0x18. Implementations: TexPoly_Dtor (004302fa)."},
+        {"offset": 28, "name": "Render", "description": "As TSBaseVtable +0x1c. Implementations: TSTexture4Poly_Render (00474e9c)."},
+        {"offset": 32, "name": "SetupRings", "description": "Implementations: TexPoly_SetupRings (0042f970)."},
+        {"offset": 36, "name": "RandomPointOnCircle", "description": "Implementations: TexPoly_RandomPointOnCircle (0042f860)."},
+        {"offset": 40, "name": "slot_0x28", "description": "Implementations: TexPoly_Slot28NoOp (00430346)."},
+        {"offset": 44, "name": "Render_0x2c", "description": "Implementations: TexPoly_Render (0042fc34)."},
+        {"offset": 48, "name": "ClipPolygon", "description": "Implementations: TexPoly_ClipPolygon (0042ff88)."},
+        {"offset": 52, "name": "DrawAtPoints", "description": "Implementations: TexPoly_DrawAtPoints (0042fa18)."}
+      ],
+      "instances": [
+        {"address": "0049afe6", "label": "TexPolyVtable", "description": "RTTI 'TexPoly', 0x10b bytes."}
       ]
     }
   ]

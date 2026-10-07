@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 /// FILE - dat\[herc].dat — the 216-byte mech type record <c>MechType_InitOne</c> (<c>004201a8</c>)
 /// loads into <c>MECH_TYPE_DATA[i]+2</c>, so record offset N is the exe's <c>typeRecord+N+2</c>.
 /// Offsets below are record offsets, in decimal. The field table and per-chassis values are in
-/// docs/simulation/mech-locomotion.md#mech-type-record.
+/// docs/retail/simulation/mech-locomotion.md#mech-type-record.
 /// </summary>
 public class HercSimDat {
 	/// <summary>Offset 0 — maximum turn rate. Not rescaled at load.</summary>
@@ -54,7 +54,7 @@ public class HercSimDat {
 
 	/// <summary>
 	/// Offset 26 — the torso-twist sequence: a full turn of the torso node, which the twist angle
-	/// seeks a position within. See docs/simulation/torso-aim.md.
+	/// seeks a position within. See docs/retail/simulation/torso-aim.md.
 	/// </summary>
 	public short AnimId_TorsoTwist { get; set; }
 
@@ -91,20 +91,24 @@ public class HercSimDat {
 	/// <summary>Record offset of <see cref="ModelLoDBoneIds"/>.</summary>
 	public static int ModelLodArrOFs { get; set; } = 46;
 
-	/// <summary>Offsets 46-65, twenty bytes. Meaning not established.</summary>
+	/// <summary>
+	/// Offsets 46-65 — signed part ids, ended by a negative one: the parts whose nodes DBSIM uses to
+	/// renumber each crude LOD root onto root 0's nodes at load. See
+	/// docs/retail/formats/mech-shape-drawing.md, "The crude roots are renumbered at load".
+	/// </summary>
 	public byte[] ModelLoDBoneIds { get; set; } = new byte[20];
 
 	/// <summary>
 	/// Offset 66 — the base term of the chassis' AI combat rating, which DBSIM's target weighting and
 	/// flee check both weigh machines by. 1000 on every retail chassis. See
-	/// docs/simulation/ai-targeting.md#relative-combat-rating.
+	/// docs/retail/simulation/ai-targeting.md#relative-combat-rating.
 	/// </summary>
 	public short AiRatingBase { get; set; } = 1000;
 
 	/// <summary>
 	/// Offset 68 — the death / fall sequence an immobilised machine goes down in; the pose at its last
 	/// frame is where the wreck stays. Every biped states 7, the PITBULL 2, the SPIDER 1. See
-	/// docs/simulation/mech-locomotion.md#going-down.
+	/// docs/retail/simulation/mech-locomotion.md#going-down.
 	/// </summary>
 	public short AnimId_Death { get; set; }
 
@@ -129,13 +133,13 @@ public class HercSimDat {
 
 	/// <summary>
 	/// Offset 78 — nonzero for a flyer (the RAZOR alone): selects the flight code paths and the
-	/// <c>fm\&lt;NAME&gt;.FM</c> load. See docs/simulation/razor-flight.md.
+	/// <c>fm\&lt;NAME&gt;.FM</c> load. See docs/retail/simulation/razor-flight.md.
 	/// </summary>
 	public short FlyerFlag { get; set; }
 
 	/// <summary>
 	/// Offset 80 — which of <c>COCKPIT.DPL</c>'s nine 24-entry colour schemes the cockpit installs.
-	/// A 0-8 permutation over the nine player HERCs. See docs/formats/cockpit-canopy-palette.md#palette.
+	/// A 0-8 permutation over the nine player HERCs. See docs/retail/formats/cockpit-canopy-palette.md#palette.
 	/// </summary>
 	public short CockpitColorScheme { get; set; }
 
@@ -147,7 +151,7 @@ public class HercSimDat {
 
 	/// <summary>
 	/// Offset 84 — whether a hit can knock this chassis' weapon mounts out: 1 on every biped, 0 on
-	/// the PITBULL. See docs/simulation/weapon-mounts.md#the-chance-path--the-destruction-roll.
+	/// the PITBULL. See docs/retail/simulation/weapon-mounts.md#the-chance-path--the-destruction-roll.
 	/// </summary>
 	public short WeaponMountsDestructible { get; set; }
 
@@ -165,7 +169,7 @@ public class HercSimDat {
 
 	/// <summary>
 	/// Offsets 102 and 104 — the point the external camera orbits, in the machine's own frame:
-	/// fore/aft (0 on every retail chassis), then height. See docs/simulation/external-views.md.
+	/// fore/aft (0 on every retail chassis), then height. See docs/retail/simulation/external-views.md.
 	/// </summary>
 	public short OrbitCentreY { get; set; }
 
@@ -180,7 +184,7 @@ public class HercSimDat {
 	/// <summary>
 	/// Offset 110 — the machine's body radius: what the blast sweep measures its surface by and what
 	/// keeps two machines apart. 750 on every retail HERC. Distinct from <see cref="HitRadius"/>.
-	/// See docs/simulation/hit-detection.md#the-three-radius-slots.
+	/// See docs/retail/simulation/hit-detection.md#the-three-radius-slots.
 	/// </summary>
 	public short BodyRadius { get; set; }
 
@@ -210,7 +214,7 @@ public class HercSimDat {
 	/// that length is the entry count (<c>Mech_Constructor</c>, <c>Mech_PlaceLegsOnGround</c>
 	/// <c>004195c8</c>), so it is not <see cref="LegCount"/>. Retail states kinds 0, 0, 2 on parts
 	/// 14, 15, 12 on every HERC but the PITBULL (four feet, kind 0, on parts 14, 15, 22, 23) and the
-	/// SPIDER (none). See docs/simulation/ground-shapes.md#a-hercs-shadows.
+	/// SPIDER (none). See docs/retail/simulation/ground-shapes.md#a-hercs-shadows.
 	///
 	/// <para><b>Read-only views.</b> These bytes overlap the shorts at 112-121, which are what the
 	/// writer emits; setting these changes nothing on the way out.</para>
@@ -240,7 +244,7 @@ public class HercSimDat {
 	/// Offset 148 — which shared texture group DBSIM binds to every sub-shape of this mech:
 	/// <c>MechType_InitOne</c> writes <c>&amp;g_MechTextureGroupSlots + value*8</c> into
 	/// <c>TSShape+0x26</c> of each root shape. <see cref="TextureGroupDbaBaseName"/> names the groups; the
-	/// per-mech roster is in docs/formats/dts-texture-binding.md#dbsims-mech-to-texture-mapping.
+	/// per-mech roster is in docs/retail/formats/dts-texture-binding.md#dbsims-mech-to-texture-mapping.
 	/// </summary>
 	public short TextureGroup { get; set; }
 
@@ -303,17 +307,21 @@ public class HercSimDat {
 
 	/// <summary>
 	/// Offset 190 — the shield array's capacity before any Shield Pod: 3500 on every HERC, 0 on the
-	/// SPIDER. See docs/simulation/damage-system.md#the-shield-system.
+	/// SPIDER. See docs/retail/simulation/damage-system.md#the-shield-system.
 	/// </summary>
 	public short ShieldMaxTotal { get; set; }
 
-	/// <summary>Offset 192. Meaning not established.</summary>
-	public short Unk192_val { get; set; }
+	/// <summary>
+	/// Offset 192 (<c>typeRec+0xc2</c>) — a flyer's HUD speed at its top airspeed, in km/h: 265 on the
+	/// RAZOR. A walker's value is overwritten at load. See
+	/// docs/retail/simulation/razor-flight.md#hud-speed.
+	/// </summary>
+	public short HudTopSpeed { get; set; }
 
 	/// <summary>
 	/// Offsets 194 and 196 — the stride-calibration pair <c>MechType_InitOne</c> turns into the Q16
 	/// factor it rescales the speed fields by, <c>Q16Divide(offset196 * 400, offset194)</c>. See
-	/// docs/simulation/mech-locomotion.md#load-time-speed-rescale.
+	/// docs/retail/simulation/mech-locomotion.md#load-time-speed-rescale.
 	/// </summary>
 	public short StrideScaleDivisor { get; set; }
 

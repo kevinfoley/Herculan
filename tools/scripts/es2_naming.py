@@ -3,15 +3,19 @@
 
 Subcommands (BIN is DBSIM or VSHELL):
 
-  triage BIN [--limit N] [--max-lines L] [--sort named|sites|callers]
+  triage BIN [--limit N] [--max-lines L] [--sort named|sites|callers|refs] [--all]
       The es2_unnamed_callees backlog with each target's decompile size and its own unnamed
       callee count, so short leaf functions can be taken first. Columns: named callers, direct
-      call/branch sites in the whole binary, distinct calling functions (fns). --sort orders by
-      named callers (default), by sites, or by fns.
+      call/branch sites in the whole binary, distinct calling functions (fns), and refs: every
+      E8/E9 rel32 plus every stored dword pointer to the address anywhere in the image (the
+      es2_xref.py sweep, so vtable slots, callback and factory tables count). --sort orders by
+      named callers (default), by sites, by fns, or by refs. --all widens the backlog from
+      callees of named functions to every unnamed function start in the dump.
   body BIN addr... [-d] [--full]
       Decompile bodies with known_symbols names substituted for FUN_/DAT_ labels, the header
       banner, blank lines and local declarations dropped (--full keeps them). -d appends the
-      disassembly.
+      disassembly; where Ghidra has no function, a capstone disassembly of the image up to the
+      next function entry, saying whose extent the address falls in.
   diff BIN addr BIN2 addr2
       Unified diff of two decompiled bodies with names substituted and the remaining FUN_/DAT_
       labels, locals and Ghidra variable numbers normalised: whether one binary's function is a
@@ -38,8 +42,17 @@ Subcommands (BIN is DBSIM or VSHELL):
       '*', and each slot carries the number of tables holding the same function (xN): a function
       shared by many tables is a base-class method. Arguments filter by table address or class
       name; --unnamed keeps only tables with an unnamed slot ('L' marks one that has a low-confidence
-      entry already). A closing line totals the unnamed
-      functions and lists the RTTI class vtables the dump's sweep did not find.
+      entry already). "installed by" names each vtable store's Ghidra function, or the store's own
+      address when no function extent holds it (stores are also found by a raw C7 scan, so ones in
+      undisassembled bytes show). A closing line totals the unnamed functions.
+  classes BIN [regex...] [--unnamed]
+      Every Borland class record: size, bases with subobject offsets, primary vtable, the +0x28
+      destructor and +0x14 operator delete with known_symbols names, marked like vtables slots.
+      --unnamed keeps the records whose destructor or operator delete is unnamed.
+  stats BIN [--list]
+      The coverage table of Herculan/docs/herculan/plan-completing-coverage.md from the current
+      dumps. --list adds every 55 8B EC prologue outside a function extent and every code-section
+      gap between extents that is not all fill bytes (00/90/CC).
   insert batch.json [--write]
       Insert new entries into their binary's file in address order, validating schema, uniqueness,
       maybe_ vs medium, and control characters. Dry run without --write.
@@ -58,11 +71,14 @@ Subcommands (BIN is DBSIM or VSHELL):
       mentions it cannot rewrite safely (bare addresses, other shapes) for a manual edit.
   repl spec.json [--write]
       [[relpath, old, new, count]]: exact replacements asserting the count; BOM and newlines kept.
-  apply BIN [--write]
+  apply BIN [--write] [--define [addr+addr...]]
       Run ES2ApplySymbolNames headless (-readOnly unless --write) and print only the summary,
-      errors and warnings.
+      errors and warnings. --define first runs ES2DefineFunctionAt in the same session, on the
+      listed addresses or, with none, on every named function entry that has no Ghidra function
+      (one inside another function's extent is reported instead: that is a fixentry case).
   fixentry BIN addr[+addr...] [--write]
-      Repair functions Ghidra starts past their prologue (es2_late_entries.py finds them): one
+      Repair functions Ghidra starts past their prologue, or early on the fill before it
+      (es2_late_entries.py finds both): one
       headless session runs ES2MergeFunctionAt <addr> auto for each true entry, then
       ES2ApplyStructures and ES2ApplySymbolNames (the merge drops the old functions' signatures
       and struct-typed parameters), then ES2CheckFunctionEntries. -readOnly unless --write; a
@@ -165,15 +181,88 @@ def addrs(args):
     return [a.lower().zfill(8) for a in args]
 
 
+def functions(binary):
+    """{address: (Ghidra name, body bytes)} from analysis_out/BIN_functions.txt."""
+    out = {}
+    with open(os.path.join(ANALYSIS, f"{binary}_functions.txt"), encoding="utf-8", errors="replace") as f:
+        for line in f:
+            a, n, s = line.rstrip("\r\n").split("\t")
+            out[a.lower()] = (n, int(s))
+    return out
+
+
+class Extents:
+    """Ghidra function extents, each taken as entry .. entry + body bytes. A body Ghidra split into
+    several ranges is shorter than its span, so a byte past the first range reads as outside it; the
+    stamps in es2_stamp.py make the same assumption."""
+
+    def __init__(self, binary):
+        self.fns = functions(binary)
+        self.starts = sorted(int(a, 16) for a in self.fns)
+
+    def containing(self, va):
+        """(entry, offset) of the function whose extent holds va, or None."""
+        i = bisect.bisect_right(self.starts, va) - 1
+        if i < 0:
+            return None
+        e = self.starts[i]
+        return (e, va - e) if va < e + self.fns[f"{e:08x}"][1] else None
+
+    def next_start(self, va):
+        i = bisect.bisect_right(self.starts, va)
+        return self.starts[i] if i < len(self.starts) else None
+
+
+def unnamed_label(name):
+    return name.startswith(uc.UNNAMED_PREFIXES)
+
+
+def image_refs(binary, targets):
+    """address -> E8/E9 rel32 branches (any offset in a code section) plus stored little-endian
+    dwords (any offset, any section) equal to it: es2_xref.py's sweep for many targets in one pass.
+    Brute force, like es2_xref.py, so a byte run that merely looks like a branch can count."""
+    import es2_xref as X
+    image = X.Image(X.BINARIES[binary])
+    want = {int(a, 16): a for a in targets}
+    out = {}
+    data = image.data
+    for _n, va, _vs, raw_off, raw_size in image.executable():
+        for i in range(raw_off, raw_off + raw_size - 5):
+            if data[i] in (0xE8, 0xE9):
+                t = va + (i - raw_off) + 5 + struct.unpack_from("<i", data, i + 1)[0]
+                if t in want:
+                    out[want[t]] = out.get(want[t], 0) + 1
+    for i in range(len(data) - 3):
+        t = struct.unpack_from("<I", data, i)[0]
+        if t in want:
+            out[want[t]] = out.get(want[t], 0) + 1
+    return out
+
+
 def cmd_triage(args):
     binary = args[0]
     limit = int(args[args.index("--limit") + 1]) if "--limit" in args else 0
     maxl = int(args[args.index("--max-lines") + 1]) if "--max-lines" in args else 10 ** 9
     sort = args[args.index("--sort") + 1] if "--sort" in args else "named"
-    assert sort in ("named", "sites", "callers"), sort
+    assert sort in ("named", "sites", "callers", "refs"), sort
     rows = uc.analyse(binary, uc.CONFIDENCE_RANK["high"], False, None)
+    labels, branches = uc.parse_disasm(binary)
+    if "--all" in args:
+        known_fns = {a for a, e in uc.load_symbols(binary).items() if e.get("name")}
+        seen = {r["address"] for r in rows}
+        sites = {}
+        for _, ss in branches.items():
+            for _, k, t in ss:
+                sites[t] = sites.get(t, 0) + 1
+        for a, label in labels.items():
+            if a.startswith("~") or a in known_fns or a in seen or not label.startswith(uc.UNNAMED_PREFIXES):
+                continue
+            rows.append({"address": a, "named_caller_count": 0, "named_callers": {},
+                         "total_call_sites": sites.get(a, 0)})
     backlog = {r["address"] for r in rows}
-    _, branches = uc.parse_disasm(binary)
+    refs = image_refs(binary, backlog)
+    for r in rows:
+        r["refs"] = refs.get(r["address"], 0)
     # Distinct functions anywhere in the binary that CALL each backlog target.
     callers = {}
     for c, sites in branches.items():
@@ -186,17 +275,19 @@ def cmd_triage(args):
         rows.sort(key=lambda r: (-r["total_call_sites"], -r["all_callers"], r["address"]))
     elif sort == "callers":
         rows.sort(key=lambda r: (-r["all_callers"], -r["total_call_sites"], r["address"]))
+    elif sort == "refs":
+        rows.sort(key=lambda r: (-r["refs"], -r["all_callers"], r["address"]))
     known = names(binary)
     d = bodies(binary)
     shown = 0
-    print("address   named sites fns lines unnamedCallees  callers")
+    print("address   named sites fns  refs lines unnamedCallees  callers")
     for r in rows:
         a = r["address"]
         n = len(compact(d[a], known).splitlines()) if a in d else -1
         if n > maxl:
             continue
         sub = sorted({t for _, k, t in branches.get(a, []) if k == "CALL" and t not in known})
-        print(f"{a}  {r['named_caller_count']:>5} {r['total_call_sites']:>5} {r['all_callers']:>3} {n:>5} {len(sub):>3}"
+        print(f"{a}  {r['named_caller_count']:>5} {r['total_call_sites']:>5} {r['all_callers']:>3} {r['refs']:>5} {n:>5} {len(sub):>3}"
               f"{'(' + ','.join(t for t in sub if t in backlog) + ')' if any(t in backlog for t in sub) else ''}"
               f"  {', '.join(sorted(r['named_callers'])[:3])}")
         shown += 1
@@ -209,6 +300,7 @@ def cmd_body(args):
     dis, full = "-d" in rest, "--full" in rest
     known = names(binary)
     d = bodies(binary)
+    ext = None
     for a in addrs(x for x in rest if not x.startswith("-")):
         if a not in d:
             print(f"### {a} not in decompile")
@@ -216,7 +308,42 @@ def cmd_body(args):
             print(f"### {a} {known.get(a, '')}")
             print(d[a] if full else compact(d[a], known))
         if dis:
-            print(disasm(binary, a))
+            text = disasm(binary, a)
+            if not text:
+                ext = ext or Extents(binary)
+                text = raw_disasm(binary, int(a, 16), known, ext)
+            print(text)
+
+
+def raw_disasm(binary, va, known, ext, limit=0x300):
+    """Capstone disassembly of the image from va, for an address where Ghidra has no function: up to
+    the next Ghidra function entry, or limit bytes. Ghidra's own listing at such an address may be
+    undefined bytes, or instructions it never promoted to a function."""
+    import capstone
+    d, off = pe(binary)
+    inside = ext.containing(va)
+    nxt = ext.next_start(va)
+    end = min(va + limit, nxt) if nxt else va + limit
+    head = f"; capstone from {va:08x} to {end:08x}"
+    if inside:
+        e, o = inside
+        head += f"; inside the extent of {known.get(f'{e:08x}', ext.fns[f'{e:08x}'][0])} ({e:08x}+0x{o:x})"
+    if nxt and nxt == end:
+        head += f"; next Ghidra function {known.get(f'{nxt:08x}', ext.fns[f'{nxt:08x}'][0])} ({nxt:08x})"
+    out = [head]
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    o = off(va)
+    for i in md.disasm(d[o:o + end - va], va):
+        line = f"{i.address:08x}   {i.bytes.hex():<20} {i.mnemonic} {i.op_str}"
+        if i.mnemonic in ("call", "jmp") or i.mnemonic.startswith("j"):
+            m = re.fullmatch(r"0x([0-9a-f]+)", i.op_str)
+            if m and m.group(1).zfill(8) in known:
+                line += f"   ; -> {known[m.group(1).zfill(8)]}"
+        for m in re.finditer(r"0x([4][0-9a-f]{5})\b", i.op_str):
+            if m.group(1).zfill(8) in known and "; ->" not in line:
+                line += f"   ; {known[m.group(1).zfill(8)]}"
+        out.append(line)
+    return "\n".join(out)
 
 
 def normalised(binary, addr):
@@ -415,35 +542,23 @@ def parse_vtables(binary):
     return out
 
 
-def disasm_index(binary):
-    """(sorted function entries, {stored dword immediate: [store sites]})."""
-    starts, stores = [], {}
+def disasm_stores(binary):
+    """{stored dword immediate: [store sites]} from the disasm dump's MOV dword ptr [..],imm lines."""
+    stores = {}
     with open(os.path.join(ANALYSIS, f"{binary}_disasm_full.txt"), encoding="utf-8", errors="replace") as f:
         for line in f:
-            if line.startswith("; FUNCTION "):
-                starts.append(line.rstrip()[-8:])
-            elif "MOV dword ptr [" in line:
+            if "MOV dword ptr [" in line:
                 m = VT_STORE.match(line)
                 if m:
                     stores.setdefault(m.group(2).zfill(8), []).append(m.group(1))
-    return sorted(set(starts)), stores
+    return stores
 
 
-def containing_fn(starts, a):
-    i = bisect.bisect_right(starts, a) - 1
-    return starts[i] if i >= 0 else a
-
-
-def cmd_vtables(args):
-    binary = args[0]
-    only_unnamed = "--unnamed" in args
-    filters = [x for x in args[1:] if not x.startswith("-")]
-    known = names(binary)
+def build_tables(binary):
+    """({vt: [(offset, fn)]}, {vt: note}, RTTI vtable set): the dump's tables merged with the RTTI
+    vtables read from the image, as cmd_vtables lists them."""
     d, off = pe(binary)
     lo, hi = code_range(binary)
-    low = {e["address"] for e in entries(binary) if not e.get("name")}
-    starts, stores = disasm_index(binary)
-    entries_ = set(starts)
     import es2_classes
     img = es2_classes.Image(os.path.join(REPO, "ES2", f"{binary}.EXE"))
     recs = es2_classes.scan(img)
@@ -486,6 +601,67 @@ def cmd_vtables(args):
                 notes[r] = notes.get(r, "") + f"; absorbs the dump's {vt}"
                 del tables[vt]
                 break
+    return tables, notes, rtti_vts
+
+
+def raw_vt_stores(binary, vts):
+    """{vt: [address of a C7 /0 store whose imm32 is vt]}, scanned over the code section's bytes at
+    every offset, so a store in bytes Ghidra never disassembled is found too. Matches MOV [reg],imm32
+    and MOV [reg+disp8],imm32 (C7 00..07 / C7 40..47, ESP/EBP forms aside)."""
+    d, off = pe(binary)
+    lo, hi = code_range(binary)
+    want = {struct.pack("<I", int(v, 16)): v for v in vts}
+    out = {}
+    o0 = off(lo)
+    for i in range(o0, o0 + (hi - lo) - 6):
+        if d[i] != 0xC7:
+            continue
+        m = d[i + 1]
+        if m < 0x08 and m not in (4, 5):
+            k = d[i + 2:i + 6]
+        elif 0x40 <= m < 0x48 and m != 0x44:
+            k = d[i + 3:i + 7]
+        else:
+            continue
+        if k in want:
+            out.setdefault(want[k], []).append(lo + i - o0)
+    return out
+
+
+def installers(binary, vt, stores, raw, ext, known):
+    """'installed by' text: each store's containing Ghidra function, or the store's own address
+    when no function extent holds it."""
+    sites = sorted(set(stores.get(vt, [])) | {f"{a:08x}" for a in raw.get(vt, [])})
+    out = []
+    for s in sites:
+        c = ext.containing(int(s, 16))
+        if c:
+            f = f"{c[0]:08x}"
+            item = f"{f} {known.get(f, '*')}"
+        else:
+            item = f"{s} (store outside any Ghidra function"
+            i = bisect.bisect_left(ext.starts, int(s, 16)) - 1
+            if i >= 0:
+                prev = f"{ext.starts[i]:08x}"
+                item += f"; follows {known.get(prev, ext.fns[prev][0])} ({prev})"
+            item += ")"
+        if item not in out:
+            out.append(item)
+    return out
+
+
+def cmd_vtables(args):
+    binary = args[0]
+    only_unnamed = "--unnamed" in args
+    filters = [x for x in args[1:] if not x.startswith("-")]
+    known = names(binary)
+    d, off = pe(binary)
+    low = {e["address"] for e in entries(binary) if not e.get("name")}
+    stores = disasm_stores(binary)
+    ext = Extents(binary)
+    entries_ = set(ext.fns)
+    tables, notes, _ = build_tables(binary)
+    raw = raw_vt_stores(binary, tables)
     share = {}
     for slots in tables.values():
         for fn in {fn for _, fn in slots}:
@@ -503,8 +679,8 @@ def cmd_vtables(args):
             continue
         print(f"=== {vt} {cname}  ({len(slots)} slots, {len(set(miss))} unnamed)"
               + (f"  [{notes[vt]}]" if vt in notes else ""))
-        fns = sorted({containing_fn(starts, a) for a in stores.get(vt, [])})
-        print("  installed by: " + (", ".join(f"{f} {known.get(f, '*')}" for f in fns) or "<no immediate store>"))
+        print("  installed by: " + (", ".join(installers(binary, vt, stores, raw, ext, known))
+                                    or "<no immediate store>"))
         for o, fn in slots:
             mark = " " if fn in known else ("L" if fn in low else "*" if fn in entries_ else "?")
             print(f"  +0x{o:03x} {mark} {fn} {known.get(fn, '')}  x{share[fn]}")
@@ -645,8 +821,11 @@ def edit_text(text, edits):
         old = e.get("name")
         fields = ed.get("fields") or {ed["field"]: ed["value"]}
         for k, v in fields.items():
-            assert k in FIELDS and k not in ("address", "binary"), k
+            assert k in FIELDS and k not in ("address", "binary", "verified"), k
             assert not re.search(r"[\x00-\x1f]", v)
+            # A stamp vouches for the description it was checked against; new text needs a new stamp.
+            if k == "description" and v != e.get(k) and e.pop("verified", None):
+                print("stamp dropped", ed["address"], "- re-stamp with es2_stamp.py once the new text is checked")
             e[k] = v
         if e.get("name"):
             assert e["name"].startswith("maybe_") == (e["confidence"] == "medium"), (e["name"], e["confidence"])
@@ -758,15 +937,44 @@ def cmd_repl(args):
         print("written")
 
 
+def define_targets(binary, args):
+    """Addresses for apply --define: the +-list after the flag, or else every named function entry
+    of the binary's known_symbols file with no Ghidra function at its address in the function list.
+    An address inside another function's extent is left out and reported, since creating a function
+    there would cut into that body; a late entry is repaired with fixentry instead."""
+    i = args.index("--define")
+    if i + 1 < len(args) and re.fullmatch(r"[0-9a-fA-F]{8}([+,][0-9a-fA-F]{8})*", args[i + 1]):
+        return [a.lower() for a in re.split(r"[+,]", args[i + 1])]
+    ext = Extents(binary)
+    known = names(binary)
+    out = []
+    for e in entries(binary):
+        a = e["address"].lower()
+        if e["type"] != "function" or not e.get("name") or a in ext.fns:
+            continue
+        c = ext.containing(int(a, 16))
+        if c:
+            f = f"{c[0]:08x}"
+            print(f"  not defining {a} {e['name']}: inside {known.get(f, ext.fns[f][0])} ({f}+0x{c[1]:x})")
+            continue
+        out.append(a)
+    return out
+
+
 def cmd_apply(args):
     binary = args[0]
     bat = os.path.join(REPO, "tools", "ghidra_12.1.2_PUBLIC", "support", "analyzeHeadless.bat")
     cmd = [bat, os.path.join(REPO, "tools", "ghidra_project"), "ES2Recon", "-process", f"{binary}.EXE",
            "-noanalysis"] + ([] if "--write" in args else ["-readOnly"]) + [
-        "-scriptPath", os.path.join(REPO, "tools", "ghidra_scripts"),
-        "-postScript", "ES2ApplySymbolNames", S.path(binary)]
+        "-scriptPath", os.path.join(REPO, "tools", "ghidra_scripts")]
+    if "--define" in args:
+        targets = define_targets(binary, args)
+        print(f"defining {len(targets)} function(s) first: {' '.join(targets)}")
+        if targets:
+            cmd += ["-postScript", "ES2DefineFunctionAt"] + targets
+    cmd += ["-postScript", "ES2ApplySymbolNames", S.path(binary)]
     r = subprocess.run(cmd, capture_output=True, text=True, errors="replace")
-    keep = re.compile(r"renamed|labeled|skipped|error|warn|exception|fail|summary", re.I)
+    keep = re.compile(r"renamed|labeled|skipped|error|warn|exception|fail|summary|created |exists ", re.I)
     for l in (r.stdout + r.stderr).splitlines():
         if keep.search(l) and "bundle event for non-GhidraBundle" not in l:
             print(l.strip()[:300])
@@ -890,10 +1098,138 @@ def cmd_match(args):
                 print(f"    differs: {c}")
 
 
+def class_records(binary):
+    """(Image, {record VA: record}, {record VA: [primary vtables]}) from es2_classes."""
+    import es2_classes
+    img = es2_classes.Image(os.path.join(REPO, "ES2", f"{binary}.EXE"))
+    recs = es2_classes.scan(img)
+    return img, recs, es2_classes.find_vtables(img, recs)
+
+
+def fn_mark(a, known, low, fns):
+    """' ' named, 'L' low entry without a name, '*' unnamed Ghidra function, '?' no function there."""
+    return " " if a in known else "L" if a in low else "*" if a in fns else "?"
+
+
+def cmd_classes(args):
+    """classes BIN [regex...] [--unnamed]: every class record, one per line, with its destructor and
+    operator delete marked as cmd_vtables marks slots."""
+    binary = args[0]
+    only_unnamed = "--unnamed" in args
+    filters = [re.compile(x, re.I) for x in args[1:] if not x.startswith("-")]
+    known = names(binary)
+    low = {e["address"] for e in entries(binary) if not e.get("name")}
+    fns = functions(binary)
+    _, recs, vts = class_records(binary)
+    layouts, _ = struct_layouts(binary)
+    shown = 0
+    for va in sorted(recs, key=lambda v: (recs[v]["name"].lower(), v)):
+        r = recs[va]
+        if filters and not any(f.search(r["name"]) for f in filters):
+            continue
+        slots = []
+        for label, a in (("dtor", r["dtor"]), ("opdel", r["opdel"])):
+            if a:
+                h = f"{a:08x}"
+                slots.append((label, h, fn_mark(h, known, low, fns)))
+        if only_unnamed and not any(m != " " for _, _, m in slots):
+            continue
+        bases = ",".join((recs[b]["name"] if b in recs else f"{b:08x}") + (f"@+0x{o:x}" if o else "")
+                         for b, o in r["bases"]) or "-"
+        vt = ",".join(f"{v:08x}" for v in vts.get(va, [])) or "-"
+        line = (f"{r['name']:<28} rec={va:08x} size=0x{r['size']:<5x} "
+                f"vptr={'+0x%x' % r['vptr'] if r['vptr'] >= 0 else '-':<6} base={bases} vt={vt}")
+        for label, h, m in slots:
+            line += f" {label}={h}{m}{known.get(h, '')}"
+        if r["name"] in layouts:
+            line += " [layout]"
+        print(line)
+        shown += 1
+    print(f"\n{shown} of {len(recs)} class records ('*' unnamed function, 'L' a low entry without a name, "
+          "'?' no function starts there; [layout] has a known_structs.json struct of the class)")
+
+
+def struct_layouts(binary):
+    with open(os.path.join(REPO, "tools", "ghidra_scripts", "known_structs.json"), encoding="utf-8-sig") as f:
+        ks = json.load(f)
+    return {s.get("class", s["name"]) for s in ks["structs"] if s["binary"] == binary}, ks
+
+
+def cmd_stats(args):
+    """stats BIN [--list]: the coverage table in Herculan/docs/herculan/plan-completing-coverage.md.
+    --list also prints the prologues outside any function and the non-padding gaps between them."""
+    binary = args[0]
+    ext = Extents(binary)
+    fns = ext.fns
+    d, off = pe(binary)
+    lo, hi = code_range(binary)
+    unnamed = {a for a, (n, _) in fns.items() if unnamed_label(n)}
+    total_b = sum(s for _, s in fns.values())
+    un_b = sum(fns[a][1] for a in unnamed)
+    o0 = off(lo)
+    code = d[o0:o0 + (hi - lo)]
+    prologues = [lo + m.start() for m in re.finditer(rb"\x55\x8b\xec", code)
+                 if not ext.containing(lo + m.start())]
+    # Gaps: code-section bytes outside every function extent, minus runs of fill bytes.
+    gaps, cur = [], lo
+    for e in ext.starts + [hi]:
+        if e > cur and e <= hi:
+            blob = d[off(cur):off(cur) + (e - cur)]
+            if blob.strip(b"\x00\x90\xcc"):
+                gaps.append((cur, e))
+        if e < hi:
+            cur = max(cur, e + fns[f"{e:08x}"][1])
+    known = names(binary)
+    tables, _, rtti_vts = build_tables(binary)
+    slots = sum(len(s) for s in tables.values())
+    un_slots = {fn for s in tables.values() for _, fn in s if fn not in known}
+    typed = total_dump = 0
+    with open(os.path.join(ANALYSIS, f"{binary}_vtables_full.txt"), encoding="utf-8", errors="replace") as f:
+        section = 0
+        for line in f:
+            if line.startswith("SECTION "):
+                section = int(line.split()[1])
+            elif VT_HEAD.match(line.rstrip("\n")):
+                total_dump += 1
+                typed += section == 1
+    _, recs, vts = class_records(binary)
+    layout_names, ks = struct_layouts(binary)
+    rec_names = {r["name"] for r in recs.values()}
+    apps = sum(1 for a in ks["applications"] if a["binary"] == binary)
+    with open(os.path.join(ANALYSIS, f"{binary}_decomp_full.c"), encoding="utf-8", errors="replace") as f:
+        dats = set(re.findall(r"\bDAT_([0-9a-f]{8})\b", f.read()))
+    named_data = sum(1 for e in entries(binary) if e["type"] == "data" and e.get("name"))
+    rows = [
+        ("Ghidra functions with a real name", f"{len(fns) - len(unnamed)} / {len(fns)} "
+         f"({100 * (len(fns) - len(unnamed)) / len(fns):.1f}%)"),
+        ("Code bytes inside unnamed functions", f"{100 * un_b / total_b:.1f}% ({un_b / 1024:.0f} KB)"),
+        ("Unnamed functions under 100 bytes", f"{sum(1 for a in unnamed if fns[a][1] < 100)} of {len(unnamed)}"),
+        ("`55 8B EC` prologues outside any Ghidra function", f"{len(prologues)}"),
+        ("Code-section gaps outside any function, not all fill bytes", f"{len(gaps)} ({sum(e - s for s, e in gaps)} bytes)"),
+        ("Vtables (with RTTI) / slots / unnamed slot targets",
+         f"{len(tables)} ({len(set(tables) & rtti_vts)}) / {slots} / {len(un_slots)}"),
+        ("Vtables with a typed slot shape in Ghidra", f"{typed} of the dump's {total_dump}"),
+        ("RTTI class records (with a vtable)", f"{len(recs)} ({len(vts)})"),
+        ("Class records with a `known_structs.json` layout", f"{len(layout_names & rec_names)}"),
+        ("Function parameters typed with a struct", f"{apps}"),
+        ("Distinct `DAT_` globals left in the decompile (named data entries)", f"{len(dats)} ({named_data})"),
+    ]
+    print(f"| | {binary} |\n|---|---|")
+    for k, v in rows:
+        print(f"| {k} | {v} |")
+    if "--list" in args:
+        print("\nprologues outside any function:")
+        for p in prologues:
+            print(f"  {p:08x}")
+        print("gaps (start-end, bytes):")
+        for s, e in gaps:
+            print(f"  {s:08x}-{e:08x} {e - s}")
+
+
 COMMANDS = {"match": cmd_match, "triage": cmd_triage, "body": cmd_body, "callers": cmd_callers, "precheck": cmd_precheck,
             "sym": cmd_sym, "rtti": cmd_rtti, "vtables": cmd_vtables, "diff": cmd_diff, "insert": cmd_insert, "edit": cmd_edit,
             "mentions": cmd_mentions, "relink": cmd_relink, "fixrefs": cmd_fixrefs, "repl": cmd_repl, "apply": cmd_apply,
-            "fixentry": cmd_fixentry}
+            "fixentry": cmd_fixentry, "stats": cmd_stats, "classes": cmd_classes}
 
 if __name__ == "__main__":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")

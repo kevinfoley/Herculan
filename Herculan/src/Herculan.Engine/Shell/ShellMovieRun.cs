@@ -8,7 +8,7 @@ namespace Herculan.Engine.Shell;
 /// What playing the queue out does to the rest of the shell, which the host owns.
 /// </summary>
 public sealed class ShellMovieHooks {
-	/// <summary>The bytes of an <c>AVI</c> file by its name in <see cref="ShellMovieQueue.FileNames"/>, or null.</summary>
+	/// <summary>The bytes of an <c>AVI</c> file by its path under the disc, <see cref="ShellMovieQueue.MoviePath"/>, or null.</summary>
 	public required Func<string, byte[]?> ReadMovie { get; init; }
 
 	/// <summary><c>Shell_InstallPalette</c> (<c>004075b2</c>) and its commit, by index.</summary>
@@ -17,7 +17,7 @@ public sealed class ShellMovieHooks {
 	/// <summary><c>Shell_SetPaletteScope</c> (<c>00439da0</c>): the scope's black fill below the strip, then the palette.</summary>
 	public required Action<int> SetPaletteScope { get; init; }
 
-	/// <summary>The frame's root (<c>DAT_004810e4</c>) repainted: its backdrop over the scope's fill.</summary>
+	/// <summary>The top-level window <c>Shell_TopWindow</c> (<c>004810e4</c>), which holds the frame's root, repainted: the root's backdrop over the scope's fill.</summary>
 	public required Action RepaintRoot { get; init; }
 
 	/// <summary>Whether the frame's full-screen panel (<c>ShellPanelWidget</c>) is up — the strip is showing.</summary>
@@ -26,7 +26,11 @@ public sealed class ShellMovieHooks {
 	/// <summary>Every tab unlit but MISSION, which is lit, and the mission screen's view shown again.</summary>
 	public required Action LightMissionTab { get; init; }
 
-	/// <summary><c>Mission_Leave</c> (<c>00444a05</c>), the MISSION tab unlit and no tab current (<c>0xffff</c>).</summary>
+	/// <summary>
+	/// <c>Mission_Leave</c> (<c>00444a05</c>), the MISSION tab unlit and no tab current (<c>0xffff</c>), with
+	/// nothing repainted: the screen keeps the mission screen until the location picture goes up
+	/// (docs/retail/shell/screen-layout.md#the-shells-movies).
+	/// </summary>
 	public required Action LeaveMissionTab { get; init; }
 
 	/// <summary>The campaign stage, 1-5.</summary>
@@ -45,13 +49,19 @@ public sealed class ShellMovieHooks {
 	/// </summary>
 	public required Action HideLocationPicture { get; init; }
 
-	/// <summary>A movie that could not be opened, or stopped on a frame it could not decode: its file name and why.</summary>
+	/// <summary>A movie that could not be opened, or stopped on a frame it could not decode: its path and why.</summary>
 	public Action<string, string>? Report { get; init; }
+
+	/// <summary>
+	/// <c>Shell_HasFocus</c> (<c>0046c094</c>): whether the shell's window has the focus. After each movie the run waits
+	/// until it does — docs/retail/shell/startup.md#the-main-loop. Null counts as having it.
+	/// </summary>
+	public Func<bool>? HasFocus { get; init; }
 }
 
 /// <summary>
 /// <c>Movie_PlayQueue</c> (<c>0041e368</c>), playing <see cref="ShellMovieQueue"/> out one movie at a
-/// time through <c>Avi_Play</c> (<c>0041e01c</c>). See docs/shell/screen-layout.md#the-shells-movies.
+/// time through <c>Avi_Play</c> (<c>0041e01c</c>). See docs/retail/shell/screen-layout.md#the-shells-movies.
 ///
 /// <para>The original is one blocking loop, with each fade and the location picture's two seconds
 /// blocking inside it. This steps once per <see cref="Update"/> under the same order, so the window
@@ -76,6 +86,7 @@ public sealed class ShellMovieRun : IDisposable {
 		Idle,
 		FadingOut,
 		Playing,
+		AwaitingFocus,
 		LocationFadeIn,
 		LocationFadeOut,
 		LocationHold,
@@ -166,7 +177,7 @@ public sealed class ShellMovieRun : IDisposable {
 				_player.Update(gl, delta);
 				if (_player.HasFailed) {
 					int id = _entry!.Id;
-					string name = ShellMovieQueue.FileName(id) ?? $"movie 0x{id:x}";
+					string name = _queue.MoviePath(id) ?? $"movie 0x{id:x}";
 					_hooks.Report?.Invoke(name, _player.DecodeException is { } ex
 						? $"stopped on a decoder fault ({ex.GetType().Name}: {ex.Message})"
 						: "stopped on a frame it could not decode");
@@ -174,9 +185,19 @@ public sealed class ShellMovieRun : IDisposable {
 
 				if (stopPressed || _player.IsFinished || _player.HasFailed) {
 					EndMovie();
-					if (AfterMovie()) {
+					if (!AwaitFocus() && AfterMovie()) {
 						FinishEntry();
 					}
+				}
+
+				return;
+			case Stage.AwaitingFocus:
+				if (!HasFocus()) {
+					return;
+				}
+
+				if (AfterMovie()) {
+					FinishEntry();
 				}
 
 				return;
@@ -228,7 +249,7 @@ public sealed class ShellMovieRun : IDisposable {
 				return;
 			}
 
-			if (!AfterMovie()) {
+			if (AwaitFocus() || !AfterMovie()) {
 				return;
 			}
 
@@ -246,9 +267,10 @@ public sealed class ShellMovieRun : IDisposable {
 
 	// Avi_Play's open. PLACEHOLDER: a movie that will not open is skipped. The original stops the shell
 	// with "Please insert ESII CD and restart" for the intro, and for any other movie puts the insert-CD
-	// panel (DAT_0048d108) up and tries again once its button is pressed; neither is ported.
+	// panel (InsertCdPanel (0048d108)) up and tries again on its Continue or ends the shell on its Quit;
+	// neither is ported.
 	private bool Begin(ShellMovieEntry entry) {
-		string? name = ShellMovieQueue.FileName(entry.Id);
+		string? name = _queue.MoviePath(entry.Id);
 		byte[]? bytes = name == null ? null : _hooks.ReadMovie(name);
 		if (name == null || bytes == null || MoviePlayer.Open(bytes) is not { } player) {
 			_hooks.Report?.Invoke(name ?? $"movie 0x{entry.Id:x}", "could not be opened, and is skipped");
@@ -268,6 +290,19 @@ public sealed class ShellMovieRun : IDisposable {
 		_player?.Stop(_audio);
 		_player?.Dispose();
 		_player = null;
+	}
+
+	private bool HasFocus() => _hooks.HasFocus?.Invoke() ?? true;
+
+	// Once Avi_Play has returned, or an entry's movie was skipped, the queue pumps messages until the shell has the
+	// focus. Returns whether the run now waits for it.
+	private bool AwaitFocus() {
+		if (HasFocus()) {
+			return false;
+		}
+
+		_stage = Stage.AwaitingFocus;
+		return true;
 	}
 
 	// Everything after Avi_Play returns, up to the location picture. Returns whether the entry is done;
