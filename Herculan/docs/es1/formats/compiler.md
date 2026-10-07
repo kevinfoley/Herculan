@@ -1,60 +1,64 @@
 # DBSIM.EXE and GO.EXE — the compiler and its runtime
 
-Both ES1 program images were built by a compiler of the Zortech C++ line, the line Symantec C++ and then Digital Mars C++ continue, and linked with that line's 32-bit DOS runtime library. This page sets out the evidence and the conventions the code follows, which play the part for ES1 that [Borland class descriptors](../../retail/formats/borland-rtti.md) plays for ES2. Image addresses follow [the X-32 executable](x32-executable.md#the-image).
+Both ES1 program images were built with Symantec C++, the line Zortech C++ began and Digital Mars C++ continues, and linked with its runtime library for the X-32 DOS extender. This page sets out the evidence and the conventions the code follows, which play the part for ES1 that [Borland class descriptors](../../retail/formats/borland-rtti.md) plays for ES2. Image addresses follow [the X-32 executable](x32-executable.md#the-image). Names in backticks without an address of their own are the runtime library's, from its source.
 
 ## Identification
 
-**The startup's messages.** The image's data opens at `ES1DBSIM 0009004e` with four DOS strings, each `\r\n` … `\r\n$`: `NULL code pointer called`, `Not enough memory`, `Bad stack size parameter` and `Stack Overflow`. `ES1GO` carries the same four. Digital Mars's 32-bit DOS library `sdx.lib` (version 8.31) holds three of them in the same form in its startup module `..\dos32\cp.asm`, with `Max of 128 args allowed` in place of `NULL code pointer called`.
+**The startup is Symantec's X-32 startup module.** Symantec C++ 6.1 ships its DOS-extender runtime with source, and its `CX.ASM` (Doug Huffman, "specifically designed for the Symantec compiler") is ES1's startup step for step: the trap at address 0, the command-line parser, the stack request, the coprocessor call and the calls into `__cinit`, `_main` and `_exit`, with the same four messages in the same order (`NULL code pointer called`, `Not enough memory`, `Bad stack size parameter`, `Stack Overflow`, at `ES1DBSIM 0009004e`). ES1's has two additions. Its trap opens with `push ebp; mov ebp,esp`, so the entry falls at `0xd` instead of `0xa`. Its `__x386_init` first sets the data selector's limit to `0x90023` (`INT 21h` `AX=3505h`, the extender's set-limit call) before storing `__psp`.
 
-**Library code.** Comparing the first 24 bytes of each `sdx.lib` function, relocated operands masked, against the images finds 46 of them at 44 addresses in `ES1DBSIM` and 52 at 50 addresses in `ES1GO`:
+**Library functions match whole.** Comparing every function of 6.1's `SDX.LIB` and `X386.LIB` against the images, relocated operands masked and the whole body required to agree, finds 90 in `ES1DBSIM` and 104 in `ES1GO`:
 
-| Library module | Functions found in `ES1DBSIM` |
-|---|---|
-| `core32\double.asm` | the software floating-point helpers `__DADD@`, `__DSUB@`, `__DMUL@`, `__DCMP@`, `__DTST0@`, `__INTDBL@`, `__LNGDBL@`, `__FLTDBL@`, `__DBLFLT@`, and five internal routines |
-| `dos32\inter.asm` | the interrupt API `int_getvector`, `int_setvector`, `int_service`, `int_prev` |
-| `dos32\io.asm`, `find.asm`, `filelen.asm`, `getenv.asm`, `getdos.asm` | `open`, `sopen`, `rename`, `lseek`, `filesize`, `access`, `findfirst`, `filelength`, `getenv`, `dos_getdiskfreespace` |
-| `core32\` string and conversion modules | `strcat`, `strncat`, `strncpy`, `stricmp`, `atoi`, `itoa`, `ultoa`, `ldexp`, `___faterr` |
-| `core\printf.c`, `_printf.c`, `scanf.c`, `ecvt.c`, `fcvt.c` | `fprintf`, `sprintf`, `vfprintf`, `printf`, `fscanf`, `sscanf`, `ecvt`, `fcvt` |
+| 6.1 module | Matching in `ES1DBSIM` | Also in `ES1GO` |
+|---|---|---|
+| `double.asm` | all 28: the software double-precision routines (`__DADD@`, `__DSUB@`, `__DMUL@`, `__DDIV@`, `__DCMP@`, the `int`/`long`/`float` conversions) and their helpers | the same |
+| `float.asm`, `floattyp.asm` | — | the 12 single-precision routines |
+| `inter.asm` | the interrupt API: `int_getvector`, `int_setvector`, `int_service`, `int_intercept`, `int_restore`, `int_prev` | the same |
+| `strings.asm` | `memset`, `memmove`, `memcmp`, `strchr`, `strcat`, `strncat`, `strncpy`, `strncmp`, `stricmp`, `__memintset` | 8 of them |
+| `io.asm`, `find.asm`, `filelen.asm`, `getenv.asm`, `getdos.asm`, `fputc.asm` | `sopen`, `creat`, `rename`, `lseek`, `filesize`, `findfirst`, `filelength`, `getenv`, four `dos_` calls, `fputc`, `fgetc` | the same, and six `dosfil.asm` calls |
+| `cinit.asm`, `x386.asm`, `funcs32.asm` | `__cinit`, `__exit`, `___faterr`, `__x386_coproc_init`, `__dosx_get_abs_address`, `__x386_map_physical_address` | the same |
+| C modules | `printf`, `fprintf`, `sprintf`, `vfprintf`, `fscanf`, `ecvt`, `setbuf`, `rand`, `clock`, `toupper`, `tolower`, `atol`, `labs`, `ltoa`, `ldexp`, `spawnl`, `spawnlp`, `execl`, `execlp`, `streambuf::underflow` | all but `rand` and `clock` |
 
-The library postdates ES1 by eight years, and most of its functions do not match byte for byte: these are the ones whose code survived unchanged.
+**ES1's runtime is a later revision than 6.1's.** Most of the library's functions that ES1 uses differ in places: `_open` (`00074947`) sends its error exit through a routine shared with the other `io.asm` calls (`00074922`), where 6.1's sets `errno` inline. The extender kernel in ES1's executables reads `DOS extender Copyright 1991-1994 by Doug Huffman`; 6.1's `X386.LIB` carries `Copyright 1991 1992`.
 
 ## Startup
 
-The extender enters the image at `0xd` ([Hand-off](x32-executable.md#hand-off)). The startup:
+The extender enters the image at `0xd` (`__x386_init`; [Hand-off](x32-executable.md#hand-off)). The startup:
 
-1. Stores the PSP selector at `0009739c` and the environment's address at `000973ac`, and zero-fills the image from the end of its file bytes to its memory size.
-2. Copies the command tail onto the stack and splits it at spaces and tabs into an argument vector, keeping a `"` or `'` quoted run as one argument. The first argument starting `=` is a decimal stack size, stored at `000973e8`, and is not passed on; a non-digit in it prints `Bad stack size parameter` and exits.
-3. Allocates the argument vector (`00001618`) and copies the environment into the heap (`00000275`). A failed allocation prints `Not enough memory` and exits.
-4. Asks the extender (`INT 21h` `AX=350Dh`) for a stack of the larger of `0x4000` bytes and the requested size, printing `Not enough memory` on failure, and stores the DOS version at `0009739e`.
-5. Detects the coprocessor (`000002ba`): `000973a8` receives 0 when none answers, 2 when `+∞` and `−∞` compare equal (an 80287) and 3 otherwise.
-6. Runs the static constructors (`0005b68c`), calls `main` (`00059350`) with the argument count and vector, and passes its result to `exit` (`0005b6f4`).
+1. Stores the PSP selector in `__psp` (`0009739c`) and the environment's address in `__envptr` (`000973ac`), and zero-fills `_BSS`, from `000adcd8` to `000bdd40`, the image's memory size.
+2. Copies the command tail onto the stack and splits it at spaces and tabs into an argument vector, keeping a `"` or `'` quoted run as one argument. While `__stack` (`000973e8`) is non-zero, an argument starting `=` replaces it with the decimal number that follows and is not passed on; a non-digit in it prints `Bad stack size parameter` and exits, and a zero leaves it an ordinary argument. Both executables ship `__stack` as `0x8000`.
+3. Allocates the vector through `_malloc` (`00001618`), stores `__argc` (`000973b0`) and `__argv` (`000973b4`), and points `argv[0]` at the program's path after the environment strings. A failed allocation prints `Not enough memory` and exits.
+4. Asks the extender (`INT 21h` `AX=350Dh`) for a stack of the larger of `__stack` and 16 KB, printing `Not enough memory` on failure, and stores the DOS version in `__osmajor` (`0009739e`) and `__osminor` (`0009739f`).
+5. Detects the coprocessor (`__x386_coproc_init`, `000002ba`): `000973a8` receives 0 when none answers, 2 when `+∞` and `−∞` compare equal (an 80287) and 3 otherwise.
+6. Copies the environment into the heap (`init_envp`, `00000275`), runs the static constructors (`__cinit`, `0005b68c`), calls `main` (`00059350`) with `__argc` and `__argv`, and passes its result to `exit` (`0005b6f4`).
 
-`ES1GO` follows the same steps, with its static constructors at `0004defc`, `main` at `00012ec7` and `exit` at `0004df64`.
+`ES1GO` follows the same steps, with `__stack` at `00083cd4`, `__cinit` at `0004defc`, `main` at `00012ec7` and `exit` at `0004df64`.
 
-**Address 0 is a trap.** The image's first bytes are a function that loads the address of `NULL code pointer called` and joins the startup's message-and-exit tail (`000001cc`, exit code 1). A call through a null code pointer lands there. A null data pointer faults instead, on the data selector's expand-down limit ([Loading the image](x32-executable.md#loading-the-image)).
+The `_malloc` the startup calls sits among the game's own objects, beside `memory.cpp`'s functions, rather than in the library region.
+
+**Address 0 is a trap.** The image's first bytes load the address of `NULL code pointer called` and jump to the startup's message-and-exit tail (`000001cc`), which prints it and calls `__exit` (`0005b6c8`) with status 1. A call through a null code pointer lands there. A null data pointer faults instead, on the data selector's expand-down limit ([Loading the image](x32-executable.md#loading-the-image)).
 
 ## Static construction and exit
 
-Two tables of function pointers meet at `000adc88`. The constructor walk (`0005b692`) runs from there down to `000adbb4`, the last entry first; the destructor walk (`0005b6ad`) runs from there up to `000adcd8`. Both skip zero entries.
+The linker gathers each object's static constructor and destructor pointers into the segments `XI` and `XC`, which meet at `000adc88`. `__cinit`'s constructor walk (`0005b692`) runs from there down to `000adbb4`, the last entry first; `__dodtors` (`0005b6ad`) runs from there up to `000adcd8`. Both skip zero entries.
 
-`exit` calls each function on a pointer stack whose top is the dword at `000bdabe`, popping until it reaches a zero entry. Then, if the dword at `000bdb46` is set, it calls that function with the exit status and returns; otherwise it runs the destructor walk, calls the function at `0009eb4c` if one is set, and ends the program with `INT 21h` `AH=4Ch` (`0005b6c8`).
+`exit` (`0005b6f4`) calls the functions `atexit` has registered, newest first, through `_atexitp` (`000bdabe`). Then, if `_hookexitp` (`000bdb46`) is set, it calls that with the exit status and returns; otherwise it runs `__dodtors`, calls `_fcloseallp` (`0009eb4c`, which ships pointing at `00073ec4`) if it is set, and ends the program through `__exit` (`0005b6c8`, `INT 21h` `AH=4Ch`).
 
 ## Calling conventions
 
-Arguments are pushed right to left, and a `short` takes a 4-byte slot. The result comes back in `EAX`. Functions keep `EBX`, `ESI`, `EDI` and `EBP`.
+The compiler has two conventions, and the runtime library shows which declarations get which. A C++ function is mangled with calling-convention code `C` (`?setb@streambuf@@IACXPAD0H@Z`) and pushes its arguments left to right, `this` last, and removes them itself: `streambuf::setb(char *base, char *end, int own)` reads `this` at `[ebp+8]`, `own` at `+0xc`, `end` at `+0x10` and `base` at `+0x14`, and returns with `ret 0x10`. A C function pushes its arguments right to left and leaves them to the caller.
 
-Most functions remove their own arguments with `ret N`, and their callers make no stack adjustment. `util\ovl.cpp`'s file reader (`000654bc`) takes a name, two `short` dimensions and a buffer, and returns with `ret 0x10`. Others return with a plain `ret` and leave the arguments to the caller: `00050d98`'s caller `0006d52c` follows the call with `add esp, 0xc`. Counted over Ghidra's function list:
+Both conventions return a result in `EAX`, give a `short` a 4-byte slot, and keep `EBX`, `ESI`, `EDI` and `EBP`.
+
+Most of ES1's game functions remove their own arguments. `util\ovl.cpp`'s file reader (`000654bc`) takes a name at `[ebp+8]`, two `short` dimensions and a buffer at `[ebp+0x14]`, and returns with `ret 0x10`. Others leave the arguments to the caller: `00050d98`'s caller `0006d52c` follows the call with `add esp, 0xc`. Counted over Ghidra's function list:
 
 | Region | Binary | `ret N` only | `ret` only | both | no return |
 |---|---|---|---|---|---|
-| game objects | `ES1DBSIM` | 1,766 | 150 | 0 | 163 |
-| game objects | `ES1GO` | 1,199 | 210 | 0 | 37 |
-| libraries | `ES1DBSIM` | 617 | 476 | 0 | 75 |
-| libraries | `ES1GO` | 532 | 474 | 0 | 78 |
+| game objects | `ES1DBSIM` | 1,777 | 156 | 0 | 159 |
+| game objects | `ES1GO` | 1,200 | 211 | 0 | 36 |
+| libraries | `ES1DBSIM` | 622 | 481 | 0 | 77 |
+| libraries | `ES1GO` | 537 | 479 | 0 | 80 |
 
-Of the 150 game functions in `ES1DBSIM` that return with a plain `ret`, 26 read an argument slot; the rest take no arguments. A `ret` count alone does not separate a callee-cleaned function with no arguments from a caller-cleaned one.
-
-`this` is the first stack argument (`[ebp+8]`), pushed last, and is removed with the others.
+Of the 156 game functions in `ES1DBSIM` that return with a plain `ret`, 27 read an argument slot; the rest take no arguments, which the callee-cleaned convention also returns from with a plain `ret`.
 
 ## Constructors and destructors
 
@@ -78,21 +82,20 @@ A slot can point at the `0x90` padding before a function's prologue rather than 
 
 ## Libraries against game code
 
-The linker placed the game's objects first, each identified by the source path its asserts push, ending with `main.cpp` and `init.cpp` in `ES1DBSIM` and `system.cpp` in `ES1GO`. The static-constructor routine (`0005b68c`, `0004defc`) opens the library region that follows. It holds the C runtime, the `util\` modules (`libio.cpp` and `ovl.cpp` in `ES1DBSIM`; `mods.cpp`, `ovl.cpp` and `my_math.cpp` in `ES1GO`), and Dynamix's shared class libraries: the persistent-class table that includes `0009efd0`–`0009f05c` pairs `TSGroup`, `TSShape`, `TSBSPPart` and the other `TS*` class names with code addresses in the region, `0005d564`–`00068908` for the entries in that range.
+The linker placed the game's objects first, each identified by the source path its asserts push, ending with `main.cpp` and `init.cpp` in `ES1DBSIM` and `system.cpp` in `ES1GO`. `__cinit` (`0005b68c`, `0004defc`) opens the library region that follows. It holds the C runtime, the `util\` modules (`libio.cpp` and `ovl.cpp` in `ES1DBSIM`; `mods.cpp`, `ovl.cpp` and `my_math.cpp` in `ES1GO`), and Dynamix's shared class libraries: the persistent-class table that includes `0009efd0`–`0009f05c` pairs `TSGroup`, `TSShape`, `TSBSPPart` and the other `TS*` class names with code addresses in the region, `0005d564`–`00068908` for the entries in that range. The runtime's functions are spread through the whole region rather than gathered at its end: the whole-function matches run from `0005b68c` to `0008f858`.
 
 | Binary | Game objects | Library region |
 |---|---|---|
-| `ES1DBSIM` | 2,079 functions, 349,600 bytes | 1,168 functions, 179,549 bytes |
-| `ES1GO` | 1,446 functions, 274,510 bytes | 1,084 functions, 171,607 bytes |
+| `ES1DBSIM` | 2,092 functions, 354,602 bytes | 1,180 functions, 180,883 bytes |
+| `ES1GO` | 1,447 functions, 274,796 bytes | 1,096 functions, 172,749 bytes |
 
-The counts are Ghidra's function list after [step 0.2](../../herculan/plan-es1-support.md)'s import, including the functions it starts on padding.
+The counts are Ghidra's function list after [step 0.2](../../herculan/plan-es1-support.md)'s import, including the functions it starts on padding. The whole-function matches fall in 61 of `ES1DBSIM`'s library-region functions and 73 of `ES1GO`'s.
 
 ## Open
 
-- **Open:** the product and version: Zortech C++ 3.x or Symantec C++ 6.x. A runtime library of the period, matched as `sdx.lib` was, settles it.
-- **Open:** what selects `ret N` or caller cleanup for a function: the linkage (`extern "C"` against C++), a compiler switch per module, or a calling-convention keyword.
+- **Open:** the Symantec C++ release, and the X-32 release, that ES1 was built with. Both are later than 6.1's and earlier than Symantec C++ 7, which shipped in 1995; an update to 6.1 or a 1994 FlashTek X-32VM release with its own startup and libraries are the candidates, and the startup's two additions and `_open`'s shared error exit are what to compare.
 - **Open:** whether a zero vtable slot is a pure virtual function, and whether the zero bytes that follow `000973fe`'s destructor slot are slots. A call through a zero slot reaches the address-0 trap.
 - **Open:** whether the compiler emits run-time type information anywhere; the vtable's first dword holds none.
 - **Open:** what decides whether a reference to a function targets its padding or its prologue.
-- **Open:** how the library region divides between the C runtime and Dynamix's libraries, function by function.
+- **Open:** how the library region divides between the C runtime and Dynamix's libraries, function by function. The 6.1 source identifies runtime functions whose bytes differ.
 - **Open:** the runtime's `INT 21h` `AX=35xxh` calls, which are the extender's services (`3501h`, `3503h`, `3504h`, `3505h`, `350Ch`, `350Dh`).

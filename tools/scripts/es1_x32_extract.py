@@ -17,8 +17,9 @@ layout it was never checked against.
 
 `--import ROOT` then imports the image into the `ES1Recon` project under ROOT/tools/ghidra_project
 with Ghidra's raw-binary loader at base 0, `ES1SetupX32Image` before auto-analysis and
-`ES1SeedFunctionStarts` after it. The compiler spec is `gcc` until the compiler is identified (plan
-step 0.4). An existing program of the same name is kept unless `--overwrite` is given, which
+`ES1SeedFunctionStarts` after it. The compiler spec is Visual Studio's (`windows`), whose default
+`__stdcall` takes each function's stack cleanup from its `ret N`, as Symantec C++'s C++ functions
+need (Herculan/docs/es1/formats/compiler.md#calling-conventions). An existing program of the same name is kept unless `--overwrite` is given, which
 replaces it and everything applied to it since.
 """
 import argparse
@@ -110,7 +111,7 @@ def ghidra_import(root, image_path, layout, overwrite):
     scripts = os.path.join(REPO, "tools", "ghidra_scripts")
     cmd = [ghidra, project, "ES1Recon", "-import", image_path,
            "-loader", "BinaryLoader", "-loader-baseAddr", "0x0", "-loader-blockName", "image",
-           "-processor", "x86:LE:32:default", "-cspec", "gcc",
+           "-processor", "x86:LE:32:default", "-cspec", "windows",
            "-scriptPath", scripts,
            "-preScript", "ES1SetupX32Image", f"{layout['image_memory_size']:x}", f"{layout['entry']:x}",
            "-postScript", "ES1SeedFunctionStarts"]
