@@ -22,6 +22,9 @@ What it does not see: calls through a vtable, a function pointer or a jump table
 (CALL [reg+n], CALL reg). A callee reached only that way is not listed -- this is
 a backlog, not a proof that nothing else is unnamed.
 
+For an ES1 binary, a call into the 0x90 padding before a function's prologue is
+counted as a call to that function (retail_binaries.Image.entries_of).
+
 A target the dump labels with a non-FUN_ name that the known_symbols files do not
 carry (a CRT routine, an import thunk, a Ghidra FID match) is left out unless
 --include-library is given; those names came from Ghidra, not from this project.
@@ -29,6 +32,7 @@ carry (a CRT routine, an import thunk, a Ghidra FID match) is left out unless
 Usage:
     python tools/scripts/es2_unnamed_callees.py                  # both binaries
     python tools/scripts/es2_unnamed_callees.py --binary VSHELL
+    python tools/scripts/es2_unnamed_callees.py --binary ES1DBSIM
     python tools/scripts/es2_unnamed_callees.py --confidence medium   # high+medium callers
     python tools/scripts/es2_unnamed_callees.py --caller MissionVar_Write
     python tools/scripts/es2_unnamed_callees.py --min-callers 3 --limit 40
@@ -45,9 +49,10 @@ import sys
 from collections import defaultdict
 
 import es2_symbols
+import retail_binaries
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-ANALYSIS = os.path.join(REPO, "tools", "analysis_out")
+ANALYSIS = retail_binaries.ANALYSIS
 
 FUNC_LINE = re.compile(r"^; FUNCTION (\S+) @ ([0-9a-f]{8})")
 BRANCH_LINE = re.compile(r"^([0-9a-f]{8})\s{3}\S+\s+(CALL|JMP) 0x([0-9a-f]{1,8})\b(?:.*; -> (\S+))?")
@@ -68,7 +73,7 @@ def load_symbols(binary: str, path: str | None = None) -> dict[str, dict]:
 
 def parse_disasm(binary: str):
     """Returns (function starts -> dump label, caller start -> [(site, kind, target)])."""
-    path = os.path.join(ANALYSIS, f"{binary}_disasm_full.txt")
+    path = retail_binaries.get(binary).dump("disasm_full.txt")
     labels: dict[str, str] = {}
     branches: dict[str, list[tuple[str, str, str]]] = defaultdict(list)
     current = None
@@ -91,11 +96,33 @@ def parse_disasm(binary: str):
     return labels, branches
 
 
+def canonical_targets(binary: str, branches, starts):
+    """Symantec C++ code is entered through the 0x90 padding before a prologue as well as at it
+    (retail_binaries.Image.entries_of), so a call to either is a call to one function. Each target
+    becomes the prologue when Ghidra made a function there or made none at any of the entries, and
+    otherwise the entry it did make one at. Ghidra also makes 1-3 byte functions of the padding alone
+    (FUN_000015a3 in ES1DBSIM), which are not the callee."""
+    image = retail_binaries.Image(binary)
+    memo: dict[str, str] = {}
+
+    def canon(target: str) -> str:
+        if target not in memo:
+            entries = image.entries_of(int(target, 16))
+            prologue = max(entries)
+            known = [a for a in entries if "%08x" % a in starts]
+            memo[target] = "%08x" % (prologue if prologue in known or not known else known[0])
+        return memo[target]
+
+    return {caller: [(site, kind, canon(t)) for site, kind, t in sites] for caller, sites in branches.items()}
+
+
 def analyse(binary: str, min_conf: int, include_library: bool, caller_filter: set[str] | None,
             symbols_path: str | None = None):
     symbols = load_symbols(binary, symbols_path)
     labels, branches = parse_disasm(binary)
     starts = {a for a in labels if not a.startswith("~")}
+    if retail_binaries.get(binary).compiler == retail_binaries.SYMANTEC:
+        branches = canonical_targets(binary, branches, starts)
 
     def named(addr: str) -> dict | None:
         e = symbols.get(addr)
@@ -149,8 +176,8 @@ def analyse(binary: str, min_conf: int, include_library: bool, caller_filter: se
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    ap.add_argument("--binary", choices=["VSHELL", "DBSIM"], action="append",
-                    help="binary to scan (repeatable; default both)")
+    ap.add_argument("--binary", type=str.upper, choices=retail_binaries.IDS, action="append",
+                    help="binary to scan (repeatable; default VSHELL and DBSIM)")
     ap.add_argument("--confidence", choices=["high", "medium"], default="high",
                     help="minimum confidence of the calling function's entry (default high)")
     ap.add_argument("--caller", action="append",

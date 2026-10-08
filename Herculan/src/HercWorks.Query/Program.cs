@@ -28,10 +28,17 @@ internal static class Program {
 		                                   mandatory or failure, condition, subject, route, failure
 		                                   text and counter writes
 
+		  census                           every entry of every archive in the install's VOL folder
+		                                   through the HercWorks reader bound to it, written back and
+		                                   compared: per archive and type, how many round-trip, parse,
+		                                   fail or have no reader, then each failure's cursor offset
+
 		Options:
 		  --install <dir>   the install to read (default: the nearest ES2\ folder above the working
 		                    directory). ZONES.VOL and SIMVOL0.VOL are read from <dir>\VOL, or from the
 		                    VOL folder of the directory <dir>\DATA\drive.cfg names.
+		  --against <dir>   census: count the entries whose folder, name and bytes match an entry of
+		                    this install's archives
 		  --variants        decode the condition on each conditioned record ("flag 625 > 0")
 		  --route-switch    orders: list only groups with a later order naming a route other than
 		                    slot 0's
@@ -52,7 +59,7 @@ internal static class Program {
 	}
 
 	internal static int Run(string[] args, TextWriter output) {
-		string? install = null, type = null;
+		string? install = null, type = null, against = null;
 		bool json = false, variants = false, routeSwitch = false, withPoint = false;
 		var positional = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
@@ -62,6 +69,9 @@ internal static class Program {
 					break;
 				case "--type" when i + 1 < args.Length:
 					type = args[++i];
+					break;
+				case "--against" when i + 1 < args.Length:
+					against = args[++i];
 					break;
 				case "--json":
 					json = true;
@@ -97,8 +107,19 @@ internal static class Program {
 			return Fail("No ES2\\VOL\\ZONES.VOL above the working directory; pass --install <dir>.");
 		}
 
-		var data = RetailData.Load(install);
 		string command = positional[0].ToLowerInvariant();
+		if (command == "census") {
+			var entries = Census.Run(install, against);
+			if (json) {
+				WriteJson(output, entries);
+			} else {
+				TextReport.Census(output, install, entries);
+			}
+
+			return 0;
+		}
+
+		var data = RetailData.Load(install);
 		if (command == "flag") {
 			if (positional.Count < 2 || !short.TryParse(positional[1], out short flag) || flag < 0) {
 				return Fail("flag takes a flag index, 0-999.");

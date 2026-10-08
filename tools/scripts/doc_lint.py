@@ -31,6 +31,8 @@ import re
 import subprocess
 import sys
 
+import retail_binaries
+
 # The checkout every relative path below is resolved against. The hook rebinds it to the checkout
 # holding the edited file, which may be a worktree while this script runs from the main checkout.
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -220,12 +222,13 @@ ENGINE_RULES: list[tuple[str, re.Pattern[str], str]] = [
 # rename never touches a doc. A backticked token is flagged when it is declared in one of these
 # projects and is not also a retail name: a known_*.json name, the class prefix of one
 # (`Text` from `Text_LoadDataFile`), or an identifier in a retail binary — the 3Space class names the
-# HercWorks DTS model reuses are strings in DBSIM.EXE. The binaries are gitignored, so a checkout
-# without ES2/ reports those few class names too.
+# HercWorks DTS model reuses are strings in DBSIM.EXE. The binaries are gitignored and read from the
+# main checkout, so a machine without them reports those few class names too.
 CSHARP_SOURCE_DIRS = [os.path.join("Herculan", "src", p) for p in ("HercWorks.Core", "Herculan.Engine")]
 RETAIL_JSON_FILES = [os.path.join("tools", "ghidra_scripts", f"known_{k}.json")
-                     for k in ("symbols_dbsim", "symbols_vshell", "structs", "vtables")]
-RETAIL_BINARIES = [os.path.join("ES2", f) for f in ("DBSIM.EXE", "VSHELL.EXE")]
+                     for k in [f"symbols_{b.lower()}" for b in retail_binaries.IDS] + ["structs", "vtables"]]
+# Every binary the registry holds, read from the main checkout (retail_binaries.ASSETS).
+RETAIL_BINARIES = [b.path for b in retail_binaries.REGISTRY.values()]
 CSHARP_TYPE_DECL = re.compile(r"\b(?:class|struct|record|enum|interface)\s+(?:struct\s+|class\s+)?([A-Za-z_]\w*)")
 CSHARP_PUBLIC_MEMBER = re.compile(
     r"^\s*public\s+[^=;]*?\b([A-Za-z_]\w*)\s*(?:<[^>]*>)?\s*(?:\{\s*(?:get|set|init)\b|=>|\(|=|;)")
@@ -294,10 +297,7 @@ def name_sets() -> tuple[set[str], set[str], set[str]]:
                 collect(json.load(fh))
         except (OSError, ValueError):
             pass
-    for rel in RETAIL_BINARIES:
-        path = os.path.join(REPO_ROOT, rel)
-        if not os.path.isfile(path):
-            path = os.path.join(main_checkout(), rel)
+    for path in RETAIL_BINARIES:
         try:
             with open(path, "rb") as fh:
                 retail.update(m.decode() for m in re.findall(rb"[A-Za-z_]\w{2,}", fh.read()))
@@ -317,15 +317,6 @@ def checkout_root(path: str) -> str | None:
         if parent == d:
             return None
         d = parent
-
-
-def main_checkout() -> str:
-    """The main checkout behind REPO_ROOT. A worktree lacks the gitignored ES2/ binaries."""
-    out = subprocess.run(
-        ["git", "rev-parse", "--path-format=absolute", "--git-common-dir"],
-        cwd=REPO_ROOT, capture_output=True, text=True, check=False,
-    ).stdout.strip()
-    return os.path.dirname(os.path.normpath(out)) if out else REPO_ROOT
 
 
 def csharp_mention(token: str) -> str | None:

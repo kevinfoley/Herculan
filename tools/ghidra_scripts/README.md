@@ -2,6 +2,8 @@
 
 Headless scripts driving the `ES2Recon` Ghidra project over `DBSIM.EXE` and `VSHELL.EXE`, and the `ES1Recon` project over ES1's `ES1DBSIM` and `ES1GO` images.
 
+`tools/scripts/retail_binaries.py` is the registry of those four binaries: for each, its identifier, the file the tools read, its container format (PE, or the flat X-32 image `es1_x32_extract.py` writes), its compiler (Borland C++ or Symantec C++), its Ghidra project and program name, its known-symbols file and its `analysis_out/` dumps. Every Python tool that takes a binary takes it from there, and a tool that depends on one container or compiler refuses a binary of another with an error rather than returning nothing for it. The gitignored files (the retail binaries, the dumps, the Ghidra install and projects) are read from the main checkout, which the registry finds from a worktree's `.git` file, so the tools run the same from a worktree.
+
 ## Running one
 
 ```sh
@@ -10,7 +12,7 @@ tools/ghidra_12.1.2_PUBLIC/support/analyzeHeadless.bat \
     -scriptPath 'E:\ES2Stuff\tools\ghidra_scripts' -postScript ES2DumpAsmBatch 0041a2f0+0041b100 400 out.txt
 ```
 
-`-noanalysis` reuses the analysed database; drop it only on a fresh import. `-process` picks the binary, and the `Apply*` scripts additionally filter by each JSON entry's own `binary` field, so running them against the wrong `-process` is a no-op rather than a corruption.
+`-noanalysis` reuses the analysed database; drop it only on a fresh import. `-process` picks the binary, and the `Apply*` scripts additionally filter by each JSON entry's own `binary` field, which must name the program exactly (`DBSIM` for `DBSIM.EXE`, `ES1DBSIM` for `ES1DBSIM`), so running them against the wrong `-process` is a no-op rather than a corruption.
 
 Every script that produces bulk output writes to a **file path given as an argument** rather than to stdout, because headless stdout is interleaved with Ghidra's own analysis logging. Per the project's `analysis_out/` rule, that path belongs in the scratchpad unless the dump is long-lived.
 
@@ -25,13 +27,13 @@ A single malformed `.java` in this directory breaks **every** script in it, with
 
 | File | Consumed by | Holds |
 | --- | --- | --- |
-| `known_symbols_dbsim.json`, `known_symbols_vshell.json` | `ES2ApplySymbolNames` | address → name, description, optional C signature, one file per binary |
+| `known_symbols_<binary>.json`: `dbsim`, `vshell`, `es1dbsim`, `es1go` | `ES2ApplySymbolNames` | address → name, description, optional C signature, one file per binary |
 | `known_structs.json` | `ES2ApplyStructures` | object layouts, and the parameters to type with them |
 | `known_vtables.json` | `ES2ApplyVtables` | vtable slot names and instance addresses |
 
 `known_structs.json` and `known_vtables.json` each carry their schema in an `_readme` entry; the symbols schema is [Known symbols](#known-symbols), below.
 
-`tools/scripts/ghidra_apply_all.sh` runs all three in the only order that works on a database that has never had them applied: vtables → structs → symbols, for DBSIM then VSHELL. All three are idempotent; once the `/ES2` types exist, any one can be run alone in any order.
+`tools/scripts/ghidra_apply_all.sh [--read-only] [BINARY...]` runs all three in the only order that works on a database that has never had them applied: vtables → structs → symbols, for each binary in the registry (or those named), in its own project. `--read-only` is a dry run. All three are idempotent; once the `/ES2` types exist, any one can be run alone in any order.
 
 - **ES2ApplyVtables** — builds one `FunctionDefinitionDataType` per slot under `/ES2/<Name>`, assembles them into a struct of 4-byte function pointers, then applies and labels it at each instance address.
 - **ES2ApplyStructures** — builds each object struct at its declared size and places fields with `replaceAtOffset`; checks every declared field width against the resolved type's own length, and refuses overlaps and past-the-end fields. An `inline` base is copied in component by component around the explicit fields, so a derived class can retype its base's vtable pointer. Then types the listed function parameters with a pointer to it, first committing the decompiler's parameters at `ANALYSIS` for a function whose stored prototype is too short.
@@ -41,14 +43,14 @@ A single malformed `.java` in this directory breaks **every** script in it, with
 
 ### Known symbols
 
-Confirmed address → meaning mappings, one file per binary: `known_symbols_dbsim.json` and `known_symbols_vshell.json`. `ES2ApplySymbolNames` applies one file to its binary (`es2_naming.py apply BIN` passes the right one), and it is idempotent: re-run it after adding or changing entries. Python tools read and write the files through `tools/scripts/es2_symbols.py`.
+Confirmed address → meaning mappings, one file per binary: `known_symbols_dbsim.json`, `known_symbols_vshell.json`, `known_symbols_es1dbsim.json` and `known_symbols_es1go.json`. `ES2ApplySymbolNames` applies one file to its binary (`es2_naming.py apply BIN` passes the right one), and it is idempotent: re-run it after adding or changing entries. Python tools read and write the files through `tools/scripts/es2_symbols.py`.
 
-One address, one entry: when a later finding revises an existing one, edit that entry in place rather than adding a second. Entries are in ascending address order, so two branches that add symbols insert at different places. `es2_naming.py insert` and `edit` keep the order and refuse a file that breaks it, a duplicate address or name, or an entry of the other binary. The apply script aborts on a duplicate.
+One address, one entry: when a later finding revises an existing one, edit that entry in place rather than adding a second. Entries are in ascending address order, so two branches that add symbols insert at different places. `es2_naming.py insert` and `edit` keep the order and refuse a file that breaks it, a duplicate address or name, or an entry of another binary. The apply script aborts on a duplicate.
 
 | Field | Holds |
 | --- | --- |
-| `address` | hex address, no `0x` prefix (`00411fc4`) |
-| `binary` | `DBSIM` or `VSHELL`: the file's own binary, matched against the `-process` file name at apply time |
+| `address` | hex address, no `0x` prefix (`00411fc4`). An ES1 function's is its prologue, never the `0x90` padding before it, which `ES1Recon` holds as a thunk of the function (`Herculan/docs/herculan/plan-es1-support.md`, 1.2) |
+| `binary` | `DBSIM`, `VSHELL`, `ES1DBSIM` or `ES1GO`: the file's own binary, matched against the `-process` program name, less `.EXE`, at apply time |
 | `type` | `function` or `data` |
 | `confidence` | `high`, `medium` or `low` |
 | `name` | the symbol name. Omitted for `low` entries, which get a plate comment only, never a rename or label, so a guess can never look like a confirmed name in the database. `medium` names carry a `maybe_` prefix, written out here rather than added by the apply script. |
@@ -85,7 +87,7 @@ One address, one entry: when a later finding revises an existing one, edit that 
 | Field | Holds |
 | --- | --- |
 | `bytes` | the function's start and byte size in the Ghidra function list (`analysis_out/<BIN>_functions.txt`) when it was stamped |
-| `sha1` | the first 12 hex digits of the SHA-1 of those bytes in the retail image under `ES2/` |
+| `sha1` | the first 12 hex digits of the SHA-1 of those bytes in the binary's retail file, as `retail_binaries.py` locates it |
 | `scope` | `body`: what the description says this function's own code does. `callees`: also every callee the description relies on, read the same way |
 | `via` | how the body was read: `decompile`, `disasm` or `both`. The decompile is enough for control flow and field offsets; a claim that rests on an argument's value, a register-passed parameter, or where one function ends and the next begins wants the disassembly. Absent on stamps made before the field existed |
 | `negatives` | optional: a negative claim the description makes ("only", "never", "no other") that is settled, with `evidence` `data` (an exhaustive read of the data settles it, e.g. a field that is -1 in every retail file) or `retail` (observed in the retail game), and `how` |
@@ -96,7 +98,7 @@ What a stamp covers is the function's own behaviour, plus its listed negatives. 
 
 **A search that found nothing is never a stamped fact.** `es2_xref.py`, `es2_fieldscan.py` and every other sweep can only report "not found by this search", whatever its positive control showed: a wider store over the field, a bulk copy, the allocator's zeroing, an alias the scan cannot resolve or a dispatch table filled at run time all escape them. Before stamping, a description that states such a result as fact is reworded to say what was searched and found nothing ("no caller found by `es2_xref`"), and the doc carries it as an `**Open:**` item. It is not listed under `negatives`.
 
-`es2_stamp.py stamp NAME --via decompile|disasm|both [--scope callees] [--negative "claim :: data|retail :: how"]` writes one, after checking the description sentence by sentence: it refuses a sentence that names callers without saying which search found them, and one saying nothing, never or only something calls, reads, writes, references or reaches something (or that code is unused, unreachable or dead) unless it is a listed negative or names its search. `--read-callers` and `--own-negatives` accept such sentences when they are reads or describe the function's own code ("it makes no other call"); the sentences are printed either way, so the choice is made looking at them. `es2_stamp.py lint` runs the same checks over every stamp already written. The doc-lint hook names any unstamped function in the lines an edit writes to a doc. `es2_stamp.py check` re-reads every stamp and voids it, exit 1, when the function's extent in the function list has changed (a late-entry fix, a re-analysis) or its bytes no longer hash the same (another build under `ES2/`), because the read it records was of other code. `es2_naming.py edit` drops the stamp of an entry whose description it changes. `Check-Symbol.ps1` shows a stamp and prints a stamped description whole.
+`es2_stamp.py stamp NAME --via decompile|disasm|both [--scope callees] [--negative "claim :: data|retail :: how"]` writes one, after checking the description sentence by sentence: it refuses a sentence that names callers without saying which search found them, and one saying nothing, never or only something calls, reads, writes, references or reaches something (or that code is unused, unreachable or dead) unless it is a listed negative or names its search. `--read-callers` and `--own-negatives` accept such sentences when they are reads or describe the function's own code ("it makes no other call"); the sentences are printed either way, so the choice is made looking at them. `es2_stamp.py lint` runs the same checks over every stamp already written. The doc-lint hook names any unstamped function in the lines an edit writes to a doc. `es2_stamp.py check` re-reads every stamp and voids it, exit 1, when the function's extent in the function list has changed (a late-entry fix, a re-analysis) or its bytes no longer hash the same (another build in the retail file), because the read it records was of other code. `es2_naming.py edit` drops the stamp of an entry whose description it changes. `Check-Symbol.ps1` shows a stamp and prints a stamped description whole.
 
 Struct-instance offsets (`mech+0x222`) belong in `known_structs.json`, which owns field layout; they are not fixed addresses, so they have no entry here. Vtable slot meanings belong in `known_vtables.json`.
 
@@ -159,7 +161,7 @@ Reference-manager searches see only what Ghidra has already disassembled and typ
 
 ### Repairing the database
 
-These mutate the program. Ghidra routinely places a function entry past the real prologue, occasionally on the fill bytes before it, or never promotes code to a function at all when its only reference is a vtable slot or a table entry. `tools/scripts/es2_late_entries.py` lists the late and early entries from the binary and the dumps, and `es2_naming.py fixentry` repairs a batch of them in one headless session: `ES2MergeFunctionAt <entry> auto` for each, then the structure and symbol applies, then `ES2CheckFunctionEntries`.
+These mutate the program. Ghidra routinely places a function entry past the real prologue, occasionally on the fill bytes before it, or never promotes code to a function at all when its only reference is a vtable slot or a table entry. `tools/scripts/es2_late_entries.py` lists the late and early entries from the binary and the dumps, and for ES1's binaries, where code is also entered through the `0x90` padding before a prologue, the functions Ghidra starts on that padding apart from them; and `es2_naming.py fixentry` repairs a batch of them in one headless session: `ES2MergeFunctionAt <entry> auto` for each, then the structure and symbol applies, then `ES2CheckFunctionEntries`.
 
 Code Ghidra never made a function of is listed by `es2_naming.py stats BIN --list`: each `55 8B EC` prologue outside a function, and each code-section gap that is not all fill bytes. Most gap bytes are Borland class records, which sit in the code section. The code among them is reached only through tables: the six-byte `{kind, priority, function}` entries of Borland's `_INIT_` and `_EXIT_` tables, which run on from DBSIM `004a7a5c` and VSHELL `00480fb0`: frameless static constructors and destructors; the `this`-adjusting thunks (`ADD dword ptr [ESP+4],imm8; JMP`) in DBSIM's secondary vtables; and the raster driver's routine tables, hand-written assembly that opens with `ENTER` or none. `es2_naming.py apply BIN --define a+b+...` creates them in the session that applies the names.
 
@@ -168,6 +170,7 @@ Code Ghidra never made a function of is listed by `es2_naming.py stats BIN --lis
 | `ES2DefineFunctionAt` | `addrs...` | Creates a function at each address. Destroys nothing: an existing function is reported and left alone, and no code units are cleared. Run before `ES2ApplySymbolNames`, which skips an address that has no function. |
 | `ES2MergeFunctionAt` | `trueEntry` `len\|auto` `out` | Removes every function entered within the range, clears it, and creates one function at `trueEntry`. For an entry split by a stray prologue function. `auto` sweeps through the last body of any function entered in the first 16 bytes, and refuses when that would reach a later function. It also repairs an early start: a function entered up to 16 bytes before `trueEntry` whose body contains it is removed, and the sweep starts at its entry. A removed function's non-default name would survive as a label, so the script also deletes that label and its plate comment at every removed entry other than `trueEntry`. The new function's prototype is committed from the decompiler at `ANALYSIS`, so `ES2ApplyStructures` still finds the parameters it types. |
 | `ES2RedefineFunction` | `clearStart` `trueEntry` `out` | Clears from `clearStart`, recreates at `trueEntry`, and decompiles the result. |
+| `ES1PaddingThunks` | `out` `[addrs(+)]` | For an ES1 image: every function Ghidra starts on the `0x90` padding before a `55 8B EC` prologue is started at the prologue, and the padding becomes a thunk of it (`Herculan/docs/herculan/plan-es1-support.md`, 1.2). Handles both of `es2_late_entries.py`'s shapes, PADDING and SPLIT; leaves a named, commented or unexpectedly shaped padding function alone and reports it, and reports a re-created function whose body differs from the old one's past the padding. Decompiles the functions listed in `addrs` afterwards, to show calls through the padding. Run `-readOnly` first. |
 | `ES2CheckFunctionEntries` | `out` `addrs...` | Read-only: whether a function starts exactly at each address, and what contains it. Run after any of the above. |
 | `ES2RemoveVtableType` | `names...` | Removes the `/ES2/<Name>` struct and slot category `ES2ApplyVtables` built for a vtable shape `known_vtables.json` no longer defines (renamed or dropped); refuses a struct still applied anywhere, so run it after `ES2ApplyVtables`. |
 

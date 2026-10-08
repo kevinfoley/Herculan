@@ -95,10 +95,12 @@ status. Drain them into topic docs and delete what you moved.
   not later mistaken for vanilla behaviour.
 - **Never write "nothing calls this", "nothing reads this" or "dead code" from a failed grep.** A
   text search of the dumps misses references through data tables, and misses field accesses through
-  Borland's `LEA`/`ADD`-rebase and stack-spill idioms. Two tools settle these, and both print their
-  own caveats:
+  the compilers' `LEA`/`ADD`-rebase, stack-spill and inlined-copy idioms. Two tools settle these, and
+  both print their own caveats. Both take `--binary` (default `DBSIM`) from
+  `tools/scripts/retail_binaries.py`, which registers ES2's `DBSIM` and `VSHELL` and ES1's `ES1DBSIM`
+  and `ES1GO`:
   - `tools/scripts/es2_xref.py ADDR|SymbolName` — every rel32 branch, stored pointer and vtable slot
-    holding an address, over the whole PE. A clean sweep is what "unreachable" has to mean.
+    holding an address, over the whole image; for ES1, through the function's padding entries too. A clean sweep is what "unreachable" has to mean.
   - `tools/scripts/es2_fieldscan.py OFFSET [--range LO-HI]` — every access to a struct field,
     resolving those idioms. Reports the union of two alias passes because neither is sound alone.
 

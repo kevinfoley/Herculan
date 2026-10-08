@@ -278,6 +278,41 @@ internal static class TextReport {
 		return $"area {a.Guid}: box point {a.PointRef} {first} to point {a.SecondPointRef} {second}";
 	}
 
+	/// <summary>One line per archive and type, then each type's failures and inexact round trips grouped by what went wrong.</summary>
+	public static void Census(TextWriter o, string install, IReadOnlyList<CensusEntry> entries) {
+		bool against = entries.Any(e => e.IdenticalToOther != null);
+		o.WriteLine($"{entries.Count} entries in {Path.GetFullPath(install)}");
+		o.WriteLine();
+		o.WriteLine($"Archive       Type  Entries  Round-trip  Parses  Fails  No reader{(against ? "  Identical" : "")}  Reader; headers");
+		var types = entries.GroupBy(e => (e.Archive, e.Type)).OrderBy(g => g.Key.Archive).ThenBy(g => g.Key.Type).ToList();
+		foreach (var g in types) {
+			int Count(CensusOutcome outcome) => g.Count(e => e.Outcome == outcome);
+			string readers = string.Join(", ", g.Select(e => e.Reader).OfType<string>().Distinct());
+			string headers = string.Join(" ", g.GroupBy(e => e.Header).OrderByDescending(h => h.Count()).Take(4)
+				.Select(h => $"{h.Key}×{h.Count()}")) + (g.Select(e => e.Header).Distinct().Count() > 4 ? " …" : "");
+			o.WriteLine($"{g.Key.Archive,-13} {g.Key.Type,-5} {g.Count(),7}  {Count(CensusOutcome.RoundTrips),10}  {Count(CensusOutcome.Parses),6}  " +
+				$"{Count(CensusOutcome.Fails),5}  {Count(CensusOutcome.NoReader),9}{(against ? $"  {g.Count(e => e.IdenticalToOther == true),9}" : "")}  " +
+				$"{(readers.Length == 0 ? "-" : readers)}; {headers}");
+		}
+
+		foreach (var g in types) {
+			var problems = g.Where(e => e.Outcome is CensusOutcome.Fails or CensusOutcome.Parses)
+				.GroupBy(e => (e.Outcome, e.Detail)).ToList();
+			if (problems.Count == 0) {
+				continue;
+			}
+
+			o.WriteLine();
+			o.WriteLine($"{g.Key.Archive} .{g.Key.Type}");
+			foreach (var p in problems.OrderByDescending(p => p.Count())) {
+				var first = p.First();
+				string offsets = string.Join(", ", p.Select(e => e.Offset).Distinct().Take(6).Select(x => x is { } v ? $"0x{v:x}" : "-"));
+				o.WriteLine($"  {p.Key.Outcome} ×{p.Count()}: {p.Key.Detail}; offset {offsets}{(p.Select(e => e.Offset).Distinct().Count() > 6 ? " …" : "")}; " +
+					$"e.g. {first.Folder}\\{first.Name} ({first.Size} bytes, read {first.Consumed?.ToString() ?? "-"})");
+			}
+		}
+	}
+
 	private static string Label(int type, string? name) => name == null ? $"0x{type:x2}" : $"0x{type:x2} {name}";
 
 	private static string Cond(short guid, string? text, bool decode) =>

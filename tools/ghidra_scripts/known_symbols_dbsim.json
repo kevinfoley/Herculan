@@ -1584,7 +1584,13 @@
       "name": "Debris_LoadPieceList",
       "description": "Reads one debris group out of an open _DEB.DAT stream: a throw count, a piece count, and that many 14-byte pieces. Multiplies both of a piece's angle fields by 182 (degrees to BAM) unless the raw value is the -1 sentinel, and accumulates the group's total piece weight into the group record, which the file does not store. Returns the largest shape index the group names.",
       "source": "docs/retail/formats/debris-dat.md",
-      "signature": "short __cdecl Debris_LoadPieceList(int *group, int *stream)"
+      "signature": "short __cdecl Debris_LoadPieceList(int *group, int *stream)",
+      "verified": {
+        "bytes": "004083f8+310",
+        "sha1": "046b0edcb3ed",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00408530",
@@ -2811,7 +2817,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Collision_LoadRecordArray",
-      "description": "Reads one object's whole collision model: an int16 node count, then that many 10-byte nodes via Collision_ReadNode, each post-processed by Collision_ComputeBoundingSphere. Called per structure type against dat/BASECOL.DAT (from Base_LoadResources, 00405fac) and per mech/flyer type against col/<NAME>.COL (from Collision_RegisterObject). Format and retail verification in docs/retail/simulation/hit-detection.md.",
+      "description": "Reads one object's whole collision model: an int16 node count, then that many 10-byte nodes via Collision_ReadNode, each post-processed by Collision_ComputeAllBoundingSpheres. Called per structure type against dat/BASECOL.DAT (from Base_LoadResources, 00405fac) and per mech/flyer type against col/<NAME>.COL (from Collision_RegisterObject). Format and retail verification in docs/retail/simulation/hit-detection.md.",
       "source": "docs/retail/formats/collision-spheres.md"
     },
     {
@@ -20472,9 +20478,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_IntegrateRateOverTick",
-      "description": "Q8mul(SimTickDelta, rate), clamped to signed 16-bit range. Core 'apply a per-unit-time rate as this tick's delta' primitive.",
+      "description": "Q8mul(SimTickDelta, rate), clamped to [-0x7fff, 0x7fff]. Core 'apply a per-unit-time rate as this tick's delta' primitive.",
       "source": "docs/retail/simulation/dbsim-physics-notes.md",
-      "signature": "short __cdecl Math_IntegrateRateOverTick(short ratePerTick)"
+      "signature": "short __cdecl Math_IntegrateRateOverTick(short ratePerTick)",
+      "verified": {
+        "bytes": "00467820+56",
+        "sha1": "edebb9d4dfbd",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00467858",
@@ -20483,7 +20495,13 @@
       "confidence": "high",
       "name": "Math_IntegrateRateOverTick2",
       "description": "(rate): Math_Q8Multiply(004d3bea, rate) clamped to +/-0x7fff: Math_IntegrateRateOverTick with the second Q8 delta, the one Time_BeginSimTick computes with unit 004d3bee. The DBSIM copy of VSHELL's Math_IntegrateRateOverTick2 (00465b50).",
-      "source": "DBSIM decompile at 00467858; compared with VSHELL 00465b50"
+      "source": "DBSIM decompile at 00467858; compared with VSHELL 00465b50",
+      "verified": {
+        "bytes": "00467858+54",
+        "sha1": "96238b2480a8",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00467890",
@@ -20576,7 +20594,13 @@
       "name": "Math_RateLimitedMoveToward",
       "description": "Generic per-tick turn/slew-rate limiter: moves current toward target by at most step, returns remaining error. Used by rocket guidance and the shield recharge tick.",
       "source": "docs/retail/simulation/dbsim-physics-notes.md",
-      "signature": "short __cdecl Math_RateLimitedMoveToward(short *current, short target, short step)"
+      "signature": "short __cdecl Math_RateLimitedMoveToward(short *current, short target, short step)",
+      "verified": {
+        "bytes": "004679d8+73",
+        "sha1": "fd396b3ae5a2",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00467a24",
@@ -27048,7 +27072,13 @@
       "confidence": "high",
       "name": "Math_AsinBam",
       "description": "Arcsine of a Q14 sine as a binary angle. Takes the magnitude (restoring the sign at the end), rounds it to a multiple of 4, and below 0xe00 * 4 (about 0.875) reads the coarse table at 004a1e54 at a further 8x step; above it reads the fine table at 004a05d4 (entry 0x1000, for 1.0, is 0x4000, a quarter turn).",
-      "source": "DBSIM decompile and disassembly at 0047d940"
+      "source": "DBSIM decompile and disassembly at 0047d940",
+      "verified": {
+        "bytes": "0047d940+62",
+        "sha1": "6117d3addded",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047da41",
@@ -27223,7 +27253,13 @@
       "confidence": "high",
       "name": "Math_CosBam",
       "description": "Cosine of a 16-bit binary angle in Q14: rounds the angle to a 16-BAM step ((a >> 4) + bit 3), takes its magnitude, and reads the quarter-turn table at 004a25dc (indices 0-0x400, 16384 at 0, 11585 at 0x200, 0 at 0x400) directly below a quarter turn and negated as table[0x800 - i] above it.",
-      "source": "DBSIM decompile and disassembly at 0047dee4"
+      "source": "DBSIM decompile and disassembly at 0047dee4",
+      "verified": {
+        "bytes": "0047dee4+55",
+        "sha1": "9b6a5450f835",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047df5c",
@@ -27233,7 +27269,13 @@
       "name": "Math_Q16Divide",
       "description": "Q16 fixed-point divide: ((int64)a << 16) / b.",
       "source": "docs/herculan/planning.md (world scale recovery)",
-      "signature": "int __cdecl Math_Q16Divide(int numerator, int denominator)"
+      "signature": "int __cdecl Math_Q16Divide(int numerator, int denominator)",
+      "verified": {
+        "bytes": "0047df5c+21",
+        "sha1": "df12661f6c9a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047df71",
@@ -27242,7 +27284,13 @@
       "confidence": "high",
       "name": "Math_Q16Multiply2",
       "description": "Q16 fixed-point multiply, (int64)a*b >> 16: a second copy of Math_Q16Multiply with an identical body.",
-      "source": "DBSIM decompile and disassembly at 0047df71"
+      "source": "DBSIM decompile and disassembly at 0047df71",
+      "verified": {
+        "bytes": "0047df71+16",
+        "sha1": "0a0ea03a9ce9",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047df81",
@@ -27262,7 +27310,13 @@
       "name": "Math_Q8Multiply",
       "description": "Q8 fixed-point multiply: (int64)a*b >> 8. Verified via raw disassembly (SHRD EAX,EDX,0x8) matching the decompiler's >>8 exactly.",
       "source": "docs/retail/simulation/dbsim-physics-notes.md",
-      "signature": "int __cdecl Math_Q8Multiply(int a, int b)"
+      "signature": "int __cdecl Math_Q8Multiply(int a, int b)",
+      "verified": {
+        "bytes": "0047df94+16",
+        "sha1": "0c489b6019d1",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047dfa4",
@@ -27272,7 +27326,13 @@
       "name": "Math_Q10Multiply",
       "description": "Q10 fixed-point multiply: (int64)a*b >> 10. Used in the shield-balance code; also builds the HUD's speed-display scale factor in MechType_InitOne.",
       "source": "docs/herculan/planning.md (world scale recovery)",
-      "signature": "int __cdecl Math_Q10Multiply(int a, int b)"
+      "signature": "int __cdecl Math_Q10Multiply(int a, int b)",
+      "verified": {
+        "bytes": "0047dfa4+16",
+        "sha1": "e278b5e5692d",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047dfb4",
@@ -27281,7 +27341,13 @@
       "confidence": "high",
       "name": "Math_Q14Multiply",
       "description": "(int a, int16 b): Q14 fixed-point multiply, (int64)a*b >> 14. The scale of the Q14 sine/cosine table at 004a25dc.",
-      "source": "DBSIM decompile and disassembly at 0047dfb4"
+      "source": "DBSIM decompile and disassembly at 0047dfb4",
+      "verified": {
+        "bytes": "0047dfb4+19",
+        "sha1": "5776b7eb78de",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047dfc8",
@@ -33289,7 +33355,13 @@
       "confidence": "high",
       "name": "Math_HeadingToward",
       "description": "Ground-plane bearing from one position to another as a BAM angle: atan2(to.y - from.y, to.x - from.x) via Math_Atan2Guarded, minus a quarter turn, because the sim's forward axis is model Y and not model X. Call sites pass the destination first. DBSim_SpawnMissionObjects uses it to face a group along the first leg of its route when the group's block-11 record carries no heading ref.",
-      "source": "docs/retail/formats/script-dat.md"
+      "source": "docs/retail/formats/script-dat.md",
+      "verified": {
+        "bytes": "00492828+39",
+        "sha1": "fe1bbf2be164",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00492850",
@@ -33385,7 +33457,13 @@
       "confidence": "high",
       "name": "Math_Atan2Bam_Thunk",
       "description": "One-line forwarder to Math_Atan2Bam with the same arguments. Math_Atan2Guarded calls it.",
-      "source": "DBSIM decompile at 004929bc"
+      "source": "DBSIM decompile at 004929bc",
+      "verified": {
+        "bytes": "004929bc+21",
+        "sha1": "33666f958199",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "004929d1",

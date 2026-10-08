@@ -65,6 +65,16 @@ Primary development/testing target is **Windows**, but OS-specific code paths sh
 - Motivation: a possible future mission editor that renders the mission environment in-engine.
 - The namespace layout, the move of game rules out of the host, and the staged refactor toward both are in [`plan-architecture-refactor.md`](plan-architecture-refactor.md).
 
+## Earthsiege 1
+
+The architecture refactor's [ES1 survey](plan-architecture-refactor.md#es1-survey--gates-stage-4) asks three questions before the engine is split between the games ([the ES1 plan](plan-es1-support.md)). The answers:
+
+- **Compiler.** Symantec C++, not Borland ([`compiler.md`](../es1/formats/compiler.md)). Its objects are byte-packed with the vptr after the subobjects' data, so no ES2 object layout carries over as a layout.
+- **The modules both simulators name** (`bullet`, `collide`, `damage`, `debris`, `flyersys`, `mechsys`) share a skeleton, the same functions with the same order of operations, and differ in record and table sizes, instance layouts, features ES2 added to the skeleton, and one change of meaning, a bullet's age ([`shared-modules.md`](../es1/simulation/shared-modules.md)).
+- **The fixed-point math.** The hand-written assembly library and its trigonometry tables are ES2's; the fixed-point primitives beneath the simulation round where ES2's truncate ([`fixed-point-math.md`](../es1/simulation/fixed-point-math.md)).
+
+So ES1 does not run on ES2's simulation code with ES1's data swapped in. Common to both are the asset layer, the assembly math library and its tables. How the two games share code is [Open](#open).
+
 ## World scale
 
 **1000 world units are 6 metres.** `WorldScale.WorldUnitsPerMeter` is `1000/6` ≈ **166.667**. This is not an estimate — it is the original's own constant.
@@ -102,3 +112,7 @@ Symbols: `Hud_WorldUnitsToMetres`, `Hud_UpdateWaypointIndicator`, `Hud_UpdateSpe
 [`../../ROADMAP.md`](../../ROADMAP.md) is the single list of what the engine does not implement yet. Behavioural divergences — implemented but wrong — stay in [`../../KNOWN_ISSUES.md`](../../KNOWN_ISSUES.md).
 
 How divergences get *found* rather than recorded is [`plan-differential-harness.md`](plan-differential-harness.md): a proposal to run retail and this engine over the same mission and diff their state tick by tick, which reaches the classes of divergence playtesting cannot.
+
+## Open
+
+- **Open:** how the two games share code — a shared core with one assembly per game, or version branches — decided from [Earthsiege 1](#earthsiege-1) and the survey's remaining per-subsystem verdicts.

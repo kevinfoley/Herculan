@@ -38,8 +38,8 @@ import java.util.Map;
 // args[0] = path to known_structs.json (see that file's _readme for the schema).
 //
 // Gives DBSIM's simulation objects a shape, and then puts that shape where the decompiler will use
-// it. For each definition in the JSON, reading only those whose "binary" is a case-insensitive
-// substring of the current program's name:
+// it. For each definition in the JSON, reading only those whose "binary" names the current
+// program (isBinary):
 //   - creates a StructureDataType under category /ES2 of exactly the declared size, so it starts
 //     out undefined-filled;
 //   - places each field with replaceAtOffset, which overwrites undefined bytes in place. NOT add()
@@ -97,7 +97,7 @@ public class ES2ApplyStructures extends GhidraScript {
         for (JsonElement el : root.getAsJsonArray("structs")) {
             JsonObject def = el.getAsJsonObject();
             String name = def.get("name").getAsString();
-            if (!progName.contains(def.get("binary").getAsString().toUpperCase())) {
+            if (!isBinary(progName, def.get("binary").getAsString())) {
                 skippedOtherBinary++;
                 continue;
             }
@@ -221,7 +221,7 @@ public class ES2ApplyStructures extends GhidraScript {
             }
 
             if (app.has("binary")
-                && !progName.contains(app.get("binary").getAsString().toUpperCase())) {
+                && !isBinary(progName, app.get("binary").getAsString())) {
                 skippedOtherBinary++;
                 continue;
             }
@@ -332,6 +332,13 @@ public class ES2ApplyStructures extends GhidraScript {
     private void fail(String message) {
         println("ERROR: " + message);
         errors++;
+    }
+
+    // An entry's "binary" is the program's name, less ".EXE" for ES2's (DBSIM -> DBSIM.EXE; ES1's
+    // programs are named ES1DBSIM and ES1GO). An exact match, so DBSIM never matches ES1DBSIM.
+    private static boolean isBinary(String progName, String binary) {
+        String b = binary.toUpperCase();
+        return progName.equals(b) || progName.equals(b + ".EXE");
     }
 
     private static String hex(int value) {

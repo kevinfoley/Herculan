@@ -490,10 +490,12 @@ def write_vtables(new_shapes, new_instances):
 
 def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    if len(sys.argv) < 2 or sys.argv[1] not in ("DBSIM", "VSHELL"):
+    if len(sys.argv) < 2:
         print(__doc__)
         return 2
-    binary = sys.argv[1]
+    binary = N.retail_binaries.require(
+        sys.argv[1], "es2_skeletons.py", "it builds skeletons from Borland class records, and ES1's "
+        "vtables point to none", compiler=N.retail_binaries.BORLAND).id
     B, new_shapes, new_instances, new_structs, apps, skipped, report = generate(binary)
     print(f"== {binary}: {len(new_shapes)} new shapes, "
           f"{sum(len(v) for k, v in new_instances.items() if k not in new_shapes)} instances added to existing shapes, "

@@ -69,7 +69,7 @@ Before Stage 4, enough ES1 reverse engineering to decide, per subsystem (formats
 
 Where the static `.DAT` tables live — `World`'s (`BaseTypeTable`, the formation tables, `BaseCollisionTable`) and Sim's (`BulletCatalog`, `WeaponCatalog`, `MechTypeRecord` and the rest) — and whether they are named Table or Catalog, is decided with that split: the tables are where the two games' data formats are most likely to differ.
 
-The answer, and how the two games share code (a shared core with one assembly per game, or version branches), goes in [`planning.md`](planning.md).
+[`planning.md`](planning.md#earthsiege-1) answers the three, and is where how the two games share code (a shared core with one assembly per game, or version branches) is decided.
 
 ## Stage 4 — responsibility splits
 
@@ -109,4 +109,4 @@ Stages 3 and 4 move code whose order is behaviour. Their check would be a replay
 - **Open:** replay determinism, which a replay diff of these stages needs (see [Verification](#verification)).
 - **Open:** `tools/scripts/rename_symbol` fails to build on the .NET 8.0.1xx SDK (CS9057: its analyzers need compiler 4.12); renames in such an environment are done by hand and checked by the build.
 - **Open:** retail behaviour still in the host: `SimulationStepper` (the fixed-timestep accumulator and a replay's ticks), the [Esc] back-out from the external view, a glance and the Heads-Down Display in `WindowKeys.ReadMenuBarEscapeKey`, and `SimulatorHost.OnUpdate`'s order, which `SimulatorRig` mirrors for the tests.
-- **Open:** the ES1 survey's three questions.
+- **Open:** the ES1 survey's per-subsystem verdicts (formats, sim objects, mission start-up, shell, audio).

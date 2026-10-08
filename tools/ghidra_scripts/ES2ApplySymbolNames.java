@@ -28,9 +28,9 @@ import java.util.Set;
 // "Known symbols").
 //
 // Applies confirmed address->meaning findings to the currently-processed program. Reads every
-// entry whose "binary" field is a case-insensitive substring of the current program's name (so
-// running this with -process "VSHELL.EXE" only touches VSHELL entries, and likewise for DBSIM),
-// and for each:
+// entry whose "binary" field names the current program (isBinary: running this with -process
+// "VSHELL.EXE" only touches VSHELL entries, and likewise for DBSIM, ES1DBSIM and ES1GO), and for
+// each:
 //   - type "function": renames the function at that address (Function.setName, USER_DEFINED) if
 //     the entry has a "name", then always writes/refreshes a plate comment with the description.
 //   - type "data": creates/refreshes a label at that address if the entry has a "name", then
@@ -104,7 +104,7 @@ public class ES2ApplySymbolNames extends GhidraScript {
         for (JsonElement el : entries) {
             JsonObject entry = el.getAsJsonObject();
             String binary = entry.get("binary").getAsString();
-            if (!progName.contains(binary.toUpperCase())) {
+            if (!isBinary(progName, binary)) {
                 skippedOtherBinary++;
                 continue;
             }
@@ -272,6 +272,13 @@ public class ES2ApplySymbolNames extends GhidraScript {
     }
 
     // "<levels of indirection>:<pointee category path and name>", or "" for a non-pointer.
+    // An entry's "binary" is the program's name, less ".EXE" for ES2's (DBSIM -> DBSIM.EXE; ES1's
+    // programs are named ES1DBSIM and ES1GO). An exact match, so DBSIM never matches ES1DBSIM.
+    private static boolean isBinary(String progName, String binary) {
+        String b = binary.toUpperCase();
+        return progName.equals(b) || progName.equals(b + ".EXE");
+    }
+
     private static String pointeePath(DataType dt) {
         int depth = 0;
         DataType target = dt;

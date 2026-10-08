@@ -41,12 +41,13 @@ import shlex
 import sys
 from dataclasses import dataclass, field
 
+import retail_binaries
+
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 SCOPE = [
     "tools/analysis_out",
-    "tools/ghidra_scripts/known_symbols_dbsim.json",
-    "tools/ghidra_scripts/known_symbols_vshell.json",
+    *(f"tools/ghidra_scripts/known_symbols_{b.lower()}.json" for b in retail_binaries.IDS),
     "Herculan/docs",
     "Herculan/src",
 ]
@@ -496,6 +497,8 @@ SELF_TESTS = [
     ("Bash", "ls tools/scripts | head", ".", False),
     ("Bash", "grep -n Mech_LocomotionTick Herculan/docs/x.md | head -5", ".", True),
     ("Bash", "cat tools/ghidra_scripts/known_symbols_dbsim.json | grep Mech | tail -3", ".", True),
+    ("Bash", "grep -n 000015a4 tools/ghidra_scripts/known_symbols_es1dbsim.json | head", ".", True),
+    ("Bash", "grep -n 000015a4 tools/analysis_out/ES1DBSIM_disasm_full.txt | head", ".", True),
     ("Bash", "rg Mech_LocomotionTick Reference/ | head", ".", False),
     ("Bash", "grep -o 'call [0-9a-f]*' tools/analysis_out/DBSIM_disasm_full.txt | sort | uniq -c", ".", False),
     ("Bash", "grep -n foo tools/analysis_out/a.txt | head -n 20", ".", True),

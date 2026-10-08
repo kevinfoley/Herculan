@@ -13,12 +13,11 @@ insert at different places in the file instead of conflicting at its top.
 from __future__ import annotations
 
 import json
-import os
 import re
 
-REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-SCRIPTS = os.path.join(REPO, "tools", "ghidra_scripts")
-BINARIES = ("DBSIM", "VSHELL")
+import retail_binaries
+
+BINARIES = retail_binaries.IDS
 FIELDS = ["address", "binary", "type", "confidence", "name", "description", "source", "signature", "verified"]
 BOM = b"\xef\xbb\xbf"
 ENTRY_BLOCK = re.compile(r"    \{\n(?:      .*\n)*?    \}")
@@ -26,15 +25,11 @@ ENTRY_ADDRESS = re.compile(r'^      "address": "([0-9a-fA-F]{8})"', re.M)
 
 
 def path(binary: str) -> str:
-    assert binary in BINARIES, binary
-    return os.path.join(SCRIPTS, f"known_symbols_{binary.lower()}.json")
-
-
-PATHS = [path(b) for b in BINARIES]
+    return retail_binaries.get(binary).symbols
 
 
 def entries(binary: str | None = None) -> list[dict]:
-    """One binary's entries, or both binaries' (DBSIM first) when binary is None."""
+    """One binary's entries, or every binary's, in registry order, when binary is None."""
     out = []
     for b in BINARIES if binary is None else (binary,):
         with open(path(b), encoding="utf-8-sig") as f:
@@ -68,6 +63,8 @@ def block(e: dict) -> str:
 def render(header: dict, es: list[dict]) -> str:
     """A whole file: header keys other than entries, then the entries as blocks in address order."""
     head = json.dumps({k: v for k, v in header.items() if k != "entries"}, indent=2, ensure_ascii=False)
+    if not es:
+        return head[:-2] + ',\n  "entries": []\n}\n'
     body = ",\n".join(block(e) for e in sorted(es, key=lambda e: e["address"].lower()))
     return head[:-2] + ',\n  "entries": [\n' + body + "\n  ]\n}\n"
 
@@ -78,7 +75,10 @@ def insert_blocks(text: str, new: list[dict]) -> str:
     for e in sorted(new, key=lambda e: e["address"].lower()):
         a = e["address"].lower()
         blocks = list(ENTRY_BLOCK.finditer(text))
-        assert blocks, "no entries to anchor on"
+        if not blocks:
+            assert text.count('  "entries": []\n') == 1, "no entries to anchor on"
+            text = text.replace('  "entries": []\n', '  "entries": [\n' + block(e) + "\n  ]\n")
+            continue
         after = next((m for m in blocks if ENTRY_ADDRESS.search(m.group(0)).group(1).lower() > a), None)
         if after:
             text = text[:after.start()] + block(e) + ",\n" + text[after.start():]
