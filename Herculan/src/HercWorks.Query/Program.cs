@@ -40,6 +40,11 @@ internal static class Program {
 		                                   compared: per archive and type, how many round-trip, parse,
 		                                   fail or have no reader, then each failure's cursor offset
 
+		  census                           every entry of every archive in the install's VOL folder
+		                                   through the HercWorks reader bound to it, written back and
+		                                   compared: per archive and type, how many round-trip, parse,
+		                                   fail or have no reader, then each failure's cursor offset
+
 		Options:
 		  --install <dir>   the install to read (default: the nearest ES2\ folder above the working
 		                    directory). ZONES.VOL and SIMVOL0.VOL are read from <dir>\VOL, or from the

@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """Helpers for working down the function-naming backlog in the known_symbols_<binary>.json files.
 
-Subcommands (BIN is DBSIM or VSHELL):
+Subcommands (BIN is a binary tools/scripts/retail_binaries.py registers: DBSIM, VSHELL, ES1DBSIM or
+ES1GO). rtti, vtables, classes and stats read Borland class records and refuse ES1's Symantec C++
+binaries; match masks in-image operand values by their range, which at ES1's base address 0 cannot
+tell an address from a small constant, and refuses ES1's images.
 
   triage BIN [--limit N] [--max-lines L] [--sort named|sites|callers|refs] [--all]
       The es2_unnamed_callees backlog with each target's decompile size and its own unnamed
@@ -103,6 +106,7 @@ import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import es2_symbols as S  # noqa: E402
+import retail_binaries  # noqa: E402
 import es2_unnamed_callees as uc  # noqa: E402
 
 REPO = uc.REPO
@@ -229,7 +233,7 @@ def image_refs(binary, targets):
     dwords (any offset, any section) equal to it: es2_xref.py's sweep for many targets in one pass.
     Brute force, like es2_xref.py, so a byte run that merely looks like a branch can count."""
     import es2_xref as X
-    image = X.Image(X.BINARIES[binary])
+    image = X.Image(binary)
     want = {int(a, 16): a for a in targets}
     out = {}
     data = image.data
@@ -456,25 +460,20 @@ def cmd_sym(args):
 
 
 def pe(binary):
-    with open(os.path.join(REPO, "ES2", f"{binary}.EXE"), "rb") as f:
-        d = f.read()
-    o = struct.unpack_from("<I", d, 0x3c)[0]
-    n = struct.unpack_from("<H", d, o + 6)[0]
-    so = struct.unpack_from("<H", d, o + 20)[0]
-    secs = []
-    for i in range(n):
-        vs, va, rs, ro = struct.unpack_from("<IIII", d, o + 24 + so + i * 40 + 8)
-        secs.append((va + 0x400000, vs, ro, rs))
+    """(the binary's file bytes, virtual address -> file offset or None), for any registered binary."""
+    img = retail_binaries.Image(binary)
+    return img.data, img.off_of
 
-    def off(v):
-        for va, vs, ro, rs in secs:
-            if va <= v < va + max(vs, rs):
-                return v - va + ro
-        return None
-    return d, off
+
+def borland(binary, what):
+    """Refuse a subcommand that reads Borland class records on a binary another compiler built."""
+    retail_binaries.require(binary, f"es2_naming.py {what}",
+                            "it reads Borland class records and typeinfo, and ES1's vtables point to none",
+                            compiler=retail_binaries.BORLAND)
 
 
 def cmd_rtti(args):
+    borland(args[0], "rtti")
     d, off = pe(args[0])
     for a in args[1:]:
         o = off(int(a, 16) - 0xc)
@@ -522,17 +521,10 @@ def is_typeinfo(d, off, a):
 
 
 def code_range(binary):
-    with open(os.path.join(REPO, "ES2", f"{binary}.EXE"), "rb") as f:
-        d = f.read()
-    o = struct.unpack_from("<I", d, 0x3c)[0]
-    n = struct.unpack_from("<H", d, o + 6)[0]
-    so = struct.unpack_from("<H", d, o + 20)[0]
-    for i in range(n):
-        s = o + 24 + so + i * 40
-        vs, va = struct.unpack_from("<II", d, s + 8)
-        if struct.unpack_from("<I", d, s + 36)[0] & 0x20:
-            return va + 0x400000, va + 0x400000 + vs
-    raise AssertionError("no code section")
+    """(lo, hi) of the code section; an X-32 image's file bytes, which hold its code and data."""
+    img = retail_binaries.Image(binary)
+    _name, va, vsize, _raw, raw_size = img.executable()[0]
+    return va, va + (vsize if img.binary.container == retail_binaries.PE else raw_size)
 
 
 def parse_vtables(binary):
@@ -564,10 +556,11 @@ def disasm_stores(binary):
 def build_tables(binary):
     """({vt: [(offset, fn)]}, {vt: note}, RTTI vtable set): the dump's tables merged with the RTTI
     vtables read from the image, as cmd_vtables lists them."""
+    borland(binary, "vtables")
     d, off = pe(binary)
     lo, hi = code_range(binary)
     import es2_classes
-    img = es2_classes.Image(os.path.join(REPO, "ES2", f"{binary}.EXE"))
+    img = es2_classes.image(binary)
     recs = es2_classes.scan(img)
     rtti_vts = {f"{v:08x}" for vts in es2_classes.find_vtables(img, recs).values() for v in vts}
     dump = parse_vtables(binary)
@@ -970,10 +963,10 @@ def define_targets(binary, args):
 
 def cmd_apply(args):
     binary = args[0]
-    bat = os.path.join(REPO, "tools", "ghidra_12.1.2_PUBLIC", "support", "analyzeHeadless.bat")
-    cmd = [bat, os.path.join(REPO, "tools", "ghidra_project"), "ES2Recon", "-process", f"{binary}.EXE",
+    b = retail_binaries.get(binary)
+    cmd = [retail_binaries.GHIDRA, retail_binaries.GHIDRA_PROJECTS, b.project, "-process", b.program,
            "-noanalysis"] + ([] if "--write" in args else ["-readOnly"]) + [
-        "-scriptPath", os.path.join(REPO, "tools", "ghidra_scripts")]
+        "-scriptPath", retail_binaries.GHIDRA_SCRIPTS]
     if "--define" in args:
         targets = define_targets(binary, args)
         print(f"defining {len(targets)} function(s) first: {' '.join(targets)}")
@@ -993,11 +986,11 @@ def cmd_fixentry(args):
     addrs = [a.lower() for a in re.split(r"[+,]", args[1]) if a]
     assert all(re.fullmatch(r"[0-9a-f]{8}", a) for a in addrs), addrs
     write = "--write" in args
-    scripts = os.path.join(REPO, "tools", "ghidra_scripts")
-    bat = os.path.join(REPO, "tools", "ghidra_12.1.2_PUBLIC", "support", "analyzeHeadless.bat")
+    scripts = retail_binaries.GHIDRA_SCRIPTS
+    b = retail_binaries.get(binary)
     tmp = tempfile.mkdtemp(prefix="es2_fixentry_")
     try:
-        cmd = [bat, os.path.join(REPO, "tools", "ghidra_project"), "ES2Recon", "-process", f"{binary}.EXE",
+        cmd = [retail_binaries.GHIDRA, retail_binaries.GHIDRA_PROJECTS, b.project, "-process", b.program,
                "-noanalysis"] + ([] if write else ["-readOnly"]) + ["-scriptPath", scripts]
         for a in addrs:
             cmd += ["-postScript", "ES2MergeFunctionAt", a, "auto", os.path.join(tmp, f"merge_{a}.txt")]
@@ -1060,6 +1053,10 @@ def cmd_match(args):
     with the BIN2 name and the callee/global names that pair up position by position."""
     import difflib
     b1, b2 = args[0], args[1]
+    for b in (b1, b2):
+        retail_binaries.require(b, "es2_naming.py match", "it masks operands in 0x400000..0x7fffff as "
+                                "in-image addresses, and an X-32 image's addresses start at 0",
+                                container=retail_binaries.PE)
     mn = int(args[args.index("--min") + 1]) if "--min" in args else 6
     fz = float(args[args.index("--fuzzy") + 1]) if "--fuzzy" in args else None
     k1, k2 = names(b1), names(b2)
@@ -1108,7 +1105,7 @@ def cmd_match(args):
 def class_records(binary):
     """(Image, {record VA: record}, {record VA: [primary vtables]}) from es2_classes."""
     import es2_classes
-    img = es2_classes.Image(os.path.join(REPO, "ES2", f"{binary}.EXE"))
+    img = es2_classes.image(binary)
     recs = es2_classes.scan(img)
     return img, recs, es2_classes.find_vtables(img, recs)
 
@@ -1166,6 +1163,7 @@ def cmd_stats(args):
     """stats BIN [--list]: the coverage table in Herculan/docs/herculan/plan-completing-coverage.md.
     --list also prints the prologues outside any function and the non-padding gaps between them."""
     binary = args[0]
+    borland(binary, "stats")
     ext = Extents(binary)
     fns = ext.fns
     d, off = pe(binary)

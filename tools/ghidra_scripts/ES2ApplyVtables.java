@@ -23,7 +23,7 @@ import java.util.Set;
 // args[0] = path to known_vtables.json (see that file's _readme for the schema).
 //
 // Gives DBSIM's simulation-object vtables a shape. For each definition in the JSON, reading only
-// those whose "binary" is a case-insensitive substring of the current program's name:
+// those whose "binary" names the current program (isBinary):
 //   - creates one FunctionDefinitionDataType per slot, under category /ES2/<VtableName>, with the
 //     default (undefined) return and no declared parameters -- argument lists are a separate
 //     per-function finding and belong in a known_symbols file's "signature" field, not here;
@@ -72,7 +72,7 @@ public class ES2ApplyVtables extends GhidraScript {
             JsonObject def = el.getAsJsonObject();
             String vtName = def.get("name").getAsString();
 
-            if (!progName.contains(def.get("binary").getAsString().toUpperCase())) {
+            if (!isBinary(progName, def.get("binary").getAsString())) {
                 skippedOtherBinary++;
                 continue;
             }
@@ -164,5 +164,12 @@ public class ES2ApplyVtables extends GhidraScript {
         println("ES2ApplyVtables: types=" + typesBuilt + " applied=" + applied
             + " labeled=" + labeled + " skippedOtherBinary=" + skippedOtherBinary
             + " errors=" + errors);
+    }
+
+    // An entry's "binary" is the program's name, less ".EXE" for ES2's (DBSIM -> DBSIM.EXE; ES1's
+    // programs are named ES1DBSIM and ES1GO). An exact match, so DBSIM never matches ES1DBSIM.
+    private static boolean isBinary(String progName, String binary) {
+        String b = binary.toUpperCase();
+        return progName.equals(b) || progName.equals(b + ".EXE");
     }
 }

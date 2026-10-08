@@ -16,58 +16,32 @@ Usage:
     python tools/scripts/es2_classes.py --tree
 
 This reads the shipped executable, not a Ghidra export, so it needs nothing to
-have been analysed first.
+have been analysed first. It reads Borland binaries only. ES1's Symantec C++
+vtables open with a zero dword, not a pointer to a class record, and no record
+has been found in ES1's images (Herculan/docs/es1/formats/compiler.md#vtables),
+so it refuses them.
 """
 
 from __future__ import annotations
 
 import argparse
-import os
 import re
 import struct
 import sys
 
-REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-BINARIES = {
-    "DBSIM": os.path.join(REPO, "ES2", "DBSIM.EXE"),
-    "VSHELL": os.path.join(REPO, "ES2", "VSHELL.EXE"),
-}
+import retail_binaries
+from retail_binaries import Image
 
 NAME = re.compile(rb"[A-Za-z_][A-Za-z0-9_ *<>,&]{2,60}\x00")
 # Type mask -> the name offsets a record of that kind uses: 3 is a class, 1 a plain struct.
 NAME_OFFSETS = {3: (0x20, 0x30), 1: (0x10,)}
 
 
-class Image:
-    def __init__(self, path: str):
-        self.data = open(path, "rb").read()
-        d = self.data
-        pe = struct.unpack_from("<I", d, 0x3C)[0]
-        nsec = struct.unpack_from("<H", d, pe + 6)[0]
-        optsize = struct.unpack_from("<H", d, pe + 20)[0]
-        self.base = struct.unpack_from("<I", d, pe + 24 + 28)[0]
-        self.sections = []
-        for i in range(nsec):
-            o = pe + 24 + optsize + i * 40
-            vsize, vaddr, rsize, raw = struct.unpack_from("<IIII", d, o + 8)
-            self.sections.append((vaddr, max(vsize, rsize), raw, rsize))
-
-    def va_of(self, off: int):
-        for vaddr, _size, raw, rsize in self.sections:
-            if raw <= off < raw + rsize:
-                return self.base + vaddr + (off - raw)
-        return None
-
-    def off_of(self, va: int):
-        for vaddr, size, raw, rsize in self.sections:
-            if self.base + vaddr <= va < self.base + vaddr + size:
-                off = raw + (va - self.base - vaddr)
-                return off if off < len(self.data) else None
-        return None
-
-    def dword(self, va: int):
-        off = self.off_of(va)
-        return None if off is None or off + 4 > len(self.data) else struct.unpack_from("<I", self.data, off)[0]
+def image(binary: str) -> Image:
+    """The binary's image, refusing any binary not built by Borland C++."""
+    return Image(retail_binaries.require(
+        binary, "es2_classes.py", "it reads Borland class records, and ES1's vtables point to none",
+        compiler=retail_binaries.BORLAND))
 
 
 def scan(img: Image):
@@ -131,13 +105,13 @@ def find_vtables(img: Image, recs):
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--binary", default="DBSIM", choices=sorted(BINARIES))
+    ap.add_argument("--binary", default="DBSIM", type=str.upper, choices=retail_binaries.IDS)
     ap.add_argument("--filter", help="only classes whose name contains this (case-insensitive)")
     ap.add_argument("--vtables", action="store_true", help="also resolve each class's primary vtable")
     ap.add_argument("--tree", action="store_true", help="print as an inheritance tree instead of a list")
     args = ap.parse_args()
 
-    img = Image(BINARIES[args.binary])
+    img = image(args.binary)
     recs = scan(img)
     vts = find_vtables(img, recs) if args.vtables else {}
     keep = [va for va, r in recs.items() if not args.filter or args.filter.lower() in r["name"].lower()]

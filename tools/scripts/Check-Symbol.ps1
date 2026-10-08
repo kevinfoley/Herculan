@@ -48,7 +48,9 @@ if (-not $RepoRoot) {
     $RepoRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 }
 
-$jsonPaths = @('dbsim', 'vshell' | ForEach-Object { Join-Path $RepoRoot "tools/ghidra_scripts/known_symbols_$_.json" })
+# One file per binary that tools/scripts/retail_binaries.py registers.
+$jsonPaths = @(Get-ChildItem (Join-Path $RepoRoot 'tools/ghidra_scripts') -Filter 'known_symbols_*.json' | ForEach-Object FullName)
+if ($jsonPaths.Count -eq 0) { throw "no known_symbols_*.json files under $RepoRoot/tools/ghidra_scripts" }
 $docsPath = Join-Path $RepoRoot 'Herculan/docs'
 $srcPath  = Join-Path $RepoRoot 'Herculan/src'
 

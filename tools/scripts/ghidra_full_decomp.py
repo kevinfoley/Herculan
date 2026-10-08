@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """Regenerate the whole-program function list, decompilation, vtable and struct dumps and report how much of each binary is named.
 
-Runs `ES2ListFunctions` headless against the ES2Recon project, once per binary, writing
+Runs `ES2ListFunctions` headless against the binary's Ghidra project (`retail_binaries.py` says
+which: ES2Recon for ES2's binaries, ES1Recon for ES1's), once per binary, writing
 `tools/analysis_out/<BINARY>_functions.txt` (address, name, body size, body address ranges), then `ES2DumpFullDecomp`
 the same way, writing `tools/analysis_out/<BINARY>_decomp_full.c`, then `ES2DumpAllVtables`,
 writing `tools/analysis_out/<BINARY>_vtables_full.txt` (read by `es2_xref.py`), then
 `ES2DumpStructs`, writing `tools/analysis_out/<BINARY>_structs_full.txt`, then `ES2DumpFullAsm`, writing
 `tools/analysis_out/<BINARY>_disasm_full.txt` (read by `es2_naming.py`, `es2_xref.py`,
-`es2_fieldscan.py` and `es2_late_entries.py`). The runs are sequential
+`es2_fieldscan.py` and `es2_late_entries.py`). The vtable dump is Borland-only:
+`ES2DumpAllVtables` sweeps the non-executable blocks for 4-aligned runs of function entry points,
+and an ES1 image is one executable block whose vtables open with a zero dword, sit at any byte
+address and point into padding (Herculan/docs/es1/formats/compiler.md#vtables), so for an ES1
+binary it is skipped by default and refused when asked for. The runs are sequential
 because headless Ghidra locks the project. Each dump is written to a temporary file and moved into
 place only when the script reports `SCRIPT-OK`, so a failed or cancelled run leaves the previous
 dump intact.
@@ -28,10 +33,11 @@ share excluding the library/import names. Code bytes Ghidra has not placed in an
 outside both denominators.
 
 Usage:
-    python tools/scripts/ghidra_full_decomp.py              # dump both binaries (all five dumps, skipping current ones), then report
+    python tools/scripts/ghidra_full_decomp.py              # dump every binary (each dump it supports, skipping current ones), then report
     python tools/scripts/ghidra_full_decomp.py --force      # dump everything, current or not
     python tools/scripts/ghidra_full_decomp.py --no-dump    # report from the existing function lists
     python tools/scripts/ghidra_full_decomp.py --binary DBSIM
+    python tools/scripts/ghidra_full_decomp.py --binary ES1DBSIM --binary ES1GO
     python tools/scripts/ghidra_full_decomp.py --binary DBSIM --dump functions --dump vtables
 """
 
@@ -47,46 +53,49 @@ import subprocess
 import sys
 
 import es2_symbols
+import retail_binaries
+from retail_binaries import ASSETS as REPO_ROOT, GHIDRA, GHIDRA_PROJECTS as PROJECT, GHIDRA_SCRIPTS as SCRIPTS
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-GHIDRA = os.path.join(REPO_ROOT, "tools", "ghidra_12.1.2_PUBLIC", "support", "analyzeHeadless.bat")
-PROJECT = os.path.join(REPO_ROOT, "tools", "ghidra_project")
-SCRIPTS = os.path.join(REPO_ROOT, "tools", "ghidra_scripts")
-OUT_DIR = os.path.join(REPO_ROOT, "tools", "analysis_out")
-
-BINARIES = ["DBSIM", "VSHELL"]
+BINARIES = list(retail_binaries.IDS)
 DUMPS = ["functions", "decomp", "vtables", "structs", "disasm"]
 TIMEOUT_SECONDS = 60  # per function, passed through to ES2DumpFullDecomp
 
 
+def supported_dumps(binary: str) -> list[str]:
+    """The dumps that read this binary correctly; see the module docstring for the vtable dump."""
+    b = retail_binaries.get(binary)
+    return [d for d in DUMPS if d != "vtables" or b.compiler == retail_binaries.BORLAND]
+
+
 def functions_path(binary: str) -> str:
-    return os.path.join(OUT_DIR, f"{binary}_functions.txt")
+    return retail_binaries.get(binary).dump("functions.txt")
 
 
 def dump_path(binary: str) -> str:
-    return os.path.join(OUT_DIR, f"{binary}_decomp_full.c")
+    return retail_binaries.get(binary).dump("decomp_full.c")
 
 
 def vtables_path(binary: str) -> str:
-    return os.path.join(OUT_DIR, f"{binary}_vtables_full.txt")
+    return retail_binaries.get(binary).dump("vtables_full.txt")
 
 
 def structs_path(binary: str) -> str:
-    return os.path.join(OUT_DIR, f"{binary}_structs_full.txt")
+    return retail_binaries.get(binary).dump("structs_full.txt")
 
 
 def disasm_path(binary: str) -> str:
-    return os.path.join(OUT_DIR, f"{binary}_disasm_full.txt")
+    return retail_binaries.get(binary).dump("disasm_full.txt")
 
 
 def program_version(binary: str) -> int | None:
     """The program's saved-database version: the highest N of the db.<N>.gbf files Ghidra keeps
-    for it under ES2Recon.rep/idata, located through that folder's ~index.dat. None when it cannot
+    for it under <project>.rep/idata, located through that folder's ~index.dat. None when it cannot
     be read, which makes every dump of the binary run."""
-    idata = os.path.join(PROJECT, "ES2Recon.rep", "idata")
+    b = retail_binaries.get(binary)
+    idata = os.path.join(PROJECT, f"{b.project}.rep", "idata")
     try:
         with open(os.path.join(idata, "~index.dat"), encoding="utf-8", errors="replace") as f:
-            ids = re.findall(r"^\s*([0-9a-f]{8}):" + re.escape(binary) + r"\.EXE:", f.read(), re.M | re.I)
+            ids = re.findall(r"^\s*([0-9a-f]{8}):" + re.escape(b.program) + r":", f.read(), re.M | re.I)
     except OSError:
         return None
     if len(ids) != 1:
@@ -97,7 +106,7 @@ def program_version(binary: str) -> int | None:
 
 
 def stamps_path(binary: str) -> str:
-    return os.path.join(OUT_DIR, f"{binary}_dumps.json")
+    return retail_binaries.get(binary).dump("dumps.json")
 
 
 def read_stamps(binary: str) -> dict:
@@ -126,7 +135,8 @@ def run_dump(binary: str, script: str, final: str, script_args: list[str], what:
         print(f"=== {binary}: {what}: current (database version {version}), skipped", flush=True)
         return True
     tmp = final + ".tmp"
-    cmd = [GHIDRA, PROJECT, "ES2Recon", "-process", f"{binary}.EXE", "-noanalysis", "-readOnly",
+    b = retail_binaries.get(binary)
+    cmd = [GHIDRA, PROJECT, b.project, "-process", b.program, "-noanalysis", "-readOnly",
            "-scriptPath", SCRIPTS, "-postScript", script, tmp, *script_args]
     print(f"=== {binary}: {what}", flush=True)
     ok = False
@@ -166,10 +176,11 @@ def read_functions(path: str) -> dict[str, tuple[str, int]]:
     return functions
 
 
-def report_names(binary: str) -> None:
+def report_names(binary: str) -> bool:
     path = functions_path(binary)
     if not os.path.exists(path):
-        sys.exit(f"{os.path.relpath(path, REPO_ROOT)} does not exist; run without --no-dump first")
+        print(f"\n=== {binary}: {os.path.relpath(path, REPO_ROOT)} does not exist; run without --no-dump first")
+        return False
 
     known = {e["address"].lower(): e["name"] for e in es2_symbols.entries(binary)
              if e.get("type") == "function" and "name" in e}
@@ -212,24 +223,31 @@ def report_names(binary: str) -> None:
     if no_function:
         print(f"   {len(no_function)} known_symbols names have no function at their address"
               " in the database: " + " ".join(f"{a} ({known[a]})" for a in no_function))
+    return True
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--no-dump", action="store_true",
                         help="skip Ghidra; report from the existing function lists")
-    parser.add_argument("--binary", choices=BINARIES, action="append",
-                        help="dump only this binary (repeatable; default both)")
+    parser.add_argument("--binary", type=str.upper, choices=BINARIES, action="append",
+                        help="dump only this binary (repeatable; default all)")
     parser.add_argument("--dump", choices=DUMPS, action="append",
-                        help="regenerate only this dump (repeatable; default all five)")
+                        help="regenerate only this dump (repeatable; default every dump the binary supports)")
     parser.add_argument("--force", action="store_true",
                         help="dump even when the database is unchanged since the last dump")
     args = parser.parse_args()
+    binaries = args.binary or BINARIES
+    for binary in binaries:
+        for d in args.dump or []:
+            if d not in supported_dumps(binary):
+                retail_binaries.require(binary, f"the {d} dump", "ES2DumpAllVtables finds Borland vtables only",
+                                        compiler=retail_binaries.BORLAND)
 
     ok = True
     if not args.no_dump:
-        dumps = args.dump or DUMPS
-        for binary in args.binary or BINARIES:
+        for binary in binaries:
+            dumps = args.dump or supported_dumps(binary)
             if "functions" in dumps:
                 ok = run_dump(binary, "ES2ListFunctions", functions_path(binary), [],
                               "listing functions", args.force) and ok
@@ -245,8 +263,8 @@ def main() -> int:
             if "disasm" in dumps:
                 ok = run_dump(binary, "ES2DumpFullAsm", disasm_path(binary), [],
                               "disassembling", args.force) and ok
-    report_names("DBSIM")
-    report_names("VSHELL")
+    for binary in binaries:
+        ok = report_names(binary) and ok
     return 0 if ok else 1
 
 

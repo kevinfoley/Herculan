@@ -6,7 +6,7 @@ Both ES1 program images were built with Symantec C++, the line Zortech C++ began
 
 **The startup is Symantec's X-32 startup module.** Symantec C++ 6.1 ships its DOS-extender runtime with source, and its `CX.ASM` (Doug Huffman, "specifically designed for the Symantec compiler") is ES1's startup step for step: the trap at address 0, the command-line parser, the stack request, the coprocessor call and the calls into `__cinit`, `_main` and `_exit`, with the same four messages in the same order (`NULL code pointer called`, `Not enough memory`, `Bad stack size parameter`, `Stack Overflow`, at `ES1DBSIM 0009004e`). ES1's has two additions. Its trap opens with `push ebp; mov ebp,esp`, so the entry falls at `0xd` instead of `0xa`. Its `__x386_init` first sets the data selector's limit to `0x90023` (`INT 21h` `AX=3505h`, the extender's set-limit call) before storing `__psp`.
 
-**Library functions match whole.** Comparing every function of 6.1's `SDX.LIB` and `X386.LIB` against the images, relocated operands masked and the whole body required to agree, finds 90 in `ES1DBSIM` and 104 in `ES1GO`:
+**Library functions match whole.** Comparing every function of 6.1's `SDX.LIB` and `X386.LIB` against the images, relocated operands masked and the whole body required to agree, finds 87 in `ES1DBSIM` and 101 in `ES1GO`. `tools/scripts/es1_libmatch.py` makes the comparison, extracting the two libraries from the CD:
 
 | 6.1 module | Matching in `ES1DBSIM` | Also in `ES1GO` |
 |---|---|---|
@@ -17,6 +17,8 @@ Both ES1 program images were built with Symantec C++, the line Zortech C++ began
 | `io.asm`, `find.asm`, `filelen.asm`, `getenv.asm`, `getdos.asm`, `fputc.asm` | `sopen`, `creat`, `rename`, `lseek`, `filesize`, `findfirst`, `filelength`, `getenv`, four `dos_` calls, `fputc`, `fgetc` | the same, and six `dosfil.asm` calls |
 | `cinit.asm`, `x386.asm`, `funcs32.asm` | `__cinit`, `__exit`, `___faterr`, `__x386_coproc_init`, `__dosx_get_abs_address`, `__x386_map_physical_address` | the same |
 | C modules | `printf`, `fprintf`, `sprintf`, `vfprintf`, `fscanf`, `ecvt`, `setbuf`, `rand`, `clock`, `toupper`, `tolower`, `atol`, `labs`, `ltoa`, `ldexp`, `spawnl`, `spawnlp`, `execl`, `execlp`, `streambuf::underflow` | all but `rand` and `clock` |
+
+Eight of these matches do not say which function they found. `fprintf`, `sprintf`, `spawnl` and `spawnlp` each match at the same two addresses (`ES1DBSIM 0005f6e0` and `0005f77c`), and `printf`, `execl` and `execlp` at one (`0005f712`): each is a short wrapper that differs from the others only in the function it calls, which the masking hides. `streambuf::underflow` is 8 bytes and matches at two addresses.
 
 **ES1's runtime is a later revision than 6.1's.** Most of the library's functions that ES1 uses differ in places: `_open` (`00074947`) sends its error exit through a routine shared with the other `io.asm` calls (`00074922`), where 6.1's sets `errno` inline. The extender kernel in ES1's executables reads `DOS extender Copyright 1991-1994 by Doug Huffman`; 6.1's `X386.LIB` carries `Copyright 1991 1992`.
 
@@ -98,4 +100,5 @@ The counts are Ghidra's function list after [step 0.2](../../herculan/plan-es1-s
 - **Open:** whether the compiler emits run-time type information anywhere; the vtable's first dword holds none.
 - **Open:** what decides whether a reference to a function targets its padding or its prologue.
 - **Open:** how the library region divides between the C runtime and Dynamix's libraries, function by function. The 6.1 source identifies runtime functions whose bytes differ.
+- **Open:** which of the eight [ambiguous matches](#identification) is which function, and `double.asm`'s `exception`, whose match (`ES1DBSIM 0007e188`, `ES1GO 0005b800`) lies inside the function Ghidra starts at `0007e15a` (`ES1GO 0005b7d2`) rather than at a function of its own.
 - **Open:** the runtime's `INT 21h` `AX=35xxh` calls, which are the extender's services (`3501h`, `3503h`, `3504h`, `3505h`, `350Ch`, `350Dh`).

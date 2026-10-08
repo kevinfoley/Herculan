@@ -1,0 +1,713 @@
+﻿{
+  "schema_version": 1,
+  "_readme": [
+    "Known symbols for ES1's DBSIM.EXE (ES1DBSIM): confirmed address -> meaning mappings, applied to the ES1Recon Ghidra project by ES2ApplySymbolNames.java.",
+    "Addresses are offsets into the flat X-32 image (Herculan/docs/es1/formats/x32-executable.md#the-image).",
+    "Schema, confidence rules and run order: tools/ghidra_scripts/README.md, 'Known symbols'.",
+    "Entries are in address order. tools/scripts/es2_naming.py insert and edit keep it, and check that it holds."
+  ],
+  "entries": [
+    {
+      "address": "000002ba",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__x386_coproc_init",
+      "description": "Symantec C++ runtime `__x386_coproc_init`, from `x386.asm`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 86 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0005b68c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__cinit",
+      "description": "Symantec C++ runtime `__cinit`, from `cinit.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 33 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0005b6c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__exit",
+      "description": "Symantec C++ runtime `__exit`, from `cinit.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 9 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0005b6d1",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "___faterr",
+      "description": "Symantec C++ runtime `___faterr`, from `cinit.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 32 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0005f6f7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "vfprintf",
+      "description": "Symantec C++ runtime `vfprintf`, from `printf.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 27 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006013a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DOSIGN",
+      "description": "Symantec C++ runtime `__DOSIGN`, from `printf.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 48 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00060998",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "memmove",
+      "description": "Symantec C++ runtime `memmove`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 79 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "000609e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "memcmp",
+      "description": "Symantec C++ runtime `memcmp`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 37 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00060b40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "memset",
+      "description": "Symantec C++ runtime `memset`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 49 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00060c0f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__dosx_get_abs_address",
+      "description": "Symantec C++ runtime `__dosx_get_abs_address`, from `funcs32.asm`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 24 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00060c27",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__x386_map_physical_address",
+      "description": "Symantec C++ runtime `__x386_map_physical_address`, from `funcs32.asm`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 61 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00064720",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ltoa",
+      "description": "Symantec C++ runtime `ltoa`, from `itoa.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 89 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00064ca0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "strcat",
+      "description": "Symantec C++ runtime `strcat`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 65 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "000662fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "labs",
+      "description": "Symantec C++ runtime `labs`, from `atoi.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 12 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00066308",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "atol",
+      "description": "Symantec C++ runtime `atol`, from `atoi.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 75 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006663c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "stricmp",
+      "description": "Symantec C++ runtime `stricmp`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 82 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006745c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "strncpy",
+      "description": "Symantec C++ runtime `strncpy`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 84 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006a01c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "strncat",
+      "description": "Symantec C++ runtime `strncat`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 70 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006c54d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "dos_set_verify",
+      "description": "Symantec C++ runtime `dos_set_verify`, from `getdos.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 14 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006c562",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "dos_set_ctrl_break",
+      "description": "Symantec C++ runtime `dos_set_ctrl_break`, from `getdos.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 15 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006c571",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "dos_get_ctrl_break",
+      "description": "Symantec C++ runtime `dos_get_ctrl_break`, from `getdos.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 11 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006c57c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "dos_getdiskfreespace",
+      "description": "Symantec C++ runtime `dos_getdiskfreespace`, from `getdos.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 40 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006c7ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fscanf",
+      "description": "Symantec C++ runtime `fscanf`, from `scanf.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 33 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006d4e2",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_MK_FP",
+      "description": "Symantec C++ runtime `MK_FP`, from `sys_pl.asm`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 10 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00072ef8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "strchr",
+      "description": "Symantec C++ runtime `strchr`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 39 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00073e24",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fputc",
+      "description": "Symantec C++ runtime `fputc`, from `fputc.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 88 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00073e7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fgetc",
+      "description": "Symantec C++ runtime `fgetc`, from `fputc.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 69 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00074898",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "strncmp",
+      "description": "Symantec C++ runtime `strncmp`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 58 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "000748d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "findfirst",
+      "description": "Symantec C++ runtime `findfirst`, from `find.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 24 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00074a1d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "sopen",
+      "description": "Symantec C++ runtime `sopen`, from `io.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 58 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00074a57",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "creat",
+      "description": "Symantec C++ runtime `creat`, from `io.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 16 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00074a93",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "rename",
+      "description": "Symantec C++ runtime `rename`, from `io.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 17 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00074aea",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "lseek",
+      "description": "Symantec C++ runtime `lseek`, from `io.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 42 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00074b14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "filesize",
+      "description": "Symantec C++ runtime `filesize`, from `io.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 49 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "000753a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "filelength",
+      "description": "Symantec C++ runtime `filelength`, from `filelen.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 69 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00075818",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "getenv",
+      "description": "Symantec C++ runtime `getenv`, from `getenv.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 62 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00075b64",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ecvt",
+      "description": "Symantec C++ runtime `ecvt`, from `ecvt.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 32 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00075e6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "___fpclassify_d",
+      "description": "Symantec C++ runtime `___fpclassify_d`, from `dclass.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 96 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00075ef5",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "setbuf",
+      "description": "Symantec C++ runtime `setbuf`, from `flush.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 40 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007cd28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "rand",
+      "description": "Symantec C++ runtime `rand`, from `rand.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 34 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007cd54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "clock",
+      "description": "Symantec C++ runtime `clock`, from `clock.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 60 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007d5a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "toupper",
+      "description": "Symantec C++ runtime `toupper`, from `is.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 24 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007dfb4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "dunnorm",
+      "description": "Symantec C++ runtime `dunnorm`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 36 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007dfd8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "dleft_justify",
+      "description": "Symantec C++ runtime `dleft_justify`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 19 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007dfec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "dround",
+      "description": "Symantec C++ runtime `dround`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 218 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e0c6",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "dnorm",
+      "description": "Symantec C++ runtime `dnorm`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 191 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e1d1",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "dget_dtype_pair",
+      "description": "Symantec C++ runtime `dget_dtype_pair`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 148 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e265",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "dget_dtype",
+      "description": "Symantec C++ runtime `dget_dtype`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 78 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e2b3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "___dtype",
+      "description": "Symantec C++ runtime `___dtype`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 48 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e2f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DTST0",
+      "description": "Symantec C++ runtime `__DTST0@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 104 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e35c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DCMP",
+      "description": "Symantec C++ runtime `__DCMP@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 257 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e45d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DSUB",
+      "description": "Symantec C++ runtime `__DSUB@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 47 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e48c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DADD",
+      "description": "Symantec C++ runtime `__DADD@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 538 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e6a6",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DDIV",
+      "description": "Symantec C++ runtime `__DDIV@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 485 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e88c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DMUL",
+      "description": "Symantec C++ runtime `__DMUL@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 395 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ea1a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__INTDBL",
+      "description": "Symantec C++ runtime `__INTDBL@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 60 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ea59",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__LNGDBL",
+      "description": "Symantec C++ runtime `__LNGDBL@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 51 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ea8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DBLUNS",
+      "description": "Symantec C++ runtime `__DBLUNS@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 37 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007eab1",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DBLINT",
+      "description": "Symantec C++ runtime `__DBLINT@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 30 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007eacf",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DBLULNG",
+      "description": "Symantec C++ runtime `__DBLULNG@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 37 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007eaf4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DBLLNG",
+      "description": "Symantec C++ runtime `__DBLLNG@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 229 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ebd9",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "funnorm",
+      "description": "Symantec C++ runtime `funnorm`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 43 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ec04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fnorm",
+      "description": "Symantec C++ runtime `fnorm`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 126 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ec82",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fleft_justify",
+      "description": "Symantec C++ runtime `fleft_justify`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 17 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ec93",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fright_justify",
+      "description": "Symantec C++ runtime `fright_justify`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 79 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ece2",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fround",
+      "description": "Symantec C++ runtime `fround`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 287 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ee01",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fget_dtype",
+      "description": "Symantec C++ runtime `fget_dtype`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 70 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ee47",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__FLTDBL",
+      "description": "Symantec C++ runtime `__FLTDBL@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 128 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007eec7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__DBLFLT",
+      "description": "Symantec C++ runtime `__DBLFLT@`, from `double.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 126 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007ef70",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "tolower",
+      "description": "Symantec C++ runtime `tolower`, from `is.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 24 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "000806f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__memintset",
+      "description": "Symantec C++ runtime `__memintset`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 29 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00082f8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "int_getvector",
+      "description": "Symantec C++ runtime `int_getvector`, from `inter.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 34 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00082fae",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "int_setvector",
+      "description": "Symantec C++ runtime `int_setvector`, from `inter.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 21 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00082fc4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "int_service",
+      "description": "Symantec C++ runtime `int_service`, from `inter.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 173 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00083071",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "int_intercept",
+      "description": "Symantec C++ runtime `int_intercept`, from `inter.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 181 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00083126",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "int_restore",
+      "description": "Symantec C++ runtime `int_restore`, from `inter.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 74 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00083174",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "int_prev",
+      "description": "Symantec C++ runtime `int_prev`, from `inter.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 125 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0008f858",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ldexp",
+      "description": "Symantec C++ runtime `ldexp`, from `ldexp.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 195 bytes from here.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    }
+  ]
+}

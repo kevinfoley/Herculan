@@ -6,10 +6,10 @@ against it, so a later session can trust that description instead of re-reading 
 schema and the policy are in tools/ghidra_scripts/README.md, "Verification stamps".
 
 A stamp pins the function's extent from the Ghidra function list -- its entry to the end of its
-body's last address range, inline jump tables included -- and a hash of those bytes in the retail
-image. `check` voids any stamp whose extent has moved (a late-entry fix, a re-analysis) or
-whose bytes no longer hash the same (a different build under ES2/), because the read it records
-was of other bytes.
+body's last address range, inline jump tables included -- and a hash of those bytes in the
+binary's retail file, which tools/scripts/retail_binaries.py locates. `check` voids any stamp whose
+extent has moved (a late-entry fix, a re-analysis) or whose bytes no longer hash the same (a
+different build in that file), because the read it records was of other bytes.
 
 Usage:
     python tools/scripts/es2_stamp.py stamp HddButton_OnClick --via decompile
@@ -43,7 +43,9 @@ import re
 import sys
 
 import es2_symbols
-from es2_xref import ANALYSIS, BINARIES, Image, resolve
+import retail_binaries
+from es2_xref import resolve
+from retail_binaries import Image
 
 SCOPES = ("body", "callees")
 EVIDENCE = ("data", "retail")
@@ -88,7 +90,7 @@ def function_extents(binary: str) -> dict[int, int]:
     """address -> extent length, from the Ghidra function list export (address, name, body bytes,
     body address ranges per line). The extent runs from the entry to the end of the body's
     last range, so an inline jump table between two ranges is inside it and hashed with the code."""
-    path = os.path.join(ANALYSIS, "%s_functions.txt" % binary)
+    path = retail_binaries.get(binary).dump("functions.txt")
     if not os.path.exists(path):
         raise SystemExit("no function list at %s" % path)
     out = {}
@@ -144,7 +146,7 @@ def cmd_stamp(args) -> int:
 
     stamp = {
         "bytes": "%08x+%d" % (target, size),
-        "sha1": digest(Image(BINARIES[args.binary]), target, size),
+        "sha1": digest(Image(args.binary), target, size),
         "scope": args.scope,
     }
     negatives = [parse_negative(n) for n in args.negative]
@@ -181,7 +183,7 @@ def cmd_check(args) -> int:
         if not stamped:
             continue
         extents = function_extents(binary)
-        image = Image(BINARIES[binary])
+        image = Image(binary)
         for e in stamped:
             total += 1
             v = e["verified"]
