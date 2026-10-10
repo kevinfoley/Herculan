@@ -532,7 +532,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_Open",
-      "description": "(stream, path): VolRStream_Close, clears +0xa, +0xe and +0x16, then open(path, 0) into the handle at +8. When that fails it looks the path up in the volume group 00083c04 through 0004dd96, which fills the entry fields from +0xa; with no group or no entry it sets status 1 and returns 0. By the entry's compression type at +0x1e it reads through: 2, the volume's stream itself (+0xe = +0xa); 7, the RLE filter at +0x27 (made by RLERStream_Ctor (00064460) on first use and attached by RLERStream_Open (0006452c)); 9, the LZH filter at +0x2b (LZHRStream_Ctor (00064ec0), LZHRStream_Open (00064fa4)). Then status 0 and +0x26 = 1, also for a volume entry, and returns 1; the same statements as ES1DBSIM's VolRStream_Open (00056944) in different code.",
+      "description": "(stream, path): VolRStream_Close, clears +0xa, +0xe and +0x16, then open(path, 0) into the handle at +8. When that fails it looks the path up in the volume group g_VolumeGroup (00083c04) through VolumeGroup_FindEntry (0004dd96), which fills the entry fields from +0xa; with no group or no entry it sets status 1 and returns 0. By the entry's compression type at +0x1e it reads through: 2, the volume's stream itself (+0xe = +0xa); 7, the RLE filter at +0x27 (made by RLERStream_Ctor (00064460) on first use and attached by RLERStream_Open (0006452c)); 9, the LZH filter at +0x2b (LZHRStream_Ctor (00064ec0), LZHRStream_Open (00064fa4)). Then status 0 and +0x26 = 1, also for a volume entry, and returns 1; the same statements as ES1DBSIM's VolRStream_Open (00056944) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "0004d218+285",
@@ -547,7 +547,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_SetGroup",
-      "description": "(a, b, c, d): makes the volume group 00083c04 through 0004d82c(0, a, b, c, d) on first use, otherwise passes the same arguments to 0004d98f on it; the same statements as ES1DBSIM's VolRStream_SetGroup (00056a38) in different code.",
+      "description": "(a, b, c, d): makes the volume group g_VolumeGroup (00083c04) through VolumeGroup_Ctor (0004d82c)(0, a, b, c, d) on first use, otherwise passes the same arguments to VolumeGroup_SetGroup (0004d98f) on it; the same statements as ES1DBSIM's VolRStream_SetGroup (00056a38) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "0004d335+70",
@@ -562,7 +562,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_DeleteGroup",
-      "description": "(): when the volume group 00083c04 is set, 0004d89a(group, 3) and clears 00083c04. es2_xref finds one call, from main (00012ec7); the same statements as ES1DBSIM's VolRStream_DeleteGroup (00056a7c) in different code.",
+      "description": "(): when the volume group g_VolumeGroup (00083c04) is set, VolumeGroup_Dtor (0004d89a)(group, 3) and clears g_VolumeGroup (00083c04). es2_xref finds one call, from main (00012ec7); the same statements as ES1DBSIM's VolRStream_DeleteGroup (00056a7c) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "0004d37b+39",
@@ -577,7 +577,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_LoadVolume",
-      "description": "(path): passes the path to 0004dcf7 on the volume group 00083c04; the same statements as ES1DBSIM's VolRStream_LoadVolume (00056aa0) in different code.",
+      "description": "(path): passes the path to VolumeGroup_LoadVolume (0004dcf7) on the volume group g_VolumeGroup (00083c04); the same statements as ES1DBSIM's VolRStream_LoadVolume (00056aa0) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "0004d3a2+24",
@@ -970,7 +970,7 @@
       "type": "function",
       "confidence": "high",
       "name": "open",
-      "description": "The runtime's open (path, flags, mode), C convention: the copy of ES1DBSIM's open (00074947), errno at 00083cbf and the error exit at 0004ed4e.",
+      "description": "The runtime's open (path, flags, mode), C convention: the copy of ES1DBSIM's open (00074947), errno at errno (00083cbf) and the error exit at 0004ed4e.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification",
       "verified": {
         "bytes": "0004ed73+214",

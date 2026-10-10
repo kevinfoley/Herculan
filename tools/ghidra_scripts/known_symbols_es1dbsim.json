@@ -562,7 +562,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_Open",
-      "description": "(stream, path): VolRStream_Close, clears +0xa, +0xe and +0x16, then open(path, 0) into the handle at +8. When that fails it looks the path up in the volume group 00096838 through 000566b8, which fills the entry fields from +0xa; with no group or no entry it sets status 1 and returns 0. By the entry's compression type at +0x1e it reads through: 2, the volume's stream itself (+0xe = +0xa); 7, the RLE filter at +0x27 (made by RLERStream_Ctor (00074f9c) on first use and attached by RLERStream_Open (00075068)); 9, the LZH filter at +0x2b (LZHRStream_Ctor (00074b8c), LZHRStream_Open (00074c70)). Then status 0 and +0x26 = 1, also for a volume entry, and returns 1 (MOV AL,1; the decompile drops both results). ES2's VolRStream_Open (DBSIM 00472fdc).",
+      "description": "(stream, path): VolRStream_Close, clears +0xa, +0xe and +0x16, then open(path, 0) into the handle at +8. When that fails it looks the path up in the volume group g_VolumeGroup (00096838) through VolumeGroup_FindEntry (000566b8), which fills the entry fields from +0xa; with no group or no entry it sets status 1 and returns 0. By the entry's compression type at +0x1e it reads through: 2, the volume's stream itself (+0xe = +0xa); 7, the RLE filter at +0x27 (made by RLERStream_Ctor (00074f9c) on first use and attached by RLERStream_Open (00075068)); 9, the LZH filter at +0x2b (LZHRStream_Ctor (00074b8c), LZHRStream_Open (00074c70)). Then status 0 and +0x26 = 1, also for a volume entry, and returns 1 (MOV AL,1; the decompile drops both results). ES2's VolRStream_Open (DBSIM 00472fdc).",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "00056944+241",
@@ -577,7 +577,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_SetGroup",
-      "description": "(a, b, c, d): makes the volume group 00096838 through 00056180(0, a, b, c, d) on first use, otherwise passes the same arguments to 000562d8 on it. ES2's VolRStream_SetGroup (DBSIM 00473154).",
+      "description": "(a, b, c, d): makes the volume group g_VolumeGroup (00096838) through VolumeGroup_Ctor (00056180)(0, a, b, c, d) on first use, otherwise passes the same arguments to VolumeGroup_SetGroup (000562d8) on it. ES2's VolRStream_SetGroup (DBSIM 00473154).",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "00056a38+65",
@@ -592,7 +592,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_DeleteGroup",
-      "description": "(): when the volume group 00096838 is set, 000561d8(group, 3) and clears 00096838. Frameless (CMP, JE, the call, MOV, RET) after the padding at 00056a79; Ghidra had no function here. No caller found by es2_xref. ES2's VolRStream_DeleteGroup (DBSIM 004731e4).",
+      "description": "(): when the volume group g_VolumeGroup (00096838) is set, VolumeGroup_Dtor (000561d8)(group, 3) and clears g_VolumeGroup (00096838). Frameless (CMP, JE, the call, MOV, RET) after the padding at 00056a79; Ghidra had no function here. No caller found by es2_xref. ES2's VolRStream_DeleteGroup (DBSIM 004731e4).",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "00056a7c+33",
@@ -607,7 +607,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_LoadVolume",
-      "description": "(path): passes the path to 00056620 on the volume group 00096838. ES2's VolRStream_LoadVolume (DBSIM 00473210).",
+      "description": "(path): passes the path to VolumeGroup_LoadVolume (00056620) on the volume group g_VolumeGroup (00096838). ES2's VolRStream_LoadVolume (DBSIM 00473210).",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "00056aa0+21",

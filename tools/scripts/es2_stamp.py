@@ -14,6 +14,7 @@ different build in that file), because the read it records was of other bytes.
 Usage:
     python tools/scripts/es2_stamp.py stamp HddButton_OnClick --via decompile
     python tools/scripts/es2_stamp.py stamp 0044a178 --scope callees --via both
+    python tools/scripts/es2_stamp.py stamp 00055d20+00055d50 00055dc8 --binary ES1DBSIM --via decompile
     python tools/scripts/es2_stamp.py stamp 0041b468 --via disasm \\
         --negative "The player's HERC starts each mission PASSIVE :: retail :: the user's play of the retail game"
 
@@ -133,46 +134,60 @@ def load(binary: str):
 
 
 def cmd_stamp(args) -> int:
+    """Stamps every target that passes the checks, with the same options, in one write; a refused
+    target is reported and left unstamped, and makes the exit status 1."""
     header, nl = load(args.binary)
-    target = resolve(args.target, args.binary)
-    entry = next((e for e in header["entries"] if int(e["address"], 16) == target), None)
-    if entry is None:
-        raise SystemExit("%08x has no known_symbols entry; add one before stamping it" % target)
-    if entry["type"] != "function":
-        raise SystemExit("%08x is a %s entry; stamps are for functions" % (target, entry["type"]))
-    size = function_extents(args.binary).get(target)
-    if size is None:
-        raise SystemExit("%08x is not a function start in the function list" % target)
-
-    stamp = {
-        "bytes": "%08x+%d" % (target, size),
-        "sha1": digest(Image(args.binary), target, size),
-        "scope": args.scope,
-    }
+    extents = function_extents(args.binary)
+    image = Image(args.binary)
     negatives = [parse_negative(n) for n in args.negative]
-    callers, negs = claim_findings(entry.get("description", ""), negatives)
-    refused = False
-    for label, found, accepted, flag in (
-            ("names callers without saying which search found them", callers, args.read_callers,
-             "--read-callers"),
-            ("states a negative that is not a listed --negative", negs, args.own_negatives, "--own-negatives")):
-        for s in found:
-            print("%s  %s:\n    %s" % ("accepted" if accepted else "REFUSED", label, s))
-        if found and not accepted:
-            refused = True
-            print("  -> reword it as a search (\"found by <tool>\"), or pass %s if it is not one" % flag)
-    if refused:
-        return 1
+    targets = [t for arg in args.target for t in arg.split("+") if t]
+    refused_any = stamped = 0
+    for t in targets:
+        target = resolve(t, args.binary)
+        entry = next((e for e in header["entries"] if int(e["address"], 16) == target), None)
+        if entry is None:
+            raise SystemExit("%08x has no known_symbols entry; add one before stamping it" % target)
+        if entry["type"] != "function":
+            raise SystemExit("%08x is a %s entry; stamps are for functions" % (target, entry["type"]))
+        size = extents.get(target)
+        if size is None:
+            raise SystemExit("%08x is not a function start in the function list" % target)
 
-    stamp["via"] = args.via
-    if negatives:
-        stamp["negatives"] = negatives
-    entry["verified"] = stamp
+        stamp = {
+            "bytes": "%08x+%d" % (target, size),
+            "sha1": digest(image, target, size),
+            "scope": args.scope,
+        }
+        callers, negs = claim_findings(entry.get("description", ""), negatives)
+        refused = False
+        for label, found, accepted, flag in (
+                ("names callers without saying which search found them", callers, args.read_callers,
+                 "--read-callers"),
+                ("states a negative that is not a listed --negative", negs, args.own_negatives, "--own-negatives")):
+            for s in found:
+                print("%08x %s  %s  %s:\n    %s" % (target, entry.get("name", ""),
+                                                   "accepted" if accepted else "REFUSED", label, s))
+            if found and not accepted:
+                refused = True
+                print("  -> reword it as a search (\"found by <tool>\"), or pass %s if it is not one" % flag)
+        if refused:
+            refused_any += 1
+            continue
 
-    es2_symbols.check(args.binary, es2_symbols.render(header, header["entries"]))
-    es2_symbols.write_text(args.binary, es2_symbols.render(header, header["entries"]), nl)
-    print("%08x  %s  stamped: %s" % (target, entry.get("name", ""), json.dumps(stamp, ensure_ascii=False)))
-    return 0
+        stamp["via"] = args.via
+        if negatives:
+            stamp["negatives"] = negatives
+        entry["verified"] = stamp
+        stamped += 1
+        if len(targets) == 1:
+            print("%08x  %s  stamped: %s" % (target, entry.get("name", ""), json.dumps(stamp, ensure_ascii=False)))
+
+    if stamped:
+        es2_symbols.check(args.binary, es2_symbols.render(header, header["entries"]))
+        es2_symbols.write_text(args.binary, es2_symbols.render(header, header["entries"]), nl)
+    if len(targets) > 1:
+        print("%s: %d stamped, %d refused" % (args.binary, stamped, refused_any))
+    return 1 if refused_any else 0
 
 
 def cmd_check(args) -> int:
@@ -247,8 +262,9 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
 
-    s = sub.add_parser("stamp", help="stamp one function entry, replacing any stamp it had")
-    s.add_argument("target", help="hex address or known_symbols name")
+    s = sub.add_parser("stamp", help="stamp function entries, replacing any stamp they had")
+    s.add_argument("target", nargs="+",
+                   help="hex address or known_symbols name; several, or a+b+c, take the same options")
     s.add_argument("--binary", default="DBSIM", choices=es2_symbols.BINARIES)
     s.add_argument("--scope", default="body", choices=SCOPES,
                    help="body: the function's own code; callees: also every callee the description relies on")

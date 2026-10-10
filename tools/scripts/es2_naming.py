@@ -34,7 +34,10 @@ address operands by different rules (insn_streams).
   precheck BIN addr...
       The known_symbols entry and every Herculan docs/src/tests mention of each address.
   sym BIN regex...
-      known_symbols entries whose name or address matches.
+      known_symbols entries whose name or address matches, marked stamped (scope, via) or unstamped.
+  funcs BIN lo [hi]
+      The Ghidra function list from lo to hi (default lo + 0x400): size, known name, and marks for
+      unnamed, low, stamped, and (X-32) a Ghidra function on the 0x90 padding before a prologue.
   rtti BIN vtable...
       Borland class of a vtable: typeinfo = dword at vt-0xc, size = dword ti+0, name = C string
       at ti + word[ti+6].
@@ -64,9 +67,11 @@ address operands by different rules (insn_streams).
       one entry's block, all fields of one edit before validating (so a low entry can take a
       confidence and a name together). A name change also renames the old name, or the FUN_/DAT_
       label of a newly named entry, elsewhere in the file (word boundary).
-  relink batch.json [--write]
+  relink batch.json [--bare] [--write]
       Rewrite FUN_/DAT_<addr> mentions of the batch's named entries in the descriptions of other
-      entries of the same binary (insert does this itself).
+      entries of the same binary (insert does this itself). --bare also rewrites a bare address
+      ("made by 00074f9c") to "Name (00074f9c)", listing each; insert reports how many there are.
+      Stamps are kept, since the rewrite only names what the address denoted.
   mentions batch.json
       FUN_/DAT_/bare-address mentions of the batch's named addresses in docs/src/tests.
   fixrefs batch.json [--write]
@@ -357,11 +362,12 @@ def raw_disasm(binary, va, known, ext, limit=0x300):
     return "\n".join(out)
 
 
-def normalised(binary, addr):
+def normalised(binary, addr, known=None):
     """Compact body with known names substituted, then every remaining FUN_/DAT_/PTR_/LAB_ label,
     stack-local name and the function's own name reduced to a placeholder, so two compiled copies
-    of one function compare equal up to what they actually do."""
-    known = names(binary)
+    of one function compare equal up to what they actually do. `known` overrides the binary's
+    names, e.g. to give another binary's names to the addresses paired with them."""
+    known = names(binary) if known is None else known
     body = bodies(binary).get(addr)
     if body is None:
         return None
@@ -450,13 +456,47 @@ def cmd_precheck(args):
                     print(f"  {os.path.relpath(p, REPO)}:{i + 1}: {l.strip()[:220]}")
 
 
+def stamp_mark(e):
+    """'stamped <scope> <via>' for a stamped entry, 'unstamped' for an unstamped function, '' for data."""
+    v = e.get("verified")
+    if v:
+        return f"stamped {v.get('scope', '?')} {v.get('via', '?')}"
+    return "unstamped" if e["type"] == "function" else ""
+
+
 def cmd_sym(args):
     binary = args[0]
     for p in args[1:]:
         r = re.compile(p, re.I)
         for e in entries():
             if e["binary"] == binary and (r.search(e.get("name") or "") or r.search(e["address"])):
-                print(f"{e['address']} [{e['type']}/{e['confidence']}] {e.get('name')}: {e.get('description', '')}\n")
+                mark = stamp_mark(e)
+                print(f"{e['address']} [{e['type']}/{e['confidence']}{'/' + mark if mark else ''}] "
+                      f"{e.get('name')}: {e.get('description', '')}\n")
+
+
+def cmd_funcs(args):
+    """funcs BIN lo [hi]: the Ghidra function list from lo up to hi (default lo + 0x400)."""
+    binary = args[0]
+    lo = int(args[1], 16)
+    hi = int(args[2], 16) if len(args) > 2 else lo + 0x400
+    fns = functions(binary)
+    es = {e["address"]: e for e in entries(binary)}
+    img = retail_binaries.Image(binary)
+    x32 = img.binary.container == retail_binaries.X32
+    print("address   bytes  mark  name   ('*' unnamed, 'L' low entry, 'S' stamped, 'p' Ghidra function on "
+          "the 0x90 padding before a prologue)")
+    for a in sorted(fns):
+        v = int(a, 16)
+        if not lo <= v < hi:
+            continue
+        gname, size, _ = fns[a]
+        e = es.get(a)
+        name = e.get("name") if e else None
+        pad = x32 and img.read(v, 1) == b"\x90" and img.entries_of(v)[-1] != v
+        mark = ("p" if pad else "") + ("S" if e and e.get("verified") else
+                                       " " if name else "L" if e else "*")
+        print(f"{a}  {size:>5}  {mark:<4}  {name or gname}")
 
 
 def pe(binary):
@@ -732,6 +772,10 @@ def cmd_insert(args):
                 assert not re.search(r"[\x00-\x1f]", v), ("control char", e["address"])
         text2 = relink(S.insert_blocks(text, batch), batch)
         texts[binary] = (text2, nl, len(S.check(binary, text2)["entries"]))
+        _, bare = relink_bare(text2, binary, {e["address"]: e["name"] for e in batch if e.get("name")}, quiet=True)
+        if bare:
+            print(f"{binary}: {bare} bare mention(s) of the batch's addresses in other entries; "
+                  "relink BATCH --bare lists and rewrites them")
     fn = sum(1 for e in new if e.get("name") and e["type"] == "function")
     dn = sum(1 for e in new if e.get("name") and e["type"] == "data")
     totals = ", ".join(f"{b} {n}" for b, (_, _, n) in sorted(texts.items()))
@@ -781,6 +825,48 @@ def relink(text, new):
     return text
 
 
+BINARY_TAG = re.compile(r"\b(?:DBSIM|VSHELL|ES1DBSIM|ES1GO)(?:'s)? $")
+
+
+def relink_bare(text, binary, named, quiet=False):
+    """Rewrite a bare address of one of `named` ({address: name}) in the descriptions of binary's other
+    entries to 'Name (address)'. An address in parentheses after a name ('Name (00012345)': the
+    address's own name, or a word with an underscore or a capital) or after a binary's name
+    ('DBSIM 00467a98'), or inside a longer
+    token, is left alone; one in a plain parenthesised list ('filter (00012345, 00012346)') is
+    rewritten. Prints each rewrite in context unless quiet. A stamp is kept: the rewrite names what
+    the address already denoted and changes no claim."""
+    if not named:
+        return text, 0
+    rx = re.compile(r"(?<![0-9A-Za-z_+])(" + "|".join(named) + r")(?![0-9A-Za-z_])")
+    out, pos, count = [], 0, 0
+    for m in S.ENTRY_BLOCK.finditer(text):
+        e = json.loads(m.group(0))
+        d = e.get("description", "")
+        new, last, changed = [], 0, False
+        for h in rx.finditer(d):
+            a, before = h.group(1), d[:h.start()]
+            word = re.search(r"(\S+) \($", before)
+            w = word.group(1).strip("`'\"") if word else ""
+            if (a == e["address"] or BINARY_TAG.search(before)
+                    or (w and ("_" in w or w[0].isupper() or w == named[a]))):
+                continue
+            new.append(d[last:h.start()] + f"{named[a]} ({a})")
+            last = h.end()
+            changed = True
+            count += 1
+            if not quiet:
+                print(f"  {binary} {e['address']} {e.get('name', '')}: ...{d[max(0, h.start() - 50):h.start()]}"
+                      f"[{a} -> {named[a]} ({a})]{d[h.end():h.end() + 30]}...")
+        if changed:
+            e["description"] = "".join(new) + d[last:]
+            out.append(text[pos:m.start()])
+            out.append(block(e))
+            pos = m.end()
+    out.append(text[pos:])
+    return "".join(out), count
+
+
 def cmd_relink(args):
     with open(args[0], encoding="utf-8") as f:
         batch = json.load(f)
@@ -788,6 +874,11 @@ def cmd_relink(args):
     for binary, part in by_binary(batch).items():
         text, nl = S.read_text(binary)
         text = relink(text, part)
+        if "--bare" in args:
+            current = names(binary)
+            text, n = relink_bare(text, binary, {e["address"]: current[e["address"]] for e in part
+                                                 if e["address"] in current})
+            print(f"{binary}: {n} bare mention(s)")
         S.check(binary, text)
         texts[binary] = (text, nl)
     if "--write" in args:
@@ -1123,7 +1214,9 @@ def insn_streams(binary):
                 hi = fns[a][2] if b.container != retail_binaries.PE and a in fns else lo
                 continue
             m = INSN.match(line)
-            if cur is None or not m:
+            # '??' lines are undefined bytes the dump lists inside a function's listing (after its
+            # last RET, say), not instructions.
+            if cur is None or not m or m.group(2) == "??":
                 continue
             masked, vals = mask(m.group(3) or "", lo, hi)
             cur.append((m.group(1), m.group(2) + " " + masked, vals))
@@ -1315,7 +1408,7 @@ def cmd_stats(args):
 
 
 COMMANDS = {"match": cmd_match, "triage": cmd_triage, "body": cmd_body, "callers": cmd_callers, "precheck": cmd_precheck,
-            "sym": cmd_sym, "rtti": cmd_rtti, "vtables": cmd_vtables, "diff": cmd_diff, "insert": cmd_insert, "edit": cmd_edit,
+            "sym": cmd_sym, "funcs": cmd_funcs, "rtti": cmd_rtti, "vtables": cmd_vtables, "diff": cmd_diff, "insert": cmd_insert, "edit": cmd_edit,
             "mentions": cmd_mentions, "relink": cmd_relink, "fixrefs": cmd_fixrefs, "repl": cmd_repl, "apply": cmd_apply,
             "fixentry": cmd_fixentry, "stats": cmd_stats, "classes": cmd_classes}
 
