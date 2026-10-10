@@ -57,7 +57,10 @@ public enum MfdSilhouetteKind {
 /// 4 DESTROYED.
 /// </param>
 /// <param name="Damage">The subject's overall damage as a Q8 fraction, which the integrity readout inverts.</param>
-/// <param name="Distance">Eye to subject in world units, printed after <c>DIST:</c> for a hostile.</param>
+/// <param name="Distance">
+/// The range printed after <c>DIST:</c> for a hostile, already in the units it is printed in — see
+/// <see cref="For"/>.
+/// </param>
 /// <param name="SilhouetteKind">Which of the two ways the viewport is filled, or neither.</param>
 /// <param name="SilhouetteBank">The sprite bank the viewport art comes from.</param>
 /// <param name="SilhouetteFrame">Its frame in that bank.</param>
@@ -127,30 +130,19 @@ public readonly record struct MfdStatusSubject(
 	/// The comm boxes, which say whether a HERC is a squadmate (<c>Squad_IndexOf</c>, <c>00433134</c>)
 	/// and give its pilot's name (<c>HddGauge_Name</c>). Null treats no machine as a squadmate.
 	/// </param>
+	/// <param name="v110">
+	/// Whether the install is v1.10's, whose simulator prints the range in metres — see <see cref="Range"/>.
+	/// </param>
 	public static MfdStatusSubject For(Sim.SimObject? subject, Sim.SimObject? viewer,
-			StringFile? strings, SquadCommChannel? squad = null) {
+			StringFile? strings, SquadCommChannel? squad = null, bool v110 = false) {
 		if (subject == null) {
 			return None;
 		}
 
 		bool own = subject == viewer;
 		bool hostile = subject.Side != World.MissionSide.Human;
-		int distance;
-		if (TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ShowTargetDistanceInMeters)) {
-			// Use the same distance formula as the MFD F4 SCANNER screen, so the numbers agree.
-			if (viewer == null) {
-				distance = 0;
-			} else {
-				int dx = subject.Position.X - viewer.Position.X;
-				int dy = subject.Position.Y - viewer.Position.Y;
-				distance = Math.Max(SimMath.FastMagnitude2D(dx, dy), 1);
-			}
-		} else {
-			// Tweak not enabled, use the vanilla formula. This does not agree with SCANNER,
-			// but it isn't apparent because vanilla displays distance in engine units
-			// on the F5 TARGET screen.
-			distance = viewer != null ? viewer.Position.ApproxDistanceTo(subject.Position) : 0;
-		}
+		int distance = Range(subject, viewer, v110,
+			TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ShowTargetDistanceInMeters));
 
 		switch (subject) {
 			case Sim.MechObject mech: {
@@ -226,6 +218,33 @@ public readonly record struct MfdStatusSubject(
 			default:
 				return None with { Present = true };
 		}
+	}
+
+	/// <summary>
+	/// The range <c>DIST:</c> prints, from <paramref name="viewer"/> to <paramref name="subject"/>, 0 with no viewer.
+	///
+	/// <para>The paint measures <c>Math_DistanceBetweenPoints</c> between the two origins, which counts the height
+	/// difference. v1.0 prints that in raw world units, and v1.10 passes it through
+	/// <c>Hud_WorldUnitsToMetres</c> first (docs/retail/retail-builds.md#how-v110s-programs-differ), so with the
+	/// tweak off each release reads as its own executable does.</para>
+	///
+	/// <para>With <see cref="TweakSettingDefinitions.ShowTargetDistanceInMeters"/> on, both releases print what the
+	/// F4 scanner's <c>TRG:</c> would: metres of the ground-plane range, at least 1 unit, so the two screens agree.
+	/// Neither release does this; it is the tweak's own reading (KNOWN_ISSUES.md, the F5 range entry).</para>
+	/// </summary>
+	public static int Range(Sim.SimObject subject, Sim.SimObject? viewer, bool v110, bool scannerRange) {
+		if (viewer == null) {
+			return 0;
+		}
+
+		if (scannerRange) {
+			int dx = subject.Position.X - viewer.Position.X;
+			int dy = subject.Position.Y - viewer.Position.Y;
+			return MfdScanner.WorldUnitsToMetres(Math.Max(SimMath.FastMagnitude2D(dx, dy), 1));
+		}
+
+		int units = viewer.Position.ApproxDistanceTo(subject.Position);
+		return v110 ? MfdScanner.WorldUnitsToMetres(units) : units;
 	}
 
 	/// <summary>

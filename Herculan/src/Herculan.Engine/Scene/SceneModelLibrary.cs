@@ -3,6 +3,7 @@ using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.File.Dgs;
 using HercWorks.Core.Data.File.Dts;
+using HercWorks.Core.Data.File.Dts.Anim;
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
@@ -21,7 +22,8 @@ namespace Herculan.Engine.Scene;
 /// </summary>
 /// <param name="Key">Stable identity, e.g. <c>dts\ACHILLES.DTS#0</c>.</param>
 /// <param name="Mesh">Triangles, outline edges then points in model space, ready to upload — see
-/// <see cref="MeshBuild"/>.</param>
+/// <see cref="MeshBuild"/>. A structure's ground plane is not in it but in
+/// <paramref name="GroundMesh"/>.</param>
 /// <param name="TriangleVertexCount">Where <paramref name="Mesh"/>'s outline range starts.</param>
 /// <param name="Atlas">
 /// The model's packed texture bank, or null when no bank could be resolved — in which case the
@@ -54,10 +56,15 @@ namespace Herculan.Engine.Scene;
 /// (<c>0046b80c</c>) reports for an object drawing this shape. Zero for a root that is not a
 /// <c>TSBasePart</c>.
 /// </param>
+/// <param name="GroundMesh">
+/// A structure's ground plane at the rest pose <paramref name="Mesh"/> is built at — see
+/// <see cref="MeshCell.Ground"/> — for a caller that draws the model whole and the ground plane with
+/// the ground. Null for every other model, and empty for a structure that has none.
+/// </param>
 public sealed record SceneModel(
 	string Key, MeshVertex[] Mesh, int TriangleVertexCount, TextureAtlas? Atlas,
 	int HeightWorldUnits, MeshSegment[] Segments, SpriteQuad[][] Sprites,
-	MeshCell[] Cells, int PointVertexCount = 0, int ShapeRadius = 0);
+	MeshCell[] Cells, int PointVertexCount = 0, int ShapeRadius = 0, MeshBuild? GroundMesh = null);
 
 /// <summary>
 /// Loads and caches the models a mission needs, keyed so identical unit types share one mesh and one
@@ -67,7 +74,7 @@ public sealed record SceneModel(
 /// <list type="bullet">
 /// <item><b>Mechs</b> — every root of <c>dts\&lt;name&gt;.DTS</c>, which are LOD variants of the one
 /// chassis and are drawn one at a time (see <see cref="MechDetailRoots"/>), textured by the bank
-/// <c>HercSimDat.TextureGroup</c> selects (see docs/retail/formats/dts-texture-binding.md).</item>
+/// <c>HercSimDat.TextureGroup</c> selects (see docs/retail/rendering/dts-texture-binding.md).</item>
 /// <item><b>Flyers</b> — <c>dts\&lt;name&gt;.DTS</c> root 0, textured from <c>ENEMY.DBA</c>: the flyer
 /// type loader binds one fixed slot rather than choosing by chassis, and that slot is the Cybrid
 /// mechs' own (see <see cref="FlyerTextureGroup"/>).</item>
@@ -100,6 +107,9 @@ public sealed class SceneModelLibrary {
 	private readonly Dictionary<string, HercSimDamage?> _damageData = new(StringComparer.OrdinalIgnoreCase);
 
 	private readonly Dictionary<string, FlightModel?> _flightModels = new(StringComparer.OrdinalIgnoreCase);
+
+	// The mech shapes whose crude roots have been renumbered in place — see LoadMechShape.
+	private readonly HashSet<string> _remappedMechShapes = new(StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>
 	/// The folder hardpoint lists live in — <c>ResourcePath_BuildFolderName(name, "gl")</c> at the
@@ -163,7 +173,7 @@ public sealed class SceneModelLibrary {
 	/// The same pair with the theater's <c>IMPACT&lt;n&gt;.DPL</c> in place of its ordinary palette —
 	/// what the whole scene is drawn through while the cockpit damage flash is up. Null when that
 	/// palette is missing, in which case the flash simply does not recolour anything. See
-	/// docs/retail/formats/cockpit-canopy-palette.md, "The damage shake".
+	/// docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".
 	/// </summary>
 	public SurfaceShading? ImpactShading => _impactShading;
 
@@ -290,7 +300,7 @@ public sealed class SceneModelLibrary {
 			return cached;
 		}
 
-		var animation = ShapeAnimation.FromModel(LoadDts(mechName + ".DTS"));
+		var animation = ShapeAnimation.FromModel(LoadMechShape(mechName));
 		_animations[mechName] = animation;
 		return animation;
 	}
@@ -309,8 +319,14 @@ public sealed class SceneModelLibrary {
 			? HercSimDat.TextureGroupDbaBaseName(data.TextureGroup)
 			: null;
 
+		// A crude root's transform ids are root 0's once renumbered, so its parts are placed through
+		// root 0's animation list rather than the one the root carries.
+		var poseList = rootIndex > 0 && LoadMechShape(mechName)?.Roots is { Count: > 0 } roots
+			? ShapeAnimation.FirstAnimList(roots[0])
+			: null;
+
 		return Build(mechName + ".DTS", rootIndex, bankName, segmented: true,
-			hiddenPartIds: DtsMeshBuilder.AttachmentPartIds(MechHardpoints(mechName)));
+			hiddenPartIds: DtsMeshBuilder.AttachmentPartIds(MechHardpoints(mechName)), poseList: poseList);
 	}
 
 	/// <summary>
@@ -318,30 +334,18 @@ public sealed class SceneModelLibrary {
 	/// <c>Shape_DrawAtDetailLevel</c> picks between each frame (see <see cref="ShapeDetail"/>).
 	/// Empty when the <c>.DTS</c> is missing.
 	///
-	/// <para><b>The chain stops at the first root that renumbers its animation nodes.</b> In the file
-	/// each root declares its own node tree and a node id means nothing outside it
-	/// (<see cref="ShapeAnimation.SharesNodeNumbering"/>); this engine evaluates one animation per
-	/// machine, root 0's, so a root that compacts its numbering would have its parts posed onto
-	/// whichever joints happen to share their numbers — on APOCA's root 4 that puts the whole upper
-	/// body on a knee. Retail renumbers those roots onto root 0's nodes at load
-	/// (<c>MechType_RemapDetailRootTransforms</c>, <c>00420090</c>), which this engine does not yet
-	/// do; truncating here instead costs the crudest one to three roots of each chassis — see
-	/// docs/retail/formats/mech-shape-drawing.md, "The crude roots are renumbered at load".</para>
+	/// <para>Every root is posed by root 0's one animation, which is what the load-time renumbering
+	/// (<see cref="LoadMechShape"/>) makes possible.</para>
 	///
-	/// <para>A prefix rather than a filtered set, because <see cref="ShapeDetail.SelectRoot"/> walks
-	/// the chain by index and a hole in it would move every root past the hole. Retail data makes
-	/// that free: the compatible roots are always the leading ones.</para>
+	/// <para>The chain stops at the first root that fails to build, because
+	/// <see cref="ShapeDetail.SelectRoot"/> walks it by index and a hole would move every root past
+	/// it.</para>
 	/// </summary>
 	public IReadOnlyList<SceneModel> MechDetailRoots(string mechName) {
-		string dtsName = mechName + ".DTS";
-		int count = LoadDts(dtsName)?.Roots?.Count ?? 0;
+		int count = LoadMechShape(mechName)?.Roots?.Count ?? 0;
 		var roots = new List<SceneModel>(count);
 
 		for (int i = 0; i < count; i++) {
-			if (i > 0 && !ShapeAnimation.SharesNodeNumbering(Root(dtsName, i), Root(dtsName, 0))) {
-				break;
-			}
-
 			if (Mech(mechName, i) is not { } root) {
 				break;
 			}
@@ -362,7 +366,23 @@ public sealed class SceneModelLibrary {
 	/// time.</para>
 	/// </summary>
 	public int MechShapeRadius(string mechName) =>
-		Root(mechName + ".DTS", 0) is TSBasePart root ? root.Radius : 0;
+		LoadMechShape(mechName)?.Roots is { Count: > 0 } roots && roots[0] is TSBasePart root ? root.Radius : 0;
+
+	/// <summary>
+	/// A machine's shape file, with every root after the first renumbered onto root 0's node
+	/// numbering the first time it is asked for, as <c>MechType_InitOne</c> does straight after
+	/// loading the roots — see <see cref="MechDetailRootRemap"/>. Every mech path goes through here,
+	/// so no root is built or read before it is renumbered.
+	/// </summary>
+	private DynamixThreeSpaceModel? LoadMechShape(string mechName) {
+		var model = LoadDts(mechName + ".DTS");
+		if (model?.Roots is { } roots && _remappedMechShapes.Add(mechName)
+				&& MechData(mechName) is { } data) {
+			MechDetailRootRemap.Apply(roots, data.ModelLoDBoneIds);
+		}
+
+		return model;
+	}
 
 	/// <summary>
 	/// The model for a flyer type, or null when the install has no <c>.DTS</c> for it. Split by cell
@@ -383,7 +403,7 @@ public sealed class SceneModelLibrary {
 	/// type loader (<c>FlyerType_LoadResources</c>, <c>00422ed0</c>) writes a <i>literal</i>
 	/// slot address, <c>0x004a9e0e</c>. That is <c>g_MechTextureGroupSlots</c> (<c>004a9df6</c>) plus
 	/// <c>3 * 8</c>, so every flyer type shares one bank and it is the enemy one — which makes sense
-	/// of a roster that is entirely Cybrid. See docs/retail/formats/dts-texture-binding.md.</para>
+	/// of a roster that is entirely Cybrid. See docs/retail/rendering/dts-texture-binding.md.</para>
 	/// </summary>
 	public const short FlyerTextureGroup = 3;
 
@@ -516,7 +536,8 @@ public sealed class SceneModelLibrary {
 	/// from. Null only when the install is missing the relevant file or the index is out of range.
 	///
 	/// <para>Split by cell, so that a collapsing part can be redrawn as its rubble — see
-	/// <see cref="DtsMeshBuilder.BuildCells"/> and <see cref="Sim.BaseObject.CellFrames"/>.</para>
+	/// <see cref="DtsMeshBuilder.BuildCells"/> and <see cref="Sim.BaseObject.CellFrames"/> — and with its
+	/// ground plane apart from the rest, which is drawn with the ground (<see cref="MeshCell.Ground"/>).</para>
 	///
 	/// <para>An <see cref="BaseShapeSource.AnimatedLibrary"/> type is split <b>by node as well</b>,
 	/// because its shape moves: a radar mast's dish free-runs and an armed tower's turret is seeked
@@ -530,9 +551,9 @@ public sealed class SceneModelLibrary {
 	public SceneModel? Base(BaseType type) =>
 		type.Source == BaseShapeSource.AnimatedLibrary
 			? Build(BaseTypeTable.AnimatedLibraryName, type.ShapeIndex, type.TextureBankName,
-				segmented: true, transparentBank: true, celled: true)
+				segmented: true, transparentBank: true, celled: true, splitGround: true)
 			: BuildFromShapeLibrary(BaseTypeTable.StaticLibraryName, type.ShapeIndex, type.TextureBankName,
-				transparentBank: true, celled: true);
+				transparentBank: true, celled: true, splitGround: true);
 
 	/// <summary>
 	/// The hit geometry a structure type's shape carries, as distinct from the geometry it is drawn
@@ -684,7 +705,7 @@ public sealed class SceneModelLibrary {
 	/// </summary>
 	public SceneModel? Hulk(int shapeIndex) =>
 		BuildFromShapeLibrary(HulkLibraryName, shapeIndex, StructureBankName, transparentBank: true,
-			celled: true);
+			celled: true, splitGround: true);
 
 	/// <summary>The wreck library <c>Base_LoadResources</c> opens, by the literal name <c>bhulks</c>.</summary>
 	public const string HulkLibraryName = "BHULKS.DGS";
@@ -697,14 +718,15 @@ public sealed class SceneModelLibrary {
 
 	private SceneModel? Build(string dtsName, int rootIndex, string? bankName,
 			bool segmented = false, bool transparentBank = false, int cellFrame = 0,
-			IReadOnlySet<short>? hiddenPartIds = null, bool celled = false, bool leveled = false) {
+			IReadOnlySet<short>? hiddenPartIds = null, bool celled = false, bool leveled = false,
+			ANAnimList? poseList = null, bool splitGround = false) {
 		string key = cellFrame == 0 ? $"dts\\{dtsName}#{rootIndex}" : $"dts\\{dtsName}#{rootIndex}@{cellFrame}";
 		if (_models.TryGetValue(key, out var cached)) {
 			return cached;
 		}
 
 		var model = BuildFromRoot(key, Root(dtsName, rootIndex), bankName, segmented, transparentBank,
-			cellFrame, hiddenPartIds, celled, leveled);
+			cellFrame, hiddenPartIds, celled, leveled, poseList, splitGround);
 		_models[key] = model;
 		return model;
 	}
@@ -765,7 +787,7 @@ public sealed class SceneModelLibrary {
 			: null;
 
 	private SceneModel? BuildFromShapeLibrary(string libraryName, int shapeIndex, string? bankName,
-			bool transparentBank = false, bool celled = false) {
+			bool transparentBank = false, bool celled = false, bool splitGround = false) {
 		string key = $"dgs\\{libraryName}#{shapeIndex}";
 		if (_models.TryGetValue(key, out var cached)) {
 			return cached;
@@ -777,21 +799,34 @@ public sealed class SceneModelLibrary {
 			root = shapes[shapeIndex].Geometry;
 		}
 
-		var model = BuildFromRoot(key, root, bankName, transparentBank: transparentBank, celled: celled);
+		var model = BuildFromRoot(key, root, bankName, transparentBank: transparentBank, celled: celled,
+			splitGround: splitGround);
 		_models[key] = model;
 		return model;
 	}
 
 	private SceneModel? BuildFromRoot(string key, TSObject? root, string? bankName,
 			bool segmented = false, bool transparentBank = false, int cellFrame = 0,
-			IReadOnlySet<short>? hiddenPartIds = null, bool celled = false, bool leveled = false) {
+			IReadOnlySet<short>? hiddenPartIds = null, bool celled = false, bool leveled = false,
+			ANAnimList? poseList = null, bool splitGround = false) {
 		if (root == null) {
 			return null;
 		}
 
 		var atlas = bankName != null ? LoadAtlas(bankName, transparentBank) : null;
-		var build = DtsMeshBuilder.BuildRoot(root, atlas, _shading, cellFrame, hiddenPartIds);
-		var (min, max) = DtsMeshBuilder.Bounds(build.Vertices);
+		MeshBuild build;
+		MeshBuild? ground = null;
+		if (splitGround) {
+			(build, var groundBuild) = DtsMeshBuilder.BuildRootSplitGround(root, atlas, _shading);
+			ground = groundBuild;
+		} else {
+			build = DtsMeshBuilder.BuildRoot(root, atlas, _shading, cellFrame, hiddenPartIds, poseList);
+		}
+
+		// Measured over the whole shape, ground plane included.
+		var (min, max) = DtsMeshBuilder.Bounds(ground is { } apart
+			? build.Vertices.Concat(apart.Vertices).ToArray()
+			: build.Vertices);
 
 		Vector3 extent = max - min;
 
@@ -801,13 +836,14 @@ public sealed class SceneModelLibrary {
 		// without animating, levels for the transient shapes built a cell at a time.
 		return new SceneModel(key, build.Vertices, build.TriangleVertexCount, atlas,
 			(int)(extent.Y * WorldScale.WorldUnitsPerMeter),
-			segmented ? DtsMeshBuilder.BuildSegments(root, atlas, _shading, hiddenPartIds) : Array.Empty<MeshSegment>(),
+			segmented ? DtsMeshBuilder.BuildSegments(root, atlas, _shading, hiddenPartIds, poseList, splitGround) : Array.Empty<MeshSegment>(),
 			DtsSpriteBuilder.Build(root),
-			celled ? DtsMeshBuilder.BuildCells(root, atlas, _shading, hiddenPartIds)
+			celled ? DtsMeshBuilder.BuildCells(root, atlas, _shading, hiddenPartIds, splitGround)
 				: leveled ? DtsMeshBuilder.BuildDetailLevels(root, atlas, _shading, cellFrame)
 				: Array.Empty<MeshCell>(),
 			build.PointVertexCount,
-			root is TSBasePart basePart ? basePart.Radius : 0);
+			root is TSBasePart basePart ? basePart.Radius : 0,
+			ground);
 	}
 
 	/// <summary>
@@ -854,14 +890,14 @@ public sealed class SceneModelLibrary {
 	/// <summary>
 	/// <paramref name="transparentIndex0"/> decodes palette index 0 to alpha 0 rather than to an
 	/// opaque colour. An explosion frame is a round puff on a field of index 0 and the original's
-	/// blit skips that index rather than writing it (docs/retail/formats/dts-billboards.md, "Brush mode 5
+	/// blit skips that index rather than writing it (docs/retail/rendering/dts-billboards.md, "Brush mode 5
 	/// skips palette index 0"), so every sprite bank asks for it.
 	///
 	/// <para>The <b>structure</b> banks are cutouts too: <c>BASETEX</c> frames 11, 36, 38, 39, 52, 53,
 	/// 60, 61, 63, 64 and 65 are 20-73% index 0 each, and they are the lattice girders on a
 	/// structure's support towers — drawn opaque they come out as black panels where the original
 	/// shows sky through the frame. The original's own switch is per frame rather than per bank: the
-	/// loader sets the frame descriptor's <c>+0x12</c> when any texel of the frame is index 0 (docs/retail/formats/dts-texture-binding.md,
+	/// loader sets the frame descriptor's <c>+0x12</c> when any texel of the frame is index 0 (docs/retail/rendering/dts-texture-binding.md,
 	/// "The frame descriptor table and the span routines (DBSIM)"). A frame with no index 0 in it
 	/// draws identically either way, so decoding the whole bank transparent reproduces the original
 	/// on this data.</para>

@@ -518,9 +518,11 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 			Index = Index
 		};
 
+		// Count before first index: AnimThread_FindTransition (004792c8) loops on the record's +2 and
+		// indexes the transition table from its +4.
 		frame.Duration = IndexShortLE();
-		frame.FirstTransition = IndexShortLE();
 		frame.NumTransitions = IndexShortLE();
+		frame.FirstTransition = IndexShortLE();
 
 		frame.ByteLen = Index - frame.Index;
 		frame.Data = Slice(Bytes!, frame.Index, frame.ByteLen);
@@ -905,8 +907,8 @@ public class DTSModelTransformer : ByteTransformer<DynamixThreeSpaceModel> {
 
 	private void WriteANSequenceFrame(ANSequenceFrame frame, MemoryStream bos) {
 		Emit(bos, WriteShortLE(frame.Duration));
-		Emit(bos, WriteShortLE(frame.FirstTransition));
 		Emit(bos, WriteShortLE(frame.NumTransitions));
+		Emit(bos, WriteShortLE(frame.FirstTransition));
 	}
 
 	private void WriteANSequence(ANSequence seq, MemoryStream bos) {

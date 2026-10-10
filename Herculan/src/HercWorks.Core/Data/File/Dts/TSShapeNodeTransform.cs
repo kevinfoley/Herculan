@@ -6,7 +6,7 @@ namespace HercWorks.Core.Data.File.Dts;
 /// One of a <see cref="TSShape"/>'s own node transforms: a 32-byte transform record, stored in the
 /// file exactly as it sits in memory — a row-major 3x3 Q14 matrix (<c>+0x00</c>), a rank byte
 /// (<c>+0x12</c>), one byte of unknown meaning (<c>+0x13</c>), then an <c>int32</c> translation
-/// (<c>+0x14</c>/<c>+0x18</c>/<c>+0x1c</c>). See docs/retail/formats/dts-node-posing.md, "The shape's own
+/// (<c>+0x14</c>/<c>+0x18</c>/<c>+0x1c</c>). See docs/retail/rendering/dts-node-posing.md, "The shape's own
 /// node transforms".
 /// </summary>
 public class TSShapeNodeTransform {

@@ -53,7 +53,7 @@ Entry stride is therefore `size + 10`, and the last entry's trailer is the archi
 
 **The trailer repeats the last content byte** — in all 2,578 entries checked, with no exception, including the 1,617 whose last byte is nonzero. It sits outside the declared size. VSHELL's `VolRStream_Read` (`004033f9`) reaches it: a read that runs past the content copies `size - position + 1` bytes, the rest of the content and then the trailer, and reports end of data.
 
-**`+0` is a compression type, and every retail entry is stored.** VSHELL's `VolRStream_Open` (`00402d25`) reads type 2 straight from the archive, 7 through an `RLERStream` filter and 9 through an `LZHRStream` (an LZHUF-style decoder: 4,036-byte window, adaptive Huffman over 314 symbols), and asserts `Unknown compression type in volume file.` on any other value. All 3,004 entries are type 2, and the RIFF check above confirms the content is stored verbatim.
+**`+0` is a compression type, and every retail entry is stored.** VSHELL's `VolRStream_Open` (`00402d25`) reads type 2 straight from the archive, 7 through an `RLERStream` filter and 9 through an `LZHRStream` ([formats](../runtime-library.md#the-decompression-filters)), and asserts `Unknown compression type in volume file.` on any other value. All 3,004 entries are type 2, and the RIFF check above confirms the content is stored verbatim.
 
 ## Loose files on disk carry no prefix
 

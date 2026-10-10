@@ -9,7 +9,7 @@ namespace HercWorks.Core.Data.File.Dts.Part;
 ///
 /// <para><see cref="AnimSequence"/> (<c>part+0x16</c>) picks which entry of the drawing shape
 /// instance's per-sequence frame counters the part reads. Children need not be bitmaps — BULLETS.DTS
-/// root 8 animates real TSGroup geometry this way. See docs/retail/formats/dts-billboards.md,
+/// root 8 animates real TSGroup geometry this way. See docs/retail/rendering/dts-billboards.md,
 /// "TSCellAnimPart_Render".</para>
 /// </summary>
 public class TSCellAnimPart : TSPartList {

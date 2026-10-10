@@ -188,7 +188,7 @@ public sealed class WeaponShot {
 	/// <summary>
 	/// Both damage figures scaled by the firing side's mission-difficulty factor —
 	/// <c>Damage_ScaleByDifficulty</c> (<c>00426b04</c>) called twice, on the record's <c>+0x06</c>
-	/// and <c>+0x04</c>, at the top of <see cref="SimWorld.Raycast"/>.
+	/// and <c>+0x04</c>, at the top of <see cref="HitTests.Raycast"/>.
 	///
 	/// <para>It is applied there rather than at construction, and that placement matters twice over:
 	/// a shot with no attacker is not scaled at all (the original's own <c>+0x0e != 0</c> gate, which
@@ -258,7 +258,7 @@ public sealed class WeaponShot {
 
 		/// <summary>
 		/// <c>ImpactFXGround</c>, and the name is accurate: it is what
-		/// <see cref="SimWorld.Raycast"/> spawns when a shot ends on the terrain. It is <i>also</i>
+		/// <see cref="HitTests.Raycast"/> spawns when a shot ends on the terrain. It is <i>also</i>
 		/// what <c>Mech_ApplyDirectFireDamage</c> uses for damage that got through armour but left the
 		/// struck component in the health band it was already in — one array serving both.
 		/// </summary>

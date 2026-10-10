@@ -112,10 +112,10 @@ public sealed partial class BaseObject {
 		// Always the armour array. Unlike a mech, a structure has no shields to flash and no
 		// component health band to fall through, so this is the one branch that exists.
 		var point = shot.Muzzle.TransformPoint(0, struckAt, 0);
-		world.SpawnPickedImpactEffect(shot.ImpactFx(WeaponShot.ImpactFxGroup.Armor), point, this);
+		world.Effects.SpawnPickedImpactEffect(shot.ImpactFx(WeaponShot.ImpactFxGroup.Armor), point, this);
 
 		if (world.Random.NextMasked(0xfff) < HitDebrisOdds) {
-			world.SpawnDebris(HitDebrisGroup, point, StructureDebris(world));
+			world.Effects.SpawnDebris(HitDebrisGroup, point, StructureDebris(world));
 		}
 
 		return struckAt;
@@ -148,7 +148,7 @@ public sealed partial class BaseObject {
 	/// <summary>
 	/// The per-object body of <c>Sim_RaycastShapeVolume</c> (<c>00427da8</c>): one ray against this
 	/// structure's collision volume. <c>Base_DirectFireHitTest</c> runs it on the one structure it is
-	/// called on (<see cref="VolumeStruck"/>), and <see cref="SimWorld.RaycastShapes"/> over the
+	/// called on (<see cref="VolumeStruck"/>), and <see cref="HitTests.RaycastShapes"/> over the
 	/// structure list.
 	///
 	/// <para>Two rejects before any grid work: <see cref="WithinReach"/>, then the structure's centre
@@ -211,7 +211,7 @@ public sealed partial class BaseObject {
 
 	/// <summary>
 	/// Whether <c>Sim_RaycastShapeList</c> (<c>00404bc0</c>) gathers this structure for
-	/// <see cref="SimWorld.RaycastShapes"/>: <b>a static type always, an animated type only once it is
+	/// <see cref="HitTests.RaycastShapes"/>: <b>a static type always, an animated type only once it is
 	/// <see cref="Wrecked"/></b>. It is <see cref="CollisionRadius"/>'s test read the other way round,
 	/// so a structure is seen either by the AI's shape probes or by the machine sweep that reads a
 	/// collision radius, never both (docs/retail/simulation/ai-navigation.md, "The two probes").

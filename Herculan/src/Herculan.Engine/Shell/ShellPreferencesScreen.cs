@@ -57,7 +57,7 @@ public enum ShellPreferencesWidget {
 /// <c>prefs.cfg</c> options, and <c>Cancel</c> and <c>Accept</c>. Built once at startup by
 /// <c>PreferencesScreen_Build</c> (<c>00434f08</c>), put up by <c>PreferencesScreen_Enter</c>
 /// (<c>004366b5</c>) and taken down by <c>PreferencesScreen_Hide</c> (<c>00436717</c>). See
-/// docs/retail/shell/screen-layout.md#the-preferences-screen.
+/// docs/retail/shell/main-menu.md#the-preferences-screen.
 ///
 /// <para>Every rect is a literal in the executable, kept parent-relative as the builder writes it: the
 /// content panel in the canvas, the five boxes and the two buttons in the panel, and the rest in whichever
@@ -320,9 +320,10 @@ public sealed class ShellPreferencesScreen {
 
 	/// <summary>
 	/// Draws the screen into <paramref name="surface"/>. The caller clears it first; the content panel's
-	/// dithered body leaves every other pixel to the backdrop, as the main menu's does.
+	/// dithered body leaves every other pixel to the backdrop, as the main menu's does. <paramref name="lit"/> is
+	/// the widget a press has lit.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
 		ShellChrome.PaintTitledPanel(surface, PanelRect, PanelBorder, PanelFace, ShellChrome.InteriorColor, TitleHeight,
@@ -345,25 +346,25 @@ public sealed class ShellPreferencesScreen {
 			PaintCheckBox(surface, widget);
 		}
 
-		PaintButton(surface, font, text, ShellPreferencesWidget.Cancel, CancelText);
-		PaintButton(surface, font, text, ShellPreferencesWidget.Accept, AcceptText);
+		PaintButton(surface, font, text, ShellPreferencesWidget.Cancel, CancelText, lit);
+		PaintButton(surface, font, text, ShellPreferencesWidget.Accept, AcceptText, lit);
 
 		if (AlertOpen) {
-			PaintAlert(surface, font, text);
+			PaintAlert(surface, font, text, lit);
 		}
 	}
 
 	/// <summary>
 	/// The <c>Alert!</c> dialog: an <c>ESAlert</c> with a filled body, its one line and its <c>ACCEPT</c>.
 	/// </summary>
-	private static void PaintAlert(ShellSurface surface, HudFont? font, ShellText? text) {
+	private static void PaintAlert(ShellSurface surface, HudFont? font, ShellText? text, ShellWidget? lit) {
 		ShellChrome.PaintTitledPanel(surface, AlertRect, PanelBorder, PanelFace, ShellChrome.InteriorColor,
 			AlertTitleHeight, headerChrome: true, AlertPlateFirst, AlertPlateLast, fill: true);
 		ShellChrome.PaintText(surface, new ShellRect(AlertRect.X0, AlertRect.Y0, AlertRect.X1, AlertRect.Y0 + AlertTitleHeight),
 			font, text?.Text(AlertTitleText), ShellTextAlign.Center, ShellChrome.FontInkColor);
 		ShellChrome.PaintText(surface, Inside(AlertRect, AlertLineRect), font, text?.Text(AlertLineText),
 			ShellTextAlign.Left, LabelColor);
-		PaintButton(surface, font, text, ShellPreferencesWidget.AlertAccept, AlertAcceptText);
+		PaintButton(surface, font, text, ShellPreferencesWidget.AlertAccept, AlertAcceptText, lit);
 	}
 
 	/// <summary>
@@ -385,14 +386,11 @@ public sealed class ShellPreferencesScreen {
 		surface.PopClip(clip);
 	}
 
-	/// <summary>A button: its box and its caption, the <c>Text</c> child <c>ESButtonFont_Ctor</c> builds at <c>{1, 0, w, h}</c>.</summary>
+	/// <summary>A button, none of which is ever greyed.</summary>
 	private static void PaintButton(ShellSurface surface, HudFont? font, ShellText? text, ShellPreferencesWidget widget,
-			int captionText) {
-		var rect = WidgetRect(widget);
-		ShellChrome.PaintButton(surface, rect, ButtonBorder);
-		ShellChrome.PaintText(surface, new ShellRect(rect.X0 + 1, rect.Y0, rect.X1, rect.Y1), font,
-			text?.Text(captionText), ShellTextAlign.Center, ShellChrome.FontInkColor);
-	}
+			int captionText, ShellWidget? lit) =>
+		ShellChrome.PaintButton(surface, WidgetRect(widget), ButtonBorder, font, text?.Text(captionText),
+			ShellChrome.FontInkColor, pressed: lit == new ShellWidget(ShellWidgetKind.PreferencesWidget, (int)widget));
 
 	private static ShellRect Inside(ShellRect parent, ShellRect child) =>
 		new(parent.X0 + child.X0, parent.Y0 + child.Y0, parent.X0 + child.X1, parent.Y0 + child.Y1);

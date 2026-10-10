@@ -12,8 +12,10 @@ namespace Herculan.Engine.Cockpit;
 /// Automatic Turret Tracking, and target selection. Each fires on its own key-down edge — the original
 /// dispatches a command per keypress, so holding one does nothing.
 /// </summary>
+/// <param name="razorThrottleKeys">Whether keypad <c>-</c> and <c>+</c> are the RAZOR's throttle keys this frame —
+/// <see cref="PilotControls.RazorThrottleKeys"/>.</param>
 public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, CockpitCommands commands, MissionScene scene,
-		GameAudio audio) {
+		GameAudio audio, Func<bool> razorThrottleKeys) {
 	private readonly KeyLatch _allStop = new();
 	private readonly KeyLatch _shieldRear = new();
 	private readonly KeyLatch _shieldFront = new();
@@ -204,9 +206,11 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		}
 
 		// [-] and [=], with the keypad's own pair alongside them, move the armed energy weapon's power
-		// level. Also an edge: each press is one step of 0x50 out of 1200.
-		bool powerUpKey = keyboard.IsKeyPressed(Key.Equal) || (keyboard.IsKeyPressed(Key.KeypadAdd) && !alt);
-		bool powerDownKey = keyboard.IsKeyPressed(Key.Minus) || keyboard.IsKeyPressed(Key.KeypadSubtract);
+		// level. Also an edge: each press is one step of 0x50 out of 1200. The keypad's pair is the RAZOR's
+		// throttle instead, which Input_KeyjoyAxisKey (0045a308) takes before the command queue sees it.
+		bool padPower = !razorThrottleKeys();
+		bool powerUpKey = keyboard.IsKeyPressed(Key.Equal) || (keyboard.IsKeyPressed(Key.KeypadAdd) && !alt && padPower);
+		bool powerDownKey = keyboard.IsKeyPressed(Key.Minus) || (keyboard.IsKeyPressed(Key.KeypadSubtract) && padPower);
 		if (_powerUp.Press(powerUpKey)) {
 			mounts?.AdjustPower(raise: true);
 		}

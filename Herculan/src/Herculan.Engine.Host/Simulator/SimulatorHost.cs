@@ -18,8 +18,8 @@ namespace Herculan.Engine.Host.Simulator;
 
 /// <summary>
 /// The simulator's turn: one mission, from a shell launch, a demo tape or the command line, run in its own
-/// window until it closes. This class is the composition and the frame's order — what runs before what each
-/// update and each render — and nothing else; each step is the named component's.
+/// window until it closes. This class is the composition, the render's order, and the host's own steps between
+/// the phases of <see cref="SimulatorFrame"/>, which owns the update's order; each step is the named component's.
 /// </summary>
 sealed class SimulatorHost : IDisposable {
 	private readonly HostOptions _options;
@@ -28,6 +28,7 @@ sealed class SimulatorHost : IDisposable {
 	private readonly HostSession _session;
 	private readonly MissionScene _scene;
 	private readonly GameAudio _audio;
+	private readonly MessagePorts _ports;
 	private readonly SimulatorPreferences _preferences;
 	private readonly EngineWindow _window;
 	private readonly MissionOutcome _outcome = new();
@@ -35,22 +36,15 @@ sealed class SimulatorHost : IDisposable {
 	private readonly CockpitView _view;
 	private readonly CockpitDisplays _displays;
 	private readonly ModalPanels _panels;
-	private readonly PilotControls _pilot;
-	private readonly CockpitKeyboard _keyboard;
-	private readonly CockpitCommands _commands;
-	private readonly PlayerCockpitUpdate _cockpitUpdate;
 	private readonly WindowKeys _windowKeys;
 	private readonly SimulatorInput _input;
-	private readonly TapePlayback _tape;
 	private readonly TapeRecording _recording;
-	private readonly SimulationStepper _stepper;
+	private readonly SimulatorFrame _frame;
 	private readonly DebugOptions _debugOptions;
 	private readonly DebugProbes _debugProbes;
 	private readonly DebugPanel _debugPanel;
 	private readonly HostMenuBar _menuBar;
 	private readonly DeveloperKeys _developerKeys;
-	private readonly bool[] _systemButtonsShowing = new bool[SystemButtons.Count];
-	private bool _suspended;
 
 	// Built once the window has a GL context.
 	private ScaledImGui? _imgui;
@@ -86,6 +80,7 @@ sealed class SimulatorHost : IDisposable {
 		_start = start;
 		_scene = start.Scene;
 		_audio = start.Audio;
+		_ports = start.Ports;
 		_preferences = start.Preferences;
 		var mission = start.Mission;
 
@@ -98,12 +93,12 @@ sealed class SimulatorHost : IDisposable {
 			PrintScreenFiles.Attach(_window, session);
 		}
 
-		_outcome.BindWindow(_window);
+		_outcome.Ended += _window.Close;
 
 		var cockpitInput = new CockpitInput();
-		_tape = new TapePlayback(start.TapePlayer, _preferences, () => _window.FramebufferSize, cockpitInput);
-		_recording = new TapeRecording(start.TapeRecorder, _preferences, _audio);
-		_input = new SimulatorInput(_window, _tape, cockpitInput);
+		var tape = new TapePlayback(start.TapePlayer, _preferences, () => _window.FramebufferSize, cockpitInput);
+		_recording = new TapeRecording(start.TapeRecorder, _preferences, _ports);
+		_input = new SimulatorInput(_window, tape, cockpitInput);
 
 		_panels = new ModalPanels(start, _input, _view, hasCockpit: _art != null, staging.Start.Joystick);
 		_panels.OpenStaged(staging.Start);
@@ -121,12 +116,13 @@ sealed class SimulatorHost : IDisposable {
 
 		// The debug panel, over its view options and its measurements; see DebugPanel for what it shows and
 		// why it is ImGui rather than the game's own HUD font. Reachable only under --developer; without it the
-		// options and measurements still exist, with the overlays off, since the renderer and stepper read them.
+		// options and measurements still exist, with the overlays off, since the renderer reads the one and the
+		// host takes the other.
 		_debugOptions = new DebugOptions(options.DeveloperMode, _view.SteadyEye);
 		_debugProbes = new DebugProbes();
 		_debugPanel = new DebugPanel(_debugOptions, _debugProbes);
 
-		// Hidden until [Esc] first raises it — see WindowKeys.ReadMenuBarEscapeKey — since it is the only way
+		// Hidden until [Esc] first raises it — see SimulatorFrame's [Esc] — since it is the only way
 		// to reach its panels and every key from F1 to F12 is already taken. A mission has no shell turn to
 		// restart, so Settings shows the folders greyed.
 		_menuBar = new HostMenuBar(session.Localization, new TweaksMenu(TweakSettings.Current, session.Localization),
@@ -140,13 +136,10 @@ sealed class SimulatorHost : IDisposable {
 
 		staging.StageMachine(_view.PilotMech, _scene.World);
 
-		_windowKeys = new WindowKeys(_window, _input, _tape, _menuBar, start.InstallRoot, start.Disc);
-		_commands = new CockpitCommands(_displays, _view, _scene, _audio, _windowKeys, _tape);
-		_pilot = new PilotControls(start, _view, _displays, _commands, _tape, _recording, _developerKeys, staging.Start);
-		_keyboard = new CockpitKeyboard(_displays, _view, _commands, _scene, _audio);
-		_cockpitUpdate = new PlayerCockpitUpdate(_displays, _view, _commands, _scene, _audio);
-		_stepper = new SimulationStepper(_scene.World, _tape, _recording, _panels, _outcome, _developerKeys, _view,
-			_debugProbes, _pilot, _input);
+		_windowKeys = new WindowKeys(_window, _input, tape, start.InstallRoot, start.Disc);
+		_frame = new SimulatorFrame(start, _art, _view, _displays, _panels, tape, _recording, _developerKeys, staging,
+			_outcome, _input, _windowKeys, _menuBar, () => _window.FramebufferSize);
+		_frame.Stepper.Ticked += () => _debugProbes.SampleBeams(_scene.World);
 		_input.MouseQueued += (x, y, buttons, width, height) =>
 			_recording.AddMouse(x, y, buttons, width, height, _panels.AnyOpen, _view.Piloting, _input.ImGuiWantsMouse);
 
@@ -170,26 +163,23 @@ sealed class SimulatorHost : IDisposable {
 
 	public void Dispose() => _window.Dispose();
 
-	// MainWndProc's WM_KILLFOCUS calls Sim_Suspend (0045f0b8) and its WM_SETFOCUS Sim_Resume (0045f0ec): every sound
-	// and both message ports stop and start again, and the flag between them holds Sim_Run's loop (see OnUpdate). Only
-	// a change goes through, since a resume without its suspend would start the mission's track again from the top. A
-	// --screenshot run is not held, so a capture never waits on the window having the focus.
+	// MainWndProc's WM_KILLFOCUS calls Sim_Suspend (0045f0b8) and its WM_SETFOCUS Sim_Resume (0045f0ec); see
+	// SimulatorFrame.Suspend. A --screenshot run is not held, so a capture never waits on the window having the focus.
 	private void OnFocusChanged(bool focused) {
-		if (focused != _suspended || _options.ScreenshotPath != null) {
+		if (_options.ScreenshotPath != null) {
 			return;
 		}
 
-		_suspended = !focused;
-		if (_suspended) {
-			_audio.Suspend();
+		if (focused) {
+			_frame.Resume();
 		} else {
-			_audio.Resume();
+			_frame.Suspend();
 		}
 	}
 
 	// The player's own cockpit canopy art + HUD, drawn as three simultaneous panels (front/left/right) rather
 	// than the original's single keyboard-panned view — see docs/herculan/planning.md's Milestone 8 section and
-	// docs/retail/formats/cockpit-views.md for why. Falls back to a single full-window 3D view when there's no
+	// docs/retail/simulation/cockpit-views.md for why. Falls back to a single full-window 3D view when there's no
 	// player.mec or its cockpit assets are missing (e.g. a raw script.dat with no accompanying player.mec).
 	// The theater's palette is the live palette — all 256 slots — with only this herc's own 24-entry
 	// cockpit colour scheme installed over slots 42-65. See CockpitPalette.
@@ -259,7 +249,7 @@ sealed class SimulatorHost : IDisposable {
 			string resultsFolder = Path.GetDirectoryName(_start.ScriptPath) ?? ".";
 			File.WriteAllBytes(Path.Combine(resultsFolder, MissionResults.FileName), results);
 			File.WriteAllBytes(Path.Combine(resultsFolder, MissionLoader.CountersFileName), counters);
-			Console.WriteLine($"Wrote {MissionResults.FileName} ({results.Length} bytes, {_scene.World.Salvage.Count} salvaged "
+			Console.WriteLine($"Wrote {MissionResults.FileName} ({results.Length} bytes, {_scene.World.Mission.Salvage.Count} salvaged "
 				+ $"weapon(s)) and {MissionLoader.CountersFileName} to {resultsFolder}.");
 		}
 
@@ -282,7 +272,7 @@ sealed class SimulatorHost : IDisposable {
 		// Nothing is read off the device yet: GLFW publishes a stick's shape a frame late (see JoystickSource), so
 		// what it can do is announced on the first frame that knows.
 		_joystick = JoystickSource.Open(input, _start.DataDirectory, _options.ProbeJoystick);
-		_pilot.Joystick = _joystick;
+		_frame.Pilot.Joystick = _joystick;
 
 		// WinMain's toggle, after the pointer is known so it is confined and centred as Video_ToggleFullscreen's is.
 		if (_start.StartFullScreen) {
@@ -299,203 +289,36 @@ sealed class SimulatorHost : IDisposable {
 	private void OnUpdate(double deltaSeconds) {
 		_imgui?.Update((float)deltaSeconds);
 
-		// A suspended Sim_Run loop sleeps and pumps messages instead of ticking, rendering or reading input, so the
-		// mission stands still until the focus comes back; nothing accumulates meanwhile, so it carries on rather than
-		// catching up. A modal panel's own loop never tests the flag, and runs on over a sim it already holds.
-		if (_suspended && !_panels.AnyOpen) {
+		if (_frame.Held) {
 			return;
 		}
 
-		_joystick?.Announce(_pilot.Bindings, _panels.Controls, _options.WriteJoystickMap, _start.DataDirectory);
-		_stepper.BeginFrame(deltaSeconds);
+		_joystick?.Announce(_frame.Pilot.Bindings, _panels.Controls, _options.WriteJoystickMap, _start.DataDirectory);
 
-		// The modal panels take the keyboard before anything else does; [Esc], which dismisses any of them, is
-		// also this host's menu-bar key. The menu bar is asked unconditionally regardless — like the panels, it
-		// tracks its own key edge every frame — so a press held across the frame a retail panel consumes it
-		// doesn't read as a fresh, unconsumed press the moment that panel closes.
-		_panels.AdvanceClock(deltaSeconds);
-		bool panelHandledKey = _panels.ReadKeys(_input.KeyboardCapturedByImGui ? null : _input.Keyboard, _outcome.Over);
-		_windowKeys.ReadMenuBarEscapeKey(panelHandledKey, _view, hasCockpit: _art != null);
+		_frame.BeginFrame(deltaSeconds);
 		_windowKeys.ReadManualKey(_displays.FlashCommHasKeyboard, _panels.AnyOpen);
 		_windowKeys.ReadFullScreenKeys();
 
-		// Everything below reads `controls` rather than the device itself: while the debug panel has keyboard
-		// focus it is null, so piloting and camera keys go dead instead of the panel and the machine both
-		// acting on the same keystroke.
-		var controls = _input.KeyboardCapturedByImGui ? null : _input.Keyboard;
-		var liveFreeKeys = _input.ImGuiHasKeyboard ? null : _input.LiveKeys;
-		_view.ReadCameraKey(_tape.Playing ? liveFreeKeys : controls, _displays.FlashCommHasKeyboard);
-
-		// The developer keys, which reach the dispatcher only while no modal panel holds the input, and the
-		// view chain's own.
-		var pilotMech = _view.PilotMech;
-		if (pilotMech != null && _view.Chain != null && controls != null && !_panels.AnyOpen && !_outcome.Over) {
-			_developerKeys.Read(controls, _scene.World, pilotMech, _view.Chain, _tape.Playing, deltaSeconds);
-		}
-
-		if (_view.Chain != null && controls != null && !_panels.AnyOpen && !_outcome.Over) {
-			_view.ReadViewKeys(controls);
-		}
-
-		_view.ReadOrbitDrag(_input.Mouse, _input.ImGuiWantsMouse);
-		_pilot.Update(controls, _panels.AnyOpen, liveFreeKeys);
-		var keyPointer = _input.Pointer();
-		var keyFramebuffer = _window.FramebufferSize;
-		_keyboard.Read(controls, _panels.AnyOpen, pilotInput: _view.Piloting || _tape.Playing,
-			(keyPointer.X, keyPointer.Y), keyFramebuffer.X, keyFramebuffer.Y);
-
-		ReadPointer(deltaSeconds);
-
-		// Player_PerFrameCockpitUpdate's own copy: whatever the cockpit has selected becomes the
-		// machine's mech+0x1a4, once a frame and before the sim ticks, so a weapon fired during the tick
-		// sees this frame's target. The drop that precedes it is the cockpit update's own — see
-		// TargetSelection.DropIfInvalid.
-		if (_scene.Targeting is { } playerTargeting) {
-			playerTargeting.DropIfInvalid(cockpitShown: !_view.ExternalViewActive);
-			playerTargeting.PushToPilot();
-		}
-
-		_displays.HddCommand?.Update(TimeSpan.FromSeconds(deltaSeconds));
-
-		// The page's paint copies the display's row onto the screen every time it runs, and here every
-		// frame the page is up is a repaint.
-		if (_displays.Hud.Mfd == MfdMode.FlashComm) {
-			_displays.FlashComm.Sync();
-		}
-
-		var framebuffer = _window.FramebufferSize;
-		_view.Advance(deltaSeconds, _art, framebuffer.X, framebuffer.Y);
-
-		// The objectives panel stops the clock the way every modal does: the original's modal loop polls
-		// input, repaints its own widgets and presents, and never reaches the sim tick. The poll raises the
-		// status alert by itself once the mission is decided — Sim_MainTick's own arm, latched on
-		// SimWorld.PendingMissionAlert by the tick that produced it.
-		_panels.RaisePendingMissionAlert(_outcome.Over);
-		_staging.RaiseStatusAlert(_panels, _scene.World);
-		if (_panels.TakeMissionEnding(out bool quitGame)) {
-			_outcome.End(quitGame);
-		}
-
-		ApplyLivePreferences();
-
-		// The same panels pause both message ports (AlertPanel_Enter, 00454630), so a line on screen when
-		// one comes up is still there, with the rest of its time, when it goes.
-		_audio.MessagesPaused = _panels.AnyOpen;
-		_stepper.Advance(deltaSeconds);
-
-		// The preferences panel's own loop turns the camera behind it, and the controls panel's, run from inside
-		// it, does not.
-		bool preferencesUp = _panels.Preferences is { IsOpen: true };
-		_view.AdvancePanelOrbit(preferencesUp, preferencesUp && _panels.Controls is not { IsOpen: true },
-			deltaSeconds);
-
+		_frame.Update(deltaSeconds);
+		ApplyTerrainTexture();
 		RefreshDrawItems();
 
-		// Dropping out of the cockpit for the fly camera puts the palette back rather than leaving a
-		// flash up with nothing ticking it.
-		if (!_view.InMachine) {
-			_flash?.Apply(false);
-		}
+		_frame.Finish(deltaSeconds);
 
-		if (_view.InMachine) {
-			_view.UpdateKickAndShake(deltaSeconds);
-			_staging.StageHitShake(_view.Shake);
-			_flash?.Apply(_view.Shake.FlashActive);
-		}
-
-		_view.PlaceCamera();
-
-		// The listener is the camera, as it is in the original — so the external view hears the machine
-		// from behind it rather than from inside it. Camera yaw runs opposite to a simulation heading
-		// (see CockpitView.PlaceCamera), and the placement rules work in the simulation's, so it is negated
-		// back here.
-		var camera = _view.Camera;
-		_audio.SetListener(camera.Position, -camera.Yaw & 0xffff);
-		_audio.Update(TimeSpan.FromSeconds(deltaSeconds));
-
-		_displays.UpdateSquadVideos();
+		// The damage flash is the cockpit's own, so dropping out of the cockpit for the fly camera puts the
+		// palette back rather than leaving a flash up with nothing ticking it.
+		_flash?.Apply(_view.InMachine && _view.Shake.FlashActive);
 
 		// What the debug panel reports about the walk — see DebugProbes.Sample for why it is measured
 		// every frame rather than only while the panel is up.
-		_debugProbes.Sample(pilotMech);
-
-		_staging.AcquireTarget(pilotMech, _scene.Targeting);
-		_cockpitUpdate.Update(deltaSeconds);
+		_debugProbes.Sample(_view.PilotMech);
 	}
 
-	// The pointer's frame. A modal owns it: the cockpit behind it takes no clicks, and the queue is drained to
-	// nothing so a click made while it was up cannot land on a console button afterwards. Otherwise the cockpit
-	// takes it — but there is nothing to click while the cockpit is off screen, so the whole click path sits
-	// out the external view rather than hit-testing a console the player cannot see, and likewise while the
-	// pointer is over the debug panel, so a click on a checkbox is not also a click on the console behind it.
-	private void ReadPointer(double deltaSeconds) {
-		_panels.PrimePanelStickLatch();
-
-		var framebuffer = _window.FramebufferSize;
-		if (_panels.AnyOpen) {
-			_panels.ReadPointer(framebuffer.X, framebuffer.Y, _pilot.Joystick);
-			_panels.Present();
-			_input.Cockpit.Drain(deltaSeconds, (_, _) => null);
-
-			// And nothing behind it stays depressed: entering a panel calls Widget_ClearPressed (00452b94), which swaps the
-			// panel's own clickable list in and clears Widget_PressedIndex to -1, dropping whatever the
-			// cockpit had held when the panel was raised.
-			_displays.Hud = _displays.Hud with { PressedWidget = null };
-		} else if (_art != null && !_view.ExternalViewActive && (_tape.Playing || !_input.ImGuiWantsMouse)) {
-			_commands.DrainClicks(_input.Cockpit, deltaSeconds, framebuffer.X, framebuffer.Y);
-		}
-
-		_panels.SyncPointer(framebuffer.X, framebuffer.Y);
-
-		// WidgetRoot_ServicePressFlashes runs at the end of the cockpit's own per-frame widget pass, which
-		// neither a modal panel's loop nor the external view reaches. A flash ending lets the button up even
-		// under a held pointer.
-		if (!_panels.AnyOpen && _art != null && !_view.ExternalViewActive) {
-			foreach (var popped in _displays.PressFlashes.Service(_audio.CoarseTicks)) {
-				_input.Cockpit.PopUp(popped);
-			}
-
-			_displays.Hud = _displays.Hud with {
-				PressedWidget = _input.Cockpit.Depressed,
-				FlashingWidgets = _displays.PressFlashes.Lit,
-			};
-		}
-
-		// The system buttons show by the pointer's row, decided where Sim_RenderFrame ends, which no frame
-		// reaches while a modal panel's own loop holds the screen: the pair stays as it was when the panel
-		// went up. Nothing shows them in the external view; see docs/retail/formats/cockpit-input.md#open.
-		if (!_panels.AnyOpen) {
-			float pointerRow = _input.Pointer().Y;
-			for (int i = 0; i < SystemButtons.Count; i++) {
-				_systemButtonsShowing[i] = _art != null && !_view.ExternalViewActive
-					&& SystemButtons.Showing((SystemButton)i, framebuffer.X, framebuffer.Y, pointerRow);
-			}
-		}
-	}
-
-	// The preferences read where they are used, every frame rather than watched for changes: the preferences
-	// panel that steps them is drawn over a frozen scene that is still being rendered behind it, so the player
-	// sees each change take effect under the panel, which is what the original shows them too.
-	private void ApplyLivePreferences() {
-		// TERRAIN TEXTURE: one byte and one nullable handle.
+	// TERRAIN TEXTURE, the one live preference the draw reads rather than the simulation (see
+	// SimulatorFrame.ApplyLivePreferences): one byte and one nullable handle.
+	private void ApplyTerrainTexture() {
 		if (_world is not null) {
 			_world.Terrain.TextureHandle = TerrainTextureHandle();
-		}
-
-		// EFFECTS DETAIL: Sound_DetailSetting (004d1fc7) is prefs option 11, read where it is used -- by a
-		// collapsing structure's smoke, a debris piece's burst and the sound throttle.
-		byte effectsDetail = _preferences[Prefs.EffectsDetailOption];
-		_scene.World.EffectsDetail = effectsDetail;
-		if (_audio.Director is { } soundDirector) {
-			soundDirector.DetailSetting = effectsDetail;
-		}
-
-		// And the two message channels' modes, which each port tests as it shows a line: COMPUTER MESSAGE
-		// (ComputerMessageMode, 004d1fbf) in MessagePort_Show, PILOT MESSAGE (004d1fbe) in the pilot
-		// port's paint. The voice half of PILOT MESSAGE is its handler's, registered at startup.
-		_audio.Messages.Mode = (MessageChannelMode)_preferences[Prefs.ComputerMessageOption];
-		if (_audio.Squad is { } squadChannel) {
-			squadChannel.Port.Mode = (MessageChannelMode)_preferences[Prefs.PilotMessageOption];
 		}
 	}
 
@@ -534,7 +357,7 @@ sealed class SimulatorHost : IDisposable {
 
 		var pilotMech = _view.PilotMech;
 		if (pilotMech != null) {
-			_textures.RefreshShieldRings(pilotMech, _displays.PowerUp, _audio.CoarseTicks, _flash.Shown);
+			_textures.RefreshShieldRings(pilotMech, _displays.PowerUp, _ports.CoarseTicks, _flash.Shown);
 		}
 
 		// The external view has no canopy over it — there is no cockpit to see from outside the machine.
@@ -546,7 +369,7 @@ sealed class SimulatorHost : IDisposable {
 			_cockpit.DrawPanelOrbitView(gl, size.X, size.Y);
 		} else if (_cockpit.HasCockpit && !_view.ExternalViewActive) {
 			_cockpit.DrawThreePanelCockpitView(gl, size.X, size.Y);
-			_cockpit.DrawSystemButtons(size.X, size.Y, _systemButtonsShowing);
+			_cockpit.DrawSystemButtons(size.X, size.Y, _frame.SystemButtonsShowing);
 		} else if (_view.ExternalViewActive && !_view.MouseOutsideView) {
 			_cockpit.DrawExternalView(gl, size.X, size.Y);
 		} else {
@@ -563,10 +386,10 @@ sealed class SimulatorHost : IDisposable {
 			_panels.Draw(_cockpit.AlertPanels, size.X, size.Y, _textures.HudSprites, panelSprites);
 		}
 
-		// The menu bar and its panels: hidden until [Esc] raises the bar (see WindowKeys.ReadMenuBarEscapeKey),
+		// The menu bar and its panels: hidden until [Esc] raises the bar (see SimulatorFrame),
 		// and never in a --screenshot capture, which sees no input to raise it.
 		if (_options.ScreenshotPath == null) {
-			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0);
+			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0, _window.FullScreen);
 		}
 
 		_debugPanel.Draw(

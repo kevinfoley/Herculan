@@ -1,5 +1,4 @@
 // rename_symbol: a symbol-aware rename over a solution, through Roslyn's Renamer.
-// Plan: Herculan/docs/engine/plan-name-consistency.md, Stage 5.
 //
 //   dotnet run --project tools/scripts/rename_symbol -- <solution> <Type|Type.Member> <NewName> [options]
 //

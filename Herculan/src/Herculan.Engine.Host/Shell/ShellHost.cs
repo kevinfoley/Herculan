@@ -96,13 +96,17 @@ sealed class ShellHost : IDisposable {
 	/// the shell ends in is returned for the next turn, which is how it survives a return from the simulator when
 	/// <c>--no-write-prefs</c> keeps option 42 off the disk.</para>
 	///
+	/// <para><paramref name="missionPicker"/> is <c>-@</c>, which <c>ES.EXE</c> hands the shell under <c>-SPRUNKNOWN</c>, as
+	/// <c>--developer</c> is here: each career's mission load waits on the DEBUG dialog
+	/// (docs/retail/shell/main-menu.md#the-mission-name-dialog).</para>
+	///
 	/// <para>Retail ignores <c>WM_CLOSE</c> while the startup sequence runs (<c>Shell_CloseAllowed</c> (<c>0046c098</c>) clear); this
 	/// window closes.</para>
 	/// </summary>
 	public static (int ExitCode, ShellLaunch? Launch, ShellCampaignMode? Mode) Run(HostSession session, string? paletteName, string? screenshotPath = null,
 			ShellCampaignMode? forcedMode = null, int startTab = ShellScreen.MainMenuTab,
 			int startBay = 0, bool startPractice = false, bool silentAudio = false, bool writePreferences = true,
-			bool startWindowed = false, bool moviesEnabled = true, int returnCode = StartupCode) {
+			bool startWindowed = false, bool moviesEnabled = true, int returnCode = StartupCode, bool missionPicker = false) {
 		var content = GameContent.MountShell(session.InstallRoot, session.Disc);
 		Console.WriteLine($"Mounted archives: {string.Join(", ", content.MountedArchives)}");
 
@@ -124,13 +128,13 @@ sealed class ShellHost : IDisposable {
 		}
 
 		using var host = new ShellHost(session, content, art, paletteName, screenshotPath, forcedMode, startTab, startBay,
-			startPractice, silentAudio, writePreferences, startWindowed, moviesEnabled, returnCode);
+			startPractice, silentAudio, writePreferences, startWindowed, moviesEnabled, returnCode, missionPicker);
 		return host.RunWindow();
 	}
 
 	private ShellHost(HostSession session, GameContent content, ShellArt art, string? paletteName, string? screenshotPath,
 			ShellCampaignMode? forcedMode, int startTab, int startBay, bool startPractice, bool silentAudio, bool writePreferences,
-			bool startWindowed, bool moviesEnabled, int returnCode) {
+			bool startWindowed, bool moviesEnabled, int returnCode, bool missionPicker) {
 		_returnCode = returnCode;
 		_fromMission = returnCode is MissionResults.DebriefExitCode or DebriefDestroyedCode;
 		_startPractice = startPractice;
@@ -199,11 +203,12 @@ sealed class ShellHost : IDisposable {
 		var hangar = new HangarTabs(content, _game, dialogs, _screen, _widgets, startBay, repaint);
 		_navigation = new TabNavigation(_screen, _canvas, _game, saveScreen, hangar, _mission, _audio, _widgets, repaint);
 		_loop = new CampaignScreens(installRoot, content, _game, saveScreen, hangar, _mission, _navigation, _startup, _movies, _canvas,
-			dialogs, _screen, _outcome, _window, _widgets, repaint);
+			dialogs, _screen, _outcome, _window, _widgets, missionPicker, repaint);
 		var save = new SaveRestoreTab(saveScreen, _game, _loop, _mission, _navigation, _screen, _widgets, repaint);
 		_menu = new MainMenuPanels(installRoot, disc, content, _window, _screen, _widgets, _game, saveScreen, mainMenu, dialogs,
 			_movies, _audio, _outcome, _loop, _navigation, repaint);
-		_fields = new EditFields(_window, _audio, _movies, _pointer, _screen, saveScreen, _menu, _canvas, _widgets, repaint);
+		_fields = new EditFields(_window, _audio, _movies, _pointer, _screen, saveScreen, _menu, dialogs.MissionName, _canvas,
+			_widgets, repaint);
 		_keys = new KeyboardRouting(_window, _movies, _mission, _pointer, _startup, _game, _menu, _fields, repaint);
 		_content = new CanvasContent(_canvas, _screen, _pointer, _startup, dialogs, _movies, _menu, save, hangar, _mission);
 
@@ -312,7 +317,7 @@ sealed class ShellHost : IDisposable {
 		}
 
 		// A fade holds the shell until it is done: it pumps window messages but not the widget layer
-		// (docs/retail/shell/screen-layout.md#sound). Retail queues the clicks made meanwhile and delivers them
+		// (docs/retail/shell/movies-and-sound.md#sound). Retail queues the clicks made meanwhile and delivers them
 		// after; this host polls, so the buttons' state is taken without delivering it, and an edge
 		// made during the fade is spent, a divergence from retail.
 		if (_audio.Fading) {
@@ -320,8 +325,8 @@ sealed class ShellHost : IDisposable {
 			return;
 		}
 
-		// The mission tab's arrows draw a lit face while pressed, so a change in what the pointer has lit
-		// repaints that tab; the other screens draw no pressed state.
+		// A content button's caption and the mission tab's arrows draw pressed while lit, so a change in what the
+		// pointer has lit repaints, as WinButton_HandleEvent (004097da) repaints on the press, the release and the leave.
 		var litBefore = _pointer.Lit;
 
 		var framebuffer = _window.FramebufferSize;
@@ -343,6 +348,10 @@ sealed class ShellHost : IDisposable {
 			return;
 		}
 
+		// Shell_PumpEvents (0046814c): Timer_Tick, then EventQueue_Pump, which delivers the clicks the window
+		// posted before the alarm's tick.
+		bool arrowsTick = _mission.TickArrowAlarm(Environment.TickCount64);
+
 		// While the pointer is over the menu bar or one of its windows, the shell under them takes nothing:
 		// the buttons' state is taken without delivering it, as during a fade.
 		if (_window.ImGuiWantsMouse) {
@@ -350,7 +359,11 @@ sealed class ShellHost : IDisposable {
 		} else {
 			_pointer.Move(_content.HitAt(canvasX, canvasY));
 			_buttons.Deliver(mouse, _widgets.Deliver);
-			if (_pointer.Lit != litBefore && _screen.SelectedTab == ShellScreen.MissionTab) {
+			if (arrowsTick) {
+				_mission.RepeatArrows();
+			}
+
+			if (_pointer.Lit != litBefore) {
 				_content.Repaint();
 			}
 		}

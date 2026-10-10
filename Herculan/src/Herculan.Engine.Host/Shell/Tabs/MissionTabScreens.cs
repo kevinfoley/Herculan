@@ -18,7 +18,13 @@ sealed class MissionTabScreens {
 	private readonly ShellDialogs _dialogs;
 	private readonly ShellOutcome _outcome;
 	private readonly FrontEndWindow _window;
+	private readonly WidgetEvents _widgets;
 	private readonly Action _repaint;
+
+	// The arrows' auto-repeat alarm. Each arrow installs its own as it is shown and removes it as it is
+	// hidden; Mission_Leave (00444a05) hides them all and Mission_Show (004441e3) shows a view's arrows
+	// together, so the alarms of the arrows up are installed in one pass and tick together, as this one does.
+	private readonly ShellAlarm _arrowAlarm = new(Environment.TickCount64);
 
 	// The mission tab's briefing, objectives and intelligence report, assembled from the loaded slot's
 	// career block and its own missn%d.str, and the screen that shows them, built once and kept.
@@ -62,13 +68,14 @@ sealed class MissionTabScreens {
 		_dialogs = dialogs;
 		_outcome = outcome;
 		_window = window;
+		_widgets = widgets;
 		_repaint = repaint;
 
 		_missionTexts = ShellMissionTexts.Load(game.WorkingFiles, game.LoadedGame);
 		_mapArt = ShellMapArt.Load(content);
 
 		widgets.Handle(ShellWidgetKind.MissionButton, widget => ClickMissionButton((ShellMissionButton)widget.Index));
-		widgets.Handle(ShellWidgetKind.MissionArrow, widget => ClickMissionArrow((ShellMissionArrow)widget.Index));
+		widgets.Handle(ShellWidgetKind.MissionArrow, ClickMissionArrow);
 		widgets.Handle(ShellWidgetKind.LaunchRefusalOkay, _ => {
 			_dialogs.LaunchRefusal.Close();
 			_repaint();
@@ -102,6 +109,14 @@ sealed class MissionTabScreens {
 	/// </summary>
 	public void Enter() {
 		_viewUp = View();
+
+		// The briefing shows all eight arrows and the debrief the two page buttons; the map view none.
+		if (_viewUp == ShellMissionView.Map) {
+			_arrowAlarm.Remove();
+		} else {
+			_arrowAlarm.Install(ShellPointer.RepeatAlarmMilliseconds, ShellPointer.RepeatAlarmMilliseconds);
+		}
+
 		if (_viewUp == ShellMissionView.Debriefing) {
 			_missionScreen.EnterDebrief(_debriefText, _canvas.Art.Sprites?.Font(ShellArt.ScreenFont));
 			if (!_debriefMovieQueued && _debriefMovie is { } movie) {
@@ -149,9 +164,31 @@ sealed class MissionTabScreens {
 	public void TabClicked() {
 		if (_screen.SelectedTab == ShellScreen.MissionTab) {
 			_missionScreen.Leave();
+			_arrowAlarm.Remove();
 		}
 
 		_debriefUp = false;
+	}
+
+	/// <summary>
+	/// <c>Timer_Tick</c>'s pass over the arrows' alarm, which <c>Shell_PumpEvents</c> (<c>0046814c</c>) runs before
+	/// <c>EventQueue_Pump</c>: whether it ticks this pass. The tick is delivered after the pass's clicks, by
+	/// <see cref="RepeatArrows"/>.
+	/// </summary>
+	public bool TickArrowAlarm(long now) => _arrowAlarm.Tick(now);
+
+	/// <summary>The alarm's tick, delivered to every arrow up; the one that is lit fires again.</summary>
+	public void RepeatArrows() {
+		if (_screen.SelectedTab != ShellScreen.MissionTab || _viewUp == ShellMissionView.Map) {
+			return;
+		}
+
+		var first = _viewUp == ShellMissionView.Debriefing ? ShellMissionArrow.PageUp : ShellMissionArrow.MapUp;
+		foreach (var arrow in Enum.GetValues<ShellMissionArrow>()) {
+			if (arrow >= first) {
+				_widgets.RepeatTick(new ShellWidget(ShellWidgetKind.MissionArrow, (int)arrow));
+			}
+		}
 	}
 
 	/// <summary>
@@ -205,12 +242,21 @@ sealed class MissionTabScreens {
 		_repaint();
 	}
 
-	// The page arrows page the text that is up; the map's six call the map's methods and repaint it
-	// (Mission_OnMapUp (00444ee7) to Mission_OnMapZoomOut (004452f2)), once each, the auto-repeat not being ported.
-	private void ClickMissionArrow(ShellMissionArrow arrow) {
+	// The page arrows page the text that is up (Mission_OnPageUp (004455e9), Mission_OnPageDown (0044569a)). The
+	// map's six (Mission_OnMapUp (00444ee7) to Mission_OnMapZoomOut (004452f2)) call the map's method and repaint
+	// it 1-4 times by the arrow's repeat count (docs/retail/shell/mission-screen.md#the-three-views). The original
+	// paints and presents after every step, back to back within the one handler, so only the last stays on screen
+	// and one repaint after the steps shows the same.
+	private void ClickMissionArrow(ShellWidget widget) {
+		var arrow = (ShellMissionArrow)widget.Index;
 		if (arrow is not (ShellMissionArrow.PageUp or ShellMissionArrow.PageDown)) {
 			if (_missionMap != null) {
-				_missionMap.Press(arrow);
+				int repeats = _widgets.RepeatCount(widget);
+				int steps = repeats < 3 ? 1 : repeats < 6 ? 2 : repeats < 9 ? 3 : 4;
+				for (int i = 0; i < steps; i++) {
+					_missionMap.Press(arrow);
+				}
+
 				_repaint();
 			}
 

@@ -5,7 +5,7 @@ namespace Herculan.Engine.Audio;
 /// <summary>
 /// A squadmate's speaking voice — the <c>P&lt;bank&gt;_nnnnn.WAV</c> clips in the voice archive, the
 /// other half of the five-slot speech pool <see cref="ComputerVoice"/> draws on. See
-/// docs/retail/formats/audio.md, "Speech and the comm portraits".
+/// docs/retail/simulation/audio.md, "Speech and the comm portraits".
 ///
 /// <para><b>The comm box opens the clip, not the port.</b> <c>CommBox_BeginMessage</c>
 /// (<c>0044afc8</c>) builds the <c>.WAV</c> name and the matching <c>.SNC</c> portrait script

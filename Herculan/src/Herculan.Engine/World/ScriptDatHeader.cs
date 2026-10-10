@@ -70,7 +70,7 @@ public readonly struct ScriptDatHeader {
 	public bool UnlimitedAmmunition { get; }
 
 	/// <inheritdoc cref="ScriptDat.TrainingMissionNumber"/>
-	/// <remarks>The music branch is <see cref="Audio.SoundDirector.StartMissionMusic"/>.</remarks>
+	/// <remarks>The music branch is <see cref="Audio.CdMusic.StartMission"/>.</remarks>
 	public int TrainingMissionNumber { get; }
 
 	/// <inheritdoc cref="ScriptDat.PlayerInvulnerable"/>

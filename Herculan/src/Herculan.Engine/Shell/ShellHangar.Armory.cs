@@ -63,7 +63,7 @@ public sealed partial class ShellHangar {
 	/// the head of that weapon's list — its <see cref="ShellWeaponUnit.FitCondition"/> becomes the
 	/// hardpoint's condition and its guidance is reset, to ARH for the three missile racks and to none for
 	/// everything else, the Razor's launcher included. With that list empty the slot is left empty and
-	/// its condition untouched. See docs/retail/shell/screen-layout.md#fitting-a-weapon.
+	/// its condition untouched. See docs/retail/shell/weapons-and-repair.md#fitting-a-weapon.
 	/// </summary>
 	public void FitMount(ShellBayMachine machine, int slot, int weaponId) {
 		if (machine.Mount(slot) is { } old) {

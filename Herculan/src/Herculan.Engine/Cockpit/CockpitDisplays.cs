@@ -16,12 +16,13 @@ namespace Herculan.Engine.Cockpit;
 /// </summary>
 public sealed class CockpitDisplays {
 	private readonly CockpitView _view;
-	private readonly GameAudio _audio;
+	private readonly MessagePorts _ports;
 
 	public CockpitDisplays(SimulatorStart start, CockpitArt? art, CockpitView view, SimulatorStaging staging) {
 		_view = view;
-		_audio = start.Audio;
+		_ports = start.Ports;
 		Art = art;
+		IsV110 = start.Content.IsV110;
 		var scene = start.Scene;
 		var squadPlacements = start.SquadPlacements;
 
@@ -66,6 +67,7 @@ public sealed class CockpitDisplays {
 		string voiceFolder = ComputerVoice.VoiceFolder(start.Content.Language);
 		start.Audio.InstructorClip = (trainingMission, messageId) =>
 			InstructorVoice.ReadClip(start.InstallRoot, start.Disc, voiceFolder, trainingMission, messageId);
+		start.Ports.AttachSquad(SquadComm);
 		start.Audio.AttachSquad(SquadComm);
 
 		// A comm box captions itself with its pilot's roster name, the same one the MFD's transmission plate
@@ -119,6 +121,9 @@ public sealed class CockpitDisplays {
 	}
 
 	public CockpitArt? Art { get; }
+
+	/// <inheritdoc cref="GameContent.IsV110"/>
+	public bool IsV110 { get; }
 
 	/// <summary>What every cockpit widget draws from this frame.</summary>
 	public CockpitHudState Hud { get; set; }
@@ -209,11 +214,11 @@ public sealed class CockpitDisplays {
 	/// the callers here leave out the ones that draw nothing from it — the latching MFD and Heads-Down Display
 	/// buttons, the weapon rows and the shield facings.</para>
 	/// </summary>
-	public void FlashPress(CockpitWidgetId id) => PressFlashes.Flash(id, _audio.CoarseTicks);
+	public void FlashPress(CockpitWidgetId id) => PressFlashes.Flash(id, _ports.CoarseTicks);
 
 	/// <summary>
 	/// The cockpit powers up the moment the player has a machine — the start-up sequence and, for a flyer, the
-	/// engine hum that runs for the rest of the mission. See GameAudio.PowerUp.
+	/// engine hum that runs for the rest of the mission. See GameAudio.PowerUp and MessagePorts.PowerUp.
 	///
 	/// <para>The listener has to be placed first. The hum is positional and PowerUp is a one-shot: SoundDirector
 	/// refuses to start a source past its catalog row's cutoff range, so with the listener still at its default
@@ -230,9 +235,10 @@ public sealed class CockpitDisplays {
 
 		audio.SetListener(pilotMech.EyePosition, pilotMech.Heading);
 		audio.PowerUp(pilotMech);
-		HeadingSweep = HeadingTapeSweep.ForPowerUp(pilotMech, audio.CoarseTicks);
+		_ports.PowerUp(pilotMech);
+		HeadingSweep = HeadingTapeSweep.ForPowerUp(pilotMech, _ports.CoarseTicks);
 		if (!screenshotRun) {
-			PowerUp = CockpitPowerUp.ForPowerUp(pilotMech, audio.CoarseTicks);
+			PowerUp = CockpitPowerUp.ForPowerUp(pilotMech, _ports.CoarseTicks);
 		}
 	}
 

@@ -63,7 +63,7 @@ public sealed class CockpitCommands(CockpitDisplays displays, CockpitView view, 
 		// The screen-edge strips are the exception, and for the same structural reason: that virtual
 		// lives in the PanelGadget mixin every gadget carries as a second base, and ScrollTrigger is one
 		// of the four classes that take no mixin at all. It is silent for want of the base, not for want
-		// of an action. See docs/retail/formats/cockpit-input.md, "The second vtable".
+		// of an action. See docs/retail/simulation/cockpit-input.md, "The second vtable".
 		//
 		// The system buttons are silent the other way round: SystemGadget carries the mixin, but its own
 		// OnClick (SystemGadget_OnClick, 00434910) goes straight to SystemButtons_OnChildClick and never
@@ -73,7 +73,7 @@ public sealed class CockpitCommands(CockpitDisplays displays, CockpitView view, 
 		// viewport are HDDListGadgets, whose OnClick (HDDListGadget_OnClick, 0044f6ac) only queues the
 		// click for HddCommandScreen_HandleListClick, and the FLASH COMM rows sit under the MFD's
 		// MFDListGadget, whose OnClick (MFDListGadget_OnClick, 00447630) only calls
-		// MfdFlashComm_HandleListClick. See docs/retail/formats/audio.md, "Sounds a cockpit control makes".
+		// MfdFlashComm_HandleListClick. See docs/retail/simulation/audio.md, "Sounds a cockpit control makes".
 		if (click.Id.Kind is not (CockpitWidgetKind.ViewEdge or CockpitWidgetKind.SystemButton
 				or CockpitWidgetKind.HddOrderRow or CockpitWidgetKind.HddMapArea
 				or CockpitWidgetKind.MfdFlashCommRow)) {
@@ -346,7 +346,7 @@ public sealed class CockpitCommands(CockpitDisplays displays, CockpitView view, 
 
 			// A comm box selects its pilot, and selecting the one already selected drops it, where the
 			// original's case 10-12 turns that click away and keeps the selection — a divergence recorded in
-			// KNOWN_ISSUES.md; see docs/retail/formats/heads-down-display.md#selecting-a-pilot. Selecting a
+			// KNOWN_ISSUES.md; see docs/retail/simulation/heads-down-display.md#selecting-a-pilot. Selecting a
 			// pilot from the damage screen also switches back to the command display, which is what that
 			// case does before it selects.
 			case HddLayout.Widget.PilotBox0 or HddLayout.Widget.PilotBox1 or HddLayout.Widget.PilotBox2

@@ -1,5 +1,4 @@
 using System.Numerics;
-using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
@@ -14,7 +13,7 @@ namespace Herculan.Engine.Cockpit;
 /// sensor dropout, and the HUD state rebuilt from the machine for the widgets to draw.
 /// </summary>
 public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView view, CockpitCommands commands,
-		MissionScene scene, GameAudio audio) {
+		MissionScene scene, MessagePorts ports) {
 	/// <summary>Runs the frame's cockpit update, when there is a cockpit and a machine to read it off.</summary>
 	public void Update(double deltaSeconds) {
 		if (displays.Art is not { } cockpitArt || view.PilotMech is not { } pilotMech) {
@@ -28,7 +27,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 		int targetRange = pilotMech.Target is { } weaponTarget
 			? pilotMech.Position.ApproxDistanceTo(weaponTarget.Position)
 			: 0;
-		pilotMech.Weapons.PerFrameUpdate(targetRange, scene.World.MissileFlown);
+		pilotMech.Weapons.PerFrameUpdate(targetRange, scene.World.PlayerMissile.Flown);
 
 		// The pods' own tick runs from inside that pass in the original, and only ever for the machine
 		// the cockpit belongs to. It is what carries the ECM and Turbo rows' buttons into the sim.
@@ -43,7 +42,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 
 		// NavMarker_Tick (004349ac) runs from the cockpit's own paint, one frame apart, and is what arms the marker
 		// on leaving it and clears it — announcing WAYPOINT REACHED — on coming back.
-		displays.NavMarker.Tick(pilotMech.Position, audio.Messages);
+		displays.NavMarker.Tick(pilotMech.Position, ports.Computer);
 
 		// Player_ResolveTargetAimPoint, once a frame and once only: it runs the Targeting Pod's decay
 		// countdown as a side effect, so asking twice would halve how long a damaged pod holds a
@@ -52,13 +51,13 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 
 		// Cockpit_PowerUpTick's arming pass, which runs from the cockpit's own per-frame update.
 		var cockpitPowerUp = displays.PowerUp;
-		cockpitPowerUp.Tick(audio.CoarseTicks);
+		cockpitPowerUp.Tick(ports.CoarseTicks);
 
 		// The dish's power-up animation, on whichever screen the display is showing this frame. Asked
 		// before the dropout, because it is what decides whether the MFD's update gets that far.
 		var hudState = displays.Hud;
 		bool scannerShowing = hudState.Mfd == MfdMode.Scanner;
-		int? mfdPowerUpFrame = cockpitPowerUp.MfdFrame(scannerShowing, audio.CoarseTicks);
+		int? mfdPowerUpFrame = cockpitPowerUp.MfdFrame(scannerShowing, ports.CoarseTicks);
 
 		// A Heads-Down Display press held while it was dark, acted on by the first update that finds it
 		// back. The display's update handles its pending press before it ticks the dropout, so this goes
@@ -72,7 +71,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 		// update while they are on screen, which a fully panned heads-down view is not.
 		if (scene.World is { } dropoutWorld) {
 			var mounts = pilotMech.Weapons;
-			cockpitDropouts.Tick(SensorDropout.SensorCondition(pilotMech), audio.CoarseTicks,
+			cockpitDropouts.Tick(SensorDropout.SensorCondition(pilotMech), ports.CoarseTicks,
 				dropoutWorld.PresentationRandom,
 				cockpitUp: !view.ExternalViewActive,
 				consoleOnScreen: !view.Pan.AtHeadsDown,
@@ -97,13 +96,13 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 			// What the gunsight hands the heading tape: the machine's own heading out of mech+0x10, except
 			// while the cockpit's power-up wind-up is still running, when it is that ramp instead. The
 			// sweep latches itself as it goes, so this is the once-a-frame call it expects.
-			Heading = displays.HeadingSweep?.Angle((short)pilotMech.Heading, audio.CoarseTicks)
+			Heading = displays.HeadingSweep?.Angle((short)pilotMech.Heading, ports.CoarseTicks)
 				?? (short)pilotMech.Heading,
 			ShieldFront = shieldFront,
 			ShieldRear = shieldRear,
 			EnergyFraction = pilotMech.EnergyPoolFraction,
 			Weapons = WeaponRowState.Build(pilotMech.Weapons,
-				cockpitArt.Gau.WeaponListTotal, cockpitArt.Strings, cockpitPowerUp, audio.CoarseTicks,
+				cockpitArt.Gau.WeaponListTotal, cockpitArt.Strings, cockpitPowerUp, ports.CoarseTicks,
 				cockpitDropouts),
 			Dropout = cockpitDropouts.Snapshot,
 			ChargeBarsDraggable = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ChargeBarPowerLevel),
@@ -127,8 +126,8 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 			// raster the command display does.
 			NavMap = MfdNavMap.Build(pilotMech, hddCommand?.Raster),
 
-			// The message port has already run for this frame inside audio.Update, before this.
-			Message = audio.Messages.Ticker,
+			// The message port has already run for this frame inside ports.Update, before this.
+			Message = ports.Computer.Ticker,
 
 			// The command display, rebuilt every frame whether or not it is the page showing: its map
 			// follows the machine, so the camera has to keep up even while the damage screen is up.
@@ -142,7 +141,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 			// another screen transmit a row the cursor never moved to.
 			FlashComm = displays.FlashComm.Snapshot(),
 
-			// The comm channel has already run for this frame inside audio.Update, on the same clock as
+			// The comm channel has already run for this frame inside ports.Update, on the same clock as
 			// the computer's port.
 			Transmission = squadComm.Transmission,
 
@@ -192,7 +191,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 		var missileCam = hudState.MissileCam;
 		if (missileCamUpdating && scene.World is { } camWorld) {
 			missileCam = displays.MissileCamScreen.Update(camWorld, pilotMech.LockAcquired,
-				MfdMissileCam.LauncherRounds(pilotMech.Weapons, weaponRows), audio.CoarseTicks,
+				MfdMissileCam.LauncherRounds(pilotMech.Weapons, weaponRows), ports.CoarseTicks,
 				repaint: !displays.MissileCamUpdatedLastFrame);
 		}
 
@@ -207,8 +206,8 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 			&& (missileCamSwitch.Holding || squadComm.Transmission is null);
 		var statusRefresh = displays.StatusRefresh;
 		statusRefresh.Update(hudState.Mfd, statusUpdating, view.Pan.IsPanning || view.Glance.Sliding,
-			audio.CoarseTicks, displays.StatusRoster.Subject, scene.Targeting?.Selected,
-			subject => MfdStatusSubject.For(subject, pilotMech, cockpitArt.Strings, squadComm)
+			ports.CoarseTicks, displays.StatusRoster.Subject, scene.Targeting?.Selected,
+			subject => MfdStatusSubject.For(subject, pilotMech, cockpitArt.Strings, squadComm, displays.IsV110)
 				with { HighlightComponent = targetAim.ComponentTargeted ? targetAim.Component : -1 });
 		displays.Hud = hudState with { StatusSubject = statusRefresh.Status, TargetSubject = statusRefresh.Target };
 	}

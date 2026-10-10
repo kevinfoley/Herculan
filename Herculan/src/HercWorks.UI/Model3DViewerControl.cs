@@ -260,7 +260,7 @@ public sealed class Model3DViewerControl : Control {
 		}
 
 		if (drawEdges) {
-			DrawWireframeOverlay(g, view, proj, near, width, height, depthBuffer);
+			DrawWireframeOverlay(g, eye, view, proj, near, width, height, depthBuffer);
 		}
 	}
 
@@ -271,7 +271,7 @@ public sealed class Model3DViewerControl : Control {
 	/// </summary>
 	private static void RasterizeTriangle(DtsTriangle tri, Vector3 eye, Matrix4x4 view, Matrix4x4 proj, Vector3 lightDir,
 			float near, int[] pixels, float[] depthBuffer, int width, int height) {
-		bool facingEye = Vector3.Dot(tri.FaceNormal, eye - tri.A) >= 0f;
+		bool facingEye = Vector3.Dot(tri.FaceNormal, eye - tri.FacingPoint) >= 0f;
 		DtsFace face = facingEye ? tri.Front : tri.Back;
 		if (!face.Draw) {
 			return;
@@ -320,19 +320,17 @@ public sealed class Model3DViewerControl : Control {
 		// Homogeneous UV weights (one projective map across a quad), folded into the 1/w terms.
 		float qa = tri.UvWeights.X * invWa, qb = tri.UvWeights.Y * invWb, qc = tri.UvWeights.Z * invWc;
 		float uAw = 0, uBw = 0, uCw = 0, vAw = 0, vBw = 0, vCw = 0;
-		bool gouraud = !textured && (face.A != face.B || face.B != face.C);
+		DtsContour contour = default;
+		bool contoured = !textured && face.Contour.HasValue;
 		int argb = 0;
-		Vector3 colA = default, colB = default, colC = default;
 		if (textured) {
 			texture = face.Texture!.Value;
 			uAw = tri.UvA.X * qa; uBw = tri.UvB.X * qb; uCw = tri.UvC.X * qc;
 			vAw = tri.UvA.Y * qa; vBw = tri.UvB.Y * qb; vCw = tri.UvC.Y * qc;
-		} else if (gouraud) {
-			colA = new Vector3(face.A.R, face.A.G, face.A.B) * invWa;
-			colB = new Vector3(face.B.R, face.B.G, face.B.B) * invWb;
-			colC = new Vector3(face.C.R, face.C.G, face.C.B) * invWc;
+		} else if (contoured) {
+			contour = face.Contour!.Value;
 		} else {
-			argb = Scale(face.A, intensity).ToArgb();
+			argb = Scale(face.Color, intensity).ToArgb();
 		}
 
 		for (int y = minY; y <= maxY; y++) {
@@ -371,10 +369,16 @@ public sealed class Model3DViewerControl : Control {
 						continue;
 					}
 					pixels[idx] = face.Lit ? texel : Scale(Color.FromArgb(texel), intensity).ToArgb();
-				} else if (gouraud) {
-					Vector3 c = (w0 * colA + w1 * colB + w2 * colC) / pixelInvW;
-					pixels[idx] = Color.FromArgb(255, (int)Math.Clamp(c.X, 0, 255), (int)Math.Clamp(c.Y, 0, 255),
-						(int)Math.Clamp(c.Z, 0, 255)).ToArgb();
+				} else if (contoured) {
+					// A TSGouraudPoly's contour fill (docs/retail/rendering/dts-texture-binding.md,
+					// "TSGouraudPoly — same ramp number, per-vertex light, no .RMP row"): the corners'
+					// palette indices interpolated linearly in screen space — these weights are
+					// screen-space, with no 1/w correction — and each pixel drawn in the ceiling of the
+					// result, so every band carries its upper index. The engine's Scene.glsl does the
+					// same with the same slack; both place a band's edge within a pixel of the
+					// original's.
+					float index = w0 * contour.IndexA + w1 * contour.IndexB + w2 * contour.IndexC;
+					pixels[idx] = contour.Palette[Math.Clamp((int)MathF.Ceiling(index - BandSlack), 0, 255)];
 				} else {
 					pixels[idx] = argb;
 				}
@@ -434,6 +438,13 @@ public sealed class Model3DViewerControl : Control {
 		}
 	}
 
+	/// <summary>
+	/// How far below a whole palette index an interpolated one may land and still take that index —
+	/// keeps a contour face whose corners all carry one index from rounding up to the next where the
+	/// interpolation lands a hair above it.
+	/// </summary>
+	private const float BandSlack = 1f / 1024f;
+
 	private static float EdgeFunction(float ax, float ay, float bx, float by, float cx, float cy) =>
 		(cx - ax) * (by - ay) - (cy - ay) * (bx - ax);
 
@@ -444,7 +455,7 @@ public sealed class Model3DViewerControl : Control {
 	/// through the visible surface. Pure Wireframe mode has no depth buffer (fill is skipped
 	/// entirely for it) and intentionally draws every edge — an "X-ray" view of the whole mesh.
 	/// </summary>
-	private void DrawWireframeOverlay(Graphics g, Matrix4x4 view, Matrix4x4 proj, float near,
+	private void DrawWireframeOverlay(Graphics g, Vector3 eye, Matrix4x4 view, Matrix4x4 proj, float near,
 			int width, int height, float[]? depthBuffer) {
 		using var edgePen = new Pen(Color.FromArgb(160, 0, 0, 0), 1f);
 		using var wireframePen = new Pen(Color.FromArgb(220, 200, 220, 255), 1f);
@@ -456,6 +467,13 @@ public sealed class Model3DViewerControl : Control {
 			}
 
 			foreach (var tri in root.Mesh.Triangles) {
+				// A one-sided copy shows its edges only from the side it draws, so a poly drawn as
+				// front and back copies shows one fan, not both.
+				if (tri.SideCopy != 0
+						&& (Vector3.Dot(tri.FaceNormal, eye - tri.FacingPoint) >= 0f) != (tri.SideCopy > 0)) {
+					continue;
+				}
+
 				Vector3 ca = Vector3.Transform(tri.A, view);
 				Vector3 cb = Vector3.Transform(tri.B, view);
 				Vector3 cc = Vector3.Transform(tri.C, view);

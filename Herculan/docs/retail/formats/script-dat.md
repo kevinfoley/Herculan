@@ -52,6 +52,8 @@ DBSIM reads `script.dat` **twice**, and the two passes want different things:
 
 **Pass 1 alone looks like `script.dat` carries no placement data** (blocks 7-9 reduced to one field each, block 10 discarded, block 11 just flipping activation flags) — that describes pass 1 only, not the format. Pass 2 reads the rest.
 
+**Pass 1's slot arrays have a fixed size and no bound.** Each roster's live-slot flags and slot-to-pool map are byte arrays the function clears with a `memset` of 100 for mechs (`DAT_004aa7ae`, `DAT_004aa812`), 50 for flyers (`DAT_004aa8da`, `DAT_004aa90c`) and 140 for structures (`DAT_004aa93e`, `DAT_004aa9ca`, `DAT_004aaa56`). A block-11 member ref indexes the flags with only a `-1 <` test, the map loops run up to the block's own count, and the squad's `player.mec` entries are marked at the mech slots from the block-7 count up. So block 7's count plus the squad, block 8's count and block 9's count must stay within 100, 50 and 140, or the writes run over the globals that follow. No retail mission's rosters, loaded with every campaign flag zero and the squad not counted, exceed them (`HercWorks.Query lint`).
+
 Per record type, what pass 2 reads (offsets into the exported record, not the `.msn` source row):
 
 | block | record | offset | field |
@@ -94,7 +96,7 @@ Per record type, what pass 2 reads (offsets into the exported record, not the `.
 2. **Position.** `DBSim_BuildGroupRecord` (`00423b34`) builds each block-11 record into a group record carrying its point, heading and member list; `Mech_AttachToGroup` (`00417aa8`, mechs) / `Flyer_AttachToGroup` (`00421ee8`, flyers) / `Base_AttachToGroup` (`00405c3c`, bases) then attach each member, filling in the member's position **only if it does not already have one**. So a roster record's own position ref wins where set, and the group's is the fallback. In every retail file the roster refs are unset, so in practice objects stand at their group's point.
 3. **Groups with no point** fall back to their route: the group's block-10 link **slot 0** resolves to a waypoint group (link record `+0x08` → block 3), whose first waypoint is the spawn point (`Route_WaypointAt`, `00423b0c`). Patrol squads are placed this way. Only slot 0 is consulted — both this and the heading fallback below read the same `groupRecord+0x44` entry.
 4. **Heading**, when the group's own block-2 ref is unset, is the bearing along the route's **first leg**: `DBSim_SpawnMissionObjects` passes waypoints [1] and [0] (second first) to `Math_HeadingToward` (`00492828`), which is `atan2(dy, dx) - 0x4000` — the quarter turn every bearing in the sim carries, since a machine's forward axis is model Y. Fewer than two waypoints leaves it at zero. **Every mech group in every retail mission reaches this**, the player's squad included; none of them carry a heading ref.
-5. **Ground height** is not in the file. Mechs and bases get `Terrain_HeightQuery` plus the type's own foot offset (`typeRecord+0x16`, and +5000 when `typeRecord+0x50` is set, which lifts a RAZOR clear of the ground at the start). `Mech_AttachToGroup` queries the ground at the group's point before the formation spread, so every member of a mech group starts at the height of the ground under that point; flyers get no query at all — they hold the spawn coordinate's Z, or 5000 units when that is zero. Bases are then queried a **second** time: placing one levels the terrain under it, so `DBSim_SpawnMissionObjects` re-settles the whole base list once the roster is down — see [`terrain-heightmap.md`](terrain-heightmap.md#structure-footprints--the-flattening-pass).
+5. **Ground height** is not in the file. Mechs and bases get `Terrain_HeightQuery` plus the type's own foot offset (`typeRecord+0x16`, and +5000 when `typeRecord+0x50` is set, which lifts a RAZOR clear of the ground at the start). `Mech_AttachToGroup` queries the ground at the group's point before the formation spread, so every member of a mech group starts at the height of the ground under that point; flyers get no query at all — they hold the spawn coordinate's Z, or 5000 units when that is zero. Bases are then queried a **second** time: placing one levels the terrain under it, so `DBSim_SpawnMissionObjects` re-settles the whole base list once the roster is down — see [`../simulation/terrain-heightmap.md`](../simulation/terrain-heightmap.md#structure-footprints--the-flattening-pass).
 6. **The player's squad is not in `script.dat`.** Block 11's **record 0** holds its spawn point and names the block-7 slots that stand for its machines — pass 1 skips it when marking activation, and pass 2 overwrites its member list with the entries read from `data\player.mec`. That file's own format is in [`../shell/campaign-loop.md`](../shell/campaign-loop.md#launching-a-mission--game_exportmissionhandoff-0040f0d4).
 
    **Record 0's member refs are how the mission names the squad.** Every mech ref — an order's subject, an action's target, an objective's subject, another group's member — reaches its machine through one slot-to-pool map, `DAT_004aa812`, which `Mission_ResolveRefByKind` (`00425348`) reads. `DBSim_LoadScriptDat` (`00424308`) fills it in three steps: the slots marked live get consecutive pool indices in slot order; then the slot record 0 names at member position *k* is pointed at the squad's *k*-th machine, the pool index after the last live roster mech plus *k*; then each `player.mec` entry *k* is marked live at slot `block-7 count + k` with that same index. The second step runs after the first, so a slot that record 0 and a live group both name means the squad member. A position whose ref is `-1` leaves that squad machine reachable by no ref, and a ref at a position past the squad's size points at no machine. `C1_01`'s one objective is condition 0 asked of mech slot 3, and slot 3 is record 0's first member: the objective is about the player's own patrol.
@@ -133,7 +135,7 @@ Once placed, a wingman is held to the same offset in flight — [`../simulation/
 
 When a block-11 record's paints-ground flag (`0x06`) is set — 39 of 61 retail records — a **base** group does two things no other group does, both from the same `BFORMS.DAT` record and both gated by that one flag. `Base_AttachToGroup` (`00405c3c`) moves the group's shared anchor onto a fixed spot in a terrain tile, and `Base_ApplyFormationTerrain` (`00405db0`) paints that tile with the formation's own material. They go together: the move is what puts the structures on the pad. Machines are unaffected — `Mech_AttachToGroup` (`00417aa8`) takes no such flag and has none of this arithmetic.
 
-The painting side, including the tile geometry both share, is in [`terrain-texturing.md`](terrain-texturing.md#base-formation-pads).
+The painting side, including the tile geometry both share, is in [`../rendering/terrain-texturing.md`](../rendering/terrain-texturing.md#base-formation-pads).
 
 ### The per-formation trailer
 
@@ -174,7 +176,7 @@ The original spells this `(x & ~mask) + b*step` / `((y & ~mask) + mask + 1) - c*
 
 Four independent checks agree on this reading. All 111 members of all eleven mapped formations fall inside their own map's bounds, against 64 for the inverted y convention. Every `dim` is predicted by its material's block shift, 11 of 11. Across the ten retail handoffs every base group's structures then sit entirely inside the tile painted for them, 11 of 11, where the unmoved anchor leaves them straddling a tile edge. And in the mission editor the move closes the player-to-base distance in the Scramble training mission by 147 m, in the direction and by roughly the amount that base was visibly too far away.
 
-A formation's layout map also marks its cells for the per-object flattening pass in [`terrain-heightmap.md`](terrain-heightmap.md#structure-footprints--the-flattening-pass), which owns that pass and what the two inputs add up to.
+A formation's layout map also marks its cells for the per-object flattening pass in [`../simulation/terrain-heightmap.md`](../simulation/terrain-heightmap.md#structure-footprints--the-flattening-pass), which owns that pass and what the two inputs add up to.
 
 ## The 13-block structure
 
@@ -278,16 +280,16 @@ Three independent real readers (`DBSim_LoadScriptDat`, `DBSim_SpawnMissionObject
 
 `WriteScriptDatFile` writes the ten shorts from `00485446` upward, and `DBSim_LoadScriptDat` reads all 20 bytes into `004a9ed2` in one call, so a field's address in DBSIM is `0x4a9ed2 + offset`.
 
-The three world fields are confirmed by `DBSim_LoadScriptDat` → `Terrain_LoadZone` / `maybe_World_LoadTheater`. See [`terrain-texturing.md`](terrain-texturing.md) for theater details.
+The three world fields are confirmed by `DBSim_LoadScriptDat` → `Terrain_LoadZone` / `World_LoadTheater`. See [`wld-world.md`](wld-world.md) for theater details.
 
 ### The training mission number
 
 `DBSim_LoadScriptDat` only stores offset 8. Every reader takes the copy `TrainingMissionNumber` (`004aa7ac`) made at the end of the load (`00425321`), and four sites read it:
 
-- **No music.** `Sim_InitMissionSession` (`00461c8f`) sets the CD track only when it is 0, so a training mission runs in silence — see [`audio.md`](audio.md#which-track-and-whether-there-is-one).
-- **A different pilot and squad port.** `Gau_BuildCockpitWidgets` (`00431cda`) builds the `0x4ef`-byte training port at `view+0x207` instead of the ordinary `0x4df`-byte one, and on that arm alone raises the port's `.GAU` rect by the herc's training lift — [`cockpit-messages.md`](cockpit-messages.md#the-training-port).
+- **No music.** `Sim_InitMissionSession` (`00461c8f`) sets the CD track only when it is 0, so a training mission runs in silence — see [`../simulation/audio.md`](../simulation/audio.md#which-track-and-whether-there-is-one).
+- **A different pilot and squad port.** `Gau_BuildCockpitWidgets` (`00431cda`) builds the `0x4ef`-byte training port at `view+0x207` instead of the ordinary `0x4df`-byte one, and on that arm alone raises the port's `.GAU` rect by the herc's training lift — [`../simulation/cockpit-messages.md`](../simulation/cockpit-messages.md#the-training-port).
 - **Its instructor's script.** The same function (`00431dab`) indexes `COMMAND<n>.STR` into the port with this number as the digit whatever its value, so an ordinary mission loads `COMMAND0.STR`.
-- **Its own voice clips.** The training port's paint (`004368fb`): the instructor speaks from the `TM<n>_` name template rather than the squad's `P<bank>_` one, with this number as the digit. Both are [`cockpit-messages.md`](cockpit-messages.md#the-training-port)'s.
+- **Its own voice clips.** The training port's paint (`004368fb`): the instructor speaks from the `TM<n>_` name template rather than the squad's `P<bank>_` one, with this number as the digit. Both are [`../simulation/cockpit-messages.md`](../simulation/cockpit-messages.md#the-training-port)'s.
 
 ### The training fields
 
@@ -298,7 +300,7 @@ Offsets 10, 12 and 14 are written by `MsnGen_LoadMission` (`0041c73d`, VSHELL) r
 | 1, campaign | forced 0 | forced 0 | `PlayerPilotSkill` (`00482aa1`), the player pilot record's skill at `+0x25` |
 | 0, training — the practice missions and `INSTANT ACTION` | `prefs.cfg` option `0x25` | option `0x26` | option `0x27` |
 
-The options are the practice missions screen's rows ([`../shell/screen-layout.md`](../shell/screen-layout.md#the-parameters)); what the three fields do in the simulator is [`../simulation/difficulty.md`](../simulation/difficulty.md).
+The options are the practice missions screen's rows ([`../shell/main-menu.md`](../shell/main-menu.md#the-parameters)); what the three fields do in the simulator is [`../simulation/difficulty.md`](../simulation/difficulty.md).
 
 The same code sets two more fields. A campaign load writes offset 0, the theater, from the stage's campaign index in `gam\career.dat`. A training load writes offset 0 as 1 whatever the mission patched it to — `TRAIN5.MSN` patches in 3 and flies on theater 1 — offset 16 as 0, and offset 18, the variant, from the practice screen's `Time of Day`.
 
@@ -319,4 +321,3 @@ Stop after block 13's declared end and ignore trailing bytes. Files may have sta
 ## Open
 
 - **Open:** whether mechs get any per-slot heading turn on formation attach, the way bases do — `MFORMS.DAT`'s 28-byte formations have no field for one, so the fallback shape `Mech_AttachToGroup` shares with `Base_AttachToGroup` may simply have nothing to read.
-- **Open:** which arm of the player's think objective type 2 selects. `TRAIN1`-`TRAIN4` patch header offset 6, the objective type, to 2, 3, 2 and 2.

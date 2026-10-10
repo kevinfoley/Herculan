@@ -18,7 +18,7 @@ repeat until contentLength consumed:
     int16 count                      -- strings in this group
     count x {
         int16 length                 -- includes the NUL terminator
-        byte[length] text            -- NUL-terminated ASCII
+        byte[length] text            -- NUL-terminated, one byte per character
         uint8 attributeCount         -- 0, 1, 7 or 8 in retail data
         byte[attributeCount] attributes
     }
@@ -28,7 +28,9 @@ repeat until contentLength consumed:
 
 **Verified byte-exact**: this shape consumes `STRINGS0.STR`, `SYSTEM.STR`, `COMMAND1.STR`, `PILOTS.STR` and `SOUNDS.STR` to their declared content lengths with zero slack, and each file's group counts reproduce the registration sequence in order.
 
-Attribute use: `STRINGS0.STR` group 0 carries one byte per order; `SYSTEM.STR`'s computer messages carry eight — the message id, a queue priority, four display timings and the `CVM` voice clip that reads the line, decoded in [`cockpit-messages.md`](cockpit-messages.md#the-computers-messages); `SOUNDS.STR` carries seven — loop count, volume, preload, throttle divisor and the two rolloff distances, then a variation count. The sound module reads a tenth byte past them and treats bytes 7-9 as runtime scratch; see [`audio.md`](audio.md#the-sound-catalog--strsoundsstr).
+Text is one byte per character, not 7-bit: `SIMALERT.VOL`'s `STG\GNL_ALRT.STR` and `STG\OBJ_ALRT.STR` spell the German text's `Ä`, `Ö` and `Ü` as `0x8E`, `0x99` and `0x9A` (`ZUR\x9ACK`, `ZERST\x99RT`, `BESCH\x8EDIGT`), the IBM PC code page's values.
+
+Attribute use: `STRINGS0.STR` group 0 carries one byte per order; `SYSTEM.STR`'s computer messages carry eight — the message id, a queue priority, four display timings and the `CVM` voice clip that reads the line, decoded in [`../simulation/cockpit-messages.md`](../simulation/cockpit-messages.md#the-computers-messages); `SOUNDS.STR` carries seven — loop count, volume, preload, throttle divisor and the two rolloff distances, then a variation count. The sound module reads a tenth byte past them and treats bytes 7-9 as runtime scratch; see [`sounds-str.md`](sounds-str.md#the-sound-catalog--strsoundsstr).
 
 ## `STRINGS0.STR` groups
 
@@ -43,9 +45,9 @@ Groups referenced by decoded code:
 | 4 | 4 | Console button captions: `I`, `LINK`, `TRACK`, `` (entry 0 unused — the chain button's numerals come from a separate `.rdata` table, `ChainCountCaptions` at `0049c71c`) |
 | 5 | 13 | MFD captions: `STATUS`, `FLASH COMM`, `NAV MAP`, `SCANNER`, `TARGET`, `MISSILE CAM`, `MODE`, `SELECT`, `RANGE`, `TARGET`, `XMIT`, `PASS`, `ACTIVE`. Entries 0-5 are the screen titles, 6-12 the aux button captions. |
 | 7 | 3 | `RED 1`-`RED 3` — `SquadCallsignStrings` (`004d1424`), which `Squad_CallsignOf` (`00431690`) returns for the squadmate whose machine it is given, by slot in `g_SquadmateMachines`; `es2_xref.py` finds no caller of it |
-| 8 | 1 | `HQ` — the name the pilot and squad channel signs a speakerless line with ([`cockpit-messages.md`](cockpit-messages.md#its-speakerless-set)) |
+| 8 | 1 | `HQ` — the name the pilot and squad channel signs a speakerless line with ([`../simulation/cockpit-messages.md`](../simulation/cockpit-messages.md#its-speakerless-set)) |
 | 9 | 3 | `XMIT`, `CANCEL`, `EXIT` — the Heads-Down Display's transmit buttons |
-| 10 | 5 | `OK`, `INT DMG`, `SHLD DWN`, `CRITICAL`, `WASTED` — not the condition table, which is group 28; no reader of `DAT_004d1440` other than `SimStrings_LoadAll` has been found ([`mfd.md`](mfd.md#open)). |
+| 10 | 5 | `OK`, `INT DMG`, `SHLD DWN`, `CRITICAL`, `WASTED` — not the condition table, which is group 28; no reader of `DAT_004d1440` other than `SimStrings_LoadAll` has been found ([`../simulation/mfd.md`](../simulation/mfd.md#open)). |
 | 11 | 2 | `MAP`, `DAMAGE` — the Heads-Down Display's page-0 title |
 | 12 | 3 | `" STRUCT DAMAGE"`, `" INTERN DAMAGE"`, `" WEAPON DAMAGE"` — its page-1 title, indexed by damage category rather than by page |
 | 13 | 19 | Structural component names, walker variant |
@@ -61,14 +63,14 @@ Groups referenced by decoded code:
 | 24 | 4 | Vehicle type names, same index for a type whose `BASES.DAT +0x32` is set |
 | 25 | 2 | `LANDSKIMMER`, `HOVERTANK` |
 | 26 | 1 | `NONE` — the MFD target screen with nothing selected |
-| 27 | 1 | `UNKNOWN` — a subject whose target class the status screen does not recognise |
+| 27 | 1 | `UNKNOWN` — the status screen's default target-class arm, which no subject reaches ([`mfd.md`](../simulation/mfd.md#the-subject)) |
 | 28 | 5 | Condition, the MFD status screen's fourth label: `OK`, `SHIELDS DN`, `INT DAMAGE`, `CRITICAL`, `DESTROYED` |
 | 29 | 2 | `ACT`, `PASS` — consumer not located; the scanner's own toggles caption from group 5 |
 | 30, 31 | 1,1 | `TRG:` and `RNG:`, the scanner's two corner captions (`DAT_004d16b4`/`b8`) |
 | 33 | 2 | `STATUS:` and `OBJECTIVE:`, the squad comm box's two fixed captions |
 | 36 | 4 | `VIEW: `, `CONTROL: `, `CAMERA`, `HERC` — the external view's caption ([`../simulation/external-views.md`](../simulation/external-views.md#what-the-external-view-shows)) |
-| 37 | 2 | `ATT` and `"WAYPOINT "` (trailing space) — the Automatic Turret Tracking legend and the waypoint indicator's caption prefix, both of them the gunsight complex's ([`cockpit-gunsight-hud.md`](cockpit-gunsight-hud.md#front-window-hud--the-gunsight-complex)) |
+| 37 | 2 | `ATT` and `"WAYPOINT "` (trailing space) — the Automatic Turret Tracking legend and the waypoint indicator's caption prefix, both of them the gunsight complex's ([`../simulation/cockpit-gunsight-hud.md`](../simulation/cockpit-gunsight-hud.md#front-window-hud--the-gunsight-complex)) |
 | 38, 39 | 1,1 | `TIME:`, `SPEED:` — the gunsight readouts |
 | 40 | 8 | Squad comm box's current-order line: `ATTACK`, `TRAVEL`, `PATROL`, `FORM UP`, `GUARD`, `FLEE`, `DEAD`, `IMMOBILE` |
 
-Other files: `SYSTEM.STR` the cockpit computer's 63 messages ([`cockpit-messages.md`](cockpit-messages.md#the-computers-messages)), `PILOT0/1/2/4.STR` what a squadmate can say, keyed the same way but with seven attribute bytes and live variants ([`cockpit-messages.md`](cockpit-messages.md#the-pilot-and-squad-channel)), `COMMAND0.STR` the three lines a mission action can post and `COMMAND1`-`4.STR` the training missions' instructor scripts, both on the pilot and squad channel ([`cockpit-messages.md`](cockpit-messages.md#its-speakerless-set)), `PILOTS.STR` 36 pilot surnames indexed by a machine's own pilot index ([`heads-down-display.md`](heads-down-display.md#squad-comm-boxes)), `SOUNDS.STR` a 57-entry sample catalog ([`audio.md`](audio.md)).
+Other files: `SYSTEM.STR` the cockpit computer's 63 messages ([`../simulation/cockpit-messages.md`](../simulation/cockpit-messages.md#the-computers-messages)), `PILOT0/1/2/4.STR` what a squadmate can say, keyed the same way but with seven attribute bytes and live variants ([`../simulation/cockpit-messages.md`](../simulation/cockpit-messages.md#the-pilot-and-squad-channel)), `COMMAND0.STR` the three lines a mission action can post and `COMMAND1`-`4.STR` the training missions' instructor scripts, both on the pilot and squad channel ([`../simulation/cockpit-messages.md`](../simulation/cockpit-messages.md#its-speakerless-set)), `PILOTS.STR` 36 pilot surnames indexed by a machine's own pilot index ([`../simulation/heads-down-display.md`](../simulation/heads-down-display.md#squad-comm-boxes)), `SOUNDS.STR` a 57-entry sample catalog ([`../simulation/audio.md`](../simulation/audio.md)).

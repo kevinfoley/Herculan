@@ -57,7 +57,7 @@ public enum MissionObjectiveSubject {
 /// <param name="CounterRefs">
 /// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.CounterRefs"/>
 /// Written when the objective is satisfied, to the same 1,000-short array <c>Action_Activate</c>
-/// writes; see <see cref="Sim.SimWorld.MissionCounters"/>.
+/// writes; see <see cref="Sim.MissionRuntime.Counters"/>.
 /// </param>
 /// <param name="CounterOps">
 /// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptObjective.CounterOps"/>

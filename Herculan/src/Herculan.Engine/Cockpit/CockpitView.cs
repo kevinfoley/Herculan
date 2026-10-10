@@ -36,7 +36,6 @@ public sealed class CockpitView {
 	// Time owed to the orbit behind the preferences panel, spent in whole steps — see AdvancePanelOrbit.
 	private double _panelOrbitSeconds;
 
-	private readonly KeyLatch _cameraKey = new();
 	private readonly KeyLatch _externalViewKey = new();
 	private readonly KeyLatch _viewControlKey = new();
 	private readonly KeyLatch _viewNextKey = new();
@@ -71,8 +70,8 @@ public sealed class CockpitView {
 	/// </summary>
 	public MechObject? PilotMech { get; }
 
-	/// <summary>Whether the player is in the machine rather than flying the observer camera; [C] swaps the two.</summary>
-	public bool Piloting { get; private set; }
+	/// <summary>Whether the player is in the machine rather than flying the observer camera, which only a mission with no player machine leaves them in.</summary>
+	public bool Piloting { get; }
 
 	/// <summary>Whether the player is in a machine at all — the cockpit's own per-frame work runs only then.</summary>
 	public bool InMachine => Piloting && PilotMech != null;
@@ -136,7 +135,7 @@ public sealed class CockpitView {
 
 	// The controls go to a camera or to an electro-optical round: InputDrivesCamera or DAT_004d25aa, the
 	// pair Input_BuildPlayerDevice tests together.
-	public bool ControlsOnCamera => ControlsDriveCamera || _scene.World.MissileFlown;
+	public bool ControlsOnCamera => ControlsDriveCamera || _scene.World.PlayerMissile.Flown;
 
 	// The two view changes share CockpitView_QueueViewCommand's gate on the current view: the pan down
 	// starts only from the forward view, and so does a glance. Every request for either goes through
@@ -171,26 +170,32 @@ public sealed class CockpitView {
 	}
 
 	/// <summary>
+	/// [Esc] once no modal panel has taken it: out of the external view, where with the cockpit's widgets off
+	/// scancode 1 falls through them to the dispatcher's own case (see <see cref="ExternalViewChain.Escape"/>), else
+	/// <see cref="ReturnToForward"/> from a glance or the Heads-Down Display. Returns whether there was a view to
+	/// come back from.
+	/// </summary>
+	public bool BackOut(bool hasCockpit) {
+		if (ExternalViewActive) {
+			Chain?.Escape();
+			return true;
+		}
+
+		if (hasCockpit && AwayFromForward) {
+			ReturnToForward();
+			return true;
+		}
+
+		return false;
+	}
+
+	/// <summary>
 	/// The camera's half of the input, from the controls just built for the machine: the steering and
 	/// throttle axes after Backturn, and the trigger.
 	/// </summary>
 	public void TakeCameraAxes(MechControls built) {
 		_cameraAxes = new PilotAxes(built.Turn, built.Throttle);
 		_cameraTrigger = built.Fire;
-	}
-
-	/// <summary>
-	/// [C] swaps between flying the observer camera and piloting the machine, on the key's own edge so holding
-	/// it does not flicker between the two. It is this engine's key rather than the original's, so during a
-	/// replay it stays with the live keyboard.
-	/// </summary>
-	public void ReadCameraKey(IKeyState? cameraKeys, bool flashCommHasKeyboard) {
-		if (PilotMech != null && cameraKeys != null) {
-			bool cameraKey = !flashCommHasKeyboard && cameraKeys.IsKeyPressed(Key.C);
-			if (_cameraKey.Press(cameraKey)) {
-				Piloting = !Piloting;
-			}
-		}
 	}
 
 	/// <summary>The view chain's own keys, which reach it only while no modal panel holds the input.</summary>
@@ -268,7 +273,7 @@ public sealed class CockpitView {
 			&& !developerKeys.StepPending;
 		if (Chain?.Advance(_cameraAxes.Steer, _cameraAxes.Throttle, _cameraTrigger,
 				ControlsDriveCamera, _scene.World.Terrain, deathCamera) == true) {
-			_scene.World.PendingMissionAlert = MissionStatus.PlayerDestroyed;
+			_scene.World.Mission.PendingAlert = MissionStatus.PlayerDestroyed;
 		}
 	}
 
@@ -276,8 +281,8 @@ public sealed class CockpitView {
 	/// The view behind the [F12] preferences panel, once a frame: the camera taken out to circle the player's machine
 	/// as the panel goes up and given back as it comes down (<see cref="ExternalViewChain.BeginPanelOrbit"/>), and
 	/// turned while <paramref name="preferencesLoopRunning"/> — not while the CONTROLS panel is up, whose own loop
-	/// runs inside the preferences panel's and never reaches its draw hook. The observer camera [C] flies is this
-	/// engine's own, and the orbit leaves it alone.
+	/// runs inside the preferences panel's and never reaches its draw hook. The observer camera is this engine's own,
+	/// and the orbit leaves it alone.
 	///
 	/// <para>Retail turns the orbit once per pass of the panel's loop, which never goes through the simulator's 40 ms
 	/// frame wait, so it turns as fast as the machine draws. Here it turns at the simulation's 25 steps a second, the rate retail's own frame loop

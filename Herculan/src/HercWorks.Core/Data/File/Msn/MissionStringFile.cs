@@ -34,6 +34,7 @@ public class MissionStringFile {
 		/// <summary>The text's length, including its NUL.</summary>
 		public short Len { get; set; }
 
+		/// <summary>The text with its NUL, one char per byte.</summary>
 		public string? Val { get; set; }
 
 		public override string ToString() {

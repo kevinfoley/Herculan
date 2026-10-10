@@ -33,6 +33,6 @@ Retail, frame 0 throughout:
 
 ## `dba\BEAMTEX.DBA`
 
-Loaded into the descriptor table at `DAT_004a988c` by `BitmapArray_PackToAtlas` (`00469f38`); the 20-byte descriptor layout, and the `+0x12` flag that marks a frame containing palette index 0, are in [`dts-texture-binding.md`](dts-texture-binding.md#the-frame-descriptor-table-and-the-span-routines-dbsim).
+Loaded into the descriptor table at `DAT_004a988c` by `BitmapArray_PackToAtlas` (`00469f38`); the 20-byte descriptor layout, and the `+0x12` flag that marks a frame containing palette index 0, are in [`../rendering/dts-texture-binding.md`](../rendering/dts-texture-binding.md#the-frame-descriptor-table-and-the-span-routines-dbsim).
 
 Retail ships **one** frame, 128x25, and every `BEAM.DAT` record points at it. Every row is a single repeated palette index: 11 at both edges, then the ramp 84..95 in to the middle and back out. The frame holds no index 0, and nothing in it varies along the beam's length, so it is a pure cross-section. In a `WORLD<n>.DPL` that ramp is the fire ramp, dark orange (184, 92, 20) climbing to near-white (252, 248, 228).

@@ -360,7 +360,7 @@ public sealed class WeaponMounts {
 
 	/// <summary>
 	/// <c>DAT_004d25ac</c> — the armed mount launched an electro-optical round and the selection has
-	/// not moved since. Set by <see cref="FireTick"/> beside <see cref="SimWorld.MissileFlown"/> and
+	/// not moved since. Set by <see cref="FireTick"/> beside <see cref="PlayerMissileState.Flown"/> and
 	/// cleared by any change of selection; while it is set and no round is being flown,
 	/// <see cref="PerFrameUpdate"/> steps the selection on. See docs/retail/simulation/weapon-firing.md.
 	/// </summary>
@@ -500,7 +500,7 @@ public sealed class WeaponMounts {
 	/// Distance to the selected target in world units, or zero when nothing is selected — see
 	/// <see cref="TargetRange"/>.
 	/// </param>
-	/// <param name="missileFlown"><see cref="SimWorld.MissileFlown"/>.</param>
+	/// <param name="missileFlown"><see cref="PlayerMissileState.Flown"/>.</param>
 	public void PerFrameUpdate(int targetRange = 0, bool missileFlown = false) {
 		if (ElectroOpticalFired && !missileFlown) {
 			StepSelection(1);
@@ -597,7 +597,7 @@ public sealed class WeaponMounts {
 	///
 	/// <para>When the armed mount's <see cref="WeaponMount.AmmoType"/> is
 	/// <see cref="Rocket.PlayerFlownSubtype"/> — it has just launched an electro-optical round — the
-	/// shot raises <see cref="ElectroOpticalFired"/> and <see cref="SimWorld.MissileFlown"/>, so the
+	/// shot raises <see cref="ElectroOpticalFired"/> and <see cref="PlayerMissileState.Flown"/>, so the
 	/// controls go to the round from the next tick. Only the locally piloted machine's trigger reaches
 	/// this in the original, which is what the owner test stands for here.</para>
 	/// </summary>
@@ -636,7 +636,7 @@ public sealed class WeaponMounts {
 
 		if (owner.LocallyPiloted && armed.AmmoType == Rocket.PlayerFlownSubtype) {
 			ElectroOpticalFired = true;
-			world.MissileFlown = true;
+			world.PlayerMissile.Flown = true;
 		}
 
 		partner?.Fire(owner, world, freeShot);

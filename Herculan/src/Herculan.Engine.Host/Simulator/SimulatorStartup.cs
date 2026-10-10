@@ -105,7 +105,8 @@ static class SimulatorStartup {
 		// Audio comes up against the same mounted archives and shares the simulation's generator, because
 		// the variation roll draws on it exactly as weapon scatter does. It never throws: a machine with no
 		// device gets a working GameAudio that happens to be silent.
-		var audio = GameAudio.Create(content, scene.World.PresentationRandom, silent: options.SilentAudio, cdDrive: options.CdDrive,
+		var ports = new MessagePorts(SystemMessages.Load(content));
+		var audio = GameAudio.Create(content, ports, scene.World.PresentationRandom, silent: options.SilentAudio, cdDrive: options.CdDrive,
 			musicDirectory: options.MusicDirectory, discImage: disc?.Image,
 			soundCfg: SoundCfg.Load(GameInstall.SoundCfgPath(installRoot)));
 		audio.Attach(scene.World);
@@ -122,7 +123,7 @@ static class SimulatorStartup {
 				+ "first placed object.");
 		}
 
-		if (scene.TerrainBank == null) {
+		if (scene.Models.TerrainBank == null) {
 			Console.Error.WriteLine($"Theater {mission.Header.TheaterIndex}'s terrain bank could not be loaded — "
 				+ "drawing the terrain flat-shaded.");
 		}
@@ -211,6 +212,7 @@ static class SimulatorStartup {
 			Content = content,
 			Scene = scene,
 			Audio = audio,
+			Ports = ports,
 			Preferences = simulatorPreferences,
 			ScriptPath = scriptPath,
 			DataDirectory = dataDirectory,

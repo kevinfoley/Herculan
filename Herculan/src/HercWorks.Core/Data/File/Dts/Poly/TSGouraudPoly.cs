@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dts.Poly;
 
 /// <summary>
 /// A poly lit per vertex: the same ramp number as <see cref="TSShadedPoly"/>, with a normal per
-/// corner. See docs/retail/formats/dts-texture-binding.md, "TSGouraudPoly — same ramp number, per-vertex
+/// corner. See docs/retail/rendering/dts-texture-binding.md, "TSGouraudPoly — same ramp number, per-vertex
 /// light, no .RMP row".
 /// </summary>
 public class TSGouraudPoly : TSSolidPoly {

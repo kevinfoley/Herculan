@@ -99,7 +99,7 @@ public sealed class WaveSample {
 	/// What the simulator's sample loader, <c>Sos_LoadWaveSample</c> (<c>00474254</c>), makes of a file: a
 	/// RIFF/WAVE file through <see cref="Decode"/>, and anything not starting <c>RIFF</c> as raw 8-bit unsigned mono
 	/// at <see cref="RawSampleRate"/>. A <c>.hmp</c> song named in <c>SOUNDS.STR</c> ends up here, because the
-	/// catalog opens every row as a sample — see docs/retail/formats/audio.md, "Opening a catalog row".
+	/// catalog opens every row as a sample — see docs/retail/simulation/audio.md, "Opening a catalog row".
 	///
 	/// <para>The RIFF half is this engine's chunk walk rather than the original's fixed offsets, so a RIFF file
 	/// <see cref="Decode"/> refuses is null here where the original would play it as its header reads.</para>
@@ -120,7 +120,7 @@ public sealed class WaveSample {
 	/// not faster than that already.
 	///
 	/// <para><b>The filter is this engine's.</b> It stands in for SOS mixing a faster sample into a slower output
-	/// (docs/retail/formats/audio.md, "DATA\SOUND.CFG"). How SOS converts happens inside <c>sos9503.dll</c> and
+	/// (docs/retail/simulation/audio.md, "DATA\SOUND.CFG"). How SOS converts happens inside <c>sos9503.dll</c> and
 	/// has not been read, so this is a clean conversion and not a copy of it: a windowed-sinc low-pass with its
 	/// cutoff just under the new Nyquist rate. It removes the top of the old sample's band and adds no
 	/// aliasing.</para>

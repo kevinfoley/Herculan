@@ -2,7 +2,7 @@
 
 The manual calls it the **turret**: the part of a HERC carrying the pilot and the weapons, aimed independently of the legs. DBSIM's own field and symbol names say "torso"; they are the same thing.
 
-Reverse-engineered from `DBSIM.EXE`. Movement of the machine itself is in [`mech-locomotion.md`](mech-locomotion.md); how a posed node reaches the screen is in [`dts-node-posing.md`](../formats/dts-node-posing.md).
+Reverse-engineered from `DBSIM.EXE`. Movement of the machine itself is in [`mech-locomotion.md`](mech-locomotion.md); how a posed node reaches the screen is in [`dts-node-posing.md`](../rendering/dts-node-posing.md).
 
 **Core fact: the turret has no rotation of its own.** The type record names a sequence per axis, each one a single full sweep of one node, and the twist/pitch angle selects a *position* within that sequence. Nothing rotates the torso; an animation is seeked to match the angle.
 
@@ -70,7 +70,7 @@ The intra-frame offset lands on a whole animation tick, because the scale-down t
 
 `Mech_Constructor` (`00415bb0`) builds them in this order, skipping any whose sequence id is negative: locomotion on `typeRec+0x12` at `mech+0x22c`, twist on `+0x1c` at `+0x230`, pitch on `+0x24` at `+0x234`.
 
-The shape re-ranks them by their sequences' priority on every step, and registration order only breaks ties; the three cover disjoint nodes on every retail chassis, so the ranking decides which thread carries root motion rather than any pose. Both are in [`dts-node-posing.md`](../formats/dts-node-posing.md#several-threads-on-one-shape).
+The shape re-ranks them by their sequences' priority on every step, and registration order only breaks ties; the three cover disjoint nodes on every retail chassis, so the ranking decides which thread carries root motion rather than any pose. Both are in [`dts-node-posing.md`](../rendering/dts-node-posing.md#several-threads-on-one-shape).
 
 ### The angle is not the drawn direction
 
@@ -88,13 +88,13 @@ The block's three cases, in its own order of tests:
 2. **ATT latched, a target selected, and that target's `+0x99` clear** — `Player_ResolveTargetAimPoint` (`0041b728`) takes the target's aim point and hands it to `Cockpit_TargetAnglesFromCameraBone`, which runs both axis ticks itself, and the centring latch is cleared. Note the liveness test is `+0x99` **alone**: unlike every AI test, a crippled (`+0xa4`) target is still tracked.
 3. **Otherwise** the centring mode or the plain axis ticks, as before.
 
-The block is the walker's; a RAZOR takes its flight input instead. Center Body replaces it while it holds the legs. It also runs while the external-view camera has the controls, with the twist axis zero and the pitch axis whatever a throttle lever bound to the turret pair reads ([`../formats/joystick-input.md`](../formats/joystick-input.md#while-the-camera-has-the-controls)), so a non-zero reading there takes the turret from the tracker exactly as case 1 says.
+The block is the walker's; a RAZOR takes its flight input instead. Center Body replaces it while it holds the legs. It also runs while the external-view camera has the controls, with the twist axis zero and the pitch axis whatever a throttle lever bound to the turret pair reads ([`joystick-input.md`](joystick-input.md#while-the-camera-has-the-controls)), so a non-zero reading there takes the turret from the tracker exactly as case 1 says.
 
 **Both centring commands turn ATT off.** `Sim_DispatchCommand`'s scancode `0x0e` ([Backspace]) and `0x2b` (`\`) each write `manager+0x14 = 0` alongside their own latch, so a pilot who asks for the turret back keeps it.
 
 **[T] turning ATT off also centres the turret.** Scancode `0x14` toggles the TRACK widget (`ConsoleButtons_ToggleAutoTrack` (`00441f7c`), which is also the console button's whole click action) and then, *only if that turned it off*, runs the same three writes the [Backspace] case does. Clicking TRACK off with the mouse therefore leaves the turret where the tracker had it; pressing [T] brings it home. The asymmetry is the dispatch case's, not the button's.
 
-Toggling it either way announces the new state on the computer's channel — `0x26` `AUTO TRACKING ENGAGED` and `0x27` `AUTO TRACKING DISABLED`, both withdrawn before the new one is posted, the same shape as the radar toggle's pair ([`../formats/cockpit-messages.md`](../formats/cockpit-messages.md#posters)).
+Toggling it either way announces the new state on the computer's channel — `0x26` `AUTO TRACKING ENGAGED` and `0x27` `AUTO TRACKING DISABLED`, both withdrawn before the new one is posted, the same shape as the radar toggle's pair ([`cockpit-messages.md`](cockpit-messages.md#posters)).
 
 **ATT with nothing selected gives up after a delay.** `Player_PerFrameCockpitUpdate` (`0041b130`) arms `mech+0x31c` with `0x1194` on the selection change that leaves the latch holding nothing, counts it down every frame the pair still holds, and latches the centring mode when it reaches zero. It does not clear the latch, so selecting again puts the turret straight back on a target.
 

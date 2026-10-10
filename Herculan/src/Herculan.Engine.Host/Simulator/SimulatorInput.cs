@@ -4,12 +4,8 @@ using Silk.NET.Input;
 
 namespace Herculan.Engine.Host.Simulator;
 
-/// <summary>
-/// Where the simulator's input comes from: the window's keyboard and mouse, or a replaying tape's, and
-/// whether the debug UI has taken either. Every handler reads <see cref="Keyboard"/> and
-/// <see cref="Pointer"/> rather than a device, so a replay drives exactly the code a player does.
-/// </summary>
-sealed class SimulatorInput : IPointerDevice {
+/// <summary>The simulator's input off the window's own devices, or a replaying tape's.</summary>
+sealed class SimulatorInput : ISimulatorInput {
 	private readonly EngineWindow _window;
 	private readonly TapePlayback _tape;
 
@@ -19,18 +15,18 @@ sealed class SimulatorInput : IPointerDevice {
 		Cockpit = cockpitInput;
 	}
 
-	/// <summary>
-	/// What every key handler reads: the window's own keyboard, or a replaying tape's keystrokes. <see cref="LiveKeys"/>
-	/// stays the window's throughout, because a replay still listens to it for [Ctrl+E], for -D's any-key abort and
-	/// for the menu bar.
-	/// </summary>
+	/// <inheritdoc/>
 	public IKeyState? Keyboard { get; private set; }
 
+	/// <inheritdoc cref="ISimulatorInput.LiveKeys"/>
 	public LiveKeys? LiveKeys { get; private set; }
 
+	IKeyState? ISimulatorInput.LiveKeys => LiveKeys;
+
+	/// <inheritdoc/>
 	public IMouse? Mouse { get; private set; }
 
-	/// <summary>The cockpit's click queue, which both the live mouse and a tape's mouse events feed.</summary>
+	/// <inheritdoc/>
 	public CockpitInput Cockpit { get; }
 
 	/// <summary>The debug UI, once the window has a GL context to build it on.</summary>
@@ -42,14 +38,13 @@ sealed class SimulatorInput : IPointerDevice {
 	/// </summary>
 	public event Action<float, float, CockpitMouseButtons, int, int>? MouseQueued;
 
+	/// <inheritdoc/>
 	public bool ImGuiHasKeyboard => ImGui != null && ImGuiNET.ImGui.GetIO().WantCaptureKeyboard;
 
+	/// <inheritdoc/>
 	public bool ImGuiWantsMouse => ImGui != null && ImGuiNET.ImGui.GetIO().WantCaptureMouse;
 
-	/// <summary>
-	/// Whether the debug UI is typing and the game's keys should go dead. Never during a replay: the tape's
-	/// keystrokes are not the player's, and the player typing into the debug panel must not lose them.
-	/// </summary>
+	/// <inheritdoc/>
 	public bool KeyboardCapturedByImGui => !_tape.Playing && ImGuiHasKeyboard;
 
 	/// <summary>Takes the window's devices, once its input context exists.</summary>
@@ -63,7 +58,7 @@ sealed class SimulatorInput : IPointerDevice {
 		// Mouse events are queued here and nowhere else: everything that decides what a click means runs
 		// once per frame in Update, out of CockpitInput.Drain. That is the original's own split — its
 		// listener callback pushes a record and returns, and CockpitMouse_ProcessQueue does the work a
-		// frame later (docs/retail/formats/cockpit-input.md §3-4).
+		// frame later (docs/retail/simulation/cockpit-input.md §3-4).
 		if (input.Mice.Count > 0) {
 			Mouse = input.Mice[0];
 
@@ -92,7 +87,7 @@ sealed class SimulatorInput : IPointerDevice {
 		}
 	}
 
-	/// <summary>Hands the keyboard back to the player once a tape has stopped — -p's hand-over.</summary>
+	/// <inheritdoc/>
 	public void TakeLiveKeys() => Keyboard = LiveKeys;
 
 	/// <summary>

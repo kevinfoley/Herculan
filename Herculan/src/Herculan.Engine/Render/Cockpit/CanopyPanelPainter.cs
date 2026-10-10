@@ -9,7 +9,7 @@ namespace Herculan.Engine.Render.Cockpit;
 /// <summary>
 /// Draws one panel's cockpit-art quad — at its own native aspect ratio, never stretched — plus, for
 /// the center panel only, the herc's HUD widgets over it, positioned from its own <c>.GAU</c> and
-/// drawn in the game's own sprite art and fonts. See docs/retail/formats/cockpit-hud-widgets.md and
+/// drawn in the game's own sprite art and fonts. See docs/retail/simulation/cockpit-hud-widgets.md and
 /// docs/herculan/planning.md's Milestone 8.
 ///
 /// <para>Widgets draw the game's own <c>.HBA</c> sprite art (see <see cref="HudSpriteSheet"/>),
@@ -179,7 +179,7 @@ public sealed class CanopyPanelPainter {
 	/// <para>Geometry is the <c>.GAU</c> energy-meter rect at offset 564, which
 	/// <c>EnergyPoolGauge_Ctor</c> (<c>00444d5c</c>) copies verbatim into the bar object before
 	/// handing it to <c>LedBarGraph_Ctor</c> with range <c>0x400</c>, so the bar is the horizontal
-	/// variant and fills along x — see docs/retail/formats/cockpit-hud-widgets.md, "LED gauges".</para>
+	/// variant and fills along x — see docs/retail/simulation/cockpit-hud-widgets.md, "LED gauges".</para>
 	///
 	/// <para>Nothing is drawn at <c>ShieldDisplay</c>: that widget is <c>ShieldsGauge</c>, a
 	/// different class with its own nested-box geometry, not an LED bar.</para>

@@ -528,7 +528,7 @@ public sealed partial class MechObject {
 	/// <summary>
 	/// <c>Mech_AiOnLineOfFireBlocked</c> (<c>0041dd2c</c>, mech vtable <c>+0x64</c>) — one of this
 	/// machine's own shots stopped on something that is not what it aimed at.
-	/// <see cref="SimWorld.Raycast"/> is the only caller; the base and flyer classes leave the slot
+	/// <see cref="HitTests.Raycast"/> is the only caller; the base and flyer classes leave the slot
 	/// empty, so only a machine reacts.
 	/// </summary>
 	public void OnLineOfFireBlocked() {

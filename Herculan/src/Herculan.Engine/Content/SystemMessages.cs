@@ -4,7 +4,7 @@ namespace Herculan.Engine.Content;
 
 /// <summary>
 /// <c>str\SYSTEM.STR</c> — the cockpit computer's own message set: every line it says, and for each
-/// one the recorded clip that says it. See docs/retail/formats/cockpit-messages.md, "The computer's
+/// one the recorded clip that says it. See docs/retail/simulation/cockpit-messages.md, "The computer's
 /// messages".
 ///
 /// <para>The file is an ordinary <c>.STR</c> string table (see docs/retail/formats/str-strings.md) of two
@@ -139,14 +139,14 @@ public sealed class SystemMessages {
 	public const int DataTransferAborted = 0x38;
 
 	/// <summary>
-	/// <c>POWERUP INITIATED. ALL SYSTEMS NOMINAL.</c> Posted by <see cref="Audio.GameAudio.AnnouncePowerUp"/>
+	/// <c>POWERUP INITIATED. ALL SYSTEMS NOMINAL.</c> Posted by <see cref="Cockpit.MessagePorts.AnnouncePowerUp"/>
 	/// when the machine's internals read no damage.
 	/// </summary>
 	public const int PowerUpNominal = 0x21;
 
 	/// <summary>
 	/// <c>POWERUP INITIATED. INTERNAL DAMAGE DETECTED.</c> Posted by
-	/// <see cref="Audio.GameAudio.AnnouncePowerUp"/> in place of <see cref="PowerUpNominal"/> when one
+	/// <see cref="Cockpit.MessagePorts.AnnouncePowerUp"/> in place of <see cref="PowerUpNominal"/> when one
 	/// of the first ten internals reads any damage.
 	/// </summary>
 	public const int PowerUpDamaged = 0x22;

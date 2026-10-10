@@ -204,7 +204,7 @@ public static class MissionLoader {
 		return new Mission(scriptPath, header, placements, player, basePads, coordinates, playerRoute,
 			groupOrders, actions, actionTimers, deploymentActions, groupKinds, groupSides,
 			objectives, Array.ConvertAll(script.ObjectiveTextRefs, line => (int)line), text, counters,
-			groupReports);
+			groupReports, Array.ConvertAll(groups, group => group.Setup));
 	}
 
 	/// <summary>
@@ -222,7 +222,7 @@ public static class MissionLoader {
 			throw new MissingHandoffFileException(countersPath);
 		}
 
-		var counters = new short[Sim.SimWorld.MissionCounterSlots];
+		var counters = new short[Sim.MissionRuntime.CounterSlots];
 		byte[] bytes = File.ReadAllBytes(countersPath);
 		Buffer.BlockCopy(bytes, 0, counters, 0, Math.Min(bytes.Length, counters.Length * 2));
 
@@ -413,11 +413,11 @@ public static class MissionLoader {
 
 		if (record.Shape != 0) {
 			return new MissionTriggerArea(MissionTriggerShape.Circle, anchor, anchor,
-				record.SecondPointOrRadius * TriggerRadiusScale);
+				record.SecondPointOrRadius * TriggerRadiusScale, reference);
 		}
 
 		return Coordinate(script, record.SecondPointOrRadius) is { } opposite
-			? new MissionTriggerArea(MissionTriggerShape.Box, anchor, opposite, 0)
+			? new MissionTriggerArea(MissionTriggerShape.Box, anchor, opposite, 0, reference)
 			: null;
 	}
 
@@ -459,7 +459,7 @@ public static class MissionLoader {
 			var lead = placements.FirstOrDefault(
 				p => p.Kind == MissionUnitKind.Base && p.SlotIndex == leadSlot);
 			if (lead != null) {
-				pads.Add(new MissionBasePad(lead.Position, layout));
+				pads.Add(new MissionBasePad(lead.Position, layout, group.Index));
 			}
 		}
 
@@ -493,9 +493,18 @@ public static class MissionLoader {
 	/// into <c>group+0x44</c>, and <c>Group_OrderTick</c> reads it by index. See
 	/// docs/retail/simulation/ai-goals.md.
 	/// </param>
+	/// <param name="AuthoredPoint"><inheritdoc cref="MissionGroupSetup.AuthoredPoint"/></param>
+	/// <param name="PointSource"><inheritdoc cref="MissionGroupSetup.PointSource"/></param>
+	/// <param name="HeadingFromRoute"><inheritdoc cref="MissionGroupSetup.HeadingFromRoute"/></param>
 	private readonly record struct Group(int Index, MissionUnitKind Kind, Vec3i Position, int Heading,
 		int FormationId, int DeploymentAction, MissionSide Side, bool PaintsGround,
-		MissionOrder?[] Orders);
+		MissionOrder?[] Orders, Vec3i AuthoredPoint, MissionGroupPointSource PointSource,
+		bool HeadingFromRoute) {
+
+		/// <summary>The public view of the record, for <see cref="Mission.GroupSetups"/>.</summary>
+		public MissionGroupSetup Setup => new(Position, AuthoredPoint, PointSource, Heading, HeadingFromRoute,
+			FormationId, PaintsGround);
+	}
 
 	/// <summary>
 	/// A roster slot's claim: which group activated it, and the slot's index within that group's
@@ -514,9 +523,15 @@ public static class MissionLoader {
 			var route = Route(orders);
 			var kind = KindOf(record.MemberKind);
 
-			var position = Coordinate(script, record.PositionRef)
+			var ownPoint = Coordinate(script, record.PositionRef);
+			var position = ownPoint
 				?? (route.Count > 0 ? route[0] : (Vec3i?)null)
 				?? Vec3i.Zero;
+			var authored = position;
+			var pointSource = ownPoint != null ? MissionGroupPointSource.OwnPoint
+				: route.Count > 0 ? MissionGroupPointSource.RouteStart
+				: MissionGroupPointSource.None;
+			var ownHeading = Heading(script, record.HeadingRef);
 
 			// A structure group that paints its ground also stands at a fixed spot on it. The
 			// mission's own point only picks the tile; the formation supplies the position within
@@ -532,14 +547,17 @@ public static class MissionLoader {
 				i,
 				kind,
 				position,
-				Heading(script, record.HeadingRef) ?? RouteBearing(route),
+				ownHeading ?? RouteBearing(route),
 				record.FormationId,
 				ActionRef(script, record.DeploymentActionRef),
 				record.Side == (short)MissionSide.Cybrid
 					? MissionSide.Cybrid
 					: MissionSide.Human,
 				record.PaintsGround != 0,
-				orders);
+				orders,
+				authored,
+				pointSource,
+				ownHeading == null);
 		}
 
 		return groups;

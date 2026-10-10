@@ -82,6 +82,12 @@ public sealed class GpuMesh : IDisposable {
 
 			_gl.EnableVertexAttribArray(13);
 			_gl.VertexAttribPointer(13, 1, VertexAttribPointerType.Float, false, MeshVertex.SizeInBytes, (void*)(24 * sizeof(float)));
+
+			_gl.EnableVertexAttribArray(14);
+			_gl.VertexAttribPointer(14, 4, VertexAttribPointerType.Float, false, MeshVertex.SizeInBytes, (void*)(25 * sizeof(float)));
+
+			_gl.EnableVertexAttribArray(15);
+			_gl.VertexAttribPointer(15, 1, VertexAttribPointerType.Float, false, MeshVertex.SizeInBytes, (void*)(29 * sizeof(float)));
 		}
 
 		_gl.BindVertexArray(0);

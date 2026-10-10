@@ -26,7 +26,7 @@ public sealed record ShellCrewPortraits(DynamixBitmap[]? Pilots, DynamixBitmap[]
 /// and the pilot's name, skill and machine. Built by <c>Crew_BuildScreen</c> (<c>00440eb8</c>,
 /// <c>wcrewi.cpp</c>), entered by <c>Crew_Enter</c> (<c>00441a01</c>), its rows coloured by
 /// <c>Crew_ColourRows</c> (<c>00441857</c>), matched to pilots by <c>Crew_MatchRowPilots</c> (<c>00441b08</c>), selected by <c>Crew_SelectRow</c> (<c>00441b85</c>) and
-/// filled by <c>Crew_FillRows</c> (<c>00441c4f</c>). See docs/retail/shell/screen-layout.md, "The crew screen".
+/// filled by <c>Crew_FillRows</c> (<c>00441c4f</c>). See docs/retail/shell/squad-and-crew.md, "The crew screen".
 ///
 /// <para><b>The screen's widgets are built once and outlive a visit</b>, so one instance serves every
 /// entry: <see cref="Enter"/> is the tab's entry, and a lit squad portrait stays lit across visits
@@ -120,7 +120,7 @@ public sealed class ShellCrewScreen {
 	/// <c>SelectedBaySlot</c> (<c>00482ae5</c>), the bay the squad panel shows. <b>Entering the screen leaves it on the last
 	/// bay that holds a finished machine</b>: after selecting the player's row, the entry offers every
 	/// occupied bay in turn to <c>Squad_SelectBay</c> (<c>0043d64d</c>), and the crew arm accepts each finished one — so the
-	/// readout is not the player's until the player's row is clicked. See docs/retail/shell/screen-layout.md,
+	/// readout is not the player's until the player's row is clicked. See docs/retail/shell/squad-and-crew.md,
 	/// "The crew screen".
 	/// </summary>
 	public int SelectedBay { get; private set; }
@@ -278,7 +278,7 @@ public sealed class ShellCrewScreen {
 	/// <summary>
 	/// The row under a canvas point, or null — its panel and everything drawn in it: the texts take no mouse
 	/// events, so a click on one reaches the row, and the portrait carries the row's own handler
-	/// (docs/retail/shell/screen-layout.md#which-widget-a-click-reaches).
+	/// (docs/retail/shell/widgets.md#which-widget-a-click-reaches).
 	/// </summary>
 	public static int? RowAt(float canvasX, float canvasY) {
 		for (int row = 0; row < RowCount; row++) {
@@ -342,9 +342,10 @@ public sealed class ShellCrewScreen {
 
 	/// <summary>
 	/// Draws the whole screen into <paramref name="surface"/>, the squad panel included. The caller
-	/// clears it first; the content panel's body is filled, as the repair screen's is.
+	/// clears it first; the content panel's body is filled, as the repair screen's is. <paramref name="lit"/> is
+	/// the widget a press has lit.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
 		ShellSquadPanel.Paint(surface, font, text, _hangar, SelectedBay, _pictures);
@@ -362,7 +363,7 @@ public sealed class ShellCrewScreen {
 				i == LitPortrait ? LitBorder : UnlitBorder);
 		}
 
-		PaintClearButton(surface, font, text);
+		PaintClearButton(surface, font, text, lit);
 		ShellChrome.PaintText(surface, Inside(PanelRect, AvailableLabelRect), font,
 			text?.Text(AvailablePilotsText), ShellTextAlign.Right, ShellChrome.FontInkColor);
 
@@ -411,17 +412,10 @@ public sealed class ShellCrewScreen {
 		}
 	}
 
-	/// <summary>
-	/// CLEAR, a live button no code greys. Its caption is the <c>Text</c> child <c>ESButtonFont_Ctor</c>
-	/// builds at <c>{1, 0, w, h}</c> in the button, so it is centred one pixel right of the button's
-	/// own rect.
-	/// </summary>
-	private static void PaintClearButton(ShellSurface surface, HudFont? font, ShellText? text) {
-		var rect = Inside(PanelRect, ClearRect);
-		ShellChrome.PaintButton(surface, rect, ButtonBorder);
-		ShellChrome.PaintText(surface, new ShellRect(rect.X0 + 1, rect.Y0, rect.X1, rect.Y1), font,
-			text?.Text(ClearText), ShellTextAlign.Center, ShellChrome.FontInkColor);
-	}
+	/// <summary>CLEAR, a live button no code greys.</summary>
+	private static void PaintClearButton(ShellSurface surface, HudFont? font, ShellText? text, ShellWidget? lit) =>
+		ShellChrome.PaintButton(surface, Inside(PanelRect, ClearRect), ButtonBorder, font, text?.Text(ClearText),
+			ShellChrome.FontInkColor, pressed: lit == new ShellWidget(ShellWidgetKind.CrewClear, 0));
 
 	private static ShellRect Inside(ShellRect parent, ShellRect child) =>
 		new(parent.X0 + child.X0, parent.Y0 + child.Y0, parent.X0 + child.X1, parent.Y0 + child.Y1);

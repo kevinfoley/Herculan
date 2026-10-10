@@ -196,7 +196,7 @@ Called from the think functions of `attacking`, `flanking`, `facing off` and `dr
 
 ## Radio callouts
 
-A squad message is posted with `Ai_PostSquadMessage` (`00420a98`), which [`cockpit-messages.md`](../formats/cockpit-messages.md#the-pilot-and-squad-channel) owns along with the id catalog. Three ids are raised from this slice:
+A squad message is posted with `Ai_PostSquadMessage` (`00420a98`), which [`cockpit-messages.md`](cockpit-messages.md#the-pilot-and-squad-channel) owns along with the id catalog. Three ids are raised from this slice:
 
 | Id | Raised by |
 |---|---|
@@ -244,5 +244,5 @@ Fields settled elsewhere link out rather than being restated.
 ## Open
 
 - **Open:** what clears `mech+0x94` besides `Mech_DirectFireHitTest`. No other clear was found by `es2_fieldscan.py 94` over `00400000-00480000` or in the decompile. If there is none, the cached rating takes in magazines running low, and damage that does not come through `Mech_DirectFireHitTest`, only at the machine's next direct-fire hit.
-- **Open:** what else steps the callout rate limit at `004a9be8`. `es2_xref.py` finds one reference, the `Math_CountdownTimerTick` push in `Mech_AiEnemySighted`; the address sits `0x64` past the `004a9b84` latch array, so an access through that array's base would not show as a reference to it.
-- **Open:** what the byte `00499358` is for. `Mech_AiEnemySighted` raises it to 1 on its first call from any machine, the player's included, before any other test. `es2_xref.py` finds two references, the function's own compare and increment; the word tables just below it that `Ai_SelectTarget` (`00411fa0`) indexes by target class end at `00499355`.
+- **Deferred:** what else steps the callout rate limit at `004a9be8`. `es2_xref.py` finds one reference, the `Math_CountdownTimerTick` push in `Mech_AiEnemySighted`; the address sits `0x64` past the `004a9b84` latch array, so an access through that array's base would not show as a reference to it.
+- **Deferred:** what the byte `00499358` is for. `Mech_AiEnemySighted` raises it to 1 on its first call from any machine, the player's included, before any other test. `es2_xref.py` finds two references, the function's own compare and increment; the word tables just below it that `Ai_SelectTarget` (`00411fa0`) indexes by target class end at `00499355`.

@@ -5,7 +5,7 @@ namespace Herculan.Engine.Audio;
 
 /// <summary>
 /// Where a training mission's instructor clips are — the one voice the original reads as loose files
-/// rather than out of an archive. See docs/retail/formats/audio.md, "File naming".
+/// rather than out of an archive. See docs/retail/simulation/audio.md, "File naming".
 ///
 /// <para>The training port's paint (<c>PilotMessagePort_Paint</c>, <c>0043660c</c>) patches the
 /// training number and <b>the posted id plus one</b> into <c>TMx_0000</c>, puts the voice folder

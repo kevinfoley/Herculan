@@ -126,6 +126,6 @@ if (MissionPollTimer_Count < 1000) MissionPollTimer_Count = 1000
 
 ## Open
 
-- **Open:** the units of `template+0x34`. It is plainly a per-shot cost the AI weighs against damage, and the retail values order the arsenal sensibly, but `Ai_ChooseWeapon` is the only reader `es2_fieldscan.py` finds among the weapon functions, so nothing else pins what it is measured in ([`../formats/weapons-dat-sim.md`](../formats/weapons-dat-sim.md)).
+- **Deferred:** the units of `template+0x34`. It is plainly a per-shot cost the AI weighs against damage, and the retail values order the arsenal sensibly, but `Ai_ChooseWeapon` is the only reader `es2_fieldscan.py` finds among the weapon functions, so nothing else pins what it is measured in ([`../formats/weapons-dat-sim.md`](../formats/weapons-dat-sim.md)).
 - **Open:** whether anything else writes `mech+0x2aa`. `es2_fieldscan.py` over the whole image and a grep of the decompile find four stores, `Mech_Constructor`'s 0 and `Mech_AiFleeCheck`'s three; no `memset`/`memcpy` sweep has been run for it.
 - **Open:** whether anything else sets `mech+0xb5`. On a machine, `es2_fieldscan.py` over the whole image and a grep of the decompile find `Rocket_HomingSteer`'s store of 1 and `Ai_FireAtPoint`'s clear; the offset's other hits are cockpit widgets and the `004d2540` block.

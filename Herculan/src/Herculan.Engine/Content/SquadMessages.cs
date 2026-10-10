@@ -3,7 +3,7 @@ namespace Herculan.Engine.Content;
 
 /// <summary>
 /// <c>str\PILOT&lt;bank&gt;.STR</c> — what a squadmate can say. One of these per recorded voice, and
-/// a comm box takes the one its pilot's voice bank names. See docs/retail/formats/cockpit-messages.md, "The
+/// a comm box takes the one its pilot's voice bank names. See docs/retail/simulation/cockpit-messages.md, "The
 /// pilot and squad channel".
 ///
 /// <para>Layout is an ordinary <c>.STR</c> table of one group. Each entry's attribute bytes are the

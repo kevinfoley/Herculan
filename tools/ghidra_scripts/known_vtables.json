@@ -266,7 +266,7 @@
     {
       "name": "CockpitWidgetVtable",
       "binary": "DBSIM",
-      "description": "The seven-slot table every clickable cockpit widget on the CTLButtonControl branch carries, at object +0x17 -- the offset the class's own Borland descriptor record states, so a widget's primary vtable is always reached the same way. SEVEN IS ESTABLISHED, and on a concrete class the block states it outright: the second of the two constants after the table is the byte offset of the mixin's vtable from the start of the primary one, so slot count = (constant - 8) / 4, and every button class carries 0x24. The three input functions that call through the table fix the slot numbers independently (Widget_OnMouseUp (00452870) reads +0x10 then calls +0x08, Widget_OnMouseDown (004527a0) calls +0x18, Widget_Repaint (00452a90) calls +0x04), and the word at +0x1c is not an eighth slot -- in every table on this branch it is either the next class's descriptor pointer (the [descriptor][0][0][vtable] block header this linker emits), the first of the two constants, or padding. Four of those next-class pointers disassemble as code and would read as a confirmed slot. The slider branch is a separate shape with a genuine +0x1c; see CockpitSliderWidgetVtable. Each class's table is found from its name, and each address here from its table, by tools/scripts/es2_classes.py --vtables, which reads the descriptor record stored 12 bytes before every table. See docs/retail/formats/cockpit-input.md.",
+      "description": "The seven-slot table every clickable cockpit widget on the CTLButtonControl branch carries, at object +0x17 -- the offset the class's own Borland descriptor record states, so a widget's primary vtable is always reached the same way. SEVEN IS ESTABLISHED, and on a concrete class the block states it outright: the second of the two constants after the table is the byte offset of the mixin's vtable from the start of the primary one, so slot count = (constant - 8) / 4, and every button class carries 0x24. The three input functions that call through the table fix the slot numbers independently (Widget_OnMouseUp (00452870) reads +0x10 then calls +0x08, Widget_OnMouseDown (004527a0) calls +0x18, Widget_Repaint (00452a90) calls +0x04), and the word at +0x1c is not an eighth slot -- in every table on this branch it is either the next class's descriptor pointer (the [descriptor][0][0][vtable] block header this linker emits), the first of the two constants, or padding. Four of those next-class pointers disassemble as code and would read as a confirmed slot. The slider branch is a separate shape with a genuine +0x1c; see CockpitSliderWidgetVtable. Each class's table is found from its name, and each address here from its table, by tools/scripts/es2_classes.py --vtables, which reads the descriptor record stored 12 bytes before every table. See docs/retail/simulation/cockpit-input.md.",
       "slots": [
         { "offset": 0,   "name": "Paint",              "description": "Redraw the widget's own content -- re-resolve its caption, pick its frame and colour. Called by slot +0x0c's stage 2, never directly by the input layer. CTLControl's table holds the empty 00452ab2; CTLButtonControl installs 00455545." },
         { "offset": 4,   "name": "Invalidate",         "description": "Widget_Repaint (00452a90) calls this and nothing else, so no widget paints inside its own click. The PanelSelectGadget branch installs Widget_InvalidateDeferred (00455524), whose whole body is this->[0x1f] = 2; CTLControl's default (00452ab7) is empty." },
@@ -315,7 +315,7 @@
         {
           "address": "0049c188",
           "label": "HUDRovingGunsightGadgetVtable",
-          "description": "The click surface over the 3D view, built by Gunsight_ClickSurface_Ctor (0043c120); see docs/retail/formats/hud-target-indicator.md. No PanelGadget subobject, so it is silent."
+          "description": "The click surface over the 3D view, built by Gunsight_ClickSurface_Ctor (0043c120); see docs/retail/simulation/hud-target-indicator.md. No PanelGadget subobject, so it is silent."
         },
         {
           "address": "0049c758",
@@ -345,7 +345,7 @@
         {
           "address": "0049cf20",
           "label": "MFDStateGadgetVtable",
-          "description": "An MFD latching button; MFDStateGadget_Ctor (0044741c). See docs/retail/formats/mfd.md."
+          "description": "An MFD latching button; MFDStateGadget_Ctor (0044741c). See docs/retail/simulation/mfd.md."
         },
         {
           "address": "0049cf60",
@@ -360,7 +360,7 @@
         {
           "address": "0049d60c",
           "label": "HDDSelectGadgetVtable",
-          "description": "A Heads-Down Display button; HddButton_Ctor (0044baac). See docs/retail/formats/heads-down-display.md."
+          "description": "A Heads-Down Display button; HddButton_Ctor (0044baac). See docs/retail/simulation/heads-down-display.md."
         },
         {
           "address": "0049d944",
@@ -382,7 +382,7 @@
     {
       "name": "CockpitSliderWidgetVtable",
       "binary": "DBSIM",
-      "description": "The eight-slot table the CTLSliderControl branch carries at object +0x17: CockpitWidgetVtable's seven slots with the same roles and the same call sites, plus +0x1c. The extra slot is present from CTLSliderControl down and absent from every button class, which is the one place the family's shape is not uniform. EIGHT IS ESTABLISHED the same way as seven: a concrete slider's second constant is 0x28, i.e. (0x28 - 8) / 4 = 8 slots, and the word at +0x20 is the subobject-offset constant 0x3e on a concrete slider and the next class's descriptor pointer on an abstract one, never a code address. See docs/retail/formats/cockpit-input.md.",
+      "description": "The eight-slot table the CTLSliderControl branch carries at object +0x17: CockpitWidgetVtable's seven slots with the same roles and the same call sites, plus +0x1c. The extra slot is present from CTLSliderControl down and absent from every button class, which is the one place the family's shape is not uniform. EIGHT IS ESTABLISHED the same way as seven: a concrete slider's second constant is 0x28, i.e. (0x28 - 8) / 4 = 8 slots, and the word at +0x20 is the subobject-offset constant 0x3e on a concrete slider and the next class's descriptor pointer on an abstract one, never a code address. See docs/retail/simulation/cockpit-input.md.",
       "slots": [
         { "offset": 0,   "name": "Paint",              "description": "Redraw the widget's own content -- re-resolve its caption, pick its frame and colour. Called by slot +0x0c's stage 2, never directly by the input layer. CTLControl's table holds the empty 00452ab2; CTLButtonControl installs 00455545." },
         { "offset": 4,   "name": "Invalidate",         "description": "Widget_Repaint (00452a90) calls this and nothing else, so no widget paints inside its own click. The PanelSelectGadget branch installs Widget_InvalidateDeferred (00455524), whose whole body is this->[0x1f] = 2; CTLControl's default (00452ab7) is empty." },
@@ -422,7 +422,7 @@
         {
           "address": "0049d12c",
           "label": "ThrottleVSliderGadgetVtable",
-          "description": "The throttle slider every one of the nine retail .GAU files uses; ThrottleSlider_CtorV (00447e24). Overrides +0x00 through +0x0c. See docs/retail/formats/cockpit-input.md."
+          "description": "The throttle slider every one of the nine retail .GAU files uses; ThrottleSlider_CtorV (00447e24). Overrides +0x00 through +0x0c. See docs/retail/simulation/cockpit-input.md."
         },
         {
           "address": "0049d0e8",
@@ -444,11 +444,11 @@
     {
       "name": "PanelGadgetMixinVtable",
       "binary": "DBSIM",
-      "description": "The four-slot table of the PanelGadget mixin -- the second base every concrete cockpit widget carries alongside CTLButtonControl or CTLHSlider/CTLVSlider, and the reason a widget has two vtable pointers. The descriptor records name it: PanelGadget is 8 bytes with its vptr at +0x00, PanelSliderGadget derives from it, and the subobject constant that precedes each table (0x20 for a button, 0x3e for a slider) is where that base sits inside the object -- exactly the amount the table's adjustor thunks subtract. THE MIXIN ADDS NO BEHAVIOUR of its own: three of the four slots thunk straight back into the primary table, and the fourth is the console click. It is not a second interface to implement but the single switch that decides whether a control makes a sound. A class with no mixin table -- CTLControl, CTLButtonControl, CTLSliderControl, CTLHSlider, CTLVSlider, ScrollTrigger, HDDisplayGadget, HDDMapGadget and HUDRovingGunsightGadget -- is silent for want of the base, not for want of an override. The block layout is [descriptor ptr][0][0][primary vtable][subobject offset][mixin vtable offset][this table], and the second constant is that last offset: the distance in bytes from the start of the primary vtable to this one, 0x24 for a button (7 slots * 4 + 8) against 0x28 for a slider (8 * 4 + 8). It holds in all 22 blocks in DBSIM that carry the pair, the two outside the widget family included -- REG_OBJ and TS_REG_OBJ declare a mixin at +0x0c with the constant 0x1c, which is the same arithmetic over a five-slot primary table. The pair is declared by whichever class first mixes the second base in and inherited unchanged by everything below it, so it varies with the branch and not with the leaf. VSHELL's own CTL family carries no such pair anywhere: its widgets are singly inherited and have no mixin. See docs/retail/formats/cockpit-input.md.",
+      "description": "The four-slot table of the PanelGadget mixin -- the second base every concrete cockpit widget carries alongside CTLButtonControl or CTLHSlider/CTLVSlider, and the reason a widget has two vtable pointers. The descriptor records name it: PanelGadget is 8 bytes with its vptr at +0x00, PanelSliderGadget derives from it, and the subobject constant that precedes each table (0x20 for a button, 0x3e for a slider) is where that base sits inside the object -- exactly the amount the table's adjustor thunks subtract. THE MIXIN ADDS NO BEHAVIOUR of its own: three of the four slots thunk straight back into the primary table, and the fourth is the console click. It is not a second interface to implement but the single switch that decides whether a control makes a sound. A class with no mixin table -- CTLControl, CTLButtonControl, CTLSliderControl, CTLHSlider, CTLVSlider, ScrollTrigger, HDDisplayGadget, HDDMapGadget and HUDRovingGunsightGadget -- is silent for want of the base, not for want of an override. The block layout is [descriptor ptr][0][0][primary vtable][subobject offset][mixin vtable offset][this table], and the second constant is that last offset: the distance in bytes from the start of the primary vtable to this one, 0x24 for a button (7 slots * 4 + 8) against 0x28 for a slider (8 * 4 + 8). It holds in all 22 blocks in DBSIM that carry the pair, the two outside the widget family included -- REG_OBJ and TS_REG_OBJ declare a mixin at +0x0c with the constant 0x1c, which is the same arithmetic over a five-slot primary table. The pair is declared by whichever class first mixes the second base in and inherited unchanged by everything below it, so it varies with the branch and not with the leaf. VSHELL's own CTL family carries no such pair anywhere: its widgets are singly inherited and have no mixin. See docs/retail/simulation/cockpit-input.md.",
       "slots": [
         { "offset": 0,   "name": "Paint",              "description": "Adjustor thunk onto the primary table's +0x00: ADD dword ptr [ESP+4], -<subobject offset>; JMP <primary implementation>. The two abstract mixin tables hold the 00496684 stub instead." },
         { "offset": 4,   "name": "FlushDeferredPaint", "description": "Adjustor thunk onto the primary table's +0x0c." },
-        { "offset": 8,   "name": "ClickSound",         "description": "Widget_ClickSound (00438e2c) in PanelGadget's table and in every class that derives from it -- push 0x11; call Sound_Play, ignoring the pointer it is handed. PanelSliderGadget replaces it with 00439014, an empty stub, and every slider inherits that. A widget therefore clicks or stays silent according to which of the two mixins it carries, and a class with no mixin at all makes no sound. See docs/retail/formats/audio.md." },
+        { "offset": 8,   "name": "ClickSound",         "description": "Widget_ClickSound (00438e2c) in PanelGadget's table and in every class that derives from it -- push 0x11; call Sound_Play, ignoring the pointer it is handed. PanelSliderGadget replaces it with 00439014, an empty stub, and every slider inherits that. A widget therefore clicks or stays silent according to which of the two mixins it carries, and a class with no mixin at all makes no sound. See docs/retail/simulation/audio.md." },
         { "offset": 12,  "name": "OnClick",            "description": "Adjustor thunk onto the primary table's +0x08." }
       ],
       "instances": [
@@ -671,7 +671,7 @@
         {"offset": 24, "name": "Dtor", "description": "(this, flags): the virtual destructor. Decrements the live-object counter at *005ddec0 once per class level, restores each level's vtable and frees what that level owns, then Mem_Delete when flags bit 0 is set. A container deletes its children through their own slot."},
         {"offset": 28, "name": "Render", "description": "As VshellTSBaseVtable's: TSPartList_Render draws the children in order, TSGroup_RenderPolys and TSBSPGroup_Render the polys, TSDetailPart_Render one level of detail, TSCellAnimPart_Render one cell, TSShape_Render the whole shape."},
         {"offset": 32, "name": "FindPart", "description": "(this, id): the part whose id (+6) is id, searching children (TSPartList_FindPart) or not (TSPartBase_FindPart)."},
-        {"offset": 36, "name": "FindPartSlot", "description": "(this, id): the address of the child-array entry holding the part whose id is id (TSPartList_FindPartSlot); a leaf answers 0. See docs/retail/formats/mech-shape-drawing.md."}
+        {"offset": 36, "name": "FindPartSlot", "description": "(this, id): the address of the child-array entry holding the part whose id is id (TSPartList_FindPartSlot); a leaf answers 0. See docs/retail/rendering/mech-shape-drawing.md."}
       ],
       "instances": [
         {"address": "0047f0f8", "label": "TSPartBaseVtable", "description": "RTTI TSPartBase: TSPartBase_GetClassTag, TSPartBase_GetStreamSize, TSPartBase_GetMemorySize, TSPartBase_ReadFromStream, TSPartBase_WriteToStream, TSPartBase_DebugPrint, TSPartBase_Dtor, TSBase_Render, TSPartBase_FindPart, TSPartBase_FindPartSlot."},
@@ -764,7 +764,7 @@
       "binary": "VSHELL",
       "description": "The shell widget classes that stop at the event handler, at object +1 (the class records state vptr +1): Window and the ESWindow subclasses that do not derive from WinButton. The word after the slot is a pointer type's descriptor (e.g. 'ESMessage *').",
       "slots": [
-        {"offset": 0, "name": "HandleEvent", "description": "(widget, event): Event_Deliver calls it for the first widget up the parent chain whose event mask takes the event; it consumes and deletes the event. Window's is Window_DispatchCallback. See docs/retail/shell/screen-layout.md, The widget that takes a click decides what it does."}
+        {"offset": 0, "name": "HandleEvent", "description": "(widget, event): Event_Deliver calls it for the first widget up the parent chain whose event mask takes the event; it consumes and deletes the event. Window's is Window_DispatchCallback. See docs/retail/shell/widgets.md, The widget that takes a click decides what it does."}
       ],
       "instances": [
         {"address": "004717dc", "label": "WindowVtable", "description": "RTTI Window: Window_DispatchCallback."},
@@ -782,7 +782,7 @@
       "description": "VshellWindowVtable plus a paint slot: WinButton and the shell's button, panel and grid classes derived from it.",
       "slots": [
         {"offset": 0, "name": "HandleEvent", "description": "As VshellWindowVtable's: WinButton_HandleEvent for the panels, ESButtonFont_HandleEvent, ESButtonBitmap_HandleEvent, ESRadioButton_HandleEvent, ESBitmap_HandleEvent, ESArm_HandleEvent, ESAlert_HandleEvent."},
-        {"offset": 4, "name": "Paint", "description": "(widget): repaint the widget; the handlers call it through the vtable after changing the lit flag. WinButton's own is Rtl_PureError. See docs/retail/shell/screen-layout.md, How a widget paints."}
+        {"offset": 4, "name": "Paint", "description": "(widget): repaint the widget; the handlers call it through the vtable after changing the lit flag. WinButton's own is Rtl_PureError. See docs/retail/shell/widgets.md, How a widget paints."}
       ],
       "instances": [
         {"address": "0046e810", "label": "WinButtonVtable", "description": "RTTI WinButton: WinButton_HandleEvent, Rtl_PureError."},

@@ -262,17 +262,17 @@ The macroblock-header pass, the coefficient decoder, the transforms and the stor
 
 ## Open
 
-- **Unported:** more than one tile per band.
-- **Unported:** band decomposition into more than one band per plane.
-- **Unported:** chroma subsampling other than 4:1:0.
-- **Unported:** half-sample motion.
-- **Unported:** bidirectional frames, types 3 and 6.
-- **Unported:** transparency, access keys, and packets carrying more than one frame.
-- **Unported:** custom scan orders and quantisation matrices.
-- **Unported:** transforms other than Haar 8x8 for 16x16 macroblocks and slant 4x4 for 4x4 ones, and 8x8 macroblocks.
-- **Unported:** empty bands, and a chroma band inheriting from an empty luma tile, which reads the luma macroblocks of an earlier frame of the same kind.
-- **Unported:** a luma band that inherits, and a chroma band that does not inherit both its type-and-motion and its quantiser.
-- **Unported:** a band of 4x4 macroblocks with an odd number of them across, for which the codec pads each row.
-- **Open:** the picture header bit after the run/value map. The codec stores it and the macroblock pass loads it, but no use of it has been traced; every frame of the corpus sets it.
-- **Open:** the 16-bit band header field after the motion resolution. The codec stores it in the band; no reader has been traced.
-- **Open:** the matrix and dither pattern the DLL converts YUV to RGB with.
+- **Deferred:** more than one tile per band.
+- **Deferred:** band decomposition into more than one band per plane.
+- **Deferred:** chroma subsampling other than 4:1:0.
+- **Deferred:** half-sample motion.
+- **Deferred:** bidirectional frames, types 3 and 6.
+- **Deferred:** transparency, access keys, and packets carrying more than one frame.
+- **Deferred:** custom scan orders and quantisation matrices.
+- **Deferred:** transforms other than Haar 8x8 for 16x16 macroblocks and slant 4x4 for 4x4 ones, and 8x8 macroblocks.
+- **Deferred:** empty bands, and a chroma band inheriting from an empty luma tile, which reads the luma macroblocks of an earlier frame of the same kind.
+- **Deferred:** a luma band that inherits, and a chroma band that does not inherit both its type-and-motion and its quantiser.
+- **Deferred:** a band of 4x4 macroblocks with an odd number of them across, for which the codec pads each row.
+- **Deferred:** the picture header bit after the run/value map. The codec stores it and the macroblock pass loads it, but no use of it has been traced; every frame of the corpus sets it.
+- **Deferred:** the 16-bit band header field after the motion resolution. The codec stores it in the band; no reader has been traced.
+- **Deferred:** the matrix and dither pattern the DLL converts YUV to RGB with.

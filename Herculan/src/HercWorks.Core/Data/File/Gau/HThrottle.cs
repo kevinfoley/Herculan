@@ -8,7 +8,7 @@ namespace HercWorks.Core.Data.File.Gau;
 /// centre. <c>ThrottleGauge_Ctor</c> (<c>00447b84</c>) reads the whole record from offset 1000.
 ///
 /// <para>Neither bar is ever drawn, by DBSIM either: the slider keeps them only to widen the region it
-/// invalidates. They are a cut feature. See docs/retail/formats/cockpit-hud-widgets.md, "Throttle
+/// invalidates. They are a cut feature. See docs/retail/simulation/cockpit-hud-widgets.md, "Throttle
 /// gauge".</para>
 /// </summary>
 public class HThrottle : WidgetBase {

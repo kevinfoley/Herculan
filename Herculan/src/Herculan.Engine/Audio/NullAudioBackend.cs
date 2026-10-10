@@ -52,5 +52,8 @@ public sealed class NullAudioBackend : IAudioBackend {
 	public IAudioStream? OpenStream(int sampleRate, int channels) => null;
 
 	/// <inheritdoc />
+	public void Update() { }
+
+	/// <inheritdoc />
 	public void Dispose() { }
 }

@@ -49,6 +49,26 @@ public sealed class ScaledImGui : IDisposable {
 	/// <inheritdoc cref="Scaled(float)"/>
 	public static Vector2 Scaled(Vector2 size) => size * (ImGui.GetFontSize() / FontSize);
 
+	/// <summary>
+	/// The widest a tooltip may be, in pixels on a 100% display. A longer text is wrapped onto further lines rather
+	/// than drawn as one line across the window.
+	/// </summary>
+	public const float TooltipMaxWidth = 400f;
+
+	/// <summary>
+	/// <see cref="ImGui.SetTooltip(string)"/>, wrapped to <see cref="TooltipMaxWidth"/>; a shorter text keeps its own
+	/// width. Inside the ImGui frame only, as <see cref="Scaled(float)"/>.
+	/// </summary>
+	public static void Tooltip(string text) {
+		ImGui.BeginTooltip();
+		// The wrap position is in the tooltip's own coordinates, so the window's padding comes off it to keep the
+		// whole tooltip, not just its text, inside the width.
+		ImGui.PushTextWrapPos(Scaled(TooltipMaxWidth) - ImGui.GetStyle().WindowPadding.X);
+		ImGui.TextUnformatted(text);
+		ImGui.PopTextWrapPos();
+		ImGui.EndTooltip();
+	}
+
 	/// <summary>Starts the next ImGui frame, first building the controller again if the display's scale changed.</summary>
 	public void Update(float deltaSeconds) {
 		// Compared loosely: the client scale is a ratio of two sizes, which a resize need not update together.

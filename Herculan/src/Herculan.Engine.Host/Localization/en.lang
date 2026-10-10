@@ -2,8 +2,8 @@ language.name English
 general.save    Save
 general.cancel  Cancel
 general.close   Close
-tweak.target_distance_meters.display_name      Show target distance in meters
-tweak.target_distance_meters.description       On the MFD, show target distance in meters on the MFD F5 TARGET screen. Retail shows distance in engine units on this screen only.
+tweak.target_distance_meters.display_name      Fix target distance readout
+tweak.target_distance_meters.description       On the MFD's F5 TARGET screen, show the target's distance in meters measured along the ground, the same way the F4 SCANNER screen measures it, so the two screens agree. Without this tweak the screen shows what your version of the game shows: version 1.0 shows the distance in engine units (1 unit = 6 mm), and version 1.10 shows it in meters. Both versions include the difference in height.
 tweak.show_correct_stats.display_name          Show correct stats
 tweak.show_correct_stats.description           Fix HERC and weapon stats that vanilla displayed incorrectly in VSHELL, such as the Outlaw's top speed and the Raptor II's hardpoint count.
 tweak.show_accurate_speed.display_name         Show accurate speed
@@ -26,6 +26,8 @@ tweak.show_altitude_tape.display_name          Show Razor altitude tape
 tweak.show_altitude_tape.description           Draw the tick tape that scrolls with your height beside the Razor's altitude scale. Retail draws the scale's brackets, column and marker, but places the tape outside its own clipping area, so it never appears.
 tweak.drop_pod_sound_from_pod.display_name    Drop pod sounds from the pod
 tweak.drop_pod_sound_from_pod.description     Hear a falling drop pod's whistle from the pod itself, following it down, and its landing from where it lands. The sounds are louder and carry for kilometres. Retail plays both sounds at your own position, so they never tell you where the pod is.
+tweak.fix_repair_diagram_sides.display_name  Fix repair diagram sides
+tweak.fix_repair_diagram_sides.description   On the REPAIR screen's damage diagram, Left Torso and Left Leg are on the same side. In retail the diagram shows Left Torso on your left but Left Leg on your right. On a Razor, the nacelles are switched to match the wings.
 tweak.smoother_turret_movement.display_name   Smoother turret movement
 tweak.smoother_turret_movement.description     Smooth turret rotation when aiming with a joystick or other analog input. Retail rounds the rotation value, causing stutter at slow aiming speeds. Has no effect when aiming with the keyboard.
 tweak.mouse_external_view.display_name         Mouse-controlled outside view
@@ -36,6 +38,10 @@ tweak.fix_weapon_damage_records.display_name  Fix weapon damage
 tweak.fix_weapon_damage_records.description   ATC75, ATC100, LAS400 and LAS500 deal the damage listed for them, and fire their own rounds and beams. In retail each one deals a smaller weapon's damage: ATC75 and ATC100 hit exactly like ATC35 and ATC50, LAS500 exactly like LAS300, and LAS400 only slightly harder than LAS200. Each also fires that weapon's round or beam, so ATC75 and ATC100 rounds fly as far as ATC35 and ATC50 rounds, and the LAS400 and LAS500 beams are as narrow as the LAS200 and LAS300 beams.
 tweak.charge_bar_power_level.display_name  Interactive Charge Bar
 tweak.charge_bar_power_level.description   Set an energy weapon's power level by clicking or dragging its charge bar on the weapon panel: the bar then fills to where you let go. The [-] and [=] keys keep working. Retail builds the bar for this, but the weapon row's own button covers it, so it never takes a click.
+tweak.fix_terrain_hit_point.display_name  Accurate terrain hits
+tweak.fix_terrain_hit_point.description   Shots and lines of sight meet the ground exactly where it is. On about a third of the terrain, retail works out where a shot strikes the ground against a slope that can be several metres off the real one, so the impact lands short or long. In version 1.10 the ground then sometimes fails to stop a shot or a line of sight at all, so machines can see and shoot each other through parts of hills.
+tweak.flyer_ignores_player_throttle.display_name  Cybrid flyers ignore your throttle setup
+tweak.flyer_ignores_player_throttle.description   A Cybrid flyer always flies at its normal cruising speed. In retail, when your joystick has a throttle and the Razor's THROTTLE control is set to THROTTLE, every Cybrid flyer in the mission slows to a lower speed, even when you are not flying a Razor.
 tweaks.title                   Tweaks
 tweaks.category.cosmetic       Cosmetic
 tweaks.category.ai             AI

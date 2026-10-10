@@ -4,7 +4,7 @@
        override it on the command line (dotnet publish -p:Version=0.9.1). The SDK appends the commit hash to
        the informational version, so every build is traceable to the commit it came from. -->
   <PropertyGroup>
-    <Version>0.9.2</Version>
+    <Version>0.9.3</Version>
     <Authors>Kevin Foley</Authors>
     <Company>Kevin Foley</Company>
     <Product>HERCULAN</Product>

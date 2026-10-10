@@ -115,6 +115,21 @@ The stated armament and the tick part company on three of the eight. The generat
 
 **It is the launcher that rolls, not the gun.** A gun tower fires both barrels every time it is allowed to. A launcher rolls `rand & 0x1f == 0` for the first barrel and, only if that failed, again for the second — so it puts at most one round up per opportunity and usually none.
 
+### Where a tower starts aiming and firing
+
+The 60000 and 40000 ranges are gates the tick tests, not the distances at which an approaching machine sees a tower react: a timer samples each of them, and the cockpit's metre readout measures differently.
+
+**What the tower measures.** Both ranges are `Math_DistanceBetweenPoints` from the tower's origin to the target's: `Math_FastMagnitude3D` (`0047dd66`) of the offset, `L + 0.34375 M + 0.25 S` over the sorted absolute components, so the height difference counts. Two readouts show a range to the selected target, and only one is the tower's:
+
+- The MFD status screen's `DIST:` ([`mfd.md`](mfd.md#mfdstatus--modes-0-and-4)) prints the same `Math_DistanceBetweenPoints` between the two origins, in **raw world units**: `_itoa` of the distance, with no metre conversion. A tower's gates are 60000 and 40000 on it. v1.10 prints it through `Hud_WorldUnitsToMetres`, which reads them as 360 and 240 ([`../retail-builds.md`](../retail-builds.md#how-v110s-programs-differ)).
+- The scanner's `TRG:` ([`mfd-scanner.md`](mfd-scanner.md#readouts)) is in metres, through `Hud_WorldUnitsToMetres` (`00434228`, `(units / 1000) * 6`), of `Math_FastMagnitude2D` (`0047dd40`, `L + M / 2`) over the ground-plane offset from the viewing machine to the target (`MfdRadarScreen_Update`, call at `0043ed74`). On level ground it reads the tower's gates as 360 and 240 approaching along a world axis and up to 11.6% more at 45° to one. A height difference pulls it the other way, since the tower counts the height and the scanner does not: with the target a height `h` above or below the tower, `h` well short of the ground range, the scanner reads about a third of `h` less at each gate: `0.34375 h` along an axis, `0.28 h` at 45° to one.
+
+- **Aiming starts at a retarget.** A target past 60000 is dropped on any tick, but one is picked up only when the `+0x21d` countdown expires, every 10000 units (4.9 s). `Ai_SelectTarget` reaches out to 100000 for anything not designated ([`ai-targeting.md`](ai-targeting.md#acquisition--ai_selecttarget-00411fa0)), so a machine further out than 360 m is picked and dropped in the same tick. A machine closing at `v` is first held at the first retarget after it crosses 360 m: anywhere from 360 m down to `360 m − 4.9 s × v`.
+- **Firing starts with the window.** Inside 40000 the tower also needs the `+0x218` window open, and that window runs from the tower's spawn whoever is near: 4.9 s open, 4.9 s shut. A machine that crosses 240 m while it is shut is not fired on until it opens: anywhere from 240 m down to `240 m − 4.9 s × v`. With the window up, the first burst waits at most one 0.73 s refire.
+- **A launcher's first round comes later still.** Each opportunity puts a round up with odds of about 1 in 16 (two 1-in-32 rolls), so its first launch takes about 16 refires, 12 s of open window, on average.
+
+At a run both shortfalls are large — a HERC at 90 km/h covers about 120 m in 4.9 s — and at a crawl they vanish.
+
 ### What a structure is aimed at
 
 `BASES.DAT +0x2c` is how far up the structure anything aiming at it aims. **All 65 retail types state one**, 1000 to 2000 world units, so a building is never shot at the ground point its model origin sits on. Two vtable slots carry it, read by different callers:
@@ -258,5 +273,4 @@ So 100, like any negative value, leaves the components undamaged, and 0 places t
 
 ## Open
 
-- **Open:** why the generator (type 3) and the transports (`0x0a`, `0x22`) state an armament of 1 when no tick any of them reaches reads it. The AI's danger flag ([`ai-combat-states.md`](ai-combat-states.md#basesdat-0x2e)) reads all three as armed.
-- **Open:** a tower's ranges against retail play. At `Hud_WorldUnitsToMetres` (`00434228`)'s confirmed scale of `(units / 1000) * 6`, the armed tick's 40000-unit fire gate is 240 m and its 60000-unit target drop 360 m, but retail towers are seen aiming from about 320 m and firing from about 200 m, short of both by a margin the scale does not account for.
+- **Deferred:** why the generator (type 3) and the transports (`0x0a`, `0x22`) state an armament of 1 when no tick any of them reaches reads it. The AI's danger flag ([`ai-combat-states.md`](ai-combat-states.md#basesdat-0x2e)) reads all three as armed.

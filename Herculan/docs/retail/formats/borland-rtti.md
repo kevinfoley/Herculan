@@ -2,7 +2,7 @@
 
 `DBSIM.EXE` and `VSHELL.EXE` were built with Borland C++, which emits a type-descriptor record for each class into the image. Every record names its class, so these are the **authentic class names**, not invented ones, and the same record gives the object size, the base classes with their subobject offsets, where the vtable pointer sits in the object, and the destructor. DBSIM carries 238 class records and VSHELL 117, plus a few plain-struct records. Template instances have records too, under their full names: `ObjPool<MECH>`, `LoosePool<PROJECTILE>`, `ARRAY<GUN_STATE *>`.
 
-`tools/scripts/es2_classes.py` reads them straight from the shipped executable, so it does not need a Ghidra project. `--vtables` resolves each record to its vtable and `--tree` prints the hierarchy. Per-class findings stay in the docs for those classes. The cockpit widget family is in [`cockpit-input.md`](cockpit-input.md#the-cockpits-own-gadget-classes), and the cut `GRENADE` projectile is in [`../simulation/weapon-damage-types.md`](../simulation/weapon-damage-types.md#type--a-firing-mechanism-selector).
+`tools/scripts/es2_classes.py` reads them straight from the shipped executable, so it does not need a Ghidra project. `--vtables` resolves each record to its vtable and `--tree` prints the hierarchy. Per-class findings stay in the docs for those classes. The cockpit widget family is in [`../simulation/cockpit-input.md`](../simulation/cockpit-input.md#the-cockpits-own-gadget-classes), and the cut `GRENADE` projectile is in [`../simulation/weapon-damage-types.md`](../simulation/weapon-damage-types.md#type--a-firing-mechanism-selector).
 
 The field order matches the `tpid` type descriptor in Borland's RTL headers. The flags and offsets below were each checked against all 355 class records in both binaries. Where a field has only the header's name, it says so.
 
@@ -88,7 +88,7 @@ Blocks are packed end to end. **The word after a table's last slot is usually th
 
 ## Open
 
-- **Open:** what the two equal counts at `+0x20`/`+0x24` hold, beyond the header's names for them.
-- **Open:** the third list at `+0x2e`, beyond the header's name for it.
-- **Open:** what the base-list entry flag `1` means, against the usual `3`.
-- **Open:** class flags `0x01` and `0x40`.
+- **Deferred:** what the two equal counts at `+0x20`/`+0x24` hold, beyond the header's names for them.
+- **Deferred:** the third list at `+0x2e`, beyond the header's name for it.
+- **Deferred:** what the base-list entry flag `1` means, against the usual `3`.
+- **Deferred:** class flags `0x01` and `0x40`.

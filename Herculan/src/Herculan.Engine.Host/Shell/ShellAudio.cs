@@ -72,8 +72,7 @@ sealed class ShellAudio : IDisposable {
 
 	/// <summary>
 	/// WM_SETFOCUS starts the sounds again, unless a movie is playing, and WM_KILLFOCUS stops them
-	/// (MainWndProc, 00404a2c). The stop reaches a movie's soundtrack too, the two sharing one backend
-	/// here where retail's MCI sound is not the sound manager's.
+	/// (MainWndProc, 00404a2c).
 	/// </summary>
 	public void FocusChanged(bool focused, bool moviePlaying) {
 		if (focused) {

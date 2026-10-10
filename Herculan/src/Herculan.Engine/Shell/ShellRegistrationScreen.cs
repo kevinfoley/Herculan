@@ -18,7 +18,7 @@ public enum ShellRegistrationButton {
 /// What <c>START NEW GAME</c> opens: a pilot name and a skill for a new campaign career. Built once at
 /// startup by <c>Registration_BuildScreen</c> (<c>0043b69e</c>), put up by <c>Registration_Show</c>
 /// (<c>0043bc0a</c>) and hidden by <c>Registration_Hide</c> (<c>0043bcb9</c>). See
-/// docs/retail/shell/screen-layout.md#the-registration-screen.
+/// docs/retail/shell/main-menu.md#the-registration-screen.
 ///
 /// <para>Every rect is a literal in the executable, kept parent-relative as the builder writes it: the
 /// panel in the canvas, the box and the two outer buttons in the panel, the rest in the box, and the
@@ -45,8 +45,10 @@ public sealed class ShellRegistrationScreen {
 	private static readonly ShellRect FieldRect =
 		new(1, 1, NameBoxRect.X1 - NameBoxRect.X0 - 1, NameBoxRect.Y1 - NameBoxRect.Y0 - 1);
 
-	/// <summary>The pilot name typed so far — the field's <c>+0x45</c>, empty from the constructor and cleared by nothing.</summary>
-	public string Name { get; private set; } = string.Empty;
+	private readonly ShellEditField _name = new(PermittedCharacters, FieldRect.X1 - FieldRect.X0);
+
+	/// <summary>The pilot name typed so far, cleared by nothing.</summary>
+	public string Name => _name.Text;
 
 	/// <summary>
 	/// <c>RegistrationSkillChoice</c> (<c>004761ac</c>), 0-3: the skill the readout shows and
@@ -54,8 +56,8 @@ public sealed class ShellRegistrationScreen {
 	/// </summary>
 	public int Skill { get; private set; }
 
-	/// <summary>The field's <c>+0xb3</c>, the caret's blink phase, which <c>ESDialog_Ctor</c> leaves on.</summary>
-	public bool CaretOn { get; private set; } = true;
+	/// <inheritdoc cref="ShellEditField.CaretOn"/>
+	public bool CaretOn => _name.CaretOn;
 
 	/// <summary>
 	/// <c>ACCEPT</c>'s greying fields: its caption colour (<c>+0x55</c>'s <c>+0xb5</c>), border colour
@@ -76,17 +78,12 @@ public sealed class ShellRegistrationScreen {
 	public static ShellHit FieldHit => new(new ShellWidget(ShellWidgetKind.RegistrationField, 0), ShellHandler.EditField);
 
 	/// <summary>
-	/// A keystroke reaching the field, as <c>ESDialog_HandleEvent</c> (<c>0040beaf</c>) takes it —
-	/// <c>+0xbf</c> is the constructor's 1 here, so a character is always tried and a Backspace or left
-	/// arrow erases while the field has the focus, down to empty (<c>+0xb7</c> is 0) — followed by the
-	/// field's handler, <c>Registration_OnNameEvent</c> (<c>0043bdee</c>), which on every character and
-	/// command writes <c>ACCEPT</c>'s greying trio from the name's first character. Enter's release of the
-	/// pointer is the host's. Returns whether anything drawn changed.
+	/// A keystroke reaching the field (<see cref="ShellEditField.Key"/>), followed by the field's handler,
+	/// <c>Registration_OnNameEvent</c> (<c>0043bdee</c>), which on every character and command writes
+	/// <c>ACCEPT</c>'s greying trio from the name's first character. Returns whether anything drawn changed.
 	/// </summary>
 	public bool Key(ShellKey key, bool focused, HudFont? font) {
-		bool changed = key.Character is { } c
-			? Type(c, font)
-			: focused && key.Command is ShellKey.Backspace or ShellKey.Left && Erase();
+		bool changed = _name.Key(key, focused, font);
 
 		var before = (_acceptLive, _acceptCaption, _acceptBorder);
 		_acceptLive = Name.Length > 0;
@@ -95,35 +92,8 @@ public sealed class ShellRegistrationScreen {
 		return changed || before != (_acceptLive, _acceptCaption, _acceptBorder);
 	}
 
-	/// <summary>
-	/// <c>ESDialog_TypeChar</c> (<c>0040bdd2</c>): a character the set permits goes on the end while the
-	/// string stays under 89 characters and the glyph, the string and six pixels more fit inside the field.
-	/// </summary>
-	private bool Type(char c, HudFont? font) {
-		if (!PermittedCharacters.Contains(c) || Name.Length + 1 >= MaxLength) {
-			return false;
-		}
-
-		if ((font?.Width(c) ?? 0) + (font?.Measure(Name) ?? 0) + CaretWidth >= FieldRect.X1 - FieldRect.X0) {
-			return false;
-		}
-
-		Name += c;
-		return true;
-	}
-
-	/// <summary><c>ESDialog_Erase</c> (<c>0040be56</c>): the last character off, while there is one.</summary>
-	private bool Erase() {
-		if (Name.Length == 0) {
-			return false;
-		}
-
-		Name = Name[..^1];
-		return true;
-	}
-
-	/// <summary>One tick of the focused field's blink alarm, every 500 ms: the phase flips, <c>+0xbf</c> being set.</summary>
-	public void CaretTick() => CaretOn = !CaretOn;
+	/// <inheritdoc cref="ShellEditField.CaretTick"/>
+	public void CaretTick() => _name.CaretTick();
 
 	/// <summary>
 	/// <c>SKILL LEVEL</c>, <c>Registration_StepSkill</c> (<c>0043c01d</c>): the skill steps modulo 4 and the
@@ -165,9 +135,10 @@ public sealed class ShellRegistrationScreen {
 	/// <summary>
 	/// Draws the screen into <paramref name="surface"/>, in the builder's order. The caller clears it
 	/// first; the panel's dithered body leaves the rest to the backdrop. <paramref name="focused"/> is
-	/// whether the field has the pointer's focus, whose caret shows while the blink phase is on.
+	/// whether the field has the pointer's focus, whose caret shows while the blink phase is on, and
+	/// <paramref name="lit"/> the widget a press has lit.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, bool focused) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, bool focused, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
 		ShellChrome.PaintTitledPanel(surface, PanelRect, PanelBorder, PanelFace, PanelBodyDither, TitleHeight,
@@ -184,17 +155,14 @@ public sealed class ShellRegistrationScreen {
 		ShellChrome.PaintEditField(surface, Inside(NameBox, FieldRect), font, Name, ShellChrome.FontInkColor,
 			caret: focused && CaretOn);
 
-		var readout = Inside(Box, SkillReadoutRect);
-		ShellChrome.PaintButton(surface, readout, ReadoutBorder);
-		ShellChrome.PaintText(surface, new ShellRect(readout.X0 + 1, readout.Y0, readout.X1, readout.Y1), font,
-			text?.Text(FirstSkillWord + Skill), ShellTextAlign.Center, ReadoutTextColor, ShellChrome.InteriorColor);
+		ShellChrome.PaintButton(surface, Inside(Box, SkillReadoutRect), ReadoutBorder, font, text?.Text(FirstSkillWord + Skill),
+			ReadoutTextColor, backingColor: ShellChrome.InteriorColor);
 
 		foreach (var button in Enum.GetValues<ShellRegistrationButton>()) {
-			var rect = ButtonRect(button);
 			bool accept = button == ShellRegistrationButton.Accept;
-			ShellChrome.PaintButton(surface, rect, accept ? _acceptBorder : ButtonBorder);
-			ShellChrome.PaintText(surface, rect, font, text?.Text(CaptionText(button)), ShellTextAlign.Center,
-				accept ? _acceptCaption : ShellChrome.FontInkColor);
+			ShellChrome.PaintButton(surface, ButtonRect(button), accept ? _acceptBorder : ButtonBorder, font,
+				text?.Text(CaptionText(button)), accept ? _acceptCaption : ShellChrome.FontInkColor,
+				pressed: IsEnabled(button) && lit == new ShellWidget(ShellWidgetKind.RegistrationButton, (int)button));
 		}
 	}
 
@@ -212,12 +180,6 @@ public sealed class ShellRegistrationScreen {
 	/// upper-case alphabet. Every letter reaches the field upper-cased, so the lower-case run never matches.
 	/// </summary>
 	private const string PermittedCharacters = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ ";
-
-	/// <summary>The string's limit, <c>0x5a</c>: a character goes on only while the new length stays below it.</summary>
-	private const int MaxLength = 0x5a;
-
-	/// <summary>The caret block's width, which the fit test leaves room for.</summary>
-	private const int CaretWidth = 6;
 
 	private const int SkillCount = 4;
 

@@ -24,17 +24,14 @@ public static class Deployment {
 	public const int StructureClearance = 5000;
 
 	/// <summary>
-	/// A ceiling on the outward search. The original has none — it steps until the point clears —
-	/// and cannot fail because the terrain test eventually walks off the grid, which blocks, and it
-	/// would then loop forever. This engine stops instead and hands back the last point tried; see
-	/// the remarks.
+	/// A ceiling on the outward search, which is this engine's own: the original steps until a point
+	/// clears, however long that takes. Every point past the grid's north or south end is refused, so
+	/// a search that runs off that way would hang the original; this one stops and hands back the last
+	/// point tried, which is off the heightmap. A search running off the west or east edge ends without the
+	/// cap, at the first walkable cell of the neighbouring rows it reads there. The cap also lets a
+	/// headless test on a stub terrain terminate. See
+	/// docs/retail/simulation/mission-deployment.md#picking-the-point--deployment_pickpointnearplayer-0042354c.
 	/// </summary>
-	/// <remarks>
-	/// The original's loop is genuinely unbounded and would hang on a zone with no clear ground in
-	/// the search direction. It never does in practice: the step is 2,000 units against a zone
-	/// thousands of times that, and the very first point is usually clear. The cap is this engine's
-	/// own, chosen so a headless test on a stub terrain terminates rather than reproducing a hang.
-	/// </remarks>
 	public const int MaxSearchSteps = 512;
 
 	/// <summary>
@@ -51,7 +48,10 @@ public static class Deployment {
 	/// an object with no collision radius is skipped too.</item>
 	/// <item><b>Structures</b>, through the same volume sweep a walking machine is stopped by.</item>
 	/// <item><b>The ground</b>, through the terrain slope walk's face test — anything too steep to
-	/// stand on, or off the grid entirely.</item>
+	/// stand on, or past the grid's north or south end. A point past the west or east edge reads a
+	/// cell of the neighbouring row (<see cref="Terrain.HeightGrid.BlocksMovementAt"/>) and can clear,
+	/// and what arrives there is stranded: see
+	/// docs/retail/simulation/mission-deployment.md#a-pod-aimed-off-the-heightmap.</item>
 	/// </list>
 	///
 	/// <para>The offset is built as the vector <c>(0, distance, 0)</c> rotated by the bearing, which

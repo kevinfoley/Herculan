@@ -99,7 +99,7 @@ public static class AiTargeting {
 		}
 
 		// The data-link shield: the order's own subject is off limits to the player's squad.
-		if (world.Objectives.ObjectiveType == MechObject.ObjectiveTypeDataLink
+		if (world.Mission.Objectives.ObjectiveType == MechObject.ObjectiveTypeDataLink
 				&& self.Group is { Leader: { LocallyPiloted: true } } led
 				&& ReferenceEquals(led.OrderTarget, candidate)) {
 			return false;

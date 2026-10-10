@@ -6,7 +6,7 @@ namespace Herculan.Engine.Scene;
 /// <summary>
 /// One machine's LOD chain as the draw items hold it: every root's items, uploaded together, and which of
 /// them is currently drawn. See <see cref="Herculan.Engine.Render.ShapeDetail"/> for the selection
-/// and docs/retail/formats/mech-shape-drawing.md for the mechanism it ports.
+/// and docs/retail/rendering/mech-shape-drawing.md for the mechanism it ports.
 /// </summary>
 /// <param name="Subject">The machine, whose position the distance to the eye is measured to.</param>
 /// <param name="ShapeRadius">Root 0's own bounding radius in world units.</param>
@@ -19,11 +19,17 @@ public sealed record MechDetailChain(SimObject Subject, int ShapeRadius, SceneIt
 /// <summary>The distances and focal length both the kept and the rebuilt items choose their detail by.</summary>
 public static class DetailMetrics {
 	// The focal length of the view being drawn, in its own pixels. Retail's is the video mode's fixed
-	// 2^9 = 512 over 480 rows (docs/retail/formats/cockpit-views.md); taking it off the window instead keeps the
+	// 2^9 = 512 over 480 rows (docs/retail/simulation/cockpit-views.md); taking it off the window instead keeps the
 	// detail thresholds a count of pixels on the screen actually being drawn, which is what makes them a
 	// measure of apparent size rather than of a 1996 monitor's.
 	public static int FocalPixels(int framebufferHeight) => Math.Max((int)MathF.Round(
 		framebufferHeight * Camera.FocalLengthPixels / Camera.FocalViewHeightPixels), 1);
+
+	// The focal length of `camera` drawn into a viewport `viewportHeight` framebuffer pixels tall, in those
+	// pixels: for a view whose focal length is its own rather than the cockpit's, as the MFD's missile
+	// camera's 2^7 is.
+	public static int FocalPixels(Camera camera, int viewportHeight) => Math.Max((int)MathF.Round(
+		viewportHeight / (2f * MathF.Tan(camera.FieldOfView / 2f))), 1);
 
 	// Eye to a detail part's own node, in world units, for an object drawn at `transform`. To the node
 	// rather than to the object's origin: the original measures after binding the part's transform, so

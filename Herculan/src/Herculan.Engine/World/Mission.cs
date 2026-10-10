@@ -179,7 +179,63 @@ public sealed record MissionPlacement(
 /// the original reads it. Only which tile it falls in matters, not where within that tile.
 /// </param>
 /// <param name="Layout">The formation's material index and occupancy map.</param>
-public sealed record MissionBasePad(Vec3i Anchor, BaseFormationLayout Layout);
+/// <param name="GroupIndex">The block-11 record whose structures stand on it.</param>
+public sealed record MissionBasePad(Vec3i Anchor, BaseFormationLayout Layout, int GroupIndex) {
+	/// <summary>
+	/// The painted tile's low-x, low-y corner: the anchor rounded down to <see cref="BaseFormationLayout.TileSize"/>.
+	/// The tile runs one <see cref="BaseFormationLayout.TileSize"/> from there along each axis.
+	/// </summary>
+	public (int X, int Y) TileOrigin => (Anchor.X & ~(Layout.TileSize - 1), Anchor.Y & ~(Layout.TileSize - 1));
+}
+
+/// <summary>Where a <see cref="MissionGroupSetup"/>'s point came from.</summary>
+public enum MissionGroupPointSource {
+	/// <summary>The block-11 record's own <c>PositionRef</c>.</summary>
+	OwnPoint,
+
+	/// <summary>
+	/// The first waypoint of the route its order slot 0 names, which is where a group with no point
+	/// of its own stands — see <see cref="MissionLoader"/>, step 3.
+	/// </summary>
+	RouteStart,
+
+	/// <summary>Neither: the record names no point and slot 0 no route, so the group stands at the origin.</summary>
+	None
+}
+
+/// <summary>
+/// One block-11 record's own placement: the point and heading its members spread from, and how they
+/// spread. A member whose roster record names its own point ignores the first two; see
+/// <see cref="MissionLoader"/>.
+/// </summary>
+/// <param name="Point">
+/// The point its members spread from, after a paints-ground structure group's snap to a fixed spot in
+/// its terrain tile — see docs/retail/formats/script-dat.md#the-anchor.
+/// </param>
+/// <param name="AuthoredPoint">
+/// The same point before that snap. Equal to <paramref name="Point"/> for every other group.
+/// </param>
+/// <param name="PointSource">Where <paramref name="AuthoredPoint"/> came from.</param>
+/// <param name="Heading">Its heading as a binary angle.</param>
+/// <param name="HeadingFromRoute">
+/// Whether the record names no heading, so <paramref name="Heading"/> is the bearing of its route's
+/// first leg (zero for a route of fewer than two waypoints).
+/// </param>
+/// <param name="FormationId">
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptGroup.FormationId"/>
+/// An index into the formation table of the group's own kind.
+/// </param>
+/// <param name="PaintsGround">
+/// <inheritdoc cref="HercWorks.Core.Data.File.Msn.Script.ScriptGroup.PaintsGround"/>
+/// </param>
+public sealed record MissionGroupSetup(
+	Vec3i Point,
+	Vec3i AuthoredPoint,
+	MissionGroupPointSource PointSource,
+	int Heading,
+	bool HeadingFromRoute,
+	int FormationId,
+	bool PaintsGround);
 
 /// <summary>
 /// A mission ready to be turned into a scene: which zone and theater it plays in, and every object
@@ -200,7 +256,8 @@ public sealed class Mission {
 			IReadOnlyList<int>? objectiveTextRefs = null,
 			IReadOnlyList<string>? text = null,
 			IReadOnlyList<short>? counters = null,
-			IReadOnlyList<OutOfActionReport>? groupOutOfActionReports = null) {
+			IReadOnlyList<OutOfActionReport>? groupOutOfActionReports = null,
+			IReadOnlyList<MissionGroupSetup>? groupSetups = null) {
 		SourcePath = sourcePath;
 		Header = header;
 		Placements = placements;
@@ -219,6 +276,7 @@ public sealed class Mission {
 		Text = text ?? Array.Empty<string>();
 		Counters = counters ?? Array.Empty<short>();
 		GroupOutOfActionReports = groupOutOfActionReports ?? Array.Empty<OutOfActionReport>();
+		GroupSetups = groupSetups ?? Array.Empty<MissionGroupSetup>();
 	}
 
 	/// <summary>Where the <c>script.dat</c> was read from.</summary>
@@ -296,6 +354,13 @@ public sealed class Mission {
 	public IReadOnlyList<OutOfActionReport> GroupOutOfActionReports { get; }
 
 	/// <summary>
+	/// Each group's point, heading and formation, by block-11 record index. The placements already
+	/// carry what the simulation needs of it; tooling reads it to show where a group stands as a
+	/// whole, including one that places nothing.
+	/// </summary>
+	public IReadOnlyList<MissionGroupSetup> GroupSetups { get; }
+
+	/// <summary>
 	/// Block 12 in file order — what the mission wants done, and what loses it. See
 	/// <see cref="MissionObjective"/>; <see cref="Herculan.Engine.Sim.MissionObjectives"/> runs them.
 	/// </summary>
@@ -316,7 +381,7 @@ public sealed class Mission {
 	/// <summary>
 	/// What the mission counters start at: <c>mission.var</c> as the shell left it, with the slots the
 	/// load resets already zeroed. Empty for a mission built without a loader, which starts them all at
-	/// zero. See <see cref="Herculan.Engine.Sim.SimWorld.MissionCounters"/>.
+	/// zero. See <see cref="Herculan.Engine.Sim.MissionRuntime.Counters"/>.
 	/// </summary>
 	public IReadOnlyList<short> Counters { get; }
 

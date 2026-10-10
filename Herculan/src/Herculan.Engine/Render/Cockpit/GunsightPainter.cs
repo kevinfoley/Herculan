@@ -178,7 +178,7 @@ internal sealed class GunsightPainter {
 	/// <c>0x204</c>-byte clip block into — the herc's <c>.HD</c>/<c>.ED</c> canopy cutout — putting it
 	/// in clip <b>mode 2</b>, the region-list mode, in which a bitmap is cut to the canopy opening
 	/// scanline by scanline — following the A-pillars, not a rectangle (see
-	/// docs/retail/formats/hud-target-indicator.md, "Why the box goes behind the cockpit frame").</para>
+	/// docs/retail/simulation/hud-target-indicator.md, "Why the box goes behind the cockpit frame").</para>
 	///
 	/// <para><b>Child 5 is the only widget that opts into it</b>: its paint calls
 	/// <c>Cockpit_PopRenderContext</c> before the box and <c>Cockpit_PushCanvasContext</c> after, dropping out of the canvas
@@ -341,7 +341,7 @@ internal sealed class GunsightPainter {
 	/// (<c>0043d5c8</c>) and <c>Gunsight_UpdateAndPaint</c> (<c>0043d6dc</c>) blit <c>HUD</c> frame
 	/// <see cref="AutoTrackLegendPlateFrame"/> at the legend rect's top-left and centre the text in
 	/// that rect in <c>DARK</c>. Nothing is drawn while it is off. See
-	/// docs/retail/formats/cockpit-gunsight-hud.md#the-att-legend.
+	/// docs/retail/simulation/cockpit-gunsight-hud.md#the-att-legend.
 	/// </summary>
 	internal static void AddAutoTrackLegend(GAUFile gau, StringFile? strings, CockpitHudState state,
 			Action<string, int, float, float> blit,

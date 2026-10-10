@@ -10,7 +10,7 @@ namespace Herculan.Engine.Render;
 /// <c>rotate((0,0x1000,0), eulerMatrix(-6000,0,21000))</c> in the sim's Z-up world space, intensity
 /// <c>0x100</c>. No mission or theater file contributes to it, and no ambient light is created
 /// anywhere in the binary — a face angled away from the sun gets shade 0, not a floor. The
-/// derivation is docs/retail/formats/terrain-lighting.md's "The sun".</para>
+/// derivation is docs/retail/rendering/terrain-lighting.md's "The sun".</para>
 ///
 /// <para><b>There are two shade calculations, not one</b>, and they are different curves. Both walk
 /// the active light list; both reduce, for the one directional light, to a function of
@@ -38,7 +38,7 @@ namespace Herculan.Engine.Render;
 /// is half as steep, an edge-on face sits at 128 rather than 0, and shade reaches 0 at 120 degrees
 /// off the light rather than 90. Both saturate near facing 0.5, so flat ground (facing 0.544) is
 /// pinned at 255 either way. The side-by-side comparison is
-/// docs/retail/formats/dts-texture-binding.md's "Two shade calculations — terrain and shapes use different
+/// docs/retail/rendering/dts-texture-binding.md's "Two shade calculations — terrain and shapes use different
 /// ones".</para>
 /// </summary>
 public static class MissionSun {
@@ -61,7 +61,7 @@ public static class MissionSun {
 	/// <c>RotateVectorByMatrixQ14((0, 0x1000, 0), BuildEulerRotationMatrixQ14(-6000, 0, 21000))</c>,
 	/// which works out to <c>(±0.758, -0.359, -0.544)</c> in the sim's Z-up world — horizontal
 	/// component 0.839, vertical 0.544. Z is composed after X, not before; getting that backwards
-	/// leaves every flat cell facing away from the sun. See docs/retail/formats/terrain-lighting.md's
+	/// leaves every flat cell facing away from the sun. See docs/retail/rendering/terrain-lighting.md's
 	/// "The sun".</para>
 	/// </summary>
 	public static Vector3 Direction { get; } = ComputeDirection();

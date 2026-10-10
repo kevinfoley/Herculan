@@ -4,7 +4,7 @@ namespace Herculan.Engine.Audio;
 
 /// <summary>
 /// An <see cref="IAudioBackend"/> with <c>data\sound.cfg</c>'s output format put on it — what the original's SOS
-/// mixer does with <c>Rate</c> and <c>Width</c> (docs/retail/formats/audio.md, "DATA\SOUND.CFG"). It owns the
+/// mixer does with <c>Rate</c> and <c>Width</c> (docs/retail/simulation/audio.md, "DATA\SOUND.CFG"). It owns the
 /// backend it wraps.
 ///
 /// <list type="bullet">
@@ -62,6 +62,9 @@ public sealed class SoundCfgBackend : IAudioBackend {
 
 	/// <inheritdoc />
 	public IAudioStream? OpenStream(int sampleRate, int channels) => _inner.OpenStream(sampleRate, channels);
+
+	/// <inheritdoc />
+	public void Update() => _inner.Update();
 
 	private float Pan(float pan) => _config.Mono ? 0f : pan;
 

@@ -51,7 +51,7 @@ Worth doing in this order; each stands on its own.
 
 ## The real cost is not the harness
 
-Making the two engines agree well enough for the diff to be *quiet* is the actual project. This engine already runs some things back to back where the original has separate dispatch passes — `MechObject.Tick` says so in as many words, and `SimWorld.Raycast`'s ordering relative to the detection sweep is the same kind of choice. Ordering differences produce divergence even when both engines are individually correct, so early runs will be noisy and reconciling them is real work.
+Making the two engines agree well enough for the diff to be *quiet* is the actual project. This engine already runs some things back to back where the original has separate dispatch passes — `MechObject.Tick` says so in as many words, and `HitTests.Raycast`'s ordering relative to the detection sweep is the same kind of choice. Ordering differences produce divergence even when both engines are individually correct, so early runs will be noisy and reconciling them is real work.
 
 That is worth knowing up front, and it is not a reason to skip it: even a noisy diff that says "first divergence at tick 340, object 3" is a far stronger lead than anything playtesting gives. It also converts a [`../../ROADMAP.md`](../../ROADMAP.md) item — how many draws DBSIM has made before a given roll — from something to reason about into something to measure, since the generator state is one of the values the harness can dump.
 

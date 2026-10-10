@@ -18,7 +18,7 @@ The engine is currently in beta. Not all features have been thoroughly tested, a
 
 ### Features
 
-- Play all of `Earthsiege 2`, at any resolution, with support for widescreen and ultra-widescreen monitors (menus render at 4:3).
+- Play all of _Earthsiege 2_, at any resolution, with support for widescreen and ultra-widescreen monitors (menus render at 4:3).
 - Hardware-accelerated rendering that almost perfectly matches retail's software renderer.
 - Currently supports Windows, with planned support for Linux and potentially macOS in the near future.
 - Full support for retail's file formats, including saved games.
@@ -109,6 +109,19 @@ Higher tickrates/smoother motion are under consideration for a future update, bu
     <p><em>Gameplay, piloting the Samson.</em></p>
   </figure>
 </div>
+
+## Documentation
+
+This repository includes extensive documentation on _Earthsiege 2_. For a full list, see the [docs folder](Herculan/docs).
+
+Some less-technical docs which may be of interest to players and fans of the series:
+
+- [Key bindings](Herculan/docs/retail/key-bindings.md): a full list of key bindings in retail, most of which are implemented in HERCULAN as well.
+- [Campaign continuity](Herculan/docs/retail/campaign-continuity.md): a breakdown of how campaign mission results carry forward to future missions.
+- [Cut content](Herculan/docs/retail/cut-content.md): a summary of some of the more interesting unfinished features that can be found in the game's code and data.
+- [Launch options](Herculan/docs/retail/launch-options.md): a list of all of retail's command-line launch options, including the all-important `-eggplant` flag.
+- [Retail builds](Herculan/docs/retail/retail-builds.md): describes the differences between v1.0 and v1.10 (this doc is more technical).
+- [Known Issues](Herculan/KNOWN_ISSUES.md): contains a detailed list of bugs and other mistakes in _Earthsiege 2_ (of which there are _many_).
 
 ## Building from source
 

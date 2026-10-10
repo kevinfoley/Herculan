@@ -85,20 +85,23 @@ sealed class SettingsWindow : IDisposable {
 		}
 	}
 
-	/// <summary>Draws the window and the install window, when each is up. <paramref name="owner"/> is the native window a picker belongs to.</summary>
-	public void Draw(nint owner) {
+	/// <summary>
+	/// Draws the window and the install window, when each is up. <paramref name="owner"/> is the native window a picker
+	/// belongs to, and <paramref name="centre"/> when each is centred on the window (<see cref="PanelCentring.Condition"/>).
+	/// </summary>
+	public void Draw(nint owner, ImGuiCond centre) {
 		if (_open) {
-			DrawSettings(owner);
+			DrawSettings(owner, centre);
 		}
 
 		if (_install != null) {
-			DrawInstall(owner);
+			DrawInstall(owner, centre);
 		}
 	}
 
-	private void DrawSettings(nint owner) {
+	private void DrawSettings(nint owner, ImGuiCond centre) {
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), 0f));
-		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
+		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), centre, new Vector2(0.5f, 0.5f));
 
 		bool stayOpen = true;
 		if (ImGui.Begin(_session.Localization.GetStringOrKey("settings.title") + "###settings", ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
@@ -147,7 +150,7 @@ sealed class SettingsWindow : IDisposable {
 				stayOpen = false;
 			}
 
-			DrawPrompt(owner);
+			DrawPrompt(owner, centre);
 		}
 
 		ImGui.End();
@@ -161,9 +164,9 @@ sealed class SettingsWindow : IDisposable {
 	}
 
 	// The install window, floating beside Settings. Using what it installed is the install's own Change.
-	private void DrawInstall(nint owner) {
+	private void DrawInstall(nint owner, ImGuiCond centre) {
 		ImGui.SetNextWindowSize(ScaledImGui.Scaled(InstallSize), ImGuiCond.Appearing);
-		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
+		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), centre, new Vector2(0.5f, 0.5f));
 		var outcome = InstallPanel.Outcome.Open;
 		if (ImGui.Begin(_session.Localization.GetStringOrKey("install.title") + "###install", ImGuiWindowFlags.NoCollapse)) {
 			outcome = _install!.Draw(owner);
@@ -196,7 +199,7 @@ sealed class SettingsWindow : IDisposable {
 		}
 		ImGui.EndDisabled();
 		if (_restartShell == null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
-			ImGui.SetTooltip(_session.Localization.GetStringOrKey("settings.in_mission"));
+			ScaledImGui.Tooltip(_session.Localization.GetStringOrKey("settings.in_mission"));
 		}
 
 		if (removed) {
@@ -236,7 +239,7 @@ sealed class SettingsWindow : IDisposable {
 		}
 		ImGui.EndDisabled();
 		if (_restartShell == null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
-			ImGui.SetTooltip(_session.Localization.GetStringOrKey("settings.in_mission"));
+			ScaledImGui.Tooltip(_session.Localization.GetStringOrKey("settings.in_mission"));
 		}
 
 		if (chosen is { } next) {
@@ -278,13 +281,13 @@ sealed class SettingsWindow : IDisposable {
 	}
 
 	// The prompt as a modal over the window, the size of the startup's own.
-	private void DrawPrompt(nint owner) {
+	private void DrawPrompt(nint owner, ImGuiCond centre) {
 		if (_prompt == null) {
 			return;
 		}
 
 		ImGui.SetNextWindowSize(ScaledImGui.Scaled(PromptSize));
-		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
+		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), centre, new Vector2(0.5f, 0.5f));
 		if (!ImGui.BeginPopupModal(PromptId, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoMove)) {
 			return;
 		}

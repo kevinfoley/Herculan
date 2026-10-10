@@ -7,7 +7,7 @@ namespace Herculan.Engine.Shell;
 /// <summary>
 /// VSHELL's sound: the shell music, the two click sounds and the startup switch, out of <c>SHLSOUND.VOL</c>, with the
 /// gates, the fade and the focus stop the original puts round them
-/// (docs/retail/shell/screen-layout.md#sound).
+/// (docs/retail/shell/movies-and-sound.md#sound).
 ///
 /// <para>The original's fades are loops that hold the shell until they finish. This one steps once per
 /// <see cref="Update"/> under the same rule, so the window keeps drawing, and <see cref="Fading"/> is
@@ -41,6 +41,9 @@ public sealed class ShellSound {
 	private readonly int _switch;
 	private readonly int _music;
 	private int _musicPlay = -1;
+
+	// The clicks' playbacks, which Stop ends along with the music.
+	private readonly List<int> _clickPlays = new();
 
 	// ShellSound_MusicVolume (004731fc), the music's volume: 0 in the image, and moved only by the fades.
 	private int _musicVolume;
@@ -125,13 +128,20 @@ public sealed class ShellSound {
 	/// <c>ShellSound_Stop</c> (<c>0042f030</c>), run when the window loses the focus: stops every sound and drops
 	/// <see cref="Active"/>. The music's volume is left where it was, and a fade under way goes on
 	/// stepping it.
+	///
+	/// <para>Every sound is this class's own playbacks, not the device's: the movies play on the same device here,
+	/// where retail's soundtrack is outside the sound manager (<see cref="SoundCfgBackend"/>), so it plays on through this.</para>
 	/// </summary>
 	public void Stop() {
 		if (!Active) {
 			return;
 		}
 
-		_backend.StopAll();
+		_backend.Stop(_musicPlay);
+		foreach (int play in _clickPlays) {
+			_backend.Stop(play);
+		}
+		_clickPlays.Clear();
 		_musicPlay = -1;
 		Active = false;
 	}
@@ -171,8 +181,13 @@ public sealed class ShellSound {
 	/// One pass of the fade's loop: a step whenever more than 10 ms of <c>GetTickCount</c> have passed
 	/// since the last — up until the volume is past 99, or down until it is below 2.
 	/// <see cref="Environment.TickCount64"/> is that same clock, at its same granularity.
+	///
+	/// <para>It services the backend's device first (<see cref="IAudioBackend.Update"/>), which is this
+	/// engine's and has no counterpart in the original's loop.</para>
 	/// </summary>
 	public void Update() {
+		_backend.Update();
+
 		if (!Fading) {
 			return;
 		}
@@ -215,7 +230,11 @@ public sealed class ShellSound {
 
 	private void Play(int sample) {
 		if (Active && _options[Prefs.SoundsOption] != 0) {
-			_backend.Start(sample, Gain(FullVolume), 0f, 1f, looping: false);
+			_clickPlays.RemoveAll(click => !_backend.IsPlaying(click));
+			int play = _backend.Start(sample, Gain(FullVolume), 0f, 1f, looping: false);
+			if (play >= 0) {
+				_clickPlays.Add(play);
+			}
 		}
 	}
 

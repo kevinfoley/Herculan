@@ -7,14 +7,14 @@ namespace HercWorks.Core.Data.File.Dts;
 public class TSBasePart : TSObject {
 	/// <summary>
 	/// The node whose transform the part is drawn through (<c>part+4</c>), as an index into the shape
-	/// instance's per-node array; negative for none. See docs/retail/formats/dts-node-posing.md,
+	/// instance's per-node array; negative for none. See docs/retail/rendering/dts-node-posing.md,
 	/// "The draw path".
 	/// </summary>
 	public short Transform { get; set; }
 
 	/// <summary>
 	/// The part's id (<c>part+6</c>) — what a find-by-id resolves, as the hardpoint splice and the
-	/// cockpit camera bone do. See docs/retail/formats/mech-shape-drawing.md, "Hardpoint attachment slots
+	/// cockpit camera bone do. See docs/retail/rendering/mech-shape-drawing.md, "Hardpoint attachment slots
 	/// are overwritten every frame".
 	/// </summary>
 	public short IdNumber { get; set; }

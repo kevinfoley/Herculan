@@ -37,8 +37,10 @@ public static partial class DtsMeshBuilder {
 				return;
 
 			case ANShape shape:
-				// An ANShape brings its own animation list into scope for everything beneath it.
-				CollectParts(shape.Parts, shape.AnimationList ?? animList, sink, atlas, shading, cellFrame,
+				// An ANShape brings its own animation list into scope for everything beneath it, unless
+				// the caller places the root through another's (Collector.PoseList).
+				CollectParts(shape.Parts, sink.PoseList ?? shape.AnimationList ?? animList, sink, atlas,
+					shading, cellFrame,
 					hiddenPartIds);
 				break;
 
@@ -115,7 +117,7 @@ public static partial class DtsMeshBuilder {
 		var tree = BspTree.From(part, frame => {
 			var offset = ResolveTransformOffset(frame, animList);
 			return WorldScale.DtsToRender(offset.X, offset.Y, offset.Z);
-		});
+		}, hiddenPartIds);
 
 		var outer = sink.Leaf;
 		foreach (int leaf in ReachableLeaves(part)) {
@@ -130,7 +132,7 @@ public static partial class DtsMeshBuilder {
 	/// The children of a <see cref="TSBSPPart"/> its tree reaches, in file order — the set
 	/// <c>TSBSPPart_Render</c> (<c>00476b0c</c>) draws: it walks the tree from node 0 through
 	/// <c>TSBSPPart_RenderNode</c> (<c>00476a1c</c>), and a child no node names is never drawn.
-	/// docs/retail/formats/dts-texture-binding.md, "<c>TSBSPPart</c> child selection", lists the retail
+	/// docs/retail/rendering/dts-texture-binding.md, "<c>TSBSPPart</c> child selection", lists the retail
 	/// shapes that carry one.
 	/// </summary>
 	internal static TSObject[] ReachableParts(TSBSPPart part) =>

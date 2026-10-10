@@ -21,12 +21,19 @@ public class DynamixBitmapTransformer : ByteTransformer<DynamixBitmap> {
 		var dbm = new DynamixBitmap {
 			Rows = IndexShortLE(),
 			Cols = IndexShortLE(),
-			BitDepth = IndexShortLE(),
-			UnkSpacer1 = IndexByte(),
+			BitsPerPixel = IndexByte(),
+			Flags = IndexByte(),
+			Packing = (BitmapPacking)IndexByte(),
 			ImageDataLen = IndexIntLE()
 		};
-		dbm.UnkSpacer2 = IndexShortLE();
+		short extraCount = IndexShortLE();
 		dbm.ImageData = IndexSegment(dbm.ImageDataLen);
+		if (extraCount > 0) {
+			dbm.ExtraDwords = new uint[extraCount];
+			for (int i = 0; i < extraCount; i++) {
+				dbm.ExtraDwords[i] = (uint)IndexIntLE();
+			}
+		}
 
 		return dbm;
 	}
@@ -36,7 +43,7 @@ public class DynamixBitmapTransformer : ByteTransformer<DynamixBitmap> {
 
 		objectBytes.Write(DynamixBitmap.HeaderMagic, 0, DynamixBitmap.HeaderMagic.Length);
 
-		int size = dbm.ImageData!.Length + 13;
+		int size = 13 + dbm.ImageData!.Length + dbm.ExtraDwords.Length * 4;
 
 		var sizeBytes = WriteIntLE(size);
 		objectBytes.Write(sizeBytes, 0, sizeBytes.Length);
@@ -47,18 +54,27 @@ public class DynamixBitmapTransformer : ByteTransformer<DynamixBitmap> {
 		var colsBytes = WriteShortLE(dbm.Cols);
 		objectBytes.Write(colsBytes, 0, colsBytes.Length);
 
-		var bitDepthBytes = WriteShortLE(dbm.BitDepth);
-		objectBytes.Write(bitDepthBytes, 0, bitDepthBytes.Length);
-
-		objectBytes.WriteByte(dbm.UnkSpacer1);
+		objectBytes.WriteByte(dbm.BitsPerPixel);
+		objectBytes.WriteByte(dbm.Flags);
+		objectBytes.WriteByte((byte)dbm.Packing);
 
 		var imgLenBytes = WriteIntLE(dbm.ImageDataLen);
 		objectBytes.Write(imgLenBytes, 0, imgLenBytes.Length);
 
-		var unkSpacer2Bytes = WriteShortLE(dbm.UnkSpacer2);
-		objectBytes.Write(unkSpacer2Bytes, 0, unkSpacer2Bytes.Length);
+		var extraCountBytes = WriteShortLE((short)dbm.ExtraDwords.Length);
+		objectBytes.Write(extraCountBytes, 0, extraCountBytes.Length);
 
 		objectBytes.Write(dbm.ImageData, 0, dbm.ImageData.Length);
+
+		foreach (uint extra in dbm.ExtraDwords) {
+			var extraBytes = WriteIntLE((int)extra);
+			objectBytes.Write(extraBytes, 0, extraBytes.Length);
+		}
+
+		// The record pads to an even length with a zero byte, standalone and inside a .DBA alike.
+		if (objectBytes.Length % 2 != 0) {
+			objectBytes.WriteByte(0x00);
+		}
 
 		return objectBytes.ToArray();
 	}

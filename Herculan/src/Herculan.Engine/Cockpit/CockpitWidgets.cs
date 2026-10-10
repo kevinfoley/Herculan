@@ -254,7 +254,7 @@ public readonly record struct CockpitWidget(CockpitWidgetId Id, CockpitSurface S
 	/// <para>The original's other case, a Manhattan-distance circular test selected by a per-widget
 	/// flag, is not implemented: every cockpit widget constructor clears that flag, and its setter
 	/// (<c>Widget_SetHitShape</c>, <c>0045234c</c>) has no caller <c>es2_xref.py</c> finds. See
-	/// docs/retail/formats/cockpit-input.md §6.</para>
+	/// docs/retail/simulation/cockpit-input.md §6.</para>
 	/// </summary>
 	public bool Contains(float artX, float artY) =>
 		artX >= X0 && artY >= Y0 && artX <= X1 && artY <= Y1;
@@ -273,7 +273,7 @@ public readonly record struct CockpitWidget(CockpitWidgetId Id, CockpitSurface S
 /// the same array by <c>Widget_RegisterClickable</c> (<c>00452c44</c>), and
 /// <c>Widget_HitTestChildren</c> (<c>00452a00</c>) linear-scans the whole thing. Nothing is removed
 /// when a panel stops showing; a hidden widget is skipped because its state byte says so
-/// (docs/retail/formats/cockpit-input.md §5). What is reproduced here is that <i>rule</i> — hidden means not
+/// (docs/retail/simulation/cockpit-input.md §5). What is reproduced here is that <i>rule</i> — hidden means not
 /// hit — via the layouts' own visibility tables, which are the decoded form of the same state byte.
 /// The flat array itself is not reproduced as a mutable registry: widgets are enumerated on demand
 /// from the layout tables, since nothing in Herculan needs to register or unregister one at
@@ -370,7 +370,7 @@ public static class CockpitWidgets {
 	/// <para>Herculan reaches the same behaviour without a canvas: the band is the bottom of the
 	/// forward surface's art, and <see cref="CockpitScreenLayout.WindowToArt"/> already resolves the
 	/// overlap in the forward surface's favour, so once the pan has carried that art to the top of the
-	/// screen the same rect answers a click there. See docs/retail/formats/cockpit-input.md §10.</para>
+	/// screen the same rect answers a click there. See docs/retail/simulation/cockpit-input.md §10.</para>
 	///
 	/// <para>The two side strips are not art-space widgets here; see
 	/// <see cref="Render.CockpitScreenLayout.SideViewEdgeAt"/>.</para>

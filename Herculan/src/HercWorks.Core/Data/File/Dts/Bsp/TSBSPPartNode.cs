@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.File.Dts.Bsp;
 
 /// <summary>
 /// One 14-byte node of a <see cref="TSBSPPart"/>'s tree: a splitting plane and its two sides. See
-/// docs/retail/formats/dts-texture-binding.md, "TSBSPPart child selection".
+/// docs/retail/rendering/dts-texture-binding.md, "TSBSPPart child selection".
 /// </summary>
 public class TSBSPPartNode {
 	/// <summary>Offset of the record in the buffer it was read from.</summary>

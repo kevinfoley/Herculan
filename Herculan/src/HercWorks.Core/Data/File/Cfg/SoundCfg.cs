@@ -2,7 +2,7 @@ namespace HercWorks.Core.Data.File.Cfg;
 
 /// <summary>
 /// <c>data\sound.cfg</c> — the sound driver settings, section <c>[Sound]</c> of an INI, as both executables
-/// interpret it. Read by <see cref="Io.Transform.Common.SoundCfgTransformer"/>. See docs/retail/formats/audio.md,
+/// interpret it. Read by <see cref="Io.Transform.Common.SoundCfgTransformer"/>. See docs/retail/simulation/audio.md,
 /// "DATA\SOUND.CFG".
 /// </summary>
 public class SoundCfg {

@@ -14,8 +14,8 @@ public static class WorldScale {
 	/// <summary>
 	/// How many DBSIM world units make up one metre of rendered space: 1000 world units are 6 metres,
 	/// so a world unit is 6 mm. This is the original's own constant, recovered from
-	/// <c>Hud_WorldUnitsToMetres</c> (<c>00434228</c>) — see docs/herculan/planning.md, "World scale —
-	/// recovered", for the derivation and its corroborations.
+	/// <c>Hud_WorldUnitsToMetres</c> (<c>00434228</c>) — see
+	/// docs/retail/simulation/dbsim-physics-notes.md#world-units for the derivation and its corroborations.
 	///
 	/// <para>The original's own <i>displayed</i> distance is coarser than this constant in two ways
 	/// that matter to a HUD but not to the scale factor: the integer divide quantises it to multiples
@@ -26,8 +26,8 @@ public static class WorldScale {
 
 	/// <summary>
 	/// How many world units one raw DTS model unit spans — one, i.e. model coordinates are world
-	/// coordinates with no conversion at all. Confirmed from game data; see docs/herculan/planning.md,
-	/// "World scale — recovered", for the evidence.
+	/// coordinates with no conversion at all. Confirmed from game data; see
+	/// docs/retail/simulation/dbsim-physics-notes.md#world-units for the evidence.
 	///
 	/// <para>Note this differs from the WinForms model viewer, which scales DTS points by 1/10 —
 	/// that viewer picks whatever scale frames a model nicely in its own window and has no world to

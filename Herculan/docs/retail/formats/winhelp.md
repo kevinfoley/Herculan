@@ -1,6 +1,6 @@
 # ES2GUIDE.HLP — the on-line manual
 
-The "On-Line Manual" is a Windows Help file, one per language: `ENGLISH\ES2GUIDE.HLP`, `FRENCH\ES2GUIDE.HLP` and `GERMAN\ES2GUIDE.HLP`, 8.6 MiB each; v1.0 and v1.10 ([`../retail-builds.md`](../retail-builds.md)) ship the same three files byte for byte. Both executables open it the same way: DBSIM's `?` key and right-hand system button reach `OnlineManual_Raise` (`0045f054`) and `Help_Show` (`004668c0`), and VSHELL's `ONLINE MANUAL` reaches `OnlineManual_Open` (VSHELL `004317ea`) and `Shell_OpenHelp` (VSHELL `004073a2`) (see [screen-layout.md](../shell/screen-layout.md#the-main-menu)). The path is `<language>\es2guide.hlp` under the directory `data\drive.cfg` names (`DriveCfg_PrefixPath`, `0045ee44`; `Path_UnderDriveCfg`, VSHELL `0040d429`), so the manual is read from the disc; neither build's installer copies it. Each calls `WinHelpA(hwnd, path, HELP_CONTENTS, 0)`, the one `WinHelpA` call in its executable: no context id, no keyword, no macro. Everything below the contents topic is reached from inside the help file.
+The "On-Line Manual" is a Windows Help file, one per language: `ENGLISH\ES2GUIDE.HLP`, `FRENCH\ES2GUIDE.HLP` and `GERMAN\ES2GUIDE.HLP`, 8.6 MiB each; v1.0 and v1.10 ([`../retail-builds.md`](../retail-builds.md)) ship the same three files byte for byte. Both executables open it the same way: DBSIM's `?` key and right-hand system button reach `OnlineManual_Raise` (`0045f054`) and `Help_Show` (`004668c0`), and VSHELL's `ONLINE MANUAL` reaches `OnlineManual_Open` (VSHELL `004317ea`) and `Shell_OpenHelp` (VSHELL `004073a2`) (see [screen-layout.md](../shell/main-menu.md#the-main-menu)). The path is `<language>\es2guide.hlp` under the directory `data\drive.cfg` names (`DriveCfg_PrefixPath`, `0045ee44`; `Path_UnderDriveCfg`, VSHELL `0040d429`), so the manual is read from the disc; neither build's installer copies it. Each calls `WinHelpA(hwnd, path, HELP_CONTENTS, 0)`, the one `WinHelpA` call in its executable: no context id, no keyword, no macro. Everything below the contents topic is reached from inside the help file.
 
 This doc describes the format as these three files use it. They were compiled by the Windows 95 help compiler (`|SYSTEM` minor version 33) and share one feature set; WinHelp features they do not use are listed under [Not in the corpus](#not-in-the-corpus). v1.10 also carries Windows 3.1 versions under `VER31\`, about 3 MB each, from the older compiler (`|SYSTEM` minor version 21, LZ77-compressed topics, 35 of the pictures stored under file names such as `256_OUTL.BMP`, and no `Readme` button); this doc does not describe them.
 
@@ -310,12 +310,12 @@ WinHelp features these files do not use, so nothing above describes them: LZ77-c
 ## Open
 
 - **Open:** the unit of paragraph spacing, indents, tab stops and table column widths. Font sizes are half-points, and in half-points the indents are round inches (108 = 0.75 in, 504 = 3.5 in), and the getting-started overview's 174 + 349 table wraps its entries at the same words as `Earthsiege 2 - On-Line Manual.pdf`, a rendering of this file. Nothing in the file or the executables states the unit.
-- **Open:** the second value in each table column (1 for the first column, 11 for the others) and the table type.
-- **Open:** a table cell's word and byte after the column number, and the non-zero compressed signed long that opens a cell's paragraph format.
-- **Open:** the third word of an embedded button.
-- **Open:** a hotspot's bytes 1–2, always 4 and 0.
-- **Open:** the fifth word of a window definition, and flag bits `0x0800` (set on `useguide` only) and `0x1000`.
-- **Open:** font attribute bits `0x10` (set on two descriptors in each file) and `0x40` (on three).
+- **Deferred:** the second value in each table column (1 for the first column, 11 for the others) and the table type.
+- **Deferred:** a table cell's word and byte after the column number, and the non-zero compressed signed long that opens a cell's paragraph format.
+- **Deferred:** the third word of an embedded button.
+- **Deferred:** a hotspot's bytes 1–2, always 4 and 0.
+- **Deferred:** the fifth word of a window definition, and flag bits `0x0800` (set on `useguide` only) and `0x1000`.
+- **Deferred:** font attribute bits `0x10` (set on two descriptors in each file) and `0x40` (on three).
 - **Open:** the font descriptors' background colour, `01 01 00` throughout, and whether the text colour `01 01 00` is a literal colour or a marker for the default.
 - **Open:** the 4-byte compressed signed long's bias.
-- **Open:** the context hash's values for characters other than letters, digits and `_`.
+- **Deferred:** the context hash's values for characters other than letters, digits and `_`.

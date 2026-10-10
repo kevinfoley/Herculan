@@ -18,10 +18,18 @@ VSHELL's arena is `Shell_PoolSize` (`0046c090`) bytes, 4,000,000 in the image, w
 
 Most file access goes through a small stream hierarchy (the C runtime's `FILE` functions are imported too). The class names come from the Borland RTTI behind each vtable. `StreamIO` is the base and holds a status word at `+4`; the concrete classes are `FileRStream`, `FileWStream`, `FileRWStream`, `VolRStream` (a loose file or a `.VOL` entry, [vol-archive.md](formats/vol-archive.md)), `MemRWStream`, and the decompression filters `RLERStream` and `LZHRStream`. The status codes seen are 0 ok, 1 I/O error, 2 end of data, 3 close failed, 4 write to a read-only stream, 5 no file, and 6 filter not attached.
 
+### The decompression filters
+
+`RLERStream` and `LZHRStream` decode the stream they are attached to as it is read: `.VOL` compression types 7 and 9 ([vol-archive.md](formats/vol-archive.md#the-per-entry-prefix--fixed-9-bytes)) and bitmap packing types 1 and 3 ([`rendering/dts-billboards.md`](rendering/dts-billboards.md#tsbitmappart_render-004762e8)). Neither stream carries a length; the reader asks for as many bytes as it knows the data unpacks to.
+
+**RLE.** `RLERStream_Read` (`0044f10c`; DBSIM `0047b5f8`) reads a control byte. With bit 7 set it is a run, `control & 0x7f` copies of the byte that follows; with bit 7 clear it is that many literal bytes, which follow it. A control byte of `0x00` or `0x80` produces nothing.
+
+**LZH** is Okumura's LZHUF. `LZHRStream_Read` (`0044f4b8`; DBSIM `0047b9ac`) keeps a 4096-byte window whose first 4036 bytes `LZHRStream_Open` (DBSIM `0047b868`) fills with spaces, writing from position 4036. Each symbol comes from an adaptive Huffman code over 314 symbols (`LZHuffman_Start`, DBSIM `0047bbd0`; `LZHuffman_DecodeChar`, DBSIM `0047bd18`). A symbol below 256 is a literal byte; any other is a match of `symbol - 253` bytes, 3 to 60, copied from window position `write - distance - 1`. `LZHuffman_DecodePosition` (DBSIM `0047bd68`) reads the 12-bit distance: a byte indexes two tables for the upper six bits and a bit count, and that count less two further bits are shifted into the byte, whose low six bits are the rest. The tables are LZHUF's `d_code` and `d_len` byte for byte.
+
 ### The errno test reads an import stub
 
 When a read, seek or handle check fails, the stream code tests `errno`: `VolRStream_SetIoError` (`0040339d`; DBSIM `00473474`) and `FileRStream_SetIoError` (`0044e914`; DBSIM `0047ae54`) store status 1 when it is nonzero and 3 otherwise, and `VolRStream`'s handle constructor, `setFile` and `read` assert `Bad file Handle.` when it is `EBADF` (6). None of these reads `errno`. They read the dword at `0046b6f6` (DBSIM `004966ea`), which is the jump stub the linker made for `cw3220.dll`'s `_errno` import. Its value is the stub's own instruction bytes, `FF 25 3C E3` (`0xE33C25FF`; DBSIM `FF 25 10 C3`), which are never 0 and never 6. So a failed stream operation always gets status 1, and the `Bad file Handle.` asserts never fire.
 
 ## Open
 
-- **Open:** whether any caller treats status 1 differently from 3, which would make the `errno` stub read visible beyond the missing assert.
+- **Deferred:** whether any caller treats status 1 differently from 3, which would make the `errno` stub read visible beyond the missing assert.

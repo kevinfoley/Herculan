@@ -73,16 +73,16 @@ public sealed class MissionObjectiveState {
 
 			switch (op) {
 				case MissionObjective.CounterSet:
-					world.SetMissionCounter(counter, 1);
+					world.Mission.SetCounter(counter, 1);
 					break;
 				case MissionObjective.CounterClear:
-					world.ClearMissionCounter(counter);
+					world.Mission.ClearCounter(counter);
 					break;
 				case MissionObjective.CounterIncrement:
-					world.BumpMissionCounter(counter, 1);
+					world.Mission.BumpCounter(counter, 1);
 					break;
 				case MissionObjective.CounterDecrement:
-					world.BumpMissionCounter(counter, -1);
+					world.Mission.BumpCounter(counter, -1);
 					break;
 			}
 		}

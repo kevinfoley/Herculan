@@ -144,8 +144,8 @@ sealed class DamageFlash(MissionScene scene, CockpitArt? art, SceneRenderer rend
 
 		// The sky and the fog colour come out of the palette too, and in an open zone they are most of
 		// what is on screen — see Scene.ImpactFlash.
-		if (scene.ImpactFlash is { } flash) {
-			(active ? flash.Atmosphere : scene.Atmosphere).ApplyTo(renderer);
+		if (scene.Models.ImpactFlash is { } flash) {
+			(active ? flash.Atmosphere : scene.Models.Atmosphere).ApplyTo(renderer);
 		}
 
 		textures.ShowFlash(active);

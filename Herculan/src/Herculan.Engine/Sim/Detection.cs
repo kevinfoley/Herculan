@@ -350,7 +350,7 @@ public static class Detection {
 			var from = new Vec3i(self.Position.X, self.Position.Y, self.Position.Z + self.SightHeight);
 			var to = new Vec3i(other.Position.X, other.Position.Y, other.Position.Z + other.SightHeight);
 
-			self.SetLineOfSightTo(other, !world.Terrain.RayWalk(from, to, out _));
+			self.SetLineOfSightTo(other, !world.Terrain.RayWalk(from, to, world.ThinRay, out _));
 		}
 
 		return self.LineOfSightTo(other);

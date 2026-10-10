@@ -224,7 +224,7 @@ public abstract class SimObject {
 
 	/// <summary>
 	/// Vtable <c>+0x50</c> — a shot from <paramref name="attacker"/> just struck this object, made by
-	/// <see cref="SimWorld.Raycast"/>. Every class but the HERC installs <c>Mech_ShareContact</c>
+	/// <see cref="HitTests.Raycast"/>. Every class but the HERC installs <c>Mech_ShareContact</c>
 	/// (<c>00411aec</c>), which does nothing but share the attacker with this object's side
 	/// (<see cref="Detection.ShareContact"/>); the HERC overrides it with its reaction
 	/// (docs/retail/simulation/ai-targeting.md, "Passing a contact on").
@@ -392,7 +392,7 @@ public abstract class SimObject {
 	/// <c>obj+0x9e</c> — whether this object has been engaged. Three setters:
 	/// <see cref="Detection.Sweep"/> raises it on both objects of a pair that have closed to
 	/// <see cref="Detection.EngagementRange"/>, <see cref="Detection.ShareContact"/> on the contact
-	/// being shared, and <see cref="SimWorld.Raycast"/> on the shooter alone. Read by
+	/// being shared, and <see cref="HitTests.Raycast"/> on the shooter alone. Read by
 	/// <see cref="MissionObjective.ConditionEngaged"/> and its negation. Why they mark different
 	/// parties is in docs/retail/simulation/mission-deployment.md, "An object's own two actions".
 	/// </summary>
@@ -467,7 +467,7 @@ public abstract class SimObject {
 	/// </summary>
 	internal void ReportOutOfAction(SimWorld world) {
 		Group?.ReportIfAllOthersOutOfAction(world, this);
-		world.ApplyOutOfActionReport(OutOfActionReport);
+		world.Mission.ApplyOutOfActionReport(OutOfActionReport);
 	}
 
 	/// <summary>
@@ -689,7 +689,7 @@ public abstract class SimObject {
 	///
 	/// <para>The world is passed because a hit is more than a number: an implementation spawns the
 	/// shot's impact effect from in here, which is where the original spawns it too — see
-	/// <see cref="SimWorld.SpawnImpactEffect"/>.</para>
+	/// <see cref="EffectPools.SpawnImpactEffect"/>.</para>
 	/// </summary>
 	/// <returns>
 	/// How far along the ray the object was struck, or zero for a miss. The caller shortens the ray
@@ -699,7 +699,7 @@ public abstract class SimObject {
 
 	/// <summary>
 	/// Vtable <c>+0x70</c> — what an explosion does to this object, called on every object the blast
-	/// sweep found in range (<see cref="SimWorld.ExplosiveBlastSweep"/>) and, for a machine, directly
+	/// sweep found in range (<see cref="HitTests.ExplosiveBlastSweep"/>) and, for a machine, directly
 	/// on itself by the direct-fire path when the shot carries a splash share.
 	///
 	/// <para>All three shootable classes implement it and no two of them alike — a machine rolls and

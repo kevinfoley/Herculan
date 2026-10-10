@@ -221,7 +221,7 @@ public sealed partial class MechObject {
 			// action's firing sites and the only one that is not a death -- see SimObject.DefeatAction.
 			Disarmed = true;
 			ActivateDefeatAction(world);
-			world.Objectives.DeferPoll(DisarmedPollDeferral);
+			world.Mission.Objectives.DeferPoll(DisarmedPollDeferral);
 		}
 
 		return chosen;

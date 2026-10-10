@@ -136,7 +136,7 @@ sealed class FrontEndWindow : IDisposable {
 		}
 
 		if (_screenshotPath == null) {
-			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0);
+			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0, _window.FullScreen);
 		}
 
 		_imgui.Render();

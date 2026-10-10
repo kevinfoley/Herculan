@@ -28,8 +28,7 @@ cluster  componentIndex      19 in every record; overwritten at load with the mo
          spheres             {x, y, z, radius}: 4 to 21 spheres about the mount point, most
                              strung along the barrel's Y axis, radius 70-450; none on ids 0,
                              26, 27
-tail     48 bytes            decoded fields below. Two bytes at tail-relative 0x26 are zeroed in
-                             memory at runtime (not file data)
+tail     48 bytes            decoded fields below
 ```
 
 ## Decoded tail fields
@@ -48,10 +47,10 @@ Offsets are absolute in-memory (tail-relative = absolute − 0x22).
 | `0x3c` | barrel count; `3` fires three shots spread along the muzzle offset's own X | `WeaponMount_FireDispatch_GunBeam` |
 | `0x3e` | **`PROJ.DAT` index**, below | `MechLoadout_ConstructWeaponMounts` |
 | `0x40`–`0x44` | muzzle offset, three int16, in the firing bone's space | `WeaponMount_PrepareShot` |
-| `0x46` | lateral muzzle offset, for a side-mounted hardpoint | `WeaponMountTemplate_SideMuzzleOffset` |
-| `0x4a` | vertical muzzle offset, for a top- or bottom-mounted one | `WeaponMountTemplate_SideMuzzleOffset` |
+| `0x46`–`0x4a` | side muzzle offset, three int16: `0x46` lateral, for a side-mounted hardpoint; `0x4a` vertical, for a top- or bottom-mounted one; `0x48` between them is zero in every record, and `WeaponMountTemplate_ReadRecord` (`0040f8bc`) stores zero there again after reading the tail | `WeaponMountTemplate_SideMuzzleOffset` |
 | `0x4c` | refire delay, in sim timer units | `WeaponMount_PrepareShot` |
-| `0x50` | **damage-detail icon**, the `WEAPONS` bank frame before the `.PDG` hardpoint's offset; -1 draws none. 0 the ELFs, 1 laser, 2 autocannon, 3 EMP, 4 particle beam, 5 missile, 6-11 LAEW, ENERGY, ECM, TARG, SHIELD, TURBO, 12 MINE, 13 PLAS and MAGN | `PaperDoll_BuildWeaponIcons` — [`cockpit-hud-widgets.md`](cockpit-hud-widgets.md#weapon-icons) |
+| `0x4e` | **combat-rating value**, what a live mount adds to its machine's combat rating, scaled by the mount's condition. Values below | `Mech_ComputeCombatRating` (`0041edd8`) — [`../simulation/ai-targeting.md`](../simulation/ai-targeting.md#relative-combat-rating) |
+| `0x50` | **damage-detail icon**, the `WEAPONS` bank frame before the `.PDG` hardpoint's offset; -1 draws none. 0 the ELFs, 1 laser, 2 autocannon, 3 EMP, 4 particle beam, 5 missile, 6-11 LAEW, ENERGY, ECM, TARG, SHIELD, TURBO, 12 MINE, 13 PLAS and MAGN | `PaperDoll_BuildWeaponIcons` — [`../simulation/cockpit-hud-widgets.md`](../simulation/cockpit-hud-widgets.md#weapon-icons) |
 | `0x22`–`0x28` | **weapon model**, four `MECHWPNS.DTS` shape indices, one per `.GL +6` mounting code | `WeaponMount_ShapeForMountingCode` (`0040fab0`) |
 
 `0x22`–`0x28` are read as `template[0x22 + code * 2]`, where `code` is the hardpoint's mounting byte: the same gun modelled for the four ways it can hang off a chassis, so `ATC20` reads four different shapes and a shoulder launcher reads one shape four times. Mounting code 4 is the invisible hardpoint and has no entry — nothing is drawn for it. **The shape's cell animation is the muzzle flash**; see [`../simulation/weapon-mounts.md`](../simulation/weapon-mounts.md#the-muzzle-flash).
@@ -63,6 +62,8 @@ Offsets are absolute in-memory (tail-relative = absolute − 0x22).
 `0x3a` is both the round count an ammunition mount powers up with and its cap (ATC20 2000, ATC35 1500, ATC50 1000, ATC75 750, ATC100 500, MSL6/8/10/24 6/8/10/24, MISSL 36, PLAS 20, LAEW 0), and the ammunition dispatch spends `0x38` rounds per shot.
 
 `0x4c` is 1200 on most weapons — about 15 sim ticks — and **zero on `ELF` and `ELF2`**, whose own mount class does not consult the refire timer at all; what paces those two is their capacitor. The mount scales it by its own `+0x63`, `0x400` unless a damaged gun has lowered it ([`../simulation/weapon-mounts.md`](../simulation/weapon-mounts.md#the-certain-path--the-condition-notification)).
+
+`0x4e` runs by size within a family: ATC20 20, ATC35 350, the three larger autocannons 500; LAS100 200, LAS200 350, the three larger lasers 500; MSL6 600, MSL8 700, MSL10, FLYMSL and BMSL 800; both ELFs 1000; the EMPs, particle beams, PLAS and MAGN 600, bar the big EMP (id 19) at 500. It is 0 on the pods, on ids 0, 26 and 27, and on ECM.
 
 `0x3c` is 1 everywhere except catalog id 19 (the big EMP), where it is 3. `0x3e == 0x13` is true for exactly one weapon too — id 23, `EMP2` — because the value is that weapon's own `PROJ.DAT` row; the gun dispatch reads it as a burst flag. The two conditions therefore pick out different weapons. See [`../simulation/weapon-firing.md`](../simulation/weapon-firing.md#the-gun-branches).
 
@@ -82,8 +83,3 @@ Answers how a weapon id maps to a `PROJ.DAT` record. Read via `WeaponMountTempla
 - **0 for non-firing entries** (`NONE`, `LAEW`, `MINE`, `TARG`, `SHLD`, `TURB`, `ENRG`). Field is inert for passive stat-boost systems. `LAEW` coincidentally resolves to index 0 (`ATC20`).
 
 The records each index reaches: [`proj-dat.md`](proj-dat.md#the-retail-records), which also says how a fired shot resolves its record a second time.
-
-## Open
-
-- **Open:** `0x4e` (200 for LAS100 rising to 800 for the big launchers).
-- **Open:** the rest of the tail outside the fields decoded above.

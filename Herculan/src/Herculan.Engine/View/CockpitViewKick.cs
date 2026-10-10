@@ -4,7 +4,7 @@ namespace Herculan.Engine.View;
 /// The cockpit's step kick — the view bob a pilot sees when the machine walks:
 /// <c>Cockpit_StartStepKick</c> (<c>00434144</c>) and <c>Cockpit_StepKickTick</c>
 /// (<c>00434194</c>). It shifts the projection centre, not the camera. See
-/// docs/retail/formats/cockpit-canopy-palette.md#the-step-kick.
+/// docs/retail/rendering/cockpit-canopy-palette.md#the-step-kick.
 ///
 /// <para>The curve runs on the frame clock in seconds rather than on coarse ticks, and is restarted
 /// from <see cref="Sim.MechObject.Footfalls"/> rather than called from the footfall itself.</para>

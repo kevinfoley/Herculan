@@ -33,7 +33,7 @@ public sealed class ShellLaunchRefusalDialog {
 	/// <summary><c>OKAY</c>'s rect, in the canvas.</summary>
 	public static ShellRect OkayButtonRect => Inside(PanelRect, OkayRect);
 
-	/// <summary><c>OKAY</c> under a canvas point, or null — a click anywhere else is swallowed, as the scrap dialog's is (docs/retail/shell/screen-layout.md, "The scrap dialog").</summary>
+	/// <summary><c>OKAY</c> under a canvas point, or null — a click anywhere else is swallowed, as the scrap dialog's is (docs/retail/shell/build-and-armory.md, "The scrap dialog").</summary>
 	public ShellHit? HitAt(float canvasX, float canvasY) =>
 		OkayButtonRect.Contains(canvasX, canvasY)
 			? ShellHit.Button(new ShellWidget(ShellWidgetKind.LaunchRefusalOkay, 0), OkayButtonRect, canvasX, canvasY)
@@ -42,9 +42,9 @@ public sealed class ShellLaunchRefusalDialog {
 	/// <summary>
 	/// Draws the dialog over whatever <paramref name="surface"/> holds. The builder writes the face and the
 	/// title plate and leaves <c>ESTitle_Ctor</c>'s filled body; the two lines are centred in <c>0x29</c>
-	/// with no backing.
+	/// with no backing. <paramref name="lit"/> is the widget a press has lit.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		if (!IsOpen) {
 			return;
 		}
@@ -61,10 +61,8 @@ public sealed class ShellLaunchRefusalDialog {
 		ShellChrome.PaintText(surface, Inside(PanelRect, SecondLineRect), font, text?.Text(first + 1),
 			ShellTextAlign.Center, ShellChrome.FontInkColor);
 
-		var okay = OkayButtonRect;
-		ShellChrome.PaintButton(surface, okay, ButtonBorder);
-		ShellChrome.PaintText(surface, new ShellRect(okay.X0 + 1, okay.Y0, okay.X1, okay.Y1), font, text?.Text(OkayText),
-			ShellTextAlign.Center, ShellChrome.FontInkColor);
+		ShellChrome.PaintButton(surface, OkayButtonRect, ButtonBorder, font, text?.Text(OkayText), ShellChrome.FontInkColor,
+			pressed: lit == new ShellWidget(ShellWidgetKind.LaunchRefusalOkay, 0));
 	}
 
 	private static ShellRect Inside(ShellRect parent, ShellRect child) =>

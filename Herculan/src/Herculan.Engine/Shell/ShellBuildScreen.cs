@@ -18,7 +18,7 @@ public enum ShellBuildButton {
 /// Built once by <c>Build_BuildScreen</c> (<c>00445758</c>), entered by <c>Build_Enter</c>
 /// (<c>0044690d</c>), its chassis moved by <c>Build_SelectChassis</c> (<c>00446c3b</c>), its figures
 /// filled by <c>Herc_BuildScreenRefresh</c> (<c>00446cfa</c>) and its buttons gated by
-/// <c>Build_GateButtons</c> (<c>004469d4</c>). See docs/retail/shell/screen-layout.md, "The build screen".
+/// <c>Build_GateButtons</c> (<c>004469d4</c>). See docs/retail/shell/build-and-armory.md, "The build screen".
 ///
 /// <para><b>Every rect here is a literal in the executable</b>, kept parent-relative as the builder
 /// writes them: the two top-level panels in the canvas, the blueprints, the list, the stats box and
@@ -208,10 +208,10 @@ public sealed class ShellBuildScreen {
 	/// a pool exactly equal to it is not enough. An occupied bay can be scrapped and not built into, and
 	/// SCRAP is dead while the hangar holds exactly one deployable machine, whichever bay it is in, or when
 	/// the bay's chassis is not available —
-	/// the repair screen's SCRAP test (docs/retail/shell/screen-layout.md#what-the-buttons-are-gated-on).
+	/// the repair screen's SCRAP test (docs/retail/shell/weapons-and-repair.md#what-the-buttons-are-gated-on).
 	///
 	/// <para>With no bay selected the original reads the dword before the eight-pointer array as the
-	/// bay's machine (docs/retail/shell/screen-layout.md#scrapping-and-building-are-gated-on-the-bay); this engine
+	/// bay's machine (docs/retail/shell/build-and-armory.md#scrapping-and-building-are-gated-on-the-bay); this engine
 	/// greys both buttons instead, which is its own choice.</para>
 	/// </summary>
 	public bool IsEnabled(ShellBuildButton button) {
@@ -284,8 +284,9 @@ public sealed class ShellBuildScreen {
 	/// Draws the whole screen into <paramref name="surface"/>, the squad panel included. The caller
 	/// clears it first. The content panel's body is dithered, where the repair and crew screens fill
 	/// theirs: the builder writes <c>+0x59</c> to 0 and the dither colour <c>+0x5d</c> to <c>0x25</c>.
+	/// <paramref name="lit"/> is the widget a press has lit.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
 		ShellSquadPanel.Paint(surface, font, text, _hangar, SelectedBay, _pictures);
@@ -314,7 +315,7 @@ public sealed class ShellBuildScreen {
 		}
 
 		PaintStats(surface, font, text);
-		PaintLowerPanel(surface, font, text);
+		PaintLowerPanel(surface, font, text, lit);
 	}
 
 	/// <summary>
@@ -383,7 +384,7 @@ public sealed class ShellBuildScreen {
 	/// of the net kilograms divided by 1000 (<c>Build_RefreshSalvage</c>, <c>00446e71</c>) — and the two
 	/// button boxes, whose bodies keep a visible <c>0x25</c> checkerboard.
 	/// </summary>
-	private void PaintLowerPanel(ShellSurface surface, HudFont? font, ShellText? text) {
+	private void PaintLowerPanel(ShellSurface surface, HudFont? font, ShellText? text, ShellWidget? lit) {
 		ShellChrome.PaintFramedPanel(surface, LowerPanelRect, Border, ShellChrome.InteriorColor, fill: true);
 		ShellChrome.PaintText(surface, Inside(LowerPanelRect, SalvageLabelRect), font, text?.Text(SalvageAvailableText),
 			ShellTextAlign.Center, LabelColor);
@@ -394,27 +395,25 @@ public sealed class ShellBuildScreen {
 			$"{(uint)AvailableKilograms / ShellRepairCosts.KilogramsPerTon} {text?.Text(TonsText)}",
 			ShellTextAlign.Center, ValueColor, ShellChrome.InteriorColor);
 
-		PaintButtonBox(surface, font, text, ScrapPanelRect, ScrapHercText, ShellBuildButton.Scrap, ScrapText);
-		PaintButtonBox(surface, font, text, BuildPanelRect, BuildHercText, ShellBuildButton.Build, BuildText);
+		PaintButtonBox(surface, font, text, ScrapPanelRect, ScrapHercText, ShellBuildButton.Scrap, ScrapText, lit);
+		PaintButtonBox(surface, font, text, BuildPanelRect, BuildHercText, ShellBuildButton.Build, BuildText, lit);
 	}
 
 	/// <summary>
 	/// One button box: a checkered framed panel, its title, and the button, greyed with its caption when
-	/// its gate is shut. The caption is the <c>Text</c> child <c>ESButtonFont_Ctor</c> builds at
-	/// <c>{1, 0, w, h}</c>, so it is centred one pixel right of the button's own rect.
+	/// its gate is shut.
 	/// </summary>
 	private void PaintButtonBox(ShellSurface surface, HudFont? font, ShellText? text, ShellRect boxRect,
-			int titleText, ShellBuildButton button, int captionText) {
+			int titleText, ShellBuildButton button, int captionText, ShellWidget? lit) {
 		var box = Inside(LowerPanelRect, boxRect);
 		ShellChrome.PaintFramedPanel(surface, box, Border, ButtonBoxFace, fill: true);
 		ShellChrome.PaintText(surface, Inside(box, BoxTitleRect), font, text?.Text(titleText), ShellTextAlign.Center,
 			LabelColor);
 
 		bool enabled = IsEnabled(button);
-		var rect = ButtonRect(button);
-		ShellChrome.PaintButton(surface, rect, enabled ? ButtonBorder : DisabledColor);
-		ShellChrome.PaintText(surface, new ShellRect(rect.X0 + 1, rect.Y0, rect.X1, rect.Y1), font,
-			text?.Text(captionText), ShellTextAlign.Center, enabled ? ShellChrome.FontInkColor : DisabledColor);
+		ShellChrome.PaintButton(surface, ButtonRect(button), enabled ? ButtonBorder : DisabledColor, font,
+			text?.Text(captionText), enabled ? ShellChrome.FontInkColor : DisabledColor,
+			pressed: enabled && lit == new ShellWidget(ShellWidgetKind.BuildButton, (int)button));
 	}
 
 	private static ShellRect Inside(ShellRect parent, ShellRect child) =>

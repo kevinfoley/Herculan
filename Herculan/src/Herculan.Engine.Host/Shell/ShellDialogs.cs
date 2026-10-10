@@ -23,12 +23,17 @@ sealed class ShellDialogs {
 	/// <summary>REPLAY MISSION?, which the debrief puts up when the campaign ends.</summary>
 	public ShellReplayDialog Replay { get; } = new();
 
+	/// <summary>The DEBUG dialog a career's mission load waits on under <c>-@</c>, built once so its typed name stays.</summary>
+	public ShellMissionNameDialog MissionName { get; } = new();
+
 	/// <summary>
 	/// The widget under a canvas point on whichever dialog is up, and whether one is: an open dialog takes the
 	/// pointer even where it has no widget.
 	/// </summary>
 	public bool TryHitAt(float canvasX, float canvasY, out ShellHit? hit) {
-		if (Scrap.IsOpen) {
+		if (MissionName.IsOpen) {
+			hit = MissionName.HitAt(canvasX, canvasY);
+		} else if (Scrap.IsOpen) {
 			hit = Scrap.HitAt(canvasX, canvasY);
 		} else if (WeaponScrap.IsOpen) {
 			hit = WeaponScrap.HitAt(canvasX, canvasY);
@@ -46,11 +51,14 @@ sealed class ShellDialogs {
 		return true;
 	}
 
-	/// <summary>The dialogs that paint over the screen beneath them; REPLAY MISSION? paints alone (CanvasContent.Repaint).</summary>
-	public void PaintOver(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
-		Scrap.Paint(surface, text, sprites);
-		WeaponScrap.Paint(surface, text, sprites);
-		LaunchRefusal.Paint(surface, text, sprites);
-		EndOfGame.Paint(surface, text, sprites);
+	/// <summary>
+	/// The dialogs that paint over the screen beneath them; REPLAY MISSION? and the DEBUG dialog paint alone
+	/// (CanvasContent.Repaint). <paramref name="lit"/> is the widget a press has lit.
+	/// </summary>
+	public void PaintOver(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
+		Scrap.Paint(surface, text, sprites, lit);
+		WeaponScrap.Paint(surface, text, sprites, lit);
+		LaunchRefusal.Paint(surface, text, sprites, lit);
+		EndOfGame.Paint(surface, text, sprites, lit);
 	}
 }

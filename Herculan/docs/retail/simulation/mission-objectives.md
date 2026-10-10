@@ -62,7 +62,7 @@ else if (!quiet && outside box)            7
 else                                       EvaluateObjectives()
 ```
 
-The box is block 1's own extent, `Mission_Box` (`004aa6c4`), which `DBSim_LoadScriptDat` (`00424308`) accumulates as it reads the coordinates; `Mission_IsOutsideBox` (`0041373c`) tests a position against it widened by a margin, 0 for answer 7 and 110000 for answer 8. The Heads-Down Display's map is framed by the same one ([`../formats/heads-down-display.md`](../formats/heads-down-display.md)).
+The box is block 1's own extent, `Mission_Box` (`004aa6c4`), which `DBSim_LoadScriptDat` (`00424308`) accumulates as it reads the coordinates; `Mission_IsOutsideBox` (`0041373c`) tests a position against it widened by a margin, 0 for answer 7 and 110000 for answer 8. The Heads-Down Display's map is framed by the same one ([`heads-down-display.md`](heads-down-display.md)).
 
 **`quiet` is the third argument, and it means "just answer the question".** Set, the function skips the 500 ms hold, both box arms and the `SYSTEM.STR` post, and only computes. The poll clears it; the player's own [Q] clears nothing else and sets it — so **a [Q] can never answer 7 or 8**, and a player standing outside the mission box is told how the objectives stand as though they were inside it.
 
@@ -89,7 +89,7 @@ Four statuses carry a `SYSTEM.STR` line, posted on the **change** rather than ea
 | 8 | `0x20` RULES OF ENGAGEMENT VIOLATED. MISSION ABORTED. |
 | 9 | `0x17` MISSION SUCCESSFUL |
 
-After a post the answer is held still for 500 ms so the caller's next poll cannot queue the line twice; the running baseline catches up on the first evaluation after that, which is what sequences the spoken line ahead of the alert panel. `MISSION OBJECTIVES COMPLETE`, `PRIMARY OBJECTIVE COMPLETE` and `SECONDARY OBJECTIVE COMPLETE` are recorded but have no poster found — see [`../formats/cockpit-messages.md`](../formats/cockpit-messages.md#posters).
+After a post the answer is held still for 500 ms so the caller's next poll cannot queue the line twice; the running baseline catches up on the first evaluation after that, which is what sequences the spoken line ahead of the alert panel. `MISSION OBJECTIVES COMPLETE`, `PRIMARY OBJECTIVE COMPLETE` and `SECONDARY OBJECTIVE COMPLETE` are recorded but have no poster found — see [`cockpit-messages.md`](cockpit-messages.md#posters).
 
 ## The poll — `Mission_PollStatus` (`004131ac`)
 
@@ -155,7 +155,7 @@ The player parks in front of what their order names and holds position. Holding 
 
 Four lines are spoken, `0x34` to `0x37`, each after the delay the table at `0049a318` gives for the step before it: 5000, 5000, `0xffff9c40`, 0. **The link therefore takes about five seconds of holding station** — 5000 counts is about 2.4 seconds; the third entry is negative, `Timer_CountDown` clamps at zero, and `DATA TRANSFER COMPLETE` is queued the tick after `TRANSFERRING DATA`.
 
-That is not what the player sees. The two are queued a tick apart but shown ten seconds apart, because `TRANSFERRING DATA` is the one `SYSTEM.STR` entry whose display timings are 10 s and 20 s rather than 3 s and 6 s and the port will not let a message yield before its minimum ([`../formats/cockpit-messages.md`](../formats/cockpit-messages.md#the-port)). So the transfer reads on screen as a long operation while the simulation has already finished it: `+0xa0` goes up when the last line is *queued*.
+That is not what the player sees. The two are queued a tick apart but shown ten seconds apart, because `TRANSFERRING DATA` is the one `SYSTEM.STR` entry whose display timings are 10 s and 20 s rather than 3 s and 6 s and the port will not let a message yield before its minimum ([`cockpit-messages.md`](cockpit-messages.md#the-port)). So the transfer reads on screen as a long operation while the simulation has already finished it: `+0xa0` goes up when the last line is *queued*.
 
 ## The group report, and why nothing shows it
 
@@ -208,7 +208,7 @@ Every way out of the simulator ends in `Sim_Shutdown` (`00461eec`), which `Sim_R
 | salvage pairs | the list `Salvage_QueueWeapon` (`00426ac8`) built: the enemy wrecks' surviving mounts, queued by that walk, after every Cybrid mount the [destruction roll](weapon-mounts.md#the-chance-path--the-destruction-roll) knocked off during the mission |
 | a block per machine | `Group_WriteStatusBlocks` (`00423d68`) over the player's group, in group order: 33 conditions, then the machine's kill tallies |
 
-**The 33 conditions** are the [damage readouts](../formats/mfd.md) the damage screens read, entries 1-13, 20-29 and 32-41 — the first thirteen components on their own armour, the first ten dependents, and the ten weapon mounts with their paired dependent — each turned from a Q8 damage reading into a percentage condition as `((0x100 - reading) * 100) >> 8`, an arithmetic shift where the decompiler shows an unsigned one. The shell reads the 66 bytes straight over the machine's status block ([`../formats/save-games.md`](../formats/save-games.md#the-66-byte-status-block)).
+**The 33 conditions** are the [damage readouts](mfd.md) the damage screens read, entries 1-13, 20-29 and 32-41 — the first thirteen components on their own armour, the first ten dependents, and the ten weapon mounts with their paired dependent — each turned from a Q8 damage reading into a percentage condition as `((0x100 - reading) * 100) >> 8`, an arithmetic shift where the decompiler shows an unsigned one. The shell reads the 66 bytes straight over the machine's status block ([`../formats/save-games.md`](../formats/save-games.md#the-66-byte-status-block)).
 
 **A destroyed player's block always reads 0 for the pilot**, dependent 9, which is the reading the debrief takes as the pilot killed ([`campaign-loop.md`](../shell/campaign-loop.md#where-the-debrief-goes-next)). The death gate's finish-off writes 30000 on the front cockpit ([`component-damage.md`](component-damage.md#going-out-of-the-fight)), every chassis but the SPIDER keeps its pilot there ([`dmg-damage-file.md`](../formats/dmg-damage-file.md#which-internals-each-component-holds)), and on all nine player chassis the cockpit's armour and the maxima behind it total less — at most 17050, OGRE's.
 
@@ -230,5 +230,5 @@ The exit code follows, into `004d283c`; the codes are [`../command-line.md`](../
 ## Open
 
 - **Open:** no reader of objective `+0x0a` found by `es2_fieldscan.py a --range 00413280-004135e5` over `Mission_EvaluateObjectives` (controls `+0x06` and `+0x0e` fire).
-- **Open:** whether anything reaches the group report cluster (`Group_StatusLineIndex`, `Group_OrderSubjectEngaged`, `Group_OrderSubjectRouteExhausted`) through a static-initialiser registration. `es2_xref.py` finds no branch, pointer or vtable slot for any of the three, but a registered function can be absent from that sweep, and `RegisterSubsystemLoader` (`00401d64`) has many callers.
-- **Open:** what the working register holds when `Mission_Status` and `Mission_WriteResults` call `Mission_EvaluateObjectives`. It decides how a code-5 or out-of-range-kind record answers when it is first in the array; no retail mission has such a record.
+- **Deferred:** whether anything reaches the group report cluster (`Group_StatusLineIndex`, `Group_OrderSubjectEngaged`, `Group_OrderSubjectRouteExhausted`) through a static-initialiser registration. `es2_xref.py` finds no branch, pointer or vtable slot for any of the three, but a registered function can be absent from that sweep, and `RegisterSubsystemLoader` (`00401d64`) has many callers.
+- **Deferred:** what the working register holds when `Mission_Status` and `Mission_WriteResults` call `Mission_EvaluateObjectives`. It decides how a code-5 or out-of-range-kind record answers when it is first in the array; no retail mission has such a record.

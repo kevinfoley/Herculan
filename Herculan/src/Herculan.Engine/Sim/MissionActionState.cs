@@ -86,9 +86,9 @@ public sealed class MissionActionState {
 
 			short op = slot < Record.CounterOps.Count ? Record.CounterOps[slot] : (short)0;
 			if (op == MissionAction.CounterIncrement) {
-				world.BumpMissionCounter(counter, 1);
+				world.Mission.BumpCounter(counter, 1);
 			} else if (op == MissionAction.CounterClear) {
-				world.ClearMissionCounter(counter);
+				world.Mission.ClearCounter(counter);
 			}
 
 			if (Record.MessageId >= 0) {

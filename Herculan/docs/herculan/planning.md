@@ -1,8 +1,8 @@
 # HERCULAN Engine — Planning
 
-Living planning document for the Earthsiege 2 engine port: architecture decisions and their rationale. This is a working document, not a spec — update it as decisions change.
+Living planning document for the engine port: architecture decisions and their rationale. This is a working document, not a spec — update it as decisions change.
 
-Implementation history (what shipped, when, and why) is **not** kept here — it lives in git log and the per-topic docs under `docs/retail/simulation/` and `docs/retail/formats/`, which are the canonical reference for any given subsystem's reverse-engineering and porting detail.
+Implementation history (what shipped, when, and why) is **not** kept here — it lives in git log and the per-topic docs under `docs/retail/simulation/`, `docs/retail/rendering/` and `docs/retail/formats/`, which are the canonical reference for any given subsystem's reverse-engineering and porting detail.
 
 ## Context
 
@@ -17,7 +17,7 @@ All behavior matches the original game exactly by default. The only exceptions a
 
 ## Settled decisions
 
-- Name: **HERCULAN Engine**
+- Name: **HERCULAN Engine**, the one name for both games it runs: Earthsiege 2 and, as [Earthsiege 1](#earthsiege-1) sets out, *Metaltech: Earthsiege*. The brand promises each game played faithfully from its own data, not one simulation core under both.
 
 - Language: **C#**, not C++. The deciding factor is that `HercWorks.Core` already represents substantial, hard-won reverse-engineering work (file formats, DBSIM sim math) and is directly reusable from C#. Performance is a non-issue on modern systems.
 
@@ -63,49 +63,40 @@ Primary development/testing target is **Windows**, but OS-specific code paths sh
 
 - **Library core + thin front-end host.** Engine subsystems (rendering, scene, etc.) should be built as libraries with no baked-in assumption that there's exactly one game loop consuming them. A separate, minimal host project wires those libraries into an actual real-time game loop.
 - Motivation: a possible future mission editor that renders the mission environment in-engine.
-- The namespace layout, the move of game rules out of the host, and the staged refactor toward both are in [`plan-architecture-refactor.md`](plan-architecture-refactor.md).
 
 ## Earthsiege 1
 
-The architecture refactor's [ES1 survey](plan-architecture-refactor.md#es1-survey--gates-stage-4) asks three questions before the engine is split between the games ([the ES1 plan](plan-es1-support.md)). The answers:
+Three questions decide how much of the engine Earthsiege 1 can share with Earthsiege 2 ([the ES1 plan](plan-es1-support.md)). The answers:
 
 - **Compiler.** Symantec C++, not Borland ([`compiler.md`](../es1/formats/compiler.md)). Its objects are byte-packed with the vptr after the subobjects' data, so no ES2 object layout carries over as a layout.
 - **The modules both simulators name** (`bullet`, `collide`, `damage`, `debris`, `flyersys`, `mechsys`) share a skeleton, the same functions with the same order of operations, and differ in record and table sizes, instance layouts, features ES2 added to the skeleton, and one change of meaning, a bullet's age ([`shared-modules.md`](../es1/simulation/shared-modules.md)).
 - **The fixed-point math.** The hand-written assembly library and its trigonometry tables are ES2's; the fixed-point primitives beneath the simulation round where ES2's truncate ([`fixed-point-math.md`](../es1/simulation/fixed-point-math.md)).
 
-So ES1 does not run on ES2's simulation code with ES1's data swapped in. Common to both are the asset layer, the assembly math library and its tables. How the two games share code is [Open](#open).
+So ES1 does not run on ES2's simulation code with ES1's data swapped in. Common to both are the asset layer, the assembly math library and its tables.
 
-## World scale
+### How the two games share code
 
-**1000 world units are 6 metres.** `WorldScale.WorldUnitsPerMeter` is `1000/6` ≈ **166.667**. This is not an estimate — it is the original's own constant.
+**A shared core with one assembly per game**, the shape ScummVM has: one application and one brand over many game engines that share almost no game logic, each in its own folder above a common backend.
 
-**Where it comes from.** The HUD prints distances to the player in metres, so DBSIM has to state its scale somewhere, and `Hud_WorldUnitsToMetres` (`00434228`) is the whole of it:
+- **The core** holds what does not depend on which game is running: the HercWorks readers, the 3Space asset classes (`TS*`, `GL*`, `AN*`), the assembly math library and its tables, and the platform, GL, render back end, audio back end, input devices, settings, install detection and launcher.
+- **One assembly per game** holds that game's simulation, cockpit, shell, mission world and static `.DAT` tables. Today's `Sim`, `Cockpit`, `Shell` and `World` are ES2's; ES1's are ported fresh beside them. Host code that wires one game's screens goes with that game.
+- **One application.** It finds which installs it has been given and runs the chosen game under that game's own title ("HERCULAN — Earthsiege 2", "HERCULAN — Metaltech: Earthsiege"), with the one logo.
 
-```
-metres = (worldUnits / 1000) * 6
-```
+Three rules keep the boundary:
 
-Three call sites in two unrelated gadgets share it — the HUD waypoint indicator's `WAYPOINT n: d M.` string (`Hud_UpdateWaypointIndicator`, `0043c3e4`) and the scanner MFD's contact-range readout (`0043ebe0`/`0043eecc`) — and both hand it a raw difference of two world positions (`Vec2_Subtract` then `Math_FastMagnitude2D`), so its input really is world units. A gameplay screenshot showing `WAYPOINT 1: 72 M.` is consistent: 72 is a multiple of 6, which every value this function can produce must be.
+1. **Project references enforce it.** A game assembly references the core and never the other game; the core references neither, so a dependency of asset-layer code (Content, Render, Gl, Platform, the audio back end) on game code is a build error.
+2. **No game switches in the core.** A difference between the games lives in the game assemblies or behind a seam the core defines, never as a test of which game is running.
+3. **The shared-skeleton modules are ported twice.** `bullet`, `collide`, `damage`, `debris`, `flyersys` and `mechsys` keep each game's own layouts, sizes and rounding, so each game gets its own faithful port and the two link to each other's docs. One abstraction over both would break the retail-structure constraint for both games.
 
-**What the world measures at that scale:**
+Rejected alternatives:
 
-| | world units | metres |
-|---|---|---|
-| terrain cell (`CellShift` 14) | 16384 | 98.3 |
-| retail zone (128 x 128 cells) | 2097152 | 12580 (12.6 km) |
-| zone 504's highest ground | 23393 | 140 |
-| drop pod landing blast radius | 3000 | 18 |
-| mech death explosion | 2000 | 12 |
-| rocket proximity warning | 40000 | 240 |
-| SAMSON model, bounding box height | 2364 | 14.2 |
+| Alternative | Why not |
+|---|---|
+| A separate repository for ES1 under the same brand | The HercWorks readers, the RE tooling, the hooks and the doc rules would be duplicated or held together by submodules, and a reader fix made twice ([ES1 plan](plan-es1-support.md#decisions-to-make-before-phase-0), decision 1) |
+| Version branches inside one simulation | The compiler, object layout and fixed-point rounding all differ, so the shared code would fill with version switches |
+| ES1's data on ES2's simulation | Not ES1's behaviour; the answers above rule it out |
 
-**DTS model units are world units.** Two fields of `dat\<mech>.DAT`, a file the sim reads in world units, carry values that are only meaningful as model-space measurements. COLOSSUS is the one retail mech whose model dips below model-space zero, to `-400`, and it is the one retail mech with a nonzero `RideHeight`: exactly `400`. A correction expressed in the same numbers as the model's own coordinates is a 1:1 unit relationship. The second field is `HitRadius`, the machine's hit-cylinder radius (see [`mech-locomotion.md`](../retail/simulation/mech-locomotion.md#mech-type-record)); it tracks chassis size across the fleet — 1500 for OUTLAW's 1700-unit model, 2500 for everything larger (2030–2575) — so it corroborates the scale, though as a size measure rather than a height. Nothing in the load path scales a model: `MechType_InitOne` hands DTS points straight to the shape instance.
-
-At 166.667 u/m, HERC models measure 10.2m (OUTLAW) to 15.5m (OGRE), ~1.5x the manual's quoted stature (6.1m/10.4m) — bounding box (includes raised arms/antennae) vs. quoted height; weight-class ordering matches the manual exactly.
-
-**Independent order-of-magnitude check:** HUD speed readout (`Mech_GetDisplaySpeedKph`, `0041bb3c`) = `speed * 315/1024`; against each mech's `SpeedForward` reproduces the manual's KPH: OUTLAW 325 → 100 (exact), SAMSON 190 → 58 (quoted 60), COLOSSUS 180 → 55, MAVERICK 285 → 88 (quoted 90). Tick rate was later resolved directly (25 Hz, `Time_BeginSimTick` (`004677bc`) — see [`dbsim-physics-notes.md`](../retail/simulation/dbsim-physics-notes.md)), confirmed independently by `mech-locomotion.md`'s root-motion speed verification.
-
-Symbols: `Hud_WorldUnitsToMetres`, `Hud_UpdateWaypointIndicator`, `Hud_UpdateSpeedReadout` (`0043dc78`), `Mech_GetDisplaySpeedKph`, `Math_Q10Multiply`, `Math_Q16Multiply`, `Math_Q16Divide`, `Math_FastMagnitude2D`, `Math_MapRange`, `Time_GetCoarseTicks`, `Vec2_Subtract`, `Vec2_Magnitude`, `Vec2_DistanceBetween`.
+What crosses the core's seams is designed when ES1 code is ready to port, as [phase 2](plan-es1-support.md#phase-2--the-engine) of the ES1 plan sets out.
 
 ## Where missing and divergent behaviour is tracked
 
@@ -115,4 +106,4 @@ How divergences get *found* rather than recorded is [`plan-differential-harness.
 
 ## Open
 
-- **Open:** how the two games share code — a shared core with one assembly per game, or version branches — decided from [Earthsiege 1](#earthsiege-1) and the survey's remaining per-subsystem verdicts.
+- **Open:** seven `Render` files use `Sim` types (`BeamRenderer`, `ConsoleGaugePainter`, `EffectLightSelection`, `ObjectDrawTable`, `SceneRenderer` and two by qualified name), which has to end before ES2's game code can leave the core for [its own assembly](#how-the-two-games-share-code).

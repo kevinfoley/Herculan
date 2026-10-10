@@ -53,6 +53,13 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 	private static readonly Key[] HddPilotKeys = { Key.Number1, Key.Number2, Key.Number3 };
 	private static readonly Key[] HddArrowKeys = { Key.Up, Key.Down, Key.Left, Key.Right };
 
+	// The keypad's arrows, which are the same scancodes to the original (TapeKeys.KeysOf). With the axis keys
+	// off on the display, they reach its key dispatch as the arrows do.
+	private static readonly Key[] HddPadArrowKeys = { Key.Keypad8, Key.Keypad2, Key.Keypad4, Key.Keypad6 };
+
+	private static bool HddArrowHeld(IKeyState controls, int arrow) =>
+		controls.IsKeyPressed(HddArrowKeys[arrow]) || controls.IsKeyPressed(HddPadArrowKeys[arrow]);
+
 	private readonly KeyLatch[] _hddOrderKeys = HddCommandKeys.Select(_ => new KeyLatch()).ToArray();
 	private readonly KeyLatch[] _hddPilotKeys = HddPilotKeys.Select(_ => new KeyLatch()).ToArray();
 	private readonly KeyLatch[] _hddArrowKeys = HddArrowKeys.Select(_ => new KeyLatch()).ToArray();
@@ -139,7 +146,7 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		if (controls != null && displays.HddHasArrows && displays.Hud.Hdd == HddPage.DamageDetail) {
 			bool modified = CtrlHeld(controls) || AltHeld(controls) || modalPanelUp;
 			for (int i = 0; i < HddArrowKeys.Length; i++) {
-				if (_hddDamageArrowKeys[i].Press(controls, HddArrowKeys[i]) && !modified) {
+				if (_hddDamageArrowKeys[i].Press(HddArrowHeld(controls, i)) && !modified) {
 					commands.PressHddButtonByKey(HddLayout.Widget.ArrowUp + i);
 				}
 			}
@@ -335,17 +342,17 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		// so it flashes every frame it pans.
 		bool dark = displays.Dropouts.HeadsDown.Dark;
 		for (int i = 0; i < HddArrowKeys.Length; i++) {
-			if (_hddArrowKeys[i].Press(controls, HddArrowKeys[i]) && dark && !modified) {
+			if (_hddArrowKeys[i].Press(HddArrowHeld(controls, i)) && dark && !modified) {
 				commands.PressHddButtonByKey(HddLayout.Widget.ArrowUp + i);
-			} else if (!dark && !modified && controls.IsKeyPressed(HddArrowKeys[i])) {
+			} else if (!dark && !modified && HddArrowHeld(controls, i)) {
 				displays.FlashPress(CockpitWidgetId.Hdd(HddLayout.Widget.ArrowUp + i));
 			}
 		}
 
 		if (!displays.Dropouts.HeadsDown.Dark && !modified) {
 			command.View.Pan(
-				(controls.IsKeyPressed(Key.Right) ? 1 : 0) - (controls.IsKeyPressed(Key.Left) ? 1 : 0),
-				(controls.IsKeyPressed(Key.Up) ? 1 : 0) - (controls.IsKeyPressed(Key.Down) ? 1 : 0));
+				(HddArrowHeld(controls, 3) ? 1 : 0) - (HddArrowHeld(controls, 2) ? 1 : 0),
+				(HddArrowHeld(controls, 0) ? 1 : 0) - (HddArrowHeld(controls, 1) ? 1 : 0));
 		}
 		if (_hddRecentre.Press(controls, Key.Keypad5) && !modalPanelUp) {
 			command.View.Recentre();

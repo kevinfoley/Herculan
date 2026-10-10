@@ -23,9 +23,12 @@ internal sealed record OrderSlot(int Slot, short Ref, IReadOnlyList<OrderRecord>
 /// <summary>One row #16 record and its orders.</summary>
 /// <param name="Index">The record's position in row #16; 0 is the player's squad.</param>
 /// <param name="Members">How many of the twenty member refs are set.</param>
+/// <param name="PositionRef">The group's own row #6 point, its heading and its route: what a same-GUID overlay often changes.</param>
+/// <param name="OutOfActionReport">The (counter ref, operation) pairs, interleaved, that are set.</param>
 internal sealed record GroupOrders(
 	int Index, short Guid, short ConditionRef, string? Condition, short MemberKind, int Members, short Side,
-	short FormationId, short DeploymentActionRef, IReadOnlyList<OrderSlot> Slots) {
+	short FormationId, short DeploymentActionRef, IReadOnlyList<OrderSlot> Slots,
+	short PositionRef, short HeadingRef, short RouteRef, IReadOnlyList<short> OutOfActionReport) {
 	public bool PlayerSquad => Index == 0;
 	public bool RouteSwitch => Slots.Any(s => s.Records.Any(r => r.RouteDiffers));
 }
@@ -104,7 +107,9 @@ internal static class OrderQuery {
 			}
 
 			result.Add(new GroupOrders(i, group.GUID, group.ConditionRef, Conditions.Describe(file, group.ConditionRef),
-				group.MemberKind, group.MemberRefs.Count(r => r != -1), group.Side, group.FormationId, group.DeploymentActionRef, slots));
+				group.MemberKind, group.MemberRefs.Count(r => r != -1), group.Side, group.FormationId, group.DeploymentActionRef, slots,
+				group.PositionRef, group.HeadingRef, group.RouteRef,
+				group.OutOfActionReport.Chunk(2).Where(p => p[0] != -1).SelectMany(p => p).ToList()));
 		}
 
 		return result;

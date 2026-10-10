@@ -5,7 +5,8 @@ Reference docs state what is true now. They are not a record of how the project
 arrived there — that is what git log is for. This linter catches the phrasings
 that show a correction was narrated in place instead of applied, and open work
 that is scattered through the body or named inconsistently: it belongs in one
-final `## Open` section, as bullets labelled **Unported:** or **Open:**.
+final `## Open` section, as bullets labelled **Unported:**, **Open:**, **Deferred:**
+or **Accepted:**.
 
 Usage:
     python tools/scripts/doc_lint.py                  # lint Herculan/docs and the known_*.json descriptions
@@ -133,12 +134,20 @@ RULES: list[tuple[str, str, re.Pattern[str], str]] = [
     ),
 ]
 
-# Open work: the docs track it with exactly two terms, "unported" (a retail feature not yet in C#)
-# and "open" (anything else unfinished), and only in a final `## Open` section, so one scroll to the
-# bottom of a doc finds all of it. Markdown only; the status registers carry their own structure.
+# Open work: the docs track it with four labels, "unported" (a retail feature not yet in C#),
+# "open" (anything else unfinished), and the user's own "deferred" (until later) and "accepted"
+# (as is), and only in a final `## Open` section, so one scroll to the bottom of a doc finds all
+# of it. Markdown only; the status registers carry their own structure.
 STATUS_EXEMPT_BASENAMES = {"KNOWN_ISSUES.md", "ROADMAP.md", "README.md"}
+
+# A doc past this size has stopped being one topic: it gets read in pages, and a section added to it
+# is written without the rest in view. Measured in bytes because the docs are not hard-wrapped, so a
+# line is a whole paragraph and line counts mean little. The status registers above are exempt.
+DOC_SIZE_LIMIT = 70 * 1024
 OPEN_HEADING = "## Open"
-OPEN_ITEM = re.compile(r"^[-*]\s+\*\*(?:Unported|Open):\*\*\s")
+OPEN_LABELS = ("Unported", "Open", "Deferred", "Accepted")
+OPEN_ITEM = re.compile(r"^[-*]\s+\*\*(?:" + "|".join(OPEN_LABELS) + r"):\*\*\s")
+OPEN_LABEL_LIST = ", ".join(f"'**{w}:**'" for w in OPEN_LABELS[:-1]) + f" or '**{OPEN_LABELS[-1]}:**'"
 HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$")
 LINK_TARGET = re.compile(r"\]\([^)]*\)")
 
@@ -152,8 +161,9 @@ STATUS_RULES: list[tuple[str, re.Pattern[str], str]] = [
             r"|(?:is|are|remains?|still)\s+(?:unknown|unclear|not\s+(?:known|understood)))\b",
             re.IGNORECASE,
         ),
-        "Open work uses two terms only: 'unported' for a retail feature not yet in C#, 'open' for "
-        "anything else. Rephrase, and list the task in the doc's final '## Open' section.",
+        "Open work uses the Open section's labels only: 'unported' for a retail feature not yet in "
+        "C#, 'open' for anything else unfinished, or 'deferred' or 'accepted'. Rephrase, "
+        "and list the task in the doc's final '## Open' section.",
     ),
     (
         "status-heading",
@@ -421,6 +431,13 @@ def lint_file(path: str, include_code: bool) -> list[tuple[int, str, str, str, s
     check_status = not is_cs and os.path.basename(path) not in STATUS_EXEMPT_BASENAMES
     check_engine = not is_cs and not is_engine_doc(path)
     hits = []
+    if check_status:
+        size = os.path.getsize(path)
+        if size > DOC_SIZE_LIMIT:
+            hits.append((1, "doc-too-long", "warn", f"{size // 1024} KB",
+                         f"Over the {DOC_SIZE_LIMIT // 1024} KB limit. Split the doc by topic into docs "
+                         "whose titles cover their content, and repoint inbound links "
+                         "(tools/scripts/doc_links.py --code)."))
     in_fence = False
     in_open = False
     open_line = 0
@@ -451,8 +468,8 @@ def lint_file(path: str, include_code: bool) -> list[tuple[int, str, str, str, s
             elif in_open and stripped and not line[0].isspace() and not OPEN_ITEM.match(line) \
                     and not SUPPRESS.search(line):
                 hits.append((n, "open-item", "error", stripped[:60],
-                             "Each Open item is a top-level bullet starting '**Unported:**' or "
-                             "'**Open:**', so a grep across the docs lists every task."))
+                             f"Each Open item is a top-level bullet starting {OPEN_LABEL_LIST}, "
+                             "so a grep across the docs lists every task."))
         if in_fence or SUPPRESS.search(line) or ALLOWED.match(line):
             continue
         # A link target is another doc's anchor, not this doc's wording.
@@ -590,7 +607,7 @@ def hook_mode() -> int:
         "Also check while you are in the file: does a later section now contradict an earlier "
         "one? Correct the earlier text rather than appending to the end.",
         "Open work (the status-*, hedge and open-* rules) goes in the final '## Open' section as "
-        "bullets starting '**Unported:**' or '**Open:**'; the body states only what is known.",
+        f"bullets starting {OPEN_LABEL_LIST}; the body states only what is known.",
         "Engine mentions (engine-*) do not belong in a retail doc: describe this engine's behaviour "
         "in a doc comment on the C# that implements it, citing the doc section.",
         "A C# name (csharp-name) does not belong in one either: describe the field or behaviour in "

@@ -7,7 +7,7 @@ namespace Herculan.Engine.Cockpit;
 /// Which halves of a message channel are live — options 3 and 2 of
 /// <see cref="SimulatorPreferences"/>, which the preferences screen's COMPUTER MESSAGE and PILOT
 /// MESSAGE rows write. Three values, not four: the row offers no OFF. See
-/// docs/retail/formats/cockpit-messages.md, "The computer's messages".
+/// docs/retail/simulation/cockpit-messages.md, "The computer's messages".
 /// </summary>
 public enum MessageChannelMode {
 	/// <summary>Text drawn, nothing spoken. The port tests <c>!= 0</c> before it speaks.</summary>
@@ -47,7 +47,7 @@ public readonly record struct MessageTicker(string? Text, long ScrollTicks, bool
 /// The cockpit's message port — the object at <c>view+0x20b</c> that queues what the computer has to
 /// say, decides when to say it, scrolls it across the front window and reads it aloud. Roughly thirty
 /// functions at <c>00434e50</c>-<c>00436fd0</c> in DBSIM; the derivation is in
-/// docs/retail/formats/cockpit-messages.md, "The computer's messages".
+/// docs/retail/simulation/cockpit-messages.md, "The computer's messages".
 ///
 /// <para><b>Both halves, one object.</b> Text and speech are not two features that happen to agree:
 /// the port shows a line and speaks it in the same call, and the timings that decide how long it
@@ -136,6 +136,15 @@ public sealed class MessagePort {
 	/// </summary>
 	public bool PilotDisabled { get; set; }
 
+	/// <summary>
+	/// Whether the external view is up — the cockpit view manager's <c>+0x14</c> reading 4, which
+	/// <c>MessagePort_Show</c> (<c>00436abc</c>) tests. A line that goes up while it is set takes the
+	/// <see cref="MessageChannelMode.VoiceOnly"/> path: no text and no alert tone for as long as that
+	/// line is up, back in the cockpit included, while its timings run and it is still spoken. See
+	/// docs/retail/simulation/cockpit-messages.md, "The port".
+	/// </summary>
+	public bool ExternalView { get; set; }
+
 	/// <summary>What the ticker is showing, republished by every <see cref="Update"/>.</summary>
 	public MessageTicker Ticker { get; private set; }
 
@@ -208,7 +217,7 @@ public sealed class MessagePort {
 	///
 	/// <para>The one message left alone is the current one while it is activated, due and waiting to
 	/// go up; this then returns false. The show clears that latch, so a line already on screen is
-	/// cancelled and comes down on the next <see cref="Update"/>. See docs/retail/formats/cockpit-messages.md,
+	/// cancelled and comes down on the next <see cref="Update"/>. See docs/retail/simulation/cockpit-messages.md,
 	/// "The port".</para>
 	/// </summary>
 	/// <returns>Whether anything was withdrawn.</returns>
@@ -337,7 +346,7 @@ public sealed class MessagePort {
 			return false;
 		}
 
-		if (Mode != MessageChannelMode.VoiceOnly) {
+		if (Mode != MessageChannelMode.VoiceOnly && !ExternalView) {
 			if (message.Id == _lastShownId && _now < _lastShownTicks + RepeatSuppressionTicks) {
 				_shown = false;
 				_cancel = true;
@@ -356,8 +365,9 @@ public sealed class MessagePort {
 
 			AlertTone?.Invoke(AlertToneFor(message.Id));
 		} else {
-			// The lifecycle still runs with the text off, so the timings and the repeat window behave
-			// the same whichever way the preference is set; only the drawing is skipped.
+			// The lifecycle still runs with the text off, or with the external view up, so the timings
+			// behave the same either way; only the drawing and the tone are skipped, and the repeat
+			// window is neither tested nor refreshed.
 			_shown = true;
 			_suppressed = true;
 		}

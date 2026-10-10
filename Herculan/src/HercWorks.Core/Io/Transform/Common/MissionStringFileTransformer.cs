@@ -1,9 +1,10 @@
 using HercWorks.Core.Data.File.Msn;
 using System.Diagnostics;
+using System.Text;
 
 namespace HercWorks.Core.Io.Transform.Common;
 
-/// <summary>Reads a mission's <c>.ENG</c> text; see <see cref="MissionStringFile"/>.</summary>
+/// <summary>Reads and writes a mission's <c>.ENG</c> text; see <see cref="MissionStringFile"/>.</summary>
 public class MissionStringFileTransformer : ByteTransformer<MissionStringFile> {
 	public override MissionStringFile? Parse(byte[]? inputArray) {
 		SetBytes(inputArray!);
@@ -28,8 +29,28 @@ public class MissionStringFileTransformer : ByteTransformer<MissionStringFile> {
 		return str;
 	}
 
+	/// <summary>
+	/// Writes the count, then each entry's four shorts and its text, taking the length field from
+	/// <see cref="MissionStringFile.StringEntry.Val"/> rather than <see cref="MissionStringFile.StringEntry.Len"/>.
+	/// </summary>
 	public override byte[]? Write(MissionStringFile? source) {
-		// Not implemented.
-		return null;
+		if (source?.Strings is not { } entries) {
+			return null;
+		}
+
+		using var outStream = new MemoryStream();
+		void Emit(byte[] bytes) => outStream.Write(bytes, 0, bytes.Length);
+
+		Emit(WriteShortLE((short)entries.Length));
+		foreach (var entry in entries) {
+			byte[] text = Encoding.Latin1.GetBytes(entry.Val ?? string.Empty);
+			Emit(WriteShortLE(entry.Guid));
+			Emit(WriteShortLE(entry.ConditionRef));
+			Emit(WriteShortLE(entry.ParentRef));
+			Emit(WriteShortLE((short)text.Length));
+			Emit(text);
+		}
+
+		return outStream.ToArray();
 	}
 }

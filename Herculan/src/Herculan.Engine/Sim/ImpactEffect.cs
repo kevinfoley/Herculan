@@ -18,8 +18,8 @@ namespace Herculan.Engine.Sim;
 /// <see cref="SimObject"/> in the original either — it comes from a pool of its own that
 /// <c>Sim_MainTick</c> walks ahead of the machine list, so nothing can shoot it and nothing collides
 /// with it. The pool holds <see cref="PoolSize"/>, and an effect that has played out keeps its slot until
-/// the next render-time flush — see <see cref="SimWorld.SpawnImpactEffect"/> and
-/// <see cref="SimWorld.Effects"/>.</para>
+/// the next render-time flush — see <see cref="EffectPools.SpawnImpactEffect"/> and
+/// <see cref="EffectPools.ImpactEffects"/>.</para>
 ///
 /// <para>An effect may have an <see cref="Owner"/>, the object it was spawned on, which decides whether
 /// it is drawn — <see cref="HiddenFromOwnerCockpit"/> — and under which terrain cell it is filed for
@@ -120,7 +120,7 @@ public sealed class ImpactEffect {
 
 	/// <summary>
 	/// Whether the effect has played out on this tick. It keeps its pool slot until
-	/// <see cref="SimWorld.Effects"/>' render-time flush takes it out of the list.
+	/// <see cref="EffectPools.ImpactEffects"/>' render-time flush takes it out of the list.
 	/// </summary>
 	internal bool Finished { get; private set; }
 

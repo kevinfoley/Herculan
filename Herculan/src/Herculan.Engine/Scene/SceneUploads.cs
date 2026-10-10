@@ -11,8 +11,8 @@ public sealed class SceneUploads : IDisposable {
 	private readonly List<IDisposable> _disposables = new();
 
 	public SceneUploads(GL gl, MissionScene scene) {
-		TerrainMesh = new GpuMesh(gl, scene.TerrainMesh);
-		TerrainTexture = scene.TerrainBank != null ? scene.TerrainBank.Atlas.Upload(gl, indexed: true) : null;
+		TerrainMesh = new GpuMesh(gl, scene.Models.TerrainMesh);
+		TerrainTexture = scene.Models.TerrainBank != null ? scene.Models.TerrainBank.Atlas.Upload(gl, indexed: true) : null;
 
 		// Which models are actually going to be drawn a node at a time: one whose segments exist *and*
 		// whose object has an animation thread to pose them with. A shape that carries no ANAnimList has
@@ -36,7 +36,7 @@ public sealed class SceneUploads : IDisposable {
 
 		// A model that is drawn posed uploads its segments instead of its flat mesh: the two are the same
 		// triangles, and only one of them is ever drawn.
-		foreach (var model in scene.Models) {
+		foreach (var model in scene.Models.All) {
 			if (animatedKeys.Contains(model.Key)) {
 				Segments[model.Key] = model.Segments.Select(segment => new GpuMesh(gl, segment.Vertices, segment.TriangleVertexCount, segment.PointVertexCount)).ToArray();
 				_disposables.AddRange(Segments[model.Key]);

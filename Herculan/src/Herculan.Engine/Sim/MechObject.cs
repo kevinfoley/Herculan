@@ -420,15 +420,22 @@ public sealed partial class MechObject : SimObject {
 
 		if (UnderAiControl) {
 			// Mech_ApplyThrottleInput and the turret block are Sim_PollPlayerInput's, and it runs for
-			// LocalPlayerMech alone. A machine in a state whose think drives the control law itself
-			// reaches it from there instead — see MechObject.Navigation.cs — so running the input path
-			// for it here would bleed the throttle back to zero underneath every decision the think
-			// just made. Everything else keeps the pilot path, which is what Controls is for.
-			if (Behaviour.State == BehaviourState.Ramming) {
-				// The one state that installs a move slot of its own. See MechObject.Ramming.cs.
-				RamTick(world);
-			} else {
-				MovementTick(world);
+			// LocalPlayerMech alone. An AI machine reaches the control law from its think instead —
+			// see MechObject.Navigation.cs — so running the input path for it here would bleed the
+			// throttle back to zero underneath every decision the think just made. What it gets is
+			// its state's move slot, Behaviour_DispatchMove (00415afc).
+			switch (Behaviour.State!.Move) {
+				case MoveSlot.Ram:
+					// See MechObject.Ramming.cs.
+					RamTick(world);
+					break;
+				case MoveSlot.None:
+					// deciding and in limbo. No move at all, which is what keeps a SPIDER that has
+					// vanished sunk under the map: the walk would put it back on the ground.
+					break;
+				default:
+					MovementTick(world);
+					break;
 			}
 
 			return;

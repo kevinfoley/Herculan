@@ -95,7 +95,7 @@ sealed class DebugProbes {
 		}
 
 		ProjectilesLive = world.Projectiles.Count;
-		EffectsLive = world.Effects.Count;
+		EffectsLive = world.Effects.ImpactEffects.Count;
 
 		foreach (var impact in world.Impacts) {
 			ProjectileImpacts++;

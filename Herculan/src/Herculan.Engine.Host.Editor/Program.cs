@@ -54,44 +54,15 @@ Console.WriteLine(
 	$"Placed {scene.Objects.Count} objects, {scene.UnmodelledCount} without a model.");
 Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, Esc quits.");
 
-// Pickable set: everything drawn, i.e. everything with a model — matches what the renderer
-// actually puts on screen. Objects don't move in the editor, so this is computed once.
-//
-// Deliberately NOT SceneModel.ShapeRadius: that is the shape file's own radius about the model's
-// origin, which sits near a mech's base, so a sphere of it there need not cover the torso, head or
-// raised arms. Instead this computes each model's own bounding-sphere radius from its mesh once (cached per model key,
-// several objects share a model) and transforms the sphere's center by the object's full
-// rotation+translation — a sphere is rotation-invariant, so the local-space radius stays correct
-// after that.
-var modelBounds = new Dictionary<string, (Vector3 LocalCenter, float Radius)>();
-var pickables = scene.Objects
-	.Where(o => o.Model != null)
-	.Select(o => {
-		var model = o.Model!;
-		if (!modelBounds.TryGetValue(model.Key, out var bounds)) {
-			bounds = ComputeBounds(model.Mesh);
-			modelBounds[model.Key] = bounds;
-		}
-
-		Vector3 worldCenter = Vector3.Transform(bounds.LocalCenter, MissionScene.TransformOf(o));
-		return new Pickable(o, worldCenter, MathF.Max(bounds.Radius, 1f));
-	})
-	.ToArray();
-
-static (Vector3 Center, float Radius) ComputeBounds(MeshVertex[] mesh) {
-	if (mesh.Length == 0) {
-		return (Vector3.Zero, 1f);
-	}
-
-	Vector3 min = mesh[0].Position;
-	Vector3 max = mesh[0].Position;
-	foreach (var vertex in mesh) {
-		min = Vector3.Min(min, vertex.Position);
-		max = Vector3.Max(max, vertex.Position);
-	}
-
-	return ((min + max) * 0.5f, Vector3.Distance(min, max) * 0.5f);
-}
+// The mission's own features, cross-referenced once: nothing moves while the editor shows it.
+var selection = new SelectionState();
+var index = new MissionIndex(scene, SquadMessages.LoadCommand(content, mission.Header.TrainingMissionNumber));
+var drape = new DrapedLines(scene.World.Terrain);
+var overlay = new MissionOverlay(index, drape);
+var picker = new ScenePicker(scene, index, overlay);
+var groupOverlay = new GroupOverlay(index, drape, picker);
+var outliner = new MissionOutliner(index, new MissionLint(index), selection);
+var properties = new PropertiesPanel(index, selection);
 
 using var window = new EngineWindow($"HERCULAN Mission Editor — zone {mission.Header.ZoneIndex}");
 
@@ -101,9 +72,19 @@ ScaledImGui? imgui = null;
 GpuMesh? terrainMesh = null;
 GpuTexture? terrainTexture = null;
 var modelMeshes = new Dictionary<string, GpuMesh>();
+var modelCells = new Dictionary<string, GpuMesh[]>();
 var modelTextures = new Dictionary<string, GpuTexture>();
+var groundMeshes = new Dictionary<string, GpuMesh>();
 var disposables = new List<IDisposable>();
 SceneItem[]? items = null;
+
+// The terrain with each structure's ground plane painted in its cell order, as the simulator draws
+// them — see SceneRenderer.Render. Without it a structure's shadow lies in the terrain's own plane and
+// ties with it in the depth buffer.
+GroundShapeLayer? groundLayer = null;
+
+// The items of the objects whose group waits on an action, which the settings may stop drawing.
+var waitingItems = new List<SceneItem>();
 IKeyboard? keyboard = null;
 IMouse? mouse = null;
 
@@ -119,7 +100,6 @@ var camera = new Camera();
 var editorCamera = new EditorCamera();
 editorCamera.ResetTo(scene.Camera.Position, scene.Camera.Heading);
 
-SceneObject? selected = null;
 bool looking = false;
 Vector2 lastMousePos = Vector2.Zero;
 
@@ -146,26 +126,43 @@ window.Load += (gl, input) => {
 	// Same as Herculan.Engine.Host: fog distances, fog colour and the banded sky come off the zone
 	// and its theater rather than being hand-picked — see Scene.Atmosphere. Without this the renderer
 	// has no sky gradient, so DrawSky paints nothing and the view has no background at all.
-	scene.Atmosphere.ApplyTo(renderer);
+	scene.Models.Atmosphere.ApplyTo(renderer);
 
 	// The theater's shaded-surface colours � what a TSShadedPoly is actually drawn through. See
 	// SurfaceRampTable.
-	renderer.SetShadeRamps(scene.ShadeRamps);
-	renderer.SetPaletteRamp(scene.PaletteRamp);
+	renderer.SetShadeRamps(scene.Models.ShadeRamps);
+	renderer.SetPaletteRamp(scene.Models.PaletteRamp);
 
 	wireframe = new WireframeRenderer(gl);
 
-	terrainMesh = new GpuMesh(gl, scene.TerrainMesh);
-	terrainTexture = scene.TerrainBank != null ? scene.TerrainBank.Atlas.Upload(gl, indexed: true) : null;
+	terrainMesh = new GpuMesh(gl, scene.Models.TerrainMesh);
+	terrainTexture = scene.Models.TerrainBank != null ? scene.Models.TerrainBank.Atlas.Upload(gl, indexed: true) : null;
 
-	foreach (var model in scene.Models) {
-		modelMeshes[model.Key] = new GpuMesh(gl, model.Mesh, model.TriangleVertexCount, model.PointVertexCount);
+	foreach (var model in scene.Models.All) {
+		// A shape split by cell — a structure or a flyer — is drawn a piece at a time as the simulator
+		// draws it, so that a TSBSPPart's children and a decal's paint layer are painted in order
+		// (BspDrawGroup); the flat mesh would leave them to the depth test.
+		if (model.Cells.Length > 0) {
+			modelCells[model.Key] = model.Cells
+				.Select(cell => new GpuMesh(gl, cell.Vertices, cell.TriangleVertexCount, cell.PointVertexCount))
+				.ToArray();
+		} else {
+			modelMeshes[model.Key] = new GpuMesh(gl, model.Mesh, model.TriangleVertexCount, model.PointVertexCount);
+		}
+
+		if (model.GroundMesh is { Vertices.Length: > 0 } ground) {
+			groundMeshes[model.Key] = new GpuMesh(gl, ground.Vertices, ground.TriangleVertexCount,
+				ground.PointVertexCount);
+		}
+
 		if (model.Atlas != null) {
 			modelTextures[model.Key] = model.Atlas.Upload(gl, indexed: true);
 		}
 	}
 
 	disposables.AddRange(modelMeshes.Values);
+	disposables.AddRange(modelCells.Values.SelectMany(cells => cells));
+	disposables.AddRange(groundMeshes.Values);
 	disposables.AddRange(modelTextures.Values);
 
 	// The terrain, and the only item the measuring grid is painted onto.
@@ -173,13 +170,63 @@ window.Load += (gl, input) => {
 		new(terrainMesh, Matrix4x4.Identity, terrainTexture?.Handle) { ShowGrid = settings.ShowGrid, CellQuantisedFog = true, GroundFill = true }
 	};
 
+	// Nothing is filed by cell here, so a ground plane is drawn wherever the camera is, as every object is.
+	groundLayer = new GroundShapeLayer(built[0], scene.World.Terrain) { ShapesFollowWalk = false };
+
 	foreach (var sceneObject in scene.Objects) {
-		if (sceneObject.Model is not { } model || !modelMeshes.TryGetValue(model.Key, out var mesh)) {
+		if (sceneObject.Model is not { } model) {
 			continue;
 		}
 
-		built.Add(new SceneItem(mesh, MissionScene.TransformOf(sceneObject),
-			modelTextures.TryGetValue(model.Key, out var texture) ? texture.Handle : null));
+		uint? textureHandle = modelTextures.TryGetValue(model.Key, out var texture) ? texture.Handle : null;
+		var transform = MissionScene.TransformOf(sceneObject);
+		bool waiting = index.IsWaiting(sceneObject);
+		if (modelCells.TryGetValue(model.Key, out var cellMeshes)) {
+			// What the flat mesh is: every sequence on its first cell and every detail part at its finest
+			// level. The ground plane stays with groundMeshes below.
+			var groups = new Dictionary<BspTree, BspDrawGroup>();
+			for (int i = 0; i < cellMeshes.Length; i++) {
+				var cell = model.Cells[i];
+				if (cell.Ground || !cell.Gate.VisibleIn(null)
+						|| (cell.Gate.Detail is { } detail && cell.Gate.Level != detail.LevelCount - 1)) {
+					continue;
+				}
+
+				var part = new SceneItem(cellMeshes[i], transform, textureHandle);
+				if (cell.Leaf is { } leaf) {
+					if (!groups.TryGetValue(leaf.Tree, out var group)) {
+						groups[leaf.Tree] = group = BspDrawGroup.AtRest(leaf.Tree, () => transform);
+					}
+
+					part.BspGroup = group;
+					part.BspLeaf = leaf.Index;
+					part.PaintLayer = cell.Layer;
+				}
+
+				built.Add(part);
+				if (waiting) {
+					waitingItems.Add(part);
+				}
+			}
+		} else if (modelMeshes.TryGetValue(model.Key, out var mesh)) {
+			var item = new SceneItem(mesh, transform, textureHandle);
+			built.Add(item);
+			if (waiting) {
+				waitingItems.Add(item);
+			}
+		} else {
+			continue;
+		}
+
+		// Filed as the simulator's submit files a structure: by its position and its body radius.
+		if (groundMeshes.TryGetValue(model.Key, out var groundMesh)) {
+			var groundItem = new SceneItem(groundMesh, MissionScene.TransformOf(sceneObject), textureHandle);
+			groundLayer.Shapes.Add(new GroundShapeDraw(groundItem, sceneObject.Object.Position,
+				sceneObject.Object.HitRadius));
+			if (waiting) {
+				waitingItems.Add(groundItem);
+			}
+		}
 	}
 
 	items = built.ToArray();
@@ -216,10 +263,9 @@ window.Load += (gl, input) => {
 				}
 			} else if (button == MouseButton.Left && leftDownOverViewport
 					&& Vector2.Distance(m.Position, leftDownPos) < 4f) {
-				selected = Pick(m.Position);
-				Console.WriteLine(selected != null
-					? $"[pick] selected {selected.Placement.TypeName ?? selected.Placement.Kind.ToString()} at {m.Position}"
-					: $"[pick] no hit at {m.Position} ({pickables.Length} pickable objects)");
+				var size = window.FramebufferSize;
+				selection.Current = picker.Pick(camera, m.Position, new Vector2(size.X, size.Y), settings);
+				Console.WriteLine($"[pick] {selection.Current?.ToString() ?? "nothing"} at {m.Position}");
 			}
 		};
 	}
@@ -263,6 +309,9 @@ window.Render += (_, gl) => {
 	// this off, and the assignment is a field write.
 	renderer.FogEnabled = settings.RenderFog;
 	items[0].ShowGrid = settings.ShowGrid;
+	foreach (var item in waitingItems) {
+		item.Visible = settings.WaitingGroups == WaitingGroupDisplay.Drawn;
+	}
 
 	// SceneRenderer.Render deliberately does not clear — the simulator host draws three cockpit
 	// panels into one frame, so clearing is the caller's job, once per frame. The editor draws a
@@ -272,19 +321,22 @@ window.Render += (_, gl) => {
 
 	// Full-window viewport: the editor draws one 3D view, unlike the simulator host's three cockpit
 	// panels, which is what SceneRenderer.Render's x/y origin exists for.
-	renderer.Render(camera, items, 0, 0, size.X, size.Y);
+	renderer.Render(camera, items, groundLayer, 0, 0, size.X, size.Y);
 
-	if (selected is { } sel) {
-		var picked = Array.Find(pickables, p => p.SceneObject == sel);
-		if (picked != null) {
-			wireframe.DrawBox(camera, picked.CenterRender, picked.RadiusRender, new Vector3(1f, 0.85f, 0.1f), aspect);
-		}
-	}
+	overlay.Draw(wireframe, camera, aspect, settings, selection);
+	groupOverlay.DrawObjects(wireframe, camera, aspect, settings, selection);
+	groupOverlay.DrawSelectedGroup(wireframe, camera, aspect, selection);
 
+	var display = ImGui.GetIO().DisplaySize;
 	float menuBarHeight = BuildMenuBar();
 	float compassMargin = ScaledImGui.Scaled(CompassMargin);
-	CompassGizmo.Draw(camera, new Vector2(compassMargin, menuBarHeight + compassMargin), ScaledImGui.Scaled(CompassSize));
-	BuildPropertiesPanel(size.X, size.Y, menuBarHeight, selected);
+	CompassGizmo.Draw(camera,
+		new Vector2(ScaledImGui.Scaled(MissionOutliner.PanelWidth) + compassMargin, menuBarHeight + compassMargin),
+		ScaledImGui.Scaled(CompassSize));
+	overlay.DrawLabels(camera, settings, selection);
+	groupOverlay.DrawLabels(camera, settings, selection);
+	outliner.Draw(display, menuBarHeight);
+	properties.Draw(display, menuBarHeight);
 	settingsPanel.Draw();
 	imgui?.Render();
 };
@@ -304,46 +356,57 @@ window.Run();
 
 return 0;
 
-SceneObject? Pick(Vector2 screenPos) {
-	var size = window.FramebufferSize;
-	float ndcX = screenPos.X / size.X * 2f - 1f;
-	float ndcY = 1f - screenPos.Y / size.Y * 2f;
-	float aspect = (float)size.X / MathF.Max(size.Y, 1);
-	var (origin, direction) = camera.ViewportPointToRay(new Vector2(ndcX, ndcY), aspect);
-
-	SceneObject? best = null;
-	float bestDistance = float.MaxValue;
-	foreach (var pickable in pickables) {
-		if (RaySphere(origin, direction, pickable.CenterRender, pickable.RadiusRender, out float t) && t < bestDistance) {
-			bestDistance = t;
-			best = pickable.SceneObject;
-		}
-	}
-
-	return best;
-}
-
-static bool RaySphere(Vector3 origin, Vector3 direction, Vector3 center, float radius, out float t) {
-	Vector3 toCenter = origin - center;
-	float b = Vector3.Dot(toCenter, direction);
-	float c = Vector3.Dot(toCenter, toCenter) - radius * radius;
-	float discriminant = b * b - c;
-	if (discriminant < 0f) {
-		t = 0f;
-		return false;
-	}
-
-	float sqrtDiscriminant = MathF.Sqrt(discriminant);
-	float near = -b - sqrtDiscriminant;
-	t = near >= 0f ? near : -b + sqrtDiscriminant;
-	return t >= 0f;
-}
-
 // Draws the main menu bar and returns its height, which is what the rest of the frame's overlays
 // hang below.
 float BuildMenuBar() {
 	if (!ImGui.BeginMainMenuBar()) {
 		return 0f;
+	}
+
+	// The overlay toggles take effect, and are saved, as they are clicked: they are view state, with
+	// nothing to confirm.
+	if (ImGui.BeginMenu("View")) {
+		bool changed = false;
+		bool areas = settings.ShowTriggerAreas;
+		if (ImGui.MenuItem("Trigger Areas", null, ref areas)) {
+			settings.ShowTriggerAreas = areas;
+			changed = true;
+		}
+
+		bool routes = settings.ShowRoutes;
+		if (ImGui.MenuItem("Routes", null, ref routes)) {
+			settings.ShowRoutes = routes;
+			changed = true;
+		}
+
+		bool box = settings.ShowMissionBox;
+		if (ImGui.MenuItem("Mission Box", null, ref box)) {
+			settings.ShowMissionBox = box;
+			changed = true;
+		}
+
+		bool pads = settings.ShowBasePads;
+		if (ImGui.MenuItem("Base Pads", null, ref pads)) {
+			settings.ShowBasePads = pads;
+			changed = true;
+		}
+
+		if (ImGui.BeginMenu("Waiting Groups")) {
+			foreach (var display in Enum.GetValues<WaitingGroupDisplay>()) {
+				if (ImGui.MenuItem(display.ToString(), null, settings.WaitingGroups == display)) {
+					settings.WaitingGroups = display;
+					changed = true;
+				}
+			}
+
+			ImGui.EndMenu();
+		}
+
+		if (changed) {
+			settings.Save();
+		}
+
+		ImGui.EndMenu();
 	}
 
 	// A bare item rather than a menu: there is one entry, and burying it under a "File"-style
@@ -356,41 +419,3 @@ float BuildMenuBar() {
 	ImGui.EndMainMenuBar();
 	return height;
 }
-
-void BuildPropertiesPanel(int width, int height, float menuBarHeight, SceneObject? sel) {
-	float panelWidth = ScaledImGui.Scaled(320f);
-
-	ImGui.SetNextWindowPos(new Vector2(width - panelWidth, menuBarHeight));
-	ImGui.SetNextWindowSize(new Vector2(panelWidth, height - menuBarHeight));
-	ImGui.Begin("Properties", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse);
-
-	if (sel != null) {
-		ImGui.TextWrapped(sel.Placement.TypeName ?? $"{sel.Placement.Kind} #{sel.Placement.TypeIndex}");
-		ImGui.Separator();
-		ImGui.Text($"Kind: {sel.Placement.Kind}");
-		ImGui.Text($"Type index: {sel.Placement.TypeIndex}");
-
-		if (sel.Model is { } model) {
-			ImGui.Text($"Model: {model.Key}");
-			ImGui.Text($"Triangles: {model.TriangleVertexCount / 3}");
-			ImGui.Text(model.Atlas is { } atlas
-				? $"Texture: {atlas.FrameCount} frames ({atlas.Width}x{atlas.Height})"
-				: "Texture: none");
-		}
-
-		ImGui.Separator();
-		var pos = sel.Object.Position;
-		ImGui.Text($"Position: {pos.X}, {pos.Y}, {pos.Z} units");
-		ImGui.Text($"          {pos.X / WorldScale.WorldUnitsPerMeter:F1}, {pos.Y / WorldScale.WorldUnitsPerMeter:F1}, " +
-			$"{pos.Z / WorldScale.WorldUnitsPerMeter:F1} m");
-		ImGui.Text($"Heading: {BinaryAngle.ToRadians(sel.Object.Heading) * (180f / MathF.PI):F1} deg");
-		ImGui.Text($"Hit radius: {sel.Object.HitRadius} units");
-	} else {
-		ImGui.TextWrapped("No object selected. Click a mech, flyer, or building in the scene.");
-	}
-
-	ImGui.End();
-}
-
-/// <summary>A placed, drawable object plus its cached render-space pick sphere.</summary>
-internal sealed record Pickable(SceneObject SceneObject, Vector3 CenterRender, float RadiusRender);

@@ -58,7 +58,7 @@ public sealed partial class MechObject {
 				force: true);
 
 			if (ReferenceEquals(player, this)) {
-				world.BumpMissionCounter(World.MissionLoader.SquadmatesDownedCounter, 1);
+				world.Mission.BumpCounter(World.MissionLoader.SquadmatesDownedCounter, 1);
 			}
 		}
 	}
@@ -106,7 +106,7 @@ public sealed partial class MechObject {
 
 			int reading = _damage.DamagePercent(WeaponMounts.FirstMountComponent + mount.LoadoutSlot);
 			if ((short)reading < SalvageableMountReading) {
-				world.QueueSalvage((short)mount.WeaponId, SalvageCondition(reading));
+				world.Mission.QueueSalvage((short)mount.WeaponId, SalvageCondition(reading));
 			}
 		}
 

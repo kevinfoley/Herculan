@@ -61,6 +61,9 @@ EXTERNAL = re.compile(r"^(?:[a-z][a-z0-9+.-]*:|//)", re.IGNORECASE)
 ATX_HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
 FENCE = re.compile(r"^\s*(```|~~~)")
 
+# An inline code span renders as code, so a `[i](...)` inside one is not a link.
+CODE_SPAN = re.compile(r"(`+)(?!`).+?(?<!`)\1(?!`)")
+
 
 def slug(heading: str) -> str:
     """GitHub's anchor for a heading: the algorithm the rendered docs actually use.
@@ -203,7 +206,7 @@ def check_file(path: str, anchor_cache: dict[str, set[str]]) -> list[tuple[int, 
             raws = [m.group(1) for m in CODE_PATH.finditer(line)]
             base_dir = None  # per-path, below
         else:
-            raws = [m.group(1) for m in LINK.finditer(line)]
+            raws = [m.group(1) for m in LINK.finditer(CODE_SPAN.sub("", line))]
             base_dir = os.path.dirname(path)
 
         for raw in raws:

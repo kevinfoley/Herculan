@@ -59,8 +59,8 @@ public readonly record struct SquadTransmission(
 /// <summary>
 /// The three squad comm boxes and the transmission they publish — <c>CommBox_OnMessageBegin</c>
 /// (<c>0044b4ec</c>) and the per-frame service loop <c>HddDisplay_ServiceCommBoxes</c> (<c>0044b5f8</c>) that runs their state machine.
-/// Derivation: docs/retail/formats/heads-down-display.md, docs/retail/formats/cockpit-messages.md and
-/// docs/retail/formats/audio.md.
+/// Derivation: docs/retail/simulation/heads-down-display.md, docs/retail/simulation/cockpit-messages.md and
+/// docs/retail/simulation/audio.md.
 ///
 /// <para>A reply from a squadmate reaches this through <see cref="SquadMessagePort"/>: the port decides
 /// when the line is due, and its begin callback puts that pilot's box into
@@ -244,7 +244,7 @@ public sealed class SquadCommChannel {
 	/// <para>It is <b>not</b> the comms-out latch itself (<c>gauge+0x147</c>): the service loop sets
 	/// that when a message ends with the machine destroyed or when the death scream ends. Retail's
 	/// <c>HddDisplay_Update</c> also sets it for a destroyed squadmate during an external-view
-	/// transition, which this class does not model — docs/retail/formats/heads-down-display.md#the-death-scream.
+	/// transition, which this class does not model — docs/retail/simulation/heads-down-display.md#the-death-scream.
 	/// The difference matters for the scream, which is posted as the machine is destroyed and
 	/// would never get past the opening static if the latch followed the flag.</para>
 	/// </summary>
@@ -509,7 +509,7 @@ public sealed class SquadCommChannel {
 	/// <summary>
 	/// The draw <c>HddGauge_PaintPilotFrame</c> (<c>0044b120</c>) makes on every portrait paint and
 	/// throws away. It moves nothing on screen, only the generator the scream's roll and every sound
-	/// and message variant draw on after it — see docs/retail/formats/heads-down-display.md#the-three-paints.
+	/// and message variant draw on after it — see docs/retail/simulation/heads-down-display.md#the-three-paints.
 	/// </summary>
 	private void PaintPortraitDraw() => _random?.Next();
 

@@ -8,7 +8,7 @@ namespace Herculan.Engine.Shell;
 /// startup by <c>EndOfGame_Build</c> (<c>0044cc2c</c>), filled and put up by <c>EndOfGame_Show(state)</c> (<c>0044cecf</c>) and taken down by
 /// <c>OKAY</c>'s handler, <c>EndOfGame_OnOkay</c> (<c>0044cf7b</c>). The launch refusal's sibling, in a window the size of the
 /// display, so its rect is a canvas rect; while it is up this engine hit-tests nothing but <c>OKAY</c>,
-/// as it does for that dialog. See docs/retail/shell/screen-layout.md#the-main-menu.
+/// as it does for that dialog. See docs/retail/shell/main-menu.md#the-main-menu.
 /// </summary>
 public sealed class ShellEndOfGameDialog {
 	/// <summary>The alert, an <c>ESAlert</c>, in the canvas.</summary>
@@ -57,8 +57,9 @@ public sealed class ShellEndOfGameDialog {
 	/// <summary>
 	/// Draws the dialog over whatever <paramref name="surface"/> holds: <c>ESTitle_Ctor</c>'s filled body
 	/// under the face and plate the builder writes, and the two lines centred in <c>0x29</c> with no backing.
+	/// <paramref name="lit"/> is the widget a press has lit.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		if (!IsOpen) {
 			return;
 		}
@@ -74,10 +75,8 @@ public sealed class ShellEndOfGameDialog {
 		ShellChrome.PaintText(surface, Inside(PanelRect, SecondLineRect), font, text?.Text(SecondLineText),
 			ShellTextAlign.Center, ShellChrome.FontInkColor);
 
-		var okay = OkayButtonRect;
-		ShellChrome.PaintButton(surface, okay, ButtonBorder);
-		ShellChrome.PaintText(surface, new ShellRect(okay.X0 + 1, okay.Y0, okay.X1, okay.Y1), font, text?.Text(OkayText),
-			ShellTextAlign.Center, ShellChrome.FontInkColor);
+		ShellChrome.PaintButton(surface, OkayButtonRect, ButtonBorder, font, text?.Text(OkayText), ShellChrome.FontInkColor,
+			pressed: lit == new ShellWidget(ShellWidgetKind.EndOfGameOkay, 0));
 	}
 
 	private static ShellRect Inside(ShellRect parent, ShellRect child) =>

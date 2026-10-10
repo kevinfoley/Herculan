@@ -1,4 +1,5 @@
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
 
 namespace Herculan.Engine.Sim;
 
@@ -16,14 +17,11 @@ public sealed partial class FlyerObject : IFlightBody {
 	private const int InitialAirSpeed = 1000;
 
 	/// <summary>
-	/// <c>flyer+0x261</c>'s literal, on the model's ±0x400 throttle scale, and the only value it holds
-	/// here (<see cref="ApplyFlightCommand"/> has the retail branch that can overwrite it). <b>Nothing
-	/// a Cybrid flyer decides moves its throttle.</b> The control law fills a five-element command
-	/// array and leaves the throttle element zero on every call, so the flight model's rate branch
-	/// never steps the setting; the one field the AI does write a throttle-shaped figure into
-	/// (<c>flyer+0x21c</c>, <c>Flyer_FormationThrottle</c> (<c>00422260</c>)'s own accumulator) is
-	/// never handed to the model. So a SKIMMER cruises at the airspeed
-	/// 0x200 asks for — 875 of its 500-1000 range — biased only by its own pitch attitude.
+	/// <c>flyer+0x261</c>'s literal, on the model's ±0x400 throttle scale. <b>Nothing a Cybrid flyer
+	/// decides moves its throttle.</b> The control law leaves the command array's throttle element zero
+	/// on every call, and <c>Flyer_FormationThrottle</c> (<c>00422260</c>)'s accumulator at
+	/// <c>flyer+0x21c</c> is never handed to the model. Only the player's own controls can overwrite
+	/// it — see <see cref="ApplyFlightCommand"/>.
 	/// </summary>
 	private const short InitialThrottle = 0x200;
 
@@ -343,6 +341,9 @@ public sealed partial class FlyerObject : IFlightBody {
 		public int Elevator;
 		public int Rudder;
 		public int GroundHeight;
+
+		/// <summary>Whether the model reads the throttle element as a lever; see <see cref="ApplyFlightCommand"/>.</summary>
+		public bool AnalogueThrottle;
 	}
 
 	/// <summary>
@@ -362,12 +363,12 @@ public sealed partial class FlyerObject : IFlightBody {
 	/// commands are softened quadratically and only a large one reaches full deflection, which is
 	/// what keeps an AI aircraft from sawing its controls back and forth.
 	///
-	/// <para>The throttle axis is passed as zero and the analogue-throttle branch is refused. The
-	/// original shares one input-preferences global with the player's own path, so a configured
-	/// throttle device would read the AI's zero axis as a <i>position</i> and set every Cybrid
-	/// flyer's throttle to 0, the middle of its range (750 for a SKIMMER, where the rate branch
-	/// leaves it at 875 — docs/retail/simulation/ai-flyers.md, "A flyer cannot change speed"); the rate
-	/// branch is the behaviour the AI was written against.</para>
+	/// <para>The throttle axis is passed as zero. The model's lever test is the player's
+	/// (<see cref="SimWorld.FlightThrottleIsLever"/>): when it holds, the zero axis is read as a lever at
+	/// its centre and the throttle set to 0, so a SKIMMER cruises at 750 rather than the 875 that
+	/// <see cref="InitialThrottle"/> asks for. <see cref="TweakSettingDefinitions.FlyerIgnoresPlayerThrottle"/>
+	/// refuses the lever branch, leaving 875 whatever the player's controls
+	/// (docs/retail/simulation/ai-flyers.md, "A flyer cannot change speed").</para>
 	/// </summary>
 	private void ApplyFlightCommand(ref FlightCommand command) {
 		if (Flight is not { } flight) {
@@ -380,7 +381,7 @@ public sealed partial class FlyerObject : IFlightBody {
 			rudder: (short)command.Rudder,
 			throttleAxis: 0,
 			groundHeight: command.GroundHeight,
-			analogueThrottle: false);
+			analogueThrottle: command.AnalogueThrottle);
 	}
 
 	/// <summary>Squares a command with its sign kept, then clamps it to the model's ±0x100 axis range.</summary>
@@ -425,7 +426,9 @@ public sealed partial class FlyerObject : IFlightBody {
 
 		var command = new FlightCommand {
 			Elevator = elevator,
-			GroundHeight = world.GroundHeightAt(Position)
+			GroundHeight = world.GroundHeightAt(Position),
+			AnalogueThrottle = world.FlightThrottleIsLever
+				&& !world.Tweaks.GetSettingValue(TweakSettingDefinitions.FlyerIgnoresPlayerThrottle)
 		};
 
 		if (roll >= maxBank - BankHysteresis && bank > 0) {

@@ -76,7 +76,7 @@ public static class SoundId {
 	/// </summary>
 	public const int Throttle = 0x2c;
 
-	/// <summary><c>herceng1.wav</c> — the engine hum, looped for the machine's whole life. Only a flyer starts it; see docs/retail/formats/audio.md, "The cockpit power-up".</summary>
+	/// <summary><c>herceng1.wav</c> — the engine hum, looped for the machine's whole life. Only a flyer starts it; see docs/retail/simulation/audio.md, "The cockpit power-up".</summary>
 	public const int EngineLoop = 0x2d;
 
 	/// <summary><c>shield1.wav</c> — the shield sound. Despite the name its row plays once (loop count 1).</summary>

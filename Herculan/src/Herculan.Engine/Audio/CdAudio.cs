@@ -16,7 +16,7 @@ namespace Herculan.Engine.Audio;
 /// <item>The rip cache of the one disc this machine has ripped before, with the disc absent.</item>
 /// </list>
 /// <para>and <see cref="NullCdAudio"/> otherwise, which runs the whole music layer above it — the
-/// track choice, the enable flag, the saved position — silently. See docs/retail/formats/audio.md's
+/// track choice, the enable flag, the saved position — silently. See docs/retail/simulation/audio.md's
 /// "CD audio" for why the digital path is preferred to retail's.</para>
 /// </summary>
 public static class CdAudio {

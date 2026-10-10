@@ -7,7 +7,7 @@ namespace Herculan.Engine.Render;
 /// <summary>
 /// The type tag at an object's <c>+0x04</c>, as far as the draw table reads it: tag 9 is drawn on the
 /// spot in its cell, and tags 0, 5 and 8 pick their own draw distance — see
-/// docs/retail/formats/terrain-drawing.md, "Objects in the walk".
+/// docs/retail/rendering/terrain-drawing.md, "Objects in the walk".
 /// </summary>
 public enum ObjectTypeTag : short {
 	/// <summary>A drop pod. <c>Meteor_Construct</c> never writes the tag, so it keeps the zero its pool starts with.</summary>
@@ -112,7 +112,7 @@ public sealed class DrawEntry {
 /// is not riding it, or off the grid altogether. Within a drawn cell everything but a ground shape is
 /// also left out when the camera rides it or when it is farther than its class's draw distance, and an
 /// impact effect on the hull of what the camera rides is not submitted at all
-/// (<see cref="DrawEntry.HiddenWhenRidden"/>). See docs/retail/formats/terrain-drawing.md, "Objects in the
+/// (<see cref="DrawEntry.HiddenWhenRidden"/>). See docs/retail/rendering/terrain-drawing.md, "Objects in the
 /// walk" and "After the walk".</para>
 ///
 /// <para>A filed object's cell is kept between passes, as the original keeps it at <c>+0x1e8</c>, so

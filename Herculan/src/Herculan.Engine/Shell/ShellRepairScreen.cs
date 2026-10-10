@@ -29,7 +29,7 @@ public enum ShellRepairButton {
 /// <para><b>Every rect here is a literal in the executable</b>, four immediates on the builder's own
 /// stack, and they are kept parent-relative exactly as it writes them — the content panel in the
 /// canvas, the two list panels and the three readout panels in that, and each list's rows in its own
-/// panel. See docs/retail/shell/screen-layout.md.</para>
+/// panel. See docs/retail/shell/weapons-and-repair.md.</para>
 ///
 /// <para><b>A selection is a <c>(column, row)</c> pair and it resolves into a category.</b> Column 0's
 /// sixteen rows are the six external component groups and then ten hardpoints; column 1's nine are
@@ -212,7 +212,7 @@ public sealed class ShellRepairScreen {
 	/// <c>(0, 0)</c>.
 	///
 	/// <para>The original selects that bay through <c>Squad_SelectBay</c> under the previous tab's rule,
-	/// as <c>Arming_Enter</c> does (docs/retail/shell/screen-layout.md#entering-the-weapons-screen); this engine
+	/// as <c>Arming_Enter</c> does (docs/retail/shell/weapons-and-repair.md#entering-the-weapons-screen); this engine
 	/// applies the repair tab's.</para>
 	/// </summary>
 	public void Enter() {
@@ -269,7 +269,7 @@ public sealed class ShellRepairScreen {
 	/// CANCEL, <c>Repair_OnCancel</c> (<c>00434d73</c>): the pool goes back to the snapshot outright, so
 	/// anything else that moved it since is undone too, and the snapshot's status block is copied over
 	/// the selected machine. With no machine selected the original copies it over whatever
-	/// <c>00482abf</c> points at; this engine restores only the pool (docs/retail/shell/screen-layout.md#open).
+	/// <c>00482abf</c> points at; this engine restores only the pool (docs/retail/shell/weapons-and-repair.md#open).
 	/// </summary>
 	public void Cancel() {
 		_hangar.SalvageKilograms = _snapshotSalvage;
@@ -314,7 +314,7 @@ public sealed class ShellRepairScreen {
 	/// The <c>(column, row)</c> a canvas point selects, or null: a row of either list, or a hotspot over
 	/// the external picture, which is only there to click while that picture is the one up. Rows overlap
 	/// by their border line, which goes to the lower row because it was built later
-	/// (docs/retail/shell/screen-layout.md#which-widget-a-click-reaches).
+	/// (docs/retail/shell/widgets.md#which-widget-a-click-reaches).
 	/// </summary>
 	public (int Column, int Row)? RowAt(float canvasX, float canvasY) {
 		if (_column == 0 && _diagrams?.HotspotAt(Machine, canvasX, canvasY) is { } hotspot) {
@@ -418,9 +418,10 @@ public sealed class ShellRepairScreen {
 	/// <summary>
 	/// Draws the whole screen into <paramref name="surface"/>. The caller clears it first; the content
 	/// panel's body is filled rather than dithered here, so unlike the save screen nothing of the
-	/// backdrop shows through it — the builder leaves <c>+0x59</c> at the constructor's 1.
+	/// backdrop shows through it — the builder leaves <c>+0x59</c> at the constructor's 1. <paramref name="lit"/>
+	/// is the widget a press has lit.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
 		_diagrams?.Paint(surface, Machine, _column);
@@ -443,10 +444,10 @@ public sealed class ShellRepairScreen {
 		PaintReadout(surface, font, Inside(PanelRect, SalvageReadoutRect),
 			WithKilograms(AvailableKilograms, text));
 
-		PaintItemPanel(surface, font, text);
-		PaintTotalPanel(surface, font, text);
-		PaintScrapPanel(surface, font, text);
-		PaintButton(surface, font, text?.Text(CancelText), ShellRepairButton.Cancel);
+		PaintItemPanel(surface, font, text, lit);
+		PaintTotalPanel(surface, font, text, lit);
+		PaintScrapPanel(surface, font, text, lit);
+		PaintButton(surface, font, text?.Text(CancelText), ShellRepairButton.Cancel, lit);
 	}
 
 	/// <summary>
@@ -532,7 +533,7 @@ public sealed class ShellRepairScreen {
 			align, color, ShellChrome.InteriorColor);
 
 	/// <summary>The <c>Selected Item</c> panel: this component's repair bill, its condition word, and REPAIR.</summary>
-	private void PaintItemPanel(ShellSurface surface, HudFont? font, ShellText? text) {
+	private void PaintItemPanel(ShellSurface surface, HudFont? font, ShellText? text, ShellWidget? lit) {
 		var panel = Inside(PanelRect, ItemPanelRect);
 		ShellChrome.PaintFramedPanel(surface, panel, FrameBorder, FrameFace, fill: true);
 		PaintLabel(surface, font, text?.Text(SelectedItemText), FullWidth(panel, PanelTitleRect));
@@ -544,28 +545,28 @@ public sealed class ShellRepairScreen {
 		// The condition word is drawn in the readout grey like every other box, not in its damage band's
 		// colour. Repair_RefreshDetail (00433445) does look the band colour up and write it to the widget's +0xb5 — and then
 		// calls ESMessage_SetString with 0x17, which overwrites +0xb5 before the paint. The write is dead; see
-		// docs/retail/shell/screen-layout.md, "The repair screen".
+		// docs/retail/shell/weapons-and-repair.md, "The repair screen".
 		PaintReadout(surface, font, Inside(panel, ItemConditionReadoutRect),
 			text?.Text(ConditionWordText(SelectionCondition)));
-		PaintButton(surface, font, text?.Text(RepairText), ShellRepairButton.Repair);
+		PaintButton(surface, font, text?.Text(RepairText), ShellRepairButton.Repair, lit);
 	}
 
 	/// <summary>The <c>Total</c> panel: a full rebuild's bill and REPAIR ALL.</summary>
-	private void PaintTotalPanel(ShellSurface surface, HudFont? font, ShellText? text) {
+	private void PaintTotalPanel(ShellSurface surface, HudFont? font, ShellText? text, ShellWidget? lit) {
 		var panel = Inside(PanelRect, TotalPanelRect);
 		ShellChrome.PaintFramedPanel(surface, panel, FrameBorder, FrameFace, fill: true);
 		PaintLabel(surface, font, text?.Text(TotalText), FullWidth(panel, PanelTitleRect));
 		PaintLabel(surface, font, text?.Text(SalvageRequiredText), FullWidth(panel, PanelCostLabelRect));
 		PaintReadout(surface, font, Inside(panel, PanelCostReadoutRect), WithKilograms(MachineCost, text));
-		PaintButton(surface, font, text?.Text(RepairAllText), ShellRepairButton.RepairAll);
+		PaintButton(surface, font, text?.Text(RepairAllText), ShellRepairButton.RepairAll, lit);
 	}
 
 	/// <summary>The <c>Scrap Herc</c> panel: a title and the button, with no readout of its own.</summary>
-	private void PaintScrapPanel(ShellSurface surface, HudFont? font, ShellText? text) {
+	private void PaintScrapPanel(ShellSurface surface, HudFont? font, ShellText? text, ShellWidget? lit) {
 		var panel = Inside(PanelRect, ScrapPanelRect);
 		ShellChrome.PaintFramedPanel(surface, panel, FrameBorder, FrameFace, fill: true);
 		PaintLabel(surface, font, text?.Text(ScrapHercText), FullWidth(panel, PanelTitleRect));
-		PaintButton(surface, font, text?.Text(ScrapText), ShellRepairButton.Scrap);
+		PaintButton(surface, font, text?.Text(ScrapText), ShellRepairButton.Scrap, lit);
 	}
 
 	private static void PaintLabel(ShellSurface surface, HudFont? font, string? value, ShellRect rect) =>
@@ -575,20 +576,17 @@ public sealed class ShellRepairScreen {
 	/// A readout box: a <c>Button</c> the builder immediately disables and gives a quieter border and
 	/// caption colour than a live one. It is a box with a figure in it, not a control.
 	/// </summary>
-	private static void PaintReadout(ShellSurface surface, HudFont? font, ShellRect rect, string? value) {
-		ShellChrome.PaintButton(surface, rect, ReadoutBorder);
-		ShellChrome.PaintText(surface, rect, font, value, ShellTextAlign.Center, ReadoutTextColor,
-			ShellChrome.InteriorColor);
-	}
+	private static void PaintReadout(ShellSurface surface, HudFont? font, ShellRect rect, string? value) =>
+		ShellChrome.PaintButton(surface, rect, ReadoutBorder, font, value, ReadoutTextColor,
+			backingColor: ShellChrome.InteriorColor);
 
 	/// <summary>One live button, greyed together with its caption when its gate is shut.</summary>
 	private void PaintButton(ShellSurface surface, HudFont? font, string? caption,
-			ShellRepairButton button) {
+			ShellRepairButton button, ShellWidget? lit) {
 		bool enabled = IsEnabled(button);
-		var rect = ButtonRect(button);
-		ShellChrome.PaintButton(surface, rect, enabled ? ButtonBorder : DisabledColor);
-		ShellChrome.PaintText(surface, rect, font, caption, ShellTextAlign.Center,
-			enabled ? ShellChrome.FontInkColor : DisabledColor);
+		ShellChrome.PaintButton(surface, ButtonRect(button), enabled ? ButtonBorder : DisabledColor, font, caption,
+			enabled ? ShellChrome.FontInkColor : DisabledColor,
+			pressed: enabled && lit == new ShellWidget(ShellWidgetKind.RepairButton, (int)button));
 	}
 
 	/// <summary>
@@ -598,7 +596,7 @@ public sealed class ShellRepairScreen {
 	///
 	/// <para>The original runs it only from <c>Squad_SelectBay</c>'s repair arm, so a machine selected on
 	/// another tab keeps the names this tab last set; this engine names every machine by its own chassis
-	/// (docs/retail/shell/screen-layout.md#which-names-a-chassis-shows).</para>
+	/// (docs/retail/shell/weapons-and-repair.md#which-names-a-chassis-shows).</para>
 	/// </summary>
 	public static int ComponentNameText(int chassisType, ShellRepairCategory category, int index) {
 		int[] table = chassisType == FlyerChassisType ? FlyerComponentNames : WalkerComponentNames;
@@ -748,7 +746,7 @@ public sealed class ShellRepairScreen {
 	/// The condition words, which the screen indexes by damage level. The run is four words long —
 	/// <c>Nominal</c>, <c>Light</c>, <c>Moderate</c>, <c>Heavy</c> — for six levels, so level 4 reads
 	/// <c>0x6c</c> <c>% Complete</c> and level 5 <c>0x6d</c> <c>Unassigned</c>, the two unrelated
-	/// entries that follow. See Herculan/KNOWN_ISSUES.md and docs/retail/shell/screen-layout.md, "The Condition
+	/// entries that follow. See Herculan/KNOWN_ISSUES.md and docs/retail/shell/weapons-and-repair.md, "The Condition
 	/// readout".
 	/// </summary>
 	private const int FirstConditionWordText = 0x68;

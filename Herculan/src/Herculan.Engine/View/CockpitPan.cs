@@ -78,6 +78,13 @@ public sealed class CockpitPan {
 	public bool AtForward => OffsetRows <= 0f;
 
 	/// <summary>
+	/// The original's current view index (<c>+0x14</c>) reading the heads-down display: set when the pan down
+	/// arrives and cleared when the pan up arrives, so it holds through the pan back up. A pan reversed before
+	/// it arrives leaves it as it was.
+	/// </summary>
+	public bool HeadsDownViewIndex { get; private set; }
+
+	/// <summary>
 	/// Asks for a view. Unlike <c>CockpitView_QueueViewCommand</c>'s gate on having fully arrived in
 	/// the other view, a request mid-pan simply reverses the travel from where it is: the original's
 	/// gate exists because its slide is an uninterruptible in-frame loop, and there is nothing to
@@ -93,5 +100,10 @@ public sealed class CockpitPan {
 
 		float step = (float)(deltaSeconds / DurationSeconds) * TravelRows;
 		OffsetRows = Math.Clamp(HeadsDownRequested ? OffsetRows + step : OffsetRows - step, 0f, TravelRows);
+		if (AtHeadsDown) {
+			HeadsDownViewIndex = true;
+		} else if (AtForward) {
+			HeadsDownViewIndex = false;
+		}
 	}
 }

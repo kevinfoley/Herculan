@@ -185,18 +185,18 @@ public class ComputerWarningTests {
 		// The positive control: the ray does stop on the bystander, so "not engaged" below cannot be
 		// a shot that simply missed everything.
 		var probe = Shot(shooter);
-		Assert.NotEqual(0, world.Raycast(probe));
+		Assert.NotEqual(0, HitTests.Raycast(world, probe));
 		Assert.Same(bystander, probe.HitObject);
 
 		// Selected the machine off to the side: the ray never reaches it, so nobody is engaged.
 		shooter.Target = target;
-		world.Raycast(Shot(shooter));
+		HitTests.Raycast(world, Shot(shooter));
 		Assert.False(shooter.Engaged, "stopping on something else is not engaging the target");
 		Assert.False(target.Engaged);
 
 		// Now the selected target is the machine the ray actually reaches.
 		shooter.Target = bystander;
-		world.Raycast(Shot(shooter));
+		HitTests.Raycast(world, Shot(shooter));
 		Assert.True(shooter.Engaged, "the shooter is the one marked engaged, not the machine it hit");
 		Assert.False(bystander.Engaged, "the struck object fires its action but is not itself marked");
 	}

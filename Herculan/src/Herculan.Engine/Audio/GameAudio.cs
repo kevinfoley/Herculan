@@ -8,57 +8,36 @@ namespace Herculan.Engine.Audio;
 
 /// <summary>
 /// The whole audio subsystem as one object for a host to hold: the device, the bank, the director,
-/// and the handful of per-frame duties that belong to none of them individually.
+/// the speaking channels the cockpit's <see cref="MessagePorts"/> post to, and the handful of per-frame
+/// duties that belong to none of them individually.
 ///
 /// <para>Everything here is optional. <see cref="Create"/> returns an instance even with no device
 /// and no samples, so a host never has to branch on whether sound came up.</para>
 /// </summary>
 public sealed class GameAudio : ISoundSink, IDisposable {
-	/// <summary>
-	/// How long after the power-up begins the computer announces the result — the original's own
-	/// <c>200 &lt; elapsed</c> against <c>Time_GetCoarseTicks</c>, whose unit is 16 ms. It lands
-	/// inside <c>start3</c>'s five seconds rather than after them.
-	/// </summary>
-	public static readonly TimeSpan PowerUpAnnounceDelay = TimeSpan.FromMilliseconds(200 * 16);
-
-	/// <summary>
-	/// <c>Time_GetCoarseTicks</c>' unit, which is what <see cref="MessagePort"/> counts in:
-	/// <c>GetTickCount() &gt;&gt; 4</c>, so 16 ms of wall time.
-	/// </summary>
-	public const double CoarseTickSeconds = 0.016;
-
-	/// <summary>
-	/// <c>Time_GetCoarseTicks</c> as this session has counted it — the same clock the message port
-	/// runs on, and the one the cockpit's power-up animations are timed against. Exposed because the
-	/// compass's wind-up is stamped and ramped in it; see <see cref="HeadingTapeSweep"/>.
-	/// </summary>
-	public long CoarseTicks => (long)_messageTicks;
-
 	private readonly SoundDirector? _director;
+	private readonly MessagePorts _ports;
 	private MechObject? _engineLoopOwner;
-	private MechObject? _pilot;
 	private SimWorld? _world;
-	private TimeSpan _powerUpAnnounceIn = TimeSpan.MinValue;
-	private double _messageTicks;
-	private bool _suspended;
 
 	private GameAudio(SoundDirector? director, SoundBank? bank, ComputerVoice? voice,
-			SystemMessages? messages, string status, SquadVoice? squadVoice = null) {
+			MessagePorts ports, string status, SquadVoice? squadVoice = null) {
 		_director = director;
+		_ports = ports;
 		Bank = bank;
 		Voice = voice;
 		SquadSpeech = squadVoice;
 		Status = status;
-		Messages = new MessagePort(messages);
+		var messages = ports.Computer;
 
 		// The port drives both halves. Speech is the voice channel's; the alert tone is an ordinary
 		// catalog effect, so it goes through the director like any other cockpit sound.
-		Messages.Speak += messageId => {
+		messages.Speak += messageId => {
 			if (SpeechEnabled) {
 				Voice?.Speak(messageId);
 			}
 		};
-		Messages.AlertTone += id => _director?.Play(id);
+		messages.AlertTone += id => _director?.Play(id);
 	}
 
 	/// <summary>
@@ -82,15 +61,6 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// original's five-slot speech pool. See <see cref="SquadVoice"/>.
 	/// </summary>
 	public SquadVoice? SquadSpeech { get; }
-
-	/// <summary>
-	/// The cockpit's message port. Not an audio object — it owns the on-screen ticker as much as the
-	/// speech — but it lives here because this is where a posted message arrives: the simulation
-	/// reaches it through <see cref="ISoundSink.Say"/>, which knows nothing about either half. A
-	/// renderer reads <see cref="MessagePort.Ticker"/> from it; see
-	/// <see cref="MessageTickerLayout"/>.
-	/// </summary>
-	public MessagePort Messages { get; }
 
 	/// <summary>The loaded catalog and samples, or null when <c>SOUNDS.STR</c> would not load.</summary>
 	public SoundBank? Bank { get; }
@@ -126,26 +96,19 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	void ISoundSink.SetPitch(int id, int rate) => _director?.SetPitch(id, rate);
 
 	/// <inheritdoc />
-	void ISoundSink.Say(int messageId) => Messages.Post(messageId);
+	void ISoundSink.Say(int messageId) => _ports.Computer.Post(messageId);
 
 	/// <inheritdoc />
-	void ISoundSink.Unsay(int messageId) => Messages.Withdraw(messageId);
+	void ISoundSink.Unsay(int messageId) => _ports.Computer.Withdraw(messageId);
 
 	/// <inheritdoc />
-	void ISoundSink.SquadSay(int messageId, object speaker) => Squad?.Post(messageId, speaker);
+	void ISoundSink.SquadSay(int messageId, object speaker) => _ports.Squad?.Post(messageId, speaker);
 
 	/// <inheritdoc />
-	void ISoundSink.CommandSay(int messageId) => Squad?.PostUnattributed(messageId);
+	void ISoundSink.CommandSay(int messageId) => _ports.Squad?.PostUnattributed(messageId);
 
 	/// <inheritdoc />
-	void ISoundSink.SquadUnsay(int messageId, object? speaker) => Squad?.Port.Withdraw(messageId, speaker);
-
-	/// <summary>
-	/// The pilot and squad channel — the three comm boxes, their queue and the portraits they play.
-	/// Null until <see cref="AttachSquad"/> is called, because which pilots are in the boxes is a
-	/// per-mission fact; a post to it before then is simply dropped.
-	/// </summary>
-	public SquadCommChannel? Squad { get; private set; }
+	void ISoundSink.SquadUnsay(int messageId, object? speaker) => _ports.Squad?.Port.Withdraw(messageId, speaker);
 
 	/// <summary>
 	/// Reads a training mission's instructor clip, given the training mission and the message id — see
@@ -154,15 +117,13 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	public Func<int, int, byte[]?>? InstructorClip { get; set; }
 
 	/// <summary>
-	/// Hands this the mission's comm boxes and connects their two outputs: the recorded line goes to
-	/// <see cref="SquadSpeech"/> and the static to the effect catalog, which is the same split the
-	/// computer's port takes. From here on <see cref="Update"/> runs the channel on the port's own
-	/// clock, so it stops with everything else across a suspend.
+	/// Connects the mission's comm boxes' two outputs: the recorded line goes to <see cref="SquadSpeech"/>
+	/// and the static to the effect catalog, which is the same split the computer's port takes. The boxes
+	/// themselves are <see cref="MessagePorts.Squad"/>.
 	/// </summary>
 	public void AttachSquad(SquadCommChannel squad) {
 		ArgumentNullException.ThrowIfNull(squad);
 
-		Squad = squad;
 		squad.Speak += (voiceBank, messageId, variant) => {
 			if (SpeechEnabled) {
 				SquadSpeech?.Speak(voiceBank, messageId, variant);
@@ -183,7 +144,7 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 
 		// CommBox_OnMessageBegin tests whether the hiss is already running before starting it, so a
 		// second box opening under the first does not layer a second copy — see the note on
-		// Sound_Play in docs/retail/formats/audio.md.
+		// Sound_Play in docs/retail/simulation/audio.md.
 		squad.Hiss += id => {
 			if (_director is { } director && !director.IsPlaying(id)) {
 				director.Play(id);
@@ -210,6 +171,7 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// an instance that silently does nothing, with <see cref="Status"/> saying which.
 	/// </summary>
 	/// <param name="content">The mounted archives. Must include <c>SIMSOUND.VOL</c> for the samples.</param>
+	/// <param name="ports">The cockpit's message ports, whose posts this speaks.</param>
 	/// <param name="random">
 	/// The generator the variation roll draws on — pass the world's
 	/// <see cref="Sim.SimWorld.PresentationRandom"/>, as the original does.
@@ -236,23 +198,22 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// The install's <c>data\sound.cfg</c>, applied through <see cref="SoundCfgBackend"/>; null takes the shipped
 	/// settings.
 	/// </param>
-	public static GameAudio Create(GameContent content, SimRandom? random = null, bool lowMemory = false,
+	public static GameAudio Create(GameContent content, MessagePorts ports, SimRandom? random = null, bool lowMemory = false,
 			bool silent = false, string? cdDrive = null, string? musicDirectory = null,
 			HercWorks.Disc.DiscImage? discImage = null, SoundCfg? soundCfg = null) {
-		// Read first and unconditionally: the message port's display half needs nothing but the text,
-		// so the ticker still runs on a machine with no sound device and in an install with no
-		// SIMSOUND.VOL.
-		var messages = SystemMessages.Load(content);
+		// The message port's display half needs nothing but the text, so the ticker still runs on a
+		// machine with no sound device and in an install with no SIMSOUND.VOL.
+		var messages = ports.Computer.Messages;
 
 		SoundBank? bank;
 		try {
 			bank = SoundBank.Load(content, lowMemory);
 		} catch (Exception e) {
-			return new GameAudio(null, null, null, messages, $"sound bank failed to load: {e.Message}");
+			return new GameAudio(null, null, null, ports, $"sound bank failed to load: {e.Message}");
 		}
 
 		if (bank == null) {
-			return new GameAudio(null, null, null, messages,
+			return new GameAudio(null, null, null, ports,
 				$"no {SoundCatalog.ResourceName} in the mounted archives — is {SoundBank.ArchiveName} mounted?");
 		}
 
@@ -266,7 +227,8 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 		var cd = silent
 			? new NullCdAudio("silenced by request")
 			: CdAudio.Open(backend, cdDrive, musicDirectory, discImage: discImage);
-		var director = new SoundDirector(bank, backend, random) { Cd = cd };
+		var director = new SoundDirector(bank, backend, random);
+		director.Music.Cd = cd;
 		var voice = new ComputerVoice(content, messages, backend);
 		var squadVoice = new SquadVoice(content, backend);
 
@@ -296,7 +258,7 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 			status += $" (no sample for: {string.Join(", ", bank.Missing)})";
 		}
 
-		return new GameAudio(director, bank, voice, messages, status, squadVoice);
+		return new GameAudio(director, bank, voice, ports, status, squadVoice);
 	}
 
 	/// <summary>
@@ -349,11 +311,11 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 			return;
 		}
 
-		_director?.StartMissionMusic(trackSelect);
+		_director?.Music.StartMission(trackSelect, _director.MusicEnabled);
 	}
 
 	/// <summary>
-	/// <c>Cockpit_PowerUpSound</c> (<c>004328cc</c>) — the cockpit's power-up, played when the player takes a machine. Plays
+	/// <c>Cockpit_PowerUpSound</c> (<c>004328cc</c>)'s sound half — the cockpit's power-up, played when the player takes a machine. Plays
 	/// the start-up sequence, and for a flyer also starts the engine hum and drops it to the pitch
 	/// the original sets.
 	///
@@ -364,12 +326,11 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	///
 	/// <para><b>A flyer gets the hum and nothing else.</b> <c>start3</c> and the announcement both
 	/// sit behind <c>cockpit+0x245</c>, which <c>Gau_BuildCockpitWidgets</c> sets for a flyer before
-	/// this runs; see docs/retail/formats/audio.md, "The cockpit power-up".</para>
+	/// this runs; see docs/retail/simulation/audio.md, "The cockpit power-up". The announcement is
+	/// <see cref="MessagePorts.PowerUp"/>'s.</para>
 	/// </summary>
 	public void PowerUp(MechObject pilot) {
-		_pilot = pilot;
 		bool flyer = pilot.Type.IsFlyer;
-		_powerUpAnnounceIn = flyer ? TimeSpan.MinValue : PowerUpAnnounceDelay;
 
 		if (_director == null) {
 			return;
@@ -389,52 +350,30 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	/// <summary>Stops the engine hum — leaving the cockpit, or the machine dying.</summary>
 	public void PowerDown() {
 		_engineLoopOwner = null;
-		_powerUpAnnounceIn = TimeSpan.MinValue;
 		_director?.Stop(SoundId.EngineLoop);
 	}
 
 	/// <summary>
-	/// Leaves the cockpit for good: the hum stops and the message port forgets everything it was
-	/// holding. <c>Cockpit_PowerUpSound</c>'s counterpart at the end of a mission.
+	/// Leaves the cockpit for good: the hum and the computer's voice stop. <c>Cockpit_PowerUpSound</c>'s
+	/// counterpart at the end of a mission; the message half is <see cref="MessagePorts.LeaveCockpit"/>.
 	/// </summary>
 	public void LeaveCockpit() {
 		PowerDown();
-		_pilot = null;
 		Voice?.Stop();
-		Messages.Clear();
 
 		// Retail has no counterpart: DBSIM exits and Windows closes the device with the process. A host
 		// that goes on running has to hand the disc back itself.
-		_director?.StopMissionMusic();
+		_director?.Music.StopMission();
 	}
 
 	/// <summary>
 	/// Per-frame service: keeps the engine hum on its machine, lets finite repeat counts run, and
-	/// runs the speech channel. Call once a frame, after the listener has been set.
+	/// notices when the speaking channels finish. Call once a frame, after the listener has been set and
+	/// after <see cref="MessagePorts.Update"/>.
 	/// </summary>
-	/// <param name="elapsed">Wall time since the last call, for the power-up announcement's delay.</param>
-	public void Update(TimeSpan elapsed = default) {
-		AnnouncePowerUp(elapsed);
+	public void Update() {
 		Voice?.Update();
-
-		// The port's clock is Time_GetCoarseTicks' wall time, not the simulation's, and it stops while
-		// suspended or paused — which is what the original's own pause pair (MessagePort_Pause,
-		// 00435b58 / MessagePort_Resume, 00435b80) achieves by shifting every deadline forward by
-		// however long the pause lasted.
-		if (!_suspended && !MessagesPaused) {
-			_messageTicks += elapsed.TotalSeconds / CoarseTickSeconds;
-		}
-
-		Messages.PilotDisabled = _pilot is { Destroyed: true };
-		Messages.Update((long)_messageTicks);
-
-		// The squad channel runs on the same clock: it is the second instance of the same port, and
-		// its comm boxes count their static in the same coarse ticks.
 		SquadSpeech?.Update();
-		if (Squad is { } squad) {
-			squad.Port.PilotDisabled = Messages.PilotDisabled;
-			squad.Update((long)_messageTicks);
-		}
 
 		if (_director == null) {
 			return;
@@ -452,78 +391,19 @@ public sealed class GameAudio : ISoundSink, IDisposable {
 	}
 
 	/// <summary>
-	/// <c>Cockpit_PowerUpTick</c> (<c>00432924</c>)'s tail — the cockpit's power-up sequence announcing itself once
-	/// <see cref="PowerUpAnnounceDelay"/> has passed since the sequence began.
-	///
-	/// <para>Which line is <see cref="PowerUpFindsDamage"/>'s.</para>
-	/// </summary>
-	private void AnnouncePowerUp(TimeSpan elapsed) {
-		if (_powerUpAnnounceIn == TimeSpan.MinValue) {
-			return;
-		}
-
-		_powerUpAnnounceIn -= elapsed;
-		if (_powerUpAnnounceIn > TimeSpan.Zero) {
-			return;
-		}
-
-		_powerUpAnnounceIn = TimeSpan.MinValue;
-		Messages.Post(PowerUpFindsDamage(_pilot)
-			? SystemMessages.PowerUpDamaged
-			: SystemMessages.PowerUpNominal);
-	}
-
-	/// <summary>
-	/// Whether the power-up announces <see cref="SystemMessages.PowerUpDamaged"/>: true when any of
-	/// the first <see cref="PowerUpCheckedInternals"/> internals reads any damage at all, which is
-	/// <c>Cockpit_PowerUpTick</c>'s test as docs/retail/formats/cockpit-messages.md, "Posters", derives it.
-	///
-	/// <para>The original's reading (<c>Mech_ReadEntryDamage</c>, <c>0041b514</c>) takes a zero
-	/// maximum as fully damaged where <see cref="ComponentDamage.DependentPercent"/> reads it as 0;
-	/// no chassis that announces has one among these slots.</para>
-	/// </summary>
-	private static bool PowerUpFindsDamage(MechObject? pilot) {
-		if (pilot?.Damage is not { } damage) {
-			return false;
-		}
-
-		for (int slot = 0; slot < PowerUpCheckedInternals; slot++) {
-			if (damage.DependentPercent(slot) != 0) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
-	/// <summary>How many internals the power-up checks, from slot 0 — the original's literal 10.</summary>
-	private const int PowerUpCheckedInternals = 10;
-
-	/// <summary>
-	/// Stops both message ports' clock and nothing else — what a modal panel does. The original's
-	/// <c>AlertPanel_Enter</c> (<c>00454630</c>) and <c>AlertPanel_Leave</c> (<c>004548ac</c>) pause
-	/// and resume the two ports and leave the sound alone, so an effect already playing plays out
-	/// and a line already on screen keeps the rest of its display time for after the panel.
-	/// <see cref="Suspend"/> is the lost window's fuller stop.
-	/// </summary>
-	public bool MessagesPaused { get; set; }
-
-	/// <summary>
 	/// Silences everything without tearing the device down — for a lost window, which is where the
 	/// original calls <c>Sound_SuspendAll</c> (<c>Sim_Suspend</c>, <c>0045f0b8</c>, alongside both ports' pause). Speech is
 	/// cut rather than remembered: <see cref="Resume"/> can only restart a clip from its beginning,
-	/// and half a sentence twice is worse than none. The message port's clock stops, so a line already
-	/// on screen keeps the rest of its display time for after the pause.
+	/// and half a sentence twice is worse than none. The message ports' half is
+	/// <see cref="MessagePorts.Suspended"/>.
 	/// </summary>
 	public void Suspend() {
-		_suspended = true;
 		Voice?.Stop();
 		_director?.SuspendAll();
 	}
 
 	/// <summary>Puts back what <see cref="Suspend"/> stopped.</summary>
 	public void Resume() {
-		_suspended = false;
 		_director?.ResumeAll();
 	}
 

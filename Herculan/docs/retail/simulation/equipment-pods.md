@@ -1,24 +1,16 @@
 # DBSIM.EXE equipment pods
 
-The five non-firing pods a HERC can carry — ECM, TARG, SHLD, TURB, ENRG. This doc owns the pod as an **object**: how the five classes are built, what each one overrides, how their cockpit rows behave, when they tick, and the damage curve they share. What each pod's contribution then *does* belongs to the system it feeds, and stays there:
-
-| Pod | Effect owned by |
-|---|---|
-| ECM | the jammer flag and the spoof roll in [`missile-lock.md`](missile-lock.md#ecm) |
-| TARG | [`target-selection.md`](target-selection.md#component-targeting--the-targeting-pod) |
-| SHLD | [`damage-system.md`](damage-system.md#the-shield-system) |
-| TURB | the speed term in [`mech-locomotion.md`](mech-locomotion.md#damage-effects-on-movement) |
-| ENRG | [`reactor-energy-pool.md`](reactor-energy-pool.md#reactor-output-rate--mech_computereactorrate-00417d08) |
+The five non-firing pods a HERC can carry — ECM, TARG, SHLD, TURB, ENRG. This doc owns the pod as an **object**: how the five classes are built, what each one overrides, how their cockpit rows behave, when they tick, and the damage curve they share. What each pod's contribution then *does* belongs to the system it feeds, but is briefly summarized here.
 
 Pods are ordinary weapon mounts on ordinary hardpoints. At the end of `Mech_ConfigureLoadout`, `MechLoadout_FileEquipmentPods` (`0040fb2c`) walks the finished mount list and files five weapon ids into a five-pointer array. The switch keys on the mount template's `+0x56`, which `Weapons_LoadResourceTables` (`0040fc8c`) writes as the record's own table index — so it is the `SHELL0.VOL` `gam\WEAPONS.DAT` catalog id.
 
-| Slot | Offset | Id | Name | Effect |
-|---|---|---|---|---|
-| 0 | `+0x307` | 18 | ECM | on/off from its own gauge, `EcmPod_Tick` (`0040f184`), which posts the jamming messages `0x2a`/`0x2b` |
-| 1 | `+0x30b` | 29 | TARG | component targeting, [`target-selection.md`](target-selection.md#component-targeting--the-targeting-pod) |
-| 2 | `+0x30f` | 30 | SHLD | shield capacity, `Mech_ComputeShieldCapacity` (`00417bec`) |
-| 3 | `+0x313` | 32 | ENRG | reactor rate, `Mech_ComputeReactorRate` (`00417d08`) |
-| 4 | `+0x317` | 31 | TURB | speed while engaged, `TurboPod_Tick` (`0040f1f0`) and [mech-locomotion.md](mech-locomotion.md) |
+| Slot | Offset | Id | Pod | What it does | Detail |
+|---|---|---|---|---|---|
+| 0 | `+0x307` | 18 | ECM | Jams: a machine targeting this one keeps losing its missile lock, and its guided missiles weave instead of closing. A jamming machine is also a target for anti-radiation missiles | [`missile-lock.md`](missile-lock.md#ecm) |
+| 1 | `+0x30b` | 29 | TARG | Lets the player aim at one component of the selected HERC, and blunts enemy ECM against this machine's locks | [`target-selection.md`](target-selection.md#component-targeting--the-targeting-pod) |
+| 2 | `+0x30f` | 30 | SHLD | Doubles shield capacity | [`damage-system.md`](damage-system.md#the-shield-system) |
+| 3 | `+0x313` | 32 | ENRG | Doubles the energy pool's recharge rate (not its capacity, as the manual says) | [`reactor-energy-pool.md`](reactor-energy-pool.md#reactor-output-rate--mech_computereactorrate-00417d08) |
+| 4 | `+0x317` | 31 | TURB | A speed boost, switched on from its cockpit row, that nearly doubles top speed while its charge lasts | [`mech-locomotion.md`](mech-locomotion.md#damage-effects-on-movement), [below](#what-the-two-ticks-do-with-the-button) |
 
 Slot order is not id order (`0x1f`→[4], `0x20`→[3]). The switch assigns rather than accumulates, so a second copy of a pod fills the same slot and contributes nothing — the last mount in hardpoint order wins.
 
@@ -39,7 +31,7 @@ Against the shared table `00498cdc`, the five reach for only four slots between 
 
 Inheriting `WeaponMount_RefireTick` in the pool slot is what makes a pod free to run: it counts the mount's refire timer down and returns the budget untouched. **The Turbo Pod is the one pod that draws on the pool** — `TurboPod_ChargeTick` spends 35 of its own charge per tick while engaged, then — if the mount is not destroyed — buys back `min(20, budget, 2000 - charge)` out of the budget the weapons left, toward the 2000 its constructor starts it at. What that does to the weapons' share is in [`reactor-energy-pool.md`](reactor-energy-pool.md#weapon-energy-arbitration--weaponmounts_arbitrateenergy-004107e4).
 
-**The Shield and Energy pods are inert objects.** Neither overrides anything but its own gauge constructor: no tick of its own, no notification, no state. That is the pod *object*, not the number it feeds: each is reached by name from the one routine that wants it, and `Mech_ComputeShieldCapacity` re-runs on every `Mech_ComponentDamageWrite`, so a Shield Pod's contribution really does fall away as the pod is shot. `Mech_ComputeReactorRate` has no second caller, so an Energy Pod's does not. `es2_fieldscan.py` over `0x307`–`0x317` finds nothing else — `Mech_ComputeShieldCapacity` is the only access to `+0x30f` it reports and `Mech_ComputeReactorRate` the only access to `+0x313`. That scan resolves the rebase idiom (it recovers `AlertPanel_Enter`'s writes through an `EBX+0x300` alias, on an unrelated object), so a slot reached as `equipmentPods[n]` off the array base would show; and no caller indexes the array in any case, since the two `+0x307` readers at `0041aa10` and `0041aa44` dereference slot 0 directly. It remains a null result.
+**The Shield and Energy pods are inert objects.** Neither overrides anything but its own gauge constructor: no tick of its own, no notification, no state. That is the pod *object*, not the number it feeds: each is reached by name from the one routine that wants it, `Mech_ComputeShieldCapacity` and `Mech_ComputeReactorRate` ([the damage curve](#the-damage-curve-the-pod-bonuses-share) has what each makes of it). `es2_fieldscan.py` over `0x307`–`0x317` finds nothing else — `Mech_ComputeShieldCapacity` is the only access to `+0x30f` it reports and `Mech_ComputeReactorRate` the only access to `+0x313`. That scan resolves the rebase idiom (it recovers `AlertPanel_Enter`'s writes through an `EBX+0x300` alias, on an unrelated object), so a slot reached as `equipmentPods[n]` off the array base would show; and no caller indexes the array in any case, since the two `+0x307` readers at `0041aa10` and `0041aa44` dereference slot 0 directly. It remains a null result.
 
 **The `+0x50` tick runs on the player's machine only.** Its one call site is `WeaponMounts_PerFrameUpdate` (`00410b40`), whose one caller is `Player_PerFrameCockpitUpdate` — so an AI machine's pods are never ticked at all. What that does and does not cost such a machine, both checkable in play:
 
@@ -52,11 +44,11 @@ A player-only tick also explains why `EcmPod_Ctor`'s null gauge handle at `+0x79
 
 ## Only two pods have a button
 
-`CockpitView_CreatePodGauge` (`004321d4`) switches on the catalog id at `pod+0x77` and builds one of three gauge classes: `TogglePodGauge_Ctor` (`00441998`, vtable `0049c8a4`) for ECM, `TurboPodGauge_Ctor` (`00441a34`, vtable `0049c878`, which derives from it and adds an LED bar over the pod's charge — [`../formats/cockpit-hud-widgets.md`](../formats/cockpit-hud-widgets.md#weapon-hardpoint-rows)) for TURB, and the plain `PodGauge_Ctor` (`00441524`, vtable `0049c8d0`) for TARG, SHLD and ENRG. **The split is the tick table again** — the two classes with a tick of their own are the two with a gauge class of their own.
+`CockpitView_CreatePodGauge` (`004321d4`) switches on the catalog id at `pod+0x77` and builds one of three gauge classes: `TogglePodGauge_Ctor` (`00441998`, vtable `0049c8a4`) for ECM, `TurboPodGauge_Ctor` (`00441a34`, vtable `0049c878`, which derives from it and adds an LED bar over the pod's charge — [`cockpit-hud-widgets.md`](cockpit-hud-widgets.md#weapon-hardpoint-rows)) for TURB, and the plain `PodGauge_Ctor` (`00441524`, vtable `0049c8d0`) for TARG, SHLD and ENRG. **The split is the tick table again** — the two classes with a tick of their own are the two with a gauge class of their own.
 
-Every pod row is clickable and sounds on a click: `PodGauge_Ctor` registers the row's `WeaponSelectGadget` child with `Widget_RegisterClickable`, and that child sounds `Widget_ClickSound` and forwards to its owner's slot 0 ([`../formats/cockpit-input.md`](../formats/cockpit-input.md)). What the slot does is where the classes part:
+Every pod row is clickable and sounds on a click: `PodGauge_Ctor` registers the row's `WeaponSelectGadget` child with `Widget_RegisterClickable`, and that child sounds `Widget_ClickSound` and forwards to its owner's slot 0 ([`cockpit-input.md`](cockpit-input.md)). What the slot does is where the classes part:
 
-- `TogglePodGauge_OnClick` (`004419fc`) XORs the button byte at `gauge+0xc2` — structurally the same child-table search as `ShieldsGauge_OnClick`. `EcmPod_Tick` and `TurboPod_Tick` read that byte back out of the state block on the next tick. This is the whole of a pod's on/off toggle; the paint that shows it is in [`../formats/cockpit-hud-widgets.md`](../formats/cockpit-hud-widgets.md#weapon-hardpoint-rows).
+- `TogglePodGauge_OnClick` (`004419fc`) XORs the button byte at `gauge+0xc2` — structurally the same child-table search as `ShieldsGauge_OnClick`. `EcmPod_Tick` and `TurboPod_Tick` read that byte back out of the state block on the next tick. This is the whole of a pod's on/off toggle; the paint that shows it is in [`cockpit-hud-widgets.md`](cockpit-hud-widgets.md#weapon-hardpoint-rows).
 - `PodGauge_OnClick` (`00441988`) sets the repaint byte and returns.
 
 So a Shield, Targeting or Energy pod row clicks and sounds but has no on/off state to change, and `Pod_TickBase` would ignore it if it did. Clicking is not how a Targeting Pod is used either — that is `[Tab]`, through `CockpitWidgets_HandleCommand` ([`target-selection.md`](target-selection.md#component-targeting--the-targeting-pod)).
@@ -84,11 +76,17 @@ The charge itself is the Turbo Pod's `+0x34` pool turn, `TurboPod_ChargeTick` (`
 
 Because `Mech_ComponentDamageWrite` then hands **every** mount its component's reading on every write anywhere on the machine, the cache tracks the live figure from there on. The two are still not interchangeable: the cache is only as current as the last write, and a change to a component reading that bypassed `Mech_ComponentDamageWrite` would part them ([Open](#open)).
 
-## The damage curve both bonuses share
+## The damage curve the pod bonuses share
 
-Gated off entirely at 225/256 damage: `scale = 1024 - 204 * (damage / 51)`, Q10 — five steps from 1024 (pristine) down to 208, then nothing. A pristine pod is worth `Q10(1024, base) = base`: it **doubles** the stat it feeds.
+Gated off entirely at 225/256 damage: `scale = 1024 - 204 * (damage / 51)`, Q10 — five steps from 1024 (pristine) down to 208, then nothing. The bonus a pod adds is `Q10(scale, base)`, so a pristine pod adds the whole of its base.
 
-Three pods use it, each against its own base — see [`damage-system.md`](damage-system.md#the-shield-system) and [`reactor-energy-pool.md`](reactor-energy-pool.md#reactor-output-rate--mech_computereactorrate-00417d08) for what "doubles" amounts to for the Shield and Energy pods, and for the manual's claim about the Energy Pod that the pool's own literals disprove. The Turbo Pod is the exception to the doubling: its base is a literal 1000, so a pristine one is worth a shade under top speed rather than a second one ([`mech-locomotion.md`](mech-locomotion.md#damage-effects-on-movement)).
+The Shield, Energy and Turbo pods use it, each against its own base:
+
+- **Shield Pod** — the base is the HERC's undamaged shield capacity. Capacity is recomputed on every damage write, so the bonus falls as the pod is shot ([`damage-system.md`](damage-system.md#the-shield-system)).
+- **Energy Pod** — the base is the reactor's output. That output is computed once, at spawn, when every pod is pristine, so the curve never bites and the pod always gives its full bonus ([`reactor-energy-pool.md`](reactor-energy-pool.md#reactor-output-rate--mech_computereactorrate-00417d08)).
+- **Turbo Pod** — the base is the literal 1000, not 1024, so even a pristine pod yields slightly less than a whole top speed — about 98% of it ([`mech-locomotion.md`](mech-locomotion.md#damage-effects-on-movement)).
+
+The Targeting Pod does not use the curve: its abilities switch off one at a time at fixed damage thresholds ([`target-selection.md`](target-selection.md#a-damaged-pod-degrades-in-four-steps)).
 
 ## Rejected readings
 

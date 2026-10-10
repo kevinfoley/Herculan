@@ -219,6 +219,5 @@ The cell layer â€” the tree, the modes, the escapes and the two-buffer scheme â€
 ## Open
 
 - **Open:** the matrix and range `IR32_32.DLL` converts YUV to RGB with.
-## Not planned
-- The null cell's second code. 0 and 1 are both decoded as a copy. What the retail codec does differently for 1 has not been read, and no frame in the corpus uses it: all 80,237 null cells across the 80 files carry 0.
-- 8-bit pixels and half-pel motion vectors (frame flag bits 1, 4 and 5). No frame in the corpus sets them, and the decoder rejects a frame that does.
+- **Accepted:** the null cell's second code. 0 and 1 are both decoded as a copy. What the retail codec does differently for 1 has not been read, and no frame in the corpus uses it: all 80,237 null cells across the 80 files carry 0.
+- **Accepted:** 8-bit pixels and half-pel motion vectors (frame flag bits 1, 4 and 5). No frame in the corpus sets them.

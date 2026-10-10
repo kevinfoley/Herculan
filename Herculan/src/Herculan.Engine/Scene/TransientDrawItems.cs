@@ -23,6 +23,16 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 	private Camera? _camera;
 	private int _focalPixels;
 
+	// What Refresh last built the items for, which RestoreFrameView builds them for again after a pass
+	// from another camera.
+	private Camera? _frameCamera;
+	private int _frameFocalPixels;
+	private SimulatorPreferences? _preferences;
+
+	// The frame camera's ground shapes, kept aside while another camera's are up. Put back rather than
+	// rebuilt, because a rebuild conforms every shape it takes up again.
+	private readonly List<GroundShapeDraw> _frameGroundShapes = new();
+
 	public List<SceneItem> Projectiles { get; } = new();
 
 	/// <summary>
@@ -53,6 +63,9 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 
 	/// <summary>This frame's items, for the camera about to draw them.</summary>
 	public void Refresh(Camera camera, int focalPixels, SimulatorPreferences preferences) {
+		_frameCamera = camera;
+		_frameFocalPixels = focalPixels;
+		_preferences = preferences;
 		_camera = camera;
 		_focalPixels = focalPixels;
 		RefreshProjectileItems();
@@ -61,6 +74,47 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 		RefreshGroundShapeItems(camera);
 		RefreshWeaponItems(preferences);
 		RefreshSpriteBatches();
+	}
+
+	/// <summary>
+	/// The items that depend on the camera, rebuilt for a pass from a camera with its own eye and focal
+	/// length — the MFD's missile camera, whose paint submits the frame again with itself as the view object
+	/// (docs/retail/simulation/mfd.md, "<c>MFDMissileView</c> — mode 5"). Those are the items that carry a
+	/// level of detail — rounds, wreckage and guns, after <see cref="WorldDrawItems.SelectDetail"/> has picked
+	/// each machine's root for <paramref name="camera"/>, which decides the hardpoint slot each gun is painted
+	/// in — and the ground shapes, which are submitted by their distance from the view object and conformed
+	/// to the terrain as they are drawn. Everything keeps this frame's draw entries.
+	/// <see cref="RestoreFrameView"/> puts the frame camera's back.
+	/// </summary>
+	public void RefreshForView(Camera camera, int focalPixels) {
+		_frameGroundShapes.Clear();
+		_frameGroundShapes.AddRange(world.GroundLayer.Shapes);
+		RefreshDetailItems(camera, focalPixels);
+		RefreshGroundShapeItems(camera);
+	}
+
+	/// <summary>The frame camera's items again, after a <see cref="RefreshForView"/>.</summary>
+	public void RestoreFrameView() {
+		if (_frameCamera is { } camera) {
+			RefreshDetailItems(camera, _frameFocalPixels);
+		}
+
+		var shapes = world.GroundLayer.Shapes;
+		shapes.Clear();
+		shapes.AddRange(_frameGroundShapes);
+	}
+
+	// The items that carry a level of detail, for `camera`. Rebuilding them has no effect beyond the lists.
+	private void RefreshDetailItems(Camera camera, int focalPixels) {
+		if (_preferences is not { } preferences) {
+			return;
+		}
+
+		_camera = camera;
+		_focalPixels = focalPixels;
+		RefreshProjectileItems();
+		RefreshDebrisItems(preferences);
+		RefreshWeaponItems(preferences);
 	}
 
 	// One transient shape's items for this frame -- a gun on its mount, a launcher round or a piece of
@@ -109,6 +163,7 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 
 				item.BspGroup = group;
 				item.BspLeaf = leaf.Index;
+				item.PaintLayer = model.Cells[i].Layer;
 			} else {
 				InSlot(item);
 			}
@@ -138,17 +193,17 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 
 		foreach (var pod in scene.World.DropPods) {
 			var model = pod.Landed
-				? (pod.AnimationFrame < scene.DropPodOpeningModels.Count
-					? scene.DropPodOpeningModels[pod.AnimationFrame]
+				? (pod.AnimationFrame < scene.Models.DropPodOpening.Count
+					? scene.Models.DropPodOpening[pod.AnimationFrame]
 					: null)
-				: scene.DropPodModel;
+				: scene.Models.DropPod;
 
 			if (model == null || !uploads.Meshes.TryGetValue(model.Key, out var mesh)) {
 				continue;
 			}
 
 			DropPods.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(pod.WorldTransform), uploads.TextureOf(model.Key)) {
-				Filing = filing.FrameEntry(pod, ObjectTypeTag.DropPod, pod.Position, scene.DropPodModel?.ShapeRadius ?? 0),
+				Filing = filing.FrameEntry(pod, ObjectTypeTag.DropPod, pod.Position, scene.Models.DropPod?.ShapeRadius ?? 0),
 			});
 		}
 	}
@@ -169,8 +224,8 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 
 		foreach (var shape in scene.World.GroundShapes) {
 			if (shape.Position.ApproxDistanceTo(camera.Position) >= GroundShape.DrawRange
-				|| shape.ShapeIndex < 0 || shape.ShapeIndex >= scene.GroundShapeModels.Count
-				|| scene.GroundShapeModels[shape.ShapeIndex] is not { Count: > 0 } cells) {
+				|| shape.ShapeIndex < 0 || shape.ShapeIndex >= scene.Models.GroundShapes.Count
+				|| scene.Models.GroundShapes[shape.ShapeIndex] is not { Count: > 0 } cells) {
 				continue;
 			}
 
@@ -200,8 +255,8 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 		Debris.Clear();
 		int hercBias = PartDetail.HercBias(preferences[Prefs.HercDetailOption]);
 
-		foreach (var piece in scene.World.DebrisInFlight) {
-			if (!scene.DebrisModels.TryGetValue(piece.ShapeLibrary, out var shapes)
+		foreach (var piece in scene.World.Effects.DebrisInFlight) {
+			if (!scene.Models.Debris.TryGetValue(piece.ShapeLibrary, out var shapes)
 				|| piece.ShapeIndex < 0 || piece.ShapeIndex >= shapes.Count
 				|| shapes[piece.ShapeIndex] is not { } model) {
 				continue;
@@ -225,7 +280,7 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 	//
 	// A gun is drawn with the machine it hangs off, and culled with it: Mech_Draw (004174c8) splices each
 	// fitted weapon's shape into the machine's own before drawing it, so the guns are parts of the one
-	// object the draw table files (docs/retail/formats/mech-shape-drawing.md). That includes the skip for the
+	// object the draw table files (docs/retail/rendering/mech-shape-drawing.md). That includes the skip for the
 	// object the camera rides, so from inside the cockpit the player's own guns are not drawn either.
 	//
 	// The mount's draw slot (WeaponMount_RenderWithDetailBias (0040ded8)) pushes HERC DETAIL's TSDetailPart bias around the render.
@@ -239,7 +294,7 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 			}
 
 			foreach (var mount in mech.Weapons.Mounts) {
-				if (!scene.MechWeaponModels.TryGetValue(mount.ModelShapeIndex, out var cells)
+				if (!scene.Models.MechWeapons.TryGetValue(mount.ModelShapeIndex, out var cells)
 					|| cells.Count == 0) {
 					continue;
 				}
@@ -260,7 +315,7 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 	}
 
 	// One item per live projectile, from the shape its PROJ.DAT subtype names — see
-	// MissionScene.BulletModels. The transform is the shot's own frame, which carries both where it is
+	// MissionModels.Bullets. The transform is the shot's own frame, which carries both where it is
 	// and which way it is pointing, so a round is drawn nose-first along its flight.
 	// Launcher rounds come out of their own table and their own shape file, and go in the same list:
 	// both classes are drawn through the same vtable slot in the original.
@@ -268,7 +323,7 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 		Projectiles.Clear();
 
 		foreach (var projectile in scene.World.Projectiles) {
-			if (scene.BulletModels.TryGetValue(projectile.SubtypeId, out var model)) {
+			if (scene.Models.Bullets.TryGetValue(projectile.SubtypeId, out var model)) {
 				AddModel(model, projectile.Frame, ProjectileEntry(projectile));
 			}
 		}
@@ -277,7 +332,7 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 		// TSCellAnimPart, and the cell is the round's own frame counter. Picking the mesh here is the
 		// engine's equivalent of TSCellAnimPart_Render choosing one child.
 		foreach (var rocket in scene.World.RocketsInFlight) {
-			if (scene.RocketModels.TryGetValue(rocket.ShapeSubtypeId, out var cells) && cells.Count > 0) {
+			if (scene.Models.Rockets.TryGetValue(rocket.ShapeSubtypeId, out var cells) && cells.Count > 0) {
 				var entry = filing.FrameEntry(rocket, ObjectTypeTag.Projectile, rocket.Position, cells[0].ShapeRadius);
 				AddModel(cells[rocket.AnimationFrame % cells.Count], rocket.Frame, entry);
 			}
@@ -301,7 +356,7 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 
 	// A bullet's entry, which its mesh and its billboards share. Null when its subtype has no shape.
 	private DrawEntry? ProjectileEntry(Projectile projectile) =>
-		scene.BulletModels.TryGetValue(projectile.SubtypeId, out var model)
+		scene.Models.Bullets.TryGetValue(projectile.SubtypeId, out var model)
 			? filing.FrameEntry(projectile, ObjectTypeTag.Projectile, projectile.Position, model.ShapeRadius)
 			: null;
 
@@ -315,7 +370,7 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 		Sprites.Clear();
 
 		foreach (var projectile in scene.World.Projectiles) {
-			if (scene.BulletModels.TryGetValue(projectile.SubtypeId, out var model)) {
+			if (scene.Models.Bullets.TryGetValue(projectile.SubtypeId, out var model)) {
 				Add(model, WorldScale.ToRenderMatrix(projectile.Frame), projectile.AnimationFrame,
 					ProjectileEntry(projectile));
 			}
@@ -328,10 +383,10 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 		// ImpactEffect.HiddenFromOwnerCockpit. Which camera that is differs by pass (the missile camera
 		// rides nothing), so the draw table answers it per pass: asked of the owner itself, the test says
 		// whether a camera riding the owner would hide the effect.
-		foreach (var effect in scene.World.Effects) {
+		foreach (var effect in scene.World.Effects.ImpactEffects) {
 			// Filed under its owner's cell when it has one (Explosion_GetOwnerDrawCell, 00408228), and by
 			// its own position and radius otherwise.
-			if (scene.ExplosionModels.TryGetValue(effect.ShapeIndex, out var model)) {
+			if (scene.Models.Explosions.TryGetValue(effect.ShapeIndex, out var model)) {
 				var entry = filing.FrameEntry(effect,
 					effect.ObjectClass != 0 ? ObjectTypeTag.EffectFar : ObjectTypeTag.Effect,
 					effect.Position, model.ShapeRadius, effect.Owner);
@@ -344,9 +399,9 @@ public sealed class TransientDrawItems(MissionScene scene, SceneUploads uploads,
 		// A fire is the third: the same kind of billboard flipbook an impact effect is, upright at
 		// wherever its owner has carried it to, and looping rather than playing once. It is always filed
 		// under its owner's cell (Fire_GetOwnerDrawCell, 0046b74c).
-		foreach (var fire in scene.World.Fires) {
-			if (fire.ShapeIndex >= 0 && fire.ShapeIndex < scene.FireModels.Count
-				&& scene.FireModels[fire.ShapeIndex] is { } model) {
+		foreach (var fire in scene.World.Effects.Fires) {
+			if (fire.ShapeIndex >= 0 && fire.ShapeIndex < scene.Models.Fires.Count
+				&& scene.Models.Fires[fire.ShapeIndex] is { } model) {
 				var entry = filing.FrameEntry(fire, ObjectTypeTag.Fire, fire.Position, model.ShapeRadius, fire.Owner);
 				Add(model, Matrix4x4.CreateTranslation(WorldScale.ToRender(fire.Position)), fire.Frame, entry);
 			}

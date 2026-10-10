@@ -22,7 +22,7 @@ public sealed record ShellTrainingHandoff(string ScriptPath, string MissionPath,
 /// (<c>Game_NewCareer</c>, <c>0040e2ed</c>) on stage 0 at the lit row, that mission loaded
 /// (<c>MsnGen_LoadMission</c>, <c>0041c73d</c>) with the squad built from its own group 0, and the
 /// handoff exported (<c>Game_ExportMissionHandoff</c>, <c>0040f0d4</c>). The sequence is
-/// docs/retail/shell/screen-layout.md#starting-a-practice-mission's; the mission load is
+/// docs/retail/shell/main-menu.md#starting-a-practice-mission's; the mission load is
 /// <see cref="MissionGenerator"/>.
 ///
 /// <para>Every random draw goes through the one generator VSHELL keeps for its whole run, in the
@@ -69,17 +69,52 @@ public static class ShellTrainingLaunch {
 	};
 
 	/// <summary>
-	/// Builds and writes the handoff into <paramref name="directory"/>, or returns null with the reason
-	/// when the install lacks a file the original would open. <paramref name="clearList"/> is the row-2
-	/// clear list the shell keeps across loads (<see cref="MissionGenerator.Load"/>).
-	/// <paramref name="instantAction"/> is <c>InstantAction_Active</c> (<c>0047363c</c>), which <c>INSTANT ACTION</c> sets.
-	/// <paramref name="held"/> is the game the shell's memory holds, as <see cref="ShellCampaignLaunch.NewCareer"/> takes it.
+	/// Both steps in one, as the shell takes them without <c>-@</c>: <see cref="NewCareer"/> on the row, then
+	/// <see cref="Load"/> of its mission. <paramref name="random"/> is VSHELL's generator, which both draw from.
 	/// </summary>
 	public static ShellTrainingHandoff? Write(string directory, GameContent content, SimulatorPreferences options,
 			int row, bool instantAction, SimRandom random, short[] clearList, PlayerSave? held, out string? failure) {
 		int Roll(short bound) => random.NextBelow(bound);
+		return NewCareer(content, options, row, Roll, held, out failure) is var (game, hangar)
+			? Load(directory, content, options, row, MissionPath(content, 0, row), instantAction, Roll, clearList, game, hangar,
+				out failure)
+			: null;
+	}
 
-		if (MissionPath(content, 0, row) is not { } missionPath) {
+	/// <summary>
+	/// <c>Game_NewCareer("TRAINEE", option 0x27)</c> in training mode, its position step
+	/// <c>Career_SeedPosition</c> (<c>00412a2f</c>) putting it on stage 0 at <paramref name="row"/>, and the hangar it
+	/// leaves. The step ends by showing the mission-name dialog, whose button the mission load is (<see cref="Load"/>).
+	/// <paramref name="held"/> is the game the shell's memory holds, as <see cref="ShellCampaignLaunch.NewCareer"/> takes
+	/// it. Null, with the reason, when the install lacks a file the original would open.
+	/// </summary>
+	public static (PlayerSave Game, ShellHangar Hangar)? NewCareer(GameContent content, SimulatorPreferences options, int row,
+			Func<short, int> roll, PlayerSave? held, out string? failure) {
+		if (ShellCampaignLaunch.NewCareer(content, TraineeName, options[DifficultyOption], ShellCampaignMode.Training, roll,
+				held, out failure) is not { } game) {
+			return null;
+		}
+
+		game.CampaignStage = 0;
+		game.MissionInStage = (short)row;
+		return (game, ShellHangar.From(game));
+	}
+
+	/// <summary>
+	/// The training half of <c>MsnGen_LoadMission</c> (<c>0041c73d</c>) for <paramref name="game"/>, which
+	/// <see cref="NewCareer"/> started, with the handoff exported (<c>Game_ExportMissionHandoff</c>, <c>0040f0d4</c>) into
+	/// <paramref name="directory"/>. <paramref name="missionPath"/> is the career position's mission
+	/// (<see cref="MissionPath"/>), as <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>) loads it, or the DEBUG
+	/// dialog's typed one. <paramref name="row"/> is the practice screen's lit row, <c>PracticeScreen_SelectedRow</c>
+	/// (<c>00479bb8</c>), which picks the player's machine. <paramref name="clearList"/> is the row-2 clear list the shell
+	/// keeps across loads (<see cref="MissionGenerator.Load"/>), and <paramref name="instantAction"/> is
+	/// <c>InstantAction_Active</c> (<c>0047363c</c>), which <c>INSTANT ACTION</c> sets. Null, with the reason, when the
+	/// install lacks a file the original would open.
+	/// </summary>
+	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
+			string? missionPath, bool instantAction, Func<short, int> roll, short[] clearList, PlayerSave game,
+			ShellHangar hangar, out string? failure) {
+		if (missionPath == null) {
 			failure = $"gam\\career.dat or missions.bin has no stage-0 mission {row}.";
 			return null;
 		}
@@ -89,21 +124,11 @@ public static class ShellTrainingLaunch {
 			return null;
 		}
 
-		if (ShellCampaignLaunch.NewCareer(content, TraineeName, options[DifficultyOption], ShellCampaignMode.Training, Roll,
-				held, out failure) is not { } game) {
-			return null;
-		}
-
-		// Career_SeedPosition (00412a2f) in training: stage 0, the practice row.
-		game.CampaignStage = 0;
-		game.MissionInStage = (short)row;
-		var hangar = ShellHangar.From(game);
-
 		// MsnGen_SeedCampaignFlags: a training load clears the flag array first.
 		var flags = new short[MissionGenerator.CampaignFlagCount];
-		SeedDrawnFlags(flags, Roll);
+		SeedDrawnFlags(flags, roll);
 
-		var mission = MissionGenerator.Load(msn, text, flags, clearList, Roll);
+		var mission = MissionGenerator.Load(msn, text, flags, clearList, roll);
 		var header = mission.Header;
 		header[5] = options[AmmoOption];
 		header[6] = options[DamageOption];

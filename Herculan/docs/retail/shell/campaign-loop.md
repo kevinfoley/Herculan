@@ -31,15 +31,15 @@ Game_ProcessMissionResults();    // 0040eae7: consume results.dat
 - it is persisted in every save slot, immediately after the salvage pool ([`../formats/save-games.md`](../formats/save-games.md));
 - it is the entire content of `data\mission.var`, in both directions.
 
-Before a mission is loaded, `MsnGen_SeedCampaignFlags` (`0040e94e`) writes flags 1 to 6: a training load clears the array first, a campaign load writes flags 1 and 2 as the career position's stage and mission, and both write flag 3 from `00482606` ([Open](#open)) and flags 4, 5 and 6 a draw below 12 each. The mission's conditions then compare against them, and its header patch clears the flags it names ([`../formats/msn-mission-file.md`](../formats/msn-mission-file.md#the-header-patch--row-2)).
+Before a mission is loaded, `MsnGen_SeedCampaignFlags` (`0040e94e`) writes flags 1 to 6: a training load clears the array first, a campaign load writes flags 1 and 2 as the career position's stage and mission, and both write flag 3 from `00482606` ([Open](#open)) and flags 4, 5 and 6 a draw below 12 each. None of the 62 retail missions has a condition testing flag 3 (`HercWorks.Query flag 3`, which finds 88 tests of flag 0), so `00482606`'s value gates no record of a retail mission. The mission's conditions then compare against them, and its header patch clears the flags it names ([`../formats/msn-mission-file.md`](../formats/msn-mission-file.md#the-header-patch--row-2)).
 
 The debrief writes three slots from its own accounting: 0 the mission's outcome code (`_maybe_CampaignFlagArray = DAT_00482ae9`), 9 the pilots lost and 8 the machines scrapped ([below](#the-debrief--game_processmissionresults-0040eae7)). On the simulator side the same array is `DAT_004a9ef4`, which DBSIM reads from `mission.var` at mission load, less a few slots it resets, and writes back at mission end — see [`../simulation/mission-deployment.md`](../simulation/mission-deployment.md).
 
-It is also what the campaign's rewards are keyed on: the debrief tests the flags the mission left to unlock chassis and weapons and to stock weapon units ([below](#the-debrief--game_processmissionresults-0040eae7)).
+It is also what the campaign's rewards are keyed on: the debrief tests the flags the mission left to unlock chassis and weapons and to stock weapon units ([below](#the-debrief--game_processmissionresults-0040eae7)). Which mission writes each flag and what the later missions do with it is [`../campaign-continuity.md`](../campaign-continuity.md).
 
 ## Starting a campaign — `Game_NewCareer` (`0040e2ed`)
 
-Takes the pilot name and the skill (`DAT_0048260c`'s mode decides the rest: 1 campaign, 0 training, the mode the practice missions and `INSTANT ACTION` run in; both of those pass the literal `TRAINEE` and the practice screen's difficulty; the campaign's is [the registration screen](screen-layout.md#the-registration-screen)). It sets the game state (`0048260e`) to 2, clears the briefing and debrief movies' once-per-load flags and the campaign flag array (`CampaignFlags_Clear`, `0040e939`), loads `gam\weapons.dat` (which also empties the build queue), generates the pilot roster, builds the player (`Player_Create`, `00410107`: roster id 0, a name index drawn below 11, the skill, bay 0, squad position 0, on strength, one machine on strength, and the three squad-member pointers, each squad's record 0 through `Squad_TakeMember` (`0040fb4f`) — [`../formats/save-games.md`](../formats/save-games.md#pilot-record--59-bytes-0x3b-in-memory)), loads `gam\hercs.dat` in a campaign and nothing in training, initializes the career position — whose last step starts the mission's load ([`screen-layout.md`](screen-layout.md#starting-a-practice-mission)) — and seeds the salvage pool:
+Takes the pilot name and the skill (`DAT_0048260c`'s mode decides the rest: 1 campaign, 0 training, the mode the practice missions and `INSTANT ACTION` run in; both of those pass the literal `TRAINEE` and the practice screen's difficulty; the campaign's is [the registration screen](main-menu.md#the-registration-screen)). It sets the game state (`0048260e`) to 2, clears the briefing and debrief movies' once-per-load flags and the campaign flag array (`CampaignFlags_Clear`, `0040e939`), loads `gam\weapons.dat` (which also empties the build queue), generates the pilot roster, builds the player (`Player_Create`, `00410107`: roster id 0, a name index drawn below 11, the skill, bay 0, squad position 0, on strength, one machine on strength, and the three squad-member pointers, each squad's record 0 through `Squad_TakeMember` (`0040fb4f`) — [`../formats/save-games.md`](../formats/save-games.md#pilot-record--59-bytes-0x3b-in-memory)), loads `gam\hercs.dat` in a campaign and nothing in training, initializes the career position — whose last step starts the mission's load ([`main-menu.md`](main-menu.md#starting-a-practice-mission)) — and seeds the salvage pool:
 
 ```
 DAT_00482af4 = rand(0..10) * 1000 + 100000;
@@ -91,7 +91,7 @@ per stage:
 | 4 | 3 | 10 | `C4_01`–`C4_10` |
 | 5 | 4 | 10 | `C5_01`–`C5_10` |
 
-Stages 1–5 are the five campaign chapters. Stage 0 holds the eight practice missions in the order the practice screen lists them, then the three `INSTANT ACTION` plays in turn. `Career_SeedPosition` (`00412a2f`) seeds a new career at stage 1 mission 0, and a training-mode one at stage 0 on the mission the practice screen selected, `DAT_00479bb8` ([`screen-layout.md`](screen-layout.md#which-mission-a-row-is)). The chapter numbering also explains the two bounds in the advance below: `stage > 4` means "already in the final chapter", and the campaign is complete once the stage index reaches the stage count of 6.
+Stages 1–5 are the five campaign chapters. Stage 0 holds the eight practice missions in the order the practice screen lists them, then the three `INSTANT ACTION` plays in turn. `Career_SeedPosition` (`00412a2f`) seeds a new career at stage 1 mission 0, and a training-mode one at stage 0 on the mission the practice screen selected, `DAT_00479bb8` ([`main-menu.md`](main-menu.md#which-mission-a-row-is)). The chapter numbering also explains the two bounds in the advance below: `stage > 4` means "already in the final chapter", and the campaign is complete once the stage index reaches the stage count of 6.
 
 The names in `missions.bin` carry their directory — `MSN\C1_01.MSN` — so they are paths ready to open, not bare mission names.
 
@@ -99,7 +99,7 @@ The player's position is the pair `(0046fb18, 0046fb1a)` — stage, then mission
 
 ## Loading the career's mission
 
-`Career_LoadCurrentMission` (`0044d4cc`) loads the mission at the career position: the stage's resolved name for that mission, passed to `MsnGen_LoadMission` (`0041c73d`). A training career takes the half [`screen-layout.md`](screen-layout.md#starting-a-practice-mission) describes. In a campaign:
+`Career_LoadCurrentMission` (`0044d4cc`) loads the mission at the career position: the stage's resolved name for that mission, passed to `MsnGen_LoadMission` (`0041c73d`). A training career takes the half [`main-menu.md`](main-menu.md#starting-a-practice-mission) describes. In a campaign:
 
 1. `MsnGen_SeedCampaignFlags` writes flags 1 and 2 as the stage and the mission ([above](#the-campaign-flag-array-is-the-msn-condition-store)), and the mission is parsed against the career's flags ([`../formats/msn-mission-file.md`](../formats/msn-mission-file.md)).
 2. The header takes the stage's campaign index as its theater, 0 in both cheat fields and the player pilot's skill as its difficulty ([`../formats/script-dat.md`](../formats/script-dat.md#the-training-fields)), and `WriteScriptDatFile` writes `data\script.dat`.
@@ -107,7 +107,7 @@ The player's position is the pair `(0046fb18, 0046fb1a)` — stage, then mission
 4. `Squad_SetPositionsInPlay` (`004102ff`) sets the positions in play from the mission's group 0. No machine is built: a campaign flies its own hangar.
 5. `Game_ExportMissionHandoff` writes `data\mission.var` and `data\player.mec` ([below](#launching-a-mission--game_exportmissionhandoff-0040f0d4)).
 
-`Career_LoadCurrentMission` then rebuilds the briefing's map (`ShellMap_Build`, [`mission-map.md`](mission-map.md)) and the career's assembled text (`Career_BuildBriefingText`), and stages the slot-10 summary (`Stats_StageCurrentGame(10)`). It then puts the mission tab back up in the view it holds, which after a debrief is 4, and posts a press to the tab's button (`Mission_ShowView(MissionScreenView, 1)`, [`screen-layout.md`](screen-layout.md#the-three-views)).
+`Career_LoadCurrentMission` then rebuilds the briefing's map (`ShellMap_Build`, [`mission-map.md`](mission-map.md)) and the career's assembled text (`Career_BuildBriefingText`), and stages the slot-10 summary (`Stats_StageCurrentGame(10)`). It then puts the mission tab back up in the view it holds, which after a debrief is 4, and posts a press to the tab's button (`Mission_ShowView(MissionScreenView, 1)`, [`mission-screen.md`](mission-screen.md#the-three-views)).
 
 Every campaign save in the retail install is this path's output. Each of `GAME_0`–`GAME_6` gives back its slot's `script%d.dat`, `missn%d.str`, career-block text and flag array byte for byte. That happens from its own flags with flag 0 holding 1, a won mission's outcome, which the load's header patch then clears. The generator is 21 to 94 steps past its seed table, within the 0 to 127 a freshly started shell's seeding leaves it at.
 
@@ -123,7 +123,7 @@ This is `data\player.mec`, and the record it emits is the one DBSIM's reader (`D
 |---|---|
 | *(file header)* player entry index | literal `0` — the player is always entry 0 |
 | *(file header)* entry count | `00482a7a` |
-| pilot name index | the pilot's `esnames.bin` name index (pilot `+0x02`). DBSIM reads the same field as an index into `str\PILOTS.STR` — [`heads-down-display.md`](../formats/heads-down-display.md#who-is-in-it) |
+| pilot name index | the pilot's `esnames.bin` name index (pilot `+0x02`). DBSIM reads the same field as an index into `str\PILOTS.STR` — [`heads-down-display.md`](../simulation/heads-down-display.md#who-is-in-it) |
 | skill | the pilot's skill tier (pilot `+0x25`) |
 | mech type | HERC record `+0x00` |
 | slot count | HERC record `+0x4c`, the mount capacity; both arrays below are this long |
@@ -160,7 +160,7 @@ The whole layout is verified byte-exact against every retail `player.mec` — th
 The longest function in `game.cpp` and the whole of the post-mission accounting.
 
 1. Read `data\mission.var` back into the flag array.
-2. Open `data\results.dat` and read: `int16` outcome to `00482ae9`, an `int32` added to the salvage pool, then `int16 count` and that many `{ int16 weapon id, int16 condition }` salvage pairs, each applied by `Armory_AddNewUnit` (`0041229d`) in campaign mode only, which stocks a new unit of that weapon with the condition as its `+0x04`, the condition it will be fitted at ([`screen-layout.md`](screen-layout.md#fitting-a-weapon)).
+2. Open `data\results.dat` and read: `int16` outcome to `00482ae9`, an `int32` added to the salvage pool, then `int16 count` and that many `{ int16 weapon id, int16 condition }` salvage pairs, each applied by `Armory_AddNewUnit` (`0041229d`) in campaign mode only, which stocks a new unit of that weapon with the condition as its `+0x04`, the condition it will be fitted at ([`weapons-and-repair.md`](weapons-and-repair.md#fitting-a-weapon)).
 3. Copy the outcome into flag slot 0.
 4. For the player, then for each on-strength squad member at positions 1 up to the machines-on-strength count `00482a7a` — not the positions in play the export walks: when the pilot's bay holds a machine, read its 66-byte status block over its `+0x08` span (`Herc_ReadStatusBlock` (`00411720`), which also destroys any mount whose condition arrived at 0 and sets that hardpoint back to 100); set the pilot's condition from the machine's overall slot (`HercStatus_Get(block, 1, 9)` (`00411d06`)), or to 100 with no machine; read the pilot's three mission counters and accumulate them (`Pilot_AccumulateMissionStats`, `0041000e`); and settle the machine (`Herc_SettleAfterMission`, `00410c7c`). A machine whose mean condition (`HercStatus_OverallCondition`) is below 30 is scrapped as the shell's scrap is — valued, its mounts at 80 or better returned to stock, the bay emptied — with the value going into the pool and one added to the hangar's `+0x24`, `00482ae7`; the pilot keeps the bay. A hangar load zeroes that word ([`../formats/herc-catalogs.md`](../formats/herc-catalogs.md#gamhercsdat--the-starting-hangar)), and the debrief began by loading slot 10, so it counts the machines this debrief scrapped. Any other machine has its overall slot reset to 100. A pilot with no machine reads no status block, so the file's 66 bytes for that machine are read as its counters.
 5. Run the squad's progression ([below](#pilot-progression)) and copy the count of pilots it lost into flag 9 (`00482b0a`). If the player's HERC condition reached 0 the campaign is over and the debrief stops here, in either mode. Otherwise flag 8 (`00482b08`) takes the scrap count, and the rest runs in a campaign only; a training debrief ends by putting the startup sequence up, which brings the main menu.
@@ -230,7 +230,7 @@ Eight jumps in the function resolve to four targets — `00410088`, `00410090`, 
 | player's HERC condition reached 0 | 3 | campaign over: [`REPLAY MISSION?`](#replay-mission) |
 | advance returned 0 — the mission failed and the new position is a stage's first mission or past stage 4 | 0 | the war is lost: [`REPLAY MISSION?`](#replay-mission) |
 | advance returned 1 — succeeded past the last stage | 1 | autosave to slot 10, play AVIs `0x53` and `0x54`, then palette 1 and the startup sequence |
-| otherwise | 2 | the debrief: the mission tab's view set to 4, then the next mission's load, which puts the tab up in that view with [the mission report](screen-layout.md#the-mission-report) ([`screen-layout.md`](screen-layout.md#the-three-views)) |
+| otherwise | 2 | the debrief: the mission tab's view set to 4, then the next mission's load, which puts the tab up in that view with [the mission report](mission-screen.md#the-mission-report) ([`mission-screen.md`](mission-screen.md#the-three-views)) |
 
 **The position advances whether or not the mission was won.** `Career_Advance` increments the mission index before it inspects the outcome; the outcome only chooses the branch. Rolling past a stage's mission count resets the mission index to 0 and increments the stage.
 
@@ -256,6 +256,6 @@ States 0 and 3 put up `REPLAY MISSION?` (`ReplayDialog_Show(state)`, `0044ca57`)
 
 ## Open
 
-- **Open:** what writes `00482606`, which `MsnGen_SeedCampaignFlags` copies into flag 3 before every mission load. Its one reference found, by a disassembly search and `es2_xref.py`, is that read; the startup memset from `MissionScreenView` clears it, so a load with nothing else writing it sees 0.
+- **Deferred:** what writes `00482606`, which `MsnGen_SeedCampaignFlags` copies into flag 3 before every mission load. Its one reference found, by a disassembly search and `es2_xref.py`, is that read; the startup memset from `MissionScreenView` clears it, so a load with nothing else writing it sees 0. The answer changes no retail mission ([above](#the-campaign-flag-array-is-the-msn-condition-store)).
 - **Open:** whether anything steps the map generator at `0x48106e` from the clock. `es2_xref.py --binary VSHELL 0048106e` finds the static initialiser's reset (`00401e5c`) and the two draws, and nothing else.
 - **Open:** a reader of `player.mec`'s trailing weapon table. None is among the functions that reference a `player.mec` path literal in `VSHELL.EXE` or `DBSIM.EXE` (a byte scan for the strings and for absolute references to them); a path built another way would escape that scan.

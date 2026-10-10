@@ -12,7 +12,7 @@ namespace Herculan.Engine.Sim;
 /// depends on the object being drawn rather than on the light.</para>
 ///
 /// <para>The whole derivation — slot layout, the constants, the selection test and the shade terms —
-/// is docs/retail/formats/effect-lights.md.</para>
+/// is docs/retail/rendering/effect-lights.md.</para>
 /// </summary>
 public sealed class EffectLightField {
 	/// <summary>
@@ -24,7 +24,7 @@ public sealed class EffectLightField {
 	/// <summary>
 	/// <c>EffectLightPool</c> (<c>004a9682</c>), the handle pool an effect allocates from before it
 	/// claims a slot: three, so at most three effect lights exist at once and a fourth light-bearing
-	/// effect runs dark. See docs/retail/formats/effect-lights.md, "Claiming a slot".
+	/// effect runs dark. See docs/retail/rendering/effect-lights.md, "Claiming a slot".
 	/// </summary>
 	public const int HandleCount = 3;
 

@@ -20,7 +20,7 @@ Both ES1 program images were built with Symantec C++, the line Zortech C++ began
 
 Eight of these matches do not say which function they found. `fprintf`, `sprintf`, `spawnl` and `spawnlp` each match at the same two addresses (`ES1DBSIM 0005f6e0` and `0005f77c`), and `printf`, `execl` and `execlp` at one (`0005f712`): each is a short wrapper that differs from the others only in the function it calls, which the masking hides. `streambuf::underflow` is 8 bytes and matches at two addresses.
 
-**ES1's runtime is a later revision than 6.1's.** Most of the library's functions that ES1 uses differ in places: `_open` (`00074947`) sends its error exit through a routine shared with the other `io.asm` calls (`00074922`), where 6.1's sets `errno` inline. The extender kernel in ES1's executables reads `DOS extender Copyright 1991-1994 by Doug Huffman`; 6.1's `X386.LIB` carries `Copyright 1991 1992`.
+**ES1's runtime is a later revision than 6.1's.** Most of the library's functions that ES1 uses differ in places: `open` (`00074947`) sends its error exit through a routine shared with the other `io.asm` calls (`00074922`, inside `Dos_ReadWrite`), where 6.1's sets `errno` inline. The extender kernel in ES1's executables reads `DOS extender Copyright 1991-1994 by Doug Huffman`; 6.1's `X386.LIB` carries `Copyright 1991 1992`.
 
 ## Startup
 
@@ -28,14 +28,14 @@ The extender enters the image at `0xd` (`__x386_init`; [Hand-off](x32-executable
 
 1. Stores the PSP selector in `__psp` (`0009739c`) and the environment's address in `__envptr` (`000973ac`), and zero-fills `_BSS`, from `000adcd8` to `000bdd40`, the image's memory size.
 2. Copies the command tail onto the stack and splits it at spaces and tabs into an argument vector, keeping a `"` or `'` quoted run as one argument. While `__stack` (`000973e8`) is non-zero, an argument starting `=` replaces it with the decimal number that follows and is not passed on; a non-digit in it prints `Bad stack size parameter` and exits, and a zero leaves it an ordinary argument. Both executables ship `__stack` as `0x8000`.
-3. Allocates the vector through `_malloc` (`00001618`), stores `__argc` (`000973b0`) and `__argv` (`000973b4`), and points `argv[0]` at the program's path after the environment strings. A failed allocation prints `Not enough memory` and exits.
+3. Allocates the vector through `malloc` (`00001618`), stores `__argc` (`000973b0`) and `__argv` (`000973b4`), and points `argv[0]` at the program's path after the environment strings. A failed allocation prints `Not enough memory` and exits.
 4. Asks the extender (`INT 21h` `AX=350Dh`) for a stack of the larger of `__stack` and 16 KB, printing `Not enough memory` on failure, and stores the DOS version in `__osmajor` (`0009739e`) and `__osminor` (`0009739f`).
 5. Detects the coprocessor (`__x386_coproc_init`, `000002ba`): `000973a8` receives 0 when none answers, 2 when `+∞` and `−∞` compare equal (an 80287) and 3 otherwise.
 6. Copies the environment into the heap (`init_envp`, `00000275`), runs the static constructors (`__cinit`, `0005b68c`), calls `main` (`00059350`) with `__argc` and `__argv`, and passes its result to `exit` (`0005b6f4`).
 
 `ES1GO` follows the same steps, with `__stack` at `00083cd4`, `__cinit` at `0004defc`, `main` at `00012ec7` and `exit` at `0004df64`.
 
-The `_malloc` the startup calls sits among the game's own objects, beside `memory.cpp`'s functions, rather than in the library region.
+The `malloc` the startup calls is the game's own, from `memory.cpp`, among the game's objects rather than in the library region ([the entry points](../simulation/memory.md#the-entry-points)).
 
 **Address 0 is a trap.** The image's first bytes load the address of `NULL code pointer called` and jump to the startup's message-and-exit tail (`000001cc`), which prints it and calls `__exit` (`0005b6c8`) with status 1. A call through a null code pointer lands there. A null data pointer faults instead, on the data selector's expand-down limit ([Loading the image](x32-executable.md#loading-the-image)).
 
@@ -95,7 +95,7 @@ The counts are Ghidra's function list after [step 0.2](../../herculan/plan-es1-s
 
 ## Open
 
-- **Open:** the Symantec C++ release, and the X-32 release, that ES1 was built with. Both are later than 6.1's and earlier than Symantec C++ 7, which shipped in 1995; an update to 6.1 or a 1994 FlashTek X-32VM release with its own startup and libraries are the candidates, and the startup's two additions and `_open`'s shared error exit are what to compare.
+- **Open:** the Symantec C++ release, and the X-32 release, that ES1 was built with. Both are later than 6.1's and earlier than Symantec C++ 7, which shipped in 1995; an update to 6.1 or a 1994 FlashTek X-32VM release with its own startup and libraries are the candidates, and the startup's two additions and `open`'s shared error exit are what to compare.
 - **Open:** whether a zero vtable slot is a pure virtual function, and whether the zero bytes that follow `000973fe`'s destructor slot are slots. A call through a zero slot reaches the address-0 trap.
 - **Open:** whether the compiler emits run-time type information anywhere; the vtable's first dword holds none.
 - **Open:** what decides whether a reference to a function targets its padding or its prologue.

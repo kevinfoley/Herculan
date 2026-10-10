@@ -5,7 +5,7 @@ namespace Herculan.Engine.Cockpit;
 /// <summary>
 /// The STATUS screen's squad roster — the machines F1's SELECT button walks, held at
 /// <c>MfdDisplay+0x308</c> with its cursor at <c>+0x318</c> and its count at <c>+0x31c</c>.
-/// docs/retail/formats/mfd.md#the-subject owns the evidence; F1's subject is <see cref="Subject"/>, read
+/// docs/retail/simulation/mfd.md#the-subject owns the evidence; F1's subject is <see cref="Subject"/>, read
 /// through <see cref="MfdStatusSubject.For"/> as F5's selection is.
 /// </summary>
 public sealed class MfdStatusRoster {

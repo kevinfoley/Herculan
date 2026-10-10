@@ -6,7 +6,7 @@ namespace HercWorks.Core.Data.File.Gau;
 /// handed to the port's constructor (<c>MessagePort_Ctor</c>, <c>004369a4</c>). This is the
 /// scrolling one-line ticker the cockpit computer writes to; the rect before it is the second port
 /// of the same class, <see cref="HPilotMessagePort"/>. A 120x9 box horizontally centred on the
-/// 320-wide screen in every retail file. See docs/retail/formats/cockpit-messages.md, "The ticker".
+/// 320-wide screen in every retail file. See docs/retail/simulation/cockpit-messages.md, "The ticker".
 ///
 /// <para>Read out of <see cref="GAUFile.Remainder"/>, which is still what the write path emits.</para>
 /// </summary>

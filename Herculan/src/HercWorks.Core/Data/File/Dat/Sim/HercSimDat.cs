@@ -94,7 +94,7 @@ public class HercSimDat {
 	/// <summary>
 	/// Offsets 46-65 — signed part ids, ended by a negative one: the parts whose nodes DBSIM uses to
 	/// renumber each crude LOD root onto root 0's nodes at load. See
-	/// docs/retail/formats/mech-shape-drawing.md, "The crude roots are renumbered at load".
+	/// docs/retail/rendering/mech-shape-drawing.md, "The crude roots are renumbered at load".
 	/// </summary>
 	public byte[] ModelLoDBoneIds { get; set; } = new byte[20];
 
@@ -139,7 +139,7 @@ public class HercSimDat {
 
 	/// <summary>
 	/// Offset 80 — which of <c>COCKPIT.DPL</c>'s nine 24-entry colour schemes the cockpit installs.
-	/// A 0-8 permutation over the nine player HERCs. See docs/retail/formats/cockpit-canopy-palette.md#palette.
+	/// A 0-8 permutation over the nine player HERCs. See docs/retail/rendering/cockpit-canopy-palette.md#palette.
 	/// </summary>
 	public short CockpitColorScheme { get; set; }
 
@@ -244,7 +244,7 @@ public class HercSimDat {
 	/// Offset 148 — which shared texture group DBSIM binds to every sub-shape of this mech:
 	/// <c>MechType_InitOne</c> writes <c>&amp;g_MechTextureGroupSlots + value*8</c> into
 	/// <c>TSShape+0x26</c> of each root shape. <see cref="TextureGroupDbaBaseName"/> names the groups; the
-	/// per-mech roster is in docs/retail/formats/dts-texture-binding.md#dbsims-mech-to-texture-mapping.
+	/// per-mech roster is in docs/retail/rendering/dts-texture-binding.md#dbsims-mech-to-texture-mapping.
 	/// </summary>
 	public short TextureGroup { get; set; }
 

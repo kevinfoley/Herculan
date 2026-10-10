@@ -12,7 +12,7 @@ using Xunit;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// The sky backdrop against retail's <c>hzline</c>: docs/retail/formats/distance-fog-and-sky.md, "The sky —
+/// The sky backdrop against retail's <c>hzline</c>: docs/retail/rendering/distance-fog-and-sky.md, "The sky —
 /// hzline".
 /// </summary>
 public class SkyGradientTests {

@@ -4,6 +4,7 @@ using HercWorks.Core.Data.Struct.Vshell.Hercs;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Content;
+using Herculan.Engine.Settings;
 
 namespace Herculan.Engine.Shell;
 
@@ -11,7 +12,7 @@ namespace Herculan.Engine.Shell;
 /// The repair screen's damage diagram: the machine drawn as parts on a blue grid down the left of the
 /// canvas, each part recoloured by its component's damage band, with clickable areas over it. Two
 /// pictures share the rect — the exploded external one while the selection is in the external list
-/// and the internals one while it is in the internals list. See docs/retail/shell/screen-layout.md, "The
+/// and the internals one while it is in the internals list. See docs/retail/shell/weapons-and-repair.md, "The
 /// damage diagram".
 ///
 /// <para><b>Both pictures are <see cref="ShellGrid"/> widgets</b>, whose remap pairs are what colour
@@ -40,6 +41,10 @@ public sealed class ShellRepairDiagrams {
 
 	/// <summary>The part slot a mount's weapon lands in: <c>slot + 6</c>, past the six body groups.</summary>
 	public const int FirstWeaponPart = 6;
+
+	/// <summary>The two torso groups, <c>Left Torso</c> and <c>Right Torso</c> (a Razor's nacelles).</summary>
+	private const int LeftTorsoGroup = 1;
+	private const int RightTorsoGroup = 2;
 
 	/// <summary>The ink a chassis part is drawn in and remapped from, <c>Repair_BuildDiagrams</c>'s <c>0xe</c>.</summary>
 	private const byte BodyInk = 0x0e;
@@ -152,7 +157,7 @@ public sealed class ShellRepairDiagrams {
 	///
 	/// <para>Where panels overlap, the one built last answers, and a point off the picture reaches none of
 	/// them: the builder makes the six areas and then the weapons, so the test runs weapons from the
-	/// highest mount down and then areas from 5 down. See docs/retail/shell/screen-layout.md#which-widget-a-click-reaches.</para>
+	/// highest mount down and then areas from 5 down. See docs/retail/shell/widgets.md#which-widget-a-click-reaches.</para>
 	/// </summary>
 	public int? HotspotAt(ShellBayMachine? machine, float canvasX, float canvasY) {
 		if (machine == null || !ExternalPictureRect.Contains(canvasX, canvasY)) {
@@ -174,7 +179,7 @@ public sealed class ShellRepairDiagrams {
 		var areas = _hotspots?.Entries?.FirstOrDefault(entry => entry.HercId == machine.ChassisType)?.Areas;
 		for (int row = (areas?.Length ?? 0) - 1; row >= 0; row--) {
 			if (areas![row] is { } area && x >= area.X0 && y >= area.Y0 && x <= area.X1 && y <= area.Y1) {
-				return row;
+				return GroupDrawnAt(row);
 			}
 		}
 
@@ -198,7 +203,7 @@ public sealed class ShellRepairDiagrams {
 			// Ids 16 and up are a second part for the same group — the Razor's. Repair_ColorDiagram (0041469a) folds them
 			// back onto 0-5 to read the condition, and still colours the slot the id names.
 			int group = id > 0xf ? id - 0x10 : id;
-			int condition = machine.Condition(ShellRepairCategory.ExternalGroup, group);
+			int condition = machine.Condition(ShellRepairCategory.ExternalGroup, GroupDrawnAt(group));
 			SetPart(parts, id, Frame(_bodyBanks[type], record.FrameId), record.OriginX, record.OriginY,
 				record.BlitFlags?.Val ?? 0, BodyInk, ShellRepairScreen.BandColor(condition));
 		}
@@ -261,6 +266,19 @@ public sealed class ShellRepairDiagrams {
 
 		return sockets.FirstOrDefault(socket => socket.Id == FirstWeaponPart + mount);
 	}
+
+	/// <summary>
+	/// The external group whose damage a layout's group <paramref name="group"/> shows and whose row its hotspot
+	/// selects. Retail's are the same, which puts <c>Left Torso</c> on the viewer's left and <c>Left Leg</c> on the
+	/// viewer's right (docs/retail/shell/weapons-and-repair.md, "The damage diagram").
+	/// <see cref="TweakSettingDefinitions.FixRepairDiagramSides"/> swaps the two torsos, so both pairs read as seen
+	/// from the front. Only the colouring and the clicks change: the parts stay where the layout puts them.
+	/// </summary>
+	private static int GroupDrawnAt(int group) =>
+		!TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.FixRepairDiagramSides) ? group
+			: group == LeftTorsoGroup ? RightTorsoGroup
+			: group == RightTorsoGroup ? LeftTorsoGroup
+			: group;
 
 	private static void SetPart(ShellGridPart?[] parts, int slot, DynamixBitmap? frame, int x, int y, int flags,
 			byte ink, byte color) {

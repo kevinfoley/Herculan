@@ -27,6 +27,26 @@ public sealed class EditorSettings {
 	/// </summary>
 	public bool ShowGrid { get; set; } = true;
 
+	/// <summary>Whether the mission's trigger areas are drawn — see <see cref="MissionOverlay"/>.</summary>
+	public bool ShowTriggerAreas { get; set; } = true;
+
+	/// <summary>Whether the routes the mission's orders name are drawn.</summary>
+	public bool ShowRoutes { get; set; } = true;
+
+	/// <summary>Whether the mission box and its two margins are drawn.</summary>
+	public bool ShowMissionBox { get; set; } = true;
+
+	/// <summary>Whether the terrain tile each paints-ground structure group repaints is outlined.</summary>
+	public bool ShowBasePads { get; set; } = true;
+
+	/// <summary>
+	/// How the members of a group waiting on an action are shown. The simulation draws none of them
+	/// until the action fires, and most stand at a placeholder point, so by default they are outlined
+	/// rather than drawn.
+	/// </summary>
+	[JsonConverter(typeof(JsonStringEnumConverter<WaitingGroupDisplay>))]
+	public WaitingGroupDisplay WaitingGroups { get; set; } = WaitingGroupDisplay.Outlined;
+
 	/// <summary>
 	/// Where the settings live: <c>%APPDATA%\Herculan\editor-settings.json</c> on Windows, and the
 	/// platform's equivalent user-config directory elsewhere.
@@ -78,5 +98,22 @@ public sealed class EditorSettings {
 	public void CopyFrom(EditorSettings other) {
 		RenderFog = other.RenderFog;
 		ShowGrid = other.ShowGrid;
+		ShowTriggerAreas = other.ShowTriggerAreas;
+		ShowRoutes = other.ShowRoutes;
+		ShowMissionBox = other.ShowMissionBox;
+		ShowBasePads = other.ShowBasePads;
+		WaitingGroups = other.WaitingGroups;
 	}
+}
+
+/// <summary>The three ways <see cref="EditorSettings.WaitingGroups"/> shows a waiting group's members.</summary>
+public enum WaitingGroupDisplay {
+	/// <summary>Drawn like any other object.</summary>
+	Drawn,
+
+	/// <summary>Not drawn, but boxed, labelled and still selectable.</summary>
+	Outlined,
+
+	/// <summary>Neither drawn nor selectable in the viewport; the outliner still lists them.</summary>
+	Hidden
 }

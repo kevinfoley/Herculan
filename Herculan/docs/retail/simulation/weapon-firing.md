@@ -167,7 +167,7 @@ For a fixed-cost weapon the target changes nothing but the cockpit bar. For a ch
 
 ### The charge bar
 
-The row's charge bar is built as a slider over 0..`0x400` and carries the drag flag, and a commit on it would store its position in the gauge (`EnergyWeaponGauge_OnChildClick`, `00440ef0`). No press reaches it: the row's select gadget is registered first and its hit rect is the whole hardpoint row, which contains the bar in every retail `.GAU` ([`../formats/cockpit-input.md`](../formats/cockpit-input.md#where-retail-rects-overlap)). The keys are the only power-level control, and the manual does not mention them.
+The row's charge bar is built as a slider over 0..`0x400` and carries the drag flag, and a commit on it would store its position in the gauge (`EnergyWeaponGauge_OnChildClick`, `00440ef0`). No press reaches it: the row's select gadget is registered first and its hit rect is the whole hardpoint row, which contains the bar in every retail `.GAU` ([`cockpit-input.md`](cockpit-input.md#where-retail-rects-overlap)). The keys are the only power-level control, and the manual does not mention them.
 
 The slider still takes part in a once-a-frame exchange with the mount, `WeaponMount_PushEnergyGaugeState` (`0040f288`), in a direction set by `+0x34`, byte 1 of the mount's `+0x33` flag block ([`weapon-mounts.md`](weapon-mounts.md#elf-and-elf2)):
 

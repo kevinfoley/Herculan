@@ -7,7 +7,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// <see cref="JoystickBindings.CombineForCamera"/>'s turret pitch — what <c>Sim_PollPlayerInput</c> still hands
-/// the machine while the camera has the controls (docs/retail/formats/joystick-input.md#while-the-camera-has-the-controls).
+/// the machine while the camera has the controls (docs/retail/simulation/joystick-input.md#while-the-camera-has-the-controls).
 /// </summary>
 public class JoystickCameraCombineTests {
 	private static readonly JoystickCapabilities StickWithLever = new(Present: true, ButtonCount: 4,

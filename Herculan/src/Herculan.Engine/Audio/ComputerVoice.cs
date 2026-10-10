@@ -5,7 +5,7 @@ namespace Herculan.Engine.Audio;
 
 /// <summary>
 /// The cockpit computer's speaking voice — <c>SYSTEM.STR</c>'s messages, read aloud from the
-/// <c>CVM_nnnn.WAV</c> clips in the voice archive. See docs/retail/formats/cockpit-messages.md, "The
+/// <c>CVM_nnnn.WAV</c> clips in the voice archive. See docs/retail/simulation/cockpit-messages.md, "The
 /// computer's messages".
 ///
 /// <para><b>It is not part of the sound catalog and does not go through
@@ -25,7 +25,7 @@ public sealed class ComputerVoice {
 	/// The voice archive's name for <paramref name="language"/>, without its extension, and the folder its clips live
 	/// in: <c>Voice_ArchiveName</c> (<c>0045ef68</c>) patches the language letter over the last letter of
 	/// <c>simvoice</c>, and <c>Voice_FilePath</c> (<c>0045ef80</c>) puts that name in front of every clip
-	/// (docs/retail/formats/audio.md, "File naming"). There is no English fallback: a v1.10 install copies its language's
+	/// (docs/retail/simulation/audio.md, "File naming"). There is no English fallback: a v1.10 install copies its language's
 	/// archive at every size.
 	/// </summary>
 	public static string VoiceFolder(GameLanguage language) => language switch {

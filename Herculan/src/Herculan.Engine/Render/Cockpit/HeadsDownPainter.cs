@@ -104,7 +104,7 @@ public sealed class HeadsDownPainter {
 	/// <summary>
 	/// The Heads-Down Display's live content, built the way <c>HddDisplay_Ctor</c> (<c>00448cc8</c>) and its two page
 	/// constructors build it — see <see cref="HddLayout"/> for where every rect and frame index comes
-	/// from, and docs/retail/formats/cockpit-views.md for the pan that reaches this view.
+	/// from, and docs/retail/simulation/cockpit-views.md for the pan that reaches this view.
 	///
 	/// <list type="number">
 	/// <item>the screen area, flooded with colour id 19 the way whichever page owns it floods it;</item>
@@ -465,7 +465,7 @@ public sealed class HeadsDownPainter {
 	///
 	/// <para>The rows do not scroll, in the original either: its row offset stays 0 on every path found,
 	/// so a view with more regions than <see cref="HddLayout.DamageRowCount"/> labels its first thirteen
-	/// and the doll still tints the rest — docs/retail/formats/heads-down-display.md#damage-detail--page-1.</para>
+	/// and the doll still tints the rest — docs/retail/simulation/heads-down-display.md#damage-detail--page-1.</para>
 	///
 	/// <para>The paper doll is the subject chassis's own <c>.PDG</c> view for the category — front for structural,
 	/// rear for internal — blitted at the screen rect's top-left plus that view's own origin, which is

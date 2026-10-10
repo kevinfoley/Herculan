@@ -25,7 +25,7 @@ public enum ShellTextAlign {
 /// box, a line-filled box, an image panel, a label and an edit field. The <c>Grid</c> picture is
 /// <see cref="ShellGrid"/>'s.
 /// The screen builders place them and set their colour fields; the derivation and the field offsets
-/// are in docs/retail/shell/screen-layout.md.
+/// are in docs/retail/shell/widgets.md.
 ///
 /// <para><b>Widget-local coordinates run 0 to <c>Width - 1</c>.</b> Every paint here works in the
 /// original's own terms, where the extent it draws against is <c>+0x2d - +0x25</c> — the difference of
@@ -87,7 +87,8 @@ public static class ShellChrome {
 	/// <c>ESButtonFont_Paint</c> (<c>00409b79</c>) without its caption — the box of every <c>Button</c>, the
 	/// disabled readouts among them: <see cref="PaintPanel"/> with the interior filled, then a second
 	/// border one pixel inside the first in the same colour. Its top and bottom run from 2 to <c>W - 2</c>
-	/// and its sides from 2 to <c>H - 2</c>, so it meets the outer border's inset corner pixels.
+	/// and its sides from 2 to <c>H - 2</c>, so it meets the outer border's inset corner pixels. It is the whole
+	/// paint of a name box, whose caption is a single space.
 	/// </summary>
 	public static void PaintButton(ShellSurface surface, ShellRect rect, byte borderColor) {
 		int w = rect.Width - 1;
@@ -100,6 +101,36 @@ public static class ShellChrome {
 		Line(surface, rect, w - 2, h - 1, 2, h - 1, borderColor);
 		Line(surface, rect, 1, h - 2, 1, 2, borderColor);
 		surface.PopClip(clip);
+	}
+
+	/// <summary>
+	/// <c>ESButtonFont_Paint</c> (<c>00409b79</c>) whole — the box (<see cref="PaintButton(ShellSurface, ShellRect, byte)"/>), then the
+	/// caption, the <c>Text</c> child <c>ESButtonFont_Ctor</c> (<c>00409a54</c>) builds at <c>{1, 0, W, H}</c>
+	/// in the button, centred.
+	///
+	/// <para><b>The caption sits on a baseline of the button's choosing, two rows lower while the button is
+	/// pressed.</b> The paint hands <c>ESMessage_Paint</c> (<c>0040b439</c>) a row of its own,
+	/// <c>(cellHeight + H + 1) / 2 - 1</c>, or <c>+ 1</c> while the lit flag <c>+0x45</c> and the enable
+	/// flag <c>+0x49</c> are both set, and the text paint draws one row above what it is handed. That is not
+	/// the row a <c>Text</c> picks for itself (<see cref="PaintText"/>), and for half the heights the two differ
+	/// by one.</para>
+	/// </summary>
+	/// <param name="pressed">
+	/// Whether the button is lit and enabled: <c>WinButton_HandleEvent</c> (<c>004097da</c>) lights an enabled
+	/// button on either button's press and puts it out on the release and on a leave, repainting each time.
+	/// </param>
+	/// <param name="backingColor">The caption's <c>+0xc5</c> while its builder has set <c>+0xc1</c>, as the readouts' builders do; null otherwise.</param>
+	public static void PaintButton(ShellSurface surface, ShellRect rect, byte borderColor, HudFont? font,
+			string? caption, byte captionColor, bool pressed = false, byte? backingColor = null) {
+		PaintButton(surface, rect, borderColor);
+		if (font == null) {
+			return;
+		}
+
+		int h = rect.Height - 1;
+		int row = (font.CellHeight + h + 1) / 2 + (pressed ? 1 : -1);
+		PaintString(surface, new ShellRect(rect.X0 + 1, rect.Y0, rect.X1, rect.Y1), font, caption, ShellTextAlign.Center,
+			captionColor, backingColor, baseline: row - 1);
 	}
 
 	/// <summary>
@@ -263,7 +294,16 @@ public static class ShellChrome {
 	/// than unified, since which one a widget uses is a property of its class.</para>
 	/// </summary>
 	public static void PaintText(ShellSurface surface, ShellRect rect, HudFont? font, string? text,
-			ShellTextAlign align, byte color, byte? backingColor = null) {
+			ShellTextAlign align, byte color, byte? backingColor = null) =>
+		PaintString(surface, rect, font, text, align, color, backingColor, baseline: null);
+
+	/// <summary>
+	/// <c>ESMessage_Paint</c>'s body. Its second argument is <c>-1</c> for a <c>Text</c> painting itself, which
+	/// centres the string by its own rule, and otherwise the row its owner chose, one below the baseline
+	/// drawn (<paramref name="baseline"/>).
+	/// </summary>
+	private static void PaintString(ShellSurface surface, ShellRect rect, HudFont? font, string? text,
+			ShellTextAlign align, byte color, byte? backingColor, int? baseline) {
 		int w = rect.Width - 1;
 		int h = rect.Height - 1;
 		var clip = surface.PushClip(rect);
@@ -275,8 +315,8 @@ public static class ShellChrome {
 		if (font != null && !string.IsNullOrEmpty(text)) {
 			// baseline = H - (H + 1 - cellHeight) / 2 - 2, and the glyph's top row is inkHeight above it
 			// (Font_DrawGlyph (00453fb4) subtracts the font's +0x16, which is the .DFN header's inkHeight field).
-			int baseline = h - (h + 1 - font.CellHeight) / 2 - 2;
-			DrawString(surface, font, text, rect.X0, rect.Y0 + baseline, align, w);
+			int y = baseline ?? h - (h + 1 - font.CellHeight) / 2 - 2;
+			DrawString(surface, font, text, rect.X0, rect.Y0 + y, align, w);
 		}
 
 		surface.Remap(rect.X0, rect.Y0 + 1, rect.X0 + w, rect.Y0 + h - 1, FontInkColor, color);

@@ -10,8 +10,7 @@ namespace HercWorks.Core.Data.File.Dat.Sim;
 ///
 /// <para>Records are variable-length, not a fixed stride: each opens with a <c>.DMG</c> piece record
 /// and a <c>.COL</c> cluster, read by those formats' own readers, and ends in a fixed 48-byte tail —
-/// see <see cref="WeaponMountTemplate"/>. The tail's open fields are kept raw so the file
-/// round-trips byte-exact. Layout: docs/retail/formats/weapons-dat-sim.md.</para>
+/// see <see cref="WeaponMountTemplate"/>. The tail is kept raw so the file round-trips byte-exact. Layout: docs/retail/formats/weapons-dat-sim.md.</para>
 /// </summary>
 public class Weapons {
 	public short Total { get; set; }
@@ -54,9 +53,10 @@ public class Weapons {
 		/// shapes at <c>0x00</c>-<c>0x06</c>, <see cref="InternalMaximum"/> <c>0x08</c>, minimum range
 		/// (int32) <c>0x0a</c>, range (int32) <c>0x0e</c>, AI shot-value penalty <c>0x12</c>, energy
 		/// thresholds <c>0x14</c>/<c>0x16</c>, magazine size <c>0x18</c>, barrel count <c>0x1a</c>,
-		/// <see cref="ProjDatIndex"/> <c>0x1c</c>, muzzle offset <c>0x1e</c>-<c>0x22</c>, side offsets
-		/// <c>0x24</c>/<c>0x28</c>, refire delay <c>0x2a</c>, <see cref="DamageIconIndex"/>
-		/// <c>0x2e</c>. See docs/retail/formats/weapons-dat-sim.md#decoded-tail-fields.
+		/// <see cref="ProjDatIndex"/> <c>0x1c</c>, muzzle offset <c>0x1e</c>-<c>0x22</c>, side muzzle
+		/// offset (three int16) <c>0x24</c>-<c>0x28</c>, refire delay <c>0x2a</c>, combat-rating value
+		/// <c>0x2c</c>, <see cref="DamageIconIndex"/> <c>0x2e</c>. See
+		/// docs/retail/formats/weapons-dat-sim.md#decoded-tail-fields.
 		/// </summary>
 		public byte[] Tail { get; set; } = new byte[0x30];
 

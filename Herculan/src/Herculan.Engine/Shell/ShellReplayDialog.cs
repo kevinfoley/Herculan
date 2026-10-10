@@ -74,9 +74,10 @@ public sealed class ShellReplayDialog {
 	/// Draws the dialog. The picture under it is the shell's own backdrop at the display's origin with no
 	/// border, which is what the renderer already draws beneath the content, so it is left unpainted here.
 	/// The panel keeps a dithered body (<c>+0x59</c> cleared) over it, so the bay shows through at half
-	/// strength; the title and the buttons are as the other dialogs draw theirs.
+	/// strength; the title and the buttons are as the other dialogs draw theirs. <paramref name="lit"/> is the
+	/// widget a press has lit.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		if (!IsOpen) {
 			return;
 		}
@@ -93,10 +94,9 @@ public sealed class ShellReplayDialog {
 			ShellTextAlign.Center, ShellChrome.FontInkColor);
 
 		foreach (var button in Enum.GetValues<ShellReplayButton>()) {
-			var rect = ButtonRect(button);
-			ShellChrome.PaintButton(surface, rect, ButtonBorder);
-			ShellChrome.PaintText(surface, new ShellRect(rect.X0 + 1, rect.Y0, rect.X1, rect.Y1), font,
-				text?.Text(button == ShellReplayButton.Yes ? YesText : NoText), ShellTextAlign.Center, ShellChrome.FontInkColor);
+			ShellChrome.PaintButton(surface, ButtonRect(button), ButtonBorder, font,
+				text?.Text(button == ShellReplayButton.Yes ? YesText : NoText), ShellChrome.FontInkColor,
+				pressed: lit == new ShellWidget(ShellWidgetKind.ReplayButton, (int)button));
 		}
 	}
 

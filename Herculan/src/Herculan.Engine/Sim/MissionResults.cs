@@ -27,15 +27,15 @@ public static class MissionResults {
 		var results = new MemoryStream();
 		var writer = new BinaryWriter(results);
 
-		bool won = world.Objectives.EvaluateObjectives(world, player) == MissionStatus.Complete;
+		bool won = world.Mission.Objectives.EvaluateObjectives(world, player) == MissionStatus.Complete;
 		writer.Write((short)(won ? 1 : 0));
 
 		int award = SimMath.Q10Multiply(SalvageScale, TotalSalvage(world, player))
-			+ world.MissionCounters[World.MissionLoader.SalvageBonusCounter] * SalvageBonusKilograms;
+			+ world.Mission.Counters[World.MissionLoader.SalvageBonusCounter] * SalvageBonusKilograms;
 		writer.Write(award);
 
-		writer.Write((short)world.Salvage.Count);
-		foreach (var (weaponId, condition) in world.Salvage) {
+		writer.Write((short)world.Mission.Salvage.Count);
+		foreach (var (weaponId, condition) in world.Mission.Salvage) {
 			writer.Write(weaponId);
 			writer.Write(condition);
 		}
@@ -46,10 +46,10 @@ public static class MissionResults {
 
 		writer.Flush();
 
-		var counters = new byte[world.MissionCounters.Count * 2];
-		for (int i = 0; i < world.MissionCounters.Count; i++) {
-			counters[i * 2] = (byte)world.MissionCounters[i];
-			counters[i * 2 + 1] = (byte)(world.MissionCounters[i] >> 8);
+		var counters = new byte[world.Mission.Counters.Count * 2];
+		for (int i = 0; i < world.Mission.Counters.Count; i++) {
+			counters[i * 2] = (byte)world.Mission.Counters[i];
+			counters[i * 2 + 1] = (byte)(world.Mission.Counters[i] >> 8);
 		}
 
 		return (results.ToArray(), counters);

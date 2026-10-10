@@ -11,7 +11,7 @@ namespace HercWorks.Core.Data.File.Dts;
 /// TSTexture4Poly, a palette index for TSSolidPoly, a shade-ramp number for TSShadedPoly and
 /// TSGouraudPoly. The flag sits in the high half of the int32 the renderers index with — retail uses
 /// 1024 on front pairs and 5120 (0x14 in that int32's top byte, "do not draw this face") on back
-/// ones. See docs/retail/formats/dts-texture-binding.md, "Poly types and their colour mechanisms".</para>
+/// ones. See docs/retail/rendering/dts-texture-binding.md, "Poly types and their colour mechanisms".</para>
 /// </summary>
 public class TSSurfaceEntry {
 	public short FrontColor { get; set; }

@@ -37,8 +37,9 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> RoundShieldBalance = new("tweak.show_even_shield_balance", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 
 	/// <summary>
-	/// On the MFD, show target distance in meters on the MFD F5 TARGET screen. Retail
-	/// shows distance in engine units on this screen only.
+	/// On the MFD status screen (F1, F5), show a hostile's range as the F4 scanner measures it: metres along the
+	/// ground. Off, each release reads as its own executable does — v1.0 in raw world units, v1.10 in metres of
+	/// the range including height. See <see cref="Cockpit.MfdStatusSubject.Range"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> ShowTargetDistanceInMeters = new("tweak.target_distance_meters", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
 
@@ -93,6 +94,23 @@ public static class TweakSettingDefinitions {
 	/// itself, so they are the same wherever the pod is. See <see cref="Sim.MeteorObject.TweakSoundReach"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> DropPodSoundFromPod = new("tweak.drop_pod_sound_from_pod", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// On the REPAIR screen's damage diagram, the part drawn as each torso shows the other torso's damage and selects
+	/// its row, so the torsos and the legs both read as seen from the front. Retail puts <c>Left Torso</c> on the
+	/// viewer's left and <c>Left Leg</c> on the viewer's right. See <see cref="Shell.ShellRepairDiagrams"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FixRepairDiagramSides = new("tweak.fix_repair_diagram_sides", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+	#endregion
+
+	#region AI
+	/// <summary>
+	/// A Cybrid flyer's speed ignores the player's own throttle setup: it always reads its throttle as a
+	/// rate, so a SKIMMER cruises at 875. Retail tests the player's stick and RAZOR THROTTLE binding for
+	/// every aircraft, and with a throttle lever bound holds every Cybrid flyer at 750. See
+	/// <see cref="Sim.SimWorld.FlightThrottleIsLever"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FlyerIgnoresPlayerThrottle = new("tweak.flyer_ignores_player_throttle", TweakCategory.AI, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -138,6 +156,16 @@ public static class TweakSettingDefinitions {
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> ChargeBarPowerLevel = new("tweak.charge_bar_power_level", TweakCategory.Functional, defaultValue: false, recommendedValue: false);
 
+	/// <summary>
+	/// Shots and lines of sight meet the ground where it is. On a third of the terrain's cells retail
+	/// solves where a ray strikes the ground against a plane that can be metres off it, so a shot's
+	/// impact lands early or late there. Where that puts the point outside the cell, a v1.10 shot or
+	/// line of sight goes on through the ground; a v1.0 shot already stops on the ground there in this
+	/// engine (retail v1.0 stops it at a range read from stale memory), and a v1.0 line of sight is
+	/// unchanged by it. See <see cref="Terrain.ThinRayRules.ExactFarPlane"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FixTerrainHitPoint = new("tweak.fix_terrain_hit_point", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
+
 	#endregion
 
 	/// <summary>Every defined <c>bool</c> tweak setting, keyed by ID for <see cref="TweakSettings"/> save/load.</summary>
@@ -145,6 +173,7 @@ public static class TweakSettingDefinitions {
 		ShowCorrectStats, ShowAccurateSpeed, RoundShieldBalance, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
-		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod,
+		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
+		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle,
 	};
 }

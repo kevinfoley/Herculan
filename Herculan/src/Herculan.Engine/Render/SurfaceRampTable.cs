@@ -16,7 +16,10 @@ namespace Herculan.Engine.Render;
 ///
 /// <para>The shaded chain's alpha channel carries the palette byte itself
 /// (<see cref="SurfaceShading.ShadedByte"/>), which is what a <c>TSShadedPoly</c>'s outline is
-/// tested on — see <see cref="Gl.MeshVertex.OutlineFillRamp"/>. The Gouraud block's alpha is 255.</para>
+/// tested on — see <see cref="Gl.MeshVertex.OutlineFillRamp"/>. The Gouraud block's alpha carries
+/// the ramp entry's palette index (<see cref="SurfaceShading.RampedPaletteIndex"/>), which is what a
+/// <c>TSGouraudPoly</c>'s corners interpolate, and the last row is the palette itself, which the bands
+/// between them are drawn in — see <see cref="PaletteRow"/>.</para>
 /// </summary>
 public sealed class SurfaceRampTable {
 	/// <summary>Light levels across — one column per shade byte.</summary>
@@ -50,20 +53,28 @@ public sealed class SurfaceRampTable {
 	///
 	/// <para><c>TSShadedPoly_Render</c> ends in <c>Raster_ShadeRampRow</c>, so its colour is fogged by
 	/// the same slice offset every other <c>.RMP</c> read is — see <see cref="PaletteRampTable"/>.
-	/// <c>TSGouraudPoly_Render</c> does not call it, and its chain has no <c>.RMP</c> step to add a
-	/// slice to, so the Gouraud block is stored once and those surfaces take the renderer's own fog
-	/// blend instead.</para>
+	/// <c>TSGouraudPoly_Render</c>'s fill writes plain palette indices and reads no slice offset, so
+	/// the Gouraud block is stored once and those surfaces are not fogged
+	/// (docs/retail/rendering/distance-fog-and-sky.md, "The fade").</para>
 	/// </summary>
 	public int DepthSlices { get; }
 
 	/// <summary>
 	/// Rows in the uploaded image: one <see cref="RampCount"/>-row block of the shaded chain per
-	/// depth slice, then one block of the Gouraud chain.
+	/// depth slice, one block of the Gouraud chain, then <see cref="PaletteRow"/>.
 	/// </summary>
-	public int Height => RampCount * (DepthSlices + 1);
+	public int Height => RampCount * (DepthSlices + 1) + 1;
 
 	/// <summary>The first row of the Gouraud block — what the shader adds a ramp number to.</summary>
 	public int GouraudBlockRow => RampCount * DepthSlices;
+
+	/// <summary>
+	/// The row holding the palette straight through, column <c>i</c> being palette index <c>i</c>'s
+	/// colour: what a <c>TSGouraudPoly</c>'s contour bands are drawn in, since each band is a whole
+	/// palette index between its corners' entries rather than a ramp entry
+	/// (<c>Raster_FillContourTriangle</c>, <c>00486ddc</c>).
+	/// </summary>
+	public int PaletteRow => RampCount * (DepthSlices + 1);
 
 	/// <summary>
 	/// Builds the table for a theater, or returns null when <paramref name="shading"/> is absent or
@@ -76,9 +87,10 @@ public sealed class SurfaceRampTable {
 		}
 
 		int slices = shading.Ramp.DepthSlices;
-		int height = RampCount * (slices + 1);
+		int paletteRow = RampCount * (slices + 1);
+		int height = paletteRow + 1;
 		var pixels = new byte[Width * height * 4];
-		for (int row = 0; row < height; row++) {
+		for (int row = 0; row < paletteRow; row++) {
 			// Blocks of RampCount rows: one per depth slice of the shaded chain, then the Gouraud
 			// chain's single block past them all.
 			int block = row / RampCount;
@@ -97,8 +109,19 @@ public sealed class SurfaceRampTable {
 				pixels[at] = color is { } c ? Quantise(c.X) : (byte)128;
 				pixels[at + 1] = color is { } c1 ? Quantise(c1.Y) : (byte)128;
 				pixels[at + 2] = color is { } c2 ? Quantise(c2.Z) : (byte)128;
-				pixels[at + 3] = gouraud ? (byte)255 : shading.ShadedByte(ramp, shade, block) ?? 255;
+				pixels[at + 3] = gouraud
+					? (byte)(shading.RampedPaletteIndex(ramp, shade) ?? 255)
+					: shading.ShadedByte(ramp, shade, block) ?? 255;
 			}
+		}
+
+		for (int index = 0; index < Width; index++) {
+			int at = (paletteRow * Width + index) * 4;
+			var color = shading.PaletteColor(index);
+			pixels[at] = color is { } c ? Quantise(c.X) : (byte)128;
+			pixels[at + 1] = color is { } c1 ? Quantise(c1.Y) : (byte)128;
+			pixels[at + 2] = color is { } c2 ? Quantise(c2.Z) : (byte)128;
+			pixels[at + 3] = 255;
 		}
 
 		return new SurfaceRampTable(pixels, slices);

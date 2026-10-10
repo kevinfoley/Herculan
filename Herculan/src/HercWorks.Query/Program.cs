@@ -27,6 +27,18 @@ internal static class Program {
 		  objectives [<mission>...]        every row #17 objective, of every mission or of those named:
 		                                   mandatory or failure, condition, subject, route, failure
 		                                   text and counter writes
+		  conditions [<mission>...]        every row #1 condition, of every mission or of those named:
+		                                   the test, draw or variant table, its chain, and what it gates
+		  lint [<mission>...]              the mission check over the script.dat each mission's load
+		                                   writes, every campaign flag zero and every roll 0
+		  text <mission>... [--ids LO-HI]  the named missions' .ENG text records in file order, each with
+		                                   its decoded condition; a later record of an id replaces the
+		                                   line when its condition holds
+
+		  census                           every entry of every archive in the install's VOL folder
+		                                   through the HercWorks reader bound to it, written back and
+		                                   compared: per archive and type, how many round-trip, parse,
+		                                   fail or have no reader, then each failure's cursor offset
 
 		  census                           every entry of every archive in the install's VOL folder
 		                                   through the HercWorks reader bound to it, written back and
@@ -43,6 +55,7 @@ internal static class Program {
 		  --route-switch    orders: list only groups with a later order naming a route other than
 		                    slot 0's
 		  --with-point      orders: list only groups with an order that names a row #6 point
+		  --ids LO-HI       text: list only the records whose id is in this range (--ids 200-204)
 		  --json            print the raw result as JSON
 
 		A type is a decimal or 0x-hex index, a name matched whole and then as a prefix, or all
@@ -59,7 +72,7 @@ internal static class Program {
 	}
 
 	internal static int Run(string[] args, TextWriter output) {
-		string? install = null, type = null, against = null;
+		string? install = null, type = null, against = null, ids = null;
 		bool json = false, variants = false, routeSwitch = false, withPoint = false;
 		var positional = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
@@ -72,6 +85,9 @@ internal static class Program {
 					break;
 				case "--against" when i + 1 < args.Length:
 					against = args[++i];
+					break;
+				case "--ids" when i + 1 < args.Length:
+					ids = args[++i];
 					break;
 				case "--json":
 					json = true;
@@ -148,9 +164,54 @@ internal static class Program {
 			return 0;
 		}
 
-		if (command is "actions" or "orders" or "objectives"
+		if (command is "actions" or "orders" or "objectives" or "conditions" or "text" or "lint"
 				&& positional.Skip(1).FirstOrDefault(n => !data.Missions.Any(m => string.Equals(m.Name, n, StringComparison.OrdinalIgnoreCase))) is { } unknown) {
 			return Fail($"No mission is named {unknown}; `missions` lists them.");
+		}
+
+		if (command == "text") {
+			if (positional.Count < 2) {
+				return Fail("text takes one or more mission names.");
+			}
+
+			short lowId = short.MinValue, highId = short.MaxValue;
+			if (ids != null) {
+				var bounds = ids.Split('-');
+				if (bounds.Length != 2 || !short.TryParse(bounds[0], out lowId) || !short.TryParse(bounds[1], out highId)) {
+					return Fail("--ids takes a range, LO-HI.");
+				}
+			}
+
+			var text = TextQuery.Run(data, positional.Skip(1).ToList(), lowId, highId);
+			if (json) {
+				WriteJson(output, text);
+			} else {
+				TextQuery.Write(output, text);
+			}
+
+			return 0;
+		}
+
+		if (command == "lint") {
+			var lint = LintQuery.Run(data, positional.Skip(1).ToList());
+			if (json) {
+				WriteJson(output, lint);
+			} else {
+				LintQuery.Write(output, lint);
+			}
+
+			return 0;
+		}
+
+		if (command == "conditions") {
+			var conditions = ConditionQuery.Run(data, positional.Skip(1).ToList());
+			if (json) {
+				WriteJson(output, conditions);
+			} else {
+				ConditionQuery.Write(output, conditions);
+			}
+
+			return 0;
 		}
 
 		if (command == "orders") {

@@ -13,13 +13,6 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// is docs/retail/simulation/component-damage.md.</para>
 /// </summary>
 public class HercSimDamage {
-	/// <summary>
-	/// Source file name. <see cref="Io.Transform.Dbsim.HercDamageFileTransformer.Write"/> checks it
-	/// to tell a skimmer's .DMG (one internals slot) from a herc's (22), so a caller that wants to
-	/// write must set it. The read path does not populate it.
-	/// </summary>
-	public string? FileName { get; set; }
-
 	public short InternalsTotal { get; set; }
 
 	/// <summary>Each internal's maximum, by internal index.</summary>

@@ -15,7 +15,7 @@ public enum ShellSaveButton {
 
 	/// <summary>
 	/// Starts a rename of the selected slot; ACCEPT is what writes the save. See
-	/// docs/retail/shell/screen-layout.md, "Saving is a rename".
+	/// docs/retail/shell/main-menu.md, "Saving is a rename".
 	/// </summary>
 	Save = 2,
 
@@ -48,7 +48,7 @@ public enum ShellSaveExitTarget {
 /// panel is placed in the canvas, the list and the button column in the panel, and the two inner
 /// buttons in the list. Composing them the same way the widget tree does is what makes each number
 /// checkable against the decompilation instead of a pre-added absolute nobody can trace back. See
-/// docs/retail/shell/screen-layout.md.</para>
+/// docs/retail/shell/main-menu.md.</para>
 ///
 /// <para><b>The screen names itself.</b> Its title, all five button captions, every field label and
 /// the words for skill, rank and sector are <c>estext.bin</c> entries fetched by index, so nothing
@@ -63,7 +63,7 @@ public enum ShellSaveExitTarget {
 /// <para><b>Each row is an edit field</b>, and keeps what the original's does: its string, its caret
 /// enable <c>+0xbf</c> and its blink phase <c>+0xb3</c>. Its focus <c>+0xa7</c> is the pointer's
 /// (<see cref="ShellPointer.Focused"/>). SAVE starts a rename and ACCEPT writes the save; the host runs
-/// <c>Game_SaveSlot</c>. See docs/retail/shell/screen-layout.md#saving-is-a-rename.</para>
+/// <c>Game_SaveSlot</c>. See docs/retail/shell/main-menu.md#saving-is-a-rename.</para>
 /// </summary>
 public sealed class ShellSaveScreen {
 	/// <summary>How many slots the list shows.</summary>
@@ -86,7 +86,7 @@ public sealed class ShellSaveScreen {
 	/// <summary>
 	/// A sixth panel the builder constructs over the summary panel's top two thirds,
 	/// <c>{0x74, 0xcc, 0x15b, 0x136}</c>, which <c>SaveRegistration_BuildPanel</c> (<c>0043b260</c>) fills with a second registration panel
-	/// (docs/retail/shell/screen-layout.md#the-second-registration-panel). It is not painted here: the entry routine
+	/// (docs/retail/shell/main-menu.md#the-second-registration-panel). It is not painted here: the entry routine
 	/// shows the summary panel and hides this one, and what shows it is open.
 	/// </summary>
 	public static readonly ShellRect StubPanelRect = new(0x74, 0xcc, 0x15b, 0x136);
@@ -287,7 +287,7 @@ public sealed class ShellSaveScreen {
 	/// <summary>
 	/// The slot the row at a canvas point belongs to, or null when the point is on no row. Rows overlap by
 	/// their border line, which goes to the lower row because it was built later
-	/// (docs/retail/shell/screen-layout.md#which-widget-a-click-reaches).
+	/// (docs/retail/shell/widgets.md#which-widget-a-click-reaches).
 	/// </summary>
 	public int? RowAt(float canvasX, float canvasY) {
 		for (int slot = RowCount - 1; slot >= 0; slot--) {
@@ -389,9 +389,10 @@ public sealed class ShellSaveScreen {
 	/// Draws the whole screen into <paramref name="surface"/>. The caller clears it first; what this
 	/// leaves untouched is what the shell's backdrop shows through, which the content panel's dithered
 	/// body relies on. <paramref name="focusedRow"/> is the row that has the pointer's focus, whose caret
-	/// shows while its blink phase is on.
+	/// shows while its blink phase is on, and <paramref name="lit"/> the widget a press has lit.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, int? focusedRow = null) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, int? focusedRow = null,
+			ShellWidget? lit = null) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
 		ShellChrome.PaintTitledPanel(surface, PanelRect, PanelBorder, PanelFace, PanelBodyDither,
@@ -410,7 +411,7 @@ public sealed class ShellSaveScreen {
 		}
 
 		foreach (var button in Enum.GetValues<ShellSaveButton>()) {
-			PaintButton(surface, font, text, button);
+			PaintButton(surface, font, text, button, lit);
 		}
 
 		PaintSummary(surface, font, text);
@@ -422,12 +423,11 @@ public sealed class ShellSaveScreen {
 	/// gated button — the border colour, the caption colour and the enable flag itself.
 	/// </summary>
 	private void PaintButton(ShellSurface surface, HudFont? font, ShellText? text,
-			ShellSaveButton button) {
+			ShellSaveButton button, ShellWidget? lit) {
 		bool enabled = IsEnabled(button);
-		var rect = ButtonRect(button);
-		ShellChrome.PaintButton(surface, rect, enabled ? ButtonBorder : DisabledColor);
-		ShellChrome.PaintText(surface, rect, font, text?.Text(CaptionText(button)),
-			ShellTextAlign.Center, enabled ? ShellChrome.FontInkColor : DisabledColor);
+		ShellChrome.PaintButton(surface, ButtonRect(button), enabled ? ButtonBorder : DisabledColor, font,
+			text?.Text(CaptionText(button)), enabled ? ShellChrome.FontInkColor : DisabledColor,
+			pressed: enabled && lit == new ShellWidget(ShellWidgetKind.SaveButton, (int)button));
 	}
 
 	/// <summary>

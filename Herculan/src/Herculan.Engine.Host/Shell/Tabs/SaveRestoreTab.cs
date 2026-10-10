@@ -31,8 +31,8 @@ sealed class SaveRestoreTab {
 
 	public ShellHit? HitAt(float canvasX, float canvasY) => _saveScreen.HitAt(canvasX, canvasY);
 
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, int? focusedRow) =>
-		_saveScreen.Paint(surface, text, sprites, focusedRow);
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, int? focusedRow, ShellWidget? lit) =>
+		_saveScreen.Paint(surface, text, sprites, focusedRow, lit);
 
 	// A save row's handler, SaveScreen_SelectSlot (0043795f). Clicking the row already selected is a
 	// no-op, the same early return the original's selection move opens with, and so is any row while

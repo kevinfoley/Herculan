@@ -17,15 +17,9 @@ public static class KeyChords {
 	// not tested: SimCommandMask strips it from the cockpit's commands.
 	public static bool Unmodified(IKeyState keyboard) => !AltHeld(keyboard) && !CtrlHeld(keyboard);
 
-	// One signed axis from a pair of keys, plus optional aliases for each direction — the arrow cluster
-	// and the numeric keypad are the same key on the hardware the manual is describing, and a host window
-	// sees them as two.
-	public static int Axis(IKeyState keyboard, Key positive, Key negative,
-			Key? positiveAlias = null, Key? negativeAlias = null) {
-		bool up = keyboard.IsKeyPressed(positive) || (positiveAlias is { } p && keyboard.IsKeyPressed(p));
-		bool down = keyboard.IsKeyPressed(negative) || (negativeAlias is { } n && keyboard.IsKeyPressed(n));
-		return (up ? 1 : 0) - (down ? 1 : 0);
-	}
+	// One signed axis from a pair of keys.
+	public static int Axis(IKeyState keyboard, Key positive, Key negative) =>
+		(keyboard.IsKeyPressed(positive) ? 1 : 0) - (keyboard.IsKeyPressed(negative) ? 1 : 0);
 
 	/// <summary>The observer camera's keys: this engine's own fly camera, not anything of the original's.</summary>
 	public static CameraInput FlyCameraInput(IKeyState? keyboard) {

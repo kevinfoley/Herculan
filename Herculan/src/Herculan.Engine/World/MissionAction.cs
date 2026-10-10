@@ -29,11 +29,17 @@ public enum MissionTriggerShape {
 /// The record's literal times ten, for <see cref="MissionTriggerShape.Circle"/> only — the scale
 /// factor is <c>TriggerArea_Resolve</c>'s own, applied once at load rather than per test.
 /// </param>
+/// <param name="Reference">
+/// The block-4 record it was resolved from, or -1 when not built from a file. The simulation never
+/// reads it; tooling uses it to tell apart two actions sharing one area from two areas that
+/// happen to have the same shape.
+/// </param>
 public readonly record struct MissionTriggerArea(
 	MissionTriggerShape Shape,
 	Vec3i A,
 	Vec3i B,
-	int Radius) {
+	int Radius,
+	int Reference = -1) {
 
 	/// <summary>
 	/// <c>TriggerArea_ContainsPoint</c> (<c>004233a4</c>) — whether a position is inside the area.

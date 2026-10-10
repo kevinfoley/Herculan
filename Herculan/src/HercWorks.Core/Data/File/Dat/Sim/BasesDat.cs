@@ -57,7 +57,7 @@ public class BaseTypeRecord {
 	/// <summary>
 	/// +0x28 — the MFD silhouette frame and type-name index: <c>STRINGS0.STR</c> group 23 when
 	/// <see cref="TextureSelector"/> is 0, group 24 when it is not
-	/// (docs/retail/formats/mfd.md#viewport-and-condition-per-class).
+	/// (docs/retail/simulation/mfd.md#viewport-and-condition-per-class).
 	/// </summary>
 	public short SilhouetteIndex { get; set; }
 

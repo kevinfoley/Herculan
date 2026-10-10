@@ -36,22 +36,25 @@ public sealed record ShellCampaignMission(string ScriptPath, string MissionPath,
 /// </summary>
 public static class ShellCampaignLaunch {
 	/// <summary>
-	/// Loads the mission at career position (<paramref name="stage"/>, <paramref name="mission"/>) and writes
-	/// its <c>script.dat</c> and <c>mission.str</c> into <paramref name="directory"/>, or returns null with the
-	/// reason when the install lacks a file the original would open. <paramref name="flags"/> is the career's
+	/// Loads the mission at career position (<paramref name="stage"/>, <paramref name="mission"/>), or
+	/// <paramref name="missionPath"/> in its place, and writes its <c>script.dat</c> and <c>mission.str</c> into
+	/// <paramref name="directory"/>, or returns null with the reason when the install lacks a file the original would
+	/// open. A path in place of the position's is the DEBUG dialog's; the position still seeds the flags and picks
+	/// the theater. <paramref name="flags"/> is the career's
 	/// campaign flag array, which the load seeds and the mission's header patch clears in place;
 	/// <paramref name="clearList"/> is the row-2 clear list the shell keeps across loads;
 	/// <paramref name="skill"/> is the player pilot's skill, the mission's difficulty. <paramref name="roll"/> is
 	/// VSHELL's <c>ShellRandom_Below</c> (<c>004659ec</c>), a draw in <c>[0, n)</c>.
 	/// </summary>
 	public static ShellCampaignMission? Write(string directory, GameContent content, int stage, int mission, short skill,
-			short[] flags, short[] clearList, Func<short, int> roll, out string? failure) {
+			short[] flags, short[] clearList, Func<short, int> roll, out string? failure, string? missionPath = null) {
 		if (ShellTrainingLaunch.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count
-				|| ShellTrainingLaunch.MissionPath(content, stage, mission) is not { } missionPath) {
+				|| (missionPath ?? ShellTrainingLaunch.MissionPath(content, stage, mission)) is not { } path) {
 			failure = $"gam\\career.dat or missions.bin has no stage {stage} mission {mission}.";
 			return null;
 		}
 
+		missionPath = path;
 		if (ShellTrainingLaunch.ReadMission(content, missionPath) is not (byte[] msn, var text)) {
 			failure = $"{missionPath} is not in any mounted archive.";
 			return null;
@@ -86,7 +89,7 @@ public static class ShellCampaignLaunch {
 	/// VSHELL's memory. In a campaign it is <c>Registration_OnAccept</c> (<c>0043c0fb</c>)'s, after
 	/// <c>LoadHercInfDat</c> (<c>0041181c</c>); in training, <c>Begin Mission</c>'s and
 	/// <c>INSTANT ACTION</c>'s, which read no <c>gam\hercs.dat</c> and leave the career position for the
-	/// caller to set. See docs/retail/shell/screen-layout.md#starting-a-campaign and
+	/// caller to set. See docs/retail/shell/main-menu.md#starting-a-campaign and
 	/// docs/retail/shell/campaign-loop.md#starting-a-campaign--game_newcareer-0040e2ed.
 	///
 	/// <para>Each weapon's units are listed in the order <c>gam\weapons.dat</c> gives them, which
@@ -200,7 +203,8 @@ public static class ShellCampaignLaunch {
 
 	/// <summary>
 	/// <c>Career_LoadCurrentMission</c> (<c>0044d4cc</c>)'s campaign load for <paramref name="game"/>'s
-	/// position, which a new career's <c>Use Default</c> click runs: <see cref="Write"/> into
+	/// position, which the DEBUG dialog's <c>Use Default</c> runs, or <c>MissionNameDialog_OnLoad</c>'s
+	/// (<c>0044d5bd</c>) of <paramref name="missionPath"/>: <see cref="Write"/> into
 	/// <paramref name="directory"/> against the career's flags and its player's skill, the flags the load
 	/// seeded and cleared written back, <c>Career_SetBriefing</c> (<c>00412ece</c>) into the career block,
 	/// the squad positions in play set in <paramref name="hangar"/>, and <c>Game_ExportMissionHandoff</c>
@@ -209,14 +213,14 @@ public static class ShellCampaignLaunch {
 	/// docs/retail/shell/campaign-loop.md#loading-the-careers-mission.
 	/// </summary>
 	public static ShellCampaignMission? LoadCareerMission(string directory, GameContent content, PlayerSave game,
-			ShellHangar hangar, short[] clearList, Func<short, int> roll, out string? failure) {
+			ShellHangar hangar, short[] clearList, Func<short, int> roll, out string? failure, string? missionPath = null) {
 		var flags = new short[PlayerSave.CampaignFlagCount];
 		for (int i = 0; i < flags.Length; i++) {
 			flags[i] = game.GetCampaignFlag(i);
 		}
 
 		var loaded = Write(directory, content, game.CampaignStage, game.MissionInStage, game.PlayerPilot?.Skill?.Id ?? 0,
-			flags, clearList, roll, out failure);
+			flags, clearList, roll, out failure, missionPath);
 		if (loaded == null) {
 			return null;
 		}

@@ -4,7 +4,10 @@ using Silk.NET.Input;
 
 namespace Herculan.Engine.Host.Shell;
 
-/// <summary>The shell's edit fields — the save screen's rows and the registration screen's name — and the keys and caret they take.</summary>
+/// <summary>
+/// The shell's edit fields — the save screen's rows and the names of the registration screen and the DEBUG dialog — and
+/// the keys and caret they take.
+/// </summary>
 sealed class EditFields {
 	private readonly FrontEndWindow _window;
 	private readonly ShellAudio _audio;
@@ -13,17 +16,19 @@ sealed class EditFields {
 	private readonly ShellScreen _screen;
 	private readonly ShellSaveScreen _saveScreen;
 	private readonly MainMenuPanels _menu;
+	private readonly ShellMissionNameDialog _missionName;
 	private readonly ShellCanvas _canvas;
 	private readonly WidgetEvents _widgets;
 	private readonly Action _repaint;
 
-	// The edit field that had the focus last update, and when its blink alarm last fired: the alarm is
-	// installed as a field takes the focus.
+	// The edit field that had the focus last update, and its blink alarm, installed as a field takes the
+	// focus and removed as it loses it.
 	private ShellWidget? _caretField;
-	private long _caretClock;
+	private readonly ShellAlarm _caretAlarm = new(Environment.TickCount64);
 
 	public EditFields(FrontEndWindow window, ShellAudio audio, ShellMovies movies, ShellPointer pointer, ShellScreen screen,
-			ShellSaveScreen saveScreen, MainMenuPanels menu, ShellCanvas canvas, WidgetEvents widgets, Action repaint) {
+			ShellSaveScreen saveScreen, MainMenuPanels menu, ShellMissionNameDialog missionName, ShellCanvas canvas,
+			WidgetEvents widgets, Action repaint) {
 		_window = window;
 		_audio = audio;
 		_movies = movies;
@@ -31,6 +36,7 @@ sealed class EditFields {
 		_screen = screen;
 		_saveScreen = saveScreen;
 		_menu = menu;
+		_missionName = missionName;
 		_canvas = canvas;
 		_widgets = widgets;
 		_repaint = repaint;
@@ -41,7 +47,7 @@ sealed class EditFields {
 	/// screen may be one of its rows (ESDialog_HandleEvent, 0040beaf). The row takes a character or a
 	/// command, Enter releases the pointer, and whatever the key, the row's handler then runs, which
 	/// selects it. The registration screen's name field takes keys the same way, its handler regating
-	/// ACCEPT. Nothing else ported here takes a key. A fade or the movie queue drops keys as it drops
+	/// ACCEPT, and so does the DEBUG dialog's, which has none. Nothing else ported here takes a key. A fade or the movie queue drops keys as it drops
 	/// clicks, and a field of the menu bar's windows being typed into takes the key instead.
 	/// </summary>
 	public void DeliverKey(Key key, bool released) {
@@ -50,7 +56,8 @@ sealed class EditFields {
 				|| _window.ImGuiWantsKeyboard
 				|| _pointer.Target?.Widget is not { } row
 				|| !(row.Kind == ShellWidgetKind.SaveRow && _screen.SelectedTab == ShellScreen.SaveTab
-					|| row.Kind == ShellWidgetKind.RegistrationField && _menu.RegistrationUp)
+					|| row.Kind == ShellWidgetKind.RegistrationField && _menu.RegistrationUp
+					|| row.Kind == ShellWidgetKind.MissionNameField && _missionName.IsOpen)
 				|| ShellKeyboard.Index(key) is not { } index) {
 			return;
 		}
@@ -63,9 +70,13 @@ sealed class EditFields {
 		}
 
 		bool focused = _pointer.Focused == row;
-		bool nameField = row.Kind == ShellWidgetKind.RegistrationField;
+		bool nameField = row.Kind != ShellWidgetKind.SaveRow;
 		var font = _canvas.Art.Sprites?.Font(ShellArt.ScreenFont);
-		bool changed = nameField ? _menu.Registration.Key(shellKey, focused, font) : _saveScreen.Key(row.Index, shellKey, focused, font);
+		bool changed = row.Kind switch {
+			ShellWidgetKind.RegistrationField => _menu.Registration.Key(shellKey, focused, font),
+			ShellWidgetKind.MissionNameField => _missionName.Key(shellKey, focused, font),
+			_ => _saveScreen.Key(row.Index, shellKey, focused, font),
+		};
 		if (shellKey.Command == ShellKey.Enter && focused && (nameField || _saveScreen.CaretEnabled(row.Index))) {
 			_pointer.ReleaseFocus();
 			changed = true;
@@ -79,23 +90,30 @@ sealed class EditFields {
 	}
 
 	/// <summary>
-	/// The focused edit field's blink alarm (WinTimer_InstallAlarm, 500 and 500), installed as the field
-	/// takes the focus. A change of focus repaints too, as the field's paint on the press does.
+	/// The focused edit field's blink alarm (ESDialog_HandleEvent, 0040beaf: WinTimer_InstallAlarm, 500 and
+	/// 500), installed as the field takes the focus; one tick per update at most, a late one dropping the
+	/// time it overshot (<see cref="ShellAlarm"/>). A change of focus repaints too, as the field's paint on
+	/// the press does.
 	/// </summary>
 	public void BlinkCaret() {
 		var focused = _pointer.Focused;
-		long now = Environment.TickCount64;
+		bool tick = _caretAlarm.Tick(Environment.TickCount64);
 		if (focused != _caretField) {
 			_caretField = focused;
-			_caretClock = now;
-			if (_screen.SelectedTab == ShellScreen.SaveTab || _menu.RegistrationUp) {
+			if (focused is { Kind: ShellWidgetKind.SaveRow or ShellWidgetKind.RegistrationField or ShellWidgetKind.MissionNameField }) {
+				_caretAlarm.Install(ShellSaveScreen.CaretBlinkMilliseconds, ShellSaveScreen.CaretBlinkMilliseconds);
+			} else {
+				_caretAlarm.Remove();
+			}
+
+			if (_screen.SelectedTab == ShellScreen.SaveTab || _menu.RegistrationUp || _missionName.IsOpen) {
 				_repaint();
 			}
 
 			return;
 		}
 
-		if (now - _caretClock < ShellSaveScreen.CaretBlinkMilliseconds) {
+		if (!tick) {
 			return;
 		}
 
@@ -103,11 +121,12 @@ sealed class EditFields {
 			_saveScreen.CaretTick(row.Index);
 		} else if (focused is { Kind: ShellWidgetKind.RegistrationField } && _menu.RegistrationUp) {
 			_menu.Registration.CaretTick();
+		} else if (focused is { Kind: ShellWidgetKind.MissionNameField } && _missionName.IsOpen) {
+			_missionName.CaretTick();
 		} else {
 			return;
 		}
 
-		_caretClock += ShellSaveScreen.CaretBlinkMilliseconds;
 		_repaint();
 	}
 }

@@ -71,22 +71,29 @@ public sealed record SurfaceShading(ShadeRamp Ramp, DynamixPalette? Palette) {
 			: null;
 
 	/// <summary>
-	/// The colour a <c>TSGouraudPoly</c> surface draws at one light level — <b>the material ramp's
+	/// The colour a <c>TSGouraudPoly</c> corner names at one light level — <b>the material ramp's
 	/// entry straight through the palette, with no <c>.RMP</c> step at all</b>.
 	///
 	/// <para><c>TSGouraudPoly_Render</c> (<c>004755c8</c>) calls <c>Light_ComputeShadeForFace</c> once
-	/// <i>per vertex</i> — walking the poly's <c>NormalList</c> and <c>VertexList</c> in step — and
-	/// lets the span routine interpolate. <b>It never calls <c>Raster_ShadeRampRow</c></b>, where
-	/// <c>TSShadedPoly_Render</c> calls it with the literal <c>0x80</c> before every fill: the ramp
-	/// lookup moves into the span so it can vary per pixel, and the fixed <c>.RMP</c> row is not part
-	/// of this path. The trace and the retail capture that distinguishes the two chains are in
-	/// docs/retail/formats/dts-texture-binding.md's "<c>TSGouraudPoly</c> — same ramp number, per-vertex
+	/// <i>per vertex</i>, and its fill, <c>Raster_FillContourPolygon</c> (<c>004879c0</c>), turns each
+	/// vertex's shade into a ramp entry and fills between the corners' entries in whole-index bands,
+	/// each band a plain palette index. <b>Nothing on that path calls <c>Raster_ShadeRampRow</c></b>,
+	/// where <c>TSShadedPoly_Render</c> calls it with the literal <c>0x80</c> before every fill. The
+	/// trace and the retail capture that distinguishes the two chains are in
+	/// docs/retail/rendering/dts-texture-binding.md's "<c>TSGouraudPoly</c> — same ramp number, per-vertex
 	/// light, no <c>.RMP</c> row".</para>
 	/// </summary>
 	/// <inheritdoc cref="ShadedColor" path="/param"/>
-	public Vector3? GouraudColor(int rampNumber, int shade) {
-		if (RampedPaletteIndex(rampNumber, shade) is not { } index
-				|| Palette == null || !Palette.Colors.TryGetValue(index & 0xff, out var entry)) {
+	public Vector3? GouraudColor(int rampNumber, int shade) =>
+		RampedPaletteIndex(rampNumber, shade) is { } index ? PaletteColor(index) : null;
+
+	/// <summary>
+	/// A palette index's own colour, or null when the palette has no entry for it — what a band of a
+	/// <c>TSGouraudPoly</c>'s fill draws: the fill steps through every whole palette index between its
+	/// corners' entries, whether or not the ramp holds it.
+	/// </summary>
+	public Vector3? PaletteColor(int index) {
+		if (Palette == null || !Palette.Colors.TryGetValue(index & 0xff, out var entry)) {
 			return null;
 		}
 

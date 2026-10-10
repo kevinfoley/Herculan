@@ -138,22 +138,22 @@ sealed class HangarTabs {
 	};
 
 	/// <summary>Paints the tab's screen; returns false for a tab with no screen to paint.</summary>
-	public bool Paint(int tab, ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	public bool Paint(int tab, ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		switch (tab) {
 			case ShellScreen.RepairTab:
-				_repairScreen.Paint(surface, text, sprites);
+				_repairScreen.Paint(surface, text, sprites, lit);
 				return true;
 			case ShellScreen.BuildTab when _buildScreen != null:
-				_buildScreen.Paint(surface, text, sprites);
+				_buildScreen.Paint(surface, text, sprites, lit);
 				return true;
 			case ShellScreen.WeaponsTab when _weaponsScreen != null:
-				_weaponsScreen.Paint(surface, text, sprites);
+				_weaponsScreen.Paint(surface, text, sprites, lit);
 				return true;
 			case ShellScreen.CrewTab when _crewScreen != null:
-				_crewScreen.Paint(surface, text, sprites);
+				_crewScreen.Paint(surface, text, sprites, lit);
 				return true;
 			case ShellScreen.ArmoryTab when _armoryScreen != null:
-				_armoryScreen.Paint(surface, text, sprites);
+				_armoryScreen.Paint(surface, text, sprites, lit);
 				return true;
 			default:
 				return false;

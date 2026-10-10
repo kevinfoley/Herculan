@@ -79,8 +79,8 @@ public sealed partial class WeaponMount {
 		var offset = MountPointOffset;
 		var muzzle = bone.TransformPoint(offset.X, offset.Y, offset.Z);
 
-		world.SpawnDebrisPiece(DebrisShapeLibraryName, thrownShape,
-			world.DebrisShapeRadius(DebrisShapeLibraryName, thrownShape),
+		world.Effects.SpawnDebrisPiece(DebrisShapeLibraryName, thrownShape,
+			world.Effects.DebrisShapeRadius(DebrisShapeLibraryName, thrownShape),
 			muzzle, bone.ToEuler(),
 			SimTrig.EulerToward(muzzle, owner.AimPoint).Z, _hardpoint.DebrisPitch, DebrisMass,
 			rolled ? (short)-1 : ComponentDamage.DefaultDebrisGroup,

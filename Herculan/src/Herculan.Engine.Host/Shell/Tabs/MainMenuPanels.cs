@@ -107,15 +107,15 @@ sealed class MainMenuPanels {
 		return RegistrationUp ? _registration.HitAt(canvasX, canvasY) : _mainMenu.HitAt(canvasX, canvasY);
 	}
 
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, bool registrationFocused) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, bool registrationFocused, ShellWidget? lit) {
 		if (_practiceUp) {
-			_practiceScreen!.Paint(surface, text, sprites);
+			_practiceScreen!.Paint(surface, text, sprites, lit);
 		} else if (PreferencesUp) {
-			_preferencesScreen!.Paint(surface, text, sprites);
+			_preferencesScreen!.Paint(surface, text, sprites, lit);
 		} else if (RegistrationUp) {
-			_registration.Paint(surface, text, sprites, focused: registrationFocused);
+			_registration.Paint(surface, text, sprites, focused: registrationFocused, lit);
 		} else {
-			_mainMenu.Paint(surface, text, sprites);
+			_mainMenu.Paint(surface, text, sprites, lit);
 		}
 	}
 
@@ -272,7 +272,7 @@ sealed class MainMenuPanels {
 
 	// QUIT, 00431727: blank the screen (Shell_BlankScreen, 0040723d) and end the main loop, with no prompt
 	// and no exit code of its own, so the shell returns the 0 its startup left and the launcher stops
-	// (docs/retail/shell/screen-layout.md#quit). The loop's common exit autosaves after the window's run returns.
+	// (docs/retail/shell/main-menu.md#quit). The loop's common exit autosaves after the window's run returns.
 	private void Quit() {
 		_outcome.Blanked = true;
 		_window.Close();

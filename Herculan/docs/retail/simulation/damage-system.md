@@ -148,7 +148,7 @@ if (ShieldPod)
 
 `podDamage` is `Component_ReadDamagePercent(mech+0x206, pod.GL[+0x17] + 19)` — the pod's own hardpoint component, like any other mount's, so it is shooting the hardpoint a pod sits on that degrades it.
 
-The pod's share is a fraction of the *undamaged* base, so a battered machine still gets the full pod bonus. `podCurve` is the damage curve every pod bonus shares, owned by [equipment-pods.md](equipment-pods.md#the-damage-curve-both-bonuses-share).
+The pod's share is a fraction of the *undamaged* base, so a battered machine still gets the full pod bonus. `podCurve` is the damage curve every pod bonus shares, owned by [equipment-pods.md](equipment-pods.md#the-damage-curve-the-pod-bonuses-share).
 
 **Getter:** `Mech_GetShieldByHeading` (`004154d0`, mech vtable `+0x34`) — given a heading angle, returns `+0x222` within ±90° of front, else `+0x224`.
 
@@ -175,12 +175,12 @@ return request - granted
 
 `Player_PerFrameCockpitUpdate` (`0041b130`, run per frame for `LocalPlayerMech`) calls `Shield_BalanceInputRead` (`00413bc8`) unconditionally. That function:
 
-- copies the gauge's 15-byte state block (`ShieldsGauge_GetStateBlock`, UI slot `+0x1e9`), and if either click flag is set calls `Shield_BalanceAdjust`, clearing the flag (once per press) — the click and key path that sets the flags is [`cockpit-input.md`](../formats/cockpit-input.md#8-worked-example-the-shield-balance-rocker);
-- writes back `(front << 10) / baseMax`, `(rear << 10) / baseMax` and the raw balance, which the gauge paints ([`cockpit-hud-widgets.md`](../formats/cockpit-hud-widgets.md#shieldsgauge)).
+- copies the gauge's 15-byte state block (`ShieldsGauge_GetStateBlock`, UI slot `+0x1e9`), and if either click flag is set calls `Shield_BalanceAdjust`, clearing the flag (once per press) — the click and key path that sets the flags is [`cockpit-input.md`](cockpit-input.md#8-worked-example-the-shield-balance-rocker);
+- writes back `(front << 10) / baseMax`, `(rear << 10) / baseMax` and the raw balance, which the gauge paints ([`cockpit-hud-widgets.md`](cockpit-hud-widgets.md#shieldsgauge)).
 
-`Shield_BalanceAdjust` (`00413af8`) adds `±0x66` (102) to `+0x226`, clamped to `[0, 0x400]`. That is just short of a tenth of the range: five presses from the centre of `0x200` reach 1022 forward or 2 rear, and only the sixth, which the clamp stops, puts the whole array on one facing. At 2 the front still holds `Q10(2, max)` — 6 of a 3500 array — while the readout already prints 0 ([`cockpit-hud-widgets.md`](../formats/cockpit-hud-widgets.md#readouts--shieldsgauge_updatereadouts-00444a68)). The manual binds `[` to rear and `]` to forward; direction 1 is the `+0x66` case, and balance is the front's share. Nothing is spent moving the balance.
+`Shield_BalanceAdjust` (`00413af8`) adds `±0x66` (102) to `+0x226`, clamped to `[0, 0x400]`. That is just short of a tenth of the range: five presses from the centre of `0x200` reach 1022 forward or 2 rear, and only the sixth, which the clamp stops, puts the whole array on one facing. At 2 the front still holds `Q10(2, max)` — 6 of a 3500 array — while the readout already prints 0 ([`cockpit-hud-widgets.md`](cockpit-hud-widgets.md#readouts--shieldsgauge_updatereadouts-00444a68)). The manual binds `[` to rear and `]` to forward; direction 1 is the `+0x66` case, and balance is the front's share. Nothing is spent moving the balance.
 
-The gauge paints charge as rings and balance as numbers, in two different places — [`cockpit-hud-widgets.md`](../formats/cockpit-hud-widgets.md#shieldsgauge).
+The gauge paints charge as rings and balance as numbers, in two different places — [`cockpit-hud-widgets.md`](cockpit-hud-widgets.md#shieldsgauge).
 
 Shield recharge is a background trickle on every mech, AI and player alike. Balance adjustment is player input layered on top, touching only the balance field, which the recharge tick reads back on the next tick. The two never call each other.
 

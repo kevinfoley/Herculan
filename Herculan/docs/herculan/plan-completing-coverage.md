@@ -47,7 +47,7 @@ These hold for every function, field and global named under this plan, and equal
 
 The dumps under `tools/analysis_out/` lag the database whenever another task has applied names or created functions; regenerate them with `tools/scripts/ghidra_full_decomp.py` at the start of each stage and after any batch that creates functions (it writes all five dumps, the disassembly included, and skips any dump taken from the current database version; a full run takes several minutes). The tools each stage leans on:
 
-- **`es2_naming.py stats BIN`** prints the coverage table above; `--list` adds every prologue outside a function and every code-section gap that is not all fill bytes.
+- **`es2_naming.py stats BIN`** prints the coverage table above; `--list` adds every prologue outside a function and every code-section gap that is not all fill bytes. A function's extent runs from its entry to the end of its body's last address range in the function list, so an inline jump table, or code no flow reaches, between two of the body's ranges is inside the function rather than a gap.
 - **`es2_naming.py classes BIN`** lists every class record with its size, bases and subobject offsets, primary vtable, `+0x28` destructor and `+0x14` operator delete, beside their `known_symbols` names; `--unnamed` keeps the records whose destructor is unnamed. Stage 2 generates skeletons from it.
 - **`es2_naming.py apply BIN --define a+b+...`** runs `ES2DefineFunctionAt` on the listed addresses before `ES2ApplySymbolNames`, in one headless session. With no list it defines every named `known_symbols` function that has no Ghidra function, and reports any that falls inside another function's extent.
 - **`es2_naming.py body -d`** disassembles with capstone where Ghidra has no function, up to the next function entry.
@@ -103,10 +103,5 @@ Behaviour changes made by naming passes, waiting on a look in the running engine
 
 ## Open
 
-- **Open:** what `SimObject_TickNoOp`'s return value of 1 means to the callers of the `+0x14` tick slot.
-- **Open:** the roles of `TexPoly_Slot28NoOp` (`TexPoly` `+0x28`) and `CTLWindow_Slot00NoOp` (`CTLWindow` `+0x00`), each named for its empty body only.
-- **Open:** what the flag `HddDamageScreen_Repaint` (0) and `HddDamageScreen_Tick` (1) pass to `HddDamageScreen_Update` selects.
-- **Open:** [`command-line.md`](../retail/command-line.md)'s account of VSHELL's `Shell_BuildSimArgv` (`0042f2e8`) leaves out most of its conditions: the gate on `ShellSwitch_L` and the exit code, the `Display_ReleaseDirectDraw` (`00407011`) call, and the conditions on `-Z`, `-s` and `-F`/`-G`.
-- **Open:** VSHELL's `Poly_ClipToHalfPlane` (`004300c7`) switches through a jump table Ghidra has not recovered (byte index at `004301da`, dword targets at `004301ed`); its case bodies, `00430209`-`00430346`, are undisassembled, so its decompile shows none of the clipping cases. Repair the table before relying on the decompile.
-- **Open:** VSHELL functions whose Ghidra extent ends before their code does: `Driver3_BlitClipped` (`00459d5c`) and `Driver3_GrabClipped` (`0045a01e`) each leave a 16-byte tail outside; `GLDisplay_SetAttribute` (`00452e98`) stops before its slot-32 case at `00452f67`; `Poly_ScanConvertToSpanRegion` (`00456000`) stops at `004566c8`, before 3228 bytes of its unrolled store code; `Poly_ScanConvert` (`00465e0a`) leaves its unrolled stepper, `00466494`-`004675d3`, outside. Extend each over its tail.
-- **Unported:** VSHELL's command-key ring. `Keyboard_OnCommandKey` (`00408f3e`), the key-listener callback, queues each command key through `Keyboard_QueueCommand` (`00408ee1`) into a 10-entry ring that drops its oldest entry when full; `ShellKeyboard` handles each key as it arrives, which differs only when ten or more command keys arrive within one frame.
+- **Deferred:** the roles of `TexPoly_Slot28NoOp` (`TexPoly` `+0x28`) and `CTLWindow_Slot00NoOp` (`CTLWindow` `+0x00`), each named for its empty body only.
+- **Deferred:** VSHELL's command-key ring. `Keyboard_OnCommandKey` (`00408f3e`), the key-listener callback, queues each command key through `Keyboard_QueueCommand` (`00408ee1`) into a 10-entry ring that drops its oldest entry when full; `ShellKeyboard` handles each key as it arrives, which differs only when ten or more command keys arrive within one frame.

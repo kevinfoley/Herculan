@@ -5,7 +5,7 @@ namespace HercWorks.Core.Data.File.Dts.Anim;
 
 /// <summary>
 /// One keyframe of an <see cref="ANAnimList"/>'s transform pool: three euler angles, then a
-/// translation. See docs/retail/formats/dts-node-posing.md, "Keyframe interpolation".
+/// translation. See docs/retail/rendering/dts-node-posing.md, "Keyframe interpolation".
 /// </summary>
 public class ANAnimListTransform {
 	public Vec3Short? Rotation { get; set; }

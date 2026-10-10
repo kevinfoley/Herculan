@@ -15,7 +15,7 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// <c>Raster_ShadeRampRow</c> (<c>00468054</c>), whose whole body is the address arithmetic
 /// <c>row = ((shade * (shadeLevels - 1) + depthBias) &amp; ~0xFF) + rampBase</c>, with
 /// <c>depthBias</c> a whole number of 8192-byte depth slices set from the drawn object's range.
-/// That is the original's distance fog. See docs/retail/formats/distance-fog-and-sky.md.</para>
+/// That is the original's distance fog. See docs/retail/rendering/distance-fog-and-sky.md.</para>
 ///
 /// <para>The body's 256-byte period over 384 rows is the row length and 12 slices x 32 shades — a
 /// shade table, not a 256 x 384 heightmap.</para>

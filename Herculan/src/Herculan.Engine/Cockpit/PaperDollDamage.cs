@@ -14,7 +14,7 @@ namespace Herculan.Engine.Cockpit;
 /// at a time and rewrites only the pixels that still hold the first. That is why a doll recolours
 /// limb by limb without disturbing the outlines drawn over it — see
 /// <c>Render.Cockpit.PaperDollPainter.AddPaperDollTint</c> for the engine's copy of that walk, and
-/// docs/retail/formats/mfd.md for the region record itself.</para>
+/// docs/retail/simulation/mfd.md for the region record itself.</para>
 ///
 /// <para>Both the key and the tint arrive as <see cref="HudColorTable"/> ids. The key is authored in
 /// the <c>.PDG</c> and resolved to a palette index at load (<c>PaperDoll_Load</c>, <c>004379cc</c>);

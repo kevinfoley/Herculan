@@ -18,13 +18,13 @@ namespace Herculan.Engine.Scene;
 /// player is hit — rebuilding two lookup tables and a sky at that moment would stutter.</para>
 /// </summary>
 /// <param name="ShadeRamps">
-/// <see cref="MissionScene.ShadeRamps"/>' counterpart: every untextured lit surface's colour.
+/// <see cref="MissionModels.ShadeRamps"/>' counterpart: every untextured lit surface's colour.
 /// </param>
 /// <param name="PaletteRamp">
-/// <see cref="MissionScene.PaletteRamp"/>'s counterpart: every textured surface's, terrain included.
+/// <see cref="MissionModels.PaletteRamp"/>'s counterpart: every textured surface's, terrain included.
 /// </param>
 /// <param name="Atmosphere">
-/// <see cref="MissionScene.Atmosphere"/>'s counterpart — the same distances, the impact palette's
+/// <see cref="MissionModels.Atmosphere"/>'s counterpart — the same distances, the impact palette's
 /// sky bands and fog colour. Distant terrain and the sky are most of the screen in an open zone, so
 /// leaving these out would flash everything except the backdrop.
 /// </param>

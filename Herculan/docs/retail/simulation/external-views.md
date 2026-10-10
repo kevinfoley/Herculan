@@ -1,6 +1,6 @@
 # External views (DBSIM.EXE)
 
-The views from outside the cockpit: the outside view [V] opens, the joystick's OUTSIDE VIEW and CHASE VIEW, the free camera only the developer keys reach, the camera that takes over when the player's machine is destroyed, and the camera object every view — the cockpit's included — is drawn from. The keys are listed in [`../key-bindings.md`](../key-bindings.md#displays-and-views); the joystick actions' dispatch is [`../formats/joystick-input.md`](../formats/joystick-input.md#the-buttons); the cockpit view manager whose view 4 these all live in is [`../formats/cockpit-views.md`](../formats/cockpit-views.md#views).
+The views from outside the cockpit: the outside view [V] opens, the joystick's OUTSIDE VIEW and CHASE VIEW, the free camera only the developer keys reach, the camera that takes over when the player's machine is destroyed, and the camera object every view — the cockpit's included — is drawn from. The keys are listed in [`../key-bindings.md`](../key-bindings.md#displays-and-views); the joystick actions' dispatch is [`joystick-input.md`](joystick-input.md#the-buttons); the cockpit view manager whose view 4 these all live in is [`cockpit-views.md`](cockpit-views.md#views).
 
 The manual's own description ("COCKPIT CONTROLS: External Views") agrees with all of it: [V] out and [V] or [Esc] back, pan with the stick or arrows, zoom with the fire button or [Space] held, [Enter] to swap between viewpoint and HERC control, [N] for the other HERCs in the squad, which can be rotated and zoomed but not controlled.
 
@@ -32,7 +32,7 @@ Every command that changes view sets `ViewChain_PendingView` and queues a cockpi
 
 ### Moving between views — `ViewChain_Apply`
 
-`ViewChain_Apply` (`0045de14`) is called once a tick from `Sim_MainTick`, after `Sim_PollPlayerInput`. It acts only while the cockpit view manager's step flag `+0x1c` is up, which `CockpitView_ProcessViewCommand` raises when it takes a queued command and `CockpitView_StepViewTransition` lowers when it finishes it one frame later ([`../formats/cockpit-views.md`](../formats/cockpit-views.md#heads-down-pan--cockpitview_stepviewtransition-0042a9c0)). So a view changes on the frame after its key, and the camera and the manager change on the same frame. If `ViewChain_PendingView` differs from `ViewChain_View` it copies it over and:
+`ViewChain_Apply` (`0045de14`) is called once a tick from `Sim_MainTick`, after `Sim_PollPlayerInput`. It acts only while the cockpit view manager's step flag `+0x1c` is up, which `CockpitView_ProcessViewCommand` raises when it takes a queued command and `CockpitView_StepViewTransition` lowers when it finishes it one frame later ([`cockpit-views.md`](cockpit-views.md#heads-down-pan--cockpitview_stepviewtransition-0042a9c0)). So a view changes on the frame after its key, and the camera and the manager change on the same frame. If `ViewChain_PendingView` differs from `ViewChain_View` it copies it over and:
 
 | To | Views | Camera mode | Controls to the camera (`InputDrivesCamera`, `004d2574`) |
 |---|---|---|---|
@@ -137,7 +137,7 @@ The eye `+0x3e` through the object's vtable `+0x24` node composed with its frame
 
 Each "→" is `Math_RateLimitedMoveToward`: the rate moves towards the target by at most the step each frame. Nothing is scaled by the frame's length, so the camera turns at a rate per frame.
 
-The steering and throttle axes are the stick's and keyboard's, re-pointed at the camera by the input build, which leaves the machine none of them: [While the camera has the controls](../formats/joystick-input.md#while-the-camera-has-the-controls).
+The steering and throttle axes are the stick's and keyboard's, re-pointed at the camera by the input build, which leaves the machine none of them: [While the camera has the controls](joystick-input.md#while-the-camera-has-the-controls).
 
 ## One camera per squadmate — `ViewChain_ViewObject`
 
@@ -160,7 +160,7 @@ A dword whose image value is 0. `es2_xref.py` finds seven accesses to it over th
 
 ## What the external view shows
 
-Entering view 4 (`CockpitView_ApplyViewState`, `00429e60`) installs the default 3D rect `CockpitViewManager_Ctor` (`00429660`) made — columns 0-319 and rows 0-194 at 320x240, doubled in the 640-wide modes, with the projection centre 160 across and 90 down — and turns the cockpit's widgets off (`+0x20f`). `View_FillOutside3dRect` (`0042da08`) floods everything outside the rect with colour 19. No cockpit, gunsight, MFD or heads-down display is drawn ([`../formats/cockpit-hud-widgets.md`](../formats/cockpit-hud-widgets.md#when-each-display-ticks)).
+Entering view 4 (`CockpitView_ApplyViewState`, `00429e60`) installs the default 3D rect `CockpitViewManager_Ctor` (`00429660`) made — columns 0-319 and rows 0-194 at 320x240, doubled in the 640-wide modes, with the projection centre 160 across and 90 down — and turns the cockpit's widgets off (`+0x20f`). `View_FillOutside3dRect` (`0042da08`) floods everything outside the rect with colour 19. No cockpit, gunsight, MFD or heads-down display is drawn ([`cockpit-hud-widgets.md`](cockpit-hud-widgets.md#when-each-display-ticks)).
 
 With the widgets off, `CockpitWidgets_HandleCommand` answers nothing, so every key it owns goes dead: the weapon-row numbers, [F1]-[F11], [Enter] and [;], [Tab], [R], the `Alt` order letters and [Alt+D]. [Enter], [Tab] and [Esc] fall through to the dispatcher's own cases above. The dispatcher's own cases — ['], [T], [Q], [P], [F12] — work as in the cockpit, and so do the joystick actions that call their handlers directly; HDD VIEW and COCKPIT VIEW, which go through the widgets, do nothing.
 
@@ -203,4 +203,4 @@ Through the [orbit](#mode-1-the-orbit) and [`Cam_Steer`](#steering-the-camera--c
 
 ## Open
 
-- **Open:** what sets the spectator flag `DAT_0049ef5c` ([above](#the-spectator-flag--dat_0049ef5c)). The whole-PE sweep finds no store to it, so retail appears to run with it clear and every branch in the table unreachable; the sweep is a null result, not proof.
+- **Deferred:** what sets the spectator flag `DAT_0049ef5c` ([above](#the-spectator-flag--dat_0049ef5c)). The whole-PE sweep finds no store to it, so retail appears to run with it clear and every branch in the table unreachable; the sweep is a null result, not proof.

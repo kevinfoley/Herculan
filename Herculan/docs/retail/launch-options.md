@@ -70,14 +70,14 @@ Any `-e…` other than `-eggplant` is recognised too; see [Open](#open).
 | `-Z0` or `-Z` | In a window. |
 | `-b` | Switches to an older way of putting frames on screen that this version of the game never finished. Once a mission starts the picture stops updating; see [Open](#open). Do not use. |
 
-Without `-v` or `-Z` the simulator uses the settings saved from its preferences panel. The saved setting can only choose between the `-v0` and `-v2` looks; `-v1` is reachable only from the command line. See [`simulation/preferences.md`](simulation/preferences.md#the-video-mode-and-full-screen-bytes) and [`formats/cockpit-views.md`](formats/cockpit-views.md#video-modes).
+Without `-v` or `-Z` the simulator uses the settings saved from its preferences panel. The saved setting can only choose between the `-v0` and `-v2` looks; `-v1` is reachable only from the command line. See [`simulation/preferences.md`](simulation/preferences.md#the-video-mode-and-full-screen-bytes) and [`simulation/cockpit-views.md`](simulation/cockpit-views.md#video-modes).
 
 ### Sound, music and language
 
 | Option | What it does |
 |---|---|
 | `-s` | Starts without sound. |
-| `-R<n>` | Chooses the CD music track for the mission. The track played is the remainder of *n* ÷ 5, plus 2: `-R0` plays track 2 (the default), `-R1` track 3, up to `-R4` for track 6. The launcher counts up through these one mission at a time. See [`formats/audio.md`](formats/audio.md#which-track-and-whether-there-is-one). |
+| `-R<n>` | Chooses the CD music track for the mission. The track played is the remainder of *n* ÷ 5, plus 2: `-R0` plays track 2 (the default), `-R1` track 3, up to `-R4` for track 6. The launcher counts up through these one mission at a time. See [`simulation/audio.md`](simulation/audio.md#which-track-and-whether-there-is-one). |
 | `-F` | French text and speech. Version 1.0 has French text only for its pop-up panels, and no French speech. |
 | `-G` | German text and speech. Version 1.0 has German text only for its pop-up panels, and no German speech. |
 | `-E` | Spanish. Both versions carry some Spanish text but no Spanish speech. |
@@ -87,13 +87,13 @@ Without `-v` or `-Z` the simulator uses the settings saved from its preferences 
 | Option | What it does |
 |---|---|
 | `-C<HERC>` | Shows the named HERC's cockpit whatever HERC is being piloted, e.g. `-CRAZOR`. Letter case does not matter. Recognised names: `ROADRUNNER`, `OUTLAW`, `RAPTOR2`, `TOMAHAWK`, `PATRIOT`, `PANTHER`, `SAMSON`, `COLOSSUS`, `APOCA`, `RAZOR`, `MAVERICK`, `OGRE`, `TEST3`; any other name is ignored. Only nine of those HERCs have cockpit artwork on the disc; see [Open](#open). |
-| `-t<n>` | Puts pilot number *n* from the game's pilot list in the first squad message box on the heads-down display, in place of its usual pilot. See [`formats/heads-down-display.md`](formats/heads-down-display.md#squad-comm-boxes). |
+| `-t<n>` | Puts pilot number *n* from the game's pilot list in the first squad message box on the heads-down display, in place of its usual pilot. See [`simulation/heads-down-display.md`](simulation/heads-down-display.md#squad-comm-boxes). |
 
 ### Memory
 
 | Option | What it does |
 |---|---|
-| `-l` | Low-memory mode, for machines with little RAM. Cockpit artwork is loaded only when it is needed, sound gets half the usual memory, and the ground under bases is left unpainted. The simulator switches this on by itself on a machine with less than 12 MB. See [`formats/audio.md`](formats/audio.md#memory-budget-and-eviction) and [`formats/terrain-texturing.md`](formats/terrain-texturing.md#base-formation-pads). |
+| `-l` | Low-memory mode, for machines with little RAM. Cockpit artwork is loaded only when it is needed, sound gets half the usual memory, and the ground under bases is left unpainted. The simulator switches this on by itself on a machine with less than 12 MB. See [`simulation/audio.md`](simulation/audio.md#memory-budget-and-eviction) and [`rendering/terrain-texturing.md`](rendering/terrain-texturing.md#base-formation-pads). |
 
 ### Recording and playback
 
@@ -123,9 +123,9 @@ Turns on a set of keys the programmers used for testing: freezing the simulation
 
 ## Open
 
-- **Open:** whether the simulator's `-T<n>`, `-V<n>`, `-W<n>`, `-a` and `-c` do anything; see [`command-line.md`](command-line.md#open).
-- **Open:** what the front end's non-`eggplant` `-e…` options do.
-- **Open:** what `-C` does with the four names that have no cockpit artwork, and what `-E` does without Spanish speech files.
-- **Open:** where the front end's `-v` and `-?` text appears; it is written to standard output, which a Windows program normally does not have.
-- **Open:** whether anything in the simulator runs the `-d` checkpoints; see [`formats/tap-input-tape.md`](formats/tap-input-tape.md#open).
-- **Open:** `-b` has not been tried against retail; the expected behaviour on each Windows family is in [`formats/cockpit-views.md`](formats/cockpit-views.md#open).
+- **Deferred:** whether the simulator's `-T<n>`, `-V<n>`, `-W<n>`, `-a` and `-c` do anything; see [`command-line.md`](command-line.md#open).
+- **Deferred:** what the front end's non-`eggplant` `-e…` options do.
+- **Deferred:** what `-C` does with the four names that have no cockpit artwork, and what `-E` does without Spanish speech files.
+- **Deferred:** where the front end's `-v` and `-?` text appears; it is written to standard output, which a Windows program normally does not have.
+- **Deferred:** whether anything in the simulator runs the `-d` checkpoints; see [`formats/tap-input-tape.md`](formats/tap-input-tape.md#open).
+- **Deferred:** `-b` has not been tried against retail; the expected behaviour on each Windows family is in [`simulation/cockpit-views.md`](simulation/cockpit-views.md#open).

@@ -131,7 +131,7 @@ public class DifficultyTests {
 		var world = WorldWith(attacker, difficulty);
 
 		var shot = OwnedShot(attacker, damageArmor: 100, damageShield: 40);
-		world.Raycast(shot);
+		HitTests.Raycast(world, shot);
 
 		Assert.Equal((short)SimMath.Q10Multiply(scale, 100), shot.DamageArmor);
 		Assert.Equal((short)SimMath.Q10Multiply(scale, 40), shot.DamageShield);
@@ -144,7 +144,7 @@ public class DifficultyTests {
 		var world = WorldWith(attacker, difficulty: 2);
 
 		var shot = OwnedShot(attacker, damageArmor: 100, damageShield: 100);
-		world.Raycast(shot);
+		HitTests.Raycast(world, shot);
 
 		Assert.Equal((short)SimMath.Q10Multiply(800, 100), shot.DamageArmor);
 	}
@@ -158,7 +158,7 @@ public class DifficultyTests {
 		var world = WorldWith(null, difficulty: 0);
 		var shot = new WeaponShot(Transform3.Identity, 5000, Round(), power: 0, owner: null);
 
-		world.Raycast(shot);
+		HitTests.Raycast(world, shot);
 
 		Assert.Equal(Round().DamageArmor, shot.DamageArmor);
 		Assert.Equal(Round().DamageShield, shot.DamageShield);
@@ -176,7 +176,7 @@ public class DifficultyTests {
 
 		var shot = OwnedShot(attacker, damageArmor: 100, damageShield: 100);
 		shot.StashDamage();
-		world.Raycast(shot);
+		HitTests.Raycast(world, shot);
 
 		Assert.Equal(0, shot.DamageArmor);
 		Assert.Equal(0, shot.DamageShield);
@@ -194,7 +194,7 @@ public class DifficultyTests {
 
 		var shot = OwnedShot(attacker, damageArmor: 100, damageShield: 40);
 		shot.StashDamage();
-		world.Raycast(shot);
+		HitTests.Raycast(world, shot);
 
 		Assert.Equal(100, shot.StashedDamageArmor);
 		Assert.Equal(40, shot.StashedDamageShield);

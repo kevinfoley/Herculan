@@ -12,7 +12,7 @@ namespace Herculan.Engine.Sim;
 /// single full sweep of one node, and the angle is used as a <i>position</i> within that sequence
 /// (<see cref="AnimationThread.SeekToPosition"/>) rather than as an angle anything rotates by. Twist
 /// and pitch are therefore the same kind of thing as the walk cycle, and reach the screen the same
-/// way — see docs/retail/formats/dts-node-posing.md.</para>
+/// way — see docs/retail/rendering/dts-node-posing.md.</para>
 /// </summary>
 public sealed partial class MechObject {
 	/// <summary>

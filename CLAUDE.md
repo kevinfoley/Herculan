@@ -5,6 +5,7 @@ Reimplementation of Earthsiege 2 (1996) in C#, reverse-engineered from the retai
 
 - `Herculan/docs/retail/formats/` — file formats
 - `Herculan/docs/retail/simulation/` — simulation behaviour (DBSIM)
+- `Herculan/docs/retail/rendering/` — rendering behaviour (DBSIM): terrain, shapes, lighting, fog and sky, polygon fill
 - `Herculan/docs/retail/shell/` — shell behaviour (VSHELL): campaign, career, armory, front end
 - `Herculan/docs/herculan/planning.md` — architecture decisions and their rationale
 - `Herculan/KNOWN_ISSUES.md` — retail bugs, and where this engine diverges from retail
@@ -48,8 +49,10 @@ The docs state what is true now. How the project got there belongs in `git log`.
 
 8. **Open work lives in one final `## Open` section**, the last section of the doc, as top-level
    bullets labelled `**Unported:**` (a retail feature this engine lacks) or `**Open:**` (anything
-   else unfinished: incomplete RE, an unconfirmed reading, an unexplained field). Those are the only
-   two status terms — never "not ported", "untraced", "unresolved", "undecoded". The body
+   else unfinished: incomplete RE, an unconfirmed reading, an unexplained field). The user also
+   marks items `**Deferred:**` (put off until later) or `**Accepted:**` (accepted as is); only the
+   user applies those two, and work on a doc's open tasks skips them. Those are the only status
+   terms — never "not ported", "untraced", "unresolved", "undecoded". The body
    states what is known and may link to [Open](#open); it carries no tasks and no hedges
    ("plausibly", "unconfirmed") — a hypothesis is an Open item. `KNOWN_ISSUES.md`, `ROADMAP.md` and
    `README.md` keep their own structure.
@@ -61,7 +64,8 @@ The docs state what is true now. How the project got there belongs in `git log`.
    which). A retail doc may link to an engine doc, but it does not name C# types. The engine docs are
    `docs/herculan/`, `KNOWN_ISSUES.md`, `ROADMAP.md` and `README.md`.
 
-`tools/scripts/doc_lint.py` enforces 1, 4, 6 and 8, and runs automatically after any edit under
+`tools/scripts/doc_lint.py` enforces 1, 4, 6 and 8, warns on a doc over 70 KB (`doc-too-long`:
+split it by topic), and runs automatically after any edit under
 `Herculan/docs/` or to a `known_*.json`. `/doc-lint` runs it over the whole set. It cannot catch 2,
 3, 5 or 7. It catches 9 by explicit markers ("HERCULAN", "this engine", `Herculan.*` namespaces,
 "Engine port" headings) and by C# names (`csharp-name`): a backticked token declared as a type or

@@ -43,6 +43,12 @@ sealed class WidgetEvents {
 		}
 	}
 
+	/// <summary>An auto-repeating button's repeat count, <c>+0x65</c>, which its handler reads.</summary>
+	public int RepeatCount(ShellWidget widget) => _pointer.RepeatCount(widget);
+
+	/// <summary>A tick of an auto-repeating button's alarm, which fires it again while it is lit.</summary>
+	public void RepeatTick(ShellWidget widget) => _pointer.RepeatTick(widget, Fire);
+
 	/// <summary>The pointer taken onto an edit field, with a left press posted at it, so that keys reach it at once.</summary>
 	public void Grab(ShellHit field) => _pointer.Grab(field, Fire);
 }

@@ -27,7 +27,7 @@ public static class TransformerRegistry {
 
 	private static readonly List<Registration> Registrations = new() {
 		// --- shell (Dir=Gam, Ext=Dat) ---
-		new("Herc Armory Panel", e => NameStartsWith(e, "ARM_") && !NameIs(e, "ARM_WEAP.DAT") && !NameIs(e, "ARM_HOTS.DAT"),
+		new("Herc Armory Panel", e => NameStartsWith(e, "ARM_") && ExtIs(e, FileType.Dat) && !NameIs(e, "ARM_WEAP.DAT") && !NameIs(e, "ARM_HOTS.DAT"),
 			() => new Shell.ArmHercTransformer()),
 		new("Armory Weapon Icons", e => NameIs(e, "ARM_WEAP.DAT"), () => new Shell.ArmWeapTransformer()),
 		new("Career Missions", e => NameIs(e, "CAREER.DAT"), () => new Shell.CareerDataTransformer()),
@@ -39,7 +39,7 @@ public static class TransformerRegistry {
 		new("Herc Info", e => NameIs(e, "HERC_INF.DAT"), () => new Shell.HercInfoTransformer()),
 		new("Starting Hercs", e => NameIs(e, "HERCS.DAT"), () => new Shell.HercsStartTransformer()),
 		new("Herc Init Data", e => NameStartsWith(e, "INI_"), () => new Shell.InitHercTransformer()),
-		new("Repair Herc Panel", e => NameStartsWith(e, "RPR_") && !NameIs(e, "RPR_HOTS.DAT"), () => new Shell.RprHercTransform()),
+		new("Repair Herc Panel", e => NameStartsWith(e, "RPR_") && ExtIs(e, FileType.Dat) && !NameIs(e, "RPR_HOTS.DAT"), () => new Shell.RprHercTransform()),
 		new("Training Hercs", e => NameIs(e, "TRN_HERCS.DAT"), () => new Shell.TrainingHercsTransform()),
 		new("Weapons Catalog", e => NameIs(e, "WEAPONS.DAT") && DirIs(e, FileType.Gam), () => new Shell.WeaponsDatTransformer()),
 
@@ -97,7 +97,7 @@ public static class TransformerRegistry {
 
 		// .HBA and .HB0/.HB1/.HB2 are byte-identical to the .DBA container format
 		// (same 12-byte "01 00 28 00" + size + count header, same embedded DynamixBitmap-per-entry
-		// layout, same 1-byte inter-entry padding) — confirmed against every real HBA/HB0/HB1/HB2
+		// layout, same zero-byte pad after each odd-length entry) — confirmed against every real HBA/HB0/HB1/HB2
 		// file in simvol0 by walking the existing DynamixBitmapArrayTransformer's exact algorithm
 		// by hand. HB0/HB1/HB2 always parse to a single 640x480 frame (a full-screen cockpit
 		// background, one per team color); HBA holds several smaller gauge/UI sprites.

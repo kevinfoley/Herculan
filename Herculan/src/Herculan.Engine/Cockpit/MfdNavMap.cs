@@ -23,7 +23,7 @@ public readonly record struct MfdNavMapState(int CentreX, int CentreY, short Hea
 
 /// <summary>
 /// The MFD's NAV MAP screen, mode 2 — <c>MfdMapScreen_Paint</c> (<c>004405e4</c>): the terrain
-/// raster centred on the machine and turned heading-up, under a cross. See docs/retail/formats/mfd.md,
+/// raster centred on the machine and turned heading-up, under a cross. See docs/retail/simulation/mfd.md,
 /// "<c>MFDMap</c> — mode 2".
 /// </summary>
 public static class MfdNavMap {

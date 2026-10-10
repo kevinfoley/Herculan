@@ -4,7 +4,7 @@ namespace Herculan.Engine.Audio;
 /// The <c>Music_*</c> layer played through this engine's own mixer: an <see cref="IMusicSource"/>
 /// supplies the track's PCM and an <see cref="IAudioStream"/> plays it. <b>The transport is this
 /// engine's</b>; retail asks the drive to play through MCI, which on current Windows never reports
-/// the end of a play and so never loops — see docs/retail/formats/audio.md's "CD audio". Everything the
+/// the end of a play and so never loops — see docs/retail/simulation/audio.md's "CD audio". Everything the
 /// original decides — which track, when, and where a suspend resumes — is
 /// <see cref="SoundDirector"/>'s and is unchanged.
 ///

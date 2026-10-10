@@ -16,12 +16,12 @@ namespace Herculan.Engine.Sim;
 /// <para><b>It rides its owner.</b> Every tick it re-places itself from where the owner is now, so
 /// a burning HERC's fires walk with it and the fire on a component walks with that component. The
 /// owner's death puts every fire it carries out at once —
-/// <see cref="SimWorld.ReleaseFires"/>.</para>
+/// <see cref="EffectPools.ReleaseFires"/>.</para>
 ///
 /// <para>Like every other effect class it lives in the effect pool rather than the object list, so
 /// nothing can shoot a fire and nothing collides with one. The pool is small and the acquire is
 /// an <i>evict</i>: with all ten busy, the original takes the one with the fewest passes left
-/// rather than refusing — see <see cref="SimWorld.SpawnFire"/>.</para>
+/// rather than refusing — see <see cref="EffectPools.SpawnFire"/>.</para>
 /// </summary>
 public sealed class FireEffect {
 	private readonly int _frameCount;
@@ -56,7 +56,7 @@ public sealed class FireEffect {
 		Position = owner.Position;
 	}
 
-	/// <summary>What is burning — <c>obj+0x4a</c>, and what <see cref="SimWorld.ReleaseFires"/> matches on.</summary>
+	/// <summary>What is burning — <c>obj+0x4a</c>, and what <see cref="EffectPools.ReleaseFires"/> matches on.</summary>
 	public SimObject Owner { get; }
 
 	/// <summary>
@@ -94,8 +94,8 @@ public sealed class FireEffect {
 	/// <para>The shared burning-object sound (<c>0x33</c>) is placed on whichever live fire is
 	/// nearest the camera, which is why the original's tick measures its own distance to the view.
 	/// The nearest-of-all choice is taken across the whole pool in <see cref="SimWorld.Tick"/>
-	/// instead of by each fire against a running minimum; <see cref="SimWorld.SpawnFire"/> and
-	/// <see cref="SimWorld.ReleaseFires"/> hold the one-sound-for-all-of-them rule the original
+	/// instead of by each fire against a running minimum; <see cref="EffectPools.SpawnFire"/> and
+	/// <see cref="EffectPools.ReleaseFires"/> hold the one-sound-for-all-of-them rule the original
 	/// counts with <c>DAT_006b4fbc</c>.</para>
 	/// </summary>
 	internal bool Tick(SimWorld world) {

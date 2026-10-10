@@ -16,15 +16,13 @@ namespace Herculan.Engine.Audio;
 /// <para><b>One buffer per sample, sources from a pool.</b> A play claims a free source, binds the
 /// sample's buffer to it and starts it, so the same sample sounding twice occupies two sources and
 /// is heard twice — the original's arrangement, where <c>Sfx_Play</c> starts a fresh
-/// <c>sosDIGIStartSample</c> on every call. See docs/retail/formats/audio.md, "A repeated play layers; it
+/// <c>sosDIGIStartSample</c> on every call. See docs/retail/simulation/audio.md, "A repeated play layers; it
 /// does not restart".</para>
 ///
-/// <para>A dropped endpoint (unplugged headphones, a changed default device) leaves it silent for
-/// good. OpenAL Soft exposes <c>ALC_EXT_disconnect</c>/<c>ALC_CONNECTED</c>, so detecting that is
-/// cheap, but reconnecting means recreating the source pool in <c>OpenChannels</c> and re-uploading
-/// every buffer <c>CreateSample</c> handed out. Sample ids are indices into <c>_buffers</c> that
-/// <see cref="SoundDirector"/> and <see cref="ComputerVoice"/> both hold, so they would have to stay
-/// stable across a re-open.</para>
+/// <para><b>The device follows the system's default output</b>, through a lost output and a changed
+/// default alike, with every sample id and play handle staying valid; see
+/// <see cref="OpenAlDeviceWatch"/>. While the device has no output, one-shots are refused and
+/// streams are not fed.</para>
 /// </summary>
 public sealed unsafe class OpenAlBackend : IAudioBackend {
 	/// <summary>
@@ -46,6 +44,12 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 	private readonly List<uint> _buffers = new();
 	private readonly uint[] _sources = new uint[ChannelCount];
 	private readonly int[] _generation = new int[ChannelCount];
+
+	// Which slots hold a play started looping and not yet stopped. A loop never ends by itself, so the
+	// slot stays claimed, and reads as playing, even while a disconnect has OpenAL holding it stopped.
+	private readonly bool[] _looping = new bool[ChannelCount];
+
+	private readonly OpenAlDeviceWatch _watch;
 	private int _channels;
 	private int _cursor;
 	private bool _disposed;
@@ -55,6 +59,7 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 		_alc = alc;
 		_device = device;
 		_context = context;
+		_watch = new OpenAlDeviceWatch(al, alc, device);
 		OpenChannels();
 	}
 
@@ -202,8 +207,13 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 	}
 
 	/// <inheritdoc />
+	/// <remarks>
+	/// With the device disconnected a one-shot is refused: it would be heard late, or, with sources
+	/// holding through the drop, all at once with every other one started meanwhile. A loop is
+	/// accepted, and sounds once the device is back.
+	/// </remarks>
 	public int Start(int sample, float gain, float pan, float pitch, bool looping) {
-		if (_disposed || sample < 0 || sample >= _buffers.Count) {
+		if (_disposed || sample < 0 || sample >= _buffers.Count || (!looping && !_watch.Connected)) {
 			return -1;
 		}
 
@@ -223,6 +233,7 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 		SetSourcePan(source, pan);
 		SetSourcePitch(source, pitch);
 		_al.SourcePlay(source);
+		_looping[slot] = looping;
 
 		return Handle(slot);
 	}
@@ -236,6 +247,10 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 	private int ClaimChannel() {
 		for (int i = 0; i < _channels; i++) {
 			int slot = (_cursor + i) % _channels;
+			if (_looping[slot]) {
+				continue;
+			}
+
 			_al.GetSourceProperty(_sources[slot], GetSourceInteger.SourceState, out int state);
 			if ((SourceState)state == SourceState.Playing || (SourceState)state == SourceState.Paused) {
 				continue;
@@ -254,7 +269,7 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 
 	/// <summary>
 	/// Packs a slot and its generation into one handle, the way the original's own <c>SFX</c> layer
-	/// does (<c>generation &lt;&lt; 16 | slotIndex</c>, docs/retail/formats/audio.md). The generation is
+	/// does (<c>generation &lt;&lt; 16 | slotIndex</c>, docs/retail/simulation/audio.md). The generation is
 	/// masked to fifteen bits so a handle is never negative and never collides with -1.
 	/// </summary>
 	private int Handle(int slot) => ((_generation[slot] & 0x7fff) << 16) | slot;
@@ -278,6 +293,7 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 	public void Stop(int play) {
 		if (Resolve(play, out uint source)) {
 			_al.SourceStop(source);
+			_looping[play & 0xffff] = false;
 		}
 	}
 
@@ -285,6 +301,10 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 	public bool IsPlaying(int play) {
 		if (!Resolve(play, out uint source)) {
 			return false;
+		}
+
+		if (_looping[play & 0xffff]) {
+			return true;
 		}
 
 		_al.GetSourceProperty(source, GetSourceInteger.SourceState, out int state);
@@ -344,6 +364,36 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 		for (int slot = 0; slot < _channels; slot++) {
 			_al.SourceStop(_sources[slot]);
 		}
+
+		Array.Clear(_looping);
+	}
+
+	/// <inheritdoc />
+	/// <remarks>
+	/// <see cref="OpenAlDeviceWatch.Update"/>, and after a reopen, whatever the runtime stopped put
+	/// back. Only what is not playing is touched, so this is a no-op where sources held through the
+	/// drop: a stopped loop plays again from its top, and a stopped stream is emptied so that the
+	/// next block its owner queues starts it.
+	/// </remarks>
+	public void Update() {
+		if (_disposed || !_watch.Update()) {
+			return;
+		}
+
+		for (int slot = 0; slot < _channels; slot++) {
+			if (_looping[slot] && !SourcePlaying(_sources[slot])) {
+				_al.SourcePlay(_sources[slot]);
+			}
+		}
+
+		foreach (var stream in _streams) {
+			stream.EmptyIfStopped();
+		}
+	}
+
+	private bool SourcePlaying(uint source) {
+		_al.GetSourceProperty(source, GetSourceInteger.SourceState, out int state);
+		return (SourceState)state == SourceState.Playing;
 	}
 
 	/// <inheritdoc />
@@ -409,7 +459,10 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 
 		private AL Al => _owner._al;
 
-		private bool Live => !_disposed && !_owner._disposed;
+		// Not while the device is disconnected either: a stopped source counts every queued block
+		// played at once, so feeding it then would run the owner through its track unheard. With
+		// nothing free and no position, the owner simply holds its place.
+		private bool Live => !_disposed && !_owner._disposed && _owner._watch.Connected;
 
 		public int FreeBlocks {
 			get {
@@ -477,6 +530,13 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 			}
 		}
 
+		/// <summary>After a reopen: a source the disconnect stopped has its queue emptied, ready to restart.</summary>
+		public void EmptyIfStopped() {
+			if (Live && !_owner.SourcePlaying(_source)) {
+				Stop();
+			}
+		}
+
 		private void Reclaim() {
 			if (!Live) {
 				return;
@@ -535,6 +595,10 @@ public sealed unsafe class OpenAlBackend : IAudioBackend {
 		_alc.MakeContextCurrent(null);
 		_alc.DestroyContext(_context);
 		_alc.CloseDevice(_device);
+
+		// Between the two, as OpenAlDeviceWatch.Dispose needs: the context's event thread has stopped,
+		// and the library is still loaded.
+		_watch.Dispose();
 		_al.Dispose();
 		_alc.Dispose();
 	}

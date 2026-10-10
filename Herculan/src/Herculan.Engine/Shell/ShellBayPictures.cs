@@ -11,7 +11,7 @@ namespace Herculan.Engine.Shell;
 /// three-quarter view as two stacked halves, with each fitted weapon drawn over its socket. Filled by
 /// <c>Squad_BuildBayPictures</c> (<c>00414e5b</c>) from <c>gam\arm_*.dat</c> into the eight bay pictures <c>Squad_BuildRosterList</c>
 /// built, and by the same function into the empty picture shown when no bay is selected. See
-/// docs/retail/shell/screen-layout.md, "The bay picture".
+/// docs/retail/shell/squad-and-crew.md, "The bay picture".
 /// </summary>
 public sealed class ShellBayPictures {
 	/// <summary>

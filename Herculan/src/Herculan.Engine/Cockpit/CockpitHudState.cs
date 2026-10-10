@@ -64,7 +64,7 @@ namespace Herculan.Engine.Cockpit;
 /// </param>
 /// <param name="PressedWidget">
 /// The widget currently held down under the pointer, drawn in its lit frame for as long as it is —
-/// the original's own <c>Widget_PressedIndex</c> (<c>0049dbdc</c>) plus the state byte it sets (docs/retail/formats/cockpit-input.md
+/// the original's own <c>Widget_PressedIndex</c> (<c>0049dbdc</c>) plus the state byte it sets (docs/retail/simulation/cockpit-input.md
 /// §7). Transient input state rather than simulation state, and it lives here for the same reason the
 /// rest does: <see cref="CockpitWidgets"/> folds it into each widget's lit flag, so the one place that
 /// decides what a widget looks like stays the one place, and no renderer needs a second parameter
@@ -197,7 +197,7 @@ public readonly record struct CockpitHudState(
 	/// <summary>
 	/// Whether <paramref name="id"/> is in its pressed state, the original's state byte <c>+0x1b</c> at 1: held
 	/// under the pointer, or flashing from a press made for the player. Only the buttons whose paint reads that
-	/// byte draw it (docs/retail/formats/cockpit-input.md#the-press-flash).
+	/// byte draw it (docs/retail/simulation/cockpit-input.md#the-press-flash).
 	/// </summary>
 	public bool ShowsPressed(CockpitWidgetId id) =>
 		PressedWidget == id || (FlashingWidgets?.Contains(id) ?? false);

@@ -49,17 +49,17 @@ public sealed class PaletteRampTable {
 
 	/// <summary>
 	/// The row a <b>flat solid face</b> reads — <see cref="ShadeRamp.UnlitShade"/>'s row in slice 0,
-	/// the fixed shade <c>TSSolidPoly_Render</c> passes. Sampling this row at the surface's palette
-	/// index is byte-for-byte what <c>DtsMeshBuilder.ResolveSolidColors</c> computes on the CPU, so
-	/// the two are interchangeable and the shader uses whichever table the damage flash has bound.
+	/// the fixed shade <c>TSSolidPoly_Render</c> passes. The shader adds the object's depth slice to
+	/// it, as <c>Raster_ShadeRampRow</c> adds the fade <c>ObjList_DrawEntryRender</c> installed.
+	/// Sampled unfogged at the surface's palette index it is byte-for-byte what
+	/// <c>DtsMeshBuilder.ResolveSolidColors</c> computes on the CPU, which is the fallback colour.
 	/// </summary>
 	public int UnlitRow { get; private init; }
 
 	/// <summary>
 	/// The row an untextured terrain cell reads — <see cref="TerrainMeshBuilder.UntexturedRowShade"/>'s
-	/// row in slice 0. Unlike
-	/// <see cref="UnlitRow"/> it is fogged: the cell's depth slice is added to it, as
-	/// <c>Raster_ShadeRampRow</c> adds the fade <c>Terrain_DrawCellQuad</c> installed.
+	/// row in slice 0. Like <see cref="UnlitRow"/> it is fogged: the cell's depth slice is added to
+	/// it, as <c>Raster_ShadeRampRow</c> adds the fade <c>Terrain_DrawCellQuad</c> installed.
 	/// </summary>
 	public int GroundRow { get; private init; }
 
@@ -86,7 +86,7 @@ public sealed class PaletteRampTable {
 	/// shape render and restores it after, which is what makes a round's textured polys fullbright.
 	/// The one retail shape it reaches is <c>BULLETS.DTS</c> root 8, the plasma cannon's round; every
 	/// other projectile shape is untextured. See <see cref="SceneItem.Fullbright"/> and
-	/// docs/retail/formats/dts-texture-binding.md's "<c>TSTexture4Poly</c> — frame index, ramp row by light,
+	/// docs/retail/rendering/dts-texture-binding.md's "<c>TSTexture4Poly</c> — frame index, ramp row by light,
 	/// fullbright on demand".</para>
 	///
 	/// <para>It sits past every depth slice, and there is only one of it: a fill that skips the ramp
@@ -136,7 +136,10 @@ public sealed class PaletteRampTable {
 					pixels[at + 2] = color.B;
 				}
 
-				pixels[at + 3] = 255;
+				// Alpha is the resolved palette byte itself, which the shader compares where the original
+				// compares bytes rather than colours: a TSSolidPoly's outline, drawn only when its line
+				// and fill bytes differ at the row and slice in force. See MeshVertex.OutlineFillRamp.
+				pixels[at + 3] = resolved;
 			}
 		}
 

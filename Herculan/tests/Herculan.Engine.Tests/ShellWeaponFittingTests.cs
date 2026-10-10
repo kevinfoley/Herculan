@@ -11,7 +11,7 @@ namespace Herculan.Engine.Tests;
 /// <summary>
 /// Fitting a weapon on the WEAPONS screen, and the armory stock it moves units in and out of:
 /// <c>Herc_FitMount</c> (<c>004114ec</c>), <c>Arming_SelectRow</c>'s refusal (<c>0043f71c</c>), the steppers, and the
-/// two scrap paths that also move stock. See docs/retail/shell/screen-layout.md#fitting-a-weapon.
+/// two scrap paths that also move stock. See docs/retail/shell/weapons-and-repair.md#fitting-a-weapon.
 /// </summary>
 public class ShellWeaponFittingTests {
 	private const int Atc20 = 1;

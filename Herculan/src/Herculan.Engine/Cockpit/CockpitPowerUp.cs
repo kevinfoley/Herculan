@@ -8,7 +8,7 @@ namespace Herculan.Engine.Cockpit;
 /// light from dark up to the real charge, and the scanner's dish grows out from a small ring. <c>Cockpit_PowerUpTick</c> (<c>00432924</c>) arms each
 /// widget with <c>Widget_BeginPowerUpAnimation</c> (<c>00438ddc</c>) and each widget runs its own
 /// ramp from the tick it was armed on. The delays, the ramps and their sources are
-/// docs/retail/formats/cockpit-hud-widgets.md's power-up section.
+/// docs/retail/simulation/cockpit-hud-widgets.md's power-up section.
 ///
 /// <para>The compass's wind-up is the same sequence's other animation, and is
 /// <see cref="HeadingTapeSweep"/>. A flyer's cockpit skips all of them.</para>

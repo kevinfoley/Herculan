@@ -21,7 +21,7 @@ namespace Herculan.Engine.Sim;
 /// it. A piece with no child group never bursts and lives until it settles.</para>
 ///
 /// <para>Two things spawn one: a <see cref="DebrisGroup"/> through
-/// <see cref="SimWorld.SpawnDebris"/>, and a weapon mount shot off its hardpoint, which throws its
+/// <see cref="EffectPools.SpawnDebris(short, in Transform3, DebrisDatabase?, short, short, int)"/>, and a weapon mount shot off its hardpoint, which throws its
 /// own gun model rather than anything out of a table — see <see cref="WeaponMount.Destroy"/>.</para>
 /// </summary>
 public sealed class DebrisObject {
@@ -50,7 +50,7 @@ public sealed class DebrisObject {
 	/// </param>
 	/// <param name="position">Where it starts, in world units.</param>
 	/// <param name="euler">Its starting orientation.</param>
-	/// <param name="velocity">Its launch velocity — see <see cref="SimWorld.SpawnDebris"/>.</param>
+	/// <param name="velocity">Its launch velocity — see <see cref="EffectPools.SpawnDebris(short, in Transform3, DebrisDatabase?, short, short, int)"/>.</param>
 	/// <param name="spinRate">How fast it tumbles, in BAM per second.</param>
 	/// <param name="lifetime">
 	/// Ticks of countdown before it bursts. Drawn for every piece, read only by one that has a child
@@ -198,7 +198,7 @@ public sealed class DebrisObject {
 		}
 
 		if (DestroyEffect >= 0) {
-			world.SpawnImpactEffect(DestroyEffect, Position, owner: null);
+			world.Effects.SpawnImpactEffect(DestroyEffect, Position, owner: null);
 		}
 
 		// The burst re-installs the database this piece was thrown out of, so its child group is read
@@ -206,7 +206,7 @@ public sealed class DebrisObject {
 		// EFFECTS DETAIL's lowest setting there is no second generation: the effect goes off and the
 		// piece is simply gone.
 		if (world.EffectsDetail != 0) {
-			world.SpawnDebris(ChildGroup, Position, ChildTable,
+			world.Effects.SpawnDebris(ChildGroup, Position, ChildTable,
 				ChildThrowPitchMin, ChildThrowPitchMax, ChildThrowSpeedScale);
 		}
 
@@ -253,16 +253,16 @@ public sealed class DebrisObject {
 	/// <summary>
 	/// How many pieces can be in the air at once — the pool's own size. The original's allocator
 	/// returns nothing when it is full and the spawn is silently skipped, which is what
-	/// <see cref="SimWorld.SpawnDebris"/> does here.
+	/// <see cref="EffectPools.SpawnDebris(short, in Transform3, DebrisDatabase?, short, short, int)"/> does here.
 	/// </summary>
 	public const int PoolSize = 150;
 
-	/// <inheritdoc cref="SimWorld.SpawnDebris" />
+	/// <inheritdoc cref="EffectPools.SpawnDebris(short, in Transform3, DebrisDatabase?, short, short, int)" />
 	public const short ChildThrowPitchMin = 3000;
 
-	/// <inheritdoc cref="SimWorld.SpawnDebris" />
+	/// <inheritdoc cref="EffectPools.SpawnDebris(short, in Transform3, DebrisDatabase?, short, short, int)" />
 	public const short ChildThrowPitchMax = 8000;
 
-	/// <inheritdoc cref="SimWorld.SpawnDebris" />
+	/// <inheritdoc cref="EffectPools.SpawnDebris(short, in Transform3, DebrisDatabase?, short, short, int)" />
 	public const int ChildThrowSpeedScale = 0x140;
 }

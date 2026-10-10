@@ -11,7 +11,7 @@ namespace Herculan.Engine.View;
 /// <see cref="CockpitViewKick"/> and not a camera move: <c>CockpitView_SetShakeBand</c>
 /// (<c>0042d2f8</c>) seeds a vertical band at the resting view offset and
 /// <c>CockpitView_StepShake</c> (<c>0042d4a8</c>) walks the offset inside it once a frame. The
-/// derivation is in docs/retail/formats/cockpit-canopy-palette.md, "The damage shake".</para>
+/// derivation is in docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".</para>
 ///
 /// <para><b>The walk never settles, and it never reaches the band's limits.</b> Each step moves
 /// toward whichever of the two limits is <i>farther</i> away, and which one that is flips at the
@@ -39,7 +39,7 @@ namespace Herculan.Engine.View;
 /// carries on from either phase.</para>
 ///
 /// <para>The original's view slides can also re-seed a disarmed band, which this class has no
-/// counterpart for. See docs/retail/formats/cockpit-canopy-palette.md, "The damage shake".</para>
+/// counterpart for. See docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".</para>
 /// </summary>
 public sealed class CockpitHitShake {
 	/// <summary>

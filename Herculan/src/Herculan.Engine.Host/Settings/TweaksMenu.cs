@@ -42,8 +42,11 @@ public sealed class TweaksMenu {
 		_closeButtons = [("general.save", Save), ("general.cancel", Cancel)];
 	}
 
-	/// <summary>Draws the panel, if it is open. Call once per frame, inside the ImGui frame.</summary>
-	public void Draw() {
+	/// <summary>
+	/// Draws the panel, if it is open. Call once per frame, inside the ImGui frame. <paramref name="centre"/> is when
+	/// it is centred on the window (<see cref="PanelCentring.Condition"/>).
+	/// </summary>
+	public void Draw(ImGuiCond centre) {
 		if (!IsOpen) {
 			return;
 		}
@@ -51,7 +54,7 @@ public sealed class TweaksMenu {
 		// A zero component means "fit the content", so the panel keeps a fixed width and grows to
 		// whatever height its settings need.
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), 0f));
-		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Appearing, new Vector2(0.5f, 0.5f));
+		ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), centre, new Vector2(0.5f, 0.5f));
 
 		bool stayOpen = true;
 		// The title doubles as the window's ID, so a language change opens it afresh, re-centred; a
@@ -67,7 +70,7 @@ public sealed class TweaksMenu {
 					}
 
 					if (ImGui.IsItemHovered() && _localization.GetString(definition.DescriptionKey) is { } description) {
-						ImGui.SetTooltip(description);
+						ScaledImGui.Tooltip(description);
 					}
 				}
 			}

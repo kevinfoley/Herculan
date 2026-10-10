@@ -41,7 +41,8 @@ static class Launcher {
 			bool firstTurn = state == ShellHost.StartupCode;
 			(int shellExit, ShellLaunch? launched, shellMode) = ShellHost.Run(session, shell.Palette, options.ScreenshotPath,
 				shellMode, firstTurn ? shell.Tab : ShellScreen.MainMenuTab, shell.Bay, firstTurn && shell.Practice,
-				options.SilentAudio, options.WritePreferences, shell.Windowed, shell.Movies, state);
+				options.SilentAudio, options.WritePreferences, shell.Windowed, shell.Movies, state,
+				missionPicker: options.DeveloperMode);
 			if (shellExit == ShellHost.SettingsRestartCode) {
 				state = shellExit;
 				continue;

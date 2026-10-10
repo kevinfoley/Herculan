@@ -2,7 +2,7 @@
 
 Reverse-engineered from `DBSIM.EXE` in the `ES2Recon` Ghidra project; all addresses are DBSIM virtual addresses.
 
-Covers how a fit becomes mounts, what those mounts hold, and how the player arms them. What happens when the trigger is pulled is in [`weapon-firing.md`](weapon-firing.md); the pool arbitration they feed is in [`reactor-energy-pool.md`](reactor-energy-pool.md); the widgets they drive are in [`../formats/cockpit-hud-widgets.md`](../formats/cockpit-hud-widgets.md#weapon-hardpoint-rows); the template table itself is in [`../formats/weapons-dat-sim.md`](../formats/weapons-dat-sim.md).
+Covers how a fit becomes mounts, what those mounts hold, and how the player arms them. What happens when the trigger is pulled is in [`weapon-firing.md`](weapon-firing.md); the pool arbitration they feed is in [`reactor-energy-pool.md`](reactor-energy-pool.md); the widgets they drive are in [`cockpit-hud-widgets.md`](cockpit-hud-widgets.md#weapon-hardpoint-rows); the template table itself is in [`../formats/weapons-dat-sim.md`](../formats/weapons-dat-sim.md).
 
 ## The join — `MechLoadout_ConstructWeaponMounts` (`0040fff8`)
 
@@ -252,7 +252,7 @@ The two routes converge rather than duplicating: `CockpitWidgets_HandleCommand` 
 
 The mouse's own split is not a modifier but the **button**: a row gadget's click handler (`EnergyWeaponGauge_OnChildClick` (`00440ef0`) for an energy row, `AmmoWeaponGauge_OnChildClick` (`004414b4`) for an ammunition one) branches on bit 1 of the value it is handed, and that value is the mouse-button word `0049db6c` — bit 0 left, bit 1 right. **A pod's row is the exception**: its handler takes no value at all, so both buttons toggle the pod and neither chains it ([`equipment-pods.md`](equipment-pods.md#only-two-pods-have-a-button)).
 
-The command codes are [scancodes](../formats/cockpit-input.md#keyboard-commands-are-scancodes): `0x26` is `L` and `0x29` is `` ` ``, which is how `ConsoleButtons_HandleCommand` (`004421a0`) binds them to the console panel's LINK and chain children; `0x11`/`0x211` are `W`/`Alt+W`; `0x02`–`0x0b` and `0x202`–`0x20b` are the two number-key banks. `Sim_DispatchCommand` (`0045fdac`) is the dispatcher every code passes through.
+The command codes are [scancodes](cockpit-input.md#keyboard-commands-are-scancodes): `0x26` is `L` and `0x29` is `` ` ``, which is how `ConsoleButtons_HandleCommand` (`004421a0`) binds them to the console panel's LINK and chain children; `0x11`/`0x211` are `W`/`Alt+W`; `0x02`–`0x0b` and `0x202`–`0x20b` are the two number-key banks. `Sim_DispatchCommand` (`0045fdac`) is the dispatcher every code passes through.
 
 ### Arming — `WeaponMounts_SelectByGauge` (`004106ac`) and `WeaponMounts_SetSelection` (`00410708`)
 
@@ -285,7 +285,3 @@ One LINK press runs the toggle **three** times: the button's own click handler (
 | Reading | Why it is wrong |
 |---|---|
 | The ELF's cell timer at `+0x84` is a per-cell interval, so the spin-up's length is a rate rather than a cell count | `ElfMount_TriggerHeld` zeroes it on the press and `ElfMount_SpinUpAndChargeTick` zeroes it again after every advance, and `Math_CountdownTimerTick` clamps at zero, so it expires on every tick it is asked. Nothing in the retail build ever gives it a non-zero value |
-
-## Open
-
-- **Open:** template fields other than those named here — see [`../formats/weapons-dat-sim.md`](../formats/weapons-dat-sim.md).

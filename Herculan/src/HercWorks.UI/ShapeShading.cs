@@ -10,7 +10,7 @@ namespace HercWorks.UI;
 /// <c>.RMP</c> ramp, and the one mission sun. A port of the engine's <c>Render.MissionSun</c>,
 /// <c>Content.ShadeRamp</c> and <c>Render.SurfaceShading</c> — the toolkit does not reference the
 /// engine (docs/herculan/planning.md), so the few pure functions it needs are repeated here. The
-/// mechanisms and their RE are docs/retail/formats/dts-texture-binding.md's "Poly types and their colour
+/// mechanisms and their RE are docs/retail/rendering/dts-texture-binding.md's "Poly types and their colour
 /// mechanisms".
 ///
 /// <para>Every method returns null when what it needs is not loaded, and the caller falls back to
@@ -36,7 +36,19 @@ public sealed class ShapeShading {
 			&& rows.Length >= r.ShadeLevels * r.DepthSlices * RowLength
 				? r
 				: null;
+
+		// A palette slot with no entry draws mid grey, as the engine's SurfaceRampTable palette row does.
+		BandPalette = new int[RowLength];
+		for (int index = 0; index < RowLength; index++) {
+			BandPalette[index] = (PaletteColor(index) ?? Color.FromArgb(255, 128, 128, 128)).ToArgb();
+		}
 	}
+
+	/// <summary>
+	/// The palette as ARGB, indexed by palette byte: what a <c>TSGouraudPoly</c>'s contour bands are
+	/// drawn in, each band being a whole palette index between its corners' ramp entries.
+	/// </summary>
+	public int[] BandPalette { get; }
 
 	/// <summary>Whether a usable <c>.RMP</c> is loaded; without one only the Gouraud chain resolves.</summary>
 	public bool HasRamp => _ramp != null;
@@ -101,9 +113,10 @@ public sealed class ShapeShading {
 
 	/// <summary>
 	/// <c>Palette_ShadeRampLookup</c> (<c>00430e34</c>): which palette index a material ramp reaches at
-	/// a shade. A ramp number past the table falls back to ramp 0, as the original's does.
+	/// a shade, entry <c>(shade * length) &gt;&gt; 8</c>. A ramp number past the table falls back to
+	/// ramp 0, as the original's does. A <c>TSGouraudPoly</c> corner's palette index.
 	/// </summary>
-	private int? RampedPaletteIndex(int rampNumber, int shade) {
+	public int? RampedPaletteIndex(int rampNumber, int shade) {
 		if (_palette.ShadeRamps is not { Count: > 0 } ramps) {
 			return null;
 		}
@@ -127,10 +140,6 @@ public sealed class ShapeShading {
 		RampedPaletteIndex(rampNumber, shade) is { } index && RampLookup(index, UnlitShade) is { } ramped
 			? PaletteColor(ramped)
 			: null;
-
-	/// <summary>A <c>TSGouraudPoly</c> corner: the ramp's entry straight through the palette, no <c>.RMP</c> step.</summary>
-	public Color? Gouraud(int rampNumber, int shade) =>
-		RampedPaletteIndex(rampNumber, shade) is { } index ? PaletteColor(index) : null;
 
 	/// <summary>
 	/// A <c>TSTexture4Poly</c> texel: <c>Raster_ShadeRampRow(shade)[texel]</c>, the row coming from

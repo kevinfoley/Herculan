@@ -28,12 +28,10 @@ public class DynamixBitmapArrayTransformer : ByteTransformer<DynamixBitmapArray>
 
 		var images = new DynamixBitmap[dba.FrameCount];
 
-		int imageCount = 0;
-
 		var dynbitmapTransform = new DynamixBitmapTransformer();
 
-		int actualBytes = Bytes!.Length - Index;
-		while (Index < actualBytes) {
+		// FrameCount frames, each a bitmap record padded to an even length with a zero byte.
+		for (int imageCount = 0; imageCount < images.Length; imageCount++) {
 			Skip(4);
 
 			int fileLength = IndexIntLE(); // slight read-ahead to get file size first
@@ -47,16 +45,17 @@ public class DynamixBitmapArrayTransformer : ByteTransformer<DynamixBitmapArray>
 			dbm.FileName = "_" + imageCount;
 
 			images[imageCount] = dbm;
-			imageCount++;
 
-			if (Index + 1 < actualBytes) {
-				byte space = IndexByte();
-				if (space != 0x00) {
-					Index -= 1;
-				}
+			if (dbaItem.Length % 2 != 0) {
+				Skip(1);
 			}
 		}
 		dba.Images = images;
+
+		if (Index < Bytes!.Length) {
+			dba.TrailingBytes = Bytes[Index..];
+			Index = Bytes.Length;
+		}
 
 		return dba;
 	}
@@ -78,11 +77,14 @@ public class DynamixBitmapArrayTransformer : ByteTransformer<DynamixBitmapArray>
 		var dbmConvert = new DynamixBitmapTransformer();
 		foreach (var dbm in dba.Images!) {
 			dbmConvert.ResetIndex();
-			byte[]? data = dbmConvert.Write(dbm);
+			byte[]? data = dbmConvert.Write(dbm); // already padded to an even length
 			if (data != null) {
 				objectBytes.Write(data, 0, data.Length);
-				objectBytes.WriteByte(0x00);
 			}
+		}
+
+		if (dba.TrailingBytes is { Length: > 0 } trailing) {
+			objectBytes.Write(trailing, 0, trailing.Length);
 		}
 
 		return objectBytes.ToArray();

@@ -38,7 +38,7 @@ public readonly record struct SpriteBatch(
 /// <para><b>What the original does</b> is a screen-space blit of a rotated, scaled quad, built from
 /// four things — a scale off the part's radius, a rotation and a vertical squash both measured from
 /// the model's own up axis probed at <c>(0, 0, 0x800)</c>, and an anchor pixel. All four are traced
-/// in docs/retail/formats/dts-billboards.md's "<c>TSBitmapPart_Render</c> (<c>004762e8</c>)". The one
+/// in docs/retail/rendering/dts-billboards.md's "<c>TSBitmapPart_Render</c> (<c>004762e8</c>)". The one
 /// consequence that has to be reproduced here rather than looked up is that the projection constant
 /// cancels out of the scale: <b>one bitmap pixel is <c>radius / 64</c> world units</b>, whatever the
 /// field of view is, which is what makes this drawable without knowing the original's focal

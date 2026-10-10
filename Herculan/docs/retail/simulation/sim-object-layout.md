@@ -64,7 +64,7 @@ Below that line all three constructors write an *identical* block — `+0x1a8 = 
 
 ## The object's frame is a transform, and its position is that transform's translation
 
-`obj+0x12` is a complete 32-byte transform record of the kind `Transform_Concat` (`0047f914`) composes: nine Q14 `int16` matrix entries, a rank byte at `+0x12`, and an `int32` translation at `+0x14`/`+0x18`/`+0x1c`. Laid at `obj+0x12`, that translation falls at `obj+0x26`/`+0x2a`/`+0x2e` — **which is the object's world position**. The two are the same storage, not a copy: `SimObject_InstallModelTransform` (`00401fe4`) builds the matrix half from the euler angles at `obj+0x0c` whenever the dirty flag at `obj+0x32` is clear, and every caller that wants a position passes `obj+0x26` as an `int[3]`.
+`obj+0x12` is a complete 32-byte transform record of the kind `Transform_Concat` (`0047f914`) composes: nine Q14 `int16` matrix entries, a rank byte at `+0x12`, and an `int32` translation at `+0x14`/`+0x18`/`+0x1c`. Laid at `obj+0x12`, that translation falls at `obj+0x26`/`+0x2a`/`+0x2e` — **which is the object's world position**. The two are the same storage, not a copy: `SimObject_InstallModelTransform` (`00401fe4`) builds the matrix half from the euler angles at `obj+0x0c` whenever the frame-valid word at `obj+0x32` is 0, and sets it to 1, and every caller that wants a position passes `obj+0x26` as an `int[3]`.
 
 ## The two per-object tables are 112 rows each
 
@@ -111,8 +111,8 @@ Nothing in the field itself says which flavour it is — only which of the two f
 
 ## Open
 
-- **Open:** whether anything queues a machine onto `g_MechDeleteQueue` (`004a9c02`). An absolute-address search of the disassembly finds only the setup write in `DBSim_LoadScriptDat` and the read in `Mech_FlushDeletes` (`0041544c`); a caller passing a copy of the pointer to `ObjectPool_QueueForDelete` is outside that search.
-- **Open:** why the structure pool's element is `0x26d`, seven bytes past `LC_BASE`'s `0x266`, the longest structure class.
-- **Open:** what `obj+0x92` is in the source. Whether it is a sub-object the compiler is addressing or just a base register it chose is not settled, so `known_structs.json` places those bytes at their absolute offsets rather than inside an invented struct.
-- **Open:** what vtable `+0x0c` is for. Every `DrawableVtable`, `ProjectileVtable` and `SimObjectVtable` table holds `Stub_ReturnZero` (`004785bf`) there.
-- **Open:** whether `mech+0x261`, the fourth lock-timer slot, is used at all. `Mech_PerTickSystemsUpdate` ticks the other four by name and no tick names this one, and `es2_fieldscan.py` over `00402000`-`00430000` finds no mech access to it (the one write it reports is `Flyer_Constructor`'s, a different class's field). A field that carries a value is never proven unread by a scan.
+- **Deferred:** whether anything queues a machine onto `g_MechDeleteQueue` (`004a9c02`). An absolute-address search of the disassembly finds only the setup write in `DBSim_LoadScriptDat` and the read in `Mech_FlushDeletes` (`0041544c`); a caller passing a copy of the pointer to `ObjectPool_QueueForDelete` is outside that search.
+- **Deferred:** why the structure pool's element is `0x26d`, seven bytes past `LC_BASE`'s `0x266`, the longest structure class.
+- **Deferred:** what `obj+0x92` is in the source. Whether it is a sub-object the compiler is addressing or just a base register it chose is not settled, so `known_structs.json` places those bytes at their absolute offsets rather than inside an invented struct.
+- **Deferred:** what vtable `+0x0c` is for. Every `DrawableVtable`, `ProjectileVtable` and `SimObjectVtable` table holds `Stub_ReturnZero` (`004785bf`) there.
+- **Deferred:** whether `mech+0x261`, the fourth lock-timer slot, is used at all. `Mech_PerTickSystemsUpdate` ticks the other four by name and no tick names this one, and `es2_fieldscan.py` over `00402000`-`00430000` finds no mech access to it (the one write it reports is `Flyer_Constructor`'s, a different class's field). A field that carries a value is never proven unread by a scan.

@@ -54,9 +54,10 @@ public class DynamixPaletteTransformer : ByteTransformer<DynamixPalette> {
 
 	/// <summary>
 	/// Reads the shade-ramp table that follows the colour entries — see
-	/// <see cref="DynamixPalette.ShadeRamps"/> for the layout and for what a ramp means. Leaves the
+	/// <see cref="DynamixPalette.ShadeRamps"/> for the layout and for what a ramp means. A count of
+	/// zero is a table with no ramps, kept so the write path puts its four bytes back. Leaves the
 	/// table empty rather than throwing when the tail is absent or short: a palette that is only
-	/// colours is still a usable palette, and every shell <c>.DPL</c> is one.
+	/// colours is still a usable palette.
 	/// </summary>
 	private void ReadShadeRamps(DynamixPalette dpl) {
 		int tailStart = Index;
@@ -65,7 +66,7 @@ public class DynamixPaletteTransformer : ByteTransformer<DynamixPalette> {
 		}
 
 		int rampCount = IndexIntLE();
-		if (rampCount <= 0 || rampCount > MaxShadeRamps) {
+		if (rampCount < 0 || rampCount > MaxShadeRamps) {
 			Index = tailStart;
 			return;
 		}

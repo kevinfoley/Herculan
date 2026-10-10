@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dts;
 /// A chunk's 4-byte type marker, <c>[subtype:u16][family:u16]</c> little-endian — family <c>0x14</c>
 /// for the TS types, <c>0x1e</c> for the AN (animation) types. DBSIM's
 /// <c>g_TSObjectTypeRegistry</c> (<c>004a63c8</c>) is keyed by the same value. See
-/// docs/retail/formats/dts-texture-binding.md, "Poly types and their colour mechanisms (DBSIM.EXE)".
+/// docs/retail/rendering/dts-texture-binding.md, "Poly types and their colour mechanisms (DBSIM.EXE)".
 /// </summary>
 public sealed class TSObjectHeader {
 	public static readonly TSObjectHeader TSPoly = new(new byte[] { 0x01, 0x00, 0x14, 0x00 }, "TSPoly");

@@ -63,7 +63,7 @@ public sealed class ShellArt {
 	/// <summary>
 	/// Banks loaded for the shell frame. Screen-specific banks are loaded by their screens. The archive's
 	/// <c>CURSOR</c> bank is not among them: the shell's pointer is the Windows arrow — see
-	/// docs/retail/shell/screen-layout.md#the-pointer.
+	/// docs/retail/shell/widgets.md#the-pointer.
 	/// </summary>
 	public static readonly string[] BankNames = { ButtonBank, MenuButtonBank };
 

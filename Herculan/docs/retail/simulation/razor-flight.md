@@ -70,7 +70,7 @@ The device layer hands the same four axes to both control paths. A flyer reads t
 
 Neither turret tick is on this path, so **a RAZOR's turret never moves** and its guns point where its nose points, toed in on the range to its target ([Gun convergence](#gun-convergence)). The throttle has to move off stick Y because on an aircraft the primary stick axes are pitch and roll, and it lands on the axis a walker has no other use for.
 
-The keyboard reaches these axes through the same source table as the stick — see [The keyboard](../formats/joystick-input.md#the-keyboard).
+The keyboard reaches these axes through the same source table as the stick — see [The keyboard](joystick-input.md#the-keyboard).
 
 ## Control law (`FlightModel_Step`)
 
@@ -78,7 +78,7 @@ Nothing in it moves the aircraft; it produces the world velocity `Razor_Movement
 
 ### Throttle
 
-An analogue throttle axis is read as a position, `axis << 3` clamped to ±0x400. Everything else is a rate: `IntegrateRateOverTick(Q8(100, axis))` accumulated into `+0x2d7` and clamped the same way. Unlike the walker's throttle lever there is no inverted sense and no clamp to one side of zero.
+With a throttle lever bound, the axis is read as a position, `axis << 3` clamped to ±0x400. The test is two globals, not anything on the airframe: the capability block's `+4` reports a throttle ([`joystick-input.md`](joystick-input.md#the-capability-block--input_querycapabilities-004777f8)), and option 26 (`004d1fd6`), the RAZOR block's THROTTLE row, holds 2, the word `THROTTLE` ([`preferences.md`](preferences.md#the-bindings-are-twelve-bytes-of-the-same-file)). That is not the walker's lever test, `Input_SetThrottleLeverMode` (`00459d20`), which wants the THROTTLE row byte it is handed to be 1 ([`mech-locomotion.md`](mech-locomotion.md)). Everything else is a rate: `IntegrateRateOverTick(Q8(100, axis))` accumulated into `+0x2d7` and clamped the same way. Unlike the walker's throttle lever there is no inverted sense and no clamp to one side of zero.
 
 `Razor_ApplyFlightInput` then copies `+0x2d7` onto `mech+0x290` and sets the `mech+0x93` dirty flag, but **only on a tick the throttle axis moved**. The reverse direction — gauge to flight model — is in `Player_PerFrameCockpitUpdate`, which with the dirty flag clear writes the gauge's value to `mech+0x2d7` as well as `mech+0x290`, gated on the flyer flag. That single line is the only path by which the cockpit slider reaches the flight model.
 
@@ -153,7 +153,7 @@ Nothing clamps to it. Past the ceiling the model builds a push proportional to t
 
 `Razor_MovementTick` has **no swept body test and no terrain clamp on the airframe as a whole**. Six points are checked instead: four against the ground, and all but the fuselage swept forward as a ray one tick's travel long through `Sim_RaycastObjectList`, so a wing catches a building as readily as a hillside. Two of the ground tests sample somewhere other than their own point: [The probes share one transform](#the-probes-share-one-transform).
 
-The components are the game's own, from `STRINGS0` group 14, the flyer damage-readout list the Heads-Down Display takes in place of the walker's group 13 (see [`heads-down-display.md`](../formats/heads-down-display.md)):
+The components are the game's own, from `STRINGS0` group 14, the flyer damage-readout list the Heads-Down Display takes in place of the walker's group 13 (see [`heads-down-display.md`](heads-down-display.md)):
 
 | Component | Name | Probe point | Clearance | Ground test | Reaction |
 | --- | --- | --- | --- | --- | --- |
@@ -208,7 +208,7 @@ A fatal contact sheds wreckage — group 3 at the contact point, and only from t
 
 ## The engine hum
 
-`Razor_MovementTick` closes by pitching the looping engine hum (catalog id `0x2d`, `herceng1.wav`) at `FastMagnitude3D(bodyVelocity) * 16 + 28000` in 16.16, clamped to 16 bits, and re-placing it at the machine. It runs for the player's machine alone and is silenced on death. The hum is started by `Cockpit_PowerUpSound` and is the flyer's, not the walker's, despite the sample's name — see [`../formats/audio.md`](../formats/audio.md).
+`Razor_MovementTick` closes by pitching the looping engine hum (catalog id `0x2d`, `herceng1.wav`) at `FastMagnitude3D(bodyVelocity) * 16 + 28000` in 16.16, clamped to 16 bits, and re-placing it at the machine. It runs for the player's machine alone and is silenced on death. The hum is started by `Cockpit_PowerUpSound` and is the flyer's, not the walker's, despite the sample's name — see [`audio.md`](audio.md).
 
 ## Gun convergence
 

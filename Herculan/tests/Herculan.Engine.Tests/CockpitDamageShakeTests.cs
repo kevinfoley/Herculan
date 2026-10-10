@@ -13,7 +13,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// The cockpit damage shake — the view band's walk, the flash's own timer, and the resources the
-/// flash swaps to. See docs/retail/formats/cockpit-canopy-palette.md, "The damage shake".
+/// flash swaps to. See docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".
 ///
 /// <para>The walk needs no Earthsiege 2 install: it is the original's arithmetic over its own
 /// constants. The palette tests do need one, and are skipped without it — what they pin is the

@@ -31,7 +31,7 @@ namespace Herculan.Engine.Sim;
 ///
 /// <para>Each of the three ends by pushing the new target into the gunsight widget
 /// (<c>Gunsight_SetValues</c>), which draws the HUD target box —
-/// see <see cref="Cockpit.TargetBox"/> and docs/retail/formats/hud-target-indicator.md.</para>
+/// see <see cref="Cockpit.TargetBox"/> and docs/retail/simulation/hud-target-indicator.md.</para>
 /// </summary>
 public sealed class TargetSelection {
 	/// <summary>

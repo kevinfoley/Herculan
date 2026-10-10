@@ -11,7 +11,7 @@ namespace Herculan.Engine.Input;
 /// An input tape driving the mission (<c>--play</c>, <c>--demo</c>): which of its frames is taken this host
 /// frame, the keystrokes and pointer it leaves for the handlers to read, and the live keys that still stop
 /// it. With no tape every member is inert, so callers ask <see cref="Playing"/> rather than whether there is
-/// one. The ticks a replay runs are the host's frame stepper's.
+/// one. The ticks a replay runs are <see cref="SimulationStepper"/>'s.
 /// </summary>
 public sealed class TapePlayback {
 	private readonly SimulatorPreferences _preferences;
@@ -56,10 +56,12 @@ public sealed class TapePlayback {
 	public double Accumulator { get; set; }
 
 	/// <summary>
-	/// The tick of a frame whose own input raised a modal panel. Sim_PollPlayerInput runs the panel from
-	/// inside Sim_MainTick, so that tick finishes once the panel is down, with the frame's SimTickDelta.
+	/// A frame whose own input raised a modal panel, its tick held back. Sim_PollPlayerInput runs the panel
+	/// from inside Sim_MainTick, so that tick finishes once the panel is down, with the frame's SimTickDelta
+	/// and its input: AlertPanel_Enter (00454630) saves the input block and AlertPanel_Leave (004548ac) writes
+	/// it back — docs/retail/formats/tap-input-tape.md#where-it-runs.
 	/// </summary>
-	public short? DeferredTick { get; set; }
+	public InputTape.Frame? DeferredFrame { get; set; }
 
 	/// <summary>
 	/// The pointer as the tape's mouse events leave it, in framebuffer pixels. The live pointer does not
@@ -96,7 +98,7 @@ public sealed class TapePlayback {
 	/// Takes the replay's next frame once it is due, before any handler reads input this host frame, and
 	/// puts its keystrokes and mouse events where those handlers look. At most one frame a host frame goes
 	/// in this way: every frame behind it that carries only held state follows in
-	/// the frame stepper.
+	/// <see cref="SimulationStepper"/>.
 	///
 	/// <para>A frame that presses anything waits for a host frame with nothing down, so every key-down edge
 	/// the tape records is one the handlers see — which also delays it by a host frame when two such frames

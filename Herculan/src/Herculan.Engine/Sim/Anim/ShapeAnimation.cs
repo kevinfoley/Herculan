@@ -287,8 +287,8 @@ public sealed class ShapeAnimation {
 	///
 	/// <para>Every root carries one of its own, and they differ: APOCA's root 0 declares 8 sequences
 	/// over a 12-node tree and its root 4 declares 1 over a 9-node tree, renumbered. This is root 0's
-	/// alone, so a caller that draws another root must check
-	/// <see cref="SharesNodeNumbering"/> first.</para>
+	/// alone, which poses every root once <see cref="Scene.MechDetailRootRemap"/> has put the others
+	/// on its numbering.</para>
 	/// </summary>
 	public static ShapeAnimation? FromModel(DynamixThreeSpaceModel? model) {
 		if (model?.Roots is not { } roots || FirstAnimList(roots) is not { } list) {
@@ -412,50 +412,9 @@ public sealed class ShapeAnimation {
 			sequence?.Priority ?? 0);
 	}
 
-	/// <summary>
-	/// Whether <paramref name="root"/> numbers its animation nodes the way <paramref name="reference"/>
-	/// does — true when every <c>(parent, child)</c> pair in its own relation list appears, with the
-	/// same parent, in the reference's.
-	///
-	/// <para><b>Each root of a multi-root shape carries its own <c>ANAnimList</c>, and in the file a
-	/// node id is only meaningful inside the root that declares it.</b> The original poses every root
-	/// through root 0's pose array, after renumbering the crude roots onto root 0's nodes at load
-	/// (docs/retail/formats/mech-shape-drawing.md, "The pose array is root 0's" and "The crude roots
-	/// are renumbered at load"). Posing one root's geometry, as loaded, with another's transforms
-	/// lands a part on whatever joint happens to share its number.</para>
-	///
-	/// <para>This is the test a caller needs before drawing one root with another's pose: it is
-	/// satisfied when a root merely drops nodes (a dropped id is never reused), and fails when it
-	/// compacts the numbering to close the gap. See docs/retail/formats/mech-shape-drawing.md, "Each root
-	/// numbers its own nodes".</para>
-	/// </summary>
-	public static bool SharesNodeNumbering(TSObject? root, TSObject? reference) {
-		if (root == null || reference == null) {
-			return false;
-		}
-
-		if (ReferenceEquals(root, reference)) {
-			return true;
-		}
-
-		if (FirstAnimList(new[] { root }) is not { } list
-				|| FirstAnimList(new[] { reference }) is not { } referenceList) {
-			return false;
-		}
-
-		var parents = new Dictionary<short, short>();
-		foreach (var relation in referenceList.Relations ?? Array.Empty<Vec2Short>()) {
-			parents[relation.Y] = relation.X;
-		}
-
-		foreach (var relation in list.Relations ?? Array.Empty<Vec2Short>()) {
-			if (!parents.TryGetValue(relation.Y, out short parent) || parent != relation.X) {
-				return false;
-			}
-		}
-
-		return true;
-	}
+	/// <summary>The first <c>ANAnimList</c> in a root, depth first — the root's own.</summary>
+	internal static ANAnimList? FirstAnimList(TSObject? root) =>
+		root == null ? null : FirstAnimList(new[] { root });
 
 	private static ANAnimList? FirstAnimList(IEnumerable<TSObject> chunks) {
 		foreach (var chunk in chunks) {

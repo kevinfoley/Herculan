@@ -6,7 +6,7 @@ namespace Herculan.Engine.Render;
 /// <summary>
 /// The order the original paints terrain cells in — <c>Terrain_DrawVisibleCells</c>
 /// (<c>0046d0a4</c>)'s walk about the viewer's cell, by row or by column as the view's heading
-/// decides, far to near (docs/retail/formats/terrain-drawing.md, "The cell walk"). Each cell's objects are
+/// decides, far to near (docs/retail/rendering/terrain-drawing.md, "The cell walk"). Each cell's objects are
 /// painted straight after its ground and under every later cell, so this is also the order that
 /// decides what paints over a ground shape.
 ///

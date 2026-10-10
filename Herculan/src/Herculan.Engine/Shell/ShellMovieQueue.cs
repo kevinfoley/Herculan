@@ -6,7 +6,7 @@ namespace Herculan.Engine.Shell;
 /// Where a shell movie plays, in canvas pixels: the rect <c>Avi_Play</c> (<c>0041e01c</c>) hands
 /// <c>MoveWindow</c> for the movie's window, as its left, top, width and height. The movie is drawn
 /// stretched to fill it, which the rects' sizes indicate and retail has not been checked for
-/// (docs/retail/shell/screen-layout.md#open).
+/// (docs/retail/shell/movies-and-sound.md#open).
 /// </summary>
 public readonly record struct ShellMovieRect(int X, int Y, int Width, int Height);
 
@@ -20,7 +20,7 @@ public sealed record ShellMovieEntry(int Id, ShellMovieRect Rect, int? Palette, 
 /// <summary>
 /// VSHELL's movie queue, <c>avi.cpp</c>'s ten-entry ring at <c>00485668</c> — which movie each id is,
 /// the rects its callers pass, and <c>Movie_Enqueue</c> (<c>0041e29c</c>). <see cref="ShellMovieRun"/>
-/// plays it out. See docs/retail/shell/screen-layout.md#the-shells-movies.
+/// plays it out. See docs/retail/shell/movies-and-sound.md#the-shells-movies.
 /// </summary>
 public sealed class ShellMovieQueue {
 	/// <summary>How many entries the ring holds.</summary>

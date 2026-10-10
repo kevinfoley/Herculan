@@ -6,7 +6,7 @@ namespace Herculan.Engine.Cockpit;
 /// When the MFD's two status screens, F1 and F5, repaint, and what they show between repaints. In the
 /// original a status screen is pixels left in the cockpit raster by its last paint, so what the player
 /// reads is that paint's subject, values and scramble state until the next one; <see cref="Status"/> and
-/// <see cref="Target"/> are those paints. docs/retail/formats/mfd.md, "The subject", owns the evidence.
+/// <see cref="Target"/> are those paints. docs/retail/simulation/mfd.md, "The subject", owns the evidence.
 ///
 /// <para><b>When a screen paints.</b> <c>MfdDisplay_Update</c> (<c>00446328</c>) runs the current status
 /// screen's update — the subject parked again, then <c>MfdStatusScreen_Update</c> (<c>0043b210</c>) and its

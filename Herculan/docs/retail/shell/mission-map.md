@@ -1,6 +1,6 @@
 # The briefing's mission map
 
-The picture inside the mission tab's `Mission Map` panel in the briefing view ([`screen-layout.md`](screen-layout.md#the-mission-screen)): a banded relief of the mission's ground, a grid, the bases, the squad and its nav path, a camera the six buttons beside it move, and an animated introduction the first time it comes up. It is one C++ object from `shellmap.cpp`, held in `DAT_0046f26c`. **Every address in this doc is in `VSHELL.EXE`.**
+The picture inside the mission tab's `Mission Map` panel in the briefing view ([`mission-screen.md`](mission-screen.md#the-mission-screen)): a banded relief of the mission's ground, a grid, the bases, the squad and its nav path, a camera the six buttons beside it move, and an animated introduction the first time it comes up. It is one C++ object from `shellmap.cpp`, held in `DAT_0046f26c`. **Every address in this doc is in `VSHELL.EXE`.**
 
 ## The object
 
@@ -40,7 +40,7 @@ The vtable at `004721b0`:
 
 In the file, `+0x1a` and `+0x1c` are the first two operations of the structure's out-of-action report ([`../formats/script-dat.md`](../formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps)). The writes reach only this copy, which nothing writes back, so DBSIM still reads the record's own operations; a base no type-2 group names would be shown by its first operation. No retail mission has one under any campaign flags or variant roll: each of the 1,937 GUID-carrying base records in the 62 missions is named by a type-2 group record with no condition, and the only conditional group records that share such a group's GUID, and so [overlay](../formats/msn-mission-file.md#repeated-guids) it, are one each in `C4_09.MSN` and `C4_10.MSN`, of type 2 with no members. The 537 type-2 group records carry `-1` (465), 0 (71) or 1 (1). `+0x1a` is what [shows a base](#bases); no reader of `+0x1c` in the map's copy has been found ([Open](#open)).
 
-**The heights.** `ShellMap_LoadZone` reads the `.dat`'s first two `int32` and discards them, keeps the third as the cell shift (`+0x104`) and the fourth as the height scale, and loads the `.dba` through `HeightGrid_Load` (`00429010`) and `HeightGrid_FromBitmap` (`00428d5b`), the shell's copy of the simulator's zone loader ([`../formats/terrain-heightmap.md`](../formats/terrain-heightmap.md)): each pixel byte is one cell's height, the bitmap's rows running north to south.
+**The heights.** `ShellMap_LoadZone` reads the `.dat`'s first two `int32` and discards them, keeps the third as the cell shift (`+0x104`) and the fourth as the height scale, and loads the `.dba` through `HeightGrid_Load` (`00429010`) and `HeightGrid_FromBitmap` (`00428d5b`), the shell's copy of the simulator's zone loader ([`../formats/zone-terrain.md`](../formats/zone-terrain.md#loading-pipeline)): each pixel byte is one cell's height, the bitmap's rows running north to south.
 
 ### The squad's positions
 
@@ -57,7 +57,7 @@ x = centreX + ((worldX - cameraX) << 7) / altitude
 y = centreY - ((worldY - cameraY) << 7) / altitude
 ```
 
-in integer arithmetic truncating toward zero — the 3Space camera's `(view << 7) / depth` over points whose height is 0. It is verified pixel for pixel against [`Reference/Managment_Mission_Briefing.png`](../../../../Reference/Managment_Mission_Briefing.png): every base and squad icon pixel, every grid line and the bounds outline land where retail's do.
+in integer arithmetic truncating toward zero — the 3Space camera's `(view << 7) / depth` over points whose height is 0. It is verified pixel for pixel against `Reference/Managment_Mission_Briefing.png`: every base and squad icon pixel, every grid line and the bounds outline land where retail's do.
 
 Three camera positions are derived at construction:
 
@@ -73,7 +73,7 @@ The squad view takes the first `+0x80` slots — the count `player.mec` gives �
 
 ### The six buttons
 
-The six map buttons ([`screen-layout.md`](screen-layout.md#the-mission-screen)) are `Mission_OnMapUp` (`00444ee7`) to `Mission_OnMapZoomOut` (`004452f2`), one each; each calls its method and then the paint, one to four times by its auto-repeat count ([`screen-layout.md`](screen-layout.md#the-three-views)).
+The six map buttons ([`mission-screen.md`](mission-screen.md#the-mission-screen)) are `Mission_OnMapUp` (`00444ee7`) to `Mission_OnMapZoomOut` (`004452f2`), one each; each calls its method and then the paint, one to four times by its auto-repeat count ([`mission-screen.md`](mission-screen.md#the-three-views)).
 
 | Button | Art | Method | Effect |
 |---|---|---|---|
@@ -104,7 +104,7 @@ Nothing re-derives it when the intro sets the altitude, so until the first zoom 
 
 A height becomes a colour as `min(height, 0x7f) / 5 + 0xd1` — the divisor is `0x80 / 0x18`, so the 128 heights fall in 26 steps, palette indices `0xd1` to `0xea`, and each briefing palette `br_w1`-`br_w5` carries its own ramp there. The rows run from the highest cell row down, each drawn as the band between its row and the one above; each cell is two triangles, `(left, bottom)`-`(left, top)`-`(right, top)` and `(left, bottom)`-`(right, top)`-`(right, bottom)`, whose corners take the colours of the heights at `(x, y)`, `(x, y + 1)`, `(x + 1, y + 1)` and `(x + 1, y)`. The last row and column of cells are never drawn, so the bitmap's right and bottom `perCell` pixels stay 0. A cell off the grid has all four corners at 0. A cell on the grid's last row reads the row above it past the end of the height array.
 
-**The triangles are banded, not shaded** — `Gfx_BandedTriangle` (`00457aa8`), the 8-bit renderer's "Gouraud" fill. With its corners' colours `high >= mid >= low`, the edge from the high corner to the low one is cut into `high - low` steps (`point = from + (to - from) * i / steps`, truncating), and so are the two edges through the middle corner, `high - mid` and `mid - low` steps. The band between steps `i` and `i + 1` is a quadrilateral filled flat with `high - i` through the polygon filler (`Gfx_FillPolygon`, `00455798`; its span rules are in [`../polygon-fill.md`](../polygon-fill.md#scan-conversion)), closed along the first edge through the middle corner for the upper bands and the second for the lower, which are coloured `mid - i`. A triangle whose corners share a colour is filled flat; one with two corners on one pixel draws nothing.
+**The triangles are banded, not shaded** — `Gfx_BandedTriangle` (`00457aa8`), the 8-bit renderer's "Gouraud" fill. With its corners' colours `high >= mid >= low`, the edge from the high corner to the low one is cut into `high - low` steps (`point = from + (to - from) * i / steps`, truncating), and so are the two edges through the middle corner, `high - mid` and `mid - low` steps. The band between steps `i` and `i + 1` is a quadrilateral filled flat with `high - i` through the polygon filler (`Gfx_FillPolygon`, `00455798`; its span rules are in [`../rendering/polygon-fill.md`](../rendering/polygon-fill.md#scan-conversion)), closed along the first edge through the middle corner for the upper bands and the second for the lower, which are coloured `mid - i`. A triangle whose corners share a colour is filled flat; one with two corners on one pixel draws nothing.
 
 ## A paint
 
@@ -177,7 +177,7 @@ The map object keeps its state, so the next time the briefing is shown the loop 
 
 ## Open
 
-- **Open:** what the two `maplabel.str` groups the constructor reads are for. None of the paint passes read here draws them.
-- **Open:** the texel stepping of the textured quad (`Bitmap_BlitRotatedScaled`, `00458f68`) and the scaled blit (`Bitmap_BlitScaledClipDispatch`, `00458e78`). Against the retail capture the relief's bands differ along their edges by a pixel.
-- **Open:** whether a click that skips the intro also reaches the widget under it afterwards. The window procedure queues the button's events while the loop runs, and nothing in the loop runs the shell's event queue (`Shell_PumpEvents` (`0046814c`)), so they are still queued when it ends; what the main loop's next pump delivers them to is unread.
-- **Open:** whether anything reads the side the loader writes at a base's `+0x1c` in the map's copy. Neither `es2_fieldscan.py` over `00423f43`-`00427b80` nor a grep for `map+0x62` finds one, and the fieldscan also misses the loader's own indexed write, so it does not settle indexed reads.
+- **Deferred:** what the two `maplabel.str` groups the constructor reads are for. None of the paint passes read here draws them.
+- **Deferred:** the texel stepping of the textured quad (`Bitmap_BlitRotatedScaled`, `00458f68`) and the scaled blit (`Bitmap_BlitScaledClipDispatch`, `00458e78`). Against the retail capture the relief's bands differ along their edges by a pixel.
+- **Deferred:** whether a click that skips the intro also reaches the widget under it afterwards. The window procedure queues the button's events while the loop runs, and nothing in the loop runs the shell's event queue (`Shell_PumpEvents` (`0046814c`)), so they are still queued when it ends; what the main loop's next pump delivers them to is unread.
+- **Deferred:** whether anything reads the side the loader writes at a base's `+0x1c` in the map's copy. Neither `es2_fieldscan.py` over `00423f43`-`00427b80` nor a grep for `map+0x62` finds one, and the fieldscan also misses the loader's own indexed write, so it does not settle indexed reads.

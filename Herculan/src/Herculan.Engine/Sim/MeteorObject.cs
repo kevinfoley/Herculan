@@ -91,7 +91,7 @@ public sealed class MeteorObject {
 	/// behaviour of the original and the reason the pod's arrival point is picked without the object
 	/// test — see <see cref="Deployment.PickPointNearPlayer"/>.
 	///
-	/// <para>Caught, not hurt: <see cref="SimWorld.ExplosiveBlastSweep"/> answers on range alone, so a
+	/// <para>Caught, not hurt: <see cref="HitTests.ExplosiveBlastSweep"/> answers on range alone, so a
 	/// machine whose shields swallow the blast still stops the delivery.</para>
 	/// </summary>
 	public bool BlastObstructed { get; private set; }
@@ -180,7 +180,7 @@ public sealed class MeteorObject {
 
 				// The pod passes no attacker, so anything it kills on the way down is nobody's kill. The
 				// answer is "was anything in range", not "was anything hurt" -- see BlastObstructed.
-				BlastObstructed = world.ExplosiveBlastSweep(
+				BlastObstructed = HitTests.ExplosiveBlastSweep(world, 
 					next, BlastRadius, BlastDamage, attacker: null, excluded: null);
 			}
 

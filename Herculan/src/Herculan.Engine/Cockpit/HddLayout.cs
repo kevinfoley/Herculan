@@ -40,7 +40,7 @@ public enum HddDamageView {
 /// The Heads-Down Display's geometry, decoded from <c>HddDisplay_Ctor</c> (<c>00448cc8</c>, the <c>HDDisplay</c>
 /// constructor at <c>.GAU</c> offset 1212) and the two page constructors it builds —
 /// <c>HddCommandScreen_Ctor</c> (<c>0044c264</c>) for the command display and <c>HddDamageScreen_Ctor</c> (<c>0045079c</c>) for the damage detail. See
-/// docs/retail/formats/cockpit-views.md for the pan that reaches this view and
+/// docs/retail/simulation/cockpit-views.md for the pan that reaches this view and
 /// <see cref="MfdLayout"/> for the closest precedent.
 /// </summary>
 /// <remarks>
@@ -602,7 +602,7 @@ public sealed class HddLayout {
 	///
 	/// <para>A row's name is <b>not</b> this list read top to bottom: rows follow the <c>.PDG</c>
 	/// view's own region order and each region's id indexes here, which is why a pilotable chassis's internal page
-	/// lists its systems 0,1,2,5,6,7,8,3,4,9 (other chassis differ — docs/retail/formats/heads-down-display.md#damage-detail--page-1).</para>
+	/// lists its systems 0,1,2,5,6,7,8,3,4,9 (other chassis differ — docs/retail/simulation/heads-down-display.md#damage-detail--page-1).</para>
 	/// </summary>
 	public static IReadOnlyList<StringFile.Entry> ComponentNames(StringFile? strings, HddDamageView view,
 			bool flyer = false) =>

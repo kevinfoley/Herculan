@@ -6,7 +6,7 @@ namespace Herculan.Engine.Audio;
 /// <summary>
 /// Music from the audio tracks of a disc image (<see cref="DiscImage"/>), for a player whose disc is an image
 /// rather than a CD in a drive. <b>This engine's own</b>; retail plays only a disc, through MCI
-/// (docs/retail/formats/audio.md, "CD audio").
+/// (docs/retail/simulation/audio.md, "CD audio").
 ///
 /// <para>An image opened through a cue sheet has the disc's real tracks. A raw image without one keeps no
 /// table of contents, and <see cref="DiscImage"/> hands back all its audio as one track whose boundaries are

@@ -34,8 +34,8 @@ public sealed class ShellCampaignLoopTests : IDisposable {
 	}
 
 	/// <summary>
-	/// A training launch writes its handoff into <c>data\</c>, adopts the TRAINEE career as the game in progress, and
-	/// hands back the launch rather than closing anything.
+	/// A training career is the game in progress as it starts, before its mission loads; the launch writes its handoff
+	/// into <c>data\</c>, adopts the same career again, and hands back the launch rather than closing anything.
 	/// </summary>
 	[Fact]
 	public void ATrainingLaunchAdoptsItsCareerAndReturnsTheHandoff() {
@@ -43,18 +43,20 @@ public sealed class ShellCampaignLoopTests : IDisposable {
 			return;
 		}
 
-		var launch = loop.LaunchTraining(StrikeTrainingRow, "test");
+		Assert.True(loop.StartTraining(StrikeTrainingRow, "test"));
+		Assert.True(game.InProgress);
+		var launch = loop.LaunchTraining("test");
 
 		Assert.NotNull(launch);
 		Assert.Equal(ShellWorkingFiles.DataDirectory(_root), launch.DataDirectory);
 		Assert.True(File.Exists(launch.ScriptPath));
-		Assert.True(game.InProgress);
-		Assert.Same(game.LoadedGame, Assert.Single(_adopted).Game);
+		Assert.Equal(2, _adopted.Count);
+		Assert.All(_adopted, adopted => Assert.Same(game.LoadedGame, adopted.Game));
 	}
 
 	/// <summary>
-	/// ACCEPT's new career starts on stage 1's first mission, with its working files in <c>data\</c>, and is the
-	/// game in progress — SAVE ungated — without anything having been saved.
+	/// ACCEPT's new career starts on stage 1's first mission and is the game in progress — SAVE ungated — before its
+	/// mission loads; the load writes its working files into <c>data\</c>, without anything having been saved.
 	/// </summary>
 	[Fact]
 	public void ANewCareerIsAdoptedOnTheFirstMission() {
@@ -63,13 +65,28 @@ public sealed class ShellCampaignLoopTests : IDisposable {
 		}
 
 		Assert.True(loop.StartCampaign("TESTER", 1));
-
 		Assert.True(game.InProgress);
 		Assert.Equal(1, game.CampaignStage);
 		Assert.Equal(0, game.MissionInStage);
+
+		Assert.True(loop.LoadCareerMission());
 		Assert.True(File.Exists(game.WorkingFiles.Script));
-		Assert.Single(_adopted);
+		Assert.Equal(2, _adopted.Count);
 		Assert.Empty(Directory.GetFiles(ShellSaveSlots.Directory(_root), "GAME_*.SAV"));
+	}
+
+	/// <summary>The DEBUG dialog's typed mission loads in the position's place, the position left as it was.</summary>
+	[Fact]
+	public void ATypedMissionLoadsInThePositionsPlace() {
+		if (Loop(ShellCampaignMode.Campaign) is not var (loop, game)) {
+			return;
+		}
+
+		Assert.True(loop.StartCampaign("TESTER", 1));
+		Assert.Equal(@"MSN\C1_01.MSN", loop.CareerMissionPath(), ignoreCase: true);
+		Assert.True(loop.LoadCareerMission(@"msn\c1_03.msn"));
+		Assert.Equal(0, game.MissionInStage);
+		Assert.False(loop.LoadCareerMission(@"msn\nosuch.msn"));
 	}
 
 	/// <summary>A game saved to a slot loads back from it, and the load says which slot it read.</summary>
@@ -80,14 +97,15 @@ public sealed class ShellCampaignLoopTests : IDisposable {
 		}
 
 		Assert.True(loop.StartCampaign("TESTER", 1));
+		Assert.True(loop.LoadCareerMission());
 		var saved = game.Save(3, " 4. TESTER");
 		Assert.NotNull(saved);
 
 		Assert.True(loop.LoadSlot(3));
 
 		Assert.Equal(saved.FileName, Assert.Single(_loaded).FileName);
-		Assert.Equal(2, _adopted.Count);
-		Assert.Same(game.LoadedGame, _adopted[1].Game);
+		Assert.Equal(3, _adopted.Count);
+		Assert.Same(game.LoadedGame, _adopted[2].Game);
 	}
 
 	/// <summary>
@@ -99,7 +117,8 @@ public sealed class ShellCampaignLoopTests : IDisposable {
 			return;
 		}
 
-		Assert.NotNull(loop.LaunchTraining(StrikeTrainingRow, "test"));
+		Assert.True(loop.StartTraining(StrikeTrainingRow, "test"));
+		Assert.NotNull(loop.LaunchTraining("test"));
 		game.AutoSave();
 
 		Assert.True(loop.LoadSlot(GameInProgress.CurrentGameSlot));

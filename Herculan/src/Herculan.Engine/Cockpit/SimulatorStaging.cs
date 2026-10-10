@@ -173,7 +173,7 @@ public sealed class SimulatorStaging(StagedStart options, StagedScreenshot captu
 
 		_statusAlertPending = false;
 		if (options.StatusAlertStatus >= 0) {
-			panels.OpenStatusAlert((MissionStatus)options.StatusAlertStatus, world.Objectives);
+			panels.OpenStatusAlert((MissionStatus)options.StatusAlertStatus, world.Mission.Objectives);
 		} else {
 			panels.RaiseStatusAlertForQuit();
 		}
@@ -218,7 +218,7 @@ public sealed class SimulatorStaging(StagedStart options, StagedScreenshot captu
 		// --impact waits for a slot of the effect light field to be lit, which is the one moment the
 		// dynamic lights are on screen at all. See EffectLightSelection.
 		bool lightWanted = capture.WaitForEffectLight
-			&& !world.EffectLights.Slots.Any(slot => slot.IsLive);
+			&& !world.Effects.Lights.Slots.Any(slot => slot.IsLive);
 
 		bool transmissionWanted = capture.WaitForTransmission && squadComm.Transmission is not { ShowName: true };
 

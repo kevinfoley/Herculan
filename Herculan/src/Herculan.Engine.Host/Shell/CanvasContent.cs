@@ -71,12 +71,20 @@ sealed class CanvasContent {
 		}
 
 		var art = _canvas.Art;
+		var lit = _pointer.Lit;
 		_surface.Clear();
 
-		// REPLAY MISSION? stands on a picture of the backdrop over the whole display, which is what the
-		// renderer draws beneath an empty content, so the dialog is all there is to paint.
+		// REPLAY MISSION? and the DEBUG dialog each stand on a picture of the backdrop over the whole display, which
+		// is what the renderer draws beneath an empty content, so the dialog is all there is to paint.
+		if (_dialogs.MissionName.IsOpen) {
+			_dialogs.MissionName.Paint(_surface, art.Text, art.Sprites,
+				focused: _pointer.Focused is { Kind: ShellWidgetKind.MissionNameField }, lit);
+			_canvas.SetContent(_surface);
+			return;
+		}
+
 		if (_dialogs.Replay.IsOpen) {
-			_dialogs.Replay.Paint(_surface, art.Text, art.Sprites);
+			_dialogs.Replay.Paint(_surface, art.Text, art.Sprites, lit);
 			_canvas.SetContent(_surface);
 			return;
 		}
@@ -93,17 +101,17 @@ sealed class CanvasContent {
 		switch (_screen.SelectedTab) {
 			case ShellScreen.MainMenuTab:
 				_menu.Paint(_surface, art.Text, art.Sprites,
-					registrationFocused: _pointer.Focused is { Kind: ShellWidgetKind.RegistrationField });
+					registrationFocused: _pointer.Focused is { Kind: ShellWidgetKind.RegistrationField }, lit);
 				break;
 			case ShellScreen.SaveTab:
 				_save.Paint(_surface, art.Text, art.Sprites,
-					_pointer.Focused is { Kind: ShellWidgetKind.SaveRow } focused ? focused.Index : null);
+					_pointer.Focused is { Kind: ShellWidgetKind.SaveRow } focused ? focused.Index : null, lit);
 				break;
 			case ShellScreen.MissionTab:
-				_mission.Paint(_surface, art.Text, art.Sprites, _pointer.Lit);
+				_mission.Paint(_surface, art.Text, art.Sprites, lit);
 				break;
 			default:
-				painted = _hangar.Paint(_screen.SelectedTab, _surface, art.Text, art.Sprites);
+				painted = _hangar.Paint(_screen.SelectedTab, _surface, art.Text, art.Sprites, lit);
 				break;
 		}
 
@@ -112,7 +120,7 @@ sealed class CanvasContent {
 			return;
 		}
 
-		_dialogs.PaintOver(_surface, art.Text, art.Sprites);
+		_dialogs.PaintOver(_surface, art.Text, art.Sprites, lit);
 		_canvas.SetContent(_surface);
 	}
 }

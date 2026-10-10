@@ -6,7 +6,7 @@ What a fired beam looks like. The firing side — trigger, dispatch, shot record
 
 `Bullet_FireBurst` (`0040bf74`) resolves the hit, then builds the visual from the already-shortened distance:
 
-1. `Sound_PlayAt(0x0b, muzzlePoint)` — catalog id `0x0b` is `laser1.wav`, placed by distance and bearing. See [`../formats/audio.md`](../formats/audio.md).
+1. `Sound_PlayAt(0x0b, muzzlePoint)` — catalog id `0x0b` is `laser1.wav`, placed by distance and bearing. See [`audio.md`](audio.md).
 2. The far end is rebuilt from the shot's own frame as `transform(0, travelled, 0)`, where `travelled` is the raycast's distance or the weapon's full range when it struck nothing.
 3. One tracer object per **5000-unit** span, allocated from the pool at `g_ProjectilePool` (`004a9746`), plus a final one for the remainder. The loop advances the shot transform's translation by a 5000-unit step each iteration and writes it back, so each tracer spans start→start+step.
 4. Subtype ids **1 and 7** (ELF, ELF2) skip the span loop entirely and spawn one object of a different shape — see [ELF](#elf-and-elf2--the-jagged-branch).
@@ -52,7 +52,7 @@ No z is written — the vertex struct's `+8` is left untouched.
 
 ### The fill is a plain texture copy
 
-A beam uses `Raster_DrawPolygon`'s **mode 0 with the transparency argument zero**, which is `Raster_SpanTextured`'s opaque half: the palette byte at `atlasPage[v][u]` goes to the framebuffer unchanged. The non-zero form is a colour-key skip of index 0, not blending. **There is no alpha, no shade level and no colour lookup anywhere in this path.** The mode table is in [`../formats/dts-texture-binding.md`](../formats/dts-texture-binding.md#the-frame-descriptor-table-and-the-span-routines-dbsim).
+A beam uses `Raster_DrawPolygon`'s **mode 0 with the transparency argument zero**, which is `Raster_SpanTextured`'s opaque half: the palette byte at `atlasPage[v][u]` goes to the framebuffer unchanged. The non-zero form is a colour-key skip of index 0, not blending. **There is no alpha, no shade level and no colour lookup anywhere in this path.** The mode table is in [`../rendering/dts-texture-binding.md`](../rendering/dts-texture-binding.md#the-frame-descriptor-table-and-the-span-routines-dbsim).
 
 ### `BEAM.DAT`'s colour index is the fill brush, and only the jagged path uses it
 
@@ -73,9 +73,9 @@ So every retail straight beam draws the identical orange-to-white ribbon and is 
 
 ### The paint uses the polygon renderers' project, clip and fill chain
 
-The paint loop is not beam code past its set-up. It calls `Poly_ProjectIndexedVertices`, then `Poly_ClipRingToNearPlane` if a vertex fell behind the near plane, then `PolyFill_Fill` — the flat-poly chain described in [`../formats/dts-texture-binding.md`](../formats/dts-texture-binding.md#the-projection-clip-and-fill-chain-dbsim). The beam draw feeds it through the globals that chain reads, published up front: `DAT_006c6970` = point array, `DAT_006c6974` = point count, `DAT_006c6976` = the vertex-index list, and per quad `DAT_006c6968` = 4 vertices with `DAT_006c696a` = `k << (3 - jaggedFlag)` as the offset into that list. `jaggedFlag` is 1 on every object that reaches here, so the shift is always 2 and the other value is unreachable.
+The paint loop is not beam code past its set-up. It calls `Poly_ProjectIndexedVertices`, then `Poly_ClipRingToNearPlane` if a vertex fell behind the near plane, then `PolyFill_Fill` — the flat-poly chain described in [`../rendering/dts-texture-binding.md`](../rendering/dts-texture-binding.md#the-projection-clip-and-fill-chain-dbsim). The beam draw feeds it through the globals that chain reads, published up front: `DAT_006c6970` = point array, `DAT_006c6974` = point count, `DAT_006c6976` = the vertex-index list, and per quad `DAT_006c6968` = 4 vertices with `DAT_006c696a` = `k << (3 - jaggedFlag)` as the offset into that list. `jaggedFlag` is 1 on every object that reaches here, so the shift is always 2 and the other value is unreachable.
 
-The fill is winding-agnostic — `Raster_DrawPolygonEitherWinding` (`004841af`) measures the signed area and hands the other winding to `Raster_DrawPolygonReversed` (`00484116`), [`../polygon-fill.md`](../polygon-fill.md#filling-a-polygon) — so the ribbon draws from either side. The index list is the 120-entry table at `DAT_004a9796`, built by `Beam_LoadResourceTables` as `(i >> 1) + {1, 0, 1, 2}[i & 3]` over the **`int16`** table at `00498640`. Read four entries from `4k`, that is `points[2k+1]`, `points[2k]`, `points[2k+2]`, `points[2k+3]` — a wound quad spanning nodes `k` and `k+1`.
+The fill is winding-agnostic — `Raster_DrawPolygonEitherWinding` (`004841af`) measures the signed area and hands the other winding to `Raster_DrawPolygonReversed` (`00484116`), [`../rendering/polygon-fill.md`](../rendering/polygon-fill.md#filling-a-polygon) — so the ribbon draws from either side. The index list is the 120-entry table at `DAT_004a9796`, built by `Beam_LoadResourceTables` as `(i >> 1) + {1, 0, 1, 2}[i & 3]` over the **`int16`** table at `00498640`. Read four entries from `4k`, that is `points[2k+1]`, `points[2k]`, `points[2k+2]`, `points[2k+3]` — a wound quad spanning nodes `k` and `k+1`.
 
 120 entries is 30 quads. Retail never approaches it: the longer-ranged of the two is `ELF` at 20000 units (see [`weapons-dat-sim.md`](../formats/weapons-dat-sim.md)), which is 20.
 

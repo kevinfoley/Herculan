@@ -94,7 +94,7 @@ internal sealed class HddMapPainter {
 		var markers = state.Command.Plotted;
 		for (int i = 0; i < markers.Count; i++) {
 			// The selected pilot's marker blinks on the display's own half-second toggle — see
-			// "The selected pilot's marker" in docs/retail/formats/heads-down-display.md.
+			// "The selected pilot's marker" in docs/retail/simulation/heads-down-display.md.
 			if (!state.Command.Blink && markers[i].PilotSlot == state.Command.SelectedPilot
 				&& state.Command.SelectedPilot >= 0) {
 				continue;

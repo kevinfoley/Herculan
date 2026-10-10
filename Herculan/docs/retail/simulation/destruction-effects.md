@@ -102,7 +102,7 @@ Gravity is `-0x20` everywhere but theater 4, the Moon — the test is `CMP word 
 `Component_DestroyAndCascade` (`0040d434`) is the whole of what a lost machine component puts on screen. The component's `.DMG` record ([`../formats/dmg-damage-file.md`](../formats/dmg-damage-file.md#the-piece-record)) says what it does; what brings it there is [`component-damage.md`](component-damage.md). In order:
 
 1. **Fire**, picked by the record's flags — [Who catches fire](#who-catches-fire).
-2. **The shape**: a `+0x03` that is not `-1` steps that sequence of the machine's shape to cell 2, its blank cell ([`../formats/mech-shape-drawing.md`](../formats/mech-shape-drawing.md#a-destroyed-component-hides-its-own-geometry)).
+2. **The shape**: a `+0x03` that is not `-1` steps that sequence of the machine's shape to cell 2, its blank cell ([`../rendering/mech-shape-drawing.md`](../rendering/mech-shape-drawing.md#a-destroyed-component-hides-its-own-geometry)).
 3. **An explosion** of `EXPLOS.DAT` type 10, or `0x11` when the flags' bit 2 is set, at the component's anchor: its cluster's bounding-sphere centre, through that cluster's node frame composed with the machine's, or the machine's own frame when no cluster names the component.
 4. **Debris**, the `+0x02` group or 2, thrown from that same frame ([Spawn sites](#spawn-sites)).
 
@@ -150,7 +150,7 @@ The three squares are 32-bit `IMUL`s and the sum wraps. Distance is in world uni
 
 Two sites, and they light different shapes:
 
-- **`Component_DestroyAndCascade`**, for a component whose `.DMG` `+0x03` byte is not `-1` (the same byte that drives its shape sequence — see [`../formats/mech-shape-drawing.md`](../formats/mech-shape-drawing.md)), and only while the cascade's latch is clear ([above](#a-machines-component)). The `.DMG` flags byte's (`+0x05`, [bits](../formats/dmg-damage-file.md#the-piece-record)) bit 1 releases every fire already on the machine and lights **shape 0** in their place — the machine going up as a whole. With bit 1 clear, bit 3 lights **shape 2** on that component's own cluster and leaves what is already alight.
+- **`Component_DestroyAndCascade`**, for a component whose `.DMG` `+0x03` byte is not `-1` (the same byte that drives its shape sequence — see [`../rendering/mech-shape-drawing.md`](../rendering/mech-shape-drawing.md)), and only while the cascade's latch is clear ([above](#a-machines-component)). The `.DMG` flags byte's (`+0x05`, [bits](../formats/dmg-damage-file.md#the-piece-record)) bit 1 releases every fire already on the machine and lights **shape 0** in their place — the machine going up as a whole. With bit 1 clear, bit 3 lights **shape 2** on that component's own cluster and leaves what is already alight.
 - **`Base_DeathSequenceTick`**, at the last stage of a collapsing part — see below.
 
 ## A structure coming down
@@ -185,7 +185,7 @@ The sequence is picked by the component record's `+4`, or by the type's own `+0x
 
 ## EFFECTS DETAIL
 
-The preferences row of that name is `prefs.cfg` byte 11, `Sound_DetailSetting` (`004d1fc7`), 0 to 2 ([`preferences.md`](preferences.md#what-each-byte-is)). Four instructions read it by its absolute address: the preferences panel's readout, the sound throttle ([`../formats/audio.md`](../formats/audio.md#the-play-request-gate)), and these two.
+The preferences row of that name is `prefs.cfg` byte 11, `Sound_DetailSetting` (`004d1fc7`), 0 to 2 ([`preferences.md`](preferences.md#what-each-byte-is)). Four instructions read it by its absolute address: the preferences panel's readout, the sound throttle ([`audio.md`](audio.md#the-play-request-gate)), and these two.
 
 - **`Base_DeathSequenceTick`** reads it once on entry. A smoke stage scatters its explosion at 2 on every stage, at 1 on the odd-numbered stages only, and at 0 never. **The 300 reload is inside the same test**, so a stage that scatters nothing leaves its timer at zero and the next tick takes the stage after it: at 0 a part goes from its first hit to its collapse in as many ticks as it has stages, and at 1 each even stage passes in one. The collapse, the debris, the fire and the stage-4 cascade are not gated.
 - **`Debris_TickUpdate`** throws a bursting piece's child group only when the setting is non-zero. The piece's own `EXPLOS.DAT` effect goes off either way, above the test; at 0 there is simply no second generation.

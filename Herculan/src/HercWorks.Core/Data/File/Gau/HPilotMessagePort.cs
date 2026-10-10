@@ -17,7 +17,7 @@ public class HPilotMessagePort : WidgetBase {
 	/// <summary>
 	/// Content offset 1664, the <c>int32</c> immediately before the rect: the training lift, subtracted
 	/// (coordinate-shifted) from both y edges only when <c>Gau_BuildCockpitWidgets</c> (<c>00431bf8</c>)
-	/// builds the training port. Values and derivation: docs/retail/formats/cockpit-messages.md#the-training-port.
+	/// builds the training port. Values and derivation: docs/retail/simulation/cockpit-messages.md#the-training-port.
 	/// </summary>
 	public int TrainingLift { get; set; }
 }

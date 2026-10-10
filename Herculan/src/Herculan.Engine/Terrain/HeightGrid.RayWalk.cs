@@ -12,7 +12,7 @@ namespace Herculan.Engine.Terrain;
 /// ray, reports the ground wherever the segment is at or below the surface. Mode 1
 /// (<see cref="RayWalkVolume"/>) instead asks whether the face the segment is crossing is one
 /// movement can pass — a <b>slope test</b>, so a segment sliding along rolling ground reports
-/// nothing and only a wall stops it. See docs/retail/formats/terrain-heightmap.md ("Mode 1 — the slope
+/// nothing and only a wall stops it. See docs/retail/simulation/terrain-heightmap.md ("Mode 1 — the slope
 /// walk").</para>
 ///
 /// <para>The setup — the delta clamp, the four slopes, the octant code and the cell stepping — is
@@ -32,16 +32,16 @@ public sealed partial class HeightGrid {
 	/// exact point solved for, by intersecting the segment with the cell's own triangle planes
 	/// (<see cref="SurfaceIntersection"/>).</para>
 	///
-	/// <para>Note what the very first iteration adds: it also height-queries the <i>start</i> point,
-	/// so a ray that begins underground is a hit immediately rather than one that has to reach a
-	/// boundary first.</para>
+	/// <para>The start point is height-queried only when the last step is also the first, the whole
+	/// segment lying in one cell.</para>
 	///
 	/// <para>Returns false — no hit — for a segment starting outside the grid, or one that walks off
 	/// its edge, exactly as the original does.</para>
 	/// </summary>
+	/// <param name="rules">Which release's handling of a crossing the solve cannot place, and the tweak — see <see cref="ThinRayRules"/>.</param>
 	/// <param name="hitPoint">Where the segment met the ground; only meaningful when this returns true.</param>
-	public bool RayWalk(Vec3i start, Vec3i end, out Vec3i hitPoint) =>
-		Walk(start, end, volume: false, out hitPoint);
+	public bool RayWalk(Vec3i start, Vec3i end, ThinRayRules rules, out Vec3i hitPoint) =>
+		Walk(start, end, volume: false, rules, out hitPoint);
 
 	/// <summary>
 	/// <c>Terrain_RayWalk</c>'s mode 1, the slope walk (<c>Terrain_FaceBlocksAt</c>
@@ -57,9 +57,9 @@ public sealed partial class HeightGrid {
 	/// <c>y</c>.
 	/// </param>
 	public bool RayWalkVolume(Vec3i start, Vec3i end, out Vec3i hitPoint) =>
-		Walk(start, end, volume: true, out hitPoint);
+		Walk(start, end, volume: true, default, out hitPoint);
 
-	private bool Walk(Vec3i start, Vec3i end, bool volume, out Vec3i hitPoint) {
+	private bool Walk(Vec3i start, Vec3i end, bool volume, ThinRayRules rules, out Vec3i hitPoint) {
 		hitPoint = default;
 
 		// Halve the delta until every component fits a signed short's worth of magnitude. Only the
@@ -103,8 +103,8 @@ public sealed partial class HeightGrid {
 
 		// Six of this function's multiplies are compiled as a plain 32-bit imul/sar pair rather than
 		// through Math_Q16Multiply, so they truncate where the rest do not. All six sit in the
-		// octant-2 and octant-3 arms. It only diverges at grazing angles, where a slope is large
-		// enough for the product to leave 32 bits, but it is the original's own arithmetic and is
+		// octant-2 and octant-3 arms, and only the three giving a height can leave 32 bits, on a
+		// step that climbs or falls 32768 units or more; it is the original's own arithmetic and is
 		// reproduced rather than tidied up.
 		bool truncateMajor = octant == 3;
 		bool truncateMinor = octant is 2 or 3;
@@ -271,14 +271,16 @@ public sealed partial class HeightGrid {
 					return true;
 				}
 			} else if (!lastStep) {
-				if (ExitBelowSurface(cellX, cellY, exitX, exitY, exitZ, edge)) {
-					return Resolve(cellX, cellY, curX, curY, curZ, exitX, exitY, exitZ,
-						exitX, exitY, exitZ, out hitPoint);
+				// A crossing v1.10's solve cannot place walks on into the next cell.
+				if (ExitBelowSurface(cellX, cellY, exitX, exitY, exitZ, edge)
+						&& Resolve(cellX, cellY, curX, curY, curZ, exitX, exitY, exitZ, rules, out hitPoint)) {
+					return true;
 				}
 			} else {
+				// v1.10 ends the walk on an endpoint crossing it cannot place, without going on to
+				// test the start.
 				if (exitZ <= HeightAtWorld(exitX, exitY)) {
-					return Resolve(cellX, cellY, curX, curY, curZ, exitX, exitY, exitZ,
-						exitX, exitY, exitZ, out hitPoint);
+					return Resolve(cellX, cellY, curX, curY, curZ, exitX, exitY, exitZ, rules, out hitPoint);
 				}
 
 				// Past the first step the segment's own start was already cleared by the step before.
@@ -287,8 +289,7 @@ public sealed partial class HeightGrid {
 				}
 
 				if (curZ <= HeightAtWorld(curX, curY)) {
-					return Resolve(cellX, cellY, curX, curY, curZ, exitX, exitY, exitZ,
-						curX, curY, curZ, out hitPoint);
+					return Resolve(cellX, cellY, curX, curY, curZ, exitX, exitY, exitZ, rules, out hitPoint);
 				}
 			}
 
@@ -307,19 +308,58 @@ public sealed partial class HeightGrid {
 	}
 
 	/// <summary>
-	/// Reports the hit the walk has just found, refined to the cell's triangle planes.
+	/// Refines a crossing the walk has just found to the cell's triangle planes, and says whether it
+	/// is a hit.
 	///
-	/// <para>The fallback is a deviation, and the only one here. When the plane solve finds nothing
-	/// the original returns "hit" with its output <b>left unwritten</b> — its caller then measures a
-	/// distance to whatever was on the stack. Rather than reproduce reading uninitialised memory,
-	/// the walk's own point for that step stands in. It is reachable only when a cell reports a
-	/// crossing that neither of its triangles then confirms.</para>
+	/// <para>When the plane solve finds nothing, v1.10 has no hit (see
+	/// <see cref="ThinRayRules.HitNeedsSurfacePoint"/>). v1.0 has a hit with its output <b>left
+	/// unwritten</b>, so its weapon-fire caller measures a distance to whatever an earlier call left
+	/// on the stack. Uninitialised memory cannot be reproduced, so the point where the step meets
+	/// the ground stands in (<see cref="GroundCrossing"/>). That point is not retail, and is listed in
+	/// KNOWN_ISSUES.md; the line-of-sight callers read only the hit, which is v1.0's.</para>
 	/// </summary>
 	private bool Resolve(int cellX, int cellY, int fromX, int fromY, int fromZ, int toX, int toY, int toZ,
-			int fallbackX, int fallbackY, int fallbackZ, out Vec3i hitPoint) {
-		hitPoint = SurfaceIntersection(cellX, cellY, fromX, fromY, fromZ, toX, toY, toZ)
-			?? new Vec3i(fallbackX, fallbackY, fallbackZ);
+			ThinRayRules rules, out Vec3i hitPoint) {
+		if (SurfaceIntersection(cellX, cellY, fromX, fromY, fromZ, toX, toY, toZ, rules.ExactFarPlane)
+				is { } point) {
+			hitPoint = point;
+			return true;
+		}
+
+		if (rules.HitNeedsSurfacePoint) {
+			hitPoint = default;
+			return false;
+		}
+
+		hitPoint = GroundCrossing(fromX, fromY, fromZ, toX, toY, toZ);
 		return true;
+	}
+
+	/// <summary>
+	/// Where a step that ends at or under the ground first meets it, by the ground
+	/// <see cref="HeightAtWorld"/> reports: the step's start when that is already at or under the
+	/// ground, otherwise the under-ground end of a bisection narrowed to adjacent points. This
+	/// engine's stand-in for the point v1.0 leaves unwritten (see <see cref="Resolve"/>); nothing in
+	/// the original computes it.
+	/// </summary>
+	private Vec3i GroundCrossing(int fromX, int fromY, int fromZ, int toX, int toY, int toZ) {
+		if (fromZ <= HeightAtWorld(fromX, fromY)) {
+			return new Vec3i(fromX, fromY, fromZ);
+		}
+
+		// (from) is above the ground and (to) is taken as at or under it; each pass keeps that.
+		while (Math.Abs(toX - fromX) > 1 || Math.Abs(toY - fromY) > 1 || Math.Abs(toZ - fromZ) > 1) {
+			int midX = fromX + ((toX - fromX) >> 1);
+			int midY = fromY + ((toY - fromY) >> 1);
+			int midZ = fromZ + ((toZ - fromZ) >> 1);
+			if (midZ <= HeightAtWorld(midX, midY)) {
+				(toX, toY, toZ) = (midX, midY, midZ);
+			} else {
+				(fromX, fromY, fromZ) = (midX, midY, midZ);
+			}
+		}
+
+		return new Vec3i(toX, toY, toZ);
 	}
 
 	/// <summary>The exit edge codes the walk reports and <see cref="ExitBelowSurface"/> reads.</summary>
@@ -426,15 +466,22 @@ public sealed partial class HeightGrid {
 	/// east and takes that corner instead — which is why the two selectors are not symmetric
 	/// here.</para>
 	///
-	/// <para>One quirk is reproduced deliberately. For the diagonal split (selector 2) the far
-	/// plane's constant is <b>not</b> recomputed against the far normal: the original leaves the
-	/// near triangle's value in place, so the far plane is skewed by the difference between the two
-	/// normals' Z. It is reached only for a hit on the far half of a diagonal-split cell, and it
-	/// shifts the reported point rather than whether there was one.</para>
+	/// <para>One quirk is reproduced unless <paramref name="exactFarPlane"/> asks otherwise. For the
+	/// diagonal split (selector 2) the far plane's constant is <b>not</b> recomputed against the far
+	/// normal: the original leaves the near triangle's value in place, so the far plane sits
+	/// <c>h00 · (nzNear − nzFar) / nzFar</c> off the true one. That moves the point found on the far
+	/// half of such a cell, by metres on high ground, and can move it off the segment altogether,
+	/// leaving no point — see docs/retail/simulation/terrain-heightmap.md, "When the solve finds no
+	/// point".</para>
 	/// </summary>
+	/// <param name="exactFarPlane">
+	/// The <see cref="Settings.TweakSettingDefinitions.FixTerrainHitPoint"/> tweak: recompute the far
+	/// plane's constant through corner <c>00</c> with the far normal, which both of a selector-2 cell's
+	/// triangles contain. Not retail.
+	/// </param>
 	/// <returns>The world-space hit point, or null if neither triangle's plane meets the segment.</returns>
 	private Vec3i? SurfaceIntersection(int cellX, int cellY, int fromX, int fromY, int fromZ,
-			int toX, int toY, int toZ) {
+			int toX, int toY, int toZ, bool exactFarPlane) {
 		int cell = CornerIndex(cellX, cellY);
 		if (cell < 0) {
 			return null;
@@ -491,6 +538,8 @@ public sealed partial class HeightGrid {
 			startX -= cellSize;
 			endX -= cellSize;
 			originX += cellSize;
+		} else if (exactFarPlane) {
+			planeD = -(_rawHeights[cell] * HeightScale + HeightBase) * normalZ;
 		}
 
 		if (!PlanePoint(normalX, normalY, normalZ, planeD, startX, startY, fromZ, endX, endY, toZ,

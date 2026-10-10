@@ -23,7 +23,7 @@ public enum GlanceSide {
 /// heads-down pan, <c>CockpitView_StepViewTransition</c> (<c>0042a9c0</c>), scrolling on x in steps of
 /// <c>0x14</c> rather than on y in steps of 10. Command 6 returns to the forward view. The gates are
 /// the queue's: a glance starts only from the forward view, the opposite glance's command from a
-/// glance is a return, and the same one is ignored. See docs/retail/formats/cockpit-views.md, "View
+/// glance is a return, and the same one is ignored. See docs/retail/simulation/cockpit-views.md, "View
 /// switching".</para>
 ///
 /// <para><b>Where this engine diverges.</b> Retail's glance slides one whole panel, which in its 4:3

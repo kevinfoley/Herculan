@@ -21,7 +21,8 @@ public class MissionGroup164 : MapObject {
 	public short PaintsGround { get; set; }
 	public const int PaintsGroundWord = 0x06 / 2;
 
-	/// <summary>0x08 — 0 in all but one retail record; what reads it is not established.</summary>
+	/// <summary>0x08 — 0 in all but one retail record; what reads it is not established
+	/// (docs/retail/formats/msn-mission-file.md#open).</summary>
 	public short NearConstant { get; set; }
 
 	/// <summary>0x0A-0x2D — 18 shorts, 0 in every retail record.</summary>

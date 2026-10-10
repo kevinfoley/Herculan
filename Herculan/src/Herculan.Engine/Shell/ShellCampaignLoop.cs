@@ -25,6 +25,10 @@ public sealed class ShellCampaignLoop {
 	// INSTANT ACTION's InstantAction_Active (0047363c), which nothing clears.
 	private bool _instantActionSet;
 
+	// PracticeScreen_SelectedRow (00479bb8) as the training career started on it; nothing can move it while the
+	// mission-name dialog stands over the practice screen.
+	private int _trainingRow;
+
 	public ShellCampaignLoop(string installRoot, GameContent content, GameInProgress game, ShellSaveScreen saveScreen) {
 		_installRoot = installRoot;
 		_content = content;
@@ -102,46 +106,62 @@ public sealed class ShellCampaignLoop {
 
 	/// <summary>
 	/// ACCEPT, Registration_OnAccept (0043c0fb), after the campaign map's first-show flag (DAT_004778aa) is cleared:
-	/// gam\herc_inf.dat reloaded, Game_NewCareer(name, skill) in campaign mode, and MissionScreenView from the
-	/// position — the map, on stage 1 mission 0. The career's position step posts the developer's mission-name
-	/// dialog's Use Default click, which the original delivers once the handler has returned and which runs
-	/// Career_LoadCurrentMission; this goes straight there, as LaunchTraining does. Its campaign end rebuilds the
-	/// map and the texts (here on the adopt) and stages slot 10's summary, which no save row shows; the screen
-	/// then puts the frame up with the strip regated and calls Mission_ShowView(MissionScreenView, 1). Nothing is
+	/// gam\herc_inf.dat reloaded and Game_NewCareer(name, skill) in campaign mode, on stage 1 mission 0. The career is
+	/// the game in progress from here (maybe_HasGameInProgress, 0048260a), before its mission is loaded: its position
+	/// step ends in the mission-name dialog, whose button is the load (<see cref="LoadCareerMission"/>). Nothing is
 	/// saved: slot 10 is first written by the next autosave. Returns whether the career started.
 	/// </summary>
 	public bool StartCampaign(string name, int skill) {
-		int Roll(short bound) => _random.NextBelow(bound);
-		if (ShellCampaignLaunch.NewCareer(_content, name, skill, ShellCampaignMode.Campaign, Roll,
+		if (ShellCampaignLaunch.NewCareer(_content, name, skill, ShellCampaignMode.Campaign, bound => _random.NextBelow(bound),
 				_game.HeldGame(), out string? failure) is not { } game) {
 			Console.WriteLine($"Accept: {failure} No career started; main menu.");
 			return false;
 		}
 
-		var careerHangar = ShellHangar.From(game);
-		if (ShellCampaignLaunch.LoadCareerMission(DataDirectory, _content, game, careerHangar, _clearList, Roll, out failure)
-				is not { } mission) {
-			Console.WriteLine($"Accept: {failure} No career started; main menu.");
-			return false;
-		}
-
-		Adopt(game, careerHangar, ShellWorkingFiles.In(DataDirectory));
-		Console.WriteLine($"New campaign for {name}, skill {skill}: {mission.MissionPath}, "
-			+ $"{mission.SquadPositions} squad position(s), {game.SalvageTotal} kg salvage; working files in {DataDirectory}.");
+		Adopt(game, ShellHangar.From(game), ShellWorkingFiles.In(DataDirectory));
+		Console.WriteLine($"New campaign for {name}, skill {skill}: {game.SalvageTotal} kg salvage.");
 		return true;
 	}
 
 	/// <summary>
-	/// Game_NewCareer("TRAINEE", option 0x27) in training mode on stage 0's mission at row: the career
-	/// started, its mission loaded and the handoff written, for the shell to close on exit code 2. The
-	/// original gets from the career to the load through the developer's mission-name dialog, which
-	/// clicks its own Use Default at once; this goes straight there. The career is the game in progress,
-	/// which the loop exit's autosave writes as slot 11 with the handoff's three working files. Returns
-	/// the launch, or null when it could not be written.
+	/// Game_NewCareer("TRAINEE", option 0x27) in training mode on stage 0's mission at row, the game in progress from
+	/// here as a campaign's is; its position step ends in the mission-name dialog, whose button is the load
+	/// (<see cref="LaunchTraining"/>). Returns whether the career started.
 	/// </summary>
-	public ShellLaunch? LaunchTraining(int row, string label) {
-		var handoff = ShellTrainingLaunch.Write(DataDirectory, _content, _game.Options, row, _instantActionSet,
-			_random, _clearList, _game.HeldGame(), out string? failure);
+	public bool StartTraining(int row, string label) {
+		if (ShellTrainingLaunch.NewCareer(_content, _game.Options, row, bound => _random.NextBelow(bound), _game.HeldGame(),
+				out string? failure) is not var (game, hangar)) {
+			Console.WriteLine($"{label}: {failure}");
+			return false;
+		}
+
+		_trainingRow = row;
+		Adopt(game, hangar, ShellWorkingFiles.In(DataDirectory));
+		return true;
+	}
+
+	/// <summary>
+	/// The career position's mission, which the mission-name dialog offers as its default (MissionNameDialog_Show,
+	/// 0044db25), or null past the end of the position's stage.
+	/// </summary>
+	public string? CareerMissionPath() =>
+		ShellTrainingLaunch.MissionPath(_content, _game.CampaignStage, _game.MissionInStage);
+
+	/// <summary>
+	/// Career_LoadCurrentMission (0044d4cc) in training, or MissionNameDialog_OnLoad (0044d5bd) with the typed
+	/// <paramref name="missionPath"/>: the mission <see cref="StartTraining"/>'s career is on loaded and the handoff
+	/// written, for the shell to close on exit code 2. The career stays the game in progress, which the loop exit's
+	/// autosave writes as slot 11 with the handoff's three working files. Returns the launch, or null when it could not
+	/// be written.
+	/// </summary>
+	public ShellLaunch? LaunchTraining(string label, string? missionPath = null) {
+		if (_game.LoadedGame is not { } game) {
+			return null;
+		}
+
+		var handoff = ShellTrainingLaunch.Load(DataDirectory, _content, _game.Options, _trainingRow,
+			missionPath ?? CareerMissionPath(), _instantActionSet, bound => _random.NextBelow(bound), _clearList, game,
+			_game.Hangar, out string? failure);
 		if (handoff == null) {
 			Console.WriteLine($"{label}: {failure}");
 			return null;
@@ -161,24 +181,26 @@ public sealed class ShellCampaignLoop {
 	}
 
 	/// <summary>
-	/// Career_LoadCurrentMission's campaign load after a debrief, as StartCampaign runs it for a new career. Returns
-	/// whether it loaded.
+	/// Career_LoadCurrentMission (0044d4cc) in a campaign, or MissionNameDialog_OnLoad (0044d5bd) with the typed
+	/// <paramref name="missionPath"/>: the mission loaded for the game in progress — a new career or one a debrief goes
+	/// on with — and adopted again. Its campaign end rebuilds the map and the texts (here on the adopt) and stages slot
+	/// 10's summary, which no save row shows; the screen then puts the frame up with the strip regated and calls
+	/// Mission_ShowView(MissionScreenView, 1). Returns whether it loaded.
 	/// </summary>
-	public bool LoadNextCareerMission() {
-		if (_game.LoadedGame == null) {
+	public bool LoadCareerMission(string? missionPath = null) {
+		if (_game.LoadedGame is not { } game) {
 			return false;
 		}
 
-		var game = _game.LoadedGame;
 		var hangar = _game.Hangar;
 		if (ShellCampaignLaunch.LoadCareerMission(DataDirectory, _content, game, hangar, _clearList,
-				bound => _random.NextBelow(bound), out string? failure) is not { } mission) {
-			Console.WriteLine($"Next mission: {failure} Main menu.");
+				bound => _random.NextBelow(bound), out string? failure, missionPath) is not { } mission) {
+			Console.WriteLine($"Mission load: {failure} Main menu.");
 			return false;
 		}
 
 		Adopt(game, hangar, ShellWorkingFiles.In(DataDirectory));
-		Console.WriteLine($"Next mission: {mission.MissionPath}, {mission.SquadPositions} squad position(s); "
+		Console.WriteLine($"Mission load: {mission.MissionPath}, {mission.SquadPositions} squad position(s); "
 			+ $"working files in {DataDirectory}.");
 		return true;
 	}

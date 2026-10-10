@@ -30,7 +30,7 @@ public enum MfdMode {
 
 /// <summary>
 /// The multi-function display's geometry, decoded from <c>MfdDisplay_Ctor</c> (<c>00445218</c>) and
-/// the per-screen constructors it builds. See docs/retail/formats/cockpit-hud-widgets.md for the surrounding
+/// the per-screen constructors it builds. See docs/retail/simulation/cockpit-hud-widgets.md for the surrounding
 /// cockpit; this type covers the MFD sub-widgets that document lists as undecoded.
 /// </summary>
 /// 

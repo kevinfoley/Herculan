@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.File.Dts;
+using HercWorks.Core.Data.File.Dts.Anim;
 using HercWorks.Core.Data.File.Dts.Bsp;
 using HercWorks.Core.Data.File.Dts.Part;
 using HercWorks.Core.Data.File.Dts.Poly;
@@ -66,8 +67,10 @@ public readonly record struct CellGate(short Sequence, short Frame, PartDetail? 
 /// <param name="TriangleVertexCount">Where the outline edges start — see <see cref="MeshBuild"/>.</param>
 /// <param name="PointVertexCount">How many trailing vertices are points — see <see cref="MeshBuild"/>.</param>
 /// <param name="Leaf">The <see cref="TSBSPPart"/> child this segment is, or null — see <see cref="BspLeaf"/>.</param>
+/// <param name="Ground">Whether this segment is the shape's ground plane — see <see cref="MeshCell.Ground"/>.</param>
+/// <param name="Layer">The paint layer of its slot it is — see <see cref="MeshCell.Layer"/>.</param>
 public readonly record struct MeshSegment(int TransformId, CellGate Gate, MeshVertex[] Vertices,
-	int TriangleVertexCount, int PointVertexCount = 0, BspLeaf? Leaf = null);
+	int TriangleVertexCount, int PointVertexCount = 0, BspLeaf? Leaf = null, bool Ground = false, int Layer = 0);
 
 /// <summary>
 /// One cell's share of a shape's geometry, at the rest pose <see cref="DtsMeshBuilder.BuildRoot"/>
@@ -80,8 +83,20 @@ public readonly record struct MeshSegment(int TransformId, CellGate Gate, MeshVe
 /// <param name="TriangleVertexCount">Where the outline edges start — see <see cref="MeshBuild"/>.</param>
 /// <param name="PointVertexCount">How many trailing vertices are points — see <see cref="MeshBuild"/>.</param>
 /// <param name="Leaf">The <see cref="TSBSPPart"/> child this piece is, or null — see <see cref="BspLeaf"/>.</param>
+/// <param name="Ground">
+/// Whether this piece holds the polys lying in the shape's own ground plane — a structure's shadow and
+/// floor plates, which only a build asked to split them apart separates (see
+/// <see cref="DtsMeshBuilder.BuildCells"/>). Such a piece is drawn with the ground rather than
+/// depth-tested against the terrain it lies in — see <see cref="GroundShapeLayer.ObjectGround"/>, and
+/// <c>LiesInGroundPlane</c> for the rule.
+/// </param>
+/// <param name="Layer">
+/// Which paint layer of its slot this piece is, 0 the first painted — see <see cref="PaintLayers"/>. A
+/// piece of a layered slot outside every <c>TSBSPPart</c> carries a <paramref name="Leaf"/> of
+/// <see cref="BspTree.Whole"/>, so that it is painted through the same group machinery.
+/// </param>
 public readonly record struct MeshCell(CellGate Gate, MeshVertex[] Vertices, int TriangleVertexCount,
-	int PointVertexCount = 0, BspLeaf? Leaf = null);
+	int PointVertexCount = 0, BspLeaf? Leaf = null, bool Ground = false, int Layer = 0);
 
 /// <summary>
 /// A built mesh: filled triangles first, then the outline edges that are drawn over them as lines,
@@ -98,7 +113,7 @@ public readonly record struct MeshCell(CellGate Gate, MeshVertex[] Vertices, int
 /// see <see cref="MeshVertex.OutlineFillRamp"/>.</para>
 ///
 /// <para>The points are one-vertex polys, which the same fill draws as a single pixel
-/// (docs/retail/formats/dts-texture-binding.md, "<c>TSSolidPoly</c> — palette index, unlit, fill plus
+/// (docs/retail/rendering/dts-texture-binding.md, "<c>TSSolidPoly</c> — palette index, unlit, fill plus
 /// outline").</para>
 /// </summary>
 /// <param name="Vertices">Triangle corners in <c>[0, TriangleVertexCount)</c>, line-segment
@@ -132,7 +147,7 @@ public readonly record struct MeshBuild(MeshVertex[] Vertices, int TriangleVerte
 /// "the value" is the drawn side's fill entry in <c>Surfaces[ColorIndexId / 4]</c>.</para>
 ///
 /// <para><see cref="TSTexture4Poly"/> polys resolve to real texture through the chain established in
-/// docs/retail/formats/dts-texture-binding.md: the value is a frame index into the mesh's bound
+/// docs/retail/rendering/dts-texture-binding.md: the value is a frame index into the mesh's bound
 /// <c>.DBA</c> bank, and the four UV corners are the frame's own rect.</para>
 ///
 /// <para><b>The untextured poly types are three separate mechanisms</b>, distinguished by what their
@@ -142,7 +157,7 @@ public readonly record struct MeshBuild(MeshVertex[] Vertices, int TriangleVerte
 /// theater palette's shade-ramp table, with the face's light level picking a step along it. The two
 /// spend it through different chains; see <see cref="SurfaceShading"/>. Nearly every surface of a
 /// HERC or a building is one of these. Resolved by <see cref="ResolveShadeRamp"/>, and the lookup
-/// happens per fragment (<see cref="MeshVertex.ShadeRamp"/>, <see cref="SurfaceRampTable"/>) because
+/// happens on the GPU (<see cref="MeshVertex.ShadeRamp"/>, <see cref="SurfaceRampTable"/>) because
 /// the shade depends on the face's world normal and one mesh serves every instance of a type.</item>
 /// <item>Plain <see cref="TSSolidPoly"/> — a <b>palette index</b>, through the theater ramp at a
 /// fixed shade, never lit. <see cref="ResolveSolidColors"/>.</item>
@@ -178,6 +193,9 @@ public static partial class DtsMeshBuilder {
 		/// <summary>The <see cref="TSBSPPart"/> child this triangle was built under, or null.</summary>
 		public BspLeaf? Leaf { get; init; }
 
+		/// <summary>Whether this triangle's poly lies in the shape's ground plane — see <see cref="MeshCell.Ground"/>.</summary>
+		public bool Ground { get; init; }
+
 		public Vector3 Color { get; }
 		public Vector2 UvA { get; }
 		public Vector2 UvB { get; }
@@ -189,7 +207,7 @@ public static partial class DtsMeshBuilder {
 		/// </summary>
 		public (float A, float B, float C) UvWeights { get; }
 
-		/// <summary>Which twin of a coincident pair wins — see <see cref="DropCoincidentTwins"/>.</summary>
+		/// <summary>What this triangle's fill resolved to — see <see cref="Ranks"/>.</summary>
 		public int Rank { get; }
 
 		/// <summary>
@@ -224,6 +242,12 @@ public static partial class DtsMeshBuilder {
 
 		/// <summary>Which side of the poly this copy draws — see <see cref="MeshVertex.Side"/>.</summary>
 		public int Side { get; init; }
+
+		/// <summary>
+		/// Another poly's facing this copy is drawn under, or <see cref="FacingGate.None"/> — see
+		/// <see cref="TextureCornerSlot"/>.
+		/// </summary>
+		public FacingGate Dependency { get; init; }
 
 		/// <summary>
 		/// Whether this copy is lit as the poly's back while the poly faces the eye — see
@@ -344,6 +368,9 @@ public static partial class DtsMeshBuilder {
 		/// <inheritdoc cref="Triangle.Leaf" />
 		public BspLeaf? Leaf { get; init; }
 
+		/// <inheritdoc cref="Triangle.Ground" />
+		public bool Ground { get; init; }
+
 		/// <summary>The poly this edge belongs to — see <see cref="Triangle.PolyId"/>.</summary>
 		public int PolyId { get; }
 	}
@@ -378,6 +405,12 @@ public static partial class DtsMeshBuilder {
 		public bool AllDetailLevels { get; init; }
 
 		/// <summary>
+		/// Whether the polys lying in the shape's ground plane are tagged to be split into pieces of their
+		/// own — see <see cref="MeshCell.Ground"/>. Set for the structure builds alone.
+		/// </summary>
+		public bool SplitGround { get; init; }
+
+		/// <summary>
 		/// The cell and detail level the walk is currently inside, pushed and restored around each
 		/// cell-animation child and each detail level. <see cref="CellGate.Ungated"/> everywhere else.
 		/// </summary>
@@ -389,6 +422,14 @@ public static partial class DtsMeshBuilder {
 		/// </summary>
 		public BspLeaf? Leaf { get; set; }
 
+		/// <summary>
+		/// The animation list every part is placed through, in place of the one the root's own
+		/// <see cref="ANShape"/> carries, or null to use that one. Set for a machine's crude LOD roots,
+		/// whose transform ids are root 0's once renumbered — see
+		/// <see cref="Scene.MechDetailRootRemap"/>.
+		/// </summary>
+		public ANAnimList? PoseList { get; init; }
+
 		private int _nextPolyId;
 
 		/// <summary>Claims the next <see cref="Triangle.PolyId"/>, once per source poly.</summary>
@@ -396,8 +437,8 @@ public static partial class DtsMeshBuilder {
 	}
 
 	/// <summary>
-	/// How good a triangle is as the survivor of a coincident group, highest wins. The ordering is
-	/// the whole point of <see cref="DropCoincidentTwins"/> and is documented there.
+	/// What a triangle's fill resolved to: only <see cref="Textured"/> samples the atlas, and an
+	/// <see cref="UnresolvedTexture"/> draws a placeholder colour.
 	/// </summary>
 	private static class Ranks {
 		/// <summary>A texture poly with no atlas frame behind it — a placeholder colour, worst option.</summary>
@@ -442,12 +483,28 @@ public static partial class DtsMeshBuilder {
 	/// <see cref="TSBasePart.IdNumber"/>s to leave out of the mesh entirely — a machine's hardpoint
 	/// attachment slots, from <see cref="AttachmentPartIds"/>. Null for every shape that has none.
 	/// </param>
+	/// <param name="poseList">
+	/// The animation list to place parts through instead of the root's own — root 0's, for a
+	/// machine's renumbered crude root (<see cref="Scene.MechDetailRootRemap"/>). Null for every
+	/// other shape.
+	/// </param>
 	public static MeshBuild BuildRoot(TSObject root, TextureAtlas? atlas = null,
 			SurfaceShading? shading = null, int cellFrame = 0,
-			IReadOnlySet<short>? hiddenPartIds = null) {
-		var sink = new Collector();
+			IReadOnlySet<short>? hiddenPartIds = null, ANAnimList? poseList = null) {
+		var sink = new Collector { PoseList = poseList };
 		Collect(root, null, sink, atlas, shading, cellFrame, hiddenPartIds);
 		return Emit(sink);
+	}
+
+	/// <summary>
+	/// <see cref="BuildRoot"/>'s mesh at cell zero, divided into the shape's ground plane and the rest —
+	/// see <see cref="MeshCell.Ground"/>. For a structure drawn whole, as the mission editor draws it.
+	/// </summary>
+	public static (MeshBuild Body, MeshBuild Ground) BuildRootSplitGround(TSObject root,
+			TextureAtlas? atlas = null, SurfaceShading? shading = null) {
+		var sink = new Collector { SplitGround = true };
+		Collect(root, null, sink, atlas, shading);
+		return (Emit(sink, ground: false), Emit(sink, ground: true));
 	}
 
 	/// <summary>
@@ -541,10 +598,8 @@ public static partial class DtsMeshBuilder {
 	/// <see cref="ResolveGroupOffset"/> works out and hands back one rigid mesh. That is still what a
 	/// structure wants — nothing animates it — but it is why a HERC's legs never moved.</para>
 	///
-	/// <para>Coincident-twin removal (<see cref="DropCoincidentTwins"/>) runs across the whole shape
-	/// first, in the shared rest-pose space, exactly as it does for the flat build: a textured poly
-	/// and its flat-shaded twin always belong to the same group, so splitting afterwards keeps the
-	/// same survivor either way.</para>
+	/// <para>Coincident-twin removal (<see cref="DropCoincidentTwins"/>) and the paint layers
+	/// (<see cref="PaintLayers"/>) run across the whole shape first, in the shared rest-pose space.</para>
 	///
 	/// <para>Every cell of every <see cref="TSCellAnimPart"/> is built, each into its own segment
 	/// under its own <see cref="CellGate"/>, because a machine's cells are damage state rather than
@@ -553,9 +608,14 @@ public static partial class DtsMeshBuilder {
 	/// alone.</para>
 	/// </summary>
 	/// <param name="hiddenPartIds"><inheritdoc cref="BuildRoot" path="/param[@name='hiddenPartIds']"/></param>
+	/// <param name="poseList"><inheritdoc cref="BuildRoot" path="/param[@name='poseList']"/></param>
+	/// <param name="splitGround"><inheritdoc cref="BuildCells" path="/param[@name='splitGround']"/></param>
 	public static MeshSegment[] BuildSegments(TSObject root, TextureAtlas? atlas = null,
-			SurfaceShading? shading = null, IReadOnlySet<short>? hiddenPartIds = null) {
-		var sink = new Collector { AllCells = true, AllDetailLevels = true };
+			SurfaceShading? shading = null, IReadOnlySet<short>? hiddenPartIds = null,
+			ANAnimList? poseList = null, bool splitGround = false) {
+		var sink = new Collector {
+			AllCells = true, AllDetailLevels = true, PoseList = poseList, SplitGround = splitGround
+		};
 		Collect(root, null, sink, atlas, shading, cellFrame: 0, hiddenPartIds);
 		return EmitSegments(sink);
 	}
@@ -574,9 +634,14 @@ public static partial class DtsMeshBuilder {
 	/// <see cref="BuildRoot"/>'s mesh exactly.</para>
 	/// </summary>
 	/// <param name="hiddenPartIds"><inheritdoc cref="BuildRoot" path="/param[@name='hiddenPartIds']"/></param>
+	/// <param name="splitGround">
+	/// Puts the polys lying in the shape's ground plane into pieces of their own, flagged
+	/// <see cref="MeshCell.Ground"/>. For a structure only.
+	/// </param>
 	public static MeshCell[] BuildCells(TSObject root, TextureAtlas? atlas = null,
-			SurfaceShading? shading = null, IReadOnlySet<short>? hiddenPartIds = null) {
-		var sink = new Collector { AllCells = true, AllDetailLevels = true };
+			SurfaceShading? shading = null, IReadOnlySet<short>? hiddenPartIds = null,
+			bool splitGround = false) {
+		var sink = new Collector { AllCells = true, AllDetailLevels = true, SplitGround = splitGround };
 		Collect(root, null, sink, atlas, shading, cellFrame: 0, hiddenPartIds);
 		return EmitCells(sink);
 	}

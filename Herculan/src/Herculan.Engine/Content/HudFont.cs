@@ -109,7 +109,7 @@ public sealed class HudFont {
 	/// <c>Label_SetRect</c> (<c>00438884</c>) and <c>Label_SetText</c> (<c>00438920</c>) place it
 	/// between them. Every HUD label in the game goes through that pair, so this is the one placement
 	/// rule the cockpit, the MFD and the Heads-Down Display all share. The formula is in
-	/// docs/retail/formats/mfd.md, "Label placement"; there is no vertical alignment flag, so it is
+	/// docs/retail/simulation/mfd.md, "Label placement"; there is no vertical alignment flag, so it is
 	/// <see cref="InkHeight"/> that gets centred.
 	///
 	/// <para>All of it is integer arithmetic in the original, including both <c>&gt;&gt; 1</c>s, and
@@ -190,7 +190,7 @@ public sealed class HudFont {
 			glyphs[i] = new DynamixBitmap {
 				Rows = (short)cellHeight,
 				Cols = (short)width,
-				BitDepth = 8,
+				BitsPerPixel = 8,
 				ImageDataLen = length,
 				ImageData = pixels,
 			};

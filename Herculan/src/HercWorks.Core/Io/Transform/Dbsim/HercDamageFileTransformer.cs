@@ -14,10 +14,8 @@ namespace HercWorks.Core.Io.Transform.Dbsim;
 /// <item><b>The component count is variable.</b> Loop the file's own <c>totalComponents</c>. A
 /// normal HERC has 29 (SPIDER, OUTLAW), so a hardcoded 29 looks right until SKIMMER, which has 1
 /// and overruns.</item>
-/// <item><b>The 22-slot internals padding applies only when there is more than 1 internal.</b>
-/// Normal hercs store all 22, so the skip is 0 in every such file and the padding is never
-/// exercised; SKIMMER stores 1, where an unconditional <c>(22-1)*2 = 42</c>-byte skip overruns its
-/// 18-byte content. With 0 padding the remainder decodes into one well-formed component.</item>
+/// <item><b>So is the internals count, and nothing pads it.</b> Hercs store 22 and SKIMMER 1; the
+/// components follow the last stored internal directly.</item>
 /// <item><b><c>SpillWeight</c> is written raw, not scaled.</b> It reads as exactly <c>20</c>
 /// (<c>0x14</c>) for the large majority of components across all three files, so a <c>* 100</c> on
 /// write would not round-trip.</item>
@@ -57,12 +55,6 @@ public class HercDamageFileTransformer : ByteTransformer<HercSimDamage> {
 		}
 		data.Internals = internals;
 
-		if (data.Internals.Length > 1) {
-			for (int i = 0; i < 22 - data.Internals.Length; i++) {
-				Skip(2);
-			}
-		}
-
 		short totalComponents = IndexShortLE();
 
 		data.ComponentData = new HercSimDamage.HercPiece[totalComponents];
@@ -76,20 +68,10 @@ public class HercDamageFileTransformer : ByteTransformer<HercSimDamage> {
 	public override byte[]? Write(HercSimDamage data) {
 		using var outStream = new MemoryStream();
 
-		int diff = 0;
-		if (data.FileName!.ToLowerInvariant().Contains(HercLUT.Skimmer.AbbrevDat.ToLowerInvariant())) {
-			Emit(outStream, WriteShortLE(1));
-		} else {
-			Emit(outStream, WriteShortLE(22));
-			diff = 22 - data.Internals!.Length;
-		}
-
-		for (int i = 0; i < data.InternalsTotal; i++) {
-			Emit(outStream, WriteShortLE(data.Internals![i].Armor));
-		}
-
-		for (int i = 0; i < diff; i++) {
-			Emit(outStream, WriteShortLE(0));
+		var internals = data.Internals ?? Array.Empty<HercSimDamage.InternalsHealth>();
+		Emit(outStream, WriteShortLE((short)internals.Length));
+		foreach (var system in internals) {
+			Emit(outStream, WriteShortLE(system.Armor));
 		}
 
 		Emit(outStream, WriteShortLE((short)data.ComponentData!.Length));

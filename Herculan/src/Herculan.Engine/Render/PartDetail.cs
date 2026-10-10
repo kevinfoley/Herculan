@@ -5,7 +5,7 @@ namespace Herculan.Engine.Render;
 /// <summary>
 /// One <c>TSDetailPart</c>'s LODs and the table that picks between them —
 /// <c>TSDetailPart_Render</c> (<c>004768bc</c>), which chooses a level every time the part is drawn
-/// from its projected size on screen. See docs/retail/formats/dts-texture-binding.md, "TSDetailPart level
+/// from its projected size on screen. See docs/retail/rendering/dts-texture-binding.md, "TSDetailPart level
 /// selection and STRUCTURE DETAIL".
 ///
 /// <para>The sibling one level up is <see cref="ShapeDetail"/>, which picks a machine's whole root

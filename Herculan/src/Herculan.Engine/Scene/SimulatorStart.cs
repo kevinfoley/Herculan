@@ -1,4 +1,5 @@
 using Herculan.Engine.Audio;
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
 using Herculan.Engine.Sim;
@@ -8,7 +9,7 @@ namespace Herculan.Engine.Scene;
 
 /// <summary>
 /// One mission brought up for the simulator's turn, before its window opens: the handoff it reads, the
-/// archives and scene built from it, its audio, the install's simulator preferences, and the input tape
+/// archives and scene built from it, its audio and message ports, the install's simulator preferences, and the input tape
 /// it replays or records.
 /// </summary>
 public sealed class SimulatorStart {
@@ -17,6 +18,9 @@ public sealed class SimulatorStart {
 	public required GameContent Content { get; init; }
 	public required MissionScene Scene { get; init; }
 	public required GameAudio Audio { get; init; }
+
+	/// <summary>The cockpit's message ports and the coarse clock they run on.</summary>
+	public required MessagePorts Ports { get; init; }
 	public required SimulatorPreferences Preferences { get; init; }
 
 	/// <summary>The script.dat the mission was loaded from; results.dat and mission.var are written beside it.</summary>

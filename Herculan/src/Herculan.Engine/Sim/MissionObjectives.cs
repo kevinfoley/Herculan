@@ -444,10 +444,10 @@ public sealed class MissionObjectives {
 
 	/// <summary>
 	/// <c>Mission_IsOutsideBox</c> (<c>0041373c</c>) — whether a position is outside the mission's bounding box, grown by
-	/// <paramref name="margin"/> on every side. See <see cref="SimWorld.MissionBox"/>.
+	/// <paramref name="margin"/> on every side. See <see cref="MissionRuntime.Box"/>.
 	/// </summary>
 	private static bool IsOutsideMissionBox(SimWorld world, SimObject subject, int margin) {
-		var box = world.MissionBox;
+		var box = world.Mission.Box;
 
 		if (box.IsEmpty) {
 			return false;

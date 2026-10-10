@@ -10,7 +10,7 @@ namespace Herculan.Engine.World;
 ///
 /// <para>Decoded from <c>maybe_World_LoadTheater</c> (<c>0042e010</c>), which reads this file
 /// field-by-field off a stream and finishes by handing one of its strings to
-/// <c>Terrain_BindTextureBank</c>. See docs/retail/formats/terrain-texturing.md.</para>
+/// <c>Terrain_BindTextureBank</c>. See docs/retail/rendering/terrain-texturing.md.</para>
 ///
 /// <para><b>There are ten descriptors for five theaters.</b> The original builds the base name as
 /// <c>world&lt;theaterIndex * 2 + variant&gt;</c>, and retail data pairs up exactly:

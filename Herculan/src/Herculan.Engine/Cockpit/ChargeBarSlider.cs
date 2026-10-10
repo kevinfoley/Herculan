@@ -25,7 +25,7 @@ namespace Herculan.Engine.Cockpit;
 /// <c>ChainedWeaponSelectGadget</c> is registered first and its rect is the whole hardpoint rect,
 /// which contains the bar in every retail <c>.GAU</c>; first hit wins. The tweak lists the bar ahead
 /// of its row instead, so the bar takes presses on its own span and the rest of the row still arms
-/// the weapon. See docs/retail/formats/cockpit-input.md, "Where retail rects overlap", and
+/// the weapon. See docs/retail/simulation/cockpit-input.md, "Where retail rects overlap", and
 /// docs/retail/simulation/weapon-firing.md#the-charge-bar.</para>
 /// </summary>
 public readonly struct ChargeBarSlider {

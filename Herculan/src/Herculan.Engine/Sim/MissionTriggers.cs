@@ -33,7 +33,7 @@ public static class MissionTriggers {
 	/// finds no subject and is offered nothing.</para>
 	/// </summary>
 	public static void Evaluate(SimWorld world) {
-		var actions = world.Actions;
+		var actions = world.Mission.Actions;
 
 		for (int i = 0; i < actions.Count; i++) {
 			var action = actions[i];

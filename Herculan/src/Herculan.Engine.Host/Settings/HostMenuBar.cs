@@ -1,3 +1,4 @@
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Host.Debugging;
 using Herculan.Engine.Host.Localization;
 using ImGuiNET;
@@ -8,11 +9,12 @@ namespace Herculan.Engine.Host.Settings;
 /// The menu bar [Esc] raises over the shell and over a mission, HERCULAN's own and not retail's, and the
 /// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Tweaks and Settings. Hidden until <see cref="Show"/>, and never
 /// drawn into a <c>--screenshot</c> capture. Which [Esc] press reaches it is each host's to decide, since
-/// retail takes [Esc] first wherever it has a use for it.
+/// retail takes [Esc] first wherever it has a use for it; over a mission, <see cref="SimulatorFrame"/> decides.
 /// </summary>
-sealed class HostMenuBar {
+sealed class HostMenuBar : IEscapeMenu {
 	private readonly LocalizationTable _localization;
 	private readonly DebugPanel? _debug;
+	private readonly PanelCentring _centring = new();
 
 	public HostMenuBar(LocalizationTable localization, TweaksMenu tweaks, SettingsWindow settings, DebugPanel? debug = null) {
 		_localization = localization;
@@ -62,9 +64,12 @@ sealed class HostMenuBar {
 	/// <summary>
 	/// Draws the bar, when it is up, and Tweaks and Settings, when they are; a host with a Debug panel draws
 	/// that itself, since it needs the host's state. <paramref name="owner"/> is the native window a folder
-	/// picker belongs to. Call once per frame inside the ImGui frame.
+	/// picker belongs to, and <paramref name="fullScreen"/> whether that window is full screen, which
+	/// <see cref="PanelCentring"/> watches. Call once per frame inside the ImGui frame.
 	/// </summary>
-	public void Draw(nint owner) {
+	public void Draw(nint owner, bool fullScreen) {
+		_centring.Update(fullScreen);
+
 		// A bare item per panel, no checkmark, since each panel closes itself.
 		if (Visible && ImGui.BeginMainMenuBar()) {
 			if (_debug != null && ImGui.MenuItem(_localization.GetStringOrKey("menu.debug"))) {
@@ -89,7 +94,7 @@ sealed class HostMenuBar {
 			ImGui.EndMainMenuBar();
 		}
 
-		Tweaks.Draw();
-		Settings.Draw(owner);
+		Tweaks.Draw(_centring.Condition);
+		Settings.Draw(owner, _centring.Condition);
 	}
 }

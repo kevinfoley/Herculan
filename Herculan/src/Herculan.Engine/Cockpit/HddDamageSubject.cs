@@ -8,7 +8,7 @@ namespace Herculan.Engine.Cockpit;
 /// Whose herc the Heads-Down Display's damage detail is inspecting, and how the screen captions it —
 /// the display's five-slot subject selector (<c>HDDisplay+0x55c</c>) over its machine array
 /// (<c>+0x534</c>) and name array (<c>+0x548</c>). The left and right arrows step it; see
-/// docs/retail/formats/heads-down-display.md#subject.
+/// docs/retail/simulation/heads-down-display.md#subject.
 /// </summary>
 /// <param name="Slot">
 /// The selector: <see cref="PlayerSlot"/>, a squad slot plus one, or <see cref="TargetSlot"/>.

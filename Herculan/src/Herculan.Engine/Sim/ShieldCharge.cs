@@ -53,7 +53,7 @@ public sealed class ShieldCharge {
 	/// <summary>
 	/// One press of the balance keys, <c>Shield_BalanceAdjust</c>'s <c>±0x66</c> — just short of a
 	/// tenth of the range, which is why a forward press from centre reads 119/81. See
-	/// docs/retail/formats/cockpit-hud-widgets.md, "Readouts".
+	/// docs/retail/simulation/cockpit-hud-widgets.md, "Readouts".
 	/// </summary>
 	public const short BalanceStep = 0x66;
 

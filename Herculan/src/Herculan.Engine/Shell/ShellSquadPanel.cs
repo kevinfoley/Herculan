@@ -8,7 +8,7 @@ namespace Herculan.Engine.Shell;
 /// <c>Condition:</c> readout under it, and the eight-row <c>Squad Inventory</c> list that selects the
 /// bay. Built once by <c>Squad_BuildRosterList</c> (<c>0043c999</c>), shown by <c>Squad_ShowPanel</c>
 /// (<c>0043cfe7</c>), its readout filled by <c>Squad_RefreshReadout</c> (<c>0043d38a</c>) and its rows by <c>Squad_RefreshRowNames</c> (<c>0043da47</c>)
-/// and <c>Squad_RefreshRowCrew</c> (<c>0043dad7</c>). The rects are literals in the canvas. See docs/retail/shell/screen-layout.md,
+/// and <c>Squad_RefreshRowCrew</c> (<c>0043dad7</c>). The rects are literals in the canvas. See docs/retail/shell/squad-and-crew.md,
 /// "The squad panel".
 ///
 /// <para><b>What the picture shows depends on the tab.</b> WEAPONS, BUILD and CREW fill it with the

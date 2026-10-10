@@ -5,7 +5,8 @@ A stamp records that a function's whole body was read and its known_symbols desc
 against it, so a later session can trust that description instead of re-reading the body. The
 schema and the policy are in tools/ghidra_scripts/README.md, "Verification stamps".
 
-A stamp pins the function's extent from the Ghidra function list and a hash of those bytes in the
+A stamp pins the function's extent from the Ghidra function list -- its entry to the end of its
+body's last address range, inline jump tables included -- and a hash of those bytes in the
 binary's retail file, which tools/scripts/retail_binaries.py locates. `check` voids any stamp whose
 extent has moved (a late-entry fix, a re-analysis) or whose bytes no longer hash the same (a
 different build in that file), because the read it records was of other bytes.
@@ -85,17 +86,21 @@ def claim_findings(description: str, negatives: list[dict]) -> tuple[list[str], 
     return callers, negs
 
 
-def function_sizes(binary: str) -> dict[int, int]:
-    """address -> byte size, from the Ghidra function list export (address, name, size per line)."""
+def function_extents(binary: str) -> dict[int, int]:
+    """address -> extent length, from the Ghidra function list export (address, name, body bytes,
+    body address ranges per line). The extent runs from the entry to the end of the body's
+    last range, so an inline jump table between two ranges is inside it and hashed with the code."""
     path = retail_binaries.get(binary).dump("functions.txt")
     if not os.path.exists(path):
         raise SystemExit("no function list at %s" % path)
     out = {}
     with open(path, encoding="utf-8", errors="replace") as fh:
         for line in fh:
-            parts = line.rstrip("\n").split("\t")
-            if len(parts) == 3:
-                out[int(parts[0], 16)] = int(parts[2])
+            parts = line.rstrip("\r\n").split("\t")
+            if len(parts) != 4:
+                raise SystemExit("%s has no ranges column; regenerate it with ghidra_full_decomp.py" % path)
+            start = int(parts[0], 16)
+            out[start] = int(parts[3].rsplit("-", 1)[1], 16) - start
     return out
 
 
@@ -135,7 +140,7 @@ def cmd_stamp(args) -> int:
         raise SystemExit("%08x has no known_symbols entry; add one before stamping it" % target)
     if entry["type"] != "function":
         raise SystemExit("%08x is a %s entry; stamps are for functions" % (target, entry["type"]))
-    size = function_sizes(args.binary).get(target)
+    size = function_extents(args.binary).get(target)
     if size is None:
         raise SystemExit("%08x is not a function start in the function list" % target)
 
@@ -177,7 +182,7 @@ def cmd_check(args) -> int:
         stamped = [e for e in es2_symbols.entries(binary) if "verified" in e]
         if not stamped:
             continue
-        sizes = function_sizes(binary)
+        extents = function_extents(binary)
         image = Image(binary)
         for e in stamped:
             total += 1
@@ -194,7 +199,7 @@ def cmd_check(args) -> int:
             for n in v.get("negatives", []):
                 if n.get("evidence") not in EVIDENCE or not n.get("claim") or not n.get("how"):
                     problems.append("malformed negative %r" % n)
-            now = sizes.get(start)
+            now = extents.get(start)
             if now != size:
                 problems.append("function extent is now %s, stamped %d"
                                 % ("gone" if now is None else now, size))

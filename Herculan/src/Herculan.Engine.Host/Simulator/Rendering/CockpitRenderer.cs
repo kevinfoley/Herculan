@@ -185,7 +185,7 @@ sealed class CockpitRenderer : IDisposable {
 	}
 
 	// The world behind the heads-down view's art, for the one herc whose view 1 declares a 3D rect: the
-	// RAZOR, through its .HD1 windows (docs/retail/formats/cockpit-views.md, "The RAZOR's heads-down view"). Sim_RenderFrame
+	// RAZOR, through its .HD1 windows (docs/retail/simulation/cockpit-views.md, "The RAZOR's heads-down view"). Sim_RenderFrame
 	// (0045fb9c) draws the world into whatever view is current under CockpitView_ShowsWorld (0042db18),
 	// with that view's own projection centre, which for view 1 sits above its window where the forward
 	// view's reticle is — the forward image plane continued downward, the way the glances continue it
@@ -285,7 +285,7 @@ sealed class CockpitRenderer : IDisposable {
 	// The three forward panels share one viewport and the forward view's centre, and that is retail's
 	// arithmetic rather than a simplification: a glance's centre is its own .VUE pair offset by its canvas
 	// origin, which puts it at the forward view's reticle, off the glance's inner edge — see
-	// docs/retail/formats/cockpit-views.md, "The side glances are one image plane". Without a .VUE the fallback
+	// docs/retail/simulation/cockpit-views.md, "The side glances are one image plane". Without a .VUE the fallback
 	// is APOCA's, which is a guess — but a far better one than the middle of the window, which is wrong
 	// for every herc in the game.
 	private Vector2 CockpitPrincipalPoint(CockpitScreenLayout.PlacedSurface surface, CockpitScreenLayout.Viewport world,

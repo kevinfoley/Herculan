@@ -69,7 +69,7 @@ Notes the table makes visible:
 | `+0x18` | triple | **Think** — `{func, thisDelta, vtableIndex}` |
 | `+0x24` | triple | **Move** |
 | `+0x30` | triple | **Reassess** |
-| `+0x3c` | short | The string index the F7 comm box prints on a squadmate's `OBJECTIVE:` line — `STRINGS0` group 40, `ATTACK`/`TRAVEL`/`PATROL`/`FORM UP`/`GUARD`/`FLEE`/`DEAD`/`IMMOBILE`. Read only by `Mech_SquadOrderLineIndex` (`0041bac8`); see [`../formats/heads-down-display.md`](../formats/heads-down-display.md) |
+| `+0x3c` | short | The string index the F7 comm box prints on a squadmate's `OBJECTIVE:` line — `STRINGS0` group 40, `ATTACK`/`TRAVEL`/`PATROL`/`FORM UP`/`GUARD`/`FLEE`/`DEAD`/`IMMOBILE`. Read only by `Mech_SquadOrderLineIndex` (`0041bac8`); see [`heads-down-display.md`](heads-down-display.md) |
 
 ### The flag bits
 
@@ -105,12 +105,12 @@ Not a pointer field: `0x45` bytes embedded in the mech, running `mech+0x4d` to `
 |---|---|---|
 | `+0x00` | ptr | The new descriptor |
 | `+0x04` | byte | Not written here; `Timer_CountDown` is handed `&block+0x04` and steps the int that follows it |
-| `+0x05` | int | The dwell countdown: `descriptor+0x04` + `(DAT_004a9bf4 & 0xf)`, after `DAT_004a9bf4 += 0xd` |
+| `+0x05` | int | The dwell countdown: `descriptor+0x04` + `(Behaviour_DwellJitter & 0xf)`, after `Behaviour_DwellJitter += 0xd` |
 | `+0x09` | int | 0. `Behaviour_CountTick` (`00413eb0`), the last call of every `Mech_AiTick`, increments it on every call except the first after the state is installed |
 | `+0x0d` | 0x28 B | Zeroed |
 | `+0x35` | 0x10 B | Zeroed, then `+0x36 = 1`. `Behaviour_CountTick` clears `+0x36` on its first call and sets `+0x35` on every later one |
 
-`DAT_004a9bf4` is a global stepped by 13 per state change and masked to 4 bits, so the jitter is 0–15 counts — a few milliseconds — and deterministic in call order rather than random.
+`Behaviour_DwellJitter` (`004a9bf4`) is a 16-bit global stepped by 13 per state change and masked to 4 bits, so the jitter is 0–15 counts — a few milliseconds — and deterministic in call order rather than random. Mech and flyer state changes step the same counter. It lies in the `DATA` section past the bytes the file supplies, so it is zero when DBSIM starts, and `es2_xref.py` finds two references to it, the add and the load in `Behaviour_SetState`. DBSIM flies one mission per process — `WinMain` calls `Sim_Run` once and then posts `WM_QUIT`, and `Sim_Run` sets the mission up once before its frame loop — so every mission's first state change steps the counter from 0 and installs a jitter of 13.
 
 ### What the dwell time buys
 
@@ -167,6 +167,8 @@ Three mech vtable slots (vtable at `0049a282`), each reading a different descrip
 | `+0x14` | `Behaviour_DispatchMove` (`00415afc`) | `+0x24` | Move |
 | `+0x18` | `Behaviour_DispatchThink` (`00415b38`) | `+0x18` | Think |
 | `+0x1c` | `Behaviour_DispatchReassess` (`00415b74`) | `+0x30` | Reassess |
+
+**What a move returns is thrown away.** `Mech_AiTick` overwrites `EAX` straight after the `+0x14` call and never tests it, unlike the think's. So the value `SimObject_TickNoOp` (`00411ab4`) returns means nothing there: the ACTOR base and the five structure classes (LC_BASE, VEHICLE, GUN_BASE, BASE, RADAR_BASE) hold it in that slot, and it does nothing but return 1. The slot means more on the projectile pool, where `Sim_MainTick` frees an object whose `+0x14` returns nonzero; no projectile class's vtable holds `SimObject_TickNoOp`. Among the slot `+0x14` calls the DBSIM decompile shows, those two are the ones made on a simulation object.
 
 Each calls `(*slot.func)(mech + slot.thisDelta)`. Because these are pointer-to-member calls made through the dispatchers rather than vtable entries, Ghidra reports zero xrefs on every think and move function in the table above — which is why the AI reads as unreachable code until the tables are followed by hand.
 
@@ -270,5 +272,5 @@ The AI-relevant mech vtable slots, as entry points for the topic docs. Slots who
 
 ## Open
 
-- **Open:** bits 6–15 of descriptor `+0x08` — no state sets one, so nothing can read one.
-- (Deferred) **Open:** what raises `mech+0xaf`. The field scan finds no writer but `Mech_AiTick`'s own clear, and a null result is not proof; a write through a base register neither alias pass follows would go unseen.
+- **Deferred:** bits 6–15 of descriptor `+0x08` — no state sets one, so nothing can read one.
+- **Open:** what raises `mech+0xaf`. The field scan finds no writer but `Mech_AiTick`'s own clear, and a null result is not proof; a write through a base register neither alias pass follows would go unseen.

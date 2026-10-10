@@ -64,6 +64,12 @@ public sealed class WorldDrawItems {
 	// SelectDetailLevels' per-frame scratch: the level each object's detail part chose this frame.
 	private readonly Dictionary<(SimObject, PartDetail), int> _detailLevelChoice = new();
 
+	// What Refresh last picked the detail for, which RestoreFrameDetail picks it for again after a pass from
+	// another camera.
+	private Camera? _frameCamera;
+	private int _frameFocalPixels;
+	private SimulatorPreferences? _preferences;
+
 	public WorldDrawItems(MissionScene scene, SceneUploads uploads, DrawFiling filing, uint? terrainTexture) {
 		_scene = scene;
 		_uploads = uploads;
@@ -110,7 +116,11 @@ public sealed class WorldDrawItems {
 			}
 		}
 
-		All = built.ToArray();
+		// A structure's ground plane is drawn with the ground layer (GroundShapeLayer.ObjectGround), not
+		// among the items, but it is built and gated like every other piece of its object, so it was kept
+		// in the list until here.
+		var groundPieces = new HashSet<SceneItem>(GroundLayer.ObjectGround);
+		All = built.Where(entry => !groundPieces.Contains(entry)).ToArray();
 
 		// Every item that draws a simulation object is filed with it. The terrain has no subject and is
 		// not filed.
@@ -125,7 +135,7 @@ public sealed class WorldDrawItems {
 		// hides the world. Both lists share the same SceneItem objects, so the per-frame transform
 		// refresh reaches whichever one is being drawn.
 		Piloted = playerItems.Count > 0
-			? built.Where(entry => !playerItems.Contains(entry)).ToArray()
+			? All.Where(entry => !playerItems.Contains(entry)).ToArray()
 			: All;
 	}
 
@@ -148,26 +158,8 @@ public sealed class WorldDrawItems {
 			item.Transform = MissionScene.TransformOf(sceneObject);
 		}
 
-		// Each node of an animating machine is re-read here, alongside the whole-object transforms above.
-		// Reading more often than the simulation ticks costs nothing and gains nothing: the thread's
-		// intra-frame fraction only moves in Advance, so consecutive reads between ticks return the same
-		// pose. That is the original's cadence too — see docs/retail/formats/dts-node-posing.md's "Evaluation cadence".
-		// Which root of each machine's shape is drawn, and which level of every detail part, settled before
-		// the two loops that follow so that a piece taken up this frame is posed and gated this frame
-		// rather than one frame stale.
-		SelectDetailRoots(camera, focalPixels, preferences);
-		SelectDetailLevels(camera, focalPixels, preferences);
-
-		foreach (var (subject, transformId, item) in _posedParts) {
-			if (!item.DetailSelected) {
-				continue;
-			}
-
-			item.Transform = MissionScene.PosedTransformOf(subject, transformId);
-		}
-
-		// The arrival gate, run before the sequence gate below so that a part which is both waiting and
-		// gated is answered by the gate once its group is in the mission. An entry is dropped the frame
+		// The arrival gate, run before the sequence gate in SelectDetail so that a part which is both waiting
+		// and gated is answered by the gate once its group is in the mission. An entry is dropped the frame
 		// it arrives -- a group deploys once and never goes back.
 		for (int i = _undeployed.Count - 1; i >= 0; i--) {
 			var (owner, parts) = _undeployed[i];
@@ -182,6 +174,43 @@ public sealed class WorldDrawItems {
 			_undeployed.RemoveAt(i);
 		}
 
+		_frameCamera = camera;
+		_frameFocalPixels = focalPixels;
+		_preferences = preferences;
+		SelectDetail(camera, focalPixels);
+	}
+
+	/// <summary>
+	/// Which root of each machine and which level of every detail part <paramref name="camera"/> sees, and the
+	/// pose and the cells of the pieces that selects. <see cref="Refresh"/> runs it for the frame's own camera;
+	/// a pass from a camera with its own eye and focal length — the MFD's missile camera — runs it again for
+	/// that camera, as the original picks every level per view
+	/// (docs/retail/simulation/mfd.md, "<c>MFDMissileView</c> — mode 5"), and
+	/// <see cref="RestoreFrameDetail"/> after it.
+	/// </summary>
+	public void SelectDetail(Camera camera, int focalPixels) {
+		if (_preferences is not { } preferences) {
+			return;
+		}
+
+		// Each node of an animating machine is re-read here, alongside the whole-object transforms in
+		// Refresh. Reading more often than the simulation ticks costs nothing and gains nothing: the thread's
+		// intra-frame fraction only moves in Advance, so consecutive reads between ticks return the same
+		// pose. That is the original's cadence too — see docs/retail/rendering/dts-node-posing.md's "Evaluation cadence".
+		// Which root of each machine's shape is drawn, and which level of every detail part, settled before
+		// the two loops that follow so that a piece taken up here is posed and gated for this draw rather
+		// than left as the last camera to select it saw it.
+		SelectDetailRoots(camera, focalPixels, preferences);
+		SelectDetailLevels(camera, focalPixels, preferences);
+
+		foreach (var (subject, transformId, item) in _posedParts) {
+			if (!item.DetailSelected) {
+				continue;
+			}
+
+			item.Transform = MissionScene.PosedTransformOf(subject, transformId);
+		}
+
 		// Which cell of each animation sequence is on screen, read straight off the object the way
 		// TSCellAnimPart_Render reads shapeInstance+8. Every piece the shape holds is already uploaded,
 		// so a destroyed component or a collapsed structure part costs a flag rather than a rebuild.
@@ -194,6 +223,13 @@ public sealed class WorldDrawItems {
 		}
 
 		RefreshWreckItems();
+	}
+
+	/// <summary>Puts back the frame camera's picks after a <see cref="SelectDetail"/> for another camera.</summary>
+	public void RestoreFrameDetail() {
+		if (_frameCamera is { } camera) {
+			SelectDetail(camera, _frameFocalPixels);
+		}
 	}
 
 	/// <summary>
@@ -257,7 +293,9 @@ public sealed class WorldDrawItems {
 						DetailSelected = root == 0
 					};
 
-					if (segment.Leaf is { } leaf) {
+					if (segment.Ground) {
+						GroundLayer.ObjectGround.Add(part);
+					} else if (segment.Leaf is { } leaf) {
 						if (!rootGroups.TryGetValue(leaf.Tree, out var group)) {
 							rootGroups[leaf.Tree] = group = new BspDrawGroup(leaf.Tree,
 								frame => MissionScene.PosedTransformOf(subject, frame));
@@ -265,6 +303,7 @@ public sealed class WorldDrawItems {
 
 						part.BspGroup = group;
 						part.BspLeaf = leaf.Index;
+						part.PaintLayer = segment.Layer;
 					}
 
 					segmentItems[i] = part;
@@ -321,7 +360,7 @@ public sealed class WorldDrawItems {
 				var part = new SceneItem(cells[i], MissionScene.TransformOf(sceneObject), texture) {
 					LightSubject = sceneObject.Object
 				};
-				JoinBspGroup(part, cell.Leaf, cellGroups, sceneObject);
+				JoinGroundOrBspGroup(part, cell, cellGroups, sceneObject);
 
 				cellItems[i] = part;
 				built.Add(part);
@@ -389,7 +428,7 @@ public sealed class WorldDrawItems {
 
 		var hulkItems = Array.Empty<(SceneItem Item, CellGate Gate)>();
 		if (structure.Type.HulkTypeIndex >= 0
-				&& _scene.HulkModels.TryGetValue(structure.Type.HulkTypeIndex, out var hulk)
+				&& _scene.Models.Hulks.TryGetValue(structure.Type.HulkTypeIndex, out var hulk)
 				&& _uploads.Cells.TryGetValue(hulk.Key, out var hulkCells)) {
 			uint? hulkTexture = _uploads.TextureOf(hulk.Key);
 			hulkItems = new (SceneItem, CellGate)[hulkCells.Length];
@@ -400,7 +439,7 @@ public sealed class WorldDrawItems {
 					LightSubject = structure,
 					Visible = false
 				};
-				JoinBspGroup(hulkItem, hulk.Cells[i].Leaf, hulkGroups, sceneObject);
+				JoinGroundOrBspGroup(hulkItem, hulk.Cells[i], hulkGroups, sceneObject);
 
 				hulkItems[i] = (hulkItem, gate);
 				built.Add(hulkItem);
@@ -414,10 +453,16 @@ public sealed class WorldDrawItems {
 	}
 
 	// A piece baked at the rest pose joins its object's group for the part it is a child of,
-	// whose planes sit at the rest pose in front of the object's own frame.
-	private static void JoinBspGroup(SceneItem item, BspLeaf? leaf, Dictionary<BspTree, BspDrawGroup> groups,
+	// whose planes sit at the rest pose in front of the object's own frame -- unless it is the shape's
+	// ground plane, which is painted with the ground instead, ahead of every child (MeshCell.Ground).
+	private void JoinGroundOrBspGroup(SceneItem item, MeshCell cell, Dictionary<BspTree, BspDrawGroup> groups,
 			SceneObject owner) {
-		if (leaf is not { } child) {
+		if (cell.Ground) {
+			GroundLayer.ObjectGround.Add(item);
+			return;
+		}
+
+		if (cell.Leaf is not { } child) {
 			return;
 		}
 
@@ -428,11 +473,12 @@ public sealed class WorldDrawItems {
 
 		item.BspGroup = group;
 		item.BspLeaf = child.Index;
+		item.PaintLayer = cell.Layer;
 	}
 
 	// Which root of each machine's shape is drawn this frame -- Shape_DrawAtDetailLevel (004033e4),
 	// ported in Render.ShapeDetail and run here because this is where the camera and the window size
-	// both are. The original runs it inside the machine's own draw slot, once per machine per frame,
+	// both are. The original runs it inside the machine's own draw slot, once per machine per view,
 	// which is this cadence.
 	//
 	// HERC DETAIL is re-read every frame for the same reason TERRAIN TEXTURE is: the preferences

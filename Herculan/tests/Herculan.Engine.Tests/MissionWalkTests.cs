@@ -49,10 +49,15 @@ public class MissionWalkTests {
 	}
 
 	/// <summary>
-	/// A machine with no pilot is driven by its behaviour state's think, and only the states the
-	/// navigation slice ports drive anything — so a mission's AI machines split in two. One under a
-	/// movement or guard order walks; one in a state whose think is unported stands where the mission
-	/// put it, because nothing calls the control law for it at all.
+	/// A machine with no pilot is driven by its behaviour state's think, and the two states with no
+	/// think — <c>deciding</c> and <c>in limbo</c> — leave it nothing to drive the control law with, so
+	/// a machine that never leaves them stands where the mission put it.
+	///
+	/// <para>Nothing here asks that a driven machine moves: whether one does depends on whether its
+	/// order leaves it anywhere to go, and a mission can open with every enemy group awaiting
+	/// deployment and only the squad, on station around a player who has not moved, in the world.
+	/// <see cref="SquadmatesKeepingFormationFollowTheWalkingPlayer"/> tests a think driving the
+	/// control law where the code guarantees it has to.</para>
 	/// </summary>
 	[Fact]
 	public void UnpilotedMachinesMoveOnlyUnderAThinkThatDrivesThem() {
@@ -89,16 +94,77 @@ public class MissionWalkTests {
 			Assert.Equal(start.X, mech.Position.X);
 			Assert.Equal(start.Y, mech.Position.Y);
 		}
+	}
 
-		// Not every driven machine has anywhere to be — a guard already on its post and a follower
-		// already on station both hold still on purpose — so this asks that the group order layer
-		// moved somebody rather than that it moved everybody.
-		if (driven.Count != 0) {
-			Assert.Contains(others.Where(o => driven.Contains(o.Mech)),
-				o => SimMath.FastMagnitude2D(
-					o.Mech.Position.X - o.Start.X, o.Mech.Position.Y - o.Start.Y) > 0);
+	/// <summary>
+	/// A squadmate in <c>patrolling</c>, <c>search/destroy</c> or <c>guarding</c> with no standing
+	/// squad order (and, guarding, no FIRE AT WILL) keeps formation on its group's leader, which is
+	/// the player — docs/retail/simulation/ai-navigation.md. It starts on its post, so once the player
+	/// has walked it further off than the formation station range the post has left it behind, and
+	/// the think has to walk it after the player.
+	///
+	/// <para>Skips when the mission's squad has no machine in such a state, and when the player is
+	/// stopped — by ground too steep to climb, or by walking into a squadmate — before it has gone
+	/// that far.</para>
+	/// </summary>
+	[Fact]
+	public void SquadmatesKeepingFormationFollowTheWalkingPlayer() {
+		if (Load() is not { } scene || scene.PlayerMech is not { Thread: not null } player) {
+			return;
+		}
+
+		var squad = scene.Objects
+			.Select(o => o.Object)
+			.OfType<MechObject>()
+			.Where(mech => !mech.IsPlayer && mech.Thread != null && mech.Group is { LedByPlayer: true })
+			.Select(mech => (Mech: mech, Start: mech.Position))
+			.ToList();
+
+		var playerStart = player.Position;
+		var full = new MechControls(0, -MechControls.AxisFull);
+		var kept = new HashSet<MechObject>();
+		var left = new HashSet<MechObject>();
+		int playerTravelled = 0;
+
+		for (int i = 0; i < 200; i++) {
+			player.Controls = full;
+			scene.World.Tick();
+
+			// Every machine starts in `deciding` and takes its order's state on the tick after; past
+			// that, any tick out of formation-keeping drops it from the question.
+			foreach (var (mech, _) in squad) {
+				if (KeepsFormation(mech)) {
+					kept.Add(mech);
+				} else if (mech.Behaviour.State != BehaviourState.Deciding) {
+					left.Add(mech);
+				}
+			}
+
+			// Measured at the halfway mark, so a follower has the second half of the run to answer.
+			if (i == 99) {
+				playerTravelled = SimMath.FastMagnitude2D(
+					player.Position.X - playerStart.X, player.Position.Y - playerStart.Y);
+			}
+		}
+
+		// Twice the range, because FastMagnitude2D is an approximation of the ground distance the
+		// think measures.
+		if (playerTravelled <= 2 * MechObject.FormationStationRange) {
+			return;
+		}
+
+		foreach (var (mech, start) in squad.Where(o => kept.Contains(o.Mech) && !left.Contains(o.Mech))) {
+			int moved = SimMath.FastMagnitude2D(mech.Position.X - start.X, mech.Position.Y - start.Y);
+			Assert.True(moved > 0,
+				$"{mech.Name} kept formation but stood still while the player walked {playerTravelled} units");
 		}
 	}
+
+	private static bool KeepsFormation(MechObject mech) =>
+		mech.SquadOrderVerb == MechObject.SquadOrderNone
+		&& (mech.Behaviour.State == BehaviourState.Patrolling
+			|| mech.Behaviour.State == BehaviourState.SearchDestroy
+			|| (mech.Behaviour.State == BehaviourState.Guarding && !mech.FireAtWill));
 
 	/// <summary>
 	/// A squadmate's formation post is the slot offset that spread it at spawn, applied to the

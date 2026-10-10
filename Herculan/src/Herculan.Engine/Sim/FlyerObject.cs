@@ -2,7 +2,6 @@
 using HercWorks.Core.Data.File.Dat.Sim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
-using Herculan.Engine.World;
 
 namespace Herculan.Engine.Sim;
 
@@ -202,7 +201,7 @@ public sealed partial class FlyerObject : SimObject {
 
 		// The effect is picked before the damage lands, which matters only for the generator: the
 		// original draws here whether or not the wreck substitution below throws the result away.
-		short effect = world.PickImpactEffect(shot.ImpactFx(WeaponShot.ImpactFxGroup.Armor));
+		short effect = world.Effects.PickImpactEffect(shot.ImpactFx(WeaponShot.ImpactFxGroup.Armor));
 
 		int struckAt = struck.Distance + 1;
 		ApplyDamage(struck.ComponentIndex, shot.DamageArmor, shot.Owner, world);
@@ -210,12 +209,12 @@ public sealed partial class FlyerObject : SimObject {
 		var point = shot.Muzzle.TransformPoint(0, struckAt, 0);
 		// With no owner, unlike the mech and structure hit tests: an effect on a flyer is drawn whatever
 		// the camera is attached to.
-		world.SpawnImpactEffect(Destroyed ? WreckHitEffect : effect, point, owner: null);
+		world.Effects.SpawnImpactEffect(Destroyed ? WreckHitEffect : effect, point, owner: null);
 
 		// And wreckage off the same point, with the same substitution: an ordinary hit sheds
 		// HitDebrisGroup, and the hit that brings the aircraft down sheds WreckDebrisGroup instead.
 		// Both are DEF_DEB's, a flyer having no debris table of its own.
-		world.SpawnDebris(Destroyed ? WreckDebrisGroup : HitDebrisGroup, point, installed: null);
+		world.Effects.SpawnDebris(Destroyed ? WreckDebrisGroup : HitDebrisGroup, point, installed: null);
 
 		return struckAt;
 	}
@@ -265,7 +264,7 @@ public sealed partial class FlyerObject : SimObject {
 	/// because the state it is now in has no move slot to clamp it back to the ground.</para>
 	///
 	/// <para>The wreckage the cascade sheds inherits the aircraft's world velocity, through the
-	/// global <see cref="SimWorld.DebrisCarrierVelocity"/> the original points at
+	/// global <see cref="EffectPools.DebrisCarrierVelocity"/> the original points at
 	/// <c>flyer+0x24f</c> for the length of this call. The loss also plays the alert for the player's
 	/// own selected target going down, on the guard all three damage endpoints share, credits the
 	/// shooter through its <c>+0x60</c> slot (<see cref="MechObject.CreditNeutralised"/>), and fires
@@ -283,13 +282,13 @@ public sealed partial class FlyerObject : SimObject {
 		}
 
 		if (world != null) {
-			world.DebrisCarrierVelocity = FlightWorldVelocity;
+			world.Effects.DebrisCarrierVelocity = FlightWorldVelocity;
 		}
 
 		bool lost = _damage.ApplyDamage(componentIndex, damage, world, this);
 
 		if (world != null) {
-			world.DebrisCarrierVelocity = default;
+			world.Effects.DebrisCarrierVelocity = default;
 		}
 
 		if (!lost || componentIndex != 0) {

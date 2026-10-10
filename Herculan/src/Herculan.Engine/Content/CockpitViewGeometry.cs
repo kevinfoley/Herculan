@@ -5,7 +5,7 @@ namespace Herculan.Engine.Content;
 
 /// <summary>
 /// One herc's <c>vue\&lt;HERC&gt;.VUE</c> — where each cockpit view's window sits inside the cockpit
-/// canvas, in device pixels. See docs/retail/formats/cockpit-views.md.
+/// canvas, in device pixels. See docs/retail/simulation/cockpit-views.md.
 ///
 /// <para><b>The canvas is the mechanism behind the heads-down pan.</b> DBSIM's cockpit lives in a
 /// virtual space taller than the screen — 320x480 in the low-res mode, 640x960 in the two 640x480
@@ -115,7 +115,7 @@ public sealed class CockpitViewGeometry {
 	/// the rect's top-left less that. For the forward view the origin is (0,0) and this is the stored
 	/// pair negated. Every other view's centre lands where the forward view's does on the canvas, off its
 	/// own window — above it for the RAZOR's heads-down view, beside it for a glance — because all of them
-	/// are windows onto one image plane: docs/retail/formats/cockpit-views.md, "The projection centre is not the
+	/// are windows onto one image plane: docs/retail/simulation/cockpit-views.md, "The projection centre is not the
 	/// middle of the view".</para>
 	/// </summary>
 	public (int X, int Y) ProjectionCenter(int viewIndex) =>

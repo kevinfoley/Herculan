@@ -6,7 +6,7 @@ namespace Herculan.Engine.Tests;
 /// <summary>
 /// The shield gauge's two numbers: retail's truncated readout, which a forward press from centre
 /// leaves at 119/81, and the rounding tweak, which reads every reachable balance as a multiple of 20.
-/// See docs/retail/formats/cockpit-hud-widgets.md, "Readouts".
+/// See docs/retail/simulation/cockpit-hud-widgets.md, "Readouts".
 /// </summary>
 public class ShieldReadoutTests {
 	/// <summary>

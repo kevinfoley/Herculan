@@ -39,8 +39,9 @@ public sealed class PilotControls {
 	// Input_LatchButton(1, 1), the first button row — always FIRE — held masked until it is let go, which
 	// also holds the axes still. Two things latch it: a flown round ending, and AlertPanel_Enter (00454630)
 	// opening any modal panel. The joystick's own latches are JoystickBindings'; this one also masks
-	// [Space], the row's key. DAT_0049ebe5 is the keyboard hold that goes with it — see
-	// docs/retail/formats/joystick-input.md. Live input only: what a replay does with a latch is that doc's Open.
+	// [Space], the row's key. DAT_0049ebe5 is the keyboard hold that goes with it. A replay never lets it go:
+	// playback skips the release loop, so the latch holds until the tape ends — see
+	// docs/retail/simulation/joystick-input.md#a-latched-first-row-holds-the-axes.
 	private bool _fireRowLatched;
 	private int _missileKeyboardHold;
 
@@ -56,7 +57,7 @@ public sealed class PilotControls {
 		_developerKeys = developerKeys;
 		_staging = staging;
 		_commands = commands;
-		_keys = new PilotKeys(view, displays, commands, start.Scene, start.Audio);
+		_keys = new PilotKeys(view, displays, commands, start.Scene, start.Audio, () => RazorThrottleKeys);
 
 		// The bindings themselves are the twelve bytes of prefs.cfg — nothing about them changes when the
 		// hardware does, which is the whole point of the split; JoystickDeviceMap is what absorbs a modern
@@ -93,6 +94,10 @@ public sealed class PilotControls {
 	/// </summary>
 	public void Update(IKeyState? controls, bool modalPanelOpen, IKeyState? freeCameraKeys) {
 		var pilotMech = _view.PilotMech;
+
+		// The flight model's lever test is a pair of globals in the original, read for every aircraft it
+		// steps whoever is piloting, so the world carries it for the Cybrid flyers too.
+		_scene.World.FlightThrottleIsLever = JoystickBindings.FlightThrottleIsLever(StickCapabilities, _preferences);
 
 		// A modal takes the player's input away entirely — the stick as well as the keyboard, and not just
 		// the command keys the key handler already gates. Each of these panels runs a loop of its own in
@@ -160,7 +165,7 @@ public sealed class PilotControls {
 					_view.TakeCameraAxes(pilotMech.Controls);
 				}
 			} else {
-				PilotFromLiveInput(pilotMech, controls, _displays.HddHasArrows, commandHasKeys, stickReading);
+				PilotFromLiveInput(pilotMech, controls, commandHasKeys, stickReading);
 			}
 		} else {
 			if (!_tape.Playing) {
@@ -185,11 +190,11 @@ public sealed class PilotControls {
 		// them below.
 		if (pilotInput && pilotMech != null) {
 			var built = pilotMech.Controls;
-			_scene.World.MissileSteer = !_view.ControlsOnCamera && StickTurretPair
+			_scene.World.PlayerMissile.Steer = !_view.ControlsOnCamera && StickTurretPair
 				? new MissileSteerInput(built.TorsoTwist, built.TorsoPitch, built.Fire)
 				: new MissileSteerInput(built.Turn, built.Throttle, built.Fire);
 		} else {
-			_scene.World.MissileSteer = default;
+			_scene.World.PlayerMissile.Steer = default;
 		}
 
 		// The controls on the camera — the outside view's default, [Enter]'s swap and [Ctrl+T]'s hand-off —
@@ -199,10 +204,11 @@ public sealed class PilotControls {
 		// InputDrivesCamera alone: under it the machine gets no steering, throttle or twist, skips
 		// Mech_PlayerFireTick and Mech_ApplyThrottleInput ignores a lever, but it keeps the pitch axis
 		// while a stick with a throttle answers, which a lever on the turret pair or the hat under HAT = 2
-		// can be moving (docs/retail/formats/joystick-input.md, "While the camera has the controls"). That
+		// can be moving (docs/retail/simulation/joystick-input.md, "While the camera has the controls"). That
 		// gate is the live stick's even during a replay, the capability block being rebuilt from the device
 		// on every call. A round flown with InputDrivesCamera clear takes the original's ordinary branch,
-		// which this neutralises as well.
+		// which this neutralises as well. A RAZOR's flight model runs under either branch and makes its own
+		// throttle test, so that test is carried through.
 		if (pilotInput && pilotMech != null && _view.ControlsOnCamera) {
 			var liveStick = Joystick?.Capabilities ?? JoystickCapabilities.None;
 			bool keepsPitch = _view.ControlsDriveCamera && liveStick.Present && liveStick.HasThrottle;
@@ -210,6 +216,7 @@ public sealed class PilotControls {
 				TorsoPitch = keepsPitch ? pilotMech.Controls.TorsoPitch : (short)0,
 				CenterTorso = pilotMech.Controls.CenterTorso,
 				CenterBody = pilotMech.Controls.CenterBody,
+				FlightThrottleLever = pilotMech.Controls.FlightThrottleLever,
 			};
 		}
 
@@ -222,10 +229,26 @@ public sealed class PilotControls {
 	/// <summary>
 	/// The machine's controls from one tape frame: its axes, with this install's keyjoy.cfg Backturn applied as
 	/// the original applies it on playback, and its trigger.
+	///
+	/// <para>A flown round ending since the last frame latches the first button row here, as it does on the live
+	/// path, and nothing on this path lets it go. While it holds, the pair the camera-axis pointers address
+	/// reads zero, as in the live build; the trigger stays the tape's, since playback's jump skips the trigger
+	/// scan as well as the release loop.</para>
 	/// </summary>
 	public MechControls TapeControls(InputTape.Frame frame, bool centerTorso, bool centerBody) {
+		if (_scene.World.PlayerMissile.TakeFireRowLatch()) {
+			_fireRowLatched = true;
+		}
+
+		var tapeAxes = InputTapePlayer.AxesOf(frame);
+		if (_fireRowLatched && !_view.ControlsOnCamera) {
+			tapeAxes = StickTurretPair
+				? tapeAxes with { TorsoTwist = 0, TorsoPitch = 0 }
+				: tapeAxes with { Steer = 0, Throttle = 0 };
+		}
+
 		var axes = Bindings.Combine(
-			new JoystickPilotInput(InputTapePlayer.AxesOf(frame), false, Array.Empty<JoystickAction>()),
+			new JoystickPilotInput(tapeAxes, false, Array.Empty<JoystickAction>()),
 			PilotAxes.Centred);
 
 		return new MechControls(axes.Steer, axes.Throttle,
@@ -234,7 +257,8 @@ public sealed class PilotControls {
 			TorsoPitch: axes.TorsoPitch,
 			CenterTorso: centerTorso,
 			CenterBody: centerBody,
-			Fire: InputTapePlayer.TriggerOf(frame));
+			Fire: InputTapePlayer.TriggerOf(frame),
+			FlightThrottleLever: JoystickBindings.FlightThrottleIsLever(StickCapabilities, _preferences));
 	}
 
 	// Stick sign convention is the device's, not the game's: forward and left are negative. No
@@ -254,26 +278,25 @@ public sealed class PilotControls {
 	// Retail's own bindings, from the manual's keyboard table and its throttle section: left and right
 	// arrows steer, up and down arrows open and close the throttle, and keypad [5] is all stop. The
 	// manual says the numeric keypad with NUM LOCK off, which on a real keyboard is the same key as the
-	// arrow cluster; both are accepted here since a host window has no NUM LOCK to read.
+	// arrow cluster; both are accepted here since a host window has no NUM LOCK to read. KeyboardAxes
+	// combines them.
 	//
-	// While the Heads-Down Display is down the four arrows are its own instead of steering, which is
-	// what the manual binds them to there: they scroll the command display's map and, on the damage
-	// detail, step the herc and the category being inspected. The keypad keeps steering throughout,
-	// so the machine is never left without a stick; the command display also keeps [Backspace]
-	// cancelling a transmission rather than re-centring the turret. This is the one place the two
-	// keyboards are separated rather than allowed to overlap, because working the display and
-	// turning the machine with the same press is the one overlap that would fight the player.
+	// On the Heads-Down Display no key steers, works the throttle or aims: CockpitView_StepViewTransition
+	// (0042a9c0) switches the axis keys off as the pan down arrives and back on as the pan up arrives
+	// (SimInput_SetEnabled), which is CockpitPan.HeadsDownViewIndex here. The arrows, the keypad's among
+	// them, are the display's there; the command display also keeps [Backspace] cancelling a transmission
+	// rather than re-centring the turret.
 	//
 	// The stick is combined with all of that rather than replacing it: the original registers the
 	// keyboard's two axis pairs in the same source table as the joystick's four axes and takes
 	// whichever has moved, so a pilot can steer with one hand and nudge with the other. What the
 	// stick reaches at all is the twelve binding bytes' business — see JoystickBindings.
-	private void PilotFromLiveInput(MechObject mech, IKeyState keys, bool hddHasArrows, bool commandHasKeys,
+	private void PilotFromLiveInput(MechObject mech, IKeyState keys, bool commandHasKeys,
 			JoystickReading stickReading) {
 		// The first button row's latch: a flown round's end and a modal panel ask for it, and letting go
 		// of the row — [Space] and the stick's first button — drops it. While it holds, the trigger reads
 		// released and the axes are held below.
-		if (_scene.World.TakeFireRowLatch()) {
+		if (_scene.World.PlayerMissile.TakeFireRowLatch()) {
 			_fireRowLatched = true;
 		}
 
@@ -288,22 +311,17 @@ public sealed class PilotControls {
 		// Under the developer flag an arrow held with Ctrl or Alt is a move or turn key, and this engine
 		// takes it off the steering and throttle axes. Retail keeps it on them — see KNOWN_ISSUES.md.
 		bool arrowsAreCommands = _developerKeys.Enabled && (CtrlHeld(keys) || AltHeld(keys));
-		var keyboardAxes = new PilotAxes(
-			(short)((arrowsAreCommands ? 0
-				: hddHasArrows
-				? Axis(keys, Key.Keypad6, Key.Keypad4)
-				: Axis(keys, Key.Right, Key.Left, Key.Keypad6, Key.Keypad4)) * MechControls.KeyboardAxis),
-			(short)((arrowsAreCommands ? 0
-				: hddHasArrows
-				? Axis(keys, Key.Keypad2, Key.Keypad8)
-				: Axis(keys, Key.Down, Key.Up, Key.Keypad2, Key.Keypad8)) * MechControls.KeyboardAxis),
-			TurretAxis(Axis(keys, Key.K, Key.J), _staging.HeldTwist),
-			TurretAxis(Axis(keys, Key.I, Key.M), _staging.HeldPitch));
+		var keyboardAxes = _view.Pan.HeadsDownViewIndex ? PilotAxes.Centred : KeyboardAxes.Build(keys, RazorThrottleKeys);
+		keyboardAxes = new PilotAxes(
+			arrowsAreCommands ? (short)0 : keyboardAxes.Steer,
+			arrowsAreCommands ? (short)0 : keyboardAxes.Throttle,
+			TurretAxis(keyboardAxes.TorsoTwist, _staging.HeldTwist),
+			TurretAxis(keyboardAxes.TorsoPitch, _staging.HeldPitch));
 
 		// DAT_0049ebe5: the keyboard's first pair goes dead from the moment the first button row is
 		// latched while a round is being flown until that row is let go, so the arrows steering the
 		// round do not walk the machine off once it has gone.
-		if (_scene.World.MissileFlown) {
+		if (_scene.World.PlayerMissile.Flown) {
 			_missileKeyboardHold = 1;
 		}
 
@@ -319,7 +337,7 @@ public sealed class PilotControls {
 
 		// Flying the round, the keyboard's pitch is the other way up unless keyjoy.cfg's Missile says
 		// Reverse. The stick's is left alone.
-		if (_scene.World.MissileFlown && !Bindings.Keyjoy.ReverseMissile) {
+		if (_scene.World.PlayerMissile.Flown && !Bindings.Keyjoy.ReverseMissile) {
 			keyboardAxes = keyboardAxes with { Throttle = (short)-keyboardAxes.Throttle };
 		}
 
@@ -357,7 +375,9 @@ public sealed class PilotControls {
 			// firing as fast as its refire delay and its capacitor allow. So is the joystick trigger,
 			// for the same reason and through the same byte.
 			Fire: _staging.HeldFire || (_joystickInput.Fire && !(_fireRowLatched && fireRowIsTrigger))
-				|| (keys.IsKeyPressed(Key.Space) && !_fireRowLatched));
+				|| (keys.IsKeyPressed(Key.Space) && !_fireRowLatched),
+			// The flight model's own pair of conditions, which differ from the walker's above.
+			FlightThrottleLever: JoystickBindings.FlightThrottleIsLever(StickCapabilities, _preferences));
 		_view.TakeCameraAxes(mech.Controls);
 
 		// A tape records the axes ahead of Backturn, which playback applies again.
@@ -365,12 +385,18 @@ public sealed class PilotControls {
 	}
 
 	/// <summary>
-	/// One turret axis: the key pair, or whatever <c>--turret</c> is holding when no key is down. Never
+	/// One turret axis: the keyboard's, or whatever <c>--turret</c> is holding when no key is down. Never
 	/// past full deflection, so holding a key during a <c>--turret</c> run cannot ask for more rate than
 	/// a stick can.
 	/// </summary>
-	private static short TurretAxis(int keys, short held) =>
-		keys != 0 ? (short)(keys * MechControls.KeyboardAxis) : held;
+	private static short TurretAxis(short keys, short held) => keys != 0 ? keys : held;
+
+	/// <summary>
+	/// Whether keypad <c>-</c> and <c>+</c> are axis keys this frame: in a RAZOR, and not on the Heads-Down
+	/// Display, where retail switches the axis keys off and the pair reaches the display's magnifiers instead
+	/// (docs/retail/simulation/joystick-input.md#the-keyboard).
+	/// </summary>
+	public bool RazorThrottleKeys => Bindings.PilotingRazor && !_view.Pan.HeadsDownViewIndex;
 
 	// The frame's stick, in the shape a live one is resolved to. Its buttons are already past the
 	// press-once latch, so a set bit is an action this frame; the first set bit claims the tick's one
@@ -403,7 +429,7 @@ public sealed class PilotControls {
 	// the tick's slot.
 	//
 	// FIRE and OFF have no case, there or here; JoystickBindings keeps both out of Pressed while still
-	// letting them claim the slot (docs/retail/formats/joystick-input.md#the-buttons).
+	// letting them claim the slot (docs/retail/simulation/joystick-input.md#the-buttons).
 	//
 	// Every case reaches the same code a key or a click does, which is also true in the original — the
 	// switch is almost entirely made of calls into the widget tree and the mech's own command handler
@@ -428,7 +454,7 @@ public sealed class PilotControls {
 
 			// The lever's sense, and only when there is a lever bound to the throttle, so on a stick without
 			// one this button does nothing at all. The original tests the capability block's +4 and the
-			// walker's THROTTLE row through a literal, even in a RAZOR (docs/retail/formats/joystick-input.md,
+			// walker's THROTTLE row through a literal, even in a RAZOR (docs/retail/simulation/joystick-input.md,
 			// "The buttons"); this tests the current machine's row, which differs from it in a RAZOR whose
 			// THROTTLE row is not the walker's.
 			case JoystickAction.ChangeDirection
@@ -462,7 +488,7 @@ public sealed class PilotControls {
 			case JoystickAction.HddView when !_view.CockpitWidgetsOff:
 				// A toggle, which is what the action's two branches were plainly meant to be. The original
 				// tests the view manager's pointer rather than the view, so it can only ever leave the HDD
-				// (docs/retail/formats/joystick-input.md, "HDD VIEW can only leave").
+				// (docs/retail/simulation/joystick-input.md, "HDD VIEW can only leave").
 				_view.RequestHeadsDown(headsDown: !_view.Pan.HeadsDownRequested);
 				break;
 

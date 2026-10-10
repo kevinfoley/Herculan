@@ -9,7 +9,7 @@ namespace Herculan.Engine.Audio;
 /// <para><c>Sound_ResolveSamplePath</c> (<c>00462238</c>) is the whole of the path rule: the
 /// catalog stores a bare filename and the loader prefixes it with <c>HMI\</c>, or with <c>HMX\</c>
 /// when the low-memory mode is on. <c>SIMSOUND.VOL</c> carries both banks — <c>hmx</c> being the
-/// same recordings as 8-bit mono 11,025 Hz (docs/retail/formats/audio.md, "Sample banks") — so
+/// same recordings as 8-bit mono 11,025 Hz (docs/retail/simulation/audio.md, "Sample banks") — so
 /// <see cref="LowMemoryBank"/> selects between them the same way.</para>
 ///
 /// <para>Unlike the original this loads every named sample up front instead of honouring the

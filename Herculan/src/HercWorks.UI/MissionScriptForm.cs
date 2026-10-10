@@ -335,7 +335,7 @@ public partial class MissionScriptForm : Form {
 		ApplyHeader(_loaded);
 		_loaded.ObjectiveTextRefs = _unlockRows.Select(r => r.Value).ToArray();
 
-		var warnings = Validate(_loaded);
+		var warnings = ScriptDatLint.Check(_loaded).Select(finding => finding.Message).ToList();
 		if (warnings.Count > 0 && !ConfirmDespiteWarnings(warnings)) {
 			return;
 		}
@@ -400,147 +400,6 @@ public partial class MissionScriptForm : Form {
 		_headerRawText.Text = string.Join(" ", script.HeaderBytes.Select(b => b.ToString("X2")));
 	}
 
-	/// <summary>
-	/// Cross-block ref sanity check. Every ref is an index into another block's array (or -1 for
-	/// "unset"), and an out-of-range one is exactly the kind of edit that produces a mission DBSIM
-	/// reads off the end of its own tables — but this stays advisory rather than blocking, since
-	/// nothing here has been proven to be the game's own validation rule.
-	/// </summary>
-	private static List<string> Validate(ScriptDat script) {
-		var warnings = new List<string>();
-
-		for (int i = 0; i < script.WaypointGroups.Length; i++) {
-			CheckRefs(warnings, $"Route {i} waypoints", script.WaypointGroups[i].Waypoints, script.Coordinates.Length, "points");
-		}
-
-		for (int i = 0; i < script.Actions.Length; i++) {
-			CheckRefs(warnings, $"Action {i} trigger area refs", script.Actions[i].AreaRefs, script.TriggerAreas.Length, "trigger areas");
-		}
-
-		for (int i = 0; i < script.ActionTimers.Length; i++) {
-			var timer = script.ActionTimers[i];
-			CheckRef(warnings, $"Action timer {i} action ref", timer.PrimaryActionRef, script.Actions.Length, "actions");
-			CheckRefs(warnings, $"Action timer {i} sequence refs", timer.SequenceRefs, script.Actions.Length, "actions");
-		}
-
-		for (int i = 0; i < script.Actions.Length; i++) {
-			if (TargetCount(script, script.Actions[i].Type) is { } targets) {
-				CheckRef(warnings, $"Action {i} target ref", script.Actions[i].TargetRef, targets, "targets");
-			}
-		}
-
-		for (int i = 0; i < script.Mechs.Length; i++) {
-			var mech = script.Mechs[i];
-			CheckRef(warnings, $"Herc {i} point ref", mech.PositionRef, script.Coordinates.Length, "points");
-			CheckRef(warnings, $"Herc {i} heading ref", mech.HeadingRef, script.Headings.Length, "headings");
-			CheckRef(warnings, $"Herc {i} engaged action", mech.EngagementActionRef, script.Actions.Length, "actions");
-			CheckRef(warnings, $"Herc {i} defeated action", mech.DefeatActionRef, script.Actions.Length, "actions");
-		}
-
-		for (int i = 0; i < script.Flyers.Length; i++) {
-			var flyer = script.Flyers[i];
-			CheckRef(warnings, $"Flyer {i} point ref", flyer.PositionRef, script.Coordinates.Length, "points");
-			CheckRef(warnings, $"Flyer {i} heading ref", flyer.HeadingRef, script.Headings.Length, "headings");
-			CheckRef(warnings, $"Flyer {i} engaged action", flyer.EngagementActionRef, script.Actions.Length, "actions");
-			CheckRef(warnings, $"Flyer {i} defeated action", flyer.DefeatActionRef, script.Actions.Length, "actions");
-		}
-
-		for (int i = 0; i < script.Bases.Length; i++) {
-			var structure = script.Bases[i];
-			CheckRef(warnings, $"Base {i} point ref", structure.PositionRef, script.Coordinates.Length, "points");
-			CheckRef(warnings, $"Base {i} heading ref", structure.HeadingRef, script.Headings.Length, "headings");
-			CheckRef(warnings, $"Base {i} engaged action", structure.EngagementActionRef, script.Actions.Length, "actions");
-			CheckRef(warnings, $"Base {i} defeated action", structure.DefeatActionRef, script.Actions.Length, "actions");
-		}
-
-		for (int i = 0; i < script.Orders.Length; i++) {
-			var order = script.Orders[i];
-			CheckRef(warnings, $"Order {i} route ref", order.RouteRef, script.WaypointGroups.Length, "routes");
-			CheckRef(warnings, $"Order {i} action ref", order.ActionRef, script.Actions.Length, "actions");
-			if (order.SubjectKind >= 0) {
-				CheckRef(warnings, $"Order {i} subject ref", order.SubjectRef,
-					SubjectCount(script, order.SubjectKind), "subjects");
-			}
-		}
-
-		for (int i = 0; i < script.Objectives.Length; i++) {
-			var objective = script.Objectives[i];
-			CheckRef(warnings, $"Objective {i} route ref", objective.RouteRef, script.WaypointGroups.Length, "routes");
-			CheckRef(warnings, $"Objective {i} subject ref", objective.SubjectRef,
-				SubjectCount(script, objective.SubjectKind), "subjects");
-		}
-
-		for (int i = 0; i < script.Groups.Length; i++) {
-			var group = script.Groups[i];
-			CheckRef(warnings, $"Group {i} point ref", group.PositionRef, script.Coordinates.Length, "points");
-			CheckRef(warnings, $"Group {i} heading ref", group.HeadingRef, script.Headings.Length, "headings");
-			CheckRef(warnings, $"Group {i} route ref", group.RouteRef, script.WaypointGroups.Length, "routes");
-			CheckRef(warnings, $"Group {i} action ref", group.DeploymentActionRef, script.Actions.Length, "actions");
-			CheckRefs(warnings, $"Group {i} order refs", group.OrderRefs, script.Orders.Length, "orders");
-
-			// Record 0 is the player squad placeholder: DBSIM never reads its member list (it fills
-			// the squad from data\player.mec instead), so whatever indexes it carries are inert.
-			if (i == 0) {
-				continue;
-			}
-
-			(int rosterCount, string rosterName) = group.MemberKind switch {
-				0 => (script.Mechs.Length, "hercs"),
-				1 => (script.Flyers.Length, "flyers"),
-				2 => (script.Bases.Length, "bases"),
-				_ => (-1, "")
-			};
-
-			if (rosterCount < 0) {
-				warnings.Add($"Group {i} roster is {group.MemberKind} — only 0 (hercs), 1 (flyers) and 2 (bases) exist.");
-				continue;
-			}
-
-			CheckRefs(warnings, $"Group {i} member slots", group.MemberRefs, rosterCount, rosterName);
-		}
-
-		return warnings;
-	}
-
-	/// <summary>
-	/// How many records a subject ref of this kind can index — 0 group, 1 herc, 2 flyer, 3 base, the
-	/// numbering orders and objectives share. -1 for a kind with no block, which CheckRef reports.
-	/// </summary>
-	private static int SubjectCount(ScriptDat script, short kind) => kind switch {
-		0 => script.Groups.Length,
-		1 => script.Mechs.Length,
-		2 => script.Flyers.Length,
-		3 => script.Bases.Length,
-		_ => 0
-	};
-
-	/// <summary>
-	/// What an action's target indexes: types 7/8/9/10 name a herc, flyer, base or group
-	/// (docs/retail/simulation/mission-deployment.md#trigger-areas--actions_evaluatetriggers-00426b70). Null
-	/// for any other type, whose target DBSIM zeroes, so it goes unchecked.
-	/// </summary>
-	private static int? TargetCount(ScriptDat script, short type) => type switch {
-		7 => script.Mechs.Length,
-		8 => script.Flyers.Length,
-		9 => script.Bases.Length,
-		10 => script.Groups.Length,
-		_ => null
-	};
-
-	private static void CheckRefs(List<string> warnings, string label, short[] refs, int count, string target) {
-		foreach (short value in refs) {
-			CheckRef(warnings, label, value, count, target);
-		}
-	}
-
-	private static void CheckRef(List<string> warnings, string label, short value, int count, string target) {
-		if (value >= count) {
-			warnings.Add($"{label}: {value} is past the end of the {count} {target}.");
-		} else if (value < -1) {
-			warnings.Add($"{label}: {value} is not a valid index (-1 means unset).");
-		}
-	}
-
 	private bool ConfirmDespiteWarnings(List<string> warnings) {
 		const int shown = 12;
 		string detail = string.Join("\n", warnings.Take(shown));
@@ -549,7 +408,7 @@ public partial class MissionScriptForm : Form {
 		}
 
 		return MessageBox.Show(this,
-			$"{warnings.Count} reference(s) point outside the block they index:\n\n{detail}\n\nSave anyway?",
-			"Reference check", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes;
+			$"{warnings.Count} problem(s) found:\n\n{detail}\n\nSave anyway?",
+			"Mission check", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes;
 	}
 }

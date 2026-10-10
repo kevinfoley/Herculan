@@ -512,7 +512,7 @@ public sealed class ComponentDamage {
 	/// <see cref="DefaultDebrisGroup"/> when it names none.</para>
 	///
 	/// <para>The blank cell is stepped to in <see cref="CellFrames"/>, which the renderer reads to
-	/// pick which cell of each sequence is on screen. See docs/retail/formats/mech-shape-drawing.md.</para>
+	/// pick which cell of each sequence is on screen. See docs/retail/rendering/mech-shape-drawing.md.</para>
 	/// </summary>
 	private void DestroyAndCascade(int index, SimWorld? world, SimObject? owner,
 			DebrisDatabase? debris) {
@@ -577,10 +577,10 @@ public sealed class ComponentDamage {
 		if (sequence >= 0) {
 			if (!_majorEffectFired) {
 				if ((piece.DestructionFlags & DestructionFlagWholeObjectFire) != 0) {
-					world.ReleaseFires(owner);
-					world.SpawnFire(owner, (short)index, default, FireEffect.WholeObjectShape);
+					world.Effects.ReleaseFires(owner);
+					world.Effects.SpawnFire(owner, (short)index, default, FireEffect.WholeObjectShape);
 				} else if ((piece.DestructionFlags & DestructionFlagComponentFire) != 0) {
-					world.SpawnFire(owner, (short)index, default, FireEffect.ComponentShape);
+					world.Effects.SpawnFire(owner, (short)index, default, FireEffect.ComponentShape);
 				}
 			}
 
@@ -594,11 +594,11 @@ public sealed class ComponentDamage {
 				type = MajorExplosion;
 			}
 
-			world.SpawnImpactEffect(type, point, owner);
+			world.Effects.SpawnImpactEffect(type, point, owner);
 		}
 
 		short group = DebrisGroupOf(piece.DebrisFlags);
-		world.SpawnDebris(group < 0 ? DefaultDebrisGroup : group,
+		world.Effects.SpawnDebris(group < 0 ? DefaultDebrisGroup : group,
 			mech?.ComponentThrowFrame((short)index) ?? owner.WorldFrame, debris);
 	}
 
@@ -613,7 +613,7 @@ public sealed class ComponentDamage {
 	/// And the record's <c>+0x03</c> byte — which <c>TSCellAnimPart</c> sequence of the machine's
 	/// shape this component drives, <c>-1</c> for a component with no geometry of its own. It is the
 	/// gate on the fire as well as the map to the blank cell; see
-	/// docs/retail/formats/mech-shape-drawing.md.
+	/// docs/retail/rendering/mech-shape-drawing.md.
 	/// </summary>
 	public static short SubShapeSequenceOf(short debrisFlags) => (sbyte)((debrisFlags >> 8) & 0xff);
 

@@ -34,26 +34,26 @@ sealed class WorldPassRenderer : IDisposable {
 
 		// How far this zone is visible and what it fades into, both off the zone and its theater rather
 		// than hand-picked — see Scene.Atmosphere. The sky is deliberately left alone.
-		scene.Atmosphere.ApplyTo(Scene);
+		scene.Models.Atmosphere.ApplyTo(Scene);
 
 		// The lights impact effects claim, which the renderer selects out of per drawn object — see
 		// EffectLightSelection. Live slots only ever come from the simulation, so this is the whole of
 		// the wiring.
-		Scene.EffectLights = scene.World.EffectLights;
+		Scene.EffectLights = scene.World.Effects.Lights;
 
 		// And the same distance as the camera's far plane, so the view stops where the original's
 		// terrain draw region does instead of drawing fully-fogged geometry past it.
-		scene.Atmosphere.ApplyTo(camera);
+		scene.Models.Atmosphere.ApplyTo(camera);
 
 		// The theater's shaded-surface colours — what a TSShadedPoly is actually drawn through. See
 		// SurfaceRampTable.
-		Scene.SetShadeRamps(scene.ShadeRamps);
-		Scene.SetPaletteRamp(scene.PaletteRamp);
+		Scene.SetShadeRamps(scene.Models.ShadeRamps);
+		Scene.SetPaletteRamp(scene.Models.PaletteRamp);
 
 		// And the same two through the theater's damage-flash palette, which the cockpit shake swaps the
 		// scene to for a fraction of a second at a time — see Scene.ImpactFlash. After the two above,
 		// which this is measured against.
-		Scene.SetImpactRamps(scene.ImpactFlash?.ShadeRamps, scene.ImpactFlash?.PaletteRamp);
+		Scene.SetImpactRamps(scene.Models.ImpactFlash?.ShadeRamps, scene.Models.ImpactFlash?.PaletteRamp);
 
 		_wireframe = new WireframeRenderer(gl);
 
@@ -95,13 +95,19 @@ sealed class WorldPassRenderer : IDisposable {
 	/// <summary>
 	/// The MFD's MISSILE CAM, from inside the overlay's pass over the forward panel: the world as
 	/// MfdMissileViewScreen_Paint draws it, from the camera the screen placed, into the screen's own rect. It is
-	/// the cockpit view's draw again with three things changed, all of them the paint's own: no sky — the overlay
+	/// the cockpit view's draw again with four things changed, all of them the paint's own: no sky — the overlay
 	/// has already flooded the rect with the colour the paint floods it with — the terrain untextured whatever
-	/// TERRAIN TEXTURE says, and every object submitted, the machine being flown among them, since the view
-	/// object is the camera and not the cockpit.
+	/// TERRAIN TEXTURE says, every object submitted, the machine being flown among them and the ground shapes
+	/// within range of this camera, since the view object is the camera and not the cockpit, and every level
+	/// of detail picked by size on this screen from this camera. The cockpit's items are put back after it.
 	/// </summary>
 	public void DrawMissileView(GL gl, int x, int y, int width, int height, Camera view, Camera cockpitCamera) {
 		view.FarPlane = cockpitCamera.FarPlane;
+
+		// The world's picks first: a gun's rebuilt item is painted in the slot of its machine's drawn root.
+		int focalPixels = DetailMetrics.FocalPixels(view, height);
+		_world.SelectDetail(view, focalPixels);
+		_transient.RefreshForView(view, focalPixels);
 
 		gl.Enable(EnableCap.ScissorTest);
 		gl.Scissor(x, y, (uint)width, (uint)height);
@@ -126,6 +132,8 @@ sealed class WorldPassRenderer : IDisposable {
 
 		groundLayer.Objects.CameraAttachedTo = riding;
 		terrainItem.TextureHandle = terrainTexture;
+		_world.RestoreFrameDetail();
+		_transient.RestoreFrameView();
 
 		Scene.Sky = sky;
 		gl.Disable(EnableCap.ScissorTest);

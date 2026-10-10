@@ -17,7 +17,7 @@ public enum SystemButton {
 
 /// <summary>
 /// The cockpit's two system buttons — the pair of <c>SystemGadget</c>s <c>SystemButtons_Ctor</c>
-/// (<c>00434368</c>) builds at the screen's top-right corner. See docs/retail/formats/cockpit-input.md, "The two
+/// (<c>00434368</c>) builds at the screen's top-right corner. See docs/retail/simulation/cockpit-input.md, "The two
 /// system buttons", for the retail evidence behind each member.
 ///
 /// <para><b>Screen space, not art space.</b> The original moves the pair's rects against the root's on

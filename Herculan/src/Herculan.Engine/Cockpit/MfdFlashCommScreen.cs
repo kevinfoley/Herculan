@@ -5,7 +5,7 @@ namespace Herculan.Engine.Cockpit;
 
 /// <summary>
 /// The MFD's FLASH COMM page (<c>MfdFlashCommScreen_Ctor</c>, <c>0043f5d8</c>) — six order rows, one
-/// of them selected, and XMIT. Derivation: docs/retail/formats/mfd.md and
+/// of them selected, and XMIT. Derivation: docs/retail/simulation/mfd.md and
 /// docs/retail/simulation/ai-squadmates.md.
 ///
 /// <para><b>Six positions, not six orders.</b> Each row names one of two verbs from

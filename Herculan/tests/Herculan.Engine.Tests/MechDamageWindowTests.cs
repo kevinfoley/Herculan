@@ -33,7 +33,7 @@ public class MechDamageWindowTests {
 		Assert.Equal(MechObject.DamageWindowReload, victim.DamageWindowTimer);
 
 		var shot = ComputerWarningTests.Shot(shooter);
-		Assert.NotEqual(0, world.Raycast(shot));
+		Assert.NotEqual(0, HitTests.Raycast(world, shot));
 		Assert.Same(victim, shot.HitObject);
 
 		int taken = victim.DamageTaken;

@@ -312,7 +312,7 @@
           "type": "ushort *",
           "name": "sequenceFrameCounts",
           "confidence": "high",
-          "description": "+0x20 -- sequenceCount ushorts read from the stream: how many cells each cell-animation sequence has. A ticking effect takes its cellFrames entry modulo this, as Explosion_TickUpdate (0040813c) and the rocket's exhaust flame do. See docs/retail/formats/dts-billboards.md."
+          "description": "+0x20 -- sequenceCount ushorts read from the stream: how many cells each cell-animation sequence has. A ticking effect takes its cellFrames entry modulo this, as Explosion_TickUpdate (0040813c) and the rocket's exhaust flame do. See docs/retail/rendering/dts-billboards.md."
         },
         {
           "offset": 36,
@@ -328,7 +328,7 @@
           "type": "void *",
           "name": "boundBitmapArray",
           "confidence": "high",
-          "description": "+0x26 -- the DBA the shape's texture and bitmap parts draw from, set at run time rather than stored in the .DTS. 'MOV EAX,dword ptr [EAX + 0x26]' in TSShape_GetBoundBitmapArray (00490c41) settles the width; TSShapeInstance_Render installs it in g_CurrentShapeDbaContext for the draw. See docs/retail/formats/dts-texture-binding.md."
+          "description": "+0x26 -- the DBA the shape's texture and bitmap parts draw from, set at run time rather than stored in the .DTS. 'MOV EAX,dword ptr [EAX + 0x26]' in TSShape_GetBoundBitmapArray (00490c41) settles the width; TSShapeInstance_Render installs it in g_CurrentShapeDbaContext for the draw. See docs/retail/rendering/dts-texture-binding.md."
         }
       ]
     },
@@ -360,7 +360,7 @@
           "type": "ushort *",
           "name": "cellFrames",
           "confidence": "high",
-          "description": "+0x8 -- this instance's current cell for each sequence, shape->sequenceCount ushorts copied from shape->initialCellFrames (null when the shape has no sequences). TSShapeInstance_Render publishes it as g_CellAnimFrames (ShapeRender_BindCellFrames, 00490c2e) for TSCellAnimPart_Render to index. Effects step an entry and wrap it at shape->sequenceFrameCounts; the mech writes 2 into a component's sequence to blank its parts. See docs/retail/formats/dts-billboards.md and docs/retail/formats/mech-shape-drawing.md."
+          "description": "+0x8 -- this instance's current cell for each sequence, shape->sequenceCount ushorts copied from shape->initialCellFrames (null when the shape has no sequences). TSShapeInstance_Render publishes it as g_CellAnimFrames (ShapeRender_BindCellFrames, 00490c2e) for TSCellAnimPart_Render to index. Effects step an entry and wrap it at shape->sequenceFrameCounts; the mech writes 2 into a component's sequence to blank its parts. See docs/retail/rendering/dts-billboards.md and docs/retail/rendering/mech-shape-drawing.md."
         }
       ]
     },
@@ -417,7 +417,7 @@
           "type": "short",
           "name": "typeTag",
           "confidence": "high",
-          "description": "+0x4 -- the type tag ObjList_DrawCellObjects (00428c60) branches on ('CMP word ptr [EBX + 0x4],0x9'): 9 draws on the spot, anything else gets a deferred, depth-sorted render entry. Written after the vtable by the constructing code: Bullet_Construct 3, a ground shape 9, an impact effect 2 or 8 by its type row's +0x26. See docs/retail/formats/distance-fog-and-sky.md."
+          "description": "+0x4 -- the type tag ObjList_DrawCellObjects (00428c60) branches on ('CMP word ptr [EBX + 0x4],0x9'): 9 draws on the spot, anything else gets a deferred, depth-sorted render entry. Written after the vtable by the constructing code: Bullet_Construct 3, a ground shape 9, an impact effect 2 or 8 by its type row's +0x26. See docs/retail/rendering/distance-fog-and-sky.md."
         }
       ]
     },
@@ -1900,7 +1900,7 @@
       "name": "LightSource",
       "binary": "DBSIM",
       "size": 14,
-      "description": "RTTI 'LightSource', 0xe bytes, derived from DRAWABLE: an impact effect's handle on a light-manager slot. EffectLight_Construct (00407604) claims the slot and seeds its intensity; it draws nothing. See docs/retail/formats/effect-lights.md.",
+      "description": "RTTI 'LightSource', 0xe bytes, derived from DRAWABLE: an impact effect's handle on a light-manager slot. EffectLight_Construct (00407604) claims the slot and seeds its intensity; it draws nothing. See docs/retail/rendering/effect-lights.md.",
       "fields": [
         {
           "offset": 0,
@@ -2221,7 +2221,7 @@
       "name": "hzline",
       "binary": "DBSIM",
       "size": 122,
-      "description": "The theater's sky backdrop (RTTI 'hzline', vtable 0049afb0, over TSGroup's 0x28 bytes): a horizon line projected from the view each frame, palette bands above it and one fill below. Built by Hzline_Ctor in World_LoadTheater from the .WLD's first eight shorts and held at g_TheaterHzline; drawn by Hzline_Draw from Scene_DrawTerrainPass. docs/retail/formats/distance-fog-and-sky.md#the-sky--hzline.",
+      "description": "The theater's sky backdrop (RTTI 'hzline', vtable 0049afb0, over TSGroup's 0x28 bytes): a horizon line projected from the view each frame, palette bands above it and one fill below. Built by Hzline_Ctor in World_LoadTheater from the .WLD's first eight shorts and held at g_TheaterHzline; drawn by Hzline_Draw from Scene_DrawTerrainPass. docs/retail/rendering/distance-fog-and-sky.md#the-sky--hzline.",
       "fields": [
         {
           "offset": 0,

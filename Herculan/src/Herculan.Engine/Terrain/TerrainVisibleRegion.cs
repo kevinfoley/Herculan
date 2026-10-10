@@ -7,7 +7,7 @@ namespace Herculan.Engine.Terrain;
 /// its left and right edges and, up over depth, of its top and bottom. For DBSIM's view these are
 /// the projection centre's distance from each edge of the view rect over the focal length — the
 /// <c>cx</c>, <c>w − cx</c>, <c>cy</c> and <c>h − cy</c> over <c>2^s</c> that
-/// <c>ViewFrustum_Build</c> multiplies by the far distance (docs/retail/formats/terrain-drawing.md, "The
+/// <c>ViewFrustum_Build</c> multiplies by the far distance (docs/retail/rendering/terrain-drawing.md, "The
 /// planes"). See <see cref="Render.Camera.EdgeSlopes"/>.
 /// </summary>
 public readonly record struct ViewEdgeSlopes(float Left, float Right, float Top, float Bottom);
@@ -17,7 +17,7 @@ public readonly record struct ViewEdgeSlopes(float Left, float Right, float Top,
 /// (<c>0046ca98</c>) builds at <c>grid+0x28</c> (count <c>grid+0xc8</c>, flag <c>grid+0x11c</c>):
 /// <c>Terrain_BuildDrawRegionQuad</c>'s square round the viewer, cut by the view's frustum loosened
 /// a cell and a half on every side and widened by the zone's height range, in cell coordinates. See
-/// docs/retail/formats/terrain-drawing.md, "The visible region".
+/// docs/retail/rendering/terrain-drawing.md, "The visible region".
 ///
 /// <para>What reads it here is <see cref="HeightGrid.PickDrawCell"/>'s bounds test, through
 /// <see cref="MinCellX"/> and its siblings. One instance belongs to one grid, as the fields do in

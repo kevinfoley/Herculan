@@ -43,7 +43,7 @@ namespace Herculan.Engine.Scene;
 /// <param name="Sky">
 /// The theater's banded sky (<see cref="SkyGradient"/>), or null when its palette did not load. How
 /// closely <paramref name="FogColor"/> matches the colour retail paints at the horizon, per theater,
-/// is docs/retail/formats/distance-fog-and-sky.md's "Where the two meet".
+/// is docs/retail/rendering/distance-fog-and-sky.md's "Where the two meet".
 /// </param>
 public readonly record struct Atmosphere(float FogStart, float FogEnd, Vector3? FogColor,
 		float CellSize, SkyGradient? Sky) {

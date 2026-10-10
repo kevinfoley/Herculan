@@ -3,7 +3,7 @@ namespace Herculan.Engine.Audio;
 /// <summary>
 /// Where <see cref="StreamedCdAudio"/> gets a Red Book track's PCM from. Retail's music is a CD
 /// player playing the disc; this engine reads the same audio digitally and plays it through its own
-/// mixer, so the source of that audio is a seam of its own — see docs/retail/formats/audio.md's "CD audio".
+/// mixer, so the source of that audio is a seam of its own — see docs/retail/simulation/audio.md's "CD audio".
 ///
 /// <para>Four implementations: <see cref="CdRipMusicSource"/> reads the disc,
 /// <see cref="ImageMusicSource"/> a disc image, <see cref="WaveFileMusicSource"/> a directory of

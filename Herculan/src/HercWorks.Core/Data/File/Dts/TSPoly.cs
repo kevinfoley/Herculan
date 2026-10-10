@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dts;
 
 /// <summary>
 /// A polygon with no surface of its own, so nothing fills it; a cell animation uses one as its
-/// blank cell. See docs/retail/formats/mech-shape-drawing.md, "A destroyed component hides its own geometry".
+/// blank cell. See docs/retail/rendering/mech-shape-drawing.md, "A destroyed component hides its own geometry".
 /// </summary>
 public class TSPoly : TSObject {
 	/// <summary>Index into the group's points of the face's stored normal (<c>poly+4</c>).</summary>

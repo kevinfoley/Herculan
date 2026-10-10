@@ -77,7 +77,7 @@ public sealed partial class MechObject {
 	/// How many times this machine's cockpit has been jolted — a hit on one of its two cockpit
 	/// components, or a slide landing. The host watches it for the edge rather than a flag, the same
 	/// way it watches <see cref="Footfalls"/>, so a jolt taken between two frames is not missed. See
-	/// <c>CockpitHitShake</c>, and docs/retail/formats/cockpit-canopy-palette.md, "The damage shake".
+	/// <c>CockpitHitShake</c>, and docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".
 	/// </summary>
 	public int CockpitHits { get; private set; }
 
@@ -143,8 +143,8 @@ public sealed partial class MechObject {
 	/// <summary>
 	/// <c>mech+0xa8</c> — the softer one: neither side is crippled, but one is past
 	/// <see cref="LegsDamagedAlert"/>. In the original it exists mainly to raise the pilot's alert
-	/// once, and to take the milder speed penalty. Latched, like its partner. The original's
-	/// <c>flanking</c> gate reads it too; the port's does not (KNOWN_ISSUES.md).
+	/// once, and to take the milder speed penalty. Latched, like its partner, and like it keeps the
+	/// machine out of <c>flanking</c>.
 	/// </summary>
 	public bool LegsDamaged { get; private set; }
 
@@ -320,7 +320,7 @@ public sealed partial class MechObject {
 		}
 
 		if (shieldDamage == 0) {
-			world.SpawnPickedImpactEffect(
+			world.Effects.SpawnPickedImpactEffect(
 				shot.ImpactFx(WeaponShot.ImpactFxGroup.Shield), shot.Muzzle.TransformPoint(0, struckAt, 0), this);
 			return struckAt;
 		}
@@ -415,7 +415,7 @@ public sealed partial class MechObject {
 	/// <para><b><c>0x12</c> <c>DAMAGE LEVEL CRITICAL</c> is never said.</b> Its call site sits
 	/// between the two readings and needs the later one to have <i>fallen</i> below the earlier; no
 	/// retail <c>PROJ.DAT</c> record can make the write negative, so the line is unreachable — see
-	/// docs/retail/formats/cockpit-messages.md, "Posters". The cockpit jolt that shares its gate is a
+	/// docs/retail/simulation/cockpit-messages.md, "Posters". The cockpit jolt that shares its gate is a
 	/// separate effect and is raised, through <see cref="CockpitHits"/>. What the test reads as
 	/// having been meant is implemented beside that jolt under the
 	/// <see cref="TweakSettingDefinitions.CriticalDamageMessage"/> tweak.</para>
@@ -470,7 +470,7 @@ public sealed partial class MechObject {
 			RollWeaponMountDestruction(world, componentIndex, after);
 		}
 
-		world.SpawnPickedImpactEffect(shot.ImpactFx(group), hitPoint, this);
+		world.Effects.SpawnPickedImpactEffect(shot.ImpactFx(group), hitPoint, this);
 
 		// And a spray of wreckage off the impact point, but only for a hit that moved the component
 		// into a new band and did not finish it: a shot that merely scuffs the armour throws nothing,
@@ -478,7 +478,7 @@ public sealed partial class MechObject {
 		// is the literal 2, which is DEF_DEB's, so it is the same three shapes off every machine
 		// however exotic its own wreckage table is.
 		if (group == WeaponShot.ImpactFxGroup.Armor && after != FullyDamaged) {
-			world.SpawnDebris(HitDebrisGroup, hitPoint, DebrisTable(world));
+			world.Effects.SpawnDebris(HitDebrisGroup, hitPoint, DebrisTable(world));
 		}
 	}
 
@@ -521,7 +521,7 @@ public sealed partial class MechObject {
 	/// </list>
 	///
 	/// <para>Reached from two places, as in the original: the world sweep
-	/// (<see cref="SimWorld.ExplosiveBlastSweep"/>) for a shot that goes off in the open, and this
+	/// (<see cref="HitTests.ExplosiveBlastSweep"/>) for a shot that goes off in the open, and this
 	/// machine's own direct-fire path for the splash share of a shot that hit it — see
 	/// <see cref="ApplyDirectFireDamage"/>.</para>
 	///
@@ -712,7 +712,7 @@ public sealed partial class MechObject {
 	/// <see cref="ComponentDamage.Deactivate"/>.</para>
 	///
 	/// <para><b>A Cybrid's lost gun is salvage.</b> On a machine of side 1 the mount goes onto the
-	/// mission's salvage list (<see cref="SimWorld.QueueSalvage"/>) between the flag write and the
+	/// mission's salvage list (<see cref="MissionRuntime.QueueSalvage"/>) between the flag write and the
 	/// finish-off, with its condition taken from <see cref="MountSalvageScale"/> of the reading: a gun
 	/// knocked off a half-wrecked mount comes home in better shape than the mount reads.</para>
 	/// </summary>
@@ -733,7 +733,7 @@ public sealed partial class MechObject {
 		mount?.Destroy(world, this, rolled: true, DebrisTable(world));
 		_damage.Deactivate(componentIndex);
 		if (Side == MissionSide.Cybrid && mount != null) {
-			world.QueueSalvage((short)mount.WeaponId,
+			world.Mission.QueueSalvage((short)mount.WeaponId,
 				SalvageCondition(SimMath.Q10Multiply(MountSalvageScale, damagePercent)));
 		}
 
@@ -772,8 +772,9 @@ public sealed partial class MechObject {
 	/// merely hurt. The RAZOR is skipped outright, as a chassis that does not walk.</item>
 	/// <item><b>The death test.</b> Either cockpit section fully gone, or life support or the pilot
 	/// destroyed, and the machine is dead — at which point the original re-enters this function with a
-	/// flat 30000 on component 0 to finish everything else off, which is why a kill leaves a machine
-	/// comprehensively wrecked rather than merely stopped.</item>
+	/// flat 30000 on component 0 to finish off the front cockpit. That blows most chassis apart, but
+	/// the PITBULL's cockpit never runs its destruction, so a dead PITBULL with its legs intact stays
+	/// standing, unmarked. See docs/retail/simulation/component-damage.md#going-out-of-the-fight.</item>
 	/// <item><b>The reactor flags latch</b> off its own dependent. They never clear, and the check is
 	/// gated on both being down, so once the first sets the second is only reachable by a single hit
 	/// crossing both thresholds at once.</item>

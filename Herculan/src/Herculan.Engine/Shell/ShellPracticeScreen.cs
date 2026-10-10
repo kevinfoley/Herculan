@@ -35,7 +35,7 @@ public enum ShellPracticeButton {
 /// <c>PracticeScreen_Build</c> (<c>0044ac80</c>), put up by <c>PracticeScreen_Show</c>
 /// (<c>0044bc92</c>) and taken down by <c>PracticeScreen_Hide</c> (<c>0044bcb3</c>); its selection is
 /// moved by <c>PracticeScreen_SelectRow</c> (<c>0044bd7c</c>). See
-/// docs/retail/shell/screen-layout.md#the-practice-missions-screen.
+/// docs/retail/shell/main-menu.md#the-practice-missions-screen.
 ///
 /// <para>Every rect is a literal in the executable, kept parent-relative as the builder writes it: the
 /// content panel in the canvas, the two boxes and the two lower buttons in the panel, and the rest in
@@ -93,7 +93,7 @@ public sealed class ShellPracticeScreen {
 	/// <summary>
 	/// The <c>prefs.cfg</c> option each parameter steps, its modulus, and the first <c>estext.bin</c>
 	/// entry of the run its readout prints — the value is added to it. Indexed by
-	/// <see cref="ShellPracticeButton"/>. See docs/retail/shell/screen-layout.md, "The parameters".
+	/// <see cref="ShellPracticeButton"/>. See docs/retail/shell/main-menu.md, "The parameters".
 	/// </summary>
 	private static readonly (int Option, int Modulus, int FirstText)[] Parameters = {
 		(0x26, 2, 0x128),
@@ -252,7 +252,7 @@ public sealed class ShellPracticeScreen {
 	/// Draws the screen into <paramref name="surface"/>. The caller clears it first; the content panel's
 	/// dithered body leaves every other pixel to the backdrop, as the main menu's does.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
 		ShellChrome.PaintTitledPanel(surface, PanelRect, Border, PanelFace, ShellChrome.InteriorColor, TitleHeight,
@@ -261,10 +261,10 @@ public sealed class ShellPracticeScreen {
 			font, text?.Text(TitleText), ShellTextAlign.Center, ShellChrome.FontInkColor);
 
 		PaintList(surface, font, text);
-		PaintParameters(surface, font, text);
+		PaintParameters(surface, font, text, lit);
 
-		PaintButton(surface, font, text, ShellPracticeButton.MainMenu, MainMenuText);
-		PaintButton(surface, font, text, ShellPracticeButton.BeginMission, BeginMissionText);
+		PaintButton(surface, font, text, ShellPracticeButton.MainMenu, MainMenuText, lit);
+		PaintButton(surface, font, text, ShellPracticeButton.BeginMission, BeginMissionText, lit);
 	}
 
 	/// <summary>
@@ -306,34 +306,28 @@ public sealed class ShellPracticeScreen {
 	/// backing, and five rows of label, colon and readout. A readout is a <c>Button</c> the builder
 	/// disables and gives border <c>0x13</c> and an opaque caption in <c>0x17</c>.
 	/// </summary>
-	private void PaintParameters(ShellSurface surface, HudFont? font, ShellText? text) {
+	private void PaintParameters(ShellSurface surface, HudFont? font, ShellText? text, ShellWidget? lit) {
 		var box = Inside(PanelRect, ParameterRect);
 		ShellChrome.PaintFramedPanel(surface, box, Border, ParameterFace, fill: true);
 		ShellChrome.PaintText(surface, Inside(box, ParameterTitleRect), font, text?.Text(ParameterTitleText),
 			ShellTextAlign.Center, LabelColor);
 
 		for (var button = ShellPracticeButton.Damage; button <= ShellPracticeButton.HercType; button++) {
-			PaintButton(surface, font, text, button, FirstParameterText + (int)button);
+			PaintButton(surface, font, text, button, FirstParameterText + (int)button, lit);
 			ShellChrome.PaintText(surface, ColonRect(button), font, Colon, ShellTextAlign.Center, ColonColor);
 
-			var readout = ReadoutRect(button);
-			ShellChrome.PaintButton(surface, readout, ReadoutBorder);
-			ShellChrome.PaintText(surface, new ShellRect(readout.X0 + 1, readout.Y0, readout.X1, readout.Y1), font,
-				text?.Text(ValueText(button)), ShellTextAlign.Center, ReadoutTextColor, ShellChrome.InteriorColor);
+			ShellChrome.PaintButton(surface, ReadoutRect(button), ReadoutBorder, font, text?.Text(ValueText(button)),
+				ReadoutTextColor, backingColor: ShellChrome.InteriorColor);
 		}
 	}
 
-	/// <summary>
-	/// A live button, greyed with its caption when it is not enabled. The caption is the <c>Text</c> child
-	/// <c>ESButtonFont_Ctor</c> builds at <c>{1, 0, w, h}</c>.
-	/// </summary>
+	/// <summary>A live button, greyed with its caption when it is not enabled.</summary>
 	private void PaintButton(ShellSurface surface, HudFont? font, ShellText? text, ShellPracticeButton button,
-			int captionText) {
+			int captionText, ShellWidget? lit) {
 		bool enabled = IsEnabled(button);
-		var rect = ButtonRect(button);
-		ShellChrome.PaintButton(surface, rect, enabled ? ButtonBorder : DisabledColor);
-		ShellChrome.PaintText(surface, new ShellRect(rect.X0 + 1, rect.Y0, rect.X1, rect.Y1), font,
-			text?.Text(captionText), ShellTextAlign.Center, enabled ? ShellChrome.FontInkColor : DisabledColor);
+		ShellChrome.PaintButton(surface, ButtonRect(button), enabled ? ButtonBorder : DisabledColor, font,
+			text?.Text(captionText), enabled ? ShellChrome.FontInkColor : DisabledColor,
+			pressed: enabled && lit == new ShellWidget(ShellWidgetKind.PracticeButton, (int)button));
 	}
 
 	private static ShellRect Inside(ShellRect parent, ShellRect child) =>

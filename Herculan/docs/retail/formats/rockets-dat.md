@@ -30,7 +30,7 @@ Retail (5 records, one per `Rocket` subtype id):
 
 ## `dts\ROCKETS.DTS`
 
-Both roots are a `TSDetailPart` over four LODs (`details = [4, 12, 45, 255]`). At the highest, the shape is a static body plus a **two-cell `TSCellAnimPart` holding geometry** — the cells are flat-poly cones at the tail, and their surface colours are the palette's flame range against the body's grey. In root 1 that level is a `TSBSPPart` whose tree reaches the body alone, so root 1's flame is never drawn at its finest level ([`dts-texture-binding.md`](dts-texture-binding.md#tsbsppart-child-selection)):
+Both roots are a `TSDetailPart` over four LODs (`details = [4, 12, 45, 255]`). At the highest, the shape is a static body plus a **two-cell `TSCellAnimPart` holding geometry** — the cells are flat-poly cones at the tail, and their surface colours are the palette's flame range against the body's grey. In root 1 that level is a `TSBSPPart` whose tree reaches the body alone, so root 1's flame is never drawn at its finest level ([`../rendering/dts-texture-binding.md`](../rendering/dts-texture-binding.md#tsbsppart-child-selection)):
 
 | | model-space centre Y | surface colours |
 |---|---|---|
@@ -40,4 +40,4 @@ Both roots are a `TSDetailPart` over four LODs (`details = [4, 12, 45, 255]`). A
 
 Both roots declare one sequence of two frames (`TSShape.SequenceList == [2]`, the `shape+0x20` array a projectile's tick mods by) and every `TSCellAnimPart` in them carries `AnimSequence == 0` — the sequence every `ROCKETS.DAT` record names.
 
-**There is no `ROCKETS.DBA` and no bank is bound.** Unlike `Bullet_LoadResources`, the rocket loader never writes the shapes' bound-bank pointer, and the shapes hold no `TSBitmapPart` to want one: a rocket is entirely ramp-coloured `TSSolidPoly`/`TSShadedPoly` geometry (57 polys; [`dts-texture-binding.md`](dts-texture-binding.md)). The cell-animation mechanism is in [`dts-billboards.md`](dts-billboards.md).
+**There is no `ROCKETS.DBA` and no bank is bound.** Unlike `Bullet_LoadResources`, the rocket loader never writes the shapes' bound-bank pointer, and the shapes hold no `TSBitmapPart` to want one: a rocket is entirely ramp-coloured `TSSolidPoly`/`TSShadedPoly` geometry (57 polys; [`../rendering/dts-texture-binding.md`](../rendering/dts-texture-binding.md)). The cell-animation mechanism is in [`../rendering/dts-billboards.md`](../rendering/dts-billboards.md).

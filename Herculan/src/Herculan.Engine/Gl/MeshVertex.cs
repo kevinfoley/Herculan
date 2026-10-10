@@ -9,7 +9,7 @@ namespace Herculan.Engine.Gl;
 ///
 /// <para><see cref="Textured"/> is per-vertex rather than per-draw because both meshes that carry
 /// textures are mixed: a mech mesh has a handful of texture polys whose frame index does not resolve
-/// (see docs/retail/formats/dts-texture-binding.md's fleet audit), and a terrain mesh can have cells whose
+/// (see docs/retail/rendering/dts-texture-binding.md's fleet audit), and a terrain mesh can have cells whose
 /// material selects a frame the theater's bank does not have. Those fall back to
 /// <see cref="Color"/> while their neighbours sample the atlas, which a single per-draw flag cannot
 /// express — it would either sample garbage UVs for the strays or drop the whole mesh's texturing.
@@ -67,7 +67,7 @@ public struct MeshVertex {
 	/// value picks a ramp and the face's shade picks a step along it — and the shade depends on the
 	/// face's <i>world</i> normal, which differs per instance because one built mesh is shared by
 	/// every structure of a type at its own heading. So the ramp number travels to the GPU and the
-	/// lookup happens per fragment, against <see cref="Render.SurfaceRampTable"/>. Baking it here
+	/// lookup happens there, against <see cref="Render.SurfaceRampTable"/>. Baking it here
 	/// would pin every instance to the rest pose's lighting.</para>
 	///
 	/// <para>It is more than a bare ramp number: a <c>TSGouraudPoly</c>'s value carries
@@ -112,10 +112,12 @@ public struct MeshVertex {
 	/// <para><c>TSSolidPoly_Render</c> (<c>00474db4</c>) resolves its surface value as
 	/// <c>rampRow(UnlitShade)[index]</c>, which is one row of
 	/// <see cref="Render.PaletteRampTable"/> — the same table a lit textured texel is resolved
-	/// through, read at a fixed row instead of the light's. So this travels to the GPU for the same
-	/// reason <see cref="ShadeRamp"/> does: the table is swapped wholesale for the cockpit's damage
-	/// flash (<see cref="Scene.ImpactFlash"/>), and a colour resolved on the CPU cannot follow that.
-	/// The outline pass carries its line entry's index the same way.</para>
+	/// through, read at a fixed row instead of the light's, in the depth slice the object's distance
+	/// installs (<c>Raster_ShadeRampRow</c> (<c>00468054</c>) adds the slice to the row). So this
+	/// travels to the GPU for the same reason <see cref="ShadeRamp"/> does: the table is swapped
+	/// wholesale for the cockpit's damage flash (<see cref="Scene.ImpactFlash"/>), and a colour
+	/// resolved on the CPU can follow neither that nor the slice. The outline pass carries its line
+	/// entry's index the same way.</para>
 	///
 	/// <para>Moving the lookup to the GPU changes no colour: over every palette index of all ten
 	/// theaters, through both the ordinary and the impact palette, the table row and the colour
@@ -136,7 +138,7 @@ public struct MeshVertex {
 	/// <para><c>TSPoly_FrontBackVisibilityTest</c> (<c>0048c620</c>) measures the eye against the
 	/// poly's stored centre (<c>poly+6</c>, a point index like the normal), not against a corner, and
 	/// the two differ because a stored centre need not lie on its poly's plane
-	/// (docs/retail/formats/dts-texture-binding.md, "<c>TSPoly_FrontBackVisibilityTest</c>"). It also makes
+	/// (docs/retail/rendering/dts-texture-binding.md, "<c>TSPoly_FrontBackVisibilityTest</c>"). It also makes
 	/// the answer the same at every corner of the poly, which <see cref="Side"/> relies on.</para>
 	///
 	/// <para>Defaults to <see cref="Position"/>, which leaves every surface that is not a shape poly —
@@ -156,8 +158,15 @@ public struct MeshVertex {
 	public float Side;
 
 	/// <summary>
-	/// For one end of a <c>TSShadedPoly</c>'s outline, the material ramp of the fill it outlines; -1
-	/// for every other vertex — the default.
+	/// For one end of a <c>TSShadedPoly</c>'s outline, the material ramp of the fill it outlines; for
+	/// one end of a plain <c>TSSolidPoly</c>'s outline, the fill's palette index; -1 for every other
+	/// vertex — the default.
+	///
+	/// <para>A solid face's outline is tested the same way: <c>TSSolidPoly_Render</c>
+	/// (<c>00474db4</c>) compares the two bytes read through <c>Raster_ShadeRampRow</c>, whose row
+	/// carries the depth slice, so whether the outline shows can change with distance. Its edges go up
+	/// whenever the line names a different palette index, and the shader drops the fragment where the
+	/// two bytes agree at the slice in force (<see cref="Render.PaletteRampTable"/>'s alpha).</para>
 	///
 	/// <para><c>TSShadedPoly_Render</c> (<c>0047542c</c>) resolves its line entry through the same two
 	/// lookups as its fill, at the same shade, and <c>PolyFill_FillThenOutline</c> (<c>0048d518</c>)
@@ -168,10 +177,29 @@ public struct MeshVertex {
 	/// </summary>
 	public float OutlineFillRamp;
 
+	/// <summary>
+	/// The plane of another poly whose facing this copy is drawn under — its normal in <c>xyz</c> and
+	/// its centre's offset along that normal in <c>w</c> — read only when <see cref="DependSide"/> is
+	/// non-zero. Zero by default.
+	///
+	/// <para>It exists for a back-facing three-vertex <c>TSTexture4Poly</c>, whose second corner is
+	/// whatever an earlier texture poly left in <c>TSTexture4Poly_Render</c>'s position array, and so
+	/// depends on which way that poly faces this frame. See <see cref="Render.TextureCornerSlot"/>.</para>
+	/// </summary>
+	public Vector4 DependFace;
+
+	/// <summary>
+	/// Which way the poly <see cref="DependFace"/> describes must face for this copy to draw: <c>+1</c>
+	/// the eye, <c>-1</c> away, decided as <see cref="Side"/> is; <c>0</c>, the default, is no
+	/// condition.
+	/// </summary>
+	public float DependSide;
+
 	public MeshVertex(Vector3 position, Vector3 normal, Vector3 color, Vector2 uv = default,
 			bool textured = false, bool unlit = false, float shade = 1f, int shadeRamp = -1,
 			Vector3? faceNormal = null, float uvWeight = 0f, int solidPaletteIndex = -1,
-			Vector3? faceCenter = null, int side = 0, int outlineFillRamp = -1) {
+			Vector3? faceCenter = null, int side = 0, int outlineFillRamp = -1,
+			Vector4 dependFace = default, int dependSide = 0) {
 		Position = position;
 		Normal = normal;
 		FaceNormal = faceNormal ?? normal;
@@ -186,8 +214,10 @@ public struct MeshVertex {
 		FaceCenter = faceCenter ?? position;
 		Side = side;
 		OutlineFillRamp = outlineFillRamp;
+		DependFace = dependFace;
+		DependSide = dependSide;
 	}
 
 	/// <summary>Bytes per vertex, used as the vertex-attribute stride.</summary>
-	public const uint SizeInBytes = 25 * sizeof(float);
+	public const uint SizeInBytes = 30 * sizeof(float);
 }

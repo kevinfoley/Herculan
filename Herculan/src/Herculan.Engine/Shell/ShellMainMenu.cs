@@ -41,7 +41,7 @@ public enum ShellMainMenuButton {
 /// <summary>
 /// Tab 0, <c>MAIN MENU</c> — one titled panel of ten buttons in two columns over the shell's backdrop.
 /// Built once by <c>0043094c</c> (<c>wmain.cpp</c>), put up by <c>MainMenu_Show</c> (<c>004310a0</c>)
-/// and hidden by <c>MainMenu_Hide</c> (<c>0043114b</c>). See docs/retail/shell/screen-layout.md#the-main-menu.
+/// and hidden by <c>MainMenu_Hide</c> (<c>0043114b</c>). See docs/retail/shell/main-menu.md#the-main-menu.
 ///
 /// <para>Every rect is a literal in the executable, kept parent-relative as the builder writes it: the
 /// panel in the canvas, the buttons in the panel.</para>
@@ -106,9 +106,9 @@ public sealed class ShellMainMenu {
 
 	/// <summary>
 	/// Draws the screen into <paramref name="surface"/>. The caller clears it first; the panel's dithered
-	/// body leaves every other pixel to the backdrop.
+	/// body leaves every other pixel to the backdrop. <paramref name="lit"/> is the widget a press has lit.
 	/// </summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
 		ShellChrome.PaintTitledPanel(surface, PanelRect, PanelBorder, PanelFace, PanelBodyDither,
@@ -119,10 +119,9 @@ public sealed class ShellMainMenu {
 
 		foreach (var button in Enum.GetValues<ShellMainMenuButton>()) {
 			bool enabled = IsEnabled(button);
-			var rect = ButtonRect(button);
-			ShellChrome.PaintButton(surface, rect, enabled ? ButtonBorder : DisabledColor);
-			ShellChrome.PaintText(surface, rect, font, text?.Text(CaptionText(button)),
-				ShellTextAlign.Center, enabled ? ShellChrome.FontInkColor : DisabledColor);
+			ShellChrome.PaintButton(surface, ButtonRect(button), enabled ? ButtonBorder : DisabledColor, font,
+				text?.Text(CaptionText(button)), enabled ? ShellChrome.FontInkColor : DisabledColor,
+				pressed: enabled && lit == new ShellWidget(ShellWidgetKind.MainMenuButton, (int)button));
 		}
 	}
 

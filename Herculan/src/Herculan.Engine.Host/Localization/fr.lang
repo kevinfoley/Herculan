@@ -2,8 +2,8 @@ language.name Français
 general.save    Enregistrer
 general.cancel  Annuler
 general.close   Fermer
-tweak.target_distance_meters.display_name      Afficher la distance de la cible en mètres
-tweak.target_distance_meters.description       Sur le MFD, affiche la distance de la cible en mètres sur l'écran F5 TARGET. Le jeu original affiche la distance en unités du moteur sur cet écran uniquement.
+tweak.target_distance_meters.display_name      Corriger l'affichage de la distance de la cible
+tweak.target_distance_meters.description       Sur l'écran F5 TARGET du MFD, affiche la distance de la cible en mètres mesurée au sol, comme la mesure l'écran F4 SCANNER, afin que les deux écrans concordent. Sans cette option, l'écran affiche ce qu'affiche votre version du jeu : la version 1.0 affiche la distance en unités du moteur (1 unité = 6 mm), et la version 1.10 l'affiche en mètres. Les deux versions tiennent compte de la différence d'altitude.
 tweak.show_correct_stats.display_name          Afficher les statistiques correctes
 tweak.show_correct_stats.description           Corrige les statistiques des HERC et des armes que le jeu original affichait de façon incorrecte dans VSHELL, comme la vitesse maximale de l'Outlaw et le nombre de points d'emport du Raptor II.
 tweak.show_accurate_speed.display_name         Afficher la vitesse exacte
@@ -26,6 +26,8 @@ tweak.show_altitude_tape.display_name          Afficher la bande d'altitude du R
 tweak.show_altitude_tape.description           Dessine la bande graduée qui défile avec votre altitude à côté de l'échelle d'altitude du Razor. Le jeu original dessine les crochets, la colonne et le repère de l'échelle, mais place la bande hors de sa propre zone de découpage, si bien qu'elle n'apparaît jamais.
 tweak.drop_pod_sound_from_pod.display_name    Sons des capsules de largage depuis la capsule
 tweak.drop_pod_sound_from_pod.description     Entendez le sifflement d'une capsule de largage en chute provenir de la capsule elle-même, en la suivant dans sa descente, et son atterrissage provenir de son point d'impact. Les sons sont plus forts et portent sur des kilomètres. Le jeu original joue les deux sons à votre propre position, si bien qu'ils n'indiquent jamais où se trouve la capsule.
+tweak.fix_repair_diagram_sides.display_name  Corriger les côtés du schéma de réparation
+tweak.fix_repair_diagram_sides.description   Sur le schéma des dégâts de l'écran REPAIR, Left Torso et Left Leg sont du même côté. Dans le jeu original, le schéma montre Left Torso à votre gauche mais Left Leg à votre droite. Sur un Razor, les nacelles sont inversées pour correspondre aux ailes.
 tweak.smoother_turret_movement.display_name   Mouvement de tourelle plus fluide
 tweak.smoother_turret_movement.description     Fluidifie la rotation de la tourelle lors de la visée au joystick ou avec une autre commande analogique. Le jeu original arrondit la valeur de rotation, ce qui provoque des saccades aux faibles vitesses de visée. Sans effet lors de la visée au clavier.
 tweak.mouse_external_view.display_name         Vue extérieure à la souris
@@ -36,6 +38,10 @@ tweak.fix_weapon_damage_records.display_name  Corriger les dégâts des armes
 tweak.fix_weapon_damage_records.description   Les ATC75, ATC100, LAS400 et LAS500 infligent les dégâts indiqués pour elles et tirent leurs propres obus et rayons. Dans le jeu original, chacune inflige les dégâts d'une arme plus petite : les ATC75 et ATC100 frappent exactement comme les ATC35 et ATC50, le LAS500 exactement comme le LAS300, et le LAS400 à peine plus fort que le LAS200. Chacune tire aussi l'obus ou le rayon de cette arme, si bien que les obus des ATC75 et ATC100 portent aussi loin que ceux des ATC35 et ATC50, et que les rayons des LAS400 et LAS500 sont aussi étroits que ceux des LAS200 et LAS300.
 tweak.charge_bar_power_level.display_name  Barre de charge interactive
 tweak.charge_bar_power_level.description   Réglez le niveau de puissance d'une arme à énergie en cliquant sur sa barre de charge dans le panneau des armes ou en la faisant glisser : la barre se remplit alors jusqu'à l'endroit où vous relâchez. Les touches [-] et [=] fonctionnent toujours. Le jeu original prévoit la barre pour cela, mais le bouton de la ligne de l'arme la recouvre, si bien qu'elle ne reçoit jamais de clic.
+tweak.fix_terrain_hit_point.display_name  Impacts précis sur le terrain
+tweak.fix_terrain_hit_point.description   Les tirs et les lignes de vue rencontrent le sol exactement là où il se trouve. Sur environ un tiers du terrain, le jeu original calcule le point où un tir frappe le sol sur une pente qui peut être décalée de plusieurs mètres par rapport à la vraie, si bien que l'impact tombe trop court ou trop long. Dans la version 1.10, le sol n'arrête alors parfois plus du tout un tir ou une ligne de vue, si bien que les machines peuvent se voir et se tirer dessus à travers certaines parties des collines.
+tweak.flyer_ignores_player_throttle.display_name  Les volants Cybrid ignorent votre manette des gaz
+tweak.flyer_ignores_player_throttle.description   Un volant Cybrid vole toujours à sa vitesse de croisière normale. Dans le jeu original, quand votre joystick a une manette des gaz et que la commande THROTTLE du Razor est réglée sur THROTTLE, tous les volants Cybrid de la mission ralentissent, même si vous ne pilotez pas un Razor.
 tweaks.title                   Ajustements
 tweaks.category.cosmetic       Cosmétique
 tweaks.category.ai             IA

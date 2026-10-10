@@ -46,7 +46,7 @@ public class Prefs {
 
 	/// <summary>
 	/// TERRAIN TEXTURE, <c>DAT_004d1fc4</c>, which the original tests per triangle to pick textured or
-	/// flat span writers (docs/retail/formats/terrain-texturing.md, "The terrain-texture switch").
+	/// flat span writers (docs/retail/rendering/terrain-texturing.md, "The terrain-texture switch").
 	/// </summary>
 	public const int TerrainTextureOption = 8;
 

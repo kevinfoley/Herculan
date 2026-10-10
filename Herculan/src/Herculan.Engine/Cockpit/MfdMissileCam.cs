@@ -48,7 +48,7 @@ public readonly record struct MfdMissileCamState(MfdMissileCamPicture Picture, i
 /// <summary>
 /// The MFD's MISSILE CAM screen, mode 5 — <c>MfdMissileViewScreen_Ctor</c> (<c>0043facc</c>), its
 /// update slot <c>MfdMissileViewScreen_Update</c> (<c>004402ec</c>) and its paint
-/// <c>MfdMissileViewScreen_Paint</c> (<c>0043fe1c</c>). See docs/retail/formats/mfd.md,
+/// <c>MfdMissileViewScreen_Paint</c> (<c>0043fe1c</c>). See docs/retail/simulation/mfd.md,
 /// "<c>MFDMissileView</c> — mode 5".
 /// </summary>
 public static class MfdMissileCam {
@@ -191,7 +191,7 @@ public static class MfdMissileCam {
 /// <summary>
 /// <c>MfdDisplay_SyncMissileCamMode</c> (<c>00447164</c>) and the half of <c>MfdDisplay_SetMode</c>
 /// (<c>00446e38</c>) that answers it: the display switching itself to the missile camera while an
-/// electro-optical launcher is armed, and back afterwards. See docs/retail/formats/mfd.md, "Modes".
+/// electro-optical launcher is armed, and back afterwards. See docs/retail/simulation/mfd.md, "Modes".
 ///
 /// <para>Every mode change has to come through <see cref="SetMode"/>, which is what lets a screen
 /// chosen by hand during the switch stand until the switch ends.</para>
@@ -278,7 +278,7 @@ public sealed class MfdMissileCamSwitch {
 /// again, as the original's does.
 /// </summary>
 public sealed class MfdMissileCamScreen {
-	/// <summary><c>screen+0x45</c>: the copy of <see cref="SimWorld.PlayerMissileStruck"/> that starts a flash once.</summary>
+	/// <summary><c>screen+0x45</c>: the copy of <see cref="PlayerMissileState.Struck"/> that starts a flash once.</summary>
 	private bool _flashStarted;
 
 	/// <summary><c>screen+0x46</c>: the coarse tick the flash ends at.</summary>
@@ -293,14 +293,14 @@ public sealed class MfdMissileCamScreen {
 	/// <c>MfdMissileViewScreen_Update</c>: paints when there is a round to ride, when the machine has
 	/// lock, or when the display asks for a full repaint, and otherwise leaves the last paint up.
 	/// </summary>
-	/// <param name="world">The world whose <see cref="SimWorld.PlayerMissile"/> the camera rides.</param>
+	/// <param name="world">The world whose <see cref="PlayerMissileState.Round"/> the camera rides.</param>
 	/// <param name="locked"><see cref="MechObject.LockAcquired"/>.</param>
 	/// <param name="launcherRounds"><see cref="MfdMissileCam.LauncherRounds"/>.</param>
 	/// <param name="coarseTicks">The coarse clock.</param>
 	/// <param name="repaint">Whether the display repaints the whole screen this frame.</param>
 	public MfdMissileCamState Update(SimWorld world, bool locked, int launcherRounds, long coarseTicks,
 			bool repaint) {
-		if (world.PlayerMissile != null || locked || repaint) {
+		if (world.PlayerMissile.Round != null || locked || repaint) {
 			_shown = Paint(world, locked, launcherRounds, coarseTicks);
 		}
 
@@ -317,7 +317,7 @@ public sealed class MfdMissileCamScreen {
 	/// tick.</para>
 	/// </summary>
 	private MfdMissileCamState Paint(SimWorld world, bool locked, int launcherRounds, long coarseTicks) {
-		if (world.PlayerMissileStruck) {
+		if (world.PlayerMissile.Struck) {
 			if (!_flashStarted) {
 				_flashDeadline = coarseTicks + MfdMissileCam.FlashTicks;
 				_flashStartTick = world.TickCount;
@@ -331,16 +331,16 @@ public sealed class MfdMissileCamScreen {
 			}
 
 			_flashStarted = false;
-			world.PlayerMissileStruck = false;
+			world.PlayerMissile.Struck = false;
 		}
 
-		if (world.PlayerMissile is { } round) {
+		if (world.PlayerMissile.Round is { } round) {
 			if (world.RocketsInFlight.Contains(round)) {
 				return new MfdMissileCamState(MfdMissileCamPicture.View, 0, MfdMissileCam.ViewFrom(round),
 					false, false, false);
 			}
 
-			world.PlayerMissile = null;
+			world.PlayerMissile.Round = null;
 		}
 
 		return new MfdMissileCamState(MfdMissileCamPicture.Labels, 0, default,

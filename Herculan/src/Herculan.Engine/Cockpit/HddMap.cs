@@ -252,7 +252,7 @@ public sealed class HddMapView {
 
 /// <summary>
 /// The command display's map: which icon each object gets, how a heading picks a frame, and the
-/// grid the whole thing is drawn over. See docs/retail/formats/heads-down-display.md.
+/// grid the whole thing is drawn over. See docs/retail/simulation/heads-down-display.md.
 /// </summary>
 public static class HddMap {
 	/// <summary>

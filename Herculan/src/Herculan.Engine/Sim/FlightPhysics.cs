@@ -160,11 +160,11 @@ internal static class FlightPhysics {
 
 	/// <summary>
 	/// One step of the model. <paramref name="analogueThrottle"/> is the original's
-	/// input-preferences test: with an analogue throttle device the axis is read as a position rather
-	/// than a rate. It is a global in DBSIM, so it applies to <i>every</i> airframe in the mission
+	/// input-preferences test, <see cref="Input.JoystickBindings.FlightThrottleIsLever"/>: when it holds
+	/// the axis is read as a position rather than a rate. It is a global in DBSIM, so it applies to <i>every</i> airframe in the mission
 	/// rather than only to the one the player flies — and an AI flyer passes a zero throttle axis, so
-	/// with such a device configured every Cybrid flyer would be pinned at idle. The AI path passes
-	/// false; see <see cref="FlyerObject"/>.
+	/// with such a device configured every Cybrid flyer's throttle is held at the middle of its range;
+	/// see <see cref="FlyerObject"/>.
 	/// </summary>
 	public static void Step(IFlightBody body, ref FlightBlock state, FlightModelRecord flight,
 			short aileron, short elevator, short rudder, short throttleAxis, int groundHeight,
@@ -183,9 +183,7 @@ internal static class FlightPhysics {
 		if (analogueThrottle) {
 			// An analogue throttle is a position, not a rate. Half the axis' travel covers the whole
 			// range, and unlike the walker's lever there is no inverted sense and no clamp to one
-			// side of zero — a flyer's throttle spans the same signed range either way. The original
-			// gates this on an input-preferences byte rather than on the walker's lever global; the
-			// host signal is the same one either way.
+			// side of zero — a flyer's throttle spans the same signed range either way.
 			state.Throttle = ClampThrottle(throttleAxis << 3);
 		} else {
 			short rate = (short)SimMath.Q8Multiply(ThrottleRate, throttleAxis);

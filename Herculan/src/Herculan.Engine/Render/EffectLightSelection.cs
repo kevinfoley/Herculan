@@ -11,7 +11,7 @@ namespace Herculan.Engine.Render;
 /// <param name="Directional">
 /// Whether this is the far approximation (the original's light type 1) rather than a real point
 /// light (type 2). The two carry the same falloff and differ only in their angular term; see
-/// docs/retail/formats/effect-lights.md, "What a light contributes".
+/// docs/retail/rendering/effect-lights.md, "What a light contributes".
 /// </param>
 /// <param name="Vector">
 /// For a directional light, the unit direction its light travels, pointing from the light at the
@@ -38,7 +38,7 @@ public readonly record struct SelectedEffectLight(bool Directional, Vector3 Vect
 /// <para>Everything below is in the simulation's own integer world units, because the distance is
 /// <see cref="Vec3i.ApproxDistanceTo"/> and the branch test is the sim's own arctangent — the
 /// conversion to render space happens only on the vectors that leave. The derivation is
-/// docs/retail/formats/effect-lights.md, "Per-object selection".</para>
+/// docs/retail/rendering/effect-lights.md, "Per-object selection".</para>
 ///
 /// <para>Where the shading departs from the original. A point light is measured to the corner the
 /// shader is lighting rather than to the poly's stored centre point, as the sun's own term is; the
@@ -69,7 +69,7 @@ public static class EffectLightSelection {
 	/// unit spans — so that the shade term is
 	/// <c>intensity * PointFalloff * cos / distanceInRenderUnits</c> and the shader never has to know
 	/// the world scale. The original's <c>A</c> is zero, so the denominator carries the distance
-	/// alone; see docs/retail/formats/effect-lights.md, "What a light contributes".
+	/// alone; see docs/retail/rendering/effect-lights.md, "What a light contributes".
 	/// </summary>
 	public const float PointFalloff =
 		EffectLightField.FalloffRange * EffectLightField.FalloffScale / WorldScale.WorldUnitsPerMeter;

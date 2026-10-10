@@ -15,7 +15,7 @@ namespace HercWorks.UI;
 /// Model3DViewerControl for the rasterizer). That needs three inputs: a theater palette (.DPL), the
 /// same theater's ramp (.RMP, found by the palette's basename) and, for textured polys, the bank
 /// the shape is bound to. A mech's bank comes from its sim .DAT's TextureGroup — the seven shared
-/// atlases in docs/retail/formats/dts-texture-binding.md's "DBSIM's mech-to-texture mapping"; same-basename
+/// atlases in docs/retail/rendering/dts-texture-binding.md's "DBSIM's mech-to-texture mapping"; same-basename
 /// DBAs like SAMSON.DBA are 2D damage-readout art, not mesh textures. Whatever is missing falls back
 /// to placeholder colours. TSBitmapPart billboards are not built.
 ///

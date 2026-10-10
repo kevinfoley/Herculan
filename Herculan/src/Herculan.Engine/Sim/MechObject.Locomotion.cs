@@ -211,7 +211,8 @@ public sealed partial class MechObject {
 	/// stopping dead. Its obstacle avoidance is skipped with it.</para>
 	///
 	/// </summary>
-	private void LocomotionTick(SimWorld world, short turn, short desired) {
+	/// <param name="ignoreObstacles">The original's fourth argument, handed on to <see cref="ObstacleAvoidance"/>; only the ramming think sets it.</param>
+	private void LocomotionTick(SimWorld world, short turn, short desired, bool ignoreObstacles = false) {
 		if (Thread is not { } thread) {
 			return;
 		}
@@ -249,7 +250,7 @@ public sealed partial class MechObject {
 			// "driven by a think function" because only the player has a pilot. Here Controls can fly
 			// any machine, and a machine somebody is flying should not have its stick taken off it.
 			if (UnderAiControl) {
-				ObstacleAvoidance(world, ref turn, ref desired);
+				ObstacleAvoidance(world, ref turn, ref desired, ignoreObstacles);
 			}
 		}
 
@@ -601,7 +602,7 @@ public sealed partial class MechObject {
 	/// <para>This seeds and reads the locomotion thread throughout. The original seeds the shape's
 	/// first thread (<c>ShapeInst_SeedRootTransform</c>, <c>00478a70</c>) and reads the first one
 	/// after <c>AnimThread_StepAll</c>'s priority re-sort, which is the twist thread while
-	/// locomotion plays a stop/step-off sequence — see docs/retail/formats/dts-node-posing.md, "Several
+	/// locomotion plays a stop/step-off sequence — see docs/retail/rendering/dts-node-posing.md, "Several
 	/// threads on one shape".</para>
 	/// </summary>
 	private void IntegrateMotion() {

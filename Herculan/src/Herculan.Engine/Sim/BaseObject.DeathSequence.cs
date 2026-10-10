@@ -101,14 +101,14 @@ public sealed partial class BaseObject {
 
 		if (Type.FireShapeIndex < 0 || component.FireShapeIndex < 0) {
 			if (component.FireShapeIndex >= 0) {
-				world.SpawnFire(this, -1, component.EmitPoint, component.FireShapeIndex);
+				world.Effects.SpawnFire(this, -1, component.EmitPoint, component.FireShapeIndex);
 			}
 
 			return;
 		}
 
 		if (EveryPartGone()) {
-			world.SpawnFire(this, -1, Type.FirePoint, Type.FireShapeIndex);
+			world.Effects.SpawnFire(this, -1, Type.FirePoint, Type.FireShapeIndex);
 		}
 	}
 
@@ -156,7 +156,7 @@ public sealed partial class BaseObject {
 			return;
 		}
 
-		world.SpawnImpactEffect(sequence.Explosion, sequence.ExplodeAtOrigin
+		world.Effects.SpawnImpactEffect(sequence.Explosion, sequence.ExplodeAtOrigin
 			? Position
 			: WorldTransform.TransformPoint(point.X, point.Y, point.Z), this);
 
@@ -173,11 +173,11 @@ public sealed partial class BaseObject {
 			component.EmitPoint.X, component.EmitPoint.Y, component.EmitPoint.Z);
 		var table = StructureDebris(world);
 
-		world.SpawnDebris(component.DebrisGroup, point, table);
+		world.Effects.SpawnDebris(component.DebrisGroup, point, table);
 
 		if (component.DebrisGroup > LargeDebrisGroup) {
-			world.SpawnDebris(LargeDebrisExtraA, point, table);
-			world.SpawnDebris(LargeDebrisExtraB, point, table);
+			world.Effects.SpawnDebris(LargeDebrisExtraA, point, table);
+			world.Effects.SpawnDebris(LargeDebrisExtraB, point, table);
 		}
 	}
 
@@ -220,7 +220,7 @@ public sealed partial class BaseObject {
 			component.Position.Y + world.Random.NextBelow((short)(spread.Y * 2)) - spread.Y,
 			component.Position.Z + world.Random.NextBelow((short)(spread.Z * 2)) - spread.Z);
 
-		world.SpawnImpactEffect(sequence.SmokeExplosion,
+		world.Effects.SpawnImpactEffect(sequence.SmokeExplosion,
 			WorldTransform.TransformPoint(local.X, local.Y, local.Z), this);
 	}
 

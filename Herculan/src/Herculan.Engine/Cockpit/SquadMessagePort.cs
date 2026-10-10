@@ -7,7 +7,7 @@ namespace Herculan.Engine.Cockpit;
 /// The pilot and squad channel — the cockpit view's second message port, at <c>view+0x207</c>. The
 /// computer's own is <see cref="MessagePort"/> at <c>view+0x20b</c>; the two are instances of the
 /// same queue with different show behaviour, which in the original is a vtable and here is two
-/// classes. See docs/retail/formats/cockpit-messages.md, "The port".
+/// classes. See docs/retail/simulation/cockpit-messages.md, "The port".
 ///
 /// <para>What differs from the computer's channel:</para>
 /// <list type="bullet">

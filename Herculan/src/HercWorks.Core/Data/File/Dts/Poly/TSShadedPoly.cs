@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Dts.Poly;
 
 /// <summary>
 /// A flat-lit poly: its surface value is a shade-ramp number, and the face's light level picks the
-/// step along that ramp. See docs/retail/formats/dts-texture-binding.md, "TSShadedPoly — shade-ramp number,
+/// step along that ramp. See docs/retail/rendering/dts-texture-binding.md, "TSShadedPoly — shade-ramp number,
 /// per-face light, fixed .RMP row".
 /// </summary>
 public class TSShadedPoly : TSSolidPoly {

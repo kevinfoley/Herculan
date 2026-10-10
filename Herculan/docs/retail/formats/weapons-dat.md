@@ -140,7 +140,7 @@ Loaded by `VSHELL.EXE`'s `LoadWeaponsDat` (`00411fc4`, file-level) → `WeaponsD
 The catalog ships a starting value per weapon; from then on it is campaign state, and four VSHELL sites establish what it means:
 
 - **Campaign progress sets it**, at the debrief — [below](#campaign-grants--armory_grantcampaignweapons-004126be).
-- **The armory screen gates its rows on it.** Where it is `0` the weapon's row is disabled — `+0x49` cleared — and its four text columns, the `0x14` price among them, drawn in the background colour, so the list shows a gap. Where it is `1` the row is live and readable ([`../shell/screen-layout.md`](../shell/screen-layout.md#the-armory-rows)).
+- **The armory screen gates its rows on it.** Where it is `0` the weapon's row is disabled — `+0x49` cleared — and its four text columns, the `0x14` price among them, drawn in the background colour, so the list shows a gap. Where it is `1` the row is live and readable ([`../shell/build-and-armory.md`](../shell/build-and-armory.md#the-armory-rows)).
 - **Purchasing skips a locked weapon**, whatever the player can afford.
 - One HERC-fit check refuses to accept the weapon while the flag is clear.
 

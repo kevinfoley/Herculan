@@ -10,7 +10,7 @@ namespace HercWorks.Core.Data.File.Gau;
 /// <see cref="WidgetBase.Size"/> is unused. The repeater's extent is not in the file: its paint
 /// (<c>HudScanner_Paint</c>, <c>0043f2b0</c>) squares off <c>0x2e</c> units from this point on both axes.
 ///
-/// Position varies per herc; see docs/retail/formats/mfd-scanner.md, "Geometry".
+/// Position varies per herc; see docs/retail/simulation/mfd-scanner.md, "Geometry".
 ///
 /// Read out of <see cref="GAUFile.Remainder"/>, which is still what the write path emits.
 /// </summary>

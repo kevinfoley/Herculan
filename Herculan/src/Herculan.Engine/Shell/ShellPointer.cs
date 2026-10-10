@@ -12,7 +12,7 @@ public enum ShellMouseButton {
 /// <summary>
 /// Which event handler a widget's class runs. They disagree about which button acts, and on which
 /// edge, so a widget's class decides how a click on it behaves
-/// (docs/retail/shell/screen-layout.md#which-widget-a-click-reaches).
+/// (docs/retail/shell/widgets.md#which-widget-a-click-reaches).
 /// </summary>
 public enum ShellHandler {
 	/// <summary>
@@ -38,8 +38,10 @@ public enum ShellHandler {
 	/// <summary>
 	/// <c>ESButtonBitmap_HandleEvent</c> on a button its builder gave the auto-repeat flag <c>+0x61</c> and a
 	/// clear <c>+0x5d</c> — the mission tab's arrows. The left press lights it and makes the press sound
-	/// without firing, and the left release fires wherever the press was; the right goes through
-	/// <c>WinButton_HandleEvent</c>; a leave puts it out.
+	/// without firing, and the left release zeroes its repeat count <c>+0x65</c> and fires wherever the press
+	/// was; the right goes through <c>WinButton_HandleEvent</c>, which leaves the count alone; a leave puts it
+	/// out and zeroes the count. While it is lit, each tick of its alarm fires it again
+	/// (<see cref="ShellPointer.RepeatTick"/>).
 	/// </summary>
 	RepeatButtonIcon,
 
@@ -58,8 +60,8 @@ public enum ShellHandler {
 	ImagePanel,
 
 	/// <summary>
-	/// <c>ESDialog_HandleEvent</c> (<c>0040beaf</c>), the save list's rows and the registration screen's
-	/// name field. Fires on the left press
+	/// <c>ESDialog_HandleEvent</c> (<c>0040beaf</c>), the save list's rows and the name fields of the
+	/// registration screen and the DEBUG dialog. Fires on the left press
 	/// and takes the pointer; the right button does nothing.
 	/// </summary>
 	EditField,
@@ -97,6 +99,8 @@ public enum ShellWidgetKind {
 	ReplayButton,
 	RegistrationField,
 	RegistrationButton,
+	MissionNameField,
+	MissionNameButton,
 }
 
 /// <summary>One widget. <see cref="Sub"/> is a second index where one kind needs two, as the repair lists' <c>(column, row)</c> do.</summary>
@@ -164,7 +168,7 @@ public readonly record struct ShellHit(ShellWidget Widget, ShellHandler Handler,
 ///
 /// <para>The state is the original's: the pointer's target, its lock (<c>+0x1f</c> of the pointer
 /// state at <c>g_EventQueue</c> (<c>005ddbd0</c>)), the lit flag <c>+0x45</c> of whichever content widget a press lit,
-/// and an edit field's focus flag <c>+0xa7</c>. The strip's lit flags live on its
+/// an auto-repeating button's repeat count <c>+0x65</c>, and an edit field's focus flag <c>+0xa7</c>. The strip's lit flags live on its
 /// <see cref="ShellButton"/>s, because they are also the tab latch.</para>
 ///
 /// <para><c>WinButton_HandleEvent</c> and <c>ESButtonBitmap_HandleEvent</c> also ignore mouse events while a
@@ -172,11 +176,19 @@ public readonly record struct ShellHit(ShellWidget Widget, ShellHandler Handler,
 /// That test is the host's: it delivers nothing here while <see cref="ShellMovieRun"/> is active.</para>
 /// </summary>
 public sealed class ShellPointer {
+	/// <summary>
+	/// The delay and period of the alarm an auto-repeating button installs when it is shown and removes when
+	/// it is hidden (<c>ESButtonBitmap_HandleEvent</c>'s events 1 and 2), so its ticks run from the show and
+	/// not from the press.
+	/// </summary>
+	public const int RepeatAlarmMilliseconds = 500;
+
 	private readonly ShellScreen _strip;
 	private readonly Action? _pressSound;
 	private ShellHit? _underPointer;
 	private ShellWidget? _lit;
 	private ShellWidget? _focused;
+	private readonly Dictionary<ShellWidget, int> _repeats = new();
 
 	/// <param name="strip">The strip whose buttons keep their own lit flags.</param>
 	/// <param name="pressSound">
@@ -202,6 +214,24 @@ public sealed class ShellPointer {
 
 	/// <summary>The edit field whose focus flag <c>+0xa7</c> is set, or null.</summary>
 	public ShellWidget? Focused => _focused;
+
+	/// <summary>An auto-repeating button's <c>+0x65</c>: the ticks it has fired on since its count was last zeroed.</summary>
+	public int RepeatCount(ShellWidget widget) => _repeats.GetValueOrDefault(widget);
+
+	/// <summary>
+	/// A tick of <paramref name="widget"/>'s alarm (event <c>0x200</c>), which <c>ESButtonBitmap_HandleEvent</c>
+	/// acts on for an auto-repeating button that is lit, enabled and shown: one more on its count, a repaint,
+	/// and its handler run again. The caller passes only buttons that are shown. Whichever button lit it, so a
+	/// right press repeats as a left one does.
+	/// </summary>
+	public void RepeatTick(ShellWidget widget, Action<ShellWidget> fire) {
+		if (_lit != widget) {
+			return;
+		}
+
+		_repeats[widget] = RepeatCount(widget) + 1;
+		fire(widget);
+	}
 
 	/// <summary>
 	/// What <c>SaveScreen_BeginRename</c> (<c>004377d2</c>) does to the pointer: the target moved onto
@@ -308,8 +338,14 @@ public sealed class ShellPointer {
 				_lit = null;
 				break;
 
+			// The left release is the class's own: it zeroes the repeat count before firing. The right is
+			// WinButton_HandleEvent's, which knows nothing of the count.
 			case ShellHandler.RepeatButtonIcon when button == ShellMouseButton.Left || _lit == target.Widget:
 				_lit = null;
+				if (button == ShellMouseButton.Left) {
+					_repeats.Remove(target.Widget);
+				}
+
 				fire(target.Widget);
 				break;
 
@@ -335,13 +371,16 @@ public sealed class ShellPointer {
 
 	/// <summary>
 	/// The leave the target is sent. <see cref="ShellHandler.Control"/> acts on it, and so does a
-	/// <c>ButtonIcon</c> whose <c>+0x5d</c> its builder cleared; the strip keeps the 1
-	/// <c>ESButtonBitmap_Ctor</c> sets and stays lit.
+	/// <c>ButtonIcon</c> whose <c>+0x5d</c> its builder cleared, which also zeroes its repeat count; the strip
+	/// keeps the 1 <c>ESButtonBitmap_Ctor</c> sets and stays lit.
 	/// </summary>
 	private void Leave() {
 		if (Target is { Handler: ShellHandler.Control or ShellHandler.Button or ShellHandler.RepeatButtonIcon } target
 				&& _lit == target.Widget) {
 			_lit = null;
+			if (target.Handler == ShellHandler.RepeatButtonIcon) {
+				_repeats.Remove(target.Widget);
+			}
 		}
 	}
 

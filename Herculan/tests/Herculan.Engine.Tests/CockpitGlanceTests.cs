@@ -4,7 +4,7 @@ using Xunit;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// <see cref="CockpitGlance"/>: the original's glance gates (docs/retail/formats/cockpit-views.md, "View
+/// <see cref="CockpitGlance"/>: the original's glance gates (docs/retail/simulation/cockpit-views.md, "View
 /// switching") and this engine's reach-limited slide.
 /// </summary>
 public class CockpitGlanceTests {

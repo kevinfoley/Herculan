@@ -40,7 +40,7 @@ public readonly record struct AltitudeReading(int Ground, int Machine, int Floor
 /// <summary>
 /// The RAZOR's altitude scale on the front window — <c>Gunsight_PaintAltitudeScale</c>
 /// (<c>0043dd70</c>), the last thing both gunsight paints draw. Its geometry, in device pixels; the
-/// paint's order and what each part shows are in docs/retail/formats/cockpit-gunsight-hud.md, "The RAZOR's
+/// paint's order and what each part shows are in docs/retail/simulation/cockpit-gunsight-hud.md, "The RAZOR's
 /// altitude scale".
 /// </summary>
 public readonly struct AltitudeScale {
@@ -58,7 +58,7 @@ public readonly struct AltitudeScale {
 
 	/// <summary>
 	/// Frame 18, the tick strip that scrolls with height. Retail blits it and never shows it
-	/// (docs/retail/formats/cockpit-gunsight-hud.md, "The tick tape is never drawn"), so it is drawn only
+	/// (docs/retail/simulation/cockpit-gunsight-hud.md, "The tick tape is never drawn"), so it is drawn only
 	/// under the <see cref="Settings.TweakSettingDefinitions.ShowAltitudeTape"/> tweak.
 	/// </summary>
 	public const int TapeFrame = 18;

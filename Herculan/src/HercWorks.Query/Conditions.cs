@@ -39,6 +39,9 @@ internal static class Conditions {
 		return parts.Count == 1 ? parts[0] : "(" + string.Join(") or (", parts) + ")";
 	}
 
+	/// <summary>What row-1 record <paramref name="c"/> itself asks, with the chain above it.</summary>
+	public static string DescribeRecord(MissionFile file, MissionCondition14 c) => DescribeOne(file, c, 0);
+
 	private static string DescribeOne(MissionFile file, MissionCondition14 c, int depth) {
 		string own = c.Type switch {
 			0 => Operator(c.OperatorOrRangeUpperOrResult) is { } op

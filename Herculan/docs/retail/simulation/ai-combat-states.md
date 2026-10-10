@@ -257,7 +257,7 @@ if (Math_CountdownTimerTick(&mech+0x61) == 0) {
 return 0
 ```
 
-`steer()` is `Mech_LocomotionTick(mech, (bearing - heading) >> 8, 0x100, 1)`: **full throttle, and the bearing error's top byte**. Every other state steers at `>> 6`, so a rammer turns a quarter as hard — it commits to a line rather than tracking a target that sidesteps.
+`steer()` is `Mech_LocomotionTick(mech, (bearing - heading) >> 8, 0x100, 1)`: **full throttle, and the bearing error's top byte**. Every other state steers at `>> 6`, so a rammer turns a quarter as hard — it commits to a line rather than tracking a target that sidesteps. The trailing 1, which only this think's four call sites pass, turns obstacle avoidance off for terrain, structures and machines ([`ai-navigation.md`](ai-navigation.md#obstacle-avoidance--mech_aiobstacleavoidance-00416274)), so the rammer runs straight at its target rather than steering off it.
 
 The target is acquired with mask `6`, which drops the "it is shooting at me" weight and the crowding divisor both — [`ai-targeting.md`](ai-targeting.md). Nothing else in the state releases it, and its dwell flag keeps the reassess from running, so a rammer holds one target for a 10000-count interval — about 4.9 seconds — at a time whatever happens to it.
 

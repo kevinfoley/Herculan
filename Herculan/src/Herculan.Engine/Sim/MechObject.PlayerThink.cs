@@ -43,7 +43,7 @@ public partial class MechObject {
 			group.AdvanceRouteCursor();
 		}
 
-		switch (world.Objectives.ObjectiveType) {
+		switch (world.Mission.Objectives.ObjectiveType) {
 			case ObjectiveTypeTargetDetected:
 				TargetDetectedArm(world, group);
 				break;

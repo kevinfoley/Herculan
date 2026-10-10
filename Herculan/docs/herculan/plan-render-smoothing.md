@@ -8,7 +8,7 @@ This is a plan, not a record of something built. Nothing here is implemented.
 
 ## Where rendering stands
 
-- The host runs a fixed-step accumulator (`Simulator/SimulationStepper.cs`, called from `SimulatorHost.OnUpdate`): `SimWorld.Tick` at `SimWorld.TicksPerSecond` = 25, with `SimMath.TickDelta` pinned to 81. Retail ticks and renders in the same 40 ms loop (`Time_BeginSimTick`, `004677bc`); see [`../retail/formats/dts-node-posing.md`](../retail/formats/dts-node-posing.md#evaluation-cadence--per-tick-not-per-rendered-frame).
+- The simulator runs a fixed-step accumulator (`Cockpit/SimulationStepper.cs`, called from `SimulatorFrame.Update`): `SimWorld.Tick` at `SimWorld.TicksPerSecond` = 25, with `SimMath.TickDelta` pinned to 81. Retail ticks and renders in the same 40 ms loop (`Time_BeginSimTick`, `004677bc`); see [`../retail/rendering/dts-node-posing.md`](../retail/rendering/dts-node-posing.md#evaluation-cadence--per-tick-not-per-rendered-frame).
 - After the tick loop, render state is copied straight off the sim, so a frame shows the latest whole tick. Every path goes through a small number of places, and this plan depends on keeping it that way:
   - `WorldDrawItems`' movers → `MissionScene.TransformOf` → `SimObject.WorldFrame`
   - `WorldDrawItems`' posed parts → `MissionScene.PosedTransformOf` → `WorldFrame` × `NodeTransform`

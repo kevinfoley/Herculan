@@ -29,7 +29,7 @@ public sealed class ShellMovieHooks {
 	/// <summary>
 	/// <c>Mission_Leave</c> (<c>00444a05</c>), the MISSION tab unlit and no tab current (<c>0xffff</c>), with
 	/// nothing repainted: the screen keeps the mission screen until the location picture goes up
-	/// (docs/retail/shell/screen-layout.md#the-shells-movies).
+	/// (docs/retail/shell/movies-and-sound.md#the-shells-movies).
 	/// </summary>
 	public required Action LeaveMissionTab { get; init; }
 
@@ -61,7 +61,7 @@ public sealed class ShellMovieHooks {
 
 /// <summary>
 /// <c>Movie_PlayQueue</c> (<c>0041e368</c>), playing <see cref="ShellMovieQueue"/> out one movie at a
-/// time through <c>Avi_Play</c> (<c>0041e01c</c>). See docs/retail/shell/screen-layout.md#the-shells-movies.
+/// time through <c>Avi_Play</c> (<c>0041e01c</c>). See docs/retail/shell/movies-and-sound.md#the-shells-movies.
 ///
 /// <para>The original is one blocking loop, with each fade and the location picture's two seconds
 /// blocking inside it. This steps once per <see cref="Update"/> under the same order, so the window

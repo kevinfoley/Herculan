@@ -2,8 +2,8 @@ language.name Deutsch
 general.save    Speichern
 general.cancel  Abbrechen
 general.close   Schließen
-tweak.target_distance_meters.display_name      Zielentfernung in Metern anzeigen
-tweak.target_distance_meters.description       Zeigt auf dem MFD im Bildschirm F5 TARGET die Zielentfernung in Metern an. Das Originalspiel zeigt die Entfernung nur auf diesem Bildschirm in internen Spieleinheiten an.
+tweak.target_distance_meters.display_name      Zielentfernungsanzeige korrigieren
+tweak.target_distance_meters.description       Zeigt auf dem MFD im Bildschirm F5 TARGET die Zielentfernung in Metern über Grund an, so wie der Bildschirm F4 SCANNER sie misst, damit beide Bildschirme übereinstimmen. Ohne diese Option zeigt der Bildschirm, was Ihre Version des Spiels anzeigt: Version 1.0 zeigt die Entfernung in internen Spieleinheiten (1 Einheit = 6 mm), Version 1.10 in Metern. Beide Versionen beziehen den Höhenunterschied mit ein.
 tweak.show_correct_stats.display_name          Korrekte Werte anzeigen
 tweak.show_correct_stats.description           Korrigiert HERC- und Waffenwerte, die das Originalspiel in VSHELL falsch anzeigte, etwa die Höchstgeschwindigkeit des Outlaw und die Anzahl der Waffenaufhängungen des Raptor II.
 tweak.show_accurate_speed.display_name         Genaue Geschwindigkeit anzeigen
@@ -26,6 +26,8 @@ tweak.show_altitude_tape.display_name          Höhenband des Razor anzeigen
 tweak.show_altitude_tape.description           Zeichnet das Skalenband, das mit Ihrer Höhe mitläuft, neben der Höhenskala des Razor. Das Originalspiel zeichnet die Klammern, die Säule und die Markierung der Skala, platziert das Band aber außerhalb seines eigenen Clipping-Bereichs, sodass es nie erscheint.
 tweak.drop_pod_sound_from_pod.display_name    Abwurfkapsel-Geräusche von der Kapsel
 tweak.drop_pod_sound_from_pod.description     Hören Sie das Pfeifen einer fallenden Abwurfkapsel von der Kapsel selbst, während es ihr nach unten folgt, und ihre Landung von dort, wo sie aufsetzt. Die Geräusche sind lauter und tragen kilometerweit. Das Originalspiel spielt beide Geräusche an Ihrer eigenen Position ab, sodass sie nie verraten, wo die Kapsel ist.
+tweak.fix_repair_diagram_sides.display_name  Seiten des Reparaturschemas korrigieren
+tweak.fix_repair_diagram_sides.description   Im Schadensschema des REPAIR-Bildschirms liegen Left Torso und Left Leg auf derselben Seite. Im Originalspiel zeigt das Schema Left Torso links, Left Leg aber rechts. Beim Razor werden die Triebwerksgondeln passend zu den Flügeln vertauscht.
 tweak.smoother_turret_movement.display_name   Flüssigere Geschützturmbewegung
 tweak.smoother_turret_movement.description     Glättet die Drehung des Geschützturms beim Zielen mit Joystick oder einem anderen analogen Eingabegerät. Das Originalspiel rundet den Drehwert, was bei langsamen Zielbewegungen zu Ruckeln führt. Hat beim Zielen mit der Tastatur keine Wirkung.
 tweak.mouse_external_view.display_name         Außenansicht per Maus
@@ -36,6 +38,10 @@ tweak.fix_weapon_damage_records.display_name  Waffenschaden korrigieren
 tweak.fix_weapon_damage_records.description   ATC75, ATC100, LAS400 und LAS500 verursachen den für sie angegebenen Schaden und feuern ihre eigenen Geschosse und Strahlen. Im Originalspiel verursacht jede den Schaden einer kleineren Waffe: ATC75 und ATC100 treffen genau wie ATC35 und ATC50, LAS500 genau wie LAS300, und LAS400 nur geringfügig stärker als LAS200. Jede feuert außerdem das Geschoss oder den Strahl dieser Waffe, sodass Geschosse von ATC75 und ATC100 so weit fliegen wie die von ATC35 und ATC50, und die Strahlen von LAS400 und LAS500 so schmal sind wie die von LAS200 und LAS300.
 tweak.charge_bar_power_level.display_name  Interaktive Ladeanzeige
 tweak.charge_bar_power_level.description   Stellen Sie die Energiestufe einer Energiewaffe ein, indem Sie auf ihre Ladeanzeige im Waffenfeld klicken oder sie ziehen: Die Anzeige füllt sich dann bis zu der Stelle, an der Sie loslassen. Die Tasten [-] und [=] funktionieren weiterhin. Das Originalspiel legt die Anzeige dafür an, aber die eigene Schaltfläche der Waffenzeile verdeckt sie, sodass sie nie einen Klick erhält.
+tweak.fix_terrain_hit_point.display_name  Genaue Geländetreffer
+tweak.fix_terrain_hit_point.description   Schüsse und Sichtlinien treffen den Boden genau dort, wo er ist. Auf etwa einem Drittel des Geländes berechnet das Originalspiel den Punkt, an dem ein Schuss den Boden trifft, auf einem Hang, der mehrere Meter neben dem echten liegen kann, sodass der Einschlag zu kurz oder zu weit liegt. In Version 1.10 hält der Boden dann manchmal einen Schuss oder eine Sichtlinie gar nicht auf, sodass sich Maschinen durch Teile von Hügeln hindurch sehen und beschießen können.
+tweak.flyer_ignores_player_throttle.display_name  Cybrid-Flieger ignorieren Ihren Schubregler
+tweak.flyer_ignores_player_throttle.description   Ein Cybrid-Flieger fliegt immer mit seiner normalen Reisegeschwindigkeit. Im Originalspiel werden alle Cybrid-Flieger der Mission langsamer, wenn Ihr Joystick einen Schubregler hat und die THROTTLE-Steuerung des Razor auf THROTTLE steht, auch wenn Sie keinen Razor fliegen.
 tweaks.title                   Optimierungen
 tweaks.category.cosmetic       Kosmetisch
 tweaks.category.ai             KI

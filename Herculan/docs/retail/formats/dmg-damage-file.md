@@ -22,7 +22,7 @@ piece = 8 bytes, then dependentCount * 4 bytes of dependent list
 |---|---|---|
 | `+0x00` | `int16` `Armor`, the component's own maximum | `Component_ReadDamagePercent`'s `local_10 = *psVar5` |
 | `+0x02` | `int8` — the debris group this component throws, `-1` = fall back to group 2. See [`destruction-effects.md`](../simulation/destruction-effects.md#the-two-database-index-space) | `Component_DestroyAndCascade`, on destruction |
-| `+0x03` | `int8` — the `TSCellAnimPart` sequence this component drives on the machine's shape, stepped to its blank cell on destruction (`*(int*)(mechThis+0x34)+8`, `[index] = 2`), `-1` for a component with no geometry of its own. It also gates the fire — see [`mech-shape-drawing.md`](mech-shape-drawing.md) | `Component_DestroyAndCascade`, guarded by `-1 < value` |
+| `+0x03` | `int8` — the `TSCellAnimPart` sequence this component drives on the machine's shape, stepped to its blank cell on destruction (`*(int*)(mechThis+0x34)+8`, `[index] = 2`), `-1` for a component with no geometry of its own. It also gates the fire — see [`../rendering/mech-shape-drawing.md`](../rendering/mech-shape-drawing.md) | `Component_DestroyAndCascade`, guarded by `-1 < value` |
 | `+0x04` | `int8` — the **index of the parent component** this one hangs off, `-1` for none. Destroying component *n* queues every still-live piece whose parent is *n* | `Component_DestroyAndCascade`'s trailing loop |
 | `+0x05` | `uint8` flags, below | `Component_ApplyDamageAndCascade`, `Component_DestroyAndCascade` |
 | `+0x06` | `int16` dependent count | `HercPiece_ReadRecord`, `Component_ReadDamagePercent`'s loop bound |

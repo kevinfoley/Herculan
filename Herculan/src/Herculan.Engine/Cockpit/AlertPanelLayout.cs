@@ -56,7 +56,7 @@ public static class AlertPanelLayout {
 	/// A widget's state byte, <c>widget+0x1b</c> — what a <c>PanelButton</c> indexes both its
 	/// four-frame plate table (<c>+0x30</c>) and its four-entry caption-font table (<c>+0x40</c>)
 	/// with. <c>Widget_HitTestChildren</c> skips a widget in <see cref="Disabled"/> whatever its class
-	/// draws. See docs/retail/formats/cockpit-input.md for the cockpit widgets' own reading of the same byte.
+	/// draws. See docs/retail/simulation/cockpit-input.md for the cockpit widgets' own reading of the same byte.
 	/// </summary>
 	public static class WidgetState {
 		/// <summary>At rest. The objectives, status and pause panels' buttons never leave it.</summary>

@@ -273,7 +273,7 @@ public sealed partial class MissionGroup {
 			}
 		}
 
-		world.ApplyOutOfActionReport(OutOfActionReport);
+		world.Mission.ApplyOutOfActionReport(OutOfActionReport);
 	}
 
 	/// <summary>

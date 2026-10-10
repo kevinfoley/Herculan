@@ -19,7 +19,7 @@ namespace Herculan.Engine.Content;
 /// which this table maps to palette 16, 10, 13, 14 — black, red, yellow and green in the assembled
 /// palette (see <see cref="CockpitPalette"/>). That the four land on exactly the colours a damage
 /// readout wears is what corroborates the table; it is <b>not</b> where those readouts get their
-/// colour, which is a font — see docs/retail/formats/heads-down-display.md, Rejected readings.</para>
+/// colour, which is a font — see docs/retail/simulation/heads-down-display.md, Rejected readings.</para>
 ///
 /// <para>The indirection is what makes the ids theater-independent: entries point into both the
 /// fixed 0-15 system colours and the theater-owned 16-31 ramp, so the same data file yields
@@ -42,7 +42,7 @@ public sealed class HudColorTable {
 	/// colour — a one-pixel vertical pinstripe. Ids 6 and 5 resolve to palette 98 and 97, two shades
 	/// of blue — <c>(0,116,204)</c> and <c>(0,40,160)</c> — which interleaved read as a single shaded
 	/// fill rather than two colours. Field <c>0x2c</c> is the even columns, <c>0x30</c> the odd. See
-	/// docs/retail/formats/cockpit-hud-widgets.md, "LED gauges".</para>
+	/// docs/retail/simulation/cockpit-hud-widgets.md, "LED gauges".</para>
 	/// </summary>
 	public const int GaugeFillEvenId = 6;
 
@@ -88,7 +88,7 @@ public sealed class HudColorTable {
 	/// <summary>
 	/// The colour a squad comm box paints its pilot's name on, and the same colour that pilot's own
 	/// map marker and order link take: <c>HudColorTable_Get</c> (<c>00434280</c>) reads the slot's id
-	/// from its own array at <c>0049b040</c>. See "The gauge" in docs/retail/formats/heads-down-display.md.
+	/// from its own array at <c>0049b040</c>. See "The gauge" in docs/retail/simulation/heads-down-display.md.
 	/// A slot outside the squad answers -1, which resolves to no colour.
 	/// </summary>
 	public static int PilotColorId(int slot) =>

@@ -360,7 +360,7 @@ public class ShellRepairScreenTests {
 		var surface = new ShellSurface(ShellLayout.CanvasWidth, ShellLayout.CanvasHeight);
 		var owned = new[] { ShellRepairScreen.PanelRect, ShellSquadPanel.PanelRect, ShellSquadPanel.ReadoutRect };
 
-		ScreenFor(BayEntry(mountCapacity: 2, weapons: new[] { 5, 6 })).Paint(surface, null, null);
+		ScreenFor(BayEntry(mountCapacity: 2, weapons: new[] { 5, 6 })).Paint(surface, null, null, null);
 
 		for (int y = 0; y < ShellLayout.CanvasHeight; y++) {
 			for (int x = 0; x < ShellLayout.CanvasWidth; x++) {

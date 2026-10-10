@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Reflection;
 using System.Text;
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Data.Struct.Herc;
@@ -12,7 +11,6 @@ using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Sim;
-using Herculan.Engine.Sim.Ai;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 
@@ -20,13 +18,13 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// The simulator's cockpit stack with no window: the components <c>SimulatorHost</c>'s constructor builds, in its
-/// order, over the mission a retail demo tape carries, and one update frame run as <c>SimulatorHost.OnUpdate</c>
-/// runs it. The keyboard, the pointer and the stick are scripted.
+/// order, over the mission a retail demo tape carries, and one update frame run through
+/// <see cref="SimulatorFrame"/>'s three phases. The keyboard, the pointer and the stick are scripted.
 ///
-/// <para>The frame leaves out what only the window, the debug UI or the renderer touch: the menu bar and the
-/// rest of <c>WindowKeys</c> (so scripts press [Esc] only to take a panel down, and never [/] or [Alt+Enter]),
-/// the debug panel's readouts, the draw items and the palette flash. None of those writes simulation state.
-/// The ticks are <c>SimulationStepper</c>'s live path, with no tape and no recording.</para>
+/// <para>The frame leaves out the host's own steps between those phases, which only the window, the debug UI or
+/// the renderer touch: <c>WindowKeys</c> (so scripts never press [/] or [Alt+Enter]), the menu bar (so [Esc]
+/// backs out of a view or does nothing), the debug panel's readouts, the draw items and the palette flash. None
+/// of those writes simulation state. There is no tape and no recording.</para>
 ///
 /// <para>The mission is a retail demo tape's own bundle — <c>DEMO2.TAP</c>'s, an OGRE with a squad of three, unless
 /// another is asked for — unpacked without the install's <c>data\</c> under it, so
@@ -36,23 +34,21 @@ sealed class SimulatorRig {
 	public const int Width = 1280;
 	public const int Height = 960;
 
-	private const double SecondsPerTick = 1.0 / SimWorld.TicksPerSecond;
-	private const double MaxAccumulatedSeconds = 0.25;
-
 	private readonly CockpitInput _cockpitInput = new();
-	private double _tickAccumulator;
 
 	private SimulatorRig(SimulatorStart start, StagedStart staged, bool developer) {
 		Start = start;
 		Scene = start.Scene;
 		Audio = start.Audio;
+		Ports = start.Ports;
 		Staging = new SimulatorStaging(staged, new StagedScreenshot(), screenshotRun: false);
 
 		Art = LoadCockpitArt(start);
 		View = new CockpitView(Scene, Art, Staging.Start);
 
 		Tape = new TapePlayback(null, start.Preferences, () => new Vector2D<int>(Width, Height), _cockpitInput);
-		Recording = new TapeRecording(null, start.Preferences, Audio);
+		Recording = new TapeRecording(null, start.Preferences, Ports);
+		Input = new ScriptedInput(Keys, Pointer, _cockpitInput);
 
 		Panels = new ModalPanels(start, Pointer, View, hasCockpit: Art != null, Staging.Start.Joystick);
 		Panels.OpenStaged(Staging.Start);
@@ -63,21 +59,20 @@ sealed class SimulatorRig {
 		DeveloperKeys = new DeveloperKeys(developer);
 		Staging.StageMachine(View.PilotMech, Scene.World);
 
-		Commands = new CockpitCommands(Displays, View, Scene, Audio, SystemButtonPresses, Tape);
-		Pilot = new PilotControls(start, View, Displays, Commands, Tape, Recording, DeveloperKeys, Staging.Start);
-		Keyboard = new CockpitKeyboard(Displays, View, Commands, Scene, Audio);
-		CockpitUpdate = new PlayerCockpitUpdate(Displays, View, Commands, Scene, Audio);
+		Simulator = new SimulatorFrame(start, Art, View, Displays, Panels, Tape, Recording, DeveloperKeys, Staging,
+			Outcome, Input, SystemButtonPresses, escapeMenu: null, () => new Vector2D<int>(Width, Height));
 
 		Audio.StartMissionMusic(Scene.Mission.Header, 0);
 		Displays.PowerUpCockpit(Audio, screenshotRun: false);
 		Staging.BeginMission();
 
-		Pilot.Joystick = Stick;
+		Simulator.Pilot.Joystick = Stick;
 	}
 
 	public SimulatorStart Start { get; }
 	public MissionScene Scene { get; }
 	public GameAudio Audio { get; }
+	public MessagePorts Ports { get; }
 	public SimulatorStaging Staging { get; }
 	public CockpitArt? Art { get; }
 	public CockpitView View { get; }
@@ -86,19 +81,17 @@ sealed class SimulatorRig {
 	public ModalPanels Panels { get; }
 	public CockpitDisplays Displays { get; }
 	public DeveloperKeys DeveloperKeys { get; }
-	public CockpitCommands Commands { get; }
-	public PilotControls Pilot { get; }
-	public CockpitKeyboard Keyboard { get; }
-	public PlayerCockpitUpdate CockpitUpdate { get; }
+	public SimulatorFrame Simulator { get; }
+	public MissionOutcome Outcome { get; } = new();
 
 	public ScriptedKeys Keys { get; } = new();
 	public ScriptedPointer Pointer { get; } = new();
 	public ScriptedStick Stick { get; } = new();
 	public SystemButtonLog SystemButtonPresses { get; } = new();
+	public ScriptedInput Input { get; }
 
-	/// <summary><c>MissionOutcome</c>'s two fields.</summary>
-	public bool MissionOver { get; private set; }
-	public bool QuitGame { get; private set; }
+	public bool MissionOver => Outcome.Over;
+	public bool QuitGame => Outcome.QuitGame;
 
 	public SimWorld World => Scene.World;
 	public MechObject? Player => View.PilotMech;
@@ -112,17 +105,13 @@ sealed class SimulatorRig {
 			return null;
 		}
 
-		// DAT_004a9bf4, the AI's dwell jitter, is a process-wide global that DBSIM starts each mission from, one
-		// mission per process. This engine keeps it static and flies several missions in one process, so a rig
-		// built after another starts from wherever the last one left it; each starts from zero here.
-		typeof(BehaviourBlock).GetField("_jitter", BindingFlags.NonPublic | BindingFlags.Static)!.SetValue(null, 0);
-
 		string folder = Path.Combine(Path.GetTempPath(), "herculan-tests", "rig-" + Guid.NewGuid().ToString("N"));
 		string scriptPath = tape.ExtractBundle(folder, installDataDirectory: null);
 
 		var content = GameContent.MountSimulator(root, null);
 		var scene = MissionScene.Load(content, scriptPath, folder);
-		var audio = GameAudio.Create(content, scene.World.PresentationRandom, silent: true);
+		var ports = new MessagePorts(SystemMessages.Load(content));
+		var audio = GameAudio.Create(content, ports, scene.World.PresentationRandom, silent: true);
 		audio.Attach(scene.World);
 
 		var preferences = SimulatorPreferences.Load(folder) ?? SimulatorPreferences.Defaults();
@@ -150,6 +139,7 @@ sealed class SimulatorRig {
 			Content = content,
 			Scene = scene,
 			Audio = audio,
+			Ports = ports,
 			Preferences = preferences,
 			ScriptPath = scriptPath,
 			DataDirectory = folder,
@@ -185,137 +175,11 @@ sealed class SimulatorRig {
 			: null;
 	}
 
-	/// <summary>One host frame's update, in <c>SimulatorHost.OnUpdate</c>'s order.</summary>
+	/// <summary>One host frame's update.</summary>
 	public void Frame(double deltaSeconds = 1 / 60d) {
-		Panels.AdvanceClock(deltaSeconds);
-		Panels.ReadKeys(Keys, MissionOver);
-
-		var controls = Keys;
-		View.ReadCameraKey(controls, Displays.FlashCommHasKeyboard);
-
-		var pilotMech = View.PilotMech;
-		if (pilotMech != null && View.Chain != null && !Panels.AnyOpen && !MissionOver) {
-			DeveloperKeys.Read(controls, World, pilotMech, View.Chain, tapePlaying: false, deltaSeconds);
-		}
-
-		if (View.Chain != null && !Panels.AnyOpen && !MissionOver) {
-			View.ReadViewKeys(controls);
-		}
-
-		View.ReadOrbitDrag(null, imguiWantsMouse: false);
-		Pilot.Update(controls, Panels.AnyOpen, controls);
-		var keyPointer = Pointer.Pointer();
-		Keyboard.Read(controls, Panels.AnyOpen, pilotInput: View.Piloting, (keyPointer.X, keyPointer.Y), Width, Height);
-
-		ReadPointer(deltaSeconds);
-
-		if (Scene.Targeting is { } playerTargeting) {
-			playerTargeting.DropIfInvalid(cockpitShown: !View.ExternalViewActive);
-			playerTargeting.PushToPilot();
-		}
-
-		Displays.HddCommand?.Update(TimeSpan.FromSeconds(deltaSeconds));
-		if (Displays.Hud.Mfd == MfdMode.FlashComm) {
-			Displays.FlashComm.Sync();
-		}
-
-		View.Advance(deltaSeconds, Art, Width, Height);
-
-		Panels.RaisePendingMissionAlert(MissionOver);
-		Staging.RaiseStatusAlert(Panels, World);
-		if (Panels.TakeMissionEnding(out bool quitGame)) {
-			MissionOver = true;
-			QuitGame = quitGame;
-		}
-
-		ApplyLivePreferences();
-
-		Audio.MessagesPaused = Panels.AnyOpen;
-		Advance(deltaSeconds);
-
-		bool preferencesUp = Panels.Preferences is { IsOpen: true };
-		View.AdvancePanelOrbit(preferencesUp, preferencesUp && Panels.Controls is not { IsOpen: true }, deltaSeconds);
-
-		if (View.InMachine) {
-			View.UpdateKickAndShake(deltaSeconds);
-		}
-
-		View.PlaceCamera();
-		var camera = View.Camera;
-		Audio.SetListener(camera.Position, -camera.Yaw & 0xffff);
-		Audio.Update(TimeSpan.FromSeconds(deltaSeconds));
-
-		Displays.UpdateSquadVideos();
-		Staging.AcquireTarget(pilotMech, Scene.Targeting);
-		CockpitUpdate.Update(deltaSeconds);
-	}
-
-	// SimulatorHost.ReadPointer, less the system buttons' showing, which only the draw reads.
-	private void ReadPointer(double deltaSeconds) {
-		Panels.PrimePanelStickLatch();
-
-		if (Panels.AnyOpen) {
-			Panels.ReadPointer(Width, Height, Pilot.Joystick);
-			Panels.Present();
-			_cockpitInput.Drain(deltaSeconds, (_, _) => null);
-			Displays.Hud = Displays.Hud with { PressedWidget = null };
-		} else if (Art != null && !View.ExternalViewActive) {
-			Commands.DrainClicks(_cockpitInput, deltaSeconds, Width, Height);
-		}
-
-		Panels.SyncPointer(Width, Height);
-
-		if (!Panels.AnyOpen && Art != null && !View.ExternalViewActive) {
-			foreach (var popped in Displays.PressFlashes.Service(Audio.CoarseTicks)) {
-				_cockpitInput.PopUp(popped);
-			}
-
-			Displays.Hud = Displays.Hud with {
-				PressedWidget = _cockpitInput.Depressed,
-				FlashingWidgets = Displays.PressFlashes.Lit,
-			};
-		}
-	}
-
-	// SimulatorHost.ApplyLivePreferences, less the terrain texture, which only the draw reads.
-	private void ApplyLivePreferences() {
-		byte effectsDetail = Start.Preferences[Prefs.EffectsDetailOption];
-		World.EffectsDetail = effectsDetail;
-		if (Audio.Director is { } soundDirector) {
-			soundDirector.DetailSetting = effectsDetail;
-		}
-
-		Audio.Messages.Mode = (MessageChannelMode)Start.Preferences[Prefs.ComputerMessageOption];
-		if (Audio.Squad is { } squadChannel) {
-			squadChannel.Port.Mode = (MessageChannelMode)Start.Preferences[Prefs.PilotMessageOption];
-		}
-	}
-
-	// SimulationStepper.Advance's live path, with no tape and no recording.
-	private void Advance(double deltaSeconds) {
-		bool frozen = MissionOver || Panels.AnyOpen;
-		if (DeveloperKeys.StepPending && !frozen) {
-			World.Tick();
-			View.AdvanceChain(DeveloperKeys);
-			DeveloperKeys.FinishStep();
-			_tickAccumulator = 0;
-			return;
-		}
-
-		if (!frozen) {
-			_tickAccumulator = Math.Min(_tickAccumulator + deltaSeconds, MaxAccumulatedSeconds);
-		}
-
-		while (!frozen && _tickAccumulator >= SecondsPerTick) {
-			_tickAccumulator -= SecondsPerTick;
-			if (DeveloperKeys.Frozen) {
-				World.TickFrozen();
-			} else {
-				World.Tick();
-			}
-
-			View.AdvanceChain(DeveloperKeys);
-		}
+		Simulator.BeginFrame(deltaSeconds);
+		Simulator.Update(deltaSeconds);
+		Simulator.Finish(deltaSeconds);
 	}
 
 	/// <summary>Runs <paramref name="frames"/> frames.</summary>
@@ -381,7 +245,7 @@ sealed class SimulatorRig {
 			line.Append(name).Append('=').Append(Convert.ToString(value, CultureInfo.InvariantCulture)).Append(' ');
 
 		Add("tick", World.TickCount);
-		Add("coarse", Audio.CoarseTicks);
+		Add("coarse", Ports.CoarseTicks);
 		if (Player is { } mech) {
 			Add("pos", mech.Position);
 			Add("heading", mech.Heading);
@@ -409,10 +273,10 @@ sealed class SimulatorRig {
 			Add("o", $"{simObject.ListIndex}:{simObject.Position}:{simObject.Heading}:{simObject.Destroyed}");
 		}
 
-		Add("shots", $"{World.Projectiles.Count}/{World.Effects.Count}");
+		Add("shots", $"{World.Projectiles.Count}/{World.Effects.ImpactEffects.Count}");
 		Add("selected", Scene.Targeting?.Selected?.ListIndex);
-		Add("steer", World.MissileSteer);
-		Add("alert", World.PendingMissionAlert);
+		Add("steer", World.PlayerMissile.Steer);
+		Add("alert", World.Mission.PendingAlert);
 
 		Add("piloting", View.Piloting);
 		Add("external", View.ExternalViewActive);
@@ -464,6 +328,30 @@ sealed class ScriptedKeys : IKeyState {
 	public void Release(params Key[] keys) => _down.ExceptWith(keys);
 
 	public void ReleaseAll() => _down.Clear();
+}
+
+/// <summary>The scripted keyboard and pointer as the simulator's input: no tape, no mouse device and no debug UI.</summary>
+sealed class ScriptedInput(ScriptedKeys keys, ScriptedPointer pointer, CockpitInput cockpit) : ISimulatorInput {
+	public IKeyState? Keyboard => keys;
+
+	public IKeyState? LiveKeys => keys;
+
+	public IMouse? Mouse => null;
+
+	public CockpitInput Cockpit => cockpit;
+
+	public bool ImGuiHasKeyboard => false;
+
+	public bool ImGuiWantsMouse => false;
+
+	public bool KeyboardCapturedByImGui => false;
+
+	public void TakeLiveKeys() {
+	}
+
+	public (float X, float Y, CockpitMouseButtons Buttons) Pointer() => pointer.Pointer();
+
+	public void WarpPointer(float x, float y) => pointer.WarpPointer(x, y);
 }
 
 /// <summary>A pointer a test places, which remembers each warp as the window's would.</summary>

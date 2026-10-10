@@ -39,8 +39,8 @@ public sealed record CockpitFrame(byte[] Pixels, int Width, int Height) {
 }
 
 /// <summary>
-/// A herc's cockpit canopy art and HUD widget layout — see docs/retail/formats/cockpit-canopy-palette.md and
-/// docs/retail/formats/cockpit-hud-widgets.md (Milestone 8
+/// A herc's cockpit canopy art and HUD widget layout — see docs/retail/rendering/cockpit-canopy-palette.md and
+/// docs/retail/simulation/cockpit-hud-widgets.md (Milestone 8
 /// Phase 0) for the RE and the real-data verification behind every constant here.
 ///
 /// <para><see cref="Front"/> is <c>(herc).HB0</c> (the center/front view) and <see cref="Side"/> is
@@ -73,7 +73,7 @@ public sealed class CockpitArt {
 	/// console graphic at this scale, and no other tried combination (1x, 2x/1x, 2x/1.2x) fits more
 	/// than one widget at once. The original's mechanism is <c>VideoMode_XCoordShift</c>
 	/// (<c>004d25be</c>) and its Y twin, a shift of 1 in the 640-wide mode. See
-	/// docs/retail/formats/cockpit-hud-widgets.md, "<c>.GAU</c> widget tree".
+	/// docs/retail/simulation/cockpit-hud-widgets.md, "<c>.GAU</c> widget tree".
 	/// </summary>
 	public const float GauToPixelScale = 2f;
 
@@ -168,7 +168,7 @@ public sealed class CockpitArt {
 	/// palette, and these colours are its HUD half: in eight of the ten theaters most of
 	/// <c>COLORS.DAT</c>'s twenty-seven entries move, most of them a long way, so a HUD that kept its
 	/// own colours through a flash would be the one part of the screen visibly refusing to. The
-	/// per-theater counts are in docs/retail/formats/cockpit-canopy-palette.md, "The damage shake".</para>
+	/// per-theater counts are in docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".</para>
 	/// </summary>
 	private sealed record PaletteColors(
 		(Vector3, Vector3, Vector3)? Gauge,
@@ -184,7 +184,7 @@ public sealed class CockpitArt {
 	/// <summary>
 	/// Whether the HUD draws through the damage-flash palette. The host sets it from
 	/// <c>CockpitHitShake.FlashActive</c>; it does nothing when the theater supplied no impact
-	/// palette. See docs/retail/formats/cockpit-canopy-palette.md, "The damage shake".
+	/// palette. See docs/retail/rendering/cockpit-canopy-palette.md, "The damage shake".
 	/// </summary>
 	public bool FlashActive { get; set; }
 
@@ -308,7 +308,7 @@ public sealed class CockpitArt {
 	/// for every herc but RAZOR that file lists no spans, so the art stays whole. RAZOR's opens two
 	/// lower side windows and the two top corners, which the host fills with the world. A missing
 	/// <c>.HD1</c> leaves the art whole rather than falling back to <see cref="CutViewportHoleByColor"/>,
-	/// which would guess windows into eight hercs' heads-down art that has none. See docs/retail/formats/cockpit-views.md,
+	/// which would guess windows into eight hercs' heads-down art that has none. See docs/retail/simulation/cockpit-views.md,
 	/// "<c>.HD0</c>-<c>.HD3</c> / <c>.ED0</c>-<c>.ED3</c> — 3D-viewport clip regions".</para>
 	/// </summary>
 	public CockpitFrame? HeadsDown { get; }

@@ -75,7 +75,7 @@ public sealed record ShellMissionTexts(string Briefing, string Objectives, strin
 /// into one <c>Text</c> child of its parent per line and shows one page of them at a time. Built by
 /// <c>TextBox_Ctor</c> (<c>0040cc0c</c>), filled by <c>TextBox_SetText</c> (<c>0040cc81</c>), and paged by
 /// <c>TextBox_PageUp</c> (<c>0040d237</c>) and <c>TextBox_PageDown</c> (<c>0040d258</c>). See
-/// docs/retail/shell/screen-layout.md, "The summary text box".
+/// docs/retail/shell/mission-screen.md, "The summary text box".
 /// </summary>
 public sealed class ShellTextBox {
 	private List<string> _lines = new();
@@ -221,7 +221,7 @@ public sealed class ShellTextBox {
 /// <summary>
 /// The career's text for the campaign map view: <c>Campaign_LoadStageText</c> (<c>0040f775</c>) reads
 /// <c>campaign.str</c> and keeps string <c>stage - 1</c> of its first group. See
-/// docs/retail/shell/screen-layout.md, "The summary text box".
+/// docs/retail/shell/mission-screen.md, "The summary text box".
 ///
 /// <para>v1.0 reads it from <c>LANG0.VOL</c>'s <c>ENG</c> folder, its literal at <c>0046f5be</c>; v1.10 from the
 /// shell language's folder. v1.10 appends the folder to a buffer it never clears, which can leave the file unfound
@@ -282,7 +282,7 @@ public sealed class ShellMissionArt {
 /// a taller summary; the debrief shows the page buttons alone, the flown mission's debrief text, and the
 /// mission report's twenty texts in the map panel. Built once by <c>Mission_BuildScreen</c>
 /// (<c>00442534</c>), put up in a view by <c>Mission_Show</c> (<c>004441e3</c>) and taken down by
-/// <c>Mission_Leave</c> (<c>00444a05</c>). See docs/retail/shell/screen-layout.md, "The mission screen".
+/// <c>Mission_Leave</c> (<c>00444a05</c>). See docs/retail/shell/mission-screen.md, "The mission screen".
 ///
 /// <para><b>Every rect here is a literal in the executable</b>, kept parent-relative as the builder
 /// writes them: the four panels in the canvas, everything else in the panel holding it.</para>
@@ -436,7 +436,7 @@ public sealed class ShellMissionScreen {
 	/// <c>0x146 + outcome</c>, <c>Failure</c> or <c>Success</c>; the salvage <c>"%d %s"</c> of the award in tons
 	/// and <c>0x149</c> <c>Tons</c>; the rest <c>"%d"</c>. The first three are left-aligned beside their labels
 	/// and the rest right-aligned under the column heads, all in <c>0x29</c>
-	/// (docs/retail/shell/screen-layout.md#the-mission-report).
+	/// (docs/retail/shell/mission-screen.md#the-mission-report).
 	/// </summary>
 	public void WriteReport(ShellDebriefReport report, ShellText? text) {
 		void Set(int index, string? value, ShellTextAlign align) {
@@ -566,8 +566,9 @@ public sealed class ShellMissionScreen {
 
 		ShellChrome.PaintPanel(surface, ButtonBarRect, ButtonBorder, fill: true);
 		foreach (var button in Enum.GetValues<ShellMissionButton>()) {
-			PaintButton(surface, font, ButtonRect(button), text?.Text(FirstButtonText + (int)button + (button > 0 ? 1 : 0)),
-				button == ShownText ? ViewLitColor : ButtonBorder);
+			ShellChrome.PaintButton(surface, ButtonRect(button), button == ShownText ? ViewLitColor : ButtonBorder, font,
+				text?.Text(FirstButtonText + (int)button + (button > 0 ? 1 : 0)), ShellChrome.FontInkColor,
+				pressed: lit == new ShellWidget(ShellWidgetKind.MissionButton, (int)button));
 		}
 	}
 
@@ -595,13 +596,6 @@ public sealed class ShellMissionScreen {
 		ShellChrome.PaintTitledPanel(surface, rect, Border, face, ShellChrome.InteriorColor, TitleHeight, headerChrome,
 			plateFirst, plateLast, fill: true);
 		ShellChrome.PaintText(surface, new ShellRect(rect.X0, rect.Y0, rect.X1, rect.Y0 + TitleHeight), font, title,
-			ShellTextAlign.Center, ShellChrome.FontInkColor);
-	}
-
-	/// <summary>One button: its double-bordered box in <paramref name="border"/> and its caption, centred in <c>0x29</c>.</summary>
-	private static void PaintButton(ShellSurface surface, HudFont? font, ShellRect rect, string? caption, byte border) {
-		ShellChrome.PaintButton(surface, rect, border);
-		ShellChrome.PaintText(surface, new ShellRect(rect.X0 + 1, rect.Y0, rect.X1, rect.Y1), font, caption,
 			ShellTextAlign.Center, ShellChrome.FontInkColor);
 	}
 

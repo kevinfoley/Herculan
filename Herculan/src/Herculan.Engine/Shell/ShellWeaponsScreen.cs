@@ -72,7 +72,7 @@ public sealed class ShellWeaponsArt {
 /// <c>Hard Points</c> steppers. Built once by <c>Arming_BuildScreen</c> (<c>0043e52c</c>,
 /// <c>warmingi.cpp</c>), entered by <c>Arming_Enter</c> (<c>0043f548</c>), its row moved by
 /// <c>Arming_SelectRow</c> (<c>0043f71c</c>) and its guidance kind by <c>Arming_ShowGuidance</c>
-/// (<c>0043fd69</c>). See docs/retail/shell/screen-layout.md, "The weapons screen".
+/// (<c>0043fd69</c>). See docs/retail/shell/weapons-and-repair.md, "The weapons screen".
 ///
 /// <para><b>Every rect here is a literal in the executable</b>, kept parent-relative as the builder
 /// writes them: the content panel in the canvas; the picture box, the list and the steppers in the
@@ -473,8 +473,11 @@ public sealed class ShellWeaponsScreen {
 		return null;
 	}
 
-	/// <summary>Draws the whole screen into <paramref name="surface"/>, the squad panel included. The caller clears it first.</summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	/// <summary>
+	/// Draws the whole screen into <paramref name="surface"/>, the squad panel included. The caller clears it first.
+	/// <paramref name="lit"/> is the widget a press has lit.
+	/// </summary>
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
 		ShellSquadPanel.Paint(surface, font, text, _hangar, SelectedBay, _pictures, _outline);
@@ -485,12 +488,12 @@ public sealed class ShellWeaponsScreen {
 			ShellChrome.FontInkColor);
 
 		PaintList(surface, font, text);
-		PaintPictureBox(surface, font, text);
+		PaintPictureBox(surface, font, text, lit);
 
 		ShellChrome.PaintText(surface, Inside(PanelRect, HardPointsLabelRect), font, text?.Text(HardPointsText),
 			ShellTextAlign.Right, ShellChrome.FontInkColor);
-		PaintButton(surface, font, ShellWeaponsButton.PreviousHardpoint, "<", ButtonBorder);
-		PaintButton(surface, font, ShellWeaponsButton.NextHardpoint, ">", ButtonBorder);
+		PaintButton(surface, font, ShellWeaponsButton.PreviousHardpoint, "<", ButtonBorder, lit);
+		PaintButton(surface, font, ShellWeaponsButton.NextHardpoint, ">", ButtonBorder, lit);
 	}
 
 	/// <summary>
@@ -532,7 +535,7 @@ public sealed class ShellWeaponsScreen {
 	/// black with no border, the three description lines are centred in the band, and a missile rack
 	/// puts its five buttons up the right-hand side.
 	/// </summary>
-	private void PaintPictureBox(ShellSurface surface, HudFont? font, ShellText? text) {
+	private void PaintPictureBox(ShellSurface surface, HudFont? font, ShellText? text, ShellWidget? lit) {
 		var box = Inside(PanelRect, PictureBoxRect);
 		ShellChrome.PaintHatchedDivider(surface, box, PictureBoxBorder, DescriptionBand, DescriptionFirstLine,
 			innerBorder: false);
@@ -548,11 +551,11 @@ public sealed class ShellWeaponsScreen {
 		if (GuidanceButtonsShown) {
 			for (int button = 0; button < ButtonGuidance.Length; button++) {
 				PaintButton(surface, font, (ShellWeaponsButton)button, text?.Text(FirstGuidanceText + button),
-					button == _litGuidanceButton ? LitGuidanceBorder : ButtonBorder);
+					button == _litGuidanceButton ? LitGuidanceBorder : ButtonBorder, lit);
 			}
 
 			PaintButton(surface, font, ShellWeaponsButton.Weapon, text?.Text(FirstWeaponNameText + SelectedWeapon),
-				ButtonBorder);
+				ButtonBorder, lit);
 		}
 
 		for (int line = 0; line < DescriptionRows.Length; line++) {
@@ -563,17 +566,11 @@ public sealed class ShellWeaponsScreen {
 		}
 	}
 
-	/// <summary>
-	/// One button: its double-bordered box in <paramref name="border"/> and its caption, the <c>Text</c> child
-	/// <c>ESButtonFont_Ctor</c> builds at <c>{1, 0, w, h}</c>, centred in <c>0x29</c>.
-	/// </summary>
+	/// <summary>One button: its double-bordered box in <paramref name="border"/> and its caption in <c>0x29</c>.</summary>
 	private static void PaintButton(ShellSurface surface, HudFont? font, ShellWeaponsButton button, string? caption,
-			byte border) {
-		var rect = ButtonRect(button);
-		ShellChrome.PaintButton(surface, rect, border);
-		ShellChrome.PaintText(surface, new ShellRect(rect.X0 + 1, rect.Y0, rect.X1, rect.Y1), font, caption,
-			ShellTextAlign.Center, ShellChrome.FontInkColor);
-	}
+			byte border, ShellWidget? lit) =>
+		ShellChrome.PaintButton(surface, ButtonRect(button), border, font, caption, ShellChrome.FontInkColor,
+			pressed: lit == new ShellWidget(ShellWidgetKind.WeaponsButton, (int)button));
 
 	private static void Column(ShellSurface surface, HudFont? font, ShellRect row, int left, int right,
 			string? value, ShellTextAlign align, byte color) =>

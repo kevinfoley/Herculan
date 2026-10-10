@@ -57,7 +57,9 @@ public sealed class GameContent {
 	/// <summary>
 	/// Whether the install is v1.10's (<see cref="LauncherLanguage.IsV110"/>). v1.10's shell takes the folder of
 	/// <c>campaign.str</c> and of the intro movies from <see cref="Language"/>, where v1.0's names English ones whatever
-	/// its language (docs/retail/retail-builds.md#v110s-shell-reads-the-language-twice-more).
+	/// its language (docs/retail/retail-builds.md#v110s-shell-reads-the-language-twice-more). The cockpit reads it for
+	/// the simulator changes it follows (docs/retail/retail-builds.md#how-v110s-programs-differ): the MFD status
+	/// screen's range in metres (<see cref="Cockpit.MfdStatusSubject.Range"/>).
 	/// </summary>
 	public bool IsV110 { get; }
 

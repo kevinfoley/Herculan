@@ -11,7 +11,7 @@ namespace Herculan.Engine.Cockpit;
 ///
 /// <para>It does not run every mission: a flyer's cockpit is marked finished before it starts, and a
 /// heading past <see cref="HalfTurn"/> finishes on its first frame. Both of those, and the ramp's
-/// derivation, are docs/retail/formats/cockpit-gunsight-hud.md's power-up wind-up section. The second is reproduced
+/// derivation, are docs/retail/simulation/cockpit-gunsight-hud.md's power-up wind-up section. The second is reproduced
 /// here rather than coded around — <see cref="Angle"/> arms and evaluates in one call, as the
 /// original's tick and paint do in one pass, so it falls out of the arithmetic. The original reads
 /// the clock once to arm and again after the world draw to evaluate; this reads it once, so the
@@ -21,7 +21,7 @@ namespace Herculan.Engine.Cockpit;
 public sealed class HeadingTapeSweep {
 	/// <summary>
 	/// How far the ramp moves per coarse tick, the original's own <c>0x32</c>. A coarse tick is 16 ms
-	/// (see <see cref="Herculan.Engine.Audio.GameAudio.CoarseTickSeconds"/>), so the compass winds at
+	/// (see <see cref="MessagePorts.CoarseTickSeconds"/>), so the compass winds at
 	/// about 17 degrees a second and a half turn takes some ten seconds.
 	/// </summary>
 	public const int RampPerTick = 0x32;
@@ -43,7 +43,7 @@ public sealed class HeadingTapeSweep {
 	/// The sweep for a cockpit powering up at <paramref name="coarseTicks"/>. A flyer's comes back
 	/// already latched and never moves the tape — <c>Gau_BuildCockpitWidgets</c>' own branch, on the
 	/// same <c>FlyerFlag</c> that gates the engine hum in
-	/// <see cref="Herculan.Engine.Audio.GameAudio.PowerUp"/>.
+	/// <see cref="MessagePorts.PowerUp"/>.
 	/// </summary>
 	public static HeadingTapeSweep ForPowerUp(MechObject pilot, long coarseTicks) {
 		ArgumentNullException.ThrowIfNull(pilot);

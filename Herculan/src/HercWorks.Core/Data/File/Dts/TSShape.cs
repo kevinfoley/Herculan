@@ -5,12 +5,12 @@ namespace HercWorks.Core.Data.File.Dts;
 
 /// <summary>
 /// A shape root: a part list, then the per-sequence frame counts and the shape's own node
-/// transforms. See docs/retail/formats/dts-node-posing.md, "The shape's own node transforms".
+/// transforms. See docs/retail/rendering/dts-node-posing.md, "The shape's own node transforms".
 /// </summary>
 public class TSShape : TSPartList {
 	/// <summary>
 	/// Frame count per animation sequence (<c>shape+0x20</c>) — what a cell-animation counter is
-	/// taken modulo. See docs/retail/formats/dts-billboards.md, "TSCellAnimPart_Render (004767e4)".
+	/// taken modulo. See docs/retail/rendering/dts-billboards.md, "TSCellAnimPart_Render (004767e4)".
 	/// </summary>
 	public short[]? SequenceList { get; set; }
 

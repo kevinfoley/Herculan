@@ -11,7 +11,9 @@ namespace HercWorks.Query;
 
 /// <summary>One retail mission: its <c>.MSN</c> and the <c>.ENG</c> beside it.</summary>
 /// <param name="Name">The file name without its extension, <c>C4_09</c>.</param>
-internal sealed record Mission(string Name, MissionFile File, MissionStringFile? Text);
+/// <param name="MsnBytes">The <c>.MSN</c> as stored, for a query that runs the mission load over it.</param>
+/// <param name="EngBytes">The <c>.ENG</c> as stored, or null when the mission has none.</param>
+internal sealed record Mission(string Name, MissionFile File, MissionStringFile? Text, byte[] MsnBytes, byte[]? EngBytes);
 
 /// <summary>One mission's record counts, for <c>missions</c>.</summary>
 /// <param name="TextRecords">The <c>.ENG</c>'s record count, null when the mission has none.</param>
@@ -93,10 +95,12 @@ internal sealed class RetailData {
 			}
 
 			string name = Path.GetFileNameWithoutExtension(fileName);
-			var file = msnTransformer.Parse(entry.RawBytes)
+			byte[] msn = entry.RawBytes ?? throw new InvalidDataException($"{fileName} is empty.");
+			var file = msnTransformer.Parse(msn)
 				?? throw new InvalidDataException($"{fileName} is empty.");
-			var text = Find(zonesVol, "MSN", name + ".ENG") is { RawBytes: { } eng } ? engTransformer.Parse(eng) : null;
-			missions.Add(new Mission(name.ToUpperInvariant(), file, text));
+			byte[]? eng = Find(zonesVol, "MSN", name + ".ENG")?.RawBytes;
+			var text = eng != null ? engTransformer.Parse(eng) : null;
+			missions.Add(new Mission(name.ToUpperInvariant(), file, text, msn, eng));
 		}
 
 		missions.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
@@ -117,7 +121,7 @@ internal sealed class RetailData {
 
 	/// <summary>
 	/// The name a structure type's MFD readout gives it: <c>STRINGS0.STR</c> group 23 or 24, picked
-	/// by its texture selector, at its silhouette index (docs/retail/formats/mfd.md#viewport-and-condition-per-class).
+	/// by its texture selector, at its silhouette index (docs/retail/simulation/mfd.md#viewport-and-condition-per-class).
 	/// </summary>
 	public string? StructureName(int typeIndex) {
 		if (Bases is not { } bases || SimStrings is not { } strings || typeIndex < 0 || typeIndex >= bases.Types.Length) {

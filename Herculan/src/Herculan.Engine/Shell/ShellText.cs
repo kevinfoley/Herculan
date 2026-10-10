@@ -58,11 +58,9 @@ public sealed class ShellText {
 			return null;
 		}
 
-		// The transformer slices each entry up to the next offset, so every string but the last
-		// carries its own NUL terminator, and Trim() does not consider NUL whitespace.
 		var trimmed = new string[values.Length];
 		for (int i = 0; i < values.Length; i++) {
-			trimmed[i] = values[i].Trim('\0').Trim();
+			trimmed[i] = values[i].Trim();
 		}
 
 		return new ShellText(trimmed);

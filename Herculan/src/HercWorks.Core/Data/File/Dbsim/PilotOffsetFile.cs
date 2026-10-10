@@ -10,7 +10,7 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// then copies the following 8 bytes into <c>gauge + index * 8 + 0x3d</c>. So an entry is three
 /// INT32s and the pair is signed, in the bank's own 320-wide space.
 ///
-/// See docs/retail/formats/heads-down-display.md, "Squad comm boxes", for what the pair means and which
+/// See docs/retail/simulation/heads-down-display.md, "Squad comm boxes", for what the pair means and which
 /// entries the shipped code path reaches.
 /// </summary>
 public class PilotOffsetFile {

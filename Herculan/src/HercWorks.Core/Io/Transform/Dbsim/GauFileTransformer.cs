@@ -71,7 +71,7 @@ public class GauFileTransformer : ByteTransformer<GAUFile> {
 		}
 		gau.Weapons = weapons;
 
-		Skip(288); // confirmed always-zero padding, offset 180-467 — see class doc comment.
+		Skip(288); // offset 180-467, zero in every retail file; holds the weapon gauge factories' runtime scratch slots — see GAUFile's doc comment.
 
 		Skip(16); // confirmed always (0,0,0,0) container rect at offset 468 — see class doc comment.
 
@@ -240,7 +240,7 @@ public class GauFileTransformer : ByteTransformer<GAUFile> {
 			WriteRect(Emit, weapon);
 		}
 
-		Emit(new byte[288]); // confirmed always-zero padding, offset 180-467.
+		Emit(new byte[288]); // offset 180-467, zero in every retail file.
 		Emit(new byte[16]); // confirmed always (0,0,0,0) container rect at offset 468.
 
 		WriteRect(Emit, gau.ChainButton!);

@@ -24,21 +24,18 @@ public class BinStringFileTransformer : ByteTransformer<StringBinaryFile> {
 		int indexStart = Index;
 		int stringStart = Index + totalStrings * 2;
 
+		// Each string runs from its offset to its NUL, read as Latin-1 so every byte survives a write.
 		var values = new string[totalStrings];
 		for (int i = 0; i < totalStrings; i++) {
 			Index = indexStart + i * 2;
-			int offset = IndexShortLE();
-
-			if (i < totalStrings - 1) {
-				Index = indexStart + (i + 1) * 2;
-				int nextIndex = IndexShortLE();
-
-				Index = stringStart + offset;
-				values[i] = IndexString(nextIndex - offset).Trim();
-			} else {
-				Index = stringStart + offset;
-				values[i] = IndexString(inputArray.Length - Index).Trim();
+			int start = stringStart + IndexShortLE();
+			int end = Array.IndexOf(inputArray, (byte)0, start);
+			if (end < 0) {
+				end = inputArray.Length;
 			}
+
+			values[i] = Encoding.Latin1.GetString(inputArray, start, end - start);
+			Index = Math.Min(end + 1, inputArray.Length);
 		}
 
 		binFile.Values = values;
@@ -46,26 +43,27 @@ public class BinStringFileTransformer : ByteTransformer<StringBinaryFile> {
 		return binFile;
 	}
 
+	/// <summary>Writes the strings back in order, each with its NUL, and regenerates the offsets.</summary>
 	public override byte[]? Write(StringBinaryFile? sbf) {
 		if (sbf == null) {
 			return null;
 		}
 
-		using var outStream = new MemoryStream();
-
+		using var pool = new MemoryStream();
 		var index = new short[sbf.Values!.Length];
-
-		int size = 0;
 		for (int s = 0; s < sbf.Values.Length; s++) {
-			index[s] = (short)size;
-			size += sbf.Values[s].Length;
-			size += sbf.Values[s].EndsWith(" ") ? 0 : 1; // null terminal byte
+			index[s] = (short)pool.Length;
+			var strBytes = Encoding.Latin1.GetBytes(sbf.Values[s]);
+			pool.Write(strBytes, 0, strBytes.Length);
+			pool.WriteByte(0x00);
 		}
+
+		using var outStream = new MemoryStream();
 
 		var totalBytes = WriteIntLE(sbf.Values.Length);
 		outStream.Write(totalBytes, 0, totalBytes.Length);
 
-		var sizeBytes = WriteIntLE(size);
+		var sizeBytes = WriteIntLE((int)pool.Length);
 		outStream.Write(sizeBytes, 0, sizeBytes.Length);
 
 		for (int i = 0; i < sbf.Values.Length; i++) {
@@ -73,11 +71,7 @@ public class BinStringFileTransformer : ByteTransformer<StringBinaryFile> {
 			outStream.Write(idxBytes, 0, idxBytes.Length);
 		}
 
-		for (int t = 0; t < sbf.Values.Length; t++) {
-			var strBytes = Encoding.ASCII.GetBytes(sbf.Values[t]);
-			outStream.Write(strBytes, 0, strBytes.Length);
-			outStream.WriteByte(0x00);
-		}
+		pool.WriteTo(outStream);
 
 		return outStream.ToArray();
 	}

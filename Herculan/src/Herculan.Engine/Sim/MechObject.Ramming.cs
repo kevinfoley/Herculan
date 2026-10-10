@@ -62,7 +62,7 @@ public sealed partial class MechObject {
 
 		if (Target is not { } target) {
 			// Nothing to charge: stand still. The retarget timer is the only way out.
-			LocomotionTick(world, 0, 0);
+			LocomotionTick(world, 0, 0, ignoreObstacles: true);
 			return false;
 		}
 
@@ -105,11 +105,16 @@ public sealed partial class MechObject {
 	/// the bearing error's top byte. The gain is <c>&gt;&gt; 8</c> where every other state steers at
 	/// <c>&gt;&gt; 6</c>, so a rammer turns a quarter as hard — it commits to a line rather than
 	/// tracking a dodging target.
+	///
+	/// <para>It also switches obstacle avoidance down to the player's line of fire alone — the
+	/// original's every ram steer passes 1 as <c>Mech_LocomotionTick</c>'s fourth argument, and no
+	/// other caller does. Without that the target itself counts as an obstruction, and the
+	/// avoidance's steer, many times this one's, holds the rammer in an orbit around it.</para>
 	/// </summary>
 	private void RamSteer(SimWorld world, SimObject target) =>
 		LocomotionTick(world,
 			(short)((short)(Detection.HeadingToward(target.Position, Position) - (short)Heading) >> 8),
-			MechControls.AxisFull);
+			MechControls.AxisFull, ignoreObstacles: true);
 
 	/// <summary>
 	/// <c>Mech_BehaviourRamTick</c> (<c>0041e488</c>) — the <c>ramming</c> state's move slot, run once
@@ -140,7 +145,7 @@ public sealed partial class MechObject {
 			return;
 		}
 
-		world.ExplosiveBlastSweep(Position, RamBlastRadius, RamBlastDamage, null, this);
+		HitTests.ExplosiveBlastSweep(world, Position, RamBlastRadius, RamBlastDamage, null, this);
 
 		// Every component the machine still has, in index order. ComponentDamageWrite makes the
 		// active-flag test the original's loop makes for itself before each call.

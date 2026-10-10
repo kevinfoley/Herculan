@@ -155,7 +155,7 @@ public sealed class HddCommandScreen {
 
 	/// <summary>Advances the blink. Wall time, not simulation time, exactly as the original's is.</summary>
 	public void Update(TimeSpan elapsed) {
-		_blinkTicks += elapsed.TotalSeconds / Audio.GameAudio.CoarseTickSeconds;
+		_blinkTicks += elapsed.TotalSeconds / MessagePorts.CoarseTickSeconds;
 		while (_blinkTicks >= BlinkTicks) {
 			_blinkTicks -= BlinkTicks;
 			Blink = !Blink;
@@ -170,10 +170,13 @@ public sealed class HddCommandScreen {
 	///
 	/// <para>Selecting a pilot, the one already selected included, has them say
 	/// <see cref="SquadOrders.StandingByMessage"/> — the first function's post, which
-	/// <see cref="SquadOrders.SendToSlot"/> withdraws. See docs/retail/formats/cockpit-messages.md#what-each-id-says.</para>
+	/// <see cref="SquadOrders.SendToSlot"/> withdraws. See docs/retail/simulation/cockpit-messages.md#what-each-id-says.</para>
+	///
+	/// <para>The refusal of a destroyed pilot is the two pickers' test, <c>+0x99</c> alone, so an
+	/// immobilised squadmate can still be selected and ordered (docs/retail/simulation/heads-down-display.md#selecting-a-pilot).</para>
 	/// </summary>
 	public void SelectPilot(int slot) {
-		if (slot >= 0 && (slot >= Squad.Count || Squad[slot].Neutralised)) {
+		if (slot >= 0 && (slot >= Squad.Count || Squad[slot].Destroyed)) {
 			return;
 		}
 
@@ -325,7 +328,7 @@ public sealed class HddCommandScreen {
 	/// Sends the armed order — the XMIT button and [X]. Refuses, as the original does, when there is
 	/// no pilot, no order, or the order still wants something picked. Returns whether the order found a
 	/// recipient at all, not whether that recipient agreed to it. The original's XMIT path calls no sound
-	/// function; the button's own click is the one known sound (docs/retail/formats/audio.md).
+	/// function; the button's own click is the one known sound (docs/retail/simulation/audio.md).
 	///
 	/// <para><b>The point and subject are the mission's one order record</b> (<c>DAT_004d0458</c>),
 	/// which nothing clears: <c>HddCommandScreen_FillOrderRecord</c> (<c>0044db24</c>) writes only the
@@ -521,13 +524,11 @@ public sealed class HddCommandScreen {
 
 	/// <summary>
 	/// <c>HddGauge_ConditionIndex</c>: the mean of the machine's structural readings, bucketed into
-	/// group 28's five conditions by the same bands the MFD status screen uses.
+	/// group 28's five conditions by the same bands the MFD status screen uses. It tests neither
+	/// destroyed nor immobilised: a destroyed squadmate's box is painted as static instead, and an
+	/// immobilised one reads its damage like any other.
 	/// </summary>
 	private static int ConditionOf(SimObject mate) {
-		if (mate.Neutralised) {
-			return 4;
-		}
-
 		if (mate is not MechObject { Damage: { } damage }) {
 			return 0;
 		}

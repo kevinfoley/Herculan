@@ -6,7 +6,7 @@ namespace Herculan.Engine.Input;
 /// One widget root's press flash: a button pressed for the player rather than by the pointer shows pressed for
 /// <see cref="FlashTicks"/> coarse ticks. <c>WidgetRoot_FlashPress</c> (<c>00453078</c>),
 /// <c>WidgetRoot_ServicePressFlashes</c> (<c>004530b8</c>) and <c>WidgetRoot_PressFlashCount</c>
-/// (<c>00453160</c>); see docs/retail/formats/cockpit-input.md#the-press-flash.
+/// (<c>00453160</c>); see docs/retail/simulation/cockpit-input.md#the-press-flash.
 ///
 /// <para>The cockpit keeps one, keyed on <see cref="CockpitWidgetId"/> (see the host's
 /// <c>CockpitDisplays.FlashPress</c>), and each alert panel keeps its own, keyed on the panel's widget index

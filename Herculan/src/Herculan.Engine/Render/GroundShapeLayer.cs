@@ -37,6 +37,23 @@ public sealed class GroundShapeLayer {
 	public List<GroundShapeDraw> Shapes { get; } = new();
 
 	/// <summary>
+	/// Whether a shape filed under a cell this pass's walk does not reach is dropped, as the original
+	/// drops it. On for the simulator. The mission editor turns it off: it files nothing in
+	/// <see cref="Objects"/> and draws every object wherever the camera is, so a structure's ground
+	/// plane, which it hands over as a shape, has to be drawn wherever its structure is.
+	/// </summary>
+	public bool ShapesFollowWalk { get; init; } = true;
+
+	/// <summary>
+	/// The structures' ground-plane pieces (<see cref="MeshCell.Ground"/>), drawn with the shapes rather
+	/// than depth-tested against the terrain they lie in. Each is ranked by the cell its
+	/// <see cref="SceneItem.Filing"/> entry was filed under this pass, which is where the original paints
+	/// the whole structure: after that cell's ground and its ground shapes, before every later cell. Kept
+	/// for the mission; whether each is drawn is its item's own answer.
+	/// </summary>
+	public List<SceneItem> ObjectGround { get; } = new();
+
+	/// <summary>
 	/// Every other object, filed by terrain cell each pass to decide whether it is drawn. An item or a
 	/// billboard whose <see cref="DrawEntry"/> is not among <see cref="ObjectDrawTable.Entries"/> is drawn
 	/// as it was last filed.

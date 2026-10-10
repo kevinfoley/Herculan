@@ -28,7 +28,7 @@ namespace HercWorks.Core.Data.File.Dbsim;
 /// <c>world24</c>, <c>clouds2</c>, <c>impact&lt;n&gt;</c> (one per world file), the terrain texture
 /// bank (<c>urban</c>, <c>bsnow</c>, <c>volcan</c>, <c>ice</c>, <c>moon</c>), then literally
 /// <c>tex</c> — five separately terminated strings, not one dotted name. The fourth is the one
-/// <c>Terrain_BindTextureBank</c> receives. Layout: docs/retail/formats/terrain-texturing.md.</para>
+/// <c>Terrain_BindTextureBank</c> receives. Layout: docs/retail/rendering/terrain-texturing.md.</para>
 /// </summary>
 public class WorldData {
 	/// <summary>Shorts in <see cref="Header"/>.</summary>
@@ -44,7 +44,7 @@ public class WorldData {
 	/// <summary>
 	/// Header short 0, the <c>hzline</c>'s <c>+0x6c</c>: half of it is how many rows above the horizon
 	/// line the first band past the horizon colour starts. 2 in retail data. See
-	/// docs/retail/formats/distance-fog-and-sky.md, "The object".
+	/// docs/retail/rendering/distance-fog-and-sky.md, "The object".
 	/// </summary>
 	public short HorizonGap => HeaderShort(0);
 
@@ -98,19 +98,19 @@ public class WorldData {
 
 	/// <summary>
 	/// The distance-band thresholds for an object with a type tag (<c>WorldShades_BandsTagged</c>,
-	/// <c>004cfd84</c>). See docs/retail/formats/distance-fog-and-sky.md, "Distance colour bands".
+	/// <c>004cfd84</c>). See docs/retail/rendering/distance-fog-and-sky.md, "Distance colour bands".
 	/// </summary>
 	public int[] DistanceBandsA { get; set; } = Array.Empty<int>();
 
 	/// <summary>
 	/// The distance-band thresholds for type tag 0 (<c>WorldShades_BandsTag0</c>, <c>004cfd88</c>).
-	/// See docs/retail/formats/distance-fog-and-sky.md, "Distance colour bands".
+	/// See docs/retail/rendering/distance-fog-and-sky.md, "Distance colour bands".
 	/// </summary>
 	public int[] DistanceBandsB { get; set; } = Array.Empty<int>();
 
 	/// <summary>
 	/// Ramp dimensions: the band count and the column count the two ramp tables expand into
-	/// <c>WorldShades_LevelRanges</c>. See docs/retail/formats/terrain-texturing.md, "The world&lt;N&gt;
+	/// <c>WorldShades_LevelRanges</c>. See docs/retail/rendering/terrain-texturing.md, "The world&lt;N&gt;
 	/// descriptor — layout".
 	/// </summary>
 	public short RampRows { get; set; }
@@ -130,7 +130,7 @@ public class WorldData {
 	/// <summary>
 	/// Two further 4-byte entries the original expands through the same helper as the ramp tables
 	/// (<c>Palette_InterpolateIndexRanges</c>, <c>00430d08</c>) into <c>WorldShades_BlendRanges</c>
-	/// (<c>004cfd80</c>). Kept raw. See docs/retail/formats/distance-fog-and-sky.md, "Distance colour
+	/// (<c>004cfd80</c>). Kept raw. See docs/retail/rendering/distance-fog-and-sky.md, "Distance colour
 	/// bands".
 	/// </summary>
 	public byte[] RampExtraA { get; set; } = new byte[4];
@@ -147,7 +147,7 @@ public class WorldData {
 	/// <summary>
 	/// <c>WorldShades_DistanceOffsets</c> (<c>004cfd6c</c>): the offset a tag-5 object's distance
 	/// takes before its band is counted, for a radius under 5000. See
-	/// docs/retail/formats/distance-fog-and-sky.md, "Distance colour bands".
+	/// docs/retail/rendering/distance-fog-and-sky.md, "Distance colour bands".
 	/// </summary>
 	public int Trailer2 { get; set; }
 

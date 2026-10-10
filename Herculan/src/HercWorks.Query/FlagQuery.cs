@@ -104,20 +104,24 @@ internal static class FlagQuery {
 	}
 
 	/// <summary>Every record of the mission, its text included, whose condition field is <paramref name="guid"/>.</summary>
-	private static List<GatedRecord> Gates(Mission mission, short guid) {
+	internal static List<GatedRecord> Gates(Mission mission, short guid) {
 		var file = mission.File;
 		var gates = new List<GatedRecord>();
-		void Add<T>(int row, T[]? records, Func<T, short> condition, Func<T, int, short> id, string noun) {
+		void Add<T>(int row, T[]? records, Func<T, short> condition, Func<T, int, short> id, string noun, Func<T, string>? detail = null) {
 			for (int i = 0; i < (records?.Length ?? 0); i++) {
 				if (records![i] is { } record && condition(record) == guid) {
 					short key = id(record, i);
-					gates.Add(new GatedRecord(row.ToString(), key, $"row {row} {noun} {key}"));
+					gates.Add(new GatedRecord(row.ToString(), key, $"row {row} {noun} {key}{detail?.Invoke(record)}"));
 				}
 			}
 		}
 
+		// A roster overlay often changes only its type or the variant key it draws from.
+		static string RosterDetail(short type, short variantKey) =>
+			(type == -1 ? "" : $" type 0x{type:x2}") + (variantKey == -1 ? "" : $" variant key {variantKey}");
+
 		Add(1, file.Conditions, r => r.ConditionRef, (r, _) => r.GUID, "cond");
-		Add(2, file.SettingsPatches, r => r.Data[0], (_, i) => (short)i, "patch");
+		Add(2, file.SettingsPatches, r => r.Data[0], (_, i) => (short)i, "patch", r => $" (header words {string.Join(" ", r.Data.Skip(1).Take(ClearListWord - 1))})");
 		Add(3, file.Variants, r => r.ConditionRef, (r, _) => r.GUID, "value GUID");
 		Add(4, file.Texts, r => r.ConditionRef, (_, i) => (short)i, "text");
 		if (file.DebriefBytes is { } debrief) {
@@ -134,9 +138,9 @@ internal static class FlagQuery {
 		Add(9, file.TriggerAreas, r => r.ConditionRef, (r, _) => r.GUID, "area GUID");
 		Add(10, file.Actions, r => r.ConditionRef, (r, _) => r.GUID, "action GUID");
 		Add(11, file.ActionTimers, r => r.ConditionRef, (r, _) => r.GUID, "timer GUID");
-		Add(12, file.Mechs, r => r.ConditionRef, (r, _) => r.GUID, "mech GUID");
-		Add(13, file.Flyers, r => r.ConditionRef, (r, _) => r.GUID, "flyer GUID");
-		Add(14, file.Bases, r => r.ConditionRef, (r, _) => r.GUID, "base GUID");
+		Add(12, file.Mechs, r => r.ConditionRef, (r, _) => r.GUID, "mech GUID", r => RosterDetail(r.TypeIndex, r.VariantKey));
+		Add(13, file.Flyers, r => r.ConditionRef, (r, _) => r.GUID, "flyer GUID", r => RosterDetail(r.TypeIndex, r.VariantKey));
+		Add(14, file.Bases, r => r.ConditionRef, (r, _) => r.GUID, "base GUID", r => RosterDetail(r.TypeIndex, r.VariantKey));
 		Add(15, file.Orders, r => r.ConditionRef, (r, _) => r.GUID, "order GUID");
 		Add(16, file.Groups, r => r.ConditionRef, (r, _) => r.GUID, "group GUID");
 		Add(17, file.Objectives, r => r!.ConditionRef, (_, i) => (short)i, "objective");

@@ -10,7 +10,7 @@ namespace Herculan.Engine.Render;
 ///
 /// <para><b>Why this exists.</b> DBSIM blits the cockpit at a fixed canvas origin, so a widget's
 /// authored rect <i>is</i> a screen rect and its mouse code hit-tests authored coordinates directly
-/// (docs/retail/formats/cockpit-input.md §4-6). Herculan does not: it fits the art by height, centres a
+/// (docs/retail/simulation/cockpit-input.md §4-6). Herculan does not: it fits the art by height, centres a
 /// three-panel content block whose width depends on the window, and offsets vertically by the
 /// heads-down pan — with the forward and heads-down art on two separately placed surfaces. Screen to
 /// widget is therefore a real transform, and it has to be the <i>same</i> transform the art was drawn
@@ -87,7 +87,7 @@ public sealed class CockpitScreenLayout {
 	///
 	/// <para>One viewport because retail's three views are one image plane. A glance keeps the
 	/// forward view's camera and focal length, and its projection centre lands off the panel's inner
-	/// edge at the forward view's reticle — see docs/retail/formats/cockpit-views.md, "The side glances are
+	/// edge at the forward view's reticle — see docs/retail/simulation/cockpit-views.md, "The side glances are
 	/// one image plane". Cutting to the window is what keeps the side views from costing anything past
 	/// the pixels actually shown.</para>
 	/// </summary>
@@ -246,7 +246,7 @@ public sealed class CockpitScreenLayout {
 	/// <summary>
 	/// The left or right screen-edge strip under a window pixel, or null. These lead to the side
 	/// windows, and <see cref="Input.CockpitInput"/> tests them only after every art-space widget, the
-	/// same last-registered precedence the original's strips have (docs/retail/formats/cockpit-input.md §10).
+	/// same last-registered precedence the original's strips have (docs/retail/simulation/cockpit-input.md §10).
 	///
 	/// <para>Retail builds them into the forward view's own left and right columns, which in its 4:3
 	/// frame are the screen's edges. Here the forward view's edges are the seams between panels, in the

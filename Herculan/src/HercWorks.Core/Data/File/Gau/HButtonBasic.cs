@@ -3,7 +3,7 @@ using HercWorks.Core.Data.Struct;
 namespace HercWorks.Core.Data.File.Gau;
 
 /// <summary>
-/// A console button's rect — chain, link or auto-track. See docs/retail/formats/cockpit-hud-widgets.md,
+/// A console button's rect — chain, link or auto-track. See docs/retail/simulation/cockpit-hud-widgets.md,
 /// "Console buttons".
 /// </summary>
 public class HButtonBasic : WidgetBase {

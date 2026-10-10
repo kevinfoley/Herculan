@@ -23,7 +23,7 @@ public readonly record struct AtlasRect(float U0, float V0, float U1, float V1);
 ///
 /// <para>Packing is purely a relocation — a frame's UV corners still span its own full extent, so
 /// the RE-confirmed corner order in <see cref="DtsMeshBuilder"/> is unaffected (see
-/// docs/retail/formats/dts-texture-binding.md's "Render path and UV generation"; the exe builds the same
+/// docs/retail/rendering/dts-texture-binding.md's "Render path and UV generation"; the exe builds the same
 /// rect-corner mapping from a per-frame descriptor whose top-left is assumed, not confirmed, to be
 /// (0,0)). Frames are padded apart by one pixel, and sampling is nearest-neighbour at the GL end,
 /// so neighbours cannot bleed into each other.</para>
@@ -144,7 +144,7 @@ public sealed class TextureAtlas {
 	///
 	/// <para><paramref name="transparentIndex0"/> decodes palette index 0 to alpha 0 instead of an
 	/// opaque colour. Off by default because most banks want index 0 opaque; sprite banks and the
-	/// structure banks, whose cutout frames are documented in docs/retail/formats/dts-texture-binding.md,
+	/// structure banks, whose cutout frames are documented in docs/retail/rendering/dts-texture-binding.md,
 	/// both ask for it — see <c>Scene.SceneModelLibrary.LoadAtlas</c>. The 2D HUD sprite banks
 	/// (<c>Content.HudSpriteSheet</c>) treat 0 as "leave the console art showing through", the same
 	/// sentinel role index 0 plays in <c>Content.CockpitArt</c>.</para>

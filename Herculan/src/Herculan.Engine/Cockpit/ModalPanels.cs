@@ -1,4 +1,3 @@
-using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Input;
@@ -46,8 +45,8 @@ public sealed class ModalPanels {
 	private delegate bool FocusPointer(out int panelX, out int panelY);
 
 	// Time_GetCoarseTicks for the panels' press flashes, in its 16 ms units. Retail's is wall time and keeps
-	// running under a panel; GameAudio.CoarseTicks, the session's other copy, stops while one is up
-	// (MessagesPaused), so a flash timed on it would never end.
+	// running under a panel; MessagePorts.CoarseTicks, the session's other copy, stops while one is up
+	// (MessagePorts.Paused), so a flash timed on it would never end.
 	private double _panelTicks;
 	private long PanelTicks => (long)_panelTicks;
 
@@ -96,7 +95,7 @@ public sealed class ModalPanels {
 		|| Preferences is { IsOpen: true } || Controls is { IsOpen: true };
 
 	/// <summary>Advances the panels' own coarse clock by the frame's wall time. Called once a frame, before the panels read input.</summary>
-	public void AdvanceClock(double deltaSeconds) => _panelTicks += deltaSeconds / GameAudio.CoarseTickSeconds;
+	public void AdvanceClock(double deltaSeconds) => _panelTicks += deltaSeconds / MessagePorts.CoarseTickSeconds;
 
 	/// <summary>
 	/// The tail of the open panel's loop pass: its press flashes serviced, and — for every panel but the
@@ -279,16 +278,16 @@ public sealed class ModalPanels {
 
 	/// <summary>
 	/// Sim_MainTick's own arms: once the mission is decided the poll raises the status alert by itself, and once
-	/// the player is down the death camera does. Latched on SimWorld.PendingMissionAlert by the tick that
+	/// the player is down the death camera does. Latched on MissionRuntime.PendingAlert by the tick that
 	/// produced it.
 	/// </summary>
 	public void RaisePendingMissionAlert(bool missionOver) {
-		if (_world is { PendingMissionAlert: not MissionStatus.None } alerted
+		if (_world is { Mission.PendingAlert: not MissionStatus.None } alerted
 			&& StatusAlert is { IsOpen: false } && Objectives is not { IsOpen: true }
 			&& !missionOver) {
-			var raised = alerted.PendingMissionAlert;
-			alerted.PendingMissionAlert = MissionStatus.None;
-			OpenStatusAlert(raised, alerted.Objectives);
+			var raised = alerted.Mission.PendingAlert;
+			alerted.Mission.PendingAlert = MissionStatus.None;
+			OpenStatusAlert(raised, alerted.Mission.Objectives);
 		}
 	}
 
@@ -303,7 +302,7 @@ public sealed class ModalPanels {
 	/// </summary>
 	public bool RaiseStatusAlertForQuit() {
 		if (StatusAlert == null || _world is not { } quitWorld
-			|| quitWorld.PlayerMech is not { } quitPlayer || quitWorld.Objectives is not { } quitObjectives) {
+			|| quitWorld.PlayerMech is not { } quitPlayer || quitWorld.Mission.Objectives is not { } quitObjectives) {
 			return false;
 		}
 
@@ -414,13 +413,13 @@ public sealed class ModalPanels {
 		// rather than the mission. [Q] alone asks how the mission stands, and [P] pauses.
 		if (q) {
 			return ctrl
-				? OpenStatusAlert((MissionStatus)StatusAlertPanel.ExitGameStatus, _world.Objectives)
+				? OpenStatusAlert((MissionStatus)StatusAlertPanel.ExitGameStatus, _world.Mission.Objectives)
 				: RaiseStatusAlertForQuit();
 		}
 
 		// [Ctrl+P] is 0x419, a developer key, and never reaches the pause.
 		if (pause && !ctrl) {
-			return OpenStatusAlert((MissionStatus)StatusAlertPanel.PauseStatus, _world.Objectives);
+			return OpenStatusAlert((MissionStatus)StatusAlertPanel.PauseStatus, _world.Mission.Objectives);
 		}
 
 		return false;

@@ -145,7 +145,7 @@ public sealed class ShellArmoryCatalog {
 /// entered by <c>Armory_Enter</c> (<c>004494f7</c>) and hidden by <c>Armory_Leave</c>
 /// (<c>004495b6</c>), its rows gated by <c>Armory_RefreshRows</c> (<c>00449329</c>), its row moved by
 /// <c>Armory_ClickRow</c> (<c>0044969f</c>) and its figures refilled by <c>Armory_RefreshReadout</c>
-/// (<c>00449cab</c>). See docs/retail/shell/screen-layout.md, "The armory screen".
+/// (<c>00449cab</c>). See docs/retail/shell/build-and-armory.md, "The armory screen".
 ///
 /// <para><b>Every rect here is a literal in the executable</b>, kept parent-relative as the builder
 /// writes them: the content panel in the canvas, which it spans edge to edge because this tab has no
@@ -439,8 +439,11 @@ public sealed class ShellArmoryScreen {
 		return null;
 	}
 
-	/// <summary>Draws the whole screen into <paramref name="surface"/>. The caller clears it first.</summary>
-	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites) {
+	/// <summary>
+	/// Draws the whole screen into <paramref name="surface"/>. The caller clears it first. <paramref name="lit"/>
+	/// is the widget a press has lit.
+	/// </summary>
+	public void Paint(ShellSurface surface, ShellText? text, HudSpriteSheet? sprites, ShellWidget? lit) {
 		var font = sprites?.Font(ShellArt.ScreenFont);
 
 		ShellChrome.PaintTitledPanel(surface, PanelRect, Border, PanelFace, ShellChrome.InteriorColor, TitleHeight,
@@ -451,7 +454,7 @@ public sealed class ShellArmoryScreen {
 		PaintList(surface, font, text);
 		PaintPictureBox(surface, font);
 		PaintReadout(surface, font, text);
-		PaintButtons(surface, font, text);
+		PaintButtons(surface, font, text, lit);
 	}
 
 	/// <summary>
@@ -520,7 +523,8 @@ public sealed class ShellArmoryScreen {
 	/// <summary>
 	/// The readout panel, as <c>Armory_RefreshReadout</c> (<c>00449cab</c>) fills it: the queue's free and
 	/// used slots, centred beside their labels, and two disabled buttons holding <c>"%ld kg"</c> of the
-	/// pool net of the queue and <c>"%d kg"</c> of what the queue has committed.
+	/// pool net of the queue and <c>"%d kg"</c> of what the queue has committed. Their captions are the only
+	/// ones on the screen whose <c>+0xc1</c> the builder sets, so they clear behind themselves.
 	/// </summary>
 	private void PaintReadout(ShellSurface surface, HudFont? font, ShellText? text) {
 		var panel = Inside(PanelRect, ReadoutPanelRect);
@@ -542,34 +546,23 @@ public sealed class ShellArmoryScreen {
 			ShellTextAlign.Right, ShellChrome.FontInkColor);
 
 		string? kg = text?.Text(KilogramsText);
-		PaintButton(surface, font, Inside(panel, SalvageBoxRect), $"{AvailableKilograms} {kg}", ReadoutBorder,
-			ShellChrome.FontInkColor, opaque: true);
-		PaintButton(surface, font, Inside(panel, AllocatedBoxRect), $"{AllocatedKilograms} {kg}", ReadoutBorder,
-			ShellChrome.FontInkColor, opaque: true);
+		ShellChrome.PaintButton(surface, Inside(panel, SalvageBoxRect), ReadoutBorder, font, $"{AvailableKilograms} {kg}",
+			ShellChrome.FontInkColor, backingColor: ShellChrome.InteriorColor);
+		ShellChrome.PaintButton(surface, Inside(panel, AllocatedBoxRect), ReadoutBorder, font, $"{AllocatedKilograms} {kg}",
+			ShellChrome.FontInkColor, backingColor: ShellChrome.InteriorColor);
 	}
 
 	/// <summary><c>Clear</c> and <c>Scrap</c> in their own framed panel, <c>Clear</c> greyed <c>0x26</c> while weapons are built automatically.</summary>
-	private void PaintButtons(ShellSurface surface, HudFont? font, ShellText? text) {
+	private void PaintButtons(ShellSurface surface, HudFont? font, ShellText? text, ShellWidget? lit) {
 		ShellChrome.PaintFramedPanel(surface, Inside(PanelRect, ButtonPanelRect), FramedBorder, FramedFace, fill: true);
 
 		foreach (var button in Enum.GetValues<ShellArmoryButton>()) {
 			bool enabled = IsEnabled(button);
-			PaintButton(surface, font, ButtonRect(button),
+			ShellChrome.PaintButton(surface, ButtonRect(button), enabled ? ButtonBorder : DisabledColor, font,
 				text?.Text(button == ShellArmoryButton.Clear ? ClearText : ScrapText),
-				enabled ? ButtonBorder : DisabledColor, enabled ? ShellChrome.FontInkColor : DisabledColor);
+				enabled ? ShellChrome.FontInkColor : DisabledColor,
+				pressed: enabled && lit == new ShellWidget(ShellWidgetKind.ArmoryButton, (int)button));
 		}
-	}
-
-	/// <summary>
-	/// One button: its double-bordered box in <paramref name="border"/> and its caption, the <c>Text</c> child
-	/// <c>ESButtonFont_Ctor</c> builds at <c>{1, 0, w, h}</c>, centred. <paramref name="opaque"/> is the caption's
-	/// <c>+0xc1</c>, which the builder sets on the two readout boxes only.
-	/// </summary>
-	private static void PaintButton(ShellSurface surface, HudFont? font, ShellRect rect, string? caption, byte border,
-			byte captionColor, bool opaque = false) {
-		ShellChrome.PaintButton(surface, rect, border);
-		ShellChrome.PaintText(surface, new ShellRect(rect.X0 + 1, rect.Y0, rect.X1, rect.Y1), font, caption,
-			ShellTextAlign.Center, captionColor, opaque ? ShellChrome.InteriorColor : null);
 	}
 
 	private static void Column(ShellSurface surface, HudFont? font, ShellRect row, int left, int right,

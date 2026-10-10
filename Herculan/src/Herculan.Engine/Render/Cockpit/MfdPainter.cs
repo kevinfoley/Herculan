@@ -21,7 +21,7 @@ internal sealed class MfdPainter {
 	/// <summary>
 	/// The multi-function display, built the way <c>MfdDisplay_Ctor</c> (<c>00445218</c>) builds it —
 	/// see <see cref="MfdLayout"/> for where every rect comes from and
-	/// docs/retail/formats/cockpit-hud-widgets.md for the panel it sits in.
+	/// docs/retail/simulation/cockpit-hud-widgets.md for the panel it sits in.
 	///
 	/// <list type="number">
 	/// <item>the screen background, whichever <c>MFD</c> frame the current mode selects — see
@@ -426,14 +426,9 @@ internal sealed class MfdPainter {
 			Label(4, MfdLayout.DistanceReadout(strings, MfdLayout.ScrambledRange), MfdLayout.StatusLabelFonts[4]);
 		} else if (!subject.Hostile && scrambled) {
 			Label(4, MfdLayout.ScrambledIntegrity, MfdLayout.StatusLabelFonts[4]);
-		} else if (subject.Hostile) { // F5 TARGET screen, show distance.
-			if (TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ShowTargetDistanceInMeters)) {
-				Label(4, MfdLayout.DistanceReadout(strings, MfdScanner.WorldUnitsToMetres(subject.Distance)),
-					MfdLayout.StatusLabelFonts[4]);
-			} else { // Vanilla functionality is to show the distance in engine units (6mm / unit)
-				Label(4, MfdLayout.DistanceReadout(strings, subject.Distance), MfdLayout.StatusLabelFonts[4]);
-			}
-		} else { // F1 STATUS screen, show hull integrity.
+		} else if (subject.Hostile) { // The range, already in the units it prints in (MfdStatusSubject.Range).
+			Label(4, MfdLayout.DistanceReadout(strings, subject.Distance), MfdLayout.StatusLabelFonts[4]);
+		} else { // A friendly: the hull integrity.
 			Label(4, MfdLayout.IntegrityReadout(subject.Damage), MfdLayout.StatusLabelFonts[4]);
 		}
 

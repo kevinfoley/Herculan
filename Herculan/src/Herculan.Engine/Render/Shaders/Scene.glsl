@@ -25,16 +25,33 @@
 VARYING vec3 vColor;
 VARYING vec2 vUV;
 VARYING float vUvWeight;
-VARYING float vTextured;
-VARYING float vUnlit;
 VARYING float vShade;
-VARYING float vShadeRamp;
+
+// The codes that say what a face is and which row it reads. Every corner of a primitive carries the
+// same value, so they are flat: interpolating a constant is not exact, and the fragment stage tests
+// these against thresholds. A Gouraud face on ramp 0 carries exactly 256, which comes out of
+// interpolation as 255.99998 on some pixels and fails `>= 256.0`, speckling the face with the
+// shaded chain's next row.
+flat VARYING float vTextured;
+flat VARYING float vUnlit;
+flat VARYING float vShadeRamp;
 // The palette index a flat solid face names, or -1. See MeshVertex.SolidPaletteIndex.
-VARYING float vSolidPaletteIndex;
+flat VARYING float vSolidPaletteIndex;
 // The fill ramp a shaded poly's outline is tested against, or -1. See MeshVertex.OutlineFillRamp.
-VARYING float vOutlineFillRamp;
+flat VARYING float vOutlineFillRamp;
 VARYING float vLightShade;
 VARYING float vViewDistance;
+
+// A TSGouraudPoly corner's palette index: the ramp entry its own shade picks, looked up per vertex
+// and interpolated linearly in SCREEN space, as Raster_FillContourPolygon (004879c0) interpolates it
+// across the projected triangle. Zero for every other surface.
+noperspective VARYING float vGouraudIndex;
+
+// The theater's shaded-surface table, SurfaceRampTable: the fragment stage reads its shaded chain and
+// palette row, the vertex stage the Gouraud block's palette indices.
+uniform sampler2D uShadeRampTable;
+uniform bool uShadeRampEnabled;
+uniform float uShadeRampGouraudRow;
 
 #ifdef EDITOR_GRID
 // Only the measuring grid needs a surface point's horizontal world position, so the varying does not
@@ -58,6 +75,8 @@ layout (location = 10) in float aSolidPaletteIndex;
 layout (location = 11) in vec3 aFaceCenter;
 layout (location = 12) in float aSide;
 layout (location = 13) in float aOutlineFillRamp;
+layout (location = 14) in vec4 aDependFace;
+layout (location = 15) in float aDependSide;
 
 uniform mat4 uModel;
 uniform mat4 uView;
@@ -112,19 +131,37 @@ void main() {
 		return;
 	}
 
+	// A copy drawn only while ANOTHER poly faces a given way (MeshVertex.DependSide): a back-facing
+	// three-vertex TSTexture4Poly, whose second corner is what an earlier texture poly left in
+	// TSTexture4Poly_Render's position array (TextureCornerSlot). That poly's plane comes as its
+	// normal and its centre's offset along it, and the test is the one above on the point of the
+	// plane nearest the origin, which gives the same sign as the poly's own centre would.
+	if (aDependSide != 0.0) {
+		vec3 dependNormal = aDependFace.xyz;
+		float normalSquared = dot(dependNormal, dependNormal);
+		vec3 onPlane = normalSquared > 0.0 ? dependNormal * (aDependFace.w / normalSquared) : vec3(0.0);
+		vec3 viewOnPlane = (uView * (uModel * vec4(onPlane, 1.0))).xyz;
+		vec3 viewDependNormal = mat3(uView) * (mat3(uModel) * dependNormal);
+		float dependSign = dot(viewDependNormal, viewOnPlane) >= 0.0 ? -1.0 : 1.0;
+		if (dependSign != aDependSide) {
+			gl_Position = vec4(0.0, 0.0, 2.0, 1.0);
+			return;
+		}
+	}
+
 	// The shade byte Light_ComputeShadeForFace (0048bedc) gives this corner:
 	//     t = (dot - 0x400000) >> 1;  if (t < 0) shade -= (0x100 * t) >> 22
 	// which with normals at length 0x800 and the sun at 0x1000/0x100 collapses to
 	// max(128 + 256 * facing, 0). See MissionSun.ShadeForFace.
 	//
-	// Computed HERE, per vertex, and interpolated — which is what makes a TSGouraudPoly
-	// Gouraud. TSGouraudPoly_Render (004755c8) calls the light function once per vertex,
-	// walking NormalList and VertexList in step, stashes the bytes and lets the span routine
-	// interpolate between them. Doing it per fragment from an interpolated normal instead is
-	// Phong, and it differs wherever the clamp bites: the original clamps each corner first
-	// and then interpolates, so a corner that bottoms out at 0 still ramps linearly to its
-	// neighbour rather than holding a dead flat region. Flat polys are unaffected — their
-	// three corners share a normal, so this is constant across the face.
+	// Computed HERE, per vertex — which is what makes a TSGouraudPoly Gouraud.
+	// TSGouraudPoly_Render (004755c8) calls the light function once per vertex, walking NormalList
+	// and VertexList in step, and its fill turns each corner's shade into a ramp entry before
+	// interpolating anything (vGouraudIndex below). Doing it per fragment from an interpolated normal
+	// instead is Phong, and it differs wherever the clamp bites: the original clamps each corner
+	// first, so a corner that bottoms out at 0 still ramps linearly to its neighbour rather than
+	// holding a dead flat region. Flat polys are unaffected — their three corners share a normal, so
+	// this is constant across the face.
 	vec3 litNormal = normal * sideSign;
 	float facing = dot(litNormal, -normalize(uLightDirection));
 
@@ -162,6 +199,16 @@ void main() {
 	}
 
 	vLightShade = min(shade, 255.0);
+
+	// A TSGouraudPoly corner's palette index, Raster_FillContourPolygon's per-vertex lookup: entry
+	// (shade * length) >> 8 of the ramp the surface names, which is the Gouraud block's alpha at
+	// this shade (SurfaceRampTable). The shade is the byte the light function returns, so it is
+	// truncated, not rounded. The fragment stage bands what this interpolates to.
+	vGouraudIndex = 0.0;
+	if (uShadeRampEnabled && aShadeRamp >= 256.0) {
+		ivec2 cell = ivec2(int(min(shade, 255.0)), int(uShadeRampGouraudRow + (aShadeRamp - 256.0) + 0.5));
+		vGouraudIndex = floor(texelFetch(uShadeRampTable, cell, 0).a * 255.0 + 0.5);
+	}
 
 	vColor = aColor;
 	vUV = aUV;
@@ -206,16 +253,15 @@ uniform float uFogStart;
 uniform float uFogEnd;
 uniform sampler2D uTexture;
 uniform bool uTextureEnabled;
-uniform sampler2D uShadeRampTable;
-uniform bool uShadeRampEnabled;
 uniform float uShadeRampRows;
-uniform float uShadeRampGouraudRow;
+// The row of uShadeRampTable holding the palette straight through. See SurfaceRampTable.PaletteRow.
+uniform float uShadeRampPaletteRow;
 uniform sampler2D uPaletteRamp;
 uniform bool uPaletteRampEnabled;
 uniform float uShadeLevels;
 uniform float uPaletteRampRows;
-// The row a flat solid face reads: ShadeRamp.UnlitShade's row in slice 0, the fixed shade
-// TSSolidPoly_Render passes. See PaletteRampTable.UnlitRow.
+// The row a flat solid face reads, before its depth slice: ShadeRamp.UnlitShade's row in slice 0,
+// the fixed shade TSSolidPoly_Render passes. See PaletteRampTable.UnlitRow.
 uniform float uPaletteRampUnlitRow;
 // The row an untextured terrain cell reads, before its depth slice: TerrainMeshBuilder.UntexturedRowShade's
 // row in slice 0. See PaletteRampTable.GroundRow.
@@ -295,8 +341,8 @@ void main() {
 		discard;
 	}
 
-	// Interpolated from the three corners' own shade bytes — the vertex shader computes them,
-	// which is what makes a TSGouraudPoly Gouraud rather than Phong. See there.
+	// The corners' shade bytes, which the vertex shader computes. Every lit surface that reads it here
+	// is flat — its corners agree — and a TSGouraudPoly reads vGouraudIndex instead.
 	float shade = clamp(vLightShade, 0.0, 255.0);
 
 	// A surface the original shades once ahead of time and stores carries its own byte rather
@@ -308,15 +354,16 @@ void main() {
 
 	// Per-vertex, not per-draw: a mesh mixes textured and fallback-coloured triangles, and
 	// vTextured is flat across each triangle so this never interpolates between the two.
-	// Distance is spent as a slice of the theater ramp wherever the fragment reads one, and as a
-	// blend toward uFogColor only where it does not — see depthSlice above, and PaletteRampTable.
+	// Distance is spent as a slice of the theater ramp wherever the fragment reads one, not at all on
+	// a TSGouraudPoly, and as a blend toward uFogColor only where neither rule settles it — see
+	// depthSlice above, and PaletteRampTable.
 	//
 	// uFogDepthBias pulls the terrain back to the depth of its cell's leading corner, which is where
 	// the original measures a cell's fog from. It is zero for everything else, which the original
 	// fogs from one distance per object rather than per cell. See SceneRenderer.FogCellSize.
 	float fogDepth = max(vViewDistance - uFogDepthBias, 0.0);
 	float slice = depthSlice(fogDepth);
-	bool rampFogged = false;
+	bool fogSettled = false;
 
 	vec3 baseColor = vColor;
 	bool textured = uTextureEnabled && vTextured > 0.5;
@@ -360,7 +407,7 @@ void main() {
 			baseColor = texture(uPaletteRamp,
 				vec2((floor(texel.r * 255.0 + 0.5) + 0.5) / 256.0, (row + 0.5) / uPaletteRampRows)).rgb;
 			texturedExact = true;
-			rampFogged = true;
+			fogSettled = true;
 		} else {
 			baseColor = texel.rgb;
 		}
@@ -369,33 +416,39 @@ void main() {
 	vec3 lit;
 	if (texturedExact) {
 		lit = baseColor;
+	} else if (uShadeRampEnabled && !textured && vShadeRamp >= 256.0) {
+		// A TSGouraudPoly, its ramp number biased by SurfaceRampTable.GouraudRowOffset. Its fill,
+		// Raster_FillContourTriangle (00486ddc), cuts each triangle of the fan at every whole palette
+		// index between its corners' and fills each band flat with the band's UPPER index, so a pixel
+		// takes the ceiling of its interpolated index and the lowest corner's index shows only where
+		// every corner has it. The band is a plain palette index: no .RMP row and no depth slice is
+		// applied, so the face is not fogged. docs/retail/rendering/dts-texture-binding.md,
+		// "TSGouraudPoly — same ramp number, per-vertex light, no .RMP row".
+		//
+		// The cuts are straight lines through points spaced evenly along the triangle's edges, which
+		// is where linear screen-space interpolation of the index crosses each whole value; retail
+		// places them on whole pixels, which moves an edge of a band by under a pixel. The slack keeps
+		// a face whose corners all carry one index from rounding up to the next where interpolation
+		// lands a hair above it.
+		const float bandSlack = 1.0 / 1024.0;
+		float index = clamp(ceil(vGouraudIndex - bandSlack), 0.0, 255.0);
+		lit = texelFetch(uShadeRampTable, ivec2(int(index), int(uShadeRampPaletteRow + 0.5)), 0).rgb;
+		fogSettled = true;
 	} else if (uShadeRampEnabled && !textured && vShadeRamp >= 0.0) {
-		// A lit flat poly (TSShadedPoly and its Gouraud sibling) has no colour for a light
-		// term to multiply — its surface names a material ramp and the face's shade byte
-		// picks a step along that ramp, and that lookup IS the shading. uShadeRampTable is
-		// the whole ramp-by-shade grid, so this is one sample rather than the original's two
-		// table reads.
-		// vShadeRamp carries the ramp number biased by SurfaceRampTable.GouraudRowOffset when the
-		// face is a TSGouraudPoly, which selects the chain rather than the row. The shaded chain has
-		// one block of ramps per depth slice, because TSShadedPoly_Render ends in
-		// Raster_ShadeRampRow and is fogged by the same bias everything else is; the Gouraud chain
-		// has no .RMP step to bias, so it is stored once and fogs by the blend below instead.
-		float chainRamp = vShadeRamp;
-		float row;
-		if (chainRamp >= 256.0) {
-			row = uShadeRampGouraudRow + (chainRamp - 256.0);
-		} else {
-			row = chainRamp + slice * 256.0;
-			rampFogged = true;
-		}
-
+		// A TSShadedPoly has no colour for a light term to multiply — its surface names a material
+		// ramp and the face's shade byte picks a step along that ramp, and that lookup IS the
+		// shading. uShadeRampTable is the whole ramp-by-shade grid, so this is one sample rather than
+		// the original's two table reads. The chain has one block of ramps per depth slice, because
+		// TSShadedPoly_Render ends in Raster_ShadeRampRow and is fogged by the same bias everything
+		// else is.
+		float row = vShadeRamp + slice * 256.0;
 		vec4 cell = texture(uShadeRampTable,
 			vec2((floor(shade) + 0.5) / 256.0, (row + 0.5) / uShadeRampRows));
 
 		// A TSShadedPoly's outline: TSShadedPoly_Render resolves its line entry through the same
 		// lookups as the fill, at the same shade and slice, and PolyFill_FillThenOutline draws the
 		// edge loop only when the two palette bytes differ. The table's alpha is that byte.
-		if (vOutlineFillRamp >= 0.0 && chainRamp < 256.0) {
+		if (vOutlineFillRamp >= 0.0) {
 			float fillRow = vOutlineFillRamp + slice * 256.0;
 			float fillByte = texture(uShadeRampTable,
 				vec2((floor(shade) + 0.5) / 256.0, (fillRow + 0.5) / uShadeRampRows)).a;
@@ -405,6 +458,7 @@ void main() {
 		}
 
 		lit = cell.rgb;
+		fogSettled = true;
 	} else if (uGroundFill && uPaletteRampEnabled && vSolidPaletteIndex >= 0.0) {
 		// A terrain cell drawn without its texture, Terrain_FillCellUntextured's flat fill: the
 		// palette index the cell's material ramp 2 reaches at its baked shade, read through the ramp
@@ -413,16 +467,31 @@ void main() {
 		float row = uPaletteRampGroundRow + slice * uShadeLevels;
 		lit = texture(uPaletteRamp,
 			vec2((floor(vSolidPaletteIndex + 0.5) + 0.5) / 256.0, (row + 0.5) / uPaletteRampRows)).rgb;
-		rampFogged = true;
+		fogSettled = true;
 	} else if (uPaletteRampEnabled && vSolidPaletteIndex >= 0.0) {
 		// A plain TSSolidPoly. Its surface value is a palette INDEX, and the original resolves it
 		// as rampRow(UnlitShade)[index] — one fixed row of the same table a lit textured texel is
-		// read from, never lit and never fogged through the ramp. Resolving it here rather than on
-		// the CPU is what lets it follow the damage flash's palette swap, and it is the identical
-		// byte either way: DtsMeshBuilder.ResolveSolidColors computes this very lookup.
-		lit = texture(uPaletteRamp,
-			vec2((floor(vSolidPaletteIndex + 0.5) + 0.5) / 256.0,
-				(uPaletteRampUnlitRow + 0.5) / uPaletteRampRows)).rgb;
+		// read from, never lit. Raster_ShadeRampRow (00468054) adds the depth slice to that row, so it
+		// fogs through the ramp as everything else does (docs/retail/rendering/distance-fog-and-sky.md,
+		// "A projectile is faded like anything else"). Resolving it here rather than on the CPU is
+		// what lets it follow the damage flash's palette swap and the slice.
+		float row = uPaletteRampUnlitRow + slice * uShadeLevels;
+		vec4 cell = texture(uPaletteRamp,
+			vec2((floor(vSolidPaletteIndex + 0.5) + 0.5) / 256.0, (row + 0.5) / uPaletteRampRows));
+
+		// A solid face's outline: PolyFill_FillThenOutline redraws the edge loop only when the line's
+		// byte and the fill's differ in this same row, so an outline can come and go with the slice.
+		// The table's alpha is that byte. See MeshVertex.OutlineFillRamp.
+		if (vOutlineFillRamp >= 0.0) {
+			float fillByte = texture(uPaletteRamp,
+				vec2((floor(vOutlineFillRamp + 0.5) + 0.5) / 256.0, (row + 0.5) / uPaletteRampRows)).a;
+			if (floor(fillByte * 255.0 + 0.5) == floor(cell.a * 255.0 + 0.5)) {
+				discard;
+			}
+		}
+
+		lit = cell.rgb;
+		fogSettled = true;
 	} else {
 		// What is left names no palette index either: a fallback colour for a surface nothing
 		// could resolve, or any solid face in a theater whose palette ramp did not load — where
@@ -444,10 +513,10 @@ void main() {
 	}
 #endif
 
-	// Whatever did not resolve through a ramp — a Gouraud face, or any surface in a theater whose
-	// ramp did not load — has nothing to carry a slice, so it fades toward the ramp's own fog colour
-	// over the same interval instead. It is the approximation, not the rule.
-	if (!rampFogged) {
+	// Whatever no rule above settled — a surface in a theater whose ramp did not load, or a fallback
+	// colour — fades toward the ramp's own fog colour over the same interval instead. It is the
+	// approximation, not the rule.
+	if (!fogSettled) {
 		float fog = clamp((fogDepth - uFogStart) / max(uFogEnd - uFogStart, 0.001), 0.0, 1.0);
 		lit = mix(lit, uFogColor, fog);
 	}

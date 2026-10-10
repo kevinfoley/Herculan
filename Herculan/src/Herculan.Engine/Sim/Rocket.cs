@@ -221,8 +221,8 @@ public sealed class Rocket {
 	///
 	/// <para><b>When the round ends</b>, by burning out or by striking something, a round the player
 	/// is still flying releases the trigger and latches the first button row
-	/// (<see cref="SimWorld.EndFlownRound"/>), and <see cref="SimWorld.PlayerMissile"/> ending short of
-	/// its lifetime raises <see cref="SimWorld.PlayerMissileStruck"/> for the missile camera.</para>
+	/// (<see cref="PlayerMissileState.EndFlownRound"/>), and <see cref="PlayerMissileState.Round"/> ending short of
+	/// its lifetime raises <see cref="PlayerMissileState.Struck"/> for the missile camera.</para>
 	/// </summary>
 	/// <returns>Whether the round is finished and should be freed.</returns>
 	internal bool Tick(SimWorld world) {
@@ -230,11 +230,11 @@ public sealed class Rocket {
 
 		if (finished) {
 			if (SubtypeId == PlayerFlownSubtype && Owner is { LocallyPiloted: true }) {
-				world.EndFlownRound();
+				world.PlayerMissile.EndFlownRound();
 			}
 
-			if (ReferenceEquals(this, world.PlayerMissile) && _age < _record.Lifetime) {
-				world.PlayerMissileStruck = true;
+			if (ReferenceEquals(this, world.PlayerMissile.Round) && _age < _record.Lifetime) {
+				world.PlayerMissile.Struck = true;
 			}
 		}
 
@@ -266,7 +266,7 @@ public sealed class Rocket {
 		var shot = new WeaponShot(_frame, step, Data, 0, Owner, _record.ClipRadius) {
 			WeaponClass = Data.SubtypeId
 		};
-		if (world.Raycast(shot) != 0) {
+		if (HitTests.Raycast(world, shot) != 0) {
 			HitObject = shot.HitObject;
 			world.RecordProjectileHit(shot);
 			return true;
@@ -338,18 +338,18 @@ public sealed class Rocket {
 	/// for everything else.
 	///
 	/// <para>The player flies the round only while the fire trigger is held, turning it by
-	/// <see cref="PlayerSteerRate"/> times each axis of <see cref="SimWorld.MissileSteer"/> per
+	/// <see cref="PlayerSteerRate"/> times each axis of <see cref="PlayerMissileState.Steer"/> per
 	/// 125 ms, with no rate limit and no deadband: the steering axis turns the heading (right is a
 	/// falling heading) and the throttle axis the pitch. Once the trigger is released the round drops
 	/// its target and becomes <see cref="ReleasedSubtype"/>, reading that subtype's
 	/// <c>ROCKETS.DAT</c> record from then on and seeking with nothing to seek, so it flies straight
-	/// on. Either way it raises <see cref="SimWorld.MissileFlown"/>. See docs/retail/simulation/rockets.md
+	/// on. Either way it raises <see cref="PlayerMissileState.Flown"/>. See docs/retail/simulation/rockets.md
 	/// ("<c>Rocket_PlayerSteer</c>").</para>
 	/// </summary>
 	private void GuidanceTick(SimWorld world) {
 		if (SubtypeId == PlayerFlownSubtype && Owner is { LocallyPiloted: true }) {
 			PlayerSteerTick(world);
-			world.MissileFlown = true;
+			world.PlayerMissile.Flown = true;
 			return;
 		}
 
@@ -365,7 +365,7 @@ public sealed class Rocket {
 
 	/// <summary><c>Rocket_PlayerSteer</c> (<c>0040a488</c>).</summary>
 	private void PlayerSteerTick(SimWorld world) {
-		var input = world.MissileSteer;
+		var input = world.PlayerMissile.Steer;
 
 		if (!input.Trigger) {
 			Target = null;
@@ -382,7 +382,7 @@ public sealed class Rocket {
 
 		// It clears the trigger byte and both axes it read. The axes are rebuilt before anything else
 		// would act on them; the trigger is not, so the machine's own fire path sees it released.
-		world.PlayerTriggerCleared = true;
+		world.PlayerMissile.TriggerCleared = true;
 	}
 
 	/// <summary>
@@ -551,7 +551,7 @@ public sealed class Rocket {
 /// What <c>Rocket_PlayerSteer</c> reads out of the player input block (<c>0x4d234a</c>): the two values
 /// its camera-axis pointers at <c>+0x22</c> and <c>+0x26</c> address, and the trigger byte at
 /// <c>+0x0d</c>. While the round has the controls the pointers address the steering and throttle
-/// axes; otherwise they follow the JOYSTICK row — see docs/retail/formats/joystick-input.md.
+/// axes; otherwise they follow the JOYSTICK row — see docs/retail/simulation/joystick-input.md.
 /// </summary>
 /// <param name="Steer">The <c>+0x22</c> axis, which turns the heading.</param>
 /// <param name="Pitch">The <c>+0x26</c> axis, which pitches the nose.</param>

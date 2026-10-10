@@ -33,7 +33,7 @@ A frame's held input is the host frame's own: the four axes before Backturn, the
 - **Mouse events** are converted to the game's screen space, the inverse of what playback does with them.
 - **The stick button that fired**, as its bit when it is one of buttons 1-4 and is not bound to FIRE, and the hat's four view bits.
 
-Nothing is recorded while the debug UI has the keyboard or the pointer, or while the player flies the free camera.
+Nothing is recorded while the debug UI has the keyboard or the pointer.
 
 While recording, the live loop follows playback's order where ordinary live play does not, so that the tape replays the ticks the recording ran:
 
@@ -51,7 +51,6 @@ Beyond what the [bundle](../retail/formats/tap-input-tape.md#the-bundle) leaves 
 - **The stick on the CONTROLS panel.** The panel reads the device directly, so presses made on it are not on the tape.
 - **The single-step key.** `Alt+keypad +` ticks the simulation once while recording; playback has no single step and runs that frame as a frozen tick.
 - **The staging flags.** `--heading`, `--throttle`, `--weapon`, `--link`, `--track` and `--target` set the mission's opening state, which the bundle does not carry.
-- **The free camera.** Keys pressed while flying it are not recorded, including `F1`-`F6`, which act whether or not the player is piloting.
 - **`[Esc]`.** A press that closed the debug UI or the menu bar is recorded, and replays as the game's `[Esc]`, which backs out of a side window or the Heads-Down Display.
 - **The device map.** A bipolar throttle is `data\herculan-joystick.cfg`'s setting, which the bundle does not carry, so the playing machine's applies.
 - **The stick's shape.** The capability block is written once, so a stick plugged in or out later in the recording is not on it.

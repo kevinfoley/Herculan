@@ -77,7 +77,26 @@ public enum ThinkSlot {
 	/// <summary><c>Mech_BehaviourInertThink</c> (<c>0041e554</c>), shared by <c>dead</c> and <c>disabled</c>.</summary>
 	Inert,
 
-	/// <summary><c>Mech_BehaviourRamThink</c> (<c>0041e570</c>), the one think with a move slot of its own.</summary>
+	/// <summary><c>Mech_BehaviourRamThink</c> (<c>0041e570</c>), the one AI think with a move slot of its own.</summary>
+	Ram
+}
+
+/// <summary>
+/// Which move function a behaviour state installs in its <c>+0x24</c> slot, which
+/// <c>Behaviour_DispatchMove</c> (<c>00415afc</c>) calls once per AI tick ahead of the think. See
+/// docs/retail/simulation/ai-dispatch.md, "The 22 states".
+/// </summary>
+public enum MoveSlot {
+	/// <summary>No move: <c>deciding</c> and <c>in limbo</c>. The dispatcher returns without calling anything.</summary>
+	None,
+
+	/// <summary><c>Mech_MovementTick</c> (<c>0041a360</c>), the walk — the other 19 states.</summary>
+	Walk,
+
+	/// <summary><c>Razor_MovementTick</c> (<c>004198f4</c>) — <c>player fly</c>.</summary>
+	Fly,
+
+	/// <summary><c>Mech_BehaviourRamTick</c> (<c>0041e488</c>) — <c>ramming</c>.</summary>
 	Ram
 }
 
@@ -88,15 +107,13 @@ public enum ThinkSlot {
 /// dispatch model are in docs/retail/simulation/ai-dispatch.md; this is a transcription of the table the
 /// initialiser writes, read out of the disassembly rather than out of any data file.
 ///
-/// <para><b>The move slot is not modelled as a slot.</b> Each descriptor carries one, and it is
-/// <c>Mech_MovementTick</c> for every state but <c>ramming</c> — which <see cref="MechObject.Tick"/>
-/// already runs for every machine, ahead of the group pass that runs the think, so the original's
-/// "integrate on the last think's decisions" ordering falls out. <c>ramming</c>'s own move is
-/// branched on there rather than dispatched through a field, since it is the only exception.</para>
+/// <para><b>The move slot is dispatched from the object pass, not the AI tick.</b>
+/// <see cref="MechObject.Tick"/> runs <see cref="Move"/> for every machine ahead of the group pass that
+/// runs the think, so the original's "integrate on the last think's decisions" ordering falls out.</para>
 /// </summary>
 public sealed class BehaviourState {
 	private BehaviourState(int index, string name, int dwell, int flags, ReassessSlot reassess,
-			ThinkSlot think = ThinkSlot.None, int objectiveLine = 3) {
+			ThinkSlot think = ThinkSlot.None, int objectiveLine = 3, MoveSlot move = MoveSlot.Walk) {
 		Index = index;
 		Name = name;
 		Dwell = dwell;
@@ -104,7 +121,11 @@ public sealed class BehaviourState {
 		Reassess = reassess;
 		Think = think;
 		ObjectiveLine = objectiveLine;
+		Move = move;
 	}
+
+	/// <inheritdoc cref="MoveSlot"/>
+	public MoveSlot Move { get; }
 
 	/// <summary>
 	/// Descriptor <c>+0x3c</c> — the <c>STRINGS0.STR</c> group 40 index the [F7] comm box prints on a
@@ -179,9 +200,9 @@ public sealed class BehaviourState {
 	// The table, in index order. Dwell times and flag masks are the immediates
 	// Behaviour_BuildStateTable writes; the reassess column is which of the two functions its +0x30
 	// triple names.
-	public static readonly BehaviourState Deciding = new(0, "deciding", 0, 0x00, ReassessSlot.SelectBehaviour);
+	public static readonly BehaviourState Deciding = new(0, "deciding", 0, 0x00, ReassessSlot.SelectBehaviour, move: MoveSlot.None);
 	public static readonly BehaviourState Player = new(1, "player", 10, 0x01, ReassessSlot.None, ThinkSlot.Player);
-	public static readonly BehaviourState PlayerFly = new(2, "player fly", 10, 0x01, ReassessSlot.None, ThinkSlot.Player);
+	public static readonly BehaviourState PlayerFly = new(2, "player fly", 10, 0x01, ReassessSlot.None, ThinkSlot.Player, move: MoveSlot.Fly);
 	public static readonly BehaviourState Attacking = new(3, "attacking", 50000, 0x02, ReassessSlot.CombatReassess, ThinkSlot.Attack, objectiveLine: 0);
 	public static readonly BehaviourState Flanking = new(4, "flanking", 50000, 0x02, ReassessSlot.CombatReassess, ThinkSlot.Flank, objectiveLine: 0);
 	public static readonly BehaviourState FacingOff = new(5, "facing off", 50000, 0x02, ReassessSlot.CombatReassess, ThinkSlot.FaceOff, objectiveLine: 0);
@@ -196,9 +217,9 @@ public sealed class BehaviourState {
 	public static readonly BehaviourState Skirting = new(14, "skirting", 10, 0x03, ReassessSlot.SelectBehaviour, ThinkSlot.Skirt, objectiveLine: 0);
 	public static readonly BehaviourState Guarding = new(15, "guarding", 10, 0x05, ReassessSlot.SelectBehaviour, ThinkSlot.Guard);
 	public static readonly BehaviourState DrivingOffEnemy = new(16, "driving off en", 50000, 0x06, ReassessSlot.SelectBehaviour, ThinkSlot.DriveOff, objectiveLine: 0);
-	public static readonly BehaviourState Ramming = new(17, "ramming", 10, 0x09, ReassessSlot.SelectBehaviour, ThinkSlot.Ram, objectiveLine: 0);
+	public static readonly BehaviourState Ramming = new(17, "ramming", 10, 0x09, ReassessSlot.SelectBehaviour, ThinkSlot.Ram, objectiveLine: 0, move: MoveSlot.Ram);
 	public static readonly BehaviourState Fleeing = new(18, "fleeing", 15000, 0x12, ReassessSlot.CombatReassess, ThinkSlot.Flee, objectiveLine: 5);
-	public static readonly BehaviourState InLimbo = new(19, "in limbo", 10, 0x21, ReassessSlot.None, objectiveLine: 6);
+	public static readonly BehaviourState InLimbo = new(19, "in limbo", 10, 0x21, ReassessSlot.None, objectiveLine: 6, move: MoveSlot.None);
 	public static readonly BehaviourState Dead = new(20, "dead", 0, 0x21, ReassessSlot.None, ThinkSlot.Inert, objectiveLine: 6);
 	public static readonly BehaviourState Disabled = new(21, "disabled", 0, 0x21, ReassessSlot.None, ThinkSlot.Inert, objectiveLine: 7);
 
@@ -261,17 +282,22 @@ public struct BehaviourBlock {
 	}
 
 	/// <summary>
-	/// <c>DAT_004a9bf4</c>, the original's own process-wide global: stepped by 13 per state change
-	/// and masked to four bits, so the jitter is deterministic in call order rather than random.
-	/// Shared with <see cref="FlyerBehaviourBlock"/>, which changes state through the same
-	/// <c>Behaviour_SetState</c>.
-	/// Static here for the same reason <see cref="Numerics.SimMath.TickDelta"/> is — DBSIM runs one
-	/// simulation per process and the field is a plain global in it.
+	/// <c>Behaviour_DwellJitter</c> (<c>004a9bf4</c>): stepped by 13 per state change and masked to
+	/// four bits, shared with <see cref="FlyerBehaviourBlock"/>. See
+	/// docs/retail/simulation/ai-dispatch.md#the-mechs-behaviour-block--mech0x4d.
 	/// </summary>
 	internal static int NextJitter() {
 		_jitter += 0xd;
 		return _jitter & 0xf;
 	}
+
+	/// <summary>
+	/// Puts the jitter counter back to the zero DBSIM starts each mission from. Retail gets that by
+	/// flying one mission per process; this host flies several in one, so every
+	/// <see cref="SimWorld"/> calls this as it is built. The counter stays a static rather than a
+	/// field of the world because the state changes that step it carry no world reference.
+	/// </summary>
+	internal static void ResetJitter() => _jitter = 0;
 
 	private static int _jitter;
 }

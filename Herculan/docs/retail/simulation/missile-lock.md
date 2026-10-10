@@ -47,7 +47,7 @@ The roll's weight, `0x14`, drops to 5 — a quarter — when the machine holding
 
 ## The lock lamp
 
-`mech+0x9b` is set from the armed mount's own class: a launcher lights its own subtype's flag, a mount that is not a launcher (class 5) lights if *any* subtype has lock. The HUD target indicator draws its locked frames from it ([`hud-target-indicator.md`](../formats/hud-target-indicator.md)). `Mech_LockTonePlay` (`0041b0bc`) turns it into the cockpit's lock audio: `Sound_Play(0x15)` (`trgloc.wav`) once per phase of a `0x40`-coarse-tick blink while set, `0x14` (`bptslct.wav`) when clear but the target changed this tick, `0x16` (`trgunloc.wav`) once on loss ([`audio.md`](../formats/audio.md)). Two latches carry it — `0049a1d1` remembers that a lock was held so its loss is announced once, `0049a1d0` that this phase's beep has sounded.
+`mech+0x9b` is set from the armed mount's own class: a launcher lights its own subtype's flag, a mount that is not a launcher (class 5) lights if *any* subtype has lock. The HUD target indicator draws its locked frames from it ([`hud-target-indicator.md`](hud-target-indicator.md)). `Mech_LockTonePlay` (`0041b0bc`) turns it into the cockpit's lock audio: `Sound_Play(0x15)` (`trgloc.wav`) once per phase of a `0x40`-coarse-tick blink while set, `0x14` (`bptslct.wav`) when clear but the target changed this tick, `0x16` (`trgunloc.wav`) once on loss ([`audio.md`](audio.md)). Two latches carry it — `0049a1d1` remembers that a lock was held so its loss is announced once, `0049a1d0` that this phase's beep has sounded.
 
 The loss branch **returns before** the target-changed test, so switching target while locked plays the loss tone and not the acquisition blip.
 

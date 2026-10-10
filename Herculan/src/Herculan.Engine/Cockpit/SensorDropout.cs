@@ -8,7 +8,7 @@ namespace Herculan.Engine.Cockpit;
 /// The 0x2a-byte sprite sequencer the cockpit plays its short animations through
 /// (<c>SpriteSequence_Start</c>, <c>00471d04</c>, and <c>SpriteSequence_Step</c>, <c>00471d7c</c>) — here
 /// the sensor dropout's wipes. It runs on the coarse clock from the tick it was started on; its layout
-/// and the rules below are docs/retail/formats/cockpit-hud-widgets.md's.
+/// and the rules below are docs/retail/simulation/cockpit-hud-widgets.md's.
 /// </summary>
 public sealed class SpriteSequence {
 	/// <summary>One frame of a sequence: which bank frame, and for how many coarse ticks it holds.</summary>
@@ -80,7 +80,7 @@ public sealed class SpriteSequence {
 /// player's sensor array is damaged. Every display that has one ticks it from its own update with the
 /// array's condition, and only while that condition is nonzero; the ranges each display draws its
 /// spells from, and the wipe it plays between states, are its own. See
-/// docs/retail/formats/cockpit-hud-widgets.md#sensor-dropout.
+/// docs/retail/simulation/cockpit-hud-widgets.md#sensor-dropout.
 /// </summary>
 public sealed class SensorDropout {
 	/// <summary>

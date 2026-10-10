@@ -1,5 +1,4 @@
 using HercWorks.Core.Data.File.Cfg;
-using Herculan.Engine.Audio;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using static Herculan.Engine.Input.KeyChords;
@@ -13,13 +12,13 @@ namespace Herculan.Engine.Input;
 /// </summary>
 public sealed class TapeRecording {
 	private readonly SimulatorPreferences _preferences;
-	private readonly GameAudio _audio;
+	private readonly MessagePorts _ports;
 	private readonly HashSet<int> _keysDown = new();
 
-	public TapeRecording(InputTapeRecorder? recorder, SimulatorPreferences preferences, GameAudio audio) {
+	public TapeRecording(InputTapeRecorder? recorder, SimulatorPreferences preferences, MessagePorts ports) {
 		Recorder = recorder;
 		_preferences = preferences;
-		_audio = audio;
+		_ports = ports;
 	}
 
 	public InputTapeRecorder? Recorder { get; }
@@ -31,12 +30,18 @@ public sealed class TapeRecording {
 	public bool DeferredTick { get; set; }
 
 	/// <summary>
+	/// The controls of the frame that raised that panel, which its tick runs on once the panel is down, as
+	/// a replay's does (<see cref="TapePlayback.DeferredFrame"/>).
+	/// </summary>
+	public Sim.MechControls DeferredControls { get; set; }
+
+	/// <summary>
 	/// The top of a recorded host frame: whether it is a panel's, and the keys that went down since the last
 	/// one. Keys are edges of the polled state rather than the device's own events, because the handlers poll
 	/// too: a key pressed and let go between two frames is one no handler saw. Only what reaches the game is
 	/// recorded — nothing while the debug UI has the keyboard or the free camera is being flown.
 	/// </summary>
-	public void BeginFrame(bool panelOpen, LiveKeys? liveKeys, bool imguiHasKeyboard, bool piloting) {
+	public void BeginFrame(bool panelOpen, IKeyState? liveKeys, bool imguiHasKeyboard, bool piloting) {
 		if (Recorder == null) {
 			return;
 		}
@@ -85,7 +90,7 @@ public sealed class TapeRecording {
 			X = (int)MathF.Round(screenX / scale),
 			Y = (int)MathF.Round(screenY / scale),
 			Buttons = (ushort)((int)buttons & 3),
-			Time = (int)_audio.CoarseTicks,
+			Time = (int)_ports.CoarseTicks,
 		});
 	}
 

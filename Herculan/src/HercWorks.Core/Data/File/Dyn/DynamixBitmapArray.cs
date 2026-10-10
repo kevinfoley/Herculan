@@ -28,6 +28,14 @@ public class DynamixBitmapArray {
 	public short ArrayCols { get; set; }
 
 	public DynamixBitmap[]? Images { get; set; }
+
+	/// <summary>
+	/// Bytes past the last of the <see cref="FrameCount"/> frames, kept verbatim so a write gives the
+	/// file back; null when the frames end the file. See docs/retail/formats/dfn-hfn-dci.md, "The
+	/// shared "Dynamix resource" envelope".
+	/// </summary>
+	public byte[]? TrailingBytes { get; set; }
+
 	/// <summary>Not in the file: a <c>.DBA</c> names no palette, so a caller pairs one with it.</summary>
 	public DynamixPalette? Palette { get; set; }
 }

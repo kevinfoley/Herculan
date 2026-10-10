@@ -202,7 +202,7 @@ public partial class MechObject {
 		} else {
 			Target = SquadOrderTarget;
 
-			if (Target == null || Target is MechObject { Destroyed: true }) {
+			if (Target == null || Target.Destroyed) {
 				Target = AiTargeting.SelectTarget(world, this, TargetFilter.None);
 
 				if (Target == null) {
@@ -245,7 +245,7 @@ public partial class MechObject {
 
 		SetBehaviourState(CompareCombatRating(world, target) switch {
 			1 => BehaviourState.Attacking,
-			2 when !LegsCrippled && Type.FlankingGate > FlankingGateThreshold => BehaviourState.Flanking,
+			2 when !LegsDamaged && !LegsCrippled && Type.FlankingGate > FlankingGateThreshold => BehaviourState.Flanking,
 			_ => BehaviourState.FacingOff
 		});
 
