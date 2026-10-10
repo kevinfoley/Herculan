@@ -28086,7 +28086,7 @@
         "bytes": "0047df94+16",
         "sha1": "0c489b6019d1",
         "scope": "body",
-        "via": "disasm"
+        "via": "both"
       }
     },
     {
@@ -28102,7 +28102,7 @@
         "bytes": "0047dfa4+16",
         "sha1": "e278b5e5692d",
         "scope": "body",
-        "via": "disasm"
+        "via": "both"
       }
     },
     {
@@ -28117,7 +28117,7 @@
         "bytes": "0047dfb4+19",
         "sha1": "5776b7eb78de",
         "scope": "body",
-        "via": "disasm"
+        "via": "both"
       }
     },
     {
@@ -34218,7 +34218,7 @@
         "bytes": "00492780+66",
         "sha1": "b3e576b61bf2",
         "scope": "body",
-        "via": "disasm"
+        "via": "both"
       }
     },
     {
@@ -34251,7 +34251,7 @@
         "bytes": "00492828+39",
         "sha1": "fe1bbf2be164",
         "scope": "body",
-        "via": "disasm"
+        "via": "both"
       }
     },
     {
@@ -34510,7 +34510,13 @@
       "confidence": "high",
       "name": "Math_RandomSeed",
       "description": "Seeds one Math_RandomNext state block: the cursors at +0x70/+0x71 to the literals 0x18 and 0x37, then a memmove of 112 bytes (56 int16) from the static table at 004a6958. The function it calls afterwards, 00492e3c, is an empty stub -- no clock and no entropy reaches the generator. Called for both 0x4d261d and 0x4d268f from Main_StaticInit (0045cad8), and by Math_RandomSeedAndSkip.",
-      "source": "docs/retail/simulation/random-generator.md"
+      "source": "docs/retail/simulation/random-generator.md",
+      "verified": {
+        "bytes": "00492d7c+41",
+        "sha1": "ef4b9723fe8a",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00492da8",
@@ -34537,7 +34543,13 @@
       "confidence": "high",
       "name": "Math_RandomBelow",
       "description": "A draw in [0, bound): (Math_RandomNext() & 0x7fff) % bound. The mask drops the sign bit rather than taking an absolute value, so the distribution is the low fifteen bits'. Used by Component_SpillIntoDependents' weighted pick.",
-      "source": "docs/retail/simulation/random-generator.md"
+      "source": "docs/retail/simulation/random-generator.md",
+      "verified": {
+        "bytes": "00492e18+36",
+        "sha1": "7c6317ee0bcd",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00492e3c",

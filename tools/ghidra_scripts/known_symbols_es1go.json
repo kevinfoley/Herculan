@@ -584,6 +584,66 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0005637a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_FastMagnitude3D",
+      "description": "(a, b, c), C convention: ES1DBSIM's Math_FastMagnitude3D (0006325a), L + M*0.34375 + S*0.25 over the sorted absolute values.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "0005637a+72",
+        "sha1": "72c0349bcd11",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005a278",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Q8Multiply",
+      "description": "(int a, int16 b), C convention: ES1DBSIM's Math_Q8Multiply (0005e7f8), Q8 multiply rounded to nearest (0x80, or 0xffffff7f when the product overflows 32 bits, then SHRD 8).",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-primitives",
+      "verified": {
+        "bytes": "0005a278+32",
+        "sha1": "04c09a342742",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005a298",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Q10Multiply",
+      "description": "(int a, int16 b), C convention: ES1DBSIM's Math_Q10Multiply (0005e818), Q10 multiply rounded to nearest (0x200, or 0xfffffdff when the product overflows 32 bits, then SHRD 10).",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-primitives",
+      "verified": {
+        "bytes": "0005a298+32",
+        "sha1": "ef9e679e1e21",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005a2b8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Q14Multiply",
+      "description": "(int a, int16 b), C convention: ES1DBSIM's Math_Q14Multiply (0005e838) instruction for instruction, Q14 multiply rounded to nearest (0x2000, or 0xffffdfff when the product overflows 32 bits, then SHRD 14). Ghidra leaves the bytes after its RET, from 0005a2d8, undisassembled.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-primitives",
+      "verified": {
+        "bytes": "0005a2b8+32",
+        "sha1": "281b0ba17695",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0005aa14",
       "binary": "ES1GO",
       "type": "function",

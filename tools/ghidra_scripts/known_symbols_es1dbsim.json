@@ -329,6 +329,51 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0005e7f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Q8Multiply",
+      "description": "(int a, int16 b), C convention: Q8 multiply rounded to nearest. IMUL of a by the sign-extended b, then SBB/XOR adds 0x80 when the product fits in 32 bits and 0xffffff7f when it does not, and SHRD EAX,EDX,8. ES2's Math_Q8Multiply (DBSIM 0047df94) truncates.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-primitives",
+      "verified": {
+        "bytes": "0005e7f8+32",
+        "sha1": "04c09a342742",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005e818",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Q10Multiply",
+      "description": "(int a, int16 b), C convention: Q10 multiply rounded to nearest. Math_Q8Multiply's body with 0x200 (0xfffffdff when the product overflows 32 bits) and a shift of 10. ES2's Math_Q10Multiply (DBSIM 0047dfa4) truncates.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-primitives",
+      "verified": {
+        "bytes": "0005e818+32",
+        "sha1": "ef9e679e1e21",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005e838",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Q14Multiply",
+      "description": "(int a, int16 b), C convention: Q14 multiply rounded to nearest. Math_Q8Multiply's body with 0x2000 (0xffffdfff when the product overflows 32 bits) and a shift of 14. ES2's Math_Q14Multiply (DBSIM 0047dfb4) truncates.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-primitives",
+      "verified": {
+        "bytes": "0005e838+32",
+        "sha1": "281b0ba17695",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0005f6f7",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -407,6 +452,126 @@
       }
     },
     {
+      "address": "0006325a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_FastMagnitude3D",
+      "description": "(a, b, c), C convention: the square-root-free magnitude L + M*0.34375 + S*0.25 over the sorted absolute values (S >> 2, M >> 2 + M >> 4 + M >> 5). Its 72 bytes are ES2's Math_FastMagnitude3D (DBSIM 0047dd66) byte for byte.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "0006325a+72",
+        "sha1": "72c0349bcd11",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00063aa4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_RandomSeed",
+      "description": "(state), callee-cleaned: sets the cursors +0x70 to 0x18 and +0x71 to 0x37 and copies the 112-byte seed table 00098150 over the state's 56 shorts. Calls nothing else, where ES2's Math_RandomSeed (DBSIM 00492d7c) goes on to an empty function.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#helpers-that-match",
+      "verified": {
+        "bytes": "00063aa4+36",
+        "sha1": "9b6655e770cd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00063af4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_RandomNext",
+      "description": "(state), callee-cleaned: ES2's additive lagged Fibonacci generator (Math_RandomNext, DBSIM 00492dd4). table[+0x71] += table[+0x70] over the 56 shorts at the state's start; returns the new table[+0x71], then advances both cursors, each wrapping from 56 to 0.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#helpers-that-match",
+      "verified": {
+        "bytes": "00063af4+69",
+        "sha1": "f9591a17e504",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00063b3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_RandomBelow",
+      "description": "(state, int16 bound), callee-cleaned: (Math_RandomNext(state) & 0x7fff) % bound, as ES2's Math_RandomBelow (DBSIM 00492e18).",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#helpers-that-match",
+      "verified": {
+        "bytes": "00063b3c+30",
+        "sha1": "4df1adb2bf3a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00063c20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_DistanceBetweenPoints",
+      "description": "(a, b), two int32 triples, callee-cleaned: Math_FastMagnitude3D of the three component differences, subtracted in line. ES2's Math_DistanceBetweenPoints (DBSIM 00492780) copies and subtracts through Vec3_Subtract.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#helpers-that-match",
+      "verified": {
+        "bytes": "00063c20+68",
+        "sha1": "9e81313feef0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00063ca0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Atan2Guarded",
+      "description": "(x, y) in source order (y at [ebp+8], x at [ebp+0xc]), callee-cleaned: sets x to 1 when x and y are both 0, then returns Math_Atan2Bam(x, y), its EAX passed through. ES2's Math_Atan2Guarded (DBSIM 00492800).",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#helpers-that-match",
+      "verified": {
+        "bytes": "00063ca0+39",
+        "sha1": "bd9898bba31c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00063cc8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_HeadingToward",
+      "description": "(to, from) in source order (from at [ebp+8], to at [ebp+0xc]), callee-cleaned: Math_Atan2Guarded(to.x - from.x, to.y - from.y) less a quarter turn (ADD AX,0xc000). ES2's Math_HeadingToward (DBSIM 00492828), which also takes the destination first.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#helpers-that-match",
+      "verified": {
+        "bytes": "00063cc8+38",
+        "sha1": "e16259dcb243",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0006410c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_CountdownTimerTick",
+      "description": "(record), callee-cleaned: the short at record+1 less the short at 000bdbd0, set to 0 when negative, and returned in AX. ES2's Math_CountdownTimerTick (DBSIM 00467944) subtracts SimTickDelta.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#helpers-that-match",
+      "verified": {
+        "bytes": "0006410c+41",
+        "sha1": "d4b3cdf5be9d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00064720",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -414,6 +579,21 @@
       "name": "ltoa",
       "description": "Symantec C++ runtime `ltoa`, from `itoa.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 89 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006477c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_CosBam",
+      "description": "(int16 angle), C convention: cosine of a binary angle in Q14 from the quarter-turn table 000981cc: the angle rounded to a step of 16 ((a >> 4) plus bit 3), its magnitude i, then table[i] below 0x400 and -table[0x800 - i] from there. ES2's Math_CosBam (DBSIM 0047dee4) but for the table's address.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "0006477c+55",
+        "sha1": "683044567a93",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00064ca0",
@@ -531,6 +711,21 @@
       "name": "strchr",
       "description": "Symantec C++ runtime `strchr`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 39 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "000734a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Atan2Bam",
+      "description": "(x, y), C convention: atan2 as a 16-bit binary angle. The smaller magnitude shifted left 9, plus half the larger, divided by the larger gives a quotient q; q is 0 or q*4 plus the byte table 0009e648[q]. When |y| > |x| the angle is 0x1000 minus that; a negative x makes it 0x2000 minus the angle and a negative y 0x4000 minus it; the result is shifted left 2 and masked to 16 bits. A y of 0 gives 0, or 0x8000 with x negative. ES2's Math_Atan2Bam (DBSIM 0047d220) with its PUSH EBX/POP EBX left out, so EBX is overwritten.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "000734a0+146",
+        "sha1": "3121e27e2174",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00073e24",
