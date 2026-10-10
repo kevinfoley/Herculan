@@ -63,11 +63,11 @@ public class SaveSlotDirectoryTests {
 	/// <summary>
 	/// A real install's directory file, parsed and written back.
 	///
-	/// <para>The round trip is byte-equal from the count block on and deliberately not equal in the
-	/// leading length: that field is the physical file less four, taken by seeking to the end
-	/// <i>after</i> writing, so on the retail file it counts a stale tail this writer does not
-	/// reproduce. Everything the reader consumes does come back unchanged, which is the invariant worth
-	/// holding.</para>
+	/// <para>The leading length is the physical file less four, taken by seeking to the end <i>after</i>
+	/// writing through a stream that never truncates, so it counts whatever stale tail an earlier, longer
+	/// write left behind. That tail is empty or not depending on the install's save history, so the test
+	/// holds what is true either way: the round trip is byte-equal from the count block on, and byte-equal
+	/// outright when the file carries no tail.</para>
 	/// </summary>
 	[Fact]
 	public void ParsesTheRetailDirectory() {
@@ -96,10 +96,12 @@ public class SaveSlotDirectoryTests {
 		Assert.True(written.Length <= original.Length, diag);
 		Assert.Equal(written[LengthFieldSize..], original[LengthFieldSize..written.Length]);
 
-		// The stored length measures the physical file rather than the payload, which is exactly the
-		// difference the round trip cannot reproduce.
+		// The stored length measures the physical file rather than the payload. With no stale tail the
+		// two coincide, and then nothing is left that the round trip cannot reproduce.
 		Assert.Equal(original.Length - LengthFieldSize, parsed.StoredLength);
-		Assert.True(parsed.StoredLength > written.Length - LengthFieldSize, diag);
+		if (written.Length == original.Length) {
+			Assert.Equal(original, written);
+		}
 
 		// Every slot names a file, and the last two are the autosaves rather than player slots.
 		Assert.All(parsed.Slots, slot => Assert.False(string.IsNullOrEmpty(slot.FileName), diag));
