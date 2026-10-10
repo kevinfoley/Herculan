@@ -23004,7 +23004,7 @@
         "bytes": "004731e4+42",
         "sha1": "656622068887",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -25917,7 +25917,13 @@
       "confidence": "high",
       "name": "FileRWStream_CtorFromHandle",
       "description": "FileRWStream(handle) constructor (vtable 004a1728, RTTI name 'FileRWStream', 0xb bytes): adopts the handle at +8 without owning it (+0xa = 0) and probes it with _lseek(h, 0, SEEK_CUR); failure goes to FileRWStream_SetIoError. The DBSIM copy of VSHELL's FileRWStream_CtorFromHandle.",
-      "source": "DBSIM decompile and disassembly at 0047a844"
+      "source": "DBSIM decompile and disassembly at 0047a844",
+      "verified": {
+        "bytes": "0047a844+72",
+        "sha1": "e82c28fc4e71",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a88c",
@@ -25926,7 +25932,13 @@
       "confidence": "high",
       "name": "FileRWStream_CtorFromPath",
       "description": "FileRWStream(path) constructor (vtable 004a1728): handle -1, +0xa cleared, then FileRWStream_Open(path). The DBSIM copy of VSHELL's FileRWStream_CtorFromPath.",
-      "source": "DBSIM decompile and disassembly at 0047a88c"
+      "source": "DBSIM decompile and disassembly at 0047a88c",
+      "verified": {
+        "bytes": "0047a88c+56",
+        "sha1": "970fe716ee9d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a8c4",
@@ -25935,7 +25947,13 @@
       "confidence": "high",
       "name": "FileRWStream_Dtor",
       "description": "FileRWStream destructor: restores vtable 004a1728, closes via FileRWStream_Close, runs Stream_BaseDtor, frees when flag & 1. The DBSIM copy of VSHELL's FileRWStream_Dtor.",
-      "source": "DBSIM decompile and disassembly at 0047a8c4"
+      "source": "DBSIM decompile and disassembly at 0047a8c4",
+      "verified": {
+        "bytes": "0047a8c4+58",
+        "sha1": "d08c7c1f1039",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a900",
@@ -25944,7 +25962,13 @@
       "confidence": "high",
       "name": "FileRWStream_GetCapabilities",
       "description": "FileRWStream vtable slot +0xc: capability queries 0-3 answer 1, anything else 0. The DBSIM copy of VSHELL's FileRWStream_GetCapabilities.",
-      "source": "DBSIM decompile and disassembly at 0047a900"
+      "source": "DBSIM decompile and disassembly at 0047a900",
+      "verified": {
+        "bytes": "0047a900+42",
+        "sha1": "13b926c0b2c8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a92c",
@@ -25953,7 +25977,13 @@
       "confidence": "high",
       "name": "FileRWStream_SetFile",
       "description": "(stream, handle): FileRWStream_Close, adopt the handle without owning it (+0xa = 0), probe it with _lseek(h, 0, SEEK_CUR); status 0 on success, else FileRWStream_SetIoError. The DBSIM copy of VSHELL's FileRWStream_SetFile.",
-      "source": "DBSIM decompile and disassembly at 0047a92c"
+      "source": "DBSIM decompile and disassembly at 0047a92c",
+      "verified": {
+        "bytes": "0047a92c+65",
+        "sha1": "df18abbfca9e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a970",
@@ -25961,8 +25991,14 @@
       "type": "function",
       "confidence": "high",
       "name": "FileRWStream_Close",
-      "description": "FileRWStream::close: _close on the handle at +8 when the stream owns it, then marks it -1. The DBSIM copy of VSHELL's FileRWStream_Close.",
-      "source": "DBSIM decompile and disassembly at 0047a970"
+      "description": "FileRWStream::close: _close on the handle at +8 when the stream owns it (+0xa) and it is not -1, returning 0 with status 3 when _close fails; otherwise marks the handle -1, sets status 5 and returns 1. The DBSIM copy of VSHELL's FileRWStream_Close.",
+      "source": "DBSIM decompile and disassembly at 0047a970",
+      "verified": {
+        "bytes": "0047a970+64",
+        "sha1": "9f7d7c1d1023",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a9b0",
@@ -25971,7 +26007,13 @@
       "confidence": "high",
       "name": "FileRWStream_Open",
       "description": "FileRWStream::open: _open(path, 0x8102, 0x180) = O_BINARY|O_CREAT|O_RDWR. The DBSIM copy of VSHELL's FileRWStream_Open.",
-      "source": "DBSIM decompile and disassembly at 0047a9b0"
+      "source": "DBSIM decompile and disassembly at 0047a9b0",
+      "verified": {
+        "bytes": "0047a9b0+74",
+        "sha1": "68e65df0e034",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a9fc",
@@ -25980,7 +26022,13 @@
       "confidence": "high",
       "name": "FileRWStream_Tell",
       "description": "FileRWStream vtable slot +4: _lseek(h, 0, SEEK_CUR), returned in EAX (the decompile drops it). The DBSIM copy of VSHELL's FileRWStream_Tell.",
-      "source": "DBSIM decompile and disassembly at 0047a9fc"
+      "source": "DBSIM decompile and disassembly at 0047a9fc",
+      "verified": {
+        "bytes": "0047a9fc+25",
+        "sha1": "932024c73ca1",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0047aa18",
@@ -25989,7 +26037,13 @@
       "confidence": "high",
       "name": "FileRWStream_Seek",
       "description": "FileRWStream vtable slot +8: (stream, pos). Clears an end-of-data status (2) first, returns 0 on any other nonzero status, then _lseek(h, pos, SEEK_SET); failure goes to FileRWStream_SetIoError, success returns 1. The DBSIM copy of VSHELL's FileRWStream_Seek.",
-      "source": "DBSIM decompile and disassembly at 0047aa18"
+      "source": "DBSIM decompile and disassembly at 0047aa18",
+      "verified": {
+        "bytes": "0047aa18+66",
+        "sha1": "4cd0dcf1ec1f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047aa5c",
@@ -25998,7 +26052,13 @@
       "confidence": "high",
       "name": "FileRWStream_GetSize",
       "description": "Returns a FileRWStream's length: saves the position (vtable +4), _lseek to the end, restores the position (vtable +8). 0 unless the status is 0 or 2. The DBSIM copy of VSHELL's FileRWStream_GetSize.",
-      "source": "DBSIM decompile and disassembly at 0047aa5c"
+      "source": "DBSIM decompile and disassembly at 0047aa5c",
+      "verified": {
+        "bytes": "0047aa5c+70",
+        "sha1": "803a8c18f881",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047aaa4",
@@ -26006,8 +26066,14 @@
       "type": "function",
       "confidence": "high",
       "name": "FileRWStream_Flush",
-      "description": "The DBSIM copy of VSHELL's FileRWStream_Flush (0044e560).",
-      "source": "es2_naming.py diff DBSIM 0047aaa4 VSHELL 0044e560: identical after normalisation; RTTI FileRWStream vtable slot"
+      "description": "FileRWStream vtable slot +0x10: MOV AL,1 and return; the stream writes through _write unbuffered. The DBSIM copy of VSHELL's FileRWStream_Flush (0044e560).",
+      "source": "es2_naming.py diff DBSIM 0047aaa4 VSHELL 0044e560: identical after normalisation; RTTI FileRWStream vtable slot",
+      "verified": {
+        "bytes": "0047aaa4+7",
+        "sha1": "523622165ca3",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0047aaac",
@@ -26016,7 +26082,13 @@
       "confidence": "high",
       "name": "FileRWStream_SetIoError",
       "description": "Sets the stream status at +4 to 1 when the dword at 004966ea is nonzero, else 3, and returns 0. That dword is the _errno import thunk's code bytes, as in VolRStream_SetIoError, so it always stores 1.",
-      "source": "DBSIM decompile and disassembly at 0047aaac"
+      "source": "DBSIM decompile and disassembly at 0047aaac",
+      "verified": {
+        "bytes": "0047aaac+35",
+        "sha1": "c32acbc15924",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047aad0",
@@ -26025,7 +26097,13 @@
       "confidence": "high",
       "name": "FileRWStream_Write",
       "description": "FileRWStream vtable slot +0x14: (stream, count, buffer). Returns 0 when the status is nonzero; _writes count bytes when count is nonzero, a failure going to FileRWStream_SetIoError; returns 1. The DBSIM copy of VSHELL's FileRWStream_Write.",
-      "source": "DBSIM decompile and disassembly at 0047aad0"
+      "source": "DBSIM decompile and disassembly at 0047aad0",
+      "verified": {
+        "bytes": "0047aad0+61",
+        "sha1": "d71a84259b54",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047ab10",
@@ -26034,7 +26112,13 @@
       "confidence": "high",
       "name": "FileRWStream_Read",
       "description": "FileRWStream vtable slot +0x18: (stream, count, buffer). Returns 0 when the status is nonzero; _reads count bytes when count is nonzero, a failure going to FileRWStream_SetIoError and a short read setting status 2 and returning 0; returns 1. The DBSIM copy of VSHELL's FileRWStream_Read.",
-      "source": "DBSIM decompile and disassembly at 0047ab10"
+      "source": "DBSIM decompile and disassembly at 0047ab10",
+      "verified": {
+        "bytes": "0047ab10+80",
+        "sha1": "a205df1b65c6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047abb8",
@@ -26184,7 +26268,13 @@
       "confidence": "high",
       "name": "FileWStream_CtorDefault",
       "description": "FileWStream() constructor (vtable 004a1778, RTTI name 'FileWStream', 0xc bytes): Stream_BaseCtor, handle -1, status 5 (no file), +0xa cleared.",
-      "source": "DBSIM decompile and disassembly at 0047aedc"
+      "source": "DBSIM decompile and disassembly at 0047aedc",
+      "verified": {
+        "bytes": "0047aedc+49",
+        "sha1": "d467f4665c9b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047af10",
@@ -26193,7 +26283,13 @@
       "confidence": "high",
       "name": "FileWStream_CtorFromHandle",
       "description": "FileWStream(handle) constructor (vtable 004a1778): adopts the handle at +8 without owning it (+0xa = 0) and probes it with _lseek(h, 0, SEEK_CUR); failure goes to FileWStream_SetIoError. The DBSIM copy of VSHELL's FileWStream_CtorFromHandle.",
-      "source": "DBSIM decompile and disassembly at 0047af10"
+      "source": "DBSIM decompile and disassembly at 0047af10",
+      "verified": {
+        "bytes": "0047af10+72",
+        "sha1": "e6643f8ee104",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047af58",
@@ -26202,7 +26298,13 @@
       "confidence": "high",
       "name": "FileWStream_Ctor",
       "description": "FileWStream(path) constructor (vtable 004a1778, RTTI name 'FileWStream'): handle -1, +0xa cleared, then FileWStream_Open(path). The DBSIM copy of VSHELL's FileWStream_Ctor.",
-      "source": "DBSIM decompile and disassembly at 0047af58"
+      "source": "DBSIM decompile and disassembly at 0047af58",
+      "verified": {
+        "bytes": "0047af58+56",
+        "sha1": "bc2dcbac3bba",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047af90",
@@ -26211,7 +26313,13 @@
       "confidence": "high",
       "name": "FileWStream_Dtor",
       "description": "FileWStream destructor: restores vtable 004a1778, closes via FileWStream_Close, runs Stream_BaseDtor, frees when flag & 1. The DBSIM copy of VSHELL's FileWStream_Dtor.",
-      "source": "DBSIM decompile and disassembly at 0047af90"
+      "source": "DBSIM decompile and disassembly at 0047af90",
+      "verified": {
+        "bytes": "0047af90+58",
+        "sha1": "60a1008af089",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047afcc",
@@ -26220,7 +26328,13 @@
       "confidence": "high",
       "name": "FileWStream_GetCapabilities",
       "description": "FileWStream vtable slot +0xc: capability query 0 answers 3, 1 and 3 answer 1, anything else 0. The DBSIM copy of VSHELL's FileWStream_GetCapabilities.",
-      "source": "DBSIM decompile and disassembly at 0047afcc"
+      "source": "DBSIM decompile and disassembly at 0047afcc",
+      "verified": {
+        "bytes": "0047afcc+60",
+        "sha1": "8d247d44992c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b008",
@@ -26229,7 +26343,13 @@
       "confidence": "high",
       "name": "FileWStream_SetFile",
       "description": "(stream, handle): FileWStream_Close, adopt the handle without owning it (+0xa = 0), probe it with _lseek(h, 0, SEEK_CUR); status 0 on success, else FileWStream_SetIoError. The DBSIM copy of VSHELL's FileWStream_SetFile.",
-      "source": "DBSIM decompile and disassembly at 0047b008"
+      "source": "DBSIM decompile and disassembly at 0047b008",
+      "verified": {
+        "bytes": "0047b008+65",
+        "sha1": "9d1e75c102ee",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b04c",
@@ -26237,8 +26357,14 @@
       "type": "function",
       "confidence": "high",
       "name": "FileWStream_Close",
-      "description": "FileWStream::close: _close on the handle at +8 when the stream owns it, marks it -1, status 5. The DBSIM copy of VSHELL's FileWStream_Close.",
-      "source": "DBSIM decompile and disassembly at 0047b04c"
+      "description": "FileWStream::close: _close on the handle at +8 when the stream owns it (+0xa) and it is not -1, returning 0 with status 3 when _close fails; otherwise marks the handle -1, sets status 5 and returns 1. The DBSIM copy of VSHELL's FileWStream_Close.",
+      "source": "DBSIM decompile and disassembly at 0047b04c",
+      "verified": {
+        "bytes": "0047b04c+64",
+        "sha1": "b9ac9de3ab60",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b08c",
@@ -26247,7 +26373,13 @@
       "confidence": "high",
       "name": "FileWStream_Open",
       "description": "FileWStream::open: _open(path, 0x8301, 0x180) = O_BINARY|O_CREAT|O_TRUNC|O_WRONLY. The DBSIM copy of VSHELL's FileWStream_Open.",
-      "source": "DBSIM decompile and disassembly at 0047b08c"
+      "source": "DBSIM decompile and disassembly at 0047b08c",
+      "verified": {
+        "bytes": "0047b08c+74",
+        "sha1": "ab9c9b8e92ca",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b0d8",
@@ -26256,7 +26388,13 @@
       "confidence": "high",
       "name": "FileWStream_Tell",
       "description": "FileWStream vtable slot +4: _lseek(h, 0, SEEK_CUR), returned in EAX (the decompile drops it). The DBSIM copy of VSHELL's FileWStream_Tell.",
-      "source": "DBSIM decompile and disassembly at 0047b0d8"
+      "source": "DBSIM decompile and disassembly at 0047b0d8",
+      "verified": {
+        "bytes": "0047b0d8+25",
+        "sha1": "cfe590f3a341",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0047b0f4",
@@ -26265,7 +26403,13 @@
       "confidence": "high",
       "name": "FileWStream_Seek",
       "description": "FileWStream vtable slot +8: (stream, pos). Clears an end-of-data status (2) first, returns 0 on any other nonzero status, then _lseek(h, pos, SEEK_SET); failure goes to FileWStream_SetIoError, success returns 1. The DBSIM copy of VSHELL's FileWStream_Seek.",
-      "source": "DBSIM decompile and disassembly at 0047b0f4"
+      "source": "DBSIM decompile and disassembly at 0047b0f4",
+      "verified": {
+        "bytes": "0047b0f4+66",
+        "sha1": "b45e15330bfe",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b138",
@@ -26274,7 +26418,13 @@
       "confidence": "high",
       "name": "FileWStream_GetSize",
       "description": "Returns a FileWStream's length: saves the position (vtable +4), _lseek to the end, restores the position (vtable +8). 0 unless the status is 0 or 2. The DBSIM copy of VSHELL's FileWStream_GetSize.",
-      "source": "DBSIM decompile and disassembly at 0047b138"
+      "source": "DBSIM decompile and disassembly at 0047b138",
+      "verified": {
+        "bytes": "0047b138+70",
+        "sha1": "9fa8136d8be5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b180",
@@ -26282,8 +26432,14 @@
       "type": "function",
       "confidence": "high",
       "name": "FileWStream_Flush",
-      "description": "The DBSIM copy of VSHELL's FileWStream_Flush (0044ec98).",
-      "source": "es2_naming.py diff DBSIM 0047b180 VSHELL 0044ec98: identical after normalisation; RTTI FileWStream vtable slot"
+      "description": "FileWStream vtable slot +0x10: MOV AL,1 and return; the stream writes through _write unbuffered. The DBSIM copy of VSHELL's FileWStream_Flush (0044ec98).",
+      "source": "es2_naming.py diff DBSIM 0047b180 VSHELL 0044ec98: identical after normalisation; RTTI FileWStream vtable slot",
+      "verified": {
+        "bytes": "0047b180+7",
+        "sha1": "523622165ca3",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0047b188",
@@ -26292,7 +26448,13 @@
       "confidence": "high",
       "name": "FileWStream_SetIoError",
       "description": "Sets the stream status at +4 to 1 when the dword at 004966ea is nonzero, else 3, and returns 0. That dword is the _errno import thunk's code bytes, as in VolRStream_SetIoError, so it always stores 1.",
-      "source": "DBSIM decompile and disassembly at 0047b188"
+      "source": "DBSIM decompile and disassembly at 0047b188",
+      "verified": {
+        "bytes": "0047b188+35",
+        "sha1": "c32acbc15924",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b1ac",
@@ -26301,7 +26463,13 @@
       "confidence": "high",
       "name": "FileWStream_Write",
       "description": "FileWStream vtable slot +0x14: (stream, count, buffer). Returns 0 when the status is nonzero; _writes count bytes when count is nonzero, a failure going to FileWStream_SetIoError; returns 1. The DBSIM copy of VSHELL's FileWStream_Write.",
-      "source": "DBSIM decompile and disassembly at 0047b1ac"
+      "source": "DBSIM decompile and disassembly at 0047b1ac",
+      "verified": {
+        "bytes": "0047b1ac+61",
+        "sha1": "35aa4f40c5a8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b1ec",
@@ -26310,7 +26478,13 @@
       "confidence": "high",
       "name": "FileWStream_Read",
       "description": "FileWStream vtable slot +0x18: sets status 4 and returns 0; the stream is write-only. The DBSIM copy of VSHELL's FileWStream_Read.",
-      "source": "DBSIM decompile and disassembly at 0047b1ec"
+      "source": "DBSIM decompile and disassembly at 0047b1ec",
+      "verified": {
+        "bytes": "0047b1ec+17",
+        "sha1": "a3348e50bbc9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b251",

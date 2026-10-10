@@ -352,13 +352,13 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_Open",
-      "description": "(stream, path): VolRStream_Close, clears +0xa, +0xe and +0x16, then open(path, 0) into the handle at +8. When that fails it looks the path up in the volume group 00096838 through 000566b8, which fills the entry fields from +0xa; with no group or no entry it sets status 1 and returns. By the entry's compression type at +0x1e it reads through: 2, the volume's stream itself (+0xe = +0xa); 7, the RLE filter at +0x27 (made by 00074f9c on first use and attached by 00075068); 9, the LZH filter at +0x2b (00074b8c, 00074c70). Then status 0 and +0x26 = 1, also for a volume entry. ES2's VolRStream_Open (DBSIM 00472fdc).",
+      "description": "(stream, path): VolRStream_Close, clears +0xa, +0xe and +0x16, then open(path, 0) into the handle at +8. When that fails it looks the path up in the volume group 00096838 through 000566b8, which fills the entry fields from +0xa; with no group or no entry it sets status 1 and returns 0. By the entry's compression type at +0x1e it reads through: 2, the volume's stream itself (+0xe = +0xa); 7, the RLE filter at +0x27 (made by 00074f9c on first use and attached by 00075068); 9, the LZH filter at +0x2b (00074b8c, 00074c70). Then status 0 and +0x26 = 1, also for a volume entry, and returns 1 (MOV AL,1; the decompile drops both results). ES2's VolRStream_Open (DBSIM 00472fdc).",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "00056944+241",
         "sha1": "a33caf125bfa",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -374,6 +374,21 @@
         "sha1": "8a4aee0ddb52",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00056a7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolRStream_DeleteGroup",
+      "description": "(): when the volume group 00096838 is set, 000561d8(group, 3) and clears 00096838. Frameless (CMP, JE, the call, MOV, RET) after the padding at 00056a79; Ghidra had no function here. No caller found by es2_xref. ES2's VolRStream_DeleteGroup (DBSIM 004731e4).",
+      "source": "Herculan/docs/es1/formats/streams.md#volrstream",
+      "verified": {
+        "bytes": "00056a7c+33",
+        "sha1": "1c6261c23f4b",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -427,7 +442,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_SetPosition",
-      "description": "VolRStream vtable slot +0xc (stream, position): a status of 2 is cleared first, and any other nonzero status returns 0. A file handle seeks with lseek(h, position, SEEK_SET), VolRStream_SetIoError on -1. An open entry stores the position at +0x16 and at +0x1a the absolute offset +0x12 + position, or, when the position is not below the size +0x22, the size itself with status 2,; type 2 seeks the volume stream there, and types 7 and 9 reset their filter (0007509c, 00074ccc), seek the volume stream to the entry's start, re-attach the filter (00075068, 00074c70) and seek the filter to the position. Returns 1 otherwise. ES2's VolRStream_SetPosition (DBSIM 00473298).",
+      "description": "VolRStream vtable slot +0xc (stream, position): a status of 2 is cleared first, and any other nonzero status returns 0. A file handle seeks with lseek(h, position, SEEK_SET), VolRStream_SetIoError on -1. An open entry stores the position at +0x16 and at +0x1a the absolute offset +0x12 + position, or, when the position is not below the size +0x22, the size itself with status 2; type 2 seeks the volume stream there, and types 7 and 9 reset their filter (0007509c, 00074ccc), seek the volume stream to the entry's start, re-attach the filter (00075068, 00074c70) and seek the filter to the position. Returns 1 otherwise. ES2's VolRStream_SetPosition (DBSIM 00473298).",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "00056b4c+375",
@@ -986,7 +1001,7 @@
       "confidence": "high",
       "name": "FileRStream_CtorDefault",
       "description": "FileRStream() constructor, callee-cleaned (this): allocates 0xb bytes when this is null (0 if that fails), Stream_BaseCtor, the vtable 00098a76 at +4, handle -1 at +8, status 5 and +0xa (owns the handle) cleared. ES2's FileRStream_CtorDefault (DBSIM 0047abb8).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00065540+60",
         "sha1": "e0f5ea751d50",
@@ -1001,7 +1016,7 @@
       "confidence": "high",
       "name": "FileRStream_CtorFromHandle",
       "description": "FileRStream(handle) constructor, callee-cleaned: allocates 0xb bytes when this is null, Stream_BaseCtor, the vtable 00098a76, adopts the handle at +8 without owning it (+0xa = 0) and probes it with lseek(h, 0, SEEK_CUR), FileRStream_SetIoError on -1. ES2's FileRStream_CtorFromHandle (DBSIM 0047abec).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "0006557c+83",
         "sha1": "0bef520c79b9",
@@ -1016,7 +1031,7 @@
       "confidence": "high",
       "name": "FileRStream_Ctor",
       "description": "FileRStream(path) constructor, callee-cleaned: allocates 0xb bytes when this is null, Stream_BaseCtor, the vtable 00098a76, handle -1, +0xa cleared, then FileRStream_Open(path). ES2's FileRStream_Ctor (DBSIM 0047ac34).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "000655d0+63",
         "sha1": "8c12551b1009",
@@ -1031,7 +1046,7 @@
       "confidence": "high",
       "name": "FileRStream_Dtor",
       "description": "FileRStream destructor (this, flags), vtable slot +4: restores the vtable 00098a76, FileRStream_Close, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set. ES2's FileRStream_Dtor (DBSIM 0047ac6c).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00065610+54",
         "sha1": "6add632992a8",
@@ -1046,7 +1061,7 @@
       "confidence": "high",
       "name": "FileRStream_GetCapabilities",
       "description": "FileRStream vtable slot +0x10 (stream, query): query 0 answers 2, queries 2 and 3 answer 1, anything else 0. ES2's FileRStream_GetCapabilities (DBSIM 0047aca8).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00065648+46",
         "sha1": "ee17e59ff2ba",
@@ -1061,7 +1076,7 @@
       "confidence": "high",
       "name": "FileRStream_SetFile",
       "description": "(stream, handle): FileRStream_Close, adopts the handle at +8 without owning it (+0xa = 0) and probes it with lseek(h, 0, SEEK_CUR): status 0 on success, FileRStream_SetIoError on -1. ES2's FileRStream_SetFile (DBSIM 0047acd8).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00065678+65",
         "sha1": "3027abac71fc",
@@ -1076,7 +1091,7 @@
       "confidence": "high",
       "name": "FileRStream_Close",
       "description": "(stream): closes the handle at +8 when the stream owns it (+0xa) and it is not -1, returning 0 with status 3 when close fails; otherwise sets the handle to -1 and status 5 and returns 1. ES2's FileRStream_Close (DBSIM 0047ad1c).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "000656bc+71",
         "sha1": "0882e162e67e",
@@ -1091,7 +1106,7 @@
       "confidence": "high",
       "name": "FileRStream_Open",
       "description": "(stream, path): FileRStream_Close, then open(path, 0) into the handle at +8: status 1 and 0 returned on failure, else status 0, +0xa (owns the handle) set and 1 returned. ES2's FileRStream_Open (DBSIM 0047ad5c).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00065704+65",
         "sha1": "25656ea3c304",
@@ -1106,7 +1121,7 @@
       "confidence": "high",
       "name": "FileRStream_Tell",
       "description": "FileRStream vtable slot +8 (stream): returns lseek(h, 0, SEEK_CUR) of the handle at +8. ES2's FileRStream_Tell (DBSIM 0047ada4).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00065748+30",
         "sha1": "2e7d75e32f34",
@@ -1121,7 +1136,7 @@
       "confidence": "high",
       "name": "FileRStream_Seek",
       "description": "FileRStream vtable slot +0xc (stream, position): a status of 2 is cleared first and any other nonzero status returns 0; lseek(h, position, SEEK_SET), FileRStream_SetIoError on -1, else 1. ES2's FileRStream_Seek (DBSIM 0047adc0).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00065768+72",
         "sha1": "3e67287150c7",
@@ -1136,7 +1151,7 @@
       "confidence": "high",
       "name": "FileRStream_GetSize",
       "description": "(stream): 0 unless the status is 0 or 2. Otherwise saves the position (slot +8), takes lseek(h, 0, SEEK_END), restores the position (slot +0xc) and returns the end offset. ES2's FileRStream_GetSize (DBSIM 0047ae04).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "000657b0+86",
         "sha1": "d1d037575c76",
@@ -1151,7 +1166,7 @@
       "confidence": "high",
       "name": "FileRStream_Flush",
       "description": "FileRStream vtable slot +0x14, entered through the padding at 00065806: MOV AL,1; RET 4. ES2's FileRStream_Flush (DBSIM 0047ae4c).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00065808+5",
         "sha1": "2727bae5f3a5",
@@ -1166,7 +1181,7 @@
       "confidence": "high",
       "name": "FileRStream_SetIoError",
       "description": "(stream): sets the status at +0 to 3 when errno (000973d3) is 0, otherwise 1, and returns 0. ES2's FileRStream_SetIoError (DBSIM 0047ae54).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00065810+40",
         "sha1": "88cc3a06416f",
@@ -1181,7 +1196,7 @@
       "confidence": "high",
       "name": "FileRStream_Write",
       "description": "FileRStream vtable slot +0x18: sets status 4 and returns 0. ES2's FileRStream_Write (DBSIM 0047ae78).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "00065838+20",
         "sha1": "e73ab05fba99",
@@ -1196,10 +1211,235 @@
       "confidence": "high",
       "name": "FileRStream_Read",
       "description": "FileRStream vtable slot +0x1c (stream, buffer, count): 0 when the status is nonzero, 1 for a count of 0; otherwise read() from the handle at +8, FileRStream_SetIoError on -1, status 2 and 0 on a short read, else 1. ES2's FileRStream_Read (DBSIM 0047ae8c).",
-      "source": "Herculan/docs/es1/formats/streams.md#filerstream",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
       "verified": {
         "bytes": "0006584c+109",
         "sha1": "6ffdafdd793d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000658bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_CtorDefault",
+      "description": "FileWStream() constructor, callee-cleaned (this): allocates 0xc bytes when this is null (0 if that fails), Stream_BaseCtor, the vtable 00098ab2 at +4, handle -1 at +8, status 5 and +0xa (owns the handle) cleared. ES2's FileWStream_CtorDefault (DBSIM 0047aedc).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "000658bc+60",
+        "sha1": "cb24110bb7d3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000658f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_CtorFromHandle",
+      "description": "FileWStream(handle) constructor, callee-cleaned: allocates 0xc bytes when this is null, Stream_BaseCtor, the vtable 00098ab2, adopts the handle at +8 without owning it (+0xa = 0) and probes it with lseek(h, 0, SEEK_CUR), FileWStream_SetIoError on -1. ES2's FileWStream_CtorFromHandle (DBSIM 0047af10).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "000658f8+83",
+        "sha1": "012d8071b9b6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006594c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_Ctor",
+      "description": "FileWStream(path) constructor, callee-cleaned: allocates 0xc bytes when this is null, Stream_BaseCtor, the vtable 00098ab2, handle -1, +0xa cleared, then FileWStream_Open(path). ES2's FileWStream_Ctor (DBSIM 0047af58).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006594c+63",
+        "sha1": "006bc47ecc67",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006598c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_Dtor",
+      "description": "FileWStream destructor (this, flags), vtable slot +4: restores the vtable 00098ab2, FileWStream_Close, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set. ES2's FileWStream_Dtor (DBSIM 0047af90).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006598c+54",
+        "sha1": "f36f96d469e4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000659c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_GetCapabilities",
+      "description": "FileWStream vtable slot +0x10 (stream, query): query 0 answers 3, queries 1 and 3 answer 1, anything else 0. ES2's FileWStream_GetCapabilities (DBSIM 0047afcc).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "000659c4+46",
+        "sha1": "80e26e0efa0f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000659f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_SetFile",
+      "description": "(stream, handle): FileWStream_Close, adopts the handle at +8 without owning it (+0xa = 0) and probes it with lseek(h, 0, SEEK_CUR): status 0 on success, FileWStream_SetIoError on -1. ES2's FileWStream_SetFile (DBSIM 0047b008).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "000659f4+65",
+        "sha1": "23b4afb9aab6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065a38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_Close",
+      "description": "(stream): closes the handle at +8 when the stream owns it (+0xa) and it is not -1, returning 0 with status 3 when close fails; otherwise sets the handle to -1 and status 5 and returns 1. ES2's FileWStream_Close (DBSIM 0047b04c).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "00065a38+71",
+        "sha1": "10b2cf735d75",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065a80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_Open",
+      "description": "(stream, path): FileWStream_Close, then open(path, 0x301, 0x180) into the handle at +8, write-only, created when missing and truncated when present: status 1 and 0 returned on failure, else status 0, +0xa (owns the handle) set and 1 returned. ES2's FileWStream_Open (DBSIM 0047b08c).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "00065a80+73",
+        "sha1": "10f1d98cdfe2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065acc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_Tell",
+      "description": "FileWStream vtable slot +8 (stream): returns lseek(h, 0, SEEK_CUR) of the handle at +8. ES2's FileWStream_Tell (DBSIM 0047b0d8).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "00065acc+30",
+        "sha1": "3b227d6f03e8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00065aec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_Seek",
+      "description": "FileWStream vtable slot +0xc (stream, position): a status of 2 is cleared first and any other nonzero status returns 0; lseek(h, position, SEEK_SET), FileWStream_SetIoError on -1, else 1. ES2's FileWStream_Seek (DBSIM 0047b0f4).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "00065aec+72",
+        "sha1": "1766801d4853",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065b34",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_GetSize",
+      "description": "(stream): 0 unless the status is 0 or 2. Otherwise saves the position (slot +8), takes lseek(h, 0, SEEK_END), restores the position (slot +0xc) and returns the end offset. ES2's FileWStream_GetSize (DBSIM 0047b138).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "00065b34+86",
+        "sha1": "3bac10ad5c52",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00065b8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_Flush",
+      "description": "FileWStream vtable slot +0x14, entered through the padding at 00065b8a: MOV AL,1; RET 4. ES2's FileWStream_Flush (DBSIM 0047b180).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "00065b8c+5",
+        "sha1": "2727bae5f3a5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00065b94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_SetIoError",
+      "description": "(stream): sets the status at +0 to 3 when errno (000973d3) is 0, otherwise 1, and returns 0. ES2's FileWStream_SetIoError (DBSIM 0047b188).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "00065b94+40",
+        "sha1": "88cc3a06416f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065bbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_Write",
+      "description": "FileWStream vtable slot +0x18 (stream, buffer, count): 0 when the status is nonzero, 1 for a count of 0; otherwise write() to the handle at +8, FileWStream_SetIoError on -1, else 1. A short write is not checked. ES2's FileWStream_Write (DBSIM 0047b1ac).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "00065bbc+71",
+        "sha1": "24c7f2f19ab3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065c04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileWStream_Read",
+      "description": "FileWStream vtable slot +0x1c: sets status 4 and returns 0. ES2's FileWStream_Read (DBSIM 0047b1ec).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "00065c04+20",
+        "sha1": "e73ab05fba99",
         "scope": "body",
         "via": "decompile"
       }
@@ -1248,6 +1488,231 @@
       "name": "strncat",
       "description": "Symantec C++ runtime `strncat`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 70 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006abac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_CtorDefault",
+      "description": "FileRWStream() constructor, callee-cleaned (this): allocates 0xb bytes when this is null (0 if that fails), Stream_BaseCtor, the vtable 0009b576 at +4, handle -1 at +8, status 5 and +0xa (owns the handle) cleared. ES2's FileRWStream_Ctor (DBSIM 0047a810).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006abac+60",
+        "sha1": "15127f0873f6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006abe8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_CtorFromHandle",
+      "description": "FileRWStream(handle) constructor, callee-cleaned: allocates 0xb bytes when this is null, Stream_BaseCtor, the vtable 0009b576, adopts the handle at +8 without owning it (+0xa = 0) and probes it with lseek(h, 0, SEEK_CUR), FileRWStream_SetIoError on -1. ES2's FileRWStream_CtorFromHandle (DBSIM 0047a844).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006abe8+83",
+        "sha1": "75a1b608408c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006ac3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_Ctor",
+      "description": "FileRWStream(path) constructor, callee-cleaned: allocates 0xb bytes when this is null, Stream_BaseCtor, the vtable 0009b576, handle -1, +0xa cleared, then FileRWStream_Open(path). ES2's FileRWStream_CtorFromPath (DBSIM 0047a88c).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006ac3c+63",
+        "sha1": "d9bf5e73015f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006ac7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_Dtor",
+      "description": "FileRWStream destructor (this, flags), vtable slot +4: restores the vtable 0009b576, FileRWStream_Close, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set. ES2's FileRWStream_Dtor (DBSIM 0047a8c4).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006ac7c+54",
+        "sha1": "975d0d6b0862",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006acb4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_GetCapabilities",
+      "description": "FileRWStream vtable slot +0x10 (stream, query): queries 0 to 3 answer 1, anything else 0. ES2's FileRWStream_GetCapabilities (DBSIM 0047a900).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006acb4+36",
+        "sha1": "be13128e8ece",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006acd8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_SetFile",
+      "description": "(stream, handle): FileRWStream_Close, adopts the handle at +8 without owning it (+0xa = 0) and probes it with lseek(h, 0, SEEK_CUR): status 0 on success, FileRWStream_SetIoError on -1. ES2's FileRWStream_SetFile (DBSIM 0047a92c).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006acd8+65",
+        "sha1": "56eb7af695fd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006ad1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_Close",
+      "description": "(stream): closes the handle at +8 when the stream owns it (+0xa) and it is not -1, returning 0 with status 3 when close fails; otherwise sets the handle to -1 and status 5 and returns 1. ES2's FileRWStream_Close (DBSIM 0047a970).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006ad1c+71",
+        "sha1": "0de75a8ef417",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006ad64",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_Open",
+      "description": "(stream, path): FileRWStream_Close, then open(path, 0x102, 0x180) into the handle at +8, read-write, created when missing: status 1 and 0 returned on failure, else status 0, +0xa (owns the handle) set and 1 returned. ES2's FileRWStream_Open (DBSIM 0047a9b0).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006ad64+73",
+        "sha1": "48a1fb1c37f7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006adb0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_Tell",
+      "description": "FileRWStream vtable slot +8 (stream): returns lseek(h, 0, SEEK_CUR) of the handle at +8. ES2's FileRWStream_Tell (DBSIM 0047a9fc).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006adb0+30",
+        "sha1": "66271673fdca",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006add0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_Seek",
+      "description": "FileRWStream vtable slot +0xc (stream, position): a status of 2 is cleared first and any other nonzero status returns 0; lseek(h, position, SEEK_SET), FileRWStream_SetIoError on -1, else 1. ES2's FileRWStream_Seek (DBSIM 0047aa18).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006add0+72",
+        "sha1": "cd8d39daedad",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006ae18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_GetSize",
+      "description": "(stream): 0 unless the status is 0 or 2. Otherwise saves the position (slot +8), takes lseek(h, 0, SEEK_END), restores the position (slot +0xc) and returns the end offset. ES2's FileRWStream_GetSize (DBSIM 0047aa5c).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006ae18+86",
+        "sha1": "54261fec73e7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006ae70",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_Flush",
+      "description": "FileRWStream vtable slot +0x14, entered through the padding at 0006ae6e: MOV AL,1; RET 4. ES2's FileRWStream_Flush (DBSIM 0047aaa4).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006ae70+5",
+        "sha1": "2727bae5f3a5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0006ae78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_SetIoError",
+      "description": "(stream): sets the status at +0 to 3 when errno (000973d3) is 0, otherwise 1, and returns 0. ES2's FileRWStream_SetIoError (DBSIM 0047aaac).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006ae78+40",
+        "sha1": "88cc3a06416f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006aea0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_Write",
+      "description": "FileRWStream vtable slot +0x18 (stream, buffer, count): 0 when the status is nonzero, 1 for a count of 0; otherwise write() to the handle at +8, FileRWStream_SetIoError on -1, else 1. A short write is not checked. ES2's FileRWStream_Write (DBSIM 0047aad0).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006aea0+71",
+        "sha1": "8cad45a5ee1c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006aee8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileRWStream_Read",
+      "description": "FileRWStream vtable slot +0x1c (stream, buffer, count): 0 when the status is nonzero, 1 for a count of 0; otherwise read() from the handle at +8, FileRWStream_SetIoError on -1, status 2 and 0 on a short read, else 1. ES2's FileRWStream_Read (DBSIM 0047ab10).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-file-classes",
+      "verified": {
+        "bytes": "0006aee8+109",
+        "sha1": "7dc35f40edc7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0006c54d",
@@ -1414,7 +1879,7 @@
       "type": "function",
       "confidence": "high",
       "name": "open",
-      "description": "The runtime's open (path, flags, mode), C convention: masks the flags with 0x8f, or with 0x07 below DOS 3 (__osmajor, 0009739e), and opens or creates the file through INT 21h calls chosen by the flag bits 0x100, 0x200, 0x400 and 0x8. Returns the handle, or -1 with the DOS error in errno (000973d3) through read's error exit at 00074922.",
+      "description": "The runtime's open (path, flags, mode), C convention. ANDs the low byte of the flags with 0x8f (with 0x07 below DOS 3, __osmajor 0009739e) and opens the path through INT 21h AH=3Dh, the access mode in AL with bits 0x4 and 0x8 cleared. A file that opens is closed again: with flags 0x100 and 0x400 both set that fails with DOS error 0x50; otherwise the file is reopened and then truncated by a zero-length write when 0x200 is set, or else moved to its end when 0x8 is set. A file missing (DOS error 2) with 0x100 set is created through AH=3Ch, read-only unless mode bit 0x80 is set, and that handle is returned, unless flag 0x80 is set, which closes it and reopens it as above. Returns the handle, or -1 with the DOS error in errno (000973d3) through read's error exit at 00074922.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification",
       "verified": {
         "bytes": "00074947+214",
@@ -1878,6 +2343,15 @@
       "name": "ldexp",
       "description": "Symantec C++ runtime `ldexp`, from `ldexp.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 195 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00096838",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_VolumeGroup",
+      "description": "The volume group VolRStream_Open looks a path up in when the path does not open as a file: made by VolRStream_SetGroup, filled by VolRStream_LoadVolume and deleted by VolRStream_DeleteGroup. ES2's g_VolumeGroup (DBSIM 004a0d30).",
+      "source": "Herculan/docs/es1/formats/streams.md#volrstream"
     },
     {
       "address": "000973d3",
