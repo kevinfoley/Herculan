@@ -896,6 +896,36 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0004df02",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Runtime_RunStaticCtors",
+      "description": "No arguments: __cinit's static-constructor walk. Calls each non-zero pointer from 0009a28c down to 0009a218, the last entry first. __cinit (0004defc) is its caller found by es2_xref. The code of ES1DBSIM's Runtime_RunStaticCtors (0005b692), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#static-construction-and-exit",
+      "verified": {
+        "bytes": "0004df02+27",
+        "sha1": "2cf7fe522505",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004df1d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "__dodtors",
+      "description": "No arguments: the runtime's static-destructor walk, calling each non-zero pointer from 0009a28c up to 0009a2b0. exit (0004df64) is its caller found by es2_xref. The code of ES1DBSIM's __dodtors (0005b6ad), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#static-construction-and-exit",
+      "verified": {
+        "bytes": "0004df1d+27",
+        "sha1": "30a95f700984",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004df38",
       "binary": "ES1GO",
       "type": "function",
@@ -912,6 +942,21 @@
       "name": "___faterr",
       "description": "Symantec C++ runtime `___faterr`, from `cinit.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 32 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0004df64",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "exit",
+      "description": "(status), C convention: calls the atexit functions through _atexitp (000ab4f2), newest first; then calls _hookexitp (000ab57a) with the status and returns when it is set, or else runs __dodtors, calls _fcloseallp (00083fd8) when it is set, and ends through __exit. The code of ES1DBSIM's exit (0005b6f4), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#static-construction-and-exit",
+      "verified": {
+        "bytes": "0004df64+93",
+        "sha1": "ae0060c1b957",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0004dfc4",
@@ -2345,16 +2390,106 @@
       }
     },
     {
+      "address": "00053800",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_Register",
+      "description": "(light), callee-cleaned. The code of ES1DBSIM's Light_Register (0005ba84), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00053800+77",
+        "sha1": "dbac702bae8a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053850",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_Unregister",
+      "description": "(light), callee-cleaned. The code of ES1DBSIM's Light_Unregister (0005bad4), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00053850+78",
+        "sha1": "1fcdce23725c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000538a0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_ComputeShadeAtPoint",
+      "description": "(point), callee-cleaned, an int32 triple. The code of ES1DBSIM's Light_ComputeShadeAtPoint (0005bb24), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "000538a0+266",
+        "sha1": "e0879ad410d8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000539ac",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Light_ComputeShadeForFace",
-      "description": "(centre, normal) in stack order, callee-cleaned, both int16 triples: sums a shade over the light list 000ab6b4 (count 000ab6b0) by the light's type +0x16: type 0 adds its intensity +0x1a; type 1 takes v = (dot(normal, model-space direction +0x2a) (0006002f) - 0x400000) >> 1 and, when v is negative, subtracts intensity * v >> 22; type 2 takes the displacement from centre to the model-space position +0x1e and, when its dot with the normal (00060062) is positive, adds intensity * ((+0x38 * (dot / (m + 1))) / (+0x34 + m)) >> 11, m being Math_FastMagnitude3D of the displacement. Returns the sum clamped to 0xff. The code of ES1DBSIM's Light_ComputeShadeForFace (0005bc30), relocated operands aside.",
+      "description": "(centre, normal) in stack order, callee-cleaned, both int16 triples: sums a shade over the light list Light_ActiveList (000ab6b4) (count Light_ActiveCount (000ab6b0)) by the light's type +0x16: type 0 adds its intensity +0x1a; type 1 takes v = (dot(normal, model-space direction +0x2a) (0006002f) - 0x400000) >> 1 and, when v is negative, subtracts intensity * v >> 22; type 2 takes the displacement from centre to the model-space position +0x1e and, when its dot with the normal (00060062) is positive, adds intensity * ((+0x38 * (dot / (m + 1))) / (+0x34 + m)) >> 11, m being Math_FastMagnitude3D of the displacement. Returns the sum clamped to 0xff. The code of ES1DBSIM's Light_ComputeShadeForFace (0005bc30), relocated operands aside.",
       "source": "ES1GO decompile at 000539ac",
       "verified": {
         "bytes": "000539ac+421",
         "sha1": "ad0258237526",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053b54",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_ComputeShadeForNormal",
+      "description": "(centre, normal) in stack order, callee-cleaned, an int32 and an int16 triple: ES2's Light_ComputeShadeForNormal (DBSIM 0048c060), reading the light's fields directly: type 0 adds the intensity; type 1 subtracts intensity * dot(normal, +0x2a) (0006002f) >> 22 when the dot is negative; type 2 adds intensity * (+0x38 * (d / (m + 1)) / (+0x34 + m)) >> 11 when d, the dot of the normal with the displacement from centre to +0x1e (00060062), is positive, m its Math_FastMagnitude3D. Clamped to 0xff. The code of ES1DBSIM's Light_ComputeShadeForNormal (0005bdd8), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00053b54+400",
+        "sha1": "2ee62ce6551c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053ce4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_InstallViewProjection",
+      "description": "(camera), callee-cleaned: ES2's Raster_InstallViewProjection (DBSIM 0048c1d8). Stores the focal shift +0x1a, near plane +0x1e and, with a shift of 0, the orthographic divisor +0x22; copies the render context's (+0x16) rect +0x210..+0x21c to Raster_ViewClipRect and sets Raster_ProjectionCentre to its top-left less the context's +0x220 pair; builds Raster_WorldToView inline, the inverse of BuildEulerRotationMatrixQ14(+0xc) with the position +0, where ES2 calls View_BuildTransform and Transform_InvertRigid, and installs it with Raster_SetViewTransform. The code of ES1DBSIM's Raster_InstallViewProjection (0005bf68), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00053ce4+271",
+        "sha1": "92f910dbade1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053df4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_SetViewTransform",
+      "description": "(transform), callee-cleaned. The code of ES1DBSIM's Raster_SetViewTransform (0005c078), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00053df4+200",
+        "sha1": "40616f375155",
         "scope": "body",
         "via": "decompile"
       }
@@ -2365,7 +2500,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_SetModelTransform",
-      "description": "(transform), callee-cleaned: installs a transform as the renderer's model transform (null means the identity at 000a44c0), storing the pointer in g_ModelTransformPtr. Builds g_ModelToView = Transform_Concat(model, *000ab658), its inverse g_ViewToModel (copy, Transform_TransposeRotation, negate the translation, Transform_RotatePoint it), and g_EyeInModelSpace, the origin through that inverse. When the byte 000ab6dc is set it inverts the model transform the same way and moves each light on the list 000ab6b4 (count 000ab6b0) into the model's space with Light_TransformToModelSpace. The code of ES1DBSIM's Raster_SetModelTransform (0005c140), relocated operands aside.",
+      "description": "(transform), callee-cleaned: installs a transform as the renderer's model transform (null means the identity at Transform_Identity (000a44c0)), storing the pointer in g_ModelTransformPtr. Builds g_ModelToView = Transform_Concat(model, *Raster_ViewTransformPtr (000ab658)), its inverse g_ViewToModel (copy, Transform_TransposeRotation, negate the translation, Transform_RotatePoint it), and g_EyeInModelSpace, the origin through that inverse. When the byte Light_ModelSpaceEnabled (000ab6dc) is set it inverts the model transform the same way and moves each light on the list Light_ActiveList (000ab6b4) (count Light_ActiveCount (000ab6b0)) into the model's space with Light_TransformToModelSpace. The code of ES1DBSIM's Raster_SetModelTransform (0005c140), relocated operands aside.",
       "source": "ES1GO decompile at 00053ebc",
       "verified": {
         "bytes": "00053ebc+333",
@@ -2390,16 +2525,286 @@
       }
     },
     {
+      "address": "00054028",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_ModelToViewArray",
+      "description": "(dst, src, count) in stack order, callee-cleaned: ES2's Raster_ModelToViewArray (DBSIM 0048c48c): Transform_ApplyToPoint by g_ModelToView over count 12-byte points. No caller found by es2_xref. The code of ES1DBSIM's Raster_ModelToViewArray (0005c2ac), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00054028+57",
+        "sha1": "e96544d31eab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054064",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_PerspectiveScale",
+      "description": "(depth, length) in stack order, callee-cleaned. The code of ES1DBSIM's Raster_PerspectiveScale (0005c2e8), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00054064+46",
+        "sha1": "2cafde6dd2e4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00054094",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Raster_PerspectiveDivide",
-      "description": "(screenOut, viewPoint) in stack order, callee-cleaned: screenOut = {(x << s) / y, (z << s) / y} for the focal shift s at 000ab660, or {(x << 8) / k, (z << 8) / k} with k the int 000ab668 when s is 0 (the orthographic mode). The code of ES1DBSIM's Raster_PerspectiveDivide (0005c318), relocated operands aside.",
+      "description": "(screenOut, viewPoint) in stack order, callee-cleaned: screenOut = {(x << s) / y, (z << s) / y} for the focal shift s at Raster_FocalShift (000ab660), or {(x << 8) / k, (z << 8) / k} with k the int Raster_OrthoDivisor (000ab668) when s is 0 (the orthographic mode). The code of ES1DBSIM's Raster_PerspectiveDivide (0005c318), relocated operands aside.",
       "source": "ES1GO decompile at 00054094",
       "verified": {
         "bytes": "00054094+99",
         "sha1": "35b28cd0559f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000540f8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_PerspectiveDivideArray",
+      "description": "(screen, view, count) in stack order, callee-cleaned: ES2's Raster_PerspectiveDivideArray (DBSIM 0048c54c), the array form of Raster_PerspectiveDivide. Its orthographic loop (0005411b-00054142) advances neither pointer nor the count, so for a non-zero count it rewrites the first point forever, as ES2's does. No caller found by es2_xref. The code of ES1DBSIM's Raster_PerspectiveDivideArray (0005c37c), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "000540f8+147",
+        "sha1": "d921ffcf698a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005418c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_ProjectToScreen",
+      "description": "(out, point) in stack order, callee-cleaned: ES2's Raster_ProjectToScreen (DBSIM 0048c5c4): out = {x + Raster_ProjectionCentre.x, Raster_ProjectionCentre.y - y}; returns out. The code of ES1DBSIM's Raster_ProjectToScreen (0005c410), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "0005418c+40",
+        "sha1": "3d5c1cce47c3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000541b4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_ProjectToScreenArray",
+      "description": "(dst, src, count) in stack order, callee-cleaned: ES2's Raster_ProjectToScreenArray (DBSIM 0048c5e8), the array form of Raster_ProjectToScreen over 8-byte points. No caller found by es2_xref. The code of ES1DBSIM's Raster_ProjectToScreenArray (0005c438), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "000541b4+66",
+        "sha1": "1e9ce76d50b5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000541f8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPoly_FrontBackVisibilityTest",
+      "description": "(centre, normal) in stack order, callee-cleaned, both int16 triples. The code of ES1DBSIM's TSPoly_FrontBackVisibilityTest (0005c47c), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "000541f8+180",
+        "sha1": "0d394688e7c4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000542ac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FrontFacing",
+      "description": "(centre, normal) in stack order, callee-cleaned, an int32 and an int16 triple. The code of ES1DBSIM's Raster_FrontFacing (0005c530), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "000542ac+162",
+        "sha1": "2aacb7dbea94",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054350",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ProjectShapeVertices",
+      "description": "No arguments: ES2's Poly_ProjectShapeVertices (DBSIM 0048c848). With Raster_FocalShift 0 projects each unseen vertex of the current polygon from the int16 points at Poly_ShortPoints (Transform_ApplyToShortPoint by g_ModelToView, then over Raster_OrthoDivisor), copies a cached one, sets the ring's count and returns 0; otherwise returns Poly_ProjectShapeVerticesPerspective. The code of ES1DBSIM's Poly_ProjectShapeVertices (0005c5d4), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00054350+333",
+        "sha1": "484a6b1d756c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000544a0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ProjectIndexedVertices",
+      "description": "No arguments. The code of ES1DBSIM's Poly_ProjectIndexedVertices (0005c724), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "000544a0+662",
+        "sha1": "f71c5bf1c7ee",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054738",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ProjectViewVertices",
+      "description": "No arguments: ES2's Poly_ProjectViewVertices (DBSIM 0048cbd8): Poly_ProjectIndexedVertices for points already in view space, which also copies the polygon's points into Poly_ViewCache when one is behind the near plane. No caller found by es2_xref. The code of ES1DBSIM's Poly_ProjectViewVertices (0005c9bc), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00054738+656",
+        "sha1": "605743a8e853",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000549c8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ClipRingToNearPlane",
+      "description": "No arguments. The code of ES1DBSIM's Poly_ClipRingToNearPlane (0005cc4c), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "000549c8+451",
+        "sha1": "7173c593aedd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054b8c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ClipRingToNearPlaneWithUV",
+      "description": "(uvOut, uvIn) in stack order, callee-cleaned. The code of ES1DBSIM's Poly_ClipRingToNearPlaneWithUV (0005ce10), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00054b8c+601",
+        "sha1": "f3c87acac856",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054de8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ClipRingToNearPlaneWithShade",
+      "description": "(shadeOut, shadeIn) in stack order, callee-cleaned. The code of ES1DBSIM's Poly_ClipRingToNearPlaneWithShade (0005d06c), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00054de8+553",
+        "sha1": "95fe7961ea70",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005506c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PolyFill_FillThenOutline",
+      "description": "(reversed), callee-cleaned. The code of ES1DBSIM's PolyFill_FillThenOutline (0005d2f0), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "0005506c+199",
+        "sha1": "c5decea12b51",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005513c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PolyFill_FillThenOutline_Thunk",
+      "description": "(reversed), callee-cleaned: PolyFill_FillThenOutline(reversed). The code of ES1DBSIM's PolyFill_FillThenOutline_Thunk (0005d3c0), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "0005513c+15",
+        "sha1": "244af1be31dc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005514c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_SaveState",
+      "description": "(slot), callee-cleaned. The code of ES1DBSIM's Raster_SaveState (0005d3d0), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "0005514c+120",
+        "sha1": "b6a8a47df957",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000551c4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSContext_Assign",
+      "description": "(this, src) in stack order, callee-cleaned: copies src's position (12 bytes) and angles (6 bytes) into this, leaving the vtable at +0x12. Raster_SaveState and Raster_RestoreState call it. The code of ES1DBSIM's TSContext_Assign (0005d448), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "000551c4+39",
+        "sha1": "be2d03d28df9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000551ec",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_RestoreState",
+      "description": "(slot), callee-cleaned. The code of ES1DBSIM's Raster_RestoreState (0005d470), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "000551ec+242",
+        "sha1": "df3c2e3fb0b7",
         "scope": "body",
         "via": "decompile"
       }
@@ -2454,6 +2859,36 @@
       "verified": {
         "bytes": "00055584+867",
         "sha1": "485606bce720",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000558e7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_DrawPolygonReversed",
+      "description": "(count, points), C convention. The code of ES1DBSIM's Raster_DrawPolygonReversed (00068f43), relocated operands aside.",
+      "source": "Herculan/docs/retail/rendering/polygon-fill.md",
+      "verified": {
+        "bytes": "000558e7+153",
+        "sha1": "b4202a81db5b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00055980",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_DrawPolygonEitherWinding",
+      "description": "(count, points), C convention: ES2's Raster_DrawPolygonEitherWinding (DBSIM 004841af): for three or more points sums the signed area in 64 bits and hands a sum of zero or less to Raster_DrawPolygonReversed; anything else, and rings of one or two points, to Raster_DrawPolygonDispatch. Nothing for a count of 0. The code of ES1DBSIM's Raster_DrawPolygonEitherWinding (00068fdc), relocated operands aside.",
+      "source": "Herculan/docs/retail/rendering/polygon-fill.md",
+      "verified": {
+        "bytes": "00055980+122",
+        "sha1": "b1c002e193aa",
         "scope": "body",
         "via": "decompile"
       }
@@ -4094,6 +4529,21 @@
       }
     },
     {
+      "address": "00067014",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Poly_ProjectShapeVerticesPerspective",
+      "description": "No arguments: ES2's Poly_ProjectShapeVerticesPerspective (DBSIM 00491194): returns 0 for an empty polygon or a focal shift of 0; otherwise sets the ring's count to the vertex count and projects each unseen int16 vertex deeper than Raster_NearPlane (marked 2), marks any other 1, copies cached ones, and returns 1 when a vertex is behind. Poly_ProjectShapeVertices is its caller found by es2_xref. The code of ES1DBSIM's Poly_ProjectShapeVerticesPerspective (00075a28), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00067014+314",
+        "sha1": "f2a42776653d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00067150",
       "binary": "ES1GO",
       "type": "function",
@@ -4535,6 +4985,15 @@
       "source": "ES1GO decompile at 00001b6c and 00051c74"
     },
     {
+      "address": "000a0c24",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Raster_WorldToView",
+      "description": "The installed camera's world-to-view transform (0x20 bytes), built by Raster_InstallViewProjection; the byte at 000a0c20 is its first-use flag. ES2's DBSIM 006c6018. ES1DBSIM's Raster_WorldToView is at 000b5e04.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
       "address": "000a4480",
       "binary": "ES1GO",
       "type": "data",
@@ -4553,6 +5012,15 @@
       "source": "ES1GO decompile at 000a44a0"
     },
     {
+      "address": "000a44c0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Transform_Identity",
+      "description": "The identity transform Raster_SetModelTransform and Raster_SetViewTransform install for a null pointer. ES2's DBSIM 006c6080. ES1DBSIM's Transform_Identity is at 000b5eb4.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
       "address": "000a44e0",
       "binary": "ES1GO",
       "type": "data",
@@ -4560,6 +5028,132 @@
       "name": "g_EyeInModelSpace",
       "description": "The viewpoint in the current model's space (three ints): the origin through g_ViewToModel, written by Raster_SetModelTransform. ES1DBSIM's g_EyeInModelSpace is at 000b5ed4.",
       "source": "ES1GO decompile at 000a44e0"
+    },
+    {
+      "address": "000a44ec",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Raster_ProjectionCentre",
+      "description": "The projection centre, two int32: the camera's clip rect's top-left less its render context's +0x220 pair (Raster_InstallViewProjection). ES2's DBSIM 006c60b8. ES1DBSIM's Raster_ProjectionCentre is at 000b5ee0.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a44f4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Raster_ViewClipRect",
+      "description": "The installed camera's clip rect, four int32 copied from its render context's +0x210..+0x21c by Raster_InstallViewProjection. ES2's DBSIM 006c60c0. ES1DBSIM's Raster_ViewClipRect is at 000b5ee8.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a4508",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "PolyFill_LineColour",
+      "description": "The polygon renderers' line colour; PolyFill_Fill and PolyFill_FillThenOutline draw an outline in it when it differs from the brush colour. ES2's DBSIM 006c60d4. ES1DBSIM's PolyFill_LineColour is at 000b5efc.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a450c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "PolyFill_FillBrush",
+      "description": "The polygon renderers' fill brush: +0 the mode, +4 the colour (000a4510). ES1DBSIM's PolyFill_FillBrush is at 000b5f00.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a4d2c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Poly_VertexCount",
+      "description": "The current polygon's vertex count (uint16), the start of the polygon scratch block, whose fields keep ES2's offsets from DBSIM 006c6968. ES1DBSIM's Poly_VertexCount is at 000b6720.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a4d2e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Poly_IndexOffset",
+      "description": "The current polygon's offset into Poly_IndexList (uint16). ES2's DBSIM 006c696a. ES1DBSIM's Poly_IndexOffset is at 000b6722.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a4d30",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Poly_ShortPoints",
+      "description": "Pointer to the shape's int16 point triples, which Poly_ProjectShapeVertices projects. ES2's DBSIM 006c696c. ES1DBSIM's Poly_ShortPoints is at 000b6724.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a4d34",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Poly_IntPoints",
+      "description": "Pointer to the int32 point triples Poly_ProjectIndexedVertices and Poly_ProjectViewVertices project. ES2's DBSIM 006c6970. ES1DBSIM's Poly_IntPoints is at 000b6728.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a4d3a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Poly_IndexList",
+      "description": "Pointer to the vertex-index list, uint16 point numbers. ES2's DBSIM 006c6976. ES1DBSIM's Poly_IndexList is at 000b672e.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a4d42",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Poly_PointState",
+      "description": "One byte per point, 1000: 0 not yet seen, 1 behind the near plane, 2 projected. ES2's DBSIM 006c697e. ES1DBSIM's Poly_PointState is at 000b6736.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a512a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Poly_ViewCache",
+      "description": "1000 int32 {x, y, z} view-space points; the projectors store each vertex's transformed point here and the near-plane clips interpolate from it. ES1DBSIM's Poly_ViewCache is at 000b6b1e.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a800a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Poly_ScreenCache",
+      "description": "1000 int32 {x, y} screen points, each projected vertex's, copied for a point marked 2. ES1DBSIM's Poly_ScreenCache is at 000b99fe.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a9f4a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Poly_ScreenPoints",
+      "description": "The ring to fill: 32 int32 {x, y} screen points, count at Poly_ScreenCount. ES1DBSIM's Poly_ScreenPoints is at 000bb93e.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000aa04a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Poly_ScreenCount",
+      "description": "The ring's point count (uint16), set by the projectors and the near-plane clips. ES2's DBSIM 006cbc86. ES1DBSIM's Poly_ScreenCount is at 000bba3e.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
     },
     {
       "address": "000ab60a",
@@ -4580,13 +5174,76 @@
       "source": "ES1GO decompile at 000ab60e"
     },
     {
+      "address": "000ab658",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Raster_ViewTransformPtr",
+      "description": "Pointer to the installed view transform, written by Raster_SetViewTransform. ES2's DBSIM 006c6078. ES1DBSIM's Raster_ViewTransformPtr is at 000bdb4a.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
       "address": "000ab65c",
       "binary": "ES1GO",
       "type": "data",
       "confidence": "high",
       "name": "g_ModelTransformPtr",
-      "description": "Pointer to the installed model transform, the identity at 000a44c0 when null is installed; written by Raster_SetModelTransform. ES1DBSIM's g_ModelTransformPtr is at 000bdb4e.",
+      "description": "Pointer to the installed model transform, the identity at Transform_Identity (000a44c0) when null is installed; written by Raster_SetModelTransform. ES1DBSIM's g_ModelTransformPtr is at 000bdb4e.",
       "source": "ES1GO decompile at 000ab65c"
+    },
+    {
+      "address": "000ab660",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Raster_FocalShift",
+      "description": "The installed camera's focal shift (+0x1a): the projection is (x << shift) / depth, and 0 selects the orthographic form. ES2's DBSIM 006c60ac. ES1DBSIM's Raster_FocalShift is at 000bdb52.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000ab664",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Raster_NearPlane",
+      "description": "The installed camera's near-plane depth (+0x1e). ES2's DBSIM 006c60b0. ES1DBSIM's Raster_NearPlane is at 000bdb56.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000ab668",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Raster_OrthoDivisor",
+      "description": "The installed camera's orthographic divisor (+0x22), set only when the focal shift is 0. ES2's DBSIM 006c60b4. ES1DBSIM's Raster_OrthoDivisor is at 000bdb5a.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000ab6b0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Light_ActiveCount",
+      "description": "Number of entries in Light_ActiveList. ES2's DBSIM 006c612c. ES1DBSIM's Light_ActiveCount is at 000bdba2.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000ab6b4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Light_ActiveList",
+      "description": "The active light list, ten light pointers, which the shade functions walk. ES2's DBSIM 006c6130. ES1DBSIM's Light_ActiveList is at 000bdba6.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000ab6dc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Light_ModelSpaceEnabled",
+      "description": "Byte: when set, Raster_SetModelTransform moves each registered light into the model's space and the save and restore carry the lights' copies. ES2's DBSIM 006cbc88. ES1DBSIM's Light_ModelSpaceEnabled is at 000bdbce.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
     }
   ]
 }

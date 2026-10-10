@@ -41,7 +41,7 @@ The `malloc` the startup calls is the game's own, from `memory.cpp`, among the g
 
 ## Static construction and exit
 
-The linker gathers each object's static constructor and destructor pointers into the segments `XI` and `XC`, which meet at `000adc88`. `__cinit`'s constructor walk (`0005b692`) runs from there down to `000adbb4`, the last entry first; `__dodtors` (`0005b6ad`) runs from there up to `000adcd8`. Both skip zero entries.
+The linker gathers each object's static constructor and destructor pointers into the segments `XI` and `XC`, which meet at `000adc88`. `__cinit`'s constructor walk (`Runtime_RunStaticCtors`, `0005b692`) runs from there down to `000adbb4`, the last entry first; `__dodtors` (`0005b6ad`) runs from there up to `000adcd8`. Both skip zero entries.
 
 `exit` (`0005b6f4`) calls the functions `atexit` has registered, newest first, through `_atexitp` (`000bdabe`). Then, if `_hookexitp` (`000bdb46`) is set, it calls that with the exit status and returns; otherwise it runs `__dodtors`, calls `_fcloseallp` (`0009eb4c`, which ships pointing at `00073ec4`) if it is set, and ends the program through `__exit` (`0005b6c8`, `INT 21h` `AH=4Ch`).
 
