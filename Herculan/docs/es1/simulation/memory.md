@@ -38,11 +38,11 @@ Each pair shares one body. `Mem_AllocFromHeap` (`000015e4`) allocates from a hea
 - The heap object has no low mark: it is the four dwords `+0` to `+0xc`, and `Heap_Alloc` (`ES1GO 000010d9`) takes no argument for one.
 - `Mem_InitHeap` (`ES1GO 0000195f`) leaves 15,000 bytes of the extender's largest free block unused, where `ES1DBSIM`'s leaves 25,000.
 - The heap is a constructed object: `Heap_Ctor` (`ES1GO 00000ef4`) builds it, `Mem_ConstructHeap` (`ES1GO 00001b5c`) on the global one.
-- It has inspection functions `ES1DBSIM` does not: `Heap_IsAllocated`, `Heap_IsValidAllocation`, `Heap_LargestFree`, a walker over every block (`HeapIter_Init`, `HeapIter_Next`), and `Heap_DrawMap` (`ES1GO 000016b9`), which draws a rows-by-columns map of the heap, one character per cell by how much of its share is allocated: 7 for none, `0xb1` below half, `0xb2` below all, `0xdb` for all.
+- It has inspection functions `ES1DBSIM` does not: `Heap_IsAllocated`, `Heap_IsValidAllocation`, `Heap_LargestFree`, a walker over every block (`HeapIter_Init`, `HeapIter_Next`), and `Heap_DrawMap` (`ES1GO 000016b9`), which draws a rows-by-columns map of the heap on the monochrome monitor (`Mono_Printf`, `ES1GO 0004f904`), one character per cell by how much of its share is allocated: 7 for none, `0xb1` below half, `0xb2` below all, `0xdb` for all.
 - `Heap_IsValidAllocation` takes the heap's end as its base plus 8 times the dword at `+4`, where `Heap_Init` stores the size in bytes, so a block ending at the heap's true end does not pass that test.
 
 ## Open
 
 - **Open:** where `Mem_InitHeap` is called from and with what size, and when the program turns the heap off.
 - **Open:** what `X32_AllocMemory` stores at `00090024` (the extender's `EDX`) and what the circular list at `0009002c`, which `X32_LargestFreeBlock` searches, holds. Both belong to the startup module's memory handling ([compiler.md](../formats/compiler.md#startup)).
-- **Open:** what calls `Heap_DrawMap`, `Heap_IsValidAllocation` and `Mem_ConstructHeap` in `ES1GO`, what `0004f904` draws with, and what `Heap_Ctor`'s store of `000aa24a`'s own address into it marks.
+- **Open:** what calls `Heap_DrawMap`, `Heap_IsValidAllocation` and `Mem_ConstructHeap` in `ES1GO`, and what `Heap_Ctor`'s store of `000aa24a`'s own address into it marks.

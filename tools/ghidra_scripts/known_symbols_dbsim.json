@@ -31012,8 +31012,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SpanRegion_PixelCount",
-      "description": "(spans): sums x1 - x0 + 1 over a span list's rows into EAX. Its bytes end at MOV EAX,EDX with no POP, LEAVE or RET, so execution runs on into 00487e5e.",
-      "source": "DBSIM decompile and disassembly at 00487e3c"
+      "description": "(spans): sums x1 - x0 over a span list's rows into EAX: the INC after each add increments the x1 it loaded, not the sum, so a row counts one pixel fewer than Region_SaveSpans (00487e5e) copies. Its bytes end at MOV EAX,EDX with no POP, LEAVE or RET, so execution runs on into Region_SaveSpans.",
+      "source": "DBSIM decompile and disassembly at 00487e3c",
+      "verified": {
+        "bytes": "00487e3c+34",
+        "sha1": "feae469b021c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00487e5e",

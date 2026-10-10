@@ -172,7 +172,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Heap_DrawMap",
-      "description": "(heap, rows, columns, top, left), callee-cleaned (RET 0x14): divides the heap's +4 size into rows x columns equal shares and walks the global heap 0009a308's blocks with HeapIter_Init and HeapIter_Next, working out for each cell the share of its bytes in ABLK blocks. Each cell is passed to 0004f904 with left + column, top + row, 0007d7b0 and a character by that share: 7 for none, 0xb1 below 50%, 0xb2 below 100% and 0xdb for all.",
+      "description": "(heap, rows, columns, top, left), callee-cleaned (RET 0x14): divides the heap's +4 size into rows x columns equal shares and walks the global heap 0009a308's blocks with HeapIter_Init and HeapIter_Next, working out for each cell the share of its bytes in ABLK blocks. Each cell is passed to Mono_Printf (0004f904) with left + column, top + row, 0007d7b0 and a character by that share: 7 for none, 0xb1 below 50%, 0xb2 below 100% and 0xdb for all.",
       "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
       "verified": {
         "bytes": "000016b9+466",
@@ -387,6 +387,21 @@
       "verified": {
         "bytes": "00001b6c+614",
         "sha1": "9100e56f6d54",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043c81",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundObject_SetPosition",
+      "description": "(object, point) in stack order, callee-cleaned: sets the positional byte +0x15, copies the point's three ints to +0x25, +0x29 and +0x2d, and calls 0004360e(the manager +0x11, the channel byte +8). The code of ES1DBSIM's SoundObject_SetPosition (00050120), relocated operands aside.",
+      "source": "ES1GO decompile at 00043c81",
+      "verified": {
+        "bytes": "00043c81+45",
+        "sha1": "6b5fa5f08950",
         "scope": "body",
         "via": "decompile"
       }
@@ -899,6 +914,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0004dfc4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "fflush",
+      "description": "The runtime's fflush (stream), C convention: a null stream flushes every FILE with flushall and returns 0. Otherwise, for a buffered stream in write mode (flags +0xc & 0x26 == 2) with a buffer (+8) it writes the pending bytes (+0 less the buffer) to the handle +0x10, setting the error bit 0x20 on a short write, resets the pointer +0 to the buffer and the count +4 to the size +0x14; any other stream gets a count of 0. Returns -1 when the error bit is set, else 0. The code of ES1DBSIM's fflush (000753e8), relocated operands aside.",
+      "source": "ES1GO decompile at 0004dfc4",
+      "verified": {
+        "bytes": "0004dfc4+114",
+        "sha1": "99cfe4abbf74",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004e068",
       "binary": "ES1GO",
       "type": "function",
@@ -961,7 +991,7 @@
       "type": "function",
       "confidence": "high",
       "name": "vprintf",
-      "description": "Symantec C++ runtime `vprintf`, from `printf.c`: (format, args), C convention: formats through 0004e22a with fputc onto stdout (_iob's second FILE, 00083cf0), then calls 0004dfc4 on stdout when bit 0x40 of its flags word (+0xc) is set, and returns the formatter's result. The code of ES1DBSIM's vprintf (0005f726), relocated operands aside.",
+      "description": "Symantec C++ runtime `vprintf`, from `printf.c`: (format, args), C convention: formats through 0004e22a with fputc onto stdout (_iob's second FILE, 00083cf0), then calls fflush (0004dfc4) on stdout when bit 0x40 of its flags word (+0xc) is set, and returns the formatter's result. The code of ES1DBSIM's vprintf (0005f726), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification",
       "verified": {
         "bytes": "0004e186+59",
@@ -1127,6 +1157,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0004eed0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "remove",
+      "description": "The runtime's remove (path), C convention: INT 21h AH=41h, storing AX in errno on carry; returns 0, or -1 on failure. The code of ES1DBSIM's remove (00074aa4), relocated operands aside.",
+      "source": "ES1GO decompile at 0004eed0",
+      "verified": {
+        "bytes": "0004eed0+30",
+        "sha1": "3d8d55ce72d0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004ef16",
       "binary": "ES1GO",
       "type": "function",
@@ -1265,6 +1310,66 @@
       }
     },
     {
+      "address": "0004f83c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_WriteChar",
+      "description": "(ch, row, column) in stack order, callee-cleaned: writes ch with the attribute byte 000841c4 to the monochrome screen cell (row * 80 + column) while the bytes 000a0bdc and 000a0bdd share a set bit and row is 0-24. No reference found by es2_xref; the same statements as ES1DBSIM's Mono_WriteChar (00060db0) in different code.",
+      "source": "ES1GO decompile at 0004f83c",
+      "verified": {
+        "bytes": "0004f83c+88",
+        "sha1": "6b359d69279f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f894",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_WriteText",
+      "description": "(text, row, column) in stack order, callee-cleaned: writes a NUL-terminated string with the attribute byte 000841c4 to the monochrome screen from the cell (row * 80 + column), under Mono_WriteChar's gate. ES2's MonoDevice_WriteText goes through a device object; the same statements as ES1DBSIM's Mono_WriteText (00060e08) in different code.",
+      "source": "ES1GO decompile at 0004f894",
+      "verified": {
+        "bytes": "0004f894+109",
+        "sha1": "e1e16945e52e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f904",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_Printf",
+      "description": "(column, row, format, ...), C convention: vsprintf into a 256-byte buffer and Mono_WriteText(buffer, row, column), under Mono_WriteChar's gate. Heap_DrawMap prints its map with it. The code of ES1DBSIM's Mono_Printf (00060e78), relocated operands aside.",
+      "source": "ES1GO decompile at 0004f904",
+      "verified": {
+        "bytes": "0004f904+86",
+        "sha1": "6deb474df8f4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f95c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_PrintScreen",
+      "description": "(printer), callee-cleaned: under Mono_WriteChar's gate, opens LPT<printer digit> and writes the monochrome screen's 2000 cells to it: before each character the PCL escape ESC(s0B for attribute 7 or ESC(s7B (bold) otherwise, a NUL printed as a space, CR LF after every 80; each cell shows 0x0fdb while it is written and is put back with a NUL turned into a space. No reference found by es2_xref; the same statements as ES1DBSIM's Mono_PrintScreen (00060ed0) in different code.",
+      "source": "ES1GO decompile at 0004f95c",
+      "verified": {
+        "bytes": "0004f95c+306",
+        "sha1": "7b18405cd485",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000502c0",
       "binary": "ES1GO",
       "type": "function",
@@ -1275,6 +1380,141 @@
       "verified": {
         "bytes": "000502c0+147",
         "sha1": "a7307ab91b8f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050640",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_PixelCount",
+      "description": "(rect), C convention: (x1 - x0 + 1) * (y1 - y0 + 1) as an int64 in EDX:EAX. The code of ES1DBSIM's Rect_PixelCount (00066458), relocated operands aside.",
+      "source": "ES1GO decompile at 00050640",
+      "verified": {
+        "bytes": "00050640+24",
+        "sha1": "53d08ececef1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050658",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_SaveRect",
+      "description": "(region, buffer), C convention: wraps buffer in a stack bitmap header the size of the region's rect (translated by the drawing context's offset when 0008441c's +0x208 is set) and grabs the screen into it with 0005afa8(header, rect, 0). The code of ES1DBSIM's Region_SaveRect (00066470), relocated operands aside.",
+      "source": "ES1GO decompile at 00050658",
+      "verified": {
+        "bytes": "00050658+156",
+        "sha1": "76207dadc27b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000506f4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SpanRegion_PixelCount",
+      "description": "(spans), C convention: sums x1 - x0 over a span list's rows into EAX: the INC after each add increments the x1 it loaded, not the sum, so a row counts one pixel fewer than Region_SaveSpans copies. Its bytes end at MOV EAX,EDX with no LEAVE or RET, so execution runs on into Region_SaveSpans. The code of ES1DBSIM's SpanRegion_PixelCount (0006650c), relocated operands aside.",
+      "source": "ES1GO decompile at 000506f4",
+      "verified": {
+        "bytes": "000506f4+34",
+        "sha1": "feae469b021c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050716",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_SaveSpans",
+      "description": "(region, buffer), C convention: Region_Save for a type-2 region: copies each row of its span list from the screen into buffer through the raster routine 00086604 (buffer, row, x0, x1), advancing buffer by x1 - x0 + 1. When the drawing context's +0x208 is set it first translates the list into the scratch span buffer 00084495 points to, adding CX + ctx+0x210 - ctx+0x220 to the top row and DX + ctx+0x20c - ctx+0x21c to each x, with ECX and EDX as the caller left them. The code of ES1DBSIM's Region_SaveSpans (0006652e), relocated operands aside.",
+      "source": "ES1GO decompile at 00050716",
+      "verified": {
+        "bytes": "00050716+168",
+        "sha1": "e2d0e3e67d7a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000507be",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_Save",
+      "description": "(region, buffer), C convention: copies the screen pixels a region covers into buffer: Region_SaveRect for a type-0 region, Region_SaveSpans for a type-2 one (the region layout is under Region_Restore). The code of ES1DBSIM's Region_Save (000665d6), relocated operands aside.",
+      "source": "ES1GO decompile at 000507be",
+      "verified": {
+        "bytes": "000507be+51",
+        "sha1": "7af587f74081",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000507f1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_PixelCount",
+      "description": "(region), C convention: Rect_PixelCount of the rect at +4 for a type-0 region, SpanRegion_PixelCount of the span list +4 points to for type 2, else EAX as the type left it. The code of ES1DBSIM's Region_PixelCount (00066609), relocated operands aside.",
+      "source": "ES1GO decompile at 000507f1",
+      "verified": {
+        "bytes": "000507f1+51",
+        "sha1": "617ef46337fd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050824",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_RestoreRect",
+      "description": "(region, point, buffer), C convention: wraps buffer in a stack bitmap header the size of the region's rect (format 8, flags 0x10) and draws it at point with 0005ae18. The code of ES1DBSIM's Region_RestoreRect (00066354), relocated operands aside.",
+      "source": "ES1GO decompile at 00050824",
+      "verified": {
+        "bytes": "00050824+68",
+        "sha1": "535f85ee915c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050868",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_RestoreSpans",
+      "description": "(region, point, buffer), C convention: Region_Restore for a type-2 region: for each row of its span list draws x1 - x0 + 1 bytes of buffer at the row, offset by point (and by the drawing context's translation when 0008441c's +0x208 is set), through the raster routine 0008660c (buffer, row, x0, x1). ES2's DBSIM 00487fb0. The code of ES1DBSIM's Region_RestoreSpans (00066398), relocated operands aside.",
+      "source": "ES1GO decompile at 00050868",
+      "verified": {
+        "bytes": "00050868+135",
+        "sha1": "62e2e517a2a4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000508ef",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_Restore",
+      "description": "(region, point, buffer), C convention: puts saved pixels back: Region_RestoreRect for a type-0 region, Region_RestoreSpans for a type-2 one. A region is {int type; ...}: type 0 carries a rect {x0, y0, x1, y1} at +4, type 2 a pointer to a span list ({int16 top row, int16 row count, {x0, x1} per row}) at +4. The code of ES1DBSIM's Region_Restore (0006641f), relocated operands aside.",
+      "source": "ES1GO decompile at 000508ef",
+      "verified": {
+        "bytes": "000508ef+57",
+        "sha1": "3d724cddc431",
         "scope": "body",
         "via": "decompile"
       }
@@ -1850,6 +2090,186 @@
       }
     },
     {
+      "address": "000530f8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "fclose",
+      "description": "The runtime's fclose (stream), C convention: -1 for a null stream. For one open in any mode (flags +0xc & 0x83) it flushes it with fflush unless flag 4 (unbuffered) is set, and closes the handle +0x10; when the stream's temporary-file number at 000ab57e[(stream - _iob) / 0x18] is set it removes the file named by that number in decimal (ltoa, remove) and clears it; then File_FreeBuffer and a memset of the FILE's 0x18 bytes. Returns the or of fflush's and close's results. The code of ES1DBSIM's fclose (00060408), relocated operands aside.",
+      "source": "ES1GO decompile at 000530f8",
+      "verified": {
+        "bytes": "000530f8+163",
+        "sha1": "a7539631f21d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000534d0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSContext_Ctor",
+      "description": "(context), callee-cleaned: TSContext's constructor, allocating 0x16 bytes when context is null; the point at +0 and the int16 triple at +0xc are constructed inline, and the vtable 00087032 goes to +0x12. The code of ES1DBSIM's TSContext_Ctor (0005b754), relocated operands aside.",
+      "source": "ES1GO decompile at 000534d0",
+      "verified": {
+        "bytes": "000534d0+122",
+        "sha1": "25190bb24c06",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005354c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSContext_CtorWithFrame",
+      "description": "(context, orientation, position) in stack order, callee-cleaned: TSContext_Ctor's body, then copies the three position ints to +0 and the three orientation int16s to +0xc (one dword and two bytes). VSHELL's TSContext_CtorWithFrame (0045d9d0). The code of ES1DBSIM's TSContext_CtorWithFrame (0005b7d0), relocated operands aside.",
+      "source": "ES1GO decompile at 0005354c",
+      "verified": {
+        "bytes": "0005354c+165",
+        "sha1": "443a40eea630",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000535f4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSContext_Dtor",
+      "description": "(context, flags), callee-cleaned: TSContext's destructor, slot +4 of its vtable 00087032: stores that vtable at +0x12 and calls operator_delete when flags bit 0 is set; returns at once for a null context. The code of ES1DBSIM's TSContext_Dtor (0005b878), relocated operands aside.",
+      "source": "ES1GO decompile at 000535f4",
+      "verified": {
+        "bytes": "000535f4+40",
+        "sha1": "da67d7f34621",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005361c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_TSLight_SetIntensity",
+      "description": "(light, value) in stack order, callee-cleaned: stores value at +0x1a. Slot +8 of the light vtables 0007e2aa and 0007e2ca. The code of ES1DBSIM's maybe_TSLight_SetIntensity (0005b8a0), relocated operands aside.",
+      "source": "ES1GO decompile at 0005361c",
+      "verified": {
+        "bytes": "0005361c+18",
+        "sha1": "d05e728831ce",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053630",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_TransformToModelSpace",
+      "description": "(light, transform) in stack order, callee-cleaned: transforms the light's position +0 (Transform_ApplyToPoint) and its int16 direction +0xc (0006780c) by transform into the model-space copies at +0x1e and +0x2a. Raster_SetModelTransform runs it on each registered light. The code of ES1DBSIM's Light_TransformToModelSpace (0005b8b4), relocated operands aside.",
+      "source": "ES1GO decompile at 00053630",
+      "verified": {
+        "bytes": "00053630+101",
+        "sha1": "91a677a4ea66",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053698",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_TSOmniLight_SetIntensity",
+      "description": "(light, value) in stack order, callee-cleaned: stores value at +0x1a and value * the int +0x38 at +0x3c. No reference found by es2_xref. The code of ES1DBSIM's maybe_TSOmniLight_SetIntensity (0005b91c), relocated operands aside.",
+      "source": "ES1GO decompile at 00053698",
+      "verified": {
+        "bytes": "00053698+37",
+        "sha1": "a19149a5d084",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000536c0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSCamera_CtorDefault",
+      "description": "(camera), callee-cleaned: TSCamera's argument-less constructor, allocating 0x22 bytes when camera is null: TSContext_Ctor, then the vtable 00087042 at +0x12. VSHELL's TSCamera_CtorDefault (0045dae4). The code of ES1DBSIM's TSCamera_CtorDefault (0005b944), relocated operands aside.",
+      "source": "ES1GO decompile at 000536c0",
+      "verified": {
+        "bytes": "000536c0+44",
+        "sha1": "4976edeab0e1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000536ec",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSCamera_Dtor",
+      "description": "(camera, flags), callee-cleaned: slot +4 of TSCamera's vtable 00087042: stores that vtable, runs TSContext_Dtor(camera, 0) and calls operator_delete when flags bit 0 is set; returns at once for a null camera. The code of ES1DBSIM's TSCamera_Dtor (0005b970), relocated operands aside.",
+      "source": "ES1GO decompile at 000536ec",
+      "verified": {
+        "bytes": "000536ec+43",
+        "sha1": "70e37a21170f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053718",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSCamera_Ctor",
+      "description": "(camera, orientation, position, c, b, a) in stack order, callee-cleaned: allocates 0x22 bytes when camera is null, runs TSContext_CtorWithFrame(camera, orientation, position), installs the vtable 00087042 and stores a at +0x16, b at +0x1a and c at +0x1e. VSHELL's TSCamera_Ctor (0045db04). The code of ES1DBSIM's TSCamera_Ctor (0005b99c), relocated operands aside.",
+      "source": "ES1GO decompile at 00053718",
+      "verified": {
+        "bytes": "00053718+68",
+        "sha1": "969b78c82b0e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005375c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSOrthoCamera_Ctor",
+      "description": "(camera, orientation, position, d, c, b, a) in stack order, callee-cleaned: allocates 0x26 bytes when camera is null, TSCamera_Ctor(camera, orientation, position, c, b, a), its own vtable 00087052 and d at +0x22. VSHELL's TSOrthoCamera_Ctor (0045db40). The code of ES1DBSIM's TSOrthoCamera_Ctor (0005b9e0), relocated operands aside.",
+      "source": "ES1GO decompile at 0005375c",
+      "verified": {
+        "bytes": "0005375c+65",
+        "sha1": "4aa463742d9a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000537a0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSOrthoCamera_Dtor",
+      "description": "(camera, flags), callee-cleaned: slot +4 of TSOrthoCamera's vtable 00087052: stores that vtable and then TSCamera's 00087042, runs TSContext_Dtor(camera, 0) and calls operator_delete when flags bit 0 is set; returns at once for a null camera. VSHELL's TSOrthoCamera_Dtor (0045f9a6). The code of ES1DBSIM's TSOrthoCamera_Dtor (0005ba24), relocated operands aside.",
+      "source": "ES1GO decompile at 000537a0",
+      "verified": {
+        "bytes": "000537a0+50",
+        "sha1": "c8c172a73c87",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000537d4",
       "binary": "ES1GO",
       "type": "function",
@@ -1860,6 +2280,36 @@
       "verified": {
         "bytes": "000537d4+39",
         "sha1": "2d8db71bd7cc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053ebc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_SetModelTransform",
+      "description": "(transform), callee-cleaned: installs a transform as the renderer's model transform (null means the identity at 000a44c0), storing the pointer in g_ModelTransformPtr. Builds g_ModelToView = Transform_Concat(model, *000ab658), its inverse g_ViewToModel (copy, Transform_TransposeRotation, negate the translation, Transform_RotatePoint it), and g_EyeInModelSpace, the origin through that inverse. When the byte 000ab6dc is set it inverts the model transform the same way and moves each light on the list 000ab6b4 (count 000ab6b0) into the model's space with Light_TransformToModelSpace. The code of ES1DBSIM's Raster_SetModelTransform (0005c140), relocated operands aside.",
+      "source": "ES1GO decompile at 00053ebc",
+      "verified": {
+        "bytes": "00053ebc+333",
+        "sha1": "6d2ad7a08cab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054094",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_PerspectiveDivide",
+      "description": "(screenOut, viewPoint) in stack order, callee-cleaned: screenOut = {(x << s) / y, (z << s) / y} for the focal shift s at 000ab660, or {(x << 8) / k, (z << 8) / k} with k the int 000ab668 when s is 0 (the orthographic mode). The code of ES1DBSIM's Raster_PerspectiveDivide (0005c318), relocated operands aside.",
+      "source": "ES1GO decompile at 00054094",
+      "verified": {
+        "bytes": "00054094+99",
+        "sha1": "35b28cd0559f",
         "scope": "body",
         "via": "decompile"
       }
@@ -1902,6 +2352,36 @@
       "name": "ltoa",
       "description": "Symantec C++ runtime `ltoa`, from `itoa.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 89 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00055584",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_DrawPolygonDispatch",
+      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (0008441c) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through 000559fc, two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 00085da9 for top byte 4, nothing otherwise), mode 1 goes to 0006a05c, modes 5 and 7 to the routine at 00086634, mode 6 fills through slot 1 (000865b4) with the brush's second field. The fills scan-convert with 00067954 and clip per the clip mode +0x204: 0 none, 1 through 000692e4 against the rect at +0x20c, otherwise against each region of the block's list (rects through 000692e4, span regions through 0004fc50). The code of ES1DBSIM's Raster_DrawPolygonDispatch (00068be0), relocated operands aside.",
+      "source": "ES1GO decompile at 00055584",
+      "verified": {
+        "bytes": "00055584+867",
+        "sha1": "485606bce720",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00056354",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_FastMagnitude2D",
+      "description": "(dx, dy), C convention: max(|dx|, |dy|) + min(|dx|, |dy|) / 2. The code of ES1DBSIM's Math_FastMagnitude2D (00063234), relocated operands aside.",
+      "source": "ES1GO decompile at 00056354",
+      "verified": {
+        "bytes": "00056354+38",
+        "sha1": "dbb2156ee2bc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0005637a",
@@ -3338,6 +3818,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00065318",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "flushall",
+      "description": "The runtime's flushall, C convention: fflush on every FILE of _iob up to 00083fd8 that is open (flags +0xc & 0x83), returning how many it flushed. The code of ES1DBSIM's flushall (00082f60), relocated operands aside.",
+      "source": "ES1GO decompile at 00065318",
+      "verified": {
+        "bytes": "00065318+43",
+        "sha1": "9b1527e677ee",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006536d",
       "binary": "ES1GO",
       "type": "function",
@@ -3345,6 +3840,21 @@
       "name": "setbuf",
       "description": "Symantec C++ runtime `setbuf`, from `flush.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 40 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006541a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "File_FreeBuffer",
+      "description": "(stream), callee-cleaned: when the stream owns its buffer (flags +0xc bit 3) frees the buffer +8 if set and clears the bit; then zeroes the pointer +0, the buffer +8, the size +0x14 and the count +4. fclose calls it. The code of ES1DBSIM's File_FreeBuffer (00075fa2), relocated operands aside.",
+      "source": "ES1GO decompile at 0006541a",
+      "verified": {
+        "bytes": "0006541a+51",
+        "sha1": "341913e5e9de",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00065654",
@@ -3419,6 +3929,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00066fe5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_TransposeRotation",
+      "description": "(transform), C convention: transposes the rotation in place, exchanging the int16s +2 and +4, +8 and +0xc, +0xa and +0xe; the rank byte is left alone. The code of ES1DBSIM's Transform_TransposeRotation (00063e05), relocated operands aside.",
+      "source": "ES1GO decompile at 00066fe5",
+      "verified": {
+        "bytes": "00066fe5+45",
+        "sha1": "4e2ac0e82130",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00067150",
       "binary": "ES1GO",
       "type": "function",
@@ -3429,6 +3954,66 @@
       "verified": {
         "bytes": "00067150+304",
         "sha1": "9b96ee9be093",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00067280",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_Concat",
+      "description": "(a, b, out), C convention: composes two 32-byte transforms (nine Q14 int16 matrix entries, the rank byte +0x12, int translations +0x14, +0x18, +0x1c): out's rotation is a's times b's, each entry rounded (+0x2000 >> 14), and out's translation is a's rotated by b's rotation (64-bit, rounded) plus b's. A rank of 0 or less copies the other's rotation; two rank-1 operands (2x2) give a rank-1 result with +0x10 = 0x4000; anything else is rank 2. The code of ES1DBSIM's Transform_Concat (0005ea08), relocated operands aside.",
+      "source": "ES1GO decompile at 00067280",
+      "verified": {
+        "bytes": "00067280+1387",
+        "sha1": "c278f0e36d23",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006b5b0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Q16Divide",
+      "description": "(a, b), C convention: Q16 divide rounded to nearest: (|a| << 16) / |b| by DIV, plus 1 when the remainder is at least half of |b| rounded up, then negated when the signs differ. The code of ES1DBSIM's Math_Q16Divide (00073534), relocated operands aside.",
+      "source": "ES1GO decompile at 0006b5b0",
+      "verified": {
+        "bytes": "0006b5b0+64",
+        "sha1": "581dc5cbca0d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006b5f0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Q16Multiply",
+      "description": "(a, b), C convention: Q16 multiply rounded to nearest: (int64)a * b + 0x8000, shifted right 16. es2_xref finds 20 calls. The code of ES1DBSIM's Math_Q16Multiply (00073574), relocated operands aside.",
+      "source": "ES1GO decompile at 0006b5f0",
+      "verified": {
+        "bytes": "0006b5f0+24",
+        "sha1": "108d371cb4a6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006b608",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Q16Multiply2",
+      "description": "(a, b), C convention: Math_Q16Multiply's body. es2_xref finds three calls, all from 00059eb0. The code of ES1DBSIM's Math_Q16Multiply2 (0007358c), relocated operands aside.",
+      "source": "ES1GO decompile at 0006b608",
+      "verified": {
+        "bytes": "0006b608+24",
+        "sha1": "108d371cb4a6",
         "scope": "body",
         "via": "decompile"
       }
@@ -3671,6 +4256,66 @@
       }
     },
     {
+      "address": "00077f33",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Emu8000_WriteWord",
+      "description": "(value, register) in stack order, callee-cleaned: writes a word to a Sound Blaster AWE32 EMU8000 register with interrupts off (restored only when they were on). The register code's bits 0-4 (channel) and bits 12-14 (moved to bits 5-7) go to the pointer port, the Data0 port 000993fa + 0x802; the value goes to Data0 + (code & 0xc00), plus 2 when bit 9 is set. 00077316 sets Data0 to the base it is given, adding 0x400 to one below 0x300 (0x220 becomes 0x620). The code of ES1DBSIM's Emu8000_WriteWord (00085133), relocated operands aside.",
+      "source": "ES1GO decompile at 00077f33",
+      "verified": {
+        "bytes": "00077f33+106",
+        "sha1": "b7f29318f54e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00077fa0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Emu8000_ReadWord",
+      "description": "(register), callee-cleaned: Emu8000_WriteWord's port selection, reading the word with IN instead. The code of ES1DBSIM's Emu8000_ReadWord (000851a0), relocated operands aside.",
+      "source": "ES1GO decompile at 00077fa0",
+      "verified": {
+        "bytes": "00077fa0+110",
+        "sha1": "e5fe4c48065e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00078010",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Emu8000_WriteDword",
+      "description": "(value, register) in stack order, callee-cleaned: Emu8000_WriteWord for a 32-bit register: the low word to the selected data port and the high word to that port + 2. The code of ES1DBSIM's Emu8000_WriteDword (00085210), relocated operands aside.",
+      "source": "ES1GO decompile at 00078010",
+      "verified": {
+        "bytes": "00078010+129",
+        "sha1": "c7fcc6123fbd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00078091",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Emu8000_ReadDword",
+      "description": "(register), callee-cleaned: Emu8000_ReadWord for a 32-bit register: the low word from the selected data port, the high word from that port + 2. The code of ES1DBSIM's Emu8000_ReadDword (00085291), relocated operands aside.",
+      "source": "ES1GO decompile at 00078091",
+      "verified": {
+        "bytes": "00078091+136",
+        "sha1": "9eaa86eb6381",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0007c2d8",
       "binary": "ES1GO",
       "type": "function",
@@ -3725,6 +4370,33 @@
       "source": "ES1GO decompile at 00001b6c and 00051c74"
     },
     {
+      "address": "000a4480",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ModelToView",
+      "description": "The current model-to-view transform (0x20 bytes), built by Raster_SetModelTransform. ES1DBSIM's g_ModelToView is at 000b5e74.",
+      "source": "ES1GO decompile at 000a4480"
+    },
+    {
+      "address": "000a44a0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ViewToModel",
+      "description": "The inverse of g_ModelToView, built by Raster_SetModelTransform. ES1DBSIM's g_ViewToModel is at 000b5e94.",
+      "source": "ES1GO decompile at 000a44a0"
+    },
+    {
+      "address": "000a44e0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_EyeInModelSpace",
+      "description": "The viewpoint in the current model's space (three ints): the origin through g_ViewToModel, written by Raster_SetModelTransform. ES1DBSIM's g_EyeInModelSpace is at 000b5ed4.",
+      "source": "ES1GO decompile at 000a44e0"
+    },
+    {
       "address": "000ab60a",
       "binary": "ES1GO",
       "type": "data",
@@ -3741,6 +4413,15 @@
       "name": "Bitmap_UnpackScratch",
       "description": "The buffer a packed bitmap is unpacked into for drawing: Bitmap_Blit puts it in the bitmap's data pointer +0xe for the blit and deletes it afterwards unless Bitmap_UseCallerScratch is set. ES1DBSIM's Bitmap_UnpackScratch is at 000bdbe2.",
       "source": "ES1GO decompile at 000ab60e"
+    },
+    {
+      "address": "000ab65c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ModelTransformPtr",
+      "description": "Pointer to the installed model transform, the identity at 000a44c0 when null is installed; written by Raster_SetModelTransform. ES1DBSIM's g_ModelTransformPtr is at 000bdb4e.",
+      "source": "ES1GO decompile at 000ab65c"
     }
   ]
 }

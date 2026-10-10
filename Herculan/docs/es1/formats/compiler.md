@@ -64,25 +64,25 @@ Of the 156 game functions in `ES1DBSIM` that return with a plain `ret`, 27 read 
 
 ## Constructors and destructors
 
-A constructor takes `this` and returns it in `EAX`. When `this` is null it calls `operator new` (`000015a4`, which takes the size and removes it) itself, and returns null if that fails. The code of each subobject constructor it inlines repeats the test with that subobject's own size: `0005b754`, for a `0x16`-byte class, tests and allocates at sizes `0x16`, `0xc`, 8, 6 and 4.
+A constructor takes `this` and returns it in `EAX`. When `this` is null it calls `operator new` (`000015a4`, which takes the size and removes it) itself, and returns null if that fails. The code of each subobject constructor it inlines repeats the test with that subobject's own size: `TSContext_Ctor` (`0005b754`), for the `0x16`-byte `TSContext`, tests and allocates at sizes `0x16`, `0xc`, 8, 6 and 4.
 
 An array of objects goes through the runtime's `__vec_new` (`00061038`), which allocates count × size plus 4 bytes when it is given no memory, stores the count in the first dword, runs the constructor on each element and returns the address after the count; `__vec_ctor` (`000610cb`) runs the constructor over memory it is given. 6.1's library declares both `(p, size, count, ctor)` and mangles them as C functions; ES1's remove their own arguments.
 
-A destructor takes `this` and a flags word. It returns at once when `this` is null; otherwise it stores its own class's vptr, calls its base's destructor with flags 0, and calls `operator delete` (`000015f8`) on `this` when bit 0 of the flags is set. `0005b970` calls its base's destructor `0005b878` that way.
+A destructor takes `this` and a flags word. It returns at once when `this` is null; otherwise it stores its own class's vptr, calls its base's destructor with flags 0, and calls `operator delete` (`000015f8`) on `this` when bit 0 of the flags is set. `TSCamera_Dtor` (`0005b970`) calls its base's destructor `TSContext_Dtor` (`0005b878`) that way.
 
 ## Object layout
 
-Members are byte-packed. The class `0005b754` builds is `0x16` bytes: a `0xc`-byte subobject, a 6-byte subobject at `+0xc` copied as one dword and two bytes (`0005b85c`), and the vptr at `+0x12`, which is not a multiple of 4.
+Members are byte-packed. `TSContext` is `0x16` bytes: a `0xc`-byte point, a 6-byte `int16` triple at `+0xc` that `TSContext_CtorWithFrame` copies as one dword and two bytes (`0005b85c`), and the vptr at `+0x12`, which is not a multiple of 4.
 
 The vptr follows the subobjects' data rather than leading the object. Across `ES1DBSIM`, the stores of a vtable address into an object use 565 times offset 0, 140 times `+2`, 52 times `+0x1c` and 39 times `+0x12`, and one class family keeps it at `+0x87` (`0004b70f`, vtables `00095756`–`00095796`).
 
 ## Vtables
 
-A vtable's first dword is 0 and its slots follow from `+4`. Of the 426 vtable addresses `ES1DBSIM`'s code stores into objects, 414 hold 0 at `+0`; all 218 in `ES1GO` do. Virtual calls index the slots from `+4` (`call [reg+4]`, `[reg+8]`, `[reg+0xc]`, …). Vtables sit at any byte address: `0005b754`'s class uses `000973fe`.
+A vtable's first dword is 0 and its slots follow from `+4`. Of the 426 vtable addresses `ES1DBSIM`'s code stores into objects, 414 hold 0 at `+0`; all 218 in `ES1GO` do. Virtual calls index the slots from `+4` (`call [reg+4]`, `[reg+8]`, `[reg+0xc]`, …). Vtables sit at any byte address: `TSContext` uses `000973fe`.
 
 A slot can hold 0. The vtables `000973fe` and `0009740e` each hold their destructor at `+4`, followed by 8 zero bytes before the next vtable.
 
-A slot can point at the `0x90` padding before a function's prologue rather than at the prologue: `000973fe`'s destructor slot holds `0005b875`, three bytes before the destructor's `push ebp` at `0005b878`. Walking each of `ES1DBSIM`'s vtables up to its first zero slot, 1,220 slots point at a prologue and 534 at a run of 1–3 `0x90` bytes before one. Direct calls do the same: a scan for `E8` call bytes finds 449 that reach a `0x90` run before a prologue, and 78 functions are called both ways (`operator new` at `000015a4` from `00000d59` by way of `000015a3`, and at `000015a4` from `0000187e`). The padding falls through to the prologue, so both addresses are entries of the same function.
+A slot can point at the `0x90` padding before a function's prologue rather than at the prologue: `000973fe`'s destructor slot holds `0005b875`, three bytes before `TSContext_Dtor`'s `push ebp` at `0005b878`. Walking each of `ES1DBSIM`'s vtables up to its first zero slot, 1,220 slots point at a prologue and 534 at a run of 1–3 `0x90` bytes before one. Direct calls do the same: a scan for `E8` call bytes finds 449 that reach a `0x90` run before a prologue, and 78 functions are called both ways (`operator new` at `000015a4` from `00000d59` by way of `000015a3`, and at `000015a4` from `0000187e`). The padding falls through to the prologue, so both addresses are entries of the same function.
 
 ## Libraries against game code
 
