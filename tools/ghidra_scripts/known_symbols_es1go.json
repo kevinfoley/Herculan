@@ -377,6 +377,66 @@
       }
     },
     {
+      "address": "0004ca58",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Volume_Ctor",
+      "description": "Volume constructor, callee-cleaned (this): allocates 0x30 bytes through operator_new when this is null (0 if that fails), then clears the file stream +0, the buffered stream +4 and the arrays +0x24, +0x28 and +0x2c. The class stores no vptr; the same statements as ES1DBSIM's Volume_Ctor (00055d20) in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
+      "verified": {
+        "bytes": "0004ca58+59",
+        "sha1": "a67ead84a446",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004ca93",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Volume_Dtor",
+      "description": "Volume destructor (this, flags): returns at once for a null this; otherwise operator_delete on each of the arrays +0x24, +0x28 and +0x2c that is set, deletes the buffered stream +4 and then the file stream +0 through their slot +4 with flags 3, and operator_delete on this when bit 0 of the flags is set; the same statements as ES1DBSIM's Volume_Dtor (00055d50) in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
+      "verified": {
+        "bytes": "0004ca93+137",
+        "sha1": "3bf0b6cfce8e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004cb1c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Volume_LoadVolume",
+      "description": "(bufferSize, mask, path) in stack order, callee-cleaned: opens path with FileRStream_Ctor and reads the 3-byte signature, which must equal 'VOL' (0008b044), a revision byte it ignores and the flags dword; when the flags share a bit with mask, wraps the file in BuffRStream_Ctor with a buffer of bufferSize bytes, 0x80 when smaller, and builds the volume with Volume_Ctor: file stream +0, buffered stream +4, path copied to +8, flags +0x20, then from the buffered stream the byte +0x1c, the directory count +0x1d, the directory-name block (word size, into +0x28, with +0x24 pointing at each name), the entry count +0x1e and the 0x12-byte entries (dword size, into +0x2c). Returns the volume, or 0 after Volume_Dtor(volume, 3) when the buffered stream's status is nonzero. A file that does not open, a wrong signature or flags sharing no bit with mask delete the file stream and return 0; the same statements as ES1DBSIM's Volume_LoadVolume (00055dc8) in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
+      "verified": {
+        "bytes": "0004cb1c+761",
+        "sha1": "d1af7f3c3d3a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004ce15",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Volume_FindEntry",
+      "description": "(volume, entry, path) in stack order, callee-cleaned: Path_Split's path into the static buffers 000ab72e (drive), 000ab732 (dir), 000ab774 (name) and 000ab77e (ext); when drive and dir are not empty, finds them among the directory names (+0x24, count +0x1d) with stricmp and returns 0 when none matches; then finds the first 0x12-byte entry (+0x2c, count +0x1e) whose directory index (+0xd) is that directory, or 0xff for none, and whose name equals name and ext with stricmp. On a hit it seeks the buffered stream +4 to the entry's offset (+0xe) through its slot +0xc, reads the entry's 9-byte prefix through its slot +0x1c, and fills entry: dword [0] the buffered stream, [2] and [4] the offset + 9, [5] the prefix's type byte and [6] its size dword; returns 1. Returns 0 when no entry matches; the same statements as ES1DBSIM's Volume_FindEntry (00055ff4) in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
+      "verified": {
+        "bytes": "0004ce15+367",
+        "sha1": "9248dffe3515",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004cf84",
       "binary": "ES1GO",
       "type": "function",
@@ -457,7 +517,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_Close",
-      "description": "(stream): closes the handle at +8 when the stream owns it (+0x26) and it is not -1, returning 0 with status 3 when close fails; passes the RLE filter +0x27 to 00064560 and the LZH filter +0x2b to 00065000 when set; clears +0xa, +0xe and +0x16, sets the handle to -1 and status 5, and returns 1; the same statements as ES1DBSIM's VolRStream_Close (000568d0) in different code.",
+      "description": "(stream): closes the handle at +8 when the stream owns it (+0x26) and it is not -1, returning 0 with status 3 when close fails; passes the RLE filter +0x27 to RLERStream_Close (00064560) and the LZH filter +0x2b to LZHRStream_Close (00065000) when set; clears +0xa, +0xe and +0x16, sets the handle to -1 and status 5, and returns 1; the same statements as ES1DBSIM's VolRStream_Close (000568d0) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "0004d18e+138",
@@ -472,7 +532,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_Open",
-      "description": "(stream, path): VolRStream_Close, clears +0xa, +0xe and +0x16, then open(path, 0) into the handle at +8. When that fails it looks the path up in the volume group 00083c04 through 0004dd96, which fills the entry fields from +0xa; with no group or no entry it sets status 1 and returns 0. By the entry's compression type at +0x1e it reads through: 2, the volume's stream itself (+0xe = +0xa); 7, the RLE filter at +0x27 (made by 00064460 on first use and attached by 0006452c); 9, the LZH filter at +0x2b (00064ec0, 00064fa4). Then status 0 and +0x26 = 1, also for a volume entry, and returns 1; the same statements as ES1DBSIM's VolRStream_Open (00056944) in different code.",
+      "description": "(stream, path): VolRStream_Close, clears +0xa, +0xe and +0x16, then open(path, 0) into the handle at +8. When that fails it looks the path up in the volume group 00083c04 through 0004dd96, which fills the entry fields from +0xa; with no group or no entry it sets status 1 and returns 0. By the entry's compression type at +0x1e it reads through: 2, the volume's stream itself (+0xe = +0xa); 7, the RLE filter at +0x27 (made by RLERStream_Ctor (00064460) on first use and attached by RLERStream_Open (0006452c)); 9, the LZH filter at +0x2b (LZHRStream_Ctor (00064ec0), LZHRStream_Open (00064fa4)). Then status 0 and +0x26 = 1, also for a volume entry, and returns 1; the same statements as ES1DBSIM's VolRStream_Open (00056944) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "0004d218+285",
@@ -562,7 +622,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_SetPosition",
-      "description": "VolRStream vtable slot +0xc (stream, position): a status of 2 is cleared first, and any other nonzero status returns 0. A file handle seeks with lseek(h, position, SEEK_SET), VolRStream_SetIoError on -1. An open entry stores the position at +0x16 and at +0x1a the absolute offset +0x12 + position, or, when the position is not below the size +0x22, the size itself with status 2; type 2 seeks the volume stream there, and types 7 and 9 reset their filter (00064560, 00065000), seek the volume stream to the entry's start, re-attach the filter (0006452c, 00064fa4) and seek the filter to the position. Returns 1 otherwise; the same statements as ES1DBSIM's VolRStream_SetPosition (00056b4c) in different code.",
+      "description": "VolRStream vtable slot +0xc (stream, position): a status of 2 is cleared first, and any other nonzero status returns 0. A file handle seeks with lseek(h, position, SEEK_SET), VolRStream_SetIoError on -1. An open entry stores the position at +0x16 and at +0x1a the absolute offset +0x12 + position, or, when the position is not below the size +0x22, the size itself with status 2; type 2 seeks the volume stream there, and types 7 and 9 reset their filter (RLERStream_Close (00064560), LZHRStream_Close (00065000)), seek the volume stream to the entry's start, re-attach the filter (RLERStream_Open (0006452c), LZHRStream_Open (00064fa4)) and seek the filter to the position. Returns 1 otherwise; the same statements as ES1DBSIM's VolRStream_SetPosition (00056b4c) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "0004d45e+417",
@@ -667,7 +727,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolumeGroup_Dtor",
-      "description": "VolumeGroup destructor (this, flags): returns at once for a null this; otherwise 0004ca93(volume, 3) on each of the count (+0x28) volume pointers, and operator_delete when bit 0 of the flags is set. The class stores no vptr. ES1DBSIM's VolumeGroup_Dtor (000561d8), the same statements in different code.",
+      "description": "VolumeGroup destructor (this, flags): returns at once for a null this; otherwise Volume_Dtor (0004ca93)(volume, 3) on each of the count (+0x28) volume pointers, and operator_delete when bit 0 of the flags is set. The class stores no vptr. ES1DBSIM's VolumeGroup_Dtor (000561d8), the same statements in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
       "verified": {
         "bytes": "0004d89a+87",
@@ -742,7 +802,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolumeGroup_RemoveVolume",
-      "description": "(group, index): 0004ca93(volume, 3) on the volume at index, shifts the later pointers down one while they are set, decrements the count byte +0x28 and clears the freed last slot. ES1DBSIM's VolumeGroup_RemoveVolume (00056528), the same statements in different code.",
+      "description": "(group, index): Volume_Dtor (0004ca93)(volume, 3) on the volume at index, shifts the later pointers down one while they are set, decrements the count byte +0x28 and clears the freed last slot. ES1DBSIM's VolumeGroup_RemoveVolume (00056528), the same statements in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
       "verified": {
         "bytes": "0004dbe5+118",
@@ -757,7 +817,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolumeGroup_AddVolume",
-      "description": "(group, mask, path) in stack order: 0004cb1c(VolumeGroup_BufferSize, mask, path) in stack order, and when that returns a volume, inserts it so the list stays in descending order of the byte at volume +0x1c, then increments the count byte +0x28. It does not test the count. ES1DBSIM's VolumeGroup_AddVolume (000565a4), the same statements in different code.",
+      "description": "(group, mask, path) in stack order: Volume_LoadVolume (0004cb1c)(VolumeGroup_BufferSize, mask, path) in stack order, and when that returns a volume, inserts it so the list stays in descending order of the byte at volume +0x1c, then increments the count byte +0x28. It does not test the count. ES1DBSIM's VolumeGroup_AddVolume (000565a4), the same statements in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
       "verified": {
         "bytes": "0004dc5b+156",
@@ -787,7 +847,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolumeGroup_FindEntry",
-      "description": "(group, entry, path) in stack order: 0004ce15(volume, entry, path) on each volume in order (count byte +0x28), returning 1 at the first that answers nonzero, else 0. ES1DBSIM's VolumeGroup_FindEntry (000566b8), the same statements in different code.",
+      "description": "(group, entry, path) in stack order: Volume_FindEntry (0004ce15)(volume, entry, path) on each volume in order (count byte +0x28), returning 1 at the first that answers nonzero, else 0. ES1DBSIM's VolumeGroup_FindEntry (000566b8), the same statements in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
       "verified": {
         "bytes": "0004dd96+78",
@@ -2471,6 +2531,201 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00064460",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_Ctor",
+      "description": "RLERStream() constructor, callee-cleaned (this): allocates 0x92 bytes through operator_new when this is null (0 if that fails), Stream_BaseCtor, the vtable 0008b00a at +4, RLERStream_Init, and status 6 (no source). The code of ES1DBSIM's RLERStream_Ctor (00074f9c), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00064460+59",
+        "sha1": "33e7e99d8f0b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006449c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_Dtor",
+      "description": "RLERStream destructor (this, flags), vtable slot +4: returns at once for a null this; otherwise restores the vtable 0008b00a, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set. The code of ES1DBSIM's RLERStream_Dtor (00074fd8), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006449c+43",
+        "sha1": "da7a317f9aa5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000644c8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_CtorOnSource",
+      "description": "RLERStream(source) constructor, callee-cleaned: RLERStream_Ctor's allocation, Stream_BaseCtor, vtable and RLERStream_Init, then RLERStream_Open(this, source). The code of ES1DBSIM's RLERStream_CtorOnSource (00075004), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "000644c8+62",
+        "sha1": "e32676ec143a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064508",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_Init",
+      "description": "(stream): clears the source pointer +8, the state bytes +0xc, +0xd and +0xe and the decoded count +0x8e. The code of ES1DBSIM's RLERStream_Init (00075044), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00064508+36",
+        "sha1": "7746a4e35541",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006452c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_Open",
+      "description": "(stream, source): RLERStream_Close, attaches the source at +8 at its current position, clears the state bytes +0xc..+0xe and the decoded count +0x8e, and copies the source's status (its +0) as its own. The code of ES1DBSIM's RLERStream_Open (00075068), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006452c+49",
+        "sha1": "b4979a0754bc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064560",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_Close",
+      "description": "(stream): when a source is attached (+8), calls the stream's own vtable slot +0x14 (RLERStream_Flush), clears +8 and sets status 6. The code of ES1DBSIM's RLERStream_Close (0007509c), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00064560+40",
+        "sha1": "ef5581f252fd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064588",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_GetCapabilities",
+      "description": "RLERStream vtable slot +0x10 (stream, query): query 0 answers 7, the compression type of an RLE volume entry; 2, 3 and 4 answer 1; anything else 0. The code of ES1DBSIM's RLERStream_GetCapabilities (000750c4), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00064588+46",
+        "sha1": "c34e2a4dadc1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000645b8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_GetPosition",
+      "description": "RLERStream vtable slot +8 (stream): the decoded count +0x8e while a source is attached (status other than 6), else 0. The code of ES1DBSIM's RLERStream_GetPosition (000750f4), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "000645b8+30",
+        "sha1": "715c9c8dab04",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000645d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_SetPosition",
+      "description": "RLERStream vtable slot +0xc (stream, position): 0 when the status is nonzero. A position below the decoded count +0x8e seeks the source to 0 through its slot +0xc, copying the source's status and returning 0 when that fails, and clears the count; any other position has the count subtracted. Then it decodes and discards that many bytes through its own slot +0x1c, in 500-byte reads into a stack buffer and then the remainder, and returns the last read's result. The code of ES1DBSIM's RLERStream_SetPosition (00075114), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "000645d8+191",
+        "sha1": "8951e17309cf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064698",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_Flush",
+      "description": "RLERStream vtable slot +0x14 (stream): whether a source is attached (status other than 6). The code of ES1DBSIM's RLERStream_Flush (000751d4), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00064698+23",
+        "sha1": "1c9df4c0ccc5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000646b0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_Write",
+      "description": "RLERStream vtable slot +0x18: sets status 4 and returns 0. The code of ES1DBSIM's RLERStream_Write (000751ec), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "000646b0+20",
+        "sha1": "e73ab05fba99",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000646c4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_Read",
+      "description": "RLERStream vtable slot +0x1c (stream, buffer, count): 0 when the status is nonzero, 1 for a count of 0; otherwise run-length decodes count bytes from the source +8 and returns 1. A control byte with bit 7 set is a run of (control & 0x7f) copies of the byte after it (the byte +0xc, the remaining run +0xd); one with bit 7 clear is that many literal bytes, read from the source as many at a time as the count allows (remaining +0xe). The decoded count +0x8e advances by every byte out and by one more for each run's value byte. Every source read goes through the source's slot +0x1c, and a failed one copies the source's status and returns 0. The code of ES1DBSIM's RLERStream_Read (00075200), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "000646c4+415",
+        "sha1": "07902a0842f6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064900",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Path_Split",
+      "description": "(ext, name, dir, drive, path) in stack order, callee-cleaned: empties each non-null output, then copies a leading 'X:' of path to drive, everything through the last '\\' (strrchr) to dir, and the rest to name up to the first '.', with that '.' and what follows to ext, or all of it to name when there is no '.'. The code of ES1DBSIM's Path_Split (00074314), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
+      "verified": {
+        "bytes": "00064900+309",
+        "sha1": "2dc48e0e04b3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00064a38",
       "binary": "ES1GO",
       "type": "function",
@@ -2486,6 +2741,51 @@
       }
     },
     {
+      "address": "00064ae0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuffRStream_Ctor",
+      "description": "BuffRStream constructor, callee-cleaned (this, buffer, size, source) in stack order: allocates 0x21 bytes through operator_new when this is null (0 if that fails), Stream_BaseCtor, the vtable 0008b04e at +4, BuffRStream_InitBuffer(this, buffer, size) and BuffRStream_SetSource(this, source). The code of ES1DBSIM's BuffRStream_Ctor (000744f4), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
+      "verified": {
+        "bytes": "00064ae0+65",
+        "sha1": "5bc06718d2ef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064b6c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuffRStream_InitBuffer",
+      "description": "(stream, buffer, size) in stack order: clears +8, +0x10, +0x19 and +0x1d, stores size at +0xc, whether buffer is null at +0x18 (the stream owns the buffer) and the buffer at +0x14, malloc(size) when none was passed. The code of ES1DBSIM's BuffRStream_InitBuffer (00074580), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
+      "verified": {
+        "bytes": "00064b6c+73",
+        "sha1": "fe87c92c9eb3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064bb8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuffRStream_SetSource",
+      "description": "(stream, source): when source differs from the current one (+8), first 00064bf4(stream); stores source at +8 and its position (slot +8) at +0x10, clears +0x19 and +0x1d, then 00064e5c(stream). The code of ES1DBSIM's BuffRStream_SetSource (000745cc), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-class",
+      "verified": {
+        "bytes": "00064bb8+60",
+        "sha1": "73723346ca40",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00064e84",
       "binary": "ES1GO",
       "type": "function",
@@ -2493,6 +2793,186 @@
       "name": "strncmp",
       "description": "Symantec C++ runtime `strncmp`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 58 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00064ec0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_Ctor",
+      "description": "LZHRStream() constructor, callee-cleaned (this): allocates 0x28 bytes through operator_new when this is null (0 if that fails), Stream_BaseCtor, the vtable 0008b08a at +4, LZHRStream_Init, and status 6 (no source). The code of ES1DBSIM's LZHRStream_Ctor (00074b8c), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00064ec0+56",
+        "sha1": "d43c9bff88d8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064ef8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_CtorOnSource",
+      "description": "LZHRStream(source) constructor, callee-cleaned: LZHRStream_Ctor's allocation, Stream_BaseCtor, vtable and LZHRStream_Init, then LZHRStream_Open(this, source). The code of ES1DBSIM's LZHRStream_CtorOnSource (00074bc4), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00064ef8+59",
+        "sha1": "da9bb0027988",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064f34",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_Init",
+      "description": "(stream): clears the source pointer +8, makes the Huffman coder at +0xc with LZHuffman_Ctor(0) and allocates the 0x103b-byte window at +0x10 through operator_new. The code of ES1DBSIM's LZHRStream_Init (00074c00), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00064f34+39",
+        "sha1": "02c091fd2c4a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064f5c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_Dtor",
+      "description": "LZHRStream destructor (this, flags), vtable slot +4: returns at once for a null this; otherwise restores the vtable 0008b08a, LZHRStream_Close, LZHuffman_Dtor(coder +0xc, 3), operator_delete on the window +0x10, Stream_BaseDtor(this, 0), and operator_delete when bit 0 of the flags is set. The code of ES1DBSIM's LZHRStream_Dtor (00074c28), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00064f5c+72",
+        "sha1": "842037a43987",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064fa4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_Open",
+      "description": "(stream, source): LZHRStream_Close, attaches the source at +8, starts the coder +0xc on it (LZHuffman_Start), fills the window's first 0xfc4 bytes with spaces, sets the window position +0x20 to 0xfc4, clears the match length +0x18, the match progress +0x1c and the decoded count +0x24, and copies the source's status (its +0) as its own. The code of ES1DBSIM's LZHRStream_Open (00074c70), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00064fa4+90",
+        "sha1": "2f8c4b0eac6d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065000",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_Close",
+      "description": "(stream): when a source is attached (+8), calls the stream's own vtable slot +0x14 (LZHRStream_Flush), clears +8 and sets status 6. The code of ES1DBSIM's LZHRStream_Close (00074ccc), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00065000+40",
+        "sha1": "ef5581f252fd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065028",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_GetCapabilities",
+      "description": "LZHRStream vtable slot +0x10 (stream, query): query 0 answers 9, the compression type of an LZH volume entry; 2, 3 and 4 answer 1; anything else 0. The code of ES1DBSIM's LZHRStream_GetCapabilities (00074cf4), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00065028+46",
+        "sha1": "ac668ad67e97",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065058",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_SetPosition",
+      "description": "LZHRStream vtable slot +0xc (stream, position): 0 when the status is 6 (no source). A position below the decoded count +0x24 seeks the source to 0 through its slot +0xc, copying the source's status and returning 0 when that fails, and clears the count; any other position has the count subtracted. Then it decodes and discards that many bytes through its own slot +0x1c, in 500-byte reads into a stack buffer and then the remainder, and returns the last read's result. The code of ES1DBSIM's LZHRStream_SetPosition (00074d24), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00065058+182",
+        "sha1": "a05eecb995c6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065110",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_Read",
+      "description": "LZHRStream vtable slot +0x1c (stream, buffer, count): 0 when the status is nonzero; otherwise LZSS-decodes count bytes through the 4 KB window +0x10 (write position +0x20, masked to 0xfff) and returns 1, also for a count of 0. While no match is pending (the progress +0x1c not below the length +0x18), LZHuffman_DecodeChar on the coder +0xc yields a symbol: below 0x100 a literal, output and stored in the window; otherwise a match of symbol - 0xfd bytes (+0x18) starting at the window position less LZHuffman_DecodePosition less 1 (+0x14, masked to 0xfff), copied out byte by byte through the window, and a match the count cuts short resumes on the next call. Each byte out advances the decoded count +0x24. LZHUF's Decode. The code of ES1DBSIM's LZHRStream_Read (00074ddc), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00065110+376",
+        "sha1": "fa8d18db5fa9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065288",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_Flush",
+      "description": "LZHRStream vtable slot +0x14 (stream): whether a source is attached (status other than 6). The code of ES1DBSIM's LZHRStream_Flush (00074f54), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "00065288+23",
+        "sha1": "1c9df4c0ccc5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000652a0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_GetPosition",
+      "description": "LZHRStream vtable slot +8 (stream): the decoded count +0x24 while a source is attached (status other than 6), else 0. The code of ES1DBSIM's LZHRStream_GetPosition (00074f6c), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "000652a0+27",
+        "sha1": "1050ee03358c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000652bc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHRStream_Write",
+      "description": "LZHRStream vtable slot +0x18: sets status 4 and returns 0. The code of ES1DBSIM's LZHRStream_Write (00074f88), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "000652bc+20",
+        "sha1": "e73ab05fba99",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "000652d0",
@@ -2612,6 +3092,216 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0006f818",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "strrchr",
+      "description": "(s, c), C convention: a pointer to the last c in s, scanning back from the terminator, which a c of 0 finds; 0 when there is none. Path_Split finds the last '\\' with it. The code of ES1DBSIM's strrchr (000826f0), relocated operands aside.",
+      "source": "ES1GO decompile at 0006f818",
+      "verified": {
+        "bytes": "0006f818+65",
+        "sha1": "3473ab49cbaf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006f85c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_Ctor",
+      "description": "LZHuffman constructor, callee-cleaned (this): allocates 0x16 bytes through operator_new when this is null (0 if that fails), then through operator_new the frequency table +4 (0x4e8 bytes), the parent links +8 (0x75a) and the child links +0xc (0x4e6), LZHUF's sizes for 314 symbols and a 627-node tree. The class stores no vptr. The code of ES1DBSIM's LZHuffman_Ctor (00082734), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006f85c+70",
+        "sha1": "f1742296bace",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006f8a4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_Dtor",
+      "description": "LZHuffman destructor (this, flags): returns at once for a null this; otherwise operator_delete on the tables +4, +8 and +0xc, and on this when bit 0 of the flags is set. The code of ES1DBSIM's LZHuffman_Dtor (0008277c), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006f8a4+57",
+        "sha1": "6603a602d216",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006f8e0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_Start",
+      "description": "(coder, source): attaches the source at +0, clears the bit-input state +0x10..+0x15, and builds LZHUF's initial tree: 314 (0x13a) leaves of frequency 1 (frequencies +4) whose child links (+0xc) are 0x273 + i and parent links (+8, from +0x4e6) their node, then the internal nodes 0x13a..0x272 each summing a pair, the sentinel frequency 0xffff at node 0x273 and parent 0 for the root 0x272. LZHUF's StartHuff. The code of ES1DBSIM's LZHuffman_Start (000827b8), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006f8e0+278",
+        "sha1": "3e31ed1ab823",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006f9f8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_EncodeChar",
+      "description": "(coder, c): walks the parent links (+8, leaf c's at +0x4e6) up to the root 0x272, shifting each node's low bit into the code from the top, then LZHuffman_PutCode(coder, code, bit count) and LZHuffman_Update(coder, c). LZHUF's EncodeChar. The code of ES1DBSIM's LZHuffman_EncodeChar (000828d0), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006f9f8+109",
+        "sha1": "3f3a0a6e5171",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006fa68",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_EncodePosition",
+      "description": "(coder, position): LZHuffman_PutCode with the code 00094304[position >> 6] << 8 and the length 000942c4[position >> 6] (LZHUF's p_code and p_len), then the low six bits << 10 in 6 bits. LZHUF's EncodePosition. The code of ES1DBSIM's LZHuffman_EncodePosition (00082940), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006fa68+68",
+        "sha1": "b8546a6fcb07",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006faac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_DecodeChar",
+      "description": "(coder): walks the child links (+0xc) from the root (+0x4e4) one LZHuffman_GetBit at a time until a leaf (>= 0x273), LZHuffman_Update's it and returns leaf - 0x273. LZHUF's DecodeChar. The code of ES1DBSIM's LZHuffman_DecodeChar (00082984), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006faac+98",
+        "sha1": "1c19068bc7f3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006fb10",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_DecodePosition",
+      "description": "(coder): reads a byte with LZHuffman_GetByte, takes the upper six bits from 00094344 and the bit count from 00094444 (LZHUF's d_code and d_len), shifts count - 2 more bits from LZHuffman_GetBit into the byte from below and returns its low six bits | upper << 6, a 12-bit position. LZHUF's DecodePosition. The code of ES1DBSIM's LZHuffman_DecodePosition (000829e8), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006fb10+90",
+        "sha1": "d39a52fe7c95",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006fb6c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_EncodeEnd",
+      "description": "(coder): writes the top byte of the bit buffer (+0x13) when bits are pending (+0x15), then a zero byte, each through the stream's slot +0x18. LZHUF's EncodeEnd with a trailing 0. The code of ES1DBSIM's LZHuffman_EncodeEnd (00082a44), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006fb6c+74",
+        "sha1": "e8091890740f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006fbb8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_GetBit",
+      "description": "(coder): while the bit count +0x12 is below 9, reads a byte through the source's slot +0x1c (0 when the read fails), ORs it into the 16-bit buffer +0x10 below the bits held and adds 8 to the count; then shifts out and returns the top bit. LZHUF's GetBit. The code of ES1DBSIM's LZHuffman_GetBit (00082a90), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006fbb8+120",
+        "sha1": "72b6a9972b55",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006fc30",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_GetByte",
+      "description": "(coder): LZHuffman_GetBit's refill, then shifts out and returns the top 8 bits. LZHUF's GetByte. The code of ES1DBSIM's LZHuffman_GetByte (00082b08), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006fc30+117",
+        "sha1": "dd51e74b7f1f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006fca8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_PutCode",
+      "description": "(coder, code, length) in stack order: ORs the code, shifted right by the pending bit count +0x15, into the output buffer +0x13 and adds length to the count; at 8 bits or more writes the buffer's top byte through the stream's slot +0x18, and when 8 still remain its low byte too and keeps code << (length - count). LZHUF's Putcode. The code of ES1DBSIM's LZHuffman_PutCode (00082b80), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006fca8+157",
+        "sha1": "3550e9b31b30",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006fd48",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_Reconstruct",
+      "description": "(coder): rebuilds the adaptive Huffman tree: gathers the leaves (child link above 0x272) to the front with their frequencies (+4) halved, rounding up, rebuilds the internal nodes 0x13a..0x272 in frequency order with memmove, and relinks the parents (+8). LZHUF's reconst. The code of ES1DBSIM's LZHuffman_Reconstruct (00082c20), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006fd48+493",
+        "sha1": "74b403f97c0a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006ff38",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LZHuffman_Update",
+      "description": "(coder, c): LZHuffman_Reconstruct when the root frequency (+4 at 0x4e4) is 0x8000, then increments the frequencies from leaf c up to the root, swapping a node past its lower-frequency successors to keep the order, with their child and parent links. LZHUF's update. The code of ES1DBSIM's LZHuffman_Update (00082e10), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-rle-and-lzh-filters",
+      "verified": {
+        "bytes": "0006ff38+335",
+        "sha1": "81314b3bdcb0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0007c2d8",
       "binary": "ES1GO",
       "type": "function",
@@ -2635,7 +3325,7 @@
       "type": "data",
       "confidence": "high",
       "name": "VolumeGroup_BufferSize",
-      "description": "dword: the buffer size VolumeGroup_AddVolume passes 0004cb1c for each volume it loads. 0x400 in the image; VolumeGroup_Ctor stores 0x400 and VolumeGroup_SetBufferSize its argument, at least 0x80. ES1DBSIM's VolumeGroup_BufferSize (0009680c).",
+      "description": "dword: the buffer size VolumeGroup_AddVolume passes Volume_LoadVolume (0004cb1c) for each volume it loads. 0x400 in the image; VolumeGroup_Ctor stores 0x400 and VolumeGroup_SetBufferSize its argument, at least 0x80. ES1DBSIM's VolumeGroup_BufferSize (0009680c).",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-group"
     },
     {

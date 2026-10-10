@@ -26616,7 +26616,13 @@
       "confidence": "high",
       "name": "RLERStream_Ctor",
       "description": "RLERStream constructor (vtable 004a17c8, RTTI name 'RLERStream', 0x92 bytes): Stream_BaseCtor, RLERStream_Init, status 6 (not attached). The DBSIM copy of VSHELL's RLERStream_Ctor.",
-      "source": "DBSIM decompile and disassembly at 0047b400"
+      "source": "DBSIM decompile and disassembly at 0047b400",
+      "verified": {
+        "bytes": "0047b400+46",
+        "sha1": "2f21979a69d6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b430",
@@ -26625,7 +26631,13 @@
       "confidence": "high",
       "name": "RLERStream_CtorOnSource",
       "description": "RLERStream constructor attached to a source stream: StreamIO base, vtable 004a17c8, RLERStream_Init, RLERStream_Open(source). The DBSIM copy of VSHELL's RLERStream_CtorOnSource.",
-      "source": "DBSIM decompile and disassembly at 0047b430"
+      "source": "DBSIM decompile and disassembly at 0047b430",
+      "verified": {
+        "bytes": "0047b430+53",
+        "sha1": "eb2527958e19",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b468",
@@ -26634,7 +26646,13 @@
       "confidence": "high",
       "name": "RLERStream_Init",
       "description": "Clears an RLERStream's source pointer at +8, its state bytes +0xc..+0xe and the dword at +0x8e. The DBSIM copy of VSHELL's RLERStream_Init.",
-      "source": "DBSIM decompile and disassembly at 0047b468"
+      "source": "DBSIM decompile and disassembly at 0047b468",
+      "verified": {
+        "bytes": "0047b468+32",
+        "sha1": "356765703d10",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b488",
@@ -26643,7 +26661,13 @@
       "confidence": "high",
       "name": "RLERStream_Open",
       "description": "(rle, source): RLERStream_Close, attach the source stream at +8, reset the decoder state, and copy the source's status (Stream_GetStatus) as its own. The DBSIM copy of VSHELL's RLERStream_Open.",
-      "source": "DBSIM decompile and disassembly at 0047b488"
+      "source": "DBSIM decompile and disassembly at 0047b488",
+      "verified": {
+        "bytes": "0047b488+54",
+        "sha1": "1484d98504c1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b4c0",
@@ -26651,8 +26675,14 @@
       "type": "function",
       "confidence": "high",
       "name": "RLERStream_Close",
-      "description": "When a source is attached: calls the stream's own vtable slot +0x10, clears the source at +8 and sets status 6. VolRStream_Close releases the +0x27 filter with it. The DBSIM copy of VSHELL's RLERStream_Close.",
-      "source": "DBSIM decompile and disassembly at 0047b4c0"
+      "description": "(stream): when a source is attached (+8), calls the stream's own vtable slot +0x10 (RLERStream_Flush), clears +8 and sets status 6. The DBSIM copy of VSHELL's RLERStream_Close.",
+      "source": "DBSIM decompile and disassembly at 0047b4c0",
+      "verified": {
+        "bytes": "0047b4c0+35",
+        "sha1": "4082a5f84c15",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b4e4",
@@ -26660,8 +26690,14 @@
       "type": "function",
       "confidence": "high",
       "name": "RLERStream_GetCapabilities",
-      "description": "The DBSIM copy of VSHELL's RLERStream_GetCapabilities (0044eff8).",
-      "source": "es2_naming.py diff DBSIM 0047b4e4 VSHELL 0044eff8: identical after normalisation; RTTI RLERStream vtable slot"
+      "description": "RLERStream vtable slot +0xc (stream, query): query 0 answers 7, the compression type of an RLE volume entry; 1 answers 0; 2 to 4 answer 1; anything else 0. The DBSIM copy of VSHELL's RLERStream_GetCapabilities (0044eff8).",
+      "source": "es2_naming.py diff DBSIM 0047b4e4 VSHELL 0044eff8: identical after normalisation; RTTI RLERStream vtable slot",
+      "verified": {
+        "bytes": "0047b4e4+43",
+        "sha1": "7068eca8543e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b510",
@@ -26669,8 +26705,14 @@
       "type": "function",
       "confidence": "high",
       "name": "RLERStream_GetPosition",
-      "description": "The DBSIM copy of VSHELL's RLERStream_GetPosition (0044f024).",
-      "source": "es2_naming.py diff DBSIM 0047b510 VSHELL 0044f024: identical after normalisation; RTTI RLERStream vtable slot"
+      "description": "RLERStream vtable slot +4 (stream): the decoded count +0x8e while a source is attached (status other than 6), else 0. The DBSIM copy of VSHELL's RLERStream_GetPosition (0044f024).",
+      "source": "es2_naming.py diff DBSIM 0047b510 VSHELL 0044f024: identical after normalisation; RTTI RLERStream vtable slot",
+      "verified": {
+        "bytes": "0047b510+24",
+        "sha1": "e2ad2b24a8d6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b528",
@@ -26678,8 +26720,14 @@
       "type": "function",
       "confidence": "high",
       "name": "RLERStream_SetPosition",
-      "description": "The DBSIM copy of VSHELL's RLERStream_SetPosition (0044f03c).",
-      "source": "es2_naming.py diff DBSIM 0047b528 VSHELL 0044f03c: differs only in callee labels and decompiler typing; RTTI RLERStream vtable slot"
+      "description": "RLERStream vtable slot +8 (stream, position): 0 when the status is nonzero. A position below the decoded count +0x8e seeks the source to 0 through its slot +8, copying the source's status (Stream_GetStatus) and returning 0 when that fails, and clears the count; any other position has the count subtracted. Then it decodes and discards that many bytes through Stream_ReadCopy, in 500-byte reads into a stack buffer and then the remainder, and returns the last read's result. The DBSIM copy of VSHELL's RLERStream_SetPosition (0044f03c).",
+      "source": "es2_naming.py diff DBSIM 0047b528 VSHELL 0044f03c: differs only in callee labels and decompiler typing; RTTI RLERStream vtable slot",
+      "verified": {
+        "bytes": "0047b528+166",
+        "sha1": "3d33ee03f5e5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b5d0",
@@ -26687,8 +26735,14 @@
       "type": "function",
       "confidence": "high",
       "name": "RLERStream_Flush",
-      "description": "The DBSIM copy of VSHELL's RLERStream_Flush (0044f0e4).",
-      "source": "es2_naming.py diff DBSIM 0047b5d0 VSHELL 0044f0e4: identical after normalisation; RTTI RLERStream vtable slot"
+      "description": "RLERStream vtable slot +0x10 (stream): whether a source is attached (status other than 6). The DBSIM copy of VSHELL's RLERStream_Flush (0044f0e4).",
+      "source": "es2_naming.py diff DBSIM 0047b5d0 VSHELL 0044f0e4: identical after normalisation; RTTI RLERStream vtable slot",
+      "verified": {
+        "bytes": "0047b5d0+18",
+        "sha1": "a303a1708e40",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b5e4",
@@ -26696,8 +26750,14 @@
       "type": "function",
       "confidence": "high",
       "name": "RLERStream_Write",
-      "description": "The DBSIM copy of VSHELL's RLERStream_Write (0044f0f8).",
-      "source": "es2_naming.py diff DBSIM 0047b5e4 VSHELL 0044f0f8: identical after normalisation; RTTI RLERStream vtable slot"
+      "description": "RLERStream vtable slot +0x14: sets status 4 and returns 0. The DBSIM copy of VSHELL's RLERStream_Write (0044f0f8).",
+      "source": "es2_naming.py diff DBSIM 0047b5e4 VSHELL 0044f0f8: identical after normalisation; RTTI RLERStream vtable slot",
+      "verified": {
+        "bytes": "0047b5e4+17",
+        "sha1": "a3348e50bbc9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b5f8",
@@ -26736,7 +26796,13 @@
       "confidence": "high",
       "name": "LZHRStream_Ctor",
       "description": "LZHRStream constructor (vtable 004a1820, RTTI name 'LZHRStream', 0x28 bytes): Stream_BaseCtor, LZHRStream_Init, status 6 (not attached). The DBSIM copy of VSHELL's LZHRStream_Ctor.",
-      "source": "DBSIM decompile and disassembly at 0047b734"
+      "source": "DBSIM decompile and disassembly at 0047b734",
+      "verified": {
+        "bytes": "0047b734+46",
+        "sha1": "9d85fdf7e063",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b764",
@@ -26745,7 +26811,13 @@
       "confidence": "high",
       "name": "LZHRStream_CtorOnSource",
       "description": "LZHRStream constructor attached to a source stream: StreamIO base, vtable 004a1820, LZHRStream_Init, LZHRStream_Open(source). The DBSIM copy of VSHELL's LZHRStream_CtorOnSource.",
-      "source": "DBSIM decompile and disassembly at 0047b764"
+      "source": "DBSIM decompile and disassembly at 0047b764",
+      "verified": {
+        "bytes": "0047b764+53",
+        "sha1": "ad14712b9ba6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b79c",
@@ -26754,7 +26826,13 @@
       "confidence": "high",
       "name": "LZHRStream_Init",
       "description": "Allocates an LZHRStream's LZHuffman coder (0x16 bytes, LZHuffman_Ctor) at +0xc and a 0x103b-byte window buffer at +0x10; source pointer +8 cleared. The DBSIM copy of VSHELL's LZHRStream_Init.",
-      "source": "DBSIM decompile and disassembly at 0047b79c"
+      "source": "DBSIM decompile and disassembly at 0047b79c",
+      "verified": {
+        "bytes": "0047b79c+110",
+        "sha1": "302ab4ddd6cb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b80c",
@@ -26763,7 +26841,13 @@
       "confidence": "high",
       "name": "LZHRStream_Dtor",
       "description": "LZHRStream destructor: LZHRStream_Close, destroys the LZHuffman at +0xc (LZHuffman_Dtor, flag 3), frees the window at +0x10, Stream_BaseDtor, frees itself when flag & 1. The DBSIM copy of VSHELL's LZHRStream_Dtor.",
-      "source": "DBSIM decompile and disassembly at 0047b80c"
+      "source": "DBSIM decompile and disassembly at 0047b80c",
+      "verified": {
+        "bytes": "0047b80c+90",
+        "sha1": "725adb017408",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b868",
@@ -26771,7 +26855,7 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHRStream_Open",
-      "description": "(lzh, source): LZHRStream_Close, attach the source at +8, start the Huffman coder on it (LZHuffman_Start), fill the first 0xfc4 bytes of the window with spaces, set the window position to 0xfc4 and copy the source's status. The DBSIM copy of VSHELL's LZHRStream_Open.",
+      "description": "(lzh, source): LZHRStream_Close, attach the source at +8, start the Huffman coder on it (LZHuffman_Start), fill the first 0xfc4 bytes of the window with spaces, set the window position +0x20 to 0xfc4, clear the match length +0x18, the match progress +0x1c and the decoded count +0x24, and copy the source's status (Stream_GetStatus). The DBSIM copy of VSHELL's LZHRStream_Open.",
       "source": "DBSIM decompile and disassembly at 0047b868",
       "verified": {
         "bytes": "0047b868+85",
@@ -26786,8 +26870,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHRStream_Close",
-      "description": "When a source is attached: calls the stream's own vtable slot +0x10, clears the source at +8 and sets status 6. VolRStream_Close releases the +0x2b filter with it. The DBSIM copy of VSHELL's LZHRStream_Close.",
-      "source": "DBSIM decompile and disassembly at 0047b8c0"
+      "description": "(stream): when a source is attached (+8), calls the stream's own vtable slot +0x10 (LZHRStream_Flush), clears +8 and sets status 6. The DBSIM copy of VSHELL's LZHRStream_Close.",
+      "source": "DBSIM decompile and disassembly at 0047b8c0",
+      "verified": {
+        "bytes": "0047b8c0+35",
+        "sha1": "4082a5f84c15",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b8e4",
@@ -26795,8 +26885,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHRStream_GetCapabilities",
-      "description": "The DBSIM copy of VSHELL's LZHRStream_GetCapabilities (0044f3f0).",
-      "source": "es2_naming.py diff DBSIM 0047b8e4 VSHELL 0044f3f0: identical after normalisation; RTTI LZHRStream vtable slot"
+      "description": "LZHRStream vtable slot +0xc (stream, query): query 0 answers 9, the compression type of an LZH volume entry; 1 answers 0; 2 to 4 answer 1; anything else 0. The DBSIM copy of VSHELL's LZHRStream_GetCapabilities (0044f3f0).",
+      "source": "es2_naming.py diff DBSIM 0047b8e4 VSHELL 0044f3f0: identical after normalisation; RTTI LZHRStream vtable slot",
+      "verified": {
+        "bytes": "0047b8e4+43",
+        "sha1": "f8bee488835a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b910",
@@ -26804,8 +26900,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHRStream_SetPosition",
-      "description": "The DBSIM copy of VSHELL's LZHRStream_SetPosition (0044f41c).",
-      "source": "es2_naming.py diff DBSIM 0047b910 VSHELL 0044f41c: differs only in callee labels and decompiler typing; RTTI LZHRStream vtable slot"
+      "description": "LZHRStream vtable slot +8 (stream, position): 0 when the status is 6 (no source). A position below the decoded count +0x24 seeks the source to 0 through its slot +8, copying the source's status (Stream_GetStatus) and returning 0 when that fails, and clears the count; any other position has the count subtracted. Then it decodes and discards that many bytes through Stream_ReadCopy2, in 500-byte reads into a stack buffer and then the remainder, and returns the last read's result. The DBSIM copy of VSHELL's LZHRStream_SetPosition (0044f41c).",
+      "source": "es2_naming.py diff DBSIM 0047b910 VSHELL 0044f41c: differs only in callee labels and decompiler typing; RTTI LZHRStream vtable slot",
+      "verified": {
+        "bytes": "0047b910+154",
+        "sha1": "981e2cd5d689",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047b9ac",
@@ -26828,8 +26930,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHRStream_Flush",
-      "description": "The DBSIM copy of VSHELL's LZHRStream_Flush (0044f5a4).",
-      "source": "es2_naming.py diff DBSIM 0047ba98 VSHELL 0044f5a4: identical after normalisation; RTTI LZHRStream vtable slot"
+      "description": "LZHRStream vtable slot +0x10 (stream): whether a source is attached (status other than 6). The DBSIM copy of VSHELL's LZHRStream_Flush (0044f5a4).",
+      "source": "es2_naming.py diff DBSIM 0047ba98 VSHELL 0044f5a4: identical after normalisation; RTTI LZHRStream vtable slot",
+      "verified": {
+        "bytes": "0047ba98+18",
+        "sha1": "a303a1708e40",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047baac",
@@ -26837,8 +26945,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHRStream_GetPosition",
-      "description": "The DBSIM copy of VSHELL's LZHRStream_GetPosition (0044f5b8).",
-      "source": "es2_naming.py diff DBSIM 0047baac VSHELL 0044f5b8: identical after normalisation; RTTI LZHRStream vtable slot"
+      "description": "LZHRStream vtable slot +4 (stream): the decoded count +0x24 while a source is attached (status other than 6), else 0. The DBSIM copy of VSHELL's LZHRStream_GetPosition (0044f5b8).",
+      "source": "es2_naming.py diff DBSIM 0047baac VSHELL 0044f5b8: identical after normalisation; RTTI LZHRStream vtable slot",
+      "verified": {
+        "bytes": "0047baac+21",
+        "sha1": "a820d43f65fb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047bac4",
@@ -26846,8 +26960,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHRStream_Write",
-      "description": "The DBSIM copy of VSHELL's LZHRStream_Write (0044f5d0).",
-      "source": "es2_naming.py diff DBSIM 0047bac4 VSHELL 0044f5d0: identical after normalisation; RTTI LZHRStream vtable slot"
+      "description": "LZHRStream vtable slot +0x14: sets status 4 and returns 0. The DBSIM copy of VSHELL's LZHRStream_Write (0044f5d0).",
+      "source": "es2_naming.py diff DBSIM 0047bac4 VSHELL 0044f5d0: identical after normalisation; RTTI LZHRStream vtable slot",
+      "verified": {
+        "bytes": "0047bac4+17",
+        "sha1": "a3348e50bbc9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047bb35",
@@ -26870,8 +26990,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHuffman_Ctor",
-      "description": "The DBSIM copy of VSHELL's LZHuffman_Ctor.",
-      "source": "DBSIM decompile and disassembly at 0047bb50"
+      "description": "LZHuffman constructor (coder): allocates with Mem_NewArray the frequency table +4 (0x4e8 bytes), the parent links +8 (0x75a) and the child links +0xc (0x4e6), LZHUF's sizes for 314 symbols and a 627-node tree, and increments *Rtl_DtorCountPtr. The DBSIM copy of VSHELL's LZHuffman_Ctor.",
+      "source": "DBSIM decompile and disassembly at 0047bb50",
+      "verified": {
+        "bytes": "0047bb50+61",
+        "sha1": "9708009e181e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047bb90",
@@ -26879,8 +27005,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHuffman_Dtor",
-      "description": "The DBSIM copy of VSHELL's LZHuffman_Dtor.",
-      "source": "DBSIM decompile and disassembly at 0047bb90"
+      "description": "LZHuffman destructor (coder, flags): decrements *Rtl_DtorCountPtr; for a non-null coder, Mem_DeleteArray on the tables +4, +8 and +0xc, and Mem_Delete when bit 0 of the flags is set. The DBSIM copy of VSHELL's LZHuffman_Dtor.",
+      "source": "DBSIM decompile and disassembly at 0047bb90",
+      "verified": {
+        "bytes": "0047bb90+64",
+        "sha1": "df656c7a795d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047bbd0",
@@ -26904,7 +27036,13 @@
       "confidence": "high",
       "name": "LZHuffman_EncodeChar",
       "description": "(coder, c): walks the parent links (+8) from leaf c up to the root (0x272) collecting the code bits, writes them with LZHuffman_PutCode, then LZHuffman_Update(c). Okumura's LZHUF EncodeChar. The DBSIM copy of VSHELL's LZHuffman_EncodeChar (0044f78c).",
-      "source": "DBSIM decompile at 0047bc80; es2_naming.py diff against VSHELL 0044f78c"
+      "source": "DBSIM decompile at 0047bc80; es2_naming.py diff against VSHELL 0044f78c",
+      "verified": {
+        "bytes": "0047bc80+84",
+        "sha1": "e20fba94870b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047bcd4",
@@ -26912,8 +27050,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHuffman_EncodePosition",
-      "description": "(coder, pos): LZHuffman_PutCode with the top six bits' length and code from the encode tables, then the low six bits in 6 bits. LZHUF's EncodePosition. The DBSIM copy of VSHELL's LZHuffman_EncodePosition (0044f7e0).",
-      "source": "DBSIM decompile at 0047bcd4; es2_naming.py diff against VSHELL 0044f7e0"
+      "description": "(coder, pos): LZHuffman_PutCode with the length 004a183c[pos >> 6] and the code 004a187c[pos >> 6] << 8 (LZHUF's p_len and p_code, byte for byte), then the low six bits << 10 in 6 bits. LZHUF's EncodePosition. The DBSIM copy of VSHELL's LZHuffman_EncodePosition (0044f7e0).",
+      "source": "DBSIM decompile at 0047bcd4; es2_naming.py diff against VSHELL 0044f7e0",
+      "verified": {
+        "bytes": "0047bcd4+68",
+        "sha1": "801a462c18fc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047bd18",
@@ -26951,8 +27095,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHuffman_EncodeEnd",
-      "description": "(coder): writes the top byte of the bit buffer (+0x13) when bits are pending (+0x15), then a zero byte. LZHUF's EncodeEnd with a trailing 0. The DBSIM copy of VSHELL's LZHuffman_EncodeEnd (0044f8c8).",
-      "source": "DBSIM decompile at 0047bdbc; es2_naming.py diff against VSHELL 0044f8c8"
+      "description": "(coder): writes the top byte of the bit buffer (+0x13) with Stream_WriteByte2 when bits are pending (+0x15), then a zero byte with Stream_WriteByte. LZHUF's EncodeEnd with a trailing 0. The DBSIM copy of VSHELL's LZHuffman_EncodeEnd (0044f8c8).",
+      "source": "DBSIM decompile at 0047bdbc; es2_naming.py diff against VSHELL 0044f8c8",
+      "verified": {
+        "bytes": "0047bdbc+48",
+        "sha1": "62f1c4c15e56",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0047bdec",
@@ -26961,7 +27111,13 @@
       "confidence": "high",
       "name": "LZHuffman_GetBit",
       "description": "(coder): refills the 16-bit input buffer (+0x10, bit count +0x12) a byte at a time with Stream_ReadByte from the source (+0) while it holds fewer than 9 bits (0 at end of data), then shifts out and returns the top bit. LZHUF's GetBit. The DBSIM copy of VSHELL's LZHuffman_GetBit (0044f8f8).",
-      "source": "DBSIM decompile at 0047bdec; es2_naming.py diff against VSHELL 0044f8f8"
+      "source": "DBSIM decompile at 0047bdec; es2_naming.py diff against VSHELL 0044f8f8",
+      "verified": {
+        "bytes": "0047bdec+95",
+        "sha1": "35a3d8d44088",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047be4c",
@@ -26970,7 +27126,13 @@
       "confidence": "high",
       "name": "LZHuffman_GetByte",
       "description": "(coder): LZHuffman_GetBit's refill, then shifts out and returns the top 8 bits. LZHUF's GetByte. The DBSIM copy of VSHELL's LZHuffman_GetByte (0044f954).",
-      "source": "DBSIM decompile at 0047be4c; es2_naming.py diff against VSHELL 0044f954"
+      "source": "DBSIM decompile at 0047be4c; es2_naming.py diff against VSHELL 0044f954",
+      "verified": {
+        "bytes": "0047be4c+94",
+        "sha1": "0a76cf0deffa",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047beac",
@@ -26978,8 +27140,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LZHuffman_PutCode",
-      "description": "(coder, len, code): ORs the code's top len bits into the output buffer (+0x13, count +0x15) and writes each completed byte to the stream. LZHUF's Putcode. The DBSIM copy of VSHELL's LZHuffman_PutCode (0044f9b0).",
-      "source": "DBSIM decompile at 0047beac; es2_naming.py diff against VSHELL 0044f9b0"
+      "description": "(coder, len, code): ORs the code, shifted right by the pending bit count +0x15, into the output buffer +0x13 and adds len to the count; at 8 bits or more writes the buffer's top byte (Stream_WriteByte2), and when 8 still remain its low byte too and keeps code << (len - count). LZHUF's Putcode. The DBSIM copy of VSHELL's LZHuffman_PutCode (0044f9b0).",
+      "source": "DBSIM decompile at 0047beac; es2_naming.py diff against VSHELL 0044f9b0",
+      "verified": {
+        "bytes": "0047beac+115",
+        "sha1": "39e454eedf52",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0047bf20",
@@ -26988,7 +27156,13 @@
       "confidence": "high",
       "name": "LZHuffman_Reconstruct",
       "description": "(coder): rebuilds the adaptive Huffman tree: halves the leaf frequencies (+4), rebuilds the internal nodes in frequency order and relinks the parents (+8). LZHUF's reconst; LZHuffman_Update calls it when the root frequency reaches 0x8000. The DBSIM copy of VSHELL's LZHuffman_Reconstruct (0044fa24).",
-      "source": "DBSIM decompile at 0047bf20; es2_naming.py diff against VSHELL 0044fa24"
+      "source": "DBSIM decompile at 0047bf20; es2_naming.py diff against VSHELL 0044fa24",
+      "verified": {
+        "bytes": "0047bf20+307",
+        "sha1": "d84fc8d63250",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047c054",
@@ -26997,7 +27171,13 @@
       "confidence": "high",
       "name": "LZHuffman_Update",
       "description": "(coder, c): LZHuffman_Reconstruct when the root frequency is 0x8000, then increments the frequencies from leaf c to the root, swapping a node past its lower-frequency successors to keep the order. LZHUF's update. The DBSIM copy of VSHELL's LZHuffman_Update (0044fb58).",
-      "source": "DBSIM decompile at 0047c054; es2_naming.py diff against VSHELL 0044fb58"
+      "source": "DBSIM decompile at 0047c054; es2_naming.py diff against VSHELL 0044fb58",
+      "verified": {
+        "bytes": "0047c054+232",
+        "sha1": "586d39ef0844",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047c13c",
@@ -27180,7 +27360,13 @@
       "confidence": "high",
       "name": "BuffRStream_Ctor",
       "description": "BuffRStream constructor (vtable 004a1af0, RTTI name 'BuffRStream', 0x21 bytes): (this, source, size, buffer) Stream_BaseCtor, installs the vtable, BuffRStream_InitBuffer(this, size, buffer) and BuffRStream_SetSource(this, source). The DBSIM copy of VSHELL's BuffRStream_Ctor.",
-      "source": "DBSIM decompile at 0047c538; RTTI at 004a1af0-0xc"
+      "source": "DBSIM decompile at 0047c538; RTTI at 004a1af0-0xc",
+      "verified": {
+        "bytes": "0047c538+62",
+        "sha1": "c9b60dd34e9f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047c578",
@@ -27198,7 +27384,13 @@
       "confidence": "high",
       "name": "BuffRStream_InitBuffer",
       "description": "(stream, size, buffer): clears +8, +0x10, +0x19 and +0x1d, stores size at +0xc, whether buffer is null at +0x18 (the stream owns it) and the buffer at +0x14, Mem_HeapAlloc(size) when none was passed. The DBSIM copy of VSHELL's BuffRStream_InitBuffer.",
-      "source": "DBSIM decompile at 0047c5c4"
+      "source": "DBSIM decompile at 0047c5c4",
+      "verified": {
+        "bytes": "0047c5c4+69",
+        "sha1": "bc9908a725a5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047c60c",
@@ -27207,7 +27399,13 @@
       "confidence": "high",
       "name": "BuffRStream_SetSource",
       "description": "(stream, source): when source differs from the current one (+8) first runs BuffRStream_ReleaseSource(stream); stores source at +8 and its vtable +4 answer at +0x10, clears +0x19 and +0x1d, then BuffRStream_SyncStatus(stream). The DBSIM copy of VSHELL's BuffRStream_SetSource.",
-      "source": "DBSIM decompile at 0047c60c"
+      "source": "DBSIM decompile at 0047c60c",
+      "verified": {
+        "bytes": "0047c60c+59",
+        "sha1": "0afdb67861c4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047c648",
@@ -27318,7 +27516,13 @@
       "confidence": "high",
       "name": "Volume_Ctor",
       "description": "(volume): zeroes +0, +4, +0x24, +0x28 and +0x2c of the 0x30-byte volume. The DBSIM copy of VSHELL's Volume_Ctor.",
-      "source": "DBSIM decompile at 0047c894"
+      "source": "DBSIM decompile at 0047c894",
+      "verified": {
+        "bytes": "0047c894+40",
+        "sha1": "9cf522dc1301",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047c8bc",
@@ -27327,7 +27531,13 @@
       "confidence": "high",
       "name": "Volume_Dtor",
       "description": "(volume, flags): frees the arrays at +0x24, +0x28 and +0x2c, destroys the streams at +4 and +0 through their own destructors (flag 3), and frees the volume when flags bit 0 is set. The DBSIM copy of VSHELL's Volume_Dtor.",
-      "source": "DBSIM decompile at 0047c8bc"
+      "source": "DBSIM decompile at 0047c8bc",
+      "verified": {
+        "bytes": "0047c8bc+231",
+        "sha1": "baabd1529df4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047c9a4",
@@ -27336,7 +27546,13 @@
       "confidence": "high",
       "name": "Volume_LoadVolume",
       "description": "(path, mask, bufferSize): the DBSIM copy of VSHELL's Volume_LoadVolume without its asserts and without the revision check: it reads the revision byte after the 'VOL' signature and ignores it. Opens path as a FileRStream, checks the signature, reads the flags dword and returns null unless it shares a bit with mask; otherwise wraps the file in a BuffRStream of max(bufferSize, 0x80) bytes and builds the 0x30-byte volume (Volume_Ctor): file stream +0, buffered stream +4, name +8, header byte +0x1c, flags +0x20, directory names +0x24/+0x28 (count +0x1d) and 0x12-byte entries +0x2c (count +0x1e). Returns null after Volume_Dtor when the stream fails.",
-      "source": "DBSIM decompile and disassembly at 0047c9a4 (no compare after the 0047cf3a read at 0047cacd)"
+      "source": "DBSIM decompile and disassembly at 0047c9a4 (no compare after the 0047cf3a read at 0047cacd)",
+      "verified": {
+        "bytes": "0047c9a4+837",
+        "sha1": "95d66c4d79be",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047ccec",
@@ -27344,8 +27560,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Volume_FindEntry",
-      "description": "(volume, path, entryInfo): the DBSIM copy of VSHELL's Volume_FindEntry (0040279f), line for line: splits the path with Path_Split, matches the directory (+0x1d count, +0x24 names) and then the name and directory index against the 18-byte entries (+0x1e count, +0x2c table) case-insensitively, and on a hit seeks the volume's stream (+4) to the entry, reads its 9-byte prefix and fills entryInfo ([0] stream, [2] and [4] data offset, [5] compression type, [6] size). Returns 1 on a hit, 0 otherwise. VolumeGroup_FindEntry calls it per volume.",
-      "source": "DBSIM decompile at 0047ccec, diffed against VSHELL 0040279f"
+      "description": "(volume, path, entryInfo): splits the path with Path_Split into static buffers; when drive and dir are not empty, finds them among the directory names (+0x24, count +0x1d) case-insensitively and returns 0 when none matches; then finds the first 18-byte entry (+0x2c, count +0x1e) whose directory index (+0xd) is that directory, or 0xff for none, and whose name equals name and ext case-insensitively. On a hit it seeks the volume's stream (+4) to the entry (slot +8), reads its 9-byte prefix and fills entryInfo ([0] stream, [2] and [4] data offset, [5] compression type, [6] size), returning 1; 0 when no entry matches. The DBSIM copy of VSHELL's Volume_FindEntry (0040279f).",
+      "source": "DBSIM decompile at 0047ccec, diffed against VSHELL 0040279f",
+      "verified": {
+        "bytes": "0047ccec+345",
+        "sha1": "92f028964ed3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047cf21",
@@ -27440,8 +27662,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Path_Split",
-      "description": "(path, drive, dir, name, ext): the DBSIM copy of VSHELL's Path_Split (0045045c).",
-      "source": "DBSIM decompile at 0047d08c, diffed against VSHELL 0045045c"
+      "description": "(path, drive, dir, name, ext): empties each non-null output, then copies a leading 'X:' of path to drive, everything through the last '\\' (_strrchr) to dir, and the rest to name up to the first '.', with that '.' and what follows to ext, or all of it to name when there is no '.'. The DBSIM copy of VSHELL's Path_Split (0045045c).",
+      "source": "DBSIM decompile at 0047d08c, diffed against VSHELL 0045045c",
+      "verified": {
+        "bytes": "0047d08c+299",
+        "sha1": "e1c3c9c3d195",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047d1b8",
@@ -29431,8 +29659,14 @@
       "type": "function",
       "confidence": "high",
       "name": "RLERStream_Dtor",
-      "description": "The DBSIM copy of VSHELL's RLERStream_Dtor (00453620).",
-      "source": "ES2DecompileContainingBatch DBSIM 00481ae5 / VSHELL 00453620: identical after normalisation; RTTI RLERStream vtable 004a17c8 slot +0x00"
+      "description": "RLERStream destructor (stream, flags), vtable slot 0: returns at once for a null stream; otherwise decrements *Rtl_DtorCountPtr, Stream_BaseDtor(stream, 0), and Mem_Delete when bit 0 of the flags is set. The DBSIM copy of VSHELL's RLERStream_Dtor (00453620).",
+      "source": "ES2DecompileContainingBatch DBSIM 00481ae5 / VSHELL 00453620: identical after normalisation; RTTI RLERStream vtable 004a17c8 slot +0x00",
+      "verified": {
+        "bytes": "00481ae5+45",
+        "sha1": "1223698770d8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00481b12",
@@ -29573,8 +29807,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Stream_ReadByte",
-      "description": "(stream, dst): reads 1 byte through the stream's read slot (vtable +0x18).",
-      "source": "DBSIM decompile at 00481e31"
+      "description": "(stream, dst): reads 1 byte through the stream's read slot (vtable +0x18), leaving its result in EAX.",
+      "source": "DBSIM decompile at 00481e31",
+      "verified": {
+        "bytes": "00481e31+23",
+        "sha1": "b4f24ddd028f",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00481e48",
@@ -34807,7 +35047,13 @@
       "confidence": "high",
       "name": "Stream_GetStatus",
       "description": "Returns a stream's status word at +4. The DBSIM copy of VSHELL's Stream_GetStatus.",
-      "source": "DBSIM decompile and disassembly at 00492f9f"
+      "source": "DBSIM decompile and disassembly at 00492f9f",
+      "verified": {
+        "bytes": "00492f9f+11",
+        "sha1": "5d588943f110",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00492fb5",
