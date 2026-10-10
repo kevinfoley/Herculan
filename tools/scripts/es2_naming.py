@@ -22,13 +22,28 @@ address operands by different rules (insn_streams).
   diff BIN addr BIN2 addr2
       Unified diff of two decompiled bodies with names substituted and the remaining FUN_/DAT_
       labels, locals and Ghidra variable numbers normalised: whether one binary's function is a
-      copy of the other's, and where the two differ.
+      copy of the other's, and where the two differ. An ES1 function against an ES2 one is headed
+      with the cross-compiler match's similarity score.
   match BIN BIN2 [--min N] [--fuzzy R] [--all]
       BIN's unnamed functions (every function with --all) of at least N instructions (default 6)
       whose disassembly, with every address operand masked, equals a BIN2 function's; with
       --fuzzy R, the three closest named BIN2 functions at a difflib ratio of at least R when there
       is no exact match. Under a unique exact named match it lists the unnamed BIN callees and
       globals that pair, operand by operand, with named BIN2 ones. Confirm a candidate with diff.
+  match ES1BIN ES2BIN[+ES2BIN] [--range lo-hi] [--only a+b...] [--min N] [--fuzzy R] [--all]
+      Cross-compiler form: the ES1 image's unnamed functions (every one with --all; never the
+      Symantec runtime es1_libmatch.py names) of at least N tokens (default 20), ranked against the
+      named functions of the ES2 binaries by similarity of their normalised decompiles, since the
+      two compilers' instructions never match. Names count only when both games use them; every
+      other name reads as FUN_?/DAT_?. Each candidate line gives the size bucket (S under 50 tokens,
+      M under 200, L) and the score that must reach its threshold (0.9, 0.8, 0.75; --fuzzy R sets one
+      for all), the sequence and multiset ratios and shared names agreeing, the same name's hits
+      in the other target, the best runner-up under another name (TIE within 0.02), and the diff
+      command. --only scores just the listed functions, below threshold too (marked '-' after the
+      score). A score is a lead, never
+      a name: siblings with one shape (FileRStream_Close, FileWStream_Close) and short dispatchers
+      score as high as twins, and a body that inlines what the other calls scores low. ES1DBSIM's
+      library region starts at __cinit (0005b68c).
   callers BIN addr... [-n CTX] [--max M]
       Every decompile line naming FUN_/DAT_<addr> (or its known name), with the enclosing function.
   precheck BIN addr...
@@ -99,6 +114,7 @@ Write batch/spec JSON files with the Write tool; heredocs eat backslashes.
 from __future__ import annotations
 
 import bisect
+import collections
 import json
 import os
 import pickle
@@ -393,6 +409,11 @@ def cmd_diff(args):
     if t1 is None or t2 is None:
         print("not in decompile:", a1 if t1 is None else "", a2 if t2 is None else "")
         return
+    if retail_binaries.get(b1).compiler != retail_binaries.get(b2).compiler:
+        shared = shared_names(b1, [b2])
+        score, seq, bag, agree, total = xscore(xmask(b1, shared)[a1], xmask(b2, shared)[a2], shared)
+        print(f"cross-compiler similarity {score:.2f} (seq {seq:.2f} bag {bag:.2f}"
+              + (f" names {agree}/{total}" if total else "") + f"; {xbucket(len(xtokens(b1)[a1]))[0]} bucket)")
     if t1 != t2 and "".join(t1.split()) == "".join(t2.split()):
         print(f"identical after normalisation, up to line breaks ({len(t1.splitlines())} lines)")
         return
@@ -1225,12 +1246,187 @@ def insn_streams(binary):
     return d
 
 
+XTYPES = re.compile(r"\b(?:undefined\d*|u?int\d*|uint|u?short|u?char|byte|word|dword|u?long|bool|void|float"
+                    r"|double|code|u?longlong|unsigned|signed)\b")
+XTOKEN = re.compile(r"[A-Za-z_][\w?]*|0x[0-9a-f]+|\d+|==|!=|<=|>=|<<|>>|&&|\|\||->|[-+*/%&|^~!<>=(){}\[\];,.?:]")
+# (token count below which, bucket, score threshold): a short body matches on its shape alone, so
+# it needs a higher score to count.
+XBUCKETS = ((50, "S", 0.9), (200, "M", 0.8), (None, "L", 0.75))
+XSHINGLE = 4
+
+
+def xtokens(binary):
+    """{function: tokens} of every decompiled body for the cross-compiler match: normalised, with
+    the binary's own names substituted, the signature line dropped, types and casts reduced to T,
+    locals and register artefacts (extraout_EAX, unaff_ESI) to v, and parameters to p, since the two
+    compilers' calling conventions number them differently (Ghidra gives some Borland __fastcall
+    functions junk register parameters ahead of the real ones). xmask then reduces the names to the
+    ones both games use."""
+    src = os.path.join(ANALYSIS, f"{binary}_decomp_full.c")
+    cache = os.path.join(CACHE, f"{binary}_xtokens.pkl")
+    if os.path.exists(cache) and os.path.getmtime(cache) > max(os.path.getmtime(p) for p in (src, S.path(binary), __file__)):
+        with open(cache, "rb") as f:
+            return pickle.load(f)
+    known = names(binary)
+    out = {}
+    for a in bodies(binary):
+        t = normalised(binary, a, known).partition("\n")[2]
+        t = XTYPES.sub("T", t)
+        t = re.sub(r"\(T *\**\)", "", t)
+        t = re.sub(r"\bT\b\s*\*+", "T", t)
+        t = re.sub(r"\b(?:local_\?|var\?|extraout_\w+|in_\w+|unaff_\w+)", "v", t)
+        t = re.sub(r"\bparam_\d+", "p", t)
+        out[a] = XTOKEN.findall(t)
+    os.makedirs(CACHE, exist_ok=True)
+    with open(cache, "wb") as f:
+        pickle.dump(out, f)
+    return out
+
+
+def xmask(binary, shared):
+    """xtokens with every name of the binary that is not in `shared` (the names both games use)
+    turned back into FUN_? or DAT_?, as an unnamed label reads: a name one game alone has carries no
+    evidence about the other."""
+    generic = {e["name"]: ("FUN_?" if e["type"] == "function" else "DAT_?")
+               for e in entries(binary) if e.get("name") and e["name"] not in shared}
+    return {a: [generic.get(t, t) for t in ts] for a, ts in xtokens(binary).items()}
+
+
+def xscore(t1, t2, shared):
+    """(score, sequence ratio, bag ratio, names agreeing, names in either) for two token lists. The
+    sequence ratio is difflib's over the token order; the bag ratio is the same 2M/T over the token
+    multisets, which a reordered or restructured body (an early return against an else) keeps. Their
+    mean is scaled by the agreement of the shared callee and global names the two bodies use, from
+    0.5 when none agree to 1 when all do; with no shared name in either body it is left as it is."""
+    import difflib
+    seq = difflib.SequenceMatcher(None, t1, t2, autojunk=False).ratio()
+    c1, c2 = collections.Counter(t1), collections.Counter(t2)
+    bag = 2 * sum((c1 & c2).values()) / (len(t1) + len(t2))
+    n1 = collections.Counter(x for x in t1 if x in shared)
+    n2 = collections.Counter(x for x in t2 if x in shared)
+    tot = sum(n1.values()) + sum(n2.values())
+    score = (seq + bag) / 2
+    if tot:
+        score *= 0.5 + 0.5 * (2 * sum((n1 & n2).values()) / tot)
+    return score, seq, bag, len(set(n1) & set(n2)), len(set(n1) | set(n2))
+
+
+def xbucket(n):
+    for limit, label, threshold in XBUCKETS:
+        if limit is None or n < limit:
+            return label, threshold
+
+
+def shared_names(b1, targets):
+    one = set(names(b1).values())
+    return one & set().union(*(set(names(t).values()) for t in targets))
+
+
+def cmd_xmatch(args):
+    """The cross-compiler form of match: BIN (an ES1 image) against one or more ES2 binaries, on
+    normalised decompiles rather than masked disassembly, which Symantec's and Borland's code
+    generation never share. Candidates come from an index of 4-token shingles over the named target
+    functions (shingles in 300 or more functions are skipped as boilerplate); the 40 sharing the most
+    are scored with xscore. One line per BIN function whose best score reaches its size bucket's
+    threshold (XBUCKETS), or --fuzzy R for every bucket, best first, with the runner-up under another
+    name, the same name's hits in the other targets, and the diff command that confirms or rejects it."""
+    b1, targets = args[0], args[1].upper().split("+")
+    retail_binaries.require(b1, "es2_naming.py match (cross-compiler)", "the cross-compiler match reads "
+                            "an ES1 image against ES2's", compiler=retail_binaries.SYMANTEC)
+    for t in targets:
+        retail_binaries.require(t, "es2_naming.py match (cross-compiler)", "the targets are ES2's binaries",
+                                compiler=retail_binaries.BORLAND)
+    mn = int(args[args.index("--min") + 1]) if "--min" in args else 20
+    fz = float(args[args.index("--fuzzy") + 1]) if "--fuzzy" in args else None
+    lo, hi = 0, 1 << 32
+    if "--range" in args:
+        r = args[args.index("--range") + 1].split("-")
+        lo, hi = int(r[0], 16), int(r[1], 16) if len(r) > 1 and r[1] else 1 << 32
+    only = set(addrs(args[args.index("--only") + 1].split("+"))) if "--only" in args else None
+    from es1_crossmatch import LIBMATCH_SOURCE
+    e1 = {e["address"]: e for e in entries(b1)}
+    img = retail_binaries.Image(b1)
+    k1 = names(b1)
+    shared = shared_names(b1, targets)
+    t1s = xmask(b1, shared)
+    t2s, k2 = {}, {}
+    for t in targets:
+        k2[t] = names(t)
+        for a, ts in xmask(t, shared).items():
+            if a in k2[t] and len(ts) >= mn:
+                t2s[(t, a)] = ts
+    index = collections.defaultdict(list)
+    sh2 = {}
+    for key, ts in t2s.items():
+        sh2[key] = {hash(tuple(ts[i:i + XSHINGLE])) for i in range(len(ts) - XSHINGLE + 1)}
+        for s in sh2[key]:
+            index[s].append(key)
+    rows, compared = [], collections.Counter()
+    for a in sorted(t1s):
+        if only is not None and a not in only:
+            continue
+        if only is None and (not lo <= int(a, 16) < hi or ("--all" not in args and a in k1)
+                             or e1.get(a, {}).get("source") == LIBMATCH_SOURCE):
+            continue
+        ts = t1s[a]
+        # A Ghidra function on the 0x90 padding before a prologue decompiles as the prologue's.
+        if len(ts) < mn or (img.read(int(a, 16), 1) == b"\x90" and img.entries_of(int(a, 16))[-1] != int(a, 16)):
+            continue
+        label, threshold = xbucket(len(ts))
+        compared[label] += 1
+        sh = {hash(tuple(ts[i:i + XSHINGLE])) for i in range(len(ts) - XSHINGLE + 1)}
+        cnt = collections.Counter()
+        for s in sh:
+            p = index.get(s)
+            if p and len(p) < 300:
+                cnt.update(p)
+        best = {}
+        for key, _c in cnt.most_common(40):
+            if not 1 / 3 <= len(ts) / len(t2s[key]) <= 3:
+                continue
+            sc = xscore(ts, t2s[key], shared)
+            nm = k2[key[0]][key[1]]
+            best.setdefault(nm, []).append((sc, key))
+        if not best:
+            continue
+        ranked = sorted(((max(h)[0], nm, sorted(h, reverse=True)) for nm, h in best.items()),
+                        key=lambda x: -x[0][0])
+        top = ranked[0]
+        passes = top[0][0] >= (fz if fz is not None else threshold)
+        if passes or only is not None:
+            rows.append((a, len(ts), label, top, ranked[1] if len(ranked) > 1 else None, passes))
+    rows.sort(key=lambda r: -r[3][0][0])
+    for a, n, label, (sc, nm, hits), runner, passes in rows:
+        score, seq, bag, agree, total = sc
+        t, x = hits[0][1]
+        mark = " " if a in k1 else "L" if a in e1 else "*"
+        also = [f"{k[0]} {k[1]} {s[0]:.2f}" for s, k in hits[1:]]
+        line = (f"{a} {mark} {label} {n:>5}  {score:.2f}{' ' if passes else '-'} {t} {x} {nm}  (seq {seq:.2f} bag {bag:.2f}"
+                + (f" names {agree}/{total}" if total else "") + ")")
+        if also:
+            line += "  also " + ", ".join(also)
+        if runner:
+            line += f"  next {runner[0][0]:.2f} {runner[1]}" + ("  TIE" if score - runner[0][0] < 0.02 else "")
+        print(line)
+        print(f"    py tools/scripts/es2_naming.py diff {b1} {a} {t} {x}")
+    above = collections.Counter(r[2] for r in rows if r[5])
+    ties = sum(1 for r in rows if r[5] and r[4] and r[3][0][0] - r[4][0][0] < 0.02)
+    print(f"\n{b1} against {'+'.join(targets)}: {len(shared)} names shared; "
+          + ", ".join(f"{lab} ({'<' + str(lim) if lim else '>=' + str(XBUCKETS[-2][0])} tokens, "
+                      f"threshold {fz if fz is not None else th}) {above[lab]} of {compared[lab]}"
+                      for lim, lab, th in XBUCKETS)
+          + f"; {sum(above.values())} candidates, {ties} within 0.02 of a runner-up under another name")
+
+
 def cmd_match(args):
     """match BIN BIN2 [--min N] [--fuzzy R] [--all]: BIN's unnamed functions whose normalised
     instruction stream equals (or, with --fuzzy, is at least R similar to) a named BIN2 function's,
-    with the BIN2 name and the callee/global names that pair up position by position."""
+    with the BIN2 name and the callee/global names that pair up position by position. An ES1 BIN
+    against ES2 targets goes to cmd_xmatch."""
     import difflib
     b1, b2 = args[0], args[1]
+    if retail_binaries.get(b1).compiler != retail_binaries.get(b2.split("+")[0]).compiler:
+        return cmd_xmatch(args)
     if retail_binaries.get(b1).container != retail_binaries.get(b2).container:
         raise SystemExit("es2_naming.py match pairs two images of one container format: a PE's and an "
                          "X-32 image's address operands are masked by different rules (insn_streams)")
