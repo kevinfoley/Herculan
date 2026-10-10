@@ -20,7 +20,7 @@ Both ES1 program images were built with Symantec C++, the line Zortech C++ began
 
 Eight of these matches do not say which function they found. `fprintf`, `sprintf`, `spawnl` and `spawnlp` each match at the same two addresses (`ES1DBSIM 0005f6e0` and `0005f77c`), and `printf`, `execl` and `execlp` at one (`0005f712`): each is a short wrapper that differs from the others only in the function it calls, which the masking hides. `streambuf::underflow` is 8 bytes and matches at two addresses.
 
-**ES1's runtime is a later revision than 6.1's.** Most of the library's functions that ES1 uses differ in places: `_open` (`00074947`) sends its error exit through a routine shared with the other `io.asm` calls (`00074922`), where 6.1's sets `errno` inline. The extender kernel in ES1's executables reads `DOS extender Copyright 1991-1994 by Doug Huffman`; 6.1's `X386.LIB` carries `Copyright 1991 1992`.
+**ES1's runtime is a later revision than 6.1's.** Most of the library's functions that ES1 uses differ in places: `open` (`00074947`) sends its error exit through a routine shared with the other `io.asm` calls (`00074922`, inside `Dos_ReadWrite`), where 6.1's sets `errno` inline. The extender kernel in ES1's executables reads `DOS extender Copyright 1991-1994 by Doug Huffman`; 6.1's `X386.LIB` carries `Copyright 1991 1992`.
 
 ## Startup
 
@@ -95,7 +95,7 @@ The counts are Ghidra's function list after [step 0.2](../../herculan/plan-es1-s
 
 ## Open
 
-- **Open:** the Symantec C++ release, and the X-32 release, that ES1 was built with. Both are later than 6.1's and earlier than Symantec C++ 7, which shipped in 1995; an update to 6.1 or a 1994 FlashTek X-32VM release with its own startup and libraries are the candidates, and the startup's two additions and `_open`'s shared error exit are what to compare.
+- **Open:** the Symantec C++ release, and the X-32 release, that ES1 was built with. Both are later than 6.1's and earlier than Symantec C++ 7, which shipped in 1995; an update to 6.1 or a 1994 FlashTek X-32VM release with its own startup and libraries are the candidates, and the startup's two additions and `open`'s shared error exit are what to compare.
 - **Open:** whether a zero vtable slot is a pure virtual function, and whether the zero bytes that follow `000973fe`'s destructor slot are slots. A call through a zero slot reaches the address-0 trap.
 - **Open:** whether the compiler emits run-time type information anywhere; the vtable's first dword holds none.
 - **Open:** what decides whether a reference to a function targets its padding or its prologue.
