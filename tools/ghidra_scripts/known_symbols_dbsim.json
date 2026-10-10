@@ -11224,7 +11224,13 @@
       "name": "Label_Ctor",
       "description": "A 0x21-byte HUD text label: zeroes it, stores the font at +0x00 and the panel-relative flag at +0x18 that makes Label_SetText subtract the global blit offset. Paired with Label_SetRect and Label_SetText.",
       "source": "docs/retail/simulation/alert-panels.md",
-      "signature": "void * __cdecl Label_Ctor(void *label, void *font, char panelRelative)"
+      "signature": "void * __cdecl Label_Ctor(void *label, void *font, char panelRelative)",
+      "verified": {
+        "bytes": "004387ac+36",
+        "sha1": "07f684254501",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004387d0",
@@ -11248,7 +11254,13 @@
       "confidence": "high",
       "name": "Label_SetRect",
       "description": "Anchors a HUD text label: stores the caller's rect at label+1..4 and computes the text anchor. Horizontal depends on the flags argument -- 2 = centre ((x1-x0)/2 + x0 + margin[0]), 4 = right (x1 - margin[0]), otherwise left (x0 + margin[0]). Vertical has no flag at all: anchorY = ((y1-y0)>>1) + y0 + (inkHeight>>1) + margin[2] + 1, where inkHeight is font+0x16 (file offset 0x1a, 11 for .HFN) and NOT the cell height at font+0xa. All of it is integer arithmetic. margin is the caller's short[4]. Paired with Label_SetText. See docs/retail/simulation/mfd.md.",
-      "source": "docs/retail/simulation/mfd.md"
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "00438884+156",
+        "sha1": "6bb062a4366f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438920",
@@ -11256,8 +11268,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Label_SetText",
-      "description": "Sets a HUD label's text and places it against the anchor Label_SetRect computed. Measures the run and subtracts 1<<XCoordShift (dropping the trailing advance), then places left/centre/right per the same flags. Vertical position is the stored anchor; HudFont_DrawGlyph then draws each glyph with its top row at anchor - inkHeight, so the inked band is what gets centred in the rect and the remaining cell rows hang below. Fills the label's background first when its +0x1d colour id is non-zero. See docs/retail/simulation/mfd.md.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "Sets a HUD label's text and places it against the anchor Label_SetRect computed. Measures the run and subtracts 1<<XCoordShift (dropping the trailing advance), then places left/centre/right per the same flags. Vertical position is the stored anchor; HudFont_DrawGlyph then draws each glyph with its top row at anchor - inkHeight, so the inked band is what gets centred in the rect and the remaining cell rows hang below. Fills the label's background first when its +0x1d colour id is non-zero, with the brush {0, colour} at the current render context's +0x22c and Raster_FillRect. For a panel-relative label (+0x18) it subtracts 004d25da/004d25de from the fill rect and the pen. See docs/retail/simulation/mfd.md.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "00438920+288",
+        "sha1": "138e65984904",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438a40",
@@ -16734,8 +16752,14 @@
       "type": "function",
       "confidence": "high",
       "name": "StringTable_ReadNext",
-      "description": "(table, &text, &attributes): reads the next string of a string table, taking the group's int16 count first at the start of a group. The DBSIM copy of VSHELL's StringTable_ReadNext.",
-      "source": "DBSIM decompile and disassembly at 004538d4"
+      "description": "(table, &text, &attributes): reads the next string of a string table {buffer +0, cursor +4, length +8, group count +0xc, index +0xe}, taking the group's int16 count first at the start of a group. Stores the address past the string's int16 length in *text; when &attributes is non-null stores the address after the attribute-count byte in it and steps over the attributes, and when it is null leaves the cursor on the first attribute byte. Returns 1 for a string, and 0 at the end of the buffer or of the group, clearing the count and the index at the group's end. The DBSIM copy of VSHELL's StringTable_ReadNext.",
+      "source": "DBSIM decompile and disassembly at 004538d4",
+      "verified": {
+        "bytes": "004538d4+133",
+        "sha1": "18d6c0dbd445",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045395c",
@@ -16745,7 +16769,13 @@
       "name": "StringTable_LoadGroup",
       "description": "Pops the next .STR group into a destination pointer array, one entry per string, advancing the table's own cursor. The capacity argument is the destination array's size and is not read; the group's own count decides how many are written.",
       "source": "docs/retail/simulation/mission-objectives.md",
-      "signature": "short __cdecl StringTable_LoadGroup(int *table, void **destination, int capacity, void **attributeDestination)"
+      "signature": "short __cdecl StringTable_LoadGroup(int *table, void **destination, int capacity, void **attributeDestination)",
+      "verified": {
+        "bytes": "0045395c+82",
+        "sha1": "f23ea5759f69",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004539b0",
@@ -34903,7 +34933,13 @@
       "confidence": "high",
       "name": "Str_ReplaceFirst",
       "description": "(s, find, replace): replaces the first occurrence of the character find in s with replace (strchr) and returns s.",
-      "source": "DBSIM decompile and disassembly at 00492a5c"
+      "source": "DBSIM decompile and disassembly at 00492a5c",
+      "verified": {
+        "bytes": "00492a5c+39",
+        "sha1": "8a2582421a46",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00492a84",
@@ -34911,8 +34947,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Path_WithExtension",
-      "description": "(path, extension): copies path into the static buffer 006cbc90, cuts it at the first '.' (Str_ReplaceFirst), then appends '.' and the extension.",
-      "source": "DBSIM decompile and disassembly at 00492a84"
+      "description": "(path, extension): copies path into the static buffer 006cbc90, cuts it at the first '.' (Str_ReplaceFirst), then appends '.' and the extension, and returns the buffer.",
+      "source": "DBSIM decompile and disassembly at 00492a84",
+      "verified": {
+        "bytes": "00492a84+92",
+        "sha1": "21c573998fad",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00492ae0",
@@ -34920,8 +34962,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ResourcePath_BuildFolderName",
-      "description": "The shared folder\\name resource-path builder: ResourcePath_BuildFolderName(name, folder) writes 'folder\\\\name' into a shared static buffer (&DAT_006cbcae) via Path_WithExtension(name) + strcat('\\\\') + strcat(folder). Confirmed by tracing its two operands against known-good results (e.g. ResourcePath_BuildFolderName(hercName, \"vue\") and the folder-name pointer table at CockpitDpl_ResourceFolderNames).",
-      "source": "docs/retail/formats/canopy-art-hb-db.md"
+      "description": "(name, folder): the resource path folder\\name.folder. Path_WithExtension(name, folder), then copies folder into the static buffer 006cbcae, appends '\\' and the Path_WithExtension result, and returns the buffer.",
+      "source": "docs/retail/formats/canopy-art-hb-db.md",
+      "verified": {
+        "bytes": "00492ae0+95",
+        "sha1": "1ae0ea1cee82",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00492b40",

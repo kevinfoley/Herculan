@@ -11,6 +11,8 @@ ES1's simulator against ES2's [fixed-point math toolkit](../../retail/simulation
 | byte for byte | `Math_FastMagnitude2D`, `Math_FastMagnitude3D`, `Math_ChebyshevMagnitude2D`, `Math_ChebyshevMagnitude3D`, `Math_ISqrt`, `Math_MapRange`, `DotProductVec3Short`, `DotProductVec3Int`, `Vec3I_DotSign`, `Vec3I_Cross`, `Math_TransposeRotation2D`, `Transform_TransposeRotation`, `Math_Rotate2DPoint`, `Transform2D_ApplyToPoint`, `Rotation_Concat`, `Transform_ConcatRotation`, `Transform_Concat`, `RotateVectorByMatrixQ14`, `Transform_ApplyToShortPoint` |
 | but for image addresses | `Math_CosBam` (`0006477c`), `Math_AsinBam` (`0005f54c`), `Math_BuildRotation2D`, `BuildEulerRotationMatrixQ14`, `Transform_RotationToEuler` |
 
+`GO.EXE`'s `BuildEulerRotationMatrixQ14` (`ES1GO 000589c4`) is not: it truncates each of its 15 trigonometry-table indexes (`SAR 4`) where `ES1DBSIM`'s (`0005f0ac`) and ES2's round them (`SAR 4`, then `ADC 0`).
+
 The tables the trigonometry reads are identical: the cosine quarter-turn table (`000981cc`, ES2 `004a25dc`, 0x401 words), the arctangent table (`0009e648`, ES2 `004a1c4c`, 513 bytes) and the used ranges of both arcsine tables (`00097634` and `000979b4`, ES2 `004a1e54` and `004a21d4`, 0x201 words each). The arctangent, `Math_Atan2Bam` (`000734a0`), is ES2's without its `PUSH EBX`/`POP EBX`: it overwrites `EBX`, which both compilers' conventions require a callee to keep. `Math_FastMagnitude3D` is `0006325a`.
 
 ## The primitives

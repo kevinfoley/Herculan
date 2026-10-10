@@ -18,7 +18,7 @@ Both ES1 program images were built with Symantec C++, the line Zortech C++ began
 | `cinit.asm`, `x386.asm`, `funcs32.asm` | `__cinit`, `__exit`, `___faterr`, `__x386_coproc_init`, `__dosx_get_abs_address`, `__x386_map_physical_address` | the same |
 | C modules | `printf`, `fprintf`, `sprintf`, `vfprintf`, `fscanf`, `ecvt`, `setbuf`, `rand`, `clock`, `toupper`, `tolower`, `atol`, `labs`, `ltoa`, `ldexp`, `spawnl`, `spawnlp`, `execl`, `execlp`, `streambuf::underflow` | all but `rand` and `clock` |
 
-Eight of these matches do not say which function they found. `fprintf`, `sprintf`, `spawnl` and `spawnlp` each match at the same two addresses (`ES1DBSIM 0005f6e0` and `0005f77c`), and `printf`, `execl` and `execlp` at one (`0005f712`): each is a short wrapper that differs from the others only in the function it calls, which the masking hides. `streambuf::underflow` is 8 bytes and matches at two addresses.
+Eight of these matches do not say by themselves which function they found. `fprintf`, `sprintf`, `spawnl` and `spawnlp` each match at the same two addresses (`ES1DBSIM 0005f6e0` and `0005f77c`), and `printf`, `execl` and `execlp` at one (`0005f712`): each is a short wrapper that differs from the others only in the function it calls, which the masking hides. The callees settle these seven: `0005f6e0` calls `vfprintf`, `0005f77c` calls `vsprintf` and `0005f712` calls `vprintf`, so they are `fprintf`, `sprintf` and `printf`, in `printf.c`'s own order, and `ES1GO` has the same three at `0004e140`, `0004e1dc` and `0004e172`. `streambuf::underflow` is 8 bytes and matches at two addresses.
 
 **ES1's runtime is a later revision than 6.1's.** Most of the library's functions that ES1 uses differ in places: `open` (`00074947`) sends its error exit through a routine shared with the other `io.asm` calls (`00074922`, inside `Dos_ReadWrite`), where 6.1's sets `errno` inline. The extender kernel in ES1's executables reads `DOS extender Copyright 1991-1994 by Doug Huffman`; 6.1's `X386.LIB` carries `Copyright 1991 1992`.
 
@@ -66,6 +66,8 @@ Of the 156 game functions in `ES1DBSIM` that return with a plain `ret`, 27 read 
 
 A constructor takes `this` and returns it in `EAX`. When `this` is null it calls `operator new` (`000015a4`, which takes the size and removes it) itself, and returns null if that fails. The code of each subobject constructor it inlines repeats the test with that subobject's own size: `0005b754`, for a `0x16`-byte class, tests and allocates at sizes `0x16`, `0xc`, 8, 6 and 4.
 
+An array of objects goes through the runtime's `__vec_new` (`00061038`), which allocates count × size plus 4 bytes when it is given no memory, stores the count in the first dword, runs the constructor on each element and returns the address after the count; `__vec_ctor` (`000610cb`) runs the constructor over memory it is given. 6.1's library declares both `(p, size, count, ctor)` and mangles them as C functions; ES1's remove their own arguments.
+
 A destructor takes `this` and a flags word. It returns at once when `this` is null; otherwise it stores its own class's vptr, calls its base's destructor with flags 0, and calls `operator delete` (`000015f8`) on `this` when bit 0 of the flags is set. `0005b970` calls its base's destructor `0005b878` that way.
 
 ## Object layout
@@ -100,5 +102,5 @@ The counts are Ghidra's function list after [step 0.2](../../herculan/plan-es1-s
 - **Open:** whether the compiler emits run-time type information anywhere; the vtable's first dword holds none.
 - **Open:** what decides whether a reference to a function targets its padding or its prologue.
 - **Open:** how the library region divides between the C runtime and Dynamix's libraries, function by function. The 6.1 source identifies runtime functions whose bytes differ.
-- **Open:** which of the eight [ambiguous matches](#identification) is which function, and `double.asm`'s `exception`, whose match (`ES1DBSIM 0007e188`, `ES1GO 0005b800`) lies inside the function Ghidra starts at `0007e15a` (`ES1GO 0005b7d2`) rather than at a function of its own.
+- **Open:** which of `streambuf::underflow`'s two [matches](#identification) is the function, and `double.asm`'s `exception`, whose match (`ES1DBSIM 0007e188`, `ES1GO 0005b800`) lies inside the function Ghidra starts at `0007e15a` (`ES1GO 0005b7d2`) rather than at a function of its own.
 - **Open:** the runtime's `INT 21h` `AX=35xxh` calls, which are the extender's services (`3501h`, `3503h`, `3504h`, `3505h`, `350Ch`, `350Dh`).

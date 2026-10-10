@@ -8,7 +8,7 @@ ES1's simulator reports a failed check through the same assert logger ES2 has, a
 
 | Severity | `Assert_Emit` |
 |---|---|
-| 1 | prints `Assert: %d warning%s logged.` to the stream at `0009e87c` when any warning has been counted |
+| 1 | prints `Assert: %d warning%s logged.` to stderr (`0009e87c`, the third FILE of `_iob`) when any warning has been counted |
 | 2 | passes the message to `00056f30` |
 | 3 | counts a warning (`000b5b50`) and passes the formatted line to `00056f30` |
 | 4 | passes the formatted line to `00056f30` and writes it to `0009e87c` |
@@ -23,6 +23,6 @@ ES2's logger (`Assert_Report`, `00479b6c`) has the same shape; its `Assert_Emit`
 
 ## Open
 
-- **Open:** what `00056f30` and `00056e84` do with the line; the stream `0009e87c`.
+- **Open:** what `00056f30` and `00056e84` do with the line.
 - **Open:** what sets `000b5bcc`, and the hooks the program adds to `000b5b58`.
 - **Open:** `ES1GO 00000486`, the shell's emitter, against `Assert_Emit`.

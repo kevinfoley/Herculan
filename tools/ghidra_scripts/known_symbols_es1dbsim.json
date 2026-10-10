@@ -257,6 +257,246 @@
       }
     },
     {
+      "address": "000016e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Context_GetTransform",
+      "description": "(context), callee-cleaned: the rotation an object's orientation block holds, built on demand. When the word at +0x26 is 0 it builds the Q14 rotation at +6 from the three int16 Euler angles at +0 with BuildEulerRotationMatrixQ14 (0005f0ac) and sets the word to 1; it returns context + 6. Most of the calls es2_naming.py callers lists pass an object's +6. ES2's class 'Context' (0x28 bytes, no vptr; MAT_OBJ's base at +0xc) has this layout, and ES2's SimObject_InstallModelTransform (DBSIM 00401fe4) builds the matrix inline.",
+      "source": "ES1DBSIM decompile at 000016e8, against ES2's SimObject_InstallModelTransform",
+      "verified": {
+        "bytes": "000016e8+47",
+        "sha1": "216b7186c84a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021f8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitViewManager_Publish",
+      "description": "(manager), frameless, callee-cleaned: stores its argument in CockpitViewManagerPublished (000bc5a0). 0005a9dc passes the dword at 000b5b60. ES2's CockpitViewManager_Publish (DBSIM 00429810).",
+      "source": "ES1DBSIM disassembly at 00021f8c",
+      "verified": {
+        "bytes": "00021f8c+12",
+        "sha1": "2226c833dc59",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00021f98",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitViewManager_Published",
+      "description": "Frameless: returns CockpitViewManagerPublished (000bc5a0). The callers es2_naming.py callers lists read the view manager's +0x10 (compared with 4), the byte +0x18 and the pointer +0x1b, where ES2's manager has the current view at +0x14, a byte at +0x1c and the CockpitView widget tree at +0x1f. ES2's CockpitViewManager_Published (DBSIM 00429820).",
+      "source": "ES1DBSIM disassembly at 00021f98",
+      "verified": {
+        "bytes": "00021f98+6",
+        "sha1": "75911259af8b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00021fa0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitViewManager_GetCockpitView",
+      "description": "(manager), callee-cleaned: returns the dword at manager + 0x1b, where ES2's CockpitViewManager_GetCockpitView (DBSIM 00429828) returns +0x1f, the CockpitView widget tree.",
+      "source": "ES1DBSIM disassembly at 00021fa0",
+      "verified": {
+        "bytes": "00021fa0+15",
+        "sha1": "002b0427ed5a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002b00c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_PushCanvasContext",
+      "description": "Increments the byte at 00092d7d, saves the installed render context (000bdbda) in the dword array at 000b0df4 at that index, and installs the cockpit's own render context, CockpitViewInstance's (00092d1c) +4, with Raster_InstallRenderContext. Cockpit_PopRenderContext undoes it. ES2's Cockpit_PushCanvasContext (DBSIM 004311e0).",
+      "source": "ES1DBSIM decompile at 0002b00c, against ES2's Cockpit_PushCanvasContext",
+      "verified": {
+        "bytes": "0002b00c+47",
+        "sha1": "f2c6c1057fdf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002b03c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_PopRenderContext",
+      "description": "Reinstalls the render context Cockpit_PushCanvasContext saved at 000b0df4[00092d7d] with Raster_InstallRenderContext and decrements the index byte 00092d7d. ES2's Cockpit_PopRenderContext (DBSIM 00431210).",
+      "source": "ES1DBSIM decompile at 0002b03c, against ES2's Cockpit_PopRenderContext",
+      "verified": {
+        "bytes": "0002b03c+26",
+        "sha1": "6f8d84afeb95",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002b058",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_DrawToCockpit",
+      "description": "(offset, rect, which) in stack order, callee-cleaned: copies a widget's rect between the display's two pages. Returns 0 unless CockpitView_RectCornerVisible(rect) is 1 and the byte +0x18 of the view manager at CockpitViewManagerPublished (000bc5a0) is 0. The GL display at 000bdd28 holds the pages at +0x88 and +0x8c: which = 1 copies from +0x8c to +0x88, and returns 0 while 000b5bca is set; any other value copies from +0x88 to +0x8c. Under Cockpit_PushCanvasContext it stores the source page at the display's +0x38 and the draw page at +0x3c, each also to 00098dd6 / 00098dda and through g_RasterRoutines slots 16 and 17 (0009df14, 0009df18); copies the type-0 region {rect} with 00066914 at the offset, 000b0dd4 when offset is null, between slot 31 (0009df50) and slot 30 (0009df4c); puts back the draw page it found, pops the context and returns 1. ES2's Widget_DrawToCockpit (DBSIM 0043122c) has these steps, tests the view manager's +0x1c, and adds a gate on Display_UseScrollWindow, the video-mode offsets 004d25da/004d25de and a one-pixel widening of the rect for scaled modes.",
+      "source": "ES1DBSIM decompile at 0002b058, against ES2's Widget_DrawToCockpit",
+      "verified": {
+        "bytes": "0002b058+318",
+        "sha1": "9da00b096203",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002b214",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_RectCornerVisible",
+      "description": "(rect{x0, y0, x1, y1}), callee-cleaned: 0 when the byte +0x20b of CockpitViewInstance (00092d1c) is set; otherwise 1 when the corner (x0, y0) or the corner (x1, y1) lies in the 320 x 200 box (inclusive extents 0x13f and 200) whose origin is the cockpit render context's (+4) +0x210 plus +0x220 and +0x214 plus +0x224, else 0. ES2's CockpitView_RectCornerVisible (DBSIM 00431410) tests +0x20f and subtracts the video-mode offsets from the rect.",
+      "source": "ES1DBSIM decompile at 0002b214, against ES2's CockpitView_RectCornerVisible",
+      "verified": {
+        "bytes": "0002b214+186",
+        "sha1": "fa22183ea5f1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00030f44",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_Ctor",
+      "description": "(label, font), callee-cleaned: a 0x20-byte HUD text label. Allocates it with operator_new when label is null (returning null when that fails), zeroes the 0x20 bytes and stores font at +0. The rest of the layout, from Label_SetRect and Label_SetText: the rect at +4..+0x13, the text anchor's x at +0x14 and y at +0x16 (int16), the alignment flags at +0x18 and the fill colour at +0x1c. ES2's Label_Ctor (DBSIM 004387ac) clears 0x21 bytes and stores a panel-relative flag at +0x18, which moves the flags to +0x19 and the fill colour to +0x1d.",
+      "source": "ES1DBSIM decompile at 00030f44, against ES2's Label_Ctor",
+      "verified": {
+        "bytes": "00030f44+126",
+        "sha1": "72797fff8f95",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031080",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetRect",
+      "description": "(label, flags, rect, margin) in stack order, callee-cleaned: copies the rect {x0, y0, x1, y1} to +4..+0x10 and computes the text anchor. x (+0x14): flags & 2 centres it, (x1 - x0) / 2 + x0 + margin[0]; flags & 4 right-aligns it, x1 - margin[0] + 1; otherwise x0 + margin[0]. y (+0x16): (y1 - y0 + HudFont_CellHeight(font)) / 2 + y0 + margin[2], margin being int16s. Stores flags at +0x18 and returns label + 4. ES2's Label_SetRect (DBSIM 00438884) right-aligns at x1 - margin[0] and centres y on half the font's ink height (+0x16) plus 1.",
+      "source": "ES1DBSIM decompile at 00031080, against ES2's Label_SetRect",
+      "verified": {
+        "bytes": "00031080+204",
+        "sha1": "7e0644d78cff",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003114c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetText",
+      "description": "(label, text), callee-cleaned: draws text in the label. Sets the pen (000b11bc, 000b11c0) to the anchor (+0x14, +0x16), moving x left by (w - 1) for flags & 4 or by (w - 1) / 2 for flags & 2, w being HudFont_MeasureString(font, text). When the fill colour +0x1c is non-zero it installs the brush {0, colour} at the current render context's +0x22c (the GL display's (000bdd28) +0x44 less 4), fills the label's rect with Raster_FillRect and puts the old brush back. Then HudFont_DrawString(font, text, pen). ES2's Label_SetText (DBSIM 00438920) measures the text for every alignment, subtracts 1 << VideoMode_XCoordShift rather than 1, and offsets a panel-relative label.",
+      "source": "ES1DBSIM decompile at 0003114c, against ES2's Label_SetText",
+      "verified": {
+        "bytes": "0003114c+214",
+        "sha1": "da9ce1f0eefe",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045004",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StringTable_ReadNext",
+      "description": "(table, &attributes, &text) in stack order, callee-cleaned: reads the next string of a loaded .STR table {buffer +0, cursor +4, length +8, group count +0xc, index +0xe}. Returns 0 at the end of the buffer. At a group's start (+0xc is 0) it reads the group's int16 count from the cursor and zeroes the index. While the index is below the count it stores the address past the string's int16 length in *text, steps over the string to its attribute-count byte, and when attributes is non-null stores the address after that byte in *attributes and steps over the attributes; with a null attributes it leaves the cursor on the first attribute byte. It then counts the string and returns 1. At the group's end it zeroes the count and the index and returns 0. ES2's StringTable_ReadNext (DBSIM 004538d4), statement for statement.",
+      "source": "ES1DBSIM decompile at 00045004, against ES2's StringTable_ReadNext",
+      "verified": {
+        "bytes": "00045004+170",
+        "sha1": "cea4e75dc480",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000450b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StringTable_LoadGroup",
+      "description": "(table, attributeDestination, capacity, destination) in stack order, callee-cleaned: reads the int16 group count at the cursor and calls StringTable_ReadNext that many times, filling consecutive destination entries and, when attributeDestination is non-null, consecutive attribute entries; then zeroes the group count +0xc. capacity is not read. ES2's StringTable_LoadGroup (DBSIM 0045395c).",
+      "source": "ES1DBSIM disassembly at 000450b0, against ES2's StringTable_LoadGroup",
+      "verified": {
+        "bytes": "000450b0+97",
+        "sha1": "d31323c8f3d0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00053d9c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FillRect",
+      "description": "(rect), C convention: fills the inclusive rect {x0, y0, x1, y1} with the brush at the installed clip block's +0x228 (the block 00098d64 points at). Brush mode 0 fills through g_RasterRoutines slot 2 (0009dedc), mode 6 remaps through slot 3 (0009dee0), and mode 4 draws the rect's outline with Raster_DrawLine under a temporary pen at +0x224; a colour whose top byte is 4 is read from the colour-ramp records at 0009a6f5. The rect moves by the block's translation when +0x208 is set and is clipped by its mode +0x204: 0 none, 1 the rect at +0x20c (00073dc4), otherwise each region of the list at +0, a rect region through 00073dc4 and a span region through 00073d8c and 00073b7c. ES2's Raster_FillRect (DBSIM 004865f8), statement for statement.",
+      "source": "ES1DBSIM decompile at 00053d9c, against ES2's Raster_FillRect",
+      "verified": {
+        "bytes": "00053d9c+664",
+        "sha1": "9c24ab4899a3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000551e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_LoadResource",
+      "description": "(mode, stream) in stack order, callee-cleaned: loads one class item. Points ClassItem_CurrentFrame (000b5adc) at a frame on its stack, reads the 8-byte type tag with 00055754, and for a tag other than -1 looks its handler up with 000554e2 and calls the handler's load function (+4) with (mode, stream); then runs 0005591d on the stream, restores the frame pointer and returns the item, or 0. ES2's ClassItem_LoadResource (DBSIM 0047a038), statement for statement.",
+      "source": "ES1DBSIM decompile at 000551e0, against ES2's ClassItem_LoadResource",
+      "verified": {
+        "bytes": "000551e0+101",
+        "sha1": "8ef672dae358",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000552f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arena_Alloc",
+      "description": "(arena, size) in stack order, callee-cleaned: bump-allocates from an arena {base +0, limit +4, cursor +8}: when arena is non-null and cursor + size is at most the limit it returns base + cursor and advances the cursor by size; otherwise it returns operator_new(size). ES2's Arena_Alloc (DBSIM 0047a1bc).",
+      "source": "ES1DBSIM disassembly at 000552f8",
+      "verified": {
+        "bytes": "000552f8+65",
+        "sha1": "3e36c0269d49",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00055d20",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -782,6 +1022,21 @@
       }
     },
     {
+      "address": "0005760c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_LoadFromFile",
+      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath, loads one class item from it with ClassItem_LoadResource in mode 0, destroys the stream and returns the item. ES2's ClassItem_LoadFromFile (DBSIM 00465e78).",
+      "source": "ES1DBSIM decompile at 0005760c, against ES2's ClassItem_LoadFromFile",
+      "verified": {
+        "bytes": "0005760c+52",
+        "sha1": "1eb087a46882",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005b68c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -807,6 +1062,21 @@
       "name": "___faterr",
       "description": "Symantec C++ runtime `___faterr`, from `cinit.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 32 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0005ba58",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBase_Dtor",
+      "description": "(this, flags), callee-cleaned: the root class's destructor. Returns at once for a null this; otherwise stores the root vtable 0009742e and calls operator_delete on this when flags bit 0 is set. The vtable holds it at +0x1c, after the stubs at +4 (returns -1), +8 and +0xc (return 0), +0x10 and +0x14 (return, removing three arguments) and the shared 00055648 at +0x18, and before the empty 0005ba80 at +0x20: the shape of ES2's TSBase vtable, class tag, stream size, memory size, read, write, debug print, destructor and render. es1_naming.py vtables finds it in the destructor slot of ten other vtables. ES2's TSBase_Dtor (DBSIM 0048bd14).",
+      "source": "ES1DBSIM disassembly at 0005ba58 and its vtable 0009742e",
+      "verified": {
+        "bytes": "0005ba58+39",
+        "sha1": "b2b654b2d777",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0005e7f8",
@@ -854,13 +1124,163 @@
       }
     },
     {
+      "address": "0005e858",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_ApplyToShortPoint",
+      "description": "(point, transform, out), C convention: transforms an int16 point by a 32-byte transform into an int32 result, rotation then translation, Q14 with +0x2000 rounding. Rank byte (+0x12) below 1: translation only; 1: rotates x and y only and passes z through; otherwise the full 3x3. ES2's Transform_ApplyToShortPoint (DBSIM 004800c8), whose decompile is the same after normalisation.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "0005e858+304",
+        "sha1": "9b96ee9be093",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005ef74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_RotatePoint",
+      "description": "(point, transform, out), C convention: Transform_ApplyToPoint without the translation -- the rotation alone on an int32 point, Q14 with +0x2000 rounding and 64-bit intermediates, with the rank-byte fast paths. ES2's Transform_RotatePoint (DBSIM 004801f8), whose decompile is the same after normalisation.",
+      "source": "ES1DBSIM decompile at 0005ef74, against ES2's Transform_RotatePoint",
+      "verified": {
+        "bytes": "0005ef74+312",
+        "sha1": "5b693f34f71c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005f0ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuildEulerRotationMatrixQ14",
+      "description": "(euler, out), C convention: builds the Q14 rotation of a 32-byte transform from three int16 Euler angles, each trigonometry-table index being an angle shifted right 4 and rounded (SAR 4 then ADC 0, 15 times). ES2's BuildEulerRotationMatrixQ14 (DBSIM 0047eaac), whose decompile is the same after normalisation.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library"
+    },
+    {
+      "address": "0005f58c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_ApplyToPoint",
+      "description": "(point, transform, out), C convention: transforms an int32 point by a 32-byte transform, rotation then translation, Q14 with +0x2000 rounding and 64-bit intermediates. Rank byte (+0x12) below 1: translation only; 1: rotates x and y only and passes z through; otherwise the full 3x3. ES2's Transform_ApplyToPoint (DBSIM 00480330), whose decompile is the same after normalisation.",
+      "source": "ES1DBSIM decompile at 0005f58c, against ES2's Transform_ApplyToPoint",
+      "verified": {
+        "bytes": "0005f58c+339",
+        "sha1": "f3b551de3175",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005f6e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fprintf",
+      "description": "Symantec C++ runtime `fprintf`, from `printf.c`: (stream, format, ...), C convention: returns vfprintf(stream, format, the address of the arguments after format). Symantec C++ 6.1's code for it matches here and at sprintf (0005f77c), as does its code for spawnl and spawnlp; the call to vfprintf settles it.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0005f6e0+23",
+        "sha1": "e7296922c645",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0005f6f7",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "vfprintf",
       "description": "Symantec C++ runtime `vfprintf`, from `printf.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 27 bytes from here.",
-      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0005f6f7+27",
+        "sha1": "b736035794b6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005f712",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "printf",
+      "description": "Symantec C++ runtime `printf`, from `printf.c`: (format, ...), C convention: returns vprintf(format, the address of the arguments after format). Symantec C++ 6.1's code for printf, execl and execlp matches here; the call to vprintf settles it.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0005f712+20",
+        "sha1": "bea2b31b34cf",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005f726",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "vprintf",
+      "description": "Symantec C++ runtime `vprintf`, from `printf.c`: (format, args), C convention: formats through 0005f7ca with fputc onto stdout (_iob's second FILE, 0009e864), then calls 000753e8 on stdout when bit 0x40 of its flags word (+0xc) is set, and returns the formatter's result.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0005f726+59",
+        "sha1": "aa81fc1aac08",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005f761",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Printf_StoreChar",
+      "description": "(c, &cursor), C convention: the output routine vsprintf hands the formatter: stores c at *cursor, advances the cursor and returns c as an unsigned byte. printf.c's static helper between vprintf and sprintf; the library gives it no public name.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0005f761+27",
+        "sha1": "9e4c2aa141ee",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005f77c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "sprintf",
+      "description": "Symantec C++ runtime `sprintf`, from `printf.c`: (buffer, format, ...), C convention: returns vsprintf(buffer, format, the address of the arguments after format). Symantec C++ 6.1's code for it matches here and at fprintf (0005f6e0), as does its code for spawnl and spawnlp; the call to vsprintf settles it.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0005f77c+23",
+        "sha1": "e7296922c645",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005f793",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "vsprintf",
+      "description": "Symantec C++ runtime `vsprintf`, from `printf.c`: (buffer, format, args), C convention: formats through 0005f7ca with Printf_StoreChar and a cursor on buffer, then stores a NUL at buffer plus the formatter's result, or at buffer itself when the result is negative.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0005f793+55",
+        "sha1": "1c60762f6319",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0006013a",
@@ -870,6 +1290,51 @@
       "name": "__DOSIGN",
       "description": "Symantec C++ runtime `__DOSIGN`, from `printf.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 48 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006061c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Str_ReplaceFirst",
+      "description": "(replace, find, s) in stack order, callee-cleaned: replaces the first occurrence of the character find in s with replace (strchr) and returns s. ES2's Str_ReplaceFirst (DBSIM 00492a5c).",
+      "source": "ES1DBSIM disassembly at 0006061c",
+      "verified": {
+        "bytes": "0006061c+39",
+        "sha1": "f0b4f182dcc1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00060644",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Path_WithExtension",
+      "description": "(extension, path) in stack order, callee-cleaned: copies path into the static buffer 000b5e30, cuts it at the first '.' (Str_ReplaceFirst), appends '.' and extension, and returns the buffer. ES2's Path_WithExtension (DBSIM 00492a84).",
+      "source": "ES1DBSIM disassembly at 00060644",
+      "verified": {
+        "bytes": "00060644+81",
+        "sha1": "eeda9ddbcfa8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00060698",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ResourcePath_BuildFolderName",
+      "description": "(folder, name) in stack order, callee-cleaned: the resource path folder\\name.folder. Path_WithExtension(name, folder), then copies folder into the static buffer 000b5e50, appends '\\' and the Path_WithExtension result, and returns the buffer. ES2's ResourcePath_BuildFolderName (DBSIM 00492ae0).",
+      "source": "ES1DBSIM disassembly at 00060698",
+      "verified": {
+        "bytes": "00060698+79",
+        "sha1": "642f564246f7",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00060998",
@@ -897,6 +1362,36 @@
       "name": "memset",
       "description": "Symantec C++ runtime `memset`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 49 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00060b74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "X32_LockRegion",
+      "description": "(offset, selector, size), C convention: INT 21h AX=252Bh with BX=0501h, ES:ECX the region's far address and EDX its size; returns 0, or -1 when the call sets the carry. AX=252Bh is the Phar Lap memory-region call the extender provides, whose subfunction BH=5 locks pages and BH=6 unlocks them. 0006f971 locks a list of code and data ranges with it, and 0006fb96 unlocks the same ranges with X32_UnlockRegion.",
+      "source": "ES1DBSIM disassembly at 00060b74",
+      "verified": {
+        "bytes": "00060b74+29",
+        "sha1": "0773541eb2b4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00060b91",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "X32_UnlockRegion",
+      "description": "(offset, selector, size), C convention: loads BX=0601h and jumps into X32_LockRegion's INT 21h AX=252Bh body: the Phar Lap memory-region call's unlock subfunction (BH=6).",
+      "source": "ES1DBSIM disassembly at 00060b91",
+      "verified": {
+        "bytes": "00060b91+6",
+        "sha1": "c5de88ee5d0d",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00060c0f",
@@ -932,6 +1427,36 @@
       }
     },
     {
+      "address": "00061038",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__vec_new",
+      "description": "Symantec C++ runtime `__vec_new`, from `vecnew.cpp`: (ctor, count, size, p) in stack order, callee-cleaned; 6.1's library declares it (p, size, count, ctor). When p is null it allocates count * size + 4 bytes with operator_new and returns null when that fails. Stores count in the first dword, calls ctor (when non-null) on each element from the next dword at size intervals, and returns the address after the count.",
+      "source": "Herculan/docs/es1/formats/compiler.md#constructors-and-destructors",
+      "verified": {
+        "bytes": "00061038+80",
+        "sha1": "0a2910f4bfad",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000610cb",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__vec_ctor",
+      "description": "Symantec C++ runtime `__vec_ctor`, from `vecnew.cpp`: (ctor, count, size, p) in stack order, callee-cleaned; 6.1's library declares it (p, size, count, ctor). When p and ctor are both non-null it calls ctor on each of the count elements at size intervals from p; it returns p.",
+      "source": "Herculan/docs/es1/formats/compiler.md#constructors-and-destructors",
+      "verified": {
+        "bytes": "000610cb+50",
+        "sha1": "215e134e2e1e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0006325a",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -944,6 +1469,36 @@
         "sha1": "72c0349bcd11",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "000639ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Pool_Next",
+      "description": "(pool, node), callee-cleaned: the in-use node after node (the link at node - 8), or the first in-use node (+0xe) when node is null; returns it as node + 8, or 0 at the end. ES2's Pool_Next (DBSIM 00471b0c) without its diagnostic for a node below 0x100000.",
+      "source": "ES1DBSIM decompile at 000639ec, against ES2's Pool_Next",
+      "verified": {
+        "bytes": "000639ec+52",
+        "sha1": "6c69bd69fde4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00063a20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Pool_Prev",
+      "description": "(pool, node), callee-cleaned: the in-use node before node (the link at node - 4), returned as node + 8 or 0; with a null node, walks Pool_Next from the start to the last in-use node. ES2's Pool_Prev (DBSIM 00471b64).",
+      "source": "ES1DBSIM decompile at 00063a20, against ES2's Pool_Prev",
+      "verified": {
+        "bytes": "00063a20+85",
+        "sha1": "ad3ddc7ef966",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -1682,6 +2237,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00067048",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_Blit",
+      "description": "(bitmap, flags, point) in stack order, callee-cleaned: draws a bitmap object's data (+4) at point with 0006a8e0(data, point, flags). A packed bitmap (+0x12 non-zero) is first unpacked by 000672cc into Bitmap_UnpackScratch (000bdbe2), which stands in for the data pointer +0xe, with the unpacked size in +0xa, during the draw; afterwards both fields are put back and the scratch buffer is deleted unless Bitmap_UseCallerScratch (000bdbde) is set. ES2's Bitmap_Blit (DBSIM 0048159c), which reaches the clip dispatcher through GL_Blit.",
+      "source": "ES1DBSIM decompile at 00067048, against ES2's Bitmap_Blit",
+      "verified": {
+        "bytes": "00067048+147",
+        "sha1": "c51fe165ba0b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006745c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1691,6 +2261,66 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00069be0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_InstallRenderContext",
+      "description": "(ctx), callee-cleaned: stores ctx at 000bdbda, the installed render context, and its clip block ctx + 4 (0 for a null ctx) at the GL display's (000bdd28) +0x44; passes the block to 0007599c when 000bdd28, read again, still holds that display, and passes it to 0007599c again. ES2's Raster_InstallRenderContext (DBSIM 00480c38) does the same through GLDisplay_SetClipBlock and Raster_SetClipBlock.",
+      "source": "ES1DBSIM disassembly at 00069be0, against ES2's Raster_InstallRenderContext",
+      "verified": {
+        "bytes": "00069be0+97",
+        "sha1": "5f504cfde24b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00069d0c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_MeasureString",
+      "description": "(font, text), callee-cleaned: the sum of 00069ce0(font, c) over the characters of the NUL-terminated text. ES2's HudFont_MeasureString (DBSIM 004823e0).",
+      "source": "ES1DBSIM decompile at 00069d0c, against ES2's HudFont_MeasureString",
+      "verified": {
+        "bytes": "00069d0c+48",
+        "sha1": "fd19ab30730e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069d3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_CellHeight",
+      "description": "(font, c), callee-cleaned: returns the int16 at font + 0xa, the glyph cell height, sign-extended; c is not read. Label_SetRect passes '0'. ES2's HudFont_CellHeight (DBSIM 00482410) takes the font alone.",
+      "source": "ES1DBSIM disassembly at 00069d3c",
+      "verified": {
+        "bytes": "00069d3c+17",
+        "sha1": "c8c8caffeea4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00069e38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_DrawString",
+      "description": "(font, text, pen) in stack order, callee-cleaned: draws a NUL-terminated run from the {x, y} pen. With the installed render context's (000bdbda) +0x231 at 1 it first moves x right by the field width +0x235 less HudFont_MeasureString, at 2 by half of that. Each character goes to 00069d64(font, c, position) and x advances by 00069ce0(font, c). ES2's HudFont_DrawString (DBSIM 00482528).",
+      "source": "ES1DBSIM decompile at 00069e38, against ES2's HudFont_DrawString",
+      "verified": {
+        "bytes": "00069e38+172",
+        "sha1": "c6bf448fee9d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006a01c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1698,6 +2328,21 @@
       "name": "strncat",
       "description": "Symantec C++ runtime `strncat`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 70 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006a064",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_DrawLine",
+      "description": "(from, to), C convention: draws a line between two {x, y} points with the pen at the installed clip block's +0x224 (the block 00098d64 points at): mode 0 a flat colour, mode 2 a span remap through g_RasterRoutines slot 1 (0009ded8), a colour whose top byte is 4 read from the colour ramps at 0009a6f5. The points move by the block's translation when +0x208 is set. Clip mode 0 draws the whole line and mode 1 the line clipped to the rect at +0x20c (0007d4a4): a flat colour through slot 34 (0009df5c), a remap as the spans 0007d358 scan-converts it to. Other modes take each region of the list at +0: a rect region clips the line with 0007d4a4, a span region intersects the line's spans with it through 00073b7c, and each piece goes to the pen's span routine. ES2's Raster_DrawLine (DBSIM 004838f8), statement for statement.",
+      "source": "ES1DBSIM decompile at 0006a064, against ES2's Raster_DrawLine",
+      "verified": {
+        "bytes": "0006a064+614",
+        "sha1": "46d313f0b7ba",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0006abac",
@@ -3215,6 +3860,15 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00092d1c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitViewInstance",
+      "description": "Pointer to the cockpit view object. Cockpit_PushCanvasContext installs its +4, the cockpit's render context; CockpitView_RectCornerVisible tests its byte +0x20b and reads that context's origin. ES2's CockpitViewInstance (DBSIM 0049b088).",
+      "source": "ES1DBSIM decompile at 0002b00c and 0002b214"
+    },
+    {
       "address": "0009680c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -3240,6 +3894,60 @@
       "name": "errno",
       "description": "int: the last DOS error. The error exit read and open share (00074922) stores it; VolRStream_SetIoError and FileRStream_SetIoError read it.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0009ded4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_RasterRoutines",
+      "description": "The rasterizer's 36 function pointers, zero in the image, followed by the count 0x24 at 0009df64. Raster_DrawLine calls slots 0, 1 and 34, Raster_FillRect slots 0, 2 and 3, and Widget_DrawToCockpit slots 16, 17, 30 and 31. ES2's g_RasterRoutines (DBSIM 004a57c4), whose slots have those uses.",
+      "source": "ES1DBSIM decompile at 00053d9c, 0006a064 and 0002b058"
+    },
+    {
+      "address": "0009e84c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "_iob",
+      "description": "Symantec C++ runtime `_iob`, the stdio FILE array, 0x18 bytes per FILE with the flags at +0xc and the DOS handle at +0x10: stdin (handle 0, flags 0x101) at 0009e84c, stdout (handle 1, 0x102) at 0009e864, stderr (handle 2, 0x106) at 0009e87c and handle 3 (0x180) at 0009e894. vprintf writes to stdout.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "000b5adc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ClassItem_CurrentFrame",
+      "description": "Pointer to the item frame of the class item being loaded: ClassItem_LoadResource points it at a frame on its stack and restores the previous value on exit. ES2's ClassItem_CurrentFrame (DBSIM 006c59e8).",
+      "source": "ES1DBSIM decompile at 000551e0"
+    },
+    {
+      "address": "000bc5a0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitViewManagerPublished",
+      "description": "The cockpit view manager, stored by CockpitViewManager_Publish and returned by CockpitViewManager_Published. Widget_DrawToCockpit tests its byte +0x18. ES2's CockpitViewManagerPublished (DBSIM 004cfa20).",
+      "source": "ES1DBSIM disassembly at 00021f8c"
+    },
+    {
+      "address": "000bdbde",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Bitmap_UseCallerScratch",
+      "description": "Flag Bitmap_Blit tests after drawing a packed bitmap: while it is 0 the blit deletes Bitmap_UnpackScratch. ES2's Bitmap_UseCallerScratch (DBSIM 006c5ff8).",
+      "source": "ES1DBSIM decompile at 00067048"
+    },
+    {
+      "address": "000bdbe2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Bitmap_UnpackScratch",
+      "description": "The buffer a packed bitmap is unpacked into for drawing: Bitmap_Blit puts it in the bitmap's data pointer +0xe for the blit and deletes it afterwards unless Bitmap_UseCallerScratch is set. ES2's Bitmap_UnpackScratch (DBSIM 006c5ffc).",
+      "source": "ES1DBSIM decompile at 00067048"
     }
   ]
 }

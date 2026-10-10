@@ -377,6 +377,21 @@
       }
     },
     {
+      "address": "00001b6c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_DrawLine",
+      "description": "(from, to), C convention: draws a line between two {x, y} points with the pen at the installed clip block's +0x224 (the block 0008441c points at): mode 0 a flat colour, mode 2 a span remap through g_RasterRoutines slot 1 (000865b4), a colour whose top byte is 4 read from the colour ramps at 00085da9. The points move by the block's translation when +0x208 is set. Clip mode 0 draws the whole line and mode 1 the line clipped to the rect at +0x20c (0004ffac): a flat colour through slot 34 (00086638), a remap as the spans 0004fe60 scan-converts it to. Other modes take each region of the list at +0: a rect region clips the line with 0004ffac, a span region intersects the line's spans with it through 0004fc50, and each piece goes to the pen's span routine. The code of ES1DBSIM's Raster_DrawLine (0006a064), relocated operands aside.",
+      "source": "ES1GO decompile at 00001b6c",
+      "verified": {
+        "bytes": "00001b6c+614",
+        "sha1": "9100e56f6d54",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004ca58",
       "binary": "ES1GO",
       "type": "function",
@@ -902,6 +917,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0004e140",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "fprintf",
+      "description": "Symantec C++ runtime `fprintf`, from `printf.c`: (stream, format, ...), C convention: returns vfprintf(stream, format, the address of the arguments after format). Symantec C++ 6.1's code for it matches here and at sprintf (0004e1dc), as does its code for spawnl and spawnlp; the call to vfprintf settles it. The code of ES1DBSIM's fprintf (0005f6e0), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0004e140+23",
+        "sha1": "e7296922c645",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004e157",
       "binary": "ES1GO",
       "type": "function",
@@ -909,6 +939,81 @@
       "name": "vfprintf",
       "description": "Symantec C++ runtime `vfprintf`, from `printf.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 27 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0004e172",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "printf",
+      "description": "Symantec C++ runtime `printf`, from `printf.c`: (format, ...), C convention: returns vprintf(format, the address of the arguments after format). Symantec C++ 6.1's code for printf, execl and execlp matches here; the call to vprintf settles it. The code of ES1DBSIM's printf (0005f712), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0004e172+20",
+        "sha1": "bea2b31b34cf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004e186",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "vprintf",
+      "description": "Symantec C++ runtime `vprintf`, from `printf.c`: (format, args), C convention: formats through 0004e22a with fputc onto stdout (_iob's second FILE, 00083cf0), then calls 0004dfc4 on stdout when bit 0x40 of its flags word (+0xc) is set, and returns the formatter's result. The code of ES1DBSIM's vprintf (0005f726), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0004e186+59",
+        "sha1": "b4059dc27bf5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004e1c1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Printf_StoreChar",
+      "description": "(c, &cursor), C convention: the output routine vsprintf hands the formatter: stores c at *cursor, advances the cursor and returns c as an unsigned byte. printf.c's static helper between vprintf and sprintf; the library gives it no public name. The code of ES1DBSIM's Printf_StoreChar (0005f761), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0004e1c1+27",
+        "sha1": "9e4c2aa141ee",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004e1dc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "sprintf",
+      "description": "Symantec C++ runtime `sprintf`, from `printf.c`: (buffer, format, ...), C convention: returns vsprintf(buffer, format, the address of the arguments after format). Symantec C++ 6.1's code for it matches here and at fprintf (0004e140), as does its code for spawnl and spawnlp; the call to vsprintf settles it. The code of ES1DBSIM's sprintf (0005f77c), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0004e1dc+23",
+        "sha1": "e7296922c645",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004e1f3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "vsprintf",
+      "description": "Symantec C++ runtime `vsprintf`, from `printf.c`: (buffer, format, args), C convention: formats through 0004e22a with Printf_StoreChar and a cursor on buffer, then stores a NUL at buffer plus the formatter's result, or at buffer itself when the result is negative. The code of ES1DBSIM's vsprintf (0005f793), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0004e1f3+55",
+        "sha1": "f2b27001ea1e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0004eb9a",
@@ -1097,6 +1202,36 @@
       }
     },
     {
+      "address": "0004f600",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "X32_LockRegion",
+      "description": "(offset, selector, size), C convention: INT 21h AX=252Bh with BX=0501h, ES:ECX the region's far address and EDX its size; returns 0, or -1 when the call sets the carry. AX=252Bh is the Phar Lap memory-region call the extender provides, whose subfunction BH=5 locks pages and BH=6 unlocks them. The code of ES1DBSIM's X32_LockRegion (00060b74), relocated operands aside.",
+      "source": "ES1GO disassembly at 0004f600",
+      "verified": {
+        "bytes": "0004f600+29",
+        "sha1": "0773541eb2b4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f61d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "X32_UnlockRegion",
+      "description": "(offset, selector, size), C convention: loads BX=0601h and jumps into X32_LockRegion's INT 21h AX=252Bh body: the Phar Lap memory-region call's unlock subfunction (BH=6). The code of ES1DBSIM's X32_UnlockRegion (00060b91), relocated operands aside.",
+      "source": "ES1GO decompile at 0004f61d",
+      "verified": {
+        "bytes": "0004f61d+6",
+        "sha1": "c5de88ee5d0d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004f69b",
       "binary": "ES1GO",
       "type": "function",
@@ -1125,6 +1260,141 @@
       "verified": {
         "bytes": "0004f738+66",
         "sha1": "4e0269b4692d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000502c0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_Blit",
+      "description": "(bitmap, flags, point) in stack order, callee-cleaned: draws a bitmap object's data (+4) at point with 0005ae18(data, point, flags). A packed bitmap (+0x12 non-zero) is first unpacked by 00050544 into Bitmap_UnpackScratch (000ab60e), which stands in for the data pointer +0xe, with the unpacked size in +0xa, during the draw; afterwards both fields are put back and the scratch buffer is deleted unless Bitmap_UseCallerScratch (000ab60a) is set. The code of ES1DBSIM's Bitmap_Blit (00067048), relocated operands aside.",
+      "source": "ES1GO decompile at 000502c0",
+      "verified": {
+        "bytes": "000502c0+147",
+        "sha1": "a7307ab91b8f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050928",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Str_ReplaceFirst",
+      "description": "(replace, find, s) in stack order, callee-cleaned: replaces the first occurrence of the character find in s with replace (strchr) and returns s; the same statements as ES1DBSIM's Str_ReplaceFirst (0006061c) in different code.",
+      "source": "ES1GO decompile at 00050928",
+      "verified": {
+        "bytes": "00050928+50",
+        "sha1": "a837b4d1d890",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005095a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Path_WithExtension",
+      "description": "(extension, path) in stack order, callee-cleaned: copies path into the static buffer 000a0be0, cuts it at the first '.' (Str_ReplaceFirst), appends '.' and extension, and returns the buffer; the same statements as ES1DBSIM's Path_WithExtension (00060644) in different code.",
+      "source": "ES1GO decompile at 0005095a",
+      "verified": {
+        "bytes": "0005095a+84",
+        "sha1": "691140fa6c65",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000509ae",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ResourcePath_BuildFolderName",
+      "description": "(folder, name) in stack order, callee-cleaned: the resource path folder\\name.folder. Path_WithExtension(name, folder), then copies folder into the static buffer 000a0c00, appends '\\' and the Path_WithExtension result, and returns the buffer; the same statements as ES1DBSIM's ResourcePath_BuildFolderName (00060698) in different code.",
+      "source": "ES1GO decompile at 000509ae",
+      "verified": {
+        "bytes": "000509ae+83",
+        "sha1": "6ddd660e179d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000513fc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_InstallRenderContext",
+      "description": "(ctx), callee-cleaned: stores ctx at 000ab612, the installed render context, and its clip block ctx + 4 (0 for a null ctx) at the GL display's (000ab616) +0x40; passes the block to 00064364 when 000ab7a0 holds that display, and passes it to 00064364 again. ES1DBSIM's Raster_InstallRenderContext (00069be0) stores the block at its display's +0x44 and compares the display global with itself.",
+      "source": "ES1GO decompile at 000513fc, against ES1DBSIM's Raster_InstallRenderContext",
+      "verified": {
+        "bytes": "000513fc+97",
+        "sha1": "f9c5c52e2ed9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051c74",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FillRect",
+      "description": "(rect), C convention: ES1DBSIM's Raster_FillRect (00053d9c) but for one step: for a span region of the clip list it converts the rect to spans without first intersecting it with the block's rect at +0x20c, where ES1DBSIM's returns when that intersection is empty.",
+      "source": "ES1GO decompile at 00051c74, against ES1DBSIM's Raster_FillRect",
+      "verified": {
+        "bytes": "00051c74+624",
+        "sha1": "866122c0ad23",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051fac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_MeasureString",
+      "description": "(font, text), callee-cleaned: the sum of 00051f80(font, c) over the characters of the NUL-terminated text. The code of ES1DBSIM's HudFont_MeasureString (00069d0c), relocated operands aside.",
+      "source": "ES1GO decompile at 00051fac",
+      "verified": {
+        "bytes": "00051fac+48",
+        "sha1": "fd19ab30730e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051fdc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_CellHeight",
+      "description": "(font, c), callee-cleaned: returns the int16 at font + 0xa, the glyph cell height, sign-extended; c is not read. The code of ES1DBSIM's HudFont_CellHeight (00069d3c), relocated operands aside.",
+      "source": "ES1GO decompile at 00051fdc",
+      "verified": {
+        "bytes": "00051fdc+17",
+        "sha1": "c8c8caffeea4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000520d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_DrawString",
+      "description": "(font, text, pen) in stack order, callee-cleaned: draws a NUL-terminated run from the {x, y} pen. With the installed render context's (000ab612) +0x231 at 1 it first moves x right by the field width +0x235 less HudFont_MeasureString, at 2 by half of that. Each character goes to 00052004(font, c, position) and x advances by 00051f80(font, c). The code of ES1DBSIM's HudFont_DrawString (00069e38), relocated operands aside.",
+      "source": "ES1GO decompile at 000520d8",
+      "verified": {
+        "bytes": "000520d8+172",
+        "sha1": "91dd5bf9c431",
         "scope": "body",
         "via": "decompile"
       }
@@ -1580,6 +1850,51 @@
       }
     },
     {
+      "address": "000537d4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBase_Dtor",
+      "description": "(this, flags), callee-cleaned: the root class's destructor. Returns at once for a null this; otherwise stores the root vtable 00087062 and calls operator_delete on this when flags bit 0 is set. The vtable holds it at +0x1c, after the stubs at +4 (returns -1), +8 and +0xc (return 0), +0x10 and +0x14 (return, removing three arguments) and the shared 00000b5c at +0x18, and before the empty 000537fc at +0x20: the shape of ES2's TSBase vtable. es1_naming.py vtables finds it in the destructor slot of five other vtables. The code of ES1DBSIM's TSBase_Dtor (0005ba58), relocated operands aside.",
+      "source": "ES1GO disassembly at 000537d4 and its vtable 00087062",
+      "verified": {
+        "bytes": "000537d4+39",
+        "sha1": "2d8db71bd7cc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005542c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "__vec_new",
+      "description": "Symantec C++ runtime `__vec_new`, from `vecnew.cpp`: (ctor, count, size, p) in stack order, callee-cleaned; 6.1's library declares it (p, size, count, ctor). When p is null it allocates count * size + 4 bytes with operator_new and returns null when that fails. Stores count in the first dword, calls ctor (when non-null) on each element from the next dword at size intervals, and returns the address after the count. The code of ES1DBSIM's __vec_new (00061038), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#constructors-and-destructors",
+      "verified": {
+        "bytes": "0005542c+80",
+        "sha1": "3702f04ace57",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000554bf",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "__vec_ctor",
+      "description": "Symantec C++ runtime `__vec_ctor`, from `vecnew.cpp`: (ctor, count, size, p) in stack order, callee-cleaned; 6.1's library declares it (p, size, count, ctor). When p and ctor are both non-null it calls ctor on each of the count elements at size intervals from p; it returns p. The code of ES1DBSIM's __vec_ctor (000610cb), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#constructors-and-destructors",
+      "verified": {
+        "bytes": "000554bf+50",
+        "sha1": "215e134e2e1e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00055528",
       "binary": "ES1GO",
       "type": "function",
@@ -1602,6 +1917,30 @@
         "scope": "body",
         "via": "both"
       }
+    },
+    {
+      "address": "00056790",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_ApplyToPoint",
+      "description": "(point, transform, out), C convention: transforms an int32 point by a 32-byte transform, rotation then translation, Q14 with +0x2000 rounding and 64-bit intermediates. Rank byte (+0x12) below 1: translation only; 1: rotates x and y only and passes z through; otherwise the full 3x3. The code of ES1DBSIM's Transform_ApplyToPoint (0005f58c), relocated operands aside.",
+      "source": "ES1GO decompile at 00056790",
+      "verified": {
+        "bytes": "00056790+339",
+        "sha1": "f3b551de3175",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000589c4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BuildEulerRotationMatrixQ14",
+      "description": "(euler, out), C convention: builds the Q14 rotation of a 32-byte transform from three int16 Euler angles. ES1DBSIM's BuildEulerRotationMatrixQ14 (0005f0ac) but for its trigonometry-table indexes, which this one truncates (SAR 4) where ES1DBSIM's rounds them (SAR 4 then ADC 0), at all 15.",
+      "source": "ES1GO disassembly at 000589c4, against ES1DBSIM's BuildEulerRotationMatrixQ14"
     },
     {
       "address": "0005a278",
@@ -2522,6 +2861,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00060154",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_RotatePoint",
+      "description": "(point, transform, out), C convention: Transform_ApplyToPoint without the translation -- the rotation alone on an int32 point, Q14 with +0x2000 rounding and 64-bit intermediates, with the rank-byte fast paths. The code of ES1DBSIM's Transform_RotatePoint (0005ef74), relocated operands aside.",
+      "source": "ES1GO decompile at 00060154",
+      "verified": {
+        "bytes": "00060154+312",
+        "sha1": "5b693f34f71c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006384c",
       "binary": "ES1GO",
       "type": "function",
@@ -3065,6 +3419,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00067150",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_ApplyToShortPoint",
+      "description": "(point, transform, out), C convention: transforms an int16 point by a 32-byte transform into an int32 result, rotation then translation, Q14 with +0x2000 rounding. Rank byte (+0x12) below 1: translation only; 1: rotates x and y only and passes z through; otherwise the full 3x3. The code of ES1DBSIM's Transform_ApplyToShortPoint (0005e858), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "00067150+304",
+        "sha1": "9b96ee9be093",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006bc60",
       "binary": "ES1GO",
       "type": "function",
@@ -3336,6 +3705,42 @@
       "name": "errno",
       "description": "int: the last DOS error. The error exit read and open share (0004ed4e) stores it; the file streams' SetIoError methods read it. ES1DBSIM's errno (000973d3).",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00083cd8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "_iob",
+      "description": "Symantec C++ runtime `_iob`, the stdio FILE array, 0x18 bytes per FILE with the flags at +0xc and the DOS handle at +0x10: stdin (handle 0, flags 0x101) at 00083cd8, stdout (handle 1, 0x102) at 00083cf0, stderr (handle 2, 0x106) at 00083d08 and handle 3 (0x180) at 00083d20. vprintf writes to stdout. ES1DBSIM's _iob is at 0009e84c.",
+      "source": "ES1GO image at 00083cd8"
+    },
+    {
+      "address": "000865b0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_RasterRoutines",
+      "description": "The rasterizer's 36 function pointers, zero in the image, followed by the count 0x24 at 00086640. Raster_DrawLine calls slots 0, 1 and 34, and Raster_FillRect slots 0, 2 and 3. ES1DBSIM's g_RasterRoutines is at 0009ded4.",
+      "source": "ES1GO decompile at 00001b6c and 00051c74"
+    },
+    {
+      "address": "000ab60a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Bitmap_UseCallerScratch",
+      "description": "Flag Bitmap_Blit tests after drawing a packed bitmap: while it is 0 the blit deletes Bitmap_UnpackScratch. ES1DBSIM's Bitmap_UseCallerScratch is at 000bdbde.",
+      "source": "ES1GO decompile at 000ab60a"
+    },
+    {
+      "address": "000ab60e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Bitmap_UnpackScratch",
+      "description": "The buffer a packed bitmap is unpacked into for drawing: Bitmap_Blit puts it in the bitmap's data pointer +0xe for the blit and deletes it afterwards unless Bitmap_UseCallerScratch is set. ES1DBSIM's Bitmap_UnpackScratch is at 000bdbe2.",
+      "source": "ES1GO decompile at 000ab60e"
     }
   ]
 }
