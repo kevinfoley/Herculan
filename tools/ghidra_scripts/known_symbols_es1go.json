@@ -1277,6 +1277,36 @@
       }
     },
     {
+      "address": "0004f623",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_X32_AllocSelector",
+      "description": "(linear), C convention: INT 21h AX=3501h, then AX=3503h with ECX = linear and AX=3505h with ECX = 0xffffffff on the selector it returned in BX; returns EAX = 0 and EDX = that selector. When 3503h or 3505h fails it frees the selector (AX=3502h) and returns -1; when 3501h fails it returns linear with DX the data selector 0007d566. The service names (allocate, free, set base, set limit) are inferred; compiler.md lists the AX=35xxh calls as Open. The code of ES1DBSIM's maybe_X32_AllocSelector (00060b97), relocated operands aside.",
+      "source": "ES1GO decompile at 0004f623",
+      "verified": {
+        "bytes": "0004f623+57",
+        "sha1": "03cbcc908dc3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f65c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_X32_FreeSelector",
+      "description": "(offset, selector), C convention: returns -1 for the data selector 0007d566; otherwise loads 0 into whichever of ES, FS and GS holds the selector, calls INT 21h AX=3502h and returns 0, or -1 on carry. offset is not read. maybe_X32_AllocSelector frees through the same call. The code of ES1DBSIM's maybe_X32_FreeSelector (00060bd0), relocated operands aside.",
+      "source": "ES1GO decompile at 0004f65c",
+      "verified": {
+        "bytes": "0004f65c+63",
+        "sha1": "49f802e6eb19",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0004f69b",
       "binary": "ES1GO",
       "type": "function",
@@ -1560,6 +1590,21 @@
       "verified": {
         "bytes": "000509ae+83",
         "sha1": "6ddd660e179d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050e40",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cursor_SetImage",
+      "description": "(bitmap, hotspot), C convention: hides the cursor (g_RasterRoutines slot 31, 0008662c) while it is shown (00084424), stores bitmap at 00084420 and the hotspot's two dwords at 00084430, frees the save-under buffer 00084442, and for a non-null bitmap stores its int16s +0 and +2 at 00084438 and 0008443a and their product at 0008443e, allocates that many bytes as the new save-under, and shows the cursor again (slot 30) when it was shown and the allocation succeeded. The code of ES1DBSIM's Cursor_SetImage (00066948), relocated operands aside.",
+      "source": "ES1GO decompile at 00050e40",
+      "verified": {
+        "bytes": "00050e40+148",
+        "sha1": "2f049cc03374",
         "scope": "body",
         "via": "decompile"
       }
@@ -2105,6 +2150,21 @@
       }
     },
     {
+      "address": "0005319c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "fopen",
+      "description": "The runtime's fopen (name, mode), C convention: takes the first FILE of _iob whose flags +0xc & 0x83 are clear, up to the one ending at 00083fe3, and returns 00066c2c(stream, mode, name); with none free it sets errno to 4 and returns 0. The code of ES1DBSIM's fopen (000605d8), relocated operands aside.",
+      "source": "ES1GO decompile at 0005319c",
+      "verified": {
+        "bytes": "0005319c+66",
+        "sha1": "6c4b2b807f47",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000534d0",
       "binary": "ES1GO",
       "type": "function",
@@ -2285,6 +2345,21 @@
       }
     },
     {
+      "address": "000539ac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_ComputeShadeForFace",
+      "description": "(centre, normal) in stack order, callee-cleaned, both int16 triples: sums a shade over the light list 000ab6b4 (count 000ab6b0) by the light's type +0x16: type 0 adds its intensity +0x1a; type 1 takes v = (dot(normal, model-space direction +0x2a) (0006002f) - 0x400000) >> 1 and, when v is negative, subtracts intensity * v >> 22; type 2 takes the displacement from centre to the model-space position +0x1e and, when its dot with the normal (00060062) is positive, adds intensity * ((+0x38 * (dot / (m + 1))) / (+0x34 + m)) >> 11, m being Math_FastMagnitude3D of the displacement. Returns the sum clamped to 0xff. The code of ES1DBSIM's Light_ComputeShadeForFace (0005bc30), relocated operands aside.",
+      "source": "ES1GO decompile at 000539ac",
+      "verified": {
+        "bytes": "000539ac+421",
+        "sha1": "ad0258237526",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00053ebc",
       "binary": "ES1GO",
       "type": "function",
@@ -2295,6 +2370,21 @@
       "verified": {
         "bytes": "00053ebc+333",
         "sha1": "6d2ad7a08cab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005400c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_ModelToView",
+      "description": "(out, point) in stack order, callee-cleaned: Transform_ApplyToPoint(point, g_ModelToView, out). The code of ES1DBSIM's Raster_ModelToView (0005c290), relocated operands aside.",
+      "source": "ES1GO decompile at 0005400c",
+      "verified": {
+        "bytes": "0005400c+26",
+        "sha1": "6d89f46a7167",
         "scope": "body",
         "via": "decompile"
       }
@@ -2369,6 +2459,21 @@
       }
     },
     {
+      "address": "0005628c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_Rotate2DPoint",
+      "description": "(point, matrix, out), C convention: rotates an {int x, int y} point by a 2x2 Q14 int16 matrix: out.x = (x * m0 + y * m2 + 0x2000) >> 14 and out.y = (x * m1 + y * m3 + 0x2000) >> 14, in 64 bits. The code of ES1DBSIM's Math_Rotate2DPoint (00064f7c), relocated operands aside.",
+      "source": "ES1GO decompile at 0005628c",
+      "verified": {
+        "bytes": "0005628c+103",
+        "sha1": "87e863cd2a4d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00056354",
       "binary": "ES1GO",
       "type": "function",
@@ -2409,6 +2514,21 @@
       "verified": {
         "bytes": "00056790+339",
         "sha1": "f3b551de3175",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00058830",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShapeInstance_Ctor",
+      "description": "(instance, shape) in stack order, callee-cleaned: allocates 0xc bytes when instance is null; installs the base vtables 0008851a and 0008853e and then its own 0008856a at +0, stores shape at +4 and, when the shape's word count +0x24 is non-zero, a copy of its word array +0x1c (Arena_Alloc from the arena 000aa110, then memmove) at +8, else 0. The code of ES1DBSIM's TSShapeInstance_Ctor (00063080), relocated operands aside.",
+      "source": "ES1GO decompile at 00058830",
+      "verified": {
+        "bytes": "00058830+143",
+        "sha1": "98968ad31e08",
         "scope": "body",
         "via": "decompile"
       }
@@ -2709,6 +2829,21 @@
       "name": "toupper",
       "description": "Symantec C++ runtime `toupper`, from `is.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 24 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0005b0e4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Str_FindBoyerMoore",
+      "description": "(text, pattern), C convention: a Boyer-Moore search for pattern in text, comparing from the pattern's end with a 256-entry skip table filled by __memintset; returns the match's address, text itself for an empty pattern, and 0 when there is no match or the pattern is longer than the text. The code of ES1DBSIM's Str_FindBoyerMoore (0006f844), relocated operands aside.",
+      "source": "ES1GO decompile at 0005b0e4",
+      "verified": {
+        "bytes": "0005b0e4+259",
+        "sha1": "d509768fd54e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0005b5d8",
@@ -3105,6 +3240,21 @@
       "name": "strchr",
       "description": "Symantec C++ runtime `strchr`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 39 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0005d7fc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Str_CompareNoCaseN",
+      "description": "(a, b, n), C convention: compares up to n characters with toupper applied to each, stopping at a NUL in a or at the first difference, and returns the difference of the last uppercased pair as bytes; 0 for n of 0. The code of ES1DBSIM's Str_CompareNoCaseN (0006a2cc), relocated operands aside.",
+      "source": "ES1GO decompile at 0005d7fc",
+      "verified": {
+        "bytes": "0005d7fc+125",
+        "sha1": "1593f3e4e515",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0005d87c",
@@ -4035,6 +4185,21 @@
       "name": "fget_dtype_pair",
       "description": "Symantec C++ runtime `fget_dtype_pair`, from `floattyp.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 142 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006bf4d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "FarPtr_Make",
+      "description": "(offset, selector), C convention: returns offset in EAX and selector in DX. maybe_MK_FP (0005dc9a) takes the two the other way round and zero-extends the selector into EDX. The code of ES1DBSIM's FarPtr_Make (0007ef89), relocated operands aside.",
+      "source": "ES1GO decompile at 0006bf4d",
+      "verified": {
+        "bytes": "0006bf4d+10",
+        "sha1": "1e084b16f4ac",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0006d6b8",
