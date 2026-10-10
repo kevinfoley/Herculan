@@ -107,7 +107,7 @@ Of the 2,484 entries, 490 round-trip, 364 parse without round-tripping, 122 fail
 
 No type parses as a different version: with the one `.DPL` above, the headers that carry a class tag and version match ES2's, and every `.MSN` carries ES2's revision. Where an ES2 reader fails or stops short on ES1's files, the layout under the same header differs. ES1's `ZONE*.DAT`, in both archives, are 4 + 20 × *n* bytes, *n* the word at `+2`; ES2's are 16 bytes, which is all the zone header reader reads.
 
-`TAPES\` holds four demo recordings and a `DEMOLIST.STR`. `DEMO1.TAP`'s first dword is 4558, which reads as the size of a bundled file in the scheme of [`../formats/tap-input-tape.md`](../formats/tap-input-tape.md#the-bundle); whether the rest of that scheme holds is [Open](#open).
+`TAPES\` holds four demo recordings and a `DEMOLIST.STR`. `DEMO1.TAP`'s first dword is 4558, which reads as the size of a bundled file in the scheme of [`../retail/formats/tap-input-tape.md`](../retail/formats/tap-input-tape.md#the-bundle); whether the rest of that scheme holds is [Open](#open).
 
 ### Not ES1
 
@@ -314,7 +314,7 @@ What the game seam has to carry, from what is already known to differ:
 - the display modes;
 - the shell, which shares little beyond the data layer.
 
-How the seam is built — a game profile object, per-game subclasses, separate assemblies — is decided at the start of phase 2, against the ES1 code that needs it.
+The two games share a core and each has its own assembly ([`planning.md`](planning.md#how-the-two-games-share-code)). What crosses the core's seams for the items above is designed at the start of phase 2, against the ES1 code that needs it.
 
 ## Open
 
