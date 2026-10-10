@@ -8,6 +8,21 @@
   ],
   "entries": [
     {
+      "address": "000001d7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "X32_AllocMemory",
+      "description": "(size), C convention: rounds size up to a multiple of 0x1000 and asks the extender for that much memory (INT 21h AX=350Ch). On carry it returns -1; otherwise it stores EDX at 00090024, raises the high-water mark 00090028 to the block's end when the end is above it, and returns the block's address. Mem_InitHeap takes the heap's block from it, and operator new and malloc fall back on it while the heap is off.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "000001d7+51",
+        "sha1": "3cabc1fe1ce3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000002ba",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -15,6 +30,276 @@
       "name": "__x386_coproc_init",
       "description": "Symantec C++ runtime `__x386_coproc_init`, from `x386.asm`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 86 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00000d8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Heap_Init",
+      "description": "(heap, block, size), callee-cleaned: sets up the heap object over the block: +0 base, +4 the size as given, +8 the free list (the block, its next link zeroed), and +0xc (free bytes) and +0x10 (their low mark) the size rounded down to a multiple of 8, which also becomes the block's size. Tags the block FBLK at +8.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00000d8c+65",
+        "sha1": "2a8022140434",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000e00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Heap_IsBlock",
+      "description": "(heap, block header): 1 when the address lies from the heap's base to 0x10 bytes before its end and carries a block tag (FBLK at +8 or ABLK at +0), else 0.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00000e00+59",
+        "sha1": "52a538690a2e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00000ec0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Heap_Alloc",
+      "description": "(heap, trackLow, size), callee-cleaned: first-fit allocation. Returns 0 for size 0. Rounds size + 8 up to a multiple of 8 and walks the free list (+8): a block of exactly that size is unlinked; a block more than 0x10 bytes larger is split, the tail staying on the list tagged FBLK; a block larger by 0x10 or less is passed over. The block is tagged ABLK, its payload zero-filled, its size taken off the free bytes (+0xc), and with trackLow set the low mark (+0x10) lowered to the free bytes. Returns the payload (header + 8), or 0 when no block fits.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00000ec0+330",
+        "sha1": "8a66693a3168",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000100c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Heap_Free",
+      "description": "(heap, payload), callee-cleaned: nothing for a null payload. Adds the block's size back to the free bytes (+0xc), tags it FBLK, inserts it into the free list (+8) in address order, and merges it with the free block before it and the one after it where they touch.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "0000100c+221",
+        "sha1": "6b108564a0f1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000010ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Heap_Realloc",
+      "description": "(heap, size, payload), callee-cleaned: size 0 frees the block (Heap_Free) and returns 0. A smaller size gives the tail back in place: to the free block that follows when there is one, otherwise as a new block freed through Heap_Free when the tail exceeds 0x10 bytes, and by moving the data into a new block (Heap_Alloc, memmove, Heap_Free) when it does not. A larger size takes the difference from a following free block large enough for it, and otherwise moves the data. The block after it is checked with Heap_IsBlock and its predecessor on the free list found with Heap_FindPrevFree. Lowers the low mark (+0x10) to the free bytes. Returns the payload, moved or not, or 0 when a move cannot allocate.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "000010ec+535",
+        "sha1": "38809126b21b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001474",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Heap_FindPrevFree",
+      "description": "(heap, block): the free block whose next link is the given block, walking the list from +8; 0 when the block heads the list or the walk ends without finding it.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00001474+59",
+        "sha1": "039afe2f3b65",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001524",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mem_InitHeap",
+      "description": "(size): caps size at X32_LargestFreeBlock() - 25000, takes a block that large from X32_AllocMemory, asserting 'Memory alloc failed' (memory.cpp line 504, severity 5) through Assert_Report when it returns -1, makes it the heap 000ae4ac (Heap_Init) and sets 000901d4, which sends operator new, malloc and the frees to the heap.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00001524+115",
+        "sha1": "be7cfb3810a6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001598",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mem_HeapOff",
+      "description": "Clears 000901d4, after which operator new and malloc take memory from X32_AllocMemory and the frees do nothing.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00001598+11",
+        "sha1": "480db04f2a49",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000015a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "operator_new",
+      "description": "The game's operator new (size), callee-cleaned (RET 4): Heap_Alloc(000ae4ac, 1, size) while 000901d4 is set, otherwise X32_AllocMemory(size) with -1 returned as 0. It is the allocation a constructor makes for a null this (Herculan/docs/es1/formats/compiler.md#constructors-and-destructors). malloc is the same body with the C convention.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "000015a4+62",
+        "sha1": "4e818aa1554d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000015e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mem_AllocFromHeap",
+      "description": "(heap, size), callee-cleaned (RET 8): Heap_Alloc(heap, 1, size) on the heap it is given.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "000015e4+20",
+        "sha1": "a667129d4dac",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000015f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "operator_delete",
+      "description": "The game's operator delete (pointer), callee-cleaned (RET 4): Heap_Free(000ae4ac, pointer) while 000901d4 is set, otherwise nothing. It is the release a destructor makes when bit 0 of its flags is set (Herculan/docs/es1/formats/compiler.md#constructors-and-destructors). free is the same body with the C convention.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "000015f8+29",
+        "sha1": "eeacd6d2427a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001618",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "malloc",
+      "description": "The game's malloc (size), C convention: operator_new's body, returning with a plain RET. It is the _malloc of the startup's argument vector (Herculan/docs/es1/formats/compiler.md#startup).",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00001618+58",
+        "sha1": "decf291055fe",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001654",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "free",
+      "description": "The game's free (pointer), C convention: operator_delete's body, returning with a plain RET.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00001654+27",
+        "sha1": "ff28f44f9391",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001670",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "realloc",
+      "description": "The game's realloc (pointer, size), C convention: Heap_Realloc(000ae4ac, size, pointer), whether or not 000901d4 is set.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00001670+21",
+        "sha1": "bd48ba8aae4d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001688",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "calloc",
+      "description": "The game's calloc (count, size), C convention: count * size bytes from Heap_Alloc(000ae4ac, 1, ...) while 000901d4 is set, otherwise from X32_AllocMemory with -1 returned as 0, then memset to zero over the block's size from the header at payload-4, less 8. A block from X32_AllocMemory has no header, so that size is read from the 4 bytes before it.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00001688+84",
+        "sha1": "915549757b86",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00056ff0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_Emit",
+      "description": "(message, line, file, condition, severity) in stack order, callee-cleaned (RET 0x14), switching on severity: 1 prints 'Assert: %d warning%s logged.' to the stream 0009e87c when the warning count 000b5b50 is not 0, the 's' left off for one; 2 passes the message to 00056f30; 3 counts a warning (000b5b50) and passes the line 00056e84 formats to 00056f30; 4 does the same without counting and also writes the line and a newline to 0009e87c; 5 writes 'Internal Error:' and a request to call Sierra customer support (000968ec), then the message, to 0009e87c; 6 passes 'Assert::break: Ctrl-C / Ctrl-Break' to 00056f30 and writes it to 0009e87c. Other severities do nothing. ES2's Assert_Emit (DBSIM 00479e18) is the counterpart.",
+      "source": "Herculan/docs/es1/simulation/asserts.md",
+      "verified": {
+        "bytes": "00056ff0+385",
+        "sha1": "99804a54aff9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00057270",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_RunHooks",
+      "description": "(logger, severity), callee-cleaned: calls each hook on the list at 000b5b58 (+0 next, +4 the function) with the severity. ES2's Assert_RunHooks (DBSIM 00479b48) is the counterpart.",
+      "source": "Herculan/docs/es1/simulation/asserts.md",
+      "verified": {
+        "bytes": "00057270+39",
+        "sha1": "230dfaee0cea",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00057298",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_Report",
+      "description": "(logger, message, line, file, condition, severity) in stack order, callee-cleaned: the member function Assert_Report(severity, condition, file, line, message) of ES2 (DBSIM 00479b6c), with the logger 000b5b54 as this. Severities 4, 5 and 6 are fatal: with 000b5bcc set it executes INT 3 and returns; otherwise it runs the hooks (Assert_RunHooks), emits the assert (Assert_Emit), emits severity 1 (the warning summary) and ends the program through __exit(1). Any other severity is only emitted.",
+      "source": "Herculan/docs/es1/simulation/asserts.md",
+      "verified": {
+        "bytes": "00057298+116",
+        "sha1": "5d82ff731c48",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0005b68c",
@@ -105,6 +390,21 @@
       "name": "__x386_map_physical_address",
       "description": "Symantec C++ runtime `__x386_map_physical_address`, from `funcs32.asm`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 61 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00060cac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "X32_LargestFreeBlock",
+      "description": "No arguments, C convention: the larger of the extender's figure (INT 21h AX=350Bh, in EAX) less the part of the current 4 KB page above the high-water mark 00090028, and the largest size (+4) on the circular list headed at the pointer 0009002c; minus 4, or 0 when that would go below 0. Mem_InitHeap caps the heap's size with it.",
+      "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
+      "verified": {
+        "bytes": "00060cac+66",
+        "sha1": "61dfc0f8554d",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00064720",

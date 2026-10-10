@@ -28,14 +28,14 @@ The extender enters the image at `0xd` (`__x386_init`; [Hand-off](x32-executable
 
 1. Stores the PSP selector in `__psp` (`0009739c`) and the environment's address in `__envptr` (`000973ac`), and zero-fills `_BSS`, from `000adcd8` to `000bdd40`, the image's memory size.
 2. Copies the command tail onto the stack and splits it at spaces and tabs into an argument vector, keeping a `"` or `'` quoted run as one argument. While `__stack` (`000973e8`) is non-zero, an argument starting `=` replaces it with the decimal number that follows and is not passed on; a non-digit in it prints `Bad stack size parameter` and exits, and a zero leaves it an ordinary argument. Both executables ship `__stack` as `0x8000`.
-3. Allocates the vector through `_malloc` (`00001618`), stores `__argc` (`000973b0`) and `__argv` (`000973b4`), and points `argv[0]` at the program's path after the environment strings. A failed allocation prints `Not enough memory` and exits.
+3. Allocates the vector through `malloc` (`00001618`), stores `__argc` (`000973b0`) and `__argv` (`000973b4`), and points `argv[0]` at the program's path after the environment strings. A failed allocation prints `Not enough memory` and exits.
 4. Asks the extender (`INT 21h` `AX=350Dh`) for a stack of the larger of `__stack` and 16 KB, printing `Not enough memory` on failure, and stores the DOS version in `__osmajor` (`0009739e`) and `__osminor` (`0009739f`).
 5. Detects the coprocessor (`__x386_coproc_init`, `000002ba`): `000973a8` receives 0 when none answers, 2 when `+∞` and `−∞` compare equal (an 80287) and 3 otherwise.
 6. Copies the environment into the heap (`init_envp`, `00000275`), runs the static constructors (`__cinit`, `0005b68c`), calls `main` (`00059350`) with `__argc` and `__argv`, and passes its result to `exit` (`0005b6f4`).
 
 `ES1GO` follows the same steps, with `__stack` at `00083cd4`, `__cinit` at `0004defc`, `main` at `00012ec7` and `exit` at `0004df64`.
 
-The `_malloc` the startup calls sits among the game's own objects, beside `memory.cpp`'s functions, rather than in the library region.
+The `malloc` the startup calls is the game's own, from `memory.cpp`, among the game's objects rather than in the library region ([the entry points](../simulation/memory.md#the-entry-points)).
 
 **Address 0 is a trap.** The image's first bytes load the address of `NULL code pointer called` and jump to the startup's message-and-exit tail (`000001cc`), which prints it and calls `__exit` (`0005b6c8`) with status 1. A call through a null code pointer lands there. A null data pointer faults instead, on the data selector's expand-down limit ([Loading the image](x32-executable.md#loading-the-image)).
 

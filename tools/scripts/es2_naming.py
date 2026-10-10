@@ -3,8 +3,8 @@
 
 Subcommands (BIN is a binary tools/scripts/retail_binaries.py registers: DBSIM, VSHELL, ES1DBSIM or
 ES1GO). rtti, vtables, classes and stats read Borland class records and refuse ES1's Symantec C++
-binaries; match masks in-image operand values by their range, which at ES1's base address 0 cannot
-tell an address from a small constant, and refuses ES1's images.
+binaries. match pairs two PE images or two X-32 images, never one of each, since the two mask
+address operands by different rules (insn_streams).
 
   triage BIN [--limit N] [--max-lines L] [--sort named|sites|callers|refs] [--all]
       The es2_unnamed_callees backlog with each target's decompile size and its own unnamed
@@ -25,7 +25,7 @@ tell an address from a small constant, and refuses ES1's images.
       copy of the other's, and where the two differ.
   match BIN BIN2 [--min N] [--fuzzy R] [--all]
       BIN's unnamed functions (every function with --all) of at least N instructions (default 6)
-      whose disassembly, with every in-image operand value masked, equals a BIN2 function's; with
+      whose disassembly, with every address operand masked, equals a BIN2 function's; with
       --fuzzy R, the three closest named BIN2 functions at a difflib ratio of at least R when there
       is no exact match. Under a unique exact named match it lists the unnamed BIN callees and
       globals that pair, operand by operand, with named BIN2 ones. Confirm a candidate with diff.
@@ -1018,30 +1018,115 @@ def cmd_fixentry(args):
 INSN = re.compile(r"^([0-9a-f]{8})   [0-9a-f]+\s+(\S+)(?: (.*?))?\s*(?:;.*)?$")
 
 
+PADDED = re.compile(r"0x([0-9a-f]{8})\b")
+UNPADDED = re.compile(r"0x([0-9a-f]{1,7})\b")
+ABS_MEM = re.compile(r"\[0x([0-9a-f]{8})\]")
+BARE = re.compile(r"[0-9a-f]{8}")
+# Functions start from address 0 in an X-32 image, so a small constant can equal one's entry; below
+# this an unpadded immediate is never read as a function pointer.
+X32_POINTER_FLOOR = 0x1000
+
+
+def x32_data_start(src, mem_size):
+    """The lowest address any instruction in an X-32 disasm dump reads or writes as an absolute memory
+    operand: where the image's data begins, below which an unpadded immediate is taken for a constant."""
+    lo = mem_size
+    with open(src, encoding="utf-8", errors="replace") as f:
+        for line in f:
+            for m in ABS_MEM.finditer(line):
+                v = int(m.group(1), 16)
+                if v < lo:
+                    lo = v
+    return lo
+
+
+def x32_function_of(image, v):
+    """An X-32 address on the 0x90 padding before a prologue, as the prologue's address; any other
+    address unchanged (retail_binaries.Image.entries_of)."""
+    entries = image.entries_of(v)
+    prologue = [a for a in entries if image.read(a, 3) == b"\x55\x8b\xec"]
+    return prologue[0] if prologue else v
+
+
 def insn_streams(binary):
     """{function address: [(insn address, normalised insn, absolute operand values)]} from the disasm
-    dump. Every operand value inside the image (0x400000..0x7fffff) becomes 'A' and is kept in the
-    third field, so a function compiled into both EXEs compares equal whatever its callees, globals
-    and jump targets were relocated to."""
-    src = os.path.join(ANALYSIS, f"{binary}_disasm_full.txt")
+    dump. Every operand value that is an address in the image becomes 'A' and is kept, as 8 hex digits,
+    in the third field, so a function compiled into two images compares equal whatever its callees,
+    globals and jump targets were relocated to.
+
+    In a PE image an address is any value in 0x400000..0x7fffff. An X-32 image starts at 0, where
+    addresses and small constants share a range. There an address is:
+      - what Ghidra prints padded to 8 digits (branch and call targets, absolute memory operands) or
+        bare (a jump-table entry);
+      - an unpadded immediate on a function's entry or the padding before it (a function pointer),
+        or inside the function's own extent (a jump-table base, a handler address it pushes), at or
+        above X32_POINTER_FLOOR;
+      - an unpadded immediate between the start of the data (x32_data_start) and the end of the
+        image (a pointer to a global or a vtable), unless it is a power of two or one less than one,
+        which are taken for constants as es1_crossmatch.py takes them.
+    Any other value stays a literal, which can only stop two twins from matching. A constant that
+    falls in the data range and is masked could let two functions that differ only in it compare
+    equal. A value on the padding before a prologue is recorded as the prologue (x32_function_of)."""
+    b = retail_binaries.get(binary)
+    src = b.dump("disasm_full.txt")
     cache = os.path.join(CACHE, f"{binary}_insns.pkl")
     os.makedirs(CACHE, exist_ok=True)
     if os.path.exists(cache) and os.path.getmtime(cache) > max(os.path.getmtime(src), os.path.getmtime(__file__)):
         with open(cache, "rb") as f:
             return pickle.load(f)
-    absv = re.compile(r"0x0*([4-7][0-9a-f]{5})\b")
-    d, cur = {}, None
+    if b.container == retail_binaries.PE:
+        absv = re.compile(r"0x0*([4-7][0-9a-f]{5})\b")
+
+        def mask(ops, _lo, _hi):
+            return absv.sub("A", ops), [v.zfill(8) for v in absv.findall(ops)]
+    else:
+        image = b.image()
+        mem_size = image.sections[0][2]
+        data_start = x32_data_start(src, mem_size)
+        fns = functions(binary)
+        entries = {e for f in fns for e in image.entries_of(int(f, 16))}
+
+        def mask(ops, lo, hi):
+            vals = []
+            # A jump-table entry: `addr  0005bd5c`, the address bare.
+            if BARE.fullmatch(ops.strip()):
+                v = int(ops, 16)
+                if v < mem_size:
+                    vals.append("%08x" % x32_function_of(image, v))
+                    return "A", vals
+                return ops, vals
+
+            def padded(m):
+                v = int(m.group(1), 16)
+                if v >= mem_size:
+                    return m.group(0)
+                vals.append("%08x" % x32_function_of(image, v))
+                return "A"
+
+            def unpadded(m):
+                v = int(m.group(1), 16)
+                if v >= X32_POINTER_FLOOR and (v in entries or lo <= v <= hi):
+                    vals.append("%08x" % x32_function_of(image, v))
+                    return "A"
+                if not data_start <= v < mem_size or v & (v - 1) == 0 or v & (v + 1) == 0:
+                    return m.group(0)
+                vals.append("%08x" % v)
+                return "A"
+            return UNPADDED.sub(unpadded, PADDED.sub(padded, ops)), vals
+    d, cur, lo, hi = {}, None, 0, 0
     with open(src, encoding="utf-8", errors="replace") as f:
         for line in f:
             if line.startswith("; FUNCTION "):
-                cur = d.setdefault(line.rstrip().rsplit("@ ", 1)[1], [])
+                a = line.rstrip().rsplit("@ ", 1)[1]
+                cur = d.setdefault(a, [])
+                lo = int(a, 16)
+                hi = fns[a][2] if b.container != retail_binaries.PE and a in fns else lo
                 continue
             m = INSN.match(line)
             if cur is None or not m:
                 continue
-            ops = m.group(3) or ""
-            vals = [v for v in absv.findall(ops)]
-            cur.append((m.group(1), m.group(2) + " " + absv.sub("A", ops), vals))
+            masked, vals = mask(m.group(3) or "", lo, hi)
+            cur.append((m.group(1), m.group(2) + " " + masked, vals))
     with open(cache, "wb") as f:
         pickle.dump(d, f)
     return d
@@ -1053,10 +1138,9 @@ def cmd_match(args):
     with the BIN2 name and the callee/global names that pair up position by position."""
     import difflib
     b1, b2 = args[0], args[1]
-    for b in (b1, b2):
-        retail_binaries.require(b, "es2_naming.py match", "it masks operands in 0x400000..0x7fffff as "
-                                "in-image addresses, and an X-32 image's addresses start at 0",
-                                container=retail_binaries.PE)
+    if retail_binaries.get(b1).container != retail_binaries.get(b2).container:
+        raise SystemExit("es2_naming.py match pairs two images of one container format: a PE's and an "
+                         "X-32 image's address operands are masked by different rules (insn_streams)")
     mn = int(args[args.index("--min") + 1]) if "--min" in args else 6
     fz = float(args[args.index("--fuzzy") + 1]) if "--fuzzy" in args else None
     k1, k2 = names(b1), names(b2)
@@ -1089,7 +1173,6 @@ def cmd_match(args):
             pairs, clash, lo, hi = {}, set(), s1[a][0][0], s1[a][-1][0]
             for (_, _, v1), (_, _, v2) in zip(s1[a], s2[x]):
                 for p, q in zip(v1, v2):
-                    p, q = p.zfill(8), q.zfill(8)
                     if lo <= p <= hi:
                         continue
                     if p not in k1 and q in k2:
