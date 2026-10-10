@@ -647,6 +647,156 @@
       }
     },
     {
+      "address": "0004d82c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolumeGroup_Ctor",
+      "description": "VolumeGroup constructor, callee-cleaned, (this, dirFirst, dir, extension, mask) in stack order: allocates 0x29 bytes through operator_new when this is null (0 if that fails), clears the 10 volume pointers at +0 and the count byte +0x28, sets VolumeGroup_BufferSize (00083c64) to 0x400, then VolumeGroup_SetGroup with the same arguments, and returns this. ES1DBSIM's VolumeGroup_Ctor (00056180), the same statements in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0004d82c+110",
+        "sha1": "6e0835af1345",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004d89a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolumeGroup_Dtor",
+      "description": "VolumeGroup destructor (this, flags): returns at once for a null this; otherwise 0004ca93(volume, 3) on each of the count (+0x28) volume pointers, and operator_delete when bit 0 of the flags is set. The class stores no vptr. ES1DBSIM's VolumeGroup_Dtor (000561d8), the same statements in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0004d89a+87",
+        "sha1": "c81f6c63701e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004d8f1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolumeGroup_SetBufferSize",
+      "description": "(size), callee-cleaned: stores max(size, 0x80) in VolumeGroup_BufferSize (00083c64). es2_xref finds one call, from main (00012ec7), with 0x200 just before main calls VolRStream_SetGroup; when that call makes the group, VolumeGroup_Ctor stores 0x400 over it before any volume is loaded. ES1DBSIM's VolumeGroup_SetBufferSize (00056238), the same statements in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0004d8f1+31",
+        "sha1": "513ea271f9ad",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004d910",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Path_JoinSkipDrive",
+      "description": "(name, dir) in stack order, callee-cleaned: copies dir, or the empty string at 00083c68 when it is null, into the static buffer 000a0b84, appends name without a leading 'X:' drive prefix and returns the buffer. ES1DBSIM's Path_JoinSkipDrive (00056254), the same statements in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0004d910+98",
+        "sha1": "66a08af0c635",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004d972",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Path_SkipDrive",
+      "description": "(path), callee-cleaned: returns path + 2 when path[1] is ':', else path. ES1DBSIM's Path_SkipDrive (000562bc), the same statements in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0004d972+29",
+        "sha1": "f8ed0c2301f9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004d98f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolumeGroup_SetGroup",
+      "description": "(group, dirFirst, dir, extension, mask) in stack order, callee-cleaned: walks the volumes by index and removes one whose flags (+0x20) share no bit with mask through VolumeGroup_RemoveVolume, then moves on past the volume shifted into its slot; returns when the group holds 10 volumes, then scans Str_Concat4's [dir]'vol\\*'<extension> with findfirst and findnext twice, with dir the first time only when dirFirst is nonzero and the second time only when it is 0. Each file whose 'vol\\<name>' equals no loaded volume's name (+8, through Path_SkipDrive) is added with VolumeGroup_AddVolume(group, mask, Path_JoinSkipDrive('vol\\<name>', that pass's dir)). The count is tested once, before the scans. ES1DBSIM's VolumeGroup_SetGroup (000562d8), the same statements in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0004d98f+598",
+        "sha1": "0467d6b0f6e6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004dbe5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolumeGroup_RemoveVolume",
+      "description": "(group, index): 0004ca93(volume, 3) on the volume at index, shifts the later pointers down one while they are set, decrements the count byte +0x28 and clears the freed last slot. ES1DBSIM's VolumeGroup_RemoveVolume (00056528), the same statements in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0004dbe5+118",
+        "sha1": "6efb01075088",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004dc5b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolumeGroup_AddVolume",
+      "description": "(group, mask, path) in stack order: 0004cb1c(VolumeGroup_BufferSize, mask, path) in stack order, and when that returns a volume, inserts it so the list stays in descending order of the byte at volume +0x1c, then increments the count byte +0x28. It does not test the count. ES1DBSIM's VolumeGroup_AddVolume (000565a4), the same statements in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0004dc5b+156",
+        "sha1": "46794f6632ab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004dcf7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolumeGroup_LoadVolume",
+      "description": "(group, path): returns 0 for a null path or a group of 10 volumes; otherwise, unless a loaded volume's name (+8) equals path, VolumeGroup_AddVolume(group, 0xffffffff, path); returns 1. ES1DBSIM's VolumeGroup_LoadVolume (00056620), the same statements in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0004dcf7+159",
+        "sha1": "3d8362a0ed73",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004dd96",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolumeGroup_FindEntry",
+      "description": "(group, entry, path) in stack order: 0004ce15(volume, entry, path) on each volume in order (count byte +0x28), returning 1 at the first that answers nonzero, else 0. ES1DBSIM's VolumeGroup_FindEntry (000566b8), the same statements in different code.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0004dd96+78",
+        "sha1": "3f8092e3d604",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004defc",
       "binary": "ES1GO",
       "type": "function",
@@ -2288,6 +2438,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0005dc70",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "findnext",
+      "description": "The runtime's findnext (), C convention: sets the DTA to 0008a018 (INT 21h AH=1Ah) and finds the next match (AH=4Fh), returning 0008a018, or 0 with the DOS error in errno (00083cbf) through the exit it shares with findfirst (0005dc58) at 0005dc80. ES1DBSIM's findnext (000748ec), the same code, relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "0005dc70+34",
+        "sha1": "46651e0dc6ad",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0005dc9a",
       "binary": "ES1GO",
       "type": "function",
@@ -2304,6 +2469,21 @@
       "name": "fscanf",
       "description": "Symantec C++ runtime `fscanf`, from `scanf.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 33 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00064a38",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Str_Concat4",
+      "description": "(out, d, c, b, a) in stack order, callee-cleaned: empties out, or the static buffer 000aa04c when out is null, strcats each non-null string of a, b, c and d onto it in that order and returns it. ES1DBSIM's Str_Concat4 (0007444c), the same code, relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
+      "verified": {
+        "bytes": "00064a38+102",
+        "sha1": "42691a87ad64",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00064e84",
@@ -2448,6 +2628,15 @@
       "name": "g_VolumeGroup",
       "description": "The volume group VolRStream_Open looks a path up in when the path does not open as a file: made by VolRStream_SetGroup, filled by VolRStream_LoadVolume and deleted by VolRStream_DeleteGroup. ES1DBSIM's g_VolumeGroup (00096838).",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream"
+    },
+    {
+      "address": "00083c64",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "VolumeGroup_BufferSize",
+      "description": "dword: the buffer size VolumeGroup_AddVolume passes 0004cb1c for each volume it loads. 0x400 in the image; VolumeGroup_Ctor stores 0x400 and VolumeGroup_SetBufferSize its argument, at least 0x80. ES1DBSIM's VolumeGroup_BufferSize (0009680c).",
+      "source": "Herculan/docs/es1/formats/streams.md#the-volume-group"
     },
     {
       "address": "00083cbf",

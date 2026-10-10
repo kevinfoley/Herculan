@@ -21186,7 +21186,13 @@
       "confidence": "high",
       "name": "VolumeGroup_Ctor",
       "description": "(group, a, b, c, d): clears the 0x1e volume pointers and the count byte +0x78, sets VolumeGroup_BufferSize to 0x400, then VolumeGroup_SetGroup(group, a, b, c, d) -- what VolRStream_SetGroup runs on an existing group. VolRStream_SetGroup builds g_VolumeGroup with it.",
-      "source": "DBSIM decompile at 00467a98"
+      "source": "DBSIM decompile at 00467a98",
+      "verified": {
+        "bytes": "00467a98+76",
+        "sha1": "40871435719a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00467ae4",
@@ -21219,7 +21225,13 @@
       "confidence": "high",
       "name": "Path_JoinSkipDrive",
       "description": "(dir, name): copies dir, or the empty string at 004a08a8 when it is null, into the static buffer 004d3c38, appends name without a leading 'X:' drive prefix and returns the buffer. VolumeGroup_SetGroup builds each volume's path with it. The DBSIM copy of VSHELL's Path_JoinSkipDrive.",
-      "source": "DBSIM decompile at 00467b50"
+      "source": "DBSIM decompile at 00467b50",
+      "verified": {
+        "bytes": "00467b50+104",
+        "sha1": "b5f72462d5a0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00467bb8",
@@ -21228,7 +21240,13 @@
       "confidence": "high",
       "name": "Path_SkipDrive",
       "description": "(path): returns path + 2 when path[1] is ':', else path. VolumeGroup_SetGroup compares loaded volume names through it. The DBSIM copy of VSHELL's Path_SkipDrive.",
-      "source": "DBSIM decompile at 00467bb8"
+      "source": "DBSIM decompile at 00467bb8",
+      "verified": {
+        "bytes": "00467bb8+26",
+        "sha1": "8944e88397e3",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00467bd4",
@@ -21237,7 +21255,13 @@
       "confidence": "high",
       "name": "VolumeGroup_SetGroup",
       "description": "(group, mask, extension, dir, dirFirst): the DBSIM copy of VSHELL's VolumeGroup_SetGroup without its assert: removes the volumes whose flags +0x20 share no bit with mask, returns when the group holds 0x1e volumes, then scans 'vol\\*<extension>' with findfirst/findnext twice, once under dir and once without it (dirFirst nonzero puts the dir pass first), adding each file whose 'vol\\<name>' matches no loaded volume's name (+8, compared through Path_SkipDrive) with VolumeGroup_AddVolume(group, Path_JoinSkipDrive(dir, name), mask). Sim_Run's call passes extension '.vol'.",
-      "source": "DBSIM decompile at 00467bd4; strings at 004a08a9 and 0049f4b6"
+      "source": "DBSIM decompile at 00467bd4; strings at 004a08a9 and 0049f4b6",
+      "verified": {
+        "bytes": "00467bd4+613",
+        "sha1": "e4437bc056ce",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00467e3c",
@@ -21246,7 +21270,13 @@
       "confidence": "high",
       "name": "VolumeGroup_RemoveVolume",
       "description": "(group, index): Volume_Dtor(volume, 3) on the volume at index, shifts the later pointers down one, decrements the count byte +0x78 and clears the freed last slot. The DBSIM copy of VSHELL's VolumeGroup_RemoveVolume without its asserts.",
-      "source": "DBSIM decompile at 00467e3c"
+      "source": "DBSIM decompile at 00467e3c",
+      "verified": {
+        "bytes": "00467e3c+81",
+        "sha1": "058cad68ac90",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00467e90",
@@ -21255,7 +21285,13 @@
       "confidence": "high",
       "name": "VolumeGroup_AddVolume",
       "description": "(group, path, mask): Volume_LoadVolume(path, mask, VolumeGroup_BufferSize) and, when it loads, inserts the volume so the list stays in descending order of the byte at volume +0x1c (read from the volume header), then increments the count byte +0x78. The DBSIM copy of VSHELL's VolumeGroup_AddVolume.",
-      "source": "DBSIM decompile at 00467e90"
+      "source": "DBSIM decompile at 00467e90",
+      "verified": {
+        "bytes": "00467e90+85",
+        "sha1": "6d9caaf6fea2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00467ee8",
@@ -21273,7 +21309,13 @@
       "confidence": "high",
       "name": "VolumeGroup_FindEntry",
       "description": "Tries Volume_FindEntry (0047ccec) on each volume in a VolumeGroup (volume pointers from +0, count byte at +0x78) in order and returns 1 at the first hit. The DBSIM copy of VSHELL's VolumeGroup_FindEntry.",
-      "source": "DBSIM decompile and disassembly at 00467f60"
+      "source": "DBSIM decompile and disassembly at 00467f60",
+      "verified": {
+        "bytes": "00467f60+58",
+        "sha1": "22c319612986",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00467f9c",
@@ -27408,7 +27450,13 @@
       "confidence": "high",
       "name": "Str_Concat4",
       "description": "(a, b, c, d, out): concatenates the non-null strings a to d into out, or into the static buffer 006c5e2f when out is null, and returns it. The DBSIM copy of VSHELL's Str_Concat4.",
-      "source": "DBSIM decompile at 0047d1b8"
+      "source": "DBSIM decompile at 0047d1b8",
+      "verified": {
+        "bytes": "0047d1b8+102",
+        "sha1": "62fcea3877ca",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047d220",

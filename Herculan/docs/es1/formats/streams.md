@@ -64,6 +64,14 @@ The runtime's `open` (`00074947`) creates a missing file for flag `0x100`, trunc
 
 `VolRStream_Open` tries the path as a loose file first. When that fails it asks the volume group `g_VolumeGroup` (`00096838`) for the entry, and reads type 2 from the volume directly, 7 through the RLE filter and 9 through the LZH filter, as VSHELL's reader does ([VOL archives](../../retail/formats/vol-archive.md)). `VolRStream_SetGroup` makes the group, `VolRStream_LoadVolume` adds a volume to it and `VolRStream_DeleteGroup` (`00056a7c`) deletes it. A read that runs past the entry's end reads one byte more than is left, from the volume stream itself rather than through `+0xe`, and stops the stream with status 2.
 
+## The volume group
+
+`g_VolumeGroup` is a `0x29`-byte object: up to 10 volume pointers from `+0` and their count at `+0x28`, where ES2's group holds `0x1e`. The volumes are kept in descending order of the byte at volume `+0x1c`, and `VolumeGroup_FindEntry` takes the entry from the first volume that has it.
+
+`VolRStream_SetGroup(mask, extension, dir, dirFirst)` makes the group on its first call and refills it on later ones through `VolumeGroup_SetGroup`. That removes the volumes whose dword at `+0x20` shares no bit with `mask`, then loads each file matching `vol\*<extension>`, once under `dir` and once without it (`dir` first when `dirFirst` is nonzero), whose `vol\<name>` is not loaded already, passing `mask` to the volume loader. It tests the limit of 10 once, before it scans; the install's `VOL\` holds seven volumes. `VolRStream_LoadVolume` adds one named volume, with the mask `0xffffffff`, unless one of that name is loaded.
+
+`main` (`00059350`) sets the volume buffer size to `0x200` and then calls `VolRStream_SetGroup` with mask 1 and extension `.vol`. When that call makes the group, `VolumeGroup_Ctor` sets the buffer size to `0x400` before it loads a volume.
+
 ## GO.EXE
 
 `ES1GO` has the same five classes:
@@ -76,10 +84,12 @@ The runtime's `open` (`00074947`) creates a missing file for flag `0x100`, trunc
 | `FileRWStream` | `0008880e` | `0005aa54`, `0005aa90`, `0005aae4` |
 | `VolRStream` | `00083c16` | `0004cf84`, `0004cfe3`, `0004d064` |
 
-The base class and the three file classes are `ES1DBSIM`'s code byte for byte, relocated operands aside, and so are the runtime's `read`, `write`, `open` and `close` they call. `VolRStream` has `ES1DBSIM`'s statements in different code: its functions follow one another with no `0x90` padding, some branches are laid out in the other order, and its stubs load arguments they do not use (`VolRStream_Write`, `0004d6b8`, loads all three before it stores status 4). Its group pointer is `00083c04`, which `VolRStream_DeleteGroup` (`0004d37b`) deletes when `main` (`00012ec7`) calls it.
+The base class and the three file classes are `ES1DBSIM`'s code byte for byte, relocated operands aside, and so are the runtime's `read`, `write`, `open` and `close` they call. `VolRStream` has `ES1DBSIM`'s statements in different code: its functions follow one another with no `0x90` padding, some branches are laid out in the other order, and its stubs load arguments they do not use (`VolRStream_Write`, `0004d6b8`, loads all three before it stores status 4). The volume group (`0004d82c`–`0004dde3`) is the same: `ES1DBSIM`'s statements in different code, its loops tested at the top where `ES1DBSIM`'s are tested at the bottom. Its pointer is `00083c04`. `main` (`00012ec7`) makes it with mask `0x100` and extension `.vol`, after the same buffer size of `0x200`, and deletes it through `VolRStream_DeleteGroup` (`0004d37b`).
 
 ## Open
 
-- **Open:** the volume group (`ES1DBSIM` `000566b8`, `00056620`, `00056180`, `000562d8`, `000561d8`; `ES1GO` `0004dd96`, `0004dcf7`, `0004d82c`, `0004d98f`, `0004d89a`), and the RLE and LZH filter classes (`ES1DBSIM` `00074f9c`, `00075068`, `0007509c`; `00074b8c`, `00074c70`, `00074ccc`; `ES1GO` `00064460`, `0006452c`, `00064560`; `00064ec0`, `00064fa4`, `00065000`).
+- **Open:** the volume class the group holds (`ES1DBSIM` `00055dc8` loads one, `00055ff4` looks an entry up, `00055d50` deletes one; `ES1GO` `0004cb1c`, `0004ce15`, `0004ca93`), and what the flags at volume `+0x20` and the byte at `+0x1c` mean.
+- **Open:** where the directory and the `dirFirst` flag that each `main` passes to `VolRStream_SetGroup` come from.
+- **Open:** the RLE and LZH filter classes (`ES1DBSIM` `00074f9c`, `00075068`, `0007509c`; `00074b8c`, `00074c70`, `00074ccc`; `ES1GO` `00064460`, `0006452c`, `00064560`; `00064ec0`, `00064fa4`, `00065000`).
 - **Open:** what each `GetCapabilities` query asks; no caller's use of the answers has been read.
 - **Open:** a caller of `ES1DBSIM`'s `VolRStream_DeleteGroup`: `es2_xref` finds none, at its entry or at its padding.
