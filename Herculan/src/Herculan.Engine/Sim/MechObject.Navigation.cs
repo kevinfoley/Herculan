@@ -682,7 +682,7 @@ public partial class MechObject {
 	private const int NavDecisionInterval = 10000;
 
 	/// <summary>Ground range inside which a formation member is on station and stops.</summary>
-	private const int FormationStationRange = 2000;
+	internal const int FormationStationRange = 2000;
 
 	/// <summary>Ground range past which a member closes on the post at full throttle.</summary>
 	private const int FormationTrailRange = 25000;
