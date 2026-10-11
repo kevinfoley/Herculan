@@ -34,6 +34,7 @@ Additionally, the game data includes an unused particle-beam weapon for the Cybr
 ## Campaign
 
 - **Intelligence results nothing records.** `C1_04` and `C2_06` record their intelligence-gathering results with a counter operation, `0x17`, that the simulator has no case for, so the content written for those results never appears: two friendly Raptor IIs reinforcing `C2_07`, and `C1_05`'s briefing line describing the enemy force. See [`campaign-continuity.md`](campaign-continuity.md#unreachable-branches).
+- **`C2_05`'s second wave.** Actions 147 and 148 have no trigger area, no machine or structure names either as its engagement or defeat action, and no timer activates either ([`simulation/mission-deployment.md`](simulation/mission-deployment.md#the-four-ways-an-action-activates)), so neither ever fires. Group 187, three Cybrids ordered to hunt the Raptor II prototype, and group 183, three on patrol, wait on action 147 and never arrive. Group 188, the Stingray hunting the prototype from the start, stays on its first order, which action 148 was to end; its second order names a route to the rendezvous, which it would not walk anyway, since a group keeps its first order's route ([`simulation/ai-goals.md`](simulation/ai-goals.md#the-route-cursor-is-loaded-once)). See [`campaign-continuity.md`](campaign-continuity.md#chapter-2--delta-sector).
 - **Placeholder debrief text.** `C5_10`'s debrief is joke placeholder lines, which no branch of the campaign ever shows. See [`campaign-continuity.md`](campaign-continuity.md#unreachable-branches).
 
 ## Files

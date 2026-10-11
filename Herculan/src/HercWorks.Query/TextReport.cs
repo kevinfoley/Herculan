@@ -238,6 +238,42 @@ internal static class TextReport {
 		}
 	}
 
+	public static void Routes(TextWriter o, IReadOnlyList<RouteQueryMission> missions) {
+		foreach (var m in missions) {
+			o.WriteLine($"{m.Mission}: {m.Routes.Count} routes");
+			foreach (var r in m.Routes) {
+				var line = new List<string> {
+					r.Guid == -1 ? $"#{r.Index} (no GUID)" : $"route {r.Guid} (#{r.Index})",
+					$"{r.Waypoints.Count} waypoint{(r.Waypoints.Count == 1 ? "" : "s")}",
+					r.Closed ? "closed: the cursor wraps, it never runs out" : "open",
+				};
+				if (r.ConditionRef != -1) {
+					line.Add(Cond(r.ConditionRef, r.Condition, true));
+				}
+
+				o.WriteLine("  " + string.Join(", ", line));
+				for (int i = 0; i < r.Waypoints.Count; i++) {
+					var w = r.Waypoints[i];
+					string at = w.Found ? $"({w.X}, {w.Y}, {w.Z})" : "(no such row #6 record)";
+					o.WriteLine($"    {i}: point {w.PointRef} {at}{(w.Leg is { } leg ? $", {leg} from the last" : "")}");
+				}
+
+				if (r.UsedBy.Count == 0) {
+					o.WriteLine("    named by no group order or objective");
+				}
+
+				foreach (var u in r.UsedBy) {
+					o.WriteLine(u.Row == 15
+						? $"    group {u.Owner} slot {u.Slot}: order {u.OrderGuid}, {OrderQuery.Verb(u.Verb ?? -1)}" +
+							(u.Installed ? " (the route the group walks)" : " (not slot 0's; the group keeps slot 0's route)")
+						: $"    objective #{u.Owner}");
+				}
+			}
+
+			o.WriteLine();
+		}
+	}
+
 	private static string Order(OrderRecord r, short guid) {
 		var parts = new List<string> { $"order {guid} (#{r.Index})", OrderQuery.Verb(r.Verb), $"formation {r.FormationId}" };
 		if (r.PointRef != -1) {

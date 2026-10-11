@@ -4751,7 +4751,13 @@
       "confidence": "high",
       "name": "Ai_KnowsObject",
       "description": "The AI's knowledge test, far looser than the player's: radar-visible (+0x95) within 999999 units, or a contact this machine holds (this+0xc2 + other[0x4b]) at any range.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00411c58+91",
+        "sha1": "d704a2f4560d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411cb4",
@@ -5094,7 +5100,13 @@
       "confidence": "high",
       "name": "Mission_GroupOrderCompleteOnRoute",
       "description": "Objective condition 0: finds the group's order slot whose route (+0x08) is the record's waypoint group and answers that slot's completion flag at group+0x70.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "0041324c+51",
+        "sha1": "71e1ac33af49",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413280",
@@ -5102,8 +5114,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_EvaluateObjectives",
-      "description": "Walks the mission's objective array (script.dat block 12) each poll and reduces it to a status: a failure condition holding, every required record holding, or neither, each split by whether the player is clear of threats.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "description": "Walks the mission's objective array (script.dat block 12) and reduces it to a status: a failure condition holding, every required record holding, or neither, each split by whether the player is clear of threats (6/10, 9/10, 5/4). The first time a record's condition holds it applies its ten counter pairs to DAT_004a9ef4 (4 set, 5 clear, 6 increment, 7 decrement) and latches +0x22; the first required record not holding is published at DAT_004d1f1c as the failure text.",
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "00413280+870",
+        "sha1": "2748091ecb2b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004135e8",
@@ -5153,8 +5171,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_IsClearOfThreats",
-      "description": "Whether nothing hostile is working on this object: no live enemy knows it within 80000 (100000 if it is that machine's own selection), and no group whose order names it is still inbound.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "description": "Whether nothing hostile is working on this object. Walks the live-object list, skipping an object whose group has not arrived (group+0x14), one on the subject's own side, and one out of the fight (+0xa5, +0xa4 or +0x99). The subject is not clear when a survivor knows it (Ai_KnowsObject) within 80000, 100000 if it is that survivor's selected target (+0x1a4); or, when the subject is not in LocalPlayerMech's group, when the survivor's group's current order names it (Group_IsOrderTarget) and either that group's route has a waypoint after its cursor (Route_WaypointAt) or the survivor knows the subject, at any range.",
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "004137b4+361",
+        "sha1": "8eb9a88259a1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413920",
@@ -5172,7 +5196,13 @@
       "confidence": "high",
       "name": "Group_AllMembersClearOfThreats",
       "description": "False when the group is written off, or when any member that is not destroyed fails Mission_IsClearOfThreats.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "00413950+79",
+        "sha1": "6e674c205e9c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004139a0",
@@ -7477,7 +7507,7 @@
         "bytes": "0042313c+51",
         "sha1": "642223201644",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -7486,9 +7516,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Route_NextWaypointClosesRoute",
-      "description": "Answers 1 when the waypoint after a route cursor is both the route's last and the same point object as its first -- the duplicate a closed patrol circuit ends on, and the one Route_AdvanceCursor would wrap straight off. Only Mech_BehaviourPlayerThink asks; it is what stops a circuit announcing its start point over and over.",
+      "description": "Answers 1 when the waypoint after a route cursor is both the route's last and the same point object as its first -- the duplicate a closed patrol circuit ends on, and the one Route_AdvanceCursor would wrap straight off. The one caller es2_xref finds is Mech_BehaviourPlayerThink (0041c1ee); it is what stops a circuit announcing its start point over and over.",
       "source": "docs/retail/simulation/player-waypoints.md",
-      "signature": "int __cdecl Route_NextWaypointClosesRoute(short *routeCursor)"
+      "signature": "int __cdecl Route_NextWaypointClosesRoute(short *routeCursor)",
+      "verified": {
+        "bytes": "00423170+51",
+        "sha1": "751c9f88e326",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004231a4",
@@ -7619,7 +7655,13 @@
       "confidence": "high",
       "name": "Group_IsOrderTarget",
       "description": "Whether an object is what the group's current order names: for the order's +0xc == 0 the order holds a group and the test is group identity, for 1-3 it holds the object itself.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00423918+72",
+        "sha1": "20fa956f1fa2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423960",
@@ -7676,7 +7718,13 @@
       "confidence": "high",
       "name": "Route_WaypointAt",
       "description": "Reads one waypoint out of a route cursor: null when the cursor has no waypoint group or the index is past its count, otherwise the resolved block-1 point at that index. Every 'is there a waypoint after this one' test in the AI is a call to this with index+1.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00423b0c+38",
+        "sha1": "7ed7bb10bc7d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423b34",
