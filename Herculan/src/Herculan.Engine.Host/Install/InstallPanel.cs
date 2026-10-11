@@ -166,7 +166,8 @@ sealed class InstallPanel : IDisposable {
 			}
 
 			float fraction = progress.BytesTotal > 0 ? (float)progress.BytesDone / progress.BytesTotal : 0f;
-			ImGui.ProgressBar(fraction, new Vector2(-1f, 0f), progress.File.Length == 0 ? ""
+			// File is null until the copy's first report, which comes only after the plan is checked and a chunk read.
+			ImGui.ProgressBar(fraction, new Vector2(-1f, 0f), string.IsNullOrEmpty(progress.File) ? ""
 				: string.Format(_localization.GetStringOrKey("install.copying"), progress.File, progress.FileIndex + 1, progress.FileCount));
 		} else if (_done != null) {
 			ImGui.TextWrapped(_done);
@@ -336,7 +337,11 @@ sealed class InstallPanel : IDisposable {
 		var language = _language;
 		bool discFiles = _discFiles;
 		var cancellation = new CancellationTokenSource();
-		// Only the latest report is kept, for the frame loop to read.
+		// Only the latest report is kept, for the frame loop to read; a retry starts from none, not the last run's.
+		lock (_progressGate) {
+			_progress = default;
+		}
+
 		var progress = new ActionProgress<InstallProgress>(report => {
 			lock (_progressGate) {
 				_progress = report;
