@@ -105,7 +105,7 @@ Every `dts\*.DTS` with a matching `dat\*.DAT`, 22 mechs:
 
 ## Poly types and their colour mechanisms (DBSIM.EXE)
 
-DBSIM's DTS type registry (`g_TSObjectTypeRegistry`, `004a63c8` — 12-byte `{tag, ctor, name}` entries keyed by the on-disk chunk marker) identifies a shape object's class by construction. Use it, not structural resemblance to VSHELL's renderers.
+DBSIM's [DTS type registry](../formats/dts-shape.md#chunk-tags) identifies a shape object's class by construction. Use it, not structural resemblance to VSHELL's renderers.
 
 | Tag | Type | Vtable | Render (`+0x1c`) | Surface value means |
 |---|---|---|---|---|

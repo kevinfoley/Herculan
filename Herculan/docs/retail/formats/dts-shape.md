@@ -4,7 +4,60 @@ A `.DTS` holds a model's shape roots, each a tree of chunked objects — part li
 
 ## Chunk tags
 
-An object's on-disk chunk header is its tag, `[subtype:u16][supertype:u16]` (e.g. `0x0014000f` = `TSTexture4Poly`). DBSIM's tags and the classes they name are tabled in [`../rendering/dts-texture-binding.md`](../rendering/dts-texture-binding.md#poly-types-and-their-colour-mechanisms-dbsimexe) and [`../rendering/dts-billboards.md`](../rendering/dts-billboards.md#class-identification).
+An object's on-disk chunk header is its tag, `[subtype:u16][supertype:u16]` (e.g. `0x0014000f` = `TSTexture4Poly`). DBSIM's type registry, `g_TSObjectTypeRegistry` (`004a63c8`), maps each tag to the function that loads its class: 18 entries of 12 bytes, `{tag, load function, name}`, followed by their count. `Light_ResetSystem` (`0048dbfc`) registers the table with `ClassItem_RegisterBucket` (`00479fac`), and `ClassItem_LoadResource` (`0047a038`) calls the load function whose tag a chunk carries. In the table's order:
+
+| Tag | Name | Load function |
+|---|---|---|
+| `0x00140001` | `TSPoly` | `TSPoly_Construct` (`0048de58`) |
+| `0x00140002` | `TSSolidPoly` | `TSSolidPoly_Construct` (`0048e06c`) |
+| `0x00140003` | `TSShadePoly` | `TSShadedPoly_Construct` (`0048e2d4`) |
+| `0x00140014` | `TSGroup` | `TSGroup_Construct` (`0048e7a4`) |
+| `0x00140005` | `TSBasePart` | `TSPartBase_Construct` (`0048f7d0`) |
+| `0x00140007` | `TSPartList` | `TSPartList_Construct` (`0048fc8c`) |
+| `0x00140008` | `TSShape` | `TSShape_Construct` (`00490c5c`) |
+| `0x00140009` | `TSGouraudPoly` | `TSGouraudPoly_Construct` (`0048e398`) |
+| `0x0014000a` | `TSBSPGroup` | `TSBSPGroup_Construct` (`0048ed04`) |
+| `0x0014000b` | `TSCellAnimPart` | `TSCellAnimPart_Construct` (`0048fee8`) |
+| `0x0014000c` | `TSDetailPart` | `TSDetailPart_Construct` (`00490094`) |
+| `0x00140015` | `TSBSPPart` | `TSBSPPart_Construct` (`0049027c`) |
+| `0x0014000e` | `TSNullObj` | `TSNullObj_Construct` (`0048dd94`) |
+| `0x0014000f` | `TSTexture4Poly` | `TSTexture4Poly_Construct` (`0048e210`) |
+| `0x00140010` | `TSAliasSolidPoly` | `TSAliasSolidPoly_Construct` (`0048e540`) |
+| `0x00140011` | `TSAliasShadedPoly` | `TSAliasShadedPoly_Construct` (`0048e604`) |
+| `0x00140012` | `TSAliasGouraudPoly` | `TSAliasGouraudPoly_Construct` (`0048e6d4`) |
+| `0x00140013` | `TSBitmapPart` | `TSBitmapPart_Construct` (`0048fa68`) |
+
+A load function takes the two arguments `ClassItem_LoadResource` passes it, takes the object's size from the current arena (`006c58b4`) with `Arena_Alloc`, runs the class's constructor, and calls the object's read slot with the same two arguments. The vtables and draw functions of the poly classes are tabled in [`../rendering/dts-texture-binding.md`](../rendering/dts-texture-binding.md#poly-types-and-their-colour-mechanisms-dbsimexe), and those of `TSBitmapPart` and `TSCellAnimPart` in [`../rendering/dts-billboards.md`](../rendering/dts-billboards.md#class-identification).
+
+## Part chunks
+
+The part classes form one hierarchy. `TSBasePart` is the head of every part; `TSBitmapPart` and `TSPartList` extend it, and `TSCellAnimPart`, `TSDetailPart` and `TSBSPPart` extend `TSPartList`. Each class's read slot calls its base's and then reads its own fields, so a chunk's body is its base's body followed by the fields below, little-endian and unpadded:
+
+| Class | Fields after the base's | In memory |
+|---|---|---|
+| `TSBasePart` | `int16` transform, `int16` id number, `int16` radius, `int16[3]` centre | `+4`, `+6`, `+8`, `+0xa`; `0x10` bytes, the vtable at `+0` |
+| `TSBitmapPart` | `int16` bitmap, `int8` x offset, `int8` y offset | `+0x10`, `+0x12`, `+0x13`; `0x14` bytes |
+| `TSPartList` | `uint16` child count, then that many child chunks | the count at `+0x10`, a pointer array at `+0x12`; `0x16` bytes |
+| `TSCellAnimPart` | `int16` animation sequence | `+0x16`; `0x18` bytes |
+| `TSDetailPart` | one `int16` size threshold per child | a pointer to the thresholds at `+0x16`; `0x1a` bytes |
+| `TSBSPPart` | `uint16` node count, the nodes at 14 bytes each, then one `int16` transform id per node | the count at `+0x16`, the nodes at `+0x18`, the transform ids at `+0x1c`; `0x20` bytes |
+
+What the fields do when the part is drawn is [`../rendering/dts-node-posing.md`](../rendering/dts-node-posing.md#the-draw-path) (the transform), [`../rendering/dts-billboards.md`](../rendering/dts-billboards.md) (the bitmap, its offsets and the animation sequence) and [`../rendering/dts-texture-binding.md`](../rendering/dts-texture-binding.md#tsdetailpart-level-selection-and-structure-detail) (the thresholds, and the [node layout](../rendering/dts-texture-binding.md#tsbsppart-child-selection)).
+
+`TSPartList_ReadFromStream` (`0048fd94`) takes the pointer array from the current arena and loads each child with `ClassItem_LoadResource` in mode 0, so a child is a whole chunk of any registered class, header included. `TSDetailPart_ReadFromStream` (`0049017c`) reads exactly as many thresholds as the list has children. `TSBSPPart_ReadFromStream` (`0049037c`) builds the node array with `Rtl_VectorNew` and `TSBSPPart_NodeCtor` (`00490803`) and reads the nodes over it as one block. Each array comes from the current arena. The constructors clear the counts and array pointers, `TSPartList_Ctor` (`00476604`) at `+0x10` and `+0x12`, `TSDetailPart_Ctor` (`00476834`) at `+0x16`, `TSBSPPart_Ctor` (`004769a0`) at `+0x16`, `+0x18` and `+0x1c`. `TSPartList_Dtor` (`00476648`) destroys each non-null child through its destructor slot with flags 3 and frees the pointer array; `TSDetailPart_Dtor` (`0047685c`) and `TSBSPPart_Dtor` (`004769d4`) free their own arrays first.
+
+Each write slot writes the same fields in the same order, and `TSPartList_WriteToStream` (`0048fe00`) writes each child with `ClassItem_StoreItem` in mode 0. The vtable gives a class's tag at slot `0`, the length of its body at `+4`, the memory it occupies at `+8`, and its read, write, debug print, destructor and draw functions at `+0xc` to `+0x1c`:
+
+| Class | Body length (`+4`) | Memory (`+8`) |
+|---|---|---|
+| `TSBasePart` | 12 | `0x10` |
+| `TSBitmapPart` | 16 | `0x14` |
+| `TSPartList` | 14 plus each child's `ClassItem_ItemTotalSize`; 0 when any child's is 0 | `0x16`, 4 per child, and each child's |
+| `TSCellAnimPart` | `TSPartList`'s plus 2, or 0 | `0x18`, 4 per child, and each child's |
+| `TSDetailPart` | `TSPartList`'s plus 2 per child, or 0 | `0x1a`, 6 per child, and each child's |
+| `TSBSPPart` | `TSPartList`'s plus 2 and 16 per node, or 0 | `0x20`, 4 per child, 16 per node, and each child's |
+
+The debug print takes a depth and an indent: when the depth is nonzero it prints the class line (`ClassItem_DebugPrintType`, `0047a488`), one line per field, indented by the indent, and each child with the depth less 1 and the indent plus 1.
 
 ## Surface stride
 

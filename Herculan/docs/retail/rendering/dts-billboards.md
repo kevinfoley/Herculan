@@ -8,7 +8,7 @@ Which `.DBA` a sprite resolves against is the shape instance's own bound bank, t
 
 ## Class identification
 
-Via DBSIM's `g_TSObjectTypeRegistry` (`004a63c8`), not resemblance:
+Via DBSIM's [type registry](../formats/dts-shape.md#chunk-tags), not resemblance:
 
 | Tag | Type | Constructor | Vtable | Render (`+0x1c`) |
 |---|---|---|---|---|

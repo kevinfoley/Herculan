@@ -24157,7 +24157,13 @@
       "confidence": "high",
       "name": "TSPartList_Dtor",
       "description": "The DBSIM copy of VSHELL's TSPartList_Dtor (00421f8b).",
-      "source": "es2_naming.py diff DBSIM 00476648 VSHELL 00421f8b: identical after normalisation; RTTI TSPartList vtable slot"
+      "source": "es2_naming.py diff DBSIM 00476648 VSHELL 00421f8b: identical after normalisation; RTTI TSPartList vtable slot",
+      "verified": {
+        "bytes": "00476648+177",
+        "sha1": "b1a3e51d903d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004766fc",
@@ -24226,7 +24232,13 @@
       "confidence": "high",
       "name": "TSDetailPart_Ctor",
       "description": "The DBSIM copy of VSHELL's TSDetailPart_Ctor (0042216b), the TSDetailPart constructor: identical decompiles once the vtable labels are set aside.",
-      "source": "es2_naming.py diff DBSIM 00476834 VSHELL 0042216b"
+      "source": "es2_naming.py diff DBSIM 00476834 VSHELL 0042216b",
+      "verified": {
+        "bytes": "00476834+38",
+        "sha1": "03544890edb9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047685c",
@@ -24235,7 +24247,13 @@
       "confidence": "high",
       "name": "TSDetailPart_Dtor",
       "description": "The DBSIM copy of VSHELL's TSDetailPart_Dtor (00422191).",
-      "source": "es2_naming.py diff DBSIM 0047685c VSHELL 00422191: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0047685c VSHELL 00422191: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot",
+      "verified": {
+        "bytes": "0047685c+61",
+        "sha1": "a5d987225669",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047689c",
@@ -24277,7 +24295,13 @@
       "confidence": "high",
       "name": "TSBSPPart_Ctor",
       "description": "The DBSIM copy of VSHELL's TSBSPPart_Ctor (004222c9), the TSBSPPart constructor: identical decompiles once the vtable labels are set aside.",
-      "source": "es2_naming.py diff DBSIM 004769a0 VSHELL 004222c9"
+      "source": "es2_naming.py diff DBSIM 004769a0 VSHELL 004222c9",
+      "verified": {
+        "bytes": "004769a0+49",
+        "sha1": "ece3287b5c91",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004769d4",
@@ -24286,7 +24310,13 @@
       "confidence": "high",
       "name": "TSBSPPart_Dtor",
       "description": "The DBSIM copy of VSHELL's TSBSPPart_Dtor (004222fa).",
-      "source": "es2_naming.py diff DBSIM 004769d4 VSHELL 004222fa: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 004769d4 VSHELL 004222fa: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot",
+      "verified": {
+        "bytes": "004769d4+71",
+        "sha1": "e33ea1ad4fa8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00476a1c",
@@ -25677,7 +25707,13 @@
       "confidence": "high",
       "name": "ClassItem_RegisterBucket",
       "description": "(entries, count): appends an {entries, count} bucket to the registry ClassItem_FindHandler searches (006c58b8, count 004a16a8), unless count is 0. Light_ResetSystem registers g_TSObjectTypeRegistry with it; GL_RegisterClassItems and AN_RegisterClassItems register the tables at GL_ClassItemTable and AN_ClassItemTable.",
-      "source": "DBSIM decompile at 00479fac"
+      "source": "DBSIM decompile at 00479fac",
+      "verified": {
+        "bytes": "00479fac+46",
+        "sha1": "2e157e81f02b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00479fdc",
@@ -25836,7 +25872,13 @@
       "confidence": "high",
       "name": "ClassItem_DebugPrintType",
       "description": "The DBSIM copy of VSHELL's VshellClassItem_DebugPrintType (00404120).",
-      "source": "es2_naming.py diff DBSIM 0047a488 VSHELL 00404120: differs only in callee labels and decompiler typing; RTTI GLRegion vtable slot"
+      "source": "es2_naming.py diff DBSIM 0047a488 VSHELL 00404120: differs only in callee labels and decompiler typing; RTTI GLRegion vtable slot",
+      "verified": {
+        "bytes": "0047a488+162",
+        "sha1": "eac3e6114606",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a52c",
@@ -33662,7 +33704,13 @@
       "confidence": "high",
       "name": "TSPartBase_GetClassTag",
       "description": "The DBSIM copy of VSHELL's TSPartBase_GetClassTag (004615f8).",
-      "source": "es2_naming.py diff DBSIM 0048f870 VSHELL 004615f8: identical after normalisation; RTTI TSPartBase vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048f870 VSHELL 004615f8: identical after normalisation; RTTI TSPartBase vtable slot",
+      "verified": {
+        "bytes": "0048f870+10",
+        "sha1": "8a92311b5d23",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048f87c",
@@ -33671,7 +33719,13 @@
       "confidence": "high",
       "name": "TSPartBase_GetStreamSize",
       "description": "The DBSIM copy of VSHELL's TSPartBase_GetStreamSize (00461604).",
-      "source": "es2_naming.py diff DBSIM 0048f87c VSHELL 00461604: identical after normalisation; RTTI TSPartBase vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048f87c VSHELL 00461604: identical after normalisation; RTTI TSPartBase vtable slot",
+      "verified": {
+        "bytes": "0048f87c+10",
+        "sha1": "f56b6a7867e5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048f888",
@@ -33680,7 +33734,13 @@
       "confidence": "high",
       "name": "TSPartBase_GetMemorySize",
       "description": "The DBSIM copy of VSHELL's TSPartBase_GetMemorySize (00461610).",
-      "source": "es2_naming.py diff DBSIM 0048f888 VSHELL 00461610: identical after normalisation; RTTI TSPartBase vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048f888 VSHELL 00461610: identical after normalisation; RTTI TSPartBase vtable slot",
+      "verified": {
+        "bytes": "0048f888+10",
+        "sha1": "11646ccb3e36",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048f894",
@@ -33698,7 +33758,13 @@
       "confidence": "high",
       "name": "TSPartBase_WriteToStream",
       "description": "The DBSIM copy of VSHELL's TSPartBase_WriteToStream (00461664).",
-      "source": "es2_naming.py diff DBSIM 0048f8dc VSHELL 00461664: differs only in callee labels and decompiler typing; RTTI TSPartBase vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048f8dc VSHELL 00461664: differs only in callee labels and decompiler typing; RTTI TSPartBase vtable slot",
+      "verified": {
+        "bytes": "0048f8dc+72",
+        "sha1": "d38a99c3f946",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048f924",
@@ -33707,7 +33773,13 @@
       "confidence": "high",
       "name": "TSPartBase_DebugPrint",
       "description": "The DBSIM copy of VSHELL's TSPartBase_DebugPrint (004616ac).",
-      "source": "es2_naming.py diff DBSIM 0048f924 VSHELL 004616ac: differs only in callee labels and decompiler typing; RTTI TSPartBase vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048f924 VSHELL 004616ac: differs only in callee labels and decompiler typing; RTTI TSPartBase vtable slot",
+      "verified": {
+        "bytes": "0048f924+322",
+        "sha1": "d653db5b18c2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fa68",
@@ -33716,7 +33788,13 @@
       "confidence": "high",
       "name": "TSBitmapPart_Construct",
       "description": "The DBSIM copy of VSHELL's TSBitmapPart_Construct (004617f0), the TSBitmapPart constructor: identical decompiles once the vtable labels are set aside.",
-      "source": "es2_naming.py diff DBSIM 0048fa68 VSHELL 004617f0"
+      "source": "es2_naming.py diff DBSIM 0048fa68 VSHELL 004617f0",
+      "verified": {
+        "bytes": "0048fa68+174",
+        "sha1": "3a8c034890eb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fb18",
@@ -33725,7 +33803,13 @@
       "confidence": "high",
       "name": "TSBitmapPart_DebugPrint",
       "description": "The DBSIM copy of VSHELL's TSBitmapPart_DebugPrint (0046189c).",
-      "source": "es2_naming.py diff DBSIM 0048fb18 VSHELL 0046189c: differs only in callee labels and decompiler typing; RTTI TSBitmapPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fb18 VSHELL 0046189c: differs only in callee labels and decompiler typing; RTTI TSBitmapPart vtable slot",
+      "verified": {
+        "bytes": "0048fb18+186",
+        "sha1": "58f3024728e6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fbd4",
@@ -33734,7 +33818,13 @@
       "confidence": "high",
       "name": "TSBitmapPart_ReadFromStream",
       "description": "The DBSIM copy of VSHELL's TSBitmapPart_ReadFromStream (00461958).",
-      "source": "es2_naming.py diff DBSIM 0048fbd4 VSHELL 00461958: differs only in callee labels and decompiler typing; RTTI TSBitmapPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fbd4 VSHELL 00461958: differs only in callee labels and decompiler typing; RTTI TSBitmapPart vtable slot",
+      "verified": {
+        "bytes": "0048fbd4+68",
+        "sha1": "7a7c3db00da1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fc18",
@@ -33743,7 +33833,13 @@
       "confidence": "high",
       "name": "TSBitmapPart_WriteToStream",
       "description": "The DBSIM copy of VSHELL's TSBitmapPart_WriteToStream (0046199c).",
-      "source": "es2_naming.py diff DBSIM 0048fc18 VSHELL 0046199c: differs only in callee labels and decompiler typing; RTTI TSBitmapPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fc18 VSHELL 0046199c: differs only in callee labels and decompiler typing; RTTI TSBitmapPart vtable slot",
+      "verified": {
+        "bytes": "0048fc18+69",
+        "sha1": "29c40a599c2e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fc60",
@@ -33752,7 +33848,13 @@
       "confidence": "high",
       "name": "TSBitmapPart_GetMemorySize",
       "description": "The DBSIM copy of VSHELL's TSBitmapPart_GetMemorySize (004619e4).",
-      "source": "es2_naming.py diff DBSIM 0048fc60 VSHELL 004619e4: identical after normalisation; RTTI TSBitmapPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fc60 VSHELL 004619e4: identical after normalisation; RTTI TSBitmapPart vtable slot",
+      "verified": {
+        "bytes": "0048fc60+10",
+        "sha1": "758a56b248f0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fc6c",
@@ -33761,7 +33863,13 @@
       "confidence": "high",
       "name": "TSBitmapPart_GetClassTag",
       "description": "The DBSIM copy of VSHELL's TSBitmapPart_GetClassTag (004619f0).",
-      "source": "es2_naming.py diff DBSIM 0048fc6c VSHELL 004619f0: identical after normalisation; RTTI TSBitmapPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fc6c VSHELL 004619f0: identical after normalisation; RTTI TSBitmapPart vtable slot",
+      "verified": {
+        "bytes": "0048fc6c+10",
+        "sha1": "0e70e96e5299",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fc78",
@@ -33770,7 +33878,13 @@
       "confidence": "high",
       "name": "TSBitmapPart_GetStreamSize",
       "description": "The DBSIM copy of VSHELL's TSBitmapPart_GetStreamSize (004619fc).",
-      "source": "es2_naming.py diff DBSIM 0048fc78 VSHELL 004619fc: differs only in callee labels and decompiler typing; RTTI TSBitmapPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fc78 VSHELL 004619fc: differs only in callee labels and decompiler typing; RTTI TSBitmapPart vtable slot",
+      "verified": {
+        "bytes": "0048fc78+20",
+        "sha1": "5c8da0978853",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fc8c",
@@ -33794,7 +33908,13 @@
       "confidence": "high",
       "name": "TSPartList_GetClassTag",
       "description": "The DBSIM copy of VSHELL's TSPartList_GetClassTag (00461a80).",
-      "source": "es2_naming.py diff DBSIM 0048fd00 VSHELL 00461a80: identical after normalisation; RTTI TSPartList vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fd00 VSHELL 00461a80: identical after normalisation; RTTI TSPartList vtable slot",
+      "verified": {
+        "bytes": "0048fd00+10",
+        "sha1": "59f7f54de009",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fd0c",
@@ -33803,7 +33923,13 @@
       "confidence": "high",
       "name": "TSPartList_GetStreamSize",
       "description": "The DBSIM copy of VSHELL's TSPartList_GetStreamSize (00461a8c).",
-      "source": "es2_naming.py diff DBSIM 0048fd0c VSHELL 00461a8c: differs only in callee labels and decompiler typing; RTTI TSPartList vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fd0c VSHELL 00461a8c: differs only in callee labels and decompiler typing; RTTI TSPartList vtable slot",
+      "verified": {
+        "bytes": "0048fd0c+71",
+        "sha1": "51481051bcb6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fd54",
@@ -33812,7 +33938,13 @@
       "confidence": "high",
       "name": "TSPartList_GetMemorySize",
       "description": "The DBSIM copy of VSHELL's TSPartList_GetMemorySize (00461ad4).",
-      "source": "es2_naming.py diff DBSIM 0048fd54 VSHELL 00461ad4: identical after normalisation; RTTI TSPartList vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fd54 VSHELL 00461ad4: identical after normalisation; RTTI TSPartList vtable slot",
+      "verified": {
+        "bytes": "0048fd54+63",
+        "sha1": "3ed9b07c8f7b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fd94",
@@ -33830,7 +33962,13 @@
       "confidence": "high",
       "name": "TSPartList_WriteToStream",
       "description": "The DBSIM copy of VSHELL's TSPartList_WriteToStream (00461b88).",
-      "source": "es2_naming.py diff DBSIM 0048fe00 VSHELL 00461b88: differs only in callee labels and decompiler typing; RTTI TSPartList vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fe00 VSHELL 00461b88: differs only in callee labels and decompiler typing; RTTI TSPartList vtable slot",
+      "verified": {
+        "bytes": "0048fe00+84",
+        "sha1": "186786923b38",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fe54",
@@ -33839,7 +33977,13 @@
       "confidence": "high",
       "name": "TSPartList_DebugPrint",
       "description": "The DBSIM copy of VSHELL's TSPartList_DebugPrint (00461bdc).",
-      "source": "es2_naming.py diff DBSIM 0048fe54 VSHELL 00461bdc: differs only in callee labels and decompiler typing; RTTI TSPartList vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fe54 VSHELL 00461bdc: differs only in callee labels and decompiler typing; RTTI TSPartList vtable slot",
+      "verified": {
+        "bytes": "0048fe54+148",
+        "sha1": "4e5872f8a074",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fee8",
@@ -33848,7 +33992,13 @@
       "confidence": "high",
       "name": "TSCellAnimPart_Construct",
       "description": "The DBSIM copy of VSHELL's TSCellAnimPart_Construct (00461c74), the TSCellAnimPart constructor: identical decompiles once the vtable labels are set aside.",
-      "source": "es2_naming.py diff DBSIM 0048fee8 VSHELL 00461c74"
+      "source": "es2_naming.py diff DBSIM 0048fee8 VSHELL 00461c74",
+      "verified": {
+        "bytes": "0048fee8+130",
+        "sha1": "a12204c14364",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048ff6c",
@@ -33857,7 +34007,13 @@
       "confidence": "high",
       "name": "TSCellAnimPart_GetClassTag",
       "description": "The DBSIM copy of VSHELL's TSCellAnimPart_GetClassTag (00461cf4).",
-      "source": "es2_naming.py diff DBSIM 0048ff6c VSHELL 00461cf4: identical after normalisation; RTTI TSCellAnimPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048ff6c VSHELL 00461cf4: identical after normalisation; RTTI TSCellAnimPart vtable slot",
+      "verified": {
+        "bytes": "0048ff6c+10",
+        "sha1": "16a07a914bc0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048ff78",
@@ -33866,7 +34022,13 @@
       "confidence": "high",
       "name": "TSCellAnimPart_GetStreamSize",
       "description": "The DBSIM copy of VSHELL's TSCellAnimPart_GetStreamSize (00461d00).",
-      "source": "es2_naming.py diff DBSIM 0048ff78 VSHELL 00461d00: differs only in callee labels and decompiler typing; RTTI TSCellAnimPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048ff78 VSHELL 00461d00: differs only in callee labels and decompiler typing; RTTI TSCellAnimPart vtable slot",
+      "verified": {
+        "bytes": "0048ff78+22",
+        "sha1": "e8d44ca8f61d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048ff90",
@@ -33875,7 +34037,13 @@
       "confidence": "high",
       "name": "TSCellAnimPart_GetMemorySize",
       "description": "The DBSIM copy of VSHELL's TSCellAnimPart_GetMemorySize (00461d18).",
-      "source": "es2_naming.py diff DBSIM 0048ff90 VSHELL 00461d18: identical after normalisation; RTTI TSCellAnimPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048ff90 VSHELL 00461d18: identical after normalisation; RTTI TSCellAnimPart vtable slot",
+      "verified": {
+        "bytes": "0048ff90+63",
+        "sha1": "52ded0b73ce1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048ffd0",
@@ -33884,7 +34052,13 @@
       "confidence": "high",
       "name": "TSCellAnimPart_ReadFromStream",
       "description": "The DBSIM copy of VSHELL's TSCellAnimPart_ReadFromStream (00461d60).",
-      "source": "es2_naming.py diff DBSIM 0048ffd0 VSHELL 00461d60: differs only in callee labels and decompiler typing; RTTI TSCellAnimPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048ffd0 VSHELL 00461d60: differs only in callee labels and decompiler typing; RTTI TSCellAnimPart vtable slot",
+      "verified": {
+        "bytes": "0048ffd0+42",
+        "sha1": "ee26ed93be50",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0048fffc",
@@ -33893,7 +34067,13 @@
       "confidence": "high",
       "name": "TSCellAnimPart_WriteToStream",
       "description": "The DBSIM copy of VSHELL's TSCellAnimPart_WriteToStream (00461d8c).",
-      "source": "es2_naming.py diff DBSIM 0048fffc VSHELL 00461d8c: differs only in callee labels and decompiler typing; RTTI TSCellAnimPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0048fffc VSHELL 00461d8c: differs only in callee labels and decompiler typing; RTTI TSCellAnimPart vtable slot",
+      "verified": {
+        "bytes": "0048fffc+43",
+        "sha1": "92c88c35db3b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490028",
@@ -33902,7 +34082,13 @@
       "confidence": "high",
       "name": "TSCellAnimPart_DebugPrint",
       "description": "The DBSIM copy of VSHELL's TSCellAnimPart_DebugPrint (00461db8).",
-      "source": "es2_naming.py diff DBSIM 00490028 VSHELL 00461db8: differs only in callee labels and decompiler typing; RTTI TSCellAnimPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 00490028 VSHELL 00461db8: differs only in callee labels and decompiler typing; RTTI TSCellAnimPart vtable slot",
+      "verified": {
+        "bytes": "00490028+107",
+        "sha1": "bea27bf0ee83",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490094",
@@ -33926,7 +34112,13 @@
       "confidence": "high",
       "name": "TSDetailPart_GetClassTag",
       "description": "The DBSIM copy of VSHELL's TSDetailPart_GetClassTag (00461e94).",
-      "source": "es2_naming.py diff DBSIM 00490108 VSHELL 00461e94: identical after normalisation; RTTI TSDetailPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 00490108 VSHELL 00461e94: identical after normalisation; RTTI TSDetailPart vtable slot",
+      "verified": {
+        "bytes": "00490108+10",
+        "sha1": "9ddfcd3b4f8f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490114",
@@ -33935,7 +34127,13 @@
       "confidence": "high",
       "name": "TSDetailPart_GetStreamSize",
       "description": "The DBSIM copy of VSHELL's TSDetailPart_GetStreamSize (00461ea0).",
-      "source": "es2_naming.py diff DBSIM 00490114 VSHELL 00461ea0: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 00490114 VSHELL 00461ea0: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot",
+      "verified": {
+        "bytes": "00490114+29",
+        "sha1": "112aff230b89",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490134",
@@ -33944,7 +34142,13 @@
       "confidence": "high",
       "name": "TSDetailPart_GetMemorySize",
       "description": "The DBSIM copy of VSHELL's TSDetailPart_GetMemorySize (00461ec0).",
-      "source": "es2_naming.py diff DBSIM 00490134 VSHELL 00461ec0: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 00490134 VSHELL 00461ec0: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot",
+      "verified": {
+        "bytes": "00490134+69",
+        "sha1": "fb1a5462c511",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0049017c",
@@ -33953,7 +34157,13 @@
       "confidence": "high",
       "name": "TSDetailPart_ReadFromStream",
       "description": "The DBSIM copy of VSHELL's TSDetailPart_ReadFromStream (00461f08).",
-      "source": "es2_naming.py diff DBSIM 0049017c VSHELL 00461f08: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0049017c VSHELL 00461f08: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot",
+      "verified": {
+        "bytes": "0049017c+73",
+        "sha1": "db24990491c0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004901c8",
@@ -33962,7 +34172,13 @@
       "confidence": "high",
       "name": "TSDetailPart_WriteToStream",
       "description": "The DBSIM copy of VSHELL's TSDetailPart_WriteToStream (00461f50).",
-      "source": "es2_naming.py diff DBSIM 004901c8 VSHELL 00461f50: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 004901c8 VSHELL 00461f50: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot",
+      "verified": {
+        "bytes": "004901c8+47",
+        "sha1": "cb7697757d1a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004901f8",
@@ -33971,7 +34187,13 @@
       "confidence": "high",
       "name": "TSDetailPart_DebugPrint",
       "description": "The DBSIM copy of VSHELL's TSDetailPart_DebugPrint (00461f80).",
-      "source": "es2_naming.py diff DBSIM 004901f8 VSHELL 00461f80: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 004901f8 VSHELL 00461f80: differs only in callee labels and decompiler typing; RTTI TSDetailPart vtable slot",
+      "verified": {
+        "bytes": "004901f8+130",
+        "sha1": "cb6ea2d5f170",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0049027c",
@@ -33995,7 +34217,13 @@
       "confidence": "high",
       "name": "TSBSPPart_GetClassTag",
       "description": "The DBSIM copy of VSHELL's TSBSPPart_GetClassTag (00462074).",
-      "source": "es2_naming.py diff DBSIM 004902f0 VSHELL 00462074: identical after normalisation; RTTI TSBSPPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 004902f0 VSHELL 00462074: identical after normalisation; RTTI TSBSPPart vtable slot",
+      "verified": {
+        "bytes": "004902f0+10",
+        "sha1": "44d11670a689",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004902fc",
@@ -34004,7 +34232,13 @@
       "confidence": "high",
       "name": "TSBSPPart_GetStreamSize",
       "description": "The DBSIM copy of VSHELL's TSBSPPart_GetStreamSize (00462080).",
-      "source": "es2_naming.py diff DBSIM 004902fc VSHELL 00462080: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 004902fc VSHELL 00462080: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot",
+      "verified": {
+        "bytes": "004902fc+43",
+        "sha1": "be5ae5df5195",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490328",
@@ -34013,7 +34247,13 @@
       "confidence": "high",
       "name": "TSBSPPart_GetMemorySize",
       "description": "The DBSIM copy of VSHELL's TSBSPPart_GetMemorySize (004620ac).",
-      "source": "es2_naming.py diff DBSIM 00490328 VSHELL 004620ac: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 00490328 VSHELL 004620ac: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot",
+      "verified": {
+        "bytes": "00490328+82",
+        "sha1": "c06d9158a5e1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0049037c",
@@ -34022,7 +34262,13 @@
       "confidence": "high",
       "name": "TSBSPPart_ReadFromStream",
       "description": "The DBSIM copy of VSHELL's TSBSPPart_ReadFromStream (00462100).",
-      "source": "es2_naming.py diff DBSIM 0049037c VSHELL 00462100: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0049037c VSHELL 00462100: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot",
+      "verified": {
+        "bytes": "0049037c+165",
+        "sha1": "8a2e09cbacf2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490424",
@@ -34031,7 +34277,13 @@
       "confidence": "high",
       "name": "TSBSPPart_WriteToStream",
       "description": "The DBSIM copy of VSHELL's TSBSPPart_WriteToStream (004621a8).",
-      "source": "es2_naming.py diff DBSIM 00490424 VSHELL 004621a8: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 00490424 VSHELL 004621a8: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot",
+      "verified": {
+        "bytes": "00490424+88",
+        "sha1": "e2e59a942fbf",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0049047c",
@@ -34040,7 +34292,13 @@
       "confidence": "high",
       "name": "TSBSPPart_DebugPrint",
       "description": "The DBSIM copy of VSHELL's TSBSPPart_DebugPrint (00462200).",
-      "source": "es2_naming.py diff DBSIM 0049047c VSHELL 00462200: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 0049047c VSHELL 00462200: differs only in callee labels and decompiler typing; RTTI TSBSPPart vtable slot",
+      "verified": {
+        "bytes": "0049047c+528",
+        "sha1": "2c14b2e07258",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490751",
@@ -34094,7 +34352,13 @@
       "confidence": "high",
       "name": "TSCellAnimPart_Dtor",
       "description": "The DBSIM copy of VSHELL's TSCellAnimPart_Dtor (0046264a).",
-      "source": "ES2DecompileContainingBatch DBSIM 004908c6 / VSHELL 0046264a: identical after normalisation; RTTI TSCellAnimPart vtable 004a629c slot +0x18"
+      "source": "ES2DecompileContainingBatch DBSIM 004908c6 / VSHELL 0046264a: identical after normalisation; RTTI TSCellAnimPart vtable 004a629c slot +0x18",
+      "verified": {
+        "bytes": "004908c6+45",
+        "sha1": "8a9b649add11",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004908f3",
@@ -34103,7 +34367,13 @@
       "confidence": "high",
       "name": "TSBitmapPart_Dtor",
       "description": "The DBSIM copy of VSHELL's TSBitmapPart_Dtor (00462677).",
-      "source": "es2_naming.py diff DBSIM 004908f3 VSHELL 00462677: identical after normalisation; RTTI TSBitmapPart vtable slot"
+      "source": "es2_naming.py diff DBSIM 004908f3 VSHELL 00462677: identical after normalisation; RTTI TSBitmapPart vtable slot",
+      "verified": {
+        "bytes": "004908f3+53",
+        "sha1": "41400952e472",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490928",
@@ -34574,7 +34844,13 @@
       "confidence": "high",
       "name": "TSPartBase_Dtor",
       "description": "The DBSIM copy of VSHELL's TSPartBase_Dtor (00464683).",
-      "source": "ES2DecompileContainingBatch DBSIM 0049224b / VSHELL 00464683: identical after normalisation; RTTI TSPartBase vtable 004a6268 slot +0x18"
+      "source": "ES2DecompileContainingBatch DBSIM 0049224b / VSHELL 00464683: identical after normalisation; RTTI TSPartBase vtable 004a6268 slot +0x18",
+      "verified": {
+        "bytes": "0049224b+45",
+        "sha1": "9dc29a5676ca",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0049231c",

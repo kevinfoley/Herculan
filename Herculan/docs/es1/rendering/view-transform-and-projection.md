@@ -27,6 +27,7 @@ ES2's two faults are ES1's too: `Raster_PerspectiveDivideArray`'s orthographic l
 | `TSCamera_CtorDefault`, `TSCamera_Ctor`, `TSCamera_Dtor` | `0005b944`, `0005b99c`, `0005b970` | `TSCamera_Ctor` is DBSIM's `View_Ctor`, arguments in the reverse order ([compiler.md](../formats/compiler.md#calling-conventions)) |
 | `TSOrthoCamera_Ctor`, `TSOrthoCamera_Dtor` | `0005b9e0`, `0005ba24` | |
 | `Light_Register`, `Light_Unregister` | `0005ba84`, `0005bad4` | the list at `000bdba6`, count `000bdba2` |
+| `Light_ResetSystem` | `000632ec` | sets `Light_ModelSpaceEnabled` and builds the identity transform inline, where ES2 calls `Light_EnableModelSpaceTransform` and `Transform_Reset`; it registers the [shape type registry](../formats/dts-shape.md) |
 | `Light_ComputeShadeAtPoint`, `Light_ComputeShadeForFace`, `Light_ComputeShadeForNormal` | `0005bb24`, `0005bc30`, `0005bdd8` | |
 | `Raster_InstallViewProjection`, `Raster_SetViewTransform`, `Raster_SetModelTransform` | `0005bf68`, `0005c078`, `0005c140` | |
 | `Raster_ModelToView`, `Raster_ModelToViewArray` | `0005c290`, `0005c2ac` | |
@@ -49,7 +50,7 @@ ES2's two faults are ES1's too: `Raster_PerspectiveDivideArray`'s orthographic l
 | `Transform_Identity` | `000b5eb4` | `006c6080` |
 | `g_EyeInModelSpace` | `000b5ed4` | `006c60a0` |
 | `Raster_ProjectionCentre`, `Raster_ViewClipRect` | `000b5ee0`, `000b5ee8` | `006c60b8`, `006c60c0` |
-| `PolyFill_LineColour`, `PolyFill_FillBrush` (mode, then colour at `+4`) | `000b5efc`, `000b5f00` | `006c60d4`, `006c60d8` |
+| `PolyFill_LineBrush`, `PolyFill_LineColour` (its `+4`), `PolyFill_FillBrush` (mode, then colour at `+4`) | `000b5ef8`, `000b5efc`, `000b5f00` | `006c60d0`, `006c60d4`, `006c60d8` |
 | the polygon scratch block, from the vertex count | `000b6720` | `006c6968` |
 | `Poly_ViewCache`, `Poly_ScreenCache`, `Poly_ScreenPoints`, the ring's count | `000b6b1e`, `000b99fe`, `000bb93e`, `000bba3e` | `006c6d66`, `006c9c46`, `006cbb86`, `006cbc86` |
 | `Raster_ViewTransformPtr`, `g_ModelTransformPtr` | `000bdb4a`, `000bdb4e` | `006c6078`, `006c607c` |
