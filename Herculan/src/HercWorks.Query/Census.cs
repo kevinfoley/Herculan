@@ -63,15 +63,17 @@ internal static class Census {
 		return Directory.GetFiles(folder, "*.VOL").OrderBy(p => Path.GetFileName(p), StringComparer.OrdinalIgnoreCase).ToList();
 	}
 
+	/// <summary>Every entry of <paramref name="installRoot"/>'s archives through the readers of the game it holds (<see cref="RetailGameDetector.Detect"/>).</summary>
 	public static List<CensusEntry> Run(string installRoot, string? againstRoot) {
 		var against = againstRoot == null ? null : Index(againstRoot);
+		var game = RetailGameDetector.Detect(installRoot);
 		var result = new List<CensusEntry>();
 		foreach (string path in Archives(installRoot)) {
 			var vol = VolFileReader.ParseVolFile(path);
 			string archive = Path.GetFileName(path).ToUpperInvariant();
 			var chassis = ChassisNames(vol);
 			foreach (var entry in vol.FilesSet) {
-				result.Add(Examine(archive, vol, entry, chassis, against));
+				result.Add(Examine(archive, vol, entry, game, chassis, against));
 			}
 		}
 
@@ -112,7 +114,7 @@ internal static class Census {
 		return new HashSet<string>(names ?? [], StringComparer.OrdinalIgnoreCase);
 	}
 
-	private static CensusEntry Examine(string archive, Voln vol, VolEntry entry, HashSet<string> chassis,
+	private static CensusEntry Examine(string archive, Voln vol, VolEntry entry, RetailGame game, HashSet<string> chassis,
 			Dictionary<(string, string), byte[]>? against) {
 		string name = entry.FileName!.Trim();
 		byte[] bytes = entry.RawBytes ?? [];
@@ -121,7 +123,7 @@ internal static class Census {
 		string header = Convert.ToHexString(bytes, 0, Math.Min(4, bytes.Length));
 		bool? identical = against == null ? null : against.TryGetValue(Key(vol, entry), out var other) && other.AsSpan().SequenceEqual(bytes);
 
-		var (label, transformer) = ReaderFor(vol, entry, type, chassis);
+		var (label, transformer) = ReaderFor(vol, entry, type, game, chassis);
 		CensusEntry Make(CensusOutcome outcome, int? offset = null, int? consumed = null, string? detail = null) =>
 			new(archive, FolderOf(vol, entry), name, type, bytes.Length, header, label, outcome, offset, consumed, detail, identical);
 
@@ -155,13 +157,14 @@ internal static class Census {
 	}
 
 	/// <summary>
-	/// The registry's reader, else one of three the registry binds more narrowly than the format: a <c>.NAM</c>'s, a
-	/// chassis stats file's by <see cref="ChassisNames"/>, and the structure shape library's for every <c>.DGS</c>,
-	/// all of which open with the same persistent-object header.
+	/// The registry's reader for <paramref name="game"/>, else one of three the registry binds more narrowly than the
+	/// format: a <c>.NAM</c>'s, a chassis stats file's by <see cref="ChassisNames"/>, and the structure shape library's
+	/// for every <c>.DGS</c>, all of which open with the same persistent-object header.
 	/// </summary>
-	private static (string? Label, ThreeSpaceByteTransformer? Transformer) ReaderFor(Voln vol, VolEntry entry, string type, HashSet<string> chassis) {
-		if (TransformerRegistry.FindTransformer(entry) is { } registered) {
-			return (TransformerRegistry.FindLabel(entry), registered);
+	private static (string? Label, ThreeSpaceByteTransformer? Transformer) ReaderFor(Voln vol, VolEntry entry, string type, RetailGame game,
+			HashSet<string> chassis) {
+		if (TransformerRegistry.FindTransformer(entry, game) is { } registered) {
+			return (TransformerRegistry.FindLabel(entry, game), registered);
 		}
 
 		string stem = Path.GetFileNameWithoutExtension(entry.FileName!.Trim());

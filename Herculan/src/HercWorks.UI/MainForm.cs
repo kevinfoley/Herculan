@@ -249,7 +249,7 @@ public partial class MainForm : Form {
 		AddDetail("File Name", entry.FileName ?? string.Empty);
 		AddDetail("Directory", entry.Dir?.Val() ?? "(unknown)");
 		AddDetail("Extension", entry.Ext?.Val() ?? "(unknown)");
-		if (TransformerRegistry.FindLabel(entry) is { } typeLabel) {
+		if (TransformerRegistry.FindLabel(entry, CurrentGame) is { } typeLabel) {
 			AddDetail("File Type", typeLabel);
 		}
 		AddDetail("Offset In VOL", entry.VolOffsetValue.ToString());
@@ -282,8 +282,15 @@ public partial class MainForm : Form {
 		}
 	}
 
+	/// <summary>
+	/// The game of the install the selected entry's archive sits in, whose readers the browser uses: the archive's own
+	/// location rather than the configured folder, so a <c>.VOL</c> opened from another install gets that game's.
+	/// </summary>
+	private RetailGame CurrentGame => RetailGameDetector.DetectFromArchive(_currentVol?.FilePath);
+
 	private void PopulateContent(VolEntry entry) {
-		var transformer = TransformerRegistry.FindTransformer(entry);
+		var game = CurrentGame;
+		var transformer = TransformerRegistry.FindTransformer(entry, game);
 		if (transformer == null) {
 			_contentTree.Nodes.Add(new TreeNode(
 				"No parser available for this file type yet — showing metadata only."));
@@ -302,7 +309,7 @@ public partial class MainForm : Form {
 				return;
 			}
 
-			string label = TransformerRegistry.FindLabel(entry) ?? entry.FileName ?? "Content";
+			string label = TransformerRegistry.FindLabel(entry, game) ?? entry.FileName ?? "Content";
 			ContentTreeRenderer.Populate(_contentTree, label, parsed);
 		} catch (Exception ex) {
 			_contentTree.Nodes.Add(new TreeNode($"Failed to parse this file:\n{ex.Message}"));

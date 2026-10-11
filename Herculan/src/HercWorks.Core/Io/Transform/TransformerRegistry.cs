@@ -21,11 +21,15 @@ namespace HercWorks.Core.Io.Transform;
 /// real herc data files: 41 20 00 7A or 41 20 01 7A. Those bytes are the source files' MS-DOS
 /// date and time (docs/retail/formats/vol-archive.md), so the match holds only for unmodified retail
 /// archives.
+///
+/// <para>Each <see cref="RetailGame"/> has its own table. ES1's is ES2's with the readers of the
+/// layouts that differ under the same name and header rebound (<see cref="Es1Rebinds"/>;
+/// docs/herculan/plan-es1-support.md#what-hercworks-reads).</para>
 /// </summary>
 public static class TransformerRegistry {
 	private sealed record Registration(string Label, Func<VolEntry, bool> Matches, Func<ThreeSpaceByteTransformer> Create);
 
-	private static readonly List<Registration> Registrations = new() {
+	private static readonly List<Registration> Es2Registrations = new() {
 		// --- shell (Dir=Gam, Ext=Dat) ---
 		new("Herc Armory Panel", e => NameStartsWith(e, "ARM_") && ExtIs(e, FileType.Dat) && !NameIs(e, "ARM_WEAP.DAT") && !NameIs(e, "ARM_HOTS.DAT"),
 			() => new Shell.ArmHercTransformer()),
@@ -114,25 +118,42 @@ public static class TransformerRegistry {
 			() => new Common.DynamixBitmapArrayTransformer()),
 	};
 
-	/// <summary>Returns a fresh transformer instance for the given entry, or null if no known parser matches.</summary>
-	public static ThreeSpaceByteTransformer? FindTransformer(VolEntry entry) {
-		foreach (var reg in Registrations) {
-			if (reg.Matches(entry)) {
-				return reg.Create();
-			}
+	/// <summary>
+	/// ES1's readers for entries ES2's table binds by the same label: each replaces that registration's reader in place,
+	/// keeping its label and match.
+	/// </summary>
+	private static readonly Dictionary<string, Func<ThreeSpaceByteTransformer>> Es1Rebinds = new() {
+		// docs/es1/formats/msn-mission-file.md
+		["Mission File"] = () => new Common.Es1MissionFileTransformer(),
+	};
+
+	private static readonly Dictionary<RetailGame, List<Registration>> Tables = new() {
+		[RetailGame.Earthsiege2] = Es2Registrations,
+		[RetailGame.Earthsiege1] = Rebind(Es2Registrations, Es1Rebinds),
+	};
+
+	private static List<Registration> Rebind(List<Registration> table, Dictionary<string, Func<ThreeSpaceByteTransformer>> rebinds) {
+		var missing = rebinds.Keys.Where(label => !table.Any(r => r.Label == label)).ToList();
+		if (missing.Count > 0) {
+			throw new InvalidOperationException($"No registration is labelled {string.Join(", ", missing)}.");
 		}
-		return null;
+
+		return table.Select(r => rebinds.TryGetValue(r.Label, out var create) ? r with { Create = create } : r).ToList();
 	}
 
-	/// <summary>Human-readable label for the matched file type, or null if no known parser matches.</summary>
-	public static string? FindLabel(VolEntry entry) {
-		foreach (var reg in Registrations) {
-			if (reg.Matches(entry)) {
-				return reg.Label;
-			}
-		}
-		return null;
-	}
+	/// <summary>
+	/// Returns a fresh transformer instance for the given entry from <paramref name="game"/>'s table, or null if no known
+	/// parser matches.
+	/// </summary>
+	public static ThreeSpaceByteTransformer? FindTransformer(VolEntry entry, RetailGame game = RetailGame.Earthsiege2) =>
+		Find(entry, game)?.Create();
+
+	/// <summary>Human-readable label for the matched file type in <paramref name="game"/>'s table, or null if no known parser matches.</summary>
+	public static string? FindLabel(VolEntry entry, RetailGame game = RetailGame.Earthsiege2) =>
+		Find(entry, game)?.Label;
+
+	private static Registration? Find(VolEntry entry, RetailGame game) =>
+		Tables[game].FirstOrDefault(reg => reg.Matches(entry));
 
 	private static bool NameIs(VolEntry e, string name) =>
 		string.Equals(e.FileName?.Trim(), name, StringComparison.OrdinalIgnoreCase);

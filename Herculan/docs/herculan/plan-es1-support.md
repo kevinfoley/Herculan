@@ -50,18 +50,18 @@ Step 0.6's census: `HercWorks.Query census --install ES1 --against ES2` runs eve
 | `DETECT` | `.DTS` | 1 | 0 | 1 | 0 | 0 | 0 | |
 | `DETECT` | `.ED0` | 1 | 0 | 0 | 0 | 0 | 1 | |
 | `SHELL0` | `.ANM` | 2 | 0 | 0 | 0 | 0 | 2 | |
-| `SHELL0` | `.BIN` | 54 | 0 | 0 | 44 | 10 | 0 | 44 read to the end, and the writer changes them from byte 4, as it does all 18 of ES2's. `C0`–`C3`, `D0`–`D3`, `G0` and `T1_TEXT.BIN` fail with the cursor at `0x10000c`–`0x6e000c`, past their end |
+| `SHELL0` | `.BIN` | 54 | 0 | 44 | 0 | 10 | 0 | `C0`–`C3`, `D0`–`D3`, `G0` and `T1_TEXT.BIN` fail at `0xa` |
 | `SHELL0` | `.BND` | 8 | 0 | 0 | 0 | 0 | 8 | Of the `.BND` files, only `CAM.BND` has a reader |
 | `SHELL0` | `.BNK` | 3 | 0 | 0 | 0 | 0 | 3 | |
 | `SHELL0` | `.DAT` | 39 | 0 | 0 | 0 | 1 | 38 | The registry binds only `CFG\DAMAGE.DAT`, by name; the component value table reader runs past its end, `0x48` |
-| `SHELL0` | `.DBA` | 224 | 1 | 221 | 0 | 3 | 0 | `CONTROLS.DBA` fails at `0x1f24`, `ICONS.DBA` at `0x2e2`, `WPNDESC.DBA` at `0x19ec5` |
-| `SHELL0` | `.DBM` | 40 | 0 | 0 | 40 | 0 | 0 | Each is 64,022 bytes and reads to its last byte but one; ES2's are 307,222 and read the same way |
+| `SHELL0` | `.DBA` | 224 | 1 | 223 | 0 | 1 | 0 | `ICONS.DBA` fails at `0x2e2` |
+| `SHELL0` | `.DBM` | 40 | 0 | 40 | 0 | 0 | 0 | Each is 64,022 bytes; ES2's are 307,222 |
 | `SHELL0` | `.DCI` | 3 | 1 | 0 | 0 | 0 | 3 | |
 | `SHELL0` | `.DFN` | 14 | 0 | 0 | 0 | 0 | 14 | |
 | `SHELL0` | `.DGS` | 6 | 0 | 0 | 6 | 0 | 0 | Read to the end; the reader has no writer |
 | `SHELL0` | `.DIG` | 2 | 0 | 0 | 0 | 0 | 2 | |
 | `SHELL0` | `.DLG` | 39 | 0 | 0 | 0 | 0 | 39 | |
-| `SHELL0` | `.DPL` | 36 | 0 | 1 | 35 | 0 | 0 | 35 read 1,036 of 1,040 bytes, as 28 of ES2's 65 do |
+| `SHELL0` | `.DPL` | 36 | 0 | 35 | 1 | 0 | 0 | `WPNDESC.DPL` opens `02 00 28 00` where the rest open `0F 00 28 00`, and its written copy differs from byte 0 |
 | `SHELL0` | `.HMP` | 13 | 0 | 0 | 0 | 0 | 13 | |
 | `SHELL0` | `.LOG` | 1 | 0 | 0 | 0 | 0 | 1 | |
 | `SHELL0` | `.MEC` | 1 | 0 | 0 | 0 | 0 | 1 | |
@@ -78,12 +78,12 @@ Step 0.6's census: `HercWorks.Query census --install ES1 --against ES2` runs eve
 | `SIMVOL0` | `.COL` | 18 | 7 | 18 | 0 | 0 | 0 | |
 | `SIMVOL0` | `.DAT` | 51 | 5 | 1 | 16 | 20 | 14 | `ROCKETS.DAT` round-trips. The 16 chassis files are 192 bytes against ES2's 216 and fail at their end, as `BULLETS.DAT` (`0x52`) and `BASES.DAT` (`0x1e8`) do; `WEAPONS.DAT` fails at `0x9d6` of `0xad4` and `SKIMMER.DAT` at `0x12` of `0x22`. `EXPLOS.DAT` stops at byte 76 of 794. The 15 `ZONE*.DAT` read as ES2's zone header, below. No reader for `STYLES`, `FFORMS`, `MFORMS`, `BFORMS`, `BASECOL`, `DEBRIS`, `DESERT`, `TEMPER`, `ICE`, `URBAN`, `SHADES`, `TEX`, `TEX_LO` and `TEX_LO2` |
 | `SIMVOL0` | `.DB0`–`.DB2` | 24, 8 each | 0 | 24 | 0 | 0 | 0 | |
-| `SIMVOL0` | `.DBA` | 104 | 2 | 103 | 0 | 1 | 0 | `CORNERS.DBA` fails at `0x6bc`; it is byte-identical to ES2's, which fails there too |
+| `SIMVOL0` | `.DBA` | 104 | 2 | 104 | 0 | 0 | 0 | |
 | `SIMVOL0` | `.DCI` | 8 | 8 | 0 | 0 | 0 | 8 | |
 | `SIMVOL0` | `.DFN` | 16 | 0 | 0 | 0 | 0 | 16 | |
 | `SIMVOL0` | `.DGS` | 7 | 0 | 0 | 7 | 0 | 0 | Read to the end; the reader has no writer |
-| `SIMVOL0` | `.DMG` | 18 | 0 | 0 | 1 | 17 | 0 | 16 fail at their end: `HOVTANK.DMG` and every file that opens with 21 internals, where ES2's HERC files hold 22. `SPIDER.DMG` overflows a count at `0x30`. `SKIMMER.DMG` reads to the end and the writer throws on it, as it does on all 22 of ES2's |
-| `SIMVOL0` | `.DPL` | 18 | 0 | 16 | 2 | 0 | 0 | 2 read 1,036 of 1,040 bytes, as ES2's do |
+| `SIMVOL0` | `.DMG` | 18 | 0 | 17 | 0 | 1 | 0 | The 17 open with 21 internals, where ES2's HERC files hold 22. `HOVTANK.DMG`, 28 bytes, runs past its end at `0x1c` |
+| `SIMVOL0` | `.DPL` | 18 | 0 | 18 | 0 | 0 | 0 | |
 | `SIMVOL0` | `.DTS` | 30 | 5 | 30 | 0 | 0 | 0 | |
 | `SIMVOL0` | `.ED0`–`.ED3` | 32, 8 each | 1 | 0 | 0 | 0 | 32 | |
 | `SIMVOL0` | `.EDG` | 4 | 0 | 4 | 0 | 0 | 0 | |
@@ -98,12 +98,12 @@ Step 0.6's census: `HercWorks.Query census --install ES1 --against ES2` runs eve
 | `SIMVOL0` | `.VUE` | 8 | 0 | 8 | 0 | 0 | 0 | |
 | `SIMVOL0` | `.WLD` | 24 | 0 | 0 | 24 | 0 | 0 | Stop at byte 71 of 281–287, and the copy differs from `0x1c`; ES2's are 310–313 bytes and round-trip |
 | `SPEECH` | `.RAW` | 161 | 0 | 0 | 0 | 0 | 161 | |
-| `ZONES` | `.BIN` | 1 | 0 | 0 | 1 | 0 | 0 | Reads to the end, and the writer changes it from byte 4, as it does ES2's |
+| `ZONES` | `.BIN` | 1 | 0 | 1 | 0 | 0 | 0 | |
 | `ZONES` | `.DAT` | 116 | 2 | 0 | 91 | 0 | 25 | The 91 `ZONE*.DAT` read as ES2's zone header, below. No reader for `WORLD0`–`WORLD3`, `MFORMS`, `STYLES`, `SING_MSN`, the eleven `ANY_*`, `BTLSET_0`–`BTLSET_2`, `TECH_0`, `TECH_SNG` and `TEST_BTL` |
 | `ZONES` | `.ENG` | 79 | 0 | 0 | 79 | 0 | 0 | Stop after 10 bytes; every one opens `01 00 42 52`. ES2's read to the end |
-| `ZONES` | `.MSN` | 77 | 0 | 0 | 8 | 69 | 0 | Every one opens with revision 5, as ES2's do. 50 fail allocating an array of negative length, 14 run past their end and 5 read a negative segment length, at offsets from `0xfe` to `0xb212`; the 8 that parse stop at 2,910–10,446 of 9,170–56,392 bytes |
+| `ZONES` | `.MSN` | 77 | 0 | 75 | 0 | 2 | 0 | ES1's mission reader ([`msn-mission-file.md`](../es1/formats/msn-mission-file.md)). `B0_C1_20` and `B0_C1_30`, [in another layout](../es1/formats/msn-mission-file.md#a-file-in-another-layout), fail at the header patches' count, `0x6` |
 
-Of the 2,484 entries, 490 round-trip, 364 parse without round-tripping, 122 fail and 1,508 have no HercWorks reader. ES2's eleven archives hold 3,004: 746 round-trip, 912 parse, 2 fail (`CORNERS.DBA` and `SHELL0`'s `ARM_HERC.DBA`) and 1,344 have no reader.
+Of the 2,484 entries, 706 round-trip, 234 parse without round-tripping, 36 fail and 1,508 have no HercWorks reader. ES2's eleven archives hold 3,004: 927 round-trip, 733 parse (the read-only `.WAV`, `.DGS` and `.NAM` readers), 0 fail and 1,344 have no reader.
 
 No type parses as a different version: with the one `.DPL` above, the headers that carry a class tag and version match ES2's, and every `.MSN` carries ES2's revision. Where an ES2 reader fails or stops short on ES1's files, the layout under the same header differs. ES1's `ZONE*.DAT`, in both archives, are 4 + 20 × *n* bytes, *n* the word at `+2`; ES2's are 16 bytes, which is all the zone header reader reads.
 
@@ -281,7 +281,7 @@ The registry is `tools/scripts/retail_binaries.py`; it also locates the gitignor
 
 **0.8 Go or no-go.** A short report from 0.6 and 0.7: per module, how much matched; per file type, how much the readers already handle; what that implies for phases 1 and 2. The user decides from it whether, and when, phase 1 starts. The report:
 
-- **Data.** Of the 2,484 entries, 490 round-trip, and 146 more read whole as their ES2 counterparts do, ES2's own failing to write back the same way (`.BIN`, `.DBM`, `.DGS`, `.DPL`, `.GAU`, `.NAM`, `SKIMMER.DMG`): the bitmaps, palettes, shapes, colliders, gun and cockpit layouts. 339 carry an ES2 header over a different layout: every `.MSN` (77), the `ZONE*.DAT` (106), `.ENG` (79), `.WLD` (24) and `.DMG` (17), 21 `dat\` tables (the 16 chassis files, `WEAPONS`, `BULLETS`, `BASES`, `SKIMMER` and `EXPLOS`), 10 `SHELL0` `.BIN`, 3 `SHELL0` `.DBA`, `CAM.BND` and `DAMAGE.DAT` — the missions and the world they run in. The 1,508 without a reader have none in the VOL browser's registry, which is all the census runs. Three of their types have readers in the engine instead, for ES2's files: 718 `.SNC` portrait scripts (548 byte-identical to ES2's), 30 `.DFN` fonts and 33 `.ED*` clip-region files. The others are the sound effects, music and speech (`.SFX` 202, `.HMP` 19, `.RAW` 175), the 123 `.TTM` scripts the shell runs, and 208 more (`.BND` tuning, dialogs, cursors, 77 `.DAT` tables).
+- **Data.** Of the 2,484 entries, 706 round-trip, 75 of them `.MSN` through ES1's mission reader: the missions, bitmaps, palettes, shapes, colliders, damage and gun layouts. 24 more read whole: the 13 `.DGS` and 2 `.NAM` through readers with no writer, the 8 `.GAU`, whose written copy differs inside the run ES2's reader skips as zero, and `WPNDESC.DPL`. 246 carry an ES2 header over a different layout: the `ZONE*.DAT` (106), `.ENG` (79) and `.WLD` (24), 21 `dat\` tables (the 16 chassis files, `WEAPONS`, `BULLETS`, `BASES`, `SKIMMER` and `EXPLOS`), 10 `SHELL0` `.BIN`, `ICONS.DBA`, `HOVTANK.DMG`, `CAM.BND`, `DAMAGE.DAT` and two `.MSN` — the world the missions run in. The 1,508 without a reader have none in the VOL browser's registry, which is all the census runs. Three of their types have readers in the engine instead, for ES2's files: 718 `.SNC` portrait scripts (548 byte-identical to ES2's), 30 `.DFN` fonts and 33 `.ED*` clip-region files. The others are the sound effects, music and speech (`.SFX` 202, `.HMP` 19, `.RAW` 175), the 123 `.TTM` scripts the shell runs, and 208 more (`.BND` tuning, dialogs, cursors, 77 `.DAT` tables).
 - **Code.** Step 0.7 pairs 296 of `ES1DBSIM`'s 3,129 functions and 147 of `ES1GO`'s 2,532 with an ES2 function. In the library regions it pairs 132 of 1,169 and 108 of 1,085, most of them `TS*`, `GL*` and `AN*` class methods through their vtables. In the game objects it pairs 164 of the simulator's 1,960 and 39 of the shell's 1,447. The simulator's largest groups lie between `appinput.cpp` and `main.cpp` (41), in `panel.cpp` (29), between `gunlist.cpp` and `mechsys.cpp` (12), in `cal_alrt.cpp` (9) and between `world.cpp` and `terrain.cpp` (8). How the modules both simulators name compare is in [`shared-modules.md`](../es1/simulation/shared-modules.md), and the math in [`fixed-point-math.md`](../es1/simulation/fixed-point-math.md): the assembly math library and its tables carry over, the fixed-point primitives round where ES2's truncate.
 - **For phase 1.** The data-format step is the census's list above: the mission, zone, world, damage and `dat\` layouts for the simulator; `.TTM`, `.SFX`, `.HMP` and the speech for the shell and the sound. The bitmaps and shapes need no reader work. In the simulator, an ES2 function is a lead for about one game function in twelve; the rest is read fresh, with ES2's docs as where to look by subsystem rather than by function. The shell pairs with almost nothing and is read fresh, `.TTM` first, as 1.1 orders. The [done](#when-a-module-is-done) test needs each module's function list, which step 0.7's margins leave open for most game functions, so reading a module also settles its boundaries. A demo replay reaches code but measures nothing until ES1's replay is shown to repeat ([Open](#open)).
 - **For phase 2.** The data layer the engine shares already reads ES1's bitmaps, palettes and shapes. The engine's own `.SNC`, `.DFN` and `.ED*` readers have not been run on ES1's files, 548 of whose `.SNC` are ES2's bytes. An ES1 mission needs ES1 readers for the mission, zone, world and `dat\` files before the engine can load one, and ES1 sound needs readers for `.SFX` and `.HMP`.
