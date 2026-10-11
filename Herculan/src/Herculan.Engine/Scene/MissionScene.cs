@@ -300,6 +300,7 @@ public sealed class MissionScene {
 		BindOrderSubjects(groups, objects);
 		BindOrderActions(groups, actions);
 		BindActionSubjects(actions, groups, objects);
+		StrandedStingrayFix.Bind(world);
 
 		// The mission's objectives, on the same second pass and for the same reason: an objective
 		// names a group or a roster slot, and neither exists until every group has been built. The

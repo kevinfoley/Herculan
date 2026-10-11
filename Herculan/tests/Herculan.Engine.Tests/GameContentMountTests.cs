@@ -116,7 +116,7 @@ public class GameContentMountTests : IDisposable {
 	}
 
 	// ES2v110\ beside the repo, as tools/scripts/es2_build_v110_installs.py builds it; null when absent.
-	private static string? FindTestInstall(string name) {
+	internal static string? FindTestInstall(string name) {
 		for (var directory = new DirectoryInfo(AppContext.BaseDirectory); directory != null; directory = directory.Parent) {
 			string candidate = Path.Combine(directory.FullName, "ES2v110", name);
 			if (GameInstall.IsInstallRoot(candidate)) {

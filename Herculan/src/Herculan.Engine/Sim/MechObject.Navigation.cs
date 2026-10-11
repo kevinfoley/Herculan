@@ -38,7 +38,12 @@ public partial class MechObject {
 			// A standing squad order overrides the group's route with its own destination.
 			DriveToPoint(world, SquadOrderDestination);
 		} else if (Group is { } group && ReferenceEquals(group.Leader, this)) {
-			FollowRoute(world, group);
+			// The C2_05 tweak's Stingray leaves its route for its quarry; every other group walks the route.
+			if (group.ClosingInPoint(world) is { } quarry) {
+				DriveToPoint(world, quarry);
+			} else {
+				FollowRoute(world, group);
+			}
 		} else {
 			KeepFormation(world);
 		}

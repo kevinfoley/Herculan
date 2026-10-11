@@ -112,6 +112,13 @@ public static class TweakSettingDefinitions {
 	/// <see cref="Sim.SimWorld.FlightThrottleIsLever"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FlyerIgnoresPlayerThrottle = new("tweak.flyer_ignores_player_throttle", TweakCategory.AI, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// In <c>C2_05</c>, once the Raptor II prototype is brought home, the Cybrid Stingray hunting it leaves its corner
+	/// of the map and walks straight at the prototype. Retail's never leaves its corner, and the mission cannot be won
+	/// until the player finds it and puts it out of the fight. See <see cref="Sim.StrandedStingrayFix"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> StrandedStingrayClosesIn = new("tweak.c2_05_stingray_closes_in", TweakCategory.AI, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -198,6 +205,6 @@ public static class TweakSettingDefinitions {
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
-		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, FasterKeyboardAiming, FixRaptorIIPerspective, ResetCountersOnReplay,
+		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, FasterKeyboardAiming, FixRaptorIIPerspective, ResetCountersOnReplay,
 	};
 }
