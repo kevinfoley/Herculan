@@ -22,6 +22,8 @@ Eight of these matches do not say by themselves which function they found. `fpri
 
 **ES1's runtime is a later revision than 6.1's.** Most of the library's functions that ES1 uses differ in places: `open` (`00074947`) sends its error exit through a routine shared with the other `io.asm` calls (`00074922`, inside `Dos_ReadWrite`), where 6.1's sets `errno` inline. The extender kernel in ES1's executables reads `DOS extender Copyright 1991-1994 by Doug Huffman`; 6.1's `X386.LIB` carries `Copyright 1991 1992`.
 
+The C library's source on the 6.1 CD (`SC\SRC\CLIB`) names runtime functions whose bytes differ, by what they do and where they sit. From `printf.c`: `_pformat` (`0005f7ca`, `ES1GO 0004e22a`), the formatter `vprintf`, `vfprintf` and `vsprintf` pass their output routine to, and its static helper `getlong` (`0006010f`, `ES1GO 0004eb6f`). ES1's `_pformat` takes `F` as a conversion beside `f` (its conversion table at `00097e14` lists `s % c d i b o u p X x f F e E G g n`), where 6.1's reads `F` as a size modifier. From `fread.c`: `fread` (`00060a10`, `ES1GO 0005330c`) and `fwrite` (`000604ac`, `ES1GO 000531e0`).
+
 ## Startup
 
 The extender enters the image at `0xd` (`__x386_init`; [Hand-off](x32-executable.md#hand-off)). The startup:

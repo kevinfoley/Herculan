@@ -1096,7 +1096,7 @@
       "type": "function",
       "confidence": "high",
       "name": "vprintf",
-      "description": "Symantec C++ runtime `vprintf`, from `printf.c`: (format, args), C convention: formats through 0004e22a with fputc onto stdout (_iob's second FILE, 00083cf0), then calls fflush (0004dfc4) on stdout when bit 0x40 of its flags word (+0xc) is set, and returns the formatter's result. The code of ES1DBSIM's vprintf (0005f726), relocated operands aside.",
+      "description": "Symantec C++ runtime `vprintf`, from `printf.c`: (format, args), C convention: formats through _pformat (0004e22a) with fputc onto stdout (_iob's second FILE, 00083cf0), then calls fflush (0004dfc4) on stdout when bit 0x40 of its flags word (+0xc) is set, and returns the formatter's result. The code of ES1DBSIM's vprintf (0005f726), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification",
       "verified": {
         "bytes": "0004e186+59",
@@ -1141,11 +1141,41 @@
       "type": "function",
       "confidence": "high",
       "name": "vsprintf",
-      "description": "Symantec C++ runtime `vsprintf`, from `printf.c`: (buffer, format, args), C convention: formats through 0004e22a with Printf_StoreChar and a cursor on buffer, then stores a NUL at buffer plus the formatter's result, or at buffer itself when the result is negative. The code of ES1DBSIM's vsprintf (0005f793), relocated operands aside.",
+      "description": "Symantec C++ runtime `vsprintf`, from `printf.c`: (buffer, format, args), C convention: formats through _pformat (0004e22a) with Printf_StoreChar and a cursor on buffer, then stores a NUL at buffer plus the formatter's result, or at buffer itself when the result is negative. The code of ES1DBSIM's vsprintf (0005f793), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification",
       "verified": {
         "bytes": "0004e1f3+55",
         "sha1": "f2b27001ea1e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004e22a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "_pformat",
+      "description": "Symantec C++ runtime `_pformat`, from `printf.c`: (output, stream, format, args), C convention: the formatter vprintf, vfprintf and vsprintf share. The same statements as ES1DBSIM's _pformat (0005f7ca) in different code.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0004e22a+2373",
+        "sha1": "a56c3c91df6b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004eb6f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "getlong",
+      "description": "Symantec C++ runtime `getlong`, from `printf.c`: (flags, &args) in stack order, callee-cleaned (Pascal): takes the next int from args and advances it; with flag 0x800 ('h') it sign-extends the low 16 bits, or zero-extends them when flag 0x200 (unsigned) is set too. _pformat's integer conversions call it. printf.c's static helper, the same as 6.1's 32-bit getlong. The code of ES1DBSIM's getlong (0006010f), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0004eb6f+43",
+        "sha1": "9f7814418cd2",
         "scope": "body",
         "via": "decompile"
       }
@@ -1445,12 +1475,27 @@
       }
     },
     {
+      "address": "0004f7b0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MonoScreen_Ctor",
+      "description": "(screen), callee-cleaned: allocates 2 bytes when screen is null; sets +1 to 1 and +0 to 1 when Crtc_DetectDualDisplay (00065c42) finds both adapters, else 0. Returns screen. Mono_StaticInit (0004fab8) builds Mono_Screen (000a0bdc) with it. The code of ES1DBSIM's MonoScreen_Ctor (00060d24), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen",
+      "verified": {
+        "bytes": "0004f7b0+54",
+        "sha1": "2c8f2a624f57",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004f83c",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Mono_WriteChar",
-      "description": "(ch, row, column) in stack order, callee-cleaned: writes ch with the attribute byte 000841c4 to the monochrome screen cell (row * 80 + column) while the bytes 000a0bdc and 000a0bdd share a set bit and row is 0-24. No reference found by es2_xref; the same statements as ES1DBSIM's Mono_WriteChar (00060db0) in different code.",
+      "description": "(ch, row, column) in stack order, callee-cleaned: writes ch with the attribute byte 000841c4 to the monochrome screen cell (row * 80 + column) while the bytes Mono_Screen (000a0bdc) and 000a0bdd share a set bit and row is 0-24. No reference found by es2_xref; the same statements as ES1DBSIM's Mono_WriteChar (00060db0) in different code.",
       "source": "ES1GO decompile at 0004f83c",
       "verified": {
         "bytes": "0004f83c+88",
@@ -1502,6 +1547,36 @@
         "sha1": "7b18405cd485",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004fa90",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_ShowCursor",
+      "description": "(show), callee-cleaned: while Mono_Screen's two bytes share a set bit, maybe_MonoCrtc_ShowCursor (00065c33) when show is non-zero, else maybe_MonoCrtc_HideCursor (00065c24). No reference found by es2_xref. The code of ES1DBSIM's Mono_ShowCursor (00061004), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#writing-to-it",
+      "verified": {
+        "bytes": "0004fa90+40",
+        "sha1": "6fe27a999173",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004fab8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_StaticInit",
+      "description": "No arguments: MonoScreen_Ctor(Mono_Screen, Mono_Screen (000a0bdc)). Its address is the static-constructor table's entry at 0009a280, which Runtime_RunStaticCtors runs at startup. The code of ES1DBSIM's Mono_StaticInit (0006102c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen",
+      "verified": {
+        "bytes": "0004fab8+11",
+        "sha1": "1f9bf4240a56",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -1695,6 +1770,51 @@
       "verified": {
         "bytes": "000509ae+83",
         "sha1": "6ddd660e179d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050a01",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "NameList_Split",
+      "description": "(out, buffer) in stack order, callee-cleaned: ES1DBSIM's NameList_Split (000606e8), with a fatal assert (severity 4, util\\mods.cpp line 100) when a name is followed by an empty one, and 1 added to the dword 000ab5fe per name.",
+      "source": "Herculan/docs/es1/formats/nam-name-list.md",
+      "verified": {
+        "bytes": "00050a01+116",
+        "sha1": "e2a7785c04c2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050a75",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolFile_GetSize",
+      "description": "(path), callee-cleaned: opens path as a VolRStream and returns VolRStream_GetSize, or 0 when the stream's status word (+0) is set after the open. The same statements as ES1DBSIM's VolFile_GetSize (00060738) in different code.",
+      "source": "Herculan/docs/es1/formats/nam-name-list.md",
+      "verified": {
+        "bytes": "00050a75+84",
+        "sha1": "c5e8c720160e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050ac9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LoadNameList",
+      "description": "(stride, capacity, mod mask, name) in stack order, callee-cleaned: ES1DBSIM's LoadNameList (00060784) with fatal asserts (severity 4, util\\mods.cpp) when an allocation fails (lines 0x9b and 0xb7), when the name with its list number is longer than 8 characters (0xab), when a list it reads has size 0 (0xb0), when a list's stream reports an error on opening (0xcc) and when a list holds more names than its entries (0xcf); it adds 1 to the dword 000ab5fe after each step. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/nam-name-list.md#mod-lists",
+      "verified": {
+        "bytes": "00050ac9+772",
+        "sha1": "ef15e08cf4b1",
         "scope": "body",
         "via": "decompile"
       }
@@ -2265,6 +2385,36 @@
       "verified": {
         "bytes": "0005319c+66",
         "sha1": "6c4b2b807f47",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000531e0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "fwrite",
+      "description": "Symantec C++ runtime `fwrite`, from `fread.c`: (buffer, size, count, stream), C convention: writes size * count bytes and returns the number of whole items written. A stream with flag 0x100 (+0xc) takes them one fputc at a time; a buffered one (flag 4 clear) copies them into its buffer (pointer +0, room +4) with memmove, calling 0006544d with the byte when the room is 0; an unbuffered one in write mode (flags & 0x32 == 2, a read-write stream with 0x80 switched to it first) takes one write to its handle (+0x10), setting the error flag 0x20 on a short count, and otherwise writes nothing. The code of ES1DBSIM's fwrite (000604ac), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "000531e0+297",
+        "sha1": "1f58a3672005",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005330c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "fread",
+      "description": "Symantec C++ runtime `fread`, from `fread.c`: (buffer, size, count, stream), C convention: reads up to size * count bytes and returns the number of whole items read. A stream with flag 0x100 (+0xc) gives them one fgetc at a time; a buffered one (flag 4 clear) copies them out of its buffer (pointer +0, count +4) with memmove, refilling it through 0006557e when it is empty; an unbuffered one in read mode (flags & 0x31 == 1, a read-write stream with 0x80 switched to it first) calls 00065344 and takes one read from its handle (+0x10), setting the end-of-file flag 0x10 when it returns 0 and the error flag 0x20 when it fails. The code of ES1DBSIM's fread (00060a10), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0005330c+302",
+        "sha1": "1c2123b2901c",
         "scope": "body",
         "via": "decompile"
       }
@@ -3056,6 +3206,36 @@
         "sha1": "72c0349bcd11",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00056509",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_AddCallback",
+      "description": "(count, callback), C convention: while the dword 0008728c is non-zero, takes the lowest clear bit of the 16-bit slot mask 000882ac, sets it, stores count in that slot of the two dword tables 000883b4 and 00088334 and callback in the table 000882b4, and returns the slot + 1; returns 0 when 0008728c is 0 or every slot is taken. es2_xref finds calls from 000093b3, 000119fc, 000203fc, 0004240a, 00045337, 0004670e and three from 00045d24. The code of ES1DBSIM's Timer_AddCallback (0006d289), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
+      "verified": {
+        "bytes": "00056509+78",
+        "sha1": "df9d4ede9d06",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00056710",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_RotationToEuler",
+      "description": "(rotation, out), C convention: out[0] = Math_AsinBam(m[5]); at a quarter turn either way out[1] = 0 and out[2] = Math_Atan2Bam(m[0], m[1]), otherwise out[1] = Math_Atan2Bam(m[8], -m[4]) and out[2] = Math_Atan2Bam(m[3], -m[2]). The code of ES1DBSIM's Transform_RotationToEuler (0005e988), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "00056710+126",
+        "sha1": "04ab478308c8",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -4784,6 +4964,81 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00065c24",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_MonoCrtc_HideCursor",
+      "description": "No arguments, frameless, keeps EDX: writes 0xf to the monochrome CRTC's register 0xa (cursor start scan line). The code of ES1DBSIM's maybe_MonoCrtc_HideCursor (0007632c).",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#writing-to-it",
+      "verified": {
+        "bytes": "00065c24+15",
+        "sha1": "40b90326f0e4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00065c33",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_MonoCrtc_ShowCursor",
+      "description": "No arguments, frameless, keeps EDX: writes 0xb to the monochrome CRTC's register 0xa (cursor start scan line). The code of ES1DBSIM's maybe_MonoCrtc_ShowCursor (0007633b).",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#writing-to-it",
+      "verified": {
+        "bytes": "00065c33+15",
+        "sha1": "7812307ff0a9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00065c42",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Crtc_DetectDualDisplay",
+      "description": "No arguments, keeps ECX and EDX: returns 1 when Crtc_Probe (00065c6f) answers at both 3b4, the monochrome adapter's CRTC index port, and 3d4, the colour adapter's; otherwise 0. MonoScreen_Ctor calls it. The code of ES1DBSIM's Crtc_DetectDualDisplay (0007634a), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen",
+      "verified": {
+        "bytes": "00065c42+45",
+        "sha1": "fb2009293190",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065c6f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Crtc_Probe",
+      "description": "Register argument DX = a CRTC index port: reads the cursor-location registers 0xe and 0xf through the data port DX+1, writes 4 and 0xa to them, reads both back, restores the saved values through Crtc_RestoreCursorLocation (00065ccc) and returns DX = 1 when both read back as written, else DX = 0. The code of ES1DBSIM's Crtc_Probe (00076377), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen",
+      "verified": {
+        "bytes": "00065c6f+93",
+        "sha1": "7880056fb4db",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065ccc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Crtc_RestoreCursorLocation",
+      "description": "Register argument DX = a CRTC data port, with two words its caller pushed under the return address, the saved register 0xf value on top and 0xe below: writes them back to registers 0xf and 0xe through the index port DX-1 and returns with both popped. Crtc_Probe's exit. The code of ES1DBSIM's Crtc_RestoreCursorLocation (000763d4), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen",
+      "verified": {
+        "bytes": "00065ccc+23",
+        "sha1": "b5f19dcbfdd1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00066fe5",
       "binary": "ES1GO",
       "type": "function",
@@ -4841,6 +5096,21 @@
         "sha1": "c278f0e36d23",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0006a378",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_AsinBam",
+      "description": "(sine), C convention: the arcsine of a Q14 sine as a binary angle, read from the coarse table 0008be4c below 0xe00 and the fine table addressed from 0008a5cc from it, the sign restored at the end. ES1DBSIM's Math_AsinBam (0005f54c) with each index truncated (SAR 2, then SAR 3) where ES1DBSIM's rounds (ADC 0 after each). Transform_RotationToEuler (00056710) calls it.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "0006a378+57",
+        "sha1": "568653c8815c",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -5952,6 +6222,15 @@
       "name": "g_TSObjectTypeRegistry",
       "description": "The shape class registry: 18 entries of 12 bytes {tag, load function, name}, followed at 000942c0 by their count, 0x12. Light_ResetSystem (000641ec) registers it with ClassItem_RegisterBucket. The same tags, names and order as ES1DBSIM's g_TSObjectTypeRegistry (0009efa8).",
       "source": "Herculan/docs/es1/formats/dts-shape.md"
+    },
+    {
+      "address": "000a0bdc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mono_Screen",
+      "description": "2 bytes, built by MonoScreen_Ctor at startup: +0 is 1 when Crtc_DetectDualDisplay found both adapters, +1 is 1; the Mono_* functions write only while the two share a set bit. ES1DBSIM's Mono_Screen is at 000b5e70.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen"
     },
     {
       "address": "000a0c24",

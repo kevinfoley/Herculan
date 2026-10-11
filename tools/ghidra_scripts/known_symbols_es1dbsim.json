@@ -422,6 +422,21 @@
       }
     },
     {
+      "address": "00019ee0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mechs_InitAllTypes",
+      "description": "No arguments: LoadNameList(10, 0x60, 0, 'mechs') in stack order into 000bc440; __vec_new of the int16 mech type count 000bc42e records of 0x1c4 bytes, element constructor 00019f3e, into 000bc444; 00030288(count); then for each type number from 0 to 15 whose 00019a30(type) is not 0xff, 00019cf0(type). ES2's Mechs_InitAllTypes (DBSIM 0042049c), whose table has 0x55 entries, whose records are 0x21e bytes and which walks all 0x55 type numbers.",
+      "source": "Herculan/docs/es1/formats/nam-name-list.md#mod-lists",
+      "verified": {
+        "bytes": "00019ee0+94",
+        "sha1": "2a41c09beca8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0001a154",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -434,6 +449,21 @@
         "sha1": "e2807ea37f41",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c770",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlyerTypes_LoadAll",
+      "description": "No arguments: when the int16 flyer type count 000bc464 is non-zero, LoadNameList(10, 0x52, 0, 'flyers') in stack order into 000bc468; operator new of count * 0x2e bytes into 000bc46c, with no element constructor; then for type numbers 0 and 1 whose 0001c678(type) is not 0xff, 0001c6c8(type). ES2's FlyerTypes_LoadAll (DBSIM 00422fb4), which builds 0x70-byte records with an element constructor and walks 0x22 type numbers.",
+      "source": "Herculan/docs/es1/formats/nam-name-list.md#mod-lists",
+      "verified": {
+        "bytes": "0001c770+84",
+        "sha1": "b7228765950b",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -3188,6 +3218,51 @@
       }
     },
     {
+      "address": "0005e608",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_RateLimitedMoveTowardInt",
+      "description": "(step, target, current) in stack order, callee-cleaned: Math_RateLimitedMoveToward (0005e598) on an int32 *current: moves it toward target by step, stopping at target, and returns the error left in magnitude, 0 once there. No reference found by es2_xref. ES2's Math_RateLimitedMoveTowardInt (DBSIM 00467a24).",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#helpers-that-match",
+      "verified": {
+        "bytes": "0005e608+77",
+        "sha1": "99abe1a6cd0a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005e658",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Slew_Step",
+      "description": "(slew), callee-cleaned: advances a Slew one step and returns its position (+6, int16). With the error = target (+8) - position: when the error and the velocity (+0xa) do not have opposite signs and the error is inside the settle band (+4), the velocity becomes error >> shift (+0x10, arithmetic) and the acceleration (+0xc) 0; when they do not have opposite signs and the error is outside it, the acceleration moves toward the limit (+0) by the jerk (+2) and the velocity toward the top speed (+0xe) in the error's direction by the acceleration, both through Math_RateLimitedMoveToward; when they have opposite signs, the acceleration moves toward the limit the same way and the velocity steps toward the target by it, held at the error. The position then adds the velocity. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-slew",
+      "verified": {
+        "bytes": "0005e658+292",
+        "sha1": "effa5fee5415",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005e77c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Slew_Ctor",
+      "description": "(slew, top speed, shift) in stack order, callee-cleaned: a Slew's constructor, allocating 0x12 bytes when slew is null. Stores the top speed (+0xe, uint16) and the shift (+0x10, byte), zeroes the velocity (+0xa) and the acceleration (+0xc), and derives the acceleration limit +0 = top speed >> shift and the jerk +2 = limit >> shift, each raised to 1 when 0, and the settle band +4 = top speed << shift. Leaves the position (+6) and target (+8) as they were. Returns slew. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-slew",
+      "verified": {
+        "bytes": "0005e77c+124",
+        "sha1": "202ec77a5e8a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0005e7f8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -3248,6 +3323,21 @@
       }
     },
     {
+      "address": "0005e988",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_RotationToEuler",
+      "description": "(rotation, out), C convention: out[0] = Math_AsinBam(m[5]); at a quarter turn either way out[1] = 0 and out[2] = Math_Atan2Bam(m[0], m[1]), otherwise out[1] = Math_Atan2Bam(m[8], -m[4]) and out[2] = Math_Atan2Bam(m[3], -m[2]). ES2's Transform_RotationToEuler (DBSIM 0047f894), whose decompile is the same after normalisation.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "0005e988+126",
+        "sha1": "39ce4b1cba4c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005ea08",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -3285,6 +3375,21 @@
       "name": "BuildEulerRotationMatrixQ14",
       "description": "(euler, out), C convention: builds the Q14 rotation of a 32-byte transform from three int16 Euler angles, each trigonometry-table index being an angle shifted right 4 and rounded (SAR 4 then ADC 0, 15 times). ES2's BuildEulerRotationMatrixQ14 (DBSIM 0047eaac), whose decompile is the same after normalisation.",
       "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library"
+    },
+    {
+      "address": "0005f54c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_AsinBam",
+      "description": "(sine), C convention: the arcsine of a Q14 sine as a binary angle. Takes the magnitude, rounded to a multiple of 4 (SAR 2, ADC 0); below 0xe00 it reads the coarse table 00097634 at a further 8x step, rounded the same way, and from 0xe00 the fine table addressed from 00095db4 (its entries from 0xe00 on lie at 000979b4); the sign is restored at the end. ES2's Math_AsinBam (DBSIM 0047d940).",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "0005f54c+62",
+        "sha1": "a5fa0238a76a",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0005f58c",
@@ -3352,7 +3457,7 @@
       "type": "function",
       "confidence": "high",
       "name": "vprintf",
-      "description": "Symantec C++ runtime `vprintf`, from `printf.c`: (format, args), C convention: formats through 0005f7ca with fputc onto stdout (_iob's second FILE, 0009e864), then calls fflush (000753e8) on stdout when bit 0x40 of its flags word (+0xc) is set, and returns the formatter's result.",
+      "description": "Symantec C++ runtime `vprintf`, from `printf.c`: (format, args), C convention: formats through _pformat (0005f7ca) with fputc onto stdout (_iob's second FILE, 0009e864), then calls fflush (000753e8) on stdout when bit 0x40 of its flags word (+0xc) is set, and returns the formatter's result.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification",
       "verified": {
         "bytes": "0005f726+59",
@@ -3397,11 +3502,41 @@
       "type": "function",
       "confidence": "high",
       "name": "vsprintf",
-      "description": "Symantec C++ runtime `vsprintf`, from `printf.c`: (buffer, format, args), C convention: formats through 0005f7ca with Printf_StoreChar and a cursor on buffer, then stores a NUL at buffer plus the formatter's result, or at buffer itself when the result is negative.",
+      "description": "Symantec C++ runtime `vsprintf`, from `printf.c`: (buffer, format, args), C convention: formats through _pformat (0005f7ca) with Printf_StoreChar and a cursor on buffer, then stores a NUL at buffer plus the formatter's result, or at buffer itself when the result is negative.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification",
       "verified": {
         "bytes": "0005f793+55",
         "sha1": "1c60762f6319",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005f7ca",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "_pformat",
+      "description": "Symantec C++ runtime `_pformat`, from `printf.c`: (output, stream, format, args), C convention: the formatter vprintf, vfprintf and vsprintf share. Sends each character through output(c, stream) and returns the count sent, or -1 when output returns -1 or a conversion is not in its table. The flag characters are the table 00097ddc ('-', '+', ' ', '#', '0', '*'), digits are tested through the ctype table 0009edc5, and the conversions are the 18-entry table 00097e14 (s % c d i b o u p X x f F e E G g n), each with a handler address 0x48 bytes on; 6.1's printf.c reads F as a size modifier instead. Integer arguments come through getlong (0006010f).",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0005f7ca+2373",
+        "sha1": "7b2689840d7d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006010f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "getlong",
+      "description": "Symantec C++ runtime `getlong`, from `printf.c`: (flags, &args) in stack order, callee-cleaned (Pascal): takes the next int from args and advances it; with flag 0x800 ('h') it sign-extends the low 16 bits, or zero-extends them when flag 0x200 (unsigned) is set too. _pformat's integer conversions call it. printf.c's static helper, the same as 6.1's 32-bit getlong.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0006010f+43",
+        "sha1": "9f7814418cd2",
         "scope": "body",
         "via": "decompile"
       }
@@ -3416,6 +3551,81 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0006016c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_PrintfRow",
+      "description": "(format, row, ...), C convention: vsprintf into a 100-byte buffer and Mono_WriteText(buffer, row, 0), at the start of the row. The frame-rate meter's lines print with it.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
+      "verified": {
+        "bytes": "0006016c+43",
+        "sha1": "4e641eb13400",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00060198",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FrameRate_PrintRate",
+      "description": "(row, label, hundredths, whole) in stack order, callee-cleaned: prints label and a rate on a monochrome-screen row with Mono_PrintfRow, as \"%s%2d.%02d fps.\" (the string 00097ee0 points to), or as \"%s--.-- fps.\" (through 00097f04) when the rate is 999.99 or 0.00, the worst and best FrameRate_Update starts from.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
+      "verified": {
+        "bytes": "00060198+100",
+        "sha1": "acc1b2b21298",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000601fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FrameRate_TimerTick",
+      "description": "No arguments, frameless: decrements FrameRate_Countdown (000b5e24) while it is non-zero. FrameRate_Update registers it with Timer_AddCallback (0006d289), count 1.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
+      "verified": {
+        "bytes": "000601fc+16",
+        "sha1": "03e134d4e56e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006020c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FrameRate_GetFrameCount",
+      "description": "No arguments, frameless: returns FrameRate_FrameCount (000b5e28). 00000c84, in vcr.cpp, passes it to sprintf for its \"Playback error. Frame #%ld\" message.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
+      "verified": {
+        "bytes": "0006020c+6",
+        "sha1": "6314a5c9091e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00060214",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FrameRate_Update",
+      "description": "No arguments: the frame-rate meter, called once a frame. On its first call (FrameRate_TicksPerSecond FrameRate_TicksPerSecond (000b5e2c) is 0) it registers FrameRate_TimerTick with Timer_AddCallback (0006d289) at count 1, sets the ticks per second to 1000000 / Math_Q14Multiply(word +4 of the structure 000bdd0c points to, 0x35a1), loads FrameRate_Countdown (000b5e24) with 32000 and returns. Later calls take the ticks elapsed, e = 32000 - countdown, and reload it. e = 32000 prints \"Current: Slower than %d fps.\" (00097f54) with 32000 / ticks per second on row 4. Otherwise, for e above the ticks per second, x = 10e / ticks per second and the rate shown is x / 10 and x % 10 as whole and hundredths, the seconds per frame in tenths printed as frames per second; for any other e, x = 100 * ticks per second / e, or 99999 when e is 0, and the rate is x / 100 and x % 100, which raises the best (FrameRate_Best (00097f58), whole then hundredths) when it is higher and neither 999 nor 99 hundredths, and lowers the worst (FrameRate_Worst (00097f5c)) when it is lower. It prints \"Best:\" on row 3 and \"Worst:\" on row 5 with FrameRate_PrintRate, then on row 4 \"Current: Faster than %d fps.\" (00097f2c) with the ticks per second when x is 99999, or \"Current:\" and the rate. Each call after the first adds 1 to FrameRate_FrameCount (000b5e28) and prints \"Frame # %d\" on row 1. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
+      "verified": {
+        "bytes": "00060214+498",
+        "sha1": "ecfcacfef5ca",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00060408",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -3426,6 +3636,21 @@
       "verified": {
         "bytes": "00060408+163",
         "sha1": "8dbe1d565db4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000604ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fwrite",
+      "description": "Symantec C++ runtime `fwrite`, from `fread.c`: (buffer, size, count, stream), C convention: writes size * count bytes and returns the number of whole items written. A stream with flag 0x100 (+0xc) takes them one fputc at a time; a buffered one (flag 4 clear) copies them into its buffer (pointer +0, room +4) with memmove, calling 00075fd5 with the byte when the room is 0; an unbuffered one in write mode (flags & 0x32 == 2, a read-write stream with 0x80 switched to it first) takes one write to its handle (+0x10), setting the error flag 0x20 on a short count, and otherwise writes nothing.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "000604ac+297",
+        "sha1": "76c5efcab8f0",
         "scope": "body",
         "via": "decompile"
       }
@@ -3491,6 +3716,66 @@
       }
     },
     {
+      "address": "000606e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "NameList_Split",
+      "description": "(out, buffer) in stack order, callee-cleaned: walks the NUL-terminated names in buffer until one starts with a '\\n' byte, storing each name's address in out when out is non-null, and returns the count. ES2's NameList_Split (DBSIM 00492b40).",
+      "source": "Herculan/docs/es1/formats/nam-name-list.md",
+      "verified": {
+        "bytes": "000606e8+80",
+        "sha1": "f71aec25b6cb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00060738",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VolFile_GetSize",
+      "description": "(path), callee-cleaned: opens path as a VolRStream and returns VolRStream_GetSize, or 0 when the stream's status word (+0) is set after the open. ES2's VolFile_GetSize (DBSIM 00492b78), which reads the status through Stream_GetStatus.",
+      "source": "Herculan/docs/es1/formats/nam-name-list.md",
+      "verified": {
+        "bytes": "00060738+75",
+        "sha1": "40c5aa4f6f53",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00060784",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LoadNameList",
+      "description": "(stride, capacity, mod mask, name) in stack order, callee-cleaned: loads the type-name list nam\\<name>.NAM and the mod lists nam\\<name>1.NAM to nam\\<name>8.NAM into a table of capacity pointers (operator new, zeroed) and returns it. List k from 1 to 8 is read only when bit k-1 of the mask is set. Each file read is sized with VolFile_GetSize, all of them are read whole into one buffer, and NameList_Split stores each file's names: the base list's from entry 0, and list k's from entry capacity - 8 * stride + (k - 1) * stride. Mechs_InitAllTypes calls it with ('mechs', 0x60 entries, stride 10) and FlyerTypes_LoadAll (0001c770) with ('flyers', 0x52, 10), both with mask 0. ES2's LoadNameList (DBSIM 00492bf4) takes (name, capacity) and loads the base list only.",
+      "source": "Herculan/docs/es1/formats/nam-name-list.md#mod-lists",
+      "verified": {
+        "bytes": "00060784+427",
+        "sha1": "0d914c7e070a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00060934",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MechMods_Probe",
+      "description": "No arguments: for n from 1 to 8 opens MECMODn.DYN (00097f84, mode \"rb\") with fopen and closes it, setting bit n-1 of MechMods_Present (000b5e6e) for each that opens. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/nam-name-list.md#mod-lists",
+      "verified": {
+        "bytes": "00060934+92",
+        "sha1": "fa07c8521b7d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00060998",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -3507,6 +3792,21 @@
       "name": "memcmp",
       "description": "Symantec C++ runtime `memcmp`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 37 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00060a10",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "fread",
+      "description": "Symantec C++ runtime `fread`, from `fread.c`: (buffer, size, count, stream), C convention: reads up to size * count bytes and returns the number of whole items read. A stream with flag 0x100 (+0xc) gives them one fgetc at a time; a buffered one (flag 4 clear) copies them out of its buffer (pointer +0, count +4) with memmove, refilling it through 00076106 when it is empty; an unbuffered one in read mode (flags & 0x31 == 1, a read-write stream with 0x80 switched to it first) calls 00075ecc and takes one read from its handle (+0x10), setting the end-of-file flag 0x10 when it returns 0 and the error flag 0x20 when it fails.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "00060a10+302",
+        "sha1": "67fb8f17a071",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00060b40",
@@ -3611,12 +3911,27 @@
       }
     },
     {
+      "address": "00060d24",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MonoScreen_Ctor",
+      "description": "(screen), callee-cleaned: allocates 2 bytes when screen is null; sets +1 to 1 and +0 to 1 when Crtc_DetectDualDisplay (0007634a) finds both adapters, else 0. Returns screen. Mono_StaticInit (0006102c) builds Mono_Screen (000b5e70) with it.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen",
+      "verified": {
+        "bytes": "00060d24+54",
+        "sha1": "46fcad842885",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00060d78",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Mono_Clear",
-      "description": "Frameless: fills the 2000 cells of the monochrome text screen (linear 0xb0000, addressed as 0009003c + 0xb0000) with 0x0720, a space in attribute 7, while the bytes 000b5e70 and 000b5e71 share a set bit.",
+      "description": "Frameless: fills the 2000 cells of the monochrome text screen (linear 0xb0000, addressed as 0009003c + 0xb0000) with 0x0720, a space in attribute 7, while the bytes Mono_Screen (000b5e70) and 000b5e71 share a set bit.",
       "source": "ES1DBSIM disassembly at 00060d78",
       "verified": {
         "bytes": "00060d78+56",
@@ -3631,7 +3946,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mono_WriteChar",
-      "description": "(ch, row, column) in stack order, callee-cleaned: writes ch with the attribute byte 00097fa0 to the monochrome screen cell (row * 80 + column) while the bytes 000b5e70 and 000b5e71 share a set bit and row is 0-24. No reference found by es2_xref.",
+      "description": "(ch, row, column) in stack order, callee-cleaned: writes ch with the attribute byte 00097fa0 to the monochrome screen cell (row * 80 + column) while the bytes Mono_Screen (000b5e70) and 000b5e71 share a set bit and row is 0-24. No reference found by es2_xref.",
       "source": "ES1DBSIM decompile at 00060db0",
       "verified": {
         "bytes": "00060db0+88",
@@ -3683,6 +3998,36 @@
         "sha1": "08d81c3cfcb1",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00061004",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_ShowCursor",
+      "description": "(show), callee-cleaned: while Mono_Screen's two bytes share a set bit, maybe_MonoCrtc_ShowCursor (0007633b) when show is non-zero, else maybe_MonoCrtc_HideCursor (0007632c). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#writing-to-it",
+      "verified": {
+        "bytes": "00061004+40",
+        "sha1": "b4602245f8eb",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006102c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mono_StaticInit",
+      "description": "No arguments: MonoScreen_Ctor(Mono_Screen, Mono_Screen (000b5e70)). Its address is the static-constructor table's entry at 000adc78, which __cinit runs at startup.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen",
+      "verified": {
+        "bytes": "0006102c+11",
+        "sha1": "6c433eb3a209",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -5354,6 +5699,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0006d289",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_AddCallback",
+      "description": "(count, callback), C convention: while the dword 0009bd40 is non-zero, takes the lowest clear bit of the 16-bit slot mask 0009cd64, sets it, stores count in that slot of the two dword tables 0009ce6c and 0009cdec and callback in the table 0009cd6c, and returns the slot + 1; returns 0 when 0009bd40 is 0 or every slot is taken. FrameRate_Update registers FrameRate_TimerTick with it; es2_xref also finds calls from 0004e434, 0004ef8c, 00050d98, 00063e64 and 00069780.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
+      "verified": {
+        "bytes": "0006d289+78",
+        "sha1": "61434d41a2b5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0006d4e2",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -6158,6 +6518,81 @@
       }
     },
     {
+      "address": "0007632c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_MonoCrtc_HideCursor",
+      "description": "No arguments, frameless, keeps EDX: writes 0xf to the monochrome CRTC's register 0xa (cursor start scan line; index port 3b4, data 3b5), below the cursor end that mode 7's BIOS cursor uses (0xc), which hides it on a 6845.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#writing-to-it",
+      "verified": {
+        "bytes": "0007632c+15",
+        "sha1": "40b90326f0e4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007633b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_MonoCrtc_ShowCursor",
+      "description": "No arguments, frameless, keeps EDX: writes 0xb to the monochrome CRTC's register 0xa (cursor start scan line; index port 3b4, data 3b5), mode 7's BIOS cursor start.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#writing-to-it",
+      "verified": {
+        "bytes": "0007633b+15",
+        "sha1": "7812307ff0a9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007634a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Crtc_DetectDualDisplay",
+      "description": "No arguments, keeps ECX and EDX: returns 1 when Crtc_Probe (00076377) answers at both 3b4, the monochrome adapter's CRTC index port, and 3d4, the colour adapter's; otherwise 0. MonoScreen_Ctor calls it.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen",
+      "verified": {
+        "bytes": "0007634a+45",
+        "sha1": "fb2009293190",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00076377",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Crtc_Probe",
+      "description": "Register argument DX = a CRTC index port: reads the cursor-location registers 0xe and 0xf through the data port DX+1, writes 4 and 0xa to them, reads both back, restores the saved values through Crtc_RestoreCursorLocation (000763d4) and returns DX = 1 when both read back as written, else DX = 0.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen",
+      "verified": {
+        "bytes": "00076377+93",
+        "sha1": "7880056fb4db",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000763d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Crtc_RestoreCursorLocation",
+      "description": "Register argument DX = a CRTC data port, with two words its caller pushed under the return address, the saved register 0xf value on top and 0xe below: writes them back to registers 0xf and 0xe through the index port DX-1 and returns with both popped. Crtc_Probe's exit.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen",
+      "verified": {
+        "bytes": "000763d4+23",
+        "sha1": "b5f19dcbfdd1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0007cd28",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -6845,6 +7280,24 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00097f58",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "FrameRate_Best",
+      "description": "Two int16, whole then hundredths: the highest rate FrameRate_Update has measured, from 0.00. FrameRate_Worst follows at FrameRate_Worst (00097f5c), from 999.99.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter"
+    },
+    {
+      "address": "00097f5c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "FrameRate_Worst",
+      "description": "Two int16, whole then hundredths: the lowest rate FrameRate_Update has measured, from 999.99.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter"
+    },
+    {
       "address": "0009ded4",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -6897,6 +7350,51 @@
       "name": "Raster_WorldToView",
       "description": "The installed camera's world-to-view transform (0x20 bytes), built by Raster_InstallViewProjection; the byte at 000b5e00 is its first-use flag. ES2's DBSIM 006c6018.",
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000b5e24",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "FrameRate_Countdown",
+      "description": "dword: FrameRate_Update loads it with 32000 each frame and FrameRate_TimerTick decrements it to 0, so 32000 less its value is the timer ticks since the last frame.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter"
+    },
+    {
+      "address": "000b5e28",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "FrameRate_FrameCount",
+      "description": "dword: the frames FrameRate_Update has counted; FrameRate_GetFrameCount returns it.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter"
+    },
+    {
+      "address": "000b5e2c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "FrameRate_TicksPerSecond",
+      "description": "dword: 1000000 / Math_Q14Multiply(word +4 of the structure 000bdd0c points to, 0x35a1), set by FrameRate_Update's first call, which it also marks as done.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter"
+    },
+    {
+      "address": "000b5e6e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MechMods_Present",
+      "description": "byte: bit n-1 set when MECMODn.DYN opened, written by MechMods_Probe. No reader found by a search of the disassembly for the address.",
+      "source": "Herculan/docs/es1/formats/nam-name-list.md#mod-lists"
+    },
+    {
+      "address": "000b5e70",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mono_Screen",
+      "description": "2 bytes, built by MonoScreen_Ctor at startup: +0 is 1 when Crtc_DetectDualDisplay found both adapters, +1 is 1. Mono_Clear, Mono_WriteChar, Mono_WriteText, Mono_Printf, Mono_PrintScreen and Mono_ShowCursor do their work only while the two bytes share a set bit.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#detecting-the-screen"
     },
     {
       "address": "000b5e74",

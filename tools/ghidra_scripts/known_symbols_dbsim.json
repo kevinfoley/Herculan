@@ -35260,7 +35260,13 @@
       "confidence": "high",
       "name": "NameList_Split",
       "description": "(buffer, out): walks the NUL-terminated names in buffer until one starts with a '\\n' byte, storing each name's address in out when out is non-null, and returns the count (EAX = EDI; the decompile drops it). LoadNameList splits the .NAM file with it.",
-      "source": "DBSIM disassembly at 00492b40"
+      "source": "Herculan/docs/retail/formats/nam-name-list.md#loading-a-list",
+      "verified": {
+        "bytes": "00492b40+53",
+        "sha1": "61d270e96118",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00492b78",
@@ -35268,8 +35274,14 @@
       "type": "function",
       "confidence": "high",
       "name": "VolFile_GetSize",
-      "description": "(path): opens path as a VolRStream (loose file or volume entry) and returns VolRStream_GetSize, or 0 when the open fails. LoadNameList sizes the .NAM file with it.",
-      "source": "DBSIM decompile at 00492b78"
+      "description": "(path), C convention: opens path as a VolRStream (loose file or volume entry) and returns VolRStream_GetSize, or 0 when Stream_GetStatus reports an error after the open. LoadNameList sizes the .NAM file with it.",
+      "source": "Herculan/docs/retail/formats/nam-name-list.md#loading-a-list",
+      "verified": {
+        "bytes": "00492b78+122",
+        "sha1": "d8a2c8dd5ede",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00492bf4",
@@ -35277,8 +35289,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LoadNameList",
-      "description": "Loads a nam\\<name>.NAM list -- a flat run of NUL-terminated ASCII names indexed by type number -- with a capacity bound as the second argument. Called with ('mechs', 0x55) into the mech name table DAT_004a9de4 that MechType_InitOne indexes, and with ('flyers', 0x22) into DAT_004a9e74. These are the tables that turn script.dat block 7's and block 8's type numbers into resource base names; MECHS.NAM ships 21 names and FLYERS.NAM 3.",
-      "source": "docs/retail/formats/script-dat.md (mission placement)"
+      "description": "(name, capacity, unused), C convention: loads the type-name list nam\\<name>.NAM -- NUL-terminated ASCII names ended by a name starting with 0x0a -- into a zeroed table of capacity pointers (Mem_NewArray) and returns it. VolFile_GetSize sizes the file, a buffer of that size takes it whole, and NameList_Split stores each name's address; a missing file leaves every entry null, and NameList_Split is not given the capacity. The body reads the first two arguments only ([ebp+8], [ebp+0xc]). The two calls found by es2_xref pass ('mechs', 0x55, 8) from Mechs_InitAllTypes, into 004a9de4, and ('flyers', 0x22, 4) from FlyerTypes_LoadAll, into 004a9e74. ES1's per-file code for numbered mod lists remains with the file number held at 0 in EBX, so its _itoa and its test of the byte 006cbccc are never reached. MECHS.NAM ships 21 names and FLYERS.NAM 3.",
+      "source": "Herculan/docs/retail/formats/nam-name-list.md#loading-a-list",
+      "verified": {
+        "bytes": "00492bf4+383",
+        "sha1": "5b156ca741b6",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00492d74",
