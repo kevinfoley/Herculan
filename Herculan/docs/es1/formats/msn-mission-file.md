@@ -192,9 +192,9 @@ The load treats each record as ES2's does ([the parser](../../retail/formats/msn
 
 ## A file in another layout
 
-`MSN\B0_C1_30.MSN` (2,694 bytes) does not follow the layout above. Read by it, the file has no conditions and 1,130 header patches, which is what `GO.EXE`'s loader would take from it. Its bytes do walk to their end as follows, a reading of the file and not of any code: the revision 5; ten words, 0, 1130, 1, 2, 1 and five 0s, without a condition; the conditions, 5 records; then rows 3 to 11 as above, except that its 8 mech records are 88 bytes. The first of them reads as above to `0x49`, then holds `-1`, `-1`, 4, 2, `-1`, `-1`, 100 at `0x4a`–`0x56`.
+Of the 77 files, 75 follow the layout above and end on their last group's last byte, `SM_SCT50.MSN` (56,392 bytes) and `B0_C2_60.MSN` (41,736) among them. Two do not, `B0_C1_20.MSN` (6,402 bytes) and `B0_C1_30.MSN` (2,694): read by the layout above, each has no conditions and then a header-patch count, 1,120 and 1,130, far more records than the file holds, and that is what `GO.EXE`'s loader would take from each.
 
-`SM_SCT50.MSN` (56,392 bytes) and `B0_C2_60.MSN` (41,736), two of the eight files ES2's reader stops short on, walk to their last byte by the layout above.
+`B0_C1_30.MSN`'s bytes do walk to their end as follows, a reading of the file and not of any code: the revision 5; ten words, 0, 1130, 1, 2, 1 and five 0s, without a condition; the conditions, 5 records; then rows 3 to 11 as above, except that its 8 mech records are 88 bytes. The first of them reads as above to `0x49`, then holds `-1`, `-1`, 4, 2, `-1`, `-1`, 100 at `0x4a`–`0x56`.
 
 ## Rejected readings
 
@@ -204,8 +204,8 @@ The load treats each record as ES2's does ([the parser](../../retail/formats/msn
 
 ## Open
 
-- **Open:** which code reads `B0_C1_30.MSN`'s layout, whether any campaign position or list names that file, and what its ten leading words and its mech records' words from `0x4a` hold.
-- **Open:** how many of the 77 files follow each layout. Walked by hand: `SM_SCT50` and `B0_C2_60` by the loader's layout, `B0_C1_30` by the other.
+- **Open:** which code reads `B0_C1_30.MSN`'s layout, whether any campaign position or list names that file or `B0_C1_20.MSN`, and what its ten leading words and its mech records' words from `0x4a` hold.
+- **Open:** whether `B0_C1_20.MSN` walks to its end by `B0_C1_30.MSN`'s reading. Its first two words after the revision are 0 and 1120, as `B0_C1_30.MSN`'s are 0 and 1130.
 - **Open:** whether the word pairs at action `0x1a`/`0x1c`, mech `0x4a`/`0x4c`, flyer `0x36`/`0x38` and base `0x0e`/`0x10` are each one (counter ref, operation) pair of ES2's out-of-action report and action write ([out-of-action report](../../retail/simulation/mission-deployment.md#the-out-of-action-report)), and whether mech `0x4e`–`0x61`, `0x62`, `0x64`, `0x66` and `0x68`, flyer `0x3a`, `0x3c` and `0x3e`, and base `0x12`, `0x14` and `0x16` are ES2's ammunition types, constant, engaged and defeated actions and starting condition. They stand where those stand in ES2's records less the pair counts and the other nine pairs; the simulator's readers of them are not read.
 - **Open:** what the exported fields mean that no code read so far uses: the 20 words at mech and flyer `0x08` and group `0x06`, an action's type and verb, the group words `0x30`, `0x32`, `0x4a` and `0x52`–`0x56`, and the ten header words.
 - **Open:** whether a group's `0x4c`/`0x4e` ref and `0x50` action are an order of ES2's kind, its subject and the action that ends it, and so whether `0x30`, `0x32` and `0x4a` hold an order's verb and formation and the group's side. In `B0_C2_60.MSN` the first group, the squad, holds 0 at `0x4a` and the groups that name it or one of its mechs at `0x4e` hold 1.
