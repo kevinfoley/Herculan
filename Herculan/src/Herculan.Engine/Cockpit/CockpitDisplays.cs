@@ -42,7 +42,8 @@ public sealed class CockpitDisplays {
 				new HddMapView(mapBounds, mapViewport.Width, mapViewport.Height),
 				HddMapRaster.Build(commandWorld.Terrain, mapBounds, art.PaletteEntry),
 				squad,
-				commandWorld);
+				commandWorld,
+				frame => HddMap.IconHeight(art.Sprites?.Sprite(HddMap.IconBank, frame)));
 
 			staging.StageCommandDisplay(HddCommand, squad, commandWorld, scene, mapViewport.Width, mapViewport.Height);
 		}

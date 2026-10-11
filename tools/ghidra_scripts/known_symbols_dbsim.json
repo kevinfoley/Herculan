@@ -15266,8 +15266,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_Update",
-      "description": "Vtable slot 1: services a queued map click, advances the half-second blink, re-fonts the order rows whose selection changed, and redraws the map when anything moved it.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Vtable slot 1, once a frame on the current page. Drains a queued list click (+0x14d) through HddCommandScreen_HandleListClick; steps DAT_0049d6b8 through 0-3 on each rise of coarse-tick bit 0x10; every 0x1e coarse ticks runs HddCommandScreen_BlinkTick; resolves an armed map click (+0x11c) through HddCommandScreen_PickPilot when no pick is wanted (+0x103) or no pilot is selected (+0x105), else HddCommandScreen_PickTarget. Clears the selected pilot's pick flags +0xa5 and +0xa6 (record +0x85 + slot * 0x2a) when its saved kind +0xa7 is 1 and either the saved unit +0x9d with +0xa5 set or the current unit +0xa1 with +0xa6 set is destroyed (+0x99). Then, while +0xc is 1 or 2: on DAT_0049d6ac repaints the selected pilot's marker gadget (Widget_PaintUnlessByte37); re-fonts the previous (+0x81) and new (+0x5d) order rows when the order changed, or all of them through HddCommandScreen_RefreshOrders when +0x139 is set; clears the message row on +0x144; and with DAT_0049d6ae set floods the viewport in DAT_004d3c26 and runs HddCommandScreen_DrawMap.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044c960+733",
+        "sha1": "1c80972cd2ca",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044cc40",
@@ -15374,7 +15380,13 @@
       "confidence": "high",
       "name": "HddMap_ToViewport",
       "description": "Adds the map viewport origin and half-extent to a projected point.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044d224+58",
+        "sha1": "13e335de117b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d260",
@@ -15383,7 +15395,13 @@
       "confidence": "high",
       "name": "HddMap_FromViewport",
       "description": "The inverse of HddMap_ToViewport.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044d260+58",
+        "sha1": "778f0ba77c55",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d29c",
@@ -15487,8 +15505,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_HitTestMarker",
-      "description": "Turns a map viewport point into world units and returns the first live object within the marker click radius of it.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Turns a map viewport point into world units, stored as the map cursor at +0x374/+0x378 with the scale at +0x37c, and returns the first object in the global live object list whose position lies strictly inside the square of half-side (5 << XCoordShift) >> 1 device pixels, in world units, about it, or 0. The test reads the object's position and nothing else of it.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044d860+361",
+        "sha1": "40efdae9f19d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d9cc",
@@ -15542,7 +15566,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_CommitPick",
-      "description": "Promotes the selected pilot's pending map pick (slot +0x85 + pilot*0x2a) to its committed one -- the point triple or the subject pointer, per the order's pick kind -- and latches that kind alongside it, so the following HddCommandScreen_FillOrderRecord knows which to copy. XMIT calls the pair in that order. Args derived from disassembly: [EBP+8] only.",
+      "description": "XMIT's first call, ahead of HddCommandScreen_FillOrderRecord. On the selected pilot's pick record (+0x85 + pilot * 0x2a): for an order that wants a pick (+0x103) copies the current pick's half its kind (+0xab) names -- the point +0x91..+0x99 to +0x85..+0x8d for 0, the unit +0xa1 to +0x9d for 1 -- clears +0xa6, copies the kind to +0xa7 and sets +0xa5; for any other order clears +0xa5. Clears +0x104 either way. Args derived from disassembly: [EBP+8] only.",
       "source": "docs/retail/simulation/heads-down-display.md",
       "signature": "void __cdecl HddCommandScreen_CommitPick(int commandScreen)",
       "verified": {
@@ -15651,8 +15675,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_AddObjectMarker",
-      "description": "One object's map marker: icon from its target class and its group's side byte, size from HddMarker_SetSize, and for the two structure classes the colour and reference size its range falloff draws a box with.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "One object's map marker, taking the gadget at the screen's count +0x10a. The class (+0x1a8) and the group's side byte (+0x45, +0x12) pick the icon (+0x24): class 0 takes 0x2a for the cockpit's own machine, 0x33 + 9 * Squad_IndexOf for a squadmate, 0x21 for another friendly and 0x18 hostile, size 5 << XCoordShift; class 2 takes 6 or 0xf at the same size; classes 1 and 3 go by the type record (+0x1f2): with +0x32 set 0x58/0x59 at 3 << shift, with silhouette +0x28 one of 1, 2, 6, 7, 10, 11, 15, 19-24, 26, 28 3/5 at 7 << shift, otherwise 2/4 at 9 << shift. Those two classes are ranged (+0x4c = 1): +0x4d takes 9 << shift, 7 or 3 (only the first shifted), +0x4f 0, +0x57 25000, and +0x51 the colour, DAT_004d3c0a (id 5) friendly and DAT_004d3c12 (id 9) hostile, except a hostile unlisted structure, which stores palette index 4 itself. Any other class takes no gadget. Stores the object at +0x38 and the class at +0x48; HddMarker_SetSize sets the extent.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044e080+650",
+        "sha1": "8f8d145063cf",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044e30c",
@@ -15660,8 +15690,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_DrawMap",
-      "description": "Everything inside the command display's map viewport, in order: flood, re-centre on the player plus the pan offset, clamp, terrain raster, the 1200 m grid, the mission border rect, then every marker with the selected pilot's link line and the chosen unit's box.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Everything inside the command display's map viewport, in order: flood in DAT_004d3c26, re-centre on the cockpit's machine plus the pan offset, clamp (HddMap_ClampAndInstallView), terrain raster, the 1200 m grid in DAT_004d3c16, the mission border rect in brush mode 4 and DAT_004d3c12, each entry of the list at DAT_004aaafc (count DAT_004aab00) through its vtable slot 0 with the word its +0x34 record's +8 points at set to 1 around the call, the nav marker's gadget when NavMarker_Position has one, then every marker through HddCommandScreen_DrawMarker, holding back the selected squadmate's (or, with none selected, the player's) to paint last, flagged when it is the squadmate's. Last, for the marker whose object is the chosen unit (+0x15c), a brush-mode-4 frame in DAT_004d3c20 (id 16) from the marker's centre less its drawn half (+0x4a) less 2 to its centre plus +0x4a plus 1, on both axes.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044e30c+1567",
+        "sha1": "f87fdac28af5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044e92c",
@@ -15670,7 +15706,13 @@
       "confidence": "high",
       "name": "HddCommandScreen_DrawMarker",
       "description": "(screen, marker, isSelectedPilot): paints one marker of the command display's map. Its point is the marker's object's (+0x38) position (+0x26/+0x2a), or its own +0x3c/+0x40/+0x44 with no object. An object flagged +0xa4 or +0x99 on a group whose side (+0x12) is non-zero is not drawn; one with +0x95 clear on a group with a side or awaiting deployment (+0x14) blinks with coarse-tick bit 0x20 and is drawn at its +0x1aa point instead (not at all when +0xa7 is set). Projects the point into the map viewport (HddMap_ToViewport) and moves the marker there (0045242c). With isSelectedPilot and an object it draws the link line to the armed order's pick in the pilot's HudColorTable colour, then returns before painting while a pilot is selected (screen +0x381) and the blink flag 0049d6ad is set. A marker with +0x4c set records its distance from screen +0x18 at +0x53. Paints through slot 0 of the vtable whose pointer is at marker +0x17. HddCommandScreen_DrawMap calls it for every marker. See docs/retail/simulation/heads-down-display.md.",
-      "source": "DBSIM decompile at 0044e92c"
+      "source": "DBSIM decompile at 0044e92c",
+      "verified": {
+        "bytes": "0044e92c+1162",
+        "sha1": "392c64950d82",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044edb8",
@@ -15808,7 +15850,13 @@
       "confidence": "high",
       "name": "HddMarker_Ctor",
       "description": "One of the command display map's 140 marker gadgets. Lazily loads the `icons` sprite bank into DAT_0049d6b4, folder selected by VideoMode_PanelMode == 3.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044f130+99",
+        "sha1": "a97be057a1c5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044f194",
@@ -15816,8 +15864,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddMarker_Paint",
-      "description": "Paints one map marker: eight-octant heading frame plus its nudge for a HERC or flyer, a range-scaled box for a structure far from the map centre, and the scanner circle for a radar structure.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Paints one map marker gadget. With no object (+0x38) it blits its icon (+0x24). Its object's class (+0x1a8) picks the rest: 0 and 2 (HERC, flyer) bucket the heading (+0x10) into eight octants, add DAT_004d1d54/DAT_004d1d5c's nudge and, unless destroyed (+0x99), DAT_0049d67c's frame offset; 1 and 3 (structure, ground vehicle) take the base frame; any other class returns without painting. A ranged marker (+0x4c) divides +0x57 (25000) << 7 by the distance HddCommandScreen_DrawMarker left at +0x53: below +0x4f it plots one pixel in +0x51, below the icon bitmap's +4 word it fills a box of that size centred on the object in DAT_004d3c20 (id 16) and frames it in +0x51 through GLRect_Fill twice, and otherwise it blits the icon. Leaves half the drawn size at +0x4a: half the box, 0 for the pixel, (+0x4d >> 1) << XCoordShift for an icon. A class-1 object with its scanner on (+0x96) and not destroyed is then ringed through Raster_DrawEllipse in brush mode 4 and +0x51, radius 140000 << 8 over the map scale, about the object's point less a quarter of the drawn size on each axis.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044f194+1042",
+        "sha1": "5ac814191c6b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044f5a8",
@@ -15861,8 +15915,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddMarker_SetSize",
-      "description": "Sets a marker gadget's square extent and the half-extent its icon is drawn back by, so the icon lands centred on the object.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Sets a marker gadget's rect far corner (+0x08/+0x0c) to the size given, which with the zeroed near corner is the extent Widget_MoveTo keeps, and the half-size +0x26/+0x2a its icon is drawn back by, so the icon lands centred on the object.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044f634+27",
+        "sha1": "9104234f1308",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044f650",
@@ -24562,7 +24622,13 @@
       "confidence": "high",
       "name": "Memory_LargestFreeBlock",
       "description": "Returns the size of the largest block on the pool's free list minus 0x6c, clamped to 0. The DBSIM copy of VSHELL's Memory_LargestFreeBlock.",
-      "source": "DBSIM decompile and disassembly at 00476dd0"
+      "source": "DBSIM decompile and disassembly at 00476dd0",
+      "verified": {
+        "bytes": "00476dd0+48",
+        "sha1": "24580a169732",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00476e00",
@@ -24694,7 +24760,13 @@
       "confidence": "high",
       "name": "Mem_New",
       "description": "The global operator new, the DBSIM copy of VSHELL's Mem_New. A size below the pool's free byte count (006bb388, pool 006bb37c + 0xc) and no larger than the pool's largest free block less 0x6c (00476dd0) is carved from the pool by Memory_Alloc; anything else goes to Mem_HeapAlloc. Both paths hand back zeroed memory, which is what settles what an uninitialised object field holds at construction. Mem_Delete is its pair; Mem_NewArray is the same with 8 bytes added.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "00477390+82",
+        "sha1": "1e661b3dcb8c",
+        "scope": "callees",
+        "via": "decompile"
+      }
     },
     {
       "address": "004773e4",

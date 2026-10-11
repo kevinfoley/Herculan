@@ -79,6 +79,56 @@ public sealed class HddCommandScreen {
 	private Vec3i _recordPoint;
 	private SimObject? _recordSubject;
 
+	// Each object's marker gadget as its last draw left it — see HddMarkerPlacement.
+	private readonly Dictionary<SimObject, HddMarkerPlacement> _placements = new(ReferenceEqualityComparer.Instance);
+	private readonly Func<int, int?> _iconHeight;
+	private readonly PickRecord[] _records = { new(), new(), new() };
+
+	/// <summary>
+	/// One pilot's pick record, which is what the link line is drawn from — the screen's <c>0x2a</c>-byte record at
+	/// <c>+0x85 + slot * 0x2a</c>: the pick made for the order being built, and the pick of the last order sent with
+	/// one. See docs/retail/simulation/heads-down-display.md#the-link-line.
+	/// </summary>
+	private sealed class PickRecord {
+		/// <summary><c>+0xa6</c> — a pick has been made since the last send, cancel or change of pilot.</summary>
+		public bool Current;
+
+		/// <summary><c>+0xab</c> — it is a unit (<see cref="CurrentUnit"/>) rather than a point.</summary>
+		public bool CurrentIsUnit;
+
+		/// <summary><c>+0x91</c>/<c>+0x95</c>.</summary>
+		public Vec3i CurrentPoint;
+
+		/// <summary><c>+0xa1</c>.</summary>
+		public SimObject? CurrentUnit;
+
+		/// <summary><c>+0xa5</c> — the last order sent to this pilot carried a pick.</summary>
+		public bool Saved;
+
+		/// <summary><c>+0xa7</c>.</summary>
+		public bool SavedIsUnit;
+
+		/// <summary><c>+0x85</c>/<c>+0x89</c>.</summary>
+		public Vec3i SavedPoint;
+
+		/// <summary><c>+0x9d</c>.</summary>
+		public SimObject? SavedUnit;
+
+		public void PickUnit(SimObject unit) {
+			CurrentUnit = unit;
+			CurrentIsUnit = true;
+			Current = true;
+		}
+
+		public void PickPoint(Vec3i point) {
+			CurrentPoint = point;
+			CurrentIsUnit = false;
+			Current = true;
+		}
+	}
+
+	private PickRecord? SelectedRecord => SelectedPilot >= 0 && SelectedPilot < _records.Length ? _records[SelectedPilot] : null;
+
 	/// <param name="view">The map camera, sized to the herc's own map viewport.</param>
 	/// <param name="raster">The mission's terrain raster, or null when the zone could not supply one.</param>
 	/// <param name="squad">
@@ -86,12 +136,17 @@ public sealed class HddCommandScreen {
 	/// <c>g_SquadmateMachines</c> (<c>004d044c</c>). Fewer than three leaves the remaining boxes empty.
 	/// </param>
 	/// <param name="world">The simulation a transmitted order is delivered into, or null for none.</param>
+	/// <param name="iconHeight">
+	/// An <see cref="HddMap.IconBank"/> frame's height in device pixels, or null for a missing frame — what a ranged
+	/// marker's size is compared with, and so what its drawn half-size depends on.
+	/// </param>
 	public HddCommandScreen(HddMapView view, HddMapRaster? raster, IReadOnlyList<SimObject> squad,
-			SimWorld? world = null) {
+			SimWorld? world = null, Func<int, int?>? iconHeight = null) {
 		View = view ?? throw new ArgumentNullException(nameof(view));
 		Raster = raster;
 		Squad = squad ?? Array.Empty<SimObject>();
 		World = world;
+		_iconHeight = iconHeight ?? (_ => null);
 	}
 
 	/// <summary>The simulation transmitted orders are delivered into, or null.</summary>
@@ -183,6 +238,9 @@ public sealed class HddCommandScreen {
 		if (slot != SelectedPilot) {
 			if (SelectedOrder != null) {
 				PickedUnit = null;
+				if (SelectedRecord is { } record) {
+					record.Current = false;
+				}
 			}
 
 			ClearOrder();
@@ -243,6 +301,7 @@ public sealed class HddCommandScreen {
 				ChosenUnit = hit;
 				ChosenPoint = null;
 				PickedUnit = hit;
+				SelectedRecord?.PickUnit(hit);
 				return HddMapClick.Picked;
 			}
 
@@ -252,6 +311,7 @@ public sealed class HddCommandScreen {
 
 			ChosenUnit = null;
 			ChosenPoint = new Vec3i(worldX, worldY, 0);
+			SelectedRecord?.PickPoint(ChosenPoint.Value);
 			return HddMapClick.Picked;
 		}
 
@@ -321,6 +381,7 @@ public sealed class HddCommandScreen {
 		PickedUnit = unit;
 		ChosenUnit = unit;
 		ChosenPoint = null;
+		SelectedRecord?.PickUnit(unit);
 		return true;
 	}
 
@@ -362,6 +423,24 @@ public sealed class HddCommandScreen {
 
 		bool reached = World == null || SquadOrders.SendToSlot(World, Squad, SelectedPilot, message);
 
+		// HddCommandScreen_CommitPick (0044db74), which XMIT runs first: an order with a pick saves it as the
+		// pilot's last one, the half its kind names, and one without forgets the last.
+		if (SelectedRecord is { } record) {
+			if (WantsPick(order)) {
+				if (record.CurrentIsUnit) {
+					record.SavedUnit = record.CurrentUnit;
+				} else {
+					record.SavedPoint = record.CurrentPoint;
+				}
+
+				record.Current = false;
+				record.SavedIsUnit = record.CurrentIsUnit;
+				record.Saved = true;
+			} else {
+				record.Saved = false;
+			}
+		}
+
 		ClearOrder();
 		SelectPilot(-1);
 		PickedUnit = null;
@@ -373,6 +452,10 @@ public sealed class HddCommandScreen {
 	/// the pick and the pilot selection all go together.
 	/// </summary>
 	public void Cancel() {
+		if (SelectedRecord is { } record) {
+			record.Current = false;
+		}
+
 		ClearOrder();
 		SelectedPilot = -1;
 		PickedUnit = null;
@@ -391,15 +474,14 @@ public sealed class HddCommandScreen {
 		}
 
 		var markers = HddMap.Markers(objects, player, route, Squad);
-		int chosen = -1;
-		if (ChosenUnit != null) {
-			for (int i = 0; i < markers.Count; i++) {
-				if (markers[i].WorldX == ChosenUnit.Position.X && markers[i].WorldY == ChosenUnit.Position.Y) {
-					chosen = i;
-					break;
-				}
-			}
-		}
+		Place(markers);
+
+		// The box is the last unit picked's (+0x15c), not the armed order's.
+		HddMarkerPlacement? chosenBox = PickedUnit != null && _placements.TryGetValue(PickedUnit, out var placed)
+			? placed
+			: null;
+
+		var (linkTarget, linkSaved) = Link();
 
 		var pilots = new HddPilotSlot[HddLayout.PilotSlotCount];
 		for (int i = 0; i < pilots.Length; i++) {
@@ -417,7 +499,69 @@ public sealed class HddCommandScreen {
 		}
 
 		return new HddCommandState(View, Raster, markers, pilots, SelectedPilot, SelectedOrder,
-			chosen, ChosenPoint, strings?.Text(PromptGroup, PromptIndex), Blink);
+			chosenBox, linkTarget, linkSaved, strings?.Text(PromptGroup, PromptIndex), Blink);
+	}
+
+	/// <summary>
+	/// Where the selected pilot's link line goes, and whether it is the saved pick's — <c>HddCommandScreen_Update</c>
+	/// (<c>0044c960</c>)'s check and <c>HddCommandScreen_DrawMarker</c> (<c>0044e92c</c>)'s choice. A pick made since
+	/// the last send is drawn to; failing that, the last order's. A current unit pick that is a hostile no scanner is
+	/// painting has no point to draw to; a saved unit pick is drawn to wherever it is.
+	/// </summary>
+	private (Vec3i? Target, bool Saved) Link() {
+		if (SelectedRecord is not { } record) {
+			return (null, false);
+		}
+
+		// Both flags drop together once a unit either pick names is destroyed — tested on the saved pick's kind
+		// alone, both halves, as the original does.
+		if (record.SavedIsUnit && ((record.Saved && record.SavedUnit is { Destroyed: true })
+				|| (record.Current && record.CurrentUnit is { Destroyed: true }))) {
+			record.Saved = false;
+			record.Current = false;
+		}
+
+		if (record.Current) {
+			if (!record.CurrentIsUnit) {
+				return (record.CurrentPoint, false);
+			}
+
+			return record.CurrentUnit is { } unit && (unit.Side != Engine.World.MissionSide.Cybrid || unit.RadarVisible)
+				? (unit.Position, false)
+				: (null, false);
+		}
+
+		if (record.Saved) {
+			return record.SavedIsUnit
+				? (record.SavedUnit?.Position, true)
+				: (record.SavedPoint, true);
+		}
+
+		return (null, false);
+	}
+
+	/// <summary>
+	/// Moves each drawn marker's gadget to its object's point this frame and records what its paint leaves —
+	/// <c>HddCommandScreen_DrawMarker</c> (<c>0044e92c</c>) and <c>HddMarker_Paint</c> (<c>0044f194</c>). A marker that
+	/// is not drawn keeps the placement it had. The selected pilot's marker in its blink's dark half is moved but not
+	/// painted, so it keeps its last drawn half-size. A deleted object's placement is dropped unless it is the chosen
+	/// unit, whose box the original still draws from its gadget.
+	/// </summary>
+	private void Place(IReadOnlyList<HddMapMarker> markers) {
+		foreach (var marker in markers) {
+			if (marker.Subject is not { } subject) {
+				continue;
+			}
+
+			bool painted = Blink || marker.PilotSlot < 0 || marker.PilotSlot != SelectedPilot;
+			int half = painted ? HddMap.DrawnHalf(marker, View, _iconHeight(marker.Frame))
+				: _placements.TryGetValue(subject, out var last) ? last.Half : 0;
+			_placements[subject] = new HddMarkerPlacement(View.ToScreenX(marker.WorldX), View.ToScreenY(marker.WorldY), half);
+		}
+
+		foreach (var gone in _placements.Keys.Where(o => o.Removed && !ReferenceEquals(o, PickedUnit)).ToList()) {
+			_placements.Remove(gone);
+		}
 	}
 
 	/// <summary>

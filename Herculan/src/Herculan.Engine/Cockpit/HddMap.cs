@@ -1,3 +1,4 @@
+using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Sim;
 using Herculan.Engine.World;
@@ -30,15 +31,32 @@ namespace Herculan.Engine.Cockpit;
 /// result is smaller than the icon, draws a box of that size instead of the icon.
 /// </param>
 /// <param name="ColorId">
-/// <c>COLORS.DAT</c> id the box is drawn in when <paramref name="Ranged"/> shrinks it past the icon:
-/// id 5 (blue) for a friendly structure, id 9 (red) for a hostile one.
+/// <c>COLORS.DAT</c> id of a <paramref name="Ranged"/> marker's colour, gadget <c>+0x51</c>: the outline of its
+/// shrunk box and its radar ring. -1 when <paramref name="PaletteIndex"/> holds the colour instead.
 /// </param>
 /// <param name="PilotSlot">
 /// Which squad comm box this marker belongs to, or -1. Clicking a squadmate's marker selects that
 /// pilot, which is <c>HddCommandScreen_PickPilot</c> (<c>0044d804</c>)'s whole body.
 /// </param>
+/// <param name="PaintSize">
+/// Gadget <c>+0x4d</c>, the size the paint halves for the selection box and the radar ring's offset. Set for a
+/// ranged marker only, and not always shifted where <paramref name="Size"/> is; 0 for everything else.
+/// </param>
+/// <param name="RadarRing">Whether the paint rings it with the radar mast's range.</param>
+/// <param name="PaletteIndex">A raw palette index standing in for <paramref name="ColorId"/>, or -1.</param>
+/// <param name="Subject">The object it marks — gadget <c>+0x38</c> — or null for a route marker.</param>
 public readonly record struct HddMapMarker(int WorldX, int WorldY, int Frame,
-	int NudgeX, int NudgeY, int Size, bool Ranged, int ColorId, int PilotSlot = -1);
+	int NudgeX, int NudgeY, int Size, bool Ranged, int ColorId, int PilotSlot = -1,
+	int PaintSize = 0, bool RadarRing = false, int PaletteIndex = -1, SimObject? Subject = null);
+
+/// <summary>
+/// Where an object's marker gadget was last placed and what its last paint left — the gadget's own rect, which
+/// <c>HddCommandScreen_DrawMarker</c> (<c>0044e92c</c>) moves only when it draws the marker, and its <c>+0x4a</c>.
+/// </summary>
+/// <param name="X">The object's projected point, device pixels from the map viewport's left edge, as it was then.</param>
+/// <param name="Y">The same from its top edge.</param>
+/// <param name="Half">The drawn half-size, <see cref="HddMap.DrawnHalf"/>.</param>
+public readonly record struct HddMarkerPlacement(float X, float Y, int Half);
 
 /// <summary>
 /// The command display's map camera: where it is centred, how far it is zoomed, and the clamps that
@@ -328,6 +346,15 @@ public static class HddMap {
 	/// <summary>For a vehicle-textured one — <c>3 &lt;&lt; XCoordShift</c>.</summary>
 	public const int VehicleMarkerSize = 6;
 
+	/// <summary>
+	/// <see cref="HddMapMarker.PaintSize"/> for a listed structure: 7, which the original stores unshifted beside
+	/// the shifted <see cref="SmallStructureMarkerSize"/>. An unlisted one stores its shifted size in both.
+	/// </summary>
+	public const int SmallStructurePaintSize = 7;
+
+	/// <summary>The same for a vehicle-textured one: 3, unshifted.</summary>
+	public const int VehiclePaintSize = 3;
+
 	/// <summary>For a route waypoint — <c>9 &lt;&lt; XCoordShift</c>.</summary>
 	public const int WaypointMarkerSize = 18;
 
@@ -367,8 +394,23 @@ public static class HddMap {
 	/// <summary>Id a hostile one takes — palette 10.</summary>
 	public const int HostileMarkerColorId = 9;
 
-	/// <summary>Id the box around the order's chosen unit is outlined in — palette 31.</summary>
+	/// <summary>
+	/// The colour a hostile structure of an unlisted silhouette takes: palette index 4 itself, which
+	/// <c>HddCommandScreen_AddObjectMarker</c> stores where every other branch stores a resolved id.
+	/// </summary>
+	public const int HostileStructurePalette = 4;
+
+	/// <summary>
+	/// Id the box round the order's chosen unit is outlined in, and a ranged marker's shrunk box filled with —
+	/// palette 31.
+	/// </summary>
 	public const int ChosenUnitColorId = 16;
+
+	/// <summary>
+	/// A radar mast's ring, in world units — <c>HddMarker_Paint</c>'s 140000, the range inside which a running
+	/// scanner paints a silent object.
+	/// </summary>
+	public const int RadarRingRange = 140000;
 
 	/// <summary>
 	/// Palette index the raster's lowest ground takes; a cell's colour is this plus its raw height
@@ -463,20 +505,31 @@ public static class HddMap {
 			case TargetClass.GroundVehicle: {
 				var type = (subject as BaseObject)?.Type;
 				int color = hostile ? HostileMarkerColorId : FriendlyMarkerColorId;
+				// HddMarker_Paint rings class 1 alone, the ground vehicle's class 3 never, and drops the ring with
+				// the scanner or the structure.
+				bool ring = subject.TargetClass == TargetClass.Structure && subject.ScannerActive && !subject.Destroyed;
 
 				if (type is { IsVehicle: true }) {
 					return new HddMapMarker(subject.Position.X, subject.Position.Y,
 						hostile ? EnemyVehicleIcon : FriendlyVehicleIcon,
-						0, 0, VehicleMarkerSize, Ranged: true, color);
+						0, 0, VehicleMarkerSize, Ranged: true, color,
+						PaintSize: VehiclePaintSize, RadarRing: ring);
 				}
 
 				bool small = type is { } record
 					&& Array.IndexOf(SmallStructureSilhouettes, (int)record.SilhouetteIndex) >= 0;
+				if (small) {
+					return new HddMapMarker(subject.Position.X, subject.Position.Y,
+						hostile ? EnemySmallStructureIcon : FriendlySmallStructureIcon,
+						0, 0, SmallStructureMarkerSize, Ranged: true, color,
+						PaintSize: SmallStructurePaintSize, RadarRing: ring);
+				}
+
 				return new HddMapMarker(subject.Position.X, subject.Position.Y,
-					small ? (hostile ? EnemySmallStructureIcon : FriendlySmallStructureIcon)
-						: (hostile ? EnemyStructureIcon : FriendlyStructureIcon),
-					0, 0, small ? SmallStructureMarkerSize : StructureMarkerSize,
-					Ranged: true, color);
+					hostile ? EnemyStructureIcon : FriendlyStructureIcon,
+					0, 0, StructureMarkerSize, Ranged: true, hostile ? -1 : color,
+					PaintSize: StructureMarkerSize, RadarRing: ring,
+					PaletteIndex: hostile ? HostileStructurePalette : -1);
 			}
 
 			default:
@@ -492,7 +545,7 @@ public static class HddMap {
 
 	/// <summary>
 	/// The whole marker list for one frame, in the original's own build order: the player's route
-	/// waypoints first, then every live object, capped at <see cref="MaxMarkers"/>.
+	/// waypoints first, then every live object <see cref="Shown"/> lets through, capped at <see cref="MaxMarkers"/>.
 	/// </summary>
 	public static IReadOnlyList<HddMapMarker> Markers(IEnumerable<SimObject> objects, SimObject? player,
 			IReadOnlyList<Vec3i>? route, IReadOnlyList<SimObject>? squad) {
@@ -514,18 +567,64 @@ public static class HddMap {
 				break;
 			}
 
-			if (subject.Removed || subject.AwaitingDeployment) {
+			if (subject.Removed || subject.AwaitingDeployment || !Shown(subject)) {
 				continue;
 			}
 
 			int slot = SquadSlotOf(squad, subject);
 			if (MarkerFor(subject, player, slot) is { } marker) {
-				markers.Add(marker);
+				markers.Add(marker with { Subject = subject });
 			}
 		}
 
 		return markers;
 	}
+
+	/// <summary>
+	/// A ranged marker's apparent size in device pixels — <c>25000 &lt;&lt; 7</c> over its distance from the map centre,
+	/// measured with <c>Math_FastMagnitude3D</c> in three dimensions, the zoom standing in for height:
+	/// <c>(x - centreX, y - centreY, -scale)</c>. <c>HddCommandScreen_DrawMarker</c> measures it and
+	/// <c>HddMarker_Paint</c> divides.
+	/// </summary>
+	public static int Apparent(HddMapMarker marker, HddMapView view) {
+		ArgumentNullException.ThrowIfNull(view);
+		int distance = SimMath.FastMagnitude3D(marker.WorldX - view.CentreX, marker.WorldY - view.CentreY, -view.Scale);
+		return (MarkerSizeReference << MarkerSizeShift) / Math.Max(distance, 1);
+	}
+
+	/// <summary>
+	/// A ranged marker's apparent size when it is drawn as a box rather than its icon, or null.
+	/// <paramref name="iconHeight"/> is its icon's height in device pixels, null when the bank has no such frame.
+	/// </summary>
+	public static int? BoxedAt(HddMapMarker marker, HddMapView view, int? iconHeight) {
+		if (!marker.Ranged) {
+			return null;
+		}
+
+		int apparent = Apparent(marker, view);
+		return iconHeight is not > 0 || apparent < iconHeight ? apparent : null;
+	}
+
+	/// <summary>
+	/// Gadget <c>+0x4a</c>, which the paint leaves for the chosen unit's box and the radar ring: half the box it drew,
+	/// or, for an icon, <see cref="HddMapMarker.PaintSize"/> halved and shifted — 0 for a unit.
+	/// </summary>
+	public static int DrawnHalf(HddMapMarker marker, HddMapView view, int? iconHeight) =>
+		BoxedAt(marker, view, iconHeight) is { } apparent ? apparent >> 1
+			: (marker.PaintSize >> 1) << CockpitViewGeometry.CoordShift;
+
+	/// <summary>An <see cref="IconBank"/> sprite's height in device pixels, or null — <see cref="BoxedAt"/>'s argument.</summary>
+	public static int? IconHeight(HudSprite? sprite) =>
+		sprite is { Height: > 0 } icon ? icon.Height * icon.Scale : null;
+
+	/// <summary>
+	/// Whether <paramref name="subject"/>'s marker is drawn this frame — <c>HddCommandScreen_DrawMarker</c>
+	/// (<c>0044e92c</c>)'s two early returns. A hostile that is <see cref="SimObject.Neutralised"/> is dropped, and
+	/// so is one no scanner is painting (<see cref="SimObject.RadarVisible"/>); a friendly is always drawn, wrecked
+	/// or not. See docs/retail/simulation/heads-down-display.md#which-markers-are-drawn.
+	/// </summary>
+	public static bool Shown(SimObject subject) =>
+		subject.Side != MissionSide.Cybrid || (!subject.Neutralised && subject.RadarVisible);
 
 	/// <summary>
 	/// Which comm-box slot <paramref name="subject"/> occupies, or -1 — <c>Squad_IndexOf</c> over the

@@ -215,7 +215,7 @@ The border is the mission box drawn through fill brush mode 4, which `Raster_Fil
 
 ### Markers
 
-140 icon gadgets allocated up front. `HddCommandScreen_BuildMapMarkers` (`0044ded8`) fills them on the screen's first repaint — the player's route first, then one per object in the three global object lists, then one with icon `0x57`, one past the nine route icons, for the player's dropped nav marker — and releases the rest. `HddCommandScreen_Repaint` (`0044c894`) calls it only while the screen's `+0x109` byte is 0, and the builder sets that byte to 1 and appends from the gadget count at `+0x10a`; the constructor zeroes both, and no other store to either is found ([Open](#open)). So the set of markers is the one the first repaint saw: each object marker keeps its object's pointer at gadget `+0x38`, and `HddMarker_Paint` reads the heading and the destroyed flag (`+0x99`) through it on every paint, which is how a destroyed object's marker stays on the map, drawn in its group's base frame (**Rotation**, below). The nav marker's gadget is built whether or not a nav marker exists; `HddCommandScreen_DrawMap` positions and paints it only while `NavMarker_Position` returns one ([`player-waypoints.md`](player-waypoints.md)).
+140 icon gadgets allocated up front. `HddCommandScreen_BuildMapMarkers` (`0044ded8`) fills them on the screen's first repaint — the player's route first, then one per object in the three global object lists, then one with icon `0x57`, one past the nine route icons, for the player's dropped nav marker — and releases the rest. `HddCommandScreen_Repaint` (`0044c894`) calls it only while the screen's `+0x109` byte is 0, and the builder sets that byte to 1 and appends from the gadget count at `+0x10a`; the constructor zeroes both, and no other store to either is found ([Open](#open)). So the set of markers is the one the first repaint saw: each object marker keeps its object's pointer at gadget `+0x38`, and `HddMarker_Paint` reads the heading and the destroyed flag (`+0x99`) through it on every paint, which is how a destroyed friendly's marker stays on the map, drawn in its group's base frame (**Rotation**, below); a hostile's is held back, as [Which markers are drawn](#which-markers-are-drawn) describes. The nav marker's gadget is built whether or not a nav marker exists; `HddCommandScreen_DrawMap` positions and paints it only while `NavMarker_Position` returns one ([`player-waypoints.md`](player-waypoints.md)).
 
 Route markers take icons `0x4e`+ and start at the route's **second** point: the loop bound is `count - 1` capped at 9 and it indexes `route[i + 1]`.
 
@@ -242,17 +242,59 @@ The listed silhouettes are 1, 2, 6, 7, 10, 11, 15, 19, 20, 21, 22, 23, 24, 26 an
 
 The frame sizes confirm it: in every nine-frame group, offsets 4 and 6 are the tall pair, 5 and 7 the wide pair, and 0-3 the four square diagonals. A destroyed object (`+0x99`) takes the base frame but keeps its octant's nudge: the paint adds the nudge before it tests the flag.
 
-**Range falloff.** A ranged marker computes an apparent size from its distance to the map centre, measured in three dimensions with the zoom standing in for height:
+**Range falloff.** A ranged marker computes an apparent size from its distance to the map centre, which `HddCommandScreen_DrawMarker` (`0044e92c`) measures with `Math_FastMagnitude3D` in three dimensions, the zoom standing in for height:
 
 ```
-apparent = 25000 << 7 / |(x - centreX, y - centreY, -scale)|
+apparent = (25000 << 7) / FastMagnitude3D(x - centreX, y - centreY, -scale)
 ```
 
-and draws a box of that size in its own colour — id 5 blue friendly, id 9 red hostile — whenever the icon it would otherwise blit is taller. `25000 << 7 / 16` puts the crossover at 200,000 world units out, the same 1200 m one grid square covers.
+Whenever that is less than the icon bitmap's `+4` word, `HddMarker_Paint` draws a box instead of the icon, `apparent >> 1` either side of the object: filled in id 16 (palette 31) and then framed in the marker's own colour, gadget `+0x51`. That colour is id 5 (palette 97, blue) for a friendly and id 9 (palette 10, red) for a hostile, except a hostile structure of an unlisted silhouette, for which `HddCommandScreen_AddObjectMarker` stores palette index 4 itself where every other branch stores a resolved id. `25000 << 7 / 16` puts the crossover at 200,000 world units out, the same 1200 m one grid square covers. A third branch, ahead of the box, plots a single pixel when the apparent size is below gadget `+0x4f`; `HddCommandScreen_AddObjectMarker` stores 0 there, which no size is below.
+
+**Drawn half-size.** Each paint leaves half of what it drew at gadget `+0x4a`, which the radar ring and the [chosen unit's box](#the-chosen-units-box) size themselves by: half the box, or for an icon `(+0x4d >> 1) << XCoordShift`. `HddCommandScreen_AddObjectMarker` sets `+0x4d` for the ranged markers alone — `9 << XCoordShift` for an unlisted structure but `7` and `3`, unshifted, for a listed one and a vehicle-textured one — so a HERC's, a flyer's and a route marker's hold the 0 `Mem_New` allocates them with.
+
+**Radar ring.** A class-1 object — a structure, never a class-3 ground vehicle — whose scanner is on (`+0x96`) and which is not destroyed (`+0x99`) is ringed by `Raster_DrawEllipse` in brush mode 4, a one-pixel ring, in the marker's colour. Its radius is `(140000 << 8) / scale` pixels: 140,000 world units, the range inside which a running scanner paints an object that is not emitting ([`target-selection.md`](target-selection.md#detection_sweep-004128f8-ranges)). The scanner is on from construction for the radar mast types ([`structure-behaviour.md`](structure-behaviour.md)). The ring is centred `+0x4a >> 1` pixels up and left of the object, which in the 640-wide mode puts an unlisted structure's ring on its icon's top-left corner. A hostile mast is ringed only while its marker is drawn.
+
+#### Which markers are drawn
+
+`HddCommandScreen_DrawMarker` (`0044e92c`) decides on every repaint whether a marker with an object is drawn, before it moves the gadget, by the object's group side byte (`+0x45`, `+0x12`, non-zero for a hostile):
+
+- A hostile that is destroyed (`+0x99`) or immobilised (`+0xa4`) is not drawn. A friendly wreck stays.
+- An object whose radar flag `+0x95` is clear, on a hostile group or on one still awaiting deployment (`+0x14`), is not drawn at its position. It takes the branch the MFD scanner's contact list also has, which would blink it at a stored point `+0x1aa` but skips whenever `+0xa7` is set, and every object constructor sets it ([`mfd-scanner.md`](mfd-scanner.md#the-blinking-ghost-contact-is-dead-code)).
+
+So a hostile is on the map only while something is painting it on radar ([`target-selection.md`](target-selection.md#the-sensor-model--sim_detectiontick-004123ac)), the same rule the scanner plots by. A marker that is not drawn keeps its gadget where it was last placed.
+
+The map pick does not consult any of this. `HddCommandScreen_HitTestMarker` (`0044d860`) walks the live object list, not the markers, and returns the first object whose position lies strictly inside a square `(5 << XCoordShift) >> 1` pixels either side of the click, so a click on a hostile that is not drawn, a wreck included, picks it like any other.
+
+#### The chosen unit's box
+
+After every marker, `HddCommandScreen_DrawMap` frames the gadget whose object is the chosen unit — `+0x15c`, the unit last picked, which arming another order leaves in place — in id 16, brush mode 4, from its centre less `+0x4a` less 2 to its centre plus `+0x4a` plus 1, taking the x half-size for both axes. The centre is the object's point, without the rotation nudge. A HERC or a flyer has a drawn half-size of 0, so its box is a 4-pixel square on the object; a structure's surrounds what it drew. The frame reads the gadget where `HddCommandScreen_DrawMarker` last placed it, in screen coordinates, so a chosen unit whose marker has stopped being drawn keeps its frame at its last drawn point on the screen while the map pans, zooms or follows the player under it. A gadget never placed is still at the rect its constructor gave it, `(0, 0)` to its size: the screen's top-left, far above the map viewport, whose block sits from canvas row 474 down ([`../formats/gau-cockpit-layout.md`](../formats/gau-cockpit-layout.md)). So a chosen unit whose marker has never been drawn, such as a hostile picked off radar, has no frame on the map.
 
 #### The selected pilot's marker
 
-`HddCommandScreen_DrawMap` (`0044e30c`) paints the markers in build order through `HddCommandScreen_DrawMarker` (`0044e92c`), but holds back the one whose object is the selected squadmate's machine (`g_SquadmateMachines[slot]` (`004d044c`)), or the player's own with no pilot selected, and paints it last. That last call is flagged when the held-back machine is the selected squadmate's, and the flag does two things in `HddCommandScreen_DrawMarker` (`0044e92c`): it draws the link line from the marker to the armed order's pick in the pilot's `HudColorTable` colour, then returns **before** painting the icon whenever a pilot is selected (`screen+0x381`) and `DAT_0049d6ad` is set. `HddCommandScreen_BlinkTick` (`0044d348`) flips `DAT_0049d6ad` every `0x1e` coarse ticks from `HddCommandScreen_Update` (`0044c960`) and forces a full map repaint, so the selected squadmate's own icon blinks at about half a second while its link line stays up. The match is by object pointer, so the blink always lands on the right machine.
+`HddCommandScreen_DrawMap` (`0044e30c`) paints the markers in build order through `HddCommandScreen_DrawMarker` (`0044e92c`), but holds back the one whose object is the selected squadmate's machine (`g_SquadmateMachines[slot]` (`004d044c`)), or the player's own with no pilot selected, and paints it last. That last call is flagged when the held-back machine is the selected squadmate's, and the flag does two things in `HddCommandScreen_DrawMarker` (`0044e92c`): it draws [the link line](#the-link-line) from the marker, then returns **before** painting the icon whenever a pilot is selected (`screen+0x381`) and `DAT_0049d6ad` is set. `HddCommandScreen_BlinkTick` (`0044d348`) flips `DAT_0049d6ad` every `0x1e` coarse ticks from `HddCommandScreen_Update` (`0044c960`) and forces a full map repaint, so the selected squadmate's own icon blinks at about half a second while its link line stays up. The match is by object pointer, so the blink always lands on the right machine.
+
+#### The link line
+
+The screen keeps a `0x2a`-byte pick record per pilot at `+0x85 + slot * 0x2a`, and the line is drawn from the selected pilot's alone:
+
+| Offset | Holds |
+|---|---|
+| `+0x85`/`+0x89`/`+0x8d` | The saved pick's point |
+| `+0x91`/`+0x95`/`+0x99` | The current pick's point |
+| `+0x9d` | The saved pick's unit |
+| `+0xa1` | The current pick's unit |
+| `+0xa5` | A saved pick is held (byte) |
+| `+0xa6` | A current pick is held (byte) |
+| `+0xa7` | The saved pick's kind: 0 a point, 1 a unit |
+| `+0xab` | The current pick's kind |
+
+**The current pick** is written by `HddCommandScreen_PickTarget` (`0044d6b8`) — a unit, or the map cursor as a point — and by [Tab](#the-order-list-and-its-state-machine) in `HddCommandScreen_KeyDispatch` (`0044cc40`), a unit; each sets `+0xa6`. `HddCommandScreen_SelectOrder` does not touch the record, so a pick's line outlives arming another order, until the next pick replaces it. `+0xa6` is cleared by XMIT, by `HddCommandScreen_CancelTransmission` (`0044dbe8`), and by `HddCommandScreen_SelectPilot` (`0044da70`) for the pilot it leaves when an order is armed.
+
+**The saved pick.** XMIT's first call is `HddCommandScreen_CommitPick` (`0044db74`). For an order that wants a pick (`+0x103`) it copies the current pick's half its kind names — the point, or the unit — into the saved half, copies the kind to `+0xa7`, sets `+0xa5` and clears `+0xa6`; for any other order it clears `+0xa5`. XMIT then deselects the pilot, so the saved pick shows the next time that pilot is selected: the line to the last order's target, until a new pick is made.
+
+**Dropping a destroyed unit.** Every update, `HddCommandScreen_Update` (`0044c960`) clears both `+0xa5` and `+0xa6` of the selected pilot when `+0xa7` is 1 and either the saved unit with `+0xa5` set or the current unit with `+0xa6` set is destroyed (`+0x99`). The kind tested for both is the saved one's.
+
+**Which line.** With `+0xa6` set the line goes to the current pick, in the pilot's colour (`HudColorTable_Get(slot)`): to its point, or to its unit's position — except a hostile unit whose `+0x95` is clear, which takes the same `+0xa7` branch as [the markers](#which-markers-are-drawn) and gets no line. Failing that, with `+0xa5` set it goes to the saved pick in `HudColorTable_Get(slot) - 1`, the palette entry one below the pilot's — palette 13, 12 and 4 for the three slots, so slot 0's green pilot's saved line is yellow: to its point, or to its unit's position with no radar test. Either way the point is projected at height 0, from the pilot marker's own centre.
 
 `hba\ICONS.HBA` is 90 frames: two singles, four structure icons, then eight nine-frame rotation groups from frame 6, then ten 16x13 route markers at 78-87 and two 8x5 ticks. It is loaded lazily by `HddMarker_Ctor` (`0044f130`) rather than with the rest of the display's art.
 
@@ -309,7 +351,7 @@ All eight match the manual's key bindings. `HddCommandScreen_RefreshOrders` (`00
 
 Tab's step is `HddCommandScreen_CycleUnit` (`0044ef08`): from the unit after `+0x15c` in the live object list when that unit is of the side wanted, from the list's head otherwise, wrapping, to the first that `HddCommandScreen_IsEligibleUnit` (`0044f014`) passes — of that side, not destroyed (`+0x99`), with `+0x98` set (every constructor sets it to 1), on the map's viewport (`HddCommandScreen_IsOnMap`, `0044f09c`), and, for a hostile, known to the player's machine (`Ai_KnowsObject`). An object leaves the list when it is deleted: the deleting destructors of VEHICLE, BASE, GUN_BASE and RADAR_BASE (`GroundVehicle_Dtor`, `Base_Dtor`, `Base_ArmedDtor`, `Base_RadarDtor`, `00406d05`-`00406df3`) end, on flags bit 0, with `ObjList_SwapRemove` (`00411e1c`), which moves the list's last entry into the object's slot.
 
-The magnifiers and the four arrows are widget presses rather than keys: `HddDisplay_HandleWidgetPress` (`0044a178`)'s cases 2-7 route them to the four pan functions and the two zoom functions on page 0 and to the damage screen's own subject and category steps on page 1. What the page sounds — [Tab]'s found/not-found pair, the map pick's blip, and XMIT's plain click — is [`audio.md`](audio.md#sounds-a-cockpit-control-makes)'s.
+The magnifiers and the four arrows are widget presses rather than keys. `HddDisplay_KeyDispatch` (`00449fcc`) presses widgets 2-5 for the cursor keys (`0x48` up, `0x50` down, `0x4b` left, `0x4d` right) and 6-7 for `-` and `=` and their keypad pair, once per key code; an auto-repeat is a fresh code ([`cockpit-input.md`](cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes)), so a held arrow pans one [pan step](#the-maps-frame-of-reference) per repeat. `HddDisplay_HandleWidgetPress` (`0044a178`)'s cases 2-7 route them to the four pan functions and the two zoom functions on page 0 and to the damage screen's own subject and category steps on page 1. What the page sounds — [Tab]'s found/not-found pair, the map pick's blip, and XMIT's plain click — is [`audio.md`](audio.md#sounds-a-cockpit-control-makes)'s.
 
 ## Damage detail — page 1
 

@@ -1,4 +1,5 @@
-﻿using Herculan.Engine.Cockpit;
+﻿using System.Numerics;
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 
@@ -105,21 +106,28 @@ internal sealed class HddMapPainter {
 				continue;
 			}
 
-			AddHddMarker(hud, sprites, markers[i], view, Px, Py, scale, selected: i == state.Command.ChosenUnit);
+			AddHddMarker(hud, sprites, markers[i], view, Px, Py, scale);
 		}
 
-		// The link the manual describes: a line from the selected pilot to whatever the armed order
-		// has been pointed at, in that pilot's own colour.
+		// The link the manual describes: a line from the selected pilot to whatever the order being built has been
+		// pointed at, in that pilot's own colour, or to the last order's pick in the palette entry one below it —
+		// HddCommandScreen_DrawMarker's HudColorTable_Get(slot) - 1.
 		int slot = state.Command.SelectedPilot;
-		if (slot >= 0 && hud.LogicalColor(HudColorTable.PilotColorId(slot)) is { } linkColor
-			&& PilotMarker(markers, slot) is { } from) {
-			int chosen = state.Command.ChosenUnit;
-			if (chosen >= 0 && chosen < markers.Count) {
-				_overlay.AddLine(Px(from.WorldX), Py(from.WorldY),
-					Px(markers[chosen].WorldX), Py(markers[chosen].WorldY), linkColor, pixel);
-			} else if (state.Command.ChosenPoint is { } point) {
-				_overlay.AddLine(Px(from.WorldX), Py(from.WorldY), Px(point.X), Py(point.Y), linkColor, pixel);
-			}
+		if (slot >= 0 && PilotMarker(markers, slot) is { } from && state.Command.LinkTarget is { } target
+			&& LinkColor(hud, slot, state.Command.LinkSaved) is { } linkColor) {
+			_overlay.AddLine(Px(from.WorldX), Py(from.WorldY), Px(target.X), Py(target.Y), linkColor, pixel);
+		}
+
+		// The order's chosen unit is boxed after every marker, by HddCommandScreen_DrawMap itself: a frame
+		// two pixels out from the marker's drawn half-size on the top and left and one on the bottom and right,
+		// centred on the object rather than on the icon. A unit's marker has no drawn half-size, so its box is
+		// a four-pixel square sitting on the object. It is placed in the viewport, not the world, so once the
+		// marker stops being drawn the box stays put on screen while the map moves under it.
+		if (state.Command.ChosenBox is { } box && hud.LogicalColor(HddMap.ChosenUnitColorId) is { } outline) {
+			float cx = Mx(box.X);
+			float cy = My(box.Y);
+			_overlay.AddRectOutline(cx - (box.Half + 2) * scale, cy - (box.Half + 2) * scale,
+				cx + (box.Half + 2) * scale, cy + (box.Half + 2) * scale, scale, outline);
 		}
 
 		if (_overlay.VertexCount > 0) {
@@ -130,6 +138,15 @@ internal sealed class HddMapPainter {
 
 		static int FloorToPitch(int world) =>
 			(int)Math.Floor(world / (double)HddMap.GridPitch) * HddMap.GridPitch;
+	}
+
+	private static Vector3? LinkColor(CockpitArt hud, int slot, bool saved) {
+		int id = HudColorTable.PilotColorId(slot);
+		if (!saved) {
+			return hud.LogicalColor(id);
+		}
+
+		return hud.Colors?.PaletteIndex(id) is { } index ? hud.PaletteEntry(index - 1) : null;
 	}
 
 	/// <summary>The marker belonging to squad slot <paramref name="slot"/>, or null.</summary>
@@ -145,50 +162,67 @@ internal sealed class HddMapPainter {
 
 	/// <summary>
 	/// One map marker — <c>HddMarker_Paint</c> (<c>0044f194</c>). An icon is blitted with its own rotation nudge, offset
-	/// back by half the marker's size so it lands on the object. A <see cref="HddMapMarker.Ranged"/>
-	/// one first works out its apparent size from its distance to the map centre and draws a filled
-	/// box of that size instead whenever the icon would be the bigger of the two.
+	/// back by half the marker's size so it lands on the object. A <see cref="HddMapMarker.Ranged"/> one draws a
+	/// box of its <see cref="HddMap.Apparent"/> size instead whenever the icon would be the bigger of the two: filled in
+	/// id 16, then framed in the marker's own colour. A radar mast is then ringed at
+	/// <see cref="HddMap.RadarRingRange"/>, about a point a quarter of its drawn size up and left of the object —
+	/// the original's offset, which puts a large structure's ring on its icon's corner.
 	/// </summary>
 	private void AddHddMarker(CockpitArt hud, HudSpriteSheet sprites, HddMapMarker marker,
-			HddMapView view, Func<int, float> px, Func<int, float> py, float scale, bool selected) {
+			HddMapView view, Func<int, float> px, Func<int, float> py, float scale) {
 		float centerX = px(marker.WorldX);
 		float centerY = py(marker.WorldY);
 		var sprite = sprites.Sprite(HddMap.IconBank, marker.Frame);
+		var color = MarkerColor(hud, marker);
+		int half = HddMap.DrawnHalf(marker, view, HddMap.IconHeight(sprite));
 
-		if (marker.Ranged) {
-			// The distance the size divides by is measured in three dimensions with the zoom standing
-			// in for height, which is the original's own vector: (x - centreX, y - centreY, -scale).
-			double dx = marker.WorldX - (double)view.CentreX;
-			double dy = marker.WorldY - (double)view.CentreY;
-			double distance = Math.Max(Math.Sqrt(dx * dx + dy * dy + (double)view.Scale * view.Scale), 1);
-			int apparent = (int)Math.Min(
-				((long)HddMap.MarkerSizeReference << HddMap.MarkerSizeShift) / distance, int.MaxValue);
-
-			if (sprite is not { Height: > 0 } || apparent < sprite.Value.Height * sprite.Value.Scale) {
-				if (hud.LogicalColor(marker.ColorId) is { } boxColor) {
-					float half = apparent * scale / 2f;
-					_overlay.AddFilledRect(centerX - half, centerY - half, centerX + half, centerY + half, boxColor);
-				}
-
-				return;
+		if (HddMap.BoxedAt(marker, view, HddMap.IconHeight(sprite)) is { } apparent) {
+			int boxHalf = apparent >> 1;
+			float x0 = centerX - boxHalf * scale;
+			float y0 = centerY - boxHalf * scale;
+			float x1 = centerX + (boxHalf + 1) * scale;
+			float y1 = centerY + (boxHalf + 1) * scale;
+			if (hud.LogicalColor(HddMap.ChosenUnitColorId) is { } fill) {
+				_overlay.AddFilledRect(x0, y0, x1, y1, fill);
 			}
+
+			if (color is { } frame) {
+				_overlay.AddRectOutline(x0, y0, x1, y1, scale, frame);
+			}
+		} else if (sprite is { Width: > 0, Height: > 0 } icon) {
+			float x = centerX + (marker.NudgeX - marker.Size / 2f) * scale;
+			float y = centerY + (marker.NudgeY - marker.Size / 2f) * scale;
+			var rect = icon.Rect;
+			_overlay.AddTexturedQuad(x, y, x + icon.Width * icon.Scale * scale, y + icon.Height * icon.Scale * scale,
+				rect.U0, rect.V0, rect.U1, rect.V1);
 		}
 
-		if (sprite is not { Width: > 0, Height: > 0 } icon) {
+		if (marker.RadarRing && color is { } ringColor) {
+			AddRing(centerX - (half >> 1) * scale, centerY - (half >> 1) * scale,
+				((long)HddMap.RadarRingRange << HddMapView.ScaleShift) / view.Scale * scale, scale, ringColor);
+		}
+	}
+
+
+	private static Vector3? MarkerColor(CockpitArt hud, HddMapMarker marker) =>
+		marker.PaletteIndex >= 0 ? hud.PaletteEntry(marker.PaletteIndex) : hud.LogicalColor(marker.ColorId);
+
+	/// <summary>A one-device-pixel circle — <c>Raster_DrawEllipse</c> under brush style 4, as segments.</summary>
+	private void AddRing(float cx, float cy, float radius, float scale, Vector3 color) {
+		if (radius < 1f) {
 			return;
 		}
 
-		float x = centerX + (marker.NudgeX - marker.Size / 2f) * scale;
-		float y = centerY + (marker.NudgeY - marker.Size / 2f) * scale;
-		float width = icon.Width * icon.Scale * scale;
-		float height = icon.Height * icon.Scale * scale;
-		var rect = icon.Rect;
-		_overlay.AddTexturedQuad(x, y, x + width, y + height, rect.U0, rect.V0, rect.U1, rect.V1);
-
-		// The order's chosen unit is boxed, two pixels proud of the icon on every side.
-		if (selected && hud.LogicalColor(HddMap.ChosenUnitColorId) is { } outline) {
-			float proud = 2f * scale;
-			_overlay.AddRectOutline(x - proud, y - proud, x + width + proud, y + height + proud, scale, outline);
+		int segments = Math.Clamp((int)(radius / 4f), 24, 256);
+		float previousX = cx + radius;
+		float previousY = cy;
+		for (int i = 1; i <= segments; i++) {
+			float angle = i * MathF.Tau / segments;
+			float x = cx + radius * MathF.Cos(angle);
+			float y = cy + radius * MathF.Sin(angle);
+			_overlay.AddLine(previousX, previousY, x, y, color, Math.Max(scale, 1f));
+			previousX = x;
+			previousY = y;
 		}
 	}
 }

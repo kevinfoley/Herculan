@@ -344,28 +344,15 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 			commands.PressHddButtonByKey(HddLayout.Widget.ZoomOut);
 		}
 
-		// The arrows scroll the map, held rather than edged: the four pan functions are written to be
-		// called repeatedly and clamp themselves against the mission box. Dark, a press is one press of
-		// the arrow's button, held back with the rest. Keypad [5] drops the scroll and puts the map back
-		// on the machine.
-		//
-		// Each of the original's presses flashes the arrow, and a held key presses it again at the
-		// keyboard's repeat rate, faster than the flash runs out; a held arrow here is that run of presses,
-		// so it flashes every frame it pans.
-		bool dark = displays.Dropouts.HeadsDown.Dark;
+		// The arrows press their own buttons, one pan step per key-down event, auto-repeats included —
+		// HddDisplay_KeyDispatch's scancodes 0x48, 0x50, 0x4b and 0x4d, each a single Widget_PressChild. Keypad [5]
+		// drops the scroll and puts the map back on the machine.
 		for (int i = 0; i < HddArrowKeys.Length; i++) {
-			if ((_hddArrowKeys[i].Press(HddArrowHeld(controls, i)) | HddArrowRepeated(controls, i)) && dark && !modified) {
+			if ((_hddArrowKeys[i].Press(HddArrowHeld(controls, i)) | HddArrowRepeated(controls, i)) && !modified) {
 				commands.PressHddButtonByKey(HddLayout.Widget.ArrowUp + i);
-			} else if (!dark && !modified && HddArrowHeld(controls, i)) {
-				displays.FlashPress(CockpitWidgetId.Hdd(HddLayout.Widget.ArrowUp + i));
 			}
 		}
 
-		if (!displays.Dropouts.HeadsDown.Dark && !modified) {
-			command.View.Pan(
-				(HddArrowHeld(controls, 3) ? 1 : 0) - (HddArrowHeld(controls, 2) ? 1 : 0),
-				(HddArrowHeld(controls, 0) ? 1 : 0) - (HddArrowHeld(controls, 1) ? 1 : 0));
-		}
 		if (_hddRecentre.PressOrRepeat(controls, Key.Keypad5) && !modalPanelUp) {
 			command.View.Recentre();
 		}

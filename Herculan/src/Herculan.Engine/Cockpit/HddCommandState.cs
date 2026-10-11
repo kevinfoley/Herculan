@@ -88,15 +88,20 @@ public readonly record struct HddPilotSlot(bool Occupied, string Name, int Condi
 /// Which order is armed, or null — the screen's <c>+0x5d</c>, held as a group-0 entry index there
 /// and as its own enum here.
 /// </param>
-/// <param name="ChosenUnit">
-/// The unit an armed ATTACK ENEMY or DEFEND POSITION has been pointed at, as a marker index into
-/// <paramref name="Markers"/>, or -1. The paint outlines it and draws a line from the selected
-/// pilot to it, which is the manual's "a colored line will then link the chosen pilot to your
-/// selected target".
+/// <param name="ChosenBox">
+/// Where the box round the unit last picked for an ATTACK ENEMY or DEFEND POSITION goes, or null: that
+/// unit's marker where it was last drawn, which is not where it is now once the marker stops being drawn
+/// (docs/retail/simulation/heads-down-display.md#the-chosen-units-box). Null too for a unit whose marker has never
+/// been drawn, which retail frames off the map.
 /// </param>
-/// <param name="ChosenPoint">
-/// The gridpoint a PATROL or GOTO has been pointed at, or null. Same line, drawn to a point rather
-/// than to a unit.
+/// <param name="LinkTarget">
+/// The world point the line from the selected pilot is drawn to, or null for none — the manual's "a colored line
+/// will then link the chosen pilot to your selected target". The pick made since the pilot's last order, or failing
+/// that the last order's own; see docs/retail/simulation/heads-down-display.md#the-link-line.
+/// </param>
+/// <param name="LinkSaved">
+/// Whether <paramref name="LinkTarget"/> is the last order's pick, which is drawn in the palette entry one below
+/// the pilot's own colour.
 /// </param>
 /// <param name="Message">
 /// The row above the order list — the prompt the screen writes when it wants something picked
@@ -113,8 +118,9 @@ public readonly record struct HddCommandState(
 	IReadOnlyList<HddPilotSlot> Pilots,
 	int SelectedPilot,
 	HddOrder? SelectedOrder,
-	int ChosenUnit,
-	Vec3i? ChosenPoint,
+	HddMarkerPlacement? ChosenBox,
+	Vec3i? LinkTarget,
+	bool LinkSaved,
 	string? Message,
 	bool Blink) {
 
@@ -126,8 +132,9 @@ public readonly record struct HddCommandState(
 		Pilots: Array.Empty<HddPilotSlot>(),
 		SelectedPilot: -1,
 		SelectedOrder: null,
-		ChosenUnit: -1,
-		ChosenPoint: null,
+		ChosenBox: null,
+		LinkTarget: null,
+		LinkSaved: false,
 		Message: null,
 		Blink: false);
 
