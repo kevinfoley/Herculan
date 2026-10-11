@@ -6,14 +6,12 @@ using Silk.NET.Input;
 namespace Herculan.Engine.Host.Shell;
 
 /// <summary>
-/// Where a key goes: [Shift+Esc] to HERCULAN's own menu bar, as in a mission, and plain [Esc] too wherever retail
-/// has no use for the key; the display keys MainWndProc handles itself; and the rest to the edit fields.
+/// Where a key goes: [Shift+Esc] to HERCULAN's own menu bar, as in a mission, and plain [Esc] too while the bar is
+/// up, to back out of it; the display keys MainWndProc handles itself; and the rest to the edit fields.
 /// </summary>
 sealed class KeyboardRouting {
 	private readonly FrontEndWindow _window;
 	private readonly ShellMovies _movies;
-	private readonly MissionTabScreens _mission;
-	private readonly ShellPointer _pointer;
 	private readonly StartupScreen _startup;
 	private readonly GameInProgress _game;
 	private readonly MainMenuPanels _menu;
@@ -23,12 +21,10 @@ sealed class KeyboardRouting {
 	// Whether the [Esc] held now went to the menu bar, which its release follows.
 	private bool _escapeIsMenuBars;
 
-	public KeyboardRouting(FrontEndWindow window, ShellMovies movies, MissionTabScreens mission, ShellPointer pointer,
-			StartupScreen startup, GameInProgress game, MainMenuPanels menu, EditFields fields, Action repaint) {
+	public KeyboardRouting(FrontEndWindow window, ShellMovies movies, StartupScreen startup, GameInProgress game,
+			MainMenuPanels menu, EditFields fields, Action repaint) {
 		_window = window;
 		_movies = movies;
-		_mission = mission;
-		_pointer = pointer;
 		_startup = startup;
 		_game = game;
 		_menu = menu;
@@ -56,18 +52,22 @@ sealed class KeyboardRouting {
 		}
 	}
 
-	// Where retail has a use for [Esc] (docs/retail/shell/main-menu.md#typing-into-a-row): a movie and the briefing
-	// map's intro skip on it, a field being typed into takes it, and with Alt or Ctrl it leaves full screen. The
-	// bar has [Esc] everywhere else and [Shift+Esc] over a field too; a movie and the intro poll the key themselves,
-	// [Shift] or not, so they keep both. Retail also hands plain [Esc] to an edit field that is merely under the
-	// pointer, which runs the field's handler and so selects a save row; here the menu bar takes it instead
-	// (KNOWN_ISSUES.md).
+	/// <summary>
+	/// Whether the [Esc] held now is the menu bar's, so that nothing of retail's sees it — read by the movie and
+	/// briefing-intro skip, which poll the key rather than taking its events (<see cref="PolledButtons"/>).
+	/// </summary>
+	public bool EscapeIsMenuBars => _escapeIsMenuBars && _window.Keyboard?.IsKeyPressed(Key.Escape) == true;
+
+	// [Shift+Esc] alone, or any unmodified [Esc] while the bar is up, is the menu bar's, wherever the shell is; every
+	// other [Esc] is retail's (docs/retail/shell/main-menu.md#typing-into-a-row): a movie and the briefing map's intro
+	// skip on it, an edit field under the pointer takes it, and with Alt or Ctrl it leaves full screen. A press the
+	// bar takes is the bar's for as long as it is held, its release included, so it never does both.
 	private bool MenuBarTakesEscape() {
 		var keyboard = _window.Keyboard;
 		bool shift = keyboard != null && (keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight));
 		bool alt = keyboard != null && (keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight));
 		bool ctrl = keyboard != null && (keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight));
-		return !alt && !ctrl && !_movies.Active && _mission.IntroUp() == null && (shift || _pointer.Focused == null);
+		return !alt && !ctrl && (shift || _window.MenuBarUp);
 	}
 
 	// MainWndProc (00404a2c)'s display keys (docs/retail/shell/main-menu.md#full-screen-asks-first), each gated

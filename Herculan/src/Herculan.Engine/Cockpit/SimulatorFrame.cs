@@ -37,6 +37,8 @@ public sealed class SimulatorFrame {
 	private readonly KeyLatch _escape = new();
 	private readonly KeyLatch _tapeEscape = new();
 	private bool _escapeHeldByMenu;
+	private bool _escapePressed;
+	private bool _escapeRepeated;
 
 	/// <param name="systemButtons">What the two system buttons reach on the window.</param>
 	/// <param name="escapeMenu">The host's own menu, which [Shift+Esc] raises, if it has one.</param>
@@ -127,10 +129,18 @@ public sealed class SimulatorFrame {
 	/// keyboard before anything else does, then [Esc].
 	/// </summary>
 	public void BeginFrame(double deltaSeconds) {
+		bool menuChordPressed = ClaimEscape();
 		Stepper.BeginFrame(deltaSeconds, HostTakesEscape());
 		_panels.AdvanceClock(deltaSeconds);
-		bool panelHandledKey = _panels.ReadKeys(_input.KeyboardCapturedByImGui ? null : _input.Keyboard, _outcome.Over);
-		ReadEscapeKey(panelHandledKey);
+
+		// A press the menu bar holds is hidden from the panels, so [Shift+Esc] never dismisses one as it raises the bar.
+		var panelKeys = _input.KeyboardCapturedByImGui ? null : _input.Keyboard;
+		if (panelKeys != null && _escapeHeldByMenu && !_tape.Playing) {
+			panelKeys = new KeysWithout(panelKeys, Key.Escape);
+		}
+
+		bool panelHandledKey = _panels.ReadKeys(panelKeys, _outcome.Over);
+		ReadEscapeKey(panelHandledKey, menuChordPressed);
 	}
 
 	/// <summary>
@@ -235,18 +245,47 @@ public sealed class SimulatorFrame {
 	}
 
 	// Whether this frame's [Esc] is the host's rather than the game's, read before the recording takes the frame's
-	// keys so a press the host's menu takes stays off the tape: [Shift+Esc], [Esc] while the menu has anything up,
-	// and the rest of a hold whose press the menu took. A modal panel takes [Esc] before either.
+	// keys so a press the host's menu takes stays off the tape: a hold whose press the menu took, which a
+	// [Shift+Esc] press always is, and with no modal panel up [Shift] held or the menu showing anything. A modal
+	// panel takes plain [Esc] before the menu does.
 	private bool HostTakesEscape() =>
-		_input.LiveKeys is { } liveKeys && !_panels.AnyOpen
-		&& (_escapeHeldByMenu || MenuBarChord(liveKeys) || _escapeMenu?.Up == true);
+		_input.LiveKeys is { } liveKeys
+		&& (_escapeHeldByMenu || !_panels.AnyOpen && (MenuBarChord(liveKeys) || _escapeMenu?.Up == true));
 
-	// [Shift+Esc] raises the host's menu, or backs out of it one layer at a time. Plain [Esc] is the game's — out
-	// of the external view, a glance or the Heads-Down Display, or from the forward view down to the Heads-Down
-	// Display (CockpitView.Escape) — except that while the host's menu has anything up, it backs out of that
-	// first. The game acts on each auto-repeat, as the original's dispatcher does, so a held [Esc] goes up and
-	// down; the menu once per press, and a press it took keeps its repeats from the game.
-	private void ReadEscapeKey(bool consumedByPanel) {
+	// The live [Esc]'s edge, settled before anything of the game's reads the keys, and whether this frame's press is
+	// [Shift+Esc], which the menu takes for the whole of its hold, over a modal panel too. Tracked every frame, as
+	// the modal panels track their own [Esc] edge regardless of who else claims it — otherwise a press still held on
+	// the frame a retail panel lets go of [Esc] reads as a second, fresh press here.
+	private bool ClaimEscape() {
+		_escapePressed = false;
+		_escapeRepeated = false;
+		if (_input.LiveKeys is not { } liveKeys) {
+			return false;
+		}
+
+		bool down = liveKeys.IsKeyPressed(Key.Escape);
+		_escapePressed = _escape.Press(down);
+		_escapeRepeated = down && liveKeys.IsKeyRepeated(Key.Escape);
+		if (!down) {
+			_escapeHeldByMenu = false;
+			return false;
+		}
+
+		bool chord = _escapePressed && MenuBarChord(liveKeys);
+		if (chord) {
+			_escapeHeldByMenu = true;
+		}
+
+		return chord;
+	}
+
+	// [Shift+Esc] raises the host's menu, or backs out of it one layer at a time, whatever else is up. Plain [Esc]
+	// is the game's — a modal panel's, else out of the external view, a glance or the Heads-Down Display, or from
+	// the forward view down to the Heads-Down Display (CockpitView.Escape) — except that while the host's menu has
+	// anything up and no panel does, it backs out of the menu first. The game acts on each auto-repeat, as the
+	// original's dispatcher does, so a held [Esc] goes up and down; the menu once per press, and a press it took
+	// keeps its repeats from the game.
+	private void ReadEscapeKey(bool consumedByPanel, bool menuChordPressed) {
 		bool hasCockpit = _art != null;
 
 		// During a replay the two halves of this key come apart: the tape's [Esc] is the game's, and the live
@@ -261,33 +300,21 @@ public sealed class SimulatorFrame {
 			consumedByPanel = false;
 		}
 
-		var liveKeys = _input.LiveKeys;
-		if (liveKeys == null) {
-			return;
-		}
-
-		// Tracked every frame independent of consumedByPanel, exactly like the modal panels track their own
-		// Escape edge regardless of who else claims it — otherwise a press that is still held on the frame a
-		// retail panel lets go of Escape reads as a second, fresh press here.
-		bool down = liveKeys.IsKeyPressed(Key.Escape);
-		bool pressed = _escape.Press(down);
-		bool repeated = down && liveKeys.IsKeyRepeated(Key.Escape);
-		if (!down) {
-			_escapeHeldByMenu = false;
-		}
-
-		if (consumedByPanel || !Unmodified(liveKeys)) {
-			return;
-		}
-
-		if (pressed && MenuBarChord(liveKeys)) {
-			_escapeHeldByMenu = true;
+		if (menuChordPressed) {
 			if (_escapeMenu?.BackOut() != true) {
 				_escapeMenu?.Show();
 			}
-		} else if (pressed && _escapeMenu?.BackOut() == true) {
+
+			return;
+		}
+
+		if (_input.LiveKeys is not { } liveKeys || consumedByPanel || !Unmodified(liveKeys)) {
+			return;
+		}
+
+		if (_escapePressed && _escapeMenu?.BackOut() == true) {
 			_escapeHeldByMenu = true;
-		} else if ((pressed || repeated) && !_escapeHeldByMenu && !tapePlaying) {
+		} else if ((_escapePressed || _escapeRepeated) && !_escapeHeldByMenu && !tapePlaying) {
 			_view.Escape(hasCockpit);
 		}
 	}

@@ -16,6 +16,9 @@ sealed class PolledButtons {
 
 	public PolledButtons(params Key[] skipKeys) => _skipKeys = skipKeys;
 
+	/// <summary>A skip key the host has taken for itself, such as the menu bar's [Shift+Esc], which counts as up.</summary>
+	public Func<Key, bool>? Taken { get; set; }
+
 	/// <summary>Takes the buttons' state without delivering it, so an edge made meanwhile is spent.</summary>
 	public void SpendButtons(IMouse mouse) {
 		_leftHeld = mouse.IsButtonPressed(MouseButton.Left);
@@ -55,5 +58,6 @@ sealed class PolledButtons {
 		changed(button, held);
 	}
 
-	private bool SkipKeyDown(IKeyboard? keyboard) => keyboard != null && _skipKeys.Any(keyboard.IsKeyPressed);
+	private bool SkipKeyDown(IKeyboard? keyboard) =>
+		keyboard != null && _skipKeys.Any(key => keyboard.IsKeyPressed(key) && Taken?.Invoke(key) != true);
 }

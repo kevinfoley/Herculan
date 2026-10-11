@@ -4,8 +4,8 @@ The keys the engine adds to retail's. Every retail key works as [`../retail/key-
 
 | Key | What it does |
 |---|---|
-| `Shift+Esc` | Raise the menu bar: in a mission with the Debug, Tweaks and Settings panels, in the front end with Tweaks and Settings. Press again to back out. It does nothing to a mission's pause, objectives and other panels, which take it as `Esc`, nor to a movie or the briefing map's opening, which it skips as `Esc` does. Retail takes `Shift+Esc` as `Esc`. |
-| `Esc` | While the menu bar or one of its panels is up, back out of it. In the front end it also raises the bar wherever retail has no use for it: not during a movie or the briefing map's opening, nor while a field is being typed into. |
+| `Shift+Esc` | Raise the menu bar: in a mission with the Debug, Tweaks and Settings panels, in the front end with Tweaks and Settings. Press again to back out. It works the same over a mission's pause, objectives and other panels, a movie and the briefing map's opening, and nothing of retail's sees the press: it closes no panel and skips nothing. Retail takes `Shift+Esc` as `Esc`.
+| `Esc` | While the menu bar or one of its panels is up, back out of it, unless a mission's pause, objectives or other panel is up, which takes it as retail's does. Otherwise `Esc` is retail's everywhere.
 | Left mouse drag | With the Mouse-controlled outside view tweak, swing the outside view round the HERC. |
 | `PrtScn` | While full screen, copy the frame to the clipboard in place of Windows' own capture, which can show a stale frame of a full-screen game; with `Alt`, `Ctrl`, `Shift` or `Win` held the key is Windows'. `--save-prtscn` also saves it ([`herculan-command-line.md`](herculan-command-line.md#screenshots-and-staged-state)). |
 

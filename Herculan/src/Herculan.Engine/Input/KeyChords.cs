@@ -15,8 +15,8 @@ public static class KeyChords {
 		keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight);
 
 	// [Shift+Esc] alone, with neither [Alt] nor [Ctrl]: HERCULAN's own menu-bar key. Retail takes it as [Esc], since
-	// SimCommandMask strips [Shift]; the menu bar takes that alias for itself everywhere but a modal panel, which
-	// still answers it as retail's does.
+	// SimCommandMask strips [Shift]; the menu bar takes that alias for itself everywhere, modal panels included, and
+	// nothing of the game's sees the press.
 	public static bool MenuBarChord(IKeyState keyboard) => ShiftHeld(keyboard) && Unmodified(keyboard);
 
 	// Neither [Alt] nor [Ctrl] held: the key arrives as its bare scancode, the code the cockpit's [Enter] and

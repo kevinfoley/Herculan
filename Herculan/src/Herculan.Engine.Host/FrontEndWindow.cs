@@ -127,6 +127,9 @@ sealed class FrontEndWindow : IDisposable {
 		}
 	}
 
+	/// <summary>Whether the menu bar or one of its windows is up.</summary>
+	public bool MenuBarUp => _menuBar.Up;
+
 	public void BeginFrame(double delta) => _imgui?.Update((float)delta);
 
 	/// <summary>The menu bar and its windows over whatever the frame drew, never in a <c>--screenshot</c> capture.</summary>

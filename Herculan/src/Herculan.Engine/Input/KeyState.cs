@@ -33,6 +33,16 @@ public sealed class LiveKeys(IKeyboard device) : IKeyState {
 }
 
 /// <summary>
+/// Another keyboard with one key reading as up, for a press the host has taken for itself, such as the menu bar's
+/// [Shift+Esc], which nothing of the game's may see.
+/// </summary>
+public sealed class KeysWithout(IKeyState keys, Key hidden) : IKeyState {
+	public bool IsKeyPressed(Key key) => key != hidden && keys.IsKeyPressed(key);
+
+	public bool IsKeyRepeated(Key key) => key != hidden && keys.IsKeyRepeated(key);
+}
+
+/// <summary>
 /// A tape's keystrokes, as keys held for exactly one host frame.
 ///
 /// <para>Every key handler fires on a key's down edge, and retail acts once per key-down

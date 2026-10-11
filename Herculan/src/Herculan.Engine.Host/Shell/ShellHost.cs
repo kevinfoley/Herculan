@@ -210,7 +210,8 @@ sealed class ShellHost : IDisposable {
 			_movies, _audio, _outcome, _loop, _navigation, repaint);
 		_fields = new EditFields(_window, _audio, _movies, _pointer, _screen, saveScreen, _menu, dialogs.MissionName, _canvas,
 			_widgets, repaint);
-		_keys = new KeyboardRouting(_window, _movies, _mission, _pointer, _startup, _game, _menu, _fields, repaint);
+		_keys = new KeyboardRouting(_window, _movies, _startup, _game, _menu, _fields, repaint);
+		_buttons.Taken = key => key == Key.Escape && _keys.EscapeIsMenuBars;
 		_content = new CanvasContent(_canvas, _screen, _pointer, _startup, dialogs, _movies, _menu, save, hangar, _mission);
 
 		_navigation.EnterTab(_screen.SelectedTab);
