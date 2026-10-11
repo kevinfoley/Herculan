@@ -482,6 +482,21 @@
       }
     },
     {
+      "address": "0001d850",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DBSim_LoadScriptDat",
+      "description": "(): the world load's first pass over the shell's handoff, ES2's DBSim_LoadScriptDat (DBSIM 00424308) in role. Clears the roster slot arrays (000af7b4, 000af818 and 000af87c, 100 bytes each; 000af8e0, 000af914, 000af948, 000af97c and 000af9b0, 50 each); reads data\\mission.var's 200 bytes into 000bc4b8 and zeroes the word at 000bc4c6; reads data\\player.mec, a word to 000af9fa, a count to 000af9e2 and that many 0x7e-byte entries at 000af9e4, then 0x11 bytes to 000af9e8; opens data\\script.dat (Path_WithExtension with \"dat\"; severity-5 assert, world.cpp line 0xb2) and reads the 20-byte header into 000bc49c, the points (12 bytes each, tracking the least and greatest X and Y at 000af7a4-000af7b0), the headings as value << 14 in 16 bits, the waypoint groups as pointers to their points, the trigger areas through FUN_0001cb48 into 10-byte records, and the actions into 16-byte records with the count of area refs up to the first negative one; of the mechs (98 bytes), flyers (56) and bases (16) it keeps only the type at +0x28, +0x2c and +0; of the groups (82 bytes) it marks, from the second record on, each member ref at +0x34 live in the roster +0x28 names, a base member also storing the group's +0x44. The player.mec entries are then marked live as mech slots after the block's count, and calls not read follow.",
+      "source": "Herculan/docs/es1/formats/script-dat.md#reading",
+      "verified": {
+        "bytes": "0001d850+3505",
+        "sha1": "2401020bc75c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00021f8c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -5696,6 +5711,21 @@
         "sha1": "bcfa5b708560",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00064d84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MemRWStream_Ctor",
+      "description": "(stream, buffer, size) in stack order, callee-cleaned: allocates the 0x14-byte stream when stream is null, runs Stream_BaseCtor, stores the vtable 00098a0e at +4 and buffer at +8 and +0x10 (the cursor) and buffer + size at +0xc, the fields of ES2's MemRWStream (VSHELL MemRWStream_Ctor, 0044ed78). The code of ES1GO's MemRWStream_Ctor (0005da60), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/streams.md#goexe",
+      "verified": {
+        "bytes": "00064d84+63",
+        "sha1": "81727b9a8c36",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {

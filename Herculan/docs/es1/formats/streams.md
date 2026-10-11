@@ -141,6 +141,8 @@ The coder, `LZHuffman` (`00082734`–`00082f5e`), is ES2's class of that name, `
 
 The base class, the three file classes and the two filters are `ES1DBSIM`'s code byte for byte, relocated operands aside, and so are `LZHuffman` (`0006f85c`–`00070086`), its position tables (`000942c4`–`00094543`), and the runtime's `read`, `write`, `open` and `close` the file classes call. `VolRStream` has `ES1DBSIM`'s statements in different code: its functions follow one another with no `0x90` padding, some branches are laid out in the other order, and its stubs load arguments they do not use (`VolRStream_Write`, `0004d6b8`, loads all three before it stores status 4). The volume class (`0004ca58`–`0004cf83`) and the volume group (`0004d82c`–`0004dde3`) are the same: `ES1DBSIM`'s statements in different code, their loops tested at the top where `ES1DBSIM`'s are tested at the bottom. `BuffRStream`'s constructor, `Path_Split` and `strrchr` are `ES1DBSIM`'s code byte for byte. The group's pointer is `00083c04`. `main` (`00012ec7`) makes it with mask `0x100` and extension `.vol`, so of the install's archives the shell loads `SHELL0`, `SPEECH` and `ZONES`, after the same buffer size of `0x200`, and deletes it through `VolRStream_DeleteGroup` (`0004d37b`).
 
+`GO.EXE` also has a stream over a buffer in memory, which the mission load reads a `.MSN` through ([loading a mission](msn-mission-file.md#loading-a-mission)). `MemRWStream_Ctor` (`0005da60`) allocates the `0x14`-byte object when given none, and stores the vtable `00089fde` and the buffer's start at `+8`, its end at `+0xc` and the cursor, at the start, at `+0x10`: the fields of ES2's `MemRWStream`. `ES1DBSIM`'s `MemRWStream_Ctor` (`ES1DBSIM 00064d84`, vtable `00098a0e`) is the same code.
+
 ## Open
 
 - **Open:** `BuffRStream` (`ES1DBSIM` vtable `0009eb96`, `ES1GO` `0008b04e`) beyond `BuffRStream_Ctor`, `BuffRStream_InitBuffer` and `BuffRStream_SetSource`.
@@ -149,3 +151,4 @@ The base class, the three file classes and the two filters are `ES1DBSIM`'s code
 - **Open:** what `RLERStream` holds from `+0xf` to `+0x8d`; its twelve functions use none of it, and ES2's class has the same gap.
 - **Open:** what each `GetCapabilities` query asks; no caller's use of the answers has been read.
 - **Open:** a caller of `ES1DBSIM`'s `VolRStream_DeleteGroup`: `es2_xref` finds none, at its entry or at its padding.
+- **Open:** the slots of `ES1GO`'s memory stream (vtable `00089fde`, `0005daa0`–`0005dbf8`), among them what a read past the buffer's end does.
