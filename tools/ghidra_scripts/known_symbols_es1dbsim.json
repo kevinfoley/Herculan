@@ -497,6 +497,36 @@
       }
     },
     {
+      "address": "00020238",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Terrain_LoadZoneShapes",
+      "description": "(theater, zone) in stack order, callee-cleaned, terrain.cpp: loads the shapes standing on a zone. For a negative zone it zeroes Zone_ShapeCount (000bc588), Zone_TheaterShapeRoots (000bc580) and Zone_ShapeObjects (000bc584) and returns. Otherwise it builds dat\\zone<zone> by ltoa (radix 10) over the XXXX of a copy of 'zoneXXXX' (000924b0) and ResourcePath_BuildFolderName, opens it with VolRStream_CtorFromPath (severity-5 assert, terrain.cpp line 0x32, when it fails), reads the word at +0 into a local it does not use again and the record count into Zone_ShapeCount. Shape_LoadAllRoots(0, 0x2bc0001, dgs\\<name>, &Zone_TheaterShapeRoots), the name Terrain_TheaterNames (000924a0)[theater], gives the root count k; it reads k * 24 bytes of dat\\<name> into a __vec_new array of TheaterShapeRecord_ElementCtor elements at Zone_TheaterShapeRecords (000bc58a) and closes that file. When the count is not 0 it allocates count pointers at Zone_ShapeObjects and for each 20-byte record reads a shape index (2 bytes), a position (12) and three angles (6), and builds a 0x3f-byte object: TSObj_Ctor(object, roots[index]) and the vptr 000924be at +2 (both skipped when operator_new fails, the stores below not); the angles to +6 and the position to +0x20, the orientation block's angles and translation; 0 to +0x2c; at +0x3b the address of the index's 24-byte record, or 0 when that record's int32 at +8 is negative. Neither index is tested against a count. Closes the zone file. With a count of 0, Zone_ShapeObjects is left as it was.",
+      "source": "Herculan/docs/es1/formats/zone-terrain.md",
+      "verified": {
+        "bytes": "00020238+669",
+        "sha1": "24dff2f0410d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000204d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TheaterShapeRecord_ElementCtor",
+      "description": "(this) callee-cleaned: the __vec_new element constructor Terrain_LoadZoneShapes (00020238) passes (by way of the padding entry 000204d5) for the 24-byte records of dat\\<theater>. Allocates 0x18 bytes when this is null and returns null when that fails; the inlined constructors of two 0xc-byte members at +0 and +0xc, each holding an 8-byte member at +0, only repeat the null test and allocation at their own sizes. Writes nothing to the record; returns this.",
+      "source": "ES1DBSIM disassembly at 000204d8",
+      "verified": {
+        "bytes": "000204d8+119",
+        "sha1": "43eff70e3b8c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00021f8c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -3464,7 +3494,13 @@
       "confidence": "high",
       "name": "BuildEulerRotationMatrixQ14",
       "description": "(euler, out), C convention: builds the Q14 rotation of a 32-byte transform from three int16 Euler angles, each trigonometry-table index being an angle shifted right 4 and rounded (SAR 4 then ADC 0, 15 times). ES2's BuildEulerRotationMatrixQ14 (DBSIM 0047eaac), whose decompile is the same after normalisation.",
-      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library"
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "0005f0ac+1181",
+        "sha1": "c15cc35584e4",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0005f54c",
@@ -8489,6 +8525,15 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "000924a0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Terrain_TheaterNames",
+      "description": "Four string pointers indexed by the theater, header word 0 of data\\script.dat: 0 desert, 1 temper, 2 ice, 3 urban. Terrain_LoadZoneShapes (00020238) names dgs\\<name> and dat\\<name> by it. ES1GO's ShellMap_TheaterNames (0007e228) has the order temper, ice, desert, urban.",
+      "source": "ES1DBSIM image at 000924a0"
+    },
+    {
       "address": "00092d1c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -8811,6 +8856,42 @@
       "name": "Poly_ScreenCount",
       "description": "The ring's point count (uint16), set by the projectors and the near-plane clips. ES2's DBSIM 006cbc86.",
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000bc580",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Zone_TheaterShapeRoots",
+      "description": "Pointer to the array of root shapes Shape_LoadAllRoots loads from the theater's dgs\\<name> in Terrain_LoadZoneShapes (00020238); a zone's 20-byte records index it. Null after a load with a negative zone.",
+      "source": "Herculan/docs/es1/formats/zone-terrain.md"
+    },
+    {
+      "address": "000bc584",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Zone_ShapeObjects",
+      "description": "Pointer to the array of Zone_ShapeCount (000bc588) object pointers Terrain_LoadZoneShapes (00020238) builds, one 0x3f-byte object (TS_OBJ and a pointer at +0x3b, vptr 000924be) per zone record. Null after a load with a negative zone; a load with a count of 0 leaves it as it was.",
+      "source": "Herculan/docs/es1/formats/zone-terrain.md"
+    },
+    {
+      "address": "000bc588",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Zone_ShapeCount",
+      "description": "int16: the zone file's record count (its word at +2), the number of objects at Zone_ShapeObjects (000bc584). Terrain_LoadZoneShapes (00020238) reads it, or sets 0 for a negative zone.",
+      "source": "Herculan/docs/es1/formats/zone-terrain.md"
+    },
+    {
+      "address": "000bc58a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Zone_TheaterShapeRecords",
+      "description": "Pointer to the theater's 24-byte shape records, one per root shape, read from dat\\<name> by Terrain_LoadZoneShapes (00020238) into a __vec_new array of TheaterShapeRecord_ElementCtor (000204d8) elements. A zone object's +0x3b points at its shape's record unless that record's int32 at +8 is negative.",
+      "source": "Herculan/docs/es1/formats/zone-terrain.md"
     },
     {
       "address": "000bc5a0",

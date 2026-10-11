@@ -46,6 +46,7 @@ A block record is the listed fields in `.MSN` order, so an offset into it is the
 | 9 | from the second record on, each member ref (block `0x34`, `.MSN` `0x3a`) that is not negative marks its slot live in the roster block `0x28` names; a base member also stores block `0x44` (`.MSN` `0x4a`) for the slot, which is passed with the base's type to `000045a4` |
 
 5. It marks each `data\player.mec` entry live as a mech slot after the block's count, as ES2's pass marks the squad ([placement](../../retail/formats/script-dat.md#placement--the-actual-rule)).
+6. Among the calls that follow, `Terrain_LoadZoneShapes` (`00020238`) loads the shapes of the zone in header word 1, from the shape library of the theater in word 0 ([`zone-terrain.md`](zone-terrain.md#the-simulators-load)).
 
 A second function, `0001e638`, opens `data\script.dat` again, where ES2's [second pass](../../retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps) builds the objects ([Open](#open)).
 
@@ -56,4 +57,4 @@ The headings in the two `.MSN` files walked by hand (`SM_SCT50`, `B0_C2_60`) are
 - **Open:** what `0001e638`, which opens `data\script.dat` after `DBSim_LoadScriptDat`, reads, and so what the simulator makes of the fields the first pass discards.
 - **Open:** whether ES1's headings are degrees, and what the simulator does with them beyond the first pass's shift.
 - **Open:** `data\player.mec` as `DBSim_LoadScriptDat` reads it: a word to `000af9fa`, a count to `000af9e2`, that many `0x7e`-byte entries at `000af9e4` (four words, two arrays of as many words as the fourth word says, a word, 26 bytes, 20 bytes and 20 bytes), then 17 bytes to `000af9e8`; what each field is.
-- **Open:** what the header words mean to the simulator, and what `000bc4b8`'s flags are used for once loaded.
+- **Open:** what header words 2 to 9 mean to the simulator, and what `000bc4b8`'s flags are used for once loaded.

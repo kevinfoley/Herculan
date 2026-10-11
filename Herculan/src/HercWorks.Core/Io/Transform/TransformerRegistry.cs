@@ -125,6 +125,8 @@ public static class TransformerRegistry {
 	private static readonly Dictionary<string, Func<ThreeSpaceByteTransformer>> Es1Rebinds = new() {
 		// docs/es1/formats/msn-mission-file.md
 		["Mission File"] = () => new Common.Es1MissionFileTransformer(),
+		// docs/es1/formats/zone-terrain.md: ES1's zone file is the zone's shapes, not a heightmap header.
+		["Zone Header"] = () => new Common.Es1ZoneDatTransformer(),
 	};
 
 	private static readonly Dictionary<RetailGame, List<Registration>> Tables = new() {

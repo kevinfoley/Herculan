@@ -47,6 +47,21 @@
       }
     },
     {
+      "address": "000006ce",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_LoadResource",
+      "description": "(mode, stream) in stack order, callee-cleaned: loads one class item. Points the frame pointer 0009a2c8 at a frame on its stack, reads the 8-byte type tag with 00000c92, and for a tag other than -1 looks its handler up with 00000a30 and calls the handler's load function (+4) with (mode, stream); then runs 00000ea8 on the stream, restores the frame pointer and returns the item, or 0; the same statements as ES1DBSIM's ClassItem_LoadResource (000551e0) in different code.",
+      "source": "ES1GO decompile at 000006ce",
+      "verified": {
+        "bytes": "000006ce+102",
+        "sha1": "8fe5656b7b57",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00000734",
       "binary": "ES1GO",
       "type": "function",
@@ -57,6 +72,21 @@
       "verified": {
         "bytes": "00000734+188",
         "sha1": "bb56af517922",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000007f0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arena_Alloc",
+      "description": "(arena, size) in stack order, callee-cleaned: bump-allocates from an arena {base +0, limit +4, cursor +8}: when arena is non-null and cursor + size is at most the limit it returns base + cursor and advances the cursor by size; otherwise it returns operator_new(size); the same statements as ES1DBSIM's Arena_Alloc (000552f8) in different code.",
+      "source": "ES1GO decompile at 000007f0",
+      "verified": {
+        "bytes": "000007f0+83",
+        "sha1": "1b99e47b0b00",
         "scope": "body",
         "via": "decompile"
       }
@@ -507,6 +537,66 @@
       "verified": {
         "bytes": "00001b6c+614",
         "sha1": "9100e56f6d54",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000923c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_LoadResource",
+      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath, loads one class item from it with ClassItem_LoadResource in mode 0, closes the stream and returns the item. es2_xref finds three calls, two from 000093b3 (dba\\icons, dba\\mapshp) and one from ShellMap_LoadZoneShapes (0000c7e3, dba\\tex1).",
+      "source": "ES1GO disassembly at 0000923c",
+      "verified": {
+        "bytes": "0000923c+57",
+        "sha1": "0499d1eb77a9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000092b9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_LoadShapeRoots",
+      "description": "(tag, path, out) in stack order, callee-cleaned, src\\shellmap.cpp: ES1DBSIM's Shape_LoadAllRoots (000635a8) without its skip. Opens path with VolRStream_CtorFromPath, pushes an arena with cursor 0, the limit the dword at 0009a4d6 and the base the pointer at 0007e20c (ArenaStack_Push), then for each chunk ClassItem_PeekTypeTag finds: a tag other than tag is a severity-5 assert (line 0x61); ClassItem_LoadResource in mode 0 into a 100-slot stack buffer, the loop not testing the count against it. Copies the pointers into an array from the current arena 000aa110 (Arena_Alloc), stores it through out, ArenaStack_Pop, closes the stream and returns the count in AX. es2_xref finds one call, from ShellMap_LoadZoneShapes (0000c7e3).",
+      "source": "ES1GO disassembly at 000092b9",
+      "verified": {
+        "bytes": "000092b9+250",
+        "sha1": "de2ade8a77da",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c7e3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_LoadZoneShapes",
+      "description": "(map, theater, zone) in stack order, callee-cleaned, src\\shellmap.cpp: the map screen's load of a zone's shapes from dat\\zone<zone>, the file ES1DBSIM's Terrain_LoadZoneShapes (00020238) reads. For a negative zone it zeroes the map's int16 count +0xc8 and its pointers +0xca and +0xd0 and returns. Otherwise it builds the path by ltoa (radix 10) over the XXXX of a copy of 'zoneXXXX' (0007e378) and ResourcePath_BuildFolderName, opens it (severity-5 assert, line 0x565, when it fails), reads the word at +0 into a local it does not use again and the count into +0xc8. ShellMap_LoadShapeRoots(0x2bc0001, dgs\\<name>, map + 0xca), the name ShellMap_TheaterNames (0007e228)[theater], gives the root count, stored at +0xce; ShellMap_LoadResource(dba\\tex1) goes to +0x4c3. When the count is not 0 it allocates count pointers at +0xd0 and for each 20-byte record reads a shape index (2 bytes), a position (12) and three angles (6), stores +0x4c3 in the root shape's +0x26, builds TSObj_Ctor(0, roots[index]) and stores the angles at the object's +4, the position at +0x1e and 0 at +0x2a. Neither index is tested against a count, nor the object against null. Closes the zone file. It reads no dat\\<name>, and its objects carry no record pointer. es2_xref finds one call, from 0000c068 at 0000c779, which passes header words 0 and 1 of data\\script.dat.",
+      "source": "Herculan/docs/es1/formats/zone-terrain.md",
+      "verified": {
+        "bytes": "0000c7e3+718",
+        "sha1": "e2029e2ed3b0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000e518",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_Ctor",
+      "description": "(object, shape) in stack order, callee-cleaned: TS_OBJ's constructor (the image holds the class names DRAWABLE, MAT_OBJ and TS_OBJ just before the vtables 0007e428, 0007e512 and 0007e536), allocating 0x32 bytes when object is null and returning null when that fails. Installs DRAWABLE's vtable 0007e428 at +0, zeroes the orientation block at +4 (its three int16 Euler angles at +0, its translation at +0x1a and its word +0x26), installs MAT_OBJ's 0007e512 and then TS_OBJ's 0007e536 at +0, stores TSShapeInstance_Ctor(0, shape) at +0x2c (0 for a null shape), clears the byte at +0x30 and returns the object. ES1DBSIM's TSObj_Ctor (00001b04) builds a 0x3b-byte object with DRAWABLE's vtable at +2, the block at +6, the shape instance at +0x2e and 8 bytes cleared at +0x32. es2_xref finds one call, from ShellMap_LoadZoneShapes (0000c7e3).",
+      "source": "ES1GO disassembly at 0000e518",
+      "verified": {
+        "bytes": "0000e518+608",
+        "sha1": "5192412cdfd2",
         "scope": "body",
         "via": "decompile"
       }
@@ -7728,6 +7818,15 @@
       "name": "ldexp",
       "description": "Symantec C++ runtime `ldexp`, from `ldexp.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 195 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007e228",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShellMap_TheaterNames",
+      "description": "Four string pointers indexed by the theater, header word 0 of data\\script.dat: 0 temper, 1 ice, 2 desert, 3 urban. ShellMap_LoadZoneShapes (0000c7e3) names dgs\\<name> by it. ES1DBSIM's Terrain_TheaterNames (000924a0) has the order desert, temper, ice, urban.",
+      "source": "ES1GO image at 0007e228"
     },
     {
       "address": "00083c04",
