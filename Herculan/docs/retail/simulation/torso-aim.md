@@ -60,7 +60,7 @@ Each tick ends by seeking the axis's thread:
 AnimThread_SeekToPosition(thread, sequenceId, (unsigned)angle >> 2)
 ```
 
-`AnimThread_SeekToPosition` (`00479238`) sums the sequence's frame durations, scales the position by `Q14 x (total - 1)`, and walks the frames subtracting durations to land on a frame plus an intra-frame offset, which it installs with `AnimThread_SetSequence` (`004791a0`). The shift is on the **unsigned** angle, so a whole turn spans the sequence exactly once and a negative angle lands in its far end rather than off the front.
+`AnimThread_SeekToPosition` (`00479238`) scales the position to the sequence's length in ticks and cuts to the frame and intra-frame offset it lands on ([Starting a sequence](../rendering/dts-node-posing.md#starting-a-sequence)). The shift is on the **unsigned** angle, so a whole turn spans the sequence exactly once and a negative angle lands in its far end rather than off the front.
 
 The threads themselves never play: `Mech_Constructor` gives every thread a rate of zero and only the locomotion tick ever raises one, so `AnimThread_Advance` returns immediately for these two.
 

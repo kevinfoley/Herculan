@@ -412,7 +412,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_LocomotionTick",
-      "description": "(mech, avoidance arg, desired speed, steer) in stack order, callee-cleaned: the HERC control law and gait machine, with the type record at +0x188. An immobilised machine (+0x9e) has desired speed and steer zeroed. Otherwise, while 00064178(mech + 0x203) reports the timer running, the desired speed becomes the type's +4 when +0xa8 is set and +6 when not; once it reports 0 the desired speed is clamped to [+4, +6]. A machine other than the player (000bc42a) that is not immobilised runs 00011c80. Damage scales the desired speed by Q10 400 (+0xa3) or 750 (+0xa2), steer is clamped to +/-0x100, and the speed +0x224 moves toward the desired speed by typeRec +8 (Math_RateLimitedMoveToward). The gait machine then compares |speed| with last tick's on the locomotion thread +0x1c0, cutting to or requesting the type's sequences +0xe, +0x10, +0x12, +0x14, +0x46 and +0x7c with 0006200c and 0006265c and setting the playback rate +0x236: an immobilised machine off +0x7c falls to +0x46, requesting it at rate 100 with Sound_PlayAt 0x1e at +0x20 unless +0xae is latched, then running at rate 0x78 and, once the sequence has played, latching +0xae, calling 00013078(mech, 0x78, 0x96) and playing 0x29. The turn rate +0x222 then moves by typeRec +0xa toward Q8(steer, tent): the tent is 0 when a gait branch set its step flag this tick or |speed| is below 45; otherwise it rises from 0 at 45 to typeRec +2 midway between 45 and the top speed +6, and falls to half that at the top speed. The heading +0xa takes the turn rate and +0x2c, the orientation block's cached-rotation word, is cleared. ES2's Mech_LocomotionTick (DBSIM 00416a04) adds the terrain slope, the Turbo Pod and the minimum playback rate, and peaks its tent at Q10(1600).",
+      "description": "(mech, avoidance arg, desired speed, steer) in stack order, callee-cleaned: the HERC control law and gait machine, with the type record at +0x188. An immobilised machine (+0x9e) has desired speed and steer zeroed. Otherwise, while 00064178(mech + 0x203) reports the timer running, the desired speed becomes the type's +4 when +0xa8 is set and +6 when not; once it reports 0 the desired speed is clamped to [+4, +6]. A machine other than the player (000bc42a) that is not immobilised runs 00011c80. Damage scales the desired speed by Q10 400 (+0xa3) or 750 (+0xa2), steer is clamped to +/-0x100, and the speed +0x224 moves toward the desired speed by typeRec +8 (Math_RateLimitedMoveToward). The gait machine then compares |speed| with last tick's on the locomotion thread +0x1c0, cutting to or requesting the type's sequences +0xe, +0x10, +0x12, +0x14, +0x46 and +0x7c with AnimThread_SetSequence (0006200c) and AnimThread_SetTarget (0006265c) and setting the playback rate +0x236: an immobilised machine off +0x7c falls to +0x46, requesting it at rate 100 with Sound_PlayAt 0x1e at +0x20 unless +0xae is latched, then running at rate 0x78 and, once the sequence has played, latching +0xae, calling 00013078(mech, 0x78, 0x96) and playing 0x29. The turn rate +0x222 then moves by typeRec +0xa toward Q8(steer, tent): the tent is 0 when a gait branch set its step flag this tick or |speed| is below 45; otherwise it rises from 0 at 45 to typeRec +2 midway between 45 and the top speed +6, and falls to half that at the top speed. The heading +0xa takes the turn rate and +0x2c, the orientation block's cached-rotation word, is cleared. ES2's Mech_LocomotionTick (DBSIM 00416a04) adds the terrain slope, the Turbo Pod and the minimum playback rate, and peaks its tent at Q10(1600).",
       "source": "ES1DBSIM decompile at 00012038, against ES2's Mech_LocomotionTick",
       "verified": {
         "bytes": "00012038+2699",
@@ -4076,6 +4076,651 @@
       }
     },
     {
+      "address": "000610fd",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "__vec_dtor",
+      "description": "Symantec C++ runtime `__vec_dtor`, from `vecnew.cpp`: (dtor, count, size, p) in stack order, callee-cleaned; 6.1's library declares it (p, size, count, dtor). When p and dtor are both non-null it calls dtor(element, 2) on each of the count elements at size intervals from p, the last first; 2 is DTORmostderived.",
+      "source": "Herculan/docs/es1/formats/compiler.md#constructors-and-destructors",
+      "verified": {
+        "bytes": "000610fd+52",
+        "sha1": "8e513f96d2a8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061134",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANSequence_NextFrame",
+      "description": "(sequence, frame), callee-cleaned: frame + 1 while it is below the frame count (+0xa) less 1, else frame. ANSequence's vtable 000ad96a slot +0x24. ES2's ANSequence_NextFrame (DBSIM 00478654).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061134+40",
+        "sha1": "fe346cf2fb45",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0006115c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANSequence_PrevFrame",
+      "description": "(sequence, frame), frameless, callee-cleaned: frame - 1, or 0 for frame 0. ANSequence's vtable 000ad96a slot +0x28. ES2's ANSequence_PrevFrame (DBSIM 00478670).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "0006115c+24",
+        "sha1": "49f9915b15af",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00061174",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANSequence_FrameShortOfTarget",
+      "description": "(sequence, offset, target, frame) in stack order, frameless, callee-cleaned: 1 in AX when frame < target, or frame == target and offset is 0; otherwise 0. ANSequence's vtable 000ad96a slot +0x2c. ES2's ANSequence_FrameShortOfTarget (DBSIM 00478680), arguments reversed.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061174+38",
+        "sha1": "91508f841f56",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006119c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANSequence_FrameShortOfTargetBackward",
+      "description": "(sequence, offset, target, frame) in stack order, frameless, callee-cleaned: 1 in AX when frame > target, or frame == target and offset is 0; otherwise 0. ANSequence's vtable 000ad96a slot +0x30. ES2's ANSequence_FrameShortOfTargetBackward (DBSIM 004786ac), arguments reversed.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "0006119c+38",
+        "sha1": "b68efb3d21e3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000611c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANCyclicSequence_NextFrame",
+      "description": "(sequence, frame), callee-cleaned: frame + 1 while it is below the frame count (+0xa) less 1, else 0. ANCyclicSequence's vtable 000ada36 slot +0x24. ES2's ANCyclicSequence_NextFrame (DBSIM 004786d8).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000611c4+39",
+        "sha1": "346d1b0c1a63",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000611ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANCyclicSequence_PrevFrame",
+      "description": "(sequence, frame), callee-cleaned: frame - 1, or the frame count (+0xa) less 1 for frame 0. ANCyclicSequence's vtable 000ada36 slot +0x28. ES2's ANCyclicSequence_PrevFrame (DBSIM 004786f8).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000611ec+40",
+        "sha1": "c6cad3e326ee",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00061214",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANCyclicSequence_FrameShortOfTarget_Always",
+      "description": "Frameless, callee-cleaned (RET 0x10): returns 1 in AX. ANCyclicSequence's vtable 000ada36 slot +0x2c. ES2's ANCyclicSequence_FrameShortOfTarget_Always (DBSIM 00478714).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061214+7",
+        "sha1": "bc4f58256b05",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006121c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANCyclicSequence_FrameShortOfTargetBackward_Always",
+      "description": "Frameless, callee-cleaned (RET 0x10): returns 1 in AX. ANCyclicSequence's vtable 000ada36 slot +0x30. ES2's ANCyclicSequence_FrameShortOfTargetBackward_Always (DBSIM 00478720).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "0006121c+7",
+        "sha1": "bc4f58256b05",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00061224",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_Construct",
+      "description": "(instance, shape) in stack order, callee-cleaned: ANShapeInstance's constructor, allocating 0x42 bytes when instance is null. TSShapeInstance_Ctor, then its vtable 00097fbe at +0; clears the ten thread slots at +0x1a; takes the node count from the shape's animation list (shape +0x2a, its +0x16) into +0xc; allocates the dirty bytes (+0xe), and through __vec_new the locals (+0x12, maybe_Point3SPair_Ctor, 0xc each) and the worlds (+0x16, Transform_Ctor, 0x20 each); copies each node's local from the keyframe pool (list +0x12) at the list's default index (+0x18) and marks it dirty; ShapeInst_BuildWorldTransforms; sets world slot 0 to the identity. ES2's ShapeInst_Construct (DBSIM 0047872c), which also fills a static identity transform.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061224+333",
+        "sha1": "6c48ee0be156",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061374",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_Point3SPair_Ctor",
+      "description": "(p), callee-cleaned: the empty constructor of the 12-byte local-transform record, allocating 0xc bytes when p is null and inlining the constructors of its two 6-byte int16 triples at +0 and +6; returns p. ShapeInst_Construct passes it to __vec_new for the local array. ES2's maybe_Point3SPair_Ctor (DBSIM 004921da), which calls its members' constructors.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061374+119",
+        "sha1": "739dd3f6e416",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000613ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_Ctor",
+      "description": "(transform), callee-cleaned: the empty constructor of the 32-byte transform, allocating 0x20 bytes when transform is null and inlining its rotation's (0x14 bytes) and translation's (0xc bytes, at +0x14) constructors; returns transform. ShapeInst_Construct passes it to __vec_new for the world array. ES2's Transform_Ctor (DBSIM 00495026), which calls Transform_CtorRotation and maybe_Point3I_Ctor.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000613ec+115",
+        "sha1": "e28a4aa6c5b0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061460",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANShapeInstance_Dtor",
+      "description": "(instance, flags), callee-cleaned: returns at once for a null instance; stores the vtable 00097fbe, operator_delete of the dirty, local and world arrays (+0xe, +0x12, +0x16), the base destructor 00063110 with flags 0, and operator_delete of the instance when flags bit 0 is set. The vtable's slot +0x1c. ES2's ANShapeInstance_Dtor (DBSIM 00478850).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061460+71",
+        "sha1": "9c1b2db69d05",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000614a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_CountThreads",
+      "description": "(instance), callee-cleaned: the number of the ten thread slots from +0x1a that are filled, counting up to the first null. ES2's ShapeInst_CountThreads (DBSIM 004788a4).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000614a8+43",
+        "sha1": "77dbfed1b9cf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000614d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_SortThreadsByPriority",
+      "description": "(instance), callee-cleaned: bubble-sorts the filled thread slots ascending by AnimThread_SequencePriority, swapping only on strictly greater. ES2's ShapeInst_SortThreadsByPriority (DBSIM 004788c4).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000614d4+140",
+        "sha1": "960837d94dc4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061560",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_RegisterThread",
+      "description": "(instance, thread), callee-cleaned: stores thread in the first empty of the ten slots at +0x1a and runs ShapeInst_SortThreadsByPriority; returns 1, or 0 when all ten are taken. ES2's ShapeInst_RegisterThread (DBSIM 00478930).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061560+81",
+        "sha1": "a87ecef442ef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000615b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_RemoveThread",
+      "description": "(instance, thread), callee-cleaned: finds thread in the ten slots at +0x1a, shifts the slots after it down by one and zeroes the tenth; returns 1, or 0 when it is not there. ES2's ShapeInst_RemoveThread (DBSIM 00478964).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000615b4+125",
+        "sha1": "6d85b29a35bc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061634",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_StepAll",
+      "description": "(instance, dt), callee-cleaned: AnimThread_Advance on every thread, last slot first, then ShapeInst_SortThreadsByPriority, then, when the first slot is filled, AnimThread_ReadRootTransform of it into world slot 0 (+0x16). ES2's AnimThread_StepAll (DBSIM 004789a0).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061634+86",
+        "sha1": "d898d6a9fcca",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006168c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_EvalAllNodeLocals",
+      "description": "(instance), callee-cleaned: AnimThread_EvalNodeLocals(thread, dirty bytes +0xe, locals +0x12) on every thread, last slot first. ES2's ShapeInst_EvalAllNodeLocals (DBSIM 004789f4).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "0006168c+85",
+        "sha1": "222227f2d285",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000616e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_ReadRootTransform",
+      "description": "(instance, out), callee-cleaned: AnimThread_ReadRootTransform of the first thread into out, or the identity transform when the first slot is empty. No caller found by es2_xref. ES2's ShapeInst_ReadRootTransform (DBSIM 00478a30).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000616e4+63",
+        "sha1": "d8bd29d3bc62",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061724",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_SeedRootTransform",
+      "description": "(instance, transform), callee-cleaned: when the first slot is filled, AnimThread_WriteRootTransform(first thread, transform) and a copy of the 32-byte transform into world slot 0 (+0x16). ES2's ShapeInst_SeedRootTransform (DBSIM 00478a70).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061724+47",
+        "sha1": "f2cd6062e1d3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061754",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_ComposeChildTransform",
+      "description": "(out, parent, local) in stack order, callee-cleaned: BuildEulerRotationMatrixQ14 of the local record's three angles with its int16 translation widened, then Transform_Concat(that, parent, out). ES2's ShapeInst_ComposeChildTransform (DBSIM 00478ab8), arguments reversed.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061754+102",
+        "sha1": "b74c47b31ff7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000617bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_ExpandRootTransform",
+      "description": "(out, local) in stack order, callee-cleaned: widens the local record's int16 translation (+6, +8, +0xa) to the int32s at out +0x14, +0x18, +0x1c and builds out's rotation with BuildEulerRotationMatrixQ14 of its angles. ES2's ShapeInst_ExpandRootTransform (DBSIM 00478b10), arguments reversed.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000617bc+84",
+        "sha1": "d5e3615c472d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061810",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_BuildWorldTransforms",
+      "description": "(instance), callee-cleaned: walks the animation list's (parent, child) relation pairs (list +0xc, count +0xa), expanding a parentless child's dirty local (ShapeInst_ExpandRootTransform) or composing a child onto its parent's world transform when its local is dirty or the parent's world was rebuilt (ShapeInst_ComposeChildTransform), marking each rebuilt node with dirty bit 1; then clears the dirty bytes. ES2's ShapeInst_BuildWorldTransforms (DBSIM 00478b58).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061810+308",
+        "sha1": "2626feca83a3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061944",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInstance_StepAnimation",
+      "description": "(instance, dt), callee-cleaned: AnimThread_StepAll, ShapeInst_EvalAllNodeLocals, ShapeInst_BuildWorldTransforms. ES2's ShapeInstance_StepAnimation (DBSIM 00478c2c).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061944+33",
+        "sha1": "4060443e9124",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061968",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_PushModelTransform",
+      "description": "(instance, root, scratch) in stack order, callee-cleaned: saves g_ModelTransformPtr, Transform_Concat(root, saved, scratch), installs scratch with Raster_SetModelTransform and returns the saved pointer. ES2's ShapeInst_PushModelTransform (DBSIM 00478c54), arguments after the instance reversed.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061968+45",
+        "sha1": "ff5f1a2f6675",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061998",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_PopModelTransform",
+      "description": "(instance, saved), callee-cleaned: Raster_SetModelTransform(saved) when saved is non-null. ES2's ShapeInst_PopModelTransform (DBSIM 00478c84).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061998+21",
+        "sha1": "f6fe3c5d8929",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000619b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ANShapeInstance_Render",
+      "description": "(instance), callee-cleaned: ShapeInst_PushModelTransform with world slot 0 (+0x16), the world array into the shape's node-transform pointer (shape +0x18), the base render 00063148, then ShapeInst_PopModelTransform. The vtable 00097fbe's slot +0x20. ES2's ANShapeInstance_Render (DBSIM 00478c98).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000619b0+58",
+        "sha1": "57d44dc74f3f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000619f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_Ctor",
+      "description": "(thread, animList) in stack order, callee-cleaned: allocates 0x52 bytes when thread is null and inlines the constructors of its members at +0x22, +0x28 and +0x2e, stores animList at +0, AnimThread_SetSequence(thread, 0, 0, 0) and sets the stored root transform at +0x2e to the identity. ES2's AnimThread_Ctor (DBSIM 00478d3c).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000619f0+300",
+        "sha1": "08dd11300c8d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061b1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_SequencePriority",
+      "description": "(thread), callee-cleaned: the int16 at +6 of the playing sequence (animation list +6 table, index thread +4). ES2's AnimThread_SequencePriority (DBSIM 00478d80).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061b1c+35",
+        "sha1": "361d7fdf2fbc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061b40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_ElapsedTicks",
+      "description": "(thread), callee-cleaned: the durations of the playing sequence's frames from frame 0 up to the playing frame (+6), stepping with the sequence's vtable +0x24 next-frame step, plus the offset +0x1c. No caller found by es2_xref. ES2's AnimThread_ElapsedTicks (DBSIM 00478d98).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061b40+134",
+        "sha1": "fb6bb8414399",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061bc8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_LoadFrameGroundMovement",
+      "description": "(thread, frame, sequence) in stack order, callee-cleaned: clears the ground-movement word +0x20 when the sequence's flag (+8) is 0; otherwise copies the keyframe record of the frame's first column (pool +0x12, index from the sequence's +0x16 at frame * column count +0x10) into +0x22 (translation) and +0x28 (rotation) and sets +0x20 to 1. ES2's AnimThread_LoadFrameGroundMovement (DBSIM 00478de8), arguments reversed.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061bc8+132",
+        "sha1": "cc982a17567d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061c4c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_CommitGroundMovement",
+      "description": "(thread), callee-cleaned: when +0x20 is set, composes the frame's whole ground movement onto the stored root transform +0x2e (Transform_Concat). ES2's AnimThread_CommitGroundMovement (DBSIM 00478e60).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061c4c+136",
+        "sha1": "4ee15df9de7e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061cd4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_UncommitGroundMovement",
+      "description": "(thread), callee-cleaned: when +0x20 is set, composes the inverse of the frame's ground movement (Transform_TransposeRotation, negated translation through Transform_RotatePoint) onto the stored root transform +0x2e. ES2's AnimThread_UncommitGroundMovement (DBSIM 00478ee8).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061cd4+209",
+        "sha1": "ddfc259b79e1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061da8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_ReadRootTransform",
+      "description": "(thread, out), callee-cleaned: the stored root transform +0x2e when +0x20 is clear; otherwise the ground movement scaled by offset / duration (+0x1c / +0x1e) composed onto it. ES2's AnimThread_ReadRootTransform (DBSIM 00478fa8).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061da8+271",
+        "sha1": "79c5afa14b13",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00061eb8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_WriteRootTransform",
+      "description": "(thread, transform), callee-cleaned: stores transform as the root transform +0x2e when +0x20 is clear; otherwise the inverse of the ground movement scaled by offset / duration composed onto transform. ES2's AnimThread_WriteRootTransform (DBSIM 00479088).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00061eb8+340",
+        "sha1": "7f5818cff268",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006200c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_SetSequence",
+      "description": "(thread, offset, frame, sequence) in stack order, callee-cleaned: cuts to a frame, asking the sequence's vtable +0x24 for the next frame, and forgets any request. ES2's AnimThread_SetSequence (DBSIM 004791a0), arguments reversed.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "0006200c+184",
+        "sha1": "2611a5d3f45b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000620c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_SeekToPosition",
+      "description": "(thread, position, sequence) in stack order, callee-cleaned: Math_Q14Multiply(total ticks - 1, position), then the frame and offset it lands on through AnimThread_SetSequence. ES2's AnimThread_SeekToPosition (DBSIM 00479238), arguments reversed.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000620c4+231",
+        "sha1": "b5183e5a0a65",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000621ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_FindTransition",
+      "description": "(thread), callee-cleaned: ES2's AnimThread_FindTransition (DBSIM 004792c8), stepping with the sequence's vtable +0x24 and +0x28 and asking the destination's +0x2c and +0x30 short-of-target steps, with (offset, target frame, destination frame) in stack order.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000621ac+1198",
+        "sha1": "9c4cec2c50fa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006265c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_SetTarget",
+      "description": "(thread, flags, frame, sequence) in stack order, callee-cleaned: stores the request and runs AnimThread_FindTransition unless the sequence is -1 or the thread is already there. ES2's AnimThread_SetTarget (DBSIM 00479570), arguments reversed.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "0006265c+108",
+        "sha1": "01c18b4e1cdc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000626c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_SetPlaybackRate",
+      "description": "(thread, rate), callee-cleaned: stores the rate at +0x4e and, when its sign changes, AnimThread_SetTarget with the stored request. ES2's AnimThread_SetPlaybackRate (DBSIM 004795cc).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000626c8+78",
+        "sha1": "501cae93a7e4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00062718",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_Advance",
+      "description": "(thread, dt), callee-cleaned: ES2's AnimThread_Advance (DBSIM 00479614), stepping with the sequence's vtable +0x24 and +0x28.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00062718+1763",
+        "sha1": "54bf7f20f0fd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00062dfc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_EvalNodeLocals",
+      "description": "(thread, dirty, locals) in stack order, callee-cleaned: the keyframe interpolator, blending each column's keyframe at the playing and the next frame with Anim_BlendKeyframeTransforms at (offset * 0x400 + duration / 2) / duration. ES2's AnimThread_EvalNodeLocals (DBSIM 004799a4), arguments reversed.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00062dfc+325",
+        "sha1": "c31e9a84b6f9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00063080",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -6590,6 +7235,21 @@
         "sha1": "b5f19dcbfdd1",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "000763ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anim_BlendKeyframeTransforms",
+      "description": "(a, b, q, out), C convention: blends two 12-byte keyframe records by the Q10 factor q, an int16: the three angles along the shortest arc, the three translations as a truncating lerp. ES2's Anim_BlendKeyframeTransforms (DBSIM 00492600), which takes q as an int.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "000763ec+229",
+        "sha1": "8d54eaad35df",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {

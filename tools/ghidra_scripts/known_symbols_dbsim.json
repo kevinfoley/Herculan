@@ -25121,7 +25121,13 @@
       "name": "ANSequence_NextFrame",
       "description": "Plain ANSequence vtable +0x20: frame >= frameCount-1 ? frame : frame+1, i.e. CLAMPS rather than wrapping. That clamp is the only way a one-shot's end is observable, because the end-of-sequence test everywhere is frame == nextFrame. Every retail chassis carries exactly one non-cyclic sequence and its chassis record's death-animation id names it. Args derived from disassembly: [EBP+8] sequence, [EBP+0xc] frame.",
       "source": "docs/retail/rendering/dts-node-posing.md",
-      "signature": "short __cdecl ANSequence_NextFrame(void *sequence, short frame)"
+      "signature": "short __cdecl ANSequence_NextFrame(void *sequence, short frame)",
+      "verified": {
+        "bytes": "00478654+26",
+        "sha1": "04263933f673",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478670",
@@ -25131,7 +25137,13 @@
       "name": "ANSequence_PrevFrame",
       "description": "Plain ANSequence vtable +0x24: frame != 0 ? frame-1 : 0, i.e. holds at the first frame. Args derived from disassembly: only [EBP+0xc] is read, the sequence pointer being unused on this arm.",
       "source": "docs/retail/rendering/dts-node-posing.md",
-      "signature": "short __cdecl ANSequence_PrevFrame(void *sequence, short frame)"
+      "signature": "short __cdecl ANSequence_PrevFrame(void *sequence, short frame)",
+      "verified": {
+        "bytes": "00478670+16",
+        "sha1": "cc86ac9932b7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478680",
@@ -25140,7 +25152,13 @@
       "confidence": "high",
       "name": "ANSequence_FrameShortOfTarget",
       "description": "ANSequence vtable +0x28 (004a6864), (seq, frame, target, flag): 1 when frame < target, or frame == target and flag is 0; otherwise 0. AnimThread_FindTransition asks it of a transition's destination sequence, for forward play, with the thread's +0x1c as the flag. The DBSIM copy of VSHELL's 0046301c.",
-      "source": "DBSIM decompile at 00478680; AnimThread_FindTransition"
+      "source": "DBSIM decompile at 00478680; AnimThread_FindTransition",
+      "verified": {
+        "bytes": "00478680+42",
+        "sha1": "cbdf228404e1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004786ac",
@@ -25149,7 +25167,13 @@
       "confidence": "high",
       "name": "ANSequence_FrameShortOfTargetBackward",
       "description": "ANSequence vtable +0x2c (004a6864), ANSequence_FrameShortOfTarget's mirror for backward play: 1 when frame > target, or frame == target and flag is 0. The DBSIM copy of VSHELL's 00463048.",
-      "source": "DBSIM decompile at 004786ac; AnimThread_FindTransition"
+      "source": "DBSIM decompile at 004786ac; AnimThread_FindTransition",
+      "verified": {
+        "bytes": "004786ac+42",
+        "sha1": "abae0da0ef19",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004786d8",
@@ -25159,7 +25183,13 @@
       "name": "ANCyclicSequence_NextFrame",
       "description": "ANCyclicSequence vtable +0x20: frame < frameCount-1 ? frame+1 : 0, i.e. wraps. Args derived from disassembly: [EBP+8] sequence, [EBP+0xc] frame, plain RET.",
       "source": "docs/retail/rendering/dts-node-posing.md",
-      "signature": "short __cdecl ANCyclicSequence_NextFrame(void *sequence, short frame)"
+      "signature": "short __cdecl ANCyclicSequence_NextFrame(void *sequence, short frame)",
+      "verified": {
+        "bytes": "004786d8+30",
+        "sha1": "3d73255dd9b5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004786f8",
@@ -25169,7 +25199,13 @@
       "name": "ANCyclicSequence_PrevFrame",
       "description": "ANCyclicSequence vtable +0x24: frame != 0 ? frame-1 : frameCount-1, i.e. wraps. Args derived from disassembly: [EBP+8] sequence, [EBP+0xc] frame.",
       "source": "docs/retail/rendering/dts-node-posing.md",
-      "signature": "short __cdecl ANCyclicSequence_PrevFrame(void *sequence, short frame)"
+      "signature": "short __cdecl ANCyclicSequence_PrevFrame(void *sequence, short frame)",
+      "verified": {
+        "bytes": "004786f8+28",
+        "sha1": "a76e2074558b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478714",
@@ -25178,7 +25214,13 @@
       "confidence": "high",
       "name": "ANCyclicSequence_FrameShortOfTarget_Always",
       "description": "ANCyclicSequence vtable +0x28 (004a6828): returns 1 in AX. The DBSIM copy of VSHELL's 004630b0.",
-      "source": "DBSIM decompile at 00478714"
+      "source": "DBSIM decompile at 00478714",
+      "verified": {
+        "bytes": "00478714+9",
+        "sha1": "4486105d0aab",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478720",
@@ -25187,7 +25229,13 @@
       "confidence": "high",
       "name": "ANCyclicSequence_FrameShortOfTargetBackward_Always",
       "description": "ANCyclicSequence vtable +0x2c (004a6828): returns 1 in AX. The DBSIM copy of VSHELL's 004630bc.",
-      "source": "DBSIM decompile at 00478720"
+      "source": "DBSIM decompile at 00478720",
+      "verified": {
+        "bytes": "00478720+9",
+        "sha1": "4486105d0aab",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047872c",
@@ -25195,8 +25243,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShapeInst_Construct",
-      "description": "TSShapeInstance constructor. Reads the node count from shape->animList+0x16 into shapeInst+0xc, then allocates the three per-node arrays ONCE: dirty flags at +0xe, local transforms at +0x12 (stride 0xc) and world transforms at +0x16 (stride 0x20). Seeds the locals from the anim list's default transforms and calls ShapeInst_BuildWorldTransforms. Nothing reallocates these, so an instance stays sized and numbered by the shape it was built with -- root 0 for a machine -- whatever root Shape_DrawAtDetailLevel later swaps in.",
-      "source": "docs/retail/rendering/mech-shape-drawing.md"
+      "description": "(instance, shape): ANShapeInstance's constructor. TSShapeInstance_Ctor, then ANShapeInstanceVtable at +0; fills the static transform at 006c572c with the identity; clears the ten thread slots at +0x1a; reads the node count from shape->animList+0x16 into shapeInst+0xc, then allocates the three per-node arrays ONCE: dirty flags at +0xe (Mem_NewArray), local transforms at +0x12 (Rtl_VectorNew of maybe_Point3SPair_Ctor, stride 0xc) and world transforms at +0x16 (Rtl_VectorNew of Transform_Ctor, stride 0x20). Seeds each node's local from the keyframe pool (animList+0x12) at the anim list's default index (animList+0x18), marks it dirty, calls ShapeInst_BuildWorldTransforms and then sets world slot 0 to the identity. Nothing reallocates these arrays, so an instance stays sized and numbered by the shape it was built with -- root 0 for a machine -- whatever root Shape_DrawAtDetailLevel later swaps in.",
+      "source": "docs/retail/rendering/mech-shape-drawing.md",
+      "verified": {
+        "bytes": "0047872c+289",
+        "sha1": "aa3344d7917f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478850",
@@ -25205,7 +25259,13 @@
       "confidence": "high",
       "name": "ANShapeInstance_Dtor",
       "description": "The DBSIM copy of VSHELL's ANShapeInstance_Dtor (004631bc).",
-      "source": "es2_naming.py diff DBSIM 00478850 VSHELL 004631bc: differs only in callee labels and decompiler typing; RTTI ANShapeInstance vtable slot"
+      "source": "es2_naming.py diff DBSIM 00478850 VSHELL 004631bc: differs only in callee labels and decompiler typing; RTTI ANShapeInstance vtable slot",
+      "verified": {
+        "bytes": "00478850+81",
+        "sha1": "794eaa9c7da9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004788a4",
@@ -25214,7 +25274,13 @@
       "confidence": "high",
       "name": "ShapeInst_CountThreads",
       "description": "(shapeInst): returns how many of the ten thread slots from shapeInst+0x1a are filled, counting up to the first null.",
-      "source": "DBSIM disassembly at 004788a4"
+      "source": "DBSIM disassembly at 004788a4",
+      "verified": {
+        "bytes": "004788a4+29",
+        "sha1": "38eaed2ee4ab",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004788c4",
@@ -25223,7 +25289,13 @@
       "confidence": "high",
       "name": "ShapeInst_SortThreadsByPriority",
       "description": "(shapeInst): bubble-sorts the thread slots at shapeInst+0x1a ascending by AnimThread_SequencePriority, swapping only on strictly greater, so equal priorities keep registration order. ShapeInst_RegisterThread runs it on every registration and AnimThread_StepAll after every advance; since ShapeInst_EvalAllNodeLocals runs last-to-first, the lowest priority wins a node two threads cover.",
-      "source": "DBSIM disassembly at 004788c4"
+      "source": "DBSIM disassembly at 004788c4",
+      "verified": {
+        "bytes": "004788c4+105",
+        "sha1": "2fea59d7a562",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478930",
@@ -25232,7 +25304,13 @@
       "confidence": "high",
       "name": "ShapeInst_RegisterThread",
       "description": "(shapeInst, thread): stores thread in the first empty of the ten slots at shapeInst+0x1a and re-sorts them with ShapeInst_SortThreadsByPriority; returns 1, or 0 when all ten are taken. ShapeInst_AddThread registers through it.",
-      "source": "DBSIM decompile at 00478930"
+      "source": "DBSIM decompile at 00478930",
+      "verified": {
+        "bytes": "00478930+51",
+        "sha1": "2cf809a6bdae",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478964",
@@ -25241,7 +25319,13 @@
       "confidence": "high",
       "name": "ShapeInst_RemoveThread",
       "description": "(shapeInst, thread): finds thread in the ten slots at shapeInst+0x1a that ShapeInst_RegisterThread fills, shifts the slots after it down by one and zeroes the tenth; returns 1, or 0 when thread is not registered. Does not free the thread.",
-      "source": "DBSIM decompile at 00478964"
+      "source": "DBSIM decompile at 00478964",
+      "verified": {
+        "bytes": "00478964+59",
+        "sha1": "75289a417422",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004789a0",
@@ -25250,7 +25334,13 @@
       "confidence": "high",
       "name": "AnimThread_StepAll",
       "description": "Advances every thread on the shape instance by the timestep (AnimThread_Advance, 00479614), last slot first over ShapeInst_CountThreads slots, then re-sorts the slots with ShapeInst_SortThreadsByPriority. Then, if a first thread exists, writes its ramped root transform (AnimThread_ReadRootTransform, 00478fa8) into the leading slot of the world-transform array at shapeInst+0x16 -- the first thread after the sort, which is not always the one ShapeInst_SeedRootTransform seeded before the advance.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "004789a0+83",
+        "sha1": "419cee49a78a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004789f4",
@@ -25259,7 +25349,13 @@
       "confidence": "high",
       "name": "ShapeInst_EvalAllNodeLocals",
       "description": "Runs AnimThread_EvalNodeLocals (004799a4) over every thread the shape instance holds (thread pointers from shapeInst+0x1a upward), passing the local-transform array (shapeInst+0x12) and the dirty-flag array (shapeInst+0xe). The loop runs last-to-first and AnimThread_EvalNodeLocals overwrites each covered node's local transform unconditionally, so the first slot's write is the one left standing for a node several threads cover -- and the slots are kept in ascending sequence priority by ShapeInst_SortThreadsByPriority. See docs/retail/rendering/dts-node-posing.md, 'Several threads on one shape'.",
-      "source": "docs/retail/rendering/dts-node-posing.md"
+      "source": "docs/retail/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "004789f4+59",
+        "sha1": "6fa890ca02d2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478a30",
@@ -25268,7 +25364,13 @@
       "confidence": "high",
       "name": "ShapeInst_ReadRootTransform",
       "description": "(shapeInst, out): AnimThread_ReadRootTransform of the first thread into out, or the identity transform (0x4000 on the diagonal) when the instance has none.",
-      "source": "DBSIM decompile at 00478a30"
+      "source": "DBSIM decompile at 00478a30",
+      "verified": {
+        "bytes": "00478a30+64",
+        "sha1": "baea2e37d3dd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478a70",
@@ -25277,7 +25379,13 @@
       "confidence": "high",
       "name": "ShapeInst_SeedRootTransform",
       "description": "(shapeInst, transform): when the instance has a thread, AnimThread_WriteRootTransform(first thread, transform) and copies the 0x20-byte transform into world slot 0 (shapeInst+0x16). The first thread is the first after ShapeInst_SortThreadsByPriority. SimObject_ApplyRootMotion seeds identity through it before stepping.",
-      "source": "DBSIM decompile at 00478a70"
+      "source": "DBSIM decompile at 00478a70",
+      "verified": {
+        "bytes": "00478a70+72",
+        "sha1": "29e899df3c95",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478ab8",
@@ -25286,7 +25394,13 @@
       "confidence": "high",
       "name": "ShapeInst_ComposeChildTransform",
       "description": "Same expansion as ShapeInst_ExpandRootTransform, then concatenates the result onto the parent's world transform (Transform_Concat) into the destination slot.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00478ab8+86",
+        "sha1": "b5e16eb276fa",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478b10",
@@ -25295,7 +25409,13 @@
       "confidence": "high",
       "name": "ShapeInst_ExpandRootTransform",
       "description": "Expands one 12-byte local transform into a 0x20-byte world transform with no parent: BuildEulerRotationMatrixQ14 over the three leading shorts, and the trailing three shorts widened to the ints at +0x14/+0x18/+0x1c. Confirms the 0xc-byte local record layout is [eulerX, eulerY, eulerZ, x, y, z] as shorts.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00478b10+71",
+        "sha1": "6b9bd83427d4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478b58",
@@ -25303,8 +25423,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShapeInst_BuildWorldTransforms",
-      "description": "Composes the per-node WORLD transform array (shapeInst+0x16, stride 0x20, indexed by transform id) that everything else reads -- e.g. Mech_TargetRelativeToPilot (0041ef14) and the cockpit eye. Walks the relation list (pairs of shorts at animList+0xc, count at animList+10): parent == -1 goes through ShapeInst_ExpandRootTransform (00478b10), otherwise ShapeInst_ComposeChildTransform (00478ab8) against the parent's already-built world transform. Dirty-flag driven off shapeInst+0xe (bit 0 = local changed, bit 1 = world rebuilt, so children follow), and memsets the flag array when done.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "description": "Composes the per-node WORLD transform array (shapeInst+0x16, stride 0x20, indexed by transform id) that everything else reads -- e.g. Cockpit_TargetAnglesFromCameraBone (0041ef14) and the cockpit eye. Walks the relation list (pairs of shorts at animList+0xc, count at animList+10): parent == -1 goes through ShapeInst_ExpandRootTransform (00478b10) when the child's dirty bit 0 is set, otherwise ShapeInst_ComposeChildTransform (00478ab8) against the parent's already-built world transform when the child's bit 0 or the parent's bit 1 is set. Dirty-flag driven off shapeInst+0xe (bit 0 = local changed, bit 1 = world rebuilt, so children follow), and memsets the flag array when done.",
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00478b58+209",
+        "sha1": "e8287d6cb260",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478c2c",
@@ -25312,8 +25438,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShapeInstance_StepAnimation",
-      "description": "Advance threads, evaluate keyframes into per-node local transforms, rebuild world transforms. In call order: AnimThread_StepAll (004789a0) then ShapeInst_EvalAllNodeLocals (004789f4, which runs AnimThread_EvalNodeLocals per thread) then ShapeInst_BuildWorldTransforms (00478b58). The keyframe interpolation is the middle step, so poses are re-blended every time this is called. Cadence: the sole caller is SimObject_ApplyRootMotion (0040250c), which Mech_IntegrateMotion runs once per sim tick -- poses are evaluated per TICK, not per rendered frame. DBSIM has no separate render rate to be per-frame at: Time_BeginSimTick spin-waits the whole loop to 40 ms (25 Hz), so tick and frame are the same thing in the original. A port with a fixed 25 Hz tick matches vanilla pose cadence exactly, however fast it renders.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "description": "(shapeInst, dt): advances the threads, evaluates keyframes into the per-node local transforms and rebuilds the world transforms, in that order: AnimThread_StepAll (004789a0), ShapeInst_EvalAllNodeLocals (004789f4) and ShapeInst_BuildWorldTransforms (00478b58). Caller found by es2_xref: SimObject_ApplyRootMotion (0040250c), which Mech_IntegrateMotion runs once per sim tick, so poses are evaluated per tick. See docs/retail/rendering/dts-node-posing.md, 'Evaluation cadence'.",
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00478c2c+38",
+        "sha1": "9f29be18b9eb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478c54",
@@ -25321,8 +25453,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShapeInst_PushModelTransform",
-      "description": "(shapeInst, scratch, root): saves g_ModelTransformPtr, Transform_Concat(root, saved, scratch), installs scratch with Raster_SetModelTransform and returns the saved pointer. ANShapeInstance_Render brackets TSShapeInstance_Render with it and ShapeInst_PopModelTransform. The DBSIM copy of VSHELL's ShapeInst_PushModelTransform (004635a4).",
-      "source": "DBSIM decompile at 00478c54"
+      "description": "(shapeInst, scratch, root): saves g_ModelTransformPtr, Transform_Concat(root, saved, scratch), installs scratch with Raster_SetModelTransform and returns the saved pointer. ANShapeInstance_Render brackets TSShapeInstance_Render with it and ShapeInst_PopModelTransform. VSHELL's ShapeInst_PushModelTransform (004635a4) does the same through Raster_GetModelTransform and Transform_Concat_Thunk.",
+      "source": "DBSIM decompile at 00478c54",
+      "verified": {
+        "bytes": "00478c54+47",
+        "sha1": "ad056f7c22e2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478c84",
@@ -25331,7 +25469,13 @@
       "confidence": "high",
       "name": "ShapeInst_PopModelTransform",
       "description": "(shapeInst, saved): Raster_SetModelTransform(saved) when saved is non-null. The DBSIM copy of VSHELL's ShapeInst_PopModelTransform (004635d0).",
-      "source": "DBSIM decompile at 00478c84"
+      "source": "DBSIM decompile at 00478c84",
+      "verified": {
+        "bytes": "00478c84+19",
+        "sha1": "ca6db9c9794e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478c98",
@@ -25340,7 +25484,13 @@
       "confidence": "high",
       "name": "ANShapeInstance_Render",
       "description": "The DBSIM copy of VSHELL's ANShapeInstance_Render (004635e4). It differs from VSHELL's: VSHELL runs Transform_Ctor on the local transform first and reads the shape through TSShapeInstance_GetShape; DBSIM's makes no Transform_Ctor call and reads the shape at instance +4 inline.",
-      "source": "es2_naming.py diff DBSIM 00478c98 VSHELL 004635e4: differs as described; RTTI ANShapeInstance vtable slot"
+      "source": "es2_naming.py diff DBSIM 00478c98 VSHELL 004635e4: differs as described; RTTI ANShapeInstance vtable slot",
+      "verified": {
+        "bytes": "00478c98+62",
+        "sha1": "2afd4dc10671",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478cd8",
@@ -25373,7 +25523,13 @@
       "confidence": "high",
       "name": "AnimThread_Ctor",
       "description": "(thread, animList): stores animList at +0, AnimThread_SetSequence(thread, 0, 0, 0), zeroes the 0x20 bytes at +0x2e and stores 0x4000 in the int16s at +0x2e, +0x34 and +0x3e. Returns thread. ShapeInst_AddThread builds each 0x52-byte thread with it.",
-      "source": "DBSIM disassembly at 00478d3c"
+      "source": "DBSIM disassembly at 00478d3c",
+      "verified": {
+        "bytes": "00478d3c+67",
+        "sha1": "c6be0e04284c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478d80",
@@ -25382,7 +25538,13 @@
       "confidence": "high",
       "name": "AnimThread_SequencePriority",
       "description": "(thread): returns the int16 at +6 of the sequence the thread is playing (shape->sequences[thread+4]) -- the field after the tick count and before the ground-movement flag at +8, the file's 'priority'.",
-      "source": "DBSIM disassembly at 00478d80; ANSequence file layout"
+      "source": "DBSIM disassembly at 00478d80; ANSequence file layout",
+      "verified": {
+        "bytes": "00478d80+24",
+        "sha1": "be6508a3d08c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478d98",
@@ -25406,7 +25568,13 @@
       "confidence": "high",
       "name": "AnimThread_LoadFrameGroundMovement",
       "description": "Called on every animation frame advance. If the sequence ground-movement flag is set, loads Transforms[transformIndices[frame * numParts]] -- part index 0, the root node -- into the thread ground translation (+0x22/24/26) and rotation (+0x28/2a/2c) and sets the ground-move flag at +0x20.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00478de8+120",
+        "sha1": "dce3db0fc93e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478e60",
@@ -25415,7 +25583,13 @@
       "confidence": "high",
       "name": "AnimThread_CommitGroundMovement",
       "description": "On frame exit, folds the completed frame full ground transform into the thread stored transform.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00478e60+136",
+        "sha1": "64341af93ca8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478ee8",
@@ -25424,7 +25598,13 @@
       "confidence": "high",
       "name": "AnimThread_UncommitGroundMovement",
       "description": "Inverse of AnimThread_CommitGroundMovement, for backward playback.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00478ee8+190",
+        "sha1": "12b87018fe45",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00478fa8",
@@ -25433,7 +25613,13 @@
       "confidence": "high",
       "name": "AnimThread_ReadRootTransform",
       "description": "Returns scale(groundTransform, thread[0x1c]/thread[0x1e]) composed onto the thread stored transform, where the fraction is intra-frame accumulator over frame duration. Inverse of AnimThread_WriteRootTransform.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00478fa8+221",
+        "sha1": "07458bec3350",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00479088",
@@ -25442,7 +25628,13 @@
       "confidence": "high",
       "name": "AnimThread_WriteRootTransform",
       "description": "Stores inverse(scale(groundTransform, frac)) composed with the incoming transform. Paired with AnimThread_ReadRootTransform so that seeding identity and reading back yields the exact per-tick root-motion delta.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00479088+278",
+        "sha1": "e652ffcc3df2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004791a0",
@@ -25465,8 +25657,14 @@
       "type": "function",
       "confidence": "high",
       "name": "AnimThread_SeekToPosition",
-      "description": "Parks a thread at a Q14 fraction of a sequence instead of playing through it: sums the sequence's frame durations, scales the position by Q14 x (total - 1) (Math_Q14Multiply), walks the frames subtracting durations, and installs the resulting frame + intra-frame offset with AnimThread_SetSequence (004791a0). The only caller pair is the two torso ticks, which pass (unsigned)angle >> 2 -- this is how a turret angle becomes a pose. See docs/retail/simulation/torso-aim.md.",
-      "source": "docs/retail/simulation/torso-aim.md"
+      "description": "(thread, sequence, position): parks a thread at a Q14 fraction of a sequence instead of playing through it: sums the sequence's frame durations, takes Math_Q14Multiply(position, total - 1), walks the frames from 0 subtracting each duration while the remainder is at least it, and installs the frame it stops on with the remainder as the offset through AnimThread_SetSequence (004791a0). Callers found by es2_xref: Mech_TorsoTwistTick and Mech_TorsoPitchTick, which pass (unsigned)angle >> 2, Base_TurretSeek and Base_Construct. See docs/retail/rendering/dts-node-posing.md, 'Starting a sequence'.",
+      "source": "docs/retail/simulation/torso-aim.md",
+      "verified": {
+        "bytes": "00479238+142",
+        "sha1": "99a3a13c4682",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004792c8",
@@ -25506,7 +25704,13 @@
       "confidence": "high",
       "name": "AnimThread_SetPlaybackRate",
       "description": "Writes the playback rate to thread+0x4e; restarts the sequence when the sign flips.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "004795cc+71",
+        "sha1": "0d8c0c5853a4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00479614",
@@ -25529,8 +25733,14 @@
       "type": "function",
       "confidence": "high",
       "name": "AnimThread_EvalNodeLocals",
-      "description": "The keyframe interpolator. For each animated column of the playing sequence, reads the transform-pool index at (sequence, frame) and at (nextSequence, nextFrame); if the two indices match, copies the 12-byte local transform straight; otherwise calls Anim_BlendKeyframeTransforms (00492600) with a Q10 interpolant of ((frameAccumulator * 0x400 + frameDuration/2) / frameDuration) -- the SAME elapsed-frame fraction AnimThread_ReadRootScaled already ramps root motion by. Writes into the shape instance's per-node local array (shapeInst+0x12, stride 0xc, indexed by transform id) and sets that node's dirty byte in shapeInst+0xe. Columns whose part id is 0 are skipped entirely, so transform 0 keeps its default and never takes an animated pose. Thread field offsets confirmed here: +4 sequence, +6 frame, +8 nextSequence, +10 nextFrame, +0x1c frameAccumulator, +0x1e frameDuration.",
-      "source": "docs/retail/simulation/mech-locomotion.md; Herculan AnimationThread.NodeTransform"
+      "description": "(thread, locals, dirty): the keyframe interpolator. For each animated column of the playing sequence, reads the transform-pool index at (sequence, frame) and at (nextSequence, nextFrame); if the two indices match, copies the 12-byte local transform straight; otherwise calls Anim_BlendKeyframeTransforms (00492600) with a Q10 interpolant of ((frameAccumulator * 0x400 + frameDuration/2) / frameDuration) -- the same elapsed-frame fraction AnimThread_ReadRootTransform ramps root motion by. Writes into the shape instance's per-node local array (shapeInst+0x12, stride 0xc, indexed by transform id) and sets that node's dirty byte in shapeInst+0xe. Columns whose part id is 0 are skipped entirely, so transform 0 keeps its default and never takes an animated pose. Thread field offsets confirmed here: +4 sequence, +6 frame, +8 nextSequence, +10 nextFrame, +0x1c frameAccumulator, +0x1e frameDuration.",
+      "source": "docs/retail/simulation/mech-locomotion.md; Herculan AnimationThread.NodeTransform",
+      "verified": {
+        "bytes": "004799a4+327",
+        "sha1": "25e7453c4c21",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00479aec",
@@ -34952,7 +35162,13 @@
       "confidence": "high",
       "name": "Anim_BlendKeyframeTransforms",
       "description": "Blends two 12-byte ANAnimList transform records (3 euler shorts then 3 translation shorts) by a Q10 factor (0x400 == fully the second). Rotation components take the SHORTEST ARC: the difference is biased by 0x10000 when it would go negative, subtracted, then folded back by 0x10000 when it exceeds 0x7fff -- the shortest signed 16-bit difference -- before the Q10 multiply and arithmetic >>10. Translation components are a plain truncating lerp on the 16-bit difference. All fixed point; no float anywhere.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00492600+228",
+        "sha1": "e2c49bd29a88",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004926e4",

@@ -99,9 +99,10 @@ public sealed class ShapeInstance {
 	/// <para><c>ShapeInst_EvalAllNodeLocals</c> (<c>004789f4</c>) runs the thread slots last to
 	/// first, each overwriting the locals of every node its sequence covers, so the first slot's
 	/// writes stand; <c>ShapeInst_SortThreadsByPriority</c> (<c>004788c4</c>) keeps the slots in
-	/// ascending priority, swapping only on strictly greater, so equal priorities never change places
-	/// and stay in registration order. Ranking at read time gives the same answer as keeping the
-	/// list sorted.</para>
+	/// ascending priority, swapping only on strictly greater. Ranking at read time gives the same
+	/// answer except between equal priorities: the original keeps those in the order its last sort
+	/// left them, which is registration order only until a thread's priority has changed and changed
+	/// back, while this breaks the tie by registration order every time.</para>
 	///
 	/// <para>On retail data it decides nothing: the sequences a type record names cover disjoint
 	/// nodes on every chassis. See docs/retail/rendering/dts-node-posing.md, "Several threads on one

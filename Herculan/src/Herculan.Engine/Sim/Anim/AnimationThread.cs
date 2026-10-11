@@ -242,9 +242,9 @@ public sealed class AnimationThread {
 		}
 
 		// A thread that is advancing is no longer parked where a seek put it, and every path below
-		// moves the accumulator on its own terms. Nothing in the engine both seeks and advances one
-		// thread — the torso's two never advance, the locomotion one is never seeked — so this is
-		// hygiene rather than a case that arises.
+		// moves the accumulator on its own terms, so the seek's sub-tick remainder goes. A structure's
+		// threads can be both seeked (BaseObject's constructor seed, its turret) and advanced at their
+		// type's rates; the torso's two never advance and the locomotion one is never seeked.
 		_frameAccumulatorFraction = 0;
 
 		step = (short)(_frameAccumulator + step);
@@ -675,15 +675,11 @@ public sealed class AnimationThread {
 					return;
 				}
 
-				// Only accept a transition whose landing frame is on the near side of the target,
-				// so playback still runs into it rather than past it.
-				bool reachesTarget = backward
-					? _transitionFrame > _targetFrame
-						|| (_transitionFrame == _targetFrame && _frameAccumulator == 0)
-					: _transitionFrame < _targetFrame
-						|| (_transitionFrame == _targetFrame && _frameAccumulator == 0);
-
-				if (reachesTarget) {
+				// Only accept a transition whose landing frame is on the near side of the target, so
+				// playback still runs into it rather than past it. The destination sequence answers,
+				// and the offset it is given is this thread's own, as the original passes it.
+				if (_animation.Sequences[_targetSequence].FrameShortOfTarget(_transitionFrame,
+						_targetFrame, _frameAccumulator, backward)) {
 					return;
 				}
 			}
