@@ -5317,7 +5317,13 @@
       "confidence": "high",
       "name": "Msn_ResolveRow6Ref",
       "description": "(guid, count, exported) -> a row-6 GUID's position among the first count records: with exported set, records whose GUID is -1 are not counted, giving the script.dat index; otherwise the array index. -1 for none. One of a family, one per row.",
-      "source": "docs/retail/formats/msn-mission-file.md"
+      "source": "docs/retail/formats/msn-mission-file.md",
+      "verified": {
+        "bytes": "00415b44+103",
+        "sha1": "7d755902c6b1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00415bab",

@@ -32,6 +32,8 @@ internal static class Program {
 		                                   text and counter writes
 		  conditions [<mission>...]        every row #1 condition, of every mission or of those named:
 		                                   the test, draw or variant table, its chain, and what it gates
+		  repeats [<mission>...]           every GUID two or more unconditioned records carry in rows
+		                                   #3, #6, #7, #8 or #9, where the last replaces the rest
 		  lint [<mission>...]              the mission check over the script.dat each mission's load
 		                                   writes, every campaign flag zero and every roll 0
 		  text <mission>... [--ids LO-HI]  the named missions' .ENG text records in file order, each with
@@ -163,7 +165,7 @@ internal static class Program {
 			return 0;
 		}
 
-		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint"
+		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats"
 				&& positional.Skip(1).FirstOrDefault(n => !data.Missions.Any(m => string.Equals(m.Name, n, StringComparison.OrdinalIgnoreCase))) is { } unknown) {
 			return Fail($"No mission is named {unknown}; `missions` lists them.");
 		}
@@ -208,6 +210,17 @@ internal static class Program {
 				WriteJson(output, lint);
 			} else {
 				LintQuery.Write(output, lint);
+			}
+
+			return 0;
+		}
+
+		if (command == "repeats") {
+			var repeats = RepeatQuery.Run(data, positional.Skip(1).ToList());
+			if (json) {
+				WriteJson(output, repeats);
+			} else {
+				RepeatQuery.Write(output, repeats);
 			}
 
 			return 0;
