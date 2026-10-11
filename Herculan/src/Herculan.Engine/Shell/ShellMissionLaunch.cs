@@ -176,17 +176,26 @@ public static class ShellMissionLaunch {
 			File.Delete(textPath);
 		}
 
-		if (save.HasCampaignState) {
-			var flags = new byte[PlayerSave.CampaignFlagCount * 2];
-			for (int i = 0; i < PlayerSave.CampaignFlagCount; i++) {
-				BitConverter.GetBytes(save.GetCampaignFlag(i)).CopyTo(flags, i * 2);
-			}
-
-			File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionVarFileName), flags);
-		}
-
+		WriteCampaignFlags(directory, save);
 		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ExportPlayerMec(hangar));
 		return scriptPath;
+	}
+
+	/// <summary>
+	/// <c>MissionVar_Write</c> (<c>0040e9cb</c>): the game's 2000-byte campaign flag array written as
+	/// <c>mission.var</c> in <paramref name="directory"/>. Nothing for a game that carries no campaign state.
+	/// </summary>
+	public static void WriteCampaignFlags(string directory, PlayerSave save) {
+		if (!save.HasCampaignState) {
+			return;
+		}
+
+		var flags = new byte[PlayerSave.CampaignFlagCount * 2];
+		for (int i = 0; i < PlayerSave.CampaignFlagCount; i++) {
+			BitConverter.GetBytes(save.GetCampaignFlag(i)).CopyTo(flags, i * 2);
+		}
+
+		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionVarFileName), flags);
 	}
 
 	private static void CopyUnlessSame(string from, string to) {

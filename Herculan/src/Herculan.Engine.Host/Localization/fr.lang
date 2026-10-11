@@ -46,6 +46,8 @@ tweak.faster_keyboard_aiming.display_name  Visée au clavier plus rapide
 tweak.faster_keyboard_aiming.description   Maintenir une touche enfoncée fait pivoter et incliner la tourelle de votre HERC aussi vite qu'un joystick poussé à fond. Dans le jeu original, une touche vise à la moitié de cette vitesse, et le chapeau chinois du joystick aux trois quarts.
 tweak.fix_raptor2_perspective.display_name  Corriger la perspective du Raptor II
 tweak.fix_raptor2_perspective.description   Place la vue cockpit du Raptor II dans son cockpit. Dans le jeu original, la vue se trouve au-dessus du sommet du HERC. Le suivi de la tourelle et la convergence des armes suivent ce changement.
+tweak.reset_counters_on_replay.display_name  Corriger les indicateurs de « Rejouer la mission »
+tweak.reset_counters_on_replay.description   Corrige les indicateurs de mission qui ne sont pas réinitialisés quand vous choisissez de rejouer une mission (après avoir été tué pendant la mission), ce qui pouvait faire échouer des déblocages ou causer d'autres comportements inattendus.
 tweaks.title                   Ajustements
 tweaks.category.cosmetic       Cosmétique
 tweaks.category.ai             IA

@@ -2,6 +2,7 @@ using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
+using Herculan.Engine.Settings;
 using Herculan.Engine.Sim;
 using Herculan.Engine.World;
 
@@ -211,11 +212,19 @@ public sealed class ShellCampaignLoop {
 	/// shell to end on exit code 2 — so the simulator flies what the load's Career_LoadSlot copied in: the slot's
 	/// script.dat, mission.str and player.mec, beside the mission.var the simulator itself last wrote, which no one
 	/// rewrites. Returns the launch, or null when the slot cannot be read.
+	/// <para>Under <see cref="TweakSettingDefinitions.ResetCountersOnReplay"/>, mission.var is written again from the
+	/// slot's own flag array. The shell autosaves slot 10 on its way out to a mission, from the same game the handoff's
+	/// mission.var was written from, so the replay starts from the counters the failed attempt started from
+	/// (docs/retail/campaign-continuity.md#replaying-a-mission).</para>
 	/// </summary>
 	public ShellLaunch? Replay() {
 		if (!LoadSlot(GameInProgress.CurrentGameSlot)) {
 			Console.WriteLine("Replay: slot 10 could not be read — main menu.");
 			return null;
+		}
+
+		if (TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ResetCountersOnReplay) && _game.LoadedGame is { } game) {
+			ShellMissionLaunch.WriteCampaignFlags(DataDirectory, game);
 		}
 
 		Console.WriteLine($"Replay: yes — slot 10's mission copied to {DataDirectory}; launching it.");

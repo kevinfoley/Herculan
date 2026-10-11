@@ -46,6 +46,8 @@ tweak.faster_keyboard_aiming.display_name  Faster Keyboard Aiming
 tweak.faster_keyboard_aiming.description   Holding a key turns and tilts your HERC's turret as fast as pushing the joystick all the way does. In retail a key aims at half that speed, and the joystick's hat at three quarters of it.
 tweak.fix_raptor2_perspective.display_name  Fix Raptor II Perspective
 tweak.fix_raptor2_perspective.description   Puts the Raptor II's cockpit view in its cockpit. In retail the view sits above the top of the HERC. Turret tracking and gun convergence move with it.
+tweak.reset_counters_on_replay.display_name  Fix "Replay Mission" flags
+tweak.reset_counters_on_replay.description   Fix mission flags not getting reset when you choose to replay a mission (after dying during the mission), which could cause unlocks to fail or other unexpected behavior.
 tweaks.title                   Tweaks
 tweaks.category.cosmetic       Cosmetic
 tweaks.category.ai             AI

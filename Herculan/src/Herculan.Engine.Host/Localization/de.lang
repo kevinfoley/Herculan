@@ -46,6 +46,8 @@ tweak.faster_keyboard_aiming.display_name  Schnelleres Zielen mit der Tastatur
 tweak.faster_keyboard_aiming.description   Eine gehaltene Taste dreht und neigt den Geschützturm Ihres HERC so schnell wie ein ganz ausgelenkter Joystick. Im Originalspiel zielt eine Taste mit der halben Geschwindigkeit und der Coolie-Hat des Joysticks mit drei Vierteln davon.
 tweak.fix_raptor2_perspective.display_name  Raptor-II-Perspektive korrigieren
 tweak.fix_raptor2_perspective.description   Setzt die Cockpitansicht des Raptor II in sein Cockpit. Im Originalspiel liegt die Ansicht über der Oberkante des HERC. Turmnachführung und Waffenkonvergenz wandern mit.
+tweak.reset_counters_on_replay.display_name  Flags bei „Einsatz noch mal?“ korrigieren
+tweak.reset_counters_on_replay.description   Behebt, dass Einsatz-Flags nicht zurückgesetzt werden, wenn Sie einen Einsatz wiederholen (nachdem Sie im Einsatz getötet wurden). Das konnte Freischaltungen verhindern oder anderes unerwartetes Verhalten auslösen.
 tweaks.title                   Optimierungen
 tweaks.category.cosmetic       Kosmetisch
 tweaks.category.ai             KI

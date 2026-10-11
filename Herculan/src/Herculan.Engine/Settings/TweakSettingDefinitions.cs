@@ -181,6 +181,15 @@ public static class TweakSettingDefinitions {
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixRaptorIIPerspective = new("tweak.fix_raptor2_perspective", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 
+	/// <summary>
+	/// REPLAY MISSION? restarts the mission from the campaign flags it was first launched with. Retail
+	/// replays it beside the counters the failed attempt left, so an unlock that needs an exact tally (the
+	/// Raptor II's in <c>C2_05</c>) can be lost by winning the replay, and the failed attempt's kills and
+	/// destroyed buildings carry into later missions.
+	/// <para>Defaults on, an exception to the retail-by-default rule. See <see cref="Shell.ShellCampaignLoop.Replay"/>.</para>
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> ResetCountersOnReplay = new("tweak.reset_counters_on_replay", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
+
 	#endregion
 
 	/// <summary>Every defined <c>bool</c> tweak setting, keyed by ID for <see cref="TweakSettings"/> save/load.</summary>
@@ -189,6 +198,6 @@ public static class TweakSettingDefinitions {
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
-		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, FasterKeyboardAiming, FixRaptorIIPerspective,
+		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, FasterKeyboardAiming, FixRaptorIIPerspective, ResetCountersOnReplay,
 	};
 }
