@@ -28,6 +28,7 @@ ES2's two faults are ES1's too: `Raster_PerspectiveDivideArray`'s orthographic l
 | `TSOrthoCamera_Ctor`, `TSOrthoCamera_Dtor` | `0005b9e0`, `0005ba24` | |
 | `Light_Register`, `Light_Unregister` | `0005ba84`, `0005bad4` | the list at `000bdba6`, count `000bdba2` |
 | `Light_ResetSystem` | `000632ec` | sets `Light_ModelSpaceEnabled` and builds the identity transform inline, where ES2 calls `Light_EnableModelSpaceTransform` and `Transform_Reset`; it registers the [shape type registry](../formats/dts-shape.md) |
+| `Raster_StaticInit` | `00063388` | a static constructor, its pointer at `000adc7c` ([static construction](../formats/compiler.md#static-construction-and-exit)). It sets the two brushes' modes inline and builds the three caches with `__vec_ctor` and the element constructors `maybe_Point3I_Ctor` (`000633fc`) and `maybe_Point2I_Ctor` (`0006342c`), where ES2's passes `Rtl_ReturnArg` for the 8-byte ones; it calls nothing for the transforms, eye point, projection centre and clip rect ES2's also constructs |
 | `Light_ComputeShadeAtPoint`, `Light_ComputeShadeForFace`, `Light_ComputeShadeForNormal` | `0005bb24`, `0005bc30`, `0005bdd8` | |
 | `Raster_InstallViewProjection`, `Raster_SetViewTransform`, `Raster_SetModelTransform` | `0005bf68`, `0005c078`, `0005c140` | |
 | `Raster_ModelToView`, `Raster_ModelToViewArray` | `0005c290`, `0005c2ac` | |

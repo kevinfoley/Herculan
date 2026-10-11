@@ -22,7 +22,7 @@ child = children[ cellFrames[animSequence] % childCount ];
 child->vtable[+0x1c]();
 ```
 
-**One child per frame, not a container.** `cellFrames` is the drawing shape instance's own per-sequence `ushort` array, published to the global `DAT_006b7bf0` by whatever installs the instance for drawing. Walking every child the way a `TSPartList` is walked stacks the whole animation on top of itself.
+**One child per frame, not a container.** `cellFrames` is the drawing shape instance's own per-sequence `ushort` array, published to the global `DAT_006b7bf0` by the shape render that draws it ([Drawing a shape](dts-node-posing.md#drawing-a-shape)). Walking every child the way a `TSPartList` is walked stacks the whole animation on top of itself.
 
 **Children need not be bitmaps.** `BULLETS.DTS` root 8 (plasma) is a two-cell animation over real `TSGroup` geometry, and both `ROCKETS.DTS` roots animate their exhaust flame the same way — that file holds no `TSBitmapPart` at all (see [`../formats/rockets-dat.md`](../formats/rockets-dat.md#dtsrocketsdts)). `animSequence` (`part+0x16`, the label `TSCellAnimPart_DebugPrint` prints it under) picks which entry of `cellFrames` the part reads; a projectile's own tick names the same sequence in its type record and mods the counter by `TSShape.SequenceList[seq]`, the shape's per-sequence frame count at `shape+0x20`.
 

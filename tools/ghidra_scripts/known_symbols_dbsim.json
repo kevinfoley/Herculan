@@ -23773,7 +23773,13 @@
       "confidence": "high",
       "name": "Palette_LoadFromFile",
       "description": "(path, &classId): opens path with VolRStream_CtorFromPath, peeks its class type tag (ClassItem_PeekTypeTag) and, when the class id is 0x1e0003 (ANShape), 0x140008 (TSShape) or 0x28000f (palette), loads it with ClassItem_LoadResource and stores the id. Returns the loaded object; for any other id it returns EBX unchanged, not 0. Shape_LoadDts and Shape_LoadDtsCopy load .dts files through it as well as the palettes its name is for.",
-      "source": "DBSIM decompile and disassembly at 00474a24"
+      "source": "DBSIM decompile and disassembly at 00474a24",
+      "verified": {
+        "bytes": "00474a24+140",
+        "sha1": "f9b32ba23163",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00474ab0",
@@ -23781,8 +23787,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Arena_Push",
-      "description": "Allocates a new arena block with Mem_HeapAlloc -- so the block is ZEROED -- and pushes it onto the DAT_006c59ec arena stack through ArenaStack_Push. Paired with Arena_Pop. MechLoadout_ConstructWeaponMounts pushes 200000 bytes around its per-hardpoint loop.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "(size): saves the heap byte count 006bb390 in 006b7a98, allocates a zeroed block of size with Mem_HeapAlloc (calloc) and pushes it as the current arena with ArenaStack_Push(block, size, 0). Paired with Arena_Pop.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "00474ab0+39",
+        "sha1": "c0400cd34e1b",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00474ad8",
@@ -23790,8 +23802,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Arena_Pop",
-      "description": "realloc's the top arena down to the bytes actually used, corrects the DAT_006bb390 accounting and pops the stack.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "No arguments: realloc's the current arena's block down to its cursor, sets the heap byte count 006bb390 to the count Arena_Push saved (006b7a98) plus the cursor, and pops the stack (ArenaStack_Pop). The block stays allocated.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "00474ad8+44",
+        "sha1": "633e27b7d37a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00474b04",
@@ -23847,8 +23865,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Shape_LoadAllRoots",
-      "description": "Loads every root of a ClassItem shape file into a caller-supplied array and returns the count. param_3 is the expected class tag (0x1e0003 for a mech .DTS) and a mismatch only logs; param_4 skips that many leading roots and is 0 at every call site, so all roots are loaded. The staging buffer is 100 slots. MechType_InitOne uses the return as the type record's root count at +0xea, which is why a machine's LOD chain is as long as its file -- nothing truncates it.",
-      "source": "docs/retail/rendering/mech-shape-drawing.md"
+      "description": "(out, path, tag, skip): opens path, Arena_Push(500000), then for each chunk ClassItem_PeekTypeTag finds: a tag other than tag raises a severity-5 assert (libio.cpp line 0x7e), which is fatal; while skip is above 0 the chunk is skipped (ClassItem_Skip), otherwise loaded (ClassItem_LoadResource, mode 0) into a 100-slot stack buffer, the loop not testing the count against it; skip drops by 1 per chunk. Copies the pointers into an array taken from the pushed arena (Arena_AllocDup), stores it through out, Arena_Pop, closes the stream and returns the count. es2_xref finds 13 calls, MechType_InitOne's (0042024f) among them.",
+      "source": "docs/retail/rendering/mech-shape-drawing.md",
+      "verified": {
+        "bytes": "00474bcc+267",
+        "sha1": "61426d1f842b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00474cd8",
@@ -23856,8 +23880,14 @@
       "type": "function",
       "confidence": "high",
       "name": "BaseType_ResolveShape",
-      "description": "Resolves one dgs\\bases shape by index (called by BaseType_LoadShape): reopens the file, then loops calling the ClassItem peek/skip primitive (ClassItem_PeekTypeTag, then ClassItem_Skip to skip) until the requested index is reached, then calls ClassItem_LoadResource once for the real load. Confirms dgs\\BASES.DGS/BHULKS.DGS are flat sequential ClassItem lists, not random-access. See dgs-hd0-notes.md.",
-      "source": "docs/retail/formats/dgs-hd0-notes.md"
+      "description": "(path, index, tag): opens path and skips index chunks (ClassItem_PeekTypeTag, ClassItem_Skip), a chunk with a tag other than tag raising a severity-5 assert (libio.cpp line 0x9e), which is fatal; then Arena_Push(200000), ClassItem_LoadResource in mode 0, Arena_Pop, closes the stream and returns the object. es2_xref finds two calls, from BaseType_LoadShape; see dgs-hd0-notes.md.",
+      "source": "docs/retail/formats/dgs-hd0-notes.md",
+      "verified": {
+        "bytes": "00474cd8+201",
+        "sha1": "66c24404225d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00474da4",
@@ -24601,7 +24631,13 @@
       "confidence": "high",
       "name": "Mem_HeapAlloc",
       "description": "calloc(1, size), adding the block's own recorded size to the heap byte count at 006bb390, which Mem_Delete subtracts from. The large-request path of Mem_New and Mem_NewArray, and what Arena_Push allocates an arena with. The DBSIM copy of VSHELL's Mem_HeapAlloc; returns the calloc pointer in EAX (the decompile drops it).",
-      "source": "docs/retail/simulation/target-selection.md"
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "00477370+32",
+        "sha1": "666d1c213cbb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00477390",
@@ -25980,7 +26016,13 @@
       "confidence": "high",
       "name": "Arena_Alloc",
       "description": "Bump-allocates from the {base, limit, cursor} arena it is handed: advances the cursor and returns base + old cursor, with NO zeroing of its own. A null or exhausted arena falls back to Mem_NewArray. Every weapon mount comes from here, out of the arena MechLoadout_ConstructWeaponMounts pushes -- and that arena is calloc'd, so a mount block is zero however it was served.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "0047a1bc+64",
+        "sha1": "8c3e89c830e3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a1fc",
@@ -25989,7 +26031,13 @@
       "confidence": "high",
       "name": "ClassItem_PeekTypeTag",
       "description": "(stream, tag[2]): saves the stream position (vtable +4), reads the 8-byte class type tag into tag (-1, 0 beforehand), and when no handler is registered for it (ClassItem_FindHandler) and 004a16ac is set, copies it to 006c59a8 and reads the rest of the header into 006c59b0 (ClassItem_TryEveryLoader). Seeks back to the saved position unless the status is 2 (end of data), then runs 0047a768 on the stream.",
-      "source": "DBSIM decompile and disassembly at 0047a1fc"
+      "source": "DBSIM decompile and disassembly at 0047a1fc",
+      "verified": {
+        "bytes": "0047a1fc+170",
+        "sha1": "2cc3c9278cc9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a2a8",
@@ -25998,7 +26046,13 @@
       "confidence": "high",
       "name": "ClassItem_Skip",
       "description": "(stream): reads a class item's 8-byte type tag and seeks past its body, the size in the tag's second dword rounded up to an even length, then runs 0047a768 on the stream. Shape_LoadAllRoots and BaseType_ResolveShape skip items with it.",
-      "source": "DBSIM decompile and disassembly at 0047a2a8"
+      "source": "DBSIM decompile and disassembly at 0047a2a8",
+      "verified": {
+        "bytes": "0047a2a8+69",
+        "sha1": "cb8dc56410a4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a2f0",
@@ -26006,8 +26060,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ArenaStack_Push",
-      "description": "(a, b, c): increments the depth 004a16d8, stores the three dwords in the 12-byte entry at 006c59ec + depth*12 and points the current-arena pointer 006c58b4 at it. Arena_Push calls it.",
-      "source": "DBSIM decompile at 0047a2f0"
+      "description": "(base, limit, cursor): increments the depth 004a16d8, stores the three dwords in the 12-byte entry at 006c59ec + depth*12 and points the current-arena pointer 006c58b4 at it. es2_xref finds Arena_Push's call.",
+      "source": "DBSIM decompile at 0047a2f0",
+      "verified": {
+        "bytes": "0047a2f0+52",
+        "sha1": "3f005316576a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a324",
@@ -26030,8 +26090,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ArenaStack_Pop",
-      "description": "Decrements the depth 004a16d8 and points 006c58b4 back at the entry below. Arena_Pop calls it.",
-      "source": "DBSIM decompile at 0047a368"
+      "description": "No arguments: decrements the depth 004a16d8 and points the current arena 006c58b4 at the entry below. Its test of the depth (TEST, JNC) is always taken, so the branch storing null for a negative depth never runs. es2_xref finds Arena_Pop's call.",
+      "source": "DBSIM decompile at 0047a368",
+      "verified": {
+        "bytes": "0047a368+44",
+        "sha1": "e35a0ab8528f",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0047a394",
@@ -34591,8 +34657,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_Ctor",
-      "description": "TSShape constructor (vtable 004a6331, RTTI name 'TSShape', 0x2a bytes, over TSPartList_Ctor): clears +0x18, +0x1c and +0x20. Constructed at 0042759e and 0049208b.",
-      "source": "DBSIM decompile and disassembly at 00490928"
+      "description": "TSShape constructor (vtable 004a6331, RTTI name 'TSShape', 0x2a bytes): TSPartList_Ctor, the vtable, clears the sequence frame counts +0x20, the cell frame array +0x1c and the node transforms +0x18, and increments *Rtl_DtorCountPtr. es2_xref finds calls from TSShape_Construct, GridShape_Construct, ANShape_Construct and Component_DestroyAndCascade.",
+      "source": "DBSIM decompile and disassembly at 00490928",
+      "verified": {
+        "bytes": "00490928+47",
+        "sha1": "4e8726ca411a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490958",
@@ -34600,8 +34672,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_Dtor",
-      "description": "The DBSIM copy of VSHELL's TSShape_Dtor (004626dc).",
-      "source": "es2_naming.py diff DBSIM 00490958 VSHELL 004626dc: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot"
+      "description": "(shape, flags): decrements *Rtl_DtorCountPtr; for a non-null shape restores the vtable, Mem_DeleteArray of +0x20, +0x1c and +0x18, TSPartList_Dtor with flags 0, and Mem_Delete when flags bit 0 is set. The DBSIM copy of VSHELL's TSShape_Dtor (004626dc).",
+      "source": "es2_naming.py diff DBSIM 00490958 VSHELL 004626dc: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot",
+      "verified": {
+        "bytes": "00490958+81",
+        "sha1": "d3f143fe65e9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004909ac",
@@ -34609,8 +34687,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_Render",
-      "description": "The DBSIM copy of VSHELL's TSShape_Render (00462730).",
-      "source": "es2_naming.py diff DBSIM 004909ac VSHELL 00462730: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot"
+      "description": "TSShape vtable +0x1c (shape): ShapeRender_BindCellFrames with the cell frame array +0x1c, ShapeInst_BindNodeTransformArray with the node transforms +0x18; when the byte 004a62f8 is set, TSBounds_ScreenVisibility returns without drawing for 0, and for 2 while the render context's clip mode +0x208 is 1 sets it to 0 around the draw; the draw swaps the active bitmap array for the shape's +0x26 (TSShape_GetBoundBitmapArray), runs TSPartList_Render and restores it. The DBSIM copy of VSHELL's TSShape_Render (00462730).",
+      "source": "es2_naming.py diff DBSIM 004909ac VSHELL 00462730: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot",
+      "verified": {
+        "bytes": "004909ac+171",
+        "sha1": "a296917b1e75",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490a58",
@@ -34627,8 +34711,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShapeInstance_Dtor",
-      "description": "The DBSIM copy of VSHELL's TSShapeInstance_Dtor (00462854).",
-      "source": "es2_naming.py diff DBSIM 00490ad0 VSHELL 00462854: identical after normalisation; RTTI TSShapeInstance vtable slot"
+      "description": "(instance, flags): decrements *Rtl_DtorCountPtr; for a non-null instance restores the vtable, Mem_DeleteArray of the cell frame copy +8, TSBase_Dtor with flags 0, and Mem_Delete when flags bit 0 is set. The DBSIM copy of VSHELL's TSShapeInstance_Dtor (00462854).",
+      "source": "es2_naming.py diff DBSIM 00490ad0 VSHELL 00462854: identical after normalisation; RTTI TSShapeInstance vtable slot",
+      "verified": {
+        "bytes": "00490ad0+61",
+        "sha1": "663eca00b308",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490b10",
@@ -34636,8 +34726,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShapeInstance_Render",
-      "description": "The DBSIM copy of VSHELL's TSShapeInstance_Render (00462894).",
-      "source": "es2_naming.py diff DBSIM 00490b10 VSHELL 00462894: differs only in callee labels and decompiler typing; RTTI TSShapeInstance vtable slot"
+      "description": "TSShapeInstance vtable +0x1c (instance): TSShape_Render's steps on the instance's shape (+4), binding the instance's own cell frame copy (+8) in place of the shape's array. es2_xref finds one call, from ANShapeInstance_Render, which points the shape's +0x18 at its world array first. The DBSIM copy of VSHELL's TSShapeInstance_Render (00462894).",
+      "source": "es2_naming.py diff DBSIM 00490b10 VSHELL 00462894: differs only in callee labels and decompiler typing; RTTI TSShapeInstance vtable slot",
+      "verified": {
+        "bytes": "00490b10+192",
+        "sha1": "3eaf61155017",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490c28",
@@ -34655,7 +34751,13 @@
       "confidence": "high",
       "name": "ShapeRender_BindCellFrames",
       "description": "(shape, cellFrames): stores cellFrames in g_CellAnimFrames (006b7bf0); the first argument is not read. TSShapeInstance_Render (00490b10) passes the instance's own cellFrames. The DBSIM copy of VSHELL's ShapeRender_BindCellFrames (0046295a).",
-      "source": "es2_naming.py match DBSIM VSHELL: EXACT pair with VSHELL 0046295a; DBSIM disassembly at 00490c2e"
+      "source": "es2_naming.py match DBSIM VSHELL: EXACT pair with VSHELL 0046295a; DBSIM disassembly at 00490c2e",
+      "verified": {
+        "bytes": "00490c2e+13",
+        "sha1": "40b91509ab04",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00490c3b",
@@ -34705,8 +34807,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_GetClassTag",
-      "description": "The DBSIM copy of VSHELL's TSShape_GetClassTag (004629f8).",
-      "source": "es2_naming.py diff DBSIM 00490cd0 VSHELL 004629f8: identical after normalisation; RTTI TSShape vtable slot"
+      "description": "TSShape vtable +0 (shape): returns the class tag 0x140008. The DBSIM copy of VSHELL's TSShape_GetClassTag (004629f8).",
+      "source": "es2_naming.py diff DBSIM 00490cd0 VSHELL 004629f8: identical after normalisation; RTTI TSShape vtable slot",
+      "verified": {
+        "bytes": "00490cd0+10",
+        "sha1": "b35af7bc64a2",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00490cdc",
@@ -34714,8 +34822,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_GetStreamSize",
-      "description": "The DBSIM copy of VSHELL's TSShape_GetStreamSize (00462a04).",
-      "source": "es2_naming.py diff DBSIM 00490cdc VSHELL 00462a04: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot"
+      "description": "TSShape vtable +4 (shape): TSPartList_GetStreamSize, and when it is non-zero adds 2 per sequence (+0x24), 0x20 per node transform (+0x16) and 4. The DBSIM copy of VSHELL's TSShape_GetStreamSize (00462a04).",
+      "source": "es2_naming.py diff DBSIM 00490cdc VSHELL 00462a04: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot",
+      "verified": {
+        "bytes": "00490cdc+41",
+        "sha1": "669777974e76",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490d08",
@@ -34723,8 +34837,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_GetMemorySize",
-      "description": "The DBSIM copy of VSHELL's TSShape_GetMemorySize (00462a30).",
-      "source": "es2_naming.py diff DBSIM 00490d08 VSHELL 00462a30: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot"
+      "description": "TSShape vtable +8 (shape): 0x2a plus 4 per child (+0x10), 0x20 per node transform (+0x16) and 4 per sequence (+0x24), plus each child's memory slot (+8). The DBSIM copy of VSHELL's TSShape_GetMemorySize (00462a30).",
+      "source": "es2_naming.py diff DBSIM 00490d08 VSHELL 00462a30: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot",
+      "verified": {
+        "bytes": "00490d08+82",
+        "sha1": "ebcc4efeb2f3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490d5c",
@@ -34741,8 +34861,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_WriteToStream",
-      "description": "The DBSIM copy of VSHELL's TSShape_WriteToStream (00462b58).",
-      "source": "es2_naming.py diff DBSIM 00490e34 VSHELL 00462b58: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot"
+      "description": "TSShape vtable +0x10 (shape, stream): TSPartList_WriteToStream, then the node transform count and the sequence count (Stream_WriteWord), the frame counts +0x20 (Stream_WriteWords) and the node transforms +0x18 through the stream's write slot. The DBSIM copy of VSHELL's TSShape_WriteToStream (00462b58).",
+      "source": "es2_naming.py diff DBSIM 00490e34 VSHELL 00462b58: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot",
+      "verified": {
+        "bytes": "00490e34+96",
+        "sha1": "a5fc6c859515",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00490e94",
@@ -34750,8 +34876,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_DebugPrint",
-      "description": "The DBSIM copy of VSHELL's TSShape_DebugPrint (00462bb8).",
-      "source": "es2_naming.py diff DBSIM 00490e94 VSHELL 00462bb8: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot"
+      "description": "TSShape vtable +0x14 (shape, depth, indent): ClassItem_DebugPrintType, then when depth is non-zero, each line indented by indent spaces, 'transformListSize %3d' (+0x16), 'seqListSize %3d' (+0x24), 'seqLenList' and each frame count of +0x20 as '%3d' indented by indent + 1, then TSPartList_DebugPrint with depth - 1 and indent + 1. The DBSIM copy of VSHELL's TSShape_DebugPrint (00462bb8).",
+      "source": "es2_naming.py diff DBSIM 00490e94 VSHELL 00462bb8: differs only in callee labels and decompiler typing; RTTI TSShape vtable slot",
+      "verified": {
+        "bytes": "00490e94+416",
+        "sha1": "3a77055a4be4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0049104a",

@@ -77,6 +77,21 @@
       }
     },
     {
+      "address": "00000e88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Heap_LargestFree",
+      "description": "(heap), callee-cleaned: the largest size on the heap's free list (+8) less the 8-byte header, reading the list's head without testing it for null. Arena_Push sizes its arena with it on the heap 000ae4ac. ES1GO's Heap_LargestFree (00001091); ES2's Memory_LargestFreeBlock (DBSIM 00476dd0) subtracts 0x6c and clamps at 0.",
+      "source": "Herculan/docs/es1/simulation/memory.md",
+      "verified": {
+        "bytes": "00000e88+53",
+        "sha1": "3f9fec5c246c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00000ec0",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1197,6 +1212,66 @@
       "verified": {
         "bytes": "000552f8+65",
         "sha1": "3e36c0269d49",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005533c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_PeekTypeTag",
+      "description": "(tag, stream) in stack order, callee-cleaned: saves the stream position (slot +8), reads the 8-byte type tag into tag (-1, 0 beforehand) through the read slot (+0x1c) and, when no handler is registered for it (through the thunk to 000554e4) and 000962b8 is set, copies it to 000bda48, reads the rest of the header (000962bc less 8 bytes) into 000bda50 and calls 00055568 through its thunk; seeks back (slot +0xc) unless the status (+0) is 2; returns status == 0. ES2's ClassItem_PeekTypeTag (DBSIM 0047a1fc).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "0005533c+167",
+        "sha1": "571c9d75d6ed",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000553e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_Skip",
+      "description": "(stream), callee-cleaned: reads a class item's 8-byte type tag and seeks past its body, the tag's second dword rounded up to an even length; returns status == 0. ES2's ClassItem_Skip (DBSIM 0047a2a8).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "000553e4+64",
+        "sha1": "e23e2284977f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00055424",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ArenaStack_Push",
+      "description": "(cursor, limit, base) in stack order, callee-cleaned: increments the depth 000962c0, stores {base, limit, cursor} in the 12-byte entry at 000b5ae0 + depth * 12, points the current arena 000bd954 at it and returns base. ES2's ArenaStack_Push (DBSIM 0047a2f0).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00055424+66",
+        "sha1": "da8b8ed9c946",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000554bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ArenaStack_Pop",
+      "description": "No arguments: decrements the depth 000962c0 and points the current arena 000bd954 at the entry below, or at null when the depth has gone negative (a signed test). ES2's ArenaStack_Pop (DBSIM 0047a368), whose test of the depth (TEST, JNC) can never take its null branch.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "000554bc+38",
+        "sha1": "3eef4bf9dfd1",
         "scope": "body",
         "via": "both"
       }
@@ -4261,7 +4336,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ANShapeInstance_Dtor",
-      "description": "(instance, flags), callee-cleaned: returns at once for a null instance; stores the vtable 00097fbe, operator_delete of the dirty, local and world arrays (+0xe, +0x12, +0x16), the base destructor 00063110 with flags 0, and operator_delete of the instance when flags bit 0 is set. The vtable's slot +0x1c. ES2's ANShapeInstance_Dtor (DBSIM 00478850).",
+      "description": "(instance, flags), callee-cleaned: returns at once for a null instance; stores the vtable 00097fbe, operator_delete of the dirty, local and world arrays (+0xe, +0x12, +0x16), the base destructor TSShapeInstance_Dtor (00063110) with flags 0, and operator_delete of the instance when flags bit 0 is set. The vtable's slot +0x1c. ES2's ANShapeInstance_Dtor (DBSIM 00478850).",
       "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
       "verified": {
         "bytes": "00061460+71",
@@ -4486,7 +4561,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ANShapeInstance_Render",
-      "description": "(instance), callee-cleaned: ShapeInst_PushModelTransform with world slot 0 (+0x16), the world array into the shape's node-transform pointer (shape +0x18), the base render 00063148, then ShapeInst_PopModelTransform. The vtable 00097fbe's slot +0x20. ES2's ANShapeInstance_Render (DBSIM 00478c98).",
+      "description": "(instance), callee-cleaned: ShapeInst_PushModelTransform with world slot 0 (+0x16), the world array into the shape's node-transform pointer (shape +0x18), the base render TSShapeInstance_Render (00063148), then ShapeInst_PopModelTransform. The vtable 00097fbe's slot +0x20. ES2's ANShapeInstance_Render (DBSIM 00478c98).",
       "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
       "verified": {
         "bytes": "000619b0+58",
@@ -4721,6 +4796,51 @@
       }
     },
     {
+      "address": "00062f44",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShape_Ctor",
+      "description": "(shape), callee-cleaned: allocates 0x2a bytes when shape is null; TSPartList_Ctor, the vtable 00097fee, and clears the sequence frame counts +0x20, the cell frame array +0x1c and the node transforms +0x18. es2_xref finds calls from TSShape_Construct, 0001fe6c and 0008f51c. ES2's TSShape_Ctor (DBSIM 00490928).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00062f44+54",
+        "sha1": "7fdd535bdf34",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00062f7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShape_Dtor",
+      "description": "(shape, flags), callee-cleaned: returns at once for a null shape; stores the vtable 00097fee, operator_delete of +0x20 and +0x1c, __vec_delete(0, 0x20, 7, +0x18) on the node transform block, TSPartList_Dtor with flags 0, and operator_delete of the shape when flags bit 0 is set. The vtable's slot +0x1c. ES2's TSShape_Dtor (DBSIM 00490958).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00062f7c+77",
+        "sha1": "4effbe318097",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00062fcc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShape_Render",
+      "description": "(shape), callee-cleaned: stores the cell frame array +0x1c in 000bd912 (ES2's ShapeRender_BindCellFrames, inline), calls 00052850 with the node transforms +0x18; when the byte 00097fe8 is set calls 000529bc on the shape and draws nothing for 0, and for 2 while the render context 000bdbda's +0x208 is 1 clears +0x208 around the draw; the draw swaps the active bitmap array 000bdb5e for the shape's +0x26, calls 00052e18 on the shape and restores it. The vtable 00097fee's slot +0x20, and 000923da's. ES2's TSShape_Render (DBSIM 004909ac), which calls its accessors and ShapeInst_BindNodeTransformArray, TSBounds_ScreenVisibility and TSPartList_Render in those places.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00062fcc+177",
+        "sha1": "e06b036c220f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00063080",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -4733,6 +4853,111 @@
         "sha1": "cf59e90ccbae",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00063110",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShapeInstance_Dtor",
+      "description": "(instance, flags), callee-cleaned: returns at once for a null instance; stores the vtable 00098072, operator_delete of the cell frame copy +8, TSBase_Dtor with flags 0, and operator_delete of the instance when flags bit 0 is set. The vtable's slot +0x1c; es2_xref finds one call, from ANShapeInstance_Dtor, its base destructor call. ES2's TSShapeInstance_Dtor (DBSIM 00490ad0).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00063110+55",
+        "sha1": "293ed059eef8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00063148",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShapeInstance_Render",
+      "description": "(instance), callee-cleaned: TSShape_Render's steps on the instance's shape (+4), binding the instance's own cell frame copy (+8) in place of the shape's. The vtable 00098072's slot +0x20; es2_xref finds one call, from ANShapeInstance_Render, its base render call. ES2's TSShapeInstance_Render (DBSIM 00490b10).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
+      "verified": {
+        "bytes": "00063148+202",
+        "sha1": "8be0468bd9e6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00063214",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBase_GetClassTag",
+      "description": "(object), frameless, callee-cleaned: returns -1 (mov eax; ret 4). Slot +4 of TSBase's vtables. ES2's TSBase_GetClassTag (DBSIM 0048dbd4).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00063214+8",
+        "sha1": "c286fe67a8fc",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006321c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBase_GetStreamSize",
+      "description": "(object), frameless, callee-cleaned: returns 0 (xor eax; ret 4). Slot +8 of TSBase's vtables. ES2's TSBase_GetStreamSize (DBSIM 0048dbdc).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "0006321c+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00063224",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBase_GetMemorySize",
+      "description": "(object), frameless, callee-cleaned: returns 0 (xor eax; ret 4). Slot +0xc of TSBase's vtables. ES2's TSBase_GetMemorySize (DBSIM 0048dbe4).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00063224+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006322c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBase_ReadFromStream",
+      "description": "(object, mode, stream), frameless, callee-cleaned: does nothing (ret 0xc). Slot +0x10 of TSBase's vtables. ES2's TSBase_ReadFromStream (DBSIM 0048dbec).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "0006322c+3",
+        "sha1": "bc4534cc9cd5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00063230",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBase_WriteToStream",
+      "description": "(object, mode, stream), frameless, callee-cleaned: does nothing (ret 0xc). Slot +0x14 of TSBase's vtables. ES2's TSBase_WriteToStream (DBSIM 0048dbf4).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00063230+3",
+        "sha1": "bc4534cc9cd5",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -4766,6 +4991,36 @@
       }
     },
     {
+      "address": "000632a2",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_ChebyshevMagnitude2D",
+      "description": "(a, b), C convention: max(|a|, |b|). ES2's Math_ChebyshevMagnitude2D (DBSIM 0047ddae), identical after normalisation.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md",
+      "verified": {
+        "bytes": "000632a2+30",
+        "sha1": "af73220a454b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000632c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_ChebyshevMagnitude3D",
+      "description": "(a, b, c), C convention: max(|a|, |b|, |c|). ES2's Math_ChebyshevMagnitude3D (DBSIM 0047ddcc), identical after normalisation.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md",
+      "verified": {
+        "bytes": "000632c0+44",
+        "sha1": "07d3625511d9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000632ec",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -4776,6 +5031,186 @@
       "verified": {
         "bytes": "000632ec+156",
         "sha1": "28e0c1043aaa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00063388",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_StaticInit",
+      "description": "Static constructor (its pointer at 000adc7c in the XI table): stores the line brush's mode 0 (PolyFill_LineBrush) and the fill brush's mode 1 (PolyFill_FillBrush), clears 000b5f08 and 000b5f0c, and builds Poly_ViewCache (1000 x 0xc, maybe_Point3I_Ctor), Poly_ScreenCache (1000 x 8) and Poly_ScreenPoints (0x20 x 8, both maybe_Point2I_Ctor) with __vec_ctor. ES2's Raster_StaticInit (DBSIM 0048dc7c), which calls the brush constructors and also constructs the transforms, the eye point, the projection centre and the clip rect.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "00063388+116",
+        "sha1": "4b29a6b27c8b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000633fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_Point3I_Ctor",
+      "description": "(p), callee-cleaned: the empty constructor of a 12-byte int32 triple, allocating 0xc bytes when p is null and inlining an 8-byte base's constructor; returns p. Raster_StaticInit's element constructor for Poly_ViewCache. ES2's maybe_Point3I_Ctor (DBSIM 004952b8).",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "000633fc+48",
+        "sha1": "2a31b4d4ca01",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0006342c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_Point2I_Ctor",
+      "description": "(p), callee-cleaned: the empty constructor of an 8-byte int32 pair, allocating 8 bytes when p is null; returns p. Raster_StaticInit's element constructor for Poly_ScreenCache and Poly_ScreenPoints, where ES2's passes Rtl_ReturnArg.",
+      "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
+      "verified": {
+        "bytes": "0006342c+27",
+        "sha1": "4cbd019b9bd5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00063448",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_LoadFromFile",
+      "description": "(tag, path) in stack order, callee-cleaned: opens path (VolRStream_CtorFromPath), peeks the first chunk's tag (ClassItem_PeekTypeTag) and, when it is 0x1e0003, 0x140008 or 0x28000f, loads it with ClassItem_LoadResource in mode 0 and stores the tag through its first argument when the load returns an object. Returns the object from ESI, which for any other tag still holds the value ESI had on entry. ES2's Palette_LoadFromFile (DBSIM 00474a24).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00063448+103",
+        "sha1": "b513f1855025",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000634b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arena_Push",
+      "description": "No arguments: takes the heap 000ae4ac's largest free block whole (Heap_LargestFree, then Heap_Alloc, which zero-fills it) and pushes it as the current arena with ArenaStack_Push(0, size, block). ES2's Arena_Push (DBSIM 00474ab0), which takes the size as its argument and allocates with Mem_HeapAlloc.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "000634b0+39",
+        "sha1": "db833ce2e20f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000634d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Arena_Pop",
+      "description": "No arguments: shrinks the current arena's block to its cursor with Heap_Realloc(000ae4ac, cursor, base), then ArenaStack_Pop. ES2's Arena_Pop (DBSIM 00474ad8), which uses realloc and also corrects the heap byte count.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "000634d8+29",
+        "sha1": "b5d132c7c023",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000634f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_LoadAfterPeek",
+      "description": "(stream), callee-cleaned: ClassItem_PeekTypeTag into a local, then ClassItem_LoadResource(0, stream), whose EAX it returns. es2_xref finds one call, from 0000bd70. ES2's ClassItem_LoadAfterPeek (DBSIM 00474b04).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "000634f8+34",
+        "sha1": "4663c405e8a6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006351c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shape_LoadDts",
+      "description": "(name), callee-cleaned: Arena_Push, Palette_LoadFromFile on Path_WithExtension('dts' at 00098114, name), Arena_Pop, and returns the object. es2_xref finds one call, from 0001c6c8. ES2's Shape_LoadDts (DBSIM 00474b2c), whose arena is 200000 bytes.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "0006351c+51",
+        "sha1": "b2226dc451ec",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00063550",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shape_LoadDtsCopy",
+      "description": "(name), callee-cleaned: Shape_LoadDts's code with its own copy of the extension, 'dts' at 00098118. No reference found by es2_xref. ES2's Shape_LoadDtsCopy (DBSIM 00474b68).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00063550+51",
+        "sha1": "9fd82cdbd25a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00063584",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_LoadDpl",
+      "description": "(name), callee-cleaned: Palette_LoadFromFile on Path_WithExtension('dpl' at 0009811c, name), into the current arena, returning the object in EAX. Six calls found by es2_xref, from 00021dd4, 000251c4, 00027e5c and three from 00058414. ES2's Palette_LoadDpl (DBSIM 00474ba4).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00063584+35",
+        "sha1": "ed65c96fdbb6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000635a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shape_LoadAllRoots",
+      "description": "(skip, tag, path, out) in stack order, callee-cleaned: opens path, Arena_Push, then for each chunk ClassItem_PeekTypeTag finds: a tag other than tag is a severity-5 assert (libio.cpp line 0x77, fatal); while skip is above 0 the chunk is skipped (ClassItem_Skip), otherwise loaded (ClassItem_LoadResource, mode 0) into a 100-slot stack buffer, the loop not testing the count against it; skip drops by 1 per chunk. Copies the pointers into an array from the current arena, stores it through out, Arena_Pop, closes the stream and returns the count. Ten calls found by es2_xref. ES2's Shape_LoadAllRoots (DBSIM 00474bcc), whose arena is 500000 bytes.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "000635a8+251",
+        "sha1": "f7eccda87765",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000636a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BaseType_ResolveShape",
+      "description": "(tag, index, path) in stack order, callee-cleaned: opens path and skips index chunks (ClassItem_PeekTypeTag, ClassItem_Skip), each with a tag other than tag a severity-5 assert (libio.cpp line 0x97, fatal); then Arena_Push, ClassItem_LoadResource in mode 0, Arena_Pop, closes the stream and returns the object. es2_xref finds two calls, from 000045a4. ES2's BaseType_ResolveShape (DBSIM 00474cd8), whose arena is 200000 bytes.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "000636a4+188",
+        "sha1": "81b4b66b3b88",
         "scope": "body",
         "via": "decompile"
       }
@@ -5724,6 +6159,126 @@
       "verified": {
         "bytes": "00065c04+20",
         "sha1": "e73ab05fba99",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065c18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShape_Construct",
+      "description": "(mode, stream) in stack order, callee-cleaned: the load function for tag 0x140008 'TSShape'. Takes 0x2a bytes from the current arena 000bd954 with Arena_Alloc, runs TSShape_Ctor, then calls the read slot (+0x10) with (mode, stream) and returns the object. ES2's TSShape_Construct (DBSIM 00490c5c).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00065c18+54",
+        "sha1": "d1521bafc42a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065c50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShape_GetClassTag",
+      "description": "(shape), callee-cleaned, no frame: returns the class tag 0x140008 (mov eax; ret 4). Slot +4 of TSShape's vtable 00097fee. ES2's TSShape_GetClassTag (DBSIM 00490cd0).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00065c50+8",
+        "sha1": "a3dc07ed4c10",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00065c58",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShape_GetStreamSize",
+      "description": "(shape), callee-cleaned: TSPartList_GetStreamSize, and when it is non-zero adds 0x20 per node transform (+0x16), 2 per sequence (+0x24) and 4. Slot +8 of the vtable 00097fee. ES2's TSShape_GetStreamSize (DBSIM 00490cdc).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00065c58+54",
+        "sha1": "6fb604453a3b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065c90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShape_GetMemorySize",
+      "description": "(shape), callee-cleaned: 0x2a plus 4 per child (+0x10), 4 per sequence (+0x24) and 0x20 per node transform (+0x16), plus each child's memory slot (+0xc). Slot +0xc of the vtable 00097fee. ES2's TSShape_GetMemorySize (DBSIM 00490d08).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00065c90+115",
+        "sha1": "bfee8898f26f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065d04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShape_ReadFromStream",
+      "description": "(shape, mode, stream) in stack order, callee-cleaned: TSPartList_ReadFromStream, then the node transform count into +0x16 and the sequence count into +0x24 through the stream's read slot (+0x1c). Takes count * 2 bytes from the current arena 000bd954 for each of +0x20 and +0x1c, and count * 0x20 + 4 bytes for the transforms, building them with __vec_new(Transform_CtorCopy, count, 0x20, block) and storing the block itself at +0x18, not the address __vec_new returns; reads the frame counts into +0x20 and count * 0x20 bytes of transforms over the block from its start, then zeroes +0x1c. Slot +0x10 of the vtable 00097fee. ES2's TSShape_ReadFromStream (DBSIM 00490d5c), which takes count * 0x20 bytes.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00065d04+274",
+        "sha1": "b891aa943c94",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00065e18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_CtorCopy",
+      "description": "(transform), callee-cleaned: Transform_Ctor's code, identical after normalisation, emitted again in this module; TSShape_ReadFromStream passes its padding entry 00065e16 to __vec_new. ES2's Transform_Ctor (DBSIM 00495026).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00065e18+115",
+        "sha1": "58e1c9addecf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065e8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShape_WriteToStream",
+      "description": "(shape, mode, stream) in stack order, callee-cleaned: TSPartList_WriteToStream, then through the stream's write slot (+0x18) the node transform count, the sequence count, the frame counts (+0x20) and the transforms (+0x18). Slot +0x14 of the vtable 00097fee. ES2's TSShape_WriteToStream (DBSIM 00490e34).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00065e8c+141",
+        "sha1": "27b699207c04",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00065f1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShape_DebugPrint",
+      "description": "(shape, indent, depth) in stack order, callee-cleaned: ClassItem_DebugPrintType, then when depth is non-zero, each line indented by indent spaces: 'transformListSize %3d', 'seqListSize %3d', 'seqLenList' and each frame count of +0x20 as '%3d' indented by indent + 1, then TSPartList_DebugPrint with indent + 1 and depth - 1. Slot +0x18 of the vtables 00097fee and 000923da. ES2's TSShape_DebugPrint (DBSIM 00490e94).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md",
+      "verified": {
+        "bytes": "00065f1c+367",
+        "sha1": "4e40e1a67029",
         "scope": "body",
         "via": "decompile"
       }

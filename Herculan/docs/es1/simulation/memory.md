@@ -18,7 +18,7 @@ The heap object:
 
 Every block, free or allocated, opens with an 8-byte header: `+0` the next free block's address, and `+4` the block's size, header included, a multiple of 8. An allocated block has `ABLK` (`0x4b4c4241`) in place of the link; a free block has `FBLK` (`0x4b4c4246`) at `+8`, the first dword of what would be its payload. The free list is kept in address order.
 
-`Heap_Alloc` (`00000ec0`) rounds the request plus the header up to a multiple of 8 and takes the first free block that is exactly that size or more than 16 bytes larger, splitting off the remainder as a free block. It zero-fills the payload. `Heap_Free` (`0000100c`) puts a block back in address order and merges it with free neighbours that touch it. `Heap_Realloc` (`000010ec`) resizes in place against a free block that follows, and moves the data otherwise.
+`Heap_Alloc` (`00000ec0`) rounds the request plus the header up to a multiple of 8 and takes the first free block that is exactly that size or more than 16 bytes larger, splitting off the remainder as a free block. It zero-fills the payload. `Heap_Free` (`0000100c`) puts a block back in address order and merges it with free neighbours that touch it. `Heap_Realloc` (`000010ec`) resizes in place against a free block that follows, and moves the data otherwise. `Heap_LargestFree` (`00000e88`, `ES1GO 00001091`) returns the largest free block's size less its header; the loaders' arenas take a block of that size ([`../formats/dts-shape.md`](../formats/dts-shape.md#differences-from-es2)).
 
 ## The entry points
 
@@ -38,7 +38,7 @@ Each pair shares one body. `Mem_AllocFromHeap` (`000015e4`) allocates from a hea
 - The heap object has no low mark: it is the four dwords `+0` to `+0xc`, and `Heap_Alloc` (`ES1GO 000010d9`) takes no argument for one.
 - `Mem_InitHeap` (`ES1GO 0000195f`) leaves 15,000 bytes of the extender's largest free block unused, where `ES1DBSIM`'s leaves 25,000.
 - The heap is a constructed object: `Heap_Ctor` (`ES1GO 00000ef4`) builds it, `Mem_ConstructHeap` (`ES1GO 00001b5c`) on the global one.
-- It has inspection functions `ES1DBSIM` does not: `Heap_IsAllocated`, `Heap_IsValidAllocation`, `Heap_LargestFree`, a walker over every block (`HeapIter_Init`, `HeapIter_Next`), and `Heap_DrawMap` (`ES1GO 000016b9`), which draws a rows-by-columns map of the heap on the monochrome monitor (`Mono_Printf`, `ES1GO 0004f904`), one character per cell by how much of its share is allocated: 7 for none, `0xb1` below half, `0xb2` below all, `0xdb` for all.
+- It has inspection functions `ES1DBSIM` does not: `Heap_IsAllocated`, `Heap_IsValidAllocation`, a walker over every block (`HeapIter_Init`, `HeapIter_Next`), and `Heap_DrawMap` (`ES1GO 000016b9`), which draws a rows-by-columns map of the heap on the monochrome monitor (`Mono_Printf`, `ES1GO 0004f904`), one character per cell by how much of its share is allocated: 7 for none, `0xb1` below half, `0xb2` below all, `0xdb` for all.
 - `Heap_IsValidAllocation` takes the heap's end as its base plus 8 times the dword at `+4`, where `Heap_Init` stores the size in bytes, so a block ending at the heap's true end does not pass that test.
 
 ## Open

@@ -144,6 +144,8 @@ It returns the new count. `Poly_ClipRingToNearPlaneWithUV` (`0048cfec`, `(uvIn, 
 
 `PolyFill_FillThenOutline` (`0048d518`, `(reversed)`) fills the ring, when it has any points, with the brush the render context holds: through `GL_DrawPolygonReversed` (`0048daa0`) when `reversed` is non-zero and `GL_DrawPolygonDispatch` (`0048dab5`) otherwise, each of which ignores its first argument and calls `Raster_DrawPolygonReversed` (`00484116`) or `Raster_DrawPolygonDispatch` (`00483dac`). Then, when the line colour `006c60d4` differs from the brush colour `006c60dc` and the brush mode `PolyFill_FillBrush` (`006c60d8`) is not 5, it sets the brush to mode 4 in the line colour and draws the ring again the same way: mode 4 is the dispatch's line loop, so this is the outline. `PolyFill_FillThenOutline_Thunk` (`0048d5fc`) forwards to it. `PolyFill_Fill` (`0048d4b4`) fills through `GL_DrawPolygonEitherWinding` (`0048d8ae`) and so `Raster_DrawPolygonEitherWinding` (`004841af`), and runs the same outline pass without the mode-5 test. The three `Raster_*` fills are in [`polygon-fill.md`](polygon-fill.md). A caller that installed its own brush in the render context gets a second flat fill instead of an outline ([`dts-texture-binding.md`](dts-texture-binding.md#tssolidpoly--palette-index-unlit-fill-plus-outline)).
 
+Before any of this runs, the static constructor `Raster_StaticInit` (`0048dc7c`) sets the line brush `PolyFill_LineBrush` (`006c60d0`) to mode 0, a flat colour (`LineBrush_Ctor`), and the fill brush to mode 1 with its `+8` and `+0xc` cleared (`FillBrush_Ctor`).
+
 ## VSHELL's copies
 
 | DBSIM | VSHELL |

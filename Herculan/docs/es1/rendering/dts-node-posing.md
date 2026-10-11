@@ -12,6 +12,8 @@
 
 **A seek rounds where ES2's truncates.** `AnimThread_SeekToPosition` scales the position with ES1's `Math_Q14Multiply`, which rounds to nearest where ES2's truncates ([the primitives](../simulation/fixed-point-math.md#the-primitives)), so a seek can land one animation tick further into the sequence than ES2's does for the same position.
 
+**The shape renders inline three of ES2's calls.** `TSShape_Render` (`00062fcc`) and `TSShapeInstance_Render` (`00063148`) store the cell frames to `000bd912`, read the render context from `000bdbda` and swap the active bitmap array at `000bdb5e` inline, where ES2's call `ShapeRender_BindCellFrames`, `Raster_GetRenderContext` and the bitmap-array accessors ([drawing a shape](../../retail/rendering/dts-node-posing.md#drawing-a-shape)). They call `00052850`, `000529bc` and `00052e18` where ES2's call `ShapeInst_BindNodeTransformArray`, `TSBounds_ScreenVisibility` and `TSPartList_Render`; the last two are among the part functions [`../formats/dts-shape.md`](../formats/dts-shape.md#open) lists. Their test runs while the byte `00097fe8` is set, which is 1 in the image; a grep of the disassembly for its address finds only these two reads.
+
 **ES1's shape-instance constructor fills no static transform.** ES2's also sets a static transform at `DBSIM 006c572c` to the identity on every construction; ES1's sets only the instance's world slot 0.
 
 ## Functions
@@ -38,8 +40,11 @@
 | `AnimThread_FindTransition`, `AnimThread_SetTarget`, `AnimThread_SetPlaybackRate` | `000621ac`, `0006265c`, `000626c8` | |
 | `AnimThread_Advance`, `AnimThread_EvalNodeLocals` | `00062718`, `00062dfc` | |
 | `Anim_BlendKeyframeTransforms` | `000763ec` | |
+| `TSShape_Render` | `00062fcc` | `TSShape`'s vtable `00097fee` slot `+0x20` ([`../formats/dts-shape.md`](../formats/dts-shape.md)) |
+| `TSShapeInstance_Dtor`, `TSShapeInstance_Render` | `00063110`, `00063148` | the vtable `00098072`; `ANShapeInstance_Dtor` and `ANShapeInstance_Render` call them as their base's |
 
 ## Open
 
 - **Open:** no caller of `ShapeInst_ReadRootTransform` or `AnimThread_ElapsedTicks` found by `es2_xref.py`.
+- **Open:** what the byte `00097fe8` is for, as for ES2's.
 - **Open:** the callers in ES1's game objects, `00001da0`–`0000205c`, which construct the instance and its threads and step them.

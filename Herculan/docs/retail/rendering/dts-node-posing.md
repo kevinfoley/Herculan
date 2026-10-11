@@ -32,7 +32,14 @@ A negative transform id composes nothing. When a node's state is installed it re
 
 `TSBasePart.Transform` at offset `+4` is the same field `Cockpit_TargetAnglesFromCameraBone` (`0041ef14`) and the cockpit eye resolve the mech type record's camera node (`typeRec+0x0c`) through — one field, one meaning, geometry and named nodes alike.
 
-A `TSShape` carries node transforms of its own ([`../formats/dts-shape.md`](../formats/dts-shape.md#the-shapes-own-node-transforms)). `TSShapeInstance_Render` (`00490b10`) binds the shape's array as `_DAT_006b7bec` through `ShapeInst_BindNodeTransformArray` (`00475fd8`) before drawing, so a plain shape instance, which has no per-node array of its own, draws its groups through the shape's transforms where an animated instance uses its `+0x16` world array.
+## Drawing a shape
+
+**A shape is drawn by drawing its parts in order, unless it lies wholly off screen.** `TSShape_Render` (`004909ac`, `TSShape`'s vtable `+0x1c`) draws a shape, and `TSShapeInstance_Render` (`00490b10`, the plain shape instance's) draws the instance's shape the same way:
+
+1. The per-sequence cell frames `TSCellAnimPart_Render` reads go to `006b7bf0` (`ShapeRender_BindCellFrames`): the shape's own array at `+0x1c`, or the instance's copy at `+8` ([`dts-billboards.md`](dts-billboards.md#tscellanimpart_render-004767e4)).
+2. The shape's node transforms, `shape+0x18`, become the per-node array the groups are drawn through (`ShapeInst_BindNodeTransformArray`, `00475fd8`, [The draw path](#the-draw-path)). A `TSShape` loads node transforms of its own ([`../formats/dts-shape.md`](../formats/dts-shape.md#the-shapes-own-node-transforms)), so a plain shape instance draws its groups through the shape's; an animated instance points `shape+0x18` at its `+0x16` world array first ([The animated shape instance](#the-animated-shape-instance)).
+3. When the byte `004a62f8` is set, `TSBounds_ScreenVisibility` (`0047613c`) tests the shape's bounding sphere against the screen. A result of 0 draws nothing. A result of 2, the sphere's box wholly inside the clip rect while the render context's clip mode (`+0x208`, [`../simulation/hud-target-indicator.md`](../simulation/hud-target-indicator.md)) is 1, sets the mode to 0, no clipping, for the draw and back to 1 after it. The byte is 1 in the image ([Open](#open)).
+4. The active bitmap array is swapped for the shape's, `shape+0x26` ([`dts-texture-binding.md`](dts-texture-binding.md#tsbitmapparts-texture-lookup-vshell)), the parts are drawn (`TSPartList_Render`, `004766fc`), and the active array is put back.
 
 ## The animated shape instance
 
@@ -207,6 +214,8 @@ The clamp is what makes a one-shot observable: `frame == nextFrame` is true only
 **Every retail chassis carries exactly one one-shot**, and its own death sequence (mech type record offset 68) names it: index 7 on the 18 bipeds, 2 on the PITBULL, 1 on the SPIDER. The RAZOR's list holds a single sequence and its death sequence of 7 is out of range, which never bites because a flyer has no locomotion thread.
 
 ## Open
+
+- **Open:** what the byte `004a62f8` is for. A grep of the disassembly for its address finds only the two shape renders' reads.
 
 - **Open:** no caller of `ShapeInstance_StepAnimation` other than `SimObject_ApplyRootMotion` found by `es2_xref.py`, and none of `AnimThread_ElapsedTicks`.
 
