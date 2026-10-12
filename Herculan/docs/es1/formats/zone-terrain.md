@@ -63,6 +63,22 @@ The simulator mounts both archives (`SIMVOL0`'s program mask is 1, `ZONES`' `0x1
 
 With a count of 0, `Zone_ShapeObjects` keeps whatever it held. The loader frees nothing a previous load built.
 
+### The zone shape object
+
+The object is a `TS_OBJ` with the record pointer added, and its type tag, the `int16` at `+0`, is 0: nothing in the load writes it and the heap zero-fills ([the zone's shapes](../rendering/polygon-shading.md#the-zone-shapes)). Its vtable `000924be` is the one `TS_OBJ`'s module copy `000924fa` has but for the destructor, and the slots are `TS_OBJ`'s own code, copied into `terrain.cpp` ([vtables](compiler.md#vtables)):
+
+| Slot | Function | Does |
+|---|---|---|
+| `+4` | `TSObj_RenderCopy` (`00020550`) | installs the object's model transform and calls its shape instance's (`+0x2e`) slot `+0x20`, the render |
+| `+8` | `TSObj_GetPositionCopy` (`00020570`) | returns the object's `+0x20`, the position |
+| `+0xc` | `ZoneShapeObj_Dtor` (`00020584`) | with the object non-null: stores the vptrs `000924be` and `000924fa`, calls the shape instance's slot `+0x1c` with 3 when it has one, stores `0009251a` and `0009253a`, and frees the object when bit 0 of its second argument is set |
+| `+0x10` | `000205d3` | returns 0; no Ghidra function |
+| `+0x14` | `TSObj_GetRadiusCopy` (`000205dc`) | returns the `int16` at `+8` of the instance's shape (`+4`), 0 without a shape instance or shape |
+
+`TSObj_RenderCopy`, `TSObj_GetPositionCopy` and `TSObj_GetRadiusCopy` are the same code as `TS_OBJ`'s `TSObj_Render` (`00001cdc`), `TSObj_GetPosition` (`00001cfc`) and `TSObj_GetRadius` (`00001d58`) in its vtable `000902ea`. `TSObj_DtorCopy` (`00020624`), `000924fa`'s destructor, is `ZoneShapeObj_Dtor` without the first store, and `MatObj_DtorCopy` (`00020680`), `0009251a`'s, stores `0009251a` and `0009253a` and frees.
+
+The record a zone shape points at holds two points of three `int32`, at `+0` and `+0xc`. `ZoneShapeObj_TransformBox` (`000206c8`), given the object and a 24-byte buffer, puts both through the object's transform (`Context_GetTransform`, `Transform_ApplyToPoint`) into the buffer and returns it, or returns 0 when the record pointer is null; `ZoneShapeObj_WorldBox` (`00020738`) does it into the static buffer `000afa28`. The frame's draw sorts a zone shape by that box ([the frame's draw](../rendering/polygon-shading.md#the-frames-draw)). The loader leaves the pointer null when the first point's z is negative.
+
 ## The shell's load
 
 `ShellMap_LoadZoneShapes` (`ES1GO 0000c7e3`, `src\shellmap.cpp`), with the map screen's object, the theater and the zone in stack order, reads the file as the simulator does and builds the objects differently:
@@ -78,7 +94,6 @@ With a count of 0, `Zone_ShapeObjects` keeps whatever it held. The loader frees 
 
 - **Open:** what the word at `0x00` is. It holds 0 to 3, as a theater index does, and neither loader reads it after storing it; whether it names the zone's theater, and in which program's order.
 - **Open:** whether the shell and the simulator load different theaters for a retail mission. With header word 0 at 0, the simulator loads `dgs\desert` and the shell `dgs\temper`; which of the two the zones' shapes are authored for is not read.
-- **Open:** the 24-byte records of `dat\desert`, `dat\temper`, `dat\ice` and `dat\urban`, 13 in each, and what an object does with its pointer to one, or with a null one when the record's `int32` at `+8` is negative.
-- **Open:** the class whose vptr `000924be` the simulator's objects carry, and its five slots (`00020550`, `00020570`, `00020584`, `000205d3`, `000205dc`).
-- **Open:** what the simulator does with the objects. `es2_xref.py` finds `Zone_ShapeObjects` and `Zone_ShapeCount` in `00020860`, `00020b50`, `00036c2c`, `00040d4c` and `0005a9dc` besides the loader.
+- **Open:** the retail values of the 24-byte records of `dat\desert`, `dat\temper`, `dat\ice` and `dat\urban`, 13 in each, and whether their two points are a box's opposite corners; and what `ObjList_EntryCompare`'s box comparisons (`00021a4c`, `000216c4`) do with them.
+- **Open:** what `00020860` and `00020b50` ask of the zone's shapes. Each passes `Zone_ShapeCount`, `Zone_ShapeObjects` and its two arguments to `0002075c` or `00020894`; `0002075c`, for each shape whose 2D distance from the point is under its shape's radius, turns the point into the shape's frame and returns the first non-zero `0001fc5c` (shape, 0, point), and `00020b70` calls `00020b50` with a frame it builds from two points.
 - **Open:** which archive's `ZONE6.DAT` and `ZONE8.DAT` the simulator reads. ES1's volume code has not been read against ES2's precedence rules ([ES2's archives](../../retail/formats/vol-archive.md#which-archives-are-mounted)).

@@ -55,6 +55,39 @@ All 24 retail files walk to their last byte by this layout, 281 to 287 bytes. Ev
 
 ES2's shorts 12 and 13, which ES2 reads and does not use, have no place in ES1's file.
 
+### The distance colour ranges
+
+The two range tables give each of the 8 columns a `{int16 first index, int16 count}` range for the nearest band and one for the farthest, which the load expands into the 16 bands between ([the load](#the-load), step 4); `dat\shades` names the column each re-pointed ramp takes ([the shades file](../rendering/polygon-shading.md#the-shades-file)). Columns 0 to 6 of the first table are the same in every retail file, each starting where one of the palette's ramps 0, 2, 4, 6, 8, 10 and 12 starts: (104, 6), (112, 16), (132, 16), (152, 16), (172, 16), (192, 6), (200, 6). In the second, columns 0 to 6 are one entry each, (111, 1), (131, 1), (151, 1), (171, 1), (191, 1), (199, 1), (207, 1), but in five files:
+
+| File | Second table, columns 0–6 |
+|---|---|
+| `WORLD2` | 111, 130, 150, 170, 190, 199, 207 |
+| `WORLD8` | 110, 129, 149, 179, 189, 198, 206 |
+| `WORLD10` | 104, 112, 132, 152, 172, 192, 200 |
+| `WORLD11` | 111, 131, 151, 171, 191, 192, 207 |
+| `WORLD20` | 110, 130, 150, 170, 190, 199, 207 |
+
+Column 7, the zone shapes' ramp 14 ([the zone's shapes](../rendering/polygon-shading.md#the-zone-shapes)), runs from 6 to 16 entries among palette entries 224 to 254 to one entry:
+
+| File | Column 7, first table | second |
+|---|---|---|
+| `WORLD0`, `WORLD1` | (240, 10) | 253; 254 |
+| `WORLD2` | (240, 14) | 253 |
+| `WORLD3` | (224, 14) | 239 |
+| `WORLD4`, `WORLD5` | (240, 12) | 253; 254 |
+| `WORLD6` | (224, 14) | 238 |
+| `WORLD7` | (240, 12) | 254 |
+| `WORLD8`, `WORLD9` | (224, 6) | 239; 225 |
+| `WORLD10`, `WORLD11` | (230, 10) | 239 |
+| `WORLD12`, `WORLD13` | (240, 15); (224, 16) | 254; 239 |
+| `WORLD14`, `WORLD15` | (240, 15) | 245 |
+| `WORLD16`, `WORLD17` | (240, 11); (240, 10) | 240 |
+| `WORLD18`, `WORLD19`, `WORLD20` | (224, 10) | 234 |
+| `WORLD21` | (224, 10) | 235 |
+| `WORLD22`, `WORLD23` | (240, 15); (240, 10) | 246; 247 |
+
+Where a row names two files and two values, the first value is the first file's.
+
 ## The load
 
 `World_LoadTheater` (`000251c4`, callee-cleaned) follows [ES2's load](../../retail/formats/wld-world.md#the-load) with these differences:
@@ -67,7 +100,7 @@ ES2's shorts 12 and 13, which ES2 reads and does not use, have no place in ES1's
 6. It reads each string a byte at a time, without a bound, into a 12-byte stack buffer, the first four into one and the fifth into another; the longest retail string is 8 characters. The first, when not empty, goes to `Hzline_LoadBitmapBank` (`00026dc8`), which loads `dba\<name>` into the `hzline`'s `+0x50`, where ES2's copy of the function, which `es2_xref.py` finds no caller of, would put it ([ES2's horizon strip](../../retail/rendering/distance-fog-and-sky.md#open)); ES1 draws it as the [horizon skyline](../rendering/ground-and-sky.md#the-horizon-skyline). The second, when not empty, [builds the clouds](#the-clouds). The third, when not empty, loads `dpl\<name>` with `Palette_LoadDpl` into `ImpactPaletteObject` (`000928f0`), as ES2's does. The fourth and fifth go to [the ground texture](../rendering/ground-and-sky.md#loading-the-ground-texture).
 7. When the number of points is not 0 it [builds the points](#the-scattered-points).
 8. It closes the file and reads `cyc\world<N>` as ES2's load does, into `000928e4`, the count at `000928e8`, through `PaletteCycle_Register` (`000281cc`), whose five slots' due times are the dword at `000981c4` plus the record's `int16` at `+4`, where ES2's take `Time_GetCoarseTicks`. Its records step 12 bytes through 6 × count bytes, as ES2's do.
-9. It loads `dat\shades` with `World_LoadShades` (`00025bc8`), ES2's.
+9. It loads `dat\shades` with `World_LoadShades` (`00025bc8`), ES2's ([the shades file](../rendering/polygon-shading.md#the-shades-file)).
 10. It calls `GndTex_Load` (`00028de8`) ([loading the ground texture](../rendering/ground-and-sky.md#loading-the-ground-texture)) and then `FlatObj_LoadResources` (`00006cf8`) with `World_FlatSetSelector`.
 
 It reads no `rmp\world<N>`, and calls neither `Terrain_BindTextureBank` nor `Raster_SetShadeRampDimensions`. A string or count that is empty or 0 leaves the pointer it would set as it was.

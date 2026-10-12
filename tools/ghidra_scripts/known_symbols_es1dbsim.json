@@ -32,6 +32,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "000003ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Camera_IsMountedOn",
+      "description": "(camera, object) in stack order: 1 when the camera's int16 +0x36 is 2 and its +0x32 is the object, otherwise 0. ObjList_DrawFrameObjects (00021008) leaves such an object out of the frame's draw; Sim_StartMission (0005a9dc) sets its main camera's +0x36 to 2.",
+      "source": "ES1DBSIM decompile at 000003ac",
+      "verified": {
+        "bytes": "000003ac+36",
+        "sha1": "62937ccac1bc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00000ac4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -332,6 +347,15 @@
       }
     },
     {
+      "address": "000018e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZero",
+      "description": "(object), callee-cleaned (RET 4), frameless: returns 0. Slot +0x10 of TS_OBJ's vtable 000902ea, MAT_OBJ's 000902ca and three others. No Ghidra function.",
+      "source": "ES1DBSIM disassembly at 000018e8"
+    },
+    {
       "address": "00001b04",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -342,6 +366,66 @@
       "verified": {
         "bytes": "00001b04+406",
         "sha1": "e3bc1cbe20fb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001c9c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_GetPosition",
+      "description": "(object): returns object + 0x20, the translation of the orientation block at +6. Slot +8 of MAT_OBJ's vtable 000902ca.",
+      "source": "ES1DBSIM decompile at 00001c9c",
+      "verified": {
+        "bytes": "00001c9c+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001cdc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_Render",
+      "description": "(object): TS_OBJ's draw, slot +4 of its vtable 000902ea: SimObject_InstallModelTransform (00001854)(object), then slot +0x20 of the shape instance at +0x2e. TSObj_RenderCopy (00020550) is the same code.",
+      "source": "ES1DBSIM decompile at 00001cdc; es2_naming diff against 00020550, identical",
+      "verified": {
+        "bytes": "00001cdc+31",
+        "sha1": "cb1435d1effa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001cfc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPosition",
+      "description": "(object): returns object + 0x20, the translation of the orientation block at +6. Slot +8 of TS_OBJ's vtable 000902ea.",
+      "source": "ES1DBSIM decompile at 00001cfc",
+      "verified": {
+        "bytes": "00001cfc+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001d58",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadius",
+      "description": "(object): the int16 at +8 of the shape (+4) of the shape instance at +0x2e, sign-extended; 0 when there is no instance or no shape. Slot +0x14 of TS_OBJ's vtable 000902ea, the radius WorldShades_DistanceBand and ObjList_DrawFrameObjects read.",
+      "source": "ES1DBSIM decompile at 00001d58",
+      "verified": {
+        "bytes": "00001d58+71",
+        "sha1": "81f34db4094a",
         "scope": "body",
         "via": "decompile"
       }
@@ -1172,6 +1256,219 @@
       }
     },
     {
+      "address": "00020550",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_RenderCopy",
+      "description": "(object): the terrain.cpp copy of TSObj_Render (00001cdc), the same code: slot +4 of the zone shape vtable 000924be and of TS_OBJ's copy 000924fa.",
+      "source": "ES1DBSIM decompile at 00020550; es2_naming diff against 00001cdc, identical",
+      "verified": {
+        "bytes": "00020550+31",
+        "sha1": "68e37b6c3228",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020570",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionCopy",
+      "description": "(object): returns object + 0x20, the terrain.cpp copy of TSObj_GetPosition (00001cfc): slot +8 of vtables 000924be and 000924fa.",
+      "source": "ES1DBSIM decompile at 00020570",
+      "verified": {
+        "bytes": "00020570+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020584",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ZoneShapeObj_Dtor",
+      "description": "(object, flags) in stack order: the zone shape object's destructor, slot +0xc of its vtable 000924be. With the object non-null: stores the vptrs 000924be and 000924fa at +2, calls slot +0x1c of the shape instance at +0x2e with 3 when there is one, stores 0009251a and 0009253a, and operator_delete's the object when bit 0 of flags is set.",
+      "source": "ES1DBSIM decompile at 00020584",
+      "verified": {
+        "bytes": "00020584+79",
+        "sha1": "071375d4f114",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000205d3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroCopy",
+      "description": "(object), callee-cleaned (RET 4), frameless: returns 0; a NOP, then the code of TSObj_ReturnZero (000018e8). Slot +0x10 of vtables 000924be, 000924fa and 0009251a. No Ghidra function.",
+      "source": "ES1DBSIM disassembly at 000205d3"
+    },
+    {
+      "address": "000205dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusCopy",
+      "description": "(object): the terrain.cpp copy of TSObj_GetRadius (00001d58), the same code: slot +0x14 of vtables 000924be and 000924fa.",
+      "source": "ES1DBSIM decompile at 000205dc, against 00001d58",
+      "verified": {
+        "bytes": "000205dc+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020624",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_DtorCopy",
+      "description": "(object, flags) in stack order: the destructor of 000924fa, TS_OBJ's terrain.cpp vtable copy: with the object non-null stores 000924fa at +2, calls slot +0x1c of the shape instance at +0x2e with 3 when there is one, stores 0009251a and 0009253a, and operator_delete's the object when bit 0 of flags is set. ZoneShapeObj_Dtor (00020584) without its first store.",
+      "source": "ES1DBSIM decompile at 00020624",
+      "verified": {
+        "bytes": "00020624+72",
+        "sha1": "0a64c9c7dd16",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002066c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_GetPositionCopy",
+      "description": "(object): returns object + 0x20, the terrain.cpp copy of MatObj_GetPosition (00001c9c): slot +8 of vtable 0009251a.",
+      "source": "ES1DBSIM decompile at 0002066c",
+      "verified": {
+        "bytes": "0002066c+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020680",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_DtorCopy",
+      "description": "(object, flags) in stack order: the destructor of vtable 0009251a: with the object non-null stores 0009251a and 0009253a at +2 and operator_delete's the object when bit 0 of flags is set.",
+      "source": "ES1DBSIM decompile at 00020680",
+      "verified": {
+        "bytes": "00020680+42",
+        "sha1": "fe21aebf6709",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000206c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ZoneShapeObj_TransformBox",
+      "description": "(object, out) in stack order: with the zone shape's record pointer +0x3b null returns 0; otherwise puts the record's two int32 points at +0 and +0xc through the object's transform (Context_GetTransform of +6, Transform_ApplyToPoint) into out and out + 0xc, and returns out.",
+      "source": "ES1DBSIM decompile at 000206c8",
+      "verified": {
+        "bytes": "000206c8+111",
+        "sha1": "0c0be57b98d1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020738",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ZoneShapeObj_WorldBox",
+      "description": "(object): sets 000afa24 to 1 when it is 0, then returns ZoneShapeObj_TransformBox (000206c8)(object, 000afa28): the zone shape's two record points in world space in a static 24-byte buffer, or 0. ObjList_DrawFrameObjects copies the box into an entry for an object below 000bc596.",
+      "source": "ES1DBSIM decompile at 00020738",
+      "verified": {
+        "bytes": "00020738+35",
+        "sha1": "8f3b7a2c5b2f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020c2c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_Init",
+      "description": "(): allocates the object list's arrays: 0x800 bytes (512 pointers) each at 000bc58e and 000bc592, 0x200 entries of 0x36 bytes at 000bc598 through __vec_new with the padding entry 00020c7f of ObjListEntry_Ctor (00020c80), 0x800 bytes at 000bc59c, and ObjList_AllocSortNodes (00021560)(0x200). No Ghidra function; es2_xref.py finds its address only as the dword at 00021519.",
+      "source": "ES1DBSIM capstone disassembly 00020c2c-00020c7e; es2_xref.py --binary ES1DBSIM 00020c2c"
+    },
+    {
+      "address": "00020c80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjListEntry_Ctor",
+      "description": "(entry): a 0x36-byte draw entry, allocated when entry is null (0 when that fails): the members at +0, +0x18 and +0x24 have constructor code that stores nothing, and the vptr 0009255e, whose slot +4 is ObjList_DrawEntryRender (00020f40), goes to +0x14. Returns the entry.",
+      "source": "ES1DBSIM decompile at 00020c80",
+      "verified": {
+        "bytes": "00020c80+166",
+        "sha1": "5e3237c941a0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020d5c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_Add",
+      "description": "(object): stores the object at entry 00092558 (int16) of the pointer array 000bc58e and increments 00092558, with no bound.",
+      "source": "ES1DBSIM decompile at 00020d5c",
+      "verified": {
+        "bytes": "00020d5c+40",
+        "sha1": "9639392ba2fb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020d84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_Remove",
+      "description": "(object): finds the object among the 00092558 entries of 000bc58e, decrements 00092558 and moves the last entry into its place. es2_xref.py finds no reference to it.",
+      "source": "ES1DBSIM decompile at 00020d84; es2_xref.py --binary ES1DBSIM 00020d84",
+      "verified": {
+        "bytes": "00020d84+91",
+        "sha1": "b336ffe76dc1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020de0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_RebuildFrame",
+      "description": "(): Sim_RenderFrame's per-frame rebuild of the object list: sets 00092558 back to 000bc596, the zone shapes Sim_StartMission added, then ObjList_Add (00020d5c)s each object of the array 000bc416 (count 000bc41c, stopping at a null) whose type record (+0x3f) has a zero int32 at +0x16, then every element of the pools 000af0b4, g_ExplosionPool, 000aeef8 and 000aef68, each walked with Pool_Prev from the end.",
+      "source": "ES1DBSIM decompile at 00020de0",
+      "verified": {
+        "bytes": "00020de0+351",
+        "sha1": "69fdf9da0b93",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00020f40",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1192,11 +1489,131 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_DrawFrameObjects",
-      "description": "(blend, eye) in stack order, callee-cleaned: calls slot +4 of each element of the ground-shape pool 000af044 within 30000 of eye (Math_DistanceBetweenPoints, walked with Pool_Prev); stores blend at 000afa98; for each of the 00092558 objects at 000bc58e that 000003ac(eye, object) returns 0 for and whose slot +8 block has a non-negative int32 +8, fills a 0x36-byte entry (position, slot +0x14 value at +0xc, distance +0xe, object +0x32, +0x12 = 0, or 2 with 00020738's 24 bytes at +0x18 for objects among the first 000bc596) and lists it at 000bc59c unless WorldShades_IsBeyondLastBand (00025f38) is true; then 00021554(eye) and 00021d04(count, list). Sim_RenderFrame passes the byte 000b5b65, 000364f8 passes 0.",
+      "description": "(blend, eye) in stack order, callee-cleaned: calls slot +4 of each element of the ground-shape pool 000af044 within 30000 of eye (Math_DistanceBetweenPoints, walked with Pool_Prev); stores blend at 000afa98; for each of the 00092558 objects at 000bc58e that Camera_IsMountedOn (000003ac)(eye, object) returns 0 for and whose slot +8 block has a non-negative int32 +8, fills a 0x36-byte entry (position, slot +0x14 value at +0xc, distance +0xe, object +0x32, +0x12 = 0, or 2 with ZoneShapeObj_WorldBox (00020738)'s 24 bytes at +0x18 for objects among the first 000bc596) and lists it at 000bc59c unless WorldShades_IsBeyondLastBand (00025f38) is true; then ObjList_SetSortEye (00021554)(eye) and ObjList_SortAndDraw (00021d04)(count, list). Sim_RenderFrame passes the byte 000b5b65, 000364f8 passes 0.",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#which-objects-are-drawn",
       "verified": {
         "bytes": "00021008+593",
         "sha1": "ea65fd4147f4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021554",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_SetSortEye",
+      "description": "(camera): stores the camera at 0009256c, before ObjList_SortAndDraw (00021d04) in ObjList_DrawFrameObjects (00021008).",
+      "source": "ES1DBSIM decompile at 00021554",
+      "verified": {
+        "bytes": "00021554+12",
+        "sha1": "116bd084a3cf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021560",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_AllocSortNodes",
+      "description": "(count): __vec_new of count 0x1d-byte sort nodes, element constructor at the padding entry 0002157f, stored at 00092570. ObjList_Init passes 0x200.",
+      "source": "ES1DBSIM decompile at 00021560",
+      "verified": {
+        "bytes": "00021560+31",
+        "sha1": "28d0b03959dc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021b20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_EntryCompare",
+      "description": "(node, other) in stack order, sort nodes whose +8 is a draw entry: when both entries' int16 +0x12 is 1 or 2, returns 00021a4c(node, other); when both are 0, returns whether node's entry is nearer (int32 distance +0xe less than other's); otherwise returns 000216c4(1, node, other). Non-zero sends ObjList_TreeInsert (00021ba8) right.",
+      "source": "ES1DBSIM decompile at 00021b20",
+      "verified": {
+        "bytes": "00021b20+133",
+        "sha1": "9159b822e3eb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021ba8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_TreeInsert",
+      "description": "(node, at) in stack order: inserts the sort node under at, recursively through the padding entry 00021ba5: right (+4) when ObjList_EntryCompare (00021b20)(node, at) is non-zero, left (+0) otherwise, into the first empty link.",
+      "source": "ES1DBSIM decompile at 00021ba8",
+      "verified": {
+        "bytes": "00021ba8+68",
+        "sha1": "1b532f9c33aa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021bec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_TreeInsertBoxed",
+      "description": "(count, entries) in stack order: for each draw entry with 1 or 2 in its int16 +0x12, in order, fills the next 0x1d-byte sort node from 00092570 ({0, 0, entry, byte 0}) and, but for the first, which is the root, ObjList_TreeInsert (00021ba8)s it under the root. Returns the next free node.",
+      "source": "ES1DBSIM decompile at 00021bec",
+      "verified": {
+        "bytes": "00021bec+113",
+        "sha1": "17c647edeef5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021c60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_TreeInsertRest",
+      "description": "(node, count, entries) in stack order: ObjList_TreeInsertBoxed (00021bec) for the draw entries whose int16 +0x12 is neither 1 nor 2, from the free node it is given, without clearing the node's byte +0xc.",
+      "source": "ES1DBSIM decompile at 00021c60",
+      "verified": {
+        "bytes": "00021c60+111",
+        "sha1": "013914207279",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021cd0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_TreeDraw",
+      "description": "(node): draws the sort tree in order, recursively through the padding entry 00021ccf: the left subtree (+0), then slot +4 of the vptr at +0x14 of the node's entry (+8), ObjList_DrawEntryRender, then the right subtree (+4).",
+      "source": "ES1DBSIM decompile at 00021cd0",
+      "verified": {
+        "bytes": "00021cd0+51",
+        "sha1": "9f874d14cc20",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021d04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_SortAndDraw",
+      "description": "(count, entries) in stack order: nothing for a count of 0; otherwise ObjList_TreeInsertBoxed (00021bec), ObjList_TreeInsertRest (00021c60) from the node it returns, and ObjList_TreeDraw (00021cd0) from the root 00092570.",
+      "source": "ES1DBSIM decompile at 00021d04",
+      "verified": {
+        "bytes": "00021d04+52",
+        "sha1": "5f2152a54df9",
         "scope": "body",
         "via": "decompile"
       }
@@ -1207,7 +1624,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_Publish",
-      "description": "(manager), frameless, callee-cleaned: stores its argument in CockpitViewManagerPublished (000bc5a0). 0005a9dc passes the dword at 000b5b60. ES2's CockpitViewManager_Publish (DBSIM 00429810).",
+      "description": "(manager), frameless, callee-cleaned: stores its argument in CockpitViewManagerPublished (000bc5a0). Sim_StartMission (0005a9dc) passes the dword at 000b5b60. ES2's CockpitViewManager_Publish (DBSIM 00429810).",
       "source": "ES1DBSIM disassembly at 00021f8c",
       "verified": {
         "bytes": "00021f8c+12",
@@ -2842,7 +3259,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolumeGroup_SetBufferSize",
-      "description": "(size), callee-cleaned: stores max(size, 0x80) in VolumeGroup_BufferSize (0009680c). es2_xref finds one call, from main (00059350), with 0x200 just before main calls VolRStream_SetGroup; when that call makes the group, VolumeGroup_Ctor stores 0x400 over it before any volume is loaded. ES2's VolumeGroup_SetBufferSize (DBSIM 00467b30).",
+      "description": "(size), callee-cleaned: stores max(size, 0x80) in VolumeGroup_BufferSize (0009680c). es2_xref finds one call, from main (Sim_Main (00059350)), with 0x200 just before main calls VolRStream_SetGroup; when that call makes the group, VolumeGroup_Ctor stores 0x400 over it before any volume is loaded. ES2's VolumeGroup_SetBufferSize (DBSIM 00467b30).",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
       "verified": {
         "bytes": "00056238+26",
@@ -3292,8 +3709,23 @@
       "type": "function",
       "confidence": "high",
       "name": "Path_ApplyAltDrive",
-      "description": "(path), callee-cleaned: copies the prefix at 000b5d9c into the buffer 000b5da0, appends path less a leading drive (a ':' at path[1]), and returns the buffer. main (00059350) copies into the prefix the ALT_DRIVE environment value when PREFER_ALT is set and the empty string otherwise, discarding the ALT_DRIVE value while 000b5bce is 0. The files built with it include data\\results.dat, data\\mission.var and data\\mem.got.",
+      "description": "(path), callee-cleaned: copies the prefix at 000b5d9c into the buffer 000b5da0, appends path less a leading drive (a ':' at path[1]), and returns the buffer. main (Sim_Main (00059350)) copies into the prefix the ALT_DRIVE environment value when PREFER_ALT is set and the empty string otherwise, discarding the ALT_DRIVE value while 000b5bce is 0. The files built with it include data\\results.dat, data\\mission.var and data\\mem.got.",
       "source": "ES1DBSIM decompile at 000592a4 and 00059350"
+    },
+    {
+      "address": "00059350",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_Main",
+      "description": "(a, b), main.cpp: the simulator's main. Mem_InitHeap(6000000), asserting at severity 5 (line 0xe3) when it gives 100000 bytes or fewer; 00058e30(b, a); copies to 000b5d9c, for 00056ecc, the ALT_DRIVE variable (taken as null unless 000b5bce is set) when PREFER_ALT is set and the string at 00096f6a otherwise; writes the heap size (4 bytes) to data\\mem_got and an int16 0 to data\\exit_cfg, asserting (lines 0xf1, 0xf9) when either does not open; 00058e74(b, a). With 000b5bc4 clear it closes the files at 000b5b82 and 000b5b7e, Mem_HeapOff, prints 'To play EarthSiege, type ES' and exits with 1. Otherwise Subsystem_RunPhase(0), VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 00096fde, 1), Subsystem_RunPhase(1); an assert (line 0x136) when the heap is under 0x26e8f0 bytes, g_LowMemory set when under 0x3c45b0; Sim_StartMission (0005a9dc), Subsystem_RunPhase(3); then each frame Subsystem_RunPhase(4), 00058574, 00063f40 while 000b5b76 is 0, leaving when 000b5bd2 or 00059700() is non-zero, else 000004b8(000b5b8a), Sim_RenderFrame unless 000b5b76 and 000b5b92 are both set, 00059b40 and Subsystem_RunPhase(6). After the loop 0005b568, Mem_HeapOff, and with 000b5bc4 set and 000b5b9e clear, bit 0 of the byte 000b5b5c points at cleared.",
+      "source": "ES1DBSIM decompile at 00059350",
+      "verified": {
+        "bytes": "00059350+773",
+        "sha1": "d309dd9ad035",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00059c08",
@@ -3301,7 +3733,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RenderFrame",
-      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; 00020de0(); 0002cf28(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view 000b5b8a), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); 000155a8(000b5b86); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
+      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; ObjList_RebuildFrame (00020de0)(); 0002cf28(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view 000b5b8a), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); 000155a8(000b5b86); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
       "source": "ES1DBSIM decompile at 00059c08, against ES2's Sim_RenderFrame",
       "verified": {
         "bytes": "00059c08+280",
@@ -3309,6 +3741,15 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "0005a9dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_StartMission",
+      "description": "(): the mission start Sim_Main (00059350) calls once. Among its steps: Subsystem_RunPhase(2), DBSim_LoadScriptDat, then ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; 000441cc, 00063e64, 0001e638; deletes every element of g_ExplosionPool and of 000aeef8; 0005a888; stores the object count 00092558 at 000bc596, the list prefix ObjList_RebuildFrame keeps; takes as the player 000b5b86 the last element of pool 000af68c with byte +0x9d set; builds a 0x4a-byte TSCamera per int16 +0x12 of its type record into 000bda9e and the main camera 000b5b8a, whose +0x36 it sets to 2; draws a first frame with Sim_RenderFrame after Palette_BlendRangeByPitch with step 8 unless an element of pool 000aed70 with a zero type-record byte +0x14 lies within 40000 of the player, when it calls 00057cf4 instead. Its sound-driver, preferences, canvas and cockpit set-up go through unnamed callees.",
+      "source": "ES1DBSIM decompile at 0005a9dc"
     },
     {
       "address": "0005b68c",
@@ -7813,7 +8254,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Region_RestoreRect",
-      "description": "(region, point, buffer), C convention: wraps buffer in a stack bitmap header the size of the region's rect (format 8, flags 0x10) and draws it at point with 0006a8e0. ES2's Region_RestoreRect (DBSIM 00487f6c).",
+      "description": "(region, point, buffer), C convention: wraps buffer in a stack bitmap header the size of the region's rect (format 8, flags 0x10) and draws it at point with Raster_BlitDispatch (0006a8e0). ES2's Region_RestoreRect (DBSIM 00487f6c).",
       "source": "ES1DBSIM decompile at 00066354, against ES2's Region_RestoreRect",
       "verified": {
         "bytes": "00066354+68",
@@ -7972,7 +8413,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Bitmap_Blit",
-      "description": "(bitmap, flags, point) in stack order, callee-cleaned: draws a bitmap object's data (+4) at point with 0006a8e0(data, point, flags). A packed bitmap (+0x12 non-zero) is first unpacked by 000672cc into Bitmap_UnpackScratch (000bdbe2), which stands in for the data pointer +0xe, with the unpacked size in +0xa, during the draw; afterwards both fields are put back and the scratch buffer is deleted unless Bitmap_UseCallerScratch (000bdbde) is set. ES2's Bitmap_Blit (DBSIM 0048159c), which reaches the clip dispatcher through GL_Blit.",
+      "description": "(bitmap, flags, point) in stack order, callee-cleaned: draws a bitmap object's data (+4) at point with Raster_BlitDispatch (0006a8e0)(data, point, flags). A packed bitmap (+0x12 non-zero) is first unpacked by 000672cc into Bitmap_UnpackScratch (000bdbe2), which stands in for the data pointer +0xe, with the unpacked size in +0xa, during the draw; afterwards both fields are put back and the scratch buffer is deleted unless Bitmap_UseCallerScratch (000bdbde) is set. ES2's Bitmap_Blit (DBSIM 0048159c), which reaches the clip dispatcher through GL_Blit.",
       "source": "ES1DBSIM decompile at 00067048, against ES2's Bitmap_Blit",
       "verified": {
         "bytes": "00067048+147",
@@ -8220,6 +8661,36 @@
       "verified": {
         "bytes": "0006a2cc+125",
         "sha1": "32fe11a9aa4b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006a714",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_DriverByName",
+      "description": "(unused, name) in stack order: the display driver number for a name, matching it whole against the table 0009b4e4: VGA_8 1, VGA_4 0, BMP_8 3; 4, the table's end, for any other name.",
+      "source": "ES1DBSIM decompile at 0006a714; image dwords 0009b4e4-0009b4fc",
+      "verified": {
+        "bytes": "0006a714+107",
+        "sha1": "21986cc65e05",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006a8e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_BlitDispatch",
+      "description": "(header, point, flags) in stack order: draws a bitmap at point on the canvas 00098d64, the point moved by the canvas's +0x20c/+0x210 less +0x21c/+0x220 when its +0x208 is 1. A bitmap of type 1 (low four bits of header byte +5) goes to 0007d66c; otherwise, by the canvas's +0x204: 0 the driver blit at 0009df3c(header, point, 0, flags), 1, or 2 with a positive canvas +0, the driver's clipped blit at 0009df44(header, point, canvas + 0x20c, flags). The point Bitmap_Blit (00067048) draws through.",
+      "source": "ES1DBSIM decompile at 0006a8e0",
+      "verified": {
+        "bytes": "0006a8e0+246",
+        "sha1": "3547737f935c",
         "scope": "body",
         "via": "decompile"
       }
@@ -8541,6 +9012,36 @@
       "name": "strchr",
       "description": "Symantec C++ runtime `strchr`, from `strings.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 39 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "00073234",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FindDriverTable",
+      "description": "(number in EAX), asm: walks the {number, table} pairs at 0009df68 and returns the table whose number matches, or the first negative number, the list's end: drivers 0 (000a7ae0), 1 (000a7b70) and 3 (000a7c00).",
+      "source": "ES1DBSIM disassembly at 00073234; image dwords at 0009df68",
+      "verified": {
+        "bytes": "00073234+26",
+        "sha1": "c2110e12983f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007324e",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_InstallDriverTable",
+      "description": "(number), C convention: Raster_FindDriverTable (00073234)(number); for -1 returns 0, otherwise copies the 0009df64 dwords (0x24 in the image) of the table to 0009ded4 with REP MOVSD and returns 1. The copy fills the raster's routine slots (0009df08, 0009df3c, 0009df44, 0009df58 among them), all 0 in the image.",
+      "source": "ES1DBSIM disassembly at 0007324e; image dwords 0009ded4-0009df64",
+      "verified": {
+        "bytes": "0007324e+55",
+        "sha1": "44b1b8309bd5",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000734a0",
@@ -10076,6 +10577,24 @@
       }
     },
     {
+      "address": "0008b9a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BlitBitmap",
+      "description": "(header, point, clip, flags) in stack order: the VGA_8 driver's bitmap blit, its table's +0x68: clips the bitmap's rows (+0) and columns (+2) against clip when clip is non-null, mirrors by flags bits 1 and 2, and writes the bytes to display memory through the sequencer's map mask (ports 3c4/3c5) a plane at a time. With header byte +5's bit 4 set every byte is written; with it clear a 0 byte is skipped, leaving the pixel.",
+      "source": "ES1DBSIM disassembly at 0008b9a8 (head, clip, flag tests and copy loops)"
+    },
+    {
+      "address": "0008d700",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BMP8_BlitBitmap",
+      "description": "The BMP_8 driver's bitmap blit, its table's +0x68: copies the bitmap's rows into the canvas bitmap, by flag bits 1 and 2 in one of four orders (cases 0-3). With header byte +5's bit 4 set each row goes by REP MOVSD/MOVSB, or byte by byte when mirrored; with it clear each 0 byte is skipped, leaving the destination. The clipped blit 0008dc3c calls it.",
+      "source": "ES1DBSIM disassembly at 0008d700 (the case blocks and copy loops)"
+    },
+    {
       "address": "0008f858",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -10675,7 +11194,7 @@
       "type": "data",
       "confidence": "high",
       "name": "g_LowMemory",
-      "description": "int16: set to 1 at 000595b1 in 00059350 when the heap Mem_InitHeap (00001524) returns is under 0x3c45b0 bytes; a search of the disassembly dump for the address finds that store and 14 compares. When it is set Mech_LoadResources (000198f0) loads no texture banks and MechType_InitOne (00019cf0) skips record +0x48's count of shape roots.",
+      "description": "int16: set to 1 at 000595b1 in Sim_Main (00059350) when the heap Mem_InitHeap (00001524) returns is under 0x3c45b0 bytes; a search of the disassembly dump for the address finds that store and 14 compares. When it is set Mech_LoadResources (000198f0) loads no texture banks and MechType_InitOne (00019cf0) skips record +0x48's count of shape roots.",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#low-memory"
     },
     {

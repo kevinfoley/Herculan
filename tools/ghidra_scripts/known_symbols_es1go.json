@@ -3185,12 +3185,42 @@
       }
     },
     {
+      "address": "0004fac4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FindDriverTable",
+      "description": "(number in EAX), asm: walks the {number, table} pairs at 00086644 and returns the table whose number matches, or the first negative number, the list's end: drivers 0 (0008b260), 1 (0008b2f0) and 3 (0008b380). The code of ES1DBSIM's Raster_FindDriverTable (00073234), relocated operands aside.",
+      "source": "ES1GO decompile at 0004fac4; es2_naming diff against ES1DBSIM 00073234, identical; image dwords at 00086644",
+      "verified": {
+        "bytes": "0004fac4+26",
+        "sha1": "9d261161b308",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004fade",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_InstallDriverTable",
+      "description": "(number), C convention: Raster_FindDriverTable (0004fac4)(number); for -1 returns 0, otherwise copies the 00086640 dwords (0x24 in the image) of the table to 000865b0 with REP MOVSD and returns 1. The routine slots there, 00086620 among them, are all 0 in the image. The code of ES1DBSIM's Raster_InstallDriverTable (0007324e), relocated operands aside.",
+      "source": "ES1GO disassembly at 0004fade; es2_naming diff against ES1DBSIM 0007324e; image dwords 000865b0-00086640",
+      "verified": {
+        "bytes": "0004fade+55",
+        "sha1": "51136f65381f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "000502c0",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Bitmap_Blit",
-      "description": "(bitmap, flags, point) in stack order, callee-cleaned: draws a bitmap object's data (+4) at point with 0005ae18(data, point, flags). A packed bitmap (+0x12 non-zero) is first unpacked by 00050544 into Bitmap_UnpackScratch (000ab60e), which stands in for the data pointer +0xe, with the unpacked size in +0xa, during the draw; afterwards both fields are put back and the scratch buffer is deleted unless Bitmap_UseCallerScratch (000ab60a) is set. The code of ES1DBSIM's Bitmap_Blit (00067048), relocated operands aside.",
+      "description": "(bitmap, flags, point) in stack order, callee-cleaned: draws a bitmap object's data (+4) at point with Raster_BlitDispatch (0005ae18)(data, point, flags). A packed bitmap (+0x12 non-zero) is first unpacked by 00050544 into Bitmap_UnpackScratch (000ab60e), which stands in for the data pointer +0xe, with the unpacked size in +0xa, during the draw; afterwards both fields are put back and the scratch buffer is deleted unless Bitmap_UseCallerScratch (000ab60a) is set. The code of ES1DBSIM's Bitmap_Blit (00067048), relocated operands aside.",
       "source": "ES1GO decompile at 000502c0",
       "verified": {
         "bytes": "000502c0+147",
@@ -3310,7 +3340,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Region_RestoreRect",
-      "description": "(region, point, buffer), C convention: wraps buffer in a stack bitmap header the size of the region's rect (format 8, flags 0x10) and draws it at point with 0005ae18. The code of ES1DBSIM's Region_RestoreRect (00066354), relocated operands aside.",
+      "description": "(region, point, buffer), C convention: wraps buffer in a stack bitmap header the size of the region's rect (format 8, flags 0x10) and draws it at point with Raster_BlitDispatch (0005ae18). The code of ES1DBSIM's Region_RestoreRect (00066354), relocated operands aside.",
       "source": "ES1GO decompile at 00050824",
       "verified": {
         "bytes": "00050824+68",
@@ -6008,6 +6038,21 @@
       }
     },
     {
+      "address": "0005a678",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_DriverByName",
+      "description": "(unused, name) in stack order: the display driver number for a name, matched whole against the table 00088738 (numbers from 00088744): VGA_8 1, VGA_4 0, BMP_8 3, and 4 for any other. The same statements as ES1DBSIM's Raster_DriverByName (0006a714) in different code.",
+      "source": "ES1GO decompile at 0005a678; es2_naming diff against ES1DBSIM 0006a714, locals only",
+      "verified": {
+        "bytes": "0005a678+107",
+        "sha1": "263d05361711",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005a8e8",
       "binary": "ES1GO",
       "type": "function",
@@ -6264,6 +6309,21 @@
       "name": "toupper",
       "description": "Symantec C++ runtime `toupper`, from `is.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 24 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0005ae18",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_BlitDispatch",
+      "description": "(header, point, flags) in stack order: draws a bitmap at point on the canvas 0008441c, the point moved by the canvas's +0x20c/+0x210 less +0x21c/+0x220 when its +0x208 is 1. A bitmap of type 1 (low four bits of header byte +5) goes to 0006b664; otherwise, by the canvas's +0x204, the driver's clipped blit at 00086620 (its table's +0x70): (header, point, 0, flags) for 0, (header, point, canvas + 0x20c, flags) for 1, or 2 with a positive canvas +0. ES1DBSIM's Raster_BlitDispatch (0006a8e0) calls the table's +0x68 blit for 0. Bitmap_Blit (000502c0) draws through it.",
+      "source": "ES1GO disassembly at 0005ae18 (three CALL [00086620]); against ES1DBSIM 0006a8e0",
+      "verified": {
+        "bytes": "0005ae18+246",
+        "sha1": "64e37ff26b1c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0005b0e4",
@@ -8946,6 +9006,21 @@
       "verified": {
         "bytes": "0006ff38+335",
         "sha1": "81314b3bdcb0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000764bc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BMP8_BlitBitmap",
+      "description": "The BMP_8 driver's bitmap blit, its table's (0008b380) +0x68: copies the bitmap's rows into the canvas bitmap, by flag bits 1 and 2 in one of four orders. With header byte +5's bit 4 set each row is copied whole, or byte by byte when mirrored; with it clear each 0 byte is skipped, leaving the destination. es2_xref.py finds three calls from 000769f8. The same statements as ES1DBSIM's BMP8_BlitBitmap (0008d700) in different code.",
+      "source": "ES1GO decompile at 000764bc; es2_naming diff against ES1DBSIM 0008d700, labels only",
+      "verified": {
+        "bytes": "000764bc+712",
+        "sha1": "5768d8bb73c0",
         "scope": "body",
         "via": "decompile"
       }
