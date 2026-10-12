@@ -636,7 +636,7 @@ public sealed partial class MechObject {
 	/// <para><b>A component with no anchor answers the machine's own origin</b>, which is at its
 	/// feet. That is the original's first branch, not a fallback invented here, and it is what most
 	/// of a HERC gets: a mech <c>.COL</c> names between six and sixteen of the 29 slots, so every
-	/// internal and — on most chassis — the shoulders are measured from the ground under the machine
+	/// internal and — on most chassis — the weapon brackets are measured from the ground under the machine
 	/// rather than from anywhere near where they are. A blast at head height reaches those parts less
 	/// readily than the geometry would suggest.</para>
 	/// </summary>

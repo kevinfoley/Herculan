@@ -5369,9 +5369,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ApplySquadCondition",
-      "description": "Writes a player-squad machine's carried-over condition into its damage arrays at spawn; DBSim_SpawnMissionObjects' squad branch is the only caller (004258de), after Mech_ConfigureLoadout. Arguments are the damage header at mech+0x206 and the 0x7e-byte squad record's three player.mec condition spans: +0x3c external (13), +0x56 internal (10), +0x6a hardpoint (10), each 0-100. Each entry becomes damage (100 - condition) * maximum / 100: components 0-12 against the piece's armour, components 13-18 zeroed; internals 0-8 against their maxima, internal 9 (pilot) and 10-11 zeroed, so the internal span's tenth entry (overall condition) is not read; components 19-28 against the mount's armour plus the maximum of internal 12+i, and past the armour the mount is written -1 and the rest goes to that internal (-1 past its maximum). Internals 12-21 have maximum 0 in retail, so a mount simply takes its share of its own armour. Writes only through the header's two array pointers.",
+      "description": "Writes a player-squad machine's carried-over condition into its damage arrays at spawn; es2_xref finds one caller, DBSim_SpawnMissionObjects' squad branch (004258de), after Mech_ConfigureLoadout. Components 0-12 take the external entries one for one, entry n against component n's armour. Arguments are the damage header at mech+0x206 and the 0x7e-byte squad record's three player.mec condition spans: +0x3c external (13), +0x56 internal (10), +0x6a hardpoint (10), each 0-100. Each entry becomes damage (100 - condition) * maximum / 100: components 0-12 against the piece's armour, components 13-18 zeroed; internals 0-8 against their maxima, internal 9 (pilot) and 10-11 zeroed, so the internal span's tenth entry (overall condition) is not read; components 19-28 against the mount's armour plus the maximum of internal 12+i, and past the armour the mount is written -1 and the rest goes to that internal (-1 past its maximum). Internals 12-21 have maximum 0 in retail, so a mount simply takes its share of its own armour. Writes only through the header's two array pointers.",
       "source": "docs/retail/simulation/component-damage.md",
-      "signature": "void __cdecl Mech_ApplySquadCondition(void *damageHeader, short *externalConditions, short *internalConditions, short *hardpointConditions)"
+      "signature": "void __cdecl Mech_ApplySquadCondition(void *damageHeader, short *externalConditions, short *internalConditions, short *hardpointConditions)",
+      "verified": {
+        "bytes": "00415068+314",
+        "sha1": "8e25e3c023ec",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004151a4",

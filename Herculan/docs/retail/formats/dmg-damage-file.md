@@ -39,29 +39,31 @@ piece = 8 bytes, then dependentCount * 4 bytes of dependent list
 | 3 | With bit 1 clear, the component's own fire, shape 2 — [`destruction-effects.md`](../simulation/destruction-effects.md#who-catches-fire) |
 | 2 | The piece's explosion is type `0x11` rather than 10, and sets the cascade's latch — [`destruction-effects.md`](../simulation/destruction-effects.md#a-machines-component) |
 
-The fires are [`destruction-effects.md`](../simulation/destruction-effects.md#fire)'s. Retail files carry 0, 1, 3, 5, 7 and 9: 7 is the front cockpit on 18 chassis, 9 is both weapon brackets on 13, 1 is the leg chains and the rear cockpit on most, and 5 and 3 are one component each in MAVERICK, OUTLAW, SPIDER and RAMSES.
+The fires are [`destruction-effects.md`](../simulation/destruction-effects.md#fire)'s. Retail files carry 0, 1, 3, 5, 7 and 9: 7 is the front cockpit on 18 chassis, 9 is both shoulders on 13, 1 is the leg chains and the rear cockpit on most, and 5 and 3 are one component each in MAVERICK, OUTLAW, SPIDER and RAMSES.
 
 **The position binding.** Neither runtime-only field is in the file. `Mech_ConfigureLoadout` (`004175dc`) fills them in from the `.COL`: `Collision_CollectComponentAnchors` (`0040cb84`) walks every cluster and emits `(componentIndex, nodeIndex, &cluster.boundCentre)`, and `HercPiece_BindComponentAnchors` (`0040d284`) writes each triple into the piece its component index names. The write is unguarded, so **the last cluster naming a component wins**; every retail mech `.COL` names each component exactly once, so it never bites. The point is the cluster's load-time *bounding-sphere* centre, not any one sphere. What reads it, and what a piece with no cluster falls back to, is `Mech_ComponentPosition` in [`damage-system.md`](../simulation/damage-system.md#where-a-component-stands--the-0x58-slot).
 
 ## The two index spaces
 
-The file names nothing. The labels below are the conventional ones, and what confirms them is the structure — the parent chains (`+0x04`) and what [`Mech_ComponentDamageWrite` reads by literal index](../simulation/component-damage.md#slots-the-write-path-reads-by-index).
+The file names nothing; the simulator does. `STRINGS0.STR` group 13 holds a name per component and group 15 a name per internal, and the Heads-Down Display's damage screen labels component *n*'s reading with entry *n* of each ([`heads-down-display.md`](../simulation/heads-down-display.md#damage-detail--page-1), [`str-strings.md`](str-strings.md#strings0str-groups)). The labels below are those names. The monochrome developer panel `MonoComponentPanel_Init` (`0045c630`) prints the same order under labels of its own, `LEFT_BRACKET`, `RIGHT_BRACKET`, `LEFT_SHOULDER`, `RIGHT_SHOULDER`, `CROTCH` for 2–6.
 
 **Components** (the 29 pieces):
 
-| Index | Component |
-|---|---|
-| 0, 1 | front and rear cockpit |
-| 2, 3 | left and right shoulder |
-| 4, 5 | left and right weapon bracket |
-| 6 | torso |
-| 7, 8 | left and right upper leg |
-| 9, 10 | left and right lower leg |
-| 11, 12 | left and right foot |
-| 13–18 | the rear pair's three pieces on a four-legged chassis, carrying armour 1 elsewhere: left 13, 15, 17 and right 14, 16, 18 |
-| 19–28 | the ten weapon mounts. A mount occupies its `.GL` record's `+0x17` plus 19 |
+| Index | Component (`STRINGS0` group 13) | Repair screen group |
+|---|---|---|
+| 0, 1 | front and rear cockpit | `Cockpit` |
+| 2, 3 | left and right weapon bracket | `Left Torso`, `Right Torso` |
+| 4, 5 | left and right shoulder | `Left Torso`, `Right Torso` |
+| 6 | torso | `Chassis` |
+| 7, 8 | left and right upper leg | `Left Leg`, `Right Leg` |
+| 9, 10 | left and right lower leg | `Left Leg`, `Right Leg` |
+| 11, 12 | left and right foot | `Left Leg`, `Right Leg` |
+| 13–18 | the rear pair's three pieces on a four-legged chassis, carrying armour 1 elsewhere: left 13, 15, 17 and right 14, 16, 18 | none |
+| 19–28 | the ten weapon mounts. A mount occupies its `.GL` record's `+0x17` plus 19 | the per-hardpoint rows |
 
-The leg chain runs upper → lower → foot through the parent index: ACHILLES' left leg is 7 → 9 → 11 and its right 8 → 10 → 12. Its mount components 19, 21 and 24 hang off bracket 5, 20, 23 and 25 off bracket 4, and 22 off the front cockpit; 26–28 hang off nothing. SPIDER sets `-1` throughout, so nothing on it cascades.
+The repair screen's groups are VSHELL's: the save's thirteen external conditions are components 0–12 one for one ([`Mech_ApplySquadCondition`](../simulation/component-damage.md#a-squad-machines-condition--mech_applysquadcondition-00415068)), and VSHELL prices and lists them in six named groups ([`save-games.md`](save-games.md#the-66-byte-status-block)). So the repair screen's `Left Torso` is the left weapon bracket and shoulder together, and DBSIM's torso, component 6, is the repair screen's `Chassis`.
+
+The leg chain runs upper → lower → foot through the parent index: ACHILLES' left leg is 7 → 9 → 11 and its right 8 → 10 → 12. Its mount components 19, 21 and 24 hang off shoulder 5, 20, 23 and 25 off shoulder 4, and 22 off the front cockpit; 26–28 hang off nothing. SPIDER sets `-1` throughout, so nothing on it cascades.
 
 **Internals** (the 22 slots):
 
@@ -89,7 +91,7 @@ Each piece's dependent list, read from the 22 shipped files. Twelve chassis — 
 |---|---|
 | 0, front cockpit | sensor array (2), targeting computer (3), shield generator (4), stabilisers (7), life support (8), pilot (9) |
 | 1, rear cockpit | 2, 3, 4, 7, 8 — the front's list without the pilot |
-| 4, 5, weapon brackets | hydraulics (6) |
+| 4, 5, shoulders | hydraulics (6) |
 | 6, torso | reactor (5), hydraulics (6) |
 | 7, 9, 11, left leg | left leg servos (0) |
 | 8, 10, 12, right leg | right leg servos (1) |
@@ -99,11 +101,11 @@ Every entry weighs 20 in the spill draw except the pilot's, which weighs 1 or 5.
 
 The other chassis depart from it:
 
-- **HEADHUNT, MAVERICK, RAMSES, STINGRAY, TOMAHAWK** — the weapon brackets hold nothing, so hydraulics sit behind the torso alone.
-- **SAMSON** — the torso holds the reactor only, so hydraulics sit behind the brackets alone.
-- **PITBULL** — the front cockpit holds all eight systems, 2 to 9, with the reactor and hydraulics weighted 30; the rear cockpit, brackets and torso hold nothing. Its rear legs are components 13, 15, 17 (left, rear servos 10) and 14, 16, 18 (right, rear servos 11).
+- **HEADHUNT, MAVERICK, RAMSES, STINGRAY, TOMAHAWK** — the shoulders hold nothing, so hydraulics sit behind the torso alone.
+- **SAMSON** — the torso holds the reactor only, so hydraulics sit behind the shoulders alone.
+- **PITBULL** — the front cockpit holds all eight systems, 2 to 9, with the reactor and hydraulics weighted 30; the rear cockpit, shoulders and torso hold nothing. Its rear legs are components 13, 15, 17 (left, rear servos 10) and 14, 16, 18 (right, rear servos 11).
 - **SPIDER** — the same four leg chains as PITBULL, and a front cockpit holding the standard list without the pilot; nothing else. Every internal it has is 100 points.
-- **RAZOR** — the front cockpit holds the sensor array (50), targeting computer (10), life support (30) and pilot (5); the brackets hold the stabilisers (40); the torso holds the shield generator and reactor (40 each); only components 7 and 8 hold the leg servos (50). Its two servo maxima are 0.
+- **RAZOR** — the front cockpit holds the sensor array (50), targeting computer (10), life support (30) and pilot (5); components 4 and 5, its nacelles, hold the stabilisers (40); component 6, its fuselage, holds the shield generator and reactor (40 each); only components 7 and 8 hold the leg servos (50). Its two servo maxima are 0.
 - **SKIMMER** — one component, holding its one internal.
 
 ## A fitted weapon replaces its mount's piece
@@ -112,4 +114,11 @@ Every sim `WEAPONS.DAT` template opens with a piece record of this format, read 
 
 A fitted mount therefore has the template's armour (`+0`: 1500, 2000 or 2500 on the guns, 15000 on ids 19–21, 1500 on the pods), neither a debris group nor a cell sequence (both `-1`, so its loss throws group 2 and hides no part), the chassis piece's parent, destruction flag bit 0 alone, and one internal at spill weight 20 whose maximum is 500 on a gun, 15000 on ids 19–21 and 0 on a pod. Templates 0, 26 and 27 carry an empty piece with no internal. The collision side of the same loop is [`collision-spheres.md`](collision-spheres.md#a-fitted-weapon-brings-its-own-spheres).
 
-The tail of the same function clears the occupancy flag of each of the first 29 components whose piece lists no internal ([`../simulation/component-damage.md`](../simulation/component-damage.md#the-component-damage-system)). On retail data that is every empty hardpoint and every mount fitted from templates 0, 26 or 27; the shoulders, 2 and 3, on every chassis; 13–18 on every chassis but PITBULL and SPIDER; the brackets, 4 and 5, on HEADHUNT, MAVERICK, RAMSES, STINGRAY and TOMAHAWK; 1–6 on PITBULL and SPIDER; and 1 and 9–12 on RAZOR. Of those, only SAMSON's shoulders have spheres in their `.COL`.
+The tail of the same function clears the occupancy flag of each of the first 29 components whose piece lists no internal ([`../simulation/component-damage.md`](../simulation/component-damage.md#the-component-damage-system)). On retail data that is every empty hardpoint and every mount fitted from templates 0, 26 or 27; the weapon brackets, 2 and 3, on every chassis; 13–18 on every chassis but PITBULL and SPIDER; the shoulders, 4 and 5, on HEADHUNT, MAVERICK, RAMSES, STINGRAY and TOMAHAWK; 1–6 on PITBULL and SPIDER; and 1 and 9–12 on RAZOR. Of those, only SAMSON's weapon brackets have spheres in their `.COL`.
+
+## Rejected readings
+
+| Reading | Why it is wrong |
+|---|---|
+| Components 4 and 5 are the weapon brackets and 2 and 3 the shoulders | The mounts hang off 4 and 5 through the parent index, which invites calling those the brackets. DBSIM's own names, `STRINGS0.STR` group 13 and the developer panel's labels, put the weapon brackets at 2 and 3 and the shoulders at 4 and 5: a gun hangs off a shoulder |
+| Component 6 is the repair screen's torso | DBSIM calls it the torso, but the repair screen's `Left Torso` and `Right Torso` are components 2 and 4, and 3 and 5; component 6 is its `Chassis` |

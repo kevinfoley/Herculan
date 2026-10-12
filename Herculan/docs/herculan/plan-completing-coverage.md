@@ -92,7 +92,7 @@ Behaviour changes made by naming passes, waiting on a look in the running engine
 - A missile tower's rockets home on its target (`SimWorld.FireRocket`).
 - Structures detect all round, with no sensor arc (`Detection.InSensorArc`).
 - A fitted weapon can be shot off a HERC: direct fire strikes its barrel's spheres, and it takes its template's 1500–15000 armour plus a 500 internal before it goes (`MechObject.FitWeaponsToModels`, `ComponentDamage.FitWeapon`).
-- An empty hardpoint, a shoulder and the other slots a chassis lists no internal for drop out of targeting, the Targeting Pod's rotation and the hit test (`ComponentDamage.ClearUnoccupied`); SAMSON's shoulders are the only ones with spheres to lose.
+- An empty hardpoint, a weapon bracket and the other slots a chassis lists no internal for drop out of targeting, the Targeting Pod's rotation and the hit test (`ComponentDamage.ClearUnoccupied`); SAMSON's weapon brackets are the only ones with spheres to lose.
 
 ## Verification
 
