@@ -3200,6 +3200,21 @@
       }
     },
     {
+      "address": "0005048c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_BlitRotatedUnpacked",
+      "description": "(bitmap, angle, size, flip, position) in stack order, callee-cleaned: The code of ES1DBSIM's Bitmap_BlitRotatedUnpacked (00067214), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground",
+      "verified": {
+        "bytes": "0005048c+159",
+        "sha1": "ba6168e149e4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00050640",
       "binary": "ES1GO",
       "type": "function",
@@ -4685,6 +4700,21 @@
       }
     },
     {
+      "address": "0005533c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_BuildRotation2D",
+      "description": "(angle, out), C convention: ES1DBSIM's Math_BuildRotation2D (000694b8), out = {cos a, sin a, -sin a, cos a} in Q14 from the cosine table, but the table index is the angle shifted right by 4 with its sign removed, truncated where ES1DBSIM's rounds, as GO.EXE's BuildEulerRotationMatrixQ14 truncates.",
+      "source": "ES1GO decompile at 0005533c, against ES1DBSIM's Math_BuildRotation2D (000694b8) with es2_naming.py diff",
+      "verified": {
+        "bytes": "0005533c+128",
+        "sha1": "e2c5cfb17725",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005542c",
       "binary": "ES1GO",
       "type": "function",
@@ -4809,6 +4839,36 @@
       "verified": {
         "bytes": "0005628c+103",
         "sha1": "87e863cd2a4d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000562f4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_SetColourRamps",
+      "description": "(first, count, records, extra), C convention: copies count 8-byte records {int16 *entries, int16 length} into g_RasterColourRamps (00085da9) from index first, two LODSD/STOSD a record; extra goes to EBX unread. The code of ES1DBSIM's Raster_SetColourRamps (000691f8), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-colour-ramps",
+      "verified": {
+        "bytes": "000562f4+47",
+        "sha1": "7fc2d48c2813",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00056323",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_GetColourRamps",
+      "description": "(first, count, out, extra), C convention: Raster_SetColourRamps (000562f4) the other way, copying count records of g_RasterColourRamps (00085da9) from index first to out. No reference found by es2_xref. The code of ES1DBSIM's Raster_GetColourRamps (00069227), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-colour-ramps",
+      "verified": {
+        "bytes": "00056323+47",
+        "sha1": "307dc1467bc2",
         "scope": "body",
         "via": "decompile"
       }
@@ -5948,6 +6008,21 @@
       }
     },
     {
+      "address": "0005a8e8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_UploadWhole",
+      "description": "(palette), callee-cleaned: the routine at 000865e4 with the palette's first entry +6, count +4 and colours +8, then Raster_SetColourRamps (000562f4) with its first ramp +0xe, ramp count +0xc, records +0x10 and +6. Callers found by es2_xref: 00048218, nine calls. The code of ES1DBSIM's Palette_UploadWhole (0006931c), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-colour-ramps",
+      "verified": {
+        "bytes": "0005a8e8+102",
+        "sha1": "857f3939bdcf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005aa14",
       "binary": "ES1GO",
       "type": "function",
@@ -6950,6 +7025,21 @@
       }
     },
     {
+      "address": "000643f0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform2D_ApplyToPoint",
+      "description": "(point, xform, out), C convention: out = the {int x, int y} point through the 2x2 int16 matrix (x * m0 + y * m2, x * m1 + y * m3, each + 0x2000 >> 14 in 64 bits) plus the int32 translation at +8/+0xc. The code of ES1DBSIM's Transform2D_ApplyToPoint (00069448), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "000643f0+109",
+        "sha1": "04c39a39dd72",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00064460",
       "binary": "ES1GO",
       "type": "function",
@@ -7589,6 +7679,21 @@
       }
     },
     {
+      "address": "00065ce4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_BlitRotatedScaled",
+      "description": "(header, position, flip, size, angle), C convention: ES1DBSIM's Bitmap_BlitRotatedScaled (00076630) but for its source quad, (0,0), (cols,0), (cols,rows), (0,rows) from the header's rows +0 and cols +2, where ES1DBSIM's stops one short of cols and rows; destination (0,0), (w,0), (w,h), (0,h) turned by Math_BuildRotation2D (0005533c)(angle) and moved by position, filled with Raster_DrawPolygonDispatch(4, ...) under the brush {5, 4, source quad, header}. Bitmap_BlitRotatedUnpacked (0005048c) calls it.",
+      "source": "ES1GO decompile at 00065ce4, against ES1DBSIM's Bitmap_BlitRotatedScaled (00076630) with es2_naming.py diff",
+      "verified": {
+        "bytes": "00065ce4+563",
+        "sha1": "482e3ff38675",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00066020",
       "binary": "ES1GO",
       "type": "function",
@@ -7674,6 +7779,21 @@
       "verified": {
         "bytes": "00066ed4+135",
         "sha1": "9633c0647940",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00066fd0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_TransposeRotation2D",
+      "description": "(matrix), C convention: swaps the 2x2 int16 matrix's +2 and +4 entries. The code of ES1DBSIM's Math_TransposeRotation2D (00063df0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "00066fd0+21",
+        "sha1": "f12b197608b3",
         "scope": "body",
         "via": "decompile"
       }
@@ -8898,6 +9018,51 @@
       "name": "ldexp",
       "description": "Symantec C++ runtime `ldexp`, from `ldexp.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 195 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007c400",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSSolidPoly_Render",
+      "description": "(this), callee-cleaned: TSSolidPoly's render slot (+0x20). The chosen surface entries go to the brush colour and PolyFill_LineColour as they are, brush mode 0, then the projection, the near-plane clip when needed and PolyFill_FillThenOutline(back). The code of ES1DBSIM's TSSolidPoly_Render (0005403c), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types",
+      "verified": {
+        "bytes": "0007c400+207",
+        "sha1": "f7d47c3d99d2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007c7f8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShadedPoly_Render",
+      "description": "(this), callee-cleaned: TSShadedPoly's render slot (+0x20). As TSSolidPoly_Render (0007c400), after ORing (Light_ComputeShadeForFace & 0xff) << 16, the normal negated for a back face, into both colours, so a top byte of 4 picks that ramp entry from g_RasterColourRamps (00085da9). The code of ES1DBSIM's TSShadedPoly_Render (000543e4), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types",
+      "verified": {
+        "bytes": "0007c7f8+402",
+        "sha1": "4a638b556df5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007c98c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGouraudPoly_Render",
+      "description": "(this), callee-cleaned: TSGouraudPoly's render slot (+0x20): a light per corner from the normal and vertex lists, normals negated for a back face, brush mode 1, PolyFill_FillThenOutline(back). The code of ES1DBSIM's TSGouraudPoly_Render (00054578), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types",
+      "verified": {
+        "bytes": "0007c98c+570",
+        "sha1": "7ded19eae174",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0007e228",

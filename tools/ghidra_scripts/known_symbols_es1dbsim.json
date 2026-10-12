@@ -1172,6 +1172,36 @@
       }
     },
     {
+      "address": "00020f40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_DrawEntryRender",
+      "description": "(entry), callee-cleaned: draws one 0x36-byte object entry of ObjList_DrawFrameObjects (00021008): 00004f78(000bc19c, {the entry's position, its int16 +0xc}), WorldShades_ApplyForObject (00025d44) with the blend byte 000afa98, the distance +0xe and the object +0x32, the object's vtable slot +4 (vptr at object +2), then 00005690 when 000afa98 is set; display calls through 0009dee4/0009dee8 while 000afa45 is set, and 00021404 when 0009255a is set and the object is 000afa88. ES2's ObjList_DrawEntryRender (DBSIM 0042876c), without the depth fade. Its address is stored at 00092562.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#which-objects-are-drawn",
+      "verified": {
+        "bytes": "00020f40+200",
+        "sha1": "5884ca0da9d4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021008",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_DrawFrameObjects",
+      "description": "(blend, eye) in stack order, callee-cleaned: calls slot +4 of each element of the ground-shape pool 000af044 within 30000 of eye (Math_DistanceBetweenPoints, walked with Pool_Prev); stores blend at 000afa98; for each of the 00092558 objects at 000bc58e that 000003ac(eye, object) returns 0 for and whose slot +8 block has a non-negative int32 +8, fills a 0x36-byte entry (position, slot +0x14 value at +0xc, distance +0xe, object +0x32, +0x12 = 0, or 2 with 00020738's 24 bytes at +0x18 for objects among the first 000bc596) and lists it at 000bc59c unless WorldShades_IsBeyondLastBand (00025f38) is true; then 00021554(eye) and 00021d04(count, list). Sim_RenderFrame passes the byte 000b5b65, 000364f8 passes 0.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#which-objects-are-drawn",
+      "verified": {
+        "bytes": "00021008+593",
+        "sha1": "ea65fd4147f4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00021f8c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1262,6 +1292,21 @@
       }
     },
     {
+      "address": "00025b68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Scene_DrawTerrainPass",
+      "description": "(camera), callee-cleaned: the backdrop. Hzline_Draw (00026264)(g_TheaterHzline, the canvas origin 000afa9c, camera) when the hzline exists, World_Clouds' slot +0x34 (camera) when it exists, PointScatter_Update (00026e8c)(World_PointScatter, camera) when it exists, then Palette_BlendRangeByPitch (00025fe4)(camera). Sim_RenderFrame calls it before ObjList_DrawFrameObjects. ES2's Scene_DrawTerrainPass (DBSIM 0042e700), which also sets the hzline's one-colour flag, projects the terrain's far edge and draws the terrain.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-frame",
+      "verified": {
+        "bytes": "00025b68+94",
+        "sha1": "d3ce1c2fe730",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00025bc8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1272,6 +1317,126 @@
       "verified": {
         "bytes": "00025bc8+236",
         "sha1": "99be775cdd77",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025cb4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WorldShades_DistanceBand",
+      "description": "(distance, obj) in stack order, callee-cleaned: ES2's WorldShades_DistanceBand (DBSIM 0042e878) with the type tag at obj+0 and the radius from vtable slot +0x14 (vptr at obj+2): how many thresholds of WorldShades_BandsTagged (000afdc4, count 000bc5b8; non-zero tag) or WorldShades_BandsTag0 (000afdc8, count 000bc5ba; tag 0) distance has reached, unsigned, at most count - 1; tag 5 first adds WorldShades_DistanceOffsets (000bc5c6)[radius >= 5000], clamped at 0.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-distance-bands",
+      "verified": {
+        "bytes": "00025cb4+144",
+        "sha1": "56156c35dec6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025d44",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WorldShades_ApplyForObject",
+      "description": "(blend, distance, obj) in stack order, callee-cleaned: ES2's WorldShades_ApplyForObject (DBSIM 0042e8e8), the tag at obj+0. While 000928ea is set it runs WorldShades_ResetRamps (00025e88) instead. Otherwise, for each {ramp, column} pair of the tag's WorldShades_TypeTable record, with b = WorldShades_DistanceBand(max(distance, 0), obj): Palette_SetRampsToRange (00028044)(WorldShades_LevelRanges[column * rows (000bc5be) + b], 1, ramp); with blend set, 000280e4 with two ranges, the band range less its last q + 1 indices (q = its length >> 2) and q + 1 indices from the end of WorldShades_BlendRanges[b] less q, through a two-entry pointer array.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-distance-bands",
+      "verified": {
+        "bytes": "00025d44+323",
+        "sha1": "c7eb84f79f03",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025e88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WorldShades_ResetRamps",
+      "description": "No arguments: Palette_SetRampsToRange (00028044) with the range {16, 16} for ramps 0, 2, 4, 6, 8, 10, 12 and 14, one at a time. ES2's WorldShades_ResetRamps (DBSIM 0042ea0c), whose last ramp is 24. WorldShades_ApplyForObject (00025d44) runs it while 000928ea is set; Callers found by es2_xref: WorldShades_ApplyForObject (00025d44) and 00036c2c.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-distance-bands",
+      "verified": {
+        "bytes": "00025e88+72",
+        "sha1": "b38f9a3c3740",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025ed0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_ActivateImpact",
+      "description": "No arguments: when ImpactPaletteObject (000928f0) is loaded, 00027e7c(ImpactPaletteObject) into 000afdcc and 000afdd0, and sets 000928eb, which Palette_BlendRangeByPitch (00025fe4) reads. ES2's Palette_ActivateImpact (DBSIM 0042ea44).",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
+      "verified": {
+        "bytes": "00025ed0+38",
+        "sha1": "4d5434cf84d1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025ef8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_ToggleImpact",
+      "description": "No arguments: when ImpactPaletteObject (000928f0) is loaded, 000afdcc = 00027e7c(000afdcc) and 000928eb flips. ES2's Palette_ToggleImpact (DBSIM 0042ea70).",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
+      "verified": {
+        "bytes": "00025ef8+34",
+        "sha1": "a9545057f69f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025f1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_RestoreFromImpact",
+      "description": "No arguments: when ImpactPaletteObject (000928f0) is loaded, 00027e7c(000afdd0) and 000928eb cleared. ES2's Palette_RestoreFromImpact (DBSIM 0042ea94).",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
+      "verified": {
+        "bytes": "00025f1c+28",
+        "sha1": "1c9623199c5f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025f38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WorldShades_IsBeyondLastBand",
+      "description": "(distance, obj) in stack order, callee-cleaned: ES2's WorldShades_IsBeyondLastBand (DBSIM 0042eab4), the tag at obj+0 and the radius from vtable slot +0x14: WorldShades_BandsTag0 (000afdc8) for tag 0, WorldShades_BandsTagged (000afdc4) otherwise, tag 8 adding WorldShades_DistanceOffsets (000bc5c6) entry 0 and tag 5 entry [radius >= 5000], clamped at 0; returns whether the table's last threshold is below distance, unsigned. ObjList_DrawFrameObjects (00021008) leaves such an object undrawn.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-distance-bands",
+      "verified": {
+        "bytes": "00025f38+169",
+        "sha1": "d04683e9e45d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025fe4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_BlendRangeByPitch",
+      "description": "(camera), callee-cleaned: while 000928ec is set, rewrites palette entries 64-79. Once (flag 00092a3e): reads the colours of entries 000bc5ce, 000bc5d0, 000bc5d2 and 000bc5d4 with Palette_GetEntry (00027f54) and builds 16 colours from 000bc5d0's to 000bc5d2's at 000afde4 with Palette_InterpolateColours (000283b0). Each call: step = 000928ee when it is not negative (then 000928ee = -1), otherwise ((pitch +0xc + 0x2000) & 0xffff) >> 10 capped at 15; end = entry 000bc5d4's colour while 000928eb is set, otherwise colour[step]; 16 colours from entry 000bc5ce's to end installed at entry 0x40 with Palette_InstallRange. Sits where ES2's Scene_DrawTerrainPass calls Palette_NoOp.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
+      "verified": {
+        "bytes": "00025fe4+256",
+        "sha1": "dc03e6a5d7ac",
         "scope": "body",
         "via": "decompile"
       }
@@ -1302,6 +1467,96 @@
       "verified": {
         "bytes": "00026234+46",
         "sha1": "8f6e8ca25f4d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026264",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hzline_Draw",
+      "description": "(this, canvasOrigin, camera) in stack order, callee-cleaned: Hzline_DrawWithOffset (00026280)(this, canvasOrigin, the line offset +0x30, camera). ES2's Hzline_Draw (DBSIM 0042ebe8).",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-horizon-line-and-the-sky",
+      "verified": {
+        "bytes": "00026264+27",
+        "sha1": "c6cedb40bd4e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026280",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hzline_DrawWithOffset",
+      "description": "(this, canvasOrigin, offset, camera) in stack order, callee-cleaned: ES2's Hzline_DrawWithOffset (DBSIM 0042ec08) on the camera's pitch (+0xc, negated into +0x34) and roll (+0xe into +0x36): Hzline_BuildHorizon (00026348), both end rows + offset >> 1, both ends + canvasOrigin when it is non-null, Hzline_FillSky (0002650c), both end rows + 1, Hzline_FillGround (000267d8)(this, canvasOrigin.x or 0, camera); then Hzline_BlitHorizonStrip (00026ac8)(this, canvasOrigin, offset, camera, +0x50) when either end row + offset is above 0, +0x50 is set and the preferences byte 000bd565 is non-zero.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-horizon-line-and-the-sky",
+      "verified": {
+        "bytes": "00026280+199",
+        "sha1": "cb8bfbe0ff3f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026348",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hzline_BuildHorizon",
+      "description": "(this, canvasOrigin) in stack order, callee-cleaned: ES2's Hzline_BuildHorizon (DBSIM 0042ec68) with ends always +-256 px from the midpoint ((cos roll, sin roll) >> 6), a zero cos(pitch) replaced by cos(pitch - 1), and a non-null canvasOrigin moving both ends by ((cos roll * origin.y) >> 14, -(sin roll * origin.x) >> 14) where ES2 lengthens the line. Writes the ends +0x38..+0x44 (Raster_ProjectionCentre, its y 000b5ee4, the line offset +0x30, Raster_FocalShift) and the step pair +0x48/+0x4c, behind ES2's never-true negation test.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-horizon-line-and-the-sky",
+      "verified": {
+        "bytes": "00026348+451",
+        "sha1": "b06f252aff5b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002650c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hzline_FillSky",
+      "description": "(this), callee-cleaned: ES2's Hzline_FillSky (DBSIM 0042ee88), drawing nothing while both end rows are above the view's top (render context 000bdbda +0x214). Rolled, the first quad starts at the line and steps (-sin roll * h, -t) then (-sin roll * h, -cos roll * h), and beyond the last band one Raster_DrawPolygonReversed polygon reaches the view-rect corners on the sky side (+0x210/+0x218, +0x214/+0x21c) in the zenith colour, where ES2 starts 2h below the line and draws a 5000-px quad.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-horizon-line-and-the-sky",
+      "verified": {
+        "bytes": "0002650c+686",
+        "sha1": "b1bf9a28a57d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000267d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hzline_FillGround",
+      "description": "(this, originX, camera) in stack order, callee-cleaned: nothing while both end rows are below the view's bottom (+0x21c). When +0x70 is set and the preferences byte 000bd567 exceeds 000956be (240), GndTex_Draw (00029120)(originX, Raster_FocalShift, 8, +0x44, +0x3c, camera + 0xc, camera). Otherwise the banded fill of ES2's Hzline_FillGround (DBSIM 0042f0b0) with its one-colour flag clear: +0x60 - 1 bands from colour +0x2c + +0x60 - 1 down one entry a band, the first +0x6c >> 1 rows, then +0x5c rows each, then colour +0x2c to the bottom; Raster_FillRect level, Raster_DrawPolygonDispatch rolled, closing on the view-rect corners on the ground side.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-ground",
+      "verified": {
+        "bytes": "000267d8+749",
+        "sha1": "f815a7b597d4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026ac8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hzline_BlitHorizonStrip",
+      "description": "(this, canvasOrigin, offset, camera, bank) in stack order, callee-cleaned: ES2's Hzline_BlitHorizonStrip (DBSIM 0042f398) without the coordinate shifts. With n frames (+4) of width w (frame 0's +6): x = (heading +0x10 << 16) / ((0x10000 / n << 16) / w), stepped back by n * w to the view's left edge (+0x210, + origin.x); frames step by w along the line (rolled: (cos, -sin) * w from the line's midpoint moved by x - 160); skipping those left of the view, it draws up to n frames, cycling the frame number, while x is left of left + 320, each standing on the line: Bitmap_Blit level, Bitmap_BlitRotatedUnpacked (00067214) by -roll rolled.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-horizon-skyline",
+      "verified": {
+        "bytes": "00026ac8+767",
+        "sha1": "439c531b6ccc",
         "scope": "body",
         "via": "decompile"
       }
@@ -1402,7 +1657,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_LoadAndActivate",
-      "description": "(path), callee-cleaned: ES2's Palette_LoadAndActivate (DBSIM 00430394): Palette_LoadDpl(path) into the active palette pointer 00092c20, then calls 00028b28 (through 00028b27), which ES2's does not.",
+      "description": "(path), callee-cleaned: ES2's Palette_LoadAndActivate (DBSIM 00430394): Palette_LoadDpl(path) into the active palette pointer 00092c20, then calls Palette_BuildTextureShadeTables (00028b28) (through 00028b27), which ES2's does not.",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
       "verified": {
         "bytes": "00027e5c+30",
@@ -1427,6 +1682,36 @@
       }
     },
     {
+      "address": "00027f54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_GetEntry",
+      "description": "(index), callee-cleaned: returns the active palette's (00092c20) colour dword at +8 [index].",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
+      "verified": {
+        "bytes": "00027f54+29",
+        "sha1": "9841f3e3cb2e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028044",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_SetRampsToRange",
+      "description": "(range, count, first) in stack order, callee-cleaned: ES2's Palette_SetRampsToRange (DBSIM 00430518): for count records of the array at 00092c34 from first, writes range's consecutive indices start .. start + length - 1 into the record's entries and its length, the range read without advancing; then Raster_SetColourRamps (000691f8)(first, count, records, 0).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-distance-bands",
+      "verified": {
+        "bytes": "00028044+159",
+        "sha1": "3ba6b23c6f34",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000281cc",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1437,6 +1722,21 @@
       "verified": {
         "bytes": "000281cc+90",
         "sha1": "4013ed12bf9d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000283b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_InterpolateColours",
+      "description": "(out, levels, count, to, from) in stack order, callee-cleaned: ES2's Palette_InterpolateColours (DBSIM 004307b0): for each of count colour pairs, levels - 1 colours from from's stepping by (to - from) * 256 / (levels - 1) per channel in 8.8 fixed point, then to's, each with 0x01 in its top byte.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
+      "verified": {
+        "bytes": "000283b0+376",
+        "sha1": "68faeea209ad",
         "scope": "body",
         "via": "decompile"
       }
@@ -1457,18 +1757,168 @@
       }
     },
     {
+      "address": "00028afc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_UnpackColour",
+      "description": "(colour, out) in stack order, callee-cleaned: writes the colour dword's bytes 0, 1 and 2 to out as three int16.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-texture-colour-tables",
+      "verified": {
+        "bytes": "00028afc+43",
+        "sha1": "fffe9a9c32ad",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00028b28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_BuildTextureShadeTables",
+      "description": "No arguments: when 00092c40 is null, builds eight 256-byte colour tables there from the active palette (00092c20) and stores the array at 000973f0 and 8 at 000973f4 and 000973f8. Entry c of table L: for each ramp (palette +0x10, count +0xc) holding c, the last deciding, ratio = (entry (len-1)*L/7 << 10) / entry Math_Q10Multiply(len-1, 0x28a) per channel (0 for a zero channel); c unchanged when no ramp holds c; otherwise the first palette index nearest (Colour_Distance (000644c8), below 1000) to c scaled by ratio with Math_Q10Multiply. Palette_LoadAndActivate (00027e5c) calls it through 00028b27.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-texture-colour-tables",
+      "verified": {
+        "bytes": "00028b28+686",
+        "sha1": "711f677efb74",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00028de8",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "GndTex_Load",
-      "description": "(fadeName, bankName, horizonGap, groundBandHeight, groundBandCount, groundColor) in stack order, callee-cleaned, gndtex.cpp: 00092c4c = 1; builds dba\\<bankName>.64k from 00092c50 and 00092c55, calls 00029714(0x140, 0x17c) and 00029830(name). Opens dat\\<fadeName> (severity-5 assert, gndtex.cpp line 0x3f, when it fails), reads an int32 count to 000b0d74 and count int32 to a new array at 000b0d78; allocates count x 4 bytes at 000b0d70 and replaces them with a 0x3c-byte array of 15 pointers; 000b0d7c = groundBandHeight, 000b0d84 = horizonGap >> 1, 000b0d80 = 15, 00092c80 = 0x140. Table i (0-14) of 16 bytes: with b = groundColor & 0xf0 and top = groundColor + groundBandCount - 1, s = top - (b + j), less 1 more when negative, entry j = s * i / 14 + b + j. World_LoadTheater (000251c4) passes the world file's fifth and fourth strings and its shorts 0, 5, 6 and 4.",
+      "description": "(fadeName, bankName, horizonGap, groundBandHeight, groundBandCount, groundColor) in stack order, callee-cleaned, gndtex.cpp: 00092c4c = 1; builds dba\\<bankName>.64k from 00092c50 and 00092c55, calls GndTex_Alloc (00029714)(0x140, 0x17c) and GndTex_LoadTexture (00029830)(name). Opens dat\\<fadeName> (severity-5 assert, gndtex.cpp line 0x3f, when it fails), reads an int32 count to 000b0d74 and count int32 to a new array at 000b0d78; allocates count x 4 bytes at 000b0d70 and replaces them with a 0x3c-byte array of 15 pointers; 000b0d7c = groundBandHeight, 000b0d84 = horizonGap >> 1, 000b0d80 = 15, 00092c80 = 0x140. Table i (0-14) of 16 bytes: with b = groundColor & 0xf0 and top = groundColor + groundBandCount - 1, s = top - (b + j), less 1 more when negative, entry j = s * i / 14 + b + j. World_LoadTheater (000251c4) passes the world file's fifth and fourth strings and its shorts 0, 5, 6 and 4.",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-ground-texture",
       "verified": {
         "bytes": "00028de8+465",
         "sha1": "d4255f14ffd0",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00028fbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTex_BuildRowTable",
+      "description": "(originX, rows, first, shift, pitch, z) in stack order, callee-cleaned: unless z, pitch and originX equal 00092c44, 00092c48 and 000b0d6c and rows is at most 000b0d68, stores them and fills {left, D, right} int32 triples at 000afe68 for rows k = first .. first + rows - 1: (q0, q1) = Math_Rotate2DPoint((-render context +0x224 - k - 1, 1 << shift), Math_BuildRotation2D(-pitch)); D = q0 ? (-z * q1) / q0 : 10000000; (s0, s1) = (-z, D) rotated by the transposed matrix (Math_TransposeRotation2D); left = ((originX - 160) * s1) >> shift, right = ((originX + 159) * s1) >> shift.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground",
+      "verified": {
+        "bytes": "00028fbc+356",
+        "sha1": "5c7e37111ecc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029120",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTex_Draw",
+      "description": "(originX, shift, texShift, rightRow, leftRow, angles, camera) in stack order, callee-cleaned: draws the textured ground. start = max((leftRow + rightRow) >> 1, view top); returns when cy (top - origin y) is negative; rows to the view's bottom (rolled: from a rotated corner), capped at 319, and the span width 00092c80 (rolled: from the roll); GndTex_BuildRowTable (00028fbc); per row, a fade table from TEX.DAT's distances (000b0d78, the first 000b0d84 rows table 14), the row ends through Math_BuildRotation2D(heading) and the eye (x, y) masked to 2^(texShift + 8) - 1 (Transform2D_ApplyToPoint), u/v and their steps ((right - left) * 0xcc >> texShift) to 00092c8c..00092ca4, and GndTex_DrawSpan (0002991d) into the bitmap 000b0d88; then Bitmap_Blit at (0, start), or Bitmap_BlitRotatedUnpacked (00067214) by -roll.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground",
+      "verified": {
+        "bytes": "00029120+1449",
+        "sha1": "2e5b3d1356bc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029714",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTex_Alloc",
+      "description": "(rows, cols) in stack order, callee-cleaned: unless 00092c70 is set, allocates the 64 KB texture at 00092c74, gets its selector with GndTex_AllocSelector (000298b8) and on success fills the bitmap header 000b0d8c (rows, cols, 8 bits, +5 bit 4, size rows * cols) and allocates its buffer 000b0d96; zeroes both and sets 00092c70, else frees the texture. Returns 00092c70. GndTex_Load passes 320 and 380.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture",
+      "verified": {
+        "bytes": "00029714+220",
+        "sha1": "1259ef95221f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000297f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTex_Free",
+      "description": "No arguments: when 00092c70 is set, GndTex_FreeSelector (000298fe), frees the texture 00092c74 and the buffer 000b0d96, and clears 00092c70, 00092c72 and both pointers. Callers found by es2_xref: 0005a7b8 and 0005b568.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture",
+      "verified": {
+        "bytes": "000297f0+64",
+        "sha1": "8b3fa7ee1be5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029830",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTex_LoadTexture",
+      "description": "(path), callee-cleaned: when 00092c70 is set and the file opens, reads its first 0x10000 bytes into the texture 00092c74 and returns 1; otherwise 0.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture",
+      "verified": {
+        "bytes": "00029830+105",
+        "sha1": "55b08cd3dccf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000298b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTex_AllocSelector",
+      "description": "No arguments, no frame: INT 21h AX=3504h with BX = DS, adds the texture pointer 00092c74 to ECX, AX=3501h, keeps the returned BX at 00092c72, AX=3503h, then AX=3505h with ECX = 0x10000; returns 1, or 0 on a carry. GndTex_DrawSpan reads the texture through that selector in GS.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture",
+      "verified": {
+        "bytes": "000298b8+70",
+        "sha1": "bb189761270b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000298fe",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTex_FreeSelector",
+      "description": "No arguments, no frame: loads BX from 00092c72 and, unless ZF is already set on entry (MOV sets no flags), zeroes ES, FS and GS and calls INT 21h AX=3502h; returns 1. In GndTex_Free (000297f0) the flag comes from its own test of 00092c70 and is clear.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture",
+      "verified": {
+        "bytes": "000298fe+31",
+        "sha1": "66980c4dad42",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002991d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTex_DrawSpan",
+      "description": "No arguments: one ground row. Jumps to 0002acd5 - 13 * 00092c80, into 380 unrolled 13-byte steps (00029989-0002acd4) each writing palette[fade][texel] = byte [EBX + GS:[v << 8 | u]] to ES:EDI and stepping u (CL, fraction in EAX's high word) by du (DL, ESI) and v (CH, EDX's high word) by dv (DH, EBP), loaded from 00092c8a..00092ca6; EDI from 00092c78, EBX from 00092c7c, GS from 00092c72. The steps end in the RET at 0002acda.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground",
+      "verified": {
+        "bytes": "0002991d+108",
+        "sha1": "373603394013",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -2082,6 +2532,66 @@
       "verified": {
         "bytes": "00053d9c+664",
         "sha1": "9c24ab4899a3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005403c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSSolidPoly_Render",
+      "description": "(this), callee-cleaned: TSSolidPoly's vtable (0009b19a) slot +0x20. ES2's TSSolidPoly_Render (DBSIM 00474db4) without the .RMP: the chosen surface entries go to the brush colour 000b5f04 and PolyFill_LineColour as they are, brush mode 0, Poly_ProjectShapeVertices, Poly_ClipRingToNearPlane when needed, PolyFill_FillThenOutline(back).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types",
+      "verified": {
+        "bytes": "0005403c+207",
+        "sha1": "8d93ec85d66c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005410c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTexture4Poly_Render",
+      "description": "(this), callee-cleaned: TSTexture4Poly's vtable (0009b1d2) slot +0x20. Picks the front or back value by ES2's -1 rule, takes that frame of the active bitmap bank (000bdb5e +8), and fills through the brush {7, 4, corners, the frame's bitmap header, table} at the render context's +0x22c (then PolyFill_FillBrush): the texture points are the frame's corners (0,0), (cols-1,0), (cols-1,rows-1), (0,rows-1) at 000b58d8 (Poly_ClipRingToNearPlaneWithUV into 000b59dc when clipped); table is 0 while 000973f4 is 0, else 000973f0[(000973f4 - 1) * light / 255] with Light_ComputeShadeForFace's light, the normal negated for a back face.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types",
+      "verified": {
+        "bytes": "0005410c+697",
+        "sha1": "7b34aa99e2da",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000543e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSShadedPoly_Render",
+      "description": "(this), callee-cleaned: TSShadedPoly's vtable (0009b1fe) slot +0x20. As TSSolidPoly_Render (0005403c), after ORing (Light_ComputeShadeForFace & 0xff) << 16, the normal negated for a back face, into both colours, so a top byte of 4 picks that ramp entry from g_RasterColourRamps (0009a6f5). VSHELL's TSShadedPoly_Render (00423024) does the same; ES2's DBSIM one uses Palette_ShadeRampLookup and the .RMP.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types",
+      "verified": {
+        "bytes": "000543e4+402",
+        "sha1": "84debbe6ed92",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054578",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGouraudPoly_Render",
+      "description": "(this), callee-cleaned: TSGouraudPoly's vtable (0009b22a) slot +0x20. ES2's TSGouraudPoly_Render (DBSIM 004755c8): a Light_ComputeShadeForFace light per corner from the normal list (+0xe) and vertex list (+0xa), normals negated for a back face, into a stack array that 000b5f0c points at (through Poly_ClipRingToNearPlaneWithShade when clipped), brush mode 1, PolyFill_FillThenOutline(back).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types",
+      "verified": {
+        "bytes": "00054578+570",
+        "sha1": "d162f20aa599",
         "scope": "body",
         "via": "decompile"
       }
@@ -2791,7 +3301,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RenderFrame",
-      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; 00020de0(); 0002cf28(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view 000b5b8a), Raster_SetModelTransform(0), 00025b68(view) and 00021008(000b5b65, view); 000155a8(000b5b86); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
+      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; 00020de0(); 0002cf28(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view 000b5b8a), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); 000155a8(000b5b86); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
       "source": "ES1DBSIM decompile at 00059c08, against ES2's Sim_RenderFrame",
       "verified": {
         "bytes": "00059c08+280",
@@ -6422,6 +6932,21 @@
       }
     },
     {
+      "address": "00063df0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_TransposeRotation2D",
+      "description": "(matrix), C convention: swaps the 2x2 int16 matrix's +2 and +4 entries. ES2's Math_TransposeRotation2D (DBSIM 0047ddf8), byte for byte.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "00063df0+21",
+        "sha1": "f12b197608b3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00063e05",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -6479,6 +7004,21 @@
         "sha1": "d4b3cdf5be9d",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "000644c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Colour_Distance",
+      "description": "(a, b) in stack order, callee-cleaned: Math_FastMagnitude3D of b - a over three int16 channels.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-texture-colour-tables",
+      "verified": {
+        "bytes": "000644c8+89",
+        "sha1": "a29bc1149a3f",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -7442,6 +7982,21 @@
       }
     },
     {
+      "address": "00067214",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_BlitRotatedUnpacked",
+      "description": "(bitmap, angle, size, flip, position) in stack order, callee-cleaned: ES2's Bitmap_BlitRotatedUnpacked (DBSIM 00481750): a packed bitmap (+0x12) is unpacked by 000672cc into Bitmap_UnpackScratch, standing in for +0xe and +0xa for the call and freed after unless Bitmap_UseCallerScratch; then Bitmap_BlitRotatedScaled (00076630)(bitmap + 4, position, flip, size, angle) directly where ES2 goes through a thunk.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground",
+      "verified": {
+        "bytes": "00067214+159",
+        "sha1": "aea2537c4b8d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006745c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -7491,6 +8046,81 @@
       "verified": {
         "bytes": "00068fdc+122",
         "sha1": "b1c002e193aa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000691f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_SetColourRamps",
+      "description": "(first, count, records, extra), C convention: copies count 8-byte records {int16 *entries, int16 length} into g_RasterColourRamps (0009a6f5) from index first, two LODSD/STOSD a record; extra goes to EBX unread. ES2's Raster_SetColourRamps (DBSIM 00486d04).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-colour-ramps",
+      "verified": {
+        "bytes": "000691f8+47",
+        "sha1": "c7592632eb74",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069227",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_GetColourRamps",
+      "description": "(first, count, out, extra), C convention: Raster_SetColourRamps (000691f8) the other way, copying count records of g_RasterColourRamps (0009a6f5) from index first to out. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-colour-ramps",
+      "verified": {
+        "bytes": "00069227+47",
+        "sha1": "c058b3056476",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006931c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_UploadWhole",
+      "description": "(palette), callee-cleaned: the routine at 0009df08 with the palette's first entry +6, count +4 and colours +8, then Raster_SetColourRamps (000691f8) with its first ramp +0xe, ramp count +0xc, records +0x10 and +6. The counterpart of ES2's Palette_UploadWhole (DBSIM 00481ed4); callers found by es2_xref: 0007aa58, nine calls.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-colour-ramps",
+      "verified": {
+        "bytes": "0006931c+102",
+        "sha1": "c3732f58c9b6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069448",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform2D_ApplyToPoint",
+      "description": "(point, xform, out), C convention: out = the {int x, int y} point through the 2x2 int16 matrix (x * m0 + y * m2, x * m1 + y * m3, each + 0x2000 >> 14 in 64 bits) plus the int32 translation at +8/+0xc. ES2's Transform2D_ApplyToPoint (DBSIM 0047ff44).",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "00069448+109",
+        "sha1": "04c39a39dd72",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000694b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_BuildRotation2D",
+      "description": "(angle, out), C convention: out = {cos a, sin a, -sin a, cos a} in Q14 from the cosine table 000981cc, the angle rounded to 1/4096 turn, sin a = cos(a - 0x4000). ES2's Math_BuildRotation2D (DBSIM 0047ea24).",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-assembly-library",
+      "verified": {
+        "bytes": "000694b8+136",
+        "sha1": "8b5581aee00d",
         "scope": "body",
         "via": "decompile"
       }
@@ -8769,6 +9399,21 @@
       "verified": {
         "bytes": "000763ec+229",
         "sha1": "8d54eaad35df",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00076630",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_BlitRotatedScaled",
+      "description": "(header, position, flip, size, angle), C convention: ES2's Bitmap_BlitRotatedScaled (DBSIM 00488a8c): source quad (0,0), (cols-1,0), (cols-1,rows-1), (0,rows-1) from the header's rows +0 and cols +2, mirrored by flip bits 2 and 1; destination (0,0), (w,0), (w,h), (0,h) from size turned by Math_BuildRotation2D(angle) and moved by position; Raster_DrawPolygonDispatch(4, ...) under the brush {5, 4, source quad, header} at the clip block's (00098d64) +0x228, restored after.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground",
+      "verified": {
+        "bytes": "00076630+565",
+        "sha1": "79771f7785de",
         "scope": "body",
         "via": "decompile"
       }

@@ -18,6 +18,10 @@ A positive sum is clockwise as drawn on screen, which is the winding step 5 need
 
 The step-2 copies, `Gfx_FillPolygon`'s translated copy and its clip output each hold 20 points, and the clipper's and scan converter's working buffers 50. None is bounds-checked.
 
+### The brush colour
+
+A type-0 fill is one colour, which DBSIM's `Raster_DrawPolygonDispatch` resolves by the colour's top byte before it scan-converts. A top byte of 0 hands the colour to the span routine as it is, a palette index. A top byte of 4 names a ramp entry: with *r* the colour's low 16 bits, sign-extended, and *s* its bits 16–23, it is the `int16` at entry (*s* · length) >> 8 of record *r* of the raster's ramp table `g_RasterColourRamps` (`004a4fbd`), each record `{int16 *entries, int16 length}`. Any other top byte draws nothing.
+
 ### Clipping to a rectangle
 
 `Poly_ClipToRect(count, points, out, rect)` clips against `rect = {x0, y0, x1, y1}`, inclusive, and returns the new count. It is Sutherland–Hodgman in two passes, all of `x` first and then all of `y`. A point is outside when `x < x0` or `x > x1` (then `y < y0` or `y > y1`). For each edge from the previous point to the current one:

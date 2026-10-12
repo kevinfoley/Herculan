@@ -51,7 +51,7 @@ All 24 retail files walk to their last byte by this layout, 281 to 287 bytes. Ev
 | 0–7 | 0 | ES2's [`hzline` shorts](../../retail/formats/wld-world.md#the-hzline-shorts), into the same fields | short 0 is 2 where *d* is 0, 6 to 14 where it is 1; zenith 214 or 240; band height 1 to 3; band count 4 to 13; ground colour 224 to 247; ground band height 1 to 3; ground band count 6 to 12; line offset 0, 1 in `WORLD21` |
 | 8 | 16 | the [scattered points'](#the-scattered-points) colour | 233; 251 in `WORLD3`, `WORLD8` and `WORLD9`; 228 in `WORLD12` |
 | 9 | 18 | `World_FlatSetSelector` (`000928e2`), ES2's short 9 | 0; 1 in `WORLD16`, `WORLD18`, `WORLD19` and `WORLD20`; −20 in `WORLD21` |
-| 10, 11 | 20 | stored at `000bc5d0` and `000bc5d2`, where ES2 stores its shorts 10 and 11 ([Open](#open)) | short 10 is 47, 242 in `WORLD12` and `WORLD13`; short 11 is 47, 60, 219, 221, 222 or 223 |
+| 10, 11 | 20 | the two palette entries whose colours the [pitch gradient](../rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479) runs between, stored at `000bc5d0` and `000bc5d2`, where ES2 stores its shorts 10 and 11 | short 10 is 47, 242 in `WORLD12` and `WORLD13`; short 11 is 47, 60, 219, 221, 222 or 223 |
 
 ES2's shorts 12 and 13, which ES2 reads and does not use, have no place in ES1's file.
 
@@ -59,16 +59,16 @@ ES2's shorts 12 and 13, which ES2 reads and does not use, have no place in ES1's
 
 `World_LoadTheater` (`000251c4`, callee-cleaned) follows [ES2's load](../../retail/formats/wld-world.md#the-load) with these differences:
 
-1. It copies the header to `000bc5a4` and loads `dpl\world<M>` with `Palette_LoadAndActivate` (`00027e5c`), which also calls `00028b28` after making the palette the active one at `00092c20` ([Open](#open)).
-2. It opens `wld\world<N>` and builds the `hzline` with `Hzline_Ctor` (`00026180`) into `g_TheaterHzline` (`000928d4`): `0x71` bytes where ES2's are `0x7a`, the same defaults, and the byte at `+0x70` set to 1 where ES2 sets `+0x70` to 0 and `+0x71`, the one-colour flag, to 1. It stores shorts 0–7 as ES2's does, through `Hzline_SetColors` (`00026234`), and short 4 + short 6 − 1 at `000928e0`.
-3. It keeps short 8 for the points, stores short 9 at `World_FlatSetSelector` (`000928e2`) and shorts 10 and 11 at `000bc5d0` and `000bc5d2`, and sets `000bc5ce` to `0x40` and `000bc5d4` to `0x62`, as ES2 sets `004cfd74` and `004cfd7a`.
+1. It copies the header to `000bc5a4` and loads `dpl\world<M>` with `Palette_LoadAndActivate` (`00027e5c`), which makes it the active palette at `00092c20` and then calls `Palette_BuildTextureShadeTables` (`00028b28`) ([the texture colour tables](../rendering/polygon-shading.md#the-texture-colour-tables)).
+2. It opens `wld\world<N>` and builds the `hzline` with `Hzline_Ctor` (`00026180`) into `g_TheaterHzline` (`000928d4`): `0x71` bytes where ES2's are `0x7a`, the same defaults, and the byte at `+0x70`, which [textures the ground](../rendering/ground-and-sky.md#the-ground), set to 1 where ES2 sets `+0x70` to 0 and `+0x71`, the one-colour flag, to 1. It stores shorts 0–7 as ES2's does, through `Hzline_SetColors` (`00026234`), and short 4 + short 6 − 1 at `000928e0`. Shorts 4–6, which ES2 never draws with, colour ES1's [banded ground](../rendering/ground-and-sky.md#the-banded-ground).
+3. It keeps short 8 for the points, stores short 9 at `World_FlatSetSelector` (`000928e2`) and shorts 10 and 11 at `000bc5d0` and `000bc5d2`, and sets `000bc5ce` to `0x40` and `000bc5d4` to `0x62`, as ES2 sets `004cfd74` and `004cfd7a`; the pitch gradient reads all four.
 4. The two band tables go to `WorldShades_BandsTagged` (`000afdc4`) and `WorldShades_BandsTag0` (`000afdc8`), each count's low 16 bits to `000bc5b8` and `000bc5ba`; rows and columns to `000bc5be` and `000bc5bc`; the expanded ranges to `WorldShades_LevelRanges` (`000afdbc`) and `WorldShades_BlendRanges` (`000afdc0`), through `Palette_InterpolateIndexRanges` (`000289e0`). Each range table is read into a 64-byte stack buffer, 16 columns, and the column count is not checked against it.
 5. The distance offsets go to `WorldShades_DistanceOffsets` (`000bc5c6`).
-6. It reads each string a byte at a time, without a bound, into a 12-byte stack buffer, the first four into one and the fifth into another; the longest retail string is 8 characters. The first, when not empty, goes to `Hzline_LoadBitmapBank` (`00026dc8`), which loads `dba\<name>` into the `hzline`'s `+0x50`, where ES2's copy of the function, which `es2_xref.py` finds no caller of, would put it ([ES2's horizon strip](../../retail/rendering/distance-fog-and-sky.md#open)). In play, ES1 draws a bitmap skyline along the horizon that scrolls as the view turns ([Open](#open)). The second, when not empty, [builds the clouds](#the-clouds). The third, when not empty, loads `dpl\<name>` with `Palette_LoadDpl` into `ImpactPaletteObject` (`000928f0`), as ES2's does. The fourth and fifth go to [the ground texture](#the-ground-texture).
+6. It reads each string a byte at a time, without a bound, into a 12-byte stack buffer, the first four into one and the fifth into another; the longest retail string is 8 characters. The first, when not empty, goes to `Hzline_LoadBitmapBank` (`00026dc8`), which loads `dba\<name>` into the `hzline`'s `+0x50`, where ES2's copy of the function, which `es2_xref.py` finds no caller of, would put it ([ES2's horizon strip](../../retail/rendering/distance-fog-and-sky.md#open)); ES1 draws it as the [horizon skyline](../rendering/ground-and-sky.md#the-horizon-skyline). The second, when not empty, [builds the clouds](#the-clouds). The third, when not empty, loads `dpl\<name>` with `Palette_LoadDpl` into `ImpactPaletteObject` (`000928f0`), as ES2's does. The fourth and fifth go to [the ground texture](../rendering/ground-and-sky.md#loading-the-ground-texture).
 7. When the number of points is not 0 it [builds the points](#the-scattered-points).
 8. It closes the file and reads `cyc\world<N>` as ES2's load does, into `000928e4`, the count at `000928e8`, through `PaletteCycle_Register` (`000281cc`), whose five slots' due times are the dword at `000981c4` plus the record's `int16` at `+4`, where ES2's take `Time_GetCoarseTicks`. Its records step 12 bytes through 6 × count bytes, as ES2's do.
 9. It loads `dat\shades` with `World_LoadShades` (`00025bc8`), ES2's.
-10. It calls `GndTex_Load` (`00028de8`) and then `FlatObj_LoadResources` (`00006cf8`) with `World_FlatSetSelector`.
+10. It calls `GndTex_Load` (`00028de8`) ([loading the ground texture](../rendering/ground-and-sky.md#loading-the-ground-texture)) and then `FlatObj_LoadResources` (`00006cf8`) with `World_FlatSetSelector`.
 
 It reads no `rmp\world<N>`, and calls neither `Terrain_BindTextureBank` nor `Raster_SetShadeRampDimensions`. A string or count that is empty or 0 leaves the pointer it would set as it was.
 
@@ -81,7 +81,7 @@ When the second string is not empty, the load allocates `0x113` bytes, construct
 - loads `dba\<name>` with `ClassItem_LoadFromFile` to `+0x1a`;
 - zeroes the three dwords at `+0x5d`, the five elements at `+0x21`, the dwords at `+0x6d`, `+0x71` and `+0x75`, and the byte at `+0x1e`.
 
-What draws the clouds is [Open](#open).
+`Scene_DrawTerrainPass` calls the clouds' slot `+0x34` each frame with the camera ([the frame](../rendering/ground-and-sky.md#the-frame)); what it draws is [Open](../rendering/ground-and-sky.md#open).
 
 ### The scattered points
 
@@ -97,25 +97,9 @@ y = centre.y + Q14(2r · cos(a − 0x4000))
 z = 0
 ```
 
-with `Math_CosBam` and `Math_Q14Multiply`. `PointScatter_Update` (`00026e8c`), given the object and the centre, scatters the points the first time (setting `+4`), and when `000bd567` is less than `000956be` stores count × `000bd567` / `000956be` at `+7` and calls `00026fe0` ([Open](#open)).
+with `Math_CosBam` and `Math_Q14Multiply`. `PointScatter_Update` (`00026e8c`), given the object and the centre, scatters the points the first time (setting `+4`), and when `000bd567` is less than `000956be` stores count × `000bd567` / `000956be` at `+7` and calls `00026fe0`. `Scene_DrawTerrainPass` calls it each frame with the camera, so the centre is the camera's position; `000bd567` is a preferences value and `000956be` holds 240 ([the ground](../rendering/ground-and-sky.md#the-ground)). What `00026fe0` draws is [Open](../rendering/ground-and-sky.md#open).
 
-### The ground texture
-
-`GndTex_Load` (`00028de8`, `gndtex.cpp`), given the fifth string, the fourth, and shorts 0, 5, 6 and 4, in stack order:
-
-1. sets `00092c4c` to 1, builds `dba\<fourth>.64k`, calls `00029714` with `0x140` and `0x17c`, and passes the name to `00029830` ([Open](#open));
-2. opens `dat\<fifth>`, asserting at severity 5 (`gndtex.cpp` line `0x3f`) when it cannot, and reads an `int32` count to `000b0d74` and that many `int32` to `000b0d78`: in retail, 15 ascending distances, from 20000 to 112400 in `TEX.DAT`;
-3. stores short 5 at `000b0d7c`, half of short 0 at `000b0d84`, 15 at `000b0d80` and `0x140` at `00092c80`;
-4. builds 15 tables of 16 bytes at `000b0d70` (allocating count × 4 bytes there first, then replacing them with the 15 pointers): with *g* short 4, *b* = *g* & `0xf0` and *top* = *g* + short 6 − 1, entry *j* of table *i* is
-
-```
-s = top − (b + j);   if s < 0: s = s − 1
-entry = b + j + (s · i) / 14              integer division, truncating
-```
-
-so table 0 is the palette row of the ground colour unchanged and each later table moves every entry of that row further toward *top*.
-
-ES2 has no `gndtex.cpp`: its ground is textured from the bank its fourth string names through `Terrain_BindTextureBank` ([terrain texturing](../../retail/rendering/terrain-texturing.md#the-answer-end-to-end)).
+ES2 has no `gndtex.cpp`: its ground is textured from the bank its fourth string names through `Terrain_BindTextureBank` ([terrain texturing](../../retail/rendering/terrain-texturing.md#the-answer-end-to-end)), where ES1's is a flat textured plane ([the textured ground](../rendering/ground-and-sky.md#the-textured-ground)).
 
 ### The ground-shape set
 
@@ -130,10 +114,8 @@ ES2 has no `gndtex.cpp`: its ground is textured from the bank its fourth string 
 
 ## Open
 
-- **Open:** which code draws ES1's horizon skyline, and whether it is ES1's copy of ES2's `Hzline_BlitHorizonStrip` (`0042f398`) blitting the bank at `+0x50`; what ES1's `hzline` draws with the other fields the load gives it, and what `000928e0` (short 4 + short 6 − 1) is read for.
-- **Open:** what `000bc5d0` and `000bc5d2` (shorts 10 and 11), `000bc5ce` and `000bc5d4` are read for, in ES1 and in ES2.
-- **Open:** what `00028b28`, which `Palette_LoadAndActivate` calls after loading the palette, does, and what the dword at `000981c4` that `PaletteCycle_Register` adds a cycle's delay to counts.
-- **Open:** the clouds' class: its vtables, what the five elements at `+0x21`, the arrays at `+0x0e`, `+0x12` and `+0x16` and the member at `+0x107` hold, and what draws it. `00025a08` stores the vptr `000928f6` and five others in turn and calls `TSBase_Dtor`; whether it is the clouds' destructor is not read.
-- **Open:** what calls `PointScatter_Update` and with which centre, what `000bd567` and `000956be` are, what `00026fe0` draws, and so what the points look like.
-- **Open:** what `00029714` and `00029830` do with `dba\<name>.64k`, and what reads `000b0d70`–`000b0d84`, `00092c4c` and `00092c80`: how the ground texture and its 15 fade tables are drawn.
+- **Open:** what `000928e0` (short 4 + short 6 − 1) is read for; `es2_xref.py` finds no reference to it besides the load's store.
+- **Open:** what ES2 reads its shorts 10 and 11 (`004cfd76`, `004cfd78`) and `004cfd74` and `004cfd7a` for.
+- **Open:** what the dword at `000981c4` that `PaletteCycle_Register` adds a cycle's delay to counts.
+- **Open:** the clouds' class: its vtables, and what the five elements at `+0x21`, the arrays at `+0x0e`, `+0x12` and `+0x16` and the member at `+0x107` hold. `00025a08` stores the vptr `000928f6` and five others in turn and calls `TSBase_Dtor`; whether it is the clouds' destructor is not read.
 - **Open:** what reads `WORLD1.DPL` and `WORLD3.DPL`, which no M names.
