@@ -26,12 +26,19 @@ namespace Herculan.Es1.Host;
 /// it farthest first with no depth test (docs/es1/rendering/polygon-shading.md#the-frames-draw). A divergence the user
 /// chose, listed in KNOWN_ISSUES.md.</para>
 ///
-/// <para>G switches the ground between textured and banded, which the preferences' option 5 does in retail; the
-/// viewer starts textured.</para>
+/// <para>G switches the preferences' option 5 between <see cref="TexturedDetail"/> and <see cref="BandedDetail"/>, the
+/// ground between textured and banded; the viewer starts textured. Both are the viewer's own choice of the most
+/// detail on each side of 240, so banded ground shows nearly every scattered point.</para>
 /// </summary>
 public static class Es1ZoneViewer {
 	/// <summary>The folder the shell reads missions from, <c>msn\%s</c> (docs/es1/formats/msn-mission-file.md#loading-a-mission).</summary>
 	public const string MissionFolder = "msn";
+
+	/// <summary>Option 5 while the ground is textured: its largest value.</summary>
+	private const int TexturedDetail = 255;
+
+	/// <summary>Option 5 while the ground is banded: the largest value below 240, which draws 248 of 250 points.</summary>
+	private const int BandedDetail = Es1GroundSpecks.DetailLimit - 1;
 
 	/// <summary>The clear colour when the theater's sky cannot be built: a mid grey, plainly not a retail sky.</summary>
 	private static readonly Vector3 MissingSky = new(0.32f, 0.32f, 0.36f);
@@ -113,7 +120,10 @@ public static class Es1ZoneViewer {
 
 		window.Load += (gl, input) => {
 			if (scene.Horizon != null && scene.Palette != null) {
-				backdrop = new Es1Backdrop(gl, scene.Horizon, scene.Ground, scene.Skyline, scene.Palette);
+				backdrop = new Es1Backdrop(gl, scene.Horizon, scene.Ground, scene.Skyline, scene.Clouds, scene.Specks,
+						scene.Palette) {
+					GroundDetail = TexturedDetail,
+				};
 				disposables.Add(backdrop);
 			}
 
@@ -123,6 +133,8 @@ public static class Es1ZoneViewer {
 				Backdrop = backdrop,
 				SkyColor = MissingSky,
 				FogEnabled = false,
+				LightDirection = Es1Sun.Direction,
+				SunShadeSlope = Es1Sun.ShadeSlope,
 			};
 			renderer.SetShadeRamps(scene.Shading.Table ?? SurfaceRampTable.Build(scene.Shading.Surfaces));
 			renderer.SetPaletteRamp(PaletteRampTable.Build(scene.Shading.Surfaces));
@@ -178,9 +190,11 @@ public static class Es1ZoneViewer {
 				return;
 			}
 
+			scene.Clouds?.Advance(deltaSeconds);
+
 			bool groundKey = keyboard?.IsKeyPressed(Key.G) == true;
 			if (groundKey && !groundKeyHeld && backdrop != null) {
-				backdrop.TexturedGround = !backdrop.TexturedGround;
+				backdrop.GroundDetail = backdrop.GroundDetail == TexturedDetail ? BandedDetail : TexturedDetail;
 			}
 
 			groundKeyHeld = groundKey;

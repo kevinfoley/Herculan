@@ -83,6 +83,9 @@ uniform mat4 uView;
 uniform mat4 uProjection;
 uniform vec3 uLightDirection;
 
+// The 256 in the sun's 128 + 256 * facing below, MissionSun.FaceShadeSlope; set per game.
+uniform float uSunShadeSlope;
+
 // The impact effects' dynamic lights, as they apply to the object being drawn — FUN_00407098 picks
 // them per render entry and the renderer uploads its answer here. See EffectLightSelection, and
 // docs/retail/formats/effect-lights.md for the two shade terms below.
@@ -152,7 +155,7 @@ void main() {
 	// The shade byte Light_ComputeShadeForFace (0048bedc) gives this corner:
 	//     t = (dot - 0x400000) >> 1;  if (t < 0) shade -= (0x100 * t) >> 22
 	// which with normals at length 0x800 and the sun at 0x1000/0x100 collapses to
-	// max(128 + 256 * facing, 0). See MissionSun.ShadeForFace.
+	// max(128 + 256 * facing, 0), the 256 being uSunShadeSlope. See MissionSun.ShadeForFace.
 	//
 	// Computed HERE, per vertex — which is what makes a TSGouraudPoly Gouraud.
 	// TSGouraudPoly_Render (004755c8) calls the light function once per vertex, walking NormalList
@@ -169,7 +172,7 @@ void main() {
 	// term is floored at 0 here but not capped — capping it first would swallow an effect light's
 	// contribution to a face the sun has already overdriven, and the sun overdrives anything within
 	// 60 degrees of it.
-	float shade = max(128.0 + 256.0 * facing, 0.0);
+	float shade = max(128.0 + uSunShadeSlope * facing, 0.0);
 
 	// A surface that carries a baked shade byte (terrain) never reads this, so it does not pay for
 	// the loop either.

@@ -11,12 +11,12 @@ namespace Herculan.Es1.Render;
 
 /// <summary>
 /// ES1's backdrop as <c>Scene_DrawTerrainPass</c> (<c>ES1DBSIM 00025b68</c>) paints it before any shape: the sky, the
-/// ground below the horizon line and the skyline on it (docs/es1/rendering/ground-and-sky.md). Backdrop.glsl runs each
-/// rule per pixel at the window's resolution; this sets it up from the camera each frame.
+/// ground below the horizon line, the skyline on it, the clouds and the scattered points
+/// (docs/es1/rendering/ground-and-sky.md). Backdrop.glsl runs each rule per pixel at the window's resolution; this
+/// sets it up from the camera each frame. A speck's pixels are the original's 320-column pixels scaled to the window.
 ///
-/// <para>The clouds and the scattered points, which the same pass draws, are not drawn: what draws them is Open
-/// (docs/es1/rendering/ground-and-sky.md#open), as is what draws with the palette entries the pitch gradient
-/// rewrites, so that is not run either.</para>
+/// <para>What draws with the palette entries the pitch gradient rewrites is Open
+/// (docs/es1/rendering/ground-and-sky.md#open), so that is not run.</para>
 /// </summary>
 public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	private const string ShaderFolder = "Herculan.Es1.Render.Shaders.";
@@ -46,9 +46,19 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	private readonly GpuTexture? _groundTexture;
 	private readonly GpuTexture? _fadeColours;
 	private readonly GpuTexture? _skylineTexture;
+	private readonly Es1CloudLayer? _clouds;
+	private readonly Es1GroundSpecks? _specks;
+	private readonly Overlay2DRenderer? _overlay;
+	private readonly GpuTexture? _blank;
+	private readonly Vector3?[] _speckColours = new Vector3?[3];
+	private readonly Random _random = new();
 
-	/// <summary>Uploads the scene's backdrop tables; <paramref name="ground"/> and <paramref name="skyline"/> are null where the theater has none.</summary>
-	public Es1Backdrop(GL gl, Es1Horizon horizon, Es1TexturedGround? ground, Es1Skyline? skyline, DynamixPalette palette) {
+	/// <summary>
+	/// Uploads the scene's backdrop tables; <paramref name="ground"/>, <paramref name="skyline"/>,
+	/// <paramref name="clouds"/> and <paramref name="specks"/> are null where the theater has none.
+	/// </summary>
+	public Es1Backdrop(GL gl, Es1Horizon horizon, Es1TexturedGround? ground, Es1Skyline? skyline,
+			Es1Clouds? clouds, Es1GroundSpecks? specks, DynamixPalette palette) {
 		_gl = gl;
 		_horizon = horizon;
 		_shader = ShaderProgram.Load(gl, typeof(Es1Backdrop).Assembly, ShaderFolder, "Backdrop.glsl");
@@ -71,13 +81,30 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 			_skyline = skyline;
 			_skylineTexture = new GpuTexture(gl, skyline.Pixels, skyline.Width, skyline.Height);
 		}
+
+		if (clouds != null) {
+			_clouds = new Es1CloudLayer(gl, clouds, palette);
+		}
+
+		if (specks != null) {
+			_specks = specks;
+			_overlay = new Overlay2DRenderer(gl);
+			_blank = new GpuTexture(gl, [255, 255, 255, 255], 1, 1);
+			for (int k = 0; k < _speckColours.Length; k++) {
+				_speckColours[k] = Es1Horizon.ColorOf(palette, specks.Colour - 2 * k);
+			}
+		}
 	}
 
 	/// <summary>
-	/// Whether the ground is textured, as it is when the preferences' option 5 is above 240 (<c>Hzline_FillGround</c>,
-	/// docs/es1/rendering/ground-and-sky.md#the-ground); off, or without a ground texture, it is banded.
+	/// The preferences' option 5: above 240 the ground is textured (<c>Hzline_FillGround</c>,
+	/// docs/es1/rendering/ground-and-sky.md#the-ground), and otherwise, or without a ground texture, banded; below 240
+	/// count × it / 240 of the scattered points are drawn.
 	/// </summary>
-	public bool TexturedGround { get; set; } = true;
+	public int GroundDetail { get; set; } = 255;
+
+	/// <summary>The preferences byte <c>000bd566</c>: (count · (it + 1)) &gt;&gt; 8 of the clouds are drawn.</summary>
+	public int CloudDetail { get; set; } = 255;
 
 	public void Draw(Camera camera, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {
 		float scale = camera.FocalPixelsFor(viewportHeight) / Es1Horizon.FocalPixels;
@@ -122,7 +149,7 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 		_shader.SetFloat("uGroundBandHeight", Math.Max(_horizon.GroundBandHeight, 1));
 		_shader.SetFloat("uFirstGroundEdge", _horizon.GroundBandHeight * sinRoll * sinRoll + t * cosRoll);
 
-		bool textured = TexturedGround && _ground != null;
+		bool textured = GroundDetail > Es1GroundSpecks.DetailLimit && _ground != null;
 		_shader.SetInt("uTextured", textured ? 1 : 0);
 		if (textured) {
 			SetTexturedGround(camera, _ground!, pitch, roll, heading, lineRow, scale, centre,
@@ -139,6 +166,64 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 		_gl.DepthMask(true);
 		_gl.Enable(EnableCap.DepthTest);
 		_gl.ActiveTexture(TextureUnit.Texture0);
+
+		_clouds?.Draw(camera, CloudDetail, _random, centre, camera.FocalPixelsFor(viewportHeight), viewportX, viewportY,
+			viewportWidth, viewportHeight);
+		DrawSpecks(camera, scale, centre, viewportX, viewportY, viewportWidth, viewportHeight);
+	}
+
+	/// <summary>
+	/// <c>PointScatter_Draw</c> (<c>ES1DBSIM 00026fe0</c>): each speck in front of the near plane is a pixel, two side by
+	/// side within <see cref="Es1GroundSpecks.PairDistance"/>, and within <see cref="Es1GroundSpecks.ClusterDistance"/>
+	/// three more up and to the right in the palette entries 2 and 4 below.
+	/// </summary>
+	private void DrawSpecks(Camera camera, float scale, Vector2 centre, int viewportX, int viewportY, int viewportWidth,
+			int viewportHeight) {
+		if (_specks == null || _overlay == null) {
+			return;
+		}
+
+		var specks = _specks.Update(camera.Position, GroundDetail, _random);
+		if (specks.IsEmpty) {
+			return;
+		}
+
+		var view = camera.ViewMatrix;
+		float focal = camera.FocalPixelsFor(viewportHeight);
+		_overlay.Clear();
+		foreach (var speck in specks) {
+			var inView = Vector3.Transform(WorldScale.ToRender(speck.Point), view);
+			float depth = -inView.Z;
+			if (depth <= camera.NearPlane) {
+				continue;
+			}
+
+			// The point in the overlay's frame, pixels from the viewport's top-left, y down as the original's rows run.
+			float x = centre.X + focal * inView.X / depth - viewportX;
+			float y = viewportY + viewportHeight - (centre.Y + focal * inView.Y / depth);
+			Plot(x, y, 0, 0, 0);
+			if (speck.Distance < Es1GroundSpecks.PairDistance) {
+				Plot(x, y, 1, 0, 0);
+			}
+
+			if (speck.Distance < Es1GroundSpecks.ClusterDistance) {
+				Plot(x, y, 2, 0, 1);
+				Plot(x, y, 2, -1, 1);
+				Plot(x, y, 1, -1, 2);
+			}
+		}
+
+		_overlay.Begin(viewportX, viewportY, viewportWidth, viewportHeight);
+		_overlay.Submit(_blank!);
+		_overlay.End();
+
+		// Gfx_PlotPixel plots nothing in a colour it cannot resolve.
+		void Plot(float x, float y, int column, int row, int shade) {
+			if (_speckColours[shade] is { } colour) {
+				_overlay.AddFilledRect(x + (column - 0.5f) * scale, y + (row - 0.5f) * scale,
+					x + (column + 0.5f) * scale, y + (row + 0.5f) * scale, colour);
+			}
+		}
 	}
 
 	private void SetTexturedGround(Camera camera, Es1TexturedGround ground, short pitch, short roll, short heading,
@@ -200,6 +285,9 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 		_groundTexture?.Dispose();
 		_fadeColours?.Dispose();
 		_skylineTexture?.Dispose();
+		_clouds?.Dispose();
+		_overlay?.Dispose();
+		_blank?.Dispose();
 		_gl.DeleteVertexArray(_vertexArray);
 	}
 

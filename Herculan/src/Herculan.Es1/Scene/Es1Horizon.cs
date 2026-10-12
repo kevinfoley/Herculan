@@ -108,7 +108,8 @@ public sealed class Es1Horizon {
 		return FocalPixels * SimTrig.Sin(pitch) / cos;
 	}
 
-	private static Vector3? ColorOf(DynamixPalette palette, int index) {
+	/// <summary>Palette entry <paramref name="index"/> as a colour, or null when the palette lacks it.</summary>
+	internal static Vector3? ColorOf(DynamixPalette palette, int index) {
 		if (!palette.Colors.TryGetValue(index, out var entry)) {
 			return null;
 		}

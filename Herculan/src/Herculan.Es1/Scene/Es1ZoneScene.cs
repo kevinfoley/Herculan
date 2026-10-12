@@ -43,6 +43,12 @@ public sealed class Es1ZoneScene {
 	/// <summary>The horizon skyline, or null for a world file that names no sky bank, as every one with <i>d</i> 1 does.</summary>
 	public Es1Skyline? Skyline { get; private init; }
 
+	/// <summary>The cloud layer, or null without a world file, for one that names no cloud bank, or without the bank.</summary>
+	public Es1Clouds? Clouds { get; private init; }
+
+	/// <summary>The scattered points, or null without a world file or for one whose count is 0.</summary>
+	public Es1GroundSpecks? Specks { get; private init; }
+
 	/// <summary>The theater and world file the scene was loaded for.</summary>
 	public Es1Theater Theater { get; }
 
@@ -120,6 +126,11 @@ public sealed class Es1ZoneScene {
 				&& content.Read("dba", world.SkyBank + ".DBA") is { } bankBytes
 					? Es1Skyline.From(new DynamixBitmapArrayTransformer().Parse(bankBytes), palette)
 					: null,
+			Clouds = world is { CloudBank.Length: > 0 }
+				&& content.Read("dba", world.CloudBank + ".DBA") is { } cloudBytes
+					? Es1Clouds.From(world, new DynamixBitmapArrayTransformer().Parse(cloudBytes))
+					: null,
+			Specks = world != null ? Es1GroundSpecks.From(world) : null,
 		};
 	}
 

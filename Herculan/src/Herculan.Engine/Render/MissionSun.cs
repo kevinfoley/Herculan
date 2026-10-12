@@ -64,13 +64,28 @@ public static class MissionSun {
 	/// leaves every flat cell facing away from the sun. See docs/retail/rendering/terrain-lighting.md's
 	/// "The sun".</para>
 	/// </summary>
-	public static Vector3 Direction { get; } = ComputeDirection();
+	public static Vector3 Direction { get; } = DirectionFor(-6000, 21000);
 
-	private static Vector3 ComputeDirection() {
+	/// <summary>
+	/// The slope of <see cref="ShadeForFace"/>'s line, the 256 in <c>128 + 256 * facing</c>: the sun's term with the
+	/// bias taken out, <c>(Intensity * NormalLength * DirectionLength) &gt;&gt; 23</c>. The 128 is the bias alone and
+	/// holds for any sun.
+	/// </summary>
+	public static int FaceShadeSlope { get; } = FaceShadeSlopeFor(Intensity, DirectionLength);
+
+	/// <summary><see cref="FaceShadeSlope"/> for a directional light of this intensity and direction length.</summary>
+	public static int FaceShadeSlopeFor(int intensity, int directionLength) =>
+		(int)(((long)intensity * NormalLength * directionLength) >> 23);
+
+	/// <summary>
+	/// The unit render-space direction <c>RotateVectorByMatrixQ14((0, L, 0), BuildEulerRotationMatrixQ14(x, 0, z))</c>
+	/// points, for angles in the sim's units, a full circle per <c>0x10000</c>.
+	/// </summary>
+	public static Vector3 DirectionFor(int xAngle, int zAngle) {
 		// The sim's angle unit is a full circle per 0x10000, per BuildEulerRotationMatrixQ14.
 		const float RadiansPerRawUnit = MathF.PI * 2f / 65536f;
-		float xRadians = -6000f * RadiansPerRawUnit;
-		float zRadians = 21000f * RadiansPerRawUnit;
+		float xRadians = xAngle * RadiansPerRawUnit;
+		float zRadians = zAngle * RadiansPerRawUnit;
 
 		var qx = Quaternion.CreateFromAxisAngle(Vector3.UnitX, xRadians);
 		var qz = Quaternion.CreateFromAxisAngle(Vector3.UnitZ, zRadians);

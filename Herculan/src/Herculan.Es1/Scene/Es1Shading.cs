@@ -9,11 +9,8 @@ namespace Herculan.Es1.Scene;
 /// How ES1's simulator colours a zone shape's faces (docs/es1/rendering/polygon-shading.md#the-zone-shapes): a solid face
 /// draws its palette index unchanged, and a shaded face takes entry (light · length) &gt;&gt; 8 of its ramp, which
 /// <c>WorldShades_ApplyForObject</c> (<c>ES1DBSIM 00025d44</c>) re-points before each shape by its distance band. Each
-/// band is one block of <see cref="Table"/>, and a drawn shape reads its band's (<see cref="SceneItem.RampBlock"/>).
-///
-/// <para>PLACEHOLDER: a face's light is Earthsiege 2's mission sun's (<see cref="MissionSun"/>). Which lights ES1
-/// registers is Open (docs/es1/rendering/polygon-shading.md#open), so where along its band's range a lit face lands is
-/// not ES1's.</para>
+/// band is one block of <see cref="Table"/>, and a drawn shape reads its band's (<see cref="SceneItem.RampBlock"/>). The
+/// light is <see cref="Es1Sun"/>'s.
 /// </summary>
 public sealed class Es1Shading {
 	/// <summary>
