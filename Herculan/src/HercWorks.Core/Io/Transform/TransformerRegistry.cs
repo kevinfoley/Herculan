@@ -191,6 +191,14 @@ public static class TransformerRegistry {
 			() => new Dbsim.Es1TheaterShapeLinesTransformer()),
 		// docs/es1/formats/styles-dat.md: dat\ in SIMVOL0 and ZONES, cfg\ in SHELL0; each record kept whole (fields Open).
 		new("Widget Styles", e => NameIs(e, "STYLES.DAT"), () => new Dbsim.Es1WidgetStylesTransformer()),
+		// docs/es1/formats/bst-battle-sets.md: ZONES' bst\ and msn\ lists, matched by name (the VOL has no folder type for bst\).
+		new("Battle Set", e => NameStartsWith(e, "BTLSET_") || NameIs(e, "TEST_BTL.DAT"), () => new Shell.Es1BattleSetTransformer()),
+		new("Mission Name List", e => NameStartsWith(e, "ANY_") && NameEndsWith(e, ".DAT"), () => new Shell.Es1NameListTransformer()),
+		new("Single Mission Lists", e => NameIs(e, "SING_MSN.DAT"), () => new Shell.Es1SingleMissionsTransformer()),
+		new("Equipment Availability", e => NameIs(e, "TECH_0.DAT") || NameIs(e, "TECH_SNG.DAT"), () => new Shell.Es1TechFileTransformer()),
+		// docs/es1/formats/wld-world.md#the-world-tables-in-zonesvol: no reader found, bytes kept whole (OPAQUE).
+		new("Unread World Table (opaque)", e => ExtIs(e, FileType.Dat) && NameStartsWith(e, "WORLD"),
+			() => new Common.Es1OpaqueFileTransformer()),
 	};
 
 	/// <summary>Whether the entry is one of the four theater shape tables (docs/es1/formats/zone-terrain.md#which-zone-and-which-theater).</summary>

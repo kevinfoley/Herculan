@@ -557,6 +557,96 @@
       }
     },
     {
+      "address": "00001dd4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Tech_LoadFile",
+      "description": "(state, path) in stack order, callee-cleaned: opens path as a VolRStream, reads it into state with Tech_Read (00001e16), closes the stream, and calls Tech_Unlock (00001f78)(state, 0). es2_xref finds two calls, both from CareerRecord_Init (000158ff), with bst\\tech_0.dat and bst\\tech_sng.dat.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#equipment-availability",
+      "verified": {
+        "bytes": "00001dd4+66",
+        "sha1": "fdec4cec6048",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001e16",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Tech_Read",
+      "description": "(state, stream) in stack order, callee-cleaned: reads an int16 count, then for each record an int16 kind and an int16 index, and for kind 0 reads 4 bytes (two int16 mission counts) into state + 4 + 5 * index, for kind 1 into state + 0x2c + 5 * index; a record of any other kind is read and dropped, and the index is not bounds-tested. The 8-byte records of bst\\tech_0.dat and bst\\tech_sng.dat.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#equipment-availability",
+      "verified": {
+        "bytes": "00001e16+205",
+        "sha1": "476f2d210d01",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001ee3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Tech_Clear",
+      "description": "(state), callee-cleaned: zeroes the unlocked byte of each of the 8 chassis entries (state + 8 + 5 * i) and of each of the 17 weapon entries (state + 0x30 + 5 * i). It leaves the mission counts and the words at +0 and +2 as they were.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#equipment-availability",
+      "verified": {
+        "bytes": "00001ee3+72",
+        "sha1": "e4f9a2bd81a9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001f2b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Tech_WriteWeaponFlags",
+      "description": "(state, stream) in stack order, callee-cleaned: writes the unlocked byte of each of the 17 weapon entries (state + 0x30 + 5 * i), one byte each, through the stream's write slot +0x18. es2_xref finds one call, from CareerRecord_WriteWeaponFlags (000160ac).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#equipment-availability",
+      "verified": {
+        "bytes": "00001f2b+77",
+        "sha1": "7cff88f9a584",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00001f78",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Tech_Unlock",
+      "description": "(state, missions) in stack order, callee-cleaned: copies entry 0x2d of the text table 0009afa8 (eng\\watext.bin, NONE) into 0007d7e0 through sprintf %s. The grade test passes, except when the mode word 000aad56 is 1 and missions is not 0, where it passes when Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) is below 2. Each of the 8 chassis entries (state + 4 + 5 * i: int16 first, int16 second, byte unlocked) that is locked and holds no -1 unlocks when first <= missions with the grade test passing, or second <= missions; each of the 17 weapon entries (state + 0x2c) the same with == for <=. Unlocking sets the byte, copies the item's name (table 0009afa8 entry 0x1b + i for a chassis, 0xd5 + i for a weapon) into 0007d7e0, and stores the kind (0, 1) at state +0 and the index at +2. es2_xref finds two calls: Tech_LoadFile (00001dd4) with 0, and Shell_ProcessMissionResults (00038eb5) with the career record's missions played.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#equipment-availability",
+      "verified": {
+        "bytes": "00001f78+503",
+        "sha1": "a6dd6f22c7e0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000216f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Tech_FormatLockedName",
+      "description": "(state, index, kind) in stack order, callee-cleaned: when kind is 0 and chassis entry index is locked (byte state + 8 + 5 * index is 0), copies entry 0x1b + index of the text table 0009afa8 into 0007d808 through sprintf %s; when kind is 1 and weapon entry index is locked (state + 0x30), entry 0xd5 + index. es2_xref finds no branch to it and no stored pointer.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#equipment-availability",
+      "verified": {
+        "bytes": "0000216f+147",
+        "sha1": "17a201b4885e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00002204",
       "binary": "ES1GO",
       "type": "function",
@@ -817,7 +907,7 @@
       "type": "function",
       "confidence": "high",
       "name": "BattleSet_Dtor",
-      "description": "(set, flags) in stack order, callee-cleaned: returns when set is null; frees the campaign array +2 (__vec_delete, 8-byte elements, with Campaign_Dtor (00014355)) and zeroes it; calls 00015153; deletes set when bit 0 of flags is set.",
+      "description": "(set, flags) in stack order, callee-cleaned: returns when set is null; frees the campaign array +2 (__vec_delete, 8-byte elements, with Campaign_Dtor (00014355)) and zeroes it; calls PilotNames_Free (00015153); deletes set when bit 0 of flags is set.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
       "verified": {
         "bytes": "00013eac+85",
@@ -832,7 +922,7 @@
       "type": "function",
       "confidence": "high",
       "name": "BattleSet_Load",
-      "description": "(set, index) in stack order, callee-cleaned: loads the string table bst\\batlsets.bin into a stack table (TextTable_Ctor (0001865c), Text_LoadDataFile through a VolRStream), reads the battle set file its entry index names into set with BattleSet_ReadFile (00013fad), then calls SingleMissions_Load (000361ac) and 00015070, and destroys the stream and the table.",
+      "description": "(set, index) in stack order, callee-cleaned: loads the string table bst\\batlsets.bin into a stack table (TextTable_Ctor (0001865c), Text_LoadDataFile through a VolRStream), reads the battle set file its entry index names into set with BattleSet_ReadFile (00013fad), then calls SingleMissions_Load (000361ac) and PilotNames_Load (00015070), and destroys the stream and the table.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
       "verified": {
         "bytes": "00013f01+121",
@@ -1022,6 +1112,51 @@
       }
     },
     {
+      "address": "00015070",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotNames_Load",
+      "description": "(), C convention: reads car\\names.dat through a VolRStream: a count byte of groups into a new pointer array at 0007ebc4, then per group a count byte and a new pointer array of that many 16-byte buffers, each filled by Stream_ReadCString (00020154) with a bound of 16. es2_xref finds one call, from BattleSet_Load (00013f01).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "00015070+227",
+        "sha1": "024ea07212c1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015153",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotNames_Free",
+      "description": "(), C convention: frees 12 groups of 3 names from the array at 0007ebc4, then each group's array and the array, and zeroes 0007ebc4. The counts are constants, not the file's. es2_xref finds one call, from BattleSet_Dtor (00013eac).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "00015153+117",
+        "sha1": "ec4266ee96d3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000158ff",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_Init",
+      "description": "(record), callee-cleaned: zeroes bytes +0 and +1 and the words +2, +6, +8, +0xa, +0xe and +0x12, sets +4 to 0x6a4 and the word 000aad58 to 0, zeroes the 100 words at +0x12d (CareerRecord_ClearWords (000161ae)), clears the equipment state at +0xa8 (Tech_Clear (00001ee3)) and loads it with Tech_LoadFile (00001dd4) from bst\\tech_0.dat when the mode word 000aad56 is 1 and bst\\tech_sng.dat otherwise, then sets the state's words +0 and +2 (record +0xa8, +0xaa) to -1. It sets the pilot count +0x10 to 4 and for each 0x25-byte pilot entry from +0x14 calls 000151c8 when the mode is 0 or the entry is the one +0xe names, and 00015228 otherwise. es2_xref finds two calls: 000163ac with a roster record (roster + 0x23 + 0x1f7 * i), and MsnGen_LoadMission (00035873) with 0009b014.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#the-career-record",
+      "verified": {
+        "bytes": "000158ff+234",
+        "sha1": "ab78a8c26b7e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000159e9",
       "binary": "ES1GO",
       "type": "function",
@@ -1082,12 +1217,102 @@
       }
     },
     {
+      "address": "00015c93",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Word_Swap",
+      "description": "(a, b) in stack order, callee-cleaned: swaps the int16 at a with the int16 at b. VSHELL's Dword_Swap (00467e9e) does the same with dwords.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions",
+      "verified": {
+        "bytes": "00015c93+40",
+        "sha1": "8e155fb75069",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015cbb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_MarkTopPilots",
+      "description": "(record), callee-cleaned: bubble-sorts a stack copy of the three pilot entry indexes at 0007ec9c (1, 2, 3) by each entry's word +0xd (record + 0x14 + 0x25 * i + 0xd), greatest first, swapping with Word_Swap (00015c93); then for each place p of the three sets the entry's byte +0xa (record + 0x1e + 0x25 * i) to 1 when p + 1 is below the word 0007ebc8, and to 0 otherwise. es2_xref finds one call, from Career_StartMission (00016e93).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions",
+      "verified": {
+        "bytes": "00015cbb+252",
+        "sha1": "d1e3a44e8247",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000160ac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_WriteWeaponFlags",
+      "description": "(record, stream) in stack order, callee-cleaned: Tech_WriteWeaponFlags (00001f2b)(record + 0xa8, stream). es2_xref finds one call, from 00022a05.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#equipment-availability",
+      "verified": {
+        "bytes": "000160ac+31",
+        "sha1": "738d8e68ccf2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000160cb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_FinishMission",
+      "description": "(record), callee-cleaned: takes n = 00015bfb(record) and the share 0007fcf0 / n (unsigned); n times calls 00015b0a(record) and stores the share at dword +0x21 of the pilot entry the word +0x12 names (record + 0x35 + 0x25 * i); then calls 00015e0b(record) and adds 1 to the missions played, the word +0xa. es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
+      "verified": {
+        "bytes": "000160cb+109",
+        "sha1": "58c00d43f097",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000161ae",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_ClearWords",
+      "description": "(record), callee-cleaned: zeroes the 100 int16 at +0x12d. es2_xref finds two calls, from CareerRecord_Init (000158ff) and 00016f22.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#the-career-record",
+      "verified": {
+        "bytes": "000161ae+46",
+        "sha1": "0cb75ad2e32c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00016845",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Roster_NthUsedRecord",
+      "description": "(roster, n) in stack order, callee-cleaned: returns 0 when n is 0; otherwise counts the records 1 to 0x28 (roster + 0x23 + 0x1f7 * i) whose first byte is not 0 and returns the index of the n-th, or 0 when there are fewer. Career_StartMission (00016e93) stores the result in the roster's word +7; es2_xref finds seven calls to Career_StartMission, each passing the roster 0009b218 and 0.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#the-career-record",
+      "verified": {
+        "bytes": "00016845+107",
+        "sha1": "d748f91a9189",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00016e93",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Career_StartMission",
-      "description": "(roster, b) in stack order, callee-cleaned: sets the roster's word +7 to 00016845(roster, b); BattleSet_Load (00013f01)(g_BattleSet (000a02cc), the roster's word +5); Career_BuildMissionPath (00015a13) on the 0x1f7-byte record at roster + 0x23 + 0x1f7 * word +7; MsnGen_LoadMission (000aad14); 00015cbb(the record); copies the word 000aad5a to the record's +0xc; Mission_WriteRestore.",
+      "description": "(roster, b) in stack order, callee-cleaned: sets the roster's word +7 to Roster_NthUsedRecord (00016845)(roster, b); BattleSet_Load (00013f01)(g_BattleSet (000a02cc), the roster's word +5); Career_BuildMissionPath (00015a13) on the 0x1f7-byte record at roster + 0x23 + 0x1f7 * word +7; MsnGen_LoadMission (000aad14); CareerRecord_MarkTopPilots (00015cbb)(the record); copies the word 000aad5a to the record's +0xc; Mission_WriteRestore.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions",
       "verified": {
         "bytes": "00016e93+143",
@@ -1147,7 +1372,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Text_GetString",
-      "description": "(table, index) in stack order, callee-cleaned: formats \"Text::getString: Index out of bounds\" with the index into a stack buffer that nothing reads, then returns the table's string base (+4) plus the uint16 at index in its offset array (+0); there is no bounds test. MsnGen_LoadMission (00035873) takes data\\script.dat, data\\mission.var and car\\sm_play.mec from entries 3, 5 and 10 of the table at 0009afb8, which 0002094d loads from cfg\\filename.bin through Text_LoadDataFile (00018755).",
+      "description": "(table, index) in stack order, callee-cleaned: formats \"Text::getString: Index out of bounds\" with the index into a stack buffer that nothing reads, then returns the table's string base (+4) plus the uint16 at index in its offset array (+0); there is no bounds test. MsnGen_LoadMission (00035873) takes data\\script.dat, data\\mission.var and car\\sm_play.mec from entries 3, 5 and 10 of the table at 0009afb8, which FileNames_Load (0002094d) loads from cfg\\filename.bin through Text_LoadDataFile (00018755).",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#loading-a-mission",
       "verified": {
         "bytes": "00018717+62",
@@ -1502,6 +1727,21 @@
       }
     },
     {
+      "address": "0002094d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "FileNames_Load",
+      "description": "(), C convention: loads cfg\\filename.bin through a VolRStream into the text table at 0009afb8 with Text_LoadDataFile (00018755), and closes and destroys the stream. Entries 3, 5, 7 and 10 are data\\script.dat, data\\mission.var, data\\results.dat and car\\sm_play.mec. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#loading-a-mission",
+      "verified": {
+        "bytes": "0002094d+60",
+        "sha1": "d97fb4c8f1e4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00020989",
       "binary": "ES1GO",
       "type": "function",
@@ -1527,6 +1767,21 @@
       "verified": {
         "bytes": "0002562c+41",
         "sha1": "223a72d7cb58",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002bb29",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BattleSetDialog_OnMessage",
+      "description": "(dialog, message) in stack order, callee-cleaned: when the message's word +6 is 100, takes the index 0001bda4 gives for the id 0x533 among the controls of the dialog's object at +6 (pointers from its +0x1f), stores the value that control's vtable (at its +0x20) slot +0x2c returns in the roster's word +5 (0009b21d) and in the low word of 0007fcec, loads that battle set into g_BattleSet (000a02cc) with BattleSet_Load (00013f01), and sets the message word to 0x514. es2_xref finds it only as a stored pointer, at 00081faa.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#which-battle-set",
+      "verified": {
+        "bytes": "0002bb29+134",
+        "sha1": "a2398f2ab3a8",
         "scope": "body",
         "via": "decompile"
       }
@@ -2117,12 +2372,27 @@
       }
     },
     {
+      "address": "00036837",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_OutcomeGrade",
+      "description": "(ordinal, kind) in stack order, callee-cleaned: returns the int16 at ordinal of the table at 000810f4 (0, 0, 1, 1, 1, 2, 2, 3, 3, 0) when kind is 0, 1, 2 or 6, and of the table at 00081108 (0, 0, 1, 1, 2, 2, 3, 3) otherwise, with no bounds test. es2_xref finds three calls: Tech_Unlock (00001f78) and two from DigitalDialog_ShowMessage.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#equipment-availability",
+      "verified": {
+        "bytes": "00036837+59",
+        "sha1": "db848d4bd604",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00037edd",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "DigitalDialog_ShowMessage",
-      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls 0004c716 into 0007fcd8 and 000467ef with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates 00081938 and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * 00036837(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(0009afc8, a, b, path).",
+      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls 0004c716 into 0007fcd8 and 000467ef with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates 00081938 and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(0009afc8, a, b, path).",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "00037edd+1016",
@@ -2174,6 +2444,21 @@
         "sha1": "636b50781272",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00038eb5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_ProcessMissionResults",
+      "description": "(), C convention: in mode 1 (000aad56) calls 00016c1e(0009b218), otherwise 00014fd6(). Opens data\\results.dat (filename table entry 7, Path_ApplyAltDrive, FileRStream; severity-5 assert at shell.cpp line 199) and reads a word to 000aad58, a dword to 0007fcf4, a word count to 000817cc and that many pairs of words (a, b), each passed in mode 1 to 00028311(000aad62, &b, a); calls 0001568d(stream). Reads data\\mission.var (entry 5, FileRWStream; assert at line 0xd7) whole into the 100 flags at 000ab244 and sets flag 0 to 000aad58. In mode 1 it then calls 00038e48(), adds 0007fcf4 to 0007fcf0, calls 00028375(000aad62), CareerRecord_FinishMission (000160cb) and Tech_Unlock (00001f78)(record + 0xa8, record word +0xa) on the record 0009b23b + 0x1f7 * [0009b21f], calls 00029e01() and sets the record's word +4 to 0x6ae; otherwise it calls 00015db7(00014ef4()). es2_xref finds one call, from 0003ba47.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
+      "verified": {
+        "bytes": "00038eb5+729",
+        "sha1": "0e9dbcbd6606",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {

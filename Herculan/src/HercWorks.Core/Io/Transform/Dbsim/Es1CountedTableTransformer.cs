@@ -1,9 +1,9 @@
 namespace HercWorks.Core.Io.Transform.Dbsim;
 
 /// <summary>
-/// The shape several of ES1's <c>dat\</c> tables share: an <c>int16</c> count, then that many fixed-length records and
-/// nothing after them (<c>MFORMS</c>, <c>FFORMS</c>, <c>BFORMS</c>, <c>STYLES</c>; docs/es1/formats/formations-dat.md,
-/// styles-dat.md). Writing a parsed file gives back its bytes.
+/// The shape several of ES1's tables share: an <c>int16</c> count, then that many fixed-length records and nothing after
+/// them (<c>dat\MFORMS</c>, <c>FFORMS</c>, <c>BFORMS</c>, <c>STYLES</c>, <c>bst\TECH_0</c>, <c>TECH_SNG</c>;
+/// docs/es1/formats/formations-dat.md, styles-dat.md, bst-battle-sets.md). Writing a parsed file gives back its bytes.
 ///
 /// <para>A file whose length is not 2 + its count × the record length throws <see cref="InvalidDataException"/>, so a file
 /// the model would not give back whole is rejected. The retail loaders check neither.</para>

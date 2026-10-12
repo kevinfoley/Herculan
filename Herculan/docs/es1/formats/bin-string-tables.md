@@ -40,7 +40,7 @@ ES1's shell keeps its menu text, file names and spoken-message text in `.BIN` st
 | 0 | `eng\C0_text.bin` | the word `000ab222` | 0, 1 | `C0` |
 | 1 | `eng\C<k>_text.bin` | the word `000ab222` | 2*k*, 1 | `C<k>` |
 | 2 | `eng\G0_text.bin` | a word of the table at `000814ec` | 0, 3 | `G0` |
-| 3 | `eng\D0_text.bin` | 2 × `00036837`(`000aad58`, `000aad5e`), plus 0 or 1 at random unless that call returns 1 | 1, 1 | `D0` |
+| 3 | `eng\D0_text.bin` | 2 × `Mission_OutcomeGrade` (`00036837`, [its tables](bst-battle-sets.md#equipment-availability))(`000aad58`, `000aad5e`), plus 0 or 1 at random unless that call returns 1 | 1, 1 | `D0` |
 | 4 | `eng\D<k>_text.bin` | as kind 3 | 2*k* + 1, 1 | `D<k>` |
 | 5–11 | `eng\T1_text.bin` | `0008159c`[`000814e8`] when `000814e8` is nonzero; else `00037bf0`(kind), except for kind 7, which keeps the line set before | the word `000815a8`[line], 2 | `T0` or `T1` |
 
@@ -50,6 +50,6 @@ ES1's shell keeps its menu text, file names and spoken-message text in `.BIN` st
 
 ## Open
 
-- **Open:** what the words `000ab222`, `000814e8` and `000815a8` hold, what `00036837` and `00037bf0` compute, and which screens send each message kind (`DigitalDialog_ShowMessage`'s callers `0003837f` and `0003c1b7`).
+- **Open:** what the words `000ab222`, `000814e8` and `000815a8` hold, what `00037bf0` computes, and which screens send each message kind (`DigitalDialog_ShowMessage`'s callers `0003837f` and `0003c1b7`).
 - **Open:** the layout of the `SNC\*_FILES.DAT` lists past their name lists, what `0004589c`, `0004680a`, `000468fc`, `000465da` and `000469da` do, and so how a line's lip-sync plays.
 - **Open:** whether every line of a file is reachable: the line numbers above against each file's count.

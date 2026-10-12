@@ -138,10 +138,34 @@ ES2 has no `gndtex.cpp`: its ground is textured from the bank its fourth string 
 
 `FlatObj_LoadResources` (`00006cf8`), ES2's ([the shape set](../../retail/simulation/ground-shapes.md#the-shape-set--flatobj_loadresources-004097a8)), loads `dts\flat` for a selector of 0 and `dts\flat2` otherwise with `Shape_LoadAllRoots` (skip 0, tag `0x140008`), the roots to `000bc1d8` and their number to `000bc1dc`, and builds a `Pool_Init` pool of 150 elements of `0x3b` bytes at `000af044`, where ES2's elements are `0x41` bytes. It loads no `dba\` bank, binds none to the shapes and builds no delete queue.
 
+## The world tables in ZONES.VOL
+
+`ZONES.VOL`'s `DAT\` folder holds four files named like the world files, `WORLD0.DAT` to `WORLD3.DAT`, 168, 166, 170 and 110 bytes, for which no loader has been found ([Open](#open)). A case-insensitive byte search of `GO.EXE` for `world` finds nothing. The same search of `DBSIM.EXE` finds three strings: the two `world` that `World_LoadTheater` builds the palette's and the world file's names from, each of which `es2_xref.py` finds referenced once, in that function, and `world0` beside `intro`, `death1` and `death2`.
+
+Each file opens with eight `int16`:
+
+| File | Shorts 0–7 |
+|---|---|
+| `WORLD0` | 208, 200, 0, 246, 1, 6, −5, 251 |
+| `WORLD1` | 208, 1, 17, 228, 1, 11, −5, 235 |
+| `WORLD2` | 208, 1, 16, 235, 200, 1, −5, 232 |
+| `WORLD3` | 208, 1, 16, 225, 1, 5, −5, 232 |
+
+Bytes `0x10`–`0x4f` are the same in all four: the `int32` 15 and fifteen ascending `int32`, 65000, 66000, 67000, 68000, 70000, 75000, 80000, 85000, 90000, 100000, 110000, 120000, 130000, 140000 and 150000. Bytes `0x50`–`0x91` are the same in `WORLD0` to `WORLD2`: the `int16` 16 and 7; seven pairs of `int16`, (104, 5), (112, 16), (132, 16), (152, 16), (172, 16), (192, 5), (240, 15); the `int16` 7; seven pairs, (106, 1), (115, 1), (135, 1), (155, 1), (175, 1), (195, 1), (254, 1); and the `int16` 10 and 10. `WORLD3` has four `int16` there, 10, 0, 10 and 0. Three NUL-terminated strings end each file:
+
+| File | Strings |
+|---|---|
+| `WORLD0`, `WORLD3` | `w1dusk`, `clouds2`, `w1dcrk` |
+| `WORLD1` | `w2ice`, `clouds2`, `w2slp` |
+| `WORLD2` | `w3desert`, `clouds2`, `w3dune` |
+
+No archive holds an entry named by `w1dusk`, `w1dcrk`, `w2ice`, `w2slp`, `w3desert` or `w3dune`; a byte search of the seven finds those strings only in these four files.
+
 ## Rejected readings
 
 | Reading | Why it is wrong |
 |---|---|
+| `ZONES.VOL`'s `dat\WORLD<N>.DAT` are the world files the simulator loads for a theater | `World_LoadTheater` opens `wld\world<N>`, `SIMVOL0.VOL`'s `.WLD`. Read by [the layout](#the-layout), a `.DAT` file's first band count is the `int32` at `0x18`, 66000, far past its end, and the banks its strings name are in no archive |
 | ES1's `.WLD` is ES2's layout, since its tables and strings follow ES2's in the same order | ES1's loader reads twelve leading `int16`, not fourteen. ES2's layout takes ES1's first band count as its shorts 12 and 13 and the first threshold as the count |
 | The first string, `world<N>`, is a name for the world, as ES2's `world24` is read and not used | ES1 loads it as the `hzline`'s bitmap bank, `dba\WORLD<N>.DBA` |
 
@@ -152,3 +176,4 @@ ES2 has no `gndtex.cpp`: its ground is textured from the bank its fourth string 
 - **Open:** what the dword at `000981c4` that `PaletteCycle_Register` adds a cycle's delay to counts.
 - **Open:** the clouds' destructors, slot `+0x1c` of each vtable: `00025a08` for `000928f6`, which stores that vptr and five others in turn and calls `TSBase_Dtor`, and `000274c8` for `TexPoly`'s `00092bde`; neither body is read.
 - **Open:** what reads `WORLD1.DPL` and `WORLD3.DPL`, which no M names.
+- **Open:** what reads [`ZONES.VOL`'s `WORLD0.DAT` to `WORLD3.DAT`](#the-world-tables-in-zonesvol), and so what their bytes are. Their fifteen ascending `int32` after a count of 15 have the shape of a band table, and `WORLD0` to `WORLD2`'s `0x50`–`0x91` that of the rows, columns and two range tables, but with seven columns, a single band table and no distance offsets; `WORLD3`'s eight bytes there do not walk that shape.
