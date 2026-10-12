@@ -1192,8 +1192,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_RegisterSubsystem",
-      "description": "No arguments, debris.cpp's static initialiser: RegisterSubsystemLoader(2, Debris_LoadResources (0000607c)) and RegisterSubsystemLoader(5, DebrisPool_FlushDeletes (00005ebc)), then 0 to the word 000aef60 and the pool pointer 000aeef8. No Ghidra function starts here. ES2's Debris_RegisterSubsystem (DBSIM 00408e9c).",
-      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load"
+      "description": "No arguments, debris.cpp's static initialiser: RegisterSubsystemLoader(2, Debris_LoadResources (0000607c)) and RegisterSubsystemLoader(5, DebrisPool_FlushDeletes (00005ebc)), then 0 to the word 000aef60 and the pool pointer 000aeef8. ES2's Debris_RegisterSubsystem (DBSIM 00408e9c).",
+      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load",
+      "verified": {
+        "bytes": "000065f4+44",
+        "sha1": "41ac7eb2c4f3",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00006620",
@@ -1201,8 +1207,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_StaticDtor",
-      "description": "No arguments: operator_delete of the debris pool 000aeef8 when it is not 0. No Ghidra function starts here. ES2's Debris_StaticDtor (DBSIM 00408ef0).",
-      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load"
+      "description": "No arguments: operator_delete of the debris pool 000aeef8 when it is not 0. ES2's Debris_StaticDtor (DBSIM 00408ef0).",
+      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load",
+      "verified": {
+        "bytes": "00006620+21",
+        "sha1": "064c8db69cca",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00006cf8",
@@ -2065,8 +2077,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_RegisterSubsystem",
-      "description": "No arguments, flyersys.cpp's static initialiser: RegisterSubsystemLoader(2, Flyer_LoadResources (0001c558)). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/formats/formations-dat.md#the-loads"
+      "description": "No arguments, flyersys.cpp's static initialiser: RegisterSubsystemLoader(2, Flyer_LoadResources (0001c558)).",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#the-loads",
+      "verified": {
+        "bytes": "0001c814+13",
+        "sha1": "ca0ced40470a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0001d850",
@@ -3649,8 +3667,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WidgetStyles_StaticDtor",
-      "description": "No arguments, a static exit routine: when the style table 00094ccc is not 0, __vec_delete(0, 0x40, 7, the table) and 0 to 00094ccc. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads"
+      "description": "No arguments, a static exit routine: when the style table 00094ccc is not 0, __vec_delete(0, 0x40, 7, the table) and 0 to 00094ccc.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
+      "verified": {
+        "bytes": "0004492c+38",
+        "sha1": "81d5240cadc0",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00044f78",
