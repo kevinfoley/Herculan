@@ -72,7 +72,7 @@ The object is a `TS_OBJ` with the record pointer added, and its type tag, the `i
 | `+4` | `TSObj_RenderCopy` (`00020550`) | installs the object's model transform and calls its shape instance's (`+0x2e`) slot `+0x20`, the render |
 | `+8` | `TSObj_GetPositionCopy` (`00020570`) | returns the object's `+0x20`, the position |
 | `+0xc` | `ZoneShapeObj_Dtor` (`00020584`) | with the object non-null: stores the vptrs `000924be` and `000924fa`, calls the shape instance's slot `+0x1c` with 3 when it has one, stores `0009251a` and `0009253a`, and frees the object when bit 0 of its second argument is set |
-| `+0x10` | `000205d3` | returns 0; no Ghidra function |
+| `+0x10` | `TSObj_ReturnZeroCopy` (`000205d3`) | returns 0: a `NOP`, then the code of `TS_OBJ`'s `TSObj_ReturnZero` (`000018e8`) |
 | `+0x14` | `TSObj_GetRadiusCopy` (`000205dc`) | returns the `int16` at `+8` of the instance's shape (`+4`), 0 without a shape instance or shape |
 
 `TSObj_RenderCopy`, `TSObj_GetPositionCopy` and `TSObj_GetRadiusCopy` are the same code as `TS_OBJ`'s `TSObj_Render` (`00001cdc`), `TSObj_GetPosition` (`00001cfc`) and `TSObj_GetRadius` (`00001d58`) in its vtable `000902ea`. `TSObj_DtorCopy` (`00020624`), `000924fa`'s destructor, is `ZoneShapeObj_Dtor` without the first store, and `MatObj_DtorCopy` (`00020680`), `0009251a`'s, stores `0009251a` and `0009253a` and frees.

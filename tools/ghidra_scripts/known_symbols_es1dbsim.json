@@ -352,8 +352,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSObj_ReturnZero",
-      "description": "(object), callee-cleaned (RET 4), frameless: returns 0. Slot +0x10 of TS_OBJ's vtable 000902ea, MAT_OBJ's 000902ca and three others. No Ghidra function.",
-      "source": "ES1DBSIM disassembly at 000018e8"
+      "description": "(object), callee-cleaned (RET 4), frameless: returns 0. Slot +0x10 of TS_OBJ's vtable 000902ea, MAT_OBJ's 000902ca and three others.",
+      "source": "ES1DBSIM disassembly at 000018e8",
+      "verified": {
+        "bytes": "000018e8+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00001b04",
@@ -1306,8 +1312,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSObj_ReturnZeroCopy",
-      "description": "(object), callee-cleaned (RET 4), frameless: returns 0; a NOP, then the code of TSObj_ReturnZero (000018e8). Slot +0x10 of vtables 000924be, 000924fa and 0009251a. No Ghidra function.",
-      "source": "ES1DBSIM disassembly at 000205d3"
+      "description": "(object), callee-cleaned (RET 4), frameless: returns 0; a NOP, then the code of TSObj_ReturnZero (000018e8). Slot +0x10 of vtables 000924be, 000924fa and 0009251a.",
+      "source": "ES1DBSIM disassembly at 000205d3",
+      "verified": {
+        "bytes": "000205d3+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "000205dc",
@@ -1405,8 +1417,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_Init",
-      "description": "(): allocates the object list's arrays: 0x800 bytes (512 pointers) each at 000bc58e and 000bc592, 0x200 entries of 0x36 bytes at 000bc598 through __vec_new with the padding entry 00020c7f of ObjListEntry_Ctor (00020c80), 0x800 bytes at 000bc59c, and ObjList_AllocSortNodes (00021560)(0x200). No Ghidra function; es2_xref.py finds its address only as the dword at 00021519.",
-      "source": "ES1DBSIM capstone disassembly 00020c2c-00020c7e; es2_xref.py --binary ES1DBSIM 00020c2c"
+      "description": "(): allocates the object list's arrays: 0x800 bytes (512 pointers) each at 000bc58e and 000bc592, 0x200 entries of 0x36 bytes at 000bc598 through __vec_new with the padding entry 00020c7f of ObjListEntry_Ctor (00020c80), 0x800 bytes at 000bc59c, and ObjList_AllocSortNodes (00021560)(0x200). es2_xref.py finds its address only as the dword at 00021519.",
+      "source": "ES1DBSIM capstone disassembly 00020c2c-00020c7e; es2_xref.py --binary ES1DBSIM 00020c2c",
+      "verified": {
+        "bytes": "00020c2c+83",
+        "sha1": "4bb9425ce0d5",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00020c80",

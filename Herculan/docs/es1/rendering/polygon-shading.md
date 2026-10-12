@@ -162,7 +162,7 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 |---|---|---|
 | `Camera_IsMountedOn` | `000003ac` | |
 | `ZoneShapeObj_WorldBox` | `00020738` | |
-| `ObjList_Init`, `ObjListEntry_Ctor` | `00020c2c`, `00020c80` | `ObjList_Init` has no Ghidra function |
+| `ObjList_Init`, `ObjListEntry_Ctor` | `00020c2c`, `00020c80` | `ObjList_Init` passes `__vec_new` the padding entry `00020c7f` before the constructor |
 | `ObjList_Add`, `ObjList_Remove`, `ObjList_RebuildFrame` | `00020d5c`, `00020d84`, `00020de0` | |
 | `ObjList_DrawEntryRender`, `ObjList_DrawFrameObjects` | `00020f40`, `00021008` | |
 | `ObjList_SetSortEye`, `ObjList_AllocSortNodes` | `00021554`, `00021560` | |
