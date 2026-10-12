@@ -587,6 +587,36 @@
       }
     },
     {
+      "address": "00009930",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercPiece_LoadTable",
+      "description": "(slot, stream) in stack order, callee-cleaned: reads the int16 internal count into +0xa and that many int16 maxima into a new array at +4, the int16 piece count into +8, and that many 18-byte pieces into a new array at +0, each with HercPiece_ReadRecord (00009890). DBSIM's HercPiece_LoadTable (0040d09c).",
+      "source": "es2_naming.py diff ES1DBSIM 00009930 DBSIM 0040d09c; Herculan/docs/es1/formats/dmg-damage-file.md#the-load",
+      "verified": {
+        "bytes": "00009930+178",
+        "sha1": "5f439eb70177",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009a2c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Damage_LoadMechDmgFile",
+      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath, asserting at severity 5 (damage.cpp line 0x85) when the stream status is set; takes the 12-byte slot of the table at 000bc2b0 numbered by the word 00090dfe, which it increments; reads the file into it with HercPiece_LoadTable (00009930); destroys the stream and returns the slot. DBSIM's Damage_LoadMechDmgFile (0040d160), without its exception frame.",
+      "source": "es2_naming.py diff ES1DBSIM 00009a2c DBSIM 0040d160; Herculan/docs/es1/formats/dmg-damage-file.md#the-load",
+      "verified": {
+        "bytes": "00009a2c+112",
+        "sha1": "e6a9855580d8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00009a9c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1072,7 +1102,7 @@
       "type": "function",
       "confidence": "high",
       "name": "FlyerType_LoadResources",
-      "description": "(type), callee-cleaned: with the name from the table at 000bc468 and the 0x2e-byte record at 000bc46c + FlyerType_RecordIndex (0001c678) * 0x2e: Ovl_ReadFile(dat\\<name>, 1, 0x22, record); Shape_LoadDts(dts\\<name>) into +0x2a, the shape's +0x26 = the dba\\enemy bank at 000bc45c; 00009a2c(dmg\\<name>) into +0x22; 00009580(col\\<name>) into +0x26. ES2's FlyerType_LoadResources (DBSIM 00422ed0), which reads 0x2e bytes into a 0x70-byte record, writes a fixed bank-slot address and reads fm\\<name>.",
+      "description": "(type), callee-cleaned: with the name from the table at 000bc468 and the 0x2e-byte record at 000bc46c + FlyerType_RecordIndex (0001c678) * 0x2e: Ovl_ReadFile(dat\\<name>, 1, 0x22, record); Shape_LoadDts(dts\\<name>) into +0x2a, the shape's +0x26 = the dba\\enemy bank at 000bc45c; Damage_LoadMechDmgFile (00009a2c)(dmg\\<name>) into +0x22; 00009580(col\\<name>) into +0x26. ES2's FlyerType_LoadResources (DBSIM 00422ed0), which reads 0x2e bytes into a 0x70-byte record, writes a fixed bank-slot address and reads fm\\<name>.",
       "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load-1",
       "verified": {
         "bytes": "0001c6c8+168",
@@ -8742,6 +8772,15 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "000769a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "OldGLBitmap_Construct",
+      "description": "Returns 0, callee-cleaned (RET 8): the load function of the GL class table's first entry (0009f198, tag 0x280000 'Old GLBitmap'), so an old-format bitmap item loads as a null object. No Ghidra function starts here. DBSIM's OldGLBitmap_Construct (00481c3c).",
+      "source": "capstone disassembly at 000769a8; Herculan/docs/es1/formats/dfn-hfn-dci.md#the-class-table"
     },
     {
       "address": "0007cd28",

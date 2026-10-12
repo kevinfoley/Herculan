@@ -15,12 +15,13 @@ Confirmed `typeId` values, each written as the envelope's 4 bytes read **big-end
 
 | typeId (BE dword) | Kind |
 |---|---|
+| `0x00002800` | An old-format bitmap, "Old GLBitmap" in the class table: `OldGLBitmap_Construct` (`00481c3c`) returns 0, so it loads as no object |
 | `0x01002800` | `.DBA`/`.HBA`/`.HB0-2`/`.DB0-2` — bitmap array |
 | `0x0E002800` | Embedded single-image sub-header inside the above |
 | `0x0B002800` | `.DCI` — cursor image, below |
 | `0x05002800` | `.DFN`/`.HFN` — bitmap font, below |
 
-Each resource is one record: the envelope, a `uint32` size of what follows, and that many bytes, rounded up to an even length with one zero byte. A bitmap array's body is an `int16` frame count, an `int16` ([Open](#open)), then that many [bitmap records](#the-bitmap-record), each rounded up the same way; a `.DBM` is one bitmap record. All 358 bitmap arrays and 10 `.DBM` in v1.0's archives end there except `dba\CORNERS.DBA`, which carries 606 bytes past its 24 frames: a bitmap body without its record header, then three whole bitmap records ([Open](#open)).
+Each resource is one record: the envelope, a `uint32` size of what follows, and that many bytes, rounded up to an even length with one zero byte. A bitmap array's body is an `int32` frame count, then that many [bitmap records](#the-bitmap-record), each rounded up the same way: `GLBitmapArray_ReadFromStream` (`00482d70`) reads the count as one dword and loads each element with `ClassItem_LoadResource`; a `.DBM` is one bitmap record. All 358 bitmap arrays and 10 `.DBM` in v1.0's archives end there except `dba\CORNERS.DBA`, which carries 606 bytes past its 24 frames: a bitmap body without its record header, then three whole bitmap records ([Open](#open)).
 
 `.DFN`/`.HFN`/`.DCI` are dispatched by a generic class-registry loader in `DBSIM.EXE` (`ClassItem_ReadTypeTag` (`0047a5a8`) → `ClassItem_FindHandler` (`0047a394`)). Specific loaders: `Panel_LoadWrapper` (`00430f58`, fonts), `Cursor_LoadWrapper` (`00430fb0`, cursors).
 
@@ -163,6 +164,5 @@ Real files checked (`ACTOR.BND`, `MECH.BND`, `CAM.BND`, `PA_01000.SNC`, `PA_0200
 - **Open:** the `.DFN`/`.HFN` header shorts at `0x0a` and `0x18`. They are 0 in every retail file and have no consumer found.
 - **Open:** `PCURSOR.DCI`'s 96 bytes past its envelope. The cursor's load reads one class item, which ends at the envelope; what reads these bytes is the open question. They may be a second image layer (an AND-mask or outline) specific to this cursor.
 - **Open:** whether DBSIM.EXE (not VSHELL) loads the SHELL0 fonts (`FONT.DFN`, `FONT2.DFN`, `BLACK.DFN`).
-- **Open:** the bitmap array's second `int16`, after the frame count.
 - **Open:** what a bitmap record's extra dwords hold, and what reads them from the bitmap object's `+0x16`.
 - **Open:** `dba\CORNERS.DBA`'s 606 bytes past its declared frames — whether anything reads them, or they are left over from an earlier, longer version of the file.

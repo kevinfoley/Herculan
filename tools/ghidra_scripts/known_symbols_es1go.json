@@ -52,7 +52,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_LoadResource",
-      "description": "(mode, stream) in stack order, callee-cleaned: loads one class item. Points the frame pointer 0009a2c8 at a frame on its stack, reads the 8-byte type tag with 00000c92, and for a tag other than -1 looks its handler up with 00000a30 and calls the handler's load function (+4) with (mode, stream); then runs 00000ea8 on the stream, restores the frame pointer and returns the item, or 0; the same statements as ES1DBSIM's ClassItem_LoadResource (000551e0) in different code.",
+      "description": "(mode, stream) in stack order, callee-cleaned: loads one class item. Points the frame pointer 0009a2c8 at a frame on its stack, reads the 8-byte type tag with 00000c92, and for a tag other than -1 looks its handler up with 00000a30 and calls the handler's load function (+4) with (mode, stream); then runs ClassItem_SkipToEnd (00000ea8) on the stream, restores the frame pointer and returns the item, or 0; the same statements as ES1DBSIM's ClassItem_LoadResource (000551e0) in different code.",
       "source": "ES1GO decompile at 000006ce",
       "verified": {
         "bytes": "000006ce+102",
@@ -179,6 +179,21 @@
         "sha1": "2bb4fe3017b3",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00000ea8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_SkipToEnd",
+      "description": "(stream), callee-cleaned: while the stream status (+0) is 0 and its position (slot +8) is below the end of the current class item (the frame 0009a2c8, +8), reads one byte (slot +0x1c); ClassItem_LoadResource (000006ce) runs it after an item's load function, so bytes the load left unread, an Old GLBitmap's whole body among them, are passed over.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#the-class-table",
+      "verified": {
+        "bytes": "00000ea8+76",
+        "sha1": "dba407947536",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -617,18 +632,63 @@
       }
     },
     {
+      "address": "00018695",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TextTable_CtorFromStream",
+      "description": "(table, stream) in stack order, callee-cleaned: allocates 0x10 bytes when table is 0, zeroes +8, +0 and +4, and reads the table from the stream with Text_LoadDataFile (00018755).",
+      "source": "Herculan/docs/es1/formats/bin-string-tables.md#the-table",
+      "verified": {
+        "bytes": "00018695+70",
+        "sha1": "63b40fd122b8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000186db",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TextTable_Dtor",
+      "description": "(table, flags) in stack order, callee-cleaned: when table is non-null, deletes its offset array (+0) and pool (+4), and the table itself when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/bin-string-tables.md#the-table",
+      "verified": {
+        "bytes": "000186db+60",
+        "sha1": "4bc42f2fc369",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00018717",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Text_GetString",
-      "description": "(table, index) in stack order, callee-cleaned: formats \"Text::getString: Index out of bounds\" with the index into a stack buffer that nothing reads, then returns the table's string base (+4) plus the uint16 at index in its offset array (+0); there is no bounds test. MsnGen_LoadMission (00035873) takes data\\script.dat, data\\mission.var and car\\sm_play.mec from entries 3, 5 and 10 of the table at 0009afb8, which 0002094d loads from cfg\\filename.bin through 00018755.",
+      "description": "(table, index) in stack order, callee-cleaned: formats \"Text::getString: Index out of bounds\" with the index into a stack buffer that nothing reads, then returns the table's string base (+4) plus the uint16 at index in its offset array (+0); there is no bounds test. MsnGen_LoadMission (00035873) takes data\\script.dat, data\\mission.var and car\\sm_play.mec from entries 3, 5 and 10 of the table at 0009afb8, which 0002094d loads from cfg\\filename.bin through Text_LoadDataFile (00018755).",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#loading-a-mission",
       "verified": {
         "bytes": "00018717+62",
         "sha1": "732733230a1c",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00018755",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Text_LoadDataFile",
+      "description": "(table, stream) in stack order, callee-cleaned: reads the int32 count into +8 and the int32 pool size into +0xc, allocates count * 2 bytes at +0 and the pool size at +4 with operator_new, reads the offsets and the pool into them through the stream's read slot (+0x1c), and returns 1 when the stream status (+0) is 0, else 0. VSHELL's Text_LoadDataFile (0040828a), without its assert on a stream error.",
+      "source": "es2_naming.py diff ES1GO 00018755 VSHELL 0040828a; Herculan/docs/es1/formats/bin-string-tables.md#the-table",
+      "verified": {
+        "bytes": "00018755+206",
+        "sha1": "c696ab6f973e",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -652,8 +712,8 @@
       "type": "function",
       "confidence": "high",
       "name": "Dialog_LoadFromFile",
-      "description": "(dialog, a, b, path), callee-cleaned: deletes the dialog's box and stream as Dialog_LoadConditional (00018cdb) does, opens path through VolRStream_CtorFromPath, reads the version word into +4; version 0 builds a DefaultDialogBox (DefaultDialogBox_Ctor (00019149)) at +6, version 2 a DigitalDialogBox (DigitalDialogBox_Ctor (00019279), passed a and b); closes the stream. es2_xref finds one call, in 00037edd, which passes an eng\\*_text.bin path.",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "description": "(dialog, a, b, path), callee-cleaned: deletes the dialog's box and stream as Dialog_LoadConditional (00018cdb) does, opens path through VolRStream_CtorFromPath, reads the version word into +4; version 0 builds a DefaultDialogBox (DefaultDialogBox_Ctor (00019149)) at +6, version 2 a DigitalDialogBox (DigitalDialogBox_Ctor (00019279), passed a and b); closes the stream. es2_xref finds one call, in DigitalDialog_ShowMessage (00037edd), which passes an eng\\*_text.bin path.",
+      "source": "Herculan/docs/es1/formats/bin-string-tables.md#the-load",
       "verified": {
         "bytes": "00018c36+165",
         "sha1": "de1fde623bfe",
@@ -802,8 +862,8 @@
       "type": "function",
       "confidence": "high",
       "name": "DigitalDialogBox_Ctor",
-      "description": "(this, a, b, dialog): allocates 0x2d bytes when this is 0; DialogBox_Init (00019b25); vtable 0007ef04; builds a text table from the dialog's stream with 00018695; font 000aacda; 000193ee(box); copies the table's string of index word 000aad5c (Text_GetString) into a new buffer at +0x15; DialogBox_Layout (000198a6); passes a and b to 000453be(0009afd4, a, b); frees the table with 000186db(table, 2).",
-      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "description": "(this, a, b, dialog): allocates 0x2d bytes when this is 0; DialogBox_Init (00019b25); vtable 0007ef04; builds a text table from the dialog's stream with TextTable_CtorFromStream (00018695); font 000aacda; DigitalDialogBox_SetRect (000193ee)(box); copies the table's string of index word 000aad5c (Text_GetString) into a new buffer at +0x15; DialogBox_Layout (000198a6); passes a and b to maybe_SncList_PlayEntry (000453be)(0009afd4, a, b); frees the table with TextTable_Dtor (000186db)(table, 2).",
+      "source": "Herculan/docs/es1/formats/bin-string-tables.md#the-load",
       "verified": {
         "bytes": "00019279+303",
         "sha1": "4db66a11b923",
@@ -817,13 +877,28 @@
       "type": "function",
       "confidence": "high",
       "name": "DigitalDialogBox_Dtor",
-      "description": "(this, flags): slot +4 of vtable 0007ef04; stores the vtable, calls 00045556(0009afd4) and 00019b54(this, 0), and deletes this when flags bit 0 is set.",
+      "description": "(this, flags): slot +4 of vtable 0007ef04; stores the vtable, calls maybe_SncList_Stop (00045556)(0009afd4) and 00019b54(this, 0), and deletes this when flags bit 0 is set.",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
       "verified": {
         "bytes": "000193a8+70",
         "sha1": "2e9eaae0babc",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000193ee",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigitalDialogBox_SetRect",
+      "description": "(box), callee-cleaned: rounds the word 000817c4 down to a thousand and looks it up in the four ints at 0007ef10 (3000, 5000, 4000, 7000) with the jump table beside them: 3000, 5000 and 4000 copy the 16 bytes at 0009ae64 to +5 and set +0 to 1; 7000 copies those at 0009aea4 and sets +0 to 0 (code at 00019435 Ghidra left undefined); any other value changes nothing. ConditionalDialogBox_SetRect (00018e5f) is the same shape over other boxes.",
+      "source": "Herculan/docs/es1/formats/bin-string-tables.md#the-load",
+      "verified": {
+        "bytes": "000193ee+101",
+        "sha1": "de4834768ddc",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -1397,6 +1472,21 @@
       }
     },
     {
+      "address": "00037edd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigitalDialog_ShowMessage",
+      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls 0004c716 into 0007fcd8 and 000467ef with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates 00081938 and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * 00036837(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(0009afc8, a, b, path).",
+      "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
+      "verified": {
+        "bytes": "00037edd+1016",
+        "sha1": "a02fac64b0b6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00038723",
       "binary": "ES1GO",
       "type": "function",
@@ -1427,6 +1517,21 @@
       }
     },
     {
+      "address": "000387a8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LoadDamageDat_Shell",
+      "description": "No arguments: opens cfg\\damage.dat (000817a6) and reads 2, 12, 20, 2 and 36 bytes (chassis scale, 6 external and 10 internal percentages, weapon scale, 18 weapon values), closes the stream; then for each chassis s in 0..7, with price = word 000808b8[s] * 1000, stores Math_Q10Multiply(Math_Q10Multiply(price, percent), chassis scale) for the 6 externals at 000a0580 + s * 0x42 and the 10 internals at 000a0580 + s * 0x42 + 0x1a, and Math_Q10Multiply(value, weapon scale) for the 18 weapons at 000ab332; destroys the stream. VSHELL's LoadDamageDat_Shell (00413628) reads gam\\damage.dat with 9 internals and a counted weapon column, for 9 chassis priced from herc_inf.dat.",
+      "source": "es2_naming.py diff ES1GO 000387a8 VSHELL 00413628; Herculan/docs/es1/formats/herc-catalogs.md#cfgdamagedat",
+      "verified": {
+        "bytes": "000387a8+595",
+        "sha1": "636b50781272",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00043c81",
       "binary": "ES1GO",
       "type": "function",
@@ -1437,6 +1542,51 @@
       "verified": {
         "bytes": "00043c81+45",
         "sha1": "6b5fa5f08950",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000453be",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_SncList_PlayEntry",
+      "description": "(player, a, b) in stack order, callee-cleaned: when the byte +0x19 is set, stops the line playing with maybe_SncList_Stop (00045556); picks the list name of the table at 0008271c (SNC\\C0_FILES.DAT, D0, C1, D1, C2, D2, C3, D3, T0, T1, G0): a when b is 1, a + 8 when b is 2, 10 when b is 3, else 0; loads it with maybe_SncList_Load (000455dc); passes 00020254(record 000aad5c of the 6-byte array +0x11, 0) to 0004589c(player + 3).",
+      "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
+      "verified": {
+        "bytes": "000453be+140",
+        "sha1": "c8eaab4cf7ef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045556",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_SncList_Stop",
+      "description": "(player), callee-cleaned: when the handle byte +2 is not -1, calls 000465da on it when 000468fc(0x1e, handle) is set, or else when 000468fc(1, handle) is, then releases it with 000469da and sets +2 to -1; calls 00045a04(player + 3) and clears the bytes +0x19, +0x1a and 0009b013.",
+      "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
+      "verified": {
+        "bytes": "00045556+122",
+        "sha1": "b21e91ef8c4c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000455dc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_SncList_Load",
+      "description": "(player, path) in stack order, callee-cleaned: opens path with VolRStream_CtorFromPath and reads one byte into the low byte of the count word +0xf; when it is nonzero, deletes the 6-byte record array +0x11 (__vec_delete with 000202b4) and makes a new one of that many (__vec_new with 00045729), reads a 32-byte name with 00020154, releases the handle +2 with 000469da when it is not -1 and opens the name with 0004680a(0, 0, +0x15, name) into +2, calls 000465da on it after each of 000468fc(0), (0x19) and (1) that is set, calls 000468fc(1) once more, and reads each record with 000201b7; closes and destroys the stream.",
+      "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
+      "verified": {
+        "bytes": "000455dc+333",
+        "sha1": "69fdee871f1b",
         "scope": "body",
         "via": "decompile"
       }
@@ -6984,6 +7134,84 @@
       "verified": {
         "bytes": "00065ccc+23",
         "sha1": "b5f19dcbfdd1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00066020",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBitmap_Construct",
+      "description": "(mode, stream) in stack order, callee-cleaned: the load function the GL class table (0008b480) registers for tag 0x28000e: 0x1a bytes from the current arena (Arena_Alloc on 000aa110), the bitmap constructed with 000500ac when the allocation succeeds, then the object's read slot (+0x10) with its two arguments; returns the object. DBSIM's GLBitmap_Construct (00481bc8) calls slot +0xc.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#the-class-table",
+      "verified": {
+        "bytes": "00066020+54",
+        "sha1": "889d2158e9d4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00066058",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "OldGLBitmap_Construct",
+      "description": "Returns 0, callee-cleaned (RET 8): the load function of the GL class table's first entry (0008b480, tag 0x280000 'Old GLBitmap'), so an old-format bitmap item loads as a null object. No Ghidra function starts here. DBSIM's OldGLBitmap_Construct (00481c3c).",
+      "source": "capstone disassembly at 00066058; Herculan/docs/es1/formats/dfn-hfn-dci.md#the-class-table"
+    },
+    {
+      "address": "00066060",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBitmap_GetClassTag",
+      "description": "Returns 0x28000e, callee-cleaned (RET 4). No Ghidra function starts here. DBSIM's GLBitmap_GetClassTag (00481c44).",
+      "source": "capstone disassembly at 00066060"
+    },
+    {
+      "address": "00066068",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBitmap_GetStreamSize",
+      "description": "(bitmap), callee-cleaned: returns 13 + the data length (+0xa) + 4 * the int16 extra count (+0x14), the bitmap record's size after its envelope. DBSIM's GLBitmap_GetStreamSize (00481c50).",
+      "source": "capstone disassembly at 00066068",
+      "verified": {
+        "bytes": "00066068+26",
+        "sha1": "5f7381f86473",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00066d7c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBitmapArray_Construct",
+      "description": "(mode, stream) in stack order, callee-cleaned: the load function the GL class table (0008b480) registers for tag 0x280001: 0xc bytes from the current arena (Arena_Alloc on 000aa110), the vtable 0008b602 then 0008b626 stored, +4 and +8 zeroed, then the read slot (+0x10, GLBitmapArray_ReadFromStream (00066ed4)) with its two arguments. DBSIM's GLBitmapArray_Construct (00482c7c).",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#the-class-table",
+      "verified": {
+        "bytes": "00066d7c+113",
+        "sha1": "439ced196261",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00066ed4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBitmapArray_ReadFromStream",
+      "description": "(array, mode, stream) in stack order, callee-cleaned: reads the int32 count into +4, takes count * 4 bytes from the current arena (Arena_Alloc on 000aa110) for +8, and stores ClassItem_LoadResource (000006ce)(0, stream) in each element. DBSIM's GLBitmapArray_ReadFromStream (00482d70).",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#the-class-table",
+      "verified": {
+        "bytes": "00066ed4+135",
+        "sha1": "9633c0647940",
         "scope": "body",
         "via": "decompile"
       }

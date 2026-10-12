@@ -106,7 +106,7 @@ A `DialogBox` is `0x2d` bytes; its subclasses differ in their constructors and v
 
 `DialogBox_Layout` (`000198a6`) takes a line's height as `00051ff0`(font, text) less 2. It sets the slot count to the text's width by `HudFont_MeasureString` divided by the box's width, plus 2; the lines a page holds to the box's height divided by the line height; the page count to the slot count divided by the lines a page holds, plus 1 when the two differ; and the page shown to 0. Line *i* of a page stands at the box's left and its top plus (*i* + 1) line heights. It then passes the box's width and the text to `00019a1d` ([Open](#open)). `DialogBox_NextPage` (`0001911f`) and `DialogBox_PrevPage` (`000190fd`) step `+0x27` within 0 and the page count less 1 and clear `+0`.
 
-`Dialog_LoadFromFile` (`00018c36`) is the dialog record's other loader, for the `eng\*_text.bin` files: version 0 makes a `DefaultDialogBox` (`DefaultDialogBox_Ctor`, `00019149`), which shows `This is a Default Dialog Box.`, and version 2 a `DigitalDialogBox` (`DigitalDialogBox_Ctor`, `00019279`).
+`Dialog_LoadFromFile` (`00018c36`) is the dialog record's other loader, for the talking-head messages' `eng\*_text.bin` files ([the dialog text files](bin-string-tables.md#the-dialog-text-files)).
 
 ## Rejected readings
 

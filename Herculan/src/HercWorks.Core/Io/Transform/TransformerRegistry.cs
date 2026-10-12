@@ -24,8 +24,8 @@ namespace HercWorks.Core.Io.Transform;
 ///
 /// <para>Each <see cref="RetailGame"/> has its own table. ES1's is ES2's with the readers of the
 /// layouts that differ under the same name and header rebound, and the chassis files, whose timestamps
-/// ES2's match cannot see, matched by name (<see cref="Es1Rebinds"/>;
-/// docs/herculan/plan-es1-support.md#what-hercworks-reads).</para>
+/// ES2's match cannot see, matched by name (<see cref="Es1Rebinds"/>), behind ES1's readers for files ES2 has no label for
+/// (<see cref="Es1Additions"/>; docs/herculan/plan-es1-support.md#what-hercworks-reads).</para>
 /// </summary>
 public static class TransformerRegistry {
 	private sealed record Registration(string Label, Func<VolEntry, bool> Matches, Func<ThreeSpaceByteTransformer> Create);
@@ -151,6 +151,18 @@ public static class TransformerRegistry {
 		["Structure Types"] = new(() => new Dbsim.Es1BasesDatTransformer()),
 		// docs/es1/formats/explos-dat.md: one table of 44-byte rows, ES2's shape table folded into them.
 		["Explosion Types"] = new(() => new Dbsim.Es1ExplosionDataTransformer()),
+		// docs/es1/formats/herc-catalogs.md#cfgdamagedat: ten internal percentages and 18 weapon values with no count.
+		["Component Value Table"] = new(() => new Shell.Es1DamageRepairCostTransformer()),
+	};
+
+	/// <summary>
+	/// ES1's readers for files ES2's table has no label for, placed ahead of the rebound table so they take their files before
+	/// ES2's broader matches do.
+	/// </summary>
+	private static readonly List<Registration> Es1Additions = new() {
+		// docs/es1/formats/bin-string-tables.md#the-dialog-text-files: a version word ahead of the .BIN table, in the ten
+		// talking-head text files only; the shell's other .BIN stay on ES2's reader.
+		new("Dialog Text", e => ExtIs(e, FileType.Bin) && NameEndsWith(e, "_TEXT.BIN"), () => new Common.Es1DialogTextTransformer()),
 	};
 
 	/// <summary>Whether the entry is one of the sixteen chassis files ES1's <c>nam\MECHS.NAM</c> names (docs/es1/formats/chassis-dat.md#which-files).</summary>
@@ -161,7 +173,7 @@ public static class TransformerRegistry {
 
 	private static readonly Dictionary<RetailGame, List<Registration>> Tables = new() {
 		[RetailGame.Earthsiege2] = Es2Registrations,
-		[RetailGame.Earthsiege1] = Rebind(Es2Registrations, Es1Rebinds),
+		[RetailGame.Earthsiege1] = [.. Es1Additions, .. Rebind(Es2Registrations, Es1Rebinds)],
 	};
 
 	private static List<Registration> Rebind(List<Registration> table, Dictionary<string, Rebinding> rebinds) {

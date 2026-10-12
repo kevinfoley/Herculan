@@ -1923,8 +1923,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Text_LoadDataFile",
-      "description": "Text::loadDataFile, named by its assert string (ctxt.cpp line 0x3f): (text, stream) reads two dword counts into +8 and +0xc, then +8 * 2 bytes into a new array at +0 and +0xc bytes into a new array at +4, all through the stream's read slot (vtable +0x18). Returns true when the stream status (+4) is 0. WeaponsBin_Open calls it.",
-      "source": "VSHELL decompile at 0040828a"
+      "description": "Text::loadDataFile, named by its assert string (ctxt.cpp line 0x3f): (text, stream) reads two dword counts into +8 and +0xc, then +8 * 2 bytes into a new array at +0 and +0xc bytes into a new array at +4 (Mem_NewArray), all through the stream's read slot (vtable +0x18). When the stream status (+4) is set it asserts at severity 4 with the stream-error string at 0046e15f; returns true when the status is 0. es2_xref finds one call, from WeaponsBin_Open.",
+      "source": "VSHELL decompile at 0040828a; es2_naming.py diff ES1GO 00018755 VSHELL 0040828a",
+      "verified": {
+        "bytes": "0040828a+154",
+        "sha1": "268bcf24f84f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00408324",

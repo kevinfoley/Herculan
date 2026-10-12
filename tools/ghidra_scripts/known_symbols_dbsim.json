@@ -30785,8 +30785,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GLBitmapArray_ReadFromStream",
-      "description": "The DBSIM copy of VSHELL's GLBitmapArray_ReadFromStream (004548dc).",
-      "source": "es2_naming.py diff DBSIM 00482d70 VSHELL 004548dc: differs only in callee labels and decompiler typing; RTTI GLBitmapArray vtable slot"
+      "description": "(array, stream): reads the int32 count into +4 with Stream_ReadDword3, takes count * 4 bytes from the arena (Arena_AllocDup, 006c58b4) for +8, and stores ClassItem_LoadResource(stream, 0) in each element. The DBSIM copy of VSHELL's GLBitmapArray_ReadFromStream (004548dc).",
+      "source": "DBSIM decompile of 00482d70; es2_naming.py diff DBSIM 00482d70 VSHELL 004548dc: differs only in callee labels and decompiler typing; RTTI GLBitmapArray vtable slot; Herculan/docs/retail/formats/dfn-hfn-dci.md#the-shared-dynamix-resource-envelope",
+      "verified": {
+        "bytes": "00482d70+82",
+        "sha1": "8fc3091b5fa0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00482dc4",
