@@ -7159,8 +7159,14 @@
       "type": "function",
       "confidence": "high",
       "name": "OldGLBitmap_Construct",
-      "description": "Returns 0, callee-cleaned (RET 8): the load function of the GL class table's first entry (0008b480, tag 0x280000 'Old GLBitmap'), so an old-format bitmap item loads as a null object. No Ghidra function starts here. DBSIM's OldGLBitmap_Construct (00481c3c).",
-      "source": "capstone disassembly at 00066058; Herculan/docs/es1/formats/dfn-hfn-dci.md#the-class-table"
+      "description": "Returns 0, callee-cleaned (RET 8): the load function of the GL class table's first entry (0008b480, tag 0x280000 'Old GLBitmap'), so an old-format bitmap item loads as a null object. DBSIM's OldGLBitmap_Construct (00481c3c).",
+      "source": "capstone disassembly at 00066058; Herculan/docs/es1/formats/dfn-hfn-dci.md#the-class-table",
+      "verified": {
+        "bytes": "00066058+5",
+        "sha1": "74c0ade21c13",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00066060",
@@ -7168,8 +7174,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GLBitmap_GetClassTag",
-      "description": "Returns 0x28000e, callee-cleaned (RET 4). No Ghidra function starts here. DBSIM's GLBitmap_GetClassTag (00481c44).",
-      "source": "capstone disassembly at 00066060"
+      "description": "Returns 0x28000e, callee-cleaned (RET 4). DBSIM's GLBitmap_GetClassTag (00481c44).",
+      "source": "capstone disassembly at 00066060",
+      "verified": {
+        "bytes": "00066060+8",
+        "sha1": "2d0ac55fe8b9",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00066068",
