@@ -18,8 +18,8 @@ public sealed class ShaderProgram : IDisposable {
 	private readonly Dictionary<string, int> _uniforms = new();
 
 	/// <summary>
-	/// Private so that <see cref="Load"/> is the only way in: shader source belongs in a file under
-	/// <c>Render/Shaders</c>, not in a string constant beside the renderer that uses it.
+	/// Private so that <c>Load</c> is the only way in: shader source belongs in an embedded <c>.glsl</c> file,
+	/// not in a string constant beside the renderer that uses it.
 	/// </summary>
 	private ShaderProgram(GL gl, string vertexSource, string fragmentSource) {
 		_gl = gl;
@@ -54,8 +54,18 @@ public sealed class ShaderProgram : IDisposable {
 	/// Code left out this way is not in the program at all — no uniforms, no varyings, nothing to
 	/// branch on at runtime.
 	/// </param>
-	public static ShaderProgram Load(GL gl, string fileName, params string[] variantDefines) {
-		string source = ShaderSource.Load(fileName);
+	public static ShaderProgram Load(GL gl, string fileName, params string[] variantDefines) =>
+		Compile(gl, ShaderSource.Load(fileName), fileName, variantDefines);
+
+	/// <summary>
+	/// Compiles a program embedded in another assembly, under its resource folder — see
+	/// <see cref="ShaderSource.Load(System.Reflection.Assembly, string, string)"/>.
+	/// </summary>
+	public static ShaderProgram Load(GL gl, System.Reflection.Assembly assembly, string resourceFolder, string fileName,
+			params string[] variantDefines) =>
+		Compile(gl, ShaderSource.Load(assembly, resourceFolder, fileName), fileName, variantDefines);
+
+	private static ShaderProgram Compile(GL gl, string source, string fileName, string[] variantDefines) {
 		try {
 			return new ShaderProgram(gl,
 				ShaderSource.ForStage(source, ShaderType.VertexShader, variantDefines),

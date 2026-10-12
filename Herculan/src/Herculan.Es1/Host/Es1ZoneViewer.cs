@@ -8,6 +8,7 @@ using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using Herculan.Engine.View;
+using Herculan.Es1.Render;
 using Herculan.Es1.Scene;
 using Herculan.Es1.World;
 using Silk.NET.Input;
@@ -18,23 +19,22 @@ namespace Herculan.Es1.Host;
 /// Shows an ES1 mission's zone with nothing simulated: the shapes its zone file places, from a free camera. The
 /// first step of docs/herculan/plan-es1-support.md#phase-2--the-engine, which runs no part of the simulator.
 ///
-/// <para>PLACEHOLDER: the ground, the sky and the distance fade are not ES1's. How ES1 draws them is Open
-/// (docs/es1/formats/wld-world.md#open), so the ground is a flat grey plane under the measuring grid and the sky one
-/// flat colour, both plainly not retail, and nothing fades. The shapes' colours are
-/// <see cref="Es1PlaceholderShading"/>'s.</para>
+/// <para>The sky, the ground and the skyline are <see cref="Es1Backdrop"/>'s, the shapes drawn over them with no
+/// depth fade, as ES1's are, and coloured by their distance bands (<see cref="Es1Shading"/>).</para>
+///
+/// <para>The shapes are drawn with the depth test, where retail sorts its object list and paints it farthest first
+/// with box comparisons for the zone's shapes, whose ordering is Open
+/// (docs/es1/rendering/polygon-shading.md#the-frames-draw).</para>
+///
+/// <para>G switches the ground between textured and banded, which the preferences' option 5 does in retail; the
+/// viewer starts textured.</para>
 /// </summary>
 public static class Es1ZoneViewer {
 	/// <summary>The folder the shell reads missions from, <c>msn\%s</c> (docs/es1/formats/msn-mission-file.md#loading-a-mission).</summary>
 	public const string MissionFolder = "msn";
 
-	/// <summary>PLACEHOLDER: the flat sky colour.</summary>
-	private static readonly Vector3 PlaceholderSky = new(0.32f, 0.32f, 0.36f);
-
-	/// <summary>PLACEHOLDER: the flat ground colour.</summary>
-	private static readonly Vector3 PlaceholderGround = new(0.45f, 0.45f, 0.45f);
-
-	/// <summary>How far the placeholder ground reaches past the zone's outermost shapes, in world units.</summary>
-	private const int GroundMargin = 200_000;
+	/// <summary>The clear colour when the theater's sky cannot be built: a mid grey, plainly not a retail sky.</summary>
+	private static readonly Vector3 MissingSky = new(0.32f, 0.32f, 0.36f);
 
 	/// <summary>The camera's starting height over the ground, in metres. The viewer's own choice.</summary>
 	private const float StartHeightMeters = 40f;
@@ -75,7 +75,11 @@ public static class Es1ZoneViewer {
 		Console.WriteLine(
 			$"{fileName}: zone {zone}, theater {theater.Name}, palette {theater.PaletteName}, world {theater.WorldName}. " +
 			$"{scene.Shapes.Count} shapes from a library of {scene.Models.Count}, {unmodelled} without a model.");
-		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, Esc quits.");
+		if (scene.Horizon == null) {
+			Console.Error.WriteLine($"{theater.WorldName}.WLD or {theater.PaletteName}.DPL is missing or unusable: no sky or ground is drawn.");
+		}
+
+		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, G textured/banded ground, Esc quits.");
 
 		Show(scene, $"HERCULAN — Metaltech: Earthsiege — {Path.GetFileNameWithoutExtension(fileName)}, zone {zone}");
 		return 0;
@@ -88,8 +92,10 @@ public static class Es1ZoneViewer {
 		using var window = new EngineWindow(title);
 
 		SceneRenderer? renderer = null;
+		Es1Backdrop? backdrop = null;
 		var disposables = new List<IDisposable>();
 		SceneItem[] items = [];
+		Es1PlacedShape[] itemShapes = [];
 		IKeyboard? keyboard = null;
 		IMouse? mouse = null;
 
@@ -102,20 +108,27 @@ public static class Es1ZoneViewer {
 
 		bool looking = false;
 		bool lookNeedsResync = false;
+		bool groundKeyHeld = false;
 		Vector2 lastMousePos = Vector2.Zero;
 
 		window.Load += (gl, input) => {
-			renderer = new SceneRenderer(gl, editorGrid: true) {
+			if (scene.Horizon != null && scene.Palette != null) {
+				backdrop = new Es1Backdrop(gl, scene.Horizon, scene.Ground, scene.Skyline, scene.Palette);
+				disposables.Add(backdrop);
+			}
+
+			// ES1 fades nothing with depth (docs/es1/rendering/polygon-shading.md), so the renderer's fog stays off.
+			renderer = new SceneRenderer(gl) {
 				Sky = null,
-				SkyColor = PlaceholderSky,
+				Backdrop = backdrop,
+				SkyColor = MissingSky,
 				FogEnabled = false,
 			};
-			renderer.SetShadeRamps(SurfaceRampTable.Build(scene.Shading));
-			renderer.SetPaletteRamp(PaletteRampTable.Build(scene.Shading));
+			renderer.SetShadeRamps(scene.Shading.Table ?? SurfaceRampTable.Build(scene.Shading.Surfaces));
+			renderer.SetPaletteRamp(PaletteRampTable.Build(scene.Shading.Surfaces));
 
-			var ground = new GpuMesh(gl, GroundQuad(min, max));
-			disposables.Add(ground);
-			var built = new List<SceneItem> { new(ground, Matrix4x4.Identity) { ShowGrid = true } };
+			var built = new List<SceneItem>();
+			var placed = new List<Es1PlacedShape>();
 
 			var meshes = new Dictionary<int, GpuMesh>();
 			foreach (var shape in scene.Shapes) {
@@ -130,9 +143,11 @@ public static class Es1ZoneViewer {
 				}
 
 				built.Add(new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)));
+				placed.Add(shape);
 			}
 
 			items = built.ToArray();
+			itemShapes = placed.ToArray();
 			keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
 			mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
 
@@ -163,6 +178,13 @@ public static class Es1ZoneViewer {
 				return;
 			}
 
+			bool groundKey = keyboard?.IsKeyPressed(Key.G) == true;
+			if (groundKey && !groundKeyHeld && backdrop != null) {
+				backdrop.TexturedGround = !backdrop.TexturedGround;
+			}
+
+			groundKeyHeld = groundKey;
+
 			// The first sample after the pointer is grabbed only re-syncs, for the reason the mission editor's
 			// Program.cs gives at lookNeedsResync.
 			Vector2 lookDelta = Vector2.Zero;
@@ -179,6 +201,7 @@ public static class Es1ZoneViewer {
 
 			freeCamera.Update(deltaSeconds, keyboard, lookDelta, looking, acceptKeyboardInput: true);
 			freeCamera.ApplyTo(camera);
+			ApplyBands(scene.Shading, camera, items, itemShapes);
 		};
 
 		window.Render += (_, _) => {
@@ -201,6 +224,21 @@ public static class Es1ZoneViewer {
 		window.Run();
 	}
 
+	/// <summary>
+	/// What <c>ObjList_DrawFrameObjects</c> (<c>ES1DBSIM 00021008</c>) settles for each zone shape before drawing it
+	/// (docs/es1/rendering/polygon-shading.md#the-frames-draw): a shape whose z is negative, or whose distance from the
+	/// camera by <c>Math_DistanceBetweenPoints</c> is past the last band, is not drawn, and the rest read their band's
+	/// block of <see cref="Es1Shading.Table"/>.
+	/// </summary>
+	private static void ApplyBands(Es1Shading shading, Camera camera, SceneItem[] items, Es1PlacedShape[] shapes) {
+		for (int i = 0; i < items.Length; i++) {
+			var frame = shapes[i].Frame;
+			int distance = camera.Position.ApproxDistanceTo(new Vec3i(frame.X, frame.Y, frame.Z));
+			items[i].Visible = frame.Z >= 0 && !shading.IsBeyondLastBand(distance);
+			items[i].RampBlock = shading.Table != null ? shading.Band(distance) : null;
+		}
+	}
+
 	/// <summary>The least and greatest X and Y over the zone's shapes, in world units; the origin for a zone with none.</summary>
 	private static (Vector2 Min, Vector2 Max) Bounds(Es1ZoneScene scene) {
 		if (scene.Shapes.Count == 0) {
@@ -216,20 +254,5 @@ public static class Es1ZoneViewer {
 		}
 
 		return (min, max);
-	}
-
-	/// <summary>PLACEHOLDER: the ground, one grey quad at height 0 reaching <see cref="GroundMargin"/> past the shapes.</summary>
-	private static MeshVertex[] GroundQuad(Vector2 min, Vector2 max) {
-		var up = new Vector3(0f, 1f, 0f);
-		Vector3 Corner(float x, float y) => WorldScale.ToRender(x, y, 0f);
-
-		var a = Corner(min.X - GroundMargin, min.Y - GroundMargin);
-		var b = Corner(max.X + GroundMargin, min.Y - GroundMargin);
-		var c = Corner(max.X + GroundMargin, max.Y + GroundMargin);
-		var d = Corner(min.X - GroundMargin, max.Y + GroundMargin);
-		return [
-			new(a, up, PlaceholderGround), new(b, up, PlaceholderGround), new(c, up, PlaceholderGround),
-			new(a, up, PlaceholderGround), new(c, up, PlaceholderGround), new(d, up, PlaceholderGround),
-		];
 	}
 }

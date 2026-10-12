@@ -79,6 +79,8 @@ public static class TransformerRegistry {
 		new("Terrain Ramp Data", e => ExtIs(e, FileType.Rmp), () => new Dbsim.TerrainRampFileTransformer()),
 		new("Viewport Data", e => ExtIs(e, FileType.Vue), () => new Dbsim.VueTransformer()),
 		new("World/Environment Data", e => ExtIs(e, FileType.Wld), () => new Dbsim.WorldDataTransformer()),
+		// One layout in both games (docs/es1/rendering/polygon-shading.md#the-shades-file).
+		new("Distance Band Ramps", e => NameIs(e, "SHADES.DAT"), () => new Dbsim.WorldShadesTransformer()),
 		new("Explosion Types", e => NameIs(e, "EXPLOS.DAT"), () => new Dbsim.ExplosionDataTransformer()),
 		new("Zone Header", e => NameStartsWith(e, "ZONE") && ExtIs(e, FileType.Dat), () => new Common.ZoneDatTransformer()),
 		// Structure shape libraries. Matched by name: the .DGS container is documented for these two
@@ -163,6 +165,11 @@ public static class TransformerRegistry {
 		// docs/es1/formats/bin-string-tables.md#the-dialog-text-files: a version word ahead of the .BIN table, in the ten
 		// talking-head text files only; the shell's other .BIN stay on ES2's reader.
 		new("Dialog Text", e => ExtIs(e, FileType.Bin) && NameEndsWith(e, "_TEXT.BIN"), () => new Common.Es1DialogTextTransformer()),
+		// docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture: the fade files the world files' fifth string
+		// names, and the textures their fourth names.
+		new("Ground Fade Distances", e => NameIs(e, "TEX.DAT") || NameIs(e, "TEX_LO.DAT") || NameIs(e, "TEX_LO2.DAT"),
+			() => new Dbsim.Es1GroundFadeTransformer()),
+		new("Ground Texture", e => NameEndsWith(e, ".64K"), () => new Dbsim.Es1GroundTextureTransformer()),
 	};
 
 	/// <summary>Whether the entry is one of the sixteen chassis files ES1's <c>nam\MECHS.NAM</c> names (docs/es1/formats/chassis-dat.md#which-files).</summary>

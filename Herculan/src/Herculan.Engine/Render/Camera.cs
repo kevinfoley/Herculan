@@ -100,6 +100,23 @@ public sealed class Camera {
 	public Vector2 PrincipalPoint { get; set; } = new(0.5f, 0.5f);
 
 	/// <summary>
+	/// The focal length in window pixels for a viewport <paramref name="viewportHeight"/> pixels tall, from
+	/// <see cref="FieldOfView"/>: what a backdrop drawn per pixel scales the original's own pixels by.
+	/// </summary>
+	public float FocalPixelsFor(int viewportHeight) =>
+		System.Math.Max(viewportHeight, 1) / (2f * MathF.Tan(FieldOfView / 2f));
+
+	/// <summary>
+	/// Where <see cref="PrincipalPoint"/> lands in window coordinates — x right, y up from the bottom of the whole
+	/// framebuffer, as <c>gl_FragCoord</c> counts — for the viewport (<paramref name="viewportX"/>,
+	/// <paramref name="viewportY"/>, <paramref name="viewportWidth"/>, <paramref name="viewportHeight"/>), origin
+	/// bottom-left as <c>GL.Viewport</c> takes it.
+	/// </summary>
+	public Vector2 PrincipalPointInWindow(int viewportX, int viewportY, int viewportWidth, int viewportHeight) => new(
+		viewportX + PrincipalPoint.X * viewportWidth,
+		viewportY + (1f - PrincipalPoint.Y) * System.Math.Max(viewportHeight, 1));
+
+	/// <summary>
 	/// The camera's orientation as the simulation would hold it — the rotation
 	/// <c>BuildEulerRotationMatrixQ14</c> builds from this view's euler triple. With row vectors its
 	/// rows are the view's own axes: row 0 right, row 1 forward, row 2 up. <see cref="Yaw"/> negates

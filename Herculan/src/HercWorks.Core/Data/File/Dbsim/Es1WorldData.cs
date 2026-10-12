@@ -12,7 +12,8 @@ public class Es1WorldData {
 
 	/// <summary>
 	/// The 12 leading shorts, in file order (docs/es1/formats/wld-world.md#the-header-shorts): 0-7 the sky backdrop as
-	/// ES2's, 8 <see cref="PointColor"/>, 9 <see cref="FlatSetSelector"/>, 10 and 11 unexplained.
+	/// ES2's, 8 <see cref="PointColor"/>, 9 <see cref="FlatSetSelector"/>, 10 and 11 the palette entries the pitch
+	/// gradient runs between.
 	/// </summary>
 	public short[] Header { get; set; } = new short[HeaderShorts];
 
@@ -30,7 +31,7 @@ public class Es1WorldData {
 
 	/// <summary>
 	/// Header short 4, ES2's <see cref="WorldData.GroundColor"/>; ES1 also builds the ground texture's fade tables
-	/// from it (docs/es1/formats/wld-world.md#the-ground-texture).
+	/// from it (docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture).
 	/// </summary>
 	public short GroundColor => HeaderShort(4);
 
@@ -114,9 +115,9 @@ public class Es1WorldData {
 	/// <summary>The impact palette, <c>dpl\&lt;name&gt;</c>, loaded when not empty.</summary>
 	public string ImpactPalette { get; set; } = "";
 
-	/// <summary>The ground texture, <c>dba\&lt;name&gt;.64k</c> (docs/es1/formats/wld-world.md#the-ground-texture).</summary>
+	/// <summary>The ground texture, <c>dba\&lt;name&gt;.64k</c> (docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture).</summary>
 	public string GroundTextureBank { get; set; } = "";
 
-	/// <summary>The ground texture's fade distances, <c>dat\&lt;name&gt;</c> (docs/es1/formats/wld-world.md#the-ground-texture).</summary>
+	/// <summary>The ground texture's fade distances, <c>dat\&lt;name&gt;</c> (docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture).</summary>
 	public string GroundFadeFile { get; set; } = "";
 }

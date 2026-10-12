@@ -23,13 +23,19 @@ public static class ShaderSource {
 	/// Reads one shader file by name — <c>"Scene.glsl"</c>, not a path — with both stages still in
 	/// it. Use <see cref="ForStage"/> to get the text for one of them.
 	/// </summary>
-	public static string Load(string fileName) {
-		string resource = ResourceFolder + fileName;
-		using Stream? stream = typeof(ShaderSource).Assembly.GetManifestResourceStream(resource);
+	public static string Load(string fileName) => Load(typeof(ShaderSource).Assembly, ResourceFolder, fileName);
+
+	/// <summary>
+	/// Reads one shader file embedded in another assembly — a game assembly's own programs — under the resource
+	/// folder <paramref name="resourceFolder"/>, which ends in a dot (<c>"Herculan.Es1.Render.Shaders."</c>).
+	/// </summary>
+	public static string Load(Assembly assembly, string resourceFolder, string fileName) {
+		string resource = resourceFolder + fileName;
+		using Stream? stream = assembly.GetManifestResourceStream(resource);
 		if (stream == null) {
 			throw new FileNotFoundException(
-				$"No embedded shader '{resource}'. Shader files live in Render/Shaders and must be " +
-				$"listed as <EmbeddedResource> in {nameof(Herculan)}.Engine.csproj.", fileName);
+				$"No embedded shader '{resource}'. Shader files must be listed as <EmbeddedResource> in " +
+				$"{assembly.GetName().Name}.csproj.", fileName);
 		}
 
 		using var reader = new StreamReader(stream);

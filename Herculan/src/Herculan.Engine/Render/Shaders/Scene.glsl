@@ -269,6 +269,8 @@ uniform float uPaletteRampGroundRow;
 uniform bool uGroundFill;
 uniform float uDepthSlices;
 uniform float uFogDepthBias;
+// The shaded chain's block this item reads in place of its depth slice, or -1. See SceneItem.RampBlock.
+uniform float uRampBlock;
 uniform bool uFullbright;
 
 // A ground shape is painted in the original straight after its own terrain cell, so the ground of
@@ -440,8 +442,9 @@ void main() {
 		// shading. uShadeRampTable is the whole ramp-by-shade grid, so this is one sample rather than
 		// the original's two table reads. The chain has one block of ramps per depth slice, because
 		// TSShadedPoly_Render ends in Raster_ShadeRampRow and is fogged by the same bias everything
-		// else is.
-		float row = vShadeRamp + slice * 256.0;
+		// else is. An item that names a block of its own reads that block instead (SceneItem.RampBlock).
+		float block = uRampBlock >= 0.0 ? uRampBlock : slice;
+		float row = vShadeRamp + block * 256.0;
 		vec4 cell = texture(uShadeRampTable,
 			vec2((floor(shade) + 0.5) / 256.0, (row + 0.5) / uShadeRampRows));
 
@@ -449,7 +452,7 @@ void main() {
 		// lookups as the fill, at the same shade and slice, and PolyFill_FillThenOutline draws the
 		// edge loop only when the two palette bytes differ. The table's alpha is that byte.
 		if (vOutlineFillRamp >= 0.0) {
-			float fillRow = vOutlineFillRamp + slice * 256.0;
+			float fillRow = vOutlineFillRamp + block * 256.0;
 			float fillByte = texture(uShadeRampTable,
 				vec2((floor(shade) + 0.5) / 256.0, (fillRow + 0.5) / uShadeRampRows)).a;
 			if (floor(fillByte * 255.0 + 0.5) == floor(cell.a * 255.0 + 0.5)) {

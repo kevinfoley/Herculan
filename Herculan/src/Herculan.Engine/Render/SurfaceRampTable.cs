@@ -1,3 +1,6 @@
+using System.Numerics;
+using HercWorks.Core.Data.File.Dyn;
+
 namespace Herculan.Engine.Render;
 
 /// <summary>
@@ -86,7 +89,35 @@ public sealed class SurfaceRampTable {
 			return null;
 		}
 
-		int slices = shading.Ramp.DepthSlices;
+		return Fill(shading.Ramp.DepthSlices,
+			(ramp, shade, block) => (shading.ShadedColor(ramp, shade, block), shading.ShadedByte(ramp, shade, block)),
+			(ramp, shade) => (shading.GouraudColor(ramp, shade), (byte?)shading.RampedPaletteIndex(ramp, shade)),
+			shading.PaletteColor);
+	}
+
+	/// <summary>
+	/// Builds a table whose shaded chain has <paramref name="blocks"/> blocks, each cell the palette index
+	/// <paramref name="shadedIndex"/> gives for (ramp, shade, block), and whose Gouraud block holds
+	/// <paramref name="gouraudIndex"/>'s for (ramp, shade), all drawn in <paramref name="palette"/>'s colours. For a
+	/// game whose ramps the original re-points per drawn object rather than fogs through a <c>.RMP</c>: each block is
+	/// one state of the ramps, and a drawn item names its block (<see cref="SceneItem.RampBlock"/>). Null where an
+	/// index has no entry.
+	/// </summary>
+	public static SurfaceRampTable FromIndices(int blocks, Func<int, int, int, byte?> shadedIndex,
+			Func<int, int, byte?> gouraudIndex, DynamixPalette palette) {
+		Vector3? ColorOf(byte? index) =>
+			index is { } i && palette.Colors.TryGetValue(i, out var entry)
+				? new Vector3(entry.GetColor().R / 255f, entry.GetColor().G / 255f, entry.GetColor().B / 255f)
+				: null;
+
+		return Fill(blocks,
+			(ramp, shade, block) => shadedIndex(ramp, shade, block) is { } index ? (ColorOf(index), index) : (null, null),
+			(ramp, shade) => gouraudIndex(ramp, shade) is { } index ? (ColorOf(index), index) : (null, null),
+			index => ColorOf((byte)index));
+	}
+
+	private static SurfaceRampTable Fill(int slices, Func<int, int, int, (Vector3? Color, byte? Byte)> shaded,
+			Func<int, int, (Vector3? Color, byte? Byte)> gouraud, Func<int, Vector3?> paletteColor) {
 		int paletteRow = RampCount * (slices + 1);
 		int height = paletteRow + 1;
 		var pixels = new byte[Width * height * 4];
@@ -95,13 +126,11 @@ public sealed class SurfaceRampTable {
 			// chain's single block past them all.
 			int block = row / RampCount;
 			int ramp = row % RampCount;
-			bool gouraud = block >= slices;
+			bool isGouraud = block >= slices;
 
 			for (int shade = 0; shade < Width; shade++) {
 				int at = (row * Width + shade) * 4;
-				var color = gouraud
-					? shading.GouraudColor(ramp, shade)
-					: shading.ShadedColor(ramp, shade, block);
+				var (color, value) = isGouraud ? gouraud(ramp, shade) : shaded(ramp, shade, block);
 
 				// A ramp slot the palette leaves empty falls back to mid grey rather than to black:
 				// no retail surface names one, and a black hole would be a louder lie than a flat
@@ -109,15 +138,13 @@ public sealed class SurfaceRampTable {
 				pixels[at] = color is { } c ? Quantise(c.X) : (byte)128;
 				pixels[at + 1] = color is { } c1 ? Quantise(c1.Y) : (byte)128;
 				pixels[at + 2] = color is { } c2 ? Quantise(c2.Z) : (byte)128;
-				pixels[at + 3] = gouraud
-					? (byte)(shading.RampedPaletteIndex(ramp, shade) ?? 255)
-					: shading.ShadedByte(ramp, shade, block) ?? 255;
+				pixels[at + 3] = value ?? 255;
 			}
 		}
 
 		for (int index = 0; index < Width; index++) {
 			int at = (paletteRow * Width + index) * 4;
-			var color = shading.PaletteColor(index);
+			var color = paletteColor(index);
 			pixels[at] = color is { } c ? Quantise(c.X) : (byte)128;
 			pixels[at + 1] = color is { } c1 ? Quantise(c1.Y) : (byte)128;
 			pixels[at + 2] = color is { } c2 ? Quantise(c2.Z) : (byte)128;

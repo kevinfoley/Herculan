@@ -74,6 +74,14 @@ public sealed class SceneItem {
 	public bool Fullbright { get; set; }
 
 	/// <summary>
+	/// Which block of the installed <see cref="SurfaceRampTable"/>'s shaded chain this item's <c>TSShadedPoly</c> faces
+	/// read, in place of the fog's depth slice: the state of the ramps the original re-points for this one object
+	/// before drawing it (<see cref="SurfaceRampTable.FromIndices"/>). Null reads the depth slice, as Earthsiege 2's
+	/// items do.
+	/// </summary>
+	public int? RampBlock { get; set; }
+
+	/// <summary>
 	/// The object this item's geometry belongs to, which is what the effect-light pass measures
 	/// from — <c>LightManager_SelectLightsForObject</c> (<c>00407098</c>) takes the drawn entry's own position and bounding radius, and both
 	/// come off the object rather than off the mesh. A machine drawn as one item per posed node names
@@ -351,6 +359,12 @@ public sealed class SceneRenderer : IDisposable {
 	public Content.SkyGradient? Sky { get; set; }
 
 	/// <summary>
+	/// A game's own backdrop, painted in place of <see cref="Sky"/> at the same point of every pass: after the
+	/// viewport is set and before any geometry. Null paints <see cref="Sky"/>.
+	/// </summary>
+	public ISceneBackdrop? Backdrop { get; set; }
+
+	/// <summary>
 	/// Flat fallback sky, used to clear the framebuffer and drawn instead of the gradient when
 	/// <see cref="Sky"/> is null.
 	///
@@ -473,7 +487,11 @@ public sealed class SceneRenderer : IDisposable {
 
 		_gl.Viewport(viewportX, viewportY, (uint)System.Math.Max(viewportWidth, 1), (uint)System.Math.Max(viewportHeight, 1));
 
-		DrawSky(camera, viewportX, viewportY, viewportWidth, viewportHeight);
+		if (Backdrop != null) {
+			Backdrop.Draw(camera, viewportX, viewportY, viewportWidth, viewportHeight);
+		} else {
+			DrawSky(camera, viewportX, viewportY, viewportWidth, viewportHeight);
+		}
 
 		_shader.Use();
 		_shader.SetMatrix("uView", camera.ViewMatrix);
@@ -805,6 +823,7 @@ public sealed class SceneRenderer : IDisposable {
 			_shader.SetInt("uFullbright", item.Fullbright ? 1 : 0);
 			_shader.SetInt("uGroundFill", item.GroundFill ? 1 : 0);
 			_shader.SetFloat("uFogDepthBias", item.CellQuantisedFog ? cellFogBias : 0f);
+			_shader.SetFloat("uRampBlock", item.RampBlock ?? -1f);
 
 			// Bind texture if available, otherwise use flat shading.
 			if (item.TextureHandle.HasValue) {
@@ -919,14 +938,8 @@ public sealed class SceneRenderer : IDisposable {
 			return;
 		}
 
-		int height = System.Math.Max(viewportHeight, 1);
-		float focalPixels = height / (2f * MathF.Tan(camera.FieldOfView / 2f));
-
-		// PrincipalPoint is measured from the viewport's top-left, y down; the shader works in window
-		// coordinates, y up from the bottom of the whole framebuffer.
-		var centre = new Vector2(
-			viewportX + camera.PrincipalPoint.X * viewportWidth,
-			viewportY + (1f - camera.PrincipalPoint.Y) * height);
+		float focalPixels = camera.FocalPixelsFor(viewportHeight);
+		var centre = camera.PrincipalPointInWindow(viewportX, viewportY, viewportWidth, viewportHeight);
 		var line = sky.Place(unchecked((short)camera.Pitch), unchecked((short)camera.Roll), centre, focalPixels);
 
 		_skyShader.Use();
