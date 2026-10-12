@@ -3490,7 +3490,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_InstallRenderContext",
-      "description": "(ctx), callee-cleaned: stores ctx at 000ab612, the installed render context, and its clip block ctx + 4 (0 for a null ctx) at the GL display's (000ab616) +0x40; passes the block to 00064364 when 000ab7a0 holds that display, and passes it to 00064364 again. ES1DBSIM's Raster_InstallRenderContext (00069be0) stores the block at its display's +0x44 and compares the display global with itself.",
+      "description": "(ctx), callee-cleaned: stores ctx at 000ab612, the installed render context, and its clip block ctx + 4 (0 for a null ctx) at the GL display's (000ab616) +0x40; passes the block to Raster_SetClipBlock (00064364) when 000ab7a0 holds that display, and passes it to Raster_SetClipBlock (00064364) again. ES1DBSIM's Raster_InstallRenderContext (00069be0) stores the block at its display's +0x44 and compares the display global with itself.",
       "source": "ES1GO decompile at 000513fc, against ES1DBSIM's Raster_InstallRenderContext",
       "verified": {
         "bytes": "000513fc+97",
@@ -7130,6 +7130,51 @@
       }
     },
     {
+      "address": "00064348",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_InstallViewport",
+      "description": "(block), C convention: copies the clip block's 0x8b dwords to 000841e0. ES2's Raster_InstallViewport (DBSIM 004893c0), which copies the same span in two parts. Raster_SelectRenderTarget passes the display's +0x40. The code of ES1DBSIM's Raster_InstallViewport (00075980), relocated operands aside.",
+      "source": "ES1GO decompile at 00064348",
+      "verified": {
+        "bytes": "00064348+28",
+        "sha1": "045ad62abf69",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064364",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_SetClipBlock",
+      "description": "(block), C convention: stores the clip block pointer 0008441c that the raster routines read. ES2's Raster_SetClipBlock (DBSIM 0048944c). Raster_InstallRenderContext passes ctx + 4. The code of ES1DBSIM's Raster_SetClipBlock (0007599c), relocated operands aside.",
+      "source": "ES1GO decompile at 00064364",
+      "verified": {
+        "bytes": "00064364+10",
+        "sha1": "ad4517d5df3b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00064378",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClipBlock_Init",
+      "description": "(block, width, height), C convention: zeroes +0..+0x200 and +0x204..+0x210 (clip mode 0), sets +0x214/+0x218 to width - 1/height - 1, zeroes +0x21c/+0x220, and points the pen +0x224 at 0008440c and the fill brush +0x228 at 00084414. ES2's ClipBlock_Init (DBSIM 00489464). GLDisplay_Open sets up a display's clip block with it. The code of ES1DBSIM's ClipBlock_Init (000759b0), relocated operands aside.",
+      "source": "ES1GO decompile at 00064378",
+      "verified": {
+        "bytes": "00064378+120",
+        "sha1": "203264cbff53",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000643f0",
       "binary": "ES1GO",
       "type": "function",
@@ -7856,6 +7901,21 @@
         "sha1": "5f7381f86473",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "00066bf0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GL_ClaimGlobal",
+      "description": "(this, instance, index) in stack order, callee-cleaned: allocates 4 bytes for a null this, clears +0, and stores instance in GL slot index (000ab784 + index * 4) when the slot is empty. ES2's GL_ClaimGlobal (DBSIM 00480484). GLDisplay_Ctor passes slot 7, the current display. The code of ES1DBSIM's GL_ClaimGlobal (0007d5bc), relocated operands aside.",
+      "source": "ES1GO decompile at 00066bf0",
+      "verified": {
+        "bytes": "00066bf0+59",
+        "sha1": "b0c87cd42453",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -9071,6 +9131,141 @@
       }
     },
     {
+      "address": "00074650",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BlitBitmapClipped",
+      "description": "(header, point, clip, flags), C convention: the VGA_8 driver's clipped blit, its table's +0x70: with clip non-null trims the bitmap's columns and rows to the rect clip (returning when nothing is left), picks the start and the row and column steps by flags bits 1 and 2, and draws each destination row with VGA8_BlitClippedRow, a plane at a time. With header byte +5's bit 4 set every byte is written; with it clear a 0 byte is skipped (OR AL,AL / JZ at 0007495f in VGA8_BlitClippedRow). The code of ES1DBSIM's VGA8_BlitBitmapClipped (0008c27c), relocated operands aside.",
+      "source": "ES1GO decompile at 00074650; es2_naming.py diff against the ES1DBSIM twin",
+      "verified": {
+        "bytes": "00074650+414",
+        "sha1": "bbda26ba58a4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000747ee",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BlitClippedRow",
+      "description": "A block of VGA8_BlitBitmapClipped, near-called with its frame (EBP) per destination row ([EBP-0x38]): in clip mode +0x204 2 clips the row to each region of the clip block's list in turn, a type-0 rect or a type-2 span region, passing over regions of other types; otherwise draws it once. For each of the four planes writes that plane's pixels of the row, every byte when header bit 4 is set, and only the non-zero ones when it is clear. The code of ES1DBSIM's VGA8_BlitClippedRow (0008c41a), relocated operands aside.",
+      "source": "ES1GO decompile at 000747ee",
+      "verified": {
+        "bytes": "000747ee+809",
+        "sha1": "6c2574962966",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00074fcc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_FillBitmapPolygon",
+      "description": "(count, points), C convention: the VGA_8 driver's table +0x84, which Raster_DrawPolygonDispatch calls for brush modes 5 and 7. Reads the brush at the clip block's (0008441c) +0x228: +8 the int32 {u, v} texture points, +0xc the bitmap header, +0x10 the colour table only for mode 7 (0 otherwise). Nothing for fewer than 3 points, a polygon with no height or no width, or one wholly outside the clip rect +0x20c..+0x218; one whose smallest y is above the rect's top is cut there with VGA8_BitmapPolyClipTop into two 32-point buffers on its own stack and redone. Walks by columns when the clip mode +0x204 is not 2 (edges from the first leftmost vertex, A forward and B backward, VGA8_BitmapEdgeSetupColumns/StepColumns, x in 000ab7b0, VGA8_SpanBitmapColumn per column from the rect's left) and by rows when it is 2 (from the first topmost vertex, A backward and B forward, the Rows pair, y in 000ab7ac, VGA8_SpanBitmapRow from the rect's top); stops when either edge ends at the far vertex, past the rect's far side, or when A's other coordinate exceeds B's, so the far vertex's column or row is never drawn. ES1DBSIM's VGA8_FillBitmapPolygon (000534ac), but that the two clip buffers are locals built with __vec_ctor on every call where ES1DBSIM's are statics built on first use.",
+      "source": "ES1GO decompile at 00074fcc; es2_naming.py diff against the ES1DBSIM twin",
+      "verified": {
+        "bytes": "00074fcc+1098",
+        "sha1": "9a7df3a5bb90",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00075418",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapPolyPointCtor",
+      "description": "(p), callee-cleaned: the empty constructor of an 8-byte int32 point, allocating 8 bytes when p is null; VGA8_FillBitmapPolygon's element constructor for the two 32-point clip buffers on its stack. The code of ES1DBSIM's VGA8_BitmapPolyPointCtor (00053864), relocated operands aside.",
+      "source": "ES1GO decompile at 00075418; es2_naming.py diff against the ES1DBSIM twin",
+      "verified": {
+        "bytes": "00075418+27",
+        "sha1": "f3e857c1c89a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00075434",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapPolyClipTop",
+      "description": "(top, texOut, pointsOut, countOut, texIn, pointsIn, countIn) in stack order, callee-cleaned: cuts a polygon and its texture points at y = top, keeping y >= top. Walking the ring from vertex 0, emits each vertex with y >= top and, when the edge to the next vertex crosses, the crossing c = c_i + (top - y_i) * (c_n - c_i) / (y_n - y_i) for each of x, u and v, from the vertex the edge leaves, the division truncating; the new count goes to countOut. The code of ES1DBSIM's VGA8_BitmapPolyClipTop (00053880), relocated operands aside.",
+      "source": "ES1GO decompile at 00075434",
+      "verified": {
+        "bytes": "00075434+354",
+        "sha1": "dd4aff478d6c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00075598",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapEdgeStepRows",
+      "description": "(edge), callee-cleaned: steps a row-walk edge of VGA8_FillBitmapPolygon one row: decrements +4 and at 0 starts the next edge from vertex +8 with VGA8_BitmapEdgeSetupRows, returning 0 when that fails; otherwise adds +0x14 to u +0xc, +0x18 to v +0x10, +0x20 to x +0x1c, +0x2c to the error +0x28 and, when the error is positive, +0x24 (+-1) to x and subtracts +0x30. Returns 1. The code of ES1DBSIM's VGA8_BitmapEdgeStepRows (000539e4), relocated operands aside.",
+      "source": "ES1GO decompile at 00075598",
+      "verified": {
+        "bytes": "00075598+85",
+        "sha1": "ee9b605790c4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000755f0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapEdgeStepColumns",
+      "description": "(edge), callee-cleaned: VGA8_BitmapEdgeStepRows for a column-walk edge, starting the next edge with VGA8_BitmapEdgeSetupColumns; +0x1c is then the edge's y. The code of ES1DBSIM's VGA8_BitmapEdgeStepColumns (00053a3c), relocated operands aside.",
+      "source": "ES1GO decompile at 000755f0",
+      "verified": {
+        "bytes": "000755f0+85",
+        "sha1": "c00833e21cb0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00075648",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapEdgeSetupRows",
+      "description": "(vertex, edge), callee-cleaned: starts a row-walk edge of VGA8_FillBitmapPolygon from vertex: steps the index by the edge's +0 (+-1, wrapping round the count 000aa0f0) past vertices with the same y, and returns 0 on reaching the far vertex 000aa0ec. Otherwise stores the row count dy at +4, the next vertex at +8, u and v (texture point << 16) at +0xc/+0x10 and their steps Math_Q16Divide(du << 16, dy << 16) at +0x14/+0x18, x at +0x1c, its whole step dx / dy at +0x20, the +-1 carry at +0x24, the error at +0x28 (0, or 1 - dy for a leftward edge), the remainder |dx| % dy at +0x2c and dy at +0x30, so step k's x is x0 + ceil(k * dx / dy); returns 1. The code of ES1DBSIM's VGA8_BitmapEdgeSetupRows (00053a94), relocated operands aside.",
+      "source": "ES1GO decompile at 00075648",
+      "verified": {
+        "bytes": "00075648+385",
+        "sha1": "bb4afb4f43f8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000757cc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapEdgeSetupColumns",
+      "description": "(vertex, edge), callee-cleaned: VGA8_BitmapEdgeSetupRows with x and y exchanged: the count is the vertices' x difference, +0x1c the edge's y and its steps from the y difference. The code of ES1DBSIM's VGA8_BitmapEdgeSetupColumns (00053c18), relocated operands aside.",
+      "source": "ES1GO decompile at 000757cc",
+      "verified": {
+        "bytes": "000757cc+386",
+        "sha1": "2ffcf3d52329",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000764bc",
       "binary": "ES1GO",
       "type": "function",
@@ -9141,6 +9336,36 @@
       "verified": {
         "bytes": "00078091+136",
         "sha1": "9eaa86eb6381",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007b9c8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SpanBitmapRow",
+      "description": "(edgeA, edgeB, header, table), C convention: one row (000ab7ac) of VGA8_FillBitmapPolygon from edgeA's x +0x1c to edgeB's, both included, n pixels. du = Math_Q16Divide(uB - uA, n << 16), dv likewise; pixel i samples u = uA + (du >> 1) + i * du, v likewise, texel at header +0xa + round(v) * header +2 + round(u) (the 0x8000 add carried into the unsigned high words), stepped exactly in 16.16. Clip mode +0x204 other than 2 clamps to the rect +0x20c..+0x214 columns (skipped pixels advancing u, v by Math_Q16Multiply); mode 2 walks the clip block's region list from the last entry, drawing the row's part in every type-0 rect (+4..+0x10) or type-2 span region holding it, and returns at any other type. Writes the planar display through the sequencer's map mask, ROL-stepping the plane. With table 0 a texel of 0 is not written (OR AH,AH / JZ at 0007bd2e); otherwise every texel is written as table[texel]. The code of ES1DBSIM's VGA8_SpanBitmapRow (000735a4), relocated operands aside.",
+      "source": "ES1GO decompile at 0007b9c8; es2_naming.py diff against the ES1DBSIM twin",
+      "verified": {
+        "bytes": "0007b9c8+934",
+        "sha1": "47f91c454b70",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007bd6e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SpanBitmapColumn",
+      "description": "(edgeA, edgeB, header, table), C convention: one column (000ab7b0) of VGA8_FillBitmapPolygon from edgeA's y +0x1c to edgeB's, both included: VGA8_SpanBitmapRow's sampling, clamped to the clip rect's rows +0x210..+0x218 in every clip mode, writing one plane 80 bytes a pixel. With table 0 a texel of 0 is not written (OR AH,AH / JZ at 0007bf6b); otherwise every texel is written as table[texel]. The code of ES1DBSIM's VGA8_SpanBitmapColumn (0007394a), relocated operands aside.",
+      "source": "ES1GO decompile at 0007bd6e; es2_naming.py diff against the ES1DBSIM twin",
+      "verified": {
+        "bytes": "0007bd6e+560",
+        "sha1": "7868802f59ff",
         "scope": "body",
         "via": "decompile"
       }

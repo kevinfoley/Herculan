@@ -817,8 +817,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LightManager_InitSubsystem",
-      "description": "No arguments, no frame: the phase-2 loader LightManager_RegisterSubsystem registers. Builds the effect light manager at 000bc19c with LightManager_Construct(0), calls LightManager_SetFalloffConstants with 2000 and 10 in stack order (A = 0, B = 62), stores 10000 at +0xc, and builds the handle pool Pool_Init(0, 8, 3) at 000aee18. ES2's LightManager_InitSubsystem (DBSIM 004076e4), whose handles are 0xe bytes. Ghidra has no function here.",
-      "source": "ES1DBSIM capstone at 000055b8"
+      "description": "No arguments, no frame: the phase-2 loader LightManager_RegisterSubsystem registers. Builds the effect light manager at 000bc19c with LightManager_Construct(0), calls LightManager_SetFalloffConstants with 2000 and 10 in stack order (A = 0, B = 62), stores 10000 at +0xc, and builds the handle pool Pool_Init(0, 8, 3) at 000aee18. ES2's LightManager_InitSubsystem (DBSIM 004076e4), whose handles are 0xe bytes.",
+      "source": "ES1DBSIM capstone at 000055b8",
+      "verified": {
+        "bytes": "000055b8+59",
+        "sha1": "402e982b142a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000055f4",
@@ -901,8 +907,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LightManager_RegisterSubsystem",
-      "description": "No arguments, no frame: the light manager's static initialiser: RegisterSubsystemLoader with LightManager_InitSubsystem at phase 2 and EffectLightPool_FlushDeletes at phase 5, then zeroes the word 000aee80 and the pool pointer 000aee18. ES2's LightManager_RegisterSubsystem (DBSIM 004078c8). Ghidra has no function here.",
-      "source": "ES1DBSIM capstone at 000056f0"
+      "description": "No arguments, no frame: the light manager's static initialiser: RegisterSubsystemLoader with LightManager_InitSubsystem at phase 2 and EffectLightPool_FlushDeletes at phase 5, then zeroes the word 000aee80 and the pool pointer 000aee18. ES2's LightManager_RegisterSubsystem (DBSIM 004078c8).",
+      "source": "ES1DBSIM capstone at 000056f0",
+      "verified": {
+        "bytes": "000056f0+44",
+        "sha1": "e63aa5d10582",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0000571c",
@@ -3515,6 +3527,111 @@
       }
     },
     {
+      "address": "000534ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_FillBitmapPolygon",
+      "description": "(count, points), C convention: the VGA_8 driver's table +0x84 (0009df58), which Raster_DrawPolygonDispatch calls for brush modes 5 and 7. Reads the brush at the clip block's (00098d64) +0x228: +8 the int32 {u, v} texture points, +0xc the bitmap header, +0x10 the colour table only for mode 7 (0 otherwise). Nothing for fewer than 3 points, a polygon with no height or no width, or one wholly outside the clip rect +0x20c..+0x218; one whose smallest y is above the rect's top is cut there with VGA8_BitmapPolyClipTop into 000b56d0/000b57d4 and redone. Walks by columns when the clip mode +0x204 is not 2 (edges from the first leftmost vertex, A forward and B backward, VGA8_BitmapEdgeSetupColumns/StepColumns, x in 000bd950, VGA8_SpanBitmapColumn per column from the rect's left) and by rows when it is 2 (from the first topmost vertex, A backward and B forward, the Rows pair, y in 000bd94c, VGA8_SpanBitmapRow from the rect's top); stops when either edge ends at the far vertex, past the rect's far side, or when A's other coordinate exceeds B's, so the far vertex's column or row is never drawn. ES2's Raster_FillBitmapPolygon (DBSIM 0048a818) walks rows only.",
+      "source": "ES1DBSIM decompile and disassembly at 000534ac (mode test 0005350b, clip and walk loops 00053610-0005385d); driver table 000a7b70 +0x84 read from the image",
+      "verified": {
+        "bytes": "000534ac+952",
+        "sha1": "a79b7e0390e7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00053864",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapPolyPointCtor",
+      "description": "(p), callee-cleaned: the empty constructor of an 8-byte int32 point, allocating 8 bytes when p is null; VGA8_FillBitmapPolygon's element constructor for its two 32-point clip buffers 000b56d0 and 000b57d4, built on first use (flags 000b56cc, 000b57d0).",
+      "source": "ES1DBSIM decompile at 00053864 and its __vec_ctor calls in 000534ac",
+      "verified": {
+        "bytes": "00053864+27",
+        "sha1": "a741d3a3633c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053880",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapPolyClipTop",
+      "description": "(top, texOut, pointsOut, countOut, texIn, pointsIn, countIn) in stack order, callee-cleaned: cuts a polygon and its texture points at y = top, keeping y >= top. Walking the ring from vertex 0, emits each vertex with y >= top and, when the edge to the next vertex crosses, the crossing c = c_i + (top - y_i) * (c_n - c_i) / (y_n - y_i) for each of x, u and v, from the vertex the edge leaves, the division truncating; the new count goes to countOut.",
+      "source": "ES1DBSIM decompile at 00053880; call at 00053689",
+      "verified": {
+        "bytes": "00053880+354",
+        "sha1": "dd4aff478d6c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000539e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapEdgeStepRows",
+      "description": "(edge), callee-cleaned: steps a row-walk edge of VGA8_FillBitmapPolygon one row: decrements +4 and at 0 starts the next edge from vertex +8 with VGA8_BitmapEdgeSetupRows, returning 0 when that fails; otherwise adds +0x14 to u +0xc, +0x18 to v +0x10, +0x20 to x +0x1c, +0x2c to the error +0x28 and, when the error is positive, +0x24 (+-1) to x and subtracts +0x30. Returns 1. ES2's Raster_BitmapEdgeStep (DBSIM 0048a944).",
+      "source": "ES1DBSIM decompile at 000539e4; es2_naming.py diff against DBSIM 0048a944",
+      "verified": {
+        "bytes": "000539e4+85",
+        "sha1": "ee9b605790c4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053a3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapEdgeStepColumns",
+      "description": "(edge), callee-cleaned: VGA8_BitmapEdgeStepRows for a column-walk edge, starting the next edge with VGA8_BitmapEdgeSetupColumns; +0x1c is then the edge's y.",
+      "source": "ES1DBSIM decompile at 00053a3c",
+      "verified": {
+        "bytes": "00053a3c+85",
+        "sha1": "c00833e21cb0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053a94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapEdgeSetupRows",
+      "description": "(vertex, edge), callee-cleaned: starts a row-walk edge of VGA8_FillBitmapPolygon from vertex: steps the index by the edge's +0 (+-1, wrapping round the count 000b56c0) past vertices with the same y, and returns 0 on reaching the far vertex 000b56bc. Otherwise stores the row count dy at +4, the next vertex at +8, u and v (texture point << 16) at +0xc/+0x10 and their steps Math_Q16Divide(du << 16, dy << 16) at +0x14/+0x18, x at +0x1c, its whole step dx / dy at +0x20, the +-1 carry at +0x24, the error at +0x28 (0, or 1 - dy for a leftward edge), the remainder |dx| % dy at +0x2c and dy at +0x30, so step k's x is x0 + ceil(k * dx / dy); returns 1. ES2's Raster_BitmapEdgeSetup (DBSIM 0048a9a0).",
+      "source": "ES1DBSIM decompile at 00053a94; es2_naming.py diff against DBSIM 0048a9a0",
+      "verified": {
+        "bytes": "00053a94+385",
+        "sha1": "aac9375fabef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053c18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BitmapEdgeSetupColumns",
+      "description": "(vertex, edge), callee-cleaned: VGA8_BitmapEdgeSetupRows with x and y exchanged: the count is the vertices' x difference, +0x1c the edge's y and its steps from the y difference.",
+      "source": "ES1DBSIM decompile at 00053c18",
+      "verified": {
+        "bytes": "00053c18+386",
+        "sha1": "8e490629d65e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00053d9c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -4316,6 +4433,21 @@
         "sha1": "d10d3eb8b33e",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0005a5f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_CreateDisplay",
+      "description": "Builds the simulator's display; its one caller found by es2_xref is Sim_StartMission (0005af1a). A 0x90-byte GLDisplay_CtorAndOpen(display, 0, 'VGA_8'), two __vec_ctor arrays of four 8-byte elements (constructor 0005a79c) at +0x48 and +0x68, Raster_SelectRenderTarget(display), +0x88 = 0, +0x8c = 1, +0x3c = 1 and +0x34 = 0, each passed to the driver's routine at 0009df18 and 0009df1c (stored at 00098dda and 00098dd2) while the display is current; the pairs {0, 0}, {0, 200}, {0, 400}, {0, 600} at +0x48 and 32 zero bytes at +0x68. Then builds the render context 000b5b6e with 00069a84(0), its origin +0x220/+0x224 (-160, -100) and +0x208 = 1 (its clip block's mode +0x204), stores the block at the display's +0x44, passes it to Raster_SetClipBlock while current, and installs the context with Raster_InstallRenderContext.",
+      "source": "ES1DBSIM decompile and disassembly at 0005a5f4; es2_xref caller",
+      "verified": {
+        "bytes": "0005a5f4+424",
+        "sha1": "d470565f4ef9",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -9253,7 +9385,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_InstallRenderContext",
-      "description": "(ctx), callee-cleaned: stores ctx at 000bdbda, the installed render context, and its clip block ctx + 4 (0 for a null ctx) at the GL display's (000bdd28) +0x44; passes the block to 0007599c when 000bdd28, read again, still holds that display, and passes it to 0007599c again. ES2's Raster_InstallRenderContext (DBSIM 00480c38) does the same through GLDisplay_SetClipBlock and Raster_SetClipBlock.",
+      "description": "(ctx), callee-cleaned: stores ctx at 000bdbda, the installed render context, and its clip block ctx + 4 (0 for a null ctx) at the GL display's (000bdd28) +0x44; passes the block to Raster_SetClipBlock (0007599c) when 000bdd28, read again, still holds that display, and passes it to Raster_SetClipBlock (0007599c) again. ES2's Raster_InstallRenderContext (DBSIM 00480c38) does the same through GLDisplay_SetClipBlock and Raster_SetClipBlock.",
       "source": "ES1DBSIM disassembly at 00069be0, against ES2's Raster_InstallRenderContext",
       "verified": {
         "bytes": "00069be0+97",
@@ -9342,6 +9474,66 @@
       "verified": {
         "bytes": "0006a2cc+125",
         "sha1": "32fe11a9aa4b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006a3a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLDisplay_Ctor",
+      "description": "(display, kindName), callee-cleaned: allocates 0x48 bytes for a null display, GL_ClaimGlobal(display, display, 7), registers 0006a34c with 0005730c and 0006a384 with 0007d628, clears +0, and stores Raster_DriverByName(display, kindName) at +0x30. ES2's GLDisplay_Ctor (DBSIM 00480e4c). es2_xref finds no reference to it.",
+      "source": "ES1DBSIM decompile at 0006a3a8; es2_xref sweep",
+      "verified": {
+        "bytes": "0006a3a8+81",
+        "sha1": "3b886fedd4da",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006a3fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLDisplay_CtorAndOpen",
+      "description": "(display, bitmap, kindName), callee-cleaned: GLDisplay_Ctor's body, then GLDisplay_Open(display, bitmap). ES2's GLDisplay_CtorAndOpen (DBSIM 00480e98). Its callers found by es2_xref are Sim_CreateDisplay and 00069a68.",
+      "source": "ES1DBSIM decompile at 0006a3fc; es2_naming.py diff against DBSIM 00480e98",
+      "verified": {
+        "bytes": "0006a3fc+90",
+        "sha1": "5649300498aa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006a480",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLDisplay_Open",
+      "description": "(display, bitmap), callee-cleaned: when +0 is 0: increments 0009b4cc, calling 000732ac the first time; RasterDriver_OpenDisplay(+0x30, bitmap, display + 4); on success allocates two 0x22c-byte clip blocks, sets up the first with ClipBlock_Init for the width +8 and height +0xc and copies it into the second (0x8b dwords), stores them at +0x40 and +0x44, zeroes +0x34, +0x38 and +0x3c, sets bit 0 of +0 and returns 1. Returns 0 when already open or when the driver refuses. ES2's GLDisplay_Open (DBSIM 00480f1c).",
+      "source": "ES1DBSIM decompile at 0006a480; es2_naming.py diff against DBSIM 00480f1c",
+      "verified": {
+        "bytes": "0006a480+378",
+        "sha1": "78319c2908b5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006a644",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_SelectRenderTarget",
+      "description": "(display), callee-cleaned: makes display the current one (GL slot 7, 000bdd28) and installs it: when a display is current, GL_SetGlobal(0, 7), which always returns 0, so the early return of 1 never runs; GL_SetGlobal(display, 7); Raster_InstallDriverTable(+0x30); copies +4..+0x2c to 00098da2..00098dca; calls the driver's routines at 0009df1c, 0009df14 and 0009df18 with +0x34, +0x38 and +0x3c; Raster_InstallViewport(+0x40); Raster_SetClipBlock(+0x44); returns 0. ES2's Raster_SelectRenderTarget (DBSIM 00481118). Its one caller found by es2_xref is Sim_CreateDisplay.",
+      "source": "ES1DBSIM decompile at 0006a644; es2_naming.py diff against DBSIM 00481118; es2_xref caller",
+      "verified": {
+        "bytes": "0006a644+208",
+        "sha1": "98a05d982ecb",
         "scope": "body",
         "via": "decompile"
       }
@@ -9725,6 +9917,21 @@
       }
     },
     {
+      "address": "0007330a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "RasterDriver_OpenDisplay",
+      "description": "(driver, bitmap, info), C convention: looks the driver's table up afresh for each call with Raster_FindDriverTable (number in EAX): slot 8 (bitmap) and slot 9 () must each return 0, else returns 0; then slot 10 (), slot 11 (bitmap, info) and slot 7 (info + 0x24, info), and returns 1. ES2's RasterDriver_OpenDisplay (DBSIM 0048930a). GLDisplay_Open passes display + 4 as info.",
+      "source": "ES1DBSIM disassembly at 0007330a",
+      "verified": {
+        "bytes": "0007330a+143",
+        "sha1": "f7648bf773b4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "000734a0",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -9780,6 +9987,36 @@
       "verified": {
         "bytes": "0007358c+24",
         "sha1": "108d371cb4a6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000735a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SpanBitmapRow",
+      "description": "(edgeA, edgeB, header, table), C convention: one row (000bd94c) of VGA8_FillBitmapPolygon from edgeA's x +0x1c to edgeB's, both included, n pixels. du = Math_Q16Divide(uB - uA, n << 16), dv likewise; pixel i samples u = uA + (du >> 1) + i * du, v likewise, texel at header +0xa + round(v) * header +2 + round(u) (the 0x8000 add carried into the unsigned high words), stepped exactly in 16.16. Clip mode +0x204 other than 2 clamps to the rect +0x20c..+0x214 columns (skipped pixels advancing u, v by Math_Q16Multiply); mode 2 walks the clip block's region list from the last entry, drawing the row's part in every type-0 rect (+4..+0x10) or type-2 span region holding it, and returns at any other type. Writes the planar display through the sequencer's map mask, ROL-stepping the plane. With table 0 a texel of 0 is not written (OR AH,AH / JZ at 0007390a); otherwise every texel is written as table[texel].",
+      "source": "ES1DBSIM disassembly at 000735a4 (setup, clip, region walk, both store loops)",
+      "verified": {
+        "bytes": "000735a4+934",
+        "sha1": "733762e940b0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007394a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SpanBitmapColumn",
+      "description": "(edgeA, edgeB, header, table), C convention: one column (000bd950) of VGA8_FillBitmapPolygon from edgeA's y +0x1c to edgeB's, both included: VGA8_SpanBitmapRow's sampling, clamped to the clip rect's rows +0x210..+0x218 in every clip mode, writing one plane 80 bytes a pixel. With table 0 a texel of 0 is not written (OR AH,AH / JZ at 00073b47); otherwise every texel is written as table[texel].",
+      "source": "ES1DBSIM disassembly at 0007394a (setup, clip, both store loops)",
+      "verified": {
+        "bytes": "0007394a+560",
+        "sha1": "a1612ea0a82e",
         "scope": "body",
         "via": "disasm"
       }
@@ -10454,6 +10691,51 @@
       }
     },
     {
+      "address": "00075980",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_InstallViewport",
+      "description": "(block), C convention: copies the clip block's 0x8b dwords to 00098b28. ES2's Raster_InstallViewport (DBSIM 004893c0), which copies the same span in two parts. Raster_SelectRenderTarget passes the display's +0x40.",
+      "source": "ES1DBSIM decompile at 00075980",
+      "verified": {
+        "bytes": "00075980+28",
+        "sha1": "eb3ab9306eb2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007599c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_SetClipBlock",
+      "description": "(block), C convention: stores the clip block pointer 00098d64 that the raster routines read. ES2's Raster_SetClipBlock (DBSIM 0048944c). Raster_InstallRenderContext passes ctx + 4.",
+      "source": "ES1DBSIM decompile at 0007599c",
+      "verified": {
+        "bytes": "0007599c+10",
+        "sha1": "e683931be45e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000759b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClipBlock_Init",
+      "description": "(block, width, height), C convention: zeroes +0..+0x200 and +0x204..+0x210 (clip mode 0), sets +0x214/+0x218 to width - 1/height - 1, zeroes +0x21c/+0x220, and points the pen +0x224 at 00098d54 and the fill brush +0x228 at 00098d5c. ES2's ClipBlock_Init (DBSIM 00489464). GLDisplay_Open sets up a display's clip block with it.",
+      "source": "ES1DBSIM decompile at 000759b0",
+      "verified": {
+        "bytes": "000759b0+120",
+        "sha1": "1824da985cea",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00075a28",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -10656,6 +10938,36 @@
       "name": "toupper",
       "description": "Symantec C++ runtime `toupper`, from `is.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 24 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007d5bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GL_ClaimGlobal",
+      "description": "(this, instance, index) in stack order, callee-cleaned: allocates 4 bytes for a null this, clears +0, and stores instance in GL slot index (000bdd0c + index * 4) when the slot is empty. ES2's GL_ClaimGlobal (DBSIM 00480484). GLDisplay_Ctor passes slot 7, the current display.",
+      "source": "ES1DBSIM decompile at 0007d5bc",
+      "verified": {
+        "bytes": "0007d5bc+59",
+        "sha1": "6d560502d036",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007d5f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GL_SetGlobal",
+      "description": "(value, index) in stack order, callee-cleaned: returns 1 and stores nothing when value is non-null and GL slot index (000bdd0c + index * 4) already holds one; otherwise stores value there and returns 0. ES2's GL_SetGlobal (DBSIM 004804a8), its arguments reversed.",
+      "source": "ES1DBSIM decompile at 0007d5f8",
+      "verified": {
+        "bytes": "0007d5f8+46",
+        "sha1": "250bcfbdb270",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0007dfb4",
@@ -11279,7 +11591,43 @@
       "confidence": "high",
       "name": "VGA8_BlitBitmap",
       "description": "(header, point, clip, flags) in stack order: the VGA_8 driver's bitmap blit, its table's +0x68: clips the bitmap's rows (+0) and columns (+2) against clip when clip is non-null, mirrors by flags bits 1 and 2, and writes the bytes to display memory through the sequencer's map mask (ports 3c4/3c5) a plane at a time. With header byte +5's bit 4 set every byte is written; with it clear a 0 byte is skipped, leaving the pixel.",
-      "source": "ES1DBSIM disassembly at 0008b9a8 (head, clip, flag tests and copy loops)"
+      "source": "ES1DBSIM disassembly at 0008b9a8 (head, clip, flag tests and copy loops)",
+      "verified": {
+        "bytes": "0008b9a8+1248",
+        "sha1": "711e52b0399e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0008c27c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BlitBitmapClipped",
+      "description": "(header, point, clip, flags), C convention: the VGA_8 driver's clipped blit, its table's +0x70 (0009df44): with clip non-null trims the bitmap's columns and rows to the rect clip (returning when nothing is left), picks the start and the row and column steps by flags bits 1 and 2, and draws each destination row with VGA8_BlitClippedRow, a plane at a time. With header byte +5's bit 4 set every byte is written; with it clear a 0 byte is skipped (OR AL,AL / JZ at 0008c58b).",
+      "source": "ES1DBSIM disassembly at 0008c27c and 0008c41a",
+      "verified": {
+        "bytes": "0008c27c+414",
+        "sha1": "1d309b4060a2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0008c41a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BlitClippedRow",
+      "description": "A block of VGA8_BlitBitmapClipped, near-called with its frame (EBP) per destination row ([EBP-0x38]): in clip mode +0x204 2 clips the row to each region of the clip block's list in turn, a type-0 rect or a type-2 span region, passing over regions of other types; otherwise draws it once. For each of the four planes writes that plane's pixels of the row, every byte when header bit 4 is set, and only the non-zero ones when it is clear.",
+      "source": "ES1DBSIM disassembly at 0008c41a",
+      "verified": {
+        "bytes": "0008c41a+809",
+        "sha1": "95cfd34e5b9f",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0008d700",

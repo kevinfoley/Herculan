@@ -31,8 +31,34 @@ The raster's routines that touch the display or a canvas (`0009df08`, the polygo
 | Name | Number | Table | Blit (`+0x68`, at `0009df3c`) | Clipped blit (`+0x70`, at `0009df44`) |
 |---|---|---|---|---|
 | `VGA_4` | 0 | `000a7ae0` | `00089964` | `0008a230` |
-| `VGA_8` | 1 | `000a7b70` | `VGA8_BlitBitmap` (`0008b9a8`) | `0008c27c` |
+| `VGA_8` | 1 | `000a7b70` | `VGA8_BlitBitmap` (`0008b9a8`) | `VGA8_BlitBitmapClipped` (`0008c27c`) |
 | `BMP_8` | 3 | `000a7c00` | `BMP8_BlitBitmap` (`0008d700`) | `0008dc3c` |
+
+**The simulator draws through `VGA_8`, a 320-pixel-wide planar VGA display.** `Sim_CreateDisplay` (`0005a5f4`), which `Sim_StartMission` calls (`0005af1a`), builds a `0x90`-byte display with `GLDisplay_CtorAndOpen` (`0006a3fc`), named `VGA_8` and given no bitmap, and makes it current with `Raster_SelectRenderTarget` (`0006a644`), which installs the table of the driver its `+0x30` names, 1. `Sim_CreateDisplay` then sets the display's `+0x3c` to 1 and its `+0x34` to 0, passing each to the driver's routine at `0009df18` and `0009df1c`, builds the render context `000b5b6e` from the display's clip block (`00069a84`) with its origin (−160, −100) at `+0x220`/`+0x224` and 1 at `+0x208`, the clip mode `+0x204` of its block at `+4`, and installs it with `Raster_InstallRenderContext`. `Sim_RenderFrame` installs no context of its own: it moves `000b5b6e`'s origin by the view shake for the length of the scene's draw ([Open](#open)). In clip mode 1 a bitmap goes to the driver's clipped blit, and a [bitmap fill](#bitmap-fills-brush-modes-5-and-7) walks by columns.
+
+The display functions are ES2's, under ES2's names ([below](#functions)). `GLDisplay_Open` (`0006a480`) opens the driver with `RasterDriver_OpenDisplay` (`0007330a`), which calls the driver's slots 8 (the bitmap) and 9, each of which must return 0, then 10, 11 (the bitmap, display `+4`) and 7 (display `+0x28`, display `+4`); it then allocates the display's two `0x22c`-byte clip blocks at `+0x40` and `+0x44`, the first set up by `ClipBlock_Init` (`000759b0`) for the display's width `+8` and height `+0xc`, with clip mode 0 and the rect (0, 0, width − 1, height − 1), and copied into the second.
+
+`VGA_8`'s routines address the screen as four planes of 80 bytes a row: column *x* of row *y* is byte *p* >> 2 of plane *p* & 3, *p* = *x* + 4 · (`0009df8e`[*y*] + `0009e604`) + `0009e610`, the plane chosen through the sequencer's map mask (port `3c4` index 2), in the segment at `0009df84`.
+
+## Bitmap fills (brush modes 5 and 7)
+
+**A bitmap fill stretches a bitmap over a polygon along straight lines across the screen, with no perspective, each pixel taking the nearest texel; mode 5 leaves the bitmap's palette index 0 unpainted, so what was drawn before shows through, and mode 7 paints every texel through a 256-byte colour table.** `Raster_DrawPolygonDispatch` hands both modes to the active driver's `+0x84` (`0009df58`); the simulator's driver is `VGA_8` ([above](#the-display-drivers)), whose routine is `VGA8_FillBitmapPolygon` (`000534ac`). ES2 draws them with driver 3's routine, by rows only, with the same rule for index 0 ([ES2's mode 5](../../retail/rendering/dts-billboards.md#brush-mode-5-skips-palette-index-0)).
+
+The brush is at the clip block's `+0x228`: `+8` the texture points, an `int32` {*u*, *v*} in texels for each vertex; `+0xc` the bitmap header, its columns at `+2` and its pixels at `+0xa`; `+0x10` the colour table, read only when the mode is 7. Neither the brush's `+4` nor the header's flags enter. The clip rect is the block's {*x0*, *y0*, *x1*, *y1*} at `+0x20c`. Given the count and the points:
+
+1. **Nothing is drawn** for fewer than three points, for a polygon whose smallest *x* is not below its largest or whose smallest *y* is not below its largest, or for one wholly outside the clip rect.
+2. **The part above the clip rect is cut off first.** When the smallest *y* is less than *y0*, `VGA8_BitmapPolyClipTop` (`00053880`) cuts the polygon at *y* = *y0*, screen and texture points alike, into the 32-point buffers at `000b56d0` and `000b57d4`, and the routine starts over on the result, drawing nothing when fewer than three points are left. Walking the ring from vertex 0, it keeps each vertex with *y* ≥ *y0* and, when the edge to the next vertex crosses *y0*, adds the crossing *c* = *c*ᵢ + (*y0* − *y*ᵢ) · (*c*ₙ − *c*ᵢ) / (*y*ₙ − *y*ᵢ) for each of *x*, *u* and *v*, *i* being the vertex the edge leaves and *n* the one it reaches, the division truncating. The other three sides are not cut.
+3. **The walk** crosses the polygon by columns when the clip mode `+0x204` is not 2, and by rows when it is 2; the simulator's mode 1 walks columns. Write *w* for the walked coordinate (*x* by columns, *y* by rows) and *s* for the other. Two edges start from the first vertex with the smallest *w* and go round the ring toward the first vertex with the largest: by columns edge A forward and B backward, by rows A backward and B forward, which for a ring wound clockwise on screen puts A at the top (columns) or the left (rows). An edge runs from a vertex to the next one in its direction, passing over vertices with the same *w*. Over its Δ = Δ*w* steps, step *k* has *s* = *s*₀ + ⌈*k* · Δ*s* / Δ⌉, kept exact with a remainder, and *u* = *u*₀ · 2¹⁶ + *k* · `Math_Q16Divide`(Δ*u* · 2¹⁶, Δ · 2¹⁶) in 16.16, *v* likewise (`VGA8_BitmapEdgeSetupColumns`, `00053c18`, and `VGA8_BitmapEdgeStepColumns`, `00053a3c`; by rows `VGA8_BitmapEdgeSetupRows`, `00053a94`, and `VGA8_BitmapEdgeStepRows`, `000539e4`). After its last step an edge hands over to the next one, which starts from its vertex's own values; when the next one would start at the far vertex, the walk ends.
+4. **The lines.** *w* goes up by one from the smallest. For each *w* not before the clip rect's near side (*x0* by columns, *y0* by rows) the routine draws the span from A's *s* to B's; then both edges step, and the walk ends when either edge ends, when *w* passes the far side (*x1*, *y1*), or when A's *s* exceeds B's. So the far vertex's line, the largest *w*, is never drawn.
+5. **The span** (`VGA8_SpanBitmapColumn`, `0007394a`; `VGA8_SpanBitmapRow`, `000735a4`) runs from *a* = A's *s* to *b* = B's, both included, *n* = *b* − *a* + 1 pixels, and does nothing when *a* is beyond the clip rect's far side or *b* before its near side. Its steps are *du* = `Math_Q16Divide`(*u*_B − *u*_A, *n* · 2¹⁶) and *dv* likewise, and pixel *i* takes *u* = *u*_A + (*du* >> 1) + *i* · *du*, *v* likewise: the middles of *n* equal steps from A to B. It draws from the later of *a* and the near side to the earlier of *b* and the far side, the pixels it skips still stepping. The texel is byte ⌊*v* + ½⌋ · columns + ⌊*u* + ½⌋ of the pixels, *u* and *v* in texels with their integer parts read as unsigned 16-bit: the nearest texel, a texture point naming a texel's centre. Nothing wraps and nothing bounds the address. A column span writes one plane, 80 bytes a pixel. In clip mode 2 the row span draws its row's part inside every region of the clip block's list that holds the row, from the last region to the first, a rect (type 0, {*x0*, *y0*, *x1*, *y1*} at `+4`) or a span region (type 2, `+4` pointing at `{int16 top, int16 rows}` and an `int16` {*x0*, *x1*} per row), and stops at a region of any other type.
+6. **The store.** With no colour table a texel of 0 is not written, leaving the pixel as it was, and any other texel is written as it is (`OR AH,AH` / `JZ` at `00073b47` by columns and `0007390a` by rows). With a table every texel, 0 included, is written as table[texel]. A mode-7 brush whose table is 0 thus draws as mode 5.
+
+So with `VGA_8`:
+
+- the [clouds](ground-and-sky.md#the-clouds) (`TexPoly_Render`), the [rolled ground](ground-and-sky.md#the-textured-ground) and the [rolled skyline](ground-and-sky.md#the-horizon-skyline) (`Bitmap_BlitRotatedScaled`) draw through mode 5 and leave each bitmap's index-0 texels unpainted;
+- a [textured shape face](#the-four-poly-types) draws through mode 7 every texel as its entry in the [texture colour table](#the-texture-colour-tables) its light picks, index 0 included, and as mode 5 while `000973f4` is 0, before the first palette load builds the tables.
+
+`BMP_8`'s routine (`0008e22c`) walks rows like ES2's and reads only the brush's `+8` and `+0xc`, passing its span no colour table ([Open](#open)).
 
 ## The four poly types
 
@@ -51,7 +77,7 @@ The load functions in `g_TSObjectTypeRegistry` (`0009efa8`, entries `{tag, load 
 
 **`TSGouraudPoly_Render`** is ES2's ([`TSGouraudPoly`](../../retail/rendering/dts-texture-binding.md#tsgouraudpoly--same-ramp-number-per-vertex-light-no-rmp-row)): one light per corner, brush mode 1, the contour fill through the raster's ramp table.
 
-**`TSTexture4Poly_Render`** maps a whole bitmap onto the poly's corners. The value, front or back by ES2's −1 rule, indexes the frames of the active bitmap bank (`000bdb5e`, its frame array at `+8`); a null frame draws nothing. The brush, installed at the render context's `+0x22c` for the fill and replaced by `PolyFill_FillBrush` after it, is `{7, 4, corners, the frame's bitmap header, a colour table}`. The corners' texture points are the frame's four corners, (0, 0), (columns − 1, 0), (columns − 1, rows − 1) and (0, rows − 1), in a 32-point buffer at `000b58d8` built on first use; a poly that crosses the near plane is clipped with `Poly_ClipRingToNearPlaneWithUV` into a second at `000b59dc`. The colour table is 0 while `000973f4` is 0; otherwise number (`000973f4` − 1) · light / 255 of the tables at `000973f0`, the light being the face's. There is no atlas and no frame descriptor: ES2's uses a frame index into packed atlas pages and the `.RMP` row for its light ([`TSTexture4Poly`](../../retail/rendering/dts-texture-binding.md#tstexture4poly--frame-index-ramp-row-by-light-fullbright-on-demand)). What brush mode 7 does with the table is [Open](#open).
+**`TSTexture4Poly_Render`** maps a whole bitmap onto the poly's corners. The value, front or back by ES2's −1 rule, indexes the frames of the active bitmap bank (`000bdb5e`, its frame array at `+8`); a null frame draws nothing. The brush, installed at the render context's `+0x22c` for the fill and replaced by `PolyFill_FillBrush` after it, is `{7, 4, corners, the frame's bitmap header, a colour table}`. The corners' texture points are the frame's four corners, (0, 0), (columns − 1, 0), (columns − 1, rows − 1) and (0, rows − 1), in a 32-point buffer at `000b58d8` built on first use; a poly that crosses the near plane is clipped with `Poly_ClipRingToNearPlaneWithUV` into a second at `000b59dc`. The colour table is 0 while `000973f4` is 0; otherwise number (`000973f4` − 1) · light / 255 of the tables at `000973f0`, the light being the face's. There is no atlas and no frame descriptor: ES2's uses a frame index into packed atlas pages and the `.RMP` row for its light ([`TSTexture4Poly`](../../retail/rendering/dts-texture-binding.md#tstexture4poly--frame-index-ramp-row-by-light-fullbright-on-demand)). Brush mode 7 draws every texel as its entry in the table, index 0 included, and with a table of 0 leaves index-0 texels unpainted ([bitmap fills](#bitmap-fills-brush-modes-5-and-7)).
 
 ### The texture colour tables
 
@@ -101,7 +127,7 @@ v     = (dot − 0x400000) >> 1
 shade = min(255, −((0x100 · v) >> 22))        the shifts are arithmetic, so the shade rounds up
 ```
 
-For a normal of length `0x800`, the length ES2's shapes store ([normals](../../retail/rendering/dts-texture-binding.md#normals-live-in-the-point-list)), dot is `0x400000` · cos, cos between the normal and the way the light travels, and the shade is 128 · (1 − cos) rounded up: 128 + 128 · *facing* with *facing* = −cos. A face turned straight away from the sun is 0, one edge-on to it 128, one pointing straight up 217, and only a face within about 10° of facing the sun reaches 255. ES2's sun, twice as long, gives 128 + 256 · *facing*, at 255 for every face within 60° of the light.
+A poly's normal is a point of its group's list ([normals](../../retail/rendering/dts-texture-binding.md#normals-live-in-the-point-list)), and in the four theater libraries every one is 2047 or 2048 long, `0x800` as ES2's are, except 32 to 69 per library that name the point (0, 0, 0), whose faces dot to 0 and take 128 whichever way they turn. For a normal of length `0x800`, dot is `0x400000` · cos, cos between the normal and the way the light travels, and the shade is 128 · (1 − cos) rounded up: 128 + 128 · *facing* with *facing* = −cos. A face turned straight away from the sun is 0, one edge-on to it 128, one pointing straight up 217, and only a face within about 10° of facing the sun reaches 255. ES2's sun, twice as long, gives 128 + 256 · *facing*, at 255 for every face within 60° of the light.
 
 ### Effect lights
 
@@ -220,29 +246,38 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 | `WorldShades_ResetRamps`, `WorldShades_IsBeyondLastBand` | `00025e88`, `00025f38` | |
 | `Palette_SetRampsToRange` | `00028044` | |
 | `Palette_UnpackColour`, `Palette_BuildTextureShadeTables` | `00028afc`, `00028b28` | |
+| `VGA8_FillBitmapPolygon`, `VGA8_BitmapPolyPointCtor`, `VGA8_BitmapPolyClipTop` | `000534ac`, `00053864`, `00053880` | `VGA8_BitmapPolyPointCtor` is the element constructor of the clip buffers |
+| `VGA8_BitmapEdgeStepRows`, `VGA8_BitmapEdgeStepColumns`, `VGA8_BitmapEdgeSetupRows`, `VGA8_BitmapEdgeSetupColumns` | `000539e4`, `00053a3c`, `00053a94`, `00053c18` | the row pair is ES2's `Raster_BitmapEdgeStep` and `Raster_BitmapEdgeSetup` (DBSIM `0048a944`, `0048a9a0`) |
 | `TSSolidPoly_Render`, `TSTexture4Poly_Render` | `0005403c`, `0005410c` | |
 | `TSShadedPoly_Render`, `TSGouraudPoly_Render` | `000543e4`, `00054578` | |
 | `Sim_Main`, `Light_CreateMissionSun`, `TSLight_Dtor`, `TSSunLight_Dtor` | `00059350`, `0005a888`, `0005a964`, `0005a99c` | |
-| `Sim_StartMission` | `0005a9dc` | |
+| `Sim_CreateDisplay`, `Sim_StartMission` | `0005a5f4`, `0005a9dc` | |
 | `Point3I_DistanceBetween`, `Colour_Distance` | `00064698`, `000644c8` | |
 | `DotProductVec3Short`, `DotProductVec3Int` | `000660bf`, `000660f2` | the light terms' dot products, for the `int16` normal and direction and for the `int32` displacement |
 | `Raster_SetColourRamps`, `Raster_GetColourRamps`, `Palette_UploadWhole` | `000691f8`, `00069227`, `0006931c` | |
+| `GLDisplay_Ctor`, `GLDisplay_CtorAndOpen`, `GLDisplay_Open`, `Raster_SelectRenderTarget` | `0006a3a8`, `0006a3fc`, `0006a480`, `0006a644` | ES2's (DBSIM `00480e4c`, `00480e98`, `00480f1c`, `00481118`), the constructor inlined in both of ES1's |
 | `Raster_DriverByName`, `Raster_BlitDispatch` | `0006a714`, `0006a8e0` | `Raster_BlitDispatch`: [the skyline's blit](ground-and-sky.md#the-horizon-skyline) |
-| `Raster_FindDriverTable`, `Raster_InstallDriverTable` | `00073234`, `0007324e` | |
+| `Raster_FindDriverTable`, `Raster_InstallDriverTable`, `RasterDriver_OpenDisplay` | `00073234`, `0007324e`, `0007330a` | `RasterDriver_OpenDisplay` is ES2's (DBSIM `0048930a`) |
+| `VGA8_SpanBitmapRow`, `VGA8_SpanBitmapColumn` | `000735a4`, `0007394a` | |
+| `Raster_InstallViewport`, `Raster_SetClipBlock`, `ClipBlock_Init` | `00075980`, `0007599c`, `000759b0` | ES2's (DBSIM `004893c0`, `0048944c`, `00489464`) |
+| `GL_ClaimGlobal`, `GL_SetGlobal` | `0007d5bc`, `0007d5f8` | the GL object slots at `000bdd0c`; slot 7, `000bdd28`, is the current display |
 | `VGA8_BlitBitmap`, `BMP8_BlitBitmap` | `0008b9a8`, `0008d700` | |
+| `VGA8_BlitBitmapClipped`, `VGA8_BlitClippedRow` | `0008c27c`, `0008c41a` | `VGA8_BlitClippedRow` is a near-called block sharing the clipped blit's frame |
 | `RotateVectorByMatrixQ14` | `0007586c` | |
 
 ## Open
 
 - **Open:** what a `TSShadedPoly` with a flag of 0, whose fill reaches the span routine as a palette index with the light in bits 16–23, draws, and which flags the shapes outside the theater libraries (`dts\`, `dgs\` other than the four) carry on their shaded, solid and Gouraud faces.
-- **Open:** what brush mode 7 does with the texture's colour table: `Raster_DrawPolygonDispatch` hands it to the routine at `0009df58`, entry `+0x84` of the active [display driver's table](#the-display-drivers), `0008ab80` for `VGA_4`, `000534ac` for `VGA_8` and `0008e22c` for `BMP_8`.
+- **Open:** the bitmap fills of `VGA_4` (`0008ab80`) and `BMP_8` (`0008e22c`, its edge functions `0008e3d0` and `0008e378`), what their spans do with index 0, and what `BMP_8`'s does with a mode-7 brush, whose table it does not pass; the simulator draws with neither ([the display drivers](#the-display-drivers)).
+- **Open:** which render context is installed while `Sim_RenderFrame` draws the scene: it installs none, and `0002cf28`, which it calls before the draw, is not read. `Sim_CreateDisplay` installs `000b5b6e`, in clip mode 1; the bitmap fills walk columns in any mode but 2, and all three of `VGA_8`'s blit paths skip index 0, so the mode decides only the clipping.
+- **Open:** no reference found by `es2_xref.py` to `Raster_InstallDriverTable`'s other caller `00073285`, to `GLDisplay_CtorAndOpen`'s other caller `00069a68`, or to `GLDisplay_Ctor` (`0006a3a8`), so no other path to a display driver is known.
+- **Open:** what `Sim_CreateDisplay`'s display fields `+0x34`, `+0x3c`, `+0x48` (four `{0, 0}`, `{0, 200}`, `{0, 400}`, `{0, 600}` pairs) and `+0x68` select, and what the driver's routines at `0009df14`, `0009df18` and `0009df1c` do with them.
 - **Open:** the `TSAlias*Poly` renderers `00054c9c`, `00054d6c` and `00054f00`.
 - **Open:** what `ObjList_DrawEntryRender` does after the draw while the byte `000afa45` is set (the display driver's routines at `0009dee4` and `0009dee8` on the block at `000afa48`), and while `0009255a` is set, for the object at `000afa88` (`00021403`).
 - **Open:** how `ObjList_EntryCompare` orders an entry with a box against another (`00021a4c`, `000216c4`), and so where a zone shape falls in the draw order among the machines and effects.
 - **Open:** what the blend byte `000b5b65` is set to, and `000280e4` (matched to ES2's `Palette_SetRampsToRangeList`), which the blend path calls.
 - **Open:** which classes carry type tags 1 to 9 in ES1: what the array at `000bc416` and the pools `000af0b4`, `000aeef8` and `000aef68` hold, and what each one's constructor stores at `+0`; and what sets the record array at `00092c34`.
 - **Open:** what `00036c2c` and `00040d4c` are in the cockpit, what `00059280` returns, and what the word at a shape instance's `+8` selects.
-- **Open:** the length of the normals ES1's shape files store, which the [shade's reduction](#a-faces-light) to 128 + 128 · *facing* takes as ES2's `0x800`.
 - **Open:** no reference to `Light_RemovePersistent` or `Light_UnregisterPersistent` found by `es2_xref.py`, and none to `LightManager_SetSlotFalloff` but the dword at `0002116c`.
 - **Open:** what `00005d74`, which sets an effect light's intensity, is, and which ramp entry it reads.
 - **Open:** no reference to `Raster_GetColourRamps` found by `es2_xref.py`.
