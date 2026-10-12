@@ -63,10 +63,11 @@ public class SaveSlotDirectoryTests {
 	/// <summary>
 	/// A real install's directory file, parsed and written back.
 	///
-	/// <para>The round trip is byte-equal from the count block on and deliberately not equal in the
-	/// leading length: that field is the physical file less four, taken by seeking to the end
-	/// <i>after</i> writing, so on the retail file it counts a stale tail this writer does not
-	/// reproduce. Everything the reader consumes does come back unchanged, which is the invariant worth
+	/// <para>The round trip is byte-equal from the count block on. The leading length is the physical file
+	/// less four, taken by seeking to the end <i>after</i> writing, so a file that was once longer — the
+	/// shipped one is — counts a stale tail this writer does not reproduce, and only there does the length
+	/// differ. A file never written shorter than before has no tail and comes back whole.
+	/// Everything the reader consumes comes back unchanged either way, which is the invariant worth
 	/// holding.</para>
 	/// </summary>
 	[Fact]
@@ -96,10 +97,9 @@ public class SaveSlotDirectoryTests {
 		Assert.True(written.Length <= original.Length, diag);
 		Assert.Equal(written[LengthFieldSize..], original[LengthFieldSize..written.Length]);
 
-		// The stored length measures the physical file rather than the payload, which is exactly the
-		// difference the round trip cannot reproduce.
+		// The stored length measures the physical file, tail and all, where the writer's measures the payload,
+		// so the two agree exactly when the file has no tail.
 		Assert.Equal(original.Length - LengthFieldSize, parsed.StoredLength);
-		Assert.True(parsed.StoredLength > written.Length - LengthFieldSize, diag);
 
 		// Every slot names a file, and the last two are the autosaves rather than player slots.
 		Assert.All(parsed.Slots, slot => Assert.False(string.IsNullOrEmpty(slot.FileName), diag));
