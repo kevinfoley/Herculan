@@ -587,12 +587,42 @@
       }
     },
     {
+      "address": "0000441c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BaseFormation_GetSlotOffset",
+      "description": "(object, slot, formation) in stack order, callee-cleaned, object unread: copies the two int32 at 000bc190 + formation * 0x38 + slot * 8 - 8 (BFORMS.DAT's 56-byte formations of seven (x, y) slots) to the static point 000aee08 and returns it, its z 000aee10 set to 0 on the first call (flag 000aee06). Neither number is checked. ES2's BaseFormation_GetSlotOffset (DBSIM 00405b9c), which reads 10-byte slots through a per-formation pointer.",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#where-a-member-stands",
+      "verified": {
+        "bytes": "0000441c+86",
+        "sha1": "8a69cdd7afab",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00004474",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_ApplyFormationOffset",
+      "description": "(object, position) in stack order, callee-cleaned: nothing when the object's int16 member slot +0x43 is 0; otherwise Formation_RotateAndAddOffset (0000d9a0)(object, position, BaseFormation_GetSlotOffset (0000441c)(object, slot, the formation number at +2 of the group the object's +0x3f points at)). ES2's Base_ApplyFormationOffset (DBSIM 00405c04). Caller found by es2_xref: 000044a4.",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#where-a-member-stands",
+      "verified": {
+        "bytes": "00004474+46",
+        "sha1": "79e1460adec8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000046ac",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Base_LoadResources",
-      "description": "No arguments: reads dat\\bforms (severity-5 assert, base.cpp line 0x270, when the stream status is set), an int16 count to 000bc18e and that many 0x38-byte records into a __vec_new array at 000bc190; opens dat\\bases (line 0x27b), reads its int16 count to 000bc188, builds that many 0x3e-byte records at g_BaseTypeTable (000bc18a) and count * 6 bytes at 000bc194, and reads 0x36 bytes into each record, setting its +0x3a to the type's 6-byte slot at 000bc194 when +0x06 is non-zero and to 0 when not; opens dat\\basecol (line 0x296) and calls 000094f0(slot, stream) for every type; keeps the greatest +0x02 plus one of the types with +0x06 zero at 000bc174 and of the others at 000bc16a, and the greatest +0x04 plus one at 000bc17e; loads dgs\\bhulks with Shape_LoadAllRoots (tag 0x2bc0001) into 000bc180; allocates zeroed pointer arrays of 000bc174 entries at 000bc176 and 000bc17a and of 000bc16a entries at 000bc16c and 000bc170; and when g_LowMemory (000bda98) is 0 loads dba\\basetex into 000bc184. A phase-2 loader. ES2's Base_LoadResources (DBSIM 00405fac), which also reads dat\\lc_wpns and reads BASES.DAT field by field with its component arrays.",
+      "description": "No arguments: reads dat\\bforms (severity-5 assert, base.cpp line 0x270, when the stream status is set), an int16 count to 000bc18e and that many 0x38-byte records into a __vec_new array at 000bc190; opens dat\\bases (line 0x27b), reads its int16 count to 000bc188, builds that many 0x3e-byte records at g_BaseTypeTable (000bc18a) and count * 6 bytes at 000bc194, and reads 0x36 bytes into each record, setting its +0x3a to the type's 6-byte slot at 000bc194 when +0x06 is non-zero and to 0 when not; opens dat\\basecol (line 0x296) and calls Collision_LoadRecordArray (000094f0)(slot, stream) for every type; keeps the greatest +0x02 plus one of the types with +0x06 zero at 000bc174 and of the others at 000bc16a, and the greatest +0x04 plus one at 000bc17e; loads dgs\\bhulks with Shape_LoadAllRoots (tag 0x2bc0001) into 000bc180; allocates zeroed pointer arrays of 000bc174 entries at 000bc176 and 000bc17a and of 000bc16a entries at 000bc16c and 000bc170; and when g_LowMemory (000bda98) is 0 loads dba\\basetex into 000bc184. A phase-2 loader. ES2's Base_LoadResources (DBSIM 00405fac), which also reads dat\\lc_wpns and reads BASES.DAT field by field with its component arrays.",
       "source": "Herculan/docs/es1/formats/bases-dat.md#the-load",
       "verified": {
         "bytes": "000046ac+995",
@@ -1097,6 +1127,84 @@
       }
     },
     {
+      "address": "00005ebc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DebrisPool_FlushDeletes",
+      "description": "No arguments: ObjectPool_FlushDeleteQueue(000aeefc, the debris pool 000aeef8). The phase-5 subsystem loader Debris_RegisterSubsystem (000065f4) registers.",
+      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load",
+      "verified": {
+        "bytes": "00005ebc+17",
+        "sha1": "4378158b6108",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005ed0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_LoadPieceList",
+      "description": "(group, stream) in stack order, callee-cleaned: reads the int16 throw count into the 10-byte group's +0 and the piece count into +2, allocates count * 4 bytes at +4, zeroes the weight total +8, then reads each 4-byte piece's shape and weight, adding the weight to +8; returns the greatest shape index. ES2's Debris_LoadPieceList (DBSIM 004083f8), whose pieces are 14 bytes with angles it turns to BAM.",
+      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load",
+      "verified": {
+        "bytes": "00005ed0+231",
+        "sha1": "c4470fbc87a4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005fb8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_ThrowGroup",
+      "description": "(group, a, shapes) in stack order, callee-cleaned: draws n = Math_RandomBelow(000b5bd4, the group's throw count +0), 0 to count - 1, and n times draws r = Math_RandomBelow(000b5bd4, the weight total +8), walks the pieces (+4) taking each weight off r while r is greater than it, and passes 00006168(0, a, shapes[the piece's shape]) to 00006480. A throw count of 0 divides by zero. ES2's Debris_ThrowGroup (DBSIM 004086bc), which throws exactly the count, or every piece for 0. Callers found by es2_xref: 00003978, 00003a58, 00009cd4, 00013b44, 0001b370.",
+      "source": "Herculan/docs/es1/formats/debris-dat.md#throwing-a-group",
+      "verified": {
+        "bytes": "00005fb8+195",
+        "sha1": "0ca5de25364e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000607c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_LoadResources",
+      "description": "No arguments, debris.cpp, a phase-2 subsystem loader: Pool_Init(0, 0x4e, 0x96) into 000aeef8 (150 pieces of 0x4e bytes); Shape_LoadAllRoots(0, 0x140008, dts\\debris, 000bc1c6), the root count to 000bc1ca; opens dat\\debris (severity-5 assert, line 0x59, when the stream status is set), reads the int16 group count to 000bc1c4, allocates count * 10 bytes at 000bc1c0 and reads each group with Debris_LoadPieceList (00005ed0); closes the file. ES2's Debris_LoadResources (DBSIM 00408860) with ES2's Debris_LoadDatabase (DBSIM 0040874c) folded in, one database into globals and no texture bank.",
+      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load",
+      "verified": {
+        "bytes": "0000607c+235",
+        "sha1": "c53c147f1664",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000065f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_RegisterSubsystem",
+      "description": "No arguments, debris.cpp's static initialiser: RegisterSubsystemLoader(2, Debris_LoadResources (0000607c)) and RegisterSubsystemLoader(5, DebrisPool_FlushDeletes (00005ebc)), then 0 to the word 000aef60 and the pool pointer 000aeef8. No Ghidra function starts here. ES2's Debris_RegisterSubsystem (DBSIM 00408e9c).",
+      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load"
+    },
+    {
+      "address": "00006620",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_StaticDtor",
+      "description": "No arguments: operator_delete of the debris pool 000aeef8 when it is not 0. No Ghidra function starts here. ES2's Debris_StaticDtor (DBSIM 00408ef0).",
+      "source": "Herculan/docs/es1/formats/debris-dat.md#the-load"
+    },
+    {
       "address": "00006cf8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1187,6 +1295,21 @@
       }
     },
     {
+      "address": "00009368",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CollisionTable_Alloc",
+      "description": "No arguments: when the int16 count 00090da0 is not 0, allocates count * 6 bytes to 000bc2ac. ES2's CollisionTable_Alloc (DBSIM 0040cbec). Caller found by es2_xref: DBSim_LoadScriptDat.",
+      "source": "Herculan/docs/es1/formats/bases-dat.md#the-collision-models",
+      "verified": {
+        "bytes": "00009368+34",
+        "sha1": "cb071f140b03",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000938c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1197,6 +1320,66 @@
       "verified": {
         "bytes": "0000938c+60",
         "sha1": "ae2697d83572",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000093c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ReadNode",
+      "description": "(node, stream) in stack order, callee-cleaned: reads the int16 node index into the 10-byte node's +0 and the cluster count into +4; for a count not 0, __vec_new builds that many 16-byte clusters with CollisionCluster_ElementCtor (00009458) at +6, each read with Collision_ReadCluster (0000938c). Returns 1. ES2's Collision_ReadNode (DBSIM 0040cc50).",
+      "source": "Herculan/docs/es1/formats/bases-dat.md#the-collision-models",
+      "verified": {
+        "bytes": "000093c8+144",
+        "sha1": "9309e015890c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009458",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CollisionCluster_ElementCtor",
+      "description": "(this) callee-cleaned: the __vec_new element constructor Collision_ReadNode (000093c8) passes for its 16-byte clusters. Allocates 0x10 bytes when this is null and returns null when that fails; the inlined constructors of the 6-byte member at +8 and its 4-byte member only repeat the null test and allocation at their own sizes. Writes nothing; returns this. ES2's CollisionCluster_ElementCtor (DBSIM 0040cf04).",
+      "source": "Herculan/docs/es1/formats/bases-dat.md#the-collision-models",
+      "verified": {
+        "bytes": "00009458+72",
+        "sha1": "a67347bbfdf9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000094a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ComputeAllBoundingSpheres",
+      "description": "(node), callee-cleaned: for each of the node's int16 cluster count (+4) 16-byte clusters at +6, stores 00008b8c(cluster, cluster + 8) at the cluster's +0xe. ES2's Collision_ComputeAllBoundingSpheres (DBSIM 0040ccc8).",
+      "source": "Herculan/docs/es1/formats/bases-dat.md#the-collision-models",
+      "verified": {
+        "bytes": "000094a0+78",
+        "sha1": "c5762b247c8b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000094f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_LoadRecordArray",
+      "description": "(slot, stream) in stack order, callee-cleaned, collide.cpp: a severity-5 assert (line 0xee, 'collision data load') when the stream status is set; reads the int16 node count into the 6-byte slot's +0 and, for a count not 0, allocates count * 10 bytes at +2 and reads each node with Collision_ReadNode (000093c8) and then Collision_ComputeAllBoundingSpheres (000094a0). ES2's Collision_LoadRecordArray (DBSIM 0040ccf8). Callers found by es2_xref: Base_LoadResources (000046ac), once per BASES.DAT type over dat\\basecol, and 00009580.",
+      "source": "Herculan/docs/es1/formats/bases-dat.md#the-collision-models",
+      "verified": {
+        "bytes": "000094f0+144",
+        "sha1": "58a268cbe467",
         "scope": "body",
         "via": "decompile"
       }
@@ -1427,6 +1610,21 @@
       }
     },
     {
+      "address": "0000d9a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Formation_RotateAndAddOffset",
+      "description": "(object, position, offset) in stack order, callee-cleaned: takes the first member of the object's group (the first pointer of the array at +0xe of the group the object's +0x3f points at), rotates the offset's int32 x and y by that member's transform (Context_GetTransform of its +6, Math_Rotate2DPoint) and adds the rotated x and y and the unrotated z to position's three int32. ES2's Formation_RotateAndAddOffset (DBSIM 00411d64). Callers found by es2_xref: Base_ApplyFormationOffset (00004474), Mech_ApplyFormationOffset (00012ed0), Flyer_ApplyFormationOffset (0001b524).",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#where-a-member-stands",
+      "verified": {
+        "bytes": "0000d9a0+89",
+        "sha1": "53be0f172fd2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000ddf4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1512,6 +1710,21 @@
       "verified": {
         "bytes": "00012038+2699",
         "sha1": "a829f82bf0c5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00012ed0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_ApplyFormationOffset",
+      "description": "(object, position) in stack order, callee-cleaned: nothing when the int16 member slot +0x43 is 0; otherwise widens the three int16 of Formation_GetSlotOffset (0001a098)(slot, the formation number at +2 of the group +0x3f points at) to int32 and passes them to Formation_RotateAndAddOffset (0000d9a0)(object, position, offset). ES2's Mech_ApplyFormationOffset (DBSIM 00417898). Callers found by es2_xref: 00013124, 00019660.",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#where-a-member-stands",
+      "verified": {
+        "bytes": "00012ed0+80",
+        "sha1": "5964303299ca",
         "scope": "body",
         "via": "decompile"
       }
@@ -1697,6 +1910,21 @@
       }
     },
     {
+      "address": "0001a098",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Formation_GetSlotOffset",
+      "description": "(slot, formation) in stack order, callee-cleaned: copies the int16 (x, y) at 000bc44a + formation * 0x1c + slot * 4 - 4 (MFORMS.DAT's 28-byte formations) to the static point 000af720 and returns it, its z 000af724 set to 0 on the first call (flag 000af71d). Neither number is checked. ES2's Formation_GetSlotOffset (DBSIM 004205cc).",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#where-a-member-stands",
+      "verified": {
+        "bytes": "0001a098+93",
+        "sha1": "7aeb000117f1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0001a154",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1709,6 +1937,51 @@
         "sha1": "e2807ea37f41",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b524",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_ApplyFormationOffset",
+      "description": "(object, position) in stack order, callee-cleaned: Mech_ApplyFormationOffset (00012ed0) with FlyerFormation_GetSlotOffset (0001c7f0) for the slot's three int16. ES2's Flyer_ApplyFormationOffset (DBSIM 00421e98). Callers found by es2_xref: 0001b574, 0001ba88.",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#where-a-member-stands",
+      "verified": {
+        "bytes": "0001b524+80",
+        "sha1": "fc8fba179f7e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c558",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_LoadResources",
+      "description": "No arguments, flyersys.cpp, the phase-2 subsystem loader Flyer_RegisterSubsystem (0001c814) registers: sets the 2-byte flyer type-slot table 000bc466 to 0xff and the count 000bc464 to 0; opens dat\\fforms (severity-5 assert, line 0x26, when the stream status is set), reads the int16 count to 000bc470 and count * 0x12 bytes into an array of FlyerFormation_ElementCtor (0001c618) elements __vec_new builds at 000bc472. ES2's Flyer_LoadResources (DBSIM 00422d90), whose slot table is 0x22 bytes.",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#the-loads",
+      "verified": {
+        "bytes": "0001c558+192",
+        "sha1": "ba2b086c662d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001c618",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlyerFormation_ElementCtor",
+      "description": "(this) callee-cleaned: the __vec_new element constructor Flyer_LoadResources (0001c558) passes for the 18-byte FFORMS.DAT records. Allocates 0x12 bytes when this is null and returns null when that fails; otherwise __vec_ctor(0001c646, 3, 6, this) over the three 6-byte slots. Returns this. ES2's FlyerFormation_ElementCtor (DBSIM 00423078).",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#the-loads",
+      "verified": {
+        "bytes": "0001c618+46",
+        "sha1": "e140a1c020b3",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -1770,6 +2043,30 @@
         "scope": "body",
         "via": "both"
       }
+    },
+    {
+      "address": "0001c7f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlyerFormation_GetSlotOffset",
+      "description": "(slot, formation) in stack order, callee-cleaned: returns 000bc472 + formation * 0x12 + slot * 6 - 6, the FFORMS.DAT slot's three int16 (x, y, z) in place. Neither number is checked. ES2's FlyerFormation_GetSlotOffset (DBSIM 00423044).",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#where-a-member-stands",
+      "verified": {
+        "bytes": "0001c7f0+34",
+        "sha1": "f97ada870440",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001c814",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_RegisterSubsystem",
+      "description": "No arguments, flyersys.cpp's static initialiser: RegisterSubsystemLoader(2, Flyer_LoadResources (0001c558)). No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#the-loads"
     },
     {
       "address": "0001d850",
@@ -1941,7 +2238,7 @@
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "ZoneShapeObj_TransformBox",
+      "name": "ZoneShapeObj_TransformSegment",
       "description": "(object, out) in stack order: with the zone shape's record pointer +0x3b null returns 0; otherwise puts the record's two int32 points at +0 and +0xc through the object's transform (Context_GetTransform of +6, Transform_ApplyToPoint) into out and out + 0xc, and returns out.",
       "source": "ES1DBSIM decompile at 000206c8",
       "verified": {
@@ -1956,8 +2253,8 @@
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "ZoneShapeObj_WorldBox",
-      "description": "(object): sets 000afa24 to 1 when it is 0, then returns ZoneShapeObj_TransformBox (000206c8)(object, 000afa28): the zone shape's two record points in world space in a static 24-byte buffer, or 0. ObjList_DrawFrameObjects copies the box into an entry for an object below 000bc596.",
+      "name": "ZoneShapeObj_WorldSegment",
+      "description": "(object): sets 000afa24 to 1 when it is 0, then returns ZoneShapeObj_TransformSegment (000206c8)(object, 000afa28): the two ends of the zone shape's dividing line in world space in a static 24-byte buffer, or 0. Caller found by es2_xref: ObjList_DrawFrameObjects (00021008), which copies the 24 bytes into the draw entry of an object below 000bc596.",
       "source": "ES1DBSIM decompile at 00020738",
       "verified": {
         "bytes": "00020738+35",
@@ -2062,7 +2359,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_DrawFrameObjects",
-      "description": "(blend, eye) in stack order, callee-cleaned: calls slot +4 of each element of the ground-shape pool 000af044 within 30000 of eye (Math_DistanceBetweenPoints, walked with Pool_Prev); stores blend at 000afa98; for each of the 00092558 objects at 000bc58e that Camera_IsMountedOn (000003ac)(eye, object) returns 0 for and whose slot +8 block has a non-negative int32 +8, fills a 0x36-byte entry (position, slot +0x14 value at +0xc, distance +0xe, object +0x32, +0x12 = 0, or 2 with ZoneShapeObj_WorldBox (00020738)'s 24 bytes at +0x18 for objects among the first 000bc596) and lists it at 000bc59c unless WorldShades_IsBeyondLastBand (00025f38) is true; then ObjList_SetSortEye (00021554)(eye) and ObjList_SortAndDraw (00021d04)(count, list). Sim_RenderFrame passes the byte 000b5b65, 000364f8 passes 0.",
+      "description": "(blend, eye) in stack order, callee-cleaned: calls slot +4 of each element of the ground-shape pool 000af044 within 30000 of eye (Math_DistanceBetweenPoints, walked with Pool_Prev); stores blend at 000afa98; for each of the 00092558 objects at 000bc58e that Camera_IsMountedOn (000003ac)(eye, object) returns 0 for and whose slot +8 block has a non-negative int32 +8, fills a 0x36-byte entry (position, slot +0x14 value at +0xc, distance +0xe, object +0x32, +0x12 = 0, or 2 with ZoneShapeObj_WorldSegment (00020738)'s 24 bytes at +0x18 for objects among the first 000bc596) and lists it at 000bc59c unless WorldShades_IsBeyondLastBand (00025f38) is true; then ObjList_SetSortEye (00021554)(eye) and ObjList_SortAndDraw (00021d04)(count, list). Sim_RenderFrame passes the byte 000b5b65, 000364f8 passes 0.",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#which-objects-are-drawn",
       "verified": {
         "bytes": "00021008+593",
@@ -2102,12 +2399,72 @@
       }
     },
     {
+      "address": "000215e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_PointNearSegment",
+      "description": "(point, entry) in stack order, callee-cleaned: whether Point3I_DistanceBetween(point, the entry's position +0) is less than half of Point3I_DistanceBetween(the entry's segment ends +0x24, +0x18). ES2's ObjList_PointNearSegment (DBSIM 00428f38). Callers found by es2_xref: 0002161c, ObjList_SortCompareSegment (000216c4) twice, ObjList_SegmentEndpointNear (000219fc) twice.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#objects-beside-a-dividing-line",
+      "verified": {
+        "bytes": "000215e0+60",
+        "sha1": "827235512c2a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000216c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_SortCompareSegment",
+      "description": "(unread, newNode, node) in stack order, callee-cleaned: ObjList_EntryCompare (00021b20)'s case where one draw entry has a segment (kind +0x12 of 1 or 2; node's when both have). When the other entry's distance +0xe exceeds the segment entry's, or ObjList_PointNearSegment (000215e0) accepts neither the camera (0009256c) nor the other entry against it, the answer is whether newNode's entry is nearer. Otherwise it builds once per node (flag +0xc) the normal n = d x (d x e) at +0x11, d the segment and e the camera less its first end, with Vec3I_Cross (000662a5), each vector halved until Math_FastMagnitude3D is at most 32000, and the camera's side Vec3I_DotSign (000661a5)(n, e) at +0xd, and returns whether the other entry's position gives the same sign. ES2's ObjList_SortCompareSegment (DBSIM 0042900c), which has no first argument.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#objects-beside-a-dividing-line",
+      "verified": {
+        "bytes": "000216c4+824",
+        "sha1": "2868ef874d64",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000219fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_SegmentEndpointNear",
+      "description": "(entryA, entryB) in stack order, callee-cleaned: returns entryB + 0x18 when ObjList_PointNearSegment (000215e0)(entryB + 0x18, entryA), else entryB + 0x24 when ObjList_PointNearSegment(entryB + 0x24, entryA), else 0: the first of B's segment ends near A. ES2's ObjList_SegmentEndpointNear (DBSIM 0042933c).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#objects-beside-a-dividing-line",
+      "verified": {
+        "bytes": "000219fc+78",
+        "sha1": "9d9b756396cb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021a4c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjList_SortCompareSegments",
+      "description": "(newNode, node) in stack order, callee-cleaned: ObjList_EntryCompare (00021b20)'s case where both draw entries have segments. Asks ObjList_SegmentEndpointNear (000219fc) for an end of node's segment near newNode's entry, then one of newNode's near node's; with neither, whether newNode's entry is nearer (+0xe). Otherwise it moves the entry whose end was found to that end with kind +0x12 set to 0, calls ObjList_SortCompareSegment (000216c4)(0, that node, the other), restores the position and kind, and returns the answer, inverted when the moved entry was node's. ES2's ObjList_SortCompareSegments (DBSIM 0042937c).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#objects-beside-a-dividing-line",
+      "verified": {
+        "bytes": "00021a4c+211",
+        "sha1": "b03193828fd3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00021b20",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "ObjList_EntryCompare",
-      "description": "(node, other) in stack order, sort nodes whose +8 is a draw entry: when both entries' int16 +0x12 is 1 or 2, returns 00021a4c(node, other); when both are 0, returns whether node's entry is nearer (int32 distance +0xe less than other's); otherwise returns 000216c4(1, node, other). Non-zero sends ObjList_TreeInsert (00021ba8) right.",
+      "description": "(node, other) in stack order, sort nodes whose +8 is a draw entry: when both entries' int16 +0x12 is 1 or 2, returns ObjList_SortCompareSegments (00021a4c)(node, other); when both are 0, returns whether node's entry is nearer (int32 distance +0xe less than other's); otherwise returns ObjList_SortCompareSegment (000216c4)(1, node, other). Non-zero sends ObjList_TreeInsert (00021ba8) right.",
       "source": "ES1DBSIM decompile at 00021b20",
       "verified": {
         "bytes": "00021b20+133",
@@ -2136,7 +2493,7 @@
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "ObjList_TreeInsertBoxed",
+      "name": "ObjList_TreeInsertSegments",
       "description": "(count, entries) in stack order: for each draw entry with 1 or 2 in its int16 +0x12, in order, fills the next 0x1d-byte sort node from 00092570 ({0, 0, entry, byte 0}) and, but for the first, which is the root, ObjList_TreeInsert (00021ba8)s it under the root. Returns the next free node.",
       "source": "ES1DBSIM decompile at 00021bec",
       "verified": {
@@ -2152,7 +2509,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_TreeInsertRest",
-      "description": "(node, count, entries) in stack order: ObjList_TreeInsertBoxed (00021bec) for the draw entries whose int16 +0x12 is neither 1 nor 2, from the free node it is given, without clearing the node's byte +0xc.",
+      "description": "(node, count, entries) in stack order: ObjList_TreeInsertSegments (00021bec) for the draw entries whose int16 +0x12 is neither 1 nor 2, from the free node it is given, without clearing the node's byte +0xc.",
       "source": "ES1DBSIM decompile at 00021c60",
       "verified": {
         "bytes": "00021c60+111",
@@ -2182,7 +2539,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_SortAndDraw",
-      "description": "(count, entries) in stack order: nothing for a count of 0; otherwise ObjList_TreeInsertBoxed (00021bec), ObjList_TreeInsertRest (00021c60) from the node it returns, and ObjList_TreeDraw (00021cd0) from the root 00092570.",
+      "description": "(count, entries) in stack order: nothing for a count of 0; otherwise ObjList_TreeInsertSegments (00021bec), ObjList_TreeInsertRest (00021c60) from the node it returns, and ObjList_TreeDraw (00021cd0) from the root 00092570.",
       "source": "ES1DBSIM decompile at 00021d04",
       "verified": {
         "bytes": "00021d04+52",
@@ -3257,6 +3614,45 @@
       }
     },
     {
+      "address": "00044880",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WidgetStyles_Load",
+      "description": "(path), callee-cleaned: opens path (VolRStream_CtorFromPath), reads the int16 count to 000bd53c and, when it is not 0, __vec_new builds that many 64-byte records with WidgetStyle_ElementCtor (00044910) at 00094ccc and reads them one at a time; destroys the stream. Checks neither the stream status nor the length, and frees no earlier table.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
+      "verified": {
+        "bytes": "00044880+143",
+        "sha1": "5c829ff00213",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044910",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WidgetStyle_ElementCtor",
+      "description": "(this) callee-cleaned: the __vec_new element constructor WidgetStyles_Load (00044880) passes (by way of the padding entry 0004490f) for the 64-byte STYLES.DAT records. Allocates 0x40 bytes when this is null; writes nothing and returns this.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
+      "verified": {
+        "bytes": "00044910+27",
+        "sha1": "beb1d1ac44e9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004492c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WidgetStyles_StaticDtor",
+      "description": "No arguments, a static exit routine: when the style table 00094ccc is not 0, __vec_delete(0, 0x40, 7, the table) and 0 to 00094ccc. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads"
+    },
+    {
       "address": "00044f78",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -3314,6 +3710,21 @@
         "sha1": "d31323c8f3d0",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00045e10",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_LoadStylesAndFonts",
+      "description": "No arguments: WidgetStyles_Load (00044880)(dat\\styles); then dfn\\title, cpylw, active, pushed, inactive, green6x8 and red6x8 each through 00044d50 into the dwords 000bd542 to 000bd55a, four bytes apart; then dba\\corners through 00044d88 into 000bd53e. Caller found by es2_xref: Sim_StartMission (0005a9dc), at 0005abc2.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
+      "verified": {
+        "bytes": "00045e10+239",
+        "sha1": "80fcaf3fe996",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -9144,6 +9555,36 @@
       "verified": {
         "bytes": "000660f2+37",
         "sha1": "e1859f9a3eb4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000661a5",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vec3I_DotSign",
+      "description": "(a, b), caller-cleaned: the sign of the dot product of two int32 triples, summed in 64 bits: 1 when it is zero or more, -1 when negative. ES2's Vec3I_DotSign (DBSIM 0047dcc1), the same statements. Callers found by es2_xref: ObjList_SortCompareSegment (000216c4), twice.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#objects-beside-a-dividing-line",
+      "verified": {
+        "bytes": "000661a5+63",
+        "sha1": "2dced55efdbc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000662a5",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vec3I_Cross",
+      "description": "(a, b, out), caller-cleaned: out = a x b on int32 triples (x = a.y*b.z - a.z*b.y, y = a.z*b.x - a.x*b.z, z = a.x*b.y - a.y*b.x), 32-bit products; returns out. ES2's Vec3I_Cross (DBSIM 0047da41), the same statements. Callers found by es2_xref: ObjList_SortCompareSegment (000216c4), twice.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#objects-beside-a-dividing-line",
+      "verified": {
+        "bytes": "000662a5+87",
+        "sha1": "fde505dfaa16",
         "scope": "body",
         "via": "decompile"
       }

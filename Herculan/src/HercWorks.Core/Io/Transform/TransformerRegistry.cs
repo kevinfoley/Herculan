@@ -178,7 +178,24 @@ public static class TransformerRegistry {
 			() => new Common.Es1OldBitmapArrayTransformer()),
 		// docs/es1/formats/dmg-damage-file.md#hovtankdmg: bytes not understood, kept whole (OPAQUE).
 		new("Unread Damage File (opaque)", e => NameIs(e, "HOVTANK.DMG"), () => new Common.Es1OpaqueFileTransformer()),
+		// docs/es1/formats/formations-dat.md: MFORMS and FFORMS hold ES2's bytes, BFORMS a layout of its own.
+		new("Mech Formations", e => NameIs(e, "MFORMS.DAT"), () => new Dbsim.Es1MechFormationsTransformer()),
+		new("Flyer Formations", e => NameIs(e, "FFORMS.DAT"), () => new Dbsim.Es1FlyerFormationsTransformer()),
+		new("Structure Formations", e => NameIs(e, "BFORMS.DAT"), () => new Dbsim.Es1BaseFormationsTransformer()),
+		// docs/es1/formats/bases-dat.md#the-collision-models: one ES2 .COL model per structure type, back to back.
+		new("Structure Collision Models", e => NameIs(e, "BASECOL.DAT"), () => new Dbsim.Es1BaseCollisionModelsTransformer()),
+		// docs/es1/formats/debris-dat.md: the one debris database's groups, 4-byte pieces.
+		new("Debris Groups", e => NameIs(e, "DEBRIS.DAT"), () => new Dbsim.Es1DebrisDatTransformer()),
+		// docs/es1/formats/zone-terrain.md#dattheater-the-shapes-dividing-lines: a theater's 24-byte shape lines.
+		new("Theater Shape Lines", e => DirIs(e, FileType.Dat) && IsEs1TheaterTable(e),
+			() => new Dbsim.Es1TheaterShapeLinesTransformer()),
+		// docs/es1/formats/styles-dat.md: dat\ in SIMVOL0 and ZONES, cfg\ in SHELL0; each record kept whole (fields Open).
+		new("Widget Styles", e => NameIs(e, "STYLES.DAT"), () => new Dbsim.Es1WidgetStylesTransformer()),
 	};
+
+	/// <summary>Whether the entry is one of the four theater shape tables (docs/es1/formats/zone-terrain.md#which-zone-and-which-theater).</summary>
+	private static bool IsEs1TheaterTable(VolEntry e) => e.FileName?.Trim().ToUpperInvariant() is
+		"DESERT.DAT" or "TEMPER.DAT" or "ICE.DAT" or "URBAN.DAT";
 
 	/// <summary>Whether the entry is one of the sixteen chassis files ES1's <c>nam\MECHS.NAM</c> names (docs/es1/formats/chassis-dat.md#which-files).</summary>
 	private static bool IsEs1ChassisFile(VolEntry e) => e.FileName?.Trim().ToUpperInvariant() is

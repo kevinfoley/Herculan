@@ -150,7 +150,7 @@ A zone shape is drawn through the object list ([below](#which-objects-are-drawn)
 
 - **`ObjList_Add` (`00020d5c`)** stores an object at entry `00092558` of `000bc58e` and counts it, with no bound.
 - **The mission start (`Sim_StartMission`, `0005a9dc`)**, after `DBSim_LoadScriptDat`, adds every zone shape object in `Zone_ShapeObjects`' order, stopping at the first null pointer ([the simulator's load](../formats/zone-terrain.md#the-simulators-load)), and once its other set-up is done stores the count at `000bc596`. The objects below that count, the zone's shapes, stay in the list for the mission.
-- **`ObjList_RebuildFrame` (`00020de0`)**, which `Sim_RenderFrame` calls each frame, sets the count back to `000bc596` and adds, in turn, each object of the array at `000bc416` (count `000bc41c`) whose type record (`+0x3f`) has 0 at `+0x16`, then every element of the pools at `000af0b4`, `g_ExplosionPool`, `000aeef8` (150 of `0x4e` bytes) and `000aef68` (200 of `0x46` bytes), each walked back from its end with `Pool_Prev`.
+- **`ObjList_RebuildFrame` (`00020de0`)**, which `Sim_RenderFrame` calls each frame, sets the count back to `000bc596` and adds, in turn, each object of the array at `000bc416` (count `000bc41c`) whose type record (`+0x3f`) has 0 at `+0x16`, then every element of the pools at `000af0b4`, `g_ExplosionPool`, `000aeef8` (150 of `0x4e` bytes, which [`Debris_LoadResources`](../formats/debris-dat.md#the-load) builds) and `000aef68` (200 of `0x46` bytes), each walked back from its end with `Pool_Prev`.
 
 `ObjList_Remove` (`00020d84`) swaps an object out for the list's last; `es2_xref.py` finds no reference to it.
 
@@ -161,11 +161,22 @@ A zone shape is drawn through the object list ([below](#which-objects-are-drawn)
 1. stores the camera's position in the [light manager](#effect-lights) with `LightManager_SetCameraPosition` (`00004f60`);
 2. calls slot `+4` of every element of the ground-shape pool `000af044` ([the ground-shape set](../formats/wld-world.md#the-ground-shape-set)) within 30000 of the camera by `Math_DistanceBetweenPoints`, walking it back from the end with `Pool_Prev`;
 3. stores the blend byte at `000afa98`;
-4. for each of the `00092558` objects in the list, but the one the camera rides in (`Camera_IsMountedOn`, `000003ac`: the camera's `+0x36` is 2 and its `+0x32` is the object) and one whose position's z (slot `+8`, `+8`) is negative, fills the next `0x36`-byte entry: the position at `+0`, the radius (slot `+0x14`) as an `int16` at `+0xc`, the distance from the camera at `+0xe`, the object at `+0x32`, and 0 at `+0x12`. For an object below `000bc596`, a zone shape, whose box `ZoneShapeObj_WorldBox` (`00020738`) returns ([the zone's shapes](../formats/zone-terrain.md#the-simulators-load)), it stores 2 at `+0x12` and the box's 24 bytes at `+0x18`;
+4. for each of the `00092558` objects in the list, but the one the camera rides in (`Camera_IsMountedOn`, `000003ac`: the camera's `+0x36` is 2 and its `+0x32` is the object) and one whose position's z (slot `+8`, `+8`) is negative, fills the next `0x36`-byte entry: the position at `+0`, the radius (slot `+0x14`) as an `int16` at `+0xc`, the distance from the camera at `+0xe`, the object at `+0x32`, and 0 at `+0x12`. For an object below `000bc596`, a zone shape, whose [dividing line](../formats/zone-terrain.md#dattheater-the-shapes-dividing-lines) `ZoneShapeObj_WorldSegment` (`00020738`) returns, it stores 2 at `+0x12` and the line's two ends, 24 bytes, at `+0x18` and `+0x24`;
 5. keeps the entry, in the list at `000bc59c`, only when `WorldShades_IsBeyondLastBand` (`00025f38`) is false for its distance;
 6. stores the camera at `0009256c` (`ObjList_SetSortEye`, `00021554`) and calls `ObjList_SortAndDraw` (`00021d04`) with the count and the list.
 
-`ObjList_SortAndDraw` does nothing for a count of 0. Otherwise it builds a binary tree in the sort nodes (`{left, right, entry, byte}`), first inserting the entries with 1 or 2 at `+0x12` in list order (`ObjList_TreeInsertBoxed`, `00021bec`), then the rest (`ObjList_TreeInsertRest`, `00021c60`), each through `ObjList_TreeInsert` (`00021ba8`) from the root, which goes right when `ObjList_EntryCompare` (`00021b20`) returns non-zero and left otherwise. It then draws the tree in order, left subtree, node, right subtree (`ObjList_TreeDraw`, `00021cd0`), calling slot `+4` of each entry's vptr `+0x14`, `ObjList_DrawEntryRender`. `ObjList_EntryCompare`, given the new entry and a node: between two entries of kind 0 it returns whether the new entry is nearer, so nearer entries go right and are drawn later; between two of kind 1 or 2 it calls `00021a4c`, and otherwise `000216c4` ([Open](#open)).
+`ObjList_SortAndDraw` does nothing for a count of 0. Otherwise it builds a binary tree in the sort nodes (`{left, right, entry, byte}`), first inserting the entries with 1 or 2 at `+0x12` in list order (`ObjList_TreeInsertSegments`, `00021bec`), then the rest (`ObjList_TreeInsertRest`, `00021c60`), each through `ObjList_TreeInsert` (`00021ba8`) from the root, which goes right when `ObjList_EntryCompare` (`00021b20`) returns non-zero and left otherwise. It then draws the tree in order, left subtree, node, right subtree (`ObjList_TreeDraw`, `00021cd0`), calling slot `+4` of each entry's vptr `+0x14`, `ObjList_DrawEntryRender`. `ObjList_EntryCompare`, given the new entry and a node: between two entries of kind 0 it returns whether the new entry is nearer, so nearer entries go right and are drawn later; between two of kind 1 or 2 it is `ObjList_SortCompareSegments`' (`00021a4c`), and otherwise `ObjList_SortCompareSegment`'s (`000216c4`), [below](#objects-beside-a-dividing-line).
+
+#### Objects beside a dividing line
+
+**An object close to a zone shape that has a dividing line is drawn after the shape when it stands on the camera's side of the line, and before the shape when it does not; objects farther off are drawn farthest first.** The comparisons are ES2's ([the draw order within a cell](../../retail/rendering/terrain-drawing.md#the-draw-order-within-a-cell)), with these differences:
+
+- ES1 sorts the frame's whole list in one tree, where ES2 sorts each terrain cell's objects.
+- The entry's distance and kind are at `+0xe` and `+0x12`, where ES2's are at `+0x12` and `+0x16`; the line's ends are at `+0x18` and `+0x24` in both. A zone shape's entry is kind 2.
+- The view's position is the point `0009256c` holds, where ES2's is `0049ac3c` + 4.
+- ES1's `ObjList_SortCompareSegment` takes a first argument it does not read; `ObjList_EntryCompare` passes 1 and `ObjList_SortCompareSegments` 0.
+
+ES1's addresses are in [Functions](#functions): `ObjList_PointNearSegment`, `ObjList_SortCompareSegment`, `ObjList_SegmentEndpointNear`, `ObjList_SortCompareSegments`, `Vec3I_DotSign` and `Vec3I_Cross`.
 
 `ObjList_DrawEntryRender` (`00020f40`), whose address `00092562` holds, draws one entry: `LightManager_SelectLightsForObject` (`00004f78`) with the manager `000bc19c` and the entry's position and `+0xc` radius as four `int32`, `WorldShades_ApplyForObject` with the blend byte, the distance and the object, the object's slot `+4`, then, when the blend byte is set, `Light_ReregisterPersistent` (`00005690`), which passes each light of `Light_AddPersistent`'s list to `Light_Register` again; `Light_Register` refuses a light already in the list. Two later steps, on the bytes `000afa45` and `0009255a`, are [Open](#open). ES2's (`ObjList_DrawEntryRender`, `0042876c`) also sets the depth fade from the entry's distance; ES1's sets none.
 
@@ -234,12 +245,14 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 | `LightManager_InitSubsystem`, `EffectLightPool_FlushDeletes` | `000055b8`, `000055f4` | |
 | `Light_AddPersistent`, `Light_RemovePersistent`, `Light_ReregisterPersistent`, `Light_UnregisterPersistent` | `00005608`, `00005628`, `00005690`, `000056c0` | |
 | `LightManager_RegisterSubsystem`, `LightManager_StaticDtor` | `000056f0`, `0000571c` | the static initialiser and its exit routine |
-| `ZoneShapeObj_WorldBox` | `00020738` | |
+| `ZoneShapeObj_WorldSegment` | `00020738` | |
 | `ObjList_Init`, `ObjListEntry_Ctor` | `00020c2c`, `00020c80` | `ObjList_Init` passes `__vec_new` the padding entry `00020c7f` before the constructor |
 | `ObjList_Add`, `ObjList_Remove`, `ObjList_RebuildFrame` | `00020d5c`, `00020d84`, `00020de0` | |
 | `ObjList_DrawEntryRender`, `ObjList_DrawFrameObjects` | `00020f40`, `00021008` | |
 | `ObjList_SetSortEye`, `ObjList_AllocSortNodes` | `00021554`, `00021560` | |
-| `ObjList_EntryCompare`, `ObjList_TreeInsert`, `ObjList_TreeInsertBoxed` | `00021b20`, `00021ba8`, `00021bec` | |
+| `ObjList_PointNearSegment`, `ObjList_SortCompareSegment` | `000215e0`, `000216c4` | |
+| `ObjList_SegmentEndpointNear`, `ObjList_SortCompareSegments` | `000219fc`, `00021a4c` | |
+| `ObjList_EntryCompare`, `ObjList_TreeInsert`, `ObjList_TreeInsertSegments` | `00021b20`, `00021ba8`, `00021bec` | |
 | `ObjList_TreeInsertRest`, `ObjList_TreeDraw`, `ObjList_SortAndDraw` | `00021c60`, `00021cd0`, `00021d04` | |
 | `World_LoadShades` | `00025bc8` | |
 | `WorldShades_DistanceBand`, `WorldShades_ApplyForObject` | `00025cb4`, `00025d44` | the object last, as with every callee-cleaned function ([calling conventions](../formats/compiler.md#calling-conventions)) |
@@ -254,6 +267,7 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 | `Sim_CreateDisplay`, `Sim_StartMission` | `0005a5f4`, `0005a9dc` | |
 | `Point3I_DistanceBetween`, `Colour_Distance` | `00064698`, `000644c8` | |
 | `DotProductVec3Short`, `DotProductVec3Int` | `000660bf`, `000660f2` | the light terms' dot products, for the `int16` normal and direction and for the `int32` displacement |
+| `Vec3I_DotSign`, `Vec3I_Cross` | `000661a5`, `000662a5` | |
 | `Raster_SetColourRamps`, `Raster_GetColourRamps`, `Palette_UploadWhole` | `000691f8`, `00069227`, `0006931c` | |
 | `GLDisplay_Ctor`, `GLDisplay_CtorAndOpen`, `GLDisplay_Open`, `Raster_SelectRenderTarget` | `0006a3a8`, `0006a3fc`, `0006a480`, `0006a644` | ES2's (DBSIM `00480e4c`, `00480e98`, `00480f1c`, `00481118`), the constructor inlined in both of ES1's |
 | `Raster_DriverByName`, `Raster_BlitDispatch` | `0006a714`, `0006a8e0` | `Raster_BlitDispatch`: [the skyline's blit](ground-and-sky.md#the-horizon-skyline) |
@@ -274,7 +288,7 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 - **Open:** what `Sim_CreateDisplay`'s display fields `+0x34`, `+0x3c`, `+0x48` (four `{0, 0}`, `{0, 200}`, `{0, 400}`, `{0, 600}` pairs) and `+0x68` select, and what the driver's routines at `0009df14`, `0009df18` and `0009df1c` do with them.
 - **Open:** the `TSAlias*Poly` renderers `00054c9c`, `00054d6c` and `00054f00`.
 - **Open:** what `ObjList_DrawEntryRender` does after the draw while the byte `000afa45` is set (the display driver's routines at `0009dee4` and `0009dee8` on the block at `000afa48`), and while `0009255a` is set, for the object at `000afa88` (`00021403`).
-- **Open:** how `ObjList_EntryCompare` orders an entry with a box against another (`00021a4c`, `000216c4`), and so where a zone shape falls in the draw order among the machines and effects.
+- **Open:** which entries carry kind 1, and `0002161c`, which calls `ObjList_PointNearSegment`.
 - **Open:** what the blend byte `000b5b65` is set to, and `000280e4` (matched to ES2's `Palette_SetRampsToRangeList`), which the blend path calls.
 - **Open:** which classes carry type tags 1 to 9 in ES1: what the array at `000bc416` and the pools `000af0b4`, `000aeef8` and `000aef68` hold, and what each one's constructor stores at `+0`; and what sets the record array at `00092c34`.
 - **Open:** what `00036c2c` and `00040d4c` are in the cockpit, what `00059280` returns, and what the word at a shape instance's `+8` selects.

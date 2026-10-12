@@ -8521,7 +8521,13 @@
       "confidence": "high",
       "name": "ObjList_SortCompareSegment",
       "description": "(node, newNode): ObjList_SortCompare's case where exactly one render entry carries a segment (entry +0x16 of 1 or 2, endpoints at +0x18 and +0x24). When the segment entry is the nearer (+0x12) the answer is plain distance order, and also when 00428f38 accepts neither the camera (0049ac3c + 4) nor the other entry's position (+4) against it. Otherwise it builds, once per entry (flag +0xc), the normal of the plane that contains the segment and faces the camera -- Vec3I_Cross(segment, Vec3I_Cross(segment, camera - start)), each vector halved until Math_FastMagnitude3D is at most 32000 -- at +0x11 with the camera's side of it (Vec3I_DotSign) at +0xd, and returns whether the other entry's position lies on the camera's side.",
-      "source": "DBSIM decompile at 0042900c"
+      "source": "DBSIM decompile at 0042900c",
+      "verified": {
+        "bytes": "0042900c+816",
+        "sha1": "d8226300e1ab",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042933c",
@@ -8545,7 +8551,13 @@
       "confidence": "high",
       "name": "ObjList_SortCompareSegments",
       "description": "(node, newNode): ObjList_SortCompare's case where both render entries carry segments. Asks 0042933c for a point of one against the other, each way round; with none, plain distance order (+0x12). Otherwise it moves that entry's position (+4) to the point and its type (+0x16) to 0 for the call, compares through ObjList_SortCompareSegment with the other entry as the segment, restores both fields, and inverts the answer when the moved entry was node.",
-      "source": "DBSIM decompile at 0042937c"
+      "source": "DBSIM decompile at 0042937c",
+      "verified": {
+        "bytes": "0042937c+227",
+        "sha1": "1f65bc93056b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00429460",
@@ -8554,7 +8566,13 @@
       "confidence": "high",
       "name": "ObjList_SortCompare",
       "description": "(node, newNode): which side of node newNode's render entry (+8) goes on; non-zero is right, drawn later. When both entries' int16 +0x16 is 1 or 2 the answer is 0042937c's; when both are 0 it is whether newNode's distance (+0x12) is less than node's; otherwise 0042900c's.",
-      "source": "DBSIM decompile at 00429460"
+      "source": "DBSIM decompile at 00429460",
+      "verified": {
+        "bytes": "00429460+116",
+        "sha1": "92137a72d769",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004294d4",
@@ -8563,7 +8581,13 @@
       "confidence": "high",
       "name": "ObjList_SortTreeInsert",
       "description": "(node, newNode): descends right (+4) when ObjList_SortCompare(node, newNode) is non-zero and left (+0) otherwise, recursing until it finds the empty child to link newNode into.",
-      "source": "DBSIM decompile at 004294d4"
+      "source": "DBSIM decompile at 004294d4",
+      "verified": {
+        "bytes": "004294d4+77",
+        "sha1": "ee6d750803c8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00429524",
@@ -8572,7 +8596,13 @@
       "confidence": "high",
       "name": "ObjList_SortTreeAddKind12",
       "description": "(entries, count): for each entry whose int16 +0x16 is 1 or 2, fills the next 0x1d-byte node from 0049ac40 (entry at +8, children and byte +0xc cleared) and inserts it under the root with ObjList_SortTreeInsert (the first node is the root). Returns the next free node; the decompile drops it (MOV EAX,ESI).",
-      "source": "DBSIM decompile and disassembly at 00429524"
+      "source": "DBSIM decompile and disassembly at 00429524",
+      "verified": {
+        "bytes": "00429524+102",
+        "sha1": "b3c99e7f466b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042958c",
@@ -8581,7 +8611,13 @@
       "confidence": "high",
       "name": "ObjList_SortTreeAddOthers",
       "description": "(entries, count, node): ObjList_SortTreeAddKind12's complement: every entry whose int16 +0x16 is neither 1 nor 2 gets the next node from node onwards and is inserted under the root at 0049ac40 with ObjList_SortTreeInsert, unless it is the root itself.",
-      "source": "DBSIM decompile at 0042958c"
+      "source": "DBSIM decompile at 0042958c",
+      "verified": {
+        "bytes": "0042958c+98",
+        "sha1": "d6358a632c09",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004295f0",
@@ -8590,7 +8626,13 @@
       "confidence": "high",
       "name": "ObjList_SortTreeDraw",
       "description": "(node): in-order walk of the sort tree: the left subtree, then slot 0 of the render entry at +8 (ObjList_DrawEntryRender), then the right subtree.",
-      "source": "DBSIM decompile at 004295f0"
+      "source": "DBSIM decompile at 004295f0",
+      "verified": {
+        "bytes": "004295f0+46",
+        "sha1": "d5882bbdb8d7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00429620",
@@ -8598,8 +8640,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_DrawSorted",
-      "description": "(entries, count): nothing for count 0. Builds a binary tree of the render entries in the 0x1d-byte node pool at 0049ac40 ({+0 left, +4 right, +8 entry}, the first node the root): ObjList_SortTreeAddKind12 adds the entries whose int16 +0x16 is 1 or 2, ObjList_SortTreeAddOthers the rest from the node it returns, both through ObjList_SortTreeInsert; then ObjList_SortTreeDraw walks it from the root. ObjList_DrawCellObjects calls it at the end of a cell with the entries it built, each of which it gave +0x16 = 0, so they order by distance alone: farthest first.",
-      "source": "DBSIM decompile at 00429620, 00429524, 0042958c, 004294d4, 00429460, 004295f0, 00428c60"
+      "description": "(entries, count): nothing for count 0. Builds a binary tree of the render entries in the 0x1d-byte node pool at 0049ac40 ({+0 left, +4 right, +8 entry}, the first node the root): ObjList_SortTreeAddKind12 adds the entries whose int16 +0x16 is 1 or 2, ObjList_SortTreeAddOthers the rest from the node it returns, both through ObjList_SortTreeInsert; then ObjList_SortTreeDraw walks it from the root. es2_xref finds one call, from ObjList_DrawCellObjects at the end of a cell with the entries it built, each of which it gave +0x16 = 0, so they order by distance alone: farthest first.",
+      "source": "DBSIM decompile at 00429620, 00429524, 0042958c, 004294d4, 00429460, 004295f0, 00428c60",
+      "verified": {
+        "bytes": "00429620+53",
+        "sha1": "98048fe0bbca",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00429655",
@@ -28727,8 +28775,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Vec3I_Cross",
-      "description": "(a, b, out): out = a x b on int32 triples (x = a.y*b.z - a.z*b.y, y = a.z*b.x - a.x*b.z, z = a.x*b.y - a.y*b.x), 32-bit products; returns out. ObjList_SortCompareSegment builds its plane normal with it.",
-      "source": "DBSIM decompile at 0047da41"
+      "description": "(a, b, out): out = a x b on int32 triples (x = a.y*b.z - a.z*b.y, y = a.z*b.x - a.x*b.z, z = a.x*b.y - a.y*b.x), 32-bit products; returns out. Callers found by es2_xref: ObjList_SortCompareSegment, twice, for its plane normal.",
+      "source": "DBSIM decompile at 0047da41",
+      "verified": {
+        "bytes": "0047da41+87",
+        "sha1": "fde505dfaa16",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047dabe",
@@ -28763,8 +28817,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Vec3I_DotSign",
-      "description": "(a, b): the sign of the dot product of two int32 triples, summed in 64 bits: 1 when it is zero or more, -1 when negative. ObjList_SortCompareSegment tests plane sides with it.",
-      "source": "DBSIM decompile at 0047dcc1"
+      "description": "(a, b): the sign of the dot product of two int32 triples, summed in 64 bits: 1 when it is zero or more, -1 when negative. Callers found by es2_xref: ObjList_SortCompareSegment, twice, for plane sides.",
+      "source": "DBSIM decompile at 0047dcc1",
+      "verified": {
+        "bytes": "0047dcc1+63",
+        "sha1": "2dced55efdbc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047dd21",

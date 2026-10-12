@@ -572,6 +572,21 @@
       }
     },
     {
+      "address": "00002818",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_LoadStylesAndFonts",
+      "description": "No arguments: WidgetStyles_Load (00044aa4)(dat\\styles); then dfn\\title, cpylw, active, pushed, inactive, nm_green and nm_red1 each through 0004b757, its result to the dwords 000aacc6 to 000aacde, four bytes apart; then dba\\corners through 0004b7df into 000ab4ee. ES1DBSIM's Widget_LoadStylesAndFonts (00045e10) with the last two fonts green6x8 and red6x8. Caller found by es2_xref: 00012ec7, which then loads CFG\\styles.dat with WidgetStyles_Load and res32\\corners.dba with 0004b7df.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
+      "verified": {
+        "bytes": "00002818+243",
+        "sha1": "5babc0aa2bb4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00006024",
       "binary": "ES1GO",
       "type": "function",
@@ -677,12 +692,27 @@
       }
     },
     {
+      "address": "0000cab1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_PlaceSquad",
+      "description": "(map), callee-cleaned, src\\shellmap.cpp: sets the squad size +0xc6 from the word 0007ebc8; opens dat\\mforms (severity-5 assert, line 0x59e, when the stream status is set), reads the count into a local and then formation + 1 records of 0x1c bytes into one buffer, the formation being +0x9e; heading: +0xa4, when not negative, indexes the int16 table +0x58, else with a path +0x6a of two points or more 000553bc of its first leg less 0x4000, else 0, made a rotation by Math_BuildRotation2D; anchor: point +0xa2 of the 12-byte points +0x52, or the path's first point when +0xa2 is -1. Each of the eight member refs at +0xa8 that is not -1 and is below +0xc6 gets the anchor at +0xd4 + 12 * k, plus for k above 0 the record's int16 slot k with z 0 turned by 000552e0. The second half of VSHELL's ShellMap_ReadSquadHeader (00424db0), without its player.mec read. Caller found by es2_xref: 0000c068.",
+      "source": "Herculan/docs/es1/formats/formations-dat.md#the-shells-squad",
+      "verified": {
+        "bytes": "0000cab1+958",
+        "sha1": "9e225d93f0bf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000ce6f",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "MechFormation_SlotCtor",
-      "description": "(slot), callee-cleaned: allocates 4 bytes when slot is null and returns it, storing nothing; 0000cab1, which reads dat\\mforms, runs it with __vec_ctor over a formation's seven 4-byte slots. The code of ES1DBSIM's MechFormation_SlotCtor (00019a14), relocated operands aside.",
+      "description": "(slot), callee-cleaned: allocates 4 bytes when slot is null and returns it, storing nothing; ShellMap_PlaceSquad (0000cab1), which reads dat\\mforms, runs it with __vec_ctor over a formation's seven 4-byte slots. The code of ES1DBSIM's MechFormation_SlotCtor (00019a14), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
       "verified": {
         "bytes": "0000ce6f+27",
@@ -772,7 +802,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_Main",
-      "description": "(a, b), src\\main.cpp: the shell's main; es2_xref finds one call, from 0000000d. Mem_InitHeap(the dword 0007e738, 3700000), asserting at severity 5 (line 0x1f8) when it gives 100000 bytes or fewer; 0001272d(b, a), and when that returns non-zero Mem_HeapOff and __exit(1); copies to 000aae06, for 0000035e, the ALT_DRIVE variable (taken as null unless 0007fd0b is set) when PREFER_ALT is set and the string at 0007e942 otherwise; 0001289c, 0001280a, 00012be3; VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 0007e943, 0x100), Subsystem_RunPhase (0000fcda)(1), which reads the eight bnd\\ files; an assert at severity 5 (line 0x219, the shortfall printed with sprintf) when the heap is under the dword 0009ae24, BND\\MAIN.BND's +0xc, and the byte 0007fd09 set when it is under 0009ae20, the file's +8. Then unnamed set-up calls, among them 00044aa4('CFG\\styles.dat') and 0004b7df('res32\\corners.dba') into 000ab4ee, and Palette_UploadWhole(0007fcd0); a loop until the byte 0007fd05 is set, which 000817c0 = 9999 also sets; after it, shut-down calls, VolRStream_DeleteGroup and Mem_HeapOff, and INT 3 when 0007fd08 is set. ES1DBSIM's Sim_Main (00059350) opens with Mem_InitHeap(6000000) and the same assert.",
+      "description": "(a, b), src\\main.cpp: the shell's main; es2_xref finds one call, from 0000000d. Mem_InitHeap(the dword 0007e738, 3700000), asserting at severity 5 (line 0x1f8) when it gives 100000 bytes or fewer; 0001272d(b, a), and when that returns non-zero Mem_HeapOff and __exit(1); copies to 000aae06, for 0000035e, the ALT_DRIVE variable (taken as null unless 0007fd0b is set) when PREFER_ALT is set and the string at 0007e942 otherwise; 0001289c, 0001280a, 00012be3; VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 0007e943, 0x100), Subsystem_RunPhase (0000fcda)(1), which reads the eight bnd\\ files; an assert at severity 5 (line 0x219, the shortfall printed with sprintf) when the heap is under the dword 0009ae24, BND\\MAIN.BND's +0xc, and the byte 0007fd09 set when it is under 0009ae20, the file's +8. Then unnamed set-up calls, among them WidgetStyles_Load (00044aa4)('CFG\\styles.dat') and 0004b7df('res32\\corners.dba') into 000ab4ee, and Palette_UploadWhole(0007fcd0); a loop until the byte 0007fd05 is set, which 000817c0 = 9999 also sets; after it, shut-down calls, VolRStream_DeleteGroup and Mem_HeapOff, and INT 3 when 0007fd08 is set. ES1DBSIM's Sim_Main (00059350) opens with Mem_InitHeap(6000000) and the same assert.",
       "source": "ES1GO decompile at 00012ec7",
       "verified": {
         "bytes": "00012ec7+772",
@@ -2159,6 +2189,36 @@
         "sha1": "6b5fa5f08950",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00044aa4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WidgetStyles_Load",
+      "description": "(path), callee-cleaned: ES1DBSIM's WidgetStyles_Load (00044880), the count at 000ab4ec and the 64-byte records at 00082654, built with WidgetStyle_ElementCtor (00044b3f); it also closes the stream (VolRStream_Close) before destroying it. Callers found by es2_xref: Widget_LoadStylesAndFonts (00002818), and 00012ec7 with CFG\\styles.dat.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
+      "verified": {
+        "bytes": "00044aa4+155",
+        "sha1": "e53df7c64741",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044b3f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WidgetStyle_ElementCtor",
+      "description": "(this) callee-cleaned: the __vec_new element constructor WidgetStyles_Load (00044aa4) passes for the 64-byte STYLES.DAT records. Allocates 0x40 bytes when this is null; writes nothing and returns this. The code of ES1DBSIM's WidgetStyle_ElementCtor (00044910), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
+      "verified": {
+        "bytes": "00044b3f+27",
+        "sha1": "e2369f224007",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
