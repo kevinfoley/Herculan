@@ -1,6 +1,6 @@
 # DBSIM.EXE and GO.EXE — `dat\zoneNNNN`, a zone's shapes
 
-ES1's zone file lists the shapes that stand on a mission's ground: for each, which of the theater's shapes it is, where it stands and which way it faces. It shares only its name with ES2's zone file, which is the 16-byte header of the zone's heightmap ([ES2's zone files](../../retail/formats/zone-terrain.md)); ES1's holds no heightmap header, and nothing of the heightmap. The simulator reads it when it loads the world, and the shell reads it for its map screen. Addresses are `ES1DBSIM` image addresses unless `ES1GO` is named ([the X-32 executable](x32-executable.md#the-image)).
+ES1's zone file lists the shapes that stand on a mission's ground: for each, which of the theater's shapes it is, where it stands and which way it faces. It shares only its name with ES2's zone file, which is the 16-byte header of the zone's heightmap ([ES2's zone files](../../retail/formats/zone-terrain.md)). ES1's ground is flat and has no heightmap: its relief is these shapes, ridges and spires among them, obstacles and cover that cannot be crossed. The simulator reads it when it loads the world, and the shell reads it for its map screen. Addresses are `ES1DBSIM` image addresses unless `ES1GO` is named ([the X-32 executable](x32-executable.md#the-image)).
 
 ## Which zone and which theater
 
@@ -81,6 +81,4 @@ With a count of 0, `Zone_ShapeObjects` keeps whatever it held. The loader frees 
 - **Open:** the 24-byte records of `dat\desert`, `dat\temper`, `dat\ice` and `dat\urban`, 13 in each, and what an object does with its pointer to one, or with a null one when the record's `int32` at `+8` is negative.
 - **Open:** the class whose vptr `000924be` the simulator's objects carry, and its five slots (`00020550`, `00020570`, `00020584`, `000205d3`, `000205dc`).
 - **Open:** what the simulator does with the objects. `es2_xref.py` finds `Zone_ShapeObjects` and `Zone_ShapeCount` in `00020860`, `00020b50`, `00036c2c`, `00040d4c` and `0005a9dc` besides the loader.
-- **Open:** what sets an object's height, every retail record's Z being 0.
 - **Open:** which archive's `ZONE6.DAT` and `ZONE8.DAT` the simulator reads. ES1's volume code has not been read against ES2's precedence rules ([ES2's archives](../../retail/formats/vol-archive.md#which-archives-are-mounted)).
-- **Open:** where an ES1 zone's ground heights come from.
