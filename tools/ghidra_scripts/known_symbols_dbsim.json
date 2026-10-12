@@ -3828,7 +3828,13 @@
       "confidence": "high",
       "name": "WeaponMount_MuzzleOffset",
       "description": "Adds the hardpoint's own mount-point offset (.GL +0x10/+0x12/+0x14) to WeaponMountTemplate_SideMuzzleOffset's result and returns the sum, in the firing bone's space. WeaponMount_PrepareShot adds the template's own muzzle triple at +0x40 on top.",
-      "source": "docs/retail/simulation/weapon-firing.md"
+      "source": "docs/retail/simulation/weapon-firing.md",
+      "verified": {
+        "bytes": "0040f540+58",
+        "sha1": "0c9097619995",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f57c",
@@ -5891,8 +5897,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ConvergeGunsOnRange",
-      "description": "Gun convergence, run at the tail of Mech_TorsoPitchTick with that tick's range argument -- the distance to the aim point, so the player's guns and the AI's both toe in on whatever the turret is tracking. For each mount, Math_EulerToward from the muzzle offset (its z less typeRec+0x66, the sight height) to (0, range, 0), stored at mount+0x24 and +0x28; a range of zero clears them. WeaponMount_PrepareShot is the consumer, composing them under the firing bone. Both gates (mount+0x5b/+0x5f, from .GL +0x02/+0x04) read zero on every retail chassis, so the convergence applies fleet-wide.",
-      "source": "docs/retail/simulation/weapon-firing.md"
+      "description": "Gun convergence, run at the tail of Mech_TorsoPitchTick with that tick's range argument -- the distance to the aim point, so the player's guns and the AI's both toe in on whatever the turret is tracking. For each mount, Math_EulerToward from WeaponMount_MuzzleOffset's result -- the mount point, without the template's barrel triple at +0x40 -- (its z less typeRec+0x66, the sight height) to (0, range, 0), stored at mount+0x24 and +0x28; a range of zero clears them. WeaponMount_PrepareShot is the consumer, composing them under the firing bone. Both gates (mount+0x5b/+0x5f, from .GL +0x02/+0x04) read zero on every retail chassis, so the convergence applies fleet-wide.",
+      "source": "docs/retail/simulation/weapon-firing.md",
+      "verified": {
+        "bytes": "0041a74c+185",
+        "sha1": "8f7e4d1f4776",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041a808",
@@ -11897,7 +11909,13 @@
       "confidence": "high",
       "name": "MfdStatusScreen_Ctor",
       "description": "Constructor for the MFD's status screen, shared by mode 0 (STATUS, F1) and mode 4 (TARGET, F5) -- MfdDisplay_Ctor builds one of each. Lazily loads the `bases`, `vehicles` and `flyers` sprite banks (folder \"hba\"/\"dba\" off VideoMode_UseHiResBanks) for target silhouettes, sets the wireframe viewport to inset+(0x2d,0xd)-(0x5f,0x3a), and builds five text labels from tables at 0049bd84 (x0), 0049bd8e (y0) and 0049bd98 (font selector into {ColorSchemePanels[10] WHITE, [14] RED}). The obvious reading of the sprite-bank load is that this is the BASES.DAT type-table loader, and it has been named Bases_LoadTypeTable on that basis; it is not. What this loads is the BASES *sprite* bank for target silhouettes. The BASES *data* file is read by Base_LoadResources (00405fac), which has no relationship to this function. See docs/retail/simulation/mfd.md.",
-      "source": "docs/retail/simulation/mfd.md"
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "0043a2e0+701",
+        "sha1": "06b9153758c7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043a5a0",
@@ -13176,8 +13194,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponSelectGadget_OnClick",
-      "description": "WeaponSelectGadgetVtable +0x08 (gadget, flags): unconditionally calls the owner's (+0x24) vtable slot 0 with (owner, gadget, flags), then slot 1 of the vtable at +0x17 and slot 2 of the sub-object at +0x20.",
-      "source": "DBSIM decompile at 00442458; es2_xref.py"
+      "description": "WeaponSelectGadgetVtable +0x08 (gadget, flags): unconditionally calls the owner's (+0x24) vtable slot 0 with (owner, gadget, flags), then slot 1 of the vtable at +0x17 and slot 2 of the PanelGadget mixin at +0x20, which is Widget_ClickSound (00438e2c) -- so every press of a pod row clicks, by mouse or by number key through Widget_PressChild.",
+      "source": "DBSIM decompile at 00442458; es2_xref.py",
+      "verified": {
+        "bytes": "00442458+45",
+        "sha1": "fb9f80e46f8f",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00442488",
@@ -13212,8 +13236,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ChainedWeaponSelectGadget_OnClick",
-      "description": "ChainedWeaponSelectGadgetVtable +0x08: the same body as WeaponSelectGadget_OnClick.",
-      "source": "DBSIM decompile at 00442920; es2_xref.py"
+      "description": "ChainedWeaponSelectGadgetVtable +0x08: the same body as WeaponSelectGadget_OnClick, ending in the mixin's Widget_ClickSound -- so every press of a weapon row clicks, by mouse or by number key through Widget_PressChild.",
+      "source": "DBSIM decompile at 00442920; es2_xref.py",
+      "verified": {
+        "bytes": "00442920+45",
+        "sha1": "fb9f80e46f8f",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00442950",

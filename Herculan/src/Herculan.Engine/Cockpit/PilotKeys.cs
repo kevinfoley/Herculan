@@ -195,10 +195,16 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 				// [Alt] and a number is command 0x202-0x20b, which the weapon manager answers itself; the
 				// bare number is 0x02-0x0b, which CockpitWidgets_HandleCommand answers by pressing the
 				// row's own select gadget. That is why only the bare key can toggle a pod.
+				//
+				// The press clicks whenever the slot has a gauge, whatever it goes on to do: Widget_PressChild
+				// calls the gadget's OnClick (ChainedWeaponSelectGadget_OnClick, 00442920, or a pod row's
+				// WeaponSelectGadget_OnClick, 00442458), which calls its mixin's sound slot, Widget_ClickSound,
+				// after the gauge's handler.
 				if (alt) {
 					mounts?.ToggleChain(slot);
-				} else if (!view.CockpitWidgetsOff && !headsDown) {
-					mounts?.PressRow(slot);
+				} else if (!view.CockpitWidgetsOff && !headsDown && mounts?.BySlot(slot) != null) {
+					mounts.PressRow(slot);
+					audio.Director?.Play(SoundId.ButtonClick);
 				}
 			}
 		}

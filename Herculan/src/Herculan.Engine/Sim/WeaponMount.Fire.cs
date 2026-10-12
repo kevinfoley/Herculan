@@ -497,6 +497,9 @@ public sealed partial class WeaponMount {
 	/// <c>Mech_ConvergeGunsOnRange</c> (<c>0041a74c</c>) — the toe-in that makes this hardpoint's
 	/// shots cross the sight line at <paramref name="range"/>, for every mount through
 	/// <see cref="WeaponMounts.ConvergeOnRange"/>; a range of zero squares them up again.
+	///
+	/// <para>The angle is taken from <see cref="MountPointOffset"/>, <c>WeaponMount_MuzzleOffset</c>'s
+	/// result, not from <see cref="MuzzleOffset"/>: the barrel length is not part of it.</para>
 	/// </summary>
 	internal void ConvergeOnRange(MechObject owner, int range) {
 		if (range == 0) {
@@ -505,7 +508,7 @@ public sealed partial class WeaponMount {
 			return;
 		}
 
-		var muzzle = MuzzleOffset;
+		var muzzle = MountPointOffset;
 		var (pitch, _, yaw) = SimTrig.EulerToward(
 			new Vec3i(0, range, 0),
 			new Vec3i(muzzle.X, muzzle.Y, muzzle.Z - owner.EyeLift));

@@ -27,12 +27,19 @@ layout (location = 3) in float aTextured;
 
 uniform vec2 uViewportSize;
 
+// Everything shifts by 1/32 of a framebuffer pixel, up and left. At a fractional scale (1080 lines
+// is 2.25 pixels per device pixel) some device-pixel edges fall exactly on a pixel centre, where the
+// rasterizer settles a flat fill's edge and the sampler a texel boundary each its own way, so a
+// paper-doll tint misses the doll pixel under it by one column. Off the centres, the two agree.
+const vec2 kTieBreak = vec2(1.0 / 32.0);
+
 void main() {
 	// aPosition is in pixel space, origin top-left, +Y down (PixelPoint's own convention) —
 	// flip Y and rescale to NDC's -1..1, +Y up.
+	vec2 position = aPosition - kTieBreak;
 	vec2 ndc = vec2(
-		aPosition.x / uViewportSize.x * 2.0 - 1.0,
-		1.0 - aPosition.y / uViewportSize.y * 2.0);
+		position.x / uViewportSize.x * 2.0 - 1.0,
+		1.0 - position.y / uViewportSize.y * 2.0);
 	gl_Position = vec4(ndc, 0.0, 1.0);
 	vUV = aUV;
 	vColor = aColor;

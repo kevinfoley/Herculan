@@ -110,7 +110,7 @@ public sealed class CockpitArt {
 	/// <para><c>SYSBUTTN</c> is the two system buttons' art (<see cref="SystemButtons"/>).</para>
 	public static readonly string[] HudBankNames = {
 		"HUD", "HUDHTICK", "MFD", SensorDropout.MfdBank, "RADAR", "THROTTLE", SensorDropout.RowBank, "PWEAPONS",
-		"HDD", "BASES", "VEHICLES", PaperDollDamage.WeaponIconBank,
+		"HDD", "BASES", "VEHICLES", MfdLayout.FlyerBank, PaperDollDamage.WeaponIconBank,
 		"ICONS", ObjectivesPanel.BackgroundBank, StatusAlertPanelLayout.PlateBank,
 		AlertPanelLayout.ButtonBank, PreferencesPanelLayout.PlateBank, ControlsPanelLayout.PlateBank,
 		SystemButtons.Bank,
@@ -119,10 +119,8 @@ public sealed class CockpitArt {
 	/// <summary>
 	/// Banks the game ships only at 320-wide, loaded through
 	/// <see cref="HudSpriteSheet.LoResResourceFolder"/> and drawn doubled.
-	/// <c>MfdStatusScreen_Ctor</c> asks for <c>bases</c>, <c>vehicles</c> and <c>flyers</c> together as
-	/// its target silhouettes, but only the first two exist in <c>hba</c>.
 	/// </summary>
-	public static readonly string[] LoResHudBankNames = { "FLYERS", SquadCommChannel.StaticBank };
+	public static readonly string[] LoResHudBankNames = { SquadCommChannel.StaticBank };
 
 	/// <summary>
 	/// The <c>.HFN</c> fonts the cockpit draws text with, out of the 18 <c>ColorSchemePanels</c>

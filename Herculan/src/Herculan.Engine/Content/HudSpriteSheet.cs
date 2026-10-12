@@ -50,7 +50,7 @@ public sealed class HudSpriteSheet {
 
 	/// <summary>
 	/// Resource folder for the 320-wide banks, used only for the handful that have no <c>hba</c> half
-	/// at all - <c>FLYERS</c> is one. A sprite from one of these reports <see cref="HudSprite.Scale"/>
+	/// at all, such as the squad comm static. A sprite from one of these reports <see cref="HudSprite.Scale"/>
 	/// 2 so it still covers the cockpit pixels it was authored to cover.
 	/// </summary>
 	public const string LoResResourceFolder = "dba";
