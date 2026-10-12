@@ -78,6 +78,10 @@ static class HostArguments {
 		  --demo                      a demo tape from TAPES\demolist.str, as VIEW DEMO plays it; implies --mission
 		  --record <tape>             record the mission's input to <tape>.tap
 
+		Metaltech: Earthsiege (an install holding GO.EXE shows the named <mission>'s zone)
+		  --theater <0-3>             header word 0: desert, temper, ice, urban; default 0
+		  --world <0-2> <0-1>         header words 9 and 8, the palette and world file; default 0 0
+
 		Front end (none combines with --mission)
 		  --shell-tab <0-7>  --shell-bay <0-7>  --shell-training  --shell-practice
 		  --shell-windowed  --shell-no-movies

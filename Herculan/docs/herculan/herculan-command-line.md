@@ -15,6 +15,8 @@ Herculan.Engine.Host [<install>] [<mission>] [flags]
 | 1 | The Earthsiege 2 install: the folder holding the archive directory. Without it the host reads the `ES2_GAME_PATH` environment variable, then tries the install it last used, then looks for an `ES2` folder beside the executable or any folder above it, and when all of those fail opens a window asking for the folder, with the system's folder picker where there is one. A named install that is not one stops the host with a message, as does a failed search under `--screenshot`. Whichever install runs is remembered in `install-path.txt` beside `tweak-settings.json`, except under `--ask-install`. |
 | 2 | The mission to fly: a `script.dat` ([`../retail/formats/script-dat.md`](../retail/formats/script-dat.md)) with the `mission.var` and `player.mec` the original reads beside it (either missing shows an error box and quits, as the original does), or a mission named by its `.MSN` — `C1_03`, `C1_03.MSN` or `MSN\C1_03.MSN` — from those `gam\career.dat` lists. Naming one implies `--mission`. Under `--mission` without one, `DATA\script.dat` in the install. `--play` and `--demo` replace it with the mission their tape carries. |
 
+A Metaltech: Earthsiege install, one whose folder holds `GO.EXE`, runs [its zone viewer](#metaltech-earthsiege) instead, and is not remembered. It needs the mission named.
+
 A named mission is loaded as the shell loads that career position ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#loading-the-careers-mission)) and flown from a handoff written into the install's `DATA`, as a launch from the front end is. A practice or demo mission takes the training load, with the practice options `DATA\prefs.cfg` holds, as `Begin Mission` or `INSTANT ACTION` on its row would. A campaign mission is loaded for a career with no history: every campaign flag 0 until the load seeds its own, and the player's lance and skill from `DATA\player.mec`, which it needs.
 
 ## What runs
@@ -28,6 +30,17 @@ Without one of these, the host runs the front end and the missions it launches, 
 | `--play <tape>` | Replays an input tape: a path, or a stem looked up in the install's `TAPES` folder. Hands the controls to the player when the tape runs out. Implies `--mission`. Retail's `-p<name>`. See [`input-tapes.md`](input-tapes.md). |
 | `--record <tape>` | Records the mission's input to `<tape>.tap`, which `--play` replays. Cannot be combined with `--play` or `--demo`. Retail's `-r<name>`. See [`input-tapes.md`](input-tapes.md#recording). |
 | `--demo` | Plays a tape picked from `TAPES\demolist.str`, as VIEW DEMO does, and ends the mission when the tape runs out or a key is pressed. With `--play`, plays that tape in demo mode instead. Implies `--mission`. Retail's `-D`. |
+
+## Metaltech: Earthsiege
+
+With an ES1 install, the host shows the named mission's zone, `B0_C2_60` or `B0_C2_60.MSN` from `ZONES.VOL`'s `MSN\`, with nothing simulated: the shapes its zone file places ([`../es1/formats/zone-terrain.md`](../es1/formats/zone-terrain.md)), from a free camera (right mouse button to look, WASD or the arrows to move, Q and E down and up, Shift faster, Esc to quit). The ground and the sky are placeholders, and the shapes are coloured through ES2's rules ([`ROADMAP.md`](../../ROADMAP.md#reverse-engineering-still-open)). A mission whose zone is set under a condition is refused; no retail mission is one. The other flags are ignored.
+
+An ES1 mission does not fix its theater or world file: the shell picks them by its mode ([header patches](../es1/formats/msn-mission-file.md#header-patches)). These name them, and an ES2 install refuses both.
+
+| Flag | Effect |
+|---|---|
+| `--theater <0-3>` | Header word 0: desert, temper, ice or urban, in the simulator's order. Default 0. |
+| `--world <0-2> <0-1>` | Header words 9 and 8, which pick the palette `dpl\world<6t+2v>` and the world file `wld\world<6t+2v+d>` ([`../es1/formats/wld-world.md`](../es1/formats/wld-world.md#which-file)). Default `0 0`. |
 
 ## Front end
 

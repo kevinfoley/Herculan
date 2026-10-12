@@ -5,6 +5,8 @@ using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
+using Herculan.Es1.Host;
+using HercWorks.Core.Io.Transform;
 
 // The thin front-end host from docs/herculan/planning.md's "Engine internal architecture" section:
 // it locates an install, asks the engine to build a scene from a real mission, and runs a real-time
@@ -13,8 +15,8 @@ using Herculan.Engine.Settings;
 // here and reuse everything below it unchanged.
 //
 // This file is the entry point alone: parse the command line, find the install, and hand over to the
-// turn that was asked for — an install (DiscInstall), a movie (MovieHost), one mission, or by default
-// ES.EXE's loop of front end and simulator (Launcher).
+// turn that was asked for — an install (DiscInstall), a Metaltech: Earthsiege zone (Es1ZoneViewer), a movie
+// (MovieHost), one mission, or by default ES.EXE's loop of front end and simulator (Launcher).
 
 HostLog.Start();
 
@@ -64,6 +66,22 @@ if (installRoot == null) {
 		$"The path should be the folder containing the '{GameInstall.ArchiveFolderName}' directory.");
 	return 1;
 }
+
+// A Metaltech: Earthsiege install runs that game's viewer, the one part of it ported so far, and is not remembered:
+// the remembered install is the one a bare launch runs, and that is still Earthsiege 2's front end.
+if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
+	if (options.MissionPath == null) {
+		HostLog.Fail("A Metaltech: Earthsiege install needs a mission named after it, such as B0_C2_60.");
+		return 1;
+	}
+
+	return Es1ZoneViewer.Run(installRoot, options.MissionPath, options.Es1.ToTheater());
+}
+if (options.Es1.Staged) {
+	HostLog.Fail("--theater and --world are for a Metaltech: Earthsiege install.");
+	return 1;
+}
+
 if (!options.AskForInstall) {
 	GameInstall.Remember(installRoot);
 }

@@ -84,7 +84,7 @@ So ES1 does not run on ES2's simulation code with ES1's data swapped in. Common 
 
 Three rules keep the boundary:
 
-1. **Project references enforce it.** A game assembly references the core and never the other game; the core references neither, so a dependency of asset-layer code (Content, Render, Gl, Platform, the audio back end) on game code is a build error.
+1. **Project references enforce it.** A game assembly references the core and never the other game; the core references neither, so a dependency of asset-layer code (Content, Render, Gl, Platform, the audio back end) on game code is a build error. ES1's is `Herculan.Es1`. Until ES2's game code leaves `Herculan.Engine` ([Open](#open)), a test enforces the line instead: `Es1BoundaryTests` fails when `Herculan.Es1` references a type in ES2's `Sim`, `Cockpit`, `Shell`, `World`, `Scene` or `Terrain`.
 2. **No game switches in the core.** A difference between the games lives in the game assemblies or behind a seam the core defines, never as a test of which game is running.
 3. **The shared-skeleton modules are ported twice.** `bullet`, `collide`, `damage`, `debris`, `flyersys` and `mechsys` keep each game's own layouts, sizes and rounding, so each game gets its own faithful port and the two link to each other's docs. One abstraction over both would break the retail-structure constraint for both games.
 

@@ -3,14 +3,15 @@ using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
 using Silk.NET.Input;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.View;
 
 /// <summary>
 /// A Unity-Editor-style free-fly observer camera: hold the right mouse button and move the mouse
 /// to look, WASD/arrow keys to move, shift to move faster. Unlike <see cref="Sim.FlyCameraObject"/>
 /// this is not a <see cref="Sim.SimObject"/> — it is tool-only input handling with no place in the
-/// simulation, so it lives in the editor host and drives a <see cref="Camera"/> directly from
-/// float deltas each frame rather than through the fixed-point sim tick.
+/// simulation, for the hosts that show a scene without running one (the mission editor, the ES1
+/// zone viewer), and drives a <see cref="Camera"/> directly from float deltas each frame rather than
+/// through the fixed-point sim tick.
 /// </summary>
 public sealed class EditorCamera {
 	/// <summary>Cruise speed, in metres per second.</summary>

@@ -97,6 +97,23 @@ public sealed class ShadeRamp {
 	}
 
 	/// <summary>
+	/// A ramp from rows already in hand, laid out as an <c>.RMP</c>'s: <paramref name="depthSlices"/> slices of
+	/// <paramref name="shadeLevels"/> rows of <see cref="RowLength"/> bytes. For a game whose theaters ship no
+	/// <c>.RMP</c>.
+	/// </summary>
+	public static ShadeRamp FromRows(int shadeLevels, int depthSlices, byte[] rows) {
+		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(shadeLevels);
+		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(depthSlices);
+		if ((long)rows.Length < (long)shadeLevels * depthSlices * RowLength) {
+			throw new ArgumentException(
+				$"{shadeLevels} levels of {depthSlices} slices need {shadeLevels * depthSlices * RowLength} bytes, not {rows.Length}.",
+				nameof(rows));
+		}
+
+		return new ShadeRamp(shadeLevels, depthSlices, rows);
+	}
+
+	/// <summary>
 	/// Which row <c>Raster_ShadeRampRow</c> (<c>00468054</c>) selects for a given shade byte: <c>(shade * (levels - 1)) / 256</c>,
 	/// clamped to the table. The truncation is the original's own <c>&amp; ~0xFF</c>.
 	/// </summary>

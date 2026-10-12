@@ -7,6 +7,7 @@ using Herculan.Engine.Host.Editor;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
+using Herculan.Engine.View;
 using Herculan.Engine.World;
 using ImGuiNET;
 using Silk.NET.Input;
