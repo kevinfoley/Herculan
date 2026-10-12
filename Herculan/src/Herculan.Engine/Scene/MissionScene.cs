@@ -177,7 +177,8 @@ public sealed class MissionScene {
 			IsV110 = content.IsV110
 		};
 		world.Mission.LoadCounters(mission.Counters);
-		var models = new SceneModelLibrary(content, theater);
+		var models = new SceneModelLibrary(content, theater,
+			CockpitPalette.ReadSchemeIndex(content, mission.Player?.TypeName));
 		var baseTypes = BaseTypeTable.Load(content);
 
 		// The theater's ground-shape set, which FlatObj_LoadResources loads at the end of

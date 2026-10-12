@@ -50,6 +50,21 @@ public static class CockpitPalette {
 		SchemeTableFirstEntry + schemeIndex * CockpitSchemeLength;
 
 	/// <summary>
+	/// Reads the herc's cockpit colour-scheme index out of its own <c>dat\&lt;MECH&gt;.DAT</c>, or -1
+	/// when there is no herc or that file is missing or unparseable. The field is
+	/// <see cref="HercWorks.Core.Data.File.Dat.Sim.HercSimDat.CockpitColorScheme"/> — record offset 80,
+	/// which is the mech type struct's <c>+0x52</c> that
+	/// <c>CockpitViewManager_LoadViews</c> indexes <c>COCKPIT.DPL</c> with.
+	/// </summary>
+	public static int ReadSchemeIndex(GameContent content, string? hercName) =>
+		hercName != null
+			&& content.Read("dat", hercName + ".DAT") is { } bytes
+			&& new HercWorks.Core.Io.Transform.Dbsim.HercSimDataTransformer().Parse(bytes)
+				is HercWorks.Core.Data.File.Dat.Sim.HercSimDat data
+			? data.CockpitColorScheme
+			: -1;
+
+	/// <summary>
 	/// Assembles the live palette: the theater palette as the base, with
 	/// <paramref name="cockpitSchemeIndex"/>'s 24-entry cockpit scheme installed over slots 42-65.
 	///

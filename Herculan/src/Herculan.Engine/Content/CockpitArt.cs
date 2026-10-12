@@ -431,7 +431,7 @@ public sealed class CockpitArt {
 	public static CockpitArt? Load(GameContent content, string hercName, string? worldPaletteName = null,
 			IEnumerable<string>? targetHercNames = null, IEnumerable<string>? extraLoResBankNames = null,
 			string? impactPaletteName = null) {
-		int schemeIndex = ReadColorSchemeIndex(content, hercName);
+		int schemeIndex = CockpitPalette.ReadSchemeIndex(content, hercName);
 		if (CockpitPalette.Load(content, worldPaletteName, schemeIndex) is not { } palette) {
 			return null;
 		}
@@ -532,19 +532,6 @@ public sealed class CockpitArt {
 			&& new PaperDiagramGraphTransformer().Parse(bytes) is PaperDollGraphic doll
 				? doll
 				: null;
-
-	/// <summary>
-	/// Reads the herc's cockpit colour-scheme index out of its own <c>dat\&lt;MECH&gt;.DAT</c>, or -1
-	/// when that file is missing or unparseable. The field is
-	/// <see cref="HercWorks.Core.Data.File.Dat.Sim.HercSimDat.CockpitColorScheme"/> — record offset 80,
-	/// which is the mech type struct's <c>+0x52</c> that
-	/// <c>CockpitViewManager_LoadViews</c> indexes <c>COCKPIT.DPL</c> with.
-	/// </summary>
-	private static int ReadColorSchemeIndex(GameContent content, string hercName) =>
-		content.Read("dat", hercName + ".DAT") is { } bytes
-			&& new HercSimDataTransformer().Parse(bytes) is HercSimDat data
-			? data.CockpitColorScheme
-			: -1;
 
 	/// <summary>All three gauge colours or none — a bar drawn with only some of them resolved would
 	/// be worse than one not drawn at all.</summary>

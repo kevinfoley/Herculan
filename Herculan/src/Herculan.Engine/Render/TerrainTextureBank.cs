@@ -40,23 +40,18 @@ public sealed class TerrainTextureBank {
 	public string BankName { get; }
 
 	/// <summary>
-	/// Loads and packs the theater's terrain bank, using the theater's own palette — the original
-	/// loads <c>dpl\world&lt;N&gt;.dpl</c> as the first act of <c>maybe_World_LoadTheater</c>, before
-	/// anything it colours. Returns null when either resource is missing or the bank holds no usable
-	/// frames, in which case terrain draws flat-shaded exactly as it did before.
+	/// Loads and packs the theater's terrain bank, decoded through <paramref name="palette"/> — the
+	/// scene's live palette, <see cref="Scene.SceneModelLibrary.Palette"/>. Returns null when the bank
+	/// is missing or holds no usable frames, in which case terrain draws flat-shaded exactly as it did
+	/// before.
 	/// </summary>
 	public static TerrainTextureBank? Load(GameContent content, TheaterDescriptor theater,
-			TerrainMaterialTable materials) {
+			TerrainMaterialTable materials, DynamixPalette? palette) {
 		byte[]? bankBytes = content.Read("dba", theater.TerrainBankName + ".DBA");
 		if (bankBytes == null
 			|| new DynamixBitmapArrayTransformer().Parse(bankBytes) is not DynamixBitmapArray bank) {
 			return null;
 		}
-
-		byte[]? paletteBytes = content.Read("dpl", theater.PaletteName + ".DPL");
-		var palette = paletteBytes != null
-			? new DynamixPaletteTransformer().Parse(paletteBytes) as DynamixPalette
-			: null;
 
 		var atlas = TextureAtlas.Build(bank, palette);
 		return atlas != null ? new TerrainTextureBank(atlas, materials, theater.TerrainBankName) : null;

@@ -121,14 +121,16 @@ public sealed class SceneModelLibrary {
 	/// <paramref name="theater"/> supplies the palette every bank in this mission decodes against —
 	/// the WORLD&lt;n&gt; palettes are per-theater, loaded once by <c>maybe_World_LoadTheater</c> and
 	/// active for everything the theater draws, so a mech's colours depend on where it is standing.
+	///
+	/// <para>It is the live palette, not the bare file: <paramref name="cockpitSchemeIndex"/>, the
+	/// player's herc's cockpit scheme, goes in over slots 42-65 just as it does for the cockpit — see
+	/// <see cref="CockpitPalette"/>. The theater files park those slots at pure green, and
+	/// <c>FIRE1.DBA</c>'s rubble and some <c>WORLD&lt;n&gt;.RMP</c> shades land in them.</para>
 	/// </summary>
-	public SceneModelLibrary(GameContent content, TheaterDescriptor theater) {
+	public SceneModelLibrary(GameContent content, TheaterDescriptor theater, int cockpitSchemeIndex) {
 		_content = content;
 
-		byte[]? paletteBytes = content.Read("dpl", theater.PaletteName + ".DPL");
-		_palette = paletteBytes != null
-			? new DynamixPaletteTransformer().Parse(paletteBytes) as DynamixPalette
-			: null;
+		_palette = CockpitPalette.Load(content, theater.PaletteName, cockpitSchemeIndex);
 
 		// The theater ships its colour ramp beside its palette, under the same base name, and a flat
 		// solid face is nothing without it — see DtsMeshBuilder's ResolveSolidColors.
@@ -149,15 +151,15 @@ public sealed class SceneModelLibrary {
 		// The same theater, through its damage-flash palette instead. Only the palette changes: the
 		// original swaps the palette object alone and there is no IMPACT<n>.RMP in retail data, so the
 		// ramp below is deliberately the theater's own.
-		byte[]? impactBytes = content.Read("dpl", theater.ImpactPaletteName + ".DPL");
-		var impactPalette = impactBytes != null
-			? new DynamixPaletteTransformer().Parse(impactBytes) as DynamixPalette
-			: null;
+		var impactPalette = CockpitPalette.LoadImpact(content, theater.ImpactPaletteName, cockpitSchemeIndex);
 
 		_impactShading = impactPalette != null && _shading != null
 			? _shading with { Palette = impactPalette }
 			: null;
 	}
+
+	/// <summary>The live palette every bank in the scene decodes against — see the constructor.</summary>
+	public DynamixPalette? Palette => _palette;
 
 	/// <summary>Every model built so far, in first-requested order.</summary>
 	public IEnumerable<SceneModel> Models => _models.Values.Where(m => m != null)!;
