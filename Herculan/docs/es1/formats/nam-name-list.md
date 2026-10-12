@@ -17,7 +17,7 @@ So a list's type numbers are fixed by its number and not by the lists before it:
 | `Mechs_InitAllTypes` (`00019ee0`) | `mechs` | 0 | 0x60 | 10 | 16 entries |
 | `FlyerTypes_LoadAll` (`0001c770`) | `flyers` | 0 | 0x52 | 10 | 2 entries |
 
-Both pass a mask of 0, so the simulator reads the base lists only. The two callers then walk 16 and 2 type numbers respectively.
+Both pass a mask of 0, so the simulator reads the base lists only. The two callers then walk 16 and 2 type numbers respectively. `mechs` names the sixteen chassis ([the chassis file](chassis-dat.md#which-files)), and `flyers` the two flyer types ([the flyer file](bullets-skimmer-dat.md#datskimmerdat)).
 
 `MechMods_Probe` (`00060934`) builds the mask the mod lists would need: for n from 1 to 8 it opens `MECMODn.DYN` in the working directory with `fopen` (mode `rb`) and closes it, setting bit n−1 of `MechMods_Present` (`000b5e6e`) for each that opens.
 
@@ -41,4 +41,3 @@ Both pass a mask of 0, so the simulator reads the base lists only. The two calle
 
 - **Open:** no caller of `MechMods_Probe` found by `es2_xref.py`, no reader of `MechMods_Present` found by a search of the disassembly for its address, and no caller of `ES1GO`'s `LoadNameList` found by `es2_xref.py`. What a `MECMODn.DYN` file holds, and whether any ES1 release shipped one, is open.
 - **Open:** what reads the dword `ES1GO 000ab5fe`.
-- **Open:** the names in ES1's `flyers` list. `mechs` names the sixteen chassis ([the chassis file](chassis-dat.md#which-files)).

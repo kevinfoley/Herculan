@@ -32,6 +32,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00000ac4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "RegisterSubsystemLoader",
+      "description": "(phase, function) in stack order, callee-cleaned: stores function and the int16 phase in the next 6-byte record at 000bbcb0, the record index being the int16 count at 0009011c, which it increments; Subsystem_RunPhase (00000af4) walks the records. Static initialisers call it, among them 0000d67c, 000081f8, 00004b80 and 00005e78 for Weapons_LoadResourceTables (0000bf48), Bullet_LoadResources (00007bb0), Base_LoadResources (000046ac) and Explosion_LoadResources (00005764) at phase 2. ES2's RegisterSubsystemLoader (DBSIM 00401d64).",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
+      "verified": {
+        "bytes": "00000ac4+47",
+        "sha1": "c4d4879ed855",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00000af4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -377,6 +392,81 @@
       }
     },
     {
+      "address": "000046ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Base_LoadResources",
+      "description": "No arguments: reads dat\\bforms (severity-5 assert, base.cpp line 0x270, when the stream status is set), an int16 count to 000bc18e and that many 0x38-byte records into a __vec_new array at 000bc190; opens dat\\bases (line 0x27b), reads its int16 count to 000bc188, builds that many 0x3e-byte records at g_BaseTypeTable (000bc18a) and count * 6 bytes at 000bc194, and reads 0x36 bytes into each record, setting its +0x3a to the type's 6-byte slot at 000bc194 when +0x06 is non-zero and to 0 when not; opens dat\\basecol (line 0x296) and calls 000094f0(slot, stream) for every type; keeps the greatest +0x02 plus one of the types with +0x06 zero at 000bc174 and of the others at 000bc16a, and the greatest +0x04 plus one at 000bc17e; loads dgs\\bhulks with Shape_LoadAllRoots (tag 0x2bc0001) into 000bc180; allocates zeroed pointer arrays of 000bc174 entries at 000bc176 and 000bc17a and of 000bc16a entries at 000bc16c and 000bc170; and when g_LowMemory (000bda98) is 0 loads dba\\basetex into 000bc184. A phase-2 loader. ES2's Base_LoadResources (DBSIM 00405fac), which also reads dat\\lc_wpns and reads BASES.DAT field by field with its component arrays.",
+      "source": "Herculan/docs/es1/formats/bases-dat.md#the-load",
+      "verified": {
+        "bytes": "000046ac+995",
+        "sha1": "674cf7ea492b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005734",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Explosion_GetTypeRecord",
+      "description": "(effect), callee-cleaned: returns g_ExplosionTypeTable (000bc1b0) + the signed type byte at effect+0x3b * 0x2c. ES2's Explosion_GetTypeRecord (DBSIM 00407b20), whose rows are 0x28 bytes.",
+      "source": "Herculan/docs/es1/formats/explos-dat.md#the-row",
+      "verified": {
+        "bytes": "00005734+25",
+        "sha1": "617ae9007dd0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005750",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ExplosionPool_FlushDeletes",
+      "description": "No arguments: ObjectPool_FlushDeleteQueue(000aee8c, g_ExplosionPool (000aee88)). Registered at phase 5 by the static initialiser at 00005e78. ES2's ExplosionPool_FlushDeletes (DBSIM 00407b3c).",
+      "source": "Herculan/docs/es1/formats/explos-dat.md#construction",
+      "verified": {
+        "bytes": "00005750+17",
+        "sha1": "518f9decc273",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005764",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Explosion_LoadResources",
+      "description": "No arguments: g_ExplosionPool (000aee88) = Pool_Init(0, 0x51, 0x28); loads dba\\explo0 to dba\\explo8 with ClassItem_LoadFromFile into a 9-pointer array at 000bc1bc, from the template 'explo666' (000907f4) with the index written by ltoa from its sixth character; opens dat\\explos (severity-5 assert, explo.cpp line 0x3f, when the stream status is set), reads the int16 count to 000bc1b4 and count * 0x2c bytes into g_ExplosionTypeTable (000bc1b0), and keeps the greatest row +0x00 plus one at 000bc1ba; loads dts\\explos with Shape_LoadAllRoots (tag 0x140008) into g_ExplosionShapes (000bc1b6); then for rows 0 to the root count less one stores bank[row +0x04] in the +0x26 of root[row +0x00]. A phase-2 loader. ES2's Explosion_LoadResources (DBSIM 00407b54), which loads fifteen banks (thirteen in low memory) and reads a separate shape table before 0x28-byte rows.",
+      "source": "Herculan/docs/es1/formats/explos-dat.md#the-load",
+      "verified": {
+        "bytes": "00005764+474",
+        "sha1": "1ed1b829248b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005af0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Explosion_Construct",
+      "description": "(effect, point, typeId) in stack order, callee-cleaned: when effect is null allocates it from g_ExplosionPool (000aee88), returning 0 when that fails; TSObj_Ctor on the root g_ExplosionShapes (000bc1b6) [row +0x00], vptr 00090822, type byte +0x3b = typeId; type tag 2 when row +0x2a is 0, else 8; frame countdown +0x45 = row +0x06; when row +0x02 is not negative zeroes that sequence's frame counter in the shape instance; copies the point into the frame; when row +0x08 is non-zero builds a ground shape from the pool 000af044 on root 1 of the array at 000bc1d8, vptr 000908a2, at the point, into +0x49 (else 0); when row +0x0a is non-zero stores 000054b0(0, the dword at row +0x0c, point) at +0x4d (else 0); then Sound_PlayAt(point, row +0x28 + 10). ES2's Explosion_Construct (DBSIM 00407f1c), which also takes an owner and a play-sound flag and plays only a non-negative id.",
+      "source": "Herculan/docs/es1/formats/explos-dat.md#construction",
+      "verified": {
+        "bytes": "00005af0+437",
+        "sha1": "91f8f2ff5af0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00006cf8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -387,6 +477,66 @@
       "verified": {
         "bytes": "00006cf8+87",
         "sha1": "e25566cb8d96",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00007b94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bullet_GetTypeRecord",
+      "description": "(round), callee-cleaned: returns g_BulletTypeTable (000bc1f6) + the signed type byte at round+0x3b * 10. ES2's Bullet_GetTypeRecord (DBSIM 0040adc0), whose records are 14 bytes.",
+      "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#datbulletsdat",
+      "verified": {
+        "bytes": "00007b94+27",
+        "sha1": "721c9dda68dd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00007bb0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bullet_LoadResources",
+      "description": "No arguments: opens dat\\bullets (severity-5 assert, bullet.cpp line 0x29, when the stream status is set), reads the int16 count to 000bc1fa and count * 10 bytes into g_BulletTypeTable (000bc1f6), and keeps the greatest record +0x00 plus one at 000bc200; loads dts\\bullets with Shape_LoadAllRoots (tag 0x140008) into 000bc1fc and dba\\bullets with ClassItem_LoadFromFile, and stores that bank in every root's +0x26. A phase-2 loader. ES2's Bullet_LoadResources (DBSIM 0040ade0), whose records are 14 bytes and which packs the bank into an atlas.",
+      "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load",
+      "verified": {
+        "bytes": "00007bb0+343",
+        "sha1": "8040950cf6d8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00007d08",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bullet_Construct",
+      "description": "(round, id) in stack order, callee-cleaned: when round is null allocates it from the pool 000af0b4, returning 0 when that fails; TSObj_Ctor on the root 000bc1fc [record +0x00], type tag 3, type byte +0x3b = id, vptr 00090c32 then 00090c56; +0x48 = Proj_LookupRecord(id, 2); the frame countdown at +0x53 = record +0x06. ES2's Bullet_Construct (DBSIM 0040af6c), which keeps the record at +0x4e and the countdown at +0x59.",
+      "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load",
+      "verified": {
+        "bytes": "00007d08+180",
+        "sha1": "99111384680f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00008e00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ReadSphereArray",
+      "description": "(cluster, stream) in stack order, callee-cleaned: reads the int16 sphere count into cluster+0; when the read succeeds and count * 8, as an int16, is non-zero, builds count 8-byte spheres with __vec_new into cluster+2 and reads that many bytes into them. ES2's Collision_ReadSphereArray (DBSIM 0040c7c4), which tests count & 0x1fff.",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
+      "verified": {
+        "bytes": "00008e00+102",
+        "sha1": "c407eba355c8",
         "scope": "body",
         "via": "decompile"
       }
@@ -407,6 +557,36 @@
       }
     },
     {
+      "address": "0000938c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ReadCluster",
+      "description": "(cluster, stream) in stack order, callee-cleaned: reads the int16 component index into cluster+6 and, when that read succeeds, the spheres with Collision_ReadSphereArray (00008e00). ES2's Collision_ReadCluster (DBSIM 0040cc14).",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
+      "verified": {
+        "bytes": "0000938c+60",
+        "sha1": "ae2697d83572",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009890",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercPiece_ReadRecord",
+      "description": "(piece, stream) in stack order, callee-cleaned: reads 8 bytes into piece+0 and, when the int16 dependent count at +6 is non-zero, operator new of count * 4 bytes into +8 and that many bytes into it. ES2's HercPiece_ReadRecord (DBSIM 0040cff8).",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
+      "verified": {
+        "bytes": "00009890+85",
+        "sha1": "c0e7a9035ffa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00009a9c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -422,6 +602,21 @@
       }
     },
     {
+      "address": "0000bb8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMountTemplate_ReadRecord",
+      "description": "(template, stream) in stack order, callee-cleaned: HercPiece_ReadRecord (00009890) into +0, Collision_ReadCluster (0000938c) into +0x12, 0x30 bytes into +0x22, then 0 into +0x48. ES2's WeaponMountTemplate_ReadRecord (DBSIM 0040f8bc).",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
+      "verified": {
+        "bytes": "0000bb8c+71",
+        "sha1": "27ea2671c089",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000befc",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -432,6 +627,51 @@
       "verified": {
         "bytes": "0000befc+75",
         "sha1": "3ee15eb6e4d3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000bf48",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Weapons_LoadResourceTables",
+      "description": "No arguments: when g_LowMemory (000bda98) is 0 loads dba\\wpntex into 000af1f0; loads dts\\mechwpn2 (dts\\mwpn2b in low memory) with Shape_LoadAllRoots (tag 0x140008) into 000bc2c8, the count to 000bc2cc, and stores the wpntex bank in every root's +0x26; opens dat\\weapons (severity-5 assert, gunlist.cpp line 0xdd, when the stream status is set); sets the count 000bc2c6 to 0x11 and builds 0x11 records of 0x58 bytes at 000bc2c2 with __vec_new and WeaponMountTemplate_Ctor (0000c0b4); for each, WeaponMountTemplate_ReadRecord (0000bb8c), +0x52 = the name pointer from the table at 000911fc and +0x56 = the index; then reads 0x2ac bytes into a new ProjDat_RecordTable (000bc2ce). A phase-2 loader. ES2's Weapons_LoadResourceTables (DBSIM 0040fc8c), which reads the template count from the file and the projectile records from dat\\proj.",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
+      "verified": {
+        "bytes": "0000bf48+362",
+        "sha1": "46f2a1367f79",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000c0b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMountTemplate_Ctor",
+      "description": "(template), callee-cleaned: when template is null allocates 0x58 bytes, returning 0 when that fails; runs the empty constructors of its members at +0x12, +0x1a, +0x40 and +0x46, and returns it. The element constructor Weapons_LoadResourceTables (0000bf48) hands __vec_new.",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
+      "verified": {
+        "bytes": "0000c0b4+195",
+        "sha1": "3e69de8b73f8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000c178",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMountTemplate_GetByWeaponId",
+      "description": "(weaponId), callee-cleaned: returns weaponId * 0x58 + the template array at 000bc2c2. ES2's WeaponMountTemplate_GetByWeaponId (DBSIM 0040fe84).",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-projectile-index",
+      "verified": {
+        "bytes": "0000c178+17",
+        "sha1": "82613d05e5df",
         "scope": "body",
         "via": "decompile"
       }
@@ -477,6 +717,51 @@
       "verified": {
         "bytes": "0000c1d0+161",
         "sha1": "772c572f19b5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000c2bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Proj_LookupRecordByIndex",
+      "description": "(index), callee-cleaned: returns index * 0x24 + ProjDat_RecordTable (000bc2ce). ES2's Proj_LookupRecordByIndex (DBSIM 0040ffb0).",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-projectile-lookups",
+      "verified": {
+        "bytes": "0000c2bc+17",
+        "sha1": "e6c6cc394140",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000c2d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Proj_LookupRecord",
+      "description": "(subtypeId, type) in stack order, callee-cleaned: returns the first of the 0x24-byte records 0 to 0x12 at ProjDat_RecordTable (000bc2ce) whose int16 +0 is type and +2 is subtypeId, or 0. ES2's Proj_LookupRecord (DBSIM 0040ffc8), which takes (type, subtypeId) and bounds the search by the file's count.",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-projectile-lookups",
+      "verified": {
+        "bytes": "0000c2d0+75",
+        "sha1": "ad5c1c9e79dc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000c31c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MechLoadout_ConstructWeaponMounts",
+      "description": "(manager, owner, ammoTypes, weaponIds, hardpoints, count, extra) in stack order, callee-cleaned: when manager is null allocates its 0x14 bytes; vptr 000912f2 at +0x10, the count at +4, an array of count mount pointers at +0; inside Arena_Push/Arena_Pop, for each 0x1a-byte hardpoint record, takes weaponIds and ammoTypes at the record's byte +0x17, a negative weapon id becoming 0x11; id 0x11 stores no mount. Otherwise the template WeaponMountTemplate_GetByWeaponId (0000c178)'s +0x3e picks the projectile record: 0x15 gives Proj_LookupRecord(ammo type, 5 rewritten to 0, 0), 0x14 none, any other value Proj_LookupRecordByIndex (0000c2bc). The switch on the id allocates from the arena 000bd954 and constructs: ids 0-2, 9-11 and 16, 0x81 bytes with 0000a9e4; id 3, 0x82 bytes with 0000a84c then vptr 00091302; ids 4, 6-8, 12, 14 and 15, 0x7f bytes with 0000a84c; id 5, 0x85 bytes with 0000a9e4 then vptr 00091376; id 13, 0x7f bytes with 0000ab50, given no projectile record. The constructors take (mount, owner, projectile record, template, hardpoint, extra), 0000ab50 without the record. ES2's MechLoadout_ConstructWeaponMounts (DBSIM 0040fff8), whose sentinels are 0x21 and 0x22.",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-projectile-index",
+      "verified": {
+        "bytes": "0000c31c+671",
+        "sha1": "a7b43aa416c0",
         "scope": "body",
         "via": "decompile"
       }
@@ -752,12 +1037,57 @@
       }
     },
     {
+      "address": "0001c678",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlyerType_RecordIndex",
+      "description": "(type), callee-cleaned: returns the byte at 000bc466 + type, the type's record index, 0xff when it has none. ES2's FlyerType_RecordIndex (DBSIM 00422e80).",
+      "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load-1",
+      "verified": {
+        "bytes": "0001c678+15",
+        "sha1": "8b19fccfb0b8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001c688",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlyerType_Register",
+      "description": "(type), callee-cleaned: when FlyerType_RecordIndex (0001c678) gives 0xff, stores the flyer type count 000bc464 as the type's record index and increments it, then DmgTable_Reserve(1) and CollisionTable_Reserve(1). ES2's FlyerType_Register (DBSIM 00422e90).",
+      "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load-1",
+      "verified": {
+        "bytes": "0001c688+64",
+        "sha1": "6ce633f9f2f4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001c6c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlyerType_LoadResources",
+      "description": "(type), callee-cleaned: with the name from the table at 000bc468 and the 0x2e-byte record at 000bc46c + FlyerType_RecordIndex (0001c678) * 0x2e: Ovl_ReadFile(dat\\<name>, 1, 0x22, record); Shape_LoadDts(dts\\<name>) into +0x2a, the shape's +0x26 = the dba\\enemy bank at 000bc45c; 00009a2c(dmg\\<name>) into +0x22; 00009580(col\\<name>) into +0x26. ES2's FlyerType_LoadResources (DBSIM 00422ed0), which reads 0x2e bytes into a 0x70-byte record, writes a fixed bank-slot address and reads fm\\<name>.",
+      "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load-1",
+      "verified": {
+        "bytes": "0001c6c8+168",
+        "sha1": "d39ec51a696c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0001c770",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "FlyerTypes_LoadAll",
-      "description": "No arguments: when the int16 flyer type count 000bc464 is non-zero, LoadNameList(10, 0x52, 0, 'flyers') in stack order into 000bc468; operator new of count * 0x2e bytes into 000bc46c, with no element constructor; then for type numbers 0 and 1 whose 0001c678(type) is not 0xff, 0001c6c8(type). ES2's FlyerTypes_LoadAll (DBSIM 00422fb4), which builds 0x70-byte records with an element constructor and walks 0x22 type numbers.",
+      "description": "No arguments: when the int16 flyer type count 000bc464 is non-zero, LoadNameList(10, 0x52, 0, 'flyers') in stack order into 000bc468; operator new of count * 0x2e bytes into 000bc46c, with no element constructor; then for type numbers 0 and 1 whose FlyerType_RecordIndex (0001c678)(type) is not 0xff, FlyerType_LoadResources (0001c6c8)(type). ES2's FlyerTypes_LoadAll (DBSIM 00422fb4), which builds 0x70-byte records with an element constructor and walks 0x22 type numbers.",
       "source": "Herculan/docs/es1/formats/nam-name-list.md#mod-lists",
       "verified": {
         "bytes": "0001c770+84",
@@ -5722,7 +6052,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shape_LoadDts",
-      "description": "(name), callee-cleaned: Arena_Push, Palette_LoadFromFile on Path_WithExtension('dts' at 00098114, name), Arena_Pop, and returns the object. es2_xref finds one call, from 0001c6c8. ES2's Shape_LoadDts (DBSIM 00474b2c), whose arena is 200000 bytes.",
+      "description": "(name), callee-cleaned: Arena_Push, Palette_LoadFromFile on Path_WithExtension('dts' at 00098114, name), Arena_Pop, and returns the object. es2_xref finds one call, from FlyerType_LoadResources (0001c6c8). ES2's Shape_LoadDts (DBSIM 00474b2c), whose arena is 200000 bytes.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "0006351c+51",
@@ -9209,6 +9539,15 @@
       "source": "Herculan/docs/es1/formats/dts-shape.md"
     },
     {
+      "address": "000aee88",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ExplosionPool",
+      "description": "The impact-effect pool, Pool_Init(0, 0x51, 0x28) in Explosion_LoadResources (00005764): 40 effects of 0x51 bytes. ES2's g_ExplosionPool.",
+      "source": "Herculan/docs/es1/formats/explos-dat.md#the-load"
+    },
+    {
       "address": "000af26c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -9486,6 +9825,51 @@
       "name": "Poly_ScreenCount",
       "description": "The ring's point count (uint16), set by the projectors and the near-plane clips. ES2's DBSIM 006cbc86.",
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000bc18a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_BaseTypeTable",
+      "description": "Pointer to the 0x3e-byte structure type records Base_LoadResources (000046ac) builds and reads dat\\bases into; the count is the int16 at 000bc188.",
+      "source": "Herculan/docs/es1/formats/bases-dat.md#the-load"
+    },
+    {
+      "address": "000bc1b0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ExplosionTypeTable",
+      "description": "Pointer to dat\\explos's 0x2c-byte rows, read by Explosion_LoadResources (00005764); the count is the int16 at 000bc1b4. ES2's g_ExplosionTypeTable, of 0x28-byte rows.",
+      "source": "Herculan/docs/es1/formats/explos-dat.md#the-load"
+    },
+    {
+      "address": "000bc1b6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ExplosionShapes",
+      "description": "Pointer to dts\\explos's root array, loaded by Explosion_LoadResources (00005764). ES2's g_ExplosionShapes.",
+      "source": "Herculan/docs/es1/formats/explos-dat.md#the-load"
+    },
+    {
+      "address": "000bc1f6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_BulletTypeTable",
+      "description": "Pointer to dat\\bullets's 10-byte records, read by Bullet_LoadResources (00007bb0); the count is the int16 at 000bc1fa.",
+      "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load"
+    },
+    {
+      "address": "000bc2ce",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ProjDat_RecordTable",
+      "description": "Pointer to the 19 0x24-byte projectile records Weapons_LoadResourceTables (0000bf48) reads from the end of dat\\weapons. ES2's ProjDat_RecordTable, read from dat\\proj.",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load"
     },
     {
       "address": "000bc42e",

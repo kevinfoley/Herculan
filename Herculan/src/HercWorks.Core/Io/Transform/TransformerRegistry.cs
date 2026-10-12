@@ -140,6 +140,15 @@ public static class TransformerRegistry {
 		// do not share, so ES1's matches the dat\ files of the names ES1's nam\MECHS.NAM lists.
 		[HercSimDataLabel] = new(() => new Dbsim.Es1HercSimDataTransformer(),
 			e => DirIs(e, FileType.Dat) && IsEs1ChassisFile(e)),
+		// docs/es1/formats/weapons-dat-sim.md: 17 templates and no count, then ES1's 19 PROJ.DAT records.
+		["Weapon Mount Templates"] = new(() => new Dbsim.Es1WeaponsSimTransformer()),
+		// docs/es1/formats/bullets-skimmer-dat.md: 10-byte records where ES2's are 14.
+		["Bullet Data"] = new(() => new Dbsim.Es1BulletDataTransformer()),
+		["Flyer Sim Data"] = new(() => new Dbsim.Es1FlyerSimDataTransformer()),
+		// docs/es1/formats/bases-dat.md: fixed 54-byte records, no components.
+		["Structure Types"] = new(() => new Dbsim.Es1BasesDatTransformer()),
+		// docs/es1/formats/explos-dat.md: one table of 44-byte rows, ES2's shape table folded into them.
+		["Explosion Types"] = new(() => new Dbsim.Es1ExplosionDataTransformer()),
 	};
 
 	/// <summary>Whether the entry is one of the sixteen chassis files ES1's <c>nam\MECHS.NAM</c> names (docs/es1/formats/chassis-dat.md#which-files).</summary>
