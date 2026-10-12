@@ -2,7 +2,7 @@
 
 **ES1 colours a shape's faces without ES2's lighting table (`.RMP`).** A flat face draws its colour as it is; a shaded face picks an entry along a colour ramp by how much light falls on it; a Gouraud face fills bands between the ramp entries its corners pick; a textured face maps a whole bitmap onto its four corners and darkens it through one of eight colour tables. Nothing fades with depth. What changes a shape's colours with distance is the ramps themselves, which the theater's distance bands re-point before each object is drawn, and an object beyond the last band is not drawn at all. Addresses are `ES1DBSIM` image addresses ([`../formats/x32-executable.md`](../formats/x32-executable.md#the-image)); ES2's are DBSIM's.
 
-The poly types and their surface pairs are ES2's ([poly types](../../retail/rendering/dts-texture-binding.md#poly-types-and-their-colour-mechanisms-dbsimexe)): each renderer runs `TSPoly_FrontBackVisibilityTest` and takes the front pair (fill, line) or the back pair, the three flat types draw nothing when both chosen entries carry `0x14` in their top byte, and the textured type tests for −1. Each surface entry is the file's `{int16 value, int16 flag}` read as one `int32`, the flag in the high half. A face's light is `Light_ComputeShadeForFace` (`0005bc30`), 0 to 255, ES2's ([two shade calculations](../../retail/rendering/dts-texture-binding.md#two-shade-calculations--terrain-and-shapes-use-different-ones)), with the stored normal negated for a face seen from behind. Projection, near-plane clipping and the fill-then-outline pass are ES2's ([`view-transform-and-projection.md`](view-transform-and-projection.md)).
+The poly types and their surface pairs are ES2's ([poly types](../../retail/rendering/dts-texture-binding.md#poly-types-and-their-colour-mechanisms-dbsimexe)): each renderer runs `TSPoly_FrontBackVisibilityTest` and takes the front pair (fill, line) or the back pair, the three flat types draw nothing when both chosen entries carry `0x14` in their top byte, and the textured type tests for −1. Each surface entry is the file's `{int16 value, int16 flag}` read as one `int32`, the flag in the high half. A face's light is `Light_ComputeShadeForFace` (`0005bc30`), 0 to 255, ES2's ([two shade calculations](../../retail/rendering/dts-texture-binding.md#two-shade-calculations--terrain-and-shapes-use-different-ones)) over ES1's own [lights](#the-lights), with the stored normal negated for a face seen from behind. Projection, near-plane clipping and the fill-then-outline pass are ES2's ([`view-transform-and-projection.md`](view-transform-and-projection.md)).
 
 ## The colour ramps
 
@@ -77,6 +77,43 @@ The shapes that stand on a zone ([`../formats/zone-terrain.md`](../formats/zone-
 
 So a theater shape's lit faces all shade along ramp 14, a single entry in every theater palette (255 in `WORLD0` and `WORLD1`), which the [distance bands](#the-zone-shapes) re-point for each shape before it is drawn; its flat faces draw their palette index unchanged at any distance.
 
+## The lights
+
+**A shape's faces are lit by one fixed sun, the same in every mission and theater, and by the flashes of impact effects near the shape; there is no ambient light.** A face's light sums the lights in `Light_ActiveList` (`000bdba6`) while it draws. `Light_Register` (`0005ba84`) has four callers, ES2's four ([ES2's effect lights](../../retail/rendering/effect-lights.md)): the mission's sun, `Light_ReregisterPersistent`, and the effect light manager's two getters.
+
+### The sun
+
+`Light_CreateMissionSun` (`0005a888`), which `Sim_StartMission` calls once (`0005ad1f`), after its call of `Light_ResetSystem` (`0005abb3`) has emptied the list, is ES2's ([ES2's sun](../../retail/rendering/terrain-lighting.md#the-sun)) with other constants:
+
+1. it allocates a `0x34`-byte light, `TSLight`'s vtable `000972b6` and then `TSSunLight`'s `000972ca` at `+0x12`, type 1 at `+0x16`, and sets its intensity `+0x1a` to `0x100` through the vtable's `+8`, `maybe_TSLight_SetIntensity`;
+2. it stores at `+0xc`, three `int16`, the direction `RotateVectorByMatrixQ14((0, 0x800, 0), BuildEulerRotationMatrixQ14(−8000, 0, 24000))`, where ES2's rotates (0, `0x1000`, 0) by (−6000, 0, 21000);
+3. it calls `Light_Register` and `Light_AddPersistent` (`00005608`), which appends the light to the list at `000bc1a0`, its `int16` count at `000907f2`, with no bound.
+
+Rotating (0, *L*, 0) takes the matrix's middle column alone: (*L* · *m* + `0x2000`) >> 14 of each of *m*₂ = −cos X · sin Z, *m*₃ = cos X · cos Z and *m*₅ = sin X, the matrix's entries in Q14 from the quarter-wave table at `000981cc`. X = −8000 is −43.9° and Z = 24000 is 131.8°, so the entries are −8789, −7869 and −11370 and the direction is (−1099, −984, −1421): (−0.537, −0.480, −0.694) at length 2048 in the Z-up world, the way the light travels. It falls at 44° from the vertical, where ES2's falls at 57°. No mission, world or palette file enters it.
+
+### A face's light
+
+`Light_ComputeShadeForFace` (`0005bc30`) adds, for a directional light, −(intensity · *v*) >> 22 when *v* = (normal · direction − `0x400000`) >> 1 is negative, and clamps the sum to 255 ([ES2's terms](../../retail/rendering/dts-texture-binding.md#two-shade-calculations--terrain-and-shapes-use-different-ones)); `DotProductVec3Short` (`000660bf`) is the plain sum of the three `int16` products. The direction it reads is the light's model-space copy `+0x2a`, which `Raster_SetModelTransform` rebuilds for each shape it draws ([`view-transform-and-projection.md`](view-transform-and-projection.md)), so a shape's heading turns its faces against the sun. With the sun alone:
+
+```
+dot   = normal · (−1099, −984, −1421)          in world axes
+v     = (dot − 0x400000) >> 1
+shade = min(255, −((0x100 · v) >> 22))        the shifts are arithmetic, so the shade rounds up
+```
+
+For a normal of length `0x800`, the length ES2's shapes store ([normals](../../retail/rendering/dts-texture-binding.md#normals-live-in-the-point-list)), dot is `0x400000` · cos, cos between the normal and the way the light travels, and the shade is 128 · (1 − cos) rounded up: 128 + 128 · *facing* with *facing* = −cos. A face turned straight away from the sun is 0, one edge-on to it 128, one pointing straight up 217, and only a face within about 10° of facing the sun reaches 255. ES2's sun, twice as long, gives 128 + 256 · *facing*, at 255 for every face within 60° of the light.
+
+### Effect lights
+
+ES1's effect light manager is ES2's ([the manager](../../retail/rendering/effect-lights.md#the-manager--dat_004a968c)), with the same falloff and selection, the singleton at `000bc19c`:
+
+- **The set-up.** `LightManager_RegisterSubsystem` (`000056f0`) registers `LightManager_InitSubsystem` (`000055b8`) at phase 2 and `EffectLightPool_FlushDeletes` (`000055f4`) at phase 5 with `RegisterSubsystemLoader`. The init builds the manager with `LightManager_Construct` (`00004bb8`), whose own `LightManager_SetFalloffConstants` (`00004da8`) call passes 3000 and 2000, calls the setter again with 2000 and 10, in stack order, so that A = 10 >> 5 = 0 and B = 2000 >> 5 = 62 as in ES2, stores 10000 at `+0xc`, and builds the handle pool `Pool_Init(0, 8, 3)` at `000aee18`: three handles of 8 bytes, where ES2's are `0xe`. `Sim_StartMission` also calls the flush (`0005acca`).
+- **The lights it makes.** The manager's embedded light at `+0x328` is a `TSAmbientLight` (vtable `0009077a`, type 0); `Light_GetOrCreateDirectional` (`000052a4`) makes `TSSunLight`s (`0009078e`, type 1, `0x34` bytes) and `Light_GetOrCreatePoint` (`0000537c`) `TSOmniLight`s (`000907a2`, type 2, `0x40` bytes). A directional light's direction goes to `+0xc` and a point light's position to `+0`, the fields of ES1's [light layout](view-transform-and-projection.md#differences-from-es2).
+- **Claiming a slot.** When the effect's `EXPLOS.DAT` row has a non-zero light mode, `Explosion_Construct` calls `EffectLight_Construct` (`000054b0`) with the row's `int16` at `+0x0c`, the first step of its intensity ramp ([`../formats/explos-dat.md`](../formats/explos-dat.md#construction)), and `00005d74` passes `EffectLight_SetIntensity` (`00005578`) the low byte of an entry of that ramp.
+- **Per object.** `ObjList_DrawFrameObjects` stores the camera's position in the manager (`LightManager_SetCameraPosition`, `00004f60`), where ES2's `Sim_RenderFrame` does, and [`ObjList_DrawEntryRender`](#the-frames-draw) calls `LightManager_SelectLightsForObject` (`00004f78`) before each object, with the entry's position and radius; it measures each slot's distance with `Point3I_DistanceBetween` (`00064698`), `Math_FastMagnitude3D` of the difference.
+
+A zone shape is drawn through the object list ([below](#which-objects-are-drawn)), so it takes the sun and any effect light within a slot's cull radius of it.
+
 ## Which objects are drawn
 
 **Each frame the simulator draws the zone's shapes and every live machine, effect and projectile from one list, farthest first, recolouring each by its distance and leaving out what lies past the theater's last distance band.** An object's type tag is its `int16` at `+0`, its vptr at `+2`; its vtable's `+4` slot draws it, `+8` returns its position (three `int32`), and `+0x14` returns the radius the bands read.
@@ -95,15 +132,16 @@ So a theater shape's lit faces all shade along ramp 14, a single entry in every 
 
 `ObjList_DrawFrameObjects` (`00021008`), given a blend byte and the camera, draws a frame's objects. `Sim_RenderFrame` passes the byte at `000b5b65`, `000364f8` passes 0. It:
 
-1. calls slot `+4` of every element of the ground-shape pool `000af044` ([the ground-shape set](../formats/wld-world.md#the-ground-shape-set)) within 30000 of the camera by `Math_DistanceBetweenPoints`, walking it back from the end with `Pool_Prev`;
-2. stores the blend byte at `000afa98`;
-3. for each of the `00092558` objects in the list, but the one the camera rides in (`Camera_IsMountedOn`, `000003ac`: the camera's `+0x36` is 2 and its `+0x32` is the object) and one whose position's z (slot `+8`, `+8`) is negative, fills the next `0x36`-byte entry: the position at `+0`, the radius (slot `+0x14`) as an `int16` at `+0xc`, the distance from the camera at `+0xe`, the object at `+0x32`, and 0 at `+0x12`. For an object below `000bc596`, a zone shape, whose box `ZoneShapeObj_WorldBox` (`00020738`) returns ([the zone's shapes](../formats/zone-terrain.md#the-simulators-load)), it stores 2 at `+0x12` and the box's 24 bytes at `+0x18`;
-4. keeps the entry, in the list at `000bc59c`, only when `WorldShades_IsBeyondLastBand` (`00025f38`) is false for its distance;
-5. stores the camera at `0009256c` (`ObjList_SetSortEye`, `00021554`) and calls `ObjList_SortAndDraw` (`00021d04`) with the count and the list.
+1. stores the camera's position in the [light manager](#effect-lights) with `LightManager_SetCameraPosition` (`00004f60`);
+2. calls slot `+4` of every element of the ground-shape pool `000af044` ([the ground-shape set](../formats/wld-world.md#the-ground-shape-set)) within 30000 of the camera by `Math_DistanceBetweenPoints`, walking it back from the end with `Pool_Prev`;
+3. stores the blend byte at `000afa98`;
+4. for each of the `00092558` objects in the list, but the one the camera rides in (`Camera_IsMountedOn`, `000003ac`: the camera's `+0x36` is 2 and its `+0x32` is the object) and one whose position's z (slot `+8`, `+8`) is negative, fills the next `0x36`-byte entry: the position at `+0`, the radius (slot `+0x14`) as an `int16` at `+0xc`, the distance from the camera at `+0xe`, the object at `+0x32`, and 0 at `+0x12`. For an object below `000bc596`, a zone shape, whose box `ZoneShapeObj_WorldBox` (`00020738`) returns ([the zone's shapes](../formats/zone-terrain.md#the-simulators-load)), it stores 2 at `+0x12` and the box's 24 bytes at `+0x18`;
+5. keeps the entry, in the list at `000bc59c`, only when `WorldShades_IsBeyondLastBand` (`00025f38`) is false for its distance;
+6. stores the camera at `0009256c` (`ObjList_SetSortEye`, `00021554`) and calls `ObjList_SortAndDraw` (`00021d04`) with the count and the list.
 
 `ObjList_SortAndDraw` does nothing for a count of 0. Otherwise it builds a binary tree in the sort nodes (`{left, right, entry, byte}`), first inserting the entries with 1 or 2 at `+0x12` in list order (`ObjList_TreeInsertBoxed`, `00021bec`), then the rest (`ObjList_TreeInsertRest`, `00021c60`), each through `ObjList_TreeInsert` (`00021ba8`) from the root, which goes right when `ObjList_EntryCompare` (`00021b20`) returns non-zero and left otherwise. It then draws the tree in order, left subtree, node, right subtree (`ObjList_TreeDraw`, `00021cd0`), calling slot `+4` of each entry's vptr `+0x14`, `ObjList_DrawEntryRender`. `ObjList_EntryCompare`, given the new entry and a node: between two entries of kind 0 it returns whether the new entry is nearer, so nearer entries go right and are drawn later; between two of kind 1 or 2 it calls `00021a4c`, and otherwise `000216c4` ([Open](#open)).
 
-`ObjList_DrawEntryRender` (`00020f40`), whose address `00092562` holds, draws one entry: `00004f78` with `000bc19c` and the entry's position and `+0xc` value, `WorldShades_ApplyForObject` with the blend byte, the distance and the object, the object's slot `+4`, then `00005690` when the blend byte is set. ES2's (`ObjList_DrawEntryRender`, `0042876c`) also sets the depth fade from the entry's distance; ES1's sets none.
+`ObjList_DrawEntryRender` (`00020f40`), whose address `00092562` holds, draws one entry: `LightManager_SelectLightsForObject` (`00004f78`) with the manager `000bc19c` and the entry's position and `+0xc` radius as four `int32`, `WorldShades_ApplyForObject` with the blend byte, the distance and the object, the object's slot `+4`, then, when the blend byte is set, `Light_ReregisterPersistent` (`00005690`), which passes each light of `Light_AddPersistent`'s list to `Light_Register` again; `Light_Register` refuses a light already in the list. Two later steps, on the bytes `000afa45` and `0009255a`, are [Open](#open). ES2's (`ObjList_DrawEntryRender`, `0042876c`) also sets the depth fade from the entry's distance; ES1's sets none.
 
 ### The distance bands
 
@@ -161,6 +199,15 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 | ES1 | Address | Notes |
 |---|---|---|
 | `Camera_IsMountedOn` | `000003ac` | |
+| `LightManager_Construct`, `TSLight_DtorCopy`, `TSAmbientLight_Dtor` | `00004bb8`, `00004d30`, `00004d68` | the light destructors are slot `+4` of their vtables, `00090766`, `0009077a`, `0009078e`, `000907a2`, `000972b6` and `000972ca` |
+| `LightManager_SetFalloffConstants`, `LightManager_SetSlotFalloff`, `LightManager_ClaimSlot`, `LightManager_ReleaseSlot` | `00004da8`, `00004dc8`, `00004dfc`, `00004e84` | |
+| `LightManager_SetSlotPosition`, `LightManager_SetSlotIntensity`, `LightManager_SetCameraPosition`, `LightManager_SelectLightsForObject` | `00004f14`, `00004f34`, `00004f60`, `00004f78` | |
+| `LightManager_RecomputeCullRadius`, `Light_GetOrCreateDirectional`, `TSSunLight_DtorCopy` | `00005274`, `000052a4`, `0000533c` | |
+| `Light_GetOrCreatePoint`, `TSOmniLight_Dtor`, `LightManager_RecycleLight` | `0000537c`, `0000540c`, `0000544c` | |
+| `EffectLight_Construct`, `EffectLight_Destruct`, `EffectLight_SetIntensity`, `EffectLight_SetPosition` | `000054b0`, `00005534`, `00005578`, `00005598` | `EffectLight_Destruct` is slot `+0xc` of the handle's vtable `000907d6` |
+| `LightManager_InitSubsystem`, `EffectLightPool_FlushDeletes` | `000055b8`, `000055f4` | |
+| `Light_AddPersistent`, `Light_RemovePersistent`, `Light_ReregisterPersistent`, `Light_UnregisterPersistent` | `00005608`, `00005628`, `00005690`, `000056c0` | |
+| `LightManager_RegisterSubsystem`, `LightManager_StaticDtor` | `000056f0`, `0000571c` | the static initialiser and its exit routine |
 | `ZoneShapeObj_WorldBox` | `00020738` | |
 | `ObjList_Init`, `ObjListEntry_Ctor` | `00020c2c`, `00020c80` | `ObjList_Init` passes `__vec_new` the padding entry `00020c7f` before the constructor |
 | `ObjList_Add`, `ObjList_Remove`, `ObjList_RebuildFrame` | `00020d5c`, `00020d84`, `00020de0` | |
@@ -175,22 +222,27 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 | `Palette_UnpackColour`, `Palette_BuildTextureShadeTables` | `00028afc`, `00028b28` | |
 | `TSSolidPoly_Render`, `TSTexture4Poly_Render` | `0005403c`, `0005410c` | |
 | `TSShadedPoly_Render`, `TSGouraudPoly_Render` | `000543e4`, `00054578` | |
-| `Colour_Distance` | `000644c8` | |
-| `Sim_Main`, `Sim_StartMission` | `00059350`, `0005a9dc` | |
+| `Sim_Main`, `Light_CreateMissionSun`, `TSLight_Dtor`, `TSSunLight_Dtor` | `00059350`, `0005a888`, `0005a964`, `0005a99c` | |
+| `Sim_StartMission` | `0005a9dc` | |
+| `Point3I_DistanceBetween`, `Colour_Distance` | `00064698`, `000644c8` | |
+| `DotProductVec3Short`, `DotProductVec3Int` | `000660bf`, `000660f2` | the light terms' dot products, for the `int16` normal and direction and for the `int32` displacement |
 | `Raster_SetColourRamps`, `Raster_GetColourRamps`, `Palette_UploadWhole` | `000691f8`, `00069227`, `0006931c` | |
 | `Raster_DriverByName`, `Raster_BlitDispatch` | `0006a714`, `0006a8e0` | `Raster_BlitDispatch`: [the skyline's blit](ground-and-sky.md#the-horizon-skyline) |
 | `Raster_FindDriverTable`, `Raster_InstallDriverTable` | `00073234`, `0007324e` | |
 | `VGA8_BlitBitmap`, `BMP8_BlitBitmap` | `0008b9a8`, `0008d700` | |
+| `RotateVectorByMatrixQ14` | `0007586c` | |
 
 ## Open
 
 - **Open:** what a `TSShadedPoly` with a flag of 0, whose fill reaches the span routine as a palette index with the light in bits 16–23, draws, and which flags the shapes outside the theater libraries (`dts\`, `dgs\` other than the four) carry on their shaded, solid and Gouraud faces.
 - **Open:** what brush mode 7 does with the texture's colour table: `Raster_DrawPolygonDispatch` hands it to the routine at `0009df58`, entry `+0x84` of the active [display driver's table](#the-display-drivers), `0008ab80` for `VGA_4`, `000534ac` for `VGA_8` and `0008e22c` for `BMP_8`.
 - **Open:** the `TSAlias*Poly` renderers `00054c9c`, `00054d6c` and `00054f00`.
-- **Open:** what `00004f78`, `00004f60` and `00005690` do: the object's transform, and what the blend byte adds after a draw.
+- **Open:** what `ObjList_DrawEntryRender` does after the draw while the byte `000afa45` is set (the display driver's routines at `0009dee4` and `0009dee8` on the block at `000afa48`), and while `0009255a` is set, for the object at `000afa88` (`00021403`).
 - **Open:** how `ObjList_EntryCompare` orders an entry with a box against another (`00021a4c`, `000216c4`), and so where a zone shape falls in the draw order among the machines and effects.
 - **Open:** what the blend byte `000b5b65` is set to, and `000280e4` (matched to ES2's `Palette_SetRampsToRangeList`), which the blend path calls.
 - **Open:** which classes carry type tags 1 to 9 in ES1: what the array at `000bc416` and the pools `000af0b4`, `000aeef8` and `000aef68` hold, and what each one's constructor stores at `+0`; and what sets the record array at `00092c34`.
 - **Open:** what `00036c2c` and `00040d4c` are in the cockpit, what `00059280` returns, and what the word at a shape instance's `+8` selects.
-- **Open:** what lights ES1 registers, and so what light a face receives.
+- **Open:** the length of the normals ES1's shape files store, which the [shade's reduction](#a-faces-light) to 128 + 128 · *facing* takes as ES2's `0x800`.
+- **Open:** no reference to `Light_RemovePersistent` or `Light_UnregisterPersistent` found by `es2_xref.py`, and none to `LightManager_SetSlotFalloff` but the dword at `0002116c`.
+- **Open:** what `00005d74`, which sets an effect light's intensity, is, and which ramp entry it reads.
 - **Open:** no reference to `Raster_GetColourRamps` found by `es2_xref.py`.

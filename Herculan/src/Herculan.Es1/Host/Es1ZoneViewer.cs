@@ -22,9 +22,9 @@ namespace Herculan.Es1.Host;
 /// <para>The sky, the ground and the skyline are <see cref="Es1Backdrop"/>'s, the shapes drawn over them with no
 /// depth fade, as ES1's are, and coloured by their distance bands (<see cref="Es1Shading"/>).</para>
 ///
-/// <para>The shapes are drawn with the depth test, where retail sorts its object list and paints it farthest first
-/// with box comparisons for the zone's shapes, whose ordering is Open
-/// (docs/es1/rendering/polygon-shading.md#the-frames-draw).</para>
+/// <para>The shapes are drawn with the depth test, as ES2's objects are, where retail sorts its object list and paints
+/// it farthest first with no depth test (docs/es1/rendering/polygon-shading.md#the-frames-draw). A divergence the user
+/// chose, listed in KNOWN_ISSUES.md.</para>
 ///
 /// <para>G switches the ground between textured and banded, which the preferences' option 5 does in retail; the
 /// viewer starts textured.</para>

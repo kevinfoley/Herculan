@@ -39,12 +39,11 @@ Reached as `table + typeId × 0x2c` (`Explosion_GetTypeRecord`, `00005734`, from
 
 ## Construction
 
-`Explosion_Construct` (`00005af0`), given the effect, the point and the type id, follows [ES2's](../../retail/simulation/impact-effects.md#construction--explosion_construct-00407f1c) with these differences. When the effect is null it allocates one from the pool and returns 0 when the pool is full. It takes the root at row `+0x00`, stores the type id at `+0x3b`, sets the type tag to 2 when `+0x2a` is 0 and 8 when not, loads the frame countdown at `+0x45` from `+0x06`, and when `+0x02` is not negative zeroes that sequence's frame counter. When `+0x08` is non-zero it builds a ground shape from the pool `000af044` on root 1 of the shape array at `000bc1d8` with vptr `000908a2`, at the point, into `+0x49`. When `+0x0a` is non-zero it calls `000054b0` with 0, the dword at `+0x0c` and the point, and keeps what it returns at `+0x4d`. It always plays sound `+0x28` + 10 at the point, where ES2's plays it only when its caller asks and the id is not negative. It records no owner.
+`Explosion_Construct` (`00005af0`), given the effect, the point and the type id, follows [ES2's](../../retail/simulation/impact-effects.md#construction--explosion_construct-00407f1c) with these differences. When the effect is null it allocates one from the pool and returns 0 when the pool is full. It takes the root at row `+0x00`, stores the type id at `+0x3b`, sets the type tag to 2 when `+0x2a` is 0 and 8 when not, loads the frame countdown at `+0x45` from `+0x06`, and when `+0x02` is not negative zeroes that sequence's frame counter. When `+0x08` is non-zero it builds a ground shape from the pool `000af044` on root 1 of the shape array at `000bc1d8` with vptr `000908a2`, at the point, into `+0x49`. When `+0x0a` is non-zero it calls `EffectLight_Construct` (`000054b0`) with 0, the dword at `+0x0c` and the point, and keeps the handle it returns at `+0x4d`: a light at the point whose intensity is the dword's low 16 bits, the ramp's first step ([effect lights](../rendering/polygon-shading.md#effect-lights)). It always plays sound `+0x28` + 10 at the point, where ES2's plays it only when its caller asks and the id is not negative. It records no owner.
 
 `ExplosionPool_FlushDeletes` hands the pool to `ObjectPool_FlushDeleteQueue` with the queue at `000aee8c`.
 
 ## Open
 
 - **Open:** what ES1's tick (the effect's vtable at `00090822`) reads of `+0x06`, the intensity ramp and `+0x24`; the values sit at ES2's offsets plus four.
-- **Open:** what `000054b0` builds from the dword at `+0x0c`, the light ES2's builds from its first intensity.
 - **Open:** the root count of `dts\explos`, and so whether every row binds its bank.

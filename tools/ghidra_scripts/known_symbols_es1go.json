@@ -4150,7 +4150,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Light_TransformToModelSpace",
-      "description": "(light, transform) in stack order, callee-cleaned: transforms the light's position +0 (Transform_ApplyToPoint) and its int16 direction +0xc (0006780c) by transform into the model-space copies at +0x1e and +0x2a. Raster_SetModelTransform runs it on each registered light. The code of ES1DBSIM's Light_TransformToModelSpace (0005b8b4), relocated operands aside.",
+      "description": "(light, transform) in stack order, callee-cleaned: transforms the light's position +0 (Transform_ApplyToPoint) and its int16 direction +0xc (RotateVectorByMatrixQ14 (0006780c)) by transform into the model-space copies at +0x1e and +0x2a. Raster_SetModelTransform runs it on each registered light. The code of ES1DBSIM's Light_TransformToModelSpace (0005b8b4), relocated operands aside.",
       "source": "ES1GO decompile at 00053630",
       "verified": {
         "bytes": "00053630+101",
@@ -4330,7 +4330,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Light_ComputeShadeForFace",
-      "description": "(centre, normal) in stack order, callee-cleaned, both int16 triples: sums a shade over the light list Light_ActiveList (000ab6b4) (count Light_ActiveCount (000ab6b0)) by the light's type +0x16: type 0 adds its intensity +0x1a; type 1 takes v = (dot(normal, model-space direction +0x2a) (0006002f) - 0x400000) >> 1 and, when v is negative, subtracts intensity * v >> 22; type 2 takes the displacement from centre to the model-space position +0x1e and, when its dot with the normal (00060062) is positive, adds intensity * ((+0x38 * (dot / (m + 1))) / (+0x34 + m)) >> 11, m being Math_FastMagnitude3D of the displacement. Returns the sum clamped to 0xff. The code of ES1DBSIM's Light_ComputeShadeForFace (0005bc30), relocated operands aside.",
+      "description": "(centre, normal) in stack order, callee-cleaned, both int16 triples: sums a shade over the light list Light_ActiveList (000ab6b4) (count Light_ActiveCount (000ab6b0)) by the light's type +0x16: type 0 adds its intensity +0x1a; type 1 takes v = (dot(normal, model-space direction +0x2a) (DotProductVec3Short (0006002f)) - 0x400000) >> 1 and, when v is negative, subtracts intensity * v >> 22; type 2 takes the displacement from centre to the model-space position +0x1e and, when its dot with the normal (DotProductVec3Int (00060062)) is positive, adds intensity * ((+0x38 * (dot / (m + 1))) / (+0x34 + m)) >> 11, m being Math_FastMagnitude3D of the displacement. Returns the sum clamped to 0xff. The code of ES1DBSIM's Light_ComputeShadeForFace (0005bc30), relocated operands aside.",
       "source": "ES1GO decompile at 000539ac",
       "verified": {
         "bytes": "000539ac+421",
@@ -4345,7 +4345,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Light_ComputeShadeForNormal",
-      "description": "(centre, normal) in stack order, callee-cleaned, an int32 and an int16 triple: ES2's Light_ComputeShadeForNormal (DBSIM 0048c060), reading the light's fields directly: type 0 adds the intensity; type 1 subtracts intensity * dot(normal, +0x2a) (0006002f) >> 22 when the dot is negative; type 2 adds intensity * (+0x38 * (d / (m + 1)) / (+0x34 + m)) >> 11 when d, the dot of the normal with the displacement from centre to +0x1e (00060062), is positive, m its Math_FastMagnitude3D. Clamped to 0xff. The code of ES1DBSIM's Light_ComputeShadeForNormal (0005bdd8), relocated operands aside.",
+      "description": "(centre, normal) in stack order, callee-cleaned, an int32 and an int16 triple: ES2's Light_ComputeShadeForNormal (DBSIM 0048c060), reading the light's fields directly: type 0 adds the intensity; type 1 subtracts intensity * dot(normal, +0x2a) (DotProductVec3Short (0006002f)) >> 22 when the dot is negative; type 2 adds intensity * (+0x38 * (d / (m + 1)) / (+0x34 + m)) >> 11 when d, the dot of the normal with the displacement from centre to +0x1e (DotProductVec3Int (00060062)), is positive, m its Math_FastMagnitude3D. Clamped to 0xff. The code of ES1DBSIM's Light_ComputeShadeForNormal (0005bdd8), relocated operands aside.",
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
       "verified": {
         "bytes": "00053b54+400",
@@ -4819,7 +4819,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawPolygonDispatch",
-      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (0008441c) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through 000559fc, two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 00085da9 for top byte 4, nothing otherwise), mode 1 goes to 0006a05c, modes 5 and 7 to the routine at 00086634, mode 6 fills through slot 1 (000865b4) with the brush's second field. The fills scan-convert with 00067954 and clip per the clip mode +0x204: 0 none, 1 through 000692e4 against the rect at +0x20c, otherwise against each region of the block's list (rects through 000692e4, span regions through 0004fc50). The code of ES1DBSIM's Raster_DrawPolygonDispatch (00068be0), relocated operands aside.",
+      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (0008441c) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through Gfx_PlotPixel (000559fc), two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 00085da9 for top byte 4, nothing otherwise), mode 1 goes to 0006a05c, modes 5 and 7 to the routine at 00086634, mode 6 fills through slot 1 (000865b4) with the brush's second field. The fills scan-convert with 00067954 and clip per the clip mode +0x204: 0 none, 1 through 000692e4 against the rect at +0x20c, otherwise against each region of the block's list (rects through 000692e4, span regions through 0004fc50). The code of ES1DBSIM's Raster_DrawPolygonDispatch (00068be0), relocated operands aside.",
       "source": "ES1GO decompile at 00055584",
       "verified": {
         "bytes": "00055584+867",
@@ -4854,6 +4854,21 @@
       "verified": {
         "bytes": "00055980+122",
         "sha1": "b1c002e193aa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000559fc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gfx_PlotPixel",
+      "description": "(point), C convention: ES2's Gfx_PlotPixel (DBSIM 004894e0), the same statements after normalisation. Reads the brush through the canvas 0008441c's +0x224: mode 0 resolves the colour by its top byte (0 the value, 4 ramp entry (bits 16-23 * length) >> 8 of g_RasterColourRamps, else nothing) and plots through 000865c4; mode 2 hands brush + 4 to 000865c8; other modes plot nothing. Adds the canvas origin when +0x208 is set and clips by +0x204: 0 none, 1 the rect +0x20c-+0x218, otherwise the canvas's list of rects and span lists. The code of ES1DBSIM's Gfx_PlotPixel (00069058), relocated operands aside.",
+      "source": "ES1GO decompile at 000559fc",
+      "verified": {
+        "bytes": "000559fc+413",
+        "sha1": "67bf6118894c",
         "scope": "body",
         "via": "decompile"
       }
@@ -7001,6 +7016,36 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0006002f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DotProductVec3Short",
+      "description": "(a, b), C convention: the sum of the three int16 products. es2_xref finds its callers Light_ComputeShadeForFace and Light_ComputeShadeForNormal. The code of ES1DBSIM's DotProductVec3Short (000660bf), relocated operands aside.",
+      "source": "ES1GO decompile at 0006002f",
+      "verified": {
+        "bytes": "0006002f+51",
+        "sha1": "b7df2c1bdc6a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00060062",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DotProductVec3Int",
+      "description": "(a, b), C convention: the sum of the three int32 products, truncated to 32 bits. The code of ES1DBSIM's DotProductVec3Int (000660f2), relocated operands aside.",
+      "source": "ES1GO decompile at 00060062",
+      "verified": {
+        "bytes": "00060062+37",
+        "sha1": "e1859f9a3eb4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00060154",
       "binary": "ES1GO",
       "type": "function",
@@ -7991,6 +8036,21 @@
         "sha1": "bc4534cc9cd5",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "0006780c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RotateVectorByMatrixQ14",
+      "description": "(v, matrix, out), C convention: ES2's RotateVectorByMatrixQ14 (DBSIM 0047ffb4), identical after normalisation. By the matrix's mode byte +0x12: below 1 copies v; 1 rotates x and y, out.x = (v.x m0 + v.y m2 + 0x2000) >> 14, out.y = (v.x m1 + v.y m3 + 0x2000) >> 14, and keeps z; otherwise out.x adds v.z m6, out.y v.z m7, and out.z = (v.x m4 + v.y m5 + v.z m8 + 0x2000) >> 14, m being the nine int16. Returns out. es2_xref finds its caller Light_TransformToModelSpace. The code of ES1DBSIM's RotateVectorByMatrixQ14 (0007586c), relocated operands aside.",
+      "source": "ES1GO decompile at 0006780c",
+      "verified": {
+        "bytes": "0006780c+276",
+        "sha1": "b946f4cabc21",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {

@@ -497,6 +497,429 @@
       }
     },
     {
+      "address": "00004bb8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_Construct",
+      "description": "(manager), callee-cleaned: ES2's LightManager_Construct (DBSIM 00406e44). Allocates 0x404 bytes for a null manager; __vec_ctor of twenty 0x23-byte slots at +0x6c (element constructor at the padding entry 00004ce5); the embedded light at +0x328 built as a TSLight (vtable 00090766 at +0x12) and retyped TSAmbientLight (0009077a), type 0 at +0x16; zeroes the live count +0x18 and the free-list counts +0x35c and +0x3b0; LightManager_SetFalloffConstants with 3000 and 2000 in stack order; then marks each slot free (+0) with a null light (+0x1f).",
+      "source": "ES1DBSIM decompile at 00004bb8, against ES2's LightManager_Construct",
+      "verified": {
+        "bytes": "00004bb8+301",
+        "sha1": "e320eced0acd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004d30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSLight_DtorCopy",
+      "description": "(light, flags), callee-cleaned: slot +4 of the light manager module's TSLight vtable 00090766: stores that vtable, TSContext_Dtor(light + 0x1e, 2) and TSContext_Dtor(light, 0), and operator_delete when flags bit 0 is set; nothing for a null light. The same code as TSLight_Dtor (0005a964) for the module's own vtable copy.",
+      "source": "ES1DBSIM decompile at 00004d30",
+      "verified": {
+        "bytes": "00004d30+56",
+        "sha1": "46a1d737e29b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004d68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSAmbientLight_Dtor",
+      "description": "(light, flags), callee-cleaned: slot +4 of TSAmbientLight's vtable 0009077a: stores that vtable and then TSLight's 00090766, TSContext_Dtor(light + 0x1e, 2) and TSContext_Dtor(light, 0), and operator_delete when flags bit 0 is set. ES2's TSAmbientLight_Dtor (DBSIM 0040798c).",
+      "source": "ES1DBSIM decompile at 00004d68",
+      "verified": {
+        "bytes": "00004d68+63",
+        "sha1": "72a226dce234",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004da8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_SetFalloffConstants",
+      "description": "(manager, b, a) in stack order, callee-cleaned: stores a >> 5 at +0x10 (A) and b >> 5 at +0x14 (B). LightManager_InitSubsystem passes 2000 and 10, so A = 0 and B = 62 as in ES2's LightManager_SetFalloffConstants (DBSIM 00406ee4).",
+      "source": "ES1DBSIM decompile at 00004da8 and the push order at 000055c6",
+      "verified": {
+        "bytes": "00004da8+30",
+        "sha1": "04eeddda0cd4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004dc8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_SetSlotFalloff",
+      "description": "(manager, b, a, slot) in stack order, callee-cleaned: the slot's A (+0xf) = a >> 5 and B (+0x13) = b >> 5, slot = manager + 0x6c + index * 0x23, then LightManager_RecomputeCullRadius. ES2's LightManager_SetSlotFalloff (DBSIM 00406f00). es2_xref finds its address only as the dword at 0002116c.",
+      "source": "ES1DBSIM decompile at 00004dc8, es2_xref",
+      "verified": {
+        "bytes": "00004dc8+49",
+        "sha1": "59542b1e7cb2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004dfc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_ClaimSlot",
+      "description": "(manager, point), callee-cleaned: ES2's LightManager_ClaimSlot (DBSIM 00406f38): takes the first free slot of twenty, clears its free flag, copies the point to +1, seeds the int16 intensity +0xd with 0xff, copies the manager's A and B to +0xf and +0x13, appends the slot to the live array +0x1c and recomputes its cull radius; returns the index. With every slot busy it writes through an uninitialised local.",
+      "source": "ES1DBSIM decompile at 00004dfc",
+      "verified": {
+        "bytes": "00004dfc+135",
+        "sha1": "4853a69dd03f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004e84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_ReleaseSlot",
+      "description": "(manager, slot index), callee-cleaned: ES2's LightManager_ReleaseSlot (DBSIM 00406fbc): sets the slot's free flag, moves the live array's last entry over it, recycles its light (+0x1f) with LightManager_RecycleLight and nulls it.",
+      "source": "ES1DBSIM decompile at 00004e84",
+      "verified": {
+        "bytes": "00004e84+142",
+        "sha1": "10c1cc48f294",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004f14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_SetSlotPosition",
+      "description": "(manager, point, slot index) in stack order, callee-cleaned: copies the int32 triple to the slot's +1. ES2's LightManager_SetSlotPosition (DBSIM 00407018).",
+      "source": "ES1DBSIM decompile at 00004f14",
+      "verified": {
+        "bytes": "00004f14+32",
+        "sha1": "24a1ac721f48",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004f34",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_SetSlotIntensity",
+      "description": "(manager, intensity, slot index) in stack order, callee-cleaned: stores the int16 at the slot's +0xd and, sign-extended, at +0x1b, and recomputes the cull radius. ES2's LightManager_SetSlotIntensity (DBSIM 00407048).",
+      "source": "ES1DBSIM decompile at 00004f34",
+      "verified": {
+        "bytes": "00004f34+43",
+        "sha1": "470b2e4426c7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004f60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_SetCameraPosition",
+      "description": "(manager, camera), callee-cleaned: copies the camera's position (+0, three int32) to the manager's +0. es2_xref finds its caller ObjList_DrawFrameObjects, which runs each frame, where ES2's LightManager_SetCameraPosition (DBSIM 0040707c) is called from Sim_RenderFrame.",
+      "source": "ES1DBSIM decompile at 00004f60 and its call at 0002101a",
+      "verified": {
+        "bytes": "00004f60+22",
+        "sha1": "51cc0134cd16",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004f78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_SelectLightsForObject",
+      "description": "(manager, {x, y, z, radius} as four int32), callee-cleaned: ES2's LightManager_SelectLightsForObject (DBSIM 00407098). Unregisters the embedded light +0x328; for each live slot with a non-zero +0x1b: past the cull radius +0x17 it recycles the slot's light; otherwise, d = distance >> 5 (Point3I_DistanceBetween), when d is not 0 and Math_Atan2Guarded(x d, y radius >> 5) is below 8000 a directional light (Light_GetOrCreateDirectional) with intensity +0x1b * min(0xff, (B << 8) / (d + A)) >> 8 and direction (object - slot) * 0x800 / distance at +0xc, else a point light (Light_GetOrCreatePoint) with intensity +0x1b, +0x34 = A << 5, +0x38 = B * 0x20, +0x3c = +0x38 * intensity and the slot's position at +0. es2_xref finds its caller ObjList_DrawEntryRender, which calls it before each object's draw.",
+      "source": "ES1DBSIM decompile at 00004f78, diff against ES2's LightManager_SelectLightsForObject",
+      "verified": {
+        "bytes": "00004f78+539",
+        "sha1": "a2add6da214e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005274",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_RecomputeCullRadius",
+      "description": "(manager, slot), callee-cleaned: slot +0x17 = (B * 0x20 * the int16 intensity +0xd) / 10 + A * 0x20. ES2's LightManager_RecomputeCullRadius (DBSIM 0040735c).",
+      "source": "ES1DBSIM decompile at 00005274",
+      "verified": {
+        "bytes": "00005274+46",
+        "sha1": "3837e8321353",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000052a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_GetOrCreateDirectional",
+      "description": "(manager), callee-cleaned: pops a light from the free list +0x35c/+0x360, or allocates a 0x34-byte TSLight retyped TSSunLight (vtable 0009078e at +0x12, type 1 at +0x16), and registers it with Light_Register; returns it. ES2's Light_GetOrCreateDirectional (DBSIM 00407388).",
+      "source": "ES1DBSIM decompile at 000052a4",
+      "verified": {
+        "bytes": "000052a4+152",
+        "sha1": "80f50bfd3337",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000533c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSSunLight_DtorCopy",
+      "description": "(light, flags), callee-cleaned: slot +4 of the light manager module's TSSunLight vtable 0009078e: stores that vtable and then TSLight's 00090766, TSContext_Dtor(light + 0x1e, 2) and TSContext_Dtor(light, 0), and operator_delete when flags bit 0 is set. The same code as TSSunLight_Dtor (0005a99c) for the module's own vtable copies.",
+      "source": "ES1DBSIM decompile at 0000533c",
+      "verified": {
+        "bytes": "0000533c+63",
+        "sha1": "f61062dbd1a3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000537c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_GetOrCreatePoint",
+      "description": "(manager), callee-cleaned: pops a light from the free list +0x3b0/+0x3b4, or allocates a 0x40-byte TSLight retyped TSOmniLight (vtable 000907a2 at +0x12, type 2 at +0x16), and registers it with Light_Register; returns it. ES2's Light_GetOrCreatePoint (DBSIM 00407444).",
+      "source": "ES1DBSIM decompile at 0000537c",
+      "verified": {
+        "bytes": "0000537c+144",
+        "sha1": "63be647f7b26",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000540c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSOmniLight_Dtor",
+      "description": "(light, flags), callee-cleaned: slot +4 of TSOmniLight's vtable 000907a2: stores that vtable and then TSLight's 00090766, TSContext_Dtor(light + 0x1e, 2) and TSContext_Dtor(light, 0), and operator_delete when flags bit 0 is set. ES2's TSOmniLight_Dtor (DBSIM 004075c1).",
+      "source": "ES1DBSIM decompile at 0000540c",
+      "verified": {
+        "bytes": "0000540c+63",
+        "sha1": "bbe735c140ec",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000544c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_RecycleLight",
+      "description": "(manager, light), callee-cleaned: for a non-null light, Light_Unregister and a push onto the directional free list (+0x35c/+0x360) when its type +0x16 is 1, the point list (+0x3b0/+0x3b4) otherwise. ES2's LightManager_RecycleLight (DBSIM 00407500).",
+      "source": "ES1DBSIM decompile at 0000544c",
+      "verified": {
+        "bytes": "0000544c+97",
+        "sha1": "2abc1c813138",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000054b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "EffectLight_Construct",
+      "description": "(handle, intensity, point) in stack order, callee-cleaned: takes a handle from the pool 000aee18 for a null one (returns 0 when it is empty), stores the vptrs 000907b6 and 000907d6 at +2, claims a manager slot at the point (LightManager_ClaimSlot) into the int16 +6 and sets its intensity (LightManager_SetSlotIntensity). Explosion_Construct passes the type row's dword at +0x0c. ES2's EffectLight_Construct (DBSIM 00407604), whose handle is 0xe bytes.",
+      "source": "ES1DBSIM decompile at 000054b0 and its call at 00005c67",
+      "verified": {
+        "bytes": "000054b0+82",
+        "sha1": "edeb404801b6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005534",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "EffectLight_Destruct",
+      "description": "(handle, flags), callee-cleaned: slot +0xc of the handle's vtable 000907d6: stores that vtable, releases the manager slot +6 (LightManager_ReleaseSlot), stores the base vtable 000907b6 and, when flags bit 0 is set, queues the handle on the pool's delete queue 000aee1c (ObjectPool_QueueForDelete). ES2's EffectLight_Destruct (DBSIM 0040765c).",
+      "source": "ES1DBSIM decompile at 00005534",
+      "verified": {
+        "bytes": "00005534+66",
+        "sha1": "44eae8bb1ce1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005578",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "EffectLight_SetIntensity",
+      "description": "(handle, byte value), callee-cleaned: LightManager_SetSlotIntensity of the handle's slot +6. ES2's EffectLight_SetIntensity (DBSIM 004076a0). es2_xref finds its caller 00005d74, which passes the low byte of an entry of the explosion row's intensity ramp.",
+      "source": "ES1DBSIM decompile at 00005578 and its call at 00005e13",
+      "verified": {
+        "bytes": "00005578+31",
+        "sha1": "dd3836d3a6b1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005598",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "EffectLight_SetPosition",
+      "description": "(handle, point), callee-cleaned: LightManager_SetSlotPosition of the handle's slot +6. ES2's EffectLight_SetPosition (DBSIM 004076c4). No reference found by es2_xref.",
+      "source": "ES1DBSIM decompile at 00005598, es2_xref",
+      "verified": {
+        "bytes": "00005598+29",
+        "sha1": "0060f270f0ba",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000055b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_InitSubsystem",
+      "description": "No arguments, no frame: the phase-2 loader LightManager_RegisterSubsystem registers. Builds the effect light manager at 000bc19c with LightManager_Construct(0), calls LightManager_SetFalloffConstants with 2000 and 10 in stack order (A = 0, B = 62), stores 10000 at +0xc, and builds the handle pool Pool_Init(0, 8, 3) at 000aee18. ES2's LightManager_InitSubsystem (DBSIM 004076e4), whose handles are 0xe bytes. Ghidra has no function here.",
+      "source": "ES1DBSIM capstone at 000055b8"
+    },
+    {
+      "address": "000055f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "EffectLightPool_FlushDeletes",
+      "description": "No arguments: ObjectPool_FlushDeleteQueue with the queue 000aee1c and the pool 000aee18. The phase-5 hook LightManager_RegisterSubsystem registers; es2_xref also finds a call from Sim_StartMission. ES2's EffectLightPool_FlushDeletes (DBSIM 004077e8).",
+      "source": "ES1DBSIM disassembly at 000055f4, es2_xref",
+      "verified": {
+        "bytes": "000055f4+17",
+        "sha1": "ca88572cfe66",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005608",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_AddPersistent",
+      "description": "(light), callee-cleaned, no frame: appends the light to the array at 000bc1a0 and increments its int16 count 000907f2, with no bound. Light_CreateMissionSun adds the sun. ES2's Light_AddPersistent (DBSIM 00407800).",
+      "source": "ES1DBSIM disassembly at 00005608",
+      "verified": {
+        "bytes": "00005608+31",
+        "sha1": "ac1f34d5cbcd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005628",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_RemovePersistent",
+      "description": "(light), callee-cleaned: finds the light in the persistent array 000bc1a0, shifts the later entries down over it and decrements the count 000907f2. ES2's Light_RemovePersistent (DBSIM 00407820). No reference found by es2_xref.",
+      "source": "ES1DBSIM decompile at 00005628, es2_xref",
+      "verified": {
+        "bytes": "00005628+101",
+        "sha1": "072affb57876",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005690",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_ReregisterPersistent",
+      "description": "No arguments: Light_Register on each entry of the persistent array 000bc1a0 (count 000907f2). es2_xref finds its caller ObjList_DrawEntryRender, which calls it after an object's draw while the blend byte 000afa98 is set. ES2's Light_ReregisterPersistent (DBSIM 00407878).",
+      "source": "ES1DBSIM decompile at 00005690 and its call at 00020f97",
+      "verified": {
+        "bytes": "00005690+47",
+        "sha1": "d095d0056bc6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000056c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_UnregisterPersistent",
+      "description": "No arguments: Light_Unregister on each entry of the persistent array 000bc1a0 (count 000907f2). ES2's Light_UnregisterPersistent (DBSIM 004078a0). No reference found by es2_xref.",
+      "source": "ES1DBSIM decompile at 000056c0, es2_xref",
+      "verified": {
+        "bytes": "000056c0+47",
+        "sha1": "d61ee5b1fdb6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000056f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_RegisterSubsystem",
+      "description": "No arguments, no frame: the light manager's static initialiser: RegisterSubsystemLoader with LightManager_InitSubsystem at phase 2 and EffectLightPool_FlushDeletes at phase 5, then zeroes the word 000aee80 and the pool pointer 000aee18. ES2's LightManager_RegisterSubsystem (DBSIM 004078c8). Ghidra has no function here.",
+      "source": "ES1DBSIM capstone at 000056f0"
+    },
+    {
+      "address": "0000571c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LightManager_StaticDtor",
+      "description": "No arguments, no frame: operator_delete of the effect-light pool 000aee18 when it is set. ES2's LightManager_StaticDtor (DBSIM 0040791c).",
+      "source": "ES1DBSIM disassembly at 0000571c",
+      "verified": {
+        "bytes": "0000571c+21",
+        "sha1": "130eed85184d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00005734",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -547,7 +970,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Explosion_Construct",
-      "description": "(effect, point, typeId) in stack order, callee-cleaned: when effect is null allocates it from g_ExplosionPool (000aee88), returning 0 when that fails; TSObj_Ctor on the root g_ExplosionShapes (000bc1b6) [row +0x00], vptr 00090822, type byte +0x3b = typeId; type tag 2 when row +0x2a is 0, else 8; frame countdown +0x45 = row +0x06; when row +0x02 is not negative zeroes that sequence's frame counter in the shape instance; copies the point into the frame; when row +0x08 is non-zero builds a ground shape from the pool 000af044 on root 1 of the array at 000bc1d8, vptr 000908a2, at the point, into +0x49 (else 0); when row +0x0a is non-zero stores 000054b0(0, the dword at row +0x0c, point) at +0x4d (else 0); then Sound_PlayAt(point, row +0x28 + 10). ES2's Explosion_Construct (DBSIM 00407f1c), which also takes an owner and a play-sound flag and plays only a non-negative id.",
+      "description": "(effect, point, typeId) in stack order, callee-cleaned: when effect is null allocates it from g_ExplosionPool (000aee88), returning 0 when that fails; TSObj_Ctor on the root g_ExplosionShapes (000bc1b6) [row +0x00], vptr 00090822, type byte +0x3b = typeId; type tag 2 when row +0x2a is 0, else 8; frame countdown +0x45 = row +0x06; when row +0x02 is not negative zeroes that sequence's frame counter in the shape instance; copies the point into the frame; when row +0x08 is non-zero builds a ground shape from the pool 000af044 on root 1 of the array at 000bc1d8, vptr 000908a2, at the point, into +0x49 (else 0); when row +0x0a is non-zero stores EffectLight_Construct (000054b0)(0, the dword at row +0x0c, point) at +0x4d (else 0); then Sound_PlayAt(point, row +0x28 + 10). ES2's Explosion_Construct (DBSIM 00407f1c), which also takes an owner and a play-sound flag and plays only a non-negative id.",
       "source": "Herculan/docs/es1/formats/explos-dat.md#construction",
       "verified": {
         "bytes": "00005af0+437",
@@ -1492,7 +1915,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_DrawEntryRender",
-      "description": "(entry), callee-cleaned: draws one 0x36-byte object entry of ObjList_DrawFrameObjects (00021008): 00004f78(000bc19c, {the entry's position, its int16 +0xc}), WorldShades_ApplyForObject (00025d44) with the blend byte 000afa98, the distance +0xe and the object +0x32, the object's vtable slot +4 (vptr at object +2), then 00005690 when 000afa98 is set; display calls through 0009dee4/0009dee8 while 000afa45 is set, and 00021404 when 0009255a is set and the object is 000afa88. ES2's ObjList_DrawEntryRender (DBSIM 0042876c), without the depth fade. Its address is stored at 00092562.",
+      "description": "(entry), callee-cleaned: draws one 0x36-byte object entry of ObjList_DrawFrameObjects (00021008): LightManager_SelectLightsForObject (00004f78)(000bc19c, {the entry's position, its int16 +0xc}), WorldShades_ApplyForObject (00025d44) with the blend byte 000afa98, the distance +0xe and the object +0x32, the object's vtable slot +4 (vptr at object +2), then Light_ReregisterPersistent (00005690) when 000afa98 is set; display calls through 0009dee4/0009dee8 while 000afa45 is set, and 00021404 when 0009255a is set and the object is 000afa88. ES2's ObjList_DrawEntryRender (DBSIM 0042876c), without the depth fade. Its address is stored at 00092562.",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#which-objects-are-drawn",
       "verified": {
         "bytes": "00020f40+200",
@@ -1717,7 +2140,7 @@
       "type": "function",
       "confidence": "high",
       "name": "World_LoadTheater",
-      "description": "(header), callee-cleaned: ES2's World_LoadTheater (DBSIM 0042e010) for ES1's world file. DBSim_LoadScriptDat (0001d850) passes data\\script.dat's 20-byte header (000bc49c); it copies it to 000bc5a4. With t header word 0, v word 9 and d word 8 it loads dpl\\world<6t+2v> with Palette_LoadAndActivate (00027e5c) and opens wld\\world<6t+2v+d>. Hzline_Ctor (00026180) builds g_TheaterHzline (000928d4); of the file's twelve leading int16 (ES2 reads fourteen), 0-7 go to the hzline as ES2's do (+0x6c, +0x54, +0x58, +0x5c, +0x60, and Hzline_SetColors (00026234) with 1, 4 and 7), short4 + short6 - 1 to 000928e0, short 8 to a local, 9 to World_FlatSetSelector (000928e2), 10 and 11 to 000bc5d0 and 000bc5d2; 000bc5ce = 0x40, 000bc5d4 = 0x62. Two int32-counted int32 tables to WorldShades_BandsTagged (000afdc4) and WorldShades_BandsTag0 (000afdc8), counts' low halves at 000bc5b8 and 000bc5ba; rows and cols int16 to 000bc5be and 000bc5bc; two cols x 4-byte range tables (64-byte stack buffers, cols unchecked) around an unused int16 expanded by Palette_InterpolateIndexRanges (000289e0) into WorldShades_LevelRanges (000afdbc), then two 4-byte ranges into WorldShades_BlendRanges (000afdc0); int16 cloud count, int16 point count, two int32 to WorldShades_DistanceOffsets (000bc5c6). Five NUL-terminated strings read a byte at a time, unbounded, into 12-byte stack buffers: the first, when not empty, to Hzline_LoadBitmapBank (00026dc8); the second, when not empty, a 0x113-byte object built by maybe_Clouds_Ctor (000271c0) with the cloud count, vptr 000928f6, into World_Clouds (000928d8); the third, when not empty, Palette_LoadDpl(dpl\\<name>) into ImpactPaletteObject (000928f0); the fourth and fifth to GndTex_Load. A non-zero point count builds PointScatter_Ctor (00026dec) into World_PointScatter (000928dc), with short 8 at its +0x15. Closes the file; opens cyc\\world<6t+2v+d> with VolRStream_Open and, when it opens with a non-zero int16 count (000928e8), allocates 6 x count bytes (000928e4) and reads count records of three int16 at a 12-byte stride, registering each with PaletteCycle_Register (000281cc). World_LoadShades (00025bc8) with 'shades'; GndTex_Load (00028de8) with (fifth string, fourth string, short 0, short 5, short 6, short 4) in stack order; FlatObj_LoadResources (00006cf8) with World_FlatSetSelector; destroys the stream. No rmp file, Terrain_BindTextureBank or Raster_SetShadeRampDimensions, where ES2 has them.",
+      "description": "(header), callee-cleaned: ES2's World_LoadTheater (DBSIM 0042e010) for ES1's world file. DBSim_LoadScriptDat (0001d850) passes data\\script.dat's 20-byte header (000bc49c); it copies it to 000bc5a4. With t header word 0, v word 9 and d word 8 it loads dpl\\world<6t+2v> with Palette_LoadAndActivate (00027e5c) and opens wld\\world<6t+2v+d>. Hzline_Ctor (00026180) builds g_TheaterHzline (000928d4); of the file's twelve leading int16 (ES2 reads fourteen), 0-7 go to the hzline as ES2's do (+0x6c, +0x54, +0x58, +0x5c, +0x60, and Hzline_SetColors (00026234) with 1, 4 and 7), short4 + short6 - 1 to 000928e0, short 8 to a local, 9 to World_FlatSetSelector (000928e2), 10 and 11 to 000bc5d0 and 000bc5d2; 000bc5ce = 0x40, 000bc5d4 = 0x62. Two int32-counted int32 tables to WorldShades_BandsTagged (000afdc4) and WorldShades_BandsTag0 (000afdc8), counts' low halves at 000bc5b8 and 000bc5ba; rows and cols int16 to 000bc5be and 000bc5bc; two cols x 4-byte range tables (64-byte stack buffers, cols unchecked) around an unused int16 expanded by Palette_InterpolateIndexRanges (000289e0) into WorldShades_LevelRanges (000afdbc), then two 4-byte ranges into WorldShades_BlendRanges (000afdc0); int16 cloud count, int16 point count, two int32 to WorldShades_DistanceOffsets (000bc5c6). Five NUL-terminated strings read a byte at a time, unbounded, into 12-byte stack buffers: the first, when not empty, to Hzline_LoadBitmapBank (00026dc8); the second, when not empty, a 0x113-byte object built by TexPoly_Ctor (000271c0) with the cloud count, vptr 000928f6, into World_Clouds (000928d8); the third, when not empty, Palette_LoadDpl(dpl\\<name>) into ImpactPaletteObject (000928f0); the fourth and fifth to GndTex_Load. A non-zero point count builds PointScatter_Ctor (00026dec) into World_PointScatter (000928dc), with short 8 at its +0x15. Closes the file; opens cyc\\world<6t+2v+d> with VolRStream_Open and, when it opens with a non-zero int16 count (000928e8), allocates 6 x count bytes (000928e4) and reads count records of three int16 at a 12-byte stride, registering each with PaletteCycle_Register (000281cc). World_LoadShades (00025bc8) with 'shades'; GndTex_Load (00028de8) with (fifth string, fourth string, short 0, short 5, short 6, short 4) in stack order; FlatObj_LoadResources (00006cf8) with World_FlatSetSelector; destroys the stream. No rmp file, Terrain_BindTextureBank or Raster_SetShadeRampDimensions, where ES2 has them.",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
       "verified": {
         "bytes": "000251c4+2113",
@@ -2047,7 +2470,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PointScatter_Update",
-      "description": "(this, centre), callee-cleaned: when the byte +4 is clear, PointScatter_Scatter (00026ee0) around centre and sets +4; then, when 000bd567 is less than 000956be, stores count +5 x 000bd567 / 000956be at +7 as int16 and calls 00026fe0(this, centre).",
+      "description": "(this, centre), callee-cleaned: when the byte +4 is clear, PointScatter_Scatter (00026ee0) around centre and sets +4; then, when 000bd567 is less than 000956be, stores count +5 x 000bd567 / 000956be at +7 as int16 and calls PointScatter_Draw (00026fe0)(this, centre).",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-scattered-points",
       "verified": {
         "bytes": "00026e8c+81",
@@ -2072,16 +2495,151 @@
       }
     },
     {
+      "address": "00026fe0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PointScatter_Draw",
+      "description": "(scatter, camera), callee-cleaned: clears the model transform, installs a pixel brush {0, colour} from its stack at the render context's +0x228 and leaves it there; for each of the first +7 points, d = Math_FastMagnitude2D of the point less the camera in x and y: when the camera moved since the centre +9 and d exceeds 70000 the point is reflected through the midpoint of the old and new camera x, y; when Raster_ModelToView puts it beyond the camera's near plane +0x1e it is projected (Raster_PerspectiveDivide, Raster_ProjectToScreen) and plotted with Gfx_PlotPixel in the colour +0x15, a second pixel to its right within 30000, and within 20000 (x+2, y) and (x+2, y-1) in colour - 2 and (x+1, y-1) in colour - 4. Stores the camera's position as the centre. es2_xref finds its caller PointScatter_Update.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-scattered-points",
+      "verified": {
+        "bytes": "00026fe0+477",
+        "sha1": "47e0bc083bd9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000271c0",
       "binary": "ES1DBSIM",
       "type": "function",
-      "confidence": "medium",
-      "name": "maybe_Clouds_Ctor",
-      "description": "(this, count, name), callee-cleaned: allocates 0x107 bytes for a null this; stores the vptrs 00092ade, 00092b02, 00092b2e, 00092b5a, 00092b86 and 00092bb2 in turn, __vec_ctor of five 12-byte elements (00027498) at +0x21, vptr 00092bde; +0xe = __vec_new of count x 4 12-byte elements (00027498), +0x12 = __vec_new of count 6-byte elements (00027510), +0x16 = count zeroed bytes, count at +0x1f and +0xf9 as int16, +0x1a = ClassItem_LoadFromFile(dba\\<name>); zeroes the dwords at +0x5d (three), +0x6d, +0x71 and +0x75, the five elements and the byte +0x1e. World_LoadTheater (000251c4) builds one into a 0x113-byte object with the world file's cloud count and second string, clouds2 in every retail file, hence the maybe_: what the object draws is not read.",
-      "source": "Herculan/docs/es1/formats/wld-world.md#the-clouds",
+      "confidence": "high",
+      "name": "TexPoly_Ctor",
+      "description": "(this, count, name), callee-cleaned: ES2's TexPoly_Ctor (DBSIM 0042f700), its offsets 4 lower. Allocates 0x107 bytes for a null this; stores the vptrs 00092ade, 00092b02, 00092b2e, 00092b5a, 00092b86 and 00092bb2 in turn, __vec_ctor of five 12-byte points (00027498) at +0x21, TexPoly's vptr 00092bde; +0xe = __vec_new of count x 4 12-byte points (00027498), +0x12 = __vec_new of count 6-byte angle triples (00027510), +0x16 = count zeroed bytes, count at +0x1f and +0xf9 as int16, +0x1a = ClassItem_LoadFromFile(dba\\<name>); zeroes the dwords at +0x5d (three), +0x6d, +0x71 and +0x75, the five points and the byte +0x1e. World_LoadTheater (000251c4) builds one into a 0x113-byte object with the world file's cloud count and second string, clouds2 in every retail file, and retypes it with the clouds' vptr 000928f6.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-clouds",
       "verified": {
         "bytes": "000271c0+519",
         "sha1": "c768932bb1e9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027540",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_RandomPointOnCircle",
+      "description": "(poly, radius, centre, _, angles, out) in stack order, callee-cleaned: slot +0x28 of TexPoly's vtable 00092bde: a = Math_RandomNext, angles = (0, 0, a), out = (centre.x + Math_Q14Multiply(radius, Math_CosBam(a)), centre.y + Math_Q14Multiply(radius, Math_CosBam(a - 0x4000)), +0x75). ES2's TexPoly_RandomPointOnCircle (DBSIM 0042f860), which shifts the two offsets by its last argument.",
+      "source": "ES1DBSIM decompile at 00027540, diff against ES2's TexPoly_RandomPointOnCircle",
+      "verified": {
+        "bytes": "00027540+155",
+        "sha1": "2581d5fc624e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000275dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_SetQuadAndRadius",
+      "description": "(poly, radius, z, ysize, xsize) in stack order, callee-cleaned: radius at +0x69, xsize at +0x6d, ysize at +0x71, z at +0x75, and the first four points at +0x21 as the rectangle (0, 0)-(xsize, ysize) at height z. ES2's TexPoly_SetQuadAndRadius (DBSIM 0042f914), its offsets 4 higher.",
+      "source": "ES1DBSIM decompile at 000275dc",
+      "verified": {
+        "bytes": "000275dc+64",
+        "sha1": "90ede649eab6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002761c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_SetFifthVertex",
+      "description": "(poly, point), callee-cleaned: copies the int32 triple to +0x51, the fifth of the points at +0x21, the poly's normal. ES2's TexPoly_SetFifthVertex (DBSIM 0042f950).",
+      "source": "ES1DBSIM decompile at 0002761c",
+      "verified": {
+        "bytes": "0002761c+25",
+        "sha1": "bd4dc34fabbb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027638",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_SetupRings",
+      "description": "(poly, camera), callee-cleaned: slot +0x24 of TexPoly's vtable 00092bde: ring count +0xf5 = +0x69 / +0x6d; for ring i, +0x6d * (i + 1) + +0x6d / 2 at +0x9b[i], the int16 0xffff / ((+0x6d * (i + 1) * 4) / +0x71) at +0x7d[i] and a Math_RandomNext word at +0xd7[i]; then the camera's position at +0xfb and 1 at +0x1e. ES2's TexPoly_SetupRings (DBSIM 0042f970).",
+      "source": "ES1DBSIM decompile at 00027638, diff against ES2's TexPoly_SetupRings",
+      "verified": {
+        "bytes": "00027638+234",
+        "sha1": "664deab50099",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027724",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_DrawAtPoints",
+      "description": "(poly, camera), callee-cleaned: slot +0x34 of TexPoly's vtable 00092bde: runs slot +0x24 while +0x1e is clear; makes +0x1a the active bitmap bank 000bdb5e, Poly_IndexList 000bdb62 and the surface list 000b6732 = +0x5d; for each of the +0x1f points at +0xe, when the camera's x or y moved since +0xfb, a point unflagged in the bytes +0x16 and farther (Math_FastMagnitude2D) than +0x69 + +0x79 is reflected through the midpoint of the old and new camera positions and flagged, a flagged one nearer than +0x69 - +0x79 unflagged; each point below +0xf9 gets slot +0x2c with its distance, Raster_SetModelTransform at its position unrotated, and slot +0x30. Stores the camera's position at +0xfb. ES2's TexPoly_DrawAtPoints (DBSIM 0042fa18), without its depth-fade reset.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#each-frame",
+      "verified": {
+        "bytes": "00027724+639",
+        "sha1": "8d99f436656c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000279a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_Render",
+      "description": "(poly), callee-cleaned: slot +0x30 of TexPoly's vtable 00092bde: takes surface entry 0 when Raster_FrontFacing of the normal point +4 (read as int16) and the centre point +6 is positive and entry 2 with the back flag otherwise, as a frame of the active bank (000bdb5e +8); for a non-null frame installs the brush {5, 4, corners, frame + 4} at the render context's +0x22c, the corners (0, 0), (u, 0), (u, rows - 1), (0, rows - 1) with u = columns - 1 rounded down to a multiple of 8, projects with Poly_ProjectIndexedVertices, clips with Poly_ClipRingToNearPlaneWithUV when it returns 1, fills with PolyFill_FillThenOutline and restores PolyFill_FillBrush. ES2's TexPoly_Render (DBSIM 0042fc34) bitmap-brush branch, taken always.",
+      "source": "ES1DBSIM decompile at 000279a4, against ES2's TexPoly_Render",
+      "verified": {
+        "bytes": "000279a4+576",
+        "sha1": "a78ef08e963e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027c00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Clouds_Setup",
+      "description": "(clouds, camera), callee-cleaned: slot +0x24 of the clouds' vtable 000928f6: TexPoly_SetQuadAndRadius(200000, 10000, 25000, 25000), margin 10000 at +0x79, TexPoly_SetFifthVertex(0, 0, -1), TexPoly_SetupRings; places each cloud with slot +0x28 at (Math_RandomNext & 0xffff) << 1 from the camera; sets the wind +0x107 = (Q14(s cos w), Q14(s sin w), 0), w = Math_RandomNext, s = 50 + Math_RandomBelow(100); stores Math_RandomBelow(3) at +0x65.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-set-up",
+      "verified": {
+        "bytes": "00027c00+375",
+        "sha1": "9d6ae4451e22",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027d78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Clouds_DriftAndDraw",
+      "description": "(clouds, camera), callee-cleaned: slot +0x34 of the clouds' vtable 000928f6, which Scene_DrawTerrainPass calls each frame: the number drawn +0xf9 = (+0x1f * (000bd566 + 1)) >> 8, the wind +0x107 added to each drawn cloud's position, then TexPoly_DrawAtPoints.",
+      "source": "ES1DBSIM decompile at 00027d78",
+      "verified": {
+        "bytes": "00027d78+149",
+        "sha1": "b6d83399ae84",
         "scope": "body",
         "via": "decompile"
       }
@@ -3761,12 +4319,57 @@
       }
     },
     {
+      "address": "0005a888",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Light_CreateMissionSun",
+      "description": "No arguments: ES2's Light_CreateMissionSun (DBSIM 00461240) with other constants: a 0x34-byte TSLight (vtable 000972b6) retyped TSSunLight (000972ca) with type 1, intensity 0x100 through its vtable +8, direction +0xc = RotateVectorByMatrixQ14((0, 0x800, 0), BuildEulerRotationMatrixQ14(-8000, 0, 24000)) = (-1099, -984, -1421); then Light_Register and Light_AddPersistent. es2_xref finds its caller Sim_StartMission.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-sun",
+      "verified": {
+        "bytes": "0005a888+219",
+        "sha1": "fbf5e81963ff",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005a964",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSLight_Dtor",
+      "description": "(light, flags), callee-cleaned: slot +4 of TSLight's vtable 000972b6: stores that vtable, TSContext_Dtor(light + 0x1e, 2) and TSContext_Dtor(light, 0), and operator_delete when flags bit 0 is set. ES2's TSLight_Dtor (DBSIM 0046209e).",
+      "source": "ES1DBSIM decompile at 0005a964",
+      "verified": {
+        "bytes": "0005a964+56",
+        "sha1": "82f778e34a65",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005a99c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSSunLight_Dtor",
+      "description": "(light, flags), callee-cleaned: slot +4 of TSSunLight's vtable 000972ca: stores that vtable and then TSLight's 000972b6, TSContext_Dtor(light + 0x1e, 2) and TSContext_Dtor(light, 0), and operator_delete when flags bit 0 is set. ES2's TSSunLight_Dtor (DBSIM 00462003).",
+      "source": "ES1DBSIM decompile at 0005a99c",
+      "verified": {
+        "bytes": "0005a99c+63",
+        "sha1": "b21e95f4fe35",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005a9dc",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Sim_StartMission",
-      "description": "(): the mission start Sim_Main (00059350) calls once. Among its steps: Subsystem_RunPhase(2), DBSim_LoadScriptDat, then ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; 000441cc, 00063e64, 0001e638; deletes every element of g_ExplosionPool and of 000aeef8; 0005a888; stores the object count 00092558 at 000bc596, the list prefix ObjList_RebuildFrame keeps; takes as the player 000b5b86 the last element of pool 000af68c with byte +0x9d set; builds a 0x4a-byte TSCamera per int16 +0x12 of its type record into 000bda9e and the main camera 000b5b8a, whose +0x36 it sets to 2; draws a first frame with Sim_RenderFrame after Palette_BlendRangeByPitch with step 8 unless an element of pool 000aed70 with a zero type-record byte +0x14 lies within 40000 of the player, when it calls 00057cf4 instead. Its sound-driver, preferences, canvas and cockpit set-up go through unnamed callees.",
+      "description": "(): the mission start Sim_Main (00059350) calls once. Among its steps: Subsystem_RunPhase(2), DBSim_LoadScriptDat, then ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; 000441cc, 00063e64, 0001e638; deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); stores the object count 00092558 at 000bc596, the list prefix ObjList_RebuildFrame keeps; takes as the player 000b5b86 the last element of pool 000af68c with byte +0x9d set; builds a 0x4a-byte TSCamera per int16 +0x12 of its type record into 000bda9e and the main camera 000b5b8a, whose +0x36 it sets to 2; draws a first frame with Sim_RenderFrame after Palette_BlendRangeByPitch with step 8 unless an element of pool 000aed70 with a zero type-record byte +0x14 lies within 40000 of the player, when it calls 00057cf4 instead. Its sound-driver, preferences, canvas and cockpit set-up go through unnamed callees.",
       "source": "ES1DBSIM decompile at 0005a9dc"
     },
     {
@@ -3907,7 +4510,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Light_TransformToModelSpace",
-      "description": "(light, transform) in stack order, callee-cleaned: transforms the light's position +0 (Transform_ApplyToPoint) and its int16 direction +0xc (0007586c) by transform into the model-space copies at +0x1e and +0x2a. Raster_SetModelTransform runs it on each registered light. ES2's Light_TransformToModelSpace (DBSIM 0048bbf0).",
+      "description": "(light, transform) in stack order, callee-cleaned: transforms the light's position +0 (Transform_ApplyToPoint) and its int16 direction +0xc (RotateVectorByMatrixQ14 (0007586c)) by transform into the model-space copies at +0x1e and +0x2a. Raster_SetModelTransform runs it on each registered light. ES2's Light_TransformToModelSpace (DBSIM 0048bbf0).",
       "source": "ES1DBSIM decompile at 0005b8b4, against ES2's Light_TransformToModelSpace",
       "verified": {
         "bytes": "0005b8b4+101",
@@ -4087,7 +4690,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Light_ComputeShadeForFace",
-      "description": "(centre, normal) in stack order, callee-cleaned, both int16 triples: sums a shade over the light list Light_ActiveList (000bdba6) (count Light_ActiveCount (000bdba2)) by the light's type +0x16: type 0 adds its intensity +0x1a; type 1 takes v = (dot(normal, model-space direction +0x2a) (000660bf) - 0x400000) >> 1 and, when v is negative, subtracts intensity * v >> 22; type 2 takes the displacement from centre to the model-space position +0x1e and, when its dot with the normal (000660f2) is positive, adds intensity * ((+0x38 * (dot / (m + 1))) / (+0x34 + m)) >> 11, m being Math_FastMagnitude3D of the displacement. Returns the sum clamped to 0xff. ES2's Light_ComputeShadeForFace (DBSIM 0048bedc) reads the same fields through accessors.",
+      "description": "(centre, normal) in stack order, callee-cleaned, both int16 triples: sums a shade over the light list Light_ActiveList (000bdba6) (count Light_ActiveCount (000bdba2)) by the light's type +0x16: type 0 adds its intensity +0x1a; type 1 takes v = (dot(normal, model-space direction +0x2a) (DotProductVec3Short (000660bf)) - 0x400000) >> 1 and, when v is negative, subtracts intensity * v >> 22; type 2 takes the displacement from centre to the model-space position +0x1e and, when its dot with the normal (DotProductVec3Int (000660f2)) is positive, adds intensity * ((+0x38 * (dot / (m + 1))) / (+0x34 + m)) >> 11, m being Math_FastMagnitude3D of the displacement. Returns the sum clamped to 0xff. ES2's Light_ComputeShadeForFace (DBSIM 0048bedc) reads the same fields through accessors.",
       "source": "ES1DBSIM decompile at 0005bc30, against ES2's Light_ComputeShadeForFace",
       "verified": {
         "bytes": "0005bc30+421",
@@ -4102,7 +4705,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Light_ComputeShadeForNormal",
-      "description": "(centre, normal) in stack order, callee-cleaned, an int32 and an int16 triple: ES2's Light_ComputeShadeForNormal (DBSIM 0048c060), reading the light's fields directly: type 0 adds the intensity; type 1 subtracts intensity * dot(normal, +0x2a) (000660bf) >> 22 when the dot is negative; type 2 adds intensity * (+0x38 * (d / (m + 1)) / (+0x34 + m)) >> 11 when d, the dot of the normal with the displacement from centre to +0x1e (000660f2), is positive, m its Math_FastMagnitude3D. Clamped to 0xff.",
+      "description": "(centre, normal) in stack order, callee-cleaned, an int32 and an int16 triple: ES2's Light_ComputeShadeForNormal (DBSIM 0048c060), reading the light's fields directly: type 0 adds the intensity; type 1 subtracts intensity * dot(normal, +0x2a) (DotProductVec3Short (000660bf)) >> 22 when the dot is negative; type 2 adds intensity * (+0x38 * (d / (m + 1)) / (+0x34 + m)) >> 11 when d, the dot of the normal with the displacement from centre to +0x1e (DotProductVec3Int (000660f2)), is positive, m its Math_FastMagnitude3D. Clamped to 0xff.",
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
       "verified": {
         "bytes": "0005bdd8+400",
@@ -4267,7 +4870,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSPoly_FrontBackVisibilityTest",
-      "description": "(centre, normal) in stack order, callee-cleaned, both int16 triples: ES2's TSPoly_FrontBackVisibilityTest (DBSIM 0048c620): with Raster_FocalShift 0 returns 1 when the normal rotated by g_ModelToView has a negative depth, else 0; otherwise returns dot(normal, g_EyeInModelSpace - centre) (000660f2).",
+      "description": "(centre, normal) in stack order, callee-cleaned, both int16 triples: ES2's TSPoly_FrontBackVisibilityTest (DBSIM 0048c620): with Raster_FocalShift 0 returns 1 when the normal rotated by g_ModelToView has a negative depth, else 0; otherwise returns dot(normal, g_EyeInModelSpace - centre) (DotProductVec3Int (000660f2)).",
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md",
       "verified": {
         "bytes": "0005c47c+180",
@@ -7481,6 +8084,21 @@
       }
     },
     {
+      "address": "00064698",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Point3I_DistanceBetween",
+      "description": "(a, b), callee-cleaned: copies b, subtracts a and returns Math_FastMagnitude3D of the difference. ES2's Point3I_DistanceBetween (DBSIM 0047d628).",
+      "source": "ES1DBSIM disassembly at 00064698",
+      "verified": {
+        "bytes": "00064698+68",
+        "sha1": "55476834aa70",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00064720",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -8249,6 +8867,36 @@
       }
     },
     {
+      "address": "000660bf",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DotProductVec3Short",
+      "description": "(a, b), C convention: the sum of the three int16 products. es2_xref finds its callers Light_ComputeShadeForFace and Light_ComputeShadeForNormal. ES2's DotProductVec3Short (DBSIM 0047dbdb).",
+      "source": "ES1DBSIM disassembly at 000660bf",
+      "verified": {
+        "bytes": "000660bf+51",
+        "sha1": "b7df2c1bdc6a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000660f2",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DotProductVec3Int",
+      "description": "(a, b), C convention: the sum of the three int32 products, truncated to 32 bits. ES2's DotProductVec3Int (DBSIM 0047dc0e).",
+      "source": "ES1DBSIM disassembly at 000660f2",
+      "verified": {
+        "bytes": "000660f2+37",
+        "sha1": "e1859f9a3eb4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000662fc",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -8470,7 +9118,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawPolygonDispatch",
-      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (00098d64) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through 00069058, two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 0009a6f5 for top byte 4, nothing otherwise), mode 1 goes to 0007965c, modes 5 and 7 to the routine at 0009df58, mode 6 fills through slot 1 (0009ded8) with the brush's second field. The fills scan-convert with 00076f54 and clip per the clip mode +0x204: 0 none, 1 through 000788e4 against the rect at +0x20c, otherwise against each region of the block's list (rects through 000788e4, span regions through 00073b7c). es2_naming.py diff finds it identical to ES2's Raster_DrawPolygonDispatch (DBSIM 00483dac) but for labels.",
+      "description": "(count, points), C convention: draws a polygon with the brush {mode, colour} at the installed clip block's (00098d64) +0x228, translating the points by (+0x20c - +0x21c, +0x210 - +0x220) first when +0x208 is set. Fewer than three points, or brush mode 4, draw in the brush colour through a temporary brush at +0x224: one point through Gfx_PlotPixel (00069058), two through Raster_DrawLine, more as a line loop. For three or more: mode 0 fills through g_RasterRoutines slot 0 with the colour (a palette index for top byte 0, the ramp entry from 0009a6f5 for top byte 4, nothing otherwise), mode 1 goes to 0007965c, modes 5 and 7 to the routine at 0009df58, mode 6 fills through slot 1 (0009ded8) with the brush's second field. The fills scan-convert with 00076f54 and clip per the clip mode +0x204: 0 none, 1 through 000788e4 against the rect at +0x20c, otherwise against each region of the block's list (rects through 000788e4, span regions through 00073b7c). es2_naming.py diff finds it identical to ES2's Raster_DrawPolygonDispatch (DBSIM 00483dac) but for labels.",
       "source": "ES1DBSIM decompile at 00068be0, against ES2's Raster_DrawPolygonDispatch",
       "verified": {
         "bytes": "00068be0+867",
@@ -8505,6 +9153,21 @@
       "verified": {
         "bytes": "00068fdc+122",
         "sha1": "b1c002e193aa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069058",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gfx_PlotPixel",
+      "description": "(point), C convention: ES2's Gfx_PlotPixel (DBSIM 004894e0), the same statements after normalisation. Reads the brush through the canvas 00098d64's +0x224: mode 0 resolves the colour by its top byte (0 the value, 4 ramp entry (bits 16-23 * length) >> 8 of g_RasterColourRamps, else nothing) and plots through 0009dee8; mode 2 hands brush + 4 to 0009deec; other modes plot nothing. Adds the canvas origin when +0x208 is set and clips by +0x204: 0 none, 1 the rect +0x20c-+0x218, otherwise the canvas's list of rects and span lists.",
+      "source": "ES1DBSIM decompile and disassembly at 00069058",
+      "verified": {
+        "bytes": "00069058+413",
+        "sha1": "37dd3d719f8b",
         "scope": "body",
         "via": "decompile"
       }
@@ -9776,6 +10439,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0007586c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "RotateVectorByMatrixQ14",
+      "description": "(v, matrix, out), C convention: ES2's RotateVectorByMatrixQ14 (DBSIM 0047ffb4), identical after normalisation. By the matrix's mode byte +0x12: below 1 copies v; 1 rotates x and y, out.x = (v.x m0 + v.y m2 + 0x2000) >> 14, out.y = (v.x m1 + v.y m3 + 0x2000) >> 14, and keeps z; otherwise out.x adds v.z m6, out.y v.z m7, and out.z = (v.x m4 + v.y m5 + v.z m8 + 0x2000) >> 14, m being the nine int16. Returns out. es2_xref finds its callers Light_CreateMissionSun and Light_TransformToModelSpace.",
+      "source": "ES1DBSIM disassembly at 0007586c",
+      "verified": {
+        "bytes": "0007586c+276",
+        "sha1": "b946f4cabc21",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00075a28",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -10654,7 +11332,7 @@
       "type": "data",
       "confidence": "high",
       "name": "World_Clouds",
-      "description": "Pointer to the 0x113-byte object World_LoadTheater (000251c4) builds with maybe_Clouds_Ctor (000271c0) and the vptr 000928f6 when the world file's second string is not empty; left as it was otherwise.",
+      "description": "Pointer to the 0x113-byte object World_LoadTheater (000251c4) builds with TexPoly_Ctor (000271c0) and the vptr 000928f6 when the world file's second string is not empty; left as it was otherwise.",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-clouds"
     },
     {

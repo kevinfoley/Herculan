@@ -1256,7 +1256,13 @@
       "confidence": "high",
       "name": "LightManager_SelectLightsForObject",
       "description": "Called once per depth-sorted render entry from ObjList_DrawEntryRender, with the entry's position and its SimObject_GetShapeRadius. Per live slot: cull past slot+0x17; else Math_Atan2Guarded(dist>>5, radius>>5) < 8000 picks a DIRECTIONAL approximation (distance-attenuated intensity, direction rebuilt at length 0x800) and otherwise a POINT light (unattenuated, falloff constants handed to the shade path as light+0x34=0 and light+0x38=1984). Far is directional, near is point -- the helper takes (x, y), so the angle is the object's angular size. See docs/retail/rendering/effect-lights.md.",
-      "source": "docs/retail/rendering/effect-lights.md"
+      "source": "docs/retail/rendering/effect-lights.md",
+      "verified": {
+        "bytes": "00407098+489",
+        "sha1": "c17562053c04",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00407284",
@@ -9182,7 +9188,13 @@
       "confidence": "high",
       "name": "TexPoly_RandomPointOnCircle",
       "description": "TexPoly vtable +0x24 (0049afe6), (poly, outPoint, outAngles, _, centre, radius, shift): draws a BAM angle a with Math_RandomNext, writes the Euler triple (0, 0, a) to outAngles, and outPoint = (centre.x + (Q14(radius, cos a) << shift), centre.y + (Q14(radius, cos(a - 0x4000)) << shift), poly+0x79).",
-      "source": "DBSIM decompile at 0042f860; docs/retail/simulation/random-generator.md"
+      "source": "DBSIM decompile at 0042f860; docs/retail/simulation/random-generator.md",
+      "verified": {
+        "bytes": "0042f860+178",
+        "sha1": "a5cee94b169f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042f914",
@@ -9221,7 +9233,13 @@
       "confidence": "high",
       "name": "TexPoly_SetupRings",
       "description": "TexPoly vtable +0x20 (0049afe6), (poly, rect): ring count +0xf9 = +0x6d / +0x71 (the step); for ring i the radius step * (i + 1) + step / 2 at +0x9f[i], the int16 0xffff / ((step * (i + 1) * 4) / +0x75) at +0x81[i], and a Math_RandomNext angle at +0xdb[i]; then copies the rect's +4/+8/+0xc into +0xff/+0x103/+0x107 and sets +0x22.",
-      "source": "DBSIM decompile at 0042f970; docs/retail/simulation/random-generator.md"
+      "source": "DBSIM decompile at 0042f970; docs/retail/simulation/random-generator.md",
+      "verified": {
+        "bytes": "0042f970+165",
+        "sha1": "eec756b1ca66",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042fa18",
@@ -9229,8 +9247,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TexPoly_DrawAtPoints",
-      "description": "TexPoly's vtable (0049afe6, RTTI 'TexPoly' at 004302aa, base TSTexture4Poly) slot +0x34, a slot TSTexture4Poly does not have; es2_xref finds the vtable entry and no call. Runs slot +0x20 (0042f970) first while +0x22 is clear; installs g_CurrentShapeDbaContext = this+0x1a, the surface base 006c697a = this+0x61 and 006c6976 = 006c60ec; Raster_SetDepthFadeFromDistance(0). Then for each of the +0x23 12-byte points at +0xe: when the viewer (arg+4) has moved since the last call (+0xff/+0x103), a point not flagged in the byte array at +0x16 and farther than +0x6d + +0x7d is reflected through the midpoint of the old and new viewer positions and flagged, and a flagged point nearer than +0x6d - +0x7d is unflagged; each point below index +0xfd gets slot +0x28 with its distance, Raster_SetModelTransform at its position and slot +0x2c (TexPoly_Render). Stores the viewer position at +0xff..+0x107.",
-      "source": "DBSIM decompile at 0042fa18; tools/scripts/es2_classes.py --vtables"
+      "description": "TexPoly's vtable (0049afe6, RTTI 'TexPoly' at 004302aa, base TSTexture4Poly) slot +0x34, a slot TSTexture4Poly does not have; es2_xref finds the vtable entry and no call. Runs slot +0x20 (0042f970) first while +0x22 is clear; installs g_CurrentShapeDbaContext = this+0x1a, the surface base 006c697a = this+0x61 and 006c6976 = 006c60ec; Raster_SetDepthFadeFromDistance(0), and holds DAT_004a09ac at 1 until it returns. Then for each of the +0x23 12-byte points at +0xe: when the viewer (arg+4) has moved since the last call (+0xff/+0x103), a point not flagged in the byte array at +0x16 and farther than +0x6d + +0x7d is reflected through the midpoint of the old and new viewer positions and flagged, and a flagged point nearer than +0x6d - +0x7d is unflagged; each point below index +0xfd gets slot +0x28 with its distance, Raster_SetModelTransform at its position and slot +0x2c (TexPoly_Render). Stores the viewer position at +0xff..+0x107.",
+      "source": "DBSIM decompile at 0042fa18; tools/scripts/es2_classes.py --vtables",
+      "verified": {
+        "bytes": "0042fa18+540",
+        "sha1": "cbad377b821b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042fc34",
@@ -9239,7 +9263,13 @@
       "confidence": "high",
       "name": "TexPoly_Render",
       "description": "TexPoly's vtable (0049afe6) slot +0x2c, which TexPoly_DrawAtPoints calls once per point. Normally builds the poly's quad from the frame descriptor g_CurrentShapeDbaContext[1] + surface*0x14 (surface base 006c697a, index this+0xc) and hands it to Raster_SetupTexturedSpan, as TSTexture4Poly_Render does; while g_TexturedPolyUseBitmapBrush is set it takes the bitmap of the surface's +0 field when Raster_FrontFacing on the points this+4/+6 is positive and of its +8 field otherwise, and draws through Poly_ProjectIndexedVertices and PolyFill_FillThenOutline, calling slot +0x30 when the projection reports a vertex behind the near plane.",
-      "source": "DBSIM decompile at 0042fc34; tools/scripts/es2_classes.py --vtables"
+      "source": "DBSIM decompile at 0042fc34; tools/scripts/es2_classes.py --vtables",
+      "verified": {
+        "bytes": "0042fc34+849",
+        "sha1": "d6c741953092",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042ff88",

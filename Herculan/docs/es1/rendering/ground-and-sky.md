@@ -9,8 +9,8 @@ The view is a 320-pixel-wide frame: several routines below use 160 as the projec
 `Sim_RenderFrame` (`00059c08`), unless `CockpitViewManager_Published`'s record has 1 at `+0x10` and a clear byte at `+0x18`, installs the camera's projection (`Raster_InstallViewProjection`), clears the model transform, and calls `Scene_DrawTerrainPass` (`00025b68`) with the camera and then `ObjList_DrawFrameObjects` (`00021008`), which draws the shapes ([`polygon-shading.md`](polygon-shading.md#which-objects-are-drawn)). `Scene_DrawTerrainPass`, given the camera:
 
 1. calls `Hzline_Draw` (`00026264`) on `g_TheaterHzline` (`000928d4`) with the canvas origin pair at `000afa9c` and the camera, when the `hzline` exists;
-2. calls slot `+0x34` of `World_Clouds` (`000928d8`) with the camera, when it exists ([Open](#open));
-3. calls `PointScatter_Update` with `World_PointScatter` (`000928dc`) and the camera, when it exists ([the scattered points](../formats/wld-world.md#the-scattered-points), [Open](#open));
+2. calls slot `+0x34` of `World_Clouds` (`000928d8`) with the camera, when it exists, which drifts and draws [the clouds](#the-clouds);
+3. calls `PointScatter_Update` with `World_PointScatter` (`000928dc`) and the camera, when it exists, which draws [the scattered points](#the-scattered-points);
 4. calls `Palette_BlendRangeByPitch` (`00025fe4`) with the camera ([below](#the-pitch-gradient-palette-entries-6479)).
 
 ES2's (`Scene_DrawTerrainPass`, `0042e700`) sets the `hzline`'s one-colour flag and projects the terrain's far edge first, and ends by drawing the terrain; ES1's does none of the three. A second view, drawn by `000364f8`, calls `Hzline_Draw` with no canvas origin and then `ObjList_DrawFrameObjects`.
@@ -118,6 +118,73 @@ So the skyline is a 360° panorama of *n* frames standing on the horizon, which 
 
 **A level frame's palette index 0 is transparent: the sky and the ground already painted show through it.** `Bitmap_Blit` (`00067048`), given flags 0, calls `Raster_BlitDispatch` (`0006a8e0`), which moves the point by the canvas's origin when the canvas (`00098d64`) has 1 at `+0x208`, hands a 1-bit bitmap (type 1 in the low four bits of header byte `+5`) to `0007d66c`, and otherwise calls the active [display driver's](polygon-shading.md#the-display-drivers) blit through `0009df3c` when the canvas's `+0x204` is 0, or its clipped blit through `0009df44`, with the canvas's clip rect `+0x20c`, when `+0x204` is 1, or 2 with a positive `+0`. Both 8-bit drivers' blits, `VGA8_BlitBitmap` and `BMP8_BlitBitmap`, copy every byte when header byte `+5` has bit 4 set ([the opaque bit](../../retail/formats/dfn-hfn-dci.md#the-bitmap-record)) and otherwise skip each 0 byte, leaving the destination pixel as it was; `BMP8_BlitBitmap`'s clipped blit (`0008dc3c`) calls `BMP8_BlitBitmap`. Every frame of the twelve `WORLD<M>.DBA` banks in `SIMVOL0.VOL`, four frames each, 320 wide and 3 to 48 rows, unpacked, has 0 in byte `+5`.
 
+## The clouds
+
+**A layer of flat textured clouds hangs high over the ground, drifting with one wind; a cloud that falls far behind the viewer reappears as far ahead.** There are as many as the world file's count, 20 in retail ([the clouds](../formats/wld-world.md#the-clouds)), each a square 25000 units on a side at height 20000, textured from the `dba\clouds2` bank, with no light and no distance colour. Their class is ES2's `TexPoly`, a `TSTexture4Poly` drawn once at each of a set of points round the viewer, which ES2 never builds ([ES2's `TexPoly`](../../retail/simulation/random-generator.md#open)); ES1 adds a subclass that sets it up and moves it.
+
+### The object
+
+`TexPoly_Ctor` (`000271c0`) builds the base ([the load](../formats/wld-world.md#the-clouds)); `World_LoadTheater` then stores the subclass's vptr `000928f6` over `TexPoly`'s `00092bde`.
+
+| Offset | |
+|---|---|
+| `+0x04`, `+0x06`, `+0x08`, `+0x0a`, `+0x0c` | the poly's normal point, centre point, corner count, index offset and surface index, a `TSPoly`'s: 4, 0, 4, 0 and 0 when it draws |
+| `+0x0e` | the clouds' positions, three `int32` each |
+| `+0x12` | an angle triple per cloud |
+| `+0x16` | a byte per cloud, bit 0 set while the cloud is [carried over](#each-frame) |
+| `+0x1a` | the bitmap bank |
+| `+0x1e` | set once the layer is set up |
+| `+0x1f`, `+0xf9` | the number of clouds and the number drawn, `int16` |
+| `+0x21` | five points of three `int32`: the four corners and the normal |
+| `+0x5d`, `+0x61`, `+0x65` | the surface entries: the frame seen from below, an unused one, the frame seen from above |
+| `+0x69`, `+0x6d`, `+0x71`, `+0x75`, `+0x79` | the field radius, the size in x and in y, the height, the carry-over margin |
+| `+0x7d`, `+0x9b`, `+0xd7`, `+0xf5` | the ring tables and their count ([Open](#open)) |
+| `+0xfb`, `+0xff`, `+0x103` | the viewer's position at the last frame |
+| `+0x107`, `+0x10b`, `+0x10f` | the wind, three `int32`, the subclass's |
+
+### The set-up
+
+`TexPoly_DrawAtPoints` calls slot `+0x24` with the camera the first time it runs, while `+0x1e` is clear. The subclass's, `Clouds_Setup` (`00027c00`):
+
+1. calls `TexPoly_SetQuadAndRadius` (`000275dc`) with 200000, 10000, 25000 and 25000 in stack order: the field radius `+0x69` = 200000, the height `+0x75` = 10000, the sizes `+0x71` and `+0x6d` = 25000, and the corners (0, 0, 10000), (25000, 0, 10000), (25000, 25000, 10000) and (0, 25000, 10000);
+2. stores the margin 10000 at `+0x79`, and with `TexPoly_SetFifthVertex` (`0002761c`) the fifth point (0, 0, −1), the normal;
+3. calls `TexPoly_SetupRings` (`00027638`), which fills the ring tables, stores the camera's position at `+0xfb` and sets `+0x1e`: *n* = `+0x69` / `+0x6d` rings, 8, and for ring *i* the `int32` `+0x6d` · (*i* + 1) + `+0x6d` / 2 at `+0x9b`, the `int16` `0xffff` / ((`+0x6d` · (*i* + 1) · 4) / `+0x71`) at `+0x7d` and a `Math_RandomNext` word at `+0xd7`;
+4. places each cloud with slot `+0x28`, `TexPoly_RandomPointOnCircle` (`00027540`), at a distance *r* = (`Math_RandomNext` & `0xffff`) << 1 from the camera: with *a* = `Math_RandomNext`, it writes the angles (0, 0, *a*) and the position (camera *x* + Q14(*r* · cos *a*), camera *y* + Q14(*r* · sin *a*), `+0x75`), cos and sin by `Math_CosBam` and the products by `Math_Q14Multiply`. The shift 1 is the number of doublings of `0x10000` before four times it reaches the field radius. Every cloud's angles go to the first triple of `+0x12`, which the draw does not read;
+5. sets the wind: with *w* = `Math_RandomNext` and *s* = 50 + `Math_RandomBelow(100)`, (Q14(*s* · cos *w*), Q14(*s* · sin *w*), 0) at `+0x107`, 50 to 149 units a frame in one direction for the whole layer;
+6. stores `Math_RandomBelow(3)` at `+0x65`, the frame every cloud shows from above.
+
+### Each frame
+
+`Clouds_DriftAndDraw` (`00027d78`), slot `+0x34` of the subclass, given the camera:
+
+1. sets the number drawn `+0xf9` to (count · (`000bd566` + 1)) >> 8, `000bd566` being a preferences byte;
+2. adds the wind to the position of each cloud drawn;
+3. calls `TexPoly_DrawAtPoints` (`00027724`), `TexPoly`'s slot `+0x34`, with the camera.
+
+`TexPoly_DrawAtPoints` makes the bank the active bitmap bank (`000bdb5e`), points `Poly_IndexList` at the 32 words from `000bdb62` that `Light_ResetSystem` sets to 0–31 and the surface list `000b6732` at `+0x5d`, and sets the poly's fields as in the table. The camera has moved when its *x* or *y* differs from `+0xfb` or `+0xff`, and *mid* is the point halfway, ((last + now) >> 1) on each axis. For each cloud, *d* being `Math_FastMagnitude2D` of its *x* and *y* less the camera's:
+
+- **Carrying over.** When the camera has moved, a cloud whose bit 0 is clear and whose *d* exceeds `+0x69` + `+0x79` (210000) is reflected through *mid*, *x* = 2 · *mid*.*x* − *x* and likewise *y*, and its bit set; a cloud whose bit is set and whose *d* is below `+0x69` − `+0x79` (190000) has it cleared. A cloud left behind thus jumps to the same distance ahead, and the bit keeps it from jumping back until it has come nearer.
+- **Drawing.** A cloud below the number drawn gets slot `+0x2c` with *d*, which does nothing (`0002750c` and `00025a50`, each `RET 8`), `Raster_SetModelTransform` with no rotation and its position as the translation, and slot `+0x30`, `TexPoly_Render`.
+
+It then stores the camera's position at `+0xfb`. So the panel's corners sit at the cloud's position plus (0–25000, 0–25000, 10000), at height 20000, unturned.
+
+`TexPoly_Render` (`000279a4`) draws the panel through brush mode 5, as `Bitmap_BlitRotatedScaled` does: `Raster_FrontFacing` of the normal and the centre, point 4 read as `int16` (0, 0, −1) and point 0, picks surface entry 0 when it is positive, the camera below the panel, and entry 2 with the back flag otherwise. The entry is a frame of the active bank, its frame array at `+8`; a null frame draws nothing. The brush `{5, 4, the corners' texture points, the frame's bitmap header}`, installed at the render context's `+0x22c` and replaced by `PolyFill_FillBrush` after, maps (0, 0), (*u*, 0), (*u*, rows − 1) and (0, rows − 1) onto the four corners, *u* being columns − 1 rounded down to a multiple of 8. The corners are projected with `Poly_ProjectIndexedVertices`, clipped with `Poly_ClipRingToNearPlaneWithUV` when it reports one behind the near plane, and filled with `PolyFill_FillThenOutline`.
+
+ES2's `TexPoly_DrawAtPoints` (`0042fa18`) also sets the depth fade to 0 and holds `004a09ac` at 1 while it walks the points; its `TexPoly_Render` (`0042fc34`) takes the bitmap brush only while `g_TexturedPolyUseBitmapBrush` is set, and otherwise draws the frame's atlas page through `Raster_SetupTexturedSpan`, and clips through a slot of its own, `TexPoly_ClipPolygon`, where ES1's calls `Poly_ClipRingToNearPlaneWithUV`; its `TexPoly_RandomPointOnCircle` (`0042f860`) shifts the two offsets after the multiply where ES1's caller shifts the distance before.
+
+## The scattered points
+
+**While the preferences value that textures the ground is below 240, specks of one colour dot the ground round the viewer: a single pixel far off, two side by side nearer, and a small cluster close by.** They are the world file's 250 points in the colour of its short 8 ([the scattered points](../formats/wld-world.md#the-scattered-points)), on the ground plane within 131070 of where the viewer first stood. `PointScatter_Update` draws count × `000bd567` / 240 of them with `PointScatter_Draw` (`00026fe0`) while `000bd567` is below `000956be` (240), and the ground is [textured](#the-ground) only while it is above, so at 240 there is neither.
+
+`PointScatter_Draw`, given the object and the camera:
+
+1. clears the model transform (`Raster_SetModelTransform(0)`) and installs a pixel brush `{0, colour}` from its own stack at the render context's `+0x228`, which it leaves there when it returns;
+2. the camera has moved when any of its coordinates differs from the centre `+9`, `+0xd`, `+0x11`; *mid* is ((centre + camera) >> 1) in *x* and *y*;
+3. for each of the first `+7` points, *d* being `Math_FastMagnitude2D` of its *x* and *y* less the camera's: when the camera has moved and *d* exceeds 70000, the point is reflected through *mid* in *x* and *y*. It is moved into the view with `Raster_ModelToView` and drawn when its depth (the view point's `+4`) exceeds the camera's near plane `+0x1e`: `Raster_PerspectiveDivide` and `Raster_ProjectToScreen` give the pixel (*x*, *y*), and `Gfx_PlotPixel` plots (*x*, *y*) in colour *c*, short 8 (`+0x15`); when *d* is below 30000 also (*x* + 1, *y*) in *c*; when it is below 20000 also (*x* + 2, *y*) and (*x* + 2, *y* − 1) in *c* − 2 and (*x* + 1, *y* − 1) in *c* − 4;
+4. stores the camera's position as the centre.
+
+`Gfx_PlotPixel` (`00069058`) is ES2's (`Gfx_PlotPixel`, `004894e0`): it reads the brush through the canvas's `+0x224` (the render context's `+0x228`, the canvas being the context's `+4`). With mode 0 it resolves the colour by its top byte as a fill's brush does ([the colour ramps](polygon-shading.md#the-colour-ramps)) and plots through the display driver's routine at `0009dee8`; with mode 2 it hands the brush's `+4` to `0009deec`; with any other mode, or a colour it cannot resolve, it plots nothing. It moves the point by the canvas's origin when `+0x208` is set, and clips it when the canvas's `+0x204` is 1 to the rect `+0x20c`–`+0x218`, and otherwise when it is not 0 to the canvas's list of rects and span lists.
+
 ## The pitch gradient (palette entries 64–79)
 
 `Palette_BlendRangeByPitch` (`00025fe4`), given the camera, rewrites palette entries 64 to 79 each frame while the byte `000928ec` is set. The first time, it reads from the active palette the colours of entry `000bc5ce` (64, as the load stores it), of entries short 10 (`000bc5d0`) and short 11 (`000bc5d2`), and of entry `000bc5d4` (98), and builds 16 colours from short 10's colour to short 11's with `Palette_InterpolateColours` (`000283b0`) at `000afde4`. Then every frame:
@@ -137,12 +204,16 @@ So the skyline is a 360° panorama of *n* frames standing on the horizon, which 
 | `Palette_BlendRangeByPitch` | `00025fe4` | where ES2's `Scene_DrawTerrainPass` ends with a call to an empty function |
 | `Hzline_Draw`, `Hzline_DrawWithOffset`, `Hzline_BuildHorizon` | `00026264`, `00026280`, `00026348` | |
 | `Hzline_FillSky`, `Hzline_FillGround`, `Hzline_BlitHorizonStrip` | `0002650c`, `000267d8`, `00026ac8` | |
+| `PointScatter_Draw` | `00026fe0` | |
+| `TexPoly_Ctor`, `TexPoly_RandomPointOnCircle`, `TexPoly_SetQuadAndRadius`, `TexPoly_SetFifthVertex` | `000271c0`, `00027540`, `000275dc`, `0002761c` | |
+| `TexPoly_SetupRings`, `TexPoly_DrawAtPoints`, `TexPoly_Render` | `00027638`, `00027724`, `000279a4` | slots `+0x24`, `+0x34` and `+0x30` of `TexPoly`'s vtable `00092bde` |
+| `Clouds_Setup`, `Clouds_DriftAndDraw` | `00027c00`, `00027d78` | slots `+0x24` and `+0x34` of the clouds' vtable `000928f6` |
 | `Palette_GetEntry`, `Palette_InterpolateColours` | `00027f54`, `000283b0` | |
 | `GndTex_Load`, `GndTex_BuildRowTable`, `GndTex_Draw` | `00028de8`, `00028fbc`, `00029120` | |
 | `GndTex_Alloc`, `GndTex_Free`, `GndTex_LoadTexture` | `00029714`, `000297f0`, `00029830` | |
 | `GndTex_AllocSelector`, `GndTex_FreeSelector`, `GndTex_DrawSpan` | `000298b8`, `000298fe`, `0002991d` | the span's unrolled steps have no Ghidra function |
 | `Math_TransposeRotation2D`, `Math_BuildRotation2D`, `Transform2D_ApplyToPoint` | `00063df0`, `000694b8`, `00069448` | the three that [`fixed-point-math.md`](../simulation/fixed-point-math.md#the-assembly-library) lists as ES2's code |
-| `Bitmap_BlitRotatedUnpacked`, `Bitmap_BlitRotatedScaled` | `00067214`, `00076630` | |
+| `Bitmap_BlitRotatedUnpacked`, `Gfx_PlotPixel`, `Bitmap_BlitRotatedScaled` | `00067214`, `00069058`, `00076630` | |
 
 ## Globals
 
@@ -160,12 +231,11 @@ So the skyline is a 360° panorama of *n* frames standing on the horizon, which 
 
 ## Open
 
-- **Open:** what draws the clouds: `World_Clouds`' slot `+0x34`, which `Scene_DrawTerrainPass` calls each frame with the camera, and the clouds' class ([`../formats/wld-world.md`](../formats/wld-world.md#open)).
-- **Open:** what `00026fe0` draws for the scattered points, which `PointScatter_Update` calls each frame with the camera; it shows count × `000bd567` / 240 of them while the preferences value is below 240.
-- **Open:** what the preferences panel's options 3 and 5 are called and which values they take; `0005b48a` also sets `000b5b96` to whether option 5 exceeds 240.
+- **Open:** what the preferences panel's options 3 and 5 are called and which values they take; `0005b48a` also sets `000b5b96` to whether option 5 exceeds 240. Which option sets `000bd566`, the byte the number of clouds drawn scales by.
+- **Open:** what reads `TexPoly`'s ring tables (`+0x7d`, `+0x9b`, `+0xd7`, count `+0xf5`) and the angle triples at `+0x12`; of the functions this page describes, the set-up writes them and none of the others reads them. What `dba\clouds2`'s frames 0 to 2 show, and what writes the surface entry `+0x5d`, the frame seen from below, which the constructor zeroes.
 - **Open:** what draws with palette entries 64–79, which the pitch gradient rewrites, and what sets `000928ec` (`00057f89`, `00058407`) and `000928ee` (`00057e15`, `0005b3a3`).
 - **Open:** what the canvas origin pair at `000afa9c` holds, and what writes it (`00022384`, `0002252c`, `0002253c`, `000243f9`, `0002e131` hold its address).
 - **Open:** what `00092c4c`, which `GndTex_Load` sets to 1, is read for; `es2_xref.py` finds no reference to it besides that store.
 - **Open:** what draws the second view that `000364f8` renders.
-- **Open:** what brush mode 5, which `Bitmap_BlitRotatedScaled` fills the turned ground bitmap and the rolled skyline frames through, does with palette index 0: `Raster_DrawPolygonDispatch` hands modes 5 and 7 to the routine at `0009df58`, entry `+0x84` of the active [display driver's table](polygon-shading.md#the-display-drivers).
+- **Open:** what brush mode 5, which `Bitmap_BlitRotatedScaled` fills the turned ground bitmap and the rolled skyline frames through and `TexPoly_Render` the clouds, does with palette index 0: `Raster_DrawPolygonDispatch` hands modes 5 and 7 to the routine at `0009df58`, entry `+0x84` of the active [display driver's table](polygon-shading.md#the-display-drivers).
 - **Open:** which driver and which canvas mode (`+0x204`) the simulator draws the skyline with, and whether `VGA_8`'s clipped blit (`0008c27c`), which reads header bit 4 as the unclipped one does, skips index 0 in the same way; its copy loops are not read.

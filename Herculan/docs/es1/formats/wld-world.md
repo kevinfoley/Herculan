@@ -107,14 +107,14 @@ It reads no `rmp\world<N>`, and calls neither `Terrain_BindTextureBank` nor `Ras
 
 ### The clouds
 
-When the second string is not empty, the load allocates `0x113` bytes, constructs them with `maybe_Clouds_Ctor` (`000271c0`) with the cloud count and the name, and stores the vptr `000928f6` at `+0` and the object at `World_Clouds` (`000928d8`). The 12-byte member at `+0x107` has no constructor code. `maybe_Clouds_Ctor`, given the object, the count *c* and the name, in stack order:
+When the second string is not empty, the load allocates `0x113` bytes, constructs them with `TexPoly_Ctor` (`000271c0`), ES2's `TexPoly` constructor, with the cloud count and the name, and stores the clouds' own vptr `000928f6` at `+0` and the object at `World_Clouds` (`000928d8`). The 12-byte member at `+0x107`, the clouds' wind, has no constructor code. `TexPoly_Ctor`, given the object, the count *c* and the name, in stack order:
 
 - stores in turn the vptrs `00092ade`, `00092b02`, `00092b2e`, `00092b5a`, `00092b86` and `00092bb2`, constructs five 12-byte elements at `+0x21` with `00027498`, and stores the vptr `00092bde`;
 - allocates *c* × 4 elements of 12 bytes (`00027498`) at `+0x0e`, *c* elements of 6 bytes (`00027510`) at `+0x12` and *c* zeroed bytes at `+0x16`, and stores *c* at `+0x1f` and `+0xf9` as `int16`;
 - loads `dba\<name>` with `ClassItem_LoadFromFile` to `+0x1a`;
 - zeroes the three dwords at `+0x5d`, the five elements at `+0x21`, the dwords at `+0x6d`, `+0x71` and `+0x75`, and the byte at `+0x1e`.
 
-`Scene_DrawTerrainPass` calls the clouds' slot `+0x34` each frame with the camera ([the frame](../rendering/ground-and-sky.md#the-frame)); what it draws is [Open](../rendering/ground-and-sky.md#open).
+`Scene_DrawTerrainPass` calls the clouds' slot `+0x34` each frame with the camera, which sets the layer up the first time and then drifts and draws it ([the clouds](../rendering/ground-and-sky.md#the-clouds)). Only the first *c* of the *c* × 4 positions are used.
 
 ### The scattered points
 
@@ -130,7 +130,7 @@ y = centre.y + Q14(2r · cos(a − 0x4000))
 z = 0
 ```
 
-with `Math_CosBam` and `Math_Q14Multiply`. `PointScatter_Update` (`00026e8c`), given the object and the centre, scatters the points the first time (setting `+4`), and when `000bd567` is less than `000956be` stores count × `000bd567` / `000956be` at `+7` and calls `00026fe0`. `Scene_DrawTerrainPass` calls it each frame with the camera, so the centre is the camera's position; `000bd567` is a preferences value and `000956be` holds 240 ([the ground](../rendering/ground-and-sky.md#the-ground)). What `00026fe0` draws is [Open](../rendering/ground-and-sky.md#open).
+with `Math_CosBam` and `Math_Q14Multiply`. `PointScatter_Update` (`00026e8c`), given the object and the centre, scatters the points the first time (setting `+4`), and when `000bd567` is less than `000956be` stores count × `000bd567` / `000956be` at `+7` and calls `00026fe0`. `Scene_DrawTerrainPass` calls it each frame with the camera, so the centre is the camera's position; `000bd567` is a preferences value and `000956be` holds 240 ([the ground](../rendering/ground-and-sky.md#the-ground)). `PointScatter_Draw` (`00026fe0`) draws them ([the scattered points](../rendering/ground-and-sky.md#the-scattered-points)).
 
 ES2 has no `gndtex.cpp`: its ground is textured from the bank its fourth string names through `Terrain_BindTextureBank` ([terrain texturing](../../retail/rendering/terrain-texturing.md#the-answer-end-to-end)), where ES1's is a flat textured plane ([the textured ground](../rendering/ground-and-sky.md#the-textured-ground)).
 
@@ -150,5 +150,5 @@ ES2 has no `gndtex.cpp`: its ground is textured from the bank its fourth string 
 - **Open:** what `000928e0` (short 4 + short 6 − 1) is read for; `es2_xref.py` finds no reference to it besides the load's store.
 - **Open:** what ES2 reads its shorts 10 and 11 (`004cfd76`, `004cfd78`) and `004cfd74` and `004cfd7a` for.
 - **Open:** what the dword at `000981c4` that `PaletteCycle_Register` adds a cycle's delay to counts.
-- **Open:** the clouds' class: its vtables, and what the five elements at `+0x21`, the arrays at `+0x0e`, `+0x12` and `+0x16` and the member at `+0x107` hold. `00025a08` stores the vptr `000928f6` and five others in turn and calls `TSBase_Dtor`; whether it is the clouds' destructor is not read.
+- **Open:** the clouds' destructors, slot `+0x1c` of each vtable: `00025a08` for `000928f6`, which stores that vptr and five others in turn and calls `TSBase_Dtor`, and `000274c8` for `TexPoly`'s `00092bde`; neither body is read.
 - **Open:** what reads `WORLD1.DPL` and `WORLD3.DPL`, which no M names.
