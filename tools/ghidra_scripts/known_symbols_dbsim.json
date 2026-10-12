@@ -6714,8 +6714,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MechType_InitOne",
-      "description": "Per-mech-type init, called once per valid slot (0-0x54) by Mechs_InitAllTypes. Opens the per-mech-type resource files (name built from the mech's own code string + several folder-prefix globals), reads a 0xd8-byte fixed record into the MECH_TYPE_DATA[typeIndex] struct (0x21e bytes/entry) at record offset 2, initializes hit-zone/collision/debris sub-resources, and -- the confirmed answer to 'how does DBSIM pick a mech's texture' -- for every mesh sub-component of this mech type, sets TSShapeInstance+0x26 (bound active DBA, see docs/retail/rendering/dts-texture-binding.md) to '&g_MechTextureGroupSlots + typeRecord[0x96]*8'. typeRecord+0x96 is MechType_TextureGroupIndex (see that entry); the 0xd8-byte record it lives in is read directly from simvol0/dat/<MECHNAME>.DAT at record offset 2, so record offset 0x96 is file offset 148, the texture-group index.",
-      "source": "memory project_es2_dts_texture_binding (DBSIM-side RE)"
+      "description": "(type): loads one chassis into its slot's 0x21e-byte MECH_TYPE_DATA record in 004a9de8, the name from 004a9de4 and the slot from maybe_MechTypeSlot_GetIndex. Ovl_ReadFile reads 0xd8 bytes of dat\\<name> into +2; the slot goes to +0 and the type to +0x6c. Shape_LoadAllRoots loads dts\\<name> (tag 0x1e0003, skip 0) into +0xde, the count to +0xea, g_ShapeDetailThresholds to +0xe2 and an Rtl_VectorNew of count CONNECT_INFO_Ctor pairs to +0xe6; then MechType_RemapDetailRootTransforms(+0xde, +0x30). It copies +6 to +0xc8 and, when +0x50 is 0, stores Q10(0x13b, +6) at +0xc2 and multiplies +4, +6, +0x2e and +0x6e by Q16Divide(+0xc6 * 400, +0xc4). GunLayout_LoadForMechType(gl\\<name>, slot + 004a9df4) and GunLayout_CollectHardpointBones, then per root MechType_BindHardpointSlots and root+0x26 = &g_MechTextureGroupSlots + (+0x96) * 8. PaperDoll_Load(name, slot) goes to +0xda. When +0x50 is set it reads 0x36 bytes of <name> in the folder at 0049a47e into +0x1dc and stores Q16Divide(+0x1fe - +0x202, +0x206 - +0x20a) at +0x1ea; when the name at +0xce is not empty, Debris_LoadDatabase(+0x212, +0xce, that texture slot).",
+      "source": "memory project_es2_dts_texture_binding (DBSIM-side RE)",
+      "verified": {
+        "bytes": "004201a8+755",
+        "sha1": "910961adc6f6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042049c",

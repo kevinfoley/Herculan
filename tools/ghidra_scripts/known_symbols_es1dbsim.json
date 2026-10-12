@@ -157,13 +157,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mem_InitHeap",
-      "description": "(size): caps size at X32_LargestFreeBlock() - 25000, takes a block that large from X32_AllocMemory, asserting 'Memory alloc failed' (memory.cpp line 504, severity 5) through Assert_Report when it returns -1, makes it the heap 000ae4ac (Heap_Init) and sets 000901d4, which sends operator new, malloc and the frees to the heap.",
+      "description": "(size): caps size at X32_LargestFreeBlock() - 25000, takes a block that large from X32_AllocMemory, asserting 'Memory alloc failed' (memory.cpp line 504, severity 5) through Assert_Report when it returns -1, makes it the heap 000ae4ac (Heap_Init) and sets 000901d4, which sends operator new, malloc and the frees to the heap. Returns the capped size.",
       "source": "Herculan/docs/es1/simulation/memory.md#the-heap",
       "verified": {
         "bytes": "00001524+115",
         "sha1": "be7cfb3810a6",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -362,6 +362,21 @@
       }
     },
     {
+      "address": "000025c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MechType_BindHardpointSlots",
+      "description": "(slotList, boneIds, count, root) in stack order, callee-cleaned: stores count at slotList+4 and a new array of count pointers at slotList+0, then for each bone id stores the root's vtable +0x28 answer for it, or null for a negative id. ES2's MechType_BindHardpointSlots (DBSIM 0040304c), whose arguments are (slotList, root, count, boneIds) and whose find goes through vtable +0x24.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "000025c4+144",
+        "sha1": "1360609a396a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00006cf8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -372,6 +387,96 @@
       "verified": {
         "bytes": "00006cf8+87",
         "sha1": "e25566cb8d96",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009350",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CollisionTable_Reserve",
+      "description": "(n), callee-cleaned: returns the int16 count at 00090da0 and adds n to it. ES2's CollisionTable_Reserve (DBSIM 0040cbd4).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
+      "verified": {
+        "bytes": "00009350+24",
+        "sha1": "9a85b582e255",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009a9c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DmgTable_Reserve",
+      "description": "(n), callee-cleaned: returns the int16 count at 00090e00 and adds n to it. ES2's DmgTable_Reserve (DBSIM 0040d200).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
+      "verified": {
+        "bytes": "00009a9c+24",
+        "sha1": "c106162a323b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000befc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GunLayout_CollectHardpointBones",
+      "description": "(layout, out) in stack order, callee-cleaned: for each 26-byte record of the hardpoint list (count int16 +0, records at +2) writes one int16 to out, the record's bone id when its byte at +6 is under 4 and -1 otherwise; returns the count. ES2's GunLayout_CollectHardpointBones (DBSIM 0040fc50).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "0000befc+75",
+        "sha1": "3ee15eb6e4d3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000c18c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GunLayout_GetBySlot",
+      "description": "(slot), callee-cleaned: returns the slot's 6-byte entry, slot * 6 + the table at 000bc2bc. ES2's GunLayout_GetBySlot (DBSIM 0040fea0).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "0000c18c+19",
+        "sha1": "a87cb6b3f511",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000c1a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GunLayout_Reserve",
+      "description": "(n), callee-cleaned: returns the int16 count at 000bc2c0 and adds n to it. ES2's GunLayout_Reserve (DBSIM 0040feb4).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
+      "verified": {
+        "bytes": "0000c1a0+24",
+        "sha1": "b45b4c417787",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c1d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GunLayout_LoadForMechType",
+      "description": "(slot, path) in stack order, callee-cleaned: opens path, takes GunLayout_GetBySlot(slot), asserts at severity 5 (gunlist.cpp line 0x112) when the stream status is set, reads the int16 count into the entry, __vec_new's count 26-byte records into its +2 and reads them, closes the stream and returns the entry. ES2's GunLayout_LoadForMechType (DBSIM 0040fee8), whose arguments are (path, slot).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "0000c1d0+161",
+        "sha1": "772c572f19b5",
         "scope": "body",
         "via": "decompile"
       }
@@ -452,18 +557,183 @@
       }
     },
     {
+      "address": "000198f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_LoadResources",
+      "description": "No arguments: sets the 16-byte slot map g_MechTypeSlotIndex (000bc430) to 0xff and the slot count g_MechTypeCount (000bc42e) to 0; reads dat\\mforms (asserting at severity 5, mechsys.cpp line 0x30, when the stream status is set): an int16 count to 000bc448 and that many 0x1c-byte records, constructed by MechFormation_ElementCtor (000199e4), to the pointer at 000bc44a; then, when g_LowMemory (000bda98) is 0, loads dba\\light, medium, heavy and enemy (the name table 00091de4) with ClassItem_LoadFromFile into the four dwords at g_MechTextureGroupSlots (000bc450). ES2's Mech_LoadResources (DBSIM 0041fdb0), whose slot map is 0x55 bytes and which packs seven banks into atlases.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
+      "verified": {
+        "bytes": "000198f0+243",
+        "sha1": "8790ef540c03",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000199e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MechFormation_ElementCtor",
+      "description": "(formation), callee-cleaned: allocates 0x1c bytes when formation is null, then __vec_ctor over its seven 4-byte slots with MechFormation_SlotCtor (00019a14) (passed as the padding entry 00019a12); returns formation. Mech_LoadResources passes it as 000199e3. ES2's MechFormation_ElementCtor (DBSIM 004207bb).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
+      "verified": {
+        "bytes": "000199e4+46",
+        "sha1": "03f233855188",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019a14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MechFormation_SlotCtor",
+      "description": "(slot), callee-cleaned: allocates 4 bytes when slot is null and returns it, storing nothing; the element constructor MechFormation_ElementCtor runs over a formation's seven slots, where ES2's passes Rtl_ReturnArgCopy.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
+      "verified": {
+        "bytes": "00019a14+27",
+        "sha1": "dbb8f8a04d0f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019a30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MechTypeSlot_GetIndex",
+      "description": "(type), callee-cleaned: returns the byte for type in the slot map g_MechTypeSlotIndex (000bc430), 0xff when the type has no slot. ES2's maybe_MechTypeSlot_GetIndex (DBSIM 0041ff00).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
+      "verified": {
+        "bytes": "00019a30+15",
+        "sha1": "f994a4519bb1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019a40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MechTypeSlot_Allocate",
+      "description": "(type), callee-cleaned: when MechTypeSlot_GetIndex(type) is 0xff, stores the slot count g_MechTypeCount (000bc42e) in the type's map byte, increments the count and takes GunLayout_Reserve(1), keeping its result in 000bc44e when the count has become 1; then, every call, CollisionTable_Reserve(1) and DmgTable_Reserve(1). One caller found by es2_xref, in DBSim_LoadScriptDat (0001d850). ES2's maybe_MechTypeSlot_Allocate (DBSIM 0041ff10).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
+      "verified": {
+        "bytes": "00019a40+95",
+        "sha1": "508b8a10fcef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019ac4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shape_RemapTransformIds",
+      "description": "(nodeCount, map, part) in stack order, callee-cleaned: takes the part's class tag from its vtable +4, finds it among the ten tags at 00091e14 (0x140005, 0x1e0005, 0x140006 return; 0x140014, 0x140015 and 0x14000b each have a handler; 0x1e0003, 0x140008, 0x140007 and 0x14000c share one) and jumps through the handler table after them; returns for any other tag. The handlers (00019aef to 00019b93) are undefined bytes in Ghidra and were not read. ES2's Shape_RemapTransformIds (DBSIM 0041ff88), whose tag comes from vtable +0 and whose arguments are (part, map, nodeCount).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "00019ac4+217",
+        "sha1": "1890ade28d1a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00019ba0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MechType_RemapDetailRootTransforms",
+      "description": "(partIds, detailSet) in stack order, callee-cleaned: with more than one root (int16 detailSet+0xc), fills a 400-byte stack table with 0xff; for each part id up to 50 or the first negative, finds the part in root 0 through the root's vtable +0x24 and, for each later root that has it, stores root 0's transform id (part+4) at that root's row [its own transform id]; then Shape_RemapTransformIds for each root after the first with its row and int16 +0x10 of root 0's +0x2a record. ES2's MechType_RemapDetailRootTransforms (DBSIM 00420090), whose find goes through vtable +0x20 and whose arguments are (detailSet, partIds).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "00019ba0+336",
+        "sha1": "0cee5231b84e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019cf0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MechType_InitOne",
+      "description": "(type), callee-cleaned: loads one chassis into its slot's 0x1c4-byte record in g_MechTypeTable (000bc444). Reads 0xc0 bytes of dat\\<name> (name from g_MechTypeNames (000bc440)) into +2 with Ovl_ReadFile, stores the slot at +0 and the type at +0x6c; Shape_LoadAllRoots(skip, 0x1e0003, dts\\<name>, +0xc6), skip being int16 +0x48 when g_LowMemory (000bda98) is set and 0 otherwise; the count to +0xd2, g_ShapeDetailThresholds (00091dac) to +0xca and a __vec_new of count CONNECT_INFO_Ctor pairs to +0xce; MechType_RemapDetailRootTransforms(+0x30, +0xc6); GunLayout_LoadForMechType(slot + 000bc44e, gl\\<name>) and GunLayout_CollectHardpointBones; per root MechType_BindHardpointSlots and root+0x26 = the dword at g_MechTextureGroupSlots (000bc450) + int16 +0x96 * 4; PaperDoll_Load(slot, name) to +0xc2. ES2's MechType_InitOne (DBSIM 004201a8), which reads 0xd8 bytes, skips no roots, stores a slot address at +0x26, rescales the speeds and has flyer and debris steps.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "00019cf0+436",
+        "sha1": "500e66b09de6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00019ea4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CONNECT_INFO_Ctor",
+      "description": "(info), callee-cleaned: allocates 6 bytes when info is null, zeroes the dword at +0 and returns info. ES2's CONNECT_INFO_Ctor (DBSIM 004207db).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "00019ea4+58",
+        "sha1": "30d7c2cf828e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00019ee0",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Mechs_InitAllTypes",
-      "description": "No arguments: LoadNameList(10, 0x60, 0, 'mechs') in stack order into 000bc440; __vec_new of the int16 mech type count 000bc42e records of 0x1c4 bytes, element constructor 00019f3e, into 000bc444; 00030288(count); then for each type number from 0 to 15 whose 00019a30(type) is not 0xff, 00019cf0(type). ES2's Mechs_InitAllTypes (DBSIM 0042049c), whose table has 0x55 entries, whose records are 0x21e bytes and which walks all 0x55 type numbers.",
+      "description": "No arguments: LoadNameList(10, 0x60, 0, 'mechs') in stack order into g_MechTypeNames (000bc440); __vec_new of the int16 mech type count g_MechTypeCount (000bc42e) records of 0x1c4 bytes, element constructor MECH_TYPE_DATA_Ctor (00019f40) passed as its padding entry 00019f3e, into g_MechTypeTable (000bc444); PaperDoll_InitTables (00030288)(count); then for each type number from 0 to 15 whose MechTypeSlot_GetIndex (00019a30)(type) is not 0xff, MechType_InitOne (00019cf0)(type). ES2's Mechs_InitAllTypes (DBSIM 0042049c), whose table has 0x55 entries, whose records are 0x21e bytes and which walks all 0x55 type numbers.",
       "source": "Herculan/docs/es1/formats/nam-name-list.md#mod-lists",
       "verified": {
         "bytes": "00019ee0+94",
         "sha1": "2a41c09beca8",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00019f40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MECH_TYPE_DATA_Ctor",
+      "description": "(data), callee-cleaned: allocates 0x1c4 bytes when data is null, __vec_ctor's ten 0x18-byte ConfigPart_Ctor parts at +0xd4 and returns data; Mechs_InitAllTypes passes it as the padding entry 00019f3e. ES2's MECH_TYPE_DATA_Ctor (DBSIM 00420817), whose parts are at +0xec.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-type-record-in-memory",
+      "verified": {
+        "bytes": "00019f40+56",
+        "sha1": "7b830a0c425d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019f78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_Ctor",
+      "description": "(part), callee-cleaned: allocates 0x18 bytes when part is null, stores the vptrs 00091e6e, 00091e92 and 00091d7a at +0 in turn, runs ShapeInstance_CtorCellFrames(part+0x10, 0) and stores the vptr 00091d46; returns part. ES2's ConfigPart_Ctor (DBSIM 0042067c).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-type-record-in-memory",
+      "verified": {
+        "bytes": "00019f78+168",
+        "sha1": "14679f83e7c0",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -927,6 +1197,36 @@
       "verified": {
         "bytes": "0002fcd4+298",
         "sha1": "fca7ddbf36fe",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00030288",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDoll_InitTables",
+      "description": "(count), callee-cleaned: __vec_new's count 0x5c-byte records to 00093348, loads dba\\weapons with ClassItem_LoadFromFile to 000b0f14, and reads pdg\\weapons: an int32 n and n * 8 bytes to 000b0f18. ES2's PaperDoll_InitTables (DBSIM 004378d8), which picks the bank's folder by VideoMode_UseHiResBanks and shifts the coordinates it reads.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "00030288+140",
+        "sha1": "e2bd74708374",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00030388",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDoll_Load",
+      "description": "(slot, name) in stack order, callee-cleaned: the slot's 0x5c-byte record in 00093348. Loads dba\\<name> with ClassItem_LoadFromFile and reads pdg\\<name>: an int32 view count, then per view the bank's frame pointer (from the bank's +8 array), two 8-byte reads, an int32 region count and that many 0x1c-byte regions, seven dwords per view; then an int32 count and that many 0x14-byte entries at +0x54 and +0x58. Returns the record. ES2's PaperDoll_Load (DBSIM 004379cc), which picks the bank's folder by VideoMode_UseHiResBanks, asserts when pdg\\<name> does not open, shifts the coordinates and resolves the region colours through HudColorTable.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "00030388+344",
+        "sha1": "2d53fdaafe6d",
         "scope": "body",
         "via": "decompile"
       }
@@ -6005,6 +6305,21 @@
       }
     },
     {
+      "address": "000654bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ovl_ReadFile",
+      "description": "(path, count, size, dst) in stack order, callee-cleaned: opens path, asserting at severity 5 (util\\ovl.cpp line 0x15) when the stream status is set, reads count * size bytes into dst, asserting at severity 5 (line 0x17) when the read fails, and closes the stream. ES2's Ovl_ReadFile (DBSIM 00492e48), whose arguments are (dst, size, count, path).",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
+      "verified": {
+        "bytes": "000654bc+131",
+        "sha1": "6a2a1d0381ac",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00065540",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -8750,6 +9065,15 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00091dac",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ShapeDetailThresholds",
+      "description": "Seven int32 {75, 60, 45, 25, 18, 12, 6}, the address MechType_InitOne stores at every chassis record's +0xca. ES2's g_ShapeDetailThresholds (DBSIM 0049a344), with the same values.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load"
+    },
+    {
       "address": "000924a0",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -9164,6 +9488,51 @@
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
     },
     {
+      "address": "000bc42e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_MechTypeCount",
+      "description": "int16: the number of chassis slots allocated, set to 0 by Mech_LoadResources and incremented by MechTypeSlot_Allocate; Mechs_InitAllTypes allocates this many records.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files"
+    },
+    {
+      "address": "000bc430",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_MechTypeSlotIndex",
+      "description": "16 bytes, one per chassis type: its slot, or 0xff for none. Mech_LoadResources fills it with 0xff, MechTypeSlot_Allocate writes it and MechTypeSlot_GetIndex reads it.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files"
+    },
+    {
+      "address": "000bc440",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_MechTypeNames",
+      "description": "Pointer to the name table LoadNameList builds from nam\\mechs, indexed by chassis type; MechType_InitOne takes a type's file name from it.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files"
+    },
+    {
+      "address": "000bc444",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_MechTypeTable",
+      "description": "Pointer to the chassis records, 0x1c4 bytes per slot, that Mechs_InitAllTypes allocates and MechType_InitOne fills.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-type-record-in-memory"
+    },
+    {
+      "address": "000bc450",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_MechTextureGroupSlots",
+      "description": "Four dwords, the banks dba\\light, medium, heavy and enemy that Mech_LoadResources loads when g_LowMemory (000bda98) is 0; MechType_InitOne stores the one a chassis' texture group (record +0x96) picks at each root's +0x26. ES2's g_MechTextureGroupSlots (DBSIM 004a9df6) is seven 8-byte slots whose address is stored instead.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load"
+    },
+    {
       "address": "000bc580",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -9225,6 +9594,15 @@
       "name": "WorldShades_DistanceOffsets",
       "description": "Two int32, 000bc5c6 and 000bc5ca, read from the world file after its two counts by World_LoadTheater (000251c4). ES2's WorldShades_DistanceOffsets (DBSIM 004cfd6c).",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
+    },
+    {
+      "address": "000bda98",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_LowMemory",
+      "description": "int16: set to 1 at 000595b1 in 00059350 when the heap Mem_InitHeap (00001524) returns is under 0x3c45b0 bytes; a search of the disassembly dump for the address finds that store and 14 compares. When it is set Mech_LoadResources (000198f0) loads no texture banks and MechType_InitOne (00019cf0) skips record +0x48's count of shape roots.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#low-memory"
     },
     {
       "address": "000bdb4a",

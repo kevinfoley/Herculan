@@ -587,6 +587,21 @@
       }
     },
     {
+      "address": "0000ce6f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MechFormation_SlotCtor",
+      "description": "(slot), callee-cleaned: allocates 4 bytes when slot is null and returns it, storing nothing; 0000cab1, which reads dat\\mforms, runs it with __vec_ctor over a formation's seven 4-byte slots. The code of ES1DBSIM's MechFormation_SlotCtor (00019a14), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
+      "verified": {
+        "bytes": "0000ce6f+27",
+        "sha1": "70fe8cf87296",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000e518",
       "binary": "ES1GO",
       "type": "function",
@@ -2475,6 +2490,21 @@
       "verified": {
         "bytes": "000513fc+97",
         "sha1": "f9c5c52e2ed9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051918",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ovl_ReadFile",
+      "description": "(path, count, size, dst) in stack order, callee-cleaned: ES1DBSIM's Ovl_ReadFile (000654bc), its two asserts (util\\ovl.cpp lines 0x15 and 0x17) at severity 4, adding 1 to the dword 000ab5fe after the open and after the read. Eight callers found by es2_xref, each reading a bnd\\ file.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md",
+      "verified": {
+        "bytes": "00051918+161",
+        "sha1": "25b98509b0be",
         "scope": "body",
         "via": "decompile"
       }

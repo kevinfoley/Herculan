@@ -23,7 +23,8 @@ namespace HercWorks.Core.Io.Transform;
 /// archives.
 ///
 /// <para>Each <see cref="RetailGame"/> has its own table. ES1's is ES2's with the readers of the
-/// layouts that differ under the same name and header rebound (<see cref="Es1Rebinds"/>;
+/// layouts that differ under the same name and header rebound, and the chassis files, whose timestamps
+/// ES2's match cannot see, matched by name (<see cref="Es1Rebinds"/>;
 /// docs/herculan/plan-es1-support.md#what-hercworks-reads).</para>
 /// </summary>
 public static class TransformerRegistry {
@@ -69,7 +70,7 @@ public static class TransformerRegistry {
 		new("Projectile Data", e => NameIs(e, "PROJ.DAT"), () => new Dbsim.ProjectileDataTransformer()),
 		new("Weapon Mount Templates", e => NameIs(e, "WEAPONS.DAT") && DirIs(e, FileType.Dat), () => new Dbsim.WeaponsSimTransformer()),
 		new("Structure Types", e => NameIs(e, "BASES.DAT") && DirIs(e, FileType.Dat), () => new Dbsim.BasesDatTransformer()),
-		new("Herc Sim Data", e => MagicIs(e, "4120007A") || MagicIs(e, "4120017A"), () => new Dbsim.HercSimDataTransformer()),
+		new(HercSimDataLabel, e => MagicIs(e, "4120007A") || MagicIs(e, "4120017A"), () => new Dbsim.HercSimDataTransformer()),
 		// Only known sample is SKIMMER.DAT, whose magic prefix doesn't match either Herc value above
 		// (7C1F640E) — matched by exact name for now rather than guessing a magic-based rule from a
 		// single data point. See FlyerSimData's doc comment for the format itself.
@@ -118,32 +119,57 @@ public static class TransformerRegistry {
 			() => new Common.DynamixBitmapArrayTransformer()),
 	};
 
+	/// <summary>The label of the chassis stats reader, <c>dat\[chassis].dat</c>, in each game's table.</summary>
+	public const string HercSimDataLabel = "Herc Sim Data";
+
+	/// <summary>An ES1 reader for an entry ES2's table binds by the same label, and the match ES1's table uses when ES2's does not fit ES1's files.</summary>
+	private sealed record Rebinding(Func<ThreeSpaceByteTransformer> Create, Func<VolEntry, bool>? Matches = null);
+
 	/// <summary>
 	/// ES1's readers for entries ES2's table binds by the same label: each replaces that registration's reader in place,
-	/// keeping its label and match.
+	/// keeping its label, and its match unless the rebinding gives one.
 	/// </summary>
-	private static readonly Dictionary<string, Func<ThreeSpaceByteTransformer>> Es1Rebinds = new() {
+	private static readonly Dictionary<string, Rebinding> Es1Rebinds = new() {
 		// docs/es1/formats/msn-mission-file.md
-		["Mission File"] = () => new Common.Es1MissionFileTransformer(),
+		["Mission File"] = new(() => new Common.Es1MissionFileTransformer()),
 		// docs/es1/formats/zone-terrain.md: ES1's zone file is the zone's shapes, not a heightmap header.
-		["Zone Header"] = () => new Common.Es1ZoneDatTransformer(),
+		["Zone Header"] = new(() => new Common.Es1ZoneDatTransformer()),
 		// docs/es1/formats/wld-world.md: ES2's layout less two leading int16.
-		["World/Environment Data"] = () => new Dbsim.Es1WorldDataTransformer(),
+		["World/Environment Data"] = new(() => new Dbsim.Es1WorldDataTransformer()),
+		// docs/es1/formats/chassis-dat.md: ES2's first 192 bytes. ES2's match is its files' source timestamps, which ES1's
+		// do not share, so ES1's matches the dat\ files of the names ES1's nam\MECHS.NAM lists.
+		[HercSimDataLabel] = new(() => new Dbsim.Es1HercSimDataTransformer(),
+			e => DirIs(e, FileType.Dat) && IsEs1ChassisFile(e)),
 	};
+
+	/// <summary>Whether the entry is one of the sixteen chassis files ES1's <c>nam\MECHS.NAM</c> names (docs/es1/formats/chassis-dat.md#which-files).</summary>
+	private static bool IsEs1ChassisFile(VolEntry e) => e.FileName?.Trim().ToUpperInvariant() is
+		"ROADRUNN.DAT" or "GUNSLING.DAT" or "RAPTOR.DAT" or "TOMAHAWK.DAT" or "PATRIOT.DAT" or "PANTHER.DAT" or "HERCULES.DAT"
+		or "COLOSSUS.DAT" or "MONGOOSE.DAT" or "SCORPION.DAT" or "MIRIMAC.DAT" or "RAMSES.DAT" or "ACHILLES.DAT" or "APOLLO.DAT"
+		or "BULLDOG.DAT" or "SPIDER.DAT";
 
 	private static readonly Dictionary<RetailGame, List<Registration>> Tables = new() {
 		[RetailGame.Earthsiege2] = Es2Registrations,
 		[RetailGame.Earthsiege1] = Rebind(Es2Registrations, Es1Rebinds),
 	};
 
-	private static List<Registration> Rebind(List<Registration> table, Dictionary<string, Func<ThreeSpaceByteTransformer>> rebinds) {
+	private static List<Registration> Rebind(List<Registration> table, Dictionary<string, Rebinding> rebinds) {
 		var missing = rebinds.Keys.Where(label => !table.Any(r => r.Label == label)).ToList();
 		if (missing.Count > 0) {
 			throw new InvalidOperationException($"No registration is labelled {string.Join(", ", missing)}.");
 		}
 
-		return table.Select(r => rebinds.TryGetValue(r.Label, out var create) ? r with { Create = create } : r).ToList();
+		return table.Select(r => rebinds.TryGetValue(r.Label, out var rebind)
+			? r with { Create = rebind.Create, Matches = rebind.Matches ?? r.Matches }
+			: r).ToList();
 	}
+
+	/// <summary>
+	/// A fresh transformer of the reader <paramref name="game"/>'s table binds under <paramref name="label"/>, whatever entry
+	/// it is for, or null when the table has no such label.
+	/// </summary>
+	public static ThreeSpaceByteTransformer? CreateByLabel(string label, RetailGame game) =>
+		Tables[game].FirstOrDefault(r => r.Label == label)?.Create();
 
 	/// <summary>
 	/// Returns a fresh transformer instance for the given entry from <paramref name="game"/>'s table, or null if no known

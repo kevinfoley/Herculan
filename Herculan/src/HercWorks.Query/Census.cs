@@ -104,7 +104,7 @@ internal static class Census {
 	/// <summary>
 	/// The names <paramref name="vol"/>'s <c>nam\MECHS.NAM</c> lists, empty when it has none. Each names its chassis's
 	/// <c>dat\</c> stats file (<see cref="HercWorks.Core.Data.File.NameList"/>); the registry finds ES2's by their source
-	/// files' timestamps, which another game's archives do not share.
+	/// files' timestamps and ES1's by their retail names, so this reaches a chassis file of any other name or date.
 	/// </summary>
 	private static HashSet<string> ChassisNames(Voln vol) {
 		var names = vol.FilesSet.FirstOrDefault(e => string.Equals(e.FileName?.Trim(), "MECHS.NAM", StringComparison.OrdinalIgnoreCase)
@@ -158,7 +158,7 @@ internal static class Census {
 
 	/// <summary>
 	/// The registry's reader for <paramref name="game"/>, else one of three the registry binds more narrowly than the
-	/// format: a <c>.NAM</c>'s, a chassis stats file's by <see cref="ChassisNames"/>, and the structure shape library's
+	/// format: a <c>.NAM</c>'s, the game's chassis stats reader for a file <see cref="ChassisNames"/> lists, and the structure shape library's
 	/// for every <c>.DGS</c>, all of which open with the same persistent-object header.
 	/// </summary>
 	private static (string? Label, ThreeSpaceByteTransformer? Transformer) ReaderFor(Voln vol, VolEntry entry, string type, RetailGame game,
@@ -171,7 +171,7 @@ internal static class Census {
 		return type switch {
 			"NAM" => ("Name List", new NameListTransformer()),
 			"DAT" when chassis.Contains(stem) && string.Equals(FolderOf(vol, entry), "dat", StringComparison.OrdinalIgnoreCase) =>
-				("Herc Sim Data (by MECHS.NAM)", new HercWorks.Core.Io.Transform.Dbsim.HercSimDataTransformer()),
+				(TransformerRegistry.HercSimDataLabel + " (by MECHS.NAM)", TransformerRegistry.CreateByLabel(TransformerRegistry.HercSimDataLabel, game)),
 			"DGS" => ("Structure Shape Library (by extension)", new HercWorks.Core.Io.Transform.Dbsim.BasesDgsTransformer()),
 			_ => (null, null),
 		};

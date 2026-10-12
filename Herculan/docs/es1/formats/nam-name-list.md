@@ -41,4 +41,4 @@ Both pass a mask of 0, so the simulator reads the base lists only. The two calle
 
 - **Open:** no caller of `MechMods_Probe` found by `es2_xref.py`, no reader of `MechMods_Present` found by a search of the disassembly for its address, and no caller of `ES1GO`'s `LoadNameList` found by `es2_xref.py`. What a `MECMODn.DYN` file holds, and whether any ES1 release shipped one, is open.
 - **Open:** what reads the dword `ES1GO 000ab5fe`.
-- **Open:** the names in ES1's two lists; the step 0.6 census counts two `.NAM` files in `SIMVOL0` ([`plan-es1-support.md`](../../herculan/plan-es1-support.md)).
+- **Open:** the names in ES1's `flyers` list. `mechs` names the sixteen chassis ([the chassis file](chassis-dat.md#which-files)).
