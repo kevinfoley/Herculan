@@ -5938,9 +5938,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_PerTickSystemsUpdate",
-      "description": "Per-mech-per-tick reactor/energy bookkeeping (integrates reactor output rate into the energy pool at +0x292), then dispatches weapon-energy arbitration and shield-recharge via Shield_RechargeTick.",
-      "source": "docs/retail/simulation/target-selection.md",
-      "signature": "void __cdecl Mech_PerTickSystemsUpdate(MechObject *mech)"
+      "description": "Per-mech, per-tick systems pass, in two halves. Energy: integrates the reactor rate into the energy pool (+0x292), hands the pool less 500 to the weapon mounts' vtable slot 0 (WeaponMounts_ArbitrateEnergy) and what they leave to Shield_RechargeTick, then stores the remainder plus 500 clamped to 0-10000. On the locally piloted machine it clears +0xb0 while shield front + rear exceeds 0x5dc. It counts down the retarget, friendly-fire-complaint, radar-silence and under-fire timers (the last expiring clears the damage-from-player-group total) and the +0x285 timer (expiry reloads 4000 and clears the damage-taken total), and runs Mech_ComputeCombatRating while +0x94 is clear. Missile lock: with a target and Mech_GetEcmPodSwitch set it raises target+0xa2; stores Mech_IsEcmSwitchedOn into the jammer flag +0xa1; counts rounds per missile subtype (WeaponMounts_RoundsByMissileType) and clears the five per-subtype lock flags at weaponMounts+0x0a and the lamp +0x9b. With a target selected: against a jamming mech target it re-rolls the spoof flag +0x9c on the ECM timer (weight 0x14, 5 with a Targeting Pod whose +0x7f is under 0x33; spoof holds 5000, a miss re-rolls after 0x5dc), clearing it otherwise; the lock reload is distance >> 2 capped at 0x7fff, or 0 for a chassis with type record +0x50 set; while +0x9d is clear, the bearing (turret twist included) is within +-0x3000 and line of sight holds, each carried subtype's timer runs and latches its flag at zero unless +0x9c stands: subtype 0 and 4 hold their timers while the own scanner (+0x96) is off or this tick's roll spoofed, subtype 1 holds on a spoof alone, subtype 2 holds while the target's scanner and jammer are both off and latches regardless of +0x9c. Failing the gate reloads timers 0, 1 and 2 and clears +0x9d at the end. On the locally piloted machine it sets the lamp from the armed mount's subtype (any lock for a non-launcher) and calls Mech_LockTonePlay.",
+      "source": "docs/retail/simulation/missile-lock.md",
+      "signature": "void __cdecl Mech_PerTickSystemsUpdate(MechObject *mech)",
+      "verified": {
+        "bytes": "0041aa5c+1629",
+        "sha1": "313b87d34396",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041b0bc",

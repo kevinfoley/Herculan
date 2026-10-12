@@ -2,6 +2,7 @@ language.name English
 general.save    Save
 general.cancel  Cancel
 general.close   Close
+general.ok      OK
 tweak.target_distance_meters.display_name      Fix target distance readout
 tweak.target_distance_meters.description       On the MFD's F5 TARGET screen, show the target's distance in meters measured along the ground, the same way the F4 SCANNER screen measures it, so the two screens agree. Without this tweak the screen shows what your version of the game shows: version 1.0 shows the distance in engine units (1 unit = 6 mm), and version 1.10 shows it in meters. Both versions include the difference in height.
 tweak.show_correct_stats.display_name          Show correct stats
@@ -78,6 +79,12 @@ crash.message                 HERCULAN stopped because of an error: {0} The deta
 menu.debug                     Debug
 menu.tweaks                    Tweaks
 menu.settings                  Settings
+menu.about                     About
+about.title                    About
+about.license                  License
+welcome.title                  Welcome
+welcome.message                Welcome to the HERCULAN Engine! HERCULAN includes a variety of optional tweaks to customize your play experience. To access HERCULAN's menu bar, press Shift-Esc at any time.
+welcome.view_tweaks            View Tweaks
 settings.title                 Settings
 settings.folders               Earthsiege 2 folders
 settings.install_folder        Install folder

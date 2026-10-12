@@ -3778,7 +3778,13 @@
       "confidence": "high",
       "name": "Pilot_Progress",
       "description": "Advances one pilot's skill (+0x25) and rank (+0x29), both capped at 3. Skill steps when career Herc + Flyer kills hit a multiple of the divisor and only for non-player pilots; rank steps on missions flown. +0x27 selects the divisor pair: 0 gives 20 kills / 10 missions, non-zero gives 10 / 15. Confirmed in raw disassembly: the jnz at 0041009f skips the whole skill block for the player, and the skill test examines only the idiv remainder (test edx,edx at 004100b3) with no guard on the kill sum -- so a zero total satisfies it.",
-      "source": "docs/retail/shell/campaign-loop.md"
+      "source": "docs/retail/shell/campaign-loop.md",
+      "verified": {
+        "bytes": "00410066+119",
+        "sha1": "85b7b59fa4e1",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "004100e0",

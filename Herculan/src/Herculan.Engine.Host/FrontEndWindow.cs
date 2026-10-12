@@ -130,6 +130,16 @@ sealed class FrontEndWindow : IDisposable {
 	/// <summary>Whether the menu bar or one of its windows is up.</summary>
 	public bool MenuBarUp => _menuBar.Up;
 
+	/// <summary>
+	/// Raises the first start's <see cref="WelcomeDialog"/>, unless it has been dismissed before or this run is a
+	/// <c>--screenshot</c> capture, which draws no menu bar windows.
+	/// </summary>
+	public void OfferWelcome() {
+		if (_screenshotPath == null) {
+			_menuBar.Welcome.Offer();
+		}
+	}
+
 	public void BeginFrame(double delta) => _imgui?.Update((float)delta);
 
 	/// <summary>The menu bar and its windows over whatever the frame drew, never in a <c>--screenshot</c> capture.</summary>

@@ -2,6 +2,7 @@ language.name Deutsch
 general.save    Speichern
 general.cancel  Abbrechen
 general.close   Schließen
+general.ok      OK
 tweak.target_distance_meters.display_name      Zielentfernungsanzeige korrigieren
 tweak.target_distance_meters.description       Zeigt auf dem MFD im Bildschirm F5 TARGET die Zielentfernung in Metern über Grund an, so wie der Bildschirm F4 SCANNER sie misst, damit beide Bildschirme übereinstimmen. Ohne diese Option zeigt der Bildschirm, was Ihre Version des Spiels anzeigt: Version 1.0 zeigt die Entfernung in internen Spieleinheiten (1 Einheit = 6 mm), Version 1.10 in Metern. Beide Versionen beziehen den Höhenunterschied mit ein.
 tweak.show_correct_stats.display_name          Korrekte Werte anzeigen
@@ -78,6 +79,12 @@ crash.message                 HERCULAN wurde wegen eines Fehlers beendet: {0} Di
 menu.debug                     Debug
 menu.tweaks                    Optimierungen
 menu.settings                  Einstellungen
+menu.about                     Über
+about.title                    Über
+about.license                  Lizenz
+welcome.title                  Willkommen
+welcome.message                Willkommen bei der HERCULAN Engine! HERCULAN bietet eine Reihe optionaler Optimierungen, mit denen Sie Ihr Spielerlebnis anpassen können. Drücken Sie jederzeit Umschalt+Esc, um die Menüleiste von HERCULAN zu öffnen.
+welcome.view_tweaks            Optimierungen anzeigen
 settings.title                 Einstellungen
 settings.folders               Earthsiege-2-Ordner
 settings.install_folder        Installationsordner

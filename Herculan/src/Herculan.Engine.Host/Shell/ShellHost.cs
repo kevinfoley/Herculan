@@ -304,11 +304,16 @@ sealed class ShellHost : IDisposable {
 		}
 
 		// The startup sequence goes up once the intro movies and the fade in after them have run. It is
-		// the only widget up and takes no mouse events, so a click meanwhile reaches nothing.
+		// the only widget up and takes no mouse events, so a click meanwhile reaches nothing. The update that ends
+		// it, putting the main menu up, also offers HERCULAN's first-start welcome.
 		if (_startup.Running && !_audio.Fading) {
 			_startup.Advance();
 			if (_window.Mouse is { } startupMouse) {
 				_buttons.SpendButtons(startupMouse);
+			}
+
+			if (!_startup.Running) {
+				_window.OfferWelcome();
 			}
 
 			return;

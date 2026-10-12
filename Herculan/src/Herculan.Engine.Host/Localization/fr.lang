@@ -2,6 +2,7 @@ language.name Français
 general.save    Enregistrer
 general.cancel  Annuler
 general.close   Fermer
+general.ok      OK
 tweak.target_distance_meters.display_name      Corriger l'affichage de la distance de la cible
 tweak.target_distance_meters.description       Sur l'écran F5 TARGET du MFD, affiche la distance de la cible en mètres mesurée au sol, comme la mesure l'écran F4 SCANNER, afin que les deux écrans concordent. Sans cette option, l'écran affiche ce qu'affiche votre version du jeu : la version 1.0 affiche la distance en unités du moteur (1 unité = 6 mm), et la version 1.10 l'affiche en mètres. Les deux versions tiennent compte de la différence d'altitude.
 tweak.show_correct_stats.display_name          Afficher les statistiques correctes
@@ -78,6 +79,12 @@ crash.message                 HERCULAN s'est arrêté à cause d'une erreur : {0
 menu.debug                     Débogage
 menu.tweaks                    Ajustements
 menu.settings                  Paramètres
+menu.about                     À propos
+about.title                    À propos
+about.license                  Licence
+welcome.title                  Bienvenue
+welcome.message                Bienvenue dans le moteur HERCULAN ! HERCULAN propose divers ajustements facultatifs pour personnaliser votre expérience de jeu. Pour accéder à la barre de menus d'HERCULAN, appuyez à tout moment sur Maj+Échap.
+welcome.view_tweaks            Voir les ajustements
 settings.title                 Paramètres
 settings.folders               Dossiers d'Earthsiege 2
 settings.install_folder        Dossier d'installation

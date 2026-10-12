@@ -30,6 +30,12 @@
     <None Include="..\..\..\Branding\HE Icon *.png" LinkBase="Assets\Icon" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- The licence the About window shows, embedded so that a build run from bin, which has no copy beside it, has it too.
+       The release zip also carries the file itself. -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\LICENSE.txt" LogicalName="LICENSE.txt" />
+  </ItemGroup>
+
   <!-- Loose files, not EmbeddedResource: Localization scans this folder at runtime, so a player can
        drop in their own .lang file (a new locale, or edits to an existing one) after install without
        rebuilding anything. -->
