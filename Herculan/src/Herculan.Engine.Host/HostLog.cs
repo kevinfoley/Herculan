@@ -18,7 +18,14 @@ namespace Herculan.Engine.Host;
 /// console to read it in.</para>
 /// </summary>
 static class HostLog {
+	// Local rather than roaming: a log is this machine's and only good for diagnosis, so it has no business following
+	// the player's profile the way the settings beside it in the roaming folder do.
 	private static readonly string LogFolder = Path.Combine(
+		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
+		"Herculan");
+
+	// Where older builds wrote the logs, with the settings. Whatever is left there is moved into LogFolder.
+	private static readonly string LegacyLogFolder = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify),
 		"Herculan");
 
@@ -31,7 +38,7 @@ static class HostLog {
 	// The earlier runs' logs: herculan-<last written>.log, which sorts by time. Older builds kept one run as
 	// herculan.previous.log, which is archived the same way.
 	private const string ArchivePrefix = "herculan-";
-	private static readonly string LegacyPreviousLogPath = Path.Combine(LogFolder, "herculan.previous.log");
+	private static readonly string LegacyPreviousLogPath = Path.Combine(LegacyLogFolder, "herculan.previous.log");
 
 	/// <summary>
 	/// Whether standard output reaches someone: a terminal the host attached to, or a redirect. Always true off
@@ -81,7 +88,7 @@ static class HostLog {
 	private static TextWriter? OpenLog() {
 		try {
 			Directory.CreateDirectory(LogFolder);
-			Archive(LegacyPreviousLogPath);
+			MoveLegacyLogs();
 			Archive(LogPath);
 			PruneArchives();
 
@@ -106,6 +113,27 @@ static class HostLog {
 		}
 
 		File.Move(path, target);
+	}
+
+	// Moves the logs older builds left in LegacyLogFolder into LogFolder, archived, for PruneArchives to cap with the
+	// rest. A log that cannot be moved stays where it is, and does not cost this run its own log.
+	private static void MoveLegacyLogs() {
+		if (LegacyLogFolder == LogFolder || !Directory.Exists(LegacyLogFolder)) {
+			return;
+		}
+
+		try {
+			foreach (string old in Directory.GetFiles(LegacyLogFolder, ArchivePrefix + "*.log")) {
+				string target = Path.Combine(LogFolder, Path.GetFileName(old));
+				if (!File.Exists(target)) {
+					File.Move(old, target);
+				}
+			}
+
+			Archive(LegacyPreviousLogPath);
+			Archive(Path.Combine(LegacyLogFolder, Path.GetFileName(LogPath)));
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+		}
 	}
 
 	// Deletes all but the newest KeptRuns archived logs. One that cannot be deleted is left for the next run.
