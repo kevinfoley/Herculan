@@ -127,6 +127,8 @@ public static class TransformerRegistry {
 		["Mission File"] = () => new Common.Es1MissionFileTransformer(),
 		// docs/es1/formats/zone-terrain.md: ES1's zone file is the zone's shapes, not a heightmap header.
 		["Zone Header"] = () => new Common.Es1ZoneDatTransformer(),
+		// docs/es1/formats/wld-world.md: ES2's layout less two leading int16.
+		["World/Environment Data"] = () => new Dbsim.Es1WorldDataTransformer(),
 	};
 
 	private static readonly Dictionary<RetailGame, List<Registration>> Tables = new() {

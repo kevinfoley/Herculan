@@ -2011,10 +2011,16 @@
       "address": "004097a8",
       "binary": "DBSIM",
       "type": "function",
-      "confidence": "medium",
+      "confidence": "high",
       "name": "FlatObj_LoadResources",
-      "description": "Loads a DTS shape set and binds a matching DBA to it, choosing base name 'flat' when param_1 == 0 and 'flat2' otherwise; the same base name is used for both 'dts\\<name>' and 'dba\\<name>'. Stores the loaded shape list at 004a971c with its count at 004a9720, then loops over every loaded shape writing the bound-DBA pointer into each instance's +0x26 -- the SAME bound-active-DBA field confirmed for mech texturing in docs/retail/rendering/dts-texture-binding.md. Called at the end of World_LoadTheater. Retail data has FLAT2.DBA (a single 64x54 frame). Named 'maybe_' because what the flat/flat2 shapes are actually drawn as (ground plane, distant filler, skirt) was not determined.",
-      "source": "docs/retail/rendering/terrain-texturing.md (terrain texturing RE session)"
+      "description": "(selector): sets the byte 00498098 to 1; with name flat for a selector of 0 and flat2 otherwise, Shape_LoadAllRoots(&g_FlatShapes, dts\\<name>, 0x140008, 0), the count to g_FlatShapeCount; Resource_Load(dba\\<name>) into 004a9722, BitmapArray_PackToAtlas of it into 004a9726, then GLBitmapArray_Dtor on the loaded one and 004a9722 = 0; every flat shape's +0x26 (its bound bitmap array pointer) set to 004a9722's address; g_FlatObjPool = Pool_Init of 150 elements of 0x41 bytes; g_FlatObjDeleteQueue = an 8-byte queue of 25 entries (+6 = 0x19, a 100-byte array, count 0). World_LoadTheater calls it last with World_FlatSetSelector. Docs: docs/retail/simulation/ground-shapes.md.",
+      "source": "docs/retail/rendering/terrain-texturing.md (terrain texturing RE session)",
+      "verified": {
+        "bytes": "004097a8+345",
+        "sha1": "a832c38ad53c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00409904",
@@ -8904,8 +8910,14 @@
       "type": "function",
       "confidence": "high",
       "name": "World_LoadTheater",
-      "description": "World/theater setup, called by DBSim_LoadScriptDat with script.dat's 20-byte header as its argument (it copies the first 5 dwords to DAT_004cfd48). Builds the base name 'world<N>' via _itoa where N = DAT_004cfd48*2 + DAT_004cfd5a, i.e. header[0]*2 + header[18] -- five theaters, two variants each. Loads dpl\\world<N>.dpl (the per-theater palette, which is what the retail WORLD0.DPL..WORLD9.DPL family is), then reads wld\\world<N>.wld field-by-field (descriptor layout decoded and verified byte-exact against all ten retail .WLD files), then 'shades' via World_LoadShades, then world<N>.rmp -- the 8-bit software renderer's colour-ramp/lighting LUT. .RMP layout, byte-verified against all 10 retail files (WORLD0-9.RMP, all exactly 98312 bytes): int32 width, int32 height, then width*height*256 raw bytes (every file: width=32, height=12, 8+32*12*256=98312). width/height are read via the same generic field-reader callback used for .wld fields; the body is read in one call into ShadeRampTable (VolRStream_Read(fileHandle, width*height*256, ShadeRampTable)). Installs _DAT_004a5b18=rampTableBase and DAT_004a5b1c=DAT_004a5b20=width -- height is used locally for the allocation size and not retained in any global. TSTexture4Poly_Render (its only reader) uses the ramp-offset formula ((DAT_004a5b1c-1)*shade & 0xffffff00, i.e. (width-1)*shade rounded down to a multiple of 256), which makes width=32 the light-level-row count with 256 bytes per row (one byte per dither-table output 0-255). The 12 height slices are the depth-fog slices Raster_SetDepthFadeFromDistance selects. Finishes with Terrain_BindTextureBank(the 4th of the descriptor's 5 trailing strings) and FlatObj_LoadResources.",
-      "source": "docs/retail/formats/wld-world.md; docs/retail/rendering/terrain-texturing.md; docs/retail/rendering/dts-texture-binding.md"
+      "description": "(header): DBSim_LoadScriptDat passes script.dat's 20-byte header; it copies it to 004cfd48 and names the theater's files world<N>, N = 2 x header word 0 + header word 9 (004cfd5a). Palette_LoadAndActivate(dpl\\world<N>); opens wld\\world<N> with VolRStream_CtorFromPath, builds g_TheaterHzline (0049aee0) with Mem_New(0x7a) and Hzline_Ctor, then reads eight int16 into the hzline (shorts 0, 2, 3, 5 and 6 to +0x6c, +0x54, +0x58, +0x5c and +0x60; Hzline_SetColors with 1, 4 and 7) and stores short4 + short6 - 1 at 0049aee8; six more int16, the second to World_FlatSetSelector (0049aeea), the third and fourth to 004cfd76 and 004cfd78, the others unused; 004cfd74 = 0x40, 004cfd7a = 0x62. Two int32-counted int32 tables to WorldShades_BandsTagged and WorldShades_BandsTag0, the counts' low halves at 004cfd5c and 004cfd5e; int16 rows (004cfd62) and cols (004cfd60); two cols x 4-byte range tables around an unused int16, expanded by Palette_InterpolateIndexRanges into WorldShades_LevelRanges, then two 4-byte ranges into WorldShades_BlendRanges; two unused int16; two int32 to WorldShades_DistanceOffsets (004cfd6c, 004cfd70); five NUL-terminated strings, the third, when not empty, loaded with Palette_LoadDpl(dpl\\<name>) into ImpactPaletteObject, the fourth kept, the first, second and fifth unused. Closes it; opens cyc\\world<N> with VolRStream_Open and, when it opens with a non-zero int16 count (0049aef0), allocates count x 6 bytes (0049aeec) and reads count records of three int16 at a 12-byte stride, registering each with PaletteCycle_Register. World_LoadShades('shades'). Reads rmp\\world<N>: an int32 width and height, ShadeRamp_Allocate(k, k, width x height) with k = ((004d25c2 + 004d25c6) x Math_CosBam(-0x2000) >> 14) + 5, and width x height x 256 bytes into ShadeRampTable. Terrain_BindTextureBank(fourth string), Raster_SetShadeRampDimensions(width, height), 004a5b18 = ShadeRampTable, 004a5b1c = 004a5b20 = width, and FlatObj_LoadResources(World_FlatSetSelector). Docs: docs/retail/formats/wld-world.md#the-load.",
+      "source": "docs/retail/formats/wld-world.md; docs/retail/rendering/terrain-texturing.md; docs/retail/rendering/dts-texture-binding.md",
+      "verified": {
+        "bytes": "0042e010+1776",
+        "sha1": "a8c2f001720a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042e700",
@@ -9035,7 +9047,13 @@
       "name": "Hzline_Ctor",
       "description": "hzline constructor (vtable 0049afb0, RTTI name 'hzline', 0x7a bytes over TSGroup): TSGroup_Ctor, then the defaults +0x6c = 1, +0x54 = 3, +0x58 = 16, +0x5c = 1, +0x60 = 8, +0x64 = +0x68 = 1, +0x50 = 0, +0x70 = 0, +0x71 = 1. World_LoadTheater overwrites +0x54..+0x60 and +0x6c from the .WLD.",
       "source": "DBSIM decompile at 0042eb5c; RTTI via es2_classes.py; docs/retail/rendering/distance-fog-and-sky.md#the-sky--hzline",
-      "signature": "hzline * __cdecl Hzline_Ctor(hzline *self)"
+      "signature": "hzline * __cdecl Hzline_Ctor(hzline *self)",
+      "verified": {
+        "bytes": "0042eb5c+95",
+        "sha1": "ce8c4bb05db8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042ebbc",
@@ -9045,7 +9063,13 @@
       "name": "Hzline_SetColors",
       "description": "(self, zenithColor, groundColor, yOffset): +0x28 = (zenithColor + band count +0x58 - 1) & 0xffffff, the horizon colour; +0x2c = groundColor & 0xffffff; +0x30 = yOffset. World_LoadTheater passes .WLD shorts 1, 4 and 7.",
       "source": "DBSIM decompile at 0042ebbc; docs/retail/rendering/distance-fog-and-sky.md#the-sky--hzline",
-      "signature": "void __cdecl Hzline_SetColors(hzline *self, int zenithColor, int groundColor, int yOffset)"
+      "signature": "void __cdecl Hzline_SetColors(hzline *self, int zenithColor, int groundColor, int yOffset)",
+      "verified": {
+        "bytes": "0042ebbc+42",
+        "sha1": "ed5696db60e4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042ebe8",
@@ -9113,7 +9137,13 @@
       "confidence": "medium",
       "name": "Hzline_LoadBitmapBank",
       "description": "(self, name): loads the named resource from the folder PTR_DAT_004a0a28 names (the 'dba' folder Terrain_BindTextureBank uses) and stores it at +0x50, which Hzline_Ctor zeroes. es2_xref.py finds no reference to it.",
-      "source": "DBSIM decompile at 0042f65c; docs/retail/rendering/distance-fog-and-sky.md#open"
+      "source": "DBSIM decompile at 0042f65c; docs/retail/rendering/distance-fog-and-sky.md#open",
+      "verified": {
+        "bytes": "0042f65c+38",
+        "sha1": "9d317d9add32",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042f6d2",
@@ -9253,8 +9283,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_LoadAndActivate",
-      "description": "Loads a .DPL by path and makes it THE active palette object (ActivePaletteObject / ActivePaletteObject). World_LoadTheater calls it with dpl\\\\world<N>, so the live 256-slot palette IS the theater palette in its entirety -- it is not a merge of COCKPIT.DPL and WORLD<N>.DPL. The only cockpit-owned slots are 42..65, overwritten afterwards by the per-herc scheme install in CockpitViewManager_LoadViews.",
-      "source": "cockpit rendering RE session"
+      "description": "(path): ClassItem_LoadFromFile(path) into ActivePaletteObject, the live palette. World_LoadTheater calls it with dpl\\world<N>; docs/retail/rendering/cockpit-canopy-palette.md#palette.",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "00430394+27",
+        "sha1": "56f37865e113",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004303b0",
@@ -9353,7 +9389,13 @@
       "confidence": "high",
       "name": "PaletteCycle_Register",
       "description": "(record): stores record in the first empty slot of the five at 004cfde8, its due time (Time_GetCoarseTicks + record's int16 +4) at 004cfdfc and 0 at 004cfe10, returning 1; 0 when all five are taken. Palette_CycleAnimatedRanges walks the slots. World_LoadTheater registers each record of the theater's cyc file, reading three int16s per record but stepping 12 bytes through a count*6-byte buffer; no .CYC entry is in any retail VOL (name scan of the eleven, which finds the .WLD/.RMP entries).",
-      "source": "DBSIM decompile at 00430638; disassembly at 0042e56b"
+      "source": "DBSIM decompile at 00430638; disassembly at 0042e56b",
+      "verified": {
+        "bytes": "00430638+78",
+        "sha1": "a9e400c41f18",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00430688",
@@ -9407,7 +9449,13 @@
       "confidence": "high",
       "name": "Palette_InterpolateIndexRanges",
       "description": "Palette_InterpolateIndexRanges(from, to, rampCount, levels, out): linearly interpolates palette index RANGES, not colours. Each of from/to/out is an array of (int16 start, int16 count) pairs; for each of rampCount ramps it emits `levels` interpolated ranges in 8.8 fixed point, with the final step forced exactly to the `to` endpoint. Called twice by World_LoadTheater with endpoint tables read from WORLD<n>.WLD. WORLD0 expands to 11 ramps x 16 levels, all ranges within indices 96-239 (terrain shading only; no cockpit equivalent found).",
-      "source": "docs/retail/rendering/cockpit-canopy-palette.md (Palette module)"
+      "source": "docs/retail/rendering/cockpit-canopy-palette.md (Palette module)",
+      "verified": {
+        "bytes": "00430d08+248",
+        "sha1": "1b937178e2a9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00430e00",

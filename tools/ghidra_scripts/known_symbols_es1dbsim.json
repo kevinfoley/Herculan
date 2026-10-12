@@ -362,6 +362,21 @@
       }
     },
     {
+      "address": "00006cf8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "FlatObj_LoadResources",
+      "description": "(selector), callee-cleaned: ES2's FlatObj_LoadResources (DBSIM 004097a8) in part. Shape_LoadAllRoots(0, 0x140008, dts\\flat for a selector of 0 and dts\\flat2 otherwise, &000bc1d8), the root array to 000bc1d8 and its count to 000bc1dc; then Pool_Init(0, 0x3b, 0x96), a pool of 150 elements of 0x3b bytes, to 000af044. It loads no dba bank, binds none to the shapes and builds no delete queue, as ES2's does. World_LoadTheater (000251c4) calls it last with World_FlatSetSelector (000928e2).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-ground-shape-set",
+      "verified": {
+        "bytes": "00006cf8+87",
+        "sha1": "e25566cb8d96",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000ddf4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -602,6 +617,171 @@
       }
     },
     {
+      "address": "000251c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "World_LoadTheater",
+      "description": "(header), callee-cleaned: ES2's World_LoadTheater (DBSIM 0042e010) for ES1's world file. DBSim_LoadScriptDat (0001d850) passes data\\script.dat's 20-byte header (000bc49c); it copies it to 000bc5a4. With t header word 0, v word 9 and d word 8 it loads dpl\\world<6t+2v> with Palette_LoadAndActivate (00027e5c) and opens wld\\world<6t+2v+d>. Hzline_Ctor (00026180) builds g_TheaterHzline (000928d4); of the file's twelve leading int16 (ES2 reads fourteen), 0-7 go to the hzline as ES2's do (+0x6c, +0x54, +0x58, +0x5c, +0x60, and Hzline_SetColors (00026234) with 1, 4 and 7), short4 + short6 - 1 to 000928e0, short 8 to a local, 9 to World_FlatSetSelector (000928e2), 10 and 11 to 000bc5d0 and 000bc5d2; 000bc5ce = 0x40, 000bc5d4 = 0x62. Two int32-counted int32 tables to WorldShades_BandsTagged (000afdc4) and WorldShades_BandsTag0 (000afdc8), counts' low halves at 000bc5b8 and 000bc5ba; rows and cols int16 to 000bc5be and 000bc5bc; two cols x 4-byte range tables (64-byte stack buffers, cols unchecked) around an unused int16 expanded by Palette_InterpolateIndexRanges (000289e0) into WorldShades_LevelRanges (000afdbc), then two 4-byte ranges into WorldShades_BlendRanges (000afdc0); int16 cloud count, int16 point count, two int32 to WorldShades_DistanceOffsets (000bc5c6). Five NUL-terminated strings read a byte at a time, unbounded, into 12-byte stack buffers: the first, when not empty, to Hzline_LoadBitmapBank (00026dc8); the second, when not empty, a 0x113-byte object built by maybe_Clouds_Ctor (000271c0) with the cloud count, vptr 000928f6, into World_Clouds (000928d8); the third, when not empty, Palette_LoadDpl(dpl\\<name>) into ImpactPaletteObject (000928f0); the fourth and fifth to GndTex_Load. A non-zero point count builds PointScatter_Ctor (00026dec) into World_PointScatter (000928dc), with short 8 at its +0x15. Closes the file; opens cyc\\world<6t+2v+d> with VolRStream_Open and, when it opens with a non-zero int16 count (000928e8), allocates 6 x count bytes (000928e4) and reads count records of three int16 at a 12-byte stride, registering each with PaletteCycle_Register (000281cc). World_LoadShades (00025bc8) with 'shades'; GndTex_Load (00028de8) with (fifth string, fourth string, short 0, short 5, short 6, short 4) in stack order; FlatObj_LoadResources (00006cf8) with World_FlatSetSelector; destroys the stream. No rmp file, Terrain_BindTextureBank or Raster_SetShadeRampDimensions, where ES2 has them.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
+      "verified": {
+        "bytes": "000251c4+2113",
+        "sha1": "387de50d4e67",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00025bc8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "World_LoadShades",
+      "description": "(name), callee-cleaned: ES2's World_LoadShades (DBSIM 0042e760): dat\\<name> as a count byte N (into 000bc5c4), N zeroed 5-byte records {byte count, pointer} at WorldShades_TypeTable (000bc5c0), then a byte K and K entries {record index, count, count two-byte pairs into a new array on that record}. The type table WorldShades_ApplyForObject reads in ES2. World_LoadTheater (000251c4) calls it through the padding entry 00025bc6 with 'shades'.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
+      "verified": {
+        "bytes": "00025bc8+236",
+        "sha1": "99be775cdd77",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026180",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hzline_Ctor",
+      "description": "(this), callee-cleaned: ES2's Hzline_Ctor (DBSIM 0042eb5c). Allocates 0x71 bytes for a null this (ES2's object is 0x7a), calls the base constructor 000547b4, stores the vptr 00092aaa and the defaults +0x6c = 1, +0x54 = 3, +0x58 = 16, +0x5c = 1, +0x60 = 8, +0x64 = +0x68 = 1, +0x50 = 0, and the byte +0x70 = 1, where ES2 stores 0 at +0x70 and 1 at +0x71.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
+      "verified": {
+        "bytes": "00026180+133",
+        "sha1": "f93623763372",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026234",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hzline_SetColors",
+      "description": "(this, lineOffset, groundColor, zenithColor) in stack order, callee-cleaned: ES2's Hzline_SetColors (DBSIM 0042ebbc): +0x28 = (zenithColor + band count +0x58 - 1) & 0xffffff, +0x2c = groundColor & 0xffffff, +0x30 = lineOffset.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
+      "verified": {
+        "bytes": "00026234+46",
+        "sha1": "8f6e8ca25f4d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026dc8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hzline_LoadBitmapBank",
+      "description": "(this, name), callee-cleaned: ES2's Hzline_LoadBitmapBank (DBSIM 0042f65c): ClassItem_LoadFromFile(dba\\<name>) into +0x50. World_LoadTheater (000251c4) calls it with the world file's first string when not empty, dba\\world<N> in retail.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
+      "verified": {
+        "bytes": "00026dc8+35",
+        "sha1": "ae430e518ec2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026dec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PointScatter_Ctor",
+      "description": "(this, count), callee-cleaned: allocates 0x17 bytes for a null this; +0 = __vec_new of count 12-byte points built by PointScatter_PointCtor (00026e5c, through its padding entry 00026e59); +5 = count and +0x15 = 0xff as int16; byte +4 = 0. World_LoadTheater (000251c4) builds one with the world file's point count and stores its short 8 at +0x15.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-scattered-points",
+      "verified": {
+        "bytes": "00026dec+109",
+        "sha1": "0ef93c0e2ea6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026e5c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PointScatter_PointCtor",
+      "description": "(this), callee-cleaned: the element constructor of PointScatter_Ctor (00026dec)'s 12-byte points: allocates 12 bytes for a null this and stores nothing.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-scattered-points",
+      "verified": {
+        "bytes": "00026e5c+48",
+        "sha1": "50451cdc42f8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026e8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PointScatter_Update",
+      "description": "(this, centre), callee-cleaned: when the byte +4 is clear, PointScatter_Scatter (00026ee0) around centre and sets +4; then, when 000bd567 is less than 000956be, stores count +5 x 000bd567 / 000956be at +7 as int16 and calls 00026fe0(this, centre).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-scattered-points",
+      "verified": {
+        "bytes": "00026e8c+81",
+        "sha1": "c8c01ffe03a4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00026ee0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PointScatter_Scatter",
+      "description": "(this, centre), callee-cleaned: copies centre's three int32 to +9, +0xd and +0x11, and for each of the +5 points draws an angle a and a radius r from Math_RandomNext(000b5c48) and stores x = centre.x + Math_Q14Multiply(2r, Math_CosBam(a)), y = centre.y + Math_Q14Multiply(2r, Math_CosBam(a - 0x4000)), z = 0.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-scattered-points",
+      "verified": {
+        "bytes": "00026ee0+253",
+        "sha1": "5ee0bd282623",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000271c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_Clouds_Ctor",
+      "description": "(this, count, name), callee-cleaned: allocates 0x107 bytes for a null this; stores the vptrs 00092ade, 00092b02, 00092b2e, 00092b5a, 00092b86 and 00092bb2 in turn, __vec_ctor of five 12-byte elements (00027498) at +0x21, vptr 00092bde; +0xe = __vec_new of count x 4 12-byte elements (00027498), +0x12 = __vec_new of count 6-byte elements (00027510), +0x16 = count zeroed bytes, count at +0x1f and +0xf9 as int16, +0x1a = ClassItem_LoadFromFile(dba\\<name>); zeroes the dwords at +0x5d (three), +0x6d, +0x71 and +0x75, the five elements and the byte +0x1e. World_LoadTheater (000251c4) builds one into a 0x113-byte object with the world file's cloud count and second string, clouds2 in every retail file, hence the maybe_: what the object draws is not read.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-clouds",
+      "verified": {
+        "bytes": "000271c0+519",
+        "sha1": "c768932bb1e9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027e5c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_LoadAndActivate",
+      "description": "(path), callee-cleaned: ES2's Palette_LoadAndActivate (DBSIM 00430394): Palette_LoadDpl(path) into the active palette pointer 00092c20, then calls 00028b28 (through 00028b27), which ES2's does not.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
+      "verified": {
+        "bytes": "00027e5c+30",
+        "sha1": "fa5dc91c8c5d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00027e98",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -612,6 +792,51 @@
       "verified": {
         "bytes": "00027e98+127",
         "sha1": "17a76ed14553",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000281cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaletteCycle_Register",
+      "description": "(record), callee-cleaned: ES2's PaletteCycle_Register (DBSIM 00430638): stores record in the first empty slot of the five at 000bc5d6, its due time (the dword 000981c4 +the record's int16 +4, where ES2 calls Time_GetCoarseTicks) at 000bc5ea and 0 at 000bc5fe, returning 1; 0 when all five are taken.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
+      "verified": {
+        "bytes": "000281cc+90",
+        "sha1": "4013ed12bf9d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000289e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_InterpolateIndexRanges",
+      "description": "(out, levels, rampCount, to, from) in stack order, callee-cleaned: ES2's Palette_InterpolateIndexRanges (DBSIM 00430d08), its loops written as do-whiles: for each of rampCount (int16 start, int16 count) pairs, levels ranges from from's to to's in 8.8 fixed point, the last exactly to's.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
+      "verified": {
+        "bytes": "000289e0+282",
+        "sha1": "27011aac41a2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028de8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTex_Load",
+      "description": "(fadeName, bankName, horizonGap, groundBandHeight, groundBandCount, groundColor) in stack order, callee-cleaned, gndtex.cpp: 00092c4c = 1; builds dba\\<bankName>.64k from 00092c50 and 00092c55, calls 00029714(0x140, 0x17c) and 00029830(name). Opens dat\\<fadeName> (severity-5 assert, gndtex.cpp line 0x3f, when it fails), reads an int32 count to 000b0d74 and count int32 to a new array at 000b0d78; allocates count x 4 bytes at 000b0d70 and replaces them with a 0x3c-byte array of 15 pointers; 000b0d7c = groundBandHeight, 000b0d84 = horizonGap >> 1, 000b0d80 = 15, 00092c80 = 0x140. Table i (0-14) of 16 bytes: with b = groundColor & 0xf0 and top = groundColor + groundBandCount - 1, s = top - (b + j), less 1 more when negative, entry j = s * i / 14 + b + j. World_LoadTheater (000251c4) passes the world file's fifth and fourth strings and its shorts 0, 5, 6 and 4.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-ground-texture",
+      "verified": {
+        "bytes": "00028de8+465",
+        "sha1": "d4255f14ffd0",
         "scope": "body",
         "via": "decompile"
       }
@@ -5227,7 +5452,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_LoadDpl",
-      "description": "(name), callee-cleaned: Palette_LoadFromFile on Path_WithExtension('dpl' at 0009811c, name), into the current arena, returning the object in EAX. Six calls found by es2_xref, from 00021dd4, 000251c4, 00027e5c and three from 00058414. ES2's Palette_LoadDpl (DBSIM 00474ba4).",
+      "description": "(name), callee-cleaned: Palette_LoadFromFile on Path_WithExtension('dpl' at 0009811c, name), into the current arena, returning the object in EAX. Six calls found by es2_xref, from 00021dd4, World_LoadTheater (000251c4), Palette_LoadAndActivate (00027e5c) and three from 00058414. ES2's Palette_LoadDpl (DBSIM 00474ba4).",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "00063584+35",
@@ -8534,6 +8759,51 @@
       "source": "ES1DBSIM image at 000924a0"
     },
     {
+      "address": "000928d4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_TheaterHzline",
+      "description": "Pointer to the theater's hzline, built by Hzline_Ctor (00026180) in World_LoadTheater (000251c4). ES2's g_TheaterHzline (DBSIM 0049aee0).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
+    },
+    {
+      "address": "000928d8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "World_Clouds",
+      "description": "Pointer to the 0x113-byte object World_LoadTheater (000251c4) builds with maybe_Clouds_Ctor (000271c0) and the vptr 000928f6 when the world file's second string is not empty; left as it was otherwise.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-clouds"
+    },
+    {
+      "address": "000928dc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "World_PointScatter",
+      "description": "Pointer to the PointScatter_Ctor (00026dec) object World_LoadTheater (000251c4) builds when the world file's point count is not 0, its +0x15 set to the file's short 8; left as it was otherwise.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-scattered-points"
+    },
+    {
+      "address": "000928e2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "World_FlatSetSelector",
+      "description": "int16: the world file's short 9, which World_LoadTheater (000251c4) passes to FlatObj_LoadResources (00006cf8): 0 loads dts\\flat, anything else dts\\flat2. ES2's World_FlatSetSelector (DBSIM 0049aeea).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-header-shorts"
+    },
+    {
+      "address": "000928f0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ImpactPaletteObject",
+      "description": "The palette World_LoadTheater (000251c4) loads from dpl\\<the world file's third string> with Palette_LoadDpl when the string is not empty, impact1 in every retail file. ES2's ImpactPaletteObject.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
+    },
+    {
       "address": "00092d1c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -8622,6 +8892,42 @@
       "name": "BehaviourStateTable",
       "description": "The 20 AI behaviour state descriptors, 0x28 bytes each, built at startup by Behaviour_BuildStateTable: +0 name, +4 dwell, +8 sixteen flag bytes (Behaviour_ExpandFlagBits), +0x18 think, +0x1c move and +0x20 reassess functions, +0x24 a dword of 0, 3, 5, 6 or 7. Reassess is 00016e04 for the five combat states and fleeing, none for player, in limbo, dead and disabled, and 0001892c for the rest; move is none for deciding and in limbo, 00018278 for ramming and 00014844 for the rest; think is none for deciding and in limbo and 00018308 for both dead and disabled. ES2's BehaviourStateTable (DBSIM 004993a4) holds 22 of 0x3e bytes with member-function triples.",
       "source": "ES1DBSIM decompile at 0000fee4"
+    },
+    {
+      "address": "000afdbc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WorldShades_LevelRanges",
+      "description": "Pointer to rows x cols (int16 start, int16 count) ranges Palette_InterpolateIndexRanges (000289e0) expands from the world file's two range tables in World_LoadTheater (000251c4). ES2's WorldShades_LevelRanges (DBSIM 004cfd7c).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
+    },
+    {
+      "address": "000afdc0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WorldShades_BlendRanges",
+      "description": "Pointer to rows (int16 start, int16 count) ranges Palette_InterpolateIndexRanges (000289e0) expands from the world file's two single ranges in World_LoadTheater (000251c4). ES2's WorldShades_BlendRanges (DBSIM 004cfd80).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
+    },
+    {
+      "address": "000afdc4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WorldShades_BandsTagged",
+      "description": "Pointer to the world file's first int32 table, count at 000bc5b8, read by World_LoadTheater (000251c4). ES2's WorldShades_BandsTagged (DBSIM 004cfd84), the distance thresholds for an object with a type tag.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
+    },
+    {
+      "address": "000afdc8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WorldShades_BandsTag0",
+      "description": "Pointer to the world file's second int32 table, count at 000bc5ba, read by World_LoadTheater (000251c4). ES2's WorldShades_BandsTag0 (DBSIM 004cfd88), the thresholds for type tag 0.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
     },
     {
       "address": "000b5adc",
@@ -8901,6 +9207,24 @@
       "name": "CockpitViewManagerPublished",
       "description": "The cockpit view manager, stored by CockpitViewManager_Publish and returned by CockpitViewManager_Published. Widget_DrawToCockpit tests its byte +0x18. ES2's CockpitViewManagerPublished (DBSIM 004cfa20).",
       "source": "ES1DBSIM disassembly at 00021f8c"
+    },
+    {
+      "address": "000bc5c0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WorldShades_TypeTable",
+      "description": "Pointer to the 5-byte records {byte count, pointer to count two-byte pairs} World_LoadShades (00025bc8) reads from dat\\shades, the record count byte at 000bc5c4. ES2's WorldShades_TypeTable (DBSIM 004cfd64).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
+    },
+    {
+      "address": "000bc5c6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WorldShades_DistanceOffsets",
+      "description": "Two int32, 000bc5c6 and 000bc5ca, read from the world file after its two counts by World_LoadTheater (000251c4). ES2's WorldShades_DistanceOffsets (DBSIM 004cfd6c).",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
     },
     {
       "address": "000bdb4a",
