@@ -93,7 +93,7 @@ All 38 of `ZONES.VOL`'s `any_msn.dat` names are in `BTLSET_0.DAT`. Every mission
 
 ### The career record
 
-A record is `0x1f7` bytes. `CareerRecord_Init` (`000158ff`) sets one up; `es2_xref.py` finds it called by `000163ac` for a roster record and by `MsnGen_LoadMission` for the record at `0009b014`.
+A record is `0x1f7` bytes. `CareerRecord_Init` (`000158ff`) sets one up; `es2_xref.py` finds it called by `Career_New` (`000163ac`) for each roster record ([starting a career](#starting-a-career)) and by `MsnGen_LoadMission` for the record at `0009b014`.
 
 | Offset | Field | At `CareerRecord_Init` |
 |---|---|---|
@@ -108,16 +108,29 @@ A record is `0x1f7` bytes. `CareerRecord_Init` (`000158ff`) sets one up; `es2_xr
 | `+0x12` | word, the pilot entry `CareerRecord_FinishMission` stores its share in | 0 |
 | `+0x14` | four `0x25`-byte pilot entries | |
 | `+0xa8` | the [equipment state](#equipment-availability), `0x81` bytes | loaded |
+| `+0x129` | dword, set to `0007fcf0` when the career starts | |
 | `+0x12d` | 100 `int16` | 0 (`CareerRecord_ClearWords`, `000161ae`) |
+| `+0x1f5` | word, set to `0007fcf8` when the career starts | |
 
 The init also zeroes byte `+1`, the word `+2` and the word `000aad58`. For each pilot entry it calls `000151c8` when the mode word `000aad56` is 0 or the entry is the one `+0xe` names, and `00015228` otherwise ([Open](#open)).
+
+### Starting a career
+
+`Career_New` (`000163ac`), given a roster and two arguments:
+
+1. stores at the roster's `+1` the pointer `00018099`(`0009b20c`, the two arguments) returns, whose `+0x42` and `+0x53` hold two file names; sets the roster's word `+5`, the battle set, to the word `0007fcec`, the words `+7` and `+9` to 0 and the byte `+0` to 1; and sets the dword `0007fcf0` to 60000;
+2. calls `00016677` with the roster;
+3. loads `car\c_armory.dat` into the weapon stock `000aad62` with `Inventory_LoadFile` and `car\car_init.dat` into the hangar with `Hangar_LoadFile` ([the starting HERCs and the weapon stock](car-hercs-and-stock.md));
+4. opens a `FileRWStream` on each of the two file names, asserting at severity 5 (`career.cpp` lines `0x2d1` and `0x2d8`) when one does not open, and writes to the first the roster's byte `+0`, its word `+5` and its `0x18` bytes from `+0xb`;
+5. for each of the 41 records: sets it up with `CareerRecord_Init`; when it is the record the word `+7` names, sets its byte `+0` to 1, calls `000166ed` with the roster, stores `0007fcf0` at its `+0x129`, copies its 100 words at `+0x12d` into the flags at `000ab244`, and stores the word `0007fcf8` at its `+0x1f5`; then writes the record's `0x1f7` bytes and the stock (`Inventory_Write`) to the first file and the hangar (`Hangar_Write`) to the second;
+6. closes both files, calls `00015ad4` with the record the word `+7` names and the four bytes at that record's `+0xe`, and calls `00016fdd` with the roster.
 
 ### After a mission
 
 `Shell_ProcessMissionResults` (`00038eb5`) reads the simulator's results back:
 
 1. In mode 1 it calls `00016c1e` with the roster, otherwise `00014fd6`.
-2. It opens `data\results.dat` (entry 7 of the file-name table, severity-5 assert at `shell.cpp` line 199) and reads a word into `000aad58`, a dword into `0007fcf4`, a word count into `000817cc`, and that many pairs of words (*a*, *b*); in mode 1 it passes each to `00028311`(`000aad62`, &*b*, *a*). It then calls `0001568d` with the stream.
+2. It opens `data\results.dat` (entry 7 of the file-name table, severity-5 assert at `shell.cpp` line 199) and reads a word into `000aad58`, a dword into `0007fcf4`, a word count into `000817cc`, and that many pairs of words (*a*, *b*); in mode 1 `Inventory_Add` (`00028311`) pushes each *b* onto slot *a* of the weapon stock `000aad62` ([the weapon stock](car-hercs-and-stock.md#the-weapon-stock)). It then calls `0001568d` with the stream.
 3. It reads `data\mission.var` (entry 5, assert at line `0xd7`) whole into the 100 flags at `000ab244`, and sets flag 0 to `000aad58`.
 4. In mode 1 it calls `00038e48`, adds `0007fcf4` to `0007fcf0`, calls `00028375`(`000aad62`), and on the record `0009b23b` + `0x1f7` × [`0009b21f`] calls `CareerRecord_FinishMission` (`000160cb`) and `Tech_Unlock` with the missions played ([Equipment availability](#equipment-availability)); it then calls `00029e01` and sets the record's word `+4` to `0x6ae`. Otherwise it calls `00015db7` with what `00014ef4` returns.
 
@@ -142,7 +155,7 @@ The init also zeroes byte `+1`, the word `+2` and the word `000aad58`. For each 
 
 `SingleMissions_Load` (`000361ac`) reads `msn\sing_msn.dat`: a byte, the count, into the low byte of the word `00081084`, then that many name lists into a new array at `00081080` (`SingleMissions_ListCtor`, `0003625e`). The retail file holds eight lists: `sm_rcn01`, `sm_rcn02`; `sm_sct01`, `sm_sct02`, `sm_sct50`; `sm_ptl01`, `sm_ptl02`; `sm_rad01`, `sm_rad02`; `sm_scr01`; `sm_sar01`; `sm_ass01`; `sm_ass01`.
 
-`SingleMission_Start` (`00036807`) passes `car\s_armory.dat` and the word `000aad62` to `00027e02`, builds the path with `SingleMission_BuildPath` (`00036649`) from the word `000aad5a`, loads the mission with `MsnGen_LoadMission` and saves the paths with `Mission_WriteRestore`. `SingleMission_BuildPath`, given a list index, or −1 for a list drawn at random, formats a name `StrList_PickRandom` draws from that list as `msn\%s` into `000aad14` and sets the text path.
+`SingleMission_Start` (`00036807`) loads `car\s_armory.dat` into the weapon stock `000aad62` with `Inventory_LoadFile` (`00027e02`, [the weapon stock](car-hercs-and-stock.md#the-weapon-stock)), builds the path with `SingleMission_BuildPath` (`00036649`) from the word `000aad5a`, loads the mission with `MsnGen_LoadMission` and saves the paths with `Mission_WriteRestore`. `SingleMission_BuildPath`, given a list index, or −1 for a list drawn at random, formats a name `StrList_PickRandom` draws from that list as `msn\%s` into `000aad14` and sets the text path.
 
 `Mission_BuildPathFromFiles` (`000366c1`), given a `findfirst` pattern, counts the files that match, copies their names, formats one drawn at random as `msn\%s` into `000aad14`, sets the text path and frees the names. [Open](#open).
 
@@ -213,5 +226,5 @@ Both files hold 25 records, the 8 chassis and the 17 weapons. Each cell gives *f
 - **Open:** what reads and restores the equipment state besides the init: what calls `CareerRecord_WriteWeaponFlags` (`es2_xref.py` finds one call, from `00022a05`) and what reads the bytes back, what saves the chassis' bytes, and what reads the state to offer the items; and what calls `Tech_FormatLockedName`, to which `es2_xref.py` finds no branch and no stored pointer.
 - **Open:** how the equipment indexes map to the shell's chassis and weapon lists, `MECHS.NAM` and `WEAPONS.DAT`'s 17 templates among them.
 - **Open:** the pilot entries: what `000151c8` and `00015228` set up, what the word `+0xd` and the byte `+0xa` are, what `0007ebc8` holds, and what `00015bfb`, `00015b0a` and `00015e0b` do with the pay share.
-- **Open:** what `Shell_ProcessMissionResults`' callees do with the results: `00016c1e`, `00014fd6`, `00028311` with the word pairs, `0001568d`, `00038e48`, `00028375`, `00029e01`, `00015db7` and `00014ef4`; and what `0007fcf4` and `0007fcf0` count.
-- **Open:** what `00027e02` makes of `car\s_armory.dat`: it reads the file with `00027e3c`, an `int16` count of records, each an `int16` slot and an `int16` count of `int16` values passed one at a time to `00040ba6` with the object's 6-byte element for the slot.
+- **Open:** what `Shell_ProcessMissionResults`' callees do with the results: `00016c1e`, `00014fd6`, `0001568d`, `00038e48`, `00028375`, `00029e01`, `00015db7` and `00014ef4`; what the word pairs it adds to the weapon stock are; and what `0007fcf4` and `0007fcf0` count.
+- **Open:** what `Career_New`'s callees `00018099`, `00016677`, `000166ed`, `00015ad4` and `00016fdd` do, what the word `0007fcf8` holds, and what reads the career record's `+0x129` and `+0x1f5`.

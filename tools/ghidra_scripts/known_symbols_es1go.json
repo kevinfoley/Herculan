@@ -872,6 +872,21 @@
       }
     },
     {
+      "address": "00011dfc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmLists_Load",
+      "description": "(), C convention: opens cfg\\tm_files.dat with VolRStream_CtorFromPath (0004d064) and reads a count byte into 0007e714 with VolRStream_Read (0004d6d6); when it is not 0, deletes the array at 0007e710 when there is one (__vec_delete (0005547c) with StrList_Dtor (000202b4)) and makes one of that many 6-byte lists (__vec_new (0005542c) with 00011eae) and reads each with StrList_Read (000201b7); closes the stream with VolRStream_Close (0004d18e) and destroys it with VolRStream_Dtor (0004d0cb). es2_xref finds one call, from 0003ba47.",
+      "source": "Herculan/docs/es1/formats/shell-file-lists.md#the-animation-lists",
+      "verified": {
+        "bytes": "00011dfc+178",
+        "sha1": "caff83f9fb53",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00012704",
       "binary": "ES1GO",
       "type": "function",
@@ -1147,7 +1162,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_Init",
-      "description": "(record), callee-cleaned: zeroes bytes +0 and +1 and the words +2, +6, +8, +0xa, +0xe and +0x12, sets +4 to 0x6a4 and the word 000aad58 to 0, zeroes the 100 words at +0x12d (CareerRecord_ClearWords (000161ae)), clears the equipment state at +0xa8 (Tech_Clear (00001ee3)) and loads it with Tech_LoadFile (00001dd4) from bst\\tech_0.dat when the mode word 000aad56 is 1 and bst\\tech_sng.dat otherwise, then sets the state's words +0 and +2 (record +0xa8, +0xaa) to -1. It sets the pilot count +0x10 to 4 and for each 0x25-byte pilot entry from +0x14 calls 000151c8 when the mode is 0 or the entry is the one +0xe names, and 00015228 otherwise. es2_xref finds two calls: 000163ac with a roster record (roster + 0x23 + 0x1f7 * i), and MsnGen_LoadMission (00035873) with 0009b014.",
+      "description": "(record), callee-cleaned: zeroes bytes +0 and +1 and the words +2, +6, +8, +0xa, +0xe and +0x12, sets +4 to 0x6a4 and the word 000aad58 to 0, zeroes the 100 words at +0x12d (CareerRecord_ClearWords (000161ae)), clears the equipment state at +0xa8 (Tech_Clear (00001ee3)) and loads it with Tech_LoadFile (00001dd4) from bst\\tech_0.dat when the mode word 000aad56 is 1 and bst\\tech_sng.dat otherwise, then sets the state's words +0 and +2 (record +0xa8, +0xaa) to -1. It sets the pilot count +0x10 to 4 and for each 0x25-byte pilot entry from +0x14 calls 000151c8 when the mode is 0 or the entry is the one +0xe names, and 00015228 otherwise. es2_xref finds two calls: Career_New (000163ac) with a roster record (roster + 0x23 + 0x1f7 * i), and MsnGen_LoadMission (00035873) with 0009b014.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#the-career-record",
       "verified": {
         "bytes": "000158ff+234",
@@ -1287,6 +1302,21 @@
       "verified": {
         "bytes": "000161ae+46",
         "sha1": "0cb75ad2e32c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000163ac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Career_New",
+      "description": "(roster, a, b) in stack order, callee-cleaned: stores at roster + 1 the pointer 00018099(0009b20c, a, b) returns; sets the roster's word +5 to the word 0007fcec, the words +7 and +9 to 0 and the byte +0 to 1, and the dword 0007fcf0 to 60000; calls 00016677(roster); loads car\\c_armory.dat into the stock the dword 000aad62 points to with Inventory_LoadFile (00027e02) and car\\car_init.dat with Hangar_LoadFile (00028c25); opens a FileRWStream (FileRWStream_Ctor, 0005aae4) on each of the names at the pointer's +0x42 and +0x53 through Path_ApplyAltDrive (00020989), asserting at severity 5 (Assert_Report (0004f498), career.cpp lines 0x2d1 and 0x2d8) when one does not open, and writes the roster's byte +0, word +5 and 0x18 bytes from +0xb to the first; for each of the 41 0x1f7-byte records from roster + 0x23 calls CareerRecord_Init (000158ff), and for the record the word +7 names sets its byte +0 to 1, calls 000166ed(roster), stores 0007fcf0 at its +0x129, copies its 100 words at +0x12d into the flags at 000ab244 and stores the word 0007fcf8 at its +0x1f5; writes each record and the stock (Inventory_Write (00027f88)) to the first file and the hangar (Hangar_Write (00029107)) to the second; closes both (FileRWStream_Close, 0005abc4), calls 00015ad4(that record, its four bytes at +0xe) and 00016fdd(roster), and destroys both streams (FileRWStream_Dtor, 0005ab24).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#starting-a-career",
+      "verified": {
+        "bytes": "000163ac+715",
+        "sha1": "ffab66c93f74",
         "scope": "body",
         "via": "decompile"
       }
@@ -1757,6 +1787,336 @@
       }
     },
     {
+      "address": "00021d0c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercLayout_Load",
+      "description": "(), C convention: for chassis 0-7 opens the path in the table at 000804d0 (CFG\\ROAD.DAT ... CFG\\COLO.DAT) with VolRStream_CtorFromPath (0004d064), reads an int16 mount count into the word 000aae0e + 6 * chassis and makes an array of that many 6-byte mounts in the dword 000aae0a + 6 * chassis; per mount reads an int16 record count into the mount's +4 and makes an array of that many 0x14-byte records (__vec_new (0005542c) with HercLayout_RecordCtor (00021f71)) at its +0; per record reads int16s into +2 (frame) and +0 (weapon), then two int16 pairs sign-extended into the int32 pairs at +4 and +0xc; destroys each stream through its vtable's +4 with 3. es2_xref finds one call, from 00020630.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
+      "verified": {
+        "bytes": "00021d0c+613",
+        "sha1": "7ce4d48de485",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021f71",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercLayout_RecordCtor",
+      "description": "(record), callee-cleaned: the vector constructor of a 0x14-byte mount picture record; allocates 0x14 bytes with operator_new (000019f0) when given null, returning null when that fails; the constructors of its two point members (+4 and +0xc) store nothing.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
+      "verified": {
+        "bytes": "00021f71+75",
+        "sha1": "a1355fb03342",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021fbc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercLayout_Free",
+      "description": "(), C convention: for chassis 0-7 deletes each mount's record array (__vec_delete (0005547c), 0x14-byte records, no destructor) for the word count at 000aae0e + 6 * chassis, then frees the mount array in the dword 000aae0a + 6 * chassis with operator_delete (00001a44). es2_xref finds one call, from 00020ae3.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md",
+      "verified": {
+        "bytes": "00021fbc+104",
+        "sha1": "443c6f8589af",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022024",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercLayout_Find",
+      "description": "(weapon, mount, chassis) in stack order, callee-cleaned: returns the first 0x14-byte record of the chassis's mount (the arrays at 000aae0a + 6 * chassis) whose word +0 is weapon, or null; no bounds test on mount or chassis. es2_xref finds one call, from MountPicture_Set (00022d78).",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
+      "verified": {
+        "bytes": "00022024+98",
+        "sha1": "7747f307276d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022086",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercLayout_FindFrame",
+      "description": "(weapon, mount, chassis) in stack order, callee-cleaned: the word +2 (frame) of the first record of the chassis's mount whose word +0 is weapon, or -1; no bounds test on mount or chassis. es2_xref finds calls from Herc_BuildDiagram (00023883) and 00024788 and a stored pointer at 00008e1f.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
+      "verified": {
+        "bytes": "00022086+102",
+        "sha1": "1a2eba138706",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000220ec",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercLayout_FindFirstPoint",
+      "description": "(point, weapon, mount, chassis) in stack order, callee-cleaned: fills point, allocating 8 bytes when it is null, with the int32 pair at +4 of the first record of the chassis's mount whose word +0 is weapon, or with 0, 0; returns it. es2_xref finds no branch to it and no stored pointer.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
+      "verified": {
+        "bytes": "000220ec+179",
+        "sha1": "883ccd979f35",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002219f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercLayout_FindSecondPoint",
+      "description": "(point, weapon, mount, chassis) in stack order, callee-cleaned: HercLayout_FindFirstPoint (000220ec) for the record's int32 pair at +0xc. es2_xref finds calls from Herc_BuildDiagram (00023883) and 00024788.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
+      "verified": {
+        "bytes": "0002219f+179",
+        "sha1": "b2b533049237",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022252",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercDamageMarks_Load",
+      "description": "(), C convention: constructs one VolRStream (VolRStream_Ctor, 0004cf84) and for chassis 0-7 opens the path in the table at 0008057c (CFG\\ROADDMG1.DAT ... CFG\\COLODMG1.DAT) with VolRStream_Open (0004d218); for 6 groups by 3 levels reads an int16 count into the word 000aae3a + 0x6c * chassis + 0x12 * group + 6 * level, makes an array of that many 10-byte marks (__vec_new (0005542c) with HercDamageMarks_MarkCtor (0002236c)) in the dword after it, and reads each mark whole with VolRStream_Read (0004d6d6); closes each file and destroys the stream. es2_xref finds one call, from 00020630.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-damage-marks",
+      "verified": {
+        "bytes": "00022252+282",
+        "sha1": "ba95ed90877b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002236c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercDamageMarks_MarkCtor",
+      "description": "(mark), callee-cleaned: the vector constructor of a 10-byte damage mark; allocates 10 bytes with operator_new (000019f0) when given null, returning null when that fails; the constructor of its point member at +2 stores nothing.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-damage-marks",
+      "verified": {
+        "bytes": "0002236c+53",
+        "sha1": "787d8a33e032",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000223a1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercDamageMarks_Free",
+      "description": "(), C convention: deletes the 8 x 6 x 3 mark arrays in the dwords 000aae3c + 0x6c * chassis + 0x12 * group + 6 * level with __vec_delete (0005547c) (10-byte marks, no destructor). es2_xref finds one call, from 00020ae3.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md",
+      "verified": {
+        "bytes": "000223a1+99",
+        "sha1": "1f7ff62934ab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022404",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercHotspots_Load",
+      "description": "(), C convention: opens CFG\\hotspot.dat with VolRStream_CtorFromPath (0004d064), reads a uint16 chassis count and per chassis a uint16 area count, makes an array of that many 0x14-byte areas (__vec_new (0005542c) with HercHotspots_AreaCtor (000226b4)) in the dword 0008003c + 4 * chassis, with no bound against the table's eight entries, and per area reads four uint16 a, b, c, d and stores the rect (min(a, c), min(b, d), max(a, c), max(b, d)) at +0; destroys the stream with VolRStream_Dtor (0004d0cb). es2_xref finds one call, from 00020630.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-clickable-areas",
+      "verified": {
+        "bytes": "00022404+688",
+        "sha1": "187c0fe69f73",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000226b4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercHotspots_AreaCtor",
+      "description": "(area), callee-cleaned: the vector constructor of a 0x14-byte area; allocates 0x14 bytes with operator_new (000019f0) when given null, returning null when that fails, and zeroes its rect's two points (+0, +8) and the dword +0x10.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-clickable-areas",
+      "verified": {
+        "bytes": "000226b4+241",
+        "sha1": "345733e58a3b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000227a5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercHotspots_AreaDtor",
+      "description": "(area, flags) in stack order, callee-cleaned: when area is not null, destroys the object at +0x10, when there is one, through its vtable's +0x1c with 3 and zeroes +0x10, then frees the area with operator_delete (00001a44) when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-clickable-areas",
+      "verified": {
+        "bytes": "000227a5+63",
+        "sha1": "bf4a53e35b85",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000227e4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercHotspots_Free",
+      "description": "(), C convention: for chassis 0-7 deletes the area array in the dword 0008003c + 4 * chassis with __vec_delete (0005547c) and HercHotspots_AreaDtor (000227a5). es2_xref finds one call, from 00020ae3.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-clickable-areas",
+      "verified": {
+        "bytes": "000227e4+43",
+        "sha1": "3a4775a64b21",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002280f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercArt_LoadAllBanks",
+      "description": "(), C convention: for chassis 0-7 loads with 0004b7df the RES32 banks the path tables name into the dword tables: <chassis>WEP1.DBA (000800f4) into 0007ff9c, <chassis>OUTL.DBA (00080264) into 0007ffbc, <chassis>DMG1.DBA (0008031c) into 0007ffdc and <chassis>WEPD.DBA (000801ac) into 0007fffc; for chassis 2-7 also the BILD bank (000803b0, from RAPTBILD.DBA) into 0008001c. es2_xref finds one call, from 00020630.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
+      "verified": {
+        "bytes": "0002280f+155",
+        "sha1": "98370fa49b55",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022d78",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MountPicture_Set",
+      "description": "(element, value, weapon, mount, chassis) in stack order, callee-cleaned: stores HercLayout_Find (00022024)(weapon, mount, chassis) at element +0; for weapon 0x11 passes the point 0, 0 to 000216e0 for element + 4; otherwise, when value is below 0x33, loads the chassis's RES32\\<chassis>WEPD.DBA with 0004b7df into the dword 0007fffc + 4 * chassis when it is 0, and passes the record's first point (+4) to 000216e0 for element + 4; at 0x33 or more does so only when the chassis's WEP1 bank (0007ff9c + 4 * chassis) is loaded. es2_xref finds calls from Herc_BuildDiagram (00023883) and 00024788.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
+      "verified": {
+        "bytes": "00022d78+304",
+        "sha1": "46fe3b4284e8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022f5e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_Ctor",
+      "description": "(herc, chassis) in stack order, callee-cleaned: allocates 0xa8 bytes when herc is null (returning null when that fails); sets up the 66-byte block at +0x2e with 0001a29c and the object at +0x72; stores chassis at +0 and, for a chassis other than -1, the mount count from the word table at 000803c8 (3, 3, 4, 5, 6, 7, 8, 9) at +2, giving each mount weapon 0x11 (+4 words) and word 0 (+0x18 words); for -1 the mount count is 0. Sets +0x2c to 2 and +0x70 to -1 and zeroes +0x94 to +0xa7.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
+      "verified": {
+        "bytes": "00022f5e+614",
+        "sha1": "15ad8a99dbd6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000233ce",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_Write",
+      "description": "(herc, stream) in stack order, callee-cleaned: writes through the stream's slot +0x18 what Herc_ReadFromStream (0002352f) reads: the chassis, the mount count n, the n weapons, then, after setting to 0 the +0x18 word of each mount whose weapon is 9, 10 or 11 and whose word is 5, the n words, the word +0x2c and the 0x42 bytes at +0x2e.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
+      "verified": {
+        "bytes": "000233ce+307",
+        "sha1": "756582c48067",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00023501",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_Read",
+      "description": "(herc, word, stream) in stack order, callee-cleaned: Herc_ReadFromStream (0002352f)(herc, stream), then, unless the byte 0007fd09 is set, Herc_BuildDiagram (00023883)(herc, word). es2_xref finds two calls, both from Hangar_Read (00028c50).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
+      "verified": {
+        "bytes": "00023501+46",
+        "sha1": "2615b88ad8ef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002352f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_ReadFromStream",
+      "description": "(herc, stream) in stack order, callee-cleaned: reads through the stream's slot +0x1c an int16 chassis into +0, an int16 mount count n into +2, n int16 weapons into +4, n int16 words into +0x18, an int16 into +0x2c and 0x42 bytes into +0x2e.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
+      "verified": {
+        "bytes": "0002352f+214",
+        "sha1": "663c7ee71a48",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00023883",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_BuildDiagram",
+      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears 0007ff98; stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with 0004b7df into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls 00023605(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with 00023d70) and 0x22-byte elements at +0x94 (with 00023f2c). Per mount: when 00024b23(herc, mount) is 0 sets the weapon to 0x11 and calls 00024c14(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to 000216e0 for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and 00024b23's value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to 000216e0 for the +0x98 element and sets the byte 0007ff8e; sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and 0007ff8e is clear, passes 0, 0 to 000216e0 for it. es2_xref finds seven calls: from Herc_Read (00023501), 000241f9, 00028e50, 00029d0f, 00029d68, and twice from 00029e01.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
+      "verified": {
+        "bytes": "00023883+1261",
+        "sha1": "3a621951d727",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024366",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_DrawDamageMarks",
+      "description": "(herc), callee-cleaned: loads the chassis's RES32 DMG1 bank with 0004b7df into 0007ffdc + 4 * chassis when it is 0; for groups 0-5 takes the level 000389fb(00024b86(herc, group, 0x785)) returns and for a level of 1 to 3 draws each mark of the list at 000aae3a + 0x6c * chassis + 0x12 * group + 6 * (level - 1): Bitmap_Blit (000502c0) of the bank's frame at the mark's point, once with the word +0x38 of the canvas 000ab616 set to the word 0007fccc and once with it put back, each time also storing it to 0008448e and calling the routine at 000865f4 with it when the canvas is the current one. es2_xref finds one call, from 000241f9.",
+      "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-damage-marks",
+      "verified": {
+        "bytes": "00024366+507",
+        "sha1": "f7470aef683e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0002562c",
       "binary": "ES1GO",
       "type": "function",
@@ -1767,6 +2127,231 @@
       "verified": {
         "bytes": "0002562c+41",
         "sha1": "223a72d7cb58",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027cb3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_CopyThroughScratch",
+      "description": "(from, to) in stack order, callee-cleaned: saves the stock the dword 000aad62 + 4 * from points to as car\\scratch.arm with Inventory_SaveFile (00027f1b), loads that file into the stock 000aad62 + 4 * to with Inventory_LoadFile (00027e02), and deletes it with remove (0004eed0), each path through Path_ApplyAltDrive (00020989).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00027cb3+90",
+        "sha1": "587e7300fee8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027d76",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_ClearAll",
+      "description": "(stock), callee-cleaned: WordStack_Clear (00040d19) on each of the int16 count +0 of 6-byte stacks at the pointer +2.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00027d76+53",
+        "sha1": "be113733a1d5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027e02",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_LoadFile",
+      "description": "(stock, path) in stack order, callee-cleaned: opens path with VolRStream_CtorFromPath (0004d064), reads it with Inventory_Read (00027e3c), closes it with VolRStream_Close (0004d18e) and destroys it. es2_xref finds three calls: from Career_New (000163ac), Inventory_CopyThroughScratch (00027cb3) and SingleMission_Start (00036807).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00027e02+58",
+        "sha1": "fdc3282ba076",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027e3c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_Read",
+      "description": "(stock, stream) in stack order, callee-cleaned: Inventory_ClearAll (00027d76), Inventory_TraceSlots (000281d7), then reads through the stream's slot +0x1c an int16 record count and per record an int16 slot, an int16 count and that many int16 words, each pushed with WordStack_Push (00040ba6) onto the stack at the pointer +2 + 6 * slot, with no bounds test; then Inventory_TraceSlots again. es2_xref finds calls from Inventory_LoadFile (00027e02) and 00016c1e.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00027e3c+223",
+        "sha1": "3c9704d47289",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027f1b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_SaveFile",
+      "description": "(stock, path) in stack order, callee-cleaned: opens a FileRWStream (FileRWStream_Ctor, 0005aae4) on path, asserting at severity 5 (Assert_Report (0004f498), inventor.cpp line 0x5f) when it does not open, writes the stock with Inventory_Write (00027f88), and closes and destroys the stream.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00027f1b+109",
+        "sha1": "43ea13fd81c5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027f88",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_Write",
+      "description": "(stock, stream) in stack order, callee-cleaned: writes through the stream's slot +0x18 the int16 slot count +0, then for every slot its index and its stack with WordStack_Write (00040ca2).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00027f88+132",
+        "sha1": "faecefb8e9be",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000281d7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_TraceSlots",
+      "description": "(stock), callee-cleaned: for each slot below the count +0 but slot 5 calls NoOp_TwoArgs (00040d41)(the slot's stack, 6 * slot for slots below 5, 6 * (slot - 1) above), which does nothing.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "000281d7+107",
+        "sha1": "e9958f66cd8e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00028311",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_Add",
+      "description": "(stock, &word, slot) in stack order, callee-cleaned: WordStack_Push (00040ba6) of the word onto the slot's stack, then Inventory_TraceSlots (000281d7).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00028311+46",
+        "sha1": "cd9ac596ad41",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002833f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Inventory_Take",
+      "description": "(stock, slot) in stack order, callee-cleaned: WordStack_Pop (00040bfd) of the slot's stack, then Inventory_TraceSlots (000281d7); returns the popped word.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "0002833f+54",
+        "sha1": "495fa5a8afe0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028ac9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_AllocSlots",
+      "description": "(), C convention: when the slot count word 00080890 is not 0, makes an array of that many null pointers at 000808a0.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
+      "verified": {
+        "bytes": "00028ac9+80",
+        "sha1": "a1f01d1f00a8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028b19",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_Clear",
+      "description": "(), C convention: when 000808a0 is set, destroys each HERC in it below the slot count 00080890 with 000232a4(herc, 3), zeroing its pointer, and frees the array; calls 00022981 when the dword 0009a30c is below the dword 0007e738; sets 00080890 and 00080892 to 0, 00080894 and 00080896 to -1, and 00080898 and the dword 0008089c to 0.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
+      "verified": {
+        "bytes": "00028b19+189",
+        "sha1": "9e44b6baf2b9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028bd6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_ReadFromSave",
+      "description": "(n, path) in stack order, callee-cleaned: opens path with FileRStream_Ctor (00052ab0), calls 00028db6(stream) n times, reads the hangar with Hangar_Read (00028c50) and destroys the stream with FileRStream_Dtor (00052af0).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
+      "verified": {
+        "bytes": "00028bd6+79",
+        "sha1": "7172193c706e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028c25",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_LoadFile",
+      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath (0004d064), reads it with Hangar_Read (00028c50) and destroys the stream. es2_xref finds three calls: from 00014fd6, Career_New (000163ac) and MsnGen_LoadMission.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
+      "verified": {
+        "bytes": "00028c25+43",
+        "sha1": "ba1ecde76a00",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028c50",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_Read",
+      "description": "(stream), callee-cleaned: Hangar_Clear (00028b19); reads through the stream's slot +0x1c the int16 slot count into 00080890, then Hangar_AllocSlots (00028ac9); the int16s 00080894, 00080896 and 00080898, the dword 0008089c and the int16 HERC count 00080892; per HERC an int16 slot, a HERC from Herc_Ctor (00022f5e)(null, -1) stored in the slot of 000808a0 with no bounds test, read with Herc_Read (00023501) given 00080898 when the slot is 00080896 and 00080898 is not 0, and 0 otherwise. es2_xref finds calls from Hangar_ReadFromSave (00028bd6) and Hangar_LoadFile (00028c25).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
+      "verified": {
+        "bytes": "00028c50+358",
+        "sha1": "5cea3facf5cd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029107",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_Write",
+      "description": "(stream), callee-cleaned: writes through the stream's slot +0x18 the words 00080890, 00080894, 00080896 and 00080898 and the dword 0008089c; then, when the mode word 000aad56 is 0, a count of 8 and, for each of slots 0-7 of 000808a0 that holds a HERC, the slot and the HERC (Herc_Write (000233ce)); otherwise the count 00080892 and the same for each slot below 00080890.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
+      "verified": {
+        "bytes": "00029107+467",
+        "sha1": "132f8726ae0b",
         "scope": "body",
         "via": "decompile"
       }
@@ -2227,7 +2812,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MsnGen_LoadMission",
-      "description": "(path), callee-cleaned: reads the .MSN entry whole into a buffer and reads it through a memory stream made by MemRWStream_Ctor (0005da60); opens data\\script.dat as a FileRWStream (severity-5 assert, mg.cpp line 0x4c5); reads the revision word, formatting an error string nothing reads when it is not 5; seeds the flags at 000ab244 by the mode 000aad56; parses with MsnGen_ParseMsnFile (0003276c); sets the header words the mode overrides; writes the 200 flag bytes to data\\mission.var (FileWStream, assert at line 0x505) and the mission through WriteScriptDatFile (0003445b); in mode 0 passes car\\sm_init.dat to 00028c25, fills a 0x25-byte record at 0009b028 per member ref of the first group up to its first -1 through functions not read, and passes car\\sm_play.mec to 0002909c; and frees the condition, point, heading, waypoint, mech, group and base arrays. VSHELL's MsnGen_LoadMission (0041c73d) in role.",
+      "description": "(path), callee-cleaned: reads the .MSN entry whole into a buffer and reads it through a memory stream made by MemRWStream_Ctor (0005da60); opens data\\script.dat as a FileRWStream (severity-5 assert, mg.cpp line 0x4c5); reads the revision word, formatting an error string nothing reads when it is not 5; seeds the flags at 000ab244 by the mode 000aad56; parses with MsnGen_ParseMsnFile (0003276c); sets the header words the mode overrides; writes the 200 flag bytes to data\\mission.var (FileWStream, assert at line 0x505) and the mission through WriteScriptDatFile (0003445b); in mode 0 passes car\\sm_init.dat to Hangar_LoadFile (00028c25), fills a 0x25-byte record at 0009b028 per member ref of the first group up to its first -1 through functions not read, and passes car\\sm_play.mec to 0002909c; and frees the condition, point, heading, waypoint, mech, group and base arrays. VSHELL's MsnGen_LoadMission (0041c73d) in role.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#loading-a-mission",
       "verified": {
         "bytes": "00035873+2305",
@@ -2362,7 +2947,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SingleMission_Start",
-      "description": "(), callee-cleaned: 00027e02(word 000aad62, car\\s_armory.dat); SingleMission_BuildPath (00036649)(word 000aad5a); MsnGen_LoadMission (000aad14); Mission_WriteRestore.",
+      "description": "(), callee-cleaned: Inventory_LoadFile (00027e02)(word 000aad62, car\\s_armory.dat); SingleMission_BuildPath (00036649)(word 000aad5a); MsnGen_LoadMission (000aad14); Mission_WriteRestore.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#single-missions",
       "verified": {
         "bytes": "00036807+48",
@@ -2452,13 +3037,103 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_ProcessMissionResults",
-      "description": "(), C convention: in mode 1 (000aad56) calls 00016c1e(0009b218), otherwise 00014fd6(). Opens data\\results.dat (filename table entry 7, Path_ApplyAltDrive, FileRStream; severity-5 assert at shell.cpp line 199) and reads a word to 000aad58, a dword to 0007fcf4, a word count to 000817cc and that many pairs of words (a, b), each passed in mode 1 to 00028311(000aad62, &b, a); calls 0001568d(stream). Reads data\\mission.var (entry 5, FileRWStream; assert at line 0xd7) whole into the 100 flags at 000ab244 and sets flag 0 to 000aad58. In mode 1 it then calls 00038e48(), adds 0007fcf4 to 0007fcf0, calls 00028375(000aad62), CareerRecord_FinishMission (000160cb) and Tech_Unlock (00001f78)(record + 0xa8, record word +0xa) on the record 0009b23b + 0x1f7 * [0009b21f], calls 00029e01() and sets the record's word +4 to 0x6ae; otherwise it calls 00015db7(00014ef4()). es2_xref finds one call, from 0003ba47.",
+      "description": "(), C convention: in mode 1 (000aad56) calls 00016c1e(0009b218), otherwise 00014fd6(). Opens data\\results.dat (filename table entry 7, Path_ApplyAltDrive, FileRStream; severity-5 assert at shell.cpp line 199) and reads a word to 000aad58, a dword to 0007fcf4, a word count to 000817cc and that many pairs of words (a, b), each passed in mode 1 to Inventory_Add (00028311)(000aad62, &b, a); calls 0001568d(stream). Reads data\\mission.var (entry 5, FileRWStream; assert at line 0xd7) whole into the 100 flags at 000ab244 and sets flag 0 to 000aad58. In mode 1 it then calls 00038e48(), adds 0007fcf4 to 0007fcf0, calls 00028375(000aad62), CareerRecord_FinishMission (000160cb) and Tech_Unlock (00001f78)(record + 0xa8, record word +0xa) on the record 0009b23b + 0x1f7 * [0009b21f], calls 00029e01() and sets the record's word +4 to 0x6ae; otherwise it calls 00015db7(00014ef4()). es2_xref finds one call, from 0003ba47.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
       "verified": {
         "bytes": "00038eb5+729",
         "sha1": "0e9dbcbd6606",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00040ba6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WordStack_Push",
+      "description": "(stack, &word) in stack order, callee-cleaned: makes a 6-byte node (operator_new (000019f0)) holding the word at +0 and the old head at +2, makes it the head (+2) and adds 1 to the int16 count +0.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00040ba6+87",
+        "sha1": "893ed801e0f1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00040bfd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WordStack_Pop",
+      "description": "(stack), callee-cleaned: returns -1 when WordStack_IsEmpty (00040c57); otherwise unlinks the head (+2), frees it with operator_delete (00001a44), subtracts 1 from the count +0 and returns the head's word.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00040bfd+90",
+        "sha1": "c8d8252f22ff",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00040c57",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WordStack_IsEmpty",
+      "description": "(stack), callee-cleaned: whether the int16 count +0 is 0.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00040c57+29",
+        "sha1": "6ceba328670e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00040ca2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WordStack_Write",
+      "description": "(stack, stream) in stack order, callee-cleaned: writes through the stream's slot +0x18 the int16 count +0, then each node's word from the head (+2) along the next pointers (+2).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00040ca2+119",
+        "sha1": "246368c151c7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00040d19",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WordStack_Clear",
+      "description": "(stack), callee-cleaned: calls WordStack_Pop (00040bfd) until it returns -1, so a stored -1 also ends it.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00040d19+40",
+        "sha1": "2f99728ec837",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00040d41",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "NoOp_TwoArgs",
+      "description": "(a, b), callee-cleaned (RET 8): loads a into EAX, b into CX and 0x12 into DX and returns, doing nothing else.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-weapon-stock",
+      "verified": {
+        "bytes": "00040d41+18",
+        "sha1": "0e77e628a358",
+        "scope": "body",
+        "via": "both"
       }
     },
     {

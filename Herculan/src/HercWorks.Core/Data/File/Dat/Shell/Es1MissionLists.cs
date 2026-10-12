@@ -3,7 +3,7 @@ namespace HercWorks.Core.Data.File.Dat.Shell;
 /// <summary>
 /// One of the shell's name lists: a count byte and that many NUL-terminated mission or list names
 /// (docs/es1/formats/bst-battle-sets.md#name-lists). The whole of ES1's <c>bst\ANY_*.DAT</c>, and each position of a battle
-/// set and each list of <c>msn\SING_MSN.DAT</c>.
+/// set and each list of <c>msn\SING_MSN.DAT</c>, <c>cfg\TM_FILES.DAT</c> and the <c>snc\*_FILES.DAT</c>.
 /// </summary>
 public class Es1NameList {
 	/// <summary>The longest name a list holds, its NUL included: <c>StrList_Read</c> (<c>ES1GO 000201b7</c>) reads each into 13 bytes.</summary>

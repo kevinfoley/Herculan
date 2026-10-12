@@ -196,6 +196,23 @@ public static class TransformerRegistry {
 		new("Mission Name List", e => NameStartsWith(e, "ANY_") && NameEndsWith(e, ".DAT"), () => new Shell.Es1NameListTransformer()),
 		new("Single Mission Lists", e => NameIs(e, "SING_MSN.DAT"), () => new Shell.Es1SingleMissionsTransformer()),
 		new("Equipment Availability", e => NameIs(e, "TECH_0.DAT") || NameIs(e, "TECH_SNG.DAT"), () => new Shell.Es1TechFileTransformer()),
+		// docs/es1/formats/car-hercs-and-stock.md: SHELL0's car\ starting HERCs and weapon stock, matched by name (the VOL has no
+		// folder type for car\, cfg\ or snc\, and no other ES1 archive uses these names).
+		new("Starting HERCs", e => NameIs(e, "CAR_INIT.DAT") || NameIs(e, "SM_INIT.DAT"), () => new Shell.Es1HercListTransformer()),
+		new("Weapon Stock", e => NameIs(e, "C_ARMORY.DAT") || NameIs(e, "S_ARMORY.DAT"), () => new Shell.Es1InventoryTransformer()),
+		// docs/es1/formats/bst-battle-sets.md#battle-sets: groups of pilot names.
+		new("Pilot Names", e => NameIs(e, "NAMES.DAT"), () => new Shell.Es1PilotNamesTransformer()),
+		// docs/es1/formats/herc-diagrams.md: the HERC diagram's mount pictures, damage marks and areas.
+		new("HERC Diagram Layout", IsEs1HercLayoutFile, () => new Shell.Es1HercLayoutTransformer()),
+		new("HERC Damage Marks", e => ExtIs(e, FileType.Dat) && NameEndsWith(e, "DMG1.DAT"), () => new Shell.Es1HercDamageMarksTransformer()),
+		new("HERC Diagram Areas", e => NameIs(e, "HOTSPOT.DAT"), () => new Shell.Es1HercHotspotsTransformer()),
+		// docs/es1/formats/herc-diagrams.md#files-no-loader-names and shell-file-lists.md#the-lip-sync-lists: no loader found,
+		// bytes kept whole (OPAQUE). Ahead of the lip-sync lists, whose match takes CO_FILES.DAT too.
+		new("Unread Shell Table (opaque)", e => NameIs(e, "CONFIG.DAT") || NameIs(e, "TEST.DAT") || NameIs(e, "CO_FILES.DAT"),
+			() => new Common.Es1OpaqueFileTransformer()),
+		// docs/es1/formats/shell-file-lists.md: the .TTM lists and the talking heads' lip-sync lists.
+		new("Animation Lists", e => NameIs(e, "TM_FILES.DAT"), () => new Shell.Es1TtmFileListsTransformer()),
+		new("Lip-Sync List", e => ExtIs(e, FileType.Dat) && NameEndsWith(e, "_FILES.DAT"), () => new Shell.Es1LipSyncListTransformer()),
 		// docs/es1/formats/wld-world.md#the-world-tables-in-zonesvol: no reader found, bytes kept whole (OPAQUE).
 		new("Unread World Table (opaque)", e => ExtIs(e, FileType.Dat) && NameStartsWith(e, "WORLD"),
 			() => new Common.Es1OpaqueFileTransformer()),
@@ -204,6 +221,10 @@ public static class TransformerRegistry {
 	/// <summary>Whether the entry is one of the four theater shape tables (docs/es1/formats/zone-terrain.md#which-zone-and-which-theater).</summary>
 	private static bool IsEs1TheaterTable(VolEntry e) => e.FileName?.Trim().ToUpperInvariant() is
 		"DESERT.DAT" or "TEMPER.DAT" or "ICE.DAT" or "URBAN.DAT";
+
+	/// <summary>Whether the entry is one of the eight HERC diagram layouts (docs/es1/formats/herc-diagrams.md#the-mount-pictures).</summary>
+	private static bool IsEs1HercLayoutFile(VolEntry e) => e.FileName?.Trim().ToUpperInvariant() is
+		"ROAD.DAT" or "GUNS.DAT" or "RAPT.DAT" or "TOMA.DAT" or "PATR.DAT" or "PANT.DAT" or "HERC.DAT" or "COLO.DAT";
 
 	/// <summary>Whether the entry is one of the sixteen chassis files ES1's <c>nam\MECHS.NAM</c> names (docs/es1/formats/chassis-dat.md#which-files).</summary>
 	private static bool IsEs1ChassisFile(VolEntry e) => e.FileName?.Trim().ToUpperInvariant() is
