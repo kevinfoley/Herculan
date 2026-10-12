@@ -29,6 +29,10 @@ tweak.drop_pod_sound_from_pod.display_name    Sons des capsules de largage depui
 tweak.drop_pod_sound_from_pod.description     Entendez le sifflement d'une capsule de largage en chute provenir de la capsule elle-même, en la suivant dans sa descente, et son atterrissage provenir de son point d'impact. Les sons sont plus forts et portent sur des kilomètres. Le jeu original joue les deux sons à votre propre position, si bien qu'ils n'indiquent jamais où se trouve la capsule.
 tweak.fix_repair_diagram_sides.display_name  Corriger les côtés du schéma de réparation
 tweak.fix_repair_diagram_sides.description   Sur le schéma des dégâts de l'écran REPAIR, Left Torso et Left Leg sont du même côté. Dans le jeu original, le schéma montre Left Torso à votre gauche mais Left Leg à votre droite. Sur un Razor, les nacelles sont inversées pour correspondre aux ailes.
+tweak.play_last_music_track.display_name  Jouer toutes les musiques
+tweak.play_last_music_track.description   Les missions jouent aussi la dernière des six pistes musicales du disque. Dans le jeu original, les missions n'alternent qu'entre les cinq premières, si bien que la dernière n'est jamais jouée.
+tweak.shuffle_mission_music.display_name  Musique de mission aléatoire
+tweak.shuffle_mission_music.description   Chaque mission joue une piste musicale choisie au hasard, jamais la même deux fois de suite. Le jeu original joue les pistes dans un ordre fixe, une par mission.
 tweak.smoother_turret_movement.display_name   Mouvement de tourelle plus fluide
 tweak.smoother_turret_movement.description     Fluidifie la rotation de la tourelle lors de la visée au joystick ou avec une autre commande analogique. Le jeu original arrondit la valeur de rotation, ce qui provoque des saccades aux faibles vitesses de visée. Sans effet lors de la visée au clavier.
 tweak.mouse_external_view.display_name         Vue extérieure à la souris

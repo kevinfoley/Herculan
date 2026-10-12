@@ -102,6 +102,18 @@ public static class TweakSettingDefinitions {
 	/// viewer's left and <c>Left Leg</c> on the viewer's right. See <see cref="Shell.ShellRepairDiagrams"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixRepairDiagramSides = new("tweak.fix_repair_diagram_sides", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// Mission music takes turns through all six of the disc's music tracks, 2 to 7. Retail's track choice
+	/// reaches 2 to 6 only, so track 7 never plays. See <see cref="Audio.CdMusic.MissionTrack"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> PlayLastMusicTrack = new("tweak.play_last_music_track", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// Each mission plays a track drawn at random, never the one the mission before it played. Retail
+	/// rotates through the tracks in disc order, one per mission. See <see cref="Audio.CdMusic.ShuffledTrack"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> ShuffleMissionMusic = new("tweak.shuffle_mission_music", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
 	#endregion
 
 	#region AI
@@ -206,5 +218,6 @@ public static class TweakSettingDefinitions {
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
 		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, FasterKeyboardAiming, FixRaptorIIPerspective, ResetCountersOnReplay,
+		PlayLastMusicTrack, ShuffleMissionMusic,
 	};
 }

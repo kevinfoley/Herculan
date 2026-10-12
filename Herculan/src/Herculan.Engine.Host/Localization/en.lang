@@ -29,6 +29,10 @@ tweak.drop_pod_sound_from_pod.display_name    Drop pod sounds from the pod
 tweak.drop_pod_sound_from_pod.description     Hear a falling drop pod's whistle from the pod itself, following it down, and its landing from where it lands. The sounds are louder and carry for kilometres. Retail plays both sounds at your own position, so they never tell you where the pod is.
 tweak.fix_repair_diagram_sides.display_name  Fix repair diagram sides
 tweak.fix_repair_diagram_sides.description   On the REPAIR screen's damage diagram, Left Torso and Left Leg are on the same side. In retail the diagram shows Left Torso on your left but Left Leg on your right. On a Razor, the nacelles are switched to match the wings.
+tweak.play_last_music_track.display_name  Play all music tracks
+tweak.play_last_music_track.description   Missions also play the last of the disc's six music tracks. Retail missions take turns through only the first five, so the last one never plays.
+tweak.shuffle_mission_music.display_name  Shuffle mission music
+tweak.shuffle_mission_music.description   Each mission plays a music track chosen at random, never the same one twice in a row. Retail plays the tracks in a fixed order, one per mission.
 tweak.smoother_turret_movement.display_name   Smoother turret movement
 tweak.smoother_turret_movement.description     Smooth turret rotation when aiming with a joystick or other analog input. Retail rounds the rotation value, causing stutter at slow aiming speeds. Has no effect when aiming with the keyboard.
 tweak.mouse_external_view.display_name         Mouse-controlled outside view

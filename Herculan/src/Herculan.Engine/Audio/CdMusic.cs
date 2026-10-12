@@ -46,6 +46,12 @@ public sealed class CdMusic : IDisposable {
 	/// <summary>How many music tracks the mission music cycles over.</summary>
 	public const int MissionTrackCount = 5;
 
+	/// <summary>
+	/// How many music tracks the disc carries, 2 to 7, on v1.0's disc and v1.10's image alike
+	/// (docs/retail/simulation/audio.md, "The disc"). One more than <see cref="MissionTrackCount"/>.
+	/// </summary>
+	public const int DiscMusicTrackCount = 6;
+
 	/// <summary>The lowest track number mission music uses; track 1 is the data track.</summary>
 	public const int FirstMusicTrack = 2;
 
@@ -58,9 +64,32 @@ public sealed class CdMusic : IDisposable {
 	///
 	/// <para>The original's remainder is a signed <c>IDIV</c>, so a negative <c>-R</c> would give it
 	/// a track below 2 and <c>MCI_PLAY</c> an invalid one; the magnitude is taken here instead.</para>
+	///
+	/// <para>With <paramref name="allTracks"/> (<see cref="Settings.TweakSettingDefinitions.PlayLastMusicTrack"/>,
+	/// this engine's) the remainder is taken over <see cref="DiscMusicTrackCount"/>, so the rotation reaches track 7.</para>
 	/// </summary>
-	public static int MissionTrack(int select) =>
-		System.Math.Abs(select % MissionTrackCount) + FirstMusicTrack;
+	public static int MissionTrack(int select, bool allTracks = false) =>
+		System.Math.Abs(select % (allTracks ? DiscMusicTrackCount : MissionTrackCount)) + FirstMusicTrack;
+
+	/// <summary>
+	/// <see cref="Settings.TweakSettingDefinitions.ShuffleMissionMusic"/>, this engine's: one of the
+	/// <paramref name="count"/> tracks from <see cref="FirstMusicTrack"/> up, drawn evenly from those that are not
+	/// <paramref name="previous"/>. A <paramref name="previous"/> outside that range excludes nothing.
+	/// </summary>
+	public static int ShuffledTrack(int count, int previous, Random random) {
+		bool excludes = previous >= FirstMusicTrack && previous < FirstMusicTrack + count;
+		int track = random.Next(FirstMusicTrack, FirstMusicTrack + count - (excludes ? 1 : 0));
+		return excludes && track >= previous ? track + 1 : track;
+	}
+
+	private static readonly Random ShuffleRandom = new();
+
+	/// <summary>
+	/// The track the last mission of this run played, which <see cref="ShuffledTrack"/> keeps the next one
+	/// from repeating. Static because each mission gets a new <see cref="SoundDirector"/>, and the run's
+	/// missions are one process.
+	/// </summary>
+	private static int s_previousMissionTrack;
 
 	/// <summary>
 	/// <c>Sim_InitMissionSession</c>'s music arm (<c>00461c86</c>-<c>00461cbc</c>): sets the track and
@@ -76,7 +105,12 @@ public sealed class CdMusic : IDisposable {
 	/// <param name="select">The <c>-R</c> value; see <see cref="MissionTrack"/>.</param>
 	/// <param name="musicEnabled"><see cref="SoundDirector.MusicEnabled"/>.</param>
 	public void StartMission(int select, bool musicEnabled) {
-		Track = MissionTrack(select);
+		var tweaks = Settings.TweakSettings.Current;
+		bool allTracks = tweaks.GetSettingValue(Settings.TweakSettingDefinitions.PlayLastMusicTrack);
+		Track = tweaks.GetSettingValue(Settings.TweakSettingDefinitions.ShuffleMissionMusic)
+			? ShuffledTrack(allTracks ? DiscMusicTrackCount : MissionTrackCount, s_previousMissionTrack, ShuffleRandom)
+			: MissionTrack(select, allTracks);
+		s_previousMissionTrack = Track;
 		Enabled = true;
 		SavedPosition = 0;
 
