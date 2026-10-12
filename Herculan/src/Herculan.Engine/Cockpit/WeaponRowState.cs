@@ -7,7 +7,8 @@ namespace Herculan.Engine.Cockpit;
 /// One row of the cockpit's weapon panel, as the three weapon-gauge classes draw it. A row is a
 /// <c>.GAU</c> weapon slot, and which mount owns it is the mount's own
 /// <see cref="WeaponMount.GaugeSlot"/> — the <c>.GL</c> record's byte at <c>+7</c>, not its position
-/// in the fit. A slot no mount claims draws its plate and number and nothing else.
+/// in the fit. A slot no mount claims is <see cref="Empty"/>: retail builds a row's gauge from its mount
+/// (<c>WeaponMounts_BuildGauges</c>, <c>00410644</c>), so such a slot has no plate, no number and no click target.
 ///
 /// <para>The three classes differ only past the name: an energy mount's row
 /// (<c>EnergyWeaponGauge_Ctor</c>, <c>00440a68</c>) carries an LED charge bar, an ammunition mount's (<c>AmmoWeaponGauge_Ctor</c>, <c>00440f78</c>)

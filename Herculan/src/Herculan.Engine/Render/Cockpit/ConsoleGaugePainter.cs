@@ -53,7 +53,9 @@ internal static class ConsoleGaugePainter {
 		for (int i = 0; i < slots; i++) {
 			var rect = weapons[i];
 			var row = i < state.Weapons.Count ? state.Weapons[i] : WeaponRowState.Empty;
-			if (!row.Powered) {
+
+			// A slot no mount claims draws nothing, plate and number included; see WeaponRowState.
+			if (!row.Powered || row.Kind == WeaponMountKind.None) {
 				continue;
 			}
 

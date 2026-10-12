@@ -447,6 +447,11 @@ public static class CockpitWidgets {
 		int slots = Math.Min(art.Gau.WeaponListTotal, rows.Length);
 
 		for (int i = 0; i < slots; i++) {
+			// A slot no mount claims has no gauge, so nothing there takes a click; see WeaponRowState.
+			if (i >= state.Weapons.Count || state.Weapons[i].Kind == WeaponMountKind.None) {
+				continue;
+			}
+
 			var rect = rows[i];
 			if (state.ChargeBarsDraggable && i < state.Weapons.Count
 				&& state.Weapons[i] is { Kind: WeaponMountKind.Energy or WeaponMountKind.Elf, Powered: true, DropoutHidden: false }
