@@ -184,6 +184,12 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// 0x24e, their single tick. Neither is a weapon command.
 		bool ctrl = CtrlHeld(keyboard);
 
+		// In the heads-down view CockpitWidgets_HandleCommand offers a code to the display's key dispatch alone, and
+		// that takes [W], [-], [=] and the keypad's pair, so Sim_DispatchCommand never passes them on to the weapon
+		// manager; nor does the widget tree arm a row for a bare number there. [Alt] and a number or [W] is another
+		// code, which the display does not take. See CockpitKeyboard.ReadHddDisplayKeys.
+		bool headsDown = view.Pan.AtHeadsDown;
+
 		for (int slot = 0; slot < WeaponRowKeys.Length; slot++) {
 			if (_weaponRow[slot].PressOrRepeat(keyboard, WeaponRowKeys[slot]) && !ctrl) {
 				// [Alt] and a number is command 0x202-0x20b, which the weapon manager answers itself; the
@@ -191,13 +197,13 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 				// row's own select gadget. That is why only the bare key can toggle a pod.
 				if (alt) {
 					mounts?.ToggleChain(slot);
-				} else if (!view.CockpitWidgetsOff) {
+				} else if (!view.CockpitWidgetsOff && !headsDown) {
 					mounts?.PressRow(slot);
 				}
 			}
 		}
 
-		if (_cycleWeapon.PressOrRepeat(keyboard, Key.W)) {
+		if (_cycleWeapon.PressOrRepeat(keyboard, Key.W) && (alt || !headsDown)) {
 			mounts?.CycleSelection(alt ? -1 : 1);
 		}
 
@@ -221,10 +227,10 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 			| (_powerUpPad.PressOrRepeat(keyboard, Key.KeypadAdd) && !alt && padPower);
 		bool powerDown = _powerDown.PressOrRepeat(keyboard, Key.Minus)
 			| (_powerDownPad.PressOrRepeat(keyboard, Key.KeypadSubtract) && padPower);
-		if (powerUp) {
+		if (powerUp && !headsDown) {
 			mounts?.AdjustPower(raise: true);
 		}
-		if (powerDown) {
+		if (powerDown && !headsDown) {
 			mounts?.AdjustPower(raise: false);
 		}
 	}

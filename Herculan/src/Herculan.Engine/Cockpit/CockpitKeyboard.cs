@@ -19,7 +19,7 @@ namespace Herculan.Engine.Cockpit;
 ///
 /// <para>A key that commands something acts on each key-down event, auto-repeats included, as the original's
 /// dispatch does (docs/retail/simulation/cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes). The keys
-/// read as held state instead — [F1]-[F8], and [S]/[I]/[W] on the damage screen — are the ones whose command,
+/// read as held state instead — [F1]-[F8], and [S]/[I]/[W] in the heads-down view — are the ones whose command,
 /// repeated, changes nothing.</para>
 /// </summary>
 public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, CockpitCommands commands,
@@ -138,16 +138,8 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 			}
 		}
 
+		ReadHddDisplayKeys(controls, modalPanelUp);
 		ReadHddCommandKeys(controls, modalPanelUp, pointer, framebufferWidth, framebufferHeight);
-
-		// The damage detail's three component categories, on the manual's own [S]/[I]/[W] bindings — the
-		// same three the display's up/down arrow buttons step through. Only while that screen is actually
-		// down: [S] and [W] are also two thirds of this host's camera movement, and the original has no
-		// such clash because its own [S]/[I]/[W] only mean anything on this screen either.
-		if (controls != null && !modalPanelUp && view.Pan.AtHeadsDown && displays.Hud.Hdd == HddPage.DamageDetail
-			&& !CtrlHeld(controls) && !AltHeld(controls) && ReadHddDamageView(controls) is { } damageView) {
-			displays.Hud = displays.Hud with { HddDamage = damageView };
-		}
 
 		// The four arrows press the display's own four arrow buttons, as HddDisplay_KeyDispatch (00449fcc)
 		// does on either page: here, up and down step the category and left and right the herc. One step per
@@ -272,19 +264,49 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		}
 	}
 
+	// The keys HddDisplay_KeyDispatch (00449fcc) answers itself on either page, before it hands the rest to the page's
+	// own dispatch. [1]-[3] press the comm boxes, left to right, which is what the number under each says; from the
+	// damage detail that also switches back to the command display. Like the magnifiers and the arrows they go through
+	// the button's press, which is what holds them back while the sensor dropout has the display dark. [S]/[I]/[W]
+	// switch to the damage detail on that category, from either page, straight through HddDisplay_SetPage.
+	//
+	// Each key the display answers is spent there: in the heads-down view the cockpit's widget tree offers a code to
+	// the display alone and Sim_DispatchCommand stops at the first handler that takes it, so none of these reaches the
+	// weapon panel — see PilotKeys.
+	private void ReadHddDisplayKeys(IKeyState? controls, bool modalPanelUp) {
+		if (controls == null || !view.Pan.AtHeadsDown) {
+			foreach (var latch in _hddPilotKeys) {
+				latch.Reset();
+			}
+
+			return;
+		}
+
+		bool modified = CtrlHeld(controls) || AltHeld(controls) || modalPanelUp;
+		for (int slot = 0; slot < HddPilotKeys.Length; slot++) {
+			if (_hddPilotKeys[slot].PressOrRepeat(controls, HddPilotKeys[slot]) && !modified) {
+				commands.PressHddButtonByKey(HddLayout.Widget.PilotBox0 + slot);
+			}
+		}
+
+		if (!modified && ReadHddDamageView(controls) is { } damageView) {
+			displays.Hud = displays.Hud with { Hdd = HddPage.DamageDetail, HddDamage = damageView };
+		}
+	}
+
 	// The command display's own keyboard, from the manual's COMMAND DISPLAY table and the screen's
 	// own key dispatch (0044cc40, which switches on scancodes and matches that table exactly). Gated
-	// on the screen actually being down, the same way [S]/[I]/[W] are gated on the damage screen:
-	// most of these letters are also cockpit or camera bindings in this host, and in the original
-	// they mean nothing anywhere else either.
+	// on the screen actually being down: it is the page's dispatch, which the display hands only the codes
+	// it does not answer itself (ReadHddDisplayKeys), and most of these letters are also cockpit or camera
+	// bindings in this host.
 	//
-	// Everything here fires on each key-down event, auto-repeats included, except the arrows' scroll. The
-	// original's dispatch is a keydown handler.
+	// Everything here fires on each key-down event, auto-repeats included. The original's dispatch is a
+	// keydown handler.
 	private void ReadHddCommandKeys(IKeyState? controls, bool modalPanelUp, (float X, float Y) pointer,
 			int framebufferWidth, int framebufferHeight) {
 		if (controls == null || displays.HddCommand is not { } command
 			|| !view.Pan.AtHeadsDown || displays.Hud.Hdd != HddPage.CommandDisplay) {
-			foreach (var latch in _hddOrderKeys.Concat(_hddPilotKeys).Concat(_hddArrowKeys)) {
+			foreach (var latch in _hddOrderKeys.Concat(_hddArrowKeys)) {
 				latch.Reset();
 			}
 
@@ -320,16 +342,6 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		}
 		if (_hddNextOrder.PressOrRepeat(controls, Key.Period) && !modified) {
 			command.StepOrder(1);
-		}
-
-		// [1]-[3] pick the pilot, left to right, which is what the number under each comm box says. The
-		// display's key dispatch (HddDisplay_KeyDispatch, 00449fcc) presses the comm box's own widget for these, and the two
-		// magnifiers' and the four arrows' for theirs, so all nine go through the button's press — which
-		// is what holds them back while the sensor dropout has the display dark.
-		for (int slot = 0; slot < HddPilotKeys.Length; slot++) {
-			if (_hddPilotKeys[slot].PressOrRepeat(controls, HddPilotKeys[slot]) && !modified) {
-				commands.PressHddButtonByKey(HddLayout.Widget.PilotBox0 + slot);
-			}
 		}
 
 		// [+] and [-], the two magnifiers, on every key-down event, auto-repeats included: HddButton_OnClick

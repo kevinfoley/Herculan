@@ -9999,7 +9999,7 @@
         "bytes": "00432bc8+1385",
         "sha1": "cd83b9174a8e",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
