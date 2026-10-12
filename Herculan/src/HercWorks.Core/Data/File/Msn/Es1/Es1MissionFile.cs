@@ -8,12 +8,19 @@ namespace HercWorks.Core.Data.File.Msn.Es1;
 /// <para>The editing model, as ES2's <see cref="MissionFile"/> is: it round-trips a file byte for
 /// byte and keeps every record as authored, refs as GUIDs. It does not apply the conditions, variants
 /// and repeated GUIDs the load applies (docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats).
-/// A file in the other layout (docs/es1/formats/msn-mission-file.md#a-file-in-another-layout) is not
-/// modelled; <see cref="Io.Transform.Common.Es1MissionFileTransformer"/> rejects it.</para>
+/// It also holds a file in the other layout (docs/es1/formats/msn-mission-file.md#a-file-in-another-layout):
+/// <see cref="HeaderWords"/> set, <see cref="HeaderPatches"/> empty, and one word in each mech's
+/// <see cref="Es1Mech.Words4E"/>.</para>
 /// </summary>
 public class Es1MissionFile {
 	/// <summary>The revision word, 5 in every retail file; the load goes on whatever it holds.</summary>
 	public short Revision { get; set; }
+
+	/// <summary>
+	/// The ten header words that follow the revision in a file in the other layout, which has no
+	/// header-patch row; <c>null</c> for a file in the loader's layout.
+	/// </summary>
+	public short[]? HeaderWords { get; set; }
 
 	/// <summary>Row 1 — the conditions the other rows' condition refs name.</summary>
 	public Es1Condition[] Conditions { get; set; } = [];

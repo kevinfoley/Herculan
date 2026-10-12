@@ -632,6 +632,306 @@
       }
     },
     {
+      "address": "00013eac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BattleSet_Dtor",
+      "description": "(set, flags) in stack order, callee-cleaned: returns when set is null; frees the campaign array +2 (__vec_delete, 8-byte elements, with Campaign_Dtor (00014355)) and zeroes it; calls 00015153; deletes set when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "00013eac+85",
+        "sha1": "cc85a4f4e349",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00013f01",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BattleSet_Load",
+      "description": "(set, index) in stack order, callee-cleaned: loads the string table bst\\batlsets.bin into a stack table (TextTable_Ctor (0001865c), Text_LoadDataFile through a VolRStream), reads the battle set file its entry index names into set with BattleSet_ReadFile (00013fad), then calls SingleMissions_Load (000361ac) and 00015070, and destroys the stream and the table.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "00013f01+121",
+        "sha1": "d342669c2cba",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00013f7a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BattleSet_FreeCampaigns",
+      "description": "(set), callee-cleaned: when the campaign array +2 is set, frees it (__vec_delete, 8-byte elements, with Campaign_Dtor (00014355)) and zeroes it.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "00013f7a+51",
+        "sha1": "1004f014c4ff",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00013fad",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BattleSet_ReadFile",
+      "description": "(set, name) in stack order, callee-cleaned: BattleSet_FreeCampaigns (00013f7a); opens bst\\<name> (sprintf, VolRStream_CtorFromPath); reads one byte into the low byte of the campaign count +0; when nonzero, makes that many 8-byte campaigns at +2 (__vec_new with Campaign_Ctor (00014075)), reads each with Campaign_Read (0001422c) and sets campaign i's word +0 to word i of the table at 0007ea94 (0, 1, 2, 3, 1, 2, 3, 1, 2, 3); destroys the stream.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "00013fad+200",
+        "sha1": "fbe92a861721",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00014075",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Campaign_Ctor",
+      "description": "(campaign), callee-cleaned: allocates 8 bytes when campaign is null (returning 0 when that fails); zeroes the position count word +2 and the position array +4; returns it.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "00014075+48",
+        "sha1": "0d01e72e15e0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000140a5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BattleSet_GetMissionName",
+      "description": "(set, outcome, position, campaign) in stack order, callee-cleaned: takes Campaign_GetPositionName (000142f6)(campaign's record, outcome, position); returns it when Str_FindBoyerMoore finds .MSN in it. Otherwise reads a name list from bst\\<name> (StrList_Read (000201b7) into a stack list), copies StrList_PickRandom (00020289)'s draw over the position's name with sprintf %s, frees the list and returns the position's name.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions",
+      "verified": {
+        "bytes": "000140a5+233",
+        "sha1": "c53c86d88af3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001418e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BattleSet_PeekNextCampaign",
+      "description": "(set, outcome, position, campaign) in stack order, callee-cleaned: Campaign_NextPosition (0001431f) on a copy of position; returns 0 when the next position is in the campaign, else the word of the table at BattleSet_NextCampaignTable (0007ead0) for (campaign, outcome), 2 words per campaign. Writes nothing.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#moving-on",
+      "verified": {
+        "bytes": "0001418e+66",
+        "sha1": "f5223477f354",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000141d0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BattleSet_Advance",
+      "description": "(set, outcome, position*, campaign*) in stack order, callee-cleaned: Campaign_NextPosition (0001431f) adds 1 to *position; when that leaves the campaign, sets *campaign to the word of the table at BattleSet_NextCampaignTable (0007ead0) for (campaign, outcome), *position to 0, and returns 1; else returns 0.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#moving-on",
+      "verified": {
+        "bytes": "000141d0+92",
+        "sha1": "8b677a524872",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001422c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Campaign_Read",
+      "description": "(campaign, stream) in stack order, callee-cleaned: reads one byte through the stream's slot +0x1c into the low byte of the position count +2; when nonzero, frees the old position array +4 (__vec_delete with StrList_Dtor (000202b4)), makes that many 6-byte positions (__vec_new with Campaign_PositionCtor (000142c7)) and reads each with StrList_Read (000201b7).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "0001422c+155",
+        "sha1": "899f7b0e4e96",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000142c7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Campaign_PositionCtor",
+      "description": "(list), callee-cleaned: allocates 6 bytes when list is null; zeroes the name list's count word +0 and pointer +2. The same statements as SingleMissions_ListCtor (0003625e).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "000142c7+47",
+        "sha1": "c565a2d8327c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000142f6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Campaign_GetPositionName",
+      "description": "(campaign, outcome, position) in stack order, callee-cleaned: StrList_Get (00020254)(the 6-byte position record position of the array +4, outcome).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions",
+      "verified": {
+        "bytes": "000142f6+41",
+        "sha1": "5958f6fa8196",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001431f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Campaign_NextPosition",
+      "description": "(campaign, position*) in stack order, callee-cleaned: adds 1 to *position; returns 1 when it is at least 0 and below the position count +2, else 0.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#moving-on",
+      "verified": {
+        "bytes": "0001431f+54",
+        "sha1": "baa7045bb08e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00014355",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Campaign_Dtor",
+      "description": "(campaign, flags) in stack order, callee-cleaned: returns when campaign is null; frees the position array +4 (__vec_delete with StrList_Dtor (000202b4)) and zeroes it; deletes campaign when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "00014355+80",
+        "sha1": "eaba34a79895",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000143a8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Screenshot_BuildPath",
+      "description": "(ext, base) in stack order, callee-cleaned: DBSIM's Screenshot_BuildPath (00453a40) with its arguments reversed, writing to 0009ae4c and numbering with the dword 0007eaf0 (ltoa): base's characters up to its NUL or first '.', at most 8 less the counter's digit count of them, then the counter's digits, then ext. es2_xref finds its two calls in 00014ac7, with .SCR and .PAL.",
+      "source": "ES1GO decompile at 000143a8; es2_naming.py diff ES1GO 000143a8 DBSIM 00453a40",
+      "verified": {
+        "bytes": "000143a8+185",
+        "sha1": "3b75333a21cf",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000159e9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Career_OutcomeChoice",
+      "description": "(outcome), callee-cleaned: 1 when outcome is greater than the word of the table at Career_OutcomeThresholds (0007ec80) (4, 4, 4, 3, 3, 3, 4, 3, 3, 3) that the word 000aad5e indexes, else 0.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions",
+      "verified": {
+        "bytes": "000159e9+42",
+        "sha1": "d6c30decc9fa",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00015a13",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Career_BuildMissionPath",
+      "description": "(record), callee-cleaned: BattleSet_GetMissionName (000140a5)(g_BattleSet (000a02cc), Career_OutcomeChoice (000159e9)(word 000aad58), the record's position word +8, its campaign word +6); formats the name as msn\\%s into 000aad14; Mission_SetTextPath.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions",
+      "verified": {
+        "bytes": "00015a13+71",
+        "sha1": "f0efbe18efb7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00015a5a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Career_AdvanceCampaign",
+      "description": "(record), callee-cleaned: BattleSet_Advance (000141d0)(g_BattleSet (000a02cc), Career_OutcomeChoice (000159e9)(word 000aad58), the record's position +8, its campaign +6); returns whether the campaign word changed.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#moving-on",
+      "verified": {
+        "bytes": "00015a5a+75",
+        "sha1": "730c9a7c255b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00015aa5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Career_PeekNextCampaign",
+      "description": "(record), callee-cleaned: returns BattleSet_PeekNextCampaign (0001418e)(g_BattleSet (000a02cc), Career_OutcomeChoice (000159e9)(word 000aad58), the record's position word +8, its campaign word +6); the decompile drops the return value, which EAX carries from the call.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#moving-on",
+      "verified": {
+        "bytes": "00015aa5+47",
+        "sha1": "c21f9297b188",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00016e93",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Career_StartMission",
+      "description": "(roster, b) in stack order, callee-cleaned: sets the roster's word +7 to 00016845(roster, b); BattleSet_Load (00013f01)(g_BattleSet (000a02cc), the roster's word +5); Career_BuildMissionPath (00015a13) on the 0x1f7-byte record at roster + 0x23 + 0x1f7 * word +7; MsnGen_LoadMission (000aad14); 00015cbb(the record); copies the word 000aad5a to the record's +0xc; Mission_WriteRestore.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions",
+      "verified": {
+        "bytes": "00016e93+143",
+        "sha1": "a69498792cdc",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001865c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TextTable_Ctor",
+      "description": "(table), callee-cleaned: allocates 16 bytes when table is null (returning 0 when that fails); zeroes the offsets +0, the pool +4 and the count +8.",
+      "source": "Herculan/docs/es1/formats/bin-string-tables.md#the-table",
+      "verified": {
+        "bytes": "0001865c+57",
+        "sha1": "0b4ed0e8465f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00018695",
       "binary": "ES1GO",
       "type": "function",
@@ -944,6 +1244,81 @@
         "sha1": "cc9be59ad0bb",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00020154",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Stream_ReadCString",
+      "description": "(stream, max, buf) in stack order, callee-cleaned: reads one byte at a time through the stream's slot +0x1c into buf until it has read a NUL or max bytes; returns the count of bytes before the NUL, or max.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#name-lists",
+      "verified": {
+        "bytes": "00020154+99",
+        "sha1": "a7e19592307e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000201b7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "StrList_Read",
+      "description": "(list, stream) in stack order, callee-cleaned: reads one byte through slot +0x1c into the low byte of the count word +0; when it is 0, sets the stream's position (slot +0xc) one past its position (slot +8); else allocates count pointers at +2 and for each a 13-byte buffer read with Stream_ReadCString (00020154)(stream, 13, buffer).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#name-lists",
+      "verified": {
+        "bytes": "000201b7+157",
+        "sha1": "8f72092a0614",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00020254",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "StrList_Get",
+      "description": "(list, index) in stack order, callee-cleaned: the first name when the count +0 is 1, else name index of the pointer array +2, with no bounds test.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#name-lists",
+      "verified": {
+        "bytes": "00020254+53",
+        "sha1": "60d6d1720d9c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00020289",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "StrList_PickRandom",
+      "description": "(list), callee-cleaned: the name Math_RandomBelow(0009aec0, the count +0) indexes in the pointer array +2.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#name-lists",
+      "verified": {
+        "bytes": "00020289+43",
+        "sha1": "7d49b9f62150",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000202b4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "StrList_Dtor",
+      "description": "(list, flags) in stack order, callee-cleaned: returns when list is null; when the pointer array +2 is set, deletes each of the count +0 names and the array and zeroes +2; deletes list when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#name-lists",
+      "verified": {
+        "bytes": "000202b4+150",
+        "sha1": "dff5b73c5959",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -1412,6 +1787,36 @@
       }
     },
     {
+      "address": "000361ac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SingleMissions_Load",
+      "description": "(), callee-cleaned: opens msn\\sing_msn.dat (VolRStream_CtorFromPath), reads one byte into the low byte of the count word 00081084; when nonzero, frees the array 00081080 (__vec_delete with StrList_Dtor (000202b4)), makes that many 6-byte name lists (__vec_new with SingleMissions_ListCtor (0003625e)) and reads each with StrList_Read (000201b7); closes and destroys the stream.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#single-missions",
+      "verified": {
+        "bytes": "000361ac+178",
+        "sha1": "33f462951a9c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003625e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SingleMissions_ListCtor",
+      "description": "(list), callee-cleaned: allocates 6 bytes when list is null; zeroes the name list's count word +0 and pointer +2. The same statements as Campaign_PositionCtor (000142c7).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#single-missions",
+      "verified": {
+        "bytes": "0003625e+47",
+        "sha1": "49aac4a0b862",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0003628d",
       "binary": "ES1GO",
       "type": "function",
@@ -1447,7 +1852,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_SetTextPath",
-      "description": "(): copies the mission path at 000aad14 to 000aad2a, cuts it at its first '.' (strchr) and appends .eng, giving the mission's .ENG path. es2_xref finds its calls in the three mission-path builders 00015a13, 00036649 and 000366c1.",
+      "description": "(): copies the mission path at 000aad14 to 000aad2a, cuts it at its first '.' (strchr) and appends .eng, giving the mission's .ENG path. es2_xref finds its calls in the three mission-path builders Career_BuildMissionPath (00015a13), SingleMission_BuildPath (00036649) and Mission_BuildPathFromFiles (000366c1).",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#which-file",
       "verified": {
         "bytes": "000364be+84",
@@ -1469,6 +1874,51 @@
         "sha1": "a07323efc85f",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00036649",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SingleMission_BuildPath",
+      "description": "(index), callee-cleaned: when index is -1 takes the list Math_RandomBelow(0009aec0, word 00081084) indexes, else list index, of the array 00081080; formats StrList_PickRandom (00020289)'s draw from it as msn\\%s into 000aad14; Mission_SetTextPath.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#single-missions",
+      "verified": {
+        "bytes": "00036649+120",
+        "sha1": "d480baceb609",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000366c1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_BuildPathFromFiles",
+      "description": "(pattern), callee-cleaned: counts the files findfirst/findnext match; copies each match's name (find block +0x1e) into a new 20-byte buffer; formats the one Math_RandomBelow(0009aec0, count) picks as msn\\%s into 000aad14; Mission_SetTextPath; frees the names. es2_xref finds no branch to it; its one stored-pointer hit, 000097e5, lies inside the instruction at 000097e4.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#single-missions",
+      "verified": {
+        "bytes": "000366c1+326",
+        "sha1": "bdb7227e203e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00036807",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SingleMission_Start",
+      "description": "(), callee-cleaned: 00027e02(word 000aad62, car\\s_armory.dat); SingleMission_BuildPath (00036649)(word 000aad5a); MsnGen_LoadMission (000aad14); Mission_WriteRestore.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#single-missions",
+      "verified": {
+        "bytes": "00036807+48",
+        "sha1": "2cc8119c81cd",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -1552,7 +2002,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_SncList_PlayEntry",
-      "description": "(player, a, b) in stack order, callee-cleaned: when the byte +0x19 is set, stops the line playing with maybe_SncList_Stop (00045556); picks the list name of the table at 0008271c (SNC\\C0_FILES.DAT, D0, C1, D1, C2, D2, C3, D3, T0, T1, G0): a when b is 1, a + 8 when b is 2, 10 when b is 3, else 0; loads it with maybe_SncList_Load (000455dc); passes 00020254(record 000aad5c of the 6-byte array +0x11, 0) to 0004589c(player + 3).",
+      "description": "(player, a, b) in stack order, callee-cleaned: when the byte +0x19 is set, stops the line playing with maybe_SncList_Stop (00045556); picks the list name of the table at 0008271c (SNC\\C0_FILES.DAT, D0, C1, D1, C2, D2, C3, D3, T0, T1, G0): a when b is 1, a + 8 when b is 2, 10 when b is 3, else 0; loads it with maybe_SncList_Load (000455dc); passes StrList_Get (00020254)(record 000aad5c of the 6-byte array +0x11, 0) to 0004589c(player + 3).",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "000453be+140",
@@ -1582,7 +2032,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_SncList_Load",
-      "description": "(player, path) in stack order, callee-cleaned: opens path with VolRStream_CtorFromPath and reads one byte into the low byte of the count word +0xf; when it is nonzero, deletes the 6-byte record array +0x11 (__vec_delete with 000202b4) and makes a new one of that many (__vec_new with 00045729), reads a 32-byte name with 00020154, releases the handle +2 with 000469da when it is not -1 and opens the name with 0004680a(0, 0, +0x15, name) into +2, calls 000465da on it after each of 000468fc(0), (0x19) and (1) that is set, calls 000468fc(1) once more, and reads each record with 000201b7; closes and destroys the stream.",
+      "description": "(player, path) in stack order, callee-cleaned: opens path with VolRStream_CtorFromPath and reads one byte into the low byte of the count word +0xf; when it is nonzero, deletes the 6-byte record array +0x11 (__vec_delete with StrList_Dtor (000202b4)) and makes a new one of that many (__vec_new with 00045729), reads a 32-byte name with Stream_ReadCString (00020154), releases the handle +2 with 000469da when it is not -1 and opens the name with 0004680a(0, 0, +0x15, name) into +2, calls 000465da on it after each of 000468fc(0), (0x19) and (1) that is set, calls 000468fc(1) once more, and reads each record with StrList_Read (000201b7); closes and destroys the stream.",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "000455dc+333",
@@ -8459,6 +8909,24 @@
       "source": "ES1GO image at 0007e228"
     },
     {
+      "address": "0007ead0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "BattleSet_NextCampaignTable",
+      "description": "int16[8][2]: the campaign a career moves to past a campaign's last position, by campaign and outcome: (1, 2), (3, 4), (3, -1), (5, 6), (5, -1), (7, -1), (7, -1), (99, -1). Read by BattleSet_Advance (000141d0) and BattleSet_PeekNextCampaign (0001418e).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#moving-on"
+    },
+    {
+      "address": "0007ec80",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Career_OutcomeThresholds",
+      "description": "int16[10]: 4, 4, 4, 3, 3, 3, 4, 3, 3, 3. Career_OutcomeChoice (000159e9) gives outcome 1 when the word 000aad58 exceeds the entry the word 000aad5e indexes.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions"
+    },
+    {
       "address": "00083c04",
       "binary": "ES1GO",
       "type": "data",
@@ -8511,6 +8979,15 @@
       "name": "g_TSObjectTypeRegistry",
       "description": "The shape class registry: 18 entries of 12 bytes {tag, load function, name}, followed at 000942c0 by their count, 0x12. Light_ResetSystem (000641ec) registers it with ClassItem_RegisterBucket. The same tags, names and order as ES1DBSIM's g_TSObjectTypeRegistry (0009efa8).",
       "source": "Herculan/docs/es1/formats/dts-shape.md"
+    },
+    {
+      "address": "000a02cc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_BattleSet",
+      "description": "The shell's battle set, 6 bytes: the campaign count word +0 and the pointer +2 to the 8-byte campaigns, each a talking-head word +0, a position count +2 and a pointer +4 to 6-byte name lists. Filled by BattleSet_Load (00013f01).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets"
     },
     {
       "address": "000a0bdc",

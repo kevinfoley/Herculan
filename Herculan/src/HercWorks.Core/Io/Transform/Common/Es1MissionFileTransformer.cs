@@ -7,51 +7,75 @@ namespace HercWorks.Core.Io.Transform.Common;
 /// revision word, then the eleven rows in the order ES1's loader reads them
 /// (docs/es1/formats/msn-mission-file.md#the-layout). Writing a parsed file gives back its bytes.
 ///
-/// <para>A file that does not follow that layout, such as <c>B0_C1_30.MSN</c>
-/// (docs/es1/formats/msn-mission-file.md#a-file-in-another-layout), throws
+/// <para>A file that does not follow that layout is read in the other layout
+/// (docs/es1/formats/msn-mission-file.md#a-file-in-another-layout), in which <c>B0_C1_20.MSN</c> and
+/// <c>B0_C1_30.MSN</c> stand: ten header words in place of the header-patch row, after the revision, and
+/// 88-byte mechs. Writing gives back the layout the file was read in. A file that follows neither throws
 /// <see cref="InvalidDataException"/>: a row whose count is negative or whose records cannot fit the
 /// bytes left, or bytes left over after the groups. The loader itself tests none of this.</para>
 /// </summary>
 public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 	private const int ConditionSize = 14;
 	private const int HeaderPatchSize = 22;
+	private const int HeaderWordCount = 10;
 	private const int PointSize = 22;
 	private const int HeadingSize = 10;
 	private const int WaypointGroupFixedSize = 10;
 	private const int TriggerAreaSize = 12;
 	private const int ActionSize = 30;
 	private const int MechSize = 106;
+	private const int OtherLayoutMechSize = 88;
 	private const int FlyerSize = 64;
 	private const int BaseSize = 24;
 	private const int GroupSize = 88;
 
-	/// <exception cref="InvalidDataException">The file does not follow the loader's layout.</exception>
+	/// <exception cref="InvalidDataException">The file follows neither layout.</exception>
 	public override Es1MissionFile? Parse(byte[]? inputArray) {
 		if (inputArray == null || inputArray.Length <= 0) {
 			return null;
 		}
 
+		try {
+			return ParseLayout(inputArray, otherLayout: false);
+		} catch (InvalidDataException loaderLayout) {
+			try {
+				return ParseLayout(inputArray, otherLayout: true);
+			} catch (InvalidDataException otherLayout) {
+				throw new InvalidDataException($"{loaderLayout.Message} In the other layout: {otherLayout.Message}", loaderLayout);
+			}
+		}
+	}
+
+	private Es1MissionFile ParseLayout(byte[] inputArray, bool otherLayout) {
 		SetBytes(inputArray);
 		Require(2, "the revision word");
 
-		var data = new Es1MissionFile {
-			Revision = IndexShortLE(),
-			Conditions = ReadRow("conditions", ConditionSize, ParseCondition),
-			HeaderPatches = ReadRow("header patches", HeaderPatchSize, ParseHeaderPatch),
-			Points = ReadRow("points", PointSize, ParsePoint),
-			Headings = ReadRow("headings", HeadingSize, ParseHeading),
-			WaypointGroups = ReadRow("waypoint groups", WaypointGroupFixedSize, ParseWaypointGroup),
-			TriggerAreas = ReadRow("trigger areas", TriggerAreaSize, ParseTriggerArea),
-			Actions = ReadRow("actions", ActionSize, ParseAction),
-			Mechs = ReadRow("mechs", MechSize, ParseMech),
-			Flyers = ReadRow("flyers", FlyerSize, ParseFlyer),
-			Bases = ReadRow("bases", BaseSize, ParseBase),
-			Groups = ReadRow("groups", GroupSize, ParseGroup),
-		};
+		var data = new Es1MissionFile { Revision = IndexShortLE() };
+		if (otherLayout) {
+			Require(HeaderWordCount * 2, "the header words");
+			data.HeaderWords = IndexShortLEArray(HeaderWordCount);
+		}
+
+		data.Conditions = ReadRow("conditions", ConditionSize, ParseCondition);
+		if (!otherLayout) {
+			data.HeaderPatches = ReadRow("header patches", HeaderPatchSize, ParseHeaderPatch);
+		}
+
+		data.Points = ReadRow("points", PointSize, ParsePoint);
+		data.Headings = ReadRow("headings", HeadingSize, ParseHeading);
+		data.WaypointGroups = ReadRow("waypoint groups", WaypointGroupFixedSize, ParseWaypointGroup);
+		data.TriggerAreas = ReadRow("trigger areas", TriggerAreaSize, ParseTriggerArea);
+		data.Actions = ReadRow("actions", ActionSize, ParseAction);
+		data.Mechs = otherLayout
+			? ReadRow("mechs", OtherLayoutMechSize, () => ParseMech(1))
+			: ReadRow("mechs", MechSize, () => ParseMech(10));
+		data.Flyers = ReadRow("flyers", FlyerSize, ParseFlyer);
+		data.Bases = ReadRow("bases", BaseSize, ParseBase);
+		data.Groups = ReadRow("groups", GroupSize, ParseGroup);
 
 		int left = GetBytes().Length - Index;
 		if (left != 0) {
-			throw new InvalidDataException($"{left} bytes follow the groups at 0x{Index:x}; the loader's layout ends there.");
+			throw new InvalidDataException($"{left} bytes follow the groups at 0x{Index:x}; the layout ends there.");
 		}
 
 		return data;
@@ -158,7 +182,8 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 		Word1C = IndexShortLE(),
 	};
 
-	private Es1Mech ParseMech() => new() {
+	/// <param name="words4E">The words at 0x4E: ten, or one in the other layout.</param>
+	private Es1Mech ParseMech(int words4E) => new() {
 		GUID = IndexShortLE(),
 		ConditionRef = IndexShortLE(),
 		VariantKey = IndexShortLE(),
@@ -170,7 +195,7 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 		HeadingRef = IndexShortLE(),
 		Word4A = IndexShortLE(),
 		Word4C = IndexShortLE(),
-		Words4E = IndexShortLEArray(10),
+		Words4E = IndexShortLEArray(words4E),
 		Word62 = IndexShortLE(),
 		ActionRef64 = IndexShortLE(),
 		ActionRef66 = IndexShortLE(),
@@ -238,12 +263,18 @@ public class Es1MissionFileTransformer : ByteTransformer<Es1MissionFile> {
 		var w = new BinaryWriter(o);
 
 		w.Write(data.Revision);
+		if (data.HeaderWords != null) {
+			Words(w, data.HeaderWords);
+		}
+
 		WriteRow(w, data.Conditions, (w, e) => Words(w, e.GUID, e.ConditionRef, e.Type, e.FlagIndexOrRangeLower,
 			e.OperatorOrRangeUpperOrResult, e.ComparisonOperand, e.LatestDraw));
-		WriteRow(w, data.HeaderPatches, (w, e) => {
-			w.Write(e.ConditionRef);
-			Words(w, e.HeaderWords);
-		});
+		if (data.HeaderWords == null) {
+			WriteRow(w, data.HeaderPatches, (w, e) => {
+				w.Write(e.ConditionRef);
+				Words(w, e.HeaderWords);
+			});
+		}
 		WriteRow(w, data.Points, (w, e) => {
 			Words(w, e.GUID, e.ConditionRef, e.VariantKey, e.Word06, e.SumFlag);
 			w.Write(e.X);

@@ -1,7 +1,7 @@
 namespace HercWorks.Core.Data.File.Msn.Es1;
 
 /// <summary>
-/// Row 8 (106 bytes) — a mech (docs/es1/formats/msn-mission-file.md#mechs). Each unset value given
+/// Row 8 (106 bytes; 88 in a file in the other layout) — a mech (docs/es1/formats/msn-mission-file.md#mechs). Each unset value given
 /// is the one a record with a repeated GUID leaves alone when it overlays an earlier one. Fields
 /// the doc calls exported are copied to <c>data\script.dat</c> without the load reading them; what they
 /// mean is open (docs/es1/formats/msn-mission-file.md#open).
@@ -37,7 +37,11 @@ public class Es1Mech : MapObject {
 	/// <summary>0x4C — a word, exported; unset <c>-1</c>.</summary>
 	public short Word4C { get; set; }
 
-	/// <summary>0x4E–0x61 — ten words, exported; unset 5. The mode-0 squad builder copies as many of them as of <see cref="Words32"/>'s.</summary>
+	/// <summary>
+	/// 0x4E–0x61 — ten words, exported; unset 5. The mode-0 squad builder copies as many of them as of
+	/// <see cref="Words32"/>'s. In a file in the other layout, one word, and the four fields after it
+	/// stand 18 bytes earlier (docs/es1/formats/msn-mission-file.md#a-file-in-another-layout).
+	/// </summary>
 	public short[] Words4E { get; set; } = new short[10];
 
 	/// <summary>0x62 — a word, exported; unset 2.</summary>

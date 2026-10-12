@@ -12,33 +12,27 @@ namespace Herculan.Engine.Tests;
 /// absent, so the suite does not depend on the install.
 /// </summary>
 public class Es1MissionFileTests {
-	/// <summary>The files in the other layout (docs/es1/formats/msn-mission-file.md#a-file-in-another-layout), which the reader rejects.</summary>
-	private static readonly HashSet<string> OtherLayout = new(StringComparer.OrdinalIgnoreCase) { "B0_C1_20", "B0_C1_30" };
-
 	private static readonly Lazy<IReadOnlyDictionary<string, byte[]>?> Missions = new(LoadMissions);
 
+	/// <summary>Every file round-trips, and the two in the other layout (docs/es1/formats/msn-mission-file.md#a-file-in-another-layout) are read in it.</summary>
 	[Fact]
-	public void EveryMissionRoundTripsOrIsInTheOtherLayout() {
+	public void EveryMissionRoundTrips() {
 		if (Missions.Value is not { } missions) {
 			return;
 		}
 
 		Assert.Equal(77, missions.Count);
 		var transformer = new Es1MissionFileTransformer();
-		var rejected = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+		var otherLayout = new List<string>();
 		foreach (var (name, bytes) in missions) {
-			Es1MissionFile file;
-			try {
-				file = transformer.Parse(bytes)!;
-			} catch (InvalidDataException ex) {
-				rejected[name] = ex.Message;
-				continue;
-			}
-
+			var file = transformer.Parse(bytes)!;
 			Assert.True(bytes.AsSpan().SequenceEqual(transformer.Write(file)), $"{name} does not round-trip");
+			if (file.HeaderWords != null) {
+				otherLayout.Add(name);
+			}
 		}
 
-		Assert.True(OtherLayout.SetEquals(rejected.Keys), string.Join("\n", rejected.Select(r => $"{r.Key}: {r.Value}")));
+		Assert.Equal(["B0_C1_20", "B0_C1_30"], otherLayout.Order());
 	}
 
 	/// <summary>The two files walked by hand to their last byte (docs/es1/formats/msn-mission-file.md#a-file-in-another-layout).</summary>
@@ -68,15 +62,22 @@ public class Es1MissionFileTests {
 		Assert.Equal(0, file.Groups[0].Word4A);
 	}
 
-	/// <summary><c>B0_C1_30.MSN</c> read by the loader's layout: no conditions, then 1,130 header patches in a 2,694-byte file.</summary>
+	/// <summary>The rows, header words and first mech docs/es1/formats/msn-mission-file.md#a-file-in-another-layout quotes from the two files in the other layout.</summary>
 	[Fact]
-	public void TheOtherLayoutIsRejectedAtTheHeaderPatchCount() {
+	public void OtherLayoutFilesHoldTheQuotedWords() {
 		if (Missions.Value is not { } missions) {
 			return;
 		}
 
-		var ex = Assert.Throws<InvalidDataException>(() => new Es1MissionFileTransformer().Parse(missions["B0_C1_30"]));
-		Assert.StartsWith("The header patches' count at 0x4, 1130,", ex.Message);
+		var c120 = new Es1MissionFileTransformer().Parse(missions["B0_C1_20"])!;
+		var c130 = new Es1MissionFileTransformer().Parse(missions["B0_C1_30"])!;
+
+		Assert.Equal([4, 0, 33, 12, 6, 0, 4, 34, 2, 5, 23], RowCounts(missions["B0_C1_20"]));
+		Assert.Equal([5, 0, 26, 12, 4, 3, 3, 8, 2, 6, 8], RowCounts(missions["B0_C1_30"]));
+		Assert.Equal(new short[] { 0, 1120, 1, 3, 2, 0, 0, 0, 0, 0 }, c120.HeaderWords);
+		Assert.Equal(new short[] { 0, 1130, 1, 2, 1, 0, 0, 0, 0, 0 }, c130.HeaderWords);
+		Assert.Equal([(4, 2, 100)], c120.Mechs.Concat(c130.Mechs)
+			.Select(m => ((int)m.Words4E.Single(), (int)m.Word62, (int)m.Word68)).Distinct());
 	}
 
 	private static int[] RowCounts(byte[] bytes) {

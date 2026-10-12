@@ -4,7 +4,7 @@ ES1's missions are the `.MSN` files in `ZONES.VOL`'s `MSN\` folder. The shell, `
 
 ## Loading a mission
 
-`MsnGen_LoadMission` (`00035873`) takes the mission's path; `es2_xref.py` finds its callers at `00016e93` and `00036807`, and the path is built in `000aad14` by four `sprintf`s of `msn\%s` (`00015a13`, `00036649` twice, and `000366c1`). In order, it:
+`MsnGen_LoadMission` (`00035873`) takes the mission's path; `es2_xref.py` finds its callers in `Career_StartMission` (`00016e93`) and `SingleMission_Start` (`00036807`), and the path is formatted as `msn\%s` in `000aad14` from a battle set's or the single missions' lists ([`bst-battle-sets.md`](bst-battle-sets.md)). In order, it:
 
 1. reads the entry whole into a buffer and reads it through a memory stream ([streams](streams.md#goexe));
 2. opens `data\script.dat` as a `FileRWStream`, asserting at severity 5 (`mg.cpp` line `0x4c5`) when it cannot. The file names are entries of the text table at `0009afb8`, which `0002094d` loads from `cfg\filename.bin`: `Text_GetString` (`00018717`) gives entry 3, `data\script.dat`; 5, `data\mission.var`; and 10, `car\sm_play.mec`;
@@ -192,9 +192,23 @@ The load treats each record as ES2's does ([the parser](../../retail/formats/msn
 
 ## A file in another layout
 
-Of the 77 files, 75 follow the layout above and end on their last group's last byte, `SM_SCT50.MSN` (56,392 bytes) and `B0_C2_60.MSN` (41,736) among them. Two do not, `B0_C1_20.MSN` (6,402 bytes) and `B0_C1_30.MSN` (2,694): read by the layout above, each has no conditions and then a header-patch count, 1,120 and 1,130, far more records than the file holds, and that is what `GO.EXE`'s loader would take from each.
+Of the 77 files, 75 follow the layout above and end on their last group's last byte, `SM_SCT50.MSN` (56,392 bytes) and `B0_C2_60.MSN` (41,736) among them. Two do not, `B0_C1_20.MSN` (6,402 bytes) and `B0_C1_30.MSN` (2,694). Read by the layout above, each has no conditions and then a header-patch count, 1,120 and 1,130, far more records than the file holds, and that is what `GO.EXE`'s loader would take from each. No battle set or mission list names either file: `BTLSET_0.DAT` names `any_msn.dat` at the two positions of its campaign 1 between `B0_C1_10`/`B0_C1_11` and `B0_C1_40` ([the retail battle sets](bst-battle-sets.md#the-retail-battle-sets)), and the layout below is a reading of the bytes ([Open](#open)).
 
-`B0_C1_30.MSN`'s bytes do walk to their end as follows, a reading of the file and not of any code: the revision 5; ten words, 0, 1130, 1, 2, 1 and five 0s, without a condition; the conditions, 5 records; then rows 3 to 11 as above, except that its 8 mech records are 88 bytes. The first of them reads as above to `0x49`, then holds `-1`, `-1`, 4, 2, `-1`, `-1`, 100 at `0x4a`–`0x56`.
+Both files walk to their last byte in this layout:
+
+1. the revision word, 5;
+2. ten header words, with no condition and no count;
+3. the conditions, as above;
+4. rows 3 to 11 as above, with no header-patch row, except that a mech record is 88 bytes.
+
+| | `B0_C1_20.MSN` | `B0_C1_30.MSN` |
+|---|---|---|
+| Header words | 0, 1120, 1, 3, 2, 0, 0, 0, 0, 0 | 0, 1130, 1, 2, 1, 0, 0, 0, 0, 0 |
+| Rows 1, 3–11 | 4, 33, 12, 6, 0, 4, 34, 2, 5, 23 | 5, 26, 12, 4, 3, 3, 8, 2, 6, 8 |
+
+Word 1 holds 1120 and 1130, the numbers of `ZONE1120.DAT` and `ZONE1130.DAT`. A header patch holds the zone in its word 1 ([which zone](zone-terrain.md#which-zone-and-which-theater)), as `B0_C1_40.MSN`'s first patch holds 1140.
+
+An 88-byte mech is the record above to `0x4d`, then one word at `0x4e` where that record has ten, then that record's `0x62`–`0x69` at `0x50`–`0x57`. All 42 hold 4 at `0x4e`, 2 at `0x50` and 100 at `0x56`, and four of `B0_C1_20.MSN`'s hold the GUIDs of its actions 46–49 at `0x52`, where the record above has its first action ref.
 
 ## Rejected readings
 
@@ -204,13 +218,11 @@ Of the 77 files, 75 follow the layout above and end on their last group's last b
 
 ## Open
 
-- **Open:** which code reads `B0_C1_30.MSN`'s layout, whether any campaign position or list names that file or `B0_C1_20.MSN`, and what its ten leading words and its mech records' words from `0x4a` hold.
-- **Open:** whether `B0_C1_20.MSN` walks to its end by `B0_C1_30.MSN`'s reading. Its first two words after the revision are 0 and 1120, as `B0_C1_30.MSN`'s are 0 and 1130.
+- **Open:** what reads [the other layout](#a-file-in-another-layout), and so what its header words and its mechs' word at `0x4e` mean. The byte search and the path builders that turned up no reader are in [`bst-battle-sets.md`](bst-battle-sets.md#open).
 - **Open:** whether the word pairs at action `0x1a`/`0x1c`, mech `0x4a`/`0x4c`, flyer `0x36`/`0x38` and base `0x0e`/`0x10` are each one (counter ref, operation) pair of ES2's out-of-action report and action write ([out-of-action report](../../retail/simulation/mission-deployment.md#the-out-of-action-report)), and whether mech `0x4e`–`0x61`, `0x62`, `0x64`, `0x66` and `0x68`, flyer `0x3a`, `0x3c` and `0x3e`, and base `0x12`, `0x14` and `0x16` are ES2's ammunition types, constant, engaged and defeated actions and starting condition. They stand where those stand in ES2's records less the pair counts and the other nine pairs; the simulator's readers of them are not read.
 - **Open:** what the exported fields mean that no code read so far uses: the 20 words at mech and flyer `0x08` and group `0x06`, an action's type and verb, the group words `0x30`, `0x32`, `0x4a` and `0x52`–`0x56`, and header words 2 to 7.
 - **Open:** whether a group's `0x4c`/`0x4e` ref and `0x50` action are an order of ES2's kind, its subject and the action that ends it, and so whether `0x30`, `0x32` and `0x4a` hold an order's verb and formation and the group's side. In `B0_C2_60.MSN` the first group, the squad, holds 0 at `0x4a` and the groups that name it or one of its mechs at `0x4e` hold 1.
 - **Open:** the squad the mode-0 load builds: what `00028c25` does with `car\sm_init.dat`, the record at `0009b028` and the functions that fill it (`000158ff`, `000151c8`, `00015402`, `00022f5e`, `00024c3c`, `00029d0f`, `00015ad4`), what `0002909c` writes to `car\sm_play.mec`, and what the table at `000803c8` counts.
-- **Open:** what the modes are; what the `0x1f7`-byte records from `0009b23b` (indexed by `0009b21f`) that mode 1 seeds flags 1 and 2 from hold, what the words at `000aacbc`–`000aacc4` the other modes use are, and what reads header words 3 and 4 at `000aad5a` and `000aad5c`.
-- **Open:** how a mission is chosen: `00016e93` and `00036807`, the path builders `00015a13`, `00036649` and `000366c1`, and `000361ac`, which opens `msn\sing_msn.dat`.
+- **Open:** what the modes are; what the `0x1f7`-byte records from `0009b23b` (indexed by `0009b21f`) that mode 1 seeds flags 1 and 2 from hold, what the words at `000aacbc`–`000aacc4` the other modes use are, what reads header word 4 at `000aad5c`, and what header word 3 at `000aad5a` means: `Career_StartMission` copies it to the career record's `+0xc`, and `SingleMission_Start` passes the word to `SingleMission_BuildPath` as a list index ([single missions](bst-battle-sets.md#single-missions)).
 - **Open:** whether a retail group's `0x4e` names a later group, which the load resolves against slots not yet read.
 - **Open:** what loads `cfg\filename.bin` into the text table (`00018755`).
