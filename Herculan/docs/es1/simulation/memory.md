@@ -31,6 +31,17 @@ Every block, free or allocated, opens with an 8-byte header: `+0` the next free 
 
 Each pair shares one body. `Mem_AllocFromHeap` (`000015e4`) allocates from a heap object it is passed rather than from `000ae4ac`. `realloc` goes to the heap whether or not `000901d4` is set. `calloc` clears its block over the size in the header before it; a block taken from the extender while the heap is off has no header, and the 4 bytes before it are read as one.
 
+## Who makes the heap
+
+Each program's `main` makes the heap first and turns it off last:
+
+| | `Sim_Main` (`00059350`) | `Shell_Main` (`ES1GO 00012ec7`) |
+|---|---|---|
+| asks for | 6,000,000 | the dword `0007e738`, 3,700,000 |
+| fatal assert when it gets 100,000 or fewer | `main.cpp` line `0xe3` | `src\main.cpp` line `0x1f8` |
+| after mounting the volumes | an assert when under `0x26e8f0` (2,550,000); `g_LowMemory` set when under `0x3c45b0` (3,950,000) ([low memory](../formats/chassis-dat.md#low-memory)) | an assert when under `BND\MAIN.BND`'s +12, 2,400,000; the byte `0007fd09` set when under its +8, 3,700,000 ([`MAIN.BND`](../formats/bnd-notes.md#bndmainbnd)) |
+| `Mem_HeapOff` | after the frame loop, and before the early exit when `000b5bc4` is clear | after the shell's loop, and before the early exit when `0001272d` returns non-zero |
+
 ## GO.EXE's heap
 
 `ES1GO`'s heap is the object at `0009a308`, switched by `0007d7b4`, with the same block format, entry points and allocation policy. Where it differs:
@@ -43,6 +54,5 @@ Each pair shares one body. `Mem_AllocFromHeap` (`000015e4`) allocates from a hea
 
 ## Open
 
-- **Open:** where `Mem_InitHeap` is called from and with what size, and when the program turns the heap off.
 - **Open:** what `X32_AllocMemory` stores at `00090024` (the extender's `EDX`) and what the circular list at `0009002c`, which `X32_LargestFreeBlock` searches, holds. Both belong to the startup module's memory handling ([compiler.md](../formats/compiler.md#startup)).
 - **Open:** what calls `Heap_DrawMap`, `Heap_IsValidAllocation` and `Mem_ConstructHeap` in `ES1GO`, and what `Heap_Ctor`'s store of `000aa24a`'s own address into it marks.

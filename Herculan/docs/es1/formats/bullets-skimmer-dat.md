@@ -68,5 +68,5 @@ ES2's reads 46 bytes into a `0x70`-byte record, keeps the damage file, collision
 ## Open
 
 - **Open:** what ES1's bullet fire and tick read of `+0x02`, `+0x04` and `+0x08`, and what the flyer code reads of `SKIMMER.DAT`'s offsets 0–17 and the zeroes at 18–33. The values sit at ES2's offsets with ES2's kind of value.
-- **Open:** `00009580`, the collision-model load the flyer's path and ES2's twin suggest.
-- **Open:** what loads for a mission that places a `HOVTANK`, with no `dat\HOVTANK.DAT` to read.
+- **Open:** `00009580`, the collision-model load the flyer's path and ES2's twin suggest; `Mech_Constructor` (`00011330`) calls it on `col\<name>` too.
+- **Open:** whether any mission places a `HOVTANK`. Once type 1 has a record, step 1 finds no `dat\HOVTANK` and its severity-5 assert ends the program ([`HOVTANK.DMG`](dmg-damage-file.md#hovtankdmg)).

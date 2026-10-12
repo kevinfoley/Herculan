@@ -557,6 +557,81 @@
       }
     },
     {
+      "address": "00002204",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Alert_LoadBnd",
+      "description": "No arguments: Ovl_ReadFile(bnd\\alert, 1, 6, 0009a318) in stack order, the whole of BND\\ALERT.BND. The static initialiser 00003c22 registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "00002204+41",
+        "sha1": "16e6bad343ab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00006024",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CtlAlert_LoadBnd",
+      "description": "No arguments: Ovl_ReadFile(bnd\\ctl_alrt, 1, 0x86, 0009a34c) in stack order, the whole of BND\\CTL_ALRT.BND. The static initialiser 00006ebe registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "00006024+44",
+        "sha1": "9a9977f3696b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00006eec",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CalAlert_LoadBnd",
+      "description": "No arguments: Ovl_ReadFile(bnd\\cal_alrt, 1, 0x46, 0009a3d4) in stack order, the whole of BND\\CAL_ALRT.BND. The static initialiser 0000816a registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "00006eec+41",
+        "sha1": "14a961540e56",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00008cd4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Map_LoadBnd",
+      "description": "No arguments: Ovl_ReadFile(bnd\\map, 1, 0x20, 0009a420) in stack order, the whole of BND\\MAP.BND. The static initialiser 00009174 registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "00008cd4+41",
+        "sha1": "6284ed6dd9e9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00009210",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellMap_LoadBnd",
+      "description": "No arguments: Ovl_ReadFile(bnd\\shellmap, 1, 0x8e, 0009a44c) in stack order, the whole of BND\\SHELLMAP.BND. The static initialiser 0000dcbd registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "00009210+44",
+        "sha1": "78db8fc135b1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000923c",
       "binary": "ES1GO",
       "type": "function",
@@ -627,6 +702,81 @@
       "verified": {
         "bytes": "0000e518+608",
         "sha1": "5192412cdfd2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fca0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RegisterSubsystemLoader",
+      "description": "(phase, function) in stack order, callee-cleaned: stores function and the int16 phase in the next 6-byte record at 000aa2c4, the record index being the int16 count at 0007e5c8, which it increments; Subsystem_RunPhase (0000fcda) walks the records. es2_xref finds eight calls, from the static initialisers of the eight bnd\\ loaders, each at phase 1. ES1DBSIM's RegisterSubsystemLoader (00000ac4).",
+      "source": "ES1GO decompile at 0000fca0, against ES1DBSIM's RegisterSubsystemLoader",
+      "verified": {
+        "bytes": "0000fca0+58",
+        "sha1": "ee95eee01b18",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fcda",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Subsystem_RunPhase",
+      "description": "(phase), callee-cleaned: calls, in order, each function of the 6-byte {function, int16 phase} records at 000aa2c4 (count int16 0007e5c8) whose phase matches. One call found by es2_xref, from Shell_Main (00012ec7) with phase 1. ES1DBSIM's Subsystem_RunPhase (00000af4).",
+      "source": "ES1GO decompile at 0000fcda, against ES1DBSIM's Subsystem_RunPhase",
+      "verified": {
+        "bytes": "0000fcda+69",
+        "sha1": "4496aa1711f4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00010530",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CtlMgr_LoadBnd",
+      "description": "No arguments: Ovl_ReadFile(bnd\\ctl_mgr, 1, 6, 0009adec) in stack order, the whole of BND\\CTL_MGR.BND. The static initialiser 00010dce registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "00010530+41",
+        "sha1": "f988d4bc233c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00012704",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Main_LoadBnd",
+      "description": "No arguments: Ovl_ReadFile(bnd\\main, 1, 0x14, 0009ae18) in stack order, the whole of BND\\MAIN.BND; Shell_Main (00012ec7) reads its dwords +8 and +0xc. The static initialiser 000131cb registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "00012704+41",
+        "sha1": "d5390009b6a7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00012ec7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_Main",
+      "description": "(a, b), src\\main.cpp: the shell's main; es2_xref finds one call, from 0000000d. Mem_InitHeap(the dword 0007e738, 3700000), asserting at severity 5 (line 0x1f8) when it gives 100000 bytes or fewer; 0001272d(b, a), and when that returns non-zero Mem_HeapOff and __exit(1); copies to 000aae06, for 0000035e, the ALT_DRIVE variable (taken as null unless 0007fd0b is set) when PREFER_ALT is set and the string at 0007e942 otherwise; 0001289c, 0001280a, 00012be3; VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 0007e943, 0x100), Subsystem_RunPhase (0000fcda)(1), which reads the eight bnd\\ files; an assert at severity 5 (line 0x219, the shortfall printed with sprintf) when the heap is under the dword 0009ae24, BND\\MAIN.BND's +0xc, and the byte 0007fd09 set when it is under 0009ae20, the file's +8. Then unnamed set-up calls, among them 00044aa4('CFG\\styles.dat') and 0004b7df('res32\\corners.dba') into 000ab4ee, and Palette_UploadWhole(0007fcd0); a loop until the byte 0007fd05 is set, which 000817c0 = 9999 also sets; after it, shut-down calls, VolRStream_DeleteGroup and Mem_HeapOff, and INT 3 when 0007fd08 is set. ES1DBSIM's Sim_Main (00059350) opens with Mem_InitHeap(6000000) and the same assert.",
+      "source": "ES1GO decompile at 00012ec7",
+      "verified": {
+        "bytes": "00012ec7+772",
+        "sha1": "ecfab1445f26",
         "scope": "body",
         "via": "decompile"
       }
@@ -1332,6 +1482,21 @@
       "verified": {
         "bytes": "00020989+87",
         "sha1": "955a172be849",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002562c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ImDevice_LoadBnd",
+      "description": "No arguments: Ovl_ReadFile(bnd\\imdevice, 1, 10, 000a0458) in stack order, the whole of BND\\IMDEVICE.BND. The static initialiser 000269cb registers it at phase 1 with RegisterSubsystemLoader (0000fca0).",
+      "source": "Herculan/docs/es1/formats/bnd-notes.md#the-shells-files",
+      "verified": {
+        "bytes": "0002562c+41",
+        "sha1": "223a72d7cb58",
         "scope": "body",
         "via": "decompile"
       }
@@ -2257,7 +2422,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolRStream_DeleteGroup",
-      "description": "(): when the volume group g_VolumeGroup (00083c04) is set, VolumeGroup_Dtor (0004d89a)(group, 3) and clears g_VolumeGroup (00083c04). es2_xref finds one call, from main (00012ec7); the same statements as ES1DBSIM's VolRStream_DeleteGroup (00056a7c) in different code.",
+      "description": "(): when the volume group g_VolumeGroup (00083c04) is set, VolumeGroup_Dtor (0004d89a)(group, 3) and clears g_VolumeGroup (00083c04). es2_xref finds one call, from main (Shell_Main (00012ec7)); the same statements as ES1DBSIM's VolRStream_DeleteGroup (00056a7c) in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream",
       "verified": {
         "bytes": "0004d37b+39",
@@ -2437,7 +2602,7 @@
       "type": "function",
       "confidence": "high",
       "name": "VolumeGroup_SetBufferSize",
-      "description": "(size), callee-cleaned: stores max(size, 0x80) in VolumeGroup_BufferSize (00083c64). es2_xref finds one call, from main (00012ec7), with 0x200 just before main calls VolRStream_SetGroup; when that call makes the group, VolumeGroup_Ctor stores 0x400 over it before any volume is loaded. ES1DBSIM's VolumeGroup_SetBufferSize (00056238), the same statements in different code.",
+      "description": "(size), callee-cleaned: stores max(size, 0x80) in VolumeGroup_BufferSize (00083c64). es2_xref finds one call, from main (Shell_Main (00012ec7)), with 0x200 just before main calls VolRStream_SetGroup; when that call makes the group, VolumeGroup_Ctor stores 0x400 over it before any volume is loaded. ES1DBSIM's VolumeGroup_SetBufferSize (00056238), the same statements in different code.",
       "source": "Herculan/docs/es1/formats/streams.md#the-volume-group",
       "verified": {
         "bytes": "0004d8f1+31",

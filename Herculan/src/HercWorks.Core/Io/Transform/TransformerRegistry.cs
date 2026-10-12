@@ -155,6 +155,8 @@ public static class TransformerRegistry {
 		["Explosion Types"] = new(() => new Dbsim.Es1ExplosionDataTransformer()),
 		// docs/es1/formats/herc-catalogs.md#cfgdamagedat: ten internal percentages and 18 weapon values with no count.
 		["Component Value Table"] = new(() => new Shell.Es1DamageRepairCostTransformer()),
+		// docs/es1/formats/bnd-notes.md#bndcambnd: 20 bytes, the camera's constants, where ES2's file is 24.
+		["Camera Config"] = new(() => new Bnd.Es1CamTransformer()),
 	};
 
 	/// <summary>
@@ -170,6 +172,12 @@ public static class TransformerRegistry {
 		new("Ground Fade Distances", e => NameIs(e, "TEX.DAT") || NameIs(e, "TEX_LO.DAT") || NameIs(e, "TEX_LO2.DAT"),
 			() => new Dbsim.Es1GroundFadeTransformer()),
 		new("Ground Texture", e => NameEndsWith(e, ".64K"), () => new Dbsim.Es1GroundTextureTransformer()),
+		// docs/es1/formats/dfn-hfn-dci.md#the-old-bitmap-record: RES32\ICONS.DBA, matched by its first item's tag ahead of
+		// ES2's bitmap array reader, which cannot read old-format items.
+		new("Old Bitmap Array", e => ExtIs(e, FileType.Dba) && Common.Es1OldBitmapArrayTransformer.IsOldBitmapArray(e.RawBytes),
+			() => new Common.Es1OldBitmapArrayTransformer()),
+		// docs/es1/formats/dmg-damage-file.md#hovtankdmg: bytes not understood, kept whole (OPAQUE).
+		new("Unread Damage File (opaque)", e => NameIs(e, "HOVTANK.DMG"), () => new Common.Es1OpaqueFileTransformer()),
 	};
 
 	/// <summary>Whether the entry is one of the sixteen chassis files ES1's <c>nam\MECHS.NAM</c> names (docs/es1/formats/chassis-dat.md#which-files).</summary>

@@ -32,11 +32,32 @@ The GL class table, `{tag, load function, name}` entries, is at `0008b480` in `E
 | 9 | `0xf32` | 590 |
 | 10 | `0x1188` | 718 |
 
-Item 10 runs to `0x145e`, 528 bytes past the file's end, which is where the header's size puts the end of the array (8 + 5,206). In every item, counting from its tag, the `int16` words at `+8` and `+10` multiply to the `uint32` at `+16` (11 × 16 = 176 in item 0), the byte at `+12` is 8, and the three bytes after it are 0; the file's bytes from `0xe0`, in item 0, hold an MS-DOS directory entry naming `QBASIC.INI`.
+Item 10 runs to `0x145e`, 528 bytes past the file's end, which is where the header's size puts the end of the array (8 + 5,206). No item is padded: every size is even. Item 10's 176 pixels end 2 bytes before the file does.
 
-The shell's `icons` (`0007e249`) is pushed at `000093ed` with the folder pointer `00086840`, `dba`, so it names `DBA\ICONS.DBA`. A search of `GO.EXE`'s and `SHELL0.VOL`'s bytes for `icons.dba`, any case, finds only the archive's two directory entries.
+### The old bitmap record
+
+Both programs load an old-format item as no object, so its layout comes from the file's bytes alone. Counting from the item's tag:
+
+```
++0x00  4 bytes  00 00 28 00   the old bitmap tag
++0x04  uint32   size of what follows
++0x08  int16    rows
++0x0a  int16    cols
++0x0c  uint8    8 in every item
++0x0d  3 bytes  0 in every item
++0x10  uint32   pixel count, rows × cols in every item
++0x14  [count]  pixels, row by row, one palette index each
+```
+
+Read with `cols` as the row length, items 0 and 1 draw small icons in indices `0x14`–`0x16` on index 0: an 11-row arrow and a 13-row figure 8 wide. The new record's fields come in the same order, its flags and packing bytes where the first two of these zeroes are and its data length one byte earlier, with an extra count after it ([ES2's bitmap record](../../retail/formats/dfn-hfn-dci.md#the-bitmap-record)).
+
+The rest of each item, 2 + 3 × count bytes, so that every size is 14 + 4 × count, is not image data. In item 0 it holds zeros, an MS-DOS directory entry naming `QBASIC.INI` at file offset `0xe0`, and from `0x200` a run of 16-bit values that mostly count up by one, with `0xFFFF` among them.
+
+### What loads it
+
+The shell's `icons` (`0007e249`) is pushed at `000093ed` with the folder pointer `00086840`, `dba`, so it names `DBA\ICONS.DBA`; the simulator's `icons` (`ES1DBSIM 00094982`) is pushed at `ES1DBSIM 00041cc7` with its own `dba` pointer `000980f8`. `GO.EXE` names its `RES32\` files as whole literal paths (74 of them, among them `res32\corners.dba`, which `Shell_Main` passes to `0004b7df`), and its six bare `res32\` prefixes sit among `.ttm` names.
 
 ## Open
 
-- **Open:** what loads `RES32\ICONS.DBA`, if anything.
-- **Open:** the old bitmap format, whose load function returns 0 in both programs. The words above read as a 16-byte header (rows, columns, bits per pixel, data length) and the pixels after it, and each item's size is 14 + 4 × that data length.
+- **Open:** what loads `RES32\ICONS.DBA`, if anything. A case-insensitive search of both images and of `SHELL0.VOL`'s and `SIMVOL0.VOL`'s bytes finds `icons` only in the two `dba` names above and the archives' directory entries, where the same search finds `res32\corners.dba` in `GO.EXE`.
+- **Open:** what the old record's byte at `+0x0c` and the three zeroes after it are, and what wrote the 2 + 3 × count bytes past each item's pixels.
