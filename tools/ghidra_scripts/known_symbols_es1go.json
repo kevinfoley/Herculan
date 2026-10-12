@@ -632,6 +632,246 @@
       }
     },
     {
+      "address": "00018824",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_WriteObjectives",
+      "description": "(path): opens path through VolRStream_CtorFromPath and finds its first OBJ: block with Stream_FindNthTag (0004b6d6); with none it closes the stream and returns. Otherwise it reads the int32 byte count, the int16 sum of lengths and the int16 piece count, then per piece a byte it does not test, an int16 length and that many bytes; removes data\\object.str (file-name entry 6) and writes it through a FileRWStream (severity-5 assert at dialog.cpp line 0x56): an int32 written as 9999 and then set to the bytes after it, the int16 count, and per piece its int16 length, its text and a 0 byte.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-objectives",
+      "verified": {
+        "bytes": "00018824+1042",
+        "sha1": "967aa4f4cf53",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00018c36",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dialog_LoadFromFile",
+      "description": "(dialog, a, b, path), callee-cleaned: deletes the dialog's box and stream as Dialog_LoadConditional (00018cdb) does, opens path through VolRStream_CtorFromPath, reads the version word into +4; version 0 builds a DefaultDialogBox (DefaultDialogBox_Ctor (00019149)) at +6, version 2 a DigitalDialogBox (DigitalDialogBox_Ctor (00019279), passed a and b); closes the stream. es2_xref finds one call, in 00037edd, which passes an eng\\*_text.bin path.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "verified": {
+        "bytes": "00018c36+165",
+        "sha1": "de1fde623bfe",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00018cdb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dialog_LoadConditional",
+      "description": "(dialog, ordinal, tag, path), callee-cleaned: deletes the dialog's box (Dialog_DeleteBox (00018d93)) and its stream at +0, opens path through VolRStream_CtorFromPath into +0, reads the version word into +4, and when it is 1 builds the box at +6 with ConditionalDialogBox_Ctor (00019453) from the tag's block of that ordinal, otherwise sets +6 to 0; closes the stream with VolRStream_Close. The loader of a mission's .ENG blocks.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#reading-a-block",
+      "verified": {
+        "bytes": "00018cdb+155",
+        "sha1": "c3253f42215a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00018d93",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dialog_DeleteBox",
+      "description": "(dialog): when the dialog's box at +6 is set, calls its destructor (vtable +0x29, slot +4) with 3 and sets +6 to 0.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#reading-a-block",
+      "verified": {
+        "bytes": "00018d93+56",
+        "sha1": "e706369712c3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00018df0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dialog_PrevPage",
+      "description": "(dialog): when the dialog has a box at +6, steps it back a page with DialogBox_PrevPage (000190fd) and calls 00018dcb(dialog).",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-briefing",
+      "verified": {
+        "bytes": "00018df0+40",
+        "sha1": "e47477a0b402",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00018e18",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dialog_NextPage",
+      "description": "(dialog): when the dialog has a box at +6, steps it forward a page with DialogBox_NextPage (0001911f) and calls 00018dcb(dialog).",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-briefing",
+      "verified": {
+        "bytes": "00018e18+40",
+        "sha1": "0693ad8cee9b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00018e5f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConditionalDialogBox_SetRect",
+      "description": "(box), callee-cleaned: rounds the word 000817c4 down to a thousand and looks it up in the four ints at 0007ee44 (6000, 5000, 3000, 4000) with a jump table beside them: 6000 copies the 16 bytes at 0009ae84 to +5 and sets +0 to 0; 5000 the bytes at 0009ae94 and +0 to 0 (code at 00018ea6 Ghidra left undefined); 3000, 4000 and any other value the bytes at 0009ae64 and +0 to 1.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "verified": {
+        "bytes": "00018e5f+126",
+        "sha1": "189a909982c2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000190fd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DialogBox_PrevPage",
+      "description": "(box): when the page +0x27 is above 0, decrements it and clears the byte +0.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "verified": {
+        "bytes": "000190fd+34",
+        "sha1": "9bee10e708a9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001911f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DialogBox_NextPage",
+      "description": "(box): when the page +0x27 is below the page count +0x23 less 1, increments it and clears the byte +0.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "verified": {
+        "bytes": "0001911f+42",
+        "sha1": "e214a4f334e0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019149",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DefaultDialogBox_Ctor",
+      "description": "(this): allocates 0x2d bytes when this is 0; DialogBox_Init (00019b25); vtable 0007eea8; font 000aacda; the 16 bytes at 0009ae64 as the box; sprintfs 'This is a Default Dialog Box.' into a new buffer at +0x15; DialogBox_Layout (000198a6).",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "verified": {
+        "bytes": "00019149+251",
+        "sha1": "dfa4acc3e6ad",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019244",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DefaultDialogBox_Dtor",
+      "description": "(this, flags): slot +4 of vtable 0007eea8; stores the vtable, calls 00019b54(this, 0) and deletes this when flags bit 0 is set.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "verified": {
+        "bytes": "00019244+53",
+        "sha1": "a0a41b89b36d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019279",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigitalDialogBox_Ctor",
+      "description": "(this, a, b, dialog): allocates 0x2d bytes when this is 0; DialogBox_Init (00019b25); vtable 0007ef04; builds a text table from the dialog's stream with 00018695; font 000aacda; 000193ee(box); copies the table's string of index word 000aad5c (Text_GetString) into a new buffer at +0x15; DialogBox_Layout (000198a6); passes a and b to 000453be(0009afd4, a, b); frees the table with 000186db(table, 2).",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "verified": {
+        "bytes": "00019279+303",
+        "sha1": "4db66a11b923",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000193a8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigitalDialogBox_Dtor",
+      "description": "(this, flags): slot +4 of vtable 0007ef04; stores the vtable, calls 00045556(0009afd4) and 00019b54(this, 0), and deletes this when flags bit 0 is set.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "verified": {
+        "bytes": "000193a8+70",
+        "sha1": "2e9eaae0babc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019453",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConditionalDialogBox_Ctor",
+      "description": "(this, ordinal, tag, dialog), callee-cleaned: allocates 0x2d bytes when this is 0; DialogBox_Init (00019b25); vtable 0007ef48 at +0x29; font 000aacda at +1; ConditionalDialogBox_SetRect (00018e5f). Finds the tag's block of that ordinal in the dialog's stream with Stream_FindNthTag (0004b6d6); reads the int32 byte count and the int16 sum, which it does not use; a count of 0 leaves +0x15 and +0x1b 0. Otherwise allocates the count's bytes as the text (+0x15) and reads pieces until the byte 0x10: 1, an int16 length and that many bytes read over the previous piece's NUL; 2, a flag index whose value MissionVar_ReadFlag (0003628d) gives, a count n, n offsets into a ten-word stack array, n - 1 (low, high) pairs of which the last holding the value inclusively picks a text, and one more pair it does not test; it then reads the picked text at the position after the pairs plus its offset and seeks to that position plus the last offset. Any other byte is passed over. Lays the text out with DialogBox_Layout (000198a6).",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#reading-a-block",
+      "verified": {
+        "bytes": "00019453+1054",
+        "sha1": "205e4eba7f1d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000198a6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DialogBox_Layout",
+      "description": "(box): line height = 00051ff0(font, text) - 2; the slot count +0x19 = HudFont_MeasureString(font, text) / (right - left) + 2; lines per page +0x25 = (bottom - top) / line height; page count +0x23 = slots / lines per page, plus 1 when they differ; page +0x27 = 0; allocates and zeroes the slot pointers +0x1b, and with __vec_new one 8-byte point per line of a page at +0x1f, line i at (left, top + (i + 1) line heights); then calls 00019a1d(box, right - left, text).",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "verified": {
+        "bytes": "000198a6+348",
+        "sha1": "1211786ab606",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00019b25",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DialogBox_Init",
+      "description": "(box): sets the byte +0 to 1 and zeroes the font +1, the text +0x15, the line slots +0x1b, the line points +0x1f and the words +0x19, +0x23, +0x25 and +0x27.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
+      "verified": {
+        "bytes": "00019b25+47",
+        "sha1": "cc9be59ad0bb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00020989",
       "binary": "ES1GO",
       "type": "function",
@@ -642,6 +882,36 @@
       "verified": {
         "bytes": "00020989+87",
         "sha1": "955a172be849",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002bbbd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "WarMapMenu_Ctor",
+      "description": "(this): the war map screen (vtable 00080bc6, class name WarMapMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the briefing, block 0 of BRF: from the .eng path 000aad2a, into the dialog 0009afc8 with Dialog_LoadConditional (00018cdb) and calls Dialog_NextPage (00018e18) as many times as the word 000809b2; sets 000809a8 to 3; when the byte 0007fd08 is 0 calls 00027bbf and, with its result, 00025d19, 00025ce6(r, 0x20000) and 0001ffdc(0005d6a0, 000809ac); sets 000aa778 to 1.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-briefing",
+      "verified": {
+        "bytes": "0002bbbd+472",
+        "sha1": "270ba8d53938",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002c422",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DebriefingMenu_Ctor",
+      "description": "(this): the debriefing screen (vtable 00080c4e, class name DebriefingMenu before it), built over the Menu base (vtable 00080ba8) with 0x26 bytes allocated when this is 0. Loads the DEB: block of ordinal word 000aad58 from the .eng path 000aad2a into the dialog 0009afc8 with Dialog_LoadConditional (00018cdb).",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-debriefing",
+      "verified": {
+        "bytes": "0002c422+338",
+        "sha1": "826b5c35e520",
         "scope": "body",
         "via": "decompile"
       }
@@ -1067,6 +1337,66 @@
       }
     },
     {
+      "address": "0003628d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MissionVar_ReadFlag",
+      "description": "(flag), callee-cleaned: opens data\\mission.var (file-name entry 5) as a FileRStream, a severity-5 assert at mission.cpp line 0x4b when it does not open, seeks to flag * 2, reads an int16, closes the stream and returns the int16.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#reading-a-block",
+      "verified": {
+        "bytes": "0003628d+190",
+        "sha1": "215df1f5636b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003634b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_WriteRestore",
+      "description": "(): writes data\\restore.dat (file-name entry 8 through Text_GetString and Path_ApplyAltDrive) through a FileRWStream, a severity-5 assert at mission.cpp line 0x55 when it does not open: the words 000aad56 and 000aad5a, then the .msn path at 000aad14 and the .eng path at 000aad2a, each as an int16 length counting the NUL and the string with its NUL.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#which-file",
+      "verified": {
+        "bytes": "0003634b+371",
+        "sha1": "086ff4328f1e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000364be",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_SetTextPath",
+      "description": "(): copies the mission path at 000aad14 to 000aad2a, cuts it at its first '.' (strchr) and appends .eng, giving the mission's .ENG path. es2_xref finds its calls in the three mission-path builders 00015a13, 00036649 and 000366c1.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#which-file",
+      "verified": {
+        "bytes": "000364be+84",
+        "sha1": "0fa6c7813ee8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00036512",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_ReadRestore",
+      "description": "(): reads data\\restore.dat (file-name entry 8) through a FileRStream, a severity-5 assert at mission.cpp line 0x75 when it does not open: a word into 000aad56, a word into 000aad5e (Mission_WriteRestore wrote it from 000aad5a), then two int16-length-prefixed strings into 000aad14 (the .msn path) and 000aad2a (the .eng path).",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#which-file",
+      "verified": {
+        "bytes": "00036512+311",
+        "sha1": "a07323efc85f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00038723",
       "binary": "ES1GO",
       "type": "function",
@@ -1109,6 +1439,36 @@
         "sha1": "6b5fa5f08950",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004b658",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Stream_FindTag",
+      "description": "(tag, stream), callee-cleaned: notes the stream's position (+8) and reads it a byte at a time (+0x1c) until the NUL-terminated tag has matched or a read fails. A matching byte advances through the tag; a byte that does not match restarts the match at the tag's first byte without being tested against it. On a failure it seeks (+0xc) back to the noted position. Returns whether the whole tag matched, the stream then just past it.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#reading-a-block",
+      "verified": {
+        "bytes": "0004b658+126",
+        "sha1": "7c8cd3929042",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004b6d6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Stream_FindNthTag",
+      "description": "(n, tag, stream), callee-cleaned: calls Stream_FindTag (0004b658) n + 1 times and returns the last call's result, so the stream ends just past the tag's occurrence of ordinal n, or just past its last occurrence when there are fewer.",
+      "source": "Herculan/docs/es1/formats/eng-mission-text.md#reading-a-block",
+      "verified": {
+        "bytes": "0004b6d6+61",
+        "sha1": "e95aec317a62",
+        "scope": "body",
+        "via": "both"
       }
     },
     {

@@ -1,6 +1,6 @@
 # GO.EXE — .MSN mission files
 
-ES1's missions are the `.MSN` files in `ZONES.VOL`'s `MSN\` folder. The shell, `GO.EXE`, loads one, keeps the records the campaign's flags allow, and hands what is left to the simulator as `data\script.dat`, as ES2's shell does ([ES2's `.MSN`](../../retail/formats/msn-mission-file.md)). An ES1 mission holds eleven of ES2's seventeen rows, in ES2's order, and five of them have shorter records. It carries no text: no `.ENG` file is read, and ES2's rows of briefing and debrief text, its timers, its orders and its objectives are absent. Addresses are `ES1GO` image addresses unless `ES1DBSIM` is named ([the X-32 executable](x32-executable.md#the-image)); ES2's are VSHELL's.
+ES1's missions are the `.MSN` files in `ZONES.VOL`'s `MSN\` folder. The shell, `GO.EXE`, loads one, keeps the records the campaign's flags allow, and hands what is left to the simulator as `data\script.dat`, as ES2's shell does ([ES2's `.MSN`](../../retail/formats/msn-mission-file.md)). An ES1 mission holds eleven of ES2's seventeen rows, in ES2's order, and five of them have shorter records. It carries no text: the load reads no `.ENG` file, and ES2's rows of briefing and debrief text, its timers, its orders and its objectives are absent. The shell's briefing, debriefing and objectives read the mission's `.ENG` themselves ([`eng-mission-text.md`](eng-mission-text.md)). Addresses are `ES1GO` image addresses unless `ES1DBSIM` is named ([the X-32 executable](x32-executable.md#the-image)); ES2's are VSHELL's.
 
 ## Loading a mission
 

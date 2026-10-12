@@ -132,6 +132,8 @@ public static class TransformerRegistry {
 	private static readonly Dictionary<string, Rebinding> Es1Rebinds = new() {
 		// docs/es1/formats/msn-mission-file.md
 		["Mission File"] = new(() => new Common.Es1MissionFileTransformer()),
+		// docs/es1/formats/eng-mission-text.md: tagged briefing, objective and debriefing blocks, not ES2's id-keyed lines.
+		["Mission Text"] = new(() => new Common.Es1MissionTextTransformer()),
 		// docs/es1/formats/zone-terrain.md: ES1's zone file is the zone's shapes, not a heightmap header.
 		["Zone Header"] = new(() => new Common.Es1ZoneDatTransformer()),
 		// docs/es1/formats/wld-world.md: ES2's layout less two leading int16.
