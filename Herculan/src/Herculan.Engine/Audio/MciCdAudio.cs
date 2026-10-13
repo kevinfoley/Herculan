@@ -21,6 +21,7 @@ namespace Herculan.Engine.Audio;
 /// "No drive is named".</item>
 /// </list>
 /// </summary>
+[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 public sealed class MciCdAudio : ICdAudio {
 	// mmsystem.h. The four commands the original sends, and the flags it sends them with: the play is
 	// 0xd = MCI_NOTIFY | MCI_FROM | MCI_TO, the position query 0x102 = MCI_WAIT | MCI_STATUS_ITEM and

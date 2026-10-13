@@ -17,7 +17,14 @@ namespace Herculan.Engine.Audio;
 /// <para><b>Every completed rip is cached</b> as a <c>TrackNN.wav</c> under
 /// <see cref="DefaultCacheRoot"/>, in a directory named for the disc's table of contents, and a
 /// cached track is read from there rather than from the disc — so a track is ripped once per
-/// machine, not once per mission.</para>
+/// machine, not once per mission. A track with sectors the drive would not give up is not cached.</para>
+///
+/// <para><b>The rest of the disc is cached in the background</b> once this source is the music
+/// (<see cref="StartCaching"/>), so one mission with the disc in is enough for
+/// <see cref="CdAudio.Open"/>'s cache fallback to play every track without it. The track being played
+/// comes first: the background rip waits while it is being read, leaves it to the player when it is
+/// the same track, and never reads the drive at the same time. A disc whose tracks are all cached is
+/// opened without reading any audio from it.</para>
 /// </summary>
 public sealed class CdRipMusicSource : MusicSourceBase {
 	/// <summary>
@@ -45,6 +52,15 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 	private readonly string _drive;
 	private readonly Dictionary<int, (long Lba, long Sectors)> _tracks;
 	private readonly string? _cacheDirectory;
+
+	// One raw read at a time across the player's rip and the background one, each holding it for a block.
+	private readonly object _driveGate = new();
+
+	// The track the player's rip is reading, or 0: the background rip waits while it is set.
+	private int _playerRipTrack;
+
+	private CancellationTokenSource? _cachingWork;
+	private Task? _caching;
 
 	private CdRipMusicSource(string drive, Dictionary<int, (long, long)> tracks, string discId,
 			string? cacheRoot) {
@@ -112,6 +128,7 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 		return null;
 	}
 
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	private static CdRipMusicSource? TryOpen(string drive, string? cacheRoot, out string failure) {
 		using var handle = OpenDevice($@"\\.\{drive}");
 		if (handle.IsInvalid) {
@@ -132,6 +149,12 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 			return null;
 		}
 
+		// Every track already cached: nothing will be read from the disc, so it need not prove it can be.
+		failure = "";
+		if (cacheRoot != null && UncachedTracks(tracks, Path.Combine(cacheRoot, discId)).Count == 0) {
+			return new CdRipMusicSource(drive, tracks, discId, cacheRoot);
+		}
+
 		// A drive can report a table of contents and still refuse CD-DA reads; that drive is MCI's.
 		var first = tracks[tracks.Keys.Min()];
 		var probe = new byte[RawSectorSize];
@@ -140,8 +163,67 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 			return null;
 		}
 
-		failure = "";
 		return new CdRipMusicSource(drive, tracks, discId, cacheRoot);
+	}
+
+	/// <summary>
+	/// The tracks of <paramref name="tracks"/> with no complete copy in <paramref name="cacheDirectory"/>,
+	/// in track order.
+	/// </summary>
+	internal static List<int> UncachedTracks(IReadOnlyDictionary<int, (long Lba, long Sectors)> tracks,
+			string cacheDirectory) =>
+		tracks.Where(track => track.Value.Sectors > 0
+				&& !IsCachedCopy(WaveFileMusicSource.PathFor(cacheDirectory, track.Key),
+					track.Value.Sectors * MusicTrack.FramesPerSector))
+			.Select(track => track.Key)
+			.Order()
+			.ToList();
+
+	/// <summary>
+	/// Starts ripping every track not yet cached into the cache on a worker, one after another, for as
+	/// long as this source lives. Does nothing without a cache, off Windows, or when it has already
+	/// started.
+	/// </summary>
+	public void StartCaching() {
+		if (_cacheDirectory == null || _caching != null || !OperatingSystem.IsWindows()) {
+			return;
+		}
+
+		BeginCaching(_cacheDirectory);
+	}
+
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
+	private void BeginCaching(string cacheDirectory) {
+		var uncached = UncachedTracks(_tracks, cacheDirectory);
+		if (uncached.Count == 0) {
+			return;
+		}
+
+		Console.WriteLine($"Music: caching tracks {string.Join(",", uncached)} from {_drive} in the background.");
+		var work = new CancellationTokenSource();
+		_cachingWork = work;
+		_caching = Task.Run(() => {
+			try {
+				foreach (int number in uncached) {
+					var (lba, sectors) = _tracks[number];
+					string path = WaveFileMusicSource.PathFor(cacheDirectory, number);
+					if (IsCachedCopy(path, sectors * MusicTrack.FramesPerSector)) {
+						continue;
+					}
+
+					var track = new MusicTrack(number, sectors * MusicTrack.FramesPerSector);
+					if (Rip(lba, sectors, track, work.Token, background: true)) {
+						Cache(path, track);
+					}
+				}
+
+				Console.WriteLine($"Music: every track from {_drive} is cached in {cacheDirectory}.");
+			} catch (OperationCanceledException) when (work.IsCancellationRequested) {
+				// The source is going away; the track in hand is left for another mission to cache.
+			} catch (Exception e) {
+				Console.Error.WriteLine($"Music: caching from {_drive} stopped: {e.Message}");
+			}
+		});
 	}
 
 	/// <summary>
@@ -189,6 +271,8 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 	}
 
 	/// <inheritdoc />
+	/// <remarks>Windows-only like the rest of the drive reading: only <see cref="TryOpen"/> makes an instance.</remarks>
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	protected override (MusicTrack Track, Action<CancellationToken> Produce)? Prepare(int track) {
 		if (!_tracks.TryGetValue(track, out var extent) || extent.Sectors <= 0) {
 			return null;
@@ -202,17 +286,32 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 		}
 
 		return (created, token => {
-			Rip(extent.Lba, extent.Sectors, created, token);
-			if (cached != null && created.IsComplete && created.DamagedSectors == 0) {
-				try {
-					Directory.CreateDirectory(_cacheDirectory!);
-					WaveFileMusicSource.Write(cached, created);
-				} catch (IOException) {
-					// A cache that cannot be written costs a re-rip next time, nothing more.
-				} catch (UnauthorizedAccessException) {
-				}
+			Volatile.Write(ref _playerRipTrack, track);
+			try {
+				Rip(extent.Lba, extent.Sectors, created, token, background: false);
+			} finally {
+				Volatile.Write(ref _playerRipTrack, 0);
+			}
+
+			if (cached != null) {
+				Cache(cached, created);
 			}
 		});
+	}
+
+	// Writes a rip to the cache when it is whole and undamaged.
+	private static void Cache(string path, MusicTrack track) {
+		if (!track.IsComplete || track.DamagedSectors != 0) {
+			return;
+		}
+
+		try {
+			Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+			WaveFileMusicSource.Write(path, track);
+		} catch (IOException) {
+			// A cache that cannot be written costs a re-rip next time, nothing more.
+		} catch (UnauthorizedAccessException) {
+		}
 	}
 
 	private static bool IsCachedCopy(string path, long frames) {
@@ -240,17 +339,27 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 		}
 	}
 
-	private void Rip(long lba, long sectors, MusicTrack track, CancellationToken token) {
+	/// <summary>
+	/// Reads <paramref name="track"/> off the disc. In the <paramref name="background"/> it waits before each
+	/// read while the player's rip is reading, and gives up when that rip is reading this same track.
+	/// </summary>
+	/// <returns>Whether it read to the end, damaged sectors and all.</returns>
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
+	private bool Rip(long lba, long sectors, MusicTrack track, CancellationToken token, bool background) {
 		using var handle = OpenDevice(_device);
 		if (handle.IsInvalid) {
 			track.Fail($"{_drive} would not open ({Marshal.GetLastPInvokeError()})");
-			return;
+			return false;
 		}
 
 		var buffer = new byte[MaxSectorsPerRead * RawSectorSize];
 		long end = lba + sectors;
 		while (lba < end) {
 			token.ThrowIfCancellationRequested();
+			if (background && !WaitForPlayerRip(track.Number, token)) {
+				return false;
+			}
+
 
 			// Clamped to the track, and so never past the lead-out: a read that runs off the end of
 			// the disc fails whole, taking the last good sectors with it.
@@ -271,18 +380,54 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 
 			lba += count;
 		}
+
+		return true;
 	}
 
-	private static bool ReadWithRetries(SafeFileHandle handle, long lba, int count, byte[] buffer) {
+	// The background rip's turn: false when the player's rip is reading this same track, which it will
+	// cache itself, and true once the player's rip is not reading at all.
+	private bool WaitForPlayerRip(int number, CancellationToken token) {
+		while (Volatile.Read(ref _playerRipTrack) is var playing and not 0) {
+			if (playing == number) {
+				return false;
+			}
+
+			token.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(100));
+			token.ThrowIfCancellationRequested();
+		}
+
+		return true;
+	}
+
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
+	private bool ReadWithRetries(SafeFileHandle handle, long lba, int count, byte[] buffer) {
 		for (int attempt = 0; attempt <= ReadRetries; attempt++) {
-			if (RawRead(handle, lba, count, buffer)) {
-				return true;
+			lock (_driveGate) {
+				if (RawRead(handle, lba, count, buffer)) {
+					return true;
+				}
 			}
 		}
 
 		return false;
 	}
 
+	/// <inheritdoc />
+	protected override void DisposeSource() {
+		if (_cachingWork is not { } work) {
+			return;
+		}
+
+		work.Cancel();
+		try {
+			_caching?.Wait(TimeSpan.FromSeconds(2));
+		} catch (AggregateException) {
+		}
+
+		work.Dispose();
+	}
+
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	private static unsafe bool RawRead(SafeFileHandle handle, long lba, int count, byte[] buffer) {
 		// RAW_READ_INFO: the offset is in 2048-byte cooked sectors whatever the mode, then the count,
 		// then TRACK_MODE_TYPE, of which CDDA is 2.
@@ -309,6 +454,7 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 			: null;
 	}
 
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	private static SafeFileHandle OpenDevice(string device) =>
 		CreateFileW(device, GenericRead, FileShareRead | FileShareWrite, IntPtr.Zero, OpenExisting, 0,
 			IntPtr.Zero);
@@ -324,10 +470,12 @@ public sealed class CdRipMusicSource : MusicSourceBase {
 	private const uint OpenExisting = 3;
 
 	[DllImport("kernel32.dll", CharSet = CharSet.Unicode, ExactSpelling = true, SetLastError = true)]
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	private static extern SafeFileHandle CreateFileW(string name, uint access, uint share,
 		IntPtr security, uint disposition, uint flags, IntPtr template);
 
 	[DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	private static extern bool DeviceIoControl(SafeFileHandle device, uint code, IntPtr input,
 		int inputLength, [Out] byte[] output, int outputLength, out int returned, IntPtr overlapped);
 }

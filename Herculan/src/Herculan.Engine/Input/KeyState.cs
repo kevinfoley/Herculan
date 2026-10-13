@@ -9,13 +9,44 @@ namespace Herculan.Engine.Input;
 /// </summary>
 public interface IKeyState {
 	bool IsKeyPressed(Key key);
+
+	/// <summary>
+	/// Whether <paramref name="key"/>'s auto-repeat falls due this frame, which a binding that acts on every
+	/// key-down event reads beside the key's edge (<see cref="KeyLatch.PressOrRepeat"/>). Never, unless a
+	/// keyboard says otherwise: a tape holds each repeat as a press of its own.
+	/// </summary>
+	bool IsKeyRepeated(Key key) => false;
 }
 
-/// <summary>The window's own keyboard.</summary>
+/// <summary>The window's own keyboard, and the auto-repeat Windows would give it.</summary>
 public sealed class LiveKeys(IKeyboard device) : IKeyState {
+	private readonly KeyRepeat _repeat = new(KeyRepeat.SystemTypematic());
+
 	public IKeyboard Device { get; } = device;
 
-	public bool IsKeyPressed(Key key) => Device.IsKeyPressed(key);
+	/// <summary>
+	/// A key the host holds down on another device's behalf, such as a gamepad's Start standing for [P], or null. It
+	/// reads as held to every handler and to a recording, as the key itself would, but never auto-repeats. This
+	/// engine's own.
+	/// </summary>
+	public Key? HeldByHost { get; set; }
+
+	public bool IsKeyPressed(Key key) => Device.IsKeyPressed(key) || key == HeldByHost;
+
+	public bool IsKeyRepeated(Key key) => _repeat.Repeated == key;
+
+	/// <summary>Moves the auto-repeat on by one host frame, before anything reads the keys.</summary>
+	public void AdvanceRepeat(double deltaSeconds) => _repeat.Advance(Device.IsKeyPressed, deltaSeconds);
+}
+
+/// <summary>
+/// Another keyboard with one key reading as up, for a press the host has taken for itself, such as the menu bar's
+/// [Shift+Esc], which nothing of the game's may see.
+/// </summary>
+public sealed class KeysWithout(IKeyState keys, Key hidden) : IKeyState {
+	public bool IsKeyPressed(Key key) => key != hidden && keys.IsKeyPressed(key);
+
+	public bool IsKeyRepeated(Key key) => key != hidden && keys.IsKeyRepeated(key);
 }
 
 /// <summary>

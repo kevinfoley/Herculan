@@ -81,7 +81,7 @@ Command values latched at `+0x18`, and the current-view gate each requires:
 | 5 | 0 (or 2 → 6) | glance to view 3 |
 | 6 | 2 or 3 | return from a glance to view 0 |
 
-Two device paths reach those commands. `CockpitView_HandleEdgeTrigger` (`00433a88`) answers a **mouse click on one of three screen-edge strips** — `+0x21a` the bottom one, `+0x21e`/`+0x222` the left and right — picking the command by current view; they are ordinary widgets, and [`cockpit-input.md`](cockpit-input.md#10-the-screen-edges-are-three-widgets) has their rects and the full mapping. `CockpitView_PollViewDevice` (`00432b14`) reads four device-state bytes at `+0x1e`-`+0x21` for commands 1/0/5/4, the joystick hat's up/down/left/right. The manual binds `[F7]`/`[F8]` to heads-down, `[F9]`/`[F10]` to the left and right windows and `[Esc]` to the way back.
+Two device paths reach those commands. `CockpitView_HandleEdgeTrigger` (`00433a88`) answers a **mouse click on one of three screen-edge strips** — `+0x21a` the bottom one, `+0x21e`/`+0x222` the left and right — picking the command by current view; they are ordinary widgets, and [`cockpit-input.md`](cockpit-input.md#10-the-screen-edges-are-three-widgets) has their rects and the full mapping. `CockpitView_PollViewDevice` (`00432b14`) reads four device-state bytes at `+0x1e`-`+0x21` for commands 1/0/5/4, the joystick hat's up/down/left/right. The manual binds `[F7]`/`[F8]` to heads-down, `[F9]`/`[F10]` to the left and right windows and `[Esc]` to heads-down from the forward view and to the way back from the others: `CockpitWidgets_HandleCommand` (`00432bc8`) answers scancode 1 with command 0 from view 0, 1 from view 1 and 6 from views 2 and 3.
 
 ### Heads-down pan — `CockpitView_StepViewTransition` (`0042a9c0`)
 

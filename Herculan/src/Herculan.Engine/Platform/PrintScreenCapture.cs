@@ -15,6 +15,7 @@ namespace Herculan.Engine.Platform;
 /// Windows' other capture keys still reach it. The hook is installed for as long as the window is full screen and
 /// no longer: every keystroke on the desktop waits on it, and it is answered from this thread's message pump.</para>
 /// </summary>
+[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 sealed unsafe class PrintScreenCapture : IDisposable {
 	private readonly nint _window;
 	private readonly Action<int, int, byte[]>? _captured;

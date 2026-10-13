@@ -4,6 +4,7 @@ using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Data.Struct.Herc;
 using HercWorks.Core.Data.Struct.Vshell.Hercs;
 using HercWorks.Core.Data.Struct.Vshell.Sav;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Content;
@@ -73,9 +74,9 @@ public static class ShellCampaignLaunch {
 		header[0] = stages[stage].CampaignIndex;
 
 		Directory.CreateDirectory(directory);
-		string scriptPath = Path.Combine(directory, MissionLoader.ScriptFileName);
+		string scriptPath = CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName);
 		ShellWorkingFiles.WriteMissionFile(scriptPath, loaded.WriteScriptDat());
-		ShellWorkingFiles.WriteMissionFile(Path.Combine(directory, MissionLoader.TextFileName), loaded.WriteMissionText());
+		ShellWorkingFiles.WriteMissionFile(CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName), loaded.WriteMissionText());
 
 		// The original asserts row 4 is there before it copies slot 0 into the career block.
 		var briefing = loaded.TextPackage is { } package ? ShellCareerBriefing.From(package) : null;
@@ -250,8 +251,8 @@ public static class ShellCampaignLaunch {
 
 		var flagBytes = new byte[flags.Length * 2];
 		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
-		File.WriteAllBytes(Path.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
-		File.WriteAllBytes(Path.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
+		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
+		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
 		return loaded;
 	}
 

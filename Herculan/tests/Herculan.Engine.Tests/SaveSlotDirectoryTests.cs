@@ -63,11 +63,12 @@ public class SaveSlotDirectoryTests {
 	/// <summary>
 	/// A real install's directory file, parsed and written back.
 	///
-	/// <para>The leading length is the physical file less four, taken by seeking to the end <i>after</i>
-	/// writing through a stream that never truncates, so it counts whatever stale tail an earlier, longer
-	/// write left behind. That tail is empty or not depending on the install's save history, so the test
-	/// holds what is true either way: the round trip is byte-equal from the count block on, and byte-equal
-	/// outright when the file carries no tail.</para>
+	/// <para>The round trip is byte-equal from the count block on. The leading length is the physical file
+	/// less four, taken by seeking to the end <i>after</i> writing, so a file that was once longer — the
+	/// shipped one is — counts a stale tail this writer does not reproduce, and only there does the length
+	/// differ. A file never written shorter than before has no tail and comes back whole.
+	/// Everything the reader consumes comes back unchanged either way, which is the invariant worth
+	/// holding.</para>
 	/// </summary>
 	[Fact]
 	public void ParsesTheRetailDirectory() {

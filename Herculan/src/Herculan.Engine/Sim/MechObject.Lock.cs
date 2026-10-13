@@ -321,7 +321,7 @@ public sealed partial class MechObject {
 	/// <c>Mech_PerTickSystemsUpdate</c>'s block at <c>0041abb1</c> — while this machine's ECM pod
 	/// switch is on (<c>Mech_GetEcmPodSwitch</c>, <c>0041aa44</c>, which is <see cref="EcmEnabled"/>),
 	/// raises <see cref="SimObject.EngagementActionHeld"/> on its selected target. Only the player's
-	/// pod is ever ticked, so only the player's target is ever held (<see cref="PodTick"/>).
+	/// pods are ever ticked, so only the player's target is ever held (<see cref="PodTick"/>).
 	///
 	/// <para>Runs from the systems pass after <see cref="Detection.Tick"/>, as the original does, so
 	/// the gate is still up when the next tick's sweep and shots read it.</para>

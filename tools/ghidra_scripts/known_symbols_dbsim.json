@@ -2496,8 +2496,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Bullet_Construct",
-      "description": "Constructs the Type-2 Bullet-class object (own vtable BulletVtable (00498628), own 14-byte type table). PROJ.DAT category 2; subtype id 9 is the confirmed Plasma cannon.",
-      "source": "docs/retail/simulation/weapon-damage-types.md"
+      "description": "Constructs a travelling round, the PROJ.DAT Type-2 Bullet: SimObjectBase_Constructor on the shape the BULLETS.DAT record's model (+0x00) indexes, vtable ProjectileBaseVtable then BulletVtable (00498628), obj+4 = 3, the subtype id at obj+0x41, obj+0x4e = Proj_LookupRecord(2, subtypeId) (the PROJ.DAT record), and obj+0x59 = the BULLETS.DAT record's +0x06 animation interval. Subtype 9 is the plasma cannon's.",
+      "source": "docs/retail/simulation/weapon-damage-types.md",
+      "verified": {
+        "bytes": "0040af6c+132",
+        "sha1": "77d424b5e1ed",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040aff0",
@@ -2505,8 +2511,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Bullet_HomingSteer",
-      "description": "The plasma round's guidance, and a steer of the object's EULER ANGLES rather than of a velocity: takes the bearing from the shot to obj+0x5b's position via Math_EulerToward, moves euler[0] and euler[2] toward it through Math_RateLimitedMoveToward capped at 0x280 per 125 ms, integrates over the tick, and stores 0 to the frame-valid word at obj+0x32, so the next reader rebuilds the rotation.",
-      "source": "docs/retail/simulation/projectiles.md"
+      "description": "The plasma round's guidance, and a steer of the object's EULER ANGLES rather than of a velocity: takes the bearing from the shot to obj+0x5b's vtable +0x24 aim node (through the target's frame) or, when that returns none, its position +0x26, via Math_EulerToward; moves euler[0] and euler[2] toward it through Math_RateLimitedMoveToward capped at 0x280 per 125 ms, integrates over the tick, and stores 0 to the frame-valid word at obj+0x32, so the next reader rebuilds the rotation. Returns the euler[2] bearing error before this tick's move, which Bullet_TickUpdate's proximity fuze tests.",
+      "source": "docs/retail/simulation/projectiles.md",
+      "verified": {
+        "bytes": "0040aff0+306",
+        "sha1": "17e59aa1aaa1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040b124",
@@ -2514,8 +2526,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Bullet_TickUpdate",
-      "description": "bullet.cpp per-bullet-instance tick. Fixed age rate Math_IntegrateRateOverTick(0x200). type==9 branch (confirmed Plasma cannon, subtype id 9 on a Bullet instance) calls Damage_ExplosiveBlastSweep directly with a 4000-unit blast radius.",
-      "source": "docs/retail/simulation/projectiles.md"
+      "description": "The travelling round's tick. Steps the shape's animation frame when the BULLETS.DAT record's +0x06 is nonzero; ages the round by Math_IntegrateRateOverTick(0x200) and returns 1 (remove) once the age +0x54 passes lifetime (+0x02) * 0x200; runs Bullet_HomingSteer when +0x5b holds a target. Moves Math_IntegrateRateOverTick(+0x52) along the frame's Y axis, sweeping that segment through Sim_RaycastObjectList with a shot record whose two damage figures are scaled Q10 by the power +0x56 when it is nonzero. Subtype 9 (plasma): a proximity fuze trips when the homing error exceeds 0x4000 in magnitude and the target is under 2000 units away, and skips the raycast; Bullet_StashDirectFireDamage stashes both figures, the record's damage and splash are zeroed, the armour figure is scaled by Damage_ScaleByDifficulty, and on contact or fuze Damage_ExplosiveBlastSweep runs at 4000 units. With no contact the round moves; contact returns 1.",
+      "source": "docs/retail/simulation/projectiles.md",
+      "verified": {
+        "bytes": "0040b124+789",
+        "sha1": "dc85968c997c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040b43c",
@@ -2523,8 +2541,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Bullet_Fire",
-      "description": "Bullet_Fire(subtypeId, muzzleWorldPoint, aimEulerTriple, ownerMech) -- spawns one travelling PROJ.DAT Type-2 Bullet from the effect pool g_ProjectilePool. Copies the muzzle point to obj+0x26 (the frame's translation), stores the euler triple at obj+0x0c with components 0 and 2 displaced by (spread*2 & random) - spread from the BULLETS.DAT record's +0x0a, sets obj+0x52 = ownerMech->vtable+0x38 (travel speed) + PROJ.Speed, and plays the record's +0x08 sound. Returns the object so Bullet_FirePowered can add to it.",
-      "source": "docs/retail/simulation/projectiles.md"
+      "description": "Bullet_Fire(subtypeId, muzzleWorldPoint, aimEulerTriple, ownerMech) -- spawns one travelling PROJ.DAT Type-2 Bullet from the effect pool g_ProjectilePool through Bullet_Construct. Copies the muzzle point to obj+0x26 (the frame's translation), stores the euler triple at obj+0x0c with components 0 and 2 displaced by (spread*2 & random) - spread from the BULLETS.DAT record's +0x0a, and zeroes the frame-valid word +0x32. Stores ownerMech at +0x4a, zeroes the 8 bytes at +0x42, the age +0x54, the power +0x56 and the homing target +0x5b, and sets +0x5f = 0x400. Sets obj+0x52 = ownerMech->vtable+0x38 (travel speed) + the PROJ.DAT record's Speed (+0x0a), truncated to 16 bits. With the BULLETS.DAT record's +0x0c nonzero, sets +0x61 = 0x400 / its lifetime (+0x02). Plays sound id record+0x08 + 10 at the muzzle point. Returns the object so Bullet_FirePowered can add to it.",
+      "source": "docs/retail/simulation/projectiles.md",
+      "verified": {
+        "bytes": "0040b43c+354",
+        "sha1": "0890b229cf37",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040b5a0",
@@ -2533,7 +2557,13 @@
       "confidence": "high",
       "name": "Bullet_FirePowered",
       "description": "Bullet_Fire plus two writes: obj+0x56 = the capacitor charge the shot was fired at (which scales both damage figures Q10 in Bullet_TickUpdate; zero leaves them at face value), and for subtypeId 9 only (the plasma cannon) obj+0x5b = ownerMech+0x1a4, the firing machine's selected target, which is what makes that one subtype home.",
-      "source": "docs/retail/simulation/projectiles.md"
+      "source": "docs/retail/simulation/projectiles.md",
+      "verified": {
+        "bytes": "0040b5a0+56",
+        "sha1": "089f56b231f2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040b5d8",
@@ -3527,8 +3557,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_FireDispatch_GunBeam",
-      "description": "Energy/gun mount vtable +0x28, the fire dispatch. Opens with WeaponMount_PrepareShot, then branches on the mount's cached PROJ.DAT Type: Type==4(Beam) spends min(template+0x38, capacitor +0x7d) out of the capacitor and calls Bullet_FireBurst with that as the shot's power, having first copied the muzzle world point into the shot transform's translation; otherwise it builds a travelling Bullet, with a second barrel when template+0x3c==3 and a burst follow-up when template+0x3e==0x13.",
-      "source": "docs/retail/simulation/weapon-firing.md"
+      "description": "Energy/gun mount vtable +0x28, the fire dispatch. Opens with WeaponMount_PrepareShot and sets mount+0x44 = 1 when the byte at (+0x18)->+6 is below 4. Then branches on the mount's cached PROJ.DAT Type: Type==4 (Beam) copies the muzzle world point into the shot transform's translation, spends min(template+0x38, capacitor +0x7d) and calls Bullet_FireBurst with that as the shot's power and template+0x30 as the range. Otherwise, with the capacitor below the cost template+0x38 (a charge-up gun), it fires Bullet_FirePowered at the whole charge from the prologue's muzzle point, and when template+0x3c == 3 two more rounds at x = 0 and x = -(template+0x40) of the template's muzzle offset, three in all; then, when template+0x3e == 0x13 and +0x4d is clear, arms +0x4d and sets the refire countdown +0x31 to template+0x4c >> 2, and otherwise clears +0x4d and empties the capacitor. With the capacitor at or above the cost it subtracts the cost and fires one unpowered Bullet_Fire.",
+      "source": "docs/retail/simulation/weapon-firing.md",
+      "verified": {
+        "bytes": "0040ea58+523",
+        "sha1": "90bc53e64e4c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040ec64",
@@ -3668,9 +3704,15 @@
       "type": "function",
       "confidence": "high",
       "name": "TurboPod_Engage",
-      "description": "Engages the Turbo Pod: if the engaged flag at pod+0x81 is clear and the charge at pod+0x7d is over 600, sets the flag and plays sound 0x2c (throtl.wav, the same servo the throttle lever uses) -- but only when the pod has a cockpit gauge at +0x79, which no AI machine's pod has. Called from TurboPod_Tick for the player's own row button and directly from Mech_BehaviourFleeThink and Ai_DriveToPoint, which is the only way an AI machine engages one since its pods are never ticked.",
+      "description": "Engages the Turbo Pod: if the engaged flag at pod+0x81 is clear and the charge at pod+0x7d is over 600, sets the flag and plays sound 0x2c (throtl.wav, the same servo the throttle lever uses) -- but only when the pod has a cockpit gauge at +0x79, which no AI machine's pod has. Its callers found by es2_xref are Mech_BehaviourFleeThink and Ai_DriveToPoint, which is how an AI machine engages one since its pods are never ticked; TurboPod_Tick makes the same test inline for the player's row button rather than calling this.",
       "source": "docs/retail/simulation/equipment-pods.md",
-      "signature": "void __cdecl TurboPod_Engage(int pod)"
+      "signature": "void __cdecl TurboPod_Engage(int pod)",
+      "verified": {
+        "bytes": "0040f09c+50",
+        "sha1": "a3937cef612a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f0d0",
@@ -3680,7 +3722,13 @@
       "name": "TurboPod_ChargeTick",
       "description": "Turbo Pod vtable +0x34, the only pod that overrides the pool turn -- every other pod inherits WeaponMount_RefireTick there and so consumes nothing. While engaged (pod+0x81) it spends 35 of the charge at pod+0x7d per tick, disengaging and zeroing the charge when it runs out; then, if the mount is not destroyed, it runs WeaponMount_RefireTick and takes min(20, budget, 2000 - charge) back out of the weapons' leftover budget, returning the remainder. 2000 is the value TurboPod_Ctor starts the charge at.",
       "source": "docs/retail/simulation/equipment-pods.md",
-      "signature": "short __cdecl TurboPod_ChargeTick(void *pod, short budget)"
+      "signature": "short __cdecl TurboPod_ChargeTick(void *pod, short budget)",
+      "verified": {
+        "bytes": "0040f0d0+115",
+        "sha1": "3eb1b288ae7a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f144",
@@ -3699,7 +3747,13 @@
       "confidence": "high",
       "name": "EcmPod_Tick",
       "description": "ECM pod vtable +0x50. Reads the pod gauge's on/off byte, mirrors it into pod+0x7d and pod+0x7f, and posts the jamming messages 0x2a and 0x2b on a change; the flag it pushes back carries the destroyed byte at +0x49.",
-      "source": "docs/retail/simulation/equipment-pods.md"
+      "source": "docs/retail/simulation/equipment-pods.md",
+      "verified": {
+        "bytes": "0040f184+106",
+        "sha1": "9e4f1b3d0c28",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f1f0",
@@ -3708,7 +3762,13 @@
       "confidence": "high",
       "name": "TurboPod_Tick",
       "description": "Turbo Pod vtable +0x50. Engages when the gauge's button byte is set and the charge at pod+0x7d is over 600, playing sound 0x2c, and disengages when the charge runs out.",
-      "source": "docs/retail/simulation/equipment-pods.md"
+      "source": "docs/retail/simulation/equipment-pods.md",
+      "verified": {
+        "bytes": "0040f1f0+151",
+        "sha1": "f8d5f5a37a28",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f288",
@@ -3810,7 +3870,13 @@
       "confidence": "high",
       "name": "WeaponMount_MuzzleOffset",
       "description": "Adds the hardpoint's own mount-point offset (.GL +0x10/+0x12/+0x14) to WeaponMountTemplate_SideMuzzleOffset's result and returns the sum, in the firing bone's space. WeaponMount_PrepareShot adds the template's own muzzle triple at +0x40 on top.",
-      "source": "docs/retail/simulation/weapon-firing.md"
+      "source": "docs/retail/simulation/weapon-firing.md",
+      "verified": {
+        "bytes": "0040f540+58",
+        "sha1": "0c9097619995",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f57c",
@@ -4172,7 +4238,13 @@
       "confidence": "high",
       "name": "WeaponMounts_PerFrameUpdate",
       "description": "The mount manager's per-frame pass. Stores its range argument -- the distance to the selected target, measured by Player_PerFrameCockpitUpdate -- into manager+0x31 BEFORE running WeaponMounts_AdvanceToReady, so the chain advance and the row lamps both see this frame's range. Then reads the weapon-panel input block, applies the chain/link commands, and walks every mount calling its vtable+0x50 gauge push with three state bytes: selected (index == manager+0x1d), in the current fire group (groups[manager+0x1c][index]), and ready (WeaponMounts_MountIsReady).",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "00410b40+398",
+        "sha1": "b82897cd7f77",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410cd0",
@@ -4733,7 +4805,13 @@
       "confidence": "high",
       "name": "Ai_KnowsObject",
       "description": "The AI's knowledge test, far looser than the player's: radar-visible (+0x95) within 999999 units, or a contact this machine holds (this+0xc2 + other[0x4b]) at any range.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00411c58+91",
+        "sha1": "d704a2f4560d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411cb4",
@@ -5076,7 +5154,13 @@
       "confidence": "high",
       "name": "Mission_GroupOrderCompleteOnRoute",
       "description": "Objective condition 0: finds the group's order slot whose route (+0x08) is the record's waypoint group and answers that slot's completion flag at group+0x70.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "0041324c+51",
+        "sha1": "71e1ac33af49",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413280",
@@ -5084,8 +5168,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_EvaluateObjectives",
-      "description": "Walks the mission's objective array (script.dat block 12) each poll and reduces it to a status: a failure condition holding, every required record holding, or neither, each split by whether the player is clear of threats.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "description": "Walks the mission's objective array (script.dat block 12) and reduces it to a status: a failure condition holding, every required record holding, or neither, each split by whether the player is clear of threats (6/10, 9/10, 5/4). The first time a record's condition holds it applies its ten counter pairs to DAT_004a9ef4 (4 set, 5 clear, 6 increment, 7 decrement) and latches +0x22; the first required record not holding is published at DAT_004d1f1c as the failure text.",
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "00413280+870",
+        "sha1": "2748091ecb2b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004135e8",
@@ -5135,8 +5225,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_IsClearOfThreats",
-      "description": "Whether nothing hostile is working on this object: no live enemy knows it within 80000 (100000 if it is that machine's own selection), and no group whose order names it is still inbound.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "description": "Whether nothing hostile is working on this object. Walks the live-object list, skipping an object whose group has not arrived (group+0x14), one on the subject's own side, and one out of the fight (+0xa5, +0xa4 or +0x99). The subject is not clear when a survivor knows it (Ai_KnowsObject) within 80000, 100000 if it is that survivor's selected target (+0x1a4); or, when the subject is not in LocalPlayerMech's group, when the survivor's group's current order names it (Group_IsOrderTarget) and either that group's route has a waypoint after its cursor (Route_WaypointAt) or the survivor knows the subject, at any range.",
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "004137b4+361",
+        "sha1": "8eb9a88259a1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413920",
@@ -5154,7 +5250,13 @@
       "confidence": "high",
       "name": "Group_AllMembersClearOfThreats",
       "description": "False when the group is written off, or when any member that is not destroyed fails Mission_IsClearOfThreats.",
-      "source": "docs/retail/simulation/mission-objectives.md"
+      "source": "docs/retail/simulation/mission-objectives.md",
+      "verified": {
+        "bytes": "00413950+79",
+        "sha1": "6e674c205e9c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004139a0",
@@ -5321,9 +5423,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ApplySquadCondition",
-      "description": "Writes a player-squad machine's carried-over condition into its damage arrays at spawn; DBSim_SpawnMissionObjects' squad branch is the only caller (004258de), after Mech_ConfigureLoadout. Arguments are the damage header at mech+0x206 and the 0x7e-byte squad record's three player.mec condition spans: +0x3c external (13), +0x56 internal (10), +0x6a hardpoint (10), each 0-100. Each entry becomes damage (100 - condition) * maximum / 100: components 0-12 against the piece's armour, components 13-18 zeroed; internals 0-8 against their maxima, internal 9 (pilot) and 10-11 zeroed, so the internal span's tenth entry (overall condition) is not read; components 19-28 against the mount's armour plus the maximum of internal 12+i, and past the armour the mount is written -1 and the rest goes to that internal (-1 past its maximum). Internals 12-21 have maximum 0 in retail, so a mount simply takes its share of its own armour. Writes only through the header's two array pointers.",
+      "description": "Writes a player-squad machine's carried-over condition into its damage arrays at spawn; es2_xref finds one caller, DBSim_SpawnMissionObjects' squad branch (004258de), after Mech_ConfigureLoadout. Components 0-12 take the external entries one for one, entry n against component n's armour. Arguments are the damage header at mech+0x206 and the 0x7e-byte squad record's three player.mec condition spans: +0x3c external (13), +0x56 internal (10), +0x6a hardpoint (10), each 0-100. Each entry becomes damage (100 - condition) * maximum / 100: components 0-12 against the piece's armour, components 13-18 zeroed; internals 0-8 against their maxima, internal 9 (pilot) and 10-11 zeroed, so the internal span's tenth entry (overall condition) is not read; components 19-28 against the mount's armour plus the maximum of internal 12+i, and past the armour the mount is written -1 and the rest goes to that internal (-1 past its maximum). Internals 12-21 have maximum 0 in retail, so a mount simply takes its share of its own armour. Writes only through the header's two array pointers.",
       "source": "docs/retail/simulation/component-damage.md",
-      "signature": "void __cdecl Mech_ApplySquadCondition(void *damageHeader, short *externalConditions, short *internalConditions, short *hardpointConditions)"
+      "signature": "void __cdecl Mech_ApplySquadCondition(void *damageHeader, short *externalConditions, short *internalConditions, short *hardpointConditions)",
+      "verified": {
+        "bytes": "00415068+314",
+        "sha1": "8e25e3c023ec",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004151a4",
@@ -5397,8 +5505,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_GetSpeed",
-      "description": "Mech vtable slot +0x38 (vtable 0049a282). Returns Q10(2000, mech+0x28e) for a walker, or mech+0x2bd when the type record's flyer flag (+0x50) is set. Used for its sign by the Center Body branch, and as a speed term by the AI's lead-the-target maths.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "description": "Mech vtable slot +0x38 (vtable 0049a282). Returns Q10(2000, mech+0x28e) for a walker, or mech+0x2bd, the airspeed, when the type record's flyer flag (+0x50) is set. Bullet_Fire (read) adds it to a travelling round's speed; mech-locomotion.md cites the Center Body branch's sign test and the AI's lead-the-target maths as other readers.",
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00415498+54",
+        "sha1": "6e0aaae393a4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004154d0",
@@ -5831,8 +5945,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ConvergeGunsOnRange",
-      "description": "Gun convergence, run at the tail of Mech_TorsoPitchTick with that tick's range argument -- the distance to the aim point, so the player's guns and the AI's both toe in on whatever the turret is tracking. For each mount, Math_EulerToward from the muzzle offset (its z less typeRec+0x66, the sight height) to (0, range, 0), stored at mount+0x24 and +0x28; a range of zero clears them. WeaponMount_PrepareShot is the consumer, composing them under the firing bone. Both gates (mount+0x5b/+0x5f, from .GL +0x02/+0x04) read zero on every retail chassis, so the convergence applies fleet-wide.",
-      "source": "docs/retail/simulation/weapon-firing.md"
+      "description": "Gun convergence, run at the tail of Mech_TorsoPitchTick with that tick's range argument -- the distance to the aim point, so the player's guns and the AI's both toe in on whatever the turret is tracking. For each mount, Math_EulerToward from WeaponMount_MuzzleOffset's result -- the mount point, without the template's barrel triple at +0x40 -- (its z less typeRec+0x66, the sight height) to (0, range, 0), stored at mount+0x24 and +0x28; a range of zero clears them. WeaponMount_PrepareShot is the consumer, composing them under the firing bone. Both gates (mount+0x5b/+0x5f, from .GL +0x02/+0x04) read zero on every retail chassis, so the convergence applies fleet-wide.",
+      "source": "docs/retail/simulation/weapon-firing.md",
+      "verified": {
+        "bytes": "0041a74c+185",
+        "sha1": "8f7e4d1f4776",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041a808",
@@ -5878,9 +5998,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_PerTickSystemsUpdate",
-      "description": "Per-mech-per-tick reactor/energy bookkeeping (integrates reactor output rate into the energy pool at +0x292), then dispatches weapon-energy arbitration and shield-recharge via Shield_RechargeTick.",
-      "source": "docs/retail/simulation/target-selection.md",
-      "signature": "void __cdecl Mech_PerTickSystemsUpdate(MechObject *mech)"
+      "description": "Per-mech, per-tick systems pass, in two halves. Energy: integrates the reactor rate into the energy pool (+0x292), hands the pool less 500 to the weapon mounts' vtable slot 0 (WeaponMounts_ArbitrateEnergy) and what they leave to Shield_RechargeTick, then stores the remainder plus 500 clamped to 0-10000. On the locally piloted machine it clears +0xb0 while shield front + rear exceeds 0x5dc. It counts down the retarget, friendly-fire-complaint, radar-silence and under-fire timers (the last expiring clears the damage-from-player-group total) and the +0x285 timer (expiry reloads 4000 and clears the damage-taken total), and runs Mech_ComputeCombatRating while +0x94 is clear. Missile lock: with a target and Mech_GetEcmPodSwitch set it raises target+0xa2; stores Mech_IsEcmSwitchedOn into the jammer flag +0xa1; counts rounds per missile subtype (WeaponMounts_RoundsByMissileType) and clears the five per-subtype lock flags at weaponMounts+0x0a and the lamp +0x9b. With a target selected: against a jamming mech target it re-rolls the spoof flag +0x9c on the ECM timer (weight 0x14, 5 with a Targeting Pod whose +0x7f is under 0x33; spoof holds 5000, a miss re-rolls after 0x5dc), clearing it otherwise; the lock reload is distance >> 2 capped at 0x7fff, or 0 for a chassis with type record +0x50 set; while +0x9d is clear, the bearing (turret twist included) is within +-0x3000 and line of sight holds, each carried subtype's timer runs and latches its flag at zero unless +0x9c stands: subtype 0 and 4 hold their timers while the own scanner (+0x96) is off or this tick's roll spoofed, subtype 1 holds on a spoof alone, subtype 2 holds while the target's scanner and jammer are both off and latches regardless of +0x9c. Failing the gate reloads timers 0, 1 and 2 and clears +0x9d at the end. On the locally piloted machine it sets the lamp from the armed mount's subtype (any lock for a non-launcher) and calls Mech_LockTonePlay.",
+      "source": "docs/retail/simulation/missile-lock.md",
+      "signature": "void __cdecl Mech_PerTickSystemsUpdate(MechObject *mech)",
+      "verified": {
+        "bytes": "0041aa5c+1629",
+        "sha1": "313b87d34396",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041b0bc",
@@ -7459,7 +7585,7 @@
         "bytes": "0042313c+51",
         "sha1": "642223201644",
         "scope": "body",
-        "via": "disasm"
+        "via": "decompile"
       }
     },
     {
@@ -7468,9 +7594,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Route_NextWaypointClosesRoute",
-      "description": "Answers 1 when the waypoint after a route cursor is both the route's last and the same point object as its first -- the duplicate a closed patrol circuit ends on, and the one Route_AdvanceCursor would wrap straight off. Only Mech_BehaviourPlayerThink asks; it is what stops a circuit announcing its start point over and over.",
+      "description": "Answers 1 when the waypoint after a route cursor is both the route's last and the same point object as its first -- the duplicate a closed patrol circuit ends on, and the one Route_AdvanceCursor would wrap straight off. The one caller es2_xref finds is Mech_BehaviourPlayerThink (0041c1ee); it is what stops a circuit announcing its start point over and over.",
       "source": "docs/retail/simulation/player-waypoints.md",
-      "signature": "int __cdecl Route_NextWaypointClosesRoute(short *routeCursor)"
+      "signature": "int __cdecl Route_NextWaypointClosesRoute(short *routeCursor)",
+      "verified": {
+        "bytes": "00423170+51",
+        "sha1": "751c9f88e326",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004231a4",
@@ -7601,7 +7733,13 @@
       "confidence": "high",
       "name": "Group_IsOrderTarget",
       "description": "Whether an object is what the group's current order names: for the order's +0xc == 0 the order holds a group and the test is group identity, for 1-3 it holds the object itself.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00423918+72",
+        "sha1": "20fa956f1fa2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423960",
@@ -7658,7 +7796,13 @@
       "confidence": "high",
       "name": "Route_WaypointAt",
       "description": "Reads one waypoint out of a route cursor: null when the cursor has no waypoint group or the index is past its count, otherwise the resolved block-1 point at that index. Every 'is there a waypoint after this one' test in the AI is a call to this with index+1.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00423b0c+38",
+        "sha1": "7ed7bb10bc7d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423b34",
@@ -9149,7 +9293,13 @@
       "name": "Hzline_DrawWithOffset",
       "description": "(self, view, yOffset, canvasOrigin): +0x34 = -view pitch (+0x10), +0x36 = view roll (+0x12); Hzline_BuildHorizon; adds yOffset >> 1 to both line ends' y; Hzline_FillSky; moves both ends down one row; Hzline_FillGround.",
       "source": "DBSIM decompile at 0042ec08; docs/retail/rendering/distance-fog-and-sky.md#the-sky--hzline",
-      "signature": "void __cdecl Hzline_DrawWithOffset(hzline *self, void *view, int yOffset, int *canvasOrigin)"
+      "signature": "void __cdecl Hzline_DrawWithOffset(hzline *self, void *view, int yOffset, int *canvasOrigin)",
+      "verified": {
+        "bytes": "0042ec08+94",
+        "sha1": "be4789db47e7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042ec68",
@@ -9157,9 +9307,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Hzline_BuildHorizon",
-      "description": "(self, canvasOrigin): writes the horizon line's screen ends to +0x38/+0x3c and +0x40/+0x44: (256 << coord shift) either side of a midpoint f*tan(pitch) from the projection centre (006c60b8/bc) along the rolled screen vertical, f = 2^006c60ac, plus +0x30 in y. A non-zero canvas origin lengthens it by its own length: both ends for a non-zero y, else the end on the x's side. +0x48/+0x4c = (sin roll, -cos roll), Q14, the band step direction; the test that would negate it compares the unsigned pitch with -0x4000 and is never true.",
+      "description": "(self, canvasOrigin): writes the horizon line's screen ends to +0x38/+0x3c (first) and +0x40/+0x44 (second): -cos roll and +cos roll times (256 << coord shift) across either side of a midpoint f*tan(pitch) from the projection centre (006c60b8/bc) along the rolled screen vertical, f = 2^006c60ac, cos(pitch) floored at 1 in Q14, plus +0x30 in y. So the first end is the left one up to a quarter turn of roll and the right one past it. A non-zero canvas origin lengthens it by its own length: both ends for a non-zero y, else the end on the x's side. +0x48/+0x4c = (sin roll, -cos roll), Q14, the band step direction; the test that would negate it compares the unsigned negated pitch (+0x34) with -0x4000 and is never true.",
       "source": "DBSIM decompile and disassembly at 0042ec68; docs/retail/rendering/distance-fog-and-sky.md#the-sky--hzline",
-      "signature": "void __cdecl Hzline_BuildHorizon(hzline *self, int *canvasOrigin)"
+      "signature": "void __cdecl Hzline_BuildHorizon(hzline *self, int *canvasOrigin)",
+      "verified": {
+        "bytes": "0042ec68+541",
+        "sha1": "b74e1d70dde6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042ee88",
@@ -9169,7 +9325,13 @@
       "name": "Hzline_FillSky",
       "description": "Paints the sky above the horizon line with the solid brush {0, colour} at the render context's +0x22c: +0x58 - 1 bands of +0x54 rows, the first in the horizon colour +0x28 and each next one entry lower, then the zenith colour beyond the last. Raster_FillRect rects when roll (+0x36) is 0, Raster_DrawPolygonReversed quads otherwise; the rolled bands' y offset uses one band fewer than the level fill's.",
       "source": "DBSIM decompile and disassembly at 0042ee88; docs/retail/rendering/distance-fog-and-sky.md#the-sky--hzline",
-      "signature": "void __cdecl Hzline_FillSky(hzline *self)"
+      "signature": "void __cdecl Hzline_FillSky(hzline *self)",
+      "verified": {
+        "bytes": "0042ee88+550",
+        "sha1": "dc23a8f92462",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042f0b0",
@@ -9177,9 +9339,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Hzline_FillGround",
-      "description": "Fills from the horizon line to the bottom of the view (render context +0x21c). With +0x71 set, which Scene_DrawTerrainPass does before its only call, one fill in the horizon colour +0x28: Raster_FillRect when level, else a polygon of the line and the view-rect corners below it through Raster_DrawPolygonDispatch. The rolled branch moves the line by its midpoint's offset from Terrain_ProjectFarEdgeAhead's point (+0x72/+0x76) into polygon slots 2-3, which every path overwrites or leaves past the vertex count. With +0x71 clear it would paint +0x60 bands of +0x5c rows down from colour +0x2c + +0x60 - 1.",
+      "description": "Fills the horizon line's ground side in one colour, bounded by the view rect at render context +0x210/+0x214/+0x218/+0x21c (left, top, right, bottom). With +0x71 set, which Scene_DrawTerrainPass sets before its Hzline_Draw call, the colour is the horizon colour +0x28: Raster_FillRect from the line to the bottom (+0x21c) when roll (+0x36) is 0; otherwise a polygon through Raster_DrawPolygonDispatch of the line's two ends (+0x38/+0x3c, +0x40/+0x44) closed through view-rect corners. When the first end is higher on screen: bottom-right if the second end's x is past the right side, then bottom-left, then top-left if the first end's x is right of the left side. Otherwise: top-right if the second end's x is short of the right side, then bottom-right, then bottom-left if the first end's x is past the left side. Hzline_BuildHorizon's ends swap sides past a quarter turn of roll, so the polygon lies on the screen-upper side when inverted; at a roll of exactly 0x8000 the line is level, the corners are top-right and bottom-right, and the outline crosses itself. The rolled branch moves the line by its midpoint's offset from Terrain_ProjectFarEdgeAhead's point (+0x72/+0x76) into polygon slots 2-3, which every path overwrites or leaves past the vertex count. With +0x71 clear it would paint +0x60 bands of +0x5c rows down from colour +0x2c + +0x60 - 1.",
       "source": "DBSIM decompile and disassembly at 0042f0b0; docs/retail/rendering/distance-fog-and-sky.md#the-sky--hzline",
-      "signature": "void __cdecl Hzline_FillGround(hzline *self)"
+      "signature": "void __cdecl Hzline_FillGround(hzline *self)",
+      "verified": {
+        "bytes": "0042f0b0+743",
+        "sha1": "bf17e46f4301",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042f398",
@@ -9845,8 +10013,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_EnergyMeterWidget",
-      "description": ".GAU offset 548 widget wrapper -> EnergyPoolGauge_Ctor: container for the Energy Meter widget (1 child from offset 564).",
-      "source": "memory project_es2_exe_recon"
+      "description": "(panel, gauBlock): the .GAU offset 548 widget wrapper. Runs GauEnergyMeter_ApplyCoordShift on the block at +0x224 (offset 548, the panel rect and its one child, the energy meter's rect at 564), allocates 0xc3 bytes and builds an EnergyPoolGauge over the block (EnergyPoolGauge_Ctor), and appends it to the panel's child array (+8, count +0x6c).",
+      "source": "memory project_es2_exe_recon",
+      "verified": {
+        "bytes": "004323e0+115",
+        "sha1": "d25538dd211d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00432454",
@@ -10011,7 +10185,7 @@
         "bytes": "00432bc8+1385",
         "sha1": "cd83b9174a8e",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -11650,8 +11824,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBarGraph_CtorBase",
-      "description": "LedBarGraph_CtorBase(obj, rect, range): precomputes span = (end - start) * 0x10000 / range at field 0x14, start at 0x18, end at 0x1c, and seeds the current fill position at 0x20 from the sign of span -- a negative span fills from the far end back, which is how the H and V variants share one implementation.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (LED gauges)"
+      "description": "LedBarGraph_CtorBase(obj, rect, range): BarGraph_Ctor over the rect and vtable BarGraphHVtable, then field 0x14 = span = (rect x1 - rect x0) * 0x10000 / range, 0x18 = rect x0, 0x1c = rect x1, and the fill position 0x20 = 0x1c when span is below 1, else 0x18.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md (LED gauges)",
+      "verified": {
+        "bytes": "004390c4+84",
+        "sha1": "41f8fc3b086c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439118",
@@ -11713,8 +11893,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBarGraph_PaintToValue",
-      "description": "Paints the bar for a 16.16 fixed-point value: fills to start + (value * span >> 16) via LedBarGraph_FillPinstripe, then installs field 0x24 as the draw colour and covers the remainder.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (LED gauges)"
+      "description": "(bar, value): paints the bar to a value over its range, working on the bar's rect at +4 {x0, y0, x1, y1}, whose x it rewrites for each fill. With a span (field 0x14) of 1 or more it fills from start (0x18) to fillEnd = start + (value * span >> 16), both included, through LedBarGraph_FillPinstripe, then the remainder fillEnd + 1 .. end (0x1c) with Raster_FillRect in field 0x24's colour. With a span below 1 it fills from end - (value * span >> 16) to end, then the remainder from start to one before the fill. The current brush's colour is swapped for the remainder and put back, and the fill's moving end is stored at 0x20.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md (LED gauges)",
+      "verified": {
+        "bytes": "004395e8+189",
+        "sha1": "c05c33ba7bfa",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004396a8",
@@ -11731,8 +11917,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBarGraph_FillPinstripe",
-      "description": "Fills the lit span of an LED bar. Walks the x range twice -- once over even columns, once over odd -- drawing a full-height line each step, with field 0x2c as the even-column colour and 0x30 as the odd. Two near-identical shades interleaved at one pixel read as a single shaded fill rather than two colours.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (LED gauges)"
+      "description": "(bar, rect {x0, y0, x1, y1}): fills an LED bar's lit span as full-height Raster_DrawLine lines from y0 to y1, walking x0..x1 inclusive twice: even columns in field 0x2c's colour, then odd columns in 0x30's. The colour goes in as a temporary {0, colour} pen in the current render context, the previous one restored after. Two near-identical shades interleaved at one pixel read as a single shaded fill.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md (LED gauges)",
+      "verified": {
+        "bytes": "00439758+217",
+        "sha1": "08e619bdd7a1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439834",
@@ -11903,7 +12095,13 @@
       "confidence": "high",
       "name": "MfdStatusScreen_Ctor",
       "description": "Constructor for the MFD's status screen, shared by mode 0 (STATUS, F1) and mode 4 (TARGET, F5) -- MfdDisplay_Ctor builds one of each. Lazily loads the `bases`, `vehicles` and `flyers` sprite banks (folder \"hba\"/\"dba\" off VideoMode_UseHiResBanks) for target silhouettes, sets the wireframe viewport to inset+(0x2d,0xd)-(0x5f,0x3a), and builds five text labels from tables at 0049bd84 (x0), 0049bd8e (y0) and 0049bd98 (font selector into {ColorSchemePanels[10] WHITE, [14] RED}). The obvious reading of the sprite-bank load is that this is the BASES.DAT type-table loader, and it has been named Bases_LoadTypeTable on that basis; it is not. What this loads is the BASES *sprite* bank for target silhouettes. The BASES *data* file is read by Base_LoadResources (00405fac), which has no relationship to this function. See docs/retail/simulation/mfd.md.",
-      "source": "docs/retail/simulation/mfd.md"
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "0043a2e0+701",
+        "sha1": "06b9153758c7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043a5a0",
@@ -12192,9 +12390,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Hud_UpdateWaypointIndicator",
-      "description": "Paint shared by gunsight children 7 and 8. The +0x45 flag picks the subject: set, NavMarker_Position and colour id 15; clear, the waypoint after the player group's route cursor with colour table entry 0, or -- on a branch gated by DAT_004d2af0, with no writer found by es2_xref.py -- the player's selected target. Takes the ground range with Vec2_DistanceBetween and the bearing as Math_Atan2Guarded(dx, dy) - 0x4000, then draws the error (mech.heading - bearing) as a filled diamond on the tape within +/-0xe38 and as a filled arrow past the rect's right or left end beyond it. Child 8 also composes 'WAYPOINT ' + cursor+1 + ': ' + Hud_WorldUnitsToMetres(range) + ' M.' into its label.",
+      "description": "Paint shared by gunsight children 7 and 8. The +0x45 flag picks the subject: set, NavMarker_Position and colour id 15 (DAT_004d3c1e); clear, the waypoint after the player group's route cursor with colour table entry 0, or -- on a branch gated by DAT_004d2af0, with no writer found by es2_xref.py -- the player's selected target. Takes the ground range with Vec2_DistanceBetween and the bearing as Math_Atan2Guarded(dx, dy) - 0x4000, then, inside a Cockpit_PushCanvasContext pair, draws the error (mech.heading - bearing) through Raster_DrawPolygonDispatch: within +/-0xe38 a filled diamond on the tape, corners bottom, left, top, right; beyond it a filled arrow past the rect's right or left end, tip first and then the base ends, the lower first on the right-hand arrow and the upper first on the left, so every outline winds clockwise. Child 8 also composes 'WAYPOINT ' + cursor+1 + ': ' + Hud_WorldUnitsToMetres(range) + ' M.' into its label.",
       "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
-      "signature": "void __cdecl Hud_UpdateWaypointIndicator(void *widget)"
+      "signature": "void __cdecl Hud_UpdateWaypointIndicator(void *widget)",
+      "verified": {
+        "bytes": "0043c3e4+1009",
+        "sha1": "89acc8ed1adb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043c7d8",
@@ -12439,8 +12643,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdRadarScreen_Paint",
-      "description": "Paints the SCANNER screen: floods the dish rect with raw palette index 0x11, blits MFD frame 15 rotated about its own corner at the plot centre by turretTwist - 0x6000, covers it with frame 14, draws the passive-range ring (ellipse outline, colour id 11) only when passive and 140000 < range, then frame 17 (reference line), frame 18 (player marker), each contact as a 2x2 fill, frame 16 over the selected target, and the four RNG:/TRG: readouts as right-aligned zero-padded four-character fields. See docs/retail/simulation/mfd-scanner.md.",
-      "source": "docs/retail/simulation/mfd-scanner.md"
+      "description": "Paints the SCANNER screen: floods the dish rect (+0x48) with raw palette index 0x11, takes the range from the display (+0x30) and sets the plot scale +0x2c = range / +0x28 >> XCoordShift, blits MFD frame 15 rotated about its own corner at the plot centre (+0x20/+0x24) by the torso twist - 0x6000, covers it with frame 14, and draws the passive-range ring only when +0x34 is 1 (passive) and 140000 < range: Raster_DrawEllipse in outline mode over centre +/- 140000 / scale, in DAT_004d3c16's colour. Then frame 17 (reference line), frame 18 (player marker), each contact ({x, y, colour} from +0x68, count +0x518) at centre + offset / scale -- one pixel through Gfx_PlotPixel with XCoordShift 0, otherwise a 2x2 Raster_FillRect -- frame 16 over the selected contact (+0x51c) offset -(2 << XCoordShift), and the RNG:/TRG: labels with the range in metres (Hud_WorldUnitsToMetres) and +0x520, each right-aligned and zero-padded to four characters. See docs/retail/simulation/mfd-scanner.md.",
+      "source": "docs/retail/simulation/mfd-scanner.md",
+      "verified": {
+        "bytes": "0043eecc+995",
+        "sha1": "795f35eb82ed",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043f2b0",
@@ -12448,8 +12658,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudScanner_Paint",
-      "description": "The front window's floating scanner repeater. Belongs to the GUNSIGHT complex, not the MFD: Gunsight_Paint and Gunsight_UpdateAndPaint reach it through the one-line Gunsight_PaintHudScanner after the child loop. Takes the SCANNER screen object (CockpitView+0x1ed's +0xd9) and the widget's own point at +0x10b (.GAU offset 1196), calls MfdRadarScreen_Update to rebuild the shared contact list, and RETURNS IMMEDIATELY when that screen is the display's current one -- so it and the F4 screen are never on screen together. Draws a 0x2e-unit red circle outline (colour id 9), the turret arc as two lines at twist +/- 0x2000, MFD frame 18 at the centre, each contact as a radius-2 black disc with a radius-1 coloured core, and MFD frame 16 over the selection. Its plot scale divides by the half-size (46 device px), not by the screen's 0x19. See docs/retail/simulation/mfd-scanner.md.",
-      "source": "docs/retail/simulation/mfd-scanner.md"
+      "description": "The front window's floating scanner repeater. Belongs to the GUNSIGHT complex, not the MFD: Gunsight_Paint and Gunsight_UpdateAndPaint reach it through the one-line Gunsight_PaintHudScanner after the child loop. Takes the SCANNER screen object (CockpitView+0x1ed's +0xd9) and the widget's own point at +0x10b (.GAU offset 1196). Does nothing when that screen is the display's current one, so it and the F4 screen are never on screen together; otherwise runs MfdRadarScreen_Update to rebuild the contact list. With the brush in outline mode (4) in DAT_004d3c12's colour, Raster_DrawEllipse over the square 0x2e << shift from the point; with the pen in the same colour, the turret arc as two Raster_DrawLine lines from the centre to (0, -half) rotated by the torso twist (vtable +0x3c of the machine at CockpitView+0x203) -/+ 0x2000; MFD bank frame 18 at centre - (3 << XCoordShift, 0). Sets the plot scale +0x2c = the range +0x30 / the half-height, so a contact at the range lands on the rim. Each contact ({x, y, colour} from +0x68, count +0x518) lands at centre + offset / scale: with XCoordShift 0 it is one pixel through Gfx_PlotPixel with the pen in its colour; otherwise, with the brush in fill mode (0), Raster_DrawEllipse over contact +/- 2 in DAT_004d3c26's colour and then over contact +/- 1 in its own. MFD frame 16 over the selected contact (+0x51c), offset -(2 << XCoordShift) on both axes.",
+      "source": "docs/retail/simulation/mfd-scanner.md",
+      "verified": {
+        "bytes": "0043f2b0+797",
+        "sha1": "c9cee6263ecb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043f5cd",
@@ -13016,9 +13232,15 @@
       "type": "function",
       "confidence": "high",
       "name": "ConsoleButtons_Ctor",
-      "description": "The console button panel under the weapon rows, from .GAU offset 468. Builds FOUR WeaponRangeSelectGadget children from the rects at 484/500/516/532 and registers each with Widget_RegisterClickable in index order -- the chain selector, LINK, TRACK, and a fourth whose rect is zero in every retail .GAU and which therefore never takes a click. Installs ConsoleButtons_OnChildClick as slot 0, and hides child 2 (TRACK) outright when the piloted machine is a flyer.",
+      "description": "(panel, gauBlock, owner): the console button panel under the weapon rows, from .GAU offset 468. Installs WeaponRangeGaugeVtable and builds FOUR WeaponRangeSelectGadget children from the rects at 484/500/516/532, each offset by the block's first pair, registering each with Widget_RegisterClickable in index order -- the chain selector, LINK, TRACK, and a fourth whose rect is zero in every retail .GAU -- with a centred Label over its rect at child +0x2c and its index at child +0x28. Sets the child count +0x68 to 4 and clears the auto-track latch +0xb3. When the piloted machine's type record sets the flyer flag (+0x50), puts child 2 (TRACK, panel +0x20) in widget state 2 (+0x1b), which hit-testing passes over, ConsoleButton_Paint skips, and ConsoleButtons_ToggleAutoTrack refuses.",
       "source": "docs/retail/simulation/cockpit-input.md",
-      "signature": "void * __cdecl ConsoleButtons_Ctor(void *panel, int *gauBlock, void *owner)"
+      "signature": "void * __cdecl ConsoleButtons_Ctor(void *panel, int *gauBlock, void *owner)",
+      "verified": {
+        "bytes": "00441dd0+408",
+        "sha1": "0fa6d360083f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00441f68",
@@ -13035,8 +13257,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConsoleButtons_ToggleAutoTrack",
-      "description": "The console buttons manager's auto-track toggle, reached from ConsoleButtons_SetStateBlock and from Sim_DispatchCommand's command 0x14 (and forced off by command 0xe). Flips the manager's +0xb3, pushes the new state into the tracking object at +0x20 and repaints it, then withdraws both 0x26 AUTO TRACKING ENGAGED and 0x27 AUTO TRACKING DISABLED from the computer's message port and posts the one the mode just became -- the same shape as Mech_ToggleRadarMode. Refuses outright when the tracking object's +0x1b is 2.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "The console buttons manager's auto-track toggle, reached from ConsoleButtons_SetStateBlock, ConsoleButtons_OnChildClick's child 2, and Sim_DispatchCommand's command 0x14 (and command 0xe while the latch is set). Refuses when the TRACK widget (+0x20) is in state 2 (+0x1b), returning 0. Otherwise flips the manager's +0xb3, copies the new state into the TRACK widget's +0x40 and repaints it through its vtable, withdraws both 0x26 AUTO TRACKING ENGAGED and 0x27 AUTO TRACKING DISABLED from the computer's message port, posts the one the mode just became -- the same shape as Mech_ToggleRadarMode -- and returns 1 in the low byte.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "00441f7c+174",
+        "sha1": "f0225048c33a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044202c",
@@ -13113,8 +13341,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponSelectGadget_Ctor",
-      "description": "Constructor for WeaponSelectGadget (object size 0x46), the weapon-row leaf without chain membership. Called directly only by PodGauge_Ctor -- a pod row cannot join a fire chain -- and as the base constructor of ChainedWeaponSelectGadget_Ctor. Class name from the descriptor record at 00443283.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "Constructor for WeaponSelectGadget, the weapon-row leaf without chain membership: Widget_CtorRect on the .GAU rect, the PanelSelectGadget then WeaponSelectGadget vtables at +0x17 with their PanelGadget mixins at +0x20, param_3 at +0x24, the slot at +0x28, and +0x1b and +0x1d zeroed. Builds the slot-number Label at +0x40 in font DAT_0049b0d4, its rect 2 to 5 device pixels in from the gadget's left edge, or from its right edge when param_5 is set, and 0 to 5 down. Writes the slot's digit, (slot + 1) % 10 + '0', to +0x44 and 0 to +0x46, so row 10 prints 0. Callers found by es2_xref: PodGauge_Ctor, and ChainedWeaponSelectGadget_Ctor as its base constructor. Class name from the descriptor record at 00443283.",
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "004421dc+438",
+        "sha1": "22b4d7086814",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00442394",
@@ -13122,8 +13356,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponSelectGadget_PaintUnderlay",
-      "description": "Blits WPN_DMG frame 0 (112x14, the row background) at the gadget's .GAU rect and prints the slot number, unless the owning gauge is dark or mid-wipe or not yet armed.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "Paints a weapon row's underlay and slot number, when CockpitView_RectCornerVisible passes the gadget. Does nothing while the owning gauge (+0x4) is dark (+0x76) or its sprite sequence at +0x6c is running (the wipe), or while the gauge's armed byte +0x8c is clear. Otherwise blits the first frame of the bitmap DAT_0049c4d4 holds (WPN_DMG frame 0, the row background) at the gadget's rect, sets the slot Label's (+0x40) colour to ColorSchemePanels[10], or [11] when +0x1b is 0, and sets its text to the digit buffer at +0x44.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00442394+141",
+        "sha1": "8c30875947c1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00442424",
@@ -13140,8 +13380,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponSelectGadget_OnClick",
-      "description": "WeaponSelectGadgetVtable +0x08 (gadget, flags): unconditionally calls the owner's (+0x24) vtable slot 0 with (owner, gadget, flags), then slot 1 of the vtable at +0x17 and slot 2 of the sub-object at +0x20.",
-      "source": "DBSIM decompile at 00442458; es2_xref.py"
+      "description": "WeaponSelectGadgetVtable +0x08 (gadget, flags): unconditionally calls the owner's (+0x24) vtable slot 0 with (owner, gadget, flags), then slot 1 of the vtable at +0x17 and slot 2 of the PanelGadget mixin at +0x20, which is Widget_ClickSound (00438e2c) -- so every press of a pod row clicks, by mouse or by number key through Widget_PressChild.",
+      "source": "DBSIM decompile at 00442458; es2_xref.py",
+      "verified": {
+        "bytes": "00442458+45",
+        "sha1": "fb9f80e46f8f",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00442488",
@@ -13176,8 +13422,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ChainedWeaponSelectGadget_OnClick",
-      "description": "ChainedWeaponSelectGadgetVtable +0x08: the same body as WeaponSelectGadget_OnClick.",
-      "source": "DBSIM decompile at 00442920; es2_xref.py"
+      "description": "ChainedWeaponSelectGadgetVtable +0x08: the same body as WeaponSelectGadget_OnClick, ending in the mixin's Widget_ClickSound -- so every press of a weapon row clicks, by mouse or by number key through Widget_PressChild.",
+      "source": "DBSIM decompile at 00442920; es2_xref.py",
+      "verified": {
+        "bytes": "00442920+45",
+        "sha1": "fb9f80e46f8f",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00442950",
@@ -13227,8 +13479,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConsoleButton_Paint",
-      "description": "Paints the chain/link/auto-track console buttons: plate from PWEAPONS frames 2 + state (frame 2 unlit, solid palette index 34 = the retail blue at RGB (77,77,182); frame 3 lit, index 14 green) blitted at the widget's own rect, then the caption. The chain button's caption comes from the three-entry Roman-numeral table at 0049c71c ('I', 'II', 'III'), a literal .rdata table unrelated to the string file. LINK and TRACK are not fixed the same way: both read ConsoleButtonCaptions (004d13d0) indexed by the widget's own kind field (param_1[10]: 1=LINK, 2=TRACK), which SimStrings_LoadAll fills from STRINGS0.STR group 4. Caption font is ColorSchemePanels[10] WHITE when unlit, [12] DARK when lit.",
-      "source": "cockpit rendering RE session"
+      "description": "Paints one chain/link/auto-track console button, nothing when CockpitView_RectCornerVisible fails or the widget is in state 2 (+0x1b). By the kind field +0x28 (0 chain, 1 LINK, 2 TRACK): plate from frame 2 + n of the bank at 0049c4d0 (PWEAPONS; frame 2 unlit, solid palette index 34 = the retail blue at RGB (77,77,182); frame 3 lit, index 14 green), n being the state byte +0x1b for chain and LINK and the latch +0x40 for TRACK, blitted at the widget's own rect, then the caption into the label at +0x2c in ColorSchemePanels[10] WHITE when n is 0 and [12] DARK otherwise. The chain button's caption comes from the three-entry Roman-numeral table at 0049c71c ('I', 'II', 'III') indexed by the panel's chain number +0xb1, a literal .rdata table unrelated to the string file. LINK and TRACK read ConsoleButtonCaptions (004d13d0) indexed by the kind field, which SimStrings_LoadAll fills from STRINGS0.STR group 4.",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "00442c88+266",
+        "sha1": "0c56e8fcc658",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00442d94",
@@ -13728,8 +13986,14 @@
       "type": "function",
       "confidence": "high",
       "name": "EnergyPoolGauge_Ctor",
-      "description": "This is the Master Energy Pool meter (reactor charge), not the shield meter. Called only by Gau_EnergyMeterWidget (004323e0) with .GAU offset 0x224=548, whose child rect is at 564 -- in OUTLAW.GAU that rect is (91,198)-(115,205), directly under the TRACK button, which is where retail draws the blue pinstripe bar. Builds an LED bar with value range 0x400, writing HudColorTable ids 6 and 5 into the pinstripe colour fields 0x2c/0x30 and id 19 into the remainder colour 0x24; those resolve to palette indices 98/97/16 = (0,116,204), (0,40,160), (0,0,0), i.e. blue. Class identity is from the binary's own class-name table, which pairs 'EnergyPoolGauge' immediately with 'LEDBarGraphV' (file offset 280429) and 'ShieldsGauge' with 'ShieldsSelectGadget' (279148): the LED bar class is EnergyPoolGauge, and ShieldsGauge is a different class entirely (see ShieldsGauge_Ctor).",
-      "source": "cockpit widget mapping"
+      "description": "Constructor for EnergyPoolGauge, the Master Energy Pool meter (reactor charge), not the shield meter; Gau_EnergyMeterWidget (read) calls it on .GAU offset 548 already shifted to device pixels. PanelGauge_Ctor, vtable EnergyPoolGaugeVtable, a GLViewport stored at DAT_004d1aec. Copies the child rect's corners at block +0x10..+0x1c (.GAU 564, x0, y0, x1, y1) offset by the panel rect's origin (+0, +4) into +4..+0x10, sets block +0x20 to 0, and builds an LED bar over that rect at +0xb5 (LedBarGraph_Ctor, range 0x400), its even and odd pinstripe colours (+0x2c, +0x30) HudColorTable ids 6 and 5 and its remainder colour (+0x24) DAT_004d3c26's. The binary's class-name table pairs 'EnergyPoolGauge' with 'LEDBarGraphV' (file offset 280429) and 'ShieldsGauge' with 'ShieldsSelectGadget' (279148).",
+      "source": "cockpit widget mapping",
+      "verified": {
+        "bytes": "00444d5c+451",
+        "sha1": "1bce6d98e92a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00444f20",
@@ -13789,7 +14053,13 @@
       "confidence": "high",
       "name": "GauEnergyMeter_ApplyCoordShift",
       "description": "(rects): VideoMode_ShiftRect on the first rect, then shifts the one rect after it by VideoMode_XCoordShift / VideoMode_YCoordShift. Gau_EnergyMeterWidget runs it on the .GAU block at +0x224 (the panel and its one child).",
-      "source": "DBSIM decompile at 00445110"
+      "source": "DBSIM decompile at 00445110",
+      "verified": {
+        "bytes": "00445110+61",
+        "sha1": "bf06e9be248f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004451f0",
@@ -15224,8 +15494,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_Update",
-      "description": "Vtable slot 1: services a queued map click, advances the half-second blink, re-fonts the order rows whose selection changed, and redraws the map when anything moved it.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Vtable slot 1, once a frame on the current page. Drains a queued list click (+0x14d) through HddCommandScreen_HandleListClick; steps DAT_0049d6b8 through 0-3 on each rise of coarse-tick bit 0x10; every 0x1e coarse ticks runs HddCommandScreen_BlinkTick; resolves an armed map click (+0x11c) through HddCommandScreen_PickPilot when no pick is wanted (+0x103) or no pilot is selected (+0x105), else HddCommandScreen_PickTarget. Clears the selected pilot's pick flags +0xa5 and +0xa6 (record +0x85 + slot * 0x2a) when its saved kind +0xa7 is 1 and either the saved unit +0x9d with +0xa5 set or the current unit +0xa1 with +0xa6 set is destroyed (+0x99). Then, while +0xc is 1 or 2: on DAT_0049d6ac repaints the selected pilot's marker gadget (Widget_PaintUnlessByte37); re-fonts the previous (+0x81) and new (+0x5d) order rows when the order changed, or all of them through HddCommandScreen_RefreshOrders when +0x139 is set; clears the message row on +0x144; and with DAT_0049d6ae set floods the viewport in DAT_004d3c26 and runs HddCommandScreen_DrawMap.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044c960+733",
+        "sha1": "1c80972cd2ca",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044cc40",
@@ -15332,7 +15608,13 @@
       "confidence": "high",
       "name": "HddMap_ToViewport",
       "description": "Adds the map viewport origin and half-extent to a projected point.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044d224+58",
+        "sha1": "13e335de117b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d260",
@@ -15341,7 +15623,13 @@
       "confidence": "high",
       "name": "HddMap_FromViewport",
       "description": "The inverse of HddMap_ToViewport.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044d260+58",
+        "sha1": "778f0ba77c55",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d29c",
@@ -15445,8 +15733,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_HitTestMarker",
-      "description": "Turns a map viewport point into world units and returns the first live object within the marker click radius of it.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Turns a map viewport point into world units, stored as the map cursor at +0x374/+0x378 with the scale at +0x37c, and returns the first object in the global live object list whose position lies strictly inside the square of half-side (5 << XCoordShift) >> 1 device pixels, in world units, about it, or 0. The test reads the object's position and nothing else of it.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044d860+361",
+        "sha1": "40efdae9f19d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044d9cc",
@@ -15500,7 +15794,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_CommitPick",
-      "description": "Promotes the selected pilot's pending map pick (slot +0x85 + pilot*0x2a) to its committed one -- the point triple or the subject pointer, per the order's pick kind -- and latches that kind alongside it, so the following HddCommandScreen_FillOrderRecord knows which to copy. XMIT calls the pair in that order. Args derived from disassembly: [EBP+8] only.",
+      "description": "XMIT's first call, ahead of HddCommandScreen_FillOrderRecord. On the selected pilot's pick record (+0x85 + pilot * 0x2a): for an order that wants a pick (+0x103) copies the current pick's half its kind (+0xab) names -- the point +0x91..+0x99 to +0x85..+0x8d for 0, the unit +0xa1 to +0x9d for 1 -- clears +0xa6, copies the kind to +0xa7 and sets +0xa5; for any other order clears +0xa5. Clears +0x104 either way. Args derived from disassembly: [EBP+8] only.",
       "source": "docs/retail/simulation/heads-down-display.md",
       "signature": "void __cdecl HddCommandScreen_CommitPick(int commandScreen)",
       "verified": {
@@ -15609,8 +15903,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_AddObjectMarker",
-      "description": "One object's map marker: icon from its target class and its group's side byte, size from HddMarker_SetSize, and for the two structure classes the colour and reference size its range falloff draws a box with.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "One object's map marker, taking the gadget at the screen's count +0x10a. The class (+0x1a8) and the group's side byte (+0x45, +0x12) pick the icon (+0x24): class 0 takes 0x2a for the cockpit's own machine, 0x33 + 9 * Squad_IndexOf for a squadmate, 0x21 for another friendly and 0x18 hostile, size 5 << XCoordShift; class 2 takes 6 or 0xf at the same size; classes 1 and 3 go by the type record (+0x1f2): with +0x32 set 0x58/0x59 at 3 << shift, with silhouette +0x28 one of 1, 2, 6, 7, 10, 11, 15, 19-24, 26, 28 3/5 at 7 << shift, otherwise 2/4 at 9 << shift. Those two classes are ranged (+0x4c = 1): +0x4d takes 9 << shift, 7 or 3 (only the first shifted), +0x4f 0, +0x57 25000, and +0x51 the colour, DAT_004d3c0a (id 5) friendly and DAT_004d3c12 (id 9) hostile, except a hostile unlisted structure, which stores palette index 4 itself. Any other class takes no gadget. Stores the object at +0x38 and the class at +0x48; HddMarker_SetSize sets the extent.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044e080+650",
+        "sha1": "8f8d145063cf",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044e30c",
@@ -15618,8 +15918,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddCommandScreen_DrawMap",
-      "description": "Everything inside the command display's map viewport, in order: flood, re-centre on the player plus the pan offset, clamp, terrain raster, the 1200 m grid, the mission border rect, then every marker with the selected pilot's link line and the chosen unit's box.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Everything inside the command display's map viewport, in order: flood in DAT_004d3c26, re-centre on the cockpit's machine plus the pan offset, clamp (HddMap_ClampAndInstallView), terrain raster, the 1200 m grid in DAT_004d3c16, the mission border rect in brush mode 4 and DAT_004d3c12, each entry of the list at DAT_004aaafc (count DAT_004aab00) through its vtable slot 0 with the word its +0x34 record's +8 points at set to 1 around the call, the nav marker's gadget when NavMarker_Position has one, then every marker through HddCommandScreen_DrawMarker, holding back the selected squadmate's (or, with none selected, the player's) to paint last, flagged when it is the squadmate's. Last, for the marker whose object is the chosen unit (+0x15c), a brush-mode-4 frame in DAT_004d3c20 (id 16) from the marker's centre less its drawn half (+0x4a) less 2 to its centre plus +0x4a plus 1, on both axes.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044e30c+1567",
+        "sha1": "f87fdac28af5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044e92c",
@@ -15628,7 +15934,13 @@
       "confidence": "high",
       "name": "HddCommandScreen_DrawMarker",
       "description": "(screen, marker, isSelectedPilot): paints one marker of the command display's map. Its point is the marker's object's (+0x38) position (+0x26/+0x2a), or its own +0x3c/+0x40/+0x44 with no object. An object flagged +0xa4 or +0x99 on a group whose side (+0x12) is non-zero is not drawn; one with +0x95 clear on a group with a side or awaiting deployment (+0x14) blinks with coarse-tick bit 0x20 and is drawn at its +0x1aa point instead (not at all when +0xa7 is set). Projects the point into the map viewport (HddMap_ToViewport) and moves the marker there (0045242c). With isSelectedPilot and an object it draws the link line to the armed order's pick in the pilot's HudColorTable colour, then returns before painting while a pilot is selected (screen +0x381) and the blink flag 0049d6ad is set. A marker with +0x4c set records its distance from screen +0x18 at +0x53. Paints through slot 0 of the vtable whose pointer is at marker +0x17. HddCommandScreen_DrawMap calls it for every marker. See docs/retail/simulation/heads-down-display.md.",
-      "source": "DBSIM decompile at 0044e92c"
+      "source": "DBSIM decompile at 0044e92c",
+      "verified": {
+        "bytes": "0044e92c+1162",
+        "sha1": "392c64950d82",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044edb8",
@@ -15766,7 +16078,13 @@
       "confidence": "high",
       "name": "HddMarker_Ctor",
       "description": "One of the command display map's 140 marker gadgets. Lazily loads the `icons` sprite bank into DAT_0049d6b4, folder selected by VideoMode_PanelMode == 3.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044f130+99",
+        "sha1": "a97be057a1c5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044f194",
@@ -15774,8 +16092,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddMarker_Paint",
-      "description": "Paints one map marker: eight-octant heading frame plus its nudge for a HERC or flyer, a range-scaled box for a structure far from the map centre, and the scanner circle for a radar structure.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Paints one map marker gadget. With no object (+0x38) it blits its icon (+0x24). Its object's class (+0x1a8) picks the rest: 0 and 2 (HERC, flyer) bucket the heading (+0x10) into eight octants, add DAT_004d1d54/DAT_004d1d5c's nudge and, unless destroyed (+0x99), DAT_0049d67c's frame offset; 1 and 3 (structure, ground vehicle) take the base frame; any other class returns without painting. A ranged marker (+0x4c) divides +0x57 (25000) << 7 by the distance HddCommandScreen_DrawMarker left at +0x53: below +0x4f it plots one pixel in +0x51, below the icon bitmap's +4 word it fills a box of that size centred on the object in DAT_004d3c20 (id 16) and frames it in +0x51 through GLRect_Fill twice, and otherwise it blits the icon. Leaves half the drawn size at +0x4a: half the box, 0 for the pixel, (+0x4d >> 1) << XCoordShift for an icon. A class-1 object with its scanner on (+0x96) and not destroyed is then ringed through Raster_DrawEllipse in brush mode 4 and +0x51, radius 140000 << 8 over the map scale, about the object's point less a quarter of the drawn size on each axis.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044f194+1042",
+        "sha1": "5ac814191c6b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044f5a8",
@@ -15819,8 +16143,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HddMarker_SetSize",
-      "description": "Sets a marker gadget's square extent and the half-extent its icon is drawn back by, so the icon lands centred on the object.",
-      "source": "docs/retail/simulation/heads-down-display.md"
+      "description": "Sets a marker gadget's rect far corner (+0x08/+0x0c) to the size given, which with the zeroed near corner is the extent Widget_MoveTo keeps, and the half-size +0x26/+0x2a its icon is drawn back by, so the icon lands centred on the object.",
+      "source": "docs/retail/simulation/heads-down-display.md",
+      "verified": {
+        "bytes": "0044f634+27",
+        "sha1": "9104234f1308",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044f650",
@@ -18976,8 +19306,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Joystick_ReadWithResponse",
-      "description": "The joystick device object's vtable +4: normalises, applies the deadzone and the response curve selected by the object's +0x28, then expands the button mask and hat bits into the 0x1d-byte block at DAT_004d24b0. A joystick is always built with mode 1 (Joystick_InitAndSeedBindings passes it to JoystickDevice_Ctor), the SQUARED curve: deadzone 0x19 SUBTRACTED to give +/-103, then |x|^2 scaled by 1/((103*103)>>8), so full deflection is 103*103/41 = 258, just over the 0x100 the control laws clamp at. Mode 0 is linear; mode 2 reads through Joystick_ReadAxisSigns, whose -1/0/+1 axes the deadzone then zeroes. Neither is used by the joystick; reading the deadzone as mode 0's linear rescale puts full deflection on 0x80 and halves every downstream response.",
-      "source": "docs/retail/simulation/joystick-input.md"
+      "description": "The joystick device object's vtable +4: normalises, applies the deadzone and the response curve selected by the object's +0x28, then expands the button mask and hat bits into the 0x1d-byte block at DAT_004d24b0. A joystick is always built with mode 1 (Joystick_InitAndSeedBindings passes it to JoystickDevice_Ctor), the SQUARED curve: deadzone 0x19 SUBTRACTED to give +/-103, then |x|^2 scaled by 1/((103*103)>>8), so full deflection is 103*103/41 = 258, just over the 0x100 the control laws clamp at. Mode 0 is linear; mode 2 reads through Joystick_ReadAxisSigns, whose -1/0/+1 axes the deadzone then zeroes. Neither is used by the joystick; reading the deadzone as mode 0's linear rescale puts full deflection on 0x80 and halves every downstream response. Last, it compares the block with its copy at DAT_004d24cd, sets DAT_004d24ea when they differ, refreshes the copy, and returns the block's address.",
+      "source": "docs/retail/simulation/joystick-input.md",
+      "verified": {
+        "bytes": "0045c314+499",
+        "sha1": "f2d03f0c52ef",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045c508",
@@ -19647,8 +19983,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_HandleWindowKey",
-      "description": "(code): 0x21c ([Alt+Enter]) runs Video_ToggleFullscreen unless a tape is playing back with 004d25b0 set; 0x430 ([Ctrl+B]) calls __break (INT3) when 004d25b0 is set. Returns 1 for either code, 0 otherwise. Input_BuildPlayerDevice and Sim_DispatchCommand call it.",
-      "source": "DBSIM decompile and disassembly at 0045fd60"
+      "description": "(code): 0x21c ([Alt+Enter]) runs Video_ToggleFullscreen unless a tape is playing back with 004d25b0 set; 0x430 ([Ctrl+B]) calls __break (INT3) when 004d25b0 is set. Returns 1 for either code, 0 otherwise. It keeps no state, so every 0x21c toggles, an auto-repeat's included. Callers found by es2_xref: Input_BuildPlayerDevice and Sim_DispatchCommand.",
+      "source": "DBSIM decompile and disassembly at 0045fd60",
+      "verified": {
+        "bytes": "0045fd60+75",
+        "sha1": "0cb64c0ff647",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0045fdac",
@@ -24640,7 +24982,13 @@
       "confidence": "high",
       "name": "Memory_LargestFreeBlock",
       "description": "Returns the size of the largest block on the pool's free list minus 0x6c, clamped to 0. The DBSIM copy of VSHELL's Memory_LargestFreeBlock.",
-      "source": "DBSIM decompile and disassembly at 00476dd0"
+      "source": "DBSIM decompile and disassembly at 00476dd0",
+      "verified": {
+        "bytes": "00476dd0+48",
+        "sha1": "24580a169732",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00476e00",
@@ -24778,7 +25126,13 @@
       "confidence": "high",
       "name": "Mem_New",
       "description": "The global operator new, the DBSIM copy of VSHELL's Mem_New. A size below the pool's free byte count (006bb388, pool 006bb37c + 0xc) and no larger than the pool's largest free block less 0x6c (00476dd0) is carved from the pool by Memory_Alloc; anything else goes to Mem_HeapAlloc. Both paths hand back zeroed memory, which is what settles what an uninitialised object field holds at construction. Mem_Delete is its pair; Mem_NewArray is the same with 8 bytes added.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "00477390+82",
+        "sha1": "1e661b3dcb8c",
+        "scope": "callees",
+        "via": "decompile"
+      }
     },
     {
       "address": "004773e4",
@@ -25194,8 +25548,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Key_WndProcHook",
-      "description": "The keyboard filter in the same ten-slot table ahead of MainWndProc as Mouse_WndProcHook. Catches WM_KEYDOWN/UP (0x100/0x101) and WM_SYSKEYDOWN/UP (0x104/0x105), translates the virtual key through the 223-entry scancode table at 004a1104, ORs in 0x800 for Shift, 0x200 for Alt, 0x400 for Ctrl and 0x80 for a key-up, then offers the code to the ten subscribers at 006bb93c; whatever none of them claims goes into the 256-entry ring at 006bb734.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "The keyboard filter in the same ten-slot table ahead of MainWndProc as Mouse_WndProcHook. Catches WM_KEYDOWN/UP (0x100/0x101) and WM_SYSKEYDOWN/UP (0x104/0x105), translates the virtual key through the 223-entry scancode table at 004a1104, ORs in 0x800 for Shift, 0x200 for Alt, 0x400 for Ctrl and 0x80 for a key-up, then offers the code to the ten subscribers at 006bb93c; whatever none of them claims goes into the 256-entry ring at 006bb734 unless the ring is full. It reads the message and wParam and never lParam, so each auto-repeat WM_KEYDOWN becomes one more code, the same as the first. An unmapped key with Alt down returns 1 unprocessed; 0x20f, 0x401 and 0x201 call Video_LeaveFullscreen instead of becoming codes; a ringed 0x44 (F10) returns 1, every other ringed code 0.",
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "00477ae0+346",
+        "sha1": "0a7e6bc2badb",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00477c3c",
@@ -31335,8 +31695,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_FillSpanList",
-      "description": "(spans, origin): copies a span list {int16 top row, int16 row count, {x0, x1} per row} to PTR_DAT_004a36a9 translated by origin -- plus (clipBlock+0x20c - +0x21c, +0x210 - +0x220) when clipBlock+0x208 is set -- and fills it with the brush at clipBlock+0x228: mode 0 through g_RasterRoutines slot 0 with the brush colour (a type-4 colour resolved through the table at 004a4fbd), mode 6 through the routine at 004a57c8; other modes return. Clips per the clip mode at clipBlock+0x204: 0 none, 1 the rect at +0x20c (SpanList_ClipToRect), otherwise each region in the block's list.",
-      "source": "DBSIM decompile at 00486928"
+      "description": "(spans, origin): copies a span list {int16 top row, int16 row count, {x0, x1} per row} to PTR_DAT_004a36a9 translated by origin -- plus (clipBlock+0x20c - +0x21c, +0x210 - +0x220) when clipBlock+0x208 is set -- and fills it with the brush at clipBlock+0x228: mode 0 through g_RasterRoutines slot 0 with the brush colour (a type-4 colour resolved through g_RasterColourRamps), mode 6 through g_RasterRoutines_RemapSpans with the brush's data; other modes return. Clips per the clip mode at clipBlock+0x204: 0 none, 1 the rect at +0x20c (SpanList_ClipToRect), otherwise each region in the block's list, a type 0 region through SpanList_ClipToRect and a type 2 through SpanRegion_Intersect, filling each piece.",
+      "source": "DBSIM decompile at 00486928",
+      "verified": {
+        "bytes": "00486928+458",
+        "sha1": "3373196ac8cc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00486af4",
@@ -31549,8 +31915,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawEllipse",
-      "description": "(rect): rasterizes the ellipse inscribed in rect {x0, y0, x1, y1} with a midpoint algorithm into a span list at PTR_DAT_004a36ad and fills it with Raster_FillSpanList about the rect's centre. The brush at clipBlock+0x228 decides the shape: mode 0 fills the ellipse; mode 4 draws a one-pixel ring as two span passes with the mode switched to 0 between them and restored after; any other mode draws nothing. A zero half-width or half-height draws a vertical or horizontal line through Raster_DrawLine instead.",
-      "source": "DBSIM decompile at 00488070"
+      "description": "(rect): rasterizes the ellipse inscribed in rect {x0, y0, x1, y1} -- centre ((x0 + x1) >> 1, (y0 + y1) >> 1), half-extents a = |x1 - x0| >> 1 and b = |y1 - y0| >> 1 -- with a midpoint algorithm into a span list at PTR_DAT_004a36ad and fills it with Raster_FillSpanList about the centre. The list has 2b rows starting b above the centre; each y from b down to 1 writes its {-x, x} span from both ends of the list at once, so the filled shape is 2a + 1 wide by 2b tall and sits half a row above the centre. The brush at clipBlock+0x228 decides the shape: mode 0 fills the ellipse; mode 4 draws a one-pixel ring as two span passes with the mode switched to 0 between them and restored after; any other mode draws nothing. A zero half-width or half-height draws a vertical or horizontal line through Raster_DrawLine instead, in the brush colour through a temporary pen at +0x224.",
+      "source": "DBSIM decompile at 00488070",
+      "verified": {
+        "bytes": "00488070+1615",
+        "sha1": "b1114be302a6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004886bf",
@@ -31833,8 +32205,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gfx_PlotPixel",
-      "description": "Plots one pixel at an {x, y} pair through the current drawing context (004a362c), clipped to its rect or clip-region list. The DBSIM copy of VSHELL's Gfx_PlotPixel.",
-      "source": "DBSIM decompile and disassembly at 004894e0"
+      "description": "Plots one pixel at an {x, y} pair with the pen at clipBlock+0x224 of the current drawing context (004a362c): pen mode 0 through g_RasterRoutines_PutPixel in its colour (a type-4 colour resolved through g_RasterColourRamps), mode 2 through g_RasterRoutines_RemapPixel; any other mode plots nothing. Translated by (+0x20c - +0x21c, +0x210 - +0x220) when +0x208 is set, then clipped per the clip mode at +0x204: 0 none, 1 the rect +0x20c..+0x218 inclusive, otherwise each region of the block's list (type 0 a rect, type 2 a span region), plotting through the first that contains it. The DBSIM copy of VSHELL's Gfx_PlotPixel.",
+      "source": "DBSIM decompile and disassembly at 004894e0",
+      "verified": {
+        "bytes": "004894e0+413",
+        "sha1": "2c4ce5b8f154",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00489680",

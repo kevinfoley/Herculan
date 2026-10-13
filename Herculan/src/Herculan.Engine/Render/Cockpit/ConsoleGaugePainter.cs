@@ -53,7 +53,9 @@ internal static class ConsoleGaugePainter {
 		for (int i = 0; i < slots; i++) {
 			var rect = weapons[i];
 			var row = i < state.Weapons.Count ? state.Weapons[i] : WeaponRowState.Empty;
-			if (!row.Powered) {
+
+			// A slot no mount claims draws nothing, plate and number included; see WeaponRowState.
+			if (!row.Powered || row.Kind == WeaponMountKind.None) {
 				continue;
 			}
 
@@ -99,7 +101,8 @@ internal static class ConsoleGaugePainter {
 				fillRect(x0, y0, x1 + 1, top + PodLabelBottom * S + 1, plate);
 			}
 
-			drawText(font, (i + 1).ToString(), left + 6, top);
+			// One digit, as WeaponSelectGadget_Ctor (004421dc) writes it: row 10 is the [0] key's and prints 0.
+			drawText(font, ((i + 1) % 10).ToString(), left + 6, top);
 			if (row.Name is { Length: > 0 } name) {
 				drawText(nameFont, name, left + 22, top);
 			}
@@ -286,7 +289,9 @@ internal static class ConsoleGaugePainter {
 		Button(new string('I', Math.Clamp(state.ChainGroup + 1, 1, 3)), gau.ChainButton,
 			Held(ConsoleButton.Chain));
 		Button(strings?.Text(CaptionGroup, 1), gau.LinkButton, Held(ConsoleButton.Link));
-		Button(strings?.Text(CaptionGroup, 2), gau.AutoTrackButton, state.AutoTrack);
+		if (!state.TrackHidden) {
+			Button(strings?.Text(CaptionGroup, 2), gau.AutoTrackButton, state.AutoTrack);
+		}
 	}
 
 	/// <summary>

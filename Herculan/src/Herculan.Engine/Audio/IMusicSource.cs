@@ -101,7 +101,7 @@ public abstract class MusicSourceBase : IMusicSource {
 	/// </summary>
 	protected abstract (MusicTrack Track, Action<CancellationToken> Produce)? Prepare(int track);
 
-	/// <summary>Waits for the current track's producer to finish. For tests and the cache warm-up.</summary>
+	/// <summary>Waits for the current track's producer to finish. For tests.</summary>
 	internal bool WaitForCurrent(TimeSpan timeout) => _worker?.Wait(timeout) ?? true;
 
 	private void Abandon() {

@@ -1,6 +1,7 @@
 using Herculan.Engine.Host.Settings;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
+using Herculan.Engine.Shell;
 using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -28,6 +29,8 @@ sealed class FrontEndWindow : IDisposable {
 	private readonly HostMenuBar _menuBar;
 	private readonly string _imguiFontPath;
 	private readonly string? _screenshotPath;
+	private readonly GamepadHostButtons _padButtons = new();
+	private IInputContext? _input;
 	private ScaledImGui? _imgui;
 	private int _framesRendered;
 
@@ -46,7 +49,8 @@ sealed class FrontEndWindow : IDisposable {
 			PrintScreenFiles.Attach(_window, session);
 		}
 		_menuBar = new HostMenuBar(session.Localization, new TweaksMenu(TweakSettings.Current, session.Localization),
-			new SettingsWindow(session, () => RequestRestart(restartRequested)));
+			new SettingsWindow(session, () => RequestRestart(restartRequested)),
+			new ControllerWindow(session.Localization, () => ShellWorkingFiles.DataDirectory(session.InstallRoot)));
 		_window.View.FocusChanged += focused => {
 			HasFocus = focused;
 			FocusChanged?.Invoke(focused);
@@ -98,6 +102,8 @@ sealed class FrontEndWindow : IDisposable {
 		_imgui = new ScaledImGui(gl, _window, input, _imguiFontPath);
 		Mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
 		Keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
+		_input = input;
+		_menuBar.Controller.Attach(input);
 	}
 
 	/// <summary>
@@ -120,14 +126,39 @@ sealed class FrontEndWindow : IDisposable {
 	/// </summary>
 	public void ToggleFullScreen() => _window.ToggleFullScreen(Mouse);
 
-	/// <summary>[Esc] for the menu bar: closes whichever of its windows is open, else hides an empty bar, else raises it.</summary>
+	/// <summary>A menu-bar key press: closes whichever of its windows is open, else hides an empty bar, else raises it.</summary>
 	public void MenuBarEscape() {
 		if (!_menuBar.BackOut()) {
 			_menuBar.Show();
 		}
 	}
 
-	public void BeginFrame(double delta) => _imgui?.Update((float)delta);
+	/// <summary>Whether the menu bar or one of its windows is up.</summary>
+	public bool MenuBarUp => _menuBar.Up;
+
+	/// <summary>
+	/// Raises the first start's <see cref="WelcomeDialog"/>, unless it has been dismissed before or this run is a
+	/// <c>--screenshot</c> capture, which draws no menu bar windows.
+	/// </summary>
+	public void OfferWelcome() {
+		if (_screenshotPath == null) {
+			_menuBar.Welcome.Offer();
+		}
+	}
+
+	/// <summary>
+	/// The top of a frame: ImGui's, and a gamepad's Back, which raises the menu bar or backs out of it as [Shift+Esc]
+	/// does (<see cref="GamepadHostButtons"/>). The front end has no pause, so Start does nothing here.
+	/// </summary>
+	public void BeginFrame(double delta) {
+		_imgui?.Update((float)delta);
+		if (_input != null && _screenshotPath == null) {
+			_padButtons.Update(_input);
+			if (_padButtons.BackPressed) {
+				MenuBarEscape();
+			}
+		}
+	}
 
 	/// <summary>The menu bar and its windows over whatever the frame drew, never in a <c>--screenshot</c> capture.</summary>
 	public void DrawMenuBar() {

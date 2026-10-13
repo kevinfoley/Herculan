@@ -77,11 +77,11 @@ public class MissionFile {
 	/// </summary>
 	public byte[]? TruncatedRow17Tail { get; set; }
 
-	public VariantValue8? GetVariant(short guid) => FindByGuid(Variants, guid);
-	public MapPoint22? GetPoint(short guid) => FindByGuid(Points, guid);
-	public Heading10? GetHeading(short guid) => FindByGuid(Headings, guid);
-	public WaypointGroup? GetWaypointGroup(short guid) => FindByGuid(WaypointGroups, guid);
-	public TriggerArea12? GetTriggerArea(short guid) => FindByGuid(TriggerAreas, guid);
+	public VariantValue8? GetVariant(short guid) => FindReplaced(Variants, guid, r => r.ConditionRef);
+	public MapPoint22? GetPoint(short guid) => FindReplaced(Points, guid, r => r.ConditionRef);
+	public Heading10? GetHeading(short guid) => FindReplaced(Headings, guid, r => r.ConditionRef);
+	public WaypointGroup? GetWaypointGroup(short guid) => FindReplaced(WaypointGroups, guid, r => r.ConditionRef);
+	public TriggerArea12? GetTriggerArea(short guid) => FindReplaced(TriggerAreas, guid, r => r.ConditionRef);
 	public MissionAction82? GetAction(short guid) => FindByGuid(Actions, guid);
 	public ActionTimer30? GetActionTimer(short guid) => FindByGuid(ActionTimers, guid);
 	public MechRosterEntry144? GetMech(short guid) => FindByGuid(Mechs, guid);
@@ -91,8 +91,18 @@ public class MissionFile {
 	public MissionGroup164? GetGroup(short guid) => FindByGuid(Groups, guid);
 
 	/// <summary>
-	/// The first record of a row with the GUID, or null for -1. Each row's refs name records of one
-	/// specific other row, so the search is per row.
+	/// Rows #3, #6, #7, #8 and #9, where a later surviving record of a GUID replaces the earlier one
+	/// (docs/retail/formats/msn-mission-file.md#repeated-guids): the last record with the GUID that
+	/// carries no condition, which is what the load keeps when every conditioned record of the GUID
+	/// fails. Null for -1, or when every record with the GUID is conditioned.
+	/// </summary>
+	private static T? FindReplaced<T>(T[]? rows, short guid, Func<T, short> condition) where T : MapObject =>
+		guid == -1 ? null : rows?.LastOrDefault(r => r.GUID == guid && condition(r) == -1);
+
+	/// <summary>
+	/// Rows #10 to #16, where a later record of a GUID overlays its set fields onto the earlier one: the
+	/// first record with the GUID, which those overlays are not merged into. Null for -1. Each row's refs
+	/// name records of one specific other row, so the search is per row.
 	/// </summary>
 	private static T? FindByGuid<T>(T[]? rows, short guid) where T : MapObject =>
 		guid == -1 ? null : rows?.FirstOrDefault(r => r.GUID == guid);

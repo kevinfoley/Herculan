@@ -79,6 +79,26 @@ public class CdMusicTests {
 	}
 
 	/// <summary>
+	/// A track counts as cached only when its file holds the whole track: one cut short, or only an
+	/// interrupted write's <c>.partial</c>, is ripped again.
+	/// </summary>
+	[Fact]
+	public void OnlyAWholeTrackCountsAsCached() {
+		string directory = Directory.CreateTempSubdirectory("herculan-music").FullName;
+		try {
+			var tracks = new Dictionary<int, (long, long)> { [2] = (0, 10), [3] = (10, 10), [4] = (20, 10) };
+			WaveFileMusicSource.Write(WaveFileMusicSource.PathFor(directory, 2), Filled(2, 10 * MusicTrack.FramesPerSector));
+			WaveFileMusicSource.Write(WaveFileMusicSource.PathFor(directory, 3), Filled(3, 9 * MusicTrack.FramesPerSector));
+			File.WriteAllBytes(WaveFileMusicSource.PathFor(directory, 4) + ".partial", new byte[100]);
+
+			Assert.Equal(new[] { 3, 4 }, CdRipMusicSource.UncachedTracks(tracks, directory));
+			Assert.Equal(new[] { 2, 3, 4 }, CdRipMusicSource.UncachedTracks(tracks, Path.Combine(directory, "other-disc")));
+		} finally {
+			Directory.Delete(directory, recursive: true);
+		}
+	}
+
+	/// <summary>
 	/// The queue fills in whole blocks and wraps from the last frame to the first with nothing
 	/// between, which is the loop.
 	/// </summary>

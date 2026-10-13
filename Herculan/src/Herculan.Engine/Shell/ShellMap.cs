@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Msn.Script;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
@@ -139,7 +140,7 @@ public sealed partial class ShellMap {
 		byte[] mec = File.Exists(mecPath) ? File.ReadAllBytes(mecPath) : Array.Empty<byte>();
 		int squadCount = mec.Length >= 4 ? BitConverter.ToInt16(mec, 2) : 0;
 
-		string formsPath = Path.Combine(installRoot, MissionLoader.DataFolderName, MechFormationTable.ResourceName);
+		string formsPath = CaseInsensitivePath.Combine(installRoot, MissionLoader.DataFolderName, MechFormationTable.ResourceName);
 		var forms = File.Exists(formsPath) ? MechFormationTable.Parse(File.ReadAllBytes(formsPath)) : null;
 
 		int zone = script.ZoneIndex;

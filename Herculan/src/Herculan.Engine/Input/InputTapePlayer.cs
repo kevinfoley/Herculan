@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Dbsim;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
@@ -141,7 +142,7 @@ public sealed class InputTapePlayer {
 	/// <c>time() % count</c>. Null when the list is missing or empty.
 	/// </summary>
 	public static string? PickDemo(string tapesDirectory) {
-		string listPath = Path.Combine(tapesDirectory, DemoListFileName);
+		string listPath = CaseInsensitivePath.Combine(tapesDirectory, DemoListFileName);
 		if (!File.Exists(listPath)) {
 			return null;
 		}
@@ -192,13 +193,13 @@ public sealed class InputTapePlayer {
 
 			byte[] contents = Tape.Bundle[i];
 			if (names[i] == Prefs.FileName) {
-				contents = ReconcilePreferences(contents, Path.Combine(directory, names[i]));
+				contents = ReconcilePreferences(contents, CaseInsensitivePath.Combine(directory, names[i]));
 			}
 
-			File.WriteAllBytes(Path.Combine(directory, names[i]), contents);
+			File.WriteAllBytes(CaseInsensitivePath.Combine(directory, names[i]), contents);
 		}
 
-		return Path.Combine(directory, MissionLoader.ScriptFileName);
+		return CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName);
 	}
 
 	/// <summary>The next frame, without taking it.</summary>

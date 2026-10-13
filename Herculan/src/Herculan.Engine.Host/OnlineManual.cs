@@ -1,3 +1,4 @@
+using HercWorks.Core.Io;
 using System.Diagnostics;
 using HercWorks.Help;
 using HercWorks.Help.Html;
@@ -20,7 +21,7 @@ namespace Herculan.Engine.Host;
 /// </summary>
 internal static class OnlineManual {
 	/// <summary>The help file's name inside each language folder.</summary>
-	public const string FileName = "ES2GUIDE.HLP";
+	public const string FileName = RetailInstaller.ManualFileName;
 
 	/// <summary>
 	/// The readme inside each language folder, which the help file's <c>Readme</c> action opens
@@ -38,7 +39,7 @@ internal static class OnlineManual {
 	/// runs off the calling thread so the window keeps drawing; failures are reported on the console.
 	/// </summary>
 	public static void Open(string installRoot, GameDisc? disc) {
-		string source = Path.Combine(installRoot, Language(installRoot).Folder);
+		string source = CaseInsensitivePath.Combine(installRoot, Language(installRoot).Folder);
 		lock (Gate) {
 			if (_converting) {
 				return;
@@ -111,7 +112,7 @@ internal static class OnlineManual {
 			"HERCULAN", "manual");
 		Directory.CreateDirectory(directory);
 		string page = Path.Combine(directory, folder + ".html");
-		File.WriteAllText(page, HelpHtmlWriter.Write(help, code, Readme(Path.Combine(installRoot, folder, ReadmeName))));
+		File.WriteAllText(page, HelpHtmlWriter.Write(help, code, Readme(CaseInsensitivePath.Combine(installRoot, folder, ReadmeName))));
 		Console.WriteLine($"On-line manual: {source} written as {page}.");
 		return page;
 	}

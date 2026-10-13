@@ -159,7 +159,7 @@ if (mount+0x5f == 0 || mount+0x5b == 0) {
 
 ## Power level — `WeaponMount_AdjustPowerLevel` (`0040f48c`)
 
-Energy mount vtable `+0x38`, reached by `WeaponMounts_HandleCommand` codes `0x0c`/`0x0d`/`0x4a`/`0x4e` (`[-]`, `[=]`, keypad `[-]`, keypad `[+]`). Moves the charge target `+0x7b` by ±`0x50` (80), clamped to 0..1200, and sets `+0x34` and `+0x3c` ([below](#the-charge-bar)). `WeaponMounts_IdleAllCapacitors` (`00410d04`, code `0x2c`) calls `WeaponMount_WakeCapacitor` on every mount, writing the idle 820, but sets neither flag, so [the charge bar](#the-charge-bar) puts each target back on the next frame.
+Energy mount vtable `+0x38`, reached by `WeaponMounts_HandleCommand` codes `0x0c`/`0x0d`/`0x4a`/`0x4e` (`[-]`, `[=]`, keypad `[-]`, keypad `[+]`). Moves the charge target `+0x7b` by ±`0x50` (80), clamped to 0..1200, and sets `+0x34` and `+0x3c` ([below](#the-charge-bar)). A held key steps it once per keyboard auto-repeat ([`cockpit-input.md`](cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes)). `WeaponMounts_IdleAllCapacitors` (`00410d04`, code `0x2c`) calls `WeaponMount_WakeCapacitor` on every mount, writing the idle 820, but sets neither flag, so [the charge bar](#the-charge-bar) puts each target back on the next frame.
 
 `WeaponMount_DemandFullCharge` (`0040f4f0`) would raise the target to 1200 in one step, but its only caller `WeaponMounts_DemandFullChargeOnArmed_Dead` (`00410d50`) has no reference of any kind anywhere in the image — neither a `CALL rel32` nor a stored address — so neither is ever reached.
 

@@ -1,3 +1,4 @@
+using HercWorks.Core.Io;
 using System.Reflection;
 using HercWorks.Core.Io.Transform;
 using HercWorks.Core.Io.Transform.Common;
@@ -55,7 +56,7 @@ internal static class Census {
 	/// <summary>Every <c>.VOL</c> in <paramref name="installRoot"/>'s <c>VOL</c> folder, in name order.</summary>
 	/// <exception cref="DirectoryNotFoundException">The install has no <c>VOL</c> folder.</exception>
 	public static IReadOnlyList<string> Archives(string installRoot) {
-		string folder = Path.Combine(installRoot, RetailData.ArchiveFolder);
+		string folder = CaseInsensitivePath.Combine(installRoot, RetailData.ArchiveFolder);
 		if (!Directory.Exists(folder)) {
 			throw new DirectoryNotFoundException($"No {RetailData.ArchiveFolder} folder in {installRoot}.");
 		}

@@ -11,6 +11,14 @@ public static class KeyChords {
 	public static bool AltHeld(IKeyState keyboard) =>
 		keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight);
 
+	public static bool ShiftHeld(IKeyState keyboard) =>
+		keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight);
+
+	// [Shift+Esc] alone, with neither [Alt] nor [Ctrl]: HERCULAN's own menu-bar key. Retail takes it as [Esc], since
+	// SimCommandMask strips [Shift]; the menu bar takes that alias for itself everywhere, modal panels included, and
+	// nothing of the game's sees the press.
+	public static bool MenuBarChord(IKeyState keyboard) => ShiftHeld(keyboard) && Unmodified(keyboard);
+
 	// Neither [Alt] nor [Ctrl] held: the key arrives as its bare scancode, the code the cockpit's [Enter] and
 	// [Tab] cases and an alert panel's [Enter] and [Esc] match exactly. With [Alt] or [Ctrl] it is another
 	// code (0x21c is [Alt+Enter]), or Key_WndProcHook keeps it for itself (0x20f, 0x201, 0x401). [Shift] is
@@ -33,15 +41,16 @@ public static class KeyChords {
 			Vertical = Axis(keyboard, Key.R, Key.F),
 			Yaw = Axis(keyboard, Key.Right, Key.Left),
 			Pitch = Axis(keyboard, Key.Up, Key.Down),
-			Boost = keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight),
+			Boost = ShiftHeld(keyboard),
 		};
 	}
 }
 
 /// <summary>
 /// One binding's held state, so its handler acts on the key going down rather than on every frame it is
-/// held — the original dispatches a command per key-down event. Each binding keeps its own latch even
-/// where two share a key, because each is refreshed under its own conditions.
+/// held — the original dispatches a command per key-down event, auto-repeats included, which
+/// <see cref="PressOrRepeat"/> also acts on. Each binding keeps its own latch even where two share a key,
+/// because each is refreshed under its own conditions.
 /// </summary>
 public sealed class KeyLatch {
 	private bool _held;
@@ -55,6 +64,13 @@ public sealed class KeyLatch {
 
 	/// <summary>Reads <paramref name="key"/> off <paramref name="keys"/> and says whether it is a fresh press.</summary>
 	public bool Press(IKeyState keys, Key key) => Press(keys.IsKeyPressed(key));
+
+	/// <summary>
+	/// Reads <paramref name="key"/> off <paramref name="keys"/> and says whether it is a fresh press or one of its
+	/// auto-repeats. While <paramref name="when"/> is false the key counts as up.
+	/// </summary>
+	public bool PressOrRepeat(IKeyState keys, Key key, bool when = true) =>
+		Press(when && keys.IsKeyPressed(key)) | (when && keys.IsKeyRepeated(key));
 
 	/// <summary>Forgets the key, so one still held reads as a fresh press next time.</summary>
 	public void Reset() => _held = false;

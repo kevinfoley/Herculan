@@ -342,6 +342,16 @@ public sealed class ShellBuildScreen {
 	}
 
 	/// <summary>
+	/// The top speed <see cref="TweakSettingDefinitions.ShowCorrectStats"/> prints for each chassis, indexed by
+	/// <see cref="HercInfEntry.HercId"/>: what the cockpit's speed readout shows at full throttle, where retail prints
+	/// <c>herc_inf.dat</c>'s own figure, which differs for all eight. A walker's readout tops out at
+	/// <see cref="Sim.MechTypeRecord.HudSpeedScale"/>, <c>315 × rawMaxForward / 1024</c> truncated; these are those
+	/// values hardcoded, except the Outlaw's 100, the manual's figure, where the formula gives 99. The Razor (8) is
+	/// not listed and keeps its file figure.
+	/// </summary>
+	private static readonly short[] CorrectTopSpeeds = { 100, 66, 73, 58, 55, 61, 58, 87 };
+
+	/// <summary>
 	/// <c>Herc_BuildScreenRefresh</c> (<c>00446cfa</c>): the selected chassis's mass and price as
 	/// <c>"%d TONS"</c>, its speed as <c>"%d KPH"</c> and its hardpoint count bare, each an opaque
 	/// left-aligned figure in <c>0x17</c>.
@@ -357,8 +367,8 @@ public sealed class ShellBuildScreen {
 			speed = entry.Speed;
 			hardpointTotal = entry.HardpointTotal;
 			if (TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ShowCorrectStats)) {
-				if (entry.HercId == HercInfEntry.OutlawHercId) {
-					speed = 100;
+				if (entry.HercId >= 0 && entry.HercId < CorrectTopSpeeds.Length) {
+					speed = CorrectTopSpeeds[entry.HercId];
 				}
 				if (entry.HercId == HercInfEntry.RaptorIIHercId) {
 					hardpointTotal = 5;

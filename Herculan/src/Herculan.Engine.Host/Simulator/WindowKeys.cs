@@ -9,7 +9,8 @@ namespace Herculan.Engine.Host.Simulator;
 
 /// <summary>
 /// The keys that act on the window rather than the game: [/] for the on-line manual, and the full-screen toggle
-/// and its ways out.
+/// and its ways out. Each acts once per press, ignoring auto-repeats: a held [Alt+Enter] toggles once per repeat in
+/// the original, which this does not reproduce (KNOWN_ISSUES.md).
 /// </summary>
 sealed class WindowKeys : ISystemButtonActions {
 	private readonly EngineWindow _window;

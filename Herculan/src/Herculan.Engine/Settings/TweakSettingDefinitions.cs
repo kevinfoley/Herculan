@@ -16,7 +16,8 @@ public static class TweakSettingDefinitions {
 	/// <para>CATEGORY: Cosmetic</para>
 	/// <para>Changes:</para>
 	/// <list type="bullet">
-	/// <item><description>Display correct speed for Outlaw in VSHELL (100 kph, not 80 kph)</description></item>
+	/// <item><description>Display each walker's top speed in VSHELL as the cockpit readout shows it, not
+	/// <c>herc_inf.dat</c>'s figure (Outlaw 100 kph, not 80) — see <see cref="Shell.ShellBuildScreen"/></description></item>
 	/// <item><description>Display correct hardpoints for Raptor II in VSHELL (5, not 4)</description></item>
 	/// </list>
 	///
@@ -101,6 +102,18 @@ public static class TweakSettingDefinitions {
 	/// viewer's left and <c>Left Leg</c> on the viewer's right. See <see cref="Shell.ShellRepairDiagrams"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixRepairDiagramSides = new("tweak.fix_repair_diagram_sides", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// Mission music takes turns through all six of the disc's music tracks, 2 to 7. Retail's track choice
+	/// reaches 2 to 6 only, so track 7 never plays. See <see cref="Audio.CdMusic.MissionTrack"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> PlayLastMusicTrack = new("tweak.play_last_music_track", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// Each mission plays a track drawn at random, never the one the mission before it played. Retail
+	/// rotates through the tracks in disc order, one per mission. See <see cref="Audio.CdMusic.ShuffledTrack"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> ShuffleMissionMusic = new("tweak.shuffle_mission_music", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
 	#endregion
 
 	#region AI
@@ -111,6 +124,13 @@ public static class TweakSettingDefinitions {
 	/// <see cref="Sim.SimWorld.FlightThrottleIsLever"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FlyerIgnoresPlayerThrottle = new("tweak.flyer_ignores_player_throttle", TweakCategory.AI, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// In <c>C2_05</c>, once the Raptor II prototype is brought home, the Cybrid Stingray hunting it leaves its corner
+	/// of the map and walks straight at the prototype. Retail's never leaves its corner, and the mission cannot be won
+	/// until the player finds it and puts it out of the fight. See <see cref="Sim.StrandedStingrayFix"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> StrandedStingrayClosesIn = new("tweak.c2_05_stingray_closes_in", TweakCategory.AI, defaultValue: false, recommendedValue: true);
 	#endregion
 
 	#region FUNCTIONAL
@@ -166,6 +186,29 @@ public static class TweakSettingDefinitions {
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> FixTerrainHitPoint = new("tweak.fix_terrain_hit_point", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
 
+	/// <summary>
+	/// A held key aims the turret as fast as a stick pushed all the way. Retail's key is worth half a stick, so
+	/// the keyboard turns the turret at half the rate the stick can reach. See <see cref="Input.KeyboardAxes.AtStickRate"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FasterKeyboardAiming = new("tweak.faster_keyboard_aiming", TweakCategory.Functional, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
+	/// Put the Raptor II pilot's eye in its cockpit. Retail's <c>RAPTOR2.DAT</c> lifts it above the top of the
+	/// model; this keeps the file's fore/aft offset and drops the lift. Turret tracking and gun convergence
+	/// measure from the same lift, so they move with the view, for every Raptor II in the mission. See
+	/// <see cref="Sim.MechObject.EyeLift"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> FixRaptorIIPerspective = new("tweak.fix_raptor2_perspective", TweakCategory.Functional, defaultValue: false, recommendedValue: true);
+
+	/// <summary>
+	/// REPLAY MISSION? restarts the mission from the campaign flags it was first launched with. Retail
+	/// replays it beside the counters the failed attempt left, so an unlock that needs an exact tally (the
+	/// Raptor II's in <c>C2_05</c>) can be lost by winning the replay, and the failed attempt's kills and
+	/// destroyed buildings carry into later missions.
+	/// <para>Defaults on, an exception to the retail-by-default rule. See <see cref="Shell.ShellCampaignLoop.Replay"/>.</para>
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> ResetCountersOnReplay = new("tweak.reset_counters_on_replay", TweakCategory.Functional, defaultValue: true, recommendedValue: true);
+
 	#endregion
 
 	/// <summary>Every defined <c>bool</c> tweak setting, keyed by ID for <see cref="TweakSettings"/> save/load.</summary>
@@ -174,6 +217,7 @@ public static class TweakSettingDefinitions {
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
-		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle,
+		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, FasterKeyboardAiming, FixRaptorIIPerspective, ResetCountersOnReplay,
+		PlayLastMusicTrack, ShuffleMissionMusic,
 	};
 }

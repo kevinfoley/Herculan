@@ -157,7 +157,7 @@ public sealed class CockpitView {
 		}
 	}
 
-	/// <summary>Whether a glance or the pan down is out, which [Esc] brings back before it does anything else.</summary>
+	/// <summary>Whether a glance or the pan down is out, which [Esc] brings back rather than panning down.</summary>
 	public bool AwayFromForward => !Glance.AtForward || Pan.HeadsDownRequested;
 
 	/// <summary>
@@ -172,21 +172,18 @@ public sealed class CockpitView {
 	/// <summary>
 	/// [Esc] once no modal panel has taken it: out of the external view, where with the cockpit's widgets off
 	/// scancode 1 falls through them to the dispatcher's own case (see <see cref="ExternalViewChain.Escape"/>), else
-	/// <see cref="ReturnToForward"/> from a glance or the Heads-Down Display. Returns whether there was a view to
-	/// come back from.
+	/// CockpitWidgets_HandleCommand (00432bc8)'s own case 1 — view command 0 from the forward view, so it pans down
+	/// to the Heads-Down Display, and <see cref="ReturnToForward"/> from a glance or heads-down. See
+	/// docs/retail/key-bindings.md#displays-and-views.
 	/// </summary>
-	public bool BackOut(bool hasCockpit) {
+	public void Escape(bool hasCockpit) {
 		if (ExternalViewActive) {
 			Chain?.Escape();
-			return true;
-		}
-
-		if (hasCockpit && AwayFromForward) {
+		} else if (hasCockpit && AwayFromForward) {
 			ReturnToForward();
-			return true;
+		} else if (hasCockpit) {
+			RequestHeadsDown(headsDown: true);
 		}
-
-		return false;
 	}
 
 	/// <summary>
@@ -198,7 +195,11 @@ public sealed class CockpitView {
 		_cameraTrigger = built.Fire;
 	}
 
-	/// <summary>The view chain's own keys, which reach it only while no modal panel holds the input.</summary>
+	/// <summary>
+	/// The view chain's own keys, which reach it only while no modal panel holds the input. Each acts on every
+	/// key-down event, auto-repeats included, so a held [V] goes in and out of the outside view at the repeat
+	/// rate, as the original's does.
+	/// </summary>
 	public void ReadViewKeys(IKeyState controls) {
 		if (Chain == null) {
 			return;
@@ -207,22 +208,22 @@ public sealed class CockpitView {
 		// [V], scancode 0x2f: out to the outside view and back. The cockpit is not drawn in the
 		// external view, and the machine — left out of the cockpit view because its geometry wraps the
 		// eye — is.
-		bool externalViewKey = !CtrlHeld(controls) && controls.IsKeyPressed(Key.V);
-		if (_externalViewKey.Press(externalViewKey)) {
+		if (_externalViewKey.PressOrRepeat(controls, Key.V, !CtrlHeld(controls))) {
 			Chain.ToggleOutside(fromKeyboard: true);
 		}
 
 		// [Enter] and [Tab] swap the controls between the camera and the machine, and [N] moves the
 		// outside view on to the next squadmate. All three are cockpit keys the widgets claim first,
 		// so they reach these cases only while the widgets are off.
-		bool viewControlKey = Unmodified(controls)
-			&& (controls.IsKeyPressed(Key.Enter) || controls.IsKeyPressed(Key.Tab));
-		if (_viewControlKey.Press(viewControlKey) && CockpitWidgetsOff) {
+		bool unmodified = Unmodified(controls);
+		bool viewControlKey = _viewControlKey.Press(unmodified
+				&& (controls.IsKeyPressed(Key.Enter) || controls.IsKeyPressed(Key.Tab)))
+			| (unmodified && (controls.IsKeyRepeated(Key.Enter) || controls.IsKeyRepeated(Key.Tab)));
+		if (viewControlKey && CockpitWidgetsOff) {
 			Chain.ToggleCameraControl();
 		}
 
-		bool viewNextKey = !CtrlHeld(controls) && !AltHeld(controls) && controls.IsKeyPressed(Key.N);
-		if (_viewNextKey.Press(viewNextKey)) {
+		if (_viewNextKey.PressOrRepeat(controls, Key.N, !CtrlHeld(controls) && !AltHeld(controls))) {
 			Chain.NextSquadmate(_scene.World.Objects);
 		}
 	}

@@ -41,10 +41,11 @@ When you run the engine, it will ask you where _Earthsiege 2_ is installed; you'
 
 #### Settings and tweaks
 
-HERCULAN Engine has a custom menu bar which is normally hidden. Press the Esc key to toggle visibility of the menu bar. It has two buttons, each which opens a new menu:
+HERCULAN Engine has a custom menu bar which is normally hidden. Press Shift+Esc to toggle visibility of the menu bar; the first time the main menu comes up, a welcome message says so. The bar has three buttons, each of which opens a new menu:
 
 - Settings: Here you can adjust the install location or change the selected language.
 - Tweaks: Here you can toggle tweaks which fix vanilla bugs or otherwise alter vanilla behavior.
+- About: The engine's version and license.
 
 The engine's own menu text lives in the `.lang` files in the `Localization` folder, which can be edited, or added to for a new language, after install. Each file names itself on its `language.name` line, and any line a translation lacks is read from `en.lang`.
 

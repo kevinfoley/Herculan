@@ -36,11 +36,11 @@ Weapon names above are the simulator's own. Subtype 9 is reached by two weapon i
 
 ## Spawning — `Bullet_Fire` (`0040b43c`)
 
-`Bullet_Fire(projIndex, muzzleWorldPoint, aimEulerTriple, ownerMech)`. The powered form `Bullet_FirePowered` (`0040b5a0`) is the same call with two fields written after it.
+`Bullet_Fire(subtypeId, muzzleWorldPoint, aimEulerTriple, ownerMech)`. The powered form `Bullet_FirePowered` (`0040b5a0`) is the same call with two fields written after it.
 
 - **Geometry is one transform.** The object holds a euler triple at `+0x0c` and a transform at `+0x12` whose translation *is* the position (`+0x26`); the rotation is rebuilt from the triple whenever the frame-valid word at `+0x32` is 0, which the homing steer stores after moving the angles.
 - **Scatter** displaces euler components 0 and 2 by `(scatter * 2 & random) - scatter`. The mask is literally `scatter * 2`, not a power of two minus one, so the retail 63 draws odd values only. Component 1 is roll about the shot's own axis and is left alone.
-- **Speed** is `ownerMech->vtable+0x38` (travel speed) **plus** the record's `Speed`, so a round fired from a machine running forward flies faster.
+- **Speed** is `ownerMech->vtable+0x38` (travel speed) **plus** the record's `Speed`, truncated to 16 bits, so a round fired from a machine running forward flies faster. On a HERC that accessor is `Mech_GetSpeed` (`00415498`): `Q10(2000, mech+0x28e)` for a walker, and for the RAZOR its airspeed, `mech+0x2bd`: 250 at idle and 1500 at full throttle in level flight, and more in a dive ([`razor-flight.md`](razor-flight.md#airspeed)). The plasma record's `Speed` is 1000, so in level flight a RAZOR's plasma round leaves at 1250 to 2500, against 1000 from a HERC standing still. The round's speed is written in `Bullet_Fire` alone, and neither it, the gun dispatch (`WeaponMount_FireDispatch_GunBeam`, `0040ea58`), `Bullet_FirePowered`, `Bullet_Construct` (`0040af6c`), `Bullet_TickUpdate` nor `Bullet_HomingSteer` tests the flyer flag, so the airspeed is the RAZOR's whole difference there.
 - `Bullet_FirePowered` adds `+0x56`, the capacitor charge the shot was fired at, and — for subtype 9 alone — `+0x5b`, the firing machine's selected target at `mech+0x1a4`.
 
 ## Flight — `Bullet_TickUpdate` (`0040b124`)

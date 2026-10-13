@@ -55,12 +55,14 @@ public sealed class SimulationStepper {
 	/// so the handlers read its keystrokes and pointer exactly as they would a player's; and a recording's
 	/// keystrokes are read at the same moment the handlers will read them.
 	/// </summary>
-	public void BeginFrame(double deltaSeconds) {
+	/// <param name="hostTakesEscape">Whether this frame's [Esc] goes to the host's menu rather than the game.</param>
+	public void BeginFrame(double deltaSeconds, bool hostTakesEscape = false) {
 		if (_tape.TakeFrame(deltaSeconds, _panels.AnyOpen, _outcome.Over, MaxAccumulatedSeconds)) {
 			EndTape();
 		}
 
-		_recording.BeginFrame(_panels.AnyOpen, _input.LiveKeys, _input.ImGuiHasKeyboard, _view.Piloting);
+		_recording.BeginFrame(_panels.AnyOpen, _input.LiveKeys, _input.ImGuiHasKeyboard, _view.Piloting,
+			hostTakesEscape);
 	}
 
 	/// <summary>

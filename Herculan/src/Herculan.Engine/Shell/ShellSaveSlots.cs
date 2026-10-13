@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Data.Struct.Vshell.Sav;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.World;
 
@@ -78,20 +79,20 @@ public sealed record ShellWorkingFiles(string? Script, string? Text, string? Pla
 	/// </summary>
 	public static ShellWorkingFiles ForSlot(string installRoot, int slot) {
 		string folder = ShellSaveSlots.Directory(installRoot);
-		return new ShellWorkingFiles(Path.Combine(folder, ShellSaveSlots.ScriptFile(slot)),
-			Path.Combine(folder, ShellSaveSlots.TextFile(slot)), Path.Combine(folder, ShellSaveSlots.PlayerFile(slot)));
+		return new ShellWorkingFiles(CaseInsensitivePath.Combine(folder, ShellSaveSlots.ScriptFile(slot)),
+			CaseInsensitivePath.Combine(folder, ShellSaveSlots.TextFile(slot)), CaseInsensitivePath.Combine(folder, ShellSaveSlots.PlayerFile(slot)));
 	}
 
 	/// <summary>The three files in the install's <c>data\</c>, where the original keeps them.</summary>
 	public static ShellWorkingFiles InData(string installRoot) => In(DataDirectory(installRoot));
 
 	/// <summary>The install's <c>data\</c>, which holds the working files and the mission handoff.</summary>
-	public static string DataDirectory(string installRoot) => Path.Combine(installRoot, MissionLoader.DataFolderName);
+	public static string DataDirectory(string installRoot) => CaseInsensitivePath.Combine(installRoot, MissionLoader.DataFolderName);
 
 	/// <summary>The three files under their <c>data\</c> names in <paramref name="directory"/>.</summary>
 	public static ShellWorkingFiles In(string directory) =>
-		new(Path.Combine(directory, MissionLoader.ScriptFileName), Path.Combine(directory, MissionLoader.TextFileName),
-			Path.Combine(directory, MissionLoader.PlayerFileName));
+		new(CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName), CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName),
+			CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName));
 
 	/// <summary>
 	/// <c>data\script.dat</c> or <c>data\mission.str</c> written as <c>WriteScriptDatFile</c> and <c>MissionStr_Write</c>
@@ -129,7 +130,7 @@ public static class ShellSaveSlots {
 	private const int LabelPrefixLength = 4;
 
 	/// <summary>The save folder inside an install root.</summary>
-	public static string Directory(string installRoot) => Path.Combine(installRoot, FolderName);
+	public static string Directory(string installRoot) => CaseInsensitivePath.Combine(installRoot, FolderName);
 
 	/// <summary>
 	/// Reads the slot directory and every save it says is in use. Returns an empty list when there is no
@@ -138,7 +139,7 @@ public static class ShellSaveSlots {
 	/// </summary>
 	public static IReadOnlyList<ShellSaveSlot> Load(string installRoot, ShellText? text = null) {
 		string folder = Directory(installRoot);
-		string path = Path.Combine(folder, DirectoryFileName);
+		string path = CaseInsensitivePath.Combine(folder, DirectoryFileName);
 		if (!File.Exists(path)
 			|| new SaveSlotDirectoryTransform().Parse(ReadOrNull(path)) is not { } directory) {
 			return Array.Empty<ShellSaveSlot>();
@@ -207,11 +208,11 @@ public static class ShellSaveSlots {
 				}).ToList(),
 			};
 
-			WriteDirectory(Path.Combine(folder, DirectoryFileName), new SaveSlotDirectoryTransform().Write(directory)!);
-			WriteInPlace(Path.Combine(folder, entry.FileName), new PlayerSaveTransform().Write(game)!);
+			WriteDirectory(CaseInsensitivePath.Combine(folder, DirectoryFileName), new SaveSlotDirectoryTransform().Write(directory)!);
+			WriteInPlace(CaseInsensitivePath.Combine(folder, entry.FileName), new PlayerSaveTransform().Write(game)!);
 			foreach (var (from, to) in new[] {
 					(working.Script, ScriptFile(slot)), (working.Text, TextFile(slot)), (working.Player, PlayerFile(slot)) }) {
-				string target = Path.Combine(folder, to);
+				string target = CaseInsensitivePath.Combine(folder, to);
 				if (from != null && File.Exists(from) && !string.Equals(Path.GetFullPath(from), Path.GetFullPath(target),
 						StringComparison.OrdinalIgnoreCase)) {
 					File.Copy(from, target, overwrite: true);
@@ -290,7 +291,7 @@ public static class ShellSaveSlots {
 		ShellSaveSummary.From(ReadSave(folder, fileName));
 
 	private static PlayerSave? ReadSave(string folder, string fileName) {
-		string path = Path.Combine(folder, fileName);
+		string path = CaseInsensitivePath.Combine(folder, fileName);
 		if (!File.Exists(path)) {
 			return null;
 		}

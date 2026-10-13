@@ -27,6 +27,7 @@ namespace Herculan.Engine.Platform;
 /// with the system's default application icon, which a window that starts full screen showed on its taskbar button
 /// with only the window's own icons set.</para>
 /// </summary>
+[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 internal sealed class ExecutableIcon : IDisposable {
 	// The resource id the .NET SDK gives the icon group <ApplicationIcon> embeds.
 	private const nint ApplicationIconId = 32512;

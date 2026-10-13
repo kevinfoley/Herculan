@@ -927,12 +927,16 @@ public sealed partial class MechObject {
 		: Type.DisplaySpeedKph(Speed);
 
 	/// <summary>
-	/// The mech vtable's <c>+0x38</c> speed accessor (<c>00415498</c>): the speed scalar in the units
-	/// the rest of the simulation quotes distances in. The control law above reads only its sign; a
+	/// The mech vtable's <c>+0x38</c> speed accessor, <c>Mech_GetSpeed</c> (<c>00415498</c>): the speed scalar in
+	/// the units the rest of the simulation quotes distances in, or, when the type record's flyer flag is set, its
+	/// <see cref="AirSpeed"/>, since <see cref="Speed"/> is never written on the flight path. The control law above reads only its sign; a
 	/// travelling shot adds the whole of it to its own speed, so a round fired from a machine running
-	/// forward flies faster than one fired standing still (see <see cref="Projectile.Speed"/>).
+	/// forward, or from a RAZOR in flight, flies faster than one fired standing still (see
+	/// <see cref="Projectile.Speed"/>).
 	/// </summary>
-	public override short TravelSpeed => (short)SimMath.Q10Multiply(TravelSpeedScale, Speed);
+	public override short TravelSpeed => Type.IsFlyer
+		? (short)AirSpeed
+		: (short)SimMath.Q10Multiply(TravelSpeedScale, Speed);
 
 	/// <summary>The accessor's own Q10 factor.</summary>
 	private const int TravelSpeedScale = 2000;

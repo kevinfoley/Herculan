@@ -275,7 +275,8 @@ internal sealed class MfdPainter {
 					float centreY = insetY + centre.Y;
 					fillRect(centreX - centre.X, centreY, centreX + centre.X + 1f, centreY + 1f, mark);
 					fillRect(centreX, centreY - centre.Y, centreX + 1f, centreY + centre.Y + 1f, mark);
-					RasterPrimitives.AddCircleOutline(centreX, centreY, MfdMissileCam.RingRadius(hud.Gau), mark, fillRect);
+					int radius = MfdMissileCam.RingRadius(hud.Gau);
+					RasterPrimitives.AddEllipseOutline(centreX, centreY, radius, radius, mark, fillRect);
 				}
 
 				break;
@@ -654,7 +655,8 @@ internal sealed class MfdPainter {
 		int worldPerPixel = scanner.WorldUnitsPerPixel;
 		if (scanner.Passive && MfdScanner.PassiveRingRange < scanner.Range
 			&& hud.LogicalColor(MfdScanner.PassiveRingColorId) is { } ring) {
-			RasterPrimitives.AddCircleOutline(centerX, centerY, MfdScanner.PassiveRingRange / worldPerPixel, ring, fillRect);
+			int radius = MfdScanner.PassiveRingRange / worldPerPixel;
+			RasterPrimitives.AddEllipseOutline(centerX, centerY, radius, radius, ring, fillRect);
 		}
 
 		blitDevice(MfdScanner.Bank, MfdScanner.ReferenceLineFrame,

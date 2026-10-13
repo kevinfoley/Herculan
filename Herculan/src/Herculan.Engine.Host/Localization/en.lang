@@ -2,10 +2,11 @@ language.name English
 general.save    Save
 general.cancel  Cancel
 general.close   Close
+general.ok      OK
 tweak.target_distance_meters.display_name      Fix target distance readout
 tweak.target_distance_meters.description       On the MFD's F5 TARGET screen, show the target's distance in meters measured along the ground, the same way the F4 SCANNER screen measures it, so the two screens agree. Without this tweak the screen shows what your version of the game shows: version 1.0 shows the distance in engine units (1 unit = 6 mm), and version 1.10 shows it in meters. Both versions include the difference in height.
 tweak.show_correct_stats.display_name          Show correct stats
-tweak.show_correct_stats.description           Fix HERC and weapon stats that vanilla displayed incorrectly in VSHELL, such as the Outlaw's top speed and the Raptor II's hardpoint count.
+tweak.show_correct_stats.description           Fix HERC and weapon stats that vanilla displayed incorrectly in VSHELL, such as every HERC's top speed and the Raptor II's hardpoint count.
 tweak.show_accurate_speed.display_name         Show accurate speed
 tweak.show_accurate_speed.description          Show the HERC's true movement speed on the HUD. Retail shows about twice the real speed while walking. Running readings are unchanged.
 tweak.show_even_shield_balance.display_name    Round shield balance readout
@@ -28,6 +29,10 @@ tweak.drop_pod_sound_from_pod.display_name    Drop pod sounds from the pod
 tweak.drop_pod_sound_from_pod.description     Hear a falling drop pod's whistle from the pod itself, following it down, and its landing from where it lands. The sounds are louder and carry for kilometres. Retail plays both sounds at your own position, so they never tell you where the pod is.
 tweak.fix_repair_diagram_sides.display_name  Fix repair diagram sides
 tweak.fix_repair_diagram_sides.description   On the REPAIR screen's damage diagram, Left Torso and Left Leg are on the same side. In retail the diagram shows Left Torso on your left but Left Leg on your right. On a Razor, the nacelles are switched to match the wings.
+tweak.play_last_music_track.display_name  Play all music tracks
+tweak.play_last_music_track.description   Missions also play the last of the disc's six music tracks. Retail missions take turns through only the first five, so the last one never plays.
+tweak.shuffle_mission_music.display_name  Shuffle mission music
+tweak.shuffle_mission_music.description   Each mission plays a music track chosen at random, never the same one twice in a row. Retail plays the tracks in a fixed order, one per mission.
 tweak.smoother_turret_movement.display_name   Smoother turret movement
 tweak.smoother_turret_movement.description     Smooth turret rotation when aiming with a joystick or other analog input. Retail rounds the rotation value, causing stutter at slow aiming speeds. Has no effect when aiming with the keyboard.
 tweak.mouse_external_view.display_name         Mouse-controlled outside view
@@ -42,6 +47,14 @@ tweak.fix_terrain_hit_point.display_name  Accurate terrain hits
 tweak.fix_terrain_hit_point.description   Shots and lines of sight meet the ground exactly where it is. On about a third of the terrain, retail works out where a shot strikes the ground against a slope that can be several metres off the real one, so the impact lands short or long. In version 1.10 the ground then sometimes fails to stop a shot or a line of sight at all, so machines can see and shoot each other through parts of hills.
 tweak.flyer_ignores_player_throttle.display_name  Cybrid flyers ignore your throttle setup
 tweak.flyer_ignores_player_throttle.description   A Cybrid flyer always flies at its normal cruising speed. In retail, when your joystick has a throttle and the Razor's THROTTLE control is set to THROTTLE, every Cybrid flyer in the mission slows to a lower speed, even when you are not flying a Razor.
+tweak.c2_05_stingray_closes_in.display_name  Fix Delta Sector Mission 5
+tweak.c2_05_stingray_closes_in.description   In the mission to escort the Raptor II prototype, once you bring the prototype home, the Cybrid Stingray hunting it leaves its corner of the map and heads straight for the prototype. In retail it never leaves the far north-east corner.
+tweak.faster_keyboard_aiming.display_name  Faster Keyboard Aiming
+tweak.faster_keyboard_aiming.description   Holding a key turns and tilts your HERC's turret as fast as pushing the joystick all the way does. In retail a key aims at half that speed, and the joystick's hat at three quarters of it.
+tweak.fix_raptor2_perspective.display_name  Fix Raptor II Perspective
+tweak.fix_raptor2_perspective.description   Puts the Raptor II's cockpit view in its cockpit. In retail the view sits above the top of the HERC. Turret tracking and gun convergence move with it.
+tweak.reset_counters_on_replay.display_name  Fix "Replay Mission" flags
+tweak.reset_counters_on_replay.description   Fix mission flags not getting reset when you choose to replay a mission (after dying during the mission), which could cause unlocks to fail or other unexpected behavior.
 tweaks.title                   Tweaks
 tweaks.category.cosmetic       Cosmetic
 tweaks.category.ai             AI
@@ -70,6 +83,13 @@ crash.message                 HERCULAN stopped because of an error: {0} The deta
 menu.debug                     Debug
 menu.tweaks                    Tweaks
 menu.settings                  Settings
+menu.controller                Controller
+menu.about                     About
+about.title                    About
+about.license                  License
+welcome.title                  Welcome
+welcome.message                Welcome to the HERCULAN Engine! HERCULAN includes a variety of optional tweaks to customize your play experience. To access HERCULAN's menu bar, press Shift-Esc at any time.
+welcome.view_tweaks            View Tweaks
 settings.title                 Settings
 settings.folders               Earthsiege 2 folders
 settings.install_folder        Install folder
@@ -87,6 +107,58 @@ settings.languages             Languages
 settings.game_language         Game language
 settings.interface_language    HERCULAN UI language
 settings.write_failed          Could not write {0}: {1}
+controller.title               Controller
+controller.device              Device
+controller.no_device           None connected
+controller.gamepad_layout     Gamepad
+controller.gamepad_layout_tip Read in the standard gamepad layout, the same on every computer: axes 0-3 are the left and right sticks, 4 and 5 the triggers; buttons 0-10 are A, B, X, Y, the bumpers, Back, Start, Guide and the stick clicks, 11-14 the d-pad, which is also hat 0.
+controller.saved_for_gamepads  These settings are saved for every gamepad.
+controller.saved_for_model     These settings are saved for this model of joystick.
+controller.saved_for_joysticks These settings are saved for every joystick without settings of its own.
+controller.none_connected      No controller is connected. Connect one and it appears here.
+controller.inputs              What the device reports
+controller.axis                Axis {0}
+controller.axis_direction      Axis {0} {1}
+controller.button              Button {0}
+controller.buttons             Buttons
+controller.hat                 Hat {0}
+controller.controls            Controls
+controller.control             Control
+controller.input               Device input
+controller.invert              Invert
+controller.reads               Game reads
+controller.stick_x             Stick left/right
+controller.stick_y             Stick forward/back
+controller.throttle            Throttle
+controller.rudder              Rudder
+controller.hat_row             Hat
+controller.button_row          BUTTON {0}
+controller.unmapped            None
+controller.detect              Detect
+controller.detecting           Cancel
+controller.detect_axis         Move the control you want as far as it goes.
+controller.detect_hat          Push the hat you want in any direction.
+controller.detect_button       Press the button you want, or pull the trigger you want.
+controller.invert_throttle_tip For a throttle lever: with the lever at idle, Game reads should show a positive number. Tick Invert if it shows a negative one.
+controller.invert_throttle_gamepad_tip  On a gamepad this is the right stick's up and down. Tick Invert to reverse which way it aims a HERC's turret and pitches a Razor.
+controller.pressed             Pressed
+controller.released            Released
+controller.centred             Centred
+controller.up                  Up
+controller.down                Down
+controller.left                Left
+controller.right               Right
+controller.options             Options
+controller.deadzone            Centre deadzone
+controller.deadzone_tip        How far an axis moves from the centre, out of 127, before the game reads it. The original game uses 25.
+controller.hat_diagonals       Hat diagonals
+controller.hat_diagonals_tip   A hat pushed diagonally counts as its two directions. The original game ignores a diagonal.
+controller.centre_idle         Centre-idle throttle
+controller.centre_idle_tip     The middle of the throttle's travel is idle, forward of it is forward and back of it is reverse. The original game reads the throttle from idle at one end to full at the other, and CHANGE DIRECTION chooses forward or reverse.
+controller.centre_idle_gamepad_tip      Only for a joystick's throttle lever. A gamepad's left stick moves the throttle up and down and leaves it where it is, so this does nothing with one.
+controller.actions_note        This window sets which parts of your device the game uses. What each one does (steering or aiming, FIRE, TARGET and so on) is set in a mission: press F12 for Preferences, then CONTROLS. With a gamepad, the JOYSTICK, THROTTLE, RUDDER and HAT rows there are set to suit it, and its button choices are kept apart from a joystick's. The settings are saved to data\herculan-joystick.cfg, which the original game does not read.
+controller.defaults            Defaults
+controller.no_data_folder      There is no data folder to save the settings in.
 disc_prompt.message            Choose the Earthsiege 2 disc folder, such as the CD drive or a copy of the disc. It is written to the install's data\{0}, which the original game reads too, and the front end restarts.
 disc_prompt.path_hint          Disc folder
 disc_prompt.picker_title       Choose the Earthsiege 2 disc folder
@@ -122,7 +194,8 @@ install.size                   Size
 install.size_minimum           Minimum ({0:N0} MB)
 install.size_medium            Medium ({0:N0} MB)
 install.size_maximum           Maximum ({0:N0} MB)
-install.size_note              A smaller install leaves more of the game on the disc, so the disc must stay where it is.
+install.size_note              Every size leaves the movies, the training instructor's voice and the on-line manual on the disc unless the box below is ticked, and a smaller size leaves some of the archives there too. Whatever is left is read from the disc or image, so it must stay where it is. The CD music always plays from the disc.
+install.disc_files             Also copy the movies, the training instructor's voice and the on-line manual
 install.language               Language
 install.language_english       English
 install.language_french        Français (French)

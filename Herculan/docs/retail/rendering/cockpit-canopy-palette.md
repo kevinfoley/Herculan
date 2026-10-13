@@ -54,6 +54,8 @@ Canopy art indices are used **as authored**; there is no shift, and the live pal
 
 Consequences: the heading tape's index 74 is a theater colour; the shield meter's green is a theater colour absent from `COCKPIT.DPL`; the canopy hazard stripes at index 13 render as the theater's yellow (measured 92% agreement at `(192,192,44)`).
 
+The window reaches the 3D world too, because the world draws through the same live palette. `FIRE1.DBA`, the bank of `FIRE.DTS` shape 3, ends every frame in a strip of rubble painted in indices 16, 23 and 48; index 48 takes the player herc's scheme colour (a dull grey-brown in all nine schemes) rather than the theater file's green. Every `WORLD<n>.RMP` also sends inputs 2, 72 and 73 (and 84 in all but `WORLD6`) into slots 42-65 at some shades and depth slices. No mesh or terrain bank uses the window, apart from one texel of `MOON.DBA`.
+
 ### Palette module
 
 | Symbol | Address | Role |

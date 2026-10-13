@@ -9,7 +9,7 @@ static class DiscInstall {
 	/// <see cref="RetailInstaller"/> from a disc folder or image, reporting each file as it starts. Returns 0 once
 	/// the install is complete, 1 when it was refused or failed, in which case what it copied has been removed.
 	/// </summary>
-	public static int Run(string source, string destination, RetailInstaller.Size size, RetailInstaller.Language language) {
+	public static int Run(string source, string destination, RetailInstaller.Size size, RetailInstaller.Language language, bool discFiles) {
 		GameDisc disc;
 		try {
 			disc = File.Exists(source) ? GameDisc.OpenImage(source)
@@ -29,10 +29,10 @@ static class DiscInstall {
 			}
 
 			Console.WriteLine($"Installing Earthsiege 2 {installer.BuildName} from {disc.Location} into {Path.GetFullPath(destination)}: "
-				+ $"{size}, {language}.");
+				+ $"{size}, {language}{(discFiles ? ", with the disc files" : "")}.");
 			int lastFile = -1;
 			try {
-				installer.Install(destination, size, language, new ActionProgress<InstallProgress>(report => {
+				installer.Install(destination, size, language, discFiles, new ActionProgress<InstallProgress>(report => {
 					if (report.FileIndex != lastFile && report.FileIndex < report.FileCount) {
 						lastFile = report.FileIndex;
 						Console.WriteLine($"  {report.FileIndex + 1}/{report.FileCount} {report.File}");

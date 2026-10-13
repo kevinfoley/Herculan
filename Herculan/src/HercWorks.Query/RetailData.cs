@@ -2,6 +2,7 @@ using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using HercWorks.Vol;
@@ -69,7 +70,7 @@ internal sealed class RetailData {
 	public static string? FindDefaultInstall() {
 		foreach (string start in new[] { Directory.GetCurrentDirectory(), AppContext.BaseDirectory }) {
 			for (var directory = new DirectoryInfo(start); directory != null; directory = directory.Parent) {
-				string candidate = Path.Combine(directory.FullName, "ES2");
+				string candidate = CaseInsensitivePath.Combine(directory.FullName, "ES2");
 				if (FindArchive(candidate, MissionArchive) != null) {
 					return candidate;
 				}
@@ -153,7 +154,7 @@ internal sealed class RetailData {
 				continue;
 			}
 
-			string path = Path.Combine(root, ArchiveFolder, archive);
+			string path = CaseInsensitivePath.Combine(root, ArchiveFolder, archive);
 			if (File.Exists(path)) {
 				return path;
 			}
@@ -164,7 +165,7 @@ internal sealed class RetailData {
 
 	/// <summary>The first token of <c>DATA\drive.cfg</c>, resolved against the install; null when there is none.</summary>
 	private static string? DiscDirectory(string installRoot) {
-		string path = Path.Combine(installRoot, "DATA", Drive.FileName);
+		string path = CaseInsensitivePath.Combine(installRoot, "DATA", Drive.FileName);
 		if (!File.Exists(path) || new DriveTransformer().Parse(File.ReadAllBytes(path))?.Directory is not { } directory) {
 			return null;
 		}

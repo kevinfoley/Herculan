@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Herculan.Engine.Input;
 using Herculan.Engine.Sim;
 using Herculan.Engine.View;
@@ -19,9 +18,9 @@ namespace Herculan.Engine.Cockpit;
 /// while under <c>Alt+S</c> the tick runs with most of it switched off. So <see cref="Frozen"/> is
 /// the developer half alone, and the host runs <see cref="SimWorld.TickFrozen()"/> for it.</para>
 ///
-/// <para>Every key here acts on each key-down event, auto-repeat included, as the dispatcher's
-/// commands do: the keyboard queues one per <c>WM_KEYDOWN</c>. So a held move key keeps moving, at
-/// the repeat delay and rate Windows is set to.</para>
+/// <para>Every key here acts on each key-down event, auto-repeat included (<see cref="IKeyState.IsKeyRepeated"/>),
+/// as the dispatcher's commands do. So a held move key keeps moving, at the repeat delay and rate Windows is
+/// set to.</para>
 /// </summary>
 public sealed class DeveloperKeys(bool enabled) {
 	/// <summary>
@@ -70,13 +69,6 @@ public sealed class DeveloperKeys(bool enabled) {
 	private int _component;
 	private readonly HashSet<Key> _held = new();
 
-	// Auto-repeat: only the last key to go down repeats, as the keyboard's own does, and a modifier
-	// going down takes the repeat off whatever had it.
-	private Key? _repeating;
-	private double _repeatWait;
-	private bool _modifiersWere;
-	private readonly (double Delay, double Interval) _typematic = Typematic();
-
 	/// <summary>Called once a stepped tick has run: the freeze goes back on.</summary>
 	public void FinishStep() {
 		StepPending = false;
@@ -91,30 +83,11 @@ public sealed class DeveloperKeys(bool enabled) {
 	/// The chain of views, whose watched object — <c>ViewChain_Viewed</c> (<c>004d2708</c>), the player's machine until the
 	/// camera moves — <c>Ctrl+Alt+D</c> hits and the move keys move.
 	/// </param>
-	public void Read(IKeyState keys, SimWorld world, MechObject player, ExternalViewChain views,
-			bool tapePlaying, double deltaSeconds) {
+	public void Read(IKeyState keys, SimWorld world, MechObject player, ExternalViewChain views, bool tapePlaying) {
 		bool ctrl = keys.IsKeyPressed(Key.ControlLeft) || keys.IsKeyPressed(Key.ControlRight);
 		bool alt = keys.IsKeyPressed(Key.AltLeft) || keys.IsKeyPressed(Key.AltRight);
 
-		if ((ctrl || alt) && !_modifiersWere) {
-			_repeating = null;
-		}
-
-		_modifiersWere = ctrl || alt;
-
-		// The repeat that falls due this frame, if any, is decided once for every key below to read.
-		Key? repeated = null;
-		if (_repeating is { } repeatKey && keys.IsKeyPressed(repeatKey)) {
-			_repeatWait -= deltaSeconds;
-			if (_repeatWait <= 0) {
-				_repeatWait += _typematic.Interval;
-				repeated = repeatKey;
-			}
-		} else {
-			_repeating = null;
-		}
-
-		bool KeyDown(Key key) => Pressed(keys, key, repeated);
+		bool KeyDown(Key key) => Pressed(keys, key);
 		bool altOnly = alt && !ctrl;
 		bool ctrlOnly = ctrl && !alt;
 		bool ctrlAlt = ctrl && alt;
@@ -231,38 +204,13 @@ public sealed class DeveloperKeys(bool enabled) {
 		}
 	}
 
-	// A key-down event: the key has just gone down, or it is the one repeating and a repeat is due.
-	private bool Pressed(IKeyState keys, Key key, Key? repeated) {
+	// A key-down event: the key has just gone down, or its auto-repeat is due.
+	private bool Pressed(IKeyState keys, Key key) {
 		if (!keys.IsKeyPressed(key)) {
 			_held.Remove(key);
 			return false;
 		}
 
-		if (_held.Add(key)) {
-			_repeating = key;
-			_repeatWait = _typematic.Delay;
-			return true;
-		}
-
-		return repeated == key;
+		return _held.Add(key) || keys.IsKeyRepeated(key);
 	}
-
-	// Windows' own keyboard delay (0-3, a quarter second each from 250 ms) and speed (0-31, about 2.5
-	// to 30 repeats a second), which is what paced retail's repeats. Its defaults elsewhere.
-	private static (double Delay, double Interval) Typematic() {
-		int delay = 1;
-		int speed = 31;
-		if (OperatingSystem.IsWindows()) {
-			SystemParametersInfo(GetKeyboardDelay, 0, ref delay, 0);
-			SystemParametersInfo(GetKeyboardSpeed, 0, ref speed, 0);
-		}
-
-		return (0.25 * (Math.Clamp(delay, 0, 3) + 1), 1.0 / (2.5 + Math.Clamp(speed, 0, 31) * 27.5 / 31));
-	}
-
-	private const uint GetKeyboardSpeed = 0x0a;
-	private const uint GetKeyboardDelay = 0x16;
-
-	[DllImport("user32.dll")]
-	private static extern bool SystemParametersInfo(uint action, uint param, ref int value, uint winIni);
 }

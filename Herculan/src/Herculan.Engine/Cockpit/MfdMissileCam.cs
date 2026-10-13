@@ -136,10 +136,11 @@ public static class MfdMissileCam {
 	/// The view's projection centre, device pixels from the inset origin — the same origin the
 	/// screen's own context is built around as the nav map's is, <see cref="MfdLayout.ScreenCentre"/>.
 	/// The cross runs through it the full width and height, and the ring is centred on it with a
-	/// radius of half the centre's own y.
+	/// radius of half the centre's own y: <c>MfdMissileViewScreen_Paint</c> (<c>0043fe1c</c>) builds the ring's rect
+	/// as <c>±((-y) &gt;&gt; 1)</c>, which rounds an odd y up.
 	/// </summary>
 	public static int RingRadius(GAUFile gau) =>
-		MfdLayout.ScreenCentre(gau) is { } centre ? centre.Y >> 1 : 0;
+		MfdLayout.ScreenCentre(gau) is { } centre ? -(-centre.Y >> 1) : 0;
 
 	/// <summary>
 	/// The camera <c>MfdMissileViewScreen_Paint</c> places for <paramref name="round"/>.

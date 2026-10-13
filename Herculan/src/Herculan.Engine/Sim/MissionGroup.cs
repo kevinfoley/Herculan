@@ -214,6 +214,25 @@ public sealed partial class MissionGroup {
 	} ?? WaypointAt(0);
 
 	/// <summary>
+	/// The action that, under <see cref="Settings.TweakSettingDefinitions.StrandedStingrayClosesIn"/>, sends this
+	/// group's leader straight at what its search/destroy order names. Set by <see cref="StrandedStingrayFix"/> on
+	/// <c>C2_05</c>'s Stingray and null on every other group. Not the original's.
+	/// </summary>
+	internal MissionActionState? ClosesInOn { get; set; }
+
+	/// <summary>
+	/// Where the leader walks this tick in place of its route: the hunted object, once <see cref="ClosesInOn"/> has
+	/// fired with the tweak on and while the order is a search/destroy against something still in the world and not
+	/// destroyed. Null otherwise, and the route is walked as retail walks it.
+	/// </summary>
+	internal Vec3i? ClosingInPoint(SimWorld world) =>
+		ClosesInOn is { Activated: true } && OrderVerb == MissionOrder.VerbSearchDestroy
+			&& OrderTarget is { Removed: false, AwaitingDeployment: false, Destroyed: false } quarry
+			&& world.Tweaks.GetSettingValue(Settings.TweakSettingDefinitions.StrandedStingrayClosesIn)
+			? quarry.Position
+			: null;
+
+	/// <summary>
 	/// <c>Group_IsOrderTarget</c> (<c>00423918</c>) — whether an object is what the current order
 	/// names, by group identity for a group-valued order and by object identity otherwise.
 	/// </summary>

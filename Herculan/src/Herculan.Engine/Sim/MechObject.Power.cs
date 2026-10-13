@@ -180,10 +180,15 @@ public sealed partial class MechObject {
 	/// a squadmate fitted with a Turbo Pod never engages it from here, and why an AI machine's ECM
 	/// follows its radar mode instead (see <see cref="JammerTick"/>): neither has a row to press.</para>
 	///
+	/// <para><b>Every pod mount ticks, not just the filed one.</b> That pass calls vtable <c>+0x50</c>
+	/// on each mount in turn, so a second ECM or Turbo Pod runs its own tick off its own row. What it
+	/// does not get is a reader: the jammer and the locomotion term both read the pod
+	/// <see cref="MechPods"/> filed, the last of its kind in hardpoint order.</para>
+	///
 	/// <list type="bullet">
-	/// <item><b>ECM</b> copies the button into <see cref="EcmEnabled"/> and announces the change. It
-	/// posts rather than replaces, so unlike the radar and auto-track toggles a run of quick presses
-	/// reads the whole sequence out.</item>
+	/// <item><b>ECM</b> copies the button into the mount's <see cref="WeaponMount.EcmSwitch"/> and
+	/// announces the change. It posts rather than replaces, so unlike the radar and auto-track toggles
+	/// a run of quick presses reads the whole sequence out.</item>
 	/// <item><b>Turbo</b> engages on a button that is on over <see cref="WeaponMount.TurboEngageCharge"/>
 	/// of charge, cuts out when the tank empties, and <b>clears its own button</b> whenever it is not
 	/// engaged — so a row pressed with an empty tank lights for one frame and goes out again.</item>
@@ -195,17 +200,33 @@ public sealed partial class MechObject {
 			return;
 		}
 
-		if (Pods.EcmMount is { } ecm && EcmEnabled != ecm.PodButton) {
-			EcmEnabled = ecm.PodButton;
-			world?.Sounds?.Say(EcmEnabled
-				? Content.SystemMessages.JammingEngaged
-				: Content.SystemMessages.JammingDisabled);
-		}
+		foreach (var pod in Weapons.Mounts) {
+			if (pod.Kind != WeaponMountKind.Pod) {
+				continue;
+			}
 
-		if (Pods.TurboPodMount is not { } turbo) {
+			if (pod.WeaponId == MechPods.EcmWeaponId) {
+				EcmPodTick(pod, world);
+			} else if (pod.WeaponId == MechPods.TurboPodWeaponId) {
+				TurboPodTick(pod, world);
+			}
+		}
+	}
+
+	// EcmPod_Tick (0040f184).
+	private static void EcmPodTick(WeaponMount ecm, SimWorld? world) {
+		if (ecm.EcmSwitch == ecm.PodButton) {
 			return;
 		}
 
+		ecm.EcmSwitch = ecm.PodButton;
+		world?.Sounds?.Say(ecm.EcmSwitch
+			? Content.SystemMessages.JammingEngaged
+			: Content.SystemMessages.JammingDisabled);
+	}
+
+	// TurboPod_Tick (0040f1f0).
+	private static void TurboPodTick(WeaponMount turbo, SimWorld? world) {
 		if (!turbo.PodButton) {
 			turbo.TurboEngaged = false;
 			return;

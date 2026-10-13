@@ -195,14 +195,17 @@ public readonly struct WaypointIndicator {
 
 	/// <summary>
 	/// The arrow's three corners — tip first, then the two base ends — in device pixels. Its base sits
-	/// <see cref="ArrowGap"/> past the tape's end and its tip <see cref="ArrowLength"/> beyond that.
+	/// <see cref="ArrowGap"/> past the tape's end and its tip <see cref="ArrowLength"/> beyond that. The paint
+	/// swaps the base ends between the two arrows — the lower one second on the right-hand arrow, the upper one on
+	/// the left-hand — so both outlines wind clockwise, which the polygon fill needs.
 	/// </summary>
 	public ((int X, int Y) Tip, (int X, int Y) BaseA, (int X, int Y) BaseB) Arrow(bool pointsRight) {
 		int y = Top + MarkLift;
 		int baseX = pointsRight ? Right + ArrowGap : Left - ArrowGap;
 		int tipX = pointsRight ? baseX + ArrowLength : baseX - ArrowLength;
+		int half = pointsRight ? ArrowHalfHeight : -ArrowHalfHeight;
 
-		return ((tipX, y), (baseX, y + ArrowHalfHeight), (baseX, y - ArrowHalfHeight));
+		return ((tipX, y), (baseX, y + half), (baseX, y - half));
 	}
 
 	/// <summary>

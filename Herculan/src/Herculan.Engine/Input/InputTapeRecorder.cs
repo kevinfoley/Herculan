@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Dbsim;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
 using Herculan.Engine.World;
@@ -61,7 +62,7 @@ public sealed class InputTapeRecorder : IDisposable {
 			string? source = names[i] == MissionLoader.ScriptFileName ? scriptPath
 				: names[i] == MissionLoader.PlayerFileName ? MissionLoader.PlayerPathFor(scriptPath)
 				: dataDirectory is null ? null
-				: System.IO.Path.Combine(dataDirectory, names[i]);
+				: CaseInsensitivePath.Combine(dataDirectory, names[i]);
 			bundle[i] = source is not null && File.Exists(source) ? File.ReadAllBytes(source) : Array.Empty<byte>();
 		}
 

@@ -100,6 +100,7 @@ static class HostArguments {
 		  --install <disc> <folder>   install from a disc folder or disc image (.iso, .bin, .cue), then exit
 		  --install-size minimum|medium|maximum         default maximum
 		  --install-language english|french|german      default english
+		  --install-disc-files        also copy the movies, instructor clips and manual
 
 		Developer
 		  --developer                 the developer keys

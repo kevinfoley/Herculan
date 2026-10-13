@@ -180,7 +180,7 @@ public sealed class MissionModels {
 		var rockets = world.Rockets;
 		var debris = world.Debris;
 
-		var terrainBank = TerrainTextureBank.Load(content, theater, materials);
+		var terrainBank = TerrainTextureBank.Load(content, theater, materials, models.Palette);
 
 		// Terrain is lit here, after the flattening above has settled the heights it is lit from, the
 		// way the original relights the grid at the end of the same pass -- see TerrainMeshBuilder.

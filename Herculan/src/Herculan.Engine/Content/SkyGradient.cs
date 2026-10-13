@@ -16,10 +16,9 @@ namespace Herculan.Engine.Content;
 /// retail pixel. Measurements are in the original's 640x480-mode pixels, scaled to the window by
 /// the view's focal length, as the rest of the projection is.</para>
 ///
-/// <para>One departure, forced by drawing per pixel: retail's line is 1024 px long
-/// (<c>Hzline_BuildHorizon</c>), so past about 51 degrees of roll its ends fall inside a 640-wide
-/// view and the fills stop short of the view's sides, leaving whatever was there before. Here the
-/// line is unbounded. No HERC rolls that far.</para>
+/// <para>The line here is unbounded where retail's has ends; retail's spans every retail view at
+/// any roll and pitch (docs/retail/rendering/distance-fog-and-sky.md, "The horizon line"), so the
+/// two draw the same picture.</para>
 /// </summary>
 public sealed class SkyGradient {
 	/// <summary>
@@ -130,8 +129,8 @@ public sealed class SkyGradient {
 	///
 	/// <para><b>Rolled</b>, its quads: band <c>i</c>'s far edge stands <c>h·i + (t - h)·cos²r</c> from
 	/// the line, the vertical term counting one band fewer than the level fill's. Then
-	/// <c>Hzline_FillGround</c> fills the screen-below side of the line, moved one row down, in the
-	/// horizon colour.</para>
+	/// <c>Hzline_FillGround</c> fills the side of the line away from the sky, the line moved one row
+	/// down, in the horizon colour.</para>
 	///
 	/// The same rule runs in Sky.glsl; this copy exists so it can be tested.
 	/// </summary>
@@ -143,9 +142,9 @@ public sealed class SkyGradient {
 			return Math.Clamp((int)MathF.Floor((distanceAbove + 0.5f - t) / h) + 1, 0, last);
 		}
 
-		// One row straight down is -cos r along Up, so the ground fill covers a pixel whose vertical
-		// distance below the line, -d / cos r, exceeds a row.
-		if (cosRoll != 0f && -distanceAbove / cosRoll > 1f) {
+		// The ground fill's edge is the line moved one row straight down, which is -cos r along Up,
+		// and it covers the side away from the sky — screen-below upright, screen-above inverted.
+		if (distanceAbove < -cosRoll) {
 			return 0;
 		}
 

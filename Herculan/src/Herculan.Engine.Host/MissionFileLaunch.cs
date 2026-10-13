@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Sav;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Engine.Shell;
@@ -59,7 +60,7 @@ static class MissionFileLaunch {
 			return training?.ScriptPath;
 		}
 
-		string playerPath = Path.Combine(dataDirectory, MissionLoader.PlayerFileName);
+		string playerPath = CaseInsensitivePath.Combine(dataDirectory, MissionLoader.PlayerFileName);
 		if (!File.Exists(playerPath) || new MecFileTransformer().Parse(File.ReadAllBytes(playerPath)) is not MecFile { Entries: [var player, ..] }) {
 			failure = $"A campaign mission flies the player's lance from {playerPath}, and there is no readable one.";
 			return null;
@@ -74,7 +75,7 @@ static class MissionFileLaunch {
 
 		var flagBytes = new byte[flags.Length * 2];
 		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
-		File.WriteAllBytes(Path.Combine(dataDirectory, ShellMissionLaunch.MissionVarFileName), flagBytes);
+		File.WriteAllBytes(CaseInsensitivePath.Combine(dataDirectory, ShellMissionLaunch.MissionVarFileName), flagBytes);
 
 		Console.WriteLine($"{campaign.MissionPath}: stage {stage} mission {mission}, loaded as a campaign mission at "
 			+ $"skill {player.Skill} — {campaign.SquadPositions} squad position(s), the lance from {playerPath}, "

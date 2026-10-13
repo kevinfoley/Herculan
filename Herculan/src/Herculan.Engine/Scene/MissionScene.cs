@@ -177,7 +177,8 @@ public sealed class MissionScene {
 			IsV110 = content.IsV110
 		};
 		world.Mission.LoadCounters(mission.Counters);
-		var models = new SceneModelLibrary(content, theater);
+		var models = new SceneModelLibrary(content, theater,
+			CockpitPalette.ReadSchemeIndex(content, mission.Player?.TypeName));
 		var baseTypes = BaseTypeTable.Load(content);
 
 		// The theater's ground-shape set, which FlatObj_LoadResources loads at the end of
@@ -300,6 +301,7 @@ public sealed class MissionScene {
 		BindOrderSubjects(groups, objects);
 		BindOrderActions(groups, actions);
 		BindActionSubjects(actions, groups, objects);
+		StrandedStingrayFix.Bind(world);
 
 		// The mission's objectives, on the same second pass and for the same reason: an objective
 		// names a group or a roster slot, and neither exists until every group has been built. The

@@ -151,6 +151,10 @@ namespace Herculan.Engine.Cockpit;
 /// What the RAZOR's altitude scale reads this frame, or null when the piloted machine is not a flyer
 /// and the scale does not draw — see <see cref="AltitudeScale"/>.
 /// </param>
+/// <param name="TrackHidden">
+/// Whether the TRACK button is hidden, neither drawn nor taking a press: true when the piloted machine
+/// is a flyer (docs/retail/simulation/torso-aim.md#automatic-turret-tracking--t).
+/// </param>
 /// <param name="FlashingWidgets">
 /// The buttons a key or another press made for the player is holding down for a moment —
 /// <see cref="Input.PressFlashes{TId}.Lit"/>. Null for none. Read it through <see cref="ShowsPressed"/>.
@@ -192,6 +196,7 @@ public readonly record struct CockpitHudState(
 	MfdMissileCamState MissileCam = default,
 	bool MissileCamHolding = false,
 	AltitudeReading? Altitude = null,
+	bool TrackHidden = false,
 	IReadOnlyList<CockpitWidgetId>? FlashingWidgets = null) {
 
 	/// <summary>

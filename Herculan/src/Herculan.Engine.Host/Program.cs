@@ -33,7 +33,7 @@ if (argumentErrors.Count > 0) {
 }
 
 if (options.InstallSource != null && options.InstallDestination != null) {
-	return DiscInstall.Run(options.InstallSource, options.InstallDestination, options.InstallSize, options.InstallLanguage);
+	return DiscInstall.Run(options.InstallSource, options.InstallDestination, options.InstallSize, options.InstallLanguage, options.InstallDiscFiles);
 }
 
 // Host-lifetime, not mission-lifetime: neither reads the install, and both need to survive into

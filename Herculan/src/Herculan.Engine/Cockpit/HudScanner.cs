@@ -51,7 +51,8 @@ public static class HudScanner {
 	/// <summary>
 	/// A blip is two filled dots, an outline and a core: radius 2 in this colour (id 19, palette 16,
 	/// black) with radius 1 in the contact's own colour inside it. Both radii are literal device
-	/// pixels, unshifted, so a blip is the same size in every video mode.
+	/// pixels, unshifted, so a blip is the same size in every video mode. The shape the ellipse fill gives
+	/// them is in docs/retail/simulation/mfd-scanner.md, "What it draws".
 	/// </summary>
 	public const int BlipOutlineColorId = 19;
 

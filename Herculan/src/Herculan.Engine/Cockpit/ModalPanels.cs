@@ -148,8 +148,9 @@ public sealed class ModalPanels {
 	}
 
 	/// <summary>
-	/// The panels take the keyboard before anything else does. [Esc], which dismisses any of them, is also this
-	/// host's menu-bar key, so they have to be asked first or two things would act on one keystroke. All are asked
+	/// The panels take the keyboard before anything else does. [Esc], which dismisses any of them, is also the
+	/// cockpit's, so they have to be asked first or two things would act on one keystroke; a [Shift+Esc] press is
+	/// this host's menu-bar key and is hidden from them (<see cref="SimulatorFrame"/>). All are asked
 	/// every frame — single <c>|</c>, not <c>||</c> — so each keeps its own key-edge state whether or not another
 	/// claimed the keystroke. Returns whether any of them claimed it.
 	/// </summary>
@@ -524,14 +525,16 @@ public sealed class ModalPanels {
 			: AlertPanelKey.None;
 	}
 
-	// One key's down edge, against its bit in a panel's held-key mask.
+	// One key's down edge, against its bit in a panel's held-key mask, or one of its auto-repeats: a panel's loop
+	// takes each repeat as a fresh code, so a held [Tab] walks the focus and a held key that raised a panel raises
+	// it again once it is down (docs/retail/simulation/cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes).
 	private static bool KeyBit(IKeyState keyboard, Key key, int bit, ref int keysDown) {
 		bool down = keyboard.IsKeyPressed(key);
 		bool edge = down && (keysDown & (1 << bit)) == 0;
 		keysDown = down
 			? keysDown | (1 << bit)
 			: keysDown & ~(1 << bit);
-		return edge;
+		return edge || (down && keyboard.IsKeyRepeated(key));
 	}
 
 	// A modal panel's buttons, pressed and released. Read straight off the device rather than through

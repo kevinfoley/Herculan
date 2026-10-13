@@ -1,3 +1,4 @@
+using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.World;
 
@@ -63,7 +64,7 @@ public static class LauncherLanguage {
 			}
 		}
 
-		return SimulatorPreferences.Load(Path.Combine(installRoot, MissionLoader.DataFolderName))?[ShellLanguageOption] switch {
+		return SimulatorPreferences.Load(CaseInsensitivePath.Combine(installRoot, MissionLoader.DataFolderName))?[ShellLanguageOption] switch {
 			1 => GameLanguage.French,
 			2 => GameLanguage.German,
 			_ => GameLanguage.English,

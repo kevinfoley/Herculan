@@ -1,4 +1,6 @@
+using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Io.Transform;
+using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using HercWorks.Vol.Io;
 using Xunit;
@@ -99,6 +101,33 @@ public class RetailQueryTests {
 		Assert.Equal((short)5, travel.Verb);
 		Assert.Equal((short)34, travel.RouteRef);
 		Assert.True(travel.RouteDiffers);
+	}
+
+	[Fact]
+	public void RepeatedPointsReadTheLastRecord() {
+		if (Retail.Value is not { } data) {
+			return;
+		}
+
+		var c2_05 = data.Missions.Single(m => m.Name == "C2_05");
+		var point2 = c2_05.File.GetPoint(2)!;
+		Assert.Equal((381782, 371954), (point2.X, point2.Y));
+
+		// Every point the editing model resolves is the one the mission load writes into script.dat, at the
+		// index of the GUID's first record.
+		var generator = MissionGenerator.Load(c2_05.MsnBytes, c2_05.EngBytes,
+			new short[MissionGenerator.CampaignFlagCount], new short[MissionGenerator.ClearListLength], _ => 0);
+		var script = (ScriptDat)new ScriptDatTransformer().Parse(generator.WriteScriptDat())!;
+		var guids = c2_05.File.Points!.Select(p => p.GUID).Where(g => g != -1).Distinct().ToList();
+		Assert.Equal(guids.Count, script.Coordinates.Length);
+		for (int i = 0; i < guids.Count; i++) {
+			var point = c2_05.File.GetPoint(guids[i])!;
+			Assert.Equal((point.X, point.Y, point.Z), (script.Coordinates[i].X, script.Coordinates[i].Y, script.Coordinates[i].Z));
+		}
+
+		var repeats = RepeatQuery.Run(data, []).SelectMany(m => m.Guids.Select(g => (m.Mission, g))).Where(x => x.g.Row == 6).ToList();
+		Assert.Equal(451, repeats.Count);
+		Assert.Equal(24, repeats.Select(x => x.Mission).Distinct().Count());
 	}
 
 	[Fact]

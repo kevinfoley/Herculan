@@ -2,10 +2,11 @@ language.name Français
 general.save    Enregistrer
 general.cancel  Annuler
 general.close   Fermer
+general.ok      OK
 tweak.target_distance_meters.display_name      Corriger l'affichage de la distance de la cible
 tweak.target_distance_meters.description       Sur l'écran F5 TARGET du MFD, affiche la distance de la cible en mètres mesurée au sol, comme la mesure l'écran F4 SCANNER, afin que les deux écrans concordent. Sans cette option, l'écran affiche ce qu'affiche votre version du jeu : la version 1.0 affiche la distance en unités du moteur (1 unité = 6 mm), et la version 1.10 l'affiche en mètres. Les deux versions tiennent compte de la différence d'altitude.
 tweak.show_correct_stats.display_name          Afficher les statistiques correctes
-tweak.show_correct_stats.description           Corrige les statistiques des HERC et des armes que le jeu original affichait de façon incorrecte dans VSHELL, comme la vitesse maximale de l'Outlaw et le nombre de points d'emport du Raptor II.
+tweak.show_correct_stats.description           Corrige les statistiques des HERC et des armes que le jeu original affichait de façon incorrecte dans VSHELL, comme la vitesse maximale de chaque HERC et le nombre de points d'emport du Raptor II.
 tweak.show_accurate_speed.display_name         Afficher la vitesse exacte
 tweak.show_accurate_speed.description          Affiche la vraie vitesse de déplacement du HERC sur le HUD. Le jeu original affiche environ le double de la vitesse réelle pendant la marche. La valeur en course est inchangée.
 tweak.show_even_shield_balance.display_name    Arrondir la répartition des boucliers
@@ -28,6 +29,10 @@ tweak.drop_pod_sound_from_pod.display_name    Sons des capsules de largage depui
 tweak.drop_pod_sound_from_pod.description     Entendez le sifflement d'une capsule de largage en chute provenir de la capsule elle-même, en la suivant dans sa descente, et son atterrissage provenir de son point d'impact. Les sons sont plus forts et portent sur des kilomètres. Le jeu original joue les deux sons à votre propre position, si bien qu'ils n'indiquent jamais où se trouve la capsule.
 tweak.fix_repair_diagram_sides.display_name  Corriger les côtés du schéma de réparation
 tweak.fix_repair_diagram_sides.description   Sur le schéma des dégâts de l'écran REPAIR, Left Torso et Left Leg sont du même côté. Dans le jeu original, le schéma montre Left Torso à votre gauche mais Left Leg à votre droite. Sur un Razor, les nacelles sont inversées pour correspondre aux ailes.
+tweak.play_last_music_track.display_name  Jouer toutes les musiques
+tweak.play_last_music_track.description   Les missions jouent aussi la dernière des six pistes musicales du disque. Dans le jeu original, les missions n'alternent qu'entre les cinq premières, si bien que la dernière n'est jamais jouée.
+tweak.shuffle_mission_music.display_name  Musique de mission aléatoire
+tweak.shuffle_mission_music.description   Chaque mission joue une piste musicale choisie au hasard, jamais la même deux fois de suite. Le jeu original joue les pistes dans un ordre fixe, une par mission.
 tweak.smoother_turret_movement.display_name   Mouvement de tourelle plus fluide
 tweak.smoother_turret_movement.description     Fluidifie la rotation de la tourelle lors de la visée au joystick ou avec une autre commande analogique. Le jeu original arrondit la valeur de rotation, ce qui provoque des saccades aux faibles vitesses de visée. Sans effet lors de la visée au clavier.
 tweak.mouse_external_view.display_name         Vue extérieure à la souris
@@ -42,6 +47,14 @@ tweak.fix_terrain_hit_point.display_name  Impacts précis sur le terrain
 tweak.fix_terrain_hit_point.description   Les tirs et les lignes de vue rencontrent le sol exactement là où il se trouve. Sur environ un tiers du terrain, le jeu original calcule le point où un tir frappe le sol sur une pente qui peut être décalée de plusieurs mètres par rapport à la vraie, si bien que l'impact tombe trop court ou trop long. Dans la version 1.10, le sol n'arrête alors parfois plus du tout un tir ou une ligne de vue, si bien que les machines peuvent se voir et se tirer dessus à travers certaines parties des collines.
 tweak.flyer_ignores_player_throttle.display_name  Les volants Cybrid ignorent votre manette des gaz
 tweak.flyer_ignores_player_throttle.description   Un volant Cybrid vole toujours à sa vitesse de croisière normale. Dans le jeu original, quand votre joystick a une manette des gaz et que la commande THROTTLE du Razor est réglée sur THROTTLE, tous les volants Cybrid de la mission ralentissent, même si vous ne pilotez pas un Razor.
+tweak.c2_05_stingray_closes_in.display_name  Corriger la mission Delta 5
+tweak.c2_05_stingray_closes_in.description   Dans la mission d'escorte du prototype de Raptor II, une fois le prototype ramené à la base, le Stingray Cybrid qui le traque quitte son coin de la carte et marche droit sur le prototype. Dans le jeu original, il ne quitte jamais l'extrême nord-est de la carte.
+tweak.faster_keyboard_aiming.display_name  Visée au clavier plus rapide
+tweak.faster_keyboard_aiming.description   Maintenir une touche enfoncée fait pivoter et incliner la tourelle de votre HERC aussi vite qu'un joystick poussé à fond. Dans le jeu original, une touche vise à la moitié de cette vitesse, et le chapeau chinois du joystick aux trois quarts.
+tweak.fix_raptor2_perspective.display_name  Corriger la perspective du Raptor II
+tweak.fix_raptor2_perspective.description   Place la vue cockpit du Raptor II dans son cockpit. Dans le jeu original, la vue se trouve au-dessus du sommet du HERC. Le suivi de la tourelle et la convergence des armes suivent ce changement.
+tweak.reset_counters_on_replay.display_name  Corriger les indicateurs de « Rejouer la mission »
+tweak.reset_counters_on_replay.description   Corrige les indicateurs de mission qui ne sont pas réinitialisés quand vous choisissez de rejouer une mission (après avoir été tué pendant la mission), ce qui pouvait faire échouer des déblocages ou causer d'autres comportements inattendus.
 tweaks.title                   Ajustements
 tweaks.category.cosmetic       Cosmétique
 tweaks.category.ai             IA
@@ -70,6 +83,13 @@ crash.message                 HERCULAN s'est arrêté à cause d'une erreur : {0
 menu.debug                     Débogage
 menu.tweaks                    Ajustements
 menu.settings                  Paramètres
+menu.controller                Manette
+menu.about                     À propos
+about.title                    À propos
+about.license                  Licence
+welcome.title                  Bienvenue
+welcome.message                Bienvenue dans le moteur HERCULAN ! HERCULAN propose divers ajustements facultatifs pour personnaliser votre expérience de jeu. Pour accéder à la barre de menus d'HERCULAN, appuyez à tout moment sur Maj+Échap.
+welcome.view_tweaks            Voir les ajustements
 settings.title                 Paramètres
 settings.folders               Dossiers d'Earthsiege 2
 settings.install_folder        Dossier d'installation
@@ -87,6 +107,58 @@ settings.languages             Langues
 settings.game_language         Langue du jeu
 settings.interface_language    Langue de l'interface HERCULAN
 settings.write_failed          Impossible d'écrire {0} : {1}
+controller.title               Manette
+controller.device              Périphérique
+controller.no_device           Aucun branché
+controller.gamepad_layout     Manette de jeu
+controller.gamepad_layout_tip Lue selon la disposition standard des manettes, la même sur tous les ordinateurs : les axes 0-3 sont les sticks gauche et droit, 4 et 5 les gâchettes ; les boutons 0-10 sont A, B, X, Y, les boutons de tranche, Back, Start, Guide et les clics des sticks, 11-14 la croix directionnelle, qui est aussi le chapeau 0.
+controller.saved_for_gamepads  Ces réglages sont enregistrés pour toutes les manettes de jeu.
+controller.saved_for_model     Ces réglages sont enregistrés pour ce modèle de joystick.
+controller.saved_for_joysticks Ces réglages sont enregistrés pour tous les joysticks sans réglages propres.
+controller.none_connected      Aucune manette n'est branchée. Branchez-en une et elle apparaîtra ici.
+controller.inputs              Ce que le périphérique indique
+controller.axis                Axe {0}
+controller.axis_direction      Axe {0} {1}
+controller.button              Bouton {0}
+controller.buttons             Boutons
+controller.hat                 Chapeau {0}
+controller.controls            Commandes
+controller.control             Commande
+controller.input               Entrée du périphérique
+controller.invert              Inverser
+controller.reads               Lu par le jeu
+controller.stick_x             Manche gauche/droite
+controller.stick_y             Manche avant/arrière
+controller.throttle            Manette des gaz
+controller.rudder              Palonnier
+controller.hat_row             Chapeau
+controller.button_row          BUTTON {0}
+controller.unmapped            Aucun
+controller.detect              Détecter
+controller.detecting           Annuler
+controller.detect_axis         Bougez la commande voulue jusqu'en butée.
+controller.detect_hat          Poussez le chapeau voulu dans n'importe quelle direction.
+controller.detect_button       Appuyez sur le bouton voulu, ou tirez la gâchette voulue.
+controller.invert_throttle_tip Pour une manette des gaz : manette au ralenti, « Lu par le jeu » doit afficher un nombre positif. Cochez Inverser s'il est négatif.
+controller.invert_throttle_gamepad_tip  Sur une manette de jeu, c'est le stick droit vers le haut et le bas. Cochez Inverser pour changer le sens dans lequel il oriente la tourelle d'un HERC et incline un Razor.
+controller.pressed             Appuyé
+controller.released            Relâché
+controller.centred             Centré
+controller.up                  Haut
+controller.down                Bas
+controller.left                Gauche
+controller.right               Droite
+controller.options             Options
+controller.deadzone            Zone morte centrale
+controller.deadzone_tip        La distance, sur 127, dont un axe doit s'écarter du centre avant que le jeu le lise. Le jeu original utilise 25.
+controller.hat_diagonals       Diagonales du chapeau
+controller.hat_diagonals_tip   Un chapeau poussé en diagonale compte comme ses deux directions. Le jeu original ignore une diagonale.
+controller.centre_idle         Ralenti au centre
+controller.centre_idle_tip     Le milieu de la course de la manette des gaz est le ralenti, en avant c'est la marche avant et en arrière la marche arrière. Le jeu original lit la manette des gaz du ralenti à une extrémité jusqu'au plein régime à l'autre, et CHANGE DIRECTION choisit la marche avant ou arrière.
+controller.centre_idle_gamepad_tip      Seulement pour la manette des gaz d'un joystick. Le stick gauche d'une manette de jeu monte et baisse les gaz et les laisse où ils sont, donc ceci n'a aucun effet avec elle.
+controller.actions_note        Cette fenêtre choisit les parties de votre périphérique que le jeu utilise. Ce que fait chacune (diriger ou viser, FIRE, TARGET, etc.) se règle en mission : appuyez sur F12 pour les préférences, puis CONTROLS. Avec une manette de jeu, les lignes JOYSTICK, THROTTLE, RUDDER et HAT y sont réglées pour elle, et ses choix de boutons sont gardés à part de ceux d'un joystick. Les réglages sont enregistrés dans data\herculan-joystick.cfg, que le jeu original ne lit pas.
+controller.defaults            Par défaut
+controller.no_data_folder      Il n'y a pas de dossier data où enregistrer les réglages.
 disc_prompt.message            Choisissez le dossier du disque d'Earthsiege 2, comme le lecteur de CD ou une copie du disque. Il est enregistré dans le fichier data\{0} de l'installation, que le jeu original lit aussi, et l'interface de jeu redémarre.
 disc_prompt.path_hint          Dossier du disque
 disc_prompt.picker_title       Choisissez le dossier du disque d'Earthsiege 2
@@ -122,7 +194,8 @@ install.size                   Taille
 install.size_minimum           Minimale ({0:N0} Mo)
 install.size_medium            Moyenne ({0:N0} Mo)
 install.size_maximum           Maximale ({0:N0} Mo)
-install.size_note              Une installation plus petite laisse une plus grande partie du jeu sur le disque, qui doit donc rester à sa place.
+install.size_note              Quelle que soit la taille, les vidéos, la voix de l'instructeur d'entraînement et le manuel en ligne restent sur le disque si la case ci-dessous n'est pas cochée, et une taille plus petite y laisse aussi une partie des archives. Ce qui reste est lu sur le disque ou l'image disque, qui doit donc rester à sa place. La musique du CD est toujours lue depuis le disque.
+install.disc_files             Copier aussi les vidéos, la voix de l'instructeur d'entraînement et le manuel en ligne
 install.language               Langue
 install.language_english       English (anglais)
 install.language_french        Français

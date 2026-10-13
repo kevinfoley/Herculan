@@ -45,7 +45,7 @@ public class DiscImageInstallTests : IDisposable {
 		Assert.Equal(RetailInstaller.RetailBuild.V110, installer.Build);
 
 		string install = Path.Combine(_root, "install");
-		installer.Install(install, size, language);
+		installer.Install(install, size, language, discFiles: false);
 
 		// An oracle install that has been played holds saves, and the game has rewritten its preferences and save
 		// list; those two are checked against the disc's own copies instead.
@@ -71,6 +71,35 @@ public class DiscImageInstallTests : IDisposable {
 		Assert.Equal(Path.GetFullPath(install), drive.InstallDirectory);
 		Assert.Equal(fromImage ? "." : Path.GetFullPath(folder), drive.Directory);
 		Assert.Equal(fromImage ? Path.GetFullPath(sourcePath) : null, drive.DiscImage);
+	}
+
+	/// <summary>
+	/// The disc files a v1.10 install adds are every file of <c>AVI</c>, of the language's intro and voice folders, and
+	/// its language folder's manual, whether the disc is the folder or the image.
+	/// </summary>
+	[Theory]
+	[InlineData(RetailInstaller.Language.English, false)]
+	[InlineData(RetailInstaller.Language.French, false)]
+	[InlineData(RetailInstaller.Language.German, true)]
+	public void AddsTheV110DiscFilesForTheLanguage(RetailInstaller.Language language, bool fromImage) {
+		if (FindBesideRepo(Path.Combine("ES2v110", "CD")) is not { } folder
+				|| (fromImage ? FindBesideRepo(V110Image) : folder) is not { } sourcePath) {
+			return;
+		}
+
+		using var source = fromImage ? GameDisc.OpenImage(sourcePath) : GameDisc.OpenFolder(sourcePath);
+		var installer = RetailInstaller.Identify(source, out _, out _)!;
+		string letter = ((char)language).ToString();
+		string[] folders = language == RetailInstaller.Language.English ? ["AVI", "SIMVOICE"] : ["AVI", "AV" + letter, "SIMVOIC" + letter];
+		var expected = folders
+			.SelectMany(name => Directory.GetFiles(Path.Combine(folder, name)).Select(file => $"{name}/{Path.GetFileName(file)}"))
+			.Append($"{RetailInstaller.LanguageFolder(language).Folder}/{RetailInstaller.ManualFileName}")
+			.Order(StringComparer.OrdinalIgnoreCase);
+
+		var without = installer.Plan(RetailInstaller.Size.Minimum, language, discFiles: false);
+		var added = installer.Plan(RetailInstaller.Size.Minimum, language, discFiles: true).Except(without).ToList();
+		Assert.All(added, file => Assert.Equal(file.Source, file.Destination));
+		Assert.Equal(expected, added.Select(file => file.Source).Order(StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
 	}
 
 	/// <summary>

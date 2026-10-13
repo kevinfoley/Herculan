@@ -51,6 +51,7 @@ sealed class HostOptions {
 	public string? InstallDestination { get; private set; }
 	public RetailInstaller.Size InstallSize { get; private set; } = RetailInstaller.Size.Maximum;
 	public RetailInstaller.Language InstallLanguage { get; private set; } = RetailInstaller.Language.English;
+	public bool InstallDiscFiles { get; private set; }
 
 	public ShellOptions Shell { get; } = new();
 	public Es1Options Es1 { get; } = new();
@@ -402,6 +403,9 @@ sealed class HostOptions {
 					options.Es1.WorldDetail = detail;
 				}
 				options.Es1.Staged = true;
+			} else if (args[i] == "--install-disc-files") {
+				// Also copy what retail always reads from the disc, as the install window's box does. See RetailInstaller.Plan.
+				options.InstallDiscFiles = true;
 			} else if (args[i].StartsWith("--")) {
 				errors.Add($"Unknown option {args[i]}.");
 			} else {

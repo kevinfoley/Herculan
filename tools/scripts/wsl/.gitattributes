@@ -1,0 +1,2 @@
+# Run by bash inside WSL, which takes a CR at a line's end as part of the command.
+*.sh text eol=lf

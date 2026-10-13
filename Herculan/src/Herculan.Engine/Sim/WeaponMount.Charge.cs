@@ -67,6 +67,13 @@ public sealed partial class WeaponMount {
 	/// </summary>
 	public bool TurboEngaged { get; internal set; }
 
+	/// <summary>
+	/// <c>pod+0x7d</c> and <c>pod+0x7f</c>, the ECM pod's switch: the row's button as
+	/// <c>EcmPod_Tick</c> (<c>0040f184</c>) last copied it, into both fields at once. Set only by
+	/// <see cref="MechObject.PodTick"/>, so an AI machine's stays clear.
+	/// </summary>
+	public bool EcmSwitch { get; internal set; }
+
 	/// <summary>What <c>TurboPod_Ctor</c> fills the tank to, and the ceiling the pool refills it to.</summary>
 	public const int TurboChargeFull = 2000;
 

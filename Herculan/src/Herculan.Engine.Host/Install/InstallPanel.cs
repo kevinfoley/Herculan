@@ -9,7 +9,8 @@ namespace Herculan.Engine.Host.Install;
 
 /// <summary>
 /// The body of the "install from a disc" window: a disc folder or image, the size and language the disc offers,
-/// a destination, and the copy itself run off the frame loop with a progress bar (<see cref="RetailInstaller"/>).
+/// whether to copy what retail always reads from the disc too (on by default), a destination, and the copy itself
+/// run off the frame loop with a progress bar (<see cref="RetailInstaller"/>).
 /// It draws into whatever ImGui window is current, so <see cref="InstallWindow"/> shows it as a window of its own
 /// and <see cref="Settings.SettingsWindow"/> as a floating one. Retail's installer is Sierra's <c>SETUP.EXE</c>;
 /// nothing here imitates its screens.
@@ -35,6 +36,7 @@ sealed class InstallPanel : IDisposable {
 	private string? _sourceMessage;
 	private bool _sourceOk;
 	private RetailInstaller.Size _size = RetailInstaller.Size.Maximum;
+	private bool _discFiles = true;
 	private RetailInstaller.Language _language = RetailInstaller.Language.English;
 	private long[]? _sizeBytes;
 	private string? _error;
@@ -114,7 +116,12 @@ sealed class InstallPanel : IDisposable {
 				_size = size;
 			}
 		}
+		ImGui.PushTextWrapPos(0f);
 		ImGui.TextDisabled(_localization.GetStringOrKey("install.size_note"));
+		ImGui.PopTextWrapPos();
+		if (ImGui.Checkbox(_localization.GetStringOrKey("install.disc_files"), ref _discFiles)) {
+			MeasureSizes();
+		}
 
 		ImGui.SeparatorText(_localization.GetStringOrKey("install.language"));
 		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.5f);
@@ -159,7 +166,8 @@ sealed class InstallPanel : IDisposable {
 			}
 
 			float fraction = progress.BytesTotal > 0 ? (float)progress.BytesDone / progress.BytesTotal : 0f;
-			ImGui.ProgressBar(fraction, new Vector2(-1f, 0f), progress.File.Length == 0 ? ""
+			// File is null until the copy's first report, which comes only after the plan is checked and a chunk read.
+			ImGui.ProgressBar(fraction, new Vector2(-1f, 0f), string.IsNullOrEmpty(progress.File) ? ""
 				: string.Format(_localization.GetStringOrKey("install.copying"), progress.File, progress.FileIndex + 1, progress.FileCount));
 		} else if (_done != null) {
 			ImGui.TextWrapped(_done);
@@ -277,7 +285,7 @@ sealed class InstallPanel : IDisposable {
 
 	private void MeasureSizes() {
 		_sizeBytes = _installer is { } installer
-			? Sizes.Select(size => installer.PlanBytes(installer.Plan(size, _language))).ToArray()
+			? Sizes.Select(size => installer.PlanBytes(installer.Plan(size, _language, _discFiles))).ToArray()
 			: null;
 	}
 
@@ -327,8 +335,13 @@ sealed class InstallPanel : IDisposable {
 
 		var size = _size;
 		var language = _language;
+		bool discFiles = _discFiles;
 		var cancellation = new CancellationTokenSource();
-		// Only the latest report is kept, for the frame loop to read.
+		// Only the latest report is kept, for the frame loop to read; a retry starts from none, not the last run's.
+		lock (_progressGate) {
+			_progress = default;
+		}
+
 		var progress = new ActionProgress<InstallProgress>(report => {
 			lock (_progressGate) {
 				_progress = report;
@@ -336,7 +349,7 @@ sealed class InstallPanel : IDisposable {
 		});
 		_cancellation = cancellation;
 		_destination = destination;
-		_installing = Task.Run(() => installer.Install(destination, size, language, progress, cancellation.Token));
+		_installing = Task.Run(() => installer.Install(destination, size, language, discFiles, progress, cancellation.Token));
 	}
 
 	private void TakeInstall() {

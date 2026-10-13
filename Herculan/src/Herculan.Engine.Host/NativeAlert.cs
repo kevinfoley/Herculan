@@ -38,6 +38,7 @@ static class NativeAlert {
 	private const uint MbSetForeground = 0x10000;
 
 	[DllImport("user32.dll", CharSet = CharSet.Unicode)]
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	private static extern int MessageBoxW(nint owner, string text, string caption, uint type);
 
 	private static void ShowWithTool(string title, string message) {

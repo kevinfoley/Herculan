@@ -76,4 +76,27 @@ public static class KeyboardAxes {
 			(short)(twist * MechControls.KeyboardAxis),
 			(short)(pitch * MechControls.KeyboardAxis));
 	}
+
+	/// <summary>
+	/// What a stick pushed all the way delivers, <see cref="JoystickReading.ApplyResponse"/> at
+	/// <see cref="JoystickReading.RawFull"/>: 258 with the original's deadzone.
+	/// </summary>
+	public static readonly short StickFullDeflection = (short)JoystickReading.ApplyResponse(JoystickReading.RawFull);
+
+	/// <summary>
+	/// <see cref="Build"/>'s pairs with each key that will aim the turret worth <see cref="StickFullDeflection"/>
+	/// rather than <see cref="MechControls.KeyboardAxis"/>, so a held key turns the turret as fast as the stick can
+	/// (<see cref="Settings.TweakSettingDefinitions.FasterKeyboardAiming"/>). <b>This engine's own</b>; retail's key
+	/// is worth half a stick. The second pair aims the turret in a walker; the first does too when
+	/// <paramref name="firstPairAims"/>, the stick having taken the movement pair
+	/// (<see cref="JoystickPilotInput.KeyboardAimsTurret"/>).
+	/// </summary>
+	public static PilotAxes AtStickRate(PilotAxes keys, bool firstPairAims) => new(
+		firstPairAims ? AtStickRate(keys.Steer) : keys.Steer,
+		firstPairAims ? AtStickRate(keys.Throttle) : keys.Throttle,
+		AtStickRate(keys.TorsoTwist),
+		AtStickRate(keys.TorsoPitch));
+
+	// Every axis Build makes is 0 or one key's worth either way.
+	private static short AtStickRate(short axis) => (short)(Math.Sign(axis) * StickFullDeflection);
 }

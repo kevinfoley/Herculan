@@ -6,26 +6,25 @@ using Silk.NET.Input;
 namespace Herculan.Engine.Host.Shell;
 
 /// <summary>
-/// Where a key goes: [Esc] to HERCULAN's own menu bar wherever retail has no use for the key, the display keys
-/// MainWndProc handles itself, and the rest to the edit fields.
+/// Where a key goes: [Shift+Esc] to HERCULAN's own menu bar, as in a mission, and plain [Esc] too while the bar is
+/// up, to back out of it; the display keys MainWndProc handles itself; and the rest to the edit fields.
 /// </summary>
 sealed class KeyboardRouting {
 	private readonly FrontEndWindow _window;
 	private readonly ShellMovies _movies;
-	private readonly MissionTabScreens _mission;
-	private readonly ShellPointer _pointer;
 	private readonly StartupScreen _startup;
 	private readonly GameInProgress _game;
 	private readonly MainMenuPanels _menu;
 	private readonly EditFields _fields;
 	private readonly Action _repaint;
 
-	public KeyboardRouting(FrontEndWindow window, ShellMovies movies, MissionTabScreens mission, ShellPointer pointer,
-			StartupScreen startup, GameInProgress game, MainMenuPanels menu, EditFields fields, Action repaint) {
+	// Whether the [Esc] held now went to the menu bar, which its release follows.
+	private bool _escapeIsMenuBars;
+
+	public KeyboardRouting(FrontEndWindow window, ShellMovies movies, StartupScreen startup, GameInProgress game,
+			MainMenuPanels menu, EditFields fields, Action repaint) {
 		_window = window;
 		_movies = movies;
-		_mission = mission;
-		_pointer = pointer;
 		_startup = startup;
 		_game = game;
 		_menu = menu;
@@ -34,10 +33,12 @@ sealed class KeyboardRouting {
 	}
 
 	public void KeyDown(Key key) {
-		// HERCULAN's own menu bar, which [Esc] raises wherever retail has no use for the key (EscapeIsRetails).
-		if (key == Key.Escape && !EscapeIsRetails()) {
-			_window.MenuBarEscape();
-			return;
+		if (key == Key.Escape) {
+			_escapeIsMenuBars = MenuBarTakesEscape();
+			if (_escapeIsMenuBars) {
+				_window.MenuBarEscape();
+				return;
+			}
 		}
 
 		DisplayHotkey(key, released: false);
@@ -46,20 +47,27 @@ sealed class KeyboardRouting {
 
 	public void KeyUp(Key key) {
 		DisplayHotkey(key, released: true);
-		if (key != Key.Escape || EscapeIsRetails()) {
+		if (key != Key.Escape || !_escapeIsMenuBars) {
 			_fields.DeliverKey(key, released: true);
 		}
 	}
 
-	// Whether [Esc] is retail's (docs/retail/shell/main-menu.md#typing-into-a-row): a movie and the briefing map's
-	// intro skip on it, a field being typed into takes it, and with Alt or Ctrl it leaves full screen.
-	// Retail also hands it to an edit field that is merely under the pointer, which runs the field's
-	// handler and so selects a save row; here the menu bar takes it instead (KNOWN_ISSUES.md).
-	private bool EscapeIsRetails() {
+	/// <summary>
+	/// Whether the [Esc] held now is the menu bar's, so that nothing of retail's sees it — read by the movie and
+	/// briefing-intro skip, which poll the key rather than taking its events (<see cref="PolledButtons"/>).
+	/// </summary>
+	public bool EscapeIsMenuBars => _escapeIsMenuBars && _window.Keyboard?.IsKeyPressed(Key.Escape) == true;
+
+	// [Shift+Esc] alone, or any unmodified [Esc] while the bar is up, is the menu bar's, wherever the shell is; every
+	// other [Esc] is retail's (docs/retail/shell/main-menu.md#typing-into-a-row): a movie and the briefing map's intro
+	// skip on it, an edit field under the pointer takes it, and with Alt or Ctrl it leaves full screen. A press the
+	// bar takes is the bar's for as long as it is held, its release included, so it never does both.
+	private bool MenuBarTakesEscape() {
 		var keyboard = _window.Keyboard;
-		return _movies.Active || _mission.IntroUp() != null || _pointer.Focused != null
-			|| keyboard != null && (keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight)
-				|| keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight));
+		bool shift = keyboard != null && (keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight));
+		bool alt = keyboard != null && (keyboard.IsKeyPressed(Key.AltLeft) || keyboard.IsKeyPressed(Key.AltRight));
+		bool ctrl = keyboard != null && (keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight));
+		return !alt && !ctrl && (shift || _window.MenuBarUp);
 	}
 
 	// MainWndProc (00404a2c)'s display keys (docs/retail/shell/main-menu.md#full-screen-asks-first), each gated

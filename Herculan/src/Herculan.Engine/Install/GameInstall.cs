@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Cfg;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Disc;
 using Herculan.Engine.Content;
@@ -56,7 +57,7 @@ public static class GameInstall {
 		// of the repo without any configuration, which is the normal development case.
 		var directory = new DirectoryInfo(AppContext.BaseDirectory);
 		while (directory != null) {
-			string candidate = Path.Combine(directory.FullName, "ES2");
+			string candidate = CaseInsensitivePath.Combine(directory.FullName, "ES2");
 			if (IsInstallRoot(candidate)) {
 				return Path.GetFullPath(candidate);
 			}
@@ -82,7 +83,7 @@ public static class GameInstall {
 
 	/// <summary>The <c>VOL</c> archive directory inside an install root.</summary>
 	public static string ArchiveDirectory(string installRoot) =>
-		Path.Combine(installRoot, ArchiveFolderName);
+		CaseInsensitivePath.Combine(installRoot, ArchiveFolderName);
 
 	/// <summary>Whether <paramref name="path"/> is an install root: a directory holding the archive directory.</summary>
 	public static bool IsInstallRoot(string path) =>
@@ -237,17 +238,17 @@ public static class GameInstall {
 			return onDisc;
 		}
 
-		string inInstall = Path.Combine(installRoot, relativePath);
+		string inInstall = CaseInsensitivePath.Combine(installRoot, relativePath);
 		return File.Exists(inInstall) ? File.OpenRead(inInstall) : null;
 	}
 
 	/// <summary>Whether <see cref="OpenDiscFile"/> would find <paramref name="relativePath"/>.</summary>
 	public static bool DiscFileExists(string installRoot, GameDisc? disc, string relativePath) =>
-		disc?.FileExists(relativePath) == true || File.Exists(Path.Combine(installRoot, relativePath));
+		disc?.FileExists(relativePath) == true || File.Exists(CaseInsensitivePath.Combine(installRoot, relativePath));
 
 	/// <summary>Whether <paramref name="relativePath"/> names a folder on <paramref name="disc"/> or under the install root.</summary>
 	public static bool DiscFolderExists(string installRoot, GameDisc? disc, string relativePath) =>
-		disc?.DirectoryExists(relativePath) == true || Directory.Exists(Path.Combine(installRoot, relativePath));
+		disc?.DirectoryExists(relativePath) == true || Directory.Exists(CaseInsensitivePath.Combine(installRoot, relativePath));
 
 	/// <summary>
 	/// <see cref="OpenDiscFile"/>'s file read whole, or null when neither place has it or it is longer than
@@ -266,18 +267,18 @@ public static class GameInstall {
 
 	/// <summary>The install's <c>data\drive.cfg</c>.</summary>
 	public static string DriveCfgPath(string installRoot) =>
-		Path.Combine(installRoot, MissionLoader.DataFolderName, Drive.FileName);
+		CaseInsensitivePath.Combine(installRoot, MissionLoader.DataFolderName, Drive.FileName);
 
 	/// <summary>The install's <c>data\sound.cfg</c>, which both executables read (<see cref="SoundCfg"/>).</summary>
 	public static string SoundCfgPath(string installRoot) =>
-		Path.Combine(installRoot, MissionLoader.DataFolderName, SoundCfg.FileName);
+		CaseInsensitivePath.Combine(installRoot, MissionLoader.DataFolderName, SoundCfg.FileName);
 
 	/// <summary><c>language.cfg</c>'s name (<see cref="HercWorks.Core.Data.File.Cfg.Language"/>).</summary>
 	public const string LanguageCfgName = "LANGUAGE.CFG";
 
 	/// <summary>The install's <c>data\language.cfg</c>.</summary>
 	public static string LanguageCfgPath(string installRoot) =>
-		Path.Combine(installRoot, MissionLoader.DataFolderName, LanguageCfgName);
+		CaseInsensitivePath.Combine(installRoot, MissionLoader.DataFolderName, LanguageCfgName);
 
 	/// <summary>
 	/// The first byte of the install's <c>data\language.cfg</c>, the one byte every retail reader takes; null when the

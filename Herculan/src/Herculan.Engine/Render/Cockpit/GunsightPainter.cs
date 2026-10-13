@@ -38,7 +38,7 @@ internal sealed class GunsightPainter {
 		float centerY = origin.Y * S + half;
 
 		if (hud.LogicalColor(HudScanner.OutlineColorId) is { } outline) {
-			RasterPrimitives.AddCircleOutline(centerX, centerY, half, outline, fillRect);
+			RasterPrimitives.AddEllipseOutline(centerX, centerY, half, half, outline, fillRect);
 
 			// The turret arc: two lines from the centre out to the rim, 45 degrees either side of the
 			// twist. The endpoint is the point (0, -half) rotated, so both reach exactly the rim.
@@ -66,10 +66,12 @@ internal sealed class GunsightPainter {
 			float blipX = centerX + contacts[i].X / worldPerPixel;
 			float blipY = centerY + contacts[i].Y / worldPerPixel;
 			if (blipOutline is { } ring) {
-				RasterPrimitives.AddFilledCircle(blipX, blipY, HudScanner.BlipOutlineRadius, ring, fillRect);
+				RasterPrimitives.AddFilledEllipse(blipX, blipY, HudScanner.BlipOutlineRadius, HudScanner.BlipOutlineRadius,
+					ring, fillRect);
 			}
 
-			RasterPrimitives.AddFilledCircle(blipX, blipY, HudScanner.BlipCoreRadius, color, fillRect);
+			RasterPrimitives.AddFilledEllipse(blipX, blipY, HudScanner.BlipCoreRadius, HudScanner.BlipCoreRadius,
+				color, fillRect);
 		}
 
 		if (scanner.TargetContact >= 0 && scanner.TargetContact < contacts.Count) {

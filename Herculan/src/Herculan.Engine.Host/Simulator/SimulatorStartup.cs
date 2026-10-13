@@ -1,3 +1,4 @@
+using HercWorks.Core.Io;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
@@ -28,7 +29,7 @@ static class SimulatorStartup {
 		InputTapePlayer? tapePlayer = null;
 		string? tapeScriptPath = null;
 		if (options.PlayTape != null || demoTape) {
-			string tapesDirectory = Path.Combine(installRoot, InputTapePlayer.TapesFolderName);
+			string tapesDirectory = CaseInsensitivePath.Combine(installRoot, InputTapePlayer.TapesFolderName);
 			string? stem = options.PlayTape ?? InputTapePlayer.PickDemo(tapesDirectory);
 			string? tapePath = stem == null
 				? null
@@ -49,7 +50,7 @@ static class SimulatorStartup {
 
 			tapeScriptPath = tapePlayer.ExtractBundle(
 				Path.Combine(Path.GetTempPath(), "herculan-tape", Path.GetFileNameWithoutExtension(tapePath)),
-				Path.Combine(installRoot, MissionLoader.DataFolderName));
+				CaseInsensitivePath.Combine(installRoot, MissionLoader.DataFolderName));
 
 			var frames = tapePlayer.Tape.Frames;
 			Console.WriteLine($"Tape {tapePlayer.Name}: {frames.Count} frames, {tapePlayer.RecordedSeconds:0.0} s as recorded, "
@@ -69,7 +70,7 @@ static class SimulatorStartup {
 				return null;
 			}
 
-			shellLaunch = new ShellLaunch(generated, Path.Combine(installRoot, MissionLoader.DataFolderName));
+			shellLaunch = new ShellLaunch(generated, CaseInsensitivePath.Combine(installRoot, MissionLoader.DataFolderName));
 		}
 
 		// The mission handoff VSHELL writes and DBSIM reads. It states its own zone and theater, so nothing

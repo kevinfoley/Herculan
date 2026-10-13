@@ -10,7 +10,8 @@ namespace Herculan.Engine.Audio;
 /// <item>A directory of <c>TrackNN.wav</c> files the caller named — <see cref="WaveFileMusicSource"/>.</item>
 /// <item>The audio tracks of the disc image the install names, when its disc is one —
 /// <see cref="ImageMusicSource"/>.</item>
-/// <item>The disc, read digitally — <see cref="CdRipMusicSource"/>, caching every track it rips.</item>
+/// <item>The disc, read digitally — <see cref="CdRipMusicSource"/>, playing the tracks it has cached from
+/// the cache and caching the rest of the disc in the background.</item>
 /// <item>The disc, played by the drive through MCI — <see cref="MciCdAudio"/>, retail's own
 /// transport, for a drive that refuses raw reads or a machine with no digital output device.</item>
 /// <item>The rip cache of the one disc this machine has ripped before, with the disc absent.</item>
@@ -61,6 +62,7 @@ public static class CdAudio {
 
 		if (CdRipMusicSource.TryCreate(drive, cacheRoot, out string ripFailure) is { } rip) {
 			if (Stream(backend, rip, reasons) is { } ripped) {
+				rip.StartCaching();
 				return ripped;
 			}
 		} else {

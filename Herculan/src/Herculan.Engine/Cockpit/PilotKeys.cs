@@ -9,8 +9,10 @@ namespace Herculan.Engine.Cockpit;
 
 /// <summary>
 /// The keyboard's commands to the machine itself: all stop, the shield balance, the weapon panel, the radar,
-/// Automatic Turret Tracking, and target selection. Each fires on its own key-down edge — the original
-/// dispatches a command per keypress, so holding one does nothing.
+/// Automatic Turret Tracking, and target selection. Each fires on its key-down edge and on each of its
+/// auto-repeats, because the original dispatches a command per key-down event, repeats included
+/// (docs/retail/simulation/cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes): a held key goes on
+/// toggling or stepping at the keyboard's repeat rate.
 /// </summary>
 /// <param name="razorThrottleKeys">Whether keypad <c>-</c> and <c>+</c> are the RAZOR's throttle keys this frame —
 /// <see cref="PilotControls.RazorThrottleKeys"/>.</param>
@@ -52,10 +54,13 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 	private readonly KeyLatch _chain = new();
 	private readonly KeyLatch _powerUp = new();
 	private readonly KeyLatch _powerDown = new();
+	private readonly KeyLatch _powerUpPad = new();
+	private readonly KeyLatch _powerDownPad = new();
 
 	/// <summary>
 	/// Every latch brought up to date and nothing acted on, which is what a modal wants: no machine is listening
-	/// while one is up, and a key pressed to work the panel must not fire as it closes.
+	/// while one is up, and a key pressed to work the panel must not fire as it closes. Its next auto-repeat
+	/// does, as each repeat reaches the original's dispatcher once the panel is down.
 	/// </summary>
 	public void Swallow(IKeyState controls) {
 		_allStop.Press(controls.IsKeyPressed(Key.Keypad5));
@@ -73,27 +78,27 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 	/// <summary>The machine's keys, acted on.</summary>
 	public void Apply(IKeyState controls, MechObject pilotMech) {
 		// Keypad [5], all stop: zero the throttle and let the gauge follow the machine this frame
-		// rather than putting the old setting straight back. On its own edge, so holding it does not
-		// fight a throttle the player is trying to open again.
-		if (_allStop.Press(controls.IsKeyPressed(Key.Keypad5))) {
+		// rather than putting the old setting straight back. Held, it stops again on each repeat until
+		// another key is pressed, since only the key pressed last repeats.
+		if (_allStop.PressOrRepeat(controls, Key.Keypad5)) {
 			pilotMech.AllStop();
 		}
 
-		// [[] and []], the manual's shield-balance keys — rear and forward. Both fire on their own
-		// edge: the original clears the gauge's flag byte after acting on it, so a held key nudges
-		// once, not once a tick. Nothing is spent moving the balance; it changes where the next
-		// recharge tick puts the charge it is already holding.
+		// [[] and []], the manual's shield-balance keys — rear and forward. The original clears the
+		// gauge's flag byte after acting on it, so a press or a repeat nudges once, not once a tick.
+		// Nothing is spent moving the balance; it changes where the next recharge tick puts the charge it
+		// is already holding.
 		//
 		// They click, because in the original the key does not call the adjust at all: Mech_HandleCommand
 		// (004157c8) hands scancodes 0x1a/0x1b to Widget_PressChild on the shield gauge, which fires the
 		// facing's own press slot — Widget_ForwardClickToOwner, which calls slot +8 of its second vtable
 		// (0049ca01), and that slot is Widget_ClickSound: catalog id 0x11. Pressing the widget is also
 		// what makes the two input routes agree by construction.
-		if (_shieldRear.Press(controls.IsKeyPressed(Key.LeftBracket))) {
+		if (_shieldRear.PressOrRepeat(controls, Key.LeftBracket)) {
 			pilotMech.Shields.AdjustBalance(towardFront: false);
 			audio.Director?.Play(SoundId.ButtonClick);
 		}
-		if (_shieldFront.Press(controls.IsKeyPressed(Key.RightBracket))) {
+		if (_shieldFront.PressOrRepeat(controls, Key.RightBracket)) {
 			pilotMech.Shields.AdjustBalance(towardFront: true);
 			audio.Director?.Play(SoundId.ButtonClick);
 		}
@@ -105,18 +110,19 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// visual range, and in the original what makes a distant enemy targetable is usually that
 		// *enemy's* radar being on — which is AI behaviour the engine does not have yet. [Alt+R] is
 		// another code, 0x213, the MFD's range key, and no handler gives it the radar.
-		if (_radar.Press(controls.IsKeyPressed(Key.R)) && !view.CockpitWidgetsOff && !AltHeld(controls)) {
+		if (_radar.PressOrRepeat(controls, Key.R) && !view.CockpitWidgetsOff && !AltHeld(controls)) {
 			pilotMech.ToggleScanner(scene.World);
 		}
 
 		// [T] toggles ATT. The command display owns [T] as an order hotkey while it is down, so the
 		// two are split the same way the arrows and [Backspace] are, and for the same reason. [Alt+T]
 		// is 0x214, the MFD's TARGET key.
-		if (_autoTrack.Press(!displays.HddCommandHasKeyboard && controls.IsKeyPressed(Key.T)) && Unmodified(controls)) {
+		if (_autoTrack.PressOrRepeat(controls, Key.T, !displays.HddCommandHasKeyboard) && Unmodified(controls)) {
 			// Sim_DispatchCommand's 0x14 case toggles the TRACK widget and, if that turned it off,
 			// latches the centring mode — so [T] off brings the turret home rather than leaving it
-			// wherever the tracker had it. Backspace's own case is the mirror image.
-			if (!pilotMech.ToggleAutoTrack(scene.World)) {
+			// wherever the tracker had it. Backspace's own case is the mirror image. A refused toggle
+			// skips the tail.
+			if (pilotMech.ToggleAutoTrack(scene.World) && !pilotMech.Weapons.AutoTrack) {
 				pilotMech.LatchCenterTorso();
 			}
 		}
@@ -127,9 +133,9 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// dispatcher's and keeps working.
 		if (scene.Targeting is { } targeting) {
 			bool widgetsOff = view.CockpitWidgetsOff;
-			bool cycleTarget = _cycleTarget.Press(Unmodified(controls) && controls.IsKeyPressed(Key.Enter));
-			bool nearestTarget = _nearestTarget.Press(controls.IsKeyPressed(Key.Apostrophe));
-			bool clearTarget = _clearTarget.Press(controls.IsKeyPressed(Key.Semicolon));
+			bool cycleTarget = _cycleTarget.PressOrRepeat(controls, Key.Enter, Unmodified(controls));
+			bool nearestTarget = _nearestTarget.PressOrRepeat(controls, Key.Apostrophe);
+			bool clearTarget = _clearTarget.PressOrRepeat(controls, Key.Semicolon);
 
 			// On the scanner and TARGET STATUS, [Enter] presses the MFD's own TARGET or SELECT button, which
 			// steps the selection. In the heads-down view it is the display's key instead — see
@@ -149,8 +155,9 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// 0x0f to the pod only when the view is not the heads-down one; while the display is down the
 		// same case goes to its own key dispatch, where the command display's [Tab] steps its unit pick —
 		// see CockpitKeyboard.
-		bool cycleComponentKey = !view.Pan.AtHeadsDown && Unmodified(controls) && controls.IsKeyPressed(Key.Tab);
-		if (_cycleComponent.Press(cycleComponentKey) && !view.CockpitWidgetsOff) {
+		bool cycleComponentKey = _cycleComponent.PressOrRepeat(controls, Key.Tab,
+			!view.Pan.AtHeadsDown && Unmodified(controls));
+		if (cycleComponentKey && !view.CockpitWidgetsOff) {
 			pilotMech.CycleTargetComponent();
 		}
 	}
@@ -165,9 +172,9 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 	//   [L] / [`]       press the console's LINK / CHAIN   -> ConsoleButtons_HandleCommand (004421a0)
 	//   [-] / [=]       lower/raise the armed weapon's power -> the armed mount's vtable +0x38
 	//
-	// All fire on their own key-down edge: they are toggles and steps, not held states. [Space] is the
-	// exception and is not here — the trigger is a held state read straight off the device struct, so it
-	// travels with the rest of the pilot's input in MechControls.
+	// All fire on each key-down event, auto-repeats included. [Space] is the exception and is not here — the
+	// trigger is a held state read straight off the device struct, so it travels with the rest of the pilot's
+	// input in MechControls.
 	//
 	// A null mounts is the swallow: every latch is brought up to date and nothing acts.
 	private void ApplyWeaponKeys(IKeyState keyboard, WeaponMounts? mounts) {
@@ -177,20 +184,32 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// 0x24e, their single tick. Neither is a weapon command.
 		bool ctrl = CtrlHeld(keyboard);
 
+		// In the heads-down view CockpitWidgets_HandleCommand offers a code to the display's key dispatch alone, and
+		// that takes [W], [-], [=] and the keypad's pair, so Sim_DispatchCommand never passes them on to the weapon
+		// manager; nor does the widget tree arm a row for a bare number there. [Alt] and a number or [W] is another
+		// code, which the display does not take. See CockpitKeyboard.ReadHddDisplayKeys.
+		bool headsDown = view.Pan.AtHeadsDown;
+
 		for (int slot = 0; slot < WeaponRowKeys.Length; slot++) {
-			if (_weaponRow[slot].Press(keyboard, WeaponRowKeys[slot]) && !ctrl) {
+			if (_weaponRow[slot].PressOrRepeat(keyboard, WeaponRowKeys[slot]) && !ctrl) {
 				// [Alt] and a number is command 0x202-0x20b, which the weapon manager answers itself; the
 				// bare number is 0x02-0x0b, which CockpitWidgets_HandleCommand answers by pressing the
 				// row's own select gadget. That is why only the bare key can toggle a pod.
+				//
+				// The press clicks whenever the slot has a gauge, whatever it goes on to do: Widget_PressChild
+				// calls the gadget's OnClick (ChainedWeaponSelectGadget_OnClick, 00442920, or a pod row's
+				// WeaponSelectGadget_OnClick, 00442458), which calls its mixin's sound slot, Widget_ClickSound,
+				// after the gauge's handler.
 				if (alt) {
 					mounts?.ToggleChain(slot);
-				} else if (!view.CockpitWidgetsOff) {
-					mounts?.PressRow(slot);
+				} else if (!view.CockpitWidgetsOff && !headsDown && mounts?.BySlot(slot) != null) {
+					mounts.PressRow(slot);
+					audio.Director?.Play(SoundId.ButtonClick);
 				}
 			}
 		}
 
-		if (_cycleWeapon.Press(keyboard, Key.W)) {
+		if (_cycleWeapon.PressOrRepeat(keyboard, Key.W) && (alt || !headsDown)) {
 			mounts?.CycleSelection(alt ? -1 : 1);
 		}
 
@@ -198,23 +217,26 @@ public sealed class PilotKeys(CockpitView view, CockpitDisplays displays, Cockpi
 		// forward panels outside the heads-down view and to nothing with the widgets off; the weapon
 		// manager answers neither code.
 		bool consoleKeys = mounts != null && !view.CockpitWidgetsOff && !view.Pan.AtHeadsDown;
-		if (_link.Press(keyboard, Key.L) && consoleKeys) {
+		if (_link.PressOrRepeat(keyboard, Key.L) && consoleKeys) {
 			commands.PressConsoleButtonByKey(ConsoleButton.Link);
 		}
-		if (_chain.Press(keyboard, Key.GraveAccent) && consoleKeys) {
+		if (_chain.PressOrRepeat(keyboard, Key.GraveAccent) && consoleKeys) {
 			commands.PressConsoleButtonByKey(ConsoleButton.Chain);
 		}
 
 		// [-] and [=], with the keypad's own pair alongside them, move the armed energy weapon's power
-		// level. Also an edge: each press is one step of 0x50 out of 1200. The keypad's pair is the RAZOR's
+		// level, one step of 0x50 out of 1200 per key-down event. The keypad's pair is the RAZOR's
 		// throttle instead, which Input_KeyjoyAxisKey (0045a308) takes before the command queue sees it.
+		// `|`, not `||`, so both of a pair's latches are refreshed every frame.
 		bool padPower = !razorThrottleKeys();
-		bool powerUpKey = keyboard.IsKeyPressed(Key.Equal) || (keyboard.IsKeyPressed(Key.KeypadAdd) && !alt && padPower);
-		bool powerDownKey = keyboard.IsKeyPressed(Key.Minus) || (keyboard.IsKeyPressed(Key.KeypadSubtract) && padPower);
-		if (_powerUp.Press(powerUpKey)) {
+		bool powerUp = _powerUp.PressOrRepeat(keyboard, Key.Equal)
+			| (_powerUpPad.PressOrRepeat(keyboard, Key.KeypadAdd) && !alt && padPower);
+		bool powerDown = _powerDown.PressOrRepeat(keyboard, Key.Minus)
+			| (_powerDownPad.PressOrRepeat(keyboard, Key.KeypadSubtract) && padPower);
+		if (powerUp && !headsDown) {
 			mounts?.AdjustPower(raise: true);
 		}
-		if (_powerDown.Press(powerDownKey)) {
+		if (powerDown && !headsDown) {
 			mounts?.AdjustPower(raise: false);
 		}
 	}

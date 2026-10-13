@@ -510,20 +510,28 @@ def unstamped_mentions(lines: set[str]) -> list[str]:
     What a doc says about such a function rests on its description, which is a lead until someone has
     read the body and stamped it (tools/ghidra_scripts/README.md, "Verification stamps"). Advisory:
     an unreadable symbol file yields nothing rather than failing the hook.
+
+    Reads every known_symbols file of the checkout at REPO_ROOT rather than going through es2_symbols:
+    the hook runs the main checkout's copy of this script, and es2_symbols would resolve the main
+    checkout's files and binary list, not those of the worktree holding the edited doc.
     """
-    try:
-        import es2_symbols
-        functions: set[str] = set()
-        stamped: set[str] = set()
-        for binary in es2_symbols.BINARIES:
-            for e in es2_symbols.entries(binary):
-                name = e.get("name")
-                if e.get("type") == "function" and name:
-                    functions.add(name)
-                    if "verified" in e:
-                        stamped.add(name)
-    except Exception:
-        return []
+    import glob
+    import json
+
+    functions: set[str] = set()
+    stamped: set[str] = set()
+    for symbols in glob.glob(os.path.join(REPO_ROOT, "tools", "ghidra_scripts", "known_symbols_*.json")):
+        try:
+            with open(symbols, encoding="utf-8-sig") as fh:
+                entries = json.load(fh)["entries"]
+        except Exception:
+            continue
+        for e in entries:
+            name = e.get("name") if isinstance(e, dict) else None
+            if name and e.get("type") == "function":
+                functions.add(name)
+                if "verified" in e:
+                    stamped.add(name)
     found = {tok for ln in lines for tok in re.findall(r"`([A-Za-z_][A-Za-z0-9_]*)`", ln)}
     return sorted(found & functions - stamped)
 

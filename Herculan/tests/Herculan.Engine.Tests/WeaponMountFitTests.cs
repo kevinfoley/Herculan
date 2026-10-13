@@ -75,7 +75,7 @@ public class WeaponMountFitTests {
 
 	/// <summary>
 	/// One gun in fit slot 0 of an ACHILLES: its mount takes the gun's armour and its internal the
-	/// gun's maximum, it stays occupied, and an empty hardpoint and a shoulder, which list no
+	/// gun's maximum, it stays occupied, and an empty hardpoint and a weapon bracket, which list no
 	/// internal, do not.
 	/// </summary>
 	[Fact]

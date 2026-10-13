@@ -110,8 +110,7 @@ public sealed class CanopyPanelPainter {
 		// textured/flat choice per vertex, so they ignore whatever texture happens to be bound.
 		if (hud != null && spriteTexture != null) {
 			_overlay.Clear();
-			AddGaugeFills(hud, scale, quadX0,
-				fillFraction: (hudState ?? CockpitHudState.Default).EnergyFraction / 1024f);
+			AddGaugeFills(hud, scale, quadX0, (hudState ?? CockpitHudState.Default).EnergyFraction);
 			if (hud.Sprites is { } sprites) {
 				// The NAV MAP's relief lives in its own texture, so the batch is flushed around it where
 				// the MFD reaches it — which keeps the flood under it and the cross and title over it,
@@ -172,48 +171,46 @@ public sealed class CanopyPanelPainter {
 	}
 
 	/// <summary>
-	/// Draws the Master Energy Pool meter's LED bar: the unfilled remainder across the whole box,
-	/// then the filled span as the original's one-pixel vertical pinstripe of two near-identical
-	/// shades (see <see cref="HudColorTable.GaugeFillEvenId"/>).
-	///
-	/// <para>Geometry is the <c>.GAU</c> energy-meter rect at offset 564, which
-	/// <c>EnergyPoolGauge_Ctor</c> (<c>00444d5c</c>) copies verbatim into the bar object before
-	/// handing it to <c>LedBarGraph_Ctor</c> with range <c>0x400</c>, so the bar is the horizontal
-	/// variant and fills along x — see docs/retail/simulation/cockpit-hud-widgets.md, "LED gauges".</para>
+	/// Draws the Master Energy Pool meter's LED bar, <c>LedBarGraph_PaintToValue</c> (<c>004395e8</c>): the filled
+	/// span as the original's one-device-pixel vertical pinstripe of two near-identical shades (see
+	/// <see cref="HudColorTable.GaugeFillEvenId"/>), then the remainder. Geometry and arithmetic are
+	/// docs/retail/simulation/cockpit-hud-widgets.md, "LED gauges": the <c>.GAU</c> rect at offset 564, shifted to
+	/// device pixels and inclusive at both corners, over range <c>0x400</c>. Every retail rect authors x0 left of
+	/// x1, so the bar fills left to right.
 	///
 	/// <para>Nothing is drawn at <c>ShieldDisplay</c>: that widget is <c>ShieldsGauge</c>, a
 	/// different class with its own nested-box geometry, not an LED bar.</para>
-	///
-	/// <para><paramref name="fillFraction"/> is the piloted machine's Master Energy Pool, over the
-	/// same 0-1024 range the widget's bar was built with — see
-	/// <c>Herculan.Engine.Sim.MechObject.EnergyPoolFraction</c>. The bar's fill <i>direction</i> is
-	/// still assumed rather than read: the original derives it from the sign of its precomputed span,
-	/// and every retail rect authors x0 left of x1, so it fills left to right here.</para>
 	/// </summary>
-	private void AddGaugeFills(CockpitArt hud, float scale, float quadX0, float fillFraction) {
+	/// <param name="poolValue">
+	/// The piloted machine's Master Energy Pool over the bar's 0-1024 range — see
+	/// <c>Herculan.Engine.Sim.MechObject.EnergyPoolFraction</c>.
+	/// </param>
+	private void AddGaugeFills(CockpitArt hud, float scale, float quadX0, int poolValue) {
 		if (hud.GaugeColors is not var (fillEven, fillOdd, remainder)
 			|| hud.Gau.EnergyMeter is not { } meter
 			|| meter.Size.Width <= 0 || meter.Size.Height <= 0) {
 			return;
 		}
 
-		const float S = CockpitArt.GauToPixelScale;
-		float Px(int gauX) => quadX0 + gauX * S * scale;
-		float Py(int gauY) => gauY * S * scale;
+		const int S = (int)CockpitArt.GauToPixelScale;
+		const int Range = 0x400;
+		void Fill(int deviceX0, int deviceY0, int deviceX1, int deviceY1, Vector3 color) =>
+			_overlay.AddFilledRect(quadX0 + deviceX0 * scale, deviceY0 * scale,
+				quadX0 + (deviceX1 + 1) * scale, (deviceY1 + 1) * scale, color);
 
-		int left = meter.Origin.X;
-		int right = left + meter.Size.Width;
-		int top = meter.Origin.Y;
-		int bottom = top + meter.Size.Height;
+		int x0 = meter.Origin.X * S;
+		int x1 = (meter.Origin.X + meter.Size.Width) * S;
+		int y0 = meter.Origin.Y * S;
+		int y1 = (meter.Origin.Y + meter.Size.Height) * S;
 
-		_overlay.AddFilledRect(Px(left), Py(top), Px(right), Py(bottom), remainder);
+		int span = ((x1 - x0) << 16) / Range;
+		int filledTo = x0 + (Math.Clamp(poolValue, 0, Range) * span >> 16);
+		for (int x = x0; x <= filledTo; x++) {
+			Fill(x, y0, x, y1, (x & 1) == 0 ? fillEven : fillOdd);
+		}
 
-		// Columns are stepped in the .GAU's own coordinate space, which is what the original strides
-		// over — the x2 scale to cockpit pixels happens inside Px, so the stripe stays one source
-		// pixel wide regardless of panel size.
-		int filledTo = left + (int)MathF.Round(meter.Size.Width * Math.Clamp(fillFraction, 0f, 1f));
-		for (int x = left; x < filledTo; x++) {
-			_overlay.AddFilledRect(Px(x), Py(top), Px(x + 1), Py(bottom), (x & 1) == 0 ? fillEven : fillOdd);
+		if (filledTo < x1) {
+			Fill(filledTo + 1, y0, x1, y1, remainder);
 		}
 	}
 
@@ -368,16 +365,18 @@ public sealed class CanopyPanelPainter {
 				return;
 			}
 
-			Vector2 At((int X, int Y) point) => new(Dx(point.X), Dy(point.Y));
+			// Raster_DrawPolygonDispatch's fill, scan-converted in device pixels so the shape steps as
+			// retail's does at any window size.
+			void FillDevice(float x0, float y0, float x1, float y1, Vector3 fill) =>
+				_overlay.AddFilledRect(Dx(x0), Dy(y0), Dx(x1), Dy(y1), fill);
 
 			if (WaypointIndicator.OnTape(subject.BearingError)) {
 				var (bottom, left, top, right) = geometry.Diamond(subject.BearingError);
-				_overlay.AddFilledTriangle(At(bottom), At(left), At(top), color);
-				_overlay.AddFilledTriangle(At(bottom), At(top), At(right), color);
+				RasterPrimitives.AddFilledPolygon(new[] { bottom, left, top, right }, color, FillDevice);
 			} else {
 				var (tip, baseA, baseB) =
 					geometry.Arrow(WaypointIndicator.PointsRight(subject.BearingError));
-				_overlay.AddFilledTriangle(At(tip), At(baseA), At(baseB), color);
+				RasterPrimitives.AddFilledPolygon(new[] { tip, baseA, baseB }, color, FillDevice);
 			}
 
 			if (subject.Number == WaypointMark.NoCaption

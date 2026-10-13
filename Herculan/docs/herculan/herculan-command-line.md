@@ -78,7 +78,7 @@ Without `--music-dir`, an install whose disc is an image with audio tracks plays
 | `--no-write-prefs` | Leaves `data\prefs.cfg` unwritten: when the preferences and controls panels close, when a mission ends in a different display mode from the one option 6 holds, and in the shell at startup, on a change of campaign or training mode, and on `Begin Mission` and `INSTANT ACTION`. See [`../retail/simulation/preferences.md`](../retail/simulation/preferences.md) and [`../retail/shell/movies-and-sound.md`](../retail/shell/movies-and-sound.md#sound). |
 | `--joystick [0-8]` | Pretends a stick with throttle, rudder and hat is attached, so the CONTROLS panel's joystick rows are live without hardware. The number sets how many of the eight button rows are live; without it, all eight. A real stick, when one is attached, takes precedence. |
 | `--joystick-probe` | Prints each axis and button of the attached stick as it moves. |
-| `--write-joystick-map` | Writes the joystick map in force to `data\herculan-joystick.cfg`. |
+| `--write-joystick-map` | Writes the joystick map in force to the device's section of `data\herculan-joystick.cfg`. |
 
 See [`joystick-config.md`](joystick-config.md).
 
@@ -89,12 +89,13 @@ See [`joystick-config.md`](joystick-config.md).
 | `--install <disc> <folder>` | Installs Earthsiege 2 from a retail disc folder or disc image (`.iso`, `.bin`, `.cue`) into a new or empty folder, as the Settings menu's install window does, then exits: 0 when the install is complete, 1 when it was refused or failed, having removed what it copied. Never looks for an install or opens a window. See `RetailInstaller` and [`retail-builds.md`](../retail/retail-builds.md#the-installer). |
 | `--install-size minimum\|medium\|maximum` | The size, as the retail installer offers it. Default `maximum`. |
 | `--install-language english\|french\|german` | The language written to `data\language.cfg`, and for v1.10 the voice archive, error and mission strings and readme copied. Default `english`. |
+| `--install-disc-files` | Also copies what both programs always read from the disc — the movies, the training instructor's clips and the on-line manual — for the language the install runs in, as the install window's box (ticked there by default) does. With `maximum`, the install then needs its disc only for the CD music. See `RetailInstaller.Plan`. |
 
 ## Developer
 
 | Flag | Effect |
 |---|---|
-| `--developer` | The developer keys. Retail's `-SPRUNKNOWN`. See [`herculan-key-bindings.md`](herculan-key-bindings.md#developer-keys). Also puts Debug on a mission's [Esc] menu bar, and gives the front end retail's `-@`: each career's mission load waits on [the DEBUG dialog](../retail/shell/main-menu.md#the-mission-name-dialog), where a mission file can be typed in place of the career's. |
+| `--developer` | The developer keys. Retail's `-SPRUNKNOWN`. See [`herculan-key-bindings.md`](herculan-key-bindings.md#developer-keys). Also puts Debug on a mission's [Shift+Esc] menu bar, and gives the front end retail's `-@`: each career's mission load waits on [the DEBUG dialog](../retail/shell/main-menu.md#the-mission-name-dialog), where a mission file can be typed in place of the career's. |
 
 ## Screenshots and staged state
 

@@ -1,7 +1,9 @@
 using System.Text;
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Io.Transform.Common;
+using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
+using Herculan.Engine.Shell;
 using Herculan.Engine.World;
 
 namespace Herculan.Engine.Install;
@@ -111,8 +113,14 @@ public sealed class RetailInstaller {
 	/// <summary>
 	/// What the script copies for <paramref name="size"/> and <paramref name="language"/>: each file's path on the
 	/// disc and under the install, renames already applied.
+	///
+	/// <para>With <paramref name="discFiles"/>, also what both programs read from the disc at every size, for the
+	/// language the install runs in: the <c>AVI</c> folder, a v1.10 French or German install's intro folder, the
+	/// training instructor's clip folder, and the language folder's on-line manual. No retail script copies these
+	/// (docs/retail/retail-builds.md, "The installer"); this engine's option, so an install plays them without its
+	/// disc, through <see cref="GameInstall.OpenDiscFile"/>'s fallback to the install.</para>
 	/// </summary>
-	public IReadOnlyList<(string Source, string Destination)> Plan(Size size, Language language) {
+	public IReadOnlyList<(string Source, string Destination)> Plan(Size size, Language language, bool discFiles) {
 		var files = new List<(string, string)>();
 		void Add(params string[] paths) => files.AddRange(paths.Select(path => (path, path)));
 
@@ -146,8 +154,31 @@ public sealed class RetailInstaller {
 			}
 		}
 
+		if (discFiles) {
+			var game = RunsIn(language);
+			foreach (string folder in new[] { ShellMovieQueue.MovieFolder, ShellMovieQueue.IntroFolder(game), ComputerVoice.VoiceFolder(game) }.Distinct()) {
+				Add(_source.FileNames(folder).Order(StringComparer.OrdinalIgnoreCase).Select(name => $"{folder}/{name}").ToArray());
+			}
+
+			string manual = $"{LanguageFolder(language).Folder}/{ManualFileName}";
+			if (_source.FileExists(manual)) {
+				Add(manual);
+			}
+		}
+
 		return files;
 	}
+
+	/// <summary>The on-line manual's name inside each language folder (docs/retail/formats/winhelp.md).</summary>
+	public const string ManualFileName = "ES2GUIDE.HLP";
+
+	// The language an install of this build in language runs in: v1.10's launcher passes the installed language,
+	// v1.0's passes none (docs/retail/retail-builds.md, "How a language is chosen"; LauncherLanguage).
+	private GameLanguage RunsIn(Language language) => Build == RetailBuild.V100 ? GameLanguage.English : language switch {
+		Language.French => GameLanguage.French,
+		Language.German => GameLanguage.German,
+		_ => GameLanguage.English,
+	};
 
 	/// <summary>The bytes <paramref name="plan"/> copies; a file missing from the disc counts as nothing.</summary>
 	public long PlanBytes(IReadOnlyList<(string Source, string Destination)> plan) =>
@@ -204,7 +235,7 @@ public sealed class RetailInstaller {
 	}
 
 	/// <summary>
-	/// Copies <see cref="Plan"/> into <paramref name="destination"/>, then writes <c>BATCH.EXE</c>'s three files:
+	/// Copies <see cref="Plan"/>, with or without <paramref name="discFiles"/>, into <paramref name="destination"/>, then writes <c>BATCH.EXE</c>'s three files:
 	/// <list type="number">
 	/// <item><c>data\drive.cfg</c>: the disc folder and the install, one per line. From an image, the disc line is
 	/// <c>.</c> and the image goes on HERCULAN's own line (<see cref="Drive.DiscImage"/>).</item>
@@ -216,7 +247,7 @@ public sealed class RetailInstaller {
 	/// </summary>
 	/// <exception cref="InvalidOperationException">The destination is refused, a file the plan names is not on the
 	/// disc, or there is not room for it.</exception>
-	public void Install(string destination, Size size, Language language,
+	public void Install(string destination, Size size, Language language, bool discFiles,
 			IProgress<InstallProgress>? progress = null, CancellationToken cancellation = default) {
 		string root = Path.GetFullPath(destination);
 		if (CheckDestination(root) is { } refusal) {
@@ -227,7 +258,7 @@ public sealed class RetailInstaller {
 			throw new InvalidOperationException($"{_source.Location} cannot go into {Drive.FileName}: {discProblem}.");
 		}
 
-		var plan = Plan(size, language);
+		var plan = Plan(size, language, discFiles);
 		if (plan.FirstOrDefault(file => !_source.FileExists(file.Source)) is { Source: not null } missing) {
 			throw new InvalidOperationException($"The disc has no {missing.Source}.");
 		}

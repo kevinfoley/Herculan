@@ -2,10 +2,11 @@ language.name Deutsch
 general.save    Speichern
 general.cancel  Abbrechen
 general.close   Schließen
+general.ok      OK
 tweak.target_distance_meters.display_name      Zielentfernungsanzeige korrigieren
 tweak.target_distance_meters.description       Zeigt auf dem MFD im Bildschirm F5 TARGET die Zielentfernung in Metern über Grund an, so wie der Bildschirm F4 SCANNER sie misst, damit beide Bildschirme übereinstimmen. Ohne diese Option zeigt der Bildschirm, was Ihre Version des Spiels anzeigt: Version 1.0 zeigt die Entfernung in internen Spieleinheiten (1 Einheit = 6 mm), Version 1.10 in Metern. Beide Versionen beziehen den Höhenunterschied mit ein.
 tweak.show_correct_stats.display_name          Korrekte Werte anzeigen
-tweak.show_correct_stats.description           Korrigiert HERC- und Waffenwerte, die das Originalspiel in VSHELL falsch anzeigte, etwa die Höchstgeschwindigkeit des Outlaw und die Anzahl der Waffenaufhängungen des Raptor II.
+tweak.show_correct_stats.description           Korrigiert HERC- und Waffenwerte, die das Originalspiel in VSHELL falsch anzeigte, etwa die Höchstgeschwindigkeit jedes HERC und die Anzahl der Waffenaufhängungen des Raptor II.
 tweak.show_accurate_speed.display_name         Genaue Geschwindigkeit anzeigen
 tweak.show_accurate_speed.description          Zeigt die tatsächliche Bewegungsgeschwindigkeit des HERC im HUD an. Das Originalspiel zeigt beim Gehen etwa das Doppelte der tatsächlichen Geschwindigkeit an. Der Wert beim Laufen bleibt unverändert.
 tweak.show_even_shield_balance.display_name    Schildverteilung runden
@@ -28,6 +29,10 @@ tweak.drop_pod_sound_from_pod.display_name    Abwurfkapsel-Geräusche von der Ka
 tweak.drop_pod_sound_from_pod.description     Hören Sie das Pfeifen einer fallenden Abwurfkapsel von der Kapsel selbst, während es ihr nach unten folgt, und ihre Landung von dort, wo sie aufsetzt. Die Geräusche sind lauter und tragen kilometerweit. Das Originalspiel spielt beide Geräusche an Ihrer eigenen Position ab, sodass sie nie verraten, wo die Kapsel ist.
 tweak.fix_repair_diagram_sides.display_name  Seiten des Reparaturschemas korrigieren
 tweak.fix_repair_diagram_sides.description   Im Schadensschema des REPAIR-Bildschirms liegen Left Torso und Left Leg auf derselben Seite. Im Originalspiel zeigt das Schema Left Torso links, Left Leg aber rechts. Beim Razor werden die Triebwerksgondeln passend zu den Flügeln vertauscht.
+tweak.play_last_music_track.display_name  Alle Musikstücke abspielen
+tweak.play_last_music_track.description   Einsätze spielen auch das letzte der sechs Musikstücke der CD. Im Originalspiel wechseln die Einsätze nur zwischen den ersten fünf, sodass das letzte nie gespielt wird.
+tweak.shuffle_mission_music.display_name  Einsatzmusik zufällig wählen
+tweak.shuffle_mission_music.description   Jeder Einsatz spielt ein zufällig gewähltes Musikstück, nie zweimal hintereinander dasselbe. Das Originalspiel spielt die Stücke in fester Reihenfolge, eines pro Einsatz.
 tweak.smoother_turret_movement.display_name   Flüssigere Geschützturmbewegung
 tweak.smoother_turret_movement.description     Glättet die Drehung des Geschützturms beim Zielen mit Joystick oder einem anderen analogen Eingabegerät. Das Originalspiel rundet den Drehwert, was bei langsamen Zielbewegungen zu Ruckeln führt. Hat beim Zielen mit der Tastatur keine Wirkung.
 tweak.mouse_external_view.display_name         Außenansicht per Maus
@@ -42,6 +47,14 @@ tweak.fix_terrain_hit_point.display_name  Genaue Geländetreffer
 tweak.fix_terrain_hit_point.description   Schüsse und Sichtlinien treffen den Boden genau dort, wo er ist. Auf etwa einem Drittel des Geländes berechnet das Originalspiel den Punkt, an dem ein Schuss den Boden trifft, auf einem Hang, der mehrere Meter neben dem echten liegen kann, sodass der Einschlag zu kurz oder zu weit liegt. In Version 1.10 hält der Boden dann manchmal einen Schuss oder eine Sichtlinie gar nicht auf, sodass sich Maschinen durch Teile von Hügeln hindurch sehen und beschießen können.
 tweak.flyer_ignores_player_throttle.display_name  Cybrid-Flieger ignorieren Ihren Schubregler
 tweak.flyer_ignores_player_throttle.description   Ein Cybrid-Flieger fliegt immer mit seiner normalen Reisegeschwindigkeit. Im Originalspiel werden alle Cybrid-Flieger der Mission langsamer, wenn Ihr Joystick einen Schubregler hat und die THROTTLE-Steuerung des Razor auf THROTTLE steht, auch wenn Sie keinen Razor fliegen.
+tweak.c2_05_stingray_closes_in.display_name  Delta-Einsatz 5 korrigieren
+tweak.c2_05_stingray_closes_in.description   Im Einsatz, in dem Sie den Raptor-II-Prototyp eskortieren, verlässt der Cybrid-Stingray, der ihn jagt, seine Kartenecke und hält direkt auf den Prototyp zu, sobald Sie den Prototyp zur Basis zurückgebracht haben. Im Originalspiel verlässt er die äußerste Nordostecke nie.
+tweak.faster_keyboard_aiming.display_name  Schnelleres Zielen mit der Tastatur
+tweak.faster_keyboard_aiming.description   Eine gehaltene Taste dreht und neigt den Geschützturm Ihres HERC so schnell wie ein ganz ausgelenkter Joystick. Im Originalspiel zielt eine Taste mit der halben Geschwindigkeit und der Coolie-Hat des Joysticks mit drei Vierteln davon.
+tweak.fix_raptor2_perspective.display_name  Raptor-II-Perspektive korrigieren
+tweak.fix_raptor2_perspective.description   Setzt die Cockpitansicht des Raptor II in sein Cockpit. Im Originalspiel liegt die Ansicht über der Oberkante des HERC. Turmnachführung und Waffenkonvergenz wandern mit.
+tweak.reset_counters_on_replay.display_name  Flags bei „Einsatz noch mal?“ korrigieren
+tweak.reset_counters_on_replay.description   Behebt, dass Einsatz-Flags nicht zurückgesetzt werden, wenn Sie einen Einsatz wiederholen (nachdem Sie im Einsatz getötet wurden). Das konnte Freischaltungen verhindern oder anderes unerwartetes Verhalten auslösen.
 tweaks.title                   Optimierungen
 tweaks.category.cosmetic       Kosmetisch
 tweaks.category.ai             KI
@@ -70,6 +83,13 @@ crash.message                 HERCULAN wurde wegen eines Fehlers beendet: {0} Di
 menu.debug                     Debug
 menu.tweaks                    Optimierungen
 menu.settings                  Einstellungen
+menu.controller                Controller
+menu.about                     Über
+about.title                    Über
+about.license                  Lizenz
+welcome.title                  Willkommen
+welcome.message                Willkommen bei der HERCULAN Engine! HERCULAN bietet eine Reihe optionaler Optimierungen, mit denen Sie Ihr Spielerlebnis anpassen können. Drücken Sie jederzeit Umschalt+Esc, um die Menüleiste von HERCULAN zu öffnen.
+welcome.view_tweaks            Optimierungen anzeigen
 settings.title                 Einstellungen
 settings.folders               Earthsiege-2-Ordner
 settings.install_folder        Installationsordner
@@ -87,6 +107,58 @@ settings.languages             Sprachen
 settings.game_language         Spielsprache
 settings.interface_language    Sprache der HERCULAN-Oberfläche
 settings.write_failed          {0} konnte nicht geschrieben werden: {1}
+controller.title               Controller
+controller.device              Gerät
+controller.no_device           Keines angeschlossen
+controller.gamepad_layout     Gamepad
+controller.gamepad_layout_tip Wird im Standard-Gamepad-Layout gelesen, auf jedem Computer gleich: Achsen 0-3 sind der linke und rechte Stick, 4 und 5 die Trigger; Tasten 0-10 sind A, B, X, Y, die Schultertasten, Back, Start, Guide und die Stick-Klicks, 11-14 das Steuerkreuz, das auch Coolie-Hat 0 ist.
+controller.saved_for_gamepads  Diese Einstellungen werden für jedes Gamepad gespeichert.
+controller.saved_for_model     Diese Einstellungen werden für dieses Joystick-Modell gespeichert.
+controller.saved_for_joysticks Diese Einstellungen werden für jeden Joystick ohne eigene Einstellungen gespeichert.
+controller.none_connected      Es ist kein Controller angeschlossen. Schließen Sie einen an, dann erscheint er hier.
+controller.inputs              Was das Gerät meldet
+controller.axis                Achse {0}
+controller.axis_direction      Achse {0} {1}
+controller.button              Taste {0}
+controller.buttons             Tasten
+controller.hat                 Coolie-Hat {0}
+controller.controls            Steuerung
+controller.control             Steuerelement
+controller.input               Geräteeingabe
+controller.invert              Umkehren
+controller.reads               Spiel liest
+controller.stick_x             Stick links/rechts
+controller.stick_y             Stick vor/zurück
+controller.throttle            Schubregler
+controller.rudder              Ruder
+controller.hat_row             Coolie-Hat
+controller.button_row          BUTTON {0}
+controller.unmapped            Keine
+controller.detect              Erkennen
+controller.detecting           Abbrechen
+controller.detect_axis         Bewegen Sie das gewünschte Steuerelement bis zum Anschlag.
+controller.detect_hat          Drücken Sie den gewünschten Coolie-Hat in eine beliebige Richtung.
+controller.detect_button       Drücken Sie die gewünschte Taste oder ziehen Sie den gewünschten Trigger.
+controller.invert_throttle_tip Für einen Schubhebel: Steht der Hebel im Leerlauf, sollte „Spiel liest“ eine positive Zahl zeigen. Zeigt es eine negative, setzen Sie „Umkehren“.
+controller.invert_throttle_gamepad_tip  Bei einem Gamepad ist dies der rechte Stick nach oben und unten. Setzen Sie „Umkehren“, um umzukehren, in welche Richtung er den Turm eines HERC richtet und eine Razor neigt.
+controller.pressed             Gedrückt
+controller.released            Losgelassen
+controller.centred             Mitte
+controller.up                  Oben
+controller.down                Unten
+controller.left                Links
+controller.right               Rechts
+controller.options             Optionen
+controller.deadzone            Totzone in der Mitte
+controller.deadzone_tip        Wie weit sich eine Achse von der Mitte bewegen muss (von 127), bevor das Spiel sie liest. Das Originalspiel verwendet 25.
+controller.hat_diagonals       Coolie-Hat-Diagonalen
+controller.hat_diagonals_tip   Ein diagonal gedrückter Coolie-Hat zählt als seine beiden Richtungen. Das Originalspiel ignoriert eine Diagonale.
+controller.centre_idle         Leerlauf in der Mitte
+controller.centre_idle_tip     Die Mitte des Schubreglerwegs ist Leerlauf, davor ist vorwärts und dahinter rückwärts. Das Originalspiel liest den Schubregler von Leerlauf am einen Ende bis Vollgas am anderen, und CHANGE DIRECTION wählt vorwärts oder rückwärts.
+controller.centre_idle_gamepad_tip      Nur für den Schubhebel eines Joysticks. Der linke Stick eines Gamepads bewegt den Schub hoch und runter und lässt ihn dort, wo er ist, daher bewirkt dies damit nichts.
+controller.actions_note        Dieses Fenster legt fest, welche Teile Ihres Geräts das Spiel verwendet. Was jedes davon tut (Lenken oder Zielen, FIRE, TARGET usw.), wird in einer Mission eingestellt: Drücken Sie F12 für die Einstellungen, dann CONTROLS. Mit einem Gamepad sind die Zeilen JOYSTICK, THROTTLE, RUDDER und HAT dort passend festgelegt, und seine Tastenbelegung wird getrennt von der eines Joysticks gespeichert. Die Einstellungen werden in data\herculan-joystick.cfg gespeichert, die das Originalspiel nicht liest.
+controller.defaults            Standard
+controller.no_data_folder      Es gibt keinen data-Ordner, in dem die Einstellungen gespeichert werden können.
 disc_prompt.message            Wählen Sie den Ordner des Earthsiege-2-Datenträgers, etwa das CD-Laufwerk oder eine Kopie der CD. Er wird in data\{0} der Installation gespeichert, die auch das Originalspiel liest, und das Spielmenü startet neu.
 disc_prompt.path_hint          Datenträgerordner
 disc_prompt.picker_title       Ordner des Earthsiege-2-Datenträgers auswählen
@@ -122,7 +194,8 @@ install.size                   Größe
 install.size_minimum           Minimal ({0:N0} MB)
 install.size_medium            Mittel ({0:N0} MB)
 install.size_maximum           Maximal ({0:N0} MB)
-install.size_note              Eine kleinere Installation lässt mehr vom Spiel auf dem Datenträger, daher muss der Datenträger bleiben, wo er ist.
+install.size_note              Bei jeder Größe bleiben die Videos, die Stimme des Ausbilders im Training und das Online-Handbuch auf dem Datenträger, wenn das Kästchen unten nicht angekreuzt ist, und eine kleinere Installation lässt dort auch einen Teil der Archive. Was dort bleibt, wird vom Datenträger oder Datenträgerabbild gelesen, daher muss er bleiben, wo er ist. Die CD-Musik wird immer vom Datenträger gespielt.
+install.disc_files             Auch die Videos, die Stimme des Ausbilders im Training und das Online-Handbuch kopieren
 install.language               Sprache
 install.language_english       English (Englisch)
 install.language_french        Français (Französisch)

@@ -376,6 +376,8 @@ The chain also **rotates** only at 4 and 11. Measured over a full stride on OUTL
 
 On flat ground, standing eye height 3.2 m (STINGRAY) to 11.2 m (SAMSON), running 4.7 m to 11.8 m (OGRE), against the 6.1-10.4 m statures the manual's HERC specs quote. A stride swings the eye 0.24-0.42 m. Nothing here is fitted.
 
+**RAPTOR2's eye is above its own model.** At rest its camera node sits 1740 units up, level with the cockpit at the front of the upper body, and the record's lift of 460 puts the eye at 2200 — over the highest polygon of the shape (2090, the top of the upper fins) and 220 over the torso's top. The fore/aft 300 puts it over the cockpit, so the view looks out from the right place along the machine but from above it.
+
 ## Collision
 
 `Mech_CollisionTest` (`00418f74`) answers "is the position I just integrated into refused", and is run after every move. Three things refuse it, in order:

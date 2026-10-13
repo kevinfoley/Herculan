@@ -165,14 +165,14 @@ Three condition arrays, all initialized to 100 by `HercStatus_InitAll` (`00411b8
 
 | Group | Facets | Name (`estext.bin`) | Facet meaning |
 |---|---|---|---|
-| 0 | `{0, 1}` | `0x4e` `Cockpit` | front, rear |
-| 1 | `{2, 4}` | `0x4f` `Left Torso` | front, rear |
-| 2 | `{3, 5}` | `0x50` `Right Torso` | front, rear |
-| 3 | `{6}` | `0x51` `Chassis` | — |
-| 4 | `{7, 9, 11}` | `0x52` `Left Leg` | thigh, calf, foot |
-| 5 | `{8, 10, 12}` | `0x53` `Right Leg` | thigh, calf, foot |
+| 0 | `{0, 1}` | `0x4e` `Cockpit` | front, rear cockpit |
+| 1 | `{2, 4}` | `0x4f` `Left Torso` | left weapon bracket, left shoulder |
+| 2 | `{3, 5}` | `0x50` `Right Torso` | right weapon bracket, right shoulder |
+| 3 | `{6}` | `0x51` `Chassis` | DBSIM's torso |
+| 4 | `{7, 9, 11}` | `0x52` `Left Leg` | upper leg, lower leg, foot |
+| 5 | `{8, 10, 12}` | `0x53` `Right Leg` | upper leg, lower leg, foot |
 
-The cockpit and leg facets follow the `.DMG` component numbering ([`dmg-damage-file.md`](dmg-damage-file.md#the-two-index-spaces)): 0 and 1 front and rear cockpit, and 7-12 each leg's upper leg, lower leg and foot in the same order. The torso facets' front/rear reading is [Open](#open).
+Facet *n* is `.DMG` component *n*: DBSIM's `Mech_ApplySquadCondition` (`00415068`) writes entry *n* of the span against component *n*'s armour, for all thirteen ([`../simulation/component-damage.md`](../simulation/component-damage.md#a-squad-machines-condition--mech_applysquadcondition-00415068)). The facet meanings are DBSIM's names for those components ([`dmg-damage-file.md`](dmg-damage-file.md#the-two-index-spaces)).
 
 The nine internal entries are named one-for-one by `estext.bin` `0x54`–`0x5c` — `Left Leg Servos`, `Right Leg Servos`, `Sensor Array`, `Targeting Computer`, `Shield Generator`, `Engine`, `Hydraulics`, `Stabilizers`, `Life Support` — matching the `.DMG` internal slots 0-8 in order ([`dmg-damage-file.md`](dmg-damage-file.md#the-two-index-spaces)).
 
@@ -210,7 +210,3 @@ Both career-block functions also copy the three loose working files that the she
 `FileUtil_CopyFile` (`0040d4d5`, `fileutil.cpp`) is the copy itself. On load, `Career_LoadSlot` additionally calls `Career_BuildBriefingText` (`00412f97`) to rebuild the assembled briefing text from the restored `data\mission.str`, so the three text arrays in the career block are indices that only mean anything alongside the slot's own `missn%d.str`.
 
 For what those files carry see [`script-dat.md`](script-dat.md) and [`msn-mission-file.md`](msn-mission-file.md); for how a mission's results re-enter the save see [`../shell/campaign-loop.md`](../shell/campaign-loop.md).
-
-## Open
-
-- **Open:** whether the torso groups' facets (2 and 4, 3 and 5) are front and rear, or the shoulder and weapon bracket that `.DMG` numbers 2-5.

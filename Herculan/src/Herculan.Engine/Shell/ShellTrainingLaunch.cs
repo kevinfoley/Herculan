@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Data.Struct.Vshell.Sav;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Shell;
 using Herculan.Engine.Content;
@@ -138,9 +139,9 @@ public static class ShellTrainingLaunch {
 		header[0] = 1;
 
 		Directory.CreateDirectory(directory);
-		string scriptPath = Path.Combine(directory, MissionLoader.ScriptFileName);
+		string scriptPath = CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName);
 		ShellWorkingFiles.WriteMissionFile(scriptPath, mission.WriteScriptDat());
-		ShellWorkingFiles.WriteMissionFile(Path.Combine(directory, MissionLoader.TextFileName), mission.WriteMissionText());
+		ShellWorkingFiles.WriteMissionFile(CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName), mission.WriteMissionText());
 
 		int positions = mission.SquadPositions;
 		hangar.SetPositionsInPlay(positions);
@@ -175,8 +176,8 @@ public static class ShellTrainingLaunch {
 
 		var flagBytes = new byte[flags.Length * 2];
 		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
-		File.WriteAllBytes(Path.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
-		File.WriteAllBytes(Path.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
+		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
+		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
 
 		failure = null;
 		return new ShellTrainingHandoff(scriptPath, missionPath, game, hangar, positions);

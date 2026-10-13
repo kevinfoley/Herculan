@@ -1,3 +1,4 @@
+using HercWorks.Core.Io;
 using HercWorks.Disc;
 using HercWorks.Disc.Iso9660;
 using Herculan.Engine.Install;
@@ -36,6 +37,12 @@ public abstract class GameDisc : IDisposable {
 	/// in no particular order.
 	/// </summary>
 	public abstract IReadOnlyList<string> ArchiveNames();
+
+	/// <summary>
+	/// The names of the files directly in the disc folder <paramref name="relativeDirectory"/>, in no particular
+	/// order; empty when there is no such folder.
+	/// </summary>
+	public abstract IReadOnlyList<string> FileNames(string relativeDirectory);
 
 	/// <summary>Where <paramref name="relativePath"/> is, for a message.</summary>
 	public abstract string Describe(string relativePath);
@@ -80,20 +87,27 @@ public abstract class GameDisc : IDisposable {
 	private sealed class FolderDisc(string directory) : GameDisc {
 		public override string Location => directory;
 
-		public override bool FileExists(string relativePath) => File.Exists(Path.Combine(directory, relativePath));
+		public override bool FileExists(string relativePath) => File.Exists(CaseInsensitivePath.Combine(directory, relativePath));
 
-		public override bool DirectoryExists(string relativePath) => Directory.Exists(Path.Combine(directory, relativePath));
+		public override bool DirectoryExists(string relativePath) => Directory.Exists(CaseInsensitivePath.Combine(directory, relativePath));
 
 		public override Stream? OpenRead(string relativePath) {
-			string path = Path.Combine(directory, relativePath);
+			string path = CaseInsensitivePath.Combine(directory, relativePath);
 			return File.Exists(path) ? File.OpenRead(path) : null;
 		}
 
 		public override IReadOnlyList<string> ArchiveNames() {
-			string archives = Path.Combine(directory, GameInstall.ArchiveFolderName);
+			string archives = CaseInsensitivePath.Combine(directory, GameInstall.ArchiveFolderName);
 			return Directory.Exists(archives)
 				? Directory.GetFiles(archives, GameContent.ArchivePattern, new EnumerationOptions { MatchCasing = MatchCasing.CaseInsensitive })
 					.Select(Path.GetFileName).OfType<string>().ToList()
+				: [];
+		}
+
+		public override IReadOnlyList<string> FileNames(string relativeDirectory) {
+			string folder = CaseInsensitivePath.Combine(directory, relativeDirectory);
+			return Directory.Exists(folder)
+				? Directory.GetFiles(folder).Select(Path.GetFileName).OfType<string>().ToList()
 				: [];
 		}
 
@@ -118,6 +132,11 @@ public abstract class GameDisc : IDisposable {
 					.Where(entry => !entry.IsDirectory && entry.Name.EndsWith(".vol", StringComparison.OrdinalIgnoreCase))
 					.Select(entry => entry.Name)
 					.ToList()
+				: [];
+
+		public override IReadOnlyList<string> FileNames(string relativeDirectory) =>
+			fileSystem.Find(relativeDirectory) is { IsDirectory: true } folder
+				? folder.Children.Where(entry => !entry.IsDirectory).Select(entry => entry.Name).ToList()
 				: [];
 
 		public override string Describe(string relativePath) => $"{relativePath} in {image.Path}";

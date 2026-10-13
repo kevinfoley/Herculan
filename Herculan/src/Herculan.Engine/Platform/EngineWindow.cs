@@ -206,8 +206,7 @@ public sealed class EngineWindow : IDisposable {
 			return;
 		}
 
-		_printScreen?.Dispose();
-		_printScreen = null;
+		EndPrintScreen();
 
 		var from = (Silk.NET.GLFW.Monitor*)_fullScreenMonitor;
 		glfw.GetMonitorPos(from, out int monitorX, out int monitorY);
@@ -228,8 +227,16 @@ public sealed class EngineWindow : IDisposable {
 	}
 
 	private nint _fullScreenMonitor;
+	// Both made only on Windows, so null everywhere else; the checks where they are used say so to the compiler.
 	private PrintScreenCapture? _printScreen;
 	private ExecutableIcon? _executableIcon;
+
+	private void EndPrintScreen() {
+		if (OperatingSystem.IsWindows()) {
+			_printScreen?.Dispose();
+		}
+		_printScreen = null;
+	}
 
 	/// <summary>
 	/// Raised with each frame [PrtScn] captures while full screen, as it goes on the clipboard: its width, height and
@@ -354,7 +361,9 @@ public sealed class EngineWindow : IDisposable {
 	private void OnRender(double deltaSeconds) {
 		if (_gl != null) {
 			Render?.Invoke(deltaSeconds, _gl);
-			_printScreen?.CaptureIfRequested(_gl, FramebufferSize.X, FramebufferSize.Y);
+			if (OperatingSystem.IsWindows()) {
+				_printScreen?.CaptureIfRequested(_gl, FramebufferSize.X, FramebufferSize.Y);
+			}
 		}
 	}
 
@@ -386,19 +395,20 @@ public sealed class EngineWindow : IDisposable {
 	private void OnClosing() {
 		_maximizedAtClose = FullScreen ? _maximizedBeforeFullScreen : Shape().Maximized;
 		Closing?.Invoke();
-		_printScreen?.Dispose();
-		_printScreen = null;
+		EndPrintScreen();
 		_input?.Dispose();
 		_input = null;
 	}
 
 	public void Dispose() {
-		_printScreen?.Dispose();
+		EndPrintScreen();
 		_input?.Dispose();
 		_gl?.Dispose();
 		_window.Dispose();
 		// After the window, which uses the icons until it is destroyed.
-		_executableIcon?.Dispose();
+		if (OperatingSystem.IsWindows()) {
+			_executableIcon?.Dispose();
+		}
 	}
 }
 

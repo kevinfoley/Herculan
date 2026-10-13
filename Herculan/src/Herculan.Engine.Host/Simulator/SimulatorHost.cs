@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Cfg;
+using HercWorks.Core.Io;
 using Herculan.Engine.Audio;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
@@ -46,7 +47,13 @@ sealed class SimulatorHost : IDisposable {
 	private readonly HostMenuBar _menuBar;
 	private readonly DeveloperKeys _developerKeys;
 
+	private readonly GamepadHostButtons _padButtons = new();
+
+	// The key a gamepad's Start is holding down in the live keyboard, kept from the press until Start is let go.
+	private Key? _startKey;
+
 	// Built once the window has a GL context.
+	private IInputContext? _inputContext;
 	private ScaledImGui? _imgui;
 	private JoystickSource? _joystick;
 	private SceneUploads? _uploads;
@@ -93,8 +100,6 @@ sealed class SimulatorHost : IDisposable {
 			PrintScreenFiles.Attach(_window, session);
 		}
 
-		_outcome.Ended += _window.Close;
-
 		var cockpitInput = new CockpitInput();
 		var tape = new TapePlayback(start.TapePlayer, _preferences, () => _window.FramebufferSize, cockpitInput);
 		_recording = new TapeRecording(start.TapeRecorder, _preferences, _ports);
@@ -122,11 +127,12 @@ sealed class SimulatorHost : IDisposable {
 		_debugProbes = new DebugProbes();
 		_debugPanel = new DebugPanel(_debugOptions, _debugProbes);
 
-		// Hidden until [Esc] first raises it — see SimulatorFrame's [Esc] — since it is the only way
-		// to reach its panels and every key from F1 to F12 is already taken. A mission has no shell turn to
-		// restart, so Settings shows the folders greyed.
+		// Hidden until [Shift+Esc] first raises it — see SimulatorFrame's [Esc] — since it is the only way
+		// to reach its panels and every key from F1 to F12, [Esc] and [Tab] among the rest, is already retail's. A
+		// mission has no shell turn to restart, so Settings shows the folders greyed.
 		_menuBar = new HostMenuBar(session.Localization, new TweaksMenu(TweakSettings.Current, session.Localization),
-			new SettingsWindow(session, restartShell: null), options.DeveloperMode ? _debugPanel : null);
+			new SettingsWindow(session, restartShell: null), new ControllerWindow(session.Localization, () => _start.DataDirectory),
+			options.DeveloperMode ? _debugPanel : null);
 
 		// The -SPRUNKNOWN keys, and the Alt+S freeze a replay honours without them.
 		_developerKeys = new DeveloperKeys(options.DeveloperMode);
@@ -247,8 +253,8 @@ sealed class SimulatorHost : IDisposable {
 		if ((_start.ShellLaunch != null || _start.TapePlayer != null) && _scene.World.PlayerMech is { } endPlayer) {
 			var (results, counters) = MissionResults.Write(_scene.World, endPlayer);
 			string resultsFolder = Path.GetDirectoryName(_start.ScriptPath) ?? ".";
-			File.WriteAllBytes(Path.Combine(resultsFolder, MissionResults.FileName), results);
-			File.WriteAllBytes(Path.Combine(resultsFolder, MissionLoader.CountersFileName), counters);
+			File.WriteAllBytes(CaseInsensitivePath.Combine(resultsFolder, MissionResults.FileName), results);
+			File.WriteAllBytes(CaseInsensitivePath.Combine(resultsFolder, MissionLoader.CountersFileName), counters);
 			Console.WriteLine($"Wrote {MissionResults.FileName} ({results.Length} bytes, {_scene.World.Mission.Salvage.Count} salvaged "
 				+ $"weapon(s)) and {MissionLoader.CountersFileName} to {resultsFolder}.");
 		}
@@ -269,10 +275,12 @@ sealed class SimulatorHost : IDisposable {
 		_cockpit = new CockpitRenderer(gl, _art, _view, _displays, _textures, _passes);
 
 		_input.Attach(input);
+		_inputContext = input;
 		// Nothing is read off the device yet: GLFW publishes a stick's shape a frame late (see JoystickSource), so
 		// what it can do is announced on the first frame that knows.
 		_joystick = JoystickSource.Open(input, _start.DataDirectory, _options.ProbeJoystick);
 		_frame.Pilot.Joystick = _joystick;
+		_menuBar.Controller.Attach(input, _joystick);
 
 		// WinMain's toggle, after the pointer is known so it is confined and centred as Video_ToggleFullscreen's is.
 		if (_start.StartFullScreen) {
@@ -287,7 +295,18 @@ sealed class SimulatorHost : IDisposable {
 	}
 
 	private void OnUpdate(double deltaSeconds) {
+		// A mission that ended last frame closes its window here, between frames rather than in the frame that
+		// ended it: Close raises Closing at once, and OnClosing disposes what the rest of a frame still reads,
+		// ImGui's context among it.
+		if (_outcome.Over) {
+			_window.Close();
+			return;
+		}
+
 		_imgui?.Update((float)deltaSeconds);
+
+		// A gamepad's own CONTROLS settings stand in for prefs.cfg's while it is the stick being read.
+		_preferences.ControlsOverride = _joystick?.ControlsOverride;
 
 		if (_frame.Held) {
 			return;
@@ -295,6 +314,8 @@ sealed class SimulatorHost : IDisposable {
 
 		_joystick?.Announce(_frame.Pilot.Bindings, _panels.Controls, _options.WriteJoystickMap, _start.DataDirectory);
 
+		ReadGamepadButtons();
+		_input.LiveKeys?.AdvanceRepeat(deltaSeconds);
 		_frame.BeginFrame(deltaSeconds);
 		_windowKeys.ReadManualKey(_displays.FlashCommHasKeyboard, _panels.AnyOpen);
 		_windowKeys.ReadFullScreenKeys();
@@ -312,6 +333,31 @@ sealed class SimulatorHost : IDisposable {
 		// What the debug panel reports about the walk — see DebugProbes.Sample for why it is measured
 		// every frame rather than only while the panel is up.
 		_debugProbes.Sample(_view.PilotMech);
+	}
+
+	// A gamepad's Back raises the menu bar or backs out of it, as [Shift+Esc] does. Its Start is [P], which pauses, or
+	// with the pause panel up [Enter], which presses the panel's one button and resumes; the key is held in the live
+	// keyboard for as long as Start is, before the frame reads its keys, so the pause and a recording see the key
+	// itself. See GamepadHostButtons.
+	private void ReadGamepadButtons() {
+		if (_inputContext == null) {
+			return;
+		}
+
+		_padButtons.Update(_inputContext);
+		if (_padButtons.BackPressed && _options.ScreenshotPath == null && !_menuBar.BackOut()) {
+			_menuBar.Show();
+		}
+
+		if (_padButtons.StartPressed) {
+			_startKey = _panels.StatusAlert is { IsOpen: true, Status: StatusAlertPanel.PauseStatus } ? Key.Enter : Key.P;
+		} else if (!_padButtons.StartDown) {
+			_startKey = null;
+		}
+
+		if (_input.LiveKeys is { } liveKeys) {
+			liveKeys.HeldByHost = _startKey;
+		}
 	}
 
 	// TERRAIN TEXTURE, the one live preference the draw reads rather than the simulation (see
@@ -386,7 +432,7 @@ sealed class SimulatorHost : IDisposable {
 			_panels.Draw(_cockpit.AlertPanels, size.X, size.Y, _textures.HudSprites, panelSprites);
 		}
 
-		// The menu bar and its panels: hidden until [Esc] raises the bar (see SimulatorFrame),
+		// The menu bar and its panels: hidden until [Shift+Esc] raises the bar (see SimulatorFrame),
 		// and never in a --screenshot capture, which sees no input to raise it.
 		if (_options.ScreenshotPath == null) {
 			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0, _window.FullScreen);

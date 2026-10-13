@@ -108,6 +108,7 @@ public sealed class PlayerCockpitUpdate(CockpitDisplays displays, CockpitView vi
 			ChargeBarsDraggable = TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ChargeBarPowerLevel),
 			ChainGroup = pilotMech.Weapons.Group,
 			AutoTrack = pilotMech.Weapons.AutoTrack,
+			TrackHidden = pilotMech.Type.IsFlyer,
 			Target = ResolveTargetIndicator(pilotMech, targetAim),
 
 			// The damage detail's subject, re-read every frame: on the target slot it follows the

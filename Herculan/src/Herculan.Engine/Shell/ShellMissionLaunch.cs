@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Sav;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.World;
 
@@ -164,28 +165,37 @@ public static class ShellMissionLaunch {
 		}
 
 		Directory.CreateDirectory(directory);
-		string scriptPath = Path.Combine(directory, MissionLoader.ScriptFileName);
+		string scriptPath = CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName);
 		CopyUnlessSame(script, scriptPath);
 
 		string? text = working.Text;
-		string textPath = Path.Combine(directory, MissionLoader.TextFileName);
+		string textPath = CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName);
 		if (File.Exists(text)) {
 			CopyUnlessSame(text, textPath);
 		} else if (File.Exists(textPath)) {
 			File.Delete(textPath);
 		}
 
-		if (save.HasCampaignState) {
-			var flags = new byte[PlayerSave.CampaignFlagCount * 2];
-			for (int i = 0; i < PlayerSave.CampaignFlagCount; i++) {
-				BitConverter.GetBytes(save.GetCampaignFlag(i)).CopyTo(flags, i * 2);
-			}
+		WriteCampaignFlags(directory, save);
+		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ExportPlayerMec(hangar));
+		return scriptPath;
+	}
 
-			File.WriteAllBytes(Path.Combine(directory, MissionVarFileName), flags);
+	/// <summary>
+	/// <c>MissionVar_Write</c> (<c>0040e9cb</c>): the game's 2000-byte campaign flag array written as
+	/// <c>mission.var</c> in <paramref name="directory"/>. Nothing for a game that carries no campaign state.
+	/// </summary>
+	public static void WriteCampaignFlags(string directory, PlayerSave save) {
+		if (!save.HasCampaignState) {
+			return;
 		}
 
-		File.WriteAllBytes(Path.Combine(directory, MissionLoader.PlayerFileName), ExportPlayerMec(hangar));
-		return scriptPath;
+		var flags = new byte[PlayerSave.CampaignFlagCount * 2];
+		for (int i = 0; i < PlayerSave.CampaignFlagCount; i++) {
+			BitConverter.GetBytes(save.GetCampaignFlag(i)).CopyTo(flags, i * 2);
+		}
+
+		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionVarFileName), flags);
 	}
 
 	private static void CopyUnlessSame(string from, string to) {

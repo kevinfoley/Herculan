@@ -1,5 +1,6 @@
 ﻿using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Data.File.Sav;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
@@ -93,7 +94,7 @@ public static class MissionLoader {
 			? slot["script".Length..]
 			: string.Empty;
 
-		return Path.Combine(directory, $"player{slot}.mec");
+		return CaseInsensitivePath.Combine(directory, $"player{slot}.mec");
 	}
 
 	/// <summary>
@@ -109,11 +110,11 @@ public static class MissionLoader {
 		string name = Path.GetFileNameWithoutExtension(scriptPath);
 
 		if (!name.StartsWith("script", StringComparison.OrdinalIgnoreCase)) {
-			return Path.Combine(directory, TextFileName);
+			return CaseInsensitivePath.Combine(directory, TextFileName);
 		}
 
 		string slot = name["script".Length..];
-		return Path.Combine(directory, slot.Length == 0 ? TextFileName : $"missn{slot}.str");
+		return CaseInsensitivePath.Combine(directory, slot.Length == 0 ? TextFileName : $"missn{slot}.str");
 	}
 
 	/// <summary>
@@ -134,7 +135,7 @@ public static class MissionLoader {
 
 	/// <summary>The conventional path of a mission handoff inside an install root.</summary>
 	public static string DefaultScriptPath(string installRoot) =>
-		Path.Combine(installRoot, DataFolderName, ScriptFileName);
+		CaseInsensitivePath.Combine(installRoot, DataFolderName, ScriptFileName);
 
 	/// <summary>
 	/// Loads the mission at <paramref name="scriptPath"/>. <paramref name="content"/> supplies the
@@ -163,7 +164,7 @@ public static class MissionLoader {
 		AddRoster(script, claims, mechNames, flyerNames, mechFormations, flyerFormations, baseFormations,
 			placements);
 
-		var counters = LoadCounters(Path.Combine(Path.GetDirectoryName(scriptPath) ?? ".", CountersFileName));
+		var counters = LoadCounters(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", CountersFileName));
 		var player = LoadPlayerLance(scriptPath, script, groups, mechFormations, mechNames, placements);
 		var basePads = ResolveBasePads(groups, claims[MissionUnitKind.Base], baseFormations, placements);
 

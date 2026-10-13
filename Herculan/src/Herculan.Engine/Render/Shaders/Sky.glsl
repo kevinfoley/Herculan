@@ -41,7 +41,7 @@ int bandAt(float d) {
 		return clamp(int(floor((d + 0.5 - uGap) / uBandHeight)) + 1, 0, last);
 	}
 
-	if (uCosRoll != 0.0 && -d / uCosRoll > 1.0) {
+	if (d < -uCosRoll) {
 		return 0;
 	}
 

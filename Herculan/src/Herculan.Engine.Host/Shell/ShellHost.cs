@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Cfg;
+using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Shell.Tabs;
 using Herculan.Engine.Install;
@@ -170,7 +171,7 @@ sealed class ShellHost : IDisposable {
 
 		// The preferences array: the practice screen's parameters, the preferences screen's options, the
 		// repair mode and the build mode are all options of it.
-		var preferences = SimulatorPreferences.Load(Path.Combine(installRoot, "DATA"));
+		var preferences = SimulatorPreferences.Load(CaseInsensitivePath.Combine(installRoot, "DATA"));
 		var options = preferences ?? SimulatorPreferences.Defaults();
 		options.SaveEnabled = writePreferences;
 		_game = new GameInProgress(installRoot, saveScreen, mainMenu, options, forcedMode, loadedGame, ShellHangar.From(loadedGame),
@@ -209,7 +210,8 @@ sealed class ShellHost : IDisposable {
 			_movies, _audio, _outcome, _loop, _navigation, repaint);
 		_fields = new EditFields(_window, _audio, _movies, _pointer, _screen, saveScreen, _menu, dialogs.MissionName, _canvas,
 			_widgets, repaint);
-		_keys = new KeyboardRouting(_window, _movies, _mission, _pointer, _startup, _game, _menu, _fields, repaint);
+		_keys = new KeyboardRouting(_window, _movies, _startup, _game, _menu, _fields, repaint);
+		_buttons.Taken = key => key == Key.Escape && _keys.EscapeIsMenuBars;
 		_content = new CanvasContent(_canvas, _screen, _pointer, _startup, dialogs, _movies, _menu, save, hangar, _mission);
 
 		_navigation.EnterTab(_screen.SelectedTab);
@@ -302,11 +304,16 @@ sealed class ShellHost : IDisposable {
 		}
 
 		// The startup sequence goes up once the intro movies and the fade in after them have run. It is
-		// the only widget up and takes no mouse events, so a click meanwhile reaches nothing.
+		// the only widget up and takes no mouse events, so a click meanwhile reaches nothing. The update that ends
+		// it, putting the main menu up, also offers HERCULAN's first-start welcome.
 		if (_startup.Running && !_audio.Fading) {
 			_startup.Advance();
 			if (_window.Mouse is { } startupMouse) {
 				_buttons.SpendButtons(startupMouse);
+			}
+
+			if (!_startup.Running) {
+				_window.OfferWelcome();
 			}
 
 			return;

@@ -493,7 +493,10 @@ public sealed class SimWorld {
 
 		// Mech_Constructor takes its shadows out of the flat pool as it builds the machine; this
 		// is the first point here at which a machine has a world to take them from.
-		(simObject as MechObject)?.AllocateShadows(this);
+		if (simObject is MechObject mech) {
+			mech.AllocateShadows(this);
+			mech.WorldTweaks = Tweaks;
+		}
 
 		for (int i = 0; i < _objects.Count; i++) {
 			_objects[i].EnsureTableSize(_objects.Count);

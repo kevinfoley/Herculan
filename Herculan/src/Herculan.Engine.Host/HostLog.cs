@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 using Herculan.Engine.Host.Localization;
@@ -9,22 +10,35 @@ namespace Herculan.Engine.Host;
 /// Explorer or a shortcut it opens no console; started from a terminal, it attaches to that terminal's console so
 /// <c>--help</c> and the command-line runs still print there. The terminal does not wait for a Windows application,
 /// so its prompt can come back before the output ends. Everything written to either stream is copied to
-/// <see cref="LogPath"/> as well, the previous run's log kept beside it as <see cref="PreviousLogPath"/>.
+/// <see cref="LogPath"/> as well, the logs of the <see cref="KeptRuns"/> runs before it kept beside it, each named
+/// for when it was last written.
 ///
 /// <para>A crash, which nothing else catches, is written to the log and shown in the operating system's error box
 /// (<see cref="NativeAlert"/>), as is a startup failure the host reports through <see cref="Fail"/> when there is no
 /// console to read it in.</para>
 /// </summary>
 static class HostLog {
+	// Local rather than roaming: a log is this machine's and only good for diagnosis, so it has no business following
+	// the player's profile the way the settings beside it in the roaming folder do.
 	private static readonly string LogFolder = Path.Combine(
+		Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData, Environment.SpecialFolderOption.DoNotVerify),
+		"Herculan");
+
+	// Where older builds wrote the logs, with the settings. Whatever is left there is moved into LogFolder.
+	private static readonly string LegacyLogFolder = Path.Combine(
 		Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData, Environment.SpecialFolderOption.DoNotVerify),
 		"Herculan");
 
 	/// <summary>This run's log.</summary>
 	public static readonly string LogPath = Path.Combine(LogFolder, "herculan.log");
 
-	/// <summary>The run before's log, kept so a relaunch after a crash does not lose it.</summary>
-	public static readonly string PreviousLogPath = Path.Combine(LogFolder, "herculan.previous.log");
+	/// <summary>How many earlier runs' logs are kept, so a few relaunches after a crash do not lose it.</summary>
+	public const int KeptRuns = 9;
+
+	// The earlier runs' logs: herculan-<last written>.log, which sorts by time. Older builds kept one run as
+	// herculan.previous.log, which is archived the same way.
+	private const string ArchivePrefix = "herculan-";
+	private static readonly string LegacyPreviousLogPath = Path.Combine(LegacyLogFolder, "herculan.previous.log");
 
 	/// <summary>
 	/// Whether standard output reaches someone: a terminal the host attached to, or a redirect. Always true off
@@ -74,9 +88,9 @@ static class HostLog {
 	private static TextWriter? OpenLog() {
 		try {
 			Directory.CreateDirectory(LogFolder);
-			if (File.Exists(LogPath)) {
-				File.Move(LogPath, PreviousLogPath, overwrite: true);
-			}
+			MoveLegacyLogs();
+			Archive(LogPath);
+			PruneArchives();
 
 			var stream = new FileStream(LogPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
 			return TextWriter.Synchronized(new StreamWriter(stream, new UTF8Encoding(false)) { AutoFlush = true });
@@ -86,11 +100,61 @@ static class HostLog {
 		}
 	}
 
+	// Renames an earlier run's log to herculan-<last written>.log, with a count after it should two runs share a second.
+	private static void Archive(string path) {
+		if (!File.Exists(path)) {
+			return;
+		}
+
+		string stamp = File.GetLastWriteTime(path).ToString("yyyy-MM-dd-HHmmss", CultureInfo.InvariantCulture);
+		string target = Path.Combine(LogFolder, $"{ArchivePrefix}{stamp}.log");
+		for (int n = 2; File.Exists(target); n++) {
+			target = Path.Combine(LogFolder, $"{ArchivePrefix}{stamp}-{n}.log");
+		}
+
+		File.Move(path, target);
+	}
+
+	// Moves the logs older builds left in LegacyLogFolder into LogFolder, archived, for PruneArchives to cap with the
+	// rest. A log that cannot be moved stays where it is, and does not cost this run its own log.
+	private static void MoveLegacyLogs() {
+		if (LegacyLogFolder == LogFolder || !Directory.Exists(LegacyLogFolder)) {
+			return;
+		}
+
+		try {
+			foreach (string old in Directory.GetFiles(LegacyLogFolder, ArchivePrefix + "*.log")) {
+				string target = Path.Combine(LogFolder, Path.GetFileName(old));
+				if (!File.Exists(target)) {
+					File.Move(old, target);
+				}
+			}
+
+			Archive(LegacyPreviousLogPath);
+			Archive(Path.Combine(LegacyLogFolder, Path.GetFileName(LogPath)));
+		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+		}
+	}
+
+	// Deletes all but the newest KeptRuns archived logs. One that cannot be deleted is left for the next run.
+	private static void PruneArchives() {
+		var archives = Directory.GetFiles(LogFolder, ArchivePrefix + "*.log")
+			.OrderByDescending(Path.GetFileName, StringComparer.Ordinal)
+			.Skip(KeptRuns);
+		foreach (string old in archives) {
+			try {
+				File.Delete(old);
+			} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) {
+			}
+		}
+	}
+
 	private static string Text(string key, string english) => Localization?.GetString(key) ?? english;
 
 	private const int AttachParentProcess = -1;
 
 	[DllImport("kernel32.dll")]
+	[System.Runtime.Versioning.SupportedOSPlatform("windows")]
 	private static extern bool AttachConsole(int processId);
 
 	// Writes everything to both writers. A failed write to the log is dropped, so a full disk never stops the host.

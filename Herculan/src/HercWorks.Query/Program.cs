@@ -24,11 +24,16 @@ internal static class Program {
 		  orders [<mission>...]            every row #16 group's row #15 orders, of every mission or of
 		                                   those named: verb, formation, point, route, subject and the
 		                                   action that ends each
+		  routes [<mission>...]            every row #8 route, of every mission or of those named: its
+		                                   waypoints' coordinates and leg lengths, whether it closes on
+		                                   itself, and the group orders and objectives naming it
 		  objectives [<mission>...]        every row #17 objective, of every mission or of those named:
 		                                   mandatory or failure, condition, subject, route, failure
 		                                   text and counter writes
 		  conditions [<mission>...]        every row #1 condition, of every mission or of those named:
 		                                   the test, draw or variant table, its chain, and what it gates
+		  repeats [<mission>...]           every GUID two or more unconditioned records carry in rows
+		                                   #3, #6, #7, #8 or #9, where the last replaces the rest
 		  lint [<mission>...]              the mission check over the script.dat each mission's load
 		                                   writes, every campaign flag zero and every roll 0
 		  text <mission>... [--ids LO-HI]  the named missions' .ENG text records in file order, each with
@@ -55,7 +60,8 @@ internal static class Program {
 		  --route-switch    orders: list only groups with a later order naming a route other than
 		                    slot 0's
 		  --with-point      orders: list only groups with an order that names a row #6 point
-		  --ids LO-HI       text: list only the records whose id is in this range (--ids 200-204)
+		  --ids LO-HI       text: list only the records whose id is in this range (--ids 200-204);
+		                    routes: only the routes whose GUID is in it
 		  --json            print the raw result as JSON
 
 		A type is a decimal or 0x-hex index, a name matched whole and then as a prefix, or all
@@ -164,22 +170,33 @@ internal static class Program {
 			return 0;
 		}
 
-		if (command is "actions" or "orders" or "objectives" or "conditions" or "text" or "lint"
+		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats"
 				&& positional.Skip(1).FirstOrDefault(n => !data.Missions.Any(m => string.Equals(m.Name, n, StringComparison.OrdinalIgnoreCase))) is { } unknown) {
 			return Fail($"No mission is named {unknown}; `missions` lists them.");
+		}
+
+		short lowId = short.MinValue, highId = short.MaxValue;
+		if (ids != null) {
+			var bounds = ids.Split('-');
+			if (bounds.Length != 2 || !short.TryParse(bounds[0], out lowId) || !short.TryParse(bounds[1], out highId)) {
+				return Fail("--ids takes a range, LO-HI.");
+			}
+		}
+
+		if (command == "routes") {
+			var routes = RouteQuery.Run(data, positional.Skip(1).ToList(), lowId, highId);
+			if (json) {
+				WriteJson(output, routes);
+			} else {
+				TextReport.Routes(output, routes);
+			}
+
+			return 0;
 		}
 
 		if (command == "text") {
 			if (positional.Count < 2) {
 				return Fail("text takes one or more mission names.");
-			}
-
-			short lowId = short.MinValue, highId = short.MaxValue;
-			if (ids != null) {
-				var bounds = ids.Split('-');
-				if (bounds.Length != 2 || !short.TryParse(bounds[0], out lowId) || !short.TryParse(bounds[1], out highId)) {
-					return Fail("--ids takes a range, LO-HI.");
-				}
 			}
 
 			var text = TextQuery.Run(data, positional.Skip(1).ToList(), lowId, highId);
@@ -198,6 +215,17 @@ internal static class Program {
 				WriteJson(output, lint);
 			} else {
 				LintQuery.Write(output, lint);
+			}
+
+			return 0;
+		}
+
+		if (command == "repeats") {
+			var repeats = RepeatQuery.Run(data, positional.Skip(1).ToList());
+			if (json) {
+				WriteJson(output, repeats);
+			} else {
+				RepeatQuery.Write(output, repeats);
 			}
 
 			return 0;

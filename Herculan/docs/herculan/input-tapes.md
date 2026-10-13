@@ -29,7 +29,7 @@ After the tape, `--play` hands the controls back to the player on the engine's o
 
 A frame's held input is the host frame's own: the four axes before Backturn, the trigger, and the stick's eight raw buttons. Its discrete input rides the next frame written, which is the first tick of the host frame or, when the host frame ran none, a later one:
 
-- **Key presses** are the key-down edges of the keyboard as polled at the top of the host frame, the same state the handlers poll, so a key pressed and released between two frames is not recorded. The first press is the command word and the rest go in the command queue; Alt and Ctrl held with a key are its `0x200` and `0x400` bits, and the modifier keys themselves, and every release, are left out.
+- **Key presses** are the key-down edges of the keyboard as polled at the top of the host frame, the same state the handlers poll, so a key pressed and released between two frames is not recorded, and each of a held key's auto-repeats (`KeyRepeat`), as retail records them. `[Esc]`, `[/]` and `[Alt+Enter]` record no repeats, since the host acts on those only as they go down. The first press is the command word and the rest go in the command queue; Alt and Ctrl held with a key are its `0x200` and `0x400` bits, and the modifier keys themselves, and every release, are left out.
 - **Mouse events** are converted to the game's screen space, the inverse of what playback does with them.
 - **The stick button that fired**, as its bit when it is one of buttons 1-4 and is not bound to FIRE, and the hat's four view bits.
 
@@ -51,7 +51,6 @@ Beyond what the [bundle](../retail/formats/tap-input-tape.md#the-bundle) leaves 
 - **The stick on the CONTROLS panel.** The panel reads the device directly, so presses made on it are not on the tape.
 - **The single-step key.** `Alt+keypad +` ticks the simulation once while recording; playback has no single step and runs that frame as a frozen tick.
 - **The staging flags.** `--heading`, `--throttle`, `--weapon`, `--link`, `--track` and `--target` set the mission's opening state, which the bundle does not carry.
-- **`[Esc]`.** A press that closed the debug UI or the menu bar is recorded, and replays as the game's `[Esc]`, which backs out of a side window or the Heads-Down Display.
 - **The device map.** A bipolar throttle is `data\herculan-joystick.cfg`'s setting, which the bundle does not carry, so the playing machine's applies.
 - **The stick's shape.** The capability block is written once, so a stick plugged in or out later in the recording is not on it.
 

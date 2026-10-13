@@ -167,7 +167,7 @@ public sealed class ComponentDamage {
 	/// <c>Mech_ConfigureLoadout</c>'s occupancy pass, after the mounts are fitted: every component of
 	/// the first 29 whose piece lists no internal has its active flag cleared, so it is never struck,
 	/// targeted or written to. That takes out every empty hardpoint, and on retail data the
-	/// shoulders and every chassis' unused slots. See
+	/// weapon brackets (2 and 3) and every chassis' unused slots. See
 	/// docs/retail/simulation/component-damage.md#the-component-damage-system.
 	/// </summary>
 	internal void ClearUnoccupied() {
@@ -501,7 +501,7 @@ public sealed class ComponentDamage {
 	///
 	/// <para><b>The <c>.DMG</c> piece's <c>ParentComponent</c> byte is a component index</b>, not a model bone: the
 	/// original compares it against the index of the component that just died. That is the whole of
-	/// the dependency graph between main components — losing a shoulder takes the arm on it.</para>
+	/// the dependency graph between main components — losing a shoulder takes the guns hung off it.</para>
 	///
 	/// <para><b>It is also where a part coming off is made visible</b>, and the record's own
 	/// <c>DebrisFlags</c> pair drives all of it. The high byte

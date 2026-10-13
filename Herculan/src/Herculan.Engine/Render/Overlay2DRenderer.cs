@@ -127,8 +127,11 @@ public sealed class Overlay2DRenderer : IDisposable {
 		AddFilledRect(x1 - thickness, y0, x1, y1, color);
 	}
 
-	/// <summary>A one-pixel line between two arbitrary points, as a quad along its own normal.</summary>
-	public void AddLine(float x0, float y0, float x1, float y1, Vector3 color) {
+	/// <summary>
+	/// A line between two arbitrary points, as a quad along its own normal: one framebuffer pixel thick, or
+	/// <paramref name="thickness"/> pixels, at least one.
+	/// </summary>
+	public void AddLine(float x0, float y0, float x1, float y1, Vector3 color, float thickness = 1f) {
 		float dx = x1 - x0;
 		float dy = y1 - y0;
 		float length = MathF.Sqrt(dx * dx + dy * dy);
@@ -136,8 +139,9 @@ public sealed class Overlay2DRenderer : IDisposable {
 			return;
 		}
 
-		float nx = -dy / length * 0.5f;
-		float ny = dx / length * 0.5f;
+		float half = Math.Max(thickness, 1f) * 0.5f;
+		float nx = -dy / length * half;
+		float ny = dx / length * half;
 		_vertices.Add(new Overlay2DVertex(new Vector2(x0 + nx, y0 + ny), color));
 		_vertices.Add(new Overlay2DVertex(new Vector2(x1 + nx, y1 + ny), color));
 		_vertices.Add(new Overlay2DVertex(new Vector2(x1 - nx, y1 - ny), color));

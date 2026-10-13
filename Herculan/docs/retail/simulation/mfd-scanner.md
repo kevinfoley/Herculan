@@ -149,10 +149,10 @@ The extent is not in the file: the paint squares off `0x2e` GAU units from that 
 
 Nothing it shares with the screen beyond two sprites — no dish, no wedge sprite, no background flood, no reference line, no range ring and no readouts.
 
-1. The circle: `Raster_DrawEllipse` (`00488070`) over the 92x92 rect with the brush in outline mode, colour id 9 → palette 10, red.
+1. The circle: `Raster_DrawEllipse` (`00488070`) over the 92x92 rect with the brush in outline mode, colour id 9 → palette 10, red. The outline comes from the same walk as the blips' fill (step 4): 93 pixels wide and 92 tall, half a row above the centre, its top and bottom rows each one run straight across.
 2. The turret arc as **two lines** from the centre to the rim (`Raster_DrawLine`, `004838f8`), at `Mech_GetTorsoTwistAngle() +/- 0x2000` — the same 90 degrees the screen's wedge sprite covers, drawn with the pen in the same red. Each endpoint is the point `(0, -radius)` rotated, so both reach the rim exactly.
 3. `MFD` frame 18, the player marker, at `centre - (3 << XCoordShift, 0)` as on the screen.
-4. Each contact as two filled discs: radius 2 in colour id 19 (palette 16, black) with radius 1 in the contact's own colour inside it. Both radii are literal device pixels, unshifted, so a blip is the same size in every video mode.
+4. Each contact as two filled ellipses through `Raster_DrawEllipse`: the rect `contact ± 2` in colour id 19 (palette 16, black), then `contact ± 1` in the contact's own colour. Both offsets are literal device pixels, unshifted, so a blip is the same size in every video mode. The ellipse fill writes `2b` rows for a half-height `b`, starting `b` rows above the centre, so each disc is a row shorter than it is wide: the black one is 5 wide and 4 tall with its top and bottom rows 3 wide, and the core a 3 by 2 block in its middle two rows, which reads as a pill. In the 320-wide mode (`VideoMode_XCoordShift` 0) a contact is one pixel through `Gfx_PlotPixel` instead.
 5. `MFD` frame 16, the target bracket, over the selected contact.
 
 Verified against `Reference/Targeting.png`: SAMSON's `51,5` puts the circle at device `102,10 - 194,102`, which is where that capture's is.

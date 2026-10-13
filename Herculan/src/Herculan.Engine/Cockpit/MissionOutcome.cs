@@ -14,13 +14,9 @@ public sealed class MissionOutcome {
 	/// <summary>DAT_004d2582, the global quit flag EXIT EARTHSIEGE?'s QUIT sets, which makes the mission's exit code 0.</summary>
 	public bool QuitGame { get; set; }
 
-	/// <summary>Raised as the mission ends, for the host to close its window.</summary>
-	public event Action? Ended;
-
 	/// <summary>Ends the mission: an answer on the status alert, or a demo running out.</summary>
 	public void End(bool quitGame = false) {
 		Over = true;
 		QuitGame = quitGame;
-		Ended?.Invoke();
 	}
 }

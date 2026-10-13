@@ -138,7 +138,7 @@ public sealed partial class MechObject {
 	/// <returns>The residual aim error: yaw and pitch, in binary angle.</returns>
 	public (short Yaw, short Pitch) TrackWorldPoint(SimWorld world, Vec3i point) {
 		var local = CameraNodeTransform.Inverted().TransformPoint(point.X, point.Y, point.Z);
-		local = new Vec3i(local.X, local.Y, local.Z - Type.EyeOffsetZ);
+		local = new Vec3i(local.X, local.Y, local.Z - EyeLift);
 
 		var (pitchError, _, yawError) = SimTrig.EulerToward(local, default);
 
@@ -420,11 +420,18 @@ public sealed partial class MechObject {
 	/// before the new one is posted, so flipping twice quickly says where it ended up rather than
 	/// reading out the sequence; the radar toggle is written the same way.
 	///
+	/// <para>It refuses on a flyer, whose TRACK button is hidden
+	/// (docs/retail/simulation/torso-aim.md#automatic-turret-tracking--t).</para>
+	///
 	/// <para>The [T] command is this plus a tail: turning ATT <i>off</i> that way also centres the
 	/// turret. See <see cref="LatchCenterTorso"/>.</para>
 	/// </summary>
-	/// <returns>Whether ATT is now on.</returns>
+	/// <returns>Whether it toggled; false when it refused.</returns>
 	public bool ToggleAutoTrack(SimWorld? world = null) {
+		if (Type.IsFlyer) {
+			return false;
+		}
+
 		Weapons.AutoTrack = !Weapons.AutoTrack;
 
 		if (world?.Sounds is { } sounds) {
@@ -435,7 +442,7 @@ public sealed partial class MechObject {
 				: Content.SystemMessages.AutoTrackingDisabled);
 		}
 
-		return Weapons.AutoTrack;
+		return true;
 	}
 
 	/// <summary>

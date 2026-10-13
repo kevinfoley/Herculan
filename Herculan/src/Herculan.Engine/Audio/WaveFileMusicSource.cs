@@ -1,3 +1,4 @@
+using HercWorks.Core.Io;
 using System.Buffers.Binary;
 
 namespace Herculan.Engine.Audio;
@@ -30,7 +31,7 @@ public sealed class WaveFileMusicSource : MusicSourceBase {
 
 	/// <summary>Where track <paramref name="track"/> lives under <paramref name="directory"/>.</summary>
 	public static string PathFor(string directory, int track) =>
-		Path.Combine(directory, $"Track{track:00}.wav");
+		CaseInsensitivePath.Combine(directory, $"Track{track:00}.wav");
 
 	/// <inheritdoc />
 	protected override (MusicTrack Track, Action<CancellationToken> Produce)? Prepare(int track) {

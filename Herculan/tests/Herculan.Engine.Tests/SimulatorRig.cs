@@ -180,6 +180,7 @@ sealed class SimulatorRig {
 		Simulator.BeginFrame(deltaSeconds);
 		Simulator.Update(deltaSeconds);
 		Simulator.Finish(deltaSeconds);
+		Keys.EndFrame();
 	}
 
 	/// <summary>Runs <paramref name="frames"/> frames.</summary>
@@ -317,11 +318,20 @@ sealed class SimulatorRig {
 	}
 }
 
-/// <summary>A keyboard whose held keys a test sets.</summary>
+/// <summary>A keyboard whose held keys, and their auto-repeats, a test sets.</summary>
 sealed class ScriptedKeys : IKeyState {
 	private readonly HashSet<Key> _down = new();
+	private Key? _repeat;
 
 	public bool IsKeyPressed(Key key) => _down.Contains(key);
+
+	public bool IsKeyRepeated(Key key) => _repeat == key && _down.Contains(key);
+
+	/// <summary>Has a held key auto-repeat on the next frame alone.</summary>
+	public void RepeatNextFrame(Key key) => _repeat = key;
+
+	/// <summary>Ends the frame, and the repeat it carried.</summary>
+	public void EndFrame() => _repeat = null;
 
 	public void Hold(params Key[] keys) => _down.UnionWith(keys);
 

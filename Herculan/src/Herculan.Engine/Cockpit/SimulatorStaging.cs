@@ -157,7 +157,7 @@ public sealed class SimulatorStaging(StagedStart options, StagedScreenshot captu
 			pilotMech.ToggleScanner(world);
 		}
 
-		if (options.AutoTrack && pilotMech != null) {
+		if (options.AutoTrack && pilotMech is { Type.IsFlyer: false }) {
 			pilotMech.Weapons.AutoTrack = true;
 		}
 	}
