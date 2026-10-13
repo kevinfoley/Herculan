@@ -4613,7 +4613,13 @@
       "confidence": "high",
       "name": "Ttm_TokenName",
       "description": "(ignored, opcode) in stack order, callee-cleaned: Dynamix's name of a .TTM opcode: searches the 128 opcodes at 000833b0 and jumps through the table 000835b0 to a case returning its string (TOKEN_LINE for 0xa0a4, TOKEN_ENDFRAME for 0x0ff0, PARAMS_0 to PARAMS_7 and PARAM_STRING for 0 to 7 and 0xf), or returns \"unknown\" (000833a8). es2_xref finds no reference to it.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands"
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "00047618+1552",
+        "sha1": "c3f8faf4be04",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00047c28",
@@ -4667,7 +4673,13 @@
       "confidence": "high",
       "name": "TtmScript_RunPage",
       "description": "(script, page) in stack order, callee-cleaned: runs a page's commands from its start in the page table +0x30 to its 0x0ff0, then returns 1. Renumbers 0x1301 to 0xc051 and 0x1311 to 0xc061; reads seven argument words after the opcode whatever its count, and steps past the arguments by the low four bits, a point list (0xaf1f, 0xaf2f) copied with TtmScript_CopyArgBytes (0004759d), a string with TtmScript_SkipString. While the call depth +0x1b0 is non-zero it adds +0x1b2 and +0x1b4 to the first two arguments of an opcode 0xa000-0xafff other than 0xa601, 0xaf1f and 0xaf2f, and also to the third and fourth of 0xa0a4. Then opcodes 0xc000-0xcfff go to TtmScript_RunSoundCommand (0004a0e0) and 0xa000-0xafff to TtmScript_RunDrawCommand (0004a213), each returning 0 when the call does; the other opcodes are matched against the 30 at 00083880 (targets at 000838f8), and an opcode outside them is stepped over. The cases are in Herculan/docs/es1/formats/ttm-scripts.md#the-commands; es2_xref finds three calls from TtmScript_Run (00046f2c) and one from each of its own 0x3003 and 0x3303 cases.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands"
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "00048218+7638",
+        "sha1": "6ebe2e193a1d",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00049fee",
@@ -4721,7 +4733,13 @@
       "confidence": "high",
       "name": "TtmScript_RunDrawCommand",
       "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: matches the opcode against the 22 at 000839b8 (targets at 00083a10) and returns 1 whether or not one matches. The cases (lines, rects, ellipses, polygons, pixels, bitmap frames and the saved regions) are in Herculan/docs/es1/formats/ttm-scripts.md#the-commands.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands"
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0004a213+4458",
+        "sha1": "b12c50be353f",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0004b37d",
