@@ -3686,9 +3686,15 @@
       "type": "function",
       "confidence": "high",
       "name": "TurboPod_Engage",
-      "description": "Engages the Turbo Pod: if the engaged flag at pod+0x81 is clear and the charge at pod+0x7d is over 600, sets the flag and plays sound 0x2c (throtl.wav, the same servo the throttle lever uses) -- but only when the pod has a cockpit gauge at +0x79, which no AI machine's pod has. Called from TurboPod_Tick for the player's own row button and directly from Mech_BehaviourFleeThink and Ai_DriveToPoint, which is the only way an AI machine engages one since its pods are never ticked.",
+      "description": "Engages the Turbo Pod: if the engaged flag at pod+0x81 is clear and the charge at pod+0x7d is over 600, sets the flag and plays sound 0x2c (throtl.wav, the same servo the throttle lever uses) -- but only when the pod has a cockpit gauge at +0x79, which no AI machine's pod has. Its callers found by es2_xref are Mech_BehaviourFleeThink and Ai_DriveToPoint, which is how an AI machine engages one since its pods are never ticked; TurboPod_Tick makes the same test inline for the player's row button rather than calling this.",
       "source": "docs/retail/simulation/equipment-pods.md",
-      "signature": "void __cdecl TurboPod_Engage(int pod)"
+      "signature": "void __cdecl TurboPod_Engage(int pod)",
+      "verified": {
+        "bytes": "0040f09c+50",
+        "sha1": "a3937cef612a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f0d0",
@@ -3698,7 +3704,13 @@
       "name": "TurboPod_ChargeTick",
       "description": "Turbo Pod vtable +0x34, the only pod that overrides the pool turn -- every other pod inherits WeaponMount_RefireTick there and so consumes nothing. While engaged (pod+0x81) it spends 35 of the charge at pod+0x7d per tick, disengaging and zeroing the charge when it runs out; then, if the mount is not destroyed, it runs WeaponMount_RefireTick and takes min(20, budget, 2000 - charge) back out of the weapons' leftover budget, returning the remainder. 2000 is the value TurboPod_Ctor starts the charge at.",
       "source": "docs/retail/simulation/equipment-pods.md",
-      "signature": "short __cdecl TurboPod_ChargeTick(void *pod, short budget)"
+      "signature": "short __cdecl TurboPod_ChargeTick(void *pod, short budget)",
+      "verified": {
+        "bytes": "0040f0d0+115",
+        "sha1": "3eb1b288ae7a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f144",
@@ -3717,7 +3729,13 @@
       "confidence": "high",
       "name": "EcmPod_Tick",
       "description": "ECM pod vtable +0x50. Reads the pod gauge's on/off byte, mirrors it into pod+0x7d and pod+0x7f, and posts the jamming messages 0x2a and 0x2b on a change; the flag it pushes back carries the destroyed byte at +0x49.",
-      "source": "docs/retail/simulation/equipment-pods.md"
+      "source": "docs/retail/simulation/equipment-pods.md",
+      "verified": {
+        "bytes": "0040f184+106",
+        "sha1": "9e4f1b3d0c28",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f1f0",
@@ -3726,7 +3744,13 @@
       "confidence": "high",
       "name": "TurboPod_Tick",
       "description": "Turbo Pod vtable +0x50. Engages when the gauge's button byte is set and the charge at pod+0x7d is over 600, playing sound 0x2c, and disengages when the charge runs out.",
-      "source": "docs/retail/simulation/equipment-pods.md"
+      "source": "docs/retail/simulation/equipment-pods.md",
+      "verified": {
+        "bytes": "0040f1f0+151",
+        "sha1": "f8d5f5a37a28",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040f288",
@@ -4196,7 +4220,13 @@
       "confidence": "high",
       "name": "WeaponMounts_PerFrameUpdate",
       "description": "The mount manager's per-frame pass. Stores its range argument -- the distance to the selected target, measured by Player_PerFrameCockpitUpdate -- into manager+0x31 BEFORE running WeaponMounts_AdvanceToReady, so the chain advance and the row lamps both see this frame's range. Then reads the weapon-panel input block, applies the chain/link commands, and walks every mount calling its vtable+0x50 gauge push with three state bytes: selected (index == manager+0x1d), in the current fire group (groups[manager+0x1c][index]), and ready (WeaponMounts_MountIsReady).",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "00410b40+398",
+        "sha1": "b82897cd7f77",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410cd0",

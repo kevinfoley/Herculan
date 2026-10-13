@@ -12,7 +12,7 @@ Pods are ordinary weapon mounts on ordinary hardpoints. At the end of `Mech_Conf
 | 3 | `+0x313` | 32 | ENRG | Doubles the energy pool's recharge rate (not its capacity, as the manual says) | [`reactor-energy-pool.md`](reactor-energy-pool.md#reactor-output-rate--mech_computereactorrate-00417d08) |
 | 4 | `+0x317` | 31 | TURB | A speed boost, switched on from its cockpit row, that nearly doubles top speed while its charge lasts | [`mech-locomotion.md`](mech-locomotion.md#damage-effects-on-movement), [below](#what-the-two-ticks-do-with-the-button) |
 
-Slot order is not id order (`0x1f`→[4], `0x20`→[3]). The switch assigns rather than accumulates, so a second copy of a pod fills the same slot and contributes nothing — the last mount in hardpoint order wins.
+Slot order is not id order (`0x1f`→[4], `0x20`→[3]). The switch assigns rather than accumulates, so a second copy of a pod fills the same slot — the last mount in hardpoint order wins — and the bonus, jammer and speed term each read the pod in that slot. **The other copy is still a working mount**: it has its own row and its own tick, because `WeaponMounts_PerFrameUpdate` (`00410b40`) calls vtable `+0x50` on every mount, not on the five slots. A second Turbo Pod switches on, sounds, burns its own charge and buys it back out of the pool, but the speed term reads only the filed pod's engaged flag; a second ECM pod posts its jamming messages, but the jammer reads only the filed pod's switch.
 
 Each pod is its own class: `Pod_CtorBase` (`0040e234`) installs the shared table `00498cdc` after `WeaponMount_CtorBase`, and one of `EcmPod_Ctor`, `TargetingPod_Ctor`, `ShieldPod_Ctor`, `EnergyPod_Ctor` and `TurboPod_Ctor` (`0040e274`, `e308`, `e344`, `e380`, `e2bc`) then replaces it with its own and writes its catalog id to `+0x77`. **A pod's layout diverges from a weapon mount's at that offset**: `+0x77` is the catalog id and `+0x79` the cockpit gauge handle, where an ammunition mount keeps the gauge handle at `+0x77` itself; and what `+0x7d` and `+0x7f` hold differs again per pod, so an offset read off one of these classes says nothing about the others.
 
@@ -62,7 +62,7 @@ So a Shield, Targeting or Energy pod row clicks and sounds but has no on/off sta
 `TurboPod_Tick` (`0040f1f0`) is a state machine over the pod's charge at `+0x7d` and its engaged flag at `+0x81`:
 
 - The button off drops the flag, full stop.
-- The button on and the pod idle engages it — through `TurboPod_Engage` (`0040f09c`), which demands more than 600 of charge and sounds `0x2c`, the same servo the throttle lever uses. **So a pod that has just run itself dry cannot be switched straight back on.**
+- The button on and the pod idle engages it, provided it holds more than 600 of charge, and sounds `0x2c`, the same servo the throttle lever uses. The tick makes this test inline rather than calling `TurboPod_Engage` (`0040f09c`), which makes the same test for the AI. **So a pod that has just run itself dry cannot be switched straight back on.**
 - The button on and the pod engaged cuts out the moment the charge reaches zero.
 - Then **the pod writes the button back from the flag**, so a row pressed with too little charge lights for one frame and goes out again by itself. Nothing else in the cockpit clears a button it did not set.
 
