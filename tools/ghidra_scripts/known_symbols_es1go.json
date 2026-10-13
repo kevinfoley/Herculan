@@ -4178,7 +4178,13 @@
       "confidence": "high",
       "name": "Ttm_SetPage",
       "description": "(page, handle): returns TtmScript_SetPage (000470e7)(script, page) for the handle's script, or 0 when the handle is empty; the handle is not tested against the count.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#choosing-a-page"
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#choosing-a-page",
+      "verified": {
+        "bytes": "000468fc+49",
+        "sha1": "2fb1a8b718a0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0004692d",
