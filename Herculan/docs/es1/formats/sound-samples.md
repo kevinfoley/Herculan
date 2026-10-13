@@ -125,6 +125,12 @@ A failure formats `SoundManager::loadDrivers: %s` with `0006f23d`'s text for the
 
 ES2's loader plays a file that is not RIFF as raw 8-bit unsigned mono at 11,025 Hz ([ES2's sample format](../../retail/formats/sound-samples.md#sample-format)).
 
+## The banks
+
+`SHELL0.VOL`'s `sos\` holds five files in the HMI library's own formats, which the programs hand to its drivers without reading a field: `MELODIC.BNK`, `DRUM.BNK` and `DONS.BNK`, 5,404 bytes each with `ADLIB-` from byte 2, and `DRUM32.DIG` and `DRUM.DIG`, which open with `HMIDIGIP`. `DONS.BNK` is `MELODIC.BNK` up to byte 67.
+
+`SoundManager_LoadBanks` (`0004f6d4`, `ES1GO 00042bf9`) reads `sos\melodic.bnk`, `sos\drum.bnk` and `sos\drum32.dig`, in that order, through the manager's volume stream `+0x504`. For each it opens the file with `VolRStream_Open`, allocates the size `VolRStream_GetSize` gives, reads that many bytes with the stream's read slot `+0x1c`, closes the file and keeps a far pointer to the data at `+0x13a`, `+0x146` and `+0x140`. It returns 0 at the first that fails to open, allocate or read, and 1 after the third. [The driver](#the-driver) says where each goes. A search of both images finds no name for `DONS.BNK` or `DRUM.DIG` ([Open](#open)).
+
 ## The simulator's catalog
 
 `SoundCatalog_Load` (`0004dc70`), the last step of `Sound_Init`, reads `str\SOUNDS.STR` row by row with `StringTable_ReadNext` into a name array (`000b18a4`) and an attribute pointer array (`000b1994`), and passes the names to `SoundManager_SetSampleNames`, so a row's number is its name index. For each row it makes `000bd63c`[row] with `SoundManager_CreateObject`(manager, 2, attribute byte 3, row), calls the object's slot `+0x28`(-1, -1, attribute byte 0) and `+0x2c`(attribute byte 1), and loads it at once when attribute byte 2 is set; the row count goes to `000bd72c`. `Sound_Play` and its siblings take a row number. The first ten rows name songs, `hmi\battle1a.hmp` five times and the five other `hmi\battle*.hmp` once each, and the eleventh `hmi\shipexpl.sfx`.
@@ -151,3 +157,4 @@ Each voice-line slot then gets `SoundManager_CreateObject`(manager, 0, 0, index)
 - **Open:** what sets the byte `000959e4` that gates loading a voice line's sample, and what the caller of `ES1GO 000087ce` does with its answer.
 - **Open:** `ES1GO 00041f64` and `ES1GO 0004240a`, which `ShellSound_Init` calls where `Sound_Init` calls `SoundManager_Ctor` and `SoundManager_LoadDrivers`.
 - **Open:** what `SOUNDS.STR`'s attribute bytes 0 and 1 set, through the slots `+0x28` and `+0x2c`.
+- **Open:** what reads `sos\DONS.BNK` and `sos\DRUM.DIG`. A case-insensitive search of both images for `dons` and the bank names finds `sos\melodic.bnk`, `sos\drum.bnk` and `sos\drum32.dig` in each, and no `dons` or `drum.dig`.

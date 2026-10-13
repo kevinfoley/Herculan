@@ -1,6 +1,6 @@
-# GO.EXE and DBSIM.EXE — bitmap arrays and fonts
+# GO.EXE and DBSIM.EXE — bitmap arrays, fonts and cursors
 
-ES1's bitmap arrays and fonts are ES2's containers, loaded by ES2's code ([ES2's resource envelope](../../retail/formats/dfn-hfn-dci.md#the-shared-dynamix-resource-envelope)): 327 of `SHELL0.VOL`'s and `SIMVOL0.VOL`'s 328 `.DBA` read through ES2's bitmap array reader and write back byte for byte, and all 30 `.DFN` read through ES2's font layout. `RES32\ICONS.DBA` holds old-format bitmaps, which both ES1 programs load as no object, as ES2's do, and the file stops 528 bytes short of its last item's end. Addresses are `ES1GO` image addresses unless `ES1DBSIM` is named ([the X-32 executable](x32-executable.md#the-image)); ES2's are DBSIM's.
+ES1's bitmap arrays, fonts and cursors are ES2's containers, loaded by ES2's code ([ES2's resource envelope](../../retail/formats/dfn-hfn-dci.md#the-shared-dynamix-resource-envelope)): 327 of `SHELL0.VOL`'s and `SIMVOL0.VOL`'s 328 `.DBA` read through ES2's bitmap array reader and write back byte for byte, all 30 `.DFN` read through ES2's font layout, and all 11 `.DCI` through ES2's cursor layout. `RES32\ICONS.DBA` holds old-format bitmaps, which both ES1 programs load as no object, as ES2's do, and the file stops 528 bytes short of its last item's end. Addresses are `ES1GO` image addresses unless `ES1DBSIM` is named ([the X-32 executable](x32-executable.md#the-image)); ES2's are DBSIM's.
 
 ## The class table
 
@@ -22,6 +22,27 @@ The GL class table, `{tag, load function, name}` entries, is at `0008b480` in `E
 The class tables register `GLFont` under tag `0x05002800` and `Old GLFont` under `0x03002800`, as ES2's do; `GLFont`'s load function is `GLFont_Construct` (`00066634`; `ES1DBSIM 0007cd9c`). `GLFont_Construct` takes 0x32 bytes from the current arena (`Arena_Alloc` on `000aa110`), stores the vtable `0008b5da` (`ES1DBSIM 000a01ba`) and calls its read slot, `+0x10` (ES2's is `+0xc`), `GLFont_ReadFromStream` (`00066978`; `ES1DBSIM 0007d0e0`). That reads [ES2's layout](../../retail/formats/dfn-hfn-dci.md#layout) in ES2's order and under ES2's two conditions, arrays from the current arena; `GLFont_WriteToStream` (`0006678c`; `ES1DBSIM 0007cef4`) writes it back the same way, and `GLFont_GetStreamSize` (`000666ec`; `ES1DBSIM 0007ce54`) and `GLFont_GetMemorySize` (`0006673c`; `ES1DBSIM 0007cea4`) compute ES2's sizes, from `0x1a` and `0x32`.
 
 `SIMVOL0.VOL` holds 16 `.DFN` and `SHELL0.VOL` 14, four names in both: `ACTIVE`, `INACTIVE`, `PUSHED` and `TITLE`, whose two copies differ. There are no `.HFN`. Every file has 223 glyphs from code 32, `widthsFlag` -1 and an array count of 0, and its pool, offsets and widths end where its envelope's size does. The cell height is 8 in the shell's `MAP` and the simulator's ten `CP*` and `RED6X8`, 18 in both `TITLE`, and 10 in the rest; `inkHeight` (`0x1a`) is 7 in every file, where ES2's are 8 and 11.
+
+## Cursors
+
+The class tables register `GLCursor` under tag `0x0B002800`. Its load function, `GLCursor_Construct` (`000663b0`; `ES1DBSIM 0007dc68`), takes 0x10 bytes from the current arena, constructs the cursor with `GLCursor_Ctor` (`00051460`; `ES1DBSIM 0006b348`), which stores the vtable `00086e4a` (`ES1DBSIM 0009b672`) and zeroes the bitmap `+4`, and calls the read slot, `+0x10` (ES2's is `+0xc`). `GLCursor_ReadFromStream` (`00066434`; `ES1DBSIM 0007dcec`) reads 8 bytes, the hotspot's x and y, into `+8`, then one class item, the bitmap, into `+4` with `ClassItem_LoadResource`: [ES2's layout](../../retail/formats/dfn-hfn-dci.md#dci--cursor-image). The other slots match ES2's one place later:
+
+| Slot | Function | Does |
+|---|---|---|
+| `+0x04` | `GLCursor_GetClassTag` (`000663e8`; `ES1DBSIM 0007dca0`) | returns `0x28000b` |
+| `+0x08` | `GLCursor_GetStreamSize` (`000663f0`; `ES1DBSIM 0007dca8`) | `ClassItem_ItemTotalSize` of the bitmap plus 8, or 0 when that is 0 |
+| `+0x0c` | `GLCursor_GetMemorySize` (`00066418`; `ES1DBSIM 0007dcd0`) | the bitmap's slot `+0xc` plus 0x10 |
+| `+0x14` | `GLCursor_WriteToStream` (`00066464`; `ES1DBSIM 0007dd1c`) | the hotspot, then the bitmap with `ClassItem_StoreItem` |
+| `+0x1c` | `GLCursor_Dtor` (`000514e4`; `ES1DBSIM 0006b3cc`) | destroys the bitmap through its slot `+0x1c` with 3, stores the base vtable `00086e22` (`ES1DBSIM 0009b64a`), and frees the cursor when bit 0 of its argument is set |
+
+| Archive | Files | Size, hotspot |
+|---|---|---|
+| `SIMVOL0` | `dci\`: `CURSOR`, `ECURSOR`, `MCURSOR`, `NCURSOR`, `PCURSOR`, `SCURSOR`, `WCURSOR` and `ALERT` | ES2's bytes, ES2's seven in `SIMVOL0.VOL` and its `SIMALERT.VOL`'s `ALERT` ([ES2's table](../../retail/formats/dfn-hfn-dci.md#dci--cursor-image)) |
+| `SHELL0` | `DCI\ALERT.DCI` | the simulator's `ALERT.DCI`: 8 × 8, (0, 0) |
+| `SHELL0` | `RES32\ARROW.DCI` | the same bytes as `ALERT.DCI` |
+| `SHELL0` | `RES32\ICONS.DCI` | 16 wide, 11 high, (1, 1) |
+
+The shell's start-up, `00045d24`, loads `res32\arrow.dci` with `Resource_LoadPath` (`0004b823`), which opens the path with `VolRStream_CtorFromPath`, loads one class item with `ClassItem_LoadResource`, closes and destroys the stream, and returns the item. It then passes the cursor's bitmap `+4` and its hotspot `+8` to `Cursor_SetImage`.
 
 ## `RES32\ICONS.DBA`
 
@@ -66,4 +87,5 @@ The shell's `icons` (`0007e249`) is pushed at `000093ed` with the folder pointer
 ## Open
 
 - **Open:** what loads `RES32\ICONS.DBA`, if anything. A case-insensitive search of both images and of `SHELL0.VOL`'s and `SIMVOL0.VOL`'s bytes finds `icons` only in the two `dba` names above and the archives' directory entries, where the same search finds `res32\corners.dba` in `GO.EXE`.
+- **Open:** what loads the cursors other than `res32\arrow.dci`. A case-insensitive search of both images finds `.dci` only in `res32\arrow.dci`, the simulator's seven cursor names without their extension, and a `dci` folder name in each; which code pushes those, and what loads `RES32\ICONS.DCI` and the shell's `DCI\ALERT.DCI`, was not read.
 - **Open:** what the old record's byte at `+0x0c` and the three zeroes after it are, and what wrote the 2 + 3 × count bytes past each item's pixels.

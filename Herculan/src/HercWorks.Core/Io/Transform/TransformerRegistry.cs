@@ -96,6 +96,8 @@ public static class TransformerRegistry {
 		new("Dynamix Palette", e => ExtIs(e, FileType.Dpl), () => new Common.DynamixPaletteTransformer()),
 		// docs/retail/formats/dfn-hfn-dci.md#layout: one layout for both sets, and in ES1's .DFN.
 		new("Bitmap Font", e => ExtIs(e, FileType.Dfn) || ExtIs(e, FileType.Hfn), () => new Common.DynamixFontTransformer()),
+		// docs/retail/formats/dfn-hfn-dci.md#dci--cursor-image: one layout in both games, ES1's simulator cursors ES2's bytes.
+		new("Cursor Image", e => ExtIs(e, FileType.Dci), () => new Common.DynamixCursorTransformer()),
 		new("Mission File", e => ExtIs(e, FileType.Msn), () => new Common.MissionFileTransformer()),
 		new("Player Save", e => ExtIs(e, FileType.Sav), () => new Common.PlayerSaveTransform()),
 		new("String Table", e => ExtIs(e, FileType.Str), () => new Common.StringFileTransformer()),
@@ -233,7 +235,29 @@ public static class TransformerRegistry {
 		new("Digital Sound", e => NameEndsWith(e, ".SFX") || NameEndsWith(e, ".RAW"), () => new Common.Es1SoundSampleTransformer()),
 		// docs/es1/formats/hmp-music.md: HMI's MIDI songs.
 		new("HMP Song", e => NameEndsWith(e, ".HMP"), () => new Common.Es1HmpSongTransformer()),
+		// docs/es1/formats/sound-samples.md#the-banks: the three HMI banks the sound manager reads whole; the other two no
+		// loader was found for, bytes kept whole (OPAQUE).
+		new("HMI Bank", e => NameIs(e, "MELODIC.BNK") || NameIs(e, "DRUM.BNK") || NameIs(e, "DRUM32.DIG"),
+			() => new Common.Es1HmiBankTransformer()),
+		new("Unread HMI Bank (opaque)", e => NameIs(e, "DONS.BNK") || NameIs(e, "DRUM.DIG"), () => new Common.Es1OpaqueFileTransformer()),
+		// docs/es1/formats/dlg-menu-dialogs.md: the shell's menus, a count and 13-byte records.
+		new("Menu Dialog", e => NameEndsWith(e, ".DLG"), () => new Shell.Es1MenuDialogTransformer()),
+		// docs/es1/formats/bnd-notes.md#the-shells-files: the shell's eight, read whole at start-up. SIMVOL0's bnd\ holds six of
+		// the names with other bytes, and an entry does not name its archive, so these match the eight's shared source
+		// timestamp, 1994-10-17 16:17:34, which none of SIMVOL0's carries.
+		new("Shell Start-up Settings", e => NameIs(e, "MAIN.BND") && MagicIs(e, Es1ShellBndStamp), () => new Bnd.Es1ShellMainBndTransformer()),
+		new("Shell Tuning File", e => ExtIs(e, FileType.Bnd) && MagicIs(e, Es1ShellBndStamp) && IsEs1ShellTuningFile(e),
+			() => new Bnd.Es1ShellTuningFileTransformer()),
+		// docs/es1/formats/bnd-notes.md#the-simulators-files: no loader found, bytes kept whole (OPAQUE). CAM.BND keeps its reader.
+		new("Unread Tuning File (opaque)", e => ExtIs(e, FileType.Bnd) && !NameIs(e, "CAM.BND"), () => new Common.Es1OpaqueFileTransformer()),
 	};
+
+	/// <summary>The VOL entry prefix's source timestamp of the shell's eight <c>BND\</c> files, MS-DOS date then time, as <see cref="MagicIs"/> takes it.</summary>
+	private const string Es1ShellBndStamp = "511D3182";
+
+	/// <summary>Whether the entry is one of the seven shell tuning files other than <c>MAIN.BND</c> (docs/es1/formats/bnd-notes.md#the-shells-files).</summary>
+	private static bool IsEs1ShellTuningFile(VolEntry e) => e.FileName?.Trim().ToUpperInvariant() is
+		"ALERT.BND" or "CTL_ALRT.BND" or "CAL_ALRT.BND" or "MAP.BND" or "SHELLMAP.BND" or "CTL_MGR.BND" or "IMDEVICE.BND";
 
 	/// <summary>Whether the entry is one of the four theater shape tables (docs/es1/formats/zone-terrain.md#which-zone-and-which-theater).</summary>
 	private static bool IsEs1TheaterTable(VolEntry e) => e.FileName?.Trim().ToUpperInvariant() is

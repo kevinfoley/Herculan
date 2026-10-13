@@ -10694,6 +10694,36 @@
       }
     },
     {
+      "address": "0006b348",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_Ctor",
+      "description": "(this), callee-cleaned: allocates 0x10 bytes when this is 0; stores the vtables 0009b626, 0009b64a and the cursor's 0009b672 in turn and zeroes the bitmap +4. DBSIM's GLCursor_Ctor (00483480).",
+      "source": "ES1DBSIM decompile at 0006b348; the same statements as ES1GO 00051460 (es2_naming diff)",
+      "verified": {
+        "bytes": "0006b348+95",
+        "sha1": "b2bfedb9e23c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006b3cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_Dtor",
+      "description": "(cursor, flags) in stack order, callee-cleaned: slot +0x1c of the GLCursor vtable 0009b672, entered through the padding at 0006b3ca. Returns for a null cursor; stores the vtable 0009b672, destroys a non-null bitmap +4 through its slot +0x1c with 3, stores the base vtable 0009b64a, and frees the cursor when flags bit 0 is set.",
+      "source": "ES1DBSIM disassembly at 0006b3ca; the same statements as ES1GO 000514e4 (es2_naming diff)",
+      "verified": {
+        "bytes": "0006b3cc+69",
+        "sha1": "1f2b79250d88",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006c54d",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -12000,6 +12030,90 @@
       "verified": {
         "bytes": "0007d5f8+46",
         "sha1": "250bcfbdb270",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007dc68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_Construct",
+      "description": "(mode, stream) in stack order, callee-cleaned: the load function the GL class table (0009f198) registers for tag 0x28000b 'GLCursor': 0x10 bytes from the current arena (Arena_Alloc on 000bd954), GLCursor_Ctor (0006b348), then the cursor's read slot +0x10 with its two arguments. DBSIM's GLCursor_Construct (00483268), whose read slot is +0xc.",
+      "source": "ES1DBSIM decompile at 0007dc68 and the class table at 0009f1f0; the same statements as ES1GO 000663b0 (es2_naming diff)",
+      "verified": {
+        "bytes": "0007dc68+54",
+        "sha1": "e5d87cdc9c20",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007dca0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_GetClassTag",
+      "description": "Returns 0x28000b, callee-cleaned (RET 4): slot +4 of the GLCursor vtable 0009b672. No Ghidra function starts here.",
+      "source": "ES1DBSIM image bytes at 0007dca0 (b8 0b 00 28 00 c2 04 00) and the vtable at 0009b672"
+    },
+    {
+      "address": "0007dca8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_GetStreamSize",
+      "description": "(cursor), callee-cleaned: slot +8 of the GLCursor vtable: ClassItem_ItemTotalSize of the bitmap +4 plus 8 for the hotspot, or 0 when that size is 0.",
+      "source": "ES1DBSIM decompile at 0007dca8; the same statements as ES1GO 000663f0 (es2_naming diff)",
+      "verified": {
+        "bytes": "0007dca8+37",
+        "sha1": "93c12355a46d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007dcd0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_GetMemorySize",
+      "description": "(cursor), callee-cleaned: slot +0xc of the GLCursor vtable: the bitmap +4's own slot +0xc plus 0x10.",
+      "source": "ES1DBSIM decompile at 0007dcd0; the same statements as ES1GO 00066418 (es2_naming diff)",
+      "verified": {
+        "bytes": "0007dcd0+26",
+        "sha1": "780987c8545d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007dcec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_ReadFromStream",
+      "description": "(cursor, mode, stream) in stack order, callee-cleaned: slot +0x10 of the GLCursor vtable: reads 8 bytes, the hotspot's x and y, into +8 through the stream's slot +0x1c, then one class item, the bitmap, into +4 with ClassItem_LoadResource(0, stream). DBSIM's GLCursor_ReadFromStream (00483320) at slot +0xc.",
+      "source": "ES1DBSIM decompile at 0007dcec; the same statements as ES1GO 00066434 (es2_naming diff)",
+      "verified": {
+        "bytes": "0007dcec+48",
+        "sha1": "443791cb7fcc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007dd1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_WriteToStream",
+      "description": "(cursor, mode, stream) in stack order, callee-cleaned: slot +0x14 of the GLCursor vtable: writes the 8 hotspot bytes at +8 through the stream's slot +0x18, then the bitmap +4 with ClassItem_StoreItem(bitmap, 0, stream).",
+      "source": "ES1DBSIM decompile at 0007dd1c; the same statements as ES1GO 00066464 (es2_naming diff)",
+      "verified": {
+        "bytes": "0007dd1c+48",
+        "sha1": "cbec3fe9af0a",
         "scope": "body",
         "via": "decompile"
       }

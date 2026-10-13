@@ -1697,6 +1697,126 @@
       }
     },
     {
+      "address": "0001a716",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Control_Ctor",
+      "description": "(this, byte, id, rect) in stack order, callee-cleaned: as Control_CtorWithKey (0001a7e5), with the key +0x1d 0 and the id at +0x17. The menu dialog's kind-2 control (0001f442) is built on it.",
+      "source": "ES1GO decompile at 0001a716",
+      "verified": {
+        "bytes": "0001a716+207",
+        "sha1": "21ed7a2e3806",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001a7e5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Control_CtorWithKey",
+      "description": "(this, byte, key, rect) in stack order, callee-cleaned: allocates 0x24 bytes when this is 0; stores the base vtable 0007ef92 at +0x20, passes the rect to 0001a8b3, and sets the key byte +0x1d, the word +0x17 to 0 and the byte +0x1e. TextButton_Ctor (0001cde8) builds on it with byte 1.",
+      "source": "ES1GO decompile at 0001a7e5",
+      "verified": {
+        "bytes": "0001a7e5+206",
+        "sha1": "3bbb2f325eb9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001abcf",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Window_Ctor",
+      "description": "(this, rect) in stack order, callee-cleaned: the shell's window, 0x4ed bytes allocated when this is 0. Fifteen 0x38-byte hotspot entries at +0x19f (__vec_ctor of 0001ad4e), the vtable 0007eff0 at +0x4e9, 000512a0(0) at +0x17 with the rect copied to its +0x210, a zero point to its +0x220 and 1 to its +0x208, the rect at +0, the control count word +0x1b 0, the word +0x1d 0xffff, and the 64-byte key list at +0x11f zeroed. The menu dialog's style-1 window.",
+      "source": "ES1GO decompile at 0001abcf",
+      "verified": {
+        "bytes": "0001abcf+383",
+        "sha1": "e36cc59ee655",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b207",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Window_AddControl",
+      "description": "(window, control) in stack order, callee-cleaned: stores control at +0x1f + 4 * the word +0x1b and increments the word; when the control's byte +0x1d, its key, is non-zero, passes the key and the key with bit 7 set to Window_AddKey (0001b296).",
+      "source": "ES1GO decompile at 0001b207",
+      "verified": {
+        "bytes": "0001b207+84",
+        "sha1": "9adf407044f4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b296",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Window_AddKey",
+      "description": "(window, key) in stack order, callee-cleaned: walks the zero-ended byte list at +0x11f and stores key at the first zero byte, returning without a store when an earlier byte equals key. The walk has no bound.",
+      "source": "ES1GO decompile at 0001b296",
+      "verified": {
+        "bytes": "0001b296+72",
+        "sha1": "ef0329994793",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001b2de",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Window_AddHotspot",
+      "description": "(window, a, id, handler, rect) in stack order, callee-cleaned: when the word +0x4e7 is under 15, fills the 0x38-byte entry at +0x19f + 0x38 * that count: 1 at +1, the rect at +2 and again at +0x24, a at +0x12, the int16 id at +0x16, handler at +0x18 and 0 at +0x34; then increments the count.",
+      "source": "ES1GO decompile at 0001b2de",
+      "verified": {
+        "bytes": "0001b2de+183",
+        "sha1": "c504087d5081",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001cde8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TextButton_Ctor",
+      "description": "(this, id, key, text, rect) in stack order, callee-cleaned: a 0x95-byte button, allocated when this is 0. Control_CtorWithKey (0001a7e5)(this, 1, key, rect), the vtable 0007f130 at +0x20, the word +0x1b 0 and the id at +0x17; three 8-byte points at +0x7c (__vec_ctor of 0001d0f2); its vtable 0007f18c at +0x20 and the word +0x19 0; STYLES.DAT records 0, 1 and 2 (the pointer 00082654, +0, +0x40, +0x80) at +0x30, +0x34 and +0x38; the fonts 000aacce, 000aacd2 and 000aacd6 at +0x24, +0x28 and +0x2c. With text, copies it to +0x3c and sets the points to (rect left, bottom - (height - 00051ff0(font, text)) / 2 - 2) with the fonts +0x24 and +0x2c, the middle one a row below the first; with none, +0x3c and the points 0. Zeroes the bytes +0x94 and +0x1f.",
+      "source": "ES1GO decompile at 0001cde8",
+      "verified": {
+        "bytes": "0001cde8+496",
+        "sha1": "67c39e96d754",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001d47d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "IconButton_Ctor",
+      "description": "(this, text, id, key, rect) in stack order, callee-cleaned: a 0xb1-byte button, allocated when this is 0, over TextButton_Ctor (0001cde8)(this, id, key, text, rect); the vtable 0007f24a at +0x20 and the rect's first point at +0x95. By the key, a scan code, copies frame pointers of res32\\corners.dba's array (000ab4ee, its +8) to +0xa5 and +0xad (a) and +0xa9 (b): 0x48 and 0x49 frames 20, 22; 0x4a 29, 31; 0x4b 25, 27; 0x4d 24, 26; 0x4e 28, 30; 0x50 and 0x51 21, 23. Ids 1503, 1504, 1505 and 1506 take 36/37, 38/39, 40/41 and 42/43 and call 0001a4f4(this, 1); 109 takes 34/35, 108 32/33, 2003 44/46 and 2004 45/47. Any other key looks the id up among the four at 0007f2c4 and jumps through the table beside them. Zeroes the word +0x19 and the byte +0x1f.",
+      "source": "ES1GO decompile at 0001d47d",
+      "verified": {
+        "bytes": "0001d47d+1552",
+        "sha1": "786c90492188",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00020154",
       "binary": "ES1GO",
       "type": "function",
@@ -2987,6 +3107,36 @@
       }
     },
     {
+      "address": "00036874",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MenuWindow_Ctor",
+      "description": "(this, id, title, rect) in stack order, callee-cleaned: a shell menu's window, 0x5a7 bytes allocated when this is 0, over Window_Ctor (0001abcf)(this, rect); six 0x12-byte label entries at +0x537 (__vec_ctor of 000369d4) and the vtable 00081140 at +0x4e9. Loads res32\\menu<id>.dba with 0004b7df into +0x5a3 (id 9999: res32\\menu<9999 - Math_RandomBelow(5)>.dba) and sets the font +0x4ed to 000aacc6; the six ids at 00081174 (999, 1240, 4444, 1610, 1800, 1920) then jump through the table beside them. Otherwise it sets +0x4f1 to the font 000aacca, copies title to +0x4f5 (a 0 byte for none), and zeroes the label count +0x535 and the hotspot count +0x4e7.",
+      "source": "ES1GO decompile at 00036874",
+      "verified": {
+        "bytes": "00036874+352",
+        "sha1": "9e74dcefefa0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00036a93",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MenuWindow_AddLabel",
+      "description": "(window, mode, width, x, y, size, text) in stack order, callee-cleaned: slot +4 of the menu window vtable 00081140. When the label count +0x535 is under 6, allocates size bytes, copies text into them, and fills the 0x12-byte entry at +0x537 + 0x12 * count: the copy at +0, x and y at +4 and +8, the int16 width at +0xc and mode at +0xe; then increments the count.",
+      "source": "ES1GO decompile at 00036a93",
+      "verified": {
+        "bytes": "00036a93+185",
+        "sha1": "6d656c8cbe1f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00037edd",
       "binary": "ES1GO",
       "type": "function",
@@ -3059,6 +3209,21 @@
         "sha1": "0e9dbcbd6606",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0003a1f7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Menu_BuildFromDlg",
+      "description": "(menu, number) in stack order, callee-cleaned: builds shell menu number's window and controls from dlg\\menu<number>.dlg, their text from eng\\menu<number>.bin (TextTable_Ctor; VolRStream_CtorFromPath, and Text_LoadDataFile when it opens). Reads the int16 count through the stream's slot +0x1c, then per record four int16 rect words (VolRStream_Read) into the low halves of zeroed dwords, the bytes kind, style and key, and the int16 id. Record i's text is line i (Text_GetString), taken before the switch for kinds 0, 1, 4 and 5 unless the id is one of the five at 0008196c, which jump through the table beside them (1211 to the next record). By kind: 0 the window at menu +6, MenuWindow_Ctor (00036874)(0, id, text, rect) for style 0 and Window_Ctor (0001abcf)(0, rect) for style 1, the rect copied to menu +0x12 for any style; 1, 4 and 5 the window's vtable +0x4e9 slot +4 with mode 0, 1 or 2, width right - left, the point (left, top), the text's length + 1 and the text, menu 4444's kind-1 text holding '#' first passed to 0002a1aa; 2 0001f442(0, id, rect); 3 IconButton_Ctor (0001d47d) for style 1 (no text when the key is non-zero) and TextButton_Ctor (0001cde8) otherwise, menu 1300's id 100 taking its text from the four values at 000819e0 on the word 0007fce8; 14 the 17 ids at 00081b08, ids 1612 to 1614 Window_AddHotspot (0001b2de)(window, 0, id, 00017a19, rect); 15 0001e11a(0, 0x100, 0, 0, a word, style, id, 0003750d(id), rect), the word set for the 23 ids at 00081a00; 16 0001eaef(0, 0x100, 0, a word, id, 00037827(id), rect), the word -1 or set for the ten ids at 00081ab8; 17 0001eff6(0, 0x13, 0, 0xffff, id, 00037996(id), rect); 18 0004c83a(rect) for style 1; other kinds nothing. Kinds 2, 3, 15, 16 and 17 add the control with Window_AddControl (0001b207). Closes and destroys both streams (VolRStream_Close, VolRStream_Dtor) and the table (TextTable_Dtor). es2_xref finds one call, from 0003969e.",
+      "source": "ES1GO decompile and disassembly at 0003a1f7",
+      "verified": {
+        "bytes": "0003a1f7+3905",
+        "sha1": "dfa3f0cfed78",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -3192,6 +3357,21 @@
       "verified": {
         "bytes": "00042b81+31",
         "sha1": "82c5fa8294b2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00042bf9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_LoadBanks",
+      "description": "(manager), callee-cleaned: reads sos\\melodic.bnk, sos\\drum.bnk and sos\\drum32.dig whole through the stream +0x504 and keeps far pointers to them at +0x13a, +0x146 and +0x140; returns 1, or 0 at the first that fails to open, allocate or read. The same statements as ES1DBSIM's SoundManager_LoadBanks (0004f6d4) in different code.",
+      "source": "ES1GO decompile at 00042bf9, against ES1DBSIM 0004f6d4 (es2_naming diff)",
+      "verified": {
+        "bytes": "00042bf9+541",
+        "sha1": "c9d24a513592",
         "scope": "body",
         "via": "decompile"
       }
@@ -3599,6 +3779,21 @@
         "sha1": "e95aec317a62",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0004b823",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Resource_LoadPath",
+      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), closes and destroys the stream (VolRStream_Close, VolRStream_Dtor(stream, 2)) and returns the item. The shell's start-up, 00045d24, loads res32\\arrow.dci with it.",
+      "source": "ES1GO decompile at 0004b823 and 00045d24",
+      "verified": {
+        "bytes": "0004b823+68",
+        "sha1": "02ff2c07d694",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -5025,6 +5220,36 @@
       "verified": {
         "bytes": "000513fc+97",
         "sha1": "f9c5c52e2ed9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051460",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_Ctor",
+      "description": "(this), callee-cleaned: allocates 0x10 bytes when this is 0; stores the vtables 00086dfe, 00086e22 and the cursor's 00086e4a in turn and zeroes the bitmap +4. The code of ES1DBSIM's GLCursor_Ctor (0006b348), relocated operands aside.",
+      "source": "ES1GO decompile at 00051460, against ES1DBSIM 0006b348 (es2_naming diff)",
+      "verified": {
+        "bytes": "00051460+95",
+        "sha1": "0297bde57fd5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000514e4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_Dtor",
+      "description": "(cursor, flags) in stack order, callee-cleaned: slot +0x1c of the GLCursor vtable 00086e4a, entered through the padding at 000514e2. Returns for a null cursor; stores the vtable 00086e4a, destroys a non-null bitmap +4 through its slot +0x1c with 3, stores the base vtable 00086e22, and frees the cursor when flags bit 0 is set. The code of ES1DBSIM's GLCursor_Dtor (0006b3cc), relocated operands aside.",
+      "source": "ES1GO decompile at 000514e4, against ES1DBSIM 0006b3cc (es2_naming diff)",
+      "verified": {
+        "bytes": "000514e4+69",
+        "sha1": "2e9a5c49d3f2",
         "scope": "body",
         "via": "decompile"
       }
@@ -9476,6 +9701,90 @@
         "sha1": "5f7381f86473",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "000663b0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_Construct",
+      "description": "(mode, stream) in stack order, callee-cleaned: the load function the GL class table (0008b480) registers for tag 0x28000b 'GLCursor': 0x10 bytes from the current arena (Arena_Alloc on 000aa110), GLCursor_Ctor (00051460), then the cursor's read slot +0x10 with its two arguments. The code of ES1DBSIM's GLCursor_Construct (0007dc68), relocated operands aside.",
+      "source": "ES1GO decompile at 000663b0 and the class table at 0008b4e0, against ES1DBSIM 0007dc68 (es2_naming diff)",
+      "verified": {
+        "bytes": "000663b0+54",
+        "sha1": "02520a46a907",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000663e8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_GetClassTag",
+      "description": "Returns 0x28000b, callee-cleaned (RET 4): slot +4 of the GLCursor vtable 00086e4a. No Ghidra function starts here.",
+      "source": "ES1GO capstone disassembly at 000663e8 and the vtable at 00086e4a"
+    },
+    {
+      "address": "000663f0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_GetStreamSize",
+      "description": "(cursor), callee-cleaned: slot +8 of the GLCursor vtable: ClassItem_ItemTotalSize of the bitmap +4 plus 8 for the hotspot, or 0 when that size is 0. The code of ES1DBSIM's GLCursor_GetStreamSize (0007dca8), relocated operands aside.",
+      "source": "ES1GO decompile at 000663f0, against ES1DBSIM 0007dca8 (es2_naming diff)",
+      "verified": {
+        "bytes": "000663f0+37",
+        "sha1": "bea3044422ca",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00066418",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_GetMemorySize",
+      "description": "(cursor), callee-cleaned: slot +0xc of the GLCursor vtable: the bitmap +4's own slot +0xc plus 0x10. The code of ES1DBSIM's GLCursor_GetMemorySize (0007dcd0), relocated operands aside.",
+      "source": "ES1GO decompile at 00066418, against ES1DBSIM 0007dcd0 (es2_naming diff)",
+      "verified": {
+        "bytes": "00066418+26",
+        "sha1": "780987c8545d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00066434",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_ReadFromStream",
+      "description": "(cursor, mode, stream) in stack order, callee-cleaned: slot +0x10 of the GLCursor vtable: reads 8 bytes, the hotspot's x and y, into +8 through the stream's slot +0x1c, then one class item, the bitmap, into +4 with ClassItem_LoadResource(0, stream). The code of ES1DBSIM's GLCursor_ReadFromStream (0007dcec), relocated operands aside.",
+      "source": "ES1GO decompile at 00066434, against ES1DBSIM 0007dcec (es2_naming diff)",
+      "verified": {
+        "bytes": "00066434+48",
+        "sha1": "192c934ce6c8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00066464",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLCursor_WriteToStream",
+      "description": "(cursor, mode, stream) in stack order, callee-cleaned: slot +0x14 of the GLCursor vtable: writes the 8 hotspot bytes at +8 through the stream's slot +0x18, then the bitmap +4 with ClassItem_StoreItem(bitmap, 0, stream). The code of ES1DBSIM's GLCursor_WriteToStream (0007dd1c), relocated operands aside.",
+      "source": "ES1GO decompile at 00066464, against ES1DBSIM 0007dd1c (es2_naming diff)",
+      "verified": {
+        "bytes": "00066464+48",
+        "sha1": "26e6e79f21e3",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {

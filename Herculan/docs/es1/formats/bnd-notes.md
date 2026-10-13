@@ -37,6 +37,10 @@ Eight functions each read one whole file into a global with `Ovl_ReadFile` (`ES1
 
 The heap is what `Mem_InitHeap` gives for the dword `0007e738`, also 3,700,000 ([who makes the heap](../simulation/memory.md#who-makes-the-heap)).
 
+## The simulator's files
+
+`CAM.BND` is [below](#bndcambnd). For the other 62 no loader was found ([Open](#open)). Six share a name with a shell file and hold other bytes: `ALERT`, `CAL_ALRT`, `CTL_ALRT`, `CTL_MGR`, `IMDEVICE` and `MAIN`, the last 30 bytes where the shell's is 20. `GRENADE.BND`, `GUNLIST.BND` and `SMOKE.BND` are byte for byte ES2's files of those names.
+
 ## `bnd\CAM.BND`
 
 20 bytes, where ES2's is 24 ([ES2's `CAM.BND`](../../retail/formats/bnd-notes.md#cambnds-full-24-byte-record)). Every value after the first dword is a constant of the simulator's [camera](../simulation/external-views.md#the-camera), in the file's order:

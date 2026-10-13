@@ -83,7 +83,7 @@ Confirmed layout (offsets relative to the start of file content, i.e. after the 
 | SCURSOR.DCI | 8×8 | (3,7) | edge-strip arrow, south |
 | PCURSOR.DCI | 16×9 | (4,4) | over the gunsight's click surface |
 
-The bitmap header from `0x18` is the ordinary one ([The bitmap record](#the-bitmap-record)), read by the same code as any other bitmap item. In all 7 files the pixels end exactly at `0x18 + subSize`, the envelope rounds its own length up to even with one zero byte, and one more zero byte follows it. `PCURSOR.DCI` carries 96 further bytes past its envelope, zero but for pairs of `0x3C` ([Open](#open)). Preserve them as raw when parsing.
+The bitmap header from `0x18` is the ordinary one ([The bitmap record](#the-bitmap-record)), read by the same code as any other bitmap item. In all 7 files the pixels end exactly at `0x18 + subSize`, the bitmap record is rounded up to even with one zero byte inside the envelope's size, and the file ends where the envelope does. `PCURSOR.DCI` alone carries 96 further bytes past its envelope, zero but for pairs of `0x3C` ([Open](#open)). Preserve them as raw when parsing.
 
 ## `.DFN` / `.HFN` — bitmap font
 
