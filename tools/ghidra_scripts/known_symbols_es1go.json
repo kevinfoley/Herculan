@@ -917,6 +917,21 @@
       }
     },
     {
+      "address": "00012bde",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "NoOp_Void",
+      "description": "(): returns at once. es2_xref finds six calls: from Shell_Main, three from Anm_Play (000132d8) and two from 000382f6.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#playing",
+      "verified": {
+        "bytes": "00012bde+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00012ec7",
       "binary": "ES1GO",
       "type": "function",
@@ -927,6 +942,201 @@
       "verified": {
         "bytes": "00012ec7+772",
         "sha1": "ecfab1445f26",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000131f8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VgaPlanar_SelectMaskRegisters",
+      "description": "(): writes index 2 (the map mask) to the VGA sequencer index port 0x3c4 and index 4 (read map select) to the graphics controller index port 0x3ce. es2_xref finds one call, from Anm_DrawFrame (00013c46).",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#the-draw-operations",
+      "verified": {
+        "bytes": "000131f8+23",
+        "sha1": "8655bd050490",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001320f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VgaPlanar_FillRun",
+      "description": "(offset, count, colour, background), caller-cleaned: writes count pixels from pixel offset to display memory through FS at byte (offset >> 2) + the dword 00088ec8, sending the map mask to port 0x3c5 before each; the mask starts at byte offset & 3 of the table 0007e9a0 (0x11, 0x22, 0x44, 0x88) and rotates left a bit per pixel, the byte address advancing when the bit leaves the top. Writes the colour, or, when the colour is 0 and the background is not null, the background's bytes from background + offset. The count is tested after each pixel, so 0 does not stop it at once.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#the-draw-operations",
+      "verified": {
+        "bytes": "0001320f+97",
+        "sha1": "86b7f9639d69",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00013270",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VgaPlanar_CopyRun",
+      "description": "(offset, count, source, background), caller-cleaned: writes count bytes from source to the pixels from offset, addressed and masked as VgaPlanar_FillRun (0001320f) does; when the background is not null, a 0 source byte writes the background's byte at the same offset in its place. The count is tested after each pixel.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#the-draw-operations",
+      "verified": {
+        "bytes": "00013270+103",
+        "sha1": "b17d38ee3295",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000132d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anm_Play",
+      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls 0005afa8(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte 0007fcb9 is set and it was made, calls 000209e0(0007fcfc) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock 0007e6fc; Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls 00051c40 with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in 0003c1b7, passing mode 1 with sound 10 and with sound 11.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#playing",
+      "verified": {
+        "bytes": "000132d8+1667",
+        "sha1": "3e4db49db52f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00013a3c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anm_Ctor",
+      "description": "(player), callee-cleaned: allocates the 0x18-byte player when given null, returning null when that fails, zeroes its six dwords and returns it. es2_xref finds one call, from Anm_Play (000132d8).",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#the-player",
+      "verified": {
+        "bytes": "00013a3c+62",
+        "sha1": "83267aa0694d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00013a7a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anm_Dtor",
+      "description": "(player, flags) in stack order, callee-cleaned: for a player that is not null, frees it with Anm_Free (00013bb4) and deletes it when flags bit 0 is set.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#the-player",
+      "verified": {
+        "bytes": "00013a7a+46",
+        "sha1": "ca0818e02d68",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00013aa8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anm_Load",
+      "description": "(player, path) in stack order, callee-cleaned: frees the player (Anm_Free (00013bb4)) and opens path with VolRStream_CtorFromPath. When it opens: allocates VolRStream_GetSize bytes and stores the buffer at +4 and +0, formats \"unable to allocate rawData, size %d\" into a stack buffer it does not use, reads the whole file through the stream's slot +0x1c, and counts the file good when that read returns true and the dwords at 0x10 and 0 are \"ANIM\" (0x4d494e41) and \"LPF \" (0x2046504c); sets +0x14 to the int32 at 0x40 less 1 and +0x10 to that less the byte at 0x1a; closes the stream. Frees the player unless the file is good, destroys the stream, and returns 1 for a good file and 0 otherwise.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#loading",
+      "verified": {
+        "bytes": "00013aa8+268",
+        "sha1": "4d1042a01234",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00013bb4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anm_Free",
+      "description": "(player), callee-cleaned: deletes the buffer at +4 when it is not null and zeroes the six dwords +0 to +0x14. es2_xref finds three calls: from Anm_Dtor and two from Anm_Load.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#the-player",
+      "verified": {
+        "bytes": "00013bb4+50",
+        "sha1": "93208aadd2af",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00013be6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anm_GetFrame",
+      "description": "(player), callee-cleaned: returns the current frame, the dword +0xc.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#the-player",
+      "verified": {
+        "bytes": "00013be6+17",
+        "sha1": "40c0b5b62a7e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00013bf7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anm_SetFrame",
+      "description": "(player, frame) in stack order, callee-cleaned: when a file is loaded (+0 not null) and 0 <= frame < +0x14, stores frame at +0xc and returns 1; otherwise returns 0.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#the-player",
+      "verified": {
+        "bytes": "00013bf7+57",
+        "sha1": "3feedea5b831",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00013c30",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anm_SetBackground",
+      "description": "(player, pixels) in stack order, callee-cleaned: stores pixels at +8, the background the draw runs take colour 0 from.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#the-player",
+      "verified": {
+        "bytes": "00013c30+22",
+        "sha1": "a007b4b8e34f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00013c46",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anm_DrawFrame",
+      "description": "(player), callee-cleaned: draws the current frame's record, which Anm_FindFrameRecord (00013d9e) finds, nothing when it returns null. Calls VgaPlanar_SelectMaskRegisters (000131f8), then runs the record's operations from pixel offset 0: a byte b of 1-127 copies the next b bytes (VgaPlanar_CopyRun (00013270)); 0 fills a count byte of the colour byte after it (VgaPlanar_FillRun (0001320f)); 0x81-0xff skips b & 0x7f pixels; 0x80 is followed by an int16 w: w > 0 skips w pixels, 0 ends the frame, and w < 0 takes c = w & 0x3fff and copies the next c bytes when bit 14 is clear or fills c pixels with the byte after w when it is set. Each run is passed the player's +8 as the background.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#drawing-a-frame",
+      "verified": {
+        "bytes": "00013c46+344",
+        "sha1": "cd69bbfaed1d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00013d9e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Anm_FindFrameRecord",
+      "description": "(player), callee-cleaned: returns the current frame's draw operations, or null. Of the pages below the header's word +6, takes the last whose table entry at +0x500 + 6 x page (first record, record count) holds the frame +0xc; in the page at the buffer +4 + 0xb00 + 0x10000 x page, passes its four header words and its word +2 of record sizes, then adds the sizes of (frame - the page's word +0) records; returns the record + 4 when its byte +1 is 0, and otherwise the record + 4 + w + (w & 1), w its word +2. es2_xref finds one call, from Anm_DrawFrame.",
+      "source": "Herculan/docs/es1/formats/anm-animation.md#finding-a-frames-record",
+      "verified": {
+        "bytes": "00013d9e+270",
+        "sha1": "d2059901fed7",
         "scope": "body",
         "via": "decompile"
       }
@@ -1172,6 +1382,21 @@
       }
     },
     {
+      "address": "0001548f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PlayerMec_WritePilotWords",
+      "description": "(entry, player, stream) in stack order, callee-cleaned: writes two int16 through the stream's slot +0x18. When entry equals player: in mode 0 (the word 000aad56) Math_RandomBelow(0009aec0, 11) and 0; otherwise the word +0x40 of the careers-log entry the roster 0009b218 holds at +1, then, after 00015ad4(record, its dword +0xe) on the record 0009b23b + 0x1f7 x [0009b21f], the word at that record's +0x21 + 0x25 x its word +0x12. For any other entry: 00015f50(record, entry), the record being 0009b014 in mode 0 and 0009b23b + 0x1f7 x [0009b21f] otherwise, then entry in mode 0 or the word at that record's +0x21 + 0x25 x entry otherwise. es2_xref finds one call, from PlayerMec_WriteEntries (00022a05).",
+      "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#the-player-file",
+      "verified": {
+        "bytes": "0001548f+510",
+        "sha1": "96f463954ad6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000158ff",
       "binary": "ES1GO",
       "type": "function",
@@ -1282,7 +1507,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_WriteWeaponFlags",
-      "description": "(record, stream) in stack order, callee-cleaned: Tech_WriteWeaponFlags (00001f2b)(record + 0xa8, stream). es2_xref finds one call, from 00022a05.",
+      "description": "(record, stream) in stack order, callee-cleaned: Tech_WriteWeaponFlags (00001f2b)(record + 0xa8, stream). es2_xref finds one call, from PlayerMec_WriteEntries (00022a05).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#equipment-availability",
       "verified": {
         "bytes": "000160ac+31",
@@ -1327,7 +1552,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Career_New",
-      "description": "(roster, a, b) in stack order, callee-cleaned: stores at roster + 1 the pointer 00018099(0009b20c, a, b) returns; sets the roster's word +5 to the word 0007fcec, the words +7 and +9 to 0 and the byte +0 to 1, and the dword 0007fcf0 to 60000; calls 00016677(roster); loads car\\c_armory.dat into the stock the dword 000aad62 points to with Inventory_LoadFile (00027e02) and car\\car_init.dat with Hangar_LoadFile (00028c25); opens a FileRWStream (FileRWStream_Ctor, 0005aae4) on each of the names at the pointer's +0x42 and +0x53 through Path_ApplyAltDrive (00020989), asserting at severity 5 (Assert_Report (0004f498), career.cpp lines 0x2d1 and 0x2d8) when one does not open, and writes the roster's byte +0, word +5 and 0x18 bytes from +0xb to the first; for each of the 41 0x1f7-byte records from roster + 0x23 calls CareerRecord_Init (000158ff), and for the record the word +7 names sets its byte +0 to 1, calls 000166ed(roster), stores 0007fcf0 at its +0x129, copies its 100 words at +0x12d into the flags at 000ab244 and stores the word 0007fcf8 at its +0x1f5; writes each record and the stock (Inventory_Write (00027f88)) to the first file and the hangar (Hangar_Write (00029107)) to the second; closes both (FileRWStream_Close, 0005abc4), calls 00015ad4(that record, its four bytes at +0xe) and 00016fdd(roster), and destroys both streams (FileRWStream_Dtor, 0005ab24).",
+      "description": "(roster, a, b) in stack order, callee-cleaned: stores at roster + 1 the pointer CareerLog_FindOrAdd (00018099)(0009b20c, a, b) returns; sets the roster's word +5 to the word 0007fcec, the words +7 and +9 to 0 and the byte +0 to 1, and the dword 0007fcf0 to 60000; calls 00016677(roster); loads car\\c_armory.dat into the stock the dword 000aad62 points to with Inventory_LoadFile (00027e02) and car\\car_init.dat with Hangar_LoadFile (00028c25); opens a FileRWStream (FileRWStream_Ctor, 0005aae4) on each of the names at the pointer's +0x42 and +0x53 through Path_ApplyAltDrive (00020989), asserting at severity 5 (Assert_Report (0004f498), career.cpp lines 0x2d1 and 0x2d8) when one does not open, and writes the roster's byte +0, word +5 and 0x18 bytes from +0xb to the first; for each of the 41 0x1f7-byte records from roster + 0x23 calls CareerRecord_Init (000158ff), and for the record the word +7 names sets its byte +0 to 1, calls 000166ed(roster), stores 0007fcf0 at its +0x129, copies its 100 words at +0x12d into the flags at 000ab244 and stores the word 0007fcf8 at its +0x1f5; writes each record and the stock (Inventory_Write (00027f88)) to the first file and the hangar (Hangar_Write (00029107)) to the second; closes both (FileRWStream_Close, 0005abc4), calls 00015ad4(that record, its four bytes at +0xe) and 00016fdd(roster), and destroys both streams (FileRWStream_Dtor, 0005ab24).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#starting-a-career",
       "verified": {
         "bytes": "000163ac+715",
@@ -1362,6 +1587,96 @@
       "verified": {
         "bytes": "00016e93+143",
         "sha1": "a69498792cdc",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00017e59",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerLog_FreeEntries",
+      "description": "(log), callee-cleaned: deletes the careers log's entry array at +0 when it is not null and zeroes the pointer. es2_xref finds three calls: from CareerLog_Load (00017e7f), 00020ae3 and 00020fff.",
+      "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#loading",
+      "verified": {
+        "bytes": "00017e59+38",
+        "sha1": "6ad8b54ee95a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00017e7f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerLog_Load",
+      "description": "(log), callee-cleaned: loads the careers log. Frees its entries (CareerLog_FreeEntries) and opens entry 13 of the file-name table 0009afb8, car\\names.log, through Text_GetString and Path_ApplyAltDrive as a FileRStream; when it opens reads the int16 count into +4 through the stream's slot +0x1c, and otherwise sets the count to 0. Allocates (count + 1) x 100 bytes at +0; with a count of 0 sets the current entry +6 to -1, otherwise reads it and count x 100 bytes of entries (FileRStream_Read). Closes the stream when the count is not 0, clears the byte +8 and destroys the stream. es2_xref finds two calls: from 00020630 and CareerLog_Delete (0001828e).",
+      "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#loading",
+      "verified": {
+        "bytes": "00017e7f+224",
+        "sha1": "001160347570",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00017f5f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerLog_Write",
+      "description": "(log, skip) in stack order, callee-cleaned: removes entry 13 of the file-name table 0009afb8, car\\names.log, opens it as a FileRWStream, asserting at severity 5 (career.cpp line 0x51b, \"Unable to open careers log file\") when it does not open, and writes the int16 count, one less when skip is not -1; when that count is not 0 writes the current entry +6 and each entry below the log's count other than skip, 100 bytes each (FileRWStream_Write). Closes and destroys the stream. es2_xref finds two calls: from Shell_Main with -1 and from CareerLog_Delete (0001828e).",
+      "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#writing",
+      "verified": {
+        "bytes": "00017f5f+314",
+        "sha1": "a9481a366bbe",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00018099",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerLog_FindOrAdd",
+      "description": "(log, word, name) in stack order, callee-cleaned: returns the careers-log entry for the name and word, adding one when none matches; an empty name becomes entry 0x16 of the text table 0009afa8 (UNTITLED). With no entries: copies the name and word into entry 0 (+0, +0x40) and CAR\\CAR_0.CAR and CAR\\CAR_0.MEC into its +0x42 and +0x53, sets the count to 1 and the byte +8 to 1, and sets the current entry +6 and the word 0007fcea to 0. Otherwise returns the first entry whose name equals the name (stricmp) and whose word +0x40 equals the word, storing its index at +6 and 0007fcea; with no match and the byte +8 clear, fills entry count the same way with CAR\\CAR_%d.CAR and CAR\\CAR_%d.MEC of its index (sprintf), adds 1 to the count, sets the byte and makes it current; with no match and the byte set, copies the name and word over the last entry, keeping its paths, and makes it current. es2_xref finds one call, from Career_New (000163ac).",
+      "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#adding-a-career",
+      "verified": {
+        "bytes": "00018099+501",
+        "sha1": "8c2ebfc55e7d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001828e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerLog_Delete",
+      "description": "(log, index) in stack order, callee-cleaned: when index is below the count, removes the entry's two files (its paths at +0x42 and +0x53), subtracts 1 from the current entry +6 when it is not 0, writes the log without the entry (CareerLog_Write) and loads it again (CareerLog_Load). es2_xref finds one call, from 0002ae96.",
+      "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#writing",
+      "verified": {
+        "bytes": "0001828e+106",
+        "sha1": "62f76105e12a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000182f8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerLog_CurrentNameArray",
+      "description": "(log), callee-cleaned: returns a new null-terminated array of string pointers. When the current entry +6, loaded into AX and compared as all of EAX, equals -1 (so only when EAX's upper half is 0xffff on entry), a 4-byte array holding null; otherwise an 8-byte array holding the 64-byte buffer at 0007ebc0, allocated on first use, and null, the buffer formatted with %s from the current entry's name. es2_xref finds one call, from 0003750d.",
+      "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#writing",
+      "verified": {
+        "bytes": "000182f8+149",
+        "sha1": "ccbe203020f1",
         "scope": "body",
         "via": "both"
       }
@@ -2142,6 +2457,36 @@
       "verified": {
         "bytes": "0002280f+155",
         "sha1": "98370fa49b55",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002299e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PlayerMec_Write",
+      "description": "(): removes entry 4 of the file-name table 0009afb8, data\\player.mec, opens it as a FileRWStream with no test that it opened, writes it with PlayerMec_WriteEntries (00022a05), closes it (FileRWStream_Close), calls 00014f28 and destroys the stream. es2_xref finds three calls: from 0002c057, 0002d327 and MsnGen_LoadMission.",
+      "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#the-player-file",
+      "verified": {
+        "bytes": "0002299e+103",
+        "sha1": "aa437270b964",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022a05",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PlayerMec_WriteEntries",
+      "description": "(stream), callee-cleaned: with r the career record 00014ef4 returns, keeps r's word +0x12 and the word 00080894; writes through the stream's slot +0x18 r's word +0xe and the count n that 00015bfb(r) returns; calls 00015ad4(r, r's dword +0xe). Then n times: writes the pilot words with PlayerMec_WritePilotWords (0001548f)(r's word +0x12, r's word +0xe, stream); with h the HERC in hangar slot 00080894 of the array 000808a0, when the slot is not -1 and holds one, calls in mode 0 (the word 000aad56) 00024c3c(h, 100) and 00024c14(h, 100, 9, 0x784), and otherwise 00024c14(h, 0001618d(r, r's dword +0xe), 9, 0x784); writes h with Herc_Write (000233ce) when there is one, and nothing in its place otherwise; calls 00015b0a(r). Then writes r's 17 weapon bytes with CareerRecord_WriteWeaponFlags (000160ac), calls 00015ad4(r, the kept word +0x12 and the kept 00080894 as one dword) and restores 00080894. es2_xref finds one call, from PlayerMec_Write (0002299e).",
+      "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#the-player-file",
+      "verified": {
+        "bytes": "00022a05+588",
+        "sha1": "b6a3d4511147",
         "scope": "body",
         "via": "decompile"
       }

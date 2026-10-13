@@ -32,7 +32,7 @@ A block record is the listed fields in `.MSN` order, so an offset into it is the
 
 1. It clears the roster slot arrays: for mechs `000af7b4`, `000af818` and `000af87c`, 100 bytes each; for flyers `000af8e0` and `000af914`, and for bases `000af948`, `000af97c` and `000af9b0`, 50 each.
 2. It reads `data\mission.var`'s 200 bytes into `000bc4b8` and sets flag 7 (`000bc4c6`) to 0. The file must open (severity-5 assert, `world.cpp` line `0x8d`).
-3. It reads `data\player.mec` ([Open](#open)).
+3. It reads `data\player.mec`, the player's HERCs and pilots ([the simulator's read](career-log-and-player-mec.md#the-simulators-read)).
 4. It opens `data\script.dat` (assert at line `0xb2`) and reads the header into `000bc49c` and the nine blocks, with the strides above. It keeps:
 
 | Block | Kept |
@@ -56,5 +56,4 @@ The headings in the two `.MSN` files walked by hand (`SM_SCT50`, `B0_C2_60`) are
 
 - **Open:** what `0001e638`, which opens `data\script.dat` after `DBSim_LoadScriptDat`, reads, and so what the simulator makes of the fields the first pass discards.
 - **Open:** whether ES1's headings are degrees, and what the simulator does with them beyond the first pass's shift.
-- **Open:** `data\player.mec` as `DBSim_LoadScriptDat` reads it: a word to `000af9fa`, a count to `000af9e2`, that many `0x7e`-byte entries at `000af9e4` (four words, two arrays of as many words as the fourth word says, a word, 26 bytes, 20 bytes and 20 bytes), then 17 bytes to `000af9e8`; what each field is.
 - **Open:** what header words 2 to 7 mean to the simulator, and what `000bc4b8`'s flags are used for once loaded.

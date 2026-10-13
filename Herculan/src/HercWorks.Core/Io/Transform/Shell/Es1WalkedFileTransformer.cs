@@ -64,6 +64,12 @@ public abstract class Es1WalkedFileTransformer<T> : ByteTransformer<T> where T :
 		return IndexShortLEArray(count);
 	}
 
+	/// <summary><paramref name="count"/> bytes at the cursor.</summary>
+	protected byte[] ReadBytes(int count) {
+		Require(count);
+		return IndexSegment(count);
+	}
+
 	/// <summary>
 	/// A NUL-terminated name at the cursor that <c>Stream_ReadCString</c> (<c>ES1GO 00020154</c>) reads into
 	/// <paramref name="bufferLength"/> bytes. A name with no NUL in that many bytes throws: the retail reader takes it whole,

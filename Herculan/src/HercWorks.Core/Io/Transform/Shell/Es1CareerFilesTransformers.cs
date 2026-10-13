@@ -106,6 +106,57 @@ public class Es1InventoryTransformer : Es1WalkedFileTransformer<Es1Inventory> {
 }
 
 /// <summary>
+/// Reads and writes ES1's <c>car\NAMES.LOG</c> (<see cref="Es1CareerLog"/>), as <c>CareerLog_Load</c> (<c>ES1GO 00017e7f</c>)
+/// reads it and <c>CareerLog_Write</c> (<c>00017f5f</c>) writes it: a count of 0 is followed by nothing.
+/// </summary>
+public class Es1CareerLogTransformer : Es1WalkedFileTransformer<Es1CareerLog> {
+	protected override Es1CareerLog ReadFile() {
+		short count = ReadInt16();
+		if (count < 0) {
+			throw new InvalidDataException($"The entry count is {count}.");
+		}
+
+		var log = new Es1CareerLog();
+		if (count == 0) {
+			return log;
+		}
+
+		log.Current = ReadInt16();
+		log.Entries = new Es1CareerLogEntry[count];
+		for (int i = 0; i < count; i++) {
+			log.Entries[i] = new Es1CareerLogEntry {
+				Name = ReadBytes(Es1CareerLogEntry.NameLength),
+				Word = ReadInt16(),
+				CareerFile = ReadBytes(Es1CareerLogEntry.PathLength),
+				HangarFile = ReadBytes(Es1CareerLogEntry.PathLength),
+			};
+		}
+
+		return log;
+	}
+
+	protected override void WriteFile(BinaryWriter w, Es1CareerLog source) {
+		w.Write(checked((short)source.Entries.Length));
+		if (source.Entries.Length == 0) {
+			return;
+		}
+
+		w.Write(source.Current);
+		foreach (var entry in source.Entries) {
+			if (entry.Name.Length != Es1CareerLogEntry.NameLength || entry.CareerFile.Length != Es1CareerLogEntry.PathLength
+				|| entry.HangarFile.Length != Es1CareerLogEntry.PathLength) {
+				throw new InvalidDataException("An entry needs a 64-byte name and two 17-byte paths.");
+			}
+
+			w.Write(entry.Name);
+			w.Write(entry.Word);
+			w.Write(entry.CareerFile);
+			w.Write(entry.HangarFile);
+		}
+	}
+}
+
+/// <summary>
 /// Reads and writes ES1's <c>car\NAMES.DAT</c> (<see cref="Es1PilotNames"/>), as <c>PilotNames_Load</c> (<c>ES1GO 00015070</c>)
 /// reads it: unlike a name list's, a group's count of 0 is followed by nothing.
 /// </summary>
