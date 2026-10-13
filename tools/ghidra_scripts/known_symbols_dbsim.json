@@ -13953,8 +13953,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdDisplay_Update",
-      "description": "MFD per-frame update. While the power-up is armed and not done (+0x8c/+0x8d) on the scanner (mode 3) it starts, then steps, the dish animation's SpriteSequence at +0x331 and returns; the pass after it ends sets done, and the next frees the sequencer and the radar bank. On another screen done comes once the coarse tick passes +0x345. Then dispatches the current screen's update slot via +0xcd + mode*4, refreshes the title for modes 2 and 5, and when a transmission is active draws the speaking pilot's frames at inset+(0x14,0) and fills the message label at +0x329. See docs/retail/simulation/mfd.md.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "MFD per-frame update. Returns at once when the published cockpit view's +0x14 is 4, when the inset rect (+0xeb) has no visible corner, or while the power-up is not armed (+0x8c). While armed and not done (+0x8d) on the scanner (mode 3) it starts, then steps, the dish animation's SpriteSequence at +0x331 and returns; the pass after it ends sets done, and the next frees the sequencer and the radar bank. On another screen done comes once the coarse tick passes +0x345. Then runs the sensor dropout (Player_DependentCondition(2)) and returns while it hides the display, updates the buttons the mode's MfdButtonVisibility row shows, and swaps the display's own 0x204-byte clip block (+0x104, the inset rect via MfdDisplay_StaticRegion) into the live render context until it returns. Under it: when g_MfdMissileCamMode is -1 and the HDD roster's transmission block (+0x766, valid flag +0x782) is up, floods the inset with palette 0x11, blits the speaking pilot's frames at inset+(0x14,0) plus the raw .OFS pair, writes the name to the message label at +0x329 while the box state is 2, and skips the screen; otherwise runs the queued repaint (+0xb0), dispatches the current screen's update slot via +0xcd + mode*4 when its dirty byte is set (modes 0 and 4 on a 0x1e-tick refresh), and refreshes the title for modes 2 and 5. See docs/retail/simulation/mfd.md.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "00446328+1250",
+        "sha1": "595db09f2dc5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044680c",
