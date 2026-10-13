@@ -148,8 +148,12 @@ public sealed class HudFont {
 	/// </param>
 	public static HudFont? Load(GameContent content, string name, string? folder = null) {
 		folder ??= ResourceFolder;
-		if (content.Read(folder, name + "." + folder.ToUpperInvariant()) is not { } bytes
-			|| bytes.Length < 34) {
+		return content.Read(folder, name + "." + folder.ToUpperInvariant()) is { } bytes ? Parse(name, bytes) : null;
+	}
+
+	/// <summary>Parses one font file's content as <paramref name="name"/>; null when it does not walk the layout <see cref="Load"/> describes.</summary>
+	public static HudFont? Parse(string name, byte[] bytes) {
+		if (bytes.Length < 34) {
 			return null;
 		}
 

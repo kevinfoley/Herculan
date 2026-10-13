@@ -102,10 +102,10 @@ Offsets relative to content start, i.e. after the 9-byte VOL prefix.
 0x02  uint16            = 0x0028
 0x04  uint32 totalSize  -- content size below this field
 0x08  int16  glyphCount
-0x0a  int16             -- 0 in every retail file
-0x0c  int16  firstCharCode           -- 32 in every retail file
+0x0a  int16  mapCount                -- 0 in every retail file
+0x0c  int16  firstCharCode           -- 32 in every retail file; -1 adds the map below
 0x0e  int16  cellHeight
-0x10  int16             -- -1 in every retail file
+0x10  int16  widthsFlag              -- -1 in every retail file, which adds the widths below
 0x12  int16  cellHeight              -- repeated
 0x14  int16  baseline                -- 8 (.DFN) / 9 (.HFN)
 0x16  int16  bitsPerPixel            -- 8 in every retail file
@@ -118,8 +118,11 @@ Offsets relative to content start, i.e. after the 9-byte VOL prefix.
 0x1e  uint32 poolLength
 0x22  [poolLength bytes]              glyph pool
       [glyphCount x uint32]           each glyph's start offset into the pool
-      [glyphCount x uint8]            each glyph's width
+      [glyphCount x uint8]            each glyph's width, when widthsFlag is -1
+      [mapCount x int16]              when firstCharCode is -1
 ```
+
+`GLFont_ReadFromStream` (`00482908`) reads the eleven shorts and the pool length, then each array in this order, the two last only under their conditions. `GLFont_GetStreamSize` (`00482770`) and `GLFont_GetMemorySize` (`004827ac`) count the widths and the map at 4 bytes an entry, where the read moves 1 and 2.
 
 A glyph is `width * cellHeight` bytes, row-major, one palette index per pixel. **Verified across all 54 retail font files: every glyph's pool slice is exactly `width * cellHeight` bytes, no exceptions** — so the width byte and the gap between consecutive offsets state the same fact twice.
 
@@ -161,7 +164,7 @@ Real files checked (`ACTOR.BND`, `MECH.BND`, `CAM.BND`, `PA_01000.SNC`, `PA_0200
 
 ## Open
 
-- **Open:** the `.DFN`/`.HFN` header shorts at `0x0a` and `0x18`. They are 0 in every retail file and have no consumer found.
+- **Open:** the `.DFN`/`.HFN` header short at `0x18`, 0 in every retail file, with no consumer found; and what the map holds and reads it, and what gives a glyph's width when `widthsFlag` is not -1. No retail font has either case.
 - **Open:** `PCURSOR.DCI`'s 96 bytes past its envelope. The cursor's load reads one class item, which ends at the envelope; what reads these bytes is the open question. They may be a second image layer (an AND-mask or outline) specific to this cursor.
 - **Open:** whether DBSIM.EXE (not VSHELL) loads the SHELL0 fonts (`FONT.DFN`, `FONT2.DFN`, `BLACK.DFN`).
 - **Open:** what a bitmap record's extra dwords hold, and what reads them from the bitmap object's `+0x16`.

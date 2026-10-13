@@ -3182,16 +3182,76 @@
       }
     },
     {
+      "address": "00045320",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_SncList_TimerTick",
+      "description": "No arguments, C convention: adds 1 to the word 00082658, the lip-sync clock, while the byte 0009afed is set. maybe_SncList_Init (00045337) registers it with Timer_AddCallback (00056509) at count 2.",
+      "source": "Herculan/docs/es1/formats/snc-lip-sync.md#the-player",
+      "verified": {
+        "bytes": "00045320+23",
+        "sha1": "8899de44f6bd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045337",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_SncList_Init",
+      "description": "(player), callee-cleaned: stores 000512a0(0) at +0x15 and sets that object's dwords +0x210, +0x214, +0x218 and +0x21c to 0, 0, 0x13f and 199, +0x208 to 1 and +0x20c to 0; registers maybe_SncList_TimerTick (00045320) with Timer_AddCallback (00056509) at count 2 and stores the slot in the word +0. es2_xref finds one call, from Shell_Main (00012ec7).",
+      "source": "Herculan/docs/es1/formats/snc-lip-sync.md#the-player",
+      "verified": {
+        "bytes": "00045337+135",
+        "sha1": "8c98ddedc753",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000453be",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "medium",
       "name": "maybe_SncList_PlayEntry",
-      "description": "(player, a, b) in stack order, callee-cleaned: when the byte +0x19 is set, stops the line playing with maybe_SncList_Stop (00045556); picks the list name of the table at 0008271c (SNC\\C0_FILES.DAT, D0, C1, D1, C2, D2, C3, D3, T0, T1, G0): a when b is 1, a + 8 when b is 2, 10 when b is 3, else 0; loads it with maybe_SncList_Load (000455dc); passes StrList_Get (00020254)(record 000aad5c of the 6-byte array +0x11, 0) to 0004589c(player + 3).",
+      "description": "(player, a, b) in stack order, callee-cleaned: when the byte +0x19 is set, stops the line playing with maybe_SncList_Stop (00045556); picks the list name of the table at 0008271c (SNC\\C0_FILES.DAT, D0, C1, D1, C2, D2, C3, D3, T0, T1, G0): a when b is 1, a + 8 when b is 2, 10 when b is 3, else 0; loads it with maybe_SncList_Load (000455dc); passes StrList_Get (00020254)(record 000aad5c of the 6-byte array +0x11, 0) to ShellSnc_Load (0004589c)(player + 3).",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "000453be+140",
         "sha1": "c8eaab4cf7ef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004544a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_SncList_StartSound",
+      "description": "(player), callee-cleaned: when the handle byte +2 is not -1 and neither +0x19 nor +0x1a is set, sets +0x19, opens the second name of the current line's list (StrList_Get (00020254) of record 000aad5c of +0x11, 1) with ShellSnc_OpenSound (00045801) into the script +3, starts the sound through the slot +0x10 of its vtable (at its +0x3b) when it is non-null and the dword 0007fcbc is above 0, and sets the clock 00082658 to 0. es2_xref finds one call, from 00018edd.",
+      "source": "Herculan/docs/es1/formats/snc-lip-sync.md#loading-a-line",
+      "verified": {
+        "bytes": "0004544a+122",
+        "sha1": "52d8e4cf66b7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000454c4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_SncList_Tick",
+      "description": "(player), callee-cleaned: calls maybe_SncList_Stop (00045556) when +0x1a is set; when +0x19 is set, advances the script +3 with ShellSnc_Advance (0004597b) and passes 000468fc the frame, the first word, of the current record, of the last record once the index +0xd reaches the count +0xb, or -1 when the records +7 are null, with the handle byte +2; then calls 00046948(0, handle). es2_xref finds one call, from 000382f6.",
+      "source": "Herculan/docs/es1/formats/snc-lip-sync.md#playing-it",
+      "verified": {
+        "bytes": "000454c4+146",
+        "sha1": "e6e70a7a1cce",
         "scope": "body",
         "via": "decompile"
       }
@@ -3202,7 +3262,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_SncList_Stop",
-      "description": "(player), callee-cleaned: when the handle byte +2 is not -1, calls 000465da on it when 000468fc(0x1e, handle) is set, or else when 000468fc(1, handle) is, then releases it with 000469da and sets +2 to -1; calls 00045a04(player + 3) and clears the bytes +0x19, +0x1a and 0009b013.",
+      "description": "(player), callee-cleaned: when the handle byte +2 is not -1, calls 000465da on it when 000468fc(0x1e, handle) is set, or else when 000468fc(1, handle) is, then releases it with 000469da and sets +2 to -1; calls ShellSnc_Release (00045a04)(player + 3) and clears the bytes +0x19, +0x1a and 0009b013.",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "00045556+122",
@@ -3222,6 +3282,81 @@
       "verified": {
         "bytes": "000455dc+333",
         "sha1": "69fdee871f1b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045758",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_SncList_Dtor",
+      "description": "(player, flags), callee-cleaned: returns for a null player; deletes the line lists +0x11 when set (__vec_delete (0005547c) with StrList_Dtor (000202b4), 6-byte elements); passes the timer slot, the word +0, to 000565b7; destroys the +0x15 object through its slot +0x1c with 3 when set; releases the script +3 with ShellSnc_Release (00045a04); frees the player with operator_delete (00001a44) when flags bit 0 is set. es2_xref finds one call, from 00020fff.",
+      "source": "Herculan/docs/es1/formats/snc-lip-sync.md#playing-it",
+      "verified": {
+        "bytes": "00045758+169",
+        "sha1": "d80acb03d802",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045801",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellSnc_OpenSound",
+      "description": "(script, name), callee-cleaned: when the dword 0007fcbc is non-zero, formats snc\\%s (00082748) of name into 000aad40 with sprintf (0004e1dc); when the object 00082768 is set, calls the slot +0x30 (vtable at +0x3b) of 00042b81(00082768, 0) until it returns 0, and opens the path through 00042f39(00082768, 0, path): on success stores 000429db(00082768, 2, 0, 0) as the sound at +0 and passes it to 00043d8a, otherwise stores 0. es2_xref finds one call, from maybe_SncList_StartSound (0004544a).",
+      "source": "Herculan/docs/es1/formats/snc-lip-sync.md#loading-a-line",
+      "verified": {
+        "bytes": "00045801+155",
+        "sha1": "44406b797935",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004589c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellSnc_Load",
+      "description": "(script, name), callee-cleaned: builds SNC\\ (0008265c) followed by name with strcat (0004efb8); opens it with VolRStream_CtorFromPath (0004d064), reads an int16 length through the read slot +0x1c, stores length >> 2 as the record count +8, takes count x 4 bytes from operator_new (000019f0) for +4 and reads length bytes into them with VolRStream_Read (0004d6d6), and closes the stream with VolRStream_Close (0004d18e); then adds each record's second word to the next record's, from record 1 to the last, so that each holds its running total, zeroes the index +0xa, and destroys the stream with VolRStream_Dtor (0004d0cb). es2_xref finds one call, from maybe_SncList_PlayEntry (000453be), which passes player + 3.",
+      "source": "Herculan/docs/es1/formats/snc-lip-sync.md#loading-a-line",
+      "verified": {
+        "bytes": "0004589c+223",
+        "sha1": "82a8c60ec5ef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004597b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellSnc_Advance",
+      "description": "(script), callee-cleaned: with t the word 00082658, returns with no records (+4 null) or while t is below the current record's total, the unsigned second word of record +0xa; otherwise increments the index +0xa past every record whose total t has reached, and on reaching the count +8 sets the byte 0009afee to 1. es2_xref finds one call, from maybe_SncList_Tick (000454c4).",
+      "source": "Herculan/docs/es1/formats/snc-lip-sync.md#playing-it",
+      "verified": {
+        "bytes": "0004597b+137",
+        "sha1": "2afab63543df",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045a04",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellSnc_Release",
+      "description": "(script), callee-cleaned: when there are records +4, deletes them with operator_delete (00001a44) and zeroes +4 and the count +8; when the sound +0 is set, calls its slot +0x14 and then its slot +8 with 3 (vtable at +0x3b) and clears +0. es2_xref finds calls from maybe_SncList_Stop (00045556) and maybe_SncList_Dtor (00045758).",
+      "source": "Herculan/docs/es1/formats/snc-lip-sync.md#playing-it",
+      "verified": {
+        "bytes": "00045a04+99",
+        "sha1": "188860497c59",
         "scope": "body",
         "via": "decompile"
       }
@@ -6169,7 +6304,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Timer_AddCallback",
-      "description": "(count, callback), C convention: while the dword 0008728c is non-zero, takes the lowest clear bit of the 16-bit slot mask 000882ac, sets it, stores count in that slot of the two dword tables 000883b4 and 00088334 and callback in the table 000882b4, and returns the slot + 1; returns 0 when 0008728c is 0 or every slot is taken. es2_xref finds calls from 000093b3, 000119fc, 000203fc, 0004240a, 00045337, 0004670e and three from 00045d24. The code of ES1DBSIM's Timer_AddCallback (0006d289), relocated operands aside.",
+      "description": "(count, callback), C convention: while the dword 0008728c is non-zero, takes the lowest clear bit of the 16-bit slot mask 000882ac, sets it, stores count in that slot of the two dword tables 000883b4 and 00088334 and callback in the table 000882b4, and returns the slot + 1; returns 0 when 0008728c is 0 or every slot is taken. es2_xref finds calls from 000093b3, 000119fc, 000203fc, 0004240a, maybe_SncList_Init (00045337), 0004670e and three from 00045d24. The code of ES1DBSIM's Timer_AddCallback (0006d289), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
       "verified": {
         "bytes": "00056509+78",
@@ -9086,6 +9221,81 @@
         "sha1": "5f7381f86473",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "00066634",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLFont_Construct",
+      "description": "(a, b), callee-cleaned: the load function the GL class table registers for tag 0x05002800 'GLFont' in its entry at 0008b4bc. Takes 0x32 bytes with Arena_Alloc (000007f0) from the current arena 000aa110, stores the vtables 0008b58e, 0008b5b2 and the GLFont vtable 0008b5da in turn, and calls its read slot +0x10, GLFont_ReadFromStream (00066978), with a and b. ES2's GLFont_Construct reads through the slot +0xc.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#fonts",
+      "verified": {
+        "bytes": "00066634+129",
+        "sha1": "6872b564df1f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000666ec",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLFont_GetStreamSize",
+      "description": "(font), callee-cleaned, slot +0x08 of the vtable 0008b5da: 0x1a + 4 x the word +0x18 + the dword +0x1a + 4 x the glyph count +4, plus 4 x the glyph count again when the word +0xc is -1 and 4 x the word +6 when the word +8 is -1, as ES2's GLFont_GetStreamSize computes it.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#fonts",
+      "verified": {
+        "bytes": "000666ec+77",
+        "sha1": "ad66f90b0a86",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006673c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLFont_GetMemorySize",
+      "description": "(font), callee-cleaned, slot +0x0c of the vtable 0008b5da: GLFont_GetStreamSize (000666ec)'s sum with 0x32, the object's size, in place of 0x1a, as ES2's GLFont_GetMemorySize computes it.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#fonts",
+      "verified": {
+        "bytes": "0006673c+77",
+        "sha1": "07b27a5ad66c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006678c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLFont_WriteToStream",
+      "description": "(font, unused, stream), callee-cleaned, slot +0x14 of the vtable 0008b5da: writes through the stream's write slot +0x18 what GLFont_ReadFromStream (00066978) reads, in its order: the eleven words +4 to +0x18 and the pool length +0x1a, the word +0x18 x 16 bytes from +0x1e, the pool +0x22, the glyph count +4 x 4 bytes from +0x26, the glyph count's bytes from +0x2a when the word +0xc is -1, and the word +6 x 2 bytes from +0x2e when the word +8 is -1.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#fonts",
+      "verified": {
+        "bytes": "0006678c+492",
+        "sha1": "13c866fa8309",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00066978",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLFont_ReadFromStream",
+      "description": "(font, unused, stream), callee-cleaned, slot +0x10 of the vtable 0008b5da: reads eleven int16 into +4 to +0x18 and the int32 pool length into +0x1a through the stream's read slot +0x1c; then each array from Arena_Alloc (000007f0) on 000aa110, or 0 when its count is 0: the word +0x18 x 16 bytes into a block of the word +0x18 x 4 at +0x1e, the pool at +0x22, the glyph count +4 x 4 bytes of offsets at +0x26; when the word +0xc is -1, the glyph count's width bytes at +0x2a, else 0; when the word +8 is -1, the word +6 x 2 bytes at +0x2e, else 0. ES2's GLFont_ReadFromStream reads the same fields in the same order.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#fonts",
+      "verified": {
+        "bytes": "00066978+629",
+        "sha1": "18be59e90959",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {

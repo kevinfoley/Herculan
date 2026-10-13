@@ -157,6 +157,8 @@ public static class TransformerRegistry {
 		["Component Value Table"] = new(() => new Shell.Es1DamageRepairCostTransformer()),
 		// docs/es1/formats/bnd-notes.md#bndcambnd: 20 bytes, the camera's constants, where ES2's file is 24.
 		["Camera Config"] = new(() => new Bnd.Es1CamTransformer()),
+		// docs/es1/formats/hd-ed-clip-regions.md: the cockpit views' clip-region layout, whose rects are two rows.
+		["Scanline Clip Mask"] = new(() => new Dbsim.Es1ClipRegionsTransformer()),
 	};
 
 	/// <summary>

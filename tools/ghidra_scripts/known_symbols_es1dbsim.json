@@ -2612,6 +2612,21 @@
       }
     },
     {
+      "address": "00021fb0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitViewManager_LoadViews",
+      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array 000afaa4, whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls 00022184(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores 0002ae5c(0, +0x25) at +0x1b and calls 0002c9d8 with it and name; with the scheme word +0x23, Palette_InstallRange (00027e98)s 16 colours at index 0x20 from the dword +8 of 000925f0 plus scheme x 0x80, 16 at 0x40 from 0x40 bytes further, and one at 0x40 from Palette_GetEntry (00027f54) of the word 000925dc[scheme]; calls 00027f74, and the slot +0x1c of 000925f0 with 3 when it is set; sets 000afb94 to 1 and 000afb98 to 000afd9c, copies the dwords 000afb3c-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from 00021dd4, through the padding before the prologue.",
+      "source": "Herculan/docs/es1/formats/hd-ed-clip-regions.md#which-files",
+      "verified": {
+        "bytes": "00021fb0+465",
+        "sha1": "f607fb7bcc52",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00022634",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -2639,6 +2654,21 @@
         "sha1": "abaa4ec2e586",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00024d44",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitClipRegions_Load",
+      "description": "(regions, path) in stack order, callee-cleaned: opens path with VolRStream_CtorFromPath (000567cc) and reads through the read slot +0x1c: an int16 rect count, and per rect two int16 rows into a 0x18-byte region from operator_new (000015a4) with vtable 00092846, +4 the type 0, +8 0, +0xc the first row, +0x10 0x13f, +0x14 the last row; then an int16 block count, and per block an int16 first row and row count into an 8-byte region tagged 2, whose data of rowCount x 4 + 8 bytes holds the two words and then the spans, read in one read. Stores each region's pointer (a rect's +4) in turn from regions +4 and the count at regions +0; destroys the stream with VolRStream_Dtor (00056824). ES2's CockpitClipRegions_Load reads four values per rect and shifts every coordinate by the caller's shifts. es2_xref finds calls from CockpitViewManager_LoadViews (00021fb0) and 00039818.",
+      "source": "Herculan/docs/es1/formats/hd-ed-clip-regions.md#layout",
+      "verified": {
+        "bytes": "00024d44+594",
+        "sha1": "e764e490ea11",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -3914,6 +3944,21 @@
         "sha1": "ec5e420b1107",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0004e4a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Snc_Load",
+      "description": "(slot, object, name) in stack order, callee-cleaned: opens snc\\<name> (ResourcePath_BuildFolderName (00060698) on 000959e5, VolRStream_CtorFromPath (000567cc)), reads an int32 length and that many bytes through the read slot +0x1c into the buffer the dword slot +0x27 points to, appends 0xff, stores object at slot +0, clears the object's byte +0x16 when it is non-null, and destroys the stream with VolRStream_Dtor (00056824). ES2's Snc_Load takes a path, writes only the terminator when it has none, and keeps its buffer pointer at +0x2f. es2_xref finds calls from 0004e0f0 and 0004e46c, through the padding before the prologue.",
+      "source": "Herculan/docs/es1/formats/snc-lip-sync.md#the-simulators-scripts",
+      "verified": {
+        "bytes": "0004e4a8+112",
+        "sha1": "544b2a90cc5d",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -11514,6 +11559,81 @@
       "name": "clock",
       "description": "Symantec C++ runtime `clock`, from `clock.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 60 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0007cd9c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLFont_Construct",
+      "description": "The code of ES1GO's GLFont_Construct (00066634), relocated operands aside: the GL class table registers it for tag 0x05002800 in its entry at 0009f1cc, and the vtable it stores last is 000a01ba.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#fonts",
+      "verified": {
+        "bytes": "0007cd9c+129",
+        "sha1": "ad32b34ad2de",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007ce54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLFont_GetStreamSize",
+      "description": "The code of ES1GO's GLFont_GetStreamSize (000666ec), relocated operands aside; slot +0x08 of the vtable 000a01ba.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#fonts",
+      "verified": {
+        "bytes": "0007ce54+77",
+        "sha1": "ad66f90b0a86",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007cea4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLFont_GetMemorySize",
+      "description": "The code of ES1GO's GLFont_GetMemorySize (0006673c), relocated operands aside; slot +0x0c of the vtable 000a01ba.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#fonts",
+      "verified": {
+        "bytes": "0007cea4+77",
+        "sha1": "07b27a5ad66c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007cef4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLFont_WriteToStream",
+      "description": "The code of ES1GO's GLFont_WriteToStream (0006678c), relocated operands aside; slot +0x14 of the vtable 000a01ba.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#fonts",
+      "verified": {
+        "bytes": "0007cef4+492",
+        "sha1": "13c866fa8309",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007d0e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLFont_ReadFromStream",
+      "description": "The code of ES1GO's GLFont_ReadFromStream (00066978), relocated operands aside; slot +0x10 of the vtable 000a01ba.",
+      "source": "Herculan/docs/es1/formats/dfn-hfn-dci.md#fonts",
+      "verified": {
+        "bytes": "0007d0e0+629",
+        "sha1": "d5093943e820",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0007d5a4",

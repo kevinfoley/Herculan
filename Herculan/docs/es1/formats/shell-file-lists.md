@@ -42,7 +42,7 @@ if line count > 0:
 | `T0_FILES.DAT` | `T1_NU.TTM` | 43 |
 | `T1_FILES.DAT` | `T1_AN.TTM` | 43 |
 
-Every line's list holds two names, a `.SNC` and then a `.RAW` (`C0_01000.SNC`, `C0_01000.RAW`). `D0_FILES.DAT`'s lines name `C0_10000.SNC` to `C0_13000.SNC`, its last two the same pair, and `D3_FILES.DAT`'s open with `C3_1…`; `T0_FILES.DAT` and `T1_FILES.DAT` differ only in their script's name. The line counts are those of the matching `ENG\<k>_TEXT.BIN` but for `T1`, whose text file holds 41 lines ([the dialog text files](bin-string-tables.md#the-dialog-text-files)); there is no `T0_TEXT.BIN`.
+Every line's list holds two names, a `.SNC` and then a `.RAW` (`C0_01000.SNC`, `C0_01000.RAW`): the line's [lip-sync script](snc-lip-sync.md#the-shells-scripts) and its sound. `D0_FILES.DAT`'s lines name `C0_10000.SNC` to `C0_13000.SNC`, its last two the same pair, and `D3_FILES.DAT`'s open with `C3_1…`; `T0_FILES.DAT` and `T1_FILES.DAT` differ only in their script's name. The line counts are those of the matching `ENG\<k>_TEXT.BIN` but for `T1`, whose text file holds 41 lines ([the dialog text files](bin-string-tables.md#the-dialog-text-files)); there is no `T0_TEXT.BIN`.
 
 `SNC\CO_FILES.DAT`, with the letter O, is 221 bytes: `01 0A`, then `C0_SYNC.TTM` and nine two-name lists naming `C01000.SNC`, `C01000.RAW` to `C09000.SNC`, `C09000.RAW`. Read by `maybe_SncList_Load`'s rule it is one line under a script name that begins with the byte `0A`, with bytes left after it. A byte search of `GO.EXE` and `DBSIM.EXE` for `co_files` finds nothing, where the same search of `GO.EXE` finds `c0_files`, and the eleven names at `0008271c` do not include it.
 
@@ -50,4 +50,4 @@ Every line's list holds two names, a `.SNC` and then a `.RAW` (`C0_01000.SNC`, `
 
 - **Open:** which animations play the lists of `cfg\tm_files.dat`: what `0003ba47` does and what reads `0007e710`.
 - **Open:** what `CO_FILES.DAT` is, which nothing found names.
-- **Open:** what `0004680a`, `000468fc`, `000465da` and `000469da` do with the script, and so how a line's `.SNC` and `.RAW` play.
+- **Open:** what `0004680a`, `000468fc`, `000465da` and `000469da` do with the `.TTM` script, and so what a lip-sync frame shows ([how a line plays](snc-lip-sync.md#playing-it)).

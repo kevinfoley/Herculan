@@ -1,6 +1,6 @@
-# GO.EXE and DBSIM.EXE — bitmap arrays
+# GO.EXE and DBSIM.EXE — bitmap arrays and fonts
 
-ES1's bitmap arrays are ES2's container, loaded by ES2's code ([ES2's resource envelope](../../retail/formats/dfn-hfn-dci.md#the-shared-dynamix-resource-envelope)): 327 of `SHELL0.VOL`'s and `SIMVOL0.VOL`'s 328 `.DBA` read through ES2's bitmap array reader and write back byte for byte. `RES32\ICONS.DBA` holds old-format bitmaps, which both ES1 programs load as no object, as ES2's do, and the file stops 528 bytes short of its last item's end. Addresses are `ES1GO` image addresses unless `ES1DBSIM` is named ([the X-32 executable](x32-executable.md#the-image)); ES2's are DBSIM's.
+ES1's bitmap arrays and fonts are ES2's containers, loaded by ES2's code ([ES2's resource envelope](../../retail/formats/dfn-hfn-dci.md#the-shared-dynamix-resource-envelope)): 327 of `SHELL0.VOL`'s and `SIMVOL0.VOL`'s 328 `.DBA` read through ES2's bitmap array reader and write back byte for byte, and all 30 `.DFN` read through ES2's font layout. `RES32\ICONS.DBA` holds old-format bitmaps, which both ES1 programs load as no object, as ES2's do, and the file stops 528 bytes short of its last item's end. Addresses are `ES1GO` image addresses unless `ES1DBSIM` is named ([the X-32 executable](x32-executable.md#the-image)); ES2's are DBSIM's.
 
 ## The class table
 
@@ -16,6 +16,12 @@ The GL class table, `{tag, load function, name}` entries, is at `0008b480` in `E
 `ES1DBSIM`'s table opens with the same two bitmap tags and names, their load functions `OldGLBitmap_Construct` (`000769a8`) and `00076970`. `OldGLBitmap_Construct` returns 0 in both, as ES2's does. `GLBitmap_Construct` takes 0x1a bytes from the current arena (`Arena_Alloc` on `000aa110`), constructs the bitmap with `000500ac` and calls its read slot, `+0x10` (ES2's is `+0xc`), with its two arguments. `GLBitmap_GetClassTag` (`00066060`) returns `0x28000e`, and `GLBitmap_GetStreamSize` (`00066068`) 13 plus the data length (`+0x0a`) plus four times the extra count (`+0x14`), the record's size after its envelope.
 
 `GLBitmapArray_Construct` takes 0xc bytes from the current arena, stores the vtable `0008b626` and zeroes `+4` and `+8`, and calls the read slot `+0x10`, `GLBitmapArray_ReadFromStream` (`00066ed4`). That reads the frame count as one `int32` into `+4`, takes count × 4 bytes from the arena for `+8`, and fills each with `ClassItem_LoadResource`(0, stream), as ES2's does. `ClassItem_LoadResource` follows the item's load function with `ClassItem_SkipToEnd` (`00000ea8`), which reads single bytes until the stream's position reaches the end of the current item (the frame `0009a2c8`, `+8`) or its status is set. An old-format item therefore leaves a null element and its bytes passed over.
+
+## Fonts
+
+The class tables register `GLFont` under tag `0x05002800` and `Old GLFont` under `0x03002800`, as ES2's do; `GLFont`'s load function is `GLFont_Construct` (`00066634`; `ES1DBSIM 0007cd9c`). `GLFont_Construct` takes 0x32 bytes from the current arena (`Arena_Alloc` on `000aa110`), stores the vtable `0008b5da` (`ES1DBSIM 000a01ba`) and calls its read slot, `+0x10` (ES2's is `+0xc`), `GLFont_ReadFromStream` (`00066978`; `ES1DBSIM 0007d0e0`). That reads [ES2's layout](../../retail/formats/dfn-hfn-dci.md#layout) in ES2's order and under ES2's two conditions, arrays from the current arena; `GLFont_WriteToStream` (`0006678c`; `ES1DBSIM 0007cef4`) writes it back the same way, and `GLFont_GetStreamSize` (`000666ec`; `ES1DBSIM 0007ce54`) and `GLFont_GetMemorySize` (`0006673c`; `ES1DBSIM 0007cea4`) compute ES2's sizes, from `0x1a` and `0x32`.
+
+`SIMVOL0.VOL` holds 16 `.DFN` and `SHELL0.VOL` 14, four names in both: `ACTIVE`, `INACTIVE`, `PUSHED` and `TITLE`, whose two copies differ. There are no `.HFN`. Every file has 223 glyphs from code 32, `widthsFlag` -1 and an array count of 0, and its pool, offsets and widths end where its envelope's size does. The cell height is 8 in the shell's `MAP` and the simulator's ten `CP*` and `RED6X8`, 18 in both `TITLE`, and 10 in the rest; `inkHeight` (`0x1a`) is 7 in every file, where ES2's are 8 and 11.
 
 ## `RES32\ICONS.DBA`
 

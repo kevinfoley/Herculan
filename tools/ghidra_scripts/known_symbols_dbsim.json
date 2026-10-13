@@ -30977,8 +30977,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GLFont_GetStreamSize",
-      "description": "The DBSIM copy of VSHELL's GLFont_GetStreamSize (004542dc).",
-      "source": "es2_naming.py diff DBSIM 00482770 VSHELL 004542dc: identical after normalisation; RTTI GLFont vtable slot"
+      "description": "(font): 0x1a + 4 x the word +0x18 + the dword +0x1a + 4 x the glyph count +4, plus 4 x the glyph count again when the word +0xc is -1 and 4 x the word +6 when the word +8 is -1, so the widths and the map count 4 bytes an entry where GLFont_ReadFromStream (00482908) moves 1 and 2. The DBSIM copy of VSHELL's GLFont_GetStreamSize (004542dc).",
+      "source": "es2_naming.py diff DBSIM 00482770 VSHELL 004542dc: identical after normalisation; RTTI GLFont vtable slot",
+      "verified": {
+        "bytes": "00482770+57",
+        "sha1": "55986da993ff",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004827ac",
@@ -30986,8 +30992,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GLFont_GetMemorySize",
-      "description": "The DBSIM copy of VSHELL's GLFont_GetMemorySize (00454318).",
-      "source": "es2_naming.py diff DBSIM 004827ac VSHELL 00454318: identical after normalisation; RTTI GLFont vtable slot"
+      "description": "(font): GLFont_GetStreamSize (00482770)'s sum with 0x32, the object's size, in place of 0x1a. The DBSIM copy of VSHELL's GLFont_GetMemorySize (00454318).",
+      "source": "es2_naming.py diff DBSIM 004827ac VSHELL 00454318: identical after normalisation; RTTI GLFont vtable slot",
+      "verified": {
+        "bytes": "004827ac+57",
+        "sha1": "779fb964aa7a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004827e8",
@@ -31004,8 +31016,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GLFont_ReadFromStream",
-      "description": "The DBSIM copy of VSHELL's GLFont_ReadFromStream (00454474).",
-      "source": "es2_naming.py diff DBSIM 00482908 VSHELL 00454474: differs only in callee labels and decompiler typing; RTTI GLFont vtable slot"
+      "description": "(font, stream): reads eleven int16 into +4 to +0x18 with Stream_ReadWord2 and the int32 pool length into +0x1a with Stream_ReadDword3; then each array from Arena_AllocDup, or 0 when its count is 0: the word +0x18 x 4 dwords with Stream_ReadDwords into a block of the word +0x18 x 4 at +0x1e, the pool with Stream_Read at +0x22, the glyph count +4 of offsets with Stream_ReadDwordsCopy at +0x26; when the word +0xc is -1, the glyph count's width bytes at +0x2a, else 0; when the word +8 is -1, the word +6 of int16 with Stream_ReadWords at +0x2e, else 0. The DBSIM copy of VSHELL's GLFont_ReadFromStream (00454474).",
+      "source": "es2_naming.py diff DBSIM 00482908 VSHELL 00454474: differs only in callee labels and decompiler typing; RTTI GLFont vtable slot",
+      "verified": {
+        "bytes": "00482908+451",
+        "sha1": "47e805bbc3f4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00482acb",
