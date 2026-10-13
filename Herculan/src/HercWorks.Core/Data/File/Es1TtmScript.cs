@@ -28,6 +28,30 @@ public class Es1TtmScript {
 	public int PackedBytesRead { get; set; }
 }
 
+/// <summary>
+/// One command of an unpacked <see cref="Es1TtmScript.Script"/>: an opcode word and its arguments, as the page walk divides them
+/// (docs/es1/formats/ttm-scripts.md#pages). What each opcode does is in docs/es1/formats/ttm-scripts.md#the-commands.
+/// </summary>
+public class Es1TtmCommand {
+	/// <summary>The opcode that ends a page.</summary>
+	public const ushort EndFrame = 0x0ff0;
+
+	/// <summary>Where the opcode word starts in the unpacked script.</summary>
+	public int Offset { get; set; }
+
+	/// <summary>The opcode word; its low four bits give the arguments.</summary>
+	public ushort Opcode { get; set; }
+
+	/// <summary>
+	/// The argument words: the opcode's low-bits count of them, or for a point list (<c>0xaf1f</c>, <c>0xaf2f</c>) the count
+	/// <i>n</i> followed by its 2<i>n</i> words; empty for a string argument.
+	/// </summary>
+	public ushort[] Arguments { get; set; } = [];
+
+	/// <summary>The string argument of an opcode whose low bits are 15, other than a point list; null otherwise.</summary>
+	public string? Text { get; set; }
+}
+
 /// <summary>One chunk of an <see cref="Es1TtmScript"/>: a 4-byte tag, a size word, and either bytes or chunks.</summary>
 public class Es1TtmChunk {
 	/// <summary>Bit 31 of the size word, which marks a chunk whose content is chunks.</summary>

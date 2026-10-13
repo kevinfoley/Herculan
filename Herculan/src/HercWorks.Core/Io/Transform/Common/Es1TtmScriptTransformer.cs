@@ -100,42 +100,69 @@ public class Es1TtmScriptTransformer : ByteTransformer<Es1TtmScript> {
 
 	/// <summary>
 	/// Where each of <paramref name="pageCount"/> pages starts in an unpacked <paramref name="script"/>, found as
-	/// <c>TtmScript_IndexPages</c> (<c>ES1GO 000480d1</c>) finds them; null where it fails (returns 2).
+	/// <c>TtmScript_IndexPages</c> (<c>ES1GO 000480d1</c>) finds them; null where <see cref="ReadPages"/> is.
 	/// </summary>
-	public static int[]? IndexPages(byte[] script, int pageCount) {
-		var starts = new int[pageCount];
+	public static int[]? IndexPages(byte[] script, int pageCount) =>
+		ReadPages(script, pageCount)?.Select(page => page[0].Offset).ToArray();
+
+	/// <summary>
+	/// The commands of each of <paramref name="pageCount"/> pages of an unpacked <paramref name="script"/>, each page ending with
+	/// its <see cref="Es1TtmCommand.EndFrame"/>, divided as <c>TtmScript_IndexPages</c> (<c>ES1GO 000480d1</c>) divides them
+	/// (docs/es1/formats/ttm-scripts.md#pages); null where that walk fails, or where a command's arguments run past the script.
+	/// A string argument is decoded as Latin-1 up to its NUL.
+	/// </summary>
+	public static List<List<Es1TtmCommand>>? ReadPages(byte[] script, int pageCount) {
+		var pages = new List<List<Es1TtmCommand>>(pageCount);
 		int p = 0;
 		for (int page = 0; page < pageCount; page++) {
-			starts[page] = p;
+			var commands = new List<Es1TtmCommand>();
+			pages.Add(commands);
 			while (true) {
 				if (p >= script.Length - 1) {
 					return null;
 				}
 
-				int op = BinaryPrimitives.ReadUInt16LittleEndian(script.AsSpan(p));
+				var command = new Es1TtmCommand { Offset = p, Opcode = BinaryPrimitives.ReadUInt16LittleEndian(script.AsSpan(p)) };
+				commands.Add(command);
 				p += 2;
-				if (op == 0x0ff0) {
+				if (command.Opcode == Es1TtmCommand.EndFrame) {
 					break;
 				}
 
-				int args = op & 0xf;
+				int args = command.Opcode & 0xf;
+				int words;
 				if (args <= 7) {
-					p += 2 * args;
+					words = args;
 				} else if (args < 0xf) {
 					return null;
-				} else if (op is 0xaf1f or 0xaf2f) {
+				} else if (command.Opcode is 0xaf1f or 0xaf2f) {
 					if (p + 2 > script.Length) {
 						return null;
 					}
 
-					p += 2 + 4 * BinaryPrimitives.ReadUInt16LittleEndian(script.AsSpan(p));
+					words = 1 + 2 * BinaryPrimitives.ReadUInt16LittleEndian(script.AsSpan(p));
 				} else {
-					p = SkipString(script, p);
+					int end = SkipString(script, p);
+					int nul = Array.IndexOf(script, (byte)0, p);
+					command.Text = Encoding.Latin1.GetString(script, p, (nul < 0 ? script.Length : nul) - p);
+					p = end;
+					continue;
 				}
+
+				if (p + 2 * words > script.Length) {
+					return null;
+				}
+
+				command.Arguments = new ushort[words];
+				for (int i = 0; i < words; i++) {
+					command.Arguments[i] = BinaryPrimitives.ReadUInt16LittleEndian(script.AsSpan(p + 2 * i));
+				}
+
+				p += 2 * words;
 			}
 		}
 
-		return starts;
+		return pages;
 	}
 
 	/// <summary>

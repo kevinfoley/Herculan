@@ -34,6 +34,9 @@ import java.util.Set;
 //   bytes:ADDR:N          types N bytes at ADDR as a byte array (a switch's index table), clearing
 //                         whatever data units are there first.
 //   ptrs:ADDR:N           types N dwords at ADDR as an array of pointers (a switch's target table).
+//   clear:ADDR:N          clears the data units in N bytes at ADDR, for a pointer auto-analysis typed over
+//                         an instruction's operand, which stops the switch item disassembling through it.
+//                         Run it before the switch item.
 //
 // Items run in the order given. Then each function touched is reported (body ranges) and decompiled
 // into the output file. Writes to the program: run with -readOnly first to see the result unsaved.
@@ -59,6 +62,7 @@ public class ES2RepairFunctionBody extends GhidraScript {
                     case "tail" -> addTail(toAddr(p[1]), toAddr(p[2]), toAddr(p[3]));
                     case "bytes" -> typeArray(toAddr(p[1]), Integer.parseInt(p[2]), false);
                     case "ptrs" -> typeArray(toAddr(p[1]), Integer.parseInt(p[2]), true);
+                    case "clear" -> clearData(toAddr(p[1]), Integer.parseInt(p[2]));
                     default -> report("ERROR unknown item " + a[i]);
                 }
             }
@@ -168,6 +172,17 @@ public class ES2RepairFunctionBody extends GhidraScript {
         report("tail " + lo + "-" + hi + " added to " + f.getName() + ": body " + before + " -> "
             + f.getBody().getNumAddresses() + ", " + gaps + " byte(s) in the range not code");
         touched.add(f);
+    }
+
+    private void clearData(Address at, int n) throws Exception {
+        Address end = at.add(n - 1);
+        if (getInstructionContaining(at) != null || getInstructionContaining(end) != null) {
+            report("ERROR clear " + at + ": the range holds code");
+            return;
+        }
+
+        clearListing(at, end);
+        report("cleared " + at + "-" + end);
     }
 
     private void typeArray(Address at, int n, boolean pointers) throws Exception {

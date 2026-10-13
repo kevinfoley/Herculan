@@ -667,7 +667,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_LoadStylesAndFonts",
-      "description": "No arguments: WidgetStyles_Load (00044aa4)(dat\\styles); then dfn\\title, cpylw, active, pushed, inactive, nm_green and nm_red1 each through 0004b757, its result to the dwords 000aacc6 to 000aacde, four bytes apart; then dba\\corners through 0004b7df into 000ab4ee. ES1DBSIM's Widget_LoadStylesAndFonts (00045e10) with the last two fonts green6x8 and red6x8. Caller found by es2_xref: 00012ec7, which then loads CFG\\styles.dat with WidgetStyles_Load and res32\\corners.dba with 0004b7df.",
+      "description": "No arguments: WidgetStyles_Load (00044aa4)(dat\\styles); then dfn\\title, cpylw, active, pushed, inactive, nm_green and nm_red1 each through 0004b757, its result to the dwords 000aacc6 to 000aacde, four bytes apart; then dba\\corners through Resource_LoadBitmapArray (0004b7df) into 000ab4ee. ES1DBSIM's Widget_LoadStylesAndFonts (00045e10) with the last two fonts green6x8 and red6x8. Caller found by es2_xref: 00012ec7, which then loads CFG\\styles.dat with WidgetStyles_Load and res32\\corners.dba with Resource_LoadBitmapArray (0004b7df).",
       "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
       "verified": {
         "bytes": "00002818+243",
@@ -937,7 +937,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_Main",
-      "description": "(a, b), src\\main.cpp: the shell's main; es2_xref finds one call, from 0000000d. Mem_InitHeap(the dword 0007e738, 3700000), asserting at severity 5 (line 0x1f8) when it gives 100000 bytes or fewer; 0001272d(b, a), and when that returns non-zero Mem_HeapOff and __exit(1); copies to 000aae06, for 0000035e, the ALT_DRIVE variable (taken as null unless 0007fd0b is set) when PREFER_ALT is set and the string at 0007e942 otherwise; 0001289c, 0001280a, 00012be3; VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 0007e943, 0x100), Subsystem_RunPhase (0000fcda)(1), which reads the eight bnd\\ files; an assert at severity 5 (line 0x219, the shortfall printed with sprintf) when the heap is under the dword 0009ae24, BND\\MAIN.BND's +0xc, and the byte 0007fd09 set when it is under 0009ae20, the file's +8. Then unnamed set-up calls, among them WidgetStyles_Load (00044aa4)('CFG\\styles.dat') and 0004b7df('res32\\corners.dba') into 000ab4ee, and Palette_UploadWhole(0007fcd0); a loop until the byte 0007fd05 is set, which 000817c0 = 9999 also sets; after it, shut-down calls, VolRStream_DeleteGroup and Mem_HeapOff, and INT 3 when 0007fd08 is set. ES1DBSIM's Sim_Main (00059350) opens with Mem_InitHeap(6000000) and the same assert.",
+      "description": "(a, b), src\\main.cpp: the shell's main; es2_xref finds one call, from 0000000d. Mem_InitHeap(the dword 0007e738, 3700000), asserting at severity 5 (line 0x1f8) when it gives 100000 bytes or fewer; 0001272d(b, a), and when that returns non-zero Mem_HeapOff and __exit(1); copies to 000aae06, for 0000035e, the ALT_DRIVE variable (taken as null unless 0007fd0b is set) when PREFER_ALT is set and the string at 0007e942 otherwise; 0001289c, 0001280a, 00012be3; VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 0007e943, 0x100), Subsystem_RunPhase (0000fcda)(1), which reads the eight bnd\\ files; an assert at severity 5 (line 0x219, the shortfall printed with sprintf) when the heap is under the dword 0009ae24, BND\\MAIN.BND's +0xc, and the byte 0007fd09 set when it is under 0009ae20, the file's +8. Then unnamed set-up calls, among them WidgetStyles_Load (00044aa4)('CFG\\styles.dat') and Resource_LoadBitmapArray (0004b7df)('res32\\corners.dba') into 000ab4ee, and Palette_UploadWhole(0007fcd0); a loop until the byte 0007fd05 is set, which 000817c0 = 9999 also sets; after it, shut-down calls, VolRStream_DeleteGroup and Mem_HeapOff, and INT 3 when 0007fd08 is set. ES1DBSIM's Sim_Main (00059350) opens with Mem_InitHeap(6000000) and the same assert.",
       "source": "ES1GO decompile at 00012ec7",
       "verified": {
         "bytes": "00012ec7+772",
@@ -2452,7 +2452,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HercArt_LoadAllBanks",
-      "description": "(), C convention: for chassis 0-7 loads with 0004b7df the RES32 banks the path tables name into the dword tables: <chassis>WEP1.DBA (000800f4) into 0007ff9c, <chassis>OUTL.DBA (00080264) into 0007ffbc, <chassis>DMG1.DBA (0008031c) into 0007ffdc and <chassis>WEPD.DBA (000801ac) into 0007fffc; for chassis 2-7 also the BILD bank (000803b0, from RAPTBILD.DBA) into 0008001c. es2_xref finds one call, from 00020630.",
+      "description": "(), C convention: for chassis 0-7 loads with Resource_LoadBitmapArray (0004b7df) the RES32 banks the path tables name into the dword tables: <chassis>WEP1.DBA (000800f4) into 0007ff9c, <chassis>OUTL.DBA (00080264) into 0007ffbc, <chassis>DMG1.DBA (0008031c) into 0007ffdc and <chassis>WEPD.DBA (000801ac) into 0007fffc; for chassis 2-7 also the BILD bank (000803b0, from RAPTBILD.DBA) into 0008001c. es2_xref finds one call, from 00020630.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "0002280f+155",
@@ -2497,7 +2497,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MountPicture_Set",
-      "description": "(element, value, weapon, mount, chassis) in stack order, callee-cleaned: stores HercLayout_Find (00022024)(weapon, mount, chassis) at element +0; for weapon 0x11 passes the point 0, 0 to 000216e0 for element + 4; otherwise, when value is below 0x33, loads the chassis's RES32\\<chassis>WEPD.DBA with 0004b7df into the dword 0007fffc + 4 * chassis when it is 0, and passes the record's first point (+4) to 000216e0 for element + 4; at 0x33 or more does so only when the chassis's WEP1 bank (0007ff9c + 4 * chassis) is loaded. es2_xref finds calls from Herc_BuildDiagram (00023883) and 00024788.",
+      "description": "(element, value, weapon, mount, chassis) in stack order, callee-cleaned: stores HercLayout_Find (00022024)(weapon, mount, chassis) at element +0; for weapon 0x11 passes the point 0, 0 to 000216e0 for element + 4; otherwise, when value is below 0x33, loads the chassis's RES32\\<chassis>WEPD.DBA with Resource_LoadBitmapArray (0004b7df) into the dword 0007fffc + 4 * chassis when it is 0, and passes the record's first point (+4) to 000216e0 for element + 4; at 0x33 or more does so only when the chassis's WEP1 bank (0007ff9c + 4 * chassis) is loaded. es2_xref finds calls from Herc_BuildDiagram (00023883) and 00024788.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "00022d78+304",
@@ -2572,7 +2572,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_BuildDiagram",
-      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears 0007ff98; stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with 0004b7df into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls 00023605(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with 00023d70) and 0x22-byte elements at +0x94 (with 00023f2c). Per mount: when 00024b23(herc, mount) is 0 sets the weapon to 0x11 and calls 00024c14(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to 000216e0 for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and 00024b23's value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to 000216e0 for the +0x98 element and sets the byte 0007ff8e; sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and 0007ff8e is clear, passes 0, 0 to 000216e0 for it. es2_xref finds seven calls: from Herc_Read (00023501), 000241f9, 00028e50, 00029d0f, 00029d68, and twice from 00029e01.",
+      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears 0007ff98; stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with Resource_LoadBitmapArray (0004b7df) into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls 00023605(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with 00023d70) and 0x22-byte elements at +0x94 (with 00023f2c). Per mount: when 00024b23(herc, mount) is 0 sets the weapon to 0x11 and calls 00024c14(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to 000216e0 for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and 00024b23's value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to 000216e0 for the +0x98 element and sets the byte 0007ff8e; sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and 0007ff8e is clear, passes 0, 0 to 000216e0 for it. es2_xref finds seven calls: from Herc_Read (00023501), 000241f9, 00028e50, 00029d0f, 00029d68, and twice from 00029e01.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "00023883+1261",
@@ -2587,7 +2587,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_DrawDamageMarks",
-      "description": "(herc), callee-cleaned: loads the chassis's RES32 DMG1 bank with 0004b7df into 0007ffdc + 4 * chassis when it is 0; for groups 0-5 takes the level 000389fb(00024b86(herc, group, 0x785)) returns and for a level of 1 to 3 draws each mark of the list at 000aae3a + 0x6c * chassis + 0x12 * group + 6 * (level - 1): Bitmap_Blit (000502c0) of the bank's frame at the mark's point, once with the word +0x38 of the canvas 000ab616 set to the word 0007fccc and once with it put back, each time also storing it to 0008448e and calling the routine at 000865f4 with it when the canvas is the current one. es2_xref finds one call, from 000241f9.",
+      "description": "(herc), callee-cleaned: loads the chassis's RES32 DMG1 bank with Resource_LoadBitmapArray (0004b7df) into 0007ffdc + 4 * chassis when it is 0; for groups 0-5 takes the level 000389fb(00024b86(herc, group, 0x785)) returns and for a level of 1 to 3 draws each mark of the list at 000aae3a + 0x6c * chassis + 0x12 * group + 6 * (level - 1): Bitmap_Blit (000502c0) of the bank's frame at the mark's point, once with the word +0x38 of the canvas 000ab616 set to the word 0007fccc and once with it put back, each time also storing it to 0008448e and calling the routine at 000865f4 with it when the canvas is the current one. es2_xref finds one call, from 000241f9.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-damage-marks",
       "verified": {
         "bytes": "00024366+507",
@@ -3457,7 +3457,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MenuWindow_Ctor",
-      "description": "(this, id, title, rect) in stack order, callee-cleaned: a shell menu's window, 0x5a7 bytes allocated when this is 0, over Window_Ctor (0001abcf)(this, rect); six 0x12-byte label entries at +0x537 (__vec_ctor of 000369d4) and the vtable 00081140 at +0x4e9. Loads res32\\menu<id>.dba with 0004b7df into +0x5a3 (id 9999: res32\\menu<9999 - Math_RandomBelow(5)>.dba) and sets the font +0x4ed to 000aacc6; the six ids at 00081174 (999, 1240, 4444, 1610, 1800, 1920) then jump through the table beside them. Otherwise it sets +0x4f1 to the font 000aacca, copies title to +0x4f5 (a 0 byte for none), and zeroes the label count +0x535 and the hotspot count +0x4e7.",
+      "description": "(this, id, title, rect) in stack order, callee-cleaned: a shell menu's window, 0x5a7 bytes allocated when this is 0, over Window_Ctor (0001abcf)(this, rect); six 0x12-byte label entries at +0x537 (__vec_ctor of 000369d4) and the vtable 00081140 at +0x4e9. Loads res32\\menu<id>.dba with Resource_LoadBitmapArray (0004b7df) into +0x5a3 (id 9999: res32\\menu<9999 - Math_RandomBelow(5)>.dba) and sets the font +0x4ed to 000aacc6; the six ids at 00081174 (999, 1240, 4444, 1610, 1800, 1920) then jump through the table beside them. Otherwise it sets +0x4f1 to the font 000aacca, copies title to +0x4f5 (a 0 byte for none), and zeroes the label count +0x535 and the hotspot count +0x4e7.",
       "source": "ES1GO decompile at 00036874",
       "verified": {
         "bytes": "00036874+352",
@@ -3487,7 +3487,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DigitalDialog_ShowMessage",
-      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls 0004c716 into 0007fcd8 and 000467ef with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates 00081938 and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(0009afc8, a, b, path).",
+      "description": "(message), callee-cleaned: returns at once when the byte +2 is 0; calls 0004c716 into 0007fcd8 and Ttm_SetDefaultContext (000467ef) with it; then by the kind word +0 builds the path with sprintf, sets the line number word 000aad5c and picks the lip-sync list words a and b: 0 eng\\C0_text.bin, line 000ab222, (0, 1); 1 eng\\C<k>_text.bin, line 000ab222, (2k, 1), k the first word of the 8-byte record of the table at 000a02ce that the word at 0009b241 + 0009b21f * 0x1f7 indexes, or -1 when out of range; 2 eng\\G0_text.bin, line a word of the table at 000814ec, (0, 3), and it updates 00081938 and sets 0007fcd5 when 000814d8's entry + 0xf differs from it; 3 eng\\D0_text.bin, line 2 * Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) plus Math_RandomBelow(2) unless that call gave 1, (1, 1); 4 eng\\D<k>_text.bin, the same line, (2k + 1, 1); 5-11 eng\\T1_text.bin, line 0008159c[000814e8] when 000814e8 is nonzero, else (5, 6, 8-11) 00037bf0(kind), (000815a8[line], 2), and two 00046948 calls; any other kind returns. Then Dialog_LoadFromFile (00018c36)(0009afc8, a, b, path).",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "00037edd+1016",
@@ -4117,11 +4117,26 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_Shutdown",
-      "description": "(): when the timer slot word 000829e4 compares unequal to -1 (zero-extended, it always does) passes it to 000565b7; calls 00046a3f; deletes the handle table 000829e0 when there is one. es2_xref finds one call, from 0003c081.",
+      "description": "(): when the timer slot word 000829e4 compares unequal to -1 (zero-extended, it always does) passes it to 000565b7; calls Ttm_CloseAll (00046a3f); deletes the handle table 000829e0 when there is one. es2_xref finds one call, from 0003c081.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
       "verified": {
         "bytes": "000464e8+70",
         "sha1": "0e872c8c0f44",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004652e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_RunAll",
+      "description": "(): notes the word 000829d6, waits in a loop until the byte 000829d5 is non-zero, clears it, and calls TtmScript_Run (00046f2c)(script, 000829d6 as it is then) for each handle of the table 000829e0 below the count 000829dc that holds a script. Then stores the render context 000ab612's +4 (0 with none) at +0x40 of the display object 00082a94, passing it to Raster_SetClipBlock when the display slot 000ab7a0 holds that object, installs 000ab612 with Raster_InstallRenderContext, subtracts the noted value from 000829d6 and returns 1. es2_xref finds calls from Shell_Main, 000382f6 and 0003c1b7.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "0004652e+172",
+        "sha1": "dfe330faf394",
         "scope": "body",
         "via": "decompile"
       }
@@ -4132,11 +4147,71 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_RunScript",
-      "description": "(handle): returns 0 for -1. Otherwise clears the byte 000829d5, calls 00046f2c(script, the word 000829d6) when the handle holds a script, stores the render context 000ab612's +4 (0 with none) at +0x40 of the display object 00082a94 and passes it to Raster_SetClipBlock when 000ab7a0 is that object, installs 000ab612 with Raster_InstallRenderContext, sets 000829d6 to its value less its value on entry, and returns 1.",
+      "description": "(handle): returns 0 for -1. Otherwise clears the byte 000829d5, calls TtmScript_Run (00046f2c)(script, the word 000829d6) when the handle holds a script, stores the render context 000ab612's +4 (0 with none) at +0x40 of the display object 00082a94 and passes it to Raster_SetClipBlock when 000ab7a0 is that object, installs 000ab612 with Raster_InstallRenderContext, sets 000829d6 to its value less its value on entry, and returns 1.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#choosing-a-page",
       "verified": {
         "bytes": "000465da+167",
         "sha1": "3689e22a9962",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046681",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_TimerTick",
+      "description": "(): the timer callback of the shell's scripts: returns at once while the byte 000829d4 is non-zero; otherwise sets the byte 000829d5 to 1 and adds 1 to the word 000829d6. es2_xref finds its address stored at 000467cc, in Ttm_AllocHandles (0004670e).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "00046681+30",
+        "sha1": "286affc05eb8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004669f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_GetPage",
+      "description": "(handle): the word +2, the current page, of the handle's script, or 0xffff for an empty handle. es2_xref finds no caller.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "0004669f+45",
+        "sha1": "679367f119b0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000466cc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_GetMode",
+      "description": "(handle): the dword +0x3c, the mode, of the handle's script, reading the handle's slot as it is, empty or not. es2_xref finds two calls from 00037dce and two from 0003b8df.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "000466cc+33",
+        "sha1": "76bbb632fd9d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000466ed",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_GetLoop",
+      "description": "(handle): the dword +0x43, the loop flag, of the handle's script, reading the handle's slot as it is, empty or not. es2_xref finds no caller.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "000466ed+33",
+        "sha1": "811c5fd62fbf",
         "scope": "body",
         "via": "decompile"
       }
@@ -4147,13 +4222,28 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_AllocHandles",
-      "description": "(timer count): allocates the handle table 000829e0, a dword per handle of the count 000829dc, and zeroes it; stores 000ab784 at 000829d8, or 0005d6b4(0, 0x4da6) when that is 0, and frees the table and returns 0 when 000829d8 is still 0; compares the word 000829e4, zero-extended, with -1, which it never equals, and so always stores Timer_AddCallback(count, 00046681) there; returns 1. es2_xref finds one call, from 0003ba47, with a count of 2.",
+      "description": "(timer count): allocates the handle table 000829e0, a dword per handle of the count 000829dc, and zeroes it; stores 000ab784 at 000829d8, or 0005d6b4(0, 0x4da6) when that is 0, and frees the table and returns 0 when 000829d8 is still 0; compares the word 000829e4, zero-extended, with -1, which it never equals, and so always stores Timer_AddCallback(count, Ttm_TimerTick (00046681)) there; returns 1. es2_xref finds one call, from 0003ba47, with a count of 2.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
       "verified": {
         "bytes": "0004670e+225",
         "sha1": "19c7e78eb39f",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000467ef",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_SetDefaultContext",
+      "description": "(context), callee-cleaned: stores context at 00082a98, the render context TtmScript_Run (00046f2c) installs for a script whose +0x2c is 0, and returns the one it replaces. es2_xref finds calls from DigitalDialog_ShowMessage, 0003b8df and 0003c1b7.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "000467ef+27",
+        "sha1": "9d396ce543b1",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -4205,9 +4295,10 @@
       "address": "00046948",
       "binary": "ES1GO",
       "type": "function",
-      "confidence": "low",
-      "description": "(value, handle): stores value at +0x3c of the handle's .TTM script and returns 1, or returns 0 when the handle is empty. TtmScript_Load stores Ttm_Open's first argument there and TtmScript_SetPage clears it; what the field holds is Open.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#choosing-a-page",
+      "confidence": "high",
+      "name": "Ttm_SetMode",
+      "description": "(mode, handle): stores mode at +0x3c of the handle's .TTM script, the mode TtmScript_Run (00046f2c) reads (0 playing, 1 paused, 2 hidden, 3 finished), and returns 1, or returns 0 when the handle is empty. TtmScript_Load stores Ttm_Open's first argument there and TtmScript_SetPage sets it to 0. es2_xref finds 24 calls.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
       "verified": {
         "bytes": "00046948+73",
         "sha1": "fc699e90b13f",
@@ -4219,9 +4310,10 @@
       "address": "00046991",
       "binary": "ES1GO",
       "type": "function",
-      "confidence": "low",
-      "description": "(value, handle): stores value at +0x43 of the handle's .TTM script and returns 1, or returns 0 when the handle is empty. TtmScript_Load stores Ttm_Open's second argument there. es2_xref finds no call.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#choosing-a-page",
+      "confidence": "high",
+      "name": "Ttm_SetLoop",
+      "description": "(loop, handle): stores loop at +0x43 of the handle's .TTM script, the flag TtmScript_NextPage (00046e7c) and TtmScript_Run (00046f2c) test for 1 to start the script again when it ends, and returns 1, or returns 0 when the handle is empty. TtmScript_Load stores Ttm_Open's second argument there. es2_xref finds no call.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
       "verified": {
         "bytes": "00046991+73",
         "sha1": "c5c94bbd9d15",
@@ -4245,16 +4337,106 @@
       }
     },
     {
+      "address": "00046a3f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_CloseAll",
+      "description": "(): destroys the script of every handle of the table 000829e0 below the count 000829dc with TtmScript_Dtor (00046e2f)(script, 3) and empties the handle. es2_xref finds one call, from Ttm_Shutdown.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
+      "verified": {
+        "bytes": "00046a3f+94",
+        "sha1": "fe19bec4d153",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046a9d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_DebugStatus",
+      "description": "(): for each handle holding a script, formats \"File: %d %15s status: \" with the handle, the script's name +4 and PLAYING, PAUSED, HIDDEN or FINISHED for the mode +0x3c of 0 to 3 into a stack buffer, and returns. es2_xref finds no caller.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "00046a9d+282",
+        "sha1": "707ccabdf22d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00046bb8",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_Ctor",
-      "description": "(script): allocates the 0x1eb-byte .TTM script when given none (returning 0 when that fails); constructs twelve 0x18-byte objects at +0x88 with __vec_ctor and 00046c6c; sets the dwords +0x1d3 and +0x1db to 0 and +0x1e3 to 4; returns the script.",
+      "description": "(script): allocates the 0x1eb-byte .TTM script when given none (returning 0 when that fails); constructs twelve 0x18-byte objects at +0x88 with __vec_ctor and GLRectangleRegion_Ctor (00046c6c); sets the dwords +0x1d3 and +0x1db to 0 and +0x1e3 to 4; returns the script.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#opening-and-closing",
       "verified": {
         "bytes": "00046bb8+180",
         "sha1": "3cc12d7fe013",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046c6c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_Ctor",
+      "description": "(region), callee-cleaned: allocates 0x18 bytes when given none; stores the vtables ClassItem 00082ab0, GLBase 00082ada and GLRegion 00082b0c in turn; runs the rect's and its points' inlined constructors at +8, which leave its four dwords as they were; then stores the vtable 00082b44 and 0 at +4, the region type (0 a rect), and returns the region. es2_xref finds its address stored at 00046bec, the element constructor TtmScript_Ctor (00046bb8) passes to __vec_ctor for the script's twelve regions at +0x88.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#loading",
+      "verified": {
+        "bytes": "00046c6c+227",
+        "sha1": "a282673e59a0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00046d4f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_Dtor",
+      "description": "(object, flags): returns for none; otherwise stores GLBase's vtable 00082ada and deletes the object when bit 0 of flags is set. The +0x1c slot of the vtable 00082ada.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#loading",
+      "verified": {
+        "bytes": "00046d4f+44",
+        "sha1": "dec54d36febc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046d7b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_Dtor",
+      "description": "(region, flags): returns for none; otherwise stores GLRegion's vtable 00082b0c, then GLBase's 00082ada, and deletes the region when bit 0 of flags is set. The +0x1c slot of the vtable 00082b0c.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#loading",
+      "verified": {
+        "bytes": "00046d7b+73",
+        "sha1": "672274d9da58",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046dc4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_Dtor",
+      "description": "(region, flags): returns for none; otherwise stores GLRectangleRegion's vtable 00082b44, then 00082b0c and 00082ada, and deletes the region when bit 0 of flags is set. The +0x1c slot of the vtable 00082b44.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#loading",
+      "verified": {
+        "bytes": "00046dc4+107",
+        "sha1": "9befba3f2d80",
         "scope": "body",
         "via": "decompile"
       }
@@ -4265,13 +4447,43 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_Dtor",
-      "description": "(script, flags): returns at once for a null script; otherwise calls 000474bd(script), destroys the twelve objects at +0x88 with __vec_dtor and 00046e73, and deletes the script when bit 0 of the flags is set.",
+      "description": "(script, flags): returns at once for a null script; otherwise calls TtmScript_Free (000474bd)(script), destroys the twelve objects at +0x88 with __vec_dtor and 00046e73, and deletes the script when bit 0 of the flags is set.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#opening-and-closing",
       "verified": {
         "bytes": "00046e2f+68",
         "sha1": "5a6b9891749a",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00046e7c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_NextPage",
+      "description": "(script): moves to the next page: the word +0x1ac when it is not -1, which it then sets to -1; else the word +0x1ae likewise; else the current page +2 plus 1, unless the mode +0x3c is 3, when the page stays. Clears the bytes +0x40, +0x41 and +0x42. When the page has reached the page count +0, calls TtmScript_Reset (0004b3c6) and sets the mode to 0 when the loop flag +0x43 is 1, and sets the mode to 2 otherwise.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "00046e7c+176",
+        "sha1": "1648ad6014a5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046f2c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Run",
+      "description": "(script, ticks) in stack order, callee-cleaned: installs the script's render context +0x2c, or 00082a98 when that is 0, storing its +4 at +0x40 of the display object 00082a94 (through Raster_SetClipBlock when the display slot 000ab7a0 holds it) and calling Raster_InstallRenderContext; subtracts ticks from the delay +0x1b8. When the delay is above 0 or the byte +0x42 is 0: unless the mode +0x3c is 2, runs the page +2 with TtmScript_RunPage (00048218), sets +0x42 to 1 and, when the delay is 0 or less, reloads it from +0x1ba and calls TtmScript_NextPage (00046e7c). Otherwise: when the byte +0x1c0 is 1, subtracts ticks from +0x1bc and, when it falls below 0, reloads it from +0x1be and calls TtmScript_CyclePalette (000472d0); reloads the delay from +0x1ba; then for mode 0 runs the page and calls TtmScript_NextPage, for mode 1 runs the page, for mode 3 calls TtmScript_Reset (0004b3c6) and sets mode 0 when the loop flag +0x43 is 1 and sets mode 2 otherwise, and for mode 2 goes straight to the return. Returns 1.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "00046f2c+443",
+        "sha1": "87712140c21f",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -4305,6 +4517,66 @@
       }
     },
     {
+      "address": "000472a2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_FixRect",
+      "description": "(script, rect): calls 0004c17c(the word 00082a9c, +0x38 of the display object 00082a94, rect).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "000472a2+46",
+        "sha1": "c86946266f97",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000472d0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_CyclePalette",
+      "description": "(script), callee-cleaned: for each of the three six-byte ranges at +0x1c1 {int16 first, int16 count, int16 direction} whose direction d is not 0, rotates the colours of the current palette slot (+0x51)[+0x55] by one place: base is first, or first + count - 1 when d is -1; it keeps colour (count * d + base - d), then for c from count down to 0 copies colour (c * d + base - d - d) to (c * d + base - d), and stores the kept colour at base. The step for c = 0 also copies the colour two places outside the range on the side it moves from to the one beside it. Then uploads that palette with Palette_UploadWhole.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "000472d0+330",
+        "sha1": "57532b2fda3c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004741a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_FindLabel",
+      "description": "(script, label): the first page, in page order, whose first command is 0x1101 or 0x1111 with label as its argument; otherwise formats \"File: %s Can't find label %d\" into a stack buffer and returns 0.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "0004741a+163",
+        "sha1": "7d9fed289488",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000474bd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Free",
+      "description": "(script): calls TtmScript_Reset (0004b3c6), then frees and zeroes the unpacked script +0x34, the page table +0x30 and the slot tables +0x51 and +0x47, and destroys the sound object +0x1a8 through its +0x3b table's +8 slot with 3 and zeroes it. es2_xref finds one call, from TtmScript_Dtor.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "000474bd+180",
+        "sha1": "675703dc4a5a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00047571",
       "binary": "ES1GO",
       "type": "function",
@@ -4318,6 +4590,30 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "0004759d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_CopyArgBytes",
+      "description": "(script, source, count): copies count bytes from source, or with a count of 0 the bytes up to its NUL, at most 100 either way, into the buffer 000a0a28, adds a NUL and returns the buffer. es2_xref finds one call, from TtmScript_RunPage (00048218), which passes a point list's words with count 4n, truncated to a byte.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0004759d+123",
+        "sha1": "b0885cee8e75",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00047618",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_TokenName",
+      "description": "(ignored, opcode) in stack order, callee-cleaned: Dynamix's name of a .TTM opcode: searches the 128 opcodes at 000833b0 and jumps through the table 000835b0 to a case returning its string (TOKEN_LINE for 0xa0a4, TOKEN_ENDFRAME for 0x0ff0, PARAMS_0 to PARAMS_7 and PARAM_STRING for 0 to 7 and 0xf), or returns \"unknown\" (000833a8). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands"
     },
     {
       "address": "00047c28",
@@ -4365,6 +4661,129 @@
       }
     },
     {
+      "address": "00048218",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_RunPage",
+      "description": "(script, page) in stack order, callee-cleaned: runs a page's commands from its start in the page table +0x30 to its 0x0ff0, then returns 1. Renumbers 0x1301 to 0xc051 and 0x1311 to 0xc061; reads seven argument words after the opcode whatever its count, and steps past the arguments by the low four bits, a point list (0xaf1f, 0xaf2f) copied with TtmScript_CopyArgBytes (0004759d), a string with TtmScript_SkipString. While the call depth +0x1b0 is non-zero it adds +0x1b2 and +0x1b4 to the first two arguments of an opcode 0xa000-0xafff other than 0xa601, 0xaf1f and 0xaf2f, and also to the third and fourth of 0xa0a4. Then opcodes 0xc000-0xcfff go to TtmScript_RunSoundCommand (0004a0e0) and 0xa000-0xafff to TtmScript_RunDrawCommand (0004a213), each returning 0 when the call does; the other opcodes are matched against the 30 at 00083880 (targets at 000838f8), and an opcode outside them is stepped over. The cases are in Herculan/docs/es1/formats/ttm-scripts.md#the-commands; es2_xref finds three calls from TtmScript_Run (00046f2c) and one from each of its own 0x3003 and 0x3303 cases.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands"
+    },
+    {
+      "address": "00049fee",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLPalette_CopyCtor",
+      "description": "(palette, source): allocates 0x14 bytes when given none; stores the vtables 00082ab0 and 00082ada, copies the words +4, +6, +0xc, +0xe and the dwords +8 (the colours) and +0x10 from source, stores the vtable 00083990 and returns the palette. Its one call found by es2_xref is the 0x4114 command's in TtmScript_RunPage.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "00049fee+158",
+        "sha1": "92af65a88186",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a08c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLPalette_Assign",
+      "description": "(palette, source): copies the words +4, +6, +0xc, +0xe and the dwords +8 (the colours) and +0x10 from source, leaving the vtable. Its one call found by es2_xref is the 0x4124 command's in TtmScript_RunPage.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0004a08c+84",
+        "sha1": "13caa3cbd51f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a0e0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_RunSoundCommand",
+      "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: returns 1 for every opcode. 0xc21f, when the byte 0007fcb9 is non-zero and +0x41 is 0: destroys the sound object +0x1a8 (its +0x3b table's +8 slot with 3), formats TtmScript_BuildPath (00047138)(script, string) with \"%s\" into 000aad40 and, when the sound manager 00082768 exists and SoundManager_SetSampleName(manager, 0xe, that) succeeds, stores SoundManager_CreateObject(manager, 2, 0, 0xe) at +0x1a8. 0xc220, when 0007fcb9 is non-zero, +0x41 is 0 and +0x1a8 holds an object: calls its +0x2c slot with Math_RandomBelow(0009aec0, 25) + 10 and its +0x10 slot, and sets +0x41 to 1. Any other opcode, 0xc102 among them, goes straight to the return.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0004a0e0+307",
+        "sha1": "a5a72a6c8a41",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004a213",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_RunDrawCommand",
+      "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: matches the opcode against the 22 at 000839b8 (targets at 00083a10) and returns 1 whether or not one matches. The cases (lines, rects, ellipses, polygons, pixels, bitmap frames and the saved regions) are in Herculan/docs/es1/formats/ttm-scripts.md#the-commands.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands"
+    },
+    {
+      "address": "0004b37d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Point_DefaultCtor",
+      "description": "(point), callee-cleaned: allocates 8 bytes when given none and returns the point as it was. es2_xref finds its address stored at 0004aab9, the element constructor the polygon commands pass to __vec_new.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0004b37d+27",
+        "sha1": "66f3633bd8a0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004b398",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtor",
+      "description": "(rect, source): allocates 0x10 bytes when given none, copies the four dwords of source and returns the rect.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0004b398+46",
+        "sha1": "1dbfd85c43db",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004b3c6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Reset",
+      "description": "(script), callee-cleaned: destroys the six palettes of the slot table +0x51 through their +0x1c slot with 3 and the six bitmap arrays of +0x47 with GLBitmapArray_Dtor (0005343c)(array, 3), frees the twelve region buffers at +0x58, zeroing every slot; zeroes the three cycling directions +0x1c5, +0x1cb and +0x1d1; sets the mode +0x3c to 2, the bytes +0x40, +0x41, +0x55 and +0x1c0 to 0, the page +2 to 0, the word +0x1ac to -1 and the words +0x1b0 to +0x1be to 0; and the dwords +0x1d7, +0x1df and +0x1e7 to 10.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#running-a-script",
+      "verified": {
+        "bytes": "0004b3c6+364",
+        "sha1": "dc1a70d050a4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004b532",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_BlendRange",
+      "description": "(ignored, colour, percent, count, first, from, to) in stack order, callee-cleaned, percent, count and first taken as bytes (percent signed): with k = (percent << 8) / 100, for each index from first to first + count inclusive, stores in to's colours (+8) from's colour at that index blended toward colour, each of the three channels colour's + ((k * (channel - colour's)) shifted right 8 as unsigned), the three ORed together at bits 0, 8 and 16, masked to 24 bits and ORed with 0x1000000. A channel below colour's makes a negative product, whose unsigned shift sets bits above its own channel.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0004b532+291",
+        "sha1": "f76e7ed882ed",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0004b658",
       "binary": "ES1GO",
       "type": "function",
@@ -4392,6 +4811,51 @@
         "sha1": "e95aec317a62",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0004b713",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Resource_LoadPalette",
+      "description": "(path), callee-cleaned: Resource_LoadPath's code: opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), closes and destroys the stream and returns the item. es2_xref finds calls from 0003950a and from TtmScript_RunPage's case for the .TTM command 0xf05f, which loads a palette with it.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0004b713+68",
+        "sha1": "7f5df6d4208a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004b79b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Resource_LoadBitmap",
+      "description": "(path), callee-cleaned: Resource_LoadPath's code: opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), closes and destroys the stream and returns the item. es2_xref finds calls from 000395a0 and from TtmScript_RunPage's case for the .TTM command 0xf01f, which loads a screen bitmap with it.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0004b79b+68",
+        "sha1": "948199eb5401",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004b7df",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Resource_LoadBitmapArray",
+      "description": "(path), callee-cleaned: Resource_LoadPath's code: opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), closes and destroys the stream and returns the item. es2_xref finds 27 calls, among them TtmScript_RunPage's case for the .TTM command 0xf02f, which loads a bitmap array with it.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0004b7df+68",
+        "sha1": "d2645886b209",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -6453,6 +6917,21 @@
       }
     },
     {
+      "address": "0005343c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBitmapArray_Dtor",
+      "description": "(array, flags): returns for none; otherwise stores GLBitmapArray's vtable 00087002, destroys each of the count +4 bitmaps of the table +8 that is not 0 through its +0x1c slot with 3, frees the table, and deletes the array when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0005343c+145",
+        "sha1": "3865bb36c120",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000534d0",
       "binary": "ES1GO",
       "type": "function",
@@ -8436,12 +8915,27 @@
       }
     },
     {
+      "address": "0005a824",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLPalette_Dtor",
+      "description": "(palette, flags): returns for none; otherwise stores the vtable 000887be, frees the colours +8 when the word +4 is non-zero, frees each of the word +0xc's eight-byte records' first dword in the table +0x10 and then the table when +0xc is non-zero, stores the vtable 000887e6 and deletes the palette when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
+      "verified": {
+        "bytes": "0005a824+159",
+        "sha1": "477afa3ff34b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005a8e8",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Palette_UploadWhole",
-      "description": "(palette), callee-cleaned: the routine at 000865e4 with the palette's first entry +6, count +4 and colours +8, then Raster_SetColourRamps (000562f4) with its first ramp +0xe, ramp count +0xc, records +0x10 and +6. Callers found by es2_xref: 00048218, nine calls. The code of ES1DBSIM's Palette_UploadWhole (0006931c), relocated operands aside.",
+      "description": "(palette), callee-cleaned: the routine at 000865e4 with the palette's first entry +6, count +4 and colours +8, then Raster_SetColourRamps (000562f4) with its first ramp +0xe, ramp count +0xc, records +0x10 and +6. Callers found by es2_xref: TtmScript_RunPage (00048218), nine calls. The code of ES1DBSIM's Palette_UploadWhole (0006931c), relocated operands aside.",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-colour-ramps",
       "verified": {
         "bytes": "0005a8e8+102",

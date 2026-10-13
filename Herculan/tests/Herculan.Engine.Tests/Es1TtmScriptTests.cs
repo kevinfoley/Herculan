@@ -42,6 +42,34 @@ public class Es1TtmScriptTests {
 		}
 	}
 
+	/// <summary>
+	/// The 123 scripts hold 33 distinct opcodes, and every command but three is one the shell's interpreter has a case for:
+	/// <c>IINTRO.TTM</c>'s font select and load and <c>CREDIT_A.TTM</c>'s <c>0xf10f</c>, which it steps over.
+	/// </summary>
+	[Fact]
+	public void EveryRetailOpcodeButThreeCommandsIsOneTheShellDispatches() {
+		if (Shell.Value is not { } shell || Sim.Value is not { } sim) {
+			return;
+		}
+
+		var opcodes = new SortedSet<ushort>();
+		var stepped = new List<string>();
+		foreach (var (e, archive) in shell.Select(e => (e, "SHELL0")).Concat(sim.Select(e => (e, "SIMVOL0"))).Where(x => HasExtension(x.e, ".TTM"))) {
+			var ttm = new Es1TtmScriptTransformer().Parse(e.RawBytes)!;
+			var pages = Es1TtmScriptTransformer.ReadPages(ttm.Script!, ttm.PageCount!.Value);
+			Assert.NotNull(pages);
+			foreach (var c in pages.SelectMany(page => page)) {
+				opcodes.Add(c.Opcode);
+				if (!Es1TtmOpcodes.Dispatched.Contains(c.Opcode)) {
+					stepped.Add($"{archive} {e.FileName!.Trim().ToUpperInvariant()} {c.Opcode:x4} {c.Text}");
+				}
+			}
+		}
+
+		Assert.Equal(33, opcodes.Count);
+		Assert.Equal(["SHELL0 IINTRO.TTM 1071 ", "SHELL0 IINTRO.TTM f04f IFONT_01.FNT", "SHELL0 CREDIT_A.TTM f10f producer"], stepped);
+	}
+
 	/// <summary><c>C0_BRD.TTM</c>, walked by hand: four pages in 128 unpacked bytes, and three tags.</summary>
 	[Fact]
 	public void TheBriefingRoomScriptReadsAsWalkedByHand() {
@@ -54,6 +82,16 @@ public class Es1TtmScriptTests {
 		Assert.Equal(((ushort)4, 128u), (ttm.PageCount!.Value, ttm.UnpackedLength!.Value));
 		Assert.Equal([(1, "pos 1"), (2, "pos 2"), (3, "nothing")],
 			Es1TtmScriptTransformer.ReadTags(ttm.Chunks[3].Children[0].Content)!.Select(t => ((int)t.Id, t.Name)));
+
+		var pages = Es1TtmScriptTransformer.ReadPages(ttm.Script!, 4)!;
+		Assert.Equal([0x1051, 0xf02f, 0x5005, 0x5005, 0x0ff0], pages[0].Select(c => (int)c.Opcode));
+		Assert.Equal("c0_brd.BMP", pages[0][1].Text);
+		Assert.Equal([20, 20, 20, 0, 0], pages[0][2].Arguments.Select(a => (int)a));
+		Assert.Equal([1, 2, 3, 0xffff, 0xffff], pages[0][3].Arguments.Select(a => (int)a));
+		Assert.Equal([0x1111, 0xa504, 0xa504, 0x4204, 0x0110, 0x0ff0], pages[1].Select(c => (int)c.Opcode));
+		Assert.Equal([0, 76, 2, 0], pages[1][1].Arguments.Select(a => (int)a));
+		Assert.Equal([0x1111, 0x0110, 0x0ff0], pages[3].Select(c => (int)c.Opcode));
+		Assert.Equal([0, 44, 82, 120], pages.Select(p => p[0].Offset));
 	}
 
 	/// <summary>A run control of <c>0x80</c> still takes its value byte, and a literal control of 0 takes none.</summary>

@@ -106,7 +106,7 @@ The sound names are entries 10 and 11 of the shell's table at `000828c0` ([the s
 
 ## Open
 
-- **Open:** what `0003c1b7` is, which screen change each of the ten sites comes before, and what the tests of `0007fcd7` at `00012a67`, `0003c22d` and `0003ca1c` decide; where the palette `0007fcd0` comes from.
+- **Open:** what `0003c1b7` is, which screen change each of the ten sites comes before, and what the tests of `0007fcd7` at `00012a67`, `0003c22d` and `0003ca1c` decide; which store of the palette `0007fcd0` comes before the play: a search of the disassembly finds `0003950a` storing one it loads with `Resource_LoadPalette`, and the `.TTM` commands `0x1061` and `0xf05f` store the selected one ([the commands](ttm-scripts.md#the-commands)).
 - **Open:** what `0005afa8` puts in the background, and what `00051c40` draws with the full-screen rectangle after the last frame; what the display object's `+0x30`, `+0x34` and `+0x38` are and what `000865f0` and `000865f4` do with them; what `000209e0` does with `0007fcfc`.
 - **Open:** what the clock `0007e6fc` counts, for mode 0's ticks a frame; `es2_xref.py` finds both calls to `Anm_Play` passing mode 1.
 - **Open:** the header's fields the player does not read, the 128 bytes at `0x80` and the 1,024 at `0x100`, the page table's and page header's byte counts, a record's first byte and its extra bytes; and what reads the player's `+0x10`, which the functions on this page set and do not read.
