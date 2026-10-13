@@ -9725,7 +9725,13 @@
       "confidence": "high",
       "name": "GLCursor_GetClassTag",
       "description": "Returns 0x28000b, callee-cleaned (RET 4): slot +4 of the GLCursor vtable 00086e4a. No Ghidra function starts here.",
-      "source": "ES1GO capstone disassembly at 000663e8 and the vtable at 00086e4a"
+      "source": "ES1GO capstone disassembly at 000663e8 and the vtable at 00086e4a",
+      "verified": {
+        "bytes": "000663e8+8",
+        "sha1": "90710626838d",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000663f0",

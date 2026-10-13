@@ -12056,7 +12056,13 @@
       "confidence": "high",
       "name": "GLCursor_GetClassTag",
       "description": "Returns 0x28000b, callee-cleaned (RET 4): slot +4 of the GLCursor vtable 0009b672. No Ghidra function starts here.",
-      "source": "ES1DBSIM image bytes at 0007dca0 (b8 0b 00 28 00 c2 04 00) and the vtable at 0009b672"
+      "source": "ES1DBSIM image bytes at 0007dca0 (b8 0b 00 28 00 c2 04 00) and the vtable at 0009b672",
+      "verified": {
+        "bytes": "0007dca0+8",
+        "sha1": "90710626838d",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0007dca8",
