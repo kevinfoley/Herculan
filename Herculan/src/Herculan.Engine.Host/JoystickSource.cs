@@ -57,9 +57,14 @@ sealed class JoystickSource : IJoystickSource {
 	// Set when Muted comes down, and cleared once the device holds no button: see Muted.
 	private bool _awaitingRelease;
 
-	private JoystickSource(IInputContext input, JoystickMapFile file, bool probe) {
+	/// <summary>Where <see cref="_file"/> is saved, or null when there is no data folder.</summary>
+	private readonly string? _mapPath;
+
+	private JoystickSource(IInputContext input, JoystickMapFile file, string? mapPath, bool probe) {
 		_input = input;
 		_file = file;
+		_mapPath = mapPath;
+		PersistGamepadControls();
 		_probe = probe;
 
 		if (probe) {
@@ -77,12 +82,17 @@ sealed class JoystickSource : IJoystickSource {
 	/// a following frame, and until then <see cref="Capabilities"/> reads
 	/// <see cref="JoystickCapabilities.None"/>.</para>
 	/// </summary>
-	public static JoystickSource Open(IInputContext input, string? dataDirectory, bool probe) =>
-		new(input,
-			dataDirectory is null
-				? new JoystickMapFile()
-				: JoystickMapFile.Load(CaseInsensitivePath.Combine(dataDirectory, JoystickMapFile.FileName)),
-			probe);
+	public static JoystickSource Open(IInputContext input, string? dataDirectory, bool probe) {
+		string? mapPath = dataDirectory is null ? null : CaseInsensitivePath.Combine(dataDirectory, JoystickMapFile.FileName);
+		return new(input, mapPath is null ? new JoystickMapFile() : JoystickMapFile.Load(mapPath), mapPath, probe);
+	}
+
+	/// <summary>
+	/// What each control does in place of <c>prefs.cfg</c>'s CONTROLS settings
+	/// (<see cref="Content.SimulatorPreferences.ControlsOverride"/>): the file's gamepad settings while the device being
+	/// read is a gamepad, and null otherwise.
+	/// </summary>
+	public GamepadControls? ControlsOverride => Device is { IsGamepad: true } ? _file.Gamepad : null;
 
 	/// <summary>
 	/// The device being read: the first connected one the file has a map for, otherwise the first
@@ -159,6 +169,7 @@ sealed class JoystickSource : IJoystickSource {
 	public void Configure(JoystickMapFile file) {
 		_file = file;
 		_saved = null;
+		PersistGamepadControls();
 		_derived = null;
 		_device = null;
 		_announced = false;
@@ -275,6 +286,17 @@ sealed class JoystickSource : IJoystickSource {
 					? " — parked at a stop, so a lever rather than a self-centring control"
 					: string.Empty);
 		}
+	}
+
+	// The CONTROLS panel's DONE saves the gamepad's settings by writing the whole file, its other sections kept.
+	private void PersistGamepadControls() {
+		_file.Gamepad.Persist = _mapPath is null ? null : () => {
+			try {
+				_file.Save(_mapPath);
+			} catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
+				Console.Error.WriteLine($"Could not write {_mapPath}: {error.Message}");
+			}
+		};
 	}
 
 	/// <summary>Reports an axis that moved appreciably or a button that went down, once per change.</summary>

@@ -140,6 +140,7 @@ controller.detect_axis         Move the control you want as far as it goes.
 controller.detect_hat          Push the hat you want in any direction.
 controller.detect_button       Press the button you want, or pull the trigger you want.
 controller.invert_throttle_tip For a throttle lever: with the lever at idle, Game reads should show a positive number. Tick Invert if it shows a negative one.
+controller.invert_throttle_gamepad_tip  On a gamepad this is the right stick's up and down. Tick Invert to reverse which way it aims a HERC's turret and pitches a Razor.
 controller.pressed             Pressed
 controller.released            Released
 controller.centred             Centred
@@ -154,7 +155,8 @@ controller.hat_diagonals       Hat diagonals
 controller.hat_diagonals_tip   A hat pushed diagonally counts as its two directions. The original game ignores a diagonal.
 controller.centre_idle         Centre-idle throttle
 controller.centre_idle_tip     The middle of the throttle's travel is idle, forward of it is forward and back of it is reverse. The original game reads the throttle from idle at one end to full at the other, and CHANGE DIRECTION chooses forward or reverse.
-controller.actions_note        This window sets which parts of your device the game uses. What each one does (steering or aiming, FIRE, TARGET and so on) is set in a mission: press F12 for Preferences, then CONTROLS. The settings are saved to data\herculan-joystick.cfg, which the original game does not read.
+controller.centre_idle_gamepad_tip      Only for a joystick's throttle lever. A gamepad's left stick moves the throttle up and down and leaves it where it is, so this does nothing with one.
+controller.actions_note        This window sets which parts of your device the game uses. What each one does (steering or aiming, FIRE, TARGET and so on) is set in a mission: press F12 for Preferences, then CONTROLS. With a gamepad, the JOYSTICK, THROTTLE, RUDDER and HAT rows there are set to suit it, and its button choices are kept apart from a joystick's. The settings are saved to data\herculan-joystick.cfg, which the original game does not read.
 controller.defaults            Defaults
 controller.no_data_folder      There is no data folder to save the settings in.
 disc_prompt.message            Choose the Earthsiege 2 disc folder, such as the CD drive or a copy of the disc. It is written to the install's data\{0}, which the original game reads too, and the front end restarts.

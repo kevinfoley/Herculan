@@ -130,6 +130,35 @@ public sealed record JoystickDeviceMap {
 	}
 
 	/// <summary>
+	/// The map for a gamepad, read in GLFW's standard layout (docs/herculan/joystick-config.md, "Gamepads"), made to go
+	/// with <see cref="GamepadControls"/>' axis rows: the left stick in the stick slots, the right stick's X in the rudder
+	/// slot and its Y in the throttle slot, the d-pad as the hat, and BUTTON 1-8 on the right trigger, A, B, X, Y, the
+	/// left and right bumpers and the right stick's click. Back and Start are left out of the eight.
+	///
+	/// <para>The throttle slot is inverted, and retail flips that slot's sign in a RAZOR alone, so the right stick's up and
+	/// down work a walker's turret and a RAZOR's nose in opposite senses (docs/herculan/joystick-config.md, "A gamepad's
+	/// own controls").</para>
+	/// </summary>
+	public static JoystickDeviceMap ForGamepad() => new() {
+		StickXAxis = 0,
+		StickYAxis = 1,
+		ThrottleAxis = 3,
+		RudderAxis = 2,
+		InvertThrottle = true,
+		HatIndex = 0,
+		Buttons = [
+			JoystickButtonSource.Axis(5, 1),
+			JoystickButtonSource.Button(0),
+			JoystickButtonSource.Button(1),
+			JoystickButtonSource.Button(2),
+			JoystickButtonSource.Button(3),
+			JoystickButtonSource.Button(4),
+			JoystickButtonSource.Button(5),
+			JoystickButtonSource.Button(10),
+		],
+	};
+
+	/// <summary>
 	/// What <c>Input_QueryCapabilities</c> would report for a device read through this map. The
 	/// CONTROLS panel greys its rows against it, so an unmapped throttle greys the THROTTLE row
 	/// exactly as a stick without one does in retail.

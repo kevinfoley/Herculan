@@ -9,7 +9,7 @@ namespace Herculan.Engine.Input;
 /// devices"). This engine's own file; retail never reads it.
 ///
 /// <para>Each map is an INI section. <c>[Gamepad]</c> serves every gamepad, since GLFW reads all of them in one
-/// layout. <c>[Joystick &lt;GUID&gt;]</c> serves one model of joystick, by the GUID GLFW gives it, and <c>[Joystick]</c>
+/// layout, and also carries what each control does with one (<see cref="Gamepad"/>). <c>[Joystick &lt;GUID&gt;]</c> serves one model of joystick, by the GUID GLFW gives it, and <c>[Joystick]</c>
 /// any joystick without a section of its own, which is also the one section a file written before per-device sections
 /// has.</para>
 /// </summary>
@@ -24,6 +24,9 @@ public sealed class JoystickMapFile {
 
 	/// <summary>A section's map, and the name of the device it was saved from, kept so the file stays readable.</summary>
 	private sealed record Entry(string Section, JoystickDeviceMap Map, string? DeviceName);
+
+	/// <summary>What each control does while a gamepad is in use, from <c>[Gamepad]</c>, or the defaults.</summary>
+	public GamepadControls Gamepad { get; private set; } = new();
 
 	/// <summary>Reads the file; one that is missing or unreadable is empty.</summary>
 	public static JoystickMapFile Load(string path) {
@@ -43,6 +46,9 @@ public sealed class JoystickMapFile {
 			var values = IniSection.Read(lines, section);
 			values.TryGetValue("name", out string? name);
 			file._sections[Normalise(section)] = new Entry(Normalise(section), JoystickDeviceMap.FromValues(values), name);
+			if (Normalise(section) == GamepadSection) {
+				file.Gamepad = GamepadControls.FromValues(values);
+			}
 		}
 
 		return file;
@@ -75,6 +81,11 @@ public sealed class JoystickMapFile {
 
 	/// <summary>Writes every section, gamepads first, then the shared joystick section, then each model's.</summary>
 	public void Save(string path) {
+		// Gamepad actions changed with no gamepad map saved yet: the section they go in, with the map it implies.
+		if (!Gamepad.IsDefault && !_sections.ContainsKey(GamepadSection)) {
+			_sections[GamepadSection] = new Entry(GamepadSection, JoystickDeviceMap.ForGamepad(), null);
+		}
+
 		var text = new StringBuilder();
 		text.AppendLine(";; Herculan's own file. The simulator's own prefs.cfg still says what each");
 		text.AppendLine(";; control DOES; this says which piece of hardware each control IS, which is");
@@ -94,6 +105,10 @@ public sealed class JoystickMapFile {
 			}
 
 			entry.Map.WriteValues(text);
+			if (entry.Section == GamepadSection) {
+				text.AppendLine();
+				Gamepad.WriteValues(text);
+			}
 		}
 
 		File.WriteAllText(path, text.ToString());

@@ -140,6 +140,7 @@ controller.detect_axis         Bougez la commande voulue jusqu'en butée.
 controller.detect_hat          Poussez le chapeau voulu dans n'importe quelle direction.
 controller.detect_button       Appuyez sur le bouton voulu, ou tirez la gâchette voulue.
 controller.invert_throttle_tip Pour une manette des gaz : manette au ralenti, « Lu par le jeu » doit afficher un nombre positif. Cochez Inverser s'il est négatif.
+controller.invert_throttle_gamepad_tip  Sur une manette de jeu, c'est le stick droit vers le haut et le bas. Cochez Inverser pour changer le sens dans lequel il oriente la tourelle d'un HERC et incline un Razor.
 controller.pressed             Appuyé
 controller.released            Relâché
 controller.centred             Centré
@@ -154,7 +155,8 @@ controller.hat_diagonals       Diagonales du chapeau
 controller.hat_diagonals_tip   Un chapeau poussé en diagonale compte comme ses deux directions. Le jeu original ignore une diagonale.
 controller.centre_idle         Ralenti au centre
 controller.centre_idle_tip     Le milieu de la course de la manette des gaz est le ralenti, en avant c'est la marche avant et en arrière la marche arrière. Le jeu original lit la manette des gaz du ralenti à une extrémité jusqu'au plein régime à l'autre, et CHANGE DIRECTION choisit la marche avant ou arrière.
-controller.actions_note        Cette fenêtre choisit les parties de votre périphérique que le jeu utilise. Ce que fait chacune (diriger ou viser, FIRE, TARGET, etc.) se règle en mission : appuyez sur F12 pour les préférences, puis CONTROLS. Les réglages sont enregistrés dans data\herculan-joystick.cfg, que le jeu original ne lit pas.
+controller.centre_idle_gamepad_tip      Seulement pour la manette des gaz d'un joystick. Le stick gauche d'une manette de jeu monte et baisse les gaz et les laisse où ils sont, donc ceci n'a aucun effet avec elle.
+controller.actions_note        Cette fenêtre choisit les parties de votre périphérique que le jeu utilise. Ce que fait chacune (diriger ou viser, FIRE, TARGET, etc.) se règle en mission : appuyez sur F12 pour les préférences, puis CONTROLS. Avec une manette de jeu, les lignes JOYSTICK, THROTTLE, RUDDER et HAT y sont réglées pour elle, et ses choix de boutons sont gardés à part de ceux d'un joystick. Les réglages sont enregistrés dans data\herculan-joystick.cfg, que le jeu original ne lit pas.
 controller.defaults            Par défaut
 controller.no_data_folder      Il n'y a pas de dossier data où enregistrer les réglages.
 disc_prompt.message            Choisissez le dossier du disque d'Earthsiege 2, comme le lecteur de CD ou une copie du disque. Il est enregistré dans le fichier data\{0} de l'installation, que le jeu original lit aussi, et l'interface de jeu redémarre.

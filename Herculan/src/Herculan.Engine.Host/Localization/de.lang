@@ -140,6 +140,7 @@ controller.detect_axis         Bewegen Sie das gewünschte Steuerelement bis zum
 controller.detect_hat          Drücken Sie den gewünschten Coolie-Hat in eine beliebige Richtung.
 controller.detect_button       Drücken Sie die gewünschte Taste oder ziehen Sie den gewünschten Trigger.
 controller.invert_throttle_tip Für einen Schubhebel: Steht der Hebel im Leerlauf, sollte „Spiel liest“ eine positive Zahl zeigen. Zeigt es eine negative, setzen Sie „Umkehren“.
+controller.invert_throttle_gamepad_tip  Bei einem Gamepad ist dies der rechte Stick nach oben und unten. Setzen Sie „Umkehren“, um umzukehren, in welche Richtung er den Turm eines HERC richtet und eine Razor neigt.
 controller.pressed             Gedrückt
 controller.released            Losgelassen
 controller.centred             Mitte
@@ -154,7 +155,8 @@ controller.hat_diagonals       Coolie-Hat-Diagonalen
 controller.hat_diagonals_tip   Ein diagonal gedrückter Coolie-Hat zählt als seine beiden Richtungen. Das Originalspiel ignoriert eine Diagonale.
 controller.centre_idle         Leerlauf in der Mitte
 controller.centre_idle_tip     Die Mitte des Schubreglerwegs ist Leerlauf, davor ist vorwärts und dahinter rückwärts. Das Originalspiel liest den Schubregler von Leerlauf am einen Ende bis Vollgas am anderen, und CHANGE DIRECTION wählt vorwärts oder rückwärts.
-controller.actions_note        Dieses Fenster legt fest, welche Teile Ihres Geräts das Spiel verwendet. Was jedes davon tut (Lenken oder Zielen, FIRE, TARGET usw.), wird in einer Mission eingestellt: Drücken Sie F12 für die Einstellungen, dann CONTROLS. Die Einstellungen werden in data\herculan-joystick.cfg gespeichert, die das Originalspiel nicht liest.
+controller.centre_idle_gamepad_tip      Nur für den Schubhebel eines Joysticks. Der linke Stick eines Gamepads bewegt den Schub hoch und runter und lässt ihn dort, wo er ist, daher bewirkt dies damit nichts.
+controller.actions_note        Dieses Fenster legt fest, welche Teile Ihres Geräts das Spiel verwendet. Was jedes davon tut (Lenken oder Zielen, FIRE, TARGET usw.), wird in einer Mission eingestellt: Drücken Sie F12 für die Einstellungen, dann CONTROLS. Mit einem Gamepad sind die Zeilen JOYSTICK, THROTTLE, RUDDER und HAT dort passend festgelegt, und seine Tastenbelegung wird getrennt von der eines Joysticks gespeichert. Die Einstellungen werden in data\herculan-joystick.cfg gespeichert, die das Originalspiel nicht liest.
 controller.defaults            Standard
 controller.no_data_folder      Es gibt keinen data-Ordner, in dem die Einstellungen gespeichert werden können.
 disc_prompt.message            Wählen Sie den Ordner des Earthsiege-2-Datenträgers, etwa das CD-Laufwerk oder eine Kopie der CD. Er wird in data\{0} der Installation gespeichert, die auch das Originalspiel liest, und das Spielmenü startet neu.

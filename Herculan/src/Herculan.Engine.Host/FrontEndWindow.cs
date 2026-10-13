@@ -29,6 +29,8 @@ sealed class FrontEndWindow : IDisposable {
 	private readonly HostMenuBar _menuBar;
 	private readonly string _imguiFontPath;
 	private readonly string? _screenshotPath;
+	private readonly GamepadHostButtons _padButtons = new();
+	private IInputContext? _input;
 	private ScaledImGui? _imgui;
 	private int _framesRendered;
 
@@ -100,6 +102,7 @@ sealed class FrontEndWindow : IDisposable {
 		_imgui = new ScaledImGui(gl, _window, input, _imguiFontPath);
 		Mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
 		Keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
+		_input = input;
 		_menuBar.Controller.Attach(input);
 	}
 
@@ -143,7 +146,19 @@ sealed class FrontEndWindow : IDisposable {
 		}
 	}
 
-	public void BeginFrame(double delta) => _imgui?.Update((float)delta);
+	/// <summary>
+	/// The top of a frame: ImGui's, and a gamepad's Back, which raises the menu bar or backs out of it as [Shift+Esc]
+	/// does (<see cref="GamepadHostButtons"/>). The front end has no pause, so Start does nothing here.
+	/// </summary>
+	public void BeginFrame(double delta) {
+		_imgui?.Update((float)delta);
+		if (_input != null && _screenshotPath == null) {
+			_padButtons.Update(_input);
+			if (_padButtons.BackPressed) {
+				MenuBarEscape();
+			}
+		}
+	}
 
 	/// <summary>The menu bar and its windows over whatever the frame drew, never in a <c>--screenshot</c> capture.</summary>
 	public void DrawMenuBar() {

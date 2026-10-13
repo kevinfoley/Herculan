@@ -75,8 +75,17 @@ public sealed class SimulatorPreferences {
 	/// </summary>
 	public static SimulatorPreferences Defaults() => new(new Prefs().Options);
 
+	/// <summary>
+	/// CONTROLS settings read and written in place of the file's, which the file keeps, while set: a gamepad's, when
+	/// it is the device being read. This engine's own; the host sets it every frame. See <see cref="IControlsOverride"/>.
+	/// </summary>
+	public IControlsOverride? ControlsOverride { get; set; }
+
 	/// <summary>Option <paramref name="index"/>'s byte, or 0 when it is outside the array.</summary>
-	public byte this[int index] => index >= 0 && index < _options.Length ? _options[index] : (byte)0;
+	public byte this[int index] =>
+		ControlsOverride is { } controls && controls.Covers(index) ? controls[index]
+		: index >= 0 && index < _options.Length ? _options[index]
+		: (byte)0;
 
 	/// <summary>
 	/// Whether any option has been written since the file was read. The original tracks the same thing
@@ -136,7 +145,9 @@ public sealed class SimulatorPreferences {
 			return;
 		}
 
-		if (_options[index] != value) {
+		if (ControlsOverride is { } controls && controls.Covers(index)) {
+			controls[index] = value;
+		} else if (_options[index] != value) {
 			_options[index] = value;
 			Changed = true;
 		}
@@ -274,7 +285,17 @@ public sealed class SimulatorPreferences {
 	public bool Save(IReadOnlyList<int> indices) {
 		ArgumentNullException.ThrowIfNull(indices);
 
-		if (!SaveEnabled || SourceDirectory is not { Length: > 0 } directory) {
+		if (!SaveEnabled) {
+			return false;
+		}
+
+		// Options standing in for the file's are saved where they are kept, and the file keeps its own.
+		if (ControlsOverride is { } controls && indices.Any(controls.Covers)) {
+			controls.Save();
+			indices = indices.Where(index => !controls.Covers(index)).ToArray();
+		}
+
+		if (SourceDirectory is not { Length: > 0 } directory) {
 			return false;
 		}
 

@@ -259,8 +259,16 @@ public sealed class ControlsPanel {
 			: AlertPanelLayout.WidgetState.Option;
 	}
 
-	// The rows ControlsPanel_Run puts in state 2 before its loop starts.
-	private bool IsGreyed(int index) => index < ControlsPanelLayout.RowCount && !Capabilities.RowEnabled(index);
+	// The rows ControlsPanel_Run puts in state 2 before its loop starts, and the axis rows of settings that fix them.
+	private bool IsGreyed(int index) =>
+		index < ControlsPanelLayout.RowCount
+		&& (!Capabilities.RowEnabled(index) || index < ControlsPanelLayout.AxisRowCount && AxisRowsFixed);
+
+	/// <summary>
+	/// Whether the axis rows are fixed by settings standing in for the file's, a gamepad's
+	/// (<see cref="SimulatorPreferences.ControlsOverride"/>). They still read out but take no click. This engine's own.
+	/// </summary>
+	private bool AxisRowsFixed => _preferences.ControlsOverride is { AxisRowsFixed: true } controls && controls.Covers(_optionBase);
 
 	// ControlsPanel_OnClick's and ControlsPanel_HandleEvent's highlight move: the row that had it back to state
 	// 3, the new one to 0.
@@ -353,7 +361,7 @@ public sealed class ControlsPanel {
 	/// list back to showing nothing, which a button row does not.
 	/// </summary>
 	private void CycleAxis(int row, bool rightButton) {
-		if (Capabilities.RowEnabled(row)) {
+		if (Capabilities.RowEnabled(row) && !AxisRowsFixed) {
 			_preferences.Step(_optionBase + row, AxisWordCount, forward: !rightButton);
 		}
 
@@ -400,6 +408,23 @@ public sealed class ControlsPanel {
 	/// panel ends up showing.</para>
 	/// </summary>
 	private void ApplyRecommended() {
+		// Settings standing in for the file's recommend their own defaults, written as they are: the gamepad's
+		// NEXT WEAPON on a RAZOR's BUTTON 3 is not on that row's list, and the detour above would turn it into TARGET.
+		if (_preferences.ControlsOverride is { } controls && controls.Covers(_optionBase)) {
+			for (int row = 0; row < ControlsPanelLayout.RowCount; row++) {
+				_preferences.Set(_optionBase + row, controls.Recommended(_optionBase + row));
+			}
+
+			for (int buttonRow = 0; buttonRow < _slots.Length; buttonRow++) {
+				int slot = Array.IndexOf(ActionsFor(buttonRow),
+					_preferences[_optionBase + ControlsPanelLayout.AxisRowCount + buttonRow]);
+				_slots[buttonRow] = slot < 0 ? 0 : slot;
+			}
+
+			RefreshValues();
+			return;
+		}
+
 		var recommended = IsRazor ? RazorRecommended : HercRecommended;
 
 		for (int row = 0; row < ControlsPanelLayout.RowCount; row++) {

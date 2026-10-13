@@ -47,7 +47,13 @@ sealed class SimulatorHost : IDisposable {
 	private readonly HostMenuBar _menuBar;
 	private readonly DeveloperKeys _developerKeys;
 
+	private readonly GamepadHostButtons _padButtons = new();
+
+	// The key a gamepad's Start is holding down in the live keyboard, kept from the press until Start is let go.
+	private Key? _startKey;
+
 	// Built once the window has a GL context.
+	private IInputContext? _inputContext;
 	private ScaledImGui? _imgui;
 	private JoystickSource? _joystick;
 	private SceneUploads? _uploads;
@@ -269,6 +275,7 @@ sealed class SimulatorHost : IDisposable {
 		_cockpit = new CockpitRenderer(gl, _art, _view, _displays, _textures, _passes);
 
 		_input.Attach(input);
+		_inputContext = input;
 		// Nothing is read off the device yet: GLFW publishes a stick's shape a frame late (see JoystickSource), so
 		// what it can do is announced on the first frame that knows.
 		_joystick = JoystickSource.Open(input, _start.DataDirectory, _options.ProbeJoystick);
@@ -298,12 +305,16 @@ sealed class SimulatorHost : IDisposable {
 
 		_imgui?.Update((float)deltaSeconds);
 
+		// A gamepad's own CONTROLS settings stand in for prefs.cfg's while it is the stick being read.
+		_preferences.ControlsOverride = _joystick?.ControlsOverride;
+
 		if (_frame.Held) {
 			return;
 		}
 
 		_joystick?.Announce(_frame.Pilot.Bindings, _panels.Controls, _options.WriteJoystickMap, _start.DataDirectory);
 
+		ReadGamepadButtons();
 		_input.LiveKeys?.AdvanceRepeat(deltaSeconds);
 		_frame.BeginFrame(deltaSeconds);
 		_windowKeys.ReadManualKey(_displays.FlashCommHasKeyboard, _panels.AnyOpen);
@@ -322,6 +333,31 @@ sealed class SimulatorHost : IDisposable {
 		// What the debug panel reports about the walk — see DebugProbes.Sample for why it is measured
 		// every frame rather than only while the panel is up.
 		_debugProbes.Sample(_view.PilotMech);
+	}
+
+	// A gamepad's Back raises the menu bar or backs out of it, as [Shift+Esc] does. Its Start is [P], which pauses, or
+	// with the pause panel up [Enter], which presses the panel's one button and resumes; the key is held in the live
+	// keyboard for as long as Start is, before the frame reads its keys, so the pause and a recording see the key
+	// itself. See GamepadHostButtons.
+	private void ReadGamepadButtons() {
+		if (_inputContext == null) {
+			return;
+		}
+
+		_padButtons.Update(_inputContext);
+		if (_padButtons.BackPressed && _options.ScreenshotPath == null && !_menuBar.BackOut()) {
+			_menuBar.Show();
+		}
+
+		if (_padButtons.StartPressed) {
+			_startKey = _panels.StatusAlert is { IsOpen: true, Status: StatusAlertPanel.PauseStatus } ? Key.Enter : Key.P;
+		} else if (!_padButtons.StartDown) {
+			_startKey = null;
+		}
+
+		if (_input.LiveKeys is { } liveKeys) {
+			liveKeys.HeldByHost = _startKey;
+		}
 	}
 
 	// TERRAIN TEXTURE, the one live preference the draw reads rather than the simulation (see

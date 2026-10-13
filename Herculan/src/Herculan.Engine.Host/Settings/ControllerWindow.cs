@@ -134,7 +134,7 @@ sealed class ControllerWindow {
 				ImGui.SeparatorText(Text("controller.controls"));
 				ControlRows(device);
 				ImGui.SeparatorText(Text("controller.options"));
-				Options();
+				Options(device);
 			} else {
 				ImGui.TextWrapped(Text("controller.none_connected"));
 			}
@@ -290,8 +290,9 @@ sealed class ControllerWindow {
 			if (ImGui.Checkbox("##invert", ref invert)) {
 				_draft = WithInvert(row, invert);
 			}
+			// A gamepad's throttle slot is the right stick's up and down, which no lever reading applies to.
 			if (row == ThrottleRow) {
-				Tooltip("controller.invert_throttle_tip");
+				Tooltip(device.IsGamepad ? "controller.invert_throttle_gamepad_tip" : "controller.invert_throttle_tip");
 			}
 
 			ImGui.TableNextColumn();
@@ -340,8 +341,9 @@ sealed class ControllerWindow {
 		ImGui.EndTable();
 	}
 
-	// The map's options that are not a choice of input.
-	private void Options() {
+	// The map's options that are not a choice of input. Centre-idle reads a throttle lever, and a gamepad's controls
+	// read none (GamepadControls), so it is greyed for one.
+	private void Options(ControllerDevice device) {
 		int deadzone = _draft.Deadzone;
 		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.5f);
 		if (ImGui.SliderInt(Text("controller.deadzone") + "###deadzone", ref deadzone, 0, JoystickReading.RawFull - 1)) {
@@ -356,10 +358,12 @@ sealed class ControllerWindow {
 		Tooltip("controller.hat_diagonals_tip");
 
 		bool bipolar = _draft.BipolarThrottle;
+		ImGui.BeginDisabled(device.IsGamepad);
 		if (ImGui.Checkbox(Text("controller.centre_idle") + "###bipolar", ref bipolar)) {
 			_draft = _draft with { BipolarThrottle = bipolar };
 		}
-		Tooltip("controller.centre_idle_tip");
+		ImGui.EndDisabled();
+		Tooltip(device.IsGamepad ? "controller.centre_idle_gamepad_tip" : "controller.centre_idle_tip");
 	}
 
 	// A combo of "none" and each of the device's count inputs; the input chosen, or null when nothing was. An index the
@@ -395,7 +399,7 @@ sealed class ControllerWindow {
 
 			for (int i = 0; i < device.ButtonCount; i++) {
 				var button = JoystickButtonSource.Button(i);
-				if (ImGui.Selectable(SourceLabel(button), button == current)) {
+				if (!device.Reserved(i) && ImGui.Selectable(SourceLabel(button), button == current)) {
 					chosen = button;
 				}
 			}
@@ -466,7 +470,7 @@ sealed class ControllerWindow {
 			// A button row takes a new button press, or an axis moved far enough, toward the end it moved to.
 			int index = _detecting - FirstButtonRow;
 			for (int i = 0; i < device.ButtonCount && i < _restingButtons.Length; i++) {
-				if (device.Button(i) && !_restingButtons[i]) {
+				if (device.Button(i) && !_restingButtons[i] && !device.Reserved(i)) {
 					_draft = WithButton(index, JoystickButtonSource.Button(i));
 					_detecting = NotDetecting;
 					return;
@@ -596,8 +600,9 @@ sealed class ControllerWindow {
 		}
 	}
 
+	// Shown over a greyed item too, whose tooltip says why it is greyed.
 	private void Tooltip(string key) {
-		if (ImGui.IsItemHovered()) {
+		if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
 			ScaledImGui.Tooltip(Text(key));
 		}
 	}

@@ -91,6 +91,18 @@ sealed class ControllerDevice {
 		return index >= 0 && index < buttons.Count && buttons[index].Pressed;
 	}
 
+	/// <summary>A gamepad's Back and Start, buttons 6 and 7 of the standard layout.</summary>
+	public const int GamepadBack = 6;
+
+	/// <inheritdoc cref="GamepadBack"/>
+	public const int GamepadStart = 7;
+
+	/// <summary>
+	/// Whether button <paramref name="index"/> is kept off the eight the bindings name: a gamepad's Back and Start,
+	/// which are the host's own (<see cref="GamepadHostButtons"/>).
+	/// </summary>
+	public bool Reserved(int index) => IsGamepad && index is GamepadBack or GamepadStart;
+
 	/// <summary>Whether any button is held.</summary>
 	public bool AnyButton() {
 		for (int i = 0; i < ButtonCount; i++) {
@@ -173,7 +185,9 @@ sealed class ControllerDevice {
 	/// reported them (see <see cref="JoystickSource"/>).
 	/// </summary>
 	public JoystickDeviceMap? Defaults() =>
-		(AxisCount, ButtonCount, HatCount) is (0, 0, 0) ? null : JoystickDeviceMap.ForDevice(AxisCount, ButtonCount, HatCount);
+		IsGamepad ? JoystickDeviceMap.ForGamepad()
+		: (AxisCount, ButtonCount, HatCount) is (0, 0, 0) ? null
+		: JoystickDeviceMap.ForDevice(AxisCount, ButtonCount, HatCount);
 
 	/// <summary>
 	/// Silk's own eight-way hat position, cut back to the four the format has bytes for.
