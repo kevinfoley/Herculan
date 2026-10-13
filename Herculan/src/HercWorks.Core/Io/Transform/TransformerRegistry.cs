@@ -49,7 +49,12 @@ public static class TransformerRegistry {
 
 		// --- dbsim (various dirs) ---
 		new("Beam Data", e => NameIs(e, "BEAM.DAT"), () => new Dbsim.BeamDatFileTransformer()),
-		new("Scanline Clip Mask", e => ExtIs(e, FileType.Edg), () => new Dbsim.EdgeClipFileTransformer()),
+		// One format, three extensions: CockpitClipRegions_Load (0042dcf0) reads the per-view cockpit
+		// cutouts and the heads-down display's edg\HDDCLIP.EDG alike.
+		new("Clip Regions", e => ExtIs(e, FileType.Edg)
+				|| ExtIs(e, FileType.Hd0) || ExtIs(e, FileType.Hd1) || ExtIs(e, FileType.Hd2) || ExtIs(e, FileType.Hd3)
+				|| ExtIs(e, FileType.Ed0) || ExtIs(e, FileType.Ed1) || ExtIs(e, FileType.Ed2) || ExtIs(e, FileType.Ed3),
+			() => new Dbsim.ClipRegionFileTransformer()),
 		new("HUD Layout", e => ExtIs(e, FileType.Gau), () => new Dbsim.GauFileTransformer()),
 		new("Herc Collider", e => ExtIs(e, FileType.Col), () => new Dbsim.HercColliderTransformer()),
 		new("3D Model (DTS)", e => ExtIs(e, FileType.Dts), () => new Dbsim.DTSModelTransformer()),

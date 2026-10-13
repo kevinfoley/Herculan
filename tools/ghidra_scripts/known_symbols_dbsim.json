@@ -9033,8 +9033,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitClipRegions_Load",
-      "description": "Parser for the per-view .ED0-.ED3 / .HD0-.HD3 files (folder name built by overwriting index 2 of the 'edg'/'hdg' literals with a digit). Layout after the 9-byte VOL prefix: int16 rectCount, rectCount x {int16 y0, y1, x0, x1}; then int16 spanBlockCount, and per block {int16 firstRow, int16 rowCount, rowCount x {int16 xStart, int16 xEnd}}. Rects become type-0 region objects, span blocks type-2. Coordinates are shifted by the caller's (xShift,yShift) pair, which is (0,0) for the .HD* hi-res set and VideoMode_X/YCoordShift for the .DB*-era .ED* set. Output is a 0x204-byte block (int count + up to 128 region pointers). APOCA.HD0 reads cleanly: one full-width rect for rows 0-76 then a 235-row span block from row 77 whose spans narrow inward (the canopy frame). APOCA.HD1 is empty (rectCount=0, blockCount=0), which is why view 1 shows no 3D at all.",
-      "source": "cockpit rendering RE session"
+      "description": "CockpitClipRegions_Load(path, out, shift): reads a clip-region file through a VolRStream into the 0x204-byte block at out (int count, then up to 128 region pointers; no bound check against 128). shift is int[2] {xShift, yShift}. Callers found by es2_xref: CockpitViewManager_LoadViews (per-view .HD0-.HD3 / .ED0-.ED3) and HddDisplay_Ctor (edg\\hddclip). Layout after the 9-byte VOL prefix: int16 rectCount, rectCount x {int16 y0, y1, x0, x1}; int16 blockCount, blockCount x {int16 firstRow, int16 rowCount, rowCount x {int16 xStart, int16 xEnd}}; reading stops after the last block. Each rect becomes a 0x18-byte GLRectangleRegion (out stores obj+4: type 0 at +4, x0 +8, y0 +0xc, x1 +0x10, y1 +0x14), each coordinate shifted left by its axis's shift and, when that shift is nonzero, the inclusive ends y1/x1 get (1 << shift) - 1 added. Each span block becomes an 8-byte {int type 2, ptr data}, data a Mem_NewArray holding {int16 firstRow << yShift, int16 rowCount << yShift, then the pairs}; with yShift nonzero each file pair is written to its row and copied into the next one, and with xShift nonzero every pair becomes {xStart << xShift, (xEnd << xShift) + 1}. count = rects + blocks.",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "0042dcf0+798",
+        "sha1": "a00da6f123de",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0042e010",
