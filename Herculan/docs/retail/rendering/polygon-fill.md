@@ -1,6 +1,6 @@
 # Polygon fill and scan conversion
 
-VSHELL and DBSIM link the same 2D graphics code for filling a convex polygon: a winding check, a rectangle clipper, and a Bresenham scan converter that turns the outline into one span per row. VSHELL also carries an `int32` copy of the scan converter, which `hgrid.cpp` uses to walk the grid cells inside a polygon in a fixed order around a centre cell. Addresses are VSHELL's, with DBSIM's copy in parentheses where it has been identified.
+VSHELL and DBSIM link the same 2D graphics code for filling a convex polygon: a winding check, a rectangle clipper, and a Bresenham scan converter that turns the outline into one span per row. The same code fills [rectangles and ellipses](#rectangles-and-ellipses), and with brush mode 4 outlines them instead. VSHELL also carries an `int32` copy of the scan converter, which `hgrid.cpp` uses to walk the grid cells inside a polygon in a fixed order around a centre cell. Addresses are VSHELL's, with DBSIM's copy in parentheses where it has been identified.
 
 Points are `int32` `{x, y}` pairs, `y` growing downward. A span region is `int16`: the top row, the row count, then an `{x0, x1}` pair per row, `x0` the left end.
 
@@ -55,6 +55,45 @@ A crossing is always computed from the outside endpoint `a` toward the other end
 A shallow edge's value is the outermost pixel its Bresenham line puts on that row, where a pixel exactly halfway between two rows counts for the row farther from the outer endpoint. Its last row therefore reaches past its inner endpoint by up to half a row's run. The steep and diagonal edges are plain Bresenham with error `2dx − dy`, the steep loop stepping `x` when the error is not negative. The vertical and diagonal edges go through a computed jump into a run of unrolled stores just below `00457350` (DBSIM `004865e4`), one per row, each adding a fixed-point step to `x`.
 
 **Rows two edges share.** Where two edges meet, both write the vertex's row and the later one stands. The right chain is written from the top down, so at a right-chain vertex the lower edge's value stands. The left chain is written from the bottom up, so the upper edge's does.
+
+## Rectangles and ellipses
+
+**A rectangle or an ellipse is filled with the brush's colour, or, with brush mode 4, only its outline is drawn.** Both read the fill brush `{mode, colour}` at the clip block's `+0x228` and resolve its colour by [the brush colour](#the-brush-colour)'s top-byte rule. An outline is drawn with lines (`Raster_DrawLine`, `004838f8`) under a temporary pen `{0, colour}` at `+0x224`, the pen at `+0x224` being put back after. With mode 4, a polygon is drawn as a line loop in the same way (`Raster_DrawPolygonDispatch`, [the outline pass](dts-texture-binding.md#tssolidpoly--palette-index-unlit-fill-plus-outline)).
+
+### Rectangles
+
+`Raster_FillRect` (DBSIM `004865f8`), given an inclusive rect {*x0*, *y0*, *x1*, *y1*}, by the brush's mode:
+
+- **0** fills it with the colour through `g_RasterRoutines` slot 2; **6** remaps it through slot 3 with the brush's second field. The rect first moves by the block's translation, (`+0x20c` − `+0x21c`, `+0x210` − `+0x220`), when `+0x208` is set, and is clipped by the clip mode `+0x204`: 0 not at all, 1 to the block's rect at `+0x20c`, otherwise to each region of the block's list, from its last entry to its first: a rect region's intersection goes to the mode's routine, and a span region's intersection with the rect, as a span list, to slot 0 whatever the mode.
+- **4** draws four lines, the rect's edges, both ends included: (*x1*, *y0*) to (*x0*, *y0*), (*x0*, *y1*) to (*x0*, *y0*), (*x0*, *y1*) to (*x1*, *y1*) and (*x1*, *y0*) to (*x1*, *y1*). The lines move and clip as lines do.
+- Any other mode draws nothing.
+
+### Ellipses
+
+`Raster_DrawEllipse` (DBSIM `00488070`), given a rect, draws in modes 0 and 4 and does nothing in any other. The centre is (*cx*, *cy*) = ((*x0* + *x1*) >> 1, (*y0* + *y1*) >> 1) and the half-extents *a* = \|*x1* − *x0*\| >> 1 and *b* = \|*y1* − *y0*\| >> 1. With *a* = 0 it draws the line (*cx*, *cy* + *b*) to (*cx*, *cy* − *b*), with *b* = 0 the line (*cx* + *a*, *cy*) to (*cx* − *a*, *cy*), in either mode, under a temporary pen whose colour is the brush's and whose mode is the stack word the function never writes. Otherwise it writes a [span list](#span-lists) of 2*b* rows, the top row *b* above the centre, into a scratch buffer and fills it at (*cx*, *cy*), from this walk, all in `int32` with each division truncating toward zero:
+
+```
+a2 = a·a,  b2 = b·b
+x = 0,  y = b,  px = 0,  py = 2·a2·b
+d = a2/4 + b2 − a2·b
+while px < py:                       the flat part, x stepping every time
+    if d > 0:  emit(x, y);  y −= 1;  py −= 2·a2;  d −= py
+    x += 1;  px += 2·b2;  d += px + b2
+d += ((a2 − b2)·3/2 − (px + py)) / 2
+while y > 0:                          the steep part, y stepping every time
+    emit(x, y)
+    if d < 0:  x += 1;  px += 2·b2;  d += px
+    y −= 1;  py −= 2·a2;  d += a2 − py
+```
+
+`emit(x, y)` writes one span into row −*y* of the list and the same span into row *y* − 1, so the bottom half sits one row higher than the top half's mirror: the shape is 2*a* + 1 pixels wide and 2*b* rows tall, half a row above the centre. Every *y* from *b* down to 1 is emitted once.
+
+- **Mode 0** emits {−*x*, *x*} and fills the list once.
+- **Mode 4** sets the brush's mode to 0, runs the walk twice and fills the list after each run, then sets the mode back to 4. Each run keeps a second column *s*, 0 at the start. In the flat part an emit uses *s* and then sets it to *x* + 1; in the steep part an emit uses it, and each step of *x* sets it to the new *x*. The first run emits {−*x*, −*s*}, the ring's left side, and the second {*s*, *x*}, its right side: a ring one pixel thick, whose top and bottom rows are each one run straight across, both runs drawing the centre column.
+
+### Span lists
+
+A span list is an `int16` top row, an `int16` row count and an `int16` {*x0*, *x1*} pair per row. `Raster_FillSpanList` (DBSIM `00486928`), given one and an origin, copies it into a scratch list moved by the origin, and by the block's translation when `+0x208` is set, and fills it with the brush: mode 0 through `g_RasterRoutines` slot 0 with the colour, mode 6 remapping with the brush's second field; any other mode draws nothing. It clips by the clip mode as `Raster_FillRect` does, cutting the list to a rect or intersecting it with a span region.
 
 ## Walking a polygon's cells
 

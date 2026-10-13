@@ -3502,7 +3502,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_DrawToCockpit",
-      "description": "(offset, rect, which) in stack order, callee-cleaned: copies a widget's rect between the display's two pages. Returns 0 unless CockpitView_RectCornerVisible(rect) is 1 and the byte +0x18 of the view manager at CockpitViewManagerPublished (000bc5a0) is 0. The GL display at 000bdd28 holds the pages at +0x88 and +0x8c: which = 1 copies from +0x8c to +0x88, and returns 0 while 000b5bca is set; any other value copies from +0x88 to +0x8c. Under Cockpit_PushCanvasContext it stores the source page at the display's +0x38 and the draw page at +0x3c, each also to 00098dd6 / 00098dda and through g_RasterRoutines slots 16 and 17 (0009df14, 0009df18); copies the type-0 region {rect} with 00066914 at the offset, 000b0dd4 when offset is null, between slot 31 (0009df50) and slot 30 (0009df4c); puts back the draw page it found, pops the context and returns 1. ES2's Widget_DrawToCockpit (DBSIM 0043122c) has these steps, tests the view manager's +0x1c, and adds a gate on Display_UseScrollWindow, the video-mode offsets 004d25da/004d25de and a one-pixel widening of the rect for scaled modes.",
+      "description": "(offset, rect, which) in stack order, callee-cleaned: copies a widget's rect between the display's two pages. Returns 0 unless CockpitView_RectCornerVisible(rect) is 1 and the byte +0x18 of the view manager at CockpitViewManagerPublished (000bc5a0) is 0. The GL display at 000bdd28 holds the pages at +0x88 and +0x8c: which = 1 copies from +0x8c to +0x88, and returns 0 while 000b5bca is set; any other value copies from +0x88 to +0x8c. Under Cockpit_PushCanvasContext it stores the source page at the display's +0x38 and the draw page at +0x3c, each also to 00098dd6 / 00098dda and through g_RasterRoutines slots 16 and 17 (0009df14, 0009df18); copies the type-0 region {rect} with Region_CopyBetweenPages (00066914) at the offset, 000b0dd4 when offset is null, between slot 31 (0009df50) and slot 30 (0009df4c); puts back the draw page it found, pops the context and returns 1. ES2's Widget_DrawToCockpit (DBSIM 0043122c) has these steps, tests the view manager's +0x1c, and adds a gate on Display_UseScrollWindow, the video-mode offsets 004d25da/004d25de and a one-pixel widening of the rect for scaled modes.",
       "source": "ES1DBSIM decompile at 0002b058, against ES2's Widget_DrawToCockpit",
       "verified": {
         "bytes": "0002b058+318",
@@ -3607,7 +3607,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_CopyBoxBetweenPages",
-      "description": "(port, direction) in stack order, callee-cleaned: while a line is up (+0x436) copies the port's box between the display's pages: Cockpit_PushCanvasContext, then the display (000bdd28) gets +0x88 as its source page (+0x38) and +0x8c as its draw page (+0x3c) for direction 0, the other way for 1, each mirrored to 00098dd6/00098dda and the routines 0009df14/0009df18 when that display is current. With the cursor hidden (g_RasterRoutines slot 31, 0009df50) it copies the region at +0x43b with 00066914(region, {0, 0}), shows the cursor (slot 30) unless the view manager's +0x10 is 4 and 00094d78 is 0, restores the draw page and Cockpit_PopRenderContext. ES2's MessagePort_CopyBoxBetweenPages (DBSIM 00437164).",
+      "description": "(port, direction) in stack order, callee-cleaned: while a line is up (+0x436) copies the port's box between the display's pages: Cockpit_PushCanvasContext, then the display (000bdd28) gets +0x88 as its source page (+0x38) and +0x8c as its draw page (+0x3c) for direction 0, the other way for 1, each mirrored to 00098dd6/00098dda and the routines 0009df14/0009df18 when that display is current. With the cursor hidden (g_RasterRoutines slot 31, 0009df50) it copies the region at +0x43b with Region_CopyBetweenPages (00066914)(region, {0, 0}), shows the cursor (slot 30) unless the view manager's +0x10 is 4 and 00094d78 is 0, restores the draw page and Cockpit_PopRenderContext. ES2's MessagePort_CopyBoxBetweenPages (DBSIM 00437164).",
       "source": "ES1DBSIM decompile at 0002fcd4, against ES2's MessagePort_CopyBoxBetweenPages",
       "verified": {
         "bytes": "0002fcd4+298",
@@ -4394,6 +4394,36 @@
         "sha1": "09eeb1886b97",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00052644",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SetSourcePage",
+      "description": "(page), C convention: the VGA_8 driver's slot 16 (table 000a7b70 +0x40): stores page at 00098dd6, its plane offset (0009e5ce + 4*page) at 0009e600 and its pan byte (0009e5f6 + page) shifted right 1 at 0009e60c. ES1GO's VGA8_SetSourcePage with the store of the page added.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "00052644+38",
+        "sha1": "740b58044749",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005266a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SetDrawPage",
+      "description": "(page), C convention: the VGA_8 driver's slot 17: VGA8_SetSourcePage (00052644) into 00098dda, 0009e604 and 0009e610, the draw page.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "0005266a+38",
+        "sha1": "f64af6a72ecf",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -10226,6 +10256,51 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "00066690",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_CopyRectBetweenPages",
+      "description": "(region, offset), C convention: the same statements as ES1GO's Region_CopyRectBetweenPages (000519bc). ES2's Region_CopyRectBetweenPages (DBSIM 00487ad0).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "00066690+305",
+        "sha1": "7d803f584210",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000667c1",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_CopySpansBetweenPages",
+      "description": "(region, offset), C convention: the same statements as ES1GO's Region_CopySpansBetweenPages (00051aed). ES2's Region_CopySpansBetweenPages (DBSIM 00487c01).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "000667c1+339",
+        "sha1": "c9f562722d26",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00066914",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_CopyBetweenPages",
+      "description": "(region, offset), C convention: copies what a region covers from the raster source page to the draw page: Region_CopyRectBetweenPages (00066690) for type 0, Region_CopySpansBetweenPages (000667c1) for type 2, nothing for another type. ES1GO's Region_CopyBetweenPages; ES2's (DBSIM 00487d54).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "00066914+51",
+        "sha1": "26886d07a714",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00066948",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -10256,6 +10331,21 @@
       }
     },
     {
+      "address": "00067178",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_BlitScaled",
+      "description": "(bitmap, size, flags, point) in stack order, callee-cleaned: the same statements as ES1GO's Bitmap_BlitScaled (000503f0): Bitmap_BlitScaledClipDispatch (00076884)(header +4, point, flags, size), a packed bitmap (+0x12 non-zero) first unpacked by 000672cc into Bitmap_UnpackScratch for the call. ES2's Bitmap_BlitScaled (DBSIM 004816bc) reaches the same dispatch through GL_BlitScaled.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "00067178+153",
+        "sha1": "d9036d126e1c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00067214",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -10266,6 +10356,21 @@
       "verified": {
         "bytes": "00067214+159",
         "sha1": "aea2537c4b8d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000673c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBitmapArray_Dtor",
+      "description": "(array, flags), callee-cleaned: returns for none; otherwise stores the vtable 0009b066, destroys each of the count +4 bitmaps of the table +8 that is not 0 through its +0x1c slot with 3, frees the table, and deletes the array when bit 0 of flags is set. The same statements as ES1GO's GLBitmapArray_Dtor (0005343c).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
+      "verified": {
+        "bytes": "000673c8+145",
+        "sha1": "6fdc38f8b09c",
         "scope": "body",
         "via": "decompile"
       }
@@ -10365,6 +10470,21 @@
       "verified": {
         "bytes": "00069227+47",
         "sha1": "c058b3056476",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069258",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLPalette_Dtor",
+      "description": "(palette, flags), callee-cleaned: returns for none; otherwise stores the vtable 0009b3b6, frees the colours +8 when the word +4 is non-zero, frees each of the word +0xc's eight-byte records' first dword in the table +0x10 and then the table when +0xc is non-zero, stores the vtable 0009b3de and deletes the palette when bit 0 of flags is set. The same statements as ES1GO's GLPalette_Dtor (0005a824).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-fades",
+      "verified": {
+        "bytes": "00069258+159",
+        "sha1": "10068c96a98d",
         "scope": "body",
         "via": "decompile"
       }
@@ -10824,6 +10944,21 @@
       "verified": {
         "bytes": "0006a714+107",
         "sha1": "21986cc65e05",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006a780",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLDisplay_GetAttribute",
+      "description": "(display, which), callee-cleaned: ES2's GLDisplay_GetAttribute (DBSIM 00481244) statement for statement: 0 +8 (width), 1 +0xc (height), 2 +0x28, 3 +0x2c, 4 +0x10, 6 +0x14, 7 +0x18, 9 +0x1c, 10 +0x20, 11 +0x24, 5, 8 and 16 three globals, anything else 0.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "0006a780+163",
+        "sha1": "ab288b644cd9",
         "scope": "body",
         "via": "decompile"
       }
@@ -12263,6 +12398,21 @@
       }
     },
     {
+      "address": "00076884",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_BlitScaledClipDispatch",
+      "description": "(header, point, flags, size), C convention: the same statements as ES1GO's Bitmap_BlitScaledClipDispatch (00065f34). ES2's Bitmap_BlitScaledClipDispatch (DBSIM 0048899c).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "00076884+235",
+        "sha1": "f996971790ef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000769a8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -12373,7 +12523,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_FixRect",
-      "description": "(script, rect): with the display object 0009f24c's +0x38 set to the low byte of its +0x3c and its +0x3c to 0009f250, Ttm_ManagerCtor's a (each store also copied to 00098dd6 or 00098dda and passed to the routine at 0009df14 or 0009df18 when the display is 000bdd28), copies a type-0 region of rect at (0, 0) with 00066914, passes rect to 0008398c with 0 (in stack order x0, y0, x1, y1, 0), then puts back the low bytes of the two fields. es2_xref finds calls from TtmScript_RunPage (0007aa58), three, and TtmScript_RunDrawCommand (0007c01c).",
+      "description": "(script, rect): with the display object 0009f24c's +0x38 set to the low byte of its +0x3c and its +0x3c to 0009f250, Ttm_ManagerCtor's a (each store also copied to 00098dd6 or 00098dda and passed to the routine at 0009df14 or 0009df18 when the display is 000bdd28), copies a type-0 region of rect at (0, 0) with Region_CopyBetweenPages (00066914), passes rect to DirtyBox_Add (0008398c) with 0 (in stack order x0, y0, x1, y1, 0), then puts back the low bytes of the two fields. es2_xref finds calls from TtmScript_RunPage (0007aa58), three, and TtmScript_RunDrawCommand (0007c01c).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
       "verified": {
         "bytes": "00079c38+344",
@@ -12523,7 +12673,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_RunPage",
-      "description": "(script, page) in stack order, callee-cleaned: ES1GO's TtmScript_RunPage (00048218) at the simulator's offsets, running the page from the page table +2 to its 0x0ff0 and returning 1, with these differences. Its call offsets (depth +0x17a, x +0x17c, y +0x17e) skip the opcodes of the table 0009ffac (targets 0009ffbc, JMP 0007ad1d). It steps over every opcode 0xc000-0xcfff; hands 0xa000-0xafff to TtmScript_RunDrawCommand (0007c01c), returning 0 when that returns 0; finds the rest in the 29 opcodes at 0009ffcc (targets 000a0040, JMP 0007adea), the shell's 30 less 0x5005, and steps over any other. Point lists go through TtmScript_CopyArgBytes (00079fdc). Loads, frees, palette selects, 0x0020, 0x4204, 0x4214, 0x2402, 0x0400, 0xf01f and 0x4124 act while the wait +0x182 is 0 or less; 0x1021 and 0x2022 act once per page through the byte +0x12, 0x2022 as min + labs(rand (0007cd28)() % (max - min)); 0x4114 acts on every run. Palettes are uploaded with Palette_UploadWhole on select and load; bitmap arrays are destroyed with 000673c8(array, 3); 0xf01f's bitmap is loaded with ClassItem_LoadResource and its rect fixed with TtmScript_FixRect (00079c38). The fades work on a stack palette set up with GLPalette_Assign (0007bfdc), scale colours a1 to a2 toward black with Palette_ScaleRange (0007cc24) by the step 6 - a4, copy the full screen with 00066914 and destroy the copy with 00069258. Labels are found with TtmScript_FindLabel (00079ef4). es2_xref finds calls from TtmScript_Run (00079a14), three, and from its own 0x3003 and 0x3303 cases, through the padding entry 0007aa57.",
+      "description": "(script, page) in stack order, callee-cleaned: ES1GO's TtmScript_RunPage (00048218) at the simulator's offsets, running the page from the page table +2 to its 0x0ff0 and returning 1, with these differences. Its call offsets (depth +0x17a, x +0x17c, y +0x17e) skip the opcodes of the table 0009ffac (targets 0009ffbc, JMP 0007ad1d). It steps over every opcode 0xc000-0xcfff; hands 0xa000-0xafff to TtmScript_RunDrawCommand (0007c01c), returning 0 when that returns 0; finds the rest in the 29 opcodes at 0009ffcc (targets 000a0040, JMP 0007adea), the shell's 30 less 0x5005, and steps over any other. Point lists go through TtmScript_CopyArgBytes (00079fdc). Loads, frees, palette selects, 0x0020, 0x4204, 0x4214, 0x2402, 0x0400, 0xf01f and 0x4124 act while the wait +0x182 is 0 or less; 0x1021 and 0x2022 act once per page through the byte +0x12, 0x2022 as min + labs(rand (0007cd28)() % (max - min)); 0x4114 acts on every run. Palettes are uploaded with Palette_UploadWhole on select and load; bitmap arrays are destroyed with GLBitmapArray_Dtor (000673c8)(array, 3); 0xf01f's bitmap is loaded with ClassItem_LoadResource and its rect fixed with TtmScript_FixRect (00079c38). The fades work on a stack palette set up with GLPalette_Assign (0007bfdc), scale colours a1 to a2 toward black with Palette_ScaleRange (0007cc24) by the step 6 - a4, copy the full screen with Region_CopyBetweenPages (00066914) and destroy the copy with GLPalette_Dtor (00069258). Labels are found with TtmScript_FindLabel (00079ef4). es2_xref finds calls from TtmScript_Run (00079a14), three, and from its own 0x3003 and 0x3303 cases, through the padding entry 0007aa57.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
       "verified": {
         "bytes": "0007aa58+5508",
@@ -12553,7 +12703,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_RunDrawCommand",
-      "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: ES1GO's TtmScript_RunDrawCommand (0004a213) at the simulator's offsets: matches the opcode against the shell's 22 at 000a00b4 (targets 000a010c, JMP 0007c040) and returns 1 whether or not one matches. The pen +0x228 and fill +0x22c of the default render context 0009f248 are set to the brushes +0x19d, +0x1a5 and +0x1ad. Each draw but 0xa601 passes its box to 0008398c with 1; the ellipses draw with 000831f4 and the sized brush with 00067178; one case serves the twelve bitmap draws, testing the opcode's low four bits, and adds the dwords +0x1b5 and +0x1b9 to the position. 0xa601, while the wait +0x182 is 0 or less, puts the selected region's saved pixels back with Region_Restore at (0, 0) and passes the region's rect to TtmScript_FixRect (00079c38). es2_xref finds one call, from TtmScript_RunPage (0007aa58), through the padding entry 0007c01b.",
+      "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: ES1GO's TtmScript_RunDrawCommand (0004a213) at the simulator's offsets: matches the opcode against the shell's 22 at 000a00b4 (targets 000a010c, JMP 0007c040) and returns 1 whether or not one matches. The pen +0x228 and fill +0x22c of the default render context 0009f248 are set to the brushes +0x19d, +0x1a5 and +0x1ad. Each draw but 0xa601 passes its box to DirtyBox_Add (0008398c) with 1; the ellipses draw with Raster_DrawEllipse (000831f4) and the sized brush with Bitmap_BlitScaled (00067178); one case serves the twelve bitmap draws, testing the opcode's low four bits, and adds the dwords +0x1b5 and +0x1b9 to the position. 0xa601, while the wait +0x182 is 0 or less, puts the selected region's saved pixels back with Region_Restore at (0, 0) and passes the region's rect to TtmScript_FixRect (00079c38). es2_xref finds one call, from TtmScript_RunPage (0007aa58), through the padding entry 0007c01b.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
       "verified": {
         "bytes": "0007c01c+2569",
@@ -12583,7 +12733,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_Reset",
-      "description": "(script): destroys the six palettes of the slot table +0x21 through their +0x1c slot with 3 and the six bitmap arrays of +0x17 with 000673c8(array, 3), deletes the twelve saved-pixel buffers at +0x28, zeroing every slot; zeroes the cycling directions +0x18f, +0x195 and +0x19b; sets the mode dword +0xe to 2, the page byte +1 and the palette slot +0x25 to 0, the word +0x178 to -1, the words +0x17a to +0x188 and the byte +0x18a to 0, and the brush colours +0x1a1, +0x1a9 and +0x1b1 to 10. ES1GO's TtmScript_Reset (0004b3c6) at the simulator's offsets; this one leaves the byte +0x12. es2_xref finds calls from TtmScript_Run (00079a14), two, and TtmScript_Free (00079f68), through the padding entry 0007ca43.",
+      "description": "(script): destroys the six palettes of the slot table +0x21 through their +0x1c slot with 3 and the six bitmap arrays of +0x17 with GLBitmapArray_Dtor (000673c8)(array, 3), deletes the twelve saved-pixel buffers at +0x28, zeroing every slot; zeroes the cycling directions +0x18f, +0x195 and +0x19b; sets the mode dword +0xe to 2, the page byte +1 and the palette slot +0x25 to 0, the word +0x178 to -1, the words +0x17a to +0x188 and the byte +0x18a to 0, and the brush colours +0x1a1, +0x1a9 and +0x1b1 to 10. ES1GO's TtmScript_Reset (0004b3c6) at the simulator's offsets; this one leaves the byte +0x12. es2_xref finds calls from TtmScript_Run (00079a14), two, and TtmScript_Free (00079f68), through the padding entry 0007ca43.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
       "verified": {
         "bytes": "0007ca44+352",
@@ -13421,6 +13571,111 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "000831f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_DrawEllipse",
+      "description": "(rect), C convention: the same statements as ES1GO's Raster_DrawEllipse (00055b9c): ES2's Raster_DrawEllipse (DBSIM 00488070) with the span list's rows kept between -min(b, cy) and before min(b, H - 1 - cy) of the centre row cy, H the display height 00098daa. The list is the one 00098de5 points to, filled by Raster_FillSpanList (0008f68c).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "000831f4+1773",
+        "sha1": "a04243a05a3d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000838e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyBox_Alloc",
+      "description": "(): ES1GO's DirtyBox_Alloc in other code, with the free list 000bbc80.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "000838e4+138",
+        "sha1": "31c8938400a2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00083970",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyBox_Free",
+      "description": "(record), callee-cleaned: pushes a dirty-box record onto the free list 000bbc80 through its +0xf. ES1GO's DirtyBox_Free.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "00083970+26",
+        "sha1": "4d2b36cb7fa0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0008398c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyBox_Add",
+      "description": "(delay, height, width, y, x) in stack order, callee-cleaned: ES1GO's DirtyBox_Add in other code, measuring the display 000bdd28 with GLDisplay_GetAttribute (0006a780) and taking its record from DirtyBox_Alloc (000838e4) for DirtyList_Insert (00083bb4).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "0008398c+343",
+        "sha1": "ac4d7b9640a8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00083ae4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyList_Prune",
+      "description": "(): ES1GO's DirtyList_Prune with the list 000bbc84 and DirtyBox_Free (00083970).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "00083ae4+101",
+        "sha1": "764dfeae8119",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00083bb4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyList_Insert",
+      "description": "(record), callee-cleaned: ES1GO's DirtyList_Insert in other code, with the list 000bbc84 and DirtyBox_Free (00083970).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "00083bb4+588",
+        "sha1": "606d5c422f6c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00083e80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyList_Flush",
+      "description": "(drawPage, sourcePage) in stack order, callee-cleaned: ES1GO's DirtyList_Flush without its render-context install and restore: sets the display 000bdd28's source page +0x38 and draw page +0x3c (copied to 00098dd6 and 00098dda and passed to raster slots 0009df14 and 0009df18 while it is the current display), copies each delay-0 box of the list 000bbc84 as the region {x, y, x + width, y + height} at offset (0, 0) with Region_CopyBetweenPages (00066914), lowers every delay by 1, puts back the two pages' low bytes, and calls DirtyList_Prune (00083ae4). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulator",
+      "verified": {
+        "bytes": "00083e80+455",
+        "sha1": "ceb0ac4ec460",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00085133",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -13533,6 +13788,21 @@
       "name": "BMP8_BlitBitmap",
       "description": "The BMP_8 driver's bitmap blit, its table's +0x68: copies the bitmap's rows into the canvas bitmap, by flag bits 1 and 2 in one of four orders (cases 0-3). With header byte +5's bit 4 set each row goes by REP MOVSD/MOVSB, or byte by byte when mirrored; with it clear each 0 byte is skipped, leaving the destination. The clipped blit 0008dc3c calls it.",
       "source": "ES1DBSIM disassembly at 0008d700 (the case blocks and copy loops)"
+    },
+    {
+      "address": "0008f68c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FillSpanList",
+      "description": "(spans, origin), C convention: ES2's Raster_FillSpanList (DBSIM 00486928) statement for statement, with the clip block 00098d64 and the colour ramps 0009a6f5.",
+      "source": "Herculan/docs/retail/rendering/polygon-fill.md#span-lists",
+      "verified": {
+        "bytes": "0008f68c+458",
+        "sha1": "ac4742c09186",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0008f858",

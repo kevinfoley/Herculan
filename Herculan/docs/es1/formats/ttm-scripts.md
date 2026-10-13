@@ -37,7 +37,7 @@ The unpacked script is a run of 16-bit commands, each an opcode word and its arg
 
 The shell keeps its scripts in a table of handles. `Ttm_Configure` (`000464b0`), given *a*, *b* and a count in stack order, stores the count in the byte `000829dc`, *b* at `00082a98`, *a* at `00082a9c` and the display object `000ab616` at `00082a94`, and clears the path prefix with `Ttm_SetPathPrefix` (`0004692d`), which stores a string pointer at `00082aa0` and returns the one before. `Ttm_AllocHandles` (`0004670e`), given a timer count, allocates the table at `000829e0`, a dword per handle, and zeroes it; takes `000ab784` into `000829d8`, or a new object `0005d6b4`(0, `0x4da6`) when that is 0, freeing the table and returning 0 when there is still none; and registers `Ttm_TimerTick` (`00046681`) with `Timer_AddCallback` at that count into the word `000829e4`. It compares the word, zero-extended, with −1, which it never equals, so it always registers. It returns 1. `Ttm_Shutdown` (`000464e8`) passes the slot to `000565b7` under the same comparison, calls `Ttm_CloseAll` (`00046a3f`), and deletes the table.
 
-`es2_xref.py` finds one call of each: `0003ba47` calls `Ttm_Configure` with a count of 50, `Ttm_AllocHandles` with 2, sets the prefix `res32\` and calls `TtmLists_Load` ([the animation lists](shell-file-lists.md#the-animation-lists)); `0003c081` calls `Ttm_Shutdown`. Of the twelve calls of `Ttm_SetPathPrefix` it finds, `Ttm_Configure`'s passes none and the other eleven pass `res32\` or `intro\`, the two `SHELL0` folders that hold scripts.
+`es2_xref.py` finds one call of each: `0003ba47` calls `Ttm_Configure` with *a* the word `0007fccc`, page 2, the [background page](../rendering/screen-pages.md#presenting-a-frame), *b* the dword `0007fcd8` and a count of 50, `Ttm_AllocHandles` with 2, sets the prefix `res32\` and calls `TtmLists_Load` ([the animation lists](shell-file-lists.md#the-animation-lists)); `0003c081` calls `Ttm_Shutdown`. Of the twelve calls of `Ttm_SetPathPrefix` it finds, `Ttm_Configure`'s passes none and the other eleven pass `res32\` or `intro\`, the two `SHELL0` folders that hold scripts.
 
 ### Opening and closing
 
@@ -145,7 +145,7 @@ Some commands act only on a page's first run, while `+0x42` is 0 ("first run"), 
 | Opcode | Name | Arguments | In the files | Case | What it does |
 |---|---|---|---|---|---|
 | `0x0ff0` | `TOKEN_ENDFRAME` | — | yes | `00049fe5` | Ends the page. |
-| `0x0020` | `TOKEN_FIXBACK` | — | yes | `000499d3` | First run: `TtmScript_FixRect` of the whole display, (0, 0) to its `+8` and `+0xc` less 1, read through `0005a6e4`. |
+| `0x0020` | `TOKEN_FIXBACK` | — | yes | `000499d3` | First run: `TtmScript_FixRect` of the whole display, (0, 0) to its width and height less 1, `GLDisplay_GetAttribute` (`0005a6e4`) items 0 and 1. |
 | `0x0070` | `TOKEN_FREEPAL` | — | no | `00048bd1` | First run: destroys the selected palette (its `+0x1c` slot with 3) and empties the slot. |
 | `0x0080` | `TOKEN_FREESHAPE` | — | yes | `00048832` | Destroys the selected bitmap array with `GLBitmapArray_Dtor` and empties the slot. |
 | `0x00c0` | `TOKEN_FREEPUT` | — | no | `00048a9c` | First run: frees the selected region's saved pixels and empties the slot. |
@@ -168,13 +168,13 @@ Some commands act only on a page's first run, while `+0x42` is 0 ("first run"), 
 | `0x4114` | `TOKEN_FADE_OUT` | first, count, colour, speed | yes | `00048c35` | First run: fades colours *first* to *first* + *count* toward the palette's colour *colour* ([below](#the-fades)). |
 | `0x4124` | `TOKEN_FADE_IN` | first, count, colour, speed | yes | `0004933b` | First run: fades the same colours up from colour *colour* ([below](#the-fades)). |
 | `0x4204` | `TOKEN_FIX_RECT` | x, y, w, h | yes | `00049b8e` | First run: `TtmScript_FixRect` of (*x*, *y*) to (*x* + *w*, *y* + *h*). |
-| `0x4214` | `TOKEN_GET` | x, y, w, h | yes | `00048892` | First run: frees the selected region's pixels, sets its rect to (*x*, *y*) to (*x* + *w*, *y* + *h*), allocates `Region_PixelCount` bytes and saves the pixels with `Region_Save`, with the display's `+0x34` set to `Ttm_Configure`'s *a* and the render context's `+0x208` to 0 while it does. |
+| `0x4214` | `TOKEN_GET` | x, y, w, h | yes | `00048892` | First run: frees the selected region's pixels, sets its rect to (*x*, *y*) to (*x* + *w*, *y* + *h*), allocates `Region_PixelCount` bytes and saves the pixels with `Region_Save`, with the display's source page `+0x34` set to `Ttm_Configure`'s *a*, the background, and the render context's `+0x208` to 0 while it does. |
 | `0x5005` | `TOKEN_HOTSPOT` | five words | yes | `00049e59` | The [random choice](#the-random-choice). |
 | `0xf01f` | `TOKEN_SCRNLOAD` | name | yes | `0004857b` | First run: loads the name with `TtmScript_BuildPath` (`.SCR` to `.DBM`) and `Resource_LoadBitmap` (`0004b79b`), draws it at (0, 0) with `Bitmap_Blit`, `TtmScript_FixRect`s its rect and destroys it. |
 | `0xf02f` | `TOKEN_SHAPELOAD` | name | yes | `000487c3` | First run: destroys the selected bitmap array and loads the name (`.BMP` to `.DBA`) into the slot with `Resource_LoadBitmapArray` (`0004b7df`). |
 | `0xf05f` | `TOKEN_PALLOAD` | name | yes | `00048b4d` | First run: destroys the selected palette, loads the name (`.PAL` to `.DPL`) into the slot with `Resource_LoadPalette` (`0004b713`), stores it at `0007fcd0` and sets `0007fcd4`. |
 
-`TtmScript_RunDrawCommand` (`0004a213`) finds its 22 opcodes in the table at `000839b8` (targets at `00083a10`) and returns 1 for every opcode. The pen is the render context's `+0x228`, the fill brush its `+0x22c`, each pointed at one of the script's three brushes: `+0x1d3` (mode 0, the colour *fg*), `+0x1db` (mode 0, *bg*) and `+0x1e3` (mode 4, *fg*). Each draw but `0xa601`'s passes the box it drew to `00040f00` ([Open](#open)).
+`TtmScript_RunDrawCommand` (`0004a213`) finds its 22 opcodes in the table at `000839b8` (targets at `00083a10`) and returns 1 for every opcode. The pen is the render context's `+0x228`, the fill brush its `+0x22c`, each pointed at one of the script's three brushes: `+0x1d3` (mode 0, the colour *fg*), `+0x1db` (mode 0, *bg*) and `+0x1e3` (mode 4, *fg*), which [outlines](../rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps) what the others fill. Each draw but `0xa601`'s records the box it drew with `DirtyBox_Add` (`00040f00`) at a delay of 1, so that the background is copied back over it when its page is next drawn on ([dirty boxes](../rendering/screen-pages.md#dirty-boxes)).
 
 | Opcode | Name | Arguments | In the files | Case | What it does |
 |---|---|---|---|---|---|
@@ -182,13 +182,13 @@ Some commands act only on a page's first run, while `+0x42` is 0 ("first run"), 
 | `0xa0a4` | `TOKEN_LINE` | x0, y0, x1, y1 | yes | `0004a235` | Pen `+0x1d3`; `Raster_DrawLine` from (*x0*, *y0*) to (*x1*, *y1*). |
 | `0xa104` | `TOKEN_RECTFILL` | x, y, w, h | yes | `0004a3b3` | Fill `+0x1db`; `Raster_FillRect` of (*x*, *y*) to (*x* + *w*, *y* + *h*); then `0xa114`'s case. |
 | `0xa114` | `TOKEN_RECT` | x, y, w, h | no | `0004a562` | Fill `+0x1e3`; `Raster_FillRect` of the same rect. |
-| `0xa404` | `TOKEN_CIRCFILL` | x, y, w, h | no | `0004a731` | Fill `+0x1db`; `00055b9c` with the rect; then `0xa424`'s case. |
-| `0xa424` | `TOKEN_CIRCLE` | x, y, w, h | no | `0004a8e0` | Fill `+0x1e3`; `00055b9c` with the rect. |
+| `0xa404` | `TOKEN_CIRCFILL` | x, y, w, h | no | `0004a731` | Fill `+0x1db`; `Raster_DrawEllipse` (`00055b9c`) with the rect; then `0xa424`'s case. |
+| `0xa424` | `TOKEN_CIRCLE` | x, y, w, h | no | `0004a8e0` | Fill `+0x1e3`; `Raster_DrawEllipse` with the rect. |
 | `0xa504`, `0xa514`, `0xa524`, `0xa534` | `TOKEN_DRAWBRUSH0` to `3` | x, y, frame, slot | `0xa504`, `0xa524` | `0004ad68` | When bitmap-array slot *slot* holds an array of more than *frame* bitmaps: `Bitmap_Blit` of bitmap *frame* at (*x*, *y*) with flags 0 to 2 from bits 4 to 7 of the opcode, 3 for any other value. |
 | `0xa505`, `0xa515`, `0xa525`, `0xa535` | `TOKEN_RLEDRAWBRUSH0` to `3` | five words | no | `0004ad68` | Nothing past the slot test. |
-| `0xa506`, `0xa516`, `0xa526`, `0xa536` | `TOKEN_SIZEDRAWBRUSH0` to `3` | x, y, frame, slot, w, h | no | `0004ad66`, `0004ad68` | After the same test: `000503f0`(bitmap, (*w*, *h*), flags, (*x*, *y*)). |
+| `0xa506`, `0xa516`, `0xa526`, `0xa536` | `TOKEN_SIZEDRAWBRUSH0` to `3` | x, y, frame, slot, w, h | no | `0004ad66`, `0004ad68` | After the same test: `Bitmap_BlitScaled` (`000503f0`)(bitmap, (*w*, *h*), flags, (*x*, *y*)), the bitmap [stretched](../rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps) to *w* by *h*. |
 | `0xa5a7` | `TOKEN_DRAW_ROT_BRUSH` | x, y, frame, slot, w, h, angle | no | `0004ad64` | After the same test: `Bitmap_BlitRotatedUnpacked` of the bitmap with *angle*, the size (*w*, *h*) and flags 0, placed at (*x* + *w*/2, *y* + *h*/2) plus (−*w*/2, −*h*/2) turned through `Math_BuildRotation2D`(*angle*) and `Transform2D_ApplyToPoint`. |
-| `0xa601` | `TOKEN_NEW_PUT` | one word, unread | yes | `0004b298` | No wait: puts the selected region's saved pixels back at its rect with `Region_Restore`, `TtmScript_FixRect`s the rect, and calls `00041062`(1). |
+| `0xa601` | `TOKEN_NEW_PUT` | one word, unread | yes | `0004b298` | No wait: puts the selected region's saved pixels back at its rect with `Region_Restore`, `TtmScript_FixRect`s the rect, and adds it with `DirtyBox_AddRect` (`00041062`) at a delay of 1. |
 | `0xaf1f` | `TOKEN_POLY` | n, *n* x, *n* y | no | `0004aaaf` | Builds *n* points, the x values then the y values; fill `+0x1e3`; `Raster_DrawPolygonEitherWinding`. |
 | `0xaf2f` | `TOKEN_POLYFILL` | as `0xaf1f` | no | `0004aaaf` | As `0xaf1f`, drawing first with fill `+0x1db`. |
 
@@ -200,7 +200,7 @@ Some commands act only on a page's first run, while `+0x42` is 0 ("first run"), 
 | `0xc21f` | `TOKEN_HDS_LOAD` | name | yes | Destroys the sound object `+0x1a8`; puts the name through `TtmScript_BuildPath` and, when the sound manager `00082768` exists and `SoundManager_SetSampleName`(manager, `0xe`, path) succeeds, stores `SoundManager_CreateObject`(manager, 2, 0, `0xe`) at `+0x1a8`. |
 | `0xc220` | `TOKEN_HDS_PLAY` | — | yes | With a sound object: calls its `+0x2c` slot with `Math_RandomBelow`(`0009aec0`, 25) + 10 and its `+0x10` slot, and sets `+0x41`. |
 
-`TtmScript_FixRect` (`000472a2`), given a script and a rect, calls `0004c17c`(`Ttm_Configure`'s *a*, the display's `+0x38`, rect) ([Open](#open)).
+`TtmScript_FixRect` (`000472a2`), given a script and a rect, calls `Display_CopyRectToPage` (`0004c17c`)(`Ttm_Configure`'s *a*, the display's draw page `+0x38`, rect), which copies the rect into the background page and queues it for the other page ([fixing a rect](../rendering/screen-pages.md#fixing-a-rect)).
 
 ### The random choice
 
@@ -210,8 +210,8 @@ Some commands act only on a page's first run, while `+0x42` is 0 ("first run"), 
 
 Both fades set the byte `000829d4`, which stops the timer counting ticks, and clear it when they end. They work on a copy of the selected palette with its own 1 KB of colours, made with `GLPalette_CopyCtor` (`00049fee`) for the fade out and `GLPalette_Assign` (`0004a08c`) for the fade in, and blend with `Palette_BlendRange` (`0004b532`): colours *first* to *first* + *count* inclusive of the selected palette, each channel set to colour *colour*'s plus *percent* / 100 of its difference from it, written to the copy, which `Palette_UploadWhole` then uploads. The step is 6 − *speed*.
 
-- **Fade out:** for *percent* from 100 down to 0 by the step, blends and uploads. Then, with the display's `+0x34` set to the low byte of its `+0x38` and its `+0x38` to its `+0x30`, copies a full-screen region (0, 0) to (319, 199) with `00051c40`; with `+0x38` set to `Ttm_Configure`'s *a*, copies it again; puts `+0x34` and `+0x38` back; uploads the selected palette; and destroys the copy with `GLPalette_Dtor` (`0005a824`).
-- **Fade in:** blends and uploads at 0 percent (the 256 it passes, taken as a byte); with the display's `+0x34` set to *a* and its `+0x38` to its `+0x30`, copies the full-screen region and puts the two back; then for *percent* from the step up to 100 by the step, blends and uploads; and uploads the selected palette.
+- **Fade out:** for *percent* from 100 down to 0 by the step, blends and uploads. Then, with the display's source page `+0x34` set to the low byte of its draw page `+0x38` and the draw page to its visible page `+0x30`, copies a full-screen region (0, 0) to (319, 199) with `Region_CopyBetweenPages` (`00051c40`); with the draw page set to `Ttm_Configure`'s *a*, the background, copies it again; puts the two pages back; uploads the selected palette; and destroys the copy with `GLPalette_Dtor` (`0005a824`). The picture drawn is thus put on the screen and into the background ([the pages](../rendering/screen-pages.md#the-pages)).
+- **Fade in:** blends and uploads at 0 percent (the 256 it passes, taken as a byte); with the source page set to *a* and the draw page to the visible page, copies the full-screen region, putting the background on the screen, and puts the two back; then for *percent* from the step up to 100 by the step, blends and uploads; and uploads the selected palette.
 
 `Palette_BlendRange` shifts each channel's product as unsigned, so a channel below the target's makes a negative product whose shift sets bits above that channel.
 
@@ -260,7 +260,7 @@ Moving to the next page is done in place, there being no `TtmScript_NextPage`: i
 
 A page therefore runs on each tick while its wait lasts, and once more, with the wait reloaded, when it runs out. Most of the commands the shell runs on a page's first run act in the simulator only while the wait is 0 or less ("no wait" in [the table](#the-simulators-commands)), which, the wait being reloaded before the page runs, holds while the reload `+0x184` is 0 or less: until a wait command has run. The wait commands act once per page through the byte `+0x12`, which a step to the next page clears and a jump leaves set: after a page that sets a wait and jumps, the target page's wait command does not act, and the jumping page's wait stays in force until a page sets another. In `ROADRUNN.TTM` the first page loads `ROADTTM.BMP`; page 1, labelled 2, draws frame 0 at (287, 166) and, with flags 2, at (306, 166), and sets a wait of 3; pages 2 to 8 draw frames 1 to 7; page 9 draws frame 8, sets a wait of 60 and jumps to label 2. After the first pass every page of the loop therefore lasts 60 ticks ([Open](#open)).
 
-`TtmScript_Reset` (`ES1DBSIM 0007ca44`) is the shell's at the simulator's offsets, destroying the bitmap arrays with `000673c8`(array, 3), with one difference: it leaves the byte `+0x12`, where the shell's clears its once flag `+0x40`. The mode is a dword, at `+0xe` to `+0x11`. `TtmScript_FindLabel` (`ES1DBSIM 00079ef4`) is the shell's, returning a byte page and formatting no message.
+`TtmScript_Reset` (`ES1DBSIM 0007ca44`) is the shell's at the simulator's offsets, destroying the bitmap arrays with `GLBitmapArray_Dtor` (`ES1DBSIM 000673c8`, the shell's code)(array, 3), with one difference: it leaves the byte `+0x12`, where the shell's clears its once flag `+0x40`. The mode is a dword, at `+0xe` to `+0x11`. `TtmScript_FindLabel` (`ES1DBSIM 00079ef4`) is the shell's, returning a byte page and formatting no message.
 
 ### The simulator's commands
 
@@ -277,9 +277,9 @@ The script's fields are the shell's less `0x30` up to the region slot `+0x27`, t
 
 | Opcode | Case | How it differs from the shell's |
 |---|---|---|
-| `0x0020` | `0007bced` | No wait, where the shell's acts on the first run; fixes (0, 0) to `0006a780`(display, 0) and `0006a780`(display, 1), each less 1. |
+| `0x0020` | `0007bced` | No wait, where the shell's acts on the first run; fixes (0, 0) to `GLDisplay_GetAttribute` (`0006a780`) of the display's items 0 and 1, each less 1. |
 | `0x0070`, `0x00c0`, `0x4204` | `0007b2e1`, `0007b189`, `0007bdd7` | No wait, where the shell's act on the first run. |
-| `0x0080` | `0007aff1` | No wait, where the shell's acts on every run; destroys the array with `000673c8`. |
+| `0x0080` | `0007aff1` | No wait, where the shell's acts on every run; destroys the array with `GLBitmapArray_Dtor`. |
 | `0x1061` | `0007b1de` | No wait; uploads the slot's palette with `Palette_UploadWhole` where the shell's stores it at `0007fcd0` and sets `0007fcd4`. |
 | `0x2022` | `0007bc6c` | Once through `+0x12`; the wait is *min* + \|`rand`() mod (*max* − *min*)\|, below *max* when *max* is above *min*, where the shell's reaches *max*. |
 | `0x1021` | `0007bcbd` | Once through `+0x12`. |
@@ -288,19 +288,19 @@ The script's fields are the shell's less `0x30` up to the region slot `+0x27`, t
 | `0x4214` | `0007b04a` | No wait; leaves the display's and the render context's fields as they are. |
 | `0x5005` | — | Stepped over. |
 | `0xf01f` | `0007ae0f` | No wait; loads the bitmap with `VolRStream_CtorFromPath` and `ClassItem_LoadResource` in place, as `Resource_LoadBitmap` does, and `TtmScript_FixRect`s (0, 0) to its `+6` and `+4`. |
-| `0xf02f` | `0007af5e` | No wait; destroys the array with `000673c8` and loads in place. |
+| `0xf02f` | `0007af5e` | No wait; destroys the array with `GLBitmapArray_Dtor` and loads in place. |
 | `0xf05f` | `0007b221` | No wait; loads in place and uploads the palette with `Palette_UploadWhole`, where the shell's stores it at `0007fcd0` and sets `0007fcd4`. |
-| the drawing commands | `0007c043`–`0007c9ac` | Each but `0xa601` passes the box it drew to `0008398c` with 1, where the shell's pass it to `00040f00`; the ellipse is `000831f4`, the sized draw `00067178`. |
+| the drawing commands | `0007c043`–`0007c9ac` | Each but `0xa601` records its box with `DirtyBox_Add` (`0008398c`) at a delay of 1, as the shell's do; the ellipse is `Raster_DrawEllipse` (`000831f4`), the sized draw `Bitmap_BlitScaled` (`00067178`) ([the simulator's drawing](../rendering/screen-pages.md#the-simulator)). |
 | `0xa504` to `0xa5a7` | `0007c674` | One case for the twelve, testing the opcode's low four bits as the shell's does; adds the script's origin, the dwords `+0x1b5` to *x* and `+0x1b9` to *y*, to where a bitmap is drawn. |
 | `0xa601` | `0007c9ac` | Puts the region's saved pixels back with `Region_Restore` at (0, 0) where the shell's puts them at the region's corner, and `TtmScript_FixRect`s the region's rect without the shell's call of `00041062`. |
 
-`TtmScript_FixRect` (`ES1DBSIM 00079c38`), given a script and a rect, sets the display's `+0x38` to the low byte of its `+0x3c` and its `+0x3c` to `Ttm_ManagerCtor`'s *a*, copies a region of the rect at (0, 0) with `00066914`, passes the rect to `0008398c` with 0, and puts back the low bytes of the two. Whenever the display is `000bdd28`, a store to its `+0x38` or `+0x3c` is copied to `00098dd6` or `00098dda` and passed to the routine at `0009df14` or `0009df18` ([Open](#open)).
+`TtmScript_FixRect` (`ES1DBSIM 00079c38`), given a script and a rect, sets the display's source page `+0x38` to the low byte of its draw page `+0x3c` and the draw page to `Ttm_ManagerCtor`'s *a*, copies the rect between them with `Region_CopyBetweenPages` (`00066914`), offset (0, 0), adds a dirty box with `DirtyBox_Add` at a delay of 0 whose width and height are the rect's *x1* and *y1*, and puts back the low bytes of the two pages ([the simulator's drawing](../rendering/screen-pages.md#the-simulator)).
 
 #### The simulator's fades
 
 The fades work on a palette on the stack (vtable `0009ff86`) given the selected palette's fields with `GLPalette_Assign` (`ES1DBSIM 0007bfdc`, the shell's code) and its own 1 KB of colours, copied from the selected palette's. `Palette_ScaleRange` (`ES1DBSIM 0007cc24`), given the script, a percent, a last and a first colour and the two palettes, sets each colour from the first to the last inclusive of the copy to the selected palette's with each channel multiplied by `Math_Q10Multiply` by percent · 1024 / 100, and its fourth byte 1. The fades pass *first* as the first colour and *count* as the last, and read neither *colour* nor the timer; the step is 6 − *speed*, as in the shell.
 
-- **Fade out:** for *percent* from 100 down to 0 by the step, scales and uploads. Then copies the full-screen region (0, 0) to (319, 199) with `00066914` twice, with the display's `+0x38` and `+0x3c` set as the shell's fade sets its `+0x34` and `+0x38`, and puts back their low bytes; uploads the selected palette; and destroys the copy with `00069258`(copy, 2).
+- **Fade out:** for *percent* from 100 down to 0 by the step, scales and uploads. Then copies the full-screen region (0, 0) to (319, 199) with `Region_CopyBetweenPages` twice, with the display's source page `+0x38` and draw page `+0x3c` set as the shell's fade sets its `+0x34` and `+0x38`, and puts back their low bytes; uploads the selected palette; and destroys the copy with `GLPalette_Dtor` (`ES1DBSIM 00069258`, the shell's code)(copy, 2).
 - **Fade in:** sets the copy's 256 colours to `0x01000000` and uploads it; copies the selected palette's colours in; copies the full-screen region once, with `+0x38` set to `Ttm_ManagerCtor`'s *a* and `+0x3c` to the display's `+0x34`, and puts back their low bytes; then for *percent* from 0 up to 100 by the step, scales and uploads; uploads the selected palette and destroys the copy.
 
 ### The cockpit clock
@@ -328,7 +328,6 @@ The name at `000925f8` comes from the command line: the option `-C` passes the t
 
 ## Open
 
-- **Open:** the drawing commands in depth: what `00040f00` does with the box each draw passes it, and `00041062`; the copies of `TtmScript_FixRect` (`0004c17c`) and the fades (`00051c40`); the ellipse `00055b9c`; the sized draw `000503f0`; brush mode 4; the display object's `+0x30`, `+0x34`, `+0x38` and `+0x40`, the routines at `000865f0` and `000865f4` the commands call when the display is `000ab616`, and `0005a6e4`'s items 0 and 1. In the simulator: `0008398c` and its first argument, 1 from a draw and 0 from `TtmScript_FixRect`; the region copy `00066914`, the ellipse `000831f4`, the sized draw `00067178`, the bitmap-array destructor `000673c8`, the palette destructor `00069258`, `0006a780`; the display's `+0x34`, `+0x38`, `+0x3c` and `+0x44` and the routines at `0009df14` and `0009df18`.
 - **Open:** the timer's rate: what `Timer_AddCallback`'s count of 2 is in ticks a second, in both programs ([the timer's divisor](../simulation/debug-monitor.md#open)); and the rate of the count `000981c4` the cockpit clock runs on.
 - **Open:** a retail look at `ROADRUNN.TTM`'s animation in a Roadrunner's cockpit: what it shows, and whether after its first pass each page lasts 60 ticks, as the jump's kept once flag makes it ([the simulator's run](#the-simulators-run)).
 - **Open:** what writes the simulator's script origin `+0x1b5` and `+0x1b9` but `TtmScript_Ctor`'s zeroes. `es2_fieldscan.py` over `ES1DBSIM 00069540`–`0007cd28` finds that store and no other, where the same scan of the clock's code finds its store of `+0x1bd`.
@@ -336,5 +335,5 @@ The name at `000925f8` comes from the command line: the option `-C` passes the t
 - **Open:** in the simulator, `es2_xref.py` finds no call of `Ttm_ManagerDtor`, `Ttm_GetPage`, `Ttm_GetMode`, `Ttm_GetLoop`, `Ttm_SetPage`, `Ttm_SetMode`, `Ttm_SetLoop` or `Ttm_Close`, and no reference to `Ttm_TokenName`; what `0002b4a0`, the other caller of `Cockpit_RunTtmScripts`, is; what `0002b5c4`, `0006c6f8`'s object at the manager's `+0`, and `0006d337` are.
 - **Open:** what the byte `0007fcb9` is, which gates the scripts' sounds as it gates [the animations'](anm-animation.md#playing); a menu dialog control's word is taken from it ([the kinds](dlg-menu-dialogs.md#the-kinds)).
 - **Open:** what reads `VER:`, `TTI:` and `TAG:`, and what the tags name. A byte search of both images for `VER:`, `TTI:`, `TAG:` and `4.14` found none, where the same search found `PAG:` and `TT3:` in each.
-- **Open:** which shell screen opens which script, through `00011f19`, `00037996`, `00037dce` and `0003b8df`; what `0003ba47` and `0003c081` are; what *a* and *b* of `Ttm_Configure`, and `0005d6b4`'s object at `000829d8`, are.
+- **Open:** which shell screen opens which script, through `00011f19`, `00037996`, `00037dce` and `0003b8df`; what `0003ba47` and `0003c081` are; what *b* of `Ttm_Configure`, the dword `0007fcd8`, and `0005d6b4`'s object at `000829d8` are.
 - **Open:** what opens `AMBIENC1.TTM` and `CPWINCRK.TTM`. A byte search of both images for `ambienc` found none, where the same search for `cpwincrk` found the one `CockpitClock_Ctor` copies after its open.

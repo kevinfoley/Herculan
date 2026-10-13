@@ -30305,8 +30305,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GLDisplay_GetAttribute",
-      "description": "(display, which): a jump table over which 0-0x10 returning one of the display's dwords: 0 +8, 1 +0xc, 2 +0x28, 3 +0x2c, 4 +0x10, 6 +0x14, 7 +0x18, 9 +0x1c, 10 +0x20, 11 +0x24; 5, 8 and 0x10 return the globals 004a57bd, 004a4fb9 and 004a36a6; anything else 0. Every direct call site passes GL_GetGlobal7's object (006c5f54) with 0 then 1, the screen width and height; three of the six callers take one off each for the last column and row. The DBSIM copy of VSHELL's GLDisplay_GetAttribute.",
-      "source": "DBSIM decompile and disassembly at 00481244 and its six callers"
+      "description": "(display, which): a jump table returning 0 +8 (width), 1 +0xc (height), 2 +0x28, 3 +0x2c, 4 +0x10, 6 +0x14, 7 +0x18, 9 +0x1c, 10 +0x20, 11 +0x24, for 5, 8 and 0x10 the globals 004a57bd, 004a4fb9 and 004a36a6, and 0 for anything else.",
+      "source": "DBSIM decompile and disassembly at 00481244 and its six callers",
+      "verified": {
+        "bytes": "00481244+168",
+        "sha1": "e2538e7463e7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004812ec",
@@ -30452,8 +30458,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Bitmap_BlitScaled",
-      "description": "(bitmap, point, flags, size{w, h}): Bitmap_Blit's scaled twin. Hands the bitmap at +4 to GL_BlitScaled with GL_GetGlobal7; a packed bitmap (+0x12 nonzero) is first unpacked by Bitmap_UnpackToScratch into the buffer at 006c5ffc, which stands in for the data pointer (+0xe) and size (+0xa) for the call and is freed afterwards unless 006c5ff8 is set. VideoMode_BlitBitmap's scaled branch calls it.",
-      "source": "DBSIM decompile and disassembly at 004816bc"
+      "description": "(bitmap, point, flags, size{w, h}): Bitmap_Blit's scaled twin. Hands the bitmap at +4 to GL_BlitScaled with GL_GetGlobal7's display; a packed bitmap (+0x12 non-zero) is first unpacked by Bitmap_UnpackToScratch, whose buffer Bitmap_UnpackScratch and returned size stand in for the data pointer +0xe and size +0xa for the call and are put back after, the buffer going to Mem_Delete unless Bitmap_UseCallerScratch is set. es2_xref finds calls from CockpitView_SetView, VideoMode_BlitBitmap, VideoMode_BlitBitmapFlags and VideoMode_BlitBitmapSized (two).",
+      "source": "DBSIM decompile and disassembly at 004816bc",
+      "verified": {
+        "bytes": "004816bc+147",
+        "sha1": "7f0a2221a4fb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00481750",
@@ -30542,7 +30554,13 @@
       "confidence": "high",
       "name": "GL_BlitScaled",
       "description": "(context, bitmapData, point, flags, size): drops the context and calls Bitmap_BlitScaledClipDispatch(bitmapData, point, flags, size).",
-      "source": "DBSIM decompile and disassembly at 00481b2f"
+      "source": "DBSIM decompile and disassembly at 00481b2f",
+      "verified": {
+        "bytes": "00481b2f+29",
+        "sha1": "d0cde79a205c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00481b4c",
@@ -31601,9 +31619,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_DrawLine",
-      "description": "Draws a line between two {x,y} points in the installed render context, in the pen at clip block +0x224 (mode 0 flat colour, or mode 2), offset by the context's origin when its +0x208 flag is set and clipped against its clip regions.",
+      "description": "(from, to): draws a line between two {x, y} points with the pen at the installed clip block's (PTR_DAT_004a362c) +0x224: mode 0 a colour, a top byte of 4 resolved through g_RasterColourRamps and any other non-zero top byte drawing nothing; mode 2 a remap through g_RasterRoutines_RemapSpans with the pen's +4; other modes nothing. Both points move by (+0x20c - +0x21c, +0x210 - +0x220) when +0x208 is set. Clip mode +0x204 0 draws the line whole and 1 clips it to the rect +0x20c with Line_ClipToRect, drawing nothing when it misses; a colour pen then draws through g_RasterRoutines_DrawLine, a remap through Line_ScanConvertToSpanRegion into 004a36a9 and its span routine. Any other clip mode walks the block's list from last to first: a rect region clips a copy of the line (Line_ClipToRect) and scan-converts it; at the first span region the line, clipped to +0x20c (returning when it misses) and scan-converted into 004a36ad, is intersected with each span region (SpanRegion_Intersect); each piece goes to the pen's span routine, g_RasterRoutines for a colour; other region types are passed over.",
       "source": "docs/retail/simulation/mfd.md",
-      "signature": "void __cdecl Raster_DrawLine(int *from, int *to)"
+      "signature": "void __cdecl Raster_DrawLine(int *from, int *to)",
+      "verified": {
+        "bytes": "004838f8+614",
+        "sha1": "57442dbb9b60",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00483b60",
@@ -31686,8 +31710,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Raster_FillRect",
-      "description": "Fills a rect through the installed clip block: mode 0 direct, mode 1 intersected with ctx+0x210, otherwise walked against each region in the block's list (rect regions intersected, span regions clipped through SpanRegion_Intersect). Used by the MFD status screen's label backgrounds and its component highlight.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "(rect): fills the inclusive rect {x0, y0, x1, y1} with the brush at the installed clip block's (PTR_DAT_004a362c) +0x228. Mode 0: g_RasterRoutines_FillRect with the colour, a top byte of 4 resolved through g_RasterColourRamps and any other non-zero top byte drawing nothing; mode 6: g_RasterRoutines_RemapRect with the brush's +4; mode 4: the rect's edges with Raster_DrawLine under a temporary pen {0, colour} at +0x224, (x1, y0)-(x0, y0), (x0, y1)-(x0, y0), (x0, y1)-(x1, y1) and (x1, y0)-(x1, y1), the pen put back after; other modes nothing. For modes 0 and 6 the rect moves by (+0x20c - +0x21c, +0x210 - +0x220) when +0x208 is set; clip mode +0x204 0 draws it whole, 1 its Rect_Intersect with the rect +0x20c, and any other walks the block's list (int16 count +0, entries from +4) from last to first: a rect region's Rect_Intersect goes to the mode's routine; at the first span region the rect, intersected with +0x20c (returning when empty), is made a span list with SpanList_FromRect (004a36ad), and each span region's SpanRegion_Intersect with it goes to g_RasterRoutines (slot 0) whatever the mode; other region types are passed over.",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "004865f8+664",
+        "sha1": "61c808501901",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00486890",
@@ -31819,8 +31849,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Region_CopyRectBetweenPages",
-      "description": "(region, point): offsets the region's rect by point (and the drawing context's translation), then copies it through g_RasterRoutines_CopyRect: unclipped for clip mode 0, clipped to the context rect (00486890) for mode 1, and per clip-list entry for mode 2 (rects through 00486890, span regions through SpanList_ClipToRect and the routine 004a5810).",
-      "source": "DBSIM decompile and disassembly at 00487ad0"
+      "description": "(region, point): Region_CopyBetweenPages for a type-0 region: adds point, and the clip block's (PTR_DAT_004a362c) translation (+0x20c - +0x21c, +0x210 - +0x220) when +0x208 is set, to the rect at +4 and passes the rect and point as given to g_RasterRoutines_CopyRect: whole in clip mode +0x204 0; its Rect_Intersect with the rect +0x20c in mode 1, nothing when they miss; in any other mode, for each entry of the block's list (count +0, entries from +4) from last to first, a rect region's Rect_Intersect through g_RasterRoutines_CopyRect and a span region's SpanList_ClipToRect (into 004a36a9) through g_RasterRoutines_CopySpans, other region types passed over.",
+      "source": "DBSIM decompile and disassembly at 00487ad0",
+      "verified": {
+        "bytes": "00487ad0+305",
+        "sha1": "c0cde013c470",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00487c01",
@@ -31828,8 +31864,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Region_CopySpansBetweenPages",
-      "description": "(region, point): Region_CopyBetweenPages for a type-2 region: copies its span list translated by point (and the drawing context's translation when +0x208 is set) into the scratch span buffer 004a36a9 and hands it to the page-copy routine 004a5810 as (spans, point): unclipped for clip mode 0, through SpanList_ClipToRect against the context rect for mode 1, and for mode 2 per clip-list entry (rects through SpanList_ClipToRect, span regions through SpanRegion_Intersect).",
-      "source": "DBSIM decompile at 00487c01"
+      "description": "(region, point): Region_CopyBetweenPages for a type-2 region: copies the span list +4 points to into the scratch list 004a36a9 points to, adding point, and the clip block's translation (+0x20c - +0x21c, +0x210 - +0x220) when +0x208 is set, to the top row and to each x0 and x1, and passes it with point to g_RasterRoutines_CopySpans: whole in clip mode +0x204 0; cut to the rect +0x20c by SpanList_ClipToRect (into 004a36ad) in mode 1; in any other mode, for each entry of the block's list from last to first, cut to a rect region (SpanList_ClipToRect) or intersected with a span region (SpanRegion_Intersect), other region types passed over.",
+      "source": "DBSIM decompile at 00487c01",
+      "verified": {
+        "bytes": "00487c01+339",
+        "sha1": "4a7f6bb3d153",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00487d54",
@@ -31837,8 +31879,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Region_CopyBetweenPages",
-      "description": "(region, point): copies the area a region covers from the raster source page to the draw page: 00487ad0 for a type-0 rect, 00487c01 for a type-2 span list. MessagePort_CopyBoxBetweenPages calls it with the raster source and draw pages swapped. A region is {int type; ...}: type 0 carries a rect {x0, y0, x1, y1} at +4, type 2 a pointer to a span list ({int16 top row, int16 row count, {x0, x1} per row}) at +4.",
-      "source": "DBSIM decompile and disassembly at 00487d54"
+      "description": "(region, point): copies the area a region covers from the raster source page to the draw page: Region_CopyRectBetweenPages for a type-0 region, Region_CopySpansBetweenPages for type 2, nothing for another type. A region is {int type; ...}: type 0 carries a rect {x0, y0, x1, y1} at +4, type 2 a pointer to a span list ({int16 top row, int16 row count, {x0, x1} per row}) at +4. es2_xref finds 15 calls, from CockpitView_ProcessViewCommand, CockpitView_StepViewTransition, Widget_DrawToCockpit, MessagePort_CopyBoxBetweenPages, LedBmBarGraphH_DrawBitmapSpan, LedBmBarGraphV_DrawBitmapSpan and PreferencesPanel_Run.",
+      "source": "DBSIM decompile and disassembly at 00487d54",
+      "verified": {
+        "bytes": "00487d54+51",
+        "sha1": "26886d07a714",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00487d88",
@@ -31997,7 +32045,13 @@
       "confidence": "high",
       "name": "Bitmap_BlitScaledClipDispatch",
       "description": "(bitmapData, point, flags, size{w, h}): offsets the point by the current context's translation when its +0x208 is 1, then calls the scaled blit routine pointer at 004a5838 as (bitmapData, w, h, &point, clip, flags) with clip 0 for clip mode (+0x204) 0 and the context's rect at +0x20c for modes 1 and 2 (mode 2 only when the region count at +0 is positive). Unlike Bitmap_BlitClipDispatch it has no transparent-bitmap branch.",
-      "source": "DBSIM decompile and disassembly at 0048899c"
+      "source": "DBSIM decompile and disassembly at 0048899c",
+      "verified": {
+        "bytes": "0048899c+239",
+        "sha1": "e8c1f6b6c405",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00488a8c",

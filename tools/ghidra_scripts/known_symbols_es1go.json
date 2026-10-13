@@ -917,6 +917,36 @@
       }
     },
     {
+      "address": "00012974",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_FrameTick",
+      "description": "(): sets the byte 0007fd06 to 1, the flag Shell_PresentFrame (00012980) waits on. es2_xref finds its address stored at 00045d59, in 00045d24's call of Timer_AddCallback at a count of 2.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#presenting-a-frame",
+      "verified": {
+        "bytes": "00012974+12",
+        "sha1": "578845acba06",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00012980",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_PresentFrame",
+      "description": "(): waits until the byte 0007fd06 is set and clears it; uploads the palette 0007fcd0 with Palette_UploadWhole when it is set and the byte 0007fcd4 is set, clearing the byte; with the byte 0007fcd5 set calls 00020a70 with the dword 00081938 and clears it; makes the display 000ab616's +0x88 the visible page (+0x30, raster slot 000865f8) and +0x84 the draw page (+0x38, slot 000865f4) and swaps +0x84 and +0x88; when 0007fcd7 is 0, 0007fcd6 set and the word 000817c4 is 1000 calls 0004bbe9(6) and clears 0007fcd6; calls DirtyList_Flush (000413db)(the new +0x88, the word 0007fccc); and with the byte 0007fd07 at 1 calls 00050ed4(0009aff0), 00027bc9 and 00051037 with the dwords 0009aff0 and 0009aff4.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#presenting-a-frame",
+      "verified": {
+        "bytes": "00012980+385",
+        "sha1": "6a3bf8dd3f4d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00012bde",
       "binary": "ES1GO",
       "type": "function",
@@ -997,7 +1027,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Anm_Play",
-      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls 0005afa8(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte 0007fcb9 is set and it was made, calls 000209e0(0007fcfc) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock 0007e6fc; Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls 00051c40 with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in 0003c1b7, passing mode 1 with sound 10 and with sound 11.",
+      "description": "(mode, sound, path) in stack order, callee-cleaned: plays a .ANM. Saves +0x34 and +0x38 of the display object the dword 000ab616 points to and stores +0x38 at +0x34 and +0x30 at +0x38, each through 000865f0 or 000865f4 while the object is still 000ab616's; in a mode other than 0 makes a 320 x 200 bitmap over a new 64,000-byte buffer and calls 0005afa8(the bitmap + 4, a zeroed 8-byte object, 0); sets up a player with Anm_Ctor (00013a3c); when sound is not -1 and the manager 00082768 exists, destroys the sound 0007e9a4 (slot +8 with 3), makes SoundManager_CreateObject(manager, 2, 0, sound) into it and, when the byte 0007fcb9 is set and it was made, calls 000209e0(0007fcfc) when that is not 0 and plays it (slot +0x10); calls NoOp_Void (00012bde); loads path with Anm_Load (00013aa8) and, for a good file, sets the buffer as the background (Anm_SetBackground (00013c30)) in a mode other than 0, then repeats: in mode 0 a deadline 60 / the header's word +0x44 ticks past the clock 0007e6fc; Anm_DrawFrame (00013c46); Anm_SetFrame (00013bf7) with Anm_GetFrame (00013be6) + 1, stopping when it returns 0; in mode 0 a wait for the deadline; NoOp_Void. Then deletes the buffer, calls NoOp_Void, builds the rectangle (0, 0)-(319, 199), stores +0x30 at +0x34 and the saved +0x38 back, calls Region_CopyBetweenPages (00051c40) with an object holding the rectangle, stores the saved +0x34 back, and destroys the player (Anm_Dtor (00013a7a) with 2) and the bitmap (00050198). es2_xref finds two calls, both in 0003c1b7, passing mode 1 with sound 10 and with sound 11.",
       "source": "Herculan/docs/es1/formats/anm-animation.md#playing",
       "verified": {
         "bytes": "000132d8+1667",
@@ -3662,6 +3692,126 @@
       }
     },
     {
+      "address": "00040d54",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyList_CreateContext",
+      "description": "(): makes a render context with 000512a0(0), stores it at 00082248, and sets its +0x208 to 1, +0x20c to 1, the four dwords +0x210 to +0x21c to (0, 0, 0x13f, 199) and +0x220/+0x224 to (0, 0): its clip block (+4) in clip mode 1 against (0, 0)-(319, 199) with the translation flag set and origin (0, 0). DirtyList_Flush (000413db) installs it.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#dirty-boxes",
+      "verified": {
+        "bytes": "00040d54+260",
+        "sha1": "b1e6e8e7611c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00040e58",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyBox_Alloc",
+      "description": "(): takes the head of the dirty-box free list 000a09bc, returning it. When the list is empty it first allocates a block of ten 0x13-byte records (0xbe bytes), returning 0 when that fails, links them in order with +0xb 1 (0 for the block's first) and the last's +0xf pointing at the old list, and makes the block the list.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#dirty-boxes",
+      "verified": {
+        "bytes": "00040e58+140",
+        "sha1": "8f9fd7c44190",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00040ee4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyBox_Free",
+      "description": "(record), callee-cleaned: pushes a dirty-box record onto the free list 000a09bc through its +0xf.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#dirty-boxes",
+      "verified": {
+        "bytes": "00040ee4+28",
+        "sha1": "d99806f834a6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00040f00",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyBox_Add",
+      "description": "(delay, height, width, y, x) in stack order, callee-cleaned, the four int16: records a box to be restored from the background. Returns when the box misses the display 000ab616 (GLDisplay_GetAttribute (0005a6e4) items 0 and 1, W and H): x > W-1, x+width < 0, y > H-1 or y+height < 0. Adds a negative x to width and zeroes it, y likewise; widens to whole groups of four columns (width += x mod 4, rounded up to a multiple of 4; x -= x mod 4); cuts width to W-1-x and height to H-1-y when they pass those; with both non-zero takes a record from DirtyBox_Alloc (00040e58), untested, and stores x +0, y +2, width +4, height +6, width*height +8, the delay byte +0xa and 0 at +0xf, and passes it to DirtyList_Insert (000411a5).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#dirty-boxes",
+      "verified": {
+        "bytes": "00040f00+354",
+        "sha1": "21f087e7d673",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00041062",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyBox_AddRect",
+      "description": "(delay, x0, y0, x1, y1) in stack order, callee-cleaned, an inclusive rect by value: DirtyBox_Add (00040f00)(delay, y1-y0+1, x1-x0+1, y0, x0).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#dirty-boxes",
+      "verified": {
+        "bytes": "00041062+58",
+        "sha1": "e040116f9674",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004109c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyList_Prune",
+      "description": "(): walks the dirty list 000a09c0 and frees with DirtyBox_Free (00040ee4) every record whose delay byte +0xa is negative, relinking the rest in order and zeroing the last one's +0xf.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#dirty-boxes",
+      "verified": {
+        "bytes": "0004109c+126",
+        "sha1": "c06afbcf5330",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000411a5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyList_Insert",
+      "description": "(record), callee-cleaned: merges a new dirty box into the list 000a09c0 or adds it. Among the records with the same delay byte +0xa whose box touches or overlaps the new one (each x at most the other's x + width, y likewise, unsigned), takes the one for which, with U the 16-bit area of the box around both and S the 16-bit sum of the two +8 areas, U <= S and S - U is largest and above 0 (the first of equals). With one it sets that record's x, y, width and height to the box around both, leaving its +8, and frees the new record with DirtyBox_Free (00040ee4); with none it puts the new record at the head of the list.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#dirty-boxes",
+      "verified": {
+        "bytes": "000411a5+521",
+        "sha1": "5ca9d5a9d1d1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000413db",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DirtyList_Flush",
+      "description": "(drawPage, sourcePage) in stack order, callee-cleaned: installs the render context 00082248 with Raster_InstallRenderContext; sets the display 000ab616's source page +0x34 and draw page +0x38 (through raster slots 000865f0 and 000865f4 while it is the current display); for each record of the dirty list 000a09c0 whose delay byte +0xa is 0 copies the type-0 region {x, y, x + width, y + height} at offset (0, 0) with Region_CopyBetweenPages (00051c40), passing the type field +4 of a region object on the stack (type 0, rect +8); lowers every record's delay by 1; puts back the low bytes of the two pages; reinstalls the render context it found (000ab612); and calls DirtyList_Prune (0004109c).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#dirty-boxes",
+      "verified": {
+        "bytes": "000413db+1249",
+        "sha1": "e7d5e9e1a920",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00042985",
       "binary": "ES1GO",
       "type": "function",
@@ -4077,6 +4227,36 @@
       "verified": {
         "bytes": "00045a04+99",
         "sha1": "188860497c59",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045b25",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shell_CreateDisplay",
+      "description": "(): allocates a 0x8c-byte display and constructs it with 0005a388(display, 0, \"VGA_8\"); builds four points at +0x44 and four at +0x64 with __vec_ctor and ShellDisplay_PagePointCtor (00045d09); calls 0005a5d0(display); sets the page pair +0x84 to 0 and +0x88 to 1, the draw page +0x38 to 1, the source page +0x34 to +0x88 and the visible page +0x30 to +0x84, each through its raster slot while the display is 000ab616; sets the page origins +0x44 to (0, 0), (0, 200), (0, 400), (0, 600) and zeroes the 0x20 bytes at +0x64. It stores the display at 00082750, calls 0005a77c(display, 2, 9), makes the render context 00082754 with 000512a0(0), its +0x208 1 and +0x20c 0, and installs it with Raster_InstallRenderContext.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
+      "verified": {
+        "bytes": "00045b25+484",
+        "sha1": "7804651e2321",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045d09",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellDisplay_PagePointCtor",
+      "description": "(p), callee-cleaned: the empty constructor of an 8-byte point, allocating 8 bytes when p is null and returning p; es2_xref finds its address stored at 00045b79 and 00045b97, the two __vec_ctor calls of Shell_CreateDisplay (00045b25) for the display's points.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
+      "verified": {
+        "bytes": "00045d09+27",
+        "sha1": "ba05df620478",
         "scope": "body",
         "via": "decompile"
       }
@@ -4522,7 +4702,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_FixRect",
-      "description": "(script, rect): calls 0004c17c(the word 00082a9c, +0x38 of the display object 00082a94, rect).",
+      "description": "(script, rect): calls Display_CopyRectToPage (0004c17c)(the word 00082a9c, +0x38 of the display object 00082a94, rect).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
       "verified": {
         "bytes": "000472a2+46",
@@ -4889,6 +5069,21 @@
         "sha1": "02ff2c07d694",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004c17c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Display_CopyRectToPage",
+      "description": "(page, sourcePage, rect) in stack order, callee-cleaned: sets the display 000ab616's source page +0x34 to sourcePage and draw page +0x38 to page (through raster slots 000865f0 and 000865f4 while it is the current display), copies the rect between them at offset (0, 0) with Region_CopyBetweenPages (00051c40), passing the type field +4 of a region object on the stack, adds the rect with DirtyBox_AddRect (00041062) at delay 0, and puts back the low bytes of the two pages. es2_xref finds calls from TtmScript_FixRect and 0003c7d8.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#fixing-a-rect",
+      "verified": {
+        "bytes": "0004c17c+736",
+        "sha1": "33fd3eca819a",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -6050,6 +6245,21 @@
       }
     },
     {
+      "address": "000503f0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_BlitScaled",
+      "description": "(bitmap, size, flags, point) in stack order, callee-cleaned: Bitmap_Blit (000502c0) with Bitmap_BlitScaledClipDispatch (00065f34)(header +4, point, flags, size) in place of Raster_BlitDispatch: a packed bitmap (+0x12 non-zero) is unpacked by 00050544 into Bitmap_UnpackScratch for the call. ES2's Bitmap_BlitScaled (DBSIM 004816bc) reaches the same dispatch through GL_BlitScaled.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "verified": {
+        "bytes": "000503f0+153",
+        "sha1": "a72293003bbf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005048c",
       "binary": "ES1GO",
       "type": "function",
@@ -6360,6 +6570,51 @@
       "verified": {
         "bytes": "00051918+161",
         "sha1": "25b98509b0be",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000519bc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_CopyRectBetweenPages",
+      "description": "(region, offset), C convention: Region_CopyBetweenPages (00051c40) for a type-0 region: adds the offset, and the clip block 0008441c's translation (+0x20c - +0x21c, +0x210 - +0x220) when +0x208 is set, to the rect at +4, and passes the rect and the offset as given to raster slot 20 (00086600). Clip mode +0x204 1 first intersects it with the block's rect +0x20c (0006659c), copying nothing when empty; any other mode but 0 walks the block's region list (count +0, entries from +4) from last to first, copying each rect region's intersection (0006659c) through slot 20 and each span region's cut (0004fd65, into the list 00084495 points to) through slot 19 (000865fc), passing over other types. ES2's Region_CopyRectBetweenPages (DBSIM 00487ad0) statement for statement.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#copying-between-pages",
+      "verified": {
+        "bytes": "000519bc+305",
+        "sha1": "c880b63dcadb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051aed",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_CopySpansBetweenPages",
+      "description": "(region, offset), C convention: Region_CopyBetweenPages (00051c40) for a type-2 region: copies the span list +4 points to into the scratch list 00084495 points to, adding the offset, and the clip block 0008441c's translation when +0x208 is set, to the top row and to each x0 and x1, and passes it with the offset to raster slot 19 (000865fc): whole in clip mode +0x204 0; cut to the block's rect (0004fd65, into the list 00084499 points to) in mode 1; in any other mode for each entry of the block's region list from last to first, cut to a rect region (0004fd65) or intersected with a span region (0004fc50). ES2's Region_CopySpansBetweenPages (DBSIM 00487c01) statement for statement.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#copying-between-pages",
+      "verified": {
+        "bytes": "00051aed+339",
+        "sha1": "430e2e9a395e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051c40",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Region_CopyBetweenPages",
+      "description": "(region, offset), C convention: copies what a region covers from the raster source page to the draw page: Region_CopyRectBetweenPages (000519bc) for type 0, Region_CopySpansBetweenPages (00051aed) for type 2, nothing for another type. The region is {int type; ...}, as Region_Restore's. ES2's Region_CopyBetweenPages (DBSIM 00487d54).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#copying-between-pages",
+      "verified": {
+        "bytes": "00051c40+51",
+        "sha1": "26886d07a714",
         "scope": "body",
         "via": "decompile"
       }
@@ -7739,6 +7994,21 @@
       }
     },
     {
+      "address": "00055b9c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_DrawEllipse",
+      "description": "(rect), C convention: ES2's Raster_DrawEllipse (DBSIM 00488070) with the span list's rows kept on the display: from -min(b, cy) up to before min(b, H - 1 - cy) relative to the centre row cy, H the dword 00084462, drawing nothing when no row is left. It draws in brush modes 0 and 4 and returns in any other; a zero half-extent draws a line through Raster_DrawLine under a temporary pen of the brush's colour whose mode dword is the uninitialised stack word; the list is the one 00084499 points to, filled by Raster_FillSpanList (0006a1ac) at the centre, mode 4 as two passes with the brush's mode set to 0 and then back to 4.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "verified": {
+        "bytes": "00055b9c+1773",
+        "sha1": "c8fdeae2ee6a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005628c",
       "binary": "ES1GO",
       "type": "function",
@@ -8928,6 +9198,21 @@
       "verified": {
         "bytes": "0005a678+107",
         "sha1": "263d05361711",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005a6e4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLDisplay_GetAttribute",
+      "description": "(display, which), callee-cleaned: returns 0 +8 (width), 1 +0xc (height), 2 +0x24, 3 +0x28, 4 +0x10, 6 +0x14, 7 +0x18, 9 +0x1c, 10 +0x20, 5 the dword 000865a9, 8 00085da5, 15 00084492, anything else 0. ES2's GLDisplay_GetAttribute (DBSIM 00481244) less its item 11 (+0x24), with items 2 and 3 four bytes lower and the global item 16 numbered 15.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
+      "verified": {
+        "bytes": "0005a6e4+149",
+        "sha1": "917469d451c8",
         "scope": "body",
         "via": "decompile"
       }
@@ -10769,6 +11054,21 @@
       }
     },
     {
+      "address": "00065f34",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Bitmap_BlitScaledClipDispatch",
+      "description": "(header, point, flags, size), C convention: moves the point by the clip block 0008441c's translation when +0x208 is 1 and calls raster slot 29 (00086624) with (header, size w, size h, &point, clip, flags): clip 0 in clip mode +0x204 0, the block's rect +0x20c in mode 1, and in mode 2 the rect when the region count +0 is above 0; nothing in any other case. ES2's Bitmap_BlitScaledClipDispatch (DBSIM 0048899c).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "verified": {
+        "bytes": "00065f34+235",
+        "sha1": "d3704e3f0918",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00066020",
       "binary": "ES1GO",
       "type": "function",
@@ -11199,6 +11499,21 @@
       "verified": {
         "bytes": "0006780c+276",
         "sha1": "b946f4cabc21",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006a1ac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FillSpanList",
+      "description": "(spans, origin), C convention: ES2's Raster_FillSpanList (DBSIM 00486928) statement for statement, with the clip block 0008441c and the colour ramps 00085da9.",
+      "source": "Herculan/docs/retail/rendering/polygon-fill.md#span-lists",
+      "verified": {
+        "bytes": "0006a1ac+458",
+        "sha1": "7ee8f6487971",
         "scope": "body",
         "via": "decompile"
       }
@@ -12221,6 +12536,81 @@
       }
     },
     {
+      "address": "000701d4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SetSourcePage",
+      "description": "(page), C convention: the VGA_8 driver's slot 16 (table 0008b2f0 +0x40): stores page's plane offset (00088e92 + 4*page) at 00088ec4 and its pan byte (00088eba + page) shifted right 1 at 00088ed0, the source page the page copies read.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
+      "verified": {
+        "bytes": "000701d4+33",
+        "sha1": "26aa70019687",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000701f5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SetDrawPage",
+      "description": "(page), C convention: the VGA_8 driver's slot 17: VGA8_SetSourcePage (000701d4) into 00088ec8 and 00088ed4, the draw page.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
+      "verified": {
+        "bytes": "000701f5+33",
+        "sha1": "a76fe15b894c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00070216",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ShowPage",
+      "description": "(page), C convention: the VGA_8 driver's slot 18. Clears 0008444e; by 00084472 waits for nothing (0), out of a vertical retrace in progress (1), or for the next retrace to start and end (other), on port 3DA bit 3; writes the page's plane offset (00088e92 + 4*page) to CRTC registers 0xc and 0xd (port 3D4); when 00084472 is non-zero waits for a retrace to start; writes the pan byte (00088eba + page) to attribute register 0x13 (port 3C0, index 0x33). It then stores the offset at 00088ecc and the pan >> 1 at 00088ed8, with 00084424 set first calling the routine 0008662c and copying 8 bytes 00084428 to 00084452, and after copying them back and calling 00086628; then sets 0008444e to 1.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
+      "verified": {
+        "bytes": "00070216+253",
+        "sha1": "8fb231cc068b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00070313",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SetPageOrigin",
+      "description": "(page, point), C convention: the VGA_8 driver's slot 15: stores the row table 00088852's word for point.y plus point.x >> 2 at 00088e92 + 4*page, and (point.x & 3) * 2 at the byte 00088eba + page while 00084476 is set (else 0); then calls VGA8_SetDrawPage (000701f5), VGA8_SetSourcePage (000701d4) or VGA8_ShowPage (00070216) with the page when it equals 0008448e, 0008448a or 00084486.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-pages",
+      "verified": {
+        "bytes": "00070313+117",
+        "sha1": "6ae13d7e0a47",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000733bc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_CopyRectBetweenPages",
+      "description": "(rect, offset), C convention: the VGA_8 driver's slot 20: copies the inclusive rect of the source page (00088ec4, pan 00088ed0) moved back by offset onto the rect of the draw page (00088ec8, pan 00088ed4). When (offset.x + 00088ed4 - 00088ed0) & 3 is non-zero it copies row by row through raster slots 21 (00086604, the source row into a stack buffer) and 22 (00086608, the buffer to the draw row). Otherwise it uses VGA write mode 1 (port 3CE, register 5 to 0x41, back to 0x40 after) a byte per four columns, stride 0008884a: a rect whose x0 and x1 share a group of four with the plane mask from 00088ee0, reading source row y + offset.y; any other as its left partial group (mask 00088ef0), whole groups on all planes, and right partial group (00088ef4), reading source row y - offset.y.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#copying-between-pages",
+      "verified": {
+        "bytes": "000733bc+749",
+        "sha1": "6fd5f1978ffa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00074650",
       "binary": "ES1GO",
       "type": "function",
@@ -12248,6 +12638,51 @@
         "sha1": "6c2574962966",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00074b18",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BlitBitmapScaled",
+      "description": "(header, w, h, point, clip, flags), C convention: the VGA_8 driver's slot 29 (table +0x74): draws the bitmap (rows +0, columns +2, size +6, pixels +0xa) stretched over w x h from point, index 0 unwritten. With clip non-null returns when the box misses the rect and trims L, R, T, B from its sides; returns when nothing is left. VGA8_ScaleStepSetup (00074f77) gives the column step ((columns-1)<<16)/(w-1), negated by flags bit 1 (2), and the row step ((rows-1)<<16)/(h-1), each with its start fraction. The source offset starts at the whole part of T row steps times the columns; flags bit 0 (1) makes it size - columns - that with stride -columns, bit 1 adds columns - 1. Each destination row from point.y + T is drawn by VGA8_BlitScaledRow (00074cbd), then the row fraction adds the step and the offset its whole part times the stride.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "verified": {
+        "bytes": "00074b18+421",
+        "sha1": "3baae147578c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00074cbd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_BlitScaledRow",
+      "description": "A block of VGA8_BlitBitmapScaled (00074b18), near-called with its frame per destination row ([EBP-0x34]). In clip mode +0x204 2 draws the row once per region of the clip block 0008441c's list, first to last, that holds it, trimmed to a rect region's x0..x1 or a span region's span on that row, passing over other types; otherwise once. A = (L + left trim) * column step + the column fraction; the fraction becomes A's low 16 bits; pixel j of the run takes the source byte at floor((A + offset * 65536 + j * step) / 65536), written plane by plane (sequencer map mask) on the draw page (row table 00088852, 00088ec8) unless it is 0.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "verified": {
+        "bytes": "00074cbd+698",
+        "sha1": "a72aa810ea74",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00074f77",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ScaleStepSetup",
+      "description": "(EDI = {int32 from, int32 to} in 16.16, ECX = steps), register-passed, for VGA8_BlitBitmapScaled (00074b18): zeroes the two low words; for ECX of 0 or less stores a step of 0 at +4; otherwise stores (to - from) / (ECX & 0xffff) at +4 and as the start fraction (the low word of +0) the step's absolute value's low 16 bits when that value is at least 0x8000, else 0x8000.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#ellipses-outlines-and-scaled-bitmaps",
+      "verified": {
+        "bytes": "00074f77+82",
+        "sha1": "5dc6d29dc241",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
