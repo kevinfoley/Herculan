@@ -2167,8 +2167,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagGroupsCopy",
-      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092142. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/mission-groups.md#the-modules-start"
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092142.",
+      "source": "Herculan/docs/es1/simulation/mission-groups.md#the-modules-start",
+      "verified": {
+        "bytes": "0001c88b+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0001c894",
@@ -2507,7 +2513,13 @@
       "confidence": "high",
       "name": "Group_ReportIfAllOutOfAction",
       "description": "(group, object), callee-cleaned: returns at the first member other than the object with neither +0x9e nor +0x93 set. Otherwise, when the flag number +0x24 is not negative, finds the operation +0x26 by REPNE SCASD among the six dwords at 0009222c (2, 1, 0xd, 0xe, 0xf, 0x10) and jumps through the table after them: 2 adds 1 to that flag of MissionVars (000bc4b8), 1 sets it to 0, 0xd to 0x10 store the operation less 0xc; any other operation writes nothing. ES2's Group_ReportIfAllOutOfAction (DBSIM 00423f30) with one (flag, operation) pair where ES2's runs ten. es2_xref finds one call, from 0000d77c.",
-      "source": "Herculan/docs/es1/simulation/mission-groups.md#going-out-of-the-fight"
+      "source": "Herculan/docs/es1/simulation/mission-groups.md#going-out-of-the-fight",
+      "verified": {
+        "bytes": "0001d524+214",
+        "sha1": "0d75b4afb74c",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0001d5fc",
@@ -2545,8 +2557,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagWorldCopy",
-      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009225e. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/world.md#where-the-module-starts"
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009225e.",
+      "source": "Herculan/docs/es1/simulation/world.md#where-the-module-starts",
+      "verified": {
+        "bytes": "0001d663+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0001d66c",
