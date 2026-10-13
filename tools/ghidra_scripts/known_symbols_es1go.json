@@ -707,6 +707,21 @@
       }
     },
     {
+      "address": "000087ce",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Speech_ArchivePresent",
+      "description": "1 when fopen opens vol\\speech.vol (closing it again), else 0. es2_xref finds one call, from 00008934 in 00008920.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-names",
+      "verified": {
+        "bytes": "000087ce+49",
+        "sha1": "f9f7925ad40d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00008cd4",
       "binary": "ES1GO",
       "type": "function",
@@ -3137,6 +3152,81 @@
       }
     },
     {
+      "address": "00042985",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_FindFreeSlot",
+      "description": "(manager): the index of the first null pointer among the 60 object slots at +0x14c, or 0xffff. The same statements as ES1DBSIM's SoundManager_FindFreeSlot (0004f4b0) in different code.",
+      "source": "ES1GO decompile at 00042985, against ES1DBSIM 0004f4b0",
+      "verified": {
+        "bytes": "00042985+86",
+        "sha1": "260c7875a531",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000429db",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_CreateObject",
+      "description": "(manager, kind, priority, index) in stack order: makes a sound object for a name index, MidiSound_Ctor (0004412a) for a name holding .hmp and DigiSound_Ctor (0004446c) for one holding .sfx or .raw, in the first free slot (SoundManager_FindFreeSlot (00042985)). The same statements as ES1DBSIM's SoundManager_CreateObject (0004f4e8) in different code.",
+      "source": "ES1GO decompile at 000429db, against ES1DBSIM 0004f4e8",
+      "verified": {
+        "bytes": "000429db+422",
+        "sha1": "d6191b43276c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00042b81",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_GetObject",
+      "description": "(manager, slot): the object pointer in the slot, manager +0x14c + slot*4. The code of ES1DBSIM's SoundManager_GetObject (0004f660), relocated operands aside.",
+      "source": "ES1GO decompile at 00042b81, against ES1DBSIM 0004f660",
+      "verified": {
+        "bytes": "00042b81+31",
+        "sha1": "82c5fa8294b2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00042e16",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_SetSampleNames",
+      "description": "(manager, names): keeps the null-terminated array of name pointers at +0x508 and records each name's size at +0x262[i], returning at once when one fails to open; sets +0x502 to the count less one after the last. The same statements as ES1DBSIM's SoundManager_SetSampleNames (0004f888) in different code.",
+      "source": "ES1GO decompile at 00042e16, against ES1DBSIM 0004f888",
+      "verified": {
+        "bytes": "00042e16+291",
+        "sha1": "e67a24707d77",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00042f39",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_SetSampleName",
+      "description": "(manager, index, name) in stack order: puts one name at an index, taking .sfx and .raw as digital and .hmp as MIDI, renaming the objects already on the index, and records the file's size. The same statements as ES1DBSIM's SoundManager_SetSampleName (0004f99c) in different code.",
+      "source": "ES1GO decompile at 00042f39, against ES1DBSIM 0004f99c",
+      "verified": {
+        "bytes": "00042f39+404",
+        "sha1": "d1d4785f8253",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00043c81",
       "binary": "ES1GO",
       "type": "function",
@@ -3147,6 +3237,111 @@
       "verified": {
         "bytes": "00043c81+45",
         "sha1": "6b5fa5f08950",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043d8a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundObject_LoadSample",
+      "description": "(sound): reads the sound's whole file into memory through the manager's volume stream, unloading other sounds to stay under the manager's limit when its +0x503 is set. The same statements as ES1DBSIM's SoundObject_LoadSample (000501ec) in different code.",
+      "source": "ES1GO decompile at 00043d8a, against ES1DBSIM 000501ec",
+      "verified": {
+        "bytes": "00043d8a+765",
+        "sha1": "586051031e98",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004412a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MidiSound_Ctor",
+      "description": "(memory or 0, slot, index, name, manager) in stack order: builds a 0xcf-byte MIDI sound object, vtable 000825bc, after 00043b28. The same statements as ES1DBSIM's MidiSound_Ctor (000504dc) in different code.",
+      "source": "ES1GO decompile at 0004412a, against ES1DBSIM 000504dc",
+      "verified": {
+        "bytes": "0004412a+151",
+        "sha1": "74194cf4e191",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004423b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MidiSound_Play",
+      "description": "(sound), slot +0x10 of vtable 000825bc: loads the song and starts it through HmiMidi_InitSong (0005ec79), then 0005f666 when the far pointer +0x35 is set, 0005f223 and 0005f63f. The same statements as ES1DBSIM's MidiSound_Play (000505c8) in different code.",
+      "source": "ES1GO decompile at 0004423b, against ES1DBSIM 000505c8",
+      "verified": {
+        "bytes": "0004423b+321",
+        "sha1": "97da37f96042",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004446c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSound_Ctor",
+      "description": "(memory or 0, slot, index, name, manager) in stack order: builds a 0x50-byte digital sound object, vtable 0008261c, after 00043b28. The same statements as ES1DBSIM's DigiSound_Ctor (000507c8) in different code.",
+      "source": "ES1GO decompile at 0004446c, against ES1DBSIM 000507c8",
+      "verified": {
+        "bytes": "0004446c+124",
+        "sha1": "7c4a44a8a06a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000444f2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSound_Dtor",
+      "description": "(sound, flags), slot +0x08 of vtable 0008261c: stops the sound with DigiSound_Stop (000449d8) and frees it when bit 0 of flags is set. The code of ES1DBSIM's DigiSound_Dtor (00050838), relocated operands aside.",
+      "source": "ES1GO decompile at 000444f2, against ES1DBSIM 00050838",
+      "verified": {
+        "bytes": "000444f2+66",
+        "sha1": "c8138f4c6b4e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000446ab",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSound_Play",
+      "description": "(sound), slot +0x10 of vtable 0008261c: loads the sample and starts it with HmiDigi_StartSample (0005e291); the stop pick uses 0005e80d and 000440e8. The same statements as ES1DBSIM's DigiSound_Play (000509c4) in different code, except that a failed start stores +0x19, then -1, at +4 where ES1DBSIM stores -1.",
+      "source": "ES1GO decompile at 000446ab, against ES1DBSIM 000509c4",
+      "verified": {
+        "bytes": "000446ab+699",
+        "sha1": "070aaa464a31",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000449d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSound_Stop",
+      "description": "(sound), slot +0x14 of vtable 0008261c: releases a live voice +0x19 and sets it to -1 and +0x1d to 0xffff. The code of ES1DBSIM's DigiSound_Stop (00050c88), relocated operands aside.",
+      "source": "ES1GO decompile at 000449d8, against ES1DBSIM 00050c88",
+      "verified": {
+        "bytes": "000449d8+60",
+        "sha1": "577cf9128528",
         "scope": "body",
         "via": "decompile"
       }
@@ -3307,7 +3502,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellSnc_OpenSound",
-      "description": "(script, name), callee-cleaned: when the dword 0007fcbc is non-zero, formats snc\\%s (00082748) of name into 000aad40 with sprintf (0004e1dc); when the object 00082768 is set, calls the slot +0x30 (vtable at +0x3b) of 00042b81(00082768, 0) until it returns 0, and opens the path through 00042f39(00082768, 0, path): on success stores 000429db(00082768, 2, 0, 0) as the sound at +0 and passes it to 00043d8a, otherwise stores 0. es2_xref finds one call, from maybe_SncList_StartSound (0004544a).",
+      "description": "(script, name), callee-cleaned: when the dword 0007fcbc is non-zero, formats snc\\%s (00082748) of name into 000aad40 with sprintf (0004e1dc); when the object 00082768 is set, calls the slot +0x30 (vtable at +0x3b) of SoundManager_GetObject (00042b81)(00082768, 0) until it returns 0, and opens the path through SoundManager_SetSampleName (00042f39)(00082768, 0, path): on success stores SoundManager_CreateObject (000429db)(00082768, 2, 0, 0) as the sound at +0 and passes it to SoundObject_LoadSample (00043d8a), otherwise stores 0. es2_xref finds one call, from maybe_SncList_StartSound (0004544a).",
       "source": "Herculan/docs/es1/formats/snc-lip-sync.md#loading-a-line",
       "verified": {
         "bytes": "00045801+155",
@@ -3357,6 +3552,21 @@
       "verified": {
         "bytes": "00045a04+99",
         "sha1": "188860497c59",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046235",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShellSound_Init",
+      "description": "Returns at once while 0007fd08 is set. Opens resource.cfg (Path_ApplyAltDrive, FileRStream_Ctor), asserting 'ERROR: Run soundset first.' (src\\system.cpp line 0x151, severity 5) when it fails, and reads [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress with 00026d71 and 00026bac, the driver numbers and ports through 000638d1 with '%X'. Closes it and returns when the [SoundFX] driver is 0. Otherwise makes the sound manager 00082768 with 00041f64(0), stores the six values in the driver defaults block (00082328, 00082320, 0008231c, 00082324, 00082330, 0008232c), calls 0004240a(manager), 000430cd(manager, 0x5f), 00043b0f(manager, 200000) and SoundManager_SetSampleNames (00042e16) with the 20 names at 000828c0, and makes the button sound 0007fd00 with SoundManager_CreateObject (000429db)(manager, 2, 0, 9), loading it with SoundObject_LoadSample (00043d8a). es2_xref finds one call, from 00045df5 in 00045d24.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-names",
+      "verified": {
+        "bytes": "00046235+634",
+        "sha1": "395f77927af7",
         "scope": "body",
         "via": "decompile"
       }
@@ -8334,6 +8544,51 @@
       "name": "maybe_MK_FP",
       "description": "Symantec C++ runtime `MK_FP`, from `sys_pl.asm`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 10 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0005e291",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_StartSample",
+      "description": "(driver, block) of the HMI library: copies a start block into the first free of the driver's 32 voices and returns its number, -1 with none free. The code of ES1DBSIM's HmiDigi_StartSample (0006dad9), relocated operands aside.",
+      "source": "es2_naming.py diff against ES1DBSIM 0006dad9",
+      "verified": {
+        "bytes": "0005e291+678",
+        "sha1": "3b2258ead083",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005ec79",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_InitSong",
+      "description": "(song block, track map, handle out) of the HMI library, the .HMP loader: checks HMIMIDIP, takes a song slot, points at the tracks and branch entries and routes the tracks to the open drivers. The code of ES1DBSIM's HmiMidi_InitSong (0006e4c1), relocated operands aside. es2_xref finds one call, from MidiSound_Play (000442cd).",
+      "source": "es2_naming.py diff against ES1DBSIM 0006e4c1",
+      "verified": {
+        "bytes": "0005ec79+1404",
+        "sha1": "16d92e88b75c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005f518",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_ReadDelta",
+      "description": "(bytes, far out pointer) of the HMI library: reads a variable-length number, seven bits a byte with the first byte the lowest, ending at the byte whose bit 7 is set, and returns the bytes read. The code of ES1DBSIM's HmiMidi_ReadDelta (0006ed60), relocated operands aside.",
+      "source": "es2_naming.py diff against ES1DBSIM 0006ed60",
+      "verified": {
+        "bytes": "0005f518+83",
+        "sha1": "db21aef97125",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0006002f",

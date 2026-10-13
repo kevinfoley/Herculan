@@ -229,6 +229,10 @@ public static class TransformerRegistry {
 		// docs/es1/formats/wld-world.md#the-world-tables-in-zonesvol: no reader found, bytes kept whole (OPAQUE).
 		new("Unread World Table (opaque)", e => ExtIs(e, FileType.Dat) && NameStartsWith(e, "WORLD"),
 			() => new Common.Es1OpaqueFileTransformer()),
+		// docs/es1/formats/sound-samples.md: effects, voice and speech with no header, each file loaded whole as the sample.
+		new("Digital Sound", e => NameEndsWith(e, ".SFX") || NameEndsWith(e, ".RAW"), () => new Common.Es1SoundSampleTransformer()),
+		// docs/es1/formats/hmp-music.md: HMI's MIDI songs.
+		new("HMP Song", e => NameEndsWith(e, ".HMP"), () => new Common.Es1HmpSongTransformer()),
 	};
 
 	/// <summary>Whether the entry is one of the four theater shape tables (docs/es1/formats/zone-terrain.md#which-zone-and-which-theater).</summary>

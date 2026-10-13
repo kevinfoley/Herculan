@@ -3857,6 +3857,36 @@
       }
     },
     {
+      "address": "0004db14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sound_Init",
+      "description": "(midiPort, port, dma, irq, midiDevice, digiDevice) in stack order: sets the voice-line slot count 000bd73c to 10, or 1 when g_LowMemory is set, and allocates the slots (__vec_new, 0x3a bytes each, to 000bd734) and 100 bytes per slot (000bd738). When digiDevice is non-zero: makes the sound manager 000959ac with SoundManager_Ctor (0004eb40), stores the six values over the driver defaults block (00095a08, 00095a00, 000959f8, 000959fc, 00095a0c, 00095a04), runs SoundManager_LoadDrivers (0004ef8c), calls 00050008(manager, 0xffffffff) and clears the manager's +0x503, or in the low-memory mode 00050008(manager, 200000) and sets it, calls 0004ffe0(manager, 100000), zeroes 000bd72c and runs SoundCatalog_Load (0004dc70). Sets 000959b4 to 10 either way. es2_xref finds one call, from Sim_StartMission (0005ab6f).",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
+      "verified": {
+        "bytes": "0004db14+298",
+        "sha1": "01ae68e3ccec",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004dc70",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundCatalog_Load",
+      "description": "Loads str\\SOUNDS.STR (ResourcePath_BuildFolderName, StringTable_LoadFromFile into 000b1e44) and reads it with StringTable_ReadNext into the name array 000b18a4 and the attribute pointer array 000b1994; passes the names to SoundManager_SetSampleNames (0004f888). For each row up to the first empty name: 000bd63c[row] = SoundManager_CreateObject (0004f4e8)(manager, 2, attribute byte 3, row), then the object's slot +0x28(-1, -1, attribute byte 0) and +0x2c(attribute byte 1), SoundObject_LoadSample when attribute byte 2 is set, and 000b1a84[row] = 0; the row count is left in 000bd72c. Then for each voice-line slot (000bd734, stride 0x3a, count 000bd73c) stores the next index past the rows at +0x34 and SoundManager_CreateObject(manager, 0, 0, index) at +0x36. Called last by Sound_Init (0004db14).",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-simulators-catalog",
+      "verified": {
+        "bytes": "0004dc70+365",
+        "sha1": "17ab9733a439",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004dde0",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -3947,16 +3977,166 @@
       }
     },
     {
+      "address": "0004e0f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SpeechLine_Load",
+      "description": "(sncName, voiceName) in stack order: finds the voice-line slot (000bd734, stride 0x3a, count 000bd73c) whose +0x2b holds 0004e208's key for voiceName; with none, takes a slot from 0004e08c (returning 0 when it gives none), stores the key at +0x2b and 1 at +0x33, and, when the sound manager 000959ac exists and the byte 000959e4 is set, builds simvoice\\<voiceName>.sfx in the slot's +0xe, names it as the slot's index +0x34 with SoundManager_SetSampleName (0004f99c) and loads the slot's sound +0x36 with SoundObject_LoadSample, returning 0 when that fails; then Snc_Load(slot, sound, sncName). Stores 000981c4 at +0x2f and returns the slot. es2_xref finds one call, from 0003e1a8 in 0003e060.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#voice-lines",
+      "verified": {
+        "bytes": "0004e0f0+278",
+        "sha1": "4934ab8d01eb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004e4a8",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Snc_Load",
-      "description": "(slot, object, name) in stack order, callee-cleaned: opens snc\\<name> (ResourcePath_BuildFolderName (00060698) on 000959e5, VolRStream_CtorFromPath (000567cc)), reads an int32 length and that many bytes through the read slot +0x1c into the buffer the dword slot +0x27 points to, appends 0xff, stores object at slot +0, clears the object's byte +0x16 when it is non-null, and destroys the stream with VolRStream_Dtor (00056824). ES2's Snc_Load takes a path, writes only the terminator when it has none, and keeps its buffer pointer at +0x2f. es2_xref finds calls from 0004e0f0 and 0004e46c, through the padding before the prologue.",
+      "description": "(slot, object, name) in stack order, callee-cleaned: opens snc\\<name> (ResourcePath_BuildFolderName (00060698) on 000959e5, VolRStream_CtorFromPath (000567cc)), reads an int32 length and that many bytes through the read slot +0x1c into the buffer the dword slot +0x27 points to, appends 0xff, stores object at slot +0, clears the object's byte +0x16 when it is non-null, and destroys the stream with VolRStream_Dtor (00056824). ES2's Snc_Load takes a path, writes only the terminator when it has none, and keeps its buffer pointer at +0x2f. es2_xref finds calls from SpeechLine_Load (0004e0f0) and 0004e46c, through the padding before the prologue.",
       "source": "Herculan/docs/es1/formats/snc-lip-sync.md#the-simulators-scripts",
       "verified": {
         "bytes": "0004e4a8+112",
         "sha1": "544b2a90cc5d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004eb40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_Ctor",
+      "description": "(memory or 0): allocates 0x50c bytes when given none; builds the member at +0x242 inline; clears +0x00-+0x23, +0x24-+0x33, +0x34-+0x9f, +0xa0-+0xcb, +0xcc-+0xd7, +0xd8-+0x133 and the 60 object slots +0x14c; sets +0x23c to 100000, +0x240 to 10, the volume byte +0x241 to 90, 000bd73e to the manager, the memory limit +0x4fe to 300000, the bytes loaded +0x4f6 and high-water mark +0x4fa to 0, the evict flag +0x503 to 1, the volume stream +0x504 to VolRStream_CtorFromPath(0, \"sos\\sound.vol\") and the timer slot +0x134 to -1.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-sound-manager",
+      "verified": {
+        "bytes": "0004eb40+394",
+        "sha1": "ba3dccaa1dc1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004ef8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_LoadDrivers",
+      "description": "(manager): returns 0 unless SoundManager_LoadBanks (0004f6d4) succeeds. Calls 0006d4f5(0, 1), registers 0004e710 with Timer_AddCallback at a count from the word at 000bdd0c+4 and 120 and keeps the slot at +0x134, calls 0006fdbb(00095b54) and 00070ed8(00095b59), opens the MIDI device 00095a0c with HmiMidi_InitDriver (00071076) on the blocks +0xcc and +0xa0 (handle 000bd8c0) and loads the banks +0x13a and +0x146 into it with 00072275. Fills the digital driver block: device 00095a04 at +0, 0x78 at +4, 8 at +0xc, 1 at +0x10, far pointers to +0xd8 at +0x14 and to +0x24 at +0x1c; port 00095a00, IRQ 000959fc and DMA 000959f8 at +0x24, +0x28 and +0x2c; 0x1000 (000959ec) at +0xd8, 1 at +0xe4, the rate 11025 (000959f0) at +0xe8, 0x13 at +0xec; the manager's far pointer at +0xb8. Sets 000bd8c8 to 0, calls 0006fdbb(00095bb8), opens device 0xa005 with HmiMidi_InitDriver on +0xcc and +0xa0 (handle 000bd8c4), loads +0x140 into it with 00072275, calls 0007225a(0), sets 000bd8cc to 1 and returns 1. Each failure formats 'SoundManager::loadDrivers: %s' with 0006f23d's text, passes one or both MIDI handles to 0007144b(handle, 1) from the bank loads on, calls 0006fe28, 00071064 and 0006d5c2(0), and returns 0. Called from Sound_Init (0004db14).",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
+      "verified": {
+        "bytes": "0004ef8c+1093",
+        "sha1": "6f80a6eb16d9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f4b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_FindFreeSlot",
+      "description": "(manager): the index of the first null pointer among the 60 object slots at +0x14c, or 0xffff.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects",
+      "verified": {
+        "bytes": "0004f4b0+55",
+        "sha1": "270e9d984c3f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f4e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_CreateObject",
+      "description": "(manager, kind, priority, index) in stack order: returns 0 when index is above the highest name index +0x502 or SoundManager_FindFreeSlot (0004f4b0) gives 0xffff. Looks up the index's name in the table +0x508: with none, kind 2 returns 0 and any other kind goes on with no name; with one, Str_FindBoyerMoore over 0006f948's result for it sets the kind to 1 when it holds .hmp, then to 0 when it holds .sfx or .raw. Kind 1 builds MidiSound_Ctor (000504dc)(0, slot, index, name, manager), any other DigiSound_Ctor (000507c8) with the same arguments; stores the object in the slot, calls its slot +0x2c with its byte +0x31, stores the priority at +0x34 and returns it.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects",
+      "verified": {
+        "bytes": "0004f4e8+373",
+        "sha1": "6d0b82057881",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f660",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_GetObject",
+      "description": "(manager, slot): the object pointer in the slot, manager +0x14c + slot*4.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects",
+      "verified": {
+        "bytes": "0004f660+24",
+        "sha1": "62c015606792",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f694",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_CountObjects",
+      "description": "(manager), callee-cleaned: the number of non-null pointers among the 60 object slots at +0x14c, returned in AL.",
+      "source": "ES1DBSIM disassembly at 0004f694",
+      "verified": {
+        "bytes": "0004f694+63",
+        "sha1": "13504eb1e1a8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004f6d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_LoadBanks",
+      "description": "(manager): reads sos\\melodic.bnk, sos\\drum.bnk and sos\\drum32.dig whole through the manager's volume stream +0x504 (VolRStream_Open, VolRStream_GetSize, operator new, the stream's read slot +0x1c, VolRStream_Close) and keeps far pointers to them at +0x13a, +0x146 and +0x140; returns 1, or 0 at the first that fails to open, allocate or read.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
+      "verified": {
+        "bytes": "0004f6d4+435",
+        "sha1": "5ab80962c350",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f888",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_SetSampleNames",
+      "description": "(manager, names): keeps the null-terminated array of name pointers at +0x508. For each name, an empty one gets size 0; any other is opened through the volume stream +0x504 and its VolRStream_GetSize stored at +0x262[i], and the function returns at once when it fails to open. Each name's data far pointer +0x38e[i] and reference count byte +0x352[i] are cleared. After the last it sets the highest name index +0x502 to the count less one.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#naming-and-loading",
+      "verified": {
+        "bytes": "0004f888+276",
+        "sha1": "1067969f0cc5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f99c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundManager_SetSampleName",
+      "description": "(manager, index, name) in stack order: returns 0 for no name, an index above +0x502, or a name in which Str_FindBoyerMoore over 0006f948's result finds none of .sfx and .raw (kind 0) and .hmp (kind 1). Every object of the 60 slots on that index must be of that kind (byte +0x17), else it returns 0; each is stopped through its slot +0x14, unloaded by 00050164, has bit 1 of its flags +0xd set and bit 0 cleared, and takes the name. Then stores the name at +0x508[index], opens it through the stream +0x504, stores VolRStream_GetSize at +0x262[index], clears the data far pointer +0x38e[index] and returns 1; 0 when it fails to open.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#naming-and-loading",
+      "verified": {
+        "bytes": "0004f99c+330",
+        "sha1": "7067ac02db02",
         "scope": "body",
         "via": "decompile"
       }
@@ -3987,6 +4167,96 @@
       "verified": {
         "bytes": "000501ec+611",
         "sha1": "30ff65c9c1cf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000504dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MidiSound_Ctor",
+      "description": "(memory or 0, slot, index, name, manager) in stack order: allocates 0xcf bytes when given none, runs 00050020 on the object, sets the vtable +0x3b to 00095c82 and the 32 dwords of the track map +0x3f to 0xff, the name +0, the index +9, the manager +0x11, the kind byte +0x17 to 1 and the slot byte +8; the flags +0xd are 2 with a name, else 0. Returns the object.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects",
+      "verified": {
+        "bytes": "000504dc+127",
+        "sha1": "7786c9919cc4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000505c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MidiSound_Play",
+      "description": "(sound), slot +0x10 of vtable 00095c82: returns 0 when its slot +0x30 returns non-zero or SoundObject_LoadSample fails. Stores the far pointer to the loaded file (manager +0x38e for the index) at +0xbf and the far callback 0004e7b4 at +0xc7, and calls HmiMidi_InitSong (0006e4c1)(+0xbf, the track map +0x3f, the handle +0x19). A non-zero result goes to +4, is formatted as 'SoundObject::playMIDI: %s' with 0006f23d's text, sets +0x19 to -1 and the word +0x1d to 0xffff, and returns 0. Otherwise calls 0006eeae(handle, +0x35, word +0x39) when the far pointer +0x35 is set, then 0006ea6b(handle), copies the handle to the word +0x1d and the word +0x21 to +0x23, calls 0006ee87(handle, far 0004e718) and returns 1.",
+      "source": "Herculan/docs/es1/formats/hmp-music.md#loading-and-playing",
+      "verified": {
+        "bytes": "000505c8+299",
+        "sha1": "433de0023aa3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000507c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSound_Ctor",
+      "description": "(memory or 0, slot, index, name, manager) in stack order: allocates 0x50 bytes when given none, runs 00050020 on the object, sets the vtable +0x3b to 00095cd6, the name +0, the manager +0x11, the index +9, the slot byte +8, +0x3f to 2, the bytes +0x47 and the kind +0x17 to 0, and +0x48 and +0x4c to -1; the flags +0xd are 2 with a name, else 0. Returns the object.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#sound-objects",
+      "verified": {
+        "bytes": "000507c8+106",
+        "sha1": "1104d6760c07",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050838",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSound_Dtor",
+      "description": "(sound, flags), slot +0x08 of vtable 00095cd6: unless null, resets the vtable to 00095cd6, stops it with DigiSound_Stop (00050c88), calls 000500d8(sound, 0), and frees it with operator delete when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#playing",
+      "verified": {
+        "bytes": "00050838+54",
+        "sha1": "b7113a73eb43",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000509c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSound_Play",
+      "description": "(sound), slot +0x10 of vtable 00095cd6. When 0006e055(000bd8c8) is above 30, picks among the 60 objects (SoundManager_GetObject on 000bd73e) the digital one (+0x17 clear) whose slot +0x30 returns non-zero with the lowest 0005049c value below 100, and stops it through its slot +0x14; returns 0 with none. Returns 0 when SoundObject_LoadSample fails. The volume is byte +0x31 * 0x7fff * the manager's byte +0x241 / 10000, or the word +0x32 when the positional byte +0x15 is set; at volume 0 with +0x18 clear it returns 1. Otherwise builds a start block: the data far pointer (manager +0x38e for the index), its size +0x262 as the length at +8, the word +0x21 at +0xc (also copied to +0x23), +0x3f at +0x10, the volume at +0x14, 0x1000 + the slot byte +8 at +0x18, the far callback 0004e7fc at +0x1c, flags 0x4100 at +0x28 (0x4300 with +0x1f at +0x40 when positional), +0x43 at +0x38 when +0x47 is set, and with +0x21 non-zero and neither +0x48 nor +0x4c -1 those two at +0x30 and +0x34 and the flags' low byte 0x40. Stores the slot in the word +0x1d and HmiDigi_StartSample (0006dad9)(000bd8c8, block) in +0x19; on -1 sets +4 and +0x19 to -1 and +0x1d to 0xffff and returns 0; else returns 1.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#playing",
+      "verified": {
+        "bytes": "000509c4+594",
+        "sha1": "e8bc170a376a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050c88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSound_Stop",
+      "description": "(sound), slot +0x14 of vtable 00095cd6: when the voice +0x19 is not -1, calls 0006dd7f(000bd8c8, voice), then sets +0x19 to -1 and the word +0x1d to 0xffff.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#playing",
+      "verified": {
+        "bytes": "00050c88+52",
+        "sha1": "09eeb1886b97",
         "scope": "body",
         "via": "decompile"
       }
@@ -10474,7 +10744,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Timer_AddCallback",
-      "description": "(count, callback), C convention: while the dword 0009bd40 is non-zero, takes the lowest clear bit of the 16-bit slot mask 0009cd64, sets it, stores count in that slot of the two dword tables 0009ce6c and 0009cdec and callback in the table 0009cd6c, and returns the slot + 1; returns 0 when 0009bd40 is 0 or every slot is taken. FrameRate_Update registers FrameRate_TimerTick with it; es2_xref also finds calls from 0004e434, 0004ef8c, 00050d98, 00063e64 and 00069780.",
+      "description": "(count, callback), C convention: while the dword 0009bd40 is non-zero, takes the lowest clear bit of the 16-bit slot mask 0009cd64, sets it, stores count in that slot of the two dword tables 0009ce6c and 0009cdec and callback in the table 0009cd6c, and returns the slot + 1; returns 0 when 0009bd40 is 0 or every slot is taken. FrameRate_Update registers FrameRate_TimerTick with it; es2_xref also finds calls from 0004e434, SoundManager_LoadDrivers (0004ef8c), 00050d98, 00063e64 and 00069780.",
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
       "verified": {
         "bytes": "0006d289+78",
@@ -10493,6 +10763,51 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0006dad9",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiDigi_StartSample",
+      "description": "(driver, block) of the HMI library: returns 0 when the dword 0009d0d8[driver] is above 0xe105, and -1 when all 32 voices (far pointers at 0009d10c + driver*0xc0) have bit 0x8000 of their word +0x30 set. Otherwise fills the first free voice from the block: the data far pointer at +0 and +8 and data + block +0x30 at +0x10; with block flags (+0x28) bit 0x40 clear the length block +8 at +0x18 and +0x1c, set block +0x30 there, +0x34 at +0x20 and block +0x2c less both at +0x2c; the words block +0x14 at +0x32, +0x18 at +0x34, the flags | 0xa000 at +0x30, +0x10 at +0x36, +0xc at +0x38, +0x24 at +0x4a; the far callback block +0x1c at +0x3c, +0x38 at +0x44, the length at +0x50, the words of +0x40-+0x58 at +0x54-+0x60; zeroes +0x3a, +0x48, +0x4c, +0x64 and +0x68. Returns the voice's number.",
+      "source": "ES1DBSIM decompile and disassembly at 0006dad9",
+      "verified": {
+        "bytes": "0006dad9+678",
+        "sha1": "2a353f365d35",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0006e4c1",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_InitSong",
+      "description": "(song block, track map, handle out) of the HMI library, the .HMP loader: returns 0xe when the file the block's far pointer gives does not open HMIMIDIP and 0xb when all 8 song slots (far pointers at 000a22ec) are taken. Keeps the file and the track map in the slot, the track count +0x30 at 000a2178 and 000a2198, and writes the block's callback into the file at +0x300 (offset) and +0x304 (selector); clears the slot's 127 entries at 000a5fec and two far pointers. Walks the tracks from +0x308, each chunk +4 bytes on: keeps the chunk's pointer, and its events pointer (chunk +0xc) moved past the first delta HmiMidi_ReadDelta (0006ed60) reads into 000a1948[track]. From the branch table at the file's +0x20 offset (a count byte per track, then 24-byte entries) keeps each track's first entry and writes each entry's file + [+0xc] at +8. Then routes each track whose map entry is 0xff to the first open driver (ids at 000a130c, 5) that answers one of its device ids at +0x80 + track*0x14 (5, ending at 0): 0xa000 answered by 0xa000, 0xa001 or 0xa008, 0xa002 by 0xa002 or 0xa009, others by themselves; a first id of 0 maps to 0, and a track nothing answers loses its events pointer, maps to 0xff and decrements 000a2178. Returns 0 with the slot through the handle pointer. es2_xref finds one call, from MidiSound_Play (00050652).",
+      "source": "Herculan/docs/es1/formats/hmp-music.md#loading-and-playing",
+      "verified": {
+        "bytes": "0006e4c1+1404",
+        "sha1": "65f113a38012",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006ed60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_ReadDelta",
+      "description": "(bytes, far out pointer) of the HMI library: reads a variable-length number, seven bits a byte with the first byte the lowest, ending at the byte whose bit 7 is set; stores it through the out pointer and returns the number of bytes read.",
+      "source": "Herculan/docs/es1/formats/hmp-music.md#events",
+      "verified": {
+        "bytes": "0006ed60+83",
+        "sha1": "db21aef97125",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0006f844",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -10503,6 +10818,21 @@
       "verified": {
         "bytes": "0006f844+259",
         "sha1": "2397af322bed",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00071076",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiMidi_InitDriver",
+      "description": "(device, port block, block, handle out) of the HMI library: takes the first of 5 driver slots whose id at 000a130c is 0, returning 0xb with none, stores the device there and copies its 16 bytes from 000a55d8 + (device - 0xa000)*16 to 000a5688. For 0xa005 and 0xa003 copies six far pointers (from 000a3028 or 000a2574) into the slot's 0x24-byte entry at 000a21b8 and calls its entry +6 with the block's far pointer +0x18/+0x1c, the slot and 000a5984. For any other device loads the driver with 00081365 unless the block's far pointer +4 is set (keeping its results in the block's +4-+0x14 and +0x28), calls 000816f5 and 00081687, and calls the driver's entry +6 with the port block's +8, +4 and +0. A non-zero result is returned; for 0xa00a it also calls 0006d5e6(0x78, ...). Marks the slot open (000a12e4), stores it through the handle pointer and returns 0.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-driver",
+      "verified": {
+        "bytes": "00071076+981",
+        "sha1": "ef275ea3c20a",
         "scope": "body",
         "via": "decompile"
       }
