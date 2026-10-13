@@ -16,7 +16,7 @@ namespace Herculan.Engine.Tests;
 public class ClipRegionFileTests {
 	/// <summary>
 	/// No rects, one span block from row 0 whose row count is the file's scanline count, then the
-	/// int16 0 the loader does not read. The engine's independent parser agrees on the row count.
+	/// int16 0 the loader does not read; the cockpit cutout flattened from it has one row per span.
 	/// </summary>
 	[Theory]
 	[InlineData("HDDCLIP.EDG", 101)]
@@ -37,5 +37,17 @@ public class ClipRegionFileTests {
 		Assert.Equal(new byte[] { 0, 0 }, file.TrailingBytes);
 		Assert.Equal(rows, CockpitClipRegions.Parse(bytes)?.RowCount);
 		Assert.Equal(bytes, transformer.Write(file));
+	}
+
+	/// <summary>
+	/// A file that ends inside its counts, or carries a negative count, reads as null rather than
+	/// throwing, so a missing cutout is never mistaken for an empty one. A well-formed empty file
+	/// (<c>APOCA.HD1</c>'s shape) reads as no spans.
+	/// </summary>
+	[Fact]
+	public void MalformedFileReadsAsNull() {
+		Assert.Null(CockpitClipRegions.Parse([0, 0, 1, 0, 0, 0]));          // a block with no header
+		Assert.Null(CockpitClipRegions.Parse([0, 0, 1, 0, 0, 0, 0xff, 0xff])); // rowCount -1
+		Assert.Equal(0, CockpitClipRegions.Parse([0, 0, 0, 0, 0, 0])?.SpanCount);
 	}
 }
