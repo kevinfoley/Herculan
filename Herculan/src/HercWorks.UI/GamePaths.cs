@@ -73,9 +73,15 @@ public static class GamePaths {
 	/// searches its volumes (<c>VolRStream_Open</c>, see docs/retail/formats/vol-archive.md), then an unpacked
 	/// SIMVOL0 tree, then the packed VOL.
 	/// </summary>
-	private static readonly string[][] SimDatSearchDirectories = {
-		new[] { "DAT" },
-		new[] { "VOL", "simvol0", "dat" }
+	private static readonly string[][] SimDatSearchDirectories = SimSearchDirectories("dat");
+
+	/// <summary>
+	/// <see cref="SimDatSearchDirectories"/> for any SIMVOL0 folder. Whether retail lets a loose file
+	/// override every folder, not just <c>dat\</c>, is open (docs/retail/formats/vol-archive.md#open).
+	/// </summary>
+	private static string[][] SimSearchDirectories(string folder) => new[] {
+		new[] { folder },
+		new[] { "VOL", "simvol0", folder }
 	};
 
 	private const string VolDirectory = "VOL";
@@ -103,6 +109,13 @@ public static class GamePaths {
 	/// </summary>
 	public static GameFile? FindSimDatFile(string fileName) =>
 		FindFile(fileName, SimDatSearchDirectories, SimVolName, SimDatDirectoryLabel);
+
+	/// <summary>
+	/// <see cref="FindSimDatFile"/> for any SIMVOL0 folder, named as the archive labels it
+	/// (<c>dmg</c>, <c>gl</c>).
+	/// </summary>
+	public static GameFile? FindSimFile(string folder, string fileName) =>
+		FindFile(fileName, SimSearchDirectories(folder), SimVolName, folder);
 
 	/// <summary>
 	/// Starting folder for a GAM file dialog: the first loose GAM directory that exists, falling back
