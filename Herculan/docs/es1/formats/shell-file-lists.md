@@ -32,7 +32,7 @@ if line count > 0:
   line count x name list
 ```
 
-`maybe_SncList_Load` (`000455dc`) opens the list through `VolRStream_CtorFromPath` and reads one byte into the low byte of the player's count word `+0xf`. When it is not 0 it deletes the record array `+0x11` (`StrList_Dtor`) and makes one of that many 6-byte records (`00045729`), reads the name with `Stream_ReadCString` (`00020154`) into a 32-byte buffer, releases the handle `+2` with `000469da` when it is not −1 and opens the name with `0004680a`(0, 0, `+0x15`, name) into `+2`, calls `000465da` on it after each of `000468fc`(0), (`0x19`) and (1) that is set, calls `000468fc`(1) once more, and reads each record with `StrList_Read`. It closes and destroys the stream. Which list a message's line takes, and the line number that picks the record, are in [which file and line](bin-string-tables.md#which-file-and-line).
+`maybe_SncList_Load` (`000455dc`) opens the list through `VolRStream_CtorFromPath` and reads one byte into the low byte of the player's count word `+0xf`. When it is not 0 it deletes the record array `+0x11` (`StrList_Dtor`) and makes one of that many 6-byte records (`00045729`), reads the name with `Stream_ReadCString` (`00020154`) into a 32-byte buffer, closes the handle `+2` with `Ttm_Close` (`000469da`) when it is not −1 and opens the name with `Ttm_Open` (`0004680a`)(0, 0, `+0x15`, name) into `+2` ([the animation scripts](ttm-scripts.md#opening-and-closing)), sets its page to 0, `0x19` and 1 in turn with `Ttm_SetPage` (`000468fc`), running it with `Ttm_RunScript` (`000465da`) after each page the script accepts, sets page 1 once more, and reads each record with `StrList_Read`. It closes and destroys the stream. Which list a message's line takes, and the line number that picks the record, are in [which file and line](bin-string-tables.md#which-file-and-line).
 
 | File | Script | Lines |
 |---|---|---|
@@ -50,4 +50,4 @@ Every line's list holds two names, a `.SNC` and then a `.RAW` (`C0_01000.SNC`, `
 
 - **Open:** which animations play the lists of `cfg\tm_files.dat`: what `0003ba47` does and what reads `0007e710`.
 - **Open:** what `CO_FILES.DAT` is, which nothing found names.
-- **Open:** what `0004680a`, `000468fc`, `000465da` and `000469da` do with the `.TTM` script, and so what a lip-sync frame shows ([how a line plays](snc-lip-sync.md#playing-it)).
+- **Open:** what a talking head's script draws on each page, and so what a lip-sync frame shows ([the scripts' Open items](ttm-scripts.md#open)).

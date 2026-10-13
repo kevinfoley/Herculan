@@ -10280,6 +10280,65 @@
       }
     },
     {
+      "address": "00069540",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_ManagerCtor",
+      "description": "(manager, a, b, count) in stack order: allocates the 0xb-byte .TTM handle manager when given none (returning 0 when that fails); stores count at its byte +4, b at 0009f248, 000bdd28 at 0009f24c and a at 0009f250; clears the path prefix with Ttm_SetPathPrefix (00069940)(manager, 0) through its padding entry; passes clock() to 0007cd4a. es2_xref finds one call, from 0002c9d8, with a count of 10.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "00069540+85",
+        "sha1": "2b1df90ad88f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006982c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "low",
+      "description": "(manager, value): stores value at 0009f248, which Ttm_ManagerCtor (00069540) sets from its b, and returns the value before.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "0006982c+25",
+        "sha1": "20af4187906a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069848",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_Open",
+      "description": "(manager, a, b, name) in stack order: returns 0xff when the count byte +4 is 0 or every handle of the table +5 holds a script; otherwise makes a script with TtmScript_Ctor (000797ac)(0) in the first empty handle and loads it with TtmScript_Load (0007a54c)(script, a, b, name), destroying it with TtmScript_Dtor (000799cc)(script, 3), emptying the handle and returning 0xff on a nonzero result; returns the handle's index. ES1GO's Ttm_Open keeps its table in globals and passes a third argument. es2_xref finds one call, from 000433cc.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "00069848+186",
+        "sha1": "28e730cec1bb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069940",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_SetPathPrefix",
+      "description": "(manager, prefix): stores the string pointer at 0009f254, the folder TtmScript_BuildPath puts before a .TTM name, and returns the one before. es2_xref finds 0002c9d8 passing ttm\\ (00092f2e).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "00069940+25",
+        "sha1": "e84bad42af21",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00069be0",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -11900,6 +11959,126 @@
         "sha1": "74c0ade21c13",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "000797ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Ctor",
+      "description": "(script): allocates the 0x1c1-byte .TTM script when given none (returning 0 when that fails); constructs twelve 0x18-byte objects at +0x58 with __vec_ctor; sets the dwords +0x19d and +0x1a5 to 0 and +0x1ad to 4, and zeroes +0x1b5, +0x1b9 and +0x1bd.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "000797ac+211",
+        "sha1": "0c428130bd9e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000799cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Dtor",
+      "description": "(script, flags): returns at once for a null script; otherwise calls 00079f68(script) through its padding entry, destroys the twelve objects at +0x58 with __vec_dtor, and deletes the script when bit 0 of the flags is set.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "000799cc+59",
+        "sha1": "818af8c88c92",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00079b54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_BuildPath",
+      "description": "(script, name): rewrites the first .SCR in name to .DBM, .BMP to .DBA and .PAL to .DPL (Str_FindBoyerMoore, strncpy of 4), and returns the buffer 000bbbf0 holding the prefix 0009f254, when there is one, followed by the name. ES1GO's also upper-cases the name and rewrites .RAW.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "00079b54+226",
+        "sha1": "6ae2cc2f4f29",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00079fb0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_SkipString",
+      "description": "(script, string): returns the address past the string's NUL, plus one more byte when the string's length is even, so the next opcode word starts on an even offset.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "00079fb0+44",
+        "sha1": "b27395a78a98",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007a54c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Load",
+      "description": "(script, a, b, name) in stack order, callee-cleaned: loads a .TTM. Opens TtmScript_BuildPath (00079b54)'s path with VolRStream_CtorFromPath and returns 3 when its status is not 0; TtmScript_FindTag (0007cba4) PAG:, reads the size dword and one byte, the page count's low byte; TT3:, reads the size dword and the method byte, returning 2 unless it is 1, then the unpacked length; allocates it at +6 (1 when that fails) and reads it through an RLERStream on the file stream, returning 1 when the file stream's status is then not 0. Closes the file stream, stores the page count byte at +0, count + 1 dwords at +2, +6 + length - 1 at +0xa, 0x18 bytes at +0x21 and +0x17, freeing them and returning 1 when one fails; indexes the pages with TtmScript_IndexPages (0007a940) through its padding entry; zeroes the two blocks and the fields, stores a at +0xe and b at +0x13, 0xff at the bytes +0x178 and +0x179, 10 at the dwords +0x1a1, +0x1a9 and +0x1b1; destroys the streams (RLERStream_DtorCopy (0007a914)'s vtable 0009ff16, VolRStream_Dtor) and returns the index result, 0 or 2. ES1GO's TtmScript_Load does not test the open or the method byte and reads the page count as a word. es2_xref finds one call, from Ttm_Open.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "0007a54c+968",
+        "sha1": "7983173be9f3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0007a914",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_DtorCopy",
+      "description": "(stream, flags): RLERStream_Dtor's code with the TTM module's copy of RLERStream's vtable, 0009ff16: returns at once for a null stream; otherwise stores that vtable, Stream_BaseDtor(stream, 0), and operator_delete when bit 0 of the flags is set.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "0007a914+43",
+        "sha1": "49805bfb1ea9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007a940",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_IndexPages",
+      "description": "(script): ES1GO's TtmScript_IndexPages over this script's fields (page count byte +0, page table +2, script +6, last byte +0xa): stores each page's start and steps over commands to the step past an opcode 0x0ff0, returning 2 when the position reaches +0xa at a page's start or after a command, or on low bits 8-14, and 0 with every page found. Strings are skipped with TtmScript_SkipString (00079fb0).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "0007a940+279",
+        "sha1": "645334863f6b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007cba4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_FindTag",
+      "description": "(script, tag, stream): ES1GO's Stream_FindTag search with the script first, unused: notes the stream's position (slot +8) and reads a byte at a time (slot +0x1c) until the NUL-terminated tag has matched or a read fails; a matching byte advances through the tag, a byte that does not match restarts at the tag's first byte without being tested against it; on a failure seeks (slot +0xc) back. Returns whether the whole tag matched, the stream then just past it.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "verified": {
+        "bytes": "0007cba4+128",
+        "sha1": "80fa7b36782a",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {

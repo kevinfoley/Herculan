@@ -216,6 +216,8 @@ public static class TransformerRegistry {
 		new("Unread HERC File (opaque)", e => NameIs(e, "CAREER1.MEC"), () => new Common.Es1OpaqueFileTransformer()),
 		// docs/es1/formats/anm-animation.md: the shell's two full-screen animations.
 		new("Deluxe Paint Animation", e => NameEndsWith(e, ".ANM"), () => new Shell.Es1DeluxePaintAnimationTransformer()),
+		// docs/es1/formats/ttm-scripts.md: the animation scripts of the shell (RES32\, INTRO\) and the simulator (ttm\).
+		new("Animation Script", e => NameEndsWith(e, ".TTM"), () => new Common.Es1TtmScriptTransformer()),
 		// docs/es1/formats/herc-diagrams.md: the HERC diagram's mount pictures, damage marks and areas.
 		new("HERC Diagram Layout", IsEs1HercLayoutFile, () => new Shell.Es1HercLayoutTransformer()),
 		new("HERC Damage Marks", e => ExtIs(e, FileType.Dat) && NameEndsWith(e, "DMG1.DAT"), () => new Shell.Es1HercDamageMarksTransformer()),

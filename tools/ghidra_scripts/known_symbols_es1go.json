@@ -3967,7 +3967,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_SncList_Tick",
-      "description": "(player), callee-cleaned: calls maybe_SncList_Stop (00045556) when +0x1a is set; when +0x19 is set, advances the script +3 with ShellSnc_Advance (0004597b) and passes 000468fc the frame, the first word, of the current record, of the last record once the index +0xd reaches the count +0xb, or -1 when the records +7 are null, with the handle byte +2; then calls 00046948(0, handle). es2_xref finds one call, from 000382f6.",
+      "description": "(player), callee-cleaned: calls maybe_SncList_Stop (00045556) when +0x1a is set; when +0x19 is set, advances the script +3 with ShellSnc_Advance (0004597b) and passes Ttm_SetPage (000468fc) the frame, the first word, of the current record, of the last record once the index +0xd reaches the count +0xb, or -1 when the records +7 are null, with the handle byte +2; then calls 00046948(0, handle). es2_xref finds one call, from 000382f6.",
       "source": "Herculan/docs/es1/formats/snc-lip-sync.md#playing-it",
       "verified": {
         "bytes": "000454c4+146",
@@ -3982,7 +3982,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_SncList_Stop",
-      "description": "(player), callee-cleaned: when the handle byte +2 is not -1, calls 000465da on it when 000468fc(0x1e, handle) is set, or else when 000468fc(1, handle) is, then releases it with 000469da and sets +2 to -1; calls ShellSnc_Release (00045a04)(player + 3) and clears the bytes +0x19, +0x1a and 0009b013.",
+      "description": "(player), callee-cleaned: when the handle byte +2 is not -1, calls Ttm_RunScript (000465da) on it when Ttm_SetPage (000468fc)(0x1e, handle) is set, or else when Ttm_SetPage (000468fc)(1, handle) is, then releases it with Ttm_Close (000469da) and sets +2 to -1; calls ShellSnc_Release (00045a04)(player + 3) and clears the bytes +0x19, +0x1a and 0009b013.",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "00045556+122",
@@ -3997,7 +3997,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_SncList_Load",
-      "description": "(player, path) in stack order, callee-cleaned: opens path with VolRStream_CtorFromPath and reads one byte into the low byte of the count word +0xf; when it is nonzero, deletes the 6-byte record array +0x11 (__vec_delete with StrList_Dtor (000202b4)) and makes a new one of that many (__vec_new with 00045729), reads a 32-byte name with Stream_ReadCString (00020154), releases the handle +2 with 000469da when it is not -1 and opens the name with 0004680a(0, 0, +0x15, name) into +2, calls 000465da on it after each of 000468fc(0), (0x19) and (1) that is set, calls 000468fc(1) once more, and reads each record with StrList_Read (000201b7); closes and destroys the stream.",
+      "description": "(player, path) in stack order, callee-cleaned: opens path with VolRStream_CtorFromPath and reads one byte into the low byte of the count word +0xf; when it is nonzero, deletes the 6-byte record array +0x11 (__vec_delete with StrList_Dtor (000202b4)) and makes a new one of that many (__vec_new with 00045729), reads a 32-byte name with Stream_ReadCString (00020154), releases the handle +2 with Ttm_Close (000469da) when it is not -1 and opens the name with Ttm_Open (0004680a)(0, 0, +0x15, name) into +2, calls Ttm_RunScript (000465da) on it after each of Ttm_SetPage (000468fc)(0), (0x19) and (1) that is set, calls Ttm_SetPage (000468fc)(1) once more, and reads each record with StrList_Read (000201b7); closes and destroys the stream.",
       "source": "Herculan/docs/es1/formats/bin-string-tables.md#which-file-and-line",
       "verified": {
         "bytes": "000455dc+333",
@@ -4092,6 +4092,268 @@
       "verified": {
         "bytes": "00046235+634",
         "sha1": "395f77927af7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000464b0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_Configure",
+      "description": "(a, b, count) in stack order: stores the handle count in the byte 000829dc, b at 00082a98, a at 00082a9c and the display object 000ab616 at 00082a94, and clears the .TTM path prefix with Ttm_SetPathPrefix (0004692d)(0). es2_xref finds one call, from 0003ba47, with a count of 50.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
+      "verified": {
+        "bytes": "000464b0+56",
+        "sha1": "63485d551d4c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000464e8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_Shutdown",
+      "description": "(): when the timer slot word 000829e4 compares unequal to -1 (zero-extended, it always does) passes it to 000565b7; calls 00046a3f; deletes the handle table 000829e0 when there is one. es2_xref finds one call, from 0003c081.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
+      "verified": {
+        "bytes": "000464e8+70",
+        "sha1": "0e872c8c0f44",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000465da",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_RunScript",
+      "description": "(handle): returns 0 for -1. Otherwise clears the byte 000829d5, calls 00046f2c(script, the word 000829d6) when the handle holds a script, stores the render context 000ab612's +4 (0 with none) at +0x40 of the display object 00082a94 and passes it to Raster_SetClipBlock when 000ab7a0 is that object, installs 000ab612 with Raster_InstallRenderContext, sets 000829d6 to its value less its value on entry, and returns 1.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#choosing-a-page",
+      "verified": {
+        "bytes": "000465da+167",
+        "sha1": "3689e22a9962",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004670e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_AllocHandles",
+      "description": "(timer count): allocates the handle table 000829e0, a dword per handle of the count 000829dc, and zeroes it; stores 000ab784 at 000829d8, or 0005d6b4(0, 0x4da6) when that is 0, and frees the table and returns 0 when 000829d8 is still 0; compares the word 000829e4, zero-extended, with -1, which it never equals, and so always stores Timer_AddCallback(count, 00046681) there; returns 1. es2_xref finds one call, from 0003ba47, with a count of 2.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
+      "verified": {
+        "bytes": "0004670e+225",
+        "sha1": "19c7e78eb39f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004680a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_Open",
+      "description": "(a, b, c, name) in stack order, callee-cleaned: returns 0xff when the handle count 000829dc is 0 or every handle of the table 000829e0 holds a script; otherwise makes a script with TtmScript_Ctor (00046bb8)(0) in the first empty handle (0xff when that fails) and loads it with TtmScript_Load (00047c28)(script, a, b, c, name). On a nonzero load result destroys it with TtmScript_Dtor (00046e2f)(script, 3), empties the handle and returns 0xff; otherwise returns the handle's index.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#opening-and-closing",
+      "verified": {
+        "bytes": "0004680a+242",
+        "sha1": "8ebd395e5bc5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000468fc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_SetPage",
+      "description": "(page, handle): returns TtmScript_SetPage (000470e7)(script, page) for the handle's script, or 0 when the handle is empty; the handle is not tested against the count.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#choosing-a-page"
+    },
+    {
+      "address": "0004692d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_SetPathPrefix",
+      "description": "(prefix): stores the string pointer at 00082aa0, the folder TtmScript_BuildPath puts before a .TTM name, and returns the one before.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
+      "verified": {
+        "bytes": "0004692d+27",
+        "sha1": "34f8ddab8934",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046948",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "low",
+      "description": "(value, handle): stores value at +0x3c of the handle's .TTM script and returns 1, or returns 0 when the handle is empty. TtmScript_Load stores Ttm_Open's first argument there and TtmScript_SetPage clears it; what the field holds is Open.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#choosing-a-page",
+      "verified": {
+        "bytes": "00046948+73",
+        "sha1": "fc699e90b13f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046991",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "low",
+      "description": "(value, handle): stores value at +0x43 of the handle's .TTM script and returns 1, or returns 0 when the handle is empty. TtmScript_Load stores Ttm_Open's second argument there. es2_xref finds no call.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#choosing-a-page",
+      "verified": {
+        "bytes": "00046991+73",
+        "sha1": "c5c94bbd9d15",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000469da",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_Close",
+      "description": "(handle): when the handle holds a script destroys it with TtmScript_Dtor(script, 3), empties the handle and returns 1; otherwise formats 'Invalid handle (%d) passed to unload.' into a stack buffer it does not use and returns 0.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#opening-and-closing",
+      "verified": {
+        "bytes": "000469da+101",
+        "sha1": "408e8ceb13c0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046bb8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Ctor",
+      "description": "(script): allocates the 0x1eb-byte .TTM script when given none (returning 0 when that fails); constructs twelve 0x18-byte objects at +0x88 with __vec_ctor and 00046c6c; sets the dwords +0x1d3 and +0x1db to 0 and +0x1e3 to 4; returns the script.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#opening-and-closing",
+      "verified": {
+        "bytes": "00046bb8+180",
+        "sha1": "3cc12d7fe013",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046e2f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Dtor",
+      "description": "(script, flags): returns at once for a null script; otherwise calls 000474bd(script), destroys the twelve objects at +0x88 with __vec_dtor and 00046e73, and deletes the script when bit 0 of the flags is set.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#opening-and-closing",
+      "verified": {
+        "bytes": "00046e2f+68",
+        "sha1": "5a6b9891749a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000470e7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_SetPage",
+      "description": "(script, page): when page is below the page count +0, stores it at the word +2, copies the word +0x1ba to +0x1b8, clears the bytes +0x40, +0x41 and +0x42 and the dword +0x3c, and returns 1; otherwise returns 0.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#choosing-a-page",
+      "verified": {
+        "bytes": "000470e7+81",
+        "sha1": "593631a56968",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00047138",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_BuildPath",
+      "description": "(script, name): upper-cases name in place, rewrites the first .SCR to .DBM, .BMP to .DBA, .PAL to .DPL and .RAW to .RAW (Str_FindBoyerMoore, strncpy of 4), and returns the buffer 000a0a00 holding the prefix 00082aa0, when there is one, followed by the name.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#loading",
+      "verified": {
+        "bytes": "00047138+362",
+        "sha1": "283e97996d9c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00047571",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_SkipString",
+      "description": "(script, string): returns the address past the string's NUL, plus one more byte when the string's length is even, so the next opcode word starts on an even offset.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#pages",
+      "verified": {
+        "bytes": "00047571+44",
+        "sha1": "c0c959bc7344",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00047c28",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Load",
+      "description": "(script, a, b, c, name) in stack order, callee-cleaned: loads a .TTM. Copies name to +4; opens TtmScript_BuildPath (00047138)'s path with VolRStream_CtorFromPath, formatting 'Error opening ttm script file <<%s>>.' into an unused stack buffer; Stream_FindTag PAG:, reads the size dword and the page count word; Stream_FindTag TT3:, reads the size dword, the method byte and the unpacked length dword, using neither size nor the method; allocates the length at +0x34 and reads it through an RLERStream on the file stream (RLERStream_CtorOnSource). A nonzero file stream status then frees +0x34, destroys both streams and returns 1, the only test of the open. Otherwise closes the file stream, stores the page count at +0, allocates count + 1 dwords at +0x30, stores +0x34 + length - 1 at +0x38 and allocates 0x18 bytes at +0x51 and +0x47, freeing the four and returning 1 when one fails; calls TtmScript_IndexPages (000480d1), zeroes +0x47's and +0x51's six dwords, twelve dwords at +0x58, the words +0x1c5, +0x1cb, +0x1d1 and the dword +0x1a8; stores c at +0x2c, b at +0x43, a at +0x3c; zeroes the bytes +0x40, +0x41, +0x55, +0x1c0 and the words +2 and +0x1b0 to +0x1be; -1 at the words +0x1ac and +0x1ae; 10 at the dwords +0x1d7, +0x1df and +0x1e7; destroys the streams (RLERStream_DtorCopy (0004809c), VolRStream_Dtor) and returns the index result, 0 or 2. es2_xref finds one call, from Ttm_Open.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#loading",
+      "verified": {
+        "bytes": "00047c28+1140",
+        "sha1": "1703a723570f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004809c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "RLERStream_DtorCopy",
+      "description": "(stream, flags): RLERStream_Dtor (0006449c)'s code with the TTM module's copy of RLERStream's vtable, 000837ee, whose slot +4 holds it: returns at once for a null stream; otherwise stores that vtable, Stream_BaseDtor(stream, 0), and operator_delete when bit 0 of the flags is set.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#loading",
+      "verified": {
+        "bytes": "0004809c+53",
+        "sha1": "550a20985626",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000480d1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_IndexPages",
+      "description": "(script): zeroes the page count +0's entries of the page table +0x30, then walks the unpacked script +0x34: for each page stores the position as its start and steps over commands until the step past an opcode 0x0ff0. Before each opcode it returns 2 when the position has reached +0x38 (the script's last byte). An opcode's low four bits 0-7 step that many argument words; 8-14 return 2; 15 steps, for 0xaf1f and 0xaf2f, a count word and twice that many words, otherwise a string through TtmScript_SkipString (00047571). Returns 0 with every page found.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#pages",
+      "verified": {
+        "bytes": "000480d1+327",
+        "sha1": "f09733b88fe4",
         "scope": "body",
         "via": "decompile"
       }
@@ -7084,7 +7346,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Timer_AddCallback",
-      "description": "(count, callback), C convention: while the dword 0008728c is non-zero, takes the lowest clear bit of the 16-bit slot mask 000882ac, sets it, stores count in that slot of the two dword tables 000883b4 and 00088334 and callback in the table 000882b4, and returns the slot + 1; returns 0 when 0008728c is 0 or every slot is taken. es2_xref finds calls from 000093b3, 000119fc, 000203fc, 0004240a, maybe_SncList_Init (00045337), 0004670e and three from 00045d24. The code of ES1DBSIM's Timer_AddCallback (0006d289), relocated operands aside.",
+      "description": "(count, callback), C convention: while the dword 0008728c is non-zero, takes the lowest clear bit of the 16-bit slot mask 000882ac, sets it, stores count in that slot of the two dword tables 000883b4 and 00088334 and callback in the table 000882b4, and returns the slot + 1; returns 0 when 0008728c is 0 or every slot is taken. es2_xref finds calls from 000093b3, 000119fc, 000203fc, 0004240a, maybe_SncList_Init (00045337), Ttm_AllocHandles (0004670e) and three from 00045d24. The code of ES1DBSIM's Timer_AddCallback (0006d289), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
       "verified": {
         "bytes": "00056509+78",
