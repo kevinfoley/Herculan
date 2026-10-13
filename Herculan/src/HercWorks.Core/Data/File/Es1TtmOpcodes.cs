@@ -2,7 +2,8 @@ namespace HercWorks.Core.Data.File;
 
 /// <summary>
 /// The opcodes of ES1's <c>.TTM</c> commands (<see cref="Es1TtmCommand"/>): Dynamix's own names for them, and the ones the
-/// shell's interpreter has a case for (docs/es1/formats/ttm-scripts.md#the-commands).
+/// shell's and the simulator's interpreters have a case for (docs/es1/formats/ttm-scripts.md#the-commands,
+/// docs/es1/formats/ttm-scripts.md#the-simulators-commands).
 /// </summary>
 public static class Es1TtmOpcodes {
 	/// <summary>
@@ -155,4 +156,11 @@ public static class Es1TtmOpcodes {
 		0xa526, 0xa536, 0xa504, 0xa514, 0xa524, 0xa534, 0xa505, 0xa515, 0xa525, 0xa535, 0xa601,
 		0xc102, 0xc21f, 0xc220,
 	};
+
+	/// <summary>
+	/// The opcodes the simulator's <c>TtmScript_RunPage</c> (<c>ES1DBSIM 0007aa58</c>) has a case for: <see cref="Dispatched"/> less
+	/// <c>0x5005</c>, which its table lacks, and the three sound commands, since it steps over every opcode <c>0xc000</c>–<c>0xcfff</c>.
+	/// </summary>
+	public static readonly IReadOnlySet<ushort> SimulatorDispatched =
+		new HashSet<ushort>(Dispatched.Except(new ushort[] { 0x5005, 0xc102, 0xc21f, 0xc220 }));
 }

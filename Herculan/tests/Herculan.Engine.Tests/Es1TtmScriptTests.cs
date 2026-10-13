@@ -44,7 +44,8 @@ public class Es1TtmScriptTests {
 
 	/// <summary>
 	/// The 123 scripts hold 33 distinct opcodes, and every command but three is one the shell's interpreter has a case for:
-	/// <c>IINTRO.TTM</c>'s font select and load and <c>CREDIT_A.TTM</c>'s <c>0xf10f</c>, which it steps over.
+	/// <c>IINTRO.TTM</c>'s font select and load and <c>CREDIT_A.TTM</c>'s <c>0xf10f</c>, which it steps over. The ten
+	/// <c>SIMVOL0</c> scripts, which the simulator plays, hold ten opcodes, each one its interpreter has a case for.
 	/// </summary>
 	[Fact]
 	public void EveryRetailOpcodeButThreeCommandsIsOneTheShellDispatches() {
@@ -53,6 +54,7 @@ public class Es1TtmScriptTests {
 		}
 
 		var opcodes = new SortedSet<ushort>();
+		var simulatorOpcodes = new SortedSet<ushort>();
 		var stepped = new List<string>();
 		foreach (var (e, archive) in shell.Select(e => (e, "SHELL0")).Concat(sim.Select(e => (e, "SIMVOL0"))).Where(x => HasExtension(x.e, ".TTM"))) {
 			var ttm = new Es1TtmScriptTransformer().Parse(e.RawBytes)!;
@@ -63,11 +65,27 @@ public class Es1TtmScriptTests {
 				if (!Es1TtmOpcodes.Dispatched.Contains(c.Opcode)) {
 					stepped.Add($"{archive} {e.FileName!.Trim().ToUpperInvariant()} {c.Opcode:x4} {c.Text}");
 				}
+
+				if (archive == "SIMVOL0") {
+					simulatorOpcodes.Add(c.Opcode);
+				}
 			}
 		}
 
 		Assert.Equal(33, opcodes.Count);
 		Assert.Equal(["SHELL0 IINTRO.TTM 1071 ", "SHELL0 IINTRO.TTM f04f IFONT_01.FNT", "SHELL0 CREDIT_A.TTM f10f producer"], stepped);
+		Assert.Equal([0x0110, 0x0ff0, 0x1021, 0x1051, 0x1111, 0x1201, 0x2022, 0xa504, 0xa524, 0xf02f], simulatorOpcodes.Select(o => (int)o));
+		Assert.Subset(Es1TtmOpcodes.SimulatorDispatched.ToHashSet(), simulatorOpcodes.ToHashSet());
+	}
+
+	/// <summary>
+	/// The simulator's interpreter has a case for the shell's opcodes but <c>0x5005</c> and the three sound commands
+	/// (docs/es1/formats/ttm-scripts.md#the-simulators-commands).
+	/// </summary>
+	[Fact]
+	public void TheSimulatorDispatchesTheShellsOpcodesButTheRandomJumpAndSounds() {
+		Assert.Equal([0x5005, 0xc102, 0xc21f, 0xc220], Es1TtmOpcodes.Dispatched.Except(Es1TtmOpcodes.SimulatorDispatched).Order().Select(o => (int)o));
+		Assert.Equal(Es1TtmOpcodes.Dispatched.Count - 4, Es1TtmOpcodes.SimulatorDispatched.Count);
 	}
 
 	/// <summary><c>C0_BRD.TTM</c>, walked by hand: four pages in 128 unpacked bytes, and three tags.</summary>

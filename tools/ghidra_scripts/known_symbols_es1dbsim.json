@@ -2617,7 +2617,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_LoadViews",
-      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array 000afaa4, whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls 00022184(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores 0002ae5c(0, +0x25) at +0x1b and calls 0002c9d8 with it and name; with the scheme word +0x23, Palette_InstallRange (00027e98)s 16 colours at index 0x20 from the dword +8 of 000925f0 plus scheme x 0x80, 16 at 0x40 from 0x40 bytes further, and one at 0x40 from Palette_GetEntry (00027f54) of the word 000925dc[scheme]; calls 00027f74, and the slot +0x1c of 000925f0 with 3 when it is set; sets 000afb94 to 1 and 000afb98 to 000afd9c, copies the dwords 000afb3c-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from 00021dd4, through the padding before the prologue.",
+      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array 000afaa4, whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls 00022184(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores 0002ae5c(0, +0x25) at +0x1b and calls Cockpit_LoadPanel (0002c9d8) with it and name; with the scheme word +0x23, Palette_InstallRange (00027e98)s 16 colours at index 0x20 from the dword +8 of 000925f0 plus scheme x 0x80, 16 at 0x40 from 0x40 bytes further, and one at 0x40 from Palette_GetEntry (00027f54) of the word 000925dc[scheme]; calls 00027f74, and the slot +0x1c of 000925f0 with 3 when it is set; sets 000afb94 to 1 and 000afb98 to 000afd9c, copies the dwords 000afb3c-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from 00021dd4, through the padding before the prologue.",
       "source": "Herculan/docs/es1/formats/hd-ed-clip-regions.md#which-files",
       "verified": {
         "bytes": "00021fb0+465",
@@ -2639,6 +2639,21 @@
         "sha1": "e02d75823603",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00024394",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitChassis_SelectByName",
+      "description": "(name) callee-cleaned: compares name with stricmp against the eight chassis names at 00092644 (ROADRUNNER, GUNSLINGER, RAPTOR, TOMAHAWK, PATRIOT, PANTHER, HERCULES, COLOSSUS) and for the first that matches stores its index at the word 000925f4 and name's address at 000925f8, the cockpit chassis CockpitClock_Ctor and 00021dd4 take in place of the HERC's own. es2_xref finds one call, from 00058e74's case for the command-line option -C, passing the text after the C.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "verified": {
+        "bytes": "00024394+62",
+        "sha1": "6f4d7e1572f0",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -3512,6 +3527,51 @@
       }
     },
     {
+      "address": "0002c9d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_LoadPanel",
+      "description": "(cockpit, name): keeps 0002b5c4(ResourcePath_BuildFolderName (00060698)(the folder 00098110 points to, name)) at 00092d3c and builds the cockpit's objects from it: 0002ad78's result at +4, 00043cac(0, it) at +0 (then 00044310 with it), 0002f3d8(0, 00092d3c + 0x684) at +0x203, a 0x469-byte object from 0002eb80(object, 00092d3c + 0x694) with 00092f0a at its +0x464 and 0 at +0x468 at +0x207, and the results of 0002ccd8, 0002cd3c, 0002cd74, 0002cdac, 0002cdf0, 0002ce28, 0002ce60 and CockpitClock_Create (0002ce98), each given the cockpit and 00092d3c, at +0x1dd to +0x1f9. Between them makes the .TTM manager with Ttm_ManagerCtor(0, 0, the installed render context 000bdbda, 10) at 00092d70, sets its prefix ttm\\ (00092f2e) with Ttm_SetPathPrefix and calls Ttm_AllocHandles (00069780)(manager, 2); ends with Ttm_RunAll (000695e0)(manager). es2_xref finds one call, from CockpitViewManager_LoadViews.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "0002c9d8+361",
+        "sha1": "380aed199aba",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002ce98",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitClock_Create",
+      "description": "(cockpit, description) in stack order, callee-cleaned: makes the cockpit clock with CockpitClock_Ctor (000433cc)(0, cockpit, description + 0x644), stores it at the cockpit's +8 + 4 x the count +0x6c, adds 1 to the count and returns the clock. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1f9.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "verified": {
+        "bytes": "0002ce98+56",
+        "sha1": "8369a882ed0b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002cf28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_DrawFrame",
+      "description": "(cockpit): returns at once while the byte 00092d7c is set. Otherwise: the first time (byte +0x23a 0) calls 0002d970 and sets +0x23a; calls the +0xc slot of the vtable at +0x76 of the clock +0x1f9 (CockpitClock_Tick), then 0002e1d8; with the byte +0x20b set calls that slot of +0x1f5 and returns. Else, while the published view manager's +0x18 is 0, calls the +0x14 slot of the table at +0x464 of +0x203; between Cockpit_PushCanvasContext and Cockpit_PopRenderContext calls the +0xc slot of each set object of the nine at +0x70, of +0x1d8 when set, and of +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1e9 and +0x1f5; then Cockpit_RunTtmScripts (0002e0ec), the +0x10 slot of the +0x464 table of +0x207, and 0002de48; and with +0x20c set calls 0002d624(cockpit, +0x20c), clearing +0x20c when that returns 0. es2_xref finds one call, from Sim_RenderFrame.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame",
+      "verified": {
+        "bytes": "0002cf28+368",
+        "sha1": "09738a915aad",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0002d614",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -3524,6 +3584,21 @@
         "sha1": "0312ad7cb46e",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0002e0ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_RunTtmScripts",
+      "description": "(): with the installed render context 000bdbda, saves its dwords +0x20c, +0x220 and +0x224, sets them to 1, 000afa9c and 000afaa0, makes it the .TTM default context with Ttm_SetDefaultContext (0006982c)(00092d70, it), runs the scripts with Ttm_RunAll (000695e0)(00092d70), and puts the three back. es2_xref finds calls from Cockpit_DrawFrame (0002cf28) and 0002b4a0, through the padding entry 0002e0e9.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame",
+      "verified": {
+        "bytes": "0002e0ec+144",
+        "sha1": "4845b52a89dc",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -3629,6 +3704,66 @@
         "sha1": "37cf7a00a08e",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "000433cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitClock_Ctor",
+      "description": "(clock, cockpit, rect): allocates the 0x8a-byte cockpit clock when given none (returning 0 when that fails); builds it with 00031318(clock, cockpit, rect + 0x10) and stores the vtable 00094b5a at +0x76. Opens the HERC's .TTM with Ttm_Open(00092d70, 0, 0, Path_WithExtension(ttm (00094b72), eight characters of 000925f8's string when 000925f8 is set, else of +0x58 of the type record +0x188 of CockpitViewInstance's +0x1ff)), takes the handle as a signed byte, and when that handle's entry of the table +5 holds a script stores CockpitViewInstance's +4 at the script's +0x1bd; a failed open's 0xff reads the dword before the table. Copies cpwincrk (00094b76) into the name buffer; sets the strings 00, 00 and : at 000bd504, 000bd508 and 000bd50c; makes three labels with Label_Ctor(0, 00092d40) at +0x7a, +0x7e and +0x82, each passed to Label_SetRect with 1, 4 and 2 respectively, rect + 0x10 and the point (1, 0), (1, 0) and (0, 0), and their +0x1c set to 0x3f, 0 and 0; sets +0x86 to 000981c4 + 30. es2_xref finds one call, from CockpitClock_Create (0002ce98).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "verified": {
+        "bytes": "000433cc+469",
+        "sha1": "fa9e98bc230f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000435b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitClock_Update",
+      "description": "(clock): slot +8 of the clock's vtable 00094b5a, entered at 000435ad: calls CockpitClock_Advance (00043658)(clock) through its padding entry.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "verified": {
+        "bytes": "000435b0+15",
+        "sha1": "3ad01dc3c098",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000435c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitClock_Tick",
+      "description": "(clock): slot +0xc of the clock's vtable 00094b5a, entered at 000435bf. Sets the mark +0x75 to 2 while the published view manager's +0x18 is set; while +0x75 is set draws the rect from +4 of the hour label +0x7a to +0xc of the minute label +0x7e with Widget_DrawToCockpit(0, rect, 0) and clears it; when the count 000981c4 is past +0x86 calls CockpitClock_Advance (00043658), sets +0x86 to the count + 30 and +0x75 to 1.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "verified": {
+        "bytes": "000435c0+151",
+        "sha1": "221266f984d5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043658",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitClock_Advance",
+      "description": "(clock): toggles the byte 00094b56 and, when it becomes 1, adds a minute to the digits HH (000bd504-000bd505) and MM (000bd508-000bd509): minutes 00 to 59, hours 00 to 24, the minute after 24:59 setting all four to 0. When CockpitView_RectCornerVisible(hour label +0x7a's +4) is nonzero, between Cockpit_PushCanvasContext and Cockpit_PopRenderContext sets the hour label's text to 000bd504 and the minute label's (+0x7e) to 000bd508 with Label_SetText, and the colon label's (+0x82) to 000bd50c while 00094b56 is 1. es2_xref finds calls from CockpitClock_Update (000435b0) and CockpitClock_Tick (000435c0), through the padding entry 00043657.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
+      "verified": {
+        "bytes": "00043658+219",
+        "sha1": "3f32793aa759",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -5296,7 +5431,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RenderFrame",
-      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; ObjList_RebuildFrame (00020de0)(); 0002cf28(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view 000b5b8a), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); 000155a8(000b5b86); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
+      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; ObjList_RebuildFrame (00020de0)(); Cockpit_DrawFrame (0002cf28)(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view 000b5b8a), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); 000155a8(000b5b86); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
       "source": "ES1DBSIM decompile at 00059c08, against ES2's Sim_RenderFrame",
       "verified": {
         "bytes": "00059c08+280",
@@ -10240,7 +10375,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_UploadWhole",
-      "description": "(palette), callee-cleaned: the routine at 0009df08 with the palette's first entry +6, count +4 and colours +8, then Raster_SetColourRamps (000691f8) with its first ramp +0xe, ramp count +0xc, records +0x10 and +6. The counterpart of ES2's Palette_UploadWhole (DBSIM 00481ed4); callers found by es2_xref: 0007aa58, nine calls.",
+      "description": "(palette), callee-cleaned: the routine at 0009df08 with the palette's first entry +6, count +4 and colours +8, then Raster_SetColourRamps (000691f8) with its first ramp +0xe, ramp count +0xc, records +0x10 and +6. The counterpart of ES2's Palette_UploadWhole (DBSIM 00481ed4); callers found by es2_xref: TtmScript_RunPage (0007aa58), nine calls.",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-colour-ramps",
       "verified": {
         "bytes": "0006931c+102",
@@ -10285,7 +10420,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_ManagerCtor",
-      "description": "(manager, a, b, count) in stack order: allocates the 0xb-byte .TTM handle manager when given none (returning 0 when that fails); stores count at its byte +4, b at 0009f248, 000bdd28 at 0009f24c and a at 0009f250; clears the path prefix with Ttm_SetPathPrefix (00069940)(manager, 0) through its padding entry; passes clock() to 0007cd4a. es2_xref finds one call, from 0002c9d8, with a count of 10.",
+      "description": "(manager, a, b, count) in stack order: allocates the 0xb-byte .TTM handle manager when given none (returning 0 when that fails); stores count at its byte +4, b at 0009f248, 000bdd28 at 0009f24c and a at 0009f250; clears the path prefix with Ttm_SetPathPrefix (00069940)(manager, 0) through its padding entry; passes clock() to srand (0007cd4a). es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), with a count of 10.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
       "verified": {
         "bytes": "00069540+85",
@@ -10295,12 +10430,112 @@
       }
     },
     {
+      "address": "00069598",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_ManagerDtor",
+      "description": "(manager, flags): returns for none; otherwise passes the timer slot word +9 to 0006d337, destroys every handle's script with Ttm_CloseAll (00069a04) through its padding entry, deletes the handle table +5, and deletes the manager when bit 0 of flags is set. ES1GO's Ttm_Shutdown keeps the table in globals. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "00069598+71",
+        "sha1": "9427beeb60c6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000695e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_RunAll",
+      "description": "(manager): returns 0 while the byte 0009b404 is 0. Otherwise notes the word 0009b406 and the installed render context 000bdbda; stores the default context 0009f248's +4 (0 with none) at +0x44 of the display object 0009f24c, through Raster_SetClipBlock when the display is 000bdd28, and installs the default context with Raster_InstallRenderContext; clears 0009b404; calls TtmScript_Run (00079a14)(script, the noted count) for each handle of the table +5 below the count byte +4 that holds a script; does the same for the noted context, subtracts the noted count from 0009b406 and returns 1. ES1GO's Ttm_RunAll (0004652e) waits for its tick instead of returning. es2_xref finds calls from Cockpit_LoadPanel (0002c9d8) and Cockpit_RunTtmScripts (0002e0ec).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame",
+      "verified": {
+        "bytes": "000695e0+275",
+        "sha1": "c6b22779155f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000696f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_TimerTick",
+      "description": "(): the timer callback of the simulator's scripts, a frameless stub: sets the byte 0009b404 to 1 and adds 1 to the word 0009b406. ES1GO's Ttm_TimerTick (00046681) first tests a byte the fades set. es2_xref finds its address stored at 0006980b, in Ttm_AllocHandles (00069780).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame"
+    },
+    {
+      "address": "00069704",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_GetPage",
+      "description": "(manager, handle): the page byte +1 of the handle's script, or 0xffff for an empty handle. ES1GO's Ttm_GetPage (0004669f) with the manager's table. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "00069704+57",
+        "sha1": "82909635060c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069740",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_GetMode",
+      "description": "(manager, handle): the mode dword +0xe of the handle's script, without testing the handle for one. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "00069740+31",
+        "sha1": "9b75ecc2b059",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069760",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_GetLoop",
+      "description": "(manager, handle): the loop flag dword +0x13 of the handle's script, without testing the handle for one. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "00069760+31",
+        "sha1": "6ee4f808cb00",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069780",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_AllocHandles",
+      "description": "(manager, timer count): allocates the handle table +5, a dword per handle of the count byte +4, returning 0 when that fails, and zeroes it; takes 000bdd0c into +0, or 0006c6f8(0, 0x4da6) when that is 0, deleting the table and returning 0 when +0 is still 0; registers Ttm_TimerTick (000696f4) with Timer_AddCallback(count, it), stores the slot at the word +9 and returns 1. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), with a count of 2.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "00069780+172",
+        "sha1": "1eff818ef8c9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006982c",
       "binary": "ES1DBSIM",
       "type": "function",
-      "confidence": "low",
-      "description": "(manager, value): stores value at 0009f248, which Ttm_ManagerCtor (00069540) sets from its b, and returns the value before.",
-      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
+      "confidence": "high",
+      "name": "Ttm_SetDefaultContext",
+      "description": "(manager, context): stores context at 0009f248, the default render context Ttm_ManagerCtor (00069540) sets from its b and Ttm_RunAll (000695e0) installs, and returns the one before. es2_xref finds one call, from Cockpit_RunTtmScripts (0002e0ec), which passes the installed render context 000bdbda.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
       "verified": {
         "bytes": "0006982c+25",
         "sha1": "20af4187906a",
@@ -10314,11 +10549,26 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_Open",
-      "description": "(manager, a, b, name) in stack order: returns 0xff when the count byte +4 is 0 or every handle of the table +5 holds a script; otherwise makes a script with TtmScript_Ctor (000797ac)(0) in the first empty handle and loads it with TtmScript_Load (0007a54c)(script, a, b, name), destroying it with TtmScript_Dtor (000799cc)(script, 3), emptying the handle and returning 0xff on a nonzero result; returns the handle's index. ES1GO's Ttm_Open keeps its table in globals and passes a third argument. es2_xref finds one call, from 000433cc.",
+      "description": "(manager, a, b, name) in stack order: returns 0xff when the count byte +4 is 0 or every handle of the table +5 holds a script; otherwise makes a script with TtmScript_Ctor (000797ac)(0) in the first empty handle and loads it with TtmScript_Load (0007a54c)(script, a, b, name), destroying it with TtmScript_Dtor (000799cc)(script, 3), emptying the handle and returning 0xff on a nonzero result; returns the handle's index. ES1GO's Ttm_Open keeps its table in globals and passes a third argument. es2_xref finds one call, from CockpitClock_Ctor (000433cc).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
       "verified": {
         "bytes": "00069848+186",
         "sha1": "28e730cec1bb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069904",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_SetPage",
+      "description": "(manager, page, handle): when the handle holds a script and page is below its page count byte +0, stores page at +1 and returns 1; otherwise returns 0. Leaves the wait, mode and flags, which ES1GO's TtmScript_SetPage (000470e7) resets. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "00069904+59",
+        "sha1": "3ff28fbc8870",
         "scope": "body",
         "via": "decompile"
       }
@@ -10329,11 +10579,71 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_SetPathPrefix",
-      "description": "(manager, prefix): stores the string pointer at 0009f254, the folder TtmScript_BuildPath puts before a .TTM name, and returns the one before. es2_xref finds 0002c9d8 passing ttm\\ (00092f2e).",
+      "description": "(manager, prefix): stores the string pointer at 0009f254, the folder TtmScript_BuildPath puts before a .TTM name, and returns the one before. es2_xref finds Cockpit_LoadPanel (0002c9d8) passing ttm\\ (00092f2e).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
       "verified": {
         "bytes": "00069940+25",
         "sha1": "e84bad42af21",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006995c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_SetMode",
+      "description": "(manager, mode, handle): stores mode at the dword +0xe of the handle's script and returns 1, or returns 0 for an empty handle. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "0006995c+48",
+        "sha1": "8f8d568168f1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0006998c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_SetLoop",
+      "description": "(manager, loop, handle): stores loop at the dword +0x13 of the handle's script and returns 1, or returns 0 for an empty handle. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "0006998c+48",
+        "sha1": "52fa25970673",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000699bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_Close",
+      "description": "(manager, handle): when the handle holds a script destroys it with TtmScript_Dtor(script, 3), empties the handle and returns 1; otherwise returns 0. No caller found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "000699bc+70",
+        "sha1": "ef6c1b31a39f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00069a04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_CloseAll",
+      "description": "(manager): destroys the script of every handle of the table +5 below the count byte +4 with TtmScript_Dtor(script, 3) and empties the handle. es2_xref finds one call, from Ttm_ManagerDtor (00069598), through the padding entry 00069a02.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "00069a04+98",
+        "sha1": "20b409593e52",
         "scope": "body",
         "via": "decompile"
       }
@@ -10833,7 +11143,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Timer_AddCallback",
-      "description": "(count, callback), C convention: while the dword 0009bd40 is non-zero, takes the lowest clear bit of the 16-bit slot mask 0009cd64, sets it, stores count in that slot of the two dword tables 0009ce6c and 0009cdec and callback in the table 0009cd6c, and returns the slot + 1; returns 0 when 0009bd40 is 0 or every slot is taken. FrameRate_Update registers FrameRate_TimerTick with it; es2_xref also finds calls from 0004e434, SoundManager_LoadDrivers (0004ef8c), 00050d98, 00063e64 and 00069780.",
+      "description": "(count, callback), C convention: while the dword 0009bd40 is non-zero, takes the lowest clear bit of the 16-bit slot mask 0009cd64, sets it, stores count in that slot of the two dword tables 0009ce6c and 0009cdec and callback in the table 0009cd6c, and returns the slot + 1; returns 0 when 0009bd40 is 0 or every slot is taken. FrameRate_Update registers FrameRate_TimerTick with it; es2_xref also finds calls from 0004e434, SoundManager_LoadDrivers (0004ef8c), 00050d98, 00063e64 and Ttm_AllocHandles (00069780).",
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
       "verified": {
         "bytes": "0006d289+78",
@@ -11977,18 +12287,63 @@
       }
     },
     {
+      "address": "00079880",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_Ctor",
+      "description": "(region): allocates 0x18 bytes when given none; stores the vtables 0009f25a, 0009f27e and 0009f2a6 in turn, runs the rect's and its points' inlined constructors at +8, then stores the vtable 0009f2ce and 0 at +4, the region type. ES1GO's GLRectangleRegion_Ctor (00046c6c) with the simulator's vtables. es2_xref finds its padding entry 0007987f stored at 000797db, in TtmScript_Ctor (000797ac), for the script's twelve regions.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "00079880+208",
+        "sha1": "3423eb07b9e9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007999c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_Dtor",
+      "description": "(region, flags): returns for none; otherwise stores the vtables 0009f2ce, 0009f2a6 and 0009f27e in turn and deletes the region when bit 0 of flags is set. ES1GO's GLRectangleRegion_Dtor (00046dc4) with the simulator's vtables. es2_xref finds it at 0009f2ea, the +0x1c slot of the vtable 0009f2ce.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "0007999c+46",
+        "sha1": "4b78037926a0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000799cc",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_Dtor",
-      "description": "(script, flags): returns at once for a null script; otherwise calls 00079f68(script) through its padding entry, destroys the twelve objects at +0x58 with __vec_dtor, and deletes the script when bit 0 of the flags is set.",
+      "description": "(script, flags): returns at once for a null script; otherwise calls TtmScript_Free (00079f68)(script) through its padding entry, destroys the twelve objects at +0x58 with __vec_dtor, and deletes the script when bit 0 of the flags is set.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulator",
       "verified": {
         "bytes": "000799cc+59",
         "sha1": "818af8c88c92",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00079a14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Run",
+      "description": "(script, ticks) in stack order, callee-cleaned: notes the default render context 0009f248 and, when the script's +0x1bd is not 0, sets 0009f248 to it and installs it with Raster_InstallRenderContext. Subtracts ticks from the wait +0x182. While it is above 0: unless the mode dword +0xe is 2, runs the page byte +1 with TtmScript_RunPage (0007aa58). Otherwise: when the byte +0x18a is 1 subtracts ticks from +0x186 and, below 0, reloads it from +0x188 and calls TtmScript_CyclePalette (00079d90); reloads the wait from +0x184; then through the table 0009f2f4 by mode: 0 runs the page, then takes the page +0x178 when it is not -1 (setting it to -1) or else adds 1 to the page and clears the byte +0x12, and when the page has reached the count byte +0 resets the script with TtmScript_Reset (0007ca44) and sets the mode to 0 when the loop dword +0x13 is 1, to 2 otherwise; 1 runs the page; 3 resets and sets the mode as at the end; 2 does nothing. Finally restores and installs the noted context and returns 1. es2_xref finds one call, from Ttm_RunAll (000695e0).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
+      "verified": {
+        "bytes": "00079a14+318",
+        "sha1": "35bb43e0e44f",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -12007,6 +12362,66 @@
       }
     },
     {
+      "address": "00079c38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_FixRect",
+      "description": "(script, rect): with the display object 0009f24c's +0x38 set to the low byte of its +0x3c and its +0x3c to 0009f250, Ttm_ManagerCtor's a (each store also copied to 00098dd6 or 00098dda and passed to the routine at 0009df14 or 0009df18 when the display is 000bdd28), copies a type-0 region of rect at (0, 0) with 00066914, passes rect to 0008398c with 0 (in stack order x0, y0, x1, y1, 0), then puts back the low bytes of the two fields. es2_xref finds calls from TtmScript_RunPage (0007aa58), three, and TtmScript_RunDrawCommand (0007c01c).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
+      "verified": {
+        "bytes": "00079c38+344",
+        "sha1": "4d0ed6f995df",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00079d90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_CyclePalette",
+      "description": "(script): ES1GO's TtmScript_CyclePalette (000472d0) at the simulator's offsets: rotates by one place each of the three six-byte ranges at +0x18b whose direction (+0x18f, +0x195, +0x19b) is not 0 in the palette of the slot table +0x21 selected by +0x25, then uploads it with Palette_UploadWhole. es2_xref finds one call, from TtmScript_Run (00079a14).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
+      "verified": {
+        "bytes": "00079d90+353",
+        "sha1": "a756b88c757b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00079ef4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_FindLabel",
+      "description": "(script, label): the first page, in page order below the count byte +0, whose first command in the page table +2 is 0x1101 or 0x1111 with label as its argument, as a byte; 0 when none is. ES1GO's TtmScript_FindLabel (0004741a) also formats a message.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
+      "verified": {
+        "bytes": "00079ef4+115",
+        "sha1": "3807f436c4f0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00079f68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Free",
+      "description": "(script): resets the script with TtmScript_Reset (0007ca44) through its padding entry, then deletes the unpacked script +6, the page table +2 and the slot tables +0x21 and +0x17 when set. ES1GO's TtmScript_Free (000474bd) also destroys a sound object. es2_xref finds one call, from TtmScript_Dtor, through the padding entry 00079f67.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "00079f68+70",
+        "sha1": "705d0089d77a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00079fb0",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -12020,6 +12435,30 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "00079fdc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_CopyArgBytes",
+      "description": "(script, source, count): copies count bytes from source, or with a count of 0 the bytes up to its NUL, at most 100 either way, into the buffer 000bbc18, adds a NUL and returns the buffer. ES1GO's TtmScript_CopyArgBytes (0004759d) with the simulator's buffer.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
+      "verified": {
+        "bytes": "00079fdc+115",
+        "sha1": "f60c7188ca22",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007a050",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ttm_TokenName",
+      "description": "(ignored, opcode) in stack order, callee-cleaned: Dynamix's name of a .TTM opcode: searches the 128 opcodes at 0009fb14 and jumps (0007a06d) through the table 0009fd14 to a case returning its string, or returns unknown (0009fb0c). The opcodes and the 2,034 bytes of strings from 0009f322 are the same as ES1GO's Ttm_TokenName (00047618)'s. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands"
     },
     {
       "address": "0007a54c",
@@ -12067,6 +12506,69 @@
       }
     },
     {
+      "address": "0007aa58",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_RunPage",
+      "description": "(script, page) in stack order, callee-cleaned: ES1GO's TtmScript_RunPage (00048218) at the simulator's offsets, running the page from the page table +2 to its 0x0ff0 and returning 1, with these differences. Its call offsets (depth +0x17a, x +0x17c, y +0x17e) skip the opcodes of the table 0009ffac (targets 0009ffbc, JMP 0007ad1d). It steps over every opcode 0xc000-0xcfff; hands 0xa000-0xafff to TtmScript_RunDrawCommand (0007c01c), returning 0 when that returns 0; finds the rest in the 29 opcodes at 0009ffcc (targets 000a0040, JMP 0007adea), the shell's 30 less 0x5005, and steps over any other. Point lists go through TtmScript_CopyArgBytes (00079fdc). Loads, frees, palette selects, 0x0020, 0x4204, 0x4214, 0x2402, 0x0400, 0xf01f and 0x4124 act while the wait +0x182 is 0 or less; 0x1021 and 0x2022 act once per page through the byte +0x12, 0x2022 as min + labs(rand (0007cd28)() % (max - min)); 0x4114 acts on every run. Palettes are uploaded with Palette_UploadWhole on select and load; bitmap arrays are destroyed with 000673c8(array, 3); 0xf01f's bitmap is loaded with ClassItem_LoadResource and its rect fixed with TtmScript_FixRect (00079c38). The fades work on a stack palette set up with GLPalette_Assign (0007bfdc), scale colours a1 to a2 toward black with Palette_ScaleRange (0007cc24) by the step 6 - a4, copy the full screen with 00066914 and destroy the copy with 00069258. Labels are found with TtmScript_FindLabel (00079ef4). es2_xref finds calls from TtmScript_Run (00079a14), three, and from its own 0x3003 and 0x3303 cases, through the padding entry 0007aa57.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands"
+    },
+    {
+      "address": "0007bfdc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLPalette_Assign",
+      "description": "(palette, source): copies the words +4, +6, +0xc, +0xe and the dwords +8 (the colours) and +0x10 from source, leaving the vtable. ES1GO's GLPalette_Assign (0004a08c). es2_xref finds calls from the two fade cases of TtmScript_RunPage (0007aa58).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-fades",
+      "verified": {
+        "bytes": "0007bfdc+63",
+        "sha1": "87c35f2bf2f2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007c01c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_RunDrawCommand",
+      "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: ES1GO's TtmScript_RunDrawCommand (0004a213) at the simulator's offsets: matches the opcode against the shell's 22 at 000a00b4 (targets 000a010c, JMP 0007c040) and returns 1 whether or not one matches. The pen +0x228 and fill +0x22c of the default render context 0009f248 are set to the brushes +0x19d, +0x1a5 and +0x1ad. Each draw but 0xa601 passes its box to 0008398c with 1; the ellipses draw with 000831f4 and the sized brush with 00067178; one case serves the twelve bitmap draws, testing the opcode's low four bits, and adds the dwords +0x1b5 and +0x1b9 to the position. 0xa601, while the wait +0x182 is 0 or less, puts the selected region's saved pixels back with Region_Restore at (0, 0) and passes the region's rect to TtmScript_FixRect (00079c38). es2_xref finds one call, from TtmScript_RunPage (0007aa58), through the padding entry 0007c01b.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands"
+    },
+    {
+      "address": "0007ca28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Point_DefaultCtor",
+      "description": "(point): allocates 8 bytes when given none and returns the point as it was. ES1GO's Point_DefaultCtor (0004b37d). es2_xref finds its padding entry 0007ca25 stored at 0007c46f, in the polygon case of TtmScript_RunDrawCommand (0007c01c), which passes it to __vec_new.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-commands",
+      "verified": {
+        "bytes": "0007ca28+27",
+        "sha1": "fa9f212b2026",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007ca44",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TtmScript_Reset",
+      "description": "(script): destroys the six palettes of the slot table +0x21 through their +0x1c slot with 3 and the six bitmap arrays of +0x17 with 000673c8(array, 3), deletes the twelve saved-pixel buffers at +0x28, zeroing every slot; zeroes the cycling directions +0x18f, +0x195 and +0x19b; sets the mode dword +0xe to 2, the page byte +1 and the palette slot +0x25 to 0, the word +0x178 to -1, the words +0x17a to +0x188 and the byte +0x18a to 0, and the brush colours +0x1a1, +0x1a9 and +0x1b1 to 10. ES1GO's TtmScript_Reset (0004b3c6) at the simulator's offsets; this one leaves the byte +0x12. es2_xref finds calls from TtmScript_Run (00079a14), two, and TtmScript_Free (00079f68), through the padding entry 0007ca43.",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-run",
+      "verified": {
+        "bytes": "0007ca44+352",
+        "sha1": "078f902883c5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0007cba4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -12082,13 +12584,49 @@
       }
     },
     {
+      "address": "0007cc24",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_ScaleRange",
+      "description": "(script, percent, last, first, source, target): for each colour from first to last inclusive, sets target's colour to source's with each of the three channels multiplied by Math_Q10Multiply by (percent << 10) / 100, and the fourth byte 1. The simulator's fades use it where ES1GO's use Palette_BlendRange (0004b532), which blends toward a colour. es2_xref finds two calls, from the fade cases of TtmScript_RunPage (0007aa58).",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-simulators-fades",
+      "verified": {
+        "bytes": "0007cc24+257",
+        "sha1": "5a90be240634",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0007cd28",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "rand",
-      "description": "Symantec C++ runtime `rand`, from `rand.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 34 bytes from here.",
-      "source": "Herculan/docs/es1/formats/compiler.md#identification"
+      "description": "Symantec C++ runtime `rand`, from `rand.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 34 bytes from here. Sets the state 000a0164 to state x 0x41c64e6d + 0x3039 and returns its bits 16 to 30; srand (0007cd4a) sets the state.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification",
+      "verified": {
+        "bytes": "0007cd28+34",
+        "sha1": "b469446fdb15",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007cd4a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "srand",
+      "description": "(seed), C convention: stores seed at 000a0164, the state rand (0007cd28) steps. es2_xref finds one call, from Ttm_ManagerCtor (00069540), which passes clock().",
+      "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
+      "verified": {
+        "bytes": "0007cd4a+10",
+        "sha1": "11ff6890a40e",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0007cd54",
