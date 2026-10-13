@@ -21,24 +21,16 @@ namespace Herculan.Engine.Input;
 ///
 /// <para>So the split is: <c>prefs.cfg</c> keeps owning what each control <i>does</i>, byte for byte
 /// as retail wrote it, and this owns which piece of hardware each control <i>is</i>. Retail never
-/// reads this file and does not know it exists; Herculan writes it beside <c>keyjoy.cfg</c> in the
-/// same INI shape, and works from <see cref="ForDevice"/>'s defaults when it is absent.</para>
+/// reads it. One map is one section of <see cref="JoystickMapFile"/>, and a device without one works
+/// from <see cref="ForDevice"/>'s defaults.</para>
 ///
 /// <para><b>What still cannot be expressed</b> is anything the twelve bytes have no room for: a
 /// fifth axis, a ninth button, a second hat, or a hat diagonal. Those are limits of the retail
 /// format, not of this map, and keeping the file compatible means keeping them.</para>
 /// </summary>
-public sealed class JoystickDeviceMap {
-	/// <summary>Where Herculan keeps the file, relative to the game's <c>data</c> folder.</summary>
-	public const string FileName = "herculan-joystick.cfg";
-
-	private const string Section = "joystick";
-
+public sealed record JoystickDeviceMap {
 	/// <summary>Means "no physical control fills this field".</summary>
 	public const int Unmapped = -1;
-
-	/// <summary>Which enumerated device to read, when more than one is attached.</summary>
-	public int DeviceIndex { get; init; }
 
 	/// <summary>The device axis feeding <see cref="JoystickReading.StickX"/>. Retail's X.</summary>
 	public int StickXAxis { get; init; } = 0;
@@ -107,28 +99,27 @@ public sealed class JoystickDeviceMap {
 	public bool HatDiagonals { get; init; }
 
 	/// <summary>
-	/// Which device button drives each of the eight the format binds, logical BUTTON 1 first.
-	/// <see cref="Unmapped"/> leaves a row dead, which is also what a device with too few buttons
-	/// produces.
+	/// What drives each of the eight buttons the format binds, logical BUTTON 1 first: a device button, or an
+	/// axis (<see cref="JoystickButtonSource"/>). <see cref="JoystickButtonSource.Unmapped"/> leaves a row dead,
+	/// which is also what a device with too few buttons produces.
 	/// </summary>
-	public IReadOnlyList<int> Buttons { get; init; } = new[] { 0, 1, 2, 3, 4, 5, 6, 7 };
+	public IReadOnlyList<JoystickButtonSource> Buttons { get; init; } =
+		Enumerable.Range(0, JoystickCapabilities.MaxButtons).Select(JoystickButtonSource.Button).ToArray();
 
 	/// <summary>
 	/// A map for a device reporting these counts: retail's own X/Y/Z/R order, the first hat, and the
 	/// first eight buttons, with anything the device does not have left unmapped. This is what runs
 	/// when no file has been written, and it is right for a plain stick.
 	/// </summary>
-	public static JoystickDeviceMap ForDevice(int axisCount, int buttonCount, int hatCount,
-			int deviceIndex = 0) {
+	public static JoystickDeviceMap ForDevice(int axisCount, int buttonCount, int hatCount) {
 		int Axis(int index) => index < axisCount ? index : Unmapped;
 
-		var buttons = new int[JoystickCapabilities.MaxButtons];
+		var buttons = new JoystickButtonSource[JoystickCapabilities.MaxButtons];
 		for (int i = 0; i < buttons.Length; i++) {
-			buttons[i] = i < buttonCount ? i : Unmapped;
+			buttons[i] = i < buttonCount ? JoystickButtonSource.Button(i) : JoystickButtonSource.Unmapped;
 		}
 
 		return new JoystickDeviceMap {
-			DeviceIndex = deviceIndex,
 			StickXAxis = Axis(0),
 			StickYAxis = Axis(1),
 			ThrottleAxis = Axis(2),
@@ -145,7 +136,7 @@ public sealed class JoystickDeviceMap {
 	/// </summary>
 	public JoystickCapabilities Capabilities() => new(
 		Present: true,
-		ButtonCount: Buttons.Count(button => button != Unmapped),
+		ButtonCount: Buttons.Count(button => button.IsMapped),
 		HasThrottle: ThrottleAxis != Unmapped,
 		HasRudder: RudderAxis != Unmapped,
 		HasHat: HatIndex != Unmapped);
@@ -173,7 +164,7 @@ public sealed class JoystickDeviceMap {
 
 		byte buttons = 0;
 		for (int i = 0; i < Buttons.Count && i < JoystickCapabilities.MaxButtons; i++) {
-			if (Buttons[i] != Unmapped && button(Buttons[i])) {
+			if (Buttons[i].Pressed(axis, button)) {
 				buttons |= (byte)(1 << i);
 			}
 		}
@@ -202,35 +193,21 @@ public sealed class JoystickDeviceMap {
 	}
 
 	/// <summary>
-	/// Reads the file, or returns null when it is absent — the caller then falls back to
-	/// <see cref="ForDevice"/>, which is what an install that has never been configured wants.
-	/// A setting the file omits keeps its default.
+	/// The map one section of <see cref="JoystickMapFile"/> holds. A setting the section omits keeps its default.
 	/// </summary>
-	public static JoystickDeviceMap? Load(string path) {
-		Dictionary<string, string> values;
-		try {
-			values = IniSection.Read(File.ReadAllLines(path), Section);
-		} catch (IOException) {
-			return null;
-		} catch (UnauthorizedAccessException) {
-			return null;
-		}
-
-		if (values.Count == 0) {
-			return null;
-		}
-
+	public static JoystickDeviceMap FromValues(Dictionary<string, string> values) {
 		var defaults = new JoystickDeviceMap();
 		int Int(string key, int fallback) => IniSection.IntValue(values, key, fallback);
 		bool Bool(string key, bool fallback) => IniSection.BoolValue(values, key, fallback);
 
-		var buttons = new int[JoystickCapabilities.MaxButtons];
+		var buttons = new JoystickButtonSource[JoystickCapabilities.MaxButtons];
 		for (int i = 0; i < buttons.Length; i++) {
-			buttons[i] = Int($"button{i + 1}", defaults.Buttons[i]);
+			buttons[i] = values.TryGetValue($"button{i + 1}", out string? text) && JoystickButtonSource.Parse(text) is { } source
+				? source
+				: defaults.Buttons[i];
 		}
 
 		return new JoystickDeviceMap {
-			DeviceIndex = Int("device", defaults.DeviceIndex),
 			StickXAxis = Int("stickx", defaults.StickXAxis),
 			StickYAxis = Int("sticky", defaults.StickYAxis),
 			ThrottleAxis = Int("throttle", defaults.ThrottleAxis),
@@ -248,22 +225,10 @@ public sealed class JoystickDeviceMap {
 	}
 
 	/// <summary>
-	/// Writes the file, comments and all, in the shape <c>keyjoy.cfg</c> uses — the point being that a
-	/// player can read it and edit it by hand, which is how retail expects its own side-car to be
-	/// maintained.
+	/// Writes the map's settings, comments and all, as the body of one section of <see cref="JoystickMapFile"/>, in
+	/// the shape <c>keyjoy.cfg</c> uses, so a player can read and edit it by hand.
 	/// </summary>
-	public void Save(string path) {
-		var text = new StringBuilder();
-		text.AppendLine("[Joystick]");
-		text.AppendLine(";; Herculan's own file. The simulator's own prefs.cfg still says what each");
-		text.AppendLine(";; control DOES; this says which piece of hardware each control IS, which is");
-		text.AppendLine(";; the one thing a 1996 gameport stick did not need to be told.");
-		text.AppendLine(";;");
-		text.AppendLine(";; Axes and buttons are zero-based indices into what the device reports.");
-		text.AppendLine(";; -1 leaves a control unmapped, which greys its row on the CONTROLS panel.");
-		text.AppendLine();
-		text.AppendLine(Line("Device", DeviceIndex, "which stick, when more than one is attached"));
-		text.AppendLine();
+	public void WriteValues(StringBuilder text) {
 		text.AppendLine(Line("StickX", StickXAxis, "left / right"));
 		text.AppendLine(Line("StickY", StickYAxis, "fore / aft"));
 		text.AppendLine(Line("Throttle", ThrottleAxis, "the lever -- often NOT axis 2 on a modern stick"));
@@ -284,13 +249,12 @@ public sealed class JoystickDeviceMap {
 			"on: centre of travel is idle, aft of it is reverse"));
 		text.AppendLine();
 		text.AppendLine(";; BUTTON 1-8 as the CONTROLS panel numbers them. The format binds eight and");
-		text.AppendLine(";; no more, so a stick with more has to leave the rest out.");
+		text.AppendLine(";; no more, so a stick with more has to leave the rest out. axis5+ (or axis5-)");
+		text.AppendLine(";; is axis 5 pushed more than halfway toward its + (or -) end, such as a trigger.");
 
 		for (int i = 0; i < Buttons.Count && i < JoystickCapabilities.MaxButtons; i++) {
-			text.AppendLine(Line($"Button{i + 1}", Buttons[i]));
+			text.AppendLine(Line($"Button{i + 1}", Buttons[i].ToString()));
 		}
-
-		File.WriteAllText(path, text.ToString());
 
 		static string Line(string key, object value, string? comment = null) {
 			string setting = value switch {

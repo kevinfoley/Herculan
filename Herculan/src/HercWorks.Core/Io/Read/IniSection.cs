@@ -51,6 +51,23 @@ public static class IniSection {
 		return values;
 	}
 
+	/// <summary>Every <c>[section]</c>'s name, in the order the file has them, a repeated one listed once.</summary>
+	public static List<string> SectionNames(IEnumerable<string> lines) {
+		var names = new List<string>();
+		foreach (string raw in lines) {
+			string line = raw.Trim();
+			int close = line.IndexOf(']');
+			if (line.Length > 0 && line[0] == '[' && close > 1) {
+				string name = line[1..close].Trim();
+				if (!names.Contains(name, StringComparer.OrdinalIgnoreCase)) {
+					names.Add(name);
+				}
+			}
+		}
+
+		return names;
+	}
+
 	/// <summary>The lines of a <c>.cfg</c>'s bytes, read as Latin-1 so no byte is lost.</summary>
 	public static string[] Lines(byte[] bytes) =>
 		System.Text.Encoding.Latin1.GetString(bytes).Split(["\r\n", "\n", "\r"], StringSplitOptions.None);

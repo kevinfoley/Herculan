@@ -83,6 +83,7 @@ crash.message                 HERCULAN stopped because of an error: {0} The deta
 menu.debug                     Debug
 menu.tweaks                    Tweaks
 menu.settings                  Settings
+menu.controller                Controller
 menu.about                     About
 about.title                    About
 about.license                  License
@@ -106,6 +107,56 @@ settings.languages             Languages
 settings.game_language         Game language
 settings.interface_language    HERCULAN UI language
 settings.write_failed          Could not write {0}: {1}
+controller.title               Controller
+controller.device              Device
+controller.no_device           None connected
+controller.gamepad_layout     Gamepad
+controller.gamepad_layout_tip Read in the standard gamepad layout, the same on every computer: axes 0-3 are the left and right sticks, 4 and 5 the triggers; buttons 0-10 are A, B, X, Y, the bumpers, Back, Start, Guide and the stick clicks, 11-14 the d-pad, which is also hat 0.
+controller.saved_for_gamepads  These settings are saved for every gamepad.
+controller.saved_for_model     These settings are saved for this model of joystick.
+controller.saved_for_joysticks These settings are saved for every joystick without settings of its own.
+controller.none_connected      No controller is connected. Connect one and it appears here.
+controller.inputs              What the device reports
+controller.axis                Axis {0}
+controller.axis_direction      Axis {0} {1}
+controller.button              Button {0}
+controller.buttons             Buttons
+controller.hat                 Hat {0}
+controller.controls            Controls
+controller.control             Control
+controller.input               Device input
+controller.invert              Invert
+controller.reads               Game reads
+controller.stick_x             Stick left/right
+controller.stick_y             Stick forward/back
+controller.throttle            Throttle
+controller.rudder              Rudder
+controller.hat_row             Hat
+controller.button_row          BUTTON {0}
+controller.unmapped            None
+controller.detect              Detect
+controller.detecting           Cancel
+controller.detect_axis         Move the control you want as far as it goes.
+controller.detect_hat          Push the hat you want in any direction.
+controller.detect_button       Press the button you want, or pull the trigger you want.
+controller.invert_throttle_tip For a throttle lever: with the lever at idle, Game reads should show a positive number. Tick Invert if it shows a negative one.
+controller.pressed             Pressed
+controller.released            Released
+controller.centred             Centred
+controller.up                  Up
+controller.down                Down
+controller.left                Left
+controller.right               Right
+controller.options             Options
+controller.deadzone            Centre deadzone
+controller.deadzone_tip        How far an axis moves from the centre, out of 127, before the game reads it. The original game uses 25.
+controller.hat_diagonals       Hat diagonals
+controller.hat_diagonals_tip   A hat pushed diagonally counts as its two directions. The original game ignores a diagonal.
+controller.centre_idle         Centre-idle throttle
+controller.centre_idle_tip     The middle of the throttle's travel is idle, forward of it is forward and back of it is reverse. The original game reads the throttle from idle at one end to full at the other, and CHANGE DIRECTION chooses forward or reverse.
+controller.actions_note        This window sets which parts of your device the game uses. What each one does (steering or aiming, FIRE, TARGET and so on) is set in a mission: press F12 for Preferences, then CONTROLS. The settings are saved to data\herculan-joystick.cfg, which the original game does not read.
+controller.defaults            Defaults
+controller.no_data_folder      There is no data folder to save the settings in.
 disc_prompt.message            Choose the Earthsiege 2 disc folder, such as the CD drive or a copy of the disc. It is written to the install's data\{0}, which the original game reads too, and the front end restarts.
 disc_prompt.path_hint          Disc folder
 disc_prompt.picker_title       Choose the Earthsiege 2 disc folder

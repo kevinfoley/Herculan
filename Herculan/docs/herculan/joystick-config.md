@@ -8,12 +8,44 @@ Retail's `prefs.cfg` says which *game axis pair* each control feeds and which *a
 
 A modern stick does not. The host reads it through GLFW, whose axes are **positional**: an ordered array of floats with no HID usages, in whatever order the driver enumerated. On a HOTAS the throttle and the twist grip commonly come out swapped against the order retail assumes. No API fixes this. HID has no "throttle" usage, and a vendor labels a throttle `Z`, `Rz` or `Slider` as it pleases, so `joyGetPosEx`, DirectInput and Raw Input all just relay that choice. A resting position does not identify a lever either: a throttle parked mid-travel reads 0.00, the same as a self-centring twist.
 
-So `prefs.cfg` keeps owning what each control **does**, byte for byte as retail writes it, and `data\herculan-joystick.cfg` owns which piece of hardware each control **is**. Retail never reads it. It is an INI in `keyjoy.cfg`'s shape. When it is absent, the device's reported counts supply retail's order as the default.
+So `prefs.cfg` keeps owning what each control **does**, byte for byte as retail writes it, and `data\herculan-joystick.cfg` owns which piece of hardware each control **is**. Retail never reads it. It is an INI in `keyjoy.cfg`'s shape, with one section per kind of device ([below](#one-file-many-devices)). For a device it has no section for, the device's reported counts supply retail's order as the default.
+
+## Gamepads
+
+**An Xbox-compatible pad has the same numbering on every computer.** GLFW recognises such a pad, and Steam Input's virtual one, as a gamepad and reads it in its standard gamepad layout instead of the driver's order:
+
+| Axis | Control | Button | Control |
+|---|---|---|---|
+| 0, 1 | left stick X, Y | 0-3 | A, B, X, Y |
+| 2, 3 | right stick X, Y | 4, 5 | left and right bumper |
+| 4, 5 | left and right trigger | 6-8 | Back, Start, Guide |
+| | | 9, 10 | left and right stick click |
+| | | 11-14 | d-pad up, right, down, left |
+
+The d-pad is also hat 0, since a gamepad has no hat of its own. A trigger is an axis, resting at −1, and is bound to a button as an axis (see [Options retail does not have](#options-retail-does-not-have)). Any other device is a joystick, numbered in its driver's order.
+
+## One file, many devices
+
+**Each kind of controller keeps its own settings, so switching between them needs no setting up again.** The file has one section per kind of device:
+
+| Section | Serves |
+|---|---|
+| `[Gamepad]` | every gamepad, since all of them share the layout above |
+| `[Joystick <GUID>]` | one model of joystick |
+| `[Joystick]` | any joystick without a section of its own |
+
+The GUID is the one GLFW gives a device. It names the model, not the unit: two of the same model share it. Which USB port the device is in does not change it, but how it connects can: on Linux a Bluetooth connection has a different GUID from a USB one, and on Windows a Bluetooth device that reports no vendor or product ID gets one made from its name. A section also records the device's name, `Name = …`, to keep the file readable; nothing reads it back. A file written before per-device sections has one `[Joystick]` section, which goes on serving every joystick.
+
+**Which device a mission reads** when more than one is connected is the first, in GLFW's order, that the file has a section for, and otherwise the first connected one.
 
 ## Setting up a stick
 
+The **Controller** window on the [Shift+Esc] menu bar edits the file, in the front end or in a mission. It shows every axis, button and hat the device reports as it moves, and beside each control the value the game reads through the map being edited. **Detect** binds whichever control moves next: an axis has to travel half its range from where it rested when Detect was pressed, so a trigger resting at one end is not taken for the control meant. The **Device** list chooses which connected device to set up, and the window says which section its settings go to; an edit made to one device is kept while another is chosen. **Defaults** is the map for the device's reported counts that runs when the file has no section for it. **Save** writes the device's section, and any other device edited since the window opened, keeping the rest of the file; a mission in progress reads the stick through it at once. While the window is up a mission's stick drives nothing, and after it closes the stick stays quiet until every button is let go, so a button pressed to bind it does not also fire its action.
+
+From the command line:
+
 1. `--joystick-probe` prints each axis and button as it moves, which is how to find out what the driver calls each control.
-2. `--write-joystick-map` writes the map in force to `data\herculan-joystick.cfg`, for editing.
+2. `--write-joystick-map` writes the map in force to the device's section of `data\herculan-joystick.cfg`, for editing.
 
 Both are off by default; the map file is the player's to own. `Herculan/examples/herculan-joystick.cfg` is a worked map for a Thrustmaster T.Flight in PC mode.
 
@@ -29,7 +61,9 @@ An axis number, though, is the map's own and not the format's, so a slot can be 
 
 ## Options retail does not have
 
-Both are off by default.
+- **An axis as a button.** Any of the eight buttons can be driven by an axis instead of a device button, written `Button1 = axis5+` (or `axis5-`). It counts as pressed while the axis is more than halfway from its centre toward that end; a trigger, which rests at its − end, does that past three-quarters of its pull. Retail reads buttons from the device's button mask alone. On a button row, the Controller window's Detect takes either a new button press or an axis moved half its travel, toward the end it moved to.
+
+The two below are off by default.
 
 - **`HatDiagonals`** resolves a hat diagonal into its two cardinal directions. Retail drops a diagonal.
 - **`BipolarThrottle`** reads the throttle lever centre-zero: the middle of the travel is idle, forward of it is forward and aft of it is reverse, each half covering the whole range. Retail's lever is end-to-end, idle at one stop and full at the other, with the direction set by `CHANGE DIRECTION` and the cockpit slider. `CHANGE DIRECTION` still reverses the lever in this mode, which is of no use but costs nothing. The Razor needs neither mode, since its throttle is already signed across the whole range.

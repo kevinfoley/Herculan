@@ -1,6 +1,7 @@
 using Herculan.Engine.Host.Settings;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
+using Herculan.Engine.Shell;
 using ImGuiNET;
 using Silk.NET.Input;
 using Silk.NET.Maths;
@@ -46,7 +47,8 @@ sealed class FrontEndWindow : IDisposable {
 			PrintScreenFiles.Attach(_window, session);
 		}
 		_menuBar = new HostMenuBar(session.Localization, new TweaksMenu(TweakSettings.Current, session.Localization),
-			new SettingsWindow(session, () => RequestRestart(restartRequested)));
+			new SettingsWindow(session, () => RequestRestart(restartRequested)),
+			new ControllerWindow(session.Localization, () => ShellWorkingFiles.DataDirectory(session.InstallRoot)));
 		_window.View.FocusChanged += focused => {
 			HasFocus = focused;
 			FocusChanged?.Invoke(focused);
@@ -98,6 +100,7 @@ sealed class FrontEndWindow : IDisposable {
 		_imgui = new ScaledImGui(gl, _window, input, _imguiFontPath);
 		Mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
 		Keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
+		_menuBar.Controller.Attach(input);
 	}
 
 	/// <summary>

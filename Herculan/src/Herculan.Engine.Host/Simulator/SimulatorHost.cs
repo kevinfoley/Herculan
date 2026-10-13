@@ -125,7 +125,8 @@ sealed class SimulatorHost : IDisposable {
 		// to reach its panels and every key from F1 to F12, [Esc] and [Tab] among the rest, is already retail's. A
 		// mission has no shell turn to restart, so Settings shows the folders greyed.
 		_menuBar = new HostMenuBar(session.Localization, new TweaksMenu(TweakSettings.Current, session.Localization),
-			new SettingsWindow(session, restartShell: null), options.DeveloperMode ? _debugPanel : null);
+			new SettingsWindow(session, restartShell: null), new ControllerWindow(session.Localization, () => _start.DataDirectory),
+			options.DeveloperMode ? _debugPanel : null);
 
 		// The -SPRUNKNOWN keys, and the Alt+S freeze a replay honours without them.
 		_developerKeys = new DeveloperKeys(options.DeveloperMode);
@@ -272,6 +273,7 @@ sealed class SimulatorHost : IDisposable {
 		// what it can do is announced on the first frame that knows.
 		_joystick = JoystickSource.Open(input, _start.DataDirectory, _options.ProbeJoystick);
 		_frame.Pilot.Joystick = _joystick;
+		_menuBar.Controller.Attach(input, _joystick);
 
 		// WinMain's toggle, after the pointer is known so it is confined and centred as Video_ToggleFullscreen's is.
 		if (_start.StartFullScreen) {

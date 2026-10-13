@@ -65,7 +65,7 @@ Without `--music-dir`, an install whose disc is an image with audio tracks plays
 | `--no-write-prefs` | Leaves `data\prefs.cfg` unwritten: when the preferences and controls panels close, when a mission ends in a different display mode from the one option 6 holds, and in the shell at startup, on a change of campaign or training mode, and on `Begin Mission` and `INSTANT ACTION`. See [`../retail/simulation/preferences.md`](../retail/simulation/preferences.md) and [`../retail/shell/movies-and-sound.md`](../retail/shell/movies-and-sound.md#sound). |
 | `--joystick [0-8]` | Pretends a stick with throttle, rudder and hat is attached, so the CONTROLS panel's joystick rows are live without hardware. The number sets how many of the eight button rows are live; without it, all eight. A real stick, when one is attached, takes precedence. |
 | `--joystick-probe` | Prints each axis and button of the attached stick as it moves. |
-| `--write-joystick-map` | Writes the joystick map in force to `data\herculan-joystick.cfg`. |
+| `--write-joystick-map` | Writes the joystick map in force to the device's section of `data\herculan-joystick.cfg`. |
 
 See [`joystick-config.md`](joystick-config.md).
 

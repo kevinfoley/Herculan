@@ -7,7 +7,7 @@ namespace Herculan.Engine.Host.Settings;
 
 /// <summary>
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, HERCULAN's own and not retail's, and the
-/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Tweaks and About; and the
+/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Tweaks and About; and the
 /// first start's <see cref="WelcomeDialog"/>, which the shell raises without the bar. Hidden until <see cref="Show"/>, and never
 /// drawn into a <c>--screenshot</c> capture. Plain [Esc] is retail's in a mission, where it pans to and from the
 /// Heads-Down Display, so which key reaches the bar is each host's to decide: over a mission
@@ -18,10 +18,12 @@ sealed class HostMenuBar : IEscapeMenu {
 	private readonly DebugPanel? _debug;
 	private readonly PanelCentring _centring = new();
 
-	public HostMenuBar(LocalizationTable localization, TweaksMenu tweaks, SettingsWindow settings, DebugPanel? debug = null) {
+	public HostMenuBar(LocalizationTable localization, TweaksMenu tweaks, SettingsWindow settings, ControllerWindow controller,
+			DebugPanel? debug = null) {
 		_localization = localization;
 		Tweaks = tweaks;
 		Settings = settings;
+		Controller = controller;
 		_debug = debug;
 		About = new AboutWindow(localization);
 		Welcome = new WelcomeDialog(localization, () => Tweaks.IsOpen = true);
@@ -31,6 +33,8 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	public SettingsWindow Settings { get; }
 
+	public ControllerWindow Controller { get; }
+
 	public AboutWindow About { get; }
 
 	public WelcomeDialog Welcome { get; }
@@ -39,7 +43,7 @@ sealed class HostMenuBar : IEscapeMenu {
 	public bool Visible { get; private set; }
 
 	/// <summary>Whether one of the bar's panels, or the welcome, is up.</summary>
-	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || About.IsOpen || Welcome.IsOpen || _debug?.IsOpen == true;
+	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || Controller.IsOpen || About.IsOpen || Welcome.IsOpen || _debug?.IsOpen == true;
 
 	/// <summary>Whether the bar or one of its panels is up.</summary>
 	public bool Up => Visible || PanelOpen;
@@ -60,6 +64,9 @@ sealed class HostMenuBar : IEscapeMenu {
 			if (Tweaks.IsOpen) {
 				Tweaks.Cancel();
 			}
+			if (Controller.IsOpen) {
+				Controller.Cancel();
+			}
 			if (Welcome.IsOpen) {
 				Welcome.Dismiss();
 			}
@@ -77,7 +84,7 @@ sealed class HostMenuBar : IEscapeMenu {
 	}
 
 	/// <summary>
-	/// Draws the bar, when it is up, and Tweaks and Settings, when they are; a host with a Debug panel draws
+	/// Draws the bar, when it is up, and its panels, when they are; a host with a Debug panel draws
 	/// that itself, since it needs the host's state. <paramref name="owner"/> is the native window a folder
 	/// picker belongs to, and <paramref name="fullScreen"/> whether that window is full screen, which
 	/// <see cref="PanelCentring"/> watches. Call once per frame inside the ImGui frame.
@@ -93,6 +100,10 @@ sealed class HostMenuBar : IEscapeMenu {
 
 			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.settings"))) {
 				Settings.IsOpen = true;
+			}
+
+			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.controller"))) {
+				Controller.Open();
 			}
 
 			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.tweaks"))) {
@@ -115,6 +126,7 @@ sealed class HostMenuBar : IEscapeMenu {
 
 		Tweaks.Draw(_centring.Condition);
 		Settings.Draw(owner, _centring.Condition);
+		Controller.Draw(_centring.Condition);
 		About.Draw(_centring.Condition);
 		Welcome.Draw(_centring.Condition);
 	}

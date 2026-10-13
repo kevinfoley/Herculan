@@ -23,24 +23,27 @@ namespace Herculan.Engine.Host;
 /// automatic answer to that: HID has no "throttle" usage, so no API reports one. The device map is
 /// where a player says which is which; <c>--joystick-probe</c> is how they find out.</para>
 ///
-/// <para><b>Two GLFW behaviours shape the rest.</b> It publishes a fixed sixteen joystick slots and
-/// leaves the unused ones reporting <see cref="IJoystick.IsConnected"/> false, so a device has to be
-/// picked by connectedness and not by index. And a connected device reports <b>zero</b> axes, buttons
-/// and hats until the first <c>Update</c> — the counts arrive a frame after <c>CreateInput</c>. So the
-/// map is derived lazily, from whatever the device is reporting now, and re-derived whenever that
-/// changes; deriving one at load time maps nothing at all.</para>
+/// <para><b>Two GLFW behaviours shape the rest.</b> It publishes a fixed sixteen slots, each either a
+/// joystick or a gamepad (<see cref="ControllerDevice"/>), and leaves the unused ones disconnected, so a
+/// device has to be picked by connectedness and not by index. And a connected joystick reports <b>zero</b>
+/// axes, buttons and hats until the first <c>Update</c> — the counts arrive a frame after
+/// <c>CreateInput</c>. So the map is derived lazily, from whatever the device is reporting now, and
+/// re-derived whenever that changes; deriving one at load time maps nothing at all.</para>
 /// </summary>
 sealed class JoystickSource : IJoystickSource {
 	private readonly IInputContext _input;
 
-	/// <summary>The map read from the install, or null to derive one from the device.</summary>
-	private readonly JoystickDeviceMap? _configured;
+	/// <summary>The install's maps, one per kind of device, as read at the start or saved by the Controller window.</summary>
+	private JoystickMapFile _file;
+
+	/// <summary>The map <see cref="_file"/> holds for <see cref="_device"/>, or null to derive one from the device.</summary>
+	private JoystickDeviceMap? _saved;
 
 	/// <summary>The derived map, and the device shape it was derived for.</summary>
 	private JoystickDeviceMap? _derived;
 	private (int Axes, int Buttons, int Hats) _derivedFor;
 
-	private IJoystick? _device;
+	private ControllerDevice? _device;
 
 	/// <summary>Prints every axis and button as it moves, so a player can fill in the map by hand.</summary>
 	private readonly bool _probe;
@@ -49,9 +52,14 @@ sealed class JoystickSource : IJoystickSource {
 
 	private bool _announced;
 
-	private JoystickSource(IInputContext input, JoystickDeviceMap? configured, bool probe) {
+	private bool _muted;
+
+	// Set when Muted comes down, and cleared once the device holds no button: see Muted.
+	private bool _awaitingRelease;
+
+	private JoystickSource(IInputContext input, JoystickMapFile file, bool probe) {
 		_input = input;
-		_configured = configured;
+		_file = file;
 		_probe = probe;
 
 		if (probe) {
@@ -62,8 +70,8 @@ sealed class JoystickSource : IJoystickSource {
 
 	/// <summary>
 	/// Opens the joystick layer. <paramref name="dataDirectory"/> is the game's <c>data</c> folder,
-	/// where the map file lives beside <c>keyjoy.cfg</c>; with no file there the device's own reported
-	/// shape supplies the defaults, once it reports one.
+	/// where the map file lives beside <c>keyjoy.cfg</c>; for a device the file has no map for, the
+	/// device's own reported shape supplies the defaults, once it reports one.
 	///
 	/// <para>Returns a source even when nothing is attached — a stick plugged in later is picked up on
 	/// a following frame, and until then <see cref="Capabilities"/> reads
@@ -72,25 +80,19 @@ sealed class JoystickSource : IJoystickSource {
 	public static JoystickSource Open(IInputContext input, string? dataDirectory, bool probe) =>
 		new(input,
 			dataDirectory is null
-				? null
-				: JoystickDeviceMap.Load(CaseInsensitivePath.Combine(dataDirectory, JoystickDeviceMap.FileName)),
+				? new JoystickMapFile()
+				: JoystickMapFile.Load(CaseInsensitivePath.Combine(dataDirectory, JoystickMapFile.FileName)),
 			probe);
 
 	/// <summary>
-	/// The device being read: the slot the configured map names when that one is connected, otherwise
-	/// the first connected slot. Null when nothing is attached.
+	/// The device being read: the first connected one the file has a map for, otherwise the first
+	/// connected one (<see cref="ControllerDevice.Pick"/>). Null when nothing is attached.
 	/// </summary>
-	public IJoystick? Device {
+	public ControllerDevice? Device {
 		get {
-			if (_device is { IsConnected: true }) {
-				return _device;
-			}
-
-			_device = Pick();
-			if (_device is not null) {
-				// Silk's own deadzone off: the original's band is applied in JoystickDeviceMap.Read, and
-				// two stacked deadzones would eat a fifth of the travel twice over.
-				_device.Deadzone = new Deadzone(0f, DeadzoneMethod.Traditional);
+			if (_device is not { IsConnected: true }) {
+				_device = ControllerDevice.Pick(_input, _file);
+				_saved = _device?.MapIn(_file);
 			}
 
 			return _device;
@@ -98,28 +100,28 @@ sealed class JoystickSource : IJoystickSource {
 	}
 
 	/// <summary>
-	/// The map in force — the install's, or one derived from what the device currently reports. Null
-	/// until a device has reported a shape, which is not the same thing as being connected.
+	/// The map in force — the one the install's file holds for the device, or one derived from what the
+	/// device currently reports. Null until a device has reported a shape, which is not the same thing
+	/// as being connected.
 	/// </summary>
 	public JoystickDeviceMap? Map {
 		get {
-			if (_configured is not null) {
-				return _configured;
-			}
-
 			if (Device is not { } device) {
 				return null;
 			}
 
-			var shape = (device.Axes.Count, device.Buttons.Count, device.Hats.Count);
+			if (_saved is not null) {
+				return _saved;
+			}
+
+			var shape = (device.AxisCount, device.ButtonCount, device.HatCount);
 			if (shape is (0, 0, 0)) {
 				// Connected, but the counts have not arrived yet. Deriving now would map nothing.
 				return null;
 			}
 
 			if (_derived is null || shape != _derivedFor) {
-				_derived = JoystickDeviceMap.ForDevice(shape.Item1, shape.Item2, shape.Item3,
-					IndexOf(device));
+				_derived = JoystickDeviceMap.ForDevice(shape.Item1, shape.Item2, shape.Item3);
 				_derivedFor = shape;
 			}
 
@@ -135,23 +137,61 @@ sealed class JoystickSource : IJoystickSource {
 	public JoystickCapabilities Capabilities =>
 		Device is null || Map is not { } map ? JoystickCapabilities.None : map.Capabilities();
 
+	/// <summary>
+	/// Whether <see cref="Read"/> reports the stick centred and every button up, which it does while the Controller
+	/// window is open, so that moving a control to bind it does not also drive the machine. After it comes down the
+	/// stick stays quiet until every device button has been let go, so a button pressed to bind it does not fire its
+	/// action as the window closes.
+	/// </summary>
+	public bool Muted {
+		get => _muted;
+		set {
+			_awaitingRelease |= _muted && !value;
+			_muted = value;
+		}
+	}
+
+	/// <summary>
+	/// Reads the stick through <paramref name="file"/>'s maps from now on, as the Controller window saves it, picking the
+	/// device again, and says what it can do again on the next <see cref="Announce"/>, so the CONTROLS panel greys its rows
+	/// against the new map.
+	/// </summary>
+	public void Configure(JoystickMapFile file) {
+		_file = file;
+		_saved = null;
+		_derived = null;
+		_device = null;
+		_announced = false;
+	}
+
 	/// <inheritdoc/>
 	public JoystickReading Read() {
 		if (Device is not { } device || Map is not { } map) {
 			return JoystickReading.Neutral;
 		}
 
+		if (Muted) {
+			return JoystickReading.Neutral;
+		}
+
+		if (_awaitingRelease) {
+			if (device.AnyButton()) {
+				return JoystickReading.Neutral;
+			}
+
+			_awaitingRelease = false;
+		}
+
 		if (_probe) {
 			Probe(device);
 		}
 
-		return map.Read(
-			index => index >= 0 && index < device.Axes.Count ? device.Axes[index].Position : 0f,
-			index => index >= 0 && index < device.Buttons.Count && device.Buttons[index].Pressed,
-			map.HatIndex >= 0 && map.HatIndex < device.Hats.Count
-				? HatOf(device.Hats[map.HatIndex].Position)
-				: JoystickHat.None);
+		return Read(map, device);
 	}
+
+	/// <summary>One frame of <paramref name="device"/> read through <paramref name="map"/>.</summary>
+	public static JoystickReading Read(JoystickDeviceMap map, ControllerDevice device) =>
+		map.Read(device.Axis, device.Button, device.Hat(map.HatIndex));
 
 	/// <summary>
 	/// Says what the stick can do, once — and not before it will answer. Silk.NET's GLFW backend publishes a
@@ -182,13 +222,15 @@ sealed class JoystickSource : IJoystickSource {
 
 		if (_probe) {
 			Console.WriteLine("Move one control at a time; put what it prints into "
-				+ $"data\\{JoystickDeviceMap.FileName}.");
+				+ $"data\\{JoystickMapFile.FileName}, or set it up in the Controller window.");
 		}
 
-		if (writeMap && dataDirectory is not null) {
-			string mapPath = CaseInsensitivePath.Combine(dataDirectory, JoystickDeviceMap.FileName);
+		// The map in force becomes the device's own section, the file's other sections kept.
+		if (writeMap && dataDirectory is not null && Device is { } device) {
+			string mapPath = CaseInsensitivePath.Combine(dataDirectory, JoystickMapFile.FileName);
 			try {
-				map.Save(mapPath);
+				_file.Set(device.IsGamepad, device.Guid, device.Name, map);
+				_file.Save(mapPath);
 				Console.WriteLine($"Wrote {mapPath}.");
 			} catch (Exception error) when (error is IOException or UnauthorizedAccessException) {
 				Console.WriteLine($"Could not write {mapPath}: {error.Message}");
@@ -206,17 +248,18 @@ sealed class JoystickSource : IJoystickSource {
 			yield break;
 		}
 
-		yield return $"* joystick [{IndexOf(device)}] {device.Name}: {device.Axes.Count} axes, "
-			+ $"{device.Buttons.Count} buttons, {device.Hats.Count} hats";
+		yield return $"* {(device.IsGamepad ? "gamepad" : "joystick")} [{device.Slot}] {device.Name}: {device.AxisCount} axes, "
+			+ $"{device.ButtonCount} buttons, {device.HatCount} hats";
 
-		if (device.Buttons.Count > JoystickCapabilities.MaxButtons) {
+		if (device.ButtonCount > JoystickCapabilities.MaxButtons) {
 			yield return $"  The retail format binds the first {JoystickCapabilities.MaxButtons} "
 				+ "buttons and has no room for the rest.";
 		}
 
-		if (_configured is null) {
+		if (_saved is null && !device.IsGamepad) {
 			yield return "  Axis order is the driver's, not a meaning — a throttle and a twist grip can "
-				+ $"come out swapped. --joystick-probe and data\\{JoystickDeviceMap.FileName} settle it.";
+				+ "come out swapped. The Controller window, or --joystick-probe and "
+				+ $"data\\{JoystickMapFile.FileName}, settle it.";
 		}
 
 		if (!_probe) {
@@ -225,8 +268,8 @@ sealed class JoystickSource : IJoystickSource {
 
 		// Where each axis is sitting before anything has been touched. A self-centring control reads
 		// about zero; one parked hard over is a lever.
-		for (int i = 0; i < device.Axes.Count; i++) {
-			float resting = device.Axes[i].Position;
+		for (int i = 0; i < device.AxisCount; i++) {
+			float resting = device.Axis(i);
 			yield return $"  at rest: axis {i} = {resting,6:0.00}"
 				+ (MathF.Abs(resting) > 0.5f
 					? " — parked at a stop, so a lever rather than a self-centring control"
@@ -234,61 +277,18 @@ sealed class JoystickSource : IJoystickSource {
 		}
 	}
 
-	/// <summary>The configured slot when it is connected, else the first connected one.</summary>
-	private IJoystick? Pick() {
-		int wanted = _configured?.DeviceIndex ?? -1;
-		if (wanted >= 0 && wanted < _input.Joysticks.Count
-			&& _input.Joysticks[wanted] is { IsConnected: true } named) {
-			return named;
-		}
-
-		foreach (var stick in _input.Joysticks) {
-			if (stick.IsConnected) {
-				return stick;
-			}
-		}
-
-		return null;
-	}
-
-	private int IndexOf(IJoystick device) {
-		for (int i = 0; i < _input.Joysticks.Count; i++) {
-			if (ReferenceEquals(_input.Joysticks[i], device)) {
-				return i;
-			}
-		}
-
-		return 0;
-	}
-
-	/// <summary>
-	/// Silk's own eight-way hat position, cut back to the four the format has bytes for.
-	/// <see cref="JoystickDeviceMap"/> decides what happens to a diagonal — retail drops it.
-	/// </summary>
-	private static JoystickHat HatOf(Position2D position) => position switch {
-		Position2D.Up => JoystickHat.North,
-		Position2D.Down => JoystickHat.South,
-		Position2D.Left => JoystickHat.West,
-		Position2D.Right => JoystickHat.East,
-		Position2D.UpLeft => JoystickHat.North | JoystickHat.West,
-		Position2D.UpRight => JoystickHat.North | JoystickHat.East,
-		Position2D.DownLeft => JoystickHat.South | JoystickHat.West,
-		Position2D.DownRight => JoystickHat.South | JoystickHat.East,
-		_ => JoystickHat.None,
-	};
-
 	/// <summary>Reports an axis that moved appreciably or a button that went down, once per change.</summary>
-	private void Probe(IJoystick device) {
-		for (int i = 0; i < device.Axes.Count && i < _lastAxes.Length; i++) {
-			float position = device.Axes[i].Position;
+	private void Probe(ControllerDevice device) {
+		for (int i = 0; i < device.AxisCount && i < _lastAxes.Length; i++) {
+			float position = device.Axis(i);
 			if (MathF.Abs(position - _lastAxes[i]) > 0.2f) {
 				_lastAxes[i] = position;
 				Console.WriteLine($"joystick: axis {i} = {position,6:0.00}");
 			}
 		}
 
-		for (int i = 0; i < device.Buttons.Count && i < _lastButtons.Length; i++) {
-			bool pressed = device.Buttons[i].Pressed;
+		for (int i = 0; i < device.ButtonCount && i < _lastButtons.Length; i++) {
+			bool pressed = device.Button(i);
 			if (pressed != _lastButtons[i]) {
 				_lastButtons[i] = pressed;
 				if (pressed) {
