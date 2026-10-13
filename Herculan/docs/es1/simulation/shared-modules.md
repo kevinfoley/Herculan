@@ -19,6 +19,8 @@ ES1's and ES2's simulators both name `bullet`, `collide`, `damage`, `debris`, `f
 | bullet | `Bullet_TickUpdate` | `00007f84` | the animation countdown, the forward step through the rate-over-tick helper and `Transform_ApplyToShortPoint`, the Q10 damage scale, the raycast, the position commit | a bullet ages one count per tick against its type's life, where ES2's ages by `Math_IntegrateRateOverTick(0x200)` against life × 0x200; ES2 adds homing, the type-9 blast and difficulty scaling; the instance fields sit 6 bytes lower |
 | debris | `Debris_LoadResources` with `Debris_LoadDatabase`, `Debris_LoadPieceList` | `0000607c`, `00005ed0` | the group header, the piece-weight sum, the highest shape index | assert line 89, against 161; one database loaded into globals, where ES2 loads any number into a 12-byte struct with a texture bank; 4-byte pieces, against 14 with two angles |
 
+ES1's `0001b290` is not in `flyersys.cpp`: it lies in the object file `0001ab54`–`0001c4bb`, whose initialised data, `00091f06`–`000920b5`, holds no source path, and `flyersys.cpp` opens after it, at `0001c4bc` ([where object files start](../formats/compiler.md#vtables)).
+
 The differences are of four kinds: none beyond the compiler (collide, damage), table and record sizes, features ES2 added to the same skeleton, and one change of meaning, the bullet's age. Beneath them the [fixed-point primitives](fixed-point-math.md#the-primitives) round where ES2's truncate.
 
 ## Open

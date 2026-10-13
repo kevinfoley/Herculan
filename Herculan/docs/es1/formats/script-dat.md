@@ -40,8 +40,8 @@ A block record is the listed fields in `.MSN` order, so an offset into it is the
 | 1 | every point, at `000bc480`, and the least and greatest X and Y at `000af7a4`–`000af7b0` |
 | 2 | every heading, at `000bc484`, as the file's value shifted left 14 into 16 bits |
 | 3 | every waypoint group, at `000bc48a`, as its count and a pointer to an array of pointers to its points |
-| 4 | every trigger area, resolved by `0001cb48` into a 10-byte record at `000bc490` |
-| 5 | every action as a 16-byte record at `000bc496`: the type and verb, the number of area refs before the first negative one with a pointer to those areas, and the two words from `.MSN` `0x1a` and `0x1c` at `+0xc` and `+0xe` |
+| 4 | every trigger area, resolved by `TriggerArea_Resolve` (`0001cb48`) into a 10-byte record at `000bc490` ([trigger areas](../simulation/mission-groups.md#trigger-areas)) |
+| 5 | every action as a 16-byte record at `000bc496`: the type and verb, the number of area refs before the first negative one with a pointer to those areas, and the two words from `.MSN` `0x1a` and `0x1c` at `+0xc` and `+0xe`, the flag and operation the action [writes](../simulation/mission-groups.md#actions) |
 | 6, 7, 8 | the type of each record, from block offsets `0x28`, `0x2c` and `0` (`.MSN` `0x30`, `0x34` and `0x08`) |
 | 9 | from the second record on, each member ref (block `0x34`, `.MSN` `0x3a`) that is not negative marks its slot live in the roster block `0x28` names; a base member also stores block `0x44` (`.MSN` `0x4a`) for the slot, which is passed with the base's type to `000045a4` |
 
@@ -56,4 +56,4 @@ The headings in the two `.MSN` files walked by hand (`SM_SCT50`, `B0_C2_60`) are
 
 - **Open:** what `0001e638`, which opens `data\script.dat` after `DBSim_LoadScriptDat`, reads, and so what the simulator makes of the fields the first pass discards.
 - **Open:** whether ES1's headings are degrees, and what the simulator does with them beyond the first pass's shift.
-- **Open:** what header words 2 to 7 mean to the simulator, and what `000bc4b8`'s flags are used for once loaded.
+- **Open:** what header words 2 to 7 mean to the simulator; `Mission_WriteResults` passes word 3 on ([the results](../simulation/world.md#writing-the-results--mission_writeresults-0001d698)). What reads `000bc4b8`'s flags during a mission besides that writer's flag 7: the actions and the groups' out-of-action reports write them ([mission groups](../simulation/mission-groups.md)), and `Mission_WriteResults` writes them back to `data\mission.var`.

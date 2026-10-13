@@ -5860,7 +5860,13 @@
       "name": "Mech_SalvageValue",
       "description": "What one machine is worth to the player's side at mission end. Zero when mech+0xb3 is set. Otherwise queues every hardpoint under 0x80 damage to the salvage list as {template+0x56, (0x100-damage)*100/256}, then returns Q10(Mech_WeightedArmorRemaining(mech), typeRec+0x54) with typeRec+0x54 halved when component 0 is at full damage.",
       "source": "docs/retail/simulation/component-damage.md",
-      "signature": "int __cdecl Mech_SalvageValue(MechObject *mech)"
+      "signature": "int __cdecl Mech_SalvageValue(MechObject *mech)",
+      "verified": {
+        "bytes": "00418e60+224",
+        "sha1": "9bc97e0817f0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00418f40",
@@ -6054,8 +6060,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ReadDamageReadouts",
-      "description": "Fills a 42-short display buffer for one machine: entry 0 is the type record's +0x6c, the rest come from Component_FillDamageReadouts.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "(machine, buffer): fills a damage readout buffer for one machine: entry 0 is the type record's (+0x1f2) +0x6c, the rest come from Component_FillDamageReadouts on the component damage at +0x206.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "0041b4ec+39",
+        "sha1": "fd0ffc81b970",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041b514",
@@ -7628,7 +7640,13 @@
       "name": "TriggerArea_Resolve",
       "description": "Load-time resolve of one script.dat block-4 (row #9) record into the 10-byte trigger-area record TriggerArea_ContainsPoint reads: type flag at +0, pointer to block-1 coordinate RefA at +2, and at +6 either a pointer to coordinate RefB (type 0) or the record's literal times 10 (other types).",
       "source": "docs/retail/simulation/mission-deployment.md",
-      "signature": "void __cdecl TriggerArea_Resolve(short *area, short *record, int coordinateBase)"
+      "signature": "void __cdecl TriggerArea_Resolve(short *area, short *record, int coordinateBase)",
+      "verified": {
+        "bytes": "00423358+74",
+        "sha1": "d3262345bb15",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004233a4",
@@ -7670,7 +7688,13 @@
       "name": "Action_TestTrigger",
       "description": "Tests a position against one action's trigger areas. Returns 1 immediately if the action has already activated (+0x0a set); otherwise offers the position to each resolved block-4 area (count at +0x04, pointer array at +0x06) via TriggerArea_ContainsPoint and calls Action_Activate on the first hit.",
       "source": "docs/retail/simulation/mission-deployment.md",
-      "signature": "short __cdecl Action_TestTrigger(int *action, int *position)"
+      "signature": "short __cdecl Action_TestTrigger(int *action, int *position)",
+      "verified": {
+        "bytes": "004234b8+79",
+        "sha1": "1988b5b0e937",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423508",
@@ -7680,7 +7704,13 @@
       "name": "Action_TestTriggerForGroup",
       "description": "Action_TestTrigger applied to every member of a group in turn (member array at group+0x0c, count at group+0x10), stopping at the first that activates it.",
       "source": "docs/retail/simulation/mission-deployment.md",
-      "signature": "short __cdecl Action_TestTriggerForGroup(int *group, int *action)"
+      "signature": "short __cdecl Action_TestTriggerForGroup(int *group, int *action)",
+      "verified": {
+        "bytes": "00423508+65",
+        "sha1": "afd8aefac774",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042354c",
@@ -7715,7 +7745,13 @@
       "confidence": "high",
       "name": "Group_OrderTargetObject",
       "description": "The object the group's current order names -- the first member of the group it holds (+0xc == 0), or the object directly (1-3).",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "004238a0+52",
+        "sha1": "b77b3aca56ec",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004238d4",
@@ -7724,7 +7760,13 @@
       "confidence": "high",
       "name": "Group_OrderTargetPosition",
       "description": "The position the group's current order works to: the order object's +0x26 origin, falling back to the first waypoint of the group's route (**(*(group+6)+2)), read with no null check, when the slot is empty or names no subject.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "004238d4+66",
+        "sha1": "dbae35ef38af",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423918",
@@ -7763,7 +7805,13 @@
       "confidence": "high",
       "name": "Group_NearestLiveMember",
       "description": "(group, obj): the member of group (array +0xc, count +0x10) nearest obj by Math_DistanceBetweenPoints, skipping obj itself and any member with destroyed (+0x99) or immobilised (+0xa4) set; 0 when none is nearer than 100000.",
-      "source": "DBSIM decompile at 00423974; docs/retail/simulation/ai-targeting.md"
+      "source": "DBSIM decompile at 00423974; docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00423974+133",
+        "sha1": "d8b51254903c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004239fc",
@@ -7825,8 +7873,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MissionGroups_Allocate",
-      "description": "(array, count): array+4 = int16 count; array+0 = Rtl_VectorNew(0, 0x7a, count, 1, 004240e4), count 0x7a-byte group records. DBSim_LoadScriptDat calls it on MissionGroups (004a9e84) with block 11's record count.",
-      "source": "DBSIM decompile at 00423d38"
+      "description": "(array, count): array+4 = int16 count; array+0 = Rtl_VectorNew(0, 0x7a, count, 1, 004240e4), count 0x7a-byte group records. es2_xref finds one call, in DBSim_LoadScriptDat (00424dec), on MissionGroups (004a9e84) with block 11's record count.",
+      "source": "DBSIM decompile at 00423d38",
+      "verified": {
+        "bytes": "00423d38+45",
+        "sha1": "1409c6eb779c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423d68",
@@ -7835,7 +7889,13 @@
       "confidence": "high",
       "name": "Group_WriteStatusBlocks",
       "description": "(group, stream) Per member in group order: Mech_ReadDamageReadouts into a 42-short buffer, then entries 1-13, 20-29 and 32-41 each written as ((0x100 - r) * 100) SAR 8, then the 6 bytes at mech+0x2a4 -- the member's Herc, Structure and Flyer kill tallies. 72 bytes a member; VSHELL reads the 66 over the machine's status block and the 6 as the pilot's mission counters.",
-      "source": "docs/retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c"
+      "source": "docs/retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c",
+      "verified": {
+        "bytes": "00423d68+286",
+        "sha1": "359ab67fe2a8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423e88",
@@ -7860,7 +7920,13 @@
       "confidence": "high",
       "name": "Group_ApplyOutnumberedDamage",
       "description": "(group): Mech_ApplyOutnumberedDamage on each member of the group's member array (+0xc, int16 count +0x10). Sim_MainTick runs it on the player's group (player+0x45) when Mission_PollStatus answers 3, and raises status 18 instead when the player is destroyed (+0x99) afterwards.",
-      "source": "DBSIM decompile at 00423f08 and Sim_MainTick"
+      "source": "DBSIM decompile at 00423f08 and Sim_MainTick",
+      "verified": {
+        "bytes": "00423f08+38",
+        "sha1": "31151f301993",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423f30",
@@ -7868,8 +7934,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_ReportIfAllOutOfAction",
-      "description": "Walks a mission group's member list (group+0xc, count group+0x10) skipping one nominated member; if every other member is immobilised (+0xa4) or destroyed (+0x99) it runs the group's own 10 mission-variable slots (indices at group+0x1c, opcodes at group+0x30) against DAT_004a9ef4 with the opcode set Mech_ReportOutOfAction uses. It does NOT remove the member from the group: a dead machine stays in the roster and keeps being ticked, which is why the inert behaviour states exist. Resolves ai-goals.md's open question on group +0x1c and +0x30.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "description": "Walks a mission group's member list (group+0xc, count group+0x10) skipping one nominated member; if every other member is immobilised (+0xa4) or destroyed (+0x99) it runs the group's own 10 mission-variable slots (indices at group+0x1c, opcodes at group+0x30) against DAT_004a9ef4 with the opcode set Mech_ReportOutOfAction uses: 1 zeroes the slot, 2 adds one, 0xd to 0x10 store the opcode less 0xc. It does NOT remove the member from the group: a dead machine stays in the roster and keeps being ticked, which is why the inert behaviour states exist.",
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00423f30+180",
+        "sha1": "68372e4d7865",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00424034",
@@ -7886,8 +7958,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MissionGroup_ElementCtor",
-      "description": "Rtl_VectorNew's per-element constructor for MissionGroups_Allocate's 0x7a-byte group records (its only reference is that PUSH at 00423d4b): zeroes the route cursor's index word at group+0x04 and nothing else.",
-      "source": "DBSIM disassembly at 004240e4, 00423d4b"
+      "description": "Rtl_VectorNew's per-element constructor for MissionGroups_Allocate's 0x7a-byte group records (es2_xref finds one reference, the operand at 00423d4c of the PUSH at 00423d4b): zeroes the route cursor's index word at group+0x04 and nothing else.",
+      "source": "DBSIM disassembly at 004240e4, 00423d4b",
+      "verified": {
+        "bytes": "004240e4+16",
+        "sha1": "fe176d129549",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004240f4",
@@ -7904,8 +7982,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_WriteResults",
-      "description": "(player) Writes data\\results.dat -- int16 (Mission_EvaluateObjectives(player) == 9), int32 Q10(2500, Mission_TotalSalvage) + counter 20 * 25000, int16 count and that many {int16 weapon, int16 condition} salvage pairs from DAT_004a9ef0, then Group_WriteStatusBlocks over the player's group -- and then the 2000 bytes of mission counters DAT_004a9ef4 back over data\\mission.var. Sim_Shutdown is its one caller.",
-      "source": "docs/retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c"
+      "description": "(player) Writes data\\results.dat -- int16 (Mission_EvaluateObjectives(player) == 9), int32 Q10(2500, Mission_TotalSalvage) + counter 20 * 25000, int16 count and that many {int16 weapon, int16 condition} salvage pairs from DAT_004a9ef0, then Group_WriteStatusBlocks over the player's group -- and then the 2000 bytes of mission counters DAT_004a9ef4 back over data\\mission.var. Asserts at severity 5 (WORLD.CPP lines 0x6f and 0x84) when either file does not open. es2_xref finds one call, from Sim_Shutdown (00461f25).",
+      "source": "docs/retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c",
+      "verified": {
+        "bytes": "0042412c+473",
+        "sha1": "f99cc9bfeccd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00424308",
@@ -23284,7 +23368,13 @@
       "confidence": "high",
       "name": "Pool_Nth",
       "description": "(pool, n): walks the pool with Pool_Prev from 0 and returns, in EAX, the element reached after n + 1 steps (the n-th, counting from 0), or 0 when the walk ends first. DBSim_BuildGroupRecord and Mission_ResolveRefByKind resolve mission indices to mechs, vehicles and structures with it.",
-      "source": "DBSIM decompile and disassembly at 00471ba4"
+      "source": "DBSIM decompile and disassembly at 00471ba4",
+      "verified": {
+        "bytes": "00471ba4+40",
+        "sha1": "ea18f856fee6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00471bcc",

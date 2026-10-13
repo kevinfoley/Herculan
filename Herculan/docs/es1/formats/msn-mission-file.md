@@ -172,13 +172,14 @@ In `B0_C2_60.MSN` four bases hold 41 at `0x0e` and 2 at `0x10`, and `0x16` holds
 | `0x36` | heading ref (row 4), resolved |
 | `0x38` | waypoint group ref (row 5), resolved |
 | `0x3a`–`0x49` | eight member refs into the row `0x2e` names, resolved |
-| `0x4a` | a word, exported, unset `-1`; for a base member the simulator's first pass keeps it beside the base's type |
+| `0x4a` | a word, exported, unset `-1`: the group's side, its low byte; for a base member the simulator's first pass keeps it beside the base's type |
 | `0x4c` | the row `0x4e` names: 0 groups, 1 mechs, 2 flyers, 3 bases |
-| `0x4e` | a ref into that row, resolved |
+| `0x4e` | a ref into that row, resolved: the group's target |
 | `0x50` | action ref (row 7), resolved |
-| `0x52`, `0x54`, `0x56` | words, exported, unset `-1` |
+| `0x52` | a word, exported, unset `-1` |
+| `0x54`, `0x56` | the group's out-of-action (flag, operation) pair, exported, unset `-1` |
 
-A kind outside those listed leaves its refs as authored. ES2's group names up to ten order records (ES2's row 15), each with a ref of this kind-and-index shape (its subject) and an action ref; an ES1 group holds one of each itself, and has eight member refs where ES2's has twenty ([Open](#open)). The first group stands for the player's squad, as ES2's does: the mode-0 load builds a squad from its members, and the simulator's first pass skips it when it marks members live and marks `data\player.mec`'s machines live instead ([`script-dat.md`](script-dat.md#reading)).
+A kind outside those listed leaves its refs as authored. ES2's group names up to ten order records (ES2's row 15), each with a ref of this kind-and-index shape (its subject) and an action ref; an ES1 group holds one of each itself, and has eight member refs where ES2's has twenty. The simulator's group record and what reads `0x4a`, `0x4c`/`0x4e` and `0x54`/`0x56` are in [`mission-groups.md`](../simulation/mission-groups.md#the-group-record). The first group stands for the player's squad, as ES2's does: the mode-0 load builds a squad from its members, and the simulator's first pass skips it when it marks members live and marks `data\player.mec`'s machines live instead ([`script-dat.md`](script-dat.md#reading)).
 
 ## Filtering, variants and repeats
 
@@ -219,9 +220,9 @@ An 88-byte mech is the record above to `0x4d`, then one word at `0x4e` where tha
 ## Open
 
 - **Open:** what reads [the other layout](#a-file-in-another-layout), and so what its header words and its mechs' word at `0x4e` mean. The byte search and the path builders that turned up no reader are in [`bst-battle-sets.md`](bst-battle-sets.md#open).
-- **Open:** whether the word pairs at action `0x1a`/`0x1c`, mech `0x4a`/`0x4c`, flyer `0x36`/`0x38` and base `0x0e`/`0x10` are each one (counter ref, operation) pair of ES2's out-of-action report and action write ([out-of-action report](../../retail/simulation/mission-deployment.md#the-out-of-action-report)), and whether mech `0x4e`–`0x61`, `0x62`, `0x64`, `0x66` and `0x68`, flyer `0x3a`, `0x3c` and `0x3e`, and base `0x12`, `0x14` and `0x16` are ES2's ammunition types, constant, engaged and defeated actions and starting condition. They stand where those stand in ES2's records less the pair counts and the other nine pairs; the simulator's readers of them are not read.
-- **Open:** what the exported fields mean that no code read so far uses: the 20 words at mech and flyer `0x08` and group `0x06`, an action's type and verb, the group words `0x30`, `0x32`, `0x4a` and `0x52`–`0x56`, and header words 2 to 7.
-- **Open:** whether a group's `0x4c`/`0x4e` ref and `0x50` action are an order of ES2's kind, its subject and the action that ends it, and so whether `0x30`, `0x32` and `0x4a` hold an order's verb and formation and the group's side. In `B0_C2_60.MSN` the first group, the squad, holds 0 at `0x4a` and the groups that name it or one of its mechs at `0x4e` hold 1.
+- **Open:** whether the word pairs at mech `0x4a`/`0x4c`, flyer `0x36`/`0x38` and base `0x0e`/`0x10` are each one (counter ref, operation) pair of ES2's out-of-action report ([out-of-action report](../../retail/simulation/mission-deployment.md#the-out-of-action-report)), as action `0x1a`/`0x1c` and group `0x54`/`0x56` are ([mission groups](../simulation/mission-groups.md)), and whether mech `0x4e`–`0x61`, `0x62`, `0x64`, `0x66` and `0x68`, flyer `0x3a`, `0x3c` and `0x3e`, and base `0x12`, `0x14` and `0x16` are ES2's ammunition types, constant, engaged and defeated actions and starting condition. They stand where those stand in ES2's records less the pair counts and the other nine pairs; the simulator's readers of them are not read.
+- **Open:** what the exported fields mean that no code read so far uses: the 20 words at mech and flyer `0x08` and group `0x06`, an action's type and verb, the group words `0x30`, `0x32` and `0x52`, and header words 2 to 7.
+- **Open:** whether a group's `0x50` action ends what its target asks, as an ES2 order's action does, and whether `0x30` and `0x32`, which the simulator copies to the group record's `+2` and `+4`, hold an order's verb and formation. In `B0_C2_60.MSN` the first group, the squad, holds 0 at `0x4a` and the groups that name it or one of its mechs at `0x4e` hold 1.
 - **Open:** the squad the mode-0 load builds: the pilot entries at `0009b028` and the functions that fill them (`000151c8`, `00015402`, `Herc_Ctor` (`00022f5e`), `00024c3c`, `00029d0f`, `00015ad4`), and what `0002909c` writes to `car\sm_play.mec`.
 - **Open:** what the modes other than 1, a career's, are; what the words at `000aacbc`–`000aacc4` the other modes use are, what reads header word 4 at `000aad5c`, and what header word 3 at `000aad5a` means: `Career_StartMission` copies it to the career record's `+0xc`, and `SingleMission_Start` passes the word to `SingleMission_BuildPath` as a list index ([single missions](bst-battle-sets.md#single-missions)).
 - **Open:** whether a retail group's `0x4e` names a later group, which the load resolves against slots not yet read.
