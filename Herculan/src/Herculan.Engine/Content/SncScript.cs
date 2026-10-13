@@ -1,3 +1,5 @@
+using HercWorks.Core.Io.Transform.Dbsim;
+
 namespace Herculan.Engine.Content;
 
 /// <summary>
@@ -5,11 +7,9 @@ namespace Herculan.Engine.Content;
 /// the matching <c>.WAV</c> plays. It carries no audio; see docs/retail/simulation/heads-down-display.md,
 /// "<c>.SNC</c> — portrait lip-sync scripts".
 ///
-/// <para>Layout after the VOL entry prefix (which <see cref="GameContent.Read"/> has already
-/// stripped): an <c>int32</c> length, then <c>length / 2</c> pairs of <c>{ frame, delta }</c>, the
-/// delta being coarse ticks until the <i>next</i> event. The <c>0xff</c> terminator
-/// <c>Snc_Load</c> (<c>00463270</c>) appends is not in the file, so a script that runs out is simply
-/// finished — which is what <see cref="Frame"/> reports as -1.</para>
+/// <para>The file is read by <see cref="LipSyncScriptTransformer"/> (docs/retail/formats/snc-lip-sync.md#layout). The
+/// terminator retail appends is not in the file, so a script that runs out is simply finished — which is what
+/// <see cref="Frame"/> reports as -1.</para>
 ///
 /// <para>Each speaker has its own scripts: the per-speaker copies of a message differ, so the
 /// speaker letter in the filename selects real data.</para>
@@ -79,22 +79,14 @@ public sealed class SncScript {
 			? Parse(bytes)
 			: null;
 
-	/// <summary>Walks the layout above. Returns null when the declared length runs past the file.</summary>
+	/// <summary>Reads a script's bytes through <see cref="LipSyncScriptTransformer"/>. Returns null when they do not parse.</summary>
 	public static SncScript? Parse(byte[] bytes) {
-		if (bytes.Length < 4) {
+		try {
+			return new LipSyncScriptTransformer().Parse(bytes) is { } script
+				? new SncScript(script.Events.Select(e => (e.Frame, e.Delta)).ToArray())
+				: null;
+		} catch (InvalidDataException) {
 			return null;
 		}
-
-		int length = BitConverter.ToInt32(bytes, 0);
-		if (length < 0 || 4 + length > bytes.Length) {
-			return null;
-		}
-
-		var events = new (byte, byte)[length / 2];
-		for (int i = 0; i < events.Length; i++) {
-			events[i] = (bytes[4 + i * 2], bytes[5 + i * 2]);
-		}
-
-		return new SncScript(events);
 	}
 }

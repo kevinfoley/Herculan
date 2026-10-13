@@ -1,5 +1,5 @@
-using System.Buffers.Binary;
 using HercWorks.Core.Data.File.Dyn;
+using HercWorks.Core.Io.Transform.Common;
 
 namespace Herculan.Engine.Content;
 
@@ -151,36 +151,35 @@ public sealed class HudFont {
 		return content.Read(folder, name + "." + folder.ToUpperInvariant()) is { } bytes ? Parse(name, bytes) : null;
 	}
 
-	/// <summary>Parses one font file's content as <paramref name="name"/>; null when it does not walk the layout <see cref="Load"/> describes.</summary>
+	/// <summary>
+	/// Parses one font file's content as <paramref name="name"/> through <see cref="DynamixFontTransformer"/>; null when it
+	/// does not walk the layout, has no glyphs or widths, or a glyph's slice of the pool is not <c>width x cellHeight</c>.
+	/// </summary>
 	public static HudFont? Parse(string name, byte[] bytes) {
-		if (bytes.Length < 34) {
+		DynamixFont? font;
+		try {
+			font = new DynamixFontTransformer().Parse(bytes);
+		} catch (InvalidDataException) {
 			return null;
 		}
 
-		short I16(int offset) => BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(offset));
+		return font == null ? null : FromFont(name, font);
+	}
 
-		int glyphCount = I16(0x08);
-		int firstCharCode = I16(0x0c);
-		int cellHeight = I16(0x0e);
-		int baseline = I16(0x14);
-		int inkHeight = I16(0x1a);
-		int poolLength = BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(0x1e));
-
-		int poolStart = 0x22;
-		int offsetsStart = poolStart + poolLength;
-		int widthsStart = offsetsStart + glyphCount * 4;
-		if (glyphCount <= 0 || cellHeight <= 0 || poolLength <= 0
-			|| widthsStart + glyphCount > bytes.Length) {
+	/// <summary>Builds the glyph bitmaps out of a parsed font's pool; null under <see cref="Parse"/>'s conditions.</summary>
+	private static HudFont? FromFont(string name, DynamixFont font) {
+		int glyphCount = font.Offsets.Length;
+		int cellHeight = font.CellHeight;
+		int poolLength = font.Pool.Length;
+		if (glyphCount <= 0 || cellHeight <= 0 || poolLength <= 0 || font.Widths is not { } widths) {
 			return null;
 		}
 
 		var glyphs = new DynamixBitmap[glyphCount];
 		for (int i = 0; i < glyphCount; i++) {
-			int start = BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(offsetsStart + i * 4));
-			int end = i + 1 < glyphCount
-				? BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(offsetsStart + (i + 1) * 4))
-				: poolLength;
-			int width = bytes[widthsStart + i];
+			int start = font.Offsets[i];
+			int end = i + 1 < glyphCount ? font.Offsets[i + 1] : poolLength;
+			int width = widths[i];
 
 			// The width byte and the slice length are two independent statements of the same fact in
 			// every retail file. Trusting the slice keeps a malformed file from reading past its pool.
@@ -190,7 +189,7 @@ public sealed class HudFont {
 			}
 
 			var pixels = new byte[length];
-			Array.Copy(bytes, poolStart + start, pixels, 0, length);
+			Array.Copy(font.Pool, start, pixels, 0, length);
 			glyphs[i] = new DynamixBitmap {
 				Rows = (short)cellHeight,
 				Cols = (short)width,
@@ -200,6 +199,6 @@ public sealed class HudFont {
 			};
 		}
 
-		return new HudFont(name, firstCharCode, cellHeight, baseline, inkHeight, glyphs);
+		return new HudFont(name, font.FirstCharCode, cellHeight, font.Baseline, font.InkHeight, glyphs);
 	}
 }

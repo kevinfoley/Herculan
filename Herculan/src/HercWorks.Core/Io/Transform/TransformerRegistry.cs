@@ -76,6 +76,8 @@ public static class TransformerRegistry {
 		// single data point. See FlyerSimData's doc comment for the format itself.
 		new("Flyer Sim Data", e => NameIs(e, "SKIMMER.DAT") && DirIs(e, FileType.Dat), () => new Dbsim.FlyerSimDataTransformer()),
 		new("Pilot Portrait Offsets", e => ExtIs(e, FileType.Ofs), () => new Dbsim.PilotOffsetFileTransformer()),
+		// docs/retail/formats/snc-lip-sync.md: the simulator's portrait scripts, the same layout in ES1's simulator.
+		new("Lip-Sync Script", e => ExtIs(e, FileType.Snc), () => new Dbsim.LipSyncScriptTransformer()),
 		new("Terrain Ramp Data", e => ExtIs(e, FileType.Rmp), () => new Dbsim.TerrainRampFileTransformer()),
 		new("Viewport Data", e => ExtIs(e, FileType.Vue), () => new Dbsim.VueTransformer()),
 		new("World/Environment Data", e => ExtIs(e, FileType.Wld), () => new Dbsim.WorldDataTransformer()),
@@ -92,6 +94,8 @@ public static class TransformerRegistry {
 		new("Dynamix Bitmap Array", e => ExtIs(e, FileType.Dba), () => new Common.DynamixBitmapArrayTransformer()),
 		new("Dynamix Bitmap", e => ExtIs(e, FileType.Dbm), () => new Common.DynamixBitmapTransformer()),
 		new("Dynamix Palette", e => ExtIs(e, FileType.Dpl), () => new Common.DynamixPaletteTransformer()),
+		// docs/retail/formats/dfn-hfn-dci.md#layout: one layout for both sets, and in ES1's .DFN.
+		new("Bitmap Font", e => ExtIs(e, FileType.Dfn) || ExtIs(e, FileType.Hfn), () => new Common.DynamixFontTransformer()),
 		new("Mission File", e => ExtIs(e, FileType.Msn), () => new Common.MissionFileTransformer()),
 		new("Player Save", e => ExtIs(e, FileType.Sav), () => new Common.PlayerSaveTransform()),
 		new("String Table", e => ExtIs(e, FileType.Str), () => new Common.StringFileTransformer()),
@@ -215,6 +219,13 @@ public static class TransformerRegistry {
 		// docs/es1/formats/shell-file-lists.md: the .TTM lists and the talking heads' lip-sync lists.
 		new("Animation Lists", e => NameIs(e, "TM_FILES.DAT"), () => new Shell.Es1TtmFileListsTransformer()),
 		new("Lip-Sync List", e => ExtIs(e, FileType.Dat) && NameEndsWith(e, "_FILES.DAT"), () => new Shell.Es1LipSyncListTransformer()),
+		// docs/es1/formats/snc-lip-sync.md#the-shells-scripts: SHELL0's scripts, an int16 length that is the size less 2, ahead
+		// of ES2's reader, which takes the simulator's.
+		new("Shell Lip-Sync Script", e => ExtIs(e, FileType.Snc) && Shell.Es1ShellLipSyncScriptTransformer.IsShellLayout(e.RawBytes),
+			() => new Shell.Es1ShellLipSyncScriptTransformer()),
+		// docs/es1/formats/hd-ed-clip-regions.md#which-files: the cockpit views' clip regions, the .EDG reader's layout.
+		new("Cockpit View Clip Regions", e => ExtIs(e, FileType.Ed0) || ExtIs(e, FileType.Ed1) || ExtIs(e, FileType.Ed2) || ExtIs(e, FileType.Ed3),
+			() => new Dbsim.Es1ClipRegionsTransformer()),
 		// docs/es1/formats/wld-world.md#the-world-tables-in-zonesvol: no reader found, bytes kept whole (OPAQUE).
 		new("Unread World Table (opaque)", e => ExtIs(e, FileType.Dat) && NameStartsWith(e, "WORLD"),
 			() => new Common.Es1OpaqueFileTransformer()),

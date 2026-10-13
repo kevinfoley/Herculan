@@ -1,6 +1,8 @@
 using System.Buffers.Binary;
 using HercWorks.Core.Io.Transform;
+using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
+using HercWorks.Core.Io.Transform.Shell;
 using HercWorks.Vol;
 using HercWorks.Vol.Io;
 using Herculan.Engine.Content;
@@ -10,7 +12,7 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// The engine's ES2 readers for <c>.SNC</c> (<see cref="SncScript"/>), <c>.DFN</c> (<see cref="HudFont"/>) and <c>.ED0</c>–<c>.ED3</c>
-/// (<see cref="CockpitClipRegions"/>) over every ES1 file of those types, and ES1's clip-region reader
+/// (<see cref="CockpitClipRegions"/>) over every ES1 file of those types, and the Core readers ES1's table binds to them
 /// (docs/es1/formats/snc-lip-sync.md, dfn-hfn-dci.md#fonts, hd-ed-clip-regions.md). Each test passes vacuously when the ES1
 /// archives are absent.
 /// </summary>
@@ -19,7 +21,10 @@ public class Es1EngineReadersTests {
 	private static readonly Lazy<IReadOnlyList<VolEntry>?> ShellVol = new(() => Load("SHELL0.VOL"));
 	private static readonly Lazy<IReadOnlyList<VolEntry>?> DetectVol = new(() => Load("DETECT.VOL"));
 
-	/// <summary>The simulator's scripts are ES2's layout; the shell's are an <c>int16</c> length and 4-byte records, which ES2's reader refuses.</summary>
+	/// <summary>
+	/// The simulator's scripts are ES2's layout; the shell's are an <c>int16</c> length and 4-byte records, which ES2's reader
+	/// refuses. ES1's table binds each set to its own reader, and every script round-trips.
+	/// </summary>
 	[Fact]
 	public void SimulatorScriptsReadAsEs2sAndShellScriptsDoNot() {
 		if (SimVol.Value is not { } sim || ShellVol.Value is not { } shell) {
@@ -31,6 +36,8 @@ public class Es1EngineReadersTests {
 		Assert.All(simScripts, e => {
 			Assert.NotNull(SncScript.Parse(e.RawBytes!));
 			Assert.Equal(e.RawBytes!.Length - 4, BinaryPrimitives.ReadInt32LittleEndian(e.RawBytes));
+			var reader = Assert.IsType<LipSyncScriptTransformer>(TransformerRegistry.FindTransformer(e, RetailGame.Earthsiege1));
+			Assert.Equal(e.RawBytes, reader.Write(reader.Parse(e.RawBytes)!));
 		});
 
 		var shellScripts = shell.Where(e => e.Ext == FileType.Snc).ToList();
@@ -40,10 +47,14 @@ public class Es1EngineReadersTests {
 			short length = BinaryPrimitives.ReadInt16LittleEndian(e.RawBytes);
 			Assert.Equal(e.RawBytes!.Length - 2, length);
 			Assert.Equal(0, length % 4);
+			var reader = Assert.IsType<Es1ShellLipSyncScriptTransformer>(TransformerRegistry.FindTransformer(e, RetailGame.Earthsiege1));
+			var script = reader.Parse(e.RawBytes)!;
+			Assert.Equal((length / 4, 0), (script.Records.Length, script.Unread.Length));
+			Assert.Equal(e.RawBytes, reader.Write(script));
 		});
 	}
 
-	/// <summary>Every font reads through ES2's reader, and its header's lengths walk it to its end.</summary>
+	/// <summary>Every font reads through ES2's reader, its header's lengths walk it to its end, and Core's font reader round-trips it.</summary>
 	[Fact]
 	public void EveryFontReadsThroughEs2sReader() {
 		if (SimVol.Value is not { } sim || ShellVol.Value is not { } shell) {
@@ -62,6 +73,8 @@ public class Es1EngineReadersTests {
 			int end = 0x22 + BinaryPrimitives.ReadInt32LittleEndian(b.AsSpan(0x1e)) + 5 * font.Glyphs.Count;
 			Assert.Equal(8 + BinaryPrimitives.ReadInt32LittleEndian(b.AsSpan(4)), end);
 			Assert.InRange(b.Length - end, 0, 1);
+			var reader = Assert.IsType<DynamixFontTransformer>(TransformerRegistry.FindTransformer(e, RetailGame.Earthsiege1));
+			Assert.Equal(b, reader.Write(reader.Parse(b)!));
 		});
 	}
 
@@ -82,7 +95,7 @@ public class Es1EngineReadersTests {
 
 		var clips = sim.Where(e => e.Ext == FileType.Edg).ToList();
 		Assert.Equal(4, clips.Count);
-		Assert.All(clips, e => Assert.IsType<Es1ClipRegionsTransformer>(TransformerRegistry.FindTransformer(e, RetailGame.Earthsiege1)));
+		Assert.All(views.Concat(clips), e => Assert.IsType<Es1ClipRegionsTransformer>(TransformerRegistry.FindTransformer(e, RetailGame.Earthsiege1)));
 
 		var reader = new Es1ClipRegionsTransformer();
 		foreach (var e in views.Concat(clips)) {
