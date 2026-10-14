@@ -7,8 +7,8 @@ namespace Herculan.Engine.Host;
 /// The first connected gamepad, given to ImGui as its gamepad keys (<see cref="Platform.ScaledImGui.GamepadFeed"/>) so the
 /// menu bar and its windows can be worked without a mouse, through ImGui's own gamepad navigation
 /// (docs/herculan/herculan-key-bindings.md, "Gamepad in the menus"). This engine's own. Back and Start are the host's
-/// (<see cref="GamepadHostButtons"/>) and the left stick's click the squad orders' (<see cref="Simulator.SquadOrderRadial"/>),
-/// so ImGui is not given them.
+/// (<see cref="GamepadHostButtons"/>) and the sticks' clicks the radials' (<see cref="Simulator.PadRadial"/>), so ImGui
+/// is not given them.
 /// </summary>
 sealed class ImGuiGamepad(IInputContext input) {
 	// Where a stick starts and finishes counting toward a direction, and a trigger, which rests at -1, toward its pull,
@@ -28,7 +28,6 @@ sealed class ImGuiGamepad(IInputContext input) {
 		(ControllerDevice.GamepadY, ImGuiKey.GamepadFaceUp),
 		(ControllerDevice.GamepadLeftBumper, ImGuiKey.GamepadL1),
 		(ControllerDevice.GamepadRightBumper, ImGuiKey.GamepadR1),
-		(ControllerDevice.GamepadRightStick, ImGuiKey.GamepadR3),
 		(ControllerDevice.GamepadDPadUp, ImGuiKey.GamepadDpadUp),
 		(ControllerDevice.GamepadDPadRight, ImGuiKey.GamepadDpadRight),
 		(ControllerDevice.GamepadDPadDown, ImGuiKey.GamepadDpadDown),

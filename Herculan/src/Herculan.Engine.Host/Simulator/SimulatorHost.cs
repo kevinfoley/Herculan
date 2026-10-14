@@ -51,7 +51,13 @@ sealed class SimulatorHost : IDisposable {
 	private readonly TapePlayback _tape;
 	private readonly PauseMenu _pauseMenu;
 	private readonly GamepadHostButtons _padButtons = new();
-	private readonly SquadOrderRadial _radial = new();
+
+	// The left stick's click: FLASH COMM's six orders. The right stick's: the MFD's six screens, then the Heads-Down
+	// Display's two pages. Each label radius keeps its ring's neighbouring labels apart.
+	private readonly PadRadial _orderRadial = new(ControllerDevice.GamepadLeftStick, 0, MfdFlashCommScreen.RowCount, 200f);
+	private readonly PadRadial _screenRadial = new(ControllerDevice.GamepadRightStick, 2, ScreenCount, 260f);
+	private const int ScreenCount = 8;
+	private const int MfdScreenCount = 6;
 
 	// Built once the window has a GL context.
 	private IInputContext? _inputContext;
@@ -324,7 +330,7 @@ sealed class SimulatorHost : IDisposable {
 		// The one owner of the mute: the mission's stick drives nothing while the pad works the menu bar and its
 		// windows, the pause menu or the squad-order radial.
 		if (_joystick != null) {
-			_joystick.Muted = _menuBar.Up || _pauseMenu.Showing || _radial.IsOpen;
+			_joystick.Muted = _menuBar.Up || _pauseMenu.Showing || _orderRadial.IsOpen || _screenRadial.IsOpen;
 		}
 
 		if (_frame.Held) {
@@ -355,14 +361,15 @@ sealed class SimulatorHost : IDisposable {
 
 	// A gamepad's own buttons, which a mission's stick never sees (ControllerDevice.Reserved). Back raises the menu bar or
 	// backs out of it, as [Shift+Esc] does, and puts ImGui's navigation on the bar it leaves up; Start raises the pause
-	// menu or resumes from it (GamepadHostButtons); and the left stick's click works the squad-order radial, whose order
-	// goes in as its [Alt] key, held in the live keyboard for this one frame before the frame reads its keys, so the
-	// cockpit takes it through FLASH COMM's own keys and a recording takes the key itself. Nothing is read while the
-	// window is out of focus.
+	// menu or resumes from it (GamepadHostButtons); and the sticks' clicks work the two radials. A radial's choice goes
+	// in as its key, held in the live keyboard for this one frame before the frame reads its keys, so the cockpit takes
+	// it through its own keys and a recording takes the key itself: an order as its [Alt] key on FLASH COMM, a screen
+	// as its function key. Nothing is read while the window is out of focus.
 	private void ReadGamepad() {
 		_input.LiveKeys?.HeldByHost.Clear();
 		if (_inputContext == null || _options.ScreenshotPath != null || _frame.Suspended) {
-			_radial.Cancel();
+			_orderRadial.Cancel();
+			_screenRadial.Cancel();
 			return;
 		}
 
@@ -375,16 +382,21 @@ sealed class SimulatorHost : IDisposable {
 			_pauseMenu.Start();
 		}
 
-		if (_radial.Update(_inputContext, RadialAllowed()) is { } row && _input.LiveKeys is { } liveKeys
+		var liveKeys = _input.LiveKeys;
+		if (_orderRadial.Update(_inputContext, RadialAllowed() && !_screenRadial.IsOpen) is { } row && liveKeys != null
 				&& CockpitKeyboard.FlashCommKey(row, _displays.FlashComm.VerbOf(row)) is { } orderKey) {
 			liveKeys.HeldByHost.Add(Key.AltLeft);
 			liveKeys.HeldByHost.Add(orderKey);
 		}
+
+		if (_screenRadial.Update(_inputContext, RadialAllowed() && !_orderRadial.IsOpen) is { } screen && liveKeys != null) {
+			liveKeys.HeldByHost.Add(Key.F1 + screen);
+		}
 	}
 
-	// The radial opens only where its order would be heard: in the machine with the cockpit up, since FLASH COMM's
-	// [Alt] keys go through the cockpit's widgets, which the external view takes away, and with nothing else holding
-	// the input. A replay's orders are the tape's.
+	// A radial opens only where its choice would be heard: in the machine with the cockpit up, since FLASH COMM's
+	// [Alt] keys and the function keys go through the cockpit's widgets, which the external view takes away, and with
+	// nothing else holding the input. A replay's keys are the tape's.
 	private bool RadialAllowed() =>
 		_input.LiveKeys != null && !_tape.Playing && !_outcome.Over && !_pauseMenu.IsOpen && !_panels.AnyOpen
 		&& !_menuBar.Up && _view.Piloting && !_view.CockpitWidgetsOff;
@@ -393,6 +405,16 @@ sealed class SimulatorHost : IDisposable {
 	private string OrderLabel(int row) {
 		int verb = _displays.FlashComm.VerbOf(row);
 		return _art?.Strings?.Text(MfdLayout.OrderGroup, verb) is { Length: > 0 } text ? text : ((SquadCommand)verb).ToString();
+	}
+
+	// A screen's label on the radial: which display, its function key, and its title in STRINGS0.STR's own words, the
+	// MFD's from its title bar and the Heads-Down Display's from its own.
+	private string ScreenLabel(int screen) {
+		var strings = _art?.Strings;
+		string? title = screen < MfdScreenCount
+			? MfdLayout.Title(strings, (MfdMode)screen)
+			: strings?.Text(HddLayout.PageTitleGroup, screen - MfdScreenCount);
+		return $"{(screen < MfdScreenCount ? "MFD" : "HDD")} F{screen + 1} {title}".TrimEnd();
 	}
 
 	// TERRAIN TEXTURE, the one live preference the draw reads rather than the simulation (see
@@ -472,7 +494,8 @@ sealed class SimulatorHost : IDisposable {
 		if (_options.ScreenshotPath == null) {
 			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0, _window.FullScreen);
 			_pauseMenu.Draw();
-			_radial.Draw(OrderLabel);
+			_orderRadial.Draw(OrderLabel, _imgui!.LargeFont);
+			_screenRadial.Draw(ScreenLabel, _imgui.LargeFont);
 		}
 
 		_debugPanel.Draw(

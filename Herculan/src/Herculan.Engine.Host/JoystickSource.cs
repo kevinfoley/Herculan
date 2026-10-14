@@ -201,9 +201,12 @@ sealed class JoystickSource : IJoystickSource {
 		return Read(map, device);
 	}
 
-	/// <summary>One frame of <paramref name="device"/> read through <paramref name="map"/>.</summary>
+	/// <summary>
+	/// One frame of <paramref name="device"/> read through <paramref name="map"/>, a button the host keeps
+	/// (<see cref="ControllerDevice.Reserved"/>) reading as up.
+	/// </summary>
 	public static JoystickReading Read(JoystickDeviceMap map, ControllerDevice device) =>
-		map.Read(device.Axis, device.Button, device.Hat(map.HatIndex));
+		map.Read(device.Axis, index => !device.Reserved(index) && device.Button(index), device.Hat(map.HatIndex));
 
 	/// <summary>
 	/// Says what the stick can do, once — and not before it will answer. Silk.NET's GLFW backend publishes a

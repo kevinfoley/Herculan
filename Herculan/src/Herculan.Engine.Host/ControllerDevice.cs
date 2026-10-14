@@ -135,10 +135,11 @@ sealed class ControllerDevice {
 
 	/// <summary>
 	/// Whether button <paramref name="index"/> is kept off the eight the bindings name: a gamepad's Back and Start, which
-	/// are the host's own (<see cref="GamepadHostButtons"/>), and its left stick's click, which opens the squad-order
-	/// radial (<see cref="Simulator.SquadOrderRadial"/>).
+	/// are the host's own (<see cref="GamepadHostButtons"/>), and its sticks' clicks, which open its radials
+	/// (<see cref="Simulator.PadRadial"/>). A map that names one, written before it was kept, reads it as never pressed.
 	/// </summary>
-	public bool Reserved(int index) => IsGamepad && index is GamepadBack or GamepadStart or GamepadLeftStick;
+	public bool Reserved(int index) =>
+		IsGamepad && index is GamepadBack or GamepadStart or GamepadLeftStick or GamepadRightStick;
 
 	/// <summary>Whether any button is held.</summary>
 	public bool AnyButton() {

@@ -132,8 +132,9 @@ public sealed record JoystickDeviceMap {
 	/// <summary>
 	/// The map for a gamepad, read in GLFW's standard layout (docs/herculan/joystick-config.md, "Gamepads"), made to go
 	/// with <see cref="GamepadControls"/>' axis rows: the left stick in the stick slots, the right stick's X in the rudder
-	/// slot and its Y in the throttle slot, the d-pad as the hat, and BUTTON 1-8 on the right trigger, A, B, X, Y, the
-	/// left and right bumpers and the right stick's click. Back and Start are left out of the eight.
+	/// slot and its Y in the throttle slot, the d-pad as the hat, and BUTTON 1-7 on the right trigger, A, B, X, Y and the
+	/// left and right bumpers, BUTTON 8 left unmapped. Back, Start and the sticks' clicks are the host's, and are left out
+	/// of the eight.
 	///
 	/// <para>The throttle slot is inverted, and retail flips that slot's sign in a RAZOR alone, so the right stick's up and
 	/// down work a walker's turret and a RAZOR's nose in opposite senses (docs/herculan/joystick-config.md, "A gamepad's
@@ -154,7 +155,7 @@ public sealed record JoystickDeviceMap {
 			JoystickButtonSource.Button(3),
 			JoystickButtonSource.Button(4),
 			JoystickButtonSource.Button(5),
-			JoystickButtonSource.Button(10),
+			JoystickButtonSource.Unmapped,
 		],
 	};
 

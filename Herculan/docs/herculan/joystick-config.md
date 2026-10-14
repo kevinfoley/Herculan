@@ -36,9 +36,8 @@ The d-pad is also hat 0, since a gamepad has no hat of its own. A trigger is an 
 | Right trigger | FIRE | FIRE |
 | A, B, X, Y | TARGET, NEXT WEAPON, LINK WEAPON, NEXT CHAIN | the same |
 | Left and right bumpers | SHIELDS REAR, SHIELDS FRONT | the same |
-| Right stick click | MFD DISPLAYS | the same |
 
-Back, Start and the left stick's click are not among the eight buttons: Back raises the menu bar, Start the pause menu, and the left stick's click the squad orders ([`herculan-key-bindings.md`](herculan-key-bindings.md)), and the Controller window does not offer them. The left trigger is free.
+Back, Start and the sticks' clicks are not among the eight buttons: Back raises the menu bar, Start the pause menu, the left stick's click the squad orders and the right stick's the cockpit's screens ([`herculan-key-bindings.md`](herculan-key-bindings.md)). The Controller window does not offer them, and a map saved naming one reads it as never pressed. BUTTON 8 has no control, and the left trigger is free for it.
 
 That is the map **Defaults** gives a gamepad in the Controller window, with CONTROLS rows of JOYSTICK on movement, THROTTLE and RUDDER on turret and HAT on views for a HERC, and JOYSTICK on turret, THROTTLE and RUDDER on movement and HAT on views for a RAZOR. With THROTTLE off THROTTLE neither machine reads a throttle lever, so the left stick moves the throttle at a rate ([`mech-locomotion.md`](../retail/simulation/mech-locomotion.md)). The map inverts the throttle slot, which is the right stick's up and down, and retail flips that slot in a RAZOR alone, so the stick's up and down work the two machines in opposite senses: a HERC's turret like a shooter's view, a RAZOR's nose like a flight stick ([Open](#open)).
 
@@ -90,4 +89,4 @@ The two below are off by default.
 
 ## Open
 
-- **Open:** which way the right stick's up and down move a HERC's turret and a RAZOR's nose with the gamepad defaults. The senses above follow from GLFW reporting a gamepad stick pushed up as negative, which has not been checked in play; if both come out reversed, the throttle slot's invert is the one setting to flip. The squad orders' radial and the pause menu read the left stick on the same assumption ([`herculan-key-bindings.md`](herculan-key-bindings.md#squad-orders-on-a-gamepad)).
+- **Open:** which way the right stick's up and down move a HERC's turret and a RAZOR's nose with the gamepad defaults. The senses above follow from GLFW reporting a gamepad stick pushed up as negative, which has not been checked in play; if both come out reversed, the throttle slot's invert is the one setting to flip. The two radials and the pause menu read the sticks on the same assumption ([`herculan-key-bindings.md`](herculan-key-bindings.md#squad-orders-on-a-gamepad)).

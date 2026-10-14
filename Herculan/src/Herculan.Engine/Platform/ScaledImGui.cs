@@ -23,6 +23,9 @@ public sealed class ScaledImGui : IDisposable {
 	/// <summary>The font's size in pixels on a 100% display.</summary>
 	public const float FontSize = 16f;
 
+	/// <summary>How many times <see cref="FontSize"/> <see cref="LargeFont"/> is.</summary>
+	public const float LargeFontScale = 2f;
+
 	private readonly GL _gl;
 	private readonly EngineWindow _window;
 	private readonly IInputContext _input;
@@ -45,6 +48,15 @@ public sealed class ScaledImGui : IDisposable {
 	/// only between <see cref="Update"/> and <see cref="Render"/>.
 	/// </summary>
 	public static float Scaled(float size) => size * ImGui.GetFontSize() / FontSize;
+
+	/// <summary>
+	/// The same font rasterised at <see cref="LargeFontScale"/> times the size, for text drawn that large, which the
+	/// ordinary font would draw blurred. Drawn at <see cref="LargeFontSize"/>.
+	/// </summary>
+	public ImFontPtr LargeFont { get; private set; }
+
+	/// <summary>The size <see cref="LargeFont"/> is drawn at in the current ImGui frame, as <see cref="Scaled(float)"/>.</summary>
+	public static float LargeFontSize => ImGui.GetFontSize() * LargeFontScale;
 
 	/// <inheritdoc cref="Scaled(float)"/>
 	public static Vector2 Scaled(Vector2 size) => size * (ImGui.GetFontSize() / FontSize);
@@ -117,8 +129,9 @@ public sealed class ScaledImGui : IDisposable {
 	private ImGuiController Build() {
 		_builtContentScale = _window.ContentScale;
 		_builtClientScale = _window.ClientScale ?? _builtContentScale;
-		var controller = new ImGuiController(_gl, _window.View, _input,
-			new ImGuiFontConfig(_fontPath, (int)MathF.Round(FontSize * _builtContentScale)));
+		float pixels = MathF.Round(FontSize * _builtContentScale);
+		var controller = new ImGuiController(_gl, _window.View, _input, new ImGuiFontConfig(_fontPath, (int)pixels),
+			() => LargeFont = ImGui.GetIO().Fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale));
 		ImGui.GetIO().FontGlobalScale = _builtClientScale / _builtContentScale;
 		ImGui.GetStyle().ScaleAllSizes(_builtClientScale);
 		ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg].W = .975f;
