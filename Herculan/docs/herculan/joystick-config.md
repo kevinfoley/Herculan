@@ -34,10 +34,12 @@ The d-pad is also hat 0, since a gamepad has no hat of its own. A trigger is an 
 | Right stick | turret: up and down aim it, left and right twist it | pitch and roll |
 | D-pad | views: up and down for the Heads-Down Display, left and right for the side windows | the same |
 | Right trigger | FIRE | FIRE |
-| A, B, X, Y | TARGET, NEXT WEAPON, LINK WEAPON, NEXT CHAIN | the same |
+| Left trigger | NEXT WEAPON | the same |
+| A, X, Y | TARGET, LINK WEAPON, NEXT CHAIN | the same |
+| B | radar active or passive, as `R` ([The radar toggle](#the-radar-toggle)) | the same |
 | Left and right bumpers | SHIELDS REAR, SHIELDS FRONT | the same |
 
-Back, Start and the sticks' clicks are not among the eight buttons: Back raises the menu bar, Start the pause menu, the left stick's click the squad orders and the right stick's the cockpit's screens ([`herculan-key-bindings.md`](herculan-key-bindings.md)). The Controller window does not offer them, and a map saved naming one reads it as never pressed. BUTTON 8 has no control, and the left trigger is free for it.
+Back, Start and the sticks' clicks are not among the eight buttons: Back raises the menu bar, Start the pause menu, the left stick's click the squad orders and the right stick's the cockpit's screens ([`herculan-key-bindings.md`](herculan-key-bindings.md)). The Controller window does not offer them, and a map saved naming one reads it as never pressed. B is not among them either, being the radar toggle, and BUTTON 8 has no control.
 
 That is the map **Defaults** gives a gamepad in the Controller window, with CONTROLS rows of JOYSTICK on movement, THROTTLE and RUDDER on turret and HAT on views for a HERC, and JOYSTICK on turret, THROTTLE and RUDDER on movement and HAT on views for a RAZOR. With THROTTLE off THROTTLE neither machine reads a throttle lever, so the left stick moves the throttle at a rate ([`mech-locomotion.md`](../retail/simulation/mech-locomotion.md)). The map inverts the throttle slot, which is the right stick's up and down, and retail flips that slot in a RAZOR alone, so the stick's up and down work the two machines in opposite senses: a HERC's turret like a shooter's view, a RAZOR's nose like a flight stick ([Open](#open)).
 
@@ -59,7 +61,7 @@ The GUID is the one GLFW gives a device. It names the model, not the unit: two o
 
 ## Setting up a stick
 
-The **Controller** window on the [Shift+Esc] menu bar edits the file, in the front end or in a mission. It shows every axis, button and hat the device reports as it moves, and beside each control the value the game reads through the map being edited. **Detect** binds whichever control moves next: an axis has to travel half its range from where it rested when Detect was pressed, so a trigger resting at one end is not taken for the control meant. The **Device** list chooses which connected device to set up, and the window says which section its settings go to; an edit made to one device is kept while another is chosen. **Defaults** is the map for the device's reported counts that runs when the file has no section for it. **Save** writes the device's section, and any other device edited since the window opened, keeping the rest of the file; a mission in progress reads the stick through it at once. While the window is up a mission's stick drives nothing, and after it closes the stick stays quiet until every button is let go, so a button pressed to bind it does not also fire its action.
+The **Controller** window on the [Shift+Esc] menu bar edits the file, in the front end or in a mission. It shows every axis, button and hat the device reports as it moves, and beside each control the value the game reads through the map being edited. **Detect** binds whichever control moves next: an axis has to travel half its range from where it rested when Detect was pressed, so a trigger resting at one end is not taken for the control meant. A device input that fills more than one row shows red in each, and hovering it names the other rows: the same button, or the same direction of an axis, on two rows; the same axis on two axis rows; or an axis on an axis row that a button row also uses. Two button rows on opposite directions of one axis do not count. The **Device** list chooses which connected device to set up, and the window says which section its settings go to; an edit made to one device is kept while another is chosen. **Defaults** is the map for the device's reported counts that runs when the file has no section for it. **Save** writes the device's section, and any other device edited since the window opened, keeping the rest of the file; a mission in progress reads the stick through it at once. While the window is up a mission's stick drives nothing, and after it closes the stick stays quiet until every button is let go, so a button pressed to bind it does not also fire its action.
 
 From the command line:
 
@@ -71,6 +73,10 @@ Both are off by default; the map file is the player's to own. `Herculan/examples
 **Check the mode switch on the base of a HOTAS before reading anything into its numbering.** A T.Flight's PC position numbers buttons and axes the way the retail format expects: the trigger is button 1 and the throttle is the throttle. Its PS3 position renumbers both, which looks exactly like a wrong mapping.
 
 A rebinding made on the CONTROLS panel is written to the install's `prefs.cfg` as the panel closes, as retail does. `--no-write-prefs` prevents that.
+
+## The radar toggle
+
+Retail gives a stick no radar action: none of the action codes a BUTTON row takes switches it ([`../retail/simulation/joystick-input.md`](../retail/simulation/joystick-input.md#the-buttons)). The map adds a control of its own, `RadarToggle`, beside the eight BUTTON rows rather than among them, so neither `prefs.cfg` nor the CONTROLS panel sees it. The Controller window sets it on its **Radar toggle** row, to a device button or to an axis, as a BUTTON row is set. While it is held the cockpit reads `R` as held, so it switches the radar between ACTIVE and PASSIVE as `R` does, does nothing where `R` does nothing, such as the outside view, and a recording takes it as `R`. It is quiet whenever the stick is: while the menu bar, the pause menu or a radial is up, and after them until every button is let go. A gamepad has it on B; a joystick has it unmapped until the window sets it.
 
 ## What the map cannot express
 

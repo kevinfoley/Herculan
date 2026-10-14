@@ -139,6 +139,9 @@ controller.throttle            Schubregler
 controller.rudder              Ruder
 controller.hat_row             Coolie-Hat
 controller.button_row          BUTTON {0}
+controller.radar_toggle        Radar umschalten
+controller.radar_toggle_tip    Schaltet das Radar zwischen aktiv und passiv um, wie R. Diese Steuerung gibt es nur in HERCULAN: Das Originalspiel hat keine Taste dafür, und das CONTROLS-Feld zeigt sie nicht.
+controller.also_drives         Dieser Eingang steuert auch {0}.
 controller.unmapped            Keine
 controller.detect              Erkennen
 controller.detecting           Abbrechen

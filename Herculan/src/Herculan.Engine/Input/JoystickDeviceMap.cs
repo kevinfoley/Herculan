@@ -107,6 +107,14 @@ public sealed record JoystickDeviceMap {
 		Enumerable.Range(0, JoystickCapabilities.MaxButtons).Select(JoystickButtonSource.Button).ToArray();
 
 	/// <summary>
+	/// What switches the radar between ACTIVE and PASSIVE as [R] does: a device button, or an axis, as one of
+	/// <see cref="Buttons"/> can be. <b>This engine's own</b>, and none of the eight the format binds, so neither
+	/// <c>prefs.cfg</c> nor the CONTROLS panel knows of it: retail gives a stick no radar action
+	/// (docs/herculan/joystick-config.md, "The radar toggle"). Unmapped unless a map names it.
+	/// </summary>
+	public JoystickButtonSource RadarToggle { get; init; } = JoystickButtonSource.Unmapped;
+
+	/// <summary>
 	/// A map for a device reporting these counts: retail's own X/Y/Z/R order, the first hat, and the
 	/// first eight buttons, with anything the device does not have left unmapped. This is what runs
 	/// when no file has been written, and it is right for a plain stick.
@@ -132,9 +140,9 @@ public sealed record JoystickDeviceMap {
 	/// <summary>
 	/// The map for a gamepad, read in GLFW's standard layout (docs/herculan/joystick-config.md, "Gamepads"), made to go
 	/// with <see cref="GamepadControls"/>' axis rows: the left stick in the stick slots, the right stick's X in the rudder
-	/// slot and its Y in the throttle slot, the d-pad as the hat, and BUTTON 1-7 on the right trigger, A, B, X, Y and the
-	/// left and right bumpers, BUTTON 8 left unmapped. Back, Start and the sticks' clicks are the host's, and are left out
-	/// of the eight.
+	/// slot and its Y in the throttle slot, the d-pad as the hat, BUTTON 1-7 on the right trigger, A, the left trigger, X,
+	/// Y and the left and right bumpers, BUTTON 8 left unmapped, and B on <see cref="RadarToggle"/>. Back, Start and the
+	/// sticks' clicks are the host's, and are left out of the eight.
 	///
 	/// <para>The throttle slot is inverted, and retail flips that slot's sign in a RAZOR alone, so the right stick's up and
 	/// down work a walker's turret and a RAZOR's nose in opposite senses (docs/herculan/joystick-config.md, "A gamepad's
@@ -150,13 +158,14 @@ public sealed record JoystickDeviceMap {
 		Buttons = [
 			JoystickButtonSource.Axis(5, 1),
 			JoystickButtonSource.Button(0),
-			JoystickButtonSource.Button(1),
+			JoystickButtonSource.Axis(4, 1),
 			JoystickButtonSource.Button(2),
 			JoystickButtonSource.Button(3),
 			JoystickButtonSource.Button(4),
 			JoystickButtonSource.Button(5),
 			JoystickButtonSource.Unmapped,
 		],
+		RadarToggle = JoystickButtonSource.Button(1),
 	};
 
 	/// <summary>
@@ -251,6 +260,9 @@ public sealed record JoystickDeviceMap {
 			HatDiagonals = Bool("hatdiagonals", defaults.HatDiagonals),
 			BipolarThrottle = Bool("bipolarthrottle", defaults.BipolarThrottle),
 			Buttons = buttons,
+			RadarToggle = values.TryGetValue("radartoggle", out string? radar) && JoystickButtonSource.Parse(radar) is { } radarSource
+				? radarSource
+				: defaults.RadarToggle,
 		};
 	}
 
@@ -285,6 +297,10 @@ public sealed record JoystickDeviceMap {
 		for (int i = 0; i < Buttons.Count && i < JoystickCapabilities.MaxButtons; i++) {
 			text.AppendLine(Line($"Button{i + 1}", Buttons[i].ToString()));
 		}
+
+		text.AppendLine();
+		text.AppendLine(Line("RadarToggle", RadarToggle.ToString(),
+			"Herculan's own: radar active/passive, as R; not in prefs.cfg"));
 
 		static string Line(string key, object value, string? comment = null) {
 			string setting = value switch {

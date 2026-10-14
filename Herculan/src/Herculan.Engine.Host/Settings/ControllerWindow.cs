@@ -11,7 +11,8 @@ namespace Herculan.Engine.Host.Settings;
 
 /// <summary>
 /// The floating "Controller" window opened from the menu bar: which axes, hat and buttons of a connected controller
-/// stand for the stick, throttle, rudder, hat and eight buttons the retail bindings name. It edits the install's
+/// stand for the stick, throttle, rudder, hat and eight buttons the retail bindings name, and the radar toggle, which is
+/// this engine's own (<see cref="JoystickDeviceMap.RadarToggle"/>). It edits the install's
 /// <c>data\herculan-joystick.cfg</c> (<see cref="JoystickMapFile"/>; docs/herculan/joystick-config.md), and is this
 /// engine's own: retail reads a stick's axes in a fixed order and has nothing to set. What each control does stays
 /// with retail's CONTROLS panel.
@@ -28,11 +29,12 @@ sealed class ControllerWindow {
 	// travel, so a stick brushed on the way to the throttle is not taken for it.
 	private const float DetectTravel = 0.5f;
 
-	// The rows, in the order drawn: the four axes, the hat, then BUTTON 1-8.
+	// The rows, in the order drawn: the four axes, the hat, BUTTON 1-8, then the radar toggle.
 	private const int ThrottleRow = 2;
 	private const int AxisRows = 4;
 	private const int HatRow = AxisRows;
 	private const int FirstButtonRow = HatRow + 1;
+	private const int RadarRow = FirstButtonRow + JoystickCapabilities.MaxButtons;
 	private const int NotDetecting = -1;
 
 	private static readonly string[] AxisRowKeys =
@@ -40,6 +42,10 @@ sealed class ControllerWindow {
 
 	private static readonly Vector4 LitColour = new(0.45f, 0.85f, 0.45f, 1f);
 	private static readonly Vector4 ErrorColour = new(1f, 0.45f, 0.4f, 1f);
+
+	// The device input a row is filled from, for telling which rows share one: an axis row takes its whole axis (Sign 0),
+	// a button row a device button (Axis false, Sign 0) or one direction of an axis.
+	private readonly record struct Bound(bool Axis, int Index, int Sign);
 
 	private readonly LocalizationTable _localization;
 	private readonly Func<string?> _dataDirectory;
@@ -256,6 +262,7 @@ sealed class ControllerWindow {
 	// reads from it through the map being edited.
 	private void ControlRows(ControllerDevice device) {
 		var reading = JoystickSource.Read(_draft, device);
+		var clashes = Clashes();
 		if (!ImGui.BeginTable("##controls", 5, ImGuiTableFlags.SizingStretchProp | ImGuiTableFlags.RowBg)) {
 			return;
 		}
@@ -274,7 +281,7 @@ sealed class ControllerWindow {
 			ImGui.TextUnformatted(Text(AxisRowKeys[row]));
 
 			ImGui.TableNextColumn();
-			if (InputCombo(AxisOf(row), device.AxisCount, "controller.axis") is { } axis) {
+			if (InputCombo(AxisOf(row), device.AxisCount, "controller.axis", clashes[row]) is { } axis) {
 				_draft = WithAxis(row, axis);
 			}
 
@@ -303,7 +310,7 @@ sealed class ControllerWindow {
 		ImGui.TableNextColumn();
 		ImGui.TextUnformatted(Text("controller.hat_row"));
 		ImGui.TableNextColumn();
-		if (InputCombo(_draft.HatIndex, device.HatCount, "controller.hat") is { } hatIndex) {
+		if (InputCombo(_draft.HatIndex, device.HatCount, "controller.hat", clash: null) is { } hatIndex) {
 			_draft = _draft with { HatIndex = hatIndex };
 		}
 		ImGui.TableNextColumn();
@@ -320,7 +327,7 @@ sealed class ControllerWindow {
 			ImGui.TableNextColumn();
 			ImGui.TextUnformatted(Format("controller.button_row", i + 1));
 			ImGui.TableNextColumn();
-			if (ButtonCombo(ButtonOf(i), device) is { } button) {
+			if (ButtonCombo(ButtonOf(i), device, clashes[row]) is { } button) {
 				_draft = WithButton(i, button);
 			}
 			ImGui.TableNextColumn();
@@ -330,6 +337,23 @@ sealed class ControllerWindow {
 			Lit(reading.Button(i), Text(reading.Button(i) ? "controller.pressed" : "controller.released"));
 			ImGui.PopID();
 		}
+
+		ImGui.PushID(RadarRow);
+		ImGui.TableNextRow();
+		ImGui.TableNextColumn();
+		ImGui.TextUnformatted(Text("controller.radar_toggle"));
+		Tooltip("controller.radar_toggle_tip");
+		ImGui.TableNextColumn();
+		if (ButtonCombo(_draft.RadarToggle, device, clashes[RadarRow]) is { } radar) {
+			_draft = _draft with { RadarToggle = radar };
+		}
+		ImGui.TableNextColumn();
+		ImGui.TableNextColumn();
+		DetectButton(RadarRow, device);
+		ImGui.TableNextColumn();
+		bool radarHeld = JoystickSource.RadarToggleHeld(_draft, device);
+		Lit(radarHeld, Text(radarHeld ? "controller.pressed" : "controller.released"));
+		ImGui.PopID();
 
 		ImGui.EndTable();
 	}
@@ -359,12 +383,76 @@ sealed class ControllerWindow {
 		Tooltip(device.IsGamepad ? "controller.centre_idle_gamepad_tip" : "controller.centre_idle_tip");
 	}
 
+	// For each row, which other rows its device input also fills, as a sentence naming them, or null where it fills only
+	// its own. Two button rows on an axis's opposite directions do not share it; an axis row and a button row on either
+	// direction of its axis do, since moving the axis presses the button.
+	private string?[] Clashes() {
+		var bound = new Bound?[RadarRow + 1];
+		for (int row = 0; row < AxisRows; row++) {
+			bound[row] = AxisOf(row) is var axis && axis != JoystickDeviceMap.Unmapped ? new Bound(true, axis, 0) : null;
+		}
+
+		for (int i = 0; i < JoystickCapabilities.MaxButtons; i++) {
+			bound[FirstButtonRow + i] = BoundOf(ButtonOf(i));
+		}
+
+		bound[RadarRow] = BoundOf(_draft.RadarToggle);
+
+		var clashes = new string?[bound.Length];
+		for (int row = 0; row < bound.Length; row++) {
+			if (bound[row] is not { } input) {
+				continue;
+			}
+
+			var others = new List<string>();
+			for (int other = 0; other < bound.Length; other++) {
+				if (other != row && bound[other] is { } shared && shared.Axis == input.Axis && shared.Index == input.Index
+						&& (shared.Sign == 0 || input.Sign == 0 || shared.Sign == input.Sign)) {
+					others.Add(RowLabel(other));
+				}
+			}
+
+			if (others.Count > 0) {
+				clashes[row] = string.Format(Text("controller.also_drives"), string.Join(", ", others));
+			}
+		}
+
+		return clashes;
+	}
+
+	private static Bound? BoundOf(JoystickButtonSource source) =>
+		source.IsMapped ? new Bound(source.IsAxis, source.Index, source.AxisSign) : null;
+
+	private string RowLabel(int row) =>
+		row < AxisRows ? Text(AxisRowKeys[row])
+		: row == HatRow ? Text("controller.hat_row")
+		: row == RadarRow ? Text("controller.radar_toggle")
+		: Format("controller.button_row", row - FirstButtonRow + 1);
+
+	// Opens a Device input combo on preview. While clash names other rows the same input fills, the preview is red and
+	// hovering it says which.
+	private static bool BeginInputCombo(string preview, string? clash) {
+		ImGui.SetNextItemWidth(-1f);
+		if (clash != null) {
+			ImGui.PushStyleColor(ImGuiCol.Text, ErrorColour);
+		}
+
+		bool open = ImGui.BeginCombo("##input", preview);
+		if (clash != null) {
+			ImGui.PopStyleColor();
+			if (!open && ImGui.IsItemHovered()) {
+				ScaledImGui.Tooltip(clash);
+			}
+		}
+
+		return open;
+	}
+
 	// A combo of "none" and each of the device's count inputs; the input chosen, or null when nothing was. An index the
 	// device does not have, from a file written for another one, shows as itself until it is changed.
-	private int? InputCombo(int current, int count, string labelKey) {
+	private int? InputCombo(int current, int count, string labelKey, string? clash) {
 		int? chosen = null;
-		ImGui.SetNextItemWidth(-1f);
-		if (ImGui.BeginCombo("##input", current == JoystickDeviceMap.Unmapped ? Text("controller.unmapped") : Format(labelKey, current))) {
+		if (BeginInputCombo(current == JoystickDeviceMap.Unmapped ? Text("controller.unmapped") : Format(labelKey, current), clash)) {
 			if (ImGui.Selectable(Text("controller.unmapped"), current == JoystickDeviceMap.Unmapped)) {
 				chosen = JoystickDeviceMap.Unmapped;
 			}
@@ -382,10 +470,9 @@ sealed class ControllerWindow {
 	}
 
 	// InputCombo for a button row, which takes each device button and then each axis in either direction.
-	private JoystickButtonSource? ButtonCombo(JoystickButtonSource current, ControllerDevice device) {
+	private JoystickButtonSource? ButtonCombo(JoystickButtonSource current, ControllerDevice device, string? clash) {
 		JoystickButtonSource? chosen = null;
-		ImGui.SetNextItemWidth(-1f);
-		if (ImGui.BeginCombo("##input", SourceLabel(current))) {
+		if (BeginInputCombo(SourceLabel(current), clash)) {
 			if (ImGui.Selectable(Text("controller.unmapped"), !current.IsMapped)) {
 				chosen = JoystickButtonSource.Unmapped;
 			}
@@ -460,11 +547,11 @@ sealed class ControllerWindow {
 				}
 			}
 		} else {
-			// A button row takes a new button press, or an axis moved far enough, toward the end it moved to.
-			int index = _detecting - FirstButtonRow;
+			// A button row, or the radar toggle, takes a new button press, or an axis moved far enough, toward the end it
+			// moved to.
 			for (int i = 0; i < device.ButtonCount && i < _restingButtons.Length; i++) {
 				if (device.Button(i) && !_restingButtons[i] && !device.Reserved(i)) {
-					_draft = WithButton(index, JoystickButtonSource.Button(i));
+					_draft = WithSource(_detecting, JoystickButtonSource.Button(i));
 					_detecting = NotDetecting;
 					return;
 				}
@@ -473,7 +560,7 @@ sealed class ControllerWindow {
 			for (int i = 0; i < device.AxisCount && i < _restingAxes.Length; i++) {
 				float moved = device.Axis(i) - _restingAxes[i];
 				if (MathF.Abs(moved) > DetectTravel) {
-					_draft = WithButton(index, JoystickButtonSource.Axis(i, moved > 0 ? 1 : -1));
+					_draft = WithSource(_detecting, JoystickButtonSource.Axis(i, moved > 0 ? 1 : -1));
 					_detecting = NotDetecting;
 					return;
 				}
@@ -550,6 +637,10 @@ sealed class ControllerWindow {
 
 	private JoystickButtonSource ButtonOf(int index) =>
 		index < _draft.Buttons.Count ? _draft.Buttons[index] : JoystickButtonSource.Unmapped;
+
+	// The map with row's button source changed: one of BUTTON 1-8, or the radar toggle.
+	private JoystickDeviceMap WithSource(int row, JoystickButtonSource source) =>
+		row == RadarRow ? _draft with { RadarToggle = source } : WithButton(row - FirstButtonRow, source);
 
 	private JoystickDeviceMap WithButton(int index, JoystickButtonSource button) {
 		var buttons = new JoystickButtonSource[JoystickCapabilities.MaxButtons];

@@ -333,6 +333,8 @@ sealed class SimulatorHost : IDisposable {
 			_joystick.Muted = _menuBar.Up || _pauseMenu.Showing || _orderRadial.IsOpen || _screenRadial.IsOpen;
 		}
 
+		ReadRadarToggle();
+
 		if (_frame.Held) {
 			return;
 		}
@@ -391,6 +393,16 @@ sealed class SimulatorHost : IDisposable {
 
 		if (_screenRadial.Update(_inputContext, RadialAllowed() && !_orderRadial.IsOpen) is { } screen && liveKeys != null) {
 			liveKeys.HeldByHost.Add(Key.F1 + screen);
+		}
+	}
+
+	// The device map's radar toggle (docs/herculan/joystick-config.md, "The radar toggle"), held as [R] for the frame the
+	// way a radial's choice goes in, so the cockpit's own [R] decides what it does and a recording takes the key. After
+	// the mute is set for the frame, so it is quiet whenever the stick is; a replay's keys are the tape's.
+	private void ReadRadarToggle() {
+		if (_inputContext != null && _options.ScreenshotPath == null && !_frame.Suspended && !_tape.Playing
+				&& _joystick?.RadarToggleHeld() == true) {
+			_input.LiveKeys?.HeldByHost.Add(Key.R);
 		}
 	}
 

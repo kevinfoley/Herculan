@@ -139,6 +139,9 @@ controller.throttle            Manette des gaz
 controller.rudder              Palonnier
 controller.hat_row             Chapeau
 controller.button_row          BUTTON {0}
+controller.radar_toggle        Bascule radar
+controller.radar_toggle_tip    Fait passer le radar d'actif à passif et inversement, comme R. Cette commande est propre à HERCULAN : le jeu original n'a pas de bouton pour elle, et le panneau CONTROLS ne l'affiche pas.
+controller.also_drives         Cette entrée commande aussi {0}.
 controller.unmapped            Aucun
 controller.detect              Détecter
 controller.detecting           Annuler

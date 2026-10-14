@@ -139,6 +139,9 @@ controller.throttle            Throttle
 controller.rudder              Rudder
 controller.hat_row             Hat
 controller.button_row          BUTTON {0}
+controller.radar_toggle        Radar toggle
+controller.radar_toggle_tip    Switches the radar between active and passive, as R does. This control is HERCULAN's own: the original game has no button for it, and the CONTROLS panel does not show it.
+controller.also_drives         This input also drives {0}.
 controller.unmapped            None
 controller.detect              Detect
 controller.detecting           Cancel

@@ -202,6 +202,17 @@ sealed class JoystickSource : IJoystickSource {
 	}
 
 	/// <summary>
+	/// Whether the map's radar toggle is held (<see cref="JoystickDeviceMap.RadarToggle"/>). It is quiet whenever
+	/// <see cref="Read"/> reports the stick neutral: while <see cref="Muted"/>, and after it until every button is let go.
+	/// </summary>
+	public bool RadarToggleHeld() =>
+		!Muted && !_awaitingRelease && Device is { } device && Map is { } map && RadarToggleHeld(map, device);
+
+	/// <summary>Whether <paramref name="map"/>'s radar toggle is held on <paramref name="device"/>, a button the host keeps reading as up.</summary>
+	public static bool RadarToggleHeld(JoystickDeviceMap map, ControllerDevice device) =>
+		map.RadarToggle.Pressed(device.Axis, index => !device.Reserved(index) && device.Button(index));
+
+	/// <summary>
 	/// One frame of <paramref name="device"/> read through <paramref name="map"/>, a button the host keeps
 	/// (<see cref="ControllerDevice.Reserved"/>) reading as up.
 	/// </summary>
