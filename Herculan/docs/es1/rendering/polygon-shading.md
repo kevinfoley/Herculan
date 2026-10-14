@@ -146,7 +146,7 @@ A zone shape is drawn through the object list ([below](#which-objects-are-drawn)
 
 ### The object list
 
-`ObjList_Init` (`00020c2c`), whose address `es2_xref.py` finds only as the dword at `00021519`, allocates the list's arrays, 512 entries each: object pointers at `000bc58e` and `000bc592` (`0x800` bytes each), `0x36`-byte draw entries at `000bc598` built by `ObjListEntry_Ctor` (`00020c80`, which stores the vptr `0009255e` at `+0x14`), entry pointers at `000bc59c`, and through `ObjList_AllocSortNodes` (`00021560`) 512 sort nodes of `0x1d` bytes at `00092570`.
+`ObjList_Init` (`00020c2c`), which `terrain.cpp`'s static initialiser registers for subsystem phase 2 ([the object list](../simulation/terrain.md#the-object-list)), allocates the list's arrays, 512 entries each: object pointers at `000bc58e` and `000bc592` (`0x800` bytes each), `0x36`-byte draw entries at `000bc598` built by `ObjListEntry_Ctor` (`00020c80`, which stores the vptr `0009255e` at `+0x14`), entry pointers at `000bc59c`, and through `ObjList_AllocSortNodes` (`00021560`) 512 sort nodes of `0x1d` bytes at `00092570`.
 
 - **`ObjList_Add` (`00020d5c`)** stores an object at entry `00092558` of `000bc58e` and counts it, with no bound.
 - **The mission start (`Sim_StartMission`, `0005a9dc`)**, after `DBSim_LoadScriptDat`, adds every zone shape object in `Zone_ShapeObjects`' order, stopping at the first null pointer ([the simulator's load](../formats/zone-terrain.md#the-simulators-load)), and once its other set-up is done stores the count at `000bc596`. The objects below that count, the zone's shapes, stay in the list for the mission.
@@ -165,6 +165,8 @@ A zone shape is drawn through the object list ([below](#which-objects-are-drawn)
 5. keeps the entry, in the list at `000bc59c`, only when `WorldShades_IsBeyondLastBand` (`00025f38`) is false for its distance;
 6. stores the camera at `0009256c` (`ObjList_SetSortEye`, `00021554`) and calls `ObjList_SortAndDraw` (`00021d04`) with the count and the list.
 
+With a pixel pick pending it also marks the pick's pixel before step 6 and restores it after, and with the occlusion probe armed it tests the probe's corners last ([the pick and the probe](../simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe)).
+
 `ObjList_SortAndDraw` does nothing for a count of 0. Otherwise it builds a binary tree in the sort nodes (`{left, right, entry, byte}`), first inserting the entries with 1 or 2 at `+0x12` in list order (`ObjList_TreeInsertSegments`, `00021bec`), then the rest (`ObjList_TreeInsertRest`, `00021c60`), each through `ObjList_TreeInsert` (`00021ba8`) from the root, which goes right when `ObjList_EntryCompare` (`00021b20`) returns non-zero and left otherwise. It then draws the tree in order, left subtree, node, right subtree (`ObjList_TreeDraw`, `00021cd0`), calling slot `+4` of each entry's vptr `+0x14`, `ObjList_DrawEntryRender`. `ObjList_EntryCompare`, given the new entry and a node: between two entries of kind 0 it returns whether the new entry is nearer, so nearer entries go right and are drawn later; between two of kind 1 or 2 it is `ObjList_SortCompareSegments`' (`00021a4c`), and otherwise `ObjList_SortCompareSegment`'s (`000216c4`), [below](#objects-beside-a-dividing-line).
 
 #### Objects beside a dividing line
@@ -178,7 +180,7 @@ A zone shape is drawn through the object list ([below](#which-objects-are-drawn)
 
 ES1's addresses are in [Functions](#functions): `ObjList_PointNearSegment`, `ObjList_SortCompareSegment`, `ObjList_SegmentEndpointNear`, `ObjList_SortCompareSegments`, `Vec3I_DotSign` and `Vec3I_Cross`.
 
-`ObjList_DrawEntryRender` (`00020f40`), whose address `00092562` holds, draws one entry: `LightManager_SelectLightsForObject` (`00004f78`) with the manager `000bc19c` and the entry's position and `+0xc` radius as four `int32`, `WorldShades_ApplyForObject` with the blend byte, the distance and the object, the object's slot `+4`, then, when the blend byte is set, `Light_ReregisterPersistent` (`00005690`), which passes each light of `Light_AddPersistent`'s list to `Light_Register` again; `Light_Register` refuses a light already in the list. Two later steps, on the bytes `000afa45` and `0009255a`, are [Open](#open). ES2's (`ObjList_DrawEntryRender`, `0042876c`) also sets the depth fade from the entry's distance; ES1's sets none.
+`ObjList_DrawEntryRender` (`00020f40`), whose address `00092562` holds, draws one entry: `LightManager_SelectLightsForObject` (`00004f78`) with the manager `000bc19c` and the entry's position and `+0xc` radius as four `int32`, `WorldShades_ApplyForObject` with the blend byte, the distance and the object, the object's slot `+4`, then, when the blend byte is set, `Light_ReregisterPersistent` (`00005690`), which passes each light of `Light_AddPersistent`'s list to `Light_Register` again; `Light_Register` refuses a light already in the list. Two later steps serve the pixel pick and the occlusion probe ([the pick and the probe](../simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe)). ES2's (`ObjList_DrawEntryRender`, `0042876c`) also sets the depth fade from the entry's distance; ES1's sets none.
 
 ### The distance bands
 
@@ -287,8 +289,7 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 - **Open:** no reference found by `es2_xref.py` to `Raster_InstallDriverTable`'s other caller `00073285`, to `GLDisplay_CtorAndOpen`'s other caller `00069a68`, or to `GLDisplay_Ctor` (`0006a3a8`), so no other path to a display driver is known.
 - **Open:** what `Sim_CreateDisplay`'s display field `+0x68` selects.
 - **Open:** the `TSAlias*Poly` renderers `00054c9c`, `00054d6c` and `00054f00`.
-- **Open:** what `ObjList_DrawEntryRender` does after the draw while the byte `000afa45` is set (the display driver's routines at `0009dee4` and `0009dee8` on the block at `000afa48`), and while `0009255a` is set, for the object at `000afa88` (`00021403`).
-- **Open:** which entries carry kind 1, and `0002161c`, which calls `ObjList_PointNearSegment`.
+- **Open:** which entries carry kind 1.
 - **Open:** what the blend byte `000b5b65` is set to, and `000280e4` (matched to ES2's `Palette_SetRampsToRangeList`), which the blend path calls.
 - **Open:** which classes carry type tags 1 to 9 in ES1: what the array at `000bc416` and the pools `000af0b4`, `000aeef8` and `000aef68` hold, and what each one's constructor stores at `+0`; and what sets the record array at `00092c34`.
 - **Open:** what `00036c2c` and `00040d4c` are in the cockpit, what `00059280` returns, and what the word at a shape instance's `+8` selects.
