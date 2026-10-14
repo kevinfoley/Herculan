@@ -165,7 +165,7 @@ The state a machine enters when its own shots are hitting something that is not 
 
 ### How it is reached
 
-`Mech_AiOnLineOfFireBlocked` (`0041dd2c`, mech vtable `+0x64`) copies the machine's current target position to `mech+0x31e` and sets `mech+0xad`. Its one caller is the tail of `Sim_RaycastObjectList` (`00426528`), which makes the call when a shot stops on terrain or on a third object, nearer than the intended target and within 45° of the same line — the test is [`hit-detection.md`](hit-detection.md#the-sweep--sim_raycastobjectlist-00426528)'s. The call is unconditional, so no vtable can leave the slot empty: every `SimObject`-shaped table but `MechVtable` fills it with `SimObject_AiOnLineOfFireBlockedNoOp` (`00411b34`), a shared stub that is a frame set-up and a `RET`. Only a machine reacts.
+`Mech_AiOnLineOfFireBlocked` (`0041dd2c`, mech vtable `+0x64`) copies the machine's current target position to `mech+0x31e` and sets `mech+0xad`. Its one caller is the tail of `Sim_RaycastObjectList` (`00426528`), which makes the call when a shot stops on terrain or on a third object nearer than the intended target, by the bearing test in [`hit-detection.md`](hit-detection.md#the-sweep--sim_raycastobjectlist-00426528). The call is unconditional, so no vtable can leave the slot empty: every `SimObject`-shaped table but `MechVtable` fills it with `SimObject_AiOnLineOfFireBlockedNoOp` (`00411b34`), a shared stub that is a frame set-up and a `RET`. Only a machine reacts.
 
 `Ai_BeginSkirtIfBlocked` (`0041de9c`) is the gate at the top of every combat think and turns that flag into the state:
 

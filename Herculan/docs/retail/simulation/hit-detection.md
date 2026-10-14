@@ -22,11 +22,11 @@ The tail of the sweep carries two effects on the shooter's side, after the terra
 ```
 if (something was struck && shooter has a target
     && groundRange(shooter, hitPoint) < range(shooter, target)
-    && |bearing(hitPoint) - bearing(target)| < 0x2000)
+    && (int16)(bearing(hitPoint) - bearing(target)) < 0x2000)
         shooter->vtable+0x64(hitObject)
 ```
 
-So a shot that stops on terrain or on a third object, nearer than the intended target and within 45° of the same line, tells the shooter its line of fire is blocked; what a machine does about it is [`ai-combat-states.md`](ai-combat-states.md#how-it-is-reached). Hitting the shooter's own target is what the report excludes: the branch that recognises it passes null in place of the struck object, so a machine does not report its target as blocking the shot at it.
+The bearings are `Math_HeadingToward` from the shooter, each less the shooter's heading (`+0x10`), and the difference is compared signed with no absolute value (`CMP`/`JGE` at `004269e5`): it passes below 45° on one side and at any angle on the other. So a shot that stops on terrain or on a third object nearer than the intended target, and not 45° or more to the positive side of the line to it, tells the shooter its line of fire is blocked; what a machine does about it is [`ai-combat-states.md`](ai-combat-states.md#how-it-is-reached). Hitting the shooter's own target is what the report excludes: the branch that recognises it passes null in place of the struck object, so a machine does not report its target as blocking the shot at it.
 
 **The group test is the filter that is easy to miss, and it matters: an object whose mission group still carries an action is skipped before any geometry is touched** (`*(int*)(obj[+0x45] + 0x14) != 0` — the group record's action slot, the same test [`mission-deployment.md`](mission-deployment.md) covers). Retail missions place undeployed groups by the ordinary rules, so several routinely sit stacked on a shared waypoint; the first stock mission parks seven objects in three overlapping pairs. Without the skip they are invisible and unticked but perfectly solid, and shots stop on nothing.
 

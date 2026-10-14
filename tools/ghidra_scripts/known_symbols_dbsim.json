@@ -34569,8 +34569,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_HeadingToward",
-      "description": "Ground-plane bearing from one position to another as a BAM angle: atan2(to.y - from.y, to.x - from.x) via Math_Atan2Guarded, minus a quarter turn, because the sim's forward axis is model Y and not model X. Call sites pass the destination first. DBSim_SpawnMissionObjects uses it to face a group along the first leg of its route when the group's block-11 record carries no heading ref.",
-      "source": "docs/retail/formats/script-dat.md"
+      "description": "(to, from): ground-plane bearing from one int32 position to another as a BAM angle, Math_Atan2Guarded(to.x - from.x, to.y - from.y) + 0xc000 in AX, i.e. atan2(to.y - from.y, to.x - from.x) less a quarter turn, because the sim's forward axis is model Y and not model X. DBSim_SpawnMissionObjects uses it to face a group along the first leg of its route when the group's block-11 record carries no heading ref.",
+      "source": "docs/retail/formats/script-dat.md",
+      "verified": {
+        "bytes": "00492828+39",
+        "sha1": "fe1bbf2be164",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00492850",
