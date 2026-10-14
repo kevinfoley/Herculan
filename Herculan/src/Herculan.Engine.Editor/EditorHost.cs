@@ -141,6 +141,7 @@ public sealed class EditorHost {
 		}
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
+			+ "drag a selected object's arrows to move it, Ctrl+Z/Ctrl+Y undo/redo, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -177,10 +178,13 @@ public sealed class EditorHost {
 		_renderer = new SceneRenderer(gl, editorGrid: true);
 		_wireframe = new WireframeRenderer(gl);
 		if (_mission != null) {
-			_drawables = new MissionDrawables(gl, _renderer, _mission, _settings);
+			_drawables = Upload(gl, _renderer, _mission);
 		}
 
 		_keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
+		if (_keyboard != null) {
+			_keyboard.KeyDown += OnKeyDown;
+		}
 		_mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
 
 		// Same reasoning as Herculan.Engine.Host: DTS geometry isn't reliably wound, so nothing here
@@ -210,6 +214,9 @@ public sealed class EditorHost {
 		} else if (button == MouseButton.Left) {
 			_leftDownPos = mouse.Position;
 			_leftDownOverViewport = !ImGui.GetIO().WantCaptureMouse;
+			if (_leftDownOverViewport && _mission != null) {
+				_mission.Gizmo.TryBegin(_camera, mouse.Position, Viewport);
+			}
 		}
 	}
 
@@ -219,10 +226,11 @@ public sealed class EditorHost {
 				_looking = false;
 				mouse.Cursor.CursorMode = CursorMode.Normal;
 			}
+		} else if (button == MouseButton.Left && _mission?.Gizmo.Dragging == true) {
+			_mission.Gizmo.End();
 		} else if (button == MouseButton.Left && _leftDownOverViewport && _mission != null
 				&& Vector2.Distance(mouse.Position, _leftDownPos) < 4f) {
-			var size = _window.FramebufferSize;
-			_mission.Selection.Current = _mission.Picker.Pick(_camera, mouse.Position, new Vector2(size.X, size.Y), _settings);
+			_mission.Selection.Current = _mission.Picker.Pick(_camera, mouse.Position, Viewport, _settings);
 			Console.WriteLine($"[pick] {_mission.Selection.Current?.ToString() ?? "nothing"} at {mouse.Position}");
 		}
 	}
@@ -261,6 +269,35 @@ public sealed class EditorHost {
 		bool acceptKeyboard = _imgui == null || !ImGui.GetIO().WantCaptureKeyboard;
 		_editorCamera.Update(deltaSeconds, _keyboard, lookDelta, _looking, acceptKeyboard);
 		_editorCamera.ApplyTo(_camera);
+
+		// After the camera, so the object stays under the pointer while the view moves too.
+		if (_mission?.Gizmo.Dragging == true && _mouse != null) {
+			_mission.Gizmo.Drag(_camera, _mouse.Position, Viewport);
+		}
+	}
+
+	// The viewport in the pointer's coordinates, as ScenePicker and MoveGizmo take it.
+	private Vector2 Viewport => new(_window.FramebufferSize.X, _window.FramebufferSize.Y);
+
+	private MissionDrawables Upload(GL gl, SceneRenderer renderer, EditorMission mission) {
+		var drawables = new MissionDrawables(gl, renderer, mission, _settings);
+		mission.Mover.Moved += drawables.Move;
+		return drawables;
+	}
+
+	// Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes, unless a text field has the keyboard, which has its own undo.
+	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
+		if (_mission == null || _mission.Gizmo.Dragging || (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)
+				|| !(keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight))) {
+			return;
+		}
+
+		bool shift = keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight);
+		if (key == Key.Z && !shift) {
+			_mission.Mover.Undo();
+		} else if (key == Key.Y || (key == Key.Z && shift)) {
+			_mission.Mover.Redo();
+		}
 	}
 
 	// A trigger going down or up, as the mouse button it stands for: a left press and release selects, a right one looks.
@@ -352,6 +389,7 @@ public sealed class EditorHost {
 		mission.Overlay.Draw(wireframe, _camera, aspect, _settings, selection);
 		mission.GroupOverlay.DrawObjects(wireframe, _camera, aspect, _settings, selection);
 		mission.GroupOverlay.DrawSelectedGroup(wireframe, _camera, aspect, selection);
+		mission.Gizmo.Draw(wireframe, _camera, aspect, _mouse?.Position ?? new Vector2(-1f), Viewport);
 	}
 
 	private void OnClosing() {
@@ -393,7 +431,7 @@ public sealed class EditorHost {
 
 		_drawables?.Dispose();
 		_mission = opened;
-		_drawables = new MissionDrawables(_gl, _renderer, opened, _settings);
+		_drawables = Upload(_gl, _renderer, opened);
 		_editorCamera.ResetTo(opened.Scene.Camera.Position, opened.Scene.Camera.Heading);
 		_window.Title = WindowTitle;
 		_volBrowser.Close();
@@ -434,6 +472,18 @@ public sealed class EditorHost {
 			// Outside the game there is no game to go back to.
 			if (ImGui.MenuItem("Back to game", null, false, _launch.FromGame)) {
 				Close(EditorExit.BackToGame);
+			}
+
+			ImGui.EndMenu();
+		}
+
+		if (ImGui.BeginMenu("Edit", _mission != null)) {
+			if (ImGui.MenuItem("Undo", "Ctrl+Z", false, _mission!.Mover.CanUndo && !_mission.Gizmo.Dragging)) {
+				_mission.Mover.Undo();
+			}
+
+			if (ImGui.MenuItem("Redo", "Ctrl+Y", false, _mission.Mover.CanRedo && !_mission.Gizmo.Dragging)) {
+				_mission.Mover.Redo();
 			}
 
 			ImGui.EndMenu();

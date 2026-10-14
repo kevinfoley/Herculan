@@ -587,7 +587,7 @@ public sealed class MissionScene {
 	/// <paramref name="groundPoint"/> plus the chassis' ride height, and <see cref="FlyerSpawnLift"/>
 	/// more for a flyer. See docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 5.
 	/// </summary>
-	private static int MechSpawnHeight(HeightGrid terrain, MechObject mech, Vec3i groundPoint) =>
+	public static int MechSpawnHeight(HeightGrid terrain, MechObject mech, Vec3i groundPoint) =>
 		terrain.HeightAtWorld(groundPoint.X, groundPoint.Y) + mech.Type.RideHeight
 			+ (mech.Type.IsFlyer ? FlyerSpawnLift : 0);
 

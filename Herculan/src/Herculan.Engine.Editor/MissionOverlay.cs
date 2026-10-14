@@ -79,7 +79,14 @@ internal sealed class MissionOverlay {
 			_pads.Add((pad, lines));
 		}
 
-		var box = MissionBox.Of(index.Mission.Coordinates);
+		SetBox(MissionBox.Of(index.Mission.Coordinates));
+	}
+
+	/// <summary>
+	/// The mission box drawn, with its two margins: block 1's extent, which an edit to a point can grow or shrink.
+	/// </summary>
+	public void SetBox(MissionBox box) {
+		_box.Clear();
 		if (!box.IsEmpty) {
 			AddBox(box, BoxColor);
 			AddBox(box.Grown(HddMap.Margin), MapExtentColor);

@@ -8,8 +8,9 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The GPU half of an <see cref="EditorMission"/>: its terrain and every model uploaded, and the scene items that
-/// draw them, with transforms baked once since nothing moves in the editor. Disposing it frees every upload, which
-/// is what opening another mission does before building the next one.
+/// draw them. Nothing ticks, so each object's transform is set as it is uploaded and again only when an edit moves it
+/// (<see cref="Move"/>). Disposing it frees every upload, which is what opening another mission does before building
+/// the next one.
 /// </summary>
 internal sealed class MissionDrawables : IDisposable {
 	private readonly List<IDisposable> _uploads = new();
@@ -78,7 +79,9 @@ internal sealed class MissionDrawables : IDisposable {
 			}
 
 			uint? textureHandle = modelTextures.TryGetValue(model.Key, out var texture) ? texture.Handle : null;
-			var transform = MissionScene.TransformOf(sceneObject);
+			var draw = new ObjectDraw { Transform = MissionScene.TransformOf(sceneObject) };
+			_objects[sceneObject] = draw;
+			var transform = draw.Transform;
 			bool waiting = mission.Index.IsWaiting(sceneObject);
 			if (modelCells.TryGetValue(model.Key, out var cellMeshes)) {
 				// What the flat mesh is: every sequence on its first cell and every detail part at its finest
@@ -92,9 +95,10 @@ internal sealed class MissionDrawables : IDisposable {
 					}
 
 					var part = new SceneItem(cellMeshes[i], transform, textureHandle);
+					draw.Items.Add(part);
 					if (cell.Leaf is { } leaf) {
 						if (!groups.TryGetValue(leaf.Tree, out var group)) {
-							groups[leaf.Tree] = group = BspDrawGroup.AtRest(leaf.Tree, () => transform);
+							groups[leaf.Tree] = group = BspDrawGroup.AtRest(leaf.Tree, () => draw.Transform);
 						}
 
 						part.BspGroup = group;
@@ -109,6 +113,7 @@ internal sealed class MissionDrawables : IDisposable {
 				}
 			} else if (modelMeshes.TryGetValue(model.Key, out var mesh)) {
 				var item = new SceneItem(mesh, transform, textureHandle);
+				draw.Items.Add(item);
 				built.Add(item);
 				if (waiting) {
 					WaitingItems.Add(item);
@@ -119,7 +124,9 @@ internal sealed class MissionDrawables : IDisposable {
 
 			// Filed as the simulator's submit files a structure: by its position and its body radius.
 			if (groundMeshes.TryGetValue(model.Key, out var groundMesh)) {
-				var groundItem = new SceneItem(groundMesh, MissionScene.TransformOf(sceneObject), textureHandle);
+				var groundItem = new SceneItem(groundMesh, transform, textureHandle);
+				draw.Items.Add(groundItem);
+				draw.GroundShape = GroundLayer.Shapes.Count;
 				GroundLayer.Shapes.Add(new GroundShapeDraw(groundItem, sceneObject.Object.Position,
 					sceneObject.Object.HitRadius));
 				if (waiting) {
@@ -139,6 +146,32 @@ internal sealed class MissionDrawables : IDisposable {
 
 	/// <summary>The items of the objects whose group waits on an action, which the settings may stop drawing.</summary>
 	public List<SceneItem> WaitingItems { get; } = new();
+
+	/// <summary>Re-places <paramref name="sceneObject"/>'s items where its simulation object now stands.</summary>
+	public void Move(SceneObject sceneObject) {
+		if (!_objects.TryGetValue(sceneObject, out var draw)) {
+			return;
+		}
+
+		draw.Transform = MissionScene.TransformOf(sceneObject);
+		foreach (var item in draw.Items) {
+			item.Transform = draw.Transform;
+		}
+
+		if (draw.GroundShape >= 0) {
+			var shape = GroundLayer.Shapes[draw.GroundShape];
+			GroundLayer.Shapes[draw.GroundShape] = shape with { Position = sceneObject.Object.Position };
+		}
+	}
+
+	// One object's items, and the transform its BSP draw groups read each frame.
+	private sealed class ObjectDraw {
+		public Matrix4x4 Transform;
+		public readonly List<SceneItem> Items = new();
+		public int GroundShape = -1;
+	}
+
+	private readonly Dictionary<SceneObject, ObjectDraw> _objects = new(ReferenceEqualityComparer.Instance);
 
 	public void Dispose() {
 		foreach (var upload in _uploads) {

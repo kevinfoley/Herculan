@@ -20,10 +20,16 @@ internal sealed class PropertiesPanel {
 
 	private readonly MissionIndex _index;
 	private readonly SelectionState _selection;
+	private readonly ObjectMover _mover;
 
-	public PropertiesPanel(MissionIndex index, SelectionState selection) {
+	// A position being typed, and the object it is for, until its field lets go.
+	private SceneObject? _draftFor;
+	private Vec3i _draft;
+
+	public PropertiesPanel(MissionIndex index, SelectionState selection, ObjectMover mover) {
 		_index = index;
 		_selection = selection;
+		_mover = mover;
 	}
 
 	private Mission Mission => _index.Mission;
@@ -89,10 +95,7 @@ internal sealed class PropertiesPanel {
 		}
 
 		ImGui.Separator();
-		var pos = sel.Object.Position;
-		ImGui.Text($"Position: {pos.X}, {pos.Y}, {pos.Z} units");
-		ImGui.Text($"          {pos.X / WorldScale.WorldUnitsPerMeter:F1}, {pos.Y / WorldScale.WorldUnitsPerMeter:F1}, " +
-			$"{pos.Z / WorldScale.WorldUnitsPerMeter:F1} m");
+		DrawPosition(sel);
 		ImGui.Text($"Heading: {MissionText.Heading(sel.Object.Heading)}");
 		ImGui.Text($"Hit radius: {sel.Object.HitRadius} units");
 
@@ -117,6 +120,79 @@ internal sealed class PropertiesPanel {
 
 		ObjectiveLinks(_index.ObjectivesOfObject(sel));
 	}
+
+	/// <summary>
+	/// The object's position, as fields that move it when it can be moved (<see cref="ObjectMover"/>). A field's edit
+	/// is applied when it loses the focus, as one undo step.
+	/// </summary>
+	private void DrawPosition(SceneObject sel) {
+		var pos = sel.Object.Position;
+		if (_mover.WhyFixed(sel) is { } reason) {
+			ImGui.Text($"Position: {pos.X}, {pos.Y}, {pos.Z} units");
+			ImGui.Text($"          {Meters(pos)}");
+			ImGui.TextDisabled(reason);
+			return;
+		}
+
+		if (!ReferenceEquals(_draftFor, sel)) {
+			_draftFor = null;
+		}
+
+		var shown = _draftFor != null ? _draft : pos;
+		int x = shown.X, y = shown.Y, z = shown.Z;
+		bool ownHeight = ObjectMover.HasOwnHeight(sel);
+		bool changed = false, done = false;
+
+		ImGui.Text("Position, in world units:");
+		changed |= PositionField("X", ref x, ref done);
+		changed |= PositionField("Y", ref y, ref done);
+		if (ownHeight) {
+			changed |= PositionField("Z", ref z, ref done);
+		} else {
+			ImGui.TextDisabled($"Z: {pos.Z}, from the ground under it");
+		}
+
+		ImGui.TextDisabled(Meters(pos));
+
+		if (changed) {
+			_draftFor = sel;
+			_draft = new Vec3i(x, y, z);
+		}
+
+		if (done && _draftFor != null) {
+			var draft = _draft;
+			_draftFor = null;
+			if (draft.X != pos.X || draft.Y != pos.Y || (ownHeight && draft.Z != pos.Z)) {
+				_mover.Commit(sel, pos, draft.X, draft.Y, draft.Z);
+			}
+		}
+
+		pos = sel.Object.Position;
+		var box = _mover.LoadedBox;
+		if (!box.IsEmpty && (pos.X < box.MinX || pos.X > box.MaxX || pos.Y < box.MinY || pos.Y > box.MaxY)) {
+			ImGui.TextWrapped("Outside the mission box as opened: the box, the heads-down map's frame and the abort "
+				+ "line grow to take it in.");
+		}
+
+		var placement = sel.Placement;
+		if (placement.Kind is MissionUnitKind.Mech or MissionUnitKind.Flyer
+				&& placement.GroupIndex >= 0 && placement.GroupIndex < _index.GroupMembers.Count
+				&& _index.GroupMembers[placement.GroupIndex] is { Count: > 1 } members && !ReferenceEquals(members[0], sel)) {
+			ImGui.TextWrapped("Once the mission runs it holds formation on its group's leader, so it can move off a "
+				+ "point given here.");
+		}
+	}
+
+	private static bool PositionField(string label, ref int value, ref bool done) {
+		ImGui.SetNextItemWidth(ScaledImGui.Scaled(140f));
+		bool changed = ImGui.InputInt(label + "##position", ref value, 0, 0);
+		done |= ImGui.IsItemDeactivatedAfterEdit();
+		return changed;
+	}
+
+	private static string Meters(Vec3i pos) =>
+		$"{pos.X / WorldScale.WorldUnitsPerMeter:F1}, {pos.Y / WorldScale.WorldUnitsPerMeter:F1}, "
+			+ $"{pos.Z / WorldScale.WorldUnitsPerMeter:F1} m";
 
 	private void DrawGroup(int group) {
 		ImGui.TextWrapped(MissionText.DescribeGroup(Mission, group));

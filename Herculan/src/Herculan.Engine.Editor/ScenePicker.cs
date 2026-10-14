@@ -7,7 +7,10 @@ using Herculan.Engine.Terrain;
 namespace Herculan.Engine.Editor;
 
 /// <summary>A placed, drawable object plus its cached render-space pick sphere.</summary>
-internal sealed record Pickable(SceneObject SceneObject, Vector3 CenterRender, float RadiusRender);
+/// <param name="LocalCenter">The sphere's centre in the model's own space, which <see cref="ScenePicker.Move"/> re-places.</param>
+internal sealed record Pickable(SceneObject SceneObject, Vector3 LocalCenter, float RadiusRender) {
+	public Vector3 CenterRender { get; set; } = Vector3.Transform(LocalCenter, MissionScene.TransformOf(SceneObject));
+}
 
 /// <summary>
 /// Turns a click in the viewport into a selection. Three kinds of target, tried in order: a
@@ -94,11 +97,23 @@ internal sealed class ScenePicker {
 					modelBounds[model.Key] = bounds;
 				}
 
-				Vector3 worldCenter = Vector3.Transform(bounds.LocalCenter, MissionScene.TransformOf(o));
-				return new Pickable(o, worldCenter, MathF.Max(bounds.Radius, 1f));
+				return new Pickable(o, bounds.LocalCenter, MathF.Max(bounds.Radius, 1f));
 			})
 			.ToArray();
 	}
+
+	/// <summary>Re-places <paramref name="sceneObject"/>'s pick sphere where its simulation object now stands.</summary>
+	public void Move(SceneObject sceneObject) {
+		foreach (var pickable in _pickables) {
+			if (ReferenceEquals(pickable.SceneObject, sceneObject)) {
+				pickable.CenterRender = Vector3.Transform(pickable.LocalCenter, MissionScene.TransformOf(sceneObject));
+			}
+		}
+	}
+
+	/// <summary>The pick sphere of <paramref name="sceneObject"/>, or null when it has no model.</summary>
+	public Pickable? PickableOf(SceneObject sceneObject) =>
+		Array.Find(_pickables, pickable => ReferenceEquals(pickable.SceneObject, sceneObject));
 
 	private static (Vector3 Center, float Radius) ComputeBounds(MeshVertex[] mesh) {
 		if (mesh.Length == 0) {

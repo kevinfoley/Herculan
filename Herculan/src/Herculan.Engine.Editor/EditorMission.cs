@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker and the two side panels, all sharing one selection. Opening another mission
+/// index, the overlays, the picker, the two side panels and the move tools, all sharing one selection. Opening another mission
 /// builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
@@ -22,7 +22,9 @@ internal sealed class EditorMission {
 		Picker = new ScenePicker(scene, index, Overlay);
 		GroupOverlay = new GroupOverlay(index, drape, Picker);
 		Outliner = new MissionOutliner(index, new MissionLint(index, document), Selection);
-		Properties = new PropertiesPanel(index, Selection);
+		Mover = new ObjectMover(document, scene, Picker, Overlay);
+		Gizmo = new MoveGizmo(Selection, Mover);
+		Properties = new PropertiesPanel(index, Selection, Mover);
 	}
 
 	/// <summary>What the window title calls the mission: the <c>.MSN</c> it was generated from, or the file opened.</summary>
@@ -53,6 +55,11 @@ internal sealed class EditorMission {
 	public MissionOutliner Outliner { get; }
 
 	public PropertiesPanel Properties { get; }
+
+	/// <summary>The edits made to <see cref="Document"/>, and their undo history.</summary>
+	public ObjectMover Mover { get; }
+
+	public MoveGizmo Gizmo { get; }
 
 	public string WindowTitle => $"HERCULAN Mission Editor — {Name}, zone {Mission.Header.ZoneIndex}";
 
