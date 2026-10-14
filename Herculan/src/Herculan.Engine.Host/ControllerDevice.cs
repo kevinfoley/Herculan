@@ -91,17 +91,54 @@ sealed class ControllerDevice {
 		return index >= 0 && index < buttons.Count && buttons[index].Pressed;
 	}
 
+	/// <summary>A gamepad's A, B, X and Y, buttons 0-3 of the standard layout.</summary>
+	public const int GamepadA = 0;
+
+	/// <inheritdoc cref="GamepadA"/>
+	public const int GamepadB = 1;
+
+	/// <inheritdoc cref="GamepadA"/>
+	public const int GamepadX = 2;
+
+	/// <inheritdoc cref="GamepadA"/>
+	public const int GamepadY = 3;
+
+	/// <summary>A gamepad's left and right bumpers, buttons 4 and 5 of the standard layout.</summary>
+	public const int GamepadLeftBumper = 4;
+
+	/// <inheritdoc cref="GamepadLeftBumper"/>
+	public const int GamepadRightBumper = 5;
+
 	/// <summary>A gamepad's Back and Start, buttons 6 and 7 of the standard layout.</summary>
 	public const int GamepadBack = 6;
 
 	/// <inheritdoc cref="GamepadBack"/>
 	public const int GamepadStart = 7;
 
+	/// <summary>A gamepad's left and right stick clicks, buttons 9 and 10 of the standard layout.</summary>
+	public const int GamepadLeftStick = 9;
+
+	/// <inheritdoc cref="GamepadLeftStick"/>
+	public const int GamepadRightStick = 10;
+
+	/// <summary>A gamepad's d-pad, buttons 11-14 of the standard layout: up, right, down, left.</summary>
+	public const int GamepadDPadUp = 11;
+
+	/// <inheritdoc cref="GamepadDPadUp"/>
+	public const int GamepadDPadRight = 12;
+
+	/// <inheritdoc cref="GamepadDPadUp"/>
+	public const int GamepadDPadDown = 13;
+
+	/// <inheritdoc cref="GamepadDPadUp"/>
+	public const int GamepadDPadLeft = 14;
+
 	/// <summary>
-	/// Whether button <paramref name="index"/> is kept off the eight the bindings name: a gamepad's Back and Start,
-	/// which are the host's own (<see cref="GamepadHostButtons"/>).
+	/// Whether button <paramref name="index"/> is kept off the eight the bindings name: a gamepad's Back and Start, which
+	/// are the host's own (<see cref="GamepadHostButtons"/>), and its left stick's click, which opens the squad-order
+	/// radial (<see cref="Simulator.SquadOrderRadial"/>).
 	/// </summary>
-	public bool Reserved(int index) => IsGamepad && index is GamepadBack or GamepadStart;
+	public bool Reserved(int index) => IsGamepad && index is GamepadBack or GamepadStart or GamepadLeftStick;
 
 	/// <summary>Whether any button is held.</summary>
 	public bool AnyButton() {

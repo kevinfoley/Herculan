@@ -86,6 +86,11 @@ menu.settings                  Paramètres
 menu.controller                Manette
 menu.editor                    Éditeur
 menu.about                     À propos
+pause.title                    Pause
+pause.resume                   Reprendre
+pause.objectives               Objectifs
+pause.preferences              Préférences
+pause.quit                     Quitter
 about.title                    À propos
 about.license                  Licence
 welcome.title                  Bienvenue

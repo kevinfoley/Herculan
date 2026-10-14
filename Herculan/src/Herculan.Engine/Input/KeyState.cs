@@ -25,13 +25,13 @@ public sealed class LiveKeys(IKeyboard device) : IKeyState {
 	public IKeyboard Device { get; } = device;
 
 	/// <summary>
-	/// A key the host holds down on another device's behalf, such as a gamepad's Start standing for [P], or null. It
-	/// reads as held to every handler and to a recording, as the key itself would, but never auto-repeats. This
-	/// engine's own.
+	/// Keys the host holds down on another device's behalf, such as the [Alt] order key a gamepad's squad-order radial
+	/// stands for. Each reads as held to every handler and to a recording, as the key itself would, but never
+	/// auto-repeats. This engine's own.
 	/// </summary>
-	public Key? HeldByHost { get; set; }
+	public HashSet<Key> HeldByHost { get; } = [];
 
-	public bool IsKeyPressed(Key key) => Device.IsKeyPressed(key) || key == HeldByHost;
+	public bool IsKeyPressed(Key key) => Device.IsKeyPressed(key) || HeldByHost.Contains(key);
 
 	public bool IsKeyRepeated(Key key) => _repeat.Repeated == key;
 

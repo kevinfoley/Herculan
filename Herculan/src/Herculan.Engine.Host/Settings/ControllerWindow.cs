@@ -18,8 +18,7 @@ namespace Herculan.Engine.Host.Settings;
 ///
 /// <para>What the player sees and does is docs/herculan/joystick-config.md, "Setting up a stick". Save hands the file to
 /// a mission's stick (<see cref="JoystickSource.Configure"/>); the front end reads no stick, and the next mission reads
-/// the file. The open window mutes a mission's stick (<see cref="JoystickSource.Muted"/>). Cancel, the title-bar close
-/// and [Esc] (<see cref="HostMenuBar.BackOut"/>) discard the edit.</para>
+/// the file. Cancel, the title-bar close and [Esc] (<see cref="HostMenuBar.BackOut"/>) discard the edit.</para>
 /// </summary>
 sealed class ControllerWindow {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
@@ -73,10 +72,10 @@ sealed class ControllerWindow {
 	/// <summary>Whether the window is up.</summary>
 	public bool IsOpen { get; private set; }
 
-	/// <summary>
-	/// Takes the window's input context once it exists, and a mission's stick, which Save reconfigures and the open
-	/// window mutes.
-	/// </summary>
+	/// <summary>Whether Detect is listening for a control to bind.</summary>
+	public bool Listening => IsOpen && _detecting != NotDetecting;
+
+	/// <summary>Takes the window's input context once it exists, and a mission's stick, which Save reconfigures.</summary>
 	public void Attach(IInputContext input, JoystickSource? live = null) {
 		_input = input;
 		_live = live;
@@ -96,18 +95,12 @@ sealed class ControllerWindow {
 		_error = null;
 		_detecting = NotDetecting;
 		IsOpen = true;
-		if (_live != null) {
-			_live.Muted = true;
-		}
 	}
 
 	/// <summary>Closes the window and discards the edit.</summary>
 	public void Cancel() {
 		IsOpen = false;
 		_detecting = NotDetecting;
-		if (_live != null) {
-			_live.Muted = false;
-		}
 	}
 
 	/// <summary>

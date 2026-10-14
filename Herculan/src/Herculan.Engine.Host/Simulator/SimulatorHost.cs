@@ -11,6 +11,7 @@ using Herculan.Engine.Platform;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Settings;
 using Herculan.Engine.Sim;
+using Herculan.Engine.Sim.Ai;
 using Herculan.Engine.World;
 using Silk.NET.Input;
 using Silk.NET.OpenGL;
@@ -47,14 +48,15 @@ sealed class SimulatorHost : IDisposable {
 	private readonly HostMenuBar _menuBar;
 	private readonly DeveloperKeys _developerKeys;
 
+	private readonly TapePlayback _tape;
+	private readonly PauseMenu _pauseMenu;
 	private readonly GamepadHostButtons _padButtons = new();
-
-	// The key a gamepad's Start is holding down in the live keyboard, kept from the press until Start is let go.
-	private Key? _startKey;
+	private readonly SquadOrderRadial _radial = new();
 
 	// Built once the window has a GL context.
 	private IInputContext? _inputContext;
 	private ScaledImGui? _imgui;
+	private ImGuiGamepad? _padNav;
 	private JoystickSource? _joystick;
 	private SceneUploads? _uploads;
 	private DrawFiling? _filing;
@@ -102,6 +104,7 @@ sealed class SimulatorHost : IDisposable {
 
 		var cockpitInput = new CockpitInput();
 		var tape = new TapePlayback(start.TapePlayer, _preferences, () => _window.FramebufferSize, cockpitInput);
+		_tape = tape;
 		_recording = new TapeRecording(start.TapeRecorder, _preferences, _ports);
 		_input = new SimulatorInput(_window, tape, cockpitInput);
 
@@ -146,6 +149,7 @@ sealed class SimulatorHost : IDisposable {
 		_frame = new SimulatorFrame(start, _art, _view, _displays, _panels, tape, _recording, _developerKeys, staging,
 			_outcome, _input, _windowKeys, _menuBar, () => _window.FramebufferSize);
 		_frame.Stepper.Ticked += () => _debugProbes.SampleBeams(_scene.World);
+		_pauseMenu = new PauseMenu(session.Localization, _frame, _panels, _outcome, cockpitInput);
 		_input.MouseQueued += (x, y, buttons, width, height) =>
 			_recording.AddMouse(x, y, buttons, width, height, _panels.AnyOpen, _view.Piloting, _input.ImGuiWantsMouse);
 
@@ -269,6 +273,8 @@ sealed class SimulatorHost : IDisposable {
 		_transient = new TransientDrawItems(_scene, _uploads, _filing, _world);
 		_passes = new WorldPassRenderer(gl, _scene, _view.Camera, _debugOptions, _world, _transient);
 		_imgui = new ScaledImGui(gl, _window, input, _session.ImGuiFontPath);
+		_padNav = new ImGuiGamepad(input);
+		_imgui.GamepadFeed = _padNav.Feed;
 		_input.ImGui = _imgui;
 		_textures = new CockpitTextures(gl, _art, _displays.HddCommand, _displays.HddMapFlashRaster);
 		_flash = new DamageFlash(_scene, _art, _passes.Scene, _textures);
@@ -303,10 +309,23 @@ sealed class SimulatorHost : IDisposable {
 			return;
 		}
 
+		if (_padNav != null) {
+			_padNav.Suspended = _menuBar.Controller.Listening;
+		}
+
 		_imgui?.Update((float)deltaSeconds);
 
 		// A gamepad's own CONTROLS settings stand in for prefs.cfg's while it is the stick being read.
 		_preferences.ControlsOverride = _joystick?.ControlsOverride;
+
+		// Before the hold, which the pause menu's Start ends.
+		ReadGamepad();
+
+		// The one owner of the mute: the mission's stick drives nothing while the pad works the menu bar and its
+		// windows, the pause menu or the squad-order radial.
+		if (_joystick != null) {
+			_joystick.Muted = _menuBar.Up || _pauseMenu.Showing || _radial.IsOpen;
+		}
 
 		if (_frame.Held) {
 			return;
@@ -314,7 +333,6 @@ sealed class SimulatorHost : IDisposable {
 
 		_joystick?.Announce(_frame.Pilot.Bindings, _panels.Controls, _options.WriteJoystickMap, _start.DataDirectory);
 
-		ReadGamepadButtons();
 		_input.LiveKeys?.AdvanceRepeat(deltaSeconds);
 		_frame.BeginFrame(deltaSeconds);
 		_windowKeys.ReadManualKey(_displays.FlashCommHasKeyboard, _panels.AnyOpen);
@@ -335,29 +353,46 @@ sealed class SimulatorHost : IDisposable {
 		_debugProbes.Sample(_view.PilotMech);
 	}
 
-	// A gamepad's Back raises the menu bar or backs out of it, as [Shift+Esc] does. Its Start is [P], which pauses, or
-	// with the pause panel up [Enter], which presses the panel's one button and resumes; the key is held in the live
-	// keyboard for as long as Start is, before the frame reads its keys, so the pause and a recording see the key
-	// itself. See GamepadHostButtons.
-	private void ReadGamepadButtons() {
-		if (_inputContext == null) {
+	// A gamepad's own buttons, which a mission's stick never sees (ControllerDevice.Reserved). Back raises the menu bar or
+	// backs out of it, as [Shift+Esc] does, and puts ImGui's navigation on the bar it leaves up; Start raises the pause
+	// menu or resumes from it (GamepadHostButtons); and the left stick's click works the squad-order radial, whose order
+	// goes in as its [Alt] key, held in the live keyboard for this one frame before the frame reads its keys, so the
+	// cockpit takes it through FLASH COMM's own keys and a recording takes the key itself. Nothing is read while the
+	// window is out of focus.
+	private void ReadGamepad() {
+		_input.LiveKeys?.HeldByHost.Clear();
+		if (_inputContext == null || _options.ScreenshotPath != null || _frame.Suspended) {
+			_radial.Cancel();
 			return;
 		}
 
 		_padButtons.Update(_inputContext);
-		if (_padButtons.BackPressed && _options.ScreenshotPath == null && !_menuBar.BackOut()) {
-			_menuBar.Show();
+		if (_padButtons.BackPressed) {
+			_menuBar.PadBack();
 		}
 
 		if (_padButtons.StartPressed) {
-			_startKey = _panels.StatusAlert is { IsOpen: true, Status: StatusAlertPanel.PauseStatus } ? Key.Enter : Key.P;
-		} else if (!_padButtons.StartDown) {
-			_startKey = null;
+			_pauseMenu.Start();
 		}
 
-		if (_input.LiveKeys is { } liveKeys) {
-			liveKeys.HeldByHost = _startKey;
+		if (_radial.Update(_inputContext, RadialAllowed()) is { } row && _input.LiveKeys is { } liveKeys
+				&& CockpitKeyboard.FlashCommKey(row, _displays.FlashComm.VerbOf(row)) is { } orderKey) {
+			liveKeys.HeldByHost.Add(Key.AltLeft);
+			liveKeys.HeldByHost.Add(orderKey);
 		}
+	}
+
+	// The radial opens only where its order would be heard: in the machine with the cockpit up, since FLASH COMM's
+	// [Alt] keys go through the cockpit's widgets, which the external view takes away, and with nothing else holding
+	// the input. A replay's orders are the tape's.
+	private bool RadialAllowed() =>
+		_input.LiveKeys != null && !_tape.Playing && !_outcome.Over && !_pauseMenu.IsOpen && !_panels.AnyOpen
+		&& !_menuBar.Up && _view.Piloting && !_view.CockpitWidgetsOff;
+
+	// An order's label on the radial: the verb FLASH COMM's row names, in STRINGS0.STR's own words.
+	private string OrderLabel(int row) {
+		int verb = _displays.FlashComm.VerbOf(row);
+		return _art?.Strings?.Text(MfdLayout.OrderGroup, verb) is { Length: > 0 } text ? text : ((SquadCommand)verb).ToString();
 	}
 
 	// TERRAIN TEXTURE, the one live preference the draw reads rather than the simulation (see
@@ -432,10 +467,12 @@ sealed class SimulatorHost : IDisposable {
 			_panels.Draw(_cockpit.AlertPanels, size.X, size.Y, _textures.HudSprites, panelSprites);
 		}
 
-		// The menu bar and its panels: hidden until [Shift+Esc] raises the bar (see SimulatorFrame),
-		// and never in a --screenshot capture, which sees no input to raise it.
+		// The menu bar and its panels: hidden until [Shift+Esc] raises the bar (see SimulatorFrame), and never in a
+		// --screenshot capture, which sees no input to raise it. Nor does either of the pad's own menus show in one.
 		if (_options.ScreenshotPath == null) {
 			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0, _window.FullScreen);
+			_pauseMenu.Draw();
+			_radial.Draw(OrderLabel);
 		}
 
 		_debugPanel.Draw(

@@ -39,6 +39,7 @@ public sealed class SimulatorFrame {
 	private bool _escapeHeldByMenu;
 	private bool _escapePressed;
 	private bool _escapeRepeated;
+	private bool _presentationHeld;
 
 	/// <param name="systemButtons">What the two system buttons reach on the window.</param>
 	/// <param name="escapeMenu">The host's own menu, which [Shift+Esc] raises, if it has one.</param>
@@ -91,37 +92,63 @@ public sealed class SimulatorFrame {
 	public bool Suspended { get; private set; }
 
 	/// <summary>
+	/// Whether the host's own pause holds the frame, between <see cref="Pause"/> and <see cref="Unpause"/>. This engine's
+	/// own, for a gamepad's Start: it holds the mission as a suspend does, and is kept apart from it so that the window
+	/// regaining the focus does not end it.
+	/// </summary>
+	public bool Paused { get; private set; }
+
+	/// <summary>
 	/// Whether the frame is held: a suspended Sim_Run loop sleeps and pumps messages instead of ticking, rendering
 	/// or reading input, so the mission stands still until it resumes, and nothing accumulates meanwhile, so it
 	/// carries on rather than catching up. A modal panel's own loop never tests the flag, and runs on over a sim it
-	/// already holds. A held frame runs none of the three phases.
+	/// already holds. A held frame runs none of the three phases. The host's pause holds it the same way.
 	/// </summary>
-	public bool Held => Suspended && !_panels.AnyOpen;
+	public bool Held => (Suspended || Paused) && !_panels.AnyOpen;
 
 	/// <summary>
 	/// Sim_Suspend (0045f0b8): every sound and both message ports stop, and the frame is <see cref="Held"/>. Only a
-	/// change goes through, here and in <see cref="Resume"/>, since a resume without its suspend would start the
-	/// mission's track again from the top.
+	/// change goes through, here and in <see cref="Resume"/>.
 	/// </summary>
 	public void Suspend() {
-		if (Suspended) {
-			return;
-		}
-
 		Suspended = true;
-		_ports.Suspended = true;
-		_audio.Suspend();
+		HoldPresentation();
 	}
 
 	/// <summary>Sim_Resume (0045f0ec): the sounds and the message ports start again, and the frame runs on.</summary>
 	public void Resume() {
-		if (!Suspended) {
+		Suspended = false;
+		HoldPresentation();
+	}
+
+	/// <summary>Holds the frame, the sounds and the message ports as <see cref="Suspend"/> does.</summary>
+	public void Pause() {
+		Paused = true;
+		HoldPresentation();
+	}
+
+	/// <summary>Ends <see cref="Pause"/>; the frame runs on unless the simulator is also suspended.</summary>
+	public void Unpause() {
+		Paused = false;
+		HoldPresentation();
+	}
+
+	// The sounds and the message ports stop while a suspend or the pause holds the frame, and start again once neither
+	// does. Only a change goes through, since a resume without its suspend would start the mission's track again from
+	// the top.
+	private void HoldPresentation() {
+		bool hold = Suspended || Paused;
+		if (hold == _presentationHeld) {
 			return;
 		}
 
-		Suspended = false;
-		_ports.Suspended = false;
-		_audio.Resume();
+		_presentationHeld = hold;
+		_ports.Suspended = hold;
+		if (hold) {
+			_audio.Suspend();
+		} else {
+			_audio.Resume();
+		}
 	}
 
 	/// <summary>

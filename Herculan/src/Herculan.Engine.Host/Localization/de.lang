@@ -86,6 +86,11 @@ menu.settings                  Einstellungen
 menu.controller                Controller
 menu.editor                    Editor
 menu.about                     Über
+pause.title                    Pause
+pause.resume                   Fortsetzen
+pause.objectives               Missionsziele
+pause.preferences              Einstellungen
+pause.quit                     Beenden
 about.title                    Über
 about.license                  Lizenz
 welcome.title                  Willkommen

@@ -94,6 +94,26 @@ public sealed class ModalPanels {
 		StatusAlert is { IsOpen: true } || Objectives is { IsOpen: true }
 		|| Preferences is { IsOpen: true } || Controls is { IsOpen: true };
 
+	/// <summary>
+	/// Whether [F11] would raise the objectives panel now: only from inside the machine, since the command reaches the
+	/// panel through the cockpit's own widget tree, which is not on screen in the external view, and not while
+	/// another modal is holding the input.
+	/// </summary>
+	public bool CanRaiseObjectives => Objectives != null && _hasCockpit && !_view.ExternalViewActive && !AnyOpen;
+
+	/// <summary>
+	/// Whether [F12] would raise the preferences panel now. Unlike the objectives panel it opens from the external view
+	/// as well: [F12] is the dispatcher's own case (0x58), not the widgets'.
+	/// </summary>
+	public bool CanRaisePreferences => Preferences != null && _hasCockpit && !AnyOpen;
+
+	/// <summary>
+	/// Whether [Q], [Ctrl+Q] and [P] would raise a panel of the status-alert family now: not once the mission is over,
+	/// and not while another modal is holding the input. The external view keeps them: they are the dispatcher's own
+	/// cases, not the widgets'.
+	/// </summary>
+	public bool CanRaiseStatusAlert(bool missionOver) => StatusAlert != null && _hasCockpit && !missionOver && !AnyOpen;
+
 	/// <summary>Advances the panels' own coarse clock by the frame's wall time. Called once a frame, before the panels read input.</summary>
 	public void AdvanceClock(double deltaSeconds) => _panelTicks += deltaSeconds / MessagePorts.CoarseTickSeconds;
 
@@ -403,10 +423,7 @@ public sealed class ModalPanels {
 			return StatusAlert.HandleKey(key, PanelTicks) || q || pause;
 		}
 
-		// Not while another panel is up, which is already holding the input. The external view keeps both:
-		// they are the dispatcher's own cases, not the widgets'.
-		if (missionOver || !_hasCockpit
-			|| Objectives is { IsOpen: true } || Preferences is { IsOpen: true }) {
+		if (!CanRaiseStatusAlert(missionOver)) {
 			return false;
 		}
 
@@ -447,11 +464,7 @@ public sealed class ModalPanels {
 			return Objectives.HandleKey(key, PanelTicks) || open;
 		}
 
-		// Only from inside the machine, and not while another panel is up: the command reaches the
-		// panel through the cockpit's own widget tree, which is not on screen in the external view, and
-		// one modal is already holding the input.
-		if (open && _hasCockpit && !_view.ExternalViewActive
-			&& StatusAlert is not { IsOpen: true } && Preferences is not { IsOpen: true }) {
+		if (open && CanRaiseObjectives) {
 			Objectives.Open();
 			return true;
 		}
@@ -490,10 +503,7 @@ public sealed class ModalPanels {
 			return Preferences.HandleKey(key, PanelTicks) || open;
 		}
 
-		// Not while another modal is up. Unlike the objectives panel it opens from the external view as
-		// well: [F12] is the dispatcher's own case (0x58), not the widgets'.
-		if (open && _hasCockpit
-			&& StatusAlert is not { IsOpen: true } && Objectives is not { IsOpen: true }) {
+		if (open && CanRaisePreferences) {
 			Preferences.Open();
 			return true;
 		}

@@ -69,6 +69,12 @@ public sealed class ScaledImGui : IDisposable {
 		ImGui.EndTooltip();
 	}
 
+	/// <summary>
+	/// Queues a gamepad's state as ImGui's gamepad keys, once a frame before the frame starts, or null for none. Silk's
+	/// controller feeds the keyboard and the mouse only. While one is set ImGui navigates by gamepad.
+	/// </summary>
+	public Action<ImGuiIOPtr>? GamepadFeed { get; set; }
+
 	/// <summary>Starts the next ImGui frame, first building the controller again if the display's scale changed.</summary>
 	public void Update(float deltaSeconds) {
 		// Compared loosely: the client scale is a ratio of two sizes, which a resize need not update together.
@@ -77,6 +83,14 @@ public sealed class ScaledImGui : IDisposable {
 					|| MathF.Abs(clientScale - _builtClientScale) > 0.01f)) {
 			_controller.Dispose();
 			_controller = Build();
+		}
+
+		// Before the controller's update, which ends in ImGui's NewFrame, where queued events are taken.
+		if (GamepadFeed is { } feed) {
+			var io = ImGui.GetIO();
+			io.ConfigFlags |= ImGuiConfigFlags.NavEnableGamepad;
+			io.BackendFlags |= ImGuiBackendFlags.HasGamepad;
+			feed(io);
 		}
 
 		_controller.Update(deltaSeconds);

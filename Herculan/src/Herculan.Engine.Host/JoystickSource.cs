@@ -148,10 +148,11 @@ sealed class JoystickSource : IJoystickSource {
 		Device is null || Map is not { } map ? JoystickCapabilities.None : map.Capabilities();
 
 	/// <summary>
-	/// Whether <see cref="Read"/> reports the stick centred and every button up, which it does while the Controller
-	/// window is open, so that moving a control to bind it does not also drive the machine. After it comes down the
-	/// stick stays quiet until every device button has been let go, so a button pressed to bind it does not fire its
-	/// action as the window closes.
+	/// Whether <see cref="Read"/> reports the stick centred and every button up, which it does while the pad is working
+	/// something of the host's (<see cref="Simulator.SimulatorHost"/> sets it), so that moving a control to bind it, or
+	/// steering through a menu, does not also drive the machine. After it comes down the stick stays quiet until every
+	/// device button has been let go, so a button pressed to bind it or to choose an item does not fire its action as
+	/// the window closes.
 	/// </summary>
 	public bool Muted {
 		get => _muted;

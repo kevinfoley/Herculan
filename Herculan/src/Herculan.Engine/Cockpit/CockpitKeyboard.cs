@@ -37,6 +37,20 @@ public sealed class CockpitKeyboard(CockpitDisplays displays, CockpitView view, 
 		(Key.F, 5, -1),   // FIRE AT WILL / HOLD YOUR FIRE
 	};
 
+	/// <summary>
+	/// The letter that, under [Alt], transmits FLASH COMM's row <paramref name="row"/> while the row names
+	/// <paramref name="verb"/>; null when none does.
+	/// </summary>
+	public static Key? FlashCommKey(int row, int verb) {
+		foreach (var (key, keyRow, requiredVerb) in FlashCommKeys) {
+			if (keyRow == row && (requiredVerb < 0 || requiredVerb == verb)) {
+				return key;
+			}
+		}
+
+		return null;
+	}
+
 	private readonly KeyLatch[] _flashCommKeys = FlashCommKeys.Select(_ => new KeyLatch()).ToArray();
 	private readonly KeyLatch _flashCommTransmit = new();
 	private readonly KeyLatch _flashCommNextRow = new();

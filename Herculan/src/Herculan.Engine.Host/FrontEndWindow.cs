@@ -32,6 +32,7 @@ sealed class FrontEndWindow : IDisposable {
 	private readonly GamepadHostButtons _padButtons = new();
 	private IInputContext? _input;
 	private ScaledImGui? _imgui;
+	private ImGuiGamepad? _padNav;
 	private int _framesRendered;
 
 	// Set by the Settings menu's restart and the Editor item, either of which closes the window once the frame's ImGui
@@ -107,6 +108,8 @@ sealed class FrontEndWindow : IDisposable {
 	/// <summary>Takes the window's devices once its input context exists, and builds ImGui on its GL context.</summary>
 	public void Attach(GL gl, IInputContext input) {
 		_imgui = new ScaledImGui(gl, _window, input, _imguiFontPath);
+		_padNav = new ImGuiGamepad(input);
+		_imgui.GamepadFeed = _padNav.Feed;
 		Mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
 		Keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
 		_input = input;
@@ -155,14 +158,19 @@ sealed class FrontEndWindow : IDisposable {
 
 	/// <summary>
 	/// The top of a frame: ImGui's, and a gamepad's Back, which raises the menu bar or backs out of it as [Shift+Esc]
-	/// does (<see cref="GamepadHostButtons"/>). The front end has no pause, so Start does nothing here.
+	/// does (<see cref="GamepadHostButtons"/>), and puts ImGui's navigation on the bar it leaves up. The front end has no
+	/// pause, so Start does nothing here.
 	/// </summary>
 	public void BeginFrame(double delta) {
+		if (_padNav != null) {
+			_padNav.Suspended = _menuBar.Controller.Listening;
+		}
+
 		_imgui?.Update((float)delta);
 		if (_input != null && _screenshotPath == null) {
 			_padButtons.Update(_input);
 			if (_padButtons.BackPressed) {
-				MenuBarEscape();
+				_menuBar.PadBack();
 			}
 		}
 	}
