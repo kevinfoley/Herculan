@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Data.File.Dbsim;
 using Herculan.Engine.Numerics;
 

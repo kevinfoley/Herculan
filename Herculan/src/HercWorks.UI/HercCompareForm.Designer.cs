@@ -54,6 +54,7 @@ partial class HercCompareForm {
 		_grid.RowHeadersWidthSizeMode = DataGridViewRowHeadersWidthSizeMode.AutoSizeToAllHeaders;
 		_grid.Size = new Size(900, 666);
 		_grid.TabIndex = 1;
+		_grid.CellPainting += OnGridCellPainting;
 		//
 		// _statusStrip
 		//

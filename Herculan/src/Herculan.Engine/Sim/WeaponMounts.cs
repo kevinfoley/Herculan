@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Data.File.Dbsim;
 
 namespace Herculan.Engine.Sim;
@@ -249,7 +250,7 @@ public sealed class WeaponMounts {
 			// in the array rather than shifting everything after it up.
 			int weaponId = Math.Max(loadout.WeaponAt(record.LoadoutSlot), 0);
 			if (weaponId == WeaponMount.EmptyWeaponId
-				|| WeaponCatalog.Kind(weaponId) == WeaponMountKind.None) {
+				|| WeaponLUT.MountKindOf(weaponId) == WeaponMountKind.None) {
 				continue;
 			}
 

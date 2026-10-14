@@ -119,18 +119,7 @@ public sealed class WeaponCatalog {
 	}
 
 	/// <summary>
-	/// The subtype ids four <c>PROJ.DAT</c> records should carry, by <c>PROJ.DAT</c> index:
-	/// <c>ATC75</c> and <c>ATC100</c> take <c>BULLETS.DAT</c> 10 and 11, <c>LAS400</c> and
-	/// <c>LAS500</c> take <c>BEAM.DAT</c> 8 and 9. Retail gives them 1, 2, 4 and 5, the ids of
-	/// <c>ATC35</c>, <c>ATC50</c>, <c>LAS200</c> and <c>LAS300</c>. See
-	/// docs/retail/formats/proj-dat.md#lookup.
-	/// </summary>
-	private static readonly IReadOnlyDictionary<int, short> CorrectedSubtypeIds = new Dictionary<int, short> {
-		[23] = 10, [24] = 11, [25] = 8, [26] = 9,
-	};
-
-	/// <summary>
-	/// <see cref="Projectile"/> with the subtype id <see cref="CorrectedSubtypeIds"/> names, for the
+	/// <see cref="Projectile"/> with the subtype id <see cref="ProjectileData.CorrectedSubtypeIds"/> names, for the
 	/// <c>FixWeaponDamageRecords</c> tweak: the shot then finds its own record when it looks it up again,
 	/// and flies and draws as its own <c>BULLETS.DAT</c> or <c>BEAM.DAT</c> record. A record that
 	/// no earlier one shadows, or whose corrected id another record of its type already carries, is
@@ -139,7 +128,7 @@ public sealed class WeaponCatalog {
 	public ProjectileData.Projectile? CorrectedProjectile(int weaponId, short secondaryKey) {
 		if (Projectile(weaponId, secondaryKey) is not { Type: { } type } own
 			|| Template(weaponId)?.ProjDatIndex is not { } index
-			|| !CorrectedSubtypeIds.TryGetValue(index, out short subtypeId)
+			|| !ProjectileData.CorrectedSubtypeIds.TryGetValue(index, out short subtypeId)
 			|| Lookup(type, own.SubtypeId) == own
 			|| Lookup(type, subtypeId) != null) {
 			return Projectile(weaponId, secondaryKey);
@@ -198,57 +187,4 @@ public sealed class WeaponCatalog {
 
 		return weaponId >= 0 && weaponId < MountNames.Count ? MountNames[weaponId] : string.Empty;
 	}
-
-	/// <summary>
-	/// Which mount class a weapon id builds — <c>MechLoadout_ConstructWeaponMounts</c>'s switch,
-	/// which is the only thing that decides it. The four live cases differ in what they carry
-	/// (rounds vs. a capacitor vs. nothing), what they draw from the Master Energy Pool, and which of
-	/// the weapon-gauge classes the cockpit gives them.
-	/// </summary>
-	public static WeaponMountKind Kind(int weaponId) => weaponId switch {
-		// WeaponMount_CtorAmmunition (0040e140) — rounds. The autocannons, the four missile launchers, MISSL and LAEW.
-		// LAEW (26) then has its vtable overwritten with GRENADE_WPN's (GrenadeMountVtable, 00499248), a
-		// hold-to-throw trigger whose fire dispatch spends a round and launches nothing; its magazine of
-		// 0 keeps it from ever firing, so this engine builds it as a plain ammunition mount.
-		1 or 2 or 3 or 4 or 5 or 13 or 14 or 15 or 16 or 21 or 26 => WeaponMountKind.Ammunition,
-
-		// The two ELFs. The factory runs WeaponMount_CtorEnergy and then overwrites the vtable
-		// pointer with PTR_DAT_004992c0 — so they are energy mounts that have replaced their fire
-		// dispatch, their readiness test and their pool turn. See WeaponMountKind.Elf.
-		6 or 22 => WeaponMountKind.Elf,
-
-		// WeaponMount_CtorEnergy (0040e074) — a capacitor charged off the pool. The lasers, EMP, plasma and the beams.
-		7 or 8 or 9 or 10 or 11 or 12 or 17 or 19 or 20 or 23 or 24 or 25 or 28
-			=> WeaponMountKind.Energy,
-
-		// The five equipment pods, each its own trivial subclass with no capacitor and no rounds.
-		18 or 29 or 30 or 31 or 32 => WeaponMountKind.Pod,
-
-		// Id 0 is an empty slot; id 27 (MINE) has no case in the switch at all, so no mount object is
-		// ever built for it even though the catalog lists it.
-		_ => WeaponMountKind.None,
-	};
-}
-
-/// <summary>Which of <c>MechLoadout_ConstructWeaponMounts</c>'s mount classes a hardpoint builds.</summary>
-public enum WeaponMountKind {
-	/// <summary>No mount object at all — an empty slot, or a catalog id the factory has no case for.</summary>
-	None,
-
-	/// <summary>A magazine of rounds. Draws nothing from the pool and prints a round count.</summary>
-	Ammunition,
-
-	/// <summary>A capacitor charged off the Master Energy Pool. Prints a charge bar.</summary>
-	Energy,
-
-	/// <summary>
-	/// <c>ELF</c> and <c>ELF2</c> — an energy mount with the vtable at <c>004992c0</c> swapped in
-	/// over the energy class's. It carries and charges the same capacitor, and prints the same bar,
-	/// but it will not <b>start</b> firing below a full one and its shot is worth a fixed 1200
-	/// however much is left. See <c>WeaponMount.CanFire</c>.
-	/// </summary>
-	Elf,
-
-	/// <summary>An equipment pod. Fires nothing, prints nothing, and is in no fire group.</summary>
-	Pod,
 }

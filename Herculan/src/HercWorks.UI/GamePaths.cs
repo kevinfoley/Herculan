@@ -118,6 +118,25 @@ public static class GamePaths {
 		FindFile(fileName, SimSearchDirectories(folder), SimVolName, folder);
 
 	/// <summary>
+	/// Finds <paramref name="fileName"/> through <paramref name="find"/> and parses it, or adds
+	/// <c>folder\fileName</c> to <paramref name="missing"/> and returns null when it is absent, truncated
+	/// or malformed — for screens that read many files and list the failures on their status line.
+	/// </summary>
+	public static T? ReadOrReport<T>(Core.Io.Transform.ByteTransformer<T> transformer, Func<string, GameFile?> find,
+			string folder, string fileName, List<string> missing) where T : class {
+		try {
+			if (find(fileName) is { } file && transformer.Parse(file.Content) is { } parsed) {
+				return parsed;
+			}
+		} catch (Exception) {
+			// A truncated or malformed file is reported the same way as an absent one.
+		}
+
+		missing.Add($@"{folder}\{fileName}");
+		return null;
+	}
+
+	/// <summary>
 	/// Starting folder for a GAM file dialog: the first loose GAM directory that exists, falling back
 	/// to the install root (the packed VOL isn't a folder a dialog can open into).
 	/// </summary>

@@ -14,6 +14,7 @@ namespace HercWorks.UI;
 public partial class HercCompareForm : Form {
 	private readonly List<(CheckBox Box, HercComparison Herc)> _hercs = new();
 	private readonly List<StatRow> _rows = new();
+	private readonly List<string> _missing = new();
 	private Font? _totalFont;
 
 	public HercCompareForm() {
@@ -51,8 +52,11 @@ public partial class HercCompareForm : Form {
 		Cursor = Cursors.WaitCursor;
 		try {
 			_hercPanel.SuspendLayout();
+			var priceFilesMissing = new List<string>();
+			var prices = HercComparison.ChassisPrices.Load(priceFilesMissing);
+			_missing.AddRange(priceFilesMissing);
 			foreach (var herc in HercLUT.Values().Where(h => h.Id < HercLUT.Skimmer.Id)) {
-				var comparison = HercComparison.Load(herc);
+				var comparison = HercComparison.Load(herc, prices);
 				var box = new CheckBox {
 					AutoSize = true,
 					Text = comparison.DisplayName,
@@ -68,7 +72,7 @@ public partial class HercCompareForm : Form {
 			Cursor = Cursors.Default;
 		}
 
-		var missing = _hercs.SelectMany(h => h.Herc.Missing).ToList();
+		var missing = _missing.Concat(_hercs.SelectMany(h => h.Herc.Missing)).ToList();
 		_statusLabel.Text = missing.Count == 0
 			? $"Read {_hercs.Count} hercs from SIMVOL0."
 			: $"Read {_hercs.Count} hercs; not found or unreadable: {string.Join(", ", missing)}.";
@@ -101,7 +105,19 @@ public partial class HercCompareForm : Form {
 		string? ComponentName(int group, int index) =>
 			Name(group, index) is { } text && text.EndsWith(" ARMOR") ? text[..^" ARMOR".Length] : Name(group, index);
 
+		_rows.Add(new StatRow("Scrap Cost (tons)",
+			"The salvage the Herc Construction screen charges for the chassis (gam\\HERC_INF.DAT). Only the nine chassis the shell builds have one.",
+			h => h.ScrapCostTons));
+		_rows.Add(new StatRow("Sell Value (tons)",
+			"The salvage scrapping the chassis yields, built, undamaged and with nothing fitted (gam\\DAMAGE.DAT against the price). A fitted weapon at 80% condition or better goes back to the armory instead.",
+			h => h.SellValueTons));
 		_rows.Add(new StatRow("Top Speed (km/h)", "The cockpit speed readout at full forward throttle.", h => h.TopSpeedKph));
+		_rows.Add(new StatRow("Shield Capacity",
+			"The shield array's total charge (dat\\NAME.DAT), front and rear together; the balance setting splits it. It recharges 5 a tick (125 a second) out of what the weapons leave in the Master Energy Pool, shrinks as the shield generator is damaged, and a Shield Pod adds up to the same again.",
+			h => h.ShieldCapacity));
+		_rows.Add(new StatRow("Reactor (energy/s)",
+			"What the reactor adds to the Master Energy Pool, which holds up to 10,000 and keeps 500 in reserve. The same for every machine; an Energy Pod doubles it. Damage to the reactor does not lower it.",
+			h => HercComparison.ReactorOutputPerSecond));
 		_rows.Add(new StatRow("Hardpoints", "Weapon mounts on the chassis (gl\\NAME.GL).", h => h.Hardpoints));
 
 		_rows.Add(new StatRow("Armor", "Total armour of the chassis' own components (dmg\\NAME.DMG). A fitted weapon adds its mount's.",
@@ -127,6 +143,8 @@ public partial class HercCompareForm : Form {
 	}
 
 	private void OnHercToggled(object? sender, EventArgs e) => RebuildGrid();
+
+	private void OnGridCellPainting(object? sender, DataGridViewCellPaintingEventArgs e) => GridCellNotes.Paint(_grid, e);
 
 	/// <summary>
 	/// Rebuilt whole on every toggle: removing a grid's last column also drops its rows, and at a few
@@ -163,7 +181,7 @@ public partial class HercCompareForm : Form {
 
 				if (stat.CellToolTip != null) {
 					for (int column = 0; column < shown.Count; column++) {
-						row.Cells[column].ToolTipText = stat.CellToolTip(shown[column]) ?? string.Empty;
+						GridCellNotes.Set(row.Cells[column], stat.CellToolTip(shown[column]));
 					}
 				}
 			}

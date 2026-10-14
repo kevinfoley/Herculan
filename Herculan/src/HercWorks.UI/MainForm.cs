@@ -14,8 +14,9 @@ namespace HercWorks.UI;
 /// player .sav file's salvage/workshop slots via the Campaign Resources editor, and
 /// exporting DBA/DBM/DPL Dynamix bitmap data to PNG via the Tools menu's Image
 /// Export dialog, and viewing .DTS 3D models with an orbit camera via the Tools
-/// menu's 3D Model Viewer, and comparing chassis speed, hardpoints, armour and internals
-/// side by side via the Tools menu's Compare Hercs screen (all built directly on HercWorks.Core — no ES2TransferApi
+/// menu's 3D Model Viewer, and comparing chassis cost, speed, hardpoints, armour and internals
+/// side by side via the Tools menu's Compare Hercs screen, and weapons' cost, ammunition, fire
+/// rate and damage via its Compare Weapons screen (all built directly on HercWorks.Core — no ES2TransferApi
 /// dependency). The VOL browser's right-hand side is a fixed-height Metadata list
 /// (the raw entry info — offset, size, compression, magic prefix — plus a "File Type"
 /// row with a short human-readable description whenever TransformerRegistry recognizes
@@ -458,6 +459,11 @@ public partial class MainForm : Form {
 
 	private void OnOpenCompareHercs(object? sender, EventArgs e) {
 		using var form = new HercCompareForm();
+		form.ShowDialog(this);
+	}
+
+	private void OnOpenCompareWeapons(object? sender, EventArgs e) {
+		using var form = new WeaponCompareForm();
 		form.ShowDialog(this);
 	}
 }
