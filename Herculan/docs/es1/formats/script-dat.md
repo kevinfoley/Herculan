@@ -48,12 +48,55 @@ A block record is the listed fields in `.MSN` order, so an offset into it is the
 5. It marks each `data\player.mec` entry live as a mech slot after the block's count, as ES2's pass marks the squad ([placement](../../retail/formats/script-dat.md#placement--the-actual-rule)).
 6. Among the calls that follow, `Terrain_LoadZoneShapes` (`00020238`) loads the shapes of the zone in header word 1, from the shape library of the theater in word 0 ([`zone-terrain.md`](zone-terrain.md#the-simulators-load)), and `World_LoadTheater` (`000251c4`) the theater's palette and world file, which words 0, 8 and 9 name ([`wld-world.md`](wld-world.md#which-file)).
 
-A second function, `0001e638`, opens `data\script.dat` again, where ES2's [second pass](../../retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps) builds the objects ([Open](#open)).
-
 The headings in the two `.MSN` files walked by hand (`SM_SCT50`, `B0_C2_60`) are multiples of 45 from 0 to 315. Shifted left 14 into 16 bits, a value keeps only its two low bits, so 45 and 225 both become `0x4000` ([Open](#open)).
+
+### The second pass
+
+`DBSim_SpawnMissionObjects` (`0001e638`) builds the mission's objects, as ES2's [second pass](../../retail/formats/script-dat.md#the-two-pass-read--and-what-it-means-for-dbsim-keeps) does; `es2_xref.py` finds one call, from `Sim_StartMission` (`0005a9dc`). It sets the word at `000bc49a`, before the header, to `0xffff`, opens `data\script.dat` again and reads past the header and blocks 1 to 5 into a 2,000-byte stack buffer, and then reads blocks 6 to 9 in full.
+
+An object takes its position and rotation from its record's refs. A point ref that is not negative gives the block-1 point's X, Y and Z; a negative one gives the position sentinel (0, 0, −1) at `000afa00`. A heading ref that is not negative gives the rotation (0, 0, the heading); a negative one gives the rotation sentinel (−32768, −32768, 0) at `000afa10`. The position goes to the object's `+0x20` (three `int32`), the rotation to `+6` (three `int16`, the heading at `+0xa`), and the `int16` at `+0x2c` is zeroed. ES2's position sentinel is (0, 0, −32768) and its rotation sentinel the same as ES1's.
+
+**Block 6, then the squad.** For each slot from 0 to the block's count plus the `data\player.mec` entry count (`000af9e2`), it reads a 98-byte record while the slot is inside the block, and builds a mech when the slot is live (`000af7b4`): `Mech_Constructor` (`00011330`) with no object, so from the mech pool, and the type, the record's `0x28` or, past the block, the entry's `+4`. It calls `0000bc60` before the loop and `0000bd40` after it ([Open](#open)).
+
+| Record offset (`.MSN`) | What the second pass does with it |
+|---|---|
+| `0x00` (`0x08`) | when not 0, the mech's `+0x91` is set to 1, where ES2's sets its radar setting `+0x97` |
+| `0x02` (`0x0a`) | when not negative, stored at `+0x1e6`, where ES2's stores its cruise speed at `+0x252` |
+| `0x28` (`0x30`) | the type |
+| `0x2a` (`0x32`), `0x46` (`0x4e`) | passed with the mech to `00012c00` as (mech, `0x46`, `0x2a`) in stack order, where ES2's passes its fit and ammunition ([Open](#open)) |
+| `0x3e` (`0x46`) | the point ref; the position's Z is the point's Z plus the type record's (`+0x188`) `int16` at `+0x16` |
+| `0x40` (`0x48`) | the heading ref |
+| `0x42`, `0x44` (`0x4a`, `0x4c`) | stored at `+0x174` and `+0x176` |
+| `0x5c`, `0x5e` (`0x64`, `0x66`) | action refs: a pointer to the 16-byte action at `+0x16c` and `+0x170`, or 0 for a negative ref |
+| `0x60` (`0x68`) | passed with the mech to `00012f20`, where ES2's passes its starting condition ([Open](#open)) |
+
+The second pass does not read record offsets `0x04`–`0x27` and `0x5a` (`.MSN` `0x0c`–`0x2f` and `0x62`).
+
+A `data\player.mec` entry *k* builds the squad's machine at slot block count + *k*, with both sentinels; its `+8` and `+0x20` go to `00012c00` as the record's `0x2a` and `0x46` do, its three condition spans `+0x3c`, `+0x56` and `+0x6a` go to `000107f0` with the mech's `+0x19c` as (`+0x19c`, `+0x6a`, `+0x56`, `+0x3c`) in stack order, where ES2's passes them to `Mech_ApplySquadCondition` (`00415068`), and its `+0` to the mech's `+0x232`, where ES2's stores the pilot index at `+0x29c`. The entry whose index is the word `data\player.mec` opens with (`000af9fa`) is the player's: the mech goes to `000bc42a` and its `+0x9d` is set to 1. Unlike ES2's, the position takes no ground height and no lift for a type that flies ([placement](../../retail/formats/script-dat.md#placement--the-actual-rule)).
+
+**Block 7.** For each live flyer slot (`000af8e0`), `0001ac58` with no object and the 56-byte record's type at `0x2c` (`.MSN` `0x34`); the point ref `0x28` with no height added, the heading ref `0x2a`, the action refs `0x32` and `0x34` (`.MSN` `0x3a`, `0x3c`) to `+0x16c` and `+0x170`, and `0x2e` and `0x30` (`.MSN` `0x36`, `0x38`) to `+0x174` and `+0x176`. `0x36` (`.MSN` `0x3e`) is not read.
+
+**Block 8.** For each live base slot (`000af948`), `00003cbc` with the byte the first pass kept for the slot (`000af9b0`) and the 16-byte record, as (byte, record) in stack order; the point ref `0x02` with no height added, the heading ref `0x04`, the action refs `0x0a` and `0x0c` to `+0x16c` and `+0x170`, and `0x06` and `0x08` to `+0x174` and `+0x176`. ES2's marks each structure's footprint, takes the ground height and, once every object is placed, levels the ground and settles every structure again; ES1's second pass does none of these.
+
+**Block 9.** One 82-byte record for each element of the group array the first pass allocated (`MissionGroups`, `000bc476`, its count at `000bc47a`), each built by `DBSim_BuildGroupRecord` (`0001cff4`) as (group, point, `MissionGroups`, heading, action, route, record) in stack order ([the group record](../simulation/mission-groups.md#the-group-record)):
+
+- the point: the block-1 point the ref `0x2e` (`.MSN` `0x34`) names, or 0 for `-1`;
+- the route: the waypoint group the ref `0x32` (`.MSN` `0x38`) names, or 0 for `-1`;
+- the heading: the heading the ref `0x30` (`.MSN` `0x36`) names; for a negative ref, `Math_HeadingToward` from the route's first waypoint to its second when the route has two or more, otherwise 0. ES2's takes the route of the group's first order;
+- the action: the action the ref `0x4a` (`.MSN` `0x50`) names, or 0 for `-1`;
+- the target ref `0x48` (`.MSN` `0x4e`) is replaced by its roster's slot-to-pool map entry, `000af818`, `000af914` or `000af97c`, for target kinds 1, 2 and 3; a group target is left as it is;
+- the eight member refs `0x34` (`.MSN` `0x3a`) are replaced in the same way through the map their kind `0x28` names. The first record's are instead the mech map's entries at block-6 count + *k* for each `data\player.mec` entry *k*, and `-1` past the last, so the squad's machines are its members in entry order, as ES2's are ([placement](../../retail/formats/script-dat.md#placement--the-actual-rule)); and the first record's `0x2c` (`.MSN` `0x32`), copied to the group's `+4`, becomes 8 when it is 11.
+
+ES2's pass goes on to the orders, the objectives, the ground and the actions' targets; ES1's closes the file after the groups.
+
+### The header
+
+Besides the theater and world words above, the simulator reads header word 7 as the difficulty and the mode at offset 4 as an override of it ([the difficulty scale](../simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c)), and word 8 for the contact scan range ([small functions](../simulation/world.md#small-functions)), which are ES2's header word 7 and word 8 ([ES2's header](../../retail/formats/script-dat.md#header-format)).
 
 ## Open
 
-- **Open:** what `0001e638`, which opens `data\script.dat` after `DBSim_LoadScriptDat`, reads, and so what the simulator makes of the fields the first pass discards.
-- **Open:** whether ES1's headings are degrees, and what the simulator does with them beyond the first pass's shift.
-- **Open:** what header words 2 to 7 mean to the simulator; `Mission_WriteResults` passes word 3 on ([the results](../simulation/world.md#writing-the-results--mission_writeresults-0001d698)). What reads `000bc4b8`'s flags during a mission besides that writer's flag 7: the actions and the groups' out-of-action reports write them ([mission groups](../simulation/mission-groups.md)), and `Mission_WriteResults` writes them back to `data\mission.var`.
+- **Open:** the second pass's callees, not read: `0000bc60` and `0000bd40` around the mechs, `00012c00` (the mech's two ten-word arrays), `00012f20` (record `0x60`), `000107f0` (the squad's condition spans), `0001ac58` (a flyer from its type) and `00003cbc` (a base from its record). ES2's pass makes the matching calls to `WeaponModels_LoadShapeChunks` and `WeaponModels_FreeShapeChunks`, `Mech_ConfigureLoadout`, `Mech_ApplyStartingCondition`, `Mech_ApplySquadCondition`, `Flyer_Constructor` and `Base_Construct`; `es2_naming.py match` pairs `00012c00` and `000107f0` with the two `Mech_` functions above its thresholds.
+- **Open:** what reads an object's `+0x174`/`+0x176` pair and its `+0x16c`/`+0x170` actions, besides `Sim_RaycastObjectList` (`0001f1d0`), which fires the struck object's `+0x16c` ([shots](../simulation/world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)); what the mech's `+0x91` and `+0x1e6` are to ES1; and who fills the slot-to-pool maps `000af818`, `000af914` and `000af97c` the second pass reads, which `DBSim_LoadScriptDat`'s unread calls after the blocks may do.
+- **Open:** what the group's `+4` is, and why the squad's 11 there becomes 8.
+- **Open:** whether ES1's headings are degrees; the second pass stores the shifted value as an object's rotation `+0xa` and as a group's heading.
+- **Open:** what header words 3 to 6 mean to the simulator, and what the other five readers of the mode at offset 4 do with it; `Mission_WriteResults` passes word 3 on ([the results](../simulation/world.md#writing-the-results--mission_writeresults-0001d698)). What reads `000bc4b8`'s flags during a mission besides that writer's flag 7: the actions and the groups' out-of-action reports write them ([mission groups](../simulation/mission-groups.md)), and `Mission_WriteResults` writes them back to `data\mission.var`.

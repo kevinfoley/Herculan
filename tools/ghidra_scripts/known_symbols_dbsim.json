@@ -8012,8 +8012,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_ShutdownNoOp2",
-      "description": "Empty body. Sim_Shutdown's last call.",
-      "source": "DBSIM disassembly at 00425344"
+      "description": "Empty body, a lone RET. es2_xref finds one call, from Sim_Shutdown (00461f8f), after its Sim_ShutdownNoOp1 call. ES1's Sim_ShutdownNoOp2 (ES1DBSIM 0001e634) is the same.",
+      "source": "DBSIM disassembly at 00425344",
+      "verified": {
+        "bytes": "00425344+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00425348",
@@ -8051,8 +8057,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_ShutdownNoOp1",
-      "description": "Empty body. Sim_Shutdown calls it after setting the exit code, before Sim_ShutdownNoOp2.",
-      "source": "DBSIM disassembly at 00426514"
+      "description": "Empty body, a lone RET. es2_xref finds one call, from Sim_Shutdown (00461f8a), the call before its Sim_ShutdownNoOp2 call. ES1's Sim_ShutdownNoOp1 (ES1DBSIM 0001f1bc) is the same.",
+      "source": "DBSIM disassembly at 00426514",
+      "verified": {
+        "bytes": "00426514+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00426528",
@@ -8060,8 +8072,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RaycastObjectList",
-      "description": "Generic ray-vs-live-object-list query. Nine call sites in four functions: Rocket_TickUpdate (1), Bullet_TickUpdate (2), Bullet_FireBurst (1) and Razor_MovementTick (5, the airframe contact probes). Calls each candidate's vtable +0x20 (hit-test) and +0x50 (AI threat-tracking). The shot record's second exclusion at +0x14 is written only by Razor_MovementTick; all three weapon callers leave that stack slot uninitialised.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "(shot): the ray-versus-live-object sweep of docs/retail/simulation/hit-detection.md. When the shot has an owner (+0xe) it scales the shot's +6 and +4 with Damage_ScaleByDifficulty by the owner's group's side (+0x45, +0x12); it caches the world-to-ray transform at the ray record's +0xa; it cuts the ray to Sim_RaycastTerrain's ground hit, between two RaycastShapeMinDistance_Clear calls. It walks the live object list, skipping the owner, the second excluded object at +0x14 and any object whose group's +0x14 action is set, and calls each candidate's slot +0x20 hit test, cutting the ray to each hit and going on while the hit distance is 500 or more. A hit on the owner's own target (+0x1a4) sets the owner's +0x9e and passes the target's engaged action +0x1b2 to Action_Activate unless its +0xa2 is set; any other struck object becomes the blocker (its +0xc). Unless the object is destroyed (+0x99), or of the other side with +0xa4 or +0xa5 set, it calls the object's slot +0x50 with the owner and the shot's +4, after Mech_AiFriendlyFireComplaint for the nearest live member of the owner's group within 30000 when the owner is locally piloted (+0xa3) and the object is of its side in another group. A strike with no object struck spawns an impact effect from the shot's effect table (+0xa). With a blocker and an owner target, a Math_GroundDistanceBetweenPoints to the ray's end below the range to the target and a bearing difference, each less the owner's heading, below 0x2000 as a signed int16, taken without an absolute value by the JGE at 004269eb, lead to the owner's slot +0x64 with the blocker. Returns the length + 1 after a strike, else 0. es2_xref finds nine calls in four functions: Rocket_TickUpdate (1), Bullet_TickUpdate (2), Bullet_FireBurst (1) and Razor_MovementTick (5).",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "00426528+1269",
+        "sha1": "e6fdc09323fc",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00426a20",
@@ -8069,9 +8087,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Damage_ExplosiveBlastSweep",
-      "description": "Radius-based splash-damage entry point. Sweeps the live-object list, skipping an object whose mission group still carries an action and the excluded object; distance - obj[+0x5c] < blastRadius calls that object +0x70. Note it truncates its int blastRadius to a short when handing it on. RETURNS 1 IF ANYTHING WAS IN RANGE, not if anything was damaged -- the flag is set beside the +0x70 call, before that call can decide the target shields swallowed it. Its one reader is the drop pod +0x4c latch. Exactly 3 call sites, all terminal: Meteor_Tick drop-pod landing, the Plasma-cannon bullet type 9 branch in Bullet_TickUpdate, and Mech_BehaviourRamTick. It is NOT the only way +0x70 is reached -- Mech_ApplyDirectFireDamage and Mech_CollisionTest both call it directly.",
+      "description": "(hitPoint, blastRadius, damage, attacker, excluded): the radius-based splash-damage sweep. Walks the live-object list, skipping an object whose mission group still carries an action (group +0x14) and the excluded object, and for each whose Math_DistanceBetweenPoints from hitPoint less its slot +0x5c body radius is below blastRadius calls its slot +0x70(object, damage, hitPoint, blastRadius as a short, attacker) and sets the result to 1. So it returns 1 when anything was in range, whatever the +0x70 call did with it. es2_xref finds three calls, from Meteor_Tick (the drop-pod landing), Bullet_TickUpdate (the plasma round) and Mech_BehaviourRamTick. See docs/retail/simulation/damage-system.md.",
       "source": "docs/retail/simulation/damage-system.md",
-      "signature": "short __cdecl Damage_ExplosiveBlastSweep(int *hitPoint, int blastRadius, short damage, int *attacker, int *excluded)"
+      "signature": "short __cdecl Damage_ExplosiveBlastSweep(int *hitPoint, int blastRadius, short damage, int *attacker, int *excluded)",
+      "verified": {
+        "bytes": "00426a20+166",
+        "sha1": "59622a59e58e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00426ac8",
@@ -8079,8 +8103,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Salvage_QueueWeapon",
-      "description": "Appends one {int16 weapon id, int16 condition} to the salvage list at DAT_004a9ef0 (a 200-byte block, room for 50, unchecked), bumping the count at DAT_004a9eee. Two callers: Mech_ApplyDirectFireDamage's mount-destruction roll on a Cybrid machine, and Mech_SalvageValue for each surviving mount of an enemy wreck. Mission_WriteResults writes the list as results.dat's salvage pairs.",
-      "source": "docs/retail/simulation/component-damage.md#what-a-wreck-is-worth--mech_salvagevalue-00418e60"
+      "description": "(pair): appends the dword its argument points at, an {int16 weapon id, int16 condition} pair of the salvage list Mission_WriteResults writes as results.dat's salvage pairs, to the list at DAT_004a9ef0 at index DAT_004a9eee, then adds 1 to the count. The list is 200 bytes from DBSim_LoadScriptDat, room for 50, and the append has no bound. es2_xref finds two calls, from Mech_ApplyDirectFireDamage (00418ad6) and Mech_SalvageValue (00418ede).",
+      "source": "docs/retail/simulation/component-damage.md#what-a-wreck-is-worth--mech_salvagevalue-00418e60",
+      "verified": {
+        "bytes": "00426ac8+33",
+        "sha1": "ab679d639c1b",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00426aec",
@@ -8088,8 +8118,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Detection_ContactScanRange",
-      "description": "Returns 30000 when DAT_004a9ee2, the scan-range setting, is 1 and 60000 otherwise: the range within which a held contact can still be selected. Its one caller is TargetSelect_CanTarget, and es2_xref.py finds this function as the only reference to DAT_004a9ee2. See docs/retail/simulation/target-selection.md.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "Returns 30000 when DAT_004a9ee2, script.dat header word 8, the scan-range setting, is 1 and 60000 otherwise: the range within which a held contact can still be selected. es2_xref finds one call, from TargetSelect_CanTarget (004331b7). See docs/retail/simulation/target-selection.md.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "00426aec+21",
+        "sha1": "308b9c3d2cc3",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00426b04",
@@ -8099,7 +8135,13 @@
       "name": "Damage_ScaleByDifficulty",
       "description": "Scales a damage figure in place by a Q10 factor from one of two four-entry tables selected by the firing side -- 0049a73c {3500, 2800, 2100, 1400} for side 0, 0049a744 {300, 600, 800, 1000} for anything else -- indexed by the mission difficulty at MissionDifficulty. So difficulty moves the two sides' damage in opposite directions (3.42x down to 1.37x, versus 0.29x up to 0.98x).",
       "source": "docs/retail/simulation/projectiles.md",
-      "signature": "void __cdecl Damage_ScaleByDifficulty(short *damage, int side)"
+      "signature": "void __cdecl Damage_ScaleByDifficulty(short *damage, int side)",
+      "verified": {
+        "bytes": "00426b04+67",
+        "sha1": "4614bb930eeb",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00426b48",
@@ -8117,8 +8159,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Actions_EvaluateTriggers",
-      "description": "Per-frame mission trigger evaluator, called by Sim_MainTick with the player's mech. Walks the whole block-5 action array and, per action type (+0x00), picks whose position Action_TestTrigger is offered: 0 the player's mech, 1 every member of the player's group, 2/3 every member of every deployed group of side 0 (human) / side 1 (Cybrid), 4/5/6 every deployed mech / flyer / base group, 7/8/9 the action's own resolved target object at +0x36, 10 every member of the action's target group. Groups whose +0x14 action pointer is still set are skipped as subjects -- an undeployed group cannot trip a trigger.",
-      "source": "docs/retail/simulation/mission-deployment.md"
+      "description": "(mech): walks the whole block-5 action array (DAT_004a9eac, count DAT_004a9ea8, stride 0x3a) and offers Action_TestTrigger positions by the action's type +0: 0 the mech's (+0x26); 1 each member of its group (+0x45) through Action_TestTriggerForGroup; 2 and 3 each member of each mission group (stride 0x7a) of side +0x12 0 or 1, and 4, 5 and 6 of kind +0 0, 1 or 2, each of those skipping a group whose action +0x14 is set and stopping at the first group that answers; 7, 8 and 9 the action's resolved target object +0x36's position; 10 the target group +0x36. A non-zero answer goes to Action_Activate. es2_xref finds one call, from Sim_MainTick (0045f760).",
+      "source": "docs/retail/simulation/mission-deployment.md",
+      "verified": {
+        "bytes": "00426b70+825",
+        "sha1": "57e7c9780bdc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00426eac",
@@ -8217,7 +8265,13 @@
       "confidence": "high",
       "name": "GridShape_HeightAround",
       "description": "Column height under a point of a shape's collision height field, the point already shifted by the grid origin. When (1 << (cellShift - 1)) < radius it returns the tallest cell within radius; below that it samples the single cell. Off-grid is 0, which is what makes the volume end at its own edges. Cells hold a byte code into the 256-entry int32 height table at grid+0x34.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "00427238+295",
+        "sha1": "b63d6a40bd7f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00427360",
@@ -8225,8 +8279,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_HeightAt",
-      "description": "GridShape_HeightAround with the grid-origin shift applied for the caller (origin << cellShift, i.e. world units rather than cells). Returns 0 for a shape with no collision volume.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "GridShape_HeightAround with the grid-origin shift added to the point first (origin column and row << cellShift, 16-bit: world units rather than cells). Returns 0 for a shape with no collision volume (no columns).",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "00427360+101",
+        "sha1": "c7e0b333c52d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004273c8",
@@ -8234,8 +8294,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_Raycast",
-      "description": "Marches a ray, in shape space, through a shape's collision height field. Rejects an empty grid and a ray with BOTH ends above grid+0x430 (the height table's last entry, its ceiling). Step length is (1 << cellShift) + clearance; the direction is rescaled to it by a Q16 divide truncated to 16 bits. Hits when GridShape_HeightAround returns nonzero above the ray's current Z; reports the hit point with the grid origin offset removed.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "Marches a ray, in shape space, through a shape's collision height field. Rejects an empty grid and a ray with BOTH ends at or above grid+0x430 (the height table's last entry, its ceiling). Shifts both ends by the origin << cellShift; the step length is (1 << cellShift) + clearance, to which Math_NormalizeVec3ToLength rescales the direction, and the step count is the segment's Math_FastMagnitude3D over the step, plus 1. Hits when GridShape_HeightAround returns nonzero above the ray's current Z; reports the hit point with the grid origin offset removed.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "004273c8+413",
+        "sha1": "548f1ad823c7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00427568",
@@ -8244,7 +8310,13 @@
       "confidence": "high",
       "name": "GridShape_Construct",
       "description": "ClassItem registry loadFn for classId 0x02bc0001 (dgs\\bases/bhulks shape records): allocates a 0x438-byte GridShape (RTTI name, vtable 0049aaa0, base TSShape), installs the vtable, then calls vtable+0xc (GridShape_ReadFromStream). See dgs-hd0-notes.md.",
-      "source": "docs/retail/formats/dgs-hd0-notes.md"
+      "source": "docs/retail/formats/dgs-hd0-notes.md",
+      "verified": {
+        "bytes": "00427568+133",
+        "sha1": "73269df3120d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004275f0",
@@ -8253,7 +8325,13 @@
       "confidence": "high",
       "name": "GridShape_GetClassTag",
       "description": "GridShape vtable 0049aaa0 slot 0: returns 0x2bc0001, GridShape_Construct's class id.",
-      "source": "docs/retail/formats/dgs-hd0-notes.md"
+      "source": "docs/retail/formats/dgs-hd0-notes.md",
+      "verified": {
+        "bytes": "004275f0+10",
+        "sha1": "2a34da413005",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "004275fc",
@@ -8262,7 +8340,13 @@
       "confidence": "high",
       "name": "GridShape_GetStreamSize",
       "description": "GridShape vtable 0049aaa0 slot +4 (shape): TSShape's stream size (00490cdc) plus columns +0x2a times rows +0x2c plus 0x40a -- the five int16 grid scalars and the 1024-byte height table GridShape_ReadFromStream reads after TSShape's fields, then one byte per cell.",
-      "source": "docs/retail/formats/dgs-hd0-notes.md"
+      "source": "docs/retail/formats/dgs-hd0-notes.md",
+      "verified": {
+        "bytes": "004275fc+38",
+        "sha1": "df49420d1e97",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00427624",
@@ -8271,7 +8355,13 @@
       "confidence": "high",
       "name": "GridShape_GetMemorySize",
       "description": "GridShape vtable 0049aaa0 slot +8: returns 0. It does not call TSShape's slot +8 (00490d08).",
-      "source": "docs/retail/formats/dgs-hd0-notes.md"
+      "source": "docs/retail/formats/dgs-hd0-notes.md",
+      "verified": {
+        "bytes": "00427624+7",
+        "sha1": "a737d8b8f0a0",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0042762c",
@@ -8279,8 +8369,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_ReadFromStream",
-      "description": "Field reader for a dgs\\bases/bhulks shape record (vtable+0xc for classId 0x02bc0001), on top of the generic ClassItem base-class chain (TSShape_ReadFromStream). Its tail is the shape's COLLISION VOLUME, a coarse height field: int16 columns (+0x2a), rows (+0x2c), origin column (+0x2e), origin row (+0x30), cell shift (+0x32), a 256-entry int32 height table (+0x34, 1024 bytes, last entry addressed as the ceiling at +0x430), then rows*columns height codes (+0x434). The obvious reading, five undecoded scalars and an opaque block followed by sub-record count * sub-record size raw records, spans the same bytes and parses every retail record, but it is not the layout. See docs/retail/simulation/hit-detection.md.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "description": "Field reader for a dgs\\bases/bhulks shape record (vtable+0xc for classId 0x02bc0001), on top of the generic ClassItem base-class chain (TSShape_ReadFromStream). Its tail is the shape's COLLISION VOLUME, a coarse height field: int16 columns (+0x2a), rows (+0x2c), origin column (+0x2e), origin row (+0x30), cell shift (+0x32), a 256-entry int32 height table (+0x34, 1024 bytes, last entry addressed as the ceiling at +0x430), then, when rows is not 0, rows pointers allocated with Arena_AllocDup at +0x434, each to a row of columns height codes read from the stream. The obvious reading, five undecoded scalars and an opaque block followed by sub-record count * sub-record size raw records, spans the same bytes and parses every retail record, but it is not the layout. See docs/retail/simulation/hit-detection.md.",
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0042762c+231",
+        "sha1": "2fc0af6c427a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00427714",
@@ -8289,7 +8385,13 @@
       "confidence": "high",
       "name": "GridShape_WriteToStream",
       "description": "GridShape vtable 0049aaa0 slot +0x10 (shape, stream): TSShape's write (00490e34), then the stream's +0x14 write of what GridShape_ReadFromStream reads, in the same order: the int16 columns +0x2a, rows +0x2c, origin column +0x2e, origin row +0x30 and cell shift +0x32, the 0x400-byte height table at +0x34, then one columns-byte row per row through the row-pointer array at +0x434.",
-      "source": "docs/retail/formats/dgs-hd0-notes.md"
+      "source": "docs/retail/formats/dgs-hd0-notes.md",
+      "verified": {
+        "bytes": "00427714+217",
+        "sha1": "407d508a6843",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004277f0",
@@ -8312,8 +8414,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_Dtor",
-      "description": "GridShape vtable 0049aaa0 slot +0x18 (shape, flags): when shape is set, decrements the live-object counter at *006cbf74, calls 00490958 (TSShape vtable 004a6331 slot +0x18) with flags 0, then Mem_Delete when flags bit 0 is set.",
-      "source": "docs/retail/formats/dgs-hd0-notes.md"
+      "description": "GridShape vtable 0049aaa0 slot +0x18 (shape, flags): when shape is set, lowers the destructor count at *Rtl_DtorCountPtr, runs TSShape_Dtor (00490958) with flags 0, then Mem_Delete when flags bit 0 is set.",
+      "source": "docs/retail/formats/dgs-hd0-notes.md",
+      "verified": {
+        "bytes": "0042786c+45",
+        "sha1": "8d148b4357bf",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042789c",
@@ -8385,8 +8493,14 @@
       "type": "function",
       "confidence": "high",
       "name": "RaycastShapeMinDistance_Clear",
-      "description": "Sets RaycastShapeMinDistance (004aab54) to 0. Sim_RaycastObjectList calls it twice, once just before Sim_RaycastTerrain.",
-      "source": "DBSIM decompile at 00427d98"
+      "description": "Sets RaycastShapeMinDistance (004aab54) to 0. es2_xref finds two calls, both from Sim_RaycastObjectList (00426650, 00426694), around its Sim_RaycastTerrain call.",
+      "source": "DBSIM decompile at 00427d98",
+      "verified": {
+        "bytes": "00427d98+8",
+        "sha1": "9efb023b26cd",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00427da0",
@@ -8395,7 +8509,13 @@
       "confidence": "high",
       "name": "RaycastShapeMinDistance_Get",
       "description": "Returns RaycastShapeMinDistance (004aab54) in EAX (the decompile drops the return).",
-      "source": "DBSIM disassembly at 00427da0"
+      "source": "DBSIM disassembly at 00427da0",
+      "verified": {
+        "bytes": "00427da0+6",
+        "sha1": "97d339c7669c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00427da8",
@@ -36072,8 +36192,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_ElevationAngle",
-      "description": "(a, b): Math_Atan2Guarded(Math_FastMagnitude2D_Thunk(a.x - b.x, a.y - b.y), a.z - b.z) on int32 triples, returned in AX. Flyer_AttackRun passes its aim point and the flyer's position (+0x26) and feeds the result to Flyer_PitchCommand.",
-      "source": "DBSIM decompile at 00492850"
+      "description": "(a, b): Math_Atan2Guarded(Math_FastMagnitude2D_Thunk(a.x - b.x, a.y - b.y), a.z - b.z) on int32 triples, returned in AX: the elevation of a seen from b. es2_xref finds two calls, both from Flyer_AttackRun.",
+      "source": "DBSIM decompile at 00492850",
+      "verified": {
+        "bytes": "00492850+51",
+        "sha1": "dbb9a9d12cd0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00492884",

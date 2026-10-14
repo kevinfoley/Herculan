@@ -37,21 +37,21 @@ An action is the 16-byte record `DBSim_LoadScriptDat` builds from block 5 ([read
 
 ## The group record
 
-ES1's group record is `0x28` bytes, where ES2's is `0x7a` ([ES2's](../../retail/simulation/ai-goals.md#the-group-records-order-fields)). `DBSim_BuildGroupRecord` (`0001cff4`) fills it from a block-9 record of `data\script.dat` ([the groups](../formats/msn-mission-file.md#groups); a block offset is the `.MSN` offset less 6) and from arguments its caller resolves; it takes (group, *p*, groups, *h*, *a*, route, record) in stack order.
+ES1's group record is `0x28` bytes, where ES2's is `0x7a` ([ES2's](../../retail/simulation/ai-goals.md#the-group-records-order-fields)). `DBSim_BuildGroupRecord` (`0001cff4`) fills it from a block-9 record of `data\script.dat` ([the groups](../formats/msn-mission-file.md#groups); a block offset is the `.MSN` offset less 6) and from arguments its caller, `DBSim_SpawnMissionObjects` (`0001e638`), resolves from the record's refs ([the second pass](../formats/script-dat.md#the-second-pass)); it takes (group, point, groups, heading, action, route, record) in stack order.
 
 | Offset | Type | Field | From |
 |---|---|---|---|
 | `+0x00` | `int16` | the members' kind: 0 mechs, 1 flyers, 2 bases | `.MSN` `0x2e` |
 | `+0x02`, `+0x04` | `int16` | copied, no reader read ([Open](#open)) | `.MSN` `0x30`, `0x32` |
 | `+0x06` | `int16` | the route cursor's index, 0 from the element constructor | |
-| `+0x08` | ptr | the route, a waypoint group | the argument *route* |
-| `+0x0c` | `int16` | | the argument *h* |
+| `+0x08` | ptr | the route, a waypoint group | the argument *route*: `.MSN` `0x38` |
+| `+0x0c` | `int16` | the heading | the argument *heading*: `.MSN` `0x36`, or the route's first leg |
 | `+0x0e`, `+0x12` | ptr, `int16` | the member array and its count | |
 | `+0x14` | byte | the side: `Mission_TotalSalvage` counts a machine whose group's byte differs from the player's group's | `.MSN` `0x4a`'s low byte |
-| `+0x16` | ptr | | the argument *a* |
+| `+0x16` | ptr | the action; the shot sweep, the blast and the trigger test skip the group's members while it is set ([`world.md`](world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)) | the argument *action*: `.MSN` `0x50` |
 | `+0x1a` | `int16` | the target's kind: 0 a group, 1 a mech, 2 a flyer, 3 a base | `.MSN` `0x4c` |
 | `+0x1c` | ptr | the target | `.MSN` `0x4e` |
-| `+0x20` | ptr | | the argument *p* |
+| `+0x20` | ptr | the group's point | the argument *point*: `.MSN` `0x34` |
 | `+0x24`, `+0x26` | `int16` | the group's out-of-action (flag, operation) pair, [below](#going-out-of-the-fight) | `.MSN` `0x54`, `0x56` |
 
 The members are the non-negative ones of the eight refs at `.MSN` `0x3a`–`0x49`, in order, in an array of that many pointers from `operator_new`. Each is `Pool_Nth` (`00063a78`) of the pool its kind names, the dword at `000af68c`, `000af72c` or `000aed70`, and is passed with its ref's position among the eight (0–7) and the group to `00013124`, `0001b574` or `000044a4` ([Open](#open)). The target resolves by its kind: a group as the groups array's base plus the index × `0x28`, a mech, flyer or base as `Pool_Nth` of the dword at `000af68c`, `000af72c` or `000aed70`. `Pool_Nth`, (pool, *n*), walks the pool with `Pool_Prev` from 0 and returns the element *n* + 1 steps in, or 0 when the walk ends first, as ES2's does; it keeps *n* in `DX` across the calls.
@@ -98,7 +98,7 @@ The route functions `Route_AdvanceCursor` (`0001c8c0`), `Route_NextWaypointClose
 
 **`Mission_TotalSalvage` (`0001d434`)**, (group, *w*): ES2's ([what the mission leaves the shell](../../retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)). It walks the mech pool, the dword at `000af68c`, from its end with `Pool_Prev`, and sums `Mech_SalvageValue` (`00014034`) over every machine whose group's side byte differs from the group's and that is destroyed or immobilised. It ignores *w*.
 
-`Mech_SalvageValue` is ES2's ([what a wreck is worth](../../retail/simulation/component-damage.md#what-a-wreck-is-worth--mech_salvagevalue-00418e60)): 0 when `+0xad` is set; otherwise, for each hardpoint whose component reading (`0000a16c` on `+0x19c`, component `0x13` plus the byte `+0x17` of the hardpoint's `+0x18`) is below `0x80`, it passes the pair {the `int16` at `+0x56` of the hardpoint's `+0x1c`, ((`0x100` − reading) × 100) >> 8} to `0001f7e8`, and it returns `Math_Q10Multiply`(`00010c38` on `+0x19c`, the type record's `+0x54`), the second halved when component 0 reads `0x100`.
+`Mech_SalvageValue` is ES2's ([what a wreck is worth](../../retail/simulation/component-damage.md#what-a-wreck-is-worth--mech_salvagevalue-00418e60)): 0 when `+0xad` is set; otherwise, for each hardpoint whose component reading (`0000a16c` on `+0x19c`, component `0x13` plus the byte `+0x17` of the hardpoint's `+0x18`) is below `0x80`, it passes the pair {the `int16` at `+0x56` of the hardpoint's `+0x1c`, ((`0x100` − reading) × 100) >> 8} to `Salvage_QueueWeapon` (`0001f7e8`, [small functions](world.md#small-functions)), and it returns `Math_Q10Multiply`(`00010c38` on `+0x19c`, the type record's `+0x54`), the second halved when component 0 reads `0x100`.
 
 **`Group_WriteStatusBlocks` (`0001d2c8`)**, (group, stream): ES2's ([the status blocks](../../retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)). For each member in order, `Mech_ReadDamageReadouts` (`0001583c`) fills a buffer with the type record's `+0x6c` and then `000109bc`'s readouts of `+0x19c`; entries 1–13, 20–29 and 32–41 are each written as ((`0x100` − *r*) × 100) >> 8 through the stream's slot `+0x18`, and then the 6 bytes at `+0x23a`: 72 bytes a member.
 
@@ -126,9 +126,9 @@ Callees of other modules read for them: `Mech_AiTick` (`0000d8e8`), `Mech_Salvag
 
 ## Open
 
-- **Open:** what the second pass over `data\script.dat` (`0001e638`) passes `DBSim_BuildGroupRecord` as *p*, *h* and *a* (`+0x20`, `+0x0c`, `+0x16`), and what reads them and `+0x02` and `+0x04`. ES2's builder takes a point, a heading and the deployment action at the matching places.
-- **Open:** the callees not read: `00013124`, `0001b574` and `000044a4`, which take a mech, flyer or base member with its ref's position and the group; `00015a5c`, which decides `0001d4d0`'s name; `0000a16c`, `00010c38` and `000109bc`, the component readings; `0001f7e8`, the salvage queue; `00064178` and `0000fe84`, the AI tick's countdown and last call.
-- **Open:** what offers positions to the actions (`0001f87c`, in `world.cpp`, calls `Action_TestTrigger` once and `Action_TestTriggerForGroup` five times) and what the eleven callers of `Action_Activate` are.
+- **Open:** what reads the group's point `+0x20`, heading `+0x0c` and `+0x02`, `+0x04`, and whether anything clears the action `+0x16`, which stands where ES2's [deployment gate](../../retail/simulation/mission-deployment.md#the-deployment-gate--group0x14) does.
+- **Open:** the callees not read: `00013124`, `0001b574` and `000044a4`, which take a mech, flyer or base member with its ref's position and the group; `00015a5c`, which decides `0001d4d0`'s name; `0000a16c`, `00010c38` and `000109bc`, the component readings; `00064178` and `0000fe84`, the AI tick's countdown and last call.
+- **Open:** eight of the eleven calls `es2_xref.py` finds to `Action_Activate`, from `00003978`, `0000e618`, `0000e85c` (two), `00013250` (two), `00018e50` and `0001b290`. The other three are `Action_TestTrigger`, `Actions_EvaluateTriggers` (`0001f87c`, [trigger areas](world.md#trigger-areas--actions_evaluatetriggers-0001f87c)) and `Sim_RaycastObjectList` (`0001f1d0`), which fires a struck enemy's `+0x16c` action.
 - **Open:** whether anything changes a group's target after the load; ES1's target is set once, by `DBSim_BuildGroupRecord`, in the functions read.
 - **Open:** the machine fields above are not in `known_structs.json`, which holds no ES1 layout; nor are the group record, the action and the trigger area.
 - **Open:** a positive control in the running game for this module, as for [`world.cpp`'s](world.md#open).

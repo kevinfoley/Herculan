@@ -842,6 +842,111 @@
       }
     },
     {
+      "address": "0000f917",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GridShape_Construct",
+      "description": "(a, b), callee-cleaned: GridShape's load function, its pointer at 0007e5c0 after GridShape's vtable 0007e580. The same statements as ES1DBSIM's GridShape_Construct (0001fe6c) in different code.",
+      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
+      "verified": {
+        "bytes": "0000f917+126",
+        "sha1": "433f2cc4fc71",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f995",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GridShape_Dtor",
+      "description": "(shape, flags), callee-cleaned, slot +0x1c of GridShape's vtable 0007e580. The same statements as ES1DBSIM's GridShape_Dtor (0001fee0) in different code.",
+      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
+      "verified": {
+        "bytes": "0000f995+52",
+        "sha1": "9d3cc3295c3e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f9c9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GridShape_GetClassTag",
+      "description": "(shape), callee-cleaned, slot +4 of GridShape's vtable 0007e580: returns 0x2bc0001. ES1DBSIM's GridShape_GetClassTag (0001ff0a) with a stack frame where ES1DBSIM's has none.",
+      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
+      "verified": {
+        "bytes": "0000f9c9+15",
+        "sha1": "a677f503cd9d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000f9d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GridShape_GetStreamSize",
+      "description": "(shape), callee-cleaned, slot +8 of GridShape's vtable 0007e580. The same statements as ES1DBSIM's GridShape_GetStreamSize (0001ff14), TSShape_GetStreamSize (00058e68) in place of ES1DBSIM's.",
+      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
+      "verified": {
+        "bytes": "0000f9d8+47",
+        "sha1": "b97c96c11e7c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fa07",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GridShape_GetMemorySize",
+      "description": "(shape), callee-cleaned, slot +0xc of GridShape's vtable 0007e580: returns 0. ES1DBSIM's GridShape_GetMemorySize (0001ff40) with a stack frame where ES1DBSIM's has none.",
+      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
+      "verified": {
+        "bytes": "0000fa07+12",
+        "sha1": "cdfff44e1c27",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000fa13",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GridShape_ReadFromStream",
+      "description": "(shape, p, stream) in stack order, callee-cleaned, slot +0x10 of GridShape's vtable 0007e580. The same statements as ES1DBSIM's GridShape_ReadFromStream (0001ff48) in different code.",
+      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
+      "verified": {
+        "bytes": "0000fa13+326",
+        "sha1": "a68dceb6314e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fb59",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GridShape_WriteToStream",
+      "description": "(shape, p, stream) in stack order, callee-cleaned, slot +0x14 of GridShape's vtable 0007e580. The same statements as ES1DBSIM's GridShape_WriteToStream (00020078) in different code.",
+      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
+      "verified": {
+        "bytes": "0000fb59+284",
+        "sha1": "dcb6482a8618",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000fca0",
       "binary": "ES1GO",
       "type": "function",
@@ -8794,7 +8899,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_Ctor",
-      "description": "(shape), callee-cleaned: allocates 0x2a bytes when shape is null; TSPartList_Ctor, the vtable 000884e6, and clears the sequence frame counts +0x20, the cell frame array +0x1c and the node transforms +0x18. es2_xref finds calls from TSShape_Construct and 0000f917. The code of ES1DBSIM's TSShape_Ctor (00062f44), relocated operands aside.",
+      "description": "(shape), callee-cleaned: allocates 0x2a bytes when shape is null; TSPartList_Ctor, the vtable 000884e6, and clears the sequence frame counts +0x20, the cell frame array +0x1c and the node transforms +0x18. es2_xref finds calls from TSShape_Construct and GridShape_Construct (0000f917). The code of ES1DBSIM's TSShape_Ctor (00062f44), relocated operands aside.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "000586f4+54",
