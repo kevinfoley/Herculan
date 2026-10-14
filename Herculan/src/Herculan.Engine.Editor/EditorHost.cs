@@ -33,13 +33,13 @@ public sealed record EditorLaunch(string InstallRoot, GameContent SimulatorConte
 	public string? ScriptPath { get; init; }
 
 	/// <summary>
-	/// Where the window opens, as the window before it left it; null for where the editor last closed on its own
-	/// (<see cref="EditorSettings.Window"/>), or maximized the first time.
+	/// The game's window, which the editor takes as a turn and leaves open for the game; null for a window of its own,
+	/// where the editor last closed on its own (<see cref="EditorSettings.Window"/>), or maximized the first time.
 	/// </summary>
-	public WindowPlacement? Placement { get; init; }
+	public HostWindow? Window { get; init; }
 
-	/// <summary>Whether the editor was opened from the game, which File &gt; Back to game returns to.</summary>
-	public bool FromGame { get; init; }
+	/// <summary>Whether the editor was opened from the game, in its window, which File &gt; Back to game returns to.</summary>
+	public bool FromGame => Window != null;
 }
 
 /// <summary>
@@ -143,32 +143,31 @@ public sealed class EditorHost {
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
-		_window = new EngineWindow(WindowTitle, placement: launch.Placement ?? _settings.Window?.ToPlacement(), maximized: true);
+		_window = launch.Window is { } window
+			? new EngineWindow(window, WindowTitle)
+			: new EngineWindow(WindowTitle, placement: _settings.Window?.ToPlacement(), maximized: true);
 		_window.Load += OnLoad;
 		_window.Update += OnUpdate;
 		_window.Render += OnRender;
 		_window.Closing += OnClosing;
-		_window.View.FocusChanged += focused => _focused = focused;
+		_window.FocusChanged += focused => _focused = focused;
 	}
 
-	/// <summary>
-	/// Runs the editor until its window closes, and returns how it ended and where the window was, for the next
-	/// window to open at.
-	/// </summary>
-	public static (EditorExit Exit, WindowPlacement Placement) Run(EditorLaunch launch) {
+	/// <summary>Runs the editor until its window closes or its turn in the game's ends, and returns how it ended.</summary>
+	public static EditorExit Run(EditorLaunch launch) {
 		var host = new EditorHost(launch);
 		using var window = host._window;
 		window.Run();
 
-		// Written into the file as it stands rather than through the open settings, which may hold the Settings panel's
-		// edits that were never confirmed.
+		// Where its own window was, written into the file as it stands rather than through the open settings, which may
+		// hold the Settings panel's edits that were never confirmed.
 		if (!launch.FromGame) {
 			var saved = EditorSettings.Load();
 			saved.Window = SavedWindow.From(window.Placement);
 			saved.Save();
 		}
 
-		return (host._exit, window.Placement);
+		return host._exit;
 	}
 
 	private string WindowTitle => _mission?.WindowTitle ?? "HERCULAN Mission Editor";

@@ -2,7 +2,6 @@ using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Install;
-using Herculan.Engine.Platform;
 
 namespace Herculan.Engine.Host;
 
@@ -57,12 +56,6 @@ sealed class HostSession(string installRoot, LocalizationTable localization, str
 	public LocalizationTable Localization { get; } = localization;
 
 	public string ImGuiFontPath { get; } = imguiFontPath;
-
-	/// <summary>
-	/// Where the last shell or mission window was when it closed, so the next one opens at the same size and place,
-	/// maximized if it was; null until one has closed.
-	/// </summary>
-	public WindowPlacement? WindowPlacement { get; set; }
 
 	/// <summary>
 	/// Makes the next use of <see cref="Disc"/> close the disc and open whatever <c>drive.cfg</c> now names. The

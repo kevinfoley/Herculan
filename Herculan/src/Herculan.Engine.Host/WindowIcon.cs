@@ -7,7 +7,7 @@ namespace Herculan.Engine.Host;
 
 /// <summary>
 /// The HERCULAN icon for the title bar and taskbar button where the executable's own icon is not used — any platform
-/// but Windows (<see cref="EngineWindow.Icons"/>) — read from the <c>HE Icon *.png</c> files the project links from
+/// but Windows (<see cref="HostWindow.Icons"/>) — read from the <c>HE Icon *.png</c> files the project links from
 /// <c>Branding/</c> into <c>Assets/Icon</c> beside the executable. Without these, GLFW gives its windows the system's
 /// default icon.
 ///

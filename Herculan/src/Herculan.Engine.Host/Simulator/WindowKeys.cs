@@ -56,6 +56,9 @@ sealed class WindowKeys : ISystemButtonActions {
 	/// </summary>
 	public void ToggleFullScreen() => _window.ToggleFullScreen(_input.Mouse);
 
+	/// <summary>WinMain's toggle at startup (<see cref="EngineWindow.StartFullScreen"/>).</summary>
+	public void StartFullScreen(bool fullScreen) => _window.StartFullScreen(fullScreen, _input.Mouse);
+
 	/// <summary>
 	/// [/] is Sim_DispatchCommand's 0x35, the on-line manual; [?] is the same key, since SimCommandMask strips
 	/// the Shift bit (docs/retail/simulation/cockpit-input.md#keyboard-commands-are-scancodes). The dispatcher never sees

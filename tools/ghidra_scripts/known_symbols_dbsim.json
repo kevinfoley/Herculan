@@ -19918,7 +19918,13 @@
       "confidence": "high",
       "name": "Sim_ShowLoadingScreen",
       "description": "(name): builds the bitmap's path with ResourcePath_BuildFolderName under the folder at PTR_DAT_004a0a28 (PTR_DAT_004a0a40 when VideoMode_PanelMode is 3), loads it with Resource_Load, blits frame 0 at (0, 0), Display_Present, and frees the array with GLBitmapArray_Dtor. Sim_InitMissionSession shows the mission loading screen with it.",
-      "source": "DBSIM decompile at 00461344"
+      "source": "DBSIM decompile at 00461344",
+      "verified": {
+        "bytes": "00461344+111",
+        "sha1": "7ca2517dfb62",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004613b4",
@@ -19927,7 +19933,13 @@
       "confidence": "high",
       "name": "Sim_ReadLoadingScreenChoice",
       "description": "(theaterOut, isRazorOut): reads the 0x14-byte header of data\\script (with the dat extension) and stores its first int16 -- the theater World_LoadTheater doubles -- in theaterOut; then reads the first five int16s of data\\player.mec and sets isRazorOut when the fifth, the player entry's mech type, is 8 (RAZOR in MECHS.NAM). Asserts (INIT.CPP lines 0xde, 0xe4, severity 5) that each file opens. Sim_InitMissionSession builds the loading screen's name from them: 'flyrX' for the Razor, else 'hercX', X = theater + 1.",
-      "source": "DBSIM decompile and disassembly at 004613b4; strings at 0049f879 and 0049f88e; MECHS.NAM"
+      "source": "DBSIM decompile and disassembly at 004613b4; strings at 0049f879 and 0049f88e; MECHS.NAM",
+      "verified": {
+        "bytes": "004613b4+326",
+        "sha1": "e500fdda448e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004614fc",

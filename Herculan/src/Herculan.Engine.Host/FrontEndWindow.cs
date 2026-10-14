@@ -24,7 +24,6 @@ sealed class FrontEndWindow : IDisposable {
 	/// </summary>
 	private const int ScreenshotFrame = 5;
 
-	private readonly HostSession _session;
 	private readonly EngineWindow _window;
 	private readonly HostMenuBar _menuBar;
 	private readonly string _imguiFontPath;
@@ -40,6 +39,7 @@ sealed class FrontEndWindow : IDisposable {
 	// is drawn.
 	private bool _closePending;
 
+	/// <param name="window">The window the front end's turn runs in.</param>
 	/// <param name="restartRequested">
 	/// The Settings menu's restart, run as it is asked for; the window then closes once the frame is drawn.
 	/// </param>
@@ -47,20 +47,16 @@ sealed class FrontEndWindow : IDisposable {
 	/// The Editor item's switch to the mission editor, run as it is asked for; the window then closes once the frame
 	/// is drawn.
 	/// </param>
-	public FrontEndWindow(HostSession session, string title, string? screenshotPath, Action restartRequested,
-			Action editorRequested) {
+	public FrontEndWindow(HostSession session, HostWindow window, string title, string? screenshotPath,
+			Action restartRequested, Action editorRequested) {
 		_imguiFontPath = session.ImGuiFontPath;
 		_screenshotPath = screenshotPath;
-		_session = session;
-		_window = new EngineWindow(title, placement: session.WindowPlacement);
-		if (session.SavePrintScreens) {
-			PrintScreenFiles.Attach(_window, session);
-		}
+		_window = new EngineWindow(window, title);
 		_menuBar = new HostMenuBar(session.Localization, new TweaksMenu(TweakSettings.Current, session.Localization),
 			new SettingsWindow(session, () => RequestClose(restartRequested)),
 			new ControllerWindow(session.Localization, () => ShellWorkingFiles.DataDirectory(session.InstallRoot)),
 			openEditor: () => RequestClose(editorRequested));
-		_window.View.FocusChanged += focused => {
+		_window.FocusChanged += focused => {
 			HasFocus = focused;
 			FocusChanged?.Invoke(focused);
 		};
@@ -89,7 +85,10 @@ sealed class FrontEndWindow : IDisposable {
 	/// <summary>Raised when the window gains or loses the focus, after <see cref="HasFocus"/> has taken it.</summary>
 	public event Action<bool>? FocusChanged;
 
-	/// <summary>Whether the window has the focus. It starts set, until the first time the window loses it.</summary>
+	/// <summary>
+	/// Whether the window has the focus. It starts set, until the first time the window loses it, which a window that
+	/// lost it during the load hears as the turn starts.
+	/// </summary>
 	public bool HasFocus { get; private set; } = true;
 
 	public IMouse? Mouse { get; private set; }
@@ -154,6 +153,9 @@ sealed class FrontEndWindow : IDisposable {
 	/// centred as retail's is.
 	/// </summary>
 	public void ToggleFullScreen() => _window.ToggleFullScreen(Mouse);
+
+	/// <inheritdoc cref="EngineWindow.StartFullScreen"/>
+	public void StartFullScreen(bool fullScreen) => _window.StartFullScreen(fullScreen, Mouse);
 
 	/// <summary>A menu-bar key press: closes whichever of its windows is open, else hides an empty bar, else raises it.</summary>
 	public void MenuBarEscape() {
@@ -228,10 +230,9 @@ sealed class FrontEndWindow : IDisposable {
 		_imgui = null;
 	}
 
-	/// <summary>Runs the window until it closes, and leaves where it was for the next window to open at.</summary>
+	/// <summary>Runs the front end's turn until it ends.</summary>
 	public void Run() {
 		_window.Run();
-		_session.WindowPlacement = _window.Placement;
 		_menuBar.Settings.Dispose();
 	}
 

@@ -4,7 +4,7 @@ using Herculan.Engine.Platform;
 namespace Herculan.Engine.Host;
 
 /// <summary>
-/// <c>--save-prtscn</c>: each frame [PrtScn] puts on the clipboard while full screen (<see cref="EngineWindow.PrintScreenCaptured"/>)
+/// <c>--save-prtscn</c>: each frame [PrtScn] puts on the clipboard while full screen (<see cref="HostWindow.PrintScreenCaptured"/>)
 /// is also written as a PNG into the install's <c>Screenshots</c> folder, named for the moment it was taken. This
 /// engine's own feature; retail has nothing behind it. The encode and write run off the render thread, so a capture
 /// does not stall the frame.
@@ -13,7 +13,7 @@ static class PrintScreenFiles {
 	public const string FolderName = "Screenshots";
 
 	/// <summary>Has <paramref name="window"/>'s captures written under <paramref name="session"/>'s install at capture time.</summary>
-	public static void Attach(EngineWindow window, HostSession session) =>
+	public static void Attach(HostWindow window, HostSession session) =>
 		window.PrintScreenCaptured += (width, height, rgb) => {
 			string folder = Path.Combine(session.InstallRoot, FolderName);
 			var taken = DateTime.Now;

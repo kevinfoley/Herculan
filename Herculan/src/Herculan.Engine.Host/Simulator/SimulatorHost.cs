@@ -19,9 +19,10 @@ using Silk.NET.OpenGL;
 namespace Herculan.Engine.Host.Simulator;
 
 /// <summary>
-/// The simulator's turn: one mission, from a shell launch, a demo tape or the command line, run in its own
-/// window until it closes. This class is the composition, the render's order, and the host's own steps between
-/// the phases of <see cref="SimulatorFrame"/>, which owns the update's order; each step is the named component's.
+/// The simulator's turn: one mission, from a shell launch, a demo tape or the command line, run in the host's
+/// window until it ends, behind <see cref="LoadingScreen"/> while it loads. This class is the composition, the render's
+/// order, and the host's own steps between the phases of <see cref="SimulatorFrame"/>, which owns the update's order;
+/// each step is the named component's.
 /// </summary>
 sealed class SimulatorHost : IDisposable {
 	private readonly HostOptions _options;
@@ -74,21 +75,23 @@ sealed class SimulatorHost : IDisposable {
 	private CockpitRenderer? _cockpit;
 
 	/// <summary>
-	/// Runs one mission with -R&lt;n&gt;'s track select, and returns its exit code (Sim_Shutdown, 00461eec): 1
-	/// when there was nothing to run.
+	/// Runs one mission in <paramref name="window"/> with -R&lt;n&gt;'s track select, and returns its exit code
+	/// (Sim_Shutdown, 00461eec): 1 when there was nothing to run.
 	/// </summary>
-	public static int Run(HostSession session, HostOptions options, SimulatorStaging staging, ShellLaunch? shellLaunch,
-			bool demoTape, int trackSelect) {
-		if (SimulatorStartup.Load(session, options, shellLaunch, demoTape) is not { } start) {
+	public static int Run(HostSession session, HostWindow window, HostOptions options, SimulatorStaging staging,
+			ShellLaunch? shellLaunch, bool demoTape, int trackSelect) {
+		using var loading = new LoadingScreen(window);
+		if (SimulatorStartup.Load(session, options, shellLaunch, demoTape, loading) is not { } start) {
 			return 1;
 		}
 
-		using var host = new SimulatorHost(session, options, staging, start, trackSelect);
+		using var host = new SimulatorHost(session, window, options, staging, start, trackSelect);
+		window.PumpEvents();
 		return host.RunWindow();
 	}
 
-	private SimulatorHost(HostSession session, HostOptions options, SimulatorStaging staging, SimulatorStart start,
-			int trackSelect) {
+	private SimulatorHost(HostSession session, HostWindow window, HostOptions options, SimulatorStaging staging,
+			SimulatorStart start, int trackSelect) {
 		_session = session;
 		_options = options;
 		_staging = staging;
@@ -102,11 +105,7 @@ sealed class SimulatorHost : IDisposable {
 		_art = LoadCockpitArt(start);
 		_view = new CockpitView(_scene, _art, staging.Start);
 
-		_window = new EngineWindow($"HERCULAN Engine — zone {mission.Header.ZoneIndex}",
-			placement: session.WindowPlacement);
-		if (session.SavePrintScreens) {
-			PrintScreenFiles.Attach(_window, session);
-		}
+		_window = new EngineWindow(window, $"HERCULAN Engine — zone {mission.Header.ZoneIndex}");
 
 		var cockpitInput = new CockpitInput();
 		var tape = new TapePlayback(start.TapePlayer, _preferences, () => _window.FramebufferSize, cockpitInput);
@@ -174,7 +173,7 @@ sealed class SimulatorHost : IDisposable {
 		_window.Update += OnUpdate;
 		_window.Render += (_, gl) => OnRender(gl);
 		_window.Closing += OnClosing;
-		_window.View.FocusChanged += OnFocusChanged;
+		_window.FocusChanged += OnFocusChanged;
 	}
 
 	public void Dispose() => _window.Dispose();
@@ -237,7 +236,6 @@ sealed class SimulatorHost : IDisposable {
 
 	private int RunWindow() {
 		_window.Run();
-		_session.WindowPlacement = _window.Placement;
 
 		// Sim_Run's write-back (0045f3ee): option 6 against the live state, set through Prefs_SetOption and saved
 		// alone through Prefs_SaveOption -- a read-modify-write of that one byte. See SimulatorStartup for the one
@@ -295,15 +293,16 @@ sealed class SimulatorHost : IDisposable {
 		_menuBar.Controller.Attach(input, _joystick);
 
 		// WinMain's toggle, after the pointer is known so it is confined and centred as Video_ToggleFullscreen's is.
-		if (_start.StartFullScreen) {
-			_windowKeys.ToggleFullScreen();
-		}
+		_windowKeys.StartFullScreen(_start.StartFullScreen);
 
 		// No fixed-function face culling. DTS geometry is not reliably wound — the WinForms model viewer
 		// reached the same conclusion and never culls by winding either — so culling by it would punch
 		// holes in the mech rather than save fill rate. The format's own front/back choice, which does
 		// leave faces undrawn, is made per poly in the scene shader instead: see MeshVertex.Side.
 		gl.Disable(EnableCap.CullFace);
+
+		// The load is done: Sim_InitMissionSession takes the loading screen down to black before the first frame.
+		_window.PresentBlack();
 	}
 
 	private void OnUpdate(double deltaSeconds) {

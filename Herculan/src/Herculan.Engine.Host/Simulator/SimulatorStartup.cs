@@ -19,10 +19,11 @@ namespace Herculan.Engine.Host.Simulator;
 /// </summary>
 static class SimulatorStartup {
 	/// <summary>
-	/// Loads the mission from a shell launch, a demo tape or the command line. Null when there is nothing to
-	/// run, having said why; the simulator's turn then ends with 1.
+	/// Loads the mission from a shell launch, a demo tape or the command line, behind <paramref name="loading"/> once
+	/// the mission is known. Null when there is nothing to run, having said why; the simulator's turn then ends with 1.
 	/// </summary>
-	public static SimulatorStart? Load(HostSession session, HostOptions options, ShellLaunch? shellLaunch, bool demoTape) {
+	public static SimulatorStart? Load(HostSession session, HostOptions options, ShellLaunch? shellLaunch, bool demoTape,
+			LoadingScreen loading) {
 		string installRoot = session.InstallRoot;
 
 		// An input tape to replay, which brings its own mission. -p and -D unpack the tape's bundle over the
@@ -94,6 +95,8 @@ static class SimulatorStartup {
 		var content = GameContent.MountSimulator(installRoot, disc);
 		Console.WriteLine($"Mounted archives: {string.Join(", ", content.MountedArchives)}");
 
+		loading.Show(content, scriptPath);
+
 		MissionScene scene;
 		try {
 			scene = MissionScene.Load(content, scriptPath, shellLaunch?.DataDirectory);
@@ -101,6 +104,8 @@ static class SimulatorStartup {
 			ReportMissingFile(session, options, missing.FileName ?? missing.Message);
 			return null;
 		}
+
+		loading.PumpEvents();
 
 		var mission = scene.Mission;
 
