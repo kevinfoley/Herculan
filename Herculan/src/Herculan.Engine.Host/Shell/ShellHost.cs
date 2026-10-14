@@ -27,7 +27,8 @@ namespace Herculan.Engine.Host.Shell;
 ///
 /// <para>The pointer is polled once per update, and each change in its position or in either button
 /// becomes one of the events VSHELL's queue carries, which <see cref="ShellPointer"/> delivers as
-/// <c>EventQueue_Pump</c> (<c>00469ba4</c>) does: two changes inside one update arrive together, move first.</para>
+/// <c>EventQueue_Pump</c> (<c>00469ba4</c>) does: two changes inside one update arrive together, move first. A gamepad's
+/// left stick moves the same pointer and its right trigger is held as the left button (<see cref="Platform.GamepadPointer"/>).</para>
 /// </summary>
 sealed class ShellHost : IDisposable {
 	/// <summary>The movie <c>Shell_Main</c> (<c>00401525</c>) opens on the disc at startup to tell that the disc is there.</summary>
@@ -47,6 +48,13 @@ sealed class ShellHost : IDisposable {
 	/// caller can run it again on the install and disc folders the menu changed.
 	/// </summary>
 	public const int SettingsRestartCode = -1;
+
+	/// <summary>
+	/// The Editor item's exit code, this engine's and outside retail's 0-6: the shell closes so that the caller can
+	/// run the mission editor. The editor's Back to game brings the shell back up with it, as the Settings menu's
+	/// restart does with <see cref="SettingsRestartCode"/>.
+	/// </summary>
+	public const int EditorExitCode = -2;
 
 	/// <summary>
 	/// The simulator's code for a destroyed player in <c>MissionModeFlag</c>, which the shell takes into the
@@ -92,7 +100,8 @@ sealed class ShellHost : IDisposable {
 	/// (<c>Shell_StartupCode</c>, <c>0048227e</c>): <see cref="StartupCode"/> on a first start, or the code the simulator returned —
 	/// <see cref="MissionResults.DebriefExitCode"/> into the debrief, <see cref="MissionResults.DemoExitCode"/>
 	/// after a demo (<c>Shell_BuildScreensAndStart</c>, <c>004012b0</c>) — or this engine's own
-	/// <see cref="SettingsRestartCode"/>, the Settings menu's restart. <paramref name="forcedMode"/> overrides
+	/// <see cref="SettingsRestartCode"/>, the Settings menu's restart, or <see cref="EditorExitCode"/>, a return from the
+	/// mission editor. <paramref name="forcedMode"/> overrides
 	/// the campaign/training mode the startup seeds from <c>prefs.cfg</c> option 42 (<c>Shell_InitGameState</c> (<c>0040e17e</c>)); the mode
 	/// the shell ends in is returned for the next turn, which is how it survives a return from the simulator when
 	/// <c>--no-write-prefs</c> keeps option 42 off the disk.</para>
@@ -187,9 +196,10 @@ sealed class ShellHost : IDisposable {
 		var dialogs = new ShellDialogs();
 
 		// The Settings menu's restart: the shell closes with SettingsRestartCode, which the caller answers by
-		// running it again on the session's folders.
+		// running it again on the session's folders. The Editor item closes it with EditorExitCode, which the caller
+		// answers with the mission editor.
 		_window = new FrontEndWindow(session, "HERCULAN Engine — shell", screenshotPath,
-			() => _outcome.ExitCode = SettingsRestartCode);
+			() => _outcome.ExitCode = SettingsRestartCode, () => _outcome.ExitCode = EditorExitCode);
 
 		_startup = new StartupScreen(_canvas, content, _audio, repaint);
 		if (!_fromMission && startTab == ShellScreen.MainMenuTab && !startPractice && screenshotPath == null) {
@@ -212,6 +222,8 @@ sealed class ShellHost : IDisposable {
 			_widgets, repaint);
 		_keys = new KeyboardRouting(_window, _movies, _startup, _game, _menu, _fields, repaint);
 		_buttons.Taken = key => key == Key.Escape && _keys.EscapeIsMenuBars;
+		_buttons.AlsoLeft = () => _window.PadClickHeld;
+		_buttons.AlsoSkip = () => _window.PadSkipHeld;
 		_content = new CanvasContent(_canvas, _screen, _pointer, _startup, dialogs, _movies, _menu, save, hangar, _mission);
 
 		_navigation.EnterTab(_screen.SelectedTab);
@@ -266,10 +278,11 @@ sealed class ShellHost : IDisposable {
 
 		// The startup's two intro movies (Shell_BuildScreensAndStart, 004012b0), played before the startup
 		// sequence — except after a demo, whose -X6 goes straight to the sequence, after a mission, whose -X3
-		// goes to the debrief, and after the Settings menu's restart, which goes to the sequence as a demo's does.
+		// goes to the debrief, and after the Settings menu's restart or the editor, which go to the sequence as a demo's
+		// does.
 		if (_fromMission) {
 			_loop.ReturnFromMission();
-		} else if (_startup.Present && _returnCode is not (MissionResults.DemoExitCode or SettingsRestartCode)) {
+		} else if (_startup.Present && _returnCode is not (MissionResults.DemoExitCode or SettingsRestartCode or EditorExitCode)) {
 			_movies.Queue.Enqueue(ShellMovieQueue.IntroPart1, ShellMovieQueue.FullRect);
 			_movies.Queue.Enqueue(ShellMovieQueue.IntroPart2, ShellMovieQueue.FullRect);
 			_movies.Start();
@@ -285,6 +298,7 @@ sealed class ShellHost : IDisposable {
 
 	private void OnUpdate(double delta) {
 		_audio.Update();
+		_window.UpdatePadPointer(delta);
 
 		// The movie queue holds the shell while it plays out, as Movie_PlayQueue's loop does.
 		if (_movies.Active) {

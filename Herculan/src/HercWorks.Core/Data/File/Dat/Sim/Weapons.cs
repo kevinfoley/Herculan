@@ -85,10 +85,30 @@ public class Weapons {
 		public int Range => BitConverter.ToInt32(Tail, 0x0e);
 
 		/// <summary>
+		/// Tail-relative <c>0x14</c> (in-memory <c>0x36</c>) — the lower energy fire threshold. See
+		/// docs/retail/simulation/weapon-mounts.md#energy for how readiness combines it with
+		/// <see cref="ShotCost"/>.
+		/// </summary>
+		public short EnergyThresholdLow => BitConverter.ToInt16(Tail, 0x14);
+
+		/// <summary>
 		/// Tail-relative <c>0x16</c> (in-memory <c>0x38</c>) — the upper energy threshold, which the
-		/// beam fire paths pass as the shot's power. See docs/retail/formats/weapons-dat-sim.md.
+		/// beam fire paths pass as the shot's power; on an ammunition mount, the rounds one shot spends.
+		/// See docs/retail/formats/weapons-dat-sim.md.
 		/// </summary>
 		public short ShotCost => BitConverter.ToInt16(Tail, 0x16);
+
+		/// <summary>Tail-relative <c>0x18</c> (in-memory <c>0x3a</c>) — an ammunition mount's magazine size and starting round count.</summary>
+		public short MagazineSize => BitConverter.ToInt16(Tail, 0x18);
+
+		/// <summary>Tail-relative <c>0x1a</c> (in-memory <c>0x3c</c>) — the barrel count; 3 fires three shots.</summary>
+		public short BarrelCount => BitConverter.ToInt16(Tail, 0x1a);
+
+		/// <summary>
+		/// Tail-relative <c>0x2a</c> (in-memory <c>0x4c</c>) — the refire delay, in <c>SimTickDelta</c>
+		/// counts (docs/retail/simulation/dbsim-physics-notes.md#timer-units).
+		/// </summary>
+		public short RefireDelay => BitConverter.ToInt16(Tail, 0x2a);
 
 		/// <summary>
 		/// Tail-relative <c>0x2e</c> (in-memory <c>0x50</c>): which icon of the <c>WEAPONS</c> bank the

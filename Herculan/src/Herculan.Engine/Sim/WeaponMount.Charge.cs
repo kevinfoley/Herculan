@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.Struct;
 using Herculan.Engine.Numerics;
 
 namespace Herculan.Engine.Sim;

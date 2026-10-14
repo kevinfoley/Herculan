@@ -2,7 +2,7 @@ using System.Numerics;
 using Herculan.Engine.Platform;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The floating "Editor Settings" window opened from the menu bar.

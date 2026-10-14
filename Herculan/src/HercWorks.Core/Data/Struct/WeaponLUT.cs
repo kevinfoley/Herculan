@@ -63,6 +63,45 @@ public sealed class WeaponLUT {
 		SecondId = secondId;
 	}
 
+	/// <summary>
+	/// <c>BEMP</c>, <c>BPBW</c> and <c>BMSL</c>, the Cybrid Bull's own armament, which no player HERC
+	/// can fit (docs/retail/formats/weapons-dat.md#the-weapon-id-space--three-spellings-per-weapon).
+	/// </summary>
+	public bool IsBullArmament => this == Bemp || this == Bpbw || this == Bmsl;
+
+	/// <summary>Which mount class this weapon builds — <see cref="MountKindOf"/>.</summary>
+	public WeaponMountKind MountKind => MountKindOf(Id);
+
+	/// <summary>
+	/// Which mount class a weapon id builds — <c>MechLoadout_ConstructWeaponMounts</c>'s switch,
+	/// which is the only thing that decides it. The four live cases differ in what they carry
+	/// (rounds vs. a capacitor vs. nothing), what they draw from the Master Energy Pool, and which of
+	/// the weapon-gauge classes the cockpit gives them.
+	/// </summary>
+	public static WeaponMountKind MountKindOf(int weaponId) => weaponId switch {
+		// WeaponMount_CtorAmmunition (0040e140) — rounds. The autocannons, the four missile launchers, MISSL and LAEW.
+		// LAEW (26) then has its vtable overwritten with GRENADE_WPN's (GrenadeMountVtable, 00499248), a
+		// hold-to-throw trigger whose fire dispatch spends a round and launches nothing; its magazine of
+		// 0 keeps it from ever firing, so it is classed as a plain ammunition mount.
+		1 or 2 or 3 or 4 or 5 or 13 or 14 or 15 or 16 or 21 or 26 => WeaponMountKind.Ammunition,
+
+		// The two ELFs. The factory runs WeaponMount_CtorEnergy and then overwrites the vtable
+		// pointer with PTR_DAT_004992c0 — so they are energy mounts that have replaced their fire
+		// dispatch, their readiness test and their pool turn. See WeaponMountKind.Elf.
+		6 or 22 => WeaponMountKind.Elf,
+
+		// WeaponMount_CtorEnergy (0040e074) — a capacitor charged off the pool. The lasers, EMP, plasma and the beams.
+		7 or 8 or 9 or 10 or 11 or 12 or 17 or 19 or 20 or 23 or 24 or 25 or 28
+			=> WeaponMountKind.Energy,
+
+		// The five equipment pods, each its own trivial subclass with no capacitor and no rounds.
+		18 or 29 or 30 or 31 or 32 => WeaponMountKind.Pod,
+
+		// Id 0 is an empty slot; id 27 (MINE) has no case in the switch at all, so no mount object is
+		// ever built for it even though the catalog lists it.
+		_ => WeaponMountKind.None,
+	};
+
 	public static WeaponLUT? GetById(int id) => ById.GetValueOrDefault(id);
 
 	/// <summary>Every entry, in id order.</summary>

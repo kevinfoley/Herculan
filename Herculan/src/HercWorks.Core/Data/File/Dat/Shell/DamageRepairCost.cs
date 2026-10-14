@@ -40,4 +40,26 @@ public class DamageRepairCost {
 	/// every id but the three Bull weapons, which are deliberately zero where the catalog prices them.
 	/// </summary>
 	public short[] WeaponValue { get; set; } = System.Array.Empty<short>();
+
+	/// <summary>A chassis price is stored in tons and charged in kilograms.</summary>
+	public const int KilogramsPerTon = 1000;
+
+	/// <summary>
+	/// External group <paramref name="group"/>'s unit value, in kilograms, for a chassis priced at
+	/// <paramref name="priceTons"/> — <c>LoadDamageDat_Shell</c> (<c>00413628</c>)'s expansion, the
+	/// share and then <see cref="ChassisScale"/> each applied as a Q10 fraction of the price. See
+	/// docs/retail/formats/herc-catalogs.md#gamdamagedat--the-component-and-weapon-value-table.
+	/// </summary>
+	public int ExternalGroupValue(int priceTons, int group) =>
+		Q10(ChassisScale, Q10(ExternalGroupPercent[group], priceTons * KilogramsPerTon));
+
+	/// <summary>Internal <paramref name="component"/>'s unit value, as <see cref="ExternalGroupValue"/>.</summary>
+	public int InternalValue(int priceTons, int component) =>
+		Q10(ChassisScale, Q10(InternalPercent[component], priceTons * KilogramsPerTon));
+
+	/// <summary>Weapon <paramref name="weaponId"/>'s unit value: <see cref="WeaponValue"/> scaled by <see cref="WeaponScale"/>.</summary>
+	public int WeaponUnitValue(int weaponId) => Q10(WeaponScale, WeaponValue[weaponId]);
+
+	/// <summary><c>FixedMulQ10</c> (<c>00450a84</c>), <c>(a * b) &gt;&gt; 10</c>.</summary>
+	private static int Q10(int a, int b) => a * b >> 10;
 }

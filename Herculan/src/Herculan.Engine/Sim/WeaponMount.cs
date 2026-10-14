@@ -55,7 +55,7 @@ public sealed partial class WeaponMount {
 		LinkPartnerOffset = (sbyte)hardpoint.LinkPartnerOffset;
 		WeaponId = weaponId;
 		SecondaryKey = secondaryKey;
-		Kind = WeaponCatalog.Kind(weaponId);
+		Kind = WeaponLUT.MountKindOf(weaponId);
 		Name = catalog.MountName(weaponId, secondaryKey);
 		Projectile = catalog.Projectile(weaponId, secondaryKey);
 		_lookedUpProjectile = Projectile is { Type: { } type } own

@@ -2,7 +2,7 @@ using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.World;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>One lint finding, with the selection that shows the record it is about, if the editor has one.</summary>
 internal sealed record EditorFinding(ScriptLintFinding Finding, EditorSelection? Target);

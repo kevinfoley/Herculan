@@ -1,13 +1,15 @@
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Host.Debugging;
 using Herculan.Engine.Host.Localization;
+using Herculan.Engine.Platform;
 using ImGuiNET;
 
 namespace Herculan.Engine.Host.Settings;
 
 /// <summary>
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, HERCULAN's own and not retail's, and the
-/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Tweaks and About; and the
+/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Tweaks and About; the
+/// Editor item, which leaves the shell for the mission editor and is greyed over a mission; and the
 /// first start's <see cref="WelcomeDialog"/>, which the shell raises without the bar. Hidden until <see cref="Show"/>, and never
 /// drawn into a <c>--screenshot</c> capture. Plain [Esc] is retail's in a mission, where it pans to and from the
 /// Heads-Down Display, so which key reaches the bar is each host's to decide: over a mission
@@ -16,11 +18,20 @@ namespace Herculan.Engine.Host.Settings;
 sealed class HostMenuBar : IEscapeMenu {
 	private readonly LocalizationTable _localization;
 	private readonly DebugPanel? _debug;
+	private readonly Action? _openEditor;
 	private readonly PanelCentring _centring = new();
 
+	// Set when the next frame's bar is to take the focus with the highlight on its first item, and what the previous
+	// frame left of the panels and the highlight, to see a panel closed from the pad.
+	private bool _focusItems;
+	private bool _panelWasOpen;
+	private bool _highlightWasShowing;
+
+	/// <param name="openEditor">The Editor item's switch to the mission editor, or null to grey the item.</param>
 	public HostMenuBar(LocalizationTable localization, TweaksMenu tweaks, SettingsWindow settings, ControllerWindow controller,
-			DebugPanel? debug = null) {
+			DebugPanel? debug = null, Action? openEditor = null) {
 		_localization = localization;
+		_openEditor = openEditor;
 		Tweaks = tweaks;
 		Settings = settings;
 		Controller = controller;
@@ -50,6 +61,18 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	/// <summary>Raises the bar.</summary>
 	public void Show() => Visible = true;
+
+	/// <summary>
+	/// A gamepad's Back: <see cref="BackOut"/>, or <see cref="Show"/> when there was nothing to back out of; and while the
+	/// bar is still up, the bar takes the focus with the highlight on its first item, so the pad can go on from there.
+	/// </summary>
+	public void PadBack() {
+		if (!BackOut()) {
+			Show();
+		}
+
+		_focusItems = Visible;
+	}
 
 	/// <summary>
 	/// [Esc]'s step back: takes down whichever panel is up, else hides the bar. Returns false when neither
@@ -92,8 +115,22 @@ sealed class HostMenuBar : IEscapeMenu {
 	public void Draw(nint owner, bool fullScreen) {
 		_centring.Update(fullScreen);
 
+		// A panel the pad closed with its own button leaves the bar up with nothing focused, so the bar takes the
+		// focus as it does after Back. The highlight showing is what says the pad, or the keyboard, was in use.
+		bool panelOpen = PanelOpen;
+		if (_panelWasOpen && !panelOpen && Visible && _highlightWasShowing) {
+			_focusItems = true;
+		}
+
+		_panelWasOpen = panelOpen;
+
 		// A bare item per panel, no checkmark, since each panel closes itself.
 		if (Visible && ImGui.BeginMainMenuBar()) {
+			if (_focusItems) {
+				_focusItems = false;
+				ImGuiNavigation.FocusMenuBar();
+			}
+
 			if (_debug != null && ImGui.MenuItem(_localization.GetStringOrKey("menu.debug"))) {
 				_debug.IsOpen = true;
 			}
@@ -108,6 +145,10 @@ sealed class HostMenuBar : IEscapeMenu {
 
 			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.tweaks"))) {
 				Tweaks.IsOpen = true;
+			}
+
+			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.editor"), null, false, _openEditor != null)) {
+				_openEditor!();
 			}
 
 			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.about"))) {
@@ -129,5 +170,6 @@ sealed class HostMenuBar : IEscapeMenu {
 		Controller.Draw(_centring.Condition);
 		About.Draw(_centring.Condition);
 		Welcome.Draw(_centring.Condition);
+		_highlightWasShowing = ImGui.GetIO().NavVisible;
 	}
 }

@@ -561,7 +561,8 @@ public sealed class ShellWeaponsScreen {
 		for (int line = 0; line < DescriptionRows.Length; line++) {
 			var (top, bottom) = DescriptionRows[line];
 			ShellChrome.PaintText(surface, new ShellRect(box.X0 + 1, box.Y0 + top, box.X1, box.Y0 + bottom), font,
-				_description >= 0 ? _art?.Descriptions?.Text(_description + line) : null, ShellTextAlign.Center,
+				_description >= 0 ? ShellWeaponProse.Correct(_art?.Descriptions?.Text(_description + line)) : null,
+				ShellTextAlign.Center,
 				ShellChrome.FontInkColor, DescriptionBand);
 		}
 	}

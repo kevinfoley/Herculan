@@ -23,6 +23,9 @@ public sealed class ScaledImGui : IDisposable {
 	/// <summary>The font's size in pixels on a 100% display.</summary>
 	public const float FontSize = 16f;
 
+	/// <summary>How many times <see cref="FontSize"/> <see cref="LargeFont"/> is.</summary>
+	public const float LargeFontScale = 2f;
+
 	private readonly GL _gl;
 	private readonly EngineWindow _window;
 	private readonly IInputContext _input;
@@ -45,6 +48,15 @@ public sealed class ScaledImGui : IDisposable {
 	/// only between <see cref="Update"/> and <see cref="Render"/>.
 	/// </summary>
 	public static float Scaled(float size) => size * ImGui.GetFontSize() / FontSize;
+
+	/// <summary>
+	/// The same font rasterised at <see cref="LargeFontScale"/> times the size, for text drawn that large, which the
+	/// ordinary font would draw blurred. Drawn at <see cref="LargeFontSize"/>.
+	/// </summary>
+	public ImFontPtr LargeFont { get; private set; }
+
+	/// <summary>The size <see cref="LargeFont"/> is drawn at in the current ImGui frame, as <see cref="Scaled(float)"/>.</summary>
+	public static float LargeFontSize => ImGui.GetFontSize() * LargeFontScale;
 
 	/// <inheritdoc cref="Scaled(float)"/>
 	public static Vector2 Scaled(Vector2 size) => size * (ImGui.GetFontSize() / FontSize);
@@ -69,6 +81,18 @@ public sealed class ScaledImGui : IDisposable {
 		ImGui.EndTooltip();
 	}
 
+	/// <summary>
+	/// Queues a gamepad's state as ImGui's gamepad keys, once a frame before the frame starts, or null for none. Silk's
+	/// controller feeds the keyboard and the mouse only. While one is set ImGui navigates by gamepad.
+	/// </summary>
+	public Action<ImGuiIOPtr>? GamepadFeed { get; set; }
+
+	/// <summary>
+	/// Other controls held as the left and right mouse buttons, such as a <see cref="GamepadPointer"/>'s triggers, or null
+	/// for none. Read once a frame before the frame starts, alongside the mouse's own buttons.
+	/// </summary>
+	public Func<(bool Left, bool Right)>? HeldAsMouseButtons { get; set; }
+
 	/// <summary>Starts the next ImGui frame, first building the controller again if the display's scale changed.</summary>
 	public void Update(float deltaSeconds) {
 		// Compared loosely: the client scale is a ratio of two sizes, which a resize need not update together.
@@ -77,6 +101,20 @@ public sealed class ScaledImGui : IDisposable {
 					|| MathF.Abs(clientScale - _builtClientScale) > 0.01f)) {
 			_controller.Dispose();
 			_controller = Build();
+		}
+
+		// Before the controller's update, which ends in ImGui's NewFrame, where queued events are taken.
+		if (GamepadFeed is { } feed) {
+			var io = ImGui.GetIO();
+			io.ConfigFlags |= ImGuiConfigFlags.NavEnableGamepad;
+			io.BackendFlags |= ImGuiBackendFlags.HasGamepad;
+			feed(io);
+		}
+
+		if (HeldAsMouseButtons is { } held) {
+			var (left, right) = held();
+			FeedMouseButton(ImGuiMouseButton.Left, MouseButton.Left, left);
+			FeedMouseButton(ImGuiMouseButton.Right, MouseButton.Right, right);
 		}
 
 		_controller.Update(deltaSeconds);
@@ -96,6 +134,17 @@ public sealed class ScaledImGui : IDisposable {
 
 	public void Dispose() => _controller.Dispose();
 
+	// Silk's controller writes io.MouseDown from the mouse alone just before NewFrame, and NewFrame then applies the queued
+	// events over it, so the button's state with the other control's goes in as an event. ImGui drops an event that
+	// repeats the button's last state, which it reads from io.MouseDown, so that is set to the opposite first; the
+	// controller overwrites it before NewFrame either way.
+	private void FeedMouseButton(ImGuiMouseButton button, MouseButton mouseButton, bool alsoHeld) {
+		bool down = alsoHeld || (_input.Mice.Count > 0 && _input.Mice[0].IsButtonPressed(mouseButton));
+		var io = ImGui.GetIO();
+		io.MouseDown[(int)button] = !down;
+		io.AddMouseButtonEvent((int)button, down);
+	}
+
 	// The font is baked at the display's pixel size, and drawn at the window-coordinate size: on Windows the two are
 	// the same; where window coordinates are already scaled (macOS), FontGlobalScale takes the pixel-sized atlas back
 	// down so the text stays sharp. The style is a 100% display's until scaled here; the constructor's frame, which
@@ -103,8 +152,9 @@ public sealed class ScaledImGui : IDisposable {
 	private ImGuiController Build() {
 		_builtContentScale = _window.ContentScale;
 		_builtClientScale = _window.ClientScale ?? _builtContentScale;
-		var controller = new ImGuiController(_gl, _window.View, _input,
-			new ImGuiFontConfig(_fontPath, (int)MathF.Round(FontSize * _builtContentScale)));
+		float pixels = MathF.Round(FontSize * _builtContentScale);
+		var controller = new ImGuiController(_gl, _window.View, _input, new ImGuiFontConfig(_fontPath, (int)pixels),
+			() => LargeFont = ImGui.GetIO().Fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale));
 		ImGui.GetIO().FontGlobalScale = _builtClientScale / _builtContentScale;
 		ImGui.GetStyle().ScaleAllSizes(_builtClientScale);
 		ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg].W = .975f;

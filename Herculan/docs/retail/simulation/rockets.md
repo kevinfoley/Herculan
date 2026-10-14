@@ -36,7 +36,7 @@ Vtable `+0x14` of `RocketVtable` (`00498448`); draw is `Bullet_Draw`, shared wit
 
 **The proximity beep.** A round fired by a machine that is **not** locally piloted (`mech+0xa3` clear) plays sound `0x32` when it comes within 40000 units of the camera (`ViewObjectPtr`, the camera position); a latch at `+0x06` holds it to once per approach and re-arms when the round leaves that range. The player's own rounds never beep.
 
-**On retail data the speed cap is unreachable.** Every record's rate of 250 becomes 79 at the simulation's timestep and 39 after the damping, so 80 ticks carry a round from ~540 to ~3600 against a ceiling of 6000 — it is still accelerating when it burns out, and `PROJ.DAT`'s `Speed` sets nothing. Because the life is a tick count while the step scales with the timestep, a rocket is the one shot whose **range** was frame-rate dependent in the original.
+**On retail data the speed cap is unreachable.** Every record's rate of 250 becomes 79 at the simulation's timestep and 39 after the damping, so 80 ticks carry a round from ~540 to ~3600 against a ceiling of 6000 — it is still accelerating when it burns out, and `PROJ.DAT`'s `Speed` sets nothing. Flown straight from a standing launcher it covers 52,597 units, about 315 m, against the launchers' 360 m template range ([`weapon-mounts.md`](weapon-mounts.md#readiness--weaponmounts_mountisready-00410970)); the launcher's own travel speed adds to every step. Because the life is a tick count while the step scales with the timestep, a rocket is the one shot whose **range** was frame-rate dependent in the original.
 
 ## Guidance — `Rocket_HomingSteer` (`0040a254`)
 

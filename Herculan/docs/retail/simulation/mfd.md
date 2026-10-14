@@ -318,6 +318,8 @@ Both of the comm box's video paints write it, *before* their own visibility test
 
 The update floods the inset with palette index `0x11` and blits at `inset + (0x14 << XCoordShift, 0)` **plus the `.OFS` pair added raw** — the frame is drawn doubled, the offset is not.
 
+**The picture is clipped to the inset.** After the buttons' updates and before the transmission, `MfdDisplay_Update` saves the live render context's `0x204`-byte clip block, copies the display's own (`+0x104`) over it, and restores the saved one on the way out. `MfdDisplay_Ctor` gives every display that block in the one-rectangle form — count 1 at `+0x104`, and at `+0x108` a pointer to `MfdDisplay_StaticRegion` (`004d1d34`), a function-local static `GLRectangleRegion` whose rect it overwrites with the inset rect (`+0xeb`..`+0xf7`). So a portrait whose `.OFS` offset lifts it above the screen loses its top rows at the bezel, and the same clip holds for the current screen's update, which runs under the same swap.
+
 ### `MFDMap` — mode 2
 
 `MfdMapScreen_Ctor` (`00440494`) takes the whole inset rect, allocates a 0x239-byte offscreen render target centred at `-((x1 - x0) >> 1)`, `-((y1 - y0) >> 1)` — so the map's centre is 97, 60 device pixels into the inset on every retail herc — and a `View_Ctor` view with perspective shift 8 and zero angles. No labels, no aux buttons.

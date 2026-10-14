@@ -3,7 +3,7 @@ using Herculan.Engine.Platform;
 using Herculan.Engine.World;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Mission panel down the left of the window: every group (with its members), trigger area,

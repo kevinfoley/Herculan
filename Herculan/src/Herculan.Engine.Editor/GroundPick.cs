@@ -3,7 +3,7 @@ using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
 using Herculan.Engine.Terrain;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Where a view ray first meets the ground: a march along the ray against

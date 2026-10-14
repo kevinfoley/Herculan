@@ -119,9 +119,10 @@ public static class HitTests {
 		}
 
 		// "My line of fire is blocked", on the shooter's own +0x64 slot, and the only caller of it in
-		// the image. A shot that stopped nearer than the target it was aimed at and within 45 degrees
-		// of the same bearing is the shooter hitting something in the way — which is what sends a
-		// machine into `skirting` to walk around it. Only a machine implements the slot.
+		// the image. A shot that stopped nearer than the target it was aimed at, on a bearing that
+		// passes the signed test below, is the shooter hitting something in the way — which is what
+		// sends a machine into `skirting` to walk around it. Only a machine implements the slot. See
+		// docs/retail/simulation/hit-detection.md, "The sweep".
 		//
 		// A shot that reached the target does not count, which is what keeps the state off a machine
 		// that is shooting perfectly well: the original clears the "what was struck" pointer, and only
@@ -136,10 +137,14 @@ public static class HitTests {
 				shooter.Position.X - stopped.X, shooter.Position.Y - stopped.Y);
 
 			if (toStop < shooter.Position.ApproxDistanceTo(aimedAt.Position)) {
+				// The original takes each bearing less the shooter's heading, which cancels in the
+				// 16-bit difference, and compares that difference signed with no absolute value: a stop
+				// any distance round to the negative side passes, one 45 degrees or more to the
+				// positive side does not.
 				short spread = (short)(Detection.HeadingToward(stopped, shooter.Position)
 					- Detection.HeadingToward(aimedAt.Position, shooter.Position));
 
-				if (System.Math.Abs((int)spread) < BlockedLineOfFireArc) {
+				if (spread < BlockedLineOfFireLimit) {
 					shooter.OnLineOfFireBlocked();
 				}
 			}
@@ -307,11 +312,11 @@ public static class HitTests {
 	}
 
 	/// <summary>
-	/// Half-arc, either side of the bearing to the target, inside which a shot that stopped short
-	/// counts as the shooter's own line of fire being blocked. 45°; see
-	/// docs/retail/simulation/ai-combat-states.md.
+	/// The signed bound on a short-stopped shot's bearing less the target's, below which it counts as
+	/// the shooter's own line of fire being blocked: 45° to the positive side, none to the negative.
+	/// See docs/retail/simulation/hit-detection.md, "The sweep".
 	/// </summary>
-	private const int BlockedLineOfFireArc = 0x2000;
+	private const short BlockedLineOfFireLimit = 0x2000;
 
 	/// <summary>
 	/// How near the player the squadmate <see cref="Raycast"/> picks must be for it to complain about

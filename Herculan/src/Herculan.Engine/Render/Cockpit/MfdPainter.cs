@@ -49,6 +49,7 @@ internal sealed class MfdPainter {
 	/// </summary>
 	internal static void AddMfd(CockpitArt hud, CockpitHudState state,
 			Action<string, int, float, float> blitDevice,
+			ClippedBlitWriter blitDeviceClipped,
 			Action<string, int, float, float, short> blitRotatedDevice,
 			MfdTextWriter drawText,
 			Action<float, float, float, float, Vector3> fillRect,
@@ -174,7 +175,7 @@ internal sealed class MfdPainter {
 		// update draws none while the display has switched itself to the missile camera.
 		bool transmissionShown = false;
 		if (state.Transmission is { } transmission && state.MfdPowerUpFrame is null && !state.MissileCamHolding) {
-			AddMfdTransmission(hud, transmission, blitDevice, DrawLabel, fillRect, insetX, insetY, X, Y);
+			AddMfdTransmission(hud, transmission, blitDeviceClipped, DrawLabel, fillRect, insetX, insetY, X, Y);
 			transmissionShown = true;
 		}
 
@@ -578,24 +579,36 @@ internal sealed class MfdPainter {
 	///
 	/// <para>The frame is blitted doubled, as every <c>dba</c>-only bank is, but the offset pair is
 	/// added raw — see <see cref="SquadTransmission.OffsetX"/>.</para>
+	///
+	/// <para>The blit is cut at the inset's edges. Before it draws, the update copies the display's own
+	/// clip block (<c>+0x104</c>) into the live render context, and <c>MfdDisplay_Ctor</c> points that
+	/// block at a one-rectangle region holding the inset rect (<c>MfdDisplay_StaticRegion</c>,
+	/// <c>004d1d34</c>). A portrait whose <c>.OFS</c> offset lifts it above the screen's top therefore
+	/// loses its top rows rather than painting over the bezel.</para>
 	/// </summary>
 	private static void AddMfdTransmission(CockpitArt hud, SquadTransmission transmission,
-			Action<string, int, float, float> blitDevice, MfdLabelWriter drawLabel,
+			ClippedBlitWriter blitDeviceClipped, MfdLabelWriter drawLabel,
 			Action<float, float, float, float, Vector3> fillRect,
 			float insetX, float insetY, Func<int, float> x, Func<int, float> y) {
 		const float S = CockpitArt.GauToPixelScale;
 
 		// The flood is the inset rect the display carries at +0xeb, whose extent is the screen
 		// chrome's own frame — and a sprite's Width/Height are already device pixels, so the GAU
-		// doubling must not be applied to them a second time.
-		if (hud.Sprites?.Sprite(MfdLayout.Bank, MfdLayout.ScreenFrame) is { } screen
-			&& hud.PaletteEntry(MfdLayout.ScreenFillPaletteIndex) is { } fill) {
-			fillRect(insetX, insetY, insetX + screen.Width, insetY + screen.Height, fill);
+		// doubling must not be applied to them a second time. The clip is the same rect.
+		if (hud.Sprites?.Sprite(MfdLayout.Bank, MfdLayout.ScreenFrame) is not { } screen) {
+			return;
 		}
 
-		blitDevice(transmission.Bank, transmission.Frame,
+		float right = insetX + screen.Width;
+		float bottom = insetY + screen.Height;
+		if (hud.PaletteEntry(MfdLayout.ScreenFillPaletteIndex) is { } fill) {
+			fillRect(insetX, insetY, right, bottom, fill);
+		}
+
+		blitDeviceClipped(transmission.Bank, transmission.Frame,
 			insetX + MfdLayout.TransmissionOrigin.X * S + transmission.OffsetX,
-			insetY + MfdLayout.TransmissionOrigin.Y * S + transmission.OffsetY);
+			insetY + MfdLayout.TransmissionOrigin.Y * S + transmission.OffsetY,
+			insetX, insetY, right, bottom);
 
 		if (!transmission.ShowName || transmission.Name is not { Length: > 0 } name) {
 			return;
@@ -720,6 +733,13 @@ internal sealed class MfdPainter {
 	/// </summary>
 	private delegate void MfdHotkeyLabelWriter(string font, string alternateFont, string text,
 		int hotkeyIndex, float x0, float y0, float x1, float y1, LabelAlign align, float marginX);
+
+	/// <summary>
+	/// Blits one sprite frame at a device-pixel position, trimmed to a device-pixel clip rect whose
+	/// right and bottom edges are exclusive.
+	/// </summary>
+	internal delegate void ClippedBlitWriter(string bank, int frame, float deviceLeft, float deviceTop,
+		float clipLeft, float clipTop, float clipRight, float clipBottom);
 
 	/// <summary>One run of glyphs, with the character at <c>hotkeyIndex</c> in an alternate font.</summary>
 	internal delegate float MfdTextWriter(string font, string alternateFont, string text,

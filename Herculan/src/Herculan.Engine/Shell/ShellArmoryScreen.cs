@@ -515,7 +515,8 @@ public sealed class ShellArmoryScreen {
 		for (int line = 0; line < InfoRows.Length; line++) {
 			var (top, bottom) = InfoRows[line];
 			ShellChrome.PaintText(surface, new ShellRect(box.X0, box.Y0 + top, box.X1, box.Y0 + bottom), font,
-				SelectedRow >= 0 ? _catalog?.Info?.Text(SelectedRow * InfoLines + line) : null, ShellTextAlign.Center,
+				SelectedRow >= 0 ? ShellWeaponProse.Correct(_catalog?.Info?.Text(SelectedRow * InfoLines + line)) : null,
+				ShellTextAlign.Center,
 				ShellChrome.FontInkColor, InfoBand);
 		}
 	}

@@ -39,6 +39,8 @@ partial class MainForm {
 		_toolsMenuItem = new ToolStripMenuItem();
 		_imageExportMenuItem = new ToolStripMenuItem();
 		_modelViewerMenuItem = new ToolStripMenuItem();
+		_compareHercsMenuItem = new ToolStripMenuItem();
+		_compareWeaponsMenuItem = new ToolStripMenuItem();
 		_volTree = new TreeView();
 		_fileDetails = new ListView();
 		_fileDetailsPropertyColumn = new ColumnHeader();
@@ -173,7 +175,7 @@ partial class MainForm {
 		// 
 		// _toolsMenuItem
 		// 
-		_toolsMenuItem.DropDownItems.AddRange(new ToolStripItem[] { _imageExportMenuItem, _modelViewerMenuItem });
+		_toolsMenuItem.DropDownItems.AddRange(new ToolStripItem[] { _imageExportMenuItem, _modelViewerMenuItem, _compareHercsMenuItem, _compareWeaponsMenuItem });
 		_toolsMenuItem.Name = "_toolsMenuItem";
 		_toolsMenuItem.Size = new Size(47, 20);
 		_toolsMenuItem.Text = "&Tools";
@@ -191,6 +193,20 @@ partial class MainForm {
 		_modelViewerMenuItem.Size = new Size(243, 22);
 		_modelViewerMenuItem.Text = "3D Model Viewer (DTS)...";
 		_modelViewerMenuItem.Click += OnOpenModelViewer;
+		// 
+		// _compareHercsMenuItem
+		// 
+		_compareHercsMenuItem.Name = "_compareHercsMenuItem";
+		_compareHercsMenuItem.Size = new Size(243, 22);
+		_compareHercsMenuItem.Text = "&Compare Hercs...";
+		_compareHercsMenuItem.Click += OnOpenCompareHercs;
+		// 
+		// _compareWeaponsMenuItem
+		// 
+		_compareWeaponsMenuItem.Name = "_compareWeaponsMenuItem";
+		_compareWeaponsMenuItem.Size = new Size(243, 22);
+		_compareWeaponsMenuItem.Text = "Compare &Weapons...";
+		_compareWeaponsMenuItem.Click += OnOpenCompareWeapons;
 		// 
 		// _volTree
 		// 
@@ -311,6 +327,8 @@ partial class MainForm {
 	private ToolStripMenuItem _toolsMenuItem;
 	private ToolStripMenuItem _imageExportMenuItem;
 	private ToolStripMenuItem _modelViewerMenuItem;
+	private ToolStripMenuItem _compareHercsMenuItem;
+	private ToolStripMenuItem _compareWeaponsMenuItem;
 	private TreeView _volTree;
 	private ListView _fileDetails;
 	private ColumnHeader _fileDetailsPropertyColumn;

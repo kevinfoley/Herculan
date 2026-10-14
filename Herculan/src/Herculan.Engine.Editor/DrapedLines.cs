@@ -3,7 +3,7 @@ using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
 using Herculan.Engine.Terrain;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Builds render-space line lists that lie on the terrain: each edge is cut into pieces no longer

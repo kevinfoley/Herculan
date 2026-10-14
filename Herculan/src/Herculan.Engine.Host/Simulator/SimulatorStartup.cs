@@ -8,6 +8,7 @@ using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
 using Herculan.Engine.Scene;
+using Herculan.Engine.Shell;
 using Herculan.Engine.World;
 
 namespace Herculan.Engine.Host.Simulator;

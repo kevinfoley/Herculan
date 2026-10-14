@@ -28,7 +28,7 @@ public enum ShellRepairCategory {
 /// <para><b>The expansion is the loader's, not the file's.</b> <c>damage.dat</c> carries fifteen
 /// shares and two scale factors and nothing chassis-specific; <c>hercdisp.cpp</c> turns them into a
 /// 9 x 6 external table, a 9 x 9 internal table and a 33-entry weapon table by multiplying each share
-/// by the chassis price through <see cref="Q10"/>. Every later cost is a plain percentage of one of
+/// by the chassis price (<see cref="DamageRepairCost.ExternalGroupValue"/>). Every later cost is a plain percentage of one of
 /// those unit values, which is why the whole model can live behind three small functions. See
 /// docs/retail/formats/herc-catalogs.md and docs/retail/shell/armory.md.</para>
 ///
@@ -63,8 +63,8 @@ public sealed class ShellRepairCosts {
 	/// <summary>How many repair levels there are. Level 5 is a destroyed component.</summary>
 	public const int LevelCount = 6;
 
-	/// <summary>The salvage pool is kept in kilograms and a chassis price in tons.</summary>
-	public const int KilogramsPerTon = 1000;
+	/// <inheritdoc cref="DamageRepairCost.KilogramsPerTon"/>
+	public const int KilogramsPerTon = DamageRepairCost.KilogramsPerTon;
 
 	private readonly short[,] _externalGroupValue;
 	private readonly short[,] _internalValue;
@@ -98,44 +98,29 @@ public sealed class ShellRepairCosts {
 		return Expand(values, Array.ConvertAll(chassis.Data, entry => entry.SalvageReq));
 	}
 
-	/// <summary>
-	/// The loader's own expansion, given the shares and one price in tons per chassis:
-	/// each unit value is the chassis price in kilograms scaled by the component's share and then by
-	/// the file's chassis scale, both as Q10 fractions.
-	/// </summary>
+	/// <summary>The loader's own expansion, given the shares and one price in tons per chassis.</summary>
 	public static ShellRepairCosts Expand(DamageRepairCost values, IReadOnlyList<short> priceInTons) {
 		int chassisCount = priceInTons.Count;
 		var external = new short[chassisCount, DamageRepairCost.ExternalGroupCount];
 		var internals = new short[chassisCount, DamageRepairCost.InternalCount];
 
 		for (int type = 0; type < chassisCount; type++) {
-			int price = priceInTons[type] * KilogramsPerTon;
-
 			for (int group = 0; group < DamageRepairCost.ExternalGroupCount; group++) {
-				external[type, group] =
-					(short)Q10(values.ChassisScale, Q10(values.ExternalGroupPercent[group], price));
+				external[type, group] = (short)values.ExternalGroupValue(priceInTons[type], group);
 			}
 
 			for (int component = 0; component < DamageRepairCost.InternalCount; component++) {
-				internals[type, component] =
-					(short)Q10(values.ChassisScale, Q10(values.InternalPercent[component], price));
+				internals[type, component] = (short)values.InternalValue(priceInTons[type], component);
 			}
 		}
 
 		var weapons = new short[values.WeaponValue.Length];
 		for (int id = 0; id < weapons.Length; id++) {
-			weapons[id] = (short)Q10(values.WeaponScale, values.WeaponValue[id]);
+			weapons[id] = (short)values.WeaponUnitValue(id);
 		}
 
 		return new ShellRepairCosts(external, internals, weapons, priceInTons.ToArray());
 	}
-
-	/// <summary>
-	/// <c>FixedMulQ10</c> (<c>00450a84</c>) — the Q10 fixed-point multiply the whole cost model is built on. Both of
-	/// <c>damage.dat</c>'s scale factors are fractions of 1024, not percentages, and a figure that
-	/// looks 2% out is usually this.
-	/// </summary>
-	public static int Q10(int a, int b) => a * b >> 10;
 
 	/// <summary>
 	/// <c>Repair_LevelForCondition</c> (<c>0041381c</c>) — the first level whose band floor is at or

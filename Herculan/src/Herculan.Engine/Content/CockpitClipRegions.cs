@@ -1,4 +1,4 @@
-using System.Buffers.Binary;
+using HercWorks.Core.Io.Transform.Dbsim;
 
 namespace Herculan.Engine.Content;
 
@@ -77,10 +77,9 @@ public sealed class CockpitClipRegions {
 		return bytes == null ? null : Parse(bytes);
 	}
 
-	/// <summary>Parses the region arrays and flattens them to per-scanline spans in one pass.</summary>
+	/// <summary>Reads the regions through <see cref="ClipRegionFileTransformer"/> and flattens them to per-scanline spans.</summary>
 	public static CockpitClipRegions? Parse(byte[] bytes) {
-		int at = 0;
-		if (!TryReadInt16(bytes, ref at, out int rectCount) || rectCount < 0) {
+		if (new ClipRegionFileTransformer().Parse(bytes) is not { } file) {
 			return null;
 		}
 
@@ -102,33 +101,16 @@ public sealed class CockpitClipRegions {
 			}
 		}
 
-		for (int r = 0; r < rectCount; r++) {
-			if (!TryReadInt16(bytes, ref at, out int y0) || !TryReadInt16(bytes, ref at, out int y1)
-				|| !TryReadInt16(bytes, ref at, out int x0) || !TryReadInt16(bytes, ref at, out int x1)) {
-				return null;
-			}
-
-			for (int y = y0; y <= y1; y++) {
-				Add(y, x0, x1 - x0 + 1);
+		foreach (var rect in file.Rects) {
+			for (int y = rect.Y0; y <= rect.Y1; y++) {
+				Add(y, rect.X0, rect.X1 - rect.X0 + 1);
 			}
 		}
 
-		if (!TryReadInt16(bytes, ref at, out int blockCount) || blockCount < 0) {
-			return null;
-		}
-
-		for (int b = 0; b < blockCount; b++) {
-			if (!TryReadInt16(bytes, ref at, out int firstRow) || !TryReadInt16(bytes, ref at, out int rowCount)
-				|| rowCount < 0) {
-				return null;
-			}
-
-			for (int i = 0; i < rowCount; i++) {
-				if (!TryReadInt16(bytes, ref at, out int xStart) || !TryReadInt16(bytes, ref at, out int xEnd)) {
-					return null;
-				}
-
-				Add(firstRow + i, xStart, xEnd - xStart + 1);
+		foreach (var block in file.Blocks) {
+			for (int i = 0; i < block.Rows.Length; i++) {
+				var span = block.Rows[i];
+				Add(block.FirstRow + i, span.XStart, span.XEnd - span.XStart + 1);
 			}
 		}
 
@@ -141,16 +123,5 @@ public sealed class CockpitClipRegions {
 		}
 
 		return new CockpitClipRegions(table);
-	}
-
-	private static bool TryReadInt16(byte[] bytes, ref int at, out int value) {
-		if (at + 2 > bytes.Length) {
-			value = 0;
-			return false;
-		}
-
-		value = BinaryPrimitives.ReadInt16LittleEndian(bytes.AsSpan(at, 2));
-		at += 2;
-		return true;
 	}
 }

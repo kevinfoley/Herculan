@@ -54,7 +54,12 @@ public static class TransformerRegistry {
 
 		// --- dbsim (various dirs) ---
 		new("Beam Data", e => NameIs(e, "BEAM.DAT"), () => new Dbsim.BeamDatFileTransformer()),
-		new("Scanline Clip Mask", e => ExtIs(e, FileType.Edg), () => new Dbsim.EdgeClipFileTransformer()),
+		// One format, three extensions: CockpitClipRegions_Load (0042dcf0) reads the per-view cockpit
+		// cutouts and the heads-down display's edg\HDDCLIP.EDG alike.
+		new("Clip Regions", e => ExtIs(e, FileType.Edg)
+				|| ExtIs(e, FileType.Hd0) || ExtIs(e, FileType.Hd1) || ExtIs(e, FileType.Hd2) || ExtIs(e, FileType.Hd3)
+				|| ExtIs(e, FileType.Ed0) || ExtIs(e, FileType.Ed1) || ExtIs(e, FileType.Ed2) || ExtIs(e, FileType.Ed3),
+			() => new Dbsim.ClipRegionFileTransformer()),
 		new("HUD Layout", e => ExtIs(e, FileType.Gau), () => new Dbsim.GauFileTransformer()),
 		new("Herc Collider", e => ExtIs(e, FileType.Col), () => new Dbsim.HercColliderTransformer()),
 		new("3D Model (DTS)", e => ExtIs(e, FileType.Dts), () => new Dbsim.DTSModelTransformer()),
@@ -163,8 +168,10 @@ public static class TransformerRegistry {
 		["Component Value Table"] = new(() => new Shell.Es1DamageRepairCostTransformer()),
 		// docs/es1/formats/bnd-notes.md#bndcambnd: 20 bytes, the camera's constants, where ES2's file is 24.
 		["Camera Config"] = new(() => new Bnd.Es1CamTransformer()),
-		// docs/es1/formats/hd-ed-clip-regions.md: the cockpit views' clip-region layout, whose rects are two rows.
-		["Scanline Clip Mask"] = new(() => new Dbsim.Es1ClipRegionsTransformer()),
+		// docs/es1/formats/hd-ed-clip-regions.md: the clip-region layout, whose rects are two rows, for the .EDG files and the
+		// cockpit views' ed0\ to ed3\ (#which-files).
+		["Clip Regions"] = new(() => new Dbsim.Es1ClipRegionsTransformer(),
+			e => ExtIs(e, FileType.Edg) || ExtIs(e, FileType.Ed0) || ExtIs(e, FileType.Ed1) || ExtIs(e, FileType.Ed2) || ExtIs(e, FileType.Ed3)),
 	};
 
 	/// <summary>
@@ -233,9 +240,6 @@ public static class TransformerRegistry {
 		// of ES2's reader, which takes the simulator's.
 		new("Shell Lip-Sync Script", e => ExtIs(e, FileType.Snc) && Shell.Es1ShellLipSyncScriptTransformer.IsShellLayout(e.RawBytes),
 			() => new Shell.Es1ShellLipSyncScriptTransformer()),
-		// docs/es1/formats/hd-ed-clip-regions.md#which-files: the cockpit views' clip regions, the .EDG reader's layout.
-		new("Cockpit View Clip Regions", e => ExtIs(e, FileType.Ed0) || ExtIs(e, FileType.Ed1) || ExtIs(e, FileType.Ed2) || ExtIs(e, FileType.Ed3),
-			() => new Dbsim.Es1ClipRegionsTransformer()),
 		// docs/es1/formats/wld-world.md#the-world-tables-in-zonesvol: no reader found, bytes kept whole (OPAQUE).
 		new("Unread World Table (opaque)", e => ExtIs(e, FileType.Dat) && NameStartsWith(e, "WORLD"),
 			() => new Common.Es1OpaqueFileTransformer()),

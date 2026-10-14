@@ -5,8 +5,8 @@
 #
 #   wsl -d Ubuntu -- bash /mnt/e/ES2Stuff/tools/scripts/wsl/sync.sh
 #
-# The copy goes to $HERCULAN_WSL_ROOT, ~/ES2Stuff unless set. Each run brings Herculan/ and Branding/ (which the
-# host's project links its icon from) in step with Windows. ES2/ and ES2v110/ are copied the first time only, since
+# The copy goes to $HERCULAN_WSL_ROOT, ~/ES2Stuff unless set. Each run brings Herculan/, Branding/ (which the
+# host's project links its icon from) and LICENSE.txt (which it embeds) in step with Windows. ES2/ and ES2v110/ are copied the first time only, since
 # the games write into them; delete one from the copy to take it again. Disc images are linked, not copied: they are
 # opened by name, and what is inside them is matched ignoring case anyway.
 set -euo pipefail
@@ -17,6 +17,7 @@ mkdir -p "$dst"
 
 rsync -a --delete --exclude=bin/ --exclude=obj/ --exclude=.vs/ --exclude=TestResults/ "$src/Herculan/" "$dst/Herculan/"
 rsync -a --delete "$src/Branding/" "$dst/Branding/"
+rsync -a "$src/LICENSE.txt" "$dst/LICENSE.txt"
 
 for install in ES2 ES2v110; do
 	if [ -d "$src/$install" ] && [ ! -d "$dst/$install" ]; then

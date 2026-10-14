@@ -148,10 +148,11 @@ sealed class JoystickSource : IJoystickSource {
 		Device is null || Map is not { } map ? JoystickCapabilities.None : map.Capabilities();
 
 	/// <summary>
-	/// Whether <see cref="Read"/> reports the stick centred and every button up, which it does while the Controller
-	/// window is open, so that moving a control to bind it does not also drive the machine. After it comes down the
-	/// stick stays quiet until every device button has been let go, so a button pressed to bind it does not fire its
-	/// action as the window closes.
+	/// Whether <see cref="Read"/> reports the stick centred and every button up, which it does while the pad is working
+	/// something of the host's (<see cref="Simulator.SimulatorHost"/> sets it), so that moving a control to bind it, or
+	/// steering through a menu, does not also drive the machine. After it comes down the stick stays quiet until every
+	/// device button has been let go, so a button pressed to bind it or to choose an item does not fire its action as
+	/// the window closes.
 	/// </summary>
 	public bool Muted {
 		get => _muted;
@@ -200,9 +201,23 @@ sealed class JoystickSource : IJoystickSource {
 		return Read(map, device);
 	}
 
-	/// <summary>One frame of <paramref name="device"/> read through <paramref name="map"/>.</summary>
+	/// <summary>
+	/// Whether the map's radar toggle is held (<see cref="JoystickDeviceMap.RadarToggle"/>). It is quiet whenever
+	/// <see cref="Read"/> reports the stick neutral: while <see cref="Muted"/>, and after it until every button is let go.
+	/// </summary>
+	public bool RadarToggleHeld() =>
+		!Muted && !_awaitingRelease && Device is { } device && Map is { } map && RadarToggleHeld(map, device);
+
+	/// <summary>Whether <paramref name="map"/>'s radar toggle is held on <paramref name="device"/>, a button the host keeps reading as up.</summary>
+	public static bool RadarToggleHeld(JoystickDeviceMap map, ControllerDevice device) =>
+		map.RadarToggle.Pressed(device.Axis, index => !device.Reserved(index) && device.Button(index));
+
+	/// <summary>
+	/// One frame of <paramref name="device"/> read through <paramref name="map"/>, a button the host keeps
+	/// (<see cref="ControllerDevice.Reserved"/>) reading as up.
+	/// </summary>
 	public static JoystickReading Read(JoystickDeviceMap map, ControllerDevice device) =>
-		map.Read(device.Axis, device.Button, device.Hat(map.HatIndex));
+		map.Read(device.Axis, index => !device.Reserved(index) && device.Button(index), device.Hat(map.HatIndex));
 
 	/// <summary>
 	/// Says what the stick can do, once — and not before it will answer. Silk.NET's GLFW backend publishes a

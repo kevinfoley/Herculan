@@ -264,41 +264,39 @@ public sealed class CanopyPanelPainter {
 		// than painted over the canopy. Trimming the quad and its UVs by the same fraction keeps the whole
 		// cockpit one batch, exactly as the Heads-Down Display's own clipped blit does.
 		void BlitDeviceClippedX(string bank, int frame, float deviceLeft, float deviceTop,
-				float clipLeft, float clipRight) {
+				float clipLeft, float clipRight) =>
+			BlitDeviceClipped(bank, frame, deviceLeft, deviceTop,
+				clipLeft, float.NegativeInfinity, clipRight, float.PositiveInfinity);
+
+		// The same trimmed to a span of device rows, for the altitude scale's tick strip, which its paint
+		// draws through a clip rect the height of the scale.
+		void BlitDeviceClippedY(string bank, int frame, float deviceLeft, float deviceTop,
+				float clipTop, float clipBottom) =>
+			BlitDeviceClipped(bank, frame, deviceLeft, deviceTop,
+				float.NegativeInfinity, clipTop, float.PositiveInfinity, clipBottom);
+
+		// The same trimmed on both axes, for the MFD's transmission, which is blitted through the display's
+		// own clip region (see MfdPainter.AddMfd).
+		void BlitDeviceClipped(string bank, int frame, float deviceLeft, float deviceTop,
+				float clipLeft, float clipTop, float clipRight, float clipBottom) {
 			if (sprites.Sprite(bank, frame) is not { } sprite || sprite.Width <= 0 || sprite.Height <= 0) {
 				return;
 			}
 
 			float width = sprite.Width * sprite.Scale;
-			float x0 = Math.Max(deviceLeft, clipLeft), x1 = Math.Min(deviceLeft + width, clipRight);
-			if (x1 <= x0) {
-				return;
-			}
-
-			var r = sprite.Rect;
-			_overlay.AddTexturedQuad(Dx(x0), Dy(deviceTop), Dx(x1), Dy(deviceTop + sprite.Height * sprite.Scale),
-				r.U0 + (r.U1 - r.U0) * ((x0 - deviceLeft) / width), r.V0,
-				r.U1 - (r.U1 - r.U0) * ((deviceLeft + width - x1) / width), r.V1);
-		}
-
-		// The same trimmed to a span of device rows, for the altitude scale's tick strip, which its paint
-		// draws through a clip rect the height of the scale.
-		void BlitDeviceClippedY(string bank, int frame, float deviceLeft, float deviceTop,
-				float clipTop, float clipBottom) {
-			if (sprites.Sprite(bank, frame) is not { } sprite || sprite.Width <= 0 || sprite.Height <= 0) {
-				return;
-			}
-
 			float height = sprite.Height * sprite.Scale;
+			float x0 = Math.Max(deviceLeft, clipLeft), x1 = Math.Min(deviceLeft + width, clipRight);
 			float y0 = Math.Max(deviceTop, clipTop), y1 = Math.Min(deviceTop + height, clipBottom);
-			if (y1 <= y0) {
+			if (x1 <= x0 || y1 <= y0) {
 				return;
 			}
 
 			var r = sprite.Rect;
-			_overlay.AddTexturedQuad(Dx(deviceLeft), Dy(y0), Dx(deviceLeft + sprite.Width * sprite.Scale), Dy(y1),
-				r.U0, r.V0 + (r.V1 - r.V0) * ((y0 - deviceTop) / height),
-				r.U1, r.V1 - (r.V1 - r.V0) * ((deviceTop + height - y1) / height));
+			_overlay.AddTexturedQuad(Dx(x0), Dy(y0), Dx(x1), Dy(y1),
+				r.U0 + (r.U1 - r.U0) * ((x0 - deviceLeft) / width),
+				r.V0 + (r.V1 - r.V0) * ((y0 - deviceTop) / height),
+				r.U1 - (r.U1 - r.U0) * ((deviceLeft + width - x1) / width),
+				r.V1 - (r.V1 - r.V0) * ((deviceTop + height - y1) / height));
 		}
 
 		// A sprite rotated about its own top-left corner rather than blitted axis-aligned — the MFD
@@ -411,7 +409,7 @@ public sealed class CanopyPanelPainter {
 			DrawText(fontName, text, textX, textY);
 		}
 
-		MfdPainter.AddMfd(hud, state, BlitDevice, BlitRotatedDevice, DrawRun,
+		MfdPainter.AddMfd(hud, state, BlitDevice, BlitDeviceClipped, BlitRotatedDevice, DrawRun,
 			(x0, y0, x1, y1, color) => _overlay.AddFilledRect(Dx(x0), Dy(y0), Dx(x1), Dy(y1), color),
 			drawNavMapTerrain is null ? null : (x0, y0, x1, y1, centre, navMap) => drawNavMapTerrain(
 				Dx(x0), Dy(y0), Dx(x1), Dy(y1), new Vector2(Dx(centre.X), Dy(centre.Y)), navMap),

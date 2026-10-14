@@ -10,15 +10,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Herculan.Engine\Herculan.Engine.csproj" />
+    <ProjectReference Include="..\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <None Include="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Settings\" />
   </ItemGroup>
 
 </Project>

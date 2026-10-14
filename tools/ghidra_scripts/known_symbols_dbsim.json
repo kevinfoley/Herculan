@@ -9309,8 +9309,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitClipRegions_Load",
-      "description": "Parser for the per-view .ED0-.ED3 / .HD0-.HD3 files (folder name built by overwriting index 2 of the 'edg'/'hdg' literals with a digit). Layout after the 9-byte VOL prefix: int16 rectCount, rectCount x {int16 y0, y1, x0, x1}; then int16 spanBlockCount, and per block {int16 firstRow, int16 rowCount, rowCount x {int16 xStart, int16 xEnd}}. Rects become type-0 region objects, span blocks type-2. Coordinates are shifted by the caller's (xShift,yShift) pair, which is (0,0) for the .HD* hi-res set and VideoMode_X/YCoordShift for the .DB*-era .ED* set. Output is a 0x204-byte block (int count + up to 128 region pointers). APOCA.HD0 reads cleanly: one full-width rect for rows 0-76 then a 235-row span block from row 77 whose spans narrow inward (the canopy frame). APOCA.HD1 is empty (rectCount=0, blockCount=0), which is why view 1 shows no 3D at all.",
-      "source": "cockpit rendering RE session"
+      "description": "CockpitClipRegions_Load(path, out, shift): reads a clip-region file through a VolRStream into the 0x204-byte block at out (int count, then up to 128 region pointers; no bound check against 128). shift is int[2] {xShift, yShift}. Callers found by es2_xref: CockpitViewManager_LoadViews (per-view .HD0-.HD3 / .ED0-.ED3) and HddDisplay_Ctor (edg\\hddclip). Layout after the 9-byte VOL prefix: int16 rectCount, rectCount x {int16 y0, y1, x0, x1}; int16 blockCount, blockCount x {int16 firstRow, int16 rowCount, rowCount x {int16 xStart, int16 xEnd}}; reading stops after the last block. Each rect becomes a 0x18-byte GLRectangleRegion (out stores obj+4: type 0 at +4, x0 +8, y0 +0xc, x1 +0x10, y1 +0x14), each coordinate shifted left by its axis's shift and, when that shift is nonzero, the inclusive ends y1/x1 get (1 << shift) - 1 added. Each span block becomes an 8-byte {int type 2, ptr data}, data a Mem_NewArray holding {int16 firstRow << yShift, int16 rowCount << yShift, then the pairs}; with yShift nonzero each file pair is written to its row and copied into the next one, and with xShift nonzero every pair becomes {xStart << xShift, (xEnd << xShift) + 1}. count = rects + blocks.",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "0042dcf0+798",
+        "sha1": "a00da6f123de",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0042e010",
@@ -14307,8 +14313,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdDisplay_Update",
-      "description": "MFD per-frame update. While the power-up is armed and not done (+0x8c/+0x8d) on the scanner (mode 3) it starts, then steps, the dish animation's SpriteSequence at +0x331 and returns; the pass after it ends sets done, and the next frees the sequencer and the radar bank. On another screen done comes once the coarse tick passes +0x345. Then dispatches the current screen's update slot via +0xcd + mode*4, refreshes the title for modes 2 and 5, and when a transmission is active draws the speaking pilot's frames at inset+(0x14,0) and fills the message label at +0x329. See docs/retail/simulation/mfd.md.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "MFD per-frame update. Returns at once when the published cockpit view's +0x14 is 4, when the inset rect (+0xeb) has no visible corner, or while the power-up is not armed (+0x8c). While armed and not done (+0x8d) on the scanner (mode 3) it starts, then steps, the dish animation's SpriteSequence at +0x331 and returns; the pass after it ends sets done, and the next frees the sequencer and the radar bank. On another screen done comes once the coarse tick passes +0x345. Then runs the sensor dropout (Player_DependentCondition(2)) and returns while it hides the display, updates the buttons the mode's MfdButtonVisibility row shows, and swaps the display's own 0x204-byte clip block (+0x104, the inset rect via MfdDisplay_StaticRegion) into the live render context until it returns. Under it: when g_MfdMissileCamMode is -1 and the HDD roster's transmission block (+0x766, valid flag +0x782) is up, floods the inset with palette 0x11, blits the speaking pilot's frames at inset+(0x14,0) plus the raw .OFS pair, writes the name to the message label at +0x329 while the box state is 2, and skips the screen; otherwise runs the queued repaint (+0xb0), dispatches the current screen's update slot via +0xcd + mode*4 when its dirty byte is set (modes 0 and 4 on a 0x1e-tick refresh), and refreshes the title for modes 2 and 5. See docs/retail/simulation/mfd.md.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "00446328+1250",
+        "sha1": "595db09f2dc5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044680c",
@@ -36177,13 +36189,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_HeadingToward",
-      "description": "Ground-plane bearing from one position to another as a BAM angle: atan2(to.y - from.y, to.x - from.x) via Math_Atan2Guarded, minus a quarter turn, because the sim's forward axis is model Y and not model X. Call sites pass the destination first. DBSim_SpawnMissionObjects uses it to face a group along the first leg of its route when the group's block-11 record carries no heading ref.",
+      "description": "(to, from): ground-plane bearing from one int32 position to another as a BAM angle, Math_Atan2Guarded(to.x - from.x, to.y - from.y) + 0xc000 in AX, i.e. atan2(to.y - from.y, to.x - from.x) less a quarter turn, because the sim's forward axis is model Y and not model X. DBSim_SpawnMissionObjects uses it to face a group along the first leg of its route when the group's block-11 record carries no heading ref.",
       "source": "docs/retail/formats/script-dat.md",
       "verified": {
         "bytes": "00492828+39",
         "sha1": "fe1bbf2be164",
         "scope": "body",
-        "via": "both"
+        "via": "disasm"
       }
     },
     {

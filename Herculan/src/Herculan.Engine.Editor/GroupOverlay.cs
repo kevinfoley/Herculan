@@ -5,7 +5,7 @@ using Herculan.Engine.Render;
 using Herculan.Engine.World;
 using ImGui = ImGuiNET.ImGui;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// What the editor draws over the placed objects and the groups they belong to: the selection boxes,

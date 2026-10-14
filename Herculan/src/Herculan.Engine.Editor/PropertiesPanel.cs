@@ -6,7 +6,7 @@ using Herculan.Engine.Scene;
 using Herculan.Engine.World;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Properties panel down the right of the window: one view per kind of

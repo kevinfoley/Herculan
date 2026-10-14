@@ -499,7 +499,7 @@ The transmit path, and what the squadmate does with an order, is [`ai-squadmates
 
 ## `hddclip`
 
-Loaded by `CockpitClipRegions_Load` from `edg\HDDCLIP.EDG` — the 320-wide clip file, shifted by `VideoMode_X/YCoordShift` at load, not an `hdg\` counterpart. Regions are then offset by the screen rect's own position minus the block origin. Same layout as the `.HD*`/`.ED*` files in [`../formats/hd-ed-clip-regions.md`](../formats/hd-ed-clip-regions.md).
+Loaded by `CockpitClipRegions_Load` from `edg\HDDCLIP.EDG` — the 320-wide clip file, shifted by `VideoMode_X/YCoordShift` at load, not an `hdg\` counterpart. Regions are then offset by the screen rect's own position minus the block origin: the loop that follows treats every region as a span block, adding the y offset to its first row and the x offset to both ends of every span, which suits the file's single span block and no rects. Same layout as the `.HD*`/`.ED*` files in [`../formats/hd-ed-clip-regions.md`](../formats/hd-ed-clip-regions.md).
 
 ## Open
 
