@@ -30,6 +30,7 @@ sealed class FrontEndWindow : IDisposable {
 	private readonly string _imguiFontPath;
 	private readonly string? _screenshotPath;
 	private readonly GamepadHostButtons _padButtons = new();
+	private readonly GamepadPointer _padPointer = new();
 	private IInputContext? _input;
 	private ScaledImGui? _imgui;
 	private ImGuiGamepad? _padNav;
@@ -124,6 +125,24 @@ sealed class FrontEndWindow : IDisposable {
 		var client = _window.ClientSize;
 		return (mouse.Position.X * framebuffer.X / Math.Max(client.X, 1),
 			mouse.Position.Y * framebuffer.Y / Math.Max(client.Y, 1));
+	}
+
+	/// <summary>Whether a gamepad's right trigger is pulled as the left button (<see cref="GamepadPointer"/>).</summary>
+	public bool PadClickHeld => _padPointer.ClickHeld;
+
+	/// <summary>Whether a gamepad button is held as a skip key (<see cref="GamepadPointer"/>).</summary>
+	public bool PadSkipHeld => _padPointer.SkipHeld;
+
+	/// <summary>
+	/// Moves the pointer by a gamepad's left stick and reads its right trigger and its buttons, once an update before the
+	/// buttons are polled (<see cref="GamepadPointer"/>). The pad stands down without the focus, in a <c>--screenshot</c>
+	/// capture, and while the menu bar or one of its windows is up, where ImGui's own gamepad navigation has it.
+	/// </summary>
+	public void UpdatePadPointer(double delta) {
+		if (_input != null) {
+			_padPointer.Update(_input, Mouse, _window.ClientSize, delta,
+				active: HasFocus && _screenshotPath == null && !_menuBar.Up);
+		}
 	}
 
 	/// <summary>

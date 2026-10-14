@@ -9,6 +9,7 @@ The keys the engine adds to retail's. Every retail key works as [`../retail/key-
 | Gamepad Back | Raise the menu bar or back out of it, as `Shift+Esc` does, in a mission and in the front end. While the bar stays up, the highlight goes on its first item ([Gamepad in the menus](#gamepad-in-the-menus)). |
 | Gamepad Start | In a mission, pause and raise the pause menu, or resume from it ([The pause menu](#the-pause-menu)). Retail's own pause panel stays on `P`. |
 | Gamepad left stick click | In a mission, hold for the squad orders ([Squad orders on a gamepad](#squad-orders-on-a-gamepad)). |
+| Gamepad left stick, right trigger | In the front end, move the pointer and click; any button but Back skips a movie ([Gamepad in the front end](#gamepad-in-the-front-end)). |
 | Left mouse drag | With the Mouse-controlled outside view tweak, swing the outside view round the HERC. |
 | `PrtScn` | While full screen, copy the frame to the clipboard in place of Windows' own capture, which can show a stale frame of a full-screen game; with `Alt`, `Ctrl`, `Shift` or `Win` held the key is Windows'. `--save-prtscn` also saves it ([`herculan-command-line.md`](herculan-command-line.md#screenshots-and-staged-state)). |
 
@@ -33,6 +34,10 @@ The menu bar and its windows work with a gamepad alone, in a mission and in the 
 | Y | Type into a text field, which needs a keyboard, or Steam's on-screen keyboard on a Steam Deck. |
 
 Closing a window with one of its own buttons also puts the highlight back on the bar's first item. While the menu bar or one of its windows is up, a mission's stick drives nothing, and after they close it stays quiet until every button is let go, so a button pressed to choose an item does not also fire its action. While the Controller window's Detect is listening, the pad moves nothing in the window, so the control moved to bind it is only bound.
+
+## Gamepad in the front end
+
+In the front end a gamepad works as the mouse: the left stick moves the pointer, faster the further it is pushed, and the right trigger is the left button, pressed at half its pull and released below a quarter. Anything a left click does, the trigger does. Any button but Back also skips a movie or the briefing map's opening, as `Esc` and `Space` do; Back skips nothing, as `Shift+Esc` skips nothing. The mouse keeps working alongside it. The first connected gamepad counts; a joystick that is not a gamepad does not. While the menu bar or one of its windows is up the stick, trigger and buttons leave the shell alone and the pad works the menus instead ([Gamepad in the menus](#gamepad-in-the-menus)), and after the menus close the pad stays quiet until every button and the trigger are let go.
 
 ## The pause menu
 
