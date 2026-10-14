@@ -41,12 +41,13 @@ public sealed class EngineWindow : IDisposable {
 	/// Where an earlier window was when it closed, so the next one opens there at the same size and maximized if
 	/// it was; null for the default size at the default place.
 	/// </param>
+	/// <param name="maximized">Whether a window with no <paramref name="placement"/> opens maximized over its default size.</param>
 	public EngineWindow(string title = "HERCULAN Engine", int width = 1280, int height = 960,
-			WindowPlacement? placement = null) {
+			WindowPlacement? placement = null, bool maximized = false) {
 		_restoredPosition = placement?.Position;
 		_restoredSize = placement?.Size ?? new Vector2D<int>(width, height);
 		_scaleOnShow = placement == null;
-		_maximizeOnShow = placement is { Maximized: true };
+		_maximizeOnShow = placement?.Maximized ?? maximized;
 		var options = WindowOptions.Default with {
 			Size = _restoredSize,
 			Position = placement?.Position ?? WindowOptions.Default.Position,
@@ -323,6 +324,38 @@ public sealed class EngineWindow : IDisposable {
 		_restoredPosition = position;
 	}
 
+	/// <summary>
+	/// Centres the window in the primary monitor's work area when its top-left lies in no monitor's work area, as a
+	/// placement saved before a monitor was unplugged can. Does nothing on a backend other than GLFW.
+	/// </summary>
+	private unsafe void KeepOnScreen() {
+		if (_window.Native?.Glfw is not { } native || _restoredPosition is not { } position) {
+			return;
+		}
+
+		var glfw = Glfw.GetApi();
+		var monitors = glfw.GetMonitors(out int count);
+		for (int i = 0; i < count; i++) {
+			glfw.GetMonitorWorkarea(monitors[i], out int x, out int y, out int width, out int height);
+			if (position.X >= x && position.X < x + width && position.Y >= y && position.Y < y + height) {
+				return;
+			}
+		}
+
+		var primary = glfw.GetPrimaryMonitor();
+		if (primary == null) {
+			return;
+		}
+
+		glfw.GetMonitorWorkarea(primary, out int areaX, out int areaY, out int areaWidth, out int areaHeight);
+		glfw.GetWindowFrameSize((WindowHandle*)native, out int left, out int top, out int right, out int bottom);
+		var size = _window.Size;
+		var centred = new Vector2D<int>(areaX + left + Math.Max(0, (areaWidth - left - right - size.X) / 2),
+			areaY + top + Math.Max(0, (areaHeight - top - bottom - size.Y) / 2));
+		_window.Position = centred;
+		_restoredPosition = centred;
+	}
+
 	public void Run() => _window.Run();
 
 	public void Close() => _window.Close();
@@ -345,6 +378,8 @@ public sealed class EngineWindow : IDisposable {
 
 		if (_scaleOnShow) {
 			ScaleToDisplay();
+		} else {
+			KeepOnScreen();
 		}
 
 		_window.IsVisible = true;

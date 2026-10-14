@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Content;
 using Herculan.Engine.Scene;
 using Herculan.Engine.World;
@@ -10,8 +11,9 @@ namespace Herculan.Engine.Editor;
 /// builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
-	private EditorMission(string name, MissionScene scene, MissionIndex index) {
+	private EditorMission(string name, ScriptDat document, MissionScene scene, MissionIndex index) {
 		Name = name;
+		Document = document;
 		Scene = scene;
 		Index = index;
 
@@ -19,12 +21,19 @@ internal sealed class EditorMission {
 		Overlay = new MissionOverlay(index, drape);
 		Picker = new ScenePicker(scene, index, Overlay);
 		GroupOverlay = new GroupOverlay(index, drape, Picker);
-		Outliner = new MissionOutliner(index, new MissionLint(index), Selection);
+		Outliner = new MissionOutliner(index, new MissionLint(index, document), Selection);
 		Properties = new PropertiesPanel(index, Selection);
 	}
 
 	/// <summary>What the window title calls the mission: the <c>.MSN</c> it was generated from, or the file opened.</summary>
 	public string Name { get; }
+
+	/// <summary>
+	/// The file as parsed, which <see cref="Scene"/> was loaded from: what an edit changes and a save writes. It keeps
+	/// every record as written, including what loading resolves away — a ref past the end of its block, a slot DBSIM
+	/// never reads.
+	/// </summary>
+	public ScriptDat Document { get; }
 
 	public MissionScene Scene { get; }
 
@@ -53,8 +62,9 @@ internal sealed class EditorMission {
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
 	/// </summary>
 	public static EditorMission Open(GameContent content, string scriptPath, string name, string? dataDirectory = null) {
-		var scene = MissionScene.Load(content, scriptPath, dataDirectory);
+		var document = MissionLoader.ReadScript(scriptPath);
+		var scene = MissionScene.Load(content, scriptPath, dataDirectory, document);
 		var index = new MissionIndex(scene, SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
-		return new EditorMission(name, scene, index);
+		return new EditorMission(name, document, scene, index);
 	}
 }

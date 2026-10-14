@@ -1,5 +1,4 @@
 using HercWorks.Core.Data.File.Msn.Script;
-using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.World;
 
 namespace Herculan.Engine.Editor;
@@ -8,18 +7,11 @@ namespace Herculan.Engine.Editor;
 internal sealed record EditorFinding(ScriptLintFinding Finding, EditorSelection? Target);
 
 /// <summary>
-/// <see cref="ScriptDatLint"/> over the opened file, each finding tied to the selection that shows
-/// its record. The file is read again for this rather than kept from the load: <see cref="Mission"/>
-/// carries resolved records, and what the lint looks for — a ref past the end of its block, a slot
-/// DBSIM never reads — is exactly what resolving throws away.
+/// <see cref="ScriptDatLint"/> over the opened file's document (<see cref="EditorMission.Document"/>), each finding
+/// tied to the selection that shows its record.
 /// </summary>
 internal sealed class MissionLint {
-	public MissionLint(MissionIndex index) {
-		if (Read(index.Mission.SourcePath) is not { } script) {
-			Findings = Array.Empty<EditorFinding>();
-			return;
-		}
-
+	public MissionLint(MissionIndex index, ScriptDat script) {
 		int squad = index.Mission.Placements.Count(placement => placement.IsPlayerLance);
 		Findings = ScriptDatLint.Check(script, squad)
 			.Select(finding => new EditorFinding(finding, TargetOf(finding, index, script)))
@@ -27,15 +19,6 @@ internal sealed class MissionLint {
 	}
 
 	public IReadOnlyList<EditorFinding> Findings { get; }
-
-	private static ScriptDat? Read(string path) {
-		try {
-			return new ScriptDatTransformer().Parse(File.ReadAllBytes(path)) as ScriptDat;
-		} catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException) {
-			Console.Error.WriteLine($"Could not re-read {path} for the mission check: {ex.Message}");
-			return null;
-		}
-	}
 
 	private static EditorSelection? TargetOf(ScriptLintFinding finding, MissionIndex index, ScriptDat script) {
 		int i = finding.Index;

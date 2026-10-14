@@ -32,7 +32,10 @@ public sealed record EditorLaunch(string InstallRoot, GameContent SimulatorConte
 	/// </summary>
 	public string? ScriptPath { get; init; }
 
-	/// <summary>Where the window opens, as the window before it left it; null for the default.</summary>
+	/// <summary>
+	/// Where the window opens, as the window before it left it; null for where the editor last closed on its own
+	/// (<see cref="EditorSettings.Window"/>), or maximized the first time.
+	/// </summary>
 	public WindowPlacement? Placement { get; init; }
 
 	/// <summary>Whether the editor was opened from the game, which File &gt; Back to game returns to.</summary>
@@ -140,7 +143,7 @@ public sealed class EditorHost {
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
-		_window = new EngineWindow(WindowTitle, placement: launch.Placement);
+		_window = new EngineWindow(WindowTitle, placement: launch.Placement ?? _settings.Window?.ToPlacement(), maximized: true);
 		_window.Load += OnLoad;
 		_window.Update += OnUpdate;
 		_window.Render += OnRender;
@@ -156,6 +159,15 @@ public sealed class EditorHost {
 		var host = new EditorHost(launch);
 		using var window = host._window;
 		window.Run();
+
+		// Written into the file as it stands rather than through the open settings, which may hold the Settings panel's
+		// edits that were never confirmed.
+		if (!launch.FromGame) {
+			var saved = EditorSettings.Load();
+			saved.Window = SavedWindow.From(window.Placement);
+			saved.Save();
+		}
+
 		return (host._exit, window.Placement);
 	}
 
