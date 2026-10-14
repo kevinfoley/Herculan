@@ -1,15 +1,15 @@
 using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
 using System.Numerics;
+using HercWorks.Core.Io;
 using Herculan.Engine.Content;
-using Herculan.Engine.Gl;
 using Herculan.Engine.Host.Editor;
-using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
-using Herculan.Engine.Scene;
+using Herculan.Engine.Shell;
 using Herculan.Engine.World;
 using ImGuiNET;
 using Silk.NET.Input;
+using Silk.NET.OpenGL;
 
 // The mission editor: a second thin host next to Herculan.Engine.Host, sharing every loading and
 // rendering utility but running a different loop — no sim ticking, so placed objects stand still,
@@ -39,52 +39,41 @@ if (!File.Exists(scriptPath)) {
 Console.WriteLine($"HERCULAN Mission Editor — loading {scriptPath} from {installRoot}");
 
 var content = GameContent.MountSimulator(installRoot);
-MissionScene scene;
+EditorMission mission;
 try {
-	scene = MissionScene.Load(content, scriptPath);
+	mission = EditorMission.Open(content, scriptPath, Path.GetFileName(scriptPath));
 } catch (MissingHandoffFileException missing) {
 	Console.Error.WriteLine($"Cannot load {scriptPath}: {missing.Message}");
 	return 1;
 }
 
-var mission = scene.Mission;
-
-Console.WriteLine(
-	$"Mission: zone {mission.Header.ZoneIndex}, theater {mission.Header.TheaterIndex}. " +
-	$"Placed {scene.Objects.Count} objects, {scene.UnmodelledCount} without a model.");
+ReportLoaded(mission);
 Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, Esc quits.");
 
-// The mission's own features, cross-referenced once: nothing moves while the editor shows it.
-var selection = new SelectionState();
-var index = new MissionIndex(scene, SquadMessages.LoadCommand(content, mission.Header.TrainingMissionNumber));
-var drape = new DrapedLines(scene.World.Terrain);
-var overlay = new MissionOverlay(index, drape);
-var picker = new ScenePicker(scene, index, overlay);
-var groupOverlay = new GroupOverlay(index, drape, picker);
-var outliner = new MissionOutliner(index, new MissionLint(index), selection);
-var properties = new PropertiesPanel(index, selection);
+// A mission opened from the archives is generated as the shell would generate it, into this scratch directory
+// rather than the install's DATA\, so opening one leaves the install's own handoff alone. The simulator's
+// settings are still read from DATA\.
+string installData = ShellWorkingFiles.DataDirectory(installRoot);
+string missionCache = Path.Combine(Path.GetTempPath(), "herculan-editor");
 
-using var window = new EngineWindow($"HERCULAN Mission Editor — zone {mission.Header.ZoneIndex}");
+// VSHELL's mount, which holds the career table and the missions: mounted the first time File > Load from VOL
+// opens, since a session that never uses it has no need of it.
+GameContent? shellContent = null;
+GameContent ShellContent() => shellContent ??= GameContent.MountShell(installRoot);
+var volBrowser = new VolMissionBrowser(() => MissionFileLaunch.List(ShellContent()));
 
+// A load the browser asked for. It runs at the start of the frame after the one that drew the browser's
+// "Loading" line, so the window says what it is doing before it stops to do it.
+string? pendingLoad = null;
+bool loadNoticeDrawn = false;
+
+using var window = new EngineWindow(mission.WindowTitle);
+
+GL? glContext = null;
 SceneRenderer? renderer = null;
 WireframeRenderer? wireframe = null;
 ScaledImGui? imgui = null;
-GpuMesh? terrainMesh = null;
-GpuTexture? terrainTexture = null;
-var modelMeshes = new Dictionary<string, GpuMesh>();
-var modelCells = new Dictionary<string, GpuMesh[]>();
-var modelTextures = new Dictionary<string, GpuTexture>();
-var groundMeshes = new Dictionary<string, GpuMesh>();
-var disposables = new List<IDisposable>();
-SceneItem[]? items = null;
-
-// The terrain with each structure's ground plane painted in its cell order, as the simulator draws
-// them — see SceneRenderer.Render. Without it a structure's shadow lies in the terrain's own plane and
-// ties with it in the depth buffer.
-GroundShapeLayer? groundLayer = null;
-
-// The items of the objects whose group waits on an action, which the settings may stop drawing.
-var waitingItems = new List<SceneItem>();
+MissionDrawables? drawables = null;
 IKeyboard? keyboard = null;
 IMouse? mouse = null;
 
@@ -98,7 +87,7 @@ const float CompassMargin = 12f;
 
 var camera = new Camera();
 var editorCamera = new EditorCamera();
-editorCamera.ResetTo(scene.Camera.Position, scene.Camera.Heading);
+editorCamera.ResetTo(mission.Scene.Camera.Position, mission.Scene.Camera.Heading);
 
 bool looking = false;
 Vector2 lastMousePos = Vector2.Zero;
@@ -121,121 +110,17 @@ bool leftDownOverViewport = false;
 string fontPath = Path.Combine(AppContext.BaseDirectory, "Assets", "Fonts", "Open_Sans", "static", "OpenSans-Regular.ttf");
 
 window.Load += (gl, input) => {
+	glContext = gl;
 	renderer = new SceneRenderer(gl, editorGrid: true);
-
-	// Same as Herculan.Engine.Host: fog distances, fog colour and the banded sky come off the zone
-	// and its theater rather than being hand-picked — see Scene.Atmosphere. Without this the renderer
-	// has no sky gradient, so DrawSky paints nothing and the view has no background at all.
-	scene.Models.Atmosphere.ApplyTo(renderer);
-
-	// The theater's shaded-surface colours � what a TSShadedPoly is actually drawn through. See
-	// SurfaceRampTable.
-	renderer.SetShadeRamps(scene.Models.ShadeRamps);
-	renderer.SetPaletteRamp(scene.Models.PaletteRamp);
-
 	wireframe = new WireframeRenderer(gl);
+	drawables = new MissionDrawables(gl, renderer, mission, settings);
 
-	terrainMesh = new GpuMesh(gl, scene.Models.TerrainMesh);
-	terrainTexture = scene.Models.TerrainBank != null ? scene.Models.TerrainBank.Atlas.Upload(gl, indexed: true) : null;
-
-	foreach (var model in scene.Models.All) {
-		// A shape split by cell — a structure or a flyer — is drawn a piece at a time as the simulator
-		// draws it, so that a TSBSPPart's children and a decal's paint layer are painted in order
-		// (BspDrawGroup); the flat mesh would leave them to the depth test.
-		if (model.Cells.Length > 0) {
-			modelCells[model.Key] = model.Cells
-				.Select(cell => new GpuMesh(gl, cell.Vertices, cell.TriangleVertexCount, cell.PointVertexCount))
-				.ToArray();
-		} else {
-			modelMeshes[model.Key] = new GpuMesh(gl, model.Mesh, model.TriangleVertexCount, model.PointVertexCount);
-		}
-
-		if (model.GroundMesh is { Vertices.Length: > 0 } ground) {
-			groundMeshes[model.Key] = new GpuMesh(gl, ground.Vertices, ground.TriangleVertexCount,
-				ground.PointVertexCount);
-		}
-
-		if (model.Atlas != null) {
-			modelTextures[model.Key] = model.Atlas.Upload(gl, indexed: true);
-		}
-	}
-
-	disposables.AddRange(modelMeshes.Values);
-	disposables.AddRange(modelCells.Values.SelectMany(cells => cells));
-	disposables.AddRange(groundMeshes.Values);
-	disposables.AddRange(modelTextures.Values);
-
-	// The terrain, and the only item the measuring grid is painted onto.
-	var built = new List<SceneItem> {
-		new(terrainMesh, Matrix4x4.Identity, terrainTexture?.Handle) { ShowGrid = settings.ShowGrid, CellQuantisedFog = true, GroundFill = true }
-	};
-
-	// Nothing is filed by cell here, so a ground plane is drawn wherever the camera is, as every object is.
-	groundLayer = new GroundShapeLayer(built[0], scene.World.Terrain) { ShapesFollowWalk = false };
-
-	foreach (var sceneObject in scene.Objects) {
-		if (sceneObject.Model is not { } model) {
-			continue;
-		}
-
-		uint? textureHandle = modelTextures.TryGetValue(model.Key, out var texture) ? texture.Handle : null;
-		var transform = MissionScene.TransformOf(sceneObject);
-		bool waiting = index.IsWaiting(sceneObject);
-		if (modelCells.TryGetValue(model.Key, out var cellMeshes)) {
-			// What the flat mesh is: every sequence on its first cell and every detail part at its finest
-			// level. The ground plane stays with groundMeshes below.
-			var groups = new Dictionary<BspTree, BspDrawGroup>();
-			for (int i = 0; i < cellMeshes.Length; i++) {
-				var cell = model.Cells[i];
-				if (cell.Ground || !cell.Gate.VisibleIn(null)
-						|| (cell.Gate.Detail is { } detail && cell.Gate.Level != detail.LevelCount - 1)) {
-					continue;
-				}
-
-				var part = new SceneItem(cellMeshes[i], transform, textureHandle);
-				if (cell.Leaf is { } leaf) {
-					if (!groups.TryGetValue(leaf.Tree, out var group)) {
-						groups[leaf.Tree] = group = BspDrawGroup.AtRest(leaf.Tree, () => transform);
-					}
-
-					part.BspGroup = group;
-					part.BspLeaf = leaf.Index;
-					part.PaintLayer = cell.Layer;
-				}
-
-				built.Add(part);
-				if (waiting) {
-					waitingItems.Add(part);
-				}
-			}
-		} else if (modelMeshes.TryGetValue(model.Key, out var mesh)) {
-			var item = new SceneItem(mesh, transform, textureHandle);
-			built.Add(item);
-			if (waiting) {
-				waitingItems.Add(item);
-			}
-		} else {
-			continue;
-		}
-
-		// Filed as the simulator's submit files a structure: by its position and its body radius.
-		if (groundMeshes.TryGetValue(model.Key, out var groundMesh)) {
-			var groundItem = new SceneItem(groundMesh, MissionScene.TransformOf(sceneObject), textureHandle);
-			groundLayer.Shapes.Add(new GroundShapeDraw(groundItem, sceneObject.Object.Position,
-				sceneObject.Object.HitRadius));
-			if (waiting) {
-				waitingItems.Add(groundItem);
-			}
-		}
-	}
-
-	items = built.ToArray();
 	keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
 	mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
 
 	// Same reasoning as Herculan.Engine.Host: DTS geometry isn't reliably wound, so nothing here
 	// is backface-culled.
-	gl.Disable(Silk.NET.OpenGL.EnableCap.CullFace);
+	gl.Disable(EnableCap.CullFace);
 
 	imgui = new ScaledImGui(gl, window, input, fontPath);
 
@@ -264,8 +149,8 @@ window.Load += (gl, input) => {
 			} else if (button == MouseButton.Left && leftDownOverViewport
 					&& Vector2.Distance(m.Position, leftDownPos) < 4f) {
 				var size = window.FramebufferSize;
-				selection.Current = picker.Pick(camera, m.Position, new Vector2(size.X, size.Y), settings);
-				Console.WriteLine($"[pick] {selection.Current?.ToString() ?? "nothing"} at {m.Position}");
+				mission.Selection.Current = mission.Picker.Pick(camera, m.Position, new Vector2(size.X, size.Y), settings);
+				Console.WriteLine($"[pick] {mission.Selection.Current?.ToString() ?? "nothing"} at {m.Position}");
 			}
 		};
 	}
@@ -297,7 +182,14 @@ window.Update += deltaSeconds => {
 };
 
 window.Render += (_, gl) => {
-	if (renderer == null || items == null || wireframe == null) {
+	if (pendingLoad != null && loadNoticeDrawn) {
+		LoadFromVol(pendingLoad);
+		pendingLoad = null;
+		loadNoticeDrawn = false;
+		volBrowser.Loading = null;
+	}
+
+	if (renderer == null || drawables == null || wireframe == null) {
 		return;
 	}
 
@@ -308,8 +200,8 @@ window.Render += (_, gl) => {
 	// object directly and Cancel restores it just as directly, so there is no change event to hang
 	// this off, and the assignment is a field write.
 	renderer.FogEnabled = settings.RenderFog;
-	items[0].ShowGrid = settings.ShowGrid;
-	foreach (var item in waitingItems) {
+	drawables.Items[0].ShowGrid = settings.ShowGrid;
+	foreach (var item in drawables.WaitingItems) {
 		item.Visible = settings.WaitingGroups == WaitingGroupDisplay.Drawn;
 	}
 
@@ -321,11 +213,12 @@ window.Render += (_, gl) => {
 
 	// Full-window viewport: the editor draws one 3D view, unlike the simulator host's three cockpit
 	// panels, which is what SceneRenderer.Render's x/y origin exists for.
-	renderer.Render(camera, items, groundLayer, 0, 0, size.X, size.Y);
+	renderer.Render(camera, drawables.Items, drawables.GroundLayer, 0, 0, size.X, size.Y);
 
-	overlay.Draw(wireframe, camera, aspect, settings, selection);
-	groupOverlay.DrawObjects(wireframe, camera, aspect, settings, selection);
-	groupOverlay.DrawSelectedGroup(wireframe, camera, aspect, selection);
+	var selection = mission.Selection;
+	mission.Overlay.Draw(wireframe, camera, aspect, settings, selection);
+	mission.GroupOverlay.DrawObjects(wireframe, camera, aspect, settings, selection);
+	mission.GroupOverlay.DrawSelectedGroup(wireframe, camera, aspect, selection);
 
 	var display = ImGui.GetIO().DisplaySize;
 	float menuBarHeight = BuildMenuBar();
@@ -333,34 +226,98 @@ window.Render += (_, gl) => {
 	CompassGizmo.Draw(camera,
 		new Vector2(ScaledImGui.Scaled(MissionOutliner.PanelWidth) + compassMargin, menuBarHeight + compassMargin),
 		ScaledImGui.Scaled(CompassSize));
-	overlay.DrawLabels(camera, settings, selection);
-	groupOverlay.DrawLabels(camera, settings, selection);
-	outliner.Draw(display, menuBarHeight);
-	properties.Draw(display, menuBarHeight);
+	mission.Overlay.DrawLabels(camera, settings, selection);
+	mission.GroupOverlay.DrawLabels(camera, settings, selection);
+	mission.Outliner.Draw(display, menuBarHeight);
+	mission.Properties.Draw(display, menuBarHeight);
 	settingsPanel.Draw();
+	volBrowser.Draw();
 	imgui?.Render();
+
+	if (pendingLoad != null) {
+		loadNoticeDrawn = true;
+	} else if (volBrowser.TakeRequest() is { } requested) {
+		pendingLoad = requested;
+		volBrowser.Loading = requested;
+	}
 };
 
 window.Closing += () => {
 	imgui?.Dispose();
+	drawables?.Dispose();
 	renderer?.Dispose();
 	wireframe?.Dispose();
-	terrainMesh?.Dispose();
-	terrainTexture?.Dispose();
-	foreach (var disposable in disposables) {
-		disposable.Dispose();
-	}
 };
 
 window.Run();
 
 return 0;
 
+// Generates the handoff for the archive mission <name> into the scratch directory and swaps the editor over to
+// it. On failure the open mission stays, and the browser says why.
+void LoadFromVol(string name) {
+	if (glContext == null || renderer == null) {
+		return;
+	}
+
+	EditorMission opened;
+	try {
+		ClearMissionCache();
+		if (MissionFileLaunch.Write(ShellContent(), installRoot, name, missionCache, out string? failure) is not { } generated) {
+			volBrowser.Failure = failure;
+			Console.Error.WriteLine($"Cannot load {name}: {failure}");
+			return;
+		}
+
+		opened = EditorMission.Open(content, generated, Path.GetFileNameWithoutExtension(name), installData);
+	} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
+			or UnauthorizedAccessException) {
+		volBrowser.Failure = ex.Message;
+		Console.Error.WriteLine($"Cannot load {name}: {ex.Message}");
+		return;
+	}
+
+	drawables?.Dispose();
+	mission = opened;
+	drawables = new MissionDrawables(glContext, renderer, mission, settings);
+	editorCamera.ResetTo(mission.Scene.Camera.Position, mission.Scene.Camera.Heading);
+	window.Title = mission.WindowTitle;
+	volBrowser.Close();
+	ReportLoaded(mission);
+}
+
+// Removes the last generated handoff, since the shell's writer does not truncate (ShellWorkingFiles.WriteMissionFile)
+// and a shorter mission would otherwise keep the longer one's tail.
+void ClearMissionCache() {
+	foreach (string file in new[] {
+			MissionLoader.ScriptFileName, MissionLoader.TextFileName, MissionLoader.PlayerFileName,
+			MissionLoader.CountersFileName }) {
+		string path = CaseInsensitivePath.Combine(missionCache, file);
+		if (File.Exists(path)) {
+			File.Delete(path);
+		}
+	}
+}
+
+static void ReportLoaded(EditorMission opened) {
+	Console.WriteLine(
+		$"Mission {opened.Name}: zone {opened.Mission.Header.ZoneIndex}, theater {opened.Mission.Header.TheaterIndex}. " +
+		$"Placed {opened.Scene.Objects.Count} objects, {opened.Scene.UnmodelledCount} without a model.");
+}
+
 // Draws the main menu bar and returns its height, which is what the rest of the frame's overlays
 // hang below.
 float BuildMenuBar() {
 	if (!ImGui.BeginMainMenuBar()) {
 		return 0f;
+	}
+
+	if (ImGui.BeginMenu("File")) {
+		if (ImGui.MenuItem("Load from VOL", null, false, pendingLoad == null)) {
+			volBrowser.Open();
+		}
+
+		ImGui.EndMenu();
 	}
 
 	// The overlay toggles take effect, and are saved, as they are clicked: they are view state, with
@@ -409,8 +366,8 @@ float BuildMenuBar() {
 		ImGui.EndMenu();
 	}
 
-	// A bare item rather than a menu: there is one entry, and burying it under a "File"-style
-	// dropdown would cost a click for nothing.
+	// A bare item rather than a menu: there is one entry, and burying it under a dropdown would cost a
+	// click for nothing.
 	if (ImGui.MenuItem("Editor Settings")) {
 		settingsPanel.Open();
 	}

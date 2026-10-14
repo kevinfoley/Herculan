@@ -32,6 +32,7 @@ Counts below are over the 62 retail `.MSN` files with campaign conditions not ap
 
 ### In place
 
+- **Opening a mission.** The editor starts on `DATA\script.dat` or the file named on its command line. File > Load from VOL lists every `.MSN` in the archives and opens one through `MissionFileLaunch` (the simulator host's `.MSN` path), generating the handoff into `%TEMP%\herculan-editor\` so the install's `DATA\` is never written; `EditorMission` and `MissionDrawables` are rebuilt for it. Such a mission's `Mission.SourcePath` is that scratch file, so a future Save must offer Save As for it rather than writing in place.
 - **Selection and panels.** `EditorSelection` is an object, group, trigger area, action, timer, route (with an optional waypoint) or objective, held in one `SelectionState` that the viewport click, the `MissionOutliner` (left: groups with members, areas, actions, timers, routes, objectives under the block-13 briefing list) and the `PropertiesPanel` (right, one view per kind, every mentioned record a link) all set.
 - **Picking.** `ScenePicker` tries a waypoint in screen space, then an object's bounding sphere (skipping waiting groups when they are hidden), then `GroundPick` (a ray march against `HeightAtWorld`) and the smallest trigger area containing that ground point.
 - **Overlays.** `MissionOverlay` draws, through `DrapedLines`, every trigger area (coloured by who trips it), every route (the player's, the walked ones and the never-walked ones in three colours, loops closed, waypoints numbered when selected), every base pad's painted tile (`MissionBasePad.TileOrigin`, with the selected group's authored point and its snap drawn too) and the mission box with its HDD-map and abort margins, each toggled from the View menu. A line hidden behind terrain shows dimmed.
@@ -127,5 +128,4 @@ Recommended: reuse an identical existing point, otherwise append; refcount befor
 ## To-do list
 
 - Objective list, underneath briefing list in left-hand sidebar, does not fit in sidebar's width. The text should wrap.
-- Support for loading arbitrary missions rather than just `script.dat`.
 - By default, start as a maximized window rather than 1280x960; remember last size and position.
