@@ -2947,8 +2947,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagTerrainCopy",
-      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092422. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/terrain.md#where-the-module-starts-and-ends"
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092422.",
+      "source": "Herculan/docs/es1/simulation/terrain.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "00020203+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002020c",
@@ -3121,8 +3127,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Drawable_GetRadiusCopy",
-      "description": "(object), callee-cleaned (RET 4), frameless: returns 0; two NOPs, then xor eax,eax and ret 4, the code at 000018f0 (no Ghidra function there) in slot +0x14 of MAT_OBJ's vtable 000902ca. Slot +0x14 of terrain.cpp's vtable copies 0009251a and 0009253a. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/formats/zone-terrain.md#the-zone-shape-object"
+      "description": "(object), callee-cleaned (RET 4), frameless: returns 0; two NOPs, then xor eax,eax and ret 4, the code at 000018f0 (no Ghidra function there) in slot +0x14 of MAT_OBJ's vtable 000902ca. Slot +0x14 of terrain.cpp's vtable copies 0009251a and 0009253a.",
+      "source": "Herculan/docs/es1/formats/zone-terrain.md#the-zone-shape-object",
+      "verified": {
+        "bytes": "000206aa+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000206b4",
@@ -3445,8 +3457,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjProbe_IsIdle",
-      "description": "No arguments, frameless: returns 1 when ObjProbe_Armed (0009255a) is 0, otherwise 0 (NEG, SBB, INC); two NOPs at 000213ce fall through to it. The code ES2 has at DBSIM 00428aa8, with no Ghidra function there. es2_xref finds no reference to it or the NOPs. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe"
+      "description": "No arguments, frameless: returns 1 when ObjProbe_Armed (0009255a) is 0, otherwise 0 (NEG, SBB, INC); two NOPs at 000213ce fall through to it. The code ES2 has at DBSIM 00428aa8, with no Ghidra function there. es2_xref finds no reference to it or the NOPs.",
+      "source": "Herculan/docs/es1/simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe",
+      "verified": {
+        "bytes": "000213d0+11",
+        "sha1": "94e02bbf6d70",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000213dc",
@@ -3454,8 +3472,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjProbe_IsHidden",
-      "description": "(unused), callee-cleaned (RET 4), frameless: returns 1 when the four bytes of ObjProbe_CornerFlags (000afa84) add up to 4, otherwise 0. ES2's ObjProbe_IsHidden (DBSIM 00428ab8), which takes no argument. es2_xref finds no reference to it or the NOP at 000213db. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe"
+      "description": "(unused), callee-cleaned (RET 4), frameless: returns 1 when the four bytes of ObjProbe_CornerFlags (000afa84) add up to 4, otherwise 0. ES2's ObjProbe_IsHidden (DBSIM 00428ab8), which takes no argument. es2_xref finds no reference to it or the NOP at 000213db.",
+      "source": "Herculan/docs/es1/simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe",
+      "verified": {
+        "bytes": "000213dc+39",
+        "sha1": "99d73f1aae34",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00021404",
@@ -3493,8 +3517,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_RegisterSubsystem",
-      "description": "No arguments, no frame: terrain.cpp's static initialiser, the dword at 000adc18 among the static constructors: RegisterSubsystemLoader (00000ac4)(2, ObjList_Init (00020c2c)), then __vec_ctor (000610cb)(ObjProbe_CornerElementCtor (00021538), 4, 8, ObjProbe_Corners (000afa54)) in stack order. ES2's ObjList_RegisterSubsystem (DBSIM 00428de8). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/terrain.md#the-object-list"
+      "description": "No arguments, no frame: terrain.cpp's static initialiser, the dword at 000adc18 among the static constructors: RegisterSubsystemLoader (00000ac4)(2, ObjList_Init (00020c2c)), then __vec_ctor (000610cb)(ObjProbe_CornerElementCtor (00021538), 4, 8, ObjProbe_Corners (000afa54)) in stack order. ES2's ObjList_RegisterSubsystem (DBSIM 00428de8).",
+      "source": "Herculan/docs/es1/simulation/terrain.md#the-object-list",
+      "verified": {
+        "bytes": "00021518+32",
+        "sha1": "3ed3faa2260f",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00021538",
@@ -3562,8 +3592,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_FreeSortNodes",
-      "description": "No arguments, frameless: operator_delete (000015f8) of ObjList_SortNodes (00092570), then 0 there. The code ES2 has at DBSIM 00428f20 (through Mem_Delete), with no Ghidra function there. es2_xref finds no reference to it. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/terrain.md#the-object-list"
+      "description": "No arguments, frameless: operator_delete (000015f8) of ObjList_SortNodes (00092570), then 0 there. The code ES2 has at DBSIM 00428f20 (through Mem_Delete), with no Ghidra function there. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/terrain.md#the-object-list",
+      "verified": {
+        "bytes": "000215c8+22",
+        "sha1": "8da1cb52560a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000215e0",
