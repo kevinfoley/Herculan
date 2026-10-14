@@ -86,6 +86,16 @@ public sealed class EditorHost {
 	private MissionDrawables? _drawables;
 	private IKeyboard? _keyboard;
 	private IMouse? _mouse;
+	private IInputContext? _input;
+
+	// A gamepad as the mouse: the left stick moves the pointer, the right trigger is the left button and the left trigger
+	// the right (docs/herculan/herculan-key-bindings.md, "Gamepad in the editor"). What each trigger was last frame, so
+	// its press and release reach the viewport as the button's own would; ImGui takes them through
+	// ScaledImGui.HeldAsMouseButtons. The pad works only while the window has the focus, as GLFW reads it regardless.
+	private readonly GamepadPointer _padPointer = new();
+	private bool _padLeftHeld;
+	private bool _padRightHeld;
+	private bool _focused = true;
 
 	private bool _looking;
 	private Vector2 _lastMousePos;
@@ -135,6 +145,7 @@ public sealed class EditorHost {
 		_window.Update += OnUpdate;
 		_window.Render += OnRender;
 		_window.Closing += OnClosing;
+		_window.View.FocusChanged += focused => _focused = focused;
 	}
 
 	/// <summary>
@@ -165,7 +176,10 @@ public sealed class EditorHost {
 		// is backface-culled.
 		gl.Disable(EnableCap.CullFace);
 
-		_imgui = new ScaledImGui(gl, _window, input, _launch.FontPath);
+		_imgui = new ScaledImGui(gl, _window, input, _launch.FontPath) {
+			HeldAsMouseButtons = () => (_padPointer.ClickHeld, _padPointer.RightClickHeld),
+		};
+		_input = input;
 
 		if (_mouse != null) {
 			_mouse.MouseDown += OnMouseDown;
@@ -203,7 +217,18 @@ public sealed class EditorHost {
 	}
 
 	private void OnUpdate(double deltaSeconds) {
+		// Before ImGui's frame, which reads the pointer and the triggers. Unconfined while looking, when the cursor is
+		// grabbed and the stick turns the view.
+		if (_input != null) {
+			_padPointer.Update(_input, _mouse, _window.ClientSize, deltaSeconds, active: _focused, confine: !_looking);
+		}
+
 		_imgui?.Update((float)deltaSeconds);
+
+		if (_mouse != null) {
+			PadButton(_padPointer.ClickHeld, ref _padLeftHeld, MouseButton.Left);
+			PadButton(_padPointer.RightClickHeld, ref _padRightHeld, MouseButton.Right);
+		}
 
 		if (_keyboard?.IsKeyPressed(Key.Escape) == true) {
 			Close(_launch.FromGame ? EditorExit.BackToGame : EditorExit.Closed);
@@ -225,6 +250,20 @@ public sealed class EditorHost {
 		bool acceptKeyboard = _imgui == null || !ImGui.GetIO().WantCaptureKeyboard;
 		_editorCamera.Update(deltaSeconds, _keyboard, lookDelta, _looking, acceptKeyboard);
 		_editorCamera.ApplyTo(_camera);
+	}
+
+	// A trigger going down or up, as the mouse button it stands for: a left press and release selects, a right one looks.
+	private void PadButton(bool held, ref bool wasHeld, MouseButton button) {
+		if (held == wasHeld) {
+			return;
+		}
+
+		wasHeld = held;
+		if (held) {
+			OnMouseDown(_mouse!, button);
+		} else {
+			OnMouseUp(_mouse!, button);
+		}
 	}
 
 	private void OnRender(double deltaSeconds, GL gl) {

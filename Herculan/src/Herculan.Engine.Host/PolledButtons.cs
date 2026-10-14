@@ -20,10 +20,10 @@ sealed class PolledButtons {
 	/// <summary>A skip key the host has taken for itself, such as the menu bar's [Shift+Esc], which counts as up.</summary>
 	public Func<Key, bool>? Taken { get; set; }
 
-	/// <summary>Another control held as the left button, such as a gamepad's trigger (<see cref="GamepadPointer"/>).</summary>
+	/// <summary>Another control held as the left button, such as a gamepad's trigger (<see cref="Platform.GamepadPointer"/>).</summary>
 	public Func<bool>? AlsoLeft { get; set; }
 
-	/// <summary>Another control held as a skip key, such as a gamepad's buttons (<see cref="GamepadPointer"/>).</summary>
+	/// <summary>Another control held as a skip key, such as a gamepad's buttons (<see cref="Platform.GamepadPointer"/>).</summary>
 	public Func<bool>? AlsoSkip { get; set; }
 
 	/// <summary>Takes the buttons' state without delivering it, so an edge made meanwhile is spent.</summary>

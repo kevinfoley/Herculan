@@ -87,6 +87,12 @@ public sealed class ScaledImGui : IDisposable {
 	/// </summary>
 	public Action<ImGuiIOPtr>? GamepadFeed { get; set; }
 
+	/// <summary>
+	/// Other controls held as the left and right mouse buttons, such as a <see cref="GamepadPointer"/>'s triggers, or null
+	/// for none. Read once a frame before the frame starts, alongside the mouse's own buttons.
+	/// </summary>
+	public Func<(bool Left, bool Right)>? HeldAsMouseButtons { get; set; }
+
 	/// <summary>Starts the next ImGui frame, first building the controller again if the display's scale changed.</summary>
 	public void Update(float deltaSeconds) {
 		// Compared loosely: the client scale is a ratio of two sizes, which a resize need not update together.
@@ -105,6 +111,12 @@ public sealed class ScaledImGui : IDisposable {
 			feed(io);
 		}
 
+		if (HeldAsMouseButtons is { } held) {
+			var (left, right) = held();
+			FeedMouseButton(ImGuiMouseButton.Left, MouseButton.Left, left);
+			FeedMouseButton(ImGuiMouseButton.Right, MouseButton.Right, right);
+		}
+
 		_controller.Update(deltaSeconds);
 	}
 
@@ -121,6 +133,17 @@ public sealed class ScaledImGui : IDisposable {
 	}
 
 	public void Dispose() => _controller.Dispose();
+
+	// Silk's controller writes io.MouseDown from the mouse alone just before NewFrame, and NewFrame then applies the queued
+	// events over it, so the button's state with the other control's goes in as an event. ImGui drops an event that
+	// repeats the button's last state, which it reads from io.MouseDown, so that is set to the opposite first; the
+	// controller overwrites it before NewFrame either way.
+	private void FeedMouseButton(ImGuiMouseButton button, MouseButton mouseButton, bool alsoHeld) {
+		bool down = alsoHeld || (_input.Mice.Count > 0 && _input.Mice[0].IsButtonPressed(mouseButton));
+		var io = ImGui.GetIO();
+		io.MouseDown[(int)button] = !down;
+		io.AddMouseButtonEvent((int)button, down);
+	}
 
 	// The font is baked at the display's pixel size, and drawn at the window-coordinate size: on Windows the two are
 	// the same; where window coordinates are already scaled (macOS), FontGlobalScale takes the pixel-sized atlas back

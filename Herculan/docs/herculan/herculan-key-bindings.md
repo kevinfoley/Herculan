@@ -40,6 +40,10 @@ Closing a window with one of its own buttons also puts the highlight back on the
 
 In the front end a gamepad works as the mouse: the left stick moves the pointer, faster the further it is pushed, and the right trigger is the left button, pressed at half its pull and released below a quarter. Anything a left click does, the trigger does. Any button but Back also skips a movie or the briefing map's opening, as `Esc` and `Space` do; Back skips nothing, as `Shift+Esc` skips nothing. The mouse keeps working alongside it. The first connected gamepad counts; a joystick that is not a gamepad does not. While the menu bar or one of its windows is up the stick, trigger and buttons leave the shell alone and the pad works the menus instead ([Gamepad in the menus](#gamepad-in-the-menus)), and after the menus close the pad stays quiet until every button and the trigger are let go.
 
+## Gamepad in the editor
+
+The mission editor takes a gamepad as the mouse too, and nothing else of it: the left stick moves the pointer as in the front end, the right trigger is the left button and the left trigger the right. So the right trigger selects in the view and works the editor's menus and panels, and holding the left trigger looks round, the stick then turning the view. It works only while the editor's window has the focus.
+
 ## The pause menu
 
 A gamepad's Start pauses a mission and puts up a menu over it: **Resume**, and **Objectives**, **Preferences** and **Quit**, which raise retail's own objectives panel (`F11`), preferences panel (`F12`) and mission status (`Q`). Each of those three is greyed where its key would do nothing, as Objectives is in the outside view, and when its panel comes down the menu is back. Up and down on the d-pad or the left stick move, A chooses, and B or Start resumes; the pointer works it too. While the menu is up the mission holds as it does while the window is out of focus, with every sound stopped. The menu bar still comes up over it, with the highlight on the bar; B on the bar hands the pad back to the pause menu.
