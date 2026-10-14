@@ -554,6 +554,9 @@ public static class HddMap {
 
 		// Up to nine, and the first waypoint is skipped: the screen walks the route from index 1 and
 		// stops one short of the count, so the leg the squad has already reached carries no icon.
+		// Placed by X and Y alone, where the original projects the waypoint's Z as well
+		// (docs/retail/simulation/heads-down-display.md#markers): the same spot for every retail
+		// player route, which all have Z 0, but not for an edited one whose waypoints have a Z.
 		if (route is { Count: > 1 }) {
 			int count = Math.Min(route.Count - 1, MaxWaypoints);
 			for (int i = 0; i < count; i++) {

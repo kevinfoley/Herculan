@@ -6488,7 +6488,13 @@
       "confidence": "high",
       "name": "Mech_AiGoalPosition",
       "description": "Resolves the point a machine is working to: a squad order's target object or its stored point for verbs 3, 5 and 6, otherwise the mission group's current order target via Group_OrderTargetPosition.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041dbcc+86",
+        "sha1": "a41f85cc7d68",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041dc24",
@@ -6547,8 +6553,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_SelectDefenceTarget",
-      "description": "Picks the HERC threatening a defended point: over GlobalMechList, candidates passing Ai_IsTargetable and not crippled, scored (limit - distance to the point) / (holders + 1), where limit is 90000, or 980000 when the group's current order names no object. Preferring live candidates, it returns the best. Used by Mech_AiOnTakingFire for the guarding and driving-off states.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "Picks the HERC threatening a defended point: over GlobalMechList, candidates passing Ai_IsTargetable and not crippled, scored (limit - ground-plane distance to the point) / (holders + 1), where limit is 90000, or 980000 when the group's current order names no object. Preferring live candidates, it returns the best. Callers found by es2_xref: Mech_BehaviourGuardThink and Mech_AiOnTakingFire, for the guarding and driving-off states.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "0041e0e0+321",
+        "sha1": "6d9c2cbf67e7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041e224",
@@ -7312,7 +7324,13 @@
       "confidence": "high",
       "name": "Flyer_LeadRouteStep",
       "description": "The flight leader's route step. Takes the waypoint one past the group's cursor, advances the cursor when it is within 15000 ground units, else falls back to the cursor's own waypoint; holds altitude 30000 through Flyer_PitchToAltitude and steers with Q16(bearingError, 28000) through Flyer_SteerAndFly.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "004224c4+210",
+        "sha1": "cae3a40db4af",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00422598",
@@ -7700,7 +7718,13 @@
       "confidence": "high",
       "name": "Group_OrderTargetPosition",
       "description": "The position the group's current order works to: the order object's +0x26 origin, falling back to the first waypoint of the group's route (**(*(group+6)+2)), read with no null check, when the slot is empty or names no subject.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "004238d4+66",
+        "sha1": "dbae35ef38af",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423918",
@@ -7748,7 +7772,13 @@
       "confidence": "high",
       "name": "Group_IsOrderComplete",
       "description": "Whether a mission group's current order is finished, switched on the order's verb (order+0x00). Verb 0: the order subject's condition tier is 4 (destroyed). Verb 2: the order names a subject and either its tier is 4 or Group_NoRivalOrderOnSubject reports nothing hostile still assigned to it. Verbs 3, 5 and 6: the group's route cursor has no waypoint after the current index. Verbs 1 and 4 never complete and can only be ended by the order's action firing.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "004239fc+119",
+        "sha1": "70b9ea91d62a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423a74",
@@ -34564,7 +34594,13 @@
       "confidence": "high",
       "name": "Math_GroundDistanceBetweenPoints",
       "description": "Ground-plane distance between two int Vec3s: Vec2_Subtract then Vec2_Magnitude, returned in EAX, Z dropped entirely. Every range an AI steering decision is made on is this; the 3D Math_DistanceBetweenPoints gates only obstacle avoidance's machine sweep and following's standoff -- a waypoint on a hilltop is as near as one at its foot.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "004927c4+60",
+        "sha1": "30d5deab18b9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00492800",

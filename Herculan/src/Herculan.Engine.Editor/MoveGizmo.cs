@@ -1,16 +1,15 @@
 using System.Numerics;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
-using Herculan.Engine.Scene;
 
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The move handles drawn on the selected object: an arrow along world X (red) and world Y (green), a square in the
-/// ground plane between them that moves it both ways at once, and for a flyer an arrow up world Z (blue) — the one
-/// height the mission sets (<see cref="ObjectMover.HasOwnHeight"/>). Dragging one previews the move through
-/// <see cref="ObjectMover.Preview"/> and commits it, as one undo step, on release. The handles keep one size on
-/// screen however far away the object is, and draw through the terrain and other objects.
+/// The move handles drawn on the selected object or waypoint (<see cref="PointMover.TargetOf"/>): an arrow along world X
+/// (red) and world Y (green), a square in the ground plane between them that moves it both ways at once, and for a
+/// flyer an arrow up world Z (blue) — the one height the mission sets (<see cref="PointMover.HasOwnHeight(MoveTarget)"/>).
+/// Dragging one previews the move through <see cref="PointMover.Preview"/> and commits it, as one undo step, on release.
+/// The handles keep one size on screen however far away the target is, and draw through the terrain and other objects.
 /// </summary>
 internal sealed class MoveGizmo {
 	private static readonly Vector3 XColor = new(0.95f, 0.3f, 0.3f);
@@ -35,17 +34,17 @@ internal sealed class MoveGizmo {
 	private const float GrabPixels = 8f;
 
 	private readonly SelectionState _selection;
-	private readonly ObjectMover _mover;
+	private readonly PointMover _mover;
 
 	private Handle _dragging = Handle.None;
-	private SceneObject? _target;
+	private MoveTarget? _target;
 	private Vec3i _start;
 	private Vector3 _origin;
 	private Vector3 _grab;
 	private float _grabAlong;
 	private Vec3i _current;
 
-	public MoveGizmo(SelectionState selection, ObjectMover mover) {
+	public MoveGizmo(SelectionState selection, PointMover mover) {
 		_selection = selection;
 		_mover = mover;
 	}
@@ -55,9 +54,8 @@ internal sealed class MoveGizmo {
 	/// <summary>Whether a drag is under way, which the viewport's click-to-select leaves alone.</summary>
 	public bool Dragging => _dragging != Handle.None;
 
-	/// <summary>The selected object, when it can be moved.</summary>
-	private SceneObject? Movable =>
-		_selection.Current is ObjectSelection { Object: var selected } && _mover.WhyFixed(selected) == null ? selected : null;
+	/// <summary>The selection, when it can be moved.</summary>
+	private MoveTarget? Movable => _mover.TargetOf(_selection.Current);
 
 	public void Draw(WireframeRenderer wireframe, Camera camera, float aspect, Vector2 pointer, Vector2 viewport) {
 		var target = _target ?? Movable;
@@ -65,13 +63,13 @@ internal sealed class MoveGizmo {
 			return;
 		}
 
-		var origin = WorldScale.ToRender(target.Object.Position);
+		var origin = _mover.HandleOrigin(target);
 		float length = Length(camera, origin);
 		var hot = Dragging ? _dragging : HandleAt(camera, target, pointer, viewport);
 
 		DrawArrow(wireframe, camera, aspect, origin, WorldX, length, hot == Handle.X ? HotColor : XColor);
 		DrawArrow(wireframe, camera, aspect, origin, WorldY, length, hot == Handle.Y ? HotColor : YColor);
-		if (ObjectMover.HasOwnHeight(target)) {
+		if (PointMover.HasOwnHeight(target)) {
 			DrawArrow(wireframe, camera, aspect, origin, WorldZ, length, hot == Handle.Z ? HotColor : ZColor);
 		}
 
@@ -86,10 +84,17 @@ internal sealed class MoveGizmo {
 			hot == Handle.Plane ? HotColor : PlaneColor, aspect);
 	}
 
-	/// <summary>Starts a drag when <paramref name="pointer"/> is on a handle of the selected object, and says whether it did.</summary>
-	public bool TryBegin(Camera camera, Vector2 pointer, Vector2 viewport) {
+	/// <summary>
+	/// Starts a drag when <paramref name="pointer"/> is on a handle of the selection, and says whether it did.
+	/// <paramref name="detach"/> gives a dragged waypoint a point of its own rather than moving the one it shares.
+	/// </summary>
+	public bool TryBegin(Camera camera, Vector2 pointer, Vector2 viewport, bool detach) {
 		if (Movable is not { } target) {
 			return false;
+		}
+
+		if (detach && target is WaypointTarget waypoint) {
+			target = waypoint with { Detach = true };
 		}
 
 		var handle = HandleAt(camera, target, pointer, viewport);
@@ -97,7 +102,7 @@ internal sealed class MoveGizmo {
 			return false;
 		}
 
-		_origin = WorldScale.ToRender(target.Object.Position);
+		_origin = _mover.HandleOrigin(target);
 		var ray = Ray(camera, pointer, viewport);
 		if (handle == Handle.Plane) {
 			if (OnPlane(ray, _origin.Y) is not { } grab) {
@@ -113,12 +118,12 @@ internal sealed class MoveGizmo {
 
 		_dragging = handle;
 		_target = target;
-		_start = target.Object.Position;
+		_start = PointMover.PositionOf(target);
 		_current = _start;
 		return true;
 	}
 
-	/// <summary>Moves the dragged object under <paramref name="pointer"/>, for the eye alone.</summary>
+	/// <summary>Moves the dragged target under <paramref name="pointer"/>, for the eye alone.</summary>
 	public void Drag(Camera camera, Vector2 pointer, Vector2 viewport) {
 		if (_target == null) {
 			return;
@@ -146,18 +151,22 @@ internal sealed class MoveGizmo {
 		_mover.Preview(_target, _current);
 	}
 
-	/// <summary>Ends the drag, committing the move when it went anywhere.</summary>
-	public void End() {
-		if (_target != null && _current != _start) {
-			_mover.Commit(_target, _start, _current.X, _current.Y, _current.Z);
+	/// <summary>Ends the drag, committing the move when it went anywhere, and says whether it did.</summary>
+	public bool End() {
+		bool moved = _target != null && _current != _start;
+		if (moved) {
+			_mover.Commit(_target!, _start, _current.X, _current.Y, _current.Z);
+		} else if (_target != null) {
+			_mover.Cancel(_target, _start);
 		}
 
 		_dragging = Handle.None;
 		_target = null;
+		return moved;
 	}
 
-	private Handle HandleAt(Camera camera, SceneObject target, Vector2 pointer, Vector2 viewport) {
-		var origin = WorldScale.ToRender(target.Object.Position);
+	private Handle HandleAt(Camera camera, MoveTarget target, Vector2 pointer, Vector2 viewport) {
+		var origin = _mover.HandleOrigin(target);
 		float length = Length(camera, origin);
 		var project = new Projection(camera, viewport);
 
@@ -174,7 +183,7 @@ internal sealed class MoveGizmo {
 		var best = Handle.None;
 		float bestDistance = GrabPixels;
 		foreach (var handle in new[] { Handle.X, Handle.Y, Handle.Z }) {
-			if (handle == Handle.Z && !ObjectMover.HasOwnHeight(target)) {
+			if (handle == Handle.Z && !PointMover.HasOwnHeight(target)) {
 				continue;
 			}
 

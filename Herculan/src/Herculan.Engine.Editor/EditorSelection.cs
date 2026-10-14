@@ -40,6 +40,15 @@ internal sealed record TimerSelection(int Timer) : EditorSelection;
 internal sealed class SelectionState {
 	public EditorSelection? Current { get; set; }
 
+	/// <summary>Raised by <see cref="Focus"/>, for the camera to frame the selection.</summary>
+	public event Action<EditorSelection>? FocusRequested;
+
+	/// <summary>Selects <paramref name="selection"/> and asks for the view to frame it, as a double-click does.</summary>
+	public void Focus(EditorSelection selection) {
+		Current = selection;
+		FocusRequested?.Invoke(selection);
+	}
+
 	/// <summary>
 	/// Whether <paramref name="selection"/> is the current selection. A route counts as selected when
 	/// any of its waypoints is.

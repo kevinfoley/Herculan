@@ -62,9 +62,11 @@ internal sealed class MissionDrawables : IDisposable {
 			}
 		}
 
-		// The terrain, and the only item the measuring grid is painted onto.
+		// The terrain, and the only item the measuring grid and the selected area's tint are painted onto.
 		var built = new List<SceneItem> {
-			new(terrainMesh, Matrix4x4.Identity, terrainTexture?.Handle) { ShowGrid = settings.ShowGrid, CellQuantisedFog = true, GroundFill = true }
+			new(terrainMesh, Matrix4x4.Identity, terrainTexture?.Handle) {
+				ShowGrid = settings.ShowGrid, ShowHighlight = true, CellQuantisedFog = true, GroundFill = true
+			}
 		};
 
 		// The terrain with each structure's ground plane painted in its cell order, as the simulator draws

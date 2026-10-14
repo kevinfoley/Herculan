@@ -9,15 +9,34 @@ namespace Herculan.Engine.Editor;
 /// One route the mission's orders name — a <c>script.dat</c> block-3 waypoint group, resolved to
 /// points.
 /// </summary>
-/// <param name="Reference">The block-3 record index.</param>
-/// <param name="Points">Its waypoints, in order.</param>
-/// <param name="WalkedBy">
-/// The groups whose order slot 0 names it — the only route a group ever walks, see
-/// docs/retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once.
-/// </param>
-/// <param name="NamedBy">The groups that name it only in a later order slot, which no group walks.</param>
-internal sealed record EditorRoute(int Reference, IReadOnlyList<Vec3i> Points, IReadOnlyList<int> WalkedBy,
-	IReadOnlyList<int> NamedBy) {
+internal sealed class EditorRoute {
+	private readonly Vec3i[] _points;
+
+	/// <param name="points">Its waypoints, in order; copied, so a move here leaves the loaded orders alone.</param>
+	public EditorRoute(int reference, IReadOnlyList<Vec3i> points, IReadOnlyList<int> walkedBy, IReadOnlyList<int> namedBy) {
+		Reference = reference;
+		_points = points.ToArray();
+		WalkedBy = walkedBy;
+		NamedBy = namedBy;
+	}
+
+	/// <summary>The block-3 record index.</summary>
+	public int Reference { get; }
+
+	/// <summary>Its waypoints, in order, as the editor's moves have left them.</summary>
+	public IReadOnlyList<Vec3i> Points => _points;
+
+	/// <summary>
+	/// The groups whose order slot 0 names it — the only route a group ever walks, see
+	/// docs/retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once.
+	/// </summary>
+	public IReadOnlyList<int> WalkedBy { get; }
+
+	/// <summary>The groups that name it only in a later order slot, which no group walks.</summary>
+	public IReadOnlyList<int> NamedBy { get; }
+
+	/// <summary>Stands waypoint <paramref name="index"/> at <paramref name="point"/>.</summary>
+	public void Move(int index, Vec3i point) => _points[index] = point;
 
 	/// <summary>
 	/// Whether the route closes on itself — its last waypoint is its first — and so is walked as a loop
@@ -48,11 +67,16 @@ internal sealed record ActionLinks(
 /// <summary>
 /// The editor's cross-reference over one loaded mission, built once: which actions name which
 /// trigger area, which groups walk which route, what fires each action and what each one sets off.
-/// Nothing in a mission moves while the editor shows it, so none of this is recomputed per frame.
+/// Which record names which is never recomputed. Where things stand is: the routes' points, the trigger areas, the
+/// group setups and the base pads here are the editor's own copies, which <see cref="PointFollowers"/> keeps in step
+/// with the document as its points move.
 /// </summary>
 internal sealed class MissionIndex {
 	private readonly Dictionary<(MissionUnitKind, int), SceneObject> _bySlot = new();
 	private readonly ActionLinks[] _actionLinks;
+	private readonly List<MissionTriggerArea> _areas;
+	private readonly MissionGroupSetup[] _setups;
+	private readonly List<MissionBasePad> _basePads;
 
 	public MissionIndex(MissionScene scene, SquadMessages? commandMessages) {
 		Mission = scene.Mission;
@@ -74,7 +98,9 @@ internal sealed class MissionIndex {
 		}
 
 		GroupMembers = members;
-		Areas = BuildAreas(Mission);
+		_areas = BuildAreas(Mission);
+		_setups = Mission.GroupSetups.ToArray();
+		_basePads = Mission.BasePads.ToList();
 		Routes = BuildRoutes(Mission);
 
 		_actionLinks = new ActionLinks[Mission.Actions.Count];
@@ -98,7 +124,10 @@ internal sealed class MissionIndex {
 	/// Every trigger area some action tests, once each, in block-4 order. An area no action names, or
 	/// that sits behind its action's first unset slot, is never tested and is not listed.
 	/// </summary>
-	public IReadOnlyList<MissionTriggerArea> Areas { get; }
+	public IReadOnlyList<MissionTriggerArea> Areas => _areas;
+
+	/// <summary>The base pads, as the editor's moves have left their groups.</summary>
+	public IReadOnlyList<MissionBasePad> BasePads => _basePads;
 
 	/// <summary>Every route some order names, once each, in block-3 order.</summary>
 	public IReadOnlyList<EditorRoute> Routes { get; }
@@ -144,7 +173,25 @@ internal sealed class MissionIndex {
 
 	/// <summary>A group's point, heading and formation, or null for an index the mission does not have.</summary>
 	public MissionGroupSetup? SetupOf(int group) =>
-		group >= 0 && group < Mission.GroupSetups.Count ? Mission.GroupSetups[group] : null;
+		group >= 0 && group < _setups.Length ? _setups[group] : null;
+
+	/// <summary>Replaces the area with <paramref name="area"/>'s reference by <paramref name="area"/>.</summary>
+	public void SetArea(MissionTriggerArea area) {
+		int at = _areas.FindIndex(existing => existing.Reference == area.Reference);
+		if (at >= 0) {
+			_areas[at] = area;
+		}
+	}
+
+	public void SetSetup(int group, MissionGroupSetup setup) => _setups[group] = setup;
+
+	/// <summary>Replaces the pad of <paramref name="pad"/>'s group by <paramref name="pad"/>.</summary>
+	public void SetBasePad(MissionBasePad pad) {
+		int at = _basePads.FindIndex(existing => existing.GroupIndex == pad.GroupIndex);
+		if (at >= 0) {
+			_basePads[at] = pad;
+		}
+	}
 
 	/// <summary>
 	/// Where a record a mission ref names stands: an object's position, or a group's point. Null when

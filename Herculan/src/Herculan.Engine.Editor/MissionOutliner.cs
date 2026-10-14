@@ -9,7 +9,7 @@ namespace Herculan.Engine.Editor;
 /// The Mission panel down the left of the window: every group (with its members), trigger area,
 /// action, timer, route and objective as a list, under the mission check's findings. It is the only way to reach the parts of a mission that are not
 /// standing somewhere — an action with no area, a group not yet in the mission — and the other way
-/// to make a selection.
+/// to make a selection. A double-click also frames the record in the view (<see cref="SelectionState.Focus"/>).
 /// </summary>
 internal sealed class MissionOutliner {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
@@ -76,9 +76,7 @@ internal sealed class MissionOutliner {
 			ImGui.PushStyleColor(ImGuiCol.Text, _selection.Is(target) ? SelectedFindingColor : FindingLinkColor);
 			ImGui.TextWrapped(finding.Message);
 			ImGui.PopStyleColor();
-			if (ImGui.IsItemClicked()) {
-				_selection.Current = target;
-			}
+			Choose(target, ImGui.IsItemClicked());
 		}
 	}
 
@@ -91,10 +89,8 @@ internal sealed class MissionOutliner {
 			var timer = Mission.ActionTimers[i];
 			var fires = timer.SequenceRefs.Where(reference => reference >= 0 && reference < Mission.Actions.Count);
 			var selection = new TimerSelection(i);
-			if (ImGui.Selectable($"Timer {i}: {MissionText.TimerSummary(timer)}, fires {string.Join(", ", fires)}##timer{i}",
-					_selection.Is(selection))) {
-				_selection.Current = selection;
-			}
+			Choose(selection, ImGui.Selectable($"Timer {i}: {MissionText.TimerSummary(timer)}, fires {string.Join(", ", fires)}##timer{i}",
+				_selection.Is(selection)));
 		}
 	}
 
@@ -121,10 +117,20 @@ internal sealed class MissionOutliner {
 
 		for (int i = 0; i < Mission.Objectives.Count; i++) {
 			var selection = new ObjectiveSelection(i);
-			if (WrappedSelectable(MissionText.DescribeObjective(Mission.Objectives[i], i), $"objective{i}",
-					_selection.Is(selection))) {
-				_selection.Current = selection;
-			}
+			Choose(selection, WrappedSelectable(MissionText.DescribeObjective(Mission.Objectives[i], i), $"objective{i}",
+				_selection.Is(selection)));
+		}
+	}
+
+	/// <summary>
+	/// Selects <paramref name="selection"/> when the item just drawn was <paramref name="clicked"/>, and frames it in the
+	/// view when it was double-clicked.
+	/// </summary>
+	private void Choose(EditorSelection selection, bool clicked) {
+		if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left)) {
+			_selection.Focus(selection);
+		} else if (clicked) {
+			_selection.Current = selection;
 		}
 	}
 
@@ -167,9 +173,7 @@ internal sealed class MissionOutliner {
 			}
 
 			bool open = ImGui.TreeNodeEx($"{MissionText.DescribeGroup(Mission, group)}: {members.Count}{waiting}##group{group}", flags);
-			if (ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen()) {
-				_selection.Current = new GroupSelection(group);
-			}
+			Choose(new GroupSelection(group), ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen());
 
 			if (!open) {
 				continue;
@@ -177,10 +181,8 @@ internal sealed class MissionOutliner {
 
 			foreach (var member in members) {
 				var selection = new ObjectSelection(member);
-				if (ImGui.Selectable($"{MissionText.Describe(member)}##m{group}.{member.Placement.SlotIndex}",
-						_selection.Is(selection))) {
-					_selection.Current = selection;
-				}
+				Choose(selection, ImGui.Selectable($"{MissionText.Describe(member)}##m{group}.{member.Placement.SlotIndex}",
+					_selection.Is(selection)));
 			}
 
 			ImGui.TreePop();
@@ -198,10 +200,8 @@ internal sealed class MissionOutliner {
 				: "box";
 			string actions = string.Join(", ", _index.ActionsTesting(area.Reference));
 			var selection = new AreaSelection(area.Reference);
-			if (ImGui.Selectable($"Area {area.Reference}: {shape}, action {actions}##area{area.Reference}",
-					_selection.Is(selection))) {
-				_selection.Current = selection;
-			}
+			Choose(selection, ImGui.Selectable($"Area {area.Reference}: {shape}, action {actions}##area{area.Reference}",
+				_selection.Is(selection)));
 		}
 	}
 
@@ -216,9 +216,7 @@ internal sealed class MissionOutliner {
 			string trigger = action.Areas.Count > 0 ? $"{action.Areas.Count} area(s)" : "no area";
 			string effect = links.WaitingGroups.Count > 0 ? $", brings in {links.WaitingGroups.Count} group(s)" : string.Empty;
 			var selection = new ActionSelection(i);
-			if (ImGui.Selectable($"Action {i}: {trigger}{effect}##action{i}", _selection.Is(selection))) {
-				_selection.Current = selection;
-			}
+			Choose(selection, ImGui.Selectable($"Action {i}: {trigger}{effect}##action{i}", _selection.Is(selection)));
 		}
 	}
 
@@ -231,10 +229,8 @@ internal sealed class MissionOutliner {
 			string walkers = route.Walked ? $"groups {string.Join(", ", route.WalkedBy)}" : "never walked";
 			string shape = route.Closed ? "loop" : "open";
 			var selection = new RouteSelection(route.Reference);
-			if (ImGui.Selectable($"Route {route.Reference}: {shape}, {walkers}##route{route.Reference}",
-					_selection.Is(selection))) {
-				_selection.Current = selection;
-			}
+			Choose(selection, ImGui.Selectable($"Route {route.Reference}: {shape}, {walkers}##route{route.Reference}",
+				_selection.Is(selection)));
 		}
 	}
 }

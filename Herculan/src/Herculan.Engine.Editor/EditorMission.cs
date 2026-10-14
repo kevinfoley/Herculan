@@ -22,7 +22,7 @@ internal sealed class EditorMission {
 		Picker = new ScenePicker(scene, index, Overlay);
 		GroupOverlay = new GroupOverlay(index, drape, Picker);
 		Outliner = new MissionOutliner(index, new MissionLint(index, document), Selection);
-		Mover = new ObjectMover(document, scene, Picker, Overlay);
+		Mover = new PointMover(document, scene, index, Picker, Overlay);
 		Gizmo = new MoveGizmo(Selection, Mover);
 		Properties = new PropertiesPanel(index, Selection, Mover);
 	}
@@ -41,7 +41,7 @@ internal sealed class EditorMission {
 
 	public Mission Mission => Scene.Mission;
 
-	/// <summary>The mission's own features, cross-referenced once: nothing moves while the editor shows it.</summary>
+	/// <summary>The mission's own features, cross-referenced once.</summary>
 	public MissionIndex Index { get; }
 
 	public SelectionState Selection { get; } = new();
@@ -57,7 +57,7 @@ internal sealed class EditorMission {
 	public PropertiesPanel Properties { get; }
 
 	/// <summary>The edits made to <see cref="Document"/>, and their undo history.</summary>
-	public ObjectMover Mover { get; }
+	public PointMover Mover { get; }
 
 	public MoveGizmo Gizmo { get; }
 
@@ -71,6 +71,10 @@ internal sealed class EditorMission {
 	public static EditorMission Open(GameContent content, string scriptPath, string name, string? dataDirectory = null) {
 		var document = MissionLoader.ReadScript(scriptPath);
 		var scene = MissionScene.Load(content, scriptPath, dataDirectory, document);
+		foreach (var sceneObject in scene.Objects) {
+			sceneObject.Object.Position = PointFollowers.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
+		}
+
 		var index = new MissionIndex(scene, SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
 		return new EditorMission(name, document, scene, index);
 	}

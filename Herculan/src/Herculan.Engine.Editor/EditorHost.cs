@@ -61,6 +61,15 @@ public sealed class EditorHost {
 	private readonly EditorSettingsPanel _settingsPanel;
 	private readonly VolMissionBrowser _volBrowser;
 	private readonly Camera _camera = new();
+
+	// How much room the top-down view leaves round the zone, as a share of the height that fits it exactly.
+	private const float TopDownMargin = 1.05f;
+
+	// The top-down view stands much higher than the free camera's clip planes reach, so while it is up they are pushed
+	// out with its height, at the depth ratio below; these are the free camera's own.
+	private const float TopDownDepthRatio = 4000f;
+	private readonly float _flyNearPlane;
+	private readonly float _flyFarPlane;
 	private readonly EditorCamera _editorCamera = new();
 
 	// A mission opened from the archives is generated as the shell would generate it, into this scratch directory
@@ -118,9 +127,15 @@ public sealed class EditorHost {
 	private Vector2 _leftDownPos;
 	private bool _leftDownOverViewport;
 
+	// The last click in the viewport, which a second one soon after and close by makes a double-click.
+	private long? _lastClickMs;
+	private Vector2 _lastClickPos;
+
 	private EditorHost(EditorLaunch launch) {
 		_launch = launch;
 		_installData = ShellWorkingFiles.DataDirectory(launch.InstallRoot);
+		_flyNearPlane = _camera.NearPlane;
+		_flyFarPlane = _camera.FarPlane;
 		_settingsPanel = new EditorSettingsPanel(_settings);
 		_volBrowser = new VolMissionBrowser(() => MissionFileLaunch.List(launch.ShellContent()));
 
@@ -138,10 +153,11 @@ public sealed class EditorHost {
 		if (_mission != null) {
 			ReportLoaded(_mission);
 			_editorCamera.ResetTo(_mission.Scene.Camera.Position, _mission.Scene.Camera.Heading);
+			_mission.Selection.FocusRequested += Frame;
 		}
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "drag a selected object's arrows to move it, Ctrl+Z/Ctrl+Y undo/redo, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's or waypoint's arrows to move it (Alt detaches a waypoint from what shares its point), Ctrl+Z/Ctrl+Y undo/redo, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -215,7 +231,8 @@ public sealed class EditorHost {
 			_leftDownPos = mouse.Position;
 			_leftDownOverViewport = !ImGui.GetIO().WantCaptureMouse;
 			if (_leftDownOverViewport && _mission != null) {
-				_mission.Gizmo.TryBegin(_camera, mouse.Position, Viewport);
+				bool alt = _keyboard != null && (_keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight));
+				_mission.Gizmo.TryBegin(_camera, mouse.Position, Viewport, detach: alt);
 			}
 		}
 	}
@@ -226,12 +243,45 @@ public sealed class EditorHost {
 				_looking = false;
 				mouse.Cursor.CursorMode = CursorMode.Normal;
 			}
-		} else if (button == MouseButton.Left && _mission?.Gizmo.Dragging == true) {
-			_mission.Gizmo.End();
-		} else if (button == MouseButton.Left && _leftDownOverViewport && _mission != null
-				&& Vector2.Distance(mouse.Position, _leftDownPos) < 4f) {
-			_mission.Selection.Current = _mission.Picker.Pick(_camera, mouse.Position, Viewport, _settings);
-			Console.WriteLine($"[pick] {_mission.Selection.Current?.ToString() ?? "nothing"} at {mouse.Position}");
+		} else if (button == MouseButton.Left && _mission != null) {
+			bool click = _leftDownOverViewport && Vector2.Distance(mouse.Position, _leftDownPos) < 4f;
+			if (_mission.Gizmo.Dragging) {
+				// A press on a handle that moved nothing still counts toward a double-click, whose second press often
+				// lands on the handles drawn over what the first selected; it leaves the selection as it is.
+				if (!_mission.Gizmo.End() && click && IsDoubleClick(mouse.Position)
+						&& _mission.Selection.Current is { } current) {
+					_mission.Selection.Focus(current);
+				}
+			} else if (click) {
+				var picked = _mission.Picker.Pick(_camera, mouse.Position, Viewport, _settings);
+				if (IsDoubleClick(mouse.Position) && picked != null) {
+					_mission.Selection.Focus(picked);
+				} else {
+					_mission.Selection.Current = picked;
+				}
+
+				Console.WriteLine($"[pick] {picked?.ToString() ?? "nothing"} at {mouse.Position}");
+			}
+		}
+	}
+
+	// Whether a click at <position> makes a double-click with the one before, within ImGui's own time and distance;
+	// a click that does starts no new pair.
+	private bool IsDoubleClick(Vector2 position) {
+		var io = ImGui.GetIO();
+		long now = Environment.TickCount64;
+		bool isDouble = _lastClickMs is { } last && now - last <= io.MouseDoubleClickTime * 1000f
+			&& Vector2.Distance(position, _lastClickPos) <= io.MouseDoubleClickMaxDist;
+		_lastClickMs = isDouble ? null : now;
+		_lastClickPos = position;
+		return isDouble;
+	}
+
+	// Moves the camera to frame what a double-click chose.
+	private void Frame(EditorSelection selection) {
+		if (_mission != null && SelectionBounds.Of(_mission, selection) is { } bounds) {
+			_editorCamera.Frame(bounds.Centre, bounds.Radius, _camera.FieldOfView,
+				_camera.FarPlane * WorldScale.WorldUnitsPerMeter * 0.8f);
 		}
 	}
 
@@ -269,6 +319,7 @@ public sealed class EditorHost {
 		bool acceptKeyboard = _imgui == null || !ImGui.GetIO().WantCaptureKeyboard;
 		_editorCamera.Update(deltaSeconds, _keyboard, lookDelta, _looking, acceptKeyboard);
 		_editorCamera.ApplyTo(_camera);
+		SetClipPlanes();
 
 		// After the camera, so the object stays under the pointer while the view moves too.
 		if (_mission?.Gizmo.Dragging == true && _mouse != null) {
@@ -285,10 +336,20 @@ public sealed class EditorHost {
 		return drawables;
 	}
 
-	// Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes, unless a text field has the keyboard, which has its own undo.
+	// V toggles the top-down view, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes, unless a text field has the keyboard,
+	// which has its own undo. None of them while a drag is under way.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
-		if (_mission == null || _mission.Gizmo.Dragging || (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)
-				|| !(keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight))) {
+		if (_mission?.Gizmo.Dragging == true || (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
+			return;
+		}
+
+		bool control = keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight);
+		if (key == Key.V && !control) {
+			ToggleTopDown();
+			return;
+		}
+
+		if (_mission == null || !control) {
 			return;
 		}
 
@@ -298,6 +359,39 @@ public sealed class EditorHost {
 		} else if (key == Key.Y || (key == Key.Z && shift)) {
 			_mission.Mover.Redo();
 		}
+	}
+
+	// Into the top-down view, high enough over the middle of the zone that its whole grid fits the window; or back out
+	// to where the view was.
+	private void ToggleTopDown() {
+		if (_editorCamera.TopDown) {
+			_editorCamera.LeaveTopDown();
+			return;
+		}
+
+		if (_mission == null) {
+			return;
+		}
+
+		var terrain = _mission.Scene.World.Terrain;
+		var size = _window.FramebufferSize;
+		float aspect = (float)size.X / MathF.Max(size.Y, 1);
+		float tanHalfHeight = MathF.Tan(_camera.FieldOfView / 2f);
+		float height = MathF.Max(terrain.WorldHeight / 2f / tanHalfHeight, terrain.WorldWidth / 2f / (tanHalfHeight * aspect));
+		_editorCamera.EnterTopDown(new Vector3(terrain.WorldWidth / 2f, terrain.WorldHeight / 2f, 0f), height * TopDownMargin);
+	}
+
+	// The free camera's clip planes, or in the top-down view ones reaching twice its height: past the corners of the
+	// ground in view at any window shape the editor is likely to have.
+	private void SetClipPlanes() {
+		if (!_editorCamera.TopDown) {
+			_camera.NearPlane = _flyNearPlane;
+			_camera.FarPlane = _flyFarPlane;
+			return;
+		}
+
+		_camera.FarPlane = MathF.Max(_flyFarPlane, _editorCamera.WorldPosition.Z / WorldScale.WorldUnitsPerMeter * 2f);
+		_camera.NearPlane = MathF.Max(_flyNearPlane, _camera.FarPlane / TopDownDepthRatio);
 	}
 
 	// A trigger going down or up, as the mouse button it stands for: a left press and release selects, a right one looks.
@@ -328,8 +422,9 @@ public sealed class EditorHost {
 
 		// Pushed every frame rather than only when the checkbox moves: the panel edits the settings
 		// object directly and Cancel restores it just as directly, so there is no change event to hang
-		// this off, and the assignment is a field write.
-		_renderer.FogEnabled = _settings.RenderFog;
+		// this off, and the assignment is a field write. The top-down view looks from beyond the fog's reach, where
+		// it would bury the whole zone.
+		_renderer.FogEnabled = _settings.RenderFog && !_editorCamera.TopDown;
 
 		// SceneRenderer.Render deliberately does not clear — the simulator host draws three cockpit
 		// panels into one frame, so clearing is the caller's job, once per frame. The editor draws a
@@ -381,6 +476,8 @@ public sealed class EditorHost {
 			item.Visible = _settings.WaitingGroups == WaitingGroupDisplay.Drawn;
 		}
 
+		mission.Overlay.Highlight(renderer.Highlight, mission.Selection);
+
 		// Full-window viewport: the editor draws one 3D view, unlike the simulator host's three cockpit
 		// panels, which is what SceneRenderer.Render's x/y origin exists for.
 		renderer.Render(_camera, drawables.Items, drawables.GroundLayer, 0, 0, size.X, size.Y);
@@ -431,6 +528,7 @@ public sealed class EditorHost {
 
 		_drawables?.Dispose();
 		_mission = opened;
+		opened.Selection.FocusRequested += Frame;
 		_drawables = Upload(_gl, _renderer, opened);
 		_editorCamera.ResetTo(opened.Scene.Camera.Position, opened.Scene.Camera.Heading);
 		_window.Title = WindowTitle;
@@ -492,6 +590,13 @@ public sealed class EditorHost {
 		// The overlay toggles take effect, and are saved, as they are clicked: they are view state, with
 		// nothing to confirm.
 		if (ImGui.BeginMenu("View")) {
+			// Camera state rather than a setting: not saved.
+			if (ImGui.MenuItem("Top-down", "V", _editorCamera.TopDown, _mission != null)) {
+				ToggleTopDown();
+			}
+
+			ImGui.Separator();
+
 			bool changed = false;
 			bool areas = _settings.ShowTriggerAreas;
 			if (ImGui.MenuItem("Trigger Areas", null, ref areas)) {

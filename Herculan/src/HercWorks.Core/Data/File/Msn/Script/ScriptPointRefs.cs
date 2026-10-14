@@ -38,13 +38,13 @@ public static class ScriptPointRefs {
 	}
 
 	/// <summary>
-	/// The ref a field naming <paramref name="reference"/> should hold to stand at (<paramref name="x"/>,
-	/// <paramref name="y"/>, <paramref name="z"/>): the same ref, its point rewritten, when nothing else names that
-	/// point; otherwise a point appended to block 1. Throws <see cref="InvalidOperationException"/> when block 1 is
-	/// already as long as a ref can index.
+	/// The ref <paramref name="moving"/> fields naming <paramref name="reference"/> should hold to stand together at
+	/// (<paramref name="x"/>, <paramref name="y"/>, <paramref name="z"/>): the same ref, its point rewritten, when
+	/// nothing else names that point; otherwise a point appended to block 1. Throws
+	/// <see cref="InvalidOperationException"/> when block 1 is already as long as a ref can index.
 	/// </summary>
-	public static short Place(ScriptDat script, short reference, int x, int y, int z) {
-		if (reference >= 0 && reference < script.Coordinates.Length && Count(script, reference) == 1) {
+	public static short Place(ScriptDat script, short reference, int x, int y, int z, int moving = 1) {
+		if (reference >= 0 && reference < script.Coordinates.Length && Count(script, reference) == moving) {
 			var point = script.Coordinates[reference];
 			point.X = x;
 			point.Y = y;

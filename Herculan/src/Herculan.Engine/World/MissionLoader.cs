@@ -584,7 +584,7 @@ public static class MissionLoader {
 	/// heading ref — so without it a whole mission faced due north and every formation spread was
 	/// rotated by the wrong angle.</para>
 	/// </summary>
-	private static int RouteBearing(IReadOnlyList<Vec3i> route) {
+	public static int RouteBearing(IReadOnlyList<Vec3i> route) {
 		if (route.Count < 2) {
 			return 0;
 		}
@@ -758,7 +758,7 @@ public static class MissionLoader {
 	/// </summary>
 	private static Vec3i OffsetFromGroup(Group group, BaseFormationTable baseFormations, int memberIndex) {
 		var offset = baseFormations.OffsetFor(group.FormationId, memberIndex);
-		return offset is { } o ? Rotate(group.Position, group.Heading, o.X, o.Y) : group.Position;
+		return offset is { } o ? FormationSpread(group.Position, group.Heading, o.X, o.Y) : group.Position;
 	}
 
 	/// <summary>
@@ -770,7 +770,7 @@ public static class MissionLoader {
 	/// </summary>
 	private static Vec3i OffsetFromGroup(Group group, MechFormationTable mechFormations, int memberIndex) {
 		var offset = mechFormations.OffsetFor(group.FormationId, memberIndex);
-		return offset is { } o ? Rotate(group.Position, group.Heading, o.X, o.Y) : group.Position;
+		return offset is { } o ? FormationSpread(group.Position, group.Heading, o.X, o.Y) : group.Position;
 	}
 
 	/// <summary>
@@ -785,7 +785,7 @@ public static class MissionLoader {
 			return group.Position;
 		}
 
-		var spread = Rotate(group.Position, group.Heading, offset.X, offset.Y);
+		var spread = FormationSpread(group.Position, group.Heading, offset.X, offset.Y);
 		return new Vec3i(spread.X, spread.Y, spread.Z + offset.Z);
 	}
 
@@ -794,7 +794,7 @@ public static class MissionLoader {
 	/// the fixed-point 2D rotation <c>Formation_RotateAndAddOffset</c> (<c>00411d64</c>) reduces to
 	/// for a heading-only object (no pitch/roll), shared by every formation kind.
 	/// </summary>
-	private static Vec3i Rotate(Vec3i anchor, int heading, int dx, int dy) {
+	public static Vec3i FormationSpread(Vec3i anchor, int heading, int dx, int dy) {
 		short cos = BinaryAngle.Cos(heading);
 		short sin = BinaryAngle.Sin(heading);
 		int worldDx = (int)(((long)dx * cos - (long)dy * sin + 0x2000) >> 14);

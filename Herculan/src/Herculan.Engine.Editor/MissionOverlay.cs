@@ -11,7 +11,8 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The mission's non-object features drawn over the scene: trigger areas, routes, base pads and the
-/// mission box with its two margins, as lines laid on the terrain, plus their ImGui labels and the waypoint pick.
+/// mission box with its two margins, as lines laid on the terrain, plus their ImGui labels, the waypoint pick and the
+/// tint over a selected area's ground.
 ///
 /// <para>Every line is drawn twice: dim with depth testing off, so a feature behind a hill still
 /// shows where it is, then at full colour with depth testing on, so the part in view reads as
@@ -53,14 +54,7 @@ internal sealed class MissionOverlay {
 		_drape = drape;
 
 		foreach (var area in index.Areas) {
-			var lines = new List<Vector3>();
-			if (area.Shape == MissionTriggerShape.Circle) {
-				drape.AddCircle(lines, area.A, area.Radius);
-			} else {
-				drape.AddRectangle(lines, area.A, area.B);
-			}
-
-			_areas.Add((area, lines, AreaColor(area)));
+			_areas.Add((area, AreaLines(area), AreaColor(area)));
 		}
 
 		var playerRoute = index.PlayerRoute;
@@ -71,12 +65,8 @@ internal sealed class MissionOverlay {
 			_routes.Add((route, lines, color));
 		}
 
-		foreach (var pad in index.Mission.BasePads) {
-			var (x, y) = pad.TileOrigin;
-			int size = pad.Layout.TileSize;
-			var lines = new List<Vector3>();
-			drape.AddRectangle(lines, new Vec3i(x, y, 0), new Vec3i(x + size, y + size, 0));
-			_pads.Add((pad, lines));
+		foreach (var pad in index.BasePads) {
+			_pads.Add((pad, PadLines(pad)));
 		}
 
 		SetBox(MissionBox.Of(index.Mission.Coordinates));
@@ -91,6 +81,72 @@ internal sealed class MissionOverlay {
 			AddBox(box, BoxColor);
 			AddBox(box.Grown(HddMap.Margin), MapExtentColor);
 			AddBox(box.Grown(MissionObjectives.RulesOfEngagementMargin), AbortColor);
+		}
+	}
+
+	/// <summary>Lays <paramref name="area"/>'s outline again where it now stands.</summary>
+	public void MoveArea(MissionTriggerArea area) {
+		int at = _areas.FindIndex(entry => entry.Area.Reference == area.Reference);
+		if (at >= 0) {
+			_areas[at] = (area, AreaLines(area), _areas[at].Color);
+		}
+	}
+
+	/// <summary>Lays the outline of <paramref name="pad"/>'s tile again, in place of its group's old one.</summary>
+	public void MovePad(MissionBasePad pad) {
+		int at = _pads.FindIndex(entry => entry.Pad.GroupIndex == pad.GroupIndex);
+		if (at >= 0) {
+			_pads[at] = (pad, PadLines(pad));
+		}
+	}
+
+	private List<Vector3> AreaLines(MissionTriggerArea area) {
+		var lines = new List<Vector3>();
+		if (area.Shape == MissionTriggerShape.Circle) {
+			_drape.AddCircle(lines, area.A, area.Radius);
+		} else {
+			_drape.AddRectangle(lines, area.A, area.B);
+		}
+
+		return lines;
+	}
+
+	private List<Vector3> PadLines(MissionBasePad pad) {
+		var (x, y) = pad.TileOrigin;
+		int size = pad.Layout.TileSize;
+		var lines = new List<Vector3>();
+		_drape.AddRectangle(lines, new Vec3i(x, y, 0), new Vec3i(x + size, y + size, 0));
+		return lines;
+	}
+
+	/// <summary>Lays <paramref name="route"/>'s line again over its waypoints as they now stand.</summary>
+	public void MoveRoute(EditorRoute route) {
+		int at = _routes.FindIndex(entry => ReferenceEquals(entry.Route, route));
+		if (at < 0) {
+			return;
+		}
+
+		var lines = new List<Vector3>();
+		_drape.AddPolyline(lines, route.Points);
+		_routes[at] = (route, lines, _routes[at].Color);
+	}
+
+	/// <summary>
+	/// Tints the ground a selected trigger area catches, through <paramref name="highlight"/>, and clears it for any
+	/// other selection.
+	/// </summary>
+	public void Highlight(GroundHighlight highlight, SelectionState selection) {
+		if (selection.Current is not AreaSelection { Area: var reference } || _index.Area(reference) is not { } area) {
+			highlight.Clear();
+			return;
+		}
+
+		var a = WorldScale.ToRender(area.A);
+		if (area.Shape == MissionTriggerShape.Circle) {
+			highlight.SetRange(new Vector2(a.X, a.Z), WorldScale.DistanceToRender(area.Radius));
+		} else {
+			var b = WorldScale.ToRender(area.B);
+			highlight.SetBox(new Vector2(a.X, a.Z), new Vector2(b.X, b.Z));
 		}
 	}
 
@@ -196,11 +252,10 @@ internal sealed class MissionOverlay {
 	/// it to where the formation's fixed spot in the tile puts the group.
 	/// </summary>
 	private void AddSnap(List<Vector3> into, int group) {
-		if (group < 0 || group >= _index.Mission.GroupSetups.Count) {
+		if (_index.SetupOf(group) is not { } setup) {
 			return;
 		}
 
-		var setup = _index.Mission.GroupSetups[group];
 		if (setup.AuthoredPoint == setup.Point) {
 			return;
 		}

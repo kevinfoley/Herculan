@@ -20,13 +20,13 @@ internal sealed class PropertiesPanel {
 
 	private readonly MissionIndex _index;
 	private readonly SelectionState _selection;
-	private readonly ObjectMover _mover;
+	private readonly PointMover _mover;
 
 	// A position being typed, and the object it is for, until its field lets go.
 	private SceneObject? _draftFor;
 	private Vec3i _draft;
 
-	public PropertiesPanel(MissionIndex index, SelectionState selection, ObjectMover mover) {
+	public PropertiesPanel(MissionIndex index, SelectionState selection, PointMover mover) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -122,7 +122,7 @@ internal sealed class PropertiesPanel {
 	}
 
 	/// <summary>
-	/// The object's position, as fields that move it when it can be moved (<see cref="ObjectMover"/>). A field's edit
+	/// The object's position, as fields that move it when it can be moved (<see cref="PointMover"/>). A field's edit
 	/// is applied when it loses the focus, as one undo step.
 	/// </summary>
 	private void DrawPosition(SceneObject sel) {
@@ -140,7 +140,7 @@ internal sealed class PropertiesPanel {
 
 		var shown = _draftFor != null ? _draft : pos;
 		int x = shown.X, y = shown.Y, z = shown.Z;
-		bool ownHeight = ObjectMover.HasOwnHeight(sel);
+		bool ownHeight = PointMover.HasOwnHeight(sel);
 		bool changed = false, done = false;
 
 		ImGui.Text("Position, in world units:");
@@ -163,7 +163,7 @@ internal sealed class PropertiesPanel {
 			var draft = _draft;
 			_draftFor = null;
 			if (draft.X != pos.X || draft.Y != pos.Y || (ownHeight && draft.Z != pos.Z)) {
-				_mover.Commit(sel, pos, draft.X, draft.Y, draft.Z);
+				_mover.Commit(new ObjectTarget(sel), pos, draft.X, draft.Y, draft.Z);
 			}
 		}
 
@@ -568,7 +568,7 @@ internal sealed class PropertiesPanel {
 		ImGui.Text($"Formation: {setup.FormationId} ({kind} table)");
 		ImGui.Text(setup.PaintsGround ? "Paints ground: yes" : "Paints ground: no");
 
-		foreach (var pad in Mission.BasePads) {
+		foreach (var pad in _index.BasePads) {
 			if (pad.GroupIndex != group) {
 				continue;
 			}
@@ -648,6 +648,22 @@ internal sealed class PropertiesPanel {
 			if (ImGui.Selectable($"{i}: {point.X}, {point.Y}##wp{i}", isSelected)) {
 				_selection.Current = new RouteSelection(route.Reference, i);
 			}
+		}
+
+		if (_mover.TargetOf(selected) is not WaypointTarget waypoint) {
+			return;
+		}
+
+		ImGui.Separator();
+		int sharers = _mover.SharersOf(waypoint);
+		ImGui.TextWrapped(sharers > 0
+			? $"Its point is named by {sharers} other record(s) — trigger areas, groups, other waypoints — which move "
+				+ "with it. Alt+drag moves the waypoint alone."
+			: "Nothing else names its point.");
+
+		if (selected.Waypoint <= 1 && route.WalkedBy.Any(group => _index.SetupOf(group)?.PointSource == MissionGroupPointSource.RouteStart)) {
+			ImGui.TextWrapped("A group with no point of its own starts on the first waypoint, facing along the first "
+				+ "leg, and moves and turns with them.");
 		}
 	}
 
