@@ -2842,8 +2842,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_GetClassTag",
-      "description": "Slot +4 of GridShape's vtable 000923da: nop; nop; mov eax, 0x2bc0001; ret 4, GridShape_Construct's tag. No Ghidra function starts here. ES2's GridShape_GetClassTag (DBSIM 004275f0).",
-      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape"
+      "description": "Slot +4 of GridShape's vtable 000923da: nop; nop; mov eax, 0x2bc0001; ret 4, GridShape_Construct's tag. ES2's GridShape_GetClassTag (DBSIM 004275f0).",
+      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
+      "verified": {
+        "bytes": "0001ff0a+10",
+        "sha1": "0072461175b2",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0001ff14",
@@ -2866,8 +2872,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GridShape_GetMemorySize",
-      "description": "Slot +0xc of GridShape's vtable 000923da: xor eax, eax; ret 4, returning 0. No Ghidra function starts here. ES2's GridShape_GetMemorySize (DBSIM 00427624).",
-      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape"
+      "description": "Slot +0xc of GridShape's vtable 000923da: xor eax, eax; ret 4, returning 0. ES2's GridShape_GetMemorySize (DBSIM 00427624).",
+      "source": "Herculan/docs/es1/simulation/world.md#the-collision-volume--gridshape",
+      "verified": {
+        "bytes": "0001ff40+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0001ff48",
@@ -13819,7 +13831,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GLCursor_GetClassTag",
-      "description": "Returns 0x28000b, callee-cleaned (RET 4): slot +4 of the GLCursor vtable 0009b672. No Ghidra function starts here.",
+      "description": "Returns 0x28000b, callee-cleaned (RET 4): slot +4 of the GLCursor vtable 0009b672.",
       "source": "ES1DBSIM image bytes at 0007dca0 (b8 0b 00 28 00 c2 04 00) and the vtable at 0009b672",
       "verified": {
         "bytes": "0007dca0+8",
