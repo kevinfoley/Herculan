@@ -3,6 +3,7 @@ using Herculan.Engine.Content;
 using Herculan.Engine.Editor;
 using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Host.Simulator;
+using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
 using Herculan.Engine.World;
 
@@ -47,13 +48,19 @@ static class Launcher {
 				shellMode, firstTurn ? shell.Tab : ShellScreen.MainMenuTab, shell.Bay, firstTurn && shell.Practice,
 				options.SilentAudio, options.WritePreferences, shell.Windowed, shell.Movies, state,
 				missionPicker: options.DeveloperMode);
+			// A termination signal closed the window (TerminationSignal), so it ends the run as QUIT would, whatever
+			// the window was left holding.
+			if (TerminationSignal.Requested) {
+				return 0;
+			}
+
 			if (shellExit == ShellHost.SettingsRestartCode) {
 				state = shellExit;
 				continue;
 			}
 
 			if (shellExit == ShellHost.EditorExitCode) {
-				if (RunEditor(session) == EditorExit.Closed) {
+				if (RunEditor(session) == EditorExit.Closed || TerminationSignal.Requested) {
 					return 0;
 				}
 
@@ -72,6 +79,10 @@ static class Launcher {
 				state = SimulatorHost.Run(session, options, staging, null, true, options.MusicTrackSelect + launches++);
 			} else {
 				return shellExit;
+			}
+
+			if (TerminationSignal.Requested) {
+				return 0;
 			}
 
 			if (!ShellHost.ReturnsToShell(state)) {

@@ -20,7 +20,7 @@ The engine is currently in beta. Not all features have been thoroughly tested, a
 
 - Play all of _Earthsiege 2_, at any resolution, with support for widescreen and ultra-widescreen monitors (menus render at 4:3).
 - Hardware-accelerated rendering that almost perfectly matches retail's software renderer.
-- Currently supports Windows, with planned support for Linux and potentially macOS in the near future.
+- Runs on Windows and Linux, with potential macOS support in the future.
 - Full support for retail's file formats, including saved games.
 - Compatible with real CDs and with ISOs (no mounting required).
 - Built-in installer for copying the files from a retail CD or ISO to your drive, supporting Minimum, Medium, and Maximum installation methods.
@@ -35,9 +35,25 @@ The engine is currently in beta. Not all features have been thoroughly tested, a
 
 To use the HERCULAN Engine, you will need a copy of the original game files. _Earthsiege 2_ is a copyrighted work. While a legal owner of the copyright has previously released the game for free, I do not have a license to distribute the original game files and they are not included in this repository. The original download directly from the copyright holder is no longer available, but there are mirrors and other websites which still have the files available. Always consult local law before downloading the game from third-party websites. Use caution when downloading files from "abandonware" websites, as they could be infected with malware. Alternatively, you can purchase an original retail CD-ROM (no longer manufactured, but still available from some online markets). I am not aware of any digital marketplace that sells _Earthsiege 2_.
 
-Download `HERCULAN-<version>-win-x64.zip` from the [Releases](https://github.com/kevinfoley/Herculan/releases) page, unzip it anywhere, and run `Herculan.exe`. You don't need to install .NET; the runtime is built into the executable. The same page has `HercWorksCSharp-<version>-win-x64.zip` for the HercWorks CSharp tools.
+Download the engine for your platform from the [Releases](https://github.com/kevinfoley/Herculan/releases) page. You don't need to install .NET; the runtime is built into the executable.
+
+- **Windows:** unzip `HERCULAN-<version>-win-x64.zip` anywhere and run `Herculan.exe`. The same page has `HercWorksCSharp-<version>-win-x64.zip` for the HercWorks CSharp tools, which are Windows-only.
+- **Linux:** extract `HERCULAN-<version>-linux-x64.tar.gz` anywhere (`tar xzf HERCULAN-<version>-linux-x64.tar.gz`) and run `HERCULAN/Herculan`.
 
 When you run the engine, it will ask you where _Earthsiege 2_ is installed; you'll also have the option of using HERCULAN to install the _Earthsiege 2_ files from a CD or ISO.
+
+#### System requirements
+
+- A 64-bit (x86-64) PC with a graphics driver that supports OpenGL 3.3.
+- **Windows:** Windows 10 or later.
+- **Linux:** a distribution with glibc 2.34 or newer. That covers Ubuntu 22.04, Debian 12, Fedora 35, RHEL 9 and Linux Mint 21 or later, as well as rolling distributions such as Arch and SteamOS 3 (Steam Deck). Older releases such as Ubuntu 20.04 and Debian 11 are not supported; the engine fails at startup with ``version `GLIBC_2.34' not found``. Distributions built on musl instead of glibc, such as Alpine, are not supported.
+
+On Linux, the engine also uses the following from your system. Desktop installs normally have all of them, but a minimal install may not:
+
+- An OpenGL 3.3 driver: Mesa (for AMD and Intel GPUs, and for NVIDIA GPUs using the open-source driver) or NVIDIA's proprietary driver.
+- An X11 or Wayland desktop session.
+- ICU, the Unicode library .NET relies on (package `libicu` or `icu`, depending on the distribution). Without it, the engine exits at startup saying it couldn't find a valid ICU package.
+- A sound system: PipeWire, PulseAudio or ALSA.
 
 #### Settings and tweaks
 
@@ -133,13 +149,14 @@ dotnet build HerculanEngine.sln
 dotnet build HercWorksMDK.sln
 ```
 
-A normal build needs the .NET 8 runtime on any machine that runs it. To build a copy of the engine that runs on Windows with no .NET installed (the same build as a release), publish it with the `win-x64` profile:
+A normal build needs the .NET 8 runtime on any machine that runs it. To build a copy of the engine that runs with no .NET installed (the same build as a release), publish it with the `win-x64` or `linux-x64` profile, from the command line or from Visual Studio's Publish page:
 
 ```
 dotnet publish src/Herculan.Engine.Host -p:PublishProfile=win-x64
+dotnet publish src/Herculan.Engine.Host -p:PublishProfile=linux-x64
 ```
 
-The result lands in `Herculan/src/Herculan.Engine.Host/bin/publish/win-x64/`; copy that whole folder.
+The result lands in `Herculan/src/Herculan.Engine.Host/bin/publish/<profile>/`; copy that whole folder. Either profile can be published from Windows or Linux. Windows does not record Linux's execute permission, so a Linux build published on Windows needs `chmod +x Herculan` before it runs, and has to be packaged on Linux (a zip made on Windows loses the permission again).
 
 ## Project Structure
 

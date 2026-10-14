@@ -66,6 +66,7 @@ public sealed class EngineWindow : IDisposable {
 			PreferredStencilBufferBits = 8,
 		};
 
+		TerminationSignal.Register();
 		_window = Window.Create(options);
 		_window.Load += OnLoad;
 		_window.Update += OnUpdate;
@@ -356,7 +357,15 @@ public sealed class EngineWindow : IDisposable {
 		Load?.Invoke(_gl, _input);
 	}
 
-	private void OnUpdate(double deltaSeconds) => Update?.Invoke(deltaSeconds);
+	private void OnUpdate(double deltaSeconds) {
+		// Closed from here, on the main thread, as if the player had closed it.
+		if (TerminationSignal.Requested) {
+			_window.Close();
+			return;
+		}
+
+		Update?.Invoke(deltaSeconds);
+	}
 
 	private void OnRender(double deltaSeconds) {
 		if (_gl != null) {

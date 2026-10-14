@@ -13,7 +13,40 @@ permissions:
   contents: write
 
 jobs:
+  # Packaged on Linux because a zip made on Windows loses the execute bit. Tarred before upload-artifact, which
+  # drops file permissions too. The tag check and the tests run once, in the release job.
+  linux:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Herculan
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish engine
+        run: dotnet publish src/Herculan.Engine.Host -p:PublishProfile=linux-x64 -o ../out/HERCULAN
+
+      - name: Package
+        working-directory: out
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          cp ../LICENSE.txt ../README.MD HERCULAN
+          mkdir HERCULAN/Branding
+          cp ../Branding/README.md HERCULAN/Branding
+          chmod +x HERCULAN/Herculan
+          tar czf "HERCULAN-$v-linux-x64.tar.gz" HERCULAN
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-x64
+          path: out/*.tar.gz
+
   release:
+    needs: linux
     runs-on: windows-latest
     defaults:
       run:
@@ -65,6 +98,11 @@ jobs:
             Compress-Archive -Path "$app/*" -DestinationPath "$app-$v-win-x64.zip"
           }
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux-x64
+          path: out
+
       - name: Create draft release
         working-directory: out
         env:
@@ -74,3 +112,4 @@ jobs:
           --title "HERCULAN ${{ steps.version.outputs.version }}"
           "HERCULAN-${{ steps.version.outputs.version }}-win-x64.zip"
           "HercWorksCSharp-${{ steps.version.outputs.version }}-win-x64.zip"
+          "HERCULAN-${{ steps.version.outputs.version }}-linux-x64.tar.gz"
