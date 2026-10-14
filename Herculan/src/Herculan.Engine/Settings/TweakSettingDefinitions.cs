@@ -19,6 +19,11 @@ public static class TweakSettingDefinitions {
 	/// <item><description>Display each walker's top speed in VSHELL as the cockpit readout shows it, not
 	/// <c>herc_inf.dat</c>'s figure (Outlaw 100 kph, not 80) — see <see cref="Shell.ShellBuildScreen"/></description></item>
 	/// <item><description>Display correct hardpoints for Raptor II in VSHELL (5, not 4)</description></item>
+	/// <item><description>Display the L100's true range on the weapons screen and in the armory (330 m, not 320), and
+	/// the missiles' (320 m for every launcher and guidance kind) — see <see cref="Shell.ShellWeaponProse"/></description></item>
+	/// <item><description>Re-rate the weapons screen's Power Consumption and Recharge words so weapons with the same
+	/// cost and refill time read alike (PBW2 as PBW, ELF as ELF2, EMP2 as EMPC) — HERCULAN's ratings, see
+	/// <see cref="Shell.ShellWeaponProse"/></description></item>
 	/// </list>
 	///
 	/// </summary>

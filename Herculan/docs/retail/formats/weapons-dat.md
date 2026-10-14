@@ -106,6 +106,12 @@ All six walk byte-exact against the retail files of both builds, in every langua
 
 `wpn_info.bin` is indexed by **`gam\arm_weap.dat`'s panel order, not by catalog id** — 26 slots of five strings each. Slot 0's five are `Type: Autocannon 20 mm`, `Range: 450 m Salvage Required: 5,000 kg`, an empty line, and two description lines. Their `Salvage Required` figures agree with this file's `0x14` price times 1000 for all 26 slots, which is what confirms both the indexing and the unit. See [`herc-catalogs.md`](herc-catalogs.md#gamarm_weapdat).
 
+**The prose's stats are not the simulator's.** Both files print a range per weapon, and `wpn_desc.bin` a `Power Consumption` and a `Recharge` word, none of them read from data. Against the mount templates ([`weapons-dat-sim.md`](weapons-dat-sim.md#decoded-tail-fields)), in the English text:
+
+- Most ranges are the template's rounded to 10 m (`ATC50` 378 m prints 380). `L100` prints 320 m in both files, in all three languages of v1.10, where its template gives 330 m. `wpn_info.bin` gives `FLYMSL` 320 m and the other launchers none; `wpn_desc.bin` says `Varies` for all four.
+- `wpn_desc.bin`'s guidance-kind blocks give SARH 510 m, ARH and ARM 420 m and EO 360 m. All four `ROCKETS.DAT` records are identical, so the four rounds fly the same distance ([`../simulation/rockets.md`](../simulation/rockets.md#flight--rocket_tickupdate-0040a538)).
+- The energy words do not follow the costs. `PBW` reads `High`/`Medium` and `PBW2` `Very High`/`Slow`, yet both are charge-up beams that spend the whole capacitor per shot and refill it at the same rate ([`../simulation/weapon-firing.md`](../simulation/weapon-firing.md#the-beam-branch)). `ELF`/`ELF2` and `EMPC`/`EMP2` differ by a word with identical costs, and `L300`, `L400` and `L500` all cost 120 a shot while `L500` alone reads `High`.
+
 **The folder is the shell's language.** `WeaponsBin_Open` prefixes every name with `eng\`, `fre\` or `ger\` by `Shell_Language` (`0048227a`), which `-f` and `-g` set ([`../retail-builds.md`](../retail-builds.md#how-a-language-is-chosen)).
 
 **v1.0's `LANG0.VOL` is not localized.** Every entry — all six `.BIN` files and `CAMPAIGN.STR` — is byte-identical across the `ENG\`, `FRE\` and `GER\` directories, three copies of the English text. v1.10's `FRE\` and `GER\` translate `estext.bin`, `weapons.bin`, `wpn_desc.bin`, `wpn_info.bin` and `CAMPAIGN.STR`, and keep the English `esnames.bin` and `missions.bin`.
@@ -131,7 +137,7 @@ Loaded by `VSHELL.EXE`'s `LoadWeaponsDat` (`00411fc4`, file-level) → `WeaponsD
            which is why the file never supplies it
 ```
 
-**The whole record is accounted for**, and none of it holds a numeric weapon stat: 16 bytes of code, a name pointer, a price, a flag, an owned count and a list head is 29 exactly. Damage, heat, rate of fire and range live on the simulator side ([`weapons-dat-sim.md`](weapons-dat-sim.md)); the only range figure the shell has is the prose in `wpn_info.bin`.
+**The whole record is accounted for**, and none of it holds a numeric weapon stat: 16 bytes of code, a name pointer, a price, a flag, an owned count and a list head is 29 exactly. Damage, heat, rate of fire and range live on the simulator side ([`weapons-dat-sim.md`](weapons-dat-sim.md)); the only range figures the shell has are the prose in `wpn_info.bin` and `wpn_desc.bin`.
 
 `0x16`, `0x17` and the `0x19` list are the armory's per-weapon inventory, and the save file is where they persist: [`save-games.md`](save-games.md) documents the block that writes all 33 of them, and the armory itself is `armory.cpp` (`Armory_AddUnit` (`00411efd`) appends a purchased unit to the list).
 
