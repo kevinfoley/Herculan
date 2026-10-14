@@ -7,7 +7,7 @@ using Herculan.Engine.Sim;
 using Herculan.Engine.World;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The mission's non-object features drawn over the scene: trigger areas, routes, base pads and the

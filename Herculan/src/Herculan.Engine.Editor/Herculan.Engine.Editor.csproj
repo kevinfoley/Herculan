@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The mission editor as a library: run on its own by Herculan.Engine.Host.Editor, and as a turn of the game's
+       own loop by Herculan.Engine.Host. -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Herculan.Engine.Editor</RootNamespace>
+    <AssemblyName>Herculan.Engine.Editor</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Herculan.Engine\Herculan.Engine.csproj" />
+  </ItemGroup>
+
+</Project>

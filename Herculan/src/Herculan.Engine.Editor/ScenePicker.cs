@@ -4,7 +4,7 @@ using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Terrain;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>A placed, drawable object plus its cached render-space pick sphere.</summary>
 internal sealed record Pickable(SceneObject SceneObject, Vector3 CenterRender, float RadiusRender);

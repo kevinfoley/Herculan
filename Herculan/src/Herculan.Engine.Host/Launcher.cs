@@ -1,4 +1,6 @@
 using Herculan.Engine.Cockpit;
+using Herculan.Engine.Content;
+using Herculan.Engine.Editor;
 using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Host.Simulator;
 using Herculan.Engine.Shell;
@@ -29,7 +31,9 @@ static class Launcher {
 	/// process; the files between them cross through the install's <c>data\</c>, as the original's do. The
 	/// <c>--shell-*</c> staging flags stage the first turn only; each later turn starts in the mode the last one
 	/// ended in. Every simulator launch is handed the count of those before it, as -R&lt;n&gt;. The Settings menu's
-	/// restart is this engine's own turn: the shell again, on whatever install the session now names.
+	/// restart is this engine's own turn: the shell again, on whatever install the session now names. So is the
+	/// Editor item's: the mission editor, whose Back to game brings the shell up again as the restart does, and whose
+	/// window closing ends the run as the shell's does.
 	/// </summary>
 	public static int RunShellLoop(HostSession session, HostOptions options) {
 		var shell = options.Shell;
@@ -44,6 +48,15 @@ static class Launcher {
 				options.SilentAudio, options.WritePreferences, shell.Windowed, shell.Movies, state,
 				missionPicker: options.DeveloperMode);
 			if (shellExit == ShellHost.SettingsRestartCode) {
+				state = shellExit;
+				continue;
+			}
+
+			if (shellExit == ShellHost.EditorExitCode) {
+				if (RunEditor(session) == EditorExit.Closed) {
+					return 0;
+				}
+
 				state = shellExit;
 				continue;
 			}
@@ -65,5 +78,22 @@ static class Launcher {
 				return state;
 			}
 		}
+	}
+
+	/// <summary>
+	/// The mission editor's turn, on the install's <c>DATA\script.dat</c>, in the window the shell left. Returns how
+	/// it ended.
+	/// </summary>
+	private static EditorExit RunEditor(HostSession session) {
+		GameContent? shellContent = null;
+		var (exit, placement) = EditorHost.Run(new EditorLaunch(session.InstallRoot,
+			GameContent.MountSimulator(session.InstallRoot, session.Disc),
+			() => shellContent ??= GameContent.MountShell(session.InstallRoot, session.Disc),
+			session.ImGuiFontPath) {
+			Placement = session.WindowPlacement,
+			FromGame = true,
+		});
+		session.WindowPlacement = placement;
+		return exit;
 	}
 }

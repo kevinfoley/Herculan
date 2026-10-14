@@ -34,13 +34,19 @@ sealed class FrontEndWindow : IDisposable {
 	private ScaledImGui? _imgui;
 	private int _framesRendered;
 
-	// Set by the Settings menu's restart, which closes the window once the frame's ImGui is drawn.
-	private bool _restartPending;
+	// Set by the Settings menu's restart and the Editor item, either of which closes the window once the frame's ImGui
+	// is drawn.
+	private bool _closePending;
 
 	/// <param name="restartRequested">
 	/// The Settings menu's restart, run as it is asked for; the window then closes once the frame is drawn.
 	/// </param>
-	public FrontEndWindow(HostSession session, string title, string? screenshotPath, Action restartRequested) {
+	/// <param name="editorRequested">
+	/// The Editor item's switch to the mission editor, run as it is asked for; the window then closes once the frame
+	/// is drawn.
+	/// </param>
+	public FrontEndWindow(HostSession session, string title, string? screenshotPath, Action restartRequested,
+			Action editorRequested) {
 		_imguiFontPath = session.ImGuiFontPath;
 		_screenshotPath = screenshotPath;
 		_session = session;
@@ -49,8 +55,9 @@ sealed class FrontEndWindow : IDisposable {
 			PrintScreenFiles.Attach(_window, session);
 		}
 		_menuBar = new HostMenuBar(session.Localization, new TweaksMenu(TweakSettings.Current, session.Localization),
-			new SettingsWindow(session, () => RequestRestart(restartRequested)),
-			new ControllerWindow(session.Localization, () => ShellWorkingFiles.DataDirectory(session.InstallRoot)));
+			new SettingsWindow(session, () => RequestClose(restartRequested)),
+			new ControllerWindow(session.Localization, () => ShellWorkingFiles.DataDirectory(session.InstallRoot)),
+			openEditor: () => RequestClose(editorRequested));
 		_window.View.FocusChanged += focused => {
 			HasFocus = focused;
 			FocusChanged?.Invoke(focused);
@@ -172,7 +179,7 @@ sealed class FrontEndWindow : IDisposable {
 
 		_imgui.Render();
 
-		if (_restartPending) {
+		if (_closePending) {
 			_window.Close();
 		}
 	}
@@ -203,10 +210,10 @@ sealed class FrontEndWindow : IDisposable {
 
 	public void Dispose() => _window.Dispose();
 
-	// Settings asks from inside its ImGui window, and the close disposes the ImGui context, so the close waits for
-	// DrawMenuBar to finish the frame.
-	private void RequestRestart(Action restartRequested) {
-		restartRequested();
-		_restartPending = true;
+	// Settings and the Editor item ask from inside an ImGui window, and the close disposes the ImGui context, so the
+	// close waits for DrawMenuBar to finish the frame.
+	private void RequestClose(Action requested) {
+		requested();
+		_closePending = true;
 	}
 }

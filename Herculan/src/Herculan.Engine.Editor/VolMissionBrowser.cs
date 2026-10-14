@@ -2,7 +2,7 @@ using System.Numerics;
 using Herculan.Engine.Platform;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The floating "Load from VOL" window opened from File: every <c>.MSN</c> in the install's archives, one of

@@ -3,7 +3,7 @@ using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
 using Herculan.Engine.World;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One route the mission's orders name — a <c>script.dat</c> block-3 waypoint group, resolved to

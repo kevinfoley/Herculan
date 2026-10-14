@@ -7,7 +7,8 @@ namespace Herculan.Engine.Host.Settings;
 
 /// <summary>
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, HERCULAN's own and not retail's, and the
-/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Tweaks and About; and the
+/// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Tweaks and About; the
+/// Editor item, which leaves the shell for the mission editor and is greyed over a mission; and the
 /// first start's <see cref="WelcomeDialog"/>, which the shell raises without the bar. Hidden until <see cref="Show"/>, and never
 /// drawn into a <c>--screenshot</c> capture. Plain [Esc] is retail's in a mission, where it pans to and from the
 /// Heads-Down Display, so which key reaches the bar is each host's to decide: over a mission
@@ -16,11 +17,14 @@ namespace Herculan.Engine.Host.Settings;
 sealed class HostMenuBar : IEscapeMenu {
 	private readonly LocalizationTable _localization;
 	private readonly DebugPanel? _debug;
+	private readonly Action? _openEditor;
 	private readonly PanelCentring _centring = new();
 
+	/// <param name="openEditor">The Editor item's switch to the mission editor, or null to grey the item.</param>
 	public HostMenuBar(LocalizationTable localization, TweaksMenu tweaks, SettingsWindow settings, ControllerWindow controller,
-			DebugPanel? debug = null) {
+			DebugPanel? debug = null, Action? openEditor = null) {
 		_localization = localization;
+		_openEditor = openEditor;
 		Tweaks = tweaks;
 		Settings = settings;
 		Controller = controller;
@@ -108,6 +112,10 @@ sealed class HostMenuBar : IEscapeMenu {
 
 			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.tweaks"))) {
 				Tweaks.IsOpen = true;
+			}
+
+			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.editor"), null, false, _openEditor != null)) {
+				_openEditor!();
 			}
 
 			if (ImGui.MenuItem(_localization.GetStringOrKey("menu.about"))) {

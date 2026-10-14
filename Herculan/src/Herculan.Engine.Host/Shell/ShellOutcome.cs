@@ -7,8 +7,8 @@ namespace Herculan.Engine.Host.Shell;
 /// </summary>
 sealed class ShellOutcome {
 	/// <summary>
-	/// <c>Shell_SetExitCode</c>'s code: the 0 the startup leaves, <see cref="ShellHost.DemoExitCode"/>, or
-	/// <see cref="ShellHost.SettingsRestartCode"/>.
+	/// <c>Shell_SetExitCode</c>'s code: the 0 the startup leaves, <see cref="ShellHost.DemoExitCode"/>,
+	/// <see cref="ShellHost.SettingsRestartCode"/> or <see cref="ShellHost.EditorExitCode"/>.
 	/// </summary>
 	public int ExitCode { get; set; }
 

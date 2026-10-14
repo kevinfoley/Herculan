@@ -2,7 +2,7 @@ using Herculan.Engine.Content;
 using Herculan.Engine.Scene;
 using Herculan.Engine.World;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference

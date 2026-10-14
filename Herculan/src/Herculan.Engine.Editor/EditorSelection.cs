@@ -1,6 +1,6 @@
 using Herculan.Engine.Scene;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// What the editor has selected. Most of a mission is not an object in the world — a trigger area,

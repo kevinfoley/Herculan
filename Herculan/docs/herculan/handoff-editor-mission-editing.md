@@ -1,6 +1,6 @@
 # Handoff — mission editing in the HERCULAN Editor
 
-Feasibility and scope for three features in `Herculan.Engine.Host.Editor`:
+Feasibility and scope for three features in the editor, `Herculan.Engine.Editor` (run on its own by `Herculan.Engine.Host.Editor`, and from the game's Editor menu item):
 
 1. Showing and selecting the mission's non-object features — trigger areas, routes, groups, objectives and the action wiring between them.
 2. Moving a herc to a new starting position.
@@ -32,7 +32,7 @@ Counts below are over the 62 retail `.MSN` files with campaign conditions not ap
 
 ### In place
 
-- **Opening a mission.** The editor starts on `DATA\script.dat` or the file named on its command line. File > Load from VOL lists every `.MSN` in the archives and opens one through `MissionFileLaunch` (the simulator host's `.MSN` path), generating the handoff into `%TEMP%\herculan-editor\` so the install's `DATA\` is never written; `EditorMission` and `MissionDrawables` are rebuilt for it. Such a mission's `Mission.SourcePath` is that scratch file, so a future Save must offer Save As for it rather than writing in place.
+- **Opening a mission.** The editor starts on `DATA\script.dat` or the file named on its command line, and with no mission and the VOL list up when there is none. File > Load from VOL lists every `.MSN` in the archives and opens one through `MissionFileLaunch` (the simulator host's `.MSN` path), generating the handoff into `%TEMP%\herculan-editor\` so the install's `DATA\` is never written; `EditorMission` and `MissionDrawables` are rebuilt for it. Such a mission's `Mission.SourcePath` is that scratch file, so a future Save must offer Save As for it rather than writing in place.
 - **Selection and panels.** `EditorSelection` is an object, group, trigger area, action, timer, route (with an optional waypoint) or objective, held in one `SelectionState` that the viewport click, the `MissionOutliner` (left: groups with members, areas, actions, timers, routes, objectives under the block-13 briefing list) and the `PropertiesPanel` (right, one view per kind, every mentioned record a link) all set.
 - **Picking.** `ScenePicker` tries a waypoint in screen space, then an object's bounding sphere (skipping waiting groups when they are hidden), then `GroundPick` (a ray march against `HeightAtWorld`) and the smallest trigger area containing that ground point.
 - **Overlays.** `MissionOverlay` draws, through `DrapedLines`, every trigger area (coloured by who trips it), every route (the player's, the walked ones and the never-walked ones in three colours, loops closed, waypoints numbered when selected), every base pad's painted tile (`MissionBasePad.TileOrigin`, with the selected group's authored point and its snap drawn too) and the mission box with its HDD-map and abort margins, each toggled from the View menu. A line hidden behind terrain shows dimmed.
@@ -98,7 +98,7 @@ Recommended: reuse an identical existing point, otherwise append; refcount befor
 
 ### 5. Live scene refresh
 
-`items[]` in the editor's `Program.cs` is a flat array with transforms baked once at `window.Load`, with the pick spheres alongside it. Moving an object needs both updated plus a terrain-height query for the new ground level. Cheap, but needs a `SceneObject` to item-slot index that does not exist yet.
+`MissionDrawables.Items` is a flat array with transforms baked once as the mission is uploaded, with the pick spheres alongside it. Moving an object needs both updated plus a terrain-height query for the new ground level. Cheap, but needs a `SceneObject` to item-slot index that does not exist yet.
 
 ### 6. Round-trip coverage
 

@@ -2,7 +2,7 @@ using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
 using Herculan.Engine.World;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// How the editor names mission records in its panels. The meanings are the simulation's — each

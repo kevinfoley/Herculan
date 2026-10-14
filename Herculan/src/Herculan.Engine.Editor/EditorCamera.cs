@@ -3,7 +3,7 @@ using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
 using Silk.NET.Input;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// A Unity-Editor-style free-fly observer camera: hold the right mouse button and move the mouse

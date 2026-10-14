@@ -84,6 +84,7 @@ menu.debug                     Debug
 menu.tweaks                    Tweaks
 menu.settings                  Settings
 menu.controller                Controller
+menu.editor                    Editor
 menu.about                     About
 about.title                    About
 about.license                  License

@@ -3,7 +3,7 @@ using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using ImGuiNET;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// A small orientation gizmo pinned to a corner of the viewport: the world's horizontal plane and

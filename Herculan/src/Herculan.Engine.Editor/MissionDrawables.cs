@@ -4,7 +4,7 @@ using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
 using Silk.NET.OpenGL;
 
-namespace Herculan.Engine.Host.Editor;
+namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The GPU half of an <see cref="EditorMission"/>: its terrain and every model uploaded, and the scene items that

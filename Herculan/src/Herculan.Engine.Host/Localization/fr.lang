@@ -84,6 +84,7 @@ menu.debug                     Débogage
 menu.tweaks                    Ajustements
 menu.settings                  Paramètres
 menu.controller                Manette
+menu.editor                    Éditeur
 menu.about                     À propos
 about.title                    À propos
 about.license                  Licence
