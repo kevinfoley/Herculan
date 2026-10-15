@@ -106,7 +106,7 @@ Each step reads the entries the step before rewrote, so successive steps turn th
 
 ### The damage shake
 
-Taking a hit shakes the view and flashes the palette, for `0x3c` coarse ticks — 0.96 s. Two functions in `MECHVIEW.CPP` own it, and it is the sibling of the footfall kick below: the cockpit's per-frame pass (`CockpitView_PerFrameUpdate`) ticks the two one after the other.
+Taking a hit shakes the view and flashes the palette, for `0x3c` coarse ticks — 0.96 s. Two functions in `PANEL.CPP` ([translation units](../simulation/cockpit-views.md)) own it, and it is the sibling of the footfall kick below: the cockpit's per-frame pass (`CockpitView_PerFrameUpdate`) ticks the two one after the other.
 
 `Cockpit_StartHitShake` (`00434010`) arms it, and returns at once in view mode 4:
 

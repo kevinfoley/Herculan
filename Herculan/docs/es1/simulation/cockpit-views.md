@@ -128,7 +128,7 @@ Where ES2's differ: ES2's steps 10 rows and `0x14` columns, both doubled by the 
 - **`CockpitView_StepShake` (`00024564`)**, (step), while armed and not in view 4: moves `CockpitShakeOffset`'s *y* by up to *step* toward the farther limit, as ES2's; sets the origins of both pages, `+0x8c` and `+0x88`, to their page origins plus the offset; moves every region of the current view's clip block by the step, a rect region's two rows (`+0xc`, `+0x14`) and a span region's first row; adds the step to the total; and moves the cockpit's widgets by (0, −step). ES2's moves its one window over the back buffer, a rect region's last row alone, and the span table and the context's rect too.
 - **`CockpitView_ClearShake` (`00024750`)**, while armed and not in view 4: puts both pages' origins back on `CockpitShakeRestOffset`, moves the clip regions back by the total, in views 2 and 3 puts the strip back with `Region_Restore` on the draw page and on `+0x88`, leaving `+0x8c` the draw page, moves the widgets by (0, total), and clears the total and the armed byte.
 
-`es2_xref.py` finds the shake's callers in `0002e17c`, `0002e1d8`, `00057ffc` and `00058414`, besides `CockpitView_ApplyViewState` and `CockpitView_StepViewTransition` ([Open](#open)).
+`es2_xref.py` finds the shake's callers in `Cockpit_StartHitShake`, which passes the band 5, and `Cockpit_HitShakeTick`, which steps by 0–4 ([the hit shake](cockpit-panel.md#the-hit-shake)), in `00057ffc` and `00058414`, and in `CockpitView_ApplyViewState` and `CockpitView_StepViewTransition` ([Open](#open)).
 
 ## Callees of other modules
 
@@ -183,6 +183,6 @@ The next object file's: `CockpitClipRegions_Load` (`00024d44`); `GLBase_DtorClip
 - **Open:** what sets the manager's current view `+0x10` before the first `CockpitView_SetView`: the constructor does not, and `CockpitView_ApplyViewState` tests it against −1.
 - **Open:** the callees read for none of this module's functions: `00028260`, `00027f74` and `00059288` in `Sim_EndFrame`; `0004c634` (a call of `0004b340`) and `00066a2e` (which copies the point at `00098d70`) in the return from the external view; the squad message port's slots `+0x14` and `+0x18`.
 - **Open:** what `000bda96`, `00098d96` and `00094c5b` are, which the view change sets and clears.
-- **Open:** the callers `es2_xref.py` finds and this batch did not read: `00057820` (the rect setters, `CockpitView_SetView`, `View_FillOutside3dRect`), `00058b68` (`ExternalView_GetRect`), and `0002e17c`, `0002e1d8`, `00057ffc` and `00058414` (the shake), with the amplitudes they pass.
+- **Open:** the callers `es2_xref.py` finds and this batch did not read: `00057820` (the rect setters, `CockpitView_SetView`, `View_FillOutside3dRect`), `00058b68` (`ExternalView_GetRect`), and `00057ffc` and `00058414` (the shake), with the amplitudes they pass.
 - **Open:** what calls `ClipRegions_AppendRectAboveScreen`, to which `es2_xref.py` finds no reference, and `HeapPtr_DtorMechviewCopy`, likewise.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in DOSBox-X's debugger, `BP <CS>:000222c0` set during a mission in the forward view fires when the view changes to the heads-down display, with the dword at `[ESP+8]` 1, and again on the way back, with 0.

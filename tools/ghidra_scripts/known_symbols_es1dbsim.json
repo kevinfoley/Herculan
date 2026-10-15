@@ -1622,6 +1622,21 @@
       }
     },
     {
+      "address": "0000ca70",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMounts_SelectByGauge",
+      "description": "(manager, gauge) in stack order: walks the manager's mounts, the array at +0 with the int16 count at +4, for the first non-null one whose vtable slot +0x5c returns nonzero for the gauge; returns 0 when none does or when that mount's byte +0x4c is clear; otherwise passes (manager, index) to 0000cb00 through its padding entry, sets the manager's byte +0x18 and returns 1. ES2's WeaponMounts_SelectByGauge (DBSIM 004106ac), its array at +4, count at +8 and test slot +0x58.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0000ca70+141",
+        "sha1": "2d568570208f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000d8e8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1647,6 +1662,21 @@
       "verified": {
         "bytes": "0000d9a0+89",
         "sha1": "53be0f172fd2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000dba4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ObjectList_Next",
+      "description": "(list, object) in stack order: the entry after object in the list, wrapping: entry (object's int16 +0x45 + 1) mod the list's int16 count +6 of the list's array +0. ES2's ObjectList_Next (DBSIM 00411e40), the object's slot at +0x4b.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0000dba4+42",
+        "sha1": "0ba99c9116e4",
         "scope": "body",
         "via": "decompile"
       }
@@ -1784,6 +1814,21 @@
         "sha1": "6c96346b182b",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00015868",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_ReadEntryDamage",
+      "description": "(machine, a, b) in stack order, callee-cleaned (RET 0xc): returns 00010b7c(machine + 0x19c, a, b). Player_DependentCondition (0002e334) passes (machine, n, 0), where ES2's passes kind 0 and index n. ES2's Mech_ReadEntryDamage (DBSIM 0041b514), on the machine's +0x206.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00015868+27",
+        "sha1": "4cb6de9a73b4",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -2722,7 +2767,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Detection_ContactScanRange",
-      "description": "(): 30000 when script.dat header word 8 (000bc4ac) is 1, otherwise 60000. ES2's Detection_ContactScanRange (DBSIM 00426aec), which reads ES2's header word 8. es2_xref finds two calls, from 0000e85c and 0002d624.",
+      "description": "(): 30000 when script.dat header word 8 (000bc4ac) is 1, otherwise 60000. ES2's Detection_ContactScanRange (DBSIM 00426aec), which reads ES2's header word 8. es2_xref finds two calls, from 0000e85c and TargetSelect_CanTarget (0002d624).",
       "source": "Herculan/docs/es1/simulation/world.md#small-functions",
       "verified": {
         "bytes": "0001f814+23",
@@ -4072,7 +4117,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_SetShakeBand",
-      "description": "(amplitude), callee-cleaned: returns at once when CockpitViewManager_Published (00021f98)'s manager is in view 4 (+0x10) or has +0x18 set. CockpitShakeRestOffset (000afb54) and CockpitShakeOffset (000afb5c) take CockpitViewCanvasOrigin (000afa9c); CockpitShakeBand (000afb64) becomes {y - amplitude, y} in view 1 and {y, y + amplitude} in views 0, 2 and 3. In views 2 and 3 it zeroes both offsets' x and, with the installed render context's (000bdbda) +0x208/+0x20c at 0, saves CockpitShakeStripRegion (000afb78) into CockpitShakeStripPixels (000afb90) with Region_Save (000665d6) and fills the region's rect with Raster_FillRect (00053d9c) in colour 0x3f on the draw page as it is and then on the display's +0x88, leaving +0x8c the draw page. Zeroes CockpitShakeTotal (000afb6c) and sets CockpitViewShakeArmed (000925ec). ES2's CockpitView_SetShakeBand (DBSIM 0042d2f8), which fills once with COLORS.DAT id 19. es2_xref finds calls from CockpitView_StepViewTransition (00022904) by the padding entry 000243d2, 0002e17c, 00057ffc and 00058414.",
+      "description": "(amplitude), callee-cleaned: returns at once when CockpitViewManager_Published (00021f98)'s manager is in view 4 (+0x10) or has +0x18 set. CockpitShakeRestOffset (000afb54) and CockpitShakeOffset (000afb5c) take CockpitViewCanvasOrigin (000afa9c); CockpitShakeBand (000afb64) becomes {y - amplitude, y} in view 1 and {y, y + amplitude} in views 0, 2 and 3. In views 2 and 3 it zeroes both offsets' x and, with the installed render context's (000bdbda) +0x208/+0x20c at 0, saves CockpitShakeStripRegion (000afb78) into CockpitShakeStripPixels (000afb90) with Region_Save (000665d6) and fills the region's rect with Raster_FillRect (00053d9c) in colour 0x3f on the draw page as it is and then on the display's +0x88, leaving +0x8c the draw page. Zeroes CockpitShakeTotal (000afb6c) and sets CockpitViewShakeArmed (000925ec). ES2's CockpitView_SetShakeBand (DBSIM 0042d2f8), which fills once with COLORS.DAT id 19. es2_xref finds calls from CockpitView_StepViewTransition (00022904) by the padding entry 000243d2, Cockpit_StartHitShake (0002e17c), 00057ffc and 00058414.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
       "verified": {
         "bytes": "000243d4+400",
@@ -4087,7 +4132,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_StepShake",
-      "description": "(step), callee-cleaned: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, moves CockpitShakeOffset (000afb5c)'s y by up to step toward the farther limit of CockpitShakeBand (000afb64), sets the origins of the display's pages +0x8c and +0x88 to their page origins plus CockpitShakeOffset through the driver's routine 0009df10, moves every region of the current view's clip block by the step (a rect region's rows +0xc and +0x14, a span region's first row), adds the step to CockpitShakeTotal (000afb6c) and moves the cockpit's widgets by (0, -step) with CockpitWidgets_TranslateForView (0002ced0). ES2's CockpitView_StepShake (DBSIM 0042d4a8), which moves one page, a rect's last row, the span table and the context's rect. es2_xref finds calls from 0002e1d8, 00057ffc and 00058414.",
+      "description": "(step), callee-cleaned: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, moves CockpitShakeOffset (000afb5c)'s y by up to step toward the farther limit of CockpitShakeBand (000afb64), sets the origins of the display's pages +0x8c and +0x88 to their page origins plus CockpitShakeOffset through the driver's routine 0009df10, moves every region of the current view's clip block by the step (a rect region's rows +0xc and +0x14, a span region's first row), adds the step to CockpitShakeTotal (000afb6c) and moves the cockpit's widgets by (0, -step) with CockpitWidgets_TranslateForView (0002ced0). ES2's CockpitView_StepShake (DBSIM 0042d4a8), which moves one page, a rect's last row, the span table and the context's rect. es2_xref finds calls from Cockpit_HitShakeTick (0002e1d8), 00057ffc and 00058414.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
       "verified": {
         "bytes": "00024564+491",
@@ -4102,7 +4147,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_ClearShake",
-      "description": "No arguments: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, sets the origins of the display's pages +0x8c and +0x88 to their page origins plus CockpitShakeRestOffset (000afb54), moves the current view's clip regions back by CockpitShakeTotal (000afb6c), in views 2 and 3 puts CockpitShakeStripRegion (000afb78) back with Region_Restore (0006641f) on the draw page and on +0x88 (leaving +0x8c the draw page), moves the widgets by (0, total) with CockpitWidgets_TranslateForView (0002ced0), and clears the total and the armed byte. ES2's CockpitView_ClearShake (DBSIM 0042d624). es2_xref finds calls from CockpitView_ApplyViewState (000222c0) by the padding entry 0002474f, 0002e1d8 and 00057ffc.",
+      "description": "No arguments: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, sets the origins of the display's pages +0x8c and +0x88 to their page origins plus CockpitShakeRestOffset (000afb54), moves the current view's clip regions back by CockpitShakeTotal (000afb6c), in views 2 and 3 puts CockpitShakeStripRegion (000afb78) back with Region_Restore (0006641f) on the draw page and on +0x88 (leaving +0x8c the draw page), moves the widgets by (0, total) with CockpitWidgets_TranslateForView (0002ced0), and clears the total and the armed byte. ES2's CockpitView_ClearShake (DBSIM 0042d624). es2_xref finds calls from CockpitView_ApplyViewState (000222c0) by the padding entry 0002474f, Cockpit_HitShakeTick (0002e1d8) and 00057ffc.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
       "verified": {
         "bytes": "00024750+643",
@@ -6337,7 +6382,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitWidgets_TranslateForView",
-      "description": "(cockpit, delta) in stack order, callee-cleaned: calls 0004433c with the root widget (the cockpit's +0) and delta's two values pushed by value, subtracts delta from the dwords +0x220 and +0x224 of the cockpit's render context +4, and calls 0002db1c(cockpit, delta) by its padding entry 0002db1b when the byte +0x23a is set. ES2's CockpitWidgets_TranslateForView (DBSIM 0043271c), which tests +0x23e and also offsets the widgets of its list at +0x246.",
+      "description": "(cockpit, delta) in stack order, callee-cleaned: calls 0004433c with the root widget (the cockpit's +0) and delta's two values pushed by value, subtracts delta from the dwords +0x220 and +0x224 of the cockpit's render context +4, and calls CockpitView_FlipScrollTriggers (0002db1c)(cockpit, delta) by its padding entry 0002db1b when the byte +0x23a is set. ES2's CockpitWidgets_TranslateForView (DBSIM 0043271c), which tests +0x23e and also offsets the widgets of its list at +0x246.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
       "verified": {
         "bytes": "0002ced0+88",
@@ -6352,11 +6397,101 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_DrawFrame",
-      "description": "(cockpit): returns at once while the byte 00092d7c is set. Otherwise: the first time (byte +0x23a 0) calls 0002d970 and sets +0x23a; calls the +0xc slot of the vtable at +0x76 of the clock +0x1f9 (CockpitClock_Tick), then 0002e1d8; with the byte +0x20b set calls that slot of +0x1f5 and returns. Else, while the published view manager's +0x18 is 0, calls the +0x14 slot of the table at +0x464 of +0x203; between Cockpit_PushCanvasContext and Cockpit_PopRenderContext calls the +0xc slot of each set object of the nine at +0x70, of +0x1d8 when set, and of +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1e9 and +0x1f5; then Cockpit_RunTtmScripts (0002e0ec), the +0x10 slot of the +0x464 table of +0x207, and 0002de48; and with +0x20c set calls 0002d624(cockpit, +0x20c), clearing +0x20c when that returns 0. es2_xref finds one call, from Sim_RenderFrame.",
+      "description": "(cockpit): returns at once while the byte Cockpit_SkipFrameDraw (00092d7c) is set. Otherwise: the first time (byte +0x23a 0) calls CockpitView_BuildScrollTriggers (0002d970) and sets +0x23a; calls the +0xc slot of the vtable at +0x76 of the clock +0x1f9 (CockpitClock_Tick), then Cockpit_HitShakeTick (0002e1d8); with the byte +0x20b set calls that slot of +0x1f5 and returns. Else, while the published view manager's +0x18 is 0, calls the +0x14 slot of the table at +0x464 of +0x203; between Cockpit_PushCanvasContext and Cockpit_PopRenderContext calls the +0xc slot of each set object of the nine at +0x70, of +0x1d8 when set, and of +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1e9 and +0x1f5; then Cockpit_RunTtmScripts (0002e0ec), the +0x10 slot of the +0x464 table of +0x207, and Cockpit_UpdateEdgeCursor (0002de48); and with +0x20c set calls TargetSelect_CanTarget (0002d624)(cockpit, +0x20c), clearing +0x20c when that returns 0. es2_xref finds one call, from Sim_RenderFrame.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame",
       "verified": {
         "bytes": "0002cf28+368",
         "sha1": "09738a915aad",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002d098",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_ArmWeaponByGauge",
+      "description": "(cockpit, gauge) in stack order, callee-cleaned: WeaponMounts_SelectByGauge (0000ca70) on the weapon manager +0x198 of the cockpit's machine +0x1ff; when that returns nonzero, Sound_Play (0004de84)(0x1a) and returns 1, else 0. es2_xref finds calls from CockpitWidgets_HandleCommand (0002d24c), 000372e4 and 00037784. ES2's CockpitView_ArmWeaponByGauge (DBSIM 00432a50), which plays no sound.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
+      "verified": {
+        "bytes": "0002d098+65",
+        "sha1": "7a83286fb942",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002d0dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_SetConsoleButtonsLatch",
+      "description": "(cockpit), callee-cleaned: sets the byte +0x1dc to 1 and the dword +0x1d0 to 0, the two stores Gau_WeaponButtonsWidget (0002ccd8) makes, and calls the +0xc slot (per frame) of the vtable at +0x76 of the console buttons +0x1dd. ES2's CockpitView_SetConsoleButtonsLatch (DBSIM 00432a80), offsets 4 higher. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
+      "verified": {
+        "bytes": "0002d0dc+46",
+        "sha1": "08da6c1a97d4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002d10c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_UnlightConsoleButtons",
+      "description": "(cockpit), callee-cleaned: clears the byte +0x1dc; for each of the console buttons' (+0x1dd) children at +0x14, +0x18 and +0x1c whose lamp byte +0x3c is set, clears it and calls the +8 slot (invalidate) of the child's vtable at +0x1c; then calls the +0xc slot of the vtable at +0x76 of +0x1dd. ES2's CockpitView_UnlightConsoleButtons (DBSIM 00432aa4), whose children sit at +0x18-+0x20 with the lamp at +0x40 and are invalidated lit or not. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
+      "verified": {
+        "bytes": "0002d10c+146",
+        "sha1": "ed10246778c9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002d1a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_PollViewDevice",
+      "description": "(cockpit, device) in stack order, callee-cleaned: with +0x23a set, Cockpit_PickEdgeCursor (0002dcc8)(cockpit, device + 2) through its padding entry; the device bytes +0x19, +0x1a, +0x1b and +0x1c each queue view command 1, 0, 4 and 5 with CockpitViewManager_QueueViewCommand (00022634) on CockpitViewManager_Published (00021f98)'s manager; when the byte +0xb is set and CockpitView_DeviceButtonLatch (00092f33) was clear, in view 1 (the manager's +0x10) calls the +0x10 slot (key) of the vtable at +0x76 of +0x1f5 with 0x0f; the latch then follows +0xb. Returns 1. es2_xref finds one call, from 0005a0c0. ES2's CockpitView_PollViewDevice (DBSIM 00432b14), whose bytes +0x1e-+0x21 queue 1, 0, 5 and 4.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
+      "verified": {
+        "bytes": "0002d1a0+171",
+        "sha1": "7feed3706cf5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002d24c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitWidgets_HandleCommand",
+      "description": "(cockpit, code) in stack order, callee-cleaned (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94); Ghidra's listing leaves the case bodies from 0002d2fa on as undefined bytes. 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block 00037b50(the pod gauge +0x1d8) returns and hands the copy to 00037b14(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): 0004a1b4(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then 00045d0c(object, 3). 0x13 (R): 000157f4(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from 00059df8. ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
+      "verified": {
+        "bytes": "0002d24c+910",
+        "sha1": "1a0a716f5b1d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002d5dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Squad_IndexOf",
+      "description": "(object), callee-cleaned: the index 0-2 of object in g_SquadmateMachines (000bcc16), or -1 for a null object or one absent from it. es2_xref finds eight calls, from 0002ed94, 0002f454, 0002f4f4, 0003e488, 0003e53c, 000403a8, 00040a40 and 00058b68. ES2's Squad_IndexOf (DBSIM 00433134).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
+      "verified": {
+        "bytes": "0002d5dc+53",
+        "sha1": "c00c83920200",
         "scope": "body",
         "via": "decompile"
       }
@@ -6374,6 +6509,249 @@
         "sha1": "0312ad7cb46e",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0002d624",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TargetSelect_CanTarget",
+      "description": "(cockpit, object) in stack order, callee-cleaned: 1 when the object's bytes +0x9e and +0x93 are clear, its group's (+0x3f) byte +0x14 differs from that of the group of the cockpit's machine +0x1ff, and either its byte +0x8f is set with the distance between the two points +0x20 (Math_DistanceBetweenPoints (00063c20)) below the dword 000bd4fc, or the machine's byte +0xbc + the object's int16 +0x45 is set with the distance below Detection_ContactScanRange (0001f814); else 0. es2_xref finds calls from Cockpit_DrawFrame (0002cf28) through the padding entry 0002d623, from TargetSelect_SetObject (0002d78c), twice from TargetSelect_Cycle (0002d898), and from 000585dc. ES2's TargetSelect_CanTarget (DBSIM 00433174), its object fields 6 higher and the group's side byte at +0x12, which measures from the watched object while its spectator flag is set.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-target-selection",
+      "verified": {
+        "bytes": "0002d624+246",
+        "sha1": "bb3f377681c0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002d71c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TargetSelect_InForwardCone",
+      "description": "(cockpit, object) in stack order, callee-cleaned: with m the cockpit's machine +0x1ff, Math_HeadingToward (00063cc8) from m's point +0x20 to the object's, less m's int16 +0xa, plus what the +0x40 slot of m's vtable at +2 returns, as an int16; 1 when that lies in -8999..8999, else 0. es2_xref finds calls from TargetSelect_SetObject (0002d78c), twice from TargetSelect_Cycle (0002d898), and from 000585dc. ES2's TargetSelect_InForwardCone (DBSIM 00433250), which measures from the watched object, without the vtable term, while its spectator flag is set.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-target-selection",
+      "verified": {
+        "bytes": "0002d71c+110",
+        "sha1": "7dd5546530da",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002d78c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TargetSelect_SetObject",
+      "description": "(cockpit, object) in stack order, callee-cleaned: runs TargetSelect_Cycle (0002d898) when the selection +0x20c is 0, then steps +0x20c through LiveObjectList (000bc416) with the cursor +0x210 and its int16 index +0x214 (past LiveObjectList_Count (000bc41c) the selection takes 0 and the cursor and index go back to the list's start) until +0x20c is the object, passes TargetSelect_CanTarget (0002d624) and the object passes TargetSelect_InForwardCone (0002d71c), or the walk is back at the selection it began with. When the selection is then the object, sets the dword +6 of the block Gunsight_GetStateBlock (00035180)(+0x1f1) returns to it and the byte +0x24 to 1, hands the block to Gunsight_SetValues (00035090) and returns 1; else 0. es2_xref finds one call, from 00034f3c. ES2's TargetSelect_SetObject (DBSIM 004332dc), which also clears the selection when passed 0.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-target-selection",
+      "verified": {
+        "bytes": "0002d78c+266",
+        "sha1": "0f4aa403939d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002d898",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TargetSelect_Cycle",
+      "description": "(cockpit), callee-cleaned: with the selection +0x20c 0, takes the first object of LiveObjectList (000bc416) when it passes TargetSelect_CanTarget (0002d624) and TargetSelect_InForwardCone (0002d71c); otherwise walks on with ObjectList_Next (0000dba4) from the selection, or from that first object, until an object passes both or the walk is back at its start. A different object becomes +0x20c and goes to the roving gunsight +0x1f1 as in TargetSelect_SetObject (0002d78c): the block's dword +6 and byte +0x24 = 1 through Gunsight_GetStateBlock (00035180) and Gunsight_SetValues (00035090). Returns +0x20c. es2_xref finds calls from CockpitWidgets_HandleCommand (0002d24c) and TargetSelect_SetObject through the padding entry 0002d896, and from 0003ab08 and 0005a0c0. ES2's TargetSelect_Cycle (DBSIM 0043349c), which TargetSelect_SetObject runs in the same place and which builds a shortlist by bearing and range instead.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-target-selection",
+      "verified": {
+        "bytes": "0002d898+214",
+        "sha1": "bcf708bb94dd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002d970",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_BuildScrollTriggers",
+      "description": "(cockpit), callee-cleaned: builds the three screen-edge strips. For each, a 0x24-byte allocation, Widget_CtorRect (000438fc) with the rect, CTLButtonControlVtablePanelCopy (0009301e) at +0x1c and 0 in the int16 +0x19, then ScrollTriggerVtable (00093046) at +0x1c and the cockpit at +0x20; stores the strip, null when the allocation failed, and passes it to Widget_RegisterClickable (000443d4) with the root widget +0. The rects {x0, y0, x1, y1}: {0, 197, 319, 200} at +0x216, {0, 0, 5, 200} at +0x21a and {314, 0, 319, 200} at +0x21e. es2_xref finds one call, from Cockpit_DrawFrame (0002cf28) through the padding entry 0002d96e. ES2's CockpitView_BuildScrollTriggers (DBSIM 00433770), which sizes the rects from the display and the coordinate shifts.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002d970+366",
+        "sha1": "d9f9a7a98591",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002dade",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_PaintNoOpPanelCopy",
+      "description": "Frameless: two NOPs and RET 4. Slot +4 (paint) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +4 of the library's button base table 00094b8a, 000439ae. ES2's CTLControl_PaintNoOp (DBSIM 00452ab2).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+    },
+    {
+      "address": "0002dae3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_InvalidateNoOpPanelCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +8 (invalidate) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +8 of the library's button base table 00094b8a, 000439b3. ES2's CTLControl_InvalidateNoOp (DBSIM 00452ab7).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+    },
+    {
+      "address": "0002dae7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_OnClickNoOpPanelCopy",
+      "description": "Frameless: a NOP and RET 8. Slot +0xc (click) of CTLButtonControlVtablePanelCopy (0009301e), which ScrollTriggerVtable (00093046) replaces with ScrollTrigger_OnClick (0002db04); the code of slot +0xc of the library's button base table 00094b8a, 000439b7. ES2's CTLControl_OnClickNoOp (DBSIM 0045555e).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+    },
+    {
+      "address": "0002daeb",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_FlushDeferredPaintNoOpPanelCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +0x10 (per frame) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +0x10 of the library's button base table 00094b8a, 000439bb. ES2's CTLControl_FlushDeferredPaintNoOp (DBSIM 0045554a).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+    },
+    {
+      "address": "0002daef",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_GetButtonValuePanelCopy",
+      "description": "Frameless: a NOP, then returns the int16 at 00094b84 in AX with RET 4. Slot +0x14 (value) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +0x14 of the library's button base table 00094b8a, 000439bf. ES2's Widget_GetButtonValue (DBSIM 00455530), which returns 0049db6c.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+    },
+    {
+      "address": "0002daf9",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_SetValueNoOpPanelCopy",
+      "description": "Frameless: three NOPs and RET 8. Slot +0x18 (set value) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +0x18 of the library's button base table 00094b8a, 000439c9. ES2's CTLControl_SetValueNoOp (DBSIM 0045553b).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+    },
+    {
+      "address": "0002daff",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_DragMoveNoOpPanelCopy",
+      "description": "Frameless: a NOP and RET 8. Slot +0x1c (drag) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +0x1c of the library's button base table 00094b8a, 000439cf. ES2's CTLControl_DragMoveNoOp (DBSIM 00455540).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+    },
+    {
+      "address": "0002db04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ScrollTrigger_OnClick",
+      "description": "(strip, value) in stack order, callee-cleaned (RET 8): CockpitView_HandleEdgeTrigger (0002dc2c)(the strip's owner +0x20, strip) through its padding entry, ignoring the value. Slot +0xc of ScrollTriggerVtable (00093046), entered through the padding 0002db03. ES2's ScrollTrigger_OnClick (DBSIM 00434df0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002db04+23",
+        "sha1": "40a6a83c68ef",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002db1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_FlipScrollTriggers",
+      "description": "(cockpit, delta) in stack order, callee-cleaned: per axis of the delta, 6 or more sets the sign +1 and the shift +320 across or +200 down, below -5 the sign -1 and -320 or -200, else neither. For each strip at +0x216, +0x21a and +0x21e, a set sign reflects the rect across its own edge on that axis (sign +1: x1 = x0, x0 -= width; sign -1: x0 = x1, x1 += width; likewise y), and the rect then moves by -(delta - shift) on both axes. es2_xref finds one call, from CockpitWidgets_TranslateForView (0002ced0) through the padding entry 0002db1b. ES2's CockpitView_FlipScrollTriggers (DBSIM 00433968), whose shift is the display's width and height.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002db1c+270",
+        "sha1": "507ec5630803",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002dc2c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_HandleEdgeTrigger",
+      "description": "(cockpit, strip) in stack order, callee-cleaned: by the published manager's view +0x10, queues with CockpitViewManager_QueueViewCommand (00022634): for the bottom strip +0x216 command 0 from view 0 and 1 from view 1; for the left +0x21a 5 from view 0 and 6 from view 3; for the right +0x21e 4 from view 0 and 6 from view 2. es2_xref finds one call, from ScrollTrigger_OnClick (0002db04) through the padding entry 0002dc2a. ES2's CockpitView_HandleEdgeTrigger (DBSIM 00433a88), its view at the manager's +0x14.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002dc2c+153",
+        "sha1": "0dd9a8574fa5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002dcc8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_PickEdgeCursor",
+      "description": "(cockpit, point) in stack order, callee-cleaned: while the dword 000b5b76 is set, takes the point from Input_GetCursorPos (0004d910) instead; rebases it as point - the canvas context's (+4) +0x210/+0x214 + its +0x220/+0x224; zeroes +0x22a and, for the first of the strips +0x216, +0x21a, +0x21e whose rect holds the point (bounds inclusive), stores the arrow by the published manager's view +0x10: the bottom 4 in view 0 and 3 in view 1, the left 6 in view 0 and 5 in view 3, the right 5 in view 0 and 6 in view 2. es2_xref finds one call, from CockpitView_PollViewDevice (0002d1a0) through the padding entry 0002dcc5. ES2's Cockpit_PickEdgeCursor (DBSIM 00433b20), offsets 4 higher, which does nothing while Cockpit_CursorsLive is clear.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002dcc8+381",
+        "sha1": "7b8ac13ce516",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002de48",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_UpdateEdgeCursor",
+      "description": "(cockpit), callee-cleaned: with an arrow at +0x22a, puts Cockpit_CursorImages (00092d20)[arrow] in the edge slot +0x22e, makes the edge slot the active one (+0x222) when it is not, saving the previous active slot at +0x226, and passes the image to Cursor_SetImage (00066948): the cursor record's dword +4 plus 4 (0 when that dword is 0) and the record plus 8. With none, when the edge slot is active, makes the saved slot active again and passes its image the same way. es2_xref finds one call, from Cockpit_DrawFrame (0002cf28) through the padding entry 0002de45. ES2's Cockpit_UpdateEdgeCursor (DBSIM 00433c54), offsets 4 higher, gated on Cockpit_CursorsLive.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002de48+186",
+        "sha1": "da5da633227c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002df04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_SetForwardCursor",
+      "description": "(index), callee-cleaned: with c CockpitViewInstance (00092d1c), puts Cockpit_CursorImages (00092d20)[index] in the forward slot c + 0x232 and, when c's active slot +0x222 is that slot, passes the image to Cursor_SetImage (00066948) as Cockpit_UpdateEdgeCursor (0002de48) does. es2_xref finds two calls, from 000346a4. ES2's Cockpit_SetForwardCursor (DBSIM 00433d90), gated on Cockpit_CursorsLive, which skips a repeat of the last index and passes the image whenever the edge slot is inactive.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002df04+101",
+        "sha1": "3d25fa154f3c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002df6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_SetOffForwardCursor",
+      "description": "(index), callee-cleaned: Cockpit_SetForwardCursor (0002df04) on the slot +0x236 of CockpitViewInstance (00092d1c), the one Cockpit_UseOffForwardCursor (0002dfd4) activates. es2_xref finds seven calls, three from 0003d48c, two from 000405ac, and from 0003fbb8 and 0003fc14. ES2's Cockpit_SetOffForwardCursor (DBSIM 00433e3c), gated on Cockpit_CursorsLive, which skips a repeat of the last index and passes the image whenever the edge slot is inactive.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002df6c+101",
+        "sha1": "5ec01268576a",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -6420,6 +6798,165 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "0002e17c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_StartHitShake",
+      "description": "No arguments: unless the published manager is in view 4 (+0x10), sets HitShakeEndTick (00092d74) to the dword 000981c4 + 0x3c and, when HitShakeNextToggleTick (00092d78) is 0, sets that to 000981c4 + the low word of Math_RandomNext (00063af4)(000b5c48) % 10 and calls Palette_ActivateImpact (00025ed0) and CockpitView_SetShakeBand (000243d4)(5). es2_xref finds one call, from 00013b44. ES2's Cockpit_StartHitShake (DBSIM 00434010), which first restores the palette and clears the shake when one is running and passes 5 << VideoMode_YCoordShift.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-hit-shake",
+      "verified": {
+        "bytes": "0002e17c+91",
+        "sha1": "fb6a1c06c964",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e1d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_HitShakeTick",
+      "description": "No arguments: in view 4 (the published manager's +0x10) clears HitShakeEndTick (00092d74). While that is set and above the dword 000981c4: when HitShakeNextToggleTick (00092d78) is below 000981c4, Palette_ToggleImpact (00025ef8) and the toggle tick set to 000981c4 + Math_RandomNext (00063af4)(000b5c48) % 10; then CockpitView_StepShake (00024564)(Math_RandomNext % 5), each random the low word; at or past the end tick it clears the end tick; either way returns 1. With the end tick clear and the toggle tick set: Palette_RestoreFromImpact (00025f1c), the toggle tick cleared, CockpitView_ClearShake (00024750), returns 1; otherwise 0. es2_xref finds one call, from Cockpit_DrawFrame (0002cf28) through the padding entry 0002e1d7. ES2's Cockpit_HitShakeTick (DBSIM 0043408c), on Time_GetCoarseTicks.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-hit-shake",
+      "verified": {
+        "bytes": "0002e1d8+200",
+        "sha1": "a38944e2d000",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e2a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hud_WorldUnitsToMetres",
+      "description": "(units), frameless, callee-cleaned (RET 4): (units / 1000) * 6, the IDIV truncating. es2_xref finds three calls, from 00034800 and twice from 000355a4. ES2's Hud_WorldUnitsToMetres (DBSIM 00434228), the same arithmetic.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
+      "verified": {
+        "bytes": "0002e2a0+20",
+        "sha1": "5c6614fce72e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002e2b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Pilot_PortraitOf",
+      "description": "(pilot), frameless, callee-cleaned (RET 4): pilot / 3, the IDIV truncating. es2_xref finds one call, from 0003dab4. ES2's Pilot_PortraitOf (DBSIM 00434240).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
+      "verified": {
+        "bytes": "0002e2b4+15",
+        "sha1": "1670b4df228a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002e2c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Pilot_VoiceBankOf",
+      "description": "(portrait), callee-cleaned (RET 4): portrait / 4 + 1, the IDIV truncating, with 3 made 4. es2_xref finds calls from 0003dab4 and 0003e060. ES2's Pilot_VoiceBankOf (DBSIM 00434260).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
+      "verified": {
+        "bytes": "0002e2c4+32",
+        "sha1": "67b1a6af2d75",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002e2e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudColorTable_Get",
+      "description": "(i), frameless, callee-cleaned (RET 4): the int16 entry i of SquadSlotColors (00092d14), sign-extended. es2_xref finds five calls, from 0002f4f4, 0003dab4, 0003e9b8 and twice from 00040d4c. ES2's HudColorTable_Get (DBSIM 00434280), which maps the id at 0049b040[i] through HudColorTable.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
+      "verified": {
+        "bytes": "0002e2e4+16",
+        "sha1": "aa5040a324a8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002e2f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Squad_PilotName",
+      "description": "(slot), callee-cleaned: HddGauge_Name (0003e830)(the instrument +0x1f5 of CockpitViewInstance (00092d1c), slot). es2_xref finds calls from 0002f454 and 00058b68. ES2's Squad_PilotName (DBSIM 00434298), on +0x1f9.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
+      "verified": {
+        "bytes": "0002e2f4+29",
+        "sha1": "a97bd6bca21b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002e314",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Squad_SlotOfPilotName",
+      "description": "(name), callee-cleaned: HddGauge_FindByName (0003e854)(the instrument +0x1f5 of CockpitViewInstance (00092d1c), name). es2_xref finds no reference to it. ES2's Squad_SlotOfPilotName (DBSIM 004342c0), on +0x1f9.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
+      "verified": {
+        "bytes": "0002e314+29",
+        "sha1": "7398318174ef",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002e334",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Player_DependentCondition",
+      "description": "(n), callee-cleaned: Damage_ToConditionState (00030eb8) of the int16 that Mech_ReadEntryDamage (00015868)(the machine +0x1ff of CockpitViewInstance (00092d1c), n, 0) returns. es2_xref finds calls from 00034f3c, 0003a2a8 and 0003cd28. ES2's Player_DependentCondition (DBSIM 004342e0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
+      "verified": {
+        "bytes": "0002e334+44",
+        "sha1": "5240dacde775",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002e360",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_FindArmedMountGauge",
+      "description": "(cockpit), callee-cleaned: with w the weapon manager +0x198 of the machine +0x1ff, the armed mount is entry w+0x1d (a signed byte, 0 for the mount when negative) of the array at w+0; returns the first of the weapon-row gauges +0x70 (count +0x94) that is set and whose dword +0x86 is that mount, or 0. es2_xref finds one call, from 0003ad08. ES2's CockpitView_FindArmedMountGauge (DBSIM 00434310), its manager at +0x202 with the array at +4, the count at +0x98 and the gauge's mount at +0xbd.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
+      "verified": {
+        "bytes": "0002e360+163",
+        "sha1": "5209b315bb18",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e404",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_StaticInit",
+      "description": "Frameless, no arguments: panel.cpp's static initializer, entry 000adc2c of the static constructor table. Stores 0 at 000b0da8, 000b0db8, 000b0dc4, 000b0dcc and both dwords of Cockpit_ZeroOffset (000b0dd4), 4 at 000b0db0, 500 at 000b0dc8 and -500 at 000b0dd0. Its RET at 0002e442, followed by one zero byte, ends the object file. es2_xref finds the table entry as its one reference.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#where-the-module-starts-and-ends"
     },
     {
       "address": "0002eea0",
@@ -6482,6 +7019,21 @@
       }
     },
     {
+      "address": "00030eb8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Damage_ToConditionState",
+      "description": "(damage): with intact = (0x100 - damage) * 100 >> 8, returns 0 at 90 or more, 1 at 74 or more, 2 at 51 or more, 3 at 1 or more, else 4. ES2's Damage_ToConditionState (DBSIM 00438700), the same statements.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00030eb8+70",
+        "sha1": "369d7698f896",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00030f44",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -6539,6 +7091,81 @@
         "sha1": "37cf7a00a08e",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "00035090",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_SetValues",
+      "description": "(gunsight, block) in stack order: for each of the block's int16 0, 1 and 2 that differs from the cached +0x7a, +0x7c and +0x7e, stores it and passes a delta to the +0x10 slot of the vtable at +0x10 of children: int16 0's (new - old) to +0xa4 and +0xbc, int16 1's (old - new) to +0xa8, int16 2's (old - new) to +0xac; then copies the block's 0x26 bytes over +0x7a. ES2's Gunsight_SetValues (DBSIM 0043d98c), whose cache is at +0xb1.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00035090+238",
+        "sha1": "4cfcd6454fda",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00035180",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_GetStateBlock",
+      "description": "(gunsight), frameless, callee-cleaned (RET 4): returns gunsight + 0x7a, the state block Gunsight_SetValues (00035090) caches. ES2's Gunsight_GetStateBlock (DBSIM 0043db88), + 0xb1.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00035180+10",
+        "sha1": "df0dc4c07cf6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003a890",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_HandleAltKey",
+      "description": "(mfd, code) in stack order: REPNE SCASD over the seven codes at 000940bc, 0x21e, 0x222, 0x223, 0x218, 0x22e, 0x212 and 0x221 (Alt with A, G, H, O, C, E, F), jumping through the seven dwords after them (000940d8) to 0003a8ba, 0003a8db, 0003a8fc, 0003a91d, 0003a93b, 0003a968 and 0003a991; returns 0 for any other code. ES2's MfdFlashComm_HandleAltKey (DBSIM 00446c10), which takes 0x21e, 0x222, 0x223, 0x218 and 0x221.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0003a890+296",
+        "sha1": "a50d1e96f496",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003e830",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddGauge_Name",
+      "description": "(roster, slot) in stack order, callee-cleaned (RET 8): the dword +0x137 of gauge slot, the gauges 0x14a bytes apart from 0xf6 past the pointer at 000944cc; the roster argument is ignored. ES2's HddGauge_Name (DBSIM 0044b900), its gauges 0x14e apart from 0x12d past 0049d230.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0003e830+36",
+        "sha1": "1e0ce4687427",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003e854",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HddGauge_FindByName",
+      "description": "(roster, name) in stack order: the index 0-2 of the first gauge, addressed as HddGauge_Name (0003e830) does, whose name +0x137 is set and is a case-insensitive prefix of name (Str_CompareNoCaseN over the gauge name's length), or -1. ES2's HddGauge_FindByName (DBSIM 0044b928).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0003e854+125",
+        "sha1": "caa215c5ea88",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -6839,6 +7466,21 @@
         "sha1": "ca5a3814cc94",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004d910",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetCursorPos",
+      "description": "Frameless, no arguments: returns the address of Input_CursorPos (000b17d8). ES2's Input_GetCursorPos (DBSIM 0045b734).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0004d910+6",
+        "sha1": "36aeabc63882",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -17015,6 +17657,15 @@
       "source": "Herculan/docs/es1/rendering/palette.md#globals"
     },
     {
+      "address": "00092d14",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SquadSlotColors",
+      "description": "Four int16, 56, 59, 49 and 0: HudColorTable_Get (0002e2e4) returns entry i. Where ES2's holds ids at 0049b040 that it maps through HudColorTable.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers"
+    },
+    {
       "address": "00092d1c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -17078,6 +17729,33 @@
       "source": "ES1DBSIM decompile at 0002c9d8"
     },
     {
+      "address": "00092d74",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HitShakeEndTick",
+      "description": "Dword: the value of the counter 000981c4 at which the hit shake ends, 0 while none runs. Cockpit_StartHitShake (0002e17c) sets it; Cockpit_HitShakeTick (0002e1d8) clears it at the end or in view 4. ES2's HitShakeEndTick.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-hit-shake"
+    },
+    {
+      "address": "00092d78",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HitShakeNextToggleTick",
+      "description": "Dword: the value of the counter 000981c4 after which Cockpit_HitShakeTick (0002e1d8) next flips the impact palette, 0 while the shake is disarmed; Cockpit_StartHitShake (0002e17c) arms it. ES2's HitShakeNextToggleTick.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-hit-shake"
+    },
+    {
+      "address": "00092d7c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cockpit_SkipFrameDraw",
+      "description": "Byte: Cockpit_DrawFrame (0002cf28) returns at once while it is set. es2_xref finds two writes, both in 00057820, which sets it to 1 for one Sim_RenderFrame and Sim_EndFrame between two CockpitView_SetView calls and clears it before a second Sim_RenderFrame.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#drawing-it"
+    },
+    {
       "address": "00092d7d",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -17085,6 +17763,42 @@
       "name": "CockpitContextStackIndex",
       "description": "Byte, 0xff in the image: the index Cockpit_PushCanvasContext (0002b00c) raises before saving the installed render context in CockpitContextStack (000b0df4) and Cockpit_PopRenderContext (0002b03c) lowers after reinstalling it.",
       "source": "ES1DBSIM decompile at 0002b00c and 0002b03c; image byte at 00092d7d"
+    },
+    {
+      "address": "00092f33",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitView_DeviceButtonLatch",
+      "description": "Byte: the view device's button byte +0xb as CockpitView_PollViewDevice (0002d1a0) last saw it, so that a press acts once. ES2's 0049b550.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device"
+    },
+    {
+      "address": "00092f34",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitWidgets_CommandCodes",
+      "description": "24 dwords, the codes CockpitWidgets_HandleCommand (0002d24c) answers: 0, 2-10, 0x3b-0x44, 1, 0x0f, 0x57 and 0x13; then, at 00092f94, their 24 handler addresses inside CockpitWidgets_HandleCommand.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device"
+    },
+    {
+      "address": "0009301e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CTLButtonControlVtablePanelCopy",
+      "description": "panel.cpp's copy of the button base class's vtable, the library's 00094b8a: a zero dword, then seven slots, CTLControl_PaintNoOpPanelCopy (0002dade), CTLControl_InvalidateNoOpPanelCopy (0002dae3), CTLControl_OnClickNoOpPanelCopy (0002dae7), CTLControl_FlushDeferredPaintNoOpPanelCopy (0002daeb), Widget_GetButtonValuePanelCopy (0002daef), CTLControl_SetValueNoOpPanelCopy (0002daf9) and CTLControl_DragMoveNoOpPanelCopy (0002daff). CockpitView_BuildScrollTriggers (0002d970) stores it at a strip's +0x1c before ScrollTriggerVtable (00093046). ES2's CTLButtonControl table.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+    },
+    {
+      "address": "00093046",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ScrollTriggerVtable",
+      "description": "The screen-edge strip's vtable: CTLButtonControlVtablePanelCopy (0009301e) with the click slot +0xc ScrollTrigger_OnClick (0002db04), entered through 0002db03. CockpitView_BuildScrollTriggers (0002d970) stores it at each strip's +0x1c. ES2's ScrollTriggerVtable.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
     },
     {
       "address": "0009680c",
@@ -17452,7 +18166,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Cockpit_ZeroOffset",
-      "description": "Two int32, the offset Widget_DrawToCockpit (0002b058) copies at when given none; panel.cpp's static initializer at 0002e404 stores 0 in both. ES2's Cockpit_ZeroOffset (DBSIM 0049b07e).",
+      "description": "Two int32, the offset Widget_DrawToCockpit (0002b058) copies at when given none; panel.cpp's static initializer at Cockpit_StaticInit (0002e404) stores 0 in both. ES2's Cockpit_ZeroOffset (DBSIM 0049b07e).",
       "source": "ES1DBSIM decompile at 0002b058; disassembly at 0002e404"
     },
     {
@@ -17463,6 +18177,15 @@
       "name": "CockpitContextStack",
       "description": "The dword stack of render contexts Cockpit_PushCanvasContext (0002b00c) saves, indexed by CockpitContextStackIndex (00092d7d). ES2's 004d0470.",
       "source": "ES1DBSIM decompile at 0002b00c and 0002b03c"
+    },
+    {
+      "address": "000b17d8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Input_CursorPos",
+      "description": "The point Input_GetCursorPos (0004d910) returns, which Cockpit_PickEdgeCursor (0002dcc8) reads while the dword 000b5b76 is set. ES2's Input_CursorPos.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules"
     },
     {
       "address": "000b5adc",

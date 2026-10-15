@@ -4168,8 +4168,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_SelectByGauge",
-      "description": "Arm the mount that owns a given weapon gauge -- what a left click on a weapon row and a number key both end at. Finds the mount whose vtable +0x58 gauge-match slot accepts the gauge (the pod base class returns 0 unconditionally, so a pod never matches), requires the mount's selectable byte +0x4c, calls WeaponMounts_SetSelection and sets the single-fire flag at manager+0x18.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(manager, gauge): the first non-null mount of the array at +4 (int16 count +8) whose vtable +0x58 slot returns nonzero for the gauge; returns 0 when none does or when that mount's byte +0x4c is clear; otherwise WeaponMounts_SetSelection(manager, index), sets the byte +0x18 and returns 1 in AX. es2_xref finds one call, from CockpitView_ArmWeaponByGauge (00432a50).",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "004106ac+90",
+        "sha1": "23adb526e2cb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410708",
@@ -4898,8 +4904,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjectList_Next",
-      "description": "(list, obj): the entry after obj in the list, wrapping: items(+0)[(obj+0x4b + 1) % count(+6)], where obj+0x4b is the slot ObjectList_Add recorded. Sim_DispatchCommand cycles maybe_GlobalLiveObjectList with it.",
-      "source": "DBSIM decompile at 00411e40"
+      "description": "(list, obj): the entry after obj in the list, wrapping: items(+0)[(obj's int16 +0x4b + 1) % the int16 count +6]. es2_xref finds two calls, from Sim_DispatchCommand.",
+      "source": "DBSIM decompile at 00411e40",
+      "verified": {
+        "bytes": "00411e40+32",
+        "sha1": "0dd8f6edc06b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411e60",
@@ -10718,9 +10730,15 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_ArmWeaponByGauge",
-      "description": "Thin wrapper: WeaponMounts_SelectByGauge on the player mech's weapon manager, returning whether anything was armed. Both the row gadget's click handlers and CockpitWidgets_HandleCommand's number-key case go through it.",
+      "description": "(cockpitView, gauge): WeaponMounts_SelectByGauge (004106ac) on the weapon manager +0x202 of the machine +0x203, returning 1 when that returns nonzero, else 0. es2_xref finds calls from CockpitWidgets_HandleCommand (00432bc8), EnergyWeaponGauge_OnChildClick and AmmoWeaponGauge_OnChildClick.",
       "source": "docs/retail/simulation/weapon-mounts.md",
-      "signature": "bool __cdecl CockpitView_ArmWeaponByGauge(int cockpitView, int gauge)"
+      "signature": "bool __cdecl CockpitView_ArmWeaponByGauge(int cockpitView, int gauge)",
+      "verified": {
+        "bytes": "00432a50+48",
+        "sha1": "c0fe397128cf",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00432a80",
@@ -10756,10 +10774,16 @@
       "address": "00432b14",
       "binary": "DBSIM",
       "type": "function",
-      "confidence": "medium",
+      "confidence": "high",
       "name": "CockpitView_PollViewDevice",
-      "description": "Polls a device-state block for the four view axes -- bytes +0x1e/+0x1f/+0x20/+0x21 queue view commands 1/0/5/4 respectively -- i.e. the joystick hat's up/down/left/right, one of the two device paths into a view command alongside the screen-edge strips CockpitView_HandleEdgeTrigger answers. Also handles the +0xb button edge.",
-      "source": "HDD pan RE session"
+      "description": "(cockpitView, device): with +0x23e set, Cockpit_PickEdgeCursor (00433b20)(cockpitView, device + 2); the device bytes +0x1e, +0x1f, +0x20 and +0x21 each queue view command 1, 0, 5 and 4 with CockpitView_QueueViewCommand on CockpitViewManager_Published's manager; when the byte +0xb is set and the latch 0049b550 was clear, in view 1 (the manager's +0x14) calls the +0xc slot (key) of the vtable of the Heads-Down Display +0x1f9 with 0x0f; the latch then follows +0xb. Returns 1 in AL. es2_xref finds one call, from Sim_PollPlayerInput.",
+      "source": "HDD pan RE session",
+      "verified": {
+        "bytes": "00432b14+177",
+        "sha1": "e755e5f151b2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00432bc8",
@@ -10782,8 +10806,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_IndexOf",
-      "description": "Returns an object's index in the three-entry squadmate array g_SquadmateMachines, or -1. MfdStatusScreen_Paint uses it to decide between ID: with a pilot name and TARGET: with a type name.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "(object): the index 0-2 of object in the three-entry g_SquadmateMachines, or -1 for a null object or one absent from it. es2_xref finds nine calls, among them PilotMessagePort_Post, MfdStatusScreen_Paint, CommBox_OnMessageBegin and ViewChain_DrawCaption.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "00433134+35",
+        "sha1": "9c27207c8d37",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433158",
@@ -10792,7 +10822,13 @@
       "confidence": "high",
       "name": "CockpitView_GetSquadMessagePort",
       "description": "Returns the pilot and squad message port at CockpitViewInstance+0x207, or 0 when there is no cockpit view.",
-      "source": "DBSIM decompile and disassembly at 00433158"
+      "source": "DBSIM decompile and disassembly at 00433158",
+      "verified": {
+        "bytes": "00433158+25",
+        "sha1": "f0bf4123a729",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433174",
@@ -10800,8 +10836,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TargetSelect_CanTarget",
-      "description": "Whether an object may be selected: alive (+0x99 and +0xa4 clear), on the other side (group+0x12), and known by either sensor route -- radar-visible (+0x95) within DAT_004d1cfc (200000, the last of the scanner's three ranges, read directly rather than the current setting), or a contact the viewer holds (viewer+0xc2+obj[0x4b]) within Detection_ContactScanRange (30000 short / 60000 long).",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "(view, object): 1 when the object is alive (+0x99 and +0xa4 clear), on the other side (its group's (+0x45) byte +0x12 against that of the measuring object's group), and known by either sensor route: radar-visible (+0x95) within DAT_004d1cfc, or a contact the measuring object holds (its byte +0xc2 + the object's int16 +0x4b) within Detection_ContactScanRange, each distance strictly less; else 0. The measuring object is the machine view+0x203, or ViewChain_Viewed while DAT_0049ef5c is set.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "00433174+220",
+        "sha1": "db174dc2826f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433250",
@@ -10809,8 +10851,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TargetSelect_InForwardCone",
-      "description": "Bearing to the candidate less the machine's heading PLUS its turret twist (vtable +0x3c), accepted within +/-8999 -- just under 50 degrees each side. Wider cousin of the +/-0x3000 gate the missile-lock block uses. The twist sign is the original's; Mech_PerTickSystemsUpdate and the sensor sweep fold it the same way.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "(view, object): with DAT_0049ef5c clear, Math_HeadingToward from the machine view+0x203's point +0x26 to the object's, less the machine's int16 +0x10, plus what the machine's vtable +0x3c slot returns; with it set, the heading from ViewChain_Viewed to the object less ViewChain_Viewed's +0x10. Returns 1 when that int16 lies in -8999..8999, else 0.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "00433250+137",
+        "sha1": "6c867c4da08b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004332dc",
@@ -10818,8 +10866,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TargetSelect_SetObject",
-      "description": "Cockpit target selection, on the widget tree (its +0x210 is the selection): selects one named object, or clears when passed 0. Reached by the ; key (scancode 0x27), the F4 scanner's TARGET button and a gunsight click. Walks +0x210 through the live-object list from the cursor at +0x214/+0x218 until it lands on the object asked for and it passes TargetSelect_CanTarget and TargetSelect_InForwardCone, so a request for something unselectable wraps back to where it started.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "(view, object): object 0 clears the selection +0x210. Otherwise runs TargetSelect_Cycle (0043349c) when there is no selection, then steps +0x210 through maybe_GlobalLiveObjectList from the cursor +0x214 and its int16 index +0x218 (past the list's count the selection takes 0 and the cursor and index go back to the start) until +0x210 is the object, passes TargetSelect_CanTarget and the object passes TargetSelect_InForwardCone, or the walk is back at the selection it began with. When the selection is then the object (0 after a clear), sets the dword +6 of Gunsight_GetStateBlock (0043db88)(+0x1f5)'s block to it and the byte +0x24 to 1 and hands the block to Gunsight_SetValues (0043d98c). Returns whether the selection is the object. es2_xref finds calls from CockpitWidgets_HandleCommand and Gunsight_UpdateAndPaint.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "004332dc+235",
+        "sha1": "8530cdd39b30",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004333c8",
@@ -10827,8 +10881,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TargetSelect_Nearest",
-      "description": "The manual's Nearest Target, the apostrophe key (scancode 0x28) via Sim_DispatchCommand. Nearest selectable object by 3D range, considering only target classes 0 (HERC) and 2 (flyer) -- structures are excluded -- and applying no cone test at all, so it reaches something behind the machine.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "(view): the nearest by 3D range from the machine view+0x203 of the live objects whose targetClass is 0 or 2 and that pass TargetSelect_CanTarget (00433174), with the cone test left out; when one is found and differs from the selection +0x210, it becomes the selection and goes to the gunsight +0x1f5 as in TargetSelect_SetObject (block dword +6, byte +0x24 = 1). Returns the object found, or 0. es2_xref finds calls from Sim_DispatchCommand and Sim_PollPlayerInput.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "004333c8+210",
+        "sha1": "e6b2bcd6dfca",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043349c",
@@ -10836,8 +10896,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TargetSelect_Cycle",
-      "description": "The manual's Select Target, [Enter] (scancode 0x1c) via CockpitWidgets_HandleCommand. Files every selectable object inside the forward cone into one of four buckets by bearing error (abs(err) >> 10, clamped to 3), sorted by range within a bucket keeping four, flattens them into the 4-entry shortlist at DAT_004d0490 and takes its head; a repeat press whose head is unchanged steps to the entry after the current selection. The angular-size correction it computes is multiplied by a literal PUSH 0x0 at 004335d0 and is therefore always zero.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "(view): files every live object that passes TargetSelect_CanTarget (00433174) and TargetSelect_InForwardCone (00433250) into one of four buckets at DAT_004d0494 by bearing error (the absolute heading error with turret twist, less a size correction, >> 10, clamped to 3), each bucket keeping its four nearest by range; flattens the buckets in order into the four-entry shortlist DAT_004d0490 points to; takes its head or, when the head is the previous head or the selection and there is a selection, the next set entry after the selection among the first three. A different result becomes the selection +0x210 and goes to the roving gunsight +0x1f5 through Gunsight_GetStateBlock and Gunsight_SetValues (block dword +6, byte +0x24 = 1). Returns +0x210. The size correction is Math_Q10Multiply of a literal 0 (PUSH 0x0 at 004335d0), so it is always 0. es2_xref finds calls from CockpitWidgets_HandleCommand, TargetSelect_SetObject, Cockpit_CycleTarget and Sim_PollPlayerInput.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "0043349c+723",
+        "sha1": "063b80b8ef0d",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00433770",
@@ -10845,8 +10911,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_BuildScrollTriggers",
-      "description": "Builds the three ScrollTrigger widgets, allocating 0x24 bytes each and running Widget_CtorRect before overwriting +0x17 with ScrollTriggerVtable, storing the cockpit view at the widget's +0x20 and calling Widget_RegisterClickable. The rects are screen-relative, in the display's own width and height, with the band thicknesses scaled by VideoMode_XCoordShift/YCoordShift: {0, H-1-(3<<Y), W-1, H-1} the bottom strip at +0x21a, {0, 0, 5<<X, H-1} the left at +0x21e, and {W-1-(5<<X), 0, W-1, H-1} the right at +0x222. Called once, lazily, from the cockpit tick (004327ac) on the first frame that finds the one-shot flag at +0x23e clear -- not from any constructor, which is why the three sit apart from the rest of the widget build.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "(view): builds the three ScrollTrigger strips: for each, Mem_New(0x24), Widget_CtorRect with the rect, CTLButtonControlVtable at +0x17 and 0 in the int16 +0x1d, then ScrollTriggerVtable at +0x17 and the view at +0x20; stores it and registers it with Widget_RegisterClickable on the root widget +0. With W and H the display's attributes 0 and 1 and X, Y VideoMode_XCoordShift and YCoordShift, the rects are {0, H-1-(3<<Y), W-1, H-1}, the bottom strip at +0x21a; {0, 0, 5<<X, H-1}, the left at +0x21e; and {W-1-(5<<X), 0, W-1, H-1}, the right at +0x222. es2_xref finds one call, from CockpitView_PerFrameUpdate (004327ac).",
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "00433770+502",
+        "sha1": "55101aeff7a1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433968",
@@ -10854,8 +10926,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_FlipScrollTriggers",
-      "description": "(cockpitView, delta) -- re-places the three ScrollTrigger strips at +0x21a/+0x21e/+0x222 on a view change, and the only code that touches their rects after CockpitView_BuildScrollTriggers makes them. Per axis, a delta of at least a band's worth (>= 6, or < -5) sets a sign and a compensating shift of one full display width or height, and a smaller delta leaves that axis alone. Where the sign is set the band is reflected across its own edge -- y0 = y1, y1 = y0 + height for a downward delta, mirrored for an upward one -- and the rect is then translated by the delta net of the full-screen shift. Reflecting a band and shifting it by a screen is what carries an edge strip to the far side of the display, which is what retail shows: the bottom edge pans down to the heads-down view and the top edge comes back. Simulating it over all four views reproduces retail exactly, including that a click at the top of the heads-down view pans back up and a click at its bottom does nothing. For the bottom strip on a vertical pan the reflection and the translation cancel, leaving the rect alone and letting the root origin do the work; the reflection earns its keep on the side strips, where it carries the left strip's band to the right edge of the left window so the way back is the opposite edge. See docs/retail/simulation/cockpit-input.md.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "(view, delta): per axis of the delta, 6 or more sets the sign +1 and a shift of the display's width (attribute 0) or height (attribute 1), below -5 the sign -1 and minus that shift, else neither. For each strip at +0x21a, +0x21e and +0x222, a set sign reflects the rect across its own edge on that axis (sign +1: x1 = x0, x0 -= width; sign -1: x0 = x1, x1 = x0 + width; likewise y), and the rect then moves by -(delta - shift) on both axes. es2_xref finds one call, from CockpitWidgets_TranslateForView. See docs/retail/simulation/cockpit-input.md.",
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "00433968+286",
+        "sha1": "dbd68004b8e9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433a88",
@@ -10863,8 +10941,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_HandleEdgeTrigger",
-      "description": "(cockpitView, trigger) -- maps a click on one of the three screen-edge ScrollTrigger strips to a view command, by current view. Not a keyboard handler and not reachable from one: its only caller in the image is ScrollTrigger_OnClick (00434df0), which passes the clicked widget. The manual's 'change views with the mouse by clicking on the screen edge leading to the view you want'. Compares the widget pointer against the three built by CockpitView_BuildScrollTriggers: +0x21a (bottom strip) queues command 0 from view 0 and 1 from view 1; +0x21e (left strip) queues 5 from view 0 and 6 from view 3; +0x222 (right strip) queues 4 from view 0 and 6 from view 2. Each strip therefore serves exactly two views and does nothing from any other. In screen terms each pair is the manual's rule in both directions, because widget rects are in canvas space and the root widget's origin moves with the view: the bottom edge pans down to the heads-down view and the TOP edge pans back up, the same widget both times, and from a side window it is the OPPOSITE edge that returns. Simulated over all four views, every strip lands on the edge facing the view it leads to; see docs/retail/simulation/cockpit-input.md.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "(view, strip): by the published manager's view +0x14, queues with CockpitView_QueueViewCommand: for the bottom strip +0x21a command 0 from view 0 and 1 from view 1; for the left +0x21e 5 from view 0 and 6 from view 3; for the right +0x222 4 from view 0 and 6 from view 2; any other pair queues nothing. es2_xref finds one call, from ScrollTrigger_OnClick (00434df0). See docs/retail/simulation/cockpit-input.md.",
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "00433a88+152",
+        "sha1": "64c26dc56127",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433b20",
@@ -10872,8 +10956,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_PickEdgeCursor",
-      "description": "(view, point): hit-tests the pointer -- the position 0045b734 returns under TapePlayback -- rebased through the view's context origin, against the three screen-edge strips at view+0x21a and stores the arrow it should show at +0x22e, by strip and current view: the bottom strip 4 (scursor) in view 0 and 3 (ncursor) in view 1; the left strip 6 (wcursor) in view 0 and 5 (ecursor) in view 3; the right strip 5 in view 0 and 6 in view 2; 0 for no strip or no move. CockpitView_PollViewDevice calls it when +0x23e is set.",
-      "source": "DBSIM decompile at 00433b20"
+      "description": "(view, point): while Cockpit_CursorsLive is set: takes the point from Input_GetCursorPos (0045b734) instead under TapePlayback; rebases it as point - the canvas context's (+4) +0x210/+0x214 + its +0x220/+0x224; zeroes +0x22e and, for the first of the strips +0x21a, +0x21e, +0x222 whose rect holds the point (bounds inclusive), stores the arrow by the manager's view +0x14: the bottom 4 (scursor) in view 0 and 3 (ncursor) in view 1, the left 6 (wcursor) in view 0 and 5 (ecursor) in view 3, the right 5 in view 0 and 6 in view 2. es2_xref finds one call, from CockpitView_PollViewDevice.",
+      "source": "DBSIM decompile at 00433b20",
+      "verified": {
+        "bytes": "00433b20+308",
+        "sha1": "3b227b95db97",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433c54",
@@ -10881,8 +10971,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_UpdateEdgeCursor",
-      "description": "(view): with an arrow picked at +0x22e, puts Cockpit_CursorImages[arrow] in the edge slot +0x232 and makes it the active slot (+0x226), saving the previous active slot at +0x22a; with none, puts the saved slot back if the edge slot is active. Each change goes to maybe_Driver3_SetCursorImage (scroll-window path) or maybe_Cursor_SetImage, both empty in driver 3. CockpitView_PerFrameUpdate runs it.",
-      "source": "DBSIM decompile and disassembly at 00433c54"
+      "description": "(view): while Cockpit_CursorsLive is set: with an arrow at +0x22e, puts Cockpit_CursorImages[arrow] in the edge slot +0x232, makes it the active slot (+0x226) when it is not, saving the previous active slot at +0x22a, and calls maybe_Driver3_SetCursorImage while Display_UseScrollWindow is set, else maybe_Cursor_SetImage; with none, when the edge slot is active, puts the saved slot back and calls the same pair. es2_xref finds one call, from CockpitView_PerFrameUpdate.",
+      "source": "DBSIM decompile and disassembly at 00433c54",
+      "verified": {
+        "bytes": "00433c54+316",
+        "sha1": "4e32b1efa1d5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433d90",
@@ -10890,8 +10986,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_SetForwardCursor",
-      "description": "(index): puts Cockpit_CursorImages[index] in the forward-view slot view+0x236, skipping a repeat of the last index (0049b62c), and passes it on to maybe_Driver3_SetCursorImage/maybe_Cursor_SetImage unless the edge slot is active. Gunsight_ClickSurface_Paint passes 1 (pcursor) while the pointer is on the click surface and 0 otherwise.",
-      "source": "DBSIM decompile and disassembly at 00433d90"
+      "description": "(index): while Cockpit_CursorsLive is set and index differs from the last one (0049b62c): puts Cockpit_CursorImages[index] in the forward-view slot +0x236 of CockpitViewInstance, calls maybe_Cursor_SetImage, or maybe_Driver3_SetCursorImage while Display_UseScrollWindow is set, when the active slot (+0x226) is other than the edge slot +0x232, and records the index. es2_xref finds two calls, from Gunsight_ClickSurface_Paint.",
+      "source": "DBSIM decompile and disassembly at 00433d90",
+      "verified": {
+        "bytes": "00433d90+171",
+        "sha1": "abe9b02380bb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433e3c",
@@ -10899,8 +11001,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_SetOffForwardCursor",
-      "description": "(index): puts Cockpit_CursorImages[index] in the slot view+0x23a that Cockpit_UseOffForwardCursor activates for the heads-down view and the glances, skipping a repeat of the last index (0049b630), and passes the image (bitmap +4, hotspot +8) on to maybe_Driver3_SetCursorImage/maybe_Cursor_SetImage unless the edge slot is active. The HDD command display passes 2 (mcursor) while an order that wants a map pick is armed and 0 otherwise.",
-      "source": "DBSIM decompile and disassembly at 00433e3c"
+      "description": "(index): Cockpit_SetForwardCursor (00433d90) on the slot +0x23a of CockpitViewInstance, which Cockpit_UseOffForwardCursor activates, with its own last index (0049b630). es2_xref finds seven calls, three from HddDisplay_HandleWidgetPress, two from HddCommandScreen_SelectOrder, and from HddCommandScreen_Show and HddCommandScreen_Hide.",
+      "source": "DBSIM decompile and disassembly at 00433e3c",
+      "verified": {
+        "bytes": "00433e3c+171",
+        "sha1": "160eae72c89b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433ee8",
@@ -11001,8 +11109,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Pilot_PortraitOf",
-      "description": "(pilot): pilot / 3, the portrait bank dba\\PILOT<n>.DBA a roster index talks with. HddGauge_LoadPilotFrames uses it.",
-      "source": "DBSIM decompile at 00434240"
+      "description": "(pilot): pilot / 3, the division rounding toward zero. es2_xref finds one call, from HddGauge_LoadPilotFrames.",
+      "source": "DBSIM decompile at 00434240",
+      "verified": {
+        "bytes": "00434240+32",
+        "sha1": "169d5bef7cf8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00434260",
@@ -11010,8 +11124,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Pilot_VoiceBankOf",
-      "description": "(portrait): (portrait / 4) + 1 with 3 remapped to 4 -- the recorded voice bank a portrait speaks with. CommBox_BeginMessage and HddGauge_LoadPilotFrames use it.",
-      "source": "DBSIM decompile at 00434260"
+      "description": "(portrait): portrait / 4 + 1, the division rounding toward zero, with 3 made 4. es2_xref finds calls from HddGauge_LoadPilotFrames and CommBox_BeginMessage.",
+      "source": "DBSIM decompile at 00434260",
+      "verified": {
+        "bytes": "00434260+29",
+        "sha1": "5790a0916f2f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00434280",
@@ -11019,8 +11139,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudColorTable_Get",
-      "description": "Returns HudColorTable[DAT_0049b040[i]] -- resolves a logical colour id held in an initialised id array to a palette index. The array at 0049b040 holds three ids, 12, 15, 26 -- the squad comm-box slot colours (palette 14, 13, 5).",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (dat\\COLORS.DAT)"
+      "description": "(i): HudColorTable[0049b040[i]], sign-extended; the int16 ids at 0049b040 are 12, 15 and 26. es2_xref finds five calls, from PilotMessagePort_Speak, HddGauge_LoadPilotFrames, HddDamageScreen_SetSubjectCaption and twice from HddCommandScreen_DrawMarker.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md (dat\\COLORS.DAT)",
+      "verified": {
+        "bytes": "00434280+24",
+        "sha1": "02301983c735",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00434298",
@@ -11028,9 +11154,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_PilotName",
-      "description": "The name in comm-box slot `slot`, by way of HddGauge_Name on the heads-down display at CockpitViewInstance+0x1f9.",
+      "description": "(slot): HddGauge_Name (0044b900)(the Heads-Down Display at CockpitViewInstance+0x1f9, slot), the name in comm-box slot slot. es2_xref finds calls from PilotMessagePort_ComposeLine and ViewChain_DrawCaption.",
       "source": "docs/retail/simulation/heads-down-display.md",
-      "signature": "char * __cdecl Squad_PilotName(int slot)"
+      "signature": "char * __cdecl Squad_PilotName(int slot)",
+      "verified": {
+        "bytes": "00434298+30",
+        "sha1": "4fbf055ef3f2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004342b8",
@@ -11062,8 +11194,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Player_DependentCondition",
-      "description": "Condition 0-4 of the player machine's dependent (internal) component n: Mech_ReadEntryDamage -> Component_ReadEntryDamage kind 0 gives damage << 8 / max, bucketed by Damage_ToConditionState. The sensor dropout's callers pass 2, SENSOR ARRAY.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "(n): Damage_ToConditionState (00438700) of the int16 Mech_ReadEntryDamage (0041b514)(the machine CockpitViewInstance+0x203, kind 0, index n) returns: condition 0-4 of the machine's kind-0 entry n. es2_xref finds six calls, from Gunsight_UpdateAndPaint, EnergyWeaponGauge_Update, AmmoWeaponGauge_Update, PodGauge_Update, MfdDisplay_Update and HddDisplay_Update.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "004342e0+47",
+        "sha1": "e3bc43338c4e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00434310",
@@ -11071,8 +11209,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_FindArmedMountGauge",
-      "description": "(cockpitView): the weapon gauge among the view's ten at +0x70 (count +0x98) whose mount (+0xbd) is the viewing machine's armed mount -- view+0x203 is the machine, its +0x202 the mount manager, whose +0x1d index into +4 is the armed mount, or 0 with the index negative -- or 0 when no gauge has it. MfdDisplay_SyncMissileCamMode's condition asks it first.",
-      "source": "DBSIM decompile at 00434310"
+      "description": "(cockpitView): the weapon gauge among the view's ten at +0x70 (count +0x98) whose mount (+0xbd) is the viewing machine's armed mount -- view+0x203 is the machine, its +0x202 the mount manager, whose +0x1d index into +4 is the armed mount, or 0 with the index negative -- or 0 when no gauge has it. es2_xref finds one call, from MfdDisplay_SyncMissileCamMode.",
+      "source": "DBSIM decompile at 00434310",
+      "verified": {
+        "bytes": "00434310+87",
+        "sha1": "bde6c0fe43d1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00434368",
@@ -11302,8 +11446,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ScrollTrigger_OnClick",
-      "description": "ScrollTrigger's vtable +0x08, and the whole of the class's behaviour: calls CockpitView_HandleEdgeTrigger(this->[0x20], this). ScrollTrigger carries no PanelGadget mixin, so +0x20 is a plain owner pointer rather than a second vtable, and the strip makes no console click.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "(strip): CockpitView_HandleEdgeTrigger (00433a88)(the strip's owner +0x20, strip). ScrollTrigger's vtable +0x08, the class's click.",
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "00434df0+21",
+        "sha1": "41fd67637980",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00434e05",
@@ -13081,8 +13231,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_GetStateBlock",
-      "description": "Returns the roving gunsight's 38-byte target/angle state block, widget+0xb1. Callers are Player_PerFrameCockpitUpdate and the three TargetSelect_* entry points, which set byte 36 to 1 to arm the target indicator.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "(gunsight): returns gunsight + 0xb1, the roving gunsight's state block that Gunsight_SetValues (0043d98c) takes. es2_xref finds calls from Player_PerFrameCockpitUpdate, TargetSelect_SetObject, TargetSelect_Nearest and TargetSelect_Cycle; the last three set the block's byte +0x24 to 1.",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0043db88+13",
+        "sha1": "b1db8a56e34f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043db98",
@@ -15852,9 +16008,15 @@
       "type": "function",
       "confidence": "high",
       "name": "HddGauge_Name",
-      "description": "Returns comm-box gauge `slot`'s name pointer (+0x137), the one HddGauge_LoadPilotFrames filled by walking PILOTS.STR to the machine's pilot index. The display argument is ignored: the gauge vector is reached through the global at 0049d230 instead.",
+      "description": "(display, slot): the name pointer at +0x137 of comm-box gauge slot, the gauges 0x14e bytes apart from 0x12d past the pointer at 0049d230; the display argument is ignored. es2_xref finds calls from Squad_PilotName and MfdStatusScreen_Paint.",
       "source": "docs/retail/simulation/heads-down-display.md",
-      "signature": "char * __cdecl HddGauge_Name(void *display, int slot)"
+      "signature": "char * __cdecl HddGauge_Name(void *display, int slot)",
+      "verified": {
+        "bytes": "0044b900+40",
+        "sha1": "f0f7828a3040",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044b928",
@@ -19546,8 +19708,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_GetCursorPos",
-      "description": "Returns &Input_CursorPos (004d238a). Cockpit_PickEdgeCursor reads the cursor from it during TapePlayback.",
-      "source": "DBSIM decompile at 0045b734"
+      "description": "Returns the address of Input_CursorPos. es2_xref finds one call, from Cockpit_PickEdgeCursor, which reads the cursor from it under TapePlayback.",
+      "source": "DBSIM decompile at 0045b734",
+      "verified": {
+        "bytes": "0045b734+6",
+        "sha1": "878063bf7487",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045b73c",

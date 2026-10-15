@@ -119,7 +119,7 @@ The probe:
 ## Open
 
 - **Open:** the callers of the tests `es2_xref.py` finds and this batch did not read: `00014174` (`Zone_WalkCollisionTest`), and what it does with the height; `0000375c` and `000037e0`, which pass arrays to `Structure_WalkCollisionTest` and `Sim_RaycastShapeVolume`, and which objects they gather; `00003a58`'s call of `Sim_RaycastShapeVolume`; and the five calls of `Sim_RaycastShapes`, from `0000e55c`, `00011c80` (twice), `00017a00` and `0001b084`, which ES2's AI uses for obstacle avoidance and line of sight ([ES2's probes](../../retail/simulation/ai-navigation.md#the-two-probes)).
-- **Open:** what input arms the pixel pick in the cockpit: `000337dc`, `00034f3c`, the byte `000936d8`, the point at `000b16d4`, and `0002d78c`, which takes the picked object.
+- **Open:** what input arms the pixel pick in the cockpit: `000337dc`, `00034f3c`, the byte `000936d8`, the point at `000b16d4`, and what `00034f3c` hands `TargetSelect_SetObject` ([the target selection](cockpit-panel.md#the-target-selection)).
 - **Open:** what arms the occlusion probe and reads its answer: `es2_xref.py` finds no reference to `ObjProbe_Arm`, `ObjProbe_IsIdle` or `ObjProbe_IsHidden`.
 - **Open:** what reads `000afa8c` and `000afa94`: a grep of the disassembly for them by address finds stores alone. And what `00098dd6` and the driver routine at `0009df14` do with the page they are given.
 - **Open:** what calls `ObjList_PointNearSegmentAxis` and `ObjList_FreeSortNodes`, to which `es2_xref.py` finds no reference, and what the entry's `int16` at `+0x30` holds: `ObjList_DrawFrameObjects` writes no `+0x30`.
