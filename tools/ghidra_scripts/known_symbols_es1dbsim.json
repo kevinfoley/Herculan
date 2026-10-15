@@ -7807,8 +7807,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimStrings_StaticInit",
-      "description": "Frameless, no arguments: the string table's file's static initializer, entry 000adc34 of the static constructor table: StringTable_Ctor (00044f14)(SimStringTable (000b0f04)). ES2's SimStrings_StaticInit (DBSIM 00437898). es2_xref finds the table entry as its one reference. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/formats/str-strings.md#where-the-object-file-starts-and-ends"
+      "description": "Frameless, no arguments: the string table's file's static initializer, entry 000adc34 of the static constructor table: StringTable_Ctor (00044f14)(SimStringTable (000b0f04)). ES2's SimStrings_StaticInit (DBSIM 00437898). es2_xref finds the table entry as its one reference.",
+      "source": "Herculan/docs/es1/formats/str-strings.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "000301d0+11",
+        "sha1": "b887f1951c7e",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000301dc",
@@ -7816,8 +7822,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimStrings_StaticDtor",
-      "description": "Frameless, no arguments: SimStrings_StaticInit (000301d0)'s exit routine, entry 000adcb8 of the exit table: OwnedArray_Dtor (00044f48)(SimStringTable (000b0f04), 2). Its RET at 000301e8 is followed by three zero bytes, the end of the string table's object file. ES2's SimStrings_StaticDtor (DBSIM 004378c8). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/formats/str-strings.md#where-the-object-file-starts-and-ends"
+      "description": "Frameless, no arguments: SimStrings_StaticInit (000301d0)'s exit routine, entry 000adcb8 of the exit table: OwnedArray_Dtor (00044f48)(SimStringTable (000b0f04), 2). Its RET at 000301e8 is followed by three zero bytes, the end of the string table's object file. ES2's SimStrings_StaticDtor (DBSIM 004378c8).",
+      "source": "Herculan/docs/es1/formats/str-strings.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "000301dc+13",
+        "sha1": "16d986c8884d",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000301ec",
@@ -7855,8 +7867,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagPaperDollCopy",
-      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 000932e2; the code of ConfigPart_GetClassTagPanelCopy (0002ad43). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/paper-doll.md#where-the-object-file-starts-and-ends"
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 000932e2; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "00030253+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0003025c",
@@ -8074,8 +8092,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PaperDoll_StaticInit",
-      "description": "Frameless, no arguments: the paper doll's file's static initializer, entry 000adc38 of the static constructor table: __vec_ctor (000610cb)(WeaponIconSize_ElementCtor (00030f28) by its padding 00030f27, 12, 8, WeaponIconSizes (000b0f18)) and __vec_ctor(PaperDollWeaponIcon_ElementCtor (000307b0), 0x11, 0x22, PaperDoll_StaticWeaponIcons (000b0f78)), in stack order. ES2's PaperDoll_StaticInit (DBSIM 0043874c), which builds 28 pairs. es2_xref finds the table entry as its one reference. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/paper-doll.md#where-the-object-file-starts-and-ends"
+      "description": "Frameless, no arguments: the paper doll's file's static initializer, entry 000adc38 of the static constructor table: __vec_ctor (000610cb)(WeaponIconSize_ElementCtor (00030f28) by its padding 00030f27, 12, 8, WeaponIconSizes (000b0f18)) and __vec_ctor(PaperDollWeaponIcon_ElementCtor (000307b0), 0x11, 0x22, PaperDoll_StaticWeaponIcons (000b0f78)), in stack order. ES2's PaperDoll_StaticInit (DBSIM 0043874c), which builds 28 pairs. es2_xref finds the table entry as its one reference.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "00030f00+39",
+        "sha1": "37223d615a51",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00030f28",
