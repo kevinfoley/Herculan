@@ -13030,8 +13030,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBarGraph_RepaintToValue",
-      "description": "LEDBarGraphH vtable +0x04 (0049bd30), (bar, value): LedBarGraph_PaintToValue's fill without its store -- the pinstriped lit run to the value's position, then the remainder through a temporary {0, +0x24} brush installed at the render context's +0x22c -- leaving the stored position +0x20 untouched.",
-      "source": "DBSIM disassembly at 004396a8"
+      "description": "LEDBarGraphH vtable +0x04 (0049bd30), (bar, value): draws the whole bar for value without storing it. pos = start (+0x18) + (value * span >> 16) for a span +0x14 of 1 or more, else end (+0x1c) - (value * span >> 16); start..pos through LedBarGraph_FillPinstripe (00439758), then pos + 1..end through a temporary {0, +0x24} brush installed at the render context's +0x22c, put back after. For a span below 1 that lights the side LedBarGraph_PaintToValue leaves unlit. The stored position +0x20 is untouched.",
+      "source": "DBSIM disassembly at 004396a8",
+      "verified": {
+        "bytes": "004396a8+176",
+        "sha1": "3e98d32a05b2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439758",
@@ -13054,8 +13060,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LEDBarGraphV_Ctor",
-      "description": "LEDBarGraphV constructor (vtable 0049bd18, RTTI name 'LEDBarGraphV', 0x3c bytes): (obj, rect, range) runs LedBarGraph_CtorV, which builds the BarGraphV (0049bd48) part, then installs its own vtable. Its call at 00444edc, range 0x400, is in the case-1 arm of EnergyPoolGauge_Ctor's switch on +0x20, which that constructor sets to 0 just before the switch (00444e41-00444e49), so the gauge takes the case-0 arm and builds the horizontal LEDBarGraph.",
-      "source": "DBSIM decompile and disassembly at 00439834"
+      "description": "LEDBarGraphV constructor (vtable 0049bd18, RTTI name 'LEDBarGraphV', 0x3c bytes): (obj, rect, range) runs LedBarGraph_CtorV, which builds the BarGraphV (0049bd48) part, then installs its own vtable; it sets no color. es2_xref finds one call, at 00444edc in EnergyPoolGauge_Ctor.",
+      "source": "DBSIM decompile and disassembly at 00439834",
+      "verified": {
+        "bytes": "00439834+36",
+        "sha1": "d6a2e35e8aa6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439858",
@@ -13063,8 +13075,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBarGraphV_PaintToValue",
-      "description": "LEDBarGraphV vtable +0x00 (0049bd18): BarGraphV_PaintToValue with the lit run drawn by the vertical pinstripe fill at 00439a0c instead of a flat colour.",
-      "source": "DBSIM decompile at 00439858"
+      "description": "LEDBarGraphV vtable +0x00 (0049bd18), (bar, value): BarGraphV_PaintToValue's runs, the lit one drawn by LedBarGraphV_FillPinstripe (00439a0c) and the remainder by Raster_FillRect after the installed brush's colour is set to +0x24 (put back after). With the span +0x14 below 0, pos = start (+0x18) + (value * span >> 16), start..pos lit and pos + 1..end (+0x1c) unlit; otherwise pos = end - (value * span >> 16), pos..end lit and start..pos - 1 unlit. Like BarGraphV_PaintToValue it writes the positions into the rect's x0 and x1 (+4, +0xc). Stores pos at +0x20.",
+      "source": "DBSIM decompile at 00439858",
+      "verified": {
+        "bytes": "00439858+189",
+        "sha1": "a4988e138843",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439918",
@@ -13073,7 +13091,13 @@
       "confidence": "high",
       "name": "LedBarGraphV_Repaint",
       "description": "LEDBarGraphV vtable +0x04: redraws the whole bar at the stored fill position +0x20 -- one side through a temporary {0, +0x24} brush at the render context's +0x22c, the other with the vertical pinstripe fill at 00439a0c, which side by the span's sign. Its argument is loaded and not used.",
-      "source": "DBSIM disassembly at 00439918"
+      "source": "DBSIM disassembly at 00439918",
+      "verified": {
+        "bytes": "00439918+242",
+        "sha1": "cbad0c54e1f3",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00439a0c",
@@ -13097,7 +13121,13 @@
       "confidence": "high",
       "name": "LedBmBarGraphH_Ctor",
       "description": "LEDBMBarGraphH constructor (table 0049bd00, RTTI 'LEDBMBarGraphH', 0x68 bytes), (bar, rect, range, bitmapA, bitmapB): LedBarGraph_CtorBase, its own table, two GLRectangleRegion members at +0x2c and +0x44 (each with the dword after its vptr zeroed), the two bitmaps at +0x60 and +0x64, and a 5000-byte Mem_NewArray block at +0x5c.",
-      "source": "DBSIM decompile at 00439ae8"
+      "source": "DBSIM decompile at 00439ae8",
+      "verified": {
+        "bytes": "00439ae8+164",
+        "sha1": "6cb81edaa8e2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439b8c",
@@ -13106,7 +13136,13 @@
       "confidence": "high",
       "name": "LedBmBarGraphH_PaintToValue",
       "description": "LEDBMBarGraphH vtable +0x00 (0049bd00): BarGraphH_PaintToValue's layout. For a positive span the lit run and the remainder are drawn by 00439c48 with the bitmaps at +0x64 and +0x60; for a non-positive span both are Raster_FillRect. Stores the position at +0x20.",
-      "source": "DBSIM decompile at 00439b8c"
+      "source": "DBSIM decompile at 00439b8c",
+      "verified": {
+        "bytes": "00439b8c+177",
+        "sha1": "802d03dab936",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439c40",
@@ -13115,7 +13151,13 @@
       "confidence": "high",
       "name": "LedBmBarGraphH_RepaintNoOp",
       "description": "LEDBMBarGraphH vtable +0x04: push ebp / mov ebp,esp / pop ebp / ret.",
-      "source": "DBSIM disassembly at 00439c40"
+      "source": "DBSIM disassembly at 00439c40",
+      "verified": {
+        "bytes": "00439c40+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00439c48",
@@ -13139,7 +13181,13 @@
       "confidence": "high",
       "name": "LedBmBarGraphV_Ctor",
       "description": "LEDBMBarGraphV constructor (table 0049bce8, RTTI 'LEDBMBarGraphV', 0x68 bytes): LedBmBarGraphH_Ctor's body over LedBarGraph_CtorV.",
-      "source": "DBSIM decompile at 00439e10"
+      "source": "DBSIM decompile at 00439e10",
+      "verified": {
+        "bytes": "00439e10+164",
+        "sha1": "0283d061c97c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439eb4",
@@ -13147,8 +13195,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBmBarGraphV_PaintToValue",
-      "description": "LEDBMBarGraphV vtable +0x00 (0049bce8): LedBarGraphV_PaintToValue's layout with both runs drawn from the bitmaps at +0x64 (lit) and +0x60 (unlit).",
-      "source": "DBSIM decompile at 00439eb4"
+      "description": "LEDBMBarGraphV vtable +0x00 (0049bce8), (bar, value): LedBarGraphV_PaintToValue's runs, both drawn by LedBmBarGraphV_DrawBitmapSpan (00439f70), the lit one from the bitmap at +0x64 and the unlit one from +0x60; the positions go into the rect's x0 and x1 (+4, +0xc). Saves the installed brush's colour and puts it back unchanged. Stores pos at +0x20.",
+      "source": "DBSIM decompile at 00439eb4",
+      "verified": {
+        "bytes": "00439eb4+177",
+        "sha1": "6442cd721c01",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439f68",
@@ -13157,7 +13211,13 @@
       "confidence": "high",
       "name": "LedBmBarGraphV_RepaintNoOp",
       "description": "LEDBMBarGraphV vtable +0x04: push ebp / mov ebp,esp / pop ebp / ret.",
-      "source": "DBSIM disassembly at 00439f68"
+      "source": "DBSIM disassembly at 00439f68",
+      "verified": {
+        "bytes": "00439f68+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00439f70",
@@ -13210,8 +13270,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBmBarGraphH_Dtor",
-      "description": "LEDBMBarGraphH's destructor (class record 0043a1a9): (bar, flags). Eight RTL destructor-count decrements -- the bar's levels and its two GLRectangleRegion members' -- then Mem_Delete on flags bit 0. It frees neither the 5000-byte block at +0x5c nor anything else the constructor allocated.",
-      "source": "DBSIM disassembly at 0043a22a; class record at 0043a1a9"
+      "description": "LEDBMBarGraphH's destructor (class record 0043a1a9): (bar, flags). Seven decrements of the runtime's destructor count (through Rtl_DtorCountPtr), then Mem_Delete when bit 0 of flags is set. It frees neither the 5000-byte block at +0x5c nor anything else the constructor allocated. es2_xref finds its address as a dword at 0043a1d1, in the class record, and no rel32 branch to it.",
+      "source": "DBSIM disassembly at 0043a22a; class record at 0043a1a9",
+      "verified": {
+        "bytes": "0043a22a+90",
+        "sha1": "c578c04973b6",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0043a284",

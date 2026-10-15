@@ -677,6 +677,456 @@
       }
     },
     {
+      "address": "00003d7c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraph_Ctor",
+      "description": "(bar, rect) in stack order, callee-cleaned: copies the rect {x0, y0, x1, y1} to +0, after the rect's inlined constructor, which with bar null allocates 0x10 bytes and still writes through the null bar. The shell's bar graph code starts here. es2_xref finds calls from BarGraphH_Ctor (00003dfa) and BarGraphV_Ctor (00004272). Identical after normalisation to ES1DBSIM's BarGraph_Ctor (000316d4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 000316d4 ES1GO 00003d7c",
+      "verified": {
+        "bytes": "00003d7c+100",
+        "sha1": "c0bc1ab7e1c6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003de0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraph_NoOp",
+      "description": "(a, b) in stack order, callee-cleaned (RET 8): loads its two arguments into EAX and CX and returns. No reference found by es2_xref. The same empty body as ES1DBSIM's frameless BarGraph_NoOp (00031733) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; ES1GO disassembly at 00003de0",
+      "verified": {
+        "bytes": "00003de0+14",
+        "sha1": "1550088044a9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00003dee",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraph_GetRect",
+      "description": "(bar), callee-cleaned (RET 4): returns the bar, whose rect is at +0. No reference found by es2_xref. Identical after normalisation to ES1DBSIM's BarGraph_GetRect (00031738).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00031738 ES1GO 00003dee",
+      "verified": {
+        "bytes": "00003dee+12",
+        "sha1": "484a97b0e892",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00003dfa",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphH_Ctor",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x2c bytes with operator_new when bar is null (returning null when that fails), runs BarGraph_Ctor (00003d7c)(bar, rect), stores BarGraphHVtable (0007dc30) at +0x28 and sets the span +0x10 = (x1 - x0) * 0x10000 / range, the start +0x14 = x0, the end +0x18 = x1 and the fill position +0x1c = the end when the span is below 1, else the start. es2_xref finds calls from LedBarGraph_Ctor (0000472a) and LedBmBarGraphH_Ctor (00005331). The same statements as ES1DBSIM's BarGraphH_Ctor (00031740) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00031740 ES1GO 00003dfa",
+      "verified": {
+        "bytes": "00003dfa+134",
+        "sha1": "a61e3ddfe965",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003e80",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphH_ResetToEmpty",
+      "description": "(bar), callee-cleaned: the fill position +0x1c becomes the end +0x18 when the span +0x10 is below 1, else the start +0x14. Slot +0xc of BarGraphHVtable (0007dc30), LEDBarGraphHVtable (0007dc74) and LEDBMBarGraphHVtable (0007dd82); es2_xref also finds it as a dword at 00094788. Identical after normalisation to ES1DBSIM's BarGraphH_ResetToEmpty (000317a4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 000317a4 ES1GO 00003e80",
+      "verified": {
+        "bytes": "00003e80+31",
+        "sha1": "fe95c7d163a4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003e9f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphH_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of BarGraphHVtable (0007dc30). Fills only the strip between the stored position +0x1c and the new one with Raster_FillRect, the unlit color +0x20 swapped into the brush at the render context's +0x228 (the display's (000ab616) +0x40) for a shrinking strip, and stores the new position. The same statements as ES1DBSIM's BarGraphH_PaintToValue (000317c4) in different code; the simulator's reads the render context at the display's +0x44.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 000317c4 ES1GO 00003e9f",
+      "verified": {
+        "bytes": "00003e9f+357",
+        "sha1": "4da94274bfea",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004008",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphH_RepaintSpan",
+      "description": "(bar, a, b) in stack order, callee-cleaned: slot +8 of BarGraphHVtable (0007dc30). Repaints the run a..b against the stored position, unlit in +0x20 through the brush at the render context's +0x228 (the display's (000ab616) +0x40) and lit in the brush as installed. The same statements as ES1DBSIM's BarGraphH_RepaintSpan (000318e0) in different code; the simulator's reads the render context at the display's +0x44.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 000318e0 ES1GO 00004008",
+      "verified": {
+        "bytes": "00004008+618",
+        "sha1": "b098f663afb0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004272",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphV_Ctor",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: BarGraphH_Ctor (00003dfa) on the rect's y0 and y1, storing BarGraphVVtable (0007dc50) at +0x28 and setting the position +0x1c to the start when the span is below 1, else the end. es2_xref finds calls from LEDBarGraphV_Ctor (00004d04) and LedBmBarGraphV_Ctor (00005a19). The same statements as ES1DBSIM's BarGraphV_Ctor (00031aac) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00031aac ES1GO 00004272",
+      "verified": {
+        "bytes": "00004272+130",
+        "sha1": "b1df199a239e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000042f4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphV_ResetToEmpty",
+      "description": "(bar), callee-cleaned: the fill position +0x1c becomes the start +0x14 when the span +0x10 is below 1, else the end +0x18. Slot +0xc of BarGraphVVtable (0007dc50), LEDBarGraphVVtable (0007dc98) and LEDBMBarGraphVVtable (0007ddaa). Identical after normalisation to ES1DBSIM's BarGraphV_ResetToEmpty (00031b10).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00031b10 ES1GO 000042f4",
+      "verified": {
+        "bytes": "000042f4+31",
+        "sha1": "9c68bfbdc9bd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004313",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphV_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of BarGraphVVtable (0007dc50). BarGraphH_PaintToValue (00003e9f) on the rect's y0 and y1 (+4, +0xc), filling from the start when the span +0x10 is below 1 and from the end otherwise. The same statements as ES1DBSIM's BarGraphV_PaintToValue (00031b30) in different code; the simulator's reads the render context at the display's +0x44 where this reads +0x40.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00031b30 ES1GO 00004313",
+      "verified": {
+        "bytes": "00004313+365",
+        "sha1": "06557c69b612",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004480",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphV_RepaintSpan",
+      "description": "(bar, a, b) in stack order, callee-cleaned: slot +8 of BarGraphVVtable (0007dc50). BarGraphH_RepaintSpan (00004008) on the rect's y0 and y1. The same statements as ES1DBSIM's BarGraphV_RepaintSpan (00031c54) in different code; the simulator's reads the render context at the display's +0x44 where this reads +0x40.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00031c54 ES1GO 00004480",
+      "verified": {
+        "bytes": "00004480+682",
+        "sha1": "0a3a2e5a4694",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000472a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraph_Ctor",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x34 bytes with operator_new when bar is null (returning null when that fails), runs BarGraphH_Ctor (00003dfa)(bar, range, rect) and stores LEDBarGraphHVtable (0007dc74) at +0x28. es2_xref finds one call, from 0000395e. The same statements as ES1DBSIM's LedBarGraph_Ctor (00031e28) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00031e28 ES1GO 0000472a",
+      "verified": {
+        "bytes": "0000472a+67",
+        "sha1": "faa5efc7a938",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000476d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraph_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of LEDBarGraphHVtable (0007dc74). Repaints only the strip between the stored position +0x1c and the new one, the lit strip through LedBarGraph_FillPinstripe (00004b87) and the unlit one through a temporary brush {0, +0x20} at the render context's +0x22c (the display's (000ab616) +0x40 less 4), and stores the new position. The same statements as ES1DBSIM's LedBarGraph_PaintToValue (00031e5c) in different code; the simulator's reads the render context at the display's +0x44.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00031e5c ES1GO 0000476d",
+      "verified": {
+        "bytes": "0000476d+406",
+        "sha1": "af6ecfc8dd79",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004903",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraph_RepaintToValue",
+      "description": "(bar, a, value) in stack order, callee-cleaned, a not read: slot +8 of LEDBarGraphHVtable (0007dc74). Draws the whole bar for value without storing it, p = start (+0x14) + (value * span >> 16) for a span +0x10 of 1 or more, else end (+0x18) - (value * span >> 16). With p strictly between start and end: start..p through LedBarGraph_FillPinstripe (00004b87) and p + 1..end through a temporary brush {0, +0x20} at the render context's +0x22c (the display's (000ab616) +0x40 less 4). Span of 1 or more: p at or before start, the whole bar through that brush; p at or after end, the whole bar through the pinstripe. Span below 1: p at or after end, the whole bar through that brush; p at or before start, the whole bar with Raster_FillRect in the brush as installed. ES1DBSIM's LedBarGraph_RepaintToValue (00031fac) has no such end cases, always lighting start..p and filling p + 1..end.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; ES1GO decompile at 00004903",
+      "verified": {
+        "bytes": "00004903+644",
+        "sha1": "cf8e15900437",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004b87",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraph_FillPinstripe",
+      "description": "(bar, rect) in stack order, callee-cleaned: a temporary pen {0, shade} at the render context's +0x228 (the display's (000ab616) +0x40 less 4), then Raster_DrawLine from (x, y0) to (x, y1) for every even column x of x0..x1 in shade +0x2c and every odd one in +0x30; puts the old pen back. es2_xref finds five calls, two from LedBarGraph_PaintToValue (0000476d) and three from LedBarGraph_RepaintToValue (00004903). The same statements as ES1DBSIM's LedBarGraph_FillPinstripe (00032078) in different code; the simulator's reads the render context at the display's +0x44.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00032078 ES1GO 00004b87",
+      "verified": {
+        "bytes": "00004b87+381",
+        "sha1": "07e4de181deb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004d04",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LEDBarGraphV_Ctor",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x3c bytes with operator_new when bar is null (returning null when that fails), runs BarGraphV_Ctor (00004272)(bar, range, rect) and stores LEDBarGraphVVtable (0007dc98) at +0x28. No reference found by es2_xref. The same statements as ES1DBSIM's LEDBarGraphV_Ctor (0003216c) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 0003216c ES1GO 00004d04",
+      "verified": {
+        "bytes": "00004d04+67",
+        "sha1": "1e54ad51184b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004d47",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraphV_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of LEDBarGraphVVtable (0007dc98). LedBarGraph_PaintToValue (0000476d) on the rect's y0 and y1 (+4, +0xc) with LedBarGraphV_FillPinstripe (000051b4) for the lit strip, filling from the start when the span +0x10 is below 1. The same statements as ES1DBSIM's LedBarGraphV_PaintToValue (000321a0) in different code; the simulator's reads the render context at the display's +0x44 where this reads the display's (000ab616) +0x40.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 000321a0 ES1GO 00004d47",
+      "verified": {
+        "bytes": "00004d47+409",
+        "sha1": "a869cb940506",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00004ee0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraphV_Repaint",
+      "description": "(bar, a, b) in stack order, callee-cleaned: slot +8 of LEDBarGraphVVtable (0007dc98). Repaints the run from a to b on the rect's y0 and y1 against the stored position q (+0x1c): orders a and b and clamps them to start (+0x14)..end (+0x18) as lo..hi. Span +0x10 below 1: q below lo, lo..hi unlit; hi below q, lo..hi lit; else lo..q lit and q + 1..hi unlit. Otherwise: hi below q, lo..hi unlit; q below lo, lo..hi lit; else lo..q unlit and q + 1..hi lit. Lit runs go through LedBarGraphV_FillPinstripe (000051b4), unlit ones through a temporary brush {0, +0x20} at the render context's +0x22c (the display's (000ab616) +0x40 less 4). ES1DBSIM's LedBarGraphV_Repaint (000322f4) uses neither argument and redraws the whole bar at q.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; ES1GO decompile at 00004ee0",
+      "verified": {
+        "bytes": "00004ee0+724",
+        "sha1": "eb5582ab10ef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000051b4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraphV_FillPinstripe",
+      "description": "(bar, rect) in stack order, callee-cleaned: Raster_DrawLine from (x0, y) to (x1, y) for every even row y of y0..y1 in shade +0x2c and every odd one in +0x30, through a temporary pen at the render context's +0x228 (the display's (000ab616) +0x40 less 4). es2_xref finds six calls, two from LedBarGraphV_PaintToValue (00004d47) and four from LedBarGraphV_Repaint (00004ee0). The same statements as ES1DBSIM's LedBarGraphV_FillPinstripe (000323f0) in different code; the simulator's reads the render context at the display's +0x44.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 000323f0 ES1GO 000051b4",
+      "verified": {
+        "bytes": "000051b4+381",
+        "sha1": "48be88179bcb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005331",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphH_Ctor",
+      "description": "(bar, unlit, lit, range, rect) in stack order, callee-cleaned: allocates 0x68 bytes when bar is null (returning null when that fails), runs BarGraphH_Ctor (00003dfa)(bar, range, rect), builds the two GLRectangleRegions at +0x2c and +0x44 (the file's vtable copies ending with 0007dd4c at +0, the dword +4 zeroed), stores LEDBMBarGraphHVtable (0007dd82) at +0x28, lit at +0x60 and unlit at +0x64, and allocates unlit's width (int16 +6) times its height (int16 +4) plus 0x20 bytes at +0x5c with operator_new. No reference found by es2_xref. The same statements as ES1DBSIM's LedBmBarGraphH_Ctor (000324e4) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 000324e4 ES1GO 00005331",
+      "verified": {
+        "bytes": "00005331+559",
+        "sha1": "d3375dffcd22",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005560",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorBarGraphsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0007dce2, the shell bar graph code's copy of GLBase's vtable: with the object non-null stores 0007dce2 at +0 and deletes the object with operator_delete when bit 0 of flags is set. The same statements as ES1DBSIM's GLBase_DtorBarGraphsCopy (000326e8) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 000326e8 ES1GO 00005560",
+      "verified": {
+        "bytes": "00005560+44",
+        "sha1": "ad115be6db07",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000558c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorBarGraphsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0007dd14, the copy of GLRegion's vtable: with the object non-null stores 0007dd14 and then 0007dce2 at +0 and deletes the object with operator_delete when bit 0 of flags is set. The same statements as ES1DBSIM's GLRegion_DtorBarGraphsCopy (0003270c) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 0003270c ES1GO 0000558c",
+      "verified": {
+        "bytes": "0000558c+73",
+        "sha1": "c84229a83ecc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000055d5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorBarGraphsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0007dd4c, the copy of GLRectangleRegion's vtable: with the object non-null stores 0007dd4c, 0007dd14 and 0007dce2 in turn at +0 and deletes the object with operator_delete when bit 0 of flags is set. The same statements as ES1DBSIM's GLRectangleRegion_DtorBarGraphsCopy (00032734) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00032734 ES1GO 000055d5",
+      "verified": {
+        "bytes": "000055d5+107",
+        "sha1": "63c190ad4b9c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005640",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphH_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of LEDBMBarGraphHVtable (0007dd82). The new position clamped to start..end; when it differs from the stored +0x1c, the strip between them through LedBmBarGraphH_DrawBitmapSpan (00005777), from the bitmap at +0x60 where it becomes lit and +0x64 where it becomes unlit, and the position stored. The same statements as ES1DBSIM's LedBmBarGraphH_PaintToValue (00032764) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00032764 ES1GO 00005640",
+      "verified": {
+        "bytes": "00005640+295",
+        "sha1": "00ebe376024c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005767",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphH_RepaintNoOp",
+      "description": "(bar, a, b) in stack order, callee-cleaned (RET 0xc): loads its three arguments into EAX, ECX and EDX and returns. Slot +8 of LEDBMBarGraphHVtable (0007dd82). The same empty body as ES1DBSIM's frameless LedBmBarGraphH_RepaintNoOp (00032833) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; ES1GO disassembly at 00005767",
+      "verified": {
+        "bytes": "00005767+16",
+        "sha1": "ee80f82af3c9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005777",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphH_DrawBitmapSpan",
+      "description": "(bar, bitmap) in stack order, callee-cleaned: draws the columns of bitmap that line up with the run in the bar's rect, through regions +0x2c and +0x44 placed from the canvas context's (000ab612) +0x220 and +0x224, Region_Save into the buffer +0x5c, Bitmap_Blit, Region_CopyBetweenPages and Region_Restore. It makes the display's (000ab616) draw page +0x38 its source page +0x34, with 0008448a and the raster slot at 000865f0 when that display is current. es2_xref finds four calls, from LedBmBarGraphH_PaintToValue (00005640). The same statements as ES1DBSIM's LedBmBarGraphH_DrawBitmapSpan (00032838) in different code; the simulator's display keeps its pages at +0x38 and +0x3c.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00032838 ES1GO 00005777",
+      "verified": {
+        "bytes": "00005777+674",
+        "sha1": "22d08c8cee35",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005a19",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphV_Ctor",
+      "description": "(bar, lit, unlit, range, rect) in stack order, callee-cleaned: LedBmBarGraphH_Ctor (00005331) over BarGraphV_Ctor (00004272), storing LEDBMBarGraphVVtable (0007ddaa) at +0x28; here +0x64 is the lit bitmap. No reference found by es2_xref. The same statements as ES1DBSIM's LedBmBarGraphV_Ctor (00032a18) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00032a18 ES1GO 00005a19",
+      "verified": {
+        "bytes": "00005a19+559",
+        "sha1": "918e0623be22",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005c48",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphV_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of LEDBMBarGraphVVtable (0007ddaa). LedBmBarGraphH_PaintToValue (00005640) on the rect's y0 and y1 through LedBmBarGraphV_DrawBitmapSpan (00005d80), lit from +0x64 and unlit from +0x60. The same statements as ES1DBSIM's LedBmBarGraphV_PaintToValue (00032c1c) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00032c1c ES1GO 00005c48",
+      "verified": {
+        "bytes": "00005c48+296",
+        "sha1": "4be938d24726",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00005d70",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphV_RepaintNoOp",
+      "description": "(bar, a, b) in stack order, callee-cleaned (RET 0xc): loads its three arguments into EAX, ECX and EDX and returns. Slot +8 of LEDBMBarGraphVVtable (0007ddaa). The same empty body as ES1DBSIM's frameless LedBmBarGraphV_RepaintNoOp (00032ced) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; ES1GO disassembly at 00005d70",
+      "verified": {
+        "bytes": "00005d70+16",
+        "sha1": "ee80f82af3c9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00005d80",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphV_DrawBitmapSpan",
+      "description": "(bar, bitmap) in stack order, callee-cleaned: LedBmBarGraphH_DrawBitmapSpan (00005777) on the y axis, the run's rect moved up by the start onto the bitmap. es2_xref finds four calls, from LedBmBarGraphV_PaintToValue (00005c48). The shell's bar graph code ends with its RET 8 at 0000601e. The same statements as ES1DBSIM's LedBmBarGraphV_DrawBitmapSpan (00032cf4) in different code, with the display's pages at +0x34 and +0x38 as in its H twin.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#in-goexe; es2_naming.py diff ES1DBSIM 00032cf4 ES1GO 00005d80",
+      "verified": {
+        "bytes": "00005d80+673",
+        "sha1": "79e33c0a393a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00006024",
       "binary": "ES1GO",
       "type": "function",
@@ -13263,6 +13713,60 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "0007dc30",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "BarGraphHVtable",
+      "description": "BarGraphH's vtable, which BarGraphH_Ctor (00003dfa) stores at a bar's +0x28: a zero dword, then BarGraphH_PaintToValue (00003e9f), BarGraphH_RepaintSpan (00004008) and BarGraphH_ResetToEmpty (00003e80). ES1DBSIM's BarGraphHVtable (00093462).",
+      "source": "es1_naming.py vtables ES1GO"
+    },
+    {
+      "address": "0007dc50",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "BarGraphVVtable",
+      "description": "BarGraphV's vtable, which BarGraphV_Ctor (00004272) stores at a bar's +0x28: a zero dword, then BarGraphV_PaintToValue (00004313), BarGraphV_RepaintSpan (00004480) and BarGraphV_ResetToEmpty (000042f4). ES1DBSIM's BarGraphVVtable (0009347a).",
+      "source": "es1_naming.py vtables ES1GO"
+    },
+    {
+      "address": "0007dc74",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "LEDBarGraphHVtable",
+      "description": "LEDBarGraphH's vtable, which LedBarGraph_Ctor (0000472a) stores at a bar's +0x28: a zero dword, then LedBarGraph_PaintToValue (0000476d), LedBarGraph_RepaintToValue (00004903) and BarGraphH_ResetToEmpty. ES1DBSIM's LEDBarGraphHVtable (00093492).",
+      "source": "es1_naming.py vtables ES1GO"
+    },
+    {
+      "address": "0007dc98",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "LEDBarGraphVVtable",
+      "description": "LEDBarGraphV's vtable, which LEDBarGraphV_Ctor (00004d04) stores at a bar's +0x28: a zero dword, then LedBarGraphV_PaintToValue (00004d47), LedBarGraphV_Repaint (00004ee0) and BarGraphV_ResetToEmpty. ES1DBSIM's LEDBarGraphVVtable (000934aa).",
+      "source": "es1_naming.py vtables ES1GO"
+    },
+    {
+      "address": "0007dd82",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "LEDBMBarGraphHVtable",
+      "description": "LEDBMBarGraphH's vtable, which LedBmBarGraphH_Ctor (00005331) stores at a bar's +0x28: a zero dword, then LedBmBarGraphH_PaintToValue (00005640), LedBmBarGraphH_RepaintNoOp (00005767) and BarGraphH_ResetToEmpty. ES1DBSIM's LEDBMBarGraphHVtable (0009355e).",
+      "source": "es1_naming.py vtables ES1GO"
+    },
+    {
+      "address": "0007ddaa",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "LEDBMBarGraphVVtable",
+      "description": "LEDBMBarGraphV's vtable, which LedBmBarGraphV_Ctor (00005a19) stores at a bar's +0x28: a zero dword, then LedBmBarGraphV_PaintToValue (00005c48), LedBmBarGraphV_RepaintNoOp (00005d70) and BarGraphV_ResetToEmpty. ES1DBSIM's LEDBMBarGraphVVtable (00093576).",
+      "source": "es1_naming.py vtables ES1GO"
     },
     {
       "address": "0007e228",

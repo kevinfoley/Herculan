@@ -8647,7 +8647,7 @@
       "type": "function",
       "confidence": "high",
       "name": "BarGraphH_ResetToEmpty",
-      "description": "(bar), callee-cleaned: the fill position +0x1c = the end +0x18 when the span +0x10 is below 1, else the start +0x14. es2_xref finds it at +0xc of BarGraphHVtable (00093462) by its padding 000317a3, and of 00093492 and 0009355e. ES2's BarGraphH_ResetToEmpty (DBSIM 0043a211).",
+      "description": "(bar), callee-cleaned: the fill position +0x1c = the end +0x18 when the span +0x10 is below 1, else the start +0x14. es2_xref finds it at +0xc of BarGraphHVtable (00093462) by its padding 000317a3, and of LEDBarGraphHVtable (00093492) and LEDBMBarGraphHVtable (0009355e). ES2's BarGraphH_ResetToEmpty (DBSIM 0043a211).",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
       "verified": {
         "bytes": "000317a4+29",
@@ -8707,7 +8707,7 @@
       "type": "function",
       "confidence": "high",
       "name": "BarGraphV_ResetToEmpty",
-      "description": "(bar), callee-cleaned: the fill position +0x1c = the start +0x14 when the span +0x10 is below 1, else the end +0x18. es2_xref finds it at +0xc of BarGraphVVtable (0009347a) by its padding 00031b0e, and of 000934aa and 00093576. ES2's BarGraphV_ResetToEmpty (DBSIM 0043a190).",
+      "description": "(bar), callee-cleaned: the fill position +0x1c = the start +0x14 when the span +0x10 is below 1, else the end +0x18. es2_xref finds it at +0xc of BarGraphVVtable (0009347a) by its padding 00031b0e, and of LEDBarGraphVVtable (000934aa) and LEDBMBarGraphVVtable (00093576). ES2's BarGraphV_ResetToEmpty (DBSIM 0043a190).",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
       "verified": {
         "bytes": "00031b10+29",
@@ -8742,6 +8742,279 @@
       "verified": {
         "bytes": "00031c54+465",
         "sha1": "b87361817615",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031e28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraph_Ctor",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x34 bytes with operator_new when bar is null (returning null when that fails), runs BarGraphH_Ctor (00031740)(bar, range, rect) and stores LEDBarGraphHVtable (00093492) at +0x28. It sets neither shade (+0x2c, +0x30) nor the unlit color +0x20. ES2's LedBarGraph_Ctor (DBSIM 004395c4). es2_xref finds calls from 0003889e, 000399c2, 00046c1f and 00047990.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#led-bar-graphs; es2_naming.py diff ES1DBSIM 00031e28 DBSIM 004395c4",
+      "verified": {
+        "bytes": "00031e28+50",
+        "sha1": "e2a9ba255b74",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00031e5c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraph_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of LEDBarGraphHVtable (00093492). Repaints only the strip between the stored position q (+0x1c) and the new one p, returning at once when they are equal. Span +0x10 of 1 or more, p = start (+0x14) + (value * span >> 16): growing, q..p through LedBarGraph_FillPinstripe (00032078) by its padding; shrinking, p + 1..q unlit. Otherwise p = end (+0x18) - (value * span >> 16): growing (p below q), p..q through the pinstripe; shrinking, q..p unlit. The unlit strip goes through a temporary brush {0, +0x20} installed at the render context's +0x22c (the display's (000bdd28) +0x44 less 4) for one Raster_FillRect. Writes the rect's x0 and x1 for each fill and stores p. ES2's LedBarGraph_PaintToValue (DBSIM 004395e8) redraws the whole bar.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#led-bar-graphs; ES1DBSIM decompile at 00031e5c",
+      "verified": {
+        "bytes": "00031e5c+334",
+        "sha1": "ea5840f60b5c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031fac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraph_RepaintToValue",
+      "description": "(bar, a, value) in stack order, callee-cleaned (RET 0xc), a not read: slot +8 of LEDBarGraphHVtable (00093492). Draws the whole bar for value without storing it: p = start (+0x14) + (value * span >> 16) for a span +0x10 of 1 or more, else end (+0x18) - (value * span >> 16); start..p through LedBarGraph_FillPinstripe (00032078), then p + 1..end through a temporary brush {0, +0x20} at the render context's +0x22c, put back after. ES2's LedBarGraph_RepaintToValue (DBSIM 004396a8), (bar, value), with the fields 4 lower here.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#led-bar-graphs; es2_naming.py diff ES1DBSIM 00031fac DBSIM 004396a8",
+      "verified": {
+        "bytes": "00031fac+203",
+        "sha1": "6783e863d447",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00032078",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraph_FillPinstripe",
+      "description": "(bar, rect) in stack order, callee-cleaned: installs a temporary pen {0, shade} at the render context's +0x228 (the display's (000bdd28) +0x44 less 4), draws Raster_DrawLine from (x, y0) to (x, y1) for every even column x of x0..x1 in shade +0x2c, then for every odd one in +0x30, and puts the old pen back. ES2's LedBarGraph_FillPinstripe (DBSIM 00439758), the same statements. es2_xref finds four calls, all at its padding 00032077, two each from LedBarGraph_PaintToValue (00031e5c) and LedBarGraph_RepaintToValue (00031fac).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#led-bar-graphs; es2_naming.py diff ES1DBSIM 00032078 DBSIM 00439758, score 0.94",
+      "verified": {
+        "bytes": "00032078+242",
+        "sha1": "e034a2c3a605",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003216c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LEDBarGraphV_Ctor",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x3c bytes with operator_new when bar is null (returning null when that fails), runs BarGraphV_Ctor (00031aac)(bar, range, rect) and stores LEDBarGraphVVtable (000934aa) at +0x28; it sets no color. ES2's LEDBarGraphV_Ctor (DBSIM 00439834). es2_xref finds one call, from 000399f1.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#led-bar-graphs; ES1DBSIM decompile at 0003216c",
+      "verified": {
+        "bytes": "0003216c+50",
+        "sha1": "62f94cb5d867",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000321a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraphV_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of LEDBarGraphVVtable (000934aa). LedBarGraph_PaintToValue (00031e5c) on the rect's y0 and y1 (+4, +0xc) with LedBarGraphV_FillPinstripe (000323f0) by its padding for the lit strip. Span +0x10 below 1, p = start + (value * span >> 16): growing, q..p lit; shrinking, p..q unlit. Otherwise p = end - (value * span >> 16): growing (p below q), p..q lit; shrinking, q..p unlit. Returns at once when p equals the stored q (+0x1c), else stores p. ES2's LedBarGraphV_PaintToValue (DBSIM 00439858) redraws the whole bar, tests the span below 0 and writes x0 and x1.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#led-bar-graphs; es2_naming.py diff ES1DBSIM 000321a0 DBSIM 00439858",
+      "verified": {
+        "bytes": "000321a0+337",
+        "sha1": "408f012b7c54",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000322f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraphV_Repaint",
+      "description": "(bar, a, b) in stack order, callee-cleaned (RET 0xc), neither argument read: slot +8 of LEDBarGraphVVtable (000934aa). Redraws the whole bar at the stored position q (+0x1c) on the rect's y0 and y1 (+4, +0xc): with the span +0x10 below 1, start..q through LedBarGraphV_FillPinstripe (000323f0) and q + 1..end through a temporary brush {0, +0x20} at the render context's +0x22c; otherwise start..q through that brush and q + 1..end through the pinstripe. ES2's LedBarGraphV_Repaint (DBSIM 00439918), with the fields 4 lower here.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#led-bar-graphs; es2_naming.py diff ES1DBSIM 000322f4 DBSIM 00439918",
+      "verified": {
+        "bytes": "000322f4+251",
+        "sha1": "5b42104fd1bd",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000323f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBarGraphV_FillPinstripe",
+      "description": "(bar, rect) in stack order, callee-cleaned: installs a temporary pen {0, shade} at the render context's +0x228, draws Raster_DrawLine from (x0, y) to (x1, y) for every even row y of y0..y1 in shade +0x2c, then for every odd one in +0x30, and puts the old pen back. ES2's LedBarGraphV_FillPinstripe (DBSIM 00439a0c), the same statements. es2_xref finds four calls, all at its padding 000323ef, two each from LedBarGraphV_PaintToValue (000321a0) and LedBarGraphV_Repaint (000322f4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#led-bar-graphs; es2_naming.py diff ES1DBSIM 000323f0 DBSIM 00439a0c, score 0.94",
+      "verified": {
+        "bytes": "000323f0+242",
+        "sha1": "af353a96b45f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000324e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphH_Ctor",
+      "description": "(bar, unlit, lit, range, rect) in stack order, callee-cleaned: allocates 0x68 bytes with operator_new when bar is null (returning null when that fails), runs BarGraphH_Ctor (00031740)(bar, range, rect), and builds two 0x18-byte GLRectangleRegions in place at +0x2c and +0x44: the file's vtable copies 000934c2, 000934e6, 0009350e and 00093536 stored in turn at +0, the dword +4 zeroed, the rect's constructor inlined at +8. Stores LEDBMBarGraphHVtable (0009355e) at +0x28, lit at +0x60 and unlit at +0x64, and allocates the save buffer at +0x5c with operator_new: unlit's width (int16 +6) times its height (int16 +4) plus 0x20 bytes. ES2's LedBmBarGraphH_Ctor (DBSIM 00439ae8), whose buffer is a fixed 5000 bytes and whose +0x64 is the lit bitmap. es2_xref finds two calls, both from 0003ba74.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; ES1DBSIM decompile at 000324e4",
+      "verified": {
+        "bytes": "000324e4+515",
+        "sha1": "2a244f386009",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000326e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorBarGraphsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 000934e6, the bar graph file's copy of GLBase's vtable: with the object non-null stores 000934e6 at +0 and deletes the object with operator_delete when bit 0 of flags is set. The code of GLBase_DtorGadgetsCopy (00031644) with this file's table.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; ES1DBSIM disassembly at 000326e8",
+      "verified": {
+        "bytes": "000326e8+34",
+        "sha1": "a8d7e559b466",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003270c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorBarGraphsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0009350e, the bar graph file's copy of GLRegion's vtable: with the object non-null stores 0009350e and then 000934e6 at +0 and deletes the object with operator_delete when bit 0 of flags is set. The code of GLRegion_DtorGadgetsCopy (0003161c) with this file's tables.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; ES1DBSIM disassembly at 0003270c",
+      "verified": {
+        "bytes": "0003270c+40",
+        "sha1": "b6460e16bc39",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00032734",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorBarGraphsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 00093536, the bar graph file's copy of GLRectangleRegion's vtable, whose slot +4 returns the class tag 0x28000c: with the object non-null stores 00093536, 0009350e and 000934e6 in turn at +0 and deletes the object with operator_delete when bit 0 of flags is set. The code of GLRectangleRegion_DtorGadgetsCopy (000315ec) with this file's tables.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; ES1DBSIM disassembly at 00032734",
+      "verified": {
+        "bytes": "00032734+46",
+        "sha1": "de702c6be67c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00032764",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphH_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of LEDBMBarGraphHVtable (0009355e). Computes p as BarGraphH_PaintToValue (000317c4) does and clamps it to at most end (+0x18), then to at least start (+0x14); when it differs from the stored q (+0x1c) draws the strip between them, both ends included, through LedBmBarGraphH_DrawBitmapSpan (00032838) by its padding, and stores p. Span +0x10 of 1 or more: growing (p above q), q..p from the bitmap at +0x60; shrinking, p..q from +0x64. Otherwise: growing (p below q), p..q from +0x60; shrinking, q..p from +0x64. ES2's LedBmBarGraphH_PaintToValue (DBSIM 00439b8c) redraws the whole bar, lights it from +0x64, and fills with Raster_FillRect for a span below 1.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; ES1DBSIM disassembly at 00032764",
+      "verified": {
+        "bytes": "00032764+207",
+        "sha1": "058ecbbc40cd",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00032833",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphH_RepaintNoOp",
+      "description": "Frameless, no Ghidra function starts here: a NOP and RET 0xc, (bar, a, b). Slot +8 of LEDBMBarGraphHVtable (0009355e). ES2's LedBmBarGraphH_RepaintNoOp (DBSIM 00439c40).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; capstone at 00032833"
+    },
+    {
+      "address": "00032838",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphH_DrawBitmapSpan",
+      "description": "(bar, bitmap) in stack order, callee-cleaned: draws the columns of bitmap that line up with the run in the bar's rect. With (ox, oy) the canvas context's (000bdbda) +0x220 and +0x224: sets region +0x2c's rect (+0x34..+0x40) to {2ox, 2oy, 2ox + w, 2oy + h}, w and h the int16 +6 and +4 of the bitmap at +0x64, unshifted; and region +0x44's rect (+0x4c..+0x58) to {x0 - start + ox, oy, x1 - start + ox, y1 - y0 + oy}, start at +0x14. Makes the display's (000bdd28) draw page +0x3c its source page +0x38, with 00098dd6 and the raster slot at 0009df14 when that display is current; Region_Save of region +0x2c into the buffer +0x5c; Bitmap_Blit(bitmap, 0, the point at the context's +0x220); Region_CopyBetweenPages(region +0x44, offset (start - ox, y0 - oy)); Region_Restore of region +0x2c from the buffer. ES2's LedBmBarGraphH_DrawBitmapSpan (DBSIM 00439c48), which shifts the size by the video mode and blits a second time with VideoMode_BlitBitmap. es2_xref finds four calls, all at its padding 00032837, from LedBmBarGraphH_PaintToValue (00032764).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; ES1DBSIM decompile at 00032838 against DBSIM 00439c48",
+      "verified": {
+        "bytes": "00032838+479",
+        "sha1": "52ed4410ae79",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00032a18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphV_Ctor",
+      "description": "(bar, lit, unlit, range, rect) in stack order, callee-cleaned: LedBmBarGraphH_Ctor (000324e4) over BarGraphV_Ctor (00031aac), storing LEDBMBarGraphVVtable (00093576) at +0x28; the second argument goes to +0x64 and sizes the buffer at +0x5c, the third to +0x60, and here +0x64 is the lit bitmap. ES2's LedBmBarGraphV_Ctor (DBSIM 00439e10), whose buffer is a fixed 5000 bytes. es2_xref finds two calls, both from 0003b2c8.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; es2_naming.py diff ES1DBSIM 000324e4 ES1DBSIM 00032a18",
+      "verified": {
+        "bytes": "00032a18+515",
+        "sha1": "336190ac7646",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00032c1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphV_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: slot +4 of LEDBMBarGraphVVtable (00093576). LedBmBarGraphH_PaintToValue (00032764) on the rect's y0 and y1 (+4, +0xc) with LedBmBarGraphV_DrawBitmapSpan (00032cf4) by its padding. Span +0x10 below 1, p = start + (value * span >> 16): shrinking (p below q), p..q from the bitmap at +0x60; growing, q..p from +0x64. Otherwise p = end - (value * span >> 16): shrinking (p above q), q..p from +0x60; growing, p..q from +0x64. So the lit bitmap is +0x64 here and +0x60 in the H paint. ES2's LedBmBarGraphV_PaintToValue (DBSIM 00439eb4) redraws the whole bar and writes x0 and x1.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; ES1DBSIM disassembly at 00032c1c",
+      "verified": {
+        "bytes": "00032c1c+209",
+        "sha1": "4bdf4176d4d1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00032ced",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphV_RepaintNoOp",
+      "description": "Frameless, no Ghidra function starts here: three NOPs and RET 0xc, (bar, a, b). Slot +8 of LEDBMBarGraphVVtable (00093576). ES2's LedBmBarGraphV_RepaintNoOp (DBSIM 00439f68).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; capstone at 00032ced"
+    },
+    {
+      "address": "00032cf4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "LedBmBarGraphV_DrawBitmapSpan",
+      "description": "(bar, bitmap) in stack order, callee-cleaned: LedBmBarGraphH_DrawBitmapSpan (00032838) on the y axis: region +0x44's rect is {ox, y0 - start + oy, x1 - x0 + ox, y1 - start + oy} and the copy's offset (x0 - ox, start - oy). ES2's LedBmBarGraphV_DrawBitmapSpan (DBSIM 00439f70), which shifts the bitmap's size by the video mode and blits with VideoMode_BlitBitmap where this uses Bitmap_Blit. es2_xref finds four calls, all at its padding 00032cf3, from LedBmBarGraphV_PaintToValue (00032c1c). The bar graph object file's last function: its RET 8 at 00032ed5 ends on a 4-byte boundary, before the next file at 00032ed8.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; es2_naming.py diff ES1DBSIM 00032838 ES1DBSIM 00032cf4",
+      "verified": {
+        "bytes": "00032cf4+484",
+        "sha1": "81fefda17230",
         "scope": "body",
         "via": "decompile"
       }
@@ -19677,6 +19950,42 @@
       "name": "BarGraphVVtable",
       "description": "BarGraphV's vtable, which BarGraphV_Ctor stores at a bar's +0x28: a zero dword, then BarGraphV_PaintToValue (00031b30), BarGraphV_RepaintSpan (00031c54) and BarGraphV_ResetToEmpty (00031b10) by its padding. ES2's BarGraphV table (DBSIM 0049bd48).",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs"
+    },
+    {
+      "address": "00093492",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LEDBarGraphHVtable",
+      "description": "LEDBarGraphH's vtable, which LedBarGraph_Ctor (00031e28) stores at a bar's +0x28: a zero dword, then LedBarGraph_PaintToValue (00031e5c), LedBarGraph_RepaintToValue (00031fac) and BarGraphH_ResetToEmpty (000317a4). ES2's LEDBarGraphHVtable (DBSIM 0049bd30).",
+      "source": "es1_naming.py vtables ES1DBSIM"
+    },
+    {
+      "address": "000934aa",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LEDBarGraphVVtable",
+      "description": "LEDBarGraphV's vtable, which LEDBarGraphV_Ctor (0003216c) stores at a bar's +0x28: a zero dword, then LedBarGraphV_PaintToValue (000321a0), LedBarGraphV_Repaint (000322f4) and BarGraphV_ResetToEmpty (00031b10). ES2's LEDBarGraphVVtable (DBSIM 0049bd18).",
+      "source": "es1_naming.py vtables ES1DBSIM"
+    },
+    {
+      "address": "0009355e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LEDBMBarGraphHVtable",
+      "description": "LEDBMBarGraphH's vtable, which LedBmBarGraphH_Ctor (000324e4) stores at a bar's +0x28: a zero dword, then LedBmBarGraphH_PaintToValue (00032764), LedBmBarGraphH_RepaintNoOp (00032833) and BarGraphH_ResetToEmpty (000317a4). ES2's LEDBMBarGraphHVtable (DBSIM 0049bd00).",
+      "source": "es1_naming.py vtables ES1DBSIM"
+    },
+    {
+      "address": "00093576",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LEDBMBarGraphVVtable",
+      "description": "LEDBMBarGraphV's vtable, which LedBmBarGraphV_Ctor (00032a18) stores at a bar's +0x28: a zero dword, then LedBmBarGraphV_PaintToValue (00032c1c), LedBmBarGraphV_RepaintNoOp (00032ced) and BarGraphV_ResetToEmpty (00031b10). ES2's LEDBMBarGraphVVtable (DBSIM 0049bce8).",
+      "source": "es1_naming.py vtables ES1DBSIM"
     },
     {
       "address": "0009680c",

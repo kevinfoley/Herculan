@@ -109,17 +109,47 @@ The span's sign picks the edge the bar fills from. A `BarGraphH` fills from star
 
 ### LED bar graphs
 
-`LedBarGraph_Ctor` (`004395c4`) makes a `BarGraphH` and installs `LEDBarGraphH`'s vtable (`0049bd30`).
+**An LED bar graph lights its filled part in two shades interleaved a pixel apart, which read as one shaded fill.** `LEDBarGraphH` (`0x34` bytes by its class record) and `LEDBarGraphV` (`0x3c`) are a `BarGraphH` and a `BarGraphV` with the two shades at `+0x2c` and `+0x30`. `LedBarGraph_Ctor` (`004395c4`), (bar, rect, range), runs `LedBarGraph_CtorBase` and installs `LEDBarGraphH`'s vtable (`0049bd30`); `LEDBarGraphV_Ctor` (`00439834`) runs `LedBarGraph_CtorV` and installs `0049bd18`. Neither sets a color: the builder writes `+0x24`, `+0x2c` and `+0x30` afterwards.
 
-`LedBarGraph_PaintToValue` (`004395e8`) fills from `start` to `start + (value * span >> 16)` (16.16 fixed point), both included, then installs field `0x24` as the draw colour and covers the remainder, from the next column to `end`, with `Raster_FillRect`.
+The lit run is the pinstripe. `LedBarGraph_FillPinstripe` (`00439758`), (bar, rect), walks the rect's x range twice, once over even columns and once over odd, drawing a full-height line (`Raster_DrawLine` from *y0* to *y1*) at each, both ends of the range included: `+0x2c` paints even columns, `+0x30` odd, each through a temporary pen {0, shade} in the current render context, the old pen put back after. `LedBarGraphV_FillPinstripe` (`00439a0c`) draws full-width lines on alternate rows instead, `+0x2c` on even rows and `+0x30` on odd. The columns are device pixels, since the energy meter's rect is shifted before its bar is built (below), so each stripe is one device pixel wide in every video mode.
 
-The filled span is not solid. `LedBarGraph_FillPinstripe` (`00439758`) walks the x range twice — once over even columns, once over odd — drawing a full-height line each step, both ends of the range included: field `0x2c` paints even columns, `0x30` odd. The columns are device pixels, since the energy meter's rect is shifted before its bar is built (below), so each stripe is one device pixel wide in every video mode. Two near-identical shades interleaved at one pixel read as a single shaded fill.
+The slots replace the base's paint and repaint; the reset is the base's:
 
-`LEDBarGraphH` fills along **x**, and the pinstripe walk strides columns. `LEDBarGraphV`'s constructor (`00439834`) goes through `LedBarGraph_CtorV` instead, and its fill, `LedBarGraphV_FillPinstripe` (`00439a0c`), draws full-width lines on alternate rows, `0x2c` on even rows and `0x30` on odd.
+- **Paint to value** (`LedBarGraph_PaintToValue`, `004395e8`): `BarGraphH_PaintToValue`'s runs, the lit one through the pinstripe and the remainder with `Raster_FillRect` after the installed brush's color is swapped for `+0x24` (put back after). With the span at 1 or more that is start to `start + (value * span >> 16)` (16.16 fixed point) lit and the next column to end unlit. `LedBarGraphV_PaintToValue` (`00439858`) is `BarGraphV_PaintToValue`'s, the lit run through `LedBarGraphV_FillPinstripe`, and like it writes the positions into the rect's *x0* and *x1* (`+4`, `+0xc`).
+- **Repaint** (`LedBarGraph_RepaintToValue`, `004396a8`), (bar, value): draws the whole bar for the value without storing it: the position p by the span's sign as the paint does, then start to p through the pinstripe and p + 1 to end through a temporary brush {0, `+0x24`} at the render context's `+0x22c`, the old brush put back. For a bar filling from end that lights the side the paint leaves unlit. `LedBarGraphV_Repaint` (`00439918`) redraws at the stored position `+0x20` on the rect's *y0* and *y1* (`+8`, `+0x10`): with the span below 1, start to the position lit and the rest unlit; otherwise start to the position unlit and the rest lit. Its argument is loaded and not used.
+
+`es2_xref.py` finds `LedBarGraph_Ctor` called from `TurboPodGauge_Ctor`, `WeaponSliderGadget_Ctor`, `EnergyPoolGauge_Ctor` and `AlertSliderGadget_Ctor`, and `LEDBarGraphV_Ctor` from `EnergyPoolGauge_Ctor` alone, in an arm it never takes (below).
 
 `EnergyPoolGauge_Ctor` (`00444d5c`) constructs an `LEDBarGraphH` over the `.GAU` widget rect at 564 with range `0x400`. The rect is its two corners, offset by the panel rect at 548 (zero in every retail `.GAU`), and `Gau_EnergyMeterWidget` (`004323e0`) has shifted both into device pixels first (`GauEnergyMeter_ApplyCoordShift`, `00445110`), so the bar spans `x0 << XCoordShift` to `x1 << XCoordShift` inclusive. It builds the bar in a switch on its own `+0x20`, which it sets to 0 just before (`00444e41`-`00444e49`), so it always takes the `LedBarGraph_Ctor` case and skips the `LEDBarGraphV` one (`00444edc`). It writes colour ids 6 and 5 into `0x2c`/`0x30` and id 19 into `0x24`. Those resolve to palette indices 98/97/16 = `(0,116,204)`, `(0,40,160)`, `(0,0,0)` — the blue pinstripe bar retail draws directly under the TRACK button, i.e. the **Master Energy Pool meter**. `Player_PerFrameCockpitUpdate` feeds it the pool scaled to that range — see [../simulation/reactor-energy-pool.md](reactor-energy-pool.md#cockpit-readouts). Its only caller is `Gau_EnergyMeterWidget`, and the binary's own class-name table pairs `EnergyPoolGauge` with `LEDBarGraphV` (file offset 280429) and `ShieldsGauge` with `ShieldsSelectGadget` (279148) — the LED bar is the energy meter, and `ShieldsGauge` is a different class entirely.
 
 A second `LEDBarGraph` per weapon row carries the energy-weapon charge field (`WeaponSliderGadget_Ctor` (`00442950`), range `0x400`) — but with raw palette indices `0x20`/`0x22` and remainder `0x2e`, not `COLORS.DAT` ids. See [Weapon hardpoint rows](#weapon-hardpoint-rows).
+
+### Bitmap bar graphs
+
+**A bitmap bar graph draws its lit and unlit parts as slices of two pictures of the whole bar, one full and one empty, rather than in flat colors.** `LEDBMBarGraphH` and `LEDBMBarGraphV`, `0x68` bytes each by their class records, are a `BarGraphH` and a `BarGraphV` with:
+
+| Offset | Holds |
+|---|---|
+| `+0x2c`, `+0x44` | two `0x18`-byte `GLRectangleRegion`s, each its vtable at `+0`, a dword at `+4` set to 0 and a rect at `+8`: the drawn bitmap's rect and the run's rect moved onto it |
+| `+0x5c` | a 5000-byte buffer (`Mem_NewArray`) for the screen under the bitmap |
+| `+0x60`, `+0x64` | the unlit and the lit bitmap |
+
+`LedBmBarGraphH_Ctor` (`00439ae8`) and `LedBmBarGraphV_Ctor` (`00439e10`), (bar, rect, range, unlit, lit), run `LedBarGraph_CtorBase` or `LedBarGraph_CtorV`, install `0049bd00` or `0049bce8`, build the two regions in place, store the bitmaps and allocate the buffer. `es2_xref.py` finds no reference to either constructor ([Open](#open)).
+
+- **Paint to value** (`LedBmBarGraphH_PaintToValue`, `00439b8c`): with the span at 1 or more, start to p from the lit bitmap and p + 1 to end from the unlit one, through `LedBmBarGraphH_DrawBitmapSpan`; with the span below 1, p to end and start to p − 1 with `Raster_FillRect` in the brush as installed. It stores p at `+0x20`. `LedBmBarGraphV_PaintToValue` (`00439eb4`) is `LedBarGraphV_PaintToValue`'s runs, both from the bitmaps (lit `+0x64`, unlit `+0x60`) through `LedBmBarGraphV_DrawBitmapSpan`, the positions written into the rect's *x0* and *x1* as there.
+- **Repaint**: `LedBmBarGraphH_RepaintNoOp` (`00439c40`) and `LedBmBarGraphV_RepaintNoOp` (`00439f68`) return at once.
+- **Reset**: the base's.
+
+**A run shows the same columns of the picture as it covers of the bar.** `LedBmBarGraphH_DrawBitmapSpan` (`00439c48`), (bar, bitmap), with the run in the bar's rect:
+
+1. Region `+0x2c`'s rect becomes the lit bitmap's size, its `int16` `+6` columns and `+4` rows shifted by `VideoMode_XCoordShift` and `VideoMode_YCoordShift`, placed at twice the translation of the installed render context (`006c5ff4`), its `+0x220` and `+0x224`.
+2. Region `+0x44`'s rect becomes the run's rect moved left by start and up to row 0, then by the translation; the copy's offset is (start − the translation's *x*, the run's *y0* − its *y*).
+3. The display's draw page (`+0x3c`) becomes its source page (`+0x38`), through the raster routines' source-page slot when that display is current.
+4. `Region_Save` keeps the screen under region `+0x2c` in the buffer; `Bitmap_Blit`(bitmap, the translation) draws the bitmap, and `VideoMode_BlitBitmap`(`004d2540`, bitmap, the translation) follows ([Open](#open)); `Region_CopyBetweenPages` copies region `+0x44` by the offset, which puts the bitmap's columns *x0* − start to *x1* − start onto the run; `Region_Restore` puts the saved screen back.
+
+`LedBmBarGraphV_DrawBitmapSpan` (`00439f70`) does the same on the y axis, the run's rect moved up by start onto the bitmap, calling `VideoMode_BlitBitmap` alone of the two blits.
+
+`LedBmBarGraphH_Dtor` (`0043a22a`), (bar, flags), takes seven from the runtime's destructor count and frees the bar with `Mem_Delete` when bit 0 of flags is set; it frees neither the buffer nor the regions. `es2_xref.py` finds its address as a dword at `0043a1d1`, in the class record at `0043a1a9`.
 
 ## Throttle gauge
 
@@ -463,5 +493,7 @@ Each display runs the toggle from its own update, so a display whose update does
 
 ## Open
 
+- **Open:** a builder of a [bitmap bar graph](#bitmap-bar-graphs): `es2_xref.py` finds no reference to `LedBmBarGraphH_Ctor` or `LedBmBarGraphV_Ctor`, nor to `LedBmBarGraphH_Dtor` beyond its class record. ES1's throttle builds its two bars as bitmap bar graphs ([ES1's](../../es1/simulation/cockpit-widgets.md#bitmap-bar-graphs)).
+- **Open:** what `VideoMode_BlitBitmap` does with the block at `004d2540`, which the [bitmap bar graphs'](#bitmap-bar-graphs) run calls after `Bitmap_Blit`, unread.
 - **Deferred:** what consumes `PWEAPONS` frame 7, a 640x80 strip.
 - **Deferred:** whether any cockpit shows the `PanelAmbience` clock: two two-digit labels and a colon label that `PanelAmbience_TickClock` (`00452144`) blinks, advancing the clock on every second call, the second field wrapping at 59 and the whole at 99:59. Its one construction is in `Gau_PanelAmbienceWidget` (`004326a8`), from the `.GAU` block at 1604, for which `es2_xref.py` finds no caller; that block is zero in all nine retail `.GAU` files.
