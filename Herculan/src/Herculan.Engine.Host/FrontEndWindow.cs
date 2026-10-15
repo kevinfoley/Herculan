@@ -28,6 +28,7 @@ sealed class FrontEndWindow : IDisposable {
 	private readonly EngineWindow _window;
 	private readonly HostMenuBar _menuBar;
 	private readonly string _imguiFontPath;
+	private readonly string _imguiItalicFontPath;
 	private readonly string? _screenshotPath;
 	private readonly GamepadHostButtons _padButtons = new();
 	private readonly GamepadPointer _padPointer = new();
@@ -54,6 +55,7 @@ sealed class FrontEndWindow : IDisposable {
 	public FrontEndWindow(HostSession session, HostWindow window, string title, string? screenshotPath,
 			Action restartRequested, Action editorRequested) {
 		_imguiFontPath = session.ImGuiFontPath;
+		_imguiItalicFontPath = session.ImGuiItalicFontPath;
 		_screenshotPath = screenshotPath;
 		_window = new EngineWindow(window, title);
 		string dataDirectory = ShellWorkingFiles.DataDirectory(session.InstallRoot);
@@ -114,9 +116,10 @@ sealed class FrontEndWindow : IDisposable {
 
 	/// <summary>Takes the window's devices once its input context exists, and builds ImGui on its GL context.</summary>
 	public void Attach(GL gl, IInputContext input) {
-		_imgui = new ScaledImGui(gl, _window, input, _imguiFontPath) {
+		_imgui = new ScaledImGui(gl, _window, input, _imguiFontPath, _imguiItalicFontPath) {
 			HeldAsMouseButtons = () => (_padPointer.ClickHeld, _padPointer.RightClickHeld),
 		};
+		_menuBar.Tweaks.Fonts = _imgui;
 		_padNav = new ImGuiGamepad(input);
 		_imgui.GamepadFeed = _padNav.Feed;
 		Mouse = input.Mice.Count > 0 ? input.Mice[0] : null;

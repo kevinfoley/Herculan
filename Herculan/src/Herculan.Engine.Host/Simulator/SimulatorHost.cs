@@ -293,7 +293,8 @@ sealed class SimulatorHost : IDisposable {
 		_world = new WorldDrawItems(_scene, _uploads, _filing, TerrainTextureHandle());
 		_transient = new TransientDrawItems(_scene, _uploads, _filing, _world);
 		_passes = new WorldPassRenderer(gl, _scene, _view.Camera, _debugOptions, _world, _transient);
-		_imgui = new ScaledImGui(gl, _window, input, _session.ImGuiFontPath);
+		_imgui = new ScaledImGui(gl, _window, input, _session.ImGuiFontPath, _session.ImGuiItalicFontPath);
+		_menuBar.Tweaks.Fonts = _imgui;
 		_padNav = new ImGuiGamepad(input);
 		_imgui.GamepadFeed = _padNav.Feed;
 		_input.ImGui = _imgui;

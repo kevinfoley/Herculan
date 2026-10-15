@@ -58,6 +58,8 @@ tweak.fix_raptor2_perspective.description   Place la vue cockpit du Raptor II da
 tweak.reset_counters_on_replay.display_name  Corriger les indicateurs de « Rejouer la mission »
 tweak.reset_counters_on_replay.description   Corrige les indicateurs de mission qui ne sont pas réinitialisés quand vous choisissez de rejouer une mission (après avoir été tué pendant la mission), ce qui pouvait faire échouer des déblocages ou causer d'autres comportements inattendus.
 tweaks.title                   Ajustements
+tweaks.description             Les ajustements modifient le comportement du jeu, en général pour corriger des bugs ou apporter des améliorations de confort. Pour l'expérience la plus proche de l'original (bugs compris), cliquez sur « Aucun » pour désactiver tous les ajustements.
+tweaks.note                    Certains bugs graphiques mineurs et plantages potentiels ne sont pas reproduits dans HERCULAN. La prise en charge des périphériques d'entrée modernes et des autres schémas de commande reste toujours disponible dans le menu Manette.
 tweaks.category.cosmetic       Cosmétique
 tweaks.category.ai             IA
 tweaks.category.functional     Fonctionnel

@@ -58,6 +58,8 @@ tweak.fix_raptor2_perspective.description   Puts the Raptor II's cockpit view in
 tweak.reset_counters_on_replay.display_name  Fix "Replay Mission" flags
 tweak.reset_counters_on_replay.description   Fix mission flags not getting reset when you choose to replay a mission (after dying during the mission), which could cause unlocks to fail or other unexpected behavior.
 tweaks.title                   Tweaks
+tweaks.description             Tweaks alter game behavior, generally either to fix bugs or provide quality-of-life enhancements. For the closest-to-vanilla experience (bugs included), click "None" to disable all tweaks.
+tweaks.note                    Some minor cosmetic bugs and potential crashes are not reproduced in HERCULAN. Support for modern input devices and alternate control schemes is always available via the Controller menu.
 tweaks.category.cosmetic       Cosmetic
 tweaks.category.ai             AI
 tweaks.category.functional     Functional
