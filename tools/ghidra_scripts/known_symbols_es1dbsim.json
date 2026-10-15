@@ -8132,6 +8132,21 @@
       }
     },
     {
+      "address": "00030fc4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetRectAroundPoint",
+      "description": "(label, flags, text, point) in stack order, callee-cleaned: sizes the label's rect +4..+0x13 to the text around point {x, y}. With w = HudFont_MeasureString(font, text): flags & 2 gives x0 = x - w/2, x1 = x0 + w and anchor x +0x14 = x0 + (x1 - x0 + 1)/2; flags & 4 gives x1 = x, x0 = x - w + 1 and anchor x = x; otherwise x0 = x, x1 = x + w and anchor x = x. y0 = y - HudFont_CellHeight2 (00069d50)(font, text), y1 = y, anchor y +0x16 = y1 + y. Stores flags at +0x18 and returns label + 4. ES2's Label_SetRectAroundPoint (DBSIM 004387d0) takes half the cell height, adds the font's ink height to the anchor y and stores the flags at +0x19. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels; es2_naming.py diff ES1DBSIM 00030fc4 DBSIM 004387d0",
+      "verified": {
+        "bytes": "00030fc4+186",
+        "sha1": "3dbb38e7838e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00031080",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -8152,7 +8167,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Label_SetText",
-      "description": "(label, text), callee-cleaned: draws text in the label. Sets the pen (000b11bc, 000b11c0) to the anchor (+0x14, +0x16), moving x left by (w - 1) for flags & 4 or by (w - 1) / 2 for flags & 2, w being HudFont_MeasureString(font, text). When the fill colour +0x1c is non-zero it installs the brush {0, colour} at the current render context's +0x22c (the GL display's (000bdd28) +0x44 less 4), fills the label's rect with Raster_FillRect and puts the old brush back. Then HudFont_DrawString(font, text, pen). ES2's Label_SetText (DBSIM 00438920) measures the text for every alignment, subtracts 1 << VideoMode_XCoordShift rather than 1, and offsets a panel-relative label.",
+      "description": "(label, text), callee-cleaned: draws text in the label. Sets the pen (Label_Pen (000b11bc), 000b11c0) to the anchor (+0x14, +0x16), moving x left by (w - 1) for flags & 4 or by (w - 1) / 2 for flags & 2, w being HudFont_MeasureString(font, text). When the fill colour +0x1c is non-zero it installs the brush {0, colour} at the current render context's +0x22c (the GL display's (000bdd28) +0x44 less 4), fills the label's rect with Raster_FillRect and puts the old brush back. Then HudFont_DrawString(font, text, pen). ES2's Label_SetText (DBSIM 00438920) measures the text for every alignment, subtracts 1 << VideoMode_XCoordShift rather than 1, and offsets a panel-relative label.",
       "source": "ES1DBSIM decompile at 0003114c, against ES2's Label_SetText",
       "verified": {
         "bytes": "0003114c+214",
@@ -8162,18 +8177,507 @@
       }
     },
     {
+      "address": "00031224",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetNumber",
+      "description": "(label, n) in stack order, callee-cleaned: ltoa(n, a 32-byte stack buffer, 10), then Label_SetText(label, buffer). ES2's Label_SetNumber (DBSIM 00438a40), which uses _itoa. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels; es2_naming.py match, score 0.95",
+      "verified": {
+        "bytes": "00031224+41",
+        "sha1": "1f030f1eae2f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031250",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_CtorWithAltFont",
+      "description": "(label, font) in stack order, callee-cleaned: allocates 0x24 bytes with operator_new when label is null (returning null when that fails), runs Label_Ctor(label, font) and stores font again at +0x20, the hotkey font Label_SetTextWithHotkey draws its one character in. ES2's Label_CtorWithAltFont (DBSIM 00438a70), whose label has the hotkey font at +0x21. es2_xref finds calls from 00035cb8 and 0003f29e.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels",
+      "verified": {
+        "bytes": "00031250+46",
+        "sha1": "7b3dc4283cb3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031280",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetText_Thunk",
+      "description": "(label, text) in stack order, callee-cleaned: Label_SetText(label, text). ES2's Label_SetText_Thunk (DBSIM 00438a94).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels",
+      "verified": {
+        "bytes": "00031280+18",
+        "sha1": "841c0ae85ed3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031294",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetTextWithHotkey",
+      "description": "(label, index, text) in stack order, callee-cleaned: Label_SetText_Thunk(label, text); then, when index is at most strlen(text), puts a NUL at text[index], keeps HudFont_MeasureString(font, text) and the character in two stack locals and restores the character. Whatever the index, it then adds the width to the pen x Label_Pen (000b11bc) and draws the character with HudFont_DrawGlyph (00069d64)(the font at +0x20, character, Label_Pen), so with index past the length both come from locals the function never wrote. ES2's Label_SetTextWithHotkey (DBSIM 00438aac) does both only when index is at most the length. es2_xref finds six calls, from 00035d20, 00035e14 (two), 0003f578 (two) and 00040948.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels; disassembly 00031294-00031310",
+      "verified": {
+        "bytes": "00031294+125",
+        "sha1": "fb90d96c3bd1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00031314",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_StaticInitNoOp",
+      "description": "Frameless, no Ghidra function starts here: a lone RET, entry 000adc3c of the static constructor table, closing the label object file; three zero bytes follow and the next file starts at PanelGauge_Ctor (00031318). ES2's Label_StaticInitNoOp (DBSIM 00438b1c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#where-the-object-files-start-and-end"
+    },
+    {
+      "address": "00031318",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_Ctor",
+      "description": "(gauge, cockpit, rect) in stack order, callee-cleaned: the base constructor of the cockpit's instruments. Copies the rect {x0, y0, x1, y1} to +0, stores cockpit at +0x10 and PanelGaugeVtable (0009338e) at +0x76, clears the int16 condition +0x68 and the bytes +0x74 (dark) and +0x75, and returns gauge. Its head is the rect's inlined constructor: with gauge null it allocates 0x10 bytes into a local and still writes through the null gauge pointer. ES2's PanelGauge_Ctor (DBSIM 00438b20) keeps its vtable at +0, the rect at +4 and the cockpit at +0x14, and also clears the sequencer, dropout ranges and power-up fields. es2_xref finds nine calls, from 00034b19, 00036f5e, 00037bfa, 00038f61, 00039845, 00039c94, 0003b101, 0003c288 and CockpitClock_Ctor.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gauge-base",
+      "verified": {
+        "bytes": "00031318+125",
+        "sha1": "c9f2228d52c5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00031395",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_OnChildClickNoOp",
+      "description": "Frameless, no Ghidra function starts here: three NOPs and RET 0xc, (gauge, flags, child). Slot +4 of PanelGaugeVtable (0009338e), which Widget_ForwardClickToOwner reaches on a child's click. ES2's PanelGauge_OnChildClickNoOp (DBSIM 0045233f).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gauge-base"
+    },
+    {
+      "address": "0003139b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_KeyDispatchNone",
+      "description": "Frameless, no Ghidra function starts here: NOP, XOR EAX,EAX and RET 8, (gauge, key): returns 0. Slot +0x10 of PanelGaugeVtable (0009338e). ES2's PanelGauge_KeyDispatchNone (DBSIM 00452344).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gauge-base"
+    },
+    {
+      "address": "000313a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_ScheduleDropout",
+      "description": "(gauge), callee-cleaned: schedules the next sensor-dropout burst on the clock 000981c4: +0x6c and +0x70 = the clock + ((Math_RandomNext(000b5c48) & 0xffff) % 6 + 2) * 60, and the int16 +0x6a = (a second draw & 0xffff) % 240 + 1, the burst's length. ES2's PanelGauge_RollDuration (DBSIM 00438d6c) draws a spell's length instead. es2_xref finds one call, from PanelGauge_TickDropout (00031400).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#sensor-dropout",
+      "verified": {
+        "bytes": "000313a4+90",
+        "sha1": "ac781fa23d52",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031400",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_TickDropout",
+      "description": "(gauge), callee-cleaned: the sensor dropout's flicker. With the int16 condition +0x68 equal to 3, sets the dark byte +0x74 and returns. Otherwise, on the clock 000981c4: while the clock is past +0x6c and short of +0x6c + the int16 +0x6a, each time it passes +0x70 it flips +0x74, sets +0x75 to 2, puts +0x70 at the clock + 1 + (Math_RandomNext(000b5c48) & 0xffff) % 30 and, on going dark, plays sound 0x1c with Sound_Play; once the clock reaches +0x6c + +0x6a it runs PanelGauge_ScheduleDropout, sets +0x74 to 1 for a condition of 2 or more and to 0 below, and +0x75 to 2. Its RET 4 at 0003149b is followed by two zero bytes and the next object file. ES2's PanelGauge_TickDropout (DBSIM 00438bc0) alternates dark and shown spells of rolled lengths, with a sprite sequencer, and forces dark at condition 0. es2_xref finds three calls, from 00034f3c, 0003a2a8 and 0003cd28.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#sensor-dropout",
+      "verified": {
+        "bytes": "00031400+158",
+        "sha1": "d2d7596cab2d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000314a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_ClickSound",
+      "description": "Frameless, no Ghidra function starts here: Sound_Play(0x11) and RET 4, (mixin). The click sound at +0xc of the PanelGadget mixin's tables: es2_xref finds 16 stored pointers to it, and es1_naming.py vtables lists nine three-slot tables holding it at +0xc. The gadget object file starts here, after two zero bytes. ES2's Widget_ClickSound (DBSIM 00438e2c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+    },
+    {
+      "address": "000314ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_ForwardClickToOwner",
+      "description": "(gadget, flags) in stack order, callee-cleaned: with flags bit 0 set, calls slot +4 of the table at owner+0x76 with (owner, flags, gadget), the owner being the gadget's +0x20; then the gadget's slot +8 (invalidate) through its vptr +0x1c, and slot +0xc (the click sound) of the mixin table at +0x24 on gadget+0x20. ES2's Widget_ForwardClickToOwner (DBSIM 00438e3c). es2_xref finds it in eight tables, at +0xc of PanelSelectGadgetVtable (000933aa), 00093b7e, 00093e6e, 00093eae, 00094136, 00094176, 0009470e and 00094f56.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "000314ac+54",
+        "sha1": "ae86801cb4bd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000314e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelSelectGadget_Dtor",
+      "description": "(gadget, flags) in stack order, callee-cleaned (RET 8): stores PanelSelectGadgetVtable (000933aa) at +0x1c, operator_delete(+0x2c), and destroys each of the three objects at +0x30, +0x34 and +0x38 that is set through its slot +0x1c with flags 3. It tests neither gadget nor flags and frees nothing of the gadget itself. ES2's PanelSelectGadget_Dtor (DBSIM 00438e70). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "000314e4+63",
+        "sha1": "26f49a0f1f3b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00031523",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLButtonControl_PaintNoOpGadgetsCopy",
+      "description": "Frameless, no Ghidra function starts here: a NOP and RET 4. Slot +4 (paint) of PanelSelectGadgetVtable (000933aa). ES2's CTLButtonControl_PaintNoOp (DBSIM 00455545).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+    },
+    {
+      "address": "00031528",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_InvalidateDeferredGadgetsCopy",
+      "description": "(gadget), callee-cleaned: sets the byte +0x1b to 2, the deferred-repaint counter. Slot +8 of PanelSelectGadgetVtable (000933aa), entered through its padding 00031527. ES2's Widget_InvalidateDeferred (DBSIM 00455524), which sets +0x1f.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "00031528+16",
+        "sha1": "9e51e63401e5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00031538",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_FlushDeferredPaintNoOpGadgetsCopy",
+      "description": "Frameless, no Ghidra function starts here: RET 4. Slot +0x10 (per frame) of PanelSelectGadgetVtable (000933aa). ES2's CTLControl_FlushDeferredPaintNoOp (DBSIM 0045554a).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+    },
+    {
+      "address": "0003153b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_GetButtonValueGadgetsCopy",
+      "description": "Frameless, no Ghidra function starts here: a NOP, then returns the int16 at 00094b84 in AX with RET 4. Slot +0x14 (value) of PanelSelectGadgetVtable (000933aa); the code of Widget_GetButtonValuePanelCopy. ES2's Widget_GetButtonValue (DBSIM 00455530).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+    },
+    {
+      "address": "00031545",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_SetValueNoOpGadgetsCopy",
+      "description": "Frameless, no Ghidra function starts here: three NOPs and RET 8. Slot +0x18 (set value) of PanelSelectGadgetVtable (000933aa). ES2's CTLControl_SetValueNoOp (DBSIM 0045553b).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+    },
+    {
+      "address": "0003154b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_DragMoveNoOpGadgetsCopy",
+      "description": "Frameless, no Ghidra function starts here: a NOP and RET 8. Slot +0x1c (drag) of PanelSelectGadgetVtable (000933aa). ES2's CTLControl_DragMoveNoOp (DBSIM 00455540).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+    },
+    {
+      "address": "00031550",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelStateGadget_OnClick",
+      "description": "(gadget, flags) in stack order, callee-cleaned: with flags bit 0 set, flips the lit byte +0x3c, then makes Widget_ForwardClickToOwner's three calls: slot +4 of the table at owner+0x76 with (owner, flags, gadget), the owner being +0x20; the gadget's slot +8 through +0x1c; slot +0xc of the mixin table at +0x24 on gadget+0x20. ES2's PanelStateGadget_OnClick (DBSIM 00438f14), whose lit byte is +0x40. es2_xref finds it at +0xc of 00093d76 and 00094736.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "00031550+59",
+        "sha1": "6c336c18cced",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003158c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelSliderGadget_Dtor",
+      "description": "(mixin, flags) in stack order, callee-cleaned (RET 8): stores PanelSliderGadgetVtable (000933d2) at +4, operator_delete(+8), destroys the object at +0x10 through its slot +0x1c with flags 3, operator_delete(+0x14) when set, GLBitmapArray_Dtor(+0x38, 3), then destroys the GLRectangleRegion at +0x18 in place, storing 000933ea, 00093412 and 0009343a there in turn. It tests neither mixin nor flags and frees nothing of the gadget. ES2's PanelSliderGadget_Dtor (DBSIM 00438f4c). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "0003158c+94",
+        "sha1": "1410b029c161",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000315ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorGadgetsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 000933ea, the first of the gadget file's three copies of GLRectangleRegion's vtables, whose slot +4 returns the class tag 0x28000c (entered at its padding 000315ea): with the object non-null stores 000933ea, 00093412 and 0009343a in turn at +0 and deletes the object with operator_delete when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "000315ec+46",
+        "sha1": "1ebe605050e5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003161c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorGadgetsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 00093412 (entered at its padding 0003161a): with the object non-null stores 00093412 and 0009343a in turn at +0 and deletes the object with operator_delete when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "0003161c+40",
+        "sha1": "934ef8741a23",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031644",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorGadgetsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0009343a: with the object non-null stores 0009343a at +0 and deletes the object with operator_delete when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "00031644+34",
+        "sha1": "205d11a20635",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031666",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_NoClickSound",
+      "description": "Frameless, no Ghidra function starts here: two NOPs and RET 4, (mixin). Slot +0xc, the click sound, of PanelSliderGadgetVtable (000933d2), so a slider is silent. ES2's Widget_NoClickSound (DBSIM 00439014).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+    },
+    {
+      "address": "0003166c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HSliderGadget_OnClick",
+      "description": "(slider, value) in stack order, callee-cleaned: slot +4 of the table at owner+0x76 with (owner, value, slider), the owner being +0x3e; the slider's slot +8 through its vptr +0x1c; slot +0xc of the mixin table at +0x42 on slider+0x3e. The value is not tested. ES2's HSliderGadget_OnClick (DBSIM 0043901c). es2_xref finds it at +0xc of five tables, 00093d06, 00093d4a, 000943b6, 000943fa and 00095006, whose value slot +0x14 is 00043ac8, which reads the knob's +0x2e against the slider's x0.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "0003166c+49",
+        "sha1": "8b4316bb1bd9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000316a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VSliderGadget_OnClick",
+      "description": "(slider, value) in stack order, callee-cleaned: the same statements as HSliderGadget_OnClick (0003166c). ES2's VSliderGadget_OnClick (DBSIM 0043904c). es2_xref finds it at +0xc of 0009431a and 0009435e, whose value slot +0x14 is 00043be8, the statements of ES2's SliderWidget_GetValueV. Its RET 8 at 000316ce is followed by three zero bytes and the next object file.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "000316a0+49",
+        "sha1": "8b4316bb1bd9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000316d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraph_Ctor",
+      "description": "(bar, rect) in stack order, callee-cleaned (RET 8): copies the rect {x0, y0, x1, y1} to +0. Its head is the rect's inlined constructor: with bar null it allocates 0x10 bytes into a local and still writes through the null bar pointer. The bar graph object file starts here, after three zero bytes. ES2's BarGraph_Ctor (DBSIM 0043907c), which stores BarGraph's vtable at +0 and the rect at +4. es2_xref finds calls from BarGraphH_Ctor (00031740) and BarGraphV_Ctor (00031aac), and the address as a dword at 000ac6cc.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
+      "verified": {
+        "bytes": "000316d4+95",
+        "sha1": "728a8be800ea",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031733",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraph_NoOp",
+      "description": "Frameless, no Ghidra function starts here: a NOP and RET 8. ES2's BarGraph_NoOp (DBSIM 004390b0) sits in the same place, between BarGraph_Ctor and BarGraph_GetRect. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs"
+    },
+    {
       "address": "00031738",
       "binary": "ES1DBSIM",
       "type": "function",
-      "confidence": "medium",
-      "name": "maybe_Widget_GetRect",
-      "description": "(widget), callee-cleaned: returns its argument. The callers es2_naming.py callers lists pass widget pointers and use the result as the widget's rect, which is at +0 (CockpitView_RectCornerVisible, x0 reads).",
-      "source": "ES1DBSIM disassembly at 00031738",
+      "confidence": "high",
+      "name": "BarGraph_GetRect",
+      "description": "(bar), callee-cleaned, frameless: MOV EAX,[ESP+4] and RET 4, returning the bar, whose rect is at +0. ES2's BarGraph_GetRect (DBSIM 004390b8) returns bar + 4. es2_xref finds ten calls, one each from 00039a28 and 00039abc and four each from 0003b804 and 0003bf18, the counts of ES2's calls from EnergyPoolGauge_Paint, EnergyPoolGauge_Update, ThrottleSlider_PaintV and ThrottleSlider_FlushPaintH; 00039a28 passes the object at its +0x7e and calls that object's slot +8 through its +0x28, where a bar graph keeps its vtable.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
       "verified": {
         "bytes": "00031738+7",
         "sha1": "37cf7a00a08e",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "00031740",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphH_Ctor",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: allocates 0x2c bytes with operator_new when bar is null (returning null when that fails), runs BarGraph_Ctor(bar, rect), stores BarGraphHVtable (00093462) at +0x28 and sets the span +0x10 = (x1 - x0) * 0x10000 / range, the start +0x14 = x0, the end +0x18 = x1, and the fill position +0x1c = the end when the span is below 1, else the start. ES2's LedBarGraph_CtorBase (DBSIM 004390c4), the BarGraphH constructor, with each field 4 higher and the vtable at +0. es2_xref finds calls from 00031e47 and 0003250c.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
+      "verified": {
+        "bytes": "00031740+99",
+        "sha1": "544bb83f4c29",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000317a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphH_ResetToEmpty",
+      "description": "(bar), callee-cleaned: the fill position +0x1c = the end +0x18 when the span +0x10 is below 1, else the start +0x14. es2_xref finds it at +0xc of BarGraphHVtable (00093462) by its padding 000317a3, and of 00093492 and 0009355e. ES2's BarGraphH_ResetToEmpty (DBSIM 0043a211).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
+      "verified": {
+        "bytes": "000317a4+29",
+        "sha1": "1c1ccc901bc9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000317c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphH_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: p = the start +0x14 + (value * span >> 16) when the span +0x10 is 1 or more, else the end +0x18 - (value * span >> 16); returns when p equals the stored position +0x1c, q. Otherwise sets the rect's x0 and x1 (+0, +8) to q and p in order and fills it with Raster_FillRect: when the bar shrinks (p < q filling from the start, p > q filling from the end) with the color of the brush at +0x228 of the display's (000bdd28) +0x44 set to +0x20 for that fill and put back, else with that brush as it stands. Stores p at +0x1c. Slot +4 of BarGraphHVtable (00093462). ES2's BarGraphH_PaintToValue (DBSIM 00439118) fills the whole track on every call, lit in +0x28 and unlit in +0x24.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
+      "verified": {
+        "bytes": "000317c4+282",
+        "sha1": "dc05ae3c82a7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000318e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphH_RepaintSpan",
+      "description": "(bar, a, b) in stack order, callee-cleaned: orders a and b, clamps them to the start +0x14 and end +0x18 as lo and hi, and fills x lo..hi with Raster_FillRect against the position +0x1c, p. Filling from the start (span +0x10 of 1 or more): in the unlit color +0x20 when p < lo, with the brush as it stands when hi < p, else lo..p unlit and p..hi with the brush. Filling from the end: unlit when hi < p, the brush when p < lo, else lo..p with the brush and p..hi unlit. So a run p splits is lit on the side BarGraphH_PaintToValue leaves unlit. Slot +8 of BarGraphHVtable (00093462). ES2's BarGraphH_RepaintSpan (DBSIM 004391e0), the same statements with +0x24 as the unlit color.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
+      "verified": {
+        "bytes": "000318e0+457",
+        "sha1": "ad06bd106f2c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031aac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphV_Ctor",
+      "description": "(bar, range, rect) in stack order, callee-cleaned: BarGraphH_Ctor on y: allocates 0x2c bytes when bar is null, runs BarGraph_Ctor, stores BarGraphVVtable (0009347a) at +0x28, the span +0x10 = (y1 - y0) * 0x10000 / range, the start +0x14 = y0, the end +0x18 = y1, and the position +0x1c = the start when the span is below 1, else the end. ES2's LedBarGraph_CtorV (DBSIM 00439344). es2_xref finds calls from 0003218b and 00032a40.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
+      "verified": {
+        "bytes": "00031aac+98",
+        "sha1": "c3d23929842c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031b10",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphV_ResetToEmpty",
+      "description": "(bar), callee-cleaned: the fill position +0x1c = the start +0x14 when the span +0x10 is below 1, else the end +0x18. es2_xref finds it at +0xc of BarGraphVVtable (0009347a) by its padding 00031b0e, and of 000934aa and 00093576. ES2's BarGraphV_ResetToEmpty (DBSIM 0043a190).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
+      "verified": {
+        "bytes": "00031b10+29",
+        "sha1": "d075429fa422",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031b30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphV_PaintToValue",
+      "description": "(bar, value) in stack order, callee-cleaned: BarGraphH_PaintToValue on the rect's y0 and y1 (+4, +0xc), filling from the start when the span +0x10 is below 1, p = the start + (value * span >> 16), and from the end otherwise, p = the end - (value * span >> 16). Slot +4 of BarGraphVVtable (0009347a). ES2's BarGraphV_PaintToValue (DBSIM 00439398) tests the span below 0, fills the whole track and writes x0 and x1.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
+      "verified": {
+        "bytes": "00031b30+290",
+        "sha1": "8bdfc6cb1a52",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00031c54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraphV_RepaintSpan",
+      "description": "(bar, a, b) in stack order, callee-cleaned: BarGraphH_RepaintSpan on the rect's y0 and y1 (+4, +0xc) with the side tests mirrored, so a run the position p splits is lit on the side BarGraphV_PaintToValue lights. Filling from the start (span +0x10 below 1): unlit (+0x20) when p < lo, the brush as it stands when hi < p, else lo..p with the brush and p..hi unlit; filling from the end: unlit when hi < p, the brush when p < lo, else lo..p unlit and p..hi with the brush. Slot +8 of BarGraphVVtable (0009347a). ES2's BarGraphV_RepaintSpan (DBSIM 00439460).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
+      "verified": {
+        "bytes": "00031c54+465",
+        "sha1": "b87361817615",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -8257,7 +8761,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitClock_Ctor",
-      "description": "(clock, cockpit, rect): allocates the 0x8a-byte cockpit clock when given none (returning 0 when that fails); builds it with 00031318(clock, cockpit, rect + 0x10) and stores the vtable 00094b5a at +0x76. Opens the HERC's .TTM with Ttm_Open(CockpitTtmManager (00092d70), 0, 0, Path_WithExtension(ttm (00094b72), eight characters of CockpitOverride_Name (000925f8)'s string when CockpitOverride_Name (000925f8) is set, else of +0x58 of the type record +0x188 of CockpitViewInstance's +0x1ff)), takes the handle as a signed byte, and when that handle's entry of the table +5 holds a script stores CockpitViewInstance's +4 at the script's +0x1bd; a failed open's 0xff reads the dword before the table. Copies cpwincrk (00094b76) into the name buffer; sets the strings 00, 00 and : at 000bd504, 000bd508 and 000bd50c; makes three labels with Label_Ctor(0, ColorSchemePanels (00092d40)) at +0x7a, +0x7e and +0x82, each passed to Label_SetRect with 1, 4 and 2 respectively, rect + 0x10 and the point (1, 0), (1, 0) and (0, 0), and their +0x1c set to 0x3f, 0 and 0; sets +0x86 to 000981c4 + 30. es2_xref finds one call, from CockpitClock_Create (0002ce98).",
+      "description": "(clock, cockpit, rect): allocates the 0x8a-byte cockpit clock when given none (returning 0 when that fails); builds it with PanelGauge_Ctor (00031318)(clock, cockpit, rect + 0x10) and stores the vtable 00094b5a at +0x76. Opens the HERC's .TTM with Ttm_Open(CockpitTtmManager (00092d70), 0, 0, Path_WithExtension(ttm (00094b72), eight characters of CockpitOverride_Name (000925f8)'s string when CockpitOverride_Name (000925f8) is set, else of +0x58 of the type record +0x188 of CockpitViewInstance's +0x1ff)), takes the handle as a signed byte, and when that handle's entry of the table +5 holds a script stores CockpitViewInstance's +4 at the script's +0x1bd; a failed open's 0xff reads the dword before the table. Copies cpwincrk (00094b76) into the name buffer; sets the strings 00, 00 and : at 000bd504, 000bd508 and 000bd50c; makes three labels with Label_Ctor(0, ColorSchemePanels (00092d40)) at +0x7a, +0x7e and +0x82, each passed to Label_SetRect with 1, 4 and 2 respectively, rect + 0x10 and the point (1, 0), (1, 0) and (0, 0), and their +0x1c set to 0x3f, 0 and 0; sets +0x86 to 000981c4 + 30. es2_xref finds one call, from CockpitClock_Create (0002ce98).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
       "verified": {
         "bytes": "000433cc+469",
@@ -15581,12 +16085,27 @@
       }
     },
     {
+      "address": "00069ce0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_GlyphWidth",
+      "description": "(font, c) in stack order, callee-cleaned: the int16 at font+0xc when it is not -1, otherwise the width byte at (the pointer at font+0x2a)[c - the int16 at font+8]. ES2's HudFont_GlyphWidth (DBSIM 0048238c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels",
+      "verified": {
+        "bytes": "00069ce0+44",
+        "sha1": "f95635c9ea3b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00069d0c",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "HudFont_MeasureString",
-      "description": "(font, text), callee-cleaned: the sum of 00069ce0(font, c) over the characters of the NUL-terminated text. ES2's HudFont_MeasureString (DBSIM 004823e0).",
+      "description": "(font, text), callee-cleaned: the sum of HudFont_GlyphWidth (00069ce0)(font, c) over the characters of the NUL-terminated text. ES2's HudFont_MeasureString (DBSIM 004823e0).",
       "source": "ES1DBSIM decompile at 00069d0c, against ES2's HudFont_MeasureString",
       "verified": {
         "bytes": "00069d0c+48",
@@ -15611,12 +16130,42 @@
       }
     },
     {
+      "address": "00069d50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_CellHeight2",
+      "description": "(font, text) in stack order, callee-cleaned (RET 8): returns the int16 at font+0xa sign-extended, the glyph cell height; the text argument is ignored. ES2's HudFont_CellHeight2 (DBSIM 0048241c) takes the font alone.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels",
+      "verified": {
+        "bytes": "00069d50+17",
+        "sha1": "c8c8caffeea4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00069d64",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_DrawGlyph",
+      "description": "(font, c, pen) in stack order, callee-cleaned: blits glyph c as a block HudFont_CellHeight(font, c) rows high and HudFont_GlyphWidth(font, c) wide, of the depth byte at font+0x12, its pixels at the pointer at font+0x22 plus (the offset array at font+0x26)[c - the int16 at font+8], through Raster_BlitDispatch to (pen x, pen y - the int16 at font+0x16). When the render context 000bdbda is set and its byte +0x230 is non-zero, then draws a line with Raster_DrawLine from (pen x, pen y) to (pen x + the glyph's width, pen y). ES2's HudFont_DrawGlyph (DBSIM 00482428), less the message it formats first.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels; es2_naming.py diff ES1DBSIM 00069d64 DBSIM 00482428",
+      "verified": {
+        "bytes": "00069d64+210",
+        "sha1": "2f41bdc4ca64",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00069e38",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "HudFont_DrawString",
-      "description": "(font, text, pen) in stack order, callee-cleaned: draws a NUL-terminated run from the {x, y} pen. With the installed render context's (000bdbda) +0x231 at 1 it first moves x right by the field width +0x235 less HudFont_MeasureString, at 2 by half of that. Each character goes to 00069d64(font, c, position) and x advances by 00069ce0(font, c). ES2's HudFont_DrawString (DBSIM 00482528).",
+      "description": "(font, text, pen) in stack order, callee-cleaned: draws a NUL-terminated run from the {x, y} pen. With the installed render context's (000bdbda) +0x231 at 1 it first moves x right by the field width +0x235 less HudFont_MeasureString, at 2 by half of that. Each character goes to HudFont_DrawGlyph (00069d64)(font, c, position) and x advances by HudFont_GlyphWidth (00069ce0)(font, c). ES2's HudFont_DrawString (DBSIM 00482528).",
       "source": "ES1DBSIM decompile at 00069e38, against ES2's HudFont_DrawString",
       "verified": {
         "bytes": "00069e38+172",
@@ -19019,6 +19568,51 @@
       "source": "Herculan/docs/es1/simulation/paper-doll.md#the-records"
     },
     {
+      "address": "0009338e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PanelGaugeVtable",
+      "description": "PanelGauge's vtable, which PanelGauge_Ctor stores at a gauge's +0x76: a zero dword, then PanelGauge_OnChildClickNoOp (00031395) at +4, 0 at +8 and +0xc, and PanelGauge_KeyDispatchNone (0003139b) at +0x10. ES2's PanelGauge table (DBSIM 0049bc6c), which holds Rtl_PureVirtualCalled where this holds 0.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gauge-base"
+    },
+    {
+      "address": "000933aa",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PanelSelectGadgetVtable",
+      "description": "PanelSelectGadget's vtable, which PanelSelectGadget_Dtor stores at a gadget's +0x1c: a zero dword, then CTLButtonControl_PaintNoOpGadgetsCopy (00031523), Widget_InvalidateDeferredGadgetsCopy (00031528) by its padding, Widget_ForwardClickToOwner (000314ac), CTLControl_FlushDeferredPaintNoOpGadgetsCopy (00031538), Widget_GetButtonValueGadgetsCopy (0003153b), CTLControl_SetValueNoOpGadgetsCopy (00031545) and CTLControl_DragMoveNoOpGadgetsCopy (0003154b). ES2's PanelSelectGadget table (DBSIM 0049dee4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+    },
+    {
+      "address": "000933d2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PanelSliderGadgetVtable",
+      "description": "PanelSliderGadget's vtable, which PanelSliderGadget_Dtor stores at a slider mixin's +4: a zero dword, 0 at +4 and +8, and Widget_NoClickSound (00031666) at +0xc. ES2's PanelSliderGadget table (DBSIM 0049df4c), which holds Rtl_PureVirtualCalled where this holds 0.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+    },
+    {
+      "address": "00093462",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BarGraphHVtable",
+      "description": "BarGraphH's vtable, which BarGraphH_Ctor stores at a bar's +0x28: a zero dword, then BarGraphH_PaintToValue (000317c4), BarGraphH_RepaintSpan (000318e0) and BarGraphH_ResetToEmpty (000317a4) by its padding. ES2's BarGraphH table (DBSIM 0049bd60).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs"
+    },
+    {
+      "address": "0009347a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "BarGraphVVtable",
+      "description": "BarGraphV's vtable, which BarGraphV_Ctor stores at a bar's +0x28: a zero dword, then BarGraphV_PaintToValue (00031b30), BarGraphV_RepaintSpan (00031c54) and BarGraphV_ResetToEmpty (00031b10) by its padding. ES2's BarGraphV table (DBSIM 0049bd48).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs"
+    },
+    {
       "address": "0009680c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -19476,6 +20070,15 @@
       "name": "PaperDoll_StaticWeaponIcons",
       "description": "17 0x22-byte weapon icons that PaperDoll_StaticInit (00030f00) builds with PaperDollWeaponIcon_ElementCtor (000307b0). es2_xref finds the address in PaperDoll_StaticInit alone; its reader is Open in the paper doll's doc.",
       "source": "Herculan/docs/es1/simulation/paper-doll.md#open"
+    },
+    {
+      "address": "000b11bc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Label_Pen",
+      "description": "The labels' pen {x, y}, two dwords: Label_SetText sets it from the label's anchor and draws the text at it, and Label_SetTextWithHotkey adds the hotkey's offset to its x before drawing the hotkey's character at it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels"
     },
     {
       "address": "000b17d8",

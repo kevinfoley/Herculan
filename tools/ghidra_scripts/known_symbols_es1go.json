@@ -977,6 +977,126 @@
       }
     },
     {
+      "address": "0000fd20",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_Ctor",
+      "description": "(label, font), callee-cleaned: a 0x20-byte HUD text label. Allocates it with operator_new when label is null (returning null when that fails), zeroes the 0x20 bytes and stores font at +0. The rest of the layout, from Label_SetRect and Label_SetText: the rect at +4..+0x13, the text anchor's x at +0x14 and y at +0x16 (int16), the alignment flags at +0x18 and the fill colour at +0x1c; the same statements as ES1DBSIM's Label_Ctor (00030f44) in different code.",
+      "source": "ES1GO decompile at 0000fd20",
+      "verified": {
+        "bytes": "0000fd20+166",
+        "sha1": "2777628ffa9f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fdc6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetRectAroundPoint",
+      "description": "(label, flags, text, point) in stack order, callee-cleaned: sizes the label's rect +4..+0x13 to the text around point {x, y}. With w = HudFont_MeasureString(font, text): flags & 2 gives x0 = x - w/2, x1 = x0 + w and anchor x +0x14 = x0 + (x1 - x0 + 1)/2; flags & 4 gives x1 = x, x0 = x - w + 1 and anchor x = x; otherwise x0 = x, x1 = x + w and anchor x = x. y0 = y - HudFont_CellHeight2 (00051ff0)(font, text), y1 = y, anchor y +0x16 = y1 + y. Stores flags at +0x18 and returns label + 4. ES2's Label_SetRectAroundPoint (DBSIM 004387d0) takes half the cell height, adds the font's ink height to the anchor y and stores the flags at +0x19. No reference found by es2_xref; the same statements as ES1DBSIM's Label_SetRectAroundPoint (00030fc4) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels; es2_naming.py diff ES1DBSIM 00030fc4 DBSIM 004387d0",
+      "verified": {
+        "bytes": "0000fdc6+200",
+        "sha1": "7aeae04bb15b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fe8e",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetRect",
+      "description": "(label, flags, rect, margin) in stack order, callee-cleaned: copies the rect {x0, y0, x1, y1} to +4..+0x10 and computes the text anchor. x (+0x14): flags & 2 centres it, (x1 - x0) / 2 + x0 + margin[0]; flags & 4 right-aligns it, x1 - margin[0] + 1; otherwise x0 + margin[0]. y (+0x16): (y1 - y0 + HudFont_CellHeight(font)) / 2 + y0 + margin[2], margin being int16s. Stores flags at +0x18 and returns label + 4; the same statements as ES1DBSIM's Label_SetRect (00031080) in different code.",
+      "source": "ES1GO decompile at 0000fe8e",
+      "verified": {
+        "bytes": "0000fe8e+311",
+        "sha1": "eac5fbdcf166",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000ffc5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetText",
+      "description": "(label, text), callee-cleaned: draws text in the label. Sets the pen (0009ade4, 0009ade8) to the anchor (+0x14, +0x16), moving x left by (w - 1) for flags & 4 or by (w - 1) / 2 for flags & 2, w being HudFont_MeasureString(font, text). When the fill colour +0x1c is non-zero it installs the brush {0, colour} at the current render context's +0x22c (the display's (000ab616) +0x40 less 4, where ES1DBSIM's reads +0x44), fills the label's rect with Raster_FillRect and puts the old brush back. Then HudFont_DrawString(font, text, pen). es2_xref finds 17 calls from seven functions, 00002c25 to 0000bf1b, and one each from Label_SetNumber (000100d8) and Label_SetText_Thunk (00010140); the same statements as ES1DBSIM's Label_SetText (0003114c) in different code.",
+      "source": "ES1GO decompile at 0000ffc5",
+      "verified": {
+        "bytes": "0000ffc5+275",
+        "sha1": "13a932185d73",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000100d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetNumber",
+      "description": "(label, n) in stack order, callee-cleaned: ltoa(n, a 32-byte stack buffer, 10), then Label_SetText(label, buffer). ES2's Label_SetNumber (DBSIM 00438a40), which uses _itoa. No reference found by es2_xref; the same statements as ES1DBSIM's Label_SetNumber (00031224) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels; es2_naming.py match, score 0.95",
+      "verified": {
+        "bytes": "000100d8+43",
+        "sha1": "ae54bc893244",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00010103",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_CtorWithAltFont",
+      "description": "(label, font) in stack order, callee-cleaned: allocates 0x24 bytes with operator_new when label is null (returning null when that fails), runs Label_Ctor(label, font) and stores font again at +0x20, the hotkey font Label_SetTextWithHotkey draws its one character in. ES2's Label_CtorWithAltFont (DBSIM 00438a70), whose label has the hotkey font at +0x21. No reference found by es2_xref; the same statements as ES1DBSIM's Label_CtorWithAltFont (00031250) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels",
+      "verified": {
+        "bytes": "00010103+61",
+        "sha1": "ca84c8b7ae5b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00010140",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetText_Thunk",
+      "description": "(label, text) in stack order, callee-cleaned: Label_SetText(label, text); the same statements as ES1DBSIM's Label_SetText_Thunk (00031280) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels",
+      "verified": {
+        "bytes": "00010140+24",
+        "sha1": "bec92ec185d0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00010158",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Label_SetTextWithHotkey",
+      "description": "(label, index, text) in stack order, callee-cleaned: Label_SetText_Thunk (00010140)(label, text); then, when index is at most strlen(text), puts a NUL at text[index], keeps HudFont_MeasureString(font, text) and the character in two stack locals and restores the character. Whatever the index, it then adds the width to the pen x (0009ade4) and draws the character with HudFont_DrawGlyph (00052004)(the font at +0x20, character, the pen), so with index past the length both come from locals the function never wrote. ES2's Label_SetTextWithHotkey (DBSIM 00438aac) does both only when index is at most the length. No reference found by es2_xref; the same statements as ES1DBSIM's Label_SetTextWithHotkey (00031294) in different code.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels; disassembly 00031294-00031310",
+      "verified": {
+        "bytes": "00010158+129",
+        "sha1": "9954fd3dddc8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00010530",
       "binary": "ES1GO",
       "type": "function",
@@ -2122,7 +2242,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DialogBox_Layout",
-      "description": "(box): line height = 00051ff0(font, text) - 2; the slot count +0x19 = HudFont_MeasureString(font, text) / (right - left) + 2; lines per page +0x25 = (bottom - top) / line height; page count +0x23 = slots / lines per page, plus 1 when they differ; page +0x27 = 0; allocates and zeroes the slot pointers +0x1b, and with __vec_new one 8-byte point per line of a page at +0x1f, line i at (left, top + (i + 1) line heights); then calls 00019a1d(box, right - left, text).",
+      "description": "(box): line height = HudFont_CellHeight2 (00051ff0)(font, text) - 2; the slot count +0x19 = HudFont_MeasureString(font, text) / (right - left) + 2; lines per page +0x25 = (bottom - top) / line height; page count +0x23 = slots / lines per page, plus 1 when they differ; page +0x27 = 0; allocates and zeroes the slot pointers +0x1b, and with __vec_new one 8-byte point per line of a page at +0x1f, line i at (left, top + (i + 1) line heights); then calls 00019a1d(box, right - left, text).",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#the-dialog-box",
       "verified": {
         "bytes": "000198a6+348",
@@ -2242,7 +2362,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TextButton_Ctor",
-      "description": "(this, id, key, text, rect) in stack order, callee-cleaned: a 0x95-byte button, allocated when this is 0. Control_CtorWithKey (0001a7e5)(this, 1, key, rect), the vtable 0007f130 at +0x20, the word +0x1b 0 and the id at +0x17; three 8-byte points at +0x7c (__vec_ctor of 0001d0f2); its vtable 0007f18c at +0x20 and the word +0x19 0; STYLES.DAT records 0, 1 and 2 (the pointer 00082654, +0, +0x40, +0x80) at +0x30, +0x34 and +0x38; the fonts 000aacce, 000aacd2 and 000aacd6 at +0x24, +0x28 and +0x2c. With text, copies it to +0x3c and sets the points to (rect left, bottom - (height - 00051ff0(font, text)) / 2 - 2) with the fonts +0x24 and +0x2c, the middle one a row below the first; with none, +0x3c and the points 0. Zeroes the bytes +0x94 and +0x1f.",
+      "description": "(this, id, key, text, rect) in stack order, callee-cleaned: a 0x95-byte button, allocated when this is 0. Control_CtorWithKey (0001a7e5)(this, 1, key, rect), the vtable 0007f130 at +0x20, the word +0x1b 0 and the id at +0x17; three 8-byte points at +0x7c (__vec_ctor of 0001d0f2); its vtable 0007f18c at +0x20 and the word +0x19 0; STYLES.DAT records 0, 1 and 2 (the pointer 00082654, +0, +0x40, +0x80) at +0x30, +0x34 and +0x38; the fonts 000aacce, 000aacd2 and 000aacd6 at +0x24, +0x28 and +0x2c. With text, copies it to +0x3c and sets the points to (rect left, bottom - (height - HudFont_CellHeight2 (00051ff0)(font, text)) / 2 - 2) with the fonts +0x24 and +0x2c, the middle one a row below the first; with none, +0x3c and the points 0. Zeroes the bytes +0x94 and +0x1f.",
       "source": "ES1GO decompile at 0001cde8",
       "verified": {
         "bytes": "0001cde8+496",
@@ -6755,12 +6875,27 @@
       }
     },
     {
+      "address": "00051f80",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_GlyphWidth",
+      "description": "(font, c) in stack order, callee-cleaned: the int16 at font+0xc when it is not -1, otherwise the width byte at (the pointer at font+0x2a)[c - the int16 at font+8]. The code of ES1DBSIM's HudFont_GlyphWidth (00069ce0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels",
+      "verified": {
+        "bytes": "00051f80+44",
+        "sha1": "f95635c9ea3b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00051fac",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "HudFont_MeasureString",
-      "description": "(font, text), callee-cleaned: the sum of 00051f80(font, c) over the characters of the NUL-terminated text. The code of ES1DBSIM's HudFont_MeasureString (00069d0c), relocated operands aside.",
+      "description": "(font, text), callee-cleaned: the sum of HudFont_GlyphWidth (00051f80)(font, c) over the characters of the NUL-terminated text. The code of ES1DBSIM's HudFont_MeasureString (00069d0c), relocated operands aside.",
       "source": "ES1GO decompile at 00051fac",
       "verified": {
         "bytes": "00051fac+48",
@@ -6785,12 +6920,42 @@
       }
     },
     {
+      "address": "00051ff0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_CellHeight2",
+      "description": "(font, text) in stack order, callee-cleaned (RET 8): returns the int16 at font+0xa sign-extended, the glyph cell height; the text argument is ignored. The code of ES1DBSIM's HudFont_CellHeight2 (00069d50), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels",
+      "verified": {
+        "bytes": "00051ff0+17",
+        "sha1": "c8c8caffeea4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00052004",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudFont_DrawGlyph",
+      "description": "(font, c, pen) in stack order, callee-cleaned: blits glyph c as a block HudFont_CellHeight(font, c) rows high and HudFont_GlyphWidth(font, c) wide, of the depth byte at font+0x12, its pixels at the pointer at font+0x22 plus (the offset array at font+0x26)[c - the int16 at font+8], through Raster_BlitDispatch to (pen x, pen y - the int16 at font+0x16). When the render context 000ab612 is set and its byte +0x230 is non-zero, then draws a line with Raster_DrawLine from (pen x, pen y) to (pen x + the glyph's width, pen y). The code of ES1DBSIM's HudFont_DrawGlyph (00069d64), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels; es2_naming.py diff ES1DBSIM 00069d64 DBSIM 00482428",
+      "verified": {
+        "bytes": "00052004+210",
+        "sha1": "fd0e50d408fd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000520d8",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "HudFont_DrawString",
-      "description": "(font, text, pen) in stack order, callee-cleaned: draws a NUL-terminated run from the {x, y} pen. With the installed render context's (000ab612) +0x231 at 1 it first moves x right by the field width +0x235 less HudFont_MeasureString, at 2 by half of that. Each character goes to 00052004(font, c, position) and x advances by 00051f80(font, c). The code of ES1DBSIM's HudFont_DrawString (00069e38), relocated operands aside.",
+      "description": "(font, text, pen) in stack order, callee-cleaned: draws a NUL-terminated run from the {x, y} pen. With the installed render context's (000ab612) +0x231 at 1 it first moves x right by the field width +0x235 less HudFont_MeasureString, at 2 by half of that. Each character goes to HudFont_DrawGlyph (00052004)(font, c, position) and x advances by HudFont_GlyphWidth (00051f80)(font, c). The code of ES1DBSIM's HudFont_DrawString (00069e38), relocated operands aside.",
       "source": "ES1GO decompile at 000520d8",
       "verified": {
         "bytes": "000520d8+172",

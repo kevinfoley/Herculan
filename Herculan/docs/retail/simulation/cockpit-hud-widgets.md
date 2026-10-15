@@ -88,18 +88,34 @@ Frame-to-state mapping: `PWEAPONS` 0/1 are the selected/unselected row plate, 2/
 
 ## LED gauges
 
-`LEDBarGraphH`/`LEDBarGraphV`. `LedBarGraph_Ctor` (`004395c4`) installs vtable `PTR_FUN_0049bd30` over `LedBarGraph_CtorBase` (`004390c4`), which precomputes:
+**A bar graph is a meter that fills a rect from one edge in proportion to a value, lit up to the value and unlit beyond it.** `LEDBarGraphH`/`LEDBarGraphV` are the two the cockpit draws, built on a plain bar graph base.
 
-```
-span    = (end - start) * 0x10000 / range     // range is the caller's value scale
-current = span < 1 ? end : start              // sign of span selects fill direction
-```
+### The bar graph base
+
+`BarGraph_Ctor` (`0043907c`) copies the rect `{x0, y0, x1, y1}` to `+4`, and `BarGraph_GetRect` (`004390b8`) returns its address. `LedBarGraph_CtorBase` (`004390c4`), (bar, rect, range), makes the bar a `BarGraphH` (vtable `0049bd60`), and `LedBarGraph_CtorV` (`00439344`) a `BarGraphV` (`0049bd48`), `0x2c` bytes each:
+
+| Offset | Holds |
+|---|---|
+| `+0x14` | the span, `(end − start) × 0x10000 / range`: 16.16 pixels per unit of value, *range* the constructor's `int16` |
+| `+0x18`, `+0x1c` | start and end: the rect's `x0` and `x1` (`BarGraphH`) or `y0` and `y1` (`BarGraphV`) |
+| `+0x20` | the fill position |
+| `+0x24`, `+0x28` | the unlit and lit colors |
+
+The span's sign picks the edge the bar fills from. A `BarGraphH` fills from start when the span is 1 or more and from end otherwise; a `BarGraphV` fills from end, its bottom, when the span is 0 or more and from start otherwise (its repaint and reset test 1 or more, as `BarGraphH`'s do). Each class has three slots:
+
+- **`+0`, paint to value v** (`BarGraphH_PaintToValue`, `00439118`; `BarGraphV_PaintToValue`, `00439398`): the position p is `start + (v × span >> 16)` filling from start, `end − (v × span >> 16)` filling from end. It fills start to p in the lit color and p + 1 to end in the unlit, or p to end lit and start to p − 1 unlit, with `Raster_FillRect` on the rect at `+4`, and stores p at `+0x20`. `BarGraphV_PaintToValue` writes those positions into the rect's `x0` and `x1` rather than `y0` and `y1`, so it would fill a band across x over the rect's whole height; the throttle's two `BarGraphV`s are the ones built, and they are never drawn ([below](#throttle-gauge)).
+- **`+4`, repaint the run from a to b** (`BarGraphH_RepaintSpan`, `004391e0`; `BarGraphV_RepaintSpan`, `00439460`): orders a and b and clamps them to start..end as lo..hi, then fills lo..hi against the stored position p, the lit part with the brush the render context already holds (the display's `+0x44`, its `+0x228`) and the unlit part in `+0x24`. Wholly on the unlit side of p, the run is unlit; wholly on the lit side, lit. A run that p splits is filled lo..p and p..hi: `BarGraphV`'s lights the side its paint lights, and `BarGraphH`'s the other side, in both directions.
+- **`+8`, reset** (`BarGraphH_ResetToEmpty`, `0043a211`; `BarGraphV_ResetToEmpty`, `0043a190`): the position becomes the edge the bar fills from, as each constructor also sets it.
+
+### LED bar graphs
+
+`LedBarGraph_Ctor` (`004395c4`) makes a `BarGraphH` and installs `LEDBarGraphH`'s vtable (`0049bd30`).
 
 `LedBarGraph_PaintToValue` (`004395e8`) fills from `start` to `start + (value * span >> 16)` (16.16 fixed point), both included, then installs field `0x24` as the draw colour and covers the remainder, from the next column to `end`, with `Raster_FillRect`.
 
 The filled span is not solid. `LedBarGraph_FillPinstripe` (`00439758`) walks the x range twice — once over even columns, once over odd — drawing a full-height line each step, both ends of the range included: field `0x2c` paints even columns, `0x30` odd. The columns are device pixels, since the energy meter's rect is shifted before its bar is built (below), so each stripe is one device pixel wide in every video mode. Two near-identical shades interleaved at one pixel read as a single shaded fill.
 
-`LEDBarGraphH` fills along **x**: `LedBarGraph_CtorBase` takes start/end from the rect's `x0`/`x1` (`param_2[0]`/`param_2[2]`), and the pinstripe walk strides columns. `LEDBarGraphV`'s constructor (`00439834`) goes through `LedBarGraph_CtorV` instead, and its fill, `LedBarGraphV_FillPinstripe` (`00439a0c`), draws full-width lines on alternate rows, `0x2c` on even rows and `0x30` on odd.
+`LEDBarGraphH` fills along **x**, and the pinstripe walk strides columns. `LEDBarGraphV`'s constructor (`00439834`) goes through `LedBarGraph_CtorV` instead, and its fill, `LedBarGraphV_FillPinstripe` (`00439a0c`), draws full-width lines on alternate rows, `0x2c` on even rows and `0x30` on odd.
 
 `EnergyPoolGauge_Ctor` (`00444d5c`) constructs an `LEDBarGraphH` over the `.GAU` widget rect at 564 with range `0x400`. The rect is its two corners, offset by the panel rect at 548 (zero in every retail `.GAU`), and `Gau_EnergyMeterWidget` (`004323e0`) has shifted both into device pixels first (`GauEnergyMeter_ApplyCoordShift`, `00445110`), so the bar spans `x0 << XCoordShift` to `x1 << XCoordShift` inclusive. It builds the bar in a switch on its own `+0x20`, which it sets to 0 just before (`00444e41`-`00444e49`), so it always takes the `LedBarGraph_Ctor` case and skips the `LEDBarGraphV` one (`00444edc`). It writes colour ids 6 and 5 into `0x2c`/`0x30` and id 19 into `0x24`. Those resolve to palette indices 98/97/16 = `(0,116,204)`, `(0,40,160)`, `(0,0,0)` — the blue pinstripe bar retail draws directly under the TRACK button, i.e. the **Master Energy Pool meter**. `Player_PerFrameCockpitUpdate` feeds it the pool scaled to that range — see [../simulation/reactor-energy-pool.md](reactor-energy-pool.md#cockpit-readouts). Its only caller is `Gau_EnergyMeterWidget`, and the binary's own class-name table pairs `EnergyPoolGauge` with `LEDBarGraphV` (file offset 280429) and `ShieldsGauge` with `ShieldsSelectGadget` (279148) — the LED bar is the energy meter, and `ShieldsGauge` is a different class entirely.
 

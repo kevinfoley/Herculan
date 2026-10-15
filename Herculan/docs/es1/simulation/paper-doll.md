@@ -9,7 +9,7 @@ The code is `000301ec`–`00030f43` and the initialized data `000932e2`–`00093
 The code ends with the module's static initializer and the element constructor it uses ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)):
 
 - **`PaperDoll_StaticInit` (`00030f00`)**, entry `000adc38` of the static constructor table, frameless with no Ghidra function: `__vec_ctor` builds 12 8-byte pairs at `WeaponIconSizes` (`000b0f18`) with `WeaponIconSize_ElementCtor`, and 17 `0x22`-byte weapon icons at `PaperDoll_StaticWeaponIcons` (`000b0f78`) with `PaperDollWeaponIcon_ElementCtor`. ES2's (`0043874c`) builds 28 pairs and no icons.
-- **`WeaponIconSize_ElementCtor` (`00030f28`)**, (pair): allocates 8 bytes when given none and returns the pair. Its `RET` at `00030f40` is followed by one zero byte and the next object file at `00030f44` ([Open](#open)).
+- **`WeaponIconSize_ElementCtor` (`00030f28`)**, (pair): allocates 8 bytes when given none and returns the pair. Its `RET` at `00030f40` is followed by one zero byte and the next object file, [the labels'](cockpit-widgets.md#labels), at `00030f44`.
 
 The exit table has no entry in the file: its entries run from `SimStrings_StaticDtor` (`000adcb8`) to `00036a54` (`000adcbc`).
 
@@ -92,7 +92,6 @@ ES2's reads the five colors through its color table, ids 12, 15, 20, 9 and 18, a
 
 ## Open
 
-- **Open:** the next object file, from `00030f44`: `Label_Ctor`, `00030fc4` (the matcher's lead is ES2's `Label_SetRectAroundPoint`), `Label_SetRect`, `Label_SetText`, `00031224` (lead `Label_SetNumber`), `00031250`, `00031280`, `00031294` (lead `Label_SetTextWithHotkey`), and the bare `RET` at `00031314`, entry `000adc3c` of the static constructor table, followed by three zero bytes and `00031318`.
 - **Open:** the screens that draw the diagram, `000330b4` and `000424f8`, unread. Their call counts match ES2's `MfdStatusScreen_Paint` and `HddDamageScreen_Update` ([ES2's](../../retail/simulation/mfd.md#viewport-and-condition-per-class)); which mode and damage reading each passes for a region is in their bodies. Also unread: `000336b0`, which calls `Damage_ToConditionState`.
 - **Open:** what reads `PaperDoll_StaticWeaponIcons`: `es2_xref.py` finds `000b0f78` in `PaperDoll_StaticInit` alone. And what calls `PaperDoll_GetView` and `HeapPtr_DtorPaperDollCopy`, to which it finds no reference.
 - **Open:** which region `colorId` values and modes ES1's `.PDG` files state, and so whether mode 1's 60 and the three-index key range meet retail art.

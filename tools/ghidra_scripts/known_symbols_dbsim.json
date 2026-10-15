@@ -12606,8 +12606,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Label_CtorWithAltFont",
-      "description": "(label, font, panelRelative): Label_Ctor, then stores the same font as the alternate at +0x21 that Label_SetTextWithHotkey draws its one character in. HddCommandScreen_Ctor and MfdFlashCommScreen_Ctor build labels with it.",
-      "source": "DBSIM decompile at 00438a70"
+      "description": "(label, font, panelRelative): Label_Ctor, then stores the same font again at +0x21, the hotkey font that Label_SetTextWithHotkey draws its one character in, making a 0x25-byte label. es2_xref finds calls from MfdFlashCommScreen_Ctor and HddCommandScreen_Ctor.",
+      "source": "docs/retail/simulation/mfd.md#label-placement",
+      "verified": {
+        "bytes": "00438a70+34",
+        "sha1": "3fe6aea6f0dd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438a94",
@@ -12616,7 +12622,13 @@
       "confidence": "high",
       "name": "Label_SetText_Thunk",
       "description": "Forwards (label, text) to Label_SetText.",
-      "source": "DBSIM decompile at 00438a94"
+      "source": "DBSIM decompile at 00438a94",
+      "verified": {
+        "bytes": "00438a94+21",
+        "sha1": "9fee749860a5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438aac",
@@ -12624,8 +12636,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Label_SetTextWithHotkey",
-      "description": "(label, text, index): sets the label's text through Label_SetText_Thunk, then, when index is at most the string's length, advances the pen x at 004d1838 by the width of text[0..index) and draws text[index] again in the alternate font at label+0x21. The HDD command display's order rows and 0043f7a4/0043f878 draw their red hotkey letter this way.",
-      "source": "DBSIM decompile at 00438aac"
+      "description": "(label, text, index): sets the label's text through Label_SetText_Thunk, then, when index is at most the string's length, puts a NUL at text[index], advances the pen x at 004d1838 by HudFont_MeasureString of the text before it, restores the character and draws it again with HudFont_DrawGlyph in the hotkey font at label+0x21. es2_xref finds its calls in MfdFlashCommScreen_Paint, MfdFlashCommScreen_Update (two), HddCommandScreen_Update (two) and HddCommandScreen_RefreshOrders.",
+      "source": "docs/retail/simulation/mfd.md#label-placement",
+      "verified": {
+        "bytes": "00438aac+112",
+        "sha1": "b78a42206c22",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438b1c",
@@ -12649,7 +12667,13 @@
       "confidence": "high",
       "name": "PanelGauge_Ctor",
       "description": "PanelGauge base constructor (vtable 0049bc6c). Clears the sensor-dropout state (+0x74 condition, +0x76/+0x77 dark flag, +0x78 deadline, +0x6c sequencer) and defaults both spell ranges to 180-360 coarse ticks, sequences +0x70 = 0 and +0x72 = 1.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00438b20+158",
+        "sha1": "a1adca4044ba",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438bc0",
@@ -12657,8 +12681,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelGauge_TickDropout",
-      "description": "The sensor dropout's two-state toggle over PanelGauge +0x6c..+0x88: +0x76 = 1 dark, 0 shown. Draws each state's length with PanelGauge_RollDuration from +0x7c/+0x80 (dark) or +0x84/+0x88 (shown) and flips when it passes; with a sequencer at +0x6c the expiry plays sequence +0x70 or +0x72 and flips when it ends. Condition +0x74 == 0 forces dark; every caller skips the call then.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "The sensor dropout's two-state toggle over PanelGauge +0x6c..+0x88: +0x76 = 1 dark, 0 shown, its previous value copied to +0x77 first. Draws each state's length with PanelGauge_RollDuration from +0x7c/+0x80 (dark) or +0x84/+0x88 (shown) onto Time_GetCoarseTicks and flips when it passes; with a sequencer at +0x6c the expiry selects and starts sequence +0x70 or +0x72 at the rect +4, steps it each later call, and flips when the step reports the end. Condition +0x74 == 0 forces dark.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00438bc0+428",
+        "sha1": "61744eb93f86",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438d6c",
@@ -12667,7 +12697,13 @@
       "confidence": "high",
       "name": "PanelGauge_RollDuration",
       "description": "(Math_RandomNext(presentation generator 0x4d268f) & 0xffff) % (hi - lo) + lo; returns lo without drawing when hi == lo.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00438d6c+47",
+        "sha1": "d0053d4558f8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438d9c",
@@ -12740,7 +12776,13 @@
       "confidence": "high",
       "name": "PanelSelectGadget_Dtor",
       "description": "PanelSelectGadget's destructor (class record 004594a0), which every button leaf's destructor ends in: (gadget, flags). Reinstalls PanelSelectGadgetVtable at +0x17 and its PanelGadget mixin table at +0x20, Mem_Deletes +0x2c, deletes each of the three objects at +0x30/+0x34/+0x38 through its own vtable +0x18 with flags 3, then Mem_Delete on flags bit 0.",
-      "source": "DBSIM decompile at 00438e70; class record at 004594a0"
+      "source": "DBSIM decompile at 00438e70; class record at 004594a0",
+      "verified": {
+        "bytes": "00438e70+161",
+        "sha1": "625ddfcf5b57",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438f14",
@@ -12749,7 +12791,13 @@
       "confidence": "high",
       "name": "PanelStateGadget_OnClick",
       "description": "PanelStateGadgetVtable +0x08 (gadget, flags): when flags bit 0 is set, flips the state byte +0x40, calls the owner's (+0x24) vtable slot 0 with (owner, gadget, flags), then slot 1 of the vtable at +0x17 and slot 2 of the sub-object at +0x20.",
-      "source": "DBSIM decompile at 00438f14; es2_xref.py"
+      "source": "DBSIM decompile at 00438f14; es2_xref.py",
+      "verified": {
+        "bytes": "00438f14+53",
+        "sha1": "659ecd7ce7a4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438f4c",
@@ -12758,7 +12806,13 @@
       "confidence": "high",
       "name": "PanelSliderGadget_Dtor",
       "description": "PanelSliderGadget's destructor (class record 00455599), which every slider leaf's destructor runs on its mixin subobject at +0x3e: (mixin, flags). Reinstalls PanelSliderGadgetVtable at +0, Mem_Deletes +8, deletes the object at +0x10 through its own vtable +0x18 with flags 3, Mem_DeleteArrays +0x14 when set, GLBitmapArray_Dtor(+0x38, 3), then Mem_Delete on flags bit 0.",
-      "source": "DBSIM decompile at 00438f4c; class record at 00455599"
+      "source": "DBSIM decompile at 00438f4c; class record at 00455599",
+      "verified": {
+        "bytes": "00438f4c+198",
+        "sha1": "fce61d8628fd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439014",
@@ -12767,7 +12821,13 @@
       "confidence": "high",
       "name": "Widget_NoClickSound",
       "description": "An empty function standing in for Widget_ClickSound at slot +8 of the slider family's secondary vtable. Dragging the throttle, or any other PanelHSliderGadget/PanelVSliderGadget leaf, makes no sound.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "00439014+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043901c",
@@ -12776,7 +12836,13 @@
       "confidence": "high",
       "name": "HSliderGadget_OnClick",
       "description": "OnClick (+0x08) of WeaponSliderGadgetVtable, ThrottleHSliderGadgetVtable and PanelHSliderGadgetVtable: the same body as VSliderGadget_OnClick (0043904c) -- owner's slot 0 with (owner, slider, value), then slot 1 at +0x17 and slot 2 of the +0x3e sub-object.",
-      "source": "DBSIM decompile at 0043901c; es2_xref.py"
+      "source": "DBSIM decompile at 0043901c; es2_xref.py",
+      "verified": {
+        "bytes": "0043901c+45",
+        "sha1": "7bc442b6c1d4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043904c",
@@ -12784,8 +12850,14 @@
       "type": "function",
       "confidence": "high",
       "name": "VSliderGadget_OnClick",
-      "description": "PanelVSliderGadgetVtable +0x08 (slider, value): calls the owner's (+0x42) vtable slot 0 with (owner, slider, value), then slot 1 of the vtable at slider+0x17 with the slider, then slot 2 of the sub-object at slider+0x3e. ThrottleSlider_OnValue calls it as its base; for the throttle the owner's slot 0 is ThrottleGauge_OnChildValue. HSliderGadget_OnClick (0043901c) has the same body.",
-      "source": "DBSIM decompile at 0043904c"
+      "description": "PanelVSliderGadgetVtable +0x08 (slider, value): calls the owner's (+0x42) vtable slot 0 with (owner, slider, value), then slot 1 of the vtable at slider+0x17 with the slider, then slot 2 of the sub-object at slider+0x3e. HSliderGadget_OnClick (0043901c) has the same body.",
+      "source": "DBSIM decompile at 0043904c",
+      "verified": {
+        "bytes": "0043904c+45",
+        "sha1": "7bc442b6c1d4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043907c",
@@ -12794,7 +12866,13 @@
       "confidence": "high",
       "name": "BarGraph_Ctor",
       "description": "BarGraph constructor (vtable 0049bd78, RTTI name 'BarGraph', 0x2c bytes): copies the rect {x0, y0, x1, y1} to +4..+0x10. LedBarGraph_CtorBase and LedBarGraph_CtorV run it first.",
-      "source": "DBSIM decompile and disassembly at 0043907c"
+      "source": "DBSIM decompile and disassembly at 0043907c",
+      "verified": {
+        "bytes": "0043907c+50",
+        "sha1": "cd38f95c4e20",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004390b0",
@@ -12817,8 +12895,14 @@
       "type": "function",
       "confidence": "high",
       "name": "BarGraph_GetRect",
-      "description": "Returns obj+4, the rect {x0, y0, x1, y1} BarGraph_Ctor copies there. ThrottleSlider_PaintV and ThrottleSlider_FlushPaintH call it on the slider's LED bar (+0x7e), 00444f20 and 00444fe0 on the gauge's bar (+0xb5) before CockpitView_RectCornerVisible.",
-      "source": "DBSIM decompile at 004390b8"
+      "description": "Returns obj+4, the rect {x0, y0, x1, y1} BarGraph_Ctor copies there. es2_xref finds ten calls: one each from EnergyPoolGauge_Paint and EnergyPoolGauge_Update and four each from ThrottleSlider_PaintV and ThrottleSlider_FlushPaintH.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md#the-bar-graph-base",
+      "verified": {
+        "bytes": "004390b8+11",
+        "sha1": "1124b35b3bfa",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004390c4",
@@ -12842,7 +12926,13 @@
       "confidence": "high",
       "name": "BarGraphH_PaintToValue",
       "description": "BarGraphH vtable +0x00 (0049bd60), (bar, value): pos = start (+0x18) + value * span (+0x14) >> 16, or end (+0x1c) minus that for a non-positive span; fills the lit run in colour +0x28 and the rest of the track in +0x24 with Raster_FillRect through the rect at +4, and stores pos at +0x20.",
-      "source": "DBSIM decompile at 00439118"
+      "source": "DBSIM decompile at 00439118",
+      "verified": {
+        "bytes": "00439118+197",
+        "sha1": "4cea5effc13b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004391e0",
@@ -12850,8 +12940,14 @@
       "type": "function",
       "confidence": "high",
       "name": "BarGraphH_RepaintSpan",
-      "description": "BarGraphH vtable +0x04, (bar, a, b): orders a and b, clamps them to the track (+0x18..+0x1c), and refills just that span against the stored fill position +0x20 -- the lit part in the current brush, the unlit part in +0x24.",
-      "source": "DBSIM decompile and disassembly at 004391e0"
+      "description": "BarGraphH vtable +0x04, (bar, a, b): orders a and b, clamps them to the track (+0x18..+0x1c) as lo and hi, and refills x lo..hi against the stored fill position +0x20, the lit part with the brush the render context holds and the unlit part in +0x24. Filling from the start (span +0x14 of 1 or more): unlit when pos < lo, the brush when hi < pos, else lo..pos unlit and pos..hi with the brush. Filling from the end: unlit when hi < pos, the brush when pos < lo, else lo..pos with the brush and pos..hi unlit. So a run pos splits is lit on the side BarGraphH_PaintToValue leaves unlit.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md#the-bar-graph-base",
+      "verified": {
+        "bytes": "004391e0+353",
+        "sha1": "05230ee10112",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439344",
@@ -12859,8 +12955,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBarGraph_CtorV",
-      "description": "Vertical LED bar graph ctor (obj, rect, range) -- the V twin of LedBarGraph_CtorBase (004390c4), taking start/end from the rect's y0/y1 instead of x0/x1. The throttle gauge builds two: .GAU ints [8..11] with range +0x400 (forward fill, above centre) and [12..15] with -0x400 (reverse fill, below). They are not four throttle detent points. NEITHER THROTTLE BAR IS EVER DRAWN: the slider holds them privately, ThrottleSlider_PaintV reads them only for their rects (via BarGraph_GetRect) to widen the region it invalidates, and the bar draw routines 00439398/00439460 have no callers in the image. A cut feature, along with the gauge+0xb1 speed fraction that would have filled them.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "BarGraphV constructor (bar, rect, range): BarGraph_Ctor, BarGraphV's vtable 0049bd48 at +0, the span +0x14 = (y1 - y0) * 0x10000 / range, start +0x18 = y0, end +0x1c = y1, and the fill position +0x20 = start when the span is below 1, else end. The vertical twin of LedBarGraph_CtorBase (004390c4). es2_xref finds BarGraphV's paint and repaint, 00439398 and 00439460, in BarGraphV's vtable alone; the throttle's two bars are in docs/retail/simulation/cockpit-hud-widgets.md#throttle-gauge.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md#the-bar-graph-base",
+      "verified": {
+        "bytes": "00439344+83",
+        "sha1": "a336039af4bc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00439398",
@@ -12868,8 +12970,14 @@
       "type": "function",
       "confidence": "high",
       "name": "BarGraphV_PaintToValue",
-      "description": "BarGraphV vtable +0x00 (0049bd48): BarGraphH_PaintToValue on the y axis, with the sign test on the span reversed.",
-      "source": "DBSIM decompile at 00439398"
+      "description": "BarGraphV vtable +0x00 (0049bd48), (bar, value): with the span +0x14 below 0, pos = start (+0x18) + (value * span >> 16), filling start..pos in the lit color +0x28 and pos+1..end (+0x1c) in the unlit color +0x24; otherwise pos = end - (value * span >> 16), filling pos..end lit and start..pos-1 unlit; stores pos at +0x20. It writes those positions to the rect's x0 (+4) and x1 (+0xc), not y0 and y1, so it fills a band across x over the rect's whole height. BarGraphH_PaintToValue tests the span below 1. es2_xref finds it in BarGraphV's vtable alone.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md#the-bar-graph-base; disassembly 00439398-0043945a",
+      "verified": {
+        "bytes": "00439398+197",
+        "sha1": "6bdc558df2dd",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00439460",
@@ -12877,8 +12985,14 @@
       "type": "function",
       "confidence": "high",
       "name": "BarGraphV_RepaintSpan",
-      "description": "BarGraphV vtable +0x04, (bar, a, b): BarGraphH_RepaintSpan on the y axis (+8/+0x10 of the rect).",
-      "source": "DBSIM decompile and disassembly at 00439460"
+      "description": "BarGraphV vtable +0x04, (bar, a, b): BarGraphH_RepaintSpan on the rect's y0 (+8) and y1 (+0x10) with the side tests mirrored, so a run the fill position +0x20 splits is lit on the side BarGraphV_PaintToValue lights. Filling from the start (span +0x14 below 1): unlit (+0x24) when pos < lo, the render context's brush when hi < pos, else lo..pos with the brush and pos..hi unlit; filling from the end: unlit when hi < pos, the brush when pos < lo, else lo..pos unlit and pos..hi with the brush.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md#the-bar-graph-base",
+      "verified": {
+        "bytes": "00439460+353",
+        "sha1": "06e896fd8721",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004395c4",
@@ -12886,8 +13000,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBarGraph_Ctor",
-      "description": "LEDBarGraph constructor: calls LedBarGraph_CtorBase then installs vtable PTR_FUN_0049bd30.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (LED gauges)"
+      "description": "LEDBarGraphH constructor (bar, rect, range): LedBarGraph_CtorBase, then LEDBarGraphH's vtable 0049bd30 at +0.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md#led-bar-graphs",
+      "verified": {
+        "bytes": "004395c4+36",
+        "sha1": "1fd7276a5b8e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004395e8",
@@ -13061,7 +13181,13 @@
       "confidence": "high",
       "name": "BarGraphV_ResetToEmpty",
       "description": "Vtable +0x08 of BarGraphV, LEDBarGraphV and LEDBMBarGraphV: stores the empty position in +0x20 -- the track end (+0x1c) for a positive span, the start (+0x18) otherwise.",
-      "source": "DBSIM disassembly at 0043a190"
+      "source": "DBSIM disassembly at 0043a190",
+      "verified": {
+        "bytes": "0043a190+25",
+        "sha1": "a5e647d632f8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043a211",
@@ -13070,7 +13196,13 @@
       "confidence": "high",
       "name": "BarGraphH_ResetToEmpty",
       "description": "Vtable +0x08 of BarGraphH, LEDBarGraphH and LEDBMBarGraphH: stores the empty position in +0x20 -- the track start (+0x18) for a positive span, the end (+0x1c) otherwise.",
-      "source": "DBSIM disassembly at 0043a211"
+      "source": "DBSIM disassembly at 0043a211",
+      "verified": {
+        "bytes": "0043a211+25",
+        "sha1": "93bac4273dd1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043a22a",
@@ -31968,7 +32100,13 @@
       "confidence": "high",
       "name": "HudFont_DrawGlyph",
       "description": "Blits one glyph: height from font+0xa (file 0x0e cellHeight), width from HudFont_GlyphWidth, bit depth from font+0x12 (file 0x16, 8 in every retail file), pixels from the pool at font+0x22 indexed through the per-glyph offset array at font+0x26. Draws with its top row at y - font+0x16 (file 0x1a, the ink height), which is the other half of Label_SetRect's vertical rule.",
-      "source": "docs/retail/formats/dfn-hfn-dci.md"
+      "source": "docs/retail/formats/dfn-hfn-dci.md",
+      "verified": {
+        "bytes": "00482428+253",
+        "sha1": "96566c496992",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00482528",

@@ -1,0 +1,157 @@
+# DBSIM.EXE — labels, the gauge and gadget bases, and bar graphs
+
+**ES1's cockpit writes its captions with ES2's label object, builds its instruments and buttons on ES2's gauge and gadget base classes, and fills its meters with ES2's bar graphs.** The differences a player could see: a label sits a pixel or two from where ES2's would; a display whose feed is damaged flickers on and off in bursts, with a sound as it goes dark, where ES2's goes dark and comes back in long spells; and a bar graph repaints only the strip between its old and new value. Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's. Every function here removes its own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)).
+
+## Where the object files start and end
+
+Four object files lie between [the paper doll's](paper-doll.md#where-the-object-file-starts-and-ends) and the one the run of `ConfigPart`'s copies at `00032ed8` opens ([module copies](../formats/compiler.md#vtables)). Each start below is a function on a 4-byte boundary after zero bytes that follow the previous file's last return ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)):
+
+| Code | Holds | Its end |
+|---|---|---|
+| `00030f44`–`00031317` | [the labels](#labels) | `Label_StaticInitNoOp` (`00031314`), entry `000adc3c` of the static constructor table: a bare `RET`, then three zero bytes |
+| `00031318`–`0003149f` | [the gauge base](#the-gauge-base) | `PanelGauge_TickDropout`'s `RET 4` at `0003149b`, then two zero bytes |
+| `000314a0`–`000316d3` | [the gadget bases](#the-gadget-bases) | `VSliderGadget_OnClick`'s `RET 8` at `000316ce`, then three zero bytes |
+| `000316d4`–`00032ed7` | [the bar graphs](#bar-graphs) | the run at `00032ed8` |
+
+Only the label file has a static initializer, and none has an entry in the exit table. The vtables the last three store lie in order from `0009338e`, right after the paper doll's data, to `00093585`; the next file's copy of `ConfigPart`'s table is at `0009358e`.
+
+## Labels
+
+**`Label_Ctor` (`00030f44`)**, (label, font), makes ES2's [label object](../../retail/simulation/mfd.md#label-placement) without its panel-relative byte, so `0x20` bytes: the font at `+0`, the rect at `+4`–`+0x13`, the anchor's `int16` x and y at `+0x14` and `+0x16`, the flags at `+0x18` and the fill color at `+0x1c`. **`Label_CtorWithAltFont` (`00031250`)** allocates `0x24` bytes when given none, runs `Label_Ctor` and stores the font again at `+0x20`, the hotkey font.
+
+Placement differs from ES2's in two places. `Label_SetRect` (`00031080`) puts a right-aligned anchor at *x1* − margin[0] + 1, and the anchor's y at (*y1* − *y0* + cell height) / 2 + *y0* + margin[2], the cell height from `HudFont_CellHeight`(font, `'0'`), where ES2's centers half the ink height and adds 1. `Label_SetText` (`0003114c`) measures the text only for flags 2 and 4, and moves the pen left by (*w* − 1) / 2 or *w* − 1, where ES2's takes 1 ≪ `VideoMode_XCoordShift` from *w*; it sets the pen at `000b11bc`, `000b11c0`, fills the rect with the brush {0, color} at the render context's `+0x22c` when the fill color is non-zero, and draws with `HudFont_DrawString`. The glyph's top row is the pen's y less the font's ink height (`+0x16`), as in ES2.
+
+The other entry points are ES2's, with these differences:
+
+- **`Label_SetRectAroundPoint` (`00030fc4`)**, (label, flags, text, point): *y0* is *y* less the whole cell height (`HudFont_CellHeight2`), not half of it, and the anchor's y is *y1* + *y*, with no ink height; the flags go to `+0x18`.
+- **`Label_SetNumber` (`00031224`)**, (label, n): `ltoa` in base 10.
+- **`Label_SetText_Thunk` (`00031280`)**, (label, text), and **`Label_SetTextWithHotkey` (`00031294`)**, (label, index, text): the hotkey moves the pen x (`000b11bc`) right by the width of the text's first index characters and draws `text[index]` in the font at `+0x20` with `HudFont_DrawGlyph`. ES1's adds the width and draws the character whatever the index; with the index past the text's length, both come from two stack locals the function never wrote (`[EBP−2]`, `[EBP−4]`), where ES2's does neither.
+
+`es2_xref.py` finds `Label_SetTextWithHotkey` called from `00035d20`, twice from `00035e14`, twice from `0003f578` and from `00040948`, beside the reads of the squad orders' strings and attribute bytes ([`STRINGS0.STR` group 0](../formats/str-strings.md#the-groups)), and `Label_CtorWithAltFont` from `00035c04` and `0003ee58` ([Open](#open)).
+
+The font functions the labels reach, in the library region:
+
+- **`HudFont_GlyphWidth` (`00069ce0`)**, (font, c): the fixed width at `+0xc` unless it is −1, else the width byte at `+0x2a`[c − the first code at `+8`], ES2's (`0048238c`).
+- **`HudFont_CellHeight2` (`00069d50`)**, (font, text): the `int16` at `+0xa`; it does not read the text. ES2's (`0048241c`) takes the font alone.
+- **`HudFont_DrawGlyph` (`00069d64`)**, (font, c, pen): ES2's (`00482428`) without the message ES2's formats first: blits the glyph through `Raster_BlitDispatch` with its top row at the pen's y less `+0x16`, then, when the render context (`000bdbda`) has `+0x230` set, underlines it with `Raster_DrawLine` along the pen's row.
+
+## The gauge base
+
+**`PanelGauge_Ctor` (`00031318`)**, (gauge, cockpit, rect), is the base of each instrument: it copies the rect to `+0`, stores the cockpit at `+0x10` and `PanelGaugeVtable` (`0009338e`) at `+0x76`, and clears `+0x68`, `+0x74` and `+0x75`. ES2's (`00438b20`) keeps its vtable at `+0`, the rect at `+4` and the cockpit at `+0x14`, and also clears the sequencer and the power-up fields, which ES1's base lacks. The allocation at its head is the rect's own constructor inlined ([constructors](../formats/compiler.md#constructors-and-destructors)): with the gauge null it allocates `0x10` bytes and then writes through the null pointer.
+
+`PanelGaugeVtable` is ES2's (`0049bc6c`) one slot further on: `PanelGauge_OnChildClickNoOp` (`00031395`, three `NOP`s and `RET 0xc`) at `+4`, 0 at `+8` and `+0xc` where ES2's holds `Rtl_PureVirtualCalled`, and `PanelGauge_KeyDispatchNone` (`0003139b`, `NOP`, `XOR EAX,EAX`, `RET 8`) at `+0x10`. A child button calls its `+4` with (gauge, flags, child) ([the gadget bases](#the-gadget-bases)).
+
+### Sensor dropout
+
+**While a display's feed is damaged, it flickers in bursts: for a random stretch it goes dark and comes back every few moments, with a sound each time it goes dark, then holds steady until the next burst.** A burst lasts 1 to 240 counts of the clock and flips the display every 1 to 30 counts, and the next begins 120 to 420 counts after it ends. ES2's alternates long dark and lit spells instead ([ES2's sensor dropout](../../retail/simulation/cockpit-hud-widgets.md#sensor-dropout)). The clock is the dword `000981c4` ([Open](#open)), and the random numbers are `Math_RandomNext`(`000b5c48`), low word.
+
+| Offset | Holds |
+|---|---|
+| `+0x68` | the condition, 0 intact to 4 destroyed (`int16`) |
+| `+0x6a` | the burst's length in counts (`int16`) |
+| `+0x6c` | the clock count the burst starts after |
+| `+0x70` | the clock count the next flip comes after |
+| `+0x74` | 1 dark, 0 shown |
+| `+0x75` | set to 2 at each change |
+
+The display's update stores `Player_DependentCondition`(4) at `+0x68` and runs **`PanelGauge_TickDropout` (`00031400`)**, (gauge), when it is non-zero; `00034f3c` does so, outside view 4, and `es2_xref.py` finds the other two calls in `0003a2a8` and `0003cd28` ([Open](#open)). The tick:
+
+1. Condition 3 sets dark and returns.
+2. Otherwise, while the clock is past `+0x6c` and short of `+0x6c` + `+0x6a`, each time it passes `+0x70` the state flips, `+0x75` becomes 2, `+0x70` becomes the clock + 1 + (*r* mod 30), and a flip to dark plays sound `0x1c` (`Sound_Play`).
+3. Once the clock reaches `+0x6c` + `+0x6a`, it runs `PanelGauge_ScheduleDropout`, sets the state dark for condition 2 or more and shown for condition 1, and `+0x75` to 2.
+
+**`PanelGauge_ScheduleDropout` (`000313a4`)**, (gauge): `+0x6c` and `+0x70` = the clock + (*r* mod 6 + 2) × 60, and `+0x6a` = *r'* mod 240 + 1. A gauge from the zero-filled heap ([the heap](memory.md#the-heap)) has these at 0, so its first tick schedules a burst. A condition of 4 flickers as 2 does, dark between bursts, rather than staying dark as 3 does.
+
+## The gadget bases
+
+**ES1's buttons and sliders are ES2's [gadget family](../../retail/simulation/cockpit-input.md#the-cockpits-own-gadget-classes), with each subobject's vptr after its data:** a gadget's primary vptr at `+0x1c`, the `PanelGadget` mixin's data, the owning gauge, at `+0x20` and its vptr at `+0x24`, for a slider the mixin at `+0x3e` and `+0x42`. A primary table has ES2's [leaf-widget slots](../../retail/simulation/cockpit-input.md#the-leaf-widget-vtable) one slot further on; the mixin's table holds the click sound at `+0xc`.
+
+- **`Widget_ClickSound` (`000314a0`)**, frameless: `Sound_Play`(`0x11`) and `RET 4`. `es1_naming.py vtables` lists it at `+0xc` of nine three-slot mixin tables (`00093ba6`, `00093be6`, …), and `es2_xref.py` finds 16 stored pointers to it.
+- **`Widget_ForwardClickToOwner` (`000314ac`)**, (gadget, flags): with bit 0 of flags set, calls slot `+4` of the owner's `+0x76` table with (owner, flags, gadget), then the gadget's primary `+8` (invalidate) and the mixin's `+0xc` (the sound) on the mixin. ES2's (`00438e3c`). It is the click slot `+0xc` of eight tables, `PanelSelectGadgetVtable` (`000933aa`) and seven in later files.
+- **`PanelStateGadget_OnClick` (`00031550`)**, (gadget, flags): the same, after flipping the lit byte `+0x3c` (ES2's `+0x40`). The click slot of `00093d76` and `00094736`.
+- **`HSliderGadget_OnClick` (`0003166c`)** and **`VSliderGadget_OnClick` (`000316a0`)**, (slider, value): the same three calls with the owner at `+0x3e` and the mixin's vptr at `+0x42`, with no test of the value, as ES2's (`0043901c`, `0043904c`). The first is the click slot of five tables whose value slot reads a horizontal track (`00043ac8`), the second of two whose value slot reads a vertical one (`00043be8`), ES2's `SliderWidget_GetValueV`'s statements.
+- **`Widget_NoClickSound` (`00031666`)**, frameless, two `NOP`s and `RET 4`: slot `+0xc` of `PanelSliderGadgetVtable` (`000933d2`), whose `+4` and `+8` hold 0. ES2's (`00439014`).
+
+`PanelSelectGadgetVtable` (`000933aa`) is ES2's `PanelSelectGadget` table (`0049dee4`) one slot further on, its slots this file's copies of the button base's ([`panel.cpp`'s copies](cockpit-panel.md#the-screen-edges-and-the-cursors)):
+
+| Slot | ES1 | Address | ES2's |
+|---|---|---|---|
+| `+4` | `CTLButtonControl_PaintNoOpGadgetsCopy`, `NOP` and `RET 4` | `00031523` | `CTLButtonControl_PaintNoOp` (`00455545`) |
+| `+8` | `Widget_InvalidateDeferredGadgetsCopy`, (gadget): `+0x1b` = 2, ES2's `+0x1f` ([deferred painting](../../retail/simulation/cockpit-input.md#painting-is-deferred-two-frames)) | `00031528` | `Widget_InvalidateDeferred` (`00455524`) |
+| `+0xc` | `Widget_ForwardClickToOwner` | `000314ac` | `Widget_ForwardClickToOwner` (`00438e3c`) |
+| `+0x10` | `CTLControl_FlushDeferredPaintNoOpGadgetsCopy`, `RET 4` | `00031538` | `CTLControl_FlushDeferredPaintNoOp` (`0045554a`) |
+| `+0x14` | `Widget_GetButtonValueGadgetsCopy`, `NOP`, the `int16` at `00094b84` in `AX`, `RET 4` | `0003153b` | `Widget_GetButtonValue` (`00455530`) |
+| `+0x18` | `CTLControl_SetValueNoOpGadgetsCopy`, three `NOP`s and `RET 8` | `00031545` | `CTLControl_SetValueNoOp` (`0045553b`) |
+| `+0x1c` | `CTLControl_DragMoveNoOpGadgetsCopy`, `NOP` and `RET 8` | `0003154b` | `CTLControl_DragMoveNoOp` (`00455540`) |
+
+The two destructors, (gadget, flags), destroy the members as ES2's do but test neither the gadget nor the flags, and free nothing of the gadget itself:
+
+- **`PanelSelectGadget_Dtor` (`000314e4`)**: stores `PanelSelectGadgetVtable` at `+0x1c`, frees `+0x2c` with `operator_delete` and destroys each of the three objects at `+0x30`, `+0x34`, `+0x38` that is set through its slot `+0x1c` with flags 3. ES2's (`00438e70`).
+- **`PanelSliderGadget_Dtor` (`0003158c`)**, on the mixin: stores `PanelSliderGadgetVtable` at its `+4`, frees `+8`, destroys the object at `+0x10` through its slot `+0x1c` with flags 3, frees `+0x14` when set, runs `GLBitmapArray_Dtor`(`+0x38`, 3) and destroys the `GLRectangleRegion` at `+0x18` in place, storing its three vtables there in turn. ES2's (`00438f4c`).
+
+`es2_xref.py` finds no reference to either ([Open](#open)). The region's three vtables and their destructors are the file's copies of `GLRectangleRegion`'s, class tag `0x28000c` at the first slot of `000933ea` ([`mechview.cpp`'s copies](cockpit-views.md#functions)): `GLRectangleRegion_DtorGadgetsCopy` (`000315ec`, `000933ea`), `GLRegion_DtorGadgetsCopy` (`0003161c`, `00093412`) and `GLBase_DtorGadgetsCopy` (`00031644`, `0009343a`), each (object, flags) storing its table and those of its bases at `+0` and freeing the object when bit 0 of flags is set.
+
+## Bar graphs
+
+**ES1's bar graphs are ES2's [base classes](../../retail/simulation/cockpit-hud-widgets.md#the-bar-graph-base) with the rect at `+0` and the vptr at `+0x28`, one color, and a paint that repaints only what changed.**
+
+| Offset | Holds | ES2's |
+|---|---|---|
+| `+0x00` | the rect `{x0, y0, x1, y1}` | `+0x04` |
+| `+0x10` | the span | `+0x14` |
+| `+0x14`, `+0x18` | start and end | `+0x18`, `+0x1c` |
+| `+0x1c` | the fill position | `+0x20` |
+| `+0x20` | the unlit color | `+0x24` |
+| `+0x28` | the vptr: `BarGraphHVtable` (`00093462`) or `BarGraphVVtable` (`0009347a`) | `+0x00` |
+
+`BarGraph_Ctor` (`000316d4`), (bar, rect), copies the rect, the allocation at its head the rect's own as in `PanelGauge_Ctor`. **`BarGraphH_Ctor` (`00031740`)** and **`BarGraphV_Ctor` (`00031aac`)**, (bar, range, rect), allocate `0x2c` bytes when given none, run `BarGraph_Ctor`, store the vtable and set the span, start, end and position as ES2's `LedBarGraph_CtorBase` (`004390c4`) and `LedBarGraph_CtorV` (`00439344`) do. `es2_xref.py` finds `BarGraphH_Ctor` called from `00031e28` and `000324e4` and `BarGraphV_Ctor` from `0003216c` and `00032a18`, the functions that store the tables `00093492`, `000934e6`, `000934aa` and `00093576` and stand where ES2's LED and bitmap bar graphs' constructors do ([Open](#open)). `BarGraph_GetRect` (`00031738`), (bar), returns the bar, whose rect is at `+0`; `es2_xref.py` finds it called once each from `00039a28` and `00039abc` and four times each from `0003b804` and `0003bf18`, the counts of ES2's calls from `EnergyPoolGauge_Paint`, `EnergyPoolGauge_Update`, `ThrottleSlider_PaintV` and `ThrottleSlider_FlushPaintH` ([Open](#open)). `BarGraph_NoOp` (`00031733`), `NOP` and `RET 8`, sits between them, as ES2's does.
+
+Both tables hold three slots from `+4`, ES2's in order: paint, repaint and reset. The reset, `BarGraphH_ResetToEmpty` (`000317a4`) and `BarGraphV_ResetToEmpty` (`00031b10`), is ES2's. The fill edge is ES2's, except that a `BarGraphV` fills from start when the span is below 1 in its paint as in its repaint and reset, where ES2's paint tests below 0.
+
+**The paint repaints only the strip between the old position and the new.** `BarGraphH_PaintToValue` (`000317c4`) and `BarGraphV_PaintToValue` (`00031b30`), (bar, value), compute the new position p as ES2's do and return when it equals the stored one, q. Otherwise they fill the rect from q to p on the bar's axis with `Raster_FillRect`: in the unlit color when the bar shrinks, through the brush the render context holds (the display's `000bdd28` `+0x44`, its `+0x228`) for that fill alone, and with that brush as it stands when the bar grows, so the lit color is whatever brush the caller installed. They store p. `BarGraphV_PaintToValue` writes the rect's *y0* and *y1*, where ES2's writes *x0* and *x1*.
+
+`BarGraphH_RepaintSpan` (`000318e0`) and `BarGraphV_RepaintSpan` (`00031c54`), (bar, a, b), are ES2's, the unlit color from `+0x20`, the lit part again the installed brush. As in ES2's, a run the position splits is lit on the side the paint lights in `BarGraphV`'s and on the other side in `BarGraphH`'s.
+
+## In GO.EXE
+
+**The shell compiles the label file and the font functions too.** `ES1GO` `0000fd20`, `0000fdc6`, `0000fe8e`, `0000ffc5`, `000100d8`, `00010103`, `00010140` and `00010158` are `Label_Ctor` to `Label_SetTextWithHotkey` in the order of the table below, the same statements laid out differently; its `Label_SetText` finds the render context at the display's `+0x40` less 4 where the simulator's reads `+0x44`. `00051f80`, `00051ff0` and `00052004` are `HudFont_GlyphWidth`, `HudFont_CellHeight2` and `HudFont_DrawGlyph`, the last testing the render context `000ab612`. Its code from `00003d7c` and `00008920` holds the bar graph constructors' and the gadget click handlers' statements ([Open](#open)).
+
+## Functions
+
+| ES1 | Address | ES2 |
+|---|---|---|
+| `Label_Ctor`, `Label_SetRectAroundPoint`, `Label_SetRect`, `Label_SetText` | `00030f44`, `00030fc4`, `00031080`, `0003114c` | `004387ac`, `004387d0`, `00438884`, `00438920` |
+| `Label_SetNumber`, `Label_CtorWithAltFont`, `Label_SetText_Thunk`, `Label_SetTextWithHotkey`, `Label_StaticInitNoOp` | `00031224`, `00031250`, `00031280`, `00031294`, `00031314` | `00438a40`, `00438a70`, `00438a94`, `00438aac`, `00438b1c` |
+| `PanelGauge_Ctor`, `PanelGauge_OnChildClickNoOp`, `PanelGauge_KeyDispatchNone` | `00031318`, `00031395`, `0003139b` | `00438b20`, `0045233f`, `00452344` |
+| `PanelGauge_ScheduleDropout`, `PanelGauge_TickDropout` | `000313a4`, `00031400` | `PanelGauge_RollDuration` (`00438d6c`) has the role, `00438bc0` |
+| `Widget_ClickSound`, `Widget_ForwardClickToOwner`, `PanelSelectGadget_Dtor` | `000314a0`, `000314ac`, `000314e4` | `00438e2c`, `00438e3c`, `00438e70` |
+| `PanelSelectGadgetVtable`'s other slots | `00031523`–`0003154b` | [the table](#the-gadget-bases) |
+| `PanelStateGadget_OnClick`, `PanelSliderGadget_Dtor` | `00031550`, `0003158c` | `00438f14`, `00438f4c` |
+| the region destructors | `000315ec`, `0003161c`, `00031644` | the code of [`mechview.cpp`'s copies](cockpit-views.md#functions) |
+| `Widget_NoClickSound`, `HSliderGadget_OnClick`, `VSliderGadget_OnClick` | `00031666`, `0003166c`, `000316a0` | `00439014`, `0043901c`, `0043904c` |
+| `BarGraph_Ctor`, `BarGraph_NoOp`, `BarGraph_GetRect` | `000316d4`, `00031733`, `00031738` | `0043907c`, `004390b0`, `004390b8` |
+| `BarGraphH_Ctor`, `BarGraphH_ResetToEmpty`, `BarGraphH_PaintToValue`, `BarGraphH_RepaintSpan` | `00031740`, `000317a4`, `000317c4`, `000318e0` | `004390c4`, `0043a211`, `00439118`, `004391e0` |
+| `BarGraphV_Ctor`, `BarGraphV_ResetToEmpty`, `BarGraphV_PaintToValue`, `BarGraphV_RepaintSpan` | `00031aac`, `00031b10`, `00031b30`, `00031c54` | `00439344`, `0043a190`, `00439398`, `00439460` |
+| `HudFont_GlyphWidth`, `HudFont_CellHeight2`, `HudFont_DrawGlyph` | `00069ce0`, `00069d50`, `00069d64` | `0048238c`, `0048241c`, `00482428` |
+
+## Globals
+
+| | Address |
+|---|---|
+| `PanelGaugeVtable` | `0009338e` |
+| `PanelSelectGadgetVtable`, `PanelSliderGadgetVtable` | `000933aa`, `000933d2` |
+| the region vtables' copies | `000933ea`, `00093412`, `0009343a` |
+| `BarGraphHVtable`, `BarGraphVVtable` | `00093462`, `0009347a` |
+| the label pen, {x, y} | `000b11bc` |
+| the button value `Widget_GetButtonValueGadgetsCopy` returns, `int16` | `00094b84` |
+
+## Open
+
+- **Open:** the rest of the bar graph file, from `00031e28`: the LED bar graphs (`00031e28`–`000323f0`, vtables `00093492` and `000934aa`; the matcher pairs `00032078` and `000323f0` with ES2's `LedBarGraph_FillPinstripe` and `LedBarGraphV_FillPinstripe`) and the bitmap bar graphs (`000324e4`–`00032cf4`, vtables `000934e6`–`00093576`, with their own copies of the region destructors at `000326e8`, `0003270c` and `00032734`), unread.
+- **Open:** the callers of `Label_SetTextWithHotkey` (`00035d20`, `00035e14`, `0003f578`, `00040948`) and of `Label_CtorWithAltFont` (`00035c04`, `0003ee58`), unread: which font each puts at `+0x20`, and whether any passes an index past its text's length, which would draw whatever character the stack held.
+- **Open:** a caller of `Label_SetRectAroundPoint`, `Label_SetNumber`, `PanelSelectGadget_Dtor`, `PanelSliderGadget_Dtor` or `BarGraph_NoOp`: `es2_xref.py` finds no branch to any of them and no stored pointer. It finds `BarGraph_Ctor`'s address also as a dword at `000ac6cc`, among other code addresses.
+- **Open:** what the clock `000981c4` counts ([the palette module's](../rendering/palette.md#open)), and so how long a burst and the gap between bursts last; whether the gap's multiplier of 60 makes it 2 to 7 seconds. Also which part of the machine dependent 4 is.
+- **Open:** the dropout's other two callers, `0003a2a8` and `0003cd28`, unread, and which displays the three are.
+- **Open:** the callers of `BarGraph_GetRect`, `00039a28`, `00039abc`, `0003b804` and `0003bf18`, unread; `00039a28` calls slot `+8` of the bar at its `+0x7e`, the repaint, which would make ES1's repaint observable.
+- **Open:** `GO.EXE`'s gauge, gadget and bar graph code, from `ES1GO 00003d7c` and `00008920`–`00008cc0`, unread beyond the decompile lines that match the simulator's `BarGraphH_Ctor`, `BarGraphV_Ctor`, `Widget_ForwardClickToOwner`, `PanelStateGadget_OnClick` and the two slider handlers: `0000897b`, `00008a63`, `00008c40`, `00008c77`, and the two functions near `00003d7c` that call it.
+- **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in DOSBox-X's debugger, `BP <CS>:00031294` fires as the squad order list is drawn, and the word at `[ESP+8]` is the hotkey's index into the string at `[ESP+0xc]`.

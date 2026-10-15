@@ -170,6 +170,27 @@ There is no vertical alignment flag: every label is vertically centred in its re
 
 `inkHeight` is the font's own `0x1a` header field (11 for `.HFN`), **not** its cell height (13) — see [`../formats/dfn-hfn-dci.md`](../formats/dfn-hfn-dci.md), "`inkHeight` and label placement". All the arithmetic is integer, both shifts included; doing it in floating point shifts a label up to a pixel on either axis.
 
+**The label object** is every HUD caption in the simulator, the MFD's and the other displays' alike. `Label_Ctor` (`004387ac`), (label, font, panelRelative), zeroes `0x21` bytes and stores:
+
+| Offset | Holds |
+|---|---|
+| `+0x00` | the font, which is the text's color ([HUD fonts](cockpit-hud-widgets.md#hud-fonts)) |
+| `+0x04`–`+0x13` | the rect `{x0, y0, x1, y1}` |
+| `+0x14`, `+0x16` | the anchor's x and y, `int16` |
+| `+0x18` | panel-relative: `Label_SetText` subtracts the global blit offset (`004d25da`, `004d25de`) from the fill rect and the pen |
+| `+0x19` | the alignment flags, 2 center and 4 right |
+| `+0x1d` | the fill color; 0 draws no background |
+| `+0x21` | the hotkey font, on a label built by `Label_CtorWithAltFont` |
+
+`Label_SetText` fills the rect in the fill color, with the brush `{0, color}` installed at the current render context's `+0x22c` for the fill, before it draws the text. The other entry points:
+
+- `Label_CtorWithAltFont` (`00438a70`), (label, font, panelRelative): `Label_Ctor`, then the same font again at `+0x21`, a `0x25`-byte label. `es2_xref.py` finds its calls in `MfdFlashCommScreen_Ctor` and `HddCommandScreen_Ctor`, and those of `Label_SetTextWithHotkey` in the two screens' paints and updates; the hotkey font the rows draw in is [below](#mfdflashcomm--mode-1).
+- `Label_SetTextWithHotkey` (`00438aac`), (label, text, index): `Label_SetText` through `Label_SetText_Thunk` (`00438a94`), then, when index is at most the text's length, moves the pen x (`004d1838`) right by `HudFont_MeasureString` of the text's first index characters and draws `text[index]` again with `HudFont_DrawGlyph` in the font at `+0x21`. That is the order list's red hotkey letter ([the order rows](#mfdflashcomm--mode-1)).
+- `Label_SetRectAroundPoint` (`004387d0`), (label, point, text, flags): sizes the rect to the text around a point instead of taking one. With the text's width w, flags 2 makes `x0 = x − w/2`, `x1 = x0 + w` and the anchor x their midpoint; 4 makes `x1 = x`, `x0 = x − w + 1` and the anchor x x; otherwise `x0 = x`, `x1 = x + w` and the anchor x x. `y0 = y − cellHeight/2` and `y1 = y`, and the anchor y is `inkHeight + y1 + y`, which counts y twice ([Open](#open)).
+- `Label_SetNumber` (`00438a40`), (label, n): the decimal text of n through `_itoa`, then `Label_SetText` ([Open](#open)).
+
+`Label_StaticInitNoOp` (`00438b1c`), a lone `RET`, is the label file's static initializer.
+
 ## Screens
 
 ### `MFDStatus` — modes 0 and 4
@@ -380,3 +401,4 @@ The `mfd_dmg` bank is the screen's sensor-dropout wipe, played over the inset at
 - **Deferred:** what label 2 of the MISSILE CAM screen (`+0x3b`) shows. `es2_fieldscan.py 3b` over `0043facc`-`00440500` finds only the constructor's re-font, against two paint reads of label 1 (`+0x37`) as control.
 - **Deferred:** a writer of `mech+0xb0` other than `Mech_DirectFireHitTest` (`00418dc7`, set) and `Mech_PerTickSystemsUpdate` (`0041ab25`, clear). `es2_fieldscan.py b0 --writes-only` over `00400000`-`004a0000` finds no other on a mech (the rest are widget dirty flags and the `004d2540` video block), and no `memset`, `memcpy` or `REP MOVS` onto a mech was found. A writer that reaches a machine the player is not piloting would let a HERC on F5 read `SHIELDS DN`.
 - **Deferred:** what the 100 a TARGET press writes to the SCANNER screen's `+0xc` does. `es2_fieldscan.py c` over `0043a2e0`-`00440a00` finds the status screen's read of its own `+0xc` in `MfdStatusScreen_Update` and no read of the SCANNER screen's: both `+0xc` reads in its update and paint are of the shared state block, through `+0x8`.
+- **Open:** a caller of `Label_SetRectAroundPoint` (`004387d0`) or `Label_SetNumber` (`00438a40`): `es2_xref.py` finds no branch to either and no stored pointer.
