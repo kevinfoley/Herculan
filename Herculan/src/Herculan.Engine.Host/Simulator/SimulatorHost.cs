@@ -8,12 +8,14 @@ using Herculan.Engine.Host.Settings;
 using Herculan.Engine.Host.Simulator.Rendering;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
+using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Settings;
 using Herculan.Engine.Sim;
 using Herculan.Engine.Sim.Ai;
 using Herculan.Engine.World;
 using Silk.NET.Input;
+using Silk.NET.Maths;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Host.Simulator;
@@ -60,6 +62,10 @@ sealed class SimulatorHost : IDisposable {
 	private const int ScreenCount = 8;
 	private const int MfdScreenCount = 6;
 
+	// The mission's frame with the high-resolution tweak off: retail's resolution (docs/retail/launch-options.md,
+	// "Display").
+	private static readonly Vector2D<int> RetailFrameSize = new(640, 480);
+
 	// Built once the window has a GL context.
 	private IInputContext? _inputContext;
 	private ScaledImGui? _imgui;
@@ -73,6 +79,7 @@ sealed class SimulatorHost : IDisposable {
 	private CockpitTextures? _textures;
 	private DamageFlash? _flash;
 	private CockpitRenderer? _cockpit;
+	private FixedResolutionTarget? _retailFrame;
 
 	/// <summary>
 	/// Runs one mission in <paramref name="window"/> with -R&lt;n&gt;'s track select, and returns its exit code
@@ -108,10 +115,10 @@ sealed class SimulatorHost : IDisposable {
 		_window = new EngineWindow(window, $"HERCULAN Engine — zone {mission.Header.ZoneIndex}");
 
 		var cockpitInput = new CockpitInput();
-		var tape = new TapePlayback(start.TapePlayer, _preferences, () => _window.FramebufferSize, cockpitInput);
+		var tape = new TapePlayback(start.TapePlayer, _preferences, () => Fit().Frame, cockpitInput);
 		_tape = tape;
 		_recording = new TapeRecording(start.TapeRecorder, _preferences, _ports);
-		_input = new SimulatorInput(_window, tape, cockpitInput);
+		_input = new SimulatorInput(_window, tape, cockpitInput, Fit);
 
 		_panels = new ModalPanels(start, _input, _view, hasCockpit: _art != null, staging.Start.Joystick);
 		_panels.OpenStaged(staging.Start);
@@ -152,7 +159,7 @@ sealed class SimulatorHost : IDisposable {
 
 		_windowKeys = new WindowKeys(_window, _input, tape, start.InstallRoot, start.Disc);
 		_frame = new SimulatorFrame(start, _art, _view, _displays, _panels, tape, _recording, _developerKeys, staging,
-			_outcome, _input, _windowKeys, _menuBar, () => _window.FramebufferSize);
+			_outcome, _input, _windowKeys, _menuBar, () => Fit().Frame);
 		_frame.Stepper.Ticked += () => _debugProbes.SampleBeams(_scene.World);
 		_pauseMenu = new PauseMenu(session.Localization, _frame, _panels, _outcome, cockpitInput);
 		_input.MouseQueued += (x, y, buttons, width, height) =>
@@ -177,6 +184,16 @@ sealed class SimulatorHost : IDisposable {
 	}
 
 	public void Dispose() => _window.Dispose();
+
+	// Where the mission's frame sits in the window: the whole window, or with the high-resolution tweak off retail's
+	// resolution scaled to fit it (TweakSettingDefinitions.HighResolutionWidescreen). Read each time it is asked, so the
+	// tweak takes effect on the frame it is set.
+	private FrameFit Fit() {
+		var window = _window.FramebufferSize;
+		return TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.HighResolutionWidescreen)
+			? FrameFit.Whole(window)
+			: new FrameFit(RetailFrameSize, window);
+	}
 
 	// MainWndProc's WM_KILLFOCUS calls Sim_Suspend (0045f0b8) and its WM_SETFOCUS Sim_Resume (0045f0ec); see
 	// SimulatorFrame.Suspend. A --screenshot run is not held, so a capture never waits on the window having the focus.
@@ -283,6 +300,7 @@ sealed class SimulatorHost : IDisposable {
 		_textures = new CockpitTextures(gl, _art, _displays.HddCommand, _displays.HddMapFlashRaster);
 		_flash = new DamageFlash(_scene, _art, _passes.Scene, _textures);
 		_cockpit = new CockpitRenderer(gl, _art, _view, _displays, _textures, _passes);
+		_retailFrame = new FixedResolutionTarget(gl, RetailFrameSize);
 
 		_input.Attach(input);
 		_inputContext = input;
@@ -443,7 +461,7 @@ sealed class SimulatorHost : IDisposable {
 			return;
 		}
 
-		int focalPixels = DetailMetrics.FocalPixels(_window.FramebufferSize.Y);
+		int focalPixels = DetailMetrics.FocalPixels(Fit().Frame.Y);
 		_world.Refresh(_view.Camera, focalPixels, _preferences);
 		_filing.BeginFrame();
 		_transient.Refresh(_view.Camera, focalPixels, _preferences);
@@ -462,11 +480,19 @@ sealed class SimulatorHost : IDisposable {
 			: null;
 
 	private void OnRender(GL gl) {
-		if (_passes == null || _cockpit == null || _textures == null || _flash == null) {
+		if (_passes == null || _cockpit == null || _textures == null || _flash == null || _retailFrame == null) {
 			return;
 		}
 
-		var size = _window.FramebufferSize;
+		// The mission draws into the frame, the window's own or retail's 640x480; the host's ImGui goes over
+		// the window at its own resolution once the frame is in it.
+		var fit = Fit();
+		var size = fit.Frame;
+		var window = fit.Window;
+		if (fit.Scaled) {
+			_retailFrame.Bind();
+		}
+
 		_passes.Scene.Clear();
 
 		var pilotMech = _view.PilotMech;
@@ -500,6 +526,10 @@ sealed class SimulatorHost : IDisposable {
 			_panels.Draw(_cockpit.AlertPanels, size.X, size.Y, _textures.HudSprites, panelSprites);
 		}
 
+		if (fit.Scaled) {
+			_retailFrame.Present(fit);
+		}
+
 		// The menu bar and its panels: hidden until [Shift+Esc] raises the bar (see SimulatorFrame), and never in a
 		// --screenshot capture, which sees no input to raise it. Nor does either of the pad's own menus show in one.
 		if (_options.ScreenshotPath == null) {
@@ -512,12 +542,12 @@ sealed class SimulatorHost : IDisposable {
 		_debugPanel.Draw(
 			new DebugPanelContext(_view.Piloting, _view.ExternalViewActive, pilotMech, _scene.Targeting, _scene.World,
 				_scene.PlayerObject?.Model?.Segments.Length ?? 0, _scene.World.Terrain),
-			size.Y);
+			window.Y);
 
 		_imgui?.Render();
 
 		if (_staging.AfterFrame(_scene.World, _passes.DrawsBeams, _displays.SquadComm, _view.Shake)) {
-			Screenshot.Capture(gl, size.X, size.Y, _options.ScreenshotPath!);
+			Screenshot.Capture(gl, window.X, window.Y, _options.ScreenshotPath!);
 			_window.Close();
 		}
 	}
@@ -528,6 +558,7 @@ sealed class SimulatorHost : IDisposable {
 		_imgui?.Dispose();
 		_passes?.Dispose();
 		_cockpit?.Dispose();
+		_retailFrame?.Dispose();
 		_textures?.Dispose();
 		_uploads?.Dispose();
 	}

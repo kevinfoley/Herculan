@@ -119,6 +119,15 @@ public static class TweakSettingDefinitions {
 	/// rotates through the tracks in disc order, one per mission. See <see cref="Audio.CdMusic.ShuffledTrack"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> ShuffleMissionMusic = new("tweak.shuffle_mission_music", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
+	/// Draw a mission at the window's own resolution and shape. Off, it is drawn at 640x480, retail's own resolution
+	/// (docs/retail/launch-options.md, "Display"), and the frame is scaled to fit the window, centred, so a window wider
+	/// than 4:3 gets bars at its sides; HERCULAN's own ImGui windows stay at the window's resolution either way. The
+	/// shell is drawn at 640x480 whatever this is set to.
+	/// <para>Defaults on, an exception to the retail-by-default rule. See <see cref="Render.FixedResolutionTarget"/>.</para>
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> HighResolutionWidescreen = new("tweak.high_resolution_widescreen", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);
 	#endregion
 
 	#region AI
@@ -218,7 +227,7 @@ public static class TweakSettingDefinitions {
 
 	/// <summary>Every defined <c>bool</c> tweak setting, keyed by ID for <see cref="TweakSettings"/> save/load.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
-		ShowCorrectStats, ShowAccurateSpeed, RoundShieldBalance, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
+		HighResolutionWidescreen, ShowCorrectStats, ShowAccurateSpeed, RoundShieldBalance, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
