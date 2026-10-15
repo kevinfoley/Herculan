@@ -23,9 +23,16 @@ internal sealed record ObjectTarget(SceneObject Object) : MoveTarget;
 internal sealed record WaypointTarget(EditorRoute Route, int Index, bool WithLast, bool Detach = false) : MoveTarget;
 
 /// <summary>
-/// Moves what stands on a <c>script.dat</c> block-1 point — a placed object or a route's waypoint — and keeps an undo
-/// history. After every change to the document's points, <see cref="PointFollowers"/> places again whatever else stands
-/// on them, and after every move, previews included, <see cref="TerrainLeveller"/> levels the ground under the
+/// Group <paramref name="Group"/>, by block-11 record index, moved through the point it stands on: its own, else its
+/// route's first waypoint. <paramref name="Detach"/> when the move gives it a point of its own rather than moving the
+/// point it stands on.
+/// </summary>
+internal sealed record GroupTarget(int Group, bool Detach = false) : MoveTarget;
+
+/// <summary>
+/// Moves what stands on a <c>script.dat</c> block-1 point — a placed object, a route's waypoint or a group — and keeps an
+/// undo history. After every change to the document's points, <see cref="PointFollowers"/> places again whatever else
+/// stands on them, and after every move, previews included, <see cref="TerrainLeveller"/> levels the ground under the
 /// structures where they now stand.
 ///
 /// <para>An object is given a point of its own (<see cref="ScriptPointRefs.Place"/>), which its roster record's ref then
@@ -40,6 +47,13 @@ internal sealed record WaypointTarget(EditorRoute Route, int Index, bool WithLas
 /// Either way its point is written with Z 0, as all but one waypoint in the retail missions has it; the simulator reads
 /// a waypoint's Z only as the starting altitude of a flight standing on its route's first waypoint and for the
 /// heads-down map's route icons (docs/retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once).</para>
+///
+/// <para>A group moves as a waypoint does: the point it stands on — its block-11 record's own, else its slot-0 route's
+/// first waypoint (docs/retail/formats/script-dat.md#placement--the-actual-rule, rules 2 and 3) — moves, and whatever
+/// shares it with it; a detached move gives the record a point of its own. Its members with no point of their own, a
+/// paints-ground group's pad and, for group 0, the player's squad follow (<see cref="PointFollowers"/>). The move is of
+/// the authored point, which a paints-ground structure group's snap then puts in its tile. Only a flyer group's height
+/// is read from the point (rule 5), so only a flyer group's is the mission's to set; any other keeps the point's Z.</para>
 /// </summary>
 internal sealed class PointMover {
 	private readonly ScriptDat _document;
@@ -52,8 +66,10 @@ internal sealed class PointMover {
 	private readonly List<Edit> _undo = new();
 	private readonly List<Edit> _redo = new();
 
-	// Block 1 as it stood before a drag of a shared point began writing into it, until the drag commits or is cancelled.
+	// Block 1 as it stood before a drag of a shared point or a group began writing into it, and the dragged group's
+	// ref, until the drag commits or is cancelled.
 	private ScriptCoordinate[]? _beforeDrag;
+	private short[]? _refsBeforeDrag;
 
 	public PointMover(ScriptDat document, MissionScene scene, MissionIndex index, ScenePicker picker, MissionOverlay overlay,
 			TerrainMaterialTable materials) {
@@ -83,12 +99,13 @@ internal sealed class PointMover {
 
 	public bool CanRedo => _redo.Count > 0;
 
-	/// <summary>What <paramref name="selection"/> names that can be moved: a movable object or a waypoint, else null.</summary>
+	/// <summary>What <paramref name="selection"/> names that can be moved: a movable object, a waypoint or a group, else null.</summary>
 	public MoveTarget? TargetOf(EditorSelection? selection) => selection switch {
 		ObjectSelection { Object: var selected } when WhyFixed(selected) == null => new ObjectTarget(selected),
 		RouteSelection { Waypoint: >= 0 } waypoint when _index.Route(waypoint.Route) is { } route
 				&& waypoint.Waypoint < route.Points.Count && _followers.WaypointEntries(route.Reference) != null =>
 			new WaypointTarget(route, waypoint.Waypoint, waypoint.Waypoint == 0 && route.Closed),
+		GroupSelection { Group: var group } when WhyFixed(group) == null => new GroupTarget(group),
 		_ => null
 	};
 
@@ -100,11 +117,27 @@ internal sealed class PointMover {
 	public string? WhyFixed(SceneObject sceneObject) {
 		var placement = sceneObject.Placement;
 		if (placement.IsPlayerLance) {
-			return "The player's squad stands at group 0's point; it has no roster record of its own to move.";
+			return "The player's squad stands at group 0's point; it has no roster record of its own. Move group 0 to move it.";
 		}
 
 		return RecordRef(placement.Kind, placement.SlotIndex) == null
 			? $"Its {placement.Kind.ToString().ToLowerInvariant()} roster slot {placement.SlotIndex} is not in the file."
+			: null;
+	}
+
+	/// <summary>
+	/// Why group <paramref name="group"/> cannot be moved, or null when it can. A structure group that paints its ground
+	/// with no structure placed has no pad to snap by and nothing standing on its point.
+	/// </summary>
+	public string? WhyFixed(int group) {
+		if (group < 0 || group >= _document.Groups.Length || _index.SetupOf(group) is not { } setup) {
+			return $"Group {group}'s record is not in the file.";
+		}
+
+		bool snaps = setup.PaintsGround && group < _index.Mission.GroupKinds.Count
+			&& _index.Mission.GroupKinds[group] == MissionUnitKind.Base;
+		return snaps && _index.BasePads.All(pad => pad.GroupIndex != group)
+			? "It paints its ground but has no structure placed: nothing stands on its point."
 			: null;
 	}
 
@@ -117,26 +150,49 @@ internal sealed class PointMover {
 		return refs.Distinct().Sum(reference => ScriptPointRefs.Count(_document, reference)) - refs.Length;
 	}
 
+	/// <summary>
+	/// How many other fields name the point <paramref name="target"/>'s group stands on — trigger areas, other groups,
+	/// waypoints — which move with it unless it is detached. For a group standing on its route's first waypoint, these
+	/// are besides that waypoint (<see cref="SharersOf(WaypointTarget)"/>).
+	/// </summary>
+	public int SharersOf(GroupTarget target) {
+		short own = _document.Groups[target.Group].PositionRef;
+		if (Coordinate(own) != null) {
+			return ScriptPointRefs.Count(_document, own) - 1;
+		}
+
+		return StartOf(target.Group) is { } start ? SharersOf(start) : 0;
+	}
+
 	/// <summary>Whether a point's Z is the mission's to set for <paramref name="sceneObject"/>: only a flyer's is.</summary>
 	public static bool HasOwnHeight(SceneObject sceneObject) => sceneObject.Object is FlyerObject;
 
-	/// <summary>Whether <paramref name="target"/> takes a height: a flyer alone.</summary>
-	public static bool HasOwnHeight(MoveTarget target) => target is ObjectTarget { Object: var sceneObject } && HasOwnHeight(sceneObject);
+	/// <summary>Whether <paramref name="target"/> takes a height: a flyer or a flyer group alone.</summary>
+	public bool HasOwnHeight(MoveTarget target) => target switch {
+		ObjectTarget { Object: var sceneObject } => HasOwnHeight(sceneObject),
+		GroupTarget group => IsFlyerGroup(group.Group),
+		_ => false
+	};
 
-	/// <summary>Where <paramref name="target"/> stands now, in world units.</summary>
-	public static Vec3i PositionOf(MoveTarget target) => target switch {
+	/// <summary>
+	/// Where <paramref name="target"/> stands now, in world units. A group's is its authored point, before a paints-ground
+	/// snap; a flyer group's height is where its first member flies, 5000 for a point at Z 0 (rule 5).
+	/// </summary>
+	public Vec3i PositionOf(MoveTarget target) => target switch {
 		ObjectTarget { Object: var sceneObject } => sceneObject.Object.Position,
 		WaypointTarget waypoint => waypoint.Route.Points[waypoint.Index],
+		GroupTarget { Group: var group } when _index.SetupOf(group) is { AuthoredPoint: var point } =>
+			IsFlyerGroup(group) ? new Vec3i(point.X, point.Y, FlyerHeight(point.Z)) : point,
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
 
 	/// <summary>
-	/// Where the move handles sit, in render space: on an object's position, or on a waypoint's marker, which is drawn
-	/// on the ground under it.
+	/// Where the move handles sit, in render space: on an object's position or a flyer group's first member, or on a
+	/// waypoint's or another group's marker, which is drawn on the ground under it.
 	/// </summary>
 	public Vector3 HandleOrigin(MoveTarget target) {
 		var position = PositionOf(target);
-		return target is WaypointTarget
+		return target is WaypointTarget || (target is GroupTarget && !HasOwnHeight(target))
 			? WorldScale.ToRender(new Vec3i(position.X, position.Y, _terrain.HeightAtWorld(position.X, position.Y) + DrapedLines.LiftWorld))
 			: WorldScale.ToRender(position);
 	}
@@ -144,24 +200,54 @@ internal sealed class PointMover {
 	/// <summary>
 	/// Where <paramref name="target"/> stands for a point at (<paramref name="x"/>, <paramref name="y"/>,
 	/// <paramref name="z"/>): an object where the simulator stands it, <paramref name="z"/> read for a flyer alone; a
-	/// waypoint at Z 0.
+	/// waypoint at Z 0; a group at <paramref name="z"/> when it is a flyer group, else at its point's own Z.
 	/// </summary>
 	public Vec3i Standing(MoveTarget target, int x, int y, int z) => target switch {
 		ObjectTarget { Object: var sceneObject } => PointFollowers.Standing(_terrain, sceneObject, x, y, z),
 		WaypointTarget => new Vec3i(x, y, 0),
+		GroupTarget group => new Vec3i(x, y, HasOwnHeight(group) ? z : PositionOf(group).Z),
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
 
 	/// <summary>
+	/// The waypoint group <paramref name="group"/> stands on when its record names no point of its own: its slot-0
+	/// order's route's first, with the last when the route is closed. Null when it has a point of its own, or no route
+	/// whose waypoints can be told apart.
+	/// </summary>
+	public WaypointTarget? StartOf(int group) {
+		if (Coordinate(_document.Groups[group].PositionRef) != null || group >= _index.Mission.GroupOrders.Count
+				|| _index.Mission.GroupOrders[group] is not { Count: > 0 } orders || orders[0] is not { RouteRef: var routeRef }
+				|| _index.Route(routeRef) is not { Points.Count: > 0 } route || _followers.WaypointEntries(route.Reference) == null) {
+			return null;
+		}
+
+		return new WaypointTarget(route, 0, route.Closed);
+	}
+
+	/// <summary>
 	/// Stands <paramref name="target"/> at <paramref name="position"/> as a drag does before it lets go. An object or a
 	/// detached waypoint moves for the eye alone, the document unchanged until <see cref="Commit"/>; a waypoint moving
-	/// its shared point writes the point, so what shares it follows, and <see cref="Commit"/> or <see cref="Cancel"/>
-	/// settles it.
+	/// its shared point, or a group, writes into the document, so what follows it does, and <see cref="Commit"/> or
+	/// <see cref="Cancel"/> settles it.
 	/// </summary>
 	public void Preview(MoveTarget target, Vec3i position) {
 		if (target is WaypointTarget { Detach: false } waypoint) {
 			_beforeDrag ??= Snapshot(_document.Coordinates);
 			WritePoints(waypoint, position);
+			_followers.Sync();
+		} else if (target is GroupTarget group) {
+			// Each step starts again from the document as the drag found it, so a detached group appends one point at
+			// most, however far it is dragged.
+			_beforeDrag ??= Snapshot(_document.Coordinates);
+			_refsBeforeDrag ??= ReadRefs(group);
+			_document.Coordinates = Snapshot(_beforeDrag);
+			WriteRefs(group, _refsBeforeDrag);
+			try {
+				MoveGroup(group, position);
+			} catch (InvalidOperationException) {
+				// Commit reports it.
+			}
+
 			_followers.Sync();
 		} else {
 			Stand(target, position);
@@ -174,7 +260,12 @@ internal sealed class PointMover {
 	public void Cancel(MoveTarget target, Vec3i before) {
 		if (_beforeDrag is { } points) {
 			_document.Coordinates = points;
+			if (_refsBeforeDrag is { } refs) {
+				WriteRefs(target, refs);
+			}
+
 			_beforeDrag = null;
+			_refsBeforeDrag = null;
 			_followers.Sync();
 		} else {
 			Stand(target, before);
@@ -201,6 +292,29 @@ internal sealed class PointMover {
 			_beforeDrag = null;
 			WritePoints(shared, position);
 			Record(target, new State(unmoved, refs, before), new State(Snapshot(_document.Coordinates), refs, position));
+			return;
+		}
+
+		if (target is GroupTarget group) {
+			var unmoved = _beforeDrag ?? Snapshot(_document.Coordinates);
+			short[] refsBefore = _refsBeforeDrag ?? refs;
+			_beforeDrag = null;
+			_refsBeforeDrag = null;
+			_document.Coordinates = Snapshot(unmoved);
+			WriteRefs(group, refsBefore);
+			try {
+				MoveGroup(group, position);
+			} catch (InvalidOperationException ex) {
+				Console.Error.WriteLine($"Cannot move {Describe(target)}: {ex.Message}");
+				_document.Coordinates = Snapshot(unmoved);
+				WriteRefs(group, refsBefore);
+				_followers.Sync();
+				_leveller.Relevel();
+				return;
+			}
+
+			Record(target, new State(unmoved, refsBefore, before),
+				new State(Snapshot(_document.Coordinates), ReadRefs(group), position));
 			return;
 		}
 
@@ -275,6 +389,39 @@ internal sealed class PointMover {
 		}
 	}
 
+	// Moves a group's point in the document as it stands: the point it stands on, its own or its route's first
+	// waypoint's, unless the move detaches it or it stands on neither; else a point of its own. The Z written is the
+	// point's own unless a flyer group's height moved: a flyer group at the point's Z 0 flies at 5000, and writing 5000
+	// would lift every member whose slot adds a height of its own.
+	private void MoveGroup(GroupTarget target, Vec3i position) {
+		short own = _document.Groups[target.Group].PositionRef;
+		var start = StartOf(target.Group);
+		int pointZ = Coordinate(own)?.Z ?? (start != null ? _document.Coordinates[ReadRefs(start)[0]].Z : 0);
+		int z = HasOwnHeight(target) && position.Z != FlyerHeight(pointZ) ? position.Z : pointZ;
+
+		if (!target.Detach && Coordinate(own) != null) {
+			var point = _document.Coordinates[own];
+			point.X = position.X;
+			point.Y = position.Y;
+			point.Z = z;
+		} else if (!target.Detach && start != null) {
+			WritePoints(start, new Vec3i(position.X, position.Y, z));
+		} else {
+			_document.Groups[target.Group].PositionRef = ScriptPointRefs.Place(_document, own, position.X, position.Y, z);
+		}
+	}
+
+	private bool IsFlyerGroup(int group) =>
+		group < _index.Mission.GroupKinds.Count && _index.Mission.GroupKinds[group] == MissionUnitKind.Flyer;
+
+	// Where a flyer group's first member flies for a point at height z (rule 5).
+	private static int FlyerHeight(int z) => z == 0 ? FlyerObject.DefaultHoverHeight : z;
+
+	private Vec3i? Coordinate(short reference) =>
+		reference >= 0 && reference < _document.Coordinates.Length
+			? new Vec3i(_document.Coordinates[reference].X, _document.Coordinates[reference].Y, _document.Coordinates[reference].Z)
+			: null;
+
 	private void Stand(MoveTarget target, Vec3i position) {
 		switch (target) {
 			case ObjectTarget { Object: var sceneObject }:
@@ -301,17 +448,19 @@ internal sealed class PointMover {
 	private static string Describe(MoveTarget target) => target switch {
 		ObjectTarget { Object: var sceneObject } => MissionText.Describe(sceneObject),
 		WaypointTarget waypoint => $"waypoint {waypoint.Index} of route {waypoint.Route.Reference}",
+		GroupTarget group => $"group {group.Group}",
 		_ => target.ToString()
 	};
 
 	private List<Vec3i> Points() => _document.Coordinates.Select(point => new Vec3i(point.X, point.Y, point.Z)).ToList();
 
-	// The fields that name the target's point: its roster record's PositionRef, or its block-3 entry — two for a
-	// closed route's first waypoint, which is also its last.
+	// The fields that name the target's point: its roster record's or its group record's PositionRef, or its block-3
+	// entry — two for a closed route's first waypoint, which is also its last.
 	private short[] ReadRefs(MoveTarget target) => target switch {
 		ObjectTarget { Object.Placement: var placement } => new[] { RecordRef(placement.Kind, placement.SlotIndex)!.Value },
 		WaypointTarget waypoint => Array.ConvertAll(WaypointEntries(waypoint),
 			entry => _document.WaypointGroups[waypoint.Route.Reference].Waypoints[entry]),
+		GroupTarget group => new[] { _document.Groups[group.Group].PositionRef },
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
 
@@ -319,6 +468,9 @@ internal sealed class PointMover {
 		switch (target) {
 			case ObjectTarget { Object.Placement: var placement }:
 				SetRecordRef(placement.Kind, placement.SlotIndex, refs[0]);
+				break;
+			case GroupTarget group:
+				_document.Groups[group.Group].PositionRef = refs[0];
 				break;
 			case WaypointTarget waypoint:
 				int[] entries = WaypointEntries(waypoint);

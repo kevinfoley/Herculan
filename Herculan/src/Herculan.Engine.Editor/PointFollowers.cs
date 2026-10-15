@@ -152,7 +152,11 @@ internal sealed class PointFollowers {
 				? walked.Points
 				: Array.Empty<Vec3i>();
 
-			var authored = Coordinate(_document.Groups[group].PositionRef) ?? (route.Count > 0 ? route[0] : Vec3i.Zero);
+			var own = Coordinate(_document.Groups[group].PositionRef);
+			var authored = own ?? (route.Count > 0 ? route[0] : Vec3i.Zero);
+			var source = own != null ? MissionGroupPointSource.OwnPoint
+				: route.Count > 0 ? MissionGroupPointSource.RouteStart
+				: MissionGroupPointSource.None;
 			// Only a structure group snaps. One that paints its ground with no structure placed has no pad, and so no
 			// layout to snap by; it has nothing to move either.
 			bool snaps = setup.PaintsGround && group < _index.Mission.GroupKinds.Count
@@ -169,11 +173,11 @@ internal sealed class PointFollowers {
 			}
 
 			int heading = setup.HeadingFromRoute ? MissionLoader.RouteBearing(route) : setup.Heading;
-			if (point == setup.Point && authored == setup.AuthoredPoint && heading == setup.Heading) {
+			if (point == setup.Point && authored == setup.AuthoredPoint && source == setup.PointSource && heading == setup.Heading) {
 				continue;
 			}
 
-			var moved = setup with { Point = point, AuthoredPoint = authored, Heading = heading };
+			var moved = setup with { Point = point, AuthoredPoint = authored, PointSource = source, Heading = heading };
 			_index.SetSetup(group, moved);
 			Vec3i? anchor = PlaceMembers(group, setup, moved, pad?.Anchor);
 			if (pad != null && anchor is { } newAnchor) {

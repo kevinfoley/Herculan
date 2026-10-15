@@ -579,6 +579,42 @@ internal sealed class PropertiesPanel {
 				+ $"material {pad.Layout.MaterialIndex}. Only which tile the authored point falls in matters; "
 				+ "a move within the tile changes nothing.");
 		}
+
+		ImGui.Separator();
+		DrawGroupMove(group, setup);
+	}
+
+	/// <summary>What dragging the group's move handles moves with it (<see cref="PointMover"/>), or why it cannot be moved.</summary>
+	private void DrawGroupMove(int group, MissionGroupSetup setup) {
+		if (_mover.WhyFixed(group) is { } reason) {
+			ImGui.TextDisabled(reason);
+			return;
+		}
+
+		if (_mover.TargetOf(new GroupSelection(group)) is not GroupTarget target) {
+			return;
+		}
+
+		int sharers = _mover.SharersOf(target);
+		string others = $"{sharers} other record(s) naming its point — trigger areas, groups, waypoints —";
+		if (setup.PointSource == MissionGroupPointSource.OwnPoint) {
+			ImGui.TextWrapped(sharers > 0
+				? $"Its point is named by {others} which move with it. Alt+drag moves the group alone."
+				: "Nothing else names its point.");
+		} else if (_mover.StartOf(group) != null) {
+			ImGui.TextWrapped("Dragging moves its route's first waypoint, the start of the route"
+				+ (sharers > 0 ? $", and the {others} with it" : "")
+				+ ". Alt+drag gives the group a point of its own.");
+		} else {
+			ImGui.TextWrapped("Dragging gives it a point of its own.");
+		}
+
+		int waitsOn = _index.DeploymentActionOf(group);
+		if (waitsOn >= 0 && Mission.Actions[waitsOn].Verb is MissionAction.VerbPodWide or MissionAction.VerbPodNarrow
+				or MissionAction.VerbWalkBehind or MissionAction.VerbWalkAhead) {
+			ImGui.TextWrapped($"It arrives {MissionText.ArrivalKind(Mission.Actions[waitsOn].Verb)}, placed about the "
+				+ "player when the action fires: its point is a placeholder, and moving it does not move where it arrives.");
+		}
 	}
 
 	/// <summary>An out-of-action report's counter writes, or nothing when it makes none.</summary>

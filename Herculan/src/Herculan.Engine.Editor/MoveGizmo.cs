@@ -5,9 +5,10 @@ using Herculan.Engine.Render;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The move handles drawn on the selected object or waypoint (<see cref="PointMover.TargetOf"/>): an arrow along world X
-/// (red) and world Y (green), a square in the ground plane between them that moves it both ways at once, and for a
-/// flyer an arrow up world Z (blue) — the one height the mission sets (<see cref="PointMover.HasOwnHeight(MoveTarget)"/>).
+/// The move handles drawn on the selected object, waypoint or group (<see cref="PointMover.TargetOf"/>): an arrow along
+/// world X (red) and world Y (green), a square in the ground plane between them that moves it both ways at once, and for
+/// a flyer or a flyer group an arrow up world Z (blue) — the one height the mission sets
+/// (<see cref="PointMover.HasOwnHeight(MoveTarget)"/>).
 /// Dragging one previews the move through <see cref="PointMover.Preview"/> and commits it, as one undo step, on release.
 /// The handles keep one size on screen however far away the target is, and draw through the terrain and other objects.
 /// </summary>
@@ -69,7 +70,7 @@ internal sealed class MoveGizmo {
 
 		DrawArrow(wireframe, camera, aspect, origin, WorldX, length, hot == Handle.X ? HotColor : XColor);
 		DrawArrow(wireframe, camera, aspect, origin, WorldY, length, hot == Handle.Y ? HotColor : YColor);
-		if (PointMover.HasOwnHeight(target)) {
+		if (_mover.HasOwnHeight(target)) {
 			DrawArrow(wireframe, camera, aspect, origin, WorldZ, length, hot == Handle.Z ? HotColor : ZColor);
 		}
 
@@ -86,15 +87,20 @@ internal sealed class MoveGizmo {
 
 	/// <summary>
 	/// Starts a drag when <paramref name="pointer"/> is on a handle of the selection, and says whether it did.
-	/// <paramref name="detach"/> gives a dragged waypoint a point of its own rather than moving the one it shares.
+	/// <paramref name="detach"/> gives a dragged waypoint or group a point of its own rather than moving the one it stands
+	/// on.
 	/// </summary>
 	public bool TryBegin(Camera camera, Vector2 pointer, Vector2 viewport, bool detach) {
 		if (Movable is not { } target) {
 			return false;
 		}
 
-		if (detach && target is WaypointTarget waypoint) {
-			target = waypoint with { Detach = true };
+		if (detach) {
+			target = target switch {
+				WaypointTarget waypoint => waypoint with { Detach = true },
+				GroupTarget group => group with { Detach = true },
+				_ => target
+			};
 		}
 
 		var handle = HandleAt(camera, target, pointer, viewport);
@@ -118,7 +124,7 @@ internal sealed class MoveGizmo {
 
 		_dragging = handle;
 		_target = target;
-		_start = PointMover.PositionOf(target);
+		_start = _mover.PositionOf(target);
 		_current = _start;
 		return true;
 	}
@@ -183,7 +189,7 @@ internal sealed class MoveGizmo {
 		var best = Handle.None;
 		float bestDistance = GrabPixels;
 		foreach (var handle in new[] { Handle.X, Handle.Y, Handle.Z }) {
-			if (handle == Handle.Z && !PointMover.HasOwnHeight(target)) {
+			if (handle == Handle.Z && !_mover.HasOwnHeight(target)) {
 				continue;
 			}
 

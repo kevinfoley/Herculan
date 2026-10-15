@@ -157,7 +157,7 @@ public sealed class EditorHost {
 		}
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's or waypoint's arrows to move it (Alt detaches a waypoint from what shares its point), Ctrl+Z/Ctrl+Y undo/redo, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), Ctrl+Z/Ctrl+Y undo/redo, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
