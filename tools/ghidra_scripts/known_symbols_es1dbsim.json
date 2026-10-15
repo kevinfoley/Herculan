@@ -7058,7 +7058,13 @@
       "confidence": "high",
       "name": "ConfigPart_GetClassTagMsgPortCopy",
       "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009306e; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
-      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends"
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "0002e4ab+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002e4b4",
@@ -7322,7 +7328,13 @@
       "confidence": "high",
       "name": "MessagePort_UnpaintNoOp",
       "description": "(port), callee-cleaned (RET 4), frameless: two NOPs and ret 4. Slot +0x14 of MsgPortVtable (00093172). ES2's MessagePort_UnpaintNoOp (DBSIM 0043757e).",
-      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots"
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots",
+      "verified": {
+        "bytes": "0002ed7e+5",
+        "sha1": "193b9046c34c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002ed83",
@@ -7331,7 +7343,13 @@
       "confidence": "high",
       "name": "MessagePort_PaintNoOp",
       "description": "(port), callee-cleaned (RET 4), frameless: a NOP and ret 4. Slot +0x18 of MsgPortVtable (00093172). ES2's MessagePort_PaintNoOp (DBSIM 00437590).",
-      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots"
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots",
+      "verified": {
+        "bytes": "0002ed83+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002ed87",
@@ -7340,7 +7358,13 @@
       "confidence": "high",
       "name": "MessagePort_GetRect",
       "description": "(port), callee-cleaned (RET 4), frameless: a NOP, then returns port + 0x43f, the box rect, with mov eax,[esp+4]; add eax,0x43f; ret 4. Slot +0x1c of MsgPortVtable (00093172), and of DialogPortVtable (000931b6) as 0002ed88, past the NOP. The code of MessagePort_GetRectPanelCopy (0002cb47). ES2's MessagePort_GetRect (DBSIM 00437583).",
-      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots"
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots",
+      "verified": {
+        "bytes": "0002ed87+13",
+        "sha1": "7c50ebe31292",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002ed94",
@@ -7709,7 +7733,13 @@
       "confidence": "high",
       "name": "MessagePort_StaticInit",
       "description": "Frameless, no arguments: the message boxes' file's static initializer, entry 000adc30 of the static constructor table. __vec_ctor(PilotStringTables (000b0e14), 0x10, 3, StringTable_Ctor (00044f14)) in stack order, then StringTable_Ctor on CommandStringTable (000b0e44) and SystemStringTable (000b0e54). ES2's MessagePort_StaticInit (DBSIM 00437270). es2_xref finds the table entry as its one reference.",
-      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends"
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "0002fe00+40",
+        "sha1": "01945b8a5e73",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002fe28",
@@ -7718,7 +7748,13 @@
       "confidence": "high",
       "name": "MessagePort_StaticDtor",
       "description": "Frameless, no arguments: the exit routine of MessagePort_StaticInit (0002fe00), entry 000adcb4 of the static destructor table. OwnedArray_Dtor (00044f48)(SystemStringTable, 2), the same on CommandStringTable, then __vec_dtor of the three PilotStringTables with OwnedArray_Dtor. Its RET at 0002fe5b ends the object file. ES2's MessagePort_StaticDtor (DBSIM 004372c4). es2_xref finds the table entry as its one reference.",
-      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends"
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "0002fe28+52",
+        "sha1": "79ff07bf82de",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00030288",
