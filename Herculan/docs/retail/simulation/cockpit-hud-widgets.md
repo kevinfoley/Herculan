@@ -256,9 +256,18 @@ The damage diagram drawn from a chassis' [`.PDG`](../formats/pdg-paper-doll.md):
 
 ### Tinting
 
-A region is not filled. `PaperDoll_RecolorRect` (`00437e94`) walks the region's rect a pixel at a time and, in mode 0 (the region's [`recolorMode`](../formats/pdg-paper-doll.md#views)), rewrites only the pixels still holding `colorId`, which is why the outlines and detail drawn over a limb survive its recolour. Modes 1 and 3 do the same without the doubled pixel step; mode 2 adds the tint to every pixel that is not the id-19 background. Modes 0 and 1 skip the walk when the two colours are equal, so an undamaged region costs nothing.
+A region is not filled. `PaperDoll_RecolorRect` (`00437e94`), (rect, keyIndex, tintIndex, mode), rewrites only the pixels of the region's rect that still hold `colorId` (the key), which is why the outlines and detail drawn over a limb survive its recolor. It makes the display's draw page (`+0x3c`) its source page (`+0x38`, through `g_RasterRoutines` slot 16 when that display is current), offsets the rect by the canvas context's `+0x210`, `+0x214` less its `+0x220`, `+0x224`, does nothing when the top row is then above row 0, and walks the rect a row at a time, left to right, reading each pixel back through `g_RasterRoutines_GetPixel` and writing through `g_RasterRoutines_PutPixel`. The mode is the region's [`recolorMode`](../formats/pdg-paper-doll.md#views):
 
-`PaperDoll_RecolorRectFromArt` (`00438230`) is the same four modes reading the source bitmap instead of the raster, for a screen that repaints a region without having repainted what is under it first — the Heads-Down Display's route, where the MFD takes the first.
+| Mode | A pixel is rewritten when it is | It becomes | The walk is skipped when tint = key |
+|---|---|---|---|
+| 0 | the key | the tint | yes |
+| 1 | the key | the tint | yes |
+| 2 | anything but `COLORS.DAT` id 19's index, the background | itself + the tint | no |
+| 3 | the key | the tint | no |
+
+Mode 0 is written as a range test from the key to the key and a shift of the pixel by tint − key, which comes to the same. When a 320-wide bank is drawn doubled (`VideoMode_PanelMode` 3 without `VideoMode_UseHiResBanks`), every mode tests one pixel per block of 2^`VideoMode_XCoordShift` × 2^`VideoMode_YCoordShift` and writes the whole block, stepping a block at a time; otherwise a block is one pixel.
+
+`PaperDoll_RecolorRectFromArt` (`00438230`), (rect, art, artOrigin, keyIndex, tintIndex, mode), is the same walk with mode 0 testing the source bitmap instead of the screen, for a screen that repaints a region without having repainted what is under it first: the pixel at the rect's offset from `artOrigin` (offset the same way) in `art`'s rows, its width the `int16` `+6` and its pixels from `+0xe`, the offset divided by the block size. Its mode 0 does not skip when tint = key, and its modes 1 to 3 step one pixel, doubled bank or not. `es2_xref.py` finds `PaperDoll_RecolorRect` called once from `MfdStatusScreen_Paint` and five times from `HddDamageScreen_Update`, and `PaperDoll_RecolorRectFromArt` once from `HddDamageScreen_Update`.
 
 `Damage_PickRegionTint` (`00438624`) chooses the colour from one Q8 damage reading, on `Damage_ToConditionState`'s own bands:
 

@@ -6925,7 +6925,13 @@
       "confidence": "high",
       "name": "Mech_GetGunLayout",
       "description": "GunLayout_GetBySlot(mechTypeRecord[0] + _DAT_004a9df4) -- this machine's hardpoint list. Its return value is what Mech_ConfigureLoadout hands MechLoadout_ConstructWeaponMounts as the record array and count.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "00420634+31",
+        "sha1": "3c4a7fbd447c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00420654",
@@ -12266,8 +12272,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SimStrings_LoadAll",
-      "description": "Opens one str\\*.STR file and registers its string groups into .bss pointer arrays, in strict file order -- 41 registrations for STRINGS0.STR, so a group's index is its position in this sequence. The sixth (13 entries into MfdCaptionTable) is the MFD's caption/title table. A registration passes a second destination array only for groups whose entries carry attribute bytes, which matches the file's own self-describing per-entry attribute count. See docs/retail/formats/str-strings.md.",
-      "source": "docs/retail/formats/str-strings.md"
+      "description": "(path): StringTable_Load(SimStringTable, path), then 41 StringTable_LoadGroup(SimStringTable, destination, capacity, attributes) registrations in file order, so a group's index is its position in this sequence. The first alone passes an attribute array (DAT_004d1374, beside its destination DAT_004d132c); the sixth fills MfdCaptionTable with 13. es2_xref finds one call, from ColorSchemePanels_LoadAll at 004310d2. See docs/retail/formats/str-strings.md.",
+      "source": "docs/retail/formats/str-strings.md",
+      "verified": {
+        "bytes": "00437598+766",
+        "sha1": "3893d8310048",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00437898",
@@ -12306,7 +12318,13 @@
       "confidence": "high",
       "name": "PaperDoll_InitTables",
       "description": "Allocates the per-type 0x5c-byte .PDG table PaperDoll_Load fills, loads the weapon-icon bank weapons.hba/.dba into DAT_004d1754, and reads pdg\\WEAPONS.PDG's {width, height} pairs into WeaponIconSizes, shifted by VideoMode_X/YCoordShift.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (Weapon icons)"
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md (Weapon icons)",
+      "verified": {
+        "bytes": "004378d8+244",
+        "sha1": "037ad03fc59c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004379cc",
@@ -12314,8 +12332,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PaperDoll_Load",
-      "description": "pdamage.cpp .PDG loader. Reads 3 views, each an origin/size pair plus a vector of 0x1c-byte regions {int index, int left, int top, int right, int bottom, int colorId, int spacer}; resolves each region's colorId through HudColorTable in place and shifts its coordinates by VideoMode_X/YCoordShift, with bottomRight additionally +1 in the 640-wide mode. Then reads the weapon-icon hardpoint list into +0x54 (count) / +0x58 (0x14-byte entries {int x, int y, int frameOffset, int alignment, int blitFlags}), shifting x and y.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (.PDG)"
+      "description": "(name, slot), pdamage.cpp's .PDG loader into the slot's 0x5c-byte record in the table at 0049bbe8. Loads the bank <name> from the folder at 0049bc4c with VideoMode_UseHiResBanks set and 0049bc50 without, through Resource_Load, and opens pdg\\<name>, asserting at severity 5 (pdamage.cpp, line 0x48) when it does not open. Reads an int32 view count, then per view the bank's frame (its +8 array, by view index), two 8-byte {x, y} reads into +4 and +0xc shifted by VideoMode_X/YCoordShift (the second +1 each with the hi-res banks), an int32 region count and that many 0x1c-byte regions {int index, int left, top, right, bottom, int colorId, int recolorMode} built with PaperDollRegion_ElementCtor, each colorId resolved through HudColorTable in place and each rect shifted the same way; seven dwords per view. Then an int32 count and that many 0x14-byte hardpoints {int x, y, frameOffset, alignment, blitFlags} at +0x54 (count) and +0x58, x and y shifted. See docs/retail/formats/pdg-paper-doll.md.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md (.PDG)",
+      "verified": {
+        "bytes": "004379cc+666",
+        "sha1": "4123412f80e8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00437c68",
@@ -12338,8 +12362,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PaperDoll_BuildWeaponIcons",
-      "description": "Builds one machine's weapon-icon list (count + 0x22-byte entries: bitmap, x, y, rect, blit flags, short gun index at +0x20), stored at mech+0x1fe by Sim_InitMissionSession. Entry n is .PDG hardpoint n; it finds the .GL record whose slot byte +0x17 is n, takes that mount's template +0x50 plus the entry's frame offset as the WEAPONS frame, and anchors it by the entry's alignment bits against the WEAPONS.PDG size.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (Weapon icons)"
+      "description": "(machine): builds the machine's weapon-icon list and returns the Mem_New'd 8-byte {count, array} holder: count = the .PDG hardpoint count (type record +0x1f2, record +0xda, +0x54), 0x22-byte entries {bitmap, x, y, rect, blit flags, int16 gun index +0x20} from Rtl_VectorNew with PaperDollWeaponIcon_ElementCtor. Entry n is hardpoint n; it finds the Mech_GetGunLayout record whose slot byte +0x17 is n and takes the mount at that position of the array at +4 of the loadout at +0x202; that mount's template +0x50 plus the hardpoint's frame offset is the WEAPONS frame (none for an empty mount or -1), anchored by the hardpoint's alignment bits against WeaponIconSizes; blit flags 2 move it left by the bitmap's int16 width +6 (shifted for a doubled bank) less that size. es2_xref finds one call, from Sim_InitMissionSession at 00461bc5, which stores the result at mech+0x1fe.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md (Weapon icons)",
+      "verified": {
+        "bytes": "00437c8c+517",
+        "sha1": "8c72d86bed61",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00437e94",
@@ -12347,9 +12377,15 @@
       "type": "function",
       "confidence": "high",
       "name": "PaperDoll_RecolorRect",
-      "description": "Repaints one .PDG region in place, reading each pixel back out of the raster. Modes 0, 1 and 3 rewrite only the pixels holding keyIndex; mode 2 adds tintIndex to every pixel that is not the id-19 background. Modes 0 and 1 skip the walk entirely when the two colours agree. Mode 0 steps whole device pixels at a time when a 320-wide bank is being drawn doubled; the other three step one. The MFD status screen's route -- the HDD damage screen uses PaperDoll_RecolorRectFromArt instead. See docs/retail/simulation/cockpit-hud-widgets.md.",
+      "description": "(rect, keyIndex, tintIndex, mode), cdecl: repaints one .PDG region in place. Makes the display DAT_006c5f54's draw page +0x3c its source page +0x38 (through maybe_g_RasterRoutines_SetSourcePage when that display is current), offsets rect by the canvas context DAT_006c5ff4's +0x210, +0x214 less its +0x220, +0x224, returns when the top row is then negative, and walks the rect a row at a time, reading through g_RasterRoutines_GetPixel and writing through g_RasterRoutines_PutPixel. Modes 0 and 1 set a pixel equal to keyIndex to tintIndex (mode 0 as the range keyIndex..keyIndex shifted by tintIndex - keyIndex), both skipping the walk when the two agree; mode 2 adds tintIndex to every pixel but HudColorTable id 19's index (DAT_004d3c26); mode 3 sets a pixel equal to keyIndex to tintIndex. With VideoMode_PanelMode 3 and VideoMode_UseHiResBanks clear, every mode tests one pixel per block of 2^VideoMode_XCoordShift by 2^VideoMode_YCoordShift and writes the whole block. es2_xref finds six calls: one from MfdStatusScreen_Paint, five from HddDamageScreen_Update. See docs/retail/simulation/cockpit-hud-widgets.md#tinting.",
       "source": "docs/retail/simulation/cockpit-hud-widgets.md (.PDG)",
-      "signature": "void __cdecl PaperDoll_RecolorRect(int *rect, int keyIndex, int tintIndex, int mode)"
+      "signature": "void __cdecl PaperDoll_RecolorRect(int *rect, int keyIndex, int tintIndex, int mode)",
+      "verified": {
+        "bytes": "00437e94+922",
+        "sha1": "811a03ee49b7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438230",
@@ -12357,9 +12393,15 @@
       "type": "function",
       "confidence": "high",
       "name": "PaperDoll_RecolorRectFromArt",
-      "description": "PaperDoll_RecolorRect's four modes over a source bitmap rather than the raster: mode 0 walks art's own rows (width at +6, pixels at +0xe) offset by artOrigin, so a region can be recoloured from the art without the screen underneath being repainted first. Modes 1-3 still read the raster back and do not expand pixels. The HDD damage screen's route. See docs/retail/simulation/cockpit-hud-widgets.md.",
+      "description": "(rect, art, artOrigin, keyIndex, tintIndex, mode), cdecl: PaperDoll_RecolorRect's set-up, top-row test and walk, with mode 0 testing art's own pixel (rows of its int16 width +6, pixels from +0xe) at the pixel's offset from artOrigin, offset like rect and divided by the block size, for keyIndex, writing tintIndex as a block for a doubled bank, whatever the two colors are. Modes 1 to 3 read the raster back as PaperDoll_RecolorRect's do and step one pixel, doubled bank or not. es2_xref finds one call, from HddDamageScreen_Update. See docs/retail/simulation/cockpit-hud-widgets.md#tinting.",
       "source": "docs/retail/simulation/cockpit-hud-widgets.md (.PDG)",
-      "signature": "void __cdecl PaperDoll_RecolorRectFromArt(int *rect, void *art, int *artOrigin, int keyIndex, int tintIndex, int mode)"
+      "signature": "void __cdecl PaperDoll_RecolorRectFromArt(int *rect, void *art, int *artOrigin, int keyIndex, int tintIndex, int mode)",
+      "verified": {
+        "bytes": "00438230+1012",
+        "sha1": "d5d94c7550dc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438624",
@@ -12367,9 +12409,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Damage_PickRegionTint",
-      "description": "Picks the colour one .PDG damage region is repainted in. Writes {condition state, palette index} to the caller's two-int block. Bands are Damage_ToConditionState's -- intact >=90/74/51/1 -- and for the region mode at region+0x18 of 0, 2 or 3 the colours are HudColorTable ids 12, 15, 20, 9, 18 (green, yellow, orange, red, grey). Mode 1 instead keeps the region's own colour id (region+0x14) for the top three bands, so an undamaged region is left alone, and takes ids 6 and 17 for the last two; no retail region states a mode other than 0. Mode >= 4 falls through writing the caller's own scratch. See docs/retail/simulation/cockpit-hud-widgets.md.",
+      "description": "(damage, region, stateAndColorOut), cdecl: picks the color one .PDG damage region is repainted in, writing {condition state, palette index} to the two-int block at stateAndColorOut. Bands are Damage_ToConditionState's -- intact >=90/74/51/1 -- and for the region mode at region+0x18 of 0, 2 or 3 the colors are HudColorTable ids 12, 15, 20, 9, 18 (green, yellow, orange, red, grey). Mode 1 instead keeps the region's own color id (region+0x14) for the top three bands, so an undamaged region is left alone, and takes ids 6 and 17 for the last two. Mode >= 4 writes uninitialized values there. See docs/retail/simulation/cockpit-hud-widgets.md.",
       "source": "docs/retail/simulation/cockpit-hud-widgets.md (.PDG)",
-      "signature": "void __cdecl Damage_PickRegionTint(int damage, void *region, int *stateAndColorOut)"
+      "signature": "void __cdecl Damage_PickRegionTint(int damage, void *region, int *stateAndColorOut)",
+      "verified": {
+        "bytes": "00438624+218",
+        "sha1": "ecc329e87f8e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00438700",

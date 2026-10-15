@@ -2027,6 +2027,21 @@
       }
     },
     {
+      "address": "0001a0f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_GetGunLayout",
+      "description": "(machine), callee-cleaned: GunLayout_GetBySlot (0000c18c)(the int16 at +0 of the machine's type record +0x188, plus the int16 at 000bc44e) and returns its result, the machine's hardpoint list: an int16 count at +0 and 0x1a-byte records from the pointer at +2. ES2's Mech_GetGunLayout (DBSIM 00420634), which reads +0x1f2. es2_xref finds two calls, from 00012c0f and PaperDoll_BuildWeaponIcons (0003058c).",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-weapon-icons",
+      "verified": {
+        "bytes": "0001a0f8+34",
+        "sha1": "0017661b54d9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0001a154",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -5902,7 +5917,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ColorSchemePanels_LoadAll",
-      "description": "(cockpit), callee-cleaned: passes ResourcePath_BuildFolderName (00060698)(str, strings0) to 0002fe84. While ColorSchemePanels (00092d40) is 0 loads the ten fonts the table 00092dc4 names (cpblue to cporange) from the folder 00098108 names (dfn) with Panel_LoadWrapper (0002adf4). While Cockpit_CursorImages (00092d20) is 0 loads the seven cursors the table 00092e24 names (cursor to wcursor) from the folder 00098100 names (dci) with Cursor_LoadWrapper (0002ae28) and stores cursor 0 at +0x236 and +0x232. Zeroes the three g_SquadmateMachines (000bcc16). While CockpitPButtonsBank (00092d68) is 0 loads dba\\pbuttons into it with ClassItem_LoadFromFile (0005760c). Calls memset (00060b40)(cockpit + 0x8f4, 0x239, 0), a count of 0. Stores the cockpit in CockpitViewInstance (00092d1c) when that is 0, clears the byte +0x20b, stores cockpit + 0x232 at +0x222 and sets the int16 +0x23b to -1. ES2's ColorSchemePanels_LoadAll (DBSIM 00431098) loads 18 fonts, from hfn in panel mode 3, puts cursor 1 in its forward slot, clears its active slot and its power-up fields, and loads no pbuttons.",
+      "description": "(cockpit), callee-cleaned: passes ResourcePath_BuildFolderName (00060698)(str, strings0) to SimStrings_LoadAll (0002fe84). While ColorSchemePanels (00092d40) is 0 loads the ten fonts the table 00092dc4 names (cpblue to cporange) from the folder 00098108 names (dfn) with Panel_LoadWrapper (0002adf4). While Cockpit_CursorImages (00092d20) is 0 loads the seven cursors the table 00092e24 names (cursor to wcursor) from the folder 00098100 names (dci) with Cursor_LoadWrapper (0002ae28) and stores cursor 0 at +0x236 and +0x232. Zeroes the three g_SquadmateMachines (000bcc16). While CockpitPButtonsBank (00092d68) is 0 loads dba\\pbuttons into it with ClassItem_LoadFromFile (0005760c). Calls memset (00060b40)(cockpit + 0x8f4, 0x239, 0), a count of 0. Stores the cockpit in CockpitViewInstance (00092d1c) when that is 0, clears the byte +0x20b, stores cockpit + 0x232 at +0x222 and sets the int16 +0x23b to -1. ES2's ColorSchemePanels_LoadAll (DBSIM 00431098) loads 18 fonts, from hfn in panel mode 3, puts cursor 1 in its forward slot, clears its active slot and its power-up fields, and loads no pbuttons.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
       "verified": {
         "bytes": "0002aecc+318",
@@ -7757,12 +7772,114 @@
       }
     },
     {
+      "address": "0002fe5c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorSimStringsCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorPanelCopy (0002acdc): with p non-null deletes the block p points at with operator_delete (000015f8) when that is non-null, then p itself when bit 0 of flags is set. The first function of the string table's object file, which carries no copy of ConfigPart's tables. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/formats/str-strings.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "0002fe5c+40",
+        "sha1": "cff19ff959c6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002fe84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimStrings_LoadAll",
+      "description": "(path), callee-cleaned: StringTable_LoadFromFile (00044f78)(SimStringTable (000b0f04), path), then 35 calls of StringTable_LoadGroup (000450b0)(SimStringTable, attributes, count, destination) in stack order, one per group of str\\STRINGS0.STR in file order, each count the group's size in the retail file. The first passes the attribute array SquadOrderAttributes (000bd270) and fills SquadOrderStrings (000bd228); the eighth fills SquadCallsignStrings (000bd324); the destination arrays run from SquadOrderStrings (000bd228) to 000bd4f3, the 34th's at 000bd4a8 between the 30th's and 31st's. ES2's SimStrings_LoadAll (DBSIM 00437598), which registers 41 groups. es2_xref finds one call, from ColorSchemePanels_LoadAll at 0002aee5.",
+      "source": "Herculan/docs/es1/formats/str-strings.md#the-load",
+      "verified": {
+        "bytes": "0002fe84+842",
+        "sha1": "a3101f67fb7e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000301d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimStrings_StaticInit",
+      "description": "Frameless, no arguments: the string table's file's static initializer, entry 000adc34 of the static constructor table: StringTable_Ctor (00044f14)(SimStringTable (000b0f04)). ES2's SimStrings_StaticInit (DBSIM 00437898). es2_xref finds the table entry as its one reference. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/formats/str-strings.md#where-the-object-file-starts-and-ends"
+    },
+    {
+      "address": "000301dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimStrings_StaticDtor",
+      "description": "Frameless, no arguments: SimStrings_StaticInit (000301d0)'s exit routine, entry 000adcb8 of the exit table: OwnedArray_Dtor (00044f48)(SimStringTable (000b0f04), 2). Its RET at 000301e8 is followed by three zero bytes, the end of the string table's object file. ES2's SimStrings_StaticDtor (DBSIM 004378c8). No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/formats/str-strings.md#where-the-object-file-starts-and-ends"
+    },
+    {
+      "address": "000301ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorPaperDollCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorPanelCopy (0002acdc): with p non-null deletes the block p points at with operator_delete (000015f8) when that is non-null, then p itself when bit 0 of flags is set. The first of the four functions that open the paper doll's object file. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "000301ec+40",
+        "sha1": "591e281f9e5b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00030214",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorPaperDollCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the paper doll's copy 000932e2 of ConfigPart's vtable: the code of ConfigPart_DtorPanelCopy (0002ad04): with part non-null stores 000932e2, calls HeapBlockOwner_Dtor (00002598)(part + 0x10, 0), stores TSPartBase's copy 00093316, calls TSBase_Dtor (0005ba58)(part, 0) and deletes part when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "00030214+63",
+        "sha1": "174f5dbe851d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00030253",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagPaperDollCopy",
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 000932e2; the code of ConfigPart_GetClassTagPanelCopy (0002ad43). No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#where-the-object-file-starts-and-ends"
+    },
+    {
+      "address": "0003025c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorPaperDollCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00093316 (entered at its padding 00030259): the code of TSPartBase_DtorPanelCopy (0002ad4c) storing 00093316.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "0003025c+42",
+        "sha1": "21ab406389b0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00030288",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "PaperDoll_InitTables",
-      "description": "(count), callee-cleaned: __vec_new's count 0x5c-byte records to 00093348, loads dba\\weapons with ClassItem_LoadFromFile to 000b0f14, and reads pdg\\weapons: an int32 n and n * 8 bytes to 000b0f18. ES2's PaperDoll_InitTables (DBSIM 004378d8), which picks the bank's folder by VideoMode_UseHiResBanks and shifts the coordinates it reads.",
+      "description": "(count), callee-cleaned: __vec_new's count 0x5c-byte records to PaperDoll_TypeTable (00093348), loads dba\\weapons with ClassItem_LoadFromFile to PaperDoll_WeaponIconBank (000b0f14), and reads pdg\\weapons: an int32 n and n * 8 bytes to WeaponIconSizes (000b0f18). ES2's PaperDoll_InitTables (DBSIM 004378d8), which picks the bank's folder by VideoMode_UseHiResBanks and shifts the coordinates it reads.",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
       "verified": {
         "bytes": "00030288+140",
@@ -7772,18 +7889,168 @@
       }
     },
     {
+      "address": "00030314",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDollType_ElementCtor",
+      "description": "(record), callee-cleaned: allocates 0x5c bytes with operator_new (000015a4) when record is null, returning 0 when that fails; then __vec_ctor (000610cb)(PaperDollView_ElementCtor (00030344) by its padding 00030342, 3, 0x1c, record) in stack order, and returns record. The element constructor PaperDoll_InitTables (00030288) hands __vec_new for the per-type 0x5c-byte paper-doll records (the pointer stored at 0003029b). ES2's PaperDollType_ElementCtor (DBSIM 00438765).",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-records",
+      "verified": {
+        "bytes": "00030314+46",
+        "sha1": "14d767c23337",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00030344",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDollView_ElementCtor",
+      "description": "(view), callee-cleaned: allocates 0x1c bytes with operator_new when view is null, returning 0 when that fails; then the inlined constructors of the 8-byte points at +4 and +0xc, each allocating 8 bytes when its own address is 0; returns view. The element constructor PaperDollType_ElementCtor hands __vec_ctor for a record's three views. ES2's PaperDollView_ElementCtor (DBSIM 004387a3), which returns its argument.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-records",
+      "verified": {
+        "bytes": "00030344+65",
+        "sha1": "5f1d4c09e9f1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00030388",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "PaperDoll_Load",
-      "description": "(slot, name) in stack order, callee-cleaned: the slot's 0x5c-byte record in 00093348. Loads dba\\<name> with ClassItem_LoadFromFile and reads pdg\\<name>: an int32 view count, then per view the bank's frame pointer (from the bank's +8 array), two 8-byte reads, an int32 region count and that many 0x1c-byte regions, seven dwords per view; then an int32 count and that many 0x14-byte entries at +0x54 and +0x58. Returns the record. ES2's PaperDoll_Load (DBSIM 004379cc), which picks the bank's folder by VideoMode_UseHiResBanks, asserts when pdg\\<name> does not open, shifts the coordinates and resolves the region colours through HudColorTable.",
+      "description": "(slot, name) in stack order, callee-cleaned: the slot's 0x5c-byte record in PaperDoll_TypeTable (00093348). Loads dba\\<name> with ClassItem_LoadFromFile and reads pdg\\<name>: an int32 view count, then per view the bank's frame pointer (from the bank's +8 array), two 8-byte reads, an int32 region count and that many 0x1c-byte regions, seven dwords per view; then an int32 count and that many 0x14-byte entries at +0x54 and +0x58. Returns the record. ES2's PaperDoll_Load (DBSIM 004379cc), which picks the bank's folder by VideoMode_UseHiResBanks, asserts when pdg\\<name> does not open, shifts the coordinates and resolves the region colours through HudColorTable.",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
       "verified": {
         "bytes": "00030388+344",
         "sha1": "2d53fdaafe6d",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000304e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDollRegion_ElementCtor",
+      "description": "(region), callee-cleaned: allocates 0x1c bytes with operator_new when region is null, returning 0 when that fails; then the inlined constructor of the 0x10-byte rect at +4 and its two points, each allocating when its own address is 0; returns region. The element constructor PaperDoll_Load (00030388) hands __vec_new for a view's 0x1c-byte regions (the pointer stored at 0003044d). ES2's PaperDollRegion_ElementCtor (DBSIM 00438785).",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-records",
+      "verified": {
+        "bytes": "000304e0+90",
+        "sha1": "27fddb706170",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003053c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDollHardpoint_ElementCtor",
+      "description": "(hardpoint), callee-cleaned: allocates 0x14 bytes with operator_new when hardpoint is null, returning 0 when that fails; then the inlined constructor of the point at +0; returns hardpoint. The element constructor PaperDoll_Load hands __vec_new, by its padding 0003053a, for the 0x14-byte hardpoints (the pointer stored at 000304ac). ES2's PaperDollHardpoint_ElementCtor (DBSIM 00438790).",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-records",
+      "verified": {
+        "bytes": "0003053c+48",
+        "sha1": "1208dccc0d95",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003056c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDoll_GetView",
+      "description": "(view, machine) in stack order, callee-cleaned: returns the paper-doll record at +0xc2 of the machine's type record (+0x188), plus view * 0x1c. ES2's PaperDoll_GetView (DBSIM 00437c68), which reads +0x1f2 and +0xda. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-records",
+      "verified": {
+        "bytes": "0003056c+32",
+        "sha1": "1e31d0679a70",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003058c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDoll_BuildWeaponIcons",
+      "description": "(machine), callee-cleaned: builds the machine's weapon-icon list from the hardpoints (count +0x54, entries +0x58) of its paper-doll record (type record +0x188, then +0xc2): __vec_new's count 0x22-byte icons with PaperDollWeaponIcon_ElementCtor (000307b0). For hardpoint n it finds the record of Mech_GetGunLayout (0001a0f8)'s layout whose slot byte +0x17 is n, stores that position at the icon's int16 +0x20, and takes the mount at that position of the array at +0 of the loadout at the machine's +0x198. A null mount or a template +0x50 of -1 gives a null bitmap; otherwise the frame is template +0x50 * 2 plus the hardpoint's +8, the bitmap from PaperDoll_WeaponIconBank (000b0f14)'s +8 array and the size from WeaponIconSizes (000b0f18). The hardpoint's x and y (+0, +4) are backed off by the size or half of it per its alignment +0xc (bits 0-2: 2 right, 4 center; the rest: 0x10 bottom, 0x20 center) into +4 and +8, the rect +0xc to +0x18 runs from that point to it plus the size, the blit flags +0x10 go to +0x1c, and flags 2 move x left by the bitmap's int16 +6 less the width. Returns an operator_new'd 8-byte {count, icons} holder. ES2's PaperDoll_BuildWeaponIcons (DBSIM 00437c8c), which reads +0x1f2, +0xda and +4 of +0x202, adds template +0x50 to the frame offset and shifts the bitmap width for a doubled bank. es2_xref finds one call, from Sim_StartMission at 0005b27a, whose next instruction stores the result at the machine's +0x194.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-weapon-icons",
+      "verified": {
+        "bytes": "0003058c+546",
+        "sha1": "327f128cfee5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000307b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDollWeaponIcon_ElementCtor",
+      "description": "(icon), callee-cleaned: allocates 0x22 bytes with operator_new when icon is null, returning 0 when that fails; then the inlined constructors of the point at +4 and the 0x10-byte rect at +0xc; returns icon. PaperDoll_BuildWeaponIcons hands it to __vec_new by its padding 000307ae (the pointer stored at 000305c2), and the static initializer at PaperDoll_StaticInit (00030f00) to __vec_ctor (stored at 00030f1d). ES2's PaperDollWeaponIcon_ElementCtor (DBSIM 00438798).",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-records",
+      "verified": {
+        "bytes": "000307b0+104",
+        "sha1": "bd188519eb50",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00030818",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDoll_RecolorRect",
+      "description": "(mode, tint, key, rect) in stack order, callee-cleaned: makes the display 000bdd28's draw page +0x3c its source page +0x38 (storing it at 00098dd6 and passing it to g_RasterRoutines slot 16, 0009df14, when that display is current), offsets rect by the canvas context 000bdbda's +0x210, +0x214 less its +0x220, +0x224, and walks it a row at a time, left to right, one pixel at a time, reading through slot 4 (0009dee4) and writing through slot 5 (0009dee8). Mode 0 shifts a pixel in key..key+2 by tint - key and mode 1 sets a pixel equal to key to tint, both skipping the walk when tint = key; mode 2 adds tint to every pixel but 63; mode 3 sets a pixel in key..key+2 to tint. Jump table 0009335c. ES2's PaperDoll_RecolorRect (DBSIM 00437e94), which tests the key alone in modes 0 and 3, spares COLORS.DAT id 19's index in mode 2, writes a block per pixel for a doubled bank and returns when the top row is above the screen. es2_xref finds six calls: one from 000330b4, five from 000424f8.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#tinting",
+      "verified": {
+        "bytes": "00030818+667",
+        "sha1": "632acc94a124",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00030ab4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDoll_RecolorRectFromArt",
+      "description": "(mode, tint, key, artOrigin, art, rect) in stack order, callee-cleaned: PaperDoll_RecolorRect (00030818)'s set-up and walk, with mode 0 testing the byte of art (pixels from +0xe, rows of its int16 width +6) at the pixel's offset from artOrigin, offset like rect, for key..key+2 and writing it shifted by tint - key, whatever tint and key are; modes 1 to 3 as PaperDoll_RecolorRect's. Jump table 0009336c. ES2's PaperDoll_RecolorRectFromArt (DBSIM 00438230). es2_xref finds one call, from 000424f8.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#tinting",
+      "verified": {
+        "bytes": "00030ab4+782",
+        "sha1": "8ff520fbbf97",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00030dc4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Damage_PickRegionTint",
+      "description": "(out, region, damage) in stack order, callee-cleaned: with intact = (0x100 - damage) * 100 >> 8 banded at 90, 74, 51 and 1 into states 0 to 4, writes the state to out +0 and a palette index to out +4. For the region's mode +0x18 of 0, 2 or 3 the indices are 0x36, 0x39, 0x5c, 0x33 and 0x3e; for mode 1, the region's color +0x14 for state 0, that color minus the state for states 1 and 2 (0x3c plus the state when the color is 0x3c), and 0x30 and 0x3e for states 3 and 4. A mode above 3 writes EDX and EDI as they stand. Jump table 0009337c. ES2's Damage_PickRegionTint (DBSIM 00438624), whose colors are HudColorTable ids. es2_xref finds five calls: one from 000330b4, four from 000424f8.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#tinting",
+      "verified": {
+        "bytes": "00030dc4+242",
+        "sha1": "fef3c4494add",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -7799,6 +8066,30 @@
         "sha1": "369d7698f896",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00030f00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaperDoll_StaticInit",
+      "description": "Frameless, no arguments: the paper doll's file's static initializer, entry 000adc38 of the static constructor table: __vec_ctor (000610cb)(WeaponIconSize_ElementCtor (00030f28) by its padding 00030f27, 12, 8, WeaponIconSizes (000b0f18)) and __vec_ctor(PaperDollWeaponIcon_ElementCtor (000307b0), 0x11, 0x22, PaperDoll_StaticWeaponIcons (000b0f78)), in stack order. ES2's PaperDoll_StaticInit (DBSIM 0043874c), which builds 28 pairs. es2_xref finds the table entry as its one reference. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#where-the-object-file-starts-and-ends"
+    },
+    {
+      "address": "00030f28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponIconSize_ElementCtor",
+      "description": "(pair), callee-cleaned: allocates 8 bytes with operator_new (000015a4) when pair is null and returns pair. PaperDoll_StaticInit (00030f00) hands it to __vec_ctor by its padding 00030f27 for WeaponIconSizes (000b0f18). Its RET 4 at 00030f40, followed by one zero byte, ends the paper doll's object file.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "00030f28+27",
+        "sha1": "39793da4a7be",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -18695,6 +18986,15 @@
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-ticker"
     },
     {
+      "address": "00093348",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaperDoll_TypeTable",
+      "description": "Pointer to the per-type array of 0x5c-byte paper-doll records that PaperDoll_InitTables (00030288) allocates with __vec_new and PaperDoll_Load (00030388) fills by slot. ES2's DAT_0049bbe8.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-records"
+    },
+    {
       "address": "0009680c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -19116,6 +19416,42 @@
       "name": "MessagePort_TextBuffer",
       "description": "The ticker's line, 0x50 characters at most, set by MessagePort_SetText (0002f934) and drawn by MessageTicker_Paint (0002fa00).",
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-ticker"
+    },
+    {
+      "address": "000b0f04",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimStringTable",
+      "description": "The 0x10-byte string table SimStrings_LoadAll (0002fe84) loads str\\strings0 into, built by SimStrings_StaticInit (000301d0) and freed by SimStrings_StaticDtor (000301dc). ES2's SimStringTable (DBSIM 004d131c).",
+      "source": "Herculan/docs/es1/formats/str-strings.md#the-load"
+    },
+    {
+      "address": "000b0f14",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaperDoll_WeaponIconBank",
+      "description": "dba\\weapons, loaded by PaperDoll_InitTables (00030288) with ClassItem_LoadFromFile; PaperDoll_BuildWeaponIcons (0003058c) takes its frames from the bank's +8 array. ES2's DAT_004d1754.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-weapon-icons"
+    },
+    {
+      "address": "000b0f18",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponIconSizes",
+      "description": "12 {int32 width, int32 height} pairs, built by PaperDoll_StaticInit (00030f00) and read from pdg\\weapons by PaperDoll_InitTables (00030288); the retail file holds 12. PaperDoll_BuildWeaponIcons reads them by frame. ES2's WeaponIconSizes (DBSIM 004d1758), 28 pairs.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#the-records"
+    },
+    {
+      "address": "000b0f78",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaperDoll_StaticWeaponIcons",
+      "description": "17 0x22-byte weapon icons that PaperDoll_StaticInit (00030f00) builds with PaperDollWeaponIcon_ElementCtor (000307b0). es2_xref finds the address in PaperDoll_StaticInit alone; its reader is Open in the paper doll's doc.",
+      "source": "Herculan/docs/es1/simulation/paper-doll.md#open"
     },
     {
       "address": "000b17d8",
@@ -19791,6 +20127,24 @@
       "name": "SystemMessageIndex",
       "description": "The index of str\\system.str, 9-byte slots at id * 9, which MessagePort_Post (0002ed94) reads for a record with no subject. ES2's at DBSIM 004d0b33.",
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-string-files"
+    },
+    {
+      "address": "000bd228",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SquadOrderStrings",
+      "description": "18 string pointers, STRINGS0.STR group 0, the squadmate orders, filled by SimStrings_LoadAll (0002fe84). es2_xref finds the address at 00035dea, 00035e97, 00035f0a, 0003f75f, 0003f7fa and 00040a04. ES2's group 0 array (DBSIM 004d132c).",
+      "source": "Herculan/docs/es1/formats/str-strings.md#the-groups"
+    },
+    {
+      "address": "000bd270",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SquadOrderAttributes",
+      "description": "18 dwords, the attribute entries of STRINGS0.STR group 0 (one attribute byte per order in the retail file), filled by SimStrings_LoadAll (0002fe84) beside SquadOrderStrings (000bd228). es2_xref finds the address beside each of SquadOrderStrings' references. ES2's group 0 attribute array (DBSIM 004d1374).",
+      "source": "Herculan/docs/es1/formats/str-strings.md#the-groups"
     },
     {
       "address": "000bd324",
