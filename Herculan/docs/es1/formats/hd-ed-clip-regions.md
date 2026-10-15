@@ -42,5 +42,5 @@ Every file ends in 2 bytes past its last block, which the loader does not read: 
 ## Open
 
 - **Open:** what the bytes past the last block are; the bytes read as a third list that the loader skips.
-- **Open:** what widget `00039818` builds around the `edg\` file.
+- **Open:** what instrument `00039818` builds around the `edg\` file. `Gau_EnergyMeterWidget` (`0002cd3c`) calls it with the `.GAU` block at 548 and keeps it at the cockpit's `+0x1e1`; ES2 builds its energy pool meter from that block ([the cockpit object](../simulation/cockpit-panel.md#the-cockpit-object)).
 - **Open:** how the simulator draws through the regions, and whether a span's `xEnd` is inclusive as ES2's is.

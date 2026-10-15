@@ -40,7 +40,7 @@ Translation units: `MECHVIEW.CPP` (view manager, `00429660`–`0042ab00`), `PANE
 1. Load `vue\<HERC>` — [`../formats/vue-view-geometry.md`](../formats/vue-view-geometry.md).
 2. Allocate the four per-view slot arrays above.
 3. Per view `i`: `CockpitClipRegions_Load` on `ed<i>`/`hd<i>` ([`../formats/hd-ed-clip-regions.md`](../formats/hd-ed-clip-regions.md)), then `ClipRegions_BuildScanlineSpans`; and unless `CockpitArt_LoadOnDemand`, `CockpitCanopy_LoadViewBitmap` for `db<i>`/`hb<i>` — see [`../formats/canopy-art-hb-db.md`](../formats/canopy-art-hb-db.md#canopy-art--hb0hb1hb2-and-db0db1db2).
-4. Build `CockpitViewInstance` (`CockpitView_Ctor`, `00431008` → `ColorSchemePanels_LoadAll`) and `Gau_BuildCockpitWidgets`.
+4. Build `CockpitViewInstance` (`CockpitView_Ctor`, `00431008` → `ColorSchemePanels_LoadAll`) and `Gau_BuildCockpitWidgets` — [the cockpit object](cockpit-hud-widgets.md#the-cockpit-object).
 5. Install the per-herc cockpit colour scheme — see [`../rendering/cockpit-canopy-palette.md`](../rendering/cockpit-canopy-palette.md#palette).
 6. Install `IMPACTCP.DPL`'s same-index scheme into the secondary palette `DAT_0049aef8` for the damage flash — see [`../rendering/cockpit-canopy-palette.md`](../rendering/cockpit-canopy-palette.md#the-damage-shake).
 

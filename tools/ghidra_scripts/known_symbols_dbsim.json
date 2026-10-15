@@ -10210,8 +10210,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_CreateCanvasContext",
-      "description": "Allocates the cockpit widget layer's own 0x239-byte render context, sets clip mode 1 (single rect) at +0x208, turns on the blit translation at +0x20c (so Bitmap_BlitClipDispatch moves every blit by the rect's top-left less the origin at +0x220/+0x224), puts the caller's rect at +0x210..+0x21c, and stores it in DAT_004d042c. Gau_BuildCockpitWidgets passes the whole cockpit canvas and keeps the result at CockpitViewInstance+4.",
-      "source": "docs/retail/simulation/hud-target-indicator.md; DBSIM decompile at 00430ea0 (piVar1[0x83] = 1)"
+      "description": "(rect): the cockpit's canvas render context: allocates 0x239 bytes with Mem_New, builds a GLViewport there with GLViewport_Ctor, stores it at 004d042c, sets its clip mode +0x208 and its translation +0x20c to 1, copies rect's four dwords to +0x210..+0x21c, clears the byte +0x230 and the dword +0x231, sets +0x235 to 200 and returns the context. Gau_BuildCockpitWidgets (00431bf8) passes {0, 0, CockpitCanvasWidth - 1, 004d25d6 - 1} and stores the result at the cockpit's +4.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "00430ea0+181",
+        "sha1": "e917c3ae49ff",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00430f58",
@@ -10219,8 +10225,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Panel_LoadWrapper",
-      "description": "Trivial wrapper funneling .DFN/.HFN panel loads into ClassItem_LoadResource with the panel's filename.",
-      "source": "docs/retail/formats/dfn-hfn-dci.md"
+      "description": "(path): opens path with VolRStream_CtorFromPath on a stack stream, loads one class item from it with ClassItem_LoadResource(stream, 0), destroys the stream with VolRStream_Dtor(stream, 2) and returns the item. ColorSchemePanels_LoadAll (00431098) loads its fonts through it.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#hud-fonts",
+      "verified": {
+        "bytes": "00430f58+88",
+        "sha1": "74eae6ffeb8c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00430fb0",
@@ -10228,8 +10240,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cursor_LoadWrapper",
-      "description": "Trivial wrapper funneling .DCI cursor loads into ClassItem_LoadResource with the cursor's filename.",
-      "source": "docs/retail/formats/dfn-hfn-dci.md"
+      "description": "(path): the code of Panel_LoadWrapper (00430f58): opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(stream, 0), destroys the stream and returns the item. ColorSchemePanels_LoadAll (00431098) loads its cursors through it.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "00430fb0+88",
+        "sha1": "0766e50e58ba",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00431008",
@@ -10237,8 +10255,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_Ctor",
-      "description": "(view, mech): the 0x288-byte cockpit widget tree. Clears the int16 +0x218 and sets +0x214 to maybe_GlobalLiveObjectList (the target-selection cursor), stores mech at +0x203 and its HERCS.DAT record's int16 +0x6c at +0x201, ColorSchemePanels_LoadAll(view) (which sets CockpitViewInstance), then 004d0490 = a 16-byte array and 004d0494 = four 12-byte {0, 16-byte array, 16-byte array}. Returns view. CockpitViewManager_LoadViews builds it into manager+0x1f.",
-      "source": "DBSIM disassembly at 00431008"
+      "description": "(cockpit, machine): clears the int16 +0x218 and sets +0x214 to maybe_GlobalLiveObjectList, stores the machine at +0x203 and the int16 +0x6c of its type record (+0x1f2) at +0x201, runs ColorSchemePanels_LoadAll (00431098)(cockpit), then stores a 16-byte Mem_NewArray at 004d0490 and a 48-byte one at 004d0494 holding four 12-byte records {0, a 16-byte array, a 16-byte array}. Returns the cockpit.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "00431008+141",
+        "sha1": "6758895f84eb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00431098",
@@ -10246,8 +10270,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ColorSchemePanels_LoadAll",
-      "description": "PANEL.CPP-adjacent. Lazy-loads the 18 color-scheme .DFN/.HFN panels (cpblue first, extension chosen by VideoMode_PanelMode==3) into the ColorSchemePanels array, then the 7 .DCI cursors into a separate array. Loop counts (0x12=18, 7) match the real retail file counts exactly.",
-      "source": "docs/retail/formats/dfn-hfn-dci.md"
+      "description": "(cockpit): passes Language_StringFilePath(strings0, str)'s path to SimStrings_LoadAll. While ColorSchemePanels (0049b0ac) is 0 loads the 18 fonts of the name table 0049b108 (cpblue first) from hfn when VideoMode_PanelMode is 3 and from dfn otherwise, with Panel_LoadWrapper (00430f58). While Cockpit_CursorImages (0049b08c) is 0 loads the seven cursors of the name table 0049b150 from dci with Cursor_LoadWrapper (00430fb0), then stores cursor 1 (pcursor) at +0x236 and cursor 0 at +0x23a. Zeroes the three g_SquadmateMachines (004d044c), calls _memset(cockpit + 0xa20, 0x284, 0), stores the cockpit in CockpitViewInstance (0049b088) when that is 0, clears the byte +0x20f, the dword +0x226, the byte +0x245, the dword +0x241 and the byte +0x26a, and sets the int16 +0x23f to -1.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "00431098+325",
+        "sha1": "5e31936e9184",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004311e0",
@@ -10255,8 +10285,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_PushCanvasContext",
-      "description": "Pushes the current render context onto the stack at DAT_004d0470 and installs CockpitViewInstance+4, the full-canvas mode-1 context. Every cockpit widget paint runs inside a Cockpit_PushCanvasContext/Cockpit_PopRenderContext pair, which is why console instruments outside the canopy cutout can draw at all.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "(): adds 1 to the index byte 0049b106, saves the installed render context (006c5ff4) in the dword stack 004d0470 at that index, installs CockpitViewInstance's +4, the cockpit's canvas context, with Raster_InstallRenderContext and returns it. Cockpit_PopRenderContext (00431210) undoes it.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#drawing-it",
+      "verified": {
+        "bytes": "004311e0+47",
+        "sha1": "143034355ef1",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00431210",
@@ -10264,8 +10300,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_PopRenderContext",
-      "description": "Restores the render context Cockpit_PushCanvasContext saved. Gunsight_TargetIndicatorPaint calls it deliberately mid-paint to drop back into the view's canopy-clipped context for the target box's blits.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "(): reinstalls the render context Cockpit_PushCanvasContext (004311e0) saved at 004d0470[0049b106] with Raster_InstallRenderContext and takes 1 from the index byte 0049b106.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#drawing-it",
+      "verified": {
+        "bytes": "00431210+28",
+        "sha1": "beccd82fd808",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0043122c",
@@ -10273,8 +10315,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_DrawToCockpit",
-      "description": "Stage 1 of the two-stage deferred paint that vtable slot +0xc drives. Acts only on the -b paged path (Display_UseScrollWindow == 0) and returns 0 otherwise: pushes the canvas render context, sets the source page (+0x38) and draw page (+0x3c) to the render target's +0x8c/+0x88 for a first argument of 1 (the reverse for 0) and copies the widget's rect between them with Region_CopyBetweenPages at the offset in the third argument, Cockpit_ZeroOffset ({0,0}) when that is null. Skips argument 1 while DAT_004d25ae is set. All 34 callers pass a null offset, and driver 3's rect copy returns at once on a zero offset, so in this image the copy moves nothing.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "(which, rect, offset): copies a widget's rect between the display's two pages. Returns 0 unless Display_UseScrollWindow is 0, CockpitView_RectCornerVisible (00431410)(rect) passes and the published view manager's byte +0x1c is 0. With the display at 006c5f54, which = 1 copies from its +0x8c to its +0x88 and returns 0 while 004d25ae is set; any other value copies from +0x88 to +0x8c. Inside Cockpit_PushCanvasContext and Cockpit_PopRenderContext it stores the source page at the display's +0x38 and the draw page at +0x3c, each also through the raster routines' source- and draw-page slots; builds a region of the rect with its far corner one pixel further on each axis whose coordinate shift is above 0 and every corner less 004d25da/004d25de; copies it with Region_CopyBetweenPages at the offset, Cockpit_ZeroOffset when that is null, between the hide- and show-cursor slots; puts the draw page back and returns 1.",
+      "source": "Herculan/docs/retail/simulation/cockpit-views.md#the--b-paged-path",
+      "verified": {
+        "bytes": "0043122c+484",
+        "sha1": "a743a62563ff",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00431410",
@@ -10282,8 +10330,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_RectCornerVisible",
-      "description": "(rect{x0, y0, x1, y1}): 0 when the cockpit's widgets are off (CockpitViewInstance+0x20f). Otherwise 1 when either corner (x0, y0) or (x1, y1), less the video-mode block's 004d25da/004d25de, lies inside the window whose origin is the render context's (view+4) +0x210 + +0x220 across and +0x214 + +0x224 down and whose size is the 3D viewport 004d25c2 x 004d25c6, bounds inclusive; 0 when neither does. The widget paint and update routines test their rect with it before drawing.",
-      "source": "DBSIM decompile and disassembly at 00431410"
+      "description": "(rect{x0, y0, x1, y1}): 0 when the cockpit's widgets are off (CockpitViewInstance+0x20f). Otherwise 1 when either corner (x0, y0) or (x1, y1), less 004d25da/004d25de, lies inside the box whose origin is the canvas context's (CockpitViewInstance+4) +0x210 + +0x220 across and +0x214 + +0x224 down and whose size is 004d25c2 x 004d25c6, bounds inclusive; 0 when neither does.",
+      "source": "Herculan/docs/retail/simulation/cockpit-views.md#the--b-paged-path",
+      "verified": {
+        "bytes": "00431410+237",
+        "sha1": "0413ac4ae3b2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00431500",
@@ -10321,8 +10375,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_LoadSquadmatePilots",
-      "description": "(cockpit): finds the player's machine (+0xa3) walking GlobalMechList with Pool_Prev, keeps its mission group (+0x45) at 0049b0f8, and takes up to three of the group's members (group +0xc, count +0x10, stopping at a null) other than the cockpit's own machine (+0x203) into 004d044c. Loads each one's pilot (+0x29c) into slot i of the HDD gauge (+0x1f9) with HddGauge_LoadPilotFrames, then calls MfdDisplay_SetStatusRoster(+0x1ed, count). Sim_InitMissionSession calls it.",
-      "source": "DBSIM decompile at 00431530; mech +0xa3 and +0x45 from known_structs.json"
+      "description": "(cockpit): walks GlobalMechList with Pool_Prev to the first machine whose byte +0xa3 is set, keeps its group +0x45 at 0049b0f8, and takes up to three of the group's members (the array +0xc, int16 count +0x10, stopping at a null) other than the cockpit's machine +0x203 into g_SquadmateMachines (004d044c). For each calls HddGauge_LoadPilotFrames(the cockpit's +0x1f9, slot, the member's int16 +0x29c), then MfdDisplay_SetStatusRoster(the cockpit's +0x1ed, count).",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "00431530+222",
+        "sha1": "04068c4d9975",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00431610",
@@ -10423,8 +10483,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_RegisterWeaponGauge",
-      "description": "Stores a weapon-row gauge at cockpit+0x70 + row*4 (row -1 takes the first free slot), appends it to the view's widget list at +8 and counts it. The weapon-row array it fills is what Cockpit_PowerUpTick arms and the number-key handler indexes.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "(cockpit, gauge, row): for a row of -1 takes the first null slot of the ten at +0x70; stores gauge at +0x1d8 when that is 0, at the widget list +8 + 4 x the count +0x6c and at +0x70 + 4 x row, and adds 1 to +0x6c and to +0x98. Each weapon-row gauge factory ends with it.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "00432018+89",
+        "sha1": "d0ff4176b257",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00432074",
@@ -10478,8 +10544,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_WeaponButtonsWidget",
-      "description": ".GAU offset 468 widget wrapper -> ConsoleButtons_Ctor: container for the Weapon Chain-select/Link/Auto-track button gadgets (4 children from offsets 484/500/516/532).",
-      "source": "memory project_es2_exe_recon"
+      "description": "(cockpit, record): .GAU block 468 (+0x1d4): shifts it with GauWeaponButtons_ApplyCoordShift, builds a 0xb5-byte ConsoleButtons over it with ConsoleButtons_Ctor(panel, block, cockpit), calls ConsoleButtons_SetChainNumber(panel, 2), sets the byte +0x1e0 to 1, the dword +0x1d4 to 0 and +0x1d8 to the dword at +0x16c, appends the panel to the widget list +8 (count +0x6c) and returns it.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "00432340+157",
+        "sha1": "8b6602bc1cbd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004323e0",
@@ -10502,8 +10574,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_ShieldDisplayWidget",
-      "description": ".GAU offset 616 widget wrapper -> ShieldsGauge_Ctor: Shield Display's front/rear numeric value label widgets (children at 632/648/664/680), nested inside the Shield Display's .GAU byte range.",
-      "source": "memory project_es2_exe_recon"
+      "description": "(cockpit, record): .GAU block 616 (+0x268): shifts it with ShieldsGauge_ApplyCoordShift, builds a 0xd4-byte ShieldsGauge over it with ShieldsGauge_Ctor(gauge, block, cockpit), appends the gauge to the widget list +8 (count +0x6c) and returns it.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "00432454+115",
+        "sha1": "2ac0c362b546",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004324c8",
@@ -10511,8 +10589,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_MfdPanelWidget",
-      "description": ".GAU offset 728 widget wrapper -> MfdDisplay_Ctor: the MFD's actual interactive behavior -- mode-switching state machine, radar-sweep table, damage-readout digits. Behaviour behind the MFD panel's bounding box at .GAU offset 952.",
-      "source": "memory project_es2_exe_recon"
+      "description": "(cockpit, record): .GAU block 728 (+0x2d8): shifts it with MfdGau_ApplyCoordShift, builds a 0x349-byte MFD over it with MfdDisplay_Ctor(display, block, cockpit), appends it to the widget list +8 (count +0x6c), calls MfdDisplay_SetMode(display, 3) and returns it.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "004324c8+130",
+        "sha1": "f7ecc95493aa",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043254c",
@@ -10520,8 +10604,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_ThrottleWidget",
-      "description": ".GAU offset 1000 widget wrapper -> ThrottleGauge_Ctor: the Throttle widget (already fully confirmed/ported in the C# port).",
-      "source": "memory project_es2_exe_recon"
+      "description": "(cockpit, record): .GAU block 1000 (+0x3e8): shifts it with GauThrottle_ApplyCoordShift, builds a 0xca-byte ThrottleGauge over it with ThrottleGauge_Ctor(gauge, block, cockpit), appends the gauge to the widget list +8 (count +0x6c) and returns it.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "0043254c+115",
+        "sha1": "5a6dfd10dca6",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004325c0",
@@ -10529,8 +10619,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_RovingGunsightWrapper",
-      "description": ".GAU offset 1088 widget wrapper, constructs the roving-gunsight complex via Gau_RovingGunsightWidget.",
-      "source": "memory project_es2_exe_recon"
+      "description": "(cockpit, record): .GAU block 1088 (+0x440): shifts it with GauRovingGunsight_ApplyCoordShift, builds the 0x11b-byte gunsight complex over it with Gau_RovingGunsightWidget(object, block, cockpit), appends it to the widget list +8 (count +0x6c) and returns it.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "004325c0+115",
+        "sha1": "793cc4f6687a",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00432634",
@@ -10538,8 +10634,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_PilotRosterWidget",
-      "description": ".GAU offset 1212 widget wrapper -> HddDisplay_Ctor: pilot-roster/crew-status HDD readout ('hddclip'/'pilots'/'static' strings), constructs 15 sub-widgets, accounts for the rest of the .GAU, roughly bytes 1212-1588.",
-      "source": "memory project_es2_exe_recon"
+      "description": "(cockpit, record): .GAU block 1212 (+0x4bc): shifts it with HddGau_ApplyCoordShift, builds the 0x78a-byte Heads-Down Display over it with HddDisplay_Ctor(display, block, cockpit), appends it to the widget list +8 (count +0x6c) and returns it.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#building-it",
+      "verified": {
+        "bytes": "00432634+115",
+        "sha1": "d79a3f890547",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004326a8",
@@ -10577,8 +10679,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_PerFrameUpdate",
-      "description": "The cockpit's per-frame widget pass, called with CockpitViewInstance from Sim_RenderFrame just before Player_PerFrameCockpitUpdate. The whole body is skipped while DAT_0049b104 is nonzero. It builds the scroll triggers once (CockpitView_BuildScrollTriggers, flag +0x23e), runs Cockpit_PowerUpTick until the power-up flag +0x245 is set, then Cockpit_HitShakeTick and Cockpit_StepKickTick. With the widgets enabled (+0x20f clear) it calls the object at +0x207 (vtable +0x14), pushes the canvas context, paints (vtable +8) the ten weapon-row gauges at +0x70 and the widgets at +0x1e1, +0x1e5, +0x1e9, +0x1f1, +0x1ed and +0x1f9, pops the context, runs Cockpit_UpdateEdgeCursor, re-runs TargetSelect_CanTarget on the selection at +0x210 and clears it when that fails, then WidgetRoot_ServicePressFlashes and NavMarker_Tick. With the widgets off (+0x20f set, view 4) it paints only the widget at +0x1f9. See docs/retail/simulation/cockpit-hud-widgets.md and docs/retail/simulation/target-selection.md, 'Losing the selection'.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "(cockpit): the cockpit's per-frame pass; does nothing while the byte 0049b104 is set. The first time (+0x23e clear) calls CockpitView_BuildScrollTriggers and sets +0x23e; calls Cockpit_PowerUpTick while +0x245 is clear, then Cockpit_HitShakeTick and Cockpit_StepKickTick. With the widgets on (+0x20f clear) calls vtable slot +0x14 of the pilot channel +0x207; between Cockpit_PushCanvasContext and Cockpit_PopRenderContext calls slot +8 of each set gauge of the ten at +0x70 and of +0x1e1, +0x1e5, +0x1e9, +0x1f1, +0x1ed and +0x1f9; then Cockpit_UpdateEdgeCursor, clears the selection +0x210 when it is set and TargetSelect_CanTarget(cockpit, it) returns 0, WidgetRoot_ServicePressFlashes(the root +0) and NavMarker_Tick. With the widgets off it calls slot +8 of +0x1f9 alone.",
+      "source": "Herculan/docs/retail/simulation/cockpit-hud-widgets.md#drawing-it",
+      "verified": {
+        "bytes": "004327ac+288",
+        "sha1": "213132745d8d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004328cc",
@@ -11795,8 +11903,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_UnpaintNoOp",
-      "description": "MsgPort and EventPort vtable +0x14: push ebp / mov ebp,esp / pop ebp / ret. DialogPort and CommandPort install PilotMessagePort_RestoreBackground.",
-      "source": "DBSIM disassembly at 0043757e"
+      "description": "(): push ebp / mov ebp,esp / pop ebp / ret: an empty body. Slot +0x14 of MsgPort (0049bb00) and EventPort (0049ba7c), whose tables es2_naming vtables reads from the image; DialogPort and CommandPort hold PilotMessagePort_RestoreBackground there.",
+      "source": "DBSIM disassembly at 0043757e",
+      "verified": {
+        "bytes": "0043757e+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00437583",
@@ -11804,8 +11918,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_GetRect",
-      "description": "Vtable +0x1c of all four message-port classes: returns port+0x4a7, the box rect inside the GLRectangleRegion at +0x49f.",
-      "source": "DBSIM decompile at 00437583; MessagePort_CtorBase"
+      "description": "(port): returns port + 0x4a7, the rect MessagePort_ShiftRect (00435574) moves. Slot +0x1c of all four message-port tables, MsgPort, EventPort, DialogPort and CommandPort, as es2_naming vtables reads them from the image.",
+      "source": "DBSIM decompile at 00437583; MessagePort_CtorBase",
+      "verified": {
+        "bytes": "00437583+13",
+        "sha1": "becc4f0afce8",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00437590",

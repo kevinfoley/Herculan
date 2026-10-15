@@ -8,6 +8,62 @@ The view manager and canvas these widgets are drawn onto: [`cockpit-views.md`](c
 
 The files behind them: the per-herc widget geometry is [`gau\<HERC>.GAU`](../formats/gau-cockpit-layout.md), the colour ids the gauges carry resolve through [`dat\COLORS.DAT`](../formats/colors-dat.md), and the damage diagram is [`.PDG`](../formats/pdg-paper-doll.md).
 
+## The cockpit object
+
+**One object holds the whole cockpit: every console instrument, the two message boxes, the cursors and the canvas they are drawn on. It is built once a mission, as the cockpit's views are loaded, and repaints its instruments every frame.** `PANEL.CPP` owns it; the view manager builds it in step 4 of its [bring-up](cockpit-views.md#cockpitviewmanager_loadviews-sequence), and the first one built is `CockpitViewInstance` (`0049b088`).
+
+### Building it
+
+1. `CockpitView_Ctor` (`00431008`), (cockpit, machine): stores the machine at `+0x203` and the `int16` `+0x6c` of its type record (`+0x1f2`) at `+0x201`, sets `+0x214` to `maybe_GlobalLiveObjectList` and the `int16` `+0x218` to 0, and runs `ColorSchemePanels_LoadAll`. It then allocates a 16-byte array at `004d0490` and four 12-byte records at `004d0494`, each {0, a 16-byte array, a 16-byte array}, and returns the cockpit.
+2. `ColorSchemePanels_LoadAll` (`00431098`), (cockpit): hands `SimStrings_LoadAll` the path `Language_StringFilePath` makes of `strings0` and `str`; the first time it runs, it loads the [fonts](#hud-fonts) and the seven cursors from `dci\` into `Cockpit_CursorImages` through `Cursor_LoadWrapper` (`00430fb0`), putting `PCURSOR` in the forward view's slot `+0x236` and `CURSOR` in the other views' slot `+0x23a` ([cursor rendering](cockpit-input.md#9-cursor-rendering)). It zeroes the three `g_SquadmateMachines`, calls `_memset`(cockpit + `0xa20`, `0x284`, 0), stores the cockpit in `CockpitViewInstance` when that is 0, clears the widgets-off byte `+0x20f`, the active cursor slot `+0x226`, `+0x241`, `+0x245` and `+0x26a`, and sets the `int16` `+0x23f` to −1.
+3. `Gau_BuildCockpitWidgets` (`00431bf8`), (cockpit, herc name): loads `gau\<herc>` into `CockpitGauRecord` with `Gau_Load` ([the layout](../formats/gau-cockpit-layout.md)); makes the canvas context over {0, 0, `CockpitCanvasWidth` − 1, `004d25d6` − 1} at `+4`; builds the root widget, a `0x398`-byte `CTLWindow` over the record, at `+0`; then `SystemButtons_Ctor`, the pilot channel at `+0x207` and the ticker at `+0x20b` ([the message boxes](cockpit-messages.md)), the seven instruments below, the coordinate shifts of the record's remaining rects, the weapon rows (`WeaponMounts_BuildGauges`) and the [flyer branch](#power-up-sequence). The order is the cockpit's [click precedence](cockpit-input.md#registration-order-is-precedence).
+
+`Cockpit_CreateCanvasContext` (`00430ea0`), (rect), makes the canvas context: a `0x239`-byte `GLViewport` with clip mode `+0x208` = 1, translation `+0x20c` = 1, the rect at `+0x210`–`+0x21c`, the byte `+0x230` and the dword `+0x231` cleared and `+0x235` = 200. It stores the context at `004d042c` and returns it.
+
+Each instrument's wrapper, (cockpit, `.GAU` record), shifts its block into device pixels, allocates and constructs the instrument with (block, cockpit), appends it to the cockpit's widget list (`+8`, its count at `+0x6c`) and returns it:
+
+| Field | Wrapper | Block | Size | Constructor |
+|---|---|---|---|---|
+| `+0x1e1` | `Gau_WeaponButtonsWidget` (`00432340`) | 468 | `0xb5` | `ConsoleButtons_Ctor`, then `ConsoleButtons_SetChainNumber`(2); the wrapper also sets the byte `+0x1e0` to 1, `+0x1d4` to 0 and `+0x1d8` to the dword at `+0x16c` |
+| `+0x1e5` | `Gau_EnergyMeterWidget` (`004323e0`) | 548 | `0xc3` | `EnergyPoolGauge_Ctor` |
+| `+0x1e9` | `Gau_ShieldDisplayWidget` (`00432454`) | 616 | `0xd4` | `ShieldsGauge_Ctor` |
+| `+0x1ed` | `Gau_MfdPanelWidget` (`004324c8`) | 728 | `0x349` | `MfdDisplay_Ctor`, then `MfdDisplay_SetMode`(3) |
+| `+0x1f1` | `Gau_ThrottleWidget` (`0043254c`) | 1000 | `0xca` | `ThrottleGauge_Ctor` |
+| `+0x1f5` | `Gau_RovingGunsightWrapper` (`004325c0`) | 1088 | `0x11b` | `Gau_RovingGunsightWidget` |
+| `+0x1f9` | `Gau_PilotRosterWidget` (`00432634`) | 1212 | `0x78a` | `HddDisplay_Ctor` |
+
+**The weapon rows.** Every row's factory ([weapon-row rects](../formats/gau-cockpit-layout.md#weapon-row-rects)) ends in `CockpitView_RegisterWeaponGauge` (`00432018`), (cockpit, gauge, row): a row of −1 takes the first empty one of the ten slots at `+0x70`; the gauge goes to `+0x1d8` when that is 0, onto the widget list and into its row's slot, and the list count and the row count `+0x98` each go up by 1.
+
+**The squadmates.** `Cockpit_LoadSquadmatePilots` (`00431530`), (cockpit), finds the player's machine (byte `+0xa3` set) in `GlobalMechList` with `Pool_Prev`, keeps its group (`+0x45`) at `0049b0f8`, and takes up to three of the group's members (the array `+0xc`, `int16` count `+0x10`, stopping at a null) other than the cockpit's own machine into `g_SquadmateMachines`. For each it calls `HddGauge_LoadPilotFrames`(`+0x1f9`, slot, the member's `int16` `+0x29c`), then `MfdDisplay_SetStatusRoster`(`+0x1ed`, count). `Squad_SendOrderToSlot` (`00431610`), `Squad_BroadcastOrderFromCockpit` (`0043166c`) and `Squad_CallsignOf` (`00431690`) read that list.
+
+| Offset | Holds |
+|---|---|
+| `+0x00`, `+0x04` | the root widget, the canvas context |
+| `+0x08` | the widget list, its count at `+0x6c` |
+| `+0x70` | the ten weapon-row gauges, their count at `+0x98` |
+| `+0x1e1`–`+0x1f9` | the seven instruments above |
+| `+0x201`, `+0x203` | the chassis' `int16` `+0x6c`, the machine |
+| `+0x207`, `+0x20b` | the pilot channel and the ticker |
+| `+0x20f` | 1 while the widgets are off (the external view) |
+| `+0x210` | the target selection |
+| `+0x21a`, `+0x21e`, `+0x222` | the [screen-edge strips](cockpit-input.md#10-the-screen-edges-are-three-widgets) |
+| `+0x226`, `+0x232`–`+0x23a` | the active cursor slot and the three slots |
+| `+0x23e` | set once the screen-edge strips are built |
+| `+0x241`, `+0x245` | the [power-up](#power-up-sequence)'s |
+
+### Drawing it
+
+`Cockpit_PushCanvasContext` (`004311e0`) adds 1 to the index byte `0049b106`, saves the installed render context (`006c5ff4`) at that index of the stack `004d0470`, installs the cockpit's canvas context `+4` with `Raster_InstallRenderContext` and returns it; `Cockpit_PopRenderContext` (`00431210`) reinstalls the saved one and takes 1 from the index.
+
+`CockpitView_PerFrameUpdate` (`004327ac`), (cockpit), from `Sim_RenderFrame` ([per-frame ordering](#per-frame-ordering)), does nothing while the byte `0049b104` is set. Otherwise:
+
+1. the first time, it calls `CockpitView_BuildScrollTriggers` ([the screen-edge strips](cockpit-input.md#10-the-screen-edges-are-three-widgets)) and sets `+0x23e`;
+2. until `+0x245` is set, `Cockpit_PowerUpTick`; then `Cockpit_HitShakeTick` and `Cockpit_StepKickTick` ([the damage shake](../rendering/cockpit-canopy-palette.md#the-damage-shake));
+3. with the widgets on: slot `+0x14` of the pilot channel `+0x207`; between `Cockpit_PushCanvasContext` and `Cockpit_PopRenderContext`, slot `+8` of each of the ten weapon rows that is set and of `+0x1e1`, `+0x1e5`, `+0x1e9`, `+0x1f1`, `+0x1ed` and `+0x1f9`; `Cockpit_UpdateEdgeCursor`; with the target selection `+0x210` set, clears it when `TargetSelect_CanTarget`(cockpit, selection) returns 0 ([losing the selection](target-selection.md#losing-the-selection--cockpitview_perframeupdate)); `WidgetRoot_ServicePressFlashes` on the root; `NavMarker_Tick`;
+4. with the widgets off, slot `+8` of `+0x1f9` alone.
+
+The gunsight complex `+0x1f5` is not among them; it is one of the dispatches `Sim_RenderFrame` makes after `Player_PerFrameCockpitUpdate` ([per-frame ordering](#per-frame-ordering)).
+
 ## HUD sprite art — `.HBA`/`.DBA`
 
 A bank ships twice under the same name: `dba\NAME.DBA` for the 320-wide mode and `hba\NAME.HBA` for the 640-wide one, exactly 2x on both axes, frame for frame, with identical frame counts. The two folder-name literals sit adjacent to each bank name in `.rdata` (`"NAME\0hba\0dba\0"`). The exceptions: `corners` is hardcoded to `dba` and `hba\CORNERS.HBA` does not exist; `static` and `pilot<n>` have no `hba\` copy, below; and `hdd`'s two copies hold the same frames at sizes that are not 2x ([`heads-down-display.md`](heads-down-display.md#frame-to-widget-confirmation)).
@@ -226,7 +282,7 @@ The frame is template `+0x50` ([`../formats/weapons-dat-sim.md`](../formats/weap
 
 ## HUD fonts
 
-`ColorSchemePanels_LoadAll` (`00431098`) lazily loads 18 `.DFN`/`.HFN` fonts into `ColorSchemePanels` (`0049b0ac`), then 7 `.DCI` cursors. Load order is the array index:
+`ColorSchemePanels_LoadAll` (`00431098`) loads 18 fonts into `ColorSchemePanels` (`0049b0ac`) the first time it runs ([building the cockpit](#building-it)), each through `Panel_LoadWrapper` (`00430f58`), which opens a `VolRStream` on the path and returns `ClassItem_LoadResource`'s item, from `hfn\` in panel mode 3 and `dfn\` otherwise. Load order is the array index:
 
 | 0-5 | 6-11 | 12-17 |
 |---|---|---|

@@ -2227,7 +2227,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_BroadcastOrder",
-      "description": "(group, order), callee-cleaned: ES2's Squad_BroadcastOrder (DBSIM 004231a4) with ES1's offsets. Each pass scores every member of the group (array +0xe, count +0x12) not yet told, not destroyed (+0x93) and not the issuer (order +2): verbs 0, 2 and 5 by the behaviour descriptor's (+0x47) byte +9 being clear, 1, 8 and 0xf by its being set, 4 and 7 by the byte +0x90 being clear or set, and no score for the other verbs to 0xf (the local keeps what it held); keeps the highest, ties going to the nearer to the issuer by Math_DistanceBetweenPoints of +0x20, and sends to it through its vtable (at +2) slot +0x2c with the reply so far and the order. A send answering non-zero makes the reply 2, a zero answer makes a reply of 0 into 1; verbs 0 and 2 stop at a reply of 2. Returns whether the reply is 2. es2_xref finds one call, from 0002b448.",
+      "description": "(group, order), callee-cleaned: ES2's Squad_BroadcastOrder (DBSIM 004231a4) with ES1's offsets. Each pass scores every member of the group (array +0xe, count +0x12) not yet told, not destroyed (+0x93) and not the issuer (order +2): verbs 0, 2 and 5 by the behaviour descriptor's (+0x47) byte +9 being clear, 1, 8 and 0xf by its being set, 4 and 7 by the byte +0x90 being clear or set, and no score for the other verbs to 0xf (the local keeps what it held); keeps the highest, ties going to the nearer to the issuer by Math_DistanceBetweenPoints of +0x20, and sends to it through its vtable (at +2) slot +0x2c with the reply so far and the order. A send answering non-zero makes the reply 2, a zero answer makes a reply of 0 into 1; verbs 0 and 2 stop at a reply of 2. Returns whether the reply is 2. es2_xref finds one call, from Squad_BroadcastOrderFromCockpit (0002b448).",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#the-squad-order-broadcast",
       "verified": {
         "bytes": "0001c950+504",
@@ -3892,7 +3892,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_LoadViews",
-      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array CockpitVueRecords (000afaa4), whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls CockpitCanopy_LoadViewBitmap (00022184)(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores 0002ae5c(0, +0x25) at +0x1b and calls Cockpit_LoadPanel (0002c9d8) with it and name; with the scheme word +0x23, Palette_InstallRange (00027e98)s 16 colours at index 0x20 from the dword +8 of CockpitPaletteSingleton (000925f0) plus scheme x 0x80, 16 at 0x40 from 0x40 bytes further, and one at 0x40 from Palette_GetEntry (00027f54) of the word 000925dc[scheme]; calls Palette_FlushDirtyRange (00027f74), and the slot +0x1c of CockpitPaletteSingleton (000925f0) with 3 when it is set; sets ExternalView_ClipBlock (000afb94) to 1 and 000afb98 to 000afd9c, copies the dwords ExternalView_Rect (000afb3c)-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from CockpitViewManager_Ctor (00021dd4), through the padding before the prologue.",
+      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array CockpitVueRecords (000afaa4), whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls CockpitCanopy_LoadViewBitmap (00022184)(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores CockpitView_Ctor (0002ae5c)(0, +0x25) at +0x1b and calls Cockpit_LoadPanel (0002c9d8) with it and name; with the scheme word +0x23, Palette_InstallRange (00027e98)s 16 colours at index 0x20 from the dword +8 of CockpitPaletteSingleton (000925f0) plus scheme x 0x80, 16 at 0x40 from 0x40 bytes further, and one at 0x40 from Palette_GetEntry (00027f54) of the word 000925dc[scheme]; calls Palette_FlushDirtyRange (00027f74), and the slot +0x1c of CockpitPaletteSingleton (000925f0) with 3 when it is set; sets ExternalView_ClipBlock (000afb94) to 1 and 000afb98 to 000afd9c, copies the dwords ExternalView_Rect (000afb3c)-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from CockpitViewManager_Ctor (00021dd4), through the padding before the prologue.",
       "source": "Herculan/docs/es1/formats/hd-ed-clip-regions.md#which-files",
       "verified": {
         "bytes": "00021fb0+465",
@@ -5717,12 +5717,141 @@
       }
     },
     {
+      "address": "0002acdc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorPanelCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorMechviewCopy (00021d38): with p non-null deletes the block p points at with operator_delete (000015f8) when that is non-null, then p itself when bit 0 of flags is set. The first of the four functions that open panel.cpp. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "0002acdc+40",
+        "sha1": "ea587c50c622",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002ad04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorPanelCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of panel.cpp's copy 00092cae of ConfigPart's vtable: the code of ConfigPart_DtorMechviewCopy (00021d60): with part non-null stores 00092cae, calls HeapBlockOwner_Dtor (00002598)(part + 0x10, 0), stores TSPartBase's copy 00092ce2, calls TSBase_Dtor (0005ba58)(part, 0) and deletes part when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "0002ad04+63",
+        "sha1": "13d3220101e3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002ad43",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagPanelCopy",
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092cae. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#where-the-module-starts-and-ends"
+    },
+    {
+      "address": "0002ad4c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorPanelCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00092ce2 (entered at its padding 0002ad49): the code of TSPartBase_DtorMechviewCopy (00021da8) storing 00092ce2.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "0002ad4c+42",
+        "sha1": "144f359658c9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002ad78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_CreateCanvasContext",
+      "description": "(rect), callee-cleaned: makes the cockpit's canvas render context: stores 00069a84(0)'s result at CockpitCanvasContext (000b0da4), sets its clip mode +0x208 and its translation +0x20c to 1, copies rect's four dwords to +0x210..+0x21c, clears the byte +0x230 and the dword +0x231, sets +0x235 to 200 and returns the context. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which passes the .GAU struct and stores the result at the cockpit's +4. ES2's Cockpit_CreateCanvasContext (DBSIM 00430ea0), which allocates a 0x239-byte GLViewport where ES1's calls 00069a84.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002ad78+121",
+        "sha1": "17837a8d2234",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002adf4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Panel_LoadWrapper",
+      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath (000567cc) on a stack stream, loads one class item from it with ClassItem_LoadResource (000551e0)(0, stream), destroys the stream with VolRStream_Dtor (00056824)(stream, 2) and returns the item. es2_xref finds one call, from the font loop of ColorSchemePanels_LoadAll (0002aecc). ES2's Panel_LoadWrapper (DBSIM 00430f58).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002adf4+52",
+        "sha1": "d03b46be1c8e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002ae28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cursor_LoadWrapper",
+      "description": "(path), callee-cleaned: the code of Panel_LoadWrapper (0002adf4): opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), destroys the stream and returns the item. es2_xref finds two calls, from the cursor loop of ColorSchemePanels_LoadAll (0002aecc) and from 00045f00. ES2's Cursor_LoadWrapper (DBSIM 00430fb0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002ae28+52",
+        "sha1": "a6691d5ead47",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002ae5c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_Ctor",
+      "description": "(cockpit, machine) in stack order, callee-cleaned: allocates 0x23d bytes with operator_new when cockpit is null, returning 0 when that fails; stores LiveObjectList (000bc416) and an int16 0 at +0x210 (the member's inlined constructor allocates 6 bytes only for a null member), the machine at +0x1ff and the int16 +0x6c of its type record (+0x188) at +0x1fd; calls ColorSchemePanels_LoadAll (0002aecc) by its padding entry 0002aecb and returns the cockpit. es2_xref finds one call, from CockpitViewManager_LoadViews (00021fb0), which passes a null cockpit and the manager's +0x25 and stores the result at the manager's +0x1b. ES2's CockpitView_Ctor (DBSIM 00431008), whose fields are 4 higher and which also allocates the arrays at 004d0490 and 004d0494.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002ae5c+111",
+        "sha1": "ea39ee157fb9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002aecc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ColorSchemePanels_LoadAll",
+      "description": "(cockpit), callee-cleaned: passes ResourcePath_BuildFolderName (00060698)(str, strings0) to 0002fe84. While ColorSchemePanels (00092d40) is 0 loads the ten fonts the table 00092dc4 names (cpblue to cporange) from the folder 00098108 names (dfn) with Panel_LoadWrapper (0002adf4). While Cockpit_CursorImages (00092d20) is 0 loads the seven cursors the table 00092e24 names (cursor to wcursor) from the folder 00098100 names (dci) with Cursor_LoadWrapper (0002ae28) and stores cursor 0 at +0x236 and +0x232. Zeroes the three g_SquadmateMachines (000bcc16). While CockpitPButtonsBank (00092d68) is 0 loads dba\\pbuttons into it with ClassItem_LoadFromFile (0005760c). Calls memset (00060b40)(cockpit + 0x8f4, 0x239, 0), a count of 0. Stores the cockpit in CockpitViewInstance (00092d1c) when that is 0, clears the byte +0x20b, stores cockpit + 0x232 at +0x222 and sets the int16 +0x23b to -1. ES2's ColorSchemePanels_LoadAll (DBSIM 00431098) loads 18 fonts, from hfn in panel mode 3, puts cursor 1 in its forward slot, clears its active slot and its power-up fields, and loads no pbuttons.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002aecc+318",
+        "sha1": "291b0b222e1b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0002b00c",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_PushCanvasContext",
-      "description": "Increments the byte at 00092d7d, saves the installed render context (000bdbda) in the dword array at 000b0df4 at that index, and installs the cockpit's own render context, CockpitViewInstance's (00092d1c) +4, with Raster_InstallRenderContext. Cockpit_PopRenderContext undoes it. ES2's Cockpit_PushCanvasContext (DBSIM 004311e0).",
+      "description": "Increments the byte at CockpitContextStackIndex (00092d7d), saves the installed render context (000bdbda) in the dword array at CockpitContextStack (000b0df4) at that index, and installs the cockpit's own render context, CockpitViewInstance's (00092d1c) +4, with Raster_InstallRenderContext. Cockpit_PopRenderContext undoes it. ES2's Cockpit_PushCanvasContext (DBSIM 004311e0).",
       "source": "ES1DBSIM decompile at 0002b00c, against ES2's Cockpit_PushCanvasContext",
       "verified": {
         "bytes": "0002b00c+47",
@@ -5737,7 +5866,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_PopRenderContext",
-      "description": "Reinstalls the render context Cockpit_PushCanvasContext saved at 000b0df4[00092d7d] with Raster_InstallRenderContext and decrements the index byte 00092d7d. ES2's Cockpit_PopRenderContext (DBSIM 00431210).",
+      "description": "Reinstalls the render context Cockpit_PushCanvasContext saved at CockpitContextStack (000b0df4)[CockpitContextStackIndex (00092d7d)] with Raster_InstallRenderContext and decrements the index byte CockpitContextStackIndex (00092d7d). ES2's Cockpit_PopRenderContext (DBSIM 00431210).",
       "source": "ES1DBSIM decompile at 0002b03c, against ES2's Cockpit_PopRenderContext",
       "verified": {
         "bytes": "0002b03c+26",
@@ -5752,13 +5881,58 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_DrawToCockpit",
-      "description": "(offset, rect, which) in stack order, callee-cleaned: copies a widget's rect between the display's two pages. Returns 0 unless CockpitView_RectCornerVisible(rect) is 1 and the byte +0x18 of the view manager at CockpitViewManagerPublished (000bc5a0) is 0. The GL display at 000bdd28 holds the pages at +0x88 and +0x8c: which = 1 copies from +0x8c to +0x88, and returns 0 while 000b5bca is set; any other value copies from +0x88 to +0x8c. Under Cockpit_PushCanvasContext it stores the source page at the display's +0x38 and the draw page at +0x3c, each also to 00098dd6 / 00098dda and through g_RasterRoutines slots 16 and 17 (0009df14, 0009df18); copies the type-0 region {rect} with Region_CopyBetweenPages (00066914) at the offset, 000b0dd4 when offset is null, between slot 31 (0009df50) and slot 30 (0009df4c); puts back the draw page it found, pops the context and returns 1. ES2's Widget_DrawToCockpit (DBSIM 0043122c) has these steps, tests the view manager's +0x1c, and adds a gate on Display_UseScrollWindow, the video-mode offsets 004d25da/004d25de and a one-pixel widening of the rect for scaled modes.",
+      "description": "(offset, rect, which) in stack order, callee-cleaned: copies a widget's rect between the display's two pages. Returns 0 unless CockpitView_RectCornerVisible(rect) is 1 and the byte +0x18 of the view manager at CockpitViewManagerPublished (000bc5a0) is 0. The GL display at 000bdd28 holds the pages at +0x88 and +0x8c: which = 1 copies from +0x8c to +0x88, and returns 0 while 000b5bca is set; any other value copies from +0x88 to +0x8c. Under Cockpit_PushCanvasContext it stores the source page at the display's +0x38 and the draw page at +0x3c, each also to 00098dd6 / 00098dda and through g_RasterRoutines slots 16 and 17 (0009df14, 0009df18); copies the type-0 region {rect} with Region_CopyBetweenPages (00066914) at the offset, Cockpit_ZeroOffset (000b0dd4) when offset is null, between slot 31 (0009df50) and slot 30 (0009df4c); puts back the draw page it found, pops the context and returns 1. ES2's Widget_DrawToCockpit (DBSIM 0043122c) has these steps, tests the view manager's +0x1c, and adds a gate on Display_UseScrollWindow, the video-mode offsets 004d25da/004d25de and a one-pixel widening of the rect for scaled modes.",
       "source": "ES1DBSIM decompile at 0002b058, against ES2's Widget_DrawToCockpit",
       "verified": {
         "bytes": "0002b058+318",
         "sha1": "9da00b096203",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0002b198",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorPanelCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 00092e7e, the first of panel.cpp's three copies of GLRectangleRegion's vtables (entered at its padding 0002b196): with the object non-null stores 00092e7e at +0 and deletes the object with operator_delete when bit 0 of flags is set. Identical after normalization to GLBase_DtorMechviewCopy (00024318).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#functions",
+      "verified": {
+        "bytes": "0002b198+34",
+        "sha1": "d1454a230c8b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002b1bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorPanelCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 00092ea6 (entered at its padding 0002b1ba): with the object non-null stores 00092ea6 and 00092e7e in turn at +0 and deletes the object with operator_delete when bit 0 of flags is set. Identical after normalization to GLRegion_DtorMechviewCopy (0002433c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#functions",
+      "verified": {
+        "bytes": "0002b1bc+40",
+        "sha1": "840f61c9ccf8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002b1e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorPanelCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 00092ece: with the object non-null stores 00092ece, 00092ea6 and 00092e7e in turn at +0 and deletes the object with operator_delete when bit 0 of flags is set. Identical after normalization to GLRectangleRegion_DtorMechviewCopy (00024364).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#functions",
+      "verified": {
+        "bytes": "0002b1e4+46",
+        "sha1": "cda2274a26b3",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -5807,6 +5981,66 @@
       }
     },
     {
+      "address": "0002b308",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_LoadSquadmatePilots",
+      "description": "(cockpit), callee-cleaned: walks g_MechPool (000af68c) with Pool_Prev (00063a20) to the first machine whose byte +0x9d is set, keeps its group +0x3f at CockpitSquadGroup (00092d6c), and takes up to three of the group's members (the array +0xe, int16 count +0x12, stopping at a null) other than the cockpit's machine +0x1ff into g_SquadmateMachines (000bcc16); for each calls 0003dab4(the cockpit's +0x1f5, the member's int16 +0x232, slot) in stack order. es2_xref finds one call, from Sim_StartMission (0005a9dc). ES2's Cockpit_LoadSquadmatePilots (DBSIM 00431530), which reads +0xa3, +0x45, +0xc, +0x10 and +0x29c and also hands the count to its MFD.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-squadmates",
+      "verified": {
+        "bytes": "0002b308+223",
+        "sha1": "5b6d3d87c0b7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002b3e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Squad_SendOrderToSlot",
+      "description": "(cockpit, slot, order) in stack order, callee-cleaned: takes the machine in the int16 slot of g_SquadmateMachines (000bcc16); when it is non-null, not the cockpit's machine +0x1ff and its byte +0x93 is clear, stores the cockpit's machine at the order's +2 and calls slot +0x2c of the vtable at the machine's +2 with (machine, 0, order); then calls 0002f370(the pilot channel +0x203, 0x22, machine) either way. es2_xref finds one call, from 0003d48c. ES2's Squad_SendOrderToSlot (DBSIM 00431610), which tests +0x99, calls vtable +0x28 and withdraws message 0x22 with MessagePort_Withdraw.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-squadmates",
+      "verified": {
+        "bytes": "0002b3e8+93",
+        "sha1": "d4b7ae82a7f6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002b448",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Squad_BroadcastOrderFromCockpit",
+      "description": "(cockpit, order) in stack order, callee-cleaned: stores the cockpit's machine +0x1ff at the order's +2 and calls Squad_BroadcastOrder (0001c950)(CockpitSquadGroup (CockpitSquadGroup (00092d6c)), order), leaving its result in EAX. es2_xref finds one call, from 0003adc8. ES2's Squad_BroadcastOrderFromCockpit (DBSIM 0043166c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-squadmates",
+      "verified": {
+        "bytes": "0002b448+36",
+        "sha1": "74b103640846",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002b46c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Squad_CallsignOf",
+      "description": "(machine), callee-cleaned: returns entry i of SquadCallsignStrings (000bd324) for the slot i of g_SquadmateMachines (000bcc16) that holds machine, or 0 when none of the three does. es2_xref finds no branch or stored pointer to it. ES2's Squad_CallsignOf (DBSIM 00431690).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-squadmates",
+      "verified": {
+        "bytes": "0002b46c+51",
+        "sha1": "8fb451ea28e0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0002b4a0",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -5822,16 +6056,244 @@
       }
     },
     {
+      "address": "0002b5c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gau_Load",
+      "description": "(path), callee-cleaned: panel.cpp's .GAU loader. Opens path with VolRStream_CtorFromPath, asserting at severity 5 with Assert_Report (00057298) (panel.cpp line 0x192) when the stream does not open; allocates 0x6a4 bytes, runs the blocks' inlined rect and point constructors, and __vec_ctor (000610cb) for six arrays of 16-byte rects: 9 at +0x14 with GauWeaponRect_ElementCtor (0002c93c) by its padding entry 0002c939, and 3 at +0x174, 5 at +0x1d4, 13 at +0x2e8, 15 at +0x50c and 3 at +0x5fc with GauRect_ElementCtor (0002c994) by its padding entry 0002c993. Reads 0x6a4 bytes over the struct with VolRStream_Read (00056d70); when the origin pair at +0 is not (0, 0) adds it to both corners of the first n weapon-row rects, n the int32 at +0x10, and to the first two points of the blocks at +0x1c4, +0x224, +0x268, +0x2d8, +0x3e8, +0x450 and +0x4bc. Destroys the stream and returns the struct. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8). ES2's Gau_Load (DBSIM 00431778), with ten weapon-row rects, four at +0x1e4, the blocks +0x1d4 and +0x440 where ES1's has +0x1c4 and +0x450, and line 0x1d6.",
+      "source": "Herculan/docs/es1/formats/gau-cockpit-layout.md#the-load",
+      "verified": {
+        "bytes": "0002b5c4+4981",
+        "sha1": "3252cda0e7b3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002c93c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GauWeaponRect_ElementCtor",
+      "description": "(rect), callee-cleaned: the element constructor Gau_Load (0002b5c4) hands __vec_ctor, by its padding entry 0002c939, for the nine weapon-row rects: allocates 0x10 bytes with operator_new when rect is null (0 when that fails), runs the inlined constructors of an inner 16-byte rect and its two 8-byte points, which allocate only for a null member, writes nothing and returns rect. es2_xref finds the padding address stored once, at 0002b6a0 inside Gau_Load. ES2's GauWeaponRect_ElementCtor (DBSIM 00434ab9).",
+      "source": "Herculan/docs/es1/formats/gau-cockpit-layout.md#the-load",
+      "verified": {
+        "bytes": "0002c93c+87",
+        "sha1": "330be3da14ee",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002c994",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GauRect_ElementCtor",
+      "description": "(rect), callee-cleaned: the element constructor Gau_Load (0002b5c4) hands __vec_ctor, by its padding entry 0002c993, for its other five rect arrays: allocates 0x10 bytes with operator_new when rect is null (0 when that fails), runs the inlined constructors of its two 8-byte points, which allocate only for a null member, writes nothing and returns rect. es2_xref finds the padding address stored five times inside Gau_Load. ES2's Gau_Load uses RectI_Ctor (DBSIM 0048dd23) there.",
+      "source": "Herculan/docs/es1/formats/gau-cockpit-layout.md#the-load",
+      "verified": {
+        "bytes": "0002c994+66",
+        "sha1": "c0751314b9c5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0002c9d8",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_LoadPanel",
-      "description": "(cockpit, name): keeps 0002b5c4(ResourcePath_BuildFolderName (00060698)(the folder 00098110 points to, name)) at 00092d3c and builds the cockpit's objects from it: 0002ad78's result at +4, 00043cac(0, it) at +0 (then 00044310 with it), 0002f3d8(0, 00092d3c + 0x684) at +0x203, a 0x469-byte object from 0002eb80(object, 00092d3c + 0x694) with 00092f0a at its +0x464 and 0 at +0x468 at +0x207, and the results of 0002ccd8, 0002cd3c, 0002cd74, 0002cdac, 0002cdf0, 0002ce28, 0002ce60 and CockpitClock_Create (0002ce98), each given the cockpit and 00092d3c, at +0x1dd to +0x1f9. Between them makes the .TTM manager with Ttm_ManagerCtor(0, 0, the installed render context 000bdbda, 10) at 00092d70, sets its prefix ttm\\ (00092f2e) with Ttm_SetPathPrefix and calls Ttm_AllocHandles (00069780)(manager, 2); ends with Ttm_RunAll (000695e0)(manager). es2_xref finds one call, from CockpitViewManager_LoadViews.",
+      "description": "(cockpit, name): keeps Gau_Load (0002b5c4)(ResourcePath_BuildFolderName (00060698)(the folder 00098110 points to, name)) at CockpitGauRecord (00092d3c) and builds the cockpit's objects from it: Cockpit_CreateCanvasContext (0002ad78)'s result at +4, 00043cac(0, it) at +0 (then 00044310 with it), 0002f3d8(0, CockpitGauRecord (00092d3c) + 0x684) at +0x203, a 0x469-byte object from 0002eb80(object, CockpitGauRecord (00092d3c) + 0x694) with 00092f0a at its +0x464 and 0 at +0x468 at +0x207, and the results of Gau_WeaponButtonsWidget (0002ccd8), Gau_EnergyMeterWidget (0002cd3c), Gau_ShieldDisplayWidget (0002cd74), Gau_MfdPanelWidget (0002cdac), Gau_ThrottleWidget (0002cdf0), Gau_RovingGunsightWrapper (0002ce28), Gau_PilotRosterWidget (0002ce60) and CockpitClock_Create (0002ce98), each given the cockpit and CockpitGauRecord (00092d3c), at +0x1dd to +0x1f9. Between them makes the .TTM manager with Ttm_ManagerCtor(0, 0, the installed render context 000bdbda, 10) at CockpitTtmManager (00092d70), sets its prefix ttm\\ (00092f2e) with Ttm_SetPathPrefix and calls Ttm_AllocHandles (00069780)(manager, 2); ends with Ttm_RunAll (000695e0)(manager). es2_xref finds one call, from CockpitViewManager_LoadViews.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
       "verified": {
         "bytes": "0002c9d8+361",
         "sha1": "380aed199aba",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002cb41",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_UnpaintNoOpPanelCopy",
+      "description": "(port), callee-cleaned (RET 4), frameless: three NOPs and ret 4. Slot +0x14 of the ticker's vtable 00092f0a, which Cockpit_LoadPanel (0002c9d8) stores at the ticker's +0x464. ES2's MessagePort_UnpaintNoOp (DBSIM 0043757e). No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-message-boxes-vtable"
+    },
+    {
+      "address": "0002cb47",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_GetRectPanelCopy",
+      "description": "(port), callee-cleaned (RET 4), frameless: a NOP, then returns port + 0x43f, the box rect MessagePort_ShiftRect (0002eea0) moves. Slot +0x1c of the ticker's vtable 00092f0a; 0002ed88, slot +0x1c of the pilot channel's vtable 000931b6, holds the same code. ES2's MessagePort_GetRect (DBSIM 00437583), which returns port + 0x4a7. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-message-boxes-vtable"
+    },
+    {
+      "address": "0002cb54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_RegisterWeaponGauge",
+      "description": "(cockpit, row, gauge) in stack order, callee-cleaned: for an int16 row of -1 takes the first null slot of the nine at +0x70 (with all nine set it stays -1, and the slot store lands on +0x6c); stores gauge at +0x1d4 when that is 0, at the widget list +8 + 4 x the count +0x6c and at +0x70 + 4 x row, and adds 1 to +0x6c and to +0x94. es2_xref finds two calls, from CockpitView_CreateEnergyWeaponGauge (0002cbbc) and CockpitView_CreateAmmoWeaponGauge (0002cc18). ES2's CockpitView_RegisterWeaponGauge (DBSIM 00432018), over ten slots, with +0x1d8 and +0x98.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-weapon-rows",
+      "verified": {
+        "bytes": "0002cb54+103",
+        "sha1": "deb3e75cbb9b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002cbbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_CreateEnergyWeaponGauge",
+      "description": "(cockpit, mount, value, row) in stack order, callee-cleaned: copies the weapon-row rect at CockpitGauRecord (00092d3c) + 0x14 + 16 x row to the struct's +0xf4, builds the gauge with 0003700c(0, mount, value, row, cockpit, struct + 0xf4), registers it with CockpitView_RegisterWeaponGauge (0002cb54)(cockpit, row, gauge) and returns it. es2_xref finds one call, from 0000a97c, which passes CockpitViewInstance, the mount, 0000aa9c(mount) and the signed byte +7 of the mount's +0x18 record, and stores the gauge at the mount's +0x77. ES2's CockpitView_CreateEnergyWeaponGauge (DBSIM 00432074), whose scratch rect is +0x104.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-weapon-rows",
+      "verified": {
+        "bytes": "0002cbbc+92",
+        "sha1": "c84450918879",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002cc18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_CreateAmmoWeaponGauge",
+      "description": "(cockpit, mount, value, row) in stack order, callee-cleaned: copies the weapon-row rect at CockpitGauRecord + 0x14 + 16 x row to the struct's +0xa4, builds the gauge with 000373a4(0, mount, value, row, cockpit, struct + 0xa4), registers it with CockpitView_RegisterWeaponGauge(cockpit, row, gauge) and returns it. es2_xref finds one call, from 0000ab20, which passes CockpitViewInstance, the mount, 0000aa9c(mount) and the signed byte +7 of the mount's +0x18 record, and stores the gauge at the mount's +0x77. ES2's CockpitView_CreateAmmoWeaponGauge (DBSIM 00432124), whose scratch rect is +0xb4.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-weapon-rows",
+      "verified": {
+        "bytes": "0002cc18+92",
+        "sha1": "6464349cfef1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002cc74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_CreatePodGauge",
+      "description": "(cockpit, mount, row) in stack order, callee-cleaned: copies the weapon-row rect at CockpitGauRecord + 0x14 + 16 x row to the struct's +0x154, builds the gauge with 00037810(0, mount, row, cockpit, struct + 0x154), adds 1 to the widget count +0x6c without storing the gauge in the list, stores it at +0x1d8 and the int16 row at +0x23b, and returns it. es2_xref finds one call, from 0000abec, which passes CockpitViewInstance, the mount and the signed byte +7 of the mount's +0x18 record, and stores the gauge at the mount's +0x77. ES2's CockpitView_CreatePodGauge (DBSIM 004321d4), which picks one of three pod gauge classes, uses +0x164 and registers the gauge in its row.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-weapon-rows",
+      "verified": {
+        "bytes": "0002cc74+98",
+        "sha1": "76a56e04cf97",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002ccd8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gau_WeaponButtonsWidget",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the console buttons with 00037bd0(0, cockpit, record + 0x1c4), calls 00037ce4(them, 2), sets the byte +0x1dc to 1, the dword +0x1d0 to 0 and +0x1d4 to the dword at +0x168, appends them to the widget list +8 (count +0x6c) and returns them. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8) by its padding entry 0002ccd6, which stores the result at +0x1dd. ES2's Gau_WeaponButtonsWidget (DBSIM 00432340), which shifts its block, +0x1d4, first and writes +0x1e0, +0x1d4 and +0x1d8 from +0x16c.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002ccd8+97",
+        "sha1": "99e62b916095",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002cd3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gau_EnergyMeterWidget",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 00039818(0, cockpit, record + 0x224), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8) by its padding entry 0002cd39, which stores the result at +0x1e1. ES2's Gau_EnergyMeterWidget (DBSIM 004323e0), which shifts the block first.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002cd3c+56",
+        "sha1": "5d72452e5969",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002cd74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gau_ShieldDisplayWidget",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 00038f34(0, cockpit, record + 0x268), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1e5. ES2's Gau_ShieldDisplayWidget (DBSIM 00432454), which shifts the block first.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002cd74+56",
+        "sha1": "815a76382c68",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002cdac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gau_MfdPanelWidget",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 00039c64(0, cockpit, record + 0x2d8), appends it to the widget list +8 (count +0x6c), calls 0003a9ec(it, 0) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1e9. ES2's Gau_MfdPanelWidget (DBSIM 004324c8), which shifts the block first and sets mode 3.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002cdac+68",
+        "sha1": "2cfbd7a46037",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002cdf0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gau_ThrottleWidget",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 0003b0d4(0, cockpit, record + 0x3e8), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1ed. ES2's Gau_ThrottleWidget (DBSIM 0043254c), which shifts the block first.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002cdf0+56",
+        "sha1": "3132da6f3eee",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002ce28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gau_RovingGunsightWrapper",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 00034aec(0, cockpit, record + 0x450), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1f1. ES2's Gau_RovingGunsightWrapper (DBSIM 004325c0), whose block is +0x440 and which shifts it first.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002ce28+56",
+        "sha1": "2a3a85439802",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002ce60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gau_PilotRosterWidget",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 0003c258(0, cockpit, record + 0x4bc), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1f5. ES2's Gau_PilotRosterWidget (DBSIM 00432634), which shifts the block first.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
+      "verified": {
+        "bytes": "0002ce60+56",
+        "sha1": "a42718ec8c5d",
         "scope": "body",
         "via": "decompile"
       }
@@ -5932,7 +6394,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_RunTtmScripts",
-      "description": "(): with the installed render context 000bdbda, saves its dwords +0x20c, +0x220 and +0x224, sets them to 1, CockpitViewCanvasOrigin (000afa9c) and 000afaa0, makes it the .TTM default context with Ttm_SetDefaultContext (0006982c)(00092d70, it), runs the scripts with Ttm_RunAll (000695e0)(00092d70), and puts the three back. es2_xref finds calls from Cockpit_DrawFrame (0002cf28) and CockpitView_InvalidateWidgets (0002b4a0), through the padding entry 0002e0e9.",
+      "description": "(): with the installed render context 000bdbda, saves its dwords +0x20c, +0x220 and +0x224, sets them to 1, CockpitViewCanvasOrigin (000afa9c) and 000afaa0, makes it the .TTM default context with Ttm_SetDefaultContext (0006982c)(CockpitTtmManager (00092d70), it), runs the scripts with Ttm_RunAll (000695e0)(CockpitTtmManager (00092d70)), and puts the three back. es2_xref finds calls from Cockpit_DrawFrame (0002cf28) and CockpitView_InvalidateWidgets (0002b4a0), through the padding entry 0002e0e9.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame",
       "verified": {
         "bytes": "0002e0ec+144",
@@ -6067,7 +6529,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitClock_Ctor",
-      "description": "(clock, cockpit, rect): allocates the 0x8a-byte cockpit clock when given none (returning 0 when that fails); builds it with 00031318(clock, cockpit, rect + 0x10) and stores the vtable 00094b5a at +0x76. Opens the HERC's .TTM with Ttm_Open(00092d70, 0, 0, Path_WithExtension(ttm (00094b72), eight characters of CockpitOverride_Name (000925f8)'s string when CockpitOverride_Name (000925f8) is set, else of +0x58 of the type record +0x188 of CockpitViewInstance's +0x1ff)), takes the handle as a signed byte, and when that handle's entry of the table +5 holds a script stores CockpitViewInstance's +4 at the script's +0x1bd; a failed open's 0xff reads the dword before the table. Copies cpwincrk (00094b76) into the name buffer; sets the strings 00, 00 and : at 000bd504, 000bd508 and 000bd50c; makes three labels with Label_Ctor(0, 00092d40) at +0x7a, +0x7e and +0x82, each passed to Label_SetRect with 1, 4 and 2 respectively, rect + 0x10 and the point (1, 0), (1, 0) and (0, 0), and their +0x1c set to 0x3f, 0 and 0; sets +0x86 to 000981c4 + 30. es2_xref finds one call, from CockpitClock_Create (0002ce98).",
+      "description": "(clock, cockpit, rect): allocates the 0x8a-byte cockpit clock when given none (returning 0 when that fails); builds it with 00031318(clock, cockpit, rect + 0x10) and stores the vtable 00094b5a at +0x76. Opens the HERC's .TTM with Ttm_Open(CockpitTtmManager (00092d70), 0, 0, Path_WithExtension(ttm (00094b72), eight characters of CockpitOverride_Name (000925f8)'s string when CockpitOverride_Name (000925f8) is set, else of +0x58 of the type record +0x188 of CockpitViewInstance's +0x1ff)), takes the handle as a signed byte, and when that handle's entry of the table +5 holds a script stores CockpitViewInstance's +4 at the script's +0x1bd; a failed open's 0xff reads the dword before the table. Copies cpwincrk (00094b76) into the name buffer; sets the strings 00, 00 and : at 000bd504, 000bd508 and 000bd50c; makes three labels with Label_Ctor(0, ColorSchemePanels (00092d40)) at +0x7a, +0x7e and +0x82, each passed to Label_SetRect with 1, 4 and 2 respectively, rect + 0x10 and the point (1, 0), (1, 0) and (0, 0), and their +0x1c set to 0x3f, 0 and 0; sets +0x86 to 000981c4 + 30. es2_xref finds one call, from CockpitClock_Create (0002ce98).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
       "verified": {
         "bytes": "000433cc+469",
@@ -16544,6 +17006,69 @@
       "source": "ES1DBSIM decompile at 0002b00c and 0002b214"
     },
     {
+      "address": "00092d20",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cockpit_CursorImages",
+      "description": "The seven .DCI cursors ColorSchemePanels_LoadAll (0002aecc) loads from dci, in the order of the name table 00092e24: cursor, pcursor, mcursor, ncursor, scursor, ecursor, wcursor. ES2's Cockpit_CursorImages (DBSIM 0049b08c).",
+      "source": "ES1DBSIM decompile at 0002aecc and the name table 00092e24"
+    },
+    {
+      "address": "00092d3c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitGauRecord",
+      "description": "Pointer to the cockpit's .GAU struct, which Cockpit_LoadPanel (0002c9d8) stores from Gau_Load (0002b5c4); the weapon-row gauge factories copy their rects out of it. ES2's CockpitGauRecord (DBSIM 0049b0a8).",
+      "source": "ES1DBSIM decompile at 0002c9d8, 0002cbbc, 0002cc18 and 0002cc74"
+    },
+    {
+      "address": "00092d40",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ColorSchemePanels",
+      "description": "The ten fonts ColorSchemePanels_LoadAll (0002aecc) loads from dfn, in the order of the name table 00092dc4: cpblue, cpgreen, cpred, cpylw, cpon, cppress, cpoff, cpgrey, cpblack, cporange. ES2's ColorSchemePanels (DBSIM 0049b0ac) holds 18.",
+      "source": "ES1DBSIM decompile at 0002aecc and the name table 00092dc4"
+    },
+    {
+      "address": "00092d68",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitPButtonsBank",
+      "description": "The bitmap bank dba\\pbuttons, which ColorSchemePanels_LoadAll (0002aecc) loads with ClassItem_LoadFromFile while this is 0.",
+      "source": "ES1DBSIM decompile at 0002aecc"
+    },
+    {
+      "address": "00092d6c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitSquadGroup",
+      "description": "The player's mission group, which Cockpit_LoadSquadmatePilots (0002b308) stores and Squad_BroadcastOrderFromCockpit (0002b448) hands Squad_BroadcastOrder. ES2's 0049b0f8.",
+      "source": "ES1DBSIM decompile at 0002b308 and 0002b448"
+    },
+    {
+      "address": "00092d70",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitTtmManager",
+      "description": "The cockpit's .TTM manager, which Cockpit_LoadPanel (0002c9d8) makes with Ttm_ManagerCtor (00069540)(0, 0, the installed render context, 10), gives the prefix ttm\\ and two handles, and runs with Ttm_RunAll.",
+      "source": "ES1DBSIM decompile at 0002c9d8"
+    },
+    {
+      "address": "00092d7d",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitContextStackIndex",
+      "description": "Byte, 0xff in the image: the index Cockpit_PushCanvasContext (0002b00c) raises before saving the installed render context in CockpitContextStack (000b0df4) and Cockpit_PopRenderContext (0002b03c) lowers after reinstalling it.",
+      "source": "ES1DBSIM decompile at 0002b00c and 0002b03c; image byte at 00092d7d"
+    },
+    {
       "address": "0009680c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -16893,6 +17418,33 @@
       "name": "WorldShades_BandsTag0",
       "description": "Pointer to the world file's second int32 table, count at 000bc5ba, read by World_LoadTheater (000251c4). ES2's WorldShades_BandsTag0 (DBSIM 004cfd88), the thresholds for type tag 0.",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
+    },
+    {
+      "address": "000b0da4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitCanvasContext",
+      "description": "The cockpit's canvas render context, stored by Cockpit_CreateCanvasContext (0002ad78). ES2's 004d042c.",
+      "source": "ES1DBSIM decompile at 0002ad78"
+    },
+    {
+      "address": "000b0dd4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Cockpit_ZeroOffset",
+      "description": "Two int32, the offset Widget_DrawToCockpit (0002b058) copies at when given none; panel.cpp's static initializer at 0002e404 stores 0 in both. ES2's Cockpit_ZeroOffset (DBSIM 0049b07e).",
+      "source": "ES1DBSIM decompile at 0002b058; disassembly at 0002e404"
+    },
+    {
+      "address": "000b0df4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitContextStack",
+      "description": "The dword stack of render contexts Cockpit_PushCanvasContext (0002b00c) saves, indexed by CockpitContextStackIndex (00092d7d). ES2's 004d0470.",
+      "source": "ES1DBSIM decompile at 0002b00c and 0002b03c"
     },
     {
       "address": "000b5adc",
@@ -17523,6 +18075,24 @@
       "name": "PaletteFade_Mode",
       "description": "int16: 0 to fade in from black, 1 to fade out to black, 2 between two palettes; set by Palette_BeginCrossFade (00028528), read by Palette_StepCrossFade (000287a8).",
       "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "000bcc16",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_SquadmateMachines",
+      "description": "Three machine pointers, the player's squadmates by slot: zeroed by ColorSchemePanels_LoadAll (0002aecc), filled by Cockpit_LoadSquadmatePilots (0002b308), indexed by Squad_SendOrderToSlot (0002b3e8) and Squad_CallsignOf (0002b46c). ES2's g_SquadmateMachines (DBSIM 004d044c).",
+      "source": "ES1DBSIM decompile at 0002aecc, 0002b308, 0002b3e8 and 0002b46c"
+    },
+    {
+      "address": "000bd324",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SquadCallsignStrings",
+      "description": "Three string pointers, which Squad_CallsignOf (0002b46c) returns by squadmate slot. ES2's SquadCallsignStrings (DBSIM 004d1424).",
+      "source": "ES1DBSIM decompile at 0002b46c"
     },
     {
       "address": "000bda98",

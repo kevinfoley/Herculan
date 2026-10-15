@@ -66,7 +66,7 @@ ES2's also points `ActiveScanlineClipSpans` at the view's span table, and moves 
 
 (manager, view): for a view below 5, `CockpitView_ApplyViewState`; then for any view but 4, with `g_LowMemory` set loads the view's canopy first and frees it after; blits frame 0 of the view's bitmap array at (0, 0) with `Bitmap_Blit`, flags 2, mirrored, for view 3 and 0 otherwise, with the context's clip mode set to 0 for the blit; and for views 0 to 3 repaints the cockpit (`CockpitView_InvalidateWidgets`, `0002b4a0`). It stores the view as current. ES2's ([view switching](../../retail/simulation/cockpit-views.md#view-switching)) also scales the blit in layout mode 2 and blits a second panel in layout mode 1.
 
-`CockpitView_InvalidateWidgets` (`0002b4a0`), (cockpit), unless the widgets are off (`+0x20b`), calls slot `+8` of each widget's vtable, held at the widget's `+0x76`: the nine at `+0x70`, then `+0x1d8`, `+0x1dd`, `+0x1e1`, `+0x1e5`, `+0x1ed`, `+0x1e9` and `+0x1f5` inside `Cockpit_PushCanvasContext` and `Cockpit_PopRenderContext`, then `+0x1f1` and `+0x1f9`, and last runs the cockpit's `.TTM` scripts (`Cockpit_RunTtmScripts`, [the cockpit's scripts](../formats/ttm-scripts.md#the-simulator)). ES2's calls slot `+4` of ten widgets at `+0x70` and has no `+0x1d8` or `+0x1dd`, and runs no script.
+`CockpitView_InvalidateWidgets` (`0002b4a0`) is `panel.cpp`'s ([drawing the cockpit](cockpit-panel.md#drawing-it)).
 
 ### `CockpitView_ProcessViewCommand` (`000226f0`)
 
@@ -132,12 +132,10 @@ Where ES2's differ: ES2's steps 10 rows and `0x14` columns, both doubled by the 
 
 ## Callees of other modules
 
-Read for this module and named with it, each ES2's counterpart:
+Read for this module and named with it, each ES2's counterpart; `CockpitView_DisableWidgets`, `CockpitView_EnableWidgets` and `CockpitWidgets_TranslateForView` are `panel.cpp`'s ([drawing the cockpit](cockpit-panel.md#drawing-it)):
 
 | ES1 | Address | Differs from ES2's |
 |---|---|---|
-| `CockpitView_DisableWidgets`, `CockpitView_EnableWidgets` | `0002b2d0`, `0002b2ec` | the byte at `+0x20b`, ES2's `+0x20f` |
-| `CockpitWidgets_TranslateForView` | `0002ced0` | (cockpit, delta), callee-cleaned: calls `0004433c` with the root widget (the cockpit's `+0`) and the delta's two values, subtracts the delta from the `+0x220`/`+0x224` of the cockpit's render context (`+4`), and calls `0002db1c`(cockpit, delta) when the byte `+0x23a` is set, where ES2's tests `+0x23e`; it walks no widget list |
 | `MessagePort_ShiftRect` | `0002eea0` | the rect at `+0x43f`, ES2's `+0x4a7` |
 | `Cockpit_UseOffForwardCursor`, `Cockpit_UseForwardCursor` | `0002dfd4`, `0002e060` | the cursors at `+0x236` and `+0x232`, the slots at `+0x222`, `+0x226` and `+0x22e`, 4 below ES2's; passes the image's `+4` (0 for none) and `+8` to `Cursor_SetImage` |
 | `SimInput_SetEnabled` | `0004d82c` | the flag at `00095818`; turning input on registers one listener, `0006c2bb`(`0004c6ec`, `0009586c`), unless `00095894` is set; turning it off clears the three 14-byte blocks at `000b1844`, `000b1854` and `000b1864` |
@@ -183,7 +181,7 @@ The next object file's: `CockpitClipRegions_Load` (`00024d44`); `GLBase_DtorClip
 - **Open:** what opens the page gate for command 5 and for the return from view 2, which wait for the display's `+0x88` to be 2. `Sim_CreateDisplay` sets the pair `+0x88`/`+0x8c` to {0, 1}, and of the 26 writes to a `+0x88` that `es2_fieldscan.py --writes-only 88` finds, those in functions this batch read are `Sim_CreateDisplay`'s 0, the swaps in `Sim_EndFrame` and `CockpitView_StepViewTransition`, and `CockpitView_ApplyViewState`'s clip block copies; the other 19 are in functions not read, `Sim_StartMission`'s store of 0 at `0005afeb` among them. A retail check: a glance to the right from the forward view, and back from the left.
 - **Open:** whether `ES1DBSIM`'s `VGA_8` slot 15 re-shows the page on the screen when its origin moves, as the shell's `VGA8_SetPageOrigin` does ([the pages](../rendering/screen-pages.md#the-pages)), which would make the pans and the shake a hardware scroll.
 - **Open:** what sets the manager's current view `+0x10` before the first `CockpitView_SetView`: the constructor does not, and `CockpitView_ApplyViewState` tests it against −1.
-- **Open:** the callees read for none of this module's functions: `00028260`, `00027f74` and `00059288` in `Sim_EndFrame`; `0004c634` (a call of `0004b340`) and `00066a2e` (which copies the point at `00098d70`) in the return from the external view; `0004433c` and `0002db1c` in `CockpitWidgets_TranslateForView`; the squad message port's slots `+0x14` and `+0x18`.
+- **Open:** the callees read for none of this module's functions: `00028260`, `00027f74` and `00059288` in `Sim_EndFrame`; `0004c634` (a call of `0004b340`) and `00066a2e` (which copies the point at `00098d70`) in the return from the external view; the squad message port's slots `+0x14` and `+0x18`.
 - **Open:** what `000bda96`, `00098d96` and `00094c5b` are, which the view change sets and clears.
 - **Open:** the callers `es2_xref.py` finds and this batch did not read: `00057820` (the rect setters, `CockpitView_SetView`, `View_FillOutside3dRect`), `00058b68` (`ExternalView_GetRect`), and `0002e17c`, `0002e1d8`, `00057ffc` and `00058414` (the shake), with the amplitudes they pass.
 - **Open:** what calls `ClipRegions_AppendRectAboveScreen`, to which `es2_xref.py` finds no reference, and `HeapPtr_DtorMechviewCopy`, likewise.
