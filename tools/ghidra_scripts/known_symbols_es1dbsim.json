@@ -6593,7 +6593,13 @@
       "confidence": "high",
       "name": "CTLControl_PaintNoOpPanelCopy",
       "description": "Frameless: two NOPs and RET 4. Slot +4 (paint) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +4 of the library's button base table 00094b8a, 000439ae. ES2's CTLControl_PaintNoOp (DBSIM 00452ab2).",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002dade+5",
+        "sha1": "193b9046c34c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002dae3",
@@ -6602,7 +6608,13 @@
       "confidence": "high",
       "name": "CTLControl_InvalidateNoOpPanelCopy",
       "description": "Frameless: a NOP and RET 4. Slot +8 (invalidate) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +8 of the library's button base table 00094b8a, 000439b3. ES2's CTLControl_InvalidateNoOp (DBSIM 00452ab7).",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002dae3+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002dae7",
@@ -6611,7 +6623,13 @@
       "confidence": "high",
       "name": "CTLControl_OnClickNoOpPanelCopy",
       "description": "Frameless: a NOP and RET 8. Slot +0xc (click) of CTLButtonControlVtablePanelCopy (0009301e), which ScrollTriggerVtable (00093046) replaces with ScrollTrigger_OnClick (0002db04); the code of slot +0xc of the library's button base table 00094b8a, 000439b7. ES2's CTLControl_OnClickNoOp (DBSIM 0045555e).",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002dae7+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002daeb",
@@ -6620,7 +6638,13 @@
       "confidence": "high",
       "name": "CTLControl_FlushDeferredPaintNoOpPanelCopy",
       "description": "Frameless: a NOP and RET 4. Slot +0x10 (per frame) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +0x10 of the library's button base table 00094b8a, 000439bb. ES2's CTLControl_FlushDeferredPaintNoOp (DBSIM 0045554a).",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002daeb+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002daef",
@@ -6629,7 +6653,13 @@
       "confidence": "high",
       "name": "Widget_GetButtonValuePanelCopy",
       "description": "Frameless: a NOP, then returns the int16 at 00094b84 in AX with RET 4. Slot +0x14 (value) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +0x14 of the library's button base table 00094b8a, 000439bf. ES2's Widget_GetButtonValue (DBSIM 00455530), which returns 0049db6c.",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002daef+10",
+        "sha1": "f62f57a4a511",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002daf9",
@@ -6638,7 +6668,13 @@
       "confidence": "high",
       "name": "CTLControl_SetValueNoOpPanelCopy",
       "description": "Frameless: three NOPs and RET 8. Slot +0x18 (set value) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +0x18 of the library's button base table 00094b8a, 000439c9. ES2's CTLControl_SetValueNoOp (DBSIM 0045553b).",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002daf9+6",
+        "sha1": "fe14fe2186bc",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002daff",
@@ -6647,7 +6683,13 @@
       "confidence": "high",
       "name": "CTLControl_DragMoveNoOpPanelCopy",
       "description": "Frameless: a NOP and RET 8. Slot +0x1c (drag) of CTLButtonControlVtablePanelCopy (0009301e) and ScrollTriggerVtable (00093046); the code of slot +0x1c of the library's button base table 00094b8a, 000439cf. ES2's CTLControl_DragMoveNoOp (DBSIM 00455540).",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
+      "verified": {
+        "bytes": "0002daff+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002db04",
@@ -6956,7 +6998,13 @@
       "confidence": "high",
       "name": "Cockpit_StaticInit",
       "description": "Frameless, no arguments: panel.cpp's static initializer, entry 000adc2c of the static constructor table. Stores 0 at 000b0da8, 000b0db8, 000b0dc4, 000b0dcc and both dwords of Cockpit_ZeroOffset (000b0dd4), 4 at 000b0db0, 500 at 000b0dc8 and -500 at 000b0dd0. Its RET at 0002e442, followed by one zero byte, ends the object file. es2_xref finds the table entry as its one reference.",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#where-the-module-starts-and-ends"
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "0002e404+63",
+        "sha1": "fa19265d3ddb",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002eea0",
