@@ -14,8 +14,8 @@ namespace Herculan.Engine.Editor;
 /// and objects whose roster record names a point of its own. Each is placed by the loader's rules
 /// (docs/retail/formats/script-dat.md#placement--the-actual-rule), and only what has changed is touched.
 ///
-/// <para>Not placed again: the terrain, so a moved structure keeps the ground levelled where it was loaded and a moved
-/// pad its old paint; and an order's or an objective's own point, which the editor does not draw.</para>
+/// <para>Not placed again: a moved pad's paint, which keeps its old tile (the ground's levelling is
+/// <see cref="TerrainLeveller"/>'s); and an order's or an objective's own point, which the editor does not draw.</para>
 /// </summary>
 internal sealed class PointFollowers {
 	private readonly ScriptDat _document;

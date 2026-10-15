@@ -13,11 +13,9 @@ namespace Herculan.Engine.Sim;
 /// destructible parts.
 ///
 /// <para>Structures are the bulk of a mission's object count and none of its motion: they sit where
-/// the mission puts them. The one thing the original does that this does not is flatten the terrain
-/// underneath a structure as it places it (<c>Terrain_MarkStructureFootprint</c> (<c>00470dc8</c>), called with the object's radius just
-/// before the height query) — that writes to the loaded heightmap, so it belongs with terrain
-/// deformation rather than here, and leaving it out means a structure on a slope stands on the
-/// interpolated surface instead of a levelled pad.</para>
+/// the mission puts them. The terrain levelled under a structure as it is placed
+/// (<c>Terrain_MarkStructureFootprint</c>, <c>00470dc8</c>) is the spawn pass's work, not this class's: see
+/// <see cref="Terrain.HeightGrid.MarkStructureFootprint"/> and <see cref="Scene.MissionScene.Load"/>.</para>
 ///
 /// <para><b>They are shootable</b>, which is what <see cref="DirectFireHitTest"/> and
 /// <see cref="ApplyDamage"/> are; see those for the two very different pieces of geometry that

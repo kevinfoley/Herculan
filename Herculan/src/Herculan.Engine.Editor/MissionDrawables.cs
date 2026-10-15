@@ -14,6 +14,8 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class MissionDrawables : IDisposable {
 	private readonly List<IDisposable> _uploads = new();
+	private readonly GpuMesh _terrainMesh;
+	private readonly MeshVertex[] _terrainVertices;
 
 	/// <summary>
 	/// Uploads <paramref name="mission"/>'s scene and points <paramref name="renderer"/> at its theater: the fog,
@@ -31,7 +33,8 @@ internal sealed class MissionDrawables : IDisposable {
 		renderer.SetShadeRamps(scene.Models.ShadeRamps);
 		renderer.SetPaletteRamp(scene.Models.PaletteRamp);
 
-		var terrainMesh = Keep(new GpuMesh(gl, scene.Models.TerrainMesh));
+		_terrainVertices = scene.Models.TerrainMesh;
+		var terrainMesh = _terrainMesh = Keep(new GpuMesh(gl, _terrainVertices));
 		var terrainTexture = scene.Models.TerrainBank != null
 			? Keep(scene.Models.TerrainBank.Atlas.Upload(gl, indexed: true))
 			: null;
@@ -165,6 +168,10 @@ internal sealed class MissionDrawables : IDisposable {
 			GroundLayer.Shapes[draw.GroundShape] = shape with { Position = sceneObject.Object.Position };
 		}
 	}
+
+	/// <summary>Uploads again the run of terrain vertices a re-levelling rebuilt (<see cref="TerrainLeveller.Changed"/>).</summary>
+	public void UploadTerrain(int firstVertex, int vertexCount) =>
+		_terrainMesh.Update(firstVertex, _terrainVertices.AsSpan(firstVertex, vertexCount));
 
 	// One object's items, and the transform its BSP draw groups read each frame.
 	private sealed class ObjectDraw {

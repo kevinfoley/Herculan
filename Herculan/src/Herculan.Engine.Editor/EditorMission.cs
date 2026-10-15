@@ -1,6 +1,7 @@
 using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Content;
 using Herculan.Engine.Scene;
+using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
 
 namespace Herculan.Engine.Editor;
@@ -11,7 +12,8 @@ namespace Herculan.Engine.Editor;
 /// builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
-	private EditorMission(string name, ScriptDat document, MissionScene scene, MissionIndex index) {
+	private EditorMission(string name, ScriptDat document, MissionScene scene, MissionIndex index,
+			TerrainMaterialTable materials) {
 		Name = name;
 		Document = document;
 		Scene = scene;
@@ -22,7 +24,7 @@ internal sealed class EditorMission {
 		Picker = new ScenePicker(scene, index, Overlay);
 		GroupOverlay = new GroupOverlay(index, drape, Picker);
 		Outliner = new MissionOutliner(index, new MissionLint(index, document), Selection);
-		Mover = new PointMover(document, scene, index, Picker, Overlay);
+		Mover = new PointMover(document, scene, index, Picker, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
 		Properties = new PropertiesPanel(index, Selection, Mover);
 	}
@@ -76,6 +78,7 @@ internal sealed class EditorMission {
 		}
 
 		var index = new MissionIndex(scene, SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
-		return new EditorMission(name, document, scene, index);
+		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
+		return new EditorMission(name, document, scene, index, TerrainMaterialTable.Load(content));
 	}
 }

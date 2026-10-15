@@ -48,6 +48,7 @@ internal sealed class MissionOverlay {
 	private readonly List<(EditorRoute Route, List<Vector3> Lines, Vector3 Color)> _routes = new();
 	private readonly List<(List<Vector3> Lines, Vector3 Color)> _box = new();
 	private readonly List<(MissionBasePad Pad, List<Vector3> Lines)> _pads = new();
+	private MissionBox _boxShape;
 
 	public MissionOverlay(MissionIndex index, DrapedLines drape) {
 		_index = index;
@@ -76,12 +77,30 @@ internal sealed class MissionOverlay {
 	/// The mission box drawn, with its two margins: block 1's extent, which an edit to a point can grow or shrink.
 	/// </summary>
 	public void SetBox(MissionBox box) {
+		_boxShape = box;
 		_box.Clear();
 		if (!box.IsEmpty) {
 			AddBox(box, BoxColor);
 			AddBox(box.Grown(HddMap.Margin), MapExtentColor);
 			AddBox(box.Grown(MissionObjectives.RulesOfEngagementMargin), AbortColor);
 		}
+	}
+
+	/// <summary>Lays every line on the ground again, for terrain whose heights have changed under them.</summary>
+	public void Redrape() {
+		for (int i = 0; i < _areas.Count; i++) {
+			_areas[i] = (_areas[i].Area, AreaLines(_areas[i].Area), _areas[i].Color);
+		}
+
+		foreach (var (route, _, _) in _routes.ToList()) {
+			MoveRoute(route);
+		}
+
+		for (int i = 0; i < _pads.Count; i++) {
+			_pads[i] = (_pads[i].Pad, PadLines(_pads[i].Pad));
+		}
+
+		SetBox(_boxShape);
 	}
 
 	/// <summary>Lays <paramref name="area"/>'s outline again where it now stands.</summary>

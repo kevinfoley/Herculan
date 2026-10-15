@@ -333,6 +333,7 @@ public sealed class EditorHost {
 	private MissionDrawables Upload(GL gl, SceneRenderer renderer, EditorMission mission) {
 		var drawables = new MissionDrawables(gl, renderer, mission, _settings);
 		mission.Mover.Moved += drawables.Move;
+		mission.Mover.TerrainChanged += drawables.UploadTerrain;
 		return drawables;
 	}
 

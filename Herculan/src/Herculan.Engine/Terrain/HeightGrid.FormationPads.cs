@@ -50,6 +50,18 @@ public sealed partial class HeightGrid {
 	/// case any one of them marking it is enough.
 	/// </param>
 	public void PaintFormationPad(int worldX, int worldY, int materialIndex, int blockShift,
+			int dimension, ReadOnlySpan<byte> map) =>
+		WalkFormationPad(worldX, worldY, materialIndex, blockShift, dimension, map);
+
+	/// <summary>
+	/// <see cref="PaintFormationPad"/>'s footprint marks alone, leaving the tile's material as it is: what
+	/// running <see cref="FlattenStructureFootprints"/> again after <see cref="RestoreUnlevelledHeights"/> needs
+	/// from a pad. Not a retail entry point.
+	/// </summary>
+	public void MarkFormationPad(int worldX, int worldY, int blockShift, int dimension, ReadOnlySpan<byte> map) =>
+		WalkFormationPad(worldX, worldY, null, blockShift, dimension, map);
+
+	private void WalkFormationPad(int worldX, int worldY, int? materialIndex, int blockShift,
 			int dimension, ReadOnlySpan<byte> map) {
 		// Map entries per cell along one axis, as a shift: the map is expressed at the material's
 		// own block size, the grid at its cell size, and only their ratio matters here.
@@ -82,7 +94,9 @@ public sealed partial class HeightGrid {
 					continue;
 				}
 
-				SetMaterialIndex(cellX, cellY, materialIndex);
+				if (materialIndex is { } material) {
+					SetMaterialIndex(cellX, cellY, material);
+				}
 
 				if (map[row * dimension + col] != 0) {
 					SetScratch(cellX, cellY, FootprintMarked);

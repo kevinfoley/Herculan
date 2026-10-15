@@ -25,7 +25,8 @@ internal sealed record WaypointTarget(EditorRoute Route, int Index, bool WithLas
 /// <summary>
 /// Moves what stands on a <c>script.dat</c> block-1 point — a placed object or a route's waypoint — and keeps an undo
 /// history. After every change to the document's points, <see cref="PointFollowers"/> places again whatever else stands
-/// on them.
+/// on them, and after every move, previews included, <see cref="TerrainLeveller"/> levels the ground under the
+/// structures where they now stand.
 ///
 /// <para>An object is given a point of its own (<see cref="ScriptPointRefs.Place"/>), which its roster record's ref then
 /// names and which wins over its group's, so the object alone moves
@@ -47,24 +48,33 @@ internal sealed class PointMover {
 	private readonly ScenePicker _picker;
 	private readonly MissionOverlay _overlay;
 	private readonly PointFollowers _followers;
+	private readonly TerrainLeveller _leveller;
 	private readonly List<Edit> _undo = new();
 	private readonly List<Edit> _redo = new();
 
 	// Block 1 as it stood before a drag of a shared point began writing into it, until the drag commits or is cancelled.
 	private ScriptCoordinate[]? _beforeDrag;
 
-	public PointMover(ScriptDat document, MissionScene scene, MissionIndex index, ScenePicker picker, MissionOverlay overlay) {
+	public PointMover(ScriptDat document, MissionScene scene, MissionIndex index, ScenePicker picker, MissionOverlay overlay,
+			TerrainMaterialTable materials) {
 		_document = document;
 		_terrain = scene.World.Terrain;
 		_index = index;
 		_picker = picker;
 		_overlay = overlay;
 		_followers = new PointFollowers(document, scene, index, overlay, Place);
+		_leveller = new TerrainLeveller(scene, index, materials, overlay, Place);
 		LoadedBox = MissionBox.Of(scene.Mission.Coordinates);
 	}
 
 	/// <summary>Raised with each object whose simulation object has moved, for whatever draws it.</summary>
 	public event Action<SceneObject>? Moved;
+
+	/// <summary>Raised with the run of terrain mesh vertices a move re-levelled, for whatever uploads it.</summary>
+	public event Action<int, int>? TerrainChanged {
+		add => _leveller.Changed += value;
+		remove => _leveller.Changed -= value;
+	}
 
 	/// <summary>The mission box as the mission was opened, which a point outside of grows.</summary>
 	public MissionBox LoadedBox { get; }
@@ -156,6 +166,8 @@ internal sealed class PointMover {
 		} else {
 			Stand(target, position);
 		}
+
+		_leveller.Relevel();
 	}
 
 	/// <summary>Puts back what <see cref="Preview"/> moved, for a drag that went nowhere.</summary>
@@ -167,6 +179,8 @@ internal sealed class PointMover {
 		} else {
 			Stand(target, before);
 		}
+
+		_leveller.Relevel();
 	}
 
 	/// <summary>
@@ -206,6 +220,7 @@ internal sealed class PointMover {
 			Console.Error.WriteLine($"Cannot move {Describe(target)}: {ex.Message}");
 			_document.Coordinates = Snapshot(from.Coordinates);
 			Stand(target, before);
+			_leveller.Relevel();
 			return;
 		}
 
@@ -223,6 +238,7 @@ internal sealed class PointMover {
 		_redo.Clear();
 		_followers.Sync();
 		_overlay.SetBox(MissionBox.Of(Points()));
+		_leveller.Relevel();
 	}
 
 	private void Step(List<Edit> from, List<Edit> to, Func<Edit, State> state) {
@@ -246,6 +262,7 @@ internal sealed class PointMover {
 		}
 
 		_overlay.SetBox(MissionBox.Of(Points()));
+		_leveller.Relevel();
 	}
 
 	// Writes a waypoint's new position into each point it names.
