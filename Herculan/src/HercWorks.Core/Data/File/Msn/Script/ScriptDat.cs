@@ -498,6 +498,13 @@ public class ScriptBaseRecord {
 	/// <summary>Exported offset <c>0x1a</c> — the operation of each of those pairs, slot for slot with <see cref="CounterRefs"/>. The file always carries the row's own operations; the briefing map reuses the first two slots in its own copy of the block (docs/retail/shell/mission-map.md#what-it-reads).</summary>
 	public short[] CounterOps => ScriptActionRefs.ReadSlots(TailBytes, ScriptActionRefs.CounterOps);
 
+	/// <summary>Sets the operation of counter pair <paramref name="slot"/> (0-9) of <see cref="CounterOps"/>.</summary>
+	public void SetCounterOp(int slot, short operation) {
+		ArgumentOutOfRangeException.ThrowIfNegative(slot);
+		ArgumentOutOfRangeException.ThrowIfGreaterThan(slot, 9);
+		ScriptActionRefs.Write(TailBytes, ScriptActionRefs.CounterOps + slot * 2, operation);
+	}
+
 	/// <inheritdoc cref="BaseRosterEntry62.StartingCondition"/>
 	/// <remarks>Exported offset <c>0x32</c>.</remarks>
 	public short StartingCondition {

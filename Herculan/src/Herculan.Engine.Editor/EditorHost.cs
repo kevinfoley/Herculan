@@ -97,6 +97,7 @@ public sealed class EditorHost {
 	private WireframeRenderer? _wireframe;
 	private ScaledImGui? _imgui;
 	private MissionDrawables? _drawables;
+	private DropPreview? _dropPreview;
 	private IKeyboard? _keyboard;
 	private IMouse? _mouse;
 	private IInputContext? _input;
@@ -159,7 +160,7 @@ public sealed class EditorHost {
 		}
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, Ctrl+Z/Ctrl+Y undo/redo, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, Delete deletes the selected object, Ctrl+Z/Ctrl+Y undo/redo, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -337,12 +338,15 @@ public sealed class EditorHost {
 		mission.Mover.Moved += drawables.Move;
 		mission.Mover.TerrainChanged += drawables.UploadTerrain;
 		mission.Placer.Added += drawables.Add;
+		_dropPreview = new DropPreview(mission, drawables);
 		mission.Placer.Removed += drawables.Remove;
+		mission.Deleter.Added += drawables.Add;
+		mission.Deleter.Removed += drawables.Remove;
 		return drawables;
 	}
 
-	// V toggles the top-down view, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes, unless a text field has the keyboard,
-	// which has its own undo. None of them while a drag is under way.
+	// V toggles the top-down view, Delete deletes the selected object, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes,
+	// unless a text field has the keyboard, which has its own undo. None of them while a drag is under way.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
 		if (_mission?.Gizmo.Dragging == true || (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
 			return;
@@ -351,6 +355,14 @@ public sealed class EditorHost {
 		bool control = keyboard.IsKeyPressed(Key.ControlLeft) || keyboard.IsKeyPressed(Key.ControlRight);
 		if (key == Key.V && !control) {
 			ToggleTopDown();
+			return;
+		}
+
+		if (key == Key.Delete && !control && _mission?.Selection.Current is ObjectSelection { Object: var selected }) {
+			if (_mission.Deleter.Delete(selected) is { } reason) {
+				Console.Error.WriteLine($"Cannot delete {MissionText.Describe(selected)}: {reason}");
+			}
+
 			return;
 		}
 
@@ -439,6 +451,7 @@ public sealed class EditorHost {
 
 		var display = ImGui.GetIO().DisplaySize;
 		if (_mission != null && _drawables != null) {
+			UpdateDropPreview(_mission);
 			DrawMission(_mission, _drawables, _renderer, _wireframe);
 		}
 
@@ -452,7 +465,9 @@ public sealed class EditorHost {
 			_mission.GroupOverlay.DrawLabels(_camera, _settings, _mission.Selection);
 			_mission.Outliner.Draw(display, menuBarHeight);
 			_mission.Properties.Draw(display, menuBarHeight);
-			_toolbox.Draw(display, enabled: !_mission.Gizmo.Dragging);
+			int? structureGroup = SelectedStructureGroup(_mission);
+			_toolbox.Draw(display, enabled: !_mission.Gizmo.Dragging, structureGroup,
+				structureGroup is { } joinable ? _mission.Placer.WhyNotJoin(joinable) : null);
 		}
 
 		_settingsPanel.Draw();
@@ -512,6 +527,26 @@ public sealed class EditorHost {
 		_closePending = true;
 	}
 
+	// The structure group the selection is, or a structure of: what a Toolbox add can join. Group 0 is the player's squad.
+	private static int? SelectedStructureGroup(EditorMission mission) {
+		int group = mission.Selection.Current switch {
+			GroupSelection selected => selected.Group,
+			ObjectSelection { Object.Placement: var placement } => placement.GroupIndex,
+			_ => -1
+		};
+		return group > 0 && mission.Index.KindOf(group) == MissionUnitKind.Base ? group : null;
+	}
+
+	// Stands the structure a Toolbox drag would add on the ground under the pointer, from the drag as the last frame's
+	// panels left it; not while the pointer is over a panel, where letting go adds nothing.
+	private void UpdateDropPreview(EditorMission mission) {
+		var drag = _toolbox.Drag;
+		var ground = drag != null && !_toolbox.DragOverPanel && _mouse != null
+			? mission.Picker.GroundAt(_camera, _mouse.Position, Viewport)
+			: null;
+		_dropPreview?.Update(drag, ground);
+	}
+
 	// Adds what the toolbox asked for on the ground under the pointer, or at the middle of the view, else under the
 	// camera when the middle of the view is sky.
 	private void AddStructure(ToolboxRequest request) {
@@ -525,7 +560,7 @@ public sealed class EditorHost {
 			: picker.GroundAt(_camera, Viewport / 2f, Viewport)
 				?? new Numerics.Vec3i((int)_editorCamera.WorldPosition.X, (int)_editorCamera.WorldPosition.Y, 0);
 		_toolbox.Status = ground is { } at
-			? _mission.Placer.Add(request.TypeIndex, request.Side, at.X, at.Y)
+			? _mission.Placer.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group)
 			: "There is no ground under the pointer.";
 	}
 

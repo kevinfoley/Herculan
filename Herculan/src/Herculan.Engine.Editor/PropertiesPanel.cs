@@ -22,16 +22,19 @@ internal sealed class PropertiesPanel {
 	private readonly SelectionState _selection;
 	private readonly PointMover _mover;
 	private readonly SideChanger _sides;
+	private readonly ObjectDeleter _deleter;
 
 	// A position being typed, and the object it is for, until its field lets go.
 	private SceneObject? _draftFor;
 	private Vec3i _draft;
 
-	public PropertiesPanel(MissionIndex index, SelectionState selection, PointMover mover, SideChanger sides) {
+	public PropertiesPanel(MissionIndex index, SelectionState selection, PointMover mover, SideChanger sides,
+			ObjectDeleter deleter) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
 		_sides = sides;
+		_deleter = deleter;
 	}
 
 	private Mission Mission => _index.Mission;
@@ -121,6 +124,66 @@ internal sealed class PropertiesPanel {
 		}
 
 		ObjectiveLinks(_index.ObjectivesOfObject(sel));
+		DeleteControls(sel);
+	}
+
+	/// <summary>
+	/// A Delete button (<see cref="ObjectDeleter"/>), or why the object cannot be deleted, with what names or needs it as
+	/// links. Drawn last, as nothing of the view follows a delete.
+	/// </summary>
+	private void DeleteControls(SceneObject sel) {
+		ImGui.Separator();
+		var blockers = _deleter.BlockersOf(sel);
+		if (blockers.None) {
+			if (ImGui.Button("Delete")) {
+				_deleter.Delete(sel);
+			}
+
+			return;
+		}
+
+		if (blockers.Fixed is { } reason) {
+			ImGui.TextDisabled($"Cannot be deleted: {reason}");
+			return;
+		}
+
+		ImGui.PushID("delete");
+		ImGui.TextWrapped("Cannot be deleted while these name or need it:");
+		foreach (int objective in blockers.Objectives) {
+			ObjectiveLink(objective);
+		}
+
+		foreach (int action in blockers.Actions) {
+			ImGui.PushID($"target{action}");
+			ActionLink(action);
+			ImGui.SameLine();
+			ImGui.Text("targets it");
+			ImGui.PopID();
+		}
+
+		foreach (int action in blockers.OwnActions) {
+			ImGui.PushID($"own{action}");
+			ActionLink(action);
+			ImGui.SameLine();
+			ImGui.Text("is fired by it");
+			ImGui.PopID();
+		}
+
+		foreach (var order in blockers.Orders) {
+			ImGui.PushID($"order{order.Group}.{order.Slot}");
+			GroupLink(order.Group);
+			ImGui.TextWrapped($"names it in order {order.Slot} ({MissionText.OrderVerb(order.Order.Verb)})");
+			ImGui.PopID();
+		}
+
+		foreach (int group in blockers.LastMemberOf) {
+			ImGui.PushID($"last{group}");
+			GroupLink(group);
+			ImGui.TextWrapped("would be left with no members, which DBSIM does not run safely");
+			ImGui.PopID();
+		}
+
+		ImGui.PopID();
 	}
 
 	/// <summary>

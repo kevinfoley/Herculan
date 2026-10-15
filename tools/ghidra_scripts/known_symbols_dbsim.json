@@ -5021,8 +5021,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_ConditionTier",
-      "description": "A mission group's 0-4 condition tier: 4 when every member is immobilised (+0xa4) or destroyed (+0x99); else 3 when the lost fraction reaches 650/1024 or the mean overall damage across all members reaches 0xc1; else 2 at 250/1024 or 0x81; else 1 at mean damage 0x33; else 0. The mean includes dead members.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "description": "A mission group's 0-4 condition tier: 4 when every member is immobilised (+0xa4) or destroyed (+0x99); else 3 when the lost fraction reaches 650/1024 or the mean overall damage across all members reaches 0xc1; else 2 at 250/1024 or 0x81; else 1 at mean damage 0x33; else 0. The mean includes dead members. Both the mean and the fraction divide by the member count (group+0x10) unchecked, so a group with no members divides by zero.",
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00412c8c+191",
+        "sha1": "fed5f75b175b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00412d4c",
@@ -7672,9 +7678,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Action_TestTriggerForGroup",
-      "description": "Action_TestTrigger applied to every member of a group in turn (member array at group+0x0c, count at group+0x10), stopping at the first that activates it.",
+      "description": "Action_TestTrigger applied to every member of a group in turn (member array at group+0x0c, count at group+0x10), stopping at the first that activates it, and returning that member's answer, else the last member's 0. The answer is kept at [EBP-2], the high half of the ECX pushed at entry as the local's slot, which only the loop writes, so a group with no members returns whatever ECX held.",
       "source": "docs/retail/simulation/mission-deployment.md",
-      "signature": "short __cdecl Action_TestTriggerForGroup(int *group, int *action)"
+      "signature": "short __cdecl Action_TestTriggerForGroup(int *group, int *action)",
+      "verified": {
+        "bytes": "00423508+65",
+        "sha1": "afd8aefac774",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0042354c",
@@ -7698,9 +7710,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_DeploymentCheck",
-      "description": "Per-frame arrival check for a mission group that has not entered the world yet, run by Sim_MainTick for exactly the groups whose record +0x14 action pointer is non-null. No-ops until that action runtime activation flag (action+0x0a) is set. Then the action verb (action+0x02) picks the arrival: 2 or 3 spawn a METEOR drop pod 150000 units from the player (bearing +-90 deg for 2, +-22.5 deg for 3) carrying the group, leaving +0x14 set for the pod to clear on landing and latching group+0x13 so only one pod is ever launched; 4 or 5 place the group leader at 90000 units behind (4) or 150000 ahead (5) facing bearing-0x8000, run every other member through vtable +0x78 for its formation offset, and clear +0x14; any other verb just clears +0x14 so the group goes live where it stands. All arrival points come from Deployment_PickPointNearPlayer.",
+      "description": "Per-frame arrival check for a mission group that has not entered the world yet, run by Sim_MainTick for exactly the groups whose record +0x14 action pointer is non-null. No-ops until that action runtime activation flag (action+0x0a) is set. Then the action verb (action+0x02) picks the arrival: 2 or 3 spawn a METEOR drop pod 150000 units from the player (bearing +-90 deg for 2, +-22.5 deg for 3) carrying the group, leaving +0x14 set for the pod to clear on landing and latching group+0x13 so only one pod is ever launched; 4 or 5 place the group leader at 90000 units behind (4) or 150000 ahead (5) facing bearing-0x8000, run every other member through vtable +0x78 for its formation offset, and clear +0x14 -- the leader is the member array's first pointer, taken without checking the group has a member; any other verb just clears +0x14 so the group goes live where it stands. All arrival points come from Deployment_PickPointNearPlayer.",
       "source": "docs/retail/simulation/mission-deployment.md",
-      "signature": "void __cdecl Group_DeploymentCheck(int *group)"
+      "signature": "void __cdecl Group_DeploymentCheck(int *group)",
+      "verified": {
+        "bytes": "004236c4+476",
+        "sha1": "7f40686e9dad",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004238a0",
@@ -7708,8 +7726,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_OrderTargetObject",
-      "description": "The object the group's current order names -- the first member of the group it holds (+0xc == 0), or the object directly (1-3).",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "The object the group's current order names -- the first member of the group it holds (+0xc == 0), read without checking that group has a member, or the object directly (1-3); 0 for no current order or another subject kind.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "004238a0+52",
+        "sha1": "b77b3aca56ec",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004238d4",

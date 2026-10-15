@@ -71,7 +71,8 @@ internal sealed record ActionLinks(
 /// group setups and the base pads here are the editor's own copies, which <see cref="PointFollowers"/> keeps in step
 /// with the document as its points move, and so are the groups' sides, which <see cref="SideChanger"/> sets. The objects
 /// and groups an edit adds (<see cref="StructurePlacer"/>) are
-/// listed here beside the loaded ones; <see cref="Mission"/> stays as loaded.
+/// listed here beside the loaded ones, and an object a delete unlinks (<see cref="ObjectDeleter"/>) is taken off;
+/// <see cref="Mission"/> stays as loaded.
 /// </summary>
 internal sealed class MissionIndex {
 	private readonly Dictionary<(MissionUnitKind, int), SceneObject> _bySlot = new();
@@ -184,6 +185,31 @@ internal sealed class MissionIndex {
 		_objects.Remove(placed);
 		_members[placed.Placement.GroupIndex].Remove(placed);
 		_bySlot.Remove((placed.Placement.Kind, placed.Placement.SlotIndex));
+	}
+
+	/// <summary>
+	/// Takes any placed object, loaded or added, off every list, as a delete does (<see cref="ObjectDeleter"/>), and
+	/// answers where it stood in <see cref="Objects"/> and in its group's members, for <see cref="RestoreObject"/>.
+	/// </summary>
+	public (int Object, int Member) DetachObject(SceneObject placed) {
+		var members = _members[placed.Placement.GroupIndex];
+		var at = (Object: _objects.FindIndex(o => ReferenceEquals(o, placed)),
+			Member: members.FindIndex(o => ReferenceEquals(o, placed)));
+		_objects.RemoveAt(at.Object);
+		members.RemoveAt(at.Member);
+		var key = (placed.Placement.Kind, placed.Placement.SlotIndex);
+		if (_bySlot.TryGetValue(key, out var listed) && ReferenceEquals(listed, placed)) {
+			_bySlot.Remove(key);
+		}
+
+		return at;
+	}
+
+	/// <summary>Puts an object <see cref="DetachObject"/> took off back where it stood.</summary>
+	public void RestoreObject(SceneObject placed, (int Object, int Member) at) {
+		_objects.Insert(at.Object, placed);
+		_members[placed.Placement.GroupIndex].Insert(at.Member, placed);
+		_bySlot[(placed.Placement.Kind, placed.Placement.SlotIndex)] = placed;
 	}
 
 	/// <summary>
