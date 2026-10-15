@@ -8242,8 +8242,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Label_StaticInitNoOp",
-      "description": "Frameless, no Ghidra function starts here: a lone RET, entry 000adc3c of the static constructor table, closing the label object file; three zero bytes follow and the next file starts at PanelGauge_Ctor (00031318). ES2's Label_StaticInitNoOp (DBSIM 00438b1c).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#where-the-object-files-start-and-end"
+      "description": "Frameless: a lone RET, entry 000adc3c of the static constructor table, closing the label object file; three zero bytes follow and the next file starts at PanelGauge_Ctor (00031318). ES2's Label_StaticInitNoOp (DBSIM 00438b1c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "00031314+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00031318",
@@ -8266,8 +8272,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelGauge_OnChildClickNoOp",
-      "description": "Frameless, no Ghidra function starts here: three NOPs and RET 0xc, (gauge, flags, child). Slot +4 of PanelGaugeVtable (0009338e), which Widget_ForwardClickToOwner reaches on a child's click. ES2's PanelGauge_OnChildClickNoOp (DBSIM 0045233f).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gauge-base"
+      "description": "Frameless: three NOPs and RET 0xc, (gauge, flags, child). Slot +4 of PanelGaugeVtable (0009338e), which Widget_ForwardClickToOwner reaches on a child's click. ES2's PanelGauge_OnChildClickNoOp (DBSIM 0045233f).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gauge-base",
+      "verified": {
+        "bytes": "00031395+6",
+        "sha1": "8cb6c4e97d30",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0003139b",
@@ -8275,8 +8287,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelGauge_KeyDispatchNone",
-      "description": "Frameless, no Ghidra function starts here: NOP, XOR EAX,EAX and RET 8, (gauge, key): returns 0. Slot +0x10 of PanelGaugeVtable (0009338e). ES2's PanelGauge_KeyDispatchNone (DBSIM 00452344).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gauge-base"
+      "description": "Frameless: NOP, XOR EAX,EAX and RET 8, (gauge, key): returns 0. Slot +0x10 of PanelGaugeVtable (0009338e). ES2's PanelGauge_KeyDispatchNone (DBSIM 00452344).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gauge-base",
+      "verified": {
+        "bytes": "0003139b+6",
+        "sha1": "ae2a5ee89632",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000313a4",
@@ -8314,8 +8332,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_ClickSound",
-      "description": "Frameless, no Ghidra function starts here: Sound_Play(0x11) and RET 4, (mixin). The click sound at +0xc of the PanelGadget mixin's tables: es2_xref finds 16 stored pointers to it, and es1_naming.py vtables lists nine three-slot tables holding it at +0xc. The gadget object file starts here, after two zero bytes. ES2's Widget_ClickSound (DBSIM 00438e2c).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+      "description": "Frameless: Sound_Play(0x11) and RET 4, (mixin). The click sound at +0xc of the PanelGadget mixin's tables: es2_xref finds 16 stored pointers to it, and es1_naming.py vtables lists nine three-slot tables holding it at +0xc. The gadget object file starts here, after two zero bytes. ES2's Widget_ClickSound (DBSIM 00438e2c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "000314a0+10",
+        "sha1": "c0b27a370cd3",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000314ac",
@@ -8353,8 +8377,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CTLButtonControl_PaintNoOpGadgetsCopy",
-      "description": "Frameless, no Ghidra function starts here: a NOP and RET 4. Slot +4 (paint) of PanelSelectGadgetVtable (000933aa). ES2's CTLButtonControl_PaintNoOp (DBSIM 00455545).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+      "description": "Frameless: a NOP and RET 4. Slot +4 (paint) of PanelSelectGadgetVtable (000933aa). ES2's CTLButtonControl_PaintNoOp (DBSIM 00455545).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "00031523+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00031528",
@@ -8377,8 +8407,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CTLControl_FlushDeferredPaintNoOpGadgetsCopy",
-      "description": "Frameless, no Ghidra function starts here: RET 4. Slot +0x10 (per frame) of PanelSelectGadgetVtable (000933aa). ES2's CTLControl_FlushDeferredPaintNoOp (DBSIM 0045554a).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+      "description": "Frameless: RET 4. Slot +0x10 (per frame) of PanelSelectGadgetVtable (000933aa). ES2's CTLControl_FlushDeferredPaintNoOp (DBSIM 0045554a).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "00031538+3",
+        "sha1": "6d2a7422bc83",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0003153b",
@@ -8386,8 +8422,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_GetButtonValueGadgetsCopy",
-      "description": "Frameless, no Ghidra function starts here: a NOP, then returns the int16 at 00094b84 in AX with RET 4. Slot +0x14 (value) of PanelSelectGadgetVtable (000933aa); the code of Widget_GetButtonValuePanelCopy. ES2's Widget_GetButtonValue (DBSIM 00455530).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+      "description": "Frameless: a NOP, then returns the int16 at 00094b84 in AX with RET 4. Slot +0x14 (value) of PanelSelectGadgetVtable (000933aa); the code of Widget_GetButtonValuePanelCopy. ES2's Widget_GetButtonValue (DBSIM 00455530).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "0003153b+10",
+        "sha1": "f62f57a4a511",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00031545",
@@ -8395,8 +8437,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CTLControl_SetValueNoOpGadgetsCopy",
-      "description": "Frameless, no Ghidra function starts here: three NOPs and RET 8. Slot +0x18 (set value) of PanelSelectGadgetVtable (000933aa). ES2's CTLControl_SetValueNoOp (DBSIM 0045553b).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+      "description": "Frameless: three NOPs and RET 8. Slot +0x18 (set value) of PanelSelectGadgetVtable (000933aa). ES2's CTLControl_SetValueNoOp (DBSIM 0045553b).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "00031545+6",
+        "sha1": "fe14fe2186bc",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0003154b",
@@ -8404,8 +8452,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CTLControl_DragMoveNoOpGadgetsCopy",
-      "description": "Frameless, no Ghidra function starts here: a NOP and RET 8. Slot +0x1c (drag) of PanelSelectGadgetVtable (000933aa). ES2's CTLControl_DragMoveNoOp (DBSIM 00455540).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+      "description": "Frameless: a NOP and RET 8. Slot +0x1c (drag) of PanelSelectGadgetVtable (000933aa). ES2's CTLControl_DragMoveNoOp (DBSIM 00455540).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "0003154b+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00031550",
@@ -8488,8 +8542,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_NoClickSound",
-      "description": "Frameless, no Ghidra function starts here: two NOPs and RET 4, (mixin). Slot +0xc, the click sound, of PanelSliderGadgetVtable (000933d2), so a slider is silent. ES2's Widget_NoClickSound (DBSIM 00439014).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases"
+      "description": "Frameless: two NOPs and RET 4, (mixin). Slot +0xc, the click sound, of PanelSliderGadgetVtable (000933d2), so a slider is silent. ES2's Widget_NoClickSound (DBSIM 00439014).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#the-gadget-bases",
+      "verified": {
+        "bytes": "00031666+5",
+        "sha1": "193b9046c34c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0003166c",
@@ -8542,8 +8602,14 @@
       "type": "function",
       "confidence": "high",
       "name": "BarGraph_NoOp",
-      "description": "Frameless, no Ghidra function starts here: a NOP and RET 8. ES2's BarGraph_NoOp (DBSIM 004390b0) sits in the same place, between BarGraph_Ctor and BarGraph_GetRect. No reference found by es2_xref.",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs"
+      "description": "Frameless: a NOP and RET 8. ES2's BarGraph_NoOp (DBSIM 004390b0) sits in the same place, between BarGraph_Ctor and BarGraph_GetRect. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bar-graphs",
+      "verified": {
+        "bytes": "00031733+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00031738",
