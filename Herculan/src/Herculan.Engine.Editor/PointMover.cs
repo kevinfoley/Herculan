@@ -12,6 +12,17 @@ namespace Herculan.Engine.Editor;
 /// <summary>What <see cref="PointMover"/> moves and the move handles drag.</summary>
 internal abstract record MoveTarget;
 
+/// <summary>
+/// One step of <see cref="PointMover"/>'s undo history that is not a move — an added object
+/// (<see cref="StructurePlacer"/>). Each puts the document, the index and the scene back as the step found or left
+/// them; the history then places again what stands on the document's points and levels the ground.
+/// </summary>
+internal interface IEditorEdit {
+	void Undo();
+
+	void Redo();
+}
+
 /// <summary>A placed object, moved through a point of its roster record's own.</summary>
 internal sealed record ObjectTarget(SceneObject Object) : MoveTarget;
 
@@ -33,7 +44,8 @@ internal sealed record GroupTarget(int Group, bool Detach = false) : MoveTarget;
 /// Moves what stands on a <c>script.dat</c> block-1 point — a placed object, a route's waypoint or a group — and keeps an
 /// undo history. After every change to the document's points, <see cref="PointFollowers"/> places again whatever else
 /// stands on them, and after every move, previews included, <see cref="TerrainLeveller"/> levels the ground under the
-/// structures where they now stand.
+/// structures where they now stand. Its history also holds the edits made elsewhere (<see cref="Record(IEditorEdit)"/>),
+/// so that Undo and Redo step through every edit in the order it was made.
 ///
 /// <para>An object is given a point of its own (<see cref="ScriptPointRefs.Place"/>), which its roster record's ref then
 /// names and which wins over its group's, so the object alone moves
@@ -63,8 +75,8 @@ internal sealed class PointMover {
 	private readonly MissionOverlay _overlay;
 	private readonly PointFollowers _followers;
 	private readonly TerrainLeveller _leveller;
-	private readonly List<Edit> _undo = new();
-	private readonly List<Edit> _redo = new();
+	private readonly List<IEditorEdit> _undo = new();
+	private readonly List<IEditorEdit> _redo = new();
 
 	// Block 1 as it stood before a drag of a shared point or a group began writing into it, and the dragged group's
 	// ref, until the drag commits or is cancelled.
@@ -343,19 +355,25 @@ internal sealed class PointMover {
 		Record(target, from, new State(Snapshot(_document.Coordinates), placed, position));
 	}
 
-	public void Undo() => Step(_undo, _redo, edit => edit.Before);
+	public void Undo() => Step(_undo, _redo, edit => edit.Undo());
 
-	public void Redo() => Step(_redo, _undo, edit => edit.After);
+	public void Redo() => Step(_redo, _undo, edit => edit.Redo());
 
-	private void Record(MoveTarget target, State from, State to) {
-		_undo.Add(new Edit(target, from, to));
+	/// <summary>
+	/// Adds an edit made elsewhere, already applied, to the history as one step, and places and levels after it as
+	/// after a move.
+	/// </summary>
+	public void Record(IEditorEdit edit) {
+		_undo.Add(edit);
 		_redo.Clear();
 		_followers.Sync();
 		_overlay.SetBox(MissionBox.Of(Points()));
 		_leveller.Relevel();
 	}
 
-	private void Step(List<Edit> from, List<Edit> to, Func<Edit, State> state) {
+	private void Record(MoveTarget target, State from, State to) => Record(new Edit(this, target, from, to));
+
+	private void Step(List<IEditorEdit> from, List<IEditorEdit> to, Action<IEditorEdit> apply) {
 		if (from.Count == 0) {
 			return;
 		}
@@ -363,20 +381,23 @@ internal sealed class PointMover {
 		var edit = from[^1];
 		from.RemoveAt(from.Count - 1);
 		to.Add(edit);
+		apply(edit);
+		_followers.Sync();
+		_overlay.SetBox(MissionBox.Of(Points()));
+		_leveller.Relevel();
+	}
 
-		var target = state(edit);
-		_document.Coordinates = Snapshot(target.Coordinates);
-		WriteRefs(edit.Target, target.References);
+	// Puts a move's points and refs back as one side of it left them.
+	private void Restore(MoveTarget moved, State state) {
+		_document.Coordinates = Snapshot(state.Coordinates);
+		WriteRefs(moved, state.References);
 		_followers.Sync();
 
 		// An object's own move is the one thing the followers do not place: undone, its record names no point again
 		// and it stands where its group puts it.
-		if (edit.Target is ObjectTarget) {
-			Stand(edit.Target, target.Position);
+		if (moved is ObjectTarget) {
+			Stand(moved, state.Position);
 		}
-
-		_overlay.SetBox(MissionBox.Of(Points()));
-		_leveller.Relevel();
 	}
 
 	// Writes a waypoint's new position into each point it names.
@@ -515,5 +536,9 @@ internal sealed class PointMover {
 
 	private sealed record State(ScriptCoordinate[] Coordinates, short[] References, Vec3i Position);
 
-	private sealed record Edit(MoveTarget Target, State Before, State After);
+	private sealed record Edit(PointMover Mover, MoveTarget Target, State Before, State After) : IEditorEdit {
+		public void Undo() => Mover.Restore(Target, Before);
+
+		public void Redo() => Mover.Restore(Target, After);
+	}
 }

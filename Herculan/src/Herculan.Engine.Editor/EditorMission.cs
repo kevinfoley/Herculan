@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker, the two side panels and the move tools, all sharing one selection. Opening another mission
+/// index, the overlays, the picker, the two side panels and the move and add tools, all sharing one selection. Opening another mission
 /// builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
@@ -26,6 +26,7 @@ internal sealed class EditorMission {
 		Outliner = new MissionOutliner(index, new MissionLint(index, document), Selection);
 		Mover = new PointMover(document, scene, index, Picker, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
+		Placer = new StructurePlacer(document, scene, index, Picker, Mover, Selection);
 		Properties = new PropertiesPanel(index, Selection, Mover);
 	}
 
@@ -62,6 +63,9 @@ internal sealed class EditorMission {
 	public PointMover Mover { get; }
 
 	public MoveGizmo Gizmo { get; }
+
+	/// <summary>Adds structures to <see cref="Document"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public StructurePlacer Placer { get; }
 
 	public string WindowTitle => $"HERCULAN Mission Editor — {Name}, zone {Mission.Header.ZoneIndex}";
 

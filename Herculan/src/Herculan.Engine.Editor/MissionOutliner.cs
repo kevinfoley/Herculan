@@ -172,7 +172,7 @@ internal sealed class MissionOutliner {
 				flags |= ImGuiTreeNodeFlags.Leaf;
 			}
 
-			bool open = ImGui.TreeNodeEx($"{MissionText.DescribeGroup(Mission, group)}: {members.Count}{waiting}##group{group}", flags);
+			bool open = ImGui.TreeNodeEx($"{MissionText.DescribeGroup(_index, group)}: {members.Count}{waiting}##group{group}", flags);
 			Choose(new GroupSelection(group), ImGui.IsItemClicked() && !ImGui.IsItemToggledOpen());
 
 			if (!open) {

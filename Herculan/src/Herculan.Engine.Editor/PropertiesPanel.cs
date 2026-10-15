@@ -195,7 +195,7 @@ internal sealed class PropertiesPanel {
 			+ $"{pos.Z / WorldScale.WorldUnitsPerMeter:F1} m";
 
 	private void DrawGroup(int group) {
-		ImGui.TextWrapped(MissionText.DescribeGroup(Mission, group));
+		ImGui.TextWrapped(MissionText.DescribeGroup(_index, group));
 		ImGui.Separator();
 
 		int waitsOn = group < Mission.GroupDeploymentActions.Count ? Mission.GroupDeploymentActions[group] : -1;
@@ -564,7 +564,7 @@ internal sealed class PropertiesPanel {
 			ImGui.TextDisabled("names none: the bearing of its route's first leg");
 		}
 
-		string kind = group < Mission.GroupKinds.Count ? Mission.GroupKinds[group].ToString().ToLowerInvariant() : "?";
+		string kind = _index.KindOf(group)?.ToString().ToLowerInvariant() ?? "?";
 		ImGui.Text($"Formation: {setup.FormationId} ({kind} table)");
 		ImGui.Text(setup.PaintsGround ? "Paints ground: yes" : "Paints ground: no");
 
@@ -743,7 +743,7 @@ internal sealed class PropertiesPanel {
 		Link(MissionText.Describe(placed), new ObjectSelection(placed));
 
 	private void GroupLink(int group) =>
-		Link(MissionText.DescribeGroup(Mission, group), new GroupSelection(group));
+		Link(MissionText.DescribeGroup(_index, group), new GroupSelection(group));
 
 	private void ActionLink(int action) => Link($"Action {action}", new ActionSelection(action));
 

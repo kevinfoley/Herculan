@@ -40,7 +40,7 @@ internal sealed class TerrainLeveller {
 		_terrain = scene.World.Terrain;
 		_models = scene.Models;
 		_index = index;
-		_objects = scene.Objects;
+		_objects = index.Objects;
 		_materials = materials;
 		_overlay = overlay;
 		_place = place;

@@ -9,19 +9,31 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The GPU half of an <see cref="EditorMission"/>: its terrain and every model uploaded, and the scene items that
 /// draw them. Nothing ticks, so each object's transform is set as it is uploaded and again only when an edit moves it
-/// (<see cref="Move"/>). Disposing it frees every upload, which is what opening another mission does before building
-/// the next one.
+/// (<see cref="Move"/>). An object an edit adds is uploaded then (<see cref="Add"/>), its model too if nothing drawn
+/// so far uses it, and one an edit takes away stops being drawn (<see cref="Remove"/>), its model kept for a redo.
+/// Disposing it frees every upload, which is what opening another mission does before building the next one.
 /// </summary>
 internal sealed class MissionDrawables : IDisposable {
+	private readonly GL _gl;
 	private readonly List<IDisposable> _uploads = new();
 	private readonly GpuMesh _terrainMesh;
 	private readonly MeshVertex[] _terrainVertices;
+	private readonly List<SceneItem> _items;
+	private readonly Func<SceneObject, bool> _isWaiting;
+
+	// Each model's uploads, by model key: a celled shape's cells or else its flat mesh, its ground plane and its texture.
+	private readonly Dictionary<string, GpuMesh> _modelMeshes = new();
+	private readonly Dictionary<string, GpuMesh[]> _modelCells = new();
+	private readonly Dictionary<string, GpuTexture> _modelTextures = new();
+	private readonly Dictionary<string, GpuMesh> _groundMeshes = new();
 
 	/// <summary>
 	/// Uploads <paramref name="mission"/>'s scene and points <paramref name="renderer"/> at its theater: the fog,
 	/// sky and shading come off the zone and its theater as in Herculan.Engine.Host, rather than being hand-picked.
 	/// </summary>
 	public MissionDrawables(GL gl, SceneRenderer renderer, EditorMission mission, EditorSettings settings) {
+		_gl = gl;
+		_isWaiting = mission.Index.IsWaiting;
 		var scene = mission.Scene;
 
 		// See Scene.Atmosphere. Without it the renderer has no sky gradient, so DrawSky paints nothing and the
@@ -39,34 +51,12 @@ internal sealed class MissionDrawables : IDisposable {
 			? Keep(scene.Models.TerrainBank.Atlas.Upload(gl, indexed: true))
 			: null;
 
-		var modelMeshes = new Dictionary<string, GpuMesh>();
-		var modelCells = new Dictionary<string, GpuMesh[]>();
-		var modelTextures = new Dictionary<string, GpuTexture>();
-		var groundMeshes = new Dictionary<string, GpuMesh>();
 		foreach (var model in scene.Models.All) {
-			// A shape split by cell — a structure or a flyer — is drawn a piece at a time as the simulator
-			// draws it, so that a TSBSPPart's children and a decal's paint layer are painted in order
-			// (BspDrawGroup); the flat mesh would leave them to the depth test.
-			if (model.Cells.Length > 0) {
-				modelCells[model.Key] = model.Cells
-					.Select(cell => Keep(new GpuMesh(gl, cell.Vertices, cell.TriangleVertexCount, cell.PointVertexCount)))
-					.ToArray();
-			} else {
-				modelMeshes[model.Key] = Keep(new GpuMesh(gl, model.Mesh, model.TriangleVertexCount, model.PointVertexCount));
-			}
-
-			if (model.GroundMesh is { Vertices.Length: > 0 } ground) {
-				groundMeshes[model.Key] = Keep(new GpuMesh(gl, ground.Vertices, ground.TriangleVertexCount,
-					ground.PointVertexCount));
-			}
-
-			if (model.Atlas != null) {
-				modelTextures[model.Key] = Keep(model.Atlas.Upload(gl, indexed: true));
-			}
+			UploadModel(model);
 		}
 
 		// The terrain, and the only item the measuring grid and the selected area's tint are painted onto.
-		var built = new List<SceneItem> {
+		_items = new List<SceneItem> {
 			new(terrainMesh, Matrix4x4.Identity, terrainTexture?.Handle) {
 				ShowGrid = settings.ShowGrid, ShowHighlight = true, CellQuantisedFog = true, GroundFill = true
 			}
@@ -76,81 +66,101 @@ internal sealed class MissionDrawables : IDisposable {
 		// them — see SceneRenderer.Render. Without it a structure's shadow lies in the terrain's own plane and
 		// ties with it in the depth buffer. Nothing is filed by cell here, so a ground plane is drawn wherever
 		// the camera is, as every object is.
-		GroundLayer = new GroundShapeLayer(built[0], scene.World.Terrain) { ShapesFollowWalk = false };
+		GroundLayer = new GroundShapeLayer(_items[0], scene.World.Terrain) { ShapesFollowWalk = false };
 
-		foreach (var sceneObject in scene.Objects) {
-			if (sceneObject.Model is not { } model) {
-				continue;
-			}
-
-			uint? textureHandle = modelTextures.TryGetValue(model.Key, out var texture) ? texture.Handle : null;
-			var draw = new ObjectDraw { Transform = MissionScene.TransformOf(sceneObject) };
-			_objects[sceneObject] = draw;
-			var transform = draw.Transform;
-			bool waiting = mission.Index.IsWaiting(sceneObject);
-			if (modelCells.TryGetValue(model.Key, out var cellMeshes)) {
-				// What the flat mesh is: every sequence on its first cell and every detail part at its finest
-				// level. The ground plane stays with groundMeshes below.
-				var groups = new Dictionary<BspTree, BspDrawGroup>();
-				for (int i = 0; i < cellMeshes.Length; i++) {
-					var cell = model.Cells[i];
-					if (cell.Ground || !cell.Gate.VisibleIn(null)
-							|| (cell.Gate.Detail is { } detail && cell.Gate.Level != detail.LevelCount - 1)) {
-						continue;
-					}
-
-					var part = new SceneItem(cellMeshes[i], transform, textureHandle);
-					draw.Items.Add(part);
-					if (cell.Leaf is { } leaf) {
-						if (!groups.TryGetValue(leaf.Tree, out var group)) {
-							groups[leaf.Tree] = group = BspDrawGroup.AtRest(leaf.Tree, () => draw.Transform);
-						}
-
-						part.BspGroup = group;
-						part.BspLeaf = leaf.Index;
-						part.PaintLayer = cell.Layer;
-					}
-
-					built.Add(part);
-					if (waiting) {
-						WaitingItems.Add(part);
-					}
-				}
-			} else if (modelMeshes.TryGetValue(model.Key, out var mesh)) {
-				var item = new SceneItem(mesh, transform, textureHandle);
-				draw.Items.Add(item);
-				built.Add(item);
-				if (waiting) {
-					WaitingItems.Add(item);
-				}
-			} else {
-				continue;
-			}
-
-			// Filed as the simulator's submit files a structure: by its position and its body radius.
-			if (groundMeshes.TryGetValue(model.Key, out var groundMesh)) {
-				var groundItem = new SceneItem(groundMesh, transform, textureHandle);
-				draw.Items.Add(groundItem);
-				draw.GroundShape = GroundLayer.Shapes.Count;
-				GroundLayer.Shapes.Add(new GroundShapeDraw(groundItem, sceneObject.Object.Position,
-					sceneObject.Object.HitRadius));
-				if (waiting) {
-					WaitingItems.Add(groundItem);
-				}
-			}
+		foreach (var sceneObject in mission.Index.Objects) {
+			Add(sceneObject);
 		}
-
-		Items = built.ToArray();
 	}
 
 	/// <summary>Everything drawn, the terrain first.</summary>
-	public SceneItem[] Items { get; }
+	public IReadOnlyList<SceneItem> Items => _items;
 
 	/// <summary>The terrain item and the structures' ground planes painted onto it.</summary>
 	public GroundShapeLayer GroundLayer { get; }
 
 	/// <summary>The items of the objects whose group waits on an action, which the settings may stop drawing.</summary>
 	public List<SceneItem> WaitingItems { get; } = new();
+
+	/// <summary>
+	/// Draws <paramref name="sceneObject"/> where its simulation object stands, uploading its model first if nothing
+	/// drawn so far uses it. An object with no model draws nothing.
+	/// </summary>
+	public void Add(SceneObject sceneObject) {
+		if (sceneObject.Model is not { } model || _objects.ContainsKey(sceneObject)) {
+			return;
+		}
+
+		UploadModel(model);
+		uint? textureHandle = _modelTextures.TryGetValue(model.Key, out var texture) ? texture.Handle : null;
+		var draw = new ObjectDraw { Transform = MissionScene.TransformOf(sceneObject) };
+		var transform = draw.Transform;
+		bool waiting = _isWaiting(sceneObject);
+		if (_modelCells.TryGetValue(model.Key, out var cellMeshes)) {
+			// What the flat mesh is: every sequence on its first cell and every detail part at its finest
+			// level. The ground plane stays with _groundMeshes below.
+			var groups = new Dictionary<BspTree, BspDrawGroup>();
+			for (int i = 0; i < cellMeshes.Length; i++) {
+				var cell = model.Cells[i];
+				if (cell.Ground || !cell.Gate.VisibleIn(null)
+						|| (cell.Gate.Detail is { } detail && cell.Gate.Level != detail.LevelCount - 1)) {
+					continue;
+				}
+
+				var part = new SceneItem(cellMeshes[i], transform, textureHandle);
+				draw.Items.Add(part);
+				if (cell.Leaf is { } leaf) {
+					if (!groups.TryGetValue(leaf.Tree, out var group)) {
+						groups[leaf.Tree] = group = BspDrawGroup.AtRest(leaf.Tree, () => draw.Transform);
+					}
+
+					part.BspGroup = group;
+					part.BspLeaf = leaf.Index;
+					part.PaintLayer = cell.Layer;
+				}
+			}
+		} else if (_modelMeshes.TryGetValue(model.Key, out var mesh)) {
+			draw.Items.Add(new SceneItem(mesh, transform, textureHandle));
+		} else {
+			return;
+		}
+
+		// Filed as the simulator's submit files a structure: by its position and its body radius.
+		if (_groundMeshes.TryGetValue(model.Key, out var groundMesh)) {
+			var groundItem = new SceneItem(groundMesh, transform, textureHandle);
+			draw.Items.Add(groundItem);
+			draw.GroundShape = GroundLayer.Shapes.Count;
+			GroundLayer.Shapes.Add(new GroundShapeDraw(groundItem, sceneObject.Object.Position,
+				sceneObject.Object.HitRadius));
+		}
+
+		_objects[sceneObject] = draw;
+		_items.AddRange(draw.Items);
+		if (waiting) {
+			WaitingItems.AddRange(draw.Items);
+		}
+	}
+
+	/// <summary>Stops drawing <paramref name="sceneObject"/>. Its model's uploads stay, for a redo to draw it again.</summary>
+	public void Remove(SceneObject sceneObject) {
+		if (!_objects.Remove(sceneObject, out var draw)) {
+			return;
+		}
+
+		foreach (var item in draw.Items) {
+			_items.Remove(item);
+			WaitingItems.Remove(item);
+		}
+
+		if (draw.GroundShape >= 0) {
+			GroundLayer.Shapes.RemoveAt(draw.GroundShape);
+			foreach (var other in _objects.Values) {
+				if (other.GroundShape > draw.GroundShape) {
+					other.GroundShape--;
+				}
+			}
+		}
+	}
 
 	/// <summary>Re-places <paramref name="sceneObject"/>'s items where its simulation object now stands.</summary>
 	public void Move(SceneObject sceneObject) {
@@ -172,6 +182,32 @@ internal sealed class MissionDrawables : IDisposable {
 	/// <summary>Uploads again the run of terrain vertices a re-levelling rebuilt (<see cref="TerrainLeveller.Changed"/>).</summary>
 	public void UploadTerrain(int firstVertex, int vertexCount) =>
 		_terrainMesh.Update(firstVertex, _terrainVertices.AsSpan(firstVertex, vertexCount));
+
+	// Uploads a model's meshes and texture, once. A shape split by cell — a structure or a flyer — is drawn a piece at
+	// a time as the simulator draws it, so that a TSBSPPart's children and a decal's paint layer are painted in order
+	// (BspDrawGroup); the flat mesh would leave them to the depth test.
+	private void UploadModel(SceneModel model) {
+		if (_modelCells.ContainsKey(model.Key) || _modelMeshes.ContainsKey(model.Key)) {
+			return;
+		}
+
+		if (model.Cells.Length > 0) {
+			_modelCells[model.Key] = model.Cells
+				.Select(cell => Keep(new GpuMesh(_gl, cell.Vertices, cell.TriangleVertexCount, cell.PointVertexCount)))
+				.ToArray();
+		} else {
+			_modelMeshes[model.Key] = Keep(new GpuMesh(_gl, model.Mesh, model.TriangleVertexCount, model.PointVertexCount));
+		}
+
+		if (model.GroundMesh is { Vertices.Length: > 0 } ground) {
+			_groundMeshes[model.Key] = Keep(new GpuMesh(_gl, ground.Vertices, ground.TriangleVertexCount,
+				ground.PointVertexCount));
+		}
+
+		if (model.Atlas != null) {
+			_modelTextures[model.Key] = Keep(model.Atlas.Upload(_gl, indexed: true));
+		}
+	}
 
 	// One object's items, and the transform its BSP draw groups read each frame.
 	private sealed class ObjectDraw {

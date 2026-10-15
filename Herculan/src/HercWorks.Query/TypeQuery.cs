@@ -32,9 +32,10 @@ internal sealed record SameGuidRecord(int Index, short ConditionRef, string? Con
 /// </param>
 /// <param name="DrawnBy">The GUIDs of the records whose variant key is <see cref="VariantSourceKey"/>.</param>
 /// <param name="PlacedBy">The groups naming the record, or for a variant source, the records that draw it.</param>
+/// <param name="PositionRef"><see cref="RosterRecord.PositionRef"/>.</param>
 internal sealed record TypeHit(
 	int Index, short Guid, short TypeIndex, string? TypeName, short ConditionRef, string? Condition,
-	short VariantKey, short? StartingCondition, short? VariantSourceKey, IReadOnlyList<short> DrawnBy,
+	short VariantKey, short? StartingCondition, short PositionRef, short? VariantSourceKey, IReadOnlyList<short> DrawnBy,
 	IReadOnlyList<GroupPlacement> PlacedBy, IReadOnlyList<SameGuidRecord> SameGuid) {
 	public bool Placed => PlacedBy.Count > 0;
 
@@ -123,7 +124,7 @@ internal static class TypeQuery {
 			hits.Add(new TypeHit(
 				record.Index, record.Guid, record.TypeIndex, data.TypeName(kind, record.TypeIndex),
 				record.ConditionRef, Conditions.Describe(file, record.ConditionRef), record.VariantKey,
-				record.StartingCondition, sourceKey, drawnBy, placedBy, sameGuid));
+				record.StartingCondition, record.PositionRef, sourceKey, drawnBy, placedBy, sameGuid));
 		}
 
 		return hits;

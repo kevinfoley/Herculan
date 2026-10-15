@@ -20,13 +20,13 @@ internal static class MissionText {
 	}
 
 	/// <summary>A group: its index, roster and side.</summary>
-	public static string DescribeGroup(Mission mission, int group) {
+	public static string DescribeGroup(MissionIndex index, int group) {
 		if (group == 0) {
 			return "Group 0 (player squad)";
 		}
 
-		string kind = group < mission.GroupKinds.Count ? mission.GroupKinds[group].ToString() : "?";
-		string side = group < mission.GroupSides.Count ? mission.GroupSides[group].ToString() : "?";
+		string kind = index.KindOf(group)?.ToString() ?? "?";
+		string side = index.SideOf(group)?.ToString() ?? "?";
 		return $"Group {group} ({kind}, {side})";
 	}
 

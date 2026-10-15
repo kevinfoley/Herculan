@@ -69,27 +69,34 @@ internal sealed record ActionLinks(
 /// trigger area, which groups walk which route, what fires each action and what each one sets off.
 /// Which record names which is never recomputed. Where things stand is: the routes' points, the trigger areas, the
 /// group setups and the base pads here are the editor's own copies, which <see cref="PointFollowers"/> keeps in step
-/// with the document as its points move.
+/// with the document as its points move. The objects and groups an edit adds (<see cref="StructurePlacer"/>) are
+/// listed here beside the loaded ones; <see cref="Mission"/> stays as loaded.
 /// </summary>
 internal sealed class MissionIndex {
 	private readonly Dictionary<(MissionUnitKind, int), SceneObject> _bySlot = new();
 	private readonly ActionLinks[] _actionLinks;
 	private readonly List<MissionTriggerArea> _areas;
-	private readonly MissionGroupSetup[] _setups;
+	private readonly List<MissionGroupSetup> _setups;
 	private readonly List<MissionBasePad> _basePads;
+	private readonly List<SceneObject> _objects;
+	private readonly List<List<SceneObject>> _members;
+
+	// The kind and side of each group an edit added, past the loaded mission's.
+	private readonly List<(MissionUnitKind Kind, MissionSide Side)> _addedGroups = new();
 
 	public MissionIndex(MissionScene scene, SquadMessages? commandMessages) {
 		Mission = scene.Mission;
 		CommandMessages = commandMessages;
+		_objects = scene.Objects.ToList();
 
-		var members = new List<SceneObject>[Mission.GroupKinds.Count];
-		for (int i = 0; i < members.Length; i++) {
-			members[i] = new List<SceneObject>();
+		_members = new List<List<SceneObject>>(Mission.GroupKinds.Count);
+		for (int i = 0; i < Mission.GroupKinds.Count; i++) {
+			_members.Add(new List<SceneObject>());
 		}
 
 		foreach (var placed in scene.Objects) {
-			if (placed.Placement.GroupIndex >= 0 && placed.Placement.GroupIndex < members.Length) {
-				members[placed.Placement.GroupIndex].Add(placed);
+			if (placed.Placement.GroupIndex >= 0 && placed.Placement.GroupIndex < _members.Count) {
+				_members[placed.Placement.GroupIndex].Add(placed);
 			}
 
 			if (placed.Placement.SlotIndex >= 0) {
@@ -97,9 +104,8 @@ internal sealed class MissionIndex {
 			}
 		}
 
-		GroupMembers = members;
 		_areas = BuildAreas(Mission);
-		_setups = Mission.GroupSetups.ToArray();
+		_setups = Mission.GroupSetups.ToList();
 		_basePads = Mission.BasePads.ToList();
 		Routes = BuildRoutes(Mission);
 
@@ -117,8 +123,64 @@ internal sealed class MissionIndex {
 	/// </summary>
 	public SquadMessages? CommandMessages { get; }
 
+	/// <summary>Every placed object, in spawn order, then those an edit added.</summary>
+	public IReadOnlyList<SceneObject> Objects => _objects;
+
 	/// <summary>Each group's placed members, by block-11 record index.</summary>
-	public IReadOnlyList<IReadOnlyList<SceneObject>> GroupMembers { get; }
+	public IReadOnlyList<IReadOnlyList<SceneObject>> GroupMembers => _members;
+
+	/// <summary>A group's roster, by block-11 record index, or null for an index the mission does not have.</summary>
+	public MissionUnitKind? KindOf(int group) =>
+		group >= 0 && group < Mission.GroupKinds.Count ? Mission.GroupKinds[group]
+			: group >= Mission.GroupKinds.Count && group - Mission.GroupKinds.Count < _addedGroups.Count
+				? _addedGroups[group - Mission.GroupKinds.Count].Kind
+				: null;
+
+	/// <summary>A group's side, by block-11 record index, or null for an index the mission does not have.</summary>
+	public MissionSide? SideOf(int group) =>
+		group >= 0 && group < Mission.GroupSides.Count ? Mission.GroupSides[group]
+			: group >= Mission.GroupSides.Count && group - Mission.GroupSides.Count < _addedGroups.Count
+				? _addedGroups[group - Mission.GroupSides.Count].Side
+				: null;
+
+	/// <summary>
+	/// Lists a group an edit appended to block 11 as record <paramref name="group"/>, which must be the next index, with
+	/// no members yet.
+	/// </summary>
+	public void AddGroup(int group, MissionUnitKind kind, MissionSide side, MissionGroupSetup setup) {
+		if (group != _members.Count || group != _setups.Count) {
+			throw new InvalidOperationException($"Group {group} is not the next group; {_members.Count} are listed.");
+		}
+
+		_addedGroups.Add((kind, side));
+		_members.Add(new List<SceneObject>());
+		_setups.Add(setup);
+	}
+
+	/// <summary>Takes the last group <see cref="AddGroup"/> listed off the list again; its members must be gone.</summary>
+	public void RemoveLastAddedGroup() {
+		if (_addedGroups.Count == 0) {
+			throw new InvalidOperationException("No added group to remove.");
+		}
+
+		_addedGroups.RemoveAt(_addedGroups.Count - 1);
+		_members.RemoveAt(_members.Count - 1);
+		_setups.RemoveAt(_setups.Count - 1);
+	}
+
+	/// <summary>Lists an object an edit added, in its group and under its roster slot.</summary>
+	public void AddObject(SceneObject placed) {
+		_objects.Add(placed);
+		_members[placed.Placement.GroupIndex].Add(placed);
+		_bySlot[(placed.Placement.Kind, placed.Placement.SlotIndex)] = placed;
+	}
+
+	/// <summary>Takes an object <see cref="AddObject"/> listed off every list again.</summary>
+	public void RemoveObject(SceneObject placed) {
+		_objects.Remove(placed);
+		_members[placed.Placement.GroupIndex].Remove(placed);
+		_bySlot.Remove((placed.Placement.Kind, placed.Placement.SlotIndex));
+	}
 
 	/// <summary>
 	/// Every trigger area some action tests, once each, in block-4 order. An area no action names, or
@@ -173,7 +235,7 @@ internal sealed class MissionIndex {
 
 	/// <summary>A group's point, heading and formation, or null for an index the mission does not have.</summary>
 	public MissionGroupSetup? SetupOf(int group) =>
-		group >= 0 && group < _setups.Length ? _setups[group] : null;
+		group >= 0 && group < _setups.Count ? _setups[group] : null;
 
 	/// <summary>Replaces the area with <paramref name="area"/>'s reference by <paramref name="area"/>.</summary>
 	public void SetArea(MissionTriggerArea area) {

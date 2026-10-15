@@ -33,7 +33,7 @@ internal sealed class PointFollowers {
 		_document = document;
 		_terrain = scene.World.Terrain;
 		_index = index;
-		_objects = scene.Objects;
+		_objects = index.Objects;
 		_overlay = overlay;
 		_place = place;
 

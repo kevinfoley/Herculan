@@ -60,6 +60,7 @@ public sealed class EditorHost {
 	private readonly EditorSettings _settings = EditorSettings.Load();
 	private readonly EditorSettingsPanel _settingsPanel;
 	private readonly VolMissionBrowser _volBrowser;
+	private readonly StructureToolbox _toolbox;
 	private readonly Camera _camera = new();
 
 	// How much room the top-down view leaves round the zone, as a share of the height that fits it exactly.
@@ -138,6 +139,7 @@ public sealed class EditorHost {
 		_flyFarPlane = _camera.FarPlane;
 		_settingsPanel = new EditorSettingsPanel(_settings);
 		_volBrowser = new VolMissionBrowser(() => MissionFileLaunch.List(launch.ShellContent()));
+		_toolbox = new StructureToolbox(launch.SimulatorContent);
 
 		string scriptPath = launch.ScriptPath ?? MissionLoader.DefaultScriptPath(launch.InstallRoot);
 		Console.WriteLine($"HERCULAN Mission Editor — loading {scriptPath} from {launch.InstallRoot}");
@@ -157,7 +159,7 @@ public sealed class EditorHost {
 		}
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), Ctrl+Z/Ctrl+Y undo/redo, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, Ctrl+Z/Ctrl+Y undo/redo, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -334,6 +336,8 @@ public sealed class EditorHost {
 		var drawables = new MissionDrawables(gl, renderer, mission, _settings);
 		mission.Mover.Moved += drawables.Move;
 		mission.Mover.TerrainChanged += drawables.UploadTerrain;
+		mission.Placer.Added += drawables.Add;
+		mission.Placer.Removed += drawables.Remove;
 		return drawables;
 	}
 
@@ -448,6 +452,7 @@ public sealed class EditorHost {
 			_mission.GroupOverlay.DrawLabels(_camera, _settings, _mission.Selection);
 			_mission.Outliner.Draw(display, menuBarHeight);
 			_mission.Properties.Draw(display, menuBarHeight);
+			_toolbox.Draw(display, enabled: !_mission.Gizmo.Dragging);
 		}
 
 		_settingsPanel.Draw();
@@ -457,6 +462,11 @@ public sealed class EditorHost {
 		if (_closePending) {
 			_window.Close();
 			return;
+		}
+
+		// After the frame's ImGui, as a load is: the add changes what the panels list.
+		if (_toolbox.TakeRequest() is { } request) {
+			AddStructure(request);
 		}
 
 		if (_pendingLoad != null) {
@@ -500,6 +510,23 @@ public sealed class EditorHost {
 	private void Close(EditorExit exit) {
 		_exit = exit;
 		_closePending = true;
+	}
+
+	// Adds what the toolbox asked for on the ground under the pointer, or at the middle of the view, else under the
+	// camera when the middle of the view is sky.
+	private void AddStructure(ToolboxRequest request) {
+		if (_mission == null || _mission.Gizmo.Dragging) {
+			return;
+		}
+
+		var picker = _mission.Picker;
+		var ground = request.AtPointer
+			? picker.GroundAt(_camera, _mouse?.Position ?? Viewport / 2f, Viewport)
+			: picker.GroundAt(_camera, Viewport / 2f, Viewport)
+				?? new Numerics.Vec3i((int)_editorCamera.WorldPosition.X, (int)_editorCamera.WorldPosition.Y, 0);
+		_toolbox.Status = ground is { } at
+			? _mission.Placer.Add(request.TypeIndex, request.Side, at.X, at.Y)
+			: "There is no ground under the pointer.";
 	}
 
 	// Generates the handoff for the archive mission <name> into the scratch directory and swaps the editor over to

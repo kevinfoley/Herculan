@@ -53,9 +53,13 @@ public sealed record SceneObject(SimObject Object, SceneModel? Model, MissionPla
 /// at all.</para>
 /// </summary>
 public sealed class MissionScene {
+	// Builds one placement's object from the tables Load read, for CreateObject.
+	private readonly Func<MissionPlacement, SceneObject?> _spawn;
+
 	private MissionScene(Mission mission, SimWorld world, FlyCameraObject camera,
 			IReadOnlyList<SceneObject> objects, TheaterDescriptor theater, SceneObject? playerObject,
-			BeamAppearance? beams, MissionModels models) {
+			BeamAppearance? beams, MissionModels models, Func<MissionPlacement, SceneObject?> spawn) {
+		_spawn = spawn;
 		Beams = beams;
 		Mission = mission;
 		World = world;
@@ -373,8 +377,20 @@ public sealed class MissionScene {
 		world.Add(camera);
 
 		var sceneModels = MissionModels.Build(content, theater, materials, models, world, objects, groundShapeModels);
-		return new MissionScene(mission, world, camera, objects, theater, playerObject, beams, sceneModels);
+		return new MissionScene(mission, world, camera, objects, theater, playerObject, beams, sceneModels,
+			placement => Spawn(placement, models, baseTypes, baseCollision, weapons, transportArmament, world.Random,
+				world.Tweaks));
 	}
+
+	/// <summary>
+	/// Builds the object for a placement the scene was not loaded with, from the same type tables, model library and
+	/// constructors <see cref="Load"/> builds each of its own from — what the mission editor stands a structure it adds
+	/// on. Its model is built if no object the scene loaded with drew one, and is then not in
+	/// <see cref="MissionModels.All"/>. The object stands at the placement's position as given: it is not settled on the
+	/// ground, added to <see cref="World"/> or listed in <see cref="Objects"/>, and its actions are not bound. Null for a
+	/// type the install has nothing for, as in <see cref="Load"/>.
+	/// </summary>
+	public SceneObject? CreateObject(MissionPlacement placement) => _spawn(placement);
 
 	/// <summary>
 	/// Where one node of an animating object's shape stands, in render space: the node's own posed
