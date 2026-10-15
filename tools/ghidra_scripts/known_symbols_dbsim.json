@@ -7075,8 +7075,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_PostSquadMessage",
-      "description": "Posts {messageId, machine} to the pilot-and-squad message port (the object CockpitView_GetSquadMessagePort returns) through its vtable slot 0, suppressed for a destroyed machine unless the third argument forces it. Ids raised by the AI targeting path: 1 enemy sighted, 3 taking fire, 8 friendly fire.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "(machine, id, force): unless the machine's byte +0x99 is set and force is 0, posts {int16 id, machine} to the pilot-and-squad message port CockpitView_GetSquadMessagePort returns, through its vtable slot 0.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00420a98+60",
+        "sha1": "55a80d75ab14",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00420ad4",
@@ -11470,8 +11476,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_QueueInit",
-      "description": "Builds the message port's queue: a vector of ten 0x31-byte records. The port is instantiated twice per cockpit view -- the computer's scrolling ticker at view+0x20b and the pilot/squad channel at view+0x207.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(queue): Rtl_VectorNew of ten 0x31-byte records at +0 with QueuedMessage_ElementCtor (00437558), then the int16 count +0x21c set to 0 and the ten in-use bytes at +0x212 cleared. MessagePort_CtorBase (00435490) builds two, the queue at port+4 and the message log at port+0x222. See docs/retail/simulation/cockpit-message-port.md, The queue.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "00434e50+59",
+        "sha1": "fd9d0ddfb09f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00434e8c",
@@ -11479,8 +11491,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_Enqueue",
-      "description": "Fills one queued record from a SYSTEM.STR entry's eight attribute bytes: id at +0x00, filename digit at +0x16, priority at +0x17, and the four timings at +0x1c/+0x20/+0x24/+0x28, each multiplied by 0x3c coarse ticks. Bytes 7-11 go to +0x2c..+0x30: byte 7 is the clip number, and bytes 8-11 lie past the eight the file supplies. minTime/maxTime stay durations until the message is shown; minWait/maxWait get the post tick added at once. The insert stops at the first queued entry of strictly higher priority, so low sorts first.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(queue, record, entry): with the count +0x21c at 10 first MessagePort_QueueDropLast (004351c0). Takes the first record whose in-use byte (+0x212 + i) is clear, sets it, and fills the 0x31-byte record queue + i * 0x31: record's five dwords +2..+0x15 at +2, entry's text pointer (entry +0) at +0x18, and from the attribute bytes at entry +5: byte 0 as the int16 id +0x00, byte 1 (filename digit) at +0x16, byte 2 (priority) at +0x17, bytes 3 and 4 (minTime, maxTime) times 0x3c coarse ticks at +0x1c and +0x20, bytes 5 and 6 (minWait, maxWait) times 0x3c plus Time_GetCoarseTicks at +0x24 and +0x28, and bytes 7-11 at +0x2c..+0x30: byte 7 is the clip number, and bytes 8-11 lie past the eight a SYSTEM.STR entry supplies. Inserts i in the order list +0x1ea before the first queued record whose priority is strictly greater, or at the end, so low sorts first, and adds 1 to the count.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "00434e8c+487",
+        "sha1": "2e7608c61f4f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00435074",
@@ -11489,7 +11507,13 @@
       "confidence": "high",
       "name": "MessagePort_QueueFront",
       "description": "(queue): 0 when the count +0x21c is 0, otherwise the record queue + slot0(+0x1ea) * 0x31. MessagePort_Tick takes it as the current message (+0x49a).",
-      "source": "DBSIM decompile at 00435074"
+      "source": "DBSIM decompile at 00435074",
+      "verified": {
+        "bytes": "00435074+93",
+        "sha1": "72f683378fff",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004350d4",
@@ -11512,8 +11536,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_RemoveAt",
-      "description": "(port, index): when the queue is not empty (count +0x21c), clears the flag byte at +0x212 + the id held in slot index of the queue at +0x1ea, shifts the later slots down one and decrements the count. MessagePort_Tick calls it.",
-      "source": "DBSIM decompile and disassembly at 00435140"
+      "description": "(queue, index): when the count +0x21c is nonzero, clears the in-use byte at +0x212 + the record index held in slot index of the order list +0x1ea, moves the later slots down one and takes 1 from the count.",
+      "source": "DBSIM decompile and disassembly at 00435140",
+      "verified": {
+        "bytes": "00435140+127",
+        "sha1": "d13fd04210fd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004351c0",
@@ -11521,8 +11551,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_QueueDropLast",
-      "description": "(queue): clears the flag byte at +0x212 + the id held in the tenth slot (+0x20e) and decrements the count +0x21c. MessagePort_Enqueue calls it when the queue is full (count 10).",
-      "source": "DBSIM decompile at 004351c0"
+      "description": "(queue): clears the in-use byte at +0x212 + the record index held in the tenth order slot (+0x20e) and takes 1 from the count +0x21c: drops the last, lowest-priority message. MessagePort_Enqueue (00434e8c) runs it on a full queue (count 10).",
+      "source": "DBSIM decompile at 004351c0",
+      "verified": {
+        "bytes": "004351c0+36",
+        "sha1": "f64337720341",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004351e4",
@@ -11545,8 +11581,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_QueueExpire",
-      "description": "(queue): from the last slot down to slot 1, MessagePort_RemoveAt each whose record's maxWait (+0x28) is earlier than Time_GetCoarseTicks. Slot 0 is never dropped. MessagePort_Tick calls it.",
-      "source": "DBSIM decompile at 004351ec"
+      "description": "(queue): from the last order slot down to slot 1, MessagePort_RemoveAt (00435140) each whose record's maxWait deadline (+0x28) is below Time_GetCoarseTicks. Slot 0 is never dropped here.",
+      "source": "DBSIM decompile at 004351ec",
+      "verified": {
+        "bytes": "004351ec+82",
+        "sha1": "ef29e1cd12bb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00435240",
@@ -11554,8 +11596,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_QueueRemoveMatch",
-      "description": "(queue, subject, id): removes the first queued record whose int16 id (+0) and subject pointer (+2) both match with MessagePort_RemoveAt and returns 1; returns 0 when none does. MessagePort_Withdraw calls it.",
-      "source": "DBSIM decompile at 00435240"
+      "description": "(queue, subject, id): removes the first queued record whose int16 id (+0) and subject pointer (+2) both match with MessagePort_RemoveAt (00435140) and returns 1; returns 0 when none does.",
+      "source": "DBSIM decompile at 00435240",
+      "verified": {
+        "bytes": "00435240+86",
+        "sha1": "045e4116df8c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00435298",
@@ -11618,7 +11666,13 @@
       "confidence": "high",
       "name": "MessagePort_CtorBase",
       "description": "MsgPort constructor (vtable 0049bb00, RTTI name 'MsgPort', 0x4d3 bytes): builds the two queues at +4 and +0x222 with MessagePort_QueueInit, constructs the box at +0x49f as a GLRectangleRegion (vtable 004a327c) of type 0 holding the given rect at +0x4a7..+0x4b3, and clears the current message +0x49a, the latches +0x49e, +0x4c9..+0x4cb, +0x4d2 and the fields +0x4b7, +0x4b8, +0x4cc, +0x4d0. MessagePort_Ctor and DialogPort_Ctor run it first.",
-      "source": "DBSIM decompile at 00435490; RTTI at 0049bb00 and 004a327c"
+      "source": "DBSIM decompile at 00435490; RTTI at 0049bb00 and 004a327c",
+      "verified": {
+        "bytes": "00435490+219",
+        "sha1": "9d2ffc9547c9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043556c",
@@ -11627,7 +11681,13 @@
       "confidence": "high",
       "name": "MessagePort_PostNoOp",
       "description": "MsgPort vtable +0x00 (0049bb00, the base of the cockpit message ports): an empty post. EventPort installs MessagePort_PickVariant, DialogPort PilotMessagePort_Post, CommandPort TrainingMessagePort_Post.",
-      "source": "DBSIM decompile at 0043556c; docs/retail/simulation/cockpit-messages.md"
+      "source": "DBSIM decompile at 0043556c; docs/retail/simulation/cockpit-messages.md",
+      "verified": {
+        "bytes": "0043556c+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00435574",
@@ -11650,8 +11710,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_AddBeginCallback",
-      "description": "Registers one of up to two begin callbacks at port+0x4b9, fired when a message comes due. Only the pilot/squad port registers any -- the comm box's CommBox_OnMessageBegin/CommBox_OnMessageEnd pair. The computer's port has none.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(port, callback): while the count byte +0x4b7 is below 2 stores callback at port+0x4b9 + 4 * count, adds 1 and returns 1; returns 0 when both are taken. MessagePort_Tick runs each begin callback with the current message as it comes due.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "004355a8+49",
+        "sha1": "ec76cfc31e8f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004355dc",
@@ -11659,8 +11725,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_AddEndCallback",
-      "description": "(port, callback): stores callback in the next of two slots at port+0x4c1 (count byte +0x4b8) and returns 1; returns 0 when both are taken. The end twin of MessagePort_AddBeginCallback. HddDisplay_Ctor registers CommBox_OnMessageEnd.",
-      "source": "DBSIM decompile at 004355dc"
+      "description": "(port, callback): stores callback in the next of two slots at port+0x4c1 (count byte +0x4b8) and returns 1; returns 0 when both are taken. The end twin of MessagePort_AddBeginCallback (004355a8); PilotMessagePort_Erase runs each with the current message.",
+      "source": "DBSIM decompile at 004355dc",
+      "verified": {
+        "bytes": "004355dc+49",
+        "sha1": "0b6588567e20",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00435610",
@@ -11698,8 +11770,14 @@
       "type": "function",
       "confidence": "high",
       "name": "SystemMessages_Index",
-      "description": "Indexes SYSTEM.STR into a 63-slot table at base + attr[0] * 9, each slot a {char *text; byte count; byte *attributes} triple, counting how many strings landed in each. Two entries sharing an id would become variants of one message and the post would roll between them; all 63 retail ids are distinct, so every count is one.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(port, mode, n, bank): loads one .STR file into its string table and indexes it: mode 0 system into SystemStringTable, index 004d0b33; mode 1 commandX with the digit n into CommandStringTable, index 004d0971; mode 2 the pilot file with the digit bank into PilotStringTables + n * 0x10, index 004d04e8 + n * 0x183. The path comes from Language_StringFilePath. For each string StringTable_ReadNext returns, the 9-byte slot {char *text; byte count; byte *attributes} at index + attribute byte 0 * 9 takes the text and attributes while its count is 0, and its count goes up by 1: two entries sharing an id become variants of one message. All 63 retail SYSTEM.STR ids are distinct, so every count there is one.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "00435970+260",
+        "sha1": "f654f63e231e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00435a74",
@@ -11707,8 +11785,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_StepToVariant",
-      "description": "(port, table, record, n): for n > 0, steps StrTable_NextString n times from the record's string and returns a record built in the static at 004d0d6a -- the string at +0, 0 at +4, 00453a08(table, string) at +5; for n = 0 returns record unchanged. MessagePort_PickVariant and PilotMessagePort_Post call it with the rolled variant.",
-      "source": "DBSIM decompile at 00435a74"
+      "description": "(port, table, record, n): for n > 0, steps StrTable_NextString (004539cc) n times from the record's string and returns a record built in the static at 004d0d6a -- the string at +0, 0 at +4, StrTable_GetAttributes (00453a08)(table, string) at +5; for n = 0 returns record unchanged. MessagePort_PickVariant and PilotMessagePort_Post pass it the rolled variant.",
+      "source": "DBSIM decompile at 00435a74",
+      "verified": {
+        "bytes": "00435a74+81",
+        "sha1": "bf69e06b9e46",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00435ac8",
@@ -11716,8 +11800,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_Withdraw",
-      "description": "Withdraws a posted message, matching on the message id AND the record's +0x02 subject pointer, so the same message about two machines is two entries. Sets the cancel latch on a matching current message unless it is due (+0x4c9: past its delay, waiting to go up), which is left alone and returns 0; the show clears +0x4c9, so a line already on screen is cancelled. Otherwise removes the match from the queue. Mech_ToggleRadarMode withdraws both radar lines before posting the one the mode became; Squad_SendOrderToSlot withdraws 0x22 STANDING BY... about the addressed squadmate from the pilot-and-squad port.",
-      "source": "docs/retail/simulation/cockpit-messages.md"
+      "description": "(port, subject, id): withdraws a posted message, matching on the message id AND the record's +0x02 subject pointer, so the same message about two machines is two entries. When the current message (+0x49a) matches: returns 0 while it is due (+0x4c9: past its delay, waiting to go up), else sets the cancel latch +0x4cb and returns 1; the show clears +0x4c9, so a line already on screen is cancelled. Otherwise returns MessagePort_QueueRemoveMatch (00435240)(port+4, subject, id).",
+      "source": "docs/retail/simulation/cockpit-messages.md",
+      "verified": {
+        "bytes": "00435ac8+76",
+        "sha1": "a2d834d527d3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00435b14",
@@ -11761,8 +11851,14 @@
       "type": "function",
       "confidence": "high",
       "name": "DialogPort_Ctor",
-      "description": "DialogPort constructor (vtable 0049bad4, RTTI name 'DialogPort', 0x4df bytes -- the pilot and squad message port): runs MessagePort_CtorBase, installs its vtable, and allocates two buffers of Region_PixelCount(+0x4a3) bytes at +0x4d3 and +0x4d7 for the box's save-unders. Gau_BuildCockpitWidgets and TrainingMessagePort_Ctor call it.",
-      "source": "DBSIM decompile and disassembly at 00435bf0"
+      "description": "(port, rect): DialogPort's constructor (vtable 0049bad4, RTTI name 'DialogPort', 0x4df bytes -- the pilot and squad message port): runs MessagePort_CtorBase (00435490), installs its vtable, and allocates two buffers of Region_PixelCount(+0x4a3) bytes with Mem_NewArray at +0x4d3 (the screen under the box) and +0x4d7 (the box as painted).",
+      "source": "DBSIM decompile and disassembly at 00435bf0",
+      "verified": {
+        "bytes": "00435bf0+85",
+        "sha1": "ae4c0d7c7e5a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00435c48",
@@ -11770,9 +11866,15 @@
       "type": "function",
       "confidence": "high",
       "name": "PilotMessagePort_Post",
-      "description": "Vtable slot 0 of the ordinary pilot/squad port (0049bad4). A record whose +0x02 subject is null takes its id from the COMMAND0.STR table at 004d0971 (variants against 004d04c8); otherwise Squad_IndexOf picks the slot's PILOT<bank>.STR table at 004d04e8 + slot * 0x183, and a subject in no slot drops the post. Rolls among variants, then MessagePort_Enqueue.",
+      "description": "(port, record): vtable slot 0 of the ordinary pilot/squad port (0049bad4). A record whose +0x02 subject is null takes its id's slot from the command index 004d0971 against CommandStringTable (004d04c8); otherwise Squad_IndexOf picks the squadmate slot, and the slot index 004d04e8 + slot * 0x183 + id * 9 against PilotStringTables (004d0498) + slot * 0x10. The test meant to drop a subject in no slot compares EDX, holding the zero-extended low byte of Squad_IndexOf's result (255 for -1), with -1, which never holds, so such a post goes on with slot 255 and reads past the index. Rolls among variants as MessagePort_PickVariant does, then MessagePort_Enqueue (00434e8c)(port+4, record, slot). See docs/retail/simulation/cockpit-message-port.md, Rejected readings.",
       "source": "docs/retail/simulation/cockpit-messages.md",
-      "signature": "void PilotMessagePort_Post(int port, byte *record)"
+      "signature": "void PilotMessagePort_Post(int port, byte *record)",
+      "verified": {
+        "bytes": "00435c48+196",
+        "sha1": "d56726ae7793",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00435d0c",
@@ -11780,9 +11882,15 @@
       "type": "function",
       "confidence": "high",
       "name": "PilotMessagePort_ComposeLine",
-      "description": "Builds the pilot/squad channel's display line into the buffer at DAT_004d0d73 and returns it: the speaker's name, \": \", then the message text strncat'd at 0x4a characters. The name comes from the speaker's comm box through Squad_PilotName, or from PilotMessagePort_GetHqName when the record names no object. Reached through the port's vtable; the port argument is not read.",
+      "description": "(port, record): DialogPort vtable +0x08. Builds the pilot/squad channel's display line into the buffer at DAT_004d0d73 and returns it: the speaker's name, \": \", then the message text (+0x18) strncat'd at 0x4a characters. The name comes from the speaker's comm box through Squad_PilotName of Squad_IndexOf(subject), or from PilotMessagePort_GetHqName when the record names no object. With no record it empties the buffer.",
       "source": "docs/retail/simulation/audio.md",
-      "signature": "char * __cdecl PilotMessagePort_ComposeLine(void *port, void *message)"
+      "signature": "char * __cdecl PilotMessagePort_ComposeLine(void *port, void *message)",
+      "verified": {
+        "bytes": "00435d0c+141",
+        "sha1": "d0018f97bedb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00435d9c",
@@ -11807,7 +11915,13 @@
       "confidence": "high",
       "name": "PilotMessagePort_Erase",
       "description": "DialogPort and CommandPort vtable +0x0c, EventPort's MessagePort_Erase slot. Returns 1 at once when no line is up (+0x49e) or the display is suppressed (+0x4d2). Otherwise, unless the cockpit view manager's +0x1c byte is set (then it returns 0): calls each of the +0x4b8 end callbacks at +0x4c1 with the current message (+0x49a), restores the box's background from the save-under at +0x4d3 (Region_Restore inside Cockpit_PushCanvasContext/Cockpit_PopRenderContext), MessagePort_CopyBoxBetweenPages(port, 1), clears +0x49e and +0x4d2 and returns 1.",
-      "source": "DBSIM decompile at 00436130"
+      "source": "DBSIM decompile at 00436130",
+      "verified": {
+        "bytes": "00436130+154",
+        "sha1": "887921e3a425",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004361cc",
@@ -11815,8 +11929,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PilotMessagePort_Update",
-      "description": "Ordinary pilot/squad port (vtable 0049bad4) slot +0x10. Sets the ready latch +0x4ca for a due message only when the record's +0x2c (attribute byte 7) is set -- a squadmate's line is made ready by the comm box instead (00435b14) -- repaints a line that is up, then MessagePort_Tick.",
-      "source": "docs/retail/simulation/cockpit-messages.md"
+      "description": "Ordinary pilot/squad port (vtable 0049bad4) slot +0x10. Sets the ready latch +0x4ca for a due message only when the record's +0x2c (attribute byte 7) is set; while a line is up (+0x49e) and not suppressed (+0x4d2), gives the display (006c5f54) its +0x8c page as source page +0x38 and repaints through slot +0x18; then MessagePort_Tick.",
+      "source": "docs/retail/simulation/cockpit-messages.md",
+      "verified": {
+        "bytes": "004361cc+117",
+        "sha1": "38c2ad88a241",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00436244",
@@ -11870,8 +11990,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_Ctor",
-      "description": "Constructs a message port from the box rect Gau_BuildCockpitWidgets read out of the .GAU and coordinate-shifted into device pixels.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(port, rect): EventPort's constructor, the computer's ticker: MessagePort_CtorBase (00435490)(port, rect), EventPort's vtable 0049ba7c, the blink latch +0x4d3 cleared, the box rect +0x4a7..+0x4b3 copied to +0x4d4..+0x4e0, 0 at +0x4e4 and -1 at the int16 +0x4e8.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "004369a4+103",
+        "sha1": "f5af3a3b639f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00436a0c",
@@ -11880,7 +12006,13 @@
       "confidence": "high",
       "name": "MessagePort_SetText",
       "description": "Latches the line the ticker will draw: strncpy of 0x50 characters, so a longer message is truncated there.",
-      "source": "docs/retail/simulation/audio.md"
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "00436a0c+45",
+        "sha1": "04d86d2fde96",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00436a3c",
@@ -11888,8 +12020,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_PickVariant",
-      "description": "Rolls between the variants SystemMessages_Index counted for an id -- the same roll SOUNDS.STR attribute byte 6 drives. No retail id has more than one, so it always picks that one.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(port, record): EventPort vtable +0x00, the ticker's post. Takes the system index slot 004d0b33 + id * 9 (id the record's byte +0); with its count byte +4 at 2 or more rolls the variant as Math_RandomNext(0x4d268f)'s low word modulo the count, and a nonzero variant goes through MessagePort_StepToVariant (00435a74) against SystemStringTable (004d04d8); a slot with text (+0) and attributes (+5) goes to MessagePort_Enqueue (00434e8c)(port+4, record, slot). The same roll SOUNDS.STR attribute byte 6 drives; no retail SYSTEM.STR id has more than one variant.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "00436a3c+127",
+        "sha1": "3f6c081e3c1e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00436abc",
@@ -11927,8 +12065,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessageTicker_ScrollText",
-      "description": "Recomputes the scrolling line's x every frame as port+0x4af - (0x23 << VideoMode_XCoordShift) * elapsed / 0x3c: it starts at the box's right edge and travels left at 35 authored units a second, 70 device pixels in the 640-wide mode. There is no wrap -- a line that outlives its own width simply leaves.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(port): EventPort vtable +0x10. Recomputes the scrolling line's x (004d1314) every frame as port+0x4af - (0x23 << VideoMode_XCoordShift) * (Time_GetCoarseTicks - the publish time 004d1318) / 0x3c: it starts at the box's right edge and travels left at 35 authored units a second, 70 device pixels in the 640-wide mode, with no wrap. Then paints through slot +0x18, sets the ready latch +0x4ca when the due latch +0x4c9 is set, and runs MessagePort_Tick.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "00436f70+94",
+        "sha1": "37f9c7b4f349",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00436fd0",
@@ -11936,8 +12080,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_Erase",
-      "description": "Takes the line down and erases its box, filling the same rect with the same COLORS.DAT id 19 the paint floods it with and nothing else -- which is what identifies that colour as the background rather than as part of the frame.",
-      "source": "docs/retail/simulation/audio.md"
+      "description": "(port): EventPort vtable +0x0c. While a line is up (+0x49e) and not suppressed (+0x4d2), fills the box rect +0x4a7 with the brush {0, color 004d3c26} through Raster_FillRect between Cockpit_PushCanvasContext and Cockpit_PopRenderContext, MessagePort_CopyBoxBetweenPages(port, 1), and clears +0x49e, +0x4d2 and the blink latch +0x4d3. Returns 1 either way.",
+      "source": "docs/retail/simulation/audio.md",
+      "verified": {
+        "bytes": "00436fd0+114",
+        "sha1": "880426105e40",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00437044",
@@ -11946,7 +12096,13 @@
       "confidence": "high",
       "name": "PilotMessagePort_RestoreBackground",
       "description": "DialogPort and CommandPort vtable +0x14: while a line is up, the display is not suppressed and the view manager's +0x1c byte is clear, puts the box's background back from the save-under at +0x4d3 (Region_Restore(port+0x4a3, port+0x4a7, +0x4d3) between Cockpit_PushCanvasContext and Cockpit_PopRenderContext). EventPort and MsgPort leave the slot empty (MessagePort_UnpaintNoOp).",
-      "source": "DBSIM disassembly at 00437044"
+      "source": "DBSIM disassembly at 00437044",
+      "verified": {
+        "bytes": "00437044+78",
+        "sha1": "3cfc71aefde4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00437094",
@@ -11955,7 +12111,13 @@
       "confidence": "high",
       "name": "PilotMessagePort_RedrawFromSaveUnder",
       "description": "DialogPort and CommandPort vtable +0x18, the slot EventPort fills with MessageTicker_Paint. Under the same three gates as PilotMessagePort_RestoreBackground: offsets the box rect (+0x4a7..+0x4b3) by the canvas origin (context +0x220/+0x224), saves the screen under it into +0x4d3 (Region_Save), takes the offset back off, and puts the box's own pixels back from +0x4d7 (Region_Restore).",
-      "source": "DBSIM decompile at 00437094; DialogPort_Ctor"
+      "source": "DBSIM decompile at 00437094; DialogPort_Ctor",
+      "verified": {
+        "bytes": "00437094+205",
+        "sha1": "cf9fd6c26188",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00437164",
@@ -11963,8 +12125,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_CopyBoxBetweenPages",
-      "description": "(port, direction): while a line is up (+0x49e) and +0x4d2 is clear, copies the box region at +0x4a3 between the display's pages with Region_CopyBetweenPages at offset {0, 0}: page +0x88 to +0x8c for direction 0, +0x8c to +0x88 for 1. Hides the cursor around the copy and shows it again unless the view manager's +0x14 is 4 and 0049dd8c is 0; restores the draw page after. MessagePort_Show, MessagePort_Erase, PilotMessagePort_Paint, PilotMessagePort_Speak and 00436130 pass 1; CockpitView_StepViewTransition passes 0.",
-      "source": "DBSIM decompile at 00437164"
+      "description": "(port, direction): while a line is up (+0x49e) and +0x4d2 is clear, copies the box region at +0x4a3 between the display's pages with Region_CopyBetweenPages at offset {0, 0}: page +0x88 to +0x8c for direction 0, +0x8c to +0x88 for 1. Hides the cursor around the copy and shows it again unless the view manager's +0x14 is 4 and 0049dd8c is 0; restores the draw page after.",
+      "source": "DBSIM decompile at 00437164",
+      "verified": {
+        "bytes": "00437164+265",
+        "sha1": "727d3b1be7be",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00437270",
@@ -12084,7 +12252,13 @@
       "confidence": "high",
       "name": "MessagePort_PaintNoOp",
       "description": "MsgPort vtable +0x18: an empty body.",
-      "source": "DBSIM decompile at 00437590"
+      "source": "DBSIM decompile at 00437590",
+      "verified": {
+        "bytes": "00437590+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00437598",
@@ -17977,7 +18151,13 @@
       "confidence": "high",
       "name": "StringTable_Ctor",
       "description": "Clears a string table: buffer +0, cursor +4, length +8 and the group counters +0xc and +0xe. Callers found by es2_xref: World_StaticInit, MessagePort_StaticInit (two tables), SimStrings_StaticInit, Sound_StaticInit, HddDisplay_Ctor, AlertPanel_CtorBase, ObjectivesPanel_Ctor and DemoTape_PickRandom.",
-      "source": "DBSIM decompile and disassembly at 004537e0"
+      "source": "DBSIM decompile and disassembly at 004537e0",
+      "verified": {
+        "bytes": "004537e0+36",
+        "sha1": "50c065b97c3c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00453804",
@@ -17985,8 +18165,14 @@
       "type": "function",
       "confidence": "high",
       "name": "OwnedArray_Dtor",
-      "description": "(holder, flags): decrements the counter at *006cbf74, Mem_DeleteArray of the array pointer at holder+0 when non-null, then Mem_Delete(holder) when flags bit 0 is set. Alert_Dtor runs it on its +0x34 member and 00457a80 on its +0x332, both with flags 2.",
-      "source": "DBSIM decompile at 00453804"
+      "description": "(holder, flags): decrements the counter at *006cbf74, Mem_DeleteArray of the array pointer at holder+0 when the holder and it are non-null, then Mem_Delete(holder) when flags bit 0 is set. MessagePort_StaticDtor and SimStrings_StaticDtor run it on string tables with flags 2.",
+      "source": "DBSIM decompile at 00453804",
+      "verified": {
+        "bytes": "00453804+47",
+        "sha1": "2da84d684ea2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00453834",
@@ -18043,8 +18229,14 @@
       "type": "function",
       "confidence": "high",
       "name": "StrTable_FirstString",
-      "description": "(table): the loaded .STR buffer (*table) + 4, the first entry's text, or 0 when nothing is loaded. HddGauge_LoadPilotFrames walks DAT_0049d238 from it.",
-      "source": "DBSIM decompile at 004539b0"
+      "description": "(table): the loaded .STR buffer (*table) + 4, the first entry's text, or 0 when nothing is loaded.",
+      "source": "DBSIM decompile at 004539b0",
+      "verified": {
+        "bytes": "004539b0+26",
+        "sha1": "17f7979dc15f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004539cc",
@@ -18053,7 +18245,13 @@
       "confidence": "high",
       "name": "StrTable_NextString",
       "description": "(table, string): the string after the given one in a loaded .STR buffer -- steps over the NUL-terminated text by its length prefix, the attribute count byte and its attributes, and the next entry's length -- or null past the buffer's end. Ignores ids and groups.",
-      "source": "docs/retail/simulation/cockpit-messages.md"
+      "source": "docs/retail/simulation/cockpit-messages.md",
+      "verified": {
+        "bytes": "004539cc+59",
+        "sha1": "4abc08d48582",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00453a08",
@@ -18062,7 +18260,13 @@
       "confidence": "high",
       "name": "StrTable_GetAttributes",
       "description": "(table, string): the entry's attribute bytes -- string + its int16 length prefix (string-2) is the attribute count byte, and the result is the byte after it -- or 0 when the count is 0 or string lies past the buffer (*table + size table[2]). MessagePort_StepToVariant stores it at its record's +5.",
-      "source": "DBSIM decompile and disassembly at 00453a08"
+      "source": "DBSIM decompile and disassembly at 00453a08",
+      "verified": {
+        "bytes": "00453a08+55",
+        "sha1": "7049c0e0524a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00453a40",
@@ -38854,7 +39058,13 @@
       "confidence": "high",
       "name": "Rtl_PureVirtualCalled",
       "description": "Borland's pure-virtual handler: pushes \"Pure virtual function called\" (004a7a3c) and calls __ErrorExit (import thunk 004966a8). Fills every abstract slot -- 24 vtables in DBSIM hold it.",
-      "source": "DBSIM disassembly at 00496684"
+      "source": "DBSIM disassembly at 00496684",
+      "verified": {
+        "bytes": "00496684+12",
+        "sha1": "16b805aaa8a2",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00497368",

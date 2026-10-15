@@ -2032,13 +2032,28 @@
       "type": "function",
       "confidence": "high",
       "name": "Computer_PostMessage",
-      "description": "(id), callee-cleaned: posts a message to the cockpit computer's port at CockpitViewInstance (00092d1c) + 0x207 with 0002ed94(port, record), the record's first int16 the id and its second 0. ES2's Computer_PostMessage (DBSIM 00420a68) posts through the port's vtable slot 0 at +0x20b.",
+      "description": "(id), callee-cleaned: posts a message to the cockpit computer's port at CockpitViewInstance (00092d1c) + 0x207 with MessagePort_Post (0002ed94)(port, record), the record's first int16 the id and its second 0. ES2's Computer_PostMessage (DBSIM 00420a68) posts through the port's vtable slot 0 at +0x20b.",
       "source": "ES1DBSIM decompile at 0001a154, against ES2's Computer_PostMessage",
       "verified": {
         "bytes": "0001a154+50",
         "sha1": "e2807ea37f41",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0001a188",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Ai_PostSquadMessage",
+      "description": "(machine, force, id) in stack order, callee-cleaned: unless the machine's byte +0x93 is set and force is 0, posts the record {int16 id, dword machine} to the pilot channel CockpitView_GetSquadMessagePort (0002d614) returns, with MessagePort_Post (0002ed94). ES2's Ai_PostSquadMessage (DBSIM 00420a98), which tests +0x99 and posts through the port's vtable slot 0.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#posting",
+      "verified": {
+        "bytes": "0001a188+65",
+        "sha1": "3fd813513b83",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -6052,7 +6067,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_SendOrderToSlot",
-      "description": "(cockpit, slot, order) in stack order, callee-cleaned: takes the machine in the int16 slot of g_SquadmateMachines (000bcc16); when it is non-null, not the cockpit's machine +0x1ff and its byte +0x93 is clear, stores the cockpit's machine at the order's +2 and calls slot +0x2c of the vtable at the machine's +2 with (machine, 0, order); then calls 0002f370(the pilot channel +0x203, 0x22, machine) either way. es2_xref finds one call, from 0003d48c. ES2's Squad_SendOrderToSlot (DBSIM 00431610), which tests +0x99, calls vtable +0x28 and withdraws message 0x22 with MessagePort_Withdraw.",
+      "description": "(cockpit, slot, order) in stack order, callee-cleaned: takes the machine in the int16 slot of g_SquadmateMachines (000bcc16); when it is non-null, not the cockpit's machine +0x1ff and its byte +0x93 is clear, stores the cockpit's machine at the order's +2 and calls slot +0x2c of the vtable at the machine's +2 with (machine, 0, order); then calls MessagePort_Withdraw (0002f370)(the pilot channel +0x203, 0x22, machine) either way. es2_xref finds one call, from 0003d48c. ES2's Squad_SendOrderToSlot (DBSIM 00431610), which tests +0x99, calls vtable +0x28 and withdraws message 0x22 with MessagePort_Withdraw.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-squadmates",
       "verified": {
         "bytes": "0002b3e8+93",
@@ -6157,7 +6172,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_LoadPanel",
-      "description": "(cockpit, name): keeps Gau_Load (0002b5c4)(ResourcePath_BuildFolderName (00060698)(the folder 00098110 points to, name)) at CockpitGauRecord (00092d3c) and builds the cockpit's objects from it: Cockpit_CreateCanvasContext (0002ad78)'s result at +4, 00043cac(0, it) at +0 (then 00044310 with it), 0002f3d8(0, CockpitGauRecord (00092d3c) + 0x684) at +0x203, a 0x469-byte object from 0002eb80(object, CockpitGauRecord (00092d3c) + 0x694) with 00092f0a at its +0x464 and 0 at +0x468 at +0x207, and the results of Gau_WeaponButtonsWidget (0002ccd8), Gau_EnergyMeterWidget (0002cd3c), Gau_ShieldDisplayWidget (0002cd74), Gau_MfdPanelWidget (0002cdac), Gau_ThrottleWidget (0002cdf0), Gau_RovingGunsightWrapper (0002ce28), Gau_PilotRosterWidget (0002ce60) and CockpitClock_Create (0002ce98), each given the cockpit and CockpitGauRecord (00092d3c), at +0x1dd to +0x1f9. Between them makes the .TTM manager with Ttm_ManagerCtor(0, 0, the installed render context 000bdbda, 10) at CockpitTtmManager (00092d70), sets its prefix ttm\\ (00092f2e) with Ttm_SetPathPrefix and calls Ttm_AllocHandles (00069780)(manager, 2); ends with Ttm_RunAll (000695e0)(manager). es2_xref finds one call, from CockpitViewManager_LoadViews.",
+      "description": "(cockpit, name): keeps Gau_Load (0002b5c4)(ResourcePath_BuildFolderName (00060698)(the folder 00098110 points to, name)) at CockpitGauRecord (00092d3c) and builds the cockpit's objects from it: Cockpit_CreateCanvasContext (0002ad78)'s result at +4, 00043cac(0, it) at +0 (then 00044310 with it), DialogPort_Ctor (0002f3d8)(0, CockpitGauRecord (00092d3c) + 0x684) at +0x203, a 0x469-byte object from MessagePort_CtorBase (0002eb80)(object, CockpitGauRecord (00092d3c) + 0x694) with 00092f0a at its +0x464 and 0 at +0x468 at +0x207, and the results of Gau_WeaponButtonsWidget (0002ccd8), Gau_EnergyMeterWidget (0002cd3c), Gau_ShieldDisplayWidget (0002cd74), Gau_MfdPanelWidget (0002cdac), Gau_ThrottleWidget (0002cdf0), Gau_RovingGunsightWrapper (0002ce28), Gau_PilotRosterWidget (0002ce60) and CockpitClock_Create (0002ce98), each given the cockpit and CockpitGauRecord (00092d3c), at +0x1dd to +0x1f9. Between them makes the .TTM manager with Ttm_ManagerCtor(0, 0, the installed render context 000bdbda, 10) at CockpitTtmManager (00092d70), sets its prefix ttm\\ (00092f2e) with Ttm_SetPathPrefix and calls Ttm_AllocHandles (00069780)(manager, 2); ends with Ttm_RunAll (000695e0)(manager). es2_xref finds one call, from CockpitViewManager_LoadViews.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#handles",
       "verified": {
         "bytes": "0002c9d8+361",
@@ -6187,7 +6202,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_GetRectPanelCopy",
-      "description": "(port), callee-cleaned (RET 4), frameless: a NOP, then returns port + 0x43f, the box rect MessagePort_ShiftRect (0002eea0) moves. Slot +0x1c of the ticker's vtable 00092f0a; 0002ed88, slot +0x1c of the pilot channel's vtable 000931b6, holds the same code. ES2's MessagePort_GetRect (DBSIM 00437583), which returns port + 0x4a7.",
+      "description": "(port), callee-cleaned (RET 4), frameless: a NOP, then returns port + 0x43f, the box rect MessagePort_ShiftRect (0002eea0) moves. Slot +0x1c of the ticker's vtable 00092f0a; 0002ed88, slot +0x1c of the pilot channel's vtable DialogPortVtable (000931b6), holds the same code. ES2's MessagePort_GetRect (DBSIM 00437583), which returns port + 0x4a7.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-message-boxes-vtable",
       "verified": {
         "bytes": "0002cb47+13",
@@ -6487,7 +6502,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_IndexOf",
-      "description": "(object), callee-cleaned: the index 0-2 of object in g_SquadmateMachines (000bcc16), or -1 for a null object or one absent from it. es2_xref finds eight calls, from 0002ed94, 0002f454, 0002f4f4, 0003e488, 0003e53c, 000403a8, 00040a40 and 00058b68. ES2's Squad_IndexOf (DBSIM 00433134).",
+      "description": "(object), callee-cleaned: the index 0-2 of object in g_SquadmateMachines (000bcc16), or -1 for a null object or one absent from it. es2_xref finds eight calls, from MessagePort_Post (0002ed94), PilotMessagePort_ComposeLine (0002f454), PilotMessagePort_Show (0002f4f4), 0003e488, 0003e53c, 000403a8, 00040a40 and 00058b68. ES2's Squad_IndexOf (DBSIM 00433134).",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002d5dc+53",
@@ -6922,7 +6937,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HudColorTable_Get",
-      "description": "(i), frameless, callee-cleaned (RET 4): the int16 entry i of SquadSlotColors (00092d14), sign-extended. es2_xref finds five calls, from 0002f4f4, 0003dab4, 0003e9b8 and twice from 00040d4c. ES2's HudColorTable_Get (DBSIM 00434280), which maps the id at 0049b040[i] through HudColorTable.",
+      "description": "(i), frameless, callee-cleaned (RET 4): the int16 entry i of SquadSlotColors (00092d14), sign-extended. es2_xref finds five calls, from PilotMessagePort_Show (0002f4f4), 0003dab4, 0003e9b8 and twice from 00040d4c. ES2's HudColorTable_Get (DBSIM 00434280), which maps the id at 0049b040[i] through HudColorTable.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002e2e4+16",
@@ -6937,7 +6952,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_PilotName",
-      "description": "(slot), callee-cleaned: HddGauge_Name (0003e830)(the instrument +0x1f5 of CockpitViewInstance (00092d1c), slot). es2_xref finds calls from 0002f454 and 00058b68. ES2's Squad_PilotName (DBSIM 00434298), on +0x1f9.",
+      "description": "(slot), callee-cleaned: HddGauge_Name (0003e830)(the instrument +0x1f5 of CockpitViewInstance (00092d1c), slot). es2_xref finds calls from PilotMessagePort_ComposeLine (0002f454) and 00058b68. ES2's Squad_PilotName (DBSIM 00434298), on +0x1f9.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002e2f4+29",
@@ -7007,6 +7022,342 @@
       }
     },
     {
+      "address": "0002e444",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorMsgPortCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorPanelCopy (0002acdc): with p non-null deletes the block p points at with operator_delete (000015f8) when that is non-null, then p itself when bit 0 of flags is set. The first of the four functions that open the message boxes' object file. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "0002e444+40",
+        "sha1": "b635b39ed924",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002e46c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorMsgPortCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the message boxes' copy 0009306e of ConfigPart's vtable: the code of ConfigPart_DtorPanelCopy (0002ad04): with part non-null stores 0009306e, calls HeapBlockOwner_Dtor (00002598)(part + 0x10, 0), stores TSPartBase's copy 000930a2, calls TSBase_Dtor (0005ba58)(part, 0) and deletes part when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "0002e46c+63",
+        "sha1": "d0764d2222f5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e4ab",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagMsgPortCopy",
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009306e; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends"
+    },
+    {
+      "address": "0002e4b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorMsgPortCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000930a2 (entered at its padding 0002e4b1): the code of TSPartBase_DtorPanelCopy (0002ad4c) storing 000930a2.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends",
+      "verified": {
+        "bytes": "0002e4b4+42",
+        "sha1": "a32a7bc4069b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002e4e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_QueueInit",
+      "description": "(queue), callee-cleaned: allocates 0x1ec bytes when given none, returning 0 when that fails; builds ten 0x2c-byte records at +0 with __vec_ctor and QueuedMessage_ElementCtor (0002e538), sets the int16 count +0x1ea to 0 and clears the ten in-use bytes at +0x1e0. ES2's MessagePort_QueueInit (DBSIM 00434e50): records 0x31 bytes, count +0x21c, in-use bytes +0x212.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
+      "verified": {
+        "bytes": "0002e4e0+88",
+        "sha1": "e5ff9a2a913e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e538",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "QueuedMessage_ElementCtor",
+      "description": "(record), callee-cleaned: returns the record, allocating 0x2c bytes when given none; the rest is the inlined allocation tests of empty member constructors (sizes 0x16, 0xc, 8, the second at +6). The element constructor MessagePort_QueueInit (0002e4e0) hands __vec_ctor. ES2's QueuedMessage_ElementCtor (DBSIM 00437558).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
+      "verified": {
+        "bytes": "0002e538+98",
+        "sha1": "8d94de5d3bb4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002e59c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_Enqueue",
+      "description": "(queue, entry, record) in stack order, callee-cleaned: with the count +0x1ea at 10 first MessagePort_QueueDropLast (0002e85c). Takes the first record whose in-use byte (+0x1e0 + i) is clear, sets it, and fills the 0x2c-byte record queue + i * 0x2c: the record's five dwords +2..+0x15 at +2, the entry's text pointer (entry +0) at +0x17, and from the attribute bytes at entry +5: byte 0 as the int16 id +0, byte 1 at +0x16, byte 2 (the priority) at +0x1b, bytes 3 and 4 times 0x3c at +0x1c and +0x20, and bytes 5 and 6 times 0x3c plus the dword 000981c4 at +0x24 and +0x28. Inserts i in the order list +0x1b8 before the first queued record whose priority is strictly greater, or at the end, and adds 1 to the count. ES2's MessagePort_Enqueue (DBSIM 00434e8c), which also stores bytes 7 to 11 and reads now from Time_GetCoarseTicks.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
+      "verified": {
+        "bytes": "0002e59c+457",
+        "sha1": "6f1f72267448",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e768",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_QueueFront",
+      "description": "(queue), callee-cleaned: 0 when the count +0x1ea is 0, otherwise the record queue + order[0] (+0x1b8) * 0x2c. ES2's MessagePort_QueueFront (DBSIM 00435074).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
+      "verified": {
+        "bytes": "0002e768+37",
+        "sha1": "4aba988e3a8f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e790",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_QueueAt",
+      "description": "(queue, index) in stack order, callee-cleaned: the record queue + order[index] (+0x1b8 + index * 4) * 0x2c, or 0 when index is at least the count +0x1ea. ES2's MessagePort_QueueAt (DBSIM 004350d4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
+      "verified": {
+        "bytes": "0002e790+54",
+        "sha1": "5f87a4728784",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e7c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_RemoveAt",
+      "description": "(queue, index) in stack order, callee-cleaned: when the count +0x1ea is non-zero, clears the in-use byte of the record order[index] names, moves the later entries of the order list +0x1b8 down one and takes 1 from the count. ES2's MessagePort_RemoveAt (DBSIM 00435140).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
+      "verified": {
+        "bytes": "0002e7c8+148",
+        "sha1": "2425471979c3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e85c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_QueueDropLast",
+      "description": "(queue), callee-cleaned: clears the in-use byte of the record the tenth order entry (+0x1dc) names and takes 1 from the count +0x1ea. ES2's MessagePort_QueueDropLast (DBSIM 004351c0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
+      "verified": {
+        "bytes": "0002e85c+53",
+        "sha1": "4c2199a9752d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e898",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_QueueExpire",
+      "description": "(queue), callee-cleaned: from the last order entry down to entry 1, MessagePort_RemoveAt (0002e7c8) each whose record's maxWait deadline +0x28 is below the dword 000981c4; entry 0 is never dropped. ES2's MessagePort_QueueExpire (DBSIM 004351ec).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
+      "verified": {
+        "bytes": "0002e898+109",
+        "sha1": "04c9a03ae1cb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e908",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_QueueRemoveMatch",
+      "description": "(queue, id, subject) in stack order, callee-cleaned: removes with MessagePort_RemoveAt (0002e7c8) the first queued record whose int16 id +0 and dword subject +2 both match and returns 1; 0 when none does. ES2's MessagePort_QueueRemoveMatch (DBSIM 00435240).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-queue",
+      "verified": {
+        "bytes": "0002e908+139",
+        "sha1": "e1993f272ce9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e994",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_StampedQueueAppend",
+      "description": "(queue, entry, record) in stack order, callee-cleaned: the message log's append: with the count +0x1ea at 5 drops entry 0 with MessagePort_StampedQueueRemoveAt (through its padding 0002eaaa); takes the first record of five whose in-use byte is clear, copies the record's five dwords +2..+0x15, the attribute bytes 0 and 1 to +0 and +0x16 and the entry's text to +0x17, copies CockpitClock_FormatTime (00043734)(the cockpit clock, CockpitViewInstance + 0x1f9) into the 9-byte string at the queue's +0x1ec + i * 9, and appends i to the order list +0x1b8. ES2's MessagePort_StampedQueueAppend (DBSIM 004352ec). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-message-log",
+      "verified": {
+        "bytes": "0002e994+278",
+        "sha1": "045c58c95b9e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002eaac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_StampedQueueRemoveAt",
+      "description": "(queue, index) in stack order, callee-cleaned: the same body as MessagePort_RemoveAt (0002e7c8), entered also at its padding 0002eaaa. ES2's MessagePort_StampedQueueRemoveAt (DBSIM 00435408).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-message-log",
+      "verified": {
+        "bytes": "0002eaac+148",
+        "sha1": "2425471979c3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002eb40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_StampedQueueTimeAt",
+      "description": "(queue, index) in stack order, callee-cleaned: the 9-byte time string of the logged record at index (queue + 0x1ec + order[index] * 9), or the empty string 000930d3 when MessagePort_QueueAt (0002e790) returns 0. ES2's MessagePort_StampedQueueTimeAt (DBSIM 00435458).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-message-log",
+      "verified": {
+        "bytes": "0002eb40+62",
+        "sha1": "31c037ed5fbd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002eb80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_CtorBase",
+      "description": "(port, rect) in stack order, callee-cleaned: MsgPort's constructor. MessagePort_QueueInit (0002e4e0) on the queue +0 and the log +0x1ec (allocating 0x246 bytes when that is null); builds the box at +0x437 as a type-0 rectangle region (the module's vtable copies 000930d6, 000930fa, 00093122, then 0009314a at +0x437, 0 at +0x43b); stores MsgPortVtable (00093172) at +0x464 and the rect's four dwords at +0x43f..+0x44b; clears +0x432, +0x436, +0x44f, +0x450 and +0x461..+0x463; then, when StrTable_FirstString (00045114)(SystemStringTable (SystemStringTable (000b0e54))) returns 0, SystemMessages_Index (0002f1ec)(port, 0, -1). ES2's MessagePort_CtorBase (DBSIM 00435490), which loads no file.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#building-the-two-ports",
+      "verified": {
+        "bytes": "0002eb80+386",
+        "sha1": "48d5f785cb76",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002ed04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorMsgPortCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 000930fa, the first of the message boxes' file's copies of GLRectangleRegion's vtables (entered at its padding 0002ed02): with the object non-null stores 000930fa at +0 and deletes the object with operator_delete when bit 0 of flags is set. Identical after normalization to GLBase_DtorPanelCopy (0002b198).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#functions",
+      "verified": {
+        "bytes": "0002ed04+34",
+        "sha1": "2a72b5ebd5b7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002ed28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorMsgPortCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 00093122 (entered at its padding 0002ed26): with the object non-null stores 00093122 and 000930fa in turn at +0 and deletes the object with operator_delete when bit 0 of flags is set. Identical after normalization to GLRegion_DtorPanelCopy (0002b1bc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#functions",
+      "verified": {
+        "bytes": "0002ed28+40",
+        "sha1": "dd01d409db80",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002ed50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorMsgPortCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0009314a: with the object non-null stores 0009314a, 00093122 and 000930fa in turn at +0 and deletes the object with operator_delete when bit 0 of flags is set. Identical after normalization to GLRectangleRegion_DtorPanelCopy (0002b1e4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#functions",
+      "verified": {
+        "bytes": "0002ed50+46",
+        "sha1": "96a675e266ba",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002ed7e",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_UnpaintNoOp",
+      "description": "(port), callee-cleaned (RET 4), frameless: two NOPs and ret 4. Slot +0x14 of MsgPortVtable (00093172). ES2's MessagePort_UnpaintNoOp (DBSIM 0043757e).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots"
+    },
+    {
+      "address": "0002ed83",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_PaintNoOp",
+      "description": "(port), callee-cleaned (RET 4), frameless: a NOP and ret 4. Slot +0x18 of MsgPortVtable (00093172). ES2's MessagePort_PaintNoOp (DBSIM 00437590).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots"
+    },
+    {
+      "address": "0002ed87",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_GetRect",
+      "description": "(port), callee-cleaned (RET 4), frameless: a NOP, then returns port + 0x43f, the box rect, with mov eax,[esp+4]; add eax,0x43f; ret 4. Slot +0x1c of MsgPortVtable (00093172), and of DialogPortVtable (000931b6) as 0002ed88, past the NOP. The code of MessagePort_GetRectPanelCopy (0002cb47). ES2's MessagePort_GetRect (DBSIM 00437583).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots"
+    },
+    {
+      "address": "0002ed94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_Post",
+      "description": "(port, record) in stack order, callee-cleaned: posts the record {byte id at +0, dword subject at +2} to either message box, in place of ES2's slot-0 posts MessagePort_PickVariant (DBSIM 00436a3c) and PilotMessagePort_Post (DBSIM 00435c48). With no subject: the slot SystemMessageIndex (000bd0ec) + id * 9 against SystemStringTable (000b0e54). Otherwise the slot Squad_IndexOf (0002d5dc)(subject) as a byte; above 3 the record's subject becomes g_SquadmateMachines (000bcc16)'s first entry and the slot 0. Then, for an id below 0x32 or a subject that is not entry 0 of the member array +0xe of its group (+0x3f), the slot PilotMessageIndex (000bcc22) + slot * 0x183 + id * 9 against PilotStringTables (000b0e14) + slot * 0x10; otherwise 000bceea + id * 9 against CommandStringTable (000b0e44). A count byte (+4) of 2 or more rolls the variant as Math_RandomNext(000b5c48)'s low word modulo the count, and a nonzero variant goes through MessagePort_StepToVariant (0002f31c, by its padding 0002f31b); a slot with text (+0) and attributes (+5) goes to MessagePort_Enqueue (0002e59c)(port, slot, record).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#posting",
+      "verified": {
+        "bytes": "0002ed94+266",
+        "sha1": "50d2c2da96fe",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0002eea0",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -7017,6 +7368,321 @@
       "verified": {
         "bytes": "0002eea0+56",
         "sha1": "11759d1053c0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002eed8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_AddBeginCallback",
+      "description": "(port, callback) in stack order, callee-cleaned: while the count byte +0x44f is below 2 stores the callback at +0x451 + 4 * count, adds 1 and returns 1; else 0. ES2's MessagePort_AddBeginCallback (DBSIM 004355a8), at +0x4b7/+0x4b9.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-lifecycle",
+      "verified": {
+        "bytes": "0002eed8+62",
+        "sha1": "2cc272f70dee",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002ef18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_AddEndCallback",
+      "description": "(port, callback) in stack order, callee-cleaned: while the count byte +0x450 is below 2 stores the callback at +0x459 + 4 * count, adds 1 and returns 1; else 0. ES2's MessagePort_AddEndCallback (DBSIM 004355dc), at +0x4b8/+0x4c1.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-lifecycle",
+      "verified": {
+        "bytes": "0002ef18+62",
+        "sha1": "49b6aa186cc7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002ef58",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_Tick",
+      "description": "(port), callee-cleaned: slot +0x10 of MsgPortVtable (00093172), by its padding 0002ef56. MessagePort_QueueExpire (0002e898); takes MessagePort_QueueFront (0002e768) as the current +0x432 when there is none, and returns with none. With ready +0x462 or cancelled +0x463 set: when due +0x461 is set and cancelled clear, calls the show (vtable +0x464, slot +4) while MessagePort_ShowEnabled (000930d2) is set and returns if it gives 0, then adds now to +0x1c and +0x20 and clears due; otherwise, when cancelled, or now is past +0x20, or past +0x1c with the count +0x1ea at 2 or more, calls the take-down (slot +0xc) and, when it returns nonzero, MessagePort_RemoveAt (0002e7c8)(queue, 0) and clears +0x432, +0x463 and +0x462. With neither: past +0x28, removes the front and clears +0x432, +0x436, +0x463 and +0x462; past +0x24 with due clear, sets due, clears ready and calls each begin callback (+0x451, count +0x44f) with the current record. Now is the dword 000981c4. ES2's MessagePort_Tick (DBSIM 00435610), which tests +0x4cc and the player's machine and calls the show unconditionally.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-lifecycle",
+      "verified": {
+        "bytes": "0002ef58+433",
+        "sha1": "c03e69971a80",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002f10c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_LineOverlapsRect",
+      "description": "(port, rect) in stack order, callee-cleaned: 1 when a line is up (+0x436) and rect {x0, y0, x1, y1} overlaps the box +0x43f..+0x44b, edges inclusive; else 0. ES2's MessagePort_LineOverlapsRect (DBSIM 00435920), which also tests +0x4d2. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-lifecycle",
+      "verified": {
+        "bytes": "0002f10c+97",
+        "sha1": "5a80b0a9de33",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f170",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_StampedQueueComposeAt",
+      "description": "(port, index) in stack order, callee-cleaned: returns what the port's vtable (+0x464) slot +8 returns for (port, MessagePort_QueueAt (0002e790)(the log +0x1ec, index)), the line of the logged message at index. ES2's file has no counterpart. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-message-log",
+      "verified": {
+        "bytes": "0002f170+41",
+        "sha1": "bbf6da7ae3c4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002f19c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_StampedQueueShownTimeAt",
+      "description": "(port, index) in stack order, callee-cleaned: when the log's (+0x1ec) record at index exists and its +0x1c is at most the dword 000981c4, MessagePort_StampedQueueTimeAt (0002eb40)(log, index); otherwise the empty string 00093196. ES2's file has no counterpart. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-message-log",
+      "verified": {
+        "bytes": "0002f19c+80",
+        "sha1": "89be70b78992",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002f1ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SystemMessages_Index",
+      "description": "(port, digit, which) in stack order, callee-cleaned: loads str\\<name>.str (ResourcePath_BuildFolderName (00060698)(str, name), StringTable_LoadFromFile (00044f78)) and indexes it. which -1: system into SystemStringTable (000b0e54), index SystemMessageIndex (000bd0ec); -2: commandr into CommandStringTable (000b0e44), index CommandMessageIndex (000bd0ac); a slot 0-2: first, when g_SquadmateMachines[slot] is entry 0 of its group's (+0x3f) member array +0xe, itself with which -2; then pilot<digit> into PilotStringTables (000b0e14) + slot * 0x10, index PilotMessageIndex (000bcc22) + slot * 0x183. For each StringTable_ReadNext (00045004) entry, the 9-byte slot index + attribute byte 0 * 9 takes {text, attributes at +5} while its count byte +4 is 0, and the count goes up by 1. ES2's SystemMessages_Index (DBSIM 00435970), (port, mode, n, bank), with the command file commandX and paths by language.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-string-files",
+      "verified": {
+        "bytes": "0002f1ec+303",
+        "sha1": "81cd9250c20a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f31c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_StepToVariant",
+      "description": "(port, n, slot, table) in stack order, callee-cleaned (entered also at its padding 0002f31b): for n 0 returns slot; otherwise steps n times with StrTable_NextString (0004513c)(table, the slot's text) and returns the slot it builds at 000bd21e: that string, a count byte 0 at 000bd222, and StrTable_GetAttributes (00045194)(table, string) at 000bd223. ES2's MessagePort_StepToVariant (DBSIM 00435a74).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#posting",
+      "verified": {
+        "bytes": "0002f31c+82",
+        "sha1": "d1d196f3f787",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f370",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_Withdraw",
+      "description": "(port, id, subject) in stack order, callee-cleaned: when the current record (+0x432) has the int16 id and the dword subject +2: returns 0 while due (+0x461), else sets cancelled +0x463 and returns 1; otherwise returns MessagePort_QueueRemoveMatch (0002e908)(port, id, subject). ES2's MessagePort_Withdraw (DBSIM 00435ac8). es2_xref finds one call, from Squad_SendOrderToSlot (0002b3e8).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-lifecycle",
+      "verified": {
+        "bytes": "0002f370+103",
+        "sha1": "582f19ec1074",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f3d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DialogPort_Ctor",
+      "description": "(port, rect) in stack order, callee-cleaned: the pilot channel's constructor: allocates 0x474 bytes when given none (returning 0 when that fails), runs MessagePort_CtorBase (0002eb80), stores DialogPortVtable (000931b6) at +0x464 and allocates two buffers of Region_PixelCount (00066609)(+0x43b) bytes with operator_new at +0x468 and +0x46c; returns the port. ES2's DialogPort_Ctor (DBSIM 00435bf0). es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#building-the-two-ports",
+      "verified": {
+        "bytes": "0002f3d8+121",
+        "sha1": "e038ef5b5439",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f454",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotMessagePort_ComposeLine",
+      "description": "(port, record) in stack order, callee-cleaned: slot +8 of DialogPortVtable (000931b6). With no record, empties PilotMessagePort_LineBuffer (000b0e64); otherwise copies the speaker's name there, Squad_PilotName (0002e2f4)(slot) for Squad_IndexOf (0002d5dc)(subject +2), or XXXX (000931da) when the subject is null or in no slot, then strcat of \": \" (000931df) and strncat of the record's text (+0x17) at 0x4a characters. Returns the buffer. ES2's PilotMessagePort_ComposeLine (DBSIM 00435d0c), which signs such a line HQ.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-pilot-channel",
+      "verified": {
+        "bytes": "0002f454+159",
+        "sha1": "502a77b62f05",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f4f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotMessagePort_Show",
+      "description": "(port), callee-cleaned: slot +4 of DialogPortVtable (000931b6). Returns 0 while the published view manager's byte +0x18 is set. Composes the line (slot +8) with the current record, sets +0x436, and gives the display (000bdd28) its +0x8c as source page +0x38 (00098dd6 and 0009df14 when current). Between Cockpit_PushCanvasContext (0002b00c) and Cockpit_PopRenderContext (0002b03c), with w = HudFont_MeasureString (00069d0c)(ColorSchemePanels[2], 00092d48, the line): x0 = origin x + 150 - w/2 and x1 = x0 + w + 20, origin being the context's +0x220/+0x224; Region_Save (000665d6) of the box offset by the origin into +0x468; Raster_FillRect (00053d9c) with the brush {0, fill} and {4, frame}, fill HudColorTable_Get (0002e2e4)(Squad_IndexOf of the subject) and frame fill - 1, or 63 and 53 with no slot; HudFont_DrawString (00069e38) at {origin x + 160 - w/2, y1 - 1}; MessagePort_CopyBoxBetweenPages (0002fcd4)(port, 1); Region_Save of the box into +0x46c; the cursor shown (0009df4c) unless the view +0x10 is 4; the display's draw page +0x3c set to the +0x8c page (00098dda, 0009df18). Returns 1. ES2's PilotMessagePort_Speak (DBSIM 00435d9c), which also speaks and tests the preferences and the player's machine.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-pilot-channel",
+      "verified": {
+        "bytes": "0002f4f4+760",
+        "sha1": "f7d4b1025ab3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f7ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotMessagePort_Erase",
+      "description": "(port), callee-cleaned: slot +0xc of DialogPortVtable (000931b6). Returns 1 with no line up (+0x436), 0 while the published view manager's +0x18 is set; otherwise calls each end callback (+0x459, count +0x450) with the current record, Region_Restore (0006641f)(+0x43b, +0x43f, +0x468) between the push and pop, MessagePort_CopyBoxBetweenPages (0002fcd4)(port, 1), clears +0x436 and returns 1. ES2's PilotMessagePort_Erase (DBSIM 00436130), which also tests and clears +0x4d2.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-pilot-channel",
+      "verified": {
+        "bytes": "0002f7ec+215",
+        "sha1": "97be8b19ec8b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f8c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotMessagePort_Update",
+      "description": "(port), callee-cleaned: slot +0x10 of DialogPortVtable (000931b6). While a line is up (+0x436) and the published view manager's +0x18 is clear, gives the display (000bdd28) its +0x8c as source page +0x38 (00098dd6 and 0009df14 when current) and calls slot +0x18; then MessagePort_Tick (0002ef58). Sets no ready latch. ES2's PilotMessagePort_Update (DBSIM 004361cc), which sets the ready latch for a due record whose +0x2c is set.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-pilot-channel",
+      "verified": {
+        "bytes": "0002f8c4+109",
+        "sha1": "00f2a9859308",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f934",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_SetText",
+      "description": "(port, record) in stack order, callee-cleaned: slot +8 of the ticker's vtable 00092f0a. Empties MessagePort_TextBuffer (000b0eb4) with no record, otherwise strncpy of the record's text (+0x17) at 0x50 characters; returns the buffer. ES2's MessagePort_SetText (DBSIM 00436a0c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-ticker",
+      "verified": {
+        "bytes": "0002f934+53",
+        "sha1": "8261438b23b0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002f96c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_Show",
+      "description": "(port), callee-cleaned: slot +4 of the ticker's vtable 00092f0a. Sets the text (slot +8) from the current record, sets +0x436, paints (slot +0x18), MessagePort_CopyBoxBetweenPages (0002fcd4)(port, 1), then for an id up to 0x21 jumps through MessagePort_ToneTable (000931e4): Sound_Play (0004de84)(0x17) for 0x10, 0x12, 0x1b, 0x1c; 0x18 for 8, 0xb-0xd, 0xf, 0x11, 0x13, 0x14; 0x19 for 6, 0xe; 0x1a for the rest, 0x1f also setting the blink latch +0x468 and 0x20 and 0x21 clearing it. A higher id plays nothing. Returns 1. ES2's MessagePort_Show (DBSIM 00436abc), which has the repeat window, the preference and view gates, the voice and other tones.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-ticker",
+      "verified": {
+        "bytes": "0002f96c+147",
+        "sha1": "98df63fc5644",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002fa00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessageTicker_Paint",
+      "description": "(port), callee-cleaned: slot +0x18 of the ticker's vtable 00092f0a. Between Cockpit_PushCanvasContext (0002b00c) and Cockpit_PopRenderContext (0002b03c): Raster_FillRect (00053d9c) of the box +0x43f with the brush {0, 63}; then, while a line is up (+0x436) and the blink latch +0x468 is clear or bit 0x20 of 000981c4 is set, HudFont_DrawString (00069e38)(ColorSchemePanels[2], 00092d48, MessagePort_TextBuffer (000b0eb4)) at x0 + ((x1 - x0) >> 1) - (w >> 1), w its HudFont_MeasureString (00069d0c) width, and y1 - 1. ES2's MessageTicker_Paint (DBSIM 00436cec), which frames the box, scrolls the text and has view gates.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-ticker",
+      "verified": {
+        "bytes": "0002fa00+181",
+        "sha1": "f1b150d4e233",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002fab8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessageTicker_Update",
+      "description": "(port), callee-cleaned: slot +0x10 of the ticker's vtable 00092f0a. Saves MessagePort_ShowEnabled (000930d2) and sets it to 1; while a line is up (+0x436) and the published view manager's +0x18 is clear, paints (slot +0x18); MessagePort_Tick (0002ef58); sets ready +0x462 when due +0x461 is set; restores MessagePort_ShowEnabled. ES2's MessageTicker_ScrollText (DBSIM 00436f70) in its slot, which also moves the scroll.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-ticker",
+      "verified": {
+        "bytes": "0002fab8+95",
+        "sha1": "d204351aeb44",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002fb18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_Erase",
+      "description": "(port), callee-cleaned: slot +0xc of the ticker's vtable 00092f0a. Raster_FillRect (00053d9c) of the box +0x43f with the brush {0, 63} between Cockpit_PushCanvasContext and Cockpit_PopRenderContext, MessagePort_CopyBoxBetweenPages (0002fcd4)(port, 1), clears +0x436 and returns 1, with a line up or not. ES2's MessagePort_Erase (DBSIM 00436fd0), which acts only on a line that is up and not suppressed and clears the blink latch.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-ticker",
+      "verified": {
+        "bytes": "0002fb18+90",
+        "sha1": "35ede1d1d7b2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002fb74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotMessagePort_RestoreBackground",
+      "description": "(port), callee-cleaned: slot +0x14 of DialogPortVtable (000931b6). While a line is up (+0x436), Region_Restore (0006641f)(+0x43b, +0x43f, +0x468) between Cockpit_PushCanvasContext and Cockpit_PopRenderContext. ES2's PilotMessagePort_RestoreBackground (DBSIM 00437044), which also tests +0x4d2 and the view-change flag.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-pilot-channel",
+      "verified": {
+        "bytes": "0002fb74+92",
+        "sha1": "27aaa9fe2a4b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002fbd0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotMessagePort_RedrawFromSaveUnder",
+      "description": "(port), callee-cleaned: slot +0x18 of DialogPortVtable (000931b6). While a line is up (+0x436), inside Cockpit_PushCanvasContext and Cockpit_PopRenderContext: adds the context's origin (+0x220, +0x224) to the box +0x43f..+0x44b, Region_Save (000665d6)(+0x43b, +0x468), subtracts it again, and Region_Restore (0006641f)(+0x43b, +0x43f, +0x46c). ES2's PilotMessagePort_RedrawFromSaveUnder (DBSIM 00437094), which also tests +0x4d2 and the view-change flag.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-pilot-channel",
+      "verified": {
+        "bytes": "0002fbd0+260",
+        "sha1": "ad5e7a4cd29d",
         "scope": "body",
         "via": "decompile"
       }
@@ -7035,6 +7701,24 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "0002fe00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_StaticInit",
+      "description": "Frameless, no arguments: the message boxes' file's static initializer, entry 000adc30 of the static constructor table. __vec_ctor(PilotStringTables (000b0e14), 0x10, 3, StringTable_Ctor (00044f14)) in stack order, then StringTable_Ctor on CommandStringTable (000b0e44) and SystemStringTable (000b0e54). ES2's MessagePort_StaticInit (DBSIM 00437270). es2_xref finds the table entry as its one reference.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends"
+    },
+    {
+      "address": "0002fe28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_StaticDtor",
+      "description": "Frameless, no arguments: the exit routine of MessagePort_StaticInit (0002fe00), entry 000adcb4 of the static destructor table. OwnedArray_Dtor (00044f48)(SystemStringTable, 2), the same on CommandStringTable, then __vec_dtor of the three PilotStringTables with OwnedArray_Dtor. Its RET at 0002fe5b ends the object file. ES2's MessagePort_StaticDtor (DBSIM 004372c4). es2_xref finds the table entry as its one reference.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#where-the-object-file-starts-and-ends"
     },
     {
       "address": "00030288",
@@ -7277,6 +7961,21 @@
       }
     },
     {
+      "address": "00043734",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitClock_FormatTime",
+      "description": "(clock), callee-cleaned (RET 4), frameless, not reading its argument: copies the hours string 000bd504 into 000b16b4 and appends : (00094b7f) and the minutes string 000bd508 with strcat; returns 000b16b4. ES2's PanelAmbience_FormatClock (DBSIM 00452218). es2_xref finds one call, from MessagePort_StampedQueueAppend (0002e994).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00043734+79",
+        "sha1": "15c3636eb3ae",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000438fc",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -7352,6 +8051,36 @@
       }
     },
     {
+      "address": "00044f14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StringTable_Ctor",
+      "description": "(table), callee-cleaned: allocates 0x10 bytes when given none (returning 0 when that fails), clears the buffer +0, cursor +4, length +8 and the int16 counters +0xc and +0xe, and returns the table. ES2's StringTable_Ctor (DBSIM 004537e0), which allocates nothing.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00044f14+49",
+        "sha1": "763452703d8f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044f48",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "OwnedArray_Dtor",
+      "description": "(holder, flags) in stack order, callee-cleaned: with the holder non-null, operator_delete (000015f8) of the block at +0 when that is non-null, then of the holder when bit 0 of flags is set. ES2's OwnedArray_Dtor (DBSIM 00453804), which also counts destructors.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00044f48+45",
+        "sha1": "4621e200b223",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00044f78",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -7409,6 +8138,51 @@
         "sha1": "d31323c8f3d0",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00045114",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StrTable_FirstString",
+      "description": "(table), callee-cleaned: the loaded buffer (*table) + 4, the first entry's text, or 0 when nothing is loaded. Identical after normalization to ES2's StrTable_FirstString (DBSIM 004539b0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00045114+39",
+        "sha1": "eb86350495cc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004513c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StrTable_NextString",
+      "description": "(table, string) in stack order, callee-cleaned: while string lies inside the buffer (*table + length table[2]), the string after it: string + its int16 length prefix (string - 2) is the attribute count byte, and the next text starts that count + 3 bytes on; else 0. Identical after normalization to ES2's StrTable_NextString (DBSIM 004539cc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0004513c+88",
+        "sha1": "c811117f8ab2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045194",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "StrTable_GetAttributes",
+      "description": "(table, string) in stack order, callee-cleaned: the entry's attribute bytes, the byte after the count byte at string + its int16 length prefix, or 0 when the count is 0 or string lies past the buffer. ES2's StrTable_GetAttributes (DBSIM 00453a08), its tests in the other order.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00045194+74",
+        "sha1": "8cc28dfa214d",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -17849,6 +18623,42 @@
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors"
     },
     {
+      "address": "000930d2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MessagePort_ShowEnabled",
+      "description": "Byte, 1 in the image: MessagePort_Tick (0002ef58) calls a port's show only while it is set, otherwise counting a due and ready message as shown. MessageTicker_Update (0002fab8) sets it to 1 around the ticker's tick; the frameless code at 0004ad30 stores (value != 1) in it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-lifecycle"
+    },
+    {
+      "address": "00093172",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MsgPortVtable",
+      "description": "MsgPort's vtable, stored at a port's +0x464 by MessagePort_CtorBase (0002eb80): a zero dword, zeros at +4, +8 and +0xc, then MessagePort_Tick (0002ef58, by its padding 0002ef56), MessagePort_UnpaintNoOp (0002ed7e), MessagePort_PaintNoOp (0002ed83) and MessagePort_GetRect (0002ed87). ES2's MsgPort table (DBSIM 0049bb00).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots"
+    },
+    {
+      "address": "000931b6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DialogPortVtable",
+      "description": "The pilot channel's vtable, stored by DialogPort_Ctor (0002f3d8): a zero dword, then PilotMessagePort_Show (0002f4f4), PilotMessagePort_ComposeLine (0002f454), PilotMessagePort_Erase (0002f7ec), PilotMessagePort_Update (0002f8c4), PilotMessagePort_RestoreBackground (0002fb74), PilotMessagePort_RedrawFromSaveUnder (0002fbd0) and 0002ed88, MessagePort_GetRect past its NOP. ES2's DialogPort table (DBSIM 0049bad4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-slots"
+    },
+    {
+      "address": "000931e4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MessagePort_ToneTable",
+      "description": "34 jump targets, for ids 0 to 0x21, of MessagePort_Show (0002f96c)'s tone switch.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-ticker"
+    },
+    {
       "address": "0009680c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -18225,6 +19035,51 @@
       "name": "CockpitContextStack",
       "description": "The dword stack of render contexts Cockpit_PushCanvasContext (0002b00c) saves, indexed by CockpitContextStackIndex (00092d7d). ES2's 004d0470.",
       "source": "ES1DBSIM decompile at 0002b00c and 0002b03c"
+    },
+    {
+      "address": "000b0e14",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PilotStringTables",
+      "description": "Three 0x10-byte string tables, one per squadmate slot, holding str\\pilot<n>.str: built by MessagePort_StaticInit (0002fe00), loaded by SystemMessages_Index (0002f1ec). ES2's PilotStringTables (DBSIM 004d0498).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-string-files"
+    },
+    {
+      "address": "000b0e44",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CommandStringTable",
+      "description": "The string table holding str\\commandr.str, loaded by SystemMessages_Index (0002f1ec) for a slot whose squadmate is its group's first member. ES2's CommandStringTable (DBSIM 004d04c8) holds COMMAND<n>.STR.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-string-files"
+    },
+    {
+      "address": "000b0e54",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SystemStringTable",
+      "description": "The string table holding str\\system.str, loaded by MessagePort_CtorBase (0002eb80) through SystemMessages_Index (0002f1ec) when it is empty. ES2's SystemStringTable (DBSIM 004d04d8).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-string-files"
+    },
+    {
+      "address": "000b0e64",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PilotMessagePort_LineBuffer",
+      "description": "The pilot channel's composed line, speaker, \": \" and text, built by PilotMessagePort_ComposeLine (0002f454).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-pilot-channel"
+    },
+    {
+      "address": "000b0eb4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MessagePort_TextBuffer",
+      "description": "The ticker's line, 0x50 characters at most, set by MessagePort_SetText (0002f934) and drawn by MessageTicker_Paint (0002fa00).",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-ticker"
     },
     {
       "address": "000b17d8",
@@ -18873,6 +19728,33 @@
       "name": "g_SquadmateMachines",
       "description": "Three machine pointers, the player's squadmates by slot: zeroed by ColorSchemePanels_LoadAll (0002aecc), filled by Cockpit_LoadSquadmatePilots (0002b308), indexed by Squad_SendOrderToSlot (0002b3e8) and Squad_CallsignOf (0002b46c). ES2's g_SquadmateMachines (DBSIM 004d044c).",
       "source": "ES1DBSIM decompile at 0002aecc, 0002b308, 0002b3e8 and 0002b46c"
+    },
+    {
+      "address": "000bcc22",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PilotMessageIndex",
+      "description": "Three 0x183-byte indexes, one per squadmate slot, of 9-byte slots {dword text, byte count, dword attributes} at id * 9, filled from PilotStringTables (000b0e14) by SystemMessages_Index (0002f1ec). ES2's at DBSIM 004d04e8.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-string-files"
+    },
+    {
+      "address": "000bd0ac",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CommandMessageIndex",
+      "description": "The index of str\\commandr.str, 9-byte slots at id * 9, which MessagePort_Post (0002ed94) reads for ids from 0x32 at 000bceea + id * 9.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-string-files"
+    },
+    {
+      "address": "000bd0ec",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SystemMessageIndex",
+      "description": "The index of str\\system.str, 9-byte slots at id * 9, which MessagePort_Post (0002ed94) reads for a record with no subject. ES2's at DBSIM 004d0b33.",
+      "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-string-files"
     },
     {
       "address": "000bd324",
