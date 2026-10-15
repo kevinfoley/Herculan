@@ -9758,7 +9758,13 @@
       "confidence": "high",
       "name": "Hzline_Dtor",
       "description": "hzline vtable +0x18 (0049afb0, the sky backdrop Hzline_Ctor builds), the destructor its class record names: (hzline, flags). One RTL destructor-count decrement, TSGroup_Dtor(hzline, 0), then Mem_Delete on flags bit 0.",
-      "source": "DBSIM disassembly at 0042f6d2; class record at 0042f682"
+      "source": "DBSIM disassembly at 0042f6d2; class record at 0042f682",
+      "verified": {
+        "bytes": "0042f6d2+45",
+        "sha1": "c404446460c3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042f700",
@@ -9881,7 +9887,13 @@
       "confidence": "high",
       "name": "TexPoly_Dtor",
       "description": "TexPoly vtable +0x18 (0049afe6, RTTI 'TexPoly', 0x10b bytes, derived from TSTexture4Poly), the destructor its class record names: (poly, flags). Five RTL destructor-count decrements, TSBase_Dtor(poly, 0), then Mem_Delete on flags bit 0.",
-      "source": "DBSIM disassembly at 004302fa; class record at 004302aa"
+      "source": "DBSIM disassembly at 004302fa; class record at 004302aa",
+      "verified": {
+        "bytes": "004302fa+76",
+        "sha1": "da9bfeef0dcf",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00430346",
@@ -9890,7 +9902,13 @@
       "confidence": "high",
       "name": "TexPoly_Slot28NoOp",
       "description": "TexPoly vtable +0x28 (0049afe6): an empty body.",
-      "source": "DBSIM decompile at 00430346"
+      "source": "DBSIM decompile at 00430346",
+      "verified": {
+        "bytes": "00430346+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043034c",
@@ -9928,8 +9946,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_SetActive",
-      "description": "Swaps ActivePaletteObject and returns the previous one. Used to temporarily retarget Palette_InstallRange at the secondary impact palette (ImpactPaletteObject) without disturbing the live one.",
-      "source": "cockpit rendering RE session"
+      "description": "(palette): makes palette the active palette ActivePaletteObject and returns the previous one. es2_xref finds calls from Palette_ActivateImpact (0042ea44), Palette_ToggleImpact (0042ea70), Palette_RestoreFromImpact (0042ea94) and two from CockpitViewManager_LoadViews.",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "004303b0+19",
+        "sha1": "cb3971e7a2bd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004303c4",
@@ -9937,8 +9961,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_InstallRange",
-      "description": "Palette_InstallRange(baseIndex, count, srcRgbaArray): copies count RGBA/RGB entries from srcRgbaArray into the global active display palette (*(ActivePaletteObject+8) + baseIndex*4), then tracks the min/max dirty index range (DAT_0049b028/DAT_0049b02c) for a batched hardware palette update -- classic indexed-display-mode palette management. Used by the cockpit-view constructor to install the small IMPACTCP.DPL flash palette into a 24-entry sub-range (base 0x2a) of the shared 256-slot palette, distinct from CockpitPaletteSingleton's own local RGB array.",
-      "source": "docs/retail/rendering/cockpit-canopy-palette.md"
+      "description": "(base, count, source): copies count dwords from source into the active palette's entries (ActivePaletteObject +8) from index base, and widens the dirty range 0049b028..0049b02c over base..base + count - 1, starting it afresh and setting the flag 0049b030 when the flag is clear.",
+      "source": "docs/retail/rendering/cockpit-canopy-palette.md",
+      "verified": {
+        "bytes": "004303c4+123",
+        "sha1": "336d372f5bb0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00430440",
@@ -9946,8 +9976,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_ReadRange",
-      "description": "(start, count, out): copies count dword entries from the active palette (ActivePaletteObject+8) from index start into out. The read-back of Palette_InstallRange.",
-      "source": "DBSIM decompile at 00430440; docs/retail/rendering/cockpit-canopy-palette.md#palette-module"
+      "description": "(start, count, out): copies count dword entries of the active palette (ActivePaletteObject +8) from index start into out; the read-back of Palette_InstallRange (004303c4). es2_xref finds no branch or stored pointer to it.",
+      "source": "DBSIM decompile at 00430440; docs/retail/rendering/cockpit-canopy-palette.md#palette-module",
+      "verified": {
+        "bytes": "00430440+52",
+        "sha1": "c05d9b28be48",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00430474",
@@ -9955,8 +9991,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_GetEntry",
-      "description": "(index): returns the active palette's dword entry at index (ActivePaletteObject+8).",
-      "source": "DBSIM decompile at 00430474; docs/retail/rendering/cockpit-canopy-palette.md#palette-module"
+      "description": "(index): returns the active palette's dword entry at index (ActivePaletteObject +8). es2_xref finds no branch or stored pointer to it.",
+      "source": "DBSIM decompile at 00430474; docs/retail/rendering/cockpit-canopy-palette.md#palette-module",
+      "verified": {
+        "bytes": "00430474+21",
+        "sha1": "02b18eeca72e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043048c",
@@ -9964,8 +10006,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_FlushDirtyRange",
-      "description": "Pushes the accumulated dirty index range to the display and clears it; if the active palette object changed since the last flush it uploads the whole palette instead.",
-      "source": "cockpit rendering RE session"
+      "description": "No arguments: when ActivePaletteObject differs from the palette last uploaded (0049b024), Palette_UploadWhole (00481ed4) of it, recording it there; otherwise, when the dirty flag 0049b030 is set, Palette_SetDisplayEntries (00465bc0) of it, all 256 entries, the range 0049b028..0049b02c unread. Then clears the range and the flag. es2_xref finds calls from Sim_EndFrame (two), CockpitViewManager_LoadViews and Sim_InitMissionSession (two).",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "0043048c+80",
+        "sha1": "63f00e8682e0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004304dc",
@@ -10033,8 +10081,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PaletteCycle_Unregister",
-      "description": "(record): clears the first of PaletteCycle_Register's five slots (004cfde8) holding record.",
-      "source": "DBSIM decompile at 00430688"
+      "description": "(record): clears the first of PaletteCycle_Register (00430638)'s five slots (004cfde8) holding record. es2_xref finds no branch or stored pointer to it.",
+      "source": "DBSIM decompile at 00430688",
+      "verified": {
+        "bytes": "00430688+34",
+        "sha1": "a1288780cdbe",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004306ac",
@@ -10042,8 +10096,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_CycleAnimatedRanges",
-      "description": "Per-frame animated palette cycling. Walks 5 fixed slots (DAT_004cfde8 descriptors, DAT_004cfdfc next-due times, DAT_004cfe10 rotation offsets); when a slot's due time passes it rotates that slot's palette sub-range by one entry and reinstalls it via Palette_InstallRange. Keyed off Time_GetCoarseTicks. Blinking cockpit/console lights.",
-      "source": "docs/retail/rendering/cockpit-canopy-palette.md (Palette module)"
+      "description": "No arguments: with Time_GetCoarseTicks as now, for each of the five slots (004cfde8) holding a record {int16 first, int16 count, int16 delay} whose due time (004cfdfc) is below now: copies count entries of the live palette (ActivePaletteObject +8) from first, starting at the slot's offset (004cfe10) and wrapping at count, to a stack buffer, installs them at first with Palette_InstallRange (004303c4), advances the offset by 1 (0 at count) and sets the due time to now + delay. Each step reads the entries the step before rewrote, so successive steps turn the range by 0, 1, 2, ... entries. es2_xref finds two calls, from Sim_EndFrame.",
+      "source": "docs/retail/rendering/cockpit-canopy-palette.md (Palette module)",
+      "verified": {
+        "bytes": "004306ac+258",
+        "sha1": "1be27096ed6f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004307b0",
@@ -10051,8 +10111,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_InterpolateColours",
-      "description": "Colour-space sibling of Palette_InterpolateIndexRanges: interpolates rampCount colour pairs across `levels` steps, emitting 0x01RRGGBB-style entries. Distinct from the index-range remapper used for terrain shading.",
-      "source": "cockpit rendering RE session"
+      "description": "(from, to, count, levels, out): for each of count color pairs, levels - 1 colors from from's, each channel (read as a signed byte) stepping by ((to - from) * 256) / (levels - 1), truncated to int16, in 8.8 fixed point, each written with 0x01 in its top byte; then to's dword unchanged. es2_xref finds no branch or stored pointer to it.",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "004307b0+330",
+        "sha1": "dbb7f4553b69",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004308fc",
@@ -10060,8 +10126,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_BeginCrossFade",
-      "description": "Palette_BeginCrossFade(fromPalette, toPalette, durationCoarseTicks): precomputes per-channel 8.8 deltas (to - from) / duration into DAT_004cfe28/004d0028/004d0228 over the from object's entry count, and disarms the step timer (0049b03c). Either endpoint may be null, meaning fade to/from black. Callers: Sim_DeathFlash and LiftStart_DarkenPalette.",
-      "source": "docs/retail/rendering/cockpit-canopy-palette.md (Palette module)"
+      "description": "(from, to, duration): stores from (004cfe1c) and duration (004cfe24), clears the step timer's armed flag (0049b03c), and over the palette's int16 entry count (+4) fills per-channel int16 deltas at 004cfe28, 004d0028 and 004d0228: with a null from, to's channel * 256 / duration, mode (004d0428) 0; with a null to, from's channel * 256 / -duration, mode 1; with both, (to - from) * 256 / duration, mode 2. Stores the count at 004cfe22. Either endpoint null means a fade from or to black. es2_xref finds calls from LiftStart_DarkenPalette and two from Sim_DeathFlash.",
+      "source": "docs/retail/rendering/cockpit-canopy-palette.md (Palette module)",
+      "verified": {
+        "bytes": "004308fc+566",
+        "sha1": "11801c439de2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00430b34",
@@ -10069,8 +10141,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_StepCrossFade",
-      "description": "Steps the Palette_BeginCrossFade fade by wall clock, not by call: the first call arms an end time of now + duration in Time_GetCoarseTicks units, and each call writes from + delta * elapsed >> 8 into the live palette from entry DAT_004cfe20 (never written, so 0) and extends the dirty range. Returns the coarse ticks remaining; once past the end it returns 0 without writing, so the last value written is the one from the last call before the end, not the destination.",
-      "source": "docs/retail/rendering/cockpit-canopy-palette.md (Palette module)"
+      "description": "No arguments: steps the Palette_BeginCrossFade (004308fc) fade by the coarse ticks elapsed since its first call. The first call after it arms an end time (0049b038) of Time_GetCoarseTicks + duration; once now passes the end it disarms and returns 0, writing nothing, so the last colors written are the last call's before the end rather than the destination. Otherwise, with e = duration - (end - now), writes the entry count of colors into the live palette from entry 004cfe20: mode 0 delta * e >> 8 per channel, modes 1 and 2 from's entry plus delta * e >> 8 per channel byte; widens the dirty range over them and returns end - now. A grep of the disassembly by address finds three reads of 004cfe20 and no store. es2_xref finds calls from LiftStart_Rise and two from Sim_DeathFlash.",
+      "source": "docs/retail/rendering/cockpit-canopy-palette.md (Palette module)",
+      "verified": {
+        "bytes": "00430b34+468",
+        "sha1": "cd2674a54c80",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00430d08",
@@ -24898,7 +24976,13 @@
       "confidence": "high",
       "name": "TSGroup_Ctor",
       "description": "TSGroup constructor (final vtable 004a0fd7, RTTI name 'TSGroup', 0x28 bytes): stamps its bases' vtables in turn, then TSGroup's, and zeroes +0x10..+0x1c.",
-      "source": "DBSIM decompile at 004757a8; RTTI via es2_classes.py"
+      "source": "DBSIM decompile at 004757a8; RTTI via es2_classes.py",
+      "verified": {
+        "bytes": "004757a8+76",
+        "sha1": "ec424a91e793",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004757f4",
@@ -24906,8 +24990,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSGroup_Dtor",
-      "description": "The DBSIM copy of VSHELL's TSGroup_Dtor (004233c9).",
-      "source": "es2_naming.py diff DBSIM 004757f4 VSHELL 004233c9: identical after normalisation; RTTI TSGroup vtable slot"
+      "description": "(group, flags): for a non-null group stores TSGroup's vtable, Mem_DeleteArray of +0x10, +0x14 and +0x18, then for each non-null pointer of the uint16 count +0x26 in the array +0x1c adds Rtl_GetPolymorphicDtorCount and calls its slot +0x18 with flags 3, Mem_DeleteArray of +0x1c, TSBase_Dtor(group, 0) and Mem_Delete on flags bit 0, with RTL destructor-count decrements. The DBSIM copy of VSHELL's TSGroup_Dtor (004233c9).",
+      "source": "es2_naming.py diff DBSIM 004757f4 VSHELL 004233c9: identical after normalisation; RTTI TSGroup vtable slot",
+      "verified": {
+        "bytes": "004757f4+211",
+        "sha1": "877360f3cc16",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004758c8",

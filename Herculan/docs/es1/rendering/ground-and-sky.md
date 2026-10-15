@@ -4,6 +4,26 @@
 
 The view is a 320-pixel-wide frame: several routines below use 160 as the projection centre's column and 320 as the view's width, as constants.
 
+## Where the object files start and end
+
+The backdrop's code is `00025128`–`0002acdb`, after the clip regions' object file ([`mechview.cpp`'s end](../simulation/cockpit-views.md#where-the-module-starts-and-ends)). Two `ConfigPart` runs ([module copies](../formats/compiler.md#vtables)) open its first two parts, and zero fill and static initializers ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)) divide the rest:
+
+| Code | What | Opens with |
+|---|---|---|
+| `00025128`–`000260e3` | `World_LoadTheater` ([the load](../formats/wld-world.md#the-load)), [the clouds' destructors](#the-object), `Scene_DrawTerrainPass`, the shades and the distance bands ([`polygon-shading.md`](polygon-shading.md#the-distance-bands)), the impact palette switch and the pitch gradient | the run `00025128`, `00025150`, `0002518f`, `00025198`, its tables `0009286e` and `000928a2` |
+| `000260e4`–`00026deb` | the `hzline` | the run `000260e4`, `0002610c`, `0002614b`, `00026154`, its tables `00092a42` and `00092a76` |
+| `00026dec`–`000271bf` | the scattered points | zero fill |
+| `000271c0`–`00027bff` | `TexPoly` and its classes' destructors | zero fill |
+| `00027c00`–`00027e0f` | the clouds' set-up and step | zero fill |
+| `00027e10`–`00028de7` | the palette module ([`palette.md`](palette.md)), its static initializer last | zero fill |
+| `00028de8`–`00029713` | `gndtex.cpp`: the ground texture's load and draw, its static initializer last | zero fill |
+| `00029714`–`000298b7` | the texture's allocation, the ground bitmap's static initializer and exit routine last | — |
+| `000298b8`–`0002acdb` | the selector calls and the span routine, frameless | zero fill |
+
+Each run is the code of `mechview.cpp`'s, its class tag stubs at `0002518f` and `0002614b`. The first part's data, `0009286e`–`00092a41`, holds after its run's tables the backdrop's globals from `g_TheaterHzline` (`000928d4`), the clouds' vtable `000928f6`, the strings `world`, `world`, `wld`, `cyc` and `shades`, and its own copies of `TexPoly`'s five base tables, `00092952` to `00092a16`, which the clouds' destructor stores. The `hzline`'s data, from `00092a42`, holds its run's tables and the `hzline`'s vtable `00092aaa`; `TexPoly`'s seven tables, `00092ade` to `00092bde`, follow, then the palette's globals from the active palette (`00092c20`) to `00092c43`, `gndtex.cpp`'s from `00092c44` with its source path at `00092c5a`, and the texture's and the span routine's from `00092c70` to `00092cad`. `gndtex.cpp`'s is the only source path in it.
+
+The span routine's 380 unrolled steps, `00029989`–`0002acd4` ([the textured ground](#the-textured-ground)), have no Ghidra code; its exit, `0002acd5`–`0002acda`, pops `EBX`, `EDI`, `ESI`, `EBP` and `DS` and returns. One zero byte follows, then the run of the object file whose data holds the source path `panel.cpp` (`00092ef2`): at `0002acdc` a 40-byte destructor with the code of `HeapPtr_DtorTheaterCopy`, without a Ghidra function, then `0002ad04` and the tables `00092cae` and `00092ce2`.
+
 ## The frame
 
 `Sim_RenderFrame` (`00059c08`), unless `CockpitViewManager_Published`'s record has 1 at `+0x10` and a clear byte at `+0x18`, installs the camera's projection (`Raster_InstallViewProjection`), clears the model transform, and calls `Scene_DrawTerrainPass` (`00025b68`) with the camera and then `ObjList_DrawFrameObjects` (`00021008`), which draws the shapes ([`polygon-shading.md`](polygon-shading.md#which-objects-are-drawn)). `Scene_DrawTerrainPass`, given the camera:
@@ -57,7 +77,7 @@ entry = b + j + (s · i) / 14              integer division, truncating
 
 so table 0 is the 16-entry palette row that holds the ground colour, unchanged, and each later table moves every entry of that row further toward *top*; table 14 is *top* throughout, or *top* − 1 for an entry above it.
 
-`GndTex_Alloc` (`00029714`), given 320 and 380, does nothing when `00092c70` is already set. Otherwise it allocates the 64 KB texture at `00092c74`, gets a selector for it with `GndTex_AllocSelector` (`000298b8`), and when that succeeds fills the bitmap header at `000b0d8c` (the bitmap object is at `000b0d88`): rows 320 at `+0`, columns 380 at `+2`, 8 bits at `+4`, bit 4 of `+5` set, the size 121,600 at `+6` and a buffer of that size at `+0xa`. It zeroes the texture and the buffer and sets `00092c70`; when anything fails it frees the texture and leaves `00092c70` clear. `GndTex_AllocSelector` asks the extender for DS's base (`INT 21h` `AX=3504h`, `BX` = DS), adds the texture's address, and calls `AX=3501h`, `3503h` with that sum in `ECX` and `3505h` with `ECX` = `0x10000`, keeping the `BX` of the `3501h` call at `00092c72`; on a carry it returns 0. `GndTex_LoadTexture` (`00029830`) reads the file's first 65,536 bytes into the texture when `00092c70` is set and the file opens.
+`GndTex_Alloc` (`00029714`), given 320 and 380, does nothing when `00092c70` is already set. Otherwise it allocates the 64 KB texture at `00092c74`, gets a selector for it with `GndTex_AllocSelector` (`000298b8`), and when that succeeds fills the bitmap header at `000b0d8c` (the bitmap object is at `000b0d88`): rows 320 at `+0`, columns 380 at `+2`, 8 bits at `+4`, bit 4 of `+5` set, the size 121,600 at `+6` and a buffer of that size at `+0xa`. It zeroes the texture and the buffer and sets `00092c70`; when anything fails it frees the texture and leaves `00092c70` clear. `GndTex_AllocSelector` asks the extender for DS's base (`INT 21h` `AX=3504h`, `BX` = DS), adds the texture's address, and calls `AX=3501h`, `3503h` with that sum in `ECX` and `3505h` with `ECX` = `0x10000`, keeping the `BX` of the `3501h` call at `00092c72`; on a carry it returns 0. `GndTex_LoadTexture` (`00029830`) reads the file's first 65,536 bytes into the texture when `00092c70` is set and the file opens. At startup `GndTexBitmap_StaticInit` (`0002989c`) passes the bitmap object `000b0d88` to `00066e34`, and at exit `GndTexBitmap_StaticDtor` (`000298a8`) passes it and 2 to `00066f20` ([Open](#open)).
 
 `TRENCHES.64K` holds only palette indices 244 to 253 and `CRACKS.64K` 242 to 250, inside the 240–255 the draw expects ([below](#the-textured-ground)).
 
@@ -79,7 +99,7 @@ D        = q0 ≠ 0 ? (−z · q1) / q0 : 10,000,000      forward ground distanc
 λR       = ((originX + 159) · s1) >> shift
 ```
 
-with `rotate(v, a)` = `Math_Rotate2DPoint` through `Math_BuildRotation2D(a)`: `x' = (x·cos a − y·sin a + 0x2000) >> 14`, `y' = (x·sin a + y·cos a + 0x2000) >> 14`, cos and sin from the 1024-entry quarter-wave table in Q14, the angle rounded to it (the matrix's sin is cos(*a* − `0x4000`)). The divisions truncate. The table is rebuilt only when *z*, the pitch or the origin's x differs from the last build's (`00092c44`, `00092c48`, `000b0d6c`) or *rows* exceeds its row count (`000b0d68`); *first* does not enter the test.
+with `rotate(v, a)` = `Math_Rotate2DPoint` through `Math_BuildRotation2D(a)`: `x' = (x·cos a − y·sin a + 0x2000) >> 14`, `y' = (x·sin a + y·cos a + 0x2000) >> 14`, cos and sin from the 1024-entry quarter-wave table in Q14, the angle rounded to it (the matrix's sin is cos(*a* − `0x4000`)). The divisions truncate. The table is rebuilt only when *z*, the pitch or the origin's x differs from the last build's (`00092c44`, `00092c48`, `000b0d6c`) or *rows* exceeds its row count (`000b0d68`); *first* does not enter the test. The table holds 320 entries, which `gndtex.cpp`'s static initializer, `GndTex_StaticInit` (`000296cc`), builds at startup with `__vec_ctor` and `GndTexRow_ElementCtor` (`000296e4`, entered at its padding `000296e3`), which allocates 12 bytes when given none and writes nothing.
 
 **Drawing the rows.** The texture transform is `Math_BuildRotation2D(h)` with the translation (*x* & `0xffff`, *y* & `0xffff`), the mask 2^(8 + 8) − 1 from the third argument. Row *i* of the bitmap, *i* from 0, takes table entry *i*:
 
@@ -126,6 +146,8 @@ So the skyline is a 360° panorama of *n* frames standing on the horizon, which 
 
 `TexPoly_Ctor` (`000271c0`) builds the base ([the load](../formats/wld-world.md#the-clouds)); `World_LoadTheater` then stores the subclass's vptr `000928f6` over `TexPoly`'s `00092bde`.
 
+The classes are ES2's chain, `ClassItem`, `TSBase`, `TSGroupItem`, `TSPoly`, `TSSolidPoly`, `TSTexture4Poly` and `TexPoly`, whose tables `TexPoly_Ctor` stores in that order, `00092ade` to `00092bde`; ES1's subclass replaces slots `+0x24` and `+0x34` ([the set-up](#the-set-up), [each frame](#each-frame)). Each destructor, slot `+0x1c` of its class's table, given the object and the flags, does nothing for a null object; otherwise it stores its own class's vptr and each base's in turn down to `TSGroupItem`'s, calls `TSBase_Dtor` with flags 0, and frees the object when bit 0 of the flags is set. None frees the positions, the angle triples, the carry-over bytes or the bitmap bank. The clouds' destructor, `Clouds_Dtor` (`00025a08`), stores `000928f6` and then the first part's copies of the base tables, `00092952` to `00092a16`; `TexPoly_Dtor` (`000274c8`) stores `00092bde` to `00092b2e`. ES2's `TexPoly_Dtor` (`004302fa`) likewise frees only the object.
+
 | Offset | |
 |---|---|
 | `+0x04`, `+0x06`, `+0x08`, `+0x0a`, `+0x0c` | the poly's normal point, centre point, corner count, index offset and surface index, a `TSPoly`'s: 4, 0, 4, 0 and 0 when it draws |
@@ -164,7 +186,7 @@ So the skyline is a 360° panorama of *n* frames standing on the horizon, which 
 `TexPoly_DrawAtPoints` makes the bank the active bitmap bank (`000bdb5e`), points `Poly_IndexList` at the 32 words from `000bdb62` that `Light_ResetSystem` sets to 0–31 and the surface list `000b6732` at `+0x5d`, and sets the poly's fields as in the table. The camera has moved when its *x* or *y* differs from `+0xfb` or `+0xff`, and *mid* is the point halfway, ((last + now) >> 1) on each axis. For each cloud, *d* being `Math_FastMagnitude2D` of its *x* and *y* less the camera's:
 
 - **Carrying over.** When the camera has moved, a cloud whose bit 0 is clear and whose *d* exceeds `+0x69` + `+0x79` (210000) is reflected through *mid*, *x* = 2 · *mid*.*x* − *x* and likewise *y*, and its bit set; a cloud whose bit is set and whose *d* is below `+0x69` − `+0x79` (190000) has it cleared. A cloud left behind thus jumps to the same distance ahead, and the bit keeps it from jumping back until it has come nearer.
-- **Drawing.** A cloud below the number drawn gets slot `+0x2c` with *d*, which does nothing (`0002750c` and `00025a50`, each `RET 8`), `Raster_SetModelTransform` with no rotation and its position as the translation, and slot `+0x30`, `TexPoly_Render`.
+- **Drawing.** A cloud below the number drawn gets slot `+0x2c` with *d*, which does nothing (`TexPoly_Slot28NoOp`, `0002750c`, entered at its padding `0002750a`, and the first part's copy `00025a50`, each `RET 8`), `Raster_SetModelTransform` with no rotation and its position as the translation, and slot `+0x30`, `TexPoly_Render`.
 
 It then stores the camera's position at `+0xfb`. So the panel's corners sit at the cloud's position plus (0–25000, 0–25000, 10000), at height 20000, unturned.
 
@@ -190,29 +212,40 @@ ES2's `TexPoly_DrawAtPoints` (`0042fa18`) also sets the depth fade to 0 and hold
 `Palette_BlendRangeByPitch` (`00025fe4`), given the camera, rewrites palette entries 64 to 79 each frame while the byte `000928ec` is set. The first time, it reads from the active palette the colours of entry `000bc5ce` (64, as the load stores it), of entries short 10 (`000bc5d0`) and short 11 (`000bc5d2`), and of entry `000bc5d4` (98), and builds 16 colours from short 10's colour to short 11's with `Palette_InterpolateColours` (`000283b0`) at `000afde4`. Then every frame:
 
 1. the step: when the `int16` at `000928ee` is negative, ((*p* + `0x2000`) & `0xffff`) >> 10, at most 15; otherwise `000928ee` itself, after which `000928ee` becomes −1;
-2. the end colour: entry 98's colour while `000928eb` is set, otherwise colour number *step* of the 16. `Palette_ActivateImpact` (`00025ed0`) sets `000928eb`, `Palette_ToggleImpact` (`00025ef8`) flips it and `Palette_RestoreFromImpact` (`00025f1c`) clears it, each only while `ImpactPaletteObject` is loaded and each switching palettes through `00027e7c`, as ES2's do;
+2. the end colour: entry 98's colour while `000928eb` is set, otherwise colour number *step* of the 16. `Palette_ActivateImpact` (`00025ed0`) sets `000928eb`, `Palette_ToggleImpact` (`00025ef8`) flips it and `Palette_RestoreFromImpact` (`00025f1c`) clears it, each only while `ImpactPaletteObject` is loaded and each switching palettes through `Palette_SetActive` (`00027e7c`), as ES2's do;
 3. 16 colours from entry 64's original colour to the end colour, through `Palette_InterpolateColours`, installed at entries 64–79 with `Palette_InstallRange`.
 
-`Palette_InterpolateColours` is ES2's (`004307b0`), its arguments in the reverse order: for each pair, *levels* − 1 colours stepping by (to − from) · 256 / (*levels* − 1) per channel in 8.8 fixed point, then the *to* colour, each written with `0x01` in its top byte. `Palette_GetEntry` (`00027f54`) returns the active palette's dword for an index.
+`Palette_InterpolateColours`, `Palette_GetEntry` and `Palette_InstallRange` are the palette module's ([`palette.md`](palette.md#functions)).
 
 ## Functions
 
 | ES1 | Address | Notes |
 |---|---|---|
+| `HeapPtr_DtorTheaterCopy`, `ConfigPart_DtorTheaterCopy`, `ConfigPart_GetClassTagTheaterCopy`, `TSPartBase_DtorTheaterCopy` | `00025128`, `00025150`, `0002518f`, `00025198` | the run that opens the first part; `es2_xref.py` finds no branch or stored pointer to `00025128`, and the tables' slots `+4` and `+0x1c` hold the other three, `00025198` by its padding `00025195` |
+| `Clouds_Dtor`, `TexPoly_Slot28NoOpTheaterCopy` | `00025a08`, `00025a50` | slots `+0x1c` and `+0x2c` of the clouds' vtable `000928f6`, `00025a08` by its padding `00025a05`; `00025a50` is also slot `+0x2c` of `00092952` |
+| `TexPoly_DtorTheaterCopy`, `TSTexture4Poly_DtorTheaterCopy`, `TSSolidPoly_DtorTheaterCopy`, `TSPoly_DtorTheaterCopy`, `TSGroupItem_DtorTheaterCopy` | `00025a54`, `00025a98`, `00025ad4`, `00025b0c`, `00025b3c` | slot `+0x1c` of the first part's copies `00092952`, `00092992`, `000929be`, `000929ea` and `00092a16` |
 | `Scene_DrawTerrainPass` | `00025b68` | |
 | `Palette_ActivateImpact`, `Palette_ToggleImpact`, `Palette_RestoreFromImpact` | `00025ed0`, `00025ef8`, `00025f1c` | |
 | `Palette_BlendRangeByPitch` | `00025fe4` | where ES2's `Scene_DrawTerrainPass` ends with a call to an empty function |
+| `HeapPtr_DtorHzlineCopy`, `ConfigPart_DtorHzlineCopy`, `ConfigPart_GetClassTagHzlineCopy`, `TSPartBase_DtorHzlineCopy` | `000260e4`, `0002610c`, `0002614b`, `00026154` | the `hzline`'s run, as the first part's; its tables are `00092a42` and `00092a76` |
+| `Hzline_Dtor` | `00026208` | slot `+0x1c` of `00092aaa`, by its padding `00026205`: stores that vptr, calls `TSGroup_Dtor` with flags 0 and frees the object on bit 0 of the flags, as ES2's `Hzline_Dtor` (`0042f6d2`); the bank at `+0x50` is not freed |
 | `Hzline_Draw`, `Hzline_DrawWithOffset`, `Hzline_BuildHorizon` | `00026264`, `00026280`, `00026348` | |
 | `Hzline_FillSky`, `Hzline_FillGround`, `Hzline_BlitHorizonStrip` | `0002650c`, `000267d8`, `00026ac8` | |
+| `HzlineFill_VertexElementCtor` | `000267bc` | the element constructor of the five 8-byte points `Hzline_FillSky` (by its padding `000267ba`) and `Hzline_FillGround` build on their stacks with `__vec_ctor`: returns the element, allocating 8 bytes when given none, and writes nothing |
 | `PointScatter_Draw` | `00026fe0` | |
 | `TexPoly_Ctor`, `TexPoly_RandomPointOnCircle`, `TexPoly_SetQuadAndRadius`, `TexPoly_SetFifthVertex` | `000271c0`, `00027540`, `000275dc`, `0002761c` | |
 | `TexPoly_SetupRings`, `TexPoly_DrawAtPoints`, `TexPoly_Render` | `00027638`, `00027724`, `000279a4` | slots `+0x24`, `+0x34` and `+0x30` of `TexPoly`'s vtable `00092bde` |
+| `TSGroupItem_DtorTexPolyCopy`, `TSPoly_DtorTexPolyCopy`, `TSSolidPoly_DtorTexPolyCopy`, `TSTexture4Poly_DtorTexPolyCopy`, `TexPoly_Dtor` | `000273c8`, `000273f4`, `00027424`, `0002745c`, `000274c8` | slot `+0x1c` of `00092b2e`, `00092b5a`, `00092b86`, `00092bb2` and `00092bde` |
+| `TexPoly_PointElementCtor`, `TexPoly_Slot28NoOp`, `TexPoly_AngleElementCtor` | `00027498`, `0002750c`, `00027510` | the element constructors of `TexPoly_Ctor`'s 12-byte points and 6-byte angle triples, each returning the element, allocating 12 or 6 bytes when given none, and writing nothing; `TexPoly_Slot28NoOp` is slot `+0x2c` of `00092bde`, ES2's `TexPoly_Slot28NoOp` (`00430346`) |
+| `TexPoly_RenderPointElementCtor` | `00027be4` | the element constructor of the 32 8-byte points `TexPoly_Render` builds on its stack with `__vec_ctor`, the code of `HzlineFill_VertexElementCtor` |
 | `Clouds_Setup`, `Clouds_DriftAndDraw` | `00027c00`, `00027d78` | slots `+0x24` and `+0x34` of the clouds' vtable `000928f6` |
-| `Palette_GetEntry`, `Palette_InterpolateColours` | `00027f54`, `000283b0` | |
 | `GndTex_Load`, `GndTex_BuildRowTable`, `GndTex_Draw` | `00028de8`, `00028fbc`, `00029120` | |
+| `GndTex_StaticInit`, `GndTexRow_ElementCtor` | `000296cc`, `000296e4` | `gndtex.cpp`'s static initializer, the dword at `000adc24`, and the row table's element constructor |
 | `GndTex_Alloc`, `GndTex_Free`, `GndTex_LoadTexture` | `00029714`, `000297f0`, `00029830` | |
+| `GndTexBitmap_StaticInit`, `GndTexBitmap_StaticDtor` | `0002989c`, `000298a8` | the dwords at `000adc28` and `000adcb0`, among the static constructors and the exit routines ([static construction](../formats/compiler.md#static-construction-and-exit)) |
 | `GndTex_AllocSelector`, `GndTex_FreeSelector`, `GndTex_DrawSpan` | `000298b8`, `000298fe`, `0002991d` | the span's unrolled steps have no Ghidra function |
 | `Math_TransposeRotation2D`, `Math_BuildRotation2D`, `Transform2D_ApplyToPoint` | `00063df0`, `000694b8`, `00069448` | the three that [`fixed-point-math.md`](../simulation/fixed-point-math.md#the-assembly-library) lists as ES2's code |
+| `TSGroup_Ctor`, `TSGroup_Dtor` | `000547b4`, `00054888` | `Hzline`'s base, ES2's (`004757a8`, `004757f4`): the constructor allocates `0x28` bytes when given none, stores the vptrs `000961ca`, `000961ee`, `0009621a` and `0009624e` in turn and zeroes `+0x10` to `+0x1c`; the destructor stores `0009624e`, frees `+0x10`, `+0x14` (through `__vec_delete`) and `+0x18`, calls slot `+0x1c` with flags 3 on each non-null pointer of the `+0x26` (`uint16`) in the array `+0x1c` and frees the array, stores `0009621a`, calls `TSBase_Dtor` and frees the object on bit 0 of the flags |
 | `Bitmap_BlitRotatedUnpacked`, `Gfx_PlotPixel`, `Bitmap_BlitRotatedScaled` | `00067214`, `00069058`, `00076630` | |
 
 ## Globals
@@ -221,7 +254,7 @@ ES2's `TexPoly_DrawAtPoints` (`0042fa18`) also sets the depth fade to 0 and hold
 |---|---|
 | the ground bitmap object, its header (rows, columns, depth, flags, size, pixels) | `000b0d88`, `000b0d8c`–`000b0d96` |
 | the texture, its selector, the allocated flag | `00092c74`, `00092c72`, `00092c70` |
-| the row table, 12 bytes a row | `000afe68` |
+| the row table, 320 entries of 12 bytes | `000afe68` |
 | the row table's key: *z*, pitch, rows, origin x | `00092c44`, `00092c48`, `000b0d68`, `000b0d6c` |
 | the span's width, its entry, destination, fade table − 240 | `00092c80`, `00092ca8`, `00092c78`, `00092c7c` |
 | the span's *u*, *v*, *du*, *dv* | `00092c8c`, `00092c94`, `00092c9c`, `00092ca4` |
@@ -237,3 +270,4 @@ ES2's `TexPoly_DrawAtPoints` (`0042fa18`) also sets the depth fade to 0 and hold
 - **Open:** what the canvas origin pair at `000afa9c` holds, and what writes it (`00022384`, `0002252c`, `0002253c`, `000243f9`, `0002e131` hold its address).
 - **Open:** what `00092c4c`, which `GndTex_Load` sets to 1, is read for; `es2_xref.py` finds no reference to it besides that store.
 - **Open:** what draws the second view that `000364f8` renders.
+- **Open:** what `00066e34` and `00066f20` do with the ground bitmap object `000b0d88`, which `GndTexBitmap_StaticInit` and `GndTexBitmap_StaticDtor` pass them; both lie in the library region, unread.

@@ -13070,6 +13070,36 @@
       }
     },
     {
+      "address": "0007cbc8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGroup_Ctor",
+      "description": "(this), callee-cleaned: TSGroup's constructor, ES2's TSGroup_Ctor (DBSIM 004757a8). The code of ES1DBSIM's TSGroup_Ctor (000547b4), relocated operands aside; it stores the vptrs 0009a12e, 0009a152, 0009a17e and TSGroup's 0009a1b2. es2_xref finds calls from 0007ad06 and 0007ce61.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#functions",
+      "verified": {
+        "bytes": "0007cbc8+167",
+        "sha1": "32b32a70a209",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0007cc9c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGroup_Dtor",
+      "description": "(group, flags), callee-cleaned: slot +0x1c of TSGroup's vtable 0009a1b2 (the dword 0009a1ce, entered at its padding 0007cc9a), ES2's TSGroup_Dtor (DBSIM 004757f4). The code of ES1DBSIM's TSGroup_Dtor (00054888), relocated operands aside. es2_xref finds a call from 0007cea1.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#functions",
+      "verified": {
+        "bytes": "0007cc9c+160",
+        "sha1": "e77db9867766",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0007e228",
       "binary": "ES1GO",
       "type": "data",

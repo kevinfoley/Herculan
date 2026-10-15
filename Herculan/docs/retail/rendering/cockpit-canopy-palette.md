@@ -58,20 +58,44 @@ The window reaches the 3D world too, because the world draws through the same li
 
 ### Palette module
 
+**One palette is live at a time; the module records which of its entries have changed since the screen last took them, and on top of that runs per-range color cycling and timed fades between two palettes.**
+
 | Symbol | Address | Role |
 |---|---|---|
-| `ActivePaletteObject` | `0049b020` | Live palette; `+8` = entry array. `0049b024` last uploaded, `0049b028`/`0x2c`/`0x30` dirty min/max/valid. |
+| `ActivePaletteObject` | `0049b020` | Live palette: `+4` its entry count (`int16`), `+8` its entries, a dword each, bytes 0–2 red, green and blue in 6 bits. `0049b024` is the palette last uploaded, `0049b028`/`0x2c`/`0x30` the dirty range's first and last entry and its valid flag. |
+| `Palette_LoadResources`, `Palette_RegisterSubsystem` | `0043034c`, `00430e90` | Allocate `g_ShadeRamps` at subsystem phase 2 and clear the five cycle slots. |
 | `Palette_LoadAndActivate` | `00430394` | Load a `.DPL` and make it active. |
-| `Palette_SetActive` | `004303b0` | Swap active object, return previous. |
-| `Palette_InstallRange` | `004303c4` | Copy `count` entries to `baseIndex`, extend dirty range. |
-| `Palette_ReadRange` | `00430440` | Inverse of the above. |
-| `Palette_GetEntry` | `00430474` | Single entry. |
-| `Palette_FlushDirtyRange` | `0043048c` | Upload dirty range; whole palette if the active object changed. |
-| `Palette_CycleAnimatedRanges` | `004306ac` | 5 slots of per-frame sub-range rotation, keyed off `Time_GetCoarseTicks`. |
-| `Palette_InterpolateColours` | `004307b0` | Interpolate colour pairs across N steps. |
+| `Palette_SetActive` | `004303b0` | Make a palette the active one and return the previous one. |
+| `Palette_InstallRange` | `004303c4` | `(base, count, source)`: copy `count` entries into the active palette from `base` and widen the dirty range over them, starting it afresh when its flag is clear. |
+| `Palette_ReadRange`, `Palette_GetEntry` | `00430440`, `00430474` | Copy `count` entries of the active palette out from an index; return one entry. `es2_xref.py` finds no caller of either ([Open](#open)). |
+| `Palette_FlushDirtyRange` | `0043048c` | [The upload](#the-upload). |
+| `PaletteCycle_Register`, `PaletteCycle_Unregister`, `Palette_CycleAnimatedRanges` | `00430638`, `00430688`, `004306ac` | [Color cycling](#color-cycling). |
+| `Palette_SetRampsToRange`, `Palette_SetRampsToRangeList`, `Palette_ReadShadeRampRanges` | `00430518`, `00430590`, `004304dc` | Re-point records of `g_ShadeRamps` (`0049b034`) at palette index ranges, the mechanism of the [distance color bands](distance-fog-and-sky.md#distance-colour-bands--worldshades_applyforobject-0042e8e8), and read them back. |
+| `Palette_InterpolateColours` | `004307b0` | [Interpolating colors](#interpolating-colors). |
 | `Palette_BeginCrossFade` | `004308fc` | Precompute 8.8 per-channel deltas between two palette objects over a duration in coarse ticks; either may be null (fade to/from black). |
 | `Palette_StepCrossFade` | `00430b34` | Write the fade's colours for the time elapsed since its first call; returns the coarse ticks remaining. |
 | `Palette_InterpolateIndexRanges` | `00430d08` | Interpolates index *ranges*, not colours — terrain shading only, driven from `WORLD<n>.WLD`. |
+
+#### The upload
+
+`Palette_FlushDirtyRange`, which `es2_xref.py` finds called twice from `Sim_EndFrame`, from `CockpitViewManager_LoadViews` and twice from `Sim_InitMissionSession`, hands the screen the active palette. When the active palette is not the one last uploaded (`0049b024`) it uploads it whole, ramps included, and records it as the last uploaded; otherwise, when the dirty flag is set, it hands all 256 of its entries to the screen palette, the dirty range itself unread. It then clears the dirty range and its flag.
+
+#### Color cycling
+
+`PaletteCycle_Register` puts a record `{int16 first, int16 count, int16 delay}` in the first empty slot of five (`004cfde8`), its due time at now + delay coarse ticks (`004cfdfc`) and its offset at 0 (`004cfe10`), and returns 1, or 0 when all five are full; `PaletteCycle_Unregister` empties the first slot holding the record, and `es2_xref.py` finds no caller of it. `Palette_CycleAnimatedRanges`, which `Sim_EndFrame` calls, takes `Time_GetCoarseTicks` as now, and for each filled slot whose due time is before now:
+
+```
+for i in 0 .. count-1:  buffer[i] = palette[first + (offset + i) mod count]     the live palette
+Palette_InstallRange(first, count, buffer)
+offset = offset + 1;  if offset == count: offset = 0
+due    = now + delay
+```
+
+Each step reads the entries the step before rewrote, so successive steps turn the range by 0, 1, 2, … entries, the turn wrapping at the range's length, rather than by one entry each.
+
+#### Interpolating colors
+
+`Palette_InterpolateColours`, given `(from, to, count, levels, out)`, writes `levels` colors to `out` for each of `count` pairs of colors: *levels* − 1 colors from *from*'s, each channel stepping by ((*to* − *from*) · 256) / (*levels* − 1) in 8.8 fixed point, the step truncated to an `int16` and the channels read as signed bytes, each color written with `0x01` in its top byte; then *to*'s dword unchanged. `es2_xref.py` finds no caller of ES2's ([Open](#open)).
 
 `Palette_BeginCrossFade` has three call sites in two functions, neither part of steady-state cockpit rendering and neither touching the secondary palette:
 
@@ -138,3 +162,4 @@ Each footfall of the player's own machine bobs the view through the projection c
 - **Deferred:** no writer of `HitShakeEndTick` (`0049b0fc`) or `HitShakeNextToggleTick` (`0049b100`) found outside `Cockpit_StartHitShake` and `Cockpit_HitShakeTick`. `es2_xref.py` finds 7 and 6 absolute references, all in those two functions, and none of the `0049b0xx`-`0049b12x` addresses the image loads as a base reaches either.
 - **Open:** whether `Sim_RenderContext`, whose projection pair `Sim_RenderFrame` moves by the shake's total, is the context `Raster_InstallViewProjection` reads through the view's `+0x16` (`View_GetRenderContext`), and so whether the world moves on screen with the canopy during a shake or holds still behind it. The window move alone leaves the world where it was on screen, since it is drawn through the rebased pixel pointer.
 - **Open:** what the shield meter's rings show through a retail flash — whether a reading change lands while the impact palette is active often enough to keep them steady, or they drop to the impact palette's slots 66-71.
+- **Open:** what calls `Palette_ReadRange`, `Palette_GetEntry`, `PaletteCycle_Unregister` and `Palette_InterpolateColours`: `es2_xref.py` finds no branch, stored pointer or vtable slot holding any of them. ES1's simulator calls its `Palette_InterpolateColours` for the pitch gradient ([ES1's palette module](../../es1/rendering/palette.md)).

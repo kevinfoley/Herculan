@@ -3892,7 +3892,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_LoadViews",
-      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array CockpitVueRecords (000afaa4), whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls CockpitCanopy_LoadViewBitmap (00022184)(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores 0002ae5c(0, +0x25) at +0x1b and calls Cockpit_LoadPanel (0002c9d8) with it and name; with the scheme word +0x23, Palette_InstallRange (00027e98)s 16 colours at index 0x20 from the dword +8 of CockpitPaletteSingleton (000925f0) plus scheme x 0x80, 16 at 0x40 from 0x40 bytes further, and one at 0x40 from Palette_GetEntry (00027f54) of the word 000925dc[scheme]; calls 00027f74, and the slot +0x1c of CockpitPaletteSingleton (000925f0) with 3 when it is set; sets ExternalView_ClipBlock (000afb94) to 1 and 000afb98 to 000afd9c, copies the dwords ExternalView_Rect (000afb3c)-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from CockpitViewManager_Ctor (00021dd4), through the padding before the prologue.",
+      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array CockpitVueRecords (000afaa4), whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls CockpitCanopy_LoadViewBitmap (00022184)(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores 0002ae5c(0, +0x25) at +0x1b and calls Cockpit_LoadPanel (0002c9d8) with it and name; with the scheme word +0x23, Palette_InstallRange (00027e98)s 16 colours at index 0x20 from the dword +8 of CockpitPaletteSingleton (000925f0) plus scheme x 0x80, 16 at 0x40 from 0x40 bytes further, and one at 0x40 from Palette_GetEntry (00027f54) of the word 000925dc[scheme]; calls Palette_FlushDirtyRange (00027f74), and the slot +0x1c of CockpitPaletteSingleton (000925f0) with 3 when it is set; sets ExternalView_ClipBlock (000afb94) to 1 and 000afb98 to 000afd9c, copies the dwords ExternalView_Rect (000afb3c)-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from CockpitViewManager_Ctor (00021dd4), through the padding before the prologue.",
       "source": "Herculan/docs/es1/formats/hd-ed-clip-regions.md#which-files",
       "verified": {
         "bytes": "00021fb0+465",
@@ -4322,6 +4322,60 @@
       }
     },
     {
+      "address": "00025128",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorTheaterCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorMechviewCopy (00021d38), the first of the four functions that open World_LoadTheater's object file. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "00025128+40",
+        "sha1": "f90a38f990cd",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00025150",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorTheaterCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of World_LoadTheater's file's copy 0009286e of ConfigPart's vtable: the code of ConfigPart_DtorMechviewCopy (00021d60) storing 0009286e and TSPartBase's copy 000928a2.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "00025150+63",
+        "sha1": "ef064a992508",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002518f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagTheaterCopy",
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009286e. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end"
+    },
+    {
+      "address": "00025198",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorTheaterCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000928a2 (entered at its padding 00025195): the code of TSPartBase_DtorMechviewCopy (00021da8) storing 000928a2.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "00025198+42",
+        "sha1": "e6d2251f09b9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000251c4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -4334,6 +4388,105 @@
         "sha1": "387de50d4e67",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00025a08",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Clouds_Dtor",
+      "description": "(clouds, flags), callee-cleaned: slot +0x1c of the clouds' vtable 000928f6 (entered at its padding 00025a05). For a non-null object stores 000928f6, then 00092952, 00092992, 000929be, 000929ea and 00092a16 in turn, World_LoadTheater's file's copies of TexPoly's, TSTexture4Poly's, TSSolidPoly's, TSPoly's and TSGroupItem's tables, then TSBase_Dtor (0005ba58)(clouds, 0) and operator_delete (000015f8) on flags bit 0. It frees none of TexPoly's arrays or its bank.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "00025a08+72",
+        "sha1": "0d655afa20b6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025a50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_Slot28NoOpTheaterCopy",
+      "description": "(poly, distance), callee-cleaned (RET 8), frameless: does nothing. Slot +0x2c of the clouds' vtable 000928f6 and of 00092952, World_LoadTheater's file's copy of TexPoly_Slot28NoOp (0002750c). No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#each-frame"
+    },
+    {
+      "address": "00025a54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_DtorTheaterCopy",
+      "description": "(poly, flags), callee-cleaned: slot +0x1c of 00092952 (entered at its padding 00025a53), World_LoadTheater's file's copy of TexPoly's table: the code of TexPoly_Dtor (000274c8) storing 00092952, 00092992, 000929be, 000929ea and 00092a16.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "00025a54+66",
+        "sha1": "595a96096e64",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025a98",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTexture4Poly_DtorTheaterCopy",
+      "description": "(poly, flags), callee-cleaned: slot +0x1c of 00092992 (entered at its padding 00025a96): the code of TSTexture4Poly_DtorTexPolyCopy (0002745c) storing 00092992, 000929be, 000929ea and 00092a16.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "00025a98+60",
+        "sha1": "bd96bfef15bc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025ad4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSSolidPoly_DtorTheaterCopy",
+      "description": "(poly, flags), callee-cleaned: slot +0x1c of 000929be: the code of TSSolidPoly_DtorTexPolyCopy (00027424) storing 000929be, 000929ea and 00092a16.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "00025ad4+54",
+        "sha1": "d16de680cfb7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025b0c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPoly_DtorTheaterCopy",
+      "description": "(poly, flags), callee-cleaned: slot +0x1c of 000929ea (entered at its padding 00025b0a): the code of TSPoly_DtorTexPolyCopy (000273f4) storing 000929ea and 00092a16.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "00025b0c+48",
+        "sha1": "e00a252e6f80",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025b3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGroupItem_DtorTheaterCopy",
+      "description": "(item, flags), callee-cleaned: slot +0x1c of 00092a16: the code of TSGroupItem_DtorTexPolyCopy (000273c8) storing 00092a16.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "00025b3c+42",
+        "sha1": "05ff8e382f9e",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -4387,7 +4540,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WorldShades_ApplyForObject",
-      "description": "(blend, distance, obj) in stack order, callee-cleaned: ES2's WorldShades_ApplyForObject (DBSIM 0042e8e8), the tag at obj+0. While 000928ea is set it runs WorldShades_ResetRamps (00025e88) instead. Otherwise, for each {ramp, column} pair of the tag's WorldShades_TypeTable record, with b = WorldShades_DistanceBand(max(distance, 0), obj): Palette_SetRampsToRange (00028044)(WorldShades_LevelRanges[column * rows (000bc5be) + b], 1, ramp); with blend set, 000280e4 with two ranges, the band range less its last q + 1 indices (q = its length >> 2) and q + 1 indices from the end of WorldShades_BlendRanges[b] less q, through a two-entry pointer array.",
+      "description": "(blend, distance, obj) in stack order, callee-cleaned: ES2's WorldShades_ApplyForObject (DBSIM 0042e8e8), the tag at obj+0. While 000928ea is set it runs WorldShades_ResetRamps (00025e88) instead. Otherwise, for each {ramp, column} pair of the tag's WorldShades_TypeTable record, with b = WorldShades_DistanceBand(max(distance, 0), obj): Palette_SetRampsToRange (00028044)(WorldShades_LevelRanges[column * rows (000bc5be) + b], 1, ramp); with blend set, Palette_SetRampsToRangeList (000280e4) with two ranges, the band range less its last q + 1 indices (q = its length >> 2) and q + 1 indices from the end of WorldShades_BlendRanges[b] less q, through a two-entry pointer array.",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-distance-bands",
       "verified": {
         "bytes": "00025d44+323",
@@ -4417,7 +4570,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_ActivateImpact",
-      "description": "No arguments: when ImpactPaletteObject (000928f0) is loaded, 00027e7c(ImpactPaletteObject) into 000afdcc and 000afdd0, and sets 000928eb, which Palette_BlendRangeByPitch (00025fe4) reads. ES2's Palette_ActivateImpact (DBSIM 0042ea44).",
+      "description": "No arguments: when ImpactPaletteObject (000928f0) is loaded, Palette_SetActive (00027e7c)(ImpactPaletteObject) into 000afdcc and 000afdd0, and sets 000928eb, which Palette_BlendRangeByPitch (00025fe4) reads. ES2's Palette_ActivateImpact (DBSIM 0042ea44).",
       "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
       "verified": {
         "bytes": "00025ed0+38",
@@ -4432,7 +4585,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_ToggleImpact",
-      "description": "No arguments: when ImpactPaletteObject (000928f0) is loaded, 000afdcc = 00027e7c(000afdcc) and 000928eb flips. ES2's Palette_ToggleImpact (DBSIM 0042ea70).",
+      "description": "No arguments: when ImpactPaletteObject (000928f0) is loaded, 000afdcc = Palette_SetActive (00027e7c)(000afdcc) and 000928eb flips. ES2's Palette_ToggleImpact (DBSIM 0042ea70).",
       "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
       "verified": {
         "bytes": "00025ef8+34",
@@ -4447,7 +4600,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_RestoreFromImpact",
-      "description": "No arguments: when ImpactPaletteObject (000928f0) is loaded, 00027e7c(000afdd0) and 000928eb cleared. ES2's Palette_RestoreFromImpact (DBSIM 0042ea94).",
+      "description": "No arguments: when ImpactPaletteObject (000928f0) is loaded, Palette_SetActive (00027e7c)(000afdd0) and 000928eb cleared. ES2's Palette_RestoreFromImpact (DBSIM 0042ea94).",
       "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
       "verified": {
         "bytes": "00025f1c+28",
@@ -4487,18 +4640,87 @@
       }
     },
     {
+      "address": "000260e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorHzlineCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorTheaterCopy (00025128), the first of the four functions that open the hzline's object file. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "000260e4+40",
+        "sha1": "6a6dd55d422b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002610c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorHzlineCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the hzline file's copy 00092a42 of ConfigPart's vtable: the code of ConfigPart_DtorTheaterCopy (00025150) storing 00092a42 and TSPartBase's copy 00092a76.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "0002610c+63",
+        "sha1": "8a49f9ddf685",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002614b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagHzlineCopy",
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092a42. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end"
+    },
+    {
+      "address": "00026154",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorHzlineCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00092a76 (entered at its padding 00026151): the code of TSPartBase_DtorTheaterCopy (00025198) storing 00092a76.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "00026154+42",
+        "sha1": "12d18d91bb27",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00026180",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Hzline_Ctor",
-      "description": "(this), callee-cleaned: ES2's Hzline_Ctor (DBSIM 0042eb5c). Allocates 0x71 bytes for a null this (ES2's object is 0x7a), calls the base constructor 000547b4, stores the vptr 00092aaa and the defaults +0x6c = 1, +0x54 = 3, +0x58 = 16, +0x5c = 1, +0x60 = 8, +0x64 = +0x68 = 1, +0x50 = 0, and the byte +0x70 = 1, where ES2 stores 0 at +0x70 and 1 at +0x71.",
+      "description": "(this), callee-cleaned: ES2's Hzline_Ctor (DBSIM 0042eb5c). Allocates 0x71 bytes for a null this (ES2's object is 0x7a), calls the base constructor TSGroup_Ctor (000547b4), stores the vptr 00092aaa and the defaults +0x6c = 1, +0x54 = 3, +0x58 = 16, +0x5c = 1, +0x60 = 8, +0x64 = +0x68 = 1, +0x50 = 0, and the byte +0x70 = 1, where ES2 stores 0 at +0x70 and 1 at +0x71.",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
       "verified": {
         "bytes": "00026180+133",
         "sha1": "f93623763372",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00026208",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hzline_Dtor",
+      "description": "(hzline, flags), callee-cleaned: slot +0x1c of the hzline's vtable 00092aaa (entered at its padding 00026205). For a non-null object stores 00092aaa, calls TSGroup_Dtor (00054888)(hzline, 0) and operator_delete (000015f8) on flags bit 0; the bank at +0x50 is not freed. ES2's Hzline_Dtor (DBSIM 0042f6d2).",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#functions",
+      "verified": {
+        "bytes": "00026208+42",
+        "sha1": "e6be26abf04c",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -4574,6 +4796,21 @@
         "sha1": "b1bf9a28a57d",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000267bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HzlineFill_VertexElementCtor",
+      "description": "(p), callee-cleaned: returns p, or operator_new (000015a4)(8) when p is null; writes nothing to the element. The element constructor of the five 8-byte points Hzline_FillSky (0002650c) and Hzline_FillGround (000267d8) build on their stacks with __vec_ctor: es2_xref finds its padding entry 000267ba as the PUSH operand at 00026547 and its address as the one at 0002684b.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#functions",
+      "verified": {
+        "bytes": "000267bc+27",
+        "sha1": "2066f8f99f54",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -4702,13 +4939,127 @@
       "type": "function",
       "confidence": "high",
       "name": "TexPoly_Ctor",
-      "description": "(this, count, name), callee-cleaned: ES2's TexPoly_Ctor (DBSIM 0042f700), its offsets 4 lower. Allocates 0x107 bytes for a null this; stores the vptrs 00092ade, 00092b02, 00092b2e, 00092b5a, 00092b86 and 00092bb2 in turn, __vec_ctor of five 12-byte points (00027498) at +0x21, TexPoly's vptr 00092bde; +0xe = __vec_new of count x 4 12-byte points (00027498), +0x12 = __vec_new of count 6-byte angle triples (00027510), +0x16 = count zeroed bytes, count at +0x1f and +0xf9 as int16, +0x1a = ClassItem_LoadFromFile(dba\\<name>); zeroes the dwords at +0x5d (three), +0x6d, +0x71 and +0x75, the five points and the byte +0x1e. World_LoadTheater (000251c4) builds one into a 0x113-byte object with the world file's cloud count and second string, clouds2 in every retail file, and retypes it with the clouds' vptr 000928f6.",
+      "description": "(this, count, name), callee-cleaned: ES2's TexPoly_Ctor (DBSIM 0042f700), its offsets 4 lower. Allocates 0x107 bytes for a null this; stores the vptrs 00092ade, 00092b02, 00092b2e, 00092b5a, 00092b86 and 00092bb2 in turn, __vec_ctor of five 12-byte points (TexPoly_PointElementCtor (00027498)) at +0x21, TexPoly's vptr 00092bde; +0xe = __vec_new of count x 4 12-byte points (TexPoly_PointElementCtor (00027498)), +0x12 = __vec_new of count 6-byte angle triples (TexPoly_AngleElementCtor (00027510)), +0x16 = count zeroed bytes, count at +0x1f and +0xf9 as int16, +0x1a = ClassItem_LoadFromFile(dba\\<name>); zeroes the dwords at +0x5d (three), +0x6d, +0x71 and +0x75, the five points and the byte +0x1e. World_LoadTheater (000251c4) builds one into a 0x113-byte object with the world file's cloud count and second string, clouds2 in every retail file, and retypes it with the clouds' vptr 000928f6.",
       "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-clouds",
       "verified": {
         "bytes": "000271c0+519",
         "sha1": "c768932bb1e9",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000273c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGroupItem_DtorTexPolyCopy",
+      "description": "(item, flags), callee-cleaned: slot +0x1c of 00092b2e (entered at its padding 000273c7), the table TexPoly_Ctor (000271c0) stores third, TSGroupItem's in ES2's chain (TexPoly_Ctor, DBSIM 0042f700). For a non-null object stores 00092b2e, calls TSBase_Dtor (0005ba58)(item, 0) and operator_delete (000015f8) on flags bit 0.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "000273c8+42",
+        "sha1": "cf265ccdbf65",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000273f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPoly_DtorTexPolyCopy",
+      "description": "(poly, flags), callee-cleaned: slot +0x1c of 00092b5a (entered at its padding 000273f2), the TSPoly table TexPoly_Ctor stores fourth: stores 00092b5a and 00092b2e in turn, then as TSGroupItem_DtorTexPolyCopy (000273c8).",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "000273f4+48",
+        "sha1": "bf5bbdd40fba",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027424",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSSolidPoly_DtorTexPolyCopy",
+      "description": "(poly, flags), callee-cleaned: slot +0x1c of 00092b86, the TSSolidPoly table TexPoly_Ctor stores fifth (its slot +0x20 TSSolidPoly_Render): stores 00092b86, 00092b5a and 00092b2e in turn, then as TSGroupItem_DtorTexPolyCopy.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "00027424+54",
+        "sha1": "0f6d770b6b8a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002745c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTexture4Poly_DtorTexPolyCopy",
+      "description": "(poly, flags), callee-cleaned: slot +0x1c of 00092bb2 (entered at its padding 0002745a), the TSTexture4Poly table TexPoly_Ctor stores sixth (its slot +0x20 TSTexture4Poly_Render): stores 00092bb2, 00092b86, 00092b5a and 00092b2e in turn, then as TSGroupItem_DtorTexPolyCopy.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "0002745c+60",
+        "sha1": "9c29ca3f5b1b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027498",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_PointElementCtor",
+      "description": "(p), callee-cleaned: returns p, or operator_new (000015a4)(12) when p is null (0 when that fails), with an inlined member constructor that would allocate 8 bytes for a null element; writes nothing to the element. The code of PointScatter_PointCtor (00026e5c). The element constructor of TexPoly_Ctor (000271c0)'s five points at +0x21 and its count x 4 points at +0xe: es2_xref finds its address as an operand at 000272a6 and at 000272ff.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-clouds",
+      "verified": {
+        "bytes": "00027498+48",
+        "sha1": "89db637b5f80",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000274c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_Dtor",
+      "description": "(poly, flags), callee-cleaned: slot +0x1c of TexPoly's vtable 00092bde. For a non-null object stores 00092bde, 00092bb2, 00092b86, 00092b5a and 00092b2e in turn, calls TSBase_Dtor (0005ba58)(poly, 0) and operator_delete (000015f8) on flags bit 0; it frees none of the object's arrays or its bank. ES2's TexPoly_Dtor (DBSIM 004302fa), which counts destructors instead of storing the bases' vptrs.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-object",
+      "verified": {
+        "bytes": "000274c8+66",
+        "sha1": "21d9e3a9e112",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002750c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_Slot28NoOp",
+      "description": "(poly, distance), callee-cleaned (RET 8), frameless: does nothing. Slot +0x2c of TexPoly's vtable 00092bde holds its padding entry 0002750a; TexPoly_DrawAtPoints (00027724) calls the slot with each drawn point's distance. ES2's TexPoly_Slot28NoOp (DBSIM 00430346). No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#each-frame"
+    },
+    {
+      "address": "00027510",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_AngleElementCtor",
+      "description": "(p), callee-cleaned: returns p, or operator_new (000015a4)(6) when p is null (0 when that fails), with an inlined member constructor that would allocate 4 bytes for a null element; writes nothing to the element. The element constructor of TexPoly_Ctor (000271c0)'s count 6-byte angle triples at +0x12: es2_xref finds its padding entry 0002750f as an operand at 00027313.",
+      "source": "Herculan/docs/es1/formats/wld-world.md#the-clouds",
+      "verified": {
+        "bytes": "00027510+48",
+        "sha1": "0752e0c413af",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -4802,6 +5153,21 @@
       }
     },
     {
+      "address": "00027be4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TexPoly_RenderPointElementCtor",
+      "description": "(p), callee-cleaned: the code of HzlineFill_VertexElementCtor (000267bc): returns p, or operator_new (000015a4)(8) when p is null; writes nothing to the element. The element constructor TexPoly_Render (000279a4) passes __vec_ctor for the 32 8-byte points on its stack: es2_xref finds its address as the operand at 00027ac8.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#functions",
+      "verified": {
+        "bytes": "00027be4+27",
+        "sha1": "a0b91d6a731c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00027c00",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -4832,12 +5198,21 @@
       }
     },
     {
+      "address": "00027e10",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_LoadResources",
+      "description": "No arguments, frameless: operator_new (000015a4)(0xa8) into g_ShadeRamps (00092c34), 21 8-byte records {int16 *indices, int16 count}, and operator_new(0x2a), 21 int16, into each record's indices; then zeroes the five PaletteCycle_Slots (000bc5d6). Palette_RegisterSubsystem (00028dd8) registers it at subsystem phase 2. ES2's Palette_LoadResources (DBSIM 0043034c), whose 0x81 records hold 0x81 indices each. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2"
+    },
+    {
       "address": "00027e5c",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Palette_LoadAndActivate",
-      "description": "(path), callee-cleaned: ES2's Palette_LoadAndActivate (DBSIM 00430394): Palette_LoadDpl(path) into the active palette pointer 00092c20, then calls Palette_BuildTextureShadeTables (00028b28) (through 00028b27), which ES2's does not.",
+      "description": "(path), callee-cleaned: ES2's Palette_LoadAndActivate (DBSIM 00430394): Palette_LoadDpl(path) into the active palette pointer ActivePaletteObject (00092c20), then calls Palette_BuildTextureShadeTables (00028b28) (through 00028b27), which ES2's does not.",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
       "verified": {
         "bytes": "00027e5c+30",
@@ -4847,16 +5222,46 @@
       }
     },
     {
+      "address": "00027e7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_SetActive",
+      "description": "(palette), callee-cleaned: makes palette the active palette ActivePaletteObject (00092c20) and returns the previous one. ES2's Palette_SetActive (DBSIM 004303b0). es2_xref finds calls from Palette_ActivateImpact (00025ed0), Palette_ToggleImpact (00025ef8) and Palette_RestoreFromImpact (00025f1c).",
+      "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
+      "verified": {
+        "bytes": "00027e7c+25",
+        "sha1": "7fa8200ed34b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00027e98",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Palette_InstallRange",
-      "description": "(source, count, base) in stack order, callee-cleaned: copies count dwords from source into the active palette's entries (*(00092c20 + 8)) from index base, and widens the dirty range 00092c28..00092c2c to cover them, starting it afresh when the flag 00092c30 is clear and setting the flag. ES2's Palette_InstallRange (DBSIM 004303c4).",
+      "description": "(source, count, base) in stack order, callee-cleaned: copies count dwords from source into the active palette's entries (*(ActivePaletteObject (00092c20) + 8)) from index base, and widens the dirty range Palette_DirtyFirst (00092c28)..Palette_DirtyLast (00092c2c) to cover them, starting it afresh when the flag Palette_DirtyValid (00092c30) is clear and setting the flag. ES2's Palette_InstallRange (DBSIM 004303c4).",
       "source": "ES1DBSIM decompile at 00027e98, against ES2's Palette_InstallRange",
       "verified": {
         "bytes": "00027e98+127",
         "sha1": "17a76ed14553",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027f18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_ReadRange",
+      "description": "(out, count, start) in stack order, callee-cleaned: copies count dwords of the active palette's entries (ActivePaletteObject +8) from index start into out. ES2's Palette_ReadRange (DBSIM 00430440). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
+      "verified": {
+        "bytes": "00027f18+59",
+        "sha1": "b6469b500c7e",
         "scope": "body",
         "via": "decompile"
       }
@@ -4867,11 +5272,41 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_GetEntry",
-      "description": "(index), callee-cleaned: returns the active palette's (00092c20) colour dword at +8 [index].",
+      "description": "(index), callee-cleaned: returns the active palette's (ActivePaletteObject (00092c20)) colour dword at +8 [index].",
       "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
       "verified": {
         "bytes": "00027f54+29",
         "sha1": "9841f3e3cb2e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00027f74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_FlushDirtyRange",
+      "description": "No arguments: when ActivePaletteObject differs from Palette_LastUploaded (00092c24), Palette_UploadWhole (0006931c) of it, recording it there; otherwise the display driver routine at 0009df08, its arguments removed by this function after the call, with (Palette_DirtyFirst (00092c28), Palette_DirtyLast (00092c2c) - first + 1, the first entry's color address) when Palette_DirtyValid (00092c30) is set and (0, 1, the palette's colors) when it is clear; then clears the range and the flag.",
+      "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
+      "verified": {
+        "bytes": "00027f74+140",
+        "sha1": "32c56533761b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00028000",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_ReadShadeRampRanges",
+      "description": "(out, count, first) in stack order, callee-cleaned: for count records of g_ShadeRamps from first, writes {the first index (*indices), count} as an int16 pair into out. ES2's Palette_ReadShadeRampRanges (DBSIM 004304dc). es2_xref finds no branch to it; the three dwords it finds holding its address, at 000ad6ed, 000ad893 and 000ad8b3, are each a 640 word with a zero word before it in tables of screen sizes.",
+      "source": "Herculan/docs/es1/rendering/palette.md#open",
+      "verified": {
+        "bytes": "00028000+66",
+        "sha1": "67da354262ad",
         "scope": "body",
         "via": "decompile"
       }
@@ -4882,11 +5317,26 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_SetRampsToRange",
-      "description": "(range, count, first) in stack order, callee-cleaned: ES2's Palette_SetRampsToRange (DBSIM 00430518): for count records of the array at 00092c34 from first, writes range's consecutive indices start .. start + length - 1 into the record's entries and its length, the range read without advancing; then Raster_SetColourRamps (000691f8)(first, count, records, 0).",
+      "description": "(range, count, first) in stack order, callee-cleaned: ES2's Palette_SetRampsToRange (DBSIM 00430518): for count records of the array at g_ShadeRamps (00092c34) from first, writes range's consecutive indices start .. start + length - 1 into the record's entries and its length, the range read without advancing; then Raster_SetColourRamps (000691f8)(first, count, records, 0).",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-distance-bands",
       "verified": {
         "bytes": "00028044+159",
         "sha1": "3ba6b23c6f34",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000280e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_SetRampsToRangeList",
+      "description": "(specs, count, first) in stack order, callee-cleaned: ES2's Palette_SetRampsToRangeList (DBSIM 00430590): for each of count records of g_ShadeRamps from first, reads a 6-byte spec {int16 rangeCount; ranges**} (spec i, and the i-th pointer of that spec's pointer array), concatenates rangeCount {int16 start, int16 length} runs into the record's indices as consecutive indices and stores the summed length at +4; then Raster_SetColourRamps (000691f8)(first, count, records, 0), where ES2 passes three arguments. es2_xref finds one call, from WorldShades_ApplyForObject (00025d44).",
+      "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
+      "verified": {
+        "bytes": "000280e4+232",
+        "sha1": "77b58262a26a",
         "scope": "body",
         "via": "decompile"
       }
@@ -4897,11 +5347,41 @@
       "type": "function",
       "confidence": "high",
       "name": "PaletteCycle_Register",
-      "description": "(record), callee-cleaned: ES2's PaletteCycle_Register (DBSIM 00430638): stores record in the first empty slot of the five at 000bc5d6, its due time (the dword 000981c4 +the record's int16 +4, where ES2 calls Time_GetCoarseTicks) at 000bc5ea and 0 at 000bc5fe, returning 1; 0 when all five are taken.",
+      "description": "(record), callee-cleaned: ES2's PaletteCycle_Register (DBSIM 00430638): stores record in the first empty slot of the five at PaletteCycle_Slots (000bc5d6), its due time (the dword 000981c4 +the record's int16 +4, where ES2 calls Time_GetCoarseTicks) at PaletteCycle_DueTimes (000bc5ea) and 0 at PaletteCycle_Offsets (000bc5fe), returning 1; 0 when all five are taken.",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-load",
       "verified": {
         "bytes": "000281cc+90",
         "sha1": "4013ed12bf9d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028228",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PaletteCycle_Unregister",
+      "description": "(record), callee-cleaned: clears the first of the five PaletteCycle_Slots holding record. ES2's PaletteCycle_Unregister (DBSIM 00430688). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/rendering/palette.md#open",
+      "verified": {
+        "bytes": "00028228+53",
+        "sha1": "9e5bb88fc7c7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028260",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_CycleAnimatedRanges",
+      "description": "No arguments: ES2's Palette_CycleAnimatedRanges (DBSIM 004306ac) with the dword 000981c4 as now: for each of the five PaletteCycle_Slots holding a record {int16 first, int16 count, int16 delay} whose due time (PaletteCycle_DueTimes (000bc5ea)) is below now, copies count entries of the live palette from first, starting at the slot's offset (PaletteCycle_Offsets (000bc5fe)) and wrapping at count, to a stack buffer, installs them at first with Palette_InstallRange (00027e98), advances the offset (0 at count) and sets the due time to now + delay. es2_xref finds one call, from Sim_EndFrame (00059b40).",
+      "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
+      "verified": {
+        "bytes": "00028260+333",
+        "sha1": "7ecd1afdf63c",
         "scope": "body",
         "via": "decompile"
       }
@@ -4912,11 +5392,41 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_InterpolateColours",
-      "description": "(out, levels, count, to, from) in stack order, callee-cleaned: ES2's Palette_InterpolateColours (DBSIM 004307b0): for each of count colour pairs, levels - 1 colours from from's stepping by (to - from) * 256 / (levels - 1) per channel in 8.8 fixed point, then to's, each with 0x01 in its top byte.",
+      "description": "(out, levels, count, to, from) in stack order, callee-cleaned: ES2's Palette_InterpolateColours (DBSIM 004307b0): for each of count color pairs, levels - 1 colors from from's, each channel (read as a signed byte) stepping by ((to - from) * 256) / (levels - 1), truncated to int16, in 8.8 fixed point, each written with 0x01 in its top byte; then to's dword unchanged. es2_xref finds two calls, from Palette_BlendRangeByPitch (00025fe4).",
       "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-pitch-gradient-palette-entries-6479",
       "verified": {
         "bytes": "000283b0+376",
         "sha1": "68faeea209ad",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00028528",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_BeginCrossFade",
+      "description": "(duration, to, from) in stack order, callee-cleaned: ES2's Palette_BeginCrossFade (DBSIM 004308fc): stores from at PaletteFade_From (000bc608) and duration at PaletteFade_Duration (000bc610), clears PaletteFade_Armed (00092c3c), and over the palette's int16 entry count (+4) fills PaletteFade_DeltaRed (000bc614), PaletteFade_DeltaGreen (000bc814) and PaletteFade_DeltaBlue (000bca14): with a null from, to's channel * 256 / duration, PaletteFade_Mode (000bcc14) 0; with a null to, from's channel * 256 / -duration, mode 1; with both, (to - from) * 256 / duration, mode 2. Stores the count at PaletteFade_EntryCount (000bc60e). es2_xref finds calls from 00057cf4 and two from 00058414.",
+      "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
+      "verified": {
+        "bytes": "00028528+640",
+        "sha1": "fa0119971ed0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000287a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_StepCrossFade",
+      "description": "No arguments: ES2's Palette_StepCrossFade (DBSIM 00430b34) with the dword 000981c4 as now: the first call after Palette_BeginCrossFade sets PaletteFade_EndTime (00092c38) to now + duration and sets PaletteFade_Armed; once now passes the end it clears the flag and returns 0 without writing. Otherwise, with e = duration - (end - now), writes the entry count of colors into the live palette from PaletteFade_FirstEntry (000bc60c): mode 0 delta * e >> 8 per channel, modes 1 and 2 from's entry plus delta * e >> 8 per channel byte; widens the dirty range over them and returns end - now. es2_xref finds calls from 00057ffc and four from 00058414.",
+      "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
+      "verified": {
+        "bytes": "000287a8+566",
+        "sha1": "8aace833dd94",
         "scope": "body",
         "via": "decompile"
       }
@@ -4957,7 +5467,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_BuildTextureShadeTables",
-      "description": "No arguments: when 00092c40 is null, builds eight 256-byte colour tables there from the active palette (00092c20) and stores the array at 000973f0 and 8 at 000973f4 and 000973f8. Entry c of table L: for each ramp (palette +0x10, count +0xc) holding c, the last deciding, ratio = (entry (len-1)*L/7 << 10) / entry Math_Q10Multiply(len-1, 0x28a) per channel (0 for a zero channel); c unchanged when no ramp holds c; otherwise the first palette index nearest (Colour_Distance (000644c8), below 1000) to c scaled by ratio with Math_Q10Multiply. Palette_LoadAndActivate (00027e5c) calls it through 00028b27.",
+      "description": "No arguments: when 00092c40 is null, builds eight 256-byte colour tables there from the active palette (ActivePaletteObject (00092c20)) and stores the array at 000973f0 and 8 at 000973f4 and 000973f8. Entry c of table L: for each ramp (palette +0x10, count +0xc) holding c, the last deciding, ratio = (entry (len-1)*L/7 << 10) / entry Math_Q10Multiply(len-1, 0x28a) per channel (0 for a zero channel); c unchanged when no ramp holds c; otherwise the first palette index nearest (Colour_Distance (000644c8), below 1000) to c scaled by ratio with Math_Q10Multiply. Palette_LoadAndActivate (00027e5c) calls it through 00028b27.",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-texture-colour-tables",
       "verified": {
         "bytes": "00028b28+686",
@@ -4965,6 +5475,15 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "00028dd8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Palette_RegisterSubsystem",
+      "description": "No arguments, frameless: the palette module's static initializer, the dword at 000adc20 among the static constructors: RegisterSubsystemLoader (00000ac4)(2, Palette_LoadResources) in stack order. ES2's Palette_RegisterSubsystem (DBSIM 00430e90). No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/rendering/palette.md#where-the-module-starts-and-ends"
     },
     {
       "address": "00028de8",
@@ -5012,6 +5531,30 @@
       }
     },
     {
+      "address": "000296cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTex_StaticInit",
+      "description": "No arguments, frameless: gndtex.cpp's static initializer, the dword at 000adc24 among the static constructors: __vec_ctor (000610cb)(GndTexRow_ElementCtor (000296e4) by its padding entry 000296e3, 320, 12, the row table 000afe68) in stack order. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground"
+    },
+    {
+      "address": "000296e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTexRow_ElementCtor",
+      "description": "(p), callee-cleaned: the code of TexPoly_PointElementCtor (00027498): returns p, or operator_new (000015a4)(12) when p is null (0 when that fails), with an inlined member constructor that would allocate 8 bytes for a null element; writes nothing to the element. The element constructor of the row table GndTex_BuildRowTable (00028fbc) fills, which GndTex_StaticInit builds.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground",
+      "verified": {
+        "bytes": "000296e4+48",
+        "sha1": "230662cadec8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00029714",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -5055,6 +5598,24 @@
         "scope": "body",
         "via": "decompile"
       }
+    },
+    {
+      "address": "0002989c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTexBitmap_StaticInit",
+      "description": "No arguments, frameless: a static initializer, the dword at 000adc28 among the static constructors: calls 00066e34 with the ground bitmap object 000b0d88. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture"
+    },
+    {
+      "address": "000298a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GndTexBitmap_StaticDtor",
+      "description": "No arguments, frameless: the exit routine at 000adcb0: calls 00066f20(000b0d88, 2) in stack order, with the ground bitmap object. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture"
     },
     {
       "address": "000298b8",
@@ -6512,6 +7073,36 @@
       }
     },
     {
+      "address": "000547b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGroup_Ctor",
+      "description": "(this), callee-cleaned: TSGroup's constructor, ES2's TSGroup_Ctor (DBSIM 004757a8): allocates 0x28 bytes for a null this, returning 0 when that fails; stores the vptrs 000961ca and 000961ee, runs the inlined constructor of a 6-byte member at +0xa, stores 0009621a and then TSGroup's 0009624e, zeroes +0x10, +0x14, +0x18 and +0x1c, and returns this. es2_xref finds three calls, one from Hzline_Ctor (00026180).",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#functions",
+      "verified": {
+        "bytes": "000547b4+167",
+        "sha1": "f986aafc2a48",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054888",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGroup_Dtor",
+      "description": "(group, flags), callee-cleaned: slot +0x1c of TSGroup's vtable 0009624e (entered at its padding 00054886). For a non-null group stores 0009624e, operator_delete (000015f8) of +0x10, __vec_delete of +0x14, operator_delete of +0x18; calls slot +0x1c with flags 3 on each non-null pointer of the uint16 count +0x26 in the array +0x1c and deletes the array; stores 0009621a, calls TSBase_Dtor (0005ba58)(group, 0) and operator_delete on flags bit 0. ES2's TSGroup_Dtor (DBSIM 004757f4), which counts destructors and frees +0x14 as a plain array.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#functions",
+      "verified": {
+        "bytes": "00054888+160",
+        "sha1": "9da5f0906bb3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005513c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -7261,7 +7852,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_EndFrame",
-      "description": "No arguments: sets 000bda96 to 1 when 000b5b92 is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); 00028260; 00027f74; on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); 00059288. Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, 00057820, four, 00057ffc, one, and 00058414, three.",
+      "description": "No arguments: sets 000bda96 to 1 when 000b5b92 is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); Palette_CycleAnimatedRanges (00028260); Palette_FlushDirtyRange (00027f74); on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); 00059288. Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, 00057820, four, 00057ffc, one, and 00058414, three.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904",
       "verified": {
         "bytes": "00059b40+200",
@@ -15818,6 +16409,78 @@
       "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
     },
     {
+      "address": "00092c20",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ActivePaletteObject",
+      "description": "The live palette object, ES2's ActivePaletteObject (DBSIM 0049b020): +4 its int16 entry count, +8 its entries. Palette_LoadAndActivate (00027e5c) and Palette_SetActive (00027e7c) set it.",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "00092c24",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Palette_LastUploaded",
+      "description": "The palette Palette_FlushDirtyRange (00027f74) last uploaded whole; it uploads the active palette whole when that differs.",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "00092c28",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Palette_DirtyFirst",
+      "description": "int32: the first entry of the dirty range Palette_InstallRange (00027e98) and Palette_StepCrossFade (000287a8) widen and Palette_FlushDirtyRange (00027f74) sends and clears.",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "00092c2c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Palette_DirtyLast",
+      "description": "int32: the last entry of the dirty range (Palette_DirtyFirst (00092c28)).",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "00092c30",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Palette_DirtyValid",
+      "description": "byte: set while the dirty range holds entries; Palette_FlushDirtyRange (00027f74) clears it.",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "00092c34",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ShadeRamps",
+      "description": "Pointer to the 21 8-byte shade ramp records {int16 *indices, int16 count} Palette_LoadResources (00027e10) allocates, each with 21 int16 indices; Palette_SetRampsToRange (00028044) and Palette_SetRampsToRangeList (000280e4) fill them. ES2's g_ShadeRamps (DBSIM 0049b034) holds 0x81.",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "00092c38",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteFade_EndTime",
+      "description": "The clock value (the dword 000981c4) at which the cross fade ends, which Palette_StepCrossFade (000287a8) sets on its first call after Palette_BeginCrossFade (00028528).",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "00092c3c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteFade_Armed",
+      "description": "byte: set while PaletteFade_EndTime (00092c38) holds the running fade's end; Palette_BeginCrossFade clears it.",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
       "address": "00092d1c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -16707,6 +17370,105 @@
       "name": "WorldShades_DistanceOffsets",
       "description": "Two int32, 000bc5c6 and 000bc5ca, read from the world file after its two counts by World_LoadTheater (000251c4). ES2's WorldShades_DistanceOffsets (DBSIM 004cfd6c).",
       "source": "Herculan/docs/es1/formats/wld-world.md#the-load"
+    },
+    {
+      "address": "000bc5d6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteCycle_Slots",
+      "description": "Five pointers to cycle records {int16 first, int16 count, int16 delay}, filled by PaletteCycle_Register (000281cc), emptied by PaletteCycle_Unregister (00028228) and zeroed by Palette_LoadResources (00027e10).",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "000bc5ea",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteCycle_DueTimes",
+      "description": "Five int32 clock values, each slot's next step in Palette_CycleAnimatedRanges (00028260).",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "000bc5fe",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteCycle_Offsets",
+      "description": "Five int16 offsets into each slot's range, advanced by Palette_CycleAnimatedRanges (00028260) and zeroed by PaletteCycle_Register (000281cc).",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "000bc608",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteFade_From",
+      "description": "The palette the cross fade starts from, stored by Palette_BeginCrossFade (00028528); Palette_StepCrossFade (000287a8) copies its entries in modes 1 and 2.",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "000bc60c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteFade_FirstEntry",
+      "description": "int16: the first palette entry Palette_StepCrossFade (000287a8) writes. A grep of the disassembly by address finds its five reads, all in Palette_StepCrossFade, and no store.",
+      "source": "Herculan/docs/es1/rendering/palette.md#open"
+    },
+    {
+      "address": "000bc60e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteFade_EntryCount",
+      "description": "int16: the number of entries the cross fade writes, the palette's +4 that Palette_BeginCrossFade (00028528) read.",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "000bc610",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteFade_Duration",
+      "description": "int32: the cross fade's length in clock counts, stored by Palette_BeginCrossFade (00028528).",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "000bc614",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteFade_DeltaRed",
+      "description": "256 int16: each entry's red delta in 8.8 per clock count, from Palette_BeginCrossFade (00028528).",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "000bc814",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteFade_DeltaGreen",
+      "description": "256 int16: each entry's green delta, as PaletteFade_DeltaRed (000bc614).",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "000bca14",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteFade_DeltaBlue",
+      "description": "256 int16: each entry's blue delta, as PaletteFade_DeltaRed (000bc614).",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
+    },
+    {
+      "address": "000bcc14",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PaletteFade_Mode",
+      "description": "int16: 0 to fade in from black, 1 to fade out to black, 2 between two palettes; set by Palette_BeginCrossFade (00028528), read by Palette_StepCrossFade (000287a8).",
+      "source": "Herculan/docs/es1/rendering/palette.md#globals"
     },
     {
       "address": "000bda98",

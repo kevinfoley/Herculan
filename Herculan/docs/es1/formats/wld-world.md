@@ -109,8 +109,8 @@ It reads no `rmp\world<N>`, and calls neither `Terrain_BindTextureBank` nor `Ras
 
 When the second string is not empty, the load allocates `0x113` bytes, constructs them with `TexPoly_Ctor` (`000271c0`), ES2's `TexPoly` constructor, with the cloud count and the name, and stores the clouds' own vptr `000928f6` at `+0` and the object at `World_Clouds` (`000928d8`). The 12-byte member at `+0x107`, the clouds' wind, has no constructor code. `TexPoly_Ctor`, given the object, the count *c* and the name, in stack order:
 
-- stores in turn the vptrs `00092ade`, `00092b02`, `00092b2e`, `00092b5a`, `00092b86` and `00092bb2`, constructs five 12-byte elements at `+0x21` with `00027498`, and stores the vptr `00092bde`;
-- allocates *c* × 4 elements of 12 bytes (`00027498`) at `+0x0e`, *c* elements of 6 bytes (`00027510`) at `+0x12` and *c* zeroed bytes at `+0x16`, and stores *c* at `+0x1f` and `+0xf9` as `int16`;
+- stores in turn the vptrs `00092ade`, `00092b02`, `00092b2e`, `00092b5a`, `00092b86` and `00092bb2`, constructs five 12-byte elements at `+0x21` with `TexPoly_PointElementCtor` (`00027498`), and stores the vptr `00092bde` ([the classes](../rendering/ground-and-sky.md#the-object));
+- allocates *c* × 4 elements of 12 bytes (`TexPoly_PointElementCtor`) at `+0x0e`, *c* elements of 6 bytes (`TexPoly_AngleElementCtor`, `00027510`) at `+0x12` and *c* zeroed bytes at `+0x16`, and stores *c* at `+0x1f` and `+0xf9` as `int16`;
 - loads `dba\<name>` with `ClassItem_LoadFromFile` to `+0x1a`;
 - zeroes the three dwords at `+0x5d`, the five elements at `+0x21`, the dwords at `+0x6d`, `+0x71` and `+0x75`, and the byte at `+0x1e`.
 
@@ -174,6 +174,5 @@ No archive holds an entry named by `w1dusk`, `w1dcrk`, `w2ice`, `w2slp`, `w3dese
 - **Open:** what `000928e0` (short 4 + short 6 − 1) is read for; `es2_xref.py` finds no reference to it besides the load's store.
 - **Open:** what ES2 reads its shorts 10 and 11 (`004cfd76`, `004cfd78`) and `004cfd74` and `004cfd7a` for.
 - **Open:** what the dword at `000981c4` that `PaletteCycle_Register` adds a cycle's delay to counts.
-- **Open:** the clouds' destructors, slot `+0x1c` of each vtable: `00025a08` for `000928f6`, which stores that vptr and five others in turn and calls `TSBase_Dtor`, and `000274c8` for `TexPoly`'s `00092bde`; neither body is read.
 - **Open:** what reads `WORLD1.DPL` and `WORLD3.DPL`, which no M names.
 - **Open:** what reads [`ZONES.VOL`'s `WORLD0.DAT` to `WORLD3.DAT`](#the-world-tables-in-zonesvol), and so what their bytes are. Their fifteen ascending `int32` after a count of 15 have the shape of a band table, and `WORLD0` to `WORLD2`'s `0x50`–`0x91` that of the rows, columns and two range tables, but with seven columns, a single band table and no distance offsets; `WORLD3`'s eight bytes there do not walk that shape.
