@@ -4357,8 +4357,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagTheaterCopy",
-      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009286e. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end"
+      "description": "(part), removing its own arguments (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009286e.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "0002518f+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00025198",
@@ -4411,8 +4417,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TexPoly_Slot28NoOpTheaterCopy",
-      "description": "(poly, distance), callee-cleaned (RET 8), frameless: does nothing. Slot +0x2c of the clouds' vtable 000928f6 and of 00092952, World_LoadTheater's file's copy of TexPoly_Slot28NoOp (0002750c). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#each-frame"
+      "description": "(poly, distance), removing its own arguments (RET 8), frameless: does nothing. Slot +0x2c of the clouds' vtable 000928f6 and of 00092952, World_LoadTheater's file's copy of TexPoly_Slot28NoOp (0002750c).",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#each-frame",
+      "verified": {
+        "bytes": "00025a50+3",
+        "sha1": "a4f5248d9b7d",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00025a54",
@@ -4675,8 +4687,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagHzlineCopy",
-      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092a42. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end"
+      "description": "(part), removing its own arguments (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092a42.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "0002614b+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00026154",
@@ -5044,8 +5062,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TexPoly_Slot28NoOp",
-      "description": "(poly, distance), callee-cleaned (RET 8), frameless: does nothing. Slot +0x2c of TexPoly's vtable 00092bde holds its padding entry 0002750a; TexPoly_DrawAtPoints (00027724) calls the slot with each drawn point's distance. ES2's TexPoly_Slot28NoOp (DBSIM 00430346). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#each-frame"
+      "description": "(poly, distance), removing its own arguments (RET 8), frameless: does nothing. Slot +0x2c of TexPoly's vtable 00092bde holds its padding entry 0002750a; TexPoly_DrawAtPoints (00027724) calls the slot with each drawn point's distance. ES2's TexPoly_Slot28NoOp (DBSIM 00430346).",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#each-frame",
+      "verified": {
+        "bytes": "0002750c+3",
+        "sha1": "a4f5248d9b7d",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00027510",
@@ -5203,8 +5227,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_LoadResources",
-      "description": "No arguments, frameless: operator_new (000015a4)(0xa8) into g_ShadeRamps (00092c34), 21 8-byte records {int16 *indices, int16 count}, and operator_new(0x2a), 21 int16, into each record's indices; then zeroes the five PaletteCycle_Slots (000bc5d6). Palette_RegisterSubsystem (00028dd8) registers it at subsystem phase 2. ES2's Palette_LoadResources (DBSIM 0043034c), whose 0x81 records hold 0x81 indices each. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2"
+      "description": "No arguments, frameless: operator_new (000015a4)(0xa8) into g_ShadeRamps (00092c34), 21 8-byte records {int16 *indices, int16 count}, and operator_new(0x2a), 21 int16, into each record's indices; then zeroes the five PaletteCycle_Slots (000bc5d6). Palette_RegisterSubsystem (00028dd8) registers it at subsystem phase 2. ES2's Palette_LoadResources (DBSIM 0043034c), whose 0x81 records hold 0x81 indices each.",
+      "source": "Herculan/docs/es1/rendering/palette.md#differences-from-es2",
+      "verified": {
+        "bytes": "00027e10+75",
+        "sha1": "c2c15f2b8056",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00027e5c",
@@ -5482,8 +5512,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_RegisterSubsystem",
-      "description": "No arguments, frameless: the palette module's static initializer, the dword at 000adc20 among the static constructors: RegisterSubsystemLoader (00000ac4)(2, Palette_LoadResources) in stack order. ES2's Palette_RegisterSubsystem (DBSIM 00430e90). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/rendering/palette.md#where-the-module-starts-and-ends"
+      "description": "No arguments, frameless: the palette module's static initializer, the dword at 000adc20 among the static constructors: RegisterSubsystemLoader (00000ac4)(2, Palette_LoadResources) in stack order. ES2's Palette_RegisterSubsystem (DBSIM 00430e90).",
+      "source": "Herculan/docs/es1/rendering/palette.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "00028dd8+13",
+        "sha1": "4be8112f3c82",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00028de8",
@@ -5536,8 +5572,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GndTex_StaticInit",
-      "description": "No arguments, frameless: gndtex.cpp's static initializer, the dword at 000adc24 among the static constructors: __vec_ctor (000610cb)(GndTexRow_ElementCtor (000296e4) by its padding entry 000296e3, 320, 12, the row table 000afe68) in stack order. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground"
+      "description": "No arguments, frameless: gndtex.cpp's static initializer, the dword at 000adc24 among the static constructors: __vec_ctor (000610cb)(GndTexRow_ElementCtor (000296e4) by its padding entry 000296e3, 320, 12, the row table 000afe68) in stack order.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-textured-ground",
+      "verified": {
+        "bytes": "000296cc+23",
+        "sha1": "843ceeccfc1c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000296e4",
@@ -5605,8 +5647,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GndTexBitmap_StaticInit",
-      "description": "No arguments, frameless: a static initializer, the dword at 000adc28 among the static constructors: calls 00066e34 with the ground bitmap object 000b0d88. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture"
+      "description": "No arguments, frameless: a static initializer, the dword at 000adc28 among the static constructors: calls 00066e34 with the ground bitmap object 000b0d88.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture",
+      "verified": {
+        "bytes": "0002989c+11",
+        "sha1": "971309394b2a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000298a8",
@@ -5614,8 +5662,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GndTexBitmap_StaticDtor",
-      "description": "No arguments, frameless: the exit routine at 000adcb0: calls 00066f20(000b0d88, 2) in stack order, with the ground bitmap object. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture"
+      "description": "No arguments, frameless: the exit routine at 000adcb0: calls 00066f20(000b0d88, 2) in stack order, with the ground bitmap object.",
+      "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture",
+      "verified": {
+        "bytes": "000298a8+13",
+        "sha1": "adb6512d9aca",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000298b8",
