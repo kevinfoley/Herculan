@@ -131,6 +131,16 @@ controller.saved_for_gamepads  Ces réglages sont enregistrés pour toutes les m
 controller.saved_for_model     Ces réglages sont enregistrés pour ce modèle de joystick.
 controller.saved_for_joysticks Ces réglages sont enregistrés pour tous les joysticks sans réglages propres.
 controller.none_connected      Aucune manette n'est branchée. Branchez-en une et elle apparaîtra ici.
+controller.mouse_emulation     Émulation de la souris
+controller.mouse_emulation_note L'émulation de la souris sert dans l'interface de jeu (menus) et dans l'Éditeur. L'émulation de la souris n'est pas disponible dans cette fenêtre ; utilisez la croix directionnelle pour naviguer dans cette fenêtre.
+controller.cursor_control      Contrôle du curseur
+controller.left_stick          Stick gauche
+controller.right_stick         Stick droit
+controller.cursor_speed        Vitesse du curseur
+controller.cursor_speed_tip    La vitesse à laquelle le stick déplace le curseur, en pourcentage de la vitesse par défaut.
+controller.clicking            Clic
+controller.right_trigger_clicks Gâchette droite : clic gauche, gâchette gauche : clic droit
+controller.left_trigger_clicks Gâchette gauche : clic gauche, gâchette droite : clic droit
 controller.inputs              Ce que le périphérique indique
 controller.axis                Axe {0}
 controller.axis_direction      Axe {0} {1}

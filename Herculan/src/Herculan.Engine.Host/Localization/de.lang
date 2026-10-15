@@ -131,6 +131,16 @@ controller.saved_for_gamepads  Diese Einstellungen werden für jedes Gamepad ges
 controller.saved_for_model     Diese Einstellungen werden für dieses Joystick-Modell gespeichert.
 controller.saved_for_joysticks Diese Einstellungen werden für jeden Joystick ohne eigene Einstellungen gespeichert.
 controller.none_connected      Es ist kein Controller angeschlossen. Schließen Sie einen an, dann erscheint er hier.
+controller.mouse_emulation     Mausemulation
+controller.mouse_emulation_note Die Mausemulation wird im Spielmenü und im Editor verwendet. In diesem Fenster ist die Mausemulation nicht verfügbar; navigieren Sie in diesem Fenster mit dem Steuerkreuz.
+controller.cursor_control      Mauszeigersteuerung
+controller.left_stick          Linker Stick
+controller.right_stick         Rechter Stick
+controller.cursor_speed        Zeigergeschwindigkeit
+controller.cursor_speed_tip    Wie schnell der Stick den Mauszeiger bewegt, in Prozent der Standardgeschwindigkeit.
+controller.clicking            Klicken
+controller.right_trigger_clicks Rechter Trigger: Linksklick, linker Trigger: Rechtsklick
+controller.left_trigger_clicks Linker Trigger: Linksklick, rechter Trigger: Rechtsklick
 controller.inputs              Was das Gerät meldet
 controller.axis                Achse {0}
 controller.axis_direction      Achse {0} {1}

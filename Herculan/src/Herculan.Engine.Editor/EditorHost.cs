@@ -1,6 +1,7 @@
 using System.Numerics;
 using HercWorks.Core.Io;
 using Herculan.Engine.Content;
+using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using Herculan.Engine.Shell;
@@ -91,11 +92,11 @@ public sealed class EditorHost {
 	private IMouse? _mouse;
 	private IInputContext? _input;
 
-	// A gamepad as the mouse: the left stick moves the pointer, the right trigger is the left button and the left trigger
-	// the right (docs/herculan/herculan-key-bindings.md, "Gamepad in the editor"). What each trigger was last frame, so
+	// A gamepad as the mouse: a stick moves the pointer, one trigger is the left button and the other the right, as the
+	// install's herculan-joystick.cfg chooses (docs/herculan/herculan-key-bindings.md, "Gamepad in the editor"). What each trigger was last frame, so
 	// its press and release reach the viewport as the button's own would; ImGui takes them through
 	// ScaledImGui.HeldAsMouseButtons. The pad works only while the window has the focus, as GLFW reads it regardless.
-	private readonly GamepadPointer _padPointer = new();
+	private readonly GamepadPointer _padPointer;
 	private bool _padLeftHeld;
 	private bool _padRightHeld;
 	private bool _focused = true;
@@ -121,6 +122,7 @@ public sealed class EditorHost {
 	private EditorHost(EditorLaunch launch) {
 		_launch = launch;
 		_installData = ShellWorkingFiles.DataDirectory(launch.InstallRoot);
+		_padPointer = new GamepadPointer { Settings = JoystickMapFile.LoadIn(_installData).Mouse };
 		_settingsPanel = new EditorSettingsPanel(_settings);
 		_volBrowser = new VolMissionBrowser(() => MissionFileLaunch.List(launch.ShellContent()));
 

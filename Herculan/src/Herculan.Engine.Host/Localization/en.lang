@@ -131,6 +131,16 @@ controller.saved_for_gamepads  These settings are saved for every gamepad.
 controller.saved_for_model     These settings are saved for this model of joystick.
 controller.saved_for_joysticks These settings are saved for every joystick without settings of its own.
 controller.none_connected      No controller is connected. Connect one and it appears here.
+controller.mouse_emulation     Mouse emulation
+controller.mouse_emulation_note Mouse emulation is used in the shell (menus) and Editor. Mouse emulation is not available in this window; use the d-pad to navigate this window.
+controller.cursor_control      Cursor control
+controller.left_stick          Left stick
+controller.right_stick         Right stick
+controller.cursor_speed        Cursor speed
+controller.cursor_speed_tip    How fast the stick moves the pointer, as a percentage of the default speed.
+controller.clicking            Clicking
+controller.right_trigger_clicks Right trigger: Left click, Left trigger: Right click
+controller.left_trigger_clicks Left trigger: Left click, Right trigger: Right click
 controller.inputs              What the device reports
 controller.axis                Axis {0}
 controller.axis_direction      Axis {0} {1}
