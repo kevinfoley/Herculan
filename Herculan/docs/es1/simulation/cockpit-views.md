@@ -149,7 +149,7 @@ Read for this module and named with it, each ES2's counterpart:
 
 | ES1 | Address | ES2 |
 |---|---|---|
-| `HeapPtr_DtorMechviewCopy`, `ConfigPart_DtorMechviewCopy`, `ConfigPart_GetClassTagMechviewCopy`, `TSPartBase_DtorMechviewCopy` | `00021d38`, `00021d60`, `00021d9f`, `00021da8` | the run ([module copies](../formats/compiler.md#vtables)); `00021d9f` has no Ghidra function |
+| `HeapPtr_DtorMechviewCopy`, `ConfigPart_DtorMechviewCopy`, `ConfigPart_GetClassTagMechviewCopy`, `TSPartBase_DtorMechviewCopy` | `00021d38`, `00021d60`, `00021d9f`, `00021da8` | the run ([module copies](../formats/compiler.md#vtables)) |
 | `CockpitViewManager_Ctor` | `00021dd4` | `00429660` |
 | `CockpitViewManager_Publish`, `CockpitViewManager_Published`, `CockpitViewManager_GetCockpitView`, `CockpitViewManager_LoadViews` | `00021f8c`, `00021f98`, `00021fa0`, `00021fb0` | `00429810`, `00429820`, `00429828`, `00429834` |
 | `CockpitCanopy_LoadViewBitmap`, `CockpitCanopy_FreeViewBitmap` | `00022184`, `0002226c` | `00429c2c`, `00429de4` |
@@ -159,7 +159,7 @@ Read for this module and named with it, each ES2's counterpart:
 | `CockpitChassis_SelectByName` | `00024394` | [the cockpit clock](../formats/ttm-scripts.md#the-cockpit-clock) |
 | `CockpitView_SetShakeBand`, `CockpitView_StepShake`, `CockpitView_ClearShake`, `CockpitView_GetShakeOffset` | `000243d4`, `00024564`, `00024750`, `000249d4` | `0042d2f8`, `0042d4a8`, `0042d624`, `0042d870` |
 | `ExternalView_SetRect`, `ExternalView_ResetRect`, `CockpitViewManager_FlushBorderFill`, `View_FillOutside3dRect`, `ExternalView_GetRect` | `00024a00`, `00024a7c`, `00024af8`, `00024b18`, `00024c20` | `0042d89c`, `0042d944`, `0042d9e8`, `0042da08`, `0042db10` |
-| `CockpitViewManager_StaticInit`, `CockpitViewManager_StaticDtor`, `CockpitVueRecord_ElementCtor` | `00024c28`, `00024c90`, `00024cc4` | `0042db40`, `0042dc40`, `0042dc88`; the first two have no Ghidra function |
+| `CockpitViewManager_StaticInit`, `CockpitViewManager_StaticDtor`, `CockpitVueRecord_ElementCtor` | `00024c28`, `00024c90`, `00024cc4` | `0042db40`, `0042dc40`, `0042dc88` |
 
 The next object file's: `CockpitClipRegions_Load` (`00024d44`); `GLBase_DtorClipRegionsCopy`, `GLRegion_DtorClipRegionsCopy`, `GLRectangleRegion_DtorClipRegionsCopy` (`00024f98`, `00024fbc`, `00024fe4`), slot `+0x1c` of `000927f6`, `0009281e`, `00092846`, the same code as the mechview copies; and `ClipRegions_AppendRectAboveScreen` (`00025014`), (block): allocates a `0x18`-byte rect region (the vtables `000927d2` to `00092846` in turn, type 0), appends its `+4` to the block's list, raising the count `+0`, and gives it the rect {0, −100, 319, −1}. `es2_xref.py` finds no reference to it ([Open](#open)).
 

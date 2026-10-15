@@ -3802,8 +3802,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagMechviewCopy",
-      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092576. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/cockpit-views.md#where-the-module-starts-and-ends"
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092576.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "00021d9f+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00021da8",
@@ -4201,8 +4207,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_StaticInit",
-      "description": "No arguments, no frame: mechview.cpp's static initialiser, the dword at 000adc1c among the static constructors: __vec_ctor (000610cb)(CockpitVueRecord_ElementCtor (00024cc4) by its padding entry 00024cc2, 4, 0x20, CockpitVueRecords (000afaa4)) in stack order, then stores the vtables 000926ee, 00092712, 0009273a and 00092762 in turn at CockpitShakeStripRegion (000afb78) and at ExternalView_ClipRegion (000afd98), and 0 at each one's +4. ES2's CockpitViewManager_StaticInit (DBSIM 0042db40). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
+      "description": "No arguments, no frame: mechview.cpp's static initialiser, the dword at 000adc1c among the static constructors: __vec_ctor (000610cb)(CockpitVueRecord_ElementCtor (00024cc4) by its padding entry 00024cc2, 4, 0x20, CockpitVueRecords (000afaa4)) in stack order, then stores the vtables 000926ee, 00092712, 0009273a and 00092762 in turn at CockpitShakeStripRegion (000afb78) and at ExternalView_ClipRegion (000afd98), and 0 at each one's +4. ES2's CockpitViewManager_StaticInit (DBSIM 0042db40).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager",
+      "verified": {
+        "bytes": "00024c28+104",
+        "sha1": "3e2ea2476807",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00024c90",
@@ -4210,8 +4222,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_StaticDtor",
-      "description": "No arguments, no frame: mechview.cpp's exit routine, the dword at 000adcac: stores 00092762, 0009273a and 00092712 in turn at ExternalView_ClipRegion (000afd98) and then at CockpitShakeStripRegion (000afb78). ES2's CockpitViewManager_StaticDtor (DBSIM 0042dc40), which counts destructors instead. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
+      "description": "No arguments, no frame: mechview.cpp's exit routine, the dword at 000adcac: stores 00092762, 0009273a and 00092712 in turn at ExternalView_ClipRegion (000afd98) and then at CockpitShakeStripRegion (000afb78). ES2's CockpitViewManager_StaticDtor (DBSIM 0042dc40), which counts destructors instead.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager",
+      "verified": {
+        "bytes": "00024c90+50",
+        "sha1": "9778f6372cc4",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00024cc4",
