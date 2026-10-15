@@ -5752,8 +5752,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagPanelCopy",
-      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092cae. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#where-the-module-starts-and-ends"
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092cae.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "0002ad43+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002ad4c",
@@ -6121,8 +6127,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_UnpaintNoOpPanelCopy",
-      "description": "(port), callee-cleaned (RET 4), frameless: three NOPs and ret 4. Slot +0x14 of the ticker's vtable 00092f0a, which Cockpit_LoadPanel (0002c9d8) stores at the ticker's +0x464. ES2's MessagePort_UnpaintNoOp (DBSIM 0043757e). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-message-boxes-vtable"
+      "description": "(port), callee-cleaned (RET 4), frameless: three NOPs and ret 4. Slot +0x14 of the ticker's vtable 00092f0a, which Cockpit_LoadPanel (0002c9d8) stores at the ticker's +0x464. ES2's MessagePort_UnpaintNoOp (DBSIM 0043757e).",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-message-boxes-vtable",
+      "verified": {
+        "bytes": "0002cb41+6",
+        "sha1": "0011b5e9ac52",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002cb47",
@@ -6130,8 +6142,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_GetRectPanelCopy",
-      "description": "(port), callee-cleaned (RET 4), frameless: a NOP, then returns port + 0x43f, the box rect MessagePort_ShiftRect (0002eea0) moves. Slot +0x1c of the ticker's vtable 00092f0a; 0002ed88, slot +0x1c of the pilot channel's vtable 000931b6, holds the same code. ES2's MessagePort_GetRect (DBSIM 00437583), which returns port + 0x4a7. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-message-boxes-vtable"
+      "description": "(port), callee-cleaned (RET 4), frameless: a NOP, then returns port + 0x43f, the box rect MessagePort_ShiftRect (0002eea0) moves. Slot +0x1c of the ticker's vtable 00092f0a; 0002ed88, slot +0x1c of the pilot channel's vtable 000931b6, holds the same code. ES2's MessagePort_GetRect (DBSIM 00437583), which returns port + 0x4a7.",
+      "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-message-boxes-vtable",
+      "verified": {
+        "bytes": "0002cb47+13",
+        "sha1": "7c50ebe31292",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0002cb54",
