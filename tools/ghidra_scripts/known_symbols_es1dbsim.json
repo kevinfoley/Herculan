@@ -8947,8 +8947,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBmBarGraphH_RepaintNoOp",
-      "description": "Frameless, no Ghidra function starts here: a NOP and RET 0xc, (bar, a, b). Slot +8 of LEDBMBarGraphHVtable (0009355e). ES2's LedBmBarGraphH_RepaintNoOp (DBSIM 00439c40).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; capstone at 00032833"
+      "description": "Frameless: a NOP and RET 0xc, (bar, a, b). Slot +8 of LEDBMBarGraphHVtable (0009355e). ES2's LedBmBarGraphH_RepaintNoOp (DBSIM 00439c40).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; capstone at 00032833",
+      "verified": {
+        "bytes": "00032833+4",
+        "sha1": "eb37b2d6a43c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00032838",
@@ -9001,8 +9007,14 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBmBarGraphV_RepaintNoOp",
-      "description": "Frameless, no Ghidra function starts here: three NOPs and RET 0xc, (bar, a, b). Slot +8 of LEDBMBarGraphVVtable (00093576). ES2's LedBmBarGraphV_RepaintNoOp (DBSIM 00439f68).",
-      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; capstone at 00032ced"
+      "description": "Frameless: three NOPs and RET 0xc, (bar, a, b). Slot +8 of LEDBMBarGraphVVtable (00093576). ES2's LedBmBarGraphV_RepaintNoOp (DBSIM 00439f68).",
+      "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; capstone at 00032ced",
+      "verified": {
+        "bytes": "00032ced+6",
+        "sha1": "8cb6c4e97d30",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00032cf4",
