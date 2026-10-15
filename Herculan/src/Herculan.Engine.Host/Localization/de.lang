@@ -113,6 +113,15 @@ settings.languages             Sprachen
 settings.game_language         Spielsprache
 settings.interface_language    Sprache der HERCULAN-Oberfläche
 settings.write_failed          {0} konnte nicht geschrieben werden: {1}
+settings.updates               Updates
+settings.auto_check_updates    Automatisch nach Updates suchen
+settings.check_updates         Nach Updates suchen
+settings.checking_updates      Suche läuft...
+settings.up_to_date            Sie haben die neueste Version, {0}.
+settings.update_check_failed   Die Suche nach Updates ist fehlgeschlagen: {0}
+update.title                   Update verfügbar
+update.message                 HERCULAN {0} ist verfügbar. Sie haben Version {1}.
+update.view_release            Version anzeigen
 controller.title               Controller
 controller.device              Gerät
 controller.no_device           Keines angeschlossen

@@ -5,7 +5,7 @@ The keys the engine adds to retail's. Every retail key works as [`../retail/key-
 | Key | What it does |
 |---|---|
 | `Shift+Esc` | Raise the menu bar: in a mission with the Debug, Settings, Controller, Tweaks and About panels, in the front end with Settings, Controller, Tweaks and About. Press again to back out. It works the same over a mission's pause, objectives and other panels, a movie and the briefing map's opening, and nothing of retail's sees the press: it closes no panel and skips nothing. Retail takes `Shift+Esc` as `Esc`.
-| `Esc` | While the menu bar or one of its panels is up, or the welcome the front end shows on its first start, back out of it, unless a mission's pause, objectives or other panel is up, which takes it as retail's does. Otherwise `Esc` is retail's everywhere.
+| `Esc` | While the menu bar or one of its panels is up, or the welcome the front end shows on its first start, or its notice of a newer release, back out of it, unless a mission's pause, objectives or other panel is up, which takes it as retail's does. Otherwise `Esc` is retail's everywhere.
 | Gamepad Back | Raise the menu bar or back out of it, as `Shift+Esc` does, in a mission and in the front end. While the bar stays up, the highlight goes on its first item ([Gamepad in the menus](#gamepad-in-the-menus)). |
 | Gamepad Start | In a mission, pause and raise the pause menu, or resume from it ([The pause menu](#the-pause-menu)). Retail's own pause panel stays on `P`. |
 | Gamepad left stick click | In a mission, hold for the squad orders ([Squad orders on a gamepad](#squad-orders-on-a-gamepad)). |

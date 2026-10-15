@@ -113,6 +113,15 @@ settings.languages             Languages
 settings.game_language         Game language
 settings.interface_language    HERCULAN UI language
 settings.write_failed          Could not write {0}: {1}
+settings.updates               Updates
+settings.auto_check_updates    Auto check for updates
+settings.check_updates         Check for Updates
+settings.checking_updates      Checking...
+settings.up_to_date            You have the latest release, {0}.
+settings.update_check_failed   Could not check for updates: {0}
+update.title                   Update Available
+update.message                 HERCULAN {0} is available. You have {1}.
+update.view_release            View Release
 controller.title               Controller
 controller.device              Device
 controller.no_device           None connected

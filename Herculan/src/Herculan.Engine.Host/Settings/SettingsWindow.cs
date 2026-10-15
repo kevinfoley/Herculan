@@ -6,6 +6,7 @@ using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Host.Shell;
 using Herculan.Engine.Install;
 using Herculan.Engine.Platform;
+using Herculan.Engine.Updates;
 using ImGuiNET;
 
 namespace Herculan.Engine.Host.Settings;
@@ -30,6 +31,9 @@ namespace Herculan.Engine.Host.Settings;
 /// it also switches the interface to the matching <c>.lang</c> file, when there is one. The interface language is
 /// any <c>.lang</c> file, by the name it gives itself (<see cref="LocalizationTable.GetLanguages"/>), and changes at
 /// once, in a mission too.</para>
+///
+/// <para>Updates holds the "Auto check for updates" setting and a Check for Updates button (<see cref="UpdateChecks"/>),
+/// which work in a mission too.</para>
 /// </summary>
 sealed class SettingsWindow : IDisposable {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
@@ -56,6 +60,9 @@ sealed class SettingsWindow : IDisposable {
 	private IReadOnlyList<RetailInstaller.Language>? _gameLanguages;
 	private readonly InterfaceLanguageCombo _interfaceLanguage;
 
+	// Check for Updates' check, from the press until the window closes.
+	private Task<ReleaseCheckResult>? _updateCheck;
+
 	/// <param name="restartShell">Brings the shell back up on the new folders; null in a mission. It is called
 	/// between this window's <c>Begin</c> and <c>End</c>, so it must not tear down the ImGui context there.</param>
 	public SettingsWindow(HostSession session, Action? restartShell) {
@@ -78,6 +85,7 @@ sealed class SettingsWindow : IDisposable {
 		_prompt = null;
 		_error = null;
 		_open = false;
+		_updateCheck = null;
 		ForgetLanguages();
 		if (_install is { Busy: false }) {
 			_install.Dispose();
@@ -139,6 +147,9 @@ sealed class SettingsWindow : IDisposable {
 			GameLanguageRow(installRoot);
 			_interfaceLanguage.Draw();
 
+			ImGui.SeparatorText(_session.Localization.GetStringOrKey("settings.updates"));
+			UpdatesRows();
+
 			if (_error != null) {
 				ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1f, 0.45f, 0.4f, 1f));
 				ImGui.TextWrapped(_error);
@@ -159,6 +170,7 @@ sealed class SettingsWindow : IDisposable {
 			_prompt = null;
 			_error = null;
 			_open = false;
+			_updateCheck = null;
 			ForgetLanguages();
 		}
 	}
@@ -271,6 +283,51 @@ sealed class SettingsWindow : IDisposable {
 	private void ForgetLanguages() {
 		_gameLanguages = null;
 		_interfaceLanguage.Forget();
+	}
+
+	// The automatic check's setting, which takes effect from the next start, and Check for Updates with what the last
+	// press found: a newer release with a button to its page, this build being the latest, or why the check failed.
+	private void UpdatesRows() {
+		bool automatic = UpdateChecks.Automatic;
+		if (ImGui.Checkbox(_session.Localization.GetStringOrKey("settings.auto_check_updates"), ref automatic)) {
+			UpdateChecks.Automatic = automatic;
+		}
+
+		bool checking = _updateCheck is { IsCompleted: false };
+		ImGui.BeginDisabled(checking);
+		if (ImGui.Button(_session.Localization.GetStringOrKey("settings.check_updates"))) {
+			_updateCheck = UpdateChecks.Check();
+		}
+		ImGui.EndDisabled();
+
+		if (_updateCheck == null) {
+			return;
+		}
+
+		if (checking) {
+			ImGui.TextDisabled(_session.Localization.GetStringOrKey("settings.checking_updates"));
+			return;
+		}
+
+		var result = _updateCheck.Result;
+		switch (result.Status) {
+			case ReleaseCheckStatus.NewerAvailable:
+				ImGui.TextWrapped(string.Format(_session.Localization.GetStringOrKey("update.message"),
+					ReleaseCheck.Display(result.Latest!), ReleaseCheck.Display(UpdateChecks.Current)));
+				if (ImGui.Button(_session.Localization.GetStringOrKey("update.view_release"))) {
+					UpdateChecks.OpenPage(result.Page!);
+				}
+				break;
+			case ReleaseCheckStatus.UpToDate:
+				ImGui.TextWrapped(string.Format(_session.Localization.GetStringOrKey("settings.up_to_date"),
+					ReleaseCheck.Display(UpdateChecks.Current)));
+				break;
+			default:
+				ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1f, 0.45f, 0.4f, 1f));
+				ImGui.TextWrapped(string.Format(_session.Localization.GetStringOrKey("settings.update_check_failed"), result.Error));
+				ImGui.PopStyleColor();
+				break;
+		}
 	}
 
 	private void OpenPrompt(PathPrompt prompt, PromptKind kind) {

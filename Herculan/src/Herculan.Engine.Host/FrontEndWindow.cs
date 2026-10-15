@@ -168,12 +168,14 @@ sealed class FrontEndWindow : IDisposable {
 	public bool MenuBarUp => _menuBar.Up;
 
 	/// <summary>
-	/// Raises the first start's <see cref="WelcomeDialog"/>, unless it has been dismissed before or this run is a
-	/// <c>--screenshot</c> capture, which draws no menu bar windows.
+	/// Raises the first start's <see cref="WelcomeDialog"/>, unless it has been dismissed before, and starts the
+	/// automatic update check (<see cref="UpdateChecks.StartAutomatic"/>), neither in a <c>--screenshot</c> capture,
+	/// which draws no menu bar windows.
 	/// </summary>
 	public void OfferWelcome() {
 		if (_screenshotPath == null) {
 			_menuBar.Welcome.Offer();
+			UpdateChecks.StartAutomatic();
 		}
 	}
 
@@ -196,13 +198,20 @@ sealed class FrontEndWindow : IDisposable {
 		}
 	}
 
-	/// <summary>The menu bar and its windows over whatever the frame drew, never in a <c>--screenshot</c> capture.</summary>
+	/// <summary>
+	/// The menu bar and its windows over whatever the frame drew, never in a <c>--screenshot</c> capture; and the update
+	/// notice, once the automatic check has found a newer release and the welcome is down.
+	/// </summary>
 	public void DrawMenuBar() {
 		if (_imgui == null) {
 			return;
 		}
 
 		if (_screenshotPath == null) {
+			if (!_menuBar.Welcome.IsOpen && UpdateChecks.TakeNews() is { } news) {
+				_menuBar.Update.Offer(news);
+			}
+
 			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0, _window.FullScreen);
 		}
 

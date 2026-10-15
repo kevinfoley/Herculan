@@ -113,6 +113,15 @@ settings.languages             Langues
 settings.game_language         Langue du jeu
 settings.interface_language    Langue de l'interface HERCULAN
 settings.write_failed          Impossible d'écrire {0} : {1}
+settings.updates               Mises à jour
+settings.auto_check_updates    Rechercher les mises à jour automatiquement
+settings.check_updates         Rechercher des mises à jour
+settings.checking_updates      Recherche en cours...
+settings.up_to_date            Vous avez la dernière version, {0}.
+settings.update_check_failed   Impossible de rechercher des mises à jour : {0}
+update.title                   Mise à jour disponible
+update.message                 HERCULAN {0} est disponible. Vous avez la version {1}.
+update.view_release            Voir la version
 controller.title               Manette
 controller.device              Périphérique
 controller.no_device           Aucun branché

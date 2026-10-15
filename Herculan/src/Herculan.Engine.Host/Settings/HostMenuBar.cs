@@ -10,7 +10,7 @@ namespace Herculan.Engine.Host.Settings;
 /// The menu bar [Shift+Esc] raises over the shell and over a mission, HERCULAN's own and not retail's, and the
 /// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Tweaks and About; the
 /// Editor item, which leaves the shell for the mission editor and is greyed over a mission; and the
-/// first start's <see cref="WelcomeDialog"/>, which the shell raises without the bar. Hidden until <see cref="Show"/>, and never
+/// first start's <see cref="WelcomeDialog"/> and the <see cref="UpdateDialog"/>, which the shell raises without the bar. Hidden until <see cref="Show"/>, and never
 /// drawn into a <c>--screenshot</c> capture. Plain [Esc] is retail's in a mission, where it pans to and from the
 /// Heads-Down Display, so which key reaches the bar is each host's to decide: over a mission
 /// <see cref="SimulatorFrame"/>, over the shell <c>KeyboardRouting</c>.
@@ -38,6 +38,7 @@ sealed class HostMenuBar : IEscapeMenu {
 		_debug = debug;
 		About = new AboutWindow(localization);
 		Welcome = new WelcomeDialog(localization, () => Tweaks.IsOpen = true);
+		Update = new UpdateDialog(localization);
 	}
 
 	public TweaksMenu Tweaks { get; }
@@ -50,11 +51,14 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	public WelcomeDialog Welcome { get; }
 
+	public UpdateDialog Update { get; }
+
 	/// <summary>Whether the bar is up.</summary>
 	public bool Visible { get; private set; }
 
-	/// <summary>Whether one of the bar's panels, or the welcome, is up.</summary>
-	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || Controller.IsOpen || About.IsOpen || Welcome.IsOpen || _debug?.IsOpen == true;
+	/// <summary>Whether one of the bar's panels, or the welcome or the update notice, is up.</summary>
+	public bool PanelOpen => Tweaks.IsOpen || Settings.IsOpen || Controller.IsOpen || About.IsOpen || Welcome.IsOpen || Update.IsOpen
+		|| _debug?.IsOpen == true;
 
 	/// <summary>Whether the bar or one of its panels is up.</summary>
 	public bool Up => Visible || PanelOpen;
@@ -77,7 +81,7 @@ sealed class HostMenuBar : IEscapeMenu {
 	/// <summary>
 	/// [Esc]'s step back: takes down whichever panel is up, else hides the bar. Returns false when neither
 	/// was up, leaving the key to the host. Tweaks goes through its Cancel, so an edit made but not saved is
-	/// discarded rather than left applied but unpersisted. The welcome goes as its OK does.
+	/// discarded rather than left applied but unpersisted. The welcome goes as its OK does, the update notice as its Close does.
 	/// </summary>
 	public bool BackOut() {
 		if (PanelOpen) {
@@ -93,6 +97,7 @@ sealed class HostMenuBar : IEscapeMenu {
 			if (Welcome.IsOpen) {
 				Welcome.Dismiss();
 			}
+			Update.Dismiss();
 			Settings.Close();
 			About.IsOpen = false;
 			return true;
@@ -170,6 +175,7 @@ sealed class HostMenuBar : IEscapeMenu {
 		Controller.Draw(_centring.Condition);
 		About.Draw(_centring.Condition);
 		Welcome.Draw(_centring.Condition);
+		Update.Draw(_centring.Condition);
 		_highlightWasShowing = ImGui.GetIO().NavVisible;
 	}
 }
