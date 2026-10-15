@@ -6,7 +6,7 @@
 
 `terrain.cpp`'s code is `0002019c`–`00021d37` and its initialised data `00092422`–`00092575`. Both open, as `world.cpp`'s do ([where `world.cpp` starts](world.md#where-the-module-starts)), with a copy of `ConfigPart`'s destructors and tables ([module copies](../formats/compiler.md#vtables)): the four functions `0002019c`, `000201c4`, `00020203` and `0002020c`, each identical after normalisation to `world.cpp`'s, and the tables `00092422` and `00092456`. `Terrain_LoadZoneShapes` (`00020238`), which asserts `terrain.cpp`, follows the run. The data then holds the theater names and `Terrain_TheaterNames` (`000924a0`), `zoneXXXX`, the zone shape vtable `000924be`, the source path at `000924da`, `dgs`, the module's copies of `TS_OBJ`'s, `MAT_OBJ`'s and `DRAWABLE`'s vtables (`000924fa`, `0009251a`, `0009253a`), and the object list's globals from `00092558` ([Globals](#globals)).
 
-The next run is `00021d38`, `00021d60`, `00021d9f` and `00021da8`, each identical after normalisation to `world.cpp`'s, with its tables at `00092576` and `000925aa`. The object file it opens holds `00021dd4`, which loads the `cockpit` palette and calls `CockpitViewManager_LoadViews`, and then `00022184`, whose asserts name `mechview.cpp`.
+The next run, `00021d38`, `00021d60`, `00021d9f` and `00021da8`, each identical after normalisation to `world.cpp`'s, with its tables at `00092576` and `000925aa`, opens `mechview.cpp` ([where `mechview.cpp` starts and ends](cockpit-views.md#where-the-module-starts-and-ends)).
 
 | Range | What | Where |
 |---|---|---|

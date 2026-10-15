@@ -3767,12 +3767,81 @@
       }
     },
     {
+      "address": "00021d38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorMechviewCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorTerrainCopy (0002019c), the first of the four functions that open mechview.cpp. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "00021d38+40",
+        "sha1": "ed7dacdfef94",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021d60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorMechviewCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of mechview.cpp's copy 00092576 of ConfigPart's vtable: the code of ConfigPart_DtorTerrainCopy (000201c4) storing 00092576 and TSPartBase's copy 000925aa.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "00021d60+63",
+        "sha1": "84773be36ea2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021d9f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagMechviewCopy",
+      "description": "(part), callee-cleaned (RET 4), frameless: returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00092576. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#where-the-module-starts-and-ends"
+    },
+    {
+      "address": "00021da8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorMechviewCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000925aa (entered at its padding 00021da5): the code of TSPartBase_DtorTerrainCopy (0002020c) storing 000925aa.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#where-the-module-starts-and-ends",
+      "verified": {
+        "bytes": "00021da8+42",
+        "sha1": "237d035e4425",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00021dd4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitViewManager_Ctor",
+      "description": "(manager, machine) in stack order, callee-cleaned: allocates the 0x33-byte manager with operator_new (000015a4) when given none and returns it. While CockpitPaletteSingleton (000925f0) is 0 it loads it with Palette_LoadDpl (00063584)(ResourcePath_BuildFolderName (00060698)(the folder 000980d0 names, cockpit)) and sets ExternalView_DefaultRect (000afb24) to {0, 30, 319, 170, -160, -75}, copying it to ExternalView_Rect (000afb3c). Takes the scheme word +0x23 and the 8-character name +0x29 (strncpy (0006745c), +0x31 = 0) from the machine's type record +0x188, its +0x6c and +0x58, or from CockpitOverride_Index (000925f4) and CockpitOverride_Name (000925f8) when that name is set; stores the machine at +0x25; calls CockpitViewManager_LoadViews (00021fb0) by its padding entry; sets +0x14 to -1, +0x18 to 0 and the word +0x19 to 0; gives CockpitShakeStripRegion (000afb78) the rect {0, 200, 320, 210} and CockpitShakeStripPixels (000afb90) Region_PixelCount (00066609) bytes from operator_new; sets +0x32 to 0. It leaves the current view +0x10 as it finds it. ES2's CockpitViewManager_Ctor (DBSIM 00429660), which sets the current view to -1 and shifts its rects by the video mode. es2_xref finds one call, from Sim_StartMission (0005a9dc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager",
+      "verified": {
+        "bytes": "00021dd4+440",
+        "sha1": "b1c124292f60",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00021f8c",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_Publish",
-      "description": "(manager), frameless, callee-cleaned: stores its argument in CockpitViewManagerPublished (000bc5a0). Sim_StartMission (0005a9dc) passes the dword at 000b5b60. ES2's CockpitViewManager_Publish (DBSIM 00429810).",
+      "description": "(manager), frameless, callee-cleaned: stores its argument in CockpitViewManagerPublished (000bc5a0). Sim_StartMission (0005a9dc) passes the dword at CockpitViewManagerInstance (000b5b60). ES2's CockpitViewManager_Publish (DBSIM 00429810).",
       "source": "ES1DBSIM disassembly at 00021f8c",
       "verified": {
         "bytes": "00021f8c+12",
@@ -3817,11 +3886,71 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_LoadViews",
-      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array 000afaa4, whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls 00022184(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores 0002ae5c(0, +0x25) at +0x1b and calls Cockpit_LoadPanel (0002c9d8) with it and name; with the scheme word +0x23, Palette_InstallRange (00027e98)s 16 colours at index 0x20 from the dword +8 of 000925f0 plus scheme x 0x80, 16 at 0x40 from 0x40 bytes further, and one at 0x40 from Palette_GetEntry (00027f54) of the word 000925dc[scheme]; calls 00027f74, and the slot +0x1c of 000925f0 with 3 when it is set; sets 000afb94 to 1 and 000afb98 to 000afd9c, copies the dwords 000afb3c-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from 00021dd4, through the padding before the prologue.",
+      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array CockpitVueRecords (000afaa4), whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls CockpitCanopy_LoadViewBitmap (00022184)(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores 0002ae5c(0, +0x25) at +0x1b and calls Cockpit_LoadPanel (0002c9d8) with it and name; with the scheme word +0x23, Palette_InstallRange (00027e98)s 16 colours at index 0x20 from the dword +8 of CockpitPaletteSingleton (000925f0) plus scheme x 0x80, 16 at 0x40 from 0x40 bytes further, and one at 0x40 from Palette_GetEntry (00027f54) of the word 000925dc[scheme]; calls 00027f74, and the slot +0x1c of CockpitPaletteSingleton (000925f0) with 3 when it is set; sets ExternalView_ClipBlock (000afb94) to 1 and 000afb98 to 000afd9c, copies the dwords ExternalView_Rect (000afb3c)-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from CockpitViewManager_Ctor (00021dd4), through the padding before the prologue.",
       "source": "Herculan/docs/es1/formats/hd-ed-clip-regions.md#which-files",
       "verified": {
         "bytes": "00021fb0+465",
         "sha1": "f607fb7bcc52",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022184",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitCanopy_LoadViewBitmap",
+      "description": "(manager, view) in stack order, callee-cleaned: for a view other than 4 whose slot of +0x08 is empty, writes the file number (the view, less 1 above 2) with ltoa (00064720) over the third character of the string dba (00092674), opens db<n>\\<the name +0x29> with VolRStream_CtorFromPath (000567cc), asserting at severity 5 with Assert_Report (00057298) (mechview.cpp line 0x103) when it does not open, stores ClassItem_LoadResource (000551e0)(0, stream) in slot view and destroys the stream with VolRStream_Dtor (00056824)(stream, 2); after file 2 it copies the slot into slot 3. ES2's CockpitCanopy_LoadViewBitmap (DBSIM 00429c2c), which also takes hb<n> in panel mode 3 and has a layout-mode branch. es2_xref finds calls from CockpitViewManager_LoadViews (00021fb0), by the padding entry 00022181, and CockpitView_SetView (00022558).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#loading-and-freeing-the-canopy-art",
+      "verified": {
+        "bytes": "00022184+229",
+        "sha1": "eb3dfbe65c4d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002226c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitCanopy_FreeViewBitmap",
+      "description": "(manager, view) in stack order, callee-cleaned: for views 0, 1 and 2 destroys slot view of +0x08 with GLBitmapArray_Dtor (000673c8)(array, 3) and clears it, and slot 3 as well for view 2; other views fall through the switch to the return. ES2's CockpitCanopy_FreeViewBitmap (DBSIM 00429de4) without its layout-mode branch for view 0. es2_xref finds one call, from CockpitView_SetView (00022558).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#loading-and-freeing-the-canopy-art",
+      "verified": {
+        "bytes": "0002226c+82",
+        "sha1": "9758bb163bfb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000222c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_ApplyViewState",
+      "description": "(manager, view) in stack order, callee-cleaned: returns at once when view is the current view +0x10 or above 4. With CockpitViewShakeArmed (000925ec) set it calls CockpitView_ClearShake (00024750) by its padding entry and sets CockpitShakeReseedAfterSlide (000925ed). View 4: clears CockpitShakeReseedAfterSlide (000925ed) and, unless in view 4, saves the current view at +0x1f, copies ExternalView_ClipBlock (000afb94) into the installed render context's (000bdbda) clip block, sets its clip mode +0x208 to 2, copies ExternalView_Rect (000afb3c)'s six values to +0x210..+0x224, sets the current view to 4, calls CockpitView_DisableWidgets (0002b2d0)(+0x1b), zeroes CockpitViewCanvasOrigin (000afa9c) and calls View_FillOutside3dRect (00024b18). Other views: from view 4 CockpitView_EnableWidgets (0002b2ec)(+0x1b); from view 2 or 3 CockpitWidgets_TranslateForView (0002ced0) and MessagePort_ShiftRect (0002eea0) on CockpitView_GetSquadMessagePort (0002d614)'s port by that view's canvas origin; from any other, for a new view other than 2 and 3, sets the draw page's (000bdd28 +0x3c) origin to its page origin +0x48 plus the new .VUE record's +0x18/+0x1c through the driver's routine 0009df10, then moves the widgets and the port's box by the old origin ((0, 0) for view -1) less the new. Then copies the view's 0x204-byte clip block into the context, sets clip mode 2, copies the record's six values to +0x210..+0x224, stores the canvas origin in CockpitViewCanvasOrigin and adds it to +0x220/+0x224. ES2's CockpitView_ApplyViewState (DBSIM 00429e60), which also points ActiveScanlineClipSpans and moves the scroll window. es2_xref finds calls from CockpitView_SetView (00022558) and CockpitView_ProcessViewCommand (000226f0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_applyviewstate-000222c0",
+      "verified": {
+        "bytes": "000222c0+662",
+        "sha1": "abb3d238abef",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022558",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_SetView",
+      "description": "(manager, view) in stack order, callee-cleaned: for a view below 5, CockpitView_ApplyViewState (000222c0); for any view but 4, with g_LowMemory (000bda98) set CockpitCanopy_LoadViewBitmap (00022184) first and CockpitCanopy_FreeViewBitmap (0002226c) last, Bitmap_Blit (00067048) of frame 0 of the view's bitmap array at (0, 0) with flags 2 for view 3 and 0 otherwise, the installed render context's +0x208 set to 0 for the blit, and CockpitView_InvalidateWidgets (0002b4a0)(+0x1b); stores the view at +0x10. ES2's CockpitView_SetView (DBSIM 0042a1f0) without its layout-mode branches. es2_xref finds calls from CockpitView_ProcessViewCommand (000226f0), four, 00057820, two, and Sim_StartMission (0005a9dc), two.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_setview-00022558",
+      "verified": {
+        "bytes": "00022558+219",
+        "sha1": "5353f1cbd3d1",
         "scope": "body",
         "via": "decompile"
       }
@@ -3842,12 +3971,87 @@
       }
     },
     {
+      "address": "000226f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_ProcessViewCommand",
+      "description": "(manager), callee-cleaned: CockpitViewManager_FlushBorderFill (00024af8) when +0x32 is set; while the word +0x19 is not 0 takes 1 from it and returns. With p the display 000bdd28's +0x88 it returns, leaving the command latched, for command 4 unless p is 0, 5 unless p is 2, 6 from view 3 unless p is 0 and 6 from view 2 unless p is 2. Then Vga_WaitVerticalRetrace (000523a4), 000bda96 = 0, and while +0x18 is clear stages the command +0x14 and sets +0x18: 0 and 1 call slot +0x14 of the squad message port (CockpitView_GetSquadMessagePort (0002d614), its vtable at +0x464) when the port's byte +0x436 is set, then CockpitView_ApplyViewState (000222c0)(current view + 1 or - 1); 2 ApplyViewState(4); 3 CockpitView_SetView (00022558)(+0x1f), 4 SetView(2), 5 SetView(3) and 6 SetView(0), each putting the current view +0x10 back, 6 then CockpitView_EnableWidgets (0002b2ec)(+0x1b); for 4, 5 and 6 adds (0, 0, 0) to the int16 angles at +0x44 of View_GetActiveObject (00059280)'s object. ES2's CockpitView_ProcessViewCommand (DBSIM 0042a4c4) on its paged path. es2_xref finds one call, from Sim_EndFrame (00059b40).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_processviewcommand-000226f0",
+      "verified": {
+        "bytes": "000226f0+532",
+        "sha1": "0c17953b363a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00022904",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_StepViewTransition",
+      "description": "(manager), callee-cleaned: runs the command +0x14 staged with +0x18 set, and returns the current view +0x10. With v the display 000bdd28's +0x88 and d its +0x8c, it sets 000bda96 to 0; every command but 2 calls slot +0x18 of CockpitViewInstance (00092d1c)'s +0x207 object; 0, 1 and 3 copy a rect from d to v with Region_CopyBetweenPages (00066914), the clip block's +0x208/+0x20c at 0. It clears +0x18, then through the driver's routine 0009df10 moves v's origin: 0 down 5 rows a step by the next .VUE record's canvas origin y less the current one's, then Cockpit_UseOffForwardCursor (0002dfd4), +0x10 + 1 and SimInput_SetEnabled (0004d82c)(0); 1 up the same way, then Cockpit_UseForwardCursor (0002e060), +0x10 - 1 and SimInput_SetEnabled(1); 2 hides the cursor (0009df50), 00094c5b = 0, +0x10 = 4 and +0x32 = 1; 3 sets 00094c5b, calls Mouse_SetPosition (00055ab8) with the point 00066a2e reads when 0004c634 returns non-zero, shows the cursor (0009df4c), calls the squad port's slot +0x18 and sets +0x10 from +0x1f; 4, 5 and 6 move x 10 columns a step, then Cockpit_UseOffForwardCursor, show d (0009df1c), draw on v, swap +0x88 and +0x8c, put v's origin back on its page's and copy {0, 0, 319, 199} from d to v, and set +0x10 to 2, 3 or 0. While the squad port's (CockpitView_GetSquadMessagePort (0002d614)) byte +0x436 is set a slide calls its slots +0x14 and +0x18 around each step and MessagePort_CopyBoxBetweenPages (0002fcd4)(port, 0) after; 00098d96 is 0 during a slide and 1 after. Then +0x14 = -1, the word +0x19 = 2, and CockpitView_SetShakeBand (000243d4)(10) by its padding entry when CockpitShakeReseedAfterSlide (000925ed) is set. ES2's CockpitView_StepViewTransition (DBSIM 0042a9c0) on its paged path, with steps of 10 rows and 0x14 columns. es2_xref finds one call, from Sim_EndFrame (00059b40).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904",
+      "verified": {
+        "bytes": "00022904+6673",
+        "sha1": "790b80fb5b7a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024318",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorMechviewCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 00092712, the second of mechview.cpp's four copies of GLRectangleRegion's vtables (entered at its padding 00024315): with the object non-null stores 000926ee at +0 and deletes the object with operator_delete (000015f8) when bit 0 of flags is set. Identical after normalisation to 00079950, the slot +0x1c of the library's 0009f27e.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#functions",
+      "verified": {
+        "bytes": "00024318+34",
+        "sha1": "5d517238a487",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002433c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorMechviewCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0009273a (entered at its padding 0002433a): with the object non-null stores 0009273a and then 00092712 at +0 and deletes the object with operator_delete (000015f8) when bit 0 of flags is set. Identical after normalisation to 00079974, the slot +0x1c of the library's 0009f2a6.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#functions",
+      "verified": {
+        "bytes": "0002433c+40",
+        "sha1": "5de697e2bac3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024364",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorMechviewCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 00092762: with the object non-null stores 00092762, 0009273a and 00092712 in turn at +0 and deletes the object with operator_delete (000015f8) when bit 0 of flags is set. Identical after normalisation to GLRectangleRegion_Dtor (0007999c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#functions",
+      "verified": {
+        "bytes": "00024364+46",
+        "sha1": "ef42a7f08fa6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00024394",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "CockpitChassis_SelectByName",
-      "description": "(name) callee-cleaned: compares name with stricmp against the eight chassis names at 00092644 (ROADRUNNER, GUNSLINGER, RAPTOR, TOMAHAWK, PATRIOT, PANTHER, HERCULES, COLOSSUS) and for the first that matches stores its index at the word 000925f4 and name's address at 000925f8, the cockpit chassis CockpitClock_Ctor and 00021dd4 take in place of the HERC's own. es2_xref finds one call, from 00058e74's case for the command-line option -C, passing the text after the C.",
+      "description": "(name) callee-cleaned: compares name with stricmp against the eight chassis names at 00092644 (ROADRUNNER, GUNSLINGER, RAPTOR, TOMAHAWK, PATRIOT, PANTHER, HERCULES, COLOSSUS) and for the first that matches stores its index at the word CockpitOverride_Index (000925f4) and name's address at CockpitOverride_Name (000925f8), the cockpit chassis CockpitClock_Ctor and CockpitViewManager_Ctor (00021dd4) take in place of the HERC's own. es2_xref finds one call, from 00058e74's case for the command-line option -C, passing the text after the C.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
       "verified": {
         "bytes": "00024394+62",
@@ -3857,16 +4061,169 @@
       }
     },
     {
+      "address": "000243d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_SetShakeBand",
+      "description": "(amplitude), callee-cleaned: returns at once when CockpitViewManager_Published (00021f98)'s manager is in view 4 (+0x10) or has +0x18 set. CockpitShakeRestOffset (000afb54) and CockpitShakeOffset (000afb5c) take CockpitViewCanvasOrigin (000afa9c); CockpitShakeBand (000afb64) becomes {y - amplitude, y} in view 1 and {y, y + amplitude} in views 0, 2 and 3. In views 2 and 3 it zeroes both offsets' x and, with the installed render context's (000bdbda) +0x208/+0x20c at 0, saves CockpitShakeStripRegion (000afb78) into CockpitShakeStripPixels (000afb90) with Region_Save (000665d6) and fills the region's rect with Raster_FillRect (00053d9c) in colour 0x3f on the draw page as it is and then on the display's +0x88, leaving +0x8c the draw page. Zeroes CockpitShakeTotal (000afb6c) and sets CockpitViewShakeArmed (000925ec). ES2's CockpitView_SetShakeBand (DBSIM 0042d2f8), which fills once with COLORS.DAT id 19. es2_xref finds calls from CockpitView_StepViewTransition (00022904) by the padding entry 000243d2, 0002e17c, 00057ffc and 00058414.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
+      "verified": {
+        "bytes": "000243d4+400",
+        "sha1": "d0bd51110225",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024564",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_StepShake",
+      "description": "(step), callee-cleaned: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, moves CockpitShakeOffset (000afb5c)'s y by up to step toward the farther limit of CockpitShakeBand (000afb64), sets the origins of the display's pages +0x8c and +0x88 to their page origins plus CockpitShakeOffset through the driver's routine 0009df10, moves every region of the current view's clip block by the step (a rect region's rows +0xc and +0x14, a span region's first row), adds the step to CockpitShakeTotal (000afb6c) and moves the cockpit's widgets by (0, -step) with CockpitWidgets_TranslateForView (0002ced0). ES2's CockpitView_StepShake (DBSIM 0042d4a8), which moves one page, a rect's last row, the span table and the context's rect. es2_xref finds calls from 0002e1d8, 00057ffc and 00058414.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
+      "verified": {
+        "bytes": "00024564+491",
+        "sha1": "a9238bf87205",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024750",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_ClearShake",
+      "description": "No arguments: while CockpitViewShakeArmed (000925ec) is set and the manager is not in view 4, sets the origins of the display's pages +0x8c and +0x88 to their page origins plus CockpitShakeRestOffset (000afb54), moves the current view's clip regions back by CockpitShakeTotal (000afb6c), in views 2 and 3 puts CockpitShakeStripRegion (000afb78) back with Region_Restore (0006641f) on the draw page and on +0x88 (leaving +0x8c the draw page), moves the widgets by (0, total) with CockpitWidgets_TranslateForView (0002ced0), and clears the total and the armed byte. ES2's CockpitView_ClearShake (DBSIM 0042d624). es2_xref finds calls from CockpitView_ApplyViewState (000222c0) by the padding entry 0002474f, 0002e1d8 and 00057ffc.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake",
+      "verified": {
+        "bytes": "00024750+643",
+        "sha1": "e8ebfb11e6f1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000249d4",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_GetShakeOffset",
-      "description": "No arguments: sets the byte 000afdb0 to 1 and returns a pointer to the static int pair at 000afdb4, written as {0, (int)(short)000afb6c}. Sim_RenderFrame adds the pair into the render context's +0x220/+0x224 for the frame and takes it out after. ES2's CockpitView_GetShakeOffset (DBSIM 0042d870).",
+      "description": "No arguments: sets the byte 000afdb0 to 1 and returns a pointer to the static int pair at 000afdb4, written as {0, (int)(short)CockpitShakeTotal (000afb6c)}. Sim_RenderFrame adds the pair into the render context's +0x220/+0x224 for the frame and takes it out after. ES2's CockpitView_GetShakeOffset (DBSIM 0042d870).",
       "source": "ES1DBSIM decompile at 000249d4, against ES2's CockpitView_GetShakeOffset",
       "verified": {
         "bytes": "000249d4+43",
         "sha1": "abaa4ec2e586",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024a00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ExternalView_SetRect",
+      "description": "(offset, rect) in stack order, callee-cleaned: stores rect's four ints at ExternalView_Rect (000afb3c) and at 000afda0 and offset's two at 000afb4c; when CockpitViewManager_Published (00021f98) answers a manager in view 4 (+0x10), also writes the six to the installed render context's (000bdbda) +0x210..+0x224. ES2's ExternalView_SetRect (DBSIM 0042d89c). es2_xref finds one call, from 00057820.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-external-view",
+      "verified": {
+        "bytes": "00024a00+124",
+        "sha1": "9f193130c84e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024a7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ExternalView_ResetRect",
+      "description": "No arguments: ExternalView_SetRect (00024a00)'s stores with ExternalView_DefaultRect (000afb24) as the source. ES2's ExternalView_ResetRect (DBSIM 0042d944). es2_xref finds one call, from 00057820.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-external-view",
+      "verified": {
+        "bytes": "00024a7c+124",
+        "sha1": "c6180ee3e4b3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024af8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitViewManager_FlushBorderFill",
+      "description": "(manager), callee-cleaned: View_FillOutside3dRect (00024b18) when the current view +0x10 is 4, then clears the byte +0x32. ES2's CockpitViewManager_FlushBorderFill (DBSIM 0042d9e8). es2_xref finds one call, from CockpitView_ProcessViewCommand (000226f0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_processviewcommand-000226f0",
+      "verified": {
+        "bytes": "00024af8+32",
+        "sha1": "f12c0063e824",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024b18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "View_FillOutside3dRect",
+      "description": "(manager), callee-cleaned, its argument unread: with the brush {0, 0x3f} at the installed render context's (000bdbda) +0x22c and the context's +0x208/+0x20c at 0, fills with Raster_FillRect (00053d9c), each when not empty, the bands around ExternalView_Rect (000afb3c) on a 320 x 200 screen: {0, 0, 319, top - 1}, {0, bottom + 1, 319, 199}, {0, top, left - 1, bottom} and {right + 1, top, 319, bottom}; then puts +0x208/+0x20c back. ES2's View_FillOutside3dRect (DBSIM 0042da08), which takes COLORS.DAT id 19 and the viewport's size. es2_xref finds calls from CockpitView_ApplyViewState (000222c0), CockpitViewManager_FlushBorderFill (00024af8) and 00057820, two.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-external-view",
+      "verified": {
+        "bytes": "00024b18+264",
+        "sha1": "f089b42820ad",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024c20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ExternalView_GetRect",
+      "description": "Frameless, no arguments: returns the address of ExternalView_Rect (000afb3c). ES2's ExternalView_GetRect (DBSIM 0042db10). es2_xref finds one call, from 00058b68, and the address stored at 000ac5ac.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-external-view",
+      "verified": {
+        "bytes": "00024c20+6",
+        "sha1": "2c1410442ad4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00024c28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitViewManager_StaticInit",
+      "description": "No arguments, no frame: mechview.cpp's static initialiser, the dword at 000adc1c among the static constructors: __vec_ctor (000610cb)(CockpitVueRecord_ElementCtor (00024cc4) by its padding entry 00024cc2, 4, 0x20, CockpitVueRecords (000afaa4)) in stack order, then stores the vtables 000926ee, 00092712, 0009273a and 00092762 in turn at CockpitShakeStripRegion (000afb78) and at ExternalView_ClipRegion (000afd98), and 0 at each one's +4. ES2's CockpitViewManager_StaticInit (DBSIM 0042db40). No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
+    },
+    {
+      "address": "00024c90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitViewManager_StaticDtor",
+      "description": "No arguments, no frame: mechview.cpp's exit routine, the dword at 000adcac: stores 00092762, 0009273a and 00092712 in turn at ExternalView_ClipRegion (000afd98) and then at CockpitShakeStripRegion (000afb78). ES2's CockpitViewManager_StaticDtor (DBSIM 0042dc40), which counts destructors instead. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
+    },
+    {
+      "address": "00024cc4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitVueRecord_ElementCtor",
+      "description": "(record), callee-cleaned: allocates 0x20 bytes with operator_new (000015a4) when given none, returning 0 when that fails; runs its members' inlined constructors, which store nothing, and returns the record. ES2's CockpitVueRecord_ElementCtor (DBSIM 0042dc88). es2_xref finds its padding entry 00024cc2 stored at 00024c34, in CockpitViewManager_StaticInit (00024c28).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager",
+      "verified": {
+        "bytes": "00024cc4+128",
+        "sha1": "0526b24a3fbb",
         "scope": "body",
         "via": "decompile"
       }
@@ -3884,6 +4241,66 @@
         "sha1": "e764e490ea11",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00024f98",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorClipRegionsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 000927f6 (entered at its padding 00024f96), the clip-region object file's copy: the code of GLBase_DtorMechviewCopy (00024318) storing 000927d2.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#functions",
+      "verified": {
+        "bytes": "00024f98+34",
+        "sha1": "eb5a9dcfc767",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024fbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorClipRegionsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0009281e (entered at its padding 00024fba): the code of GLRegion_DtorMechviewCopy (0002433c) storing 0009281e and 000927f6.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#functions",
+      "verified": {
+        "bytes": "00024fbc+40",
+        "sha1": "dbedd1399885",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024fe4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorClipRegionsCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 00092846, the vtable CockpitClipRegions_Load (00024d44) gives a rect region: the code of GLRectangleRegion_DtorMechviewCopy (00024364) storing 00092846, 0009281e and 000927f6.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#functions",
+      "verified": {
+        "bytes": "00024fe4+46",
+        "sha1": "77805921d6ac",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00025014",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClipRegions_AppendRectAboveScreen",
+      "description": "(block), callee-cleaned: allocates a 0x18-byte rect region with operator_new (000015a4), its inlined constructors storing the vtables 000927d2, 000927f6, 0009281e and 00092846 in turn and the type 0 at +4; appends its +4 to the block's list at index +0, raising the count, and sets its rect +8..+0x14 to {0, -100, 319, -1}. es2_xref finds no branch or stored pointer to it or its padding.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#functions",
+      "verified": {
+        "bytes": "00025014+276",
+        "sha1": "d761447ca0c7",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -3907,7 +4324,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Scene_DrawTerrainPass",
-      "description": "(camera), callee-cleaned: the backdrop. Hzline_Draw (00026264)(g_TheaterHzline, the canvas origin 000afa9c, camera) when the hzline exists, World_Clouds' slot +0x34 (camera) when it exists, PointScatter_Update (00026e8c)(World_PointScatter, camera) when it exists, then Palette_BlendRangeByPitch (00025fe4)(camera). Sim_RenderFrame calls it before ObjList_DrawFrameObjects. ES2's Scene_DrawTerrainPass (DBSIM 0042e700), which also sets the hzline's one-colour flag, projects the terrain's far edge and draws the terrain.",
+      "description": "(camera), callee-cleaned: the backdrop. Hzline_Draw (00026264)(g_TheaterHzline, the canvas origin CockpitViewCanvasOrigin (000afa9c), camera) when the hzline exists, World_Clouds' slot +0x34 (camera) when it exists, PointScatter_Update (00026e8c)(World_PointScatter, camera) when it exists, then Palette_BlendRangeByPitch (00025fe4)(camera). Sim_RenderFrame calls it before ObjList_DrawFrameObjects. ES2's Scene_DrawTerrainPass (DBSIM 0042e700), which also sets the hzline's one-colour flag, projects the terrain's far edge and draws the terrain.",
       "source": "Herculan/docs/es1/rendering/ground-and-sky.md#the-frame",
       "verified": {
         "bytes": "00025b68+94",
@@ -4727,6 +5144,51 @@
       }
     },
     {
+      "address": "0002b2d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_DisableWidgets",
+      "description": "(cockpit), callee-cleaned: sets the widgets-off byte +0x20b to 1 when it is 0. ES2's CockpitView_DisableWidgets (DBSIM 00431500), whose byte is +0x20f.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0002b2d0+28",
+        "sha1": "90c302bb629d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002b2ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_EnableWidgets",
+      "description": "(cockpit), callee-cleaned: clears the widgets-off byte +0x20b when it is set. ES2's CockpitView_EnableWidgets (DBSIM 00431518), whose byte is +0x20f.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0002b2ec+28",
+        "sha1": "40f75d3c1982",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002b4a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_InvalidateWidgets",
+      "description": "(cockpit), callee-cleaned: unless the widgets-off byte +0x20b is set, calls slot +8 of the vtable each widget holds at its +0x76, for each non-null widget pointer: the nine at +0x70, then +0x1d8, +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1e9 and +0x1f5 between Cockpit_PushCanvasContext (0002b00c) and Cockpit_PopRenderContext (0002b03c), then +0x1f1 and +0x1f9; last calls Cockpit_RunTtmScripts (0002e0ec)(cockpit). ES2's CockpitView_InvalidateWidgets (DBSIM 004316c0), which calls slot +4 of ten widgets at +0x70, has no +0x1d8 or +0x1dd and runs no script.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_setview-00022558",
+      "verified": {
+        "bytes": "0002b4a0+289",
+        "sha1": "706d229c44b7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0002c9d8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -4754,6 +5216,21 @@
         "sha1": "8369a882ed0b",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0002ced0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitWidgets_TranslateForView",
+      "description": "(cockpit, delta) in stack order, callee-cleaned: calls 0004433c with the root widget (the cockpit's +0) and delta's two values pushed by value, subtracts delta from the dwords +0x220 and +0x224 of the cockpit's render context +4, and calls 0002db1c(cockpit, delta) by its padding entry 0002db1b when the byte +0x23a is set. ES2's CockpitWidgets_TranslateForView (DBSIM 0043271c), which tests +0x23e and also offsets the widgets of its list at +0x246.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0002ced0+88",
+        "sha1": "77e709518f8c",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -4787,16 +5264,61 @@
       }
     },
     {
+      "address": "0002dfd4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_UseOffForwardCursor",
+      "description": "No arguments: with c CockpitViewInstance (00092d1c), stores c + 0x236 at c + 0x226 when c's +0x222 holds c + 0x22e; otherwise stores it at +0x222 and passes Cursor_SetImage (00066948) the dword +4 of the cursor record c + 0x236 points to plus 4 (0 when that dword is 0) and the record's address plus 8. ES2's Cockpit_UseOffForwardCursor (DBSIM 00433ee8), its offsets 4 higher.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0002dfd4+137",
+        "sha1": "4065b287dfdf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002e060",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cockpit_UseForwardCursor",
+      "description": "No arguments: Cockpit_UseOffForwardCursor (0002dfd4) with the cursor at CockpitViewInstance (00092d1c) + 0x232. ES2's Cockpit_UseForwardCursor (DBSIM 00433f7c), its offsets 4 higher.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0002e060+137",
+        "sha1": "846f0df5b0ad",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0002e0ec",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_RunTtmScripts",
-      "description": "(): with the installed render context 000bdbda, saves its dwords +0x20c, +0x220 and +0x224, sets them to 1, 000afa9c and 000afaa0, makes it the .TTM default context with Ttm_SetDefaultContext (0006982c)(00092d70, it), runs the scripts with Ttm_RunAll (000695e0)(00092d70), and puts the three back. es2_xref finds calls from Cockpit_DrawFrame (0002cf28) and 0002b4a0, through the padding entry 0002e0e9.",
+      "description": "(): with the installed render context 000bdbda, saves its dwords +0x20c, +0x220 and +0x224, sets them to 1, CockpitViewCanvasOrigin (000afa9c) and 000afaa0, makes it the .TTM default context with Ttm_SetDefaultContext (0006982c)(00092d70, it), runs the scripts with Ttm_RunAll (000695e0)(00092d70), and puts the three back. es2_xref finds calls from Cockpit_DrawFrame (0002cf28) and CockpitView_InvalidateWidgets (0002b4a0), through the padding entry 0002e0e9.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#each-frame",
       "verified": {
         "bytes": "0002e0ec+144",
         "sha1": "4845b52a89dc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002eea0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MessagePort_ShiftRect",
+      "description": "(port, delta) in stack order, callee-cleaned: subtracts delta's x from +0x43f and +0x447 and its y from +0x443 and +0x44b, moving the rect {x0, y0, x1, y1} at +0x43f. ES2's MessagePort_ShiftRect (DBSIM 00435574), whose rect is at +0x4a7.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0002eea0+56",
+        "sha1": "11759d1053c0",
         "scope": "body",
         "via": "decompile"
       }
@@ -4912,7 +5434,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitClock_Ctor",
-      "description": "(clock, cockpit, rect): allocates the 0x8a-byte cockpit clock when given none (returning 0 when that fails); builds it with 00031318(clock, cockpit, rect + 0x10) and stores the vtable 00094b5a at +0x76. Opens the HERC's .TTM with Ttm_Open(00092d70, 0, 0, Path_WithExtension(ttm (00094b72), eight characters of 000925f8's string when 000925f8 is set, else of +0x58 of the type record +0x188 of CockpitViewInstance's +0x1ff)), takes the handle as a signed byte, and when that handle's entry of the table +5 holds a script stores CockpitViewInstance's +4 at the script's +0x1bd; a failed open's 0xff reads the dword before the table. Copies cpwincrk (00094b76) into the name buffer; sets the strings 00, 00 and : at 000bd504, 000bd508 and 000bd50c; makes three labels with Label_Ctor(0, 00092d40) at +0x7a, +0x7e and +0x82, each passed to Label_SetRect with 1, 4 and 2 respectively, rect + 0x10 and the point (1, 0), (1, 0) and (0, 0), and their +0x1c set to 0x3f, 0 and 0; sets +0x86 to 000981c4 + 30. es2_xref finds one call, from CockpitClock_Create (0002ce98).",
+      "description": "(clock, cockpit, rect): allocates the 0x8a-byte cockpit clock when given none (returning 0 when that fails); builds it with 00031318(clock, cockpit, rect + 0x10) and stores the vtable 00094b5a at +0x76. Opens the HERC's .TTM with Ttm_Open(00092d70, 0, 0, Path_WithExtension(ttm (00094b72), eight characters of CockpitOverride_Name (000925f8)'s string when CockpitOverride_Name (000925f8) is set, else of +0x58 of the type record +0x188 of CockpitViewInstance's +0x1ff)), takes the handle as a signed byte, and when that handle's entry of the table +5 holds a script stores CockpitViewInstance's +4 at the script's +0x1bd; a failed open's 0xff reads the dword before the table. Copies cpwincrk (00094b76) into the name buffer; sets the strings 00, 00 and : at 000bd504, 000bd508 and 000bd50c; makes three labels with Label_Ctor(0, 00092d40) at +0x7a, +0x7e and +0x82, each passed to Label_SetRect with 1, 4 and 2 respectively, rect + 0x10 and the point (1, 0), (1, 0) and (0, 0), and their +0x1c set to 0x3f, 0 and 0; sets +0x86 to 000981c4 + 30. es2_xref finds one call, from CockpitClock_Create (0002ce98).",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
       "verified": {
         "bytes": "000433cc+469",
@@ -5187,6 +5709,21 @@
       "verified": {
         "bytes": "0004aacc+35",
         "sha1": "d67755ac21e5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004d82c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimInput_SetEnabled",
+      "description": "(enabled), callee-cleaned: when enabled differs from the flag 00095818, returns 0 when 0004c62c returns 0; turning input on, unless 00095894 is set, registers 0004c6ec against 0009586c with 0006c2bb, whose answer it returns; flips the flag; turning it off clears the three 14-byte blocks at 000b1844, 000b1854 and 000b1864 with memset. Returns 1 otherwise. ES2's SimInput_SetEnabled (DBSIM 0045b670), which registers two listeners and clears 15-byte blocks.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "0004d82c+156",
+        "sha1": "ca5a3814cc94",
         "scope": "body",
         "via": "decompile"
       }
@@ -5594,6 +6131,21 @@
         "sha1": "09eeb1886b97",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000523a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vga_WaitVerticalRetrace",
+      "description": "Frameless, no arguments: MOV DX,0x3DA; IN AL,DX; TEST AL,8; JZ back: spins until the VGA input-status register reports vertical retrace. ES2's Vga_WaitVerticalRetrace (DBSIM 0045c61c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "000523a4+10",
+        "sha1": "274492f35595",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -6089,6 +6641,21 @@
         "sha1": "8e9df2ecc1ce",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "00055ab8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_SetPosition",
+      "description": "(x, y), C convention: when 000962e0 is set, stores x, doubled while 000962dc is set, and y at 000962e8 and 000962ec and issues INT 33h with AX 4, CX x and DX y, the mouse driver's set-cursor-position function.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00055ab8+54",
+        "sha1": "3c4806d718f5",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -6632,6 +7199,21 @@
       }
     },
     {
+      "address": "00059280",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "View_GetActiveObject",
+      "description": "Frameless, no arguments: returns the dword at 000b5b8a. ES2's View_GetActiveObject (DBSIM 0045eddc), which returns ViewObjectPtr.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
+      "verified": {
+        "bytes": "00059280+6",
+        "sha1": "97b1d306a321",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "000592a4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -6646,11 +7228,26 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_Main",
-      "description": "(a, b), main.cpp: the simulator's main. Mem_InitHeap(6000000), asserting at severity 5 (line 0xe3) when it gives 100000 bytes or fewer; 00058e30(b, a); copies to 000b5d9c, for 00056ecc, the ALT_DRIVE variable (taken as null unless 000b5bce is set) when PREFER_ALT is set and the string at 00096f6a otherwise; writes the heap size (4 bytes) to data\\mem_got and an int16 0 to data\\exit_cfg, asserting (lines 0xf1, 0xf9) when either does not open; 00058e74(b, a). With 000b5bc4 clear it closes the files at 000b5b82 and 000b5b7e, Mem_HeapOff, prints 'To play EarthSiege, type ES' and exits with 1. Otherwise Subsystem_RunPhase(0), VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 00096fde, 1), Subsystem_RunPhase(1); an assert (line 0x136) when the heap is under 0x26e8f0 bytes, g_LowMemory set when under 0x3c45b0; Sim_StartMission (0005a9dc), Subsystem_RunPhase(3); then each frame Subsystem_RunPhase(4), 00058574, 00063f40 while 000b5b76 is 0, leaving when 000b5bd2 or 00059700() is non-zero, else Cam_Update (000004b8)(000b5b8a), Sim_RenderFrame unless 000b5b76 and 000b5b92 are both set, 00059b40 and Subsystem_RunPhase(6). After the loop 0005b568, Mem_HeapOff, and with 000b5bc4 set and 000b5b9e clear, bit 0 of the byte 000b5b5c points at cleared.",
+      "description": "(a, b), main.cpp: the simulator's main. Mem_InitHeap(6000000), asserting at severity 5 (line 0xe3) when it gives 100000 bytes or fewer; 00058e30(b, a); copies to 000b5d9c, for 00056ecc, the ALT_DRIVE variable (taken as null unless 000b5bce is set) when PREFER_ALT is set and the string at 00096f6a otherwise; writes the heap size (4 bytes) to data\\mem_got and an int16 0 to data\\exit_cfg, asserting (lines 0xf1, 0xf9) when either does not open; 00058e74(b, a). With 000b5bc4 clear it closes the files at 000b5b82 and 000b5b7e, Mem_HeapOff, prints 'To play EarthSiege, type ES' and exits with 1. Otherwise Subsystem_RunPhase(0), VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 00096fde, 1), Subsystem_RunPhase(1); an assert (line 0x136) when the heap is under 0x26e8f0 bytes, g_LowMemory set when under 0x3c45b0; Sim_StartMission (0005a9dc), Subsystem_RunPhase(3); then each frame Subsystem_RunPhase(4), 00058574, 00063f40 while 000b5b76 is 0, leaving when 000b5bd2 or 00059700() is non-zero, else Cam_Update (000004b8)(000b5b8a), Sim_RenderFrame unless 000b5b76 and 000b5b92 are both set, Sim_EndFrame (00059b40) and Subsystem_RunPhase(6). After the loop 0005b568, Mem_HeapOff, and with 000b5bc4 set and 000b5b9e clear, bit 0 of the byte SimDisplay (000b5b5c) points at cleared.",
       "source": "ES1DBSIM decompile at 00059350",
       "verified": {
         "bytes": "00059350+773",
         "sha1": "d309dd9ad035",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00059b40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_EndFrame",
+      "description": "No arguments: sets 000bda96 to 1 when 000b5b92 is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); 00028260; 00027f74; on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); 00059288. Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, 00057820, four, 00057ffc, one, and 00058414, three.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904",
+      "verified": {
+        "bytes": "00059b40+200",
+        "sha1": "572abcdbf8c9",
         "scope": "body",
         "via": "decompile"
       }
@@ -10051,7 +10648,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Palette_LoadDpl",
-      "description": "(name), callee-cleaned: Palette_LoadFromFile on Path_WithExtension('dpl' at 0009811c, name), into the current arena, returning the object in EAX. Six calls found by es2_xref, from 00021dd4, World_LoadTheater (000251c4), Palette_LoadAndActivate (00027e5c) and three from 00058414. ES2's Palette_LoadDpl (DBSIM 00474ba4).",
+      "description": "(name), callee-cleaned: Palette_LoadFromFile on Path_WithExtension('dpl' at 0009811c, name), into the current arena, returning the object in EAX. Six calls found by es2_xref, from CockpitViewManager_Ctor (00021dd4), World_LoadTheater (000251c4), Palette_LoadAndActivate (00027e5c) and three from 00058414. ES2's Palette_LoadDpl (DBSIM 00474ba4).",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "00063584+35",
@@ -15113,6 +15710,51 @@
       "source": "Herculan/docs/es1/simulation/terrain.md#globals"
     },
     {
+      "address": "000925ec",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitViewShakeArmed",
+      "description": "byte: set by CockpitView_SetShakeBand (000243d4) and cleared by CockpitView_ClearShake (00024750); CockpitView_StepShake (00024564), CockpitView_ClearShake and CockpitView_ApplyViewState (000222c0) test it. ES2's CockpitViewShakeArmed.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake"
+    },
+    {
+      "address": "000925ed",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitShakeReseedAfterSlide",
+      "description": "byte: CockpitView_ApplyViewState (000222c0) sets it when a view change clears an armed shake and clears it on a change to view 4; CockpitView_StepViewTransition (00022904) then calls CockpitView_SetShakeBand (000243d4)(10). ES2's CockpitShakeReseedAfterSlide.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_applyviewstate-000222c0"
+    },
+    {
+      "address": "000925f0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitPaletteSingleton",
+      "description": "dword: the dpl\\cockpit palette CockpitViewManager_Ctor (00021dd4) loads while it is 0; CockpitViewManager_LoadViews (00021fb0) installs the scheme's colours from its +8 and calls its slot +0x1c. ES2's CockpitPaletteSingleton.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
+    },
+    {
+      "address": "000925f4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitOverride_Index",
+      "description": "int16: the chassis index CockpitChassis_SelectByName (00024394) stores for the -C option; CockpitViewManager_Ctor (00021dd4) takes it as the scheme word while CockpitOverride_Name is set. ES2's CockpitOverride_Index.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
+    },
+    {
+      "address": "000925f8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitOverride_Name",
+      "description": "char *: the -C option's text, stored by CockpitChassis_SelectByName (00024394); when it is set CockpitViewManager_Ctor (00021dd4) takes it in place of the chassis name. ES2's CockpitOverride_Name.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
+    },
+    {
       "address": "000928d4",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -15374,6 +16016,114 @@
       "source": "Herculan/docs/es1/simulation/terrain.md#globals"
     },
     {
+      "address": "000afa9c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitViewCanvasOrigin",
+      "description": "Two int32: the current view's canvas origin, its .VUE record's +0x18/+0x1c, stored by CockpitView_ApplyViewState (000222c0) and zeroed for view 4; CockpitView_SetShakeBand (000243d4) rests the shake on it. ES2's 004cfa24.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_applyviewstate-000222c0"
+    },
+    {
+      "address": "000afaa4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitVueRecords",
+      "description": "Four 32-byte .VUE records, built by CockpitViewManager_StaticInit (00024c28) with CockpitVueRecord_ElementCtor (00024cc4); CockpitViewManager_LoadViews (00021fb0) reads vue\\<name> into them and stores their address at the manager's +4. ES2's CockpitVueRecords (DBSIM 004cfa2c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
+    },
+    {
+      "address": "000afb24",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ExternalView_DefaultRect",
+      "description": "Six int32, {0, 30, 319, 170, -160, -75}: the external view's rect and projection pair, set by CockpitViewManager_Ctor (00021dd4) with the cockpit palette's first load; ExternalView_ResetRect (00024a7c) copies it to ExternalView_Rect. ES2's ExternalView_DefaultRect.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-external-view"
+    },
+    {
+      "address": "000afb3c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ExternalView_Rect",
+      "description": "Six int32: the external view's rect (left, top, right, bottom) and projection pair, which CockpitView_ApplyViewState (000222c0) installs for view 4 and View_FillOutside3dRect (00024b18) paints around; set by ExternalView_SetRect (00024a00) and ExternalView_ResetRect (00024a7c); ExternalView_GetRect (00024c20) returns its address. ES2's ExternalView_Rect.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-external-view"
+    },
+    {
+      "address": "000afb54",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitShakeRestOffset",
+      "description": "Two int32: the canvas origin CockpitView_SetShakeBand (000243d4) arms the shake at, x 0 in views 2 and 3; CockpitView_ClearShake (00024750) puts the pages' origins back on it. ES2's 004cfadc.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake"
+    },
+    {
+      "address": "000afb5c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitShakeOffset",
+      "description": "Two int32: the shaken origin, set with CockpitShakeRestOffset by CockpitView_SetShakeBand (000243d4), its y moved by CockpitView_StepShake (00024564). ES2's 004cfae4.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake"
+    },
+    {
+      "address": "000afb64",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitShakeBand",
+      "description": "Two int32, the low and high limits of the shaken origin's y, set by CockpitView_SetShakeBand (000243d4) and read by CockpitView_StepShake (00024564). ES2's 004cfaec.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake"
+    },
+    {
+      "address": "000afb6c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitShakeTotal",
+      "description": "int16: the sum of CockpitView_StepShake (00024564)'s steps, zeroed by CockpitView_SetShakeBand (000243d4), taken back and zeroed by CockpitView_ClearShake (00024750), and returned as {0, total} by CockpitView_GetShakeOffset (000249d4). ES2's 004cfaf4.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake"
+    },
+    {
+      "address": "000afb78",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitShakeStripRegion",
+      "description": "A 0x18-byte rect region (vtable 00092762 from CockpitViewManager_StaticInit (00024c28)) whose rect CockpitViewManager_Ctor (00021dd4) sets to {0, 200, 320, 210}: CockpitView_SetShakeBand (000243d4) saves and fills it in views 2 and 3 and CockpitView_ClearShake (00024750) restores it. ES2's 004cfafe.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake"
+    },
+    {
+      "address": "000afb90",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitShakeStripPixels",
+      "description": "The buffer of Region_PixelCount bytes CockpitViewManager_Ctor (00021dd4) allocates, which holds CockpitShakeStripRegion's pixels while a glance's shake runs. ES2's 004cfb18.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-shake"
+    },
+    {
+      "address": "000afb94",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ExternalView_ClipBlock",
+      "description": "A 0x204-byte clip block, count 1 and ExternalView_ClipRegion's +4 (000afd9c), set by CockpitViewManager_LoadViews (00021fb0); CockpitView_ApplyViewState (000222c0) installs it for view 4. ES2's 004cfb1c.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
+    },
+    {
+      "address": "000afd98",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ExternalView_ClipRegion",
+      "description": "A 0x18-byte rect region (vtable 00092762 from CockpitViewManager_StaticInit (00024c28)) whose rect, at 000afda0, CockpitViewManager_LoadViews (00021fb0), ExternalView_SetRect (00024a00) and ExternalView_ResetRect (00024a7c) set to ExternalView_Rect's first four values.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-external-view"
+    },
+    {
       "address": "000afdbc",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -15417,6 +16167,24 @@
       "name": "ClassItem_CurrentFrame",
       "description": "Pointer to the item frame of the class item being loaded: ClassItem_LoadResource points it at a frame on its stack and restores the previous value on exit. ES2's ClassItem_CurrentFrame (DBSIM 006c59e8).",
       "source": "ES1DBSIM decompile at 000551e0"
+    },
+    {
+      "address": "000b5b5c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimDisplay",
+      "description": "The display Sim_EndFrame (00059b40) flips each frame: +0x8c shown, +0x88 drawn, the two swapped.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904"
+    },
+    {
+      "address": "000b5b60",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitViewManagerInstance",
+      "description": "The cockpit view manager Sim_StartMission (0005a9dc) makes with CockpitViewManager_Ctor (00021dd4) and passes to CockpitViewManager_Publish (00021f8c); Sim_EndFrame (00059b40) passes it to CockpitView_StepViewTransition and CockpitView_ProcessViewCommand. ES2's CockpitViewManagerInstance (DBSIM 004d2544).",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
     },
     {
       "address": "000b5e04",

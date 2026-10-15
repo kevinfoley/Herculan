@@ -9072,8 +9072,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_Ctor",
-      "description": "This 0x37-byte object is the player's own cockpit view manager (MECHVIEW.CPP): it holds the current view index at +0x14, the pending view command at +0x18, the CockpitView widget tree pointer at +0x1f, the owning mech at +0x29 and the herc model name at +0x2d, and it is what CockpitView_SetView/CockpitView_ProcessViewCommand drive. It is small because the heavy state lives in the CockpitView object it builds (see CockpitViewManager_LoadViews -> CockpitView_Ctor -> CockpitViewInstance). Also the site of CockpitPaletteSingleton's first (singleton-guarded) load of dpl\\\\cockpit.",
-      "source": "cockpit rendering RE session"
+      "description": "(manager, machine), MECHVIEW.CPP: sets +0x14 to -1. While CockpitPaletteSingleton is 0 it loads dpl\\cockpit into it with Palette_LoadDpl (ResourcePath_BuildFolderName) and sets ExternalView_DefaultRect to {0, 0, (0x140 << VideoMode_XCoordShift) - 1, (0xc3 << VideoMode_YCoordShift) - 1, -0xa0 << the x shift, -0x5a << the y shift}, copied to ExternalView_Rect. Takes the scheme word +0x27 from the machine's type record +0x1f2's +0x6c and the 8-character name +0x2d (+0x35 = 0) from the name table DAT_004a9de4 at that index, or from CockpitOverride_Index and CockpitOverride_Name when that name is set; stores the machine at +0x29; CockpitViewManager_LoadViews(manager, name); +0x18 = -1, +0x1c = 0 and the word +0x1d = 0; shifts the rect 0049ac54..0049ac60 by the coordinate shifts; gives 004cfb18 Mem_NewArray(Region_PixelCount(004cfb02)) bytes; +0x36 = 0. The 0x37-byte manager holds the current view at +0x14, the pending command at +0x18 and the CockpitView widget tree at +0x1f. es2_xref finds one call, from Sim_InitMissionSession.",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "00429660+432",
+        "sha1": "e49e656bfde0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00429810",
@@ -9117,8 +9123,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitCanopy_LoadViewBitmap",
-      "description": "MECHVIEW.CPP:0x12e. The .HB0/.HB1/.HB2 (.DB0/.DB1/.DB2) load site. No literal 'hb0' string exists because the folder name is built at runtime: it copies the global folder literal 'dba' (or 'hba' when VideoMode_PanelMode==3) into a stack buffer and overwrites index 2 with an ASCII digit via _itoa, giving db0/db1/db2 or hb0/hb1/hb2, then ResourcePath_BuildFolderName(hercName, buf) + ClassItem_LoadResource. View->file map: fileIdx = viewIdx>2 ? viewIdx-1 : viewIdx, so views 0,1,2,3 -> files 0,1,2,2 and view 4 loads nothing; after loading file 2 the same handle is also stored in slot 3, i.e. views 2 and 3 share one bitmap (view 3 is drawn horizontally mirrored, see CockpitView_SetView). Result handles land in CockpitViewManager+8[viewIdx]. The CockpitLayoutMode==1 branch increments byte 2 of the SHARED global 'dba' literal (MOV ECX,[0x4a0a28]; INC byte ptr [ECX+2]) rather than the local buffer -- verified in raw disassembly at 00429d3e; the follow-on load still uses the unmodified local buffer, so that branch loads db0 twice and corrupts the global folder name. Treat CockpitLayoutMode==1 as an unused/buggy path.",
-      "source": "cockpit rendering RE session"
+      "description": "(manager, view), MECHVIEW.CPP: the .DB0-.DB2 / .HB0-.HB2 load. For a view other than 4 whose slot of +8 is empty it copies the folder literal PTR_DAT_004a0a28 (dba), or PTR_DAT_004a0a40 (hba) when VideoMode_PanelMode is 3, into a stack buffer, writes the file number (the view, less 1 above 2) over its third character with _itoa, giving db0-db2 or hb0-hb2, and loads <folder>\\<name +0x2d> with VolRStream_CtorFromPath and ClassItem_LoadResource into slot view, asserting at severity 5 (line 0x12e) when the stream does not open. With maybe_CockpitLayoutMode 1 and view 0 it adds 1 to the third character of the shared literal, not the stack buffer, opens the stack buffer's path again (assert line 0x135) and loads it into slot 1, so that branch loads file 0 twice and changes the global folder name. After file 2 it copies the slot into slot 3: views 2 and 3 share one bitmap, view 3 drawn mirrored by CockpitView_SetView.",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "00429c2c+439",
+        "sha1": "0a6e50dbbd51",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00429de4",
@@ -9126,8 +9138,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitCanopy_FreeViewBitmap",
-      "description": "Releases the canopy bitmap handle for one view and nulls its slot; when freeing view 2 it also nulls slot 3, which shares the same handle. Only called when CockpitArt_LoadOnDemand (CockpitArt_LoadOnDemand) is set, i.e. the low-memory mode that loads and frees canopy art per view switch instead of keeping all four resident.",
-      "source": "cockpit rendering RE session"
+      "description": "(manager, view): for views 1 and 2, and for view 0 (first freeing slot 1 when maybe_CockpitLayoutMode is 1), destroys slot view of +8 with GLBitmapArray_Dtor(array, 3), counting the destructor, and clears the slot, and slot 3 as well for view 2, which shares its handle; returns for other views. es2_xref finds one call, from CockpitView_SetView, which makes it under CockpitArt_LoadOnDemand.",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "00429de4+123",
+        "sha1": "43f854b64ada",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00429e60",
@@ -9135,8 +9153,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_ApplyViewState",
-      "description": "Installs one view's state into the global render context (DAT_006c5ff4): copies that view's 0x204-byte clip-region block (CockpitViewManager+0xc + viewIdx*0x204, filled by CockpitClipRegions_Load) into ctx+4..ctx+0x208, points ActiveScanlineClipSpans at the view's prebuilt per-scanline span table (CockpitViewManager+0x10[viewIdx]), and copies the view's six .VUE ints into ctx[0x84..0x89]. The .VUE record's last two ints are the view's origin inside the cockpit canvas and go to DAT_004cfa24/28 (or VideoMode_X/YCoordShift-space DAT_004d25da/de in CockpitLayoutMode 2). View 4 instead installs the default full-screen clip block at DAT_004cfb1c and hides the cockpit widgets -- it is the external/no-cockpit view.",
-      "source": "cockpit rendering RE session"
+      "description": "(manager, view): installs one view's state into the render context DAT_006c5ff4. Returns at once when view is the current view +0x14 or above 4. With CockpitViewShakeArmed set it calls CockpitView_ClearShake and sets CockpitShakeReseedAfterSlide. View 4: clears CockpitShakeReseedAfterSlide and, unless in view 4, saves the current view at +0x23, copies the block DAT_004cfb1c into the context's clip block, sets clip mode +0x208 to 2 and ActiveScanlineClipSpans to 0, copies ExternalView_Rect's six ints to ctx[0x84..0x89], sets the current view to 4, CockpitView_DisableWidgets(+0x1f), zeroes the canvas origin DAT_004cfa24/28 and calls View_FillOutside3dRect. Other views: from view 4 CockpitView_EnableWidgets; from view 2 or 3, outside maybe_CockpitLayoutMode 2, CockpitWidgets_TranslateForView and MessagePort_ShiftRect by that view's canvas origin; on the scroll-window path moves the window through g_RasterRoutines_SetOrigin; from any other view, outside layout mode 2, sets the draw page's origin (paged path, new views other than 2 and 3) or the window's (scroll-window path) by the new .VUE record's canvas origin and moves the widgets and the message port's box by the old origin ((0, 0) for -1) less the new. Then copies the view's 0x204-byte clip block (+0xc) into the context, points ActiveScanlineClipSpans at +0x10[view], sets clip mode 2, copies the record's six ints to ctx[0x84..0x89], and stores the canvas origin in DAT_004d25da/de in layout mode 2, otherwise in DAT_004cfa24/28, added to ctx[0x88]/[0x89].",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "00429e60+909",
+        "sha1": "5dac88792f36",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042a1f0",
@@ -9144,8 +9168,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_SetView",
-      "description": "Switches the cockpit to view 0-4. Calls CockpitView_ApplyViewState, then blits the view's full-screen canopy bitmap once via Bitmap_Blit(bitmap, {0,0}, flags) with flags = 2 (horizontal mirror) for view 3 and 0 otherwise -- this is where the side view's single authored bitmap is flipped for the opposite side. Finally repaints every cockpit widget (CockpitView_InvalidateWidgets). The canopy is NOT redrawn per frame: it is blitted once per view change and the 3D scene is then rasterized over it, clipped to ActiveScanlineClipSpans. In CockpitLayoutMode 1 view 0 additionally blits slot 1 at y+0xc5.",
-      "source": "cockpit rendering RE session"
+      "description": "(manager, view): for a view below 5, and not view 1 when maybe_CockpitLayoutMode is 1, CockpitView_ApplyViewState; then for any view but 4, with CockpitArt_LoadOnDemand set CockpitCanopy_LoadViewBitmap first and CockpitCanopy_FreeViewBitmap last, it blits frame 0 of slot view's bitmap array at (0, 0) with flags 2 (mirrored) for view 3 and 0 otherwise, the render context's +0x208 at 0 for the blit: through Bitmap_BlitScaled to 0x140 x 0x1e0 in layout mode 2 (view 3 with +0x208 1, +0x21c 0x1df and x -1), otherwise Bitmap_Blit. In layout mode 1 it also blits slot 1 at y + 0xc5 for view 0 and, for views 2 and 3, fills {0, 0xc5, 0x140, 0x1e0} on the page +0x8c in COLORS.DAT id 19 (DAT_004d3c26). For views below 4 CockpitView_InvalidateWidgets(+0x1f). Stores the view at +0x14.",
+      "source": "cockpit rendering RE session",
+      "verified": {
+        "bytes": "0042a1f0+514",
+        "sha1": "c3bf9d0be94a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042a3f4",
@@ -9177,8 +9207,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_StepViewTransition",
-      "description": "Runs a queued view change's animated slide, once per frame from Sim_EndFrame just before CockpitView_ProcessViewCommand, gated on pending != -1 and the armed flag at +0x1c. For commands 0/1 (heads-down pan) it steps the display origin y by 10 canvas rows per loop iteration over vue[dest].canvasOriginY - vue[src].canvasOriginY (237, or 474 after the coord shift), then a remainder step; commands 4/5/6 step x by 0x14. The loop has no timer, retrace poll or frame boundary, so its real-time speed is CPU-bound. On completion: +0x14 += 1 (or -1), +0x18 = -1, +0x1d = 2 (two-frame cooldown). The pan down's completion calls SimInput_SetEnabled(0), switching the axis keys off on the heads-down display, and the pan up's SimInput_SetEnabled(1). See docs/retail/simulation/cockpit-views.md.",
-      "source": "HDD pan RE session"
+      "description": "(manager): runs the view command +0x18 that CockpitView_ProcessViewCommand staged with +0x1c set, and returns the current view +0x14; does nothing else while the command is -1 or +0x1c is clear. It sets _DAT_004d2702 to 0, zeroes the display clip block's +0x208/+0x20c for the first half, and calls slot +0x18 of CockpitViewInstance's +0x20b object for every command but 2. On the -b paged path (Display_UseScrollWindow 0), commands 0 and 1 outside maybe_CockpitLayoutMode 2, and 3, copy the outgoing image from +0x8c to +0x88 with Region_CopyBetweenPages. It clears +0x1c, then: 0 and 1 move the window or the page origin down or up by the two .VUE records' canvas origin y difference (travel 0x1e0 and a doubled step in layout mode 2), 10 rows a step, with Display_Present after each step on the scroll-window path and the squad message port's slots +0x14/+0x18 around each step and MessagePort_CopyBoxBetweenPages after while its +0x49e is set; then Cockpit_UseOffForwardCursor or Cockpit_UseForwardCursor, the current view + 1 or - 1 and SimInput_SetEnabled(0) or (1), layout mode 2 also flipping the pages. 2 hides the cursor, DAT_0049dbdf = 0, current view 4, +0x36 = 1, and saves sound 0x2d's volume and sets it to 100 when effects are on. 3 presents on the scroll-window path, shows the cursor, calls the port's slot +0x18, sets the current view from +0x23 and puts the volume back. 4, 5 and 6 slide x by 0x14 columns a step the same way, then Cockpit_UseOffForwardCursor, and on the paged path show +0x8c, draw on +0x88, swap the two and copy the screen across; they set the current view to 2, 3 or 0 (layout mode 2 flips the pages and copies without sliding). DAT_004a365e is 0 during a slide and 1 after. It ends with +0x18 = -1, the word +0x1d = 2 (a two-frame cooldown), CockpitView_SetShakeBand(10) when CockpitShakeReseedAfterSlide is set, and SystemButtons_RestoreAll. The slide loop has no timer, retrace wait or frame boundary of its own, so its speed is the CPU's. es2_xref finds two calls, from Sim_EndFrame. See docs/retail/simulation/cockpit-views.md.",
+      "source": "HDD pan RE session",
+      "verified": {
+        "bytes": "0042a9c0+10487",
+        "sha1": "3e6ad81f4f14",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042d2b8",
@@ -9195,8 +9231,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_SetShakeBand",
-      "description": "Seeds the shake's vertical band: copies the resting view offset into 004cfae4/004cfae8 and sets the two limits at 004cfaec/004cfaf0 to that offset and that offset plus or minus the amplitude argument, the sign chosen by the view mode enum at CockpitViewManager_Published's +0x14. Sets CockpitViewShakeArmed. Also reached from CockpitView_StepViewTransition.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "description": "(amplitude): seeds the shake's band. Returns at once when CockpitViewManager_Published's manager is in view 4 (+0x14) or has +0x1c set. Takes the offset 004cfae4/004cfae8 from Display_OriginX/Y on the scroll-window path and from the canvas origin 004cfa24/004cfa28 otherwise, and copies it to the resting copy 004cfadc/004cfae0. View 1: limits 004cfaec/004cfaf0 = {y - amplitude, y}. Views 2 and 3: on the paged path zeroes 004cfae0 and 004cfae4; with the render context's +0x208/+0x20c at 0 saves the region 004cfb02 into 004cfb18 with Region_Save, fills its rect 004cfb06 with COLORS.DAT id 19 (DAT_004d3c26) and makes +0x88 the draw page. Views 0, 2 and 3 then take {y, y + amplitude}, y the canvas origin plus Display_OriginY on the scroll-window path; any other view takes no limits. Zeroes 004cfaf4 and sets CockpitViewShakeArmed. CockpitView_StepViewTransition calls it with 10.",
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "0042d2f8+429",
+        "sha1": "8decc23bad7f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042d4a8",
@@ -9204,8 +9246,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_StepShake",
-      "description": "One frame of the shake: moves the view's y offset (004cfae8) by up to the step argument toward whichever of CockpitView_SetShakeBand's two limits is farther away, so the view ping-pongs across the band rather than settling, then reinstalls the projection. Does nothing unless CockpitViewShakeArmed is set, and nothing in view mode 4.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "description": "(step): one frame of the shake. While CockpitViewShakeArmed is set and the manager is not in view 4, moves 004cfae8 by up to step toward whichever of the limits 004cfaec/004cfaf0 is farther, so the view ping-pongs across the band; moves the window to the page +0x8c's origin plus 004cfae4/004cfae8 through g_RasterRoutines_SetOrigin, Display_SetOrigin on driver 3, which ignores the page, so the canopy in the back buffer moves on screen; moves the current view's clip regions by the step (a rect region's last row +0x14, a span region's first row); adds the step to 004cfaf4; moves ActiveScanlineClipSpans' first dword by step x 8 and its second by -step, and the render context's +0x218/+0x21c by -step; and moves the cockpit's widgets by (0, -step) with CockpitWidgets_TranslateForView.",
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "0042d4a8+380",
+        "sha1": "42729e30e175",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042d624",
@@ -9213,8 +9261,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_ClearShake",
-      "description": "Undoes CockpitView_SetShakeBand: restores the view offset from the resting copy at 004cfadc/004cfae0, reinstalls the projection and clears CockpitViewShakeArmed. No-op when that byte is clear or the view mode is 4. Called when the cockpit damage shake ends or restarts, from CockpitView_ApplyViewState, and from the two mech-death screen flashes.",
-      "source": "docs/retail/rendering/cockpit-canopy-palette.md"
+      "description": "Undoes CockpitView_SetShakeBand. While CockpitViewShakeArmed is set and the manager is not in view 4, moves the window back to the page +0x8c's origin plus the resting copy 004cfadc/004cfae0 through g_RasterRoutines_SetOrigin, moves the current view's clip regions, ActiveScanlineClipSpans and the render context's +0x218/+0x21c back by 004cfaf4, in views 2 and 3 puts the region 004cfb02 back from 004cfb18 with Region_Restore on the draw page and on +0x88 (leaving +0x8c the draw page), moves the widgets by (0, 004cfaf4) with CockpitWidgets_TranslateForView, and clears 004cfaf4 and the armed byte. es2_xref finds calls from CockpitView_ApplyViewState, Cockpit_StartHitShake, Cockpit_HitShakeTick, LiftStart_Rise and Sim_DeathFlash.",
+      "source": "docs/retail/rendering/cockpit-canopy-palette.md",
+      "verified": {
+        "bytes": "0042d624+505",
+        "sha1": "6da61270f9e4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042d820",
@@ -9232,7 +9286,13 @@
       "confidence": "high",
       "name": "CockpitView_SetKickOffset",
       "description": "(value): on the current render context (006c5ff4), +0x224 -= CockpitView_KickOffset, then += value & 0xffff, which it stores in CockpitView_KickOffset.",
-      "source": "DBSIM decompile at 0042d82c"
+      "source": "DBSIM decompile at 0042d82c",
+      "verified": {
+        "bytes": "0042d82c+40",
+        "sha1": "887624c6e00a",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0042d854",
@@ -9241,7 +9301,13 @@
       "confidence": "high",
       "name": "CockpitView_ClearKickOffset",
       "description": "Takes CockpitView_KickOffset back out of the current render context's +0x224 and zeroes it.",
-      "source": "DBSIM disassembly at 0042d854"
+      "source": "DBSIM disassembly at 0042d854",
+      "verified": {
+        "bytes": "0042d854+26",
+        "sha1": "e8dc808f75de",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0042d870",
@@ -9249,8 +9315,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_GetShakeOffset",
-      "description": "Returns a pointer to the static pair {0, (int)(short)DAT_004cfaf4}: the hit shake's vertical offset, which CockpitView_SetShakeBand, CockpitView_StepShake and CockpitView_ClearShake write. Sim_RenderFrame adds the pair into the projection centre for the frame and takes it out after.",
-      "source": "DBSIM decompile at 0042d870"
+      "description": "No arguments: sets the byte 0049add5 to 1 when it is 0 and returns a pointer to the static pair 004cfd40, written as {0, (int)(short)004cfaf4}, the sum of CockpitView_StepShake's steps. Sim_RenderFrame adds the pair to Sim_RenderContext's +0x220/+0x224, the projection pair, for the frame's draw and takes it out after.",
+      "source": "DBSIM decompile at 0042d870",
+      "verified": {
+        "bytes": "0042d870+41",
+        "sha1": "1f408b7b6bf5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042d89c",
@@ -9273,8 +9345,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ExternalView_ResetRect",
-      "description": "ExternalView_SetRect's body with ExternalView_DefaultRect as the source. PreferencesPanel_Raise calls it.",
-      "source": "DBSIM decompile at 0042d944"
+      "description": "No arguments: copies ExternalView_DefaultRect's six ints to ExternalView_Rect and its first four to 004cfd28; when CockpitViewManager_Published answers a manager in view 4 (+0x14), also writes the six to the render context's (006c5ff4) +0x210..+0x224. ExternalView_SetRect with the default as its source. es2_xref finds one call, from PreferencesPanel_Raise.",
+      "source": "DBSIM decompile at 0042d944",
+      "verified": {
+        "bytes": "0042d944+162",
+        "sha1": "e6617f7e4c9d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042d9e8",
@@ -9282,8 +9360,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_FlushBorderFill",
-      "description": "(manager): View_FillOutside3dRect when the current view (+0x14) is 4, the external view; then clears +0x36. CockpitView_ProcessViewCommand calls it first when +0x36 is set.",
-      "source": "DBSIM decompile at 0042d9e8"
+      "description": "(manager): View_FillOutside3dRect when the current view +0x14 is 4, the external view; then clears +0x36. CockpitView_ProcessViewCommand calls it first when +0x36 is set.",
+      "source": "DBSIM decompile at 0042d9e8",
+      "verified": {
+        "bytes": "0042d9e8+29",
+        "sha1": "aca9ce52655f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042da08",
@@ -9291,8 +9375,14 @@
       "type": "function",
       "confidence": "high",
       "name": "View_FillOutside3dRect",
-      "description": "Floods the four bands around the 3D rect (ExternalView_Rect/+4/+8/+0xc: left, top, right, bottom) with COLORS.DAT id 19 (DAT_004d3c26): a full-width band above it, one below it, and the left and right strips between. It installs a {0, colour} fill brush at the render context's +0x22c, zeroes the context's +0x208/+0x20c offsets for the fills and restores them, and issues one Raster_FillRect per non-empty band. Called by CockpitView_ApplyViewState for view 4, by CockpitViewManager_FlushBorderFill and twice by PreferencesPanel_Raise. See docs/retail/simulation/external-views.md.",
-      "source": "docs/retail/simulation/external-views.md"
+      "description": "No arguments: floods the four bands around the 3D rect ExternalView_Rect (left, top, right, bottom) within the viewport DAT_004d25c2 x DAT_004d25c6 with COLORS.DAT id 19 (DAT_004d3c26). It installs the fill brush {0, colour} at the render context's (006c5ff4) +0x22c, zeroes the context's +0x208/+0x20c for the fills and puts them back, and issues one Raster_FillRect per non-empty band: {0, 0, w - 1, top - 1}, {0, bottom + 1, w - 1, h - 1}, {0, top, left - 1, bottom} and {right + 1, top, w - 1, bottom}. es2_xref finds calls from CockpitView_ApplyViewState, CockpitViewManager_FlushBorderFill and PreferencesPanel_Raise, two. See docs/retail/simulation/external-views.md.",
+      "source": "docs/retail/simulation/external-views.md",
+      "verified": {
+        "bytes": "0042da08+263",
+        "sha1": "4115adc14bb6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042db10",
@@ -9300,8 +9390,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ExternalView_GetRect",
-      "description": "Returns &ExternalView_Rect. ViewChain_DrawCaption centres the caption in it.",
-      "source": "DBSIM decompile at 0042db10"
+      "description": "No arguments: returns &ExternalView_Rect. es2_xref finds one call, from ViewChain_DrawCaption.",
+      "source": "DBSIM decompile at 0042db10",
+      "verified": {
+        "bytes": "0042db10+6",
+        "sha1": "356c73d284be",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042db18",
@@ -9463,7 +9559,13 @@
       "confidence": "high",
       "name": "Palette_ActivateImpact",
       "description": "Swaps the active palette to ImpactPaletteObject through Palette_SetActive, saving the previous one at 004cfd8c/004cfd90 and latching 0049aef3. The flash half of the cockpit damage shake.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "0042ea44+43",
+        "sha1": "09ffe87702c0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042ea70",
@@ -9472,7 +9574,13 @@
       "confidence": "high",
       "name": "Palette_ToggleImpact",
       "description": "Swaps the saved and active palettes and flips 0049aef3, so repeated calls alternate between the theater palette and its impact palette -- unless Palette_RestoreFromImpact ran while the impact palette was active, which leaves the saved slot 004cfd8c on the theater palette, so later toggles swap it with itself. Called once per HitShakeNextToggleTick expiry while the shake runs.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "0042ea70+34",
+        "sha1": "67f7414168d8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042ea94",
@@ -9481,7 +9589,13 @@
       "confidence": "high",
       "name": "Palette_RestoreFromImpact",
       "description": "Puts the palette Palette_ActivateImpact saved back. Called when the shake ends and when a new shake restarts over a running one.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "0042ea94+29",
+        "sha1": "1fe80a46e7a8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042eab4",
@@ -10099,8 +10213,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_DisableWidgets",
-      "description": "(view): sets the widgets-off byte view+0x20f to 1, the counterpart of CockpitView_EnableWidgets (00431518). CockpitView_ApplyViewState calls it on the manager's +0x1f view when it sets the manager's +0x14 to view 4.",
-      "source": "DBSIM decompile at 00431500"
+      "description": "(view): sets the widgets-off byte view+0x20f to 1 when it is 0, the counterpart of CockpitView_EnableWidgets (00431518). CockpitView_ApplyViewState calls it on the manager's +0x1f cockpit when it switches to view 4.",
+      "source": "DBSIM decompile at 00431500",
+      "verified": {
+        "bytes": "00431500+24",
+        "sha1": "207794dbc773",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00431518",
@@ -10108,8 +10228,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_EnableWidgets",
-      "description": "(view): clears the widgets-off byte at +0x20f. CockpitView_ApplyViewState and CockpitView_ProcessViewCommand call it.",
-      "source": "DBSIM decompile and disassembly at 00431518"
+      "description": "(view): clears the widgets-off byte +0x20f when it is set. CockpitView_ApplyViewState calls it leaving view 4, and CockpitView_ProcessViewCommand on command 6.",
+      "source": "DBSIM decompile and disassembly at 00431518",
+      "verified": {
+        "bytes": "00431518+24",
+        "sha1": "587a65396a4b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00431530",
@@ -10174,7 +10300,13 @@
       "confidence": "high",
       "name": "CockpitView_InvalidateWidgets",
       "description": "(cockpit): unless the widgets are off (+0x20f), calls vtable slot +4 (a widget's Invalidate) on each non-null widget pointer: the ten at +0x70 and those at +0x1e1, +0x1e5, +0x1e9, +0x1f1, +0x1ed and +0x1f9 inside Cockpit_PushCanvasContext / Cockpit_PopRenderContext, then +0x1f5 after the pop. CockpitView_SetView runs it after blitting the canopy.",
-      "source": "DBSIM decompile at 004316c0; slot +4 from known_vtables.json CockpitWidgetVtable"
+      "source": "DBSIM decompile at 004316c0; slot +4 from known_vtables.json CockpitWidgetVtable",
+      "verified": {
+        "bytes": "004316c0+183",
+        "sha1": "3579775753af",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00431778",
@@ -10352,8 +10484,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitWidgets_TranslateForView",
-      "description": "(cockpitView, delta) -- re-places the cockpit's widgets for a view change. FIRST calls Widget_TranslateRootForView on the root (*cockpitView), which is what converts screen coordinates to canvas coordinates for every later hit test; then subtracts the delta from the pair at +0x220/+0x224, then walks the list at +0x246 (count at +0x25a) offsetting each widget's rect by -delta through Widget_OffsetRect. The three screen-edge strips are NOT in that list and are handled separately: when the one-shot build flag at +0x23e is set, it hands the same delta to CockpitView_FlipScrollTriggers. Called from CockpitView_ApplyViewState (00429e60), which has two call sites for it -- one when leaving a glance, passing that view's own origin, and a general one passing the outgoing view's origin minus the incoming view's.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "(cockpitView, delta): re-places the cockpit's widgets for a view change. Calls Widget_TranslateRootForView, through its thunk, on the root *cockpitView; subtracts the delta from the dwords +0x220/+0x224 of the render context at cockpitView+4; when the one-shot build flag +0x23e is set hands the delta to CockpitView_FlipScrollTriggers, which moves the three screen-edge strips; then offsets each widget of the list at +0x246 (count +0x25a) by -delta with Widget_OffsetRect. CockpitView_ApplyViewState calls it leaving a glance with that view's own origin and otherwise with the outgoing view's origin less the incoming one's; CockpitView_StepShake and CockpitView_ClearShake call it with the shake's step.",
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "0043271c+141",
+        "sha1": "0b1b513ff110",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004327ac",
@@ -10584,8 +10722,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_UseOffForwardCursor",
-      "description": "Makes view+0x23a the active cursor slot (+0x226), or only the saved slot (+0x22a) while the edge slot is showing, and passes the image on to maybe_Driver3_SetCursorImage/maybe_Cursor_SetImage. CockpitView_StepViewTransition runs it on panning down to the heads-down view and on entering a glance.",
-      "source": "DBSIM decompile at 00433ee8 and CockpitView_StepViewTransition"
+      "description": "No arguments: with c CockpitViewInstance, stores c + 0x23a at the saved slot +0x22a when c's active slot +0x226 holds the edge slot c + 0x232; otherwise makes c + 0x23a the active slot and passes the image on through maybe_Driver3_SetCursorImage on the scroll-window path and maybe_Cursor_SetImage on the paged one. CockpitView_StepViewTransition runs it at the end of a pan down and of every glance slide.",
+      "source": "DBSIM decompile at 00433ee8 and CockpitView_StepViewTransition",
+      "verified": {
+        "bytes": "00433ee8+148",
+        "sha1": "ac55eabaac9e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00433f7c",
@@ -10593,8 +10737,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_UseForwardCursor",
-      "description": "Makes view+0x236 the active cursor slot (+0x226), or only the saved slot (+0x22a) while the edge slot is showing, and passes the image on to maybe_Driver3_SetCursorImage/maybe_Cursor_SetImage. Sim_InitMissionSession runs it as the cockpit comes up and CockpitView_StepViewTransition on panning back up to the forward view.",
-      "source": "DBSIM decompile at 00433f7c and its two callers"
+      "description": "No arguments: Cockpit_UseOffForwardCursor's code with c + 0x236, the forward cursor. es2_xref finds calls from CockpitView_StepViewTransition, at the end of a pan up, and Sim_InitMissionSession.",
+      "source": "DBSIM decompile at 00433f7c and its two callers",
+      "verified": {
+        "bytes": "00433f7c+148",
+        "sha1": "9f702f16c935",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00434010",
@@ -10602,8 +10752,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_StartHitShake",
-      "description": "Starts (or restarts) the cockpit's damage shake: swaps the active palette to the theater's impact palette (ImpactPaletteObject, 0049aef8), seeds the view-offset band through CockpitView_SetShakeBand(5 << VideoMode_YCoordShift) and arms the two timers -- HitShakeEndTick at now + 0x3c coarse ticks and HitShakeNextToggleTick at now + rand%10. Returns immediately in view mode 4. Its two callers are Mech_ApplyDirectFireDamage (a hit on either of the player's own two cockpit components, while that component still reads under 0x64 damaged) and Mech_CollisionTest (the landing at the bottom of a long slide). Restarting over a running shake restores the palette and clears the view band, then skips the arm block because HitShakeNextToggleTick is still set -- so it extends the window without re-seeding the band; the flash continues only if the restart landed on a theater-palette phase (see Palette_ToggleImpact).",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "description": "Starts (or restarts) the cockpit's damage shake; returns at once when CockpitViewManager_Published's manager is in view 4 (+0x14). When HitShakeEndTick is set it first calls Palette_RestoreFromImpact and CockpitView_ClearShake. Sets HitShakeEndTick to now + 0x3c coarse ticks; when HitShakeNextToggleTick is 0 sets it to now + Math_RandomNext % 10, calls Palette_ActivateImpact and CockpitView_SetShakeBand(5 << VideoMode_YCoordShift). So a restart over a running shake restores the palette and clears the band, then skips the arm block because HitShakeNextToggleTick is still set, extending the window without re-seeding the band.",
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00434010+121",
+        "sha1": "07d2835160bb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043408c",
@@ -10611,8 +10767,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_HitShakeTick",
-      "description": "Per-frame half of the damage shake, called from the cockpit frame pass (CockpitView_PerFrameUpdate) immediately before the footfall kick's own tick. While HitShakeEndTick is in the future it flips the impact palette each time HitShakeNextToggleTick expires (rearming it at now + rand%10) and calls CockpitView_StepShake(rand%5) every frame; on expiry it restores the palette and the view. Returns whether the shake is running, which its caller ignores.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "description": "Per-frame half of the damage shake. In view 4 it clears HitShakeEndTick. While HitShakeEndTick is in the future it calls Palette_ToggleImpact each time HitShakeNextToggleTick has passed, rearming it at now + Math_RandomNext % 10, and CockpitView_StepShake(Math_RandomNext % 5) every frame, returning 1; at expiry it clears HitShakeEndTick and returns 1. With HitShakeEndTick clear and HitShakeNextToggleTick set it calls Palette_RestoreFromImpact, clears the toggle tick, calls CockpitView_ClearShake and returns 1; otherwise it returns 0.",
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "0043408c+184",
+        "sha1": "eb1ffca353df",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00434144",
@@ -11138,7 +11300,13 @@
       "confidence": "high",
       "name": "MessagePort_ShiftRect",
       "description": "(port, delta{dx, dy}): subtracts dx from port+0x4a7 and +0x4af and dy from +0x4ab and +0x4b3, moving the rect {x0, y0, x1, y1} at +0x4a7. CockpitView_ApplyViewState calls it on CockpitView_GetSquadMessagePort's port.",
-      "source": "DBSIM decompile at 00435574"
+      "source": "DBSIM decompile at 00435574",
+      "verified": {
+        "bytes": "00435574+51",
+        "sha1": "01008738b47b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004355a8",
@@ -19615,9 +19783,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Vga_WaitVerticalRetrace",
-      "description": "MOV DX,0x3da / IN AL,DX / TEST AL,8 / JZ: spins until the VGA input-status register reports vertical retrace. One caller, CockpitView_ProcessViewCommand (0042a726), on the -b paged path only. A user-mode IN faults on NT-family Windows.",
+      "description": "MOV DX,0x3da / IN AL,DX / TEST AL,8 / JZ: spins until the VGA input-status register reports vertical retrace. CockpitView_ProcessViewCommand calls it on the -b paged path. A user-mode IN faults on NT-family Windows.",
       "source": "docs/retail/simulation/cockpit-views.md",
-      "signature": "void __cdecl Vga_WaitVerticalRetrace(void)"
+      "signature": "void __cdecl Vga_WaitVerticalRetrace(void)",
+      "verified": {
+        "bytes": "0045c61c+10",
+        "sha1": "274492f35595",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0045c626",
@@ -20037,9 +20211,15 @@
       "type": "function",
       "confidence": "high",
       "name": "View_GetActiveObject",
-      "description": "Returns ViewObjectPtr. HddMap_DrawTerrain reads the map projection's +4 triple through it: centre x, centre y, scale.",
+      "description": "Frameless: returns ViewObjectPtr (004d256e). es2_xref finds calls from CockpitView_ProcessViewCommand, four, MfdRadarScreen_Update, MfdMapScreen_Paint and HddMap_DrawTerrain.",
       "source": "docs/retail/simulation/heads-down-display.md",
-      "signature": "void * __cdecl View_GetActiveObject(void)"
+      "signature": "void * __cdecl View_GetActiveObject(void)",
+      "verified": {
+        "bytes": "0045eddc+6",
+        "sha1": "e66ea947684c",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0045ede4",
@@ -21255,9 +21435,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Display_SetOrigin",
-      "description": "Driver 3's g_RasterRoutines slot 15 target, reached through the stub 00489802. Moves the viewport window over the back buffer to point param_2: sets the render target descriptor's pixel pointer and row-table base to base + y*width + x and stores the point in Display_OriginX/Y. Ignores param_1, the page.",
+      "description": "(page, point), C convention: driver 3's g_RasterRoutines slot 15 target. Moves the viewport window over the back buffer to point: stores 004d3078 + y * the int16 row stride at the render target descriptor's (DAT_004d3074) +2 + x at the descriptor's +10 and through the pointer DAT_004a03e8, and stores the point in Display_OriginX/Y. It does not read page.",
       "source": "docs/retail/simulation/cockpit-views.md",
-      "signature": "void __cdecl Display_SetOrigin(int page, int *point)"
+      "signature": "void __cdecl Display_SetOrigin(int page, int *point)",
+      "verified": {
+        "bytes": "004648d4+57",
+        "sha1": "d2a571c43c09",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00464910",
@@ -36772,7 +36958,13 @@
       "confidence": "high",
       "name": "View_GetRenderContext",
       "description": "(view) -> the dword at view + 0x16, the view's render context.",
-      "source": "docs/retail/rendering/terrain-drawing.md"
+      "source": "docs/retail/rendering/terrain-drawing.md",
+      "verified": {
+        "bytes": "00495061+11",
+        "sha1": "901884f09e43",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0049506c",
