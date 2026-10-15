@@ -69,7 +69,8 @@ internal sealed record ActionLinks(
 /// trigger area, which groups walk which route, what fires each action and what each one sets off.
 /// Which record names which is never recomputed. Where things stand is: the routes' points, the trigger areas, the
 /// group setups and the base pads here are the editor's own copies, which <see cref="PointFollowers"/> keeps in step
-/// with the document as its points move. The objects and groups an edit adds (<see cref="StructurePlacer"/>) are
+/// with the document as its points move, and so are the groups' sides, which <see cref="SideChanger"/> sets. The objects
+/// and groups an edit adds (<see cref="StructurePlacer"/>) are
 /// listed here beside the loaded ones; <see cref="Mission"/> stays as loaded.
 /// </summary>
 internal sealed class MissionIndex {
@@ -81,8 +82,9 @@ internal sealed class MissionIndex {
 	private readonly List<SceneObject> _objects;
 	private readonly List<List<SceneObject>> _members;
 
-	// The kind and side of each group an edit added, past the loaded mission's.
-	private readonly List<(MissionUnitKind Kind, MissionSide Side)> _addedGroups = new();
+	// Every group's side, and the kind of each group an edit added, past the loaded mission's.
+	private readonly List<MissionSide> _sides;
+	private readonly List<MissionUnitKind> _addedKinds = new();
 
 	public MissionIndex(MissionScene scene, SquadMessages? commandMessages) {
 		Mission = scene.Mission;
@@ -106,6 +108,7 @@ internal sealed class MissionIndex {
 
 		_areas = BuildAreas(Mission);
 		_setups = Mission.GroupSetups.ToList();
+		_sides = Mission.GroupSides.ToList();
 		_basePads = Mission.BasePads.ToList();
 		Routes = BuildRoutes(Mission);
 
@@ -132,38 +135,39 @@ internal sealed class MissionIndex {
 	/// <summary>A group's roster, by block-11 record index, or null for an index the mission does not have.</summary>
 	public MissionUnitKind? KindOf(int group) =>
 		group >= 0 && group < Mission.GroupKinds.Count ? Mission.GroupKinds[group]
-			: group >= Mission.GroupKinds.Count && group - Mission.GroupKinds.Count < _addedGroups.Count
-				? _addedGroups[group - Mission.GroupKinds.Count].Kind
+			: group >= Mission.GroupKinds.Count && group - Mission.GroupKinds.Count < _addedKinds.Count
+				? _addedKinds[group - Mission.GroupKinds.Count]
 				: null;
 
 	/// <summary>A group's side, by block-11 record index, or null for an index the mission does not have.</summary>
-	public MissionSide? SideOf(int group) =>
-		group >= 0 && group < Mission.GroupSides.Count ? Mission.GroupSides[group]
-			: group >= Mission.GroupSides.Count && group - Mission.GroupSides.Count < _addedGroups.Count
-				? _addedGroups[group - Mission.GroupSides.Count].Side
-				: null;
+	public MissionSide? SideOf(int group) => group >= 0 && group < _sides.Count ? _sides[group] : null;
+
+	/// <summary>Sets a group's side, as <see cref="SideChanger"/> has written it into the document.</summary>
+	public void SetSide(int group, MissionSide side) => _sides[group] = side;
 
 	/// <summary>
 	/// Lists a group an edit appended to block 11 as record <paramref name="group"/>, which must be the next index, with
 	/// no members yet.
 	/// </summary>
 	public void AddGroup(int group, MissionUnitKind kind, MissionSide side, MissionGroupSetup setup) {
-		if (group != _members.Count || group != _setups.Count) {
+		if (group != _members.Count || group != _setups.Count || group != _sides.Count) {
 			throw new InvalidOperationException($"Group {group} is not the next group; {_members.Count} are listed.");
 		}
 
-		_addedGroups.Add((kind, side));
+		_addedKinds.Add(kind);
+		_sides.Add(side);
 		_members.Add(new List<SceneObject>());
 		_setups.Add(setup);
 	}
 
 	/// <summary>Takes the last group <see cref="AddGroup"/> listed off the list again; its members must be gone.</summary>
 	public void RemoveLastAddedGroup() {
-		if (_addedGroups.Count == 0) {
+		if (_addedKinds.Count == 0) {
 			throw new InvalidOperationException("No added group to remove.");
 		}
 
-		_addedGroups.RemoveAt(_addedGroups.Count - 1);
+		_addedKinds.RemoveAt(_addedKinds.Count - 1);
+		_sides.RemoveAt(_sides.Count - 1);
 		_members.RemoveAt(_members.Count - 1);
 		_setups.RemoveAt(_setups.Count - 1);
 	}

@@ -27,7 +27,8 @@ internal sealed class EditorMission {
 		Mover = new PointMover(document, scene, index, Picker, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
 		Placer = new StructurePlacer(document, scene, index, Picker, Mover, Selection);
-		Properties = new PropertiesPanel(index, Selection, Mover);
+		Sides = new SideChanger(document, index, Mover);
+		Properties = new PropertiesPanel(index, Selection, Mover, Sides);
 	}
 
 	/// <summary>What the window title calls the mission: the <c>.MSN</c> it was generated from, or the file opened.</summary>
@@ -66,6 +67,8 @@ internal sealed class EditorMission {
 
 	/// <summary>Adds structures to <see cref="Document"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public StructurePlacer Placer { get; }
+
+	public SideChanger Sides { get; }
 
 	public string WindowTitle => $"HERCULAN Mission Editor — {Name}, zone {Mission.Header.ZoneIndex}";
 

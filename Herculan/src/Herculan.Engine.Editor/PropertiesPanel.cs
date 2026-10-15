@@ -21,15 +21,17 @@ internal sealed class PropertiesPanel {
 	private readonly MissionIndex _index;
 	private readonly SelectionState _selection;
 	private readonly PointMover _mover;
+	private readonly SideChanger _sides;
 
 	// A position being typed, and the object it is for, until its field lets go.
 	private SceneObject? _draftFor;
 	private Vec3i _draft;
 
-	public PropertiesPanel(MissionIndex index, SelectionState selection, PointMover mover) {
+	public PropertiesPanel(MissionIndex index, SelectionState selection, PointMover mover, SideChanger sides) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
+		_sides = sides;
 	}
 
 	private Mission Mission => _index.Mission;
@@ -79,7 +81,7 @@ internal sealed class PropertiesPanel {
 		ImGui.Text($"Kind: {placement.Kind}");
 		ImGui.Text($"Type index: {placement.TypeIndex}");
 		ImGui.Text(placement.IsPlayerLance ? "Player squad" : $"Roster slot: {placement.SlotIndex}");
-		ImGui.Text($"Side: {placement.Side}");
+		SideField(placement.GroupIndex);
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Group:");
 		ImGui.SameLine();
@@ -183,6 +185,37 @@ internal sealed class PropertiesPanel {
 		}
 	}
 
+	/// <summary>
+	/// The group's side, as a choice that changes it when it can be changed (<see cref="SideChanger"/>), as one undo
+	/// step. The side is the group's, so the view says when other members change with it.
+	/// </summary>
+	private void SideField(int group) {
+		var current = _index.SideOf(group);
+		string? reason = _sides.WhyFixed(group);
+		if (reason != null || current is not { } side) {
+			ImGui.Text($"Side: {current?.ToString() ?? "?"}");
+			if (reason != null) {
+				ImGui.TextDisabled(reason);
+			}
+
+			return;
+		}
+
+		ImGui.AlignTextToFramePadding();
+		ImGui.Text("Side:");
+		foreach (var option in Enum.GetValues<MissionSide>()) {
+			ImGui.SameLine();
+			if (ImGui.RadioButton(option + "##side", side == option)) {
+				_sides.Set(group, option);
+			}
+		}
+
+		int members = group < _index.GroupMembers.Count ? _index.GroupMembers[group].Count : 0;
+		if (members > 1) {
+			ImGui.TextDisabled($"The side is its group's: all {members} members change with it.");
+		}
+	}
+
 	private static bool PositionField(string label, ref int value, ref bool done) {
 		ImGui.SetNextItemWidth(ScaledImGui.Scaled(140f));
 		bool changed = ImGui.InputInt(label + "##position", ref value, 0, 0);
@@ -196,6 +229,7 @@ internal sealed class PropertiesPanel {
 
 	private void DrawGroup(int group) {
 		ImGui.TextWrapped(MissionText.DescribeGroup(_index, group));
+		SideField(group);
 		ImGui.Separator();
 
 		int waitsOn = group < Mission.GroupDeploymentActions.Count ? Mission.GroupDeploymentActions[group] : -1;
