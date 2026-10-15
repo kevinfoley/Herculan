@@ -7,17 +7,17 @@ using Herculan.Engine.Terrain;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Keeps the ground levelled under the structures where they now stand. The simulator levels it once, at spawn
-/// (<see cref="HeightGrid.FlattenStructureFootprints"/>, docs/retail/simulation/terrain-heightmap.md#structure-footprints--the-flattening-pass),
-/// from every structure's footprint and every base pad's layout; after a move, <see cref="Relevel"/> puts the
-/// heightmap back as the zone loaded it and runs the same pass over the footprints as they now stand, so the ground a
-/// structure leaves returns to the heightmap and the ground it reaches is what mission start would make of it.
-/// Running the pass again is the editor's own; retail never re-levels.
+/// Keeps the ground levelled under the structures, and the base pads painted, where they now stand. The simulator
+/// paints each pad (<see cref="HeightGrid.PaintFormationPad"/>) and levels the ground
+/// (<see cref="HeightGrid.FlattenStructureFootprints"/>, docs/retail/simulation/terrain-heightmap.md#structure-footprints--the-flattening-pass)
+/// once, at spawn, from every structure's footprint and every pad's layout; after a move, <see cref="Relevel"/> puts
+/// the heightmap and the cell materials back as the zone loaded them and runs the same two passes over the structures
+/// and pads as they now stand, so the ground a structure or pad leaves returns to the zone as loaded and the ground it
+/// reaches is what mission start would make of it. Running the passes again is the editor's own; retail never does.
 ///
 /// <para>What stands on the ground is settled again where it changed: a structure on the ground under it, as the
 /// spawn pass re-settles them, and a walking mech where the editor draws it (<see cref="PointFollowers.Settled"/>).
-/// The terrain mesh is rebuilt over the cells that changed (<see cref="Changed"/>) and the overlays laid on it again.
-/// A moved pad's paint is not redone.</para>
+/// The terrain mesh is rebuilt over the cells that changed (<see cref="Changed"/>) and the overlays laid on it again.</para>
 /// </summary>
 internal sealed class TerrainLeveller {
 	private readonly HeightGrid _terrain;
@@ -28,9 +28,10 @@ internal sealed class TerrainLeveller {
 	private readonly MissionOverlay _overlay;
 	private readonly Action<SceneObject, Vec3i, int> _place;
 
-	// The raw heights the terrain mesh was last built from, and where the footprints stood when the ground was last
-	// levelled.
+	// The raw heights and materials the terrain mesh was last built from, and where the footprints stood when the
+	// ground was last levelled.
 	private readonly byte[] _meshed;
+	private readonly byte[] _meshedMaterials;
 	private int[] _levelledFor;
 
 	/// <param name="place">Stands an object at a position and heading, for whatever draws and picks it.</param>
@@ -45,9 +46,11 @@ internal sealed class TerrainLeveller {
 		_place = place;
 
 		_meshed = new byte[_terrain.Width * _terrain.Height];
+		_meshedMaterials = new byte[_meshed.Length];
 		for (int y = 0; y < _terrain.Height; y++) {
 			for (int x = 0; x < _terrain.Width; x++) {
 				_meshed[_terrain.CellIndex(x, y)] = _terrain.RawHeightAt(x, y);
+				_meshedMaterials[_terrain.CellIndex(x, y)] = (byte)_terrain.MaterialIndexAt(x, y);
 			}
 		}
 
@@ -60,7 +63,7 @@ internal sealed class TerrainLeveller {
 	/// </summary>
 	public event Action<int, int>? Changed;
 
-	/// <summary>Levels the ground again if a structure or a pad has moved since it was last levelled.</summary>
+	/// <summary>Levels and paints the ground again if a structure or a pad has moved since it was last levelled.</summary>
 	public void Relevel() {
 		int[] footprints = Footprints();
 		if (footprints.AsSpan().SequenceEqual(_levelledFor)) {
@@ -69,33 +72,41 @@ internal sealed class TerrainLeveller {
 
 		_levelledFor = footprints;
 		_terrain.RestoreUnlevelledHeights();
+		_terrain.RestoreUnpaintedMaterials();
 		foreach (var sceneObject in _objects) {
 			if (sceneObject.Object is BaseObject structure) {
 				_terrain.MarkStructureFootprint(structure.Position.X, structure.Position.Y, structure.ShapeRadius);
 			}
 		}
 
+		// In the mission's order, as the spawn pass paints them, so where two tiles overlap the same one wins.
 		foreach (var pad in _index.BasePads) {
-			_terrain.MarkFormationPad(pad.Anchor.X, pad.Anchor.Y, _materials[pad.Layout.MaterialIndex].BlockShift,
-				pad.Layout.Dimension, pad.Layout.Map);
+			_terrain.PaintFormationPad(pad.Anchor.X, pad.Anchor.Y, pad.Layout.MaterialIndex,
+				_materials[pad.Layout.MaterialIndex].BlockShift, pad.Layout.Dimension, pad.Layout.Map);
 		}
 
 		_terrain.FlattenStructureFootprints();
 
-		// The corners that moved. A cell is drawn from its own corner and the three east and north of it, so the cells
-		// to build again reach one further west and south.
+		// The cells to build again: those with a corner that moved, and those repainted. A cell is drawn from its own
+		// corner and the three east and north of it, so a moved corner reaches the cells one west and south of it too;
+		// a cell's texture is its own material's alone.
 		int minX = int.MaxValue, minY = int.MaxValue, maxX = -1, maxY = -1;
+		bool heightsChanged = false;
 		for (int y = 0; y < _terrain.Height; y++) {
 			for (int x = 0; x < _terrain.Width; x++) {
 				int cell = _terrain.CellIndex(x, y);
 				byte height = _terrain.RawHeightAt(x, y);
-				if (height == _meshed[cell]) {
+				byte material = (byte)_terrain.MaterialIndexAt(x, y);
+				bool moved = height != _meshed[cell];
+				if (!moved && material == _meshedMaterials[cell]) {
 					continue;
 				}
 
 				_meshed[cell] = height;
-				minX = Math.Min(minX, x);
-				minY = Math.Min(minY, y);
+				_meshedMaterials[cell] = material;
+				heightsChanged |= moved;
+				minX = Math.Min(minX, moved ? x - 1 : x);
+				minY = Math.Min(minY, moved ? y - 1 : y);
 				maxX = Math.Max(maxX, x);
 				maxY = Math.Max(maxY, y);
 			}
@@ -105,10 +116,13 @@ internal sealed class TerrainLeveller {
 			return;
 		}
 
-		Settle();
+		if (heightsChanged) {
+			Settle();
+			_overlay.Redrape();
+		}
+
 		var (first, count) = TerrainMeshBuilder.Rebuild(_models.TerrainMesh, _terrain, _models.TerrainBank,
-			_models.TerrainShading, minX - 1, minY - 1, maxX, maxY);
-		_overlay.Redrape();
+			_models.TerrainShading, minX, minY, maxX, maxY);
 		Changed?.Invoke(first, count);
 	}
 
