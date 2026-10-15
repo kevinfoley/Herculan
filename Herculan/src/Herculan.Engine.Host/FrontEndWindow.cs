@@ -202,7 +202,11 @@ sealed class FrontEndWindow : IDisposable {
 	/// The menu bar and its windows over whatever the frame drew, never in a <c>--screenshot</c> capture; and the update
 	/// notice, once the automatic check has found a newer release and the welcome is down.
 	/// </summary>
-	public void DrawMenuBar() {
+	/// <param name="revealOnHover">
+	/// Whether the pointer at the window's top left raises the bar (<see cref="HostMenuBar.ShowOnHover"/>): the caller's
+	/// say, which the shell withholds while a movie plays. It does nothing without the focus either, nor in a capture.
+	/// </param>
+	public void DrawMenuBar(bool revealOnHover) {
 		if (_imgui == null) {
 			return;
 		}
@@ -210,6 +214,10 @@ sealed class FrontEndWindow : IDisposable {
 		if (_screenshotPath == null) {
 			if (!_menuBar.Welcome.IsOpen && UpdateChecks.TakeNews() is { } news) {
 				_menuBar.Update.Offer(news);
+			}
+
+			if (revealOnHover && HasFocus) {
+				_menuBar.ShowOnHover();
 			}
 
 			_menuBar.Draw(_window.View.Native?.Win32?.Hwnd ?? 0, _window.FullScreen);

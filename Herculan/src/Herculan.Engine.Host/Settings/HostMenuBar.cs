@@ -7,7 +7,8 @@ using ImGuiNET;
 namespace Herculan.Engine.Host.Settings;
 
 /// <summary>
-/// The menu bar [Shift+Esc] raises over the shell and over a mission, HERCULAN's own and not retail's, and the
+/// The menu bar [Shift+Esc] raises over the shell and over a mission, and the pointer at the window's top left over the
+/// shell (<see cref="ShowOnHover"/>), HERCULAN's own and not retail's, and the
 /// panels it opens: Debug (a mission's only, and only under <c>--developer</c>), Settings, Controller, Tweaks and About; the
 /// Editor item, which leaves the shell for the mission editor and is greyed over a mission; and the
 /// first start's <see cref="WelcomeDialog"/> and the <see cref="UpdateDialog"/>, which the shell raises without the bar. Hidden until <see cref="Show"/>, and never
@@ -16,6 +17,11 @@ namespace Herculan.Engine.Host.Settings;
 /// <see cref="SimulatorFrame"/>, over the shell <c>KeyboardRouting</c>.
 /// </summary>
 sealed class HostMenuBar : IEscapeMenu {
+	// The zone ShowOnHover watches, in pixels on a 100% display (ScaledImGui.Scaled), so that on a scaled display it
+	// grows with the bar's own items rather than shrinking under them.
+	private const float HoverWidth = 300f;
+	private const float HoverHeight = 4f;
+
 	private readonly LocalizationTable _localization;
 	private readonly DebugPanel? _debug;
 	private readonly Action? _openEditor;
@@ -65,6 +71,22 @@ sealed class HostMenuBar : IEscapeMenu {
 
 	/// <summary>Raises the bar.</summary>
 	public void Show() => Visible = true;
+
+	/// <summary>
+	/// Raises the bar while the pointer is within <see cref="HoverHeight"/> of the window's top edge and
+	/// <see cref="HoverWidth"/> of its left, where the bar's items come up. A host that wants the zone calls this
+	/// each frame inside the ImGui frame, before <see cref="Draw"/>; when to skip it is the host's to decide. The bar
+	/// hides again as it does however it was raised, by a click outside it.
+	/// </summary>
+	public void ShowOnHover() {
+		// ImGui's pointer is in its own frame's units, which ScaledImGui.Scaled converts to. One it has lost reads
+		// -FLT_MAX, so the zone's lower bounds keep that out.
+		var pointer = ImGui.GetIO().MousePos;
+		if (pointer.X >= 0f && pointer.X < ScaledImGui.Scaled(HoverWidth)
+				&& pointer.Y >= 0f && pointer.Y < ScaledImGui.Scaled(HoverHeight)) {
+			Visible = true;
+		}
+	}
 
 	/// <summary>
 	/// A gamepad's Back: <see cref="BackOut"/>, or <see cref="Show"/> when there was nothing to back out of; and while the

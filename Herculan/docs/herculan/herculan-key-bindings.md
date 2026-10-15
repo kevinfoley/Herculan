@@ -11,6 +11,7 @@ The keys the engine adds to retail's. Every retail key works as [`../retail/key-
 | Gamepad left stick click | In a mission, hold for the squad orders ([Squad orders on a gamepad](#squad-orders-on-a-gamepad)). |
 | Gamepad right stick click | In a mission, hold for the cockpit's screens ([Screens on a gamepad](#screens-on-a-gamepad)). |
 | Gamepad left stick, right trigger | In the front end, move the pointer and click; any button but Back skips a movie ([Gamepad in the front end](#gamepad-in-the-front-end)). |
+| Pointer at the top left | In the front end, raise the menu bar by moving the pointer to the window's top edge, within 300 pixels of its left edge (both scaled with the display, as the bar is). A click outside the bar hides it again. Not while a movie plays, nor while the window is out of focus. |
 | Left mouse drag | With the Mouse-controlled outside view tweak, swing the outside view round the HERC. |
 | `PrtScn` | While full screen, copy the frame to the clipboard in place of Windows' own capture, which can show a stale frame of a full-screen game; with `Alt`, `Ctrl`, `Shift` or `Win` held the key is Windows'. `--save-prtscn` also saves it ([`herculan-command-line.md`](herculan-command-line.md#screenshots-and-staged-state)). |
 

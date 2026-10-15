@@ -406,6 +406,9 @@ sealed class ShellHost : IDisposable {
 		gl.ClearColor(0f, 0f, 0f, 1f);
 		gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+		// The pointer at the window's top left raises the menu bar, but not while a movie plays.
+		bool revealOnHover = !_movies.Active;
+
 		// QUIT's blank fills the whole client area with palette index 0, strip and all. The startup blanks
 		// the same way just before it shows the sequence, and nothing is drawn before then but the intro
 		// movies; CREDITS blanks round its movie.
@@ -416,14 +419,14 @@ sealed class ShellHost : IDisposable {
 			gl.ClearColor(blank.R / 255f, blank.G / 255f, blank.B / 255f, 1f);
 			gl.Clear(ClearBufferMask.ColorBufferBit);
 			_movies.DrawMovie(layout);
-			_window.DrawMenuBar();
+			_window.DrawMenuBar(revealOnHover);
 			return;
 		}
 
 		_canvas.Draw(layout, _screen);
 		_movies.DrawLocationPicture(layout);
 		_movies.DrawMovie(layout);
-		_window.DrawMenuBar();
+		_window.DrawMenuBar(revealOnHover);
 		_window.FrameDrawn(gl);
 	}
 
