@@ -14,7 +14,7 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 |---|---|---|
 | 0, 16 | the origin pair, the number of weapon rows in use | the same |
 | 20 | nine weapon-row rects, indexed by the row the mount's factory is given | 20, ten rects |
-| 164, 244, 340 | the scratch rects of the ammunition, energy and pod factories, which copy a row's rect there before building its gauge | 180, 260, 356 |
+| 164, 244, 340 | the blocks of the ammunition, energy and pod rows, each opening with the scratch rect its factory copies a row's rect to before building the row's gauge ([the weapon rows](../simulation/cockpit-panel.md#the-weapon-rows)). The ammunition and energy blocks hold at 180 and 260 the select button's rect and at 196 and 276 the round count's or charge bar's, each relative to the row's top-left, and the energy block at 304 an `int32` its gauge hands the charge bar's constructor ([the weapon rows' gauges](../simulation/cockpit-weapon-gauges.md#the-energy-row)) | 180, 260, 356; ES2's gauges place their parts at fixed offsets from the row's rect, and read a mirror flag from a byte of the block |
 | 372 | three rects | 388 |
 | 452 | the console buttons' block: a 16-byte header, then five rects from 468 | 468, four rects from 484 |
 | 548, 616, 728, 1000 | the blocks of the instruments at the cockpit's `+0x1e1` to `+0x1ed` | the same |
@@ -39,5 +39,5 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 
 ## Open
 
-- **Open:** a check of the reading against the eight retail files in `SIMVOL0.VOL`, through HercWorks.Core: the `int32` at 16 at most 9 in each, every in-use row rect inside 20–163, and the five rects at 468–547 holding the console buttons.
+- **Open:** a check of the reading against the eight retail files in `SIMVOL0.VOL`, through HercWorks.Core: the `int32` at 16 at most 9 in each, every in-use row rect inside 20–163, the five rects at 468–547 holding the console buttons, and the weapon rows' rects at 180, 196, 260 and 276 inside a row's height.
 - **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread, as are those of the other blocks but 1104's. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.

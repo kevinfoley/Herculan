@@ -14387,9 +14387,15 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdMapScreen_Ctor",
-      "description": "Constructor for the MFD's NAV MAP screen (mode 2). Copies the inset rect into this+0x18..0x24, allocates a 0x239-byte offscreen render target (this+0x10) centred at -((x1-x0)>>1), -((y1-y0)>>1), and a 0x22-byte view (this+0x14, View_Ctor) with perspective shift 8. No labels, no aux buttons.",
+      "description": "(screen, insetRect): the NAV MAP screen's constructor (mode 2). MFDisplay_Ctor, then MFDNavMapVtable (0049c4be) at +0; saves the installed render context (006c5ff4); a 0x239-byte GLViewport (Mem_New, GLViewport_Ctor) at +0x10; the rect's four dwords at +0x18..+0x24; the viewport's +0x220/+0x224 = -((x1 - x0) >> 1), -((y1 - y0) >> 1) and +0x208 = 1; a 0x22-byte view at +0x14, View_Ctor(view, the viewport, 8, 0x100, position (0, 0, 0), MfdMapScreen_ViewAngles (0049c454)); reinstalls the saved context with Raster_InstallRenderContext. No labels.",
       "source": "docs/retail/simulation/mfd.md",
-      "signature": "void * __cdecl MfdMapScreen_Ctor(void *this, int *insetRect)"
+      "signature": "void * __cdecl MfdMapScreen_Ctor(void *this, int *insetRect)",
+      "verified": {
+        "bytes": "00440494+328",
+        "sha1": "3512535d26b1",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004405dc",
@@ -14398,7 +14404,13 @@
       "confidence": "high",
       "name": "MfdMapScreen_PaintNoOp",
       "description": "MFDNavMap vtable +0x00 (0049c4be): an empty body. The map draws from its per-frame slot +0x04, MfdMapScreen_Paint.",
-      "source": "DBSIM decompile at 004405dc"
+      "source": "DBSIM decompile at 004405dc",
+      "verified": {
+        "bytes": "004405dc+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "004405e4",
@@ -14406,9 +14418,15 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdMapScreen_Paint",
-      "description": "NAV MAP paint, vtable slot 1; runs every frame the screen is up. Floods the inset with COLORS.DAT id 19, centres the map projection on the viewing machine (obj+0x26/+0x2a) at a fixed scale of 200000 (8.8 world units per pixel), calls HddMap_DrawTerrain(obj+0x10) so the map turns heading-up, then draws a cross in id 16 through the centre with two Raster_DrawLine calls, (-1,0)-(1,0) and (0,-1)-(0,1) shifted by VideoMode_X/YCoordShift. No grid, border or markers.",
+      "description": "NAV MAP update slot, MFDNavMap vtable +0x04: returns at once while CockpitViewManagerPublished's byte +0x1c (the view-change flag) is set. Floods the rect +4 with the brush {0, COLORS.DAT id 19 (004d3c26)} at the installed context's +0x22c (Raster_FillRect); sets the viewport (+0x10) rect +0x210 to +0x18..+0x24 less the installed context's +0x220/+0x224, copies the context's 0x81 dwords from +4 and its +0x208 over the viewport's, and installs it. Calls View_GetActiveObject and drops the result. The view (+0x14) gets position (the cockpit machine's +0x26, +0x2a, 200000) and angles (MfdMapScreen_ViewAngles' first int16, 0, 0); the viewport's +0x20c = 0; Raster_InstallViewProjection(view); HddMap_DrawTerrain(the machine's int16 heading +0x10). Then +0x20c = 1, the pen {0, COLORS.DAT id 16 (004d3c20)} at the viewport's +0x228, and Raster_DrawLine from (-(1 << VideoMode_XCoordShift), 0) to (1 << it, 0) and from (0, -(1 << VideoMode_YCoordShift)) to (0, 1 << it); reinstalls the saved context and calls Widget_DrawToCockpit(1, rect, 0).",
       "source": "docs/retail/simulation/mfd.md",
-      "signature": "void __cdecl MfdMapScreen_Paint(void *this)"
+      "signature": "void __cdecl MfdMapScreen_Paint(void *this)",
+      "verified": {
+        "bytes": "004405e4+521",
+        "sha1": "cf9506f20f60",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004407f0",
@@ -14431,8 +14449,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponGauge_Ctor",
-      "description": "Constructor for a weapon hardpoint gauge. Lazily loads the `pweapons` (DAT_0049c4d0) and `wpn_dmg` (DAT_0049c4d4) sprite banks, folder selected off VideoMode_UseHiResBanks, builds the two-sequence WPN_DMG frame table (frames 1-9 and 9-1, one tick each) into _DAT_004d1adc, gives the gauge its own sequencer over it at +0x6c, and sets the sensor-dropout ranges to 120-360 dark and 180-1800 shown.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (HUD sprite art)"
+      "description": "(gauge, block, cockpit, mount): the weapon row gauge's base constructor. PanelGauge_Ctor(gauge, block, cockpit), WeaponGaugeVtable at +0; loads the pweapons bank into 0049c4d0 and the wpn_dmg bank into 0049c4d4 when each is 0 (folder by VideoMode_UseHiResBanks, ResourcePath_BuildFolderName, Resource_Load), and with wpn_dmg builds once the two-sequence frame table from the start frames WeaponGauge_WipeFirstFrames and the end frames at 0049c4cc, each frame held 1, at 004d1ad8/004d1adc; stores the mount at +0xbd and 0 in the bytes +0xb1 and +0xc1; a 0x2a-byte SpriteSequence_Init over wpn_dmg and that table at +0x6c; the int16 +0x74 = 0; the dropout ranges +0x7c..+0x88 = 120, 360, 180, 1800; the byte +0x8e = 0.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md (HUD sprite art)",
+      "verified": {
+        "bytes": "0044080c+518",
+        "sha1": "b3eff184036b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00440a14",
@@ -14440,8 +14464,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponGauge_MountProjectileType",
-      "description": "(gauge): the Type (int16 +0) of the PROJ.DAT record the gauge's mount (+0xbd) holds at +0x20, or -1 with no mount or no record. MfdDisplay_SyncMissileCamMode tests it for 0, Rocket.",
-      "source": "DBSIM decompile at 00440a14"
+      "description": "(gauge): the int16 +0 (the type) of the PROJ.DAT record the gauge's mount (+0xbd) holds at +0x20, or -1 with no mount or no record.",
+      "source": "DBSIM decompile at 00440a14",
+      "verified": {
+        "bytes": "00440a14+40",
+        "sha1": "a1e8d0a7052e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00440a3c",
@@ -14449,8 +14479,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponGauge_MountProjectileSubtype",
-      "description": "(gauge): the subtype id (int16 +2) of the PROJ.DAT record the gauge's mount (+0xbd) holds at +0x20, or -1 with no mount or no record. MfdDisplay_SyncMissileCamMode tests it for 3, the electro-optical missile.",
-      "source": "DBSIM decompile at 00440a3c"
+      "description": "(gauge): the int16 +2 (the subtype id) of the PROJ.DAT record the gauge's mount (+0xbd) holds at +0x20, or -1 with no mount or no record.",
+      "source": "DBSIM decompile at 00440a3c",
+      "verified": {
+        "bytes": "00440a3c+41",
+        "sha1": "117df6dd1123",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00440a68",
@@ -14458,8 +14494,14 @@
       "type": "function",
       "confidence": "high",
       "name": "EnergyWeaponGauge_Ctor",
-      "description": "The weapon-row gauge class for energy mounts (vtable 0049c91c), built via CockpitView_CreateEnergyWeaponGauge. Builds the charge bar (WeaponSliderGadget_Ctor) over the same value field the ammunition class puts its number in (x0+36..x0+53, y0..y0+5).",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(gauge, block, cockpit, row, mount): the energy row's constructor. WeaponGauge_Ctor(gauge, block, cockpit, mount); ChainedWeaponGaugeVtable (0049c93c), the int16 row at +0xd9, EnergyWeaponGaugeVtable (0049c91c). Child 0, a 0x67-byte ChainedWeaponSelectGadget_Ctor(child, block, gauge, row, bit row of the block's byte +0x40), at +0x18, registered with Widget_RegisterClickable in the root widget at +0 of CockpitViewInstance; strncpy of 12 bytes of WeaponMount_GetDisplayName(mount) to +0xb1; child 1, a 0x7e-byte WeaponSliderGadget_Ctor(child, the value field x0 + (0x24 .. 0x35 << VideoMode_XCoordShift), y0 .. y0 + (5 << VideoMode_YCoordShift), mirrored from x1 when the flag is set, gauge, the block's dword +0x3c), at +0x1c, registered; +0x68 = 2; +0xc6 = 0x400; _memset(+0xc2, 0, 0x17), which clears the 0x400.",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "00440a68+511",
+        "sha1": "9f20252637c5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00440c68",
@@ -14468,7 +14510,13 @@
       "confidence": "high",
       "name": "EnergyWeaponGauge_Paint",
       "description": "EnergyWeaponGauge vtable +0x04 (0049c91c): while +0x8c is set, paints the row's two children (+0x18, +0x1c) through slot +0x00 of their tables at +0x17. AmmoWeaponGauge_Paint is the ammunition row's.",
-      "source": "DBSIM decompile at 00440c68"
+      "source": "DBSIM decompile at 00440c68",
+      "verified": {
+        "bytes": "00440c68+39",
+        "sha1": "d4e1792675a2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00440c90",
@@ -14476,8 +14524,14 @@
       "type": "function",
       "confidence": "high",
       "name": "EnergyWeaponGauge_Update",
-      "description": "Energy weapon row's per-frame update. While armed: runs the power-up fill until done, then the sensor dropout -- Player_DependentCondition(2) into +0x74 and PanelGauge_TickDropout when nonzero -- and on the dark-to-shown transition repaints both children (select gadget, charge bar).",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "The energy row's per-frame update, vtable +0x08. Returns unless CockpitView_RectCornerVisible(+4) passes or CockpitViewManagerPublished's +0x1c is set, and the row is armed (+0x8c). Before the power-up is done (+0x8d) it runs EnergyWeaponGauge_PowerUpFill; once done, with +0x8e clear and the rect on screen, it calls its own slot +0x04, sets +0x8e and returns. Then Player_DependentCondition(2) into +0x74 and PanelGauge_TickDropout when nonzero; when +0x76 has just turned 0 (differs from +0x77), both children's slot +0x04; and both children's slot +0x0c.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00440c90+188",
+        "sha1": "494645dbfcec",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00440d4c",
@@ -14516,7 +14570,13 @@
       "confidence": "high",
       "name": "EnergyWeaponGauge_PowerUpFill",
       "description": "An energy weapon row's power-up fill: the charge bar shows min(elapsed * 0x19, live) against the coarse ticks since the row was armed, then the live value (+0xdb) and done from elapsed >= 0x33. Repaints both children.",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00440e84+105",
+        "sha1": "7cdafca9e6cd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00440ef0",
@@ -14524,9 +14584,15 @@
       "type": "function",
       "confidence": "high",
       "name": "EnergyWeaponGauge_OnChildClick",
-      "description": "The energy weapon row's vtable slot 0, which its children forward to. Searches the child table at +0x18 (count +0x68): child 0 is the select gadget, and it chains the row via WeaponMounts_ToggleChainMember when bit 1 of the click value (the mouse-button word 0049db6c) is set and arms it via CockpitView_ArmWeaponByGauge otherwise; child 1 is the charge bar (WeaponSliderGadget, which no press reaches in retail), whose committed slider position is clamped to 0..0x400 and stored at +0xc6 -- block[1] of the state block WeaponMount_PushEnergyGaugeState reads back as the charge target.",
+      "description": "(gauge, child, value): the energy row's vtable +0x00. Finds the child among the +0x68 children from +0x18. Child 0: with bit 1 of value set, WeaponMounts_ToggleChainMember(the cockpit machine's (CockpitViewInstance +0x203) manager +0x202, the int16 row +0xd9); otherwise CockpitView_ArmWeaponByGauge(+0x14, gauge). Child 1, the charge bar: stores value, clamped to 0..0x400, at +0xc6.",
       "source": "docs/retail/simulation/weapon-mounts.md",
-      "signature": "void __cdecl EnergyWeaponGauge_OnChildClick(int gauge, int child, uint value)"
+      "signature": "void __cdecl EnergyWeaponGauge_OnChildClick(int gauge, int child, uint value)",
+      "verified": {
+        "bytes": "00440ef0+134",
+        "sha1": "af7949acd245",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00440f78",
@@ -14534,8 +14600,14 @@
       "type": "function",
       "confidence": "high",
       "name": "AmmoWeaponGauge_Ctor",
-      "description": "The weapon-row gauge class for ammunition mounts (vtable 0049c8fc), built via CockpitView_CreateAmmoWeaponGauge. Adds a left-aligned numeric label over the value field at x0+36..x0+53, y0..y0+5 of the .GAU hardpoint rect; AmmoWeaponGauge_Paint fills it with itoa(rounds) in ColorSchemePanels[10] WHITE when the mount is selected and [11] GRAY otherwise.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(gauge, block, cockpit, row, mount): the ammunition row's constructor. WeaponGauge_Ctor(gauge, block, cockpit, mount); ChainedWeaponGaugeVtable, the int16 row at +0xd9, ProjectileWeaponGaugeVtable (0049c8fc). The mirror flag is bit row of the block's byte +0x30. The value rect +0xdf..+0xeb is x0 + (0x24 << VideoMode_XCoordShift) .. x0 + (0x35 << it), y0 .. y0 + (5 << VideoMode_YCoordShift), or with the flag x1 - (0x35 << it) .. x1 - (0x24 << it). Child 0, a 0x67-byte ChainedWeaponSelectGadget_Ctor(child, block, gauge, row, flag), at +0x18, registered with Widget_RegisterClickable in the root widget of CockpitViewInstance; strncpy of 12 bytes of WeaponMount_GetDisplayName(mount) to +0xb1; a 0x21-byte label, Label_Ctor(label, ColorSchemePanels[11] (0049b0d8), 1), placed by Label_SetRect over +0xdf with zero margins and flags 1, or 4 with the flag, fill +0x1d = 0x2e, at +0xdb; +0x68 = 1; _memset(+0xc2, 0, 0x17).",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "00440f78+570",
+        "sha1": "475ea1bd62dd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004411b4",
@@ -14558,8 +14630,14 @@
       "type": "function",
       "confidence": "high",
       "name": "AmmoWeaponGauge_Update",
-      "description": "Ammunition row's per-frame update. Marks the power-up done at once, runs the sensor dropout as EnergyWeaponGauge_Update does, and refreshes the round-count label only while the row is neither dark nor mid-wipe (+0x76 clear and the +0x6c sequencer idle).",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md"
+      "description": "The ammunition row's per-frame update, vtable +0x08. Returns unless CockpitView_RectCornerVisible(+4) passes or CockpitViewManagerPublished's +0x1c is set, and the row is armed (+0x8c). Sets +0x8d to 1 and +0xb0 to 2. With +0x8e clear and the rect on screen, calls its own slot +0x04, sets +0x8e and returns. Then Player_DependentCondition(2) into +0x74 and PanelGauge_TickDropout when nonzero; when +0x76 has just turned 0, child 0's slot +0x04 and +0xb0 = 2; child 0's slot +0x0c. Unless +0x76 is set or the +0x6c sequencer is busy (SpriteSequence_State): +0xb0 = 2 when child 0's byte +0x1f is set; at +0xb0 = 1, Widget_DrawToCockpit(0, the label +0xdb's rect +4, 0) unless +0xd3 is set, and +0xb0 lowered; at 2 with the label's rect on screen, unless +0xd3 is set, _itoa(+0xc2, 10) into the label (Label_SetText) in ColorSchemePanels[10] when +0xd6 is set and [11] otherwise, and +0xb0 lowered.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md",
+      "verified": {
+        "bytes": "00441268+394",
+        "sha1": "c640393de1fd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004413f4",
@@ -14597,9 +14675,15 @@
       "type": "function",
       "confidence": "high",
       "name": "AmmoWeaponGauge_OnChildClick",
-      "description": "The ammunition weapon row's vtable slot 0, the twin of EnergyWeaponGauge_OnChildClick: child 0 chains the row on the right-button bit of the click value and arms it otherwise, then marks the row for repaint at +0xb0. It is also the PodGauge vtable's +0x2c entry.",
+      "description": "(gauge, child, value): the ammunition row's vtable +0x00. Finds the child among the +0x68 children from +0x18; for a later child returns its index less 1. Child 0: with bit 1 of value set, WeaponMounts_ToggleChainMember(the cockpit machine's manager +0x202, the int16 row +0xd9); otherwise CockpitView_ArmWeaponByGauge(+0x14, gauge); then +0xb0 = 2.",
       "source": "docs/retail/simulation/weapon-mounts.md",
-      "signature": "uint __cdecl AmmoWeaponGauge_OnChildClick(int gauge, int child, uint value)"
+      "signature": "uint __cdecl AmmoWeaponGauge_OnChildClick(int gauge, int child, uint value)",
+      "verified": {
+        "bytes": "004414b4+109",
+        "sha1": "23181c38a550",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00441524",
@@ -15261,8 +15345,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponGauge_SetStateNoOp",
-      "description": "WeaponGauge vtable +0x10 (0049c95c), kept by ChainedWeaponGauge, PodWeaponGauge, TogglePodGauge and EnergyPodGauge: an empty body. EnergyWeaponGauge installs EnergyWeaponGauge_SetState.",
-      "source": "DBSIM decompile at 00443417"
+      "description": "An empty body (push ebp; mov ebp,esp; pop ebp; ret): the weapon gauge tables' +0x10 set-state slot where a class has no state to set.",
+      "source": "DBSIM decompile at 00443417",
+      "verified": {
+        "bytes": "00443417+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0044341c",
@@ -16998,7 +17088,13 @@
       "name": "HddMap_WorldToScreen",
       "description": "Projects a world point to screen: view transform (Raster_ModelToView), Raster_PerspectiveDivide, Raster_ProjectToScreen.",
       "source": "docs/retail/simulation/heads-down-display.md",
-      "signature": "void __cdecl HddMap_WorldToScreen(int *worldPoint, int *screenOut)"
+      "signature": "void __cdecl HddMap_WorldToScreen(int *worldPoint, int *screenOut)",
+      "verified": {
+        "bytes": "0044c228+58",
+        "sha1": "bf0792837e69",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044c264",
@@ -17729,9 +17825,15 @@
       "type": "function",
       "confidence": "high",
       "name": "HddMap_DrawTerrain",
-      "description": "Blits the map raster HddMapTerrainRaster through the installed map projection: projects the grown mission box's own corners (world units, not cell edges), turns the top-left corner about the map centre by the angle with Math_Rotate2DPoint in screen space, and hands the bitmap to Bitmap_BlitRotatedUnpacked with the same angle. The command display passes 0; MfdMapScreen_Paint passes the machine's heading.",
+      "description": "(angle): blits HddMapTerrainRaster through the installed projection. Raster_SetModelTransform(0); projects View_GetActiveObject's position +4..+0xc and the corners (Mission_Box min x - 60000, max y (004aa6d0) + 60000, 0) and (max x (004aa6cc) + 60000, min y (004aa6c8) - 60000, 0) with HddMap_WorldToScreen; turns the top-left corner by the angle about the projected view position (Math_BuildRotation2D, Math_Rotate2DPoint) and calls Bitmap_BlitRotatedUnpacked(&HddMapTerrainRaster, that corner, 0, bottom-right less the unturned top-left, angle).",
       "source": "docs/retail/simulation/heads-down-display.md",
-      "signature": "void __cdecl HddMap_DrawTerrain(short angle)"
+      "signature": "void __cdecl HddMap_DrawTerrain(short angle)",
+      "verified": {
+        "bytes": "004502e4+331",
+        "sha1": "0f974289c34a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00450430",
@@ -34739,9 +34841,15 @@
       "type": "function",
       "confidence": "high",
       "name": "View_Ctor",
-      "description": "Constructs a view (vtable 004a5b41): View_CtorBase for the position and angles, then the render target at +0x16, the perspective shift at +0x1a and the near plane at +0x1e -- the fields Raster_InstallViewProjection reads. Sim_InitMissionSession passes shift 8 or 9; MfdMapScreen_Ctor passes 8, near plane 0x100, and a zero position and zero angles.",
+      "description": "(view, renderTarget, perspectiveShift, nearPlane, position, angles): View_CtorBase(view, position, angles), then the vtable 004a5b41 at +0, the perspective shift at +0x1a, the near plane at +0x1e and the render target at +0x16 -- the fields Raster_InstallViewProjection reads; adds 1 to the count at Rtl_DtorCountPtr. Returns view.",
       "source": "docs/retail/simulation/cockpit-views.md",
-      "signature": "void * __cdecl View_Ctor(void *this, void *renderTarget, int perspectiveShift, int nearPlane, int *position, short *angles)"
+      "signature": "void * __cdecl View_Ctor(void *this, void *renderTarget, int perspectiveShift, int nearPlane, int *position, short *angles)",
+      "verified": {
+        "bytes": "0048bc98+61",
+        "sha1": "154ccdd2ec96",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0048bcd8",

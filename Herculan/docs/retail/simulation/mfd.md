@@ -344,16 +344,19 @@ The update floods the inset with palette index `0x11` and blits at `inset + (0x1
 
 ### `MFDMap` — mode 2
 
-`MfdMapScreen_Ctor` (`00440494`) takes the whole inset rect, allocates a 0x239-byte offscreen render target centred at `-((x1 - x0) >> 1)`, `-((y1 - y0) >> 1)` — so the map's centre is 97, 60 device pixels into the inset on every retail herc — and a `View_Ctor` view with perspective shift 8 and zero angles. No labels, no aux buttons.
+**The NAV MAP is the command display's terrain map at a fixed scale, centered on the player's machine and turned so that its heading points up, with a small cross at the center.** It has no labels, grid, border, markers or aux buttons, and no clamp, zoom or pan.
 
-`MfdMapScreen_Paint` (`004405e4`), every frame the screen is up:
+`MfdMapScreen_Ctor` (`00440494`), (screen, inset rect), allocates nothing itself: it runs `MFDisplay_Ctor`, stores `MFDNavMapVtable` (`0049c4be`) and copies the rect to `+0x18`–`+0x24`. It builds at `+0x10` a `0x239`-byte `GLViewport`, its origin `+0x220`/`+0x224` at −((*x1* − *x0*) >> 1), −((*y1* − *y0*) >> 1), so the map's center is 97, 60 device pixels into the inset on every retail herc, and its clip mode `+0x208` 1; and at `+0x14` a `0x22`-byte view, `View_Ctor`(view, the viewport, perspective shift 8, near plane `0x100`, position (0, 0, 0), angles `MfdMapScreen_ViewAngles` (`0049c454`)), which stores the viewport at `+0x16`, the shift at `+0x1a` and the near plane at `+0x1e`. `MfdMapScreen_StaticInit` (`004407f0`) sets those angles to {`0xc000`, 0, 0}, a pitch straight down. The constructor puts back the render context it found. The object is `0x28` bytes.
 
-1. Floods the rect with `COLORS.DAT` id 19, which is why no screen chrome is blitted for this mode.
-2. Centres the projection on the viewing machine (`obj+0x26`, `+0x2a`) at a fixed scale of `200000` — 8.8 fixed, about 781 world units or 4.7 m per device pixel. Projection is the command display's, [`heads-down-display.md`](heads-down-display.md#the-maps-frame-of-reference); there is no clamp, zoom or pan.
-3. `HddMap_DrawTerrain(obj+0x10)` — the command display's raster, [`heads-down-display.md`](heads-down-display.md#terrain-raster), turned by the machine's heading where the command display passes 0.
-4. A cross in `COLORS.DAT` id 16: two `Raster_DrawLine` (`004838f8`) calls, `(-1, 0)-(1, 0)` and `(0, -1)-(0, 1)` shifted by `VideoMode_X/YCoordShift`, through the target's origin.
+The table's paint slot `+0` is `MfdMapScreen_PaintNoOp` (`004405dc`), an empty body; the map is drawn by its update slot `+4`, `MfdMapScreen_Paint` (`004405e4`), (screen), every frame the screen is up ([paint order](#paint-order)):
 
-No grid, border or markers.
+1. While the view manager's view-change flag is set (`CockpitViewManagerPublished` `+0x1c`, [the view manager](cockpit-views.md#object-model)), it returns at once.
+2. It floods the screen's rect (`+4`) with `COLORS.DAT` id 19, the brush {0, color} at the installed render context's `+0x22c`, which is why no screen chrome is blitted for this mode.
+3. It sets the viewport's rect `+0x210`–`+0x21c` to the screen's rect less that context's origin `+0x220`/`+0x224`, copies the context's clip block (`0x81` dwords from `+4`) and its clip mode `+0x208` over the viewport's, and installs the viewport with `Raster_InstallRenderContext`.
+4. It puts the view over the cockpit's machine (`CockpitViewInstance` `+0x203`): position `+4`–`+0xc` = the machine's `+0x26`, `+0x2a` and 200000; angles `+0x10`–`+0x14` = the first `int16` of `MfdMapScreen_ViewAngles`, 0 and 0. It clears the viewport's translation flag `+0x20c` and installs the view's projection with `Raster_InstallViewProjection`. A camera straight overhead at a height of 200000 with a focal length of 2⁸ = 256 maps about 781 world units, 4.7 m, to a device pixel, which is the command display's projection ([the map's frame of reference](heads-down-display.md#the-maps-frame-of-reference)). It also calls `View_GetActiveObject` and does not use the result.
+5. `HddMap_DrawTerrain`(the machine's `int16` heading `+0x10`) blits the command display's terrain raster turned by that angle ([terrain raster](heads-down-display.md#terrain-raster)); the command display passes 0.
+6. It sets the viewport's translation flag `+0x20c`, installs the pen {0, `COLORS.DAT` id 16} at its `+0x228`, and draws two lines with `Raster_DrawLine` (`004838f8`), (−(1 ≪ `VideoMode_XCoordShift`), 0)–(1 ≪ `VideoMode_XCoordShift`, 0) and (0, −(1 ≪ `VideoMode_YCoordShift`))–(0, 1 ≪ `VideoMode_YCoordShift`): a cross through the viewport's origin, each line five device pixels long in the 640-wide modes.
+7. It reinstalls the render context it found and copies the screen's rect to the display with `Widget_DrawToCockpit`(1, rect, 0).
 
 **Heading up.** The turn is a positive binary angle in screen space, clockwise on a screen whose y runs down. A heading counts the other way — a machine moves along `(-sin h, cos h)` — so turning the picture by the heading puts the nose at the top.
 

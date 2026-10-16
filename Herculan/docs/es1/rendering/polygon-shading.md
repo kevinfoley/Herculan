@@ -230,7 +230,7 @@ In `WORLD0`, for one, a near shape's lit faces shade across palette entries 240 
 
 In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with `000928ea` set, ramp 14 takes `WorldShades_ResetRamps`' range {16, 16} instead, and the cull still applies ([above](#the-distance-bands)). Two other views draw the zone's shapes straight through each object's slot `+4`, outside the object list, with no band and no cull:
 
-- **`00036c2c`** fills its view with colour `0x17`, puts its camera 200000 above the position `00059280` returns, calls `WorldShades_ResetRamps`, draws every zone shape, then draws markers with `00069058`.
+- **`MfdMapScreen_Paint` (`00036c2c`)**, the MFD's NAV MAP, fills its view with colour `0x17`, puts its camera 200000 above the active view object, calls `WorldShades_ResetRamps`, draws every zone shape, then plots a cross with `Gfx_PlotPixel` ([the NAV MAP](../simulation/mfd-nav-map.md#the-paint)).
 - **`00040d4c`**, a cockpit map, fills with colour `0x36`, draws grid lines in `0x37` every 50000 units, points ramp 14 at the one-entry range {56, 1} with `Palette_SetRampsToRange`, so every lit face is palette entry 56, and draws every zone shape with the word its shape instance's `+8` points at set to 1 for the draw and 0 after.
 
 ## Functions
@@ -292,7 +292,7 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 - **Open:** which entries carry kind 1.
 - **Open:** what the blend byte `000b5b65` is set to.
 - **Open:** which classes carry type tags 1 to 9 in ES1: what the array at `000bc416` and the pools `000af0b4`, `000aeef8` and `000aef68` hold, and what each one's constructor stores at `+0`.
-- **Open:** what `00036c2c` and `00040d4c` are in the cockpit, what `00059280` returns, and what the word at a shape instance's `+8` selects.
+- **Open:** what `00040d4c` is in the cockpit, and what the word at a shape instance's `+8` selects.
 - **Open:** no reference to `Light_RemovePersistent` or `Light_UnregisterPersistent` found by `es2_xref.py`, and none to `LightManager_SetSlotFalloff` but the dword at `0002116c`.
 - **Open:** what `00005d74`, which sets an effect light's intensity, is, and which ramp entry it reads.
 - **Open:** no reference to `Raster_GetColourRamps` found by `es2_xref.py`.
