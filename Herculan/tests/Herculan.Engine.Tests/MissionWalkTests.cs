@@ -1,7 +1,9 @@
+using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
+using Herculan.Engine.Shell;
 using Herculan.Engine.Sim;
 using Herculan.Engine.World;
 using Xunit;
@@ -17,12 +19,29 @@ namespace Herculan.Engine.Tests;
 /// <para>Skips silently when no Earthsiege 2 install or mission can be found.</para>
 /// </summary>
 [Collection(SimTimestepCollection.Name)]
-public class MissionWalkTests {
+public sealed class MissionWalkTests : IDisposable {
+	private readonly string _root = Path.Combine(Path.GetTempPath(), "herculan-tests", "walk-" + Guid.NewGuid().ToString("N"));
+
+	public void Dispose() {
+		try {
+			Directory.Delete(_root, recursive: true);
+		} catch (IOException) {
+		}
+	}
+
+	/// <summary>
+	/// <c>TRAIN1</c>, Basic Training 1, launched from the practice screen's first row into a temp folder, so the walk
+	/// is the same every run whatever the install's own <c>script.dat</c> holds. Below row 4 the player flies the
+	/// mission's own machine (docs/retail/shell/main-menu.md#selecting-a-mission).
+	/// </summary>
 	[Fact]
 	public void PlayerMechWalksAcrossRealTerrain() {
-		if (Load() is not { } scene || scene.PlayerMech is not { Thread: not null } mech) {
+		if (LoadTraining(row: 0) is not { } scene) {
 			return;
 		}
+
+		var mech = scene.PlayerMech;
+		Assert.True(mech is { Thread: not null }, "TRAIN1 has no player HERC with a thread");
 
 		var start = mech.Position;
 		var full = new MechControls(0, -MechControls.AxisFull);
@@ -76,6 +95,18 @@ public class MissionWalkTests {
 			Assert.Equal(post.X, mech.Position.X);
 			Assert.Equal(post.Y, mech.Position.Y);
 		}
+	}
+
+	/// <summary>The practice mission on <paramref name="row"/>, its handoff written under <see cref="_root"/>, never the install.</summary>
+	private MissionScene? LoadTraining(int row) {
+		if (GameInstall.Locate(null) is not { } install) {
+			return null;
+		}
+
+		var handoff = ShellTrainingLaunch.Write(_root, GameContent.MountShell(install), SimulatorPreferences.Defaults(), row,
+			instantAction: false, new SimRandom(), new short[MissionGenerator.ClearListLength], held: null, out string? failure);
+		Assert.True(handoff != null, failure);
+		return MissionScene.Load(GameContent.MountSimulator(install), handoff.ScriptPath);
 	}
 
 	private static MissionScene? Load() {
