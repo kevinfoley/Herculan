@@ -175,24 +175,31 @@ def cmd_stamp(args) -> int:
     for t in targets:
         target = resolve(t, args.binary)
         entry = next((e for e in header["entries"] if int(e["address"], 16) == target), None)
-        if entry is None:
-            raise SystemExit("%08x has no known_symbols entry; add one before stamping it" % target)
-        if entry["type"] != "function":
-            raise SystemExit("%08x is a %s entry; stamps are for functions" % (target, entry["type"]))
         size = extents.get(target)
-        if args.via == "raw":
+        # A target that cannot be stamped as asked is refused like a wording refusal, so one bad
+        # address in a list leaves the rest of the list stamped.
+        problem = None
+        if entry is None:
+            problem = "has no known_symbols entry; add one before stamping it"
+        elif entry["type"] != "function":
+            problem = "is a %s entry; stamps are for functions" % entry["type"]
+        elif args.via == "raw":
             raw = raw_extent(image, target)
             if raw is None:
-                raise SystemExit("%08x is not a straight-line stub ending in a RET within %d bytes; "
-                                 "--via raw reads only those" % (target, RAW_LIMIT))
-            if size is not None and size != raw:
-                raise SystemExit("%08x: the function list's extent is %d bytes, the stub %d; stamp it --via disasm"
-                                 % (target, size, raw))
-            size = raw
+                problem = ("is not a straight-line stub ending in a RET within %d bytes; --via raw reads only "
+                           "those (a stub that calls takes --via disasm once apply --define has made it)" % RAW_LIMIT)
+            elif size is not None and size != raw:
+                problem = "has a function-list extent of %d bytes, the stub %d; stamp it --via disasm" % (size, raw)
+            else:
+                size = raw
         elif size is None:
-            raise SystemExit("%08x is not a function start in the function list%s" % (
-                target, "; a straight-line stub with no Ghidra function yet takes --via raw"
-                if raw_extent(image, target) else ""))
+            problem = "is not a function start in the function list%s" % (
+                "; a straight-line stub with no Ghidra function yet takes --via raw"
+                if raw_extent(image, target) else "")
+        if problem:
+            print("%08x %s  REFUSED  %s" % (target, entry.get("name", "") if entry else "", problem))
+            refused_any += 1
+            continue
 
         stamp = {
             "bytes": "%08x+%d" % (target, size),

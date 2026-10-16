@@ -86,7 +86,10 @@ address operands by different rules (insn_streams).
       Rewrite FUN_/DAT_<addr> mentions of the batch's named entries in the descriptions of other
       entries of the same binary (insert does this itself). --bare also rewrites a bare address
       ("made by 00074f9c") to "Name (00074f9c)", listing each; insert reports how many there are.
-      Stamps are kept, since the rewrite only names what the address denoted.
+      Stamps are kept, since the rewrite only names what the address denoted. insert, edit and
+      relink undo a doubling they write ("Name (Name (00012345))" -> "Name (00012345)", "Name (Name)"
+      -> "Name"), printing each, and print CHECK for a new "Name, Name (00012345)", which is a
+      doubling unless both arguments really are that object.
   mentions batch.json
       FUN_/DAT_/bare-address mentions of the batch's named addresses in docs/src/tests.
   fixrefs batch.json [--write]
@@ -761,6 +764,44 @@ def by_binary(items):
         out.setdefault(x["binary"], []).append(x)
     return out
 
+# 'Name (Name (00012345))' and 'Name (Name)': a renamed FUN_/DAT_ mention landing inside a parenthesis
+# that already gave the address or the name. Always wrong, so undouble() rewrites it.
+DOUBLED = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*) \(\1(?: \(([0-9a-f]{8})\))?\)")
+# 'Name, Name (00012345)': a doubling too, or two arguments that really are the same object
+# (MonoScreen_Ctor(Mono_Screen, Mono_Screen (000b5e70))), so undouble() only reports it.
+REPEATED = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*), \1 \([0-9a-f]{8}\)")
+
+
+def undouble(before, after, binary):
+    """Rewrite the DOUBLED forms a rename or relink wrote into after's descriptions, and report the
+    REPEATED forms it wrote, leaving any already in before alone. Returns the new text."""
+    was = {json.loads(m.group(0))["address"]: json.loads(m.group(0)).get("description", "")
+           for m in S.ENTRY_BLOCK.finditer(before)}
+    out, pos = [], 0
+    for m in S.ENTRY_BLOCK.finditer(after):
+        e = json.loads(m.group(0))
+        d, old = e.get("description", ""), was.get(e["address"], "")
+
+        def fix(h):
+            if h.group(0) in old:
+                return h.group(0)
+            to = h.group(1) + (" (%s)" % h.group(2) if h.group(2) else "")
+            print(f"  undoubled {binary} {e['address']} {e.get('name', '')}: {h.group(0)} -> {to}")
+            return to
+
+        d2 = DOUBLED.sub(fix, d)
+        for h in REPEATED.finditer(d2):
+            if h.group(0) not in old:
+                print(f"  CHECK {binary} {e['address']} {e.get('name', '')}: '{h.group(0)}' "
+                      "is a doubling unless both arguments are that object")
+        if d2 != d:
+            e["description"] = d2
+            out.append(after[pos:m.start()])
+            out.append(block(e))
+            pos = m.end()
+    out.append(after[pos:])
+    return "".join(out)
+
 
 def cmd_insert(args):
     with open(args[0], encoding="utf-8") as f:
@@ -791,7 +832,7 @@ def cmd_insert(args):
             existing.add(e["address"])
             for v in e.values():
                 assert not re.search(r"[\x00-\x1f]", v), ("control char", e["address"])
-        text2 = relink(S.insert_blocks(text, batch), batch)
+        text2 = undouble(text, relink(S.insert_blocks(text, batch), batch), binary)
         texts[binary] = (text2, nl, len(S.check(binary, text2)["entries"]))
         _, bare = relink_bare(text2, binary, {e["address"]: e["name"] for e in batch if e.get("name")}, quiet=True)
         if bare:
@@ -893,13 +934,14 @@ def cmd_relink(args):
         batch = json.load(f)
     texts = {}
     for binary, part in by_binary(batch).items():
-        text, nl = S.read_text(binary)
-        text = relink(text, part)
+        before, nl = S.read_text(binary)
+        text = relink(before, part)
         if "--bare" in args:
             current = names(binary)
             text, n = relink_bare(text, binary, {e["address"]: current[e["address"]] for e in part
                                                  if e["address"] in current})
             print(f"{binary}: {n} bare mention(s)")
+        text = undouble(before, text, binary)
         S.check(binary, text)
         texts[binary] = (text, nl)
     if "--write" in args:
@@ -914,7 +956,7 @@ def cmd_edit(args):
     texts = {}
     for binary, part in by_binary(edits).items():
         text, nl = S.read_text(binary)
-        texts[binary] = (edit_text(text, part), nl)
+        texts[binary] = (undouble(text, edit_text(text, part), binary), nl)
         print("ok", binary, len(S.check(binary, texts[binary][0])["entries"]))
     if "--write" in args:
         for binary, (text, nl) in texts.items():
