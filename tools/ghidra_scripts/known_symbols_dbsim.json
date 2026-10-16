@@ -3462,9 +3462,15 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_RangeAllows",
-      "description": "template+0x2c < range < template+0x30, both bounds exclusive: the weapon's engagement window. The lower bound is zero in all 33 retail templates. Asked by Ai_ChooseWeapon, by Ai_FireAtPoint's ELF latch, and by WeaponMounts_MountIsReady, which is what reddens a player's row and makes the firing chain skip a weapon that cannot reach the selected target.",
+      "description": "(mount, range): 1 when the int32 +0x2c of the template at the mount's +0x1c is below range and range is below the template's int32 +0x30, both bounds exclusive, otherwise 0: the weapon's engagement window.",
       "source": "docs/retail/simulation/weapon-mounts.md; docs/retail/simulation/ai-weapons.md",
-      "signature": "int __cdecl WeaponMount_RangeAllows(void *mount, int range)"
+      "signature": "int __cdecl WeaponMount_RangeAllows(void *mount, int range)",
+      "verified": {
+        "bytes": "0040e5f8+33",
+        "sha1": "def9140f86cd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040e61c",
@@ -4139,8 +4145,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_CtorLocal",
-      "description": "The locally-piloted machine's mount manager (vtable 00499238): runs MechLoadout_ConstructWeaponMounts, then allocates three fire-group arrays (manager+0x1f/+0x25/+0x2b) and picks the initial selection. Writes 'group == wanted' into all three arrays with wanted fixed at 0 for a weapon and -1 for a pod, so every non-pod mount starts in group I and groups II and III start empty; manager+0x1d becomes the first non-pod mount in mount-array order.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(manager and five more, the third the int16 mount count): the locally-piloted machine's mount manager (vtable 00499238). Runs MechLoadout_ConstructWeaponMounts (0040fff8) with all six, stores PLAYER_GUNLISTVtable, runs Rtl_VectorNew(manager + 0x1f, 6, 3, 1, ARRAY_short_Ctor (00411892)) and gives each of the three fire-group arrays (+0x1f, +0x25, +0x2b) the int16 count at its +4 and Mem_NewArray(count * 2) at its +0; sets +0x1d to 0xff, then for each non-null mount takes wanted = -1 when its template's (+0x1c) int16 +0x56 is 0x12 or 0x1d-0x20 (the pods) and 0 otherwise, the first mount with 0 becoming +0x1d, and writes (array number == wanted) into the mount's entry of all three arrays, so every non-pod mount starts in group I and groups II and III start empty. Last, WeaponMounts_SetChain (00410ae4)(manager, 0), +0x16 set to 1 and one live destructor counted.",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "004104ec+342",
+        "sha1": "80525596ff0d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410644",
@@ -4164,9 +4176,15 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_MountForHardpointSlot",
-      "description": "Linear search of the mount manager's array for the mount whose .GL record's +0x17 equals the argument, or null. Damage components 19-28 are the mounts, so the caller passes component - 19. The match is on the .GL slot, not on a position in the array.",
+      "description": "(manager, slot): the first non-null mount of the array at +4 (int16 count +8) whose .GL record (+0x18) has the slot as its byte +0x17, or null. The match is on the .GL slot, not on a position in the array.",
       "source": "docs/retail/simulation/weapon-mounts.md",
-      "signature": "void * __cdecl WeaponMounts_MountForHardpointSlot(void *manager, short loadoutSlot)"
+      "signature": "void * __cdecl WeaponMounts_MountForHardpointSlot(void *manager, short loadoutSlot)",
+      "verified": {
+        "bytes": "00410670+58",
+        "sha1": "bcb3d69fc459",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004106ac",
@@ -4189,8 +4207,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_SetSelection",
-      "description": "The only writer of the armed-mount index at manager+0x1d. Normalises a linked pair onto its first half: if the mount being armed is linked (+0x4b) and its .GL partner offset (slot+0x16) is negative, the partner is armed instead. That is what keeps a linked pair's two rows agreeing about which of them is armed.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(manager, index): when index differs from the signed byte +0x1d: when that mount is linked (+0x4b) and its .GL record's (+0x18) signed partner offset +0x16 is negative, adds the offset to index, so a linked pair is armed on its first half; stores index at +0x1d and clears the word 004d25ac.",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "00410708+68",
+        "sha1": "c1e11bdfca6f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041074c",
@@ -4198,8 +4222,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_StepSelection",
-      "description": "Step the armed mount one place through the current fire chain, wrapping. Skips anything not selectable (+0x4c), not in the current chain, or the second half of a linked pair (partner offset must be positive). Does not clear the single-fire flag itself -- the command handler does, which is why the chain switch and the per-frame advance step the selection without giving the chain control back.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(manager, step): with the signed byte +0x1d not negative, moves an index from it by step, wrapping below 0 to the int16 count +8 less 1 and at the count to 0, until it reaches a non-null mount with +0x4c set, either unlinked (+0x4b clear) or with a positive .GL partner offset (+0x18's byte +0x16), whose int16 entry in the current fire group's array (+0x1f + the byte +0x1c * 6) is non-zero, or comes back to +0x1d; then WeaponMounts_SetSelection (00410708)(manager, index). It does not touch the single-fire flag +0x18.",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "0041074c+149",
+        "sha1": "11be54ac9d29",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004107e4",
@@ -4207,8 +4237,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_ArbitrateEnergy",
-      "description": "The weapon half of the Master Energy Pool tick, (manager, budget, selection, arg). Reached through the mount manager's vtable slot 0: GUNLIST's WeaponMounts_ArbitrateEnergyNoSelection passes -1, PLAYER_GUNLIST's WeaponMounts_ArbitrateEnergyWithSelection the selection byte manager+0x1d. Serves the selected mount first, then the remaining mounts highest-priority-first by vtable+0x48. Each mount takes its share via vtable+0x34 and passes the remainder on. Once any mount reports itself mid-charge (+0x43), every later mount targets zero instead and bleeds its capacitor back to the pool, so only one energy weapon charges at a time. Returns the unclaimed budget. A player-only infinite-energy debug path refunds all consumption when MissionModeFlag==0 and UnlimitedAmmoFlag==1.",
-      "source": "docs/retail/simulation/reactor-energy-pool.md"
+      "description": "(manager, budget, selection, machine): the weapon half of the Master Energy Pool tick. The budget it hands back is the one it was given when the machine's +0xa3 is set, MissionModeFlag is 0 and UnlimitedAmmoFlag is 1. Clears ten int16 served flags, then serves up to the int16 count +8 mounts: the selection while it is not negative and not yet served, otherwise the unserved non-null mount whose vtable +0x48 answers highest, a later mount replacing the best only when strictly higher. Each served mount gets vtable +0x34(mount, budget, a word that is 1 once a mount served so far had +0x43 set), whose answer becomes the budget; then, when WeaponMount_AutoFireDue (0040ede8)(mount) answers non-zero, its vtable +0x28(mount, machine, the refund flag). Returns the budget, or the original under the refund.",
+      "source": "docs/retail/simulation/reactor-energy-pool.md",
+      "verified": {
+        "bytes": "004107e4+394",
+        "sha1": "766e4513e8fe",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00410970",
@@ -4216,9 +4252,15 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_MountIsReady",
-      "description": "The readiness predicate behind BOTH the weapon row's green/red state box and the firing chain's skip: the mount's own vtable+0x2c test, then WeaponMount_RangeAllows against the selected target's range at manager+0x31 (skipped outright when that is zero, i.e. no target), then a missile-lock gate -- vtable+0x60's subtype is exempt for 5 (not a launcher) and 3 (EO, which is pilot-flown and never latches a flag), and otherwise must have its flag set in manager[0x0a + code*2]. A linked mount recurses once into its partner, so a pair is ready only when both halves are. The lock array is written by Mech_PerTickSystemsUpdate -- see docs/retail/simulation/missile-lock.md.",
+      "description": "(manager, mount, mountIndex, followLink): 1 when the mount's vtable +0x2c answers non-zero, then, unless the dword +0x31 is 0, WeaponMount_RangeAllows (0040e5f8)(mount, +0x31) answers non-zero, and vtable +0x60(mount, 0)'s subtype is 5 or 3 or names a non-zero int16 at manager + 0x0a + subtype * 2; and then, when followLink is 0 and the mount is linked (+0x4b), the answer for its partner (mountIndex + the .GL record's byte +0x16) with followLink 1. Otherwise 0.",
       "source": "docs/retail/simulation/weapon-mounts.md",
-      "signature": "short __cdecl WeaponMounts_MountIsReady(void *manager, void *mount, int mountIndex, short followLink)"
+      "signature": "short __cdecl WeaponMounts_MountIsReady(void *manager, void *mount, int mountIndex, short followLink)",
+      "verified": {
+        "bytes": "00410970+148",
+        "sha1": "f132a11a0c82",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410a04",
@@ -4226,9 +4268,15 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_ChainReady",
-      "description": "WeaponMounts_AdvanceToReady's own wrapper around WeaponMounts_MountIsReady, and the only caller of it that is not the gauge push. Returns 1 without asking -- so the chain never steps -- while the single-fire flag manager+0x18 is set or DAT_004d25aa, the flag set while an electro-optical missile is in flight, is up; otherwise forwards to the full predicate with followLink clear.",
+      "description": "(manager, mount, mountIndex): 1 without asking while the single-fire byte +0x18 or the word 004d25aa is set; otherwise WeaponMounts_MountIsReady (00410970)(manager, mount, mountIndex, 0).",
       "source": "docs/retail/simulation/weapon-mounts.md",
-      "signature": "short __cdecl WeaponMounts_ChainReady(void *manager, void *mount, short mountIndex)"
+      "signature": "short __cdecl WeaponMounts_ChainReady(void *manager, void *mount, short mountIndex)",
+      "verified": {
+        "bytes": "00410a04+53",
+        "sha1": "babe9ad26d1b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410a3c",
@@ -4236,9 +4284,15 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_AdvanceToReady",
-      "description": "The firing chain's own advance, run every frame from WeaponMounts_PerFrameUpdate: if the armed mount cannot fire, step through the chain until one that can is found, and put the original back if none is. Asks WeaponMounts_ChainReady rather than WeaponMounts_MountIsReady directly, which is what gates it off while the single-fire flag (manager+0x18) is set -- the manual's 'select a weapon to single-fire ... once you fire, the current firing chain will resume'. Because the predicate is range-gated, this is also what steps the chain past a weapon that cannot reach the target.",
+      "description": "(manager): with the signed byte +0x1d not negative and WeaponMounts_ChainReady (00410a04) refusing the armed mount, steps with WeaponMounts_StepSelection (0041074c)(manager, 1) and asks again, clearing +0x18 and returning at the first mount that passes; when the selection comes back round, or after more steps than the int16 count +8, stores the original at +0x1d and passes it to WeaponMounts_SetSelection (00410708).",
       "source": "docs/retail/simulation/weapon-mounts.md",
-      "signature": "void __cdecl WeaponMounts_AdvanceToReady(void *manager)"
+      "signature": "void __cdecl WeaponMounts_AdvanceToReady(void *manager)",
+      "verified": {
+        "bytes": "00410a3c+167",
+        "sha1": "d8fa541ed661",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410ae4",
@@ -4246,8 +4300,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_SetChain",
-      "description": "Switch which of the three fire chains is current (manager+0x1c). If the armed mount is not in the new chain, steps the selection to one that is, then pushes the new number to the console chain button's caption.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(manager, chain): when the chain differs from the signed byte +0x1c, stores it there, calls WeaponMounts_StepSelection (0041074c)(manager, 1) when a mount is armed (+0x1d not negative) and its int16 entry in the new chain's array (+0x1f + chain * 6) is 0, and passes the chain to ConsoleButtons_SetChainNumber (00441f68) with the panel Cockpit_GetConsoleButtons returns.",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "00410ae4+89",
+        "sha1": "30824eeedb50",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410b40",
@@ -4270,8 +4330,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_XorChainBit",
-      "description": "Flips one mount's membership bit in the currently selected fire chain (manager+0x1f + manager+0x1c*6, indexed by mount index). Membership is toggled, never set, which is why Alt+number and a right click both add and remove.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(manager, index): XORs 1 into the index's int16 entry of the current fire group's array (+0x1f + the signed byte +0x1c * 6), so a call adds or removes the mount.",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "00410cd0+51",
+        "sha1": "0d02233214fc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410d04",
@@ -4279,8 +4345,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_IdleAllCapacitors",
-      "description": "WeaponMounts_HandleCommand's 0x2c case: calls vtable +0x3c (WeaponMount_WakeCapacitor) on every mount, dropping every energy capacitor's target back to the idle 820. The bulk counterpart to WeaponMount_AdjustPowerLevel.",
-      "source": "docs/retail/simulation/weapon-firing.md"
+      "description": "(manager): calls vtable +0x3c, WeaponMount_WakeCapacitor (0040f4d8) on an energy mount, of each non-null mount of the array at +4 (int16 count +8).",
+      "source": "docs/retail/simulation/weapon-firing.md",
+      "verified": {
+        "bytes": "00410d04+73",
+        "sha1": "224a45aa4d48",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410d50",
@@ -4288,8 +4360,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_DemandFullChargeOnArmed_Dead",
-      "description": "DEAD CODE. Would call vtable +0x40 (WeaponMount_DemandFullCharge) on the armed mount and clear every other mount's mid-charge flag (+0x43). Has no reference of any kind anywhere in DBSIM.EXE -- neither a CALL rel32 nor a stored address -- so nothing in the retail build reaches it, and WeaponMount_DemandFullCharge is therefore never invoked either.",
-      "source": "docs/retail/simulation/weapon-firing.md"
+      "description": "(manager): calls vtable +0x40, WeaponMount_DemandFullCharge (0040f4f0) on an energy mount, of the armed mount (index == the signed byte +0x1d) and clears +0x43 of every other non-null mount. es2_xref finds no branch or stored pointer to it.",
+      "source": "docs/retail/simulation/weapon-firing.md",
+      "verified": {
+        "bytes": "00410d50+105",
+        "sha1": "e5ee0c733737",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410dbc",
@@ -4297,8 +4375,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_FireTrigger",
-      "description": "The weapon manager's fire entry. Resolves the armed mount and, if it is linked (+0x4b), its partner via the hardpoint's +0x16 offset; requires both to pass vtable +0x2c (can fire) AND both to pass vtable +0x30 (trigger held) before either fires through vtable +0x28. Clears the single-fire flag (+0x18) once the armed mount is no longer ready. Also passes a free-shot flag built from MissionModeFlag/UnlimitedAmmoFlag, which only the ammunition class reads.",
-      "source": "docs/retail/simulation/weapon-firing.md"
+      "description": "(manager, trigger, machine): the weapon manager's fire entry. With the signed byte +0x1d not negative: the free-shot flag is 1 when MissionModeFlag is 0 and UnlimitedAmmoFlag is 1; the partner is the mount at the armed index + the .GL record's byte +0x16 when the armed mount is linked (+0x4b). It returns 0 unless the armed mount's vtable +0x2c answers non-zero, and the partner's, and then both vtable +0x30(mount, trigger); then the armed mount's vtable +0x28(mount, machine, free-shot flag), +0x18 cleared when its +0x2c now answers 0, the words 004d25ac and 004d25aa set to 1 when its vtable +0x60(mount, 0) answers 3, and the partner's +0x28 the same way, +0x18 cleared again when the armed mount's +0x2c answers 0. Returns 1 when it fired.",
+      "source": "docs/retail/simulation/weapon-firing.md",
+      "verified": {
+        "bytes": "00410dbc+328",
+        "sha1": "6d2da34e6ab1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410f04",
@@ -4306,8 +4390,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_SetTrackLatch",
-      "description": "(manager): stores 1 at manager+0x14, TRACK's latch. WeaponMounts_PerFrameUpdate calls it when byte 2 of the console panel's input block is set and clears +0x14 itself otherwise.",
-      "source": "DBSIM decompile at 00410f04 and 00410b40"
+      "description": "(manager): stores 1 at the byte +0x14, TRACK's latch.",
+      "source": "DBSIM decompile at 00410f04 and 00410b40",
+      "verified": {
+        "bytes": "00410f04+14",
+        "sha1": "fff98f7d101f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410f14",
@@ -4315,8 +4405,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_ToggleLink",
-      "description": "Toggle link fire on the armed mount and its .GL partner. Two conditions, both from the chassis: the armed mount's slot+0x16 partner offset is non-zero, and the partner hardpoint carries the SAME weapon id (template+0x56). Both halves' +0x4b flip together. One LINK press runs this three times -- the button's click handler, the manager's next per-frame pass reading the button's latch byte, and that pass writing the byte back -- which nets to one flip.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(manager): with the signed byte +0x1d not negative, takes the armed mount's .GL record's (+0x18) signed partner offset +0x16; when it is not 0, the mount at the armed index + offset is not null, and the two mounts' templates (+0x1c) agree on the int16 weapon id +0x56, XORs 1 into both mounts' +0x4b.",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "00410f14+98",
+        "sha1": "0d608e7ab0e2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00410f78",
@@ -4339,8 +4435,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_ToggleChainMember",
-      "description": "Add or remove one cockpit weapon row from the CURRENT fire chain -- Alt and the row's number key, or a right click on the row. Finds the mount by its .GL fire-chain byte (slot+7), requires the mount template's int32 at 0x30 to be positive (zero for every pod, which is what keeps pods off a chain), then XORs that mount's bit in the current chain array via WeaponMounts_XorChainBit. It does not arm anything. Follows the toggle by waking an energy mount's capacitor when its arbitration priority reads zero.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(manager, row): for the first non-null mount whose .GL record's (+0x18) fire-chain byte +7 is the row and whose template's (+0x1c) int32 +0x30 is above 0 (zero for every pod): WeaponMounts_XorChainBit (00410cd0)(manager, index), then the mount's vtable +0x3c when its vtable +0x48 answers 0, and 1 returned. Returns 0 when none matches. It does not arm anything.",
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "004110ac+97",
+        "sha1": "81bc2ce512fd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411110",
@@ -4471,8 +4573,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_DtorAmmunition",
-      "description": "PROJECTILE_WPN vtable +0x18 (00498d54), the destructor its class record names: (this, flags). The weapon-mount teardown (see EnergyPod_Dtor), then Mem_Delete on flags bit 0.",
-      "source": "DBSIM disassembly at 004115a5; class record at 0041154d"
+      "description": "(this, flags): PROJECTILE_WPN vtable +0x18 (00498d54). Returns at once for a null mount; otherwise four destructor-count decrements around HeapBlockOwner_Dtor on the mount's shape-instance block and TSBase_Dtor(this, 0), then Mem_Delete on flags bit 0.",
+      "source": "DBSIM disassembly at 004115a5; class record at 0041154d",
+      "verified": {
+        "bytes": "004115a5+83",
+        "sha1": "483e2e77aeea",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004115f8",
@@ -4570,8 +4678,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_ArbitrateEnergyWithSelection",
-      "description": "PLAYER_GUNLIST vtable +0x00 (00499238), (manager, budget, arg): WeaponMounts_ArbitrateEnergy(manager, budget, the selection byte manager+0x1d, arg) -- the pool turn that serves the selected mount first. The GUNLIST base installs WeaponMounts_ArbitrateEnergyNoSelection.",
-      "source": "DBSIM disassembly at 0041194a"
+      "description": "(manager, budget, machine): PLAYER_GUNLIST vtable +0x00 (00499238): WeaponMounts_ArbitrateEnergy (004107e4)(manager, budget, the sign-extended byte +0x1d, machine), the pool turn that serves the selected mount first.",
+      "source": "DBSIM disassembly at 0041194a",
+      "verified": {
+        "bytes": "0041194a+31",
+        "sha1": "cbb745a6d2a8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411969",
@@ -4812,9 +4926,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ReportOutOfAction",
-      "description": "es2_xref.py finds four calls, each immediately before the defeat action at a damage endpoint that puts an object out of the fight: both of Mech_ComponentDamageWrite's branches, Flyer_ComponentDamageWrite and Base_ApplyDamage (the name predates the other two). Ai_ChooseWeapon's weapons-out defeat does not call it: that block's only call is Action_Activate. Calls Group_ReportIfAllOutOfAction for the object's own group, then walks its 10 mission-counter slots (refs at obj+0x1ba, ops at obj+0x1ce) writing DAT_004a9ef4: op 1 zeroes the counter, 2 increments it, 0xd-0x10 store op-0xc, anything else writes nothing.",
+      "description": "(object): with a group at +0x45, Group_ReportIfAllOutOfAction (00423f30)(group, object); then for each of ten slots, the int16 counter refs from +0x1ba and the int16 operations from +0x1ce, a non-negative ref writes that counter of DAT_004a9ef4: operation 1 zeroes it, 2 adds 1, 0xd-0x10 store the operation less 0xc, anything else writes nothing. es2_xref.py finds four calls: both of Mech_ComponentDamageWrite's branches, Flyer_ComponentDamageWrite and Base_ApplyDamage.",
       "source": "docs/retail/simulation/component-damage.md",
-      "signature": "void __cdecl Mech_ReportOutOfAction(SimObject *obj)"
+      "signature": "void __cdecl Mech_ReportOutOfAction(SimObject *obj)",
+      "verified": {
+        "bytes": "00411bc8+142",
+        "sha1": "f06b9be0f521",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411c58",
@@ -4837,8 +4957,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_TargetStateTier",
-      "description": "Reads an object's behaviour descriptor through its block at +0x4d and returns the state tier the squad-order abandon check compares against: 2 for descriptor flag bit 5 (in limbo, dead, disabled), 1 for bit 4 (fleeing), else 0.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "(object): with a behaviour descriptor at +0x4d, 2 when its flag byte +0xd (flag bit 5) is set, 1 when its byte +0xc (bit 4) is, otherwise 0; 0 with no descriptor.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00411cb4+54",
+        "sha1": "7b6fed768c42",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411cec",
@@ -4877,8 +5003,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjectList_Add",
-      "description": "Appends an object to the world's single live-object list and records the slot it landed in at obj+0x4b. That index is what addresses both the per-object contact table (obj+0xc2) and the line-of-sight cache (obj+0x132).",
-      "source": "docs/retail/simulation/target-selection.md; Herculan.Engine/Sim/SimWorld.cs"
+      "description": "(list, obj): stores obj at entry int16 +6 of the array at +0, stores that index at obj's int16 +0x4b and adds 1 to +6.",
+      "source": "docs/retail/simulation/target-selection.md; Herculan.Engine/Sim/SimWorld.cs",
+      "verified": {
+        "bytes": "00411dd4+36",
+        "sha1": "27cf1b78fe39",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411df8",
@@ -4886,8 +5018,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjectList_Init",
-      "description": "(list, capacity): list+0 = Mem_NewArray(capacity * 4), int16 list+4 = capacity. DBSim_LoadScriptDat sizes maybe_GlobalLiveObjectList with it.",
-      "source": "DBSIM decompile at 00411df8"
+      "description": "(list, capacity): Mem_NewArray(capacity * 4) at +0 and the int16 capacity at +4.",
+      "source": "DBSIM decompile at 00411df8",
+      "verified": {
+        "bytes": "00411df8+34",
+        "sha1": "8f363efdfd42",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411e1c",
@@ -4925,8 +5063,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjectList_Prev",
-      "description": "(list, obj): the entry before obj in the list, wrapping: items(+0)[(obj+0x4b + count - 1) % count(+6)]. The reverse of ObjectList_Next.",
-      "source": "DBSIM decompile at 00411e60"
+      "description": "(list, obj): the entry before obj in the list, wrapping: items(+0)[(obj's int16 +0x4b + count - 1) % the int16 count +6]. The reverse of ObjectList_Next (00411e40).",
+      "source": "DBSIM decompile at 00411e60",
+      "verified": {
+        "bytes": "00411e60+32",
+        "sha1": "80917a633aaf",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411e80",
@@ -4934,8 +5078,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_IsTargetable",
-      "description": "Whether an AI machine may target a candidate: not the same side (group+0x12), not destroyed (+0x99), collapsed (+0xb4) or invulnerable (+0xb7), currently known through Ai_KnowsObject, not an out-of-action flyer (+0xa5/+0xa4/+0x99), not the player's own selection while this machine's +0x9a is set, and with mask bit 0x10 not this machine's own object class.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "(this, candidate, mask): whether an AI machine may target a candidate. 0 when the candidate's group's (+0x45) side byte +0x12 is this machine's, when it is destroyed (+0x99) or collapsed (+0xb4), when Ai_KnowsObject (00411c58)(this, candidate) answers 0, when it is invulnerable (+0xb7), with mask bit 0x10 when its class +0x1a8 is this machine's, and for a class-2 candidate when +0xa5, +0xa4 or +0x99 is set; then 0 when the first member of this machine's group's array +0xc is locally piloted (+0xa3), the word DAT_004a9ed8 is 3 and Group_OrderTargetObject (004238a0)(group) is the candidate, and 0 when this machine's +0x9a is set and the candidate is CockpitViewInstance's +0x210; otherwise 1.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00411e80+288",
+        "sha1": "25b0e8fd638b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00411fa0",
@@ -4958,8 +5108,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_DetectionTick",
-      "description": "The whole sensor model for one tick, from Sim_MainTick after every object update and the input poll. Three passes: tick each object's LOS-cache (+0x1e2) and contact-decay (+0x1e5) timers, running Detection_DecayContacts on expiry; run Detection_Sweep for each live human-side object, holding the locally-piloted machine (+0xa3) back to sweep LAST so squadmates' contacts reach it first; clear the per-tick action latch +0xa2.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "(): three passes over maybe_GlobalLiveObjectList. First, for each object whose group's (+0x45) dword +0x14 is 0, Math_CountdownTimerTick on its LOS-cache timer +0x1e2 and its contact-decay timer +0x1e5; when the second answers 0, its counter gets 10000 + Math_RandomBelow(004d261d, 1000) and Detection_DecayContacts (0041251c) runs on the object. Second, for each object whose group's +0x14 is 0, neither immobilised (+0xa4) nor destroyed (+0x99), whose group's side byte +0x12 is 0: Detection_Sweep (004128f8), except that a locally-piloted one (+0xa3) is held back, and the last one held is swept after the walk. Third, clears every object's +0xa2.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "004123ac+365",
+        "sha1": "423e810961e4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041251c",
@@ -4967,8 +5123,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Detection_DecayContacts",
-      "description": "Clears the object's own radar visibility (+0x95) then drops every enemy contact it holds that is past 100001 units or has no line of sight, mutually. The range here is measured on the GROUND PLANE only (Math_FastMagnitude2D) where every other range in the sensor model is the 3D approximation, so a flyer directly overhead stays a contact.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "(object): clears its radar visibility +0x95, then for each entry whose group's (+0x45) dword +0x14 is 0, whose side byte +0x12 differs from the object's group's, and which the object holds as a contact (+0xc2 + the entry's +0x4b): unless Math_GroundDistanceBetweenPoints (004927c4)(object +0x26, entry +0x26) is at most 100000 and Detection_LineOfSight (00412608)(object, entry) answers non-zero, clears that contact byte and the entry's for the object. The range is on the ground plane, where the sweep's are 3D.",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "0041251c+235",
+        "sha1": "4fd581cd5875",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00412608",
@@ -4991,8 +5153,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Detection_ShareContact",
-      "description": "(spotter, contact). Passes a new contact to every deployed object (group+0x14 clear) on the spotter's own side within 100000 units, the spotter included. Inside 50000 it also sets the CONTACT's +0x9e engagement flag and activates that same-side object's OWN +0x1b2 engagement action through Action_Activate unless its +0xa2 ECM gate is raised; the two writes land on different objects (EDI vs EBX, 004127a7/004127ab). Nothing is shared to the other side and a same-side pair is not a contact at all. Called from Detection_Sweep and, with the shooter as contact, from Mech_ShareContact.",
-      "source": "docs/retail/simulation/mission-deployment.md"
+      "description": "(spotter, contact): when their groups' (+0x45) side bytes +0x12 differ, for each object whose group's dword +0x14 is 0 and whose side is the spotter's, the spotter included: within 100000 of the contact (Math_DistanceBetweenPoints) it sets the object's contact byte (+0xc2 + the contact's +0x4b); within 50000 it also sets the contact's +0x9e and runs Action_Activate on the object's own +0x1b2 unless that is null or the object's +0xa2 is set. Detection_Sweep (004128f8) and Mech_ShareContact (00411aec) call it.",
+      "source": "docs/retail/simulation/mission-deployment.md",
+      "verified": {
+        "bytes": "00412704+241",
+        "sha1": "7e2b52d694f9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004127f8",
@@ -5009,8 +5177,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiEnemySighted",
-      "description": "Mech vtable +0x48, the enemy-detected callout. For a machine in the player's group, posts squad message 1 through Ai_PostSquadMessage for an object that is not class 1, not yet radar-visible (+0x95), and held as a contact by neither this machine nor the player, latched per object in EnemySighted_CalledInLatch[obj+0x4b] (set even when the rate limit swallows the callout). DAT_004a9be9 is re-armed to 10000 on each callout and stepped by this function's own Math_CountdownTimerTick(004a9be8) on every non-player call, so it runs down per call-in, not per tick. The local player's own machine sets the latch without calling out.",
-      "source": "docs/retail/simulation/ai-targeting.md"
+      "description": "(machine, object): mech vtable +0x48, the enemy-detected callout. Sets the byte 00499358 to 1 when it is 0. For a locally-piloted machine (+0xa3) it sets EnemySighted_CalledInLatch[object+0x4b]. Otherwise it ticks EnemySighted_CalloutRateLimit (004a9be8); then, when the object's class +0x1a8 is not 1, the machine's group is PlayerMech's, the latch is clear, the object is not radar-visible (+0x95) and neither the machine nor PlayerMech holds it as a contact (+0xc2), it sets the latch and, when the counter 004a9be9 is 0, posts squad message 1 through Ai_PostSquadMessage (00420a98)(machine, 1, 0) and stores 10000 there.",
+      "source": "docs/retail/simulation/ai-targeting.md",
+      "verified": {
+        "bytes": "00412800+246",
+        "sha1": "974c8c00ef28",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004128f8",
@@ -5018,8 +5192,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Detection_Sweep",
-      "description": "One human-side object's look around, over Cybrid objects only -- but it writes both objects' tables, so a Cybrid learns without ever sweeping. Radar painting within 200000 when either object emits and not both are painted, with 140000 the range at which a scanner paints something not emitting back. Looking runs only within 80000: a pair that already knows each other is skipped, otherwise each object's +/-0x3800 sensor arc (vtable +0x44) plus LOS makes the contact -- shared to the spotter's side by Detection_ShareContact, or kept private when the spotter is the player's machine.",
-      "source": "docs/retail/simulation/target-selection.md"
+      "description": "(machine): one human-side object's look around, over each entry that is neither immobilised (+0xa4) nor destroyed (+0x99), whose group's (+0x45) dword +0x14 is 0 and side byte +0x12 is 1, with d = Math_DistanceBetweenPoints(machine +0x26, entry +0x26). When the two are not both radar-visible (+0x95), either has its scanner on (+0x96), d is below 200000 and Detection_LineOfSight (00412608)(machine, entry) answers non-zero: when the entry's +0x96 is set or d is below 140000, the machine's vtable +0x48(machine, entry) and the entry's +0x95 set; when the machine's +0x96 is set or d is below 140000, the machine's +0x95 set. Past 80000 it goes on to the next entry. When each holds the other as a contact (+0xc2 + the other's +0x4b): below 50000 the entry's +0x9e set, Action_Activate of the machine's +0x1b2 unless it is null or the machine's +0xa2 is set, the machine's +0x9e set and the entry's +0x1b2 the same way. Otherwise, with h = Math_HeadingToward from the machine to the entry: when the machine's vtable +0x44(machine, its vtable +0x3c + h) and the line of sight answer non-zero, its vtable +0x48(machine, entry) and then Detection_ShareContact (00412704)(machine, entry), or for a locally-piloted machine (+0xa3) its own contact byte instead; and when the entry's +0x44(entry, its +0x3c + h - 0x8000) and the line of sight answer non-zero, Detection_ShareContact(entry, machine).",
+      "source": "docs/retail/simulation/target-selection.md",
+      "verified": {
+        "bytes": "004128f8+705",
+        "sha1": "70b1d4b9c3e8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00412bbc",
@@ -37743,8 +37923,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_GroundDistanceBetweenPoints",
-      "description": "Ground-plane distance between two int Vec3s: Vec2_Subtract then Vec2_Magnitude, returned in EAX, Z dropped entirely. Every range an AI steering decision is made on is this; the 3D Math_DistanceBetweenPoints gates only obstacle avoidance's machine sweep and following's standoff -- a waypoint on a hilltop is as near as one at its foot.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "description": "(a, b): the ground-plane distance between two int32 points: copies a's x and y, Vec2_Subtract by b and Vec2_Magnitude, whose result it leaves in EAX; z is dropped.",
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "004927c4+60",
+        "sha1": "30d5deab18b9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00492800",

@@ -13,7 +13,7 @@ The retail file is 2,772 bytes and the walk ends on its last byte. The templates
 
 ## The load
 
-`Weapons_LoadResourceTables` (`0000bf48`) is a phase-2 subsystem loader: the static initialiser at `0000d67c` registers it with `RegisterSubsystemLoader` (`00000ac4`), which appends a 6-byte {function, phase} record at `000bbcb0` for `Subsystem_RunPhase` (`00000af4`). It follows [ES2's](../../retail/formats/weapons-dat-sim.md) with these differences:
+`Weapons_LoadResourceTables` (`0000bf48`) is a phase-2 subsystem loader: the static initialiser `Weapons_RegisterSubsystem` (`0000d67c`, [gunlist.cpp's end](../simulation/weapon-mounts.md#where-the-code-sits)) registers it with `RegisterSubsystemLoader` (`00000ac4`), which appends a 6-byte {function, phase} record at `000bbcb0` for `Subsystem_RunPhase` (`00000af4`). It follows [ES2's](../../retail/formats/weapons-dat-sim.md) with these differences:
 
 1. When `g_LowMemory` ([low memory](chassis-dat.md#low-memory)) is 0 it loads `dba\wpntex` into `000af1f0`; it loads `dts\mechwpn2`, or `dts\mwpn2b` in low memory, with `Shape_LoadAllRoots` (tag `0x140008`), and stores the `wpntex` bank in every root's `+0x26`.
 2. It opens `dat\weapons`, asserting at severity 5 (`gunlist.cpp` line `0xdd`) when the stream status is set, and reads no count: it sets the template count `000bc2c6` to 17 and builds 17 records of `0x58` bytes at `000bc2c2` with `__vec_new` and the constructor `WeaponMountTemplate_Ctor` (`0000c0b4`).

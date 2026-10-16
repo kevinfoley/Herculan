@@ -62,13 +62,13 @@ Runs once per tick from `Sim_MainTick`, **after** every object update and the in
 | < 200000 | Scanner paints, if either object emits and not both are already painted, with LOS |
 | < 140000 | A scanner paints an object that is *not* emitting back |
 | < 80000 | The looking half runs at all |
-| < 50000 | Sets `obj+0x9e` and fires the engagement action |
+| < 50000 | For a pair that each hold the other as a contact already: sets both objects' `+0x9e` and fires each one's engagement action unless its own `+0xa2` is set. Such a pair skips the looking |
 
 Looking: bearing plus aim twist against the ±`0x3800` sensor arc (`SimObject_BearingInSensorArc` (`00411acc`), vtable `+0x44`), then LOS. The sweep dispatches the arc through each object's own table, and all five structure classes install `Base_BearingInSensorArc_Always` (`00405308`) there, so a structure has no arc and sees all round. An AI machine's contact goes to `Detection_ShareContact` (`00412704`), which shares it to everything on its side within 100000 and engages within 50000 ([`mission-deployment.md`](mission-deployment.md#an-objects-own-two-actions--0x1b2-and-0x1b6)); the player's machine keeps it to itself. The reciprocal bearing is tested from the other object's arc in the same pass.
 
 Just before it paints the Cybrid, and just before it makes a contact of its own, the sweep calls the sweeping object's vtable `+0x48`, the "enemy detected" callout, which tests the state those two writes are about to change — [`ai-targeting.md`](ai-targeting.md#radio-callouts). The reciprocal test makes no call.
 
-Decay (`Detection_DecayContacts`, `0041251c`) drops a contact past **100001** measured **on the ground plane only** (`Math_FastMagnitude2D`, where every other range here is the 3D approximation) or with no LOS, mutually.
+Decay (`Detection_DecayContacts`, `0041251c`) clears the object's own `+0x95`, then drops each contact it holds on a deployed enemy that is farther than **100000** measured **on the ground plane only** (`Math_GroundDistanceBetweenPoints`, where every other range here is the 3D approximation) or has no LOS, mutually.
 
 ### Line of sight — `Detection_LineOfSight` (`00412608`)
 
