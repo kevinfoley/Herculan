@@ -1472,6 +1472,66 @@
       }
     },
     {
+      "address": "0000baf0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorGunlistCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorSimObjectCopy (0000d68c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#where-the-code-sits; ES1DBSIM disassembly at 0000baf0",
+      "verified": {
+        "bytes": "0000baf0+40",
+        "sha1": "2ba35db228d7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000bb18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorGunlistCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00091142: byte for byte the code of ConfigPart_DtorGroupsCopy (0001c84c), relocated operands aside, storing 00091142 and 00091176 where that stores 00092142 and 00092176.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#where-the-code-sits; ES1DBSIM disassembly at 0000bb18",
+      "verified": {
+        "bytes": "0000bb18+63",
+        "sha1": "9a3fa6e028d6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000bb57",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagGunlistCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00091142, and slot +4 of the vtable ElfMountVtable (00091302) (entered at 0000bb58), and slot +4 of the vtable GrenadeMountVtable (00091376) (entered at 0000bb58), and slot +4 of the vtable EnergyMountVtable (0009142e) (entered at 0000bb58), and slot +4 of the vtable WeaponMountBaseVtable (000914a2) (entered at 0000bb58), and slot +4 of the vtable AmmunitionMountVtable (00091516) (entered at 0000bb58); the code of ConfigPart_GetClassTagGroupsCopy (0001c88b).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#where-the-code-sits; ES1DBSIM disassembly at 0000bb57",
+      "verified": {
+        "bytes": "0000bb57+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000bb60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorGunlistCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00091176 (entered at its padding 0000bb5d): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00091176 where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#where-the-code-sits; ES1DBSIM disassembly at 0000bb60",
+      "verified": {
+        "bytes": "0000bb60+42",
+        "sha1": "7cebb7af1fe7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0000bb8c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1484,6 +1544,111 @@
         "sha1": "27ea2671c089",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0000bbd4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMountTemplate_SideMuzzleOffset",
+      "description": "(template, mounting code) in stack order, callee-cleaned: sets the byte WeaponMountTemplate_SideMuzzleOffsetInit (000af1f4) to 1 when it is 0; copies the template's three int16 at +0x46 to the vector at WeaponMountTemplate_SideMuzzleOffsetVec (000af1f8) and zeroes its y; then, by the code through the jump table 00091240, 0 zeroes x, 1 negates z and zeroes x, 2 negates x and zeroes z, 3 zeroes z and 4 zeroes both, and a code above 4 leaves the copy; returns WeaponMountTemplate_SideMuzzleOffsetVec (000af1f8). ES2's WeaponMountTemplate_SideMuzzleOffset (DBSIM 0040f904). es2_xref finds one call, from 0000b918.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models; ES1DBSIM disassembly at 0000bbd4",
+      "verified": {
+        "bytes": "0000bbd4+137",
+        "sha1": "d7c7ed5da4fe",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000bc60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponModels_LoadShapeChunks",
+      "description": "No arguments: opens dts\\mechwpns, or dts\\mwpnsb while g_LowMemory (000bda98) is set, through ResourcePath_BuildFolderName (00060698) with the folder 000980c8 names and VolRStream_CtorFromPath (000567cc); zeroes the count WeaponModels_ShapeChunkCount (000bc412) and, while ClassItem_PeekTypeTag (0005533c) finds a tag, asserts at severity 5 (gunlist.cpp line 0x7d) unless it is 0x140008, stores ClassItem_TagTotalSize (000555ec) of it in the next entry of WeaponModels_ShapeChunkSizes (000bc372) and operator_new (000015a4) of that in the next entry of WeaponModels_ShapeChunks (000bc2d2), reads that many bytes into it with VolRStream_Read (00056d70) and counts it; then VolRStream_Dtor (00056824)(stream, 2). ES2's WeaponModels_LoadShapeChunks (DBSIM 0040f998), which always opens dts\\mechwpns. es2_xref finds one call, from DBSim_SpawnMissionObjects (0001e638).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models; ES1DBSIM disassembly at 0000bc60",
+      "verified": {
+        "bytes": "0000bc60+222",
+        "sha1": "2d05ba6cc562",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000bd40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponModels_FreeShapeChunks",
+      "description": "No arguments: for each of the WeaponModels_ShapeChunkCount (000bc412) buffers at WeaponModels_ShapeChunks (000bc2d2), operator_delete (000015f8) and a 0 in its entry. ES2's WeaponModels_FreeShapeChunks (DBSIM 0040fa88). es2_xref finds one call, from DBSim_SpawnMissionObjects (0001e638).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models; ES1DBSIM disassembly at 0000bd40",
+      "verified": {
+        "bytes": "0000bd40+46",
+        "sha1": "09417ada7921",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000bd70",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_ShapeForMountingCode",
+      "description": "(template, mounting code) in stack order, callee-cleaned: takes the template's int16 at +0x22 + 2 * code as a chunk index, builds a MemRWStream on its stack over that chunk of WeaponModels_ShapeChunks (000bc2d2) and its length in WeaponModels_ShapeChunkSizes (000bc372) with MemRWStream_Ctor (00064d84), loads the shape with ClassItem_LoadAfterPeek (000634f8), stores the wpntex bank pointer WeaponTexBank (000af1f0) at the shape's +0x26, runs the stream's inlined destructor (gunlist.cpp's copy 0009127e of MemRWStream's vtable at +4, Stream_BaseDtor (00064d10)(stream, 0)) and returns the shape. ES2's WeaponMount_ShapeForMountingCode (DBSIM 0040fab0). es2_xref finds one call, from 0000a530.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models; ES1DBSIM disassembly at 0000bd70",
+      "verified": {
+        "bytes": "0000bd70+103",
+        "sha1": "a512aec2d160",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000bdd8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MemRWStream_DtorGunlistCopy",
+      "description": "(stream, flags) in stack order, callee-cleaned: slot +4 of the vtable 0009127e, gunlist.cpp's copy of MemRWStream's vtable 00098a0e (entered at its padding 0000bdd7): byte for byte the code of MemRWStream_Dtor (00064dc4), relocated operands aside, storing 0009127e at +4 where that stores 00098a0e.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models; ES1DBSIM disassembly at 0000bdd8",
+      "verified": {
+        "bytes": "0000bdd8+43",
+        "sha1": "0ea99c055f5e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000be04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMounts_FindEcmMount",
+      "description": "(manager), callee-cleaned: walks the manager's mount array (+0, the int16 count +4), skipping holes, and returns the first mount whose template's (+0x1c) int16 +0x56 is 13, the ECM, or 0. ES2 files its pods into an array instead (MechLoadout_FileEquipmentPods, DBSIM 0040fb2c). es2_xref finds calls from 00014e68 and 00014eb4.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#lookups-over-the-mounts; ES1DBSIM disassembly at 0000be04",
+      "verified": {
+        "bytes": "0000be04+102",
+        "sha1": "758d78c32acf",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000be6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMounts_RoundsByMissileType",
+      "description": "(manager, rounds) in stack order, callee-cleaned: memset (00060b40) of the five int16 at rounds to 0; for each mount of the manager's array (+0, the int16 count +4), skipping holes, calls its slot +0x64 (mount, &n) and, when the subtype it returns is not 5, adds n to rounds[subtype]. ES2's WeaponMounts_RoundsByMissileType (DBSIM 0040fbdc), which calls slot +0x60. es2_xref finds one call, from 00014ee0.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#lookups-over-the-mounts; ES1DBSIM disassembly at 0000be6c",
+      "verified": {
+        "bytes": "0000be6c+144",
+        "sha1": "7746c5878983",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -1507,7 +1672,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Weapons_LoadResourceTables",
-      "description": "No arguments: when g_LowMemory (000bda98) is 0 loads dba\\wpntex into 000af1f0; loads dts\\mechwpn2 (dts\\mwpn2b in low memory) with Shape_LoadAllRoots (tag 0x140008) into 000bc2c8, the count to 000bc2cc, and stores the wpntex bank in every root's +0x26; opens dat\\weapons (severity-5 assert, gunlist.cpp line 0xdd, when the stream status is set); sets the count 000bc2c6 to 0x11 and builds 0x11 records of 0x58 bytes at 000bc2c2 with __vec_new and WeaponMountTemplate_Ctor (0000c0b4); for each, WeaponMountTemplate_ReadRecord (0000bb8c), +0x52 = the name pointer from the table at 000911fc and +0x56 = the index; then reads 0x2ac bytes into a new ProjDat_RecordTable (000bc2ce). A phase-2 loader. ES2's Weapons_LoadResourceTables (DBSIM 0040fc8c), which reads the template count from the file and the projectile records from dat\\proj.",
+      "description": "No arguments: when g_LowMemory (000bda98) is 0 loads dba\\wpntex into WeaponTexBank (000af1f0); loads dts\\mechwpn2 (dts\\mwpn2b in low memory) with Shape_LoadAllRoots (tag 0x140008) into WeaponModels_Mechwpn2Roots (000bc2c8), the count to WeaponModels_Mechwpn2RootCount (000bc2cc), and stores the wpntex bank in every root's +0x26; opens dat\\weapons (severity-5 assert, gunlist.cpp line 0xdd, when the stream status is set); sets the count WeaponMountTemplate_Count (000bc2c6) to 0x11 and builds 0x11 records of 0x58 bytes at WeaponMountTemplate_Table (000bc2c2) with __vec_new and WeaponMountTemplate_Ctor (0000c0b4); for each, WeaponMountTemplate_ReadRecord (0000bb8c), +0x52 = the name pointer from the table at 000911fc and +0x56 = the index; then reads 0x2ac bytes into a new ProjDat_RecordTable (000bc2ce). A phase-2 loader. ES2's Weapons_LoadResourceTables (DBSIM 0040fc8c), which reads the template count from the file and the projectile records from dat\\proj.",
       "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load",
       "verified": {
         "bytes": "0000bf48+362",
@@ -1537,7 +1702,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMountTemplate_GetByWeaponId",
-      "description": "(weaponId), callee-cleaned: returns weaponId * 0x58 + the template array at 000bc2c2. ES2's WeaponMountTemplate_GetByWeaponId (DBSIM 0040fe84).",
+      "description": "(weaponId), callee-cleaned: returns weaponId * 0x58 + the template array at WeaponMountTemplate_Table (000bc2c2). ES2's WeaponMountTemplate_GetByWeaponId (DBSIM 0040fe84).",
       "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-projectile-index",
       "verified": {
         "bytes": "0000c178+17",
@@ -1552,7 +1717,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GunLayout_GetBySlot",
-      "description": "(slot), callee-cleaned: returns the slot's 6-byte entry, slot * 6 + the table at 000bc2bc. ES2's GunLayout_GetBySlot (DBSIM 0040fea0).",
+      "description": "(slot), callee-cleaned: returns the slot's 6-byte entry, slot * 6 + the table at GunLayout_Table (000bc2bc). ES2's GunLayout_GetBySlot (DBSIM 0040fea0).",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
       "verified": {
         "bytes": "0000c18c+19",
@@ -1567,11 +1732,26 @@
       "type": "function",
       "confidence": "high",
       "name": "GunLayout_Reserve",
-      "description": "(n), callee-cleaned: returns the int16 count at 000bc2c0 and adds n to it. ES2's GunLayout_Reserve (DBSIM 0040feb4).",
+      "description": "(n), callee-cleaned: returns the int16 count at GunLayout_Count (000bc2c0) and adds n to it. ES2's GunLayout_Reserve (DBSIM 0040feb4).",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
       "verified": {
         "bytes": "0000c1a0+24",
         "sha1": "b45b4c417787",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c1b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GunLayout_AllocTable",
+      "description": "No arguments, frameless: stores operator_new (000015a4)(the int16 GunLayout_Count (000bc2c0) * 6) at GunLayout_Table (000bc2bc). ES2's GunLayout_AllocTable (DBSIM 0040fecc). es2_xref finds one call, from DBSim_LoadScriptDat (0001d850).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-hardpoint-lists; ES1DBSIM disassembly at 0000c1b8",
+      "verified": {
+        "bytes": "0000c1b8+24",
+        "sha1": "d55513c8b267",
         "scope": "body",
         "via": "both"
       }
@@ -1589,6 +1769,21 @@
         "sha1": "772c572f19b5",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0000c274",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GunLayoutRecord_ElementCtor",
+      "description": "(record), callee-cleaned: allocates 0x1a bytes when record is null, returning 0 when that fails; runs the inlined empty constructor of its 6-byte member at +0x10, which repeats the null test with sizes 6 and 4; returns record. The element constructor GunLayout_LoadForMechType (0000c1d0) hands __vec_new (00061038) by its padding entry 0000c271 (the PUSH at 0000c235). ES2's GunLayoutRecord_ElementCtor (DBSIM 004117a5).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-hardpoint-lists; ES1DBSIM disassembly at 0000c274",
+      "verified": {
+        "bytes": "0000c274+72",
+        "sha1": "109469f8f964",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -1627,7 +1822,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MechLoadout_ConstructWeaponMounts",
-      "description": "(manager, owner, ammoTypes, weaponIds, hardpoints, count, extra) in stack order, callee-cleaned: when manager is null allocates its 0x14 bytes; vptr 000912f2 at +0x10, the count at +4, an array of count mount pointers at +0; inside Arena_Push/Arena_Pop, for each 0x1a-byte hardpoint record, takes weaponIds and ammoTypes at the record's byte +0x17, a negative weapon id becoming 0x11; id 0x11 stores no mount. Otherwise the template WeaponMountTemplate_GetByWeaponId (0000c178)'s +0x3e picks the projectile record: 0x15 gives Proj_LookupRecord(ammo type, 5 rewritten to 0, 0), 0x14 none, any other value Proj_LookupRecordByIndex (0000c2bc). The switch on the id allocates from the arena 000bd954 and constructs: ids 0-2, 9-11 and 16, 0x81 bytes with 0000a9e4; id 3, 0x82 bytes with 0000a84c then vptr 00091302; ids 4, 6-8, 12, 14 and 15, 0x7f bytes with 0000a84c; id 5, 0x85 bytes with 0000a9e4 then vptr 00091376; id 13, 0x7f bytes with 0000ab50, given no projectile record. The constructors take (mount, owner, projectile record, template, hardpoint, extra), 0000ab50 without the record. ES2's MechLoadout_ConstructWeaponMounts (DBSIM 0040fff8), whose sentinels are 0x21 and 0x22.",
+      "description": "(manager, owner, ammoTypes, weaponIds, hardpoints, count, extra) in stack order, callee-cleaned: when manager is null allocates its 0x14 bytes; vptr WeaponMountsBaseVtable (000912f2) at +0x10, the count at +4, an array of count mount pointers at +0; inside Arena_Push/Arena_Pop, for each 0x1a-byte hardpoint record, takes weaponIds and ammoTypes at the record's byte +0x17, a negative weapon id becoming 0x11; id 0x11 stores no mount. Otherwise the template WeaponMountTemplate_GetByWeaponId (0000c178)'s +0x3e picks the projectile record: 0x15 gives Proj_LookupRecord(ammo type, 5 rewritten to 0, 0), 0x14 none, any other value Proj_LookupRecordByIndex (0000c2bc). The switch on the id allocates from the arena 000bd954 and constructs: ids 0-2, 9-11 and 16, 0x81 bytes with 0000a9e4; id 3, 0x82 bytes with 0000a84c then vptr ElfMountVtable (00091302); ids 4, 6-8, 12, 14 and 15, 0x7f bytes with 0000a84c; id 5, 0x85 bytes with 0000a9e4 then vptr GrenadeMountVtable (00091376); id 13, 0x7f bytes with 0000ab50, given no projectile record. The constructors take (mount, owner, projectile record, template, hardpoint, extra), 0000ab50 without the record. ES2's MechLoadout_ConstructWeaponMounts (DBSIM 0040fff8), whose sentinels are 0x21 and 0x22.",
       "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-projectile-index",
       "verified": {
         "bytes": "0000c31c+671",
@@ -1637,12 +1832,267 @@
       }
     },
     {
+      "address": "0000c5bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMounts_ArbitrateEnergyNoSelection",
+      "description": "(manager, budget) in stack order, callee-cleaned: slot +4 of the base manager's vtable WeaponMountsBaseVtable (000912f2) (entered at its padding 0000c5bb): returns WeaponMounts_ArbitrateEnergy (0000cc2c)(manager, 0xffff, budget). ES2's WeaponMounts_ArbitrateEnergyNoSelection (DBSIM 00411a1d), which also passes the machine on.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-manager; ES1DBSIM disassembly at 0000c5bc",
+      "verified": {
+        "bytes": "0000c5bc+23",
+        "sha1": "37006fe06a7a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c5d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ElfMount_Dtor",
+      "description": "(mount, flags) in stack order, callee-cleaned: slot +0x1c of the ELF mounts' vtable ElfMountVtable (00091302) (entered at its padding 0000c5d3). Returns at once for a null mount; otherwise stores ElfMountVtable (00091302), the energy mounts' EnergyMountVtable (0009142e), the mount base's WeaponMountBaseVtable (000914a2) and ConfigPart's copy 00091142 in turn, runs HeapBlockOwner_Dtor (00002598)(mount + 0x10, 0), stores 00091176, runs TSBase_Dtor (0005ba58)(mount, 0) and calls operator_delete (000015f8) when flags bit 0 is set. ES2's ElfMount_Dtor (DBSIM 004119c3).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c5d4",
+      "verified": {
+        "bytes": "0000c5d4+81",
+        "sha1": "0e899c3d6994",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c628",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_ZeroChargeTarget",
+      "description": "(mount), callee-cleaned: slot +0x48 of the energy and ELF vtables EnergyMountVtable (0009142e) and ElfMountVtable (00091302) (entered at its padding 0000c625): zeroes the charge target +0x7b and the mid-charge byte +0x43 and sets the bytes +0x34 and +0x3c. ES2's WeaponMount_ZeroChargeTarget (DBSIM 004116ad).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c628",
+      "verified": {
+        "bytes": "0000c628+60",
+        "sha1": "a8efc4e07e9c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c664",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_DrainCapacitor",
+      "description": "(mount), callee-cleaned: slot +0x50 of the energy and ELF vtables EnergyMountVtable (0009142e) and ElfMountVtable (00091302): zeroes the charge +0x7d and the charge target +0x7b and sets the bytes +0x34 and +0x3c. ES2's WeaponMount_DrainCapacitor (DBSIM 004116cf).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c664",
+      "verified": {
+        "bytes": "0000c664+46",
+        "sha1": "f9f57aaa71ce",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c692",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_CountsInCombatRating_Always",
+      "description": "Frameless: two NOPs, then MOV AX,1 and RET 4: returns 1. Slot +0x58 of the vtables WeaponMountBaseVtable (000914a2), EnergyMountVtable (0009142e) and ElfMountVtable (00091302). ES2's WeaponMount_CountsInCombatRating_Always (DBSIM 004111e9), slot +0x54.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c692",
+      "verified": {
+        "bytes": "0000c692+9",
+        "sha1": "8a07f1f3f8da",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000c69c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GrenadeMount_Dtor",
+      "description": "(mount, flags) in stack order, callee-cleaned: slot +0x1c of the grenade mounts' vtable GrenadeMountVtable (00091376) (entered at its padding 0000c69b). Returns at once for a null mount; otherwise stores GrenadeMountVtable (00091376), the ammunition mounts' AmmunitionMountVtable (00091516), the mount base's WeaponMountBaseVtable (000914a2) and ConfigPart's copy 00091142 in turn, runs HeapBlockOwner_Dtor (00002598)(mount + 0x10, 0), stores 00091176, runs TSBase_Dtor (0005ba58)(mount, 0) and calls operator_delete (000015f8) when flags bit 0 is set. ES2's GrenadeMount_Dtor (DBSIM 00411969).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c69c",
+      "verified": {
+        "bytes": "0000c69c+81",
+        "sha1": "f9d42187dcdf",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c6ed",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_AdjustPowerLevelNoOp",
+      "description": "Frameless: three NOPs and RET 8. Slot +0x3c of the vtables WeaponMountBaseVtable (000914a2), AmmunitionMountVtable (00091516) and GrenadeMountVtable (00091376). ES2's WeaponMount_AdjustPowerLevelNoOp (DBSIM 004111ce), slot +0x38.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c6ed",
+      "verified": {
+        "bytes": "0000c6ed+6",
+        "sha1": "fe14fe2186bc",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000c6f3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_WakeCapacitorNoOp",
+      "description": "Frameless: a NOP and RET 4. Slot +0x40 of the vtables WeaponMountBaseVtable (000914a2), AmmunitionMountVtable (00091516) and GrenadeMountVtable (00091376). ES2's WeaponMount_WakeCapacitorNoOp (DBSIM 004111d3), slot +0x3c.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c6f3",
+      "verified": {
+        "bytes": "0000c6f3+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000c6f7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_DemandFullChargeNoOp",
+      "description": "Frameless: a NOP and RET 4. Slot +0x44 of the vtables WeaponMountBaseVtable (000914a2), AmmunitionMountVtable (00091516) and GrenadeMountVtable (00091376). ES2's WeaponMount_DemandFullChargeNoOp (DBSIM 004111d8), slot +0x40.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c6f7",
+      "verified": {
+        "bytes": "0000c6f7+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000c6fb",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_ZeroChargeTargetNoOp",
+      "description": "Frameless: a NOP and RET 4. Slot +0x48 of the vtables WeaponMountBaseVtable (000914a2), AmmunitionMountVtable (00091516) and GrenadeMountVtable (00091376). ES2's WeaponMount_ZeroChargeTargetNoOp (DBSIM 004111dd), slot +0x44.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c6fb",
+      "verified": {
+        "bytes": "0000c6fb+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000c6ff",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_GetEnergyPriorityZero",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +0x4c of the vtables WeaponMountBaseVtable (000914a2), AmmunitionMountVtable (00091516) and GrenadeMountVtable (00091376). ES2's WeaponMount_GetEnergyPriorityZero (DBSIM 004111e2), slot +0x48.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c6ff",
+      "verified": {
+        "bytes": "0000c6ff+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000c708",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_DrainAmmo",
+      "description": "(mount), callee-cleaned: slot +0x50 of the ammunition and grenade vtables AmmunitionMountVtable (00091516) and GrenadeMountVtable (00091376) (entered at its padding 0000c705): zeroes the rounds remaining +0x7b. ES2's WeaponMount_DrainAmmo (DBSIM 004115f8).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c708",
+      "verified": {
+        "bytes": "0000c708+18",
+        "sha1": "e887a3fc314b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c71c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_DtorEnergy",
+      "description": "(mount, flags) in stack order, callee-cleaned: slot +0x1c of the energy mounts' vtable EnergyMountVtable (0009142e) (entered at its padding 0000c71a): byte for byte the code of WeaponMount_DtorAmmunition (0000c7bc), relocated operands aside, storing EnergyMountVtable (0009142e) where that stores AmmunitionMountVtable (00091516). ES2's WeaponMount_DtorEnergy (DBSIM 0041165a).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c71c",
+      "verified": {
+        "bytes": "0000c71c+75",
+        "sha1": "17a0af25dfb4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c768",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_TriggerHeld",
+      "description": "(mount, input) in stack order, callee-cleaned: slot +0x34 of the mount base, energy and ammunition vtables WeaponMountBaseVtable (000914a2), EnergyMountVtable (0009142e) and AmmunitionMountVtable (00091516) (entered at its padding 0000c767): returns the input record's byte +0x15. ES2's WeaponMount_TriggerHeld (DBSIM 0040f8ad), which reads +0x0d.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c768",
+      "verified": {
+        "bytes": "0000c768+16",
+        "sha1": "4c2431f140c4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c778",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_DtorBase",
+      "description": "(mount, flags) in stack order, callee-cleaned: slot +0x1c of the mount base's vtable WeaponMountBaseVtable (000914a2). Stores WeaponMountBaseVtable (000914a2) and ConfigPart's copy 00091142, runs HeapBlockOwner_Dtor (00002598)(mount + 0x10, 0), stores 00091176 and runs TSBase_Dtor (0005ba58)(mount, 0). It tests no null mount, never reads its flags and frees nothing. ES2's WeaponMount_DtorBase (DBSIM 00411743), which frees the mount on flags bit 0.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c778",
+      "verified": {
+        "bytes": "0000c778+53",
+        "sha1": "f0619883ba7f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000c7ad",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_DrainNoOp",
+      "description": "Frameless: three NOPs and RET 4. Slot +0x50 of the mount base's vtable WeaponMountBaseVtable (000914a2). ES2's WeaponMount_DrainNoOp (DBSIM 0040f89f), slot +0x4c.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c7ad",
+      "verified": {
+        "bytes": "0000c7ad+6",
+        "sha1": "0011b5e9ac52",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000c7b3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "WeaponMount_IsSpent_Always",
+      "description": "Frameless: a NOP, then MOV AX,1 and RET 4: returns 1. Slot +0x60 of the mount base's vtable WeaponMountBaseVtable (000914a2). ES2's WeaponMount_IsSpent_Always (DBSIM 0040f8a4), slot +0x5c.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes; ES1DBSIM disassembly at 0000c7b3",
+      "verified": {
+        "bytes": "0000c7b3+8",
+        "sha1": "6d0f287b0144",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
       "address": "0000c7bc",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_DtorAmmunition",
-      "description": "(mount, flags) in stack order, callee-cleaned: slot +0x1c of the ammunition mounts' vtable 00091516, whose slots +0x3c to +0x48 are frameless no-ops, +0x4c returns 0 and +0x50 is 0000c708, which zeroes +0x7b, as ES2's PROJECTILE_WPN table holds its no-op power slots, its zero priority and WeaponMount_DrainAmmo. Returns at once for a null mount; otherwise stores 00091516, the mount base's 000914a2 and 00091142, runs HeapBlockOwner_Dtor (00002598)(mount + 0x10, 0), stores 00091176, runs TSBase_Dtor (0005ba58)(mount, 0) and calls operator_delete (000015f8) when flags bit 0 is set. ES2's WeaponMount_DtorAmmunition (DBSIM 004115a5).",
+      "description": "(mount, flags) in stack order, callee-cleaned: slot +0x1c of the ammunition mounts' vtable AmmunitionMountVtable (00091516), whose slots +0x3c to +0x48 are frameless no-ops, +0x4c returns 0 and +0x50 is WeaponMount_DrainAmmo (0000c708), which zeroes +0x7b, as ES2's PROJECTILE_WPN table holds its no-op power slots, its zero priority and WeaponMount_DrainAmmo. Returns at once for a null mount; otherwise stores AmmunitionMountVtable (00091516), the mount base's WeaponMountBaseVtable (000914a2) and 00091142, runs HeapBlockOwner_Dtor (00002598)(mount + 0x10, 0), stores 00091176, runs TSBase_Dtor (0005ba58)(mount, 0) and calls operator_delete (000015f8) when flags bit 0 is set. ES2's WeaponMount_DtorAmmunition (DBSIM 004115a5).",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#where-the-code-sits; ES1DBSIM disassembly at 0000c7bc",
       "verified": {
         "bytes": "0000c7bc+75",
@@ -1777,7 +2227,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_ArbitrateEnergy",
-      "description": "(manager, selection, budget) in stack order, callee-cleaned: the weapon half of the energy pool turn. Clears ten int16 served flags (memset (00060b40) of 0x14 bytes), then serves up to the int16 count +4 mounts in turn: the selection while it is not negative and not yet served, otherwise the unserved non-null mount whose slot +0x4c answers highest, a later mount replacing the best only when strictly higher; it marks the mount served and calls its slot +0x38(mount, a dword whose low word is 1 once a mount served so far had its byte +0x43 set and whose high word is the budget it was given, budget), whose AX answer becomes the budget, and stops when no mount is left. Returns the budget in AX, or the budget it was given when the word MissionModeFlag (000bc4a0) is 0 and UnlimitedAmmoFlag (000bc4a6) is 1. ES2's WeaponMounts_ArbitrateEnergy (DBSIM 004107e4) also takes the machine, refunds only when the machine's +0xa3 is set, and calls a served mount's fire slot when WeaponMount_AutoFireDue (DBSIM 0040ede8) answers non-zero. es2_xref finds two calls, through its padding entry 0000cc2a, from 0000c5bc and WeaponMounts_ArbitrateEnergyWithSelection (0000c994).",
+      "description": "(manager, selection, budget) in stack order, callee-cleaned: the weapon half of the energy pool turn. Clears ten int16 served flags (memset (00060b40) of 0x14 bytes), then serves up to the int16 count +4 mounts in turn: the selection while it is not negative and not yet served, otherwise the unserved non-null mount whose slot +0x4c answers highest, a later mount replacing the best only when strictly higher; it marks the mount served and calls its slot +0x38(mount, a dword whose low word is 1 once a mount served so far had its byte +0x43 set and whose high word is the budget it was given, budget), whose AX answer becomes the budget, and stops when no mount is left. Returns the budget in AX, or the budget it was given when the word MissionModeFlag (000bc4a0) is 0 and UnlimitedAmmoFlag (000bc4a6) is 1. ES2's WeaponMounts_ArbitrateEnergy (DBSIM 004107e4) also takes the machine, refunds only when the machine's +0xa3 is set, and calls a served mount's fire slot when WeaponMount_AutoFireDue (DBSIM 0040ede8) answers non-zero. es2_xref finds two calls, through its padding entry 0000cc2a, from WeaponMounts_ArbitrateEnergyNoSelection (0000c5bc) and WeaponMounts_ArbitrateEnergyWithSelection (0000c994).",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#energy--weaponmounts_arbitrateenergy-0000cc2c; ES1DBSIM disassembly at 0000cc2c",
       "verified": {
         "bytes": "0000cc2c+387",
@@ -3682,7 +4132,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DBSim_SpawnMissionObjects",
-      "description": "(): the world load's second pass over the shell's handoff, building the mission's objects, ES2's DBSim_SpawnMissionObjects (DBSIM 004253d8) in role. Sets the word at 000bc49a to 0xffff, reopens data\\script (Path_WithExtension) and reads past the 20-byte header and blocks 1-5 into a 2000-byte stack buffer. Block 6 (98-byte mechs) and then the player.mec entries, between FUN_0000bc60 and FUN_0000bd40: each live slot (000af7b4) gets Mech_Constructor (00011330)(null, type); a record gives the position from its point ref +0x3e, the point's Z plus the type record's (+0x188) int16 +0x16 with no ground query, or the sentinel at 000afa00 (0, 0, -1), and the rotation (0, 0, heading) from its heading ref +0x40 or the sentinel at 000afa10 (-0x8000, -0x8000, 0), into +0x20 and +6, zeroing the int16 +0x2c; then FUN_00012c00(mech, +0x46, +0x2a) in stack order, +0x91 set when +0 is not 0, the action refs +0x5c and +0x5e as 16-byte action pointers into +0x16c and +0x170, +0x42 and +0x44 into +0x174 and +0x176, FUN_00012f20(mech, +0x60), and +2 into +0x1e6 when not negative. A player.mec entry (0x7e bytes from 000af9e4) takes both sentinels, FUN_00012c00(mech, +0x20, +8), FUN_000107f0(mech +0x19c, +0x6a, +0x56, +0x3c) and its +0 into +0x232; the one whose index is the word at 000af9fa is stored at PlayerMech (000bc42a) with +0x9d set to 1. Block 7 (56-byte flyers), each live slot (000af8e0): FUN_0001ac58(null, +0x2c), point ref +0x28 with no height added, heading ref +0x2a, actions +0x32 and +0x34, pair +0x2e and +0x30. Block 8 (16-byte bases), each live slot (000af948): FUN_00003cbc(the slot's byte at 000af9b0, record), point ref +2, heading ref +4, actions +0xa and +0xc, pair +6 and +8. Block 9: one 82-byte record per element of MissionGroups (000bc476): member refs +0x34 remapped through the slot-to-pool map their kind +0x28 names (000af818, 000af914, 000af97c), the first record's replaced by the mech map's entries at block-6 count + k for each player.mec entry k and -1 after, and its +0x2c made 8 when 11; the target ref +0x48 remapped for target kinds 1-3; the heading from ref +0x30, or Math_HeadingToward (00063cc8) from the route's first waypoint to its second when it has two or more, else 0; then DBSim_BuildGroupRecord (0001cff4)(group, the point ref +0x2e's point, MissionGroups, heading, the action ref +0x4a's action, the route ref +0x32's waypoint group, record) in stack order. Closes the file. es2_xref finds one call, from Sim_StartMission (0005a9dc).",
+      "description": "(): the world load's second pass over the shell's handoff, building the mission's objects, ES2's DBSim_SpawnMissionObjects (DBSIM 004253d8) in role. Sets the word at 000bc49a to 0xffff, reopens data\\script (Path_WithExtension) and reads past the 20-byte header and blocks 1-5 into a 2000-byte stack buffer. Block 6 (98-byte mechs) and then the player.mec entries, between WeaponModels_LoadShapeChunks and WeaponModels_FreeShapeChunks: each live slot (000af7b4) gets Mech_Constructor (00011330)(null, type); a record gives the position from its point ref +0x3e, the point's Z plus the type record's (+0x188) int16 +0x16 with no ground query, or the sentinel at 000afa00 (0, 0, -1), and the rotation (0, 0, heading) from its heading ref +0x40 or the sentinel at 000afa10 (-0x8000, -0x8000, 0), into +0x20 and +6, zeroing the int16 +0x2c; then FUN_00012c00(mech, +0x46, +0x2a) in stack order, +0x91 set when +0 is not 0, the action refs +0x5c and +0x5e as 16-byte action pointers into +0x16c and +0x170, +0x42 and +0x44 into +0x174 and +0x176, FUN_00012f20(mech, +0x60), and +2 into +0x1e6 when not negative. A player.mec entry (0x7e bytes from 000af9e4) takes both sentinels, FUN_00012c00(mech, +0x20, +8), FUN_000107f0(mech +0x19c, +0x6a, +0x56, +0x3c) and its +0 into +0x232; the one whose index is the word at 000af9fa is stored at PlayerMech (000bc42a) with +0x9d set to 1. Block 7 (56-byte flyers), each live slot (000af8e0): FUN_0001ac58(null, +0x2c), point ref +0x28 with no height added, heading ref +0x2a, actions +0x32 and +0x34, pair +0x2e and +0x30. Block 8 (16-byte bases), each live slot (000af948): FUN_00003cbc(the slot's byte at 000af9b0, record), point ref +2, heading ref +4, actions +0xa and +0xc, pair +6 and +8. Block 9: one 82-byte record per element of MissionGroups (000bc476): member refs +0x34 remapped through the slot-to-pool map their kind +0x28 names (000af818, 000af914, 000af97c), the first record's replaced by the mech map's entries at block-6 count + k for each player.mec entry k and -1 after, and its +0x2c made 8 when 11; the target ref +0x48 remapped for target kinds 1-3; the heading from ref +0x30, or Math_HeadingToward (00063cc8) from the route's first waypoint to its second when it has two or more, else 0; then DBSim_BuildGroupRecord (0001cff4)(group, the point ref +0x2e's point, MissionGroups, heading, the action ref +0x4a's action, the route ref +0x32's waypoint group, record) in stack order. Closes the file. es2_xref finds one call, from Sim_StartMission (0005a9dc).",
       "source": "Herculan/docs/es1/formats/script-dat.md#the-second-pass",
       "verified": {
         "bytes": "0001e638+2948",
@@ -13262,12 +13712,27 @@
       }
     },
     {
+      "address": "000555ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_TagTotalSize",
+      "description": "(tag), callee-cleaned: an item's total length from its 8-byte type tag: the dword at +4 as it is when the high nibble of byte 3 is set, otherwise that dword + 9 with bit 0 cleared, the length with the tag rounded up to an even count. ES2's ClassItem_TagTotalSize (DBSIM 0047a434).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models; ES1DBSIM disassembly at 000555ec",
+      "verified": {
+        "bytes": "000555ec+34",
+        "sha1": "191a1b15407d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00055610",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_ItemTotalSize",
-      "description": "(item), callee-cleaned: builds {tag = vtable +4, length = vtable +8} on its stack and returns 000555ec of it, or 0 when the length is 0. ES2's ClassItem_ItemTotalSize (DBSIM 0047a450).",
+      "description": "(item), callee-cleaned: builds {tag = vtable +4, length = vtable +8} on its stack and returns ClassItem_TagTotalSize (000555ec) of it, or 0 when the length is 0. ES2's ClassItem_ItemTotalSize (DBSIM 0047a450).",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "00055610+54",
@@ -17251,7 +17716,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_LoadAfterPeek",
-      "description": "(stream), callee-cleaned: ClassItem_PeekTypeTag into a local, then ClassItem_LoadResource(0, stream), whose EAX it returns. es2_xref finds one call, from 0000bd70. ES2's ClassItem_LoadAfterPeek (DBSIM 00474b04).",
+      "description": "(stream), callee-cleaned: ClassItem_PeekTypeTag into a local, then ClassItem_LoadResource(0, stream), whose EAX it returns. es2_xref finds one call, from WeaponMount_ShapeForMountingCode (0000bd70). ES2's ClassItem_LoadAfterPeek (DBSIM 00474b04).",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "000634f8+34",
@@ -17921,6 +18386,21 @@
         "sha1": "81727b9a8c36",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00064dc4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MemRWStream_Dtor",
+      "description": "(stream, flags) in stack order, callee-cleaned: slot +4 of MemRWStream's vtable 00098a0e (entered at its padding 00064dc3): returns at once for a null stream; otherwise stores 00098a0e at +4, runs Stream_BaseDtor (00064d10)(stream, 0) and calls operator_delete (000015f8) when flags bit 0 is set. VSHELL's MemRWStream_Dtor (004536a1).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models; ES1DBSIM disassembly at 00064dc4",
+      "verified": {
+        "bytes": "00064dc4+43",
+        "sha1": "6f5b1a608d6b",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -22400,6 +22880,60 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "000912f2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponMountsBaseVtable",
+      "description": "The base weapon-mount manager's vtable: a zero dword and one slot, WeaponMounts_ArbitrateEnergyNoSelection (0000c5bc) by its padding entry. MechLoadout_ConstructWeaponMounts (0000c31c) stores it at the manager's +0x10. ES2's GUNLIST vtable (DBSIM 00499338).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-manager"
+    },
+    {
+      "address": "00091302",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ElfMountVtable",
+      "description": "The ELF mounts' vtable: the energy table EnergyMountVtable (0009142e) with its own destructor ElfMount_Dtor (0000c5d4) at +0x1c and its own fire (+0x2c, 0000b218), ready (+0x30, 0000b384), trigger (+0x34, 0000acb4) and pool turn (+0x38, 0000b748) slots, the four slots ES2's ElfMountVtable (DBSIM 004992c0) replaces. MechLoadout_ConstructWeaponMounts (0000c31c) stores it over the energy constructor's table for weapon id 3.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes"
+    },
+    {
+      "address": "00091376",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "GrenadeMountVtable",
+      "description": "The grenade mounts' vtable: the ammunition table AmmunitionMountVtable (00091516) with its own destructor GrenadeMount_Dtor (0000c69c) at +0x1c and its own fire (+0x2c, 0000afd4), trigger (+0x34, 0000ad54) and gauge push (+0x54, 0000b714) slots, the three slots ES2's GrenadeMountVtable (DBSIM 00499248) replaces. MechLoadout_ConstructWeaponMounts (0000c31c) stores it over the ammunition constructor's table for weapon id 5, GREN.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes"
+    },
+    {
+      "address": "0009142e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "EnergyMountVtable",
+      "description": "gunlist.cpp's copy of the energy mounts' vtable, ES2's ENERGY_WPN table (DBSIM 00498dcc) with every slot 4 higher, ending with the gauge factory at +0x68 and 0 at +0x6c. ElfMount_Dtor (0000c5d4) and WeaponMount_DtorEnergy (0000c71c) store it; the energy constructor 0000a84c stores its own file's copy 00090fb6.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes"
+    },
+    {
+      "address": "000914a2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponMountBaseVtable",
+      "description": "gunlist.cpp's copy of the mount base's vtable, ES2's GUN_STATE table (DBSIM 00498e44) with every slot 4 higher; it holds 0 at ready (+0x30), gauge push (+0x54) and gauge factory (+0x68), where ES2's holds Rtl_PureVirtualCalled, and 0 at +0x6c. The five destructors from ElfMount_Dtor (0000c5d4) to WeaponMount_DtorAmmunition (0000c7bc) store it; the base constructor 0000a530 stores its own file's copy 00090f42.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes"
+    },
+    {
+      "address": "00091516",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AmmunitionMountVtable",
+      "description": "gunlist.cpp's copy of the ammunition mounts' vtable, ES2's PROJECTILE_WPN table (DBSIM 00498d54) with every slot 4 higher, ending with the gauge factory at +0x68 and 0 at +0x6c. GrenadeMount_Dtor (0000c69c) and WeaponMount_DtorAmmunition (0000c7bc) store it; the ammunition constructor 0000a9e4 stores its own file's copy 0009102a.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-mount-classes"
+    },
+    {
       "address": "0009158a",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -23264,6 +23798,33 @@
       "source": "Herculan/docs/es1/formats/explos-dat.md#the-load"
     },
     {
+      "address": "000af1f0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponTexBank",
+      "description": "Pointer to the dba\\wpntex bitmap bank Weapons_LoadResourceTables (0000bf48) loads while g_LowMemory (000bda98) is 0; WeaponMount_ShapeForMountingCode (0000bd70) stores it at each weapon model's +0x26, and the loader at each mechwpn2 root's.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models"
+    },
+    {
+      "address": "000af1f4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponMountTemplate_SideMuzzleOffsetInit",
+      "description": "Byte: WeaponMountTemplate_SideMuzzleOffset (0000bbd4) sets it to 1 when it is 0, the construction flag of its result vector WeaponMountTemplate_SideMuzzleOffsetVec (000af1f8).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models"
+    },
+    {
+      "address": "000af1f8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponMountTemplate_SideMuzzleOffsetVec",
+      "description": "Three int16 x, y, z: the side muzzle offset WeaponMountTemplate_SideMuzzleOffset (0000bbd4) builds and returns. ES2's is at DBSIM 004a9b74.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models"
+    },
+    {
       "address": "000af200",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -23993,6 +24554,60 @@
       "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load"
     },
     {
+      "address": "000bc2bc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "GunLayout_Table",
+      "description": "Pointer to the gun-layout table of 6-byte {int16 count, record array} entries, GunLayout_Count (000bc2c0) long; GunLayout_AllocTable (0000c1b8) allocates it and GunLayout_GetBySlot (0000c18c) indexes it. ES2's GunLayout_Table (DBSIM 004a9968).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-hardpoint-lists"
+    },
+    {
+      "address": "000bc2c0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "GunLayout_Count",
+      "description": "int16 entry count of GunLayout_Table (000bc2bc); GunLayout_Reserve (0000c1a0) adds to it. ES2's GunLayout_Count (DBSIM 004a996c).",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-hardpoint-lists"
+    },
+    {
+      "address": "000bc2c2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponMountTemplate_Table",
+      "description": "Pointer to the 17 0x58-byte mount templates Weapons_LoadResourceTables (0000bf48) builds with __vec_new and WeaponMountTemplate_Ctor (0000c0b4); WeaponMountTemplate_GetByWeaponId (0000c178) indexes it. ES2's WeaponMountTemplate_Table (DBSIM 004a9970).",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load"
+    },
+    {
+      "address": "000bc2c6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponMountTemplate_Count",
+      "description": "int16 count of WeaponMountTemplate_Table (000bc2c2), which Weapons_LoadResourceTables (0000bf48) sets to 0x11, where ES2's reads it from the file. ES2's WeaponMountTemplate_Count (DBSIM 004a9974).",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load"
+    },
+    {
+      "address": "000bc2c8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponModels_Mechwpn2Roots",
+      "description": "The shape roots Weapons_LoadResourceTables (0000bf48) loads from dts\\mechwpn2 (dts\\mwpn2b in low memory) with Shape_LoadAllRoots, WeaponModels_Mechwpn2RootCount (000bc2cc) of them. A search of the disassembly dump for the address finds the loader's push and read and one read, at 0000ba81, in 0000b968.",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load"
+    },
+    {
+      "address": "000bc2cc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponModels_Mechwpn2RootCount",
+      "description": "int16 count of WeaponModels_Mechwpn2Roots (000bc2c8), stored by Weapons_LoadResourceTables (0000bf48).",
+      "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load"
+    },
+    {
       "address": "000bc2ce",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -24000,6 +24615,33 @@
       "name": "ProjDat_RecordTable",
       "description": "Pointer to the 19 0x24-byte projectile records Weapons_LoadResourceTables (0000bf48) reads from the end of dat\\weapons. ES2's ProjDat_RecordTable, read from dat\\proj.",
       "source": "Herculan/docs/es1/formats/weapons-dat-sim.md#the-load"
+    },
+    {
+      "address": "000bc2d2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponModels_ShapeChunks",
+      "description": "Array of pointers to the raw dts\\mechwpns chunks WeaponModels_LoadShapeChunks (0000bc60) reads, WeaponModels_ShapeChunkCount (000bc412) of them; it ends 0xa0 bytes on, where WeaponModels_ShapeChunkSizes (000bc372) starts, room for 40. ES2's is at DBSIM 004a9988, 0xf0 bytes long.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models"
+    },
+    {
+      "address": "000bc372",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponModels_ShapeChunkSizes",
+      "description": "Array of the byte lengths of the chunks in WeaponModels_ShapeChunks (000bc2d2), which WeaponModels_LoadShapeChunks (0000bc60) takes from ClassItem_TagTotalSize. ES2's is at DBSIM 004a9a78.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models"
+    },
+    {
+      "address": "000bc412",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WeaponModels_ShapeChunkCount",
+      "description": "int32 count of WeaponModels_ShapeChunks (000bc2d2), which WeaponModels_LoadShapeChunks (0000bc60) sets and WeaponModels_FreeShapeChunks (0000bd40) walks. ES2's is at DBSIM 004a9b68.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models"
     },
     {
       "address": "000bc416",

@@ -1,16 +1,75 @@
-# DBSIM.EXE — the weapon mount manager
+# DBSIM.EXE — `gunlist.cpp`: weapon models, hardpoint lists, mount classes and the mount manager
 
-**ES1's HERC handles its weapons as ES2's does ([the manager](../../retail/simulation/weapon-mounts.md#the-manager--mech0x202)): one weapon is armed at a time, three fire chains say which weapons the armed one steps through, two identical weapons on opposite hardpoints can be linked to fire together, and the reactor's energy charges one weapon at a time.** What a player would see differs in three ways. A linked pair's two rows each light ready on their own weapon's state, where ES2's light only when both halves are ready. Alt with a row's number reaches rows 1 to 9, ES1's nine rows. The ECM, weapon id 13, is the one mount that starts outside chain I, where ES2 keeps its five equipment pods out. Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's. Every function here removes its own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)).
+**ES1's HERC handles its weapons as ES2's does ([the manager](../../retail/simulation/weapon-mounts.md#the-manager--mech0x202)): one weapon is armed at a time, three fire chains say which weapons the armed one steps through, two identical weapons on opposite hardpoints can be linked to fire together, and the reactor's energy charges one weapon at a time.** Each fitted weapon carries its own copy of its model, built from a table of raw shapes that exists only while the mission's HERCs are built, and the kinds of mount behind the weapons are ES2's, with an ECM class of its own in place of ES2's five equipment pods. What a player would see differs in three ways. A linked pair's two rows each light ready on their own weapon's state, where ES2's light only when both halves are ready. Alt with a row's number reaches rows 1 to 9, ES1's nine rows. The ECM, weapon id 13, is the one mount that starts outside chain I, where ES2 keeps its five equipment pods out. Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's. Every function here removes its own arguments, so argument lists are in stack order ([calling conventions](../formats/compiler.md#calling-conventions)).
 
 ## Where the code sits
 
-The code from `0000c7bc` to `0000d68b` is the end of `gunlist.cpp`, the object file that holds `Weapons_LoadResourceTables` (`0000bf48`), whose asserts name it ([the load](../formats/weapons-dat-sim.md#the-load)). The file opens at `0000baf0` with its run of `ConfigPart`'s copies, after a `RET` at `0000baec` and three zero bytes ([module copies](../formats/compiler.md#vtables)). Between there and `0000d68b`, `es1_boilerplate.py scan` finds no other copy of the 40-byte destructor, and a scan for a return byte followed by zero fill to a 4-byte boundary finds one hit, at `0000c044` inside an instruction of `Weapons_LoadResourceTables`. The last code is the file's static initializer, **`Weapons_RegisterSubsystem` (`0000d67c`)**, entry `000adbf0` of the static constructor table, frameless and with no Ghidra function: it passes `Weapons_LoadResourceTables` and 2 to `RegisterSubsystemLoader` (`00000ac4`), as ES2's `Weapons_RegisterSubsystem` (`00411110`) does. Its `RET` at `0000d688` is followed by three zero bytes and `HeapPtr_DtorSimObjectCopy` (`0000d68c`), which opens [the next file](sim-object-base.md#where-the-object-file-starts-and-ends) ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)). This page covers the code from `0000c7bc` ([Open](#open)).
+`gunlist.cpp` is the code from `0000baf0` to `0000d68b`, the object file that holds `Weapons_LoadResourceTables` (`0000bf48`), whose asserts name it ([the load](../formats/weapons-dat-sim.md#the-load)). It opens, after a `RET` at `0000baec` and three zero bytes, with its run of `ConfigPart`'s copies ([module copies](../formats/compiler.md#vtables)): `HeapPtr_DtorGunlistCopy` (`0000baf0`), `ConfigPart_DtorGunlistCopy` (`0000bb18`), the frameless class tag `ConfigPart_GetClassTagGunlistCopy` (`0000bb57`) and `TSPartBase_DtorGunlistCopy` (`0000bb60`), the slots of the file's copies `00091142` and `00091176` of `ConfigPart`'s and `TSPartBase`'s tables. Between there and `0000d68b`, `es1_boilerplate.py scan` finds no other copy of the 40-byte destructor, and a scan for a return byte followed by zero fill to a 4-byte boundary finds one hit, at `0000c044` inside an instruction of `Weapons_LoadResourceTables`. The last code is the file's static initializer, **`Weapons_RegisterSubsystem` (`0000d67c`)**, entry `000adbf0` of the static constructor table, frameless and with no Ghidra function: it passes `Weapons_LoadResourceTables` and 2 to `RegisterSubsystemLoader` (`00000ac4`), as ES2's `Weapons_RegisterSubsystem` (`00411110`) does. Its `RET` at `0000d688` is followed by three zero bytes and `HeapPtr_DtorSimObjectCopy` (`0000d68c`), which opens [the next file](sim-object-base.md#where-the-object-file-starts-and-ends) ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)).
 
-The page holds the mount manager in ES2's order, `WeaponMounts_CtorLocal` (`0000c808`) to `WeaponMounts_ToggleChainMember` (`0000d5e4`), against ES2's `004104ec` to `004110ac`, and two class functions besides: **`WeaponMount_DtorAmmunition` (`0000c7bc`)**, (mount, flags), slot `+0x1c` of the ammunition mounts' table `00091516`, which stores `00091516`, the mount base's `000914a2` and `ConfigPart`'s `00091142`, runs `HeapBlockOwner_Dtor` on `+0x10`, stores `00091176`, runs `TSBase_Dtor` and frees the mount on flags bit 0, as ES2's `004115a5` does; and **`WeaponMount_RangeAllows` (`0000ac14`)**, (mount, range), ES2's (`0040e5f8`): 1 when the template's (`+0x1c`) `int32` `+0x2c` < range < its `int32` `+0x30`.
+In between, in address order: the template reader `WeaponMountTemplate_ReadRecord` (`0000bb8c`) and [the weapon models](#the-weapon-models) (`0000bbd4`–`0000bdd8`); two [lookups over a manager's mounts](#lookups-over-the-mounts) (`0000be04`, `0000be6c`); the loader with [the hardpoint lists](#the-hardpoint-lists) and the projectile lookups (`0000befc`–`0000c2d0`, [the load](../formats/weapons-dat-sim.md#the-load)); the factory `MechLoadout_ConstructWeaponMounts` (`0000c31c`, [the projectile index](../formats/weapons-dat-sim.md#the-projectile-index)); the slot functions of [the mount classes](#the-mount-classes) (`0000c5bc`–`0000c7bc`); and [the manager](#the-manager), `WeaponMounts_CtorLocal` (`0000c808`) to `WeaponMounts_ToggleChainMember` (`0000d5e4`), in the order of ES2's `004104ec` to `004110ac`.
+
+## The weapon models
+
+Each mount carries its own copy of its weapon's model, built from a raw shape chunk, as ES2's do ([the muzzle flash](../../retail/simulation/weapon-mounts.md#the-muzzle-flash)):
+
+- **`WeaponModels_LoadShapeChunks` (`0000bc60`)** is ES2's (`0040f998`) on `dts\mechwpns`, or on `dts\mwpnsb` while `g_LowMemory` (`000bda98`) is set; ES2's has no low-memory file. It allocates with `operator_new`, asserts at `gunlist.cpp` line `0x7d`, and keeps the buffers at `WeaponModels_ShapeChunks` (`000bc2d2`), their lengths at `WeaponModels_ShapeChunkSizes` (`000bc372`) and the count, an `int32`, at `WeaponModels_ShapeChunkCount` (`000bc412`). The two arrays are `0xa0` bytes apart, room for 40 chunks, where ES2's are `0xf0` apart. `ClassItem_TagTotalSize` (`000555ec`) is ES2's (`0047a434`).
+- **`WeaponModels_FreeShapeChunks` (`0000bd40`)** is ES2's (`0040fa88`). `DBSim_SpawnMissionObjects` (`0001e638`) builds the HERC records and the `player.mec` entries between the two calls, as ES2's does.
+- **`WeaponMount_ShapeForMountingCode` (`0000bd70`)**, (template, mounting code), is ES2's (`0040fab0`): chunk `template[0x22 + code × 2]` opened as a `MemRWStream` on its stack, the shape loaded from it with `ClassItem_LoadAfterPeek`, and the `wpntex` bank `WeaponTexBank` (`000af1f0`), which `Weapons_LoadResourceTables` loads, stored at the shape's `+0x26`. `es2_xref.py` finds one call, from `0000a530`, [the mount base's constructor](#the-mount-classes). The stream's destructor is inlined with the file's copy `0009127e` of `MemRWStream`'s table, whose slot `+4` is `MemRWStream_DtorGunlistCopy` (`0000bdd8`), the code of `MemRWStream_Dtor` (`00064dc4`).
+- **`WeaponMountTemplate_SideMuzzleOffset` (`0000bbd4`)**, (template, mounting code), is ES2's (`0040f904`, [the side offset](../../retail/simulation/weapon-firing.md#where-the-shot-comes-from--weaponmount_prepareshot-0040e788)), building its vector in `WeaponMountTemplate_SideMuzzleOffsetVec` (`000af1f8`). `es2_xref.py` finds one call, from `0000b918`, in the object file before this one.
+
+## The hardpoint lists
+
+ES1 keeps each chassis' `.GL` hardpoint list ([the layout](../../retail/formats/gun-layout-gl.md)) as ES2 does. **`GunLayout_AllocTable` (`0000c1b8`)**, ES2's (`0040fecc`), allocates `GunLayout_Count` (`000bc2c0`) 6-byte entries {`int16` count, record array} at `GunLayout_Table` (`000bc2bc`); `es2_xref.py` finds one call, from `DBSim_LoadScriptDat` (`0001d850`). `GunLayout_Reserve` (`0000c1a0`) hands out entries, `GunLayout_GetBySlot` (`0000c18c`) indexes the table, and `GunLayout_LoadForMechType` (`0000c1d0`) reads a file into an entry, building its 26-byte records with `__vec_new` and **`GunLayoutRecord_ElementCtor` (`0000c274`)**, entered at its padding `0000c271`, which returns the record after the empty constructor of its member at `+0x10`, the mount-point offset, as ES2's (`004117a5`) does. `GunLayout_CollectHardpointBones` (`0000befc`) is ES2's (`0040fc50`).
+
+## The mount classes
+
+**ES1's mounts are ES2's classes ([mount classes](../../retail/simulation/weapon-mounts.md#mount-classes)) with an ECM class of its own in place of ES2's five pods**: a base, an energy class with the ELF derived from it, and an ammunition class with the grenade launcher derived from it. `MechLoadout_ConstructWeaponMounts` (`0000c31c`) picks the class by weapon id ([the factory](../formats/weapons-dat-sim.md#the-projectile-index)).
+
+| Class | Weapon ids | Constructor, and the table it stores | This file's table | Its destructor |
+|---|---|---|---|---|
+| Base | — | `0000a530`, `00090f42` | `WeaponMountBaseVtable` (`000914a2`) | `WeaponMount_DtorBase` (`0000c778`) |
+| Energy | 4, 6–8, 12, 14, 15 | `0000a84c`, `00090fb6` | `EnergyMountVtable` (`0009142e`) | `WeaponMount_DtorEnergy` (`0000c71c`) |
+| ELF | 3 | `0000a84c`; the factory then stores `00091302` | `ElfMountVtable` (`00091302`) | `ElfMount_Dtor` (`0000c5d4`) |
+| Ammunition | 0–2, 9–11, 16 | `0000a9e4`, `0009102a` | `AmmunitionMountVtable` (`00091516`) | `WeaponMount_DtorAmmunition` (`0000c7bc`) |
+| Grenade | 5, `GREN` | `0000a9e4`; the factory then stores `00091376` | `GrenadeMountVtable` (`00091376`) | `GrenadeMount_Dtor` (`0000c69c`) |
+| ECM | 13 | `0000ab50`, `000910be` | — | — |
+
+The constructors are in the object file before this one ([Open](#open)); `0000a84c`, `0000a9e4` and `0000ab50` each call `0000a530`. A class's table there and its copy here hold the same function in each slot, entered at the function or at its padding, except the slots holding the small functions each file has its own copies of ([module copies](../formats/compiler.md#vtables)): the class tag `+4`, the destructor `+0x1c`, the trigger `+0x34` and the stubs below. The factory stores this file's tables over the constructor's for the ELF and the grenade alone, so it builds energy, ammunition and ECM mounts that hold the other file's tables and run its copies.
+
+The destructors give the hierarchy. `ElfMount_Dtor` stores `00091302`, `0009142e`, `000914a2` and `ConfigPart`'s `00091142` in turn, `GrenadeMount_Dtor` stores `00091376`, `00091516`, `000914a2` and `00091142`, and the energy and ammunition destructors store their own table, `000914a2` and `00091142`. Each of those four returns at once for a null mount, then runs `HeapBlockOwner_Dtor` on `+0x10`, stores `TSPartBase`'s `00091176`, runs `TSBase_Dtor` and frees the mount on flags bit 0, as ES2's do (`004119c3`, `00411969`, `0041165a`, `004115a5`); `WeaponMount_DtorEnergy` is byte for byte `WeaponMount_DtorAmmunition`, operands aside. `WeaponMount_DtorBase` stores `000914a2` and `00091142` and makes the same two calls, but neither tests for a null mount nor frees it, and never reads its flags, where ES2's (`00411743`) frees on bit 0.
+
+A mount's slots stand 4 bytes above ES2's, as every ES1 table does ([vtables](../formats/compiler.md#vtables)). Slots `+4` to `+0x28` are `ConfigPart`'s and `TSPartBase`'s, with the class's destructor at `+0x1c` and `0000a4cc` at `+0x20`, where ES2's `+0x1c` holds `WeaponMount_RenderWithDetailBias`. From `+0x2c`, with the roles ES2's docs give them ([weapon-firing.md](../../retail/simulation/weapon-firing.md), [the energy pool](../../retail/simulation/reactor-energy-pool.md#weapon-energy-arbitration--weaponmounts_arbitrateenergy-004107e4)):
+
+| ES1 | ES2 | Role | Base | Energy | ELF | Ammunition | Grenade |
+|---|---|---|---|---|---|---|---|
+| `+0x2c` | `+0x28` | fire | `0000add4` | `0000b024` | `0000b218` | `0000af40` | `0000afd4` |
+| `+0x30` | `+0x2c` | ready | 0 | `0000b278` | `0000b384` | `0000b340` | `0000b340` |
+| `+0x34` | `+0x30` | trigger | `WeaponMount_TriggerHeld` | as Base | `0000acb4` | as Base | `0000ad54` |
+| `+0x38` | `+0x34` | pool turn | `0000b408` | `0000b4d4` | `0000b748` | `0000b408` | `0000b408` |
+| `+0x3c` | `+0x38` | power level | `WeaponMount_AdjustPowerLevelNoOp` | `0000b820` | `0000b820` | as Base | as Base |
+| `+0x40` | `+0x3c` | wake | `WeaponMount_WakeCapacitorNoOp` | `0000b884` | `0000b884` | as Base | as Base |
+| `+0x44` | `+0x40` | full charge | `WeaponMount_DemandFullChargeNoOp` | `0000b8a4` | `0000b8a4` | as Base | as Base |
+| `+0x48` | `+0x44` | zero the charge target | `WeaponMount_ZeroChargeTargetNoOp` | `WeaponMount_ZeroChargeTarget` | as Energy | as Base | as Base |
+| `+0x4c` | `+0x48` | priority | `WeaponMount_GetEnergyPriorityZero` | `0000b8c4` | `0000b8c4` | as Base | as Base |
+| `+0x50` | `+0x4c` | drain | `WeaponMount_DrainNoOp` | `WeaponMount_DrainCapacitor` | as Energy | `WeaponMount_DrainAmmo` | as Ammunition |
+| `+0x54` | `+0x50` | gauge push | 0 | `0000b5b8` | `0000b5b8` | `0000b67c` | `0000b714` |
+| `+0x58` | `+0x54` | counts in the combat rating | `WeaponMount_CountsInCombatRating_Always` | as Base | as Base | `0000b8ec` | `0000b8ec` |
+| `+0x5c` | `+0x58` | gauge match | `0000a4f0` | `0000a4f8` | `0000a4f8` | `0000a514` | `0000a514` |
+| `+0x60` | `+0x5c` | spent | `WeaponMount_IsSpent_Always` | `0000b300` | `0000b300` | `0000b314` | `0000b314` |
+| `+0x64` | `+0x60` | ammunition subtype | `0000ac54` | `0000ac54` | `0000ac54` | `0000ac70` | `0000ac70` |
+| `+0x68` | `+0x64` | gauge factory | 0 | `0000a97c` | `0000a97c` | `0000ab20` | `0000ab20` |
+
+The ELF's table replaces the energy table's fire, ready, trigger and pool turn, and the grenade's replaces the ammunition table's fire, trigger and gauge push, the slots ES2's ELF and grenade tables replace ([ELF and ELF2](../../retail/simulation/weapon-mounts.md#elf-and-elf2)). Where ES2's base table holds `Rtl_PureVirtualCalled`, at ready, gauge push and gauge factory, ES1's holds 0. Every table ends with the gauge factory: each of the five holds 0 at `+0x6c`, where ES2's `+0x68` holds the condition notification ([losing a mount](../../retail/simulation/weapon-mounts.md#losing-a-mount), [Open](#open)). ES1's `GREN` carries a magazine of 8 ([retail values](../formats/weapons-dat-sim.md#retail-values)), where ES2's grenade class serves `LAEW`, whose magazine is 0. The factory allocates ES2's sizes for the ammunition and grenade mounts, `0x81` and `0x85`, and 4 bytes fewer than ES2's for the energy and ELF mounts, `0x7f` and `0x82` against ES2's `0x83` and `0x86` ([Open](#open)).
+
+The slot functions in this file:
+
+- **`WeaponMount_TriggerHeld` (`0000c768`)**, (mount, input), returns the input record's byte `+0x15`, where ES2's (`0040f8ad`) reads `+0x0d` ([the trigger](../../retail/simulation/weapon-firing.md#the-trigger-is-polled-not-dispatched)). `WeaponMounts_FireTrigger` passes it its own third argument.
+- **`WeaponMount_ZeroChargeTarget` (`0000c628`)** and **`WeaponMount_DrainCapacitor` (`0000c664`)**, (mount), are ES2's (`004116ad`, `004116cf`, [the charge bar](../../retail/simulation/weapon-firing.md#the-charge-bar)); **`WeaponMount_DrainAmmo` (`0000c708`)**, (mount), is ES2's (`004115f8`), which zeroes the rounds `+0x7b`.
+- The stubs are frameless, `NOP`s before a `RET`, where ES2's are framed functions with the same results: `WeaponMount_AdjustPowerLevelNoOp` (`0000c6ed`) removes two arguments and returns; `WeaponMount_WakeCapacitorNoOp` (`0000c6f3`), `WeaponMount_DemandFullChargeNoOp` (`0000c6f7`), `WeaponMount_ZeroChargeTargetNoOp` (`0000c6fb`) and `WeaponMount_DrainNoOp` (`0000c7ad`) remove one; `WeaponMount_GetEnergyPriorityZero` (`0000c6ff`) returns 0; `WeaponMount_CountsInCombatRating_Always` (`0000c692`) and `WeaponMount_IsSpent_Always` (`0000c7b3`) return 1 in `AX`. ES2's are `004111ce`, `004111d3`, `004111d8`, `004111dd`, `0040f89f`, `004111e2`, `004111e9` and `0040f8a4`.
 
 ## The manager
 
-The machine holds its manager at `+0x198`, where ES2's holds it at `+0x202`. `00012c00`, the function ES2's `Mech_ConfigureLoadout` (`004175dc`) pairs with, builds it: with the machine's byte `+0x9d` set, the local manager through `WeaponMounts_CtorLocal`; otherwise the `0x14`-byte base through `MechLoadout_ConstructWeaponMounts` (`0000c31c`) alone, which stores the base table `000912f2`. ES2's tests `+0xa3`.
+The machine holds its manager at `+0x198`, where ES2's holds it at `+0x202`. `00012c00`, the function ES2's `Mech_ConfigureLoadout` (`004175dc`) pairs with, builds it: with the machine's byte `+0x9d` set, the local manager through `WeaponMounts_CtorLocal`; otherwise the `0x14`-byte base through `MechLoadout_ConstructWeaponMounts` (`0000c31c`) alone, which stores the base table `WeaponMountsBaseVtable` (`000912f2`). ES2's tests `+0xa3`.
 
 | ES1 | ES2 | Holds |
 |---|---|---|
@@ -20,9 +79,16 @@ The machine holds its manager at `+0x198`, where ES2's holds it at `+0x202`. `00
 | `+0x10` | `+0x00` | the vptr: `000912f2` for the base, `0009158a` for the local manager |
 | `+0x14`–`+0x34` | the same | as ES2's: TRACK's latch `+0x14`, the chain-changed byte `+0x16`, single fire `+0x18`, the current chain `+0x1c`, the armed mount `+0x1d`, the three chains `+0x1f`/`+0x25`/`+0x2b` (each a 6-byte array of one `int16` per mount and its count), the range to the selected target `+0x31` |
 
-The base is `0x14` bytes and the local manager `0x35`, as ES2's. A mount's slots stand 4 bytes above ES2's, as every ES1 table does ([vtables](../formats/compiler.md#vtables)): the fire slot is `+0x2c`, ready `+0x30`, trigger `+0x34`, the pool turn `+0x38`, the power level `+0x3c`, wake `+0x40`, full charge `+0x44`, priority `+0x4c`, the gauge push `+0x54`, the gauge match `+0x5c`, the ammunition subtype `+0x64` and the gauge factory `+0x68`.
+The base is `0x14` bytes and the local manager `0x35`, as ES2's. The mount slots the manager calls are in [the mount classes](#the-mount-classes)' table.
 
-`0009158a` holds a zero dword and one slot, the padding entry `0000c991` of **`WeaponMounts_ArbitrateEnergyWithSelection` (`0000c994`)**, (manager, budget), which passes (manager, the armed mount `+0x1d`, budget) to `WeaponMounts_ArbitrateEnergy`. ES2's table holds it at `+0`, and ES2's passes the machine on as well.
+Each table holds a zero dword and one slot, the energy turn. `000912f2`'s is the padding entry `0000c5bb` of **`WeaponMounts_ArbitrateEnergyNoSelection` (`0000c5bc`)**, (manager, budget), which returns `WeaponMounts_ArbitrateEnergy`(manager, `0xffff`, budget), as ES2's (`00411a1d`) does with −1. `0009158a`'s is the padding entry `0000c991` of **`WeaponMounts_ArbitrateEnergyWithSelection` (`0000c994`)**, (manager, budget), which passes (manager, the armed mount `+0x1d`, budget) to `WeaponMounts_ArbitrateEnergy`. ES2's tables hold them at `+0`, and ES2's pass the machine on as well.
+
+### Lookups over the mounts
+
+Two functions walk a manager's mount array, skipping holes:
+
+- **`WeaponMounts_RoundsByMissileType` (`0000be6c`)**, (manager, rounds), is ES2's (`0040fbdc`, [missile lock](../../retail/simulation/missile-lock.md)) on slot `+0x64`: it zeroes the five `int16` at rounds and adds each mount's rounds to its subtype's entry unless the subtype is 5. `es2_xref.py` finds one call, from `00014ee0`.
+- **`WeaponMounts_FindEcmMount` (`0000be04`)**, (manager), returns the first mount whose template's (`+0x1c`) `int16` `+0x56` is 13, the ECM, or 0. `es2_xref.py` finds calls from `00014e68` and `00014eb4`. ES2's `MechLoadout_FileEquipmentPods` (`0040fb2c`) instead files its five pods into an array at `mech+0x307` once the mounts are built ([equipment pods](../../retail/simulation/equipment-pods.md)).
 
 ## Building it — `WeaponMounts_CtorLocal` (`0000c808`)
 
@@ -65,7 +131,7 @@ ES2's (`00410f78`) handles the same codes with ten row codes, `0x202`–`0x20b`.
 
 ## Readiness
 
-**`WeaponMounts_MountIsReady` (`0000cdb0`)**, (manager, mount), is ES2's ([readiness](../../retail/simulation/weapon-mounts.md#readiness--weaponmounts_mountisready-00410970)) without the link term: the mount's ready slot `+0x30`; then, when the range `+0x31` is not 0, `WeaponMount_RangeAllows`; then the subtype from slot `+0x64` must be 5 or 3 or have its lock flag set at `+0x06` + 2 × subtype. ES2's also asks the partner of a linked mount, so its pair is ready only when both halves are; ES1's answers for the one mount, and the per-frame pass lights each row of a pair by its own answer.
+**`WeaponMounts_MountIsReady` (`0000cdb0`)**, (manager, mount), is ES2's ([readiness](../../retail/simulation/weapon-mounts.md#readiness--weaponmounts_mountisready-00410970)) without the link term: the mount's ready slot `+0x30`; then, when the range `+0x31` is not 0, `WeaponMount_RangeAllows`; then the subtype from slot `+0x64` must be 5 or 3 or have its lock flag set at `+0x06` + 2 × subtype. ES2's also asks the partner of a linked mount, so its pair is ready only when both halves are; ES1's answers for the one mount, and the per-frame pass lights each row of a pair by its own answer. **`WeaponMount_RangeAllows` (`0000ac14`)**, (mount, range), in the object file before this one, is ES2's (`0040e5f8`): 1 when the template's (`+0x1c`) `int32` `+0x2c` < range < its `int32` `+0x30`.
 
 **`WeaponMounts_ChainReady` (`0000ce1c`)**, (manager, mount), returns 1 without asking while single fire `+0x18` or `000b5bc6` is set, and otherwise `WeaponMounts_MountIsReady`, as ES2's does ([the chain hold](../../retail/simulation/weapon-mounts.md#arming--weaponmounts_selectbygauge-004106ac-and-weaponmounts_setselection-00410708)). **`WeaponMounts_AdvanceToReady` (`0000ce54`)**, (manager), is ES2's: with a mount armed that `WeaponMounts_ChainReady` refuses, it steps the selection by +1 until one passes, clearing single fire, and otherwise puts the original back.
 
@@ -87,7 +153,7 @@ ES2's (`00410f78`) handles the same codes with ten row codes, `0x202`–`0x20b`.
 - It takes no machine and calls no mount's fire slot. ES2's calls a served mount's fire slot when `WeaponMount_AutoFireDue` (`0040ede8`) answers non-zero for it ([`EMP2`'s second volley](../../retail/simulation/weapon-firing.md#the-gun-branches)).
 - Its refund needs only `000bc4a0` = 0 and `000bc4a6` = 1, script.dat header words 2 and 5 ([the header](../formats/script-dat.md#the-header)): the budget it was given goes back for every machine, where ES2's refunds the locally piloted machine alone.
 
-`es2_xref.py` finds two calls, from `WeaponMounts_ArbitrateEnergyWithSelection` and from `0000c5bc`, in the part of the file this page does not cover.
+`es2_xref.py` finds two calls, from `WeaponMounts_ArbitrateEnergyWithSelection` and `WeaponMounts_ArbitrateEnergyNoSelection`.
 
 ## Firing — `WeaponMounts_FireTrigger` (`0000d2bc`)
 
@@ -99,18 +165,34 @@ ES2's (`00410f78`) handles the same codes with ten row codes, `0x202`–`0x20b`.
 
 | ES1 | Address | ES2 |
 |---|---|---|
-| `WeaponMount_RangeAllows`, `WeaponMount_DtorAmmunition` | `0000ac14`, `0000c7bc` | `0040e5f8`, `004115a5` |
+| `HeapPtr_DtorGunlistCopy`, `ConfigPart_DtorGunlistCopy`, `ConfigPart_GetClassTagGunlistCopy`, `TSPartBase_DtorGunlistCopy` | `0000baf0`, `0000bb18`, `0000bb57`, `0000bb60` | —, —, —, `0049224b` |
+| `WeaponMountTemplate_ReadRecord`, `WeaponMountTemplate_SideMuzzleOffset`, `WeaponModels_LoadShapeChunks`, `WeaponModels_FreeShapeChunks`, `WeaponMount_ShapeForMountingCode`, `MemRWStream_DtorGunlistCopy` | `0000bb8c`, `0000bbd4`, `0000bc60`, `0000bd40`, `0000bd70`, `0000bdd8` | `0040f8bc`, `0040f904`, `0040f998`, `0040fa88`, `0040fab0`, — |
+| `WeaponMounts_FindEcmMount`, `WeaponMounts_RoundsByMissileType`, `GunLayout_CollectHardpointBones`, `Weapons_LoadResourceTables`, `WeaponMountTemplate_Ctor` | `0000be04`, `0000be6c`, `0000befc`, `0000bf48`, `0000c0b4` | —, `0040fbdc`, `0040fc50`, `0040fc8c`, `0041178d` |
+| `WeaponMountTemplate_GetByWeaponId`, `GunLayout_GetBySlot`, `GunLayout_Reserve`, `GunLayout_AllocTable`, `GunLayout_LoadForMechType`, `GunLayoutRecord_ElementCtor` | `0000c178`, `0000c18c`, `0000c1a0`, `0000c1b8`, `0000c1d0`, `0000c274` | `0040fe84`, `0040fea0`, `0040feb4`, `0040fecc`, `0040fee8`, `004117a5` |
+| `Proj_LookupRecordByIndex`, `Proj_LookupRecord`, `MechLoadout_ConstructWeaponMounts`, `WeaponMounts_ArbitrateEnergyNoSelection` | `0000c2bc`, `0000c2d0`, `0000c31c`, `0000c5bc` | `0040ffb0`, `0040ffc8`, `0040fff8`, `00411a1d` |
+| `ElfMount_Dtor`, `WeaponMount_ZeroChargeTarget`, `WeaponMount_DrainCapacitor`, `WeaponMount_CountsInCombatRating_Always`, `GrenadeMount_Dtor` | `0000c5d4`, `0000c628`, `0000c664`, `0000c692`, `0000c69c` | `004119c3`, `004116ad`, `004116cf`, `004111e9`, `00411969` |
+| `WeaponMount_AdjustPowerLevelNoOp`, `WeaponMount_WakeCapacitorNoOp`, `WeaponMount_DemandFullChargeNoOp`, `WeaponMount_ZeroChargeTargetNoOp`, `WeaponMount_GetEnergyPriorityZero` | `0000c6ed`, `0000c6f3`, `0000c6f7`, `0000c6fb`, `0000c6ff` | `004111ce`, `004111d3`, `004111d8`, `004111dd`, `004111e2` |
+| `WeaponMount_DrainAmmo`, `WeaponMount_DtorEnergy`, `WeaponMount_TriggerHeld`, `WeaponMount_DtorBase`, `WeaponMount_DrainNoOp`, `WeaponMount_IsSpent_Always`, `WeaponMount_DtorAmmunition` | `0000c708`, `0000c71c`, `0000c768`, `0000c778`, `0000c7ad`, `0000c7b3`, `0000c7bc` | `004115f8`, `0041165a`, `0040f8ad`, `00411743`, `0040f89f`, `0040f8a4`, `004115a5` |
 | `WeaponMounts_CtorLocal`, `ARRAY_short_Ctor`, `WeaponMounts_ArbitrateEnergyWithSelection`, `WeaponMounts_BuildGauges`, `WeaponMounts_MountForHardpointSlot` | `0000c808`, `0000c96c`, `0000c994`, `0000c9b0`, `0000ca04` | `004104ec`, `00411892`, `0041194a`, `00410644`, `00410670` |
 | `WeaponMounts_SelectByGauge`, `WeaponMounts_SetSelection`, `WeaponMounts_StepSelection`, `WeaponMounts_ArbitrateEnergy` | `0000ca70`, `0000cb00`, `0000cb54`, `0000cc2c` | `004106ac`, `00410708`, `0041074c`, `004107e4` |
 | `WeaponMounts_MountIsReady`, `WeaponMounts_ChainReady`, `WeaponMounts_AdvanceToReady`, `WeaponMounts_SetChain`, `WeaponMounts_PerFrameUpdate` | `0000cdb0`, `0000ce1c`, `0000ce54`, `0000cf10`, `0000cf78` | `00410970`, `00410a04`, `00410a3c`, `00410ae4`, `00410b40` |
 | `WeaponMounts_XorChainBit`, `WeaponMounts_IdleAllCapacitors`, `WeaponMounts_DemandFullChargeOnArmed`, `WeaponMounts_FireTrigger` | `0000d180`, `0000d1c4`, `0000d22c`, `0000d2bc` | `00410cd0`, `00410d04`, `00410d50`, `00410dbc` |
 | `WeaponMounts_SetTrackLatch`, `WeaponMounts_ToggleLink`, `WeaponMounts_HandleCommand`, `WeaponMounts_ToggleChainMember`, `Weapons_RegisterSubsystem` | `0000d408`, `0000d41c`, `0000d4b4`, `0000d5e4`, `0000d67c` | `00410f04`, `00410f14`, `00410f78`, `004110ac`, `00411110` |
+| `WeaponMount_RangeAllows`, in the file before this one | `0000ac14` | `0040e5f8` |
+| Library callees: `ClassItem_TagTotalSize`, `MemRWStream_Dtor` | `000555ec`, `00064dc4` | `0047a434`, VSHELL `004536a1` |
 
 ## Globals
 
 | | Address |
 |---|---|
-| `WeaponMountsLocalVtable`, the local manager's table | `0009158a` |
+| `WeaponTexBank`, the `dba\wpntex` bank | `000af1f0` |
+| `WeaponMountTemplate_SideMuzzleOffsetInit` and `WeaponMountTemplate_SideMuzzleOffsetVec`, the side offset's construction flag and vector | `000af1f4`, `000af1f8` |
+| `GunLayout_Table` and `GunLayout_Count` | `000bc2bc`, `000bc2c0` |
+| `WeaponMountTemplate_Table` and `WeaponMountTemplate_Count` | `000bc2c2`, `000bc2c6` |
+| `WeaponModels_Mechwpn2Roots` and `WeaponModels_Mechwpn2RootCount`, the `dts\mechwpn2` roots the loader loads | `000bc2c8`, `000bc2cc` |
+| `WeaponModels_ShapeChunks`, `WeaponModels_ShapeChunkSizes` and `WeaponModels_ShapeChunkCount` | `000bc2d2`, `000bc372`, `000bc412` |
+| `WeaponMountsBaseVtable` and `WeaponMountsLocalVtable`, the managers' tables | `000912f2`, `0009158a` |
+| `ElfMountVtable`, `GrenadeMountVtable`, `EnergyMountVtable`, `WeaponMountBaseVtable`, `AmmunitionMountVtable` | `00091302`, `00091376`, `0009142e`, `000914a2`, `00091516` |
 | `WeaponMounts_CommandCodes`, 17 codes and 17 targets | `00091598` |
 | `maybe_WeaponChain_EoHold` and `maybe_WeaponChain_EoStepPending` | `000b5bc6`, `000b5bc8` |
 | `MissionModeFlag` and `UnlimitedAmmoFlag`, script.dat header words 2 and 5 | `000bc4a0`, `000bc4a6` |
@@ -118,9 +200,12 @@ ES2's (`00410f78`) handles the same codes with ten row codes, `0x202`–`0x20b`.
 
 ## Open
 
-- **Open:** `gunlist.cpp` from `0000baf0` to `0000c7bb`: the mount classes' constructors and slots, the loader and the hardpoint layouts, partly named from earlier batches. `es1_boilerplate.py scan` proposes the run at `0000baf0`, an `RLERStream` destructor copy at `0000bdd8` and the frameless slots `0000c692`, `0000c6ed`–`0000c6ff`, `0000c7ad` and `0000c7b3`.
+- **Open:** the object file before `gunlist.cpp`, which ends at `0000baef`: the mount constructors `0000a530`, `0000a84c`, `0000a9e4` and `0000ab50`, their tables `00090f42`, `00090fb6`, `0009102a` and `000910be`, and the slot functions the tables name from `0000a4cc` to `0000b8ec`, among them the grenade class's fire, trigger and gauge push that `GREN` runs, and the ECM's class.
+- **Open:** how ES1 takes a damaged mount out, with no condition slot in the mount tables.
+- **Open:** what ES1's energy and ELF mounts, 4 bytes shorter than ES2's, leave out. ES2's energy class keeps its charge rate at `+0x7f` ([mount classes](../../retail/simulation/weapon-mounts.md#mount-classes)), where ES1's `0x7f`-byte mount ends.
+- **Open:** what `00014e68` and `00014eb4` do with the mount `WeaponMounts_FindEcmMount` returns, and what `0000b968` does with `WeaponModels_Mechwpn2Roots`, which a search of the disassembly dump finds it reading at `0000ba81`.
 - **Open:** the console panel's functions `00037ce4`, `00037e78` and `00037ed4`, which the manager calls where ES2's calls `ConsoleButtons_SetChainNumber`, `ConsoleButtons_SetStateBlock` and `ConsoleButtons_GetStateBlock` ([the weapon rows' file](cockpit-weapon-gauges.md#open)).
 - **Open:** the second argument `MechLoadout_ConstructWeaponMounts` passes on to the mount constructors, 1 from `WeaponMounts_CtorLocal` and 0 from `00012c00`, which its description calls the owner.
 - **Open:** what clears `000b5bc6`; ES2's `Sim_MainTick` clears `004d25aa` each tick ([the missile camera](../../retail/simulation/rockets.md#the-missile-camera)).
 - **Open:** what reaches `WeaponMounts_DemandFullChargeOnArmed`, to which `es2_xref.py` finds no branch or stored pointer, and what the two dwords at `0003d7fc` and `0003d8f0` holding `WeaponMounts_FireTrigger`'s padding entry are.
-- **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in the cockpit, `BP <CS>:0000cf78` fires every frame; `W` moves the armed row to the next weapon in the chain, and Alt with a row's number takes that row out of the chain or puts it back (`BP <CS>:0000d5e4`).
+- **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in the cockpit, `BP <CS>:0000cf78` fires every frame; `W` moves the armed row to the next weapon in the chain, and Alt with a row's number takes that row out of the chain or puts it back (`BP <CS>:0000d5e4`). At mission load, `BP <CS>:0000bd70` fires once per visible hardpoint between one hit each on `0000bc60` and `0000bd40`.

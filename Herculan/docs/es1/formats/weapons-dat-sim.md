@@ -15,8 +15,8 @@ The retail file is 2,772 bytes and the walk ends on its last byte. The templates
 
 `Weapons_LoadResourceTables` (`0000bf48`) is a phase-2 subsystem loader: the static initialiser `Weapons_RegisterSubsystem` (`0000d67c`, [gunlist.cpp's end](../simulation/weapon-mounts.md#where-the-code-sits)) registers it with `RegisterSubsystemLoader` (`00000ac4`), which appends a 6-byte {function, phase} record at `000bbcb0` for `Subsystem_RunPhase` (`00000af4`). It follows [ES2's](../../retail/formats/weapons-dat-sim.md) with these differences:
 
-1. When `g_LowMemory` ([low memory](chassis-dat.md#low-memory)) is 0 it loads `dba\wpntex` into `000af1f0`; it loads `dts\mechwpn2`, or `dts\mwpn2b` in low memory, with `Shape_LoadAllRoots` (tag `0x140008`), and stores the `wpntex` bank in every root's `+0x26`.
-2. It opens `dat\weapons`, asserting at severity 5 (`gunlist.cpp` line `0xdd`) when the stream status is set, and reads no count: it sets the template count `000bc2c6` to 17 and builds 17 records of `0x58` bytes at `000bc2c2` with `__vec_new` and the constructor `WeaponMountTemplate_Ctor` (`0000c0b4`).
+1. When `g_LowMemory` ([low memory](chassis-dat.md#low-memory)) is 0 it loads `dba\wpntex` into `WeaponTexBank` (`000af1f0`); it loads `dts\mechwpn2`, or `dts\mwpn2b` in low memory, with `Shape_LoadAllRoots` (tag `0x140008`) into `WeaponModels_Mechwpn2Roots` (`000bc2c8`), and stores the `wpntex` bank in every root's `+0x26`. The weapon models a mount carries come from `dts\mechwpns` instead ([the weapon models](../simulation/weapon-mounts.md#the-weapon-models)).
+2. It opens `dat\weapons`, asserting at severity 5 (`gunlist.cpp` line `0xdd`) when the stream status is set, and reads no count: it sets `WeaponMountTemplate_Count` (`000bc2c6`) to 17 and builds 17 records of `0x58` bytes at `WeaponMountTemplate_Table` (`000bc2c2`) with `__vec_new` and the constructor `WeaponMountTemplate_Ctor` (`0000c0b4`).
 3. `WeaponMountTemplate_ReadRecord` (`0000bb8c`) reads each, as ES2's does: `HercPiece_ReadRecord` (`00009890`) reads the piece's 8 bytes and its 4-byte dependents into `+0x00`, `Collision_ReadCluster` (`0000938c`) the component index into `+0x18` and the spheres through `Collision_ReadSphereArray` (`00008e00`) into `+0x12`, and the 48-byte tail goes to `+0x22`; then it writes 0 to `+0x48`. `Collision_ReadSphereArray` reads `count × 8` bytes when that product, as an `int16`, is non-zero, where ES2's tests `count & 0x1fff`.
 4. The loader stores at `+0x52` the template's name from the 17-entry table at `000911fc` and at `+0x56` its index, as ES2's does from its 33-entry table.
 5. It then reads the next `0x2ac` bytes, the projectile records, into `ProjDat_RecordTable` (`000bc2ce`), where ES2's opens `dat\proj` and reads a count and that many records.
@@ -42,15 +42,15 @@ The retail file is 2,772 bytes and the walk ends on its last byte. The templates
 - **21** (`0x15`): `Proj_LookupRecord(ammunition type, 0)`, a `Rocket` record by the hardpoint's ammunition type, 5 rewritten to 0. The three pods carry it.
 - **Otherwise** a direct index through `Proj_LookupRecordByIndex`. `GREN` carries 22, and `22 × 0x24` lies past the `0x2ac` bytes the table holds.
 
-ES2's values are 33 for none and 34 for the rocket lookup. A weapon id below 0 becomes 17, which builds no mount and leaves the slot 0, where ES2's clamps to 0. The factory's switch builds mounts of four sizes from four constructors:
+ES2's values are 33 for none and 34 for the rocket lookup. A weapon id below 0 becomes 17, which builds no mount and leaves the slot 0, where ES2's clamps to 0. The factory's switch builds mounts of four sizes from three constructors, five classes in all ([the mount classes](../simulation/weapon-mounts.md#the-mount-classes)):
 
-| Weapon ids | Mount bytes | Constructor |
-|---|---|---|
-| 0, 1, 2, 9, 10, 11, 16 | `0x81` | `0000a9e4` |
-| 3 | `0x82` | `0000a84c`, then vptr `00091302` |
-| 4, 6, 7, 8, 12, 14, 15 | `0x7f` | `0000a84c` |
-| 5 | `0x85` | `0000a9e4`, then vptr `00091376` |
-| 13 | `0x7f` | `0000ab50`, given no projectile record |
+| Weapon ids | Mount bytes | Class | Constructor |
+|---|---|---|---|
+| 0, 1, 2, 9, 10, 11, 16 | `0x81` | ammunition | `0000a9e4` |
+| 3 | `0x82` | ELF | `0000a84c`, then vptr `ElfMountVtable` (`00091302`) |
+| 4, 6, 7, 8, 12, 14, 15 | `0x7f` | energy | `0000a84c` |
+| 5 | `0x85` | grenade | `0000a9e4`, then vptr `GrenadeMountVtable` (`00091376`) |
+| 13 | `0x7f` | ECM | `0000ab50`, given no projectile record |
 
 ## Retail values
 
@@ -83,6 +83,5 @@ The 19 projectile records hold, in their first six fields, the values ES2's `PRO
 ## Open
 
 - **Open:** what each tail field means to ES1's mounts and fire code; the readers this page names are the loader, `WeaponMountTemplate_ReadRecord` and `MechLoadout_ConstructWeaponMounts`, which reads `+0x3e`. The values sit at ES2's offsets with ES2's kind of value.
-- **Open:** the four mount constructors (`0000a84c`, `0000a9e4`, `0000ab50` and the vptrs `00091302`, `00091376`), and whether they are ES2's ammunition, energy, ELF and ECM classes, which the id groups suggest.
 - **Open:** what `GREN`'s constructor does with the pointer `Proj_LookupRecordByIndex(22)` returns, past the table's end; ES1's grenade records are 7 to 9.
 - **Open:** which `EXPLOS.DAT` impact array each of the three projectile arrays is in ES1, read in ES2's file order here.

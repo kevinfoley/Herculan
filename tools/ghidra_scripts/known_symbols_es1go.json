@@ -152,12 +152,27 @@
       }
     },
     {
+      "address": "00000b00",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_TagTotalSize",
+      "description": "(tag), callee-cleaned: an item's total length from its 8-byte type tag: the dword at +4 as it is when the high nibble of byte 3 is set, otherwise that dword + 9 with bit 0 cleared, the length with the tag rounded up to an even count; the same statements as ES1DBSIM's ClassItem_TagTotalSize (000555ec) in different code.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models; ES1GO disassembly at 00000b00",
+      "verified": {
+        "bytes": "00000b00+38",
+        "sha1": "53d2e01629d6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00000b26",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_ItemTotalSize",
-      "description": "(item), callee-cleaned: builds {tag = vtable +4, length = vtable +8} on its stack and returns 00000b00 of it, or 0 when the length is 0; the same statements as ES1DBSIM's ClassItem_ItemTotalSize (00055610) in different code.",
+      "description": "(item), callee-cleaned: builds {tag = vtable +4, length = vtable +8} on its stack and returns ClassItem_TagTotalSize (00000b00) of it, or 0 when the length is 0; the same statements as ES1DBSIM's ClassItem_ItemTotalSize (00055610) in different code.",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "00000b26+54",
@@ -10910,6 +10925,21 @@
         "sha1": "55e3e5bf51a6",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0005daa0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MemRWStream_Dtor",
+      "description": "(stream, flags) in stack order, callee-cleaned: slot +4 of MemRWStream's vtable 00089fde (entered at its padding 0005da9f): returns at once for a null stream; otherwise stores 00089fde at +4, runs Stream_BaseDtor (0005d9ec)(stream, 0) and calls operator_delete (00001a44) when flags bit 0 is set. The code of ES1DBSIM's MemRWStream_Dtor (00064dc4), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/weapon-mounts.md#the-weapon-models; ES1GO disassembly at 0005daa0",
+      "verified": {
+        "bytes": "0005daa0+43",
+        "sha1": "cfce129bd889",
+        "scope": "body",
+        "via": "both"
       }
     },
     {

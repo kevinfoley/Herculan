@@ -3947,7 +3947,13 @@
       "confidence": "high",
       "name": "WeaponMount_DrainNoOp",
       "description": "GUN_STATE vtable +0x4c (00498e44), kept by POD_WPN and the five pods: an empty body. The energy classes install WeaponMount_DrainCapacitor, the ammunition classes WeaponMount_DrainAmmo.",
-      "source": "DBSIM decompile at 0040f89f"
+      "source": "DBSIM decompile at 0040f89f",
+      "verified": {
+        "bytes": "0040f89f+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0040f8a4",
@@ -4013,7 +4019,13 @@
       "confidence": "high",
       "name": "WeaponModels_FreeShapeChunks",
       "description": "Frees the DAT_004a9988 buffers WeaponModels_LoadShapeChunks allocated and nulls each slot.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "source": "docs/retail/simulation/weapon-mounts.md",
+      "verified": {
+        "bytes": "0040fa88+39",
+        "sha1": "455ca8d64061",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0040fab0",
@@ -4101,7 +4113,13 @@
       "confidence": "high",
       "name": "GunLayout_AllocTable",
       "description": "GunLayout_Table = Mem_NewArray(GunLayout_Count * 6). DBSim_LoadScriptDat calls it.",
-      "source": "DBSIM decompile at 0040fecc"
+      "source": "DBSIM decompile at 0040fecc",
+      "verified": {
+        "bytes": "0040fecc+27",
+        "sha1": "01d8227ff5ab",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0040fee8",
@@ -4475,7 +4493,13 @@
       "confidence": "high",
       "name": "WeaponMount_AdjustPowerLevelNoOp",
       "description": "GUN_STATE vtable +0x38 (00498e44), kept by POD_WPN, the five pods and both ammunition classes: an empty body. Only the energy classes install WeaponMount_AdjustPowerLevel.",
-      "source": "DBSIM decompile at 004111ce"
+      "source": "DBSIM decompile at 004111ce",
+      "verified": {
+        "bytes": "004111ce+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004111d3",
@@ -4484,7 +4508,13 @@
       "confidence": "high",
       "name": "WeaponMount_WakeCapacitorNoOp",
       "description": "GUN_STATE vtable +0x3c (00498e44), kept by POD_WPN, the five pods and both ammunition classes: an empty body. Only the energy classes install WeaponMount_WakeCapacitor.",
-      "source": "DBSIM decompile at 004111d3"
+      "source": "DBSIM decompile at 004111d3",
+      "verified": {
+        "bytes": "004111d3+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004111d8",
@@ -4493,7 +4523,13 @@
       "confidence": "high",
       "name": "WeaponMount_DemandFullChargeNoOp",
       "description": "GUN_STATE vtable +0x40 (00498e44), kept by POD_WPN, the five pods and both ammunition classes: an empty body. Only the energy classes install WeaponMount_DemandFullCharge.",
-      "source": "DBSIM decompile at 004111d8"
+      "source": "DBSIM decompile at 004111d8",
+      "verified": {
+        "bytes": "004111d8+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004111dd",
@@ -4502,7 +4538,13 @@
       "confidence": "high",
       "name": "WeaponMount_ZeroChargeTargetNoOp",
       "description": "GUN_STATE vtable +0x44 (00498e44), kept by POD_WPN, the five pods and both ammunition classes: an empty body. Only the energy classes install WeaponMount_ZeroChargeTarget.",
-      "source": "DBSIM decompile at 004111dd"
+      "source": "DBSIM decompile at 004111dd",
+      "verified": {
+        "bytes": "004111dd+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004111e2",
@@ -4511,7 +4553,13 @@
       "confidence": "high",
       "name": "WeaponMount_GetEnergyPriorityZero",
       "description": "GUN_STATE vtable +0x48 (00498e44), kept by POD_WPN, the five pods and both ammunition classes: returns 0. Only the energy classes install WeaponMount_GetEnergyPriority.",
-      "source": "DBSIM decompile at 004111e2"
+      "source": "DBSIM decompile at 004111e2",
+      "verified": {
+        "bytes": "004111e2+7",
+        "sha1": "a737d8b8f0a0",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004111e9",
@@ -4589,7 +4637,13 @@
       "confidence": "high",
       "name": "WeaponMount_DrainAmmo",
       "description": "PROJECTILE_WPN and GRENADE_WPN vtable +0x4c, the slot the energy classes fill with WeaponMount_DrainCapacitor: zeroes the rounds remaining (+0x7b).",
-      "source": "DBSIM decompile at 004115f8"
+      "source": "DBSIM decompile at 004115f8",
+      "verified": {
+        "bytes": "004115f8+14",
+        "sha1": "a9fd496396b9",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041165a",
@@ -4598,7 +4652,13 @@
       "confidence": "high",
       "name": "WeaponMount_DtorEnergy",
       "description": "ENERGY_WPN vtable +0x18 (00498dcc), the destructor its class record names: (this, flags). The weapon-mount teardown (see EnergyPod_Dtor), then Mem_Delete on flags bit 0.",
-      "source": "DBSIM disassembly at 0041165a; class record at 00411606"
+      "source": "DBSIM disassembly at 0041165a; class record at 00411606",
+      "verified": {
+        "bytes": "0041165a+83",
+        "sha1": "c358eb4710dc",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004116ad",
@@ -4616,7 +4676,13 @@
       "confidence": "high",
       "name": "WeaponMount_DrainCapacitor",
       "description": "Energy mount vtable +0x4c (and the ELF table's): zeroes the charge (+0x7d) and the charge target (+0x7b), and sets +0x34 and +0x3c as WeaponMount_ZeroChargeTarget does.",
-      "source": "DBSIM decompile at 004116cf; DBSIM_vtables_full.txt"
+      "source": "DBSIM decompile at 004116cf; DBSIM_vtables_full.txt",
+      "verified": {
+        "bytes": "004116cf+32",
+        "sha1": "6e477c0b9899",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00411743",
@@ -4625,7 +4691,13 @@
       "confidence": "high",
       "name": "WeaponMount_DtorBase",
       "description": "GUN_STATE vtable +0x18 (00498e44, RTTI 'GUN_STATE', 0x77 bytes, derived from CONFIG_PART), the destructor its class record names: (this, flags). The weapon-mount teardown (see EnergyPod_Dtor), then Mem_Delete on flags bit 0.",
-      "source": "DBSIM disassembly at 00411743; class record at 004116ef"
+      "source": "DBSIM disassembly at 00411743; class record at 004116ef",
+      "verified": {
+        "bytes": "00411743+74",
+        "sha1": "8ce59b016e92",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041178d",
@@ -4694,7 +4766,13 @@
       "confidence": "high",
       "name": "GrenadeMount_Dtor",
       "description": "GRENADE_WPN vtable +0x18 (00499248), the destructor its class record names: (this, flags). The weapon-mount teardown (see EnergyPod_Dtor), then Mem_Delete on flags bit 0.",
-      "source": "DBSIM decompile at 00411969; class record at 004118a6"
+      "source": "DBSIM decompile at 00411969; class record at 004118a6",
+      "verified": {
+        "bytes": "00411969+90",
+        "sha1": "123d12841184",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004119c3",
@@ -4703,7 +4781,13 @@
       "confidence": "high",
       "name": "ElfMount_Dtor",
       "description": "ELF_WPN vtable +0x18 (ElfMountVtable, 004992c0), the destructor its class record names: (this, flags). The weapon-mount teardown (see EnergyPod_Dtor), then Mem_Delete on flags bit 0.",
-      "source": "DBSIM decompile at 004119c3; class record at 004118fa"
+      "source": "DBSIM decompile at 004119c3; class record at 004118fa",
+      "verified": {
+        "bytes": "004119c3+90",
+        "sha1": "f33da141347b",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00411a1d",
@@ -4711,8 +4795,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_ArbitrateEnergyNoSelection",
-      "description": "(manager, budget, arg): WeaponMounts_ArbitrateEnergy(manager, budget, -1, arg), the energy pool turn with no selected mount served first. Its one reference is the stored pointer at 00499338.",
-      "source": "DBSIM decompile at 00411a1d; tools/scripts/es2_xref.py 00411a1d"
+      "description": "(manager, budget, arg): WeaponMounts_ArbitrateEnergy(manager, budget, -1, arg), the energy pool turn with no selected mount served first. Slot 0 of the GUNLIST vtable 00499338, the base manager's; es2_xref finds one reference, that stored pointer.",
+      "source": "DBSIM decompile at 00411a1d; tools/scripts/es2_xref.py 00411a1d",
+      "verified": {
+        "bytes": "00411a1d+28",
+        "sha1": "8ec96d4d05db",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00411a3c",
@@ -28578,7 +28668,13 @@
       "confidence": "high",
       "name": "ClassItem_TagTotalSize",
       "description": "(tag): an item's total length from its 8-byte class type tag: the size dword at +4 as it is when the high nibble of byte 3 is set, else size + 8 (the tag itself) rounded up to an even length. WeaponModels_LoadShapeChunks steps through chunks with it.",
-      "source": "DBSIM decompile and disassembly at 0047a434"
+      "source": "DBSIM decompile and disassembly at 0047a434",
+      "verified": {
+        "bytes": "0047a434+28",
+        "sha1": "7cf91480df35",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0047a450",
