@@ -238,12 +238,6 @@ sealed class HostOptions {
 					shell.Bay = requestedBay;
 				}
 				shell.Staged = true;
-			} else if (args[i] == "--shell-training") {
-				// Run the front end in training mode rather than the mode prefs.cfg option 42 holds — DAT_0048260c,
-				// the flag that gates REPAIR, BUILD and ARMORY off. PRACTICE MISSIONS sets it too, but only from the
-				// main menu, where the strip hides nothing; this is how the gated strip is reachable on the other tabs.
-				shell.Mode = ShellCampaignMode.Training;
-				shell.Staged = true;
 			} else if (args[i] == "--shell-practice") {
 				// Come up on the practice screen, as the main menu's PRACTICE MISSIONS puts it up, so --screenshot
 				// can land on it.
@@ -418,7 +412,6 @@ sealed class ShellOptions {
 	/// <summary>Whether any <c>--shell-*</c> flag was given, which a lone mission cannot honour.</summary>
 	public bool Staged { get; set; }
 	public string? Palette { get; set; }
-	public ShellCampaignMode? Mode { get; set; }
 	public int Tab { get; set; } = ShellScreen.MainMenuTab;
 	public int Bay { get; set; }
 	public bool Practice { get; set; }
