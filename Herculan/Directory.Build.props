@@ -12,4 +12,9 @@
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
+  <!-- dotnet test runs every test project under these settings, which fail a hung test rather than wait on it. -->
+  <PropertyGroup>
+    <RunSettingsFilePath>$(MSBuildThisFileDirectory)tests\Tests.runsettings</RunSettingsFilePath>
+  </PropertyGroup>
+
 </Project>
