@@ -346,9 +346,9 @@ sealed class SimulatorHost : IDisposable {
 		ReadGamepad();
 
 		// The one owner of the mute: the mission's stick drives nothing while the pad works the menu bar and its
-		// windows, the pause menu or the squad-order radial.
+		// windows, the pause menu or a radial, and for a moment after a radial's choice (PadRadial.MutesStick).
 		if (_joystick != null) {
-			_joystick.Muted = _menuBar.Up || _pauseMenu.Showing || _orderRadial.IsOpen || _screenRadial.IsOpen;
+			_joystick.Muted = _menuBar.Up || _pauseMenu.Showing || _orderRadial.MutesStick || _screenRadial.MutesStick;
 		}
 
 		ReadRadarToggle();
