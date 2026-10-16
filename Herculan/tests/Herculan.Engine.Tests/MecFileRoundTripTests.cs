@@ -9,9 +9,9 @@ namespace Herculan.Engine.Tests;
 /// than a retail one so the test needs no Earthsiege 2 install.
 ///
 /// <para>What is being pinned is the trailing armory flag table — <c>int16 count</c> then one byte
-/// per weapon catalog id — which VSHELL writes after the last entry and which this transformer used
-/// to drop. Both shapes have to survive: a file that carries the table (everything the shell
-/// writes) and one that does not (files written before it was decoded, which DBSIM accepts).</para>
+/// per weapon catalog id — which VSHELL writes after the last entry. Both shapes have to survive: a
+/// file that carries the table (everything the shell writes) and one that does not, which DBSIM
+/// accepts.</para>
 /// </summary>
 public class MecFileRoundTripTests {
 	private const int WeaponCatalogSize = 33;
@@ -45,11 +45,13 @@ public class MecFileRoundTripTests {
 		Assert.Equal(original, transformer.Write(parsed));
 	}
 
-	[Fact]
-	public void ReadsTheEntryFieldsEitherWay() {
+	[Theory]
+	[InlineData(true)]
+	[InlineData(false)]
+	public void ReadsTheEntryFieldsEitherWay(bool withWeaponFlags) {
 		var transformer = new MecFileTransformer();
 
-		MecFile parsed = Assert.IsType<MecFile>(transformer.Parse(BuildMec(withWeaponFlags: true)));
+		MecFile parsed = Assert.IsType<MecFile>(transformer.Parse(BuildMec(withWeaponFlags)));
 
 		Assert.Equal(0, parsed.PlayerEntryIndex);
 		MecEntry entry = Assert.Single(parsed.Entries);
