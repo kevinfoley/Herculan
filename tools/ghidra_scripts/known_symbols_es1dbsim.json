@@ -10267,8 +10267,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagMissileViewCopy",
-      "description": "Frameless: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009388e; the code of ConfigPart_GetClassTagPanelCopy (0002ad43). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#where-the-object-file-starts-and-ends; the image at 0003608b"
+      "description": "Frameless: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009388e; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#where-the-object-file-starts-and-ends; the image at 0003608b",
+      "verified": {
+        "bytes": "0003608b+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00036094",
@@ -10396,8 +10402,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdMissileView_StaticInit",
-      "description": "Frameless, no arguments: entry 000adc40 of the static constructor table: stores 00093956, 0009397a, 000939a2 and 000939ca in turn at MfdMissileView_ClipRegion (000b13c8), the copies of the GLRectangleRegion's class tables, and clears 000b13cc. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; the image at 00036a20"
+      "description": "Frameless, no arguments: entry 000adc40 of the static constructor table: stores 00093956, 0009397a, 000939a2 and 000939ca in turn at MfdMissileView_ClipRegion (000b13c8), the copies of the GLRectangleRegion's class tables, and clears 000b13cc.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; the image at 00036a20",
+      "verified": {
+        "bytes": "00036a20+51",
+        "sha1": "9e09536a8a82",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00036a54",
@@ -10405,8 +10417,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdMissileView_StaticDtor",
-      "description": "Frameless, no arguments: entry 000adcbc of the exit table: stores 000939ca, 000939a2 and 0009397a in turn at MfdMissileView_ClipRegion (000b13c8). A 0x90 byte and the region's destructors follow it in the missile camera's object file. No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; the image at 00036a54"
+      "description": "Frameless, no arguments: entry 000adcbc of the exit table: stores 000939ca, 000939a2 and 0009397a in turn at MfdMissileView_ClipRegion (000b13c8). A 0x90 byte and the region's destructors follow it in the missile camera's object file.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; the image at 00036a54",
+      "verified": {
+        "bytes": "00036a54+31",
+        "sha1": "72fac95d439a",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00036a74",
