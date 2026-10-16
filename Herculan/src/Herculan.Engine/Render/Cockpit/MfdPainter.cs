@@ -471,21 +471,24 @@ internal sealed class MfdPainter {
 					}
 				}
 
-				// And last, over the tints: the Targeting Pod's component highlight. The paint stops at
-				// the first region that holds the component, directly or through the merge mapping, and
-				// fills its rect one device pixel proud on each side.
+				// And last, over the tints: the Targeting Pod's component highlight, outlining the first
+				// region that holds the component, directly or through the merge mapping
+				// (docs/retail/simulation/mfd.md#region-tints). The region's device rect is the tint pass's,
+				// TopLeft * 2 to BottomRight * 2 + 1 inclusive, and the outline runs one device pixel
+				// outside it on every side.
 				if (subject.Hostile && subject.HighlightComponent >= 0 && view.Regions is { } highlightRegions
 					&& hud.LogicalColor(MfdLayout.ComponentHighlightColorId) is { } highlight) {
+					const int Scale = (int)CockpitArt.GauToPixelScale;
 					int alias = MfdLayout.ComponentHighlightRegion(subject.HighlightComponent);
 					foreach (var region in highlightRegions) {
 						if (region.Index != subject.HighlightComponent && region.Index != alias) {
 							continue;
 						}
 
-						fillRect(
-							dollLeft + region.TopLeft.X * S - 1, dollTop + region.TopLeft.Y * S - 1,
-							dollLeft + region.BottomRight.X * S + 2, dollTop + region.BottomRight.Y * S + 2,
-							highlight);
+						RasterPrimitives.AddRectOutline(
+							region.TopLeft.X * Scale - 1, region.TopLeft.Y * Scale - 1,
+							region.BottomRight.X * Scale + 2, region.BottomRight.Y * Scale + 2,
+							highlight, dollLeft, dollTop, fillRect);
 						break;
 					}
 				}
