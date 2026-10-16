@@ -42,15 +42,15 @@ The retail file is 2,772 bytes and the walk ends on its last byte. The templates
 - **21** (`0x15`): `Proj_LookupRecord(ammunition type, 0)`, a `Rocket` record by the hardpoint's ammunition type, 5 rewritten to 0. The three pods carry it.
 - **Otherwise** a direct index through `Proj_LookupRecordByIndex`. `GREN` carries 22, and `22 × 0x24` lies past the `0x2ac` bytes the table holds.
 
-ES2's values are 33 for none and 34 for the rocket lookup. A weapon id below 0 becomes 17, which builds no mount and leaves the slot 0, where ES2's clamps to 0. The factory's switch builds mounts of four sizes from three constructors, five classes in all ([the mount classes](../simulation/weapon-mounts.md#the-mount-classes)):
+ES2's values are 33 for none and 34 for the rocket lookup. A weapon id below 0 becomes 17, which builds no mount and leaves the slot 0, where ES2's clamps to 0. The factory's switch builds mounts of four sizes from three constructors, five classes in all ([the mount classes](../simulation/weapon-mount-classes.md#the-classes)):
 
 | Weapon ids | Mount bytes | Class | Constructor |
 |---|---|---|---|
-| 0, 1, 2, 9, 10, 11, 16 | `0x81` | ammunition | `0000a9e4` |
-| 3 | `0x82` | ELF | `0000a84c`, then vptr `ElfMountVtable` (`00091302`) |
-| 4, 6, 7, 8, 12, 14, 15 | `0x7f` | energy | `0000a84c` |
-| 5 | `0x85` | grenade | `0000a9e4`, then vptr `GrenadeMountVtable` (`00091376`) |
-| 13 | `0x7f` | ECM | `0000ab50`, given no projectile record |
+| 0, 1, 2, 9, 10, 11, 16 | `0x81` | ammunition | `WeaponMount_CtorAmmunition` (`0000a9e4`) |
+| 3 | `0x82` | ELF | `WeaponMount_CtorEnergy` (`0000a84c`), then vptr `ElfMountVtable` (`00091302`) |
+| 4, 6, 7, 8, 12, 14, 15 | `0x7f` | energy | `WeaponMount_CtorEnergy` |
+| 5 | `0x85` | grenade | `WeaponMount_CtorAmmunition`, then vptr `GrenadeMountVtable` (`00091376`) |
+| 13 | `0x7f` | ECM | `EcmMount_Ctor` (`0000ab50`), given no projectile record |
 
 ## Retail values
 
@@ -83,5 +83,5 @@ The 19 projectile records hold, in their first six fields, the values ES2's `PRO
 ## Open
 
 - **Open:** what each tail field means to ES1's mounts and fire code; the readers this page names are the loader, `WeaponMountTemplate_ReadRecord` and `MechLoadout_ConstructWeaponMounts`, which reads `+0x3e`. The values sit at ES2's offsets with ES2's kind of value.
-- **Open:** what `GREN`'s constructor does with the pointer `Proj_LookupRecordByIndex(22)` returns, past the table's end; ES1's grenade records are 7 to 9.
+- **Open:** what lies at the pointer `Proj_LookupRecordByIndex(22)` returns for `GREN`, past the table's end; ES1's grenade records are 7 to 9. The constructor keeps it at the mount's `+0x20` unread, and `WeaponMount_GetDisplayName`, `WeaponMount_GetAmmoType` and `GrenadeMount_FireDispatch` read its `+0` and `+2` ([the mount classes](../simulation/weapon-mount-classes.md#firing)).
 - **Open:** which `EXPLOS.DAT` impact array each of the three projectile arrays is in ES1, read in ES2's file order here.

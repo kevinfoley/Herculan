@@ -3278,8 +3278,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_CtorBase",
-      "description": "Base weapon-mount constructor, run by every mount class before its own. Loads the hardpoint's weapon model when the .GL mounting code (+6) is under 4 via WeaponMount_ShapeForMountingCode, installs it with ShapeInstance_CtorCellFrames at mount+0x10, translates its point lists to the mount point with Shape_TranslatePointLists, resolves the two .GL aim nodes at +2/+4 (both -1 on every retail chassis), zeroes the flag blocks at +0x33/+0x3b/+0x43, and writes the refire scale 0x400 to +0x63.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(mount, shape instance, hardpoint record, template, projectile record): with the hardpoint's byte +6 below 4 the model is WeaponMount_ShapeForMountingCode (0040fab0)(template, that byte), else 0. Stores ClassItemVtable, TSBaseVtable and TSPartBaseVtable, runs ShapeInstance_CtorCellFrames (00402fc0)(mount + 0x10, model), stores CONFIG_PARTVtable and WeaponMountBaseVtable, and keeps the hardpoint record at +0x18, the template at +0x1c and the projectile record at +0x20. +0x5b and +0x5f get ShapeInst_AddThread (00402374)(shape instance, the hardpoint's int16 +2 or +4), or 0 when that value is negative; with a model at +0x10, Shape_TranslatePointLists (0040dd4c)(model, WeaponMount_MuzzleOffset (0040f540)(mount)). Then zeroes 6 bytes at +0x24 and at +0x2a, the int16 +0x31, 8 bytes at +0x33 and at +0x3b and 0x18 bytes at +0x43, sets +0x4c to 1 and the refire scale +0x63 to 0x400. Increments *Rtl_DtorCountPtr after each base.",
+      "source": "Herculan/docs/retail/simulation/weapon-mounts.md#the-base-constructor--weaponmount_ctorbase-0040df30",
+      "verified": {
+        "bytes": "0040df30+321",
+        "sha1": "21517fade10d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040e074",
@@ -3332,9 +3338,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Pod_CtorBase",
-      "description": "Shared constructor for the five equipment pods, run between WeaponMount_CtorBase and each pod's own. Installs the pod base vtable 00498cdc and writes -1 to the catalog id at pod+0x77. A pod diverges from the weapon-mount layout here: +0x77 is a short catalog id and +0x79 the cockpit gauge handle, where an ammunition mount keeps the gauge handle at +0x77.",
-      "source": "docs/retail/simulation/equipment-pods.md",
-      "signature": "void * __cdecl Pod_CtorBase(void *pod, int shapeInstance, int hardpoint, int weaponTemplate)"
+      "description": "(pod, shape instance, hardpoint record, template): WeaponMount_CtorBase (0040df30)(pod, shape instance, hardpoint record, template, 0), then stores the pod base vtable PodMountVtable (00498cdc), clears the selectable byte +0x4c and writes -1 to the int16 +0x77, the pods' catalog id.",
+      "source": "Herculan/docs/retail/simulation/equipment-pods.md",
+      "signature": "void * __cdecl Pod_CtorBase(void *pod, int shapeInstance, int hardpoint, int weaponTemplate)",
+      "verified": {
+        "bytes": "0040e234+62",
+        "sha1": "0fa915f0dc93",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0040e274",

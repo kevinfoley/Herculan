@@ -63,6 +63,16 @@ Shared mount fields mean different things per class:
 | `+0x49` | destroyed | destroyed |
 | `+0x4b` | LINK engaged | LINK engaged |
 
+### The base constructor — `WeaponMount_CtorBase` (`0040df30`)
+
+Every class's constructor runs it first, as (mount, shape instance, hardpoint record, template, projectile record); `Pod_CtorBase` (`0040e234`) passes 0 for the projectile record. In order:
+
+1. With the hardpoint's mounting code (`.GL +6`) below 4, it opens the weapon model and gives it its private cell frames at `+0x10`/`+0x14` ([the muzzle flash](#the-muzzle-flash), steps 1 and 2); otherwise the model is 0.
+2. It stores its bases' tables and then `WeaponMountBaseVtable`, and keeps the hardpoint record at `+0x18`, the template at `+0x1c` and the projectile record at `+0x20`.
+3. `+0x5b` and `+0x5f` get `ShapeInst_AddThread`(shape instance, `.GL +2` or `+4`), or 0 when that value is negative ([gun convergence](weapon-firing.md#gun-convergence--mech_convergegunsonrange-0041a74c)).
+4. With a model, it moves the model's points to the mount point ([the muzzle flash](#the-muzzle-flash), step 3).
+5. It zeroes the two `int16` triples at `+0x24` (the convergence angles) and `+0x2a`, the refire countdown `+0x31`, the flag blocks `+0x33` and `+0x3b`, and the 24 bytes from `+0x43`, then sets the selectable byte `+0x4c` to 1 and the refire scale `+0x63` to `0x400`.
+
 ### Ammunition
 
 `WeaponMount_CtorAmmunition` (`0040e140`) reads the magazine size from the template's field at `+0x3a` and powers the mount up holding a full one: `+0x7b = size`, `+0x7d = size << 8`. The gauge prints `+0x7d >> 8`, and `+0x7d` lags the real count: `WeaponMount_PushAmmoGaugeState` (`0040f330`) decays it toward `+0x7b * 256` at 250 per 125 ms, which is what makes the cockpit counter roll rather than jump. The fire dispatch spends `+0x7b` — see [`weapon-firing.md`](weapon-firing.md#the-ammunition-dispatch).
@@ -113,7 +123,7 @@ The spin-up only runs while the mount is **ready**: `WeaponMounts_FireTrigger` t
 
 Every hardpoint whose mounting code is visible (`.GL +6 < 4`) gets its own copy of the weapon model when the mount is built, from a table of raw chunks that exists only while the HERCs are built. `WeaponModels_LoadShapeChunks` (`0040f998`) reads every top-level chunk of `dts\mechwpns` whole: it asserts that the chunk's tag is `0x140008` (`GUNLIST.CPP` line `0x90`, severity 5), sizes it with `ClassItem_TagTotalSize` (`0047a434`), and reads it into a `Mem_NewArray` buffer, the pointers at `004a9988`, the lengths at `004a9a78` and the count at `004a9b68`. Its loop has no bound, and the length array starts `0xf0` bytes after the pointer array. `DBSim_SpawnMissionObjects` (`004253d8`) builds the HERC records and the `player.mec` entries between that call and `WeaponModels_FreeShapeChunks` (`0040fa88`), which frees each buffer and nulls its pointer.
 
-1. `WeaponMount_CtorBase` (`0040df30`) calls `WeaponMount_ShapeForMountingCode` (`0040fab0`), which opens chunk `template[0x22 + code * 2]` of that table as a memory stream, loads the shape from it, and binds it the `wpntex` atlas at `shape+0x26`.
+1. [`WeaponMount_CtorBase`](#the-base-constructor--weaponmount_ctorbase-0040df30) (`0040df30`) calls `WeaponMount_ShapeForMountingCode` (`0040fab0`), which opens chunk `template[0x22 + code * 2]` of that table as a memory stream, loads the shape from it, and binds it the `wpntex` atlas at `shape+0x26`.
 2. `ShapeInstance_CtorCellFrames` (`00402fc0`) stores the shape at `mount+0x10` and allocates `mount+0x14` as a **private copy** of its per-sequence frame array, `shape+0x24` entries long.
 3. `Shape_TranslatePointLists` (`0040dd4c`) translates the shape's own point lists by `WeaponMount_MuzzleOffset` — the mount point, not the muzzle. That private copy is why every mount can carry the same weapon and still sit and flash independently.
 4. `Mech_ConfigureLoadout` reads the hardpoint's bone from `WeaponMount_HardpointBoneId` (`0040e61c`, the `.GL` record's `+0`, the same bone the shot leaves from) and `Shape_StampTransformId` (`00417530`) stamps that transform id onto every part of the shape, so it rides the machine's own skeleton.
