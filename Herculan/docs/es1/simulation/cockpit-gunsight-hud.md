@@ -16,7 +16,7 @@ Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-e
 
 The code runs from `00033740` to `0003526f`, after [the status screen's](mfd-status-screen.md#where-the-object-file-starts-and-ends) zero byte, and the initialized data from `00093662`. Both open with the copy of `ConfigPart`'s destructors and tables that starts each object file which carries one ([module copies](../formats/compiler.md#vtables)): `00033740`, `00033768`, `000337a7` (frameless) and `000337b0`, each the code of `panel.cpp`'s ([where `panel.cpp` starts](cockpit-panel.md#where-the-module-starts-and-ends)), and the tables `00093662` and `00093696`.
 
-The last function, `Gunsight_ShiftChildRects`, returns with a `RET 8` that ends at `0003526f` on a 4-byte boundary, and the file has no static initializer. `00035270` is a second copy of `HeapPtr_DtorGunsightCopy`'s code, which this file already holds at `00033740`, so it belongs to the next object file; `es2_xref.py` finds no reference to it, and an MFD screen's constructor follows it at `00035298` ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)).
+The last function, `Gunsight_ShiftChildRects`, returns with a `RET 8` that ends at `0003526f` on a 4-byte boundary, and the file has no static initializer. `00035270` is a second copy of `HeapPtr_DtorGunsightCopy`'s code, which this file already holds at `00033740`, so it belongs to the next object file, [the scanner screen's](mfd-scanner.md#where-the-object-file-starts-and-ends); `es2_xref.py` finds no reference to it ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)).
 
 ## Building the gunsight
 

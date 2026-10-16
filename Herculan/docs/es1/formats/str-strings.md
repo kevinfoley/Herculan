@@ -23,7 +23,7 @@ The retail `STRINGS0.STR` walks to its declared content length of 2,133 bytes in
 
 | Group | Count | Array | Strings | ES2's | `es2_xref.py` finds the array at |
 |---|---|---|---|---|---|
-| 0 | 18 | `SquadOrderStrings` (`000bd228`), one attribute byte each in `SquadOrderAttributes` (`000bd270`) | the squadmate orders | 0 | `00035dea`, `00035e97`, `00035f0a`, `0003f75f`, `0003f7fa`, `00040a04`; the attributes beside each |
+| 0 | 18 | `SquadOrderStrings` (`000bd228`), and in `SquadOrderAttributes` (`000bd270`) a pointer to one attribute byte each | the squadmate orders | 0 | [the FLASH COMM screen](../simulation/mfd-flash-comm.md#painting): `00035dea`, `00035e97`, `00035f0a`; `0003f75f`, `0003f7fa`, `00040a04`; the attributes beside each |
 | 1 | 3 | `000bd2b8` | `RED1`–`RED3` | 1 | the load alone |
 | 2 | 1 | `000bd2c4` | `OFFLINE` | 2 | `00037a2d`, `00038516` |
 | 3 | 1 | `000bd2c8` | `ECM` | — | `000378ff` |
@@ -48,13 +48,13 @@ The retail `STRINGS0.STR` walks to its declared content length of 2,133 bytes in
 | 22 | 1 | `000bd464` | `NONE` | 26 | [`MfdStatusScreen_Paint`](../simulation/mfd-status-screen.md#the-paint): `0003311e` |
 | 23 | 1 | `000bd468` | `UNKNOWN` | 27 | [`MfdStatusScreen_Paint`](../simulation/mfd-status-screen.md#the-paint): `00033679` |
 | 24 | 5 | `000bd46c` | `OK`, `SHIELDS DN`, `INT DAMAGE`, `CRITICAL`, `DESTROYED` | 28 | [`MfdStatusScreen_SetCondition`](../simulation/mfd-status-screen.md#the-condition-line): `000336d3`; `0003e017` |
-| 25 | 2 | `000bd480` | `ACT`, `PASS` | 29 | `00035686` |
-| 26 | 1 | `000bd488` | `RNG:` | — | `00035b42` |
-| 27 | 1 | `000bd48c` | `DST:` | — | `00035ab9` |
+| 25 | 2 | `000bd480` | `ACT`, `PASS` | 29 | [the scanner's paint](../simulation/mfd-scanner.md#the-paint): `00035686` |
+| 26 | 1 | `000bd488` | `RNG:` | — | [the scanner's paint](../simulation/mfd-scanner.md#the-paint): `00035b42` |
+| 27 | 1 | `000bd48c` | `DST:` | — | [the scanner's paint](../simulation/mfd-scanner.md#the-paint): `00035ab9` |
 | 28 | 4 | `000bd490` | `SELECT PILOT`, `SELECT COMMAND`, `DESIGNATE LOCATION`, `DESIGNATE TARGET` | — | `0004009e`, `000405f7`, `00040882` |
 | 29 | 2 | `000bd4a0` | `STATUS:`, `OBJECTIVE:` | 33 | `0003dffc` |
 | 30 | 1 | `000bd4ac` | `OFFLINE` | — | `0003a26d`, `0003a355` |
-| 31 | 5 | `000bd4b0` | `MISS`, `READY TO`, `LAUNCH`, `NONE`, `LOCK` | — | the load alone |
+| 31 | 5 | `000bd4b0` | `MISS`, `READY TO`, `LAUNCH`, `NONE`, `LOCK` | — | the load alone; [the missile camera's paint](../simulation/mfd-missile-camera.md#painting) reads entries 1 to 4 at their own addresses, `000bd4b4`–`000bd4c0`: `00036818`, `00036826`, `00036836`, `000368b0` |
 | 32 | 4 | `000bd4c4` | `VIEW: `, `CONTROL: `, `CAMERA`, `HERC` | 36 | `00058ca0`, `00058d1b` |
 | 33 | 1 | `000bd4a8` | `ATT` | — | `00034f1f`, `00035074` |
 | 34 | 8 | `000bd4d4` | `ATTACK`, `TRAVEL`, `PATROL`, `FORM UP`, `GUARD`, `FLEE`, `DEAD`, `IMMOBILE` | 40 | `0003e03d` |
@@ -78,6 +78,6 @@ The arrays lie in registration order from `000bd228` to `000bd4f3`, except group
 
 ## Open
 
-- **Open:** what reads the arrays of groups 1, 6, 9 and 31: `es2_xref.py` finds `000bd2b8`, `000bd314`, `000bd33c` and `000bd4b0` in `SimStrings_LoadAll` alone, and an access through a neighboring array's base would show in neither its search nor a grep by address. The other arrays' readers are the addresses in [the groups](#the-groups), unread but for the status screen's, and which screen each caption belongs to follows from reading them.
+- **Open:** what reads the arrays of groups 1, 6 and 9: `es2_xref.py` finds `000bd2b8`, `000bd314` and `000bd33c` in `SimStrings_LoadAll` alone, and a grep of the disassembly for their later entries' addresses as operands finds none, where it finds group 2's two reads and group 31's four; an access through a neighboring array's base would show in neither. The other arrays' readers are the addresses in [the groups](#the-groups), unread but for the status screen's and the MFD screens', and which screen each caption belongs to follows from reading them.
 - **Open:** what reads the light names at `0009328c` and `000932c8` (`0003b45d`, `0003bc09`, `000398de`, unread), and what calls `HeapPtr_DtorSimStringsCopy`, to which `es2_xref.py` finds no reference.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in DOSBox-X's debugger, `BP <CS>:0002fe84` fires as the cockpit is built, and after it returns the dword at `000bd2e0` points at the text `STATUS`.

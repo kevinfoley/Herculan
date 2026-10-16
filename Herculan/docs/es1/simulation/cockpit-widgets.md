@@ -27,7 +27,7 @@ The other entry points are ES2's, with these differences:
 - **`Label_SetNumber` (`00031224`)**, (label, n): `ltoa` in base 10.
 - **`Label_SetText_Thunk` (`00031280`)**, (label, text), and **`Label_SetTextWithHotkey` (`00031294`)**, (label, index, text): the hotkey moves the pen x (`000b11bc`) right by the width of the text's first index characters and draws `text[index]` in the font at `+0x20` with `HudFont_DrawGlyph`. ES1's adds the width and draws the character whatever the index; with the index past the text's length, both come from two stack locals the function never wrote (`[EBP−2]`, `[EBP−4]`), where ES2's does neither.
 
-`es2_xref.py` finds `Label_SetTextWithHotkey` called from `00035d20`, twice from `00035e14`, twice from `0003f578` and from `00040948`, beside the reads of the squad orders' strings and attribute bytes ([`STRINGS0.STR` group 0](../formats/str-strings.md#the-groups)), and `Label_CtorWithAltFont` from `00035c04` and `0003ee58` ([Open](#open)).
+`es2_xref.py` finds `Label_SetTextWithHotkey` called from `MfdFlashCommScreen_Paint` (`00035d20`), twice from `MfdFlashCommScreen_Update` (`00035e14`), twice from `0003f578` and from `00040948`, beside the reads of the squad orders' strings and attribute bytes ([`STRINGS0.STR` group 0](../formats/str-strings.md#the-groups)), and `Label_CtorWithAltFont` from `MfdFlashCommScreen_Ctor` (`00035c04`) and `0003ee58` ([Open](#open)). The FLASH COMM screen passes each order's attribute byte as the index and sets the hotkey font to `cpred` ([the FLASH COMM screen](mfd-flash-comm.md#the-screen-object)).
 
 The font functions the labels reach, in the library region:
 
@@ -195,7 +195,7 @@ They are the same statements laid out differently, the no-ops framed functions, 
 
 ## Open
 
-- **Open:** the callers of `Label_SetTextWithHotkey` (`00035d20`, `00035e14`, `0003f578`, `00040948`) and of `Label_CtorWithAltFont` (`00035c04`, `0003ee58`), unread: which font each puts at `+0x20`, and whether any passes an index past its text's length, which would draw whatever character the stack held.
+- **Open:** the callers of `Label_SetTextWithHotkey` at `0003f578` and `00040948` and of `Label_CtorWithAltFont` at `0003ee58`, unread: which font each puts at `+0x20`. Whether any caller passes an index past its text's length, which would draw whatever character the stack held; for the FLASH COMM rows, that is whether an order's attribute byte in the retail `STRINGS0.STR` exceeds its text's length ([Open there](mfd-flash-comm.md#open)).
 - **Open:** a caller of `Label_SetRectAroundPoint`, `Label_SetNumber`, `PanelSelectGadget_Dtor`, `PanelSliderGadget_Dtor` or `BarGraph_NoOp`: `es2_xref.py` finds no branch to any of them and no stored pointer. It finds `BarGraph_Ctor`'s address also as a dword at `000ac6cc`, among other code addresses.
 - **Open:** what the clock `000981c4` counts ([the palette module's](../rendering/palette.md#open)), and so how long a burst and the gap between bursts last; whether the gap's multiplier of 60 makes it 2 to 7 seconds. Also which part of the machine dependent 4 is.
 - **Open:** the dropout's other two callers, `0003a2a8` and `0003cd28`, unread, and which displays the three are.

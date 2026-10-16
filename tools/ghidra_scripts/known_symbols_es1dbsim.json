@@ -3502,7 +3502,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjList_DrawFrameObjects",
-      "description": "(blend, eye) in stack order, callee-cleaned: calls slot +4 of each element of the ground-shape pool 000af044 within 30000 of eye (Math_DistanceBetweenPoints, walked with Pool_Prev); stores blend at ObjList_Blend (000afa98); for each of the ObjList_Count (00092558) objects at ObjList_Objects (000bc58e) that Camera_IsMountedOn (000003ac)(eye, object) returns 0 for and whose slot +8 block has a non-negative int32 +8, fills a 0x36-byte entry (position, slot +0x14 value at +0xc, distance +0xe, object +0x32, +0x12 = 0, or 2 with ZoneShapeObj_WorldSegment (00020738)'s 24 bytes at +0x18 for objects among the first ObjList_ZoneShapeCount (000bc596)) and lists it at ObjList_DrawList (000bc59c) unless WorldShades_IsBeyondLastBand (00025f38) is true. With ObjPick_Pending (000afa45) set it then stores the GL display 000bdd28 at 000afa8c, points the display's +0x38 at its +0x8c (storing that at 00098dd6 and passing it to the driver's routine at 0009df14 when it is still the GL display), saves the pixel the driver's 0009dee4 reads at ObjPick_Point (000afa48) in ObjPick_SavedPixel (000afa90), writes 1 there through 0009dee8 and zeroes ObjPick_Object (000afa50). Then ObjList_SetSortEye (00021554)(eye) and ObjList_SortAndDraw (00021d04)(count, list); with the pick pending it writes ObjPick_SavedPixel back and clears ObjPick_Pending, and with ObjProbe_Armed (0009255a) set it calls ObjProbe_TestCorners (0002146c) by its padding entry 0002146a. Sim_RenderFrame passes the byte 000b5b65, 000364f8 passes 0.",
+      "description": "(blend, eye) in stack order, callee-cleaned: calls slot +4 of each element of the ground-shape pool 000af044 within 30000 of eye (Math_DistanceBetweenPoints, walked with Pool_Prev); stores blend at ObjList_Blend (000afa98); for each of the ObjList_Count (00092558) objects at ObjList_Objects (000bc58e) that Camera_IsMountedOn (000003ac)(eye, object) returns 0 for and whose slot +8 block has a non-negative int32 +8, fills a 0x36-byte entry (position, slot +0x14 value at +0xc, distance +0xe, object +0x32, +0x12 = 0, or 2 with ZoneShapeObj_WorldSegment (00020738)'s 24 bytes at +0x18 for objects among the first ObjList_ZoneShapeCount (000bc596)) and lists it at ObjList_DrawList (000bc59c) unless WorldShades_IsBeyondLastBand (00025f38) is true. With ObjPick_Pending (000afa45) set it then stores the GL display 000bdd28 at 000afa8c, points the display's +0x38 at its +0x8c (storing that at 00098dd6 and passing it to the driver's routine at 0009df14 when it is still the GL display), saves the pixel the driver's 0009dee4 reads at ObjPick_Point (000afa48) in ObjPick_SavedPixel (000afa90), writes 1 there through 0009dee8 and zeroes ObjPick_Object (000afa50). Then ObjList_SetSortEye (00021554)(eye) and ObjList_SortAndDraw (00021d04)(count, list); with the pick pending it writes ObjPick_SavedPixel back and clears ObjPick_Pending, and with ObjProbe_Armed (0009255a) set it calls ObjProbe_TestCorners (0002146c) by its padding entry 0002146a. Sim_RenderFrame passes the byte 000b5b65, MfdMissileViewScreen_Paint (000364f8) passes 0.",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#which-objects-are-drawn",
       "verified": {
         "bytes": "00021008+593",
@@ -5857,7 +5857,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_CreateCanvasContext",
-      "description": "(rect), callee-cleaned: makes the cockpit's canvas render context: stores 00069a84(0)'s result at CockpitCanvasContext (000b0da4), sets its clip mode +0x208 and its translation +0x20c to 1, copies rect's four dwords to +0x210..+0x21c, clears the byte +0x230 and the dword +0x231, sets +0x235 to 200 and returns the context. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which passes the .GAU struct and stores the result at the cockpit's +4. ES2's Cockpit_CreateCanvasContext (DBSIM 00430ea0), which allocates a 0x239-byte GLViewport where ES1's calls 00069a84.",
+      "description": "(rect), callee-cleaned: makes the cockpit's canvas render context: stores GLViewport_Ctor (00069a84)(0)'s result at CockpitCanvasContext (000b0da4), sets its clip mode +0x208 and its translation +0x20c to 1, copies rect's four dwords to +0x210..+0x21c, clears the byte +0x230 and the dword +0x231, sets +0x235 to 200 and returns the context. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which passes the .GAU struct and stores the result at the cockpit's +4. ES2's Cockpit_CreateCanvasContext (DBSIM 00430ea0), which allocates a 0x239-byte GLViewport where ES1's calls GLViewport_Ctor (00069a84).",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
       "verified": {
         "bytes": "0002ad78+121",
@@ -6097,7 +6097,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Squad_BroadcastOrderFromCockpit",
-      "description": "(cockpit, order) in stack order, callee-cleaned: stores the cockpit's machine +0x1ff at the order's +2 and calls Squad_BroadcastOrder (0001c950)(CockpitSquadGroup (CockpitSquadGroup (00092d6c)), order), leaving its result in EAX. es2_xref finds one call, from 0003adc8. ES2's Squad_BroadcastOrderFromCockpit (DBSIM 0043166c).",
+      "description": "(cockpit, order) in stack order, callee-cleaned: stores the cockpit's machine +0x1ff at the order's +2 and calls Squad_BroadcastOrder (0001c950)(CockpitSquadGroup (00092d6c), order), leaving its result in EAX. es2_xref finds one call, from MfdFlashComm_Transmit (0003adc8). ES2's Squad_BroadcastOrderFromCockpit (DBSIM 0043166c).",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-squadmates",
       "verified": {
         "bytes": "0002b448+36",
@@ -6907,7 +6907,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hud_WorldUnitsToMetres",
-      "description": "(units), frameless, callee-cleaned (RET 4): (units / 1000) * 6, the IDIV truncating. es2_xref finds three calls, from Hud_UpdateWaypointIndicator (00034800) and twice from 000355a4. ES2's Hud_WorldUnitsToMetres (DBSIM 00434228), the same arithmetic.",
+      "description": "(units), frameless, callee-cleaned (RET 4): (units / 1000) * 6, the IDIV truncating. es2_xref finds three calls, from Hud_UpdateWaypointIndicator (00034800) and twice from MfdRadarScreen_Paint (000355a4). ES2's Hud_WorldUnitsToMetres (DBSIM 00434228), the same arithmetic.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002e2a0+20",
@@ -8227,7 +8227,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Label_SetTextWithHotkey",
-      "description": "(label, index, text) in stack order, callee-cleaned: Label_SetText_Thunk(label, text); then, when index is at most strlen(text), puts a NUL at text[index], keeps HudFont_MeasureString(font, text) and the character in two stack locals and restores the character. Whatever the index, it then adds the width to the pen x Label_Pen (000b11bc) and draws the character with HudFont_DrawGlyph (00069d64)(the font at +0x20, character, Label_Pen), so with index past the length both come from locals the function never wrote. ES2's Label_SetTextWithHotkey (DBSIM 00438aac) does both only when index is at most the length. es2_xref finds six calls, from 00035d20, 00035e14 (two), 0003f578 (two) and 00040948.",
+      "description": "(label, index, text) in stack order, callee-cleaned: Label_SetText_Thunk(label, text); then, when index is at most strlen(text), puts a NUL at text[index], keeps HudFont_MeasureString(font, text) and the character in two stack locals and restores the character. Whatever the index, it then adds the width to the pen x Label_Pen (000b11bc) and draws the character with HudFont_DrawGlyph (00069d64)(the font at +0x20, character, Label_Pen), so with index past the length both come from locals the function never wrote. ES2's Label_SetTextWithHotkey (DBSIM 00438aac) does both only when index is at most the length. es2_xref finds six calls, from MfdFlashCommScreen_Paint (00035d20), MfdFlashCommScreen_Update (00035e14) (two), 0003f578 (two) and 00040948.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels; disassembly 00031294-00031310",
       "verified": {
         "bytes": "00031294+125",
@@ -10037,6 +10037,423 @@
       }
     },
     {
+      "address": "00035270",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorScannerCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorPanelCopy (0002acdc): with p non-null deletes the block p points at with operator_delete (000015f8) when that is non-null, then p itself when bit 0 of flags is set. The first function of the scanner screen's object file, with no copy of ConfigPart's tables after it. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/mfd-scanner.md#where-the-object-file-starts-and-ends; ES1DBSIM decompile at 00035270",
+      "verified": {
+        "bytes": "00035270+40",
+        "sha1": "bd426944318d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00035298",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdRadarScreen_Ctor",
+      "description": "(screen, rect) in stack order, callee-cleaned: allocates 0x54 bytes with operator_new when screen is null, returning 0 when that fails; runs MFDisplay_Ctor (00039c50), the inlined constructors of the points at +0x10 and +0x18 and of a rect at +0x44, and stores MFDRadarVtable (00093862) at +8. Loads the bank radar from the folder 000980f8 names into MfdRadar_RadarBank (0009385c) while that is 0 (ResourcePath_BuildFolderName, ClassItem_LoadFromFile) and keeps its first frame at +0xc. Sets +0x10 to the rect's top-left, +0x18 to the top-left + (0x22, 0x16), +0x20 = 0x15, +0x24 = 1, +0x28 = 0 and +0x2c = 1. Builds five labels with Label_Ctor (00030f44)(0, ColorSchemePanels[0]) and places each with Label_SetRect (00031080), zero margins, relative to the top-left: +0x3c (3, 0x21)-(0xf, 0x26) and +0x40 (3, 0x26)-(0x13, 0x2b) with flags 1, +0x34 (0x36, 0x21)-(0x42, 0x26) and +0x38 (0x32, 0x26)-(0x42, 0x2b) with flags 4, +0x30 (1, 2)-(0xf, 7) with flags 2. ES2's MfdRadarScreen_Ctor (DBSIM 0043e70c). The constructor 00039c64 builds it for mode 3 at +0xa2.",
+      "source": "Herculan/docs/es1/simulation/mfd-scanner.md#the-screen-object; ES1DBSIM decompile at 00035298",
+      "verified": {
+        "bytes": "00035298+753",
+        "sha1": "307da0cebd10",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003558c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdRadarScreen_Update",
+      "description": "(screen) in stack order, callee-cleaned: slot +8 of MFDRadarVtable (00093862): calls the screen's slot +4, MfdRadarScreen_Paint (000355a4). ES2's update slot, MfdRadarScreen_UpdateAndPaint (DBSIM 0043eeb4), runs MfdRadarScreen_Update (DBSIM 0043ebe0) first.",
+      "source": "Herculan/docs/es1/simulation/mfd-scanner.md#the-screen-object; ES1DBSIM decompile at 0003558c",
+      "verified": {
+        "bytes": "0003558c+21",
+        "sha1": "1ef479b63ea5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000355a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdRadarScreen_Paint",
+      "description": "(screen) in stack order, callee-cleaned (RET 4): slot +4 of MFDRadarVtable (00093862). When the range, +0xc of the block at +4, differs from +0x28, stores it there and sets +0x24 = range / +0x20 (IDIV). Installs a pen and a brush {0, 0} at +0x228 and +0x22c of the render context 000bdbda and blits +0xc at +0x10 with Bitmap_Blit (00067048). Sets +0x2c to 1 when the byte +0x90 of CockpitViewInstance's +0x1ff machine is 0, else 0, and label +0x30 takes ColorSchemePanels[2] or [1] and the text of group 25 (000bd480) entry +0x2c. For each LiveObjectList object other than the machine, with +0x9e and +0x93 clear and the dword +0x16 of its group (+0x3f) zero: the position is +0x20/+0x24 when +0x8f is set or the group's side byte +0x14 is not 1; otherwise, while bit 0x20 of 000981c4 is clear and +0xa1 is clear, the point at +0x164; else the object is skipped. With d = Math_FastMagnitude2D (00063234) of the offset (dx, dy) from the machine's +0x20/+0x24, 1 for 0, an object with d < +0x28 is plotted: d negated when dy > 0, a = 0x4000 - Math_AsinBam (0005f54c)((dx << 14) / d) + the int16 +0x10 of View_GetActiveObject (00059280), x = Math_Q14Multiply (0005e838)(d, Math_CosBam (0006477c)(a)) / +0x24 + +0x18, y = Math_Q14Multiply(d, Math_CosBam(a - 0x4000)) / +0x24 + +0x1c, one Gfx_PlotPixel (00069058) with the pen {0, c}, c being 0x32 for side 0, else 0x35, 0x37, 0x3b or 0x3e for the int16 class +0x162 of 0, 1, 2 or any other. For CockpitViewInstance's selection +0x20c it keeps the point and Hud_WorldUnitsToMetres (0002e2a0)(|d|), and after the walk outlines (x-2, y-2)-(x+2, y+2) with Raster_FillRect (00053d9c) under the brush {4, 0x3b}. Then Label_SetText (0003114c) writes DST: (000bd48c) to +0x34, the selection's meters, 0 when it was not plotted, to +0x38, RNG: (000bd488) to +0x3c and Hud_WorldUnitsToMetres of the range to +0x40, each number through ltoa (00064720) and right-aligned and zero-padded in four characters. ES2's MfdRadarScreen_Paint (DBSIM 0043eecc), with the contact walk of ES2's MfdRadarScreen_Update (DBSIM 0043ebe0).",
+      "source": "Herculan/docs/es1/simulation/mfd-scanner.md#the-paint; ES1DBSIM decompile and disassembly at 000355a4",
+      "verified": {
+        "bytes": "000355a4+1590",
+        "sha1": "0c3c4dc8e03b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00035bdc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorFlashCommCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorPanelCopy (0002acdc): with p non-null deletes the block p points at with operator_delete (000015f8) when that is non-null, then p itself when bit 0 of flags is set. The first function of the FLASH COMM screen's object file, with no copy of ConfigPart's tables after it. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00035bdc",
+      "verified": {
+        "bytes": "00035bdc+40",
+        "sha1": "82538f33c548",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00035c04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashCommScreen_Ctor",
+      "description": "(screen, display, rect) in stack order, callee-cleaned: allocates 0x35 bytes with operator_new when screen is null, returning 0 when that fails; runs MFDisplay_Ctor (00039c50), stores MFDFlashCommVtable (0009387a) at +8 and the display at +0xc. With s = (y1 - y0) / 6 of the rect and h = HudFont_CellHeight (00069d3c)(ColorSchemePanels[1], '0'), builds six rows at +0x10 to +0x24, row i a Label_CtorWithAltFont (00031250)(0, ColorSchemePanels[1]) placed by Label_SetRect (00031080) with flags 1 and the margin {1, 0} over (x0, y0 + i*s)-(x1, y0 + i*s + h), its hotkey font +0x20 set to ColorSchemePanels[2] and its fill +0x1c to 0x3f; clears the six state bytes from +0x28 and the byte +0x32, and sets the int16 +0x33 to -1. ES2's MfdFlashCommScreen_Ctor (DBSIM 0043f5d8), whose rows start from an inset rect of their own and step 7 << YCoordShift. The constructor 00039c64 builds it for mode 1 at +0x9a.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-screen-object; ES1DBSIM decompile at 00035c04",
+      "verified": {
+        "bytes": "00035c04+283",
+        "sha1": "a96455fd7f0c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00035d20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashCommScreen_Paint",
+      "description": "(screen) in stack order, callee-cleaned: slot +4 of MFDFlashCommVtable (0009387a): fills the rect (+0) with Raster_FillRect (00053d9c) under the brush {0, 0x3f} at the render context 000bdbda's +0x22c and copies the first dword of the block at +4, the selected row, to +0x2e. For each of the six rows it sets the label's font to ColorSchemePanels[6] when bit 0 of its state byte (+0x28 + row) is set, else [3] for the row at +0x2e and [1] for the others, and calls Label_SetTextWithHotkey (00031294)(label, the byte SquadOrderAttributes (000bd270)[k] points at, SquadOrderStrings (000bd228)[k]), k being the row plus 3 when bit 1 of its state byte is set. ES2's MfdFlashCommScreen_Paint (DBSIM 0043f7a4), which also draws the selected row's plate.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#painting; ES1DBSIM decompile and disassembly at 00035d20",
+      "verified": {
+        "bytes": "00035d20+244",
+        "sha1": "332fb1172d79",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00035e14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashCommScreen_Update",
+      "description": "(screen) in stack order, callee-cleaned: slot +8 of MFDFlashCommVtable (0009387a). When the block's (+4) first dword differs from +0x2e, the byte +0x32 is set or the int16 +0x33 is not -1: the old row (+0x33 when not -1, else +0x2e) takes ColorSchemePanels[1] and the new row, stored at +0x2e, ColorSchemePanels[3], each followed by Label_SetTextWithHotkey (00031294) with its order as the paint picks it and Widget_DrawToCockpit (0002b058)(0, the label's rect at +4, 1); then +0x32 is cleared. Sets +0x33 to -1 in every case. ES2's MfdFlashCommScreen_Update (DBSIM 0043f878) without the row plates.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#painting; ES1DBSIM decompile at 00035e14",
+      "verified": {
+        "bytes": "00035e14+309",
+        "sha1": "e0bc2e441c81",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00035f4c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_SelectedVerb",
+      "description": "(screen) in stack order, callee-cleaned (RET 4): returns the row at +0x2e, plus 3 when bit 1 of its state byte at +0x28 + row is set. ES2's MfdFlashComm_SelectedVerb (DBSIM 0043f998) on ES1's offsets.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-order-helpers; ES1DBSIM disassembly at 00035f4c",
+      "verified": {
+        "bytes": "00035f4c+51",
+        "sha1": "b7b708605c44",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00035f80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_SetScreenRow",
+      "description": "(screen, row) in stack order, callee-cleaned: copies the low word of +0x2e into the int16 +0x33 and stores row at +0x2e. ES2's MfdFlashComm_SetScreenRow (DBSIM 0043f9b8) on ES1's offsets.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-order-helpers; ES1DBSIM disassembly at 00035f80",
+      "verified": {
+        "bytes": "00035f80+26",
+        "sha1": "87089cb01b97",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00035f9c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_ToggleRowVariant",
+      "description": "(screen) in stack order, callee-cleaned: when the row at +0x2e is 4 or 5, flips bit 1 of its state byte at +0x28 + row and sets the byte +0x32; otherwise does nothing. ES2's MfdFlashComm_ToggleRowVariant (DBSIM 0043f9d0) on ES1's offsets.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-order-helpers; ES1DBSIM disassembly at 00035f9c",
+      "verified": {
+        "bytes": "00035f9c+45",
+        "sha1": "3762b03ccd2f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00035fcc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_ResetRow",
+      "description": "(screen, row) in stack order, callee-cleaned: ANDs the state byte at +0x28 + row with 1 and stores ColorSchemePanels[2] (00092d48) as the hotkey font +0x20 of the row's label (+0x10 + 4*row). ES2's MfdFlashComm_ResetRow (DBSIM 0043f9f4) on ES1's offsets. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-order-helpers; ES1DBSIM disassembly at 00035fcc",
+      "verified": {
+        "bytes": "00035fcc+41",
+        "sha1": "8ef9071ad7bc",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00035ff8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_DisableRow",
+      "description": "(screen, row) in stack order, callee-cleaned: ORs 1 into the state byte at +0x28 + row and stores ColorSchemePanels[6] (00092d58) as the hotkey font +0x20 of the row's label (+0x10 + 4*row). ES2's MfdFlashComm_DisableRow (DBSIM 0043fa14) on ES1's offsets. es2_xref finds no branch or stored pointer to it. The last function of the FLASH COMM screen's object file: its RET 8 at 0003601f is followed by two zero bytes.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-order-helpers; ES1DBSIM disassembly at 00035ff8",
+      "verified": {
+        "bytes": "00035ff8+42",
+        "sha1": "3c2d358822db",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00036024",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorMissileViewCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorPanelCopy (0002acdc). The first of the four functions that open the missile camera screen's object file. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#where-the-object-file-starts-and-ends; ES1DBSIM decompile at 00036024",
+      "verified": {
+        "bytes": "00036024+40",
+        "sha1": "9e5744307ef4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003604c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorMissileViewCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the missile camera file's copy 0009388e of ConfigPart's vtable: the code of ConfigPart_DtorPanelCopy (0002ad04), storing 0009388e and then TSPartBase's copy 000938c2.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#where-the-object-file-starts-and-ends; ES1DBSIM decompile at 0003604c",
+      "verified": {
+        "bytes": "0003604c+63",
+        "sha1": "fe1e1f18dfbc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0003608b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagMissileViewCopy",
+      "description": "Frameless: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009388e; the code of ConfigPart_GetClassTagPanelCopy (0002ad43). No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#where-the-object-file-starts-and-ends; the image at 0003608b"
+    },
+    {
+      "address": "00036094",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorMissileViewCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000938c2: the code of TSPartBase_DtorPanelCopy (0002ad4c) storing 000938c2.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#where-the-object-file-starts-and-ends; ES1DBSIM decompile at 00036094",
+      "verified": {
+        "bytes": "00036094+42",
+        "sha1": "c39c92bfd49c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000360c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdMissileViewScreen_Ctor",
+      "description": "(screen, rect) in stack order, callee-cleaned: allocates 0x41 bytes with operator_new when screen is null, returning 0 when that fails; runs MFDisplay_Ctor (00039c50) and the inlined constructors of a 0xc-byte point at +0x1d and an int16 triple at +0x29, and stores MFDMissileViewVtable (0009391a) at +8. +0xc = GLViewport_Ctor (00069a84)(0), whose +0x210-+0x21c take the rect and +0x220/+0x224 -(w >> 1) and -(h >> 1); the clip block 000b11c4 gets the count 1, the region pointer 000b13cc and, at 000b13d0-000b13dc, the viewport's rect; the viewport's +0x208 = 2, the block's 0x81 dwords are copied over the viewport's +4 and its +0x20c is cleared. +0x10 = a 0x4a-byte camera: TSCamera_Ctor (0005b99c)(camera, orientation (0, 0, 0), position (0, 0, 0), 0x80, 7, the viewport), the inlined constructors of its triples +0x26, +0x2c, +0x38, +0x3e and +0x44, the vptr 0009392e at +0x12, and +0x32, +0x36, +0x44, +0x46 and +0x48 cleared. +0x14 = Hzline_Ctor (00026180)(0) with +0x54 = 1, +0x58 = 3, +0x5c = 1 and +0x60 = 3, Hzline_SetColors (00026234)(horizon, 0, 0x16, 0x10), Hzline_LoadBitmapBank (00026dc8)(horizon, smlwld2) and the byte +0x70 cleared. Four labels at +0x2f, +0x33, +0x37 and +0x3b, Label_Ctor (00030f44)(0, ColorSchemePanels[2]) placed by Label_SetRect (00031080) with flags 2 and zero margins over the rect's top-left plus the int16 x and y of the tables 000938f4 and 000938fc to that point plus the width and height of 00093904 and 0009390c; then label +0x37 takes ColorSchemePanels[3] and the fill 0x31. ES2's MfdMissileViewScreen_Ctor (DBSIM 0043facc), which keeps the rect in globals, takes a column off the viewport's right edge and shifts the label coordinates by the video mode. The constructor 00039c64 builds it for mode 5 at +0xaa.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-screen-object; ES1DBSIM decompile at 000360c0",
+      "verified": {
+        "bytes": "000360c0+982",
+        "sha1": "3c73a64583a2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00036498",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cam_DtorMissileViewCopy",
+      "description": "(camera, flags) in stack order, callee-cleaned: slot +4 of 0009392e, the table MfdMissileViewScreen_Ctor (000360c0) stores at its 0x4a-byte camera's +0x12: with the camera non-null stores 0009392e and then 00093946 at +0x12, runs TSContext_Dtor (0005b878)(camera, 0) and deletes the camera with operator_delete when bit 0 of flags is set. The camera class's destructor in the missile camera file's copy; ES2's camera class is CAM.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; ES1DBSIM disassembly at 00036498",
+      "verified": {
+        "bytes": "00036498+50",
+        "sha1": "1ebf2327c1bc",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000364cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSCamera_DtorMissileViewCopy",
+      "description": "(camera, flags) in stack order, callee-cleaned: slot +4 of 00093946, the missile camera file's copy of TSCamera's vtable: the code of TSCamera_Dtor (0005b970) storing 00093946.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; ES1DBSIM decompile at 000364cc",
+      "verified": {
+        "bytes": "000364cc+43",
+        "sha1": "5321efc581c6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000364f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdMissileViewScreen_Paint",
+      "description": "(screen) in stack order, callee-cleaned: slot +4 of MFDMissileViewVtable (0009391a). With +0x18 set it walks g_ExplosionPool (000aee88) with Pool_Prev (00063a20) for it: found, it flips the byte +0x1c, fills the rect with Raster_FillRect (00053d9c) under the brush {0, 0x3c} when the byte is 1 and {0, 0x3f} when 0, at the render context 000bdbda's +0x22c, and returns; gone, it clears +0x18. With MfdMissileView_TrackedRound (00093914) set it walks the pool 000af0b4 for it: gone, it clears it and takes the pose from +0x1d (position) and +0x29 (angles); found, the pose is the round's +0x20-+0x28 and +6-+0xb with Math_Q14Multiply (0005e838)(500, Math_CosBam (0006477c)(h)) added to x and Math_Q14Multiply(500, Math_CosBam(h - 0x4000)) to y, h the round's +0xa, and is saved at +0x1d and +0x29. Then for the first explosion of g_ExplosionPool whose +0x20 lies within 10000 of the pose by Point3I_DistanceBetween (00064698) it stores the explosion at +0x18, sets +0x1c to 1, fills the rect with {0, 0x3c} and returns. Otherwise, with the round still set, it subtracts CockpitView_GetShakeOffset (000249d4)'s pair from the viewport's (+0xc) rect +0x210-+0x21c, installs the viewport with Raster_InstallRenderContext (00069be0), writes the pose into the camera (+0x10) at +0, +4, +8, +0xc and +0x10, installs it with Raster_InstallViewProjection (0005bf68), calls Hzline_Draw (00026264)(+0x14, 0, camera) when +0x14 is set, sets the byte 000928ea, calls ObjList_DrawFrameObjects (00021008)(0, camera), clears 000928ea, reinstalls the render context it found and adds the pair back. With no round it fills the rect with {0, 0x3f}; when CockpitView_SumLauncherCounts (00036930) returns 0 label +0x33 reads NONE (000bd4bc), else +0x2f reads READY TO (000bd4b4) and +0x33 LAUNCH (000bd4b8); label +0x3b takes ColorSchemePanels[0] and the fill 0x30 while the byte +0x9f of CockpitViewInstance's +0x1f1 is 0, else ColorSchemePanels[3] and the fill 0x3f or 0x35 by bit 0x20 of 000981c4, and reads LOCK (000bd4c0); the labels through Label_SetText (0003114c). ES2's MfdMissileViewScreen_Paint (DBSIM 0043fe1c), whose flash follows a flag for 0x1e coarse ticks and whose view draws the terrain, a crosshair and a ring.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#painting; ES1DBSIM decompile at 000364f8",
+      "verified": {
+        "bytes": "000364f8+978",
+        "sha1": "9a906e738966",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000368cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdMissileViewScreen_Update",
+      "description": "(screen) in stack order, callee-cleaned: slot +8 of MFDMissileViewVtable (0009391a): sets the byte +0x3f to 2 when MfdMissileView_TrackedRound (00093914), +0x18 or the byte +0x9f of CockpitViewInstance's +0x1f1 is non-zero; at 2 calls the screen's slot +4 and at 1 Widget_DrawToCockpit (0002b058)(0, the rect, 0), lowering +0x3f by 1 either way. ES2's MfdMissileViewScreen_Update (DBSIM 004402ec), which tests its +0x1c where ES1's tests the flash's explosion.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#painting; ES1DBSIM decompile at 000368cc",
+      "verified": {
+        "bytes": "000368cc+98",
+        "sha1": "0d5a011e81ac",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00036930",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitView_SumLauncherCounts",
+      "description": "(screen) in stack order, callee-cleaned (RET 4), entered by MfdMissileViewScreen_Paint (000364f8) at its padding 0003692e; the argument is not read. Over CockpitViewInstance's weapon rows (+0x70, count +0x94) it calls slot +0x64 of each set row's set mount (+0x86) with (mount, the address of an int16 n) and adds n when the call returns other than 5; returns the sum. ES2's CockpitView_SumLauncherCounts (DBSIM 00440348), which reads +0x98, +0xbd and slot +0x60 and calls _strlen on a string first.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#painting; ES1DBSIM disassembly at 00036930",
+      "verified": {
+        "bytes": "00036930+117",
+        "sha1": "c926ceb9530b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000369a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdMissileViewScreen_BlinkLockLabel",
+      "description": "(screen) in stack order, callee-cleaned: when bit 0x20 of 000981c4 is set and the byte +0x40 clear, sets +0x40 and gives label +0x3b ColorSchemePanels[3] and the fill 0x35; when the bit is clear and +0x40 set, clears +0x40 and gives the label ColorSchemePanels[3] and the fill 0x3f; returns 1 after either, else 0. ES2's MfdMissileViewScreen_BlinkLockLabel (DBSIM 004403bc), which reads Time_GetCoarseTicks. es2_xref finds no branch or stored pointer to it or its padding.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#painting; ES1DBSIM decompile at 000369a8",
+      "verified": {
+        "bytes": "000369a8+119",
+        "sha1": "99e206acc36c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00036a20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdMissileView_StaticInit",
+      "description": "Frameless, no arguments: entry 000adc40 of the static constructor table: stores 00093956, 0009397a, 000939a2 and 000939ca in turn at MfdMissileView_ClipRegion (000b13c8), the copies of the GLRectangleRegion's class tables, and clears 000b13cc. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; the image at 00036a20"
+    },
+    {
+      "address": "00036a54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdMissileView_StaticDtor",
+      "description": "Frameless, no arguments: entry 000adcbc of the exit table: stores 000939ca, 000939a2 and 0009397a in turn at MfdMissileView_ClipRegion (000b13c8). A 0x90 byte and the region's destructors follow it in the missile camera's object file. No Ghidra function starts here.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; the image at 00036a54"
+    },
+    {
+      "address": "00036a74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorMissileViewCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 0009397a, the missile camera file's copy of GLBase's vtable: with the object non-null stores 0009397a at +0 and deletes the object with operator_delete when bit 0 of flags is set. The code of GLBase_DtorGadgetsCopy (00031644) with this file's table.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; ES1DBSIM decompile at 00036a74",
+      "verified": {
+        "bytes": "00036a74+34",
+        "sha1": "a694ff6b3cc9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00036a98",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorMissileViewCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 000939a2, the missile camera file's copy of GLRegion's vtable: with the object non-null stores 000939a2 and then 0009397a at +0 and deletes the object with operator_delete when bit 0 of flags is set. The code of GLRegion_DtorGadgetsCopy (0003161c) with this file's tables.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; ES1DBSIM decompile at 00036a98",
+      "verified": {
+        "bytes": "00036a98+40",
+        "sha1": "aba9f66dc71c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00036ac0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorMissileViewCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of 000939ca, the missile camera file's copy of GLRectangleRegion's vtable, whose slot +4 (00066bd0) returns the class tag 0x28000c: with the object non-null stores 000939ca, 000939a2 and 0009397a in turn at +0 and deletes the object with operator_delete when bit 0 of flags is set. The code of GLRectangleRegion_DtorGadgetsCopy (000315ec) with this file's tables. The last function of the missile camera's object file: its RET 8 at 00036aeb is followed by two zero bytes.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; ES1DBSIM decompile at 00036ac0",
+      "verified": {
+        "bytes": "00036ac0+46",
+        "sha1": "f2a37916c531",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00039c50",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -10057,11 +10474,26 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashComm_HandleAltKey",
-      "description": "(mfd, code) in stack order: REPNE SCASD over the seven codes at 000940bc, 0x21e, 0x222, 0x223, 0x218, 0x22e, 0x212 and 0x221 (Alt with A, G, H, O, C, E, F), jumping through the seven dwords after them (000940d8) to 0003a8ba, 0003a8db, 0003a8fc, 0003a91d, 0003a93b, 0003a968 and 0003a991; returns 0 for any other code. ES2's MfdFlashComm_HandleAltKey (DBSIM 00446c10), which takes 0x21e, 0x222, 0x223, 0x218 and 0x221.",
+      "description": "(mfd, code) in stack order, callee-cleaned (RET 8): with the FLASH COMM screen at the mfd's +0x9a, REPNE SCASD over the seven codes at 000940bc, 0x21e, 0x222, 0x223, 0x218, 0x22e, 0x212 and 0x221 (Alt with A, G, H, O, C, E, F), jumping through the seven dwords after them (000940d8) to 0003a8ba, 0003a8db, 0003a8fc, 0003a91d, 0003a93b, 0003a968 and 0003a991, a case returning 1 in AL; returns 0 for any other code. The cases at 0003a8ba and 0003a8db each call MfdFlashComm_SetScreenRow (00035f80)(screen, 0 or 1), MfdFlashComm_Transmit (0003adc8)(mfd) and 0003acd4(mfd, the same row, the mfd's +0xc4); the other five are undefined bytes in ES1Recon. ES2's MfdFlashComm_HandleAltKey (DBSIM 00446c10), which takes the same seven codes.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
       "verified": {
         "bytes": "0003a890+296",
         "sha1": "a50d1e96f496",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003adc8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdFlashComm_Transmit",
+      "description": "(display) in stack order, callee-cleaned (RET 4): stores MfdFlashComm_SelectedVerb (00035f4c) of the screen at +0x9a in the dword 000b0ddc, calls Squad_BroadcastOrderFromCockpit (0002b448)(the display's +0x10, 000b0ddc) and, when that returns non-zero, MfdFlashComm_ToggleRowVariant (00035f9c) on the screen. ES2's MfdFlashComm_Transmit (DBSIM 00447220), which stores a word.",
+      "source": "Herculan/docs/es1/simulation/mfd-flash-comm.md#the-order-helpers; ES1DBSIM decompile at 0003adc8",
+      "verified": {
+        "bytes": "0003adc8+55",
+        "sha1": "f3fadadc4855",
         "scope": "body",
         "via": "decompile"
       }
@@ -12106,7 +12538,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_CreateDisplay",
-      "description": "Builds the simulator's display; its one caller found by es2_xref is Sim_StartMission (0005af1a). A 0x90-byte GLDisplay_CtorAndOpen(display, 0, 'VGA_8'), two __vec_ctor arrays of four 8-byte elements (constructor 0005a79c) at +0x48 and +0x68, Raster_SelectRenderTarget(display), +0x88 = 0, +0x8c = 1, +0x3c = 1 and +0x34 = 0, each passed to the driver's routine at 0009df18 and 0009df1c (stored at 00098dda and 00098dd2) while the display is current; the pairs {0, 0}, {0, 200}, {0, 400}, {0, 600} at +0x48 and 32 zero bytes at +0x68. Then builds the render context 000b5b6e with 00069a84(0), its origin +0x220/+0x224 (-160, -100) and +0x208 = 1 (its clip block's mode +0x204), stores the block at the display's +0x44, passes it to Raster_SetClipBlock while current, and installs the context with Raster_InstallRenderContext.",
+      "description": "Builds the simulator's display; its one caller found by es2_xref is Sim_StartMission (0005af1a). A 0x90-byte GLDisplay_CtorAndOpen(display, 0, 'VGA_8'), two __vec_ctor arrays of four 8-byte elements (constructor 0005a79c) at +0x48 and +0x68, Raster_SelectRenderTarget(display), +0x88 = 0, +0x8c = 1, +0x3c = 1 and +0x34 = 0, each passed to the driver's routine at 0009df18 and 0009df1c (stored at 00098dda and 00098dd2) while the display is current; the pairs {0, 0}, {0, 200}, {0, 400}, {0, 600} at +0x48 and 32 zero bytes at +0x68. Then builds the render context 000b5b6e with GLViewport_Ctor (00069a84)(0), its origin +0x220/+0x224 (-160, -100) and +0x208 = 1 (its clip block's mode +0x204), stores the block at the display's +0x44, passes it to Raster_SetClipBlock while current, and installs the context with Raster_InstallRenderContext.",
       "source": "ES1DBSIM decompile and disassembly at 0005a5f4; es2_xref caller",
       "verified": {
         "bytes": "0005a5f4+424",
@@ -17486,6 +17918,21 @@
       }
     },
     {
+      "address": "00069a84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLViewport_Ctor",
+      "description": "(viewport) in stack order, callee-cleaned: allocates 0x239 bytes with operator_new when viewport is null; stores 0009b40a, 0009b42e and 0009b456 in turn at +0, runs the inlined constructor of the rect at +0x210, copies 0x8b dwords from the viewport the GL display's (000bdd28) +0x40 points at to +4, and clears the byte +0x230 and the dwords +0x231 and +0x235. ES2's GLViewport_Ctor (DBSIM 00480b28): the same 0x239-byte layout, its copy made as 0x81 dwords and then +0x208-+0x22c.",
+      "source": "Herculan/docs/es1/simulation/mfd-missile-camera.md#the-viewport-and-the-camera; ES1DBSIM decompile at 00069a84; es2_naming.py diff against DBSIM 00480b28",
+      "verified": {
+        "bytes": "00069a84+270",
+        "sha1": "bb55d01ac1c7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00069be0",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -21245,6 +21692,51 @@
       "source": "es1_naming.py vtables ES1DBSIM 00093842; ES1DBSIM image bytes at 00093842"
     },
     {
+      "address": "0009385c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MfdRadar_RadarBank",
+      "description": "The bitmap bank radar, which MfdRadarScreen_Ctor (00035298) loads while this is 0 and whose first frame MfdRadarScreen_Paint (000355a4) blits as the scanner screen's backdrop.",
+      "source": "es2_xref.py --binary ES1DBSIM 0009385c; ES1DBSIM decompile at 00035298"
+    },
+    {
+      "address": "00093862",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MFDRadarVtable",
+      "description": "MFDRadar's vtable, which MfdRadarScreen_Ctor (00035298) stores at a screen's +8: a zero dword, then MfdRadarScreen_Paint (000355a4) and MfdRadarScreen_Update (0003558c), each by its padding. ES2's MFDRadarVtable.",
+      "source": "es1_naming.py vtables ES1DBSIM; the image at 00093862"
+    },
+    {
+      "address": "0009387a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MFDFlashCommVtable",
+      "description": "MFDFlashComm's vtable, which MfdFlashCommScreen_Ctor (00035c04) stores at a screen's +8: a zero dword, then MfdFlashCommScreen_Paint (00035d20) by its padding and MfdFlashCommScreen_Update (00035e14). ES2's MFDFlashCommVtable.",
+      "source": "es1_naming.py vtables ES1DBSIM; the image at 0009387a"
+    },
+    {
+      "address": "00093914",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MfdMissileView_TrackedRound",
+      "description": "The round the MISSILE CAM screen follows, or 0: MfdMissileViewScreen_Paint (000364f8) walks the pool 000af0b4 for it and clears it when it is gone, and MfdMissileViewScreen_Update (000368cc) repaints the screen while it is set. es2_xref finds one store besides the paint's, at 00007843 in 00007748. ES2's 0049c394.",
+      "source": "es2_xref.py --binary ES1DBSIM 00093914; grep of ES1DBSIM_disasm_full.txt for 0x93914"
+    },
+    {
+      "address": "0009391a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MFDMissileViewVtable",
+      "description": "MFDMissileView's vtable, which MfdMissileViewScreen_Ctor (000360c0) stores at a screen's +8: a zero dword, then MfdMissileViewScreen_Paint (000364f8) and MfdMissileViewScreen_Update (000368cc), each by its padding. ES2's MFDMissileViewVtable.",
+      "source": "es1_naming.py vtables ES1DBSIM; the image at 0009391a"
+    },
+    {
       "address": "0009680c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -21711,6 +22203,15 @@
       "name": "Label_Pen",
       "description": "The labels' pen {x, y}, two dwords: Label_SetText sets it from the label's anchor and draws the text at it, and Label_SetTextWithHotkey adds the hotkey's offset to its x before drawing the hotkey's character at it.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#labels"
+    },
+    {
+      "address": "000b13c8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MfdMissileView_ClipRegion",
+      "description": "The GLRectangleRegion MfdMissileView_StaticInit (00036a20) builds: its vptr at +0 and +4 cleared. MfdMissileViewScreen_Ctor (000360c0) points the clip block 000b11c4's region at its +4, 000b13cc, and writes the viewport's rect at its +8 to +0x14, 000b13d0-000b13dc.",
+      "source": "ES1DBSIM disassembly at 00036a20; ES1DBSIM decompile at 000360c0"
     },
     {
       "address": "000b17d8",

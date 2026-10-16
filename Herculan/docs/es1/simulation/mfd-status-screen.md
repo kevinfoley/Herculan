@@ -19,7 +19,7 @@ The data holds, after the run's tables, the two bank pointers, `MFDStatusVtable`
 | `+0x08` | the vptr, `MFDStatusVtable` | `+0x00` |
 | `+0x0c`–`+0x1c` | labels 0 to 4 | `+0x10`–`+0x20` |
 
-ES2's object (`0x42` bytes) also holds the press scramble's counter, flag and deadline, a viewport rect and the latched subject with its hold ([the subject](../../retail/simulation/mfd.md#the-subject)); ES1's holds none of them. `es2_xref.py` finds the constructor called from `0003a0df` and `0003a15c`, which build the screens of modes 0 and 4 as ES2's display does: each stores its screen at the display's `+0x96` and `+0xa6`, gives it the display's `+0xb4` as its rect and points its `+4` at the display's `+0x7a` ([Open](#open)).
+ES2's object (`0x42` bytes) also holds the press scramble's counter, flag and deadline, a viewport rect and the latched subject with its hold ([the subject](../../retail/simulation/mfd.md#the-subject)); ES1's holds none of them. `es2_xref.py` finds the constructor called from `0003a0df` and `0003a15c` in the display's constructor (`00039c64`), which builds the six screens in mode order and stores them at `+0x96` to `+0xaa`, as ES2's display does: this one for modes 0 and 4, [FLASH COMM](mfd-flash-comm.md), the NAV MAP (`00036b18`), [the scanner](mfd-scanner.md) and [the missile camera](mfd-missile-camera.md). It gives each the display's `+0xb4` as its rect and points its `+4` at the display's `+0x7a` ([Open](#open)).
 
 The constructor loads `bases` and `flyers` once, from the folder `000980f8` names, into `MfdStatus_BasesBank` (`000935f4`) and `MfdStatus_FlyersBank` (`000935f8`); ES2's loads `vehicles` too. It builds the five labels in `ColorSchemePanels[2]` (`cpred`) with no plate, each centered (`Label_SetRect` flags 2, zero margins) in a rect from the screen rect's *x0* + 30 to *x0* + 60 across and 10 tall, at *y0* + 0, 8, 21, 28 and 35. ES2's are left-aligned in white and red on plates.
 
@@ -68,6 +68,6 @@ The condition is ES2's scan on ES1's offsets: destroyed (4) when the byte `+0x93
 
 ## Open
 
-- **Open:** what writes the subject, the dword at the display's `+0x82` (`+8` of the block at `+0x7a`), and so what F1 and F5 each show. ES2's display parks the SELECT roster's entry for mode 0 and the current target for mode 4 ([the subject](../../retail/simulation/mfd.md#the-subject)); ES1's display code from `00039c64` is unread beyond its two calls of the constructor, and whether ES1's SELECT steps a roster with it.
+- **Open:** what writes the subject, the dword at the display's `+0x82` (`+8` of the block at `+0x7a`), and so what F1 and F5 each show. ES2's display parks the SELECT roster's entry for mode 0 and the current target for mode 4 ([the subject](../../retail/simulation/mfd.md#the-subject)); ES1's display code from `00039c64` is unread beyond its screen constructors, and whether ES1's SELECT steps a roster with it.
 - **Open:** whether an object of ES1 carries a class other than 0 to 2 at `+0x162`, which would show `UNKNOWN`.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: with the status screen up and a hostile HERC as its subject, `BP <CS>:000336b0` fires on each repaint with the word at `[ESP+0xc]` (friendly) 0, and the screen shows no `[ n% ]` line under the condition.

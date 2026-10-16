@@ -282,7 +282,7 @@ Text margin `2 << XCoordShift` = 4 device — the only nonzero label margin on t
 |---|---|
 | `ColorSchemePanels[1]` `CPGREEN` | an ordinary row |
 | `[3]` `CPYLW` | the selected row, which the paint re-fonts as it fills it |
-| `[6]` `CPOFF` | an unavailable row, one whose state byte has bit 0 set. `FUN_0043fa14` sets that bit and turns the row's hotkey font `+0x21` to `CPOFF` as well; `FUN_0043f9f4` puts the hotkey font back to `CPRED` and clears bit 1, keeping bit 0. Neither has a caller found ([Open](#open)) |
+| `[6]` `CPOFF` | an unavailable row, one whose state byte has bit 0 set. `MfdFlashComm_DisableRow` (`0043fa14`) sets that bit and turns the row's hotkey font `+0x21` to `CPOFF` as well; `MfdFlashComm_ResetRow` (`0043f9f4`) puts the hotkey font back to `CPRED` and clears bit 1, keeping bit 0. Neither has a caller found ([Open](#open)) |
 | `[2]` `CPRED` | the row's alternate at `+0x21`, which is **not** an unavailable state — `Label_SetTextWithHotkey` (`00438aac`) redraws exactly one character of the row in it, at the index the order's own attribute byte names, which is how the hotkey letter is picked out. The [F7] order list uses the same mechanism |
 
 The selected row also carries a plate: `MFD` frames 11-13, 91x8 GAU, blitted by `MfdFlashCommScreen_DrawRowPlate` (`0043fa34`) **after** the text so the hollow rounded rect frames it rather than covering it. Frame 11 unpressed, 12 while XMIT is held — the index is `0xb +` that button's own press byte — and 13 the plain plate that erases a row which has just stopped being selected. `MfdFlashCommScreen_Update` (`0043f878`) repaints exactly those two rows when the cursor moves, rather than the whole block.
@@ -296,6 +296,7 @@ Screen fields, based at `MfdDisplay+0xd1`:
 | Offset | Contents |
 |---|---|
 | `+0x08` | Pointer to the display's shared state block (`display+0xb1`), whose first int is the selected row |
+| `+0x10` | The display |
 | `+0x14` | Six row label pointers |
 | `+0x2c` | Six row state bytes — bit 0 unavailable, bit 1 showing the second verb |
 | `+0x32` | The screen's own row, which is what XMIT resolves |
@@ -310,7 +311,7 @@ Two dispatches, not one. `CockpitWidgets_HandleCommand` (`00432bc8`) offers ever
 | Code | Handler | Effect |
 |---|---|---|
 | `0x1e` `0x22` `0x23` `0x18` `0x2e` `0x12` `0x21` (A G H O C E F) | `MfdDisplay_KeyDispatch` (`004469c0`) | Select rows 0, 1, 2, 3, 4, 4, 5. Gated on the display being on mode 1 |
-| the same seven `+0x200` | `MfdFlashComm_HandleAltKey` (`00446c10`) | Select **and transmit**, from any screen. `0x22e` only transmits when the resolved verb is 4 and `0x212` only when it is 7 |
+| the same seven `+0x200` | `MfdFlashComm_HandleAltKey` (`00446c10`) | Select **and transmit**, from any screen: `MfdFlashComm_SetScreenRow` (`0043f9b8`) makes the row the screen's own (`+0x32`), keeping the old one at `+0x37` for the update to repaint, `MfdFlashComm_Transmit` sends its verb, and `MfdFlashComm_SelectRow` selects it. `0x22e` only transmits when the resolved verb is 4 and `0x212` only when it is 7 |
 | `0x2d` (X) | `MfdDisplay_KeyDispatch` (`004469c0`) | Press button 10 if the current mode shows it |
 | `0x33` `0x34` (`,` `.`) | `MfdDisplay_KeyDispatch` (`004469c0`) | Previous / next available row, wrapping |
 | `0x20` (D) | `MfdDisplay_KeyDispatch` (`004469c0`) | Press button 7 SELECT if visible |
@@ -397,7 +398,7 @@ The `mfd_dmg` bank is the screen's sensor-dropout wipe, played over the inset at
 - **Deferred:** `MfdMissileViewScreen_BlinkLockLabel` (`004403bc`), which toggles the MISSILE CAM screen's `+0x44` with coarse-tick bit `0x20` and repaints label 3 in `CPYLW` on id 9 or id 19 to match — the paint's lock blink, latched in a byte. `es2_xref.py` finds no branch to it and no stored pointer.
 - **Deferred:** what the label `MfdDisplay_Ctor` builds once per process into `0049cbd0` is for — centred over the inset rect, zero margins, plate `COLORS.DAT` id 19 (`004d3c26`). `es2_xref.py 0049cbd0` finds four references, all in the constructor.
 - **Deferred:** a reader of `STRINGS0.STR` group 10's array (`004d1440`). `es2_xref.py 004d1440` finds only `SimStrings_LoadAll` (`0043766a`), and the disassembly holds no operand in `004d1440`-`004d1453`; an access through a neighbouring group's base would show in neither.
-- **Deferred:** a caller of `FUN_0043fa14` or `FUN_0043f9f4`, the FLASH COMM row-state helpers. `es2_xref.py` reports both UNREFERENCED with no late function start nearby, and the only writes to the row state bytes found over `0043f000`-`00447fff` (`es2_fieldscan.py 2c` plus a disassembly grep for indexed byte writes) are the constructor's clear, `MfdFlashComm_ToggleRowVariant`'s `XOR` and these two. Without a caller no row draws in `CPOFF`.
+- **Deferred:** a caller of `MfdFlashComm_DisableRow` (`0043fa14`) or `MfdFlashComm_ResetRow` (`0043f9f4`), the FLASH COMM row-state helpers. `es2_xref.py` reports both UNREFERENCED with no late function start nearby, and the only writes to the row state bytes found over `0043f000`-`00447fff` (`es2_fieldscan.py 2c` plus a disassembly grep for indexed byte writes) are the constructor's clear, `MfdFlashComm_ToggleRowVariant`'s `XOR` and these two. Without a caller no row draws in `CPOFF`.
 - **Deferred:** what label 2 of the MISSILE CAM screen (`+0x3b`) shows. `es2_fieldscan.py 3b` over `0043facc`-`00440500` finds only the constructor's re-font, against two paint reads of label 1 (`+0x37`) as control.
 - **Deferred:** a writer of `mech+0xb0` other than `Mech_DirectFireHitTest` (`00418dc7`, set) and `Mech_PerTickSystemsUpdate` (`0041ab25`, clear). `es2_fieldscan.py b0 --writes-only` over `00400000`-`004a0000` finds no other on a mech (the rest are widget dirty flags and the `004d2540` video block), and no `memset`, `memcpy` or `REP MOVS` onto a mech was found. A writer that reaches a machine the player is not piloting would let a HERC on F5 read `SHIELDS DN`.
 - **Deferred:** what the 100 a TARGET press writes to the SCANNER screen's `+0xc` does. `es2_fieldscan.py c` over `0043a2e0`-`00440a00` finds the status screen's read of its own `+0xc` in `MfdStatusScreen_Update` and no read of the SCANNER screen's: both `+0xc` reads in its update and paint are of the shared state block, through `+0x8`.

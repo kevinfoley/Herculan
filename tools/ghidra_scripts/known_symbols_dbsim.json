@@ -14056,8 +14056,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdRadarScreen_Ctor",
-      "description": "Constructor for the MFD's SCANNER screen (mode 3), the largest of the six at 0x524 bytes. Builds the plot geometry (dish at inset+(0x26,1), centre at inset+(0x41,0x1c), plot radius 0x19 GAU), the 100-entry contact vector at +0x68 and the four corner readouts. Binds MFD bank frames 14 (dish) and 15 (turret wedge). Range comes from MfdScannerRanges 004d1cf4 = 50000/100000/200000 world units (300/600/1200 m at 1000 units = 6 m) indexed by the zoom field at MfdDisplay+0xc5, default 2. The `radar` bank's 10-frame sweep is NOT this screen's -- MfdDisplay_Update plays it over the same dish on a switch to mode 3. See docs/retail/simulation/mfd-scanner.md.",
-      "source": "docs/retail/simulation/mfd-scanner.md"
+      "description": "(screen, rect): the SCANNER screen's constructor. MFDisplay_Ctor, then MFDRadarVtable at +0, a 100-entry vector of 0xc-byte contacts at +0x68 (Rtl_VectorNew with MfdRadarContact_ElementCtor), MFD bank (0049cbcc) frames 14 and 15 at +0x10 and +0x14, the plot radius 0x19 at +0x28, the plot centre at the rect's top-left + (0x41 << XCoordShift, 0x1c << YCoordShift) at +0x20, the dish top-left at the rect's top-left + (0x26 << XCoordShift, 1 << YCoordShift) at +0x18, +0x2c = 1 and +0x30 = 0. Four 0x21-byte labels, Label_Ctor(label, DAT_0049b0e0, 1) placed by Label_SetRect with zero margins and the fill +0x1d = 0x11, rects the rect's top-left plus a shifted offset and size: +0x38 (0x26, 0x33) + (0xc, 5) flags 1, +0x3c (0x4f, 1) + (0x10, 5) flags 4, +0x40 (0x26, 1) + (0xc, 5) flags 1, +0x44 (0x4f, 0x33) + (0x10, 5) flags 4. The dish rect +0x48 runs from +0x18 to +0x18 plus frame 14's width and height (+6, +4), each shifted by the coordinate shift in panel mode 3 without hi-res banks; +0x58 = the rect's top-left + (0x40 << XCoordShift, 3 << YCoordShift); +0x60 = the centre less (3 << XCoordShift, 0); +0x34 = 1. See docs/retail/simulation/mfd-scanner.md.",
+      "source": "docs/retail/simulation/mfd-scanner.md",
+      "verified": {
+        "bytes": "0043e70c+1233",
+        "sha1": "874a04bbfaa1",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0043ebe0",
@@ -14065,8 +14071,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdRadarScreen_Update",
-      "description": "Rebuilds the SCANNER screen's contact list from the live object list: skips the viewing machine, anything dead (+0x99/+0xa4), a group still awaiting deployment (group+0x14), an invulnerable structure type (class 1 with BASES.DAT +0x1e), a Cybrid not currently radar-visible (+0x95), and anything past the current display range on the ground plane. Survivors are rotated by Math_BuildRotation2D(-heading) and stored as (x, -y) with a colour id per class and side, so the plot is hull-relative nose-up. Also mirrors mech+0x96 into +0x34 and re-presses PASS or ACTIVE when it changed. Its hostile branch's blinking obj+0x1aa last-known-position marker is DEAD CODE: every constructor sets obj+0xa7 = 1 and nothing clears it. See docs/retail/simulation/mfd-scanner.md.",
-      "source": "docs/retail/simulation/mfd-scanner.md"
+      "description": "Rebuilds the SCANNER screen's contact list: clears the count +0x518 and the selection entry +0x51c, copies the range (+0xc of the block at +8) to +0x30, and sets the mirror +0x34 to 1 when the byte +0x96 of CockpitViewInstance's +0x203 machine is 0; when that differs from the old +0x34 it presses MFD child 0xb (PASS) or 0xc (ACTIVE) through Widget_PressChild(Cockpit_GetMfd_Thunk(), child, 1). Walks the live object list, skipping the machine itself, an object with +0xa4 or +0x99 set, one whose group (+0x45) has a non-zero +0x14, and a class-1 object (+0x1a8) whose type record (+0x1f2) has +0x1e set. The position is +0x26/+0x2a when +0x95 is set or the group's side byte +0x12 is not 1; otherwise, while Time_GetCoarseTicks has bit 0x20 clear and +0xa7 is clear, the point at +0x1aa, else the object is skipped. The offset from the machine's +0x26/+0x2a with Math_FastMagnitude2D distance d (1 for 0) is kept when d < +0x30: rotated with Math_BuildRotation2D(-(machine +0x10)) and Math_Rotate2DPoint and stored as {x, -y, colour} at +0x68 + 0xc * count, the colour by class and side: class 0 DAT_004d3c20 (side 0) or DAT_004d3c12, class 2 DAT_004d3c22 or DAT_004d3c1e, classes 1 and 3 DAT_004d3c0c or DAT_004d3c18, any other DAT_004d3c24. For CockpitViewInstance's selection +0x210 it stores the entry at +0x51c and Hud_WorldUnitsToMetres(d) at +0x520. See docs/retail/simulation/mfd-scanner.md.",
+      "source": "docs/retail/simulation/mfd-scanner.md",
+      "verified": {
+        "bytes": "0043ebe0+723",
+        "sha1": "54c3987dcd61",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0043eeb4",
@@ -14075,7 +14087,13 @@
       "confidence": "high",
       "name": "MfdRadarScreen_UpdateAndPaint",
       "description": "MFDRadar vtable +0x04 (0049c328), the MFD screen's per-frame slot: MfdRadarScreen_Update, then the screen's own slot +0x00, MfdRadarScreen_Paint.",
-      "source": "DBSIM decompile at 0043eeb4"
+      "source": "DBSIM decompile at 0043eeb4",
+      "verified": {
+        "bytes": "0043eeb4+23",
+        "sha1": "c1b711065998",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043eecc",
@@ -14128,8 +14146,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashCommScreen_Ctor",
-      "description": "Constructor for the MFD's FLASH COMM screen (mode 1). Builds six order rows: rect inset+(2,0xd)-(0x60,0x3a) GAU with both corners nudged in by 1<<XCoordShift, stepping 7<<YCoordShift per row. Font ColorSchemePanels[1] CPGREEN with [2] CPRED as the alternate at +0x21, background colour id 0x11, text margin 2<<XCoordShift. The six rows are positions over STRINGS0.STR group 0's orders: rows 4 and 5 switch to verbs 7 and 8 when their state byte's bit 1 is set (MfdFlashComm_SelectedVerb). See docs/retail/simulation/mfd.md.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "(screen, rect, display): the FLASH COMM screen's constructor. MFDisplay_Ctor, then MFDFlashCommVtable at +0 and the display at +0x10. The row block +0x39-+0x45 is the rect's top-left + (2 << XCoordShift, 0xd << YCoordShift) to + (0x60 << XCoordShift, 0x3a << YCoordShift), both corners then moved in by 1 << XCoordShift on both axes. Six 0x25-byte rows at +0x14, each Label_CtorWithAltFont(label, ColorSchemePanels[1] DAT_0049b0b0, 1) placed by Label_SetRect with flags 1 and the x margin 2 << XCoordShift over the block's width from top to top + (7 << YCoordShift), top stepping by that amount, with the hotkey font +0x21 = ColorSchemePanels[2] (DAT_0049b0b4) and the fill +0x1d = 0x11; clears the six state bytes from +0x2c and the byte +0x36, and sets the int16 +0x37 to -1. See docs/retail/simulation/mfd.md.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "0043f5d8+457",
+        "sha1": "8f012ad26001",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043f7a4",
@@ -14137,8 +14161,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashCommScreen_Paint",
-      "description": "MFDFlashComm vtable +0x00 (0049c36c): floods the screen rect (+0x39) with colour 0x11 through a temporary brush, copies the current selection (*(+8)) into +0x32, then for each of the six rows sets its label's frame -- 0049b0c4 when the row's flag byte (+0x2c+i) has bit 0, 0049b0b8 for the selected row, 0049b0b0 otherwise -- and its text and hotkey from the tables at 004d132c/004d1374 (index +3 when the flag has bit 1), and draws the selected row's plate with MfdFlashCommScreen_DrawRowPlate.",
-      "source": "DBSIM decompile at 0043f7a4"
+      "description": "MFDFlashComm vtable +0x00 (0049c36c): floods the row block (+0x39) with Raster_FillRect under the brush {0, 0x11} at the render context's +0x22c, copies the current selection (the first dword of the block at +8) into +0x32, then for each of the six rows sets its label's font -- 0049b0c4 when the row's state byte (+0x2c+i) has bit 0, 0049b0b8 for the selected row, 0049b0b0 otherwise -- and its text and hotkey index from the tables at 004d132c/004d1374 (index +3 when the state byte has bit 1) through Label_SetTextWithHotkey, and draws the selected row's plate with MfdFlashCommScreen_DrawRowPlate.",
+      "source": "DBSIM decompile at 0043f7a4",
+      "verified": {
+        "bytes": "0043f7a4+210",
+        "sha1": "f36d9d6be248",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043f878",
@@ -14146,8 +14176,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashCommScreen_Update",
-      "description": "MFDFlashComm vtable +0x04 (0049c36c): when the selection (*(+8)) differs from +0x32, the force byte +0x36 is set, or a row is pending in +0x37: repaints the old row (+0x37 if set, else +0x32) unselected, makes the new selection current and repaints it selected, each with MfdFlashCommScreen_DrawRowPlate, Label_SetTextWithHotkey and Widget_DrawToCockpit; then clears +0x36 and sets +0x37 to -1.",
-      "source": "DBSIM decompile at 0043f878"
+      "description": "MFDFlashComm vtable +0x04 (0049c36c): when the selection (the first dword of the block at +8) differs from +0x32, the force byte +0x36 is set, or the int16 +0x37 is not -1: repaints the old row (+0x37 when not -1, else +0x32) in ColorSchemePanels[1] (0049b0b0) with MfdFlashCommScreen_DrawRowPlate(screen, row, 1) and Label_SetTextWithHotkey, then makes the selection current at +0x32 and repaints it in [3] (0049b0b8) with its text and MfdFlashCommScreen_DrawRowPlate(screen, row, 0), each followed by Widget_DrawToCockpit(1, the label's rect, 0), and clears +0x36. Sets +0x37 to -1 in every case.",
+      "source": "DBSIM decompile at 0043f878",
+      "verified": {
+        "bytes": "0043f878+285",
+        "sha1": "4058302d9377",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043f998",
@@ -14186,8 +14222,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdFlashComm_ToggleRowVariant",
-      "description": "(screen): for selected row (+0x32) 4 or 5 only, flips bit 1 of that row's state byte at screen+0x2c+row and sets +0x36; any other row is left alone. MfdFlashComm_SelectedVerb adds 3 to the verb of a row with that bit set. MfdFlashComm_Transmit calls it.",
-      "source": "DBSIM decompile at 0043f9d0"
+      "description": "(screen): for selected row (+0x32) 4 or 5 only, flips bit 1 of that row's state byte at screen+0x2c+row and sets +0x36; any other row is left alone. MfdFlashComm_SelectedVerb adds 3 to the verb of a row with that bit set.",
+      "source": "DBSIM decompile at 0043f9d0",
+      "verified": {
+        "bytes": "0043f9d0+33",
+        "sha1": "03090b203def",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043f9f4",
@@ -14196,7 +14238,13 @@
       "confidence": "high",
       "name": "MfdFlashComm_ResetRow",
       "description": "(screen, row) ANDs the row state byte +0x2c+row with 1 (clears the second-verb bit 1, keeps bit 0) and restores the row label's hotkey font +0x21 to ColorSchemePanels[2] CPRED (0049b0b4). No reference found by es2_xref.",
-      "source": "docs/retail/simulation/mfd.md#open"
+      "source": "docs/retail/simulation/mfd.md#open",
+      "verified": {
+        "bytes": "0043f9f4+29",
+        "sha1": "55af13093e9a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043fa14",
@@ -14205,7 +14253,13 @@
       "confidence": "high",
       "name": "MfdFlashComm_DisableRow",
       "description": "(screen, row) ORs bit 0 into the row state byte +0x2c+row and sets the row label's hotkey font +0x21 to ColorSchemePanels[6] CPOFF (0049b0c4). No reference found by es2_xref.",
-      "source": "docs/retail/simulation/mfd.md#open"
+      "source": "docs/retail/simulation/mfd.md#open",
+      "verified": {
+        "bytes": "0043fa14+29",
+        "sha1": "d5a0fd3e53e1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043fa34",
@@ -14228,8 +14282,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdMissileViewScreen_Ctor",
-      "description": "Constructor for the MFD's MISSILE CAM screen (mode 5), matching the MFDMissileView class name in DBSIM's string table. Like the nav map it gets no background chrome from MfdDisplay_Repaint, filling the screen with its own camera image. See docs/retail/simulation/mfd.md.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "(screen, rect): the MISSILE CAM screen's constructor. MFDisplay_Ctor, then MFDMissileViewVtable at +0, the rect copied to 004d1ac8-004d1ad4. +0x10 = a 0x239-byte GLViewport (GLViewport_Ctor) whose rect +0x210-+0x21c is the rect with +0x218 less 1 and whose origin +0x220/+0x224 is -(w >> 1), -(h >> 1); the clip block 004d18ac gets the count 1, the region pointer 004d1ab4 and at 004d1ab8-004d1ac4 the viewport's rect, the viewport's +0x208 = 2, the block's 0x81 dwords are copied over the viewport's +4 and its +0x20c cleared. +0x14 = a 0x4e-byte camera: View_Ctor(camera, the viewport, 7, 0x80, two zero triples), CAMVtable at +0, and +0x32, +0x4a, +0x36, +0x48, +0x46 and +0x44 cleared. Four 0x21-byte labels at +0x33-+0x3f, Label_Ctor(label, DAT_0049b0b4, 1) placed by Label_SetRect with flags 2 and zero margins over the rect's top-left plus the x and y of the int16 tables 0049c374 and 0049c37c to that point plus the width and height of 0049c384 and 0049c38c, each shifted by VideoMode_XCoordShift or VideoMode_YCoordShift; label 2 (+0x3b) then takes DAT_0049b0b8 and the fill DAT_004d3c0a, and the byte +0x45 is cleared. See docs/retail/simulation/mfd.md, 'MFDMissileView -- mode 5'.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "0043facc+848",
+        "sha1": "a71f57f693ef",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043fe1c",
@@ -14253,7 +14313,13 @@
       "confidence": "high",
       "name": "MfdMissileViewScreen_Update",
       "description": "MFDMissileView vtable +0x04 (0049c449): raises the repaint counter +0x43 to 2 when DAT_0049c394, +0x1c, or the cockpit view's +0x1f5 object's +0xd6 byte is set; at 2 runs the screen's own slot +0x00 (MfdMissileViewScreen_Paint), at 1 Widget_DrawToCockpit(0, 004d1ac8), decrementing the counter either way.",
-      "source": "DBSIM decompile at 004402ec"
+      "source": "DBSIM decompile at 004402ec",
+      "verified": {
+        "bytes": "004402ec+92",
+        "sha1": "18db73a81a48",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00440348",
@@ -14261,8 +14327,14 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_SumLauncherCounts",
-      "description": "Over CockpitViewInstance's weapon gauges (+0x70 array, count +0x98), sums the int16 each mount (gauge+0xbd) writes through its vtable +0x60 when that call returns a subtype other than 5, not a launcher; returns the sum. MfdMissileViewScreen_Paint shows the label 004d16f4 when it is 0.",
-      "source": "DBSIM disassembly at 00440348"
+      "description": "Calls _strlen(DAT_004d16e8) and discards the result, then over CockpitViewInstance's weapon gauges (+0x70 array, count +0x98) calls slot +0x60 of each set gauge's set mount (gauge+0xbd) with (mount, the address of an int16 n) and adds n when the call returns other than 5; returns the sum.",
+      "source": "DBSIM disassembly at 00440348",
+      "verified": {
+        "bytes": "00440348+113",
+        "sha1": "8970b35cfa95",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004403bc",
@@ -14271,7 +14343,13 @@
       "confidence": "high",
       "name": "MfdMissileViewScreen_BlinkLockLabel",
       "description": "(screen): flips the MISSILE CAM screen's +0x44 with coarse-tick bit 0x20 and, on each flip, re-fonts label 3 (+0x3f) in ColorSchemePanels[3] on a plate of COLORS.DAT id 9 (bit set) or id 19 (bit clear), returning 1; 0 when nothing changed. The same blink MfdMissileViewScreen_Paint applies to the LOCK label, latched in a byte. es2_xref.py finds no branch to it and no stored pointer.",
-      "source": "DBSIM decompile at 004403bc; es2_xref.py 004403bc"
+      "source": "DBSIM decompile at 004403bc; es2_xref.py 004403bc",
+      "verified": {
+        "bytes": "004403bc+95",
+        "sha1": "cd30430c99f2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0044041c",
