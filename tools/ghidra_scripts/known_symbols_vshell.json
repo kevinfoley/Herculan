@@ -258,7 +258,13 @@
       "confidence": "high",
       "name": "VolRStream_Open",
       "description": "VolRStream::open(path) from src\\volrstrm.cpp. Closes, then tries _open(path, O_BINARY|O_RDONLY) first, so a loose file on disk overrides a volume entry of the same name. Otherwise looks the path up with VolumeGroup_FindEntry (g_VolumeGroup) and switches on the entry's compression type (the first byte of its 9-byte prefix): 2 reads the volume stream directly, 7 attaches the RLERStream at +0x27, 9 the LZHRStream at +0x2b (each created on first use, asserting 'Insufficient memory to allocate filter stream.'), anything else asserts 'Unknown compression type in volume file.'. Returns 1 with status 0 and +0x26 set, or 0 with status 1 when neither source has the file.",
-      "source": "VSHELL decompile and disassembly at 00402d25"
+      "source": "VSHELL decompile and disassembly at 00402d25",
+      "verified": {
+        "bytes": "00402d25+702",
+        "sha1": "ea9b049a3f78",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00402fe3",
@@ -5670,7 +5676,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MsnGen_BuildPlayerHerc",
-      "description": "Training: the player's machine into bay 0 -- group 0's first member while the practice row is below 4 or InstantAction_Active is set, else gam\\ini_*.dat for prefs option 0x28.",
+      "description": "Training: the player's machine into bay 0 -- group 0's first member while the practice row is below 4 or InstantAction_Active is set, else gam\\ini_*.dat for prefs option 0x28 (byte 004824e0), indexing the nine-name table at 004706fc, opened with VolRStream_Open and read by HercRecord_ReadCatalogForm. Then HercList_Deliver(0x482ac3, 0, herc) and Player_SetBay(0).",
       "source": "docs/retail/shell/main-menu.md#starting-a-practice-mission"
     },
     {

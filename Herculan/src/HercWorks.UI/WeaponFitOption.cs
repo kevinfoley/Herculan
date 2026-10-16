@@ -93,6 +93,23 @@ internal sealed class AmmoTypeOption {
 	/// <summary>The filler value retail writes in every slot that is not a launcher.</summary>
 	public const short Filler = 5;
 
+	/// <summary>
+	/// The list's label for <see cref="Filler"/>: what it means on a launcher, which fires it as SARH. The
+	/// dropdown only ever opens on a launcher, since the forms cancel an ammunition edit on any other mount.
+	/// </summary>
+	public const string FillerLabel = "Default (SARH)";
+
+	/// <summary>
+	/// Shows <c>(none)</c> in the ammunition cell of a mount that is not a launcher, where the filler
+	/// means nothing rather than <see cref="FillerLabel"/>'s SARH.
+	/// </summary>
+	public static void FormatNonLauncherCell(DataGridViewCellFormattingEventArgs e, short ammoType) {
+		if (ammoType == Filler) {
+			e.Value = "(none)";
+			e.FormattingApplied = true;
+		}
+	}
+
 	public required short Id { get; init; }
 	public required string Label { get; init; }
 
@@ -102,7 +119,7 @@ internal sealed class AmmoTypeOption {
 		var options = MissileType.Values()
 			.Select(type => new AmmoTypeOption {
 				Id = (short)type.Id,
-				Label = type.Id == Filler ? "(none)" : $"{type.Abbrev} — {type.Name}"
+				Label = type.Id == Filler ? FillerLabel : $"{type.Abbrev} — {type.Name}"
 			})
 			.ToList();
 

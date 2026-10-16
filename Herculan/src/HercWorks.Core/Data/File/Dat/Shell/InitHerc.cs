@@ -35,6 +35,16 @@ public class InitHerc {
 
 	public ShellHercData? Data { get; set; }
 
+	/// <summary>
+	/// The file stem of each chassis type 0-8, in VSHELL's nine-entry filename table at <c>004706fc</c>:
+	/// <c>INI_OUTL.DAT</c> is type 0. See docs/retail/formats/herc-catalogs.md#the-chassis-type-space.
+	/// </summary>
+	public static readonly IReadOnlyList<string> FileStems =
+		new[] { "OUTL", "RAPT", "TOMA", "SAMS", "COLO", "APOC", "OGRE", "MAVR", "RAZR" };
+
+	/// <summary>The file holding chassis <paramref name="type"/>'s stock fit, e.g. <c>INI_OUTL.DAT</c>.</summary>
+	public static string FileNameFor(int type) => $"INI_{FileStems[type]}.DAT";
+
 	public InitHerc() { }
 
 	public InitHerc(string fileName, string dirPath) {
