@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Every test run, through Directory.Build.props, so a hung test fails the run instead of stalling it. xUnit names any
+     test still running after 30 seconds ("[Long Running Test]", shown at dotnet test's default verbosity, not with
+     -v q), and once a test host has been a minute without finishing a test, blame kills it and the run aborts. No
+     dump is written. The whole suite runs in about 40 seconds, its slowest assembly in about 30. -->
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="blame" enabled="True">
+        <Configuration>
+          <CollectDumpOnTestSessionHang TestTimeout="1m" HangDumpType="None" />
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+  <xUnit>
+    <DiagnosticMessages>true</DiagnosticMessages>
+    <LongRunningTestSeconds>30</LongRunningTestSeconds>
+  </xUnit>
+</RunSettings>

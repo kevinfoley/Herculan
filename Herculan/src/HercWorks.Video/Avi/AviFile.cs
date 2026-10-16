@@ -283,29 +283,33 @@ public sealed class AviFile {
 				continue;
 			}
 
-			if (!TryParsePacketId(chunk.Id, out int stream, out bool isVideo)) {
+			if (!Classify(chunk.Id, out bool isVideo)) {
 				continue;
 			}
 
-			if (stream != _videoStream && stream != _audioStream) {
-				continue;
-			}
-
-			_streamKinds.TryGetValue(stream, out AviStreamKind kind);
 			var packet = new AviPacket(chunk.BodyAt, chunk.BodyLength, false);
-
-			// The two-letter suffix says what the payload is, and the stream header says what the
-			// stream is. Requiring both to agree keeps a mislabelled chunk out of the wrong list.
-			if (isVideo && kind == AviStreamKind.Video) {
-				if (_videoPackets.Count < Limits.MaxFrames) {
-					_videoPackets.Add(packet);
-				}
-			} else if (!isVideo && kind == AviStreamKind.Audio) {
-				if (_audioPackets.Count < Limits.MaxFrames) {
-					_audioPackets.Add(packet);
-				}
+			List<AviPacket> packets = isVideo ? _videoPackets : _audioPackets;
+			if (packets.Count < Limits.MaxFrames) {
+				packets.Add(packet);
 			}
 		}
+	}
+
+	/// <summary>
+	/// Whether a movie-list chunk id is a packet of the video or the audio stream this file's formats were
+	/// read from, and which. <see cref="AviStreamReader"/> sorts its packets by the same test.
+	///
+	/// <para>The two-letter suffix says what the payload is, and the stream header says what the stream
+	/// is. Requiring both to agree keeps a mislabelled chunk out of the wrong list.</para>
+	/// </summary>
+	internal bool Classify(uint id, out bool isVideo) {
+		if (!TryParsePacketId(id, out int stream, out isVideo)
+			|| (stream != _videoStream && stream != _audioStream)) {
+			return false;
+		}
+
+		_streamKinds.TryGetValue(stream, out AviStreamKind kind);
+		return isVideo ? kind == AviStreamKind.Video : kind == AviStreamKind.Audio;
 	}
 
 	/// <summary>

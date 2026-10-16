@@ -33,6 +33,10 @@ tweak.play_last_music_track.display_name  Jouer toutes les musiques
 tweak.play_last_music_track.description   Les missions jouent aussi la dernière des six pistes musicales du disque. Dans le jeu original, les missions n'alternent qu'entre les cinq premières, si bien que la dernière n'est jamais jouée.
 tweak.shuffle_mission_music.display_name  Musique de mission aléatoire
 tweak.shuffle_mission_music.description   Chaque mission joue une piste musicale choisie au hasard, jamais la même deux fois de suite. Le jeu original joue les pistes dans un ordre fixe, une par mission.
+tweak.change_pbw_beam_hue.display_name  Changer la teinte PBW
+tweak.change_pbw_beam_hue.description   Dans le jeu original, les rayons du PBW et du PBW2 utilisent la même texture que les lasers, ce qui les rend impossibles à distinguer. Cet ajustement modifie la teinte du PBW pour plus de clarté.
+tweak.high_resolution_widescreen.display_name  Rendu haute résolution panoramique
+tweak.high_resolution_widescreen.description   Activé, le jeu est rendu à la résolution et aux proportions de la fenêtre. Désactivé, le jeu est rendu en 640x480. L'interface hors mission est toujours en 640x480.
 tweak.smoother_turret_movement.display_name   Mouvement de tourelle plus fluide
 tweak.smoother_turret_movement.description     Fluidifie la rotation de la tourelle lors de la visée au joystick ou avec une autre commande analogique. Le jeu original arrondit la valeur de rotation, ce qui provoque des saccades aux faibles vitesses de visée. Sans effet lors de la visée au clavier.
 tweak.mouse_external_view.display_name         Vue extérieure à la souris
@@ -56,6 +60,8 @@ tweak.fix_raptor2_perspective.description   Place la vue cockpit du Raptor II da
 tweak.reset_counters_on_replay.display_name  Corriger les indicateurs de « Rejouer la mission »
 tweak.reset_counters_on_replay.description   Corrige les indicateurs de mission qui ne sont pas réinitialisés quand vous choisissez de rejouer une mission (après avoir été tué pendant la mission), ce qui pouvait faire échouer des déblocages ou causer d'autres comportements inattendus.
 tweaks.title                   Ajustements
+tweaks.description             Les ajustements modifient le comportement du jeu, en général pour corriger des bugs ou apporter des améliorations de confort. Pour l'expérience la plus proche de l'original (bugs compris), cliquez sur « Aucun » pour désactiver tous les ajustements.
+tweaks.note                    Certains bugs graphiques mineurs et plantages potentiels ne sont pas reproduits dans HERCULAN. La prise en charge des périphériques d'entrée modernes et des autres schémas de commande reste toujours disponible dans le menu Manette.
 tweaks.category.cosmetic       Cosmétique
 tweaks.category.ai             IA
 tweaks.category.functional     Fonctionnel
@@ -131,6 +137,16 @@ controller.saved_for_gamepads  Ces réglages sont enregistrés pour toutes les m
 controller.saved_for_model     Ces réglages sont enregistrés pour ce modèle de joystick.
 controller.saved_for_joysticks Ces réglages sont enregistrés pour tous les joysticks sans réglages propres.
 controller.none_connected      Aucune manette n'est branchée. Branchez-en une et elle apparaîtra ici.
+controller.mouse_emulation     Émulation de la souris
+controller.mouse_emulation_note L'émulation de la souris sert dans l'interface de jeu (menus) et dans l'Éditeur. L'émulation de la souris n'est pas disponible dans cette fenêtre ; utilisez la croix directionnelle pour naviguer dans cette fenêtre.
+controller.cursor_control      Contrôle du curseur
+controller.left_stick          Stick gauche
+controller.right_stick         Stick droit
+controller.cursor_speed        Vitesse du curseur
+controller.cursor_speed_tip    La vitesse à laquelle le stick déplace le curseur, en pourcentage de la vitesse par défaut.
+controller.clicking            Clic
+controller.right_trigger_clicks Gâchette droite : clic gauche, gâchette gauche : clic droit
+controller.left_trigger_clicks Gâchette gauche : clic gauche, gâchette droite : clic droit
 controller.inputs              Ce que le périphérique indique
 controller.axis                Axe {0}
 controller.axis_direction      Axe {0} {1}
@@ -147,6 +163,11 @@ controller.stick_y             Manche avant/arrière
 controller.throttle            Manette des gaz
 controller.rudder              Palonnier
 controller.hat_row             Chapeau
+controller.gamepad_stick_x     Direction / Palonnier
+controller.gamepad_stick_y     Gaz
+controller.gamepad_throttle    Inclinaison tourelle / Tangage
+controller.gamepad_rudder      Rotation tourelle / Roulis
+controller.gamepad_hat_row     Vues
 controller.button_row          BUTTON {0}
 controller.radar_toggle        Bascule radar
 controller.radar_toggle_tip    Fait passer le radar d'actif à passif et inversement, comme R. Cette commande est propre à HERCULAN : le jeu original n'a pas de bouton pour elle, et le panneau CONTROLS ne l'affiche pas.
@@ -158,7 +179,7 @@ controller.detect_axis         Bougez la commande voulue jusqu'en butée.
 controller.detect_hat          Poussez le chapeau voulu dans n'importe quelle direction.
 controller.detect_button       Appuyez sur le bouton voulu, ou tirez la gâchette voulue.
 controller.invert_throttle_tip Pour une manette des gaz : manette au ralenti, « Lu par le jeu » doit afficher un nombre positif. Cochez Inverser s'il est négatif.
-controller.invert_throttle_gamepad_tip  Sur une manette de jeu, c'est le stick droit vers le haut et le bas. Cochez Inverser pour changer le sens dans lequel il oriente la tourelle d'un HERC et incline un Razor.
+controller.invert_throttle_gamepad_tip  Sur une manette de jeu, c'est le stick droit vers le haut et le bas. Cochez Inverser pour changer le sens dans lequel il oriente la tourelle d'un HERC et incline un RAZOR.
 controller.pressed             Appuyé
 controller.released            Relâché
 controller.centred             Centré
@@ -174,6 +195,8 @@ controller.hat_diagonals_tip   Un chapeau poussé en diagonale compte comme ses 
 controller.centre_idle         Ralenti au centre
 controller.centre_idle_tip     Le milieu de la course de la manette des gaz est le ralenti, en avant c'est la marche avant et en arrière la marche arrière. Le jeu original lit la manette des gaz du ralenti à une extrémité jusqu'au plein régime à l'autre, et CHANGE DIRECTION choisit la marche avant ou arrière.
 controller.centre_idle_gamepad_tip      Seulement pour la manette des gaz d'un joystick. Le stick gauche d'une manette de jeu monte et baisse les gaz et les laisse où ils sont, donc ceci n'a aucun effet avec elle.
+controller.invert_razor_pitch  Inverser le tangage RAZOR
+controller.invert_razor_pitch_tip   Inverse le sens dans lequel les commandes lèvent et baissent le nez du RAZOR. La tourelle d'un HERC reste comme la colonne Inverser la règle. Le clavier n'est pas concerné.
 controller.actions_note        Cette fenêtre choisit les parties de votre périphérique que le jeu utilise. Ce que fait chacune (diriger ou viser, FIRE, TARGET, etc.) se règle en mission : appuyez sur F12 pour les préférences, puis CONTROLS. Avec une manette de jeu, les lignes JOYSTICK, THROTTLE, RUDDER et HAT y sont réglées pour elle, et ses choix de boutons sont gardés à part de ceux d'un joystick. Les réglages sont enregistrés dans data\herculan-joystick.cfg, que le jeu original ne lit pas.
 controller.defaults            Par défaut
 controller.no_data_folder      Il n'y a pas de dossier data où enregistrer les réglages.

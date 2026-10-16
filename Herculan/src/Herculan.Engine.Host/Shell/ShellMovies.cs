@@ -119,10 +119,7 @@ sealed class ShellMovies : IDisposable {
 
 	// What playing the queue does to the rest of the shell.
 	private ShellMovieHooks Hooks() => new() {
-		ReadMovie = path => {
-			using var stream = GameInstall.OpenDiscFile(_installRoot, _disc, path);
-			return stream != null ? MovieHost.ReadMovie(stream) : null;
-		},
+		OpenMovie = path => GameInstall.OpenDiscFile(_installRoot, _disc, path),
 		InstallPalette = index => {
 			_canvas.InstallPalette(index);
 			_repaint();

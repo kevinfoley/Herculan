@@ -96,7 +96,7 @@ The whole function reduces to two numbers, `nearLeft` and `nearRight` — the ra
 
 ### The two probes
 
-Two 20000-unit segments in body space, splaying outward:
+Two 20000-unit segments in body space, splaying outward, the same literals on every chassis — nothing in the probe setup reads the type record:
 
 ```
 left :  (-1500, 0, 0)  ->  (-10000, 20000, 0)
@@ -126,8 +126,8 @@ The third source runs only for a machine whose group is **led by the player**, a
 ### Resolving it
 
 ```
-if (unstickActive && nothing found)        take a quarter off the committed side's range
-if (unstickActive && both sides found)     nearLeft += mech+0x254
+if (mech+0xae && nothing found)            take a quarter off the committed side's range
+if (mech+0xae && both sides found)         nearLeft += mech+0x254
 steerAway = nearLeft <= nearRight
 closest   = min(nearLeft, nearRight)
 gain      = (source was the firing line) ? 1000 : 700
@@ -148,7 +148,7 @@ mech+0x254 = rand & 1 ? -5000 : 5000     // a side, picked by coin flip
 mech+0xae  = (mech.speed > 0)            // back out if it was going forward
 ```
 
-For those five seconds `Mech_LocomotionTick` ignores the desired speed it was handed and runs the machine at its chassis maximum — reverse if `+0xae` is set, forward if not — while `mech+0x254` biases the avoidance to the side the coin chose. The bias is applied two ways: it breaks the tie when both sides are blocked, and when *neither* side reports anything it invents a 25% closer reading on the chosen side so the machine still turns.
+For those five seconds `Mech_LocomotionTick` ignores the desired speed it was handed and runs the machine at its chassis maximum — reverse if `+0xae` is set, forward if not — while `mech+0x254` biases the avoidance to the side the coin chose. The bias is applied two ways: it breaks the tie when both sides are blocked, and when *neither* side reports anything it invents a 25% closer reading on the chosen side so the machine still turns. **Only a machine backing out gets the bias**: both tests read `+0xae`, not the timer, so one blocked while standing or reversing runs the five seconds with no side preference. `Mech_LocomotionTick` clears `+0xae` when the timer expires.
 
 ## The navigation states
 
@@ -201,7 +201,7 @@ Its target handling is the exception among the five: it runs `Ai_SelectDefenceTa
 
 | Offset | Type | Meaning |
 |---|---|---|
-| `+0xae` | byte | Unstick direction: reverse out rather than push forward |
+| `+0xae` | byte | Unstick direction: reverse out rather than push forward. Also what turns on the avoidance's side bias |
 | `+0x254` | short | Unstick side, `±5000` |
 | `+0x26d` | timer | The unstick window, 10000 counts or about 4.9 s; its counter is the int at `+0x26e` |
 | `+0x252` | short | AI cruise speed, from block 7 `+0x02` ([`script-dat.md`](../formats/script-dat.md), [`msn-mission-file.md`](../formats/msn-mission-file.md)). Zero means `0xaa` |

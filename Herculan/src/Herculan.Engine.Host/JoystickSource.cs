@@ -236,9 +236,11 @@ sealed class JoystickSource : IJoystickSource {
 			Console.WriteLine(line);
 		}
 
-		// The lever's mode lives in the map but is read through the bindings, the control law having no
-		// route to the map. Derived maps never set it, so this only ever carries a file's own choice.
+		// The lever's mode and the RAZOR's pitch sense live in the map but are read through the bindings, the
+		// control law having no route to the map. Derived maps never set them, so this only ever carries a file's
+		// own choice.
 		bindings.BipolarThrottle = map.BipolarThrottle;
+		bindings.InvertRazorPitch = map.InvertRazorPitch;
 
 		// Only when a stick really answered: with none attached the panel keeps whatever --joystick staged,
 		// which is the whole point of that flag.

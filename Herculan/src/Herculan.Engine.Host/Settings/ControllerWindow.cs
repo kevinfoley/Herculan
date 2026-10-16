@@ -15,7 +15,9 @@ namespace Herculan.Engine.Host.Settings;
 /// this engine's own (<see cref="JoystickDeviceMap.RadarToggle"/>). It edits the install's
 /// <c>data\herculan-joystick.cfg</c> (<see cref="JoystickMapFile"/>; docs/herculan/joystick-config.md), and is this
 /// engine's own: retail reads a stick's axes in a fixed order and has nothing to set. What each control does stays
-/// with retail's CONTROLS panel.
+/// with retail's CONTROLS panel. Above the device's own settings, and only while a gamepad is connected, "Mouse emulation" chooses the stick, its speed and the triggers
+/// a gamepad works the pointer with in the front end and the mission editor (<see cref="JoystickMapFile.Mouse"/>), which
+/// serve every gamepad whichever device is being edited.
 ///
 /// <para>What the player sees and does is docs/herculan/joystick-config.md, "Setting up a stick". Save hands the file to
 /// a mission's stick (<see cref="JoystickSource.Configure"/>); the front end reads no stick, and the next mission reads
@@ -39,6 +41,11 @@ sealed class ControllerWindow {
 
 	private static readonly string[] AxisRowKeys =
 		["controller.stick_x", "controller.stick_y", "controller.throttle", "controller.rudder"];
+
+	// A gamepad's rows are named for what they do, which GamepadControls' fixed axis rows decide whatever axis fills
+	// them: the slots' own names would have the throttle slot aiming the turret.
+	private static readonly string[] GamepadAxisRowKeys =
+		["controller.gamepad_stick_x", "controller.gamepad_stick_y", "controller.gamepad_throttle", "controller.gamepad_rudder"];
 
 	private static readonly Vector4 LitColour = new(0.45f, 0.85f, 0.45f, 1f);
 	private static readonly Vector4 ErrorColour = new(1f, 0.45f, 0.4f, 1f);
@@ -77,6 +84,9 @@ sealed class ControllerWindow {
 
 	/// <summary>Whether the window is up.</summary>
 	public bool IsOpen { get; private set; }
+
+	/// <summary>Raised by Save with the file it wrote, for whatever reads it outside a mission.</summary>
+	public event Action<JoystickMapFile>? Saved;
 
 	/// <summary>Whether Detect is listening for a control to bind.</summary>
 	public bool Listening => IsOpen && _detecting != NotDetecting;
@@ -125,17 +135,23 @@ sealed class ControllerWindow {
 		if (ImGui.Begin(Text("controller.title") + "###controller", ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
 			var device = CurrentDevice();
 			DeviceRow(device);
-
 			if (device != null) {
 				Detect(device);
+			} else {
+				ImGui.TextWrapped(Text("controller.none_connected"));
+			}
+
+			if (_input != null && ControllerDevice.Connected(_input).Any(connected => connected.IsGamepad)) {
+				MouseEmulation();
+			}
+
+			if (device != null) {
 				ImGui.SeparatorText(Text("controller.inputs"));
 				DeviceState(device);
 				ImGui.SeparatorText(Text("controller.controls"));
 				ControlRows(device);
 				ImGui.SeparatorText(Text("controller.options"));
 				Options(device);
-			} else {
-				ImGui.TextWrapped(Text("controller.none_connected"));
 			}
 
 			ImGui.Spacing();
@@ -227,6 +243,52 @@ sealed class ControllerWindow {
 		}
 	}
 
+	// Which stick moves the pointer and how fast, and which trigger is the left button while a gamepad works as the mouse.
+	private void MouseEmulation() {
+		ImGui.SeparatorText(Text("controller.mouse_emulation"));
+		ImGui.PushTextWrapPos(0f);
+		ImGui.TextDisabled(Text("controller.mouse_emulation_note"));
+		ImGui.PopTextWrapPos();
+
+		var mouse = _file.Mouse;
+		if (SideCombo("controller.cursor_control", "###cursor", mouse.CursorStick,
+				(GamepadSide.Left, "controller.left_stick"), (GamepadSide.Right, "controller.right_stick")) is { } stick) {
+			_file.Mouse = mouse with { CursorStick = stick };
+		}
+
+		int speed = mouse.CursorSpeed;
+		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.6f);
+		if (ImGui.SliderInt(Text("controller.cursor_speed") + "###cursorSpeed", ref speed,
+				GamepadMouseSettings.MinCursorSpeed, GamepadMouseSettings.MaxCursorSpeed, "%d%%", ImGuiSliderFlags.AlwaysClamp)) {
+			_file.Mouse = _file.Mouse with { CursorSpeed = speed };
+		}
+		Tooltip("controller.cursor_speed_tip");
+
+		mouse = _file.Mouse;
+		if (SideCombo("controller.clicking", "###clicking", mouse.LeftClickTrigger,
+				(GamepadSide.Right, "controller.right_trigger_clicks"), (GamepadSide.Left, "controller.left_trigger_clicks")) is { } trigger) {
+			_file.Mouse = mouse with { LeftClickTrigger = trigger };
+		}
+	}
+
+	// A combo of two choices; the one chosen, or null when nothing new was.
+	private GamepadSide? SideCombo(string labelKey, string id, GamepadSide current,
+			(GamepadSide Side, string Key) first, (GamepadSide Side, string Key) second) {
+		GamepadSide? chosen = null;
+		ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * 0.6f);
+		if (ImGui.BeginCombo(Text(labelKey) + id, Text(current == first.Side ? first.Key : second.Key))) {
+			foreach (var (side, key) in (ReadOnlySpan<(GamepadSide, string)>)[first, second]) {
+				if (ImGui.Selectable(Text(key), side == current)) {
+					chosen = side;
+				}
+			}
+
+			ImGui.EndCombo();
+		}
+
+		return chosen == current ? null : chosen;
+	}
+
 	// Every axis, button and hat the device reports, as it reports them.
 	private void DeviceState(ControllerDevice device) {
 		const int Columns = 3;
@@ -262,7 +324,7 @@ sealed class ControllerWindow {
 	// reads from it through the map being edited.
 	private void ControlRows(ControllerDevice device) {
 		var reading = JoystickSource.Read(_draft, device);
-		var clashes = Clashes();
+		var clashes = Clashes(device.IsGamepad);
 		if (!ImGui.BeginTable("##controls", 5, ImGuiTableFlags.SizingStretchProp | ImGuiTableFlags.RowBg)) {
 			return;
 		}
@@ -278,7 +340,7 @@ sealed class ControllerWindow {
 			ImGui.PushID(row);
 			ImGui.TableNextRow();
 			ImGui.TableNextColumn();
-			ImGui.TextUnformatted(Text(AxisRowKeys[row]));
+			ImGui.TextUnformatted(RowLabel(row, device.IsGamepad));
 
 			ImGui.TableNextColumn();
 			if (InputCombo(AxisOf(row), device.AxisCount, "controller.axis", clashes[row]) is { } axis) {
@@ -308,7 +370,7 @@ sealed class ControllerWindow {
 		ImGui.PushID(HatRow);
 		ImGui.TableNextRow();
 		ImGui.TableNextColumn();
-		ImGui.TextUnformatted(Text("controller.hat_row"));
+		ImGui.TextUnformatted(RowLabel(HatRow, device.IsGamepad));
 		ImGui.TableNextColumn();
 		if (InputCombo(_draft.HatIndex, device.HatCount, "controller.hat", clash: null) is { } hatIndex) {
 			_draft = _draft with { HatIndex = hatIndex };
@@ -381,12 +443,18 @@ sealed class ControllerWindow {
 		}
 		ImGui.EndDisabled();
 		Tooltip(device.IsGamepad ? "controller.centre_idle_gamepad_tip" : "controller.centre_idle_tip");
+
+		bool razorPitch = _draft.InvertRazorPitch;
+		if (ImGui.Checkbox(Text("controller.invert_razor_pitch") + "###razorpitch", ref razorPitch)) {
+			_draft = _draft with { InvertRazorPitch = razorPitch };
+		}
+		Tooltip("controller.invert_razor_pitch_tip");
 	}
 
 	// For each row, which other rows its device input also fills, as a sentence naming them, or null where it fills only
 	// its own. Two button rows on an axis's opposite directions do not share it; an axis row and a button row on either
 	// direction of its axis do, since moving the axis presses the button.
-	private string?[] Clashes() {
+	private string?[] Clashes(bool isGamepad) {
 		var bound = new Bound?[RadarRow + 1];
 		for (int row = 0; row < AxisRows; row++) {
 			bound[row] = AxisOf(row) is var axis && axis != JoystickDeviceMap.Unmapped ? new Bound(true, axis, 0) : null;
@@ -408,7 +476,7 @@ sealed class ControllerWindow {
 			for (int other = 0; other < bound.Length; other++) {
 				if (other != row && bound[other] is { } shared && shared.Axis == input.Axis && shared.Index == input.Index
 						&& (shared.Sign == 0 || input.Sign == 0 || shared.Sign == input.Sign)) {
-					others.Add(RowLabel(other));
+					others.Add(RowLabel(other, isGamepad));
 				}
 			}
 
@@ -423,9 +491,10 @@ sealed class ControllerWindow {
 	private static Bound? BoundOf(JoystickButtonSource source) =>
 		source.IsMapped ? new Bound(source.IsAxis, source.Index, source.AxisSign) : null;
 
-	private string RowLabel(int row) =>
-		row < AxisRows ? Text(AxisRowKeys[row])
-		: row == HatRow ? Text("controller.hat_row")
+	// A gamepad's hat is fixed on VIEWS in both halves of the CONTROLS panel, as its axis rows are fixed.
+	private string RowLabel(int row, bool isGamepad) =>
+		row < AxisRows ? Text((isGamepad ? GamepadAxisRowKeys : AxisRowKeys)[row])
+		: row == HatRow ? Text(isGamepad ? "controller.gamepad_hat_row" : "controller.hat_row")
 		: row == RadarRow ? Text("controller.radar_toggle")
 		: Format("controller.button_row", row - FirstButtonRow + 1);
 
@@ -571,6 +640,7 @@ sealed class ControllerWindow {
 	private void ApplyDefaults() {
 		_detecting = NotDetecting;
 		_draft = CurrentDevice()?.Defaults() ?? new JoystickDeviceMap();
+		_file.Mouse = new GamepadMouseSettings();
 	}
 
 	private void Save() {
@@ -592,6 +662,7 @@ sealed class ControllerWindow {
 		}
 
 		_live?.Configure(_file);
+		Saved?.Invoke(_file);
 		Cancel();
 	}
 

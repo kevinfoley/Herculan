@@ -10,7 +10,7 @@ namespace HercWorks.UI;
 /// <summary>
 /// Starting shell for the HercWorks MDK WinForms port. Currently supports opening
 /// and browsing a .vol archive, unpacking it to a folder, editing HERC_INF.DAT via
-/// the Herc Stats editor, editing WEAPONS.DAT via the Item Stats editor, editing a
+/// the Herc Stats editor, editing the INI_*.DAT stock fits via the Stock Fits editor, editing WEAPONS.DAT via the Item Stats editor, editing a
 /// player .sav file's salvage/workshop slots via the Campaign Resources editor, and
 /// exporting DBA/DBM/DPL Dynamix bitmap data to PNG via the Tools menu's Image
 /// Export dialog, and viewing .DTS 3D models with an orbit camera via the Tools
@@ -419,6 +419,11 @@ public partial class MainForm : Form {
 
 	private void OnOpenHercStats(object? sender, EventArgs e) {
 		using var form = new HercStatsForm();
+		form.ShowDialog(this);
+	}
+
+	private void OnOpenStockFits(object? sender, EventArgs e) {
+		using var form = new StockFitForm();
 		form.ShowDialog(this);
 	}
 

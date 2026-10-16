@@ -1,4 +1,5 @@
 using Herculan.Engine.Host.Settings;
+using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Settings;
 using Herculan.Engine.Shell;
@@ -27,6 +28,7 @@ sealed class FrontEndWindow : IDisposable {
 	private readonly EngineWindow _window;
 	private readonly HostMenuBar _menuBar;
 	private readonly string _imguiFontPath;
+	private readonly string _imguiItalicFontPath;
 	private readonly string? _screenshotPath;
 	private readonly GamepadHostButtons _padButtons = new();
 	private readonly GamepadPointer _padPointer = new();
@@ -34,6 +36,9 @@ sealed class FrontEndWindow : IDisposable {
 	private ScaledImGui? _imgui;
 	private ImGuiGamepad? _padNav;
 	private int _framesRendered;
+
+	// Whether the bar was up at the last pad update, to see it go down.
+	private bool _barWasVisible;
 
 	// Set by the Settings menu's restart and the Editor item, either of which closes the window once the frame's ImGui
 	// is drawn.
@@ -50,11 +55,15 @@ sealed class FrontEndWindow : IDisposable {
 	public FrontEndWindow(HostSession session, HostWindow window, string title, string? screenshotPath,
 			Action restartRequested, Action editorRequested) {
 		_imguiFontPath = session.ImGuiFontPath;
+		_imguiItalicFontPath = session.ImGuiItalicFontPath;
 		_screenshotPath = screenshotPath;
 		_window = new EngineWindow(window, title);
+		string dataDirectory = ShellWorkingFiles.DataDirectory(session.InstallRoot);
+		_padPointer.Settings = JoystickMapFile.LoadIn(dataDirectory).Mouse;
+		var controller = new ControllerWindow(session.Localization, () => dataDirectory);
+		controller.Saved += file => _padPointer.Settings = file.Mouse;
 		_menuBar = new HostMenuBar(session.Localization, new TweaksMenu(TweakSettings.Current, session.Localization),
-			new SettingsWindow(session, () => RequestClose(restartRequested)),
-			new ControllerWindow(session.Localization, () => ShellWorkingFiles.DataDirectory(session.InstallRoot)),
+			new SettingsWindow(session, () => RequestClose(restartRequested)), controller,
 			openEditor: () => RequestClose(editorRequested));
 		_window.FocusChanged += focused => {
 			HasFocus = focused;
@@ -107,7 +116,10 @@ sealed class FrontEndWindow : IDisposable {
 
 	/// <summary>Takes the window's devices once its input context exists, and builds ImGui on its GL context.</summary>
 	public void Attach(GL gl, IInputContext input) {
-		_imgui = new ScaledImGui(gl, _window, input, _imguiFontPath);
+		_imgui = new ScaledImGui(gl, _window, input, _imguiFontPath, _imguiItalicFontPath) {
+			HeldAsMouseButtons = () => (_padPointer.ClickHeld, _padPointer.RightClickHeld),
+		};
+		_menuBar.Tweaks.Fonts = _imgui;
 		_padNav = new ImGuiGamepad(input);
 		_imgui.GamepadFeed = _padNav.Feed;
 		Mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
@@ -126,22 +138,35 @@ sealed class FrontEndWindow : IDisposable {
 			mouse.Position.Y * framebuffer.Y / Math.Max(client.Y, 1));
 	}
 
-	/// <summary>Whether a gamepad's right trigger is pulled as the left button (<see cref="GamepadPointer"/>).</summary>
+	/// <summary>Whether a gamepad's trigger is pulled as the left button (<see cref="GamepadPointer"/>).</summary>
 	public bool PadClickHeld => _padPointer.ClickHeld;
 
-	/// <summary>Whether a gamepad button is held as a skip key (<see cref="GamepadPointer"/>).</summary>
-	public bool PadSkipHeld => _padPointer.SkipHeld;
+	/// <summary>
+	/// Whether a gamepad button is held as a skip key (<see cref="GamepadPointer"/>); never while the bar is up, where the
+	/// buttons work the bar.
+	/// </summary>
+	public bool PadSkipHeld => _padPointer.SkipHeld && !_menuBar.Visible;
 
 	/// <summary>
-	/// Moves the pointer by a gamepad's left stick and reads its right trigger and its buttons, once an update before the
+	/// Moves the pointer by a gamepad's stick and reads its triggers and its buttons, once an update before the
 	/// buttons are polled (<see cref="GamepadPointer"/>). The pad stands down without the focus, in a <c>--screenshot</c>
-	/// capture, and while the menu bar or one of its windows is up, where ImGui's own gamepad navigation has it.
+	/// capture, and while one of the menu bar's windows is up, where ImGui's own gamepad navigation has it. While the bar
+	/// alone is up the stick and the triggers go on working the pointer, the triggers reaching ImGui as the mouse's
+	/// buttons, so the bar can be clicked or hidden by a click outside it; the bar going down then waits, as a window
+	/// closing does, for the pad to be let go.
 	/// </summary>
 	public void UpdatePadPointer(double delta) {
-		if (_input != null) {
-			_padPointer.Update(_input, Mouse, _window.ClientSize, delta,
-				active: HasFocus && _screenshotPath == null && !_menuBar.Up);
+		if (_input == null) {
+			return;
 		}
+
+		if (_barWasVisible && !_menuBar.Visible) {
+			_padPointer.WaitForRelease();
+		}
+
+		_barWasVisible = _menuBar.Visible;
+		_padPointer.Update(_input, Mouse, _window.ClientSize, delta,
+			active: HasFocus && _screenshotPath == null && !_menuBar.PanelOpen);
 	}
 
 	/// <summary>

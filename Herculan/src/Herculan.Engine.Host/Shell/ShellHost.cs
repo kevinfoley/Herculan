@@ -29,7 +29,7 @@ namespace Herculan.Engine.Host.Shell;
 /// <para>The pointer is polled once per update, and each change in its position or in either button
 /// becomes one of the events VSHELL's queue carries, which <see cref="ShellPointer"/> delivers as
 /// <c>EventQueue_Pump</c> (<c>00469ba4</c>) does: two changes inside one update arrive together, move first. A gamepad's
-/// left stick moves the same pointer and its right trigger is held as the left button (<see cref="Platform.GamepadPointer"/>).</para>
+/// stick moves the same pointer and one of its triggers is held as the left button (<see cref="Platform.GamepadPointer"/>).</para>
 /// </summary>
 sealed class ShellHost : IDisposable {
 	/// <summary>The movie <c>Shell_Main</c> (<c>00401525</c>) opens on the disc at startup to tell that the disc is there.</summary>

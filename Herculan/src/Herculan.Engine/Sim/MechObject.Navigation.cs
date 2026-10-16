@@ -303,7 +303,10 @@ public partial class MechObject {
 			}
 		}
 
-		if (_backoffTimer != 0 && nearLeft == AvoidanceRange && nearRight == AvoidanceRange) {
+		// The side bias is gated on the reverse-out flag (mech+0xae), not on the unstick timer the top
+		// of the function tests: a machine blocked while standing or reversing runs the timer with no
+		// bias.
+		if (_backoffReverse && nearLeft == AvoidanceRange && nearRight == AvoidanceRange) {
 			// Nothing seen while backing out of something: invent a reading a quarter nearer on the
 			// side the collision picked, so the machine still turns as it clears.
 			if (_backoffSide > 0) {
@@ -317,7 +320,7 @@ public partial class MechObject {
 			return;
 		}
 
-		if (_backoffTimer != 0 && nearLeft < AvoidanceRange && nearRight < AvoidanceRange) {
+		if (_backoffReverse && nearLeft < AvoidanceRange && nearRight < AvoidanceRange) {
 			nearLeft += _backoffSide;
 		}
 

@@ -33,6 +33,10 @@ tweak.play_last_music_track.display_name  Alle Musikstücke abspielen
 tweak.play_last_music_track.description   Einsätze spielen auch das letzte der sechs Musikstücke der CD. Im Originalspiel wechseln die Einsätze nur zwischen den ersten fünf, sodass das letzte nie gespielt wird.
 tweak.shuffle_mission_music.display_name  Einsatzmusik zufällig wählen
 tweak.shuffle_mission_music.description   Jeder Einsatz spielt ein zufällig gewähltes Musikstück, nie zweimal hintereinander dasselbe. Das Originalspiel spielt die Stücke in fester Reihenfolge, eines pro Einsatz.
+tweak.change_pbw_beam_hue.display_name  PBW-Strahlfarbe ändern
+tweak.change_pbw_beam_hue.description   Im Originalspiel verwenden die Strahlen von PBW und PBW2 dieselbe Textur wie die Laser, sodass sie nicht zu unterscheiden sind. Diese Anpassung ändert den Farbton der PBW zur besseren Unterscheidung.
+tweak.high_resolution_widescreen.display_name  Hochauflösende Breitbilddarstellung aktivieren
+tweak.high_resolution_widescreen.description   Wenn aktiviert, wird das Spielgeschehen in der Auflösung und im Seitenverhältnis des Fensters dargestellt. Wenn deaktiviert, wird es in 640x480 dargestellt. Die Menüs außerhalb des Einsatzes sind immer 640x480.
 tweak.smoother_turret_movement.display_name   Flüssigere Geschützturmbewegung
 tweak.smoother_turret_movement.description     Glättet die Drehung des Geschützturms beim Zielen mit Joystick oder einem anderen analogen Eingabegerät. Das Originalspiel rundet den Drehwert, was bei langsamen Zielbewegungen zu Ruckeln führt. Hat beim Zielen mit der Tastatur keine Wirkung.
 tweak.mouse_external_view.display_name         Außenansicht per Maus
@@ -56,6 +60,8 @@ tweak.fix_raptor2_perspective.description   Setzt die Cockpitansicht des Raptor 
 tweak.reset_counters_on_replay.display_name  Flags bei „Einsatz noch mal?“ korrigieren
 tweak.reset_counters_on_replay.description   Behebt, dass Einsatz-Flags nicht zurückgesetzt werden, wenn Sie einen Einsatz wiederholen (nachdem Sie im Einsatz getötet wurden). Das konnte Freischaltungen verhindern oder anderes unerwartetes Verhalten auslösen.
 tweaks.title                   Optimierungen
+tweaks.description             Optimierungen verändern das Spielverhalten, meist um Fehler zu beheben oder den Komfort zu verbessern. Für ein möglichst originalgetreues Spielerlebnis (Fehler inklusive) klicken Sie auf „Keine", um alle Optimierungen abzuschalten.
+tweaks.note                    Einige kleinere optische Fehler und mögliche Abstürze werden in HERCULAN nicht nachgebildet. Moderne Eingabegeräte und alternative Steuerungsschemata werden über das Menü Controller immer unterstützt.
 tweaks.category.cosmetic       Kosmetisch
 tweaks.category.ai             KI
 tweaks.category.functional     Funktional
@@ -131,6 +137,16 @@ controller.saved_for_gamepads  Diese Einstellungen werden für jedes Gamepad ges
 controller.saved_for_model     Diese Einstellungen werden für dieses Joystick-Modell gespeichert.
 controller.saved_for_joysticks Diese Einstellungen werden für jeden Joystick ohne eigene Einstellungen gespeichert.
 controller.none_connected      Es ist kein Controller angeschlossen. Schließen Sie einen an, dann erscheint er hier.
+controller.mouse_emulation     Mausemulation
+controller.mouse_emulation_note Die Mausemulation wird im Spielmenü und im Editor verwendet. In diesem Fenster ist die Mausemulation nicht verfügbar; navigieren Sie in diesem Fenster mit dem Steuerkreuz.
+controller.cursor_control      Mauszeigersteuerung
+controller.left_stick          Linker Stick
+controller.right_stick         Rechter Stick
+controller.cursor_speed        Zeigergeschwindigkeit
+controller.cursor_speed_tip    Wie schnell der Stick den Mauszeiger bewegt, in Prozent der Standardgeschwindigkeit.
+controller.clicking            Klicken
+controller.right_trigger_clicks Rechter Trigger: Linksklick, linker Trigger: Rechtsklick
+controller.left_trigger_clicks Linker Trigger: Linksklick, rechter Trigger: Rechtsklick
 controller.inputs              Was das Gerät meldet
 controller.axis                Achse {0}
 controller.axis_direction      Achse {0} {1}
@@ -147,6 +163,11 @@ controller.stick_y             Stick vor/zurück
 controller.throttle            Schubregler
 controller.rudder              Ruder
 controller.hat_row             Coolie-Hat
+controller.gamepad_stick_x     Lenken / Ruder
+controller.gamepad_stick_y     Schub
+controller.gamepad_throttle    Turmneigung / Nicken
+controller.gamepad_rudder      Turmdrehung / Rollen
+controller.gamepad_hat_row     Ansichten
 controller.button_row          BUTTON {0}
 controller.radar_toggle        Radar umschalten
 controller.radar_toggle_tip    Schaltet das Radar zwischen aktiv und passiv um, wie R. Diese Steuerung gibt es nur in HERCULAN: Das Originalspiel hat keine Taste dafür, und das CONTROLS-Feld zeigt sie nicht.
@@ -158,7 +179,7 @@ controller.detect_axis         Bewegen Sie das gewünschte Steuerelement bis zum
 controller.detect_hat          Drücken Sie den gewünschten Coolie-Hat in eine beliebige Richtung.
 controller.detect_button       Drücken Sie die gewünschte Taste oder ziehen Sie den gewünschten Trigger.
 controller.invert_throttle_tip Für einen Schubhebel: Steht der Hebel im Leerlauf, sollte „Spiel liest“ eine positive Zahl zeigen. Zeigt es eine negative, setzen Sie „Umkehren“.
-controller.invert_throttle_gamepad_tip  Bei einem Gamepad ist dies der rechte Stick nach oben und unten. Setzen Sie „Umkehren“, um umzukehren, in welche Richtung er den Turm eines HERC richtet und eine Razor neigt.
+controller.invert_throttle_gamepad_tip  Bei einem Gamepad ist dies der rechte Stick nach oben und unten. Setzen Sie „Umkehren“, um umzukehren, in welche Richtung er den Turm eines HERC richtet und eine RAZOR neigt.
 controller.pressed             Gedrückt
 controller.released            Losgelassen
 controller.centred             Mitte
@@ -174,6 +195,8 @@ controller.hat_diagonals_tip   Ein diagonal gedrückter Coolie-Hat zählt als se
 controller.centre_idle         Leerlauf in der Mitte
 controller.centre_idle_tip     Die Mitte des Schubreglerwegs ist Leerlauf, davor ist vorwärts und dahinter rückwärts. Das Originalspiel liest den Schubregler von Leerlauf am einen Ende bis Vollgas am anderen, und CHANGE DIRECTION wählt vorwärts oder rückwärts.
 controller.centre_idle_gamepad_tip      Nur für den Schubhebel eines Joysticks. Der linke Stick eines Gamepads bewegt den Schub hoch und runter und lässt ihn dort, wo er ist, daher bewirkt dies damit nichts.
+controller.invert_razor_pitch  RAZOR-Nicken umkehren
+controller.invert_razor_pitch_tip   Kehrt um, in welche Richtung die Steuerung die Nase des RAZOR hebt und senkt. Der Turm eines HERC bleibt so, wie die Spalte „Umkehren“ ihn einstellt. Die Tastatur ist nicht betroffen.
 controller.actions_note        Dieses Fenster legt fest, welche Teile Ihres Geräts das Spiel verwendet. Was jedes davon tut (Lenken oder Zielen, FIRE, TARGET usw.), wird in einer Mission eingestellt: Drücken Sie F12 für die Einstellungen, dann CONTROLS. Mit einem Gamepad sind die Zeilen JOYSTICK, THROTTLE, RUDDER und HAT dort passend festgelegt, und seine Tastenbelegung wird getrennt von der eines Joysticks gespeichert. Die Einstellungen werden in data\herculan-joystick.cfg gespeichert, die das Originalspiel nicht liest.
 controller.defaults            Standard
 controller.no_data_folder      Es gibt keinen data-Ordner, in dem die Einstellungen gespeichert werden können.

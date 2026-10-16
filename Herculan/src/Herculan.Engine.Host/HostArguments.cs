@@ -79,7 +79,7 @@ static class HostArguments {
 		  --record <tape>             record the mission's input to <tape>.tap
 
 		Front end (none combines with --mission)
-		  --shell-tab <0-7>  --shell-bay <0-7>  --shell-training  --shell-practice
+		  --shell-tab <0-7>  --shell-bay <0-7>  --shell-practice
 		  --shell-windowed  --shell-no-movies
 		  --shell-palette <name>
 

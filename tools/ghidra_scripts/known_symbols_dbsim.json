@@ -877,7 +877,13 @@
       "name": "Base_ApplyFormationTerrain",
       "description": "Repaints the ground under one base group with its formation's own material -- what puts a retail base on a marked concrete pad instead of open terrain. Called from DBSim_SpawnMissionObjects (004253d8) immediately after DBSim_BuildGroupRecord, for discriminator-2 groups whose block-11 paints-ground flag (0x06) is set, passing the group's first-attached member. Reads that object's group pointer (+0x45) -> formation id (+2) -> the BFORMS.DAT record at DAT_004a9630, and returns without doing anything when the record's material index (+8) is -1, which is exactly the six formations that carry no layout map. Otherwise hands Terrain_PaintFormationPad (00471260) the object's position (+0x26), that material index, the record's row-pointer array (+0x18) and its map dimension (+0x14). Sibling of Base_AttachToGroup (00405c3c), which snaps the group onto the tile this paints under the same flag.",
       "source": "docs/retail/formats/script-dat.md (base formation terrain)",
-      "signature": "void __cdecl Base_ApplyFormationTerrain(void *structure)"
+      "signature": "void __cdecl Base_ApplyFormationTerrain(void *structure)",
+      "verified": {
+        "bytes": "00405db0+68",
+        "sha1": "c79a2f86d7a1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00405df4",
@@ -5660,8 +5666,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiObstacleAvoidance",
-      "description": "Terrain and obstacle avoidance applied to steering and desired speed. AI only -- Mech_LocomotionTick skips it when the mech is PlayerMech. Reduces to the nearer obstruction on each side, both starting at 22000, from three sources: two 20000-unit body-space probes splaying +/-10000 (Sim_RaycastShapes and Terrain_RayWalk), a sweep of live machines at Q10(2000, range) inside a 45-degree arc, and -- for a squad led by the player -- the player's line of fire at Q10(1000, range) inside 67.5 degrees. Steer is +/-((22000 - closest) * gain / 22000), gain 700 or 1000 for the firing line; only the firing line ever cuts the speed. The mirrored reverse mode is written 0 at the top of the function and never set, which also makes the half-speed arm of the speed override unreachable.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "description": "Amends a turn axis and a desired speed in place through its pointer arguments: (mech, short *turn, short *desired, flags). Returns at once when the speed (+0x28e) and *desired are both zero, or when *desired is negative and the unstick counter (+0x26e) is zero. Each side's range starts at 22000. Unless flags bit 0 is set: two body-space probes from fixed literals, the same on every chassis -- left (-1500,0,0)->(-10000,20000,0), right (1500,0,0)->(10000,20000,0) -- put through the machine's frame with both ends' Z set to one Terrain_HeightQuery under the machine; each side takes Sim_RaycastShapes' range when under 22000, then Terrain_RayWalk mode 1's hit measured by Math_GroundDistanceBetweenPoints from the probe's start when nearer. Then every live-list object other than itself whose group +0x14 is zero and whose vtable +0x7c is nonzero, at Q10(2000, Math_DistanceBetweenPoints), claims the left side for a bearing error (Math_HeadingToward minus heading) of 0 to 0x1fff and the right for -1 to -0x1fff. When the group leader (group+0x0c slot 0) has +0xa3 set, each of the DAT_004a9d4c points at DAT_004a9c0c does the same at Q10(1000, Math_GroundDistanceBetweenPoints) inside 0x3000, marking its side as a firing-line reading. While +0xae (backing out of a block) is set: both sides at 22000 takes a quarter off the side +0x254 names (left when positive, else right); both under 22000 adds +0x254 to the left. Then, if either side is under 22000, the closer (left on a tie) gives (22000 - closest) * gain / 22000, gain 1000 for a firing-line reading and 700 otherwise, added to *turn and negated when left is closer; a firing-line reading under 3000 sets *desired to typeRec+4. A reverse-mode local is zeroed at the top and has no other write in the body; set, it would rotate the bearing tests half a turn and make the override take typeRec+6 >> 1.",
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00416274+1733",
+        "sha1": "345faee6767f",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041693c",
@@ -6583,9 +6595,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourRamTick",
-      "description": "The per-tick MOVE slot of one AI behaviour state, NOT a death throe: block 00499b5c's +0x0c, whose think slot Mech_BehaviourRamThink (0041e570) charges the machine's selected target at full throttle and calls this three times a tick once its charge timer fires. Integrates motion, snaps the machine to terrain height + typeRec+0x16, places its legs, and runs Mech_CollisionTest; on a block (or once mech+0xb1 is latched) it detonates Damage_ExplosiveBlastSweep(pos, 3000, 2000, 0, self) and then finishes off every one of its own 29 components with a flat 32000 through vtable +0x74 -- a guaranteed self-destruction, no roll and no falloff. Ghidra's function boundary starts one prologue late at 0041e48e. The mech+0xb1 arm is the 'something ran into me' latch Mech_CollisionTest raises through vtable +0x68 (SimObject_SetRunInto, 0042200c) on whatever blocked it; that byte has exactly one writer and this one reader in the image and is NEVER cleared, so a machine bumped earlier in the mission detonates on its first tick in the state.",
+      "description": "The move slot of the ramming state (17), in place of Mech_MovementTick: Mech_IntegrateMotion, Z set to Terrain_HeightQuery(ActiveHeightGrid) plus typeRec+0x16, Mech_PlaceLegsOnGround, then Mech_CollisionTest -- with no SimObject_PushTransform/SimObject_PopTransform, so a refused step is kept. When the test refuses, or mech+0xb1 (the 'something ran into me' latch SimObject_SetRunInto raises) is set, it calls Damage_ExplosiveBlastSweep(pos, 3000, 2000, 0, self) and then writes a flat 32000 through vtable +0x74, attacker self, to each of its 29 components whose active flag (the +0x20e array) is set. Returns 1.",
       "source": "docs/retail/simulation/damage-system.md",
-      "signature": "short __cdecl Mech_BehaviourRamTick(int *this)"
+      "signature": "short __cdecl Mech_BehaviourRamTick(int *this)",
+      "verified": {
+        "bytes": "0041e488+202",
+        "sha1": "14056016351a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041e554",
@@ -6727,7 +6745,13 @@
       "confidence": "high",
       "name": "Ai_DriveToPoint",
       "description": "The AI's one steering primitive: Mech_LocomotionTick(mech, (Math_HeadingToward(point, mech) - mech.heading) >> 6, speed, 0) with speed = mech+0x252 or 0xaa when that is zero, and a Turbo Pod sprint at 0x100 past 30000 units that only a standing squad order can reach. Returns whether the GROUND-PLANE range is under 10000 -- arrival, which is what Ai_FollowRoute steps the route cursor on.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0041fac4+156",
+        "sha1": "250669a0bcd9",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041fb60",
@@ -8268,7 +8292,13 @@
       "confidence": "high",
       "name": "Terrain_LoadZone",
       "description": "terrain.cpp zone/grid loader. Builds a 'zoneNNNN' filename, reads a grid header, allocates a HeightGrid, installs it as ActiveHeightGrid.",
-      "source": "memory project_es2_exe_recon"
+      "source": "memory project_es2_exe_recon",
+      "verified": {
+        "bytes": "0042789c+774",
+        "sha1": "ff3f1558a47c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00427ba4",
@@ -22290,7 +22320,13 @@
       "confidence": "high",
       "name": "SimObject_GetShapeRadius",
       "description": "SimObject vtable +0x10: the current LOD shape's bounding radius, shape+8 via the shape instance at obj+0x34. Every hit test's coarse reject uses it, as does the LOD selector Shape_DrawAtDetailLevel. shape+8 is the third of the three int16 head fields TSPartBase_ReadFromStream reads -- a radius, not an id.",
-      "source": "docs/retail/simulation/hit-detection.md"
+      "source": "docs/retail/simulation/hit-detection.md",
+      "verified": {
+        "bytes": "0046b80c+52",
+        "sha1": "4a6d910bdf6d",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0046b890",
@@ -22773,7 +22809,13 @@
       "name": "Terrain_MarkStructureFootprint",
       "description": "Registers one structure's footprint in the height grid's +0xf0 scratch array, ready for Terrain_FlattenStructureFootprints to level it. Sets the scratch byte to 1 for the cell the structure stands in unconditionally, then walks the cells in the position's radius-sized bounding box and, for each whose corner (cellX << cellShift, cellY << cellShift, position.z) is within radius by Math_FastMagnitude3D -- the z terms cancel, so the test is planar -- marks that cell plus the three west, south and south-west of it, covering all four quads meeting that corner. radius is the caller's SimObject_GetShapeRadius (vtable +0x10). Callers: Base_AttachToGroup (00405c3c) and DBSim_SpawnMissionObjects' own base branch, each immediately before that structure's height query. No bounds checking beyond refusing to step to a negative index.",
       "source": "docs/retail/simulation/terrain-heightmap.md, 'Structure footprints -- the flattening pass'",
-      "signature": "void __cdecl Terrain_MarkStructureFootprint(void *grid, int *position, int radius)"
+      "signature": "void __cdecl Terrain_MarkStructureFootprint(void *grid, int *position, int radius)",
+      "verified": {
+        "bytes": "00470dc8+273",
+        "sha1": "3231400a4f08",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00470edc",
@@ -22783,7 +22825,13 @@
       "name": "Terrain_AccumulateFootprint",
       "description": "Terrain_FlattenStructureFootprints' measuring half: an eight-way recursive flood fill over cells whose +0xf0 scratch byte has bit 0 set and bit 1 clear. Sets bit 1, then adds the cell's raw height byte to DAT_006b54f4 and increments the cell count DAT_006b54f8, which the caller divides to get the region's average height.",
       "source": "docs/retail/simulation/terrain-heightmap.md, 'Structure footprints -- the flattening pass'",
-      "signature": "void __cdecl Terrain_AccumulateFootprint(void *grid, int cellX, int cellY)"
+      "signature": "void __cdecl Terrain_AccumulateFootprint(void *grid, int cellX, int cellY)",
+      "verified": {
+        "bytes": "00470edc+318",
+        "sha1": "6717a9ee8d63",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047101c",
@@ -22793,7 +22841,13 @@
       "name": "Terrain_WriteFootprintHeight",
       "description": "Terrain_FlattenStructureFootprints' writing half, and the part that produces the FLAT TOP rather than a flat set of corner samples. Eight-way recursive like Terrain_AccumulateFootprint but over bit 2 of the +0xf0 scratch byte; the force argument makes a cell take the height whether or not it is part of the footprint, and it is passed 1 only for the neighbours east, north and north-east. Those three are therefore written but not recursed through, being unmarked, so a region gains one sample on each of those two sides -- which turns a single marked cell into a 2x2 block of equal samples, i.e. one flat quad centred on the structure with the four surrounding quads sloping down to the plain.",
       "source": "docs/retail/simulation/terrain-heightmap.md, 'Structure footprints -- the flattening pass'",
-      "signature": "void __cdecl Terrain_WriteFootprintHeight(void *grid, int cellX, int cellY, int height, int force)"
+      "signature": "void __cdecl Terrain_WriteFootprintHeight(void *grid, int cellX, int cellY, int height, int force)",
+      "verified": {
+        "bytes": "0047101c+369",
+        "sha1": "b023b526ba35",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00471190",
@@ -22803,7 +22857,13 @@
       "name": "Terrain_FlattenStructureFootprints",
       "description": "THE REASON A TURRET STANDS ON A FLAT-TOPPED MOUND. A zone heightmap marks each ground vehicle with a single raised sample (ZONE555: one cell of 120 in a plain of 97 under each turret), which as a corner sample is the apex of a four-quad pyramid at the cell's CORNER while the structure stands near its centre. This levels it instead: walk every cell, and where the scratch byte is marked (bit 0) but not yet counted (bit 1), flood-fill the connected region with Terrain_AccumulateFootprint to get its raw-height sum and count, then write sum/count back over it with Terrain_WriteFootprintHeight. Finishes with Terrain_BuildSurface, since every normal, diagonal selector and baked shade is now stale. Called once by DBSim_SpawnMissionObjects (at 004263d9) after the whole roster is placed, which then re-queries every base's ground height. Walks both axes to 1 << widthShift, which would half-cover a taller-than-wide zone; every retail zone is square.",
       "source": "docs/retail/simulation/terrain-heightmap.md, 'Structure footprints -- the flattening pass'",
-      "signature": "void __cdecl Terrain_FlattenStructureFootprints(void *grid)"
+      "signature": "void __cdecl Terrain_FlattenStructureFootprints(void *grid)",
+      "verified": {
+        "bytes": "00471190+205",
+        "sha1": "ded719482c5b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00471260",
@@ -23377,7 +23437,13 @@
       "confidence": "high",
       "name": "VolRStream_Open",
       "description": "VolRStream::open(path), the DBSIM copy of VSHELL's VolRStream_Open with the asserts compiled out: tries _open(path, O_BINARY|O_RDONLY) first, then VolumeGroup_FindEntry on g_VolumeGroup (004a0d30), and switches on the entry's compression type: 2 reads the volume stream directly, 7 attaches the RLERStream at +0x27, 9 the LZHRStream at +0x2b (each created on first use). Any other type returns 1 with status 0 and no source at +0xe. Returns 0 with status 1 when neither source has the file.",
-      "source": "DBSIM decompile and disassembly at 00472fdc"
+      "source": "DBSIM decompile and disassembly at 00472fdc",
+      "verified": {
+        "bytes": "00472fdc+376",
+        "sha1": "ea01931d20fe",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00473154",

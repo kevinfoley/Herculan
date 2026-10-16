@@ -23,6 +23,7 @@
   <!-- Linked from the editor host rather than copied: one font file, two hosts. -->
   <ItemGroup>
     <None Include="..\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Regular.ttf" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\Herculan.Engine.Host.Editor\Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" Link="Assets\Fonts\Open_Sans\static\OpenSans-Italic.ttf" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- The window icon (WindowIcon), linked from Branding/ like the font above: loose files, since the artwork is not

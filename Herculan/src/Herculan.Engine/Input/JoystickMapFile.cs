@@ -1,4 +1,5 @@
 using System.Text;
+using HercWorks.Core.Io;
 using HercWorks.Core.Io.Read;
 
 namespace Herculan.Engine.Input;
@@ -9,7 +10,8 @@ namespace Herculan.Engine.Input;
 /// devices"). This engine's own file; retail never reads it.
 ///
 /// <para>Each map is an INI section. <c>[Gamepad]</c> serves every gamepad, since GLFW reads all of them in one
-/// layout, and also carries what each control does with one (<see cref="Gamepad"/>). <c>[Joystick &lt;GUID&gt;]</c> serves one model of joystick, by the GUID GLFW gives it, and <c>[Joystick]</c>
+/// layout, and also carries what each control does with one (<see cref="Gamepad"/>) and how one works as the mouse
+/// (<see cref="Mouse"/>). <c>[Joystick &lt;GUID&gt;]</c> serves one model of joystick, by the GUID GLFW gives it, and <c>[Joystick]</c>
 /// any joystick without a section of its own, which is also the one section a file written before per-device sections
 /// has.</para>
 /// </summary>
@@ -27,6 +29,9 @@ public sealed class JoystickMapFile {
 
 	/// <summary>What each control does while a gamepad is in use, from <c>[Gamepad]</c>, or the defaults.</summary>
 	public GamepadControls Gamepad { get; private set; } = new();
+
+	/// <summary>How a gamepad works as the mouse, from <c>[Gamepad]</c>, or the defaults.</summary>
+	public GamepadMouseSettings Mouse { get; set; } = new();
 
 	/// <summary>Reads the file; one that is missing or unreadable is empty.</summary>
 	public static JoystickMapFile Load(string path) {
@@ -48,11 +53,15 @@ public sealed class JoystickMapFile {
 			file._sections[Normalise(section)] = new Entry(Normalise(section), JoystickDeviceMap.FromValues(values), name);
 			if (Normalise(section) == GamepadSection) {
 				file.Gamepad = GamepadControls.FromValues(values);
+				file.Mouse = GamepadMouseSettings.FromValues(values);
 			}
 		}
 
 		return file;
 	}
+
+	/// <summary>Reads the file in a game's <c>data</c> folder, as <see cref="Load"/> does.</summary>
+	public static JoystickMapFile LoadIn(string dataDirectory) => Load(CaseInsensitivePath.Combine(dataDirectory, FileName));
 
 	/// <summary>Whether no device has a map.</summary>
 	public bool IsEmpty => _sections.Count == 0;
@@ -81,8 +90,9 @@ public sealed class JoystickMapFile {
 
 	/// <summary>Writes every section, gamepads first, then the shared joystick section, then each model's.</summary>
 	public void Save(string path) {
-		// Gamepad actions changed with no gamepad map saved yet: the section they go in, with the map it implies.
-		if (!Gamepad.IsDefault && !_sections.ContainsKey(GamepadSection)) {
+		// Gamepad actions or mouse settings changed with no gamepad map saved yet: the section they go in, with the map it
+		// implies.
+		if ((!Gamepad.IsDefault || !Mouse.IsDefault) && !_sections.ContainsKey(GamepadSection)) {
 			_sections[GamepadSection] = new Entry(GamepadSection, JoystickDeviceMap.ForGamepad(), null);
 		}
 
@@ -108,6 +118,8 @@ public sealed class JoystickMapFile {
 			if (entry.Section == GamepadSection) {
 				text.AppendLine();
 				Gamepad.WriteValues(text);
+				text.AppendLine();
+				Mouse.WriteValues(text);
 			}
 		}
 

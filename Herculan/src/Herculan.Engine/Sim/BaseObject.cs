@@ -57,16 +57,15 @@ public sealed partial class BaseObject : SimObject {
 	/// <param name="collision">The type's <c>BASECOL.DAT</c> sphere model — see <see cref="CollisionModel"/>.</param>
 	/// <param name="shapeRadius">
 	/// The shape's own bounding radius — the original's vtable <c>+0x10</c> (<c>SimObject_GetShapeRadius</c>, <c>0046b80c</c>),
-	/// which is simply <c>shape+8</c>. Both hit paths open with a coarse reject against it.
+	/// which is simply <c>shape+8</c>, for a static type its <c>.DGS</c> record's and for an
+	/// animated one its <c>BASES_AN.DTS</c> root's. Both hit paths open with a coarse reject against
+	/// it, and placement marks the ground it levels with it (<see cref="Terrain.HeightGrid.MarkStructureFootprint"/>).
 	///
 	/// <para>Distinct from <see cref="HitRadius"/>, which is the <i>type</i>'s stated figure and is
 	/// what the blast sweep asks for; the two disagree by up to a fifth on retail data, and four
 	/// types state a type radius of zero while their shape has a real one.</para>
 	///
-	/// <para>Zero for an <see cref="BaseShapeSource.AnimatedLibrary"/> type, whose shape is a DTS
-	/// root rather than a <c>.DGS</c> record and whose head fields this engine does not read; the
-	/// type's own radius stands in there, which is close enough for a reject that only has to be
-	/// generous.</para>
+	/// <para>Zero only when the install lacks the shape, and then the type's own radius stands in.</para>
 	/// </param>
 	/// <param name="animCellCount">
 	/// How many frames <see cref="BaseType.AnimCellSequence"/> holds — the modulus
