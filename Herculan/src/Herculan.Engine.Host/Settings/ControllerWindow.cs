@@ -438,6 +438,12 @@ sealed class ControllerWindow {
 		}
 		ImGui.EndDisabled();
 		Tooltip(device.IsGamepad ? "controller.centre_idle_gamepad_tip" : "controller.centre_idle_tip");
+
+		bool razorPitch = _draft.InvertRazorPitch;
+		if (ImGui.Checkbox(Text("controller.invert_razor_pitch") + "###razorpitch", ref razorPitch)) {
+			_draft = _draft with { InvertRazorPitch = razorPitch };
+		}
+		Tooltip("controller.invert_razor_pitch_tip");
 	}
 
 	// For each row, which other rows its device input also fills, as a sentence naming them, or null where it fills only

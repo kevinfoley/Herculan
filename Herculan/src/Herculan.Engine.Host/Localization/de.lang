@@ -188,6 +188,8 @@ controller.hat_diagonals_tip   Ein diagonal gedrückter Coolie-Hat zählt als se
 controller.centre_idle         Leerlauf in der Mitte
 controller.centre_idle_tip     Die Mitte des Schubreglerwegs ist Leerlauf, davor ist vorwärts und dahinter rückwärts. Das Originalspiel liest den Schubregler von Leerlauf am einen Ende bis Vollgas am anderen, und CHANGE DIRECTION wählt vorwärts oder rückwärts.
 controller.centre_idle_gamepad_tip      Nur für den Schubhebel eines Joysticks. Der linke Stick eines Gamepads bewegt den Schub hoch und runter und lässt ihn dort, wo er ist, daher bewirkt dies damit nichts.
+controller.invert_razor_pitch  RAZOR-Nicken umkehren
+controller.invert_razor_pitch_tip   Kehrt um, in welche Richtung die Steuerung die Nase des RAZOR hebt und senkt. Der Turm eines HERC bleibt so, wie die Spalte „Umkehren“ ihn einstellt. Die Tastatur ist nicht betroffen.
 controller.actions_note        Dieses Fenster legt fest, welche Teile Ihres Geräts das Spiel verwendet. Was jedes davon tut (Lenken oder Zielen, FIRE, TARGET usw.), wird in einer Mission eingestellt: Drücken Sie F12 für die Einstellungen, dann CONTROLS. Mit einem Gamepad sind die Zeilen JOYSTICK, THROTTLE, RUDDER und HAT dort passend festgelegt, und seine Tastenbelegung wird getrennt von der eines Joysticks gespeichert. Die Einstellungen werden in data\herculan-joystick.cfg gespeichert, die das Originalspiel nicht liest.
 controller.defaults            Standard
 controller.no_data_folder      Es gibt keinen data-Ordner, in dem die Einstellungen gespeichert werden können.

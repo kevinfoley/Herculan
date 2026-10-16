@@ -188,6 +188,8 @@ controller.hat_diagonals_tip   Un chapeau poussé en diagonale compte comme ses 
 controller.centre_idle         Ralenti au centre
 controller.centre_idle_tip     Le milieu de la course de la manette des gaz est le ralenti, en avant c'est la marche avant et en arrière la marche arrière. Le jeu original lit la manette des gaz du ralenti à une extrémité jusqu'au plein régime à l'autre, et CHANGE DIRECTION choisit la marche avant ou arrière.
 controller.centre_idle_gamepad_tip      Seulement pour la manette des gaz d'un joystick. Le stick gauche d'une manette de jeu monte et baisse les gaz et les laisse où ils sont, donc ceci n'a aucun effet avec elle.
+controller.invert_razor_pitch  Inverser le tangage RAZOR
+controller.invert_razor_pitch_tip   Inverse le sens dans lequel les commandes lèvent et baissent le nez du RAZOR. La tourelle d'un HERC reste comme la colonne Inverser la règle. Le clavier n'est pas concerné.
 controller.actions_note        Cette fenêtre choisit les parties de votre périphérique que le jeu utilise. Ce que fait chacune (diriger ou viser, FIRE, TARGET, etc.) se règle en mission : appuyez sur F12 pour les préférences, puis CONTROLS. Avec une manette de jeu, les lignes JOYSTICK, THROTTLE, RUDDER et HAT y sont réglées pour elle, et ses choix de boutons sont gardés à part de ceux d'un joystick. Les réglages sont enregistrés dans data\herculan-joystick.cfg, que le jeu original ne lit pas.
 controller.defaults            Par défaut
 controller.no_data_folder      Il n'y a pas de dossier data où enregistrer les réglages.

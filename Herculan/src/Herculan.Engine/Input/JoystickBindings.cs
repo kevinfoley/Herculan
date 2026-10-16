@@ -67,6 +67,14 @@ public sealed class JoystickBindings {
 	public bool BipolarThrottle { get; set; }
 
 	/// <summary>
+	/// <see cref="JoystickDeviceMap.InvertRazorPitch"/>, copied here by the host as <see cref="BipolarThrottle"/> is. It
+	/// negates what the stick puts on game axis 1, the RAZOR's elevator (docs/retail/simulation/razor-flight.md), from
+	/// whichever control the bindings route there, and only while <see cref="PilotingRazor"/>. The keyboard's share of
+	/// the axis is left alone, so only the device's sense changes.
+	/// </summary>
+	public bool InvertRazorPitch { get; set; }
+
+	/// <summary>
 	/// <c>Input_SetThrottleLeverMode</c> (<c>00459d20</c>): 0 when no physical lever is driving the
 	/// throttle, otherwise non-zero for one, the sign being <see cref="ThrottleLeverInverted"/>.
 	///
@@ -296,9 +304,10 @@ public sealed class JoystickBindings {
 
 		// Second rank first, then first rank, and zero where neither moved so the keyboard can still
 		// reach the axis — Combine finishes the chain.
+		short elevator = Pick(secondary[1], primary[1]);
 		return new PilotAxes(
 			Pick(secondary[0], primary[0]),
-			Pick(secondary[1], primary[1]),
+			PilotingRazor && InvertRazorPitch ? (short)-elevator : elevator,
 			Pick(secondary[2], primary[2]),
 			Pick(secondary[3], primary[3]));
 	}

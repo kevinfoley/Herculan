@@ -188,6 +188,8 @@ controller.hat_diagonals_tip   A hat pushed diagonally counts as its two directi
 controller.centre_idle         Centre-idle throttle
 controller.centre_idle_tip     The middle of the throttle's travel is idle, forward of it is forward and back of it is reverse. The original game reads the throttle from idle at one end to full at the other, and CHANGE DIRECTION chooses forward or reverse.
 controller.centre_idle_gamepad_tip      Only for a joystick's throttle lever. A gamepad's left stick moves the throttle up and down and leaves it where it is, so this does nothing with one.
+controller.invert_razor_pitch  Invert RAZOR pitch
+controller.invert_razor_pitch_tip   Reverses which way the controls pitch the RAZOR's nose up and down, leaving a HERC's turret as the Invert column sets it. The keyboard is not affected.
 controller.actions_note        This window sets which parts of your device the game uses. What each one does (steering or aiming, FIRE, TARGET and so on) is set in a mission: press F12 for Preferences, then CONTROLS. With a gamepad, the JOYSTICK, THROTTLE, RUDDER and HAT rows there are set to suit it, and its button choices are kept apart from a joystick's. The settings are saved to data\herculan-joystick.cfg, which the original game does not read.
 controller.defaults            Defaults
 controller.no_data_folder      There is no data folder to save the settings in.
