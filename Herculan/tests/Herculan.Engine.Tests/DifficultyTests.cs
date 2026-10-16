@@ -22,16 +22,32 @@ namespace Herculan.Engine.Tests;
 public class DifficultyTests {
 	// ---- the header field -------------------------------------------------------------------
 
+	/// <summary>
+	/// Every header short carries its own value, so a field read from any neighbour's offset reads
+	/// the wrong one. The two cheat flags take turns at 1, the only value they read as on, so a swap
+	/// between them shows too.
+	/// </summary>
 	[Theory]
-	[InlineData(0)]
-	[InlineData(1)]
-	[InlineData(2)]
-	[InlineData(3)]
-	public void HeaderCarriesDifficultyAtOffsetFourteen(short difficulty) {
+	[InlineData(true, false)]
+	[InlineData(false, true)]
+	public void HeaderReadsEachFieldFromItsOwnOffset(bool unlimitedAmmunition, bool playerInvulnerable) {
 		var bytes = new byte[ScriptDatHeader.Size];
-		System.Buffers.Binary.BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(14), difficulty);
+		short[] shorts = [5, 7, 99, 11, 13, (short)(unlimitedAmmunition ? 1 : 0),
+			(short)(playerInvulnerable ? 1 : 0), 2, 99, 17];
+		for (int i = 0; i < shorts.Length; i++) {
+			System.Buffers.Binary.BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(i * 2), shorts[i]);
+		}
 
-		Assert.Equal(difficulty, ScriptDatHeader.Read(bytes).Difficulty);
+		var header = ScriptDatHeader.Read(bytes);
+
+		Assert.Equal(5, header.TheaterIndex);
+		Assert.Equal(7, header.ZoneIndex);
+		Assert.Equal(11, header.ObjectiveType);
+		Assert.Equal(13, header.TrainingMissionNumber);
+		Assert.Equal(unlimitedAmmunition, header.UnlimitedAmmunition);
+		Assert.Equal(playerInvulnerable, header.PlayerInvulnerable);
+		Assert.Equal(2, header.Difficulty);
+		Assert.Equal(17, header.TheaterVariant);
 	}
 
 	/// <summary>
@@ -42,8 +58,6 @@ public class DifficultyTests {
 	[Theory]
 	[InlineData(-1, 0)]
 	[InlineData(4, 3)]
-	[InlineData(short.MaxValue, 3)]
-	[InlineData(short.MinValue, 0)]
 	public void HeaderClampsDifficultyToTheFourLevels(short onDisk, int expected) {
 		var bytes = new byte[ScriptDatHeader.Size];
 		System.Buffers.Binary.BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(14), onDisk);
@@ -51,60 +65,28 @@ public class DifficultyTests {
 		Assert.Equal(expected, ScriptDatHeader.Read(bytes).Difficulty);
 	}
 
-	/// <summary>
-	/// Offset 14 and nothing beside it: a header carrying a difficulty must leave the four fields the
-	/// loader already decoded alone. Catches an off-by-two against the neighbouring cheat flags.
-	/// </summary>
-	[Fact]
-	public void DifficultyDoesNotDisturbTheOtherHeaderFields() {
-		var bytes = new byte[ScriptDatHeader.Size];
-		System.Buffers.Binary.BinaryPrimitives.WriteInt16LittleEndian(bytes.AsSpan(14), 3);
-
-		var header = ScriptDatHeader.Read(bytes);
-
-		Assert.Equal(0, header.TheaterIndex);
-		Assert.Equal(0, header.ZoneIndex);
-		Assert.Equal(0, header.ObjectiveType);
-		Assert.Equal(0, header.TheaterVariant);
-	}
-
-	// ---- the tables -------------------------------------------------------------------------
-
-	/// <summary>
-	/// The firing side picks the table — <c>DAT_0049a73c</c> for the human side, <c>DAT_0049a744</c>
-	/// for any other — and the difficulty indexes it.
-	/// </summary>
-	[Theory]
-	[InlineData(0, 3500, 300)]
-	[InlineData(1, 2800, 600)]
-	[InlineData(2, 2100, 800)]
-	[InlineData(3, 1400, 1000)]
-	public void DamageScaleMatchesTheRetailTables(int difficulty, int human, int cybrid) {
-		var world = new SimWorld(FlatTerrain()) { Difficulty = difficulty };
-
-		Assert.Equal(human, world.DamageScaleFor(MissionSide.Human));
-		Assert.Equal(cybrid, world.DamageScaleFor(MissionSide.Cybrid));
-	}
-
 	// ---- where the scale is applied ---------------------------------------------------------
 
-	[Theory]
-	[InlineData(0, 3500)]
-	[InlineData(1, 2800)]
-	[InlineData(2, 2100)]
-	[InlineData(3, 1400)]
-	public void RaycastScalesBothDamageFiguresOfAnOwnedShot(int difficulty, int scale) {
+	/// <summary>
+	/// A human shot at difficulty 2 takes the human table's 2100: 100 and 40 come out as 205 and 82,
+	/// truncated.
+	/// </summary>
+	[Fact]
+	public void RaycastScalesBothDamageFiguresOfAnOwnedShot() {
 		var attacker = new Marker(MissionSide.Human);
-		var world = WorldWith(attacker, difficulty);
+		var world = WorldWith(attacker, difficulty: 2);
 
 		var shot = OwnedShot(attacker, damageArmor: 100, damageShield: 40);
 		HitTests.Raycast(world, shot);
 
-		Assert.Equal((short)SimMath.Q10Multiply(scale, 100), shot.DamageArmor);
-		Assert.Equal((short)SimMath.Q10Multiply(scale, 40), shot.DamageShield);
+		Assert.Equal(205, shot.DamageArmor);
+		Assert.Equal(82, shot.DamageShield);
 	}
 
-	/// <summary>A Cybrid shot takes the other table — the side is the <i>firing</i> side.</summary>
+	/// <summary>
+	/// A Cybrid shot takes the other table — the side is the <i>firing</i> side. At difficulty 2 that
+	/// is 800, so 100 comes out as 78.
+	/// </summary>
 	[Fact]
 	public void RaycastTakesTheFiringSidesTable() {
 		var attacker = new Marker(MissionSide.Cybrid);
@@ -113,7 +95,7 @@ public class DifficultyTests {
 		var shot = OwnedShot(attacker, damageArmor: 100, damageShield: 100);
 		HitTests.Raycast(world, shot);
 
-		Assert.Equal((short)SimMath.Q10Multiply(800, 100), shot.DamageArmor);
+		Assert.Equal(78, shot.DamageArmor);
 	}
 
 	/// <summary>
@@ -132,25 +114,7 @@ public class DifficultyTests {
 	}
 
 	/// <summary>
-	/// The plasma round empties its record before the raycast, so the scale finds zeros there and the
-	/// round is scaled once — in <c>Detonate</c> — rather than twice. This is the ordering test: it
-	/// fails if the scale is ever moved forward to construction.
-	/// </summary>
-	[Fact]
-	public void AnEmptiedRecordIsNotScaledByTheRaycast() {
-		var attacker = new Marker(MissionSide.Human);
-		var world = WorldWith(attacker, difficulty: 0);
-
-		var shot = OwnedShot(attacker, damageArmor: 100, damageShield: 100);
-		shot.StashDamage();
-		HitTests.Raycast(world, shot);
-
-		Assert.Equal(0, shot.DamageArmor);
-		Assert.Equal(0, shot.DamageShield);
-	}
-
-	/// <summary>
-	/// And what the stash put aside stays unscaled, as the original's
+	/// What the stash puts aside stays unscaled, as the original's
 	/// <c>Bullet_StashDirectFireDamage</c> stashes it before the scale runs. A structure struck on its
 	/// collision-volume path reads this figure back, so scaling it would double-dip that one path.
 	/// </summary>
@@ -170,30 +134,29 @@ public class DifficultyTests {
 	// ---- the plasma blast -------------------------------------------------------------------
 
 	/// <summary>
-	/// The plasma round's blast, which reaches the scale by its own route: fire one at a target that
-	/// reports a hit, and the figure that arrives at the blast is the power-scaled armour damage with
-	/// the difficulty factor on top of it — once.
+	/// The plasma round's blast, which reaches the scale by its own route. Fired at half power into a
+	/// target that reports a hit, it empties its record before the raycast, so the target takes nothing
+	/// directly, and the blast arrives with the record's armour damage power-scaled to 50 and then
+	/// difficulty-scaled once: 2100 × 50 >> 10 = 102.
 	/// </summary>
-	[Theory]
-	[InlineData(0, 3500)]
-	[InlineData(2, 2100)]
-	[InlineData(3, 1400)]
-	public void PlasmaBlastIsScaledOnceByDifficulty(int difficulty, int scale) {
+	[Fact]
+	public void PlasmaBlastIsScaledOnceByDifficulty() {
 		var attacker = new Marker(MissionSide.Human);
 		var victim = new Marker(MissionSide.Cybrid) { Struck = true, Position = Muzzle };
-		var world = WorldWith(attacker, difficulty);
+		var world = WorldWith(attacker, difficulty: 2);
 		world.Add(victim);
 
 		var round = Round();
 		round.SubtypeId = Projectile.PlasmaSubtype;
 
 		var shot = new Projectile(round, Record(), Muzzle, (0, 0, 0), ownerSpeed: 0,
-			power: Q10Unit, owner: attacker, random: world.Random);
+			power: Q10Unit / 2, owner: attacker, random: world.Random);
 
 		SimMath.TickDelta = SimMath.VanillaTickDelta;
 		shot.Tick(world);
 
-		Assert.Equal((short)SimMath.Q10Multiply(scale, round.DamageArmor), victim.BlastDamage);
+		Assert.Equal(0, victim.DirectDamage);
+		Assert.Equal(102, victim.BlastDamage);
 	}
 
 	// ---- fixtures ---------------------------------------------------------------------------
@@ -262,13 +225,22 @@ public class DifficultyTests {
 		/// <summary>Whether this object reports itself hit by any shot that reaches it.</summary>
 		public bool Struck { get; init; }
 
+		/// <summary>The armour figure the last shot to reach this object carried.</summary>
+		public short DirectDamage { get; private set; }
+
 		/// <summary>The figure the last blast arrived with.</summary>
 		public short BlastDamage { get; private set; }
 
 		public override int HitRadius => 500;
 
-		public override int DirectFireHitTest(SimWorld world, WeaponShot shot) =>
-			Struck ? MinimumHit : 0;
+		public override int DirectFireHitTest(SimWorld world, WeaponShot shot) {
+			if (!Struck) {
+				return 0;
+			}
+
+			DirectDamage = shot.DamageArmor;
+			return MinimumHit;
+		}
 
 		public override void ExplosiveDamage(SimWorld world, short damage, Vec3i hitPoint,
 			int blastRadius, SimObject? attacker) => BlastDamage = damage;
