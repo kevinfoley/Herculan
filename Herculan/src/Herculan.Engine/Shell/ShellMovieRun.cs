@@ -8,7 +8,10 @@ namespace Herculan.Engine.Shell;
 /// What playing the queue out does to the rest of the shell, which the host owns.
 /// </summary>
 public sealed class ShellMovieHooks {
-	/// <summary>The bytes of an <c>AVI</c> file by its path under the disc, <see cref="ShellMovieQueue.MoviePath"/>, or null.</summary>
+	/// <summary>
+	/// The bytes of an <c>AVI</c> file by its path under the disc, <see cref="ShellMovieQueue.MoviePath"/>, or null.
+	/// Called on a worker thread, since a movie read whole from a CD drive takes seconds.
+	/// </summary>
 	public required Func<string, byte[]?> ReadMovie { get; init; }
 
 	/// <summary><c>Shell_InstallPalette</c> (<c>004075b2</c>) and its commit, by index.</summary>
@@ -68,9 +71,12 @@ public sealed class ShellMovieHooks {
 /// keeps drawing, and <see cref="Active"/> is what the host holds the widgets on meanwhile — the span
 /// in which the original's widgets see no event.</para>
 ///
-/// <para>The hourglass <c>Movie_PlayQueue</c> raises before each movie is left out: it shows only
-/// while nothing pumps messages, and a movie here opens inside one update. A movie that will not
-/// open is skipped (see <see cref="Begin"/>).</para>
+/// <para>A movie is read and parsed on a worker thread while the window keeps drawing, and its sound and
+/// its clock start together on the update that finds it open, so the time the read took is not counted
+/// as time played. A button pressed while it opens is spent and stops nothing; that is this engine's.
+/// PLACEHOLDER: the hourglass <c>Movie_PlayQueue</c> raises before each movie and <c>Avi_Play</c> drops
+/// as playback starts is not shown over the open. A movie that will not open is skipped (see
+/// <see cref="Begin"/>).</para>
 /// </summary>
 public sealed class ShellMovieRun : IDisposable {
 	/// <summary>How long the location picture stays up: <c>Shell_BusyWaitSeconds(2)</c> (<c>00401d53</c>)'s busy wait, in milliseconds.</summary>
@@ -85,6 +91,7 @@ public sealed class ShellMovieRun : IDisposable {
 	private enum Stage {
 		Idle,
 		FadingOut,
+		Opening,
 		Playing,
 		AwaitingFocus,
 		LocationFadeIn,
@@ -99,6 +106,7 @@ public sealed class ShellMovieRun : IDisposable {
 	private Stage _stage;
 	private ShellMovieEntry? _entry;
 	private MoviePlayer? _player;
+	private Task<MoviePlayer?>? _opening;
 
 	// The run's bVar1: the music was started again at a location picture, so the end of the run does not.
 	private bool _musicRestarted;
@@ -164,6 +172,18 @@ public sealed class ShellMovieRun : IDisposable {
 
 				_sound?.Stop();
 				NextEntry();
+				return;
+			case Stage.Opening:
+				if (!_opening!.IsCompleted) {
+					return;
+				}
+
+				if (Opened() is { } player) {
+					Play(gl, player);
+				} else if (!AwaitFocus() && AfterMovie()) {
+					FinishEntry();
+				}
+
 				return;
 			case Stage.Playing:
 				if (_player == null) {
@@ -265,25 +285,48 @@ public sealed class ShellMovieRun : IDisposable {
 		}
 	}
 
-	// Avi_Play's open. PLACEHOLDER: a movie that will not open is skipped. The original stops the shell
-	// with "Please insert ESII CD and restart" for the intro, and for any other movie puts the insert-CD
-	// panel (InsertCdPanel (0048d108)) up and tries again on its Continue or ends the shell on its Quit;
-	// neither is ported.
+	// Avi_Play's open, started on a worker thread; Opened takes its result. Returns false for an entry with
+	// no movie, which is skipped at once. PLACEHOLDER: a movie that will not open is skipped. The original
+	// stops the shell with "Please insert ESII CD and restart" for the intro, and for any other movie puts
+	// the insert-CD panel (InsertCdPanel (0048d108)) up and tries again on its Continue or ends the shell on
+	// its Quit; neither is ported.
 	private bool Begin(ShellMovieEntry entry) {
-		string? name = _queue.MoviePath(entry.Id);
-		byte[]? bytes = name == null ? null : _hooks.ReadMovie(name);
-		if (name == null || bytes == null || MoviePlayer.Open(bytes) is not { } player) {
-			_hooks.Report?.Invoke(name ?? $"movie 0x{entry.Id:x}", "could not be opened, and is skipped");
+		if (_queue.MoviePath(entry.Id) is not { } name) {
+			_hooks.Report?.Invoke($"movie 0x{entry.Id:x}", "could not be opened, and is skipped");
 			return false;
 		}
 
+		var read = _hooks.ReadMovie;
+		_opening = Task.Run(() => read(name) is { } bytes ? MoviePlayer.Open(bytes) : null);
+		_stage = Stage.Opening;
+		return true;
+	}
+
+	// The open's player, or null, reported, when it failed or found nothing it could play.
+	private MoviePlayer? Opened() {
+		var opening = _opening!;
+		_opening = null;
+		if (opening.IsCompletedSuccessfully && opening.Result is { } player) {
+			return player;
+		}
+
+		string name = _queue.MoviePath(_entry!.Id) ?? $"movie 0x{_entry.Id:x}";
+		_hooks.Report?.Invoke(name, opening.Exception?.InnerException is { } ex
+			? $"could not be read ({ex.Message}), and is skipped"
+			: "could not be opened, and is skipped");
+		return null;
+	}
+
+	// The sound started and the first frame put up on the same update, with no time yet played, so the
+	// picture and the sound leave together whatever the open cost.
+	private void Play(GL gl, MoviePlayer player) {
 		_player = player;
 		if (_audio != null) {
 			player.StartAudio(_audio);
 		}
 
+		player.Update(gl, TimeSpan.Zero);
 		_stage = Stage.Playing;
-		return true;
 	}
 
 	private void EndMovie() {
@@ -359,6 +402,14 @@ public sealed class ShellMovieRun : IDisposable {
 
 	public void Dispose() {
 		EndMovie();
+
+		// An open still under way is left to finish, and what it opens is dropped; it holds no GL texture yet.
+		_opening?.ContinueWith(opening => {
+			if (opening.IsCompletedSuccessfully) {
+				opening.Result?.Dispose();
+			}
+		}, TaskScheduler.Default);
+		_opening = null;
 		_stage = Stage.Idle;
 	}
 }
