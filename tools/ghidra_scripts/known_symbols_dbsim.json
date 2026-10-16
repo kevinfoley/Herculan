@@ -5660,8 +5660,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiObstacleAvoidance",
-      "description": "Terrain and obstacle avoidance applied to steering and desired speed. AI only -- Mech_LocomotionTick skips it when the mech is PlayerMech. Reduces to the nearer obstruction on each side, both starting at 22000, from three sources: two 20000-unit body-space probes splaying +/-10000 (Sim_RaycastShapes and Terrain_RayWalk), a sweep of live machines at Q10(2000, range) inside a 45-degree arc, and -- for a squad led by the player -- the player's line of fire at Q10(1000, range) inside 67.5 degrees. Steer is +/-((22000 - closest) * gain / 22000), gain 700 or 1000 for the firing line; only the firing line ever cuts the speed. The mirrored reverse mode is written 0 at the top of the function and never set, which also makes the half-speed arm of the speed override unreachable.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "description": "Amends a turn axis and a desired speed in place through its pointer arguments: (mech, short *turn, short *desired, flags). Returns at once when the speed (+0x28e) and *desired are both zero, or when *desired is negative and the unstick counter (+0x26e) is zero. Each side's range starts at 22000. Unless flags bit 0 is set: two body-space probes from fixed literals, the same on every chassis -- left (-1500,0,0)->(-10000,20000,0), right (1500,0,0)->(10000,20000,0) -- put through the machine's frame with both ends' Z set to one Terrain_HeightQuery under the machine; each side takes Sim_RaycastShapes' range when under 22000, then Terrain_RayWalk mode 1's hit measured by Math_GroundDistanceBetweenPoints from the probe's start when nearer. Then every live-list object other than itself whose group +0x14 is zero and whose vtable +0x7c is nonzero, at Q10(2000, Math_DistanceBetweenPoints), claims the left side for a bearing error (Math_HeadingToward minus heading) of 0 to 0x1fff and the right for -1 to -0x1fff. When the group leader (group+0x0c slot 0) has +0xa3 set, each of the DAT_004a9d4c points at DAT_004a9c0c does the same at Q10(1000, Math_GroundDistanceBetweenPoints) inside 0x3000, marking its side as a firing-line reading. While +0xae (backing out of a block) is set: both sides at 22000 takes a quarter off the side +0x254 names (left when positive, else right); both under 22000 adds +0x254 to the left. Then, if either side is under 22000, the closer (left on a tie) gives (22000 - closest) * gain / 22000, gain 1000 for a firing-line reading and 700 otherwise, added to *turn and negated when left is closer; a firing-line reading under 3000 sets *desired to typeRec+4. A reverse-mode local is zeroed at the top and has no other write in the body; set, it would rotate the bearing tests half a turn and make the override take typeRec+6 >> 1.",
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00416274+1733",
+        "sha1": "345faee6767f",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041693c",
@@ -6571,9 +6577,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_BehaviourRamTick",
-      "description": "The per-tick MOVE slot of one AI behaviour state, NOT a death throe: block 00499b5c's +0x0c, whose think slot Mech_BehaviourRamThink (0041e570) charges the machine's selected target at full throttle and calls this three times a tick once its charge timer fires. Integrates motion, snaps the machine to terrain height + typeRec+0x16, places its legs, and runs Mech_CollisionTest; on a block (or once mech+0xb1 is latched) it detonates Damage_ExplosiveBlastSweep(pos, 3000, 2000, 0, self) and then finishes off every one of its own 29 components with a flat 32000 through vtable +0x74 -- a guaranteed self-destruction, no roll and no falloff. Ghidra's function boundary starts one prologue late at 0041e48e. The mech+0xb1 arm is the 'something ran into me' latch Mech_CollisionTest raises through vtable +0x68 (SimObject_SetRunInto, 0042200c) on whatever blocked it; that byte has exactly one writer and this one reader in the image and is NEVER cleared, so a machine bumped earlier in the mission detonates on its first tick in the state.",
+      "description": "The move slot of the ramming state (17), in place of Mech_MovementTick: Mech_IntegrateMotion, Z set to Terrain_HeightQuery(ActiveHeightGrid) plus typeRec+0x16, Mech_PlaceLegsOnGround, then Mech_CollisionTest -- with no SimObject_PushTransform/SimObject_PopTransform, so a refused step is kept. When the test refuses, or mech+0xb1 (the 'something ran into me' latch SimObject_SetRunInto raises) is set, it calls Damage_ExplosiveBlastSweep(pos, 3000, 2000, 0, self) and then writes a flat 32000 through vtable +0x74, attacker self, to each of its 29 components whose active flag (the +0x20e array) is set. Returns 1.",
       "source": "docs/retail/simulation/damage-system.md",
-      "signature": "short __cdecl Mech_BehaviourRamTick(int *this)"
+      "signature": "short __cdecl Mech_BehaviourRamTick(int *this)",
+      "verified": {
+        "bytes": "0041e488+202",
+        "sha1": "14056016351a",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041e554",
@@ -6715,7 +6727,13 @@
       "confidence": "high",
       "name": "Ai_DriveToPoint",
       "description": "The AI's one steering primitive: Mech_LocomotionTick(mech, (Math_HeadingToward(point, mech) - mech.heading) >> 6, speed, 0) with speed = mech+0x252 or 0xaa when that is zero, and a Turbo Pod sprint at 0x100 past 30000 units that only a standing squad order can reach. Returns whether the GROUND-PLANE range is under 10000 -- arrival, which is what Ai_FollowRoute steps the route cursor on.",
-      "source": "docs/retail/simulation/ai-navigation.md"
+      "source": "docs/retail/simulation/ai-navigation.md",
+      "verified": {
+        "bytes": "0041fac4+156",
+        "sha1": "250669a0bcd9",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0041fb60",

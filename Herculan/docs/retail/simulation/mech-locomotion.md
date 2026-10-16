@@ -355,6 +355,8 @@ The end-of-sequence test works only because the death sequence is the chassis' o
 
 The landing calls `Mech_SpreadImpactDamage` (`00417a04`) with `(150, 120)` — see [`component-damage.md`](component-damage.md#spread-impact-damage--mech_spreadimpactdamage-00417a04), which owns that primitive. A bad enough landing can therefore finish a machine off through the death gate.
 
+**A HERC disabled while standing too close to another HERC, or to a HERC's wreck, never falls.** The fall advances only when the machine's move does: `disabled` and `dead` keep the ordinary walk move ([`ai-dispatch.md`](ai-dispatch.md)), so every frame of the fall is a step through `Mech_MovementTick` and [`Mech_CollisionTest`](#collision). With its centre within 1,500 units of another machine's (both HERCs' 750 body radius, which a wreck keeps) every step is refused, and [the refusal](#what-a-refused-move-does)'s `SimObject_PopTransform` puts back each animation thread's whole record along with the position — sequence, frame and target included — so playback never reaches the death sequence. The machine stays standing in the pose it was disabled in, its lost leg no longer planted, `mech+0xb4` is never latched, and it remains a target for the AI as a machine still falling does. Walking cannot close that gap, since the same test refuses the step; [the ram charge](ai-combat-states.md#the-charge--mech_behaviourramtick-0041e488), which has no undo, is one move that can.
+
 `Mech_PlaceLegsOnGround` has a death-sequence arm of its own, but it leaves the sound id unset and so can never reach the footfall it guards.
 
 ## Cockpit eye and bob
