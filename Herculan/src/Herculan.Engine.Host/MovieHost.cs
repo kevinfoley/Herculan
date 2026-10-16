@@ -75,7 +75,7 @@ static class MovieHost {
 		}
 
 		using (player) {
-			Console.WriteLine($"Playing {player.Width}x{player.Height}, {player.Duration.TotalSeconds:0.0}s. "
+			Console.WriteLine($"Playing {player.Width}x{player.Height}, {player.Duration!.Value.TotalSeconds:0.0}s. "
 				+ "The movie loops; close the window to stop.");
 
 			return Present(player, screenshotPath, silentAudio);
@@ -175,7 +175,7 @@ static class MovieHost {
 		};
 
 		window.Closing += () => {
-			player.Stop(audio);
+			player.Stop();
 			audio?.Dispose();
 			audio = null;
 

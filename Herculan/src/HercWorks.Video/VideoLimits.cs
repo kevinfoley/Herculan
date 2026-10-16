@@ -41,8 +41,24 @@ public sealed record VideoLimits {
 	/// </summary>
 	public int MaxPixelsPerFrame { get; init; } = 4096 * 4096;
 
-	/// <summary>Largest accepted file, in bytes. The whole file is held in memory while decoding.</summary>
+	/// <summary>
+	/// Largest accepted file held in memory (<see cref="Avi.AviFile.Open"/>), in bytes. A streamed movie
+	/// (<see cref="MoviePlayback.Open(Stream, VideoLimits?)"/>) is never held whole, and has no such limit.
+	/// </summary>
 	public long MaxFileBytes { get; init; } = 256L * 1024 * 1024;
+
+	/// <summary>
+	/// How far a streamed movie is read ahead of playback, in bytes of packets waiting to be played. Four
+	/// megabytes is about twenty seconds of the retail cutscenes, which need about 175 KB a second, and a
+	/// packet larger than this on its own is still taken.
+	/// </summary>
+	public int ReadAheadBytes { get; init; } = 4 * 1024 * 1024;
+
+	/// <summary>
+	/// Largest accepted header region of a streamed movie: everything before its first <c>movi</c> list,
+	/// which the reader holds to parse. Retail files carry about 4 KB there.
+	/// </summary>
+	public int MaxHeaderBytes { get; init; } = 1024 * 1024;
 
 	/// <summary>Largest accepted single compressed chunk, in bytes.</summary>
 	public int MaxChunkBytes { get; init; } = 32 * 1024 * 1024;

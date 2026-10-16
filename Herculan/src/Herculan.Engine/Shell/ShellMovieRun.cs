@@ -9,10 +9,11 @@ namespace Herculan.Engine.Shell;
 /// </summary>
 public sealed class ShellMovieHooks {
 	/// <summary>
-	/// The bytes of an <c>AVI</c> file by its path under the disc, <see cref="ShellMovieQueue.MoviePath"/>, or null.
-	/// Called on a worker thread, since a movie read whole from a CD drive takes seconds.
+	/// An <c>AVI</c> file opened for reading by its path under the disc, <see cref="ShellMovieQueue.MoviePath"/>, or
+	/// null. Called on a worker thread, since opening a file on a CD drive that has spun down takes seconds; the
+	/// movie owns the stream from then on.
 	/// </summary>
-	public required Func<string, byte[]?> ReadMovie { get; init; }
+	public required Func<string, Stream?> OpenMovie { get; init; }
 
 	/// <summary><c>Shell_InstallPalette</c> (<c>004075b2</c>) and its commit, by index.</summary>
 	public required Action<int> InstallPalette { get; init; }
@@ -71,9 +72,10 @@ public sealed class ShellMovieHooks {
 /// keeps drawing, and <see cref="Active"/> is what the host holds the widgets on meanwhile — the span
 /// in which the original's widgets see no event.</para>
 ///
-/// <para>A movie is read and parsed on a worker thread while the window keeps drawing, and its sound and
-/// its clock start together on the update that finds it open, so the time the read took is not counted
-/// as time played. A button pressed while it opens is spent and stops nothing; that is this engine's.
+/// <para>A movie is read as it plays (<see cref="MoviePlayer.Open(Stream)"/>). Its header and first half
+/// second are read on a worker thread while the window keeps drawing, and its sound and its clock start
+/// together on the update that finds it ready, so the time the open took is not counted as time played. A
+/// button pressed while it opens is spent and stops nothing; that is this engine's.
 /// PLACEHOLDER: the hourglass <c>Movie_PlayQueue</c> raises before each movie and <c>Avi_Play</c> drops
 /// as playback starts is not shown over the open. A movie that will not open is skipped (see
 /// <see cref="Begin"/>).</para>
@@ -198,7 +200,9 @@ public sealed class ShellMovieRun : IDisposable {
 				if (_player.HasFailed) {
 					int id = _entry!.Id;
 					string name = _queue.MoviePath(id) ?? $"movie 0x{id:x}";
-					_hooks.Report?.Invoke(name, _player.DecodeException is { } ex
+					_hooks.Report?.Invoke(name, _player.ReadException is { } read
+						? $"stopped where its read failed ({read.Message})"
+						: _player.DecodeException is { } ex
 						? $"stopped on a decoder fault ({ex.GetType().Name}: {ex.Message})"
 						: "stopped on a frame it could not decode");
 				}
@@ -296,8 +300,15 @@ public sealed class ShellMovieRun : IDisposable {
 			return false;
 		}
 
-		var read = _hooks.ReadMovie;
-		_opening = Task.Run(() => read(name) is { } bytes ? MoviePlayer.Open(bytes) : null);
+		var open = _hooks.OpenMovie;
+		_opening = Task.Run(() => {
+			if (open(name) is not { } stream || MoviePlayer.Open(stream) is not { } player) {
+				return null;
+			}
+
+			player.WaitUntilReady();
+			return player;
+		});
 		_stage = Stage.Opening;
 		return true;
 	}
@@ -330,7 +341,6 @@ public sealed class ShellMovieRun : IDisposable {
 	}
 
 	private void EndMovie() {
-		_player?.Stop(_audio);
 		_player?.Dispose();
 		_player = null;
 	}
