@@ -9067,8 +9067,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagStatusScreenCopy",
-      "description": "Frameless, no Ghidra function starts here: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009358e; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
-      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#where-the-object-file-starts-and-ends; capstone at 00032f3f"
+      "description": "Frameless: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009358e; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
+      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#where-the-object-file-starts-and-ends; capstone at 00032f3f",
+      "verified": {
+        "bytes": "00032f3f+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00032f48",
@@ -9181,8 +9187,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagGunsightCopy",
-      "description": "Frameless, no Ghidra function starts here: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00093662; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
-      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#where-the-object-file-starts; the image at 000337a7"
+      "description": "Frameless: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00093662; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#where-the-object-file-starts; the image at 000337a7",
+      "verified": {
+        "bytes": "000337a7+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "000337b0",
