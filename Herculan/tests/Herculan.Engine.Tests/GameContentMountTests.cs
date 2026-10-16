@@ -8,7 +8,8 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// <see cref="GameContent.MountInstall"/>'s scan over the install and the <c>drive.cfg</c> directory, on
-/// hand-built archives, and what it mounts of the v1.10 test installs when they are present.
+/// hand-built archives, the install's loose files that answer before them, and what it mounts of the v1.10 test
+/// installs when they are present.
 /// </summary>
 public class GameContentMountTests : IDisposable {
 	private readonly string _root = Directory.CreateTempSubdirectory("herculan-mount-").FullName;
@@ -72,6 +73,44 @@ public class GameContentMountTests : IDisposable {
 		Assert.Equal("disc"u8.ToArray(), GameInstall.ReadDiscFile(Install, disc, Path.Combine("AVI", "PT1.AVI"), 100));
 		Assert.Equal("install"u8.ToArray(), GameInstall.ReadDiscFile(Install, disc, Path.Combine("AVI", "PT2.AVI"), 100));
 		Assert.Null(GameInstall.ReadDiscFile(Install, disc, Path.Combine("AVI", "PT3.AVI"), 100));
+	}
+
+	[Fact]
+	public void ALooseFileInTheInstallAnswersBeforeTheArchives() {
+		WriteVol(Install, "A.VOL", Voln.DbsimProgram, 0x05, ("X.DAT", "archive"), ("Y.DAT", "archive"));
+		WriteFile(Path.Combine(Install, "DAT", "X.DAT"), "loose");
+
+		var content = GameContent.MountSimulator(Install);
+
+		Assert.Equal("loose", Text(content, "X.DAT"));
+		Assert.Equal("archive", Text(content, "Y.DAT"));
+	}
+
+	[Fact]
+	public void ALooseFileIsMatchedIgnoringCaseAndNeedsNoArchiveEntry() {
+		WriteVol(Install, "A.VOL", Voln.DbsimProgram, 0x05, ("X.DAT", "archive"));
+		WriteFile(Path.Combine(Install, "dat", "x.dat"), "loose");
+		WriteFile(Path.Combine(Install, "dat", "new.dat"), "new");
+
+		var content = GameContent.MountSimulator(Install);
+
+		Assert.Equal("loose", Text(content, "X.DAT"));
+		Assert.Equal("new", Text(content, "NEW.DAT"));
+		Assert.True(content.Contains("DAT", "NEW.DAT"));
+		Assert.Equal(new[] { "X.DAT" }, content.ListFolder("DAT"));
+	}
+
+	[Fact]
+	public void ALooseFileOnTheDiscIsNotRead() {
+		WriteVol(Install, "A.VOL", Voln.DbsimProgram, 0x05, ("X.DAT", "archive"));
+		WriteFile(Path.Combine(Disc, "DAT", "X.DAT"), "disc");
+		WriteFile(Path.Combine(Disc, "DAT", "Z.DAT"), "disc");
+		WriteDriveCfg(Disc);
+
+		var content = GameContent.MountSimulator(Install);
+
+		Assert.Equal("archive", Text(content, "X.DAT"));
+		Assert.False(content.Contains("DAT", "Z.DAT"));
 	}
 
 	/// <summary>

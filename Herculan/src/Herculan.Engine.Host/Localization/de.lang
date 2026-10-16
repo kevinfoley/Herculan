@@ -163,6 +163,11 @@ controller.stick_y             Stick vor/zurück
 controller.throttle            Schubregler
 controller.rudder              Ruder
 controller.hat_row             Coolie-Hat
+controller.gamepad_stick_x     Lenken / Ruder
+controller.gamepad_stick_y     Schub
+controller.gamepad_throttle    Turmneigung / Nicken
+controller.gamepad_rudder      Turmdrehung / Rollen
+controller.gamepad_hat_row     Ansichten
 controller.button_row          BUTTON {0}
 controller.radar_toggle        Radar umschalten
 controller.radar_toggle_tip    Schaltet das Radar zwischen aktiv und passiv um, wie R. Diese Steuerung gibt es nur in HERCULAN: Das Originalspiel hat keine Taste dafür, und das CONTROLS-Feld zeigt sie nicht.
@@ -174,7 +179,7 @@ controller.detect_axis         Bewegen Sie das gewünschte Steuerelement bis zum
 controller.detect_hat          Drücken Sie den gewünschten Coolie-Hat in eine beliebige Richtung.
 controller.detect_button       Drücken Sie die gewünschte Taste oder ziehen Sie den gewünschten Trigger.
 controller.invert_throttle_tip Für einen Schubhebel: Steht der Hebel im Leerlauf, sollte „Spiel liest“ eine positive Zahl zeigen. Zeigt es eine negative, setzen Sie „Umkehren“.
-controller.invert_throttle_gamepad_tip  Bei einem Gamepad ist dies der rechte Stick nach oben und unten. Setzen Sie „Umkehren“, um umzukehren, in welche Richtung er den Turm eines HERC richtet und eine Razor neigt.
+controller.invert_throttle_gamepad_tip  Bei einem Gamepad ist dies der rechte Stick nach oben und unten. Setzen Sie „Umkehren“, um umzukehren, in welche Richtung er den Turm eines HERC richtet und eine RAZOR neigt.
 controller.pressed             Gedrückt
 controller.released            Losgelassen
 controller.centred             Mitte

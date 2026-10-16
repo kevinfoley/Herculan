@@ -248,11 +248,20 @@ public partial class PlayerSquadForm : Form {
 	/// <summary>
 	/// Greys the ammunition cell of every slot that is not a launcher, so a value that has no effect
 	/// does not read as one that does. The value itself is still shown rather than blanked — it is
-	/// real data in the file, and retail's own filler 5 is what belongs there.
+	/// real data in the file, and retail's own filler 5 is what belongs there; it reads (none) here
+	/// rather than the SARH it means on a launcher (AmmoTypeOption.FormatNonLauncherCell).
 	/// </summary>
 	private void OnLoadoutCellFormatting(object? sender, DataGridViewCellFormattingEventArgs e) {
-		if (e.ColumnIndex == _slotAmmoColumn.Index && e.CellStyle is { } style
-			&& SlotAt(e.RowIndex) is { IsLauncher: false }) {
+		if (e.ColumnIndex != _slotAmmoColumn.Index || SlotAt(e.RowIndex) is not { } row) {
+			return;
+		}
+
+		if (row.IsLauncher) {
+			return;
+		}
+
+		AmmoTypeOption.FormatNonLauncherCell(e, row.AmmoType);
+		if (e.CellStyle is { } style) {
 			style.ForeColor = SystemColors.GrayText;
 			style.BackColor = SystemColors.Control;
 		}

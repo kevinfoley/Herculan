@@ -24,7 +24,7 @@ Standard RIFF: a chain of `[fourcc][int32 length][body]` records with bodies pad
 
 Streams are numbered by position — the n-th `strl` list is stream n — and that number is what the two ASCII digits leading each `movi` chunk id refer to. The suffix says what the payload is: `dc` or `db` for video, `wb` for audio. A packet is only accepted when the suffix and the stream header agree about the kind, so a mislabelled chunk cannot land in the wrong queue, and only from the first stream of its kind, so the second video stream above does not interleave its packets with the first's.
 
-Packets are grouped into `rec ` lists in some files and loose in others, so the walk descends through lists rather than assuming either layout.
+Every file lays its top level out the same way: `hdrl`, a `JUNK` pad that puts the one `movi` list at offset 4084 (2036 in `ESTAB2.AVI`), then `idx1`, and in the 83 files with audio an `INFO` and a `PRMI` list after that. Those 83 group their packets into `rec ` lists, and their sound runs eleven packets ahead of the picture: `movi` opens with eleven audio packets, alternates one video and one audio packet, and closes with eleven video packets. Each audio packet holds one frame's worth of sound, 1/15 s, so the lead is about 0.73 s. `END1A.AVI`, nine frames long, is nine audio packets and then nine video packets. The ten files without audio hold their video packets loose in `movi`, so a reader descends through lists rather than assuming either layout. Read front to back, every file delivers its sound and its picture together.
 
 ### The index is not followed
 
@@ -102,7 +102,7 @@ Decoding both files this way matches Windows' own Cinepak codec, `iccvid.dll`, p
 
 ## Audio
 
-`AviAudioTrack` concatenates a stream's packets and widens them to signed 16-bit. 8-bit WAVE data is unsigned with `0x80` as silence, so it is widened about that midpoint rather than shifted.
+A stream's packets concatenate into one PCM track. 8-bit WAVE data is unsigned with `0x80` as silence, so widening it to signed 16-bit goes about that midpoint rather than shifting.
 
 ## Rejected readings
 

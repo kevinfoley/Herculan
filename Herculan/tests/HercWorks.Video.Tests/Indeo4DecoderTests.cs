@@ -24,7 +24,7 @@ public sealed class Indeo4DecoderTests {
 		MoviePlayback playback = MoviePlayback.Open(File.ReadAllBytes(path))!;
 		Assert.Equal(391, playback.FrameCount);
 
-		playback.Advance(playback.Duration);
+		playback.Advance(playback.Duration!.Value);
 		Assert.Null(playback.DecodeException);
 		Assert.False(playback.HasFailed);
 		Assert.Equal(390, playback.CurrentFrameIndex);

@@ -42,6 +42,11 @@ sealed class ControllerWindow {
 	private static readonly string[] AxisRowKeys =
 		["controller.stick_x", "controller.stick_y", "controller.throttle", "controller.rudder"];
 
+	// A gamepad's rows are named for what they do, which GamepadControls' fixed axis rows decide whatever axis fills
+	// them: the slots' own names would have the throttle slot aiming the turret.
+	private static readonly string[] GamepadAxisRowKeys =
+		["controller.gamepad_stick_x", "controller.gamepad_stick_y", "controller.gamepad_throttle", "controller.gamepad_rudder"];
+
 	private static readonly Vector4 LitColour = new(0.45f, 0.85f, 0.45f, 1f);
 	private static readonly Vector4 ErrorColour = new(1f, 0.45f, 0.4f, 1f);
 
@@ -319,7 +324,7 @@ sealed class ControllerWindow {
 	// reads from it through the map being edited.
 	private void ControlRows(ControllerDevice device) {
 		var reading = JoystickSource.Read(_draft, device);
-		var clashes = Clashes();
+		var clashes = Clashes(device.IsGamepad);
 		if (!ImGui.BeginTable("##controls", 5, ImGuiTableFlags.SizingStretchProp | ImGuiTableFlags.RowBg)) {
 			return;
 		}
@@ -335,7 +340,7 @@ sealed class ControllerWindow {
 			ImGui.PushID(row);
 			ImGui.TableNextRow();
 			ImGui.TableNextColumn();
-			ImGui.TextUnformatted(Text(AxisRowKeys[row]));
+			ImGui.TextUnformatted(RowLabel(row, device.IsGamepad));
 
 			ImGui.TableNextColumn();
 			if (InputCombo(AxisOf(row), device.AxisCount, "controller.axis", clashes[row]) is { } axis) {
@@ -365,7 +370,7 @@ sealed class ControllerWindow {
 		ImGui.PushID(HatRow);
 		ImGui.TableNextRow();
 		ImGui.TableNextColumn();
-		ImGui.TextUnformatted(Text("controller.hat_row"));
+		ImGui.TextUnformatted(RowLabel(HatRow, device.IsGamepad));
 		ImGui.TableNextColumn();
 		if (InputCombo(_draft.HatIndex, device.HatCount, "controller.hat", clash: null) is { } hatIndex) {
 			_draft = _draft with { HatIndex = hatIndex };
@@ -449,7 +454,7 @@ sealed class ControllerWindow {
 	// For each row, which other rows its device input also fills, as a sentence naming them, or null where it fills only
 	// its own. Two button rows on an axis's opposite directions do not share it; an axis row and a button row on either
 	// direction of its axis do, since moving the axis presses the button.
-	private string?[] Clashes() {
+	private string?[] Clashes(bool isGamepad) {
 		var bound = new Bound?[RadarRow + 1];
 		for (int row = 0; row < AxisRows; row++) {
 			bound[row] = AxisOf(row) is var axis && axis != JoystickDeviceMap.Unmapped ? new Bound(true, axis, 0) : null;
@@ -471,7 +476,7 @@ sealed class ControllerWindow {
 			for (int other = 0; other < bound.Length; other++) {
 				if (other != row && bound[other] is { } shared && shared.Axis == input.Axis && shared.Index == input.Index
 						&& (shared.Sign == 0 || input.Sign == 0 || shared.Sign == input.Sign)) {
-					others.Add(RowLabel(other));
+					others.Add(RowLabel(other, isGamepad));
 				}
 			}
 
@@ -486,9 +491,10 @@ sealed class ControllerWindow {
 	private static Bound? BoundOf(JoystickButtonSource source) =>
 		source.IsMapped ? new Bound(source.IsAxis, source.Index, source.AxisSign) : null;
 
-	private string RowLabel(int row) =>
-		row < AxisRows ? Text(AxisRowKeys[row])
-		: row == HatRow ? Text("controller.hat_row")
+	// A gamepad's hat is fixed on VIEWS in both halves of the CONTROLS panel, as its axis rows are fixed.
+	private string RowLabel(int row, bool isGamepad) =>
+		row < AxisRows ? Text((isGamepad ? GamepadAxisRowKeys : AxisRowKeys)[row])
+		: row == HatRow ? Text(isGamepad ? "controller.gamepad_hat_row" : "controller.hat_row")
 		: row == RadarRow ? Text("controller.radar_toggle")
 		: Format("controller.button_row", row - FirstButtonRow + 1);
 

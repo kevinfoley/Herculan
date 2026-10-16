@@ -87,7 +87,7 @@ Ammo type `0`–`3` are the guidance kinds `SARH`, `ARH`, `ARM`, `EO`; `5` means
 
 ## `gam\ini_*.dat` — the stock fit per chassis
 
-Nine files, one per type, each a **bare HERC catalog record** with no leading hangar slot. `MsnGen_BuildPlayerHerc` (`0041c58d`) reads one, through the nine-entry table at `004706fc`, to build a practice mission's player machine when the practice screen's Herc Type option chooses the chassis ([`../shell/main-menu.md`](../shell/main-menu.md#starting-a-practice-mission)). A chassis bought in the campaign is not fitted from it: `Herc_Order` builds the record with no hardpoints occupied ([`../shell/armory.md`](../shell/armory.md#buying-a-chassis--herc_order-00411019)). All nine consume exactly, and each file's leading type field matches its filename stem.
+Nine files, one per type, each a **bare HERC catalog record** with no leading hangar slot. `MsnGen_BuildPlayerHerc` (`0041c58d`) reads one, through the nine-entry table at `004706fc` and `VolRStream_Open`, so a loose copy in the install overrides `SHELL0.VOL`'s ([`vol-archive.md`](vol-archive.md#loose-files-on-disk-carry-no-prefix)), to build a practice mission's player machine when the practice screen's Herc Type option chooses the chassis ([`../shell/main-menu.md`](../shell/main-menu.md#starting-a-practice-mission)). A chassis bought in the campaign is not fitted from it: `Herc_Order` builds the record with no hardpoints occupied ([`../shell/armory.md`](../shell/armory.md#buying-a-chassis--herc_order-00411019)). All nine consume exactly, and each file's leading type field matches its filename stem.
 
 ## `gam\trn_herc.dat` — a second stock-fit set
 

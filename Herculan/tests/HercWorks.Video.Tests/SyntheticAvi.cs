@@ -54,6 +54,16 @@ internal sealed class SyntheticAvi {
 		return this;
 	}
 
+	/// <summary>Adds a <c>rec </c> list holding a video packet and then an audio packet, as the retail files group them.</summary>
+	internal SyntheticAvi AddRecord(byte[] video, byte[] audio) {
+		var record = new List<byte>();
+		record.AddRange("rec "u8.ToArray());
+		AddChunk(record, "00dc", video);
+		AddChunk(record, "01wb", audio);
+		AddList(_movi, [.. record]);
+		return this;
+	}
+
 	/// <summary>Sets a 256-entry greyscale palette, so index n resolves to the grey (n, n, n).</summary>
 	internal SyntheticAvi WithGreyPalette() {
 		Palette.Clear();

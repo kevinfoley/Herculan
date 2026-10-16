@@ -123,7 +123,7 @@ public sealed class MicrosoftVideo1DecoderTests {
 		MoviePlayback playback = MoviePlayback.Open(File.ReadAllBytes(path))!;
 		Assert.Equal(19, playback.FrameCount);
 
-		playback.Advance(playback.Duration);
+		playback.Advance(playback.Duration!.Value);
 		Assert.False(playback.HasFailed);
 		Assert.Equal(18, playback.CurrentFrameIndex);
 		Assert.Equal(0xF2BA65FB8191B0D2UL, Digest(playback.Frame.Rgba));
@@ -143,7 +143,7 @@ public sealed class MicrosoftVideo1DecoderTests {
 		MoviePlayback playback = MoviePlayback.Open(File.ReadAllBytes(path))!;
 		Assert.Equal(3, playback.FrameCount);
 
-		playback.Advance(playback.Duration);
+		playback.Advance(playback.Duration!.Value);
 		Assert.False(playback.HasFailed);
 		Assert.Equal(2, playback.CurrentFrameIndex);
 		Assert.Equal(0x3A934BE715916AE4UL, Digest(playback.Frame.Rgba));

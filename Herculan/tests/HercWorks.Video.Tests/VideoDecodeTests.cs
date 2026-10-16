@@ -167,34 +167,38 @@ public class VideoDecodeTests {
 			.AddAudio(0x80, 0x80, 0xFF, 0x00)
 			.Build();
 
-		AviAudioTrack? track = AviAudioTrack.Decode(AviFile.Open(bytes)!);
+		using MoviePlayback playback = MoviePlayback.Open(bytes)!;
+		var samples = new short[8];
 
-		Assert.NotNull(track);
-		Assert.Equal(4, track.Samples.Length);
-		Assert.Equal(0, track.Samples[0]);
-		Assert.Equal(0, track.Samples[1]);
-		Assert.Equal(0x7F00, track.Samples[2]);
-		Assert.Equal(-0x8000, track.Samples[3]);
+		Assert.Equal(4, playback.ReadAudio(samples));
+		Assert.Equal(0, samples[0]);
+		Assert.Equal(0, samples[1]);
+		Assert.Equal(0x7F00, samples[2]);
+		Assert.Equal(-0x8000, samples[3]);
+		Assert.True(playback.AudioEnded);
 	}
 
 	/// <summary>
-	/// A stereo track folds to mono by averaging, because the engine's audio backend takes mono
-	/// samples. Catches one channel being dropped instead of mixed.
+	/// A stereo track reads out with its channels interleaved as the file has them, across packets, and
+	/// only in whole frames. Catches a short read leaving half a frame behind, which swaps the channels
+	/// of everything after it.
 	/// </summary>
 	[Fact]
-	public void FoldsStereoToMonoByAveraging() {
+	public void ReadsStereoInWholeFramesAcrossPackets() {
 		byte[] bytes = new SyntheticAvi { WithAudio = true, AudioBits = 8, AudioChannels = 2 }
 			.AddVideo(1)
-			.AddAudio(0xFF, 0x80, 0x00, 0x80)
+			.AddAudio(0x90, 0xA0, 0xB0)
+			.AddAudio(0xC0)
 			.Build();
 
-		AviAudioTrack track = AviAudioTrack.Decode(AviFile.Open(bytes)!)!;
-		short[] mono = track.ToMono();
+		using MoviePlayback playback = MoviePlayback.Open(bytes)!;
+		var frame = new short[3];
 
-		Assert.Equal(2, track.Channels);
-		Assert.Equal(2, mono.Length);
-		Assert.Equal((0x7F00 + 0) / 2, mono[0]);
-		Assert.Equal((-0x8000 + 0) / 2, mono[1]);
+		Assert.Equal(2, playback.ReadAudio(frame));
+		Assert.Equal(new short[] { 0x1000, 0x2000 }, frame[..2]);
+		Assert.Equal(2, playback.ReadAudio(frame));
+		Assert.Equal(new short[] { 0x3000, 0x4000 }, frame[..2]);
+		Assert.Equal(0, playback.ReadAudio(frame));
 	}
 
 	/// <summary>
@@ -207,7 +211,10 @@ public class VideoDecodeTests {
 			.AddAudio(1, 2, 3, 4)
 			.Build();
 
-		Assert.Null(AviAudioTrack.Decode(AviFile.Open(bytes)!));
+		using MoviePlayback playback = MoviePlayback.Open(bytes)!;
+
+		Assert.Null(playback.AudioFormat);
+		Assert.Equal(0, playback.ReadAudio(new short[4]));
 	}
 
 	/// <summary>

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Numerics;
 using Herculan.Engine.Platform;
 using ImGuiNET;
@@ -10,7 +11,7 @@ namespace Herculan.Engine.Host.Simulator;
 /// held: leaning the stick picks the nearest choice, centring it picks none, and letting go of the click takes the one
 /// picked. The squad orders and the cockpit's screens are one each (docs/herculan/herculan-key-bindings.md, "Squad
 /// orders on a gamepad" and "Screens on a gamepad"). This engine's own. It picks and draws; the host acts on the choice
-/// and mutes the mission's stick while it is up.
+/// and mutes the mission's stick while <see cref="MutesStick"/>.
 /// </summary>
 /// <param name="clickButton">The stick's click, in the standard gamepad layout.</param>
 /// <param name="xAxis">The stick's X axis; its Y is the next.</param>
@@ -25,6 +26,10 @@ sealed class PadRadial(int clickButton, int xAxis, int count, float labelRadius)
 
 	// How far the stick has to lean, as a fraction of its travel, to pick a choice.
 	private const float PickTravel = 0.5f;
+
+	// How long the mission's stick stays muted after a choice is taken, so the stick springing back from the choice as
+	// it is let go does not steer or aim.
+	private static readonly TimeSpan SettleTime = TimeSpan.FromSeconds(0.5);
 
 	// In pixels on a 100% display: the disc's margin beyond the labels, and the dot that shows where the stick is.
 	private const float DiscMargin = 20f;
@@ -43,8 +48,17 @@ sealed class PadRadial(int clickButton, int xAxis, int count, float labelRadius)
 	private bool _clickDown;
 	private Vector2 _stick;
 
+	// The Stopwatch timestamp of the last choice taken, or 0 for none.
+	private long _takenAt;
+
 	/// <summary>Whether the radial is up.</summary>
 	public bool IsOpen => _slot >= 0;
+
+	/// <summary>
+	/// Whether the mission's stick should drive nothing: while the radial is up, and for <see cref="SettleTime"/> after a
+	/// choice is taken. Taking nothing leaves the stick at once, since a centred stick has nothing to spring back from.
+	/// </summary>
+	public bool MutesStick => IsOpen || (_takenAt != 0 && Stopwatch.GetElapsedTime(_takenAt) < SettleTime);
 
 	/// <summary>The choice picked, or -1 for none.</summary>
 	public int Picked { get; private set; } = -1;
@@ -91,7 +105,12 @@ sealed class PadRadial(int clickButton, int xAxis, int count, float labelRadius)
 
 		int picked = Picked;
 		Cancel();
-		return picked >= 0 ? picked : null;
+		if (picked < 0) {
+			return null;
+		}
+
+		_takenAt = Stopwatch.GetTimestamp();
+		return picked;
 	}
 
 	/// <summary>Takes the radial down taking nothing, as the window losing the focus does.</summary>

@@ -205,7 +205,7 @@ public sealed class Indeo3DecoderTests {
 		Assert.Equal(400, playback.CurrentFrameIndex);
 		Assert.Equal(0x8080F98512A13B34UL, Digest(playback.Frame.Rgba));
 
-		playback.Advance(playback.Duration);
+		playback.Advance(playback.Duration!.Value);
 		Assert.False(playback.HasFailed);
 		Assert.Equal(603, playback.CurrentFrameIndex);
 	}

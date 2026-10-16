@@ -163,6 +163,11 @@ controller.stick_y             Stick forward/back
 controller.throttle            Throttle
 controller.rudder              Rudder
 controller.hat_row             Hat
+controller.gamepad_stick_x     Turn / Rudder
+controller.gamepad_stick_y     Throttle
+controller.gamepad_throttle    Turret elevation / Pitch
+controller.gamepad_rudder      Turret rotation / Roll
+controller.gamepad_hat_row     Views
 controller.button_row          BUTTON {0}
 controller.radar_toggle        Radar toggle
 controller.radar_toggle_tip    Switches the radar between active and passive, as R does. This control is HERCULAN's own: the original game has no button for it, and the CONTROLS panel does not show it.
@@ -174,7 +179,7 @@ controller.detect_axis         Move the control you want as far as it goes.
 controller.detect_hat          Push the hat you want in any direction.
 controller.detect_button       Press the button you want, or pull the trigger you want.
 controller.invert_throttle_tip For a throttle lever: with the lever at idle, Game reads should show a positive number. Tick Invert if it shows a negative one.
-controller.invert_throttle_gamepad_tip  On a gamepad this is the right stick's up and down. Tick Invert to reverse which way it aims a HERC's turret and pitches a Razor.
+controller.invert_throttle_gamepad_tip  On a gamepad this is the right stick's up and down. Tick Invert to reverse which way it aims a HERC's turret and pitches a RAZOR.
 controller.pressed             Pressed
 controller.released            Released
 controller.centred             Centred

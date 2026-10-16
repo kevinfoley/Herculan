@@ -1,4 +1,5 @@
-﻿using HercWorks.Vol;
+﻿using HercWorks.Core.Io;
+using HercWorks.Vol;
 using HercWorks.Vol.Io;
 using Herculan.Engine.Install;
 
@@ -16,6 +17,13 @@ namespace Herculan.Engine.Content;
 /// archive holding a <c>folder\name</c> answering for it (docs/retail/formats/vol-archive.md, "Which
 /// archives are mounted").</para>
 ///
+/// <para>A file on disk at <c>folder\name</c> under the install answers before any archive, as
+/// <c>VolRStream_Open</c> (VSHELL <c>00402d25</c>, DBSIM <c>00472fdc</c>) tries <c>_open</c> on the relative path
+/// first (docs/retail/formats/vol-archive.md#loose-files-on-disk-carry-no-prefix). Such a file is content-only, as
+/// HercWorks saves it, and is looked for at every <see cref="Read"/> and <see cref="Contains"/>, as retail looks at
+/// every open. Only the install is searched, never the disc. The path is matched ignoring case
+/// (<see cref="CaseInsensitivePath"/>), as the DOS and Windows file systems retail ran on match it.</para>
+///
 /// <para>It also carries the program's <see cref="Language"/>, which the readers of translated resources take
 /// their folder or extension from.</para>
 ///
@@ -32,8 +40,10 @@ public sealed class GameContent {
 
 	private readonly Dictionary<string, VolEntry> _entries = new(StringComparer.OrdinalIgnoreCase);
 	private readonly List<Voln> _mounted;
+	private readonly string _installRoot;
 
-	private GameContent(List<Voln> searchOrder, GameLanguage language, bool isV110) {
+	private GameContent(string installRoot, List<Voln> searchOrder, GameLanguage language, bool isV110) {
+		_installRoot = installRoot;
 		_mounted = searchOrder;
 		Language = language;
 		IsV110 = isV110;
@@ -163,17 +173,18 @@ public sealed class GameContent {
 		var language = (program & Voln.DbsimProgram) != 0
 			? LauncherLanguage.Simulator(installRoot)
 			: LauncherLanguage.Shell(installRoot);
-		return new GameContent(loaded.OrderByDescending(vol => vol.VolOrderNum).ToList(), language,
+		return new GameContent(installRoot, loaded.OrderByDescending(vol => vol.VolOrderNum).ToList(), language,
 			LauncherLanguage.IsV110(installRoot));
 	}
 
 	/// <summary>
-	/// Reads one resource's bytes, or null if no mounted archive has it. <paramref name="folder"/>
-	/// and <paramref name="name"/> are matched case-insensitively, matching the original's own
-	/// <c>_stricmp</c>-based resource resolution.
+	/// Reads one resource's bytes: the loose file in the install if there is one, else the first mounted archive's
+	/// entry, else null. <paramref name="folder"/> and <paramref name="name"/> are matched case-insensitively,
+	/// matching the original's own <c>_stricmp</c>-based resource resolution.
 	/// </summary>
 	public byte[]? Read(string folder, string name) =>
-		_entries.TryGetValue(Key(folder, name), out var entry) ? entry.RawBytes : null;
+		LooseFile(folder, name) is { } path ? File.ReadAllBytes(path)
+		: _entries.TryGetValue(Key(folder, name), out var entry) ? entry.RawBytes : null;
 
 	/// <summary>
 	/// Same as <see cref="Read"/> but throws with the resolved resource path when the entry is
@@ -182,19 +193,29 @@ public sealed class GameContent {
 	/// </summary>
 	public byte[] ReadRequired(string folder, string name) =>
 		Read(folder, name) ?? throw new FileNotFoundException(
-			$"Resource '{Key(folder, name)}' not present in any mounted archive " +
+			$"Resource '{Key(folder, name)}' not present in {_installRoot} or any mounted archive " +
 			$"({string.Join(", ", MountedArchives)}).");
 
-	/// <summary>Whether any mounted archive contains this resource.</summary>
-	public bool Contains(string folder, string name) => _entries.ContainsKey(Key(folder, name));
+	/// <summary>Whether the install has this resource as a loose file or any mounted archive contains it.</summary>
+	public bool Contains(string folder, string name) =>
+		_entries.ContainsKey(Key(folder, name)) || LooseFile(folder, name) != null;
 
-	/// <summary>Every resource name in one folder, in mount order. Useful for tooling and probes.</summary>
+	/// <summary>
+	/// Every resource name the mounted archives hold in one folder, by name. Loose files are not listed: neither
+	/// program enumerates a resource folder, so this serves tooling and probes.
+	/// </summary>
 	public IEnumerable<string> ListFolder(string folder) {
 		string prefix = folder + "\\";
 		return _entries.Keys
 			.Where(k => k.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
 			.Select(k => k.Substring(prefix.Length))
 			.OrderBy(n => n, StringComparer.OrdinalIgnoreCase);
+	}
+
+	// The install's file at folder\name, or null when there is none.
+	private string? LooseFile(string folder, string name) {
+		string path = CaseInsensitivePath.Combine(_installRoot, folder, name);
+		return File.Exists(path) ? path : null;
 	}
 
 	private static string Key(string folder, string name) => $"{folder}\\{name}";

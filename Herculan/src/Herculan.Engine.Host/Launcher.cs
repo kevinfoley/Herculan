@@ -43,7 +43,7 @@ static class Launcher {
 		using var window = OpenWindow(session);
 		var shell = options.Shell;
 		var staging = new SimulatorStaging(options.StagedStart, options.StagedScreenshot, screenshotRun: options.ScreenshotPath != null);
-		var shellMode = shell.Mode;
+		ShellCampaignMode? shellMode = null;
 		int state = ShellHost.StartupCode;
 		int launches = 0;
 		while (true) {

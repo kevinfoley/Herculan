@@ -31,6 +31,7 @@ partial class MainForm {
 		_editMenuItem = new ToolStripMenuItem();
 		_hercStatsMenuItem = new ToolStripMenuItem();
 		_itemStatsMenuItem = new ToolStripMenuItem();
+		_stockFitsMenuItem = new ToolStripMenuItem();
 		_projectilesMenuItem = new ToolStripMenuItem();
 		_campaignResourcesMenuItem = new ToolStripMenuItem();
 		_missionScriptMenuItem = new ToolStripMenuItem();
@@ -119,7 +120,7 @@ partial class MainForm {
 		// 
 		// _editMenuItem
 		// 
-		_editMenuItem.DropDownItems.AddRange(new ToolStripItem[] { _hercStatsMenuItem, _itemStatsMenuItem, _projectilesMenuItem, _campaignResourcesMenuItem, _missionScriptMenuItem, _playerSquadMenuItem, _missionFilesMenuItem });
+		_editMenuItem.DropDownItems.AddRange(new ToolStripItem[] { _hercStatsMenuItem, _stockFitsMenuItem, _itemStatsMenuItem, _projectilesMenuItem, _campaignResourcesMenuItem, _missionScriptMenuItem, _playerSquadMenuItem, _missionFilesMenuItem });
 		_editMenuItem.Name = "_editMenuItem";
 		_editMenuItem.Size = new Size(39, 20);
 		_editMenuItem.Text = "&Edit";
@@ -130,6 +131,13 @@ partial class MainForm {
 		_hercStatsMenuItem.Size = new Size(220, 22);
 		_hercStatsMenuItem.Text = "Herc Stats...";
 		_hercStatsMenuItem.Click += OnOpenHercStats;
+		// 
+		// _stockFitsMenuItem
+		// 
+		_stockFitsMenuItem.Name = "_stockFitsMenuItem";
+		_stockFitsMenuItem.Size = new Size(220, 22);
+		_stockFitsMenuItem.Text = "Stock Fits (INI_*.DAT)...";
+		_stockFitsMenuItem.Click += OnOpenStockFits;
 		// 
 		// _itemStatsMenuItem
 		// 
@@ -318,6 +326,7 @@ partial class MainForm {
 	private ToolStripMenuItem _exitMenuItem;
 	private ToolStripMenuItem _editMenuItem;
 	private ToolStripMenuItem _hercStatsMenuItem;
+	private ToolStripMenuItem _stockFitsMenuItem;
 	private ToolStripMenuItem _itemStatsMenuItem;
 	private ToolStripMenuItem _projectilesMenuItem;
 	private ToolStripMenuItem _campaignResourcesMenuItem;
