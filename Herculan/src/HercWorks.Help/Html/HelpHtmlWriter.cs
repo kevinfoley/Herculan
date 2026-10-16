@@ -43,7 +43,6 @@ public static class HelpHtmlWriter {
 		private readonly StringBuilder _html = new();
 		private readonly Dictionary<int, (HelpPicture Picture, string Uri)?> _pictures = [];
 		private readonly Dictionary<string, int> _keywordIndex = new(StringComparer.Ordinal);
-		private int _maps;
 		private int _popupColour = 0xFFFFFF;
 
 		// The font in effect, carried from record to record and cell to cell in stored order
@@ -133,6 +132,8 @@ public static class HelpHtmlWriter {
 				.Append("#main>.nsr,#main>.scroll,.wbody>.nsr,.wbody>.scroll{padding-left:8px;padding-right:8px;}\n")
 				.Append("#main>:first-child,.wbody>:first-child{padding-top:8px;}\n#main>.scroll,.wbody>.scroll{padding-bottom:8px;}\n")
 				.Append("p{margin:0;}\na{color:inherit;cursor:pointer;}\nimg{vertical-align:bottom;}\n")
+				.Append(".spots{display:inline-block;position:relative;vertical-align:bottom;}\n.spots img{display:block;}\n")
+				.Append(".spots a{position:absolute;}\n")
 				.Append("table{border-collapse:collapse;table-layout:fixed;}\ntd{vertical-align:top;padding:0;overflow:visible;}\n")
 				.Append(".tab{display:inline-block;text-indent:0;}\n")
 				.Append(".index{padding:8px 16px;color:#c0c0c0;font:10pt Arial,sans-serif;}\n.index a{color:#0ff;display:block;}\n")
@@ -442,34 +443,38 @@ public static class HelpHtmlWriter {
 			return entry;
 		}
 
+		// A picture with hotspots is a positioned box holding the picture and one link per hotspot laid
+		// over it. An image map would do the same, but Firefox misplaces a map's click regions inside the
+		// zoomed stage while ordinary boxes zoom with everything else.
 		private void WritePicture(HelpPictureRef reference, StringBuilder into) {
 			if (Picture(reference.Number) is not var (picture, uri)) {
 				return;
 			}
 
-			string map = picture.Hotspots.Count > 0 ? "m" + Num(++_maps) : "";
-			into.Append("<img alt=\"\" width=\"").Append(Num(picture.Width)).Append("\" height=\"").Append(Num(picture.Height))
-				.Append("\" src=\"").Append(uri).Append('"');
-			if (reference.Placement == HelpPicturePlacement.Right) {
-				into.Append(" style=\"float:right\"");
+			string style = reference.Placement == HelpPicturePlacement.Right ? " style=\"float:right\"" : "";
+			bool spots = picture.Hotspots.Count > 0;
+			if (spots) {
+				into.Append("<span class=\"spots\"").Append(style).Append('>');
+				style = "";
 			}
 
-			if (map.Length > 0) {
-				into.Append(" usemap=\"#").Append(map).Append("\"><map name=\"").Append(map).Append("\">");
-				foreach (var spot in picture.Hotspots) {
-					if (help.LocateContext(spot.Hash) is not { } at) {
-						continue;
-					}
+			into.Append("<img alt=\"\" width=\"").Append(Num(picture.Width)).Append("\" height=\"").Append(Num(picture.Height))
+				.Append("\" src=\"").Append(uri).Append('"').Append(style).Append('>');
+			if (!spots) {
+				return;
+			}
 
-					into.Append("<area shape=\"rect\" coords=\"").Append(Num(spot.Left)).Append(',').Append(Num(spot.Top)).Append(',')
-						.Append(Num(spot.Left + spot.Width)).Append(',').Append(Num(spot.Top + spot.Height))
-						.Append("\" href=\"#\" alt=\"\" data-go=\"p").Append(Num(at.Topic.Number)).Append("\">");
+			foreach (var spot in picture.Hotspots) {
+				if (help.LocateContext(spot.Hash) is not { } at) {
+					continue;
 				}
 
-				into.Append("</map>");
-			} else {
-				into.Append('>');
+				into.Append("<a href=\"#\" data-go=\"p").Append(Num(at.Topic.Number)).Append("\" style=\"left:").Append(Num(spot.Left))
+					.Append("px;top:").Append(Num(spot.Top)).Append("px;width:").Append(Num(spot.Width)).Append("px;height:")
+					.Append(Num(spot.Height)).Append("px\"></a>");
 			}
+
+			into.Append("</span>");
 		}
 
 		/// <summary>

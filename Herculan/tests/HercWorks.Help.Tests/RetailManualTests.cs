@@ -87,4 +87,17 @@ public class RetailManualTests {
 		Assert.Contains("<span class=\"f11\">Medium missile platform.</span>", html);
 		Assert.Contains("<span class=\"f11\">Cybrid foot soldier.</span>", html);
 	}
+
+	// Every hotspot of a picture is a link laid over it, not an image-map area.
+	[Fact]
+	public void PictureHotspotsAreLinksOverThePicture() {
+		if (RetailManuals.Read("ENGLISH") is not { } bytes) {
+			return;
+		}
+
+		string html = HelpHtmlWriter.Write(HelpFile.Parse(bytes, out _)!);
+		Assert.DoesNotContain("<map", html);
+		Assert.Equal(13, html.Split("<span class=\"spots\"").Length - 1);
+		Assert.Equal(73, System.Text.RegularExpressions.Regex.Count(html, "<a href=\"#\" data-go=\"p\\d+\" style=\"left:"));
+	}
 }
