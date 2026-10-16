@@ -23383,7 +23383,13 @@
       "confidence": "high",
       "name": "VolRStream_Open",
       "description": "VolRStream::open(path), the DBSIM copy of VSHELL's VolRStream_Open with the asserts compiled out: tries _open(path, O_BINARY|O_RDONLY) first, then VolumeGroup_FindEntry on g_VolumeGroup (004a0d30), and switches on the entry's compression type: 2 reads the volume stream directly, 7 attaches the RLERStream at +0x27, 9 the LZHRStream at +0x2b (each created on first use). Any other type returns 1 with status 0 and no source at +0xe. Returns 0 with status 1 when neither source has the file.",
-      "source": "DBSIM decompile and disassembly at 00472fdc"
+      "source": "DBSIM decompile and disassembly at 00472fdc",
+      "verified": {
+        "bytes": "00472fdc+376",
+        "sha1": "ea01931d20fe",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00473154",
