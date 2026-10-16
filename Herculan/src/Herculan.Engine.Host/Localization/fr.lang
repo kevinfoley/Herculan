@@ -163,6 +163,11 @@ controller.stick_y             Manche avant/arrière
 controller.throttle            Manette des gaz
 controller.rudder              Palonnier
 controller.hat_row             Chapeau
+controller.gamepad_stick_x     Direction / Palonnier
+controller.gamepad_stick_y     Gaz
+controller.gamepad_throttle    Inclinaison tourelle / Tangage
+controller.gamepad_rudder      Rotation tourelle / Roulis
+controller.gamepad_hat_row     Vues
 controller.button_row          BUTTON {0}
 controller.radar_toggle        Bascule radar
 controller.radar_toggle_tip    Fait passer le radar d'actif à passif et inversement, comme R. Cette commande est propre à HERCULAN : le jeu original n'a pas de bouton pour elle, et le panneau CONTROLS ne l'affiche pas.
@@ -174,7 +179,7 @@ controller.detect_axis         Bougez la commande voulue jusqu'en butée.
 controller.detect_hat          Poussez le chapeau voulu dans n'importe quelle direction.
 controller.detect_button       Appuyez sur le bouton voulu, ou tirez la gâchette voulue.
 controller.invert_throttle_tip Pour une manette des gaz : manette au ralenti, « Lu par le jeu » doit afficher un nombre positif. Cochez Inverser s'il est négatif.
-controller.invert_throttle_gamepad_tip  Sur une manette de jeu, c'est le stick droit vers le haut et le bas. Cochez Inverser pour changer le sens dans lequel il oriente la tourelle d'un HERC et incline un Razor.
+controller.invert_throttle_gamepad_tip  Sur une manette de jeu, c'est le stick droit vers le haut et le bas. Cochez Inverser pour changer le sens dans lequel il oriente la tourelle d'un HERC et incline un RAZOR.
 controller.pressed             Appuyé
 controller.released            Relâché
 controller.centred             Centré
