@@ -33,6 +33,8 @@ tweak.play_last_music_track.display_name  Jouer toutes les musiques
 tweak.play_last_music_track.description   Les missions jouent aussi la dernière des six pistes musicales du disque. Dans le jeu original, les missions n'alternent qu'entre les cinq premières, si bien que la dernière n'est jamais jouée.
 tweak.shuffle_mission_music.display_name  Musique de mission aléatoire
 tweak.shuffle_mission_music.description   Chaque mission joue une piste musicale choisie au hasard, jamais la même deux fois de suite. Le jeu original joue les pistes dans un ordre fixe, une par mission.
+tweak.change_pbw_beam_hue.display_name  Changer la teinte PBW
+tweak.change_pbw_beam_hue.description   Dans le jeu original, les rayons du PBW et du PBW2 utilisent la même texture que les lasers, ce qui les rend impossibles à distinguer. Cet ajustement modifie la teinte du PBW pour plus de clarté.
 tweak.high_resolution_widescreen.display_name  Rendu haute résolution panoramique
 tweak.high_resolution_widescreen.description   Activé, le jeu est rendu à la résolution et aux proportions de la fenêtre. Désactivé, le jeu est rendu en 640x480. L'interface hors mission est toujours en 640x480.
 tweak.smoother_turret_movement.display_name   Mouvement de tourelle plus fluide

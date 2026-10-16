@@ -33,6 +33,8 @@ tweak.play_last_music_track.display_name  Play all music tracks
 tweak.play_last_music_track.description   Missions also play the last of the disc's six music tracks. Retail missions take turns through only the first five, so the last one never plays.
 tweak.shuffle_mission_music.display_name  Shuffle mission music
 tweak.shuffle_mission_music.description   Each mission plays a music track chosen at random, never the same one twice in a row. Retail plays the tracks in a fixed order, one per mission.
+tweak.change_pbw_beam_hue.display_name  Change PBW beam hue
+tweak.change_pbw_beam_hue.description   In retail, the PBW and PBW2 beams use the same texture as the Lasers, making them indistinguishable. This tweak adjusts the PBW hue for visual clarity.
 tweak.high_resolution_widescreen.display_name  Enable high-resolution, widescreen rendering
 tweak.high_resolution_widescreen.description   When enabled, gameplay is rendered at the window resolution and aspect ratio. When disabled, gameplay is rendered at 640x480. The shell is always 640x480.
 tweak.smoother_turret_movement.display_name   Smoother turret movement

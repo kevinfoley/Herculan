@@ -122,6 +122,35 @@ public sealed class BeamAppearance {
 		return _profiles[frame];
 	}
 
+	/// <summary>The <c>PROJ.DAT</c> subtype id of PBW, whose beam <see cref="Settings.TweakSettingDefinitions.ChangePbwBeamHue"/> recolours.</summary>
+	public const int PbwSubtype = 0;
+
+	/// <summary>The <c>PROJ.DAT</c> subtype id of PBW2, whose beam <see cref="Settings.TweakSettingDefinitions.ChangePbwBeamHue"/> recolours.</summary>
+	public const int Pbw2Subtype = 6;
+
+	/// <summary>Whether <paramref name="subtypeId"/> is PBW's or PBW2's.</summary>
+	public static bool IsParticleBeam(int subtypeId) => subtypeId is PbwSubtype or Pbw2Subtype;
+
+	/// <summary>
+	/// <paramref name="texels"/> with every texel's hue turned 180 degrees and its saturation, value and alpha kept,
+	/// for <see cref="Settings.TweakSettingDefinitions.ChangePbwBeamHue"/>; a HERCULAN colour, not retail's. A half
+	/// turn in HSV maps each channel <c>c</c> to <c>max + min - c</c>, so the fire ramp, dark orange (184, 92, 20)
+	/// to near-white (252, 248, 228), becomes dark blue (20, 112, 184) to (228, 232, 252).
+	/// </summary>
+	public static byte[] TurnHue(ReadOnlySpan<byte> texels) {
+		var turned = new byte[texels.Length];
+		for (int i = 0; i + 3 < texels.Length; i += 4) {
+			byte r = texels[i], g = texels[i + 1], b = texels[i + 2];
+			int sum = Math.Max(r, Math.Max(g, b)) + Math.Min(r, Math.Min(g, b));
+			turned[i] = (byte)(sum - r);
+			turned[i + 1] = (byte)(sum - g);
+			turned[i + 2] = (byte)(sum - b);
+			turned[i + 3] = texels[i + 3];
+		}
+
+		return turned;
+	}
+
 	/// <summary>
 	/// One row of the frame, expanded through the palette. Every retail row is a single repeated
 	/// index, so the first column is the whole row; the general case takes it anyway rather than

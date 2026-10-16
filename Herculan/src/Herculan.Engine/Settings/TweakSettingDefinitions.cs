@@ -121,6 +121,13 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> ShuffleMissionMusic = new("tweak.shuffle_mission_music", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
 
 	/// <summary>
+	/// Turn the hue of the PBW and PBW2 beams by 180 degrees, so they draw blue instead of fire orange. Retail draws
+	/// every straight beam from the one <c>BEAMTEX.DBA</c> frame (docs/retail/formats/beam-dat.md), so a particle beam
+	/// differs from a laser only in width. The colour is HERCULAN's, not retail's. See <see cref="Content.BeamAppearance.TurnHue"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> ChangePbwBeamHue = new("tweak.change_pbw_beam_hue", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
 	/// Draw a mission at the window's own resolution and shape. Off, it is drawn at 640x480, retail's own resolution
 	/// (docs/retail/launch-options.md, "Display"), and the frame is scaled to fit the window, centred, so a window wider
 	/// than 4:3 gets bars at its sides; HERCULAN's own ImGui windows stay at the window's resolution either way. The
@@ -232,6 +239,6 @@ public static class TweakSettingDefinitions {
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
 		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, FasterKeyboardAiming, FixRaptorIIPerspective, ResetCountersOnReplay,
-		PlayLastMusicTrack, ShuffleMissionMusic,
+		PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue,
 	};
 }
