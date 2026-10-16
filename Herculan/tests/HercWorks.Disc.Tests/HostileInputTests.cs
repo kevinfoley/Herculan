@@ -176,6 +176,7 @@ public class HostileInputTests : IDisposable {
 		string valid = "FILE \"a.bin\" BINARY\n TRACK 01 MODE1/2352\n  INDEX 01 00:00:00\n TRACK 02 AUDIO\n  PREGAP 00:02:00\n  INDEX 01 01:00:00\n";
 		const string alphabet = "FILETRACKINDEXPREGAPOSTGAP0123456789:\" \n/.MODEAUDIO";
 		var random = new Random(2);
+		int parsed = 0, refused = 0;
 		for (int round = 0; round < 5000; round++) {
 			char[] text = valid.ToCharArray();
 			for (int i = random.Next(1, 6); i > 0; i--) {
@@ -184,9 +185,14 @@ public class HostileInputTests : IDisposable {
 
 			try {
 				CueSheet.Parse(new string(text));
+				parsed++;
 			} catch (DiscFormatException) {
+				refused++;
 			}
 		}
+
+		// Both outcomes have to occur, or the mutation is too light or too heavy to test anything.
+		Assert.True(parsed > 50 && refused > 50, $"{parsed} parsed, {refused} refused");
 	}
 
 	private string Write(string name, byte[] bytes) {

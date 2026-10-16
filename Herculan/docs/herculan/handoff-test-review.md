@@ -1,7 +1,7 @@
-# Handoff: Herculan.Engine.Tests review — tests that need the retail data to settle
+# Handoff: test review — tests that need the retail data to settle
 
-A review of `Herculan/tests/Herculan.Engine.Tests` removed or rewrote the tests that could not catch a
-regression. These are the ones it kept but could not settle without a retail install, because the
+A review of `Herculan.Engine.Tests`, `HercWorks.Disc.Tests`, `HercWorks.Help.Tests` and
+`HercWorks.Video.Tests` removed or rewrote the tests that could not catch a regression. These are the ones it kept but could not settle without a retail install, because the
 cloud environment has none and every retail-data case there returns early. Each entry names what is
 suspect and what check would settle it.
 
@@ -44,6 +44,11 @@ suspect and what check would settle it.
 - **`MechLocomotionTests.TheEyeRidesTheCameraNode`** — the summary quotes fleet statistics (3.2–11.2 m
   without the offset, 8.2–13.2 m with it) that the 7–15 m assertion never checks. Either tighten it to
   per-chassis bounds from the data or drop the figures from the comment.
+- **`HercWorks.Help.Tests` `HostileInputTests.CorruptBytesNeverThrow`** — corrupts four bytes of the
+  retail manual 2000 times, but never checks that any corrupted copy still parses, so it could pass with
+  every round refused at the header and the deep parse paths never reached. Count the rounds that parse
+  and the ones refused, and assert both clear a floor, as `HercWorks.Disc.Tests`'
+  `SurvivesRandomCorruption` and `SurvivesRandomCueSheets` do.
 - **`PlayerSaveRoundTripTests.RoundTripsEveryRetailSaveByteForByte`** — the sanity checks (`NameIndex`
   0–35, printable names, 9 chassis unlocks, 36 squadmates) partly restate fixed sizes, but they diagnose
   a desync the round trip alone could hide. Only worth revisiting with the saves to hand.

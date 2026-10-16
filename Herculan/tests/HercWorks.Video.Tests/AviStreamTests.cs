@@ -42,15 +42,19 @@ public class AviStreamTests {
 			.AddVideo(7)
 			.Build();
 
-		// The first record's video chunk now claims far more than its list holds.
+		// The first record's video chunk now claims far more than its list holds, which loses that
+		// record's two packets and nothing after it.
 		int at = IndexOf(bytes, "00dc"u8.ToArray());
 		BitConverter.GetBytes(0x7FFFFFFF).CopyTo(bytes, at + 4);
-		AssertSamePackets(bytes, seekable: true);
+		var (video, audio) = AssertSamePackets(bytes, seekable: true);
+		Assert.Equal(new byte[][] { [4, 5], [7] }, video);
+		Assert.Equal(new byte[][] { [6] }, audio);
 
 		// A one-level limit spends its level on the movie list, so the records inside it go unread.
 		var shallow = new VideoLimits { MaxRiffDepth = 1 };
 		byte[] nested = new SyntheticAvi().AddRecord([1], [2]).AddVideo(3).Build();
-		AssertSamePackets(nested, seekable: true, shallow);
+		(video, _) = AssertSamePackets(nested, seekable: true, shallow);
+		Assert.Equal(new byte[][] { [3] }, video);
 	}
 
 	/// <summary>
@@ -194,7 +198,9 @@ public class AviStreamTests {
 		.AddVideo(4, 30, 0, 1)
 		.Build();
 
-	private static void AssertSamePackets(byte[] bytes, bool seekable, VideoLimits? limits = null) {
+	/// <summary>Reads the file both ways, asserts they agree, and returns the stream reader's packets.</summary>
+	private static (List<byte[]> Video, List<byte[]> Audio) AssertSamePackets(
+		byte[] bytes, bool seekable, VideoLimits? limits = null) {
 		AviFile file = AviFile.Open(bytes, limits)!;
 		using var reader = AviStreamReader.Open(new GatedStream(bytes, seekable) { Unlimited = true }, limits)!;
 		var video = new List<byte[]>();
@@ -205,6 +211,7 @@ public class AviStreamTests {
 
 		Assert.Equal(file.VideoPackets.Select(p => file.PacketData(p).ToArray()), video);
 		Assert.Equal(file.AudioPackets.Select(p => file.PacketData(p).ToArray()), audio);
+		return (video, audio);
 	}
 
 	private static void Until(Func<bool> condition) {
