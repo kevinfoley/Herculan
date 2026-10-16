@@ -39,7 +39,8 @@ address operands by different rules (insn_streams).
       M under 200, L) and the score that must reach its threshold (0.9, 0.8, 0.75; --fuzzy R sets one
       for all), the sequence and multiset ratios and shared names agreeing, the same name's hits
       in the other target, the best runner-up under another name (TIE within 0.02), and the diff
-      command. --only scores just the listed functions, below threshold too (marked '-' after the
+      command (--diff prints the diff itself instead, and the runner-up's when it ties). --only
+      scores just the listed functions, below threshold too (marked '-' after the
       score). A score is a lead, never
       a name: siblings with one shape (FileRStream_Close, FileWStream_Close) and short dispatchers
       score as high as twins, and a body that inlines what the other calls scores low. ES1DBSIM's
@@ -118,6 +119,8 @@ from __future__ import annotations
 
 import bisect
 import collections
+import contextlib
+import io
 import json
 import os
 import pickle
@@ -1450,7 +1453,18 @@ def cmd_xmatch(args):
         if runner:
             line += f"  next {runner[0][0]:.2f} {runner[1]}" + ("  TIE" if score - runner[0][0] < 0.02 else "")
         print(line)
-        print(f"    py tools/scripts/es2_naming.py diff {b1} {a} {t} {x}")
+        if "--diff" not in args:
+            print(f"    py tools/scripts/es2_naming.py diff {b1} {a} {t} {x}")
+            continue
+        # --diff: the diff itself under the line, and the runner-up's too when it ties.
+        pairs = [(t, x)] + ([runner[2][0][1]] if runner and score - runner[0][0] < 0.02 else [])
+        for pt, px in pairs:
+            buf = io.StringIO()
+            with contextlib.redirect_stdout(buf):
+                cmd_diff([b1, a, pt, px])
+            print(f"    --- diff {b1} {a} {pt} {px} ({k2[pt].get(px, px)})")
+            for dl in buf.getvalue().splitlines():
+                print("    " + dl)
     above = collections.Counter(r[2] for r in rows if r[5])
     ties = sum(1 for r in rows if r[5] and r[4] and r[3][0][0] - r[4][0][0] < 0.02)
     print(f"\n{b1} against {'+'.join(targets)}: {len(shared)} names shared; "

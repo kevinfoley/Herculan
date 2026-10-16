@@ -19,7 +19,12 @@ A batch subagent cannot touch the known_symbols files, so it lists the writes in
 Only those tools and subcommands run; any other line (grep, git, shell) is skipped with a note,
 since the file is a subagent's output. Comment and blank lines are ignored.
 
+`brief` writes the batch subagent's brief: tools/scripts/es1_batch_brief.md, the rules every batch
+shares, with the batch number, range and scratch folder filled in and the batch's own section (what
+the range holds, its leads, the docs to read) taken from a notes file.
+
 Usage:
+    python tools/scripts/es1_batch.py brief N LO HI --scratch DIR [--notes NOTES.md] [--out FILE]
     python tools/scripts/es1_batch.py run COMMANDS.txt [--from N]
     python tools/scripts/es1_batch.py list COMMANDS.txt
 """
@@ -200,16 +205,41 @@ def stop(i, why):
     return 1
 
 
+def cmd_brief(args):
+    """Fills es1_batch_brief.md with the batch number, range, scratch folder and the batch's own notes."""
+    text = (SCRIPTS / "es1_batch_brief.md").read_text(encoding="utf-8")
+    notes = Path(args.notes).read_text(encoding="utf-8").strip() if args.notes else ""
+    scratch = args.scratch.replace("/", "\\")
+    for k, v in (("BATCH", str(args.batch)), ("LO", args.lo.lower().zfill(8)), ("HI", args.hi.lower().zfill(8)),
+                 ("SCRATCH", scratch), ("NOTES", notes)):
+        text = text.replace("@@%s@@" % k, v)
+    left = re.findall(r"@@\w+@@", text)
+    if left:
+        raise SystemExit("unfilled placeholders: " + " ".join(sorted(set(left))))
+    out = Path(args.out) if args.out else Path(args.scratch) / "brief.md"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(text, encoding="utf-8")
+    print("%s: %d words" % (out, len(text.split())))
+    return 0
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = p.add_subparsers(dest="cmd", required=True)
+    b = sub.add_parser("brief", help="write a batch subagent's brief from es1_batch_brief.md")
+    b.add_argument("batch", type=int)
+    b.add_argument("lo")
+    b.add_argument("hi")
+    b.add_argument("--scratch", required=True, help="the batch's scratch folder, named in the brief")
+    b.add_argument("--notes", help="a file with the batch's own section: its range's contents, leads, docs to read")
+    b.add_argument("--out", help="where to write the brief (default <scratch>/brief.md)")
     r = sub.add_parser("run", help="run the file's commands, then apply, regenerate and check")
     r.add_argument("file")
     r.add_argument("--from", dest="start", type=int, default=1, help="resume at this step number")
     ls = sub.add_parser("list", help="print the steps the run would take, numbered")
     ls.add_argument("file")
     args = p.parse_args()
-    return {"run": cmd_run, "list": cmd_list}[args.cmd](args)
+    return {"run": cmd_run, "list": cmd_list, "brief": cmd_brief}[args.cmd](args)
 
 
 if __name__ == "__main__":

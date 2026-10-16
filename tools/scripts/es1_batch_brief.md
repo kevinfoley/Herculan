@@ -1,0 +1,37 @@
+You are running batch @@BATCH@@ of the ES1 (Metaltech: Earthsiege) reverse-engineering work. Work in the git worktree `E:\ES2Stuff\.claude\worktrees\es1` (branch `features/es1`); every edit goes there. Gitignored assets (ES1/, ES2/, tools/analysis_out/, Ghidra) live only in `E:\ES2Stuff`; the Python RE tools find them themselves. Your scratchpad: `@@SCRATCH@@` (create it).
+
+## Read first
+- `CLAUDE.md` (the worktree's), whole.
+- Memory notes in `C:\Users\Haven\.claude\projects\E--ES2Stuff\memory\`: `project_es1_naming_backlog.md`, `feedback_document_for_implementation.md`, `feedback_unreachable_claims.md`, `feedback_critical_thinking_open_gaps.md`, `feedback_no_guesswork_ports.md`, `reference_ghidra_script_catalog.md`, `feedback_documentation_style.md`, `feedback_windows_tooling_gotchas.md`, `reference_worktrees.md`, `feedback_check_all_records_before_deriving.md`, `feedback_proportionate_verification.md`, `feedback_es2_terminology.md`.
+- `Herculan/docs/herculan/handoff-es1-data-formats.md` (untracked; "How the batches were run" and the latest batch entries, whose lessons apply) and `Herculan/docs/herculan/handoff-es1-library-region.md` "A batch" steps 2–8, your procedure.
+- `Herculan/docs/herculan/plan-es1-support.md` "Working method" and "When a module is done".
+- `Herculan/docs/es1/formats/compiler.md` "Vtables" and "Where object files meet in the code".
+- The docs named under "The batch" below.
+
+## The batch
+**ES1DBSIM `@@LO@@`–`@@HI@@`.**
+
+@@NOTES@@
+
+**Start with the tools that do the mechanical part:**
+1. `py tools/scripts/es1_boilerplate.py bounds ES1DBSIM <lo> <hi>` over the range with a margin on each side: the zero fill after returns, the `ConfigPart` run's destructor copies (lone or opening a run), the static constructor and exit table entries, and the assert source paths. Each line is a lead for the "Where the object file starts and ends" section every module page has; settle the boundaries from it and `compiler.md`'s rules, and stop the batch at a real boundary.
+2. `py tools/scripts/es1_boilerplate.py scan ES1DBSIM <lo> <hi> --module <Tag>[@addr] ... --source <doc#section> --out <scratch>/boilerplate.json`, one tag per object file, named for what the file is (match the existing `*Copy` names' convention). Its batch goes in with the rest; its `.unnamed.json` stubs get names here; a second copy in one file is named by hand.
+3. `py tools/scripts/es2_naming.py match ES1DBSIM DBSIM+VSHELL --all --only a+b+... --diff > <scratch>/match.txt`, then read that file: each candidate with its diff, and the runner-up's diff when it ties (the runner-up is sometimes the twin). A score is a lead, not a name.
+
+## Docs
+Docs before symbols. Where no ES2 doc describes the shared behaviour at port level, write it in `docs/retail/` (re-read the whole target doc first, move rather than duplicate, fix inbound anchors); the ES1 page holds ES1's addresses and differences only, enough to port from without re-reading the code. One fact, one home: move a section rather than repeat it; keep every page under 70 KB. Every doc line about a function comes from a body you read this session or a stamp. Read or stamp every ES2 function your own doc lines describe, and no others; an unstamped function is not an Open item.
+
+A search that found nothing is written as what was searched (`no caller found by es2_xref`) and goes in `## Open`. Before writing an Open item, grep `Herculan/docs` for its addresses and names: an earlier doc may already answer it. A global inside a block can be written through the block's base: an absolute-operand search does not settle its writers. **A player-visible difference inferred from what one module lacks** ("a damaged weapon works unchanged", "no message is posted") is stated as what that module's code does; whether other code does it is an Open item with a cheap retail check. Propose a retail check (landmarks, cheap to see) in Open. Keep each doc's final newline.
+
+## Limits
+- No commit, amend, stash, reset, checkout or restore; no `es2_naming.py apply --write`; no `ghidra_full_decomp.py`; do not run `es1_batch.py run`.
+- **No command that touches `known_symbols_*.json`, not even an insert dry run**: auto mode refuses them from a subagent. Write the batch JSONs to your scratchpad (Write tool, not heredocs) and the command file `@@SCRATCH@@\write_commands.txt` for `tools/scripts/es1_batch.py` (read its docstring): one plain command per line, `#` comment lines allowed. In order: inserts, ES1GO twins (prepare GO's JSON yourself from `es2_naming.py match ES1DBSIM ES1GO`, with GO's own globals and addresses; `es1_naming.py twin` refuses addresses with no ES1DBSIM name yet), edits, `relink --bare`, stamps, then the read-only `apply` lines with their `--define` lists, then a `# after regen` comment line followed by the stamps of defined stubs that make a call (`--via raw` reads only straight-line stubs with no call). Each insert/edit/relink line once; the runner does the dry run and the write, and checks for name doublings itself. Run `py tools/scripts/es1_batch.py list <file>` to check it parses as you intend.
+- Stamps: **no `--own-negatives` or `--read-callers` by default.** Pass `--own-negatives` only on functions whose description has a sentence about the function's own body (an argument never read, "it makes no other call"), and `--read-callers` only where every named caller was read this session or is stamped; put those in their own stamp command with the reason in a comment line above.
+- Description wording: a sentence naming a caller says which search found it; "its arguments removed by this function" instead of "caller-cleaned"; avoid "the caller's block"; name a callee once as `Name (addr)`; medium confidence ⇔ a `maybe_` name prefix.
+- Reject a twin that is an exact match of a lone load-and-return unless its global pairs too; per-module class copies (`*<Tag>Copy`) are not named onto ES1GO's library originals.
+- Verification budget: `doc_lint.py` on touched docs and `doc_links.py`, at most about 8 targeted checks; no build/tests unless you change C# (you should not); no harnesses, scanners over many files, or simulations.
+- Scope cap: about 60 functions read in this range, plus their ES2 counterparts. Beyond it goes to `## Open`.
+- Stop and report on any refused tool or edit, unless a plain alternative read-only command does the same job.
+
+## Report (at most 400 words)
+Where the object file(s) start and end, what the range holds (classes, ES2 counterparts, differences a player would see), Open items closed in other docs, entries and stamps per binary, docs touched with lint/links results, the `--define` addresses, `git status --porcelain`, the path of `write_commands.txt` and its `es1_batch.py list` step count, any step of your procedure that was the same shape as last batch and could be scripted, and a commit subject of at most 16 words ending `(Claude)`.

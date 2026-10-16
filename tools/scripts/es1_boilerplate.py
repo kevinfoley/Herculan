@@ -38,6 +38,16 @@ disassembly reference. Printed after them: the --define list (units with no Ghid
 es2_stamp.py commands, --via raw for those. --fresh treats the range's own entries as unnamed and
 compares each proposal with the name it has: a positive control over a range already named.
 It writes nothing under tools/ghidra_scripts/.
+
+  bounds BIN LO HI
+
+Lists, in address order, the evidence compiler.md#where-object-files-meet-in-the-code places object
+files by: a RET followed by 1-3 zero bytes outside every function extent up to a 4-byte boundary;
+each copy of HeapPtr_Dtor (the run's 40-byte destructor), lone or opening a run with the ConfigPart_Dtor
+and TSPartBase_Dtor copies after it; the static constructor and exit table entries that point into
+the range (the tables' bounds read from Runtime_RunStaticCtors and __dodtors); and the source paths
+the range's code pushes for its asserts. Each line is a lead for the batch's "Where the object file
+starts and ends", not a boundary.
 """
 
 from __future__ import annotations
@@ -508,9 +518,133 @@ def scan(args):
         print("        (and the unnamed stubs once named: --via raw where no Ghidra function starts, else --via disasm)")
 
 
+RUN_BASES = ("HeapPtr_Dtor", "ConfigPart_Dtor", "TSPartBase_Dtor")
+SOURCE_PATH = re.compile(rb"[\w:\\./-]+\.(?:cpp|c)\Z", re.I)
+
+
+def table_bounds(x, name):
+    """(low, high) of the pointer table the named walk runs over: the MOV reg,imm and CMP reg,imm in
+    its first instructions (Runtime_RunStaticCtors, compiler.md#static-construction-and-exit). None
+    when the binary has no such name or the walk is not of that shape."""
+    a = next((a for a, n in x.known.items() if n == name), None)
+    if a is None:
+        return None
+    imms = []
+    for i in x.md.disasm(x.img.read(a, 32) or b"", a):
+        if i.mnemonic in ("mov", "cmp") and HEX.search(i.op_str) and "[" not in i.op_str:
+            imms.append(int(HEX.search(i.op_str).group(0), 16))
+        if len(imms) == 2:
+            return min(imms), max(imms)
+    return None
+
+
+def bounds(args):
+    """The evidence compiler.md#where-object-files-meet-in-the-code places object files by, over a range."""
+    lo, hi = int(args.lo, 16), int(args.hi, 16)
+    x = Image(args.binary)
+    img = x.img
+    events = []   # (address, kind, text)
+
+    # 1. Zero fill after a return: 1-3 zero bytes outside every function extent, up to a 4-byte
+    #    boundary, right after the bytes of a RET or RET n. A zero inside an instruction is in an extent.
+    for p in range(lo, hi + 2):
+        if p % 4 or p == 0:
+            continue
+        n = 0
+        while n < 3 and img.read(p - n - 1, 1) == b"\x00" and not x.ext.containing(p - n - 1):
+            n += 1
+        if not n:
+            continue
+        z = p - n
+        if img.read(z - 1, 1) == b"\xc3":
+            ret, at = "RET", z - 1
+        elif img.read(z - 3, 1) == b"\xc2":
+            ret, at = "RET %#x" % int.from_bytes(img.read(z - 2, 2), "little"), z - 3
+        else:
+            continue
+        events.append((p, "zero fill", f"{ret} at {at:08x}, then {n} zero byte{'s' * (n > 1)} to {p:08x}"))
+
+    # 2. Copies of the ConfigPart run's destructors: a lone HeapPtr_Dtor copy opens a file, as does a run.
+    base_of = split_scores(set(x.known.values()))
+    run_keys = {}
+    for a, n in x.known.items():
+        b = base_of.get(n, n)
+        if b in RUN_BASES and x.entries[a]["type"] == "function":
+            k, _ = x.key(a)
+            if k:
+                run_keys.setdefault(k, b)
+    copies = []
+    # A run's other destructors are looked for past hi too, so a run that opens at the range's end shows.
+    for a in sorted(f for f in x.fns if lo <= f <= hi + 0x100 and not V.is_padding_thunk(img, f)):
+        k, _ = x.key(a)
+        if k in run_keys:
+            copies.append((a, run_keys[k]))
+    for i, (a, b) in enumerate(copies):
+        if b != "HeapPtr_Dtor" or a > hi:
+            continue
+        after = [c for c in copies[i + 1:] if c[0] - a < 0x100]
+        rest = [c for c in after if c[1] != "HeapPtr_Dtor"][:2]
+        what = ("opening a run: " + ", ".join(f"{bb} copy {aa:08x}" for aa, bb in rest)) if rest and rest[0][0] - a < 0x60 \
+            else "lone" + (f" (the run's other destructors follow at " + ", ".join(f"{aa:08x}" for aa, _ in rest) + ")" if rest else "")
+        name = x.known.get(a)
+        events.append((a, "destructor", f"{a:08x} HeapPtr_Dtor copy{' ' + name if name else ''}, {what}"))
+
+    # 3. Static constructor and exit table entries pointing into the range.
+    for label, walk in (("static ctor", "Runtime_RunStaticCtors"), ("exit", "__dodtors")):
+        tb = table_bounds(x, walk)
+        if not tb:
+            if walk == "Runtime_RunStaticCtors":
+                print(f"  (no {walk} in {x.binary}'s names: the static constructor table is not read)")
+            continue
+        t_lo, t_hi = tb
+        if label == "exit":
+            ctor = table_bounds(x, "Runtime_RunStaticCtors")
+            t_lo = ctor[1] if ctor else t_lo
+        for e in range(t_lo, t_hi, 4):
+            w = img.dword(e)
+            if w and lo <= w <= hi:
+                end = x.end_of(w)
+                n = x.known.get(w)
+                events.append((w, label, f"{label} table entry {e:08x} -> {w:08x}{' ' + n if n else ''}"
+                                         + (f", code to {end:08x}" if end else "")))
+
+    # 4. Source paths the range's code pushes (an assert names its object file).
+    seen = set()
+    for a in sorted(f for f in x.fns if lo <= f <= hi):
+        ins = x.insns(a, x.fns[a][2]) or []
+        for i in ins:
+            if i.mnemonic != "push" or not HEX.fullmatch(i.op_str):
+                continue
+            t = int(i.op_str, 16)
+            if t < x.data_start or t in seen:
+                continue
+            raw = img.read(t, 80) or b""
+            s = raw.split(b"\x00", 1)[0]
+            if SOURCE_PATH.search(s):
+                seen.add(t)
+                events.append((i.address, "source path", f"{i.address:08x} pushes {t:08x} "
+                                                         f"\"{s.decode('latin-1')}\""))
+
+    print(f"{x.binary} {lo:08x}-{hi:08x}: object-file boundary evidence (compiler.md#where-object-files-meet-in-the-code)")
+    order = {"zero fill": 0, "static ctor": 1, "exit": 2, "destructor": 3, "source path": 4}
+    for a, kind, text in sorted(events, key=lambda e: (e[0], order[e[1]])):
+        print(f"  {kind:<12} {text}")
+    starts = sorted({a for a, kind, _ in events if kind in ("zero fill", "destructor")})
+    if starts:
+        print("  starts the zero fill and destructor copies place: " + ", ".join(f"{a:08x}" for a in starts))
+    print("  (a lead per line, not a boundary: read compiler.md's rules; a file can open with no copy, and "
+          "a static initializer is not always a file's last code)")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
+    bp = sub.add_parser("bounds", help="list the evidence object-file boundaries are placed by, over a range")
+    bp.add_argument("binary", type=str.upper, choices=[b for b in retail_binaries.IDS
+                                                       if retail_binaries.get(b).container == retail_binaries.X32])
+    bp.add_argument("lo")
+    bp.add_argument("hi", help="last address of the range, inclusive")
+    bp.set_defaults(fn=bounds)
     s = sub.add_parser("scan", help="propose names for the boilerplate in a range")
     s.add_argument("binary", type=str.upper, choices=[b for b in retail_binaries.IDS
                                                       if retail_binaries.get(b).container == retail_binaries.X32])
