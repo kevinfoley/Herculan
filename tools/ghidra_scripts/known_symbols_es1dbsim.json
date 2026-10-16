@@ -10507,8 +10507,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdMapScreen_PaintNoOp",
-      "description": "Frameless: (screen), callee-cleaned: RET 4 and a NOP. Slot +4, the paint slot, of MFDNavMapVtable (000939f2). ES2's MfdMapScreen_PaintNoOp (DBSIM 004405dc). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/mfd-nav-map.md#the-screen-object; the image at 00036c28"
+      "description": "Frameless: (screen), callee-cleaned: RET 4 and a NOP. Slot +4, the paint slot, of MFDNavMapVtable (000939f2). ES2's MfdMapScreen_PaintNoOp (DBSIM 004405dc).",
+      "source": "Herculan/docs/es1/simulation/mfd-nav-map.md#the-screen-object; the image at 00036c28",
+      "verified": {
+        "bytes": "00036c28+3",
+        "sha1": "6d2a7422bc83",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00036c2c",
@@ -10531,8 +10537,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdMapScreen_StaticInit",
-      "description": "Frameless, no arguments: entry 000adc44 of the static constructor table: stores the int16 0xc000 at MfdMapScreen_ViewAngles (000b13e0) and 0 at 000b13e2 and 000b13e4, then RET at 00036eb3, the NAV MAP file's last code. ES2's MfdMapScreen_StaticInit (DBSIM 004407f0). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/mfd-nav-map.md#where-the-object-file-starts-and-ends; the image at 00036e9c"
+      "description": "Frameless, no arguments: entry 000adc44 of the static constructor table: stores the int16 0xc000 at MfdMapScreen_ViewAngles (000b13e0) and 0 at 000b13e2 and 000b13e4, then RET at 00036eb3, the NAV MAP file's last code. ES2's MfdMapScreen_StaticInit (DBSIM 004407f0).",
+      "source": "Herculan/docs/es1/simulation/mfd-nav-map.md#where-the-object-file-starts-and-ends; the image at 00036e9c",
+      "verified": {
+        "bytes": "00036e9c+24",
+        "sha1": "7ecb18a905fb",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00036eb4",
@@ -10570,8 +10582,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_GetClassTagWeaponGaugeCopy",
-      "description": "Frameless: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00093a06; the code of ConfigPart_GetClassTagPanelCopy (0002ad43). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#where-the-object-file-starts-and-ends; the image at 00036f1b"
+      "description": "Frameless: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00093a06; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#where-the-object-file-starts-and-ends; the image at 00036f1b",
+      "verified": {
+        "bytes": "00036f1b+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00036f24",
@@ -10609,8 +10627,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelGauge_OnChildClickNoOpWeaponGaugeCopy",
-      "description": "Frameless: three NOPs and RET 0xc. Slot +4 of WeaponGaugeVtable (00093a6e); the code of PanelGauge_OnChildClickNoOp (00031395). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-row-gauge-base; the image at 00036f85"
+      "description": "Frameless: three NOPs and RET 0xc. Slot +4 of WeaponGaugeVtable (00093a6e); the code of PanelGauge_OnChildClickNoOp (00031395).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-row-gauge-base; the image at 00036f85",
+      "verified": {
+        "bytes": "00036f85+6",
+        "sha1": "8cb6c4e97d30",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00036f8b",
@@ -10618,8 +10642,14 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelGauge_KeyDispatchNoneWeaponGaugeCopy",
-      "description": "Frameless: returns 0; a NOP, then xor eax,eax and RET 8. Slot +0x10 of WeaponGaugeVtable (00093a6e), and entered at 00036f8c from slot +0x10 of the energy, ammunition and pod rows' tables EnergyWeaponGaugeVtable (00093a8e), ProjectileWeaponGaugeVtable (00093aae) and 00093ace; the code of PanelGauge_KeyDispatchNone (0003139b). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-row-gauge-base; the image at 00036f8b"
+      "description": "Frameless: returns 0; a NOP, then xor eax,eax and RET 8. Slot +0x10 of WeaponGaugeVtable (00093a6e), and entered at 00036f8c from slot +0x10 of the energy, ammunition and pod rows' tables 00093a8e, 00093aae and 00093ace; the code of PanelGauge_KeyDispatchNone (0003139b).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-row-gauge-base; the image at 00036f8b",
+      "verified": {
+        "bytes": "00036f8b+6",
+        "sha1": "ae2a5ee89632",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00036f91",
@@ -10627,8 +10657,14 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponGauge_SetStateNoOp",
-      "description": "Frameless: three NOPs and RET 8. Slot +0x14 of WeaponGaugeVtable (00093a6e), and entered at 00036f94 from slot +0x14 of the pod row's table 00093ace. ES2's WeaponGauge_SetStateNoOp (DBSIM 00443417). No Ghidra function starts here.",
-      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-row-gauge-base; the image at 00036f91"
+      "description": "Frameless: three NOPs and RET 8. Slot +0x14 of WeaponGaugeVtable (00093a6e), and entered at 00036f94 from slot +0x14 of the pod row's table 00093ace. ES2's WeaponGauge_SetStateNoOp (DBSIM 00443417).",
+      "source": "Herculan/docs/es1/simulation/cockpit-weapon-gauges.md#the-row-gauge-base; the image at 00036f91",
+      "verified": {
+        "bytes": "00036f91+6",
+        "sha1": "fe14fe2186bc",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00036f98",
