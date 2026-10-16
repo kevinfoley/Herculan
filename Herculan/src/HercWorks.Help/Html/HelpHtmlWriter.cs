@@ -46,6 +46,10 @@ public static class HelpHtmlWriter {
 		private int _maps;
 		private int _popupColour = 0xFFFFFF;
 
+		// The font in effect, carried from record to record and cell to cell in stored order
+		// (docs/retail/formats/winhelp.md#commands); null at the start of each topic.
+		private int? _font;
+
 		public string Write() {
 			for (int i = 0; i < help.Keywords.Count; i++) {
 				_keywordIndex.TryAdd(help.Keywords[i].Keyword, i);
@@ -234,6 +238,7 @@ public static class HelpHtmlWriter {
 			}
 
 			_html.Append('>');
+			_font = null;
 			if (topic.ScrollingStart > 0) {
 				_html.Append("<div class=\"nsr\">");
 				for (int i = 0; i < topic.ScrollingStart; i++) {
@@ -271,7 +276,8 @@ public static class HelpHtmlWriter {
 			_html.Append("<div data-b=\"").Append(Num(index)).Append("\">");
 			switch (block) {
 				case HelpParagraphRun run:
-					new Run(this, run.Format, run.Inlines).Write();
+					new Run(this, run.Format, run.Inlines, _font).Write();
+					_font = EndFont(run.Inlines, _font);
 					break;
 				case HelpTableRow row:
 					WriteRow(row);
@@ -295,11 +301,20 @@ public static class HelpHtmlWriter {
 				_html.Append("<col style=\"width:").Append(Num((column.Width + Gap(column)) / UnitsPerPoint)).Append("pt\">");
 			}
 
+			// Each cell starts in the font the cell stored before it ended in, whatever column that was.
+			var starts = new int?[row.Cells.Count];
+			for (int i = 0; i < row.Cells.Count; i++) {
+				starts[i] = _font;
+				_font = EndFont(row.Cells[i].Inlines, _font);
+			}
+
 			_html.Append("</colgroup><tr>");
 			for (int c = 0; c < row.Columns.Count; c++) {
 				_html.Append("<td style=\"padding-left:").Append(Num(Gap(row.Columns[c]) / UnitsPerPoint)).Append("pt\">");
-				foreach (var cell in row.Cells.Where(cell => cell.Column == c)) {
-					new Run(this, cell.Format, cell.Inlines).Write();
+				for (int i = 0; i < row.Cells.Count; i++) {
+					if (row.Cells[i].Column == c) {
+						new Run(this, row.Cells[i].Format, row.Cells[i].Inlines, starts[i]).Write();
+					}
 				}
 
 				_html.Append("</td>");
@@ -307,6 +322,9 @@ public static class HelpHtmlWriter {
 
 			_html.Append("</tr></table>");
 		}
+
+		private static int? EndFont(IReadOnlyList<HelpInline> inlines, int? font) =>
+			inlines.OfType<HelpFontChange>().LastOrDefault()?.Descriptor ?? font;
 
 		private void WriteIndex() {
 			_html.Append("<template id=\"index\"><div class=\"index\">");
@@ -455,19 +473,20 @@ public static class HelpHtmlWriter {
 		}
 
 		/// <summary>
-		/// One paragraph run's inlines as paragraphs. Fonts are spans and hotspots are anchors; both are
-		/// closed and reopened round every boundary they cross, so the markup stays nested whatever order
-		/// the commands come in.
+		/// One paragraph run's inlines as paragraphs, starting in <paramref name="font"/>, the font the
+		/// record before it ended in. Fonts are spans and hotspots are anchors; both are closed and
+		/// reopened round every boundary they cross, so the markup stays nested whatever order the
+		/// commands come in.
 		///
 		/// <para>Every tab in the corpus is a hanging indent — one tab stop at the left indent and a
 		/// negative first-line indent — so the first tab of a paragraph's first line becomes an
 		/// inline-block as wide as the gap to that stop. Any other tab is a space.</para>
 		/// </summary>
-		private sealed class Run(Writer writer, HelpParagraphFormat format, IReadOnlyList<HelpInline> inlines) {
+		private sealed class Run(Writer writer, HelpParagraphFormat format, IReadOnlyList<HelpInline> inlines, int? font) {
 			private readonly StringBuilder _head = new();
 			private readonly StringBuilder _rest = new();
 			private StringBuilder _into = null!;
-			private int? _font;
+			private int? _font = font;
 			private string? _anchor;
 			private bool _tabbed;
 			private bool _brokenLine;

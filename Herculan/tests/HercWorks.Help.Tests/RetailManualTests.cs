@@ -1,3 +1,4 @@
+using HercWorks.Help.Html;
 using Xunit;
 
 namespace HercWorks.Help.Tests;
@@ -73,5 +74,17 @@ public class RetailManualTests {
 
 		Assert.Equal(73, hotspots);
 		Assert.Null(help.TryGetPicture(82, out _));
+	}
+
+	// The descriptions in Cybrid Types have no font change of their own; they carry the hotspot cell's.
+	[Fact]
+	public void AFontCarriesIntoTheNextCell() {
+		if (RetailManuals.Read("ENGLISH") is not { } bytes) {
+			return;
+		}
+
+		string html = HelpHtmlWriter.Write(HelpFile.Parse(bytes, out _)!);
+		Assert.Contains("<span class=\"f11\">Medium missile platform.</span>", html);
+		Assert.Contains("<span class=\"f11\">Cybrid foot soldier.</span>", html);
 	}
 }
