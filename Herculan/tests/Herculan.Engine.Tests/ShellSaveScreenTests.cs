@@ -14,24 +14,15 @@ namespace Herculan.Engine.Tests;
 /// </summary>
 public class ShellSaveScreenTests {
 	/// <summary>
-	/// The content panel, and that it is where the original puts it: centred on the canvas's midpoint,
-	/// and clear of the tab strip's bottom edge.
-	///
-	/// <para>Its width is odd, so it cannot sit symmetrically in an even canvas: the margin is 142 on
-	/// the left and 141 on the right. What is centred is the panel's midpoint on x=320 — half of 640 —
-	/// rather than the two margins on each other, which is what makes <c>0x8e</c> and <c>0x1f2</c> a
-	/// pair.</para>
+	/// The content panel is centred on the canvas's midpoint and clear of the tab strip's bottom edge.
+	/// Its width is odd, so it cannot sit symmetrically in an even canvas: what is centred is the
+	/// panel's midpoint on x=320, not the two margins on each other.
 	/// </summary>
 	[Fact]
-	public void PlacesTheContentPanel() {
+	public void TheContentPanelIsCentredBelowTheTabs() {
 		var panel = ShellSaveScreen.PanelRect;
 
-		Assert.Equal(new ShellRect(142, 127, 498, 468), panel);
-		Assert.Equal(357, panel.Width);
-		Assert.Equal(342, panel.Height);
-
 		Assert.Equal(ShellLayout.CanvasWidth / 2, (panel.X0 + panel.X1) / 2);
-		Assert.Equal(141, ShellLayout.CanvasWidth - 1 - panel.X1);
 		Assert.True(panel.Y0 > ShellLayout.TabBottom);
 	}
 

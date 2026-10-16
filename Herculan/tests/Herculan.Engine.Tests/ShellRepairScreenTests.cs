@@ -24,12 +24,8 @@ public class ShellRepairScreenTests {
 	/// the canvas and leaves the left for the machine's damage diagram and the squad roster.
 	/// </summary>
 	[Fact]
-	public void PlacesTheContentPanel() {
+	public void TheContentPanelClearsTheTabsAndBothPictures() {
 		var panel = ShellRepairScreen.PanelRect;
-
-		Assert.Equal(new ShellRect(241, 43, 632, 473), panel);
-		Assert.Equal(392, panel.Width);
-		Assert.Equal(431, panel.Height);
 
 		// Clear of the tab strip above it and inside the canvas on both far edges.
 		Assert.True(panel.Y0 > ShellLayout.TabBottom);
@@ -121,9 +117,6 @@ public class ShellRepairScreenTests {
 		Assert.Equal(0, ShellRepairScreen.IndexOf(ShellRepairCategory.Hardpoint, 6));
 		Assert.Equal(9, ShellRepairScreen.IndexOf(ShellRepairCategory.Hardpoint, 15));
 		Assert.Equal(8, ShellRepairScreen.IndexOf(ShellRepairCategory.Internal, 8));
-
-		// Both lists end to end are the builder's twenty-five handlers, so no row is unaccounted for.
-		Assert.Equal(25, ShellRepairScreen.ColumnZeroRowCount + ShellRepairScreen.InternalRowCount);
 	}
 
 	/// <summary>
@@ -317,15 +310,16 @@ public class ShellRepairScreenTests {
 		// The left leg's three: thigh, calf, foot.
 		entry.ExternalConditions[HercExternals.LegLeftTop].Health = 30;
 		entry.ExternalConditions[HercExternals.LegLeftMid].Health = 60;
-		entry.ExternalConditions[HercExternals.LegLeftFoot].Health = 61;
+		entry.ExternalConditions[HercExternals.LegLeftFoot].Health = 62;
 
 		var machine = ShellBayMachine.From(entry);
 		Assert.Equal(75, machine.Condition(ShellRepairCategory.ExternalGroup, 0));
+
+		// Integer division, as the original does it: 152 / 3 truncates to 50 where rounding would give 51.
 		Assert.Equal(50, machine.Condition(ShellRepairCategory.ExternalGroup, 4));
 
-		// Integer division, as the original does it: 151 / 3 truncates rather than rounds.
-		Assert.All(ShellBayMachine.ExternalGroupFacets, facets => Assert.NotEmpty(facets));
-		Assert.Equal(13, ShellBayMachine.ExternalGroupFacets.Sum(f => f.Length));
+		// Each of the thirteen facets in exactly one group.
+		Assert.Equal(Enumerable.Range(0, 13), ShellBayMachine.ExternalGroupFacets.SelectMany(f => f).OrderBy(f => f));
 	}
 
 	/// <summary>

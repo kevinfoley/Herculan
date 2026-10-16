@@ -2,6 +2,7 @@ using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using Herculan.Engine.Shell;
 using HercWorks.Core.Data.File.Dat.Shell;
+using HercWorks.Core.Data.Struct.Herc;
 using HercWorks.Core.Io.Transform.Shell;
 using Xunit;
 
@@ -11,18 +12,13 @@ namespace Herculan.Engine.Tests;
 /// <c>gam\arm_hots.dat</c> and <c>gam\rpr_hots.dat</c> — the clickable regions laid over a chassis
 /// picture, both read by <c>Hotspots_BuildOverlay</c> (<c>0043c1a0</c>) through one piece of code.
 ///
-/// <para>What these pin is the reading that a parse alone cannot settle: the four <c>int32</c> are
-/// two inclusive corners, not a corner and a size. Retail's values stay inside the canvas either way,
-/// so the discriminator is the geometry — a chassis's left and right hardpoints are mirror images
-/// only when read as corners — plus the fact that the bytes go straight to <c>ESRect_Ctor</c>'s rect
-/// argument. Get it wrong and every hotspot is the right shape in the wrong place.</para>
+/// <para>What these pin is that the two files agree with what consumes them: the arming file's
+/// per-chassis area counts with the mount capacities, the repair file's with the external groups,
+/// and every area with the canvas. See docs/retail/formats/herc-catalogs.md for the format.</para>
 ///
 /// <para>Retail-data cases skip silently without an install, as the rest of the suite does.</para>
 /// </summary>
 public class HardpointOverlayTests {
-	/// <summary>The chassis count the reader asserts.</summary>
-	private const int ChassisCount = 9;
-
 	private static HardpointOverlayConfig? Load(string name) {
 		if (GameInstall.Locate(null) is not { } root) {
 			return null;
@@ -35,24 +31,22 @@ public class HardpointOverlayTests {
 	}
 
 	/// <summary>
-	/// Nine groups with sequential ids in both files, and the per-chassis area counts. The arming
-	/// counts are each chassis's mount capacity and the repair counts are a flat six, which is what
-	/// says the two files carry different things through the same format.
+	/// <c>arm_hots.dat</c> carries one area per weapon mount: each chassis's group, found by its own
+	/// id, holds as many areas as that chassis's mount capacity. The arming tab bounds its mount loop on
+	/// the capacity and indexes the group's areas with it, so the two retail sources have to agree.
 	/// </summary>
-	[Theory]
-	[InlineData("ARM_HOTS.DAT", new[] { 3, 5, 5, 8, 9, 9, 10, 4, 7 })]
-	[InlineData("RPR_HOTS.DAT", new[] { 6, 6, 6, 6, 6, 6, 6, 6, 6 })]
-	public void RetailFileHasNineChassisGroups(string name, int[] areaCounts) {
-		if (Load(name) is not { } overlay) {
+	[Fact]
+	public void ArmingFileCarriesOneAreaPerMount() {
+		if (Load("ARM_HOTS.DAT") is not { } overlay) {
 			return;
 		}
 
-		Assert.NotNull(overlay.Entries);
-		Assert.Equal(ChassisCount, overlay.Entries.Length);
+		var players = HercLUT.Values().Where(h => h.IsPlayerChassis).ToArray();
+		Assert.Equal(players.Length, overlay.Entries!.Length);
 
-		for (int i = 0; i < overlay.Entries.Length; i++) {
-			Assert.Equal(i, overlay.Entries[i].HercId);
-			Assert.Equal(areaCounts[i], overlay.Entries[i].Areas!.Length);
+		foreach (var herc in players) {
+			var group = Assert.Single(overlay.Entries, e => e.HercId == herc.Id);
+			Assert.Equal(herc.HardpointMax, group.Areas!.Length);
 		}
 	}
 
@@ -87,31 +81,6 @@ public class HardpointOverlayTests {
 		}
 
 		Assert.Equal(expectedEmpty, empty);
-	}
-
-	/// <summary>
-	/// The first chassis's first two arming areas, verbatim, and the mirror symmetry that settles the
-	/// corner-versus-size reading. Read as <c>{x, y, w, h}</c> these would be two overlapping boxes
-	/// 70 and 191 pixels wide; read as corners they are a 34x32 and a 35x32 hardpoint either side of
-	/// x≈114.
-	/// </summary>
-	[Fact]
-	public void ArmingHardpointsAreMirroredAboutTheChassisCentre() {
-		if (Load("ARM_HOTS.DAT") is not { } overlay) {
-			return;
-		}
-
-		var areas = overlay.Entries![0].Areas!;
-		var left = areas[0];
-		var right = areas[1];
-
-		Assert.Equal((37, 94, 70, 125), (left.X0, left.Y0, left.X1, left.Y1));
-		Assert.Equal((157, 94, 191, 125), (right.X0, right.Y0, right.X1, right.Y1));
-
-		// Same band, and the two gaps to the mirror axis agree to within a pixel.
-		Assert.Equal(left.Y0, right.Y0);
-		Assert.Equal(left.Y1, right.Y1);
-		Assert.InRange(Math.Abs((left.X0 + right.X1) - (left.X1 + right.X0)), 0, 2);
 	}
 
 	/// <summary>

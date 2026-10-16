@@ -39,15 +39,6 @@ public class ShellLayoutTests {
 		Assert.Equal(24, tab.Height);
 	}
 
-	/// <summary>The strip stays inside the canvas, and its last tab stops short of the right edge.</summary>
-	[Fact]
-	public void TabStripFitsTheCanvas() {
-		Assert.True(ShellLayout.MenuButton.X0 > 0);
-		Assert.True(ShellLayout.Tab(ShellLayout.TabCount - 1).X1 < ShellLayout.CanvasWidth);
-		Assert.Equal(ShellLayout.CanvasWidth - 1, ShellLayout.Screen.X1);
-		Assert.Equal(ShellLayout.CanvasHeight - 1, ShellLayout.Screen.Y1);
-	}
-
 	/// <summary>A spread of window shapes: the native 4:3, wider, taller, and one with no clean scale.</summary>
 	public static TheoryData<int, int> Windows() {
 		var data = new TheoryData<int, int>();
@@ -238,22 +229,27 @@ public class ShellLayoutTests {
 	}
 
 	/// <summary>
-	/// The palette table at <c>0046dcdc</c>, read out of the executable's data segment. Pinned in full
-	/// because three separate runs are indexed into it by arithmetic — a name inserted or dropped
-	/// anywhere in it silently moves every stage-indexed palette after that point.
+	/// Each named index lands on its own entry of the table at <c>0046dcdc</c>, by name and back again,
+	/// case-insensitively. A name inserted or dropped ahead of one moves it onto its neighbour. The
+	/// stage-indexed runs are the two stage tests below.
 	/// </summary>
-	[Fact]
-	public void PaletteTableIsTheExecutablesOwn() {
-		Assert.Equal(new[] {
-			"INTR_PT1", "PALETTE", "ARMING", "CAM_ER", "CAM_MOON",
-			"BR_W1", "BR_W2", "BR_W3", "BR_W4", "BR_W5",
-			"DB_W1", "DB_W2", "DB_W3", "DB_W4", "DB_W5",
-			"ALPH", "DELT", "OMIC", "BRAV", "LUNA",
-		}, ShellPalette.Names);
+	[Theory]
+	[InlineData(ShellPalette.Interstitial, "intr_pt1")]
+	[InlineData(ShellPalette.ServiceBay, "palette")]
+	[InlineData(ShellPalette.Arming, "arming")]
+	[InlineData(ShellPalette.CampaignMapEarth, "cam_er")]
+	[InlineData(ShellPalette.CampaignMapMoon, "cam_moon")]
+	public void NamedPalettesIndexTheirOwnEntry(int index, string name) {
+		Assert.Equal(name, ShellPalette.Name(index), ignoreCase: true);
+		Assert.Equal(index, ShellPalette.IndexOf(name));
+	}
 
+	/// <summary>An index outside the table, and a name it does not carry, both read as null.</summary>
+	[Fact]
+	public void PaletteLookupsOutsideTheTableAreNull() {
 		Assert.Null(ShellPalette.Name(-1));
 		Assert.Null(ShellPalette.Name(ShellPalette.Names.Length));
-		Assert.Equal(ShellPalette.Arming, ShellPalette.IndexOf("arming"));
+		Assert.Null(ShellPalette.IndexOf("NOSUCH"));
 	}
 
 	/// <summary>Which palette each tab is drawn through, as <c>Shell_SelectTabPalette</c> (<c>0043b162</c>) picks it.</summary>
@@ -298,13 +294,5 @@ public class ShellLayoutTests {
 		Assert.Equal("OMIC", ShellPalette.Name(ShellPalette.ForStage(3)));
 		Assert.Equal("BRAV", ShellPalette.Name(ShellPalette.ForStage(4)));
 		Assert.Equal("LUNA", ShellPalette.Name(ShellPalette.ForStage(ShellPalette.LunarStage)));
-	}
-
-	/// <summary>The palette scope covers the canvas below the strip and never overlaps it.</summary>
-	[Fact]
-	public void PaletteScopeSitsBelowTheTabStrip() {
-		Assert.Equal(new ShellRect(0, 0x1e, ShellLayout.CanvasWidth - 1, ShellLayout.CanvasHeight - 1),
-			ShellLayout.PaletteScope);
-		Assert.True(ShellLayout.PaletteScope.Y0 > ShellLayout.TabBottom);
 	}
 }

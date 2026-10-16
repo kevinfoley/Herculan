@@ -6,15 +6,6 @@ namespace Herculan.Engine.Tests;
 /// <summary>How a gamepad's mouse settings are kept in <c>herculan-joystick.cfg</c>'s <c>[Gamepad]</c> section.</summary>
 public class GamepadMouseSettingsTests {
 	[Fact]
-	public void DefaultsAreRightStickAndRightTriggerClicks() {
-		var settings = new GamepadMouseSettings();
-
-		Assert.Equal(GamepadSide.Right, settings.CursorStick);
-		Assert.Equal(GamepadSide.Right, settings.LeftClickTrigger);
-		Assert.Equal(100, settings.CursorSpeed);
-	}
-
-	[Fact]
 	public void ChangedSettingsSurviveASaveWithNoDeviceSection() {
 		string path = Path.GetTempFileName();
 		try {

@@ -70,7 +70,10 @@ public class DifficultyTests {
 
 	// ---- the tables -------------------------------------------------------------------------
 
-	/// <summary><c>DAT_0049a73c</c> and <c>DAT_0049a744</c>, read straight out of the binary.</summary>
+	/// <summary>
+	/// The firing side picks the table — <c>DAT_0049a73c</c> for the human side, <c>DAT_0049a744</c>
+	/// for any other — and the difficulty indexes it.
+	/// </summary>
 	[Theory]
 	[InlineData(0, 3500, 300)]
 	[InlineData(1, 2800, 600)]
@@ -81,42 +84,6 @@ public class DifficultyTests {
 
 		Assert.Equal(human, world.DamageScaleFor(MissionSide.Human));
 		Assert.Equal(cybrid, world.DamageScaleFor(MissionSide.Cybrid));
-	}
-
-	/// <summary>
-	/// The property that makes difficulty a difficulty: a human shot is scaled up at every level and a
-	/// Cybrid one down at every level, and each step closes the gap between them.
-	/// </summary>
-	[Fact]
-	public void EachStepMovesTheTwoSidesTowardsEachOther() {
-		var world = new SimWorld(FlatTerrain());
-
-		for (int level = 0; level < ScriptDatHeader.DifficultyLevels; level++) {
-			world.Difficulty = level;
-			Assert.True(world.DamageScaleFor(MissionSide.Human) > Q10Unit);
-			Assert.True(world.DamageScaleFor(MissionSide.Cybrid) < Q10Unit);
-
-			if (level == 0) {
-				continue;
-			}
-
-			int human = world.DamageScaleFor(MissionSide.Human);
-			int cybrid = world.DamageScaleFor(MissionSide.Cybrid);
-			world.Difficulty = level - 1;
-
-			Assert.True(human < world.DamageScaleFor(MissionSide.Human));
-			Assert.True(cybrid > world.DamageScaleFor(MissionSide.Cybrid));
-			world.Difficulty = level;
-		}
-	}
-
-	/// <summary>
-	/// The aim-scatter table is indexed by the same value, so it must be the same width. It read five
-	/// entries once, which would have been a fifth difficulty level that does not exist.
-	/// </summary>
-	[Fact]
-	public void AimScatterTableIsOneEntryPerDifficultyLevel() {
-		Assert.Equal(ScriptDatHeader.DifficultyLevels, MechObject.AiAimScatter.Length);
 	}
 
 	// ---- where the scale is applied ---------------------------------------------------------

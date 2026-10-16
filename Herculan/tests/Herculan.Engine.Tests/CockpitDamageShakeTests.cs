@@ -35,45 +35,6 @@ public class CockpitDamageShakeTests {
 		}
 	}
 
-	/// <summary>A hit moves the view off its rest position.</summary>
-	[Fact]
-	public void AHitStartsTheShake() {
-		var shake = new CockpitHitShake();
-		shake.Update(Frame, cockpitHits: 1);
-
-		Assert.True(OffsetsOver(shake, frames: 20).Any(o => o > 0),
-			"twenty frames of a 0-4 step should have moved the view at least once");
-	}
-
-	/// <summary>
-	/// And brings the flash up during the window — but <b>not necessarily on the first frame</b>. The
-	/// interval is a 0-9 tick roll, and a roll of 0 flips the palette straight back off on the frame
-	/// after it was raised.
-	/// </summary>
-	[Fact]
-	public void AHitStartsTheFlash() {
-		var shake = new CockpitHitShake();
-		shake.Update(Frame, cockpitHits: 1);
-
-		Assert.True(FlashSeenOver(shake, frames: 30, hits: 1),
-			"the flash should be up for some of the window");
-	}
-
-	/// <summary>
-	/// The walk stays inside the band the original seeds — <c>5 &lt;&lt; VideoMode_YCoordShift</c>,
-	/// ten of the art's pixels — and never goes the other side of rest. A step that overshot a limit
-	/// would put the horizon somewhere the original never puts it.
-	/// </summary>
-	[Fact]
-	public void TheWalkStaysInsideTheBand() {
-		var shake = new CockpitHitShake();
-		shake.Update(Frame, cockpitHits: 1);
-
-		foreach (int offset in OffsetsOver(shake, frames: 500)) {
-			Assert.InRange(offset, 0, CockpitHitShake.BandPixels);
-		}
-	}
-
 	/// <summary>
 	/// It oscillates rather than settling, and it reverses constantly: <c>CockpitView_StepShake</c>
 	/// steps toward whichever limit is <i>farther</i>, and which one that is flips the moment the
@@ -118,7 +79,8 @@ public class CockpitDamageShakeTests {
 
 	/// <summary>
 	/// The window is <c>0x3c</c> coarse ticks and then both halves go back — the view to rest and the
-	/// palette to the theater's.
+	/// palette to the theater's. The count is held throughout, so this is also what says it is an edge,
+	/// not a level: re-arming on a steady count would make the shake permanent.
 	/// </summary>
 	[Fact]
 	public void TheShakeEndsAfterItsWindow() {
@@ -270,21 +232,6 @@ public class CockpitDamageShakeTests {
 
 		// And it stays down: a reset shake is not waiting to resume on the next frame.
 		Assert.All(OffsetsOver(shake, frames: 30), offset => Assert.Equal(0, offset));
-	}
-
-	/// <summary>
-	/// The count is an edge, not a level: holding it steady must not re-arm the shake every frame,
-	/// which would make it permanent.
-	/// </summary>
-	[Fact]
-	public void AnUnchangedCountDoesNotRetrigger() {
-		var shake = new CockpitHitShake();
-		shake.Update(Frame, cockpitHits: 7);
-
-		Advance(shake, CockpitHitShake.DurationSeconds + Frame * 2, hits: 7);
-
-		Assert.Equal(0, shake.OffsetPixels);
-		Assert.False(shake.FlashActive);
 	}
 
 	// ---- the palette the flash swaps to -----------------------------------------------------

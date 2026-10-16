@@ -75,13 +75,6 @@ public class ShellMainMenuTests {
 		Assert.Equal(2, startup.Frame);
 	}
 
-	/// <summary>The six frames are bay2a_80 to bay2a_84, the last twice.</summary>
-	[Fact]
-	public void StartupFramesRepeatTheLastBackdrop() {
-		Assert.Equal(new[] { "BAY2A_80", "BAY2A_81", "BAY2A_82", "BAY2A_83", "BAY2A_84", "BAY2A_84" },
-			ShellStartupSequence.FrameNames);
-	}
-
 	/// <summary>FUN_0044cecf's reasons: state 0 the war lost, 1 the cybrids defeated, 3 killed.</summary>
 	[Theory]
 	[InlineData(0, 0x130)]

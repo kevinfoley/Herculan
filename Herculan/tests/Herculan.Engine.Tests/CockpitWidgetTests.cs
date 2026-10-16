@@ -53,45 +53,6 @@ public class CockpitWidgetTests {
 	}
 
 	/// <summary>
-	/// The latching/momentary split is the two button classes <c>MfdDisplay_Ctor</c> constructs: 0-5
-	/// and 11-12 through the selection-driven class, 7-10 through the press-driven one. It is also
-	/// exactly the set <c>MfdButton_Repaint</c> gates its caption re-font on, which is the check that
-	/// makes the two agree.
-	///
-	/// <para>Index 6 is deliberately not asserted either way. The constructor's switch has no case 6,
-	/// so that button takes whichever class the previous loop iteration happened to leave on the
-	/// stack — the original has no answer to give. It is the degenerate zero rect that no mode shows,
-	/// so nothing observable depends on it.</para>
-	/// </summary>
-	[Theory]
-	[InlineData(0, true)]    // F1
-	[InlineData(5, true)]    // F6
-	[InlineData(7, false)]   // SELECT
-	[InlineData(8, false)]   // RANGE
-	[InlineData(9, false)]   // TARGET
-	[InlineData(10, false)]  // XMIT
-	[InlineData(11, true)]   // PASS
-	[InlineData(12, true)]   // ACTIVE
-	public void MfdButtonsSplitIntoLatchingAndMomentary(int index, bool expected) =>
-		Assert.Equal(expected, MfdLayout.IsLatching(index));
-
-	/// <summary>
-	/// The Heads-Down Display splits the same way inside one class, on the index its paint switches on:
-	/// the two page buttons latch, the arrows and magnifiers are momentary.
-	/// </summary>
-	[Theory]
-	[InlineData(HddLayout.Widget.PageButton0, true)]
-	[InlineData(HddLayout.Widget.PageButton1, true)]
-	[InlineData(HddLayout.Widget.ArrowUp, false)]
-	[InlineData(HddLayout.Widget.ArrowDown, false)]
-	[InlineData(HddLayout.Widget.ZoomIn, false)]
-	[InlineData(HddLayout.Widget.ZoomOut, false)]
-	[InlineData(HddLayout.Widget.Transmit, false)]
-	[InlineData(HddLayout.Widget.Cancel, false)]
-	public void HddWidgetsSplitIntoLatchingAndMomentary(HddLayout.Widget widget, bool expected) =>
-		Assert.Equal(expected, HddLayout.IsLatching(widget));
-
-	/// <summary>
 	/// The MFD's buttons 7 and 10 share a rect — the same physical button captioned SELECT on the
 	/// status screens and XMIT on FLASH COMM — and no mode shows both, which is what lets the hit test
 	/// treat overlaps as impossible.

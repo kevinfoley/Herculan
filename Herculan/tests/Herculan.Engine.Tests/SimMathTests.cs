@@ -27,12 +27,19 @@ public class SimMathTests {
 	[Theory]
 	[MemberData(nameof(Steps))]
 	public void ScalePerTickStepTracksTheTickLength(short step) {
-		// Twice the tick length covers twice the ramp; half of it, half the ramp.
+		// Twice the tick length covers twice the ramp.
 		WithTickDelta((short)(SimMath.VanillaTickDelta * 2),
 			() => Assert.Equal(step * 2, SimMath.ScalePerTickStep(step)));
+	}
 
-		int halved = System.Math.Max(1, step * 40 / SimMath.VanillaTickDelta);
-		WithTickDelta(40, () => Assert.Equal(halved, SimMath.ScalePerTickStep(step)));
+	/// <summary>A tick of 40 against the vanilla 81 covers a little under half the ramp, truncated.</summary>
+	[Theory]
+	[InlineData(3, 1)]
+	[InlineData(25, 12)]
+	[InlineData(150, 74)]
+	[InlineData(3000, 1481)]
+	public void ScalePerTickStepTruncatesAShorterTick(int step, int expected) {
+		WithTickDelta(40, () => Assert.Equal(expected, SimMath.ScalePerTickStep((short)step)));
 	}
 
 	[Fact]

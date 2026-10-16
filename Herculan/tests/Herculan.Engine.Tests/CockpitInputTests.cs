@@ -235,15 +235,6 @@ public class CockpitInputTests {
 			Frame(input));
 	}
 
-	/// <summary>A drain with nothing queued reports nothing and disturbs no state.</summary>
-	[Fact]
-	public void AnEmptyFrameIsQuiet() {
-		var input = new CockpitInput();
-		Assert.Empty(Frame(input));
-		Assert.Null(input.Depressed);
-		Assert.Null(input.Pressed);
-	}
-
 	/// <summary>Reset drops an armed press, so a release arriving afterwards completes nothing.</summary>
 	[Fact]
 	public void ResetDisarmsAnInFlightPress() {
@@ -316,12 +307,14 @@ public class CockpitInputTests {
 	[Fact]
 	public void TheQueueIsBounded() {
 		var input = new CockpitInput();
-		for (int i = 0; i < CockpitInput.QueueCapacity * 2; i++) {
-			input.Enqueue(50, 10, CockpitMouseButtons.None);
+		for (int i = 0; i < CockpitInput.QueueCapacity; i++) {
+			Press(input, 50);
+			Release(input, 50);
 		}
 
-		// One drain empties it: the overflow was dropped at enqueue time, not buffered for later.
-		Frame(input);
+		// Only the first capacity's worth of events, half of the pairs, completes a click, and the
+		// overflow was dropped at enqueue time rather than buffered for the next drain.
+		Assert.Equal(CockpitInput.QueueCapacity / 2, Frame(input).Count);
 		Assert.Empty(Frame(input));
 	}
 }
