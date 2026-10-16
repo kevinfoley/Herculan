@@ -54,7 +54,7 @@ The font functions the labels reach, in the library region:
 | `+0x74` | 1 dark, 0 shown |
 | `+0x75` | set to 2 at each change |
 
-The display's update stores `Player_DependentCondition`(4) at `+0x68` and runs **`PanelGauge_TickDropout` (`00031400`)**, (gauge), when it is non-zero; `00034f3c` does so, outside view 4, and `es2_xref.py` finds the other two calls in `0003a2a8` and `0003cd28` ([Open](#open)). The tick:
+The display's update stores `Player_DependentCondition`(4) at `+0x68` and runs **`PanelGauge_TickDropout` (`00031400`)**, (gauge), when it is non-zero; `Gunsight_UpdateAndPaint` (`00034f3c`) does so, outside view 4 ([the gunsight's update](cockpit-gunsight-hud.md#painting-and-the-per-frame-update)), and `es2_xref.py` finds the other two calls in `0003a2a8` and `0003cd28` ([Open](#open)). The tick:
 
 1. Condition 3 sets dark and returns.
 2. Otherwise, while the clock is past `+0x6c` and short of `+0x6c` + `+0x6a`, each time it passes `+0x70` the state flips, `+0x75` becomes 2, `+0x70` becomes the clock + 1 + (*r* mod 30), and a flip to dark plays sound `0x1c` (`Sound_Play`).

@@ -3412,7 +3412,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjPick_GetObject",
-      "description": "No arguments, frameless: returns ObjPick_Object (000afa50), the last object ObjList_DrawEntryRender (00020f40) saw change the pick's pixel. ES2's ObjPick_GetObject (DBSIM 004282c0). es2_xref finds one call, from 00034f3c.",
+      "description": "No arguments, frameless: returns ObjPick_Object (000afa50), the last object ObjList_DrawEntryRender (00020f40) saw change the pick's pixel. ES2's ObjPick_GetObject (DBSIM 004282c0). es2_xref finds one call, from Gunsight_UpdateAndPaint (00034f3c).",
       "source": "Herculan/docs/es1/simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe",
       "verified": {
         "bytes": "00020d48+6",
@@ -3427,7 +3427,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjPick_IsIdle",
-      "description": "No arguments, frameless: returns 1 when ObjPick_Pending (000afa45) is 0, otherwise 0 (NEG, SBB, INC). ES2's ObjPick_IsIdle (DBSIM 004282c8). es2_xref finds one call, from 00034f3c.",
+      "description": "No arguments, frameless: returns 1 when ObjPick_Pending (000afa45) is 0, otherwise 0 (NEG, SBB, INC). ES2's ObjPick_IsIdle (DBSIM 004282c8). es2_xref finds one call, from Gunsight_UpdateAndPaint (00034f3c).",
       "source": "Herculan/docs/es1/simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe",
       "verified": {
         "bytes": "00020d50+11",
@@ -4072,7 +4072,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_StepViewTransition",
-      "description": "(manager), callee-cleaned: runs the command +0x14 staged with +0x18 set, and returns the current view +0x10. With v the display 000bdd28's +0x88 and d its +0x8c, it sets 000bda96 to 0; every command but 2 calls slot +0x18 of CockpitViewInstance (00092d1c)'s +0x207 object; 0, 1 and 3 copy a rect from d to v with Region_CopyBetweenPages (00066914), the clip block's +0x208/+0x20c at 0. It clears +0x18, then through the driver's routine 0009df10 moves v's origin: 0 down 5 rows a step by the next .VUE record's canvas origin y less the current one's, then Cockpit_UseOffForwardCursor (0002dfd4), +0x10 + 1 and SimInput_SetEnabled (0004d82c)(0); 1 up the same way, then Cockpit_UseForwardCursor (0002e060), +0x10 - 1 and SimInput_SetEnabled(1); 2 hides the cursor (0009df50), 00094c5b = 0, +0x10 = 4 and +0x32 = 1; 3 sets 00094c5b, calls Mouse_SetPosition (00055ab8) with the point 00066a2e reads when 0004c634 returns non-zero, shows the cursor (0009df4c), calls the squad port's slot +0x18 and sets +0x10 from +0x1f; 4, 5 and 6 move x 10 columns a step, then Cockpit_UseOffForwardCursor, show d (0009df1c), draw on v, swap +0x88 and +0x8c, put v's origin back on its page's and copy {0, 0, 319, 199} from d to v, and set +0x10 to 2, 3 or 0. While the squad port's (CockpitView_GetSquadMessagePort (0002d614)) byte +0x436 is set a slide calls its slots +0x14 and +0x18 around each step and MessagePort_CopyBoxBetweenPages (0002fcd4)(port, 0) after; 00098d96 is 0 during a slide and 1 after. Then +0x14 = -1, the word +0x19 = 2, and CockpitView_SetShakeBand (000243d4)(10) by its padding entry when CockpitShakeReseedAfterSlide (000925ed) is set. ES2's CockpitView_StepViewTransition (DBSIM 0042a9c0) on its paged path, with steps of 10 rows and 0x14 columns. es2_xref finds one call, from Sim_EndFrame (00059b40).",
+      "description": "(manager), callee-cleaned: runs the command +0x14 staged with +0x18 set, and returns the current view +0x10. With v the display 000bdd28's +0x88 and d its +0x8c, it sets 000bda96 to 0; every command but 2 calls slot +0x18 of CockpitViewInstance (00092d1c)'s +0x207 object; 0, 1 and 3 copy a rect from d to v with Region_CopyBetweenPages (00066914), the clip block's +0x208/+0x20c at 0. It clears +0x18, then through the driver's routine 0009df10 moves v's origin: 0 down 5 rows a step by the next .VUE record's canvas origin y less the current one's, then Cockpit_UseOffForwardCursor (0002dfd4), +0x10 + 1 and SimInput_SetEnabled (0004d82c)(0); 1 up the same way, then Cockpit_UseForwardCursor (0002e060), +0x10 - 1 and SimInput_SetEnabled(1); 2 hides the cursor (0009df50), 00094c5b = 0, +0x10 = 4 and +0x32 = 1; 3 sets 00094c5b, calls Mouse_SetPosition (00055ab8) with the point Cursor_GetPosition (00066a2e) reads when Input_GetMouseDevice_Thunk (0004c634) returns non-zero, shows the cursor (0009df4c), calls the squad port's slot +0x18 and sets +0x10 from +0x1f; 4, 5 and 6 move x 10 columns a step, then Cockpit_UseOffForwardCursor, show d (0009df1c), draw on v, swap +0x88 and +0x8c, put v's origin back on its page's and copy {0, 0, 319, 199} from d to v, and set +0x10 to 2, 3 or 0. While the squad port's (CockpitView_GetSquadMessagePort (0002d614)) byte +0x436 is set a slide calls its slots +0x14 and +0x18 around each step and MessagePort_CopyBoxBetweenPages (0002fcd4)(port, 0) after; 00098d96 is 0 during a slide and 1 after. Then +0x14 = -1, the word +0x19 = 2, and CockpitView_SetShakeBand (000243d4)(10) by its padding entry when CockpitShakeReseedAfterSlide (000925ed) is set. ES2's CockpitView_StepViewTransition (DBSIM 0042a9c0) on its paged path, with steps of 10 rows and 0x14 columns. es2_xref finds one call, from Sim_EndFrame (00059b40).",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904",
       "verified": {
         "bytes": "00022904+6673",
@@ -6367,7 +6367,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_RovingGunsightWrapper",
-      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with 00034aec(0, cockpit, record + 0x450), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1f1. ES2's Gau_RovingGunsightWrapper (DBSIM 004325c0), whose block is +0x440 and which shifts it first.",
+      "description": "(cockpit, record) in stack order, callee-cleaned: builds the instrument with Gau_RovingGunsightWidget (00034aec)(0, cockpit, record + 0x450), appends it to the widget list +8 (count +0x6c) and returns it. es2_xref finds one call, from Cockpit_LoadPanel (0002c9d8), which stores the result at +0x1f1. ES2's Gau_RovingGunsightWrapper (DBSIM 004325c0), whose block is +0x440 and which shifts it first.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
       "verified": {
         "bytes": "0002ce28+56",
@@ -6577,7 +6577,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TargetSelect_SetObject",
-      "description": "(cockpit, object) in stack order, callee-cleaned: runs TargetSelect_Cycle (0002d898) when the selection +0x20c is 0, then steps +0x20c through LiveObjectList (000bc416) with the cursor +0x210 and its int16 index +0x214 (past LiveObjectList_Count (000bc41c) the selection takes 0 and the cursor and index go back to the list's start) until +0x20c is the object, passes TargetSelect_CanTarget (0002d624) and the object passes TargetSelect_InForwardCone (0002d71c), or the walk is back at the selection it began with. When the selection is then the object, sets the dword +6 of the block Gunsight_GetStateBlock (00035180)(+0x1f1) returns to it and the byte +0x24 to 1, hands the block to Gunsight_SetValues (00035090) and returns 1; else 0. es2_xref finds one call, from 00034f3c. ES2's TargetSelect_SetObject (DBSIM 004332dc), which also clears the selection when passed 0.",
+      "description": "(cockpit, object) in stack order, callee-cleaned: runs TargetSelect_Cycle (0002d898) when the selection +0x20c is 0, then steps +0x20c through LiveObjectList (000bc416) with the cursor +0x210 and its int16 index +0x214 (past LiveObjectList_Count (000bc41c) the selection takes 0 and the cursor and index go back to the list's start) until +0x20c is the object, passes TargetSelect_CanTarget (0002d624) and the object passes TargetSelect_InForwardCone (0002d71c), or the walk is back at the selection it began with. When the selection is then the object, sets the dword +6 of the block Gunsight_GetStateBlock (00035180)(+0x1f1) returns to it and the byte +0x24 to 1, hands the block to Gunsight_SetValues (00035090) and returns 1; else 0. es2_xref finds one call, from Gunsight_UpdateAndPaint (00034f3c). ES2's TargetSelect_SetObject (DBSIM 004332dc), which also clears the selection when passed 0.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-target-selection",
       "verified": {
         "bytes": "0002d78c+266",
@@ -6802,7 +6802,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_SetForwardCursor",
-      "description": "(index), callee-cleaned: with c CockpitViewInstance (00092d1c), puts Cockpit_CursorImages (00092d20)[index] in the forward slot c + 0x232 and, when c's active slot +0x222 is that slot, passes the image to Cursor_SetImage (00066948) as Cockpit_UpdateEdgeCursor (0002de48) does. es2_xref finds two calls, from 000346a4. ES2's Cockpit_SetForwardCursor (DBSIM 00433d90), gated on Cockpit_CursorsLive, which skips a repeat of the last index and passes the image whenever the edge slot is inactive.",
+      "description": "(index), callee-cleaned: with c CockpitViewInstance (00092d1c), puts Cockpit_CursorImages (00092d20)[index] in the forward slot c + 0x232 and, when c's active slot +0x222 is that slot, passes the image to Cursor_SetImage (00066948) as Cockpit_UpdateEdgeCursor (0002de48) does. es2_xref finds two calls, from Gunsight_ClickSurface_Paint (000346a4). ES2's Cockpit_SetForwardCursor (DBSIM 00433d90), gated on Cockpit_CursorsLive, which skips a repeat of the last index and passes the image whenever the edge slot is inactive.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
       "verified": {
         "bytes": "0002df04+101",
@@ -6907,7 +6907,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hud_WorldUnitsToMetres",
-      "description": "(units), frameless, callee-cleaned (RET 4): (units / 1000) * 6, the IDIV truncating. es2_xref finds three calls, from 00034800 and twice from 000355a4. ES2's Hud_WorldUnitsToMetres (DBSIM 00434228), the same arithmetic.",
+      "description": "(units), frameless, callee-cleaned (RET 4): (units / 1000) * 6, the IDIV truncating. es2_xref finds three calls, from Hud_UpdateWaypointIndicator (00034800) and twice from 000355a4. ES2's Hud_WorldUnitsToMetres (DBSIM 00434228), the same arithmetic.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002e2a0+20",
@@ -6997,7 +6997,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Player_DependentCondition",
-      "description": "(n), callee-cleaned: Damage_ToConditionState (00030eb8) of the int16 that Mech_ReadEntryDamage (00015868)(the machine +0x1ff of CockpitViewInstance (00092d1c), n, 0) returns. es2_xref finds calls from 00034f3c, 0003a2a8 and 0003cd28. ES2's Player_DependentCondition (DBSIM 004342e0).",
+      "description": "(n), callee-cleaned: Damage_ToConditionState (00030eb8) of the int16 that Mech_ReadEntryDamage (00015868)(the machine +0x1ff of CockpitViewInstance (00092d1c), n, 0) returns. es2_xref finds calls from Gunsight_UpdateAndPaint (00034f3c), 0003a2a8 and 0003cd28. ES2's Player_DependentCondition (DBSIM 004342e0).",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#squadmate-and-pilot-helpers",
       "verified": {
         "bytes": "0002e334+44",
@@ -8317,7 +8317,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelGauge_TickDropout",
-      "description": "(gauge), callee-cleaned: the sensor dropout's flicker. With the int16 condition +0x68 equal to 3, sets the dark byte +0x74 and returns. Otherwise, on the clock 000981c4: while the clock is past +0x6c and short of +0x6c + the int16 +0x6a, each time it passes +0x70 it flips +0x74, sets +0x75 to 2, puts +0x70 at the clock + 1 + (Math_RandomNext(000b5c48) & 0xffff) % 30 and, on going dark, plays sound 0x1c with Sound_Play; once the clock reaches +0x6c + +0x6a it runs PanelGauge_ScheduleDropout, sets +0x74 to 1 for a condition of 2 or more and to 0 below, and +0x75 to 2. Its RET 4 at 0003149b is followed by two zero bytes and the next object file. ES2's PanelGauge_TickDropout (DBSIM 00438bc0) alternates dark and shown spells of rolled lengths, with a sprite sequencer, and forces dark at condition 0. es2_xref finds three calls, from 00034f3c, 0003a2a8 and 0003cd28.",
+      "description": "(gauge), callee-cleaned: the sensor dropout's flicker. With the int16 condition +0x68 equal to 3, sets the dark byte +0x74 and returns. Otherwise, on the clock 000981c4: while the clock is past +0x6c and short of +0x6c + the int16 +0x6a, each time it passes +0x70 it flips +0x74, sets +0x75 to 2, puts +0x70 at the clock + 1 + (Math_RandomNext(000b5c48) & 0xffff) % 30 and, on going dark, plays sound 0x1c with Sound_Play; once the clock reaches +0x6c + +0x6a it runs PanelGauge_ScheduleDropout, sets +0x74 to 1 for a condition of 2 or more and to 0 below, and +0x75 to 2. Its RET 4 at 0003149b is followed by two zero bytes and the next object file. ES2's PanelGauge_TickDropout (DBSIM 00438bc0) alternates dark and shown spells of rolled lengths, with a sprite sequencer, and forces dark at condition 0. es2_xref finds three calls, from Gunsight_UpdateAndPaint (00034f3c), 0003a2a8 and 0003cd28.",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#sensor-dropout",
       "verified": {
         "bytes": "00031400+158",
@@ -9407,6 +9407,96 @@
       }
     },
     {
+      "address": "00033c20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudHeadingTape_Ctor",
+      "description": "(tape, rect) in stack order, callee-cleaned: allocates 0x54 bytes with operator_new when tape is null (returning null when that fails), runs HudRotationIndicator_Ctor (00033968)(tape, rect), stores HRevRotationGaugeVtable (0009374e) at +0x10, loads hudhtick from the folder the pointer 000980f8 names (ResourcePath_BuildFolderName, ClassItem_LoadFromFile) into HudHTickBank (000936d0) while that is 0, and calls HudHeadingTape_Recompute (00033c7c) directly by its padding entry 00033c79. ES2's HudHeadingTape_Ctor (DBSIM 0043b57c), which picks hba or dba and calls the recompute through its vtable. es2_xref finds one call, from 00034c43.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-heading-tape; es2_naming.py diff ES1DBSIM 00033c20 DBSIM 0043b57c",
+      "verified": {
+        "bytes": "00033c20+89",
+        "sha1": "79db8d2b2ff4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033c7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudHeadingTape_Recompute",
+      "description": "(tape), callee-cleaned: slot +0xc of HRevRotationGaugeVtable (0009374e). With F the hudhtick bank's frame count (HudHTickBank (000936d0) +4) and its frame pointers at +8: +0x28 = x1 - x0 (W), +0x3c = 0, +0x40 = F * W * 0x400 / 0x10000, +0x44 = x0, +0x48 = the last frame, +0x4c = the first, the int16 +0x50 = 1 and +0x52 = F - 2, or F - 1 when that is negative. ES2's HudHeadingTape_Recompute (DBSIM 0043b5dc), whose +0x40 is F * W.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-heading-tape; es2_naming.py diff ES1DBSIM 00033c7c DBSIM 0043b5dc",
+      "verified": {
+        "bytes": "00033c7c+140",
+        "sha1": "affe5990ce91",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033d08",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudHeadingTape_SetHeading",
+      "description": "(tape, delta) in stack order, callee-cleaned (RET 8): slot +0x10 of HRevRotationGaugeVtable (0009374e), the add-delta slot Gunsight_SetValues hands the heading's change; delta is not read. h = the negated int16 +0xa of the machine at +0x1ff of CockpitViewInstance (00092d1c), as an unsigned 16-bit value; with P = +0x40 and W = +0x28: q = (h * P) >> 10, frame = q / W, offset = q % W + ((h << 8) / 0x10000 * ((P * 0xe39) >> 10)) >> 8; when offset >= W it subtracts W and steps frame, wrapped to 0 at the bank's count (HudHTickBank (000936d0) +4). Stores x0 - offset at +0x44, frame's pointer at +0x48 and the next frame's, wrapped, at +0x4c. ES2's HudHeadingTape_SetHeading (DBSIM 0043b654) maps the heading it is given with Math_Q16Multiply against +0x40 and has no added term.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-heading-tape; ES1DBSIM disassembly at 00033d08",
+      "verified": {
+        "bytes": "00033d08+204",
+        "sha1": "b486533aa2f5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00033dd4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudHeadingTape_Paint",
+      "description": "(tape), callee-cleaned: slot +4 of HRevRotationGaugeVtable (0009374e). Inside Cockpit_PushCanvasContext (0002b00c) and Cockpit_PopRenderContext (0002b03c), saves the context's +0x210, +0x218, +0x220 and +0x224, sets +0x210 and +0x218 to the tape's x0 and x1 less the origin x +0x220 and +0x220 to x0 less the old +0x220, blits +0x48 at (+0x44, y0) and +0x4c at (+0x44 + +0x28, y0) with Bitmap_Blit (00067048), and restores the four. ES2's HudHeadingTape_Paint (DBSIM 0043b6dc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-heading-tape; ES1DBSIM disassembly at 00033dd4",
+      "verified": {
+        "bytes": "00033dd4+189",
+        "sha1": "4c65a24a0386",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00033e94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudHeadingTape_Repaint",
+      "description": "(tape), callee-cleaned: slot +8 of HRevRotationGaugeVtable (0009374e): calls the tape's slot +4, HudHeadingTape_Paint (00033dd4). Entered at its padding 00033e91. ES2's HudHeadingTape_Repaint (DBSIM 0043b7a4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-heading-tape; es2_naming.py diff ES1DBSIM 00033e94 DBSIM 0043b7a4",
+      "verified": {
+        "bytes": "00033e94+21",
+        "sha1": "43e9d987f16c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033eac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudHeadingTape_SetLimits",
+      "description": "(tape, max, min) in stack order, callee-cleaned: slot +0x14 of HRevRotationGaugeVtable (0009374e), entered at its padding 00033ea9: +0x40 = (max - min) / +0x28, then HudSlideBar_SetLimits (000338cc)(tape, max, min), whose closing recompute writes +0x40 again. ES2's HudHeadingTape_SetLimits (DBSIM 0043b7b4).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-heading-tape; es2_naming.py diff ES1DBSIM 00033eac DBSIM 0043b7b4",
+      "verified": {
+        "bytes": "00033eac+41",
+        "sha1": "aade22b9f235",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00033ed8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -9422,18 +9512,411 @@
       }
     },
     {
+      "address": "00033f1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_Reticle_Ctor",
+      "description": "(child, rect) in stack order, callee-cleaned: gunsight child 4. Allocates 0x24 bytes with operator_new when child is null (returning null when that fails), runs GunsightChild_CtorWithFields (00033ed8)(child, rect) and stores HUDCrosshairGunsightVtable (00093776) at +0x10. ES2 builds its reticle inline in Gau_RovingGunsightWidget. es2_xref finds one call, from 00034d3b.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-reticle; ES1DBSIM decompile of 00033f1c",
+      "verified": {
+        "bytes": "00033f1c+47",
+        "sha1": "c85a16af5a30",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033f4c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_ReticleRepaint",
+      "description": "(child), callee-cleaned: slot +8 of HUDCrosshairGunsightVtable (00093776): calls the child's slot +4, Gunsight_ReticlePaint (00033f64). ES2's Gunsight_ReticleRepaint (DBSIM 0043e5e7).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-reticle; es2_naming.py diff ES1DBSIM 00033f4c DBSIM 0043e5e7",
+      "verified": {
+        "bytes": "00033f4c+21",
+        "sha1": "43e9d987f16c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033f64",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_ReticlePaint",
+      "description": "(child), callee-cleaned: slot +4 of HUDCrosshairGunsightVtable (00093776), the reticle's paint. Inside Cockpit_PushCanvasContext (0002b00c) and Cockpit_PopRenderContext (0002b03c), installs the pen {0, 0x38} at the context's +0x228 and draws four lines with Raster_DrawLine (0006a064), with (cx, cy) = (+0x1c, +0x20), a = +0x14 and b = +0x18: (cx + a, cy)-(cx + b, cy), (cx - b, cy)-(cx - a, cy), (cx, cy - b)-(cx, cy - a) and (cx, cy + a)-(cx, cy + b). ES2's Gunsight_ReticlePaint (DBSIM 0043b7e0) blits one of three HUD frames by where the target projects and by lock.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-reticle; ES1DBSIM disassembly at 00033f64",
+      "verified": {
+        "bytes": "00033f64+215",
+        "sha1": "08eeb0e82fe3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003403c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_TargetIndicator_Ctor",
+      "description": "(child, rect) in stack order, callee-cleaned: gunsight child 5, the target box. Allocates 0x38 bytes with operator_new when child is null (returning null when that fails), runs GunsightChild_CtorWithFields (00033ed8)(child, rect) and the inlined constructor of the 0x10-byte rect at +0x28 with its two points, and stores HUDLockingGunsightVtable (0009378a) at +0x10. The pointer to the state block at +0x24 is stored by Gau_RovingGunsightWidget. ES2's Gunsight_TargetIndicator_Ctor (DBSIM 0043b928). es2_xref finds calls from 00034d61 and Gunsight_UnusedChild_Ctor (00034710).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-target-box; ES1DBSIM disassembly at 0003403c",
+      "verified": {
+        "bytes": "0003403c+106",
+        "sha1": "c9369403b1a1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000340a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_TargetIndicatorRepaint",
+      "description": "(child), callee-cleaned: slot +8 of HUDLockingGunsightVtable (0009378a): calls the child's slot +4, Gunsight_TargetIndicatorPaint (000340c0). ES2's Gunsight_TargetIndicatorRepaint (DBSIM 0043e629).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-target-box; es2_naming.py diff ES1DBSIM 000340a8 DBSIM 0043e629",
+      "verified": {
+        "bytes": "000340a8+21",
+        "sha1": "43e9d987f16c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000340c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_TargetIndicatorPaint",
+      "description": "(child), callee-cleaned: slot +4 of HUDLockingGunsightVtable (0009378a). Draws only while the state block at +0x24 has an object at +6 and its byte +0x24 set. Saves the 32 bytes at g_ModelTransformPtr (000bdb4e), installs the identity with Raster_SetModelTransform (0005c140)(0), and with r = block +0x1c and (x, y, z) = block +0xa..+0x15 takes (x, y, z - r/2) and (x, y, z - r/2 + 2r) through Raster_ModelToView (0005c290); with either view depth (+4) below 0x100 it puts the transform back and returns. Projects both (Raster_PerspectiveDivide (0005c318), Raster_ProjectToScreen (0005c410)); h = |row difference|, and below 25 or above 75 each row moves by half the difference, int16, to make h 25 or 75. The box +0x28..+0x34 = (second x - h/2, second row, second x + h/2, first row). Corner lengths: +0x18 when the box is wider (taller) than that, else half its width (height). Colour 1 when the byte +0x14 of the object's group (+0x3f) is 0, else 0x35. Saving the pen +0x228 and brush +0x22c of the installed render context (000bdbda), with block byte +0x25 clear it draws with the pen {0, colour} two Raster_DrawLine (0006a064) lines along the edges at each corner; with it set, with the brush {0, colour}, four triangles through Raster_DrawPolygonDispatch (00068be0), each the inner half of a corner's square. Builds its three points with __vec_ctor (000610cb) and Point_DefaultCtorGunsightCopy (000345a0). Restores the pen, brush and transform. ES2's Gunsight_TargetIndicatorPaint (DBSIM 0043b950) blits HUD sprites and draws an off-screen arrow.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-target-box; ES1DBSIM disassembly at 000340c0",
+      "verified": {
+        "bytes": "000340c0+1248",
+        "sha1": "c7a96658f0f7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000345a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Point_DefaultCtorGunsightCopy",
+      "description": "(point), callee-cleaned: allocates 8 bytes with operator_new when point is null and returns point as it then is. The code of Point_DefaultCtor (0007ca28). es2_xref finds its address stored at 00034294 and 00034933, the element constructor Gunsight_TargetIndicatorPaint (000340c0) and Hud_UpdateWaypointIndicator (00034800) pass to __vec_ctor.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; es2_naming.py diff ES1DBSIM 000345a0 ES1DBSIM 0007ca28",
+      "verified": {
+        "bytes": "000345a0+27",
+        "sha1": "411a14dacc82",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000345bc",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_ClickSurface_Ctor",
-      "description": "(child, rect) in stack order, callee-cleaned: allocates 0x28 bytes with operator_new when child is null (returning null when that fails), runs GunsightChild_CtorWithFields (00033ed8)(child, rect) and stores HUDRovingGunsightVtable (0009379e) at +0x10. Allocates a 0x20-byte gadget, builds it with Widget_CtorRect (000438fc)(gadget, rect), stores 000937b2 and then HUDRovingGunsightGadgetVtable (000937da) at its +0x1c with an int16 0 at +0x19 and then +0x17, keeps it at +0x24 and registers it with Widget_RegisterClickable (000443d4) on the list at +0 of CockpitViewInstance (00092d1c). ES2's Gunsight_ClickSurface_Ctor (DBSIM 0043c120). es2_xref finds one call, from 00034ba7.",
+      "description": "(child, rect) in stack order, callee-cleaned: allocates 0x28 bytes with operator_new when child is null (returning null when that fails), runs GunsightChild_CtorWithFields (00033ed8)(child, rect) and stores HUDRovingGunsightVtable (0009379e) at +0x10. Allocates a 0x20-byte gadget, builds it with Widget_CtorRect (000438fc)(gadget, rect), stores CTLButtonControlVtableGunsightCopy (000937b2) and then HUDRovingGunsightGadgetVtable (000937da) at its +0x1c with an int16 0 at +0x19 and then +0x17, keeps it at +0x24 and registers it with Widget_RegisterClickable (000443d4) on the list at +0 of CockpitViewInstance (00092d1c). ES2's Gunsight_ClickSurface_Ctor (DBSIM 0043c120). es2_xref finds one call, from 00034ba7.",
       "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; ES1DBSIM disassembly at 000345bc",
       "verified": {
         "bytes": "000345bc+163",
         "sha1": "43f9970b27af",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "00034660",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_ClickSurface_Repaint",
+      "description": "(child), callee-cleaned: slot +8 of HUDRovingGunsightVtable (0009379e): calls the child's slot +4, Gunsight_ClickSurface_Paint (000346a4). ES2's Gunsight_ClickSurface_Repaint (DBSIM 0043e61b).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; es2_naming.py diff ES1DBSIM 00034660 DBSIM 0043e61b",
+      "verified": {
+        "bytes": "00034660+21",
+        "sha1": "43e9d987f16c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00034675",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_PaintNoOpGunsightCopy",
+      "description": "Frameless, no Ghidra function starts here: three NOPs and RET 4. Slot +4 (paint) of CTLButtonControlVtableGunsightCopy (000937b2); the code of CTLControl_PaintNoOpPanelCopy (0002dade). ES2's CTLButtonControl_PaintNoOp (DBSIM 00455545).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; capstone at 00034675"
+    },
+    {
+      "address": "0003467b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_InvalidateNoOpGunsightCopy",
+      "description": "Frameless, no Ghidra function starts here: a NOP and RET 4. Slot +8 (invalidate) of CTLButtonControlVtableGunsightCopy (000937b2); the code of CTLControl_InvalidateNoOpPanelCopy (0002dae3). ES2's CTLButtonControl_InvalidateNoOp (DBSIM 00455559).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; capstone at 0003467b"
+    },
+    {
+      "address": "0003467f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_OnClickNoOpGunsightCopy",
+      "description": "Frameless, no Ghidra function starts here: a NOP and RET 8. Slot +0xc (click) of CTLButtonControlVtableGunsightCopy (000937b2), which HUDRovingGunsightGadgetVtable (000937da) replaces with Gunsight_ClickGadget_OnClick (000337dc); the code of CTLControl_OnClickNoOpPanelCopy (0002dae7). ES2's CTLControl_OnClickNoOp (DBSIM 0045555e).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; capstone at 0003467f"
+    },
+    {
+      "address": "00034683",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_FlushDeferredPaintNoOpGunsightCopy",
+      "description": "Frameless, no Ghidra function starts here: a NOP and RET 4. Slot +0x10 (per frame) of CTLButtonControlVtableGunsightCopy (000937b2) and HUDRovingGunsightGadgetVtable (000937da); the code of CTLControl_FlushDeferredPaintNoOpPanelCopy (0002daeb). ES2's CTLControl_FlushDeferredPaintNoOp (DBSIM 0045554a).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; capstone at 00034683"
+    },
+    {
+      "address": "00034687",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_GetButtonValueGunsightCopy",
+      "description": "Frameless, no Ghidra function starts here: a NOP, then returns the int16 at 00094b84 in AX with RET 4. Slot +0x14 (value) of CTLButtonControlVtableGunsightCopy (000937b2) and HUDRovingGunsightGadgetVtable (000937da); the code of Widget_GetButtonValuePanelCopy (0002daef). ES2's Widget_GetButtonValue (DBSIM 00455530).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; capstone at 00034687"
+    },
+    {
+      "address": "00034691",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_SetValueNoOpGunsightCopy",
+      "description": "Frameless, no Ghidra function starts here: three NOPs and RET 8. Slot +0x18 (set value) of CTLButtonControlVtableGunsightCopy (000937b2) and HUDRovingGunsightGadgetVtable (000937da); the code of CTLControl_SetValueNoOpPanelCopy (0002daf9). ES2's CTLControl_SetValueNoOp (DBSIM 0045553b).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; capstone at 00034691"
+    },
+    {
+      "address": "00034697",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_DragMoveNoOpGunsightCopy",
+      "description": "Frameless, no Ghidra function starts here: a NOP and RET 8. Slot +0x1c (drag) of CTLButtonControlVtableGunsightCopy (000937b2) and HUDRovingGunsightGadgetVtable (000937da); the code of CTLControl_DragMoveNoOpPanelCopy (0002daff). ES2's CTLControl_DragMoveNoOp (DBSIM 00455540).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; capstone at 00034697"
+    },
+    {
+      "address": "0003469b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_ClickGadget_PaintNoOp",
+      "description": "Frameless, no Ghidra function starts here: a NOP and RET 4. Slot +4 (paint) of HUDRovingGunsightGadgetVtable (000937da). ES2's Gunsight_ClickGadget_PaintNoOp (DBSIM 0043e611).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; capstone at 0003469b"
+    },
+    {
+      "address": "0003469f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_ClickGadget_InvalidateNoOp",
+      "description": "Frameless, no Ghidra function starts here: a NOP and RET 4. Slot +8 (invalidate) of HUDRovingGunsightGadgetVtable (000937da). ES2's Gunsight_ClickGadget_InvalidateNoOp (DBSIM 0043e616).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; capstone at 0003469f"
+    },
+    {
+      "address": "000346a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_ClickSurface_Paint",
+      "description": "(child), callee-cleaned: slot +4 of HUDRovingGunsightVtable (0009379e), gunsight child 0's paint: reads the cursor into +0x1c/+0x20 with Cursor_GetPosition (00066a2e) and calls Cockpit_SetForwardCursor with 1 when that point lies in the rect +0..+0xc, bounds inclusive, and 0 otherwise. ES2's Gunsight_ClickSurface_Paint (DBSIM 0043c1dc), which keeps the point at +0x42/+0x46.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; es2_naming.py diff ES1DBSIM 000346a4 DBSIM 0043c1dc",
+      "verified": {
+        "bytes": "000346a4+108",
+        "sha1": "f53720b9fd47",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00034710",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_UnusedChild_Ctor",
+      "description": "(child, rect) in stack order, callee-cleaned: gunsight child 6. Allocates 0x38 bytes with operator_new when child is null (returning null when that fails), runs Gunsight_TargetIndicator_Ctor (0003403c)(child, rect) and stores HUDPipperVtable (00093802) at +0x10, whose paint slot is three NOPs and RET 4. ES2's Gunsight_UnusedChild_Ctor (DBSIM 0043c240). es2_xref finds one call, from 00034d8c.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-target-box; es2_naming.py diff ES1DBSIM 00034710 DBSIM 0043c240",
+      "verified": {
+        "bytes": "00034710+47",
+        "sha1": "a94e34479434",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00034740",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_UnusedChild_Repaint",
+      "description": "(child), callee-cleaned: slot +8 of HUDPipperVtable (00093802): calls the child's slot +4, the empty Gunsight_UnusedChild_Paint (00034755). ES2's Gunsight_UnusedChild_Repaint (DBSIM 0043e603).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-target-box; es2_naming.py diff ES1DBSIM 00034740 DBSIM 0043e603",
+      "verified": {
+        "bytes": "00034740+21",
+        "sha1": "43e9d987f16c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00034755",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_UnusedChild_Paint",
+      "description": "Frameless, no Ghidra function starts here: three NOPs and RET 4. Slot +4 (paint) of HUDPipperVtable (00093802), so gunsight child 6 draws nothing. ES2's Gunsight_UnusedChild_Paint (DBSIM 0043c260).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-target-box; capstone at 00034755"
+    },
+    {
+      "address": "0003475c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudWaypointIndicator_Ctor",
+      "description": "(indicator, rect) in stack order, callee-cleaned: gunsight child 7. Allocates 0x4f bytes with operator_new when indicator is null (returning null when that fails), runs HudRotationIndicator_Ctor (00033968)(indicator, rect) and the inlined constructor of the point at +0x3c, stores HNavGaugeVtable (00093816) at +0x10, clears the bytes +0x4a and +0x49, and keeps at +0x4b a label from Label_Ctor (00030f44)(0, the font at 00092d44) placed with Label_SetRect (00031080)(label, 2, rect, {0, 6}). ES2's HudWaypointIndicator_Ctor (DBSIM 0043c268). es2_xref finds one call, from 00034dd3.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-waypoint-indicator; ES1DBSIM decompile of 0003475c",
+      "verified": {
+        "bytes": "0003475c+114",
+        "sha1": "607677116565",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000347d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudWaypointIndicator_Repaint",
+      "description": "(indicator), callee-cleaned: slot +8 of HNavGaugeVtable (00093816): calls the indicator's slot +4, Hud_UpdateWaypointIndicator (00034800). ES2's HudWaypointIndicator_Repaint (DBSIM 0043e5f5).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-waypoint-indicator; es2_naming.py diff ES1DBSIM 000347d0 DBSIM 0043e5f5",
+      "verified": {
+        "bytes": "000347d0+21",
+        "sha1": "43e9d987f16c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000347e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudWaypointIndicator_ShiftLimits",
+      "description": "(indicator, delta) in stack order, callee-cleaned: slot +0x10 of HNavGaugeVtable (00093816), where the slide bars' tables hold HudSlideBar_AddDelta: adds delta to both int16 limits +0x24 and +0x26. Hud_UpdateWaypointIndicator (00034800) places its marker from +0x24. ES2's HudWaypointIndicator_ShiftLimits (DBSIM 0043c3d0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-waypoint-indicator; es2_naming.py diff ES1DBSIM 000347e8 DBSIM 0043c3d0",
+      "verified": {
+        "bytes": "000347e8+24",
+        "sha1": "a641137d78b9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00034800",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hud_UpdateWaypointIndicator",
+      "description": "(indicator), callee-cleaned: slot +4 of HNavGaugeVtable (00093816), the waypoint indicator's paint. With m the machine at +0x1ff of CockpitViewInstance (00092d1c) and g its group +0x3f: draws only when g is set, the dword g+8 is set, Route_WaypointAt (0001cfb8)(g+6, cursor + 1) is non-null and the int16 cursor g+6 is below the int16 count at the list g+8 points to; n = cursor + 1. Copies the waypoint's 8 bytes to +0x3c, stores Vec2_DistanceBetween (000645c8)(m+0x20, +0x3c) at +0x45 and Math_Atan2Guarded (00063ca0)(dx, dy) + 0xc000 at +0x3a. With e = m's int16 +0xa - +0x3a, unsigned 16-bit: +0x4a = 1 for e 0xe39-0x7fff, +0x49 = 1 for e 0x8000-0xf1c7, both 0 otherwise. Inside Cockpit_PushCanvasContext (0002b00c), with the brush {0, 1} at the context's +0x22c, fills a triangle with Raster_DrawPolygonDispatch (00068be0): with neither flag (x, y0+8), (x-2, y0+5), (x+2, y0+5), x = x1 - ((+0x3a - +0x24) & 0xffff) * +0x28 / +0x2c unsigned; with +0x49 (x0, y0+6), (x0, y0+10), (x0-2, y0+8); with +0x4a (x1, y0+6), (x1+2, y0+8), (x1, y0+10). Then +0x45 = Hud_WorldUnitsToMetres (0002e2a0)(+0x45) and the label +0x4b gets 'WP ' (HudWaypoint_CaptionPrefix (00093832)), ltoa (00064720)(n), ': ' (00093836), the metres and ' M.' (00093839) by strcat (00064ca0) through Label_SetText (0003114c); Cockpit_PopRenderContext (0002b03c). Builds its points with __vec_ctor (000610cb) and Point_DefaultCtorGunsightCopy (000345a0). ES2's Hud_UpdateWaypointIndicator (DBSIM 0043c3e4), which places a diamond from the error, has the nav marker's branch and draws shifted shapes above the rect.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-waypoint-indicator; ES1DBSIM disassembly at 00034800",
+      "verified": {
+        "bytes": "00034800+748",
+        "sha1": "3a34d99dd907",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00034aec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gau_RovingGunsightWidget",
+      "description": "(gunsight, cockpit, block) in stack order, callee-cleaned: the gunsight's constructor, run on the .GAU block at 1104. Allocates 0xd0 bytes with operator_new when gunsight is null (returning null when that fails), runs PanelGauge_Ctor (00031318)(gunsight, cockpit, block), the inlined constructors of the 0x26-byte state block at +0x7a, and stores HUDVtable (00093842) at +0x76. With o the block's int32 0-1 and p its int32 12-13 it appends with Gunsight_AddChild (00034e94), by its padding entry 00034e91: Gunsight_ClickSurface_Ctor (000345bc) over int32 15-18 + o; then, after Cursor_SyncPosition (000669dc)(p), Mouse_SetPosition (00055ab8)(p.x, p.y) when Input_GetMouseDevice_Thunk (0004c634) returns non-zero and 00055bc2({2 p.x, p.y, int16 0}, 1), HudHeadingTape_Ctor (00033c20) over int32 4-7 + o, limits 0xe38 and 0xf1c8 through its slot +0x14; HudRotationIndicator_Ctor (00033968) over that rect with x0 + 15, y0 + 10, x1 - 15, y1 + 10, limits 0x38e3 and 0xc71d; HudSlideBarV_Ctor (00033ac4) over int32 8-11 + o, limits 8000 and 0xe0c0; Gunsight_Reticle_Ctor (00033f1c) over p - int32 14 to p + int32 14, + o, its +0x1c/+0x20 set to p; Gunsight_TargetIndicator_Ctor (0003403c) and Gunsight_UnusedChild_Ctor (00034710) over the same rect, each with +0x24 = gunsight + 0x7a; HudWaypointIndicator_Ctor (0003475c) over the tape's rect, limits 0xe38 and 0xf1c8. Then +0xcc = Label_Ctor (00030f44)(0, the font at 00092d60), Label_SetRect (00031080)(label, 2, {x0 - 3, y0 + 10, x0 + 12, y0 + 15} of child 1's top-left, {0, 0}) and the label's +0x1c = 0x38; zeroes +0x64, the state block (memset (00060b40)) and the int16 +0x68; returns gunsight. ES2's Gau_RovingGunsightWidget (DBSIM 0043c7d8). es2_xref finds one call, from Gau_RovingGunsightWrapper (0002ce28).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#building-the-gunsight; ES1DBSIM disassembly at 00034aec",
+      "verified": {
+        "bytes": "00034aec+924",
+        "sha1": "df2fd13ee8d5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00034e88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_OnChildClickNoOpGunsightCopy",
+      "description": "Frameless, no Ghidra function starts here: RET 0xc, (gauge, flags, child). Slot +4 of HUDVtable (00093842); the code of PanelGauge_OnChildClickNoOp (00031395) without its NOPs. ES2's PanelGauge_OnChildClickNoOp (DBSIM 0045233f).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#painting-and-the-per-frame-update; capstone at 00034e88"
+    },
+    {
+      "address": "00034e8b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelGauge_KeyDispatchNoneGunsightCopy",
+      "description": "Frameless, no Ghidra function starts here: NOP, XOR EAX,EAX and RET 8, (gauge, key): returns 0. Slot +0x10 of HUDVtable (00093842); the code of PanelGauge_KeyDispatchNone (0003139b). ES2's PanelGauge_KeyDispatchNone (DBSIM 00452344).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#painting-and-the-per-frame-update; capstone at 00034e8b"
+    },
+    {
+      "address": "00034e94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_AddChild",
+      "description": "(gunsight, child) in stack order, callee-cleaned: when child is non-null, stores it at +0xa0 + 4 * the count +0xc8 and adds 1 to the count. Entered at its padding 00034e91. ES2's Gunsight_AddChild (DBSIM 0043d5a4), its array at +0xd7 and count at +0xff.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#building-the-gunsight; es2_naming.py diff ES1DBSIM 00034e94 DBSIM 0043d5a4",
+      "verified": {
+        "bytes": "00034e94+46",
+        "sha1": "95a0468c65bf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00034ec4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_Paint",
+      "description": "(gunsight), callee-cleaned: slot +8 of HUDVtable (00093842), entered at its padding 00034ec2. Unless the byte +0x74 (dark) is set, calls slot +4 of each child's table at +0x10 over the +0xa0 array (count +0xc8), then, when the byte +0x7c of the instrument at +0x1dd of CockpitViewInstance (00092d1c) is set, Label_SetText (0003114c)(the label +0xcc, the pointer at 000bd4a8). ES2's Gunsight_Paint (DBSIM 0043d5c8), which also tests child 0's rect with CockpitView_RectCornerVisible, pushes the canvas context, blits the ATT plate and draws the readouts, the scanner repeater and the altitude scale.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#painting-and-the-per-frame-update; ES1DBSIM disassembly at 00034ec4",
+      "verified": {
+        "bytes": "00034ec4+118",
+        "sha1": "21a29ecb44f6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00034f3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_UpdateAndPaint",
+      "description": "(gunsight), callee-cleaned: slot +0xc of HUDVtable (00093842), entered at its padding 00034f3a. Returns at once when the manager CockpitViewManager_Published (00021f98) answers is in view 4 (+0x10). Stores Player_DependentCondition (0002e334)(4) at the int16 +0x68 and runs PanelGauge_TickDropout (00031400) when it is non-zero. Unless the byte +0x74 is set or CockpitView_RectCornerVisible (0002b214)(child 0, +0xa0) answers 0: while Gunsight_PickArmed (000936d8) is set and ObjPick_IsIdle (00020d50) answers non-zero, passes +0x10 and a non-zero ObjPick_GetObject (00020d48) to TargetSelect_SetObject (0002d78c) and clears Gunsight_PickArmed; stores the selection +0x20c of CockpitViewInstance (00092d1c) at +0x80 and, when set, its 12 bytes at +0x20 at +0x84, the int16 +8 of the dword +4 of its +0x2e (read through 0 when +0x2e is 0) at +0x96, 2000 at +0x9a and its int16 +0xa at +0x90; calls slot +8 of each child; and, as Gunsight_Paint (00034ec4) does, sets the ATT text. ES2's Gunsight_UpdateAndPaint (DBSIM 0043d6dc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#painting-and-the-per-frame-update; ES1DBSIM disassembly at 00034f3c",
+      "verified": {
+        "bytes": "00034f3c+339",
+        "sha1": "0d575ad64fb3",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -9464,6 +9947,21 @@
         "sha1": "df0dc4c07cf6",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0003518c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_ShiftChildRects",
+      "description": "(gunsight, delta{dx, dy}) in stack order, callee-cleaned: subtracts dx from x0 and x1 and dy from y0 and y1 of the rects at +0 of the children at +0xa4, +0xa8, +0xac, +0xb0 and +0xbc, children 1-4 and 7. ES2's Gunsight_ShiftChildRects (DBSIM 0043db98). es2_xref finds no branch or stored pointer to it or its padding 0003518a-0003518b.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#painting-and-the-per-frame-update; es2_naming.py diff ES1DBSIM 0003518c DBSIM 0043db98; es2_xref.py --binary ES1DBSIM 0003518c",
+      "verified": {
+        "bytes": "0003518c+228",
+        "sha1": "dfef796bb358",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -9899,6 +10397,36 @@
         "sha1": "d67755ac21e5",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004b340",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetMouseDevice",
+      "description": "No arguments: 0 when the dword 000bd612 is 0; otherwise 0004b2d0(000bd612), less 0x3a when that is non-zero and 0 when it is 0. ES2's Input_GetMouseDevice (DBSIM 0045bf4c), statement for statement.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; es2_naming.py diff ES1DBSIM 0004b340 DBSIM 0045bf4c",
+      "verified": {
+        "bytes": "0004b340+46",
+        "sha1": "08bc7ca1f0aa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004c634",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetMouseDevice_Thunk",
+      "description": "Frameless, no arguments: calls Input_GetMouseDevice (0004b340) and returns its result. ES2's Input_GetMouseDevice_Thunk (DBSIM 0045bd70).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; ES1DBSIM disassembly at 0004c634",
+      "verified": {
+        "bytes": "0004c634+6",
+        "sha1": "2bab5fdeb811",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -15311,6 +15839,21 @@
       }
     },
     {
+      "address": "000645c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vec2_DistanceBetween",
+      "description": "(a, b) in stack order, callee-cleaned (RET 8): returns Math_FastMagnitude2D (00063234)(b.x - a.x, b.y - a.y), the two int32 points' approximate distance. ES2's Vec2_DistanceBetween (DBSIM 0047d588).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; ES1DBSIM disassembly at 000645c8",
+      "verified": {
+        "bytes": "000645c8+58",
+        "sha1": "79d181569d0f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00064698",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -16379,6 +16922,36 @@
         "sha1": "c27947b5d8fe",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "000669dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cursor_SyncPosition",
+      "description": "(point), C convention: when the dword 00098d96 is set, copies the point to 00098d70/00098d74, between calls through 0009df50 and 0009df4c when the dword 00098d6c is set; otherwise copies it to 00098d9a/00098d9e. ES2's Cursor_SyncPosition (DBSIM 00486d70), statement for statement.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; ES1DBSIM disassembly at 000669dc",
+      "verified": {
+        "bytes": "000669dc+82",
+        "sha1": "f8ff5b434ab2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00066a2e",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cursor_GetPosition",
+      "description": "(out), C convention: copies the point at 00098d70/00098d74, which Cursor_SyncPosition (000669dc) writes, to out. ES2's Cursor_GetPosition (DBSIM 00486dc2).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; ES1DBSIM disassembly at 00066a2e",
+      "verified": {
+        "bytes": "00066a2e+24",
+        "sha1": "22074be6c153",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -20465,12 +21038,21 @@
       "source": "es2_xref.py --binary ES1DBSIM 000936cc"
     },
     {
+      "address": "000936d0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HudHTickBank",
+      "description": "The bitmap bank hudhtick, the heading tape's strip, which HudHeadingTape_Ctor (00033c20) loads while this is 0: frame count at +4, frame pointers at +8. ES2's HudHTickBank (DBSIM 0049be70).",
+      "source": "es2_xref.py --binary ES1DBSIM 000936d0"
+    },
+    {
       "address": "000936d8",
       "binary": "ES1DBSIM",
       "type": "data",
       "confidence": "high",
       "name": "Gunsight_PickArmed",
-      "description": "Byte, 1 while a gunsight click's pixel pick is pending: Gunsight_ClickGadget_OnClick (000337dc) sets it as it calls ObjPick_Arm. es2_xref finds it also at 00034f96 and 00034fbc, in 00034f3c.",
+      "description": "Byte, 1 while a gunsight click's pixel pick is pending: Gunsight_ClickGadget_OnClick (000337dc) sets it as it calls ObjPick_Arm. es2_xref finds it also at 00034f96 and 00034fbc, in Gunsight_UpdateAndPaint (00034f3c).",
       "source": "es2_xref.py --binary ES1DBSIM 000936d8"
     },
     {
@@ -20501,13 +21083,49 @@
       "source": "es1_naming.py vtables ES1DBSIM"
     },
     {
+      "address": "0009374e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HRevRotationGaugeVtable",
+      "description": "The heading tape's vtable, which HudHeadingTape_Ctor (00033c20) stores at +0x10: a zero dword, then HudHeadingTape_Paint (00033dd4), HudHeadingTape_Repaint (00033e94), HudHeadingTape_Recompute (00033c7c), HudHeadingTape_SetHeading (00033d08) and HudHeadingTape_SetLimits (00033eac), the repaint, the recompute and the set-limits by their padding entries 00033e91, 00033c79 and 00033ea9. ES2's HRevRotationGaugeVtable (DBSIM 0049c1ec).",
+      "source": "es1_naming.py vtables ES1DBSIM 0009374e"
+    },
+    {
+      "address": "00093776",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HUDCrosshairGunsightVtable",
+      "description": "The reticle's vtable, which Gunsight_Reticle_Ctor (00033f1c) stores at +0x10: a zero dword, then Gunsight_ReticlePaint (00033f64) and Gunsight_ReticleRepaint (00033f4c). ES2's HUDCrosshairGunsightVtable (DBSIM 0049c124).",
+      "source": "es1_naming.py vtables ES1DBSIM 00093776"
+    },
+    {
+      "address": "0009378a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HUDLockingGunsightVtable",
+      "description": "The target box's vtable, which Gunsight_TargetIndicator_Ctor (0003403c) stores at +0x10: a zero dword, then Gunsight_TargetIndicatorPaint (000340c0) and Gunsight_TargetIndicatorRepaint (000340a8). ES2's HUDLockingGunsightVtable (DBSIM 0049c1c4).",
+      "source": "es1_naming.py vtables ES1DBSIM 0009378a"
+    },
+    {
       "address": "0009379e",
       "binary": "ES1DBSIM",
       "type": "data",
       "confidence": "high",
       "name": "HUDRovingGunsightVtable",
-      "description": "HUDRovingGunsight's vtable, which Gunsight_ClickSurface_Ctor (000345bc) stores at +0x10: a zero dword, then 000346a4 and 00034660. ES2's HUDRovingGunsightVtable (DBSIM 0049c1b0), Gunsight_ClickSurface_Paint and its repaint.",
+      "description": "HUDRovingGunsight's vtable, which Gunsight_ClickSurface_Ctor (000345bc) stores at +0x10: a zero dword, then Gunsight_ClickSurface_Paint (000346a4) and Gunsight_ClickSurface_Repaint (00034660). ES2's HUDRovingGunsightVtable (DBSIM 0049c1b0), Gunsight_ClickSurface_Paint and its repaint.",
       "source": "es1_naming.py vtables ES1DBSIM"
+    },
+    {
+      "address": "000937b2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CTLButtonControlVtableGunsightCopy",
+      "description": "The gunsight file's copy of the button base class's vtable, the library's 00094b8a: a zero dword, then seven slots, CTLControl_PaintNoOpGunsightCopy (00034675), CTLControl_InvalidateNoOpGunsightCopy (0003467b), CTLControl_OnClickNoOpGunsightCopy (0003467f), CTLControl_FlushDeferredPaintNoOpGunsightCopy (00034683), Widget_GetButtonValueGunsightCopy (00034687), CTLControl_SetValueNoOpGunsightCopy (00034691) and CTLControl_DragMoveNoOpGunsightCopy (00034697). Gunsight_ClickSurface_Ctor (000345bc) stores it at the gadget's +0x1c before HUDRovingGunsightGadgetVtable (000937da). ES2's CTLButtonControl table (DBSIM 0049df24).",
+      "source": "es1_naming.py vtables ES1DBSIM 000937b2"
     },
     {
       "address": "000937da",
@@ -20515,8 +21133,44 @@
       "type": "data",
       "confidence": "high",
       "name": "HUDRovingGunsightGadgetVtable",
-      "description": "The gunsight click gadget's vtable, which Gunsight_ClickSurface_Ctor (000345bc) stores at the gadget's +0x1c after 000937b2: seven slots from +4, Gunsight_ClickGadget_OnClick (000337dc) at +0xc, and at the others 0003469b, 0003469f and 00034683-00034697, where Ghidra has no function. ES2's HUDRovingGunsightGadgetVtable (DBSIM 0049c188), its click slot at +8.",
+      "description": "The gunsight click gadget's vtable, which Gunsight_ClickSurface_Ctor (000345bc) stores at the gadget's +0x1c after CTLButtonControlVtableGunsightCopy (000937b2): a zero dword, then Gunsight_ClickGadget_PaintNoOp (0003469b), Gunsight_ClickGadget_InvalidateNoOp (0003469f), Gunsight_ClickGadget_OnClick (000337dc), and the copy's last four, CTLControl_FlushDeferredPaintNoOpGunsightCopy (00034683), Widget_GetButtonValueGunsightCopy (00034687), CTLControl_SetValueNoOpGunsightCopy (00034691) and CTLControl_DragMoveNoOpGunsightCopy (00034697). ES2's HUDRovingGunsightGadgetVtable (DBSIM 0049c188), its click slot at +8.",
       "source": "es1_naming.py vtables ES1DBSIM"
+    },
+    {
+      "address": "00093802",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HUDPipperVtable",
+      "description": "Gunsight child 6's vtable, which Gunsight_UnusedChild_Ctor (00034710) stores at +0x10: a zero dword, then Gunsight_UnusedChild_Paint (00034755) and Gunsight_UnusedChild_Repaint (00034740). ES2's HUDPipperVtable (DBSIM 0049c174).",
+      "source": "es1_naming.py vtables ES1DBSIM 00093802"
+    },
+    {
+      "address": "00093816",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HNavGaugeVtable",
+      "description": "The waypoint indicator's vtable, which HudWaypointIndicator_Ctor (0003475c) stores at +0x10: a zero dword, then Hud_UpdateWaypointIndicator (00034800), HudWaypointIndicator_Repaint (000347d0), HudRotationIndicator_Recompute (000339dc), HudWaypointIndicator_ShiftLimits (000347e8) and HudSlideBar_SetLimits (000338cc). ES2's HNavGaugeVtable (DBSIM 0049c154).",
+      "source": "es1_naming.py vtables ES1DBSIM 00093816"
+    },
+    {
+      "address": "00093832",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HudWaypoint_CaptionPrefix",
+      "description": "The string 'WP ', which Hud_UpdateWaypointIndicator (00034800) copies as one dword to start the waypoint caption; ': ' at 00093836 and ' M.' at 00093839 follow it. ES2 takes the caption's first word from STRINGS0.STR group 37.",
+      "source": "ES1DBSIM image bytes at 00093832"
+    },
+    {
+      "address": "00093842",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HUDVtable",
+      "description": "The gunsight's vtable, which Gau_RovingGunsightWidget (00034aec) stores at +0x76: a zero dword, then PanelGauge_OnChildClickNoOpGunsightCopy (00034e88), Gunsight_Paint (00034ec4) and Gunsight_UpdateAndPaint (00034f3c) by their padding 00034ec2 and 00034f3a, and PanelGauge_KeyDispatchNoneGunsightCopy (00034e8b). ES2's HUDVtable.",
+      "source": "es1_naming.py vtables ES1DBSIM 00093842; ES1DBSIM image bytes at 00093842"
     },
     {
       "address": "0009680c",

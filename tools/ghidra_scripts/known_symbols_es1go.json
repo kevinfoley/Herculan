@@ -1612,7 +1612,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_PresentFrame",
-      "description": "(): waits until the byte 0007fd06 is set and clears it; uploads the palette 0007fcd0 with Palette_UploadWhole when it is set and the byte 0007fcd4 is set, clearing the byte; with the byte 0007fcd5 set calls 00020a70 with the dword 00081938 and clears it; makes the display 000ab616's +0x88 the visible page (+0x30, raster slot 000865f8) and +0x84 the draw page (+0x38, slot 000865f4) and swaps +0x84 and +0x88; when 0007fcd7 is 0, 0007fcd6 set and the word 000817c4 is 1000 calls 0004bbe9(6) and clears 0007fcd6; calls DirtyList_Flush (000413db)(the new +0x88, the word 0007fccc); and with the byte 0007fd07 at 1 calls 00050ed4(0009aff0), 00027bc9 and Mouse_SetPosition (00051037) with the dwords 0009aff0 and 0009aff4.",
+      "description": "(): waits until the byte 0007fd06 is set and clears it; uploads the palette 0007fcd0 with Palette_UploadWhole when it is set and the byte 0007fcd4 is set, clearing the byte; with the byte 0007fcd5 set calls 00020a70 with the dword 00081938 and clears it; makes the display 000ab616's +0x88 the visible page (+0x30, raster slot 000865f8) and +0x84 the draw page (+0x38, slot 000865f4) and swaps +0x84 and +0x88; when 0007fcd7 is 0, 0007fcd6 set and the word 000817c4 is 1000 calls 0004bbe9(6) and clears 0007fcd6; calls DirtyList_Flush (000413db)(the new +0x88, the word 0007fccc); and with the byte 0007fd07 at 1 calls Cursor_SyncPosition (00050ed4)(0009aff0), 00027bc9 and Mouse_SetPosition (00051037) with the dwords 0009aff0 and 0009aff4.",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#presenting-a-frame",
       "verified": {
         "bytes": "00012980+385",
@@ -7187,6 +7187,36 @@
         "sha1": "2f049cc03374",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00050ed4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cursor_SyncPosition",
+      "description": "(point), C convention: when the dword 0008444e is set, copies the point to 00084428/0008442c, between calls through 0008662c and 00086628 when the dword 00084424 is set; otherwise copies it to 00084452/00084456. The code of ES1DBSIM's Cursor_SyncPosition (ES1DBSIM 000669dc), relocated operands aside. es2_xref finds calls from 0000305b, 00010967, Shell_PresentFrame (00012980) and 00045e98.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; es2_naming.py match ES1DBSIM ES1GO, EXACT; ES1GO disassembly at 00050ed4",
+      "verified": {
+        "bytes": "00050ed4+82",
+        "sha1": "258a0e30d568",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00050f26",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cursor_GetPosition",
+      "description": "(out), C convention: copies the point at 00084428/0008442c, which Cursor_SyncPosition (00050ed4) writes, to out. The code of ES1DBSIM's Cursor_GetPosition (ES1DBSIM 00066a2e), relocated operands aside. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#functions; es2_naming.py match ES1DBSIM ES1GO, EXACT; ES1GO disassembly at 00050f26; es2_xref.py --binary ES1GO 00050f26",
+      "verified": {
+        "bytes": "00050f26+24",
+        "sha1": "0235aa1d5817",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {

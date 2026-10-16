@@ -13534,8 +13534,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudHeadingTape_Ctor",
-      "description": "Constructor for the HUD heading tick tape. Lazily loads the `hudhtick` sprite bank into DAT_0049be70, selecting folder \"hba\" or \"dba\" off VideoMode_UseHiResBanks (the 640-wide vs 320-wide video mode flag).",
-      "source": "docs/retail/simulation/cockpit-hud-widgets.md (HUD sprite art)"
+      "description": "(tape, rect): gunsight child 1, the heading tick tape. HudRotationIndicator_Ctor (0043b438)(tape, rect), then HRevRotationGaugeVtable (0049c1ec) at +0; while HudHTickBank (0049be70) is 0 loads hudhtick into it with Resource_Load from the folder ResourcePath_BuildFolderName gives, hba while VideoMode_UseHiResBanks (004d25f0) is set and dba otherwise; then calls its slot +8, HudHeadingTape_Recompute (0043b5dc), and returns tape.",
+      "source": "docs/retail/simulation/cockpit-hud-widgets.md (HUD sprite art)",
+      "verified": {
+        "bytes": "0043b57c+94",
+        "sha1": "25185c22ce29",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0043b5dc",
@@ -13543,9 +13549,15 @@
       "type": "function",
       "confidence": "high",
       "name": "HudHeadingTape_Recompute",
-      "description": "Slide-bar slot +8 for the heading tick tape: caches the rect width at +0x28, the bank's frame span in Q16 at +0x40, the scroll x at +0x44 and the two frames to blit at +0x48/+0x4c, seeded to the bank's last and first.",
+      "description": "(tape): slot +8 of HRevRotationGaugeVtable (0049c1ec). With F the hudhtick bank's frame count (HudHTickBank (0049be70) +4) and its frame pointers at +8: +0x28 = the rect's width W (+0xc - +4), +0x3c = 0, +0x40 = F * W (computed as F * W * 0x10000 / 0x10000), +0x44 = the rect's x0, +0x48 = the last frame, +0x4c = the first, the int16 +0x50 = 1 and +0x52 = F - 2, or F - 1 when that is negative.",
       "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
-      "signature": "void __cdecl HudHeadingTape_Recompute(void *widget)"
+      "signature": "void __cdecl HudHeadingTape_Recompute(void *widget)",
+      "verified": {
+        "bytes": "0043b5dc+119",
+        "sha1": "a296afaca050",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b654",
@@ -13553,9 +13565,15 @@
       "type": "function",
       "confidence": "high",
       "name": "HudHeadingTape_SetHeading",
-      "description": "Slot +0xc for the heading tick tape: maps a heading onto the hudhtick bank with Math_Q16Multiply against +0x40, splitting the product into a frame index and a sub-frame pixel offset, both wrapped at the bank's frame count. Writes the scroll x at +0x44 = rect.x0 - offset and the consecutive frame pair at +0x48/+0x4c. The compass degrees are art, so the heading only picks which slice of the strip shows.",
+      "description": "(tape, heading): slot +0xc of HRevRotationGaugeVtable (0049c1ec). total = Math_Q16Multiply((ushort)heading, +0x40); frame = total / +0x28, offset = total % +0x28, and when offset reaches +0x28 it subtracts it and steps frame, wrapped to 0 at the bank's count (HudHTickBank (0049be70) +4). Writes +0x44 = the rect's x0 - offset, +0x48 = frame's pointer and +0x4c = the next frame's, wrapped.",
       "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
-      "signature": "void __cdecl HudHeadingTape_SetHeading(void *widget, short heading)"
+      "signature": "void __cdecl HudHeadingTape_SetHeading(void *widget, short heading)",
+      "verified": {
+        "bytes": "0043b654+134",
+        "sha1": "41a2b1e68b88",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b6dc",
@@ -13563,9 +13581,15 @@
       "type": "function",
       "confidence": "high",
       "name": "HudHeadingTape_Paint",
-      "description": "Narrows the canvas clip to the tape's own rect, then blits the two frames HudHeadingTape_SetHeading chose at +0x44 and +0x44 + rectWidth, so the tape reads as a strip sliding through a window. Restores the four clip fields it borrowed before returning.",
+      "description": "(tape): slot +0 of HRevRotationGaugeVtable (0049c1ec). Inside Cockpit_PushCanvasContext and Cockpit_PopRenderContext, saves the context's +0x210, +0x218, +0x220 and +0x224, sets +0x210 and +0x218 to the rect's x0 and x1 less the origin x +0x220 and +0x220 to x0 less the old +0x220, blits +0x48 at (+0x44, the rect's y0) and +0x4c at (+0x44 + +0x28, y0) with VideoMode_BlitBitmap, and restores the four.",
       "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
-      "signature": "void __cdecl HudHeadingTape_Paint(void *widget)"
+      "signature": "void __cdecl HudHeadingTape_Paint(void *widget)",
+      "verified": {
+        "bytes": "0043b6dc+200",
+        "sha1": "75cc093ee07c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b7a4",
@@ -13574,7 +13598,13 @@
       "confidence": "high",
       "name": "HudHeadingTape_Repaint",
       "description": "HRevRotationGauge vtable +0x04 (0049c1ec): calls the gauge's own slot +0x00, HudHeadingTape_Paint.",
-      "source": "DBSIM decompile at 0043b7a4"
+      "source": "DBSIM decompile at 0043b7a4",
+      "verified": {
+        "bytes": "0043b7a4+14",
+        "sha1": "6d81889b6b96",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b7b4",
@@ -13582,8 +13612,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudHeadingTape_SetLimits",
-      "description": "HRevRotationGauge vtable +0x10 (0049c1ec), (tape, lo, hi): +0x40 = (hi - lo) / +0x28, then HudSlideBar_SetLimits(tape, lo, hi).",
-      "source": "DBSIM decompile at 0043b7b4"
+      "description": "(tape, lo, hi): slot +0x10 of HRevRotationGaugeVtable (0049c1ec). +0x40 = (hi - lo) / +0x28, then HudSlideBar_SetLimits (0043b3c0)(tape, lo, hi), whose closing call of slot +8, HudHeadingTape_Recompute (0043b5dc), writes +0x40 again.",
+      "source": "DBSIM decompile at 0043b7b4",
+      "verified": {
+        "bytes": "0043b7b4+44",
+        "sha1": "69b066b71338",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0043b7e0",
@@ -13591,8 +13627,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_ReticlePaint",
-      "description": "Gunsight child 4's paint: blits one HUD-bank reticle frame centred on the .GAU reticle point (offset 1136). Frame 0 with no target, with the selection behind the near plane, or with its aim point projecting further than 5 << (the video-mode coordinate shift) from the reticle on either axis; frame 2 inside that tolerance; frame 1 when the armed missile mount also has lock (state block +0x39 = mech+0x9b).",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "(child): slot +0 of HUDCrosshairGunsightVtable (0049c124), gunsight child 4's paint. Inside Cockpit_PushCanvasContext and Cockpit_PopRenderContext, blits with Bitmap_Blit one Hud_BitmapBank frame centred on the point +0x42/+0x46, the .GAU reticle point (offset 1136): frame 0 when the state block's object (+0x1a) is 0, when its point +0x1e..+0x29, taken to view space with the identity model transform (Raster_SetModelTransform, Raster_ModelToView), is less deep than ViewObjectPtr +0x1e, or when it projects (Raster_PerspectiveDivide, Raster_ProjectToScreen) further than 5 << VideoMode_XCoordShift across or 5 << VideoMode_YCoordShift down from +0x42/+0x46; otherwise frame 2 while the byte +0x39 is 0 and frame 1 while it is set. Puts the model transform back.",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0043b7e0+325",
+        "sha1": "7df4ebd67126",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b928",
@@ -13600,8 +13642,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_TargetIndicator_Ctor",
-      "description": "Constructor for gunsight child 5, the target box and its off-screen arrow: GunsightChild_CtorBase plus vtable 0049c1c4, whose slot 0 is Gunsight_TargetIndicatorPaint.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "(child, rect): gunsight child 5, the target box and its off-screen arrow. GunsightChild_CtorBase (0043b344)(child, rect), then HUDGunsightVtable and HUDLockingGunsightVtable (0049c1c4) at +0, whose slot 0 is Gunsight_TargetIndicatorPaint (0043b950).",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0043b928+40",
+        "sha1": "e5d2730c14f4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b950",
@@ -13648,8 +13696,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_UnusedChild_Ctor",
-      "description": "Gunsight child 6. Built on Gunsight_TargetIndicator_Ctor and fed the same target state block at construction, then overwritten with vtable 0049c174 whose paint slot is a bare RET. Never drawn, and never updated per frame either -- Gunsight_SetValues pushes live state to children 4 and 5 only.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "(child, rect): gunsight child 6. Gunsight_TargetIndicator_Ctor (0043b928)(child, rect), then HUDPipperVtable (0049c174) at +0, whose paint slot, Gunsight_UnusedChild_Paint (0043c260), is an empty body.",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0043c240+31",
+        "sha1": "d8ef6db9c072",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043c260",
@@ -13657,8 +13711,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_UnusedChild_Paint",
-      "description": "Child 6's paint slot: RET. See Gunsight_UnusedChild_Ctor.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "Slot +0 of HUDPipperVtable (0049c174), gunsight child 6's paint: an empty body (PUSH EBP, MOV EBP,ESP, POP EBP, RET).",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0043c260+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0043c268",
@@ -13676,9 +13736,15 @@
       "type": "function",
       "confidence": "high",
       "name": "HudWaypointIndicator_ShiftLimits",
-      "description": "Slide-bar slot +0xc as the waypoint indicator overrides it: adds the delta to BOTH limits at +0x24/+0x26 rather than to a value the way HudSlideBar_AddDelta does. Gunsight_SetValues sends child 7 the heading delta here, and it has no visible effect -- Hud_UpdateWaypointIndicator reads neither limit, only the range at +0x2c, which an equal shift of both leaves alone.",
+      "description": "(indicator, delta): slot +0xc of HNavGaugeVtable (0049c154), where the slide bars' tables hold HudSlideBar_AddDelta: adds delta to both int16 limits +0x24 and +0x26. Hud_UpdateWaypointIndicator (0043c3e4) reads the range +0x2c, which an equal shift of both leaves alone, and neither limit.",
       "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
-      "signature": "void __cdecl HudWaypointIndicator_ShiftLimits(void *widget, short delta)"
+      "signature": "void __cdecl HudWaypointIndicator_ShiftLimits(void *widget, short delta)",
+      "verified": {
+        "bytes": "0043c3d0+19",
+        "sha1": "7b3ce4b3b681",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043c3e4",
@@ -13711,8 +13777,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_AddChild",
-      "description": "Appends a child pointer to the roving-gunsight complex's array at widget+0xd7 (count at +0xff), so construction order is child index. Gunsight_Paint (0043d5c8) walks that array calling each child's slot 0.",
-      "source": "docs/retail/simulation/cockpit-gunsight-hud.md"
+      "description": "(gunsight, child): when child is non-null, stores it at +0xd7 + 4 * the count +0xff and adds 1 to the count, so construction order is child index.",
+      "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
+      "verified": {
+        "bytes": "0043d5a4+34",
+        "sha1": "d242345a7fb2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043d5c8",
@@ -13720,8 +13792,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_Paint",
-      "description": "Paints the front-window HUD: every child of the array at widget+0xd7 in order, then the mission-name label and the speed readout.",
-      "source": "docs/retail/simulation/cockpit-gunsight-hud.md"
+      "description": "(gunsight): the gunsight's paint. Unless the byte +0x76 (dark) is set or CockpitView_RectCornerVisible answers 0 for child 0's rect (+4 of the child at +0xd7), inside Cockpit_PushCanvasContext and Cockpit_PopRenderContext: calls slot 0 of each child over the +0xd7 array (count +0xff); while the byte +0xb3 of the instrument at CockpitViewInstance +0x1e1 is set, blits Hud_BitmapBank's frame 14 at the label +0x103's rect and sets that label's text to DAT_004d16d4; calls HudClock_Tick and Hud_UpdateSpeedReadout; sets the text of the labels DAT_004d1850, DAT_004d1854, DAT_004d1858 and DAT_004d185c; calls Gunsight_PaintHudScanner and Gunsight_PaintAltitudeScale.",
+      "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
+      "verified": {
+        "bytes": "0043d5c8+274",
+        "sha1": "1dbdc569dea0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043d6dc",
@@ -13729,8 +13807,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_UpdateAndPaint",
-      "description": "The roving gunsight's vtable +8, called once a frame from Sim_RenderFrame. Copies CockpitView+0x26c..+0x27e (target, world aim point, pod present flag) into the widget's state block at +0xb7..+0xc9, adds the target's heading (+0xc7), its shape radius from vtable +0x10 (+0xcd) and a literal 2000 (+0xd1), drives child 1, the heading tape, with the NEGATED viewing object's heading -- the sign that makes the compass strip run the same way the simulation's own bearings do -- then runs every child's slot +4 and repaints the whole complex. While the armed byte +0x8c is set and the done byte +0x8d clear, child 1 is given the power-up wind-up ramp (coarseTicks - +0x90) * 0x32 as a ushort instead: climbing from zero for a heading <= 0x8000, counting down from zero above it, latching +0x8d the frame it reaches the heading.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "(gunsight): the gunsight's vtable +8, once a frame. Returns at once when the manager CockpitViewManager_Published answers is in view 4 (+0x14) and its byte +0x1c is clear. Stores Player_DependentCondition(2) at the int16 +0x74 and, when it is non-zero, the int16 entries for it of the tables 0049be48, 0049be52, 0049be5c and 0049be66 at +0x7c, +0x80, +0x84 and +0x88, and runs PanelGauge_TickDropout. Unless the byte +0x76 is set or CockpitView_RectCornerVisible answers 0 for child 0's rect, inside Cockpit_PushCanvasContext and Cockpit_PopRenderContext: while Gunsight_PickArmed (0049be74) is set and ObjPick_IsIdle answers true, hands a non-zero ObjPick_GetObject to TargetSelect_SetObject with the cockpit +0x14, and stores 0 in Gunsight_PickArmed; copies CockpitView+0x26c to +0xb7 and, when it is non-zero, +0x270..+0x27b to +0xbb..+0xc6, the int16 +0x27c to +0xc9, the int16 +8 of the dword +4 of the object's +0x34 (read through 0 when +0x34 is 0) to +0xcd, 2000 to +0xd1 and the object's int16 +0x10 to +0xc7; calls child 1's slot +0xc with the negation of the heading +0x10 of the machine at CockpitViewInstance +0x203, in whose place, while the byte +0x8c is set and +0x8d clear, it takes the wind-up ramp r = (ushort)((Time_GetCoarseTicks() - +0x90) * 0x32) for a heading up to 0x8000 and -r above it, until r reaches the heading or -r falls to it, when it sets +0x8d and takes the heading; calls slot +4 of each child; then the ATT legend, HudClock_Tick, Hud_UpdateSpeedReadout, the four labels' text, Gunsight_PaintHudScanner and Gunsight_PaintAltitudeScale as Gunsight_Paint (0043d5c8) does.",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0043d6dc+685",
+        "sha1": "00a3b76678f0",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043d98c",
@@ -13838,7 +13922,13 @@
       "confidence": "high",
       "name": "Gunsight_ReticleRepaint",
       "description": "HUDCrosshairGunsight vtable +0x04 (0049c124): calls the gauge's own slot +0x00, Gunsight_ReticlePaint.",
-      "source": "DBSIM disassembly at 0043e5e7"
+      "source": "DBSIM disassembly at 0043e5e7",
+      "verified": {
+        "bytes": "0043e5e7+14",
+        "sha1": "6d81889b6b96",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0043e5f5",
@@ -13847,7 +13937,13 @@
       "confidence": "high",
       "name": "HudWaypointIndicator_Repaint",
       "description": "HNavGauge vtable +0x04 (0049c154): calls the gauge's own slot +0x00, Hud_UpdateWaypointIndicator.",
-      "source": "DBSIM decompile at 0043e5f5"
+      "source": "DBSIM decompile at 0043e5f5",
+      "verified": {
+        "bytes": "0043e5f5+14",
+        "sha1": "6d81889b6b96",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043e603",
@@ -13856,7 +13952,13 @@
       "confidence": "high",
       "name": "Gunsight_UnusedChild_Repaint",
       "description": "HUDPipper vtable +0x04 (0049c174): calls the gauge's own slot +0x00, Gunsight_UnusedChild_Paint.",
-      "source": "DBSIM decompile at 0043e603"
+      "source": "DBSIM decompile at 0043e603",
+      "verified": {
+        "bytes": "0043e603+14",
+        "sha1": "6d81889b6b96",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043e611",
@@ -13865,7 +13967,13 @@
       "confidence": "high",
       "name": "Gunsight_ClickGadget_PaintNoOp",
       "description": "HUDRovingGunsightGadget vtable +0x00 (0049c188): an empty body.",
-      "source": "DBSIM decompile at 0043e611"
+      "source": "DBSIM decompile at 0043e611",
+      "verified": {
+        "bytes": "0043e611+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0043e616",
@@ -13874,7 +13982,13 @@
       "confidence": "high",
       "name": "Gunsight_ClickGadget_InvalidateNoOp",
       "description": "HUDRovingGunsightGadget vtable +0x04 (0049c188): an empty body.",
-      "source": "DBSIM decompile at 0043e616"
+      "source": "DBSIM decompile at 0043e616",
+      "verified": {
+        "bytes": "0043e616+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0043e61b",
@@ -13883,7 +13997,13 @@
       "confidence": "high",
       "name": "Gunsight_ClickSurface_Repaint",
       "description": "HUDRovingGunsight vtable +0x04 (0049c1b0): calls the gauge's own slot +0x00, Gunsight_ClickSurface_Paint.",
-      "source": "DBSIM decompile at 0043e61b"
+      "source": "DBSIM decompile at 0043e61b",
+      "verified": {
+        "bytes": "0043e61b+14",
+        "sha1": "6d81889b6b96",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043e629",
@@ -13892,7 +14012,13 @@
       "confidence": "high",
       "name": "Gunsight_TargetIndicatorRepaint",
       "description": "HUDLockingGunsight vtable +0x04 (0049c1c4): calls the gauge's own slot +0x00, Gunsight_TargetIndicatorPaint.",
-      "source": "DBSIM decompile at 0043e629"
+      "source": "DBSIM decompile at 0043e629",
+      "verified": {
+        "bytes": "0043e629+14",
+        "sha1": "6d81889b6b96",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043e677",
@@ -40006,6 +40132,24 @@
       "name": "MfdStatusLabelTables",
       "description": "Three parallel int16[5] tables for the MFD status screen's labels: 0049bd84 x0 (6 for all five), 0049bd8e y0 (16, 23, 32, 40, 49), 0049bd98 font selector (0,1,0,1,1) into {ColorSchemePanels[10] WHITE, [14] RED}. All in GAU units relative to the inset screen origin; each label is 6 units tall and runs right to the wireframe viewport's left edge at 45. See docs/retail/simulation/mfd.md.",
       "source": "docs/retail/simulation/mfd.md"
+    },
+    {
+      "address": "0049be70",
+      "binary": "DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HudHTickBank",
+      "description": "The hudhtick bitmap bank, the heading tape's strip, which HudHeadingTape_Ctor (0043b57c) loads with Resource_Load while this is 0: frame count at +4, frame pointers at +8, which HudHeadingTape_Recompute (0043b5dc) and HudHeadingTape_SetHeading (0043b654) read.",
+      "source": "DBSIM disassembly of HudHeadingTape_Ctor at 0043b596-0043b5c9"
+    },
+    {
+      "address": "0049be74",
+      "binary": "DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Gunsight_PickArmed",
+      "description": "A byte: while it is set and ObjPick_IsIdle answers true, Gunsight_UpdateAndPaint (0043d6dc) hands a non-zero ObjPick_GetObject to TargetSelect_SetObject, then stores 0 here. es2_xref and a grep of the disassembly find it only at that test (0043d78a) and that store (0043d7b2); ES1's Gunsight_PickArmed (ES1DBSIM 000936d8) is set by its gunsight click slot.",
+      "source": "es2_xref.py 0049be74; grep 0049be74 tools/analysis_out/DBSIM_disasm_full.txt"
     },
     {
       "address": "0049be78",

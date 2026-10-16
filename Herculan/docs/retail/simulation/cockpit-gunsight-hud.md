@@ -29,6 +29,13 @@ All nine children derive from `GunsightChild_CtorBase` (`0043b344`), a bare rect
 
 Children 4 and 5: [`hud-target-indicator.md`](hud-target-indicator.md).
 
+### Painting
+
+The gunsight has two paint slots. Both skip everything while the display is dark (`+0x76`, [sensor dropout](cockpit-hud-widgets.md#sensor-dropout)) or while neither corner of child 0's rect is on screen (`CockpitView_RectCornerVisible`), and both draw inside a `Cockpit_PushCanvasContext`/`Cockpit_PopRenderContext` pair.
+
+- `Gunsight_Paint` (`0043d5c8`) calls each child's slot 0, its paint, then draws the [`ATT` legend](#the-att-legend), calls `HudClock_Tick` and `Hud_UpdateSpeedReadout`, sets the text of the four labels at `004d1850`–`004d185c` ([the readouts](#speed-and-time-readouts)), and calls `Gunsight_PaintHudScanner` and `Gunsight_PaintAltitudeScale`.
+- `Gunsight_UpdateAndPaint` (`0043d6dc`), the slot `+8` that runs once a frame, returns at once in view 4 unless the view manager's byte `+0x1c` is set. It stores `Player_DependentCondition(2)` at `+0x74` and, when that is non-zero, the gunsight's dropout ranges for it from the tables at `0049be48`–`0049be66` at `+0x7c`–`+0x88`, and runs `PanelGauge_TickDropout`. Past the two tests above, it hands the [pixel pick's](../rendering/terrain-drawing.md#the-pixel-pick-and-the-occlusion-probe) object, when there is one, to `TargetSelect_SetObject` with the cockpit (`+0x14`) while the byte `Gunsight_PickArmed` (`0049be74`) is set and the pick is idle, clearing the byte; fills the state block's target fields ([live values](#live-values)); drives the [heading tape](#heading-tape); calls each child's slot `+4`, its repaint; and draws the rest as `Gunsight_Paint` does.
+
 ### Live values
 
 `Player_PerFrameCockpitUpdate` (`0041b130`) calls `Gunsight_SetValues` (`0043d98c`) once a frame with three shorts — `mech+0x10` (heading), `mech+0x298` (twist angle), `mech+0x29a` (pitch angle). Heading and twist are refreshed only while the machine's immobilised byte (`+0xa4`) is clear; once it is set they keep the values last cached. The widget caches them at `+0xb1`/`+0xb3`/`+0xb5` and forwards each one's **delta** to a child's `AddDelta` slot (`+0xc`):
@@ -62,10 +69,10 @@ Frame 13 is green and 12 yellow; the 299 threshold is about 1.6°, so any delibe
 
 ### Heading tape
 
-Child 1, the manual's Heading Indicator. `HudHeadingTape_Recompute` (`0043b5dc`) caches the rect's width at `+0x28` and the `hudhtick` bank's last and first frames at `+0x48`/`+0x4c`; `HudHeadingTape_SetHeading` (`0043b654`) converts the angle it is given into a frame pair and a sub-frame offset:
+Child 1, the manual's Heading Indicator. `HudHeadingTape_Ctor` (`0043b57c`) builds it on `HudRotationIndicator_Ctor`, stores `HRevRotationGaugeVtable`, loads the `hudhtick` bank once into `HudHTickBank` (`0049be70`) (from `hba` while `VideoMode_UseHiResBanks` is set, else `dba`) and runs its recompute, slot `+8`. `HudHeadingTape_Recompute` (`0043b5dc`) caches the rect's width at `+0x28`, `bankFrames * rectWidth` at `+0x40`, `rect.x0` at `+0x44` and the bank's last and first frames at `+0x48`/`+0x4c`, and zeroes `+0x3c`; it also sets the `int16` `+0x50` to 1 and `+0x52` to `bankFrames - 2` (`bankFrames - 1` when that is negative), which none of the tape's five slots reads. The tape's set-limits slot, `HudHeadingTape_SetLimits` (`0043b7b4`), stores `(hi - lo) / rectWidth` at `+0x40` and then runs `HudSlideBar_SetLimits`, whose closing recompute writes `bankFrames * rectWidth` back. `HudHeadingTape_SetHeading` (`0043b654`) converts the angle it is given into a frame pair and a sub-frame offset:
 
 ```
-total   = Math_Q16Multiply(heading, framePixels)     // +0x40, bankFrames * rectWidth in Q16
+total   = Math_Q16Multiply(heading, framePixels)     // +0x40, bankFrames * rectWidth
 frame   = total / rectWidth,  offset = total % rectWidth   // both wrapped at bankFrames
 +0x44   = rect.x0 - offset
 +0x48   = bank[frame],  +0x4c = bank[frame + 1]

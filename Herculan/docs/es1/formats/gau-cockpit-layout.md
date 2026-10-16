@@ -18,12 +18,26 @@ Nothing shifts the rects into device pixels: ES1's builders pass each block to i
 | 372 | three rects | 388 |
 | 452 | the console buttons' block: a 16-byte header, then five rects from 468 | 468, four rects from 484 |
 | 548, 616, 728, 1000 | the blocks of the instruments at the cockpit's `+0x1e1` to `+0x1ed` | the same |
-| 1104 | the block of the instrument at `+0x1f1` | 1088, the gunsight complex |
+| 1104 | the gunsight's block, [below](#the-gunsight-block-at-1104) | 1088 |
 | 1212 | the block of the instrument at `+0x1f5`, with 15 rects at 1292 and 3 at 1532 | the same, the Heads-Down Display |
 | 1604 | the cockpit clock's block ([the cockpit clock](ttm-scripts.md#the-cockpit-clock)) | the same, `PanelAmbience`'s |
 | 1668, 1684 | the pilot channel's box and the ticker's | the same |
 
+## The gunsight block at 1104
+
+`Gau_RovingGunsightWidget` (`00034aec`) reads the block's `int32` from 1104 to 1179 ([building the gunsight](../simulation/cockpit-gunsight-hud.md#building-the-gunsight)), on the plan of ES2's block at 1088 ([ES2's](../../retail/formats/gau-cockpit-layout.md#gau-block-at-1088)) moved 16 bytes on:
+
+| int | Offset | ES1 | ES2's |
+|---|---|---|---|
+| `[0]`, `[1]` | 1104, 1108 | the origin, added to every child's rect but the reticle's centre | the same |
+| `[2]`, `[3]` | 1112, 1116 | unread by the builder | the complex's bottom-right |
+| `[4..7]` | 1120–1132 | the heading tape's rect, which the rotation indicator's and the waypoint indicator's derive from | the same |
+| `[8..0xb]` | 1136–1148 | the vertical slide bar's rect | the speed and time anchors |
+| `[0xc]`, `[0xd]` | 1152, 1156 | the reticle's centre, where the cursor is put | the same |
+| `[0xe]` | 1160 | the half-size of the square about it that the reticle, the target box and child 6 take as their rect | the same |
+| `[0xf..0x12]` | 1164–1179 | the click surface's rect | the gunsight area |
+
 ## Open
 
 - **Open:** a check of the reading against the eight retail files in `SIMVOL0.VOL`, through HercWorks.Core: the `int32` at 16 at most 9 in each, every in-use row rect inside 20–163, and the five rects at 468–547 holding the console buttons.
-- **Open:** what the instruments at 1104 and 1212 are; their constructors (`00034aec`, `0003c258`) are unread, as are those of the other blocks.
+- **Open:** what the instrument at 1212 is; its constructor (`0003c258`) is unread, as are those of the other blocks but 1104's. What the gunsight block's `int32` 2 and 3 (1112, 1116) and its bytes from 1180 to 1211 hold: the builder reads neither, and `Gau_Load` adds the origin to `int32` 2 and 3.

@@ -19,7 +19,7 @@ The 38-byte state block, offsets from the gunsight's `+0xb1` and from a child's 
 | 10, 14, 18 | Its world aim point |
 | 22 | The target's own heading |
 | 24 | Whether a Targeting Pod has singled out a component — `CockpitView+0x27c`, the pod's **present flag**. The component id beside it at `+0x27e` never reaches the gunsight; only the MFD reads that |
-| 28 | The target's shape radius (vtable `+0x10`), which sizes the box |
+| 28 | The target's shape radius, which sizes the box: the `int16` `+8` of the shape (`+4`) of its shape instance (`+0x34`), read in place rather than through the vtable's `+0x10` |
 | 32 | Literal 2000, unread |
 | 36 | **Indicator armed.** Set to 1 by all three selection entry points and never cleared; the box's paint refuses to draw until it is set |
 | 37 | `mech+0x9b`, missile lock |
