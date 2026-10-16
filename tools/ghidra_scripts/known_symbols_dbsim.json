@@ -13309,8 +13309,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdStatusScreen_Paint",
-      "description": "Paint for the MFD status screen shared by F1 and F5. Latches the subject from the display's shared block (+0xb9), then branches on its target class: a HERC gets its .PDG paper doll and a twelve-dependent condition scan, a flyer gets flyers-bank frame 0, a structure gets bases/vehicles frame BASES.DAT+0x28. ID: versus TARGET: follows whether the subject is the viewing object or a squadmate; the integrity-versus-range choice for label 4 follows the subject's mission-group side byte, as does the name label's font in the HERC branch; the flyer and structure branches set no font, so that label keeps the last one written (the ctor's [14] RED at first).",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "The MFD status screen's paint (MFDStatus vtable +0), (screen), shared by F1 and F5. Installs the brush {0, 0x11} at the render context's (006c5ff4) +0x22c and fills the viewport rect +0x24 with its y0 moved down and its x1 and y1 moved in by 1 << VideoMode_XCoordShift. Latches the subject at +0x3e from the shared block's (+8) +8: taken when that is set or nothing is latched; a latched subject whose entry is gone is dropped unless its +0x99 or +0xa4 is set, then held until a paint past the deadline +0x3a, 300 coarse ticks after the paint that set the flag +0x39. No subject: label 1 (+0x14) in ColorSchemePanels[0], labels 0-1 DAT_004d1574 and DAT_004d1690, labels 2-4 empty. Class +0x1a8 0, a HERC: unless the scramble flag +0x34 is set, VideoMode_BlitBitmap of the paper doll's view 2 (type +0x1f2, +0xda, +0x38) at its origin plus the viewport's top-left plus (0x11, 2); Mech_ReadDamageReadouts; label 0 ID: (DAT_004d1570) for the cockpit's machine or a squadmate (Squad_IndexOf), TARGET: otherwise; label 1 YOU, the squadmate's HddGauge_Name or the type name (_strupr of type +0x58), XXXXXXXXX while scrambled, in ColorSchemePanels[1] when the side byte (+0x12 of the group at +0x45) is 0 and [2] otherwise; label 2 STATUS:; per region the walker means of the readings, or for a flyer chassis (type +0x50) the single readings 1 and 5-9, through Damage_PickRegionTint and PaperDoll_RecolorRect; the state (4 for +0x99, 3 when readings 20-31 all exceed 0x80, 2 when any exceeds 0, 1 for +0xb0, else 0) to MfdStatusScreen_SetCondition with the damage vtable +0x40 returns. Then, unscrambled, for side byte 1 with CockpitView+0x27c set, it outlines (brush mode 4, colour DAT_004d3c20) the rect, grown one pixel on each side, of the first region whose id is CockpitView+0x27e or the region that id merges into (1 to 0, 9 and 11 to 7, 10 and 12 to 8, 15-18 to 13). Class 2, a flyer: flyers frame 0; classes 1 and 3: the bases or vehicles bank (type +0x32) frame type +0x28; each centred in the viewport by its frame size, doubled for VideoMode_PanelMode 3 without hi-res banks; label 0 TARGET:, label 1 the flyer's type name (_strupr of +0x12 of +0x1fa) or the group 23 or 24 name, label 2 STATUS:, SetCondition with state -1. Other classes: TARGET: and DAT_004d1694 in ColorSchemePanels[0]. Every subject but none then, for side byte 1, sets label 4 to DAT_004d1578 followed by _itoa of Math_DistanceBetweenPoints from the cockpit's machine (CockpitViewInstance +0x203), or XXXXX while scrambled. See docs/retail/simulation/mfd.md.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "0043a5a0+3184",
+        "sha1": "50a5c92ded63",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b210",
@@ -13318,8 +13324,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdStatusScreen_Update",
-      "description": "The status screen's vtable +4: ticks a 30-tick blink latch at +0x34/+0x35, runs the paint, then invalidates the screen rect.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "The status screen's vtable +4, (screen): when +0xc holds 100, sets it to 0, sets the scramble flag +0x34 and the deadline +0x35 to Time_GetCoarseTicks + 0x1e; otherwise, with +0x34 set, clears it once the ticks pass the deadline. Then runs the paint slot +0 and Widget_DrawToCockpit (0043122c)(1, the rect at +4, 0).",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "0043b210+80",
+        "sha1": "d17570cbfad6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b260",
@@ -13327,8 +13339,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MfdStatusScreen_SetCondition",
-      "description": "Writes the MFD status screen's fourth and fifth labels. Label 4 (screen+0x1c) takes MfdStatusConditionStrings[state] = STRINGS0.STR group 28; state is the caller's, or Damage_ToConditionState(damage) when the caller passes -1. Label 5 (screen+0x20) is composed from literals: \"[ \" (0049be2c), itoa((0x100 - damage) * 100 >> 8), then \"% ]\" (0049be2f) -- undamaged reads \"[ 100% ]\". When the subject is unreadable (screen+0x34 set) it writes \"XXXXXX\" and \"XXX\" instead. NOTE: STRINGS0.STR group 10 holds a near-identical five-string set and is dead data -- SimStrings_LoadAll is the only reference to its array. See docs/retail/simulation/mfd.md.",
-      "source": "docs/retail/simulation/mfd.md"
+      "description": "(screen, damage, friendly, state): writes the MFD status screen's labels 3 and 4. Unscrambled (+0x34 clear): label 3 (+0x1c) takes MfdStatusConditionStrings[state] (STRINGS0.STR group 28), the state being Damage_ToConditionState(damage) when -1 is passed; with friendly non-zero, label 4 (+0x20) reads \"[ \" (0049be2c), _itoa((0x100 - damage) * 100 >> 8) and \"% ]\" (0049be2f), so undamaged reads \"[ 100% ]\". Scrambled: label 3 reads \"XXXXXX\" (0049bdba) and, with friendly non-zero, label 4 \"XXX\" (0049bdc1). See docs/retail/simulation/mfd.md.",
+      "source": "docs/retail/simulation/mfd.md",
+      "verified": {
+        "bytes": "0043b260+209",
+        "sha1": "1e34e3ac96d6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b334",
@@ -13351,8 +13369,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_ClickGadget_OnClickNoOp",
-      "description": "HUDRovingGunsightGadget vtable +0x08 (0049c188), the click surface's OnClick: tests bit 0 of its value argument and returns without acting on it.",
-      "source": "DBSIM disassembly at 0043b338"
+      "description": "Slot +0x08 of HUDRovingGunsightGadgetVtable (0049c188), the gunsight click gadget's OnClick, (gadget, flags): tests bit 0 of flags and returns. ES1's slot (ES1DBSIM 000337dc) arms the pixel pick under that bit.",
+      "source": "DBSIM disassembly at 0043b338",
+      "verified": {
+        "bytes": "0043b338+9",
+        "sha1": "4628a7628998",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0043b344",
@@ -13360,8 +13384,14 @@
       "type": "function",
       "confidence": "high",
       "name": "GunsightChild_CtorBase",
-      "description": "Base of all nine roving-gunsight children: stores the caller's {x0,y0,x1,y1} rect at +4..+0x10 and sets a stub vtable each subclass overwrites. Children 4, 5 and 6 additionally receive the 38-byte target state block at +0x14.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "HUDGauge constructor, the base of the roving gunsight's children, (child, rect): stores HUDGaugeVtable (0049c26c) at +0 and the rect {x0, y0, x1, y1} at +4..+0x10.",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0043b344+50",
+        "sha1": "ca3018c6b222",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b378",
@@ -13369,8 +13399,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudSlideBar_CtorBase",
-      "description": "Base of the front-window HUD's sliding-bar widgets. Stores the rect, defaults the limits to +/-0x4800 at +0x24/+0x26, precomputes the range at +0x2c and seeds the current value at +0x3a to the midpoint. HudSlideBar_SetLimits (0043b3c0) is the vtable +0x10 slot that overrides those limits.",
-      "source": "docs/retail/simulation/cockpit-gunsight-hud.md"
+      "description": "RotationGauge constructor, the base of the HUD's sliding bars, (bar, rect): GunsightChild_CtorBase, RotationGaugeVtable (0049c24c) at +0, limits -0x4800 and 0x4800 at +0x24 and +0x26, the range 0x4800 - min at +0x2c and the value (min + max) >> 1, unsigned 16-bit, at +0x3a.",
+      "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
+      "verified": {
+        "bytes": "0043b378+69",
+        "sha1": "7df8d855edb6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b3c0",
@@ -13378,8 +13414,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudSlideBar_SetLimits",
-      "description": "Slide-bar vtable slot +0x10: sets min/max at +0x24/+0x26, recomputes the range and the midpoint value, then runs the recompute slot (+8). The gunsight gives the heading tape and child 7 +/-0xe38 (~20 deg) and the rotation indicator +/-0x38e3 (~80 deg).",
-      "source": "docs/retail/simulation/cockpit-gunsight-hud.md"
+      "description": "Slot +0x10 of the rotation gauges' vtables, (bar, min, max): min to +0x24, max to +0x26, the range max - min to +0x2c and the value (min + max) >> 1, unsigned 16-bit, to +0x3a, then the bar's slot +8, the recompute.",
+      "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
+      "verified": {
+        "bytes": "0043b3c0+55",
+        "sha1": "4103884fc4fb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b3f8",
@@ -13387,8 +13429,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudSlideBar_AddDelta",
-      "description": "Slide-bar vtable slot +0xc: value (+0x3a) -= delta, clamped to [+0x24, +0x26]. The only caller is Gunsight_SetValues, which chooses the delta's sign per child so that a bar either tracks its angle or scrolls against it.",
-      "source": "docs/retail/simulation/cockpit-gunsight-hud.md"
+      "description": "Slot +0xc of the rotation gauges' vtables, (bar, delta): the value +0x3a less delta, stored when it lies within [+0x24, +0x26], otherwise the limit it passed.",
+      "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
+      "verified": {
+        "bytes": "0043b3f8+63",
+        "sha1": "83aae76d2036",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b438",
@@ -13396,8 +13444,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudRotationIndicator_Ctor",
-      "description": "The manual's Rotation Indicator -- child 2 of the roving-gunsight complex, driven by the turret twist angle. Has no .GAU rect of its own: Gau_RovingGunsightWidget derives it from the heading tape's rect at offset 1104 with literals (+15, -10, 90 wide, 4 tall) and then gives it limits +/-0x38e3.",
-      "source": "docs/retail/simulation/cockpit-gunsight-hud.md"
+      "description": "HFixRotationGauge constructor, the manual's rotation indicator, (bar, rect): HudSlideBar_CtorBase, HFixRotationGaugeVtable (0049c22c) at +0, then the bar's slot +8, HudRotationIndicator_Recompute. See docs/retail/simulation/cockpit-gunsight-hud.md.",
+      "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
+      "verified": {
+        "bytes": "0043b438+38",
+        "sha1": "9ef411247e12",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b460",
@@ -13405,8 +13459,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudRotationIndicator_Recompute",
-      "description": "Slide-bar slot +8 for the rotation indicator: caches the rect's width at +0x28 as the bar's travel, and the track sprite's blit position at +0x2e/+0x32 -- the rect's top-left lifted by (2 << VideoMode_YCoordShift).",
-      "source": "docs/retail/simulation/cockpit-gunsight-hud.md"
+      "description": "HFixRotationGauge vtable +8, (bar): the width x1 - x0 (+0xc - +4) to +0x28 and the track point (x0, y0 - (2 << VideoMode_YCoordShift)) to +0x2e and +0x32.",
+      "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
+      "verified": {
+        "bytes": "0043b460+66",
+        "sha1": "a84ac733cc4f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b4a4",
@@ -13414,8 +13474,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudRotationIndicator_Paint",
-      "description": "Blits HUD bank frame 11 (182x10) as the track, then the sliding bar: frame 13 (green) while |value| <= 299, frame 12 (yellow) otherwise, at rect.x0 + (value - min) * width / range, minus (15 << VideoMode_XCoordShift) to centre the 62px bar on that point. This is the manual's 'turns yellow and moves left or right if your Turret moves from center'.",
-      "source": "docs/retail/simulation/cockpit-gunsight-hud.md"
+      "description": "HFixRotationGauge vtable +0, (bar): between Cockpit_PushCanvasContext and Cockpit_PopRenderContext, blits Hud_BitmapBank frame 11 at the track point +0x2e, then frame 13 while the value +0x3a lies within -299..299 and frame 12 otherwise, at x = x0 + ((value - min) & 0xffff) * width (+0x28) / range (+0x2c, unsigned), plus 1 when the value is negative, less 15 << VideoMode_XCoordShift, and y = y0. See docs/retail/simulation/cockpit-gunsight-hud.md.",
+      "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
+      "verified": {
+        "bytes": "0043b4a4+168",
+        "sha1": "135e512ed095",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b54c",
@@ -13423,8 +13489,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudSlideBar_CtorHidden",
-      "description": "Child 3 of the roving-gunsight complex, driven by the turret pitch angle. Its vtable (0049c20c) has no-op stubs in both the paint (0043b574) and recompute (0043b56c) slots, so the pitch axis has a slide bar that is never drawn -- there is no on-screen pitch indicator.",
-      "source": "docs/retail/simulation/cockpit-gunsight-hud.md"
+      "description": "VFixRotationGauge constructor, (bar, rect): HudSlideBar_CtorBase, then VFixRotationGaugeVtable (0049c20c) at +0, whose paint and recompute slots are the empty HudSlideBarHidden_PaintNoOp (0043b574) and HudSlideBarHidden_RecomputeNoOp (0043b56c).",
+      "source": "docs/retail/simulation/cockpit-gunsight-hud.md",
+      "verified": {
+        "bytes": "0043b54c+31",
+        "sha1": "57f046db7db3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b56c",
@@ -13432,8 +13504,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudSlideBarHidden_RecomputeNoOp",
-      "description": "VFixRotationGauge vtable +0x08 (0049c20c), the recompute slot of HudSlideBar_CtorHidden's pitch bar: an empty body.",
-      "source": "DBSIM decompile at 0043b56c"
+      "description": "VFixRotationGauge vtable +0x08 (0049c20c), the recompute slot: an empty body.",
+      "source": "DBSIM decompile at 0043b56c",
+      "verified": {
+        "bytes": "0043b56c+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b574",
@@ -13441,8 +13519,14 @@
       "type": "function",
       "confidence": "high",
       "name": "HudSlideBarHidden_PaintNoOp",
-      "description": "VFixRotationGauge vtable +0x00 (0049c20c), the paint slot of HudSlideBar_CtorHidden's pitch bar: an empty body.",
-      "source": "DBSIM decompile at 0043b574"
+      "description": "VFixRotationGauge vtable +0x00 (0049c20c), the paint slot: an empty body.",
+      "source": "DBSIM decompile at 0043b574",
+      "verified": {
+        "bytes": "0043b574+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043b57c",
@@ -13534,8 +13618,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_ClickSurface_Ctor",
-      "description": "Gunsight child 0: the clickable gunsight surface over the 3D view, on the .GAU's offset-1148 rect. Allocates a gadget and registers it with the cockpit's clickable list, which is the 'gunsight click' path into TargetSelect_SetObject.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "Gunsight child 0, the clickable gunsight surface, (child, rect): GunsightChild_CtorBase, then HUDGunsightVtable and HUDRovingGunsightVtable (0049c1b0) at +0. Allocates a 0x20-byte gadget with Mem_New and, when that succeeds, builds it with Widget_CtorRect(rect) and stores CTLButtonControlVtable with 0 at +0x1d and then HUDRovingGunsightGadgetVtable (0049c188) with 0 at +0x1b, at its +0x17. Keeps the gadget at +0x4a and registers it with Widget_RegisterClickable on the cockpit's clickable list (the dword at CockpitViewInstance).",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0043c120+187",
+        "sha1": "eb907bd0f18b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0043c1dc",
@@ -13543,8 +13633,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Gunsight_ClickSurface_Paint",
-      "description": "Child 0's paint: draws nothing, only tests the cursor point at +0x42/+0x46 against its own rect and reports the result.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "description": "HUDRovingGunsight vtable +0 (0049c1b0), gunsight child 0's paint, (child): reads the cursor into +0x42/+0x46 with Cursor_GetPosition and calls Cockpit_SetForwardCursor(1) when that point lies in the rect +4..+0x10, bounds inclusive, and Cockpit_SetForwardCursor(0) otherwise.",
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0043c1dc+100",
+        "sha1": "4d743cc07b51",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0043c240",
@@ -13805,7 +13901,13 @@
       "confidence": "high",
       "name": "HudSlideBarHidden_Repaint",
       "description": "VFixRotationGauge vtable +0x04 (0049c20c): calls the gauge's own slot +0x00, which for this class is HudSlideBarHidden_PaintNoOp.",
-      "source": "DBSIM disassembly at 0043e677"
+      "source": "DBSIM disassembly at 0043e677",
+      "verified": {
+        "bytes": "0043e677+14",
+        "sha1": "6d81889b6b96",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0043e685",
@@ -13814,7 +13916,13 @@
       "confidence": "high",
       "name": "HudRotationIndicator_Repaint",
       "description": "HFixRotationGauge vtable +0x04 (0049c22c): calls the gauge's own slot +0x00, HudRotationIndicator_Paint.",
-      "source": "DBSIM decompile at 0043e685"
+      "source": "DBSIM decompile at 0043e685",
+      "verified": {
+        "bytes": "0043e685+14",
+        "sha1": "6d81889b6b96",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0043e70c",
@@ -15273,8 +15381,14 @@
       "type": "function",
       "confidence": "high",
       "name": "MFDisplay_Ctor",
-      "description": "MFDisplay constructor (vtable 0049cfbc, RTTI name 'MFDisplay', 0x10 bytes): stores its argument at +4 and clears +0xc. The five MFD screen constructors (MfdStatusScreen_Ctor, MfdRadarScreen_Ctor, MfdFlashCommScreen_Ctor, MfdMissileViewScreen_Ctor, MfdMapScreen_Ctor) start with it.",
-      "source": "DBSIM decompile and disassembly at 004451f0"
+      "description": "MFDisplay constructor (vtable 0049cfbc, RTTI name 'MFDisplay', 0x10 bytes), the base of the MFD's screens, (screen, rect): stores the vtable at +0, the rect pointer at +4 and 0 at +0xc.",
+      "source": "DBSIM decompile and disassembly at 004451f0",
+      "verified": {
+        "bytes": "004451f0+25",
+        "sha1": "ff4f26c6d66d",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "0044520c",

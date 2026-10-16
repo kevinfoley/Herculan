@@ -3397,7 +3397,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ObjPick_Arm",
-      "description": "(point), callee-cleaned: copies the point's two int32 to ObjPick_Point (000afa48) and sets ObjPick_Pending (000afa45) to 1. ES2's ObjPick_Arm (DBSIM 004282a0). es2_xref finds one call, from 000337dc.",
+      "description": "(point), callee-cleaned: copies the point's two int32 to ObjPick_Point (000afa48) and sets ObjPick_Pending (000afa45) to 1. ES2's ObjPick_Arm (DBSIM 004282a0). es2_xref finds one call, from Gunsight_ClickGadget_OnClick (000337dc).",
       "source": "Herculan/docs/es1/simulation/terrain.md#the-pixel-pick-and-the-occlusion-probe",
       "verified": {
         "bytes": "00020d28+32",
@@ -8032,7 +8032,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PaperDoll_RecolorRect",
-      "description": "(mode, tint, key, rect) in stack order, callee-cleaned: makes the display 000bdd28's draw page +0x3c its source page +0x38 (storing it at 00098dd6 and passing it to g_RasterRoutines slot 16, 0009df14, when that display is current), offsets rect by the canvas context 000bdbda's +0x210, +0x214 less its +0x220, +0x224, and walks it a row at a time, left to right, one pixel at a time, reading through slot 4 (0009dee4) and writing through slot 5 (0009dee8). Mode 0 shifts a pixel in key..key+2 by tint - key and mode 1 sets a pixel equal to key to tint, both skipping the walk when tint = key; mode 2 adds tint to every pixel but 63; mode 3 sets a pixel in key..key+2 to tint. Jump table 0009335c. ES2's PaperDoll_RecolorRect (DBSIM 00437e94), which tests the key alone in modes 0 and 3, spares COLORS.DAT id 19's index in mode 2, writes a block per pixel for a doubled bank and returns when the top row is above the screen. es2_xref finds six calls: one from 000330b4, five from 000424f8.",
+      "description": "(mode, tint, key, rect) in stack order, callee-cleaned: makes the display 000bdd28's draw page +0x3c its source page +0x38 (storing it at 00098dd6 and passing it to g_RasterRoutines slot 16, 0009df14, when that display is current), offsets rect by the canvas context 000bdbda's +0x210, +0x214 less its +0x220, +0x224, and walks it a row at a time, left to right, one pixel at a time, reading through slot 4 (0009dee4) and writing through slot 5 (0009dee8). Mode 0 shifts a pixel in key..key+2 by tint - key and mode 1 sets a pixel equal to key to tint, both skipping the walk when tint = key; mode 2 adds tint to every pixel but 63; mode 3 sets a pixel in key..key+2 to tint. Jump table 0009335c. ES2's PaperDoll_RecolorRect (DBSIM 00437e94), which tests the key alone in modes 0 and 3, spares COLORS.DAT id 19's index in mode 2, writes a block per pixel for a doubled bank and returns when the top row is above the screen. es2_xref finds six calls: one from MfdStatusScreen_Paint (000330b4), five from 000424f8.",
       "source": "Herculan/docs/es1/simulation/paper-doll.md#tinting",
       "verified": {
         "bytes": "00030818+667",
@@ -8062,7 +8062,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Damage_PickRegionTint",
-      "description": "(out, region, damage) in stack order, callee-cleaned: with intact = (0x100 - damage) * 100 >> 8 banded at 90, 74, 51 and 1 into states 0 to 4, writes the state to out +0 and a palette index to out +4. For the region's mode +0x18 of 0, 2 or 3 the indices are 0x36, 0x39, 0x5c, 0x33 and 0x3e; for mode 1, the region's color +0x14 for state 0, that color minus the state for states 1 and 2 (0x3c plus the state when the color is 0x3c), and 0x30 and 0x3e for states 3 and 4. A mode above 3 writes EDX and EDI as they stand. Jump table 0009337c. ES2's Damage_PickRegionTint (DBSIM 00438624), whose colors are HudColorTable ids. es2_xref finds five calls: one from 000330b4, four from 000424f8.",
+      "description": "(out, region, damage) in stack order, callee-cleaned: with intact = (0x100 - damage) * 100 >> 8 banded at 90, 74, 51 and 1 into states 0 to 4, writes the state to out +0 and a palette index to out +4. For the region's mode +0x18 of 0, 2 or 3 the indices are 0x36, 0x39, 0x5c, 0x33 and 0x3e; for mode 1, the region's color +0x14 for state 0, that color minus the state for states 1 and 2 (0x3c plus the state when the color is 0x3c), and 0x30 and 0x3e for states 3 and 4. A mode above 3 writes EDX and EDI as they stand. Jump table 0009337c. ES2's Damage_PickRegionTint (DBSIM 00438624), whose colors are HudColorTable ids. es2_xref finds five calls: one from MfdStatusScreen_Paint (000330b4), four from 000424f8.",
       "source": "Herculan/docs/es1/simulation/paper-doll.md#tinting",
       "verified": {
         "bytes": "00030dc4+242",
@@ -9022,13 +9022,406 @@
       "type": "function",
       "confidence": "high",
       "name": "LedBmBarGraphV_DrawBitmapSpan",
-      "description": "(bar, bitmap) in stack order, callee-cleaned: LedBmBarGraphH_DrawBitmapSpan (00032838) on the y axis: region +0x44's rect is {ox, y0 - start + oy, x1 - x0 + ox, y1 - start + oy} and the copy's offset (x0 - ox, start - oy). ES2's LedBmBarGraphV_DrawBitmapSpan (DBSIM 00439f70), which shifts the bitmap's size by the video mode and blits with VideoMode_BlitBitmap where this uses Bitmap_Blit. es2_xref finds four calls, all at its padding 00032cf3, from LedBmBarGraphV_PaintToValue (00032c1c). The bar graph object file's last function: its RET 8 at 00032ed5 ends on a 4-byte boundary, before the next file at 00032ed8.",
+      "description": "(bar, bitmap) in stack order, callee-cleaned: LedBmBarGraphH_DrawBitmapSpan (00032838) on the y axis: region +0x44's rect is {ox, y0 - start + oy, x1 - x0 + ox, y1 - start + oy} and the copy's offset (x0 - ox, start - oy). ES2's LedBmBarGraphV_DrawBitmapSpan (DBSIM 00439f70), which shifts the bitmap's size by the video mode and blits with VideoMode_BlitBitmap where this uses Bitmap_Blit. es2_xref finds four calls, all at its padding 00032cf3, from LedBmBarGraphV_PaintToValue (00032c1c). The bar graph object file's last function: its RET 8 at 00032ed5 ends on a 4-byte boundary, before the next file at HeapPtr_DtorStatusScreenCopy (00032ed8).",
       "source": "Herculan/docs/es1/simulation/cockpit-widgets.md#bitmap-bar-graphs; es2_naming.py diff ES1DBSIM 00032838 ES1DBSIM 00032cf4",
       "verified": {
         "bytes": "00032cf4+484",
         "sha1": "81fefda17230",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00032ed8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorStatusScreenCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorPanelCopy (0002acdc): with p non-null deletes the block p points at with operator_delete (000015f8) when that is non-null, then p itself when bit 0 of flags is set. The first of the four functions that open the status screen's object file. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00032ed8",
+      "verified": {
+        "bytes": "00032ed8+40",
+        "sha1": "037ccc4e1d04",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00032f00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorStatusScreenCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the status screen file's copy 0009358e of ConfigPart's vtable: the code of ConfigPart_DtorPanelCopy (0002ad04): with part non-null stores 0009358e, calls HeapBlockOwner_Dtor (00002598)(part + 0x10, 0), stores TSPartBase's copy 000935c2, calls TSBase_Dtor (0005ba58)(part, 0) and deletes part when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00032f00",
+      "verified": {
+        "bytes": "00032f00+63",
+        "sha1": "a13eabef6df0",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00032f3f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagStatusScreenCopy",
+      "description": "Frameless, no Ghidra function starts here: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 0009358e; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
+      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#where-the-object-file-starts-and-ends; capstone at 00032f3f"
+    },
+    {
+      "address": "00032f48",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorStatusScreenCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000935c2 (entered at its padding 00032f45): the code of TSPartBase_DtorPanelCopy (0002ad4c) storing 000935c2.",
+      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 00032f48",
+      "verified": {
+        "bytes": "00032f48+42",
+        "sha1": "4a87e9c8fc82",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00032f74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdStatusScreen_Ctor",
+      "description": "(screen, rect) in stack order, callee-cleaned: allocates 0x20 bytes with operator_new when screen is null (returning null when that fails), runs MFDisplay_Ctor (00039c50)(screen, rect) and stores MFDStatusVtable (000935fe) at +8. While MfdStatus_BasesBank (000935f4) is 0 it loads bases and flyers from the folder at 000980f8 with ResourcePath_BuildFolderName and ClassItem_LoadFromFile into it and MfdStatus_FlyersBank (000935f8). Then five labels at +0xc..+0x1c, each Label_Ctor (00030f44)(0, ColorSchemePanels[2] (00092d48)) and Label_SetRect (00031080)(label, 2, r, zero margins), r being x from the rect's x0 + 0x1e to x0 + 0x3c and y from y0 + {0, 8, 0x15, 0x1c, 0x23} to that + 10. ES2's MfdStatusScreen_Ctor (DBSIM 0043a2e0) loads a vehicles bank too, sets a viewport rect and builds left-aligned labels from tables. es2_xref finds calls from 0003a0df and 0003a15c, which store the screen at +0x96 and +0xa6 of the display and point its +4 at the display's +0x7a.",
+      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#the-screen-object; ES1DBSIM disassembly at 00032f74 and 0003a0d1-0003a170",
+      "verified": {
+        "bytes": "00032f74+317",
+        "sha1": "03a60cd819bc",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000330b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdStatusScreen_Paint",
+      "description": "(screen) in stack order, callee-cleaned: slot +4 of MFDStatusVtable (000935fe). Installs the brush {0, 0x3f} at the canvas context's (000bdbda) +0x22c and fills the rect at +0 with Raster_FillRect (00053d9c). The subject is the dword +8 of the block +4 points to. With none: label 1's (+0x10) font becomes ColorSchemePanels (00092d40) [0], label 0 (+0xc) reads 000bd3f0 (TARGET:) and label 1 000bd464 (NONE). Otherwise by the subject's int16 class +0x162. Class 0, a HERC: Bitmap_Blit (00067048) of the paper doll's view 2 (the record at +0xc2 of the type record +0x188, plus 0x38) at the view's origin plus the rect's top-left; Mech_ReadDamageReadouts (0001583c) into a local buffer; when the subject is not CockpitViewInstance's (00092d1c) +0x1ff, label 0 TARGET: and label 1 the name 000bd3f8[type record int16 +0x6c] in ColorSchemePanels[1] (00092d44) when the side byte (+0x14 of the group record at +0x3f) is 0 and [2] (00092d48) otherwise; label 2 (+0x14) 000bd3f4 (STATUS:); for each region of the view (count +0x14, 0x1c-byte records from +0x18) the mean of the readings its id selects through the jump table 0009361c (id 0: 1 and 2; 4, 5, 6: 5, 6, 7; 7: 8, 10, 12; 8: 9, 11, 13; 13: 14, 16, 18; 14: 15, 17, 19; any other id divides by a count of 0) to Damage_PickRegionTint (00030dc4), then PaperDoll_RecolorRect (00030818)(region +0x18, the tint, region +0x14, the region's rect plus the doll's origin). The state: 4 when +0x93 is set; else 3 when the least of readings 20-31 is above 0x80, 2 when the greatest is above 0; then 1 for a 0 with +0xaa set. MfdStatusScreen_SetCondition (000336b0)(screen, state, side byte = 0, the int16 vtable +0x44 returns). Class 1, a structure: frame (type record int16 +0) of MfdStatus_BasesBank (000935f4) at (x0 + 2, y1 - its height - 5), label 0 TARGET:, label 1 000bd438[frame], SetCondition with state -1. Class 2, a flyer: frame 0 of MfdStatus_FlyersBank (000935f8) placed the same, label 0 TARGET:, label 1 000bd45c (LANDSKIMMER), SetCondition with -1. Any other class: label 1's font ColorSchemePanels[0], TARGET: and 000bd468 (UNKNOWN). ES2's MfdStatusScreen_Paint (DBSIM 0043a5a0).",
+      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#the-paint; ES1DBSIM disassembly at 000330b4",
+      "verified": {
+        "bytes": "000330b4+1498",
+        "sha1": "542ed468c6e3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00033690",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdStatusScreen_Update",
+      "description": "(screen) in stack order, callee-cleaned: slot +8 of MFDStatusVtable (000935fe): calls the screen's slot +4, MfdStatusScreen_Paint (000330b4), then Widget_DrawToCockpit (0002b058)(0, the rect at +0, 1). ES2's MfdStatusScreen_Update (DBSIM 0043b210) first runs the press scramble's timer at +0x34.",
+      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#the-paint; ES1DBSIM disassembly at 00033690",
+      "verified": {
+        "bytes": "00033690+32",
+        "sha1": "e38df7e4f425",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000336b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MfdStatusScreen_SetCondition",
+      "description": "(screen, state, friendly, damage) in stack order, callee-cleaned: with state -1 takes Damage_ToConditionState (00030eb8)(damage); label 3 (+0x18) reads 000bd46c[state] (STRINGS0.STR group 24). With friendly non-zero, label 4 (+0x1c) reads \"[ \" (00093658), ltoa((0x100 - damage) * 100 >> 8) in base 10 and \"% ]\" (0009365b). ES2's MfdStatusScreen_SetCondition (DBSIM 0043b260), which also writes the scramble's XXXXXX and XXX.",
+      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#the-paint; ES1DBSIM disassembly at 000336b0",
+      "verified": {
+        "bytes": "000336b0+143",
+        "sha1": "a1976afbad0b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00033740",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorGunsightCopy",
+      "description": "(p, flags), callee-cleaned: the code of HeapPtr_DtorPanelCopy (0002acdc). The first of the four functions that open the gunsight HUD's object file. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#where-the-object-file-starts; ES1DBSIM decompile at 00033740",
+      "verified": {
+        "bytes": "00033740+40",
+        "sha1": "6d0d5f5d7281",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033768",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorGunsightCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the gunsight file's copy 00093662 of ConfigPart's vtable: the code of ConfigPart_DtorPanelCopy (0002ad04), storing 00093662 and then TSPartBase's copy 00093696.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#where-the-object-file-starts; ES1DBSIM decompile at 00033768",
+      "verified": {
+        "bytes": "00033768+63",
+        "sha1": "c430a65a2684",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000337a7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagGunsightCopy",
+      "description": "Frameless, no Ghidra function starts here: (part), callee-cleaned (RET 4): returns 0; a NOP, then xor eax,eax and ret 4. Slot +4 of the vtable 00093662; the code of ConfigPart_GetClassTagPanelCopy (0002ad43).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#where-the-object-file-starts; the image at 000337a7"
+    },
+    {
+      "address": "000337b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorGunsightCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00093696: the code of TSPartBase_DtorPanelCopy (0002ad4c) storing 00093696.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#where-the-object-file-starts; ES1DBSIM decompile at 000337b0",
+      "verified": {
+        "bytes": "000337b0+42",
+        "sha1": "e085d04a3212",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000337dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_ClickGadget_OnClick",
+      "description": "(gadget, flags) in stack order, callee-cleaned: slot +0xc of HUDRovingGunsightGadgetVtable (000937da). With bit 0 of flags set, stores 1 in the byte Gunsight_PickArmed (000936d8) and calls ObjPick_Arm (00020d28) with the point at 000b16d4. ES2's Gunsight_ClickGadget_OnClickNoOp (DBSIM 0043b338) tests the same bit and returns.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; ES1DBSIM disassembly at 000337dc",
+      "verified": {
+        "bytes": "000337dc+30",
+        "sha1": "dda768468655",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000337fc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GunsightChild_CtorBase",
+      "description": "(child, rect) in stack order, callee-cleaned: copies the rect {x0, y0, x1, y1} to +0..+0xc and returns child. The allocations at its head are the rect's own constructor inlined: with child null it allocates 0x10 bytes and then writes the rect through the null pointer. ES2's GunsightChild_CtorBase (DBSIM 0043b344) also stores HUDGaugeVtable, its rect at +4.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; ES1DBSIM disassembly at 000337fc",
+      "verified": {
+        "bytes": "000337fc+95",
+        "sha1": "7d7fd537fc4e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0003385c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudSlideBar_CtorBase",
+      "description": "(bar, rect) in stack order, callee-cleaned: GunsightChild_CtorBase (000337fc)(bar, rect), RotationGaugeVtable (000936de) at +0x10, limits -0x4800 and 0x4800 at +0x24 and +0x26, the range max - min at +0x2c and the value (min + max) >> 1, unsigned 16-bit, at +0x3a. ES2's HudSlideBar_CtorBase (DBSIM 0043b378), its vtable at +0.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; es2_naming.py diff ES1DBSIM 0003385c DBSIM 0043b378",
+      "verified": {
+        "bytes": "0003385c+112",
+        "sha1": "74be85a8a67b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000338cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudSlideBar_SetLimits",
+      "description": "(bar, max, min) in stack order, callee-cleaned: slot +0x14 of the rotation gauges' vtables: min to +0x24, max to +0x26, the range max - min to +0x2c, the value (min + max) >> 1, unsigned 16-bit, to +0x3a, then the bar's slot +0xc, the recompute. ES2's HudSlideBar_SetLimits (DBSIM 0043b3c0).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; es2_naming.py diff ES1DBSIM 000338cc DBSIM 0043b3c0",
+      "verified": {
+        "bytes": "000338cc+65",
+        "sha1": "0996500c9a80",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033910",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudSlideBar_AddDelta",
+      "description": "(bar, delta) in stack order, callee-cleaned: slot +0x10 of the rotation gauges' vtables (by its padding 0003390d): the value +0x3a less delta, stored when it lies within [+0x24, +0x26], otherwise the limit it passed. ES2's HudSlideBar_AddDelta (DBSIM 0043b3f8).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; ES1DBSIM disassembly at 00033910",
+      "verified": {
+        "bytes": "00033910+85",
+        "sha1": "a818b3c83774",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00033968",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudRotationIndicator_Ctor",
+      "description": "(bar, rect) in stack order, callee-cleaned: allocates 0x3c bytes with operator_new when bar is null (returning null when that fails), runs HudSlideBar_CtorBase (0003385c), stores HFixRotationGaugeVtable (000936fe) at +0x10, loads hudhslid from the folder at 000980f8 into HudHSlidBank (000936c8) while that is 0, and runs HudRotationIndicator_Recompute (000339dc) by its padding. ES2's HudRotationIndicator_Ctor (DBSIM 0043b438) draws from the HUD bank. es2_xref finds calls from 00033c3c, 0003477b and 00034c87.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; ES1DBSIM decompile at 00033968",
+      "verified": {
+        "bytes": "00033968+89",
+        "sha1": "358827982878",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000339c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudRotationIndicator_Repaint",
+      "description": "(bar) in stack order, callee-cleaned: slot +8 of HFixRotationGaugeVtable (000936fe): calls the bar's slot +4, the paint. ES2's HudRotationIndicator_Repaint (DBSIM 0043e685).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; ES1DBSIM disassembly at 000339c4",
+      "verified": {
+        "bytes": "000339c4+21",
+        "sha1": "43e9d987f16c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000339dc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudRotationIndicator_Recompute",
+      "description": "(bar) in stack order, callee-cleaned: slot +0xc of HFixRotationGaugeVtable (000936fe): the width x1 - x0 to +0x28 and the track point (x0, y0 - 1) to +0x2e and +0x32. ES2's HudRotationIndicator_Recompute (DBSIM 0043b460) lifts the track by 2 << VideoMode_YCoordShift.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; ES1DBSIM decompile at 000339dc",
+      "verified": {
+        "bytes": "000339dc+40",
+        "sha1": "45c2b52dc5a6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033a04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudRotationIndicator_Paint",
+      "description": "(bar) in stack order, callee-cleaned: slot +4 of HFixRotationGaugeVtable (000936fe). Between Cockpit_PushCanvasContext and Cockpit_PopRenderContext, Bitmap_Blit (00067048) of HudHSlidBank's (000936c8) frame 0 at the track point +0x2e, then of frame 2 while the value +0x3a lies strictly between -300 and 300 and frame 1 otherwise, at x = x0 + ((value - min) & 0xffff) * width (+0x28) / range (+0x2c, unsigned), plus 1 when the value is negative, less 15, and y = y0. ES2's HudRotationIndicator_Paint (DBSIM 0043b4a4) draws HUD frames 11, 13 and 12 and takes 15 << VideoMode_XCoordShift.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; es2_naming.py diff ES1DBSIM 00033a04 DBSIM 0043b4a4",
+      "verified": {
+        "bytes": "00033a04+191",
+        "sha1": "568cf113d061",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033ac4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudSlideBarV_Ctor",
+      "description": "(bar, rect) in stack order, callee-cleaned: allocates 0x3c bytes with operator_new when bar is null (returning null when that fails), runs HudSlideBar_CtorBase (0003385c), stores VFixRotationGaugeVtable (00093726) at +0x10, loads hudvslid from the folder at 000980f8 into HudVSlidBank (000936cc) while that is 0, and runs HudSlideBarV_Recompute (00033b38) by its padding. ES2's HudSlideBar_CtorHidden (DBSIM 0043b54c), whose class's paint slot is empty. es2_xref finds one call, from 00034cd7.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; ES1DBSIM decompile at 00033ac4",
+      "verified": {
+        "bytes": "00033ac4+89",
+        "sha1": "6a299b54b56b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033b20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudSlideBarV_Repaint",
+      "description": "(bar) in stack order, callee-cleaned: slot +8 of VFixRotationGaugeVtable (00093726): calls the bar's slot +4, HudSlideBarV_Paint. ES2's HudSlideBarHidden_Repaint (DBSIM 0043e677).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; ES1DBSIM decompile at 00033b20",
+      "verified": {
+        "bytes": "00033b20+21",
+        "sha1": "43e9d987f16c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033b38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudSlideBarV_Recompute",
+      "description": "(bar) in stack order, callee-cleaned: slot +0xc of VFixRotationGaugeVtable (00093726): the height y1 - y0 to +0x28 and the track point (x0, y0) to +0x2e and +0x32. ES2's slot, HudSlideBarHidden_RecomputeNoOp (DBSIM 0043b56c), is empty.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; ES1DBSIM decompile at 00033b38",
+      "verified": {
+        "bytes": "00033b38+38",
+        "sha1": "8a4a96dad6f4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033b60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HudSlideBarV_Paint",
+      "description": "(bar) in stack order, callee-cleaned: slot +4 of VFixRotationGaugeVtable (00093726). Between Cockpit_PushCanvasContext and Cockpit_PopRenderContext, Bitmap_Blit (00067048) of HudVSlidBank's (000936cc) frame 0 at the track point +0x2e, then of frame 2 while the value +0x3a lies strictly between -400 and 400 and frame 1 otherwise, at x = x0 and y = y0 + ((value - min) & 0xffff) * height (+0x28) / range (+0x2c, unsigned), plus 1 when the value is negative, less 7. ES2's slot, HudSlideBarHidden_PaintNoOp (DBSIM 0043b574), is empty.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-slide-bars; ES1DBSIM decompile at 00033b60",
+      "verified": {
+        "bytes": "00033b60+191",
+        "sha1": "f90b35ed7696",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00033ed8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GunsightChild_CtorWithFields",
+      "description": "(child, rect) in stack order, callee-cleaned: GunsightChild_CtorBase (000337fc)(child, rect), then the dwords 3 and 6 at +0x14 and +0x18 and 0xa0 and 0x3a at +0x1c and +0x20, and returns child. es2_xref finds calls from 00033f38, 0003405a and Gunsight_ClickSurface_Ctor (000345bc).",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; ES1DBSIM disassembly at 00033ed8",
+      "verified": {
+        "bytes": "00033ed8+65",
+        "sha1": "0519e919a0f9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000345bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Gunsight_ClickSurface_Ctor",
+      "description": "(child, rect) in stack order, callee-cleaned: allocates 0x28 bytes with operator_new when child is null (returning null when that fails), runs GunsightChild_CtorWithFields (00033ed8)(child, rect) and stores HUDRovingGunsightVtable (0009379e) at +0x10. Allocates a 0x20-byte gadget, builds it with Widget_CtorRect (000438fc)(gadget, rect), stores 000937b2 and then HUDRovingGunsightGadgetVtable (000937da) at its +0x1c with an int16 0 at +0x19 and then +0x17, keeps it at +0x24 and registers it with Widget_RegisterClickable (000443d4) on the list at +0 of CockpitViewInstance (00092d1c). ES2's Gunsight_ClickSurface_Ctor (DBSIM 0043c120). es2_xref finds one call, from 00034ba7.",
+      "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#the-click-surface; ES1DBSIM disassembly at 000345bc",
+      "verified": {
+        "bytes": "000345bc+163",
+        "sha1": "43f9970b27af",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -9057,6 +9450,21 @@
       "verified": {
         "bytes": "00035180+10",
         "sha1": "df0dc4c07cf6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00039c50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MFDisplay_Ctor",
+      "description": "(screen, rect) in stack order, callee-cleaned: stores rect at +0 and returns screen. ES2's MFDisplay_Ctor (DBSIM 004451f0) stores its vtable at +0, the rect at +4 and 0 at +0xc.",
+      "source": "Herculan/docs/es1/simulation/mfd-status-screen.md#the-screen-object; ES1DBSIM disassembly at 00039c50",
+      "verified": {
+        "bytes": "00039c50+19",
+        "sha1": "10fac46715ba",
         "scope": "body",
         "via": "both"
       }
@@ -19997,6 +20405,105 @@
       "confidence": "high",
       "name": "LEDBMBarGraphVVtable",
       "description": "LEDBMBarGraphV's vtable, which LedBmBarGraphV_Ctor (00032a18) stores at a bar's +0x28: a zero dword, then LedBmBarGraphV_PaintToValue (00032c1c), LedBmBarGraphV_RepaintNoOp (00032ced) and BarGraphV_ResetToEmpty (00031b10). ES2's LEDBMBarGraphVVtable (DBSIM 0049bce8).",
+      "source": "es1_naming.py vtables ES1DBSIM"
+    },
+    {
+      "address": "000935f4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MfdStatus_BasesBank",
+      "description": "The bitmap bank bases, which MfdStatusScreen_Ctor (00032f74) loads while this is 0; MfdStatusScreen_Paint (000330b4) blits a structure's frame from it. ES2's bases bank (DBSIM 0049bda4).",
+      "source": "es2_xref.py --binary ES1DBSIM 000935f4"
+    },
+    {
+      "address": "000935f8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MfdStatus_FlyersBank",
+      "description": "The bitmap bank flyers, which MfdStatusScreen_Ctor (00032f74) loads beside MfdStatus_BasesBank; MfdStatusScreen_Paint (000330b4) blits its frame 0 for a flyer. ES2's flyers bank (DBSIM 0049bda8).",
+      "source": "es2_xref.py --binary ES1DBSIM 000935f8"
+    },
+    {
+      "address": "000935fe",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MFDStatusVtable",
+      "description": "MFDStatus's vtable, which MfdStatusScreen_Ctor (00032f74) stores at a screen's +8: a zero dword, then MfdStatusScreen_Paint (000330b4) and MfdStatusScreen_Update (00033690), each by its padding. ES2's MFDStatusVtable.",
+      "source": "es1_naming.py vtables ES1DBSIM; the image at 000935fe"
+    },
+    {
+      "address": "000936c8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HudHSlidBank",
+      "description": "The bitmap bank hudhslid, which HudRotationIndicator_Ctor (00033968) loads while this is 0: frame 0 the track, frame 2 the bar near center and frame 1 the bar elsewhere, as HudRotationIndicator_Paint (00033a04) draws them.",
+      "source": "es2_xref.py --binary ES1DBSIM 000936c8"
+    },
+    {
+      "address": "000936cc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HudVSlidBank",
+      "description": "The bitmap bank hudvslid, which HudSlideBarV_Ctor (00033ac4) loads while this is 0: frame 0 the track, frame 2 the bar near center and frame 1 the bar elsewhere, as HudSlideBarV_Paint (00033b60) draws them.",
+      "source": "es2_xref.py --binary ES1DBSIM 000936cc"
+    },
+    {
+      "address": "000936d8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Gunsight_PickArmed",
+      "description": "Byte, 1 while a gunsight click's pixel pick is pending: Gunsight_ClickGadget_OnClick (000337dc) sets it as it calls ObjPick_Arm. es2_xref finds it also at 00034f96 and 00034fbc, in 00034f3c.",
+      "source": "es2_xref.py --binary ES1DBSIM 000936d8"
+    },
+    {
+      "address": "000936de",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "RotationGaugeVtable",
+      "description": "RotationGauge's vtable, which HudSlideBar_CtorBase (0003385c) stores at a bar's +0x10: a zero dword, zeros at +4, +8 and +0xc where ES2's holds Rtl_PureVirtualCalled, HudSlideBar_AddDelta (00033910) by its padding at +0x10 and HudSlideBar_SetLimits (000338cc) at +0x14. ES2's RotationGaugeVtable (DBSIM 0049c24c).",
+      "source": "es1_naming.py vtables ES1DBSIM; the image at 000936de"
+    },
+    {
+      "address": "000936fe",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HFixRotationGaugeVtable",
+      "description": "HFixRotationGauge's vtable, which HudRotationIndicator_Ctor (00033968) stores at +0x10: a zero dword, then HudRotationIndicator_Paint (00033a04), HudRotationIndicator_Repaint (000339c4), HudRotationIndicator_Recompute (000339dc), HudSlideBar_AddDelta and HudSlideBar_SetLimits. ES2's HFixRotationGaugeVtable (DBSIM 0049c22c).",
+      "source": "es1_naming.py vtables ES1DBSIM"
+    },
+    {
+      "address": "00093726",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "VFixRotationGaugeVtable",
+      "description": "VFixRotationGauge's vtable, which HudSlideBarV_Ctor (00033ac4) stores at +0x10: a zero dword, then HudSlideBarV_Paint (00033b60), HudSlideBarV_Repaint (00033b20), HudSlideBarV_Recompute (00033b38), HudSlideBar_AddDelta and HudSlideBar_SetLimits. ES2's VFixRotationGaugeVtable (DBSIM 0049c20c), whose paint and recompute are empty.",
+      "source": "es1_naming.py vtables ES1DBSIM"
+    },
+    {
+      "address": "0009379e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HUDRovingGunsightVtable",
+      "description": "HUDRovingGunsight's vtable, which Gunsight_ClickSurface_Ctor (000345bc) stores at +0x10: a zero dword, then 000346a4 and 00034660. ES2's HUDRovingGunsightVtable (DBSIM 0049c1b0), Gunsight_ClickSurface_Paint and its repaint.",
+      "source": "es1_naming.py vtables ES1DBSIM"
+    },
+    {
+      "address": "000937da",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HUDRovingGunsightGadgetVtable",
+      "description": "The gunsight click gadget's vtable, which Gunsight_ClickSurface_Ctor (000345bc) stores at the gadget's +0x1c after 000937b2: seven slots from +4, Gunsight_ClickGadget_OnClick (000337dc) at +0xc, and at the others 0003469b, 0003469f and 00034683-00034697, where Ghidra has no function. ES2's HUDRovingGunsightGadgetVtable (DBSIM 0049c188), its click slot at +8.",
       "source": "es1_naming.py vtables ES1DBSIM"
     },
     {

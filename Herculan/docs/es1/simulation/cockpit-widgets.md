@@ -4,7 +4,7 @@
 
 ## Where the object files start and end
 
-Four object files lie between [the paper doll's](paper-doll.md#where-the-object-file-starts-and-ends) and the one the run of `ConfigPart`'s copies at `00032ed8` opens ([module copies](../formats/compiler.md#vtables)). Each start below is a function on a 4-byte boundary after zero bytes that follow the previous file's last return ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)):
+Four object files lie between [the paper doll's](paper-doll.md#where-the-object-file-starts-and-ends) and [the status screen's](mfd-status-screen.md#where-the-object-file-starts-and-ends), which the run of `ConfigPart`'s copies at `00032ed8` opens ([module copies](../formats/compiler.md#vtables)). Each start below is a function on a 4-byte boundary after zero bytes that follow the previous file's last return ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)):
 
 | Code | Holds | Its end |
 |---|---|---|

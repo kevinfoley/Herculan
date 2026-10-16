@@ -67,7 +67,7 @@ The pick:
 3. **`ObjList_DrawEntryRender`**, after each entry's draw while the pick is pending, reads the pixel into `000afa94` and, when it is not 1, stores the entry's object in `ObjPick_Object` and the pixel in `ObjPick_SavedPixel`, and writes 1 again. So `ObjPick_Object` ends as the last object drawn over the point, and `ObjPick_SavedPixel` as the colour it drew there; ES2's stores the pixel the same way (`00428807`).
 4. **`ObjList_DrawFrameObjects`**, after `ObjList_SortAndDraw`, writes `ObjPick_SavedPixel` back and clears `ObjPick_Pending`.
 
-`ObjPick_IsIdle` (`00020d50`) is 1 when `ObjPick_Pending` is clear, and `ObjPick_GetObject` (`00020d48`) returns `ObjPick_Object`. `es2_xref.py` finds one call of `ObjPick_Arm`, from `000337dc`, where it finds none of ES2's: given two arguments, `000337dc` sets the byte `000936d8` and arms the pick with the point at `000b16d4` when bit 0 of the second is set. It finds the calls of the other two in `00034f3c`, which, while `000936d8` is set and `ObjPick_IsIdle` answers non-zero, passes its own `+0x10` and a non-zero `ObjPick_GetObject` to `0002d78c`, and clears `000936d8` ([Open](#open)).
+`ObjPick_IsIdle` (`00020d50`) is 1 when `ObjPick_Pending` is clear, and `ObjPick_GetObject` (`00020d48`) returns `ObjPick_Object`. `es2_xref.py` finds one call of `ObjPick_Arm`, from `Gunsight_ClickGadget_OnClick` (`000337dc`), the gunsight surface's click slot ([the click surface](cockpit-gunsight-hud.md#the-click-surface)), where it finds none of ES2's. It finds the calls of the other two in `00034f3c`, which, while `Gunsight_PickArmed` (`000936d8`) is set and `ObjPick_IsIdle` answers non-zero, passes its own `+0x10` and a non-zero `ObjPick_GetObject` to `0002d78c`, and clears `000936d8` ([Open](#open)).
 
 The probe:
 
@@ -119,7 +119,7 @@ The probe:
 ## Open
 
 - **Open:** the callers of the tests `es2_xref.py` finds and this batch did not read: `00014174` (`Zone_WalkCollisionTest`), and what it does with the height; `0000375c` and `000037e0`, which pass arrays to `Structure_WalkCollisionTest` and `Sim_RaycastShapeVolume`, and which objects they gather; `00003a58`'s call of `Sim_RaycastShapeVolume`; and the five calls of `Sim_RaycastShapes`, from `0000e55c`, `00011c80` (twice), `00017a00` and `0001b084`, which ES2's AI uses for obstacle avoidance and line of sight ([ES2's probes](../../retail/simulation/ai-navigation.md#the-two-probes)).
-- **Open:** what input arms the pixel pick in the cockpit: `000337dc`, `00034f3c`, the byte `000936d8`, the point at `000b16d4`, and what `00034f3c` hands `TargetSelect_SetObject` ([the target selection](cockpit-panel.md#the-target-selection)).
+- **Open:** `00034f3c`, unread beyond its pick calls, and what it hands `TargetSelect_SetObject` ([the target selection](cockpit-panel.md#the-target-selection)); and what the point at `000b16d4` holds when [the click slot](cockpit-gunsight-hud.md#the-click-surface) arms the pick.
 - **Open:** what arms the occlusion probe and reads its answer: `es2_xref.py` finds no reference to `ObjProbe_Arm`, `ObjProbe_IsIdle` or `ObjProbe_IsHidden`.
 - **Open:** what reads `000afa8c` and `000afa94`: a grep of the disassembly for them by address finds stores alone. And what `00098dd6` and the driver routine at `0009df14` do with the page they are given.
 - **Open:** what calls `ObjList_PointNearSegmentAxis` and `ObjList_FreeSortNodes`, to which `es2_xref.py` finds no reference, and what the entry's `int16` at `+0x30` holds: `ObjList_DrawFrameObjects` writes no `+0x30`.

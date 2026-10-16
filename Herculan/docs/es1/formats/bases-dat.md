@@ -17,7 +17,7 @@ The loader reads each record into the first 54 bytes of a 62-byte runtime record
 
 | Offset | Holds | Retail values |
 |---|---|---|
-| `+0x00` | — | the record's own index, 0 to 8 |
+| `+0x00` | the type's index: [the status screen](../simulation/mfd-status-screen.md#the-paint) draws a structure as that frame of `bases` and names it by that entry of `STRINGS0.STR` group 20, through the record a structure's `+0x188` holds (stored at `00004245`) | the record's own index, 0 to 8 |
 | **`+0x02`** | the shape's index in its set | 0 to 5 |
 | **`+0x04`** | the wreck type in `dgs\bhulks` | 0 to 8; type 5 has 6, type 6 has 7, type 7 has 5 |
 | **`+0x06`** | 0: the first shape set; non-zero: the second, and the type's `BASECOL.DAT` model is installed | 1 on type 5, 2 on types 6 and 8; ES2's field here is the [animation thread count](../../retail/formats/bases-dat.md#the-type-record), non-zero on its animated types |
@@ -60,6 +60,6 @@ A type whose `+0x06` is 0 has its model read all the same and not installed. `SI
 
 ## Open
 
-- **Open:** what ES1's structure code reads at `+0x00` and `+0x08`–`+0x35`. The values are of ES2's kinds (damage, positions, an idle flipbook of −1 or 0 with a 256 interval at `+0x2a`, `+0x2c`, a 1500 at `+0x32`) but not at ES2's offsets, ES1's record having no component array.
+- **Open:** what ES1's structure code reads at `+0x08`–`+0x35`. The values are of ES2's kinds (damage, positions, an idle flipbook of −1 or 0 with a 256 interval at `+0x2a`, `+0x2c`, a 1500 at `+0x32`) but not at ES2's offsets, ES1's record having no component array.
 - **Open:** which of `dgs\bases`, `dgs\bases_e`, `dts\bases_an` and `dts\bases_ae`, the names beside the loader's strings at `000906d6`–`000906f2`, each shape set draws from, and what fills the four pointer arrays.
 - **Open:** what the structure code does with a type's collision model, and with the models of types whose `+0x06` is 0.

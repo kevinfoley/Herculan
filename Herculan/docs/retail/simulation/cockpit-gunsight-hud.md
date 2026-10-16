@@ -18,7 +18,7 @@ All nine children derive from `GunsightChild_CtorBase` (`0043b344`), a bare rect
 
 | # | Ctor | What it is |
 |---|---|---|
-| 0 | `Gunsight_ClickSurface_Ctor` (`0043c120`) | The clickable gunsight surface. Registers a child gadget with the cockpit's click list — the "gunsight click" entry into `TargetSelect_SetObject`. Its paint (`Gunsight_ClickSurface_Paint`, `0043c1dc`) only tracks the cursor against its rect |
+| 0 | `Gunsight_ClickSurface_Ctor` (`0043c120`) | The clickable gunsight surface. Registers a `0x20`-byte gadget over its rect with the cockpit's click list; the gadget's click slot, `Gunsight_ClickGadget_OnClickNoOp` (`0043b338`), tests bit 0 of its flags and returns, where ES1's arms [the pixel pick](../rendering/terrain-drawing.md#the-pixel-pick-and-the-occlusion-probe) ([ES1's](../../es1/simulation/cockpit-gunsight-hud.md#the-click-surface)). Its paint (`Gunsight_ClickSurface_Paint`, `0043c1dc`) reads the cursor and calls `Cockpit_SetForwardCursor` with 1 while it lies in the rect, bounds inclusive, and 0 otherwise |
 | 1 | `HudHeadingTape_Ctor` (`0043b57c`) | Heading tick tape, bank `hudhtick`, limits ±`0xe38` |
 | 2 | `HudRotationIndicator_Ctor` (`0043b438`) | The rotation indicator, limits ±`0x38e3` |
 | 3 | `HudSlideBar_CtorHidden` (`0043b54c`) | The pitch axis's slide bar — **paint slot is a no-op** (`HudSlideBarHidden_PaintNoOp`, `0043b574`), so it is never drawn |

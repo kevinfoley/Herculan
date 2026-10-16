@@ -66,9 +66,9 @@ It finds each hardpoint's gun through **`Mech_GetGunLayout` (`0001a0f8`)**, (mac
 
 ES2's reads the five colors through its color table, ids 12, 15, 20, 9 and 18, and in mode 1 keeps `colorId` for states 1 and 2 and takes ids 6 and 17 for 3 and 4. A mode above 3 writes whatever `EDX` and `EDI` held.
 
-**`Damage_ToConditionState` (`00030eb8`)**, (damage): ES2's (`00438700`), the same statements. `es2_xref.py` finds calls from `Player_DependentCondition` ([the squadmates](cockpit-panel.md#squadmate-and-pilot-helpers)) and `000336c6`.
+**`Damage_ToConditionState` (`00030eb8`)**, (damage): ES2's (`00438700`), the same statements. `es2_xref.py` finds calls from `Player_DependentCondition` ([the squadmates](cockpit-panel.md#squadmate-and-pilot-helpers)) and `MfdStatusScreen_SetCondition` (`000336b0`, [the condition line](mfd-status-screen.md#the-condition-line)).
 
-`es2_xref.py` finds `PaperDoll_RecolorRect` called once from `000330b4` and five times from `000424f8`, `PaperDoll_RecolorRectFromArt` once from `000424f8`, and `Damage_PickRegionTint` once from `000330b4` and four times from `000424f8` ([Open](#open)).
+`es2_xref.py` finds `PaperDoll_RecolorRect` called once from `MfdStatusScreen_Paint` (`000330b4`) and five times from `000424f8`, `PaperDoll_RecolorRectFromArt` once from `000424f8`, and `Damage_PickRegionTint` once from `MfdStatusScreen_Paint` and four times from `000424f8` ([Open](#open)). The status screen tints view 2 by ES2's walker table, each region in its own `recolorMode` ([a HERC on the status screen](mfd-status-screen.md#a-herc)).
 
 ## Functions
 
@@ -92,7 +92,7 @@ ES2's reads the five colors through its color table, ids 12, 15, 20, 9 and 18, a
 
 ## Open
 
-- **Open:** the screens that draw the diagram, `000330b4` and `000424f8`, unread. Their call counts match ES2's `MfdStatusScreen_Paint` and `HddDamageScreen_Update` ([ES2's](../../retail/simulation/mfd.md#viewport-and-condition-per-class)); which mode and damage reading each passes for a region is in their bodies. Also unread: `000336b0`, which calls `Damage_ToConditionState`.
+- **Open:** the other screen that draws the diagram, `000424f8`, unread. Its call counts match ES2's `HddDamageScreen_Update` ([ES2's](../../retail/simulation/heads-down-display.md#damage-detail--page-1)); which mode and damage reading it passes for a region is in its body.
 - **Open:** what reads `PaperDoll_StaticWeaponIcons`: `es2_xref.py` finds `000b0f78` in `PaperDoll_StaticInit` alone. And what calls `PaperDoll_GetView` and `HeapPtr_DtorPaperDollCopy`, to which it finds no reference.
 - **Open:** which region `colorId` values and modes ES1's `.PDG` files state, and so whether mode 1's 60 and the three-index key range meet retail art.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in DOSBox-X's debugger, `BP <CS>:0003058c` fires once for each machine as a mission starts, and the word at the returned holder's `+0` is that machine's `.PDG` hardpoint count.

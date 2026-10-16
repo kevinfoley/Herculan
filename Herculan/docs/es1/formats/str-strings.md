@@ -40,14 +40,14 @@ The retail `STRINGS0.STR` walks to its declared content length of 2,133 bytes in
 | 14 | 1 | `000bd3e0` | `YOU` | 17 | `0003ca1c`, `00058c72` |
 | 15 | 1 | `000bd3e4` | `TARGET` | — | `0003ca6e` |
 | 16 | 2 | `000bd3e8` | `NO TARGET SELECTED`, `NO INFO AVAILABLE` | 19 | `0003caa2`, `0003cd5e`, `00073eea` |
-| 17 | 1 | `000bd3f0` | `TARGET:` | — | `00033110`, `000331ff`, `0003355b`, `00033610`, `0003366b` |
-| 18 | 1 | `000bd3f4` | `STATUS:` | 21 | `0003324b` |
-| 19 | 16 | `000bd3f8` | the HERC type names, `ROADRUNNER` to `ARACHNITRON` | — | `0003323d` |
-| 20 | 9 | `000bd438` | the structure type names, `SUPPLY DEPOT` to `GUN TOWER` | — | `0003356c` |
-| 21 | 2 | `000bd45c` | `LANDSKIMMER`, `HOVERTANK` | 25 | `0003361e` |
-| 22 | 1 | `000bd464` | `NONE` | 26 | `0003311e` |
-| 23 | 1 | `000bd468` | `UNKNOWN` | 27 | `00033679` |
-| 24 | 5 | `000bd46c` | `OK`, `SHIELDS DN`, `INT DAMAGE`, `CRITICAL`, `DESTROYED` | 28 | `000336d3`, `0003e017` |
+| 17 | 1 | `000bd3f0` | `TARGET:` | — | [`MfdStatusScreen_Paint`](../simulation/mfd-status-screen.md#the-paint): `00033110`, `000331ff`, `0003355b`, `00033610`, `0003366b` |
+| 18 | 1 | `000bd3f4` | `STATUS:` | 21 | [`MfdStatusScreen_Paint`](../simulation/mfd-status-screen.md#the-paint): `0003324b` |
+| 19 | 16 | `000bd3f8` | the HERC type names, `ROADRUNNER` to `ARACHNITRON` | — | [`MfdStatusScreen_Paint`](../simulation/mfd-status-screen.md#the-paint): `0003323d` |
+| 20 | 9 | `000bd438` | the structure type names, `SUPPLY DEPOT` to `GUN TOWER` | — | [`MfdStatusScreen_Paint`](../simulation/mfd-status-screen.md#the-paint): `0003356c` |
+| 21 | 2 | `000bd45c` | `LANDSKIMMER`, `HOVERTANK` | 25 | [`MfdStatusScreen_Paint`](../simulation/mfd-status-screen.md#the-paint): `0003361e` |
+| 22 | 1 | `000bd464` | `NONE` | 26 | [`MfdStatusScreen_Paint`](../simulation/mfd-status-screen.md#the-paint): `0003311e` |
+| 23 | 1 | `000bd468` | `UNKNOWN` | 27 | [`MfdStatusScreen_Paint`](../simulation/mfd-status-screen.md#the-paint): `00033679` |
+| 24 | 5 | `000bd46c` | `OK`, `SHIELDS DN`, `INT DAMAGE`, `CRITICAL`, `DESTROYED` | 28 | [`MfdStatusScreen_SetCondition`](../simulation/mfd-status-screen.md#the-condition-line): `000336d3`; `0003e017` |
 | 25 | 2 | `000bd480` | `ACT`, `PASS` | 29 | `00035686` |
 | 26 | 1 | `000bd488` | `RNG:` | — | `00035b42` |
 | 27 | 1 | `000bd48c` | `DST:` | — | `00035ab9` |
@@ -78,6 +78,6 @@ The arrays lie in registration order from `000bd228` to `000bd4f3`, except group
 
 ## Open
 
-- **Open:** what reads the arrays of groups 1, 6, 9 and 31: `es2_xref.py` finds `000bd2b8`, `000bd314`, `000bd33c` and `000bd4b0` in `SimStrings_LoadAll` alone, and an access through a neighboring array's base would show in neither its search nor a grep by address. The other arrays' readers are the addresses in [the groups](#the-groups), unread, and which screen each caption belongs to follows from reading them.
+- **Open:** what reads the arrays of groups 1, 6, 9 and 31: `es2_xref.py` finds `000bd2b8`, `000bd314`, `000bd33c` and `000bd4b0` in `SimStrings_LoadAll` alone, and an access through a neighboring array's base would show in neither its search nor a grep by address. The other arrays' readers are the addresses in [the groups](#the-groups), unread but for the status screen's, and which screen each caption belongs to follows from reading them.
 - **Open:** what reads the light names at `0009328c` and `000932c8` (`0003b45d`, `0003bc09`, `000398de`, unread), and what calls `HeapPtr_DtorSimStringsCopy`, to which `es2_xref.py` finds no reference.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in DOSBox-X's debugger, `BP <CS>:0002fe84` fires as the cockpit is built, and after it returns the dword at `000bd2e0` points at the text `STATUS`.

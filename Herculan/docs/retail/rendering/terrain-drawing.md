@@ -157,4 +157,4 @@ Two screen tests ride on the object draw, each armed by a function `es2_xref.py`
 
 ## Open
 
-- **Open:** what arms [the pick and the probe](#the-pixel-pick-and-the-occlusion-probe). `es2_xref.py` finds no reference to `ObjPick_Arm` or `ObjProbe_Arm`, and they hold the only stores of 1 to `DAT_004cf9b4` and `DAT_0049abbc`. Unless something else arms the pick, `ObjPick_GetObject` always returns 0 and a gunsight click selects nothing.
+- **Open:** what arms [the pick and the probe](#the-pixel-pick-and-the-occlusion-probe). `es2_xref.py` finds no reference to `ObjPick_Arm` or `ObjProbe_Arm`, and they hold the only stores of 1 to `DAT_004cf9b4` and `DAT_0049abbc`. Unless something else arms the pick, `ObjPick_GetObject` always returns 0 and a gunsight click selects nothing. ES1 arms its pick from the gunsight surface's click slot ([ES1's](../../es1/simulation/cockpit-gunsight-hud.md#the-click-surface)); ES2's slot, `Gunsight_ClickGadget_OnClickNoOp` (`0043b338`), tests the same bit of its flags and returns ([the gunsight surface](../simulation/cockpit-gunsight-hud.md#front-window-hud--the-gunsight-complex)).
