@@ -68,6 +68,14 @@ public sealed record JoystickDeviceMap {
 	public bool InvertRudder { get; init; }
 
 	/// <summary>
+	/// Whether the RAZOR's pitch runs the other way to what the four inverts above give it — <b>this engine's
+	/// invention</b>; retail has no invert of any kind. The per-axis inverts serve both machines, and with the
+	/// default bindings one control pitches a HERC's turret and a RAZOR's nose, so this is how the two get
+	/// separate senses. <see cref="JoystickBindings.InvertRazorPitch"/> applies it.
+	/// </summary>
+	public bool InvertRazorPitch { get; init; }
+
+	/// <summary>
 	/// The centre band, in <see cref="JoystickReading.RawFull"/> units. Defaults to the original's own
 	/// <see cref="JoystickReading.Deadzone"/>; a modern stick with a tighter centre can take it down,
 	/// and a worn one up. Note it also shapes the response curve, which is scaled to reach full
@@ -256,6 +264,7 @@ public sealed record JoystickDeviceMap {
 			InvertStickY = Bool("invertsticky", defaults.InvertStickY),
 			InvertThrottle = Bool("invertthrottle", defaults.InvertThrottle),
 			InvertRudder = Bool("invertrudder", defaults.InvertRudder),
+			InvertRazorPitch = Bool("invertrazorpitch", defaults.InvertRazorPitch),
 			Deadzone = Math.Clamp(Int("deadzone", defaults.Deadzone), 0, JoystickReading.RawFull - 1),
 			HatDiagonals = Bool("hatdiagonals", defaults.HatDiagonals),
 			BipolarThrottle = Bool("bipolarthrottle", defaults.BipolarThrottle),
@@ -282,6 +291,8 @@ public sealed record JoystickDeviceMap {
 		text.AppendLine(Line("InvertThrottle", InvertThrottle,
 			"the lever's CLOSED stop must read positive"));
 		text.AppendLine(Line("InvertRudder", InvertRudder));
+		text.AppendLine(Line("InvertRazorPitch", InvertRazorPitch,
+			"Herculan's own: the RAZOR's pitch, on top of the inverts above"));
 		text.AppendLine();
 		text.AppendLine(Line("Deadzone", Deadzone,
 			$"of {JoystickReading.RawFull}; the original uses {JoystickReading.Deadzone}"));

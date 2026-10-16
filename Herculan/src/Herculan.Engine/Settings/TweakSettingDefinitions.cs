@@ -21,6 +21,8 @@ public static class TweakSettingDefinitions {
 	/// <item><description>Display correct hardpoints for Raptor II in VSHELL (5, not 4)</description></item>
 	/// <item><description>Display the L100's true range on the weapons screen and in the armory (330 m, not 320), and
 	/// the missiles' (320 m for every launcher and guidance kind) — see <see cref="Shell.ShellWeaponProse"/></description></item>
+	/// <item><description>Display every guidance kind's true warhead damage on the weapons screen (2000, not 2250 to
+	/// 3500) — see <see cref="Shell.ShellWeaponProse"/></description></item>
 	/// <item><description>Re-rate the weapons screen's Power Consumption and Recharge words so weapons with the same
 	/// cost and refill time read alike (PBW2 as PBW, ELF as ELF2, EMP2 as EMPC) — HERCULAN's ratings, see
 	/// <see cref="Shell.ShellWeaponProse"/></description></item>
@@ -119,6 +121,22 @@ public static class TweakSettingDefinitions {
 	/// rotates through the tracks in disc order, one per mission. See <see cref="Audio.CdMusic.ShuffledTrack"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> ShuffleMissionMusic = new("tweak.shuffle_mission_music", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
+	/// Turn the hue of the PBW and PBW2 beams by 180 degrees, so they draw blue instead of fire orange. Retail draws
+	/// every straight beam from the one <c>BEAMTEX.DBA</c> frame (docs/retail/formats/beam-dat.md), so a particle beam
+	/// differs from a laser only in width. The colour is HERCULAN's, not retail's. See <see cref="Content.BeamAppearance.TurnHue"/>.
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> ChangePbwBeamHue = new("tweak.change_pbw_beam_hue", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
+
+	/// <summary>
+	/// Draw a mission at the window's own resolution and shape. Off, it is drawn at 640x480, retail's own resolution
+	/// (docs/retail/launch-options.md, "Display"), and the frame is scaled to fit the window, centred, so a window wider
+	/// than 4:3 gets bars at its sides; HERCULAN's own ImGui windows stay at the window's resolution either way. The
+	/// shell is drawn at 640x480 whatever this is set to.
+	/// <para>Defaults on, an exception to the retail-by-default rule. See <see cref="Render.FixedResolutionTarget"/>.</para>
+	/// </summary>
+	public static readonly TweakSettingDefinition<bool> HighResolutionWidescreen = new("tweak.high_resolution_widescreen", TweakCategory.Cosmetic, defaultValue: true, recommendedValue: true);
 	#endregion
 
 	#region AI
@@ -218,11 +236,11 @@ public static class TweakSettingDefinitions {
 
 	/// <summary>Every defined <c>bool</c> tweak setting, keyed by ID for <see cref="TweakSettings"/> save/load.</summary>
 	public static readonly IReadOnlyList<TweakSettingDefinition<bool>> All = new[] {
-		ShowCorrectStats, ShowAccurateSpeed, RoundShieldBalance, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
+		HighResolutionWidescreen, ShowCorrectStats, ShowAccurateSpeed, RoundShieldBalance, ShowTargetDistanceInMeters, FixNacelleImpactEffectPosition,
 		PreserveSoundPosition, CriticalDamageMessage, ShowSquadmateNumber, FixComputerMessagePreference,
 		SmootherTurretMovement, MouseExternalView, FixDefendPositionOrder, FixWeaponDamageRecords,
 		ChargeBarPowerLevel, FlashThroughSecondHit, ShowAltitudeTape, DropPodSoundFromPod, FixRepairDiagramSides,
 		FixTerrainHitPoint, FlyerIgnoresPlayerThrottle, StrandedStingrayClosesIn, FasterKeyboardAiming, FixRaptorIIPerspective, ResetCountersOnReplay,
-		PlayLastMusicTrack, ShuffleMissionMusic,
+		PlayLastMusicTrack, ShuffleMissionMusic, ChangePbwBeamHue,
 	};
 }

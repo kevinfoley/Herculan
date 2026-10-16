@@ -69,8 +69,8 @@ sealed class AboutWindow {
 		}
 	}
 
-	// The release number, without the commit hash the SDK appends to the informational version after a '+'.
-	private static string DisplayVersion() {
+	/// <summary>The release number, without the commit hash the SDK appends to the informational version after a '+'.</summary>
+	internal static string DisplayVersion() {
 		var assembly = typeof(AboutWindow).Assembly;
 		string? informational = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 		if (informational != null) {

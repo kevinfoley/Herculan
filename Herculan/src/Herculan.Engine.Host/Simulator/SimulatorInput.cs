@@ -1,5 +1,6 @@
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
+using Herculan.Engine.Render;
 using Silk.NET.Input;
 
 namespace Herculan.Engine.Host.Simulator;
@@ -8,11 +9,14 @@ namespace Herculan.Engine.Host.Simulator;
 sealed class SimulatorInput : ISimulatorInput {
 	private readonly EngineWindow _window;
 	private readonly TapePlayback _tape;
+	private readonly Func<FrameFit> _fit;
 
-	public SimulatorInput(EngineWindow window, TapePlayback tape, CockpitInput cockpitInput) {
+	/// <param name="fit">Where the mission's frame sits in the window this frame, which the pointer is placed in.</param>
+	public SimulatorInput(EngineWindow window, TapePlayback tape, CockpitInput cockpitInput, Func<FrameFit> fit) {
 		_window = window;
 		_tape = tape;
 		Cockpit = cockpitInput;
+		_fit = fit;
 	}
 
 	/// <inheritdoc/>
@@ -33,7 +37,7 @@ sealed class SimulatorInput : ISimulatorInput {
 	public ScaledImGui? ImGui { get; set; }
 
 	/// <summary>
-	/// A live mouse event, in framebuffer pixels, as it went into <see cref="Cockpit"/>, with the framebuffer's
+	/// A live mouse event, in pixels of the mission's frame, as it went into <see cref="Cockpit"/>, with the frame's
 	/// size: what a recording puts on its tape.
 	/// </summary>
 	public event Action<float, float, CockpitMouseButtons, int, int>? MouseQueued;
@@ -62,21 +66,19 @@ sealed class SimulatorInput : ISimulatorInput {
 		if (input.Mice.Count > 0) {
 			Mouse = input.Mice[0];
 
-			// The pointer reports window-client pixels while the cockpit is placed in framebuffer pixels,
-			// which differ on a high-DPI display. Rescaling here is the same correction the original makes
-			// for the same reason — Mouse_RecomputeScale (0048078c) converts client coordinates into the
-			// game's own space before any listener sees them (§2).
+			// The pointer reports window-client pixels while the cockpit is placed in pixels of the mission's
+			// frame, which differ on a high-DPI display and at 640x480 (the high-resolution tweak off). Rescaling
+			// here is the same correction the original makes for the same reason — Mouse_RecomputeScale (0048078c)
+			// converts client coordinates into the game's own space before any listener sees them (§2).
 			void Queue(IMouse m, CockpitMouseButtons buttons) {
 				if (_tape.Playing) {
 					return;
 				}
 
-				var client = _window.ClientSize;
-				var framebuffer = _window.FramebufferSize;
-				float x = m.Position.X * framebuffer.X / Math.Max(client.X, 1);
-				float y = m.Position.Y * framebuffer.Y / Math.Max(client.Y, 1);
+				var fit = _fit();
+				var (x, y) = ToFrame(m.Position, fit);
 				Cockpit.Enqueue(x, y, buttons);
-				MouseQueued?.Invoke(x, y, buttons, framebuffer.X, framebuffer.Y);
+				MouseQueued?.Invoke(x, y, buttons, fit.Frame.X, fit.Frame.Y);
 			}
 
 			// The mask is built from the event's own button rather than read back off the device, so it
@@ -91,7 +93,7 @@ sealed class SimulatorInput : ISimulatorInput {
 	public void TakeLiveKeys() => Keyboard = LiveKeys;
 
 	/// <summary>
-	/// Where the pointer is and what it holds, in framebuffer pixels: the live mouse, or during a replay
+	/// Where the pointer is and what it holds, in pixels of the mission's frame: the live mouse, or during a replay
 	/// wherever the tape's own mouse events have left it.
 	/// </summary>
 	public (float X, float Y, CockpitMouseButtons Buttons) Pointer() {
@@ -103,15 +105,12 @@ sealed class SimulatorInput : ISimulatorInput {
 			return (float.NaN, float.NaN, CockpitMouseButtons.None);
 		}
 
-		var client = _window.ClientSize;
-		var framebuffer = _window.FramebufferSize;
-		return (Mouse.Position.X * framebuffer.X / Math.Max(client.X, 1),
-			Mouse.Position.Y * framebuffer.Y / Math.Max(client.Y, 1),
-			ButtonsHeld(Mouse));
+		var (x, y) = ToFrame(Mouse.Position, _fit());
+		return (x, y, ButtonsHeld(Mouse));
 	}
 
 	/// <summary>
-	/// Puts the pointer on a framebuffer pixel — <c>Mouse_WarpCursorToPoint</c>'s (<c>004807d0</c>) conversion back to
+	/// Puts the pointer on a pixel of the mission's frame — <c>Mouse_WarpCursorToPoint</c>'s (<c>004807d0</c>) conversion back to
 	/// client coordinates and its <c>SetCursorPos</c>, which the original gates on a live mouse device. During a replay
 	/// the tape owns the pointer and the window's own mouse is left alone, which is a divergence from retail: the
 	/// original's replay warps too, then sets the position from each mouse event the tape carries, and this
@@ -122,11 +121,19 @@ sealed class SimulatorInput : ISimulatorInput {
 			return;
 		}
 
+		var fit = _fit();
+		var (windowX, windowY) = fit.ToWindow(x, y);
 		var client = _window.ClientSize;
-		var framebuffer = _window.FramebufferSize;
 		Mouse.Position = new System.Numerics.Vector2(
-			x * client.X / Math.Max(framebuffer.X, 1),
-			y * client.Y / Math.Max(framebuffer.Y, 1));
+			windowX * client.X / Math.Max(fit.Window.X, 1),
+			windowY * client.Y / Math.Max(fit.Window.Y, 1));
+	}
+
+	/// <summary>A window-client position as a pixel of the mission's frame, through the framebuffer's pixels.</summary>
+	private (float X, float Y) ToFrame(System.Numerics.Vector2 position, FrameFit fit) {
+		var client = _window.ClientSize;
+		return fit.ToFrame(position.X * fit.Window.X / Math.Max(client.X, 1),
+			position.Y * fit.Window.Y / Math.Max(client.Y, 1));
 	}
 
 	/// <summary>Every mouse button currently held, as the cockpit's own flag pair.</summary>

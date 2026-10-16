@@ -2,7 +2,6 @@ using Herculan.Engine.Audio;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Localization;
 using Herculan.Engine.Install;
-using Herculan.Engine.Platform;
 
 namespace Herculan.Engine.Host;
 
@@ -10,7 +9,8 @@ namespace Herculan.Engine.Host;
 /// What outlives one turn of the shell or one mission: the install, which the Settings menu can change for
 /// the next turn, the install's disc, the player's interface strings and the font every ImGui window is drawn in.
 /// </summary>
-sealed class HostSession(string installRoot, LocalizationTable localization, string imguiFontPath) : IDisposable {
+sealed class HostSession(string installRoot, LocalizationTable localization, string imguiFontPath,
+		string imguiItalicFontPath) : IDisposable {
 	private string _installRoot = installRoot;
 	private GameDisc? _disc;
 	private bool _discOpen;
@@ -58,11 +58,8 @@ sealed class HostSession(string installRoot, LocalizationTable localization, str
 
 	public string ImGuiFontPath { get; } = imguiFontPath;
 
-	/// <summary>
-	/// Where the last shell or mission window was when it closed, so the next one opens at the same size and place,
-	/// maximized if it was; null until one has closed.
-	/// </summary>
-	public WindowPlacement? WindowPlacement { get; set; }
+	/// <summary>The italic face of <see cref="ImGuiFontPath"/>'s font (<see cref="ScaledImGui.ItalicFont"/>).</summary>
+	public string ImGuiItalicFontPath { get; } = imguiItalicFontPath;
 
 	/// <summary>
 	/// Makes the next use of <see cref="Disc"/> close the disc and open whatever <c>drive.cfg</c> now names. The

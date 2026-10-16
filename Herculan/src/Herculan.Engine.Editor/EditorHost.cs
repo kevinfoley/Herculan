@@ -1,6 +1,7 @@
 using System.Numerics;
 using HercWorks.Core.Io;
 using Herculan.Engine.Content;
+using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
 using Herculan.Engine.Shell;
@@ -33,11 +34,14 @@ public sealed record EditorLaunch(string InstallRoot, GameContent SimulatorConte
 	/// </summary>
 	public string? ScriptPath { get; init; }
 
-	/// <summary>Where the window opens, as the window before it left it; null for the default.</summary>
-	public WindowPlacement? Placement { get; init; }
+	/// <summary>
+	/// The game's window, which the editor takes as a turn and leaves open for the game; null for a window of its own,
+	/// where the editor last closed on its own (<see cref="EditorSettings.Window"/>), or maximized the first time.
+	/// </summary>
+	public HostWindow? Window { get; init; }
 
-	/// <summary>Whether the editor was opened from the game, which File &gt; Back to game returns to.</summary>
-	public bool FromGame { get; init; }
+	/// <summary>Whether the editor was opened from the game, in its window, which File &gt; Back to game returns to.</summary>
+	public bool FromGame => Window != null;
 }
 
 /// <summary>
@@ -89,11 +93,11 @@ public sealed class EditorHost {
 	private IMouse? _mouse;
 	private IInputContext? _input;
 
-	// A gamepad as the mouse: the left stick moves the pointer, the right trigger is the left button and the left trigger
-	// the right (docs/herculan/herculan-key-bindings.md, "Gamepad in the editor"). What each trigger was last frame, so
+	// A gamepad as the mouse: a stick moves the pointer, one trigger is the left button and the other the right, as the
+	// install's herculan-joystick.cfg chooses (docs/herculan/herculan-key-bindings.md, "Gamepad in the editor"). What each trigger was last frame, so
 	// its press and release reach the viewport as the button's own would; ImGui takes them through
 	// ScaledImGui.HeldAsMouseButtons. The pad works only while the window has the focus, as GLFW reads it regardless.
-	private readonly GamepadPointer _padPointer = new();
+	private readonly GamepadPointer _padPointer;
 	private bool _padLeftHeld;
 	private bool _padRightHeld;
 	private bool _focused = true;
@@ -119,6 +123,7 @@ public sealed class EditorHost {
 	private EditorHost(EditorLaunch launch) {
 		_launch = launch;
 		_installData = ShellWorkingFiles.DataDirectory(launch.InstallRoot);
+		_padPointer = new GamepadPointer { Settings = JoystickMapFile.LoadIn(_installData).Mouse };
 		_settingsPanel = new EditorSettingsPanel(_settings);
 		_volBrowser = new VolMissionBrowser(() => MissionFileLaunch.List(launch.ShellContent()));
 
@@ -141,23 +146,31 @@ public sealed class EditorHost {
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
-		_window = new EngineWindow(WindowTitle, placement: launch.Placement);
+		_window = launch.Window is { } window
+			? new EngineWindow(window, WindowTitle)
+			: new EngineWindow(WindowTitle, placement: _settings.Window?.ToPlacement(), maximized: true);
 		_window.Load += OnLoad;
 		_window.Update += OnUpdate;
 		_window.Render += OnRender;
 		_window.Closing += OnClosing;
-		_window.View.FocusChanged += focused => _focused = focused;
+		_window.FocusChanged += focused => _focused = focused;
 	}
 
-	/// <summary>
-	/// Runs the editor until its window closes, and returns how it ended and where the window was, for the next
-	/// window to open at.
-	/// </summary>
-	public static (EditorExit Exit, WindowPlacement Placement) Run(EditorLaunch launch) {
+	/// <summary>Runs the editor until its window closes or its turn in the game's ends, and returns how it ended.</summary>
+	public static EditorExit Run(EditorLaunch launch) {
 		var host = new EditorHost(launch);
 		using var window = host._window;
 		window.Run();
-		return (host._exit, window.Placement);
+
+		// Where its own window was, written into the file as it stands rather than through the open settings, which may
+		// hold the Settings panel's edits that were never confirmed.
+		if (!launch.FromGame) {
+			var saved = EditorSettings.Load();
+			saved.Window = SavedWindow.From(window.Placement);
+			saved.Save();
+		}
+
+		return host._exit;
 	}
 
 	private string WindowTitle => _mission?.WindowTitle ?? "HERCULAN Mission Editor";

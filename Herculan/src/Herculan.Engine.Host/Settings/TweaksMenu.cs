@@ -35,6 +35,9 @@ public sealed class TweaksMenu {
 	/// <summary>Whether the panel is currently open. Set by the menu bar; see <see cref="HostMenuBar"/>.</summary>
 	public bool IsOpen { get; set; }
 
+	/// <summary>The ImGui the panel draws in, for its italic note; the note is drawn upright without one.</summary>
+	public ScaledImGui? Fonts { get; set; }
+
 	public TweaksMenu(TweakSettings settings, LocalizationTable localization) {
 		_settings = settings ?? throw new ArgumentNullException(nameof(settings));
 		_localization = localization ?? throw new ArgumentNullException(nameof(localization));
@@ -60,6 +63,16 @@ public sealed class TweaksMenu {
 		// The title doubles as the window's ID, so a language change opens it afresh, re-centred; a
 		// "###tweaks" suffix would keep the ID fixed at the cost of a string built every frame.
 		if (ImGui.Begin(_localization.GetStringOrKey("tweaks.title"), ref stayOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize)) {
+			ImGui.TextWrapped(_localization.GetStringOrKey("tweaks.description"));
+			ImGui.Spacing();
+			if (Fonts?.ItalicFont is { } italic) {
+				ImGui.PushFont(italic);
+				ImGui.TextWrapped(_localization.GetStringOrKey("tweaks.note"));
+				ImGui.PopFont();
+			} else {
+				ImGui.TextWrapped(_localization.GetStringOrKey("tweaks.note"));
+			}
+
 			foreach (var (category, settings) in VisibleByCategory) {
 				ImGui.SeparatorText(_localization.GetStringOrKey(CategoryKey(category)));
 				foreach (var definition in settings) {

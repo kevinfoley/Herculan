@@ -30,16 +30,19 @@ public sealed class ScaledImGui : IDisposable {
 	private readonly EngineWindow _window;
 	private readonly IInputContext _input;
 	private readonly string _fontPath;
+	private readonly string? _italicFontPath;
 	private ImGuiController _controller;
 	private float _builtContentScale;
 	private float _builtClientScale;
 
 	/// <param name="fontPath">The TrueType font every ImGui window draws in.</param>
-	public ScaledImGui(GL gl, EngineWindow window, IInputContext input, string fontPath) {
+	/// <param name="italicFontPath">Its italic face, for <see cref="ItalicFont"/>; null for none.</param>
+	public ScaledImGui(GL gl, EngineWindow window, IInputContext input, string fontPath, string? italicFontPath = null) {
 		_gl = gl;
 		_window = window;
 		_input = input;
 		_fontPath = fontPath;
+		_italicFontPath = italicFontPath;
 		_controller = Build();
 	}
 
@@ -54,6 +57,12 @@ public sealed class ScaledImGui : IDisposable {
 	/// ordinary font would draw blurred. Drawn at <see cref="LargeFontSize"/>.
 	/// </summary>
 	public ImFontPtr LargeFont { get; private set; }
+
+	/// <summary>
+	/// The font's italic face at the ordinary size, or null when the constructor was given none. Rebuilt with the
+	/// controller, so it is read each time it is drawn with rather than kept.
+	/// </summary>
+	public ImFontPtr? ItalicFont { get; private set; }
 
 	/// <summary>The size <see cref="LargeFont"/> is drawn at in the current ImGui frame, as <see cref="Scaled(float)"/>.</summary>
 	public static float LargeFontSize => ImGui.GetFontSize() * LargeFontScale;
@@ -153,8 +162,11 @@ public sealed class ScaledImGui : IDisposable {
 		_builtContentScale = _window.ContentScale;
 		_builtClientScale = _window.ClientScale ?? _builtContentScale;
 		float pixels = MathF.Round(FontSize * _builtContentScale);
-		var controller = new ImGuiController(_gl, _window.View, _input, new ImGuiFontConfig(_fontPath, (int)pixels),
-			() => LargeFont = ImGui.GetIO().Fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale));
+		var controller = new ImGuiController(_gl, _window.View, _input, new ImGuiFontConfig(_fontPath, (int)pixels), () => {
+			var fonts = ImGui.GetIO().Fonts;
+			LargeFont = fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale);
+			ItalicFont = _italicFontPath != null ? fonts.AddFontFromFileTTF(_italicFontPath, pixels) : null;
+		});
 		ImGui.GetIO().FontGlobalScale = _builtClientScale / _builtContentScale;
 		ImGui.GetStyle().ScaleAllSizes(_builtClientScale);
 		ImGui.GetStyle().Colors[(int)ImGuiCol.WindowBg].W = .975f;

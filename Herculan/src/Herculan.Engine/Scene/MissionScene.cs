@@ -1,4 +1,5 @@
-﻿using HercWorks.Core.Data.Struct;
+﻿using HercWorks.Core.Data.File.Msn.Script;
+using HercWorks.Core.Data.Struct;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
@@ -121,8 +122,10 @@ public sealed class MissionScene {
 	/// Loads the mission at <paramref name="scriptPath"/> and everything it needs.
 	/// </summary>
 	/// <param name="dataDirectory">Where the simulator's settings are, when not beside the script.</param>
-	public static MissionScene Load(GameContent content, string scriptPath, string? dataDirectory = null) {
-		var mission = MissionLoader.Load(content, scriptPath);
+	/// <param name="script">The script already read from <paramref name="scriptPath"/>, or null to read it here.</param>
+	public static MissionScene Load(GameContent content, string scriptPath, string? dataDirectory = null,
+			ScriptDat? script = null) {
+		var mission = MissionLoader.Load(content, script ?? MissionLoader.ReadScript(scriptPath), scriptPath);
 
 		var materials = TerrainMaterialTable.Load(content);
 		var theater = TheaterDescriptor.Load(content, mission.Header.TheaterIndex, mission.Header.TheaterVariant);

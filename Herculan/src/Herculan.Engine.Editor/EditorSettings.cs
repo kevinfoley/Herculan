@@ -1,5 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Herculan.Engine.Platform;
+using Silk.NET.Maths;
 
 namespace Herculan.Engine.Editor;
 
@@ -46,6 +48,12 @@ public sealed class EditorSettings {
 	/// </summary>
 	[JsonConverter(typeof(JsonStringEnumConverter<WaitingGroupDisplay>))]
 	public WaitingGroupDisplay WaitingGroups { get; set; } = WaitingGroupDisplay.Outlined;
+
+	/// <summary>
+	/// Where the editor's window was when the editor last closed on its own (not from the game, which hands it the
+	/// game window's place), for it to open at again. Null until then, when it opens maximized.
+	/// </summary>
+	public SavedWindow? Window { get; set; }
 
 	/// <summary>
 	/// Where the settings live: <c>%APPDATA%\Herculan\editor-settings.json</c> on Windows, and the
@@ -104,6 +112,38 @@ public sealed class EditorSettings {
 		ShowBasePads = other.ShowBasePads;
 		WaitingGroups = other.WaitingGroups;
 	}
+}
+
+/// <summary><see cref="WindowPlacement"/> in a shape the settings file holds.</summary>
+public sealed class SavedWindow {
+	/// <inheritdoc cref="WindowPlacement.Position"/>
+	public int? X { get; set; }
+
+	/// <inheritdoc cref="WindowPlacement.Position"/>
+	public int? Y { get; set; }
+
+	/// <inheritdoc cref="WindowPlacement.Size"/>
+	public int Width { get; set; }
+
+	/// <inheritdoc cref="WindowPlacement.Size"/>
+	public int Height { get; set; }
+
+	/// <inheritdoc cref="WindowPlacement.Maximized"/>
+	public bool Maximized { get; set; }
+
+	public static SavedWindow From(WindowPlacement placement) => new() {
+		X = placement.Position?.X,
+		Y = placement.Position?.Y,
+		Width = placement.Size.X,
+		Height = placement.Size.Y,
+		Maximized = placement.Maximized,
+	};
+
+	/// <summary>The placement, or null when the file's size is not a usable one.</summary>
+	public WindowPlacement? ToPlacement() => Width > 0 && Height > 0
+		? new WindowPlacement(X is { } x && Y is { } y ? new Vector2D<int>(x, y) : null, new Vector2D<int>(Width, Height),
+			Maximized)
+		: null;
 }
 
 /// <summary>The three ways <see cref="EditorSettings.WaitingGroups"/> shows a waiting group's members.</summary>

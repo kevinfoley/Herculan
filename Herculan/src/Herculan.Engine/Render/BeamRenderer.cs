@@ -2,6 +2,7 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
+using Herculan.Engine.Settings;
 using Herculan.Engine.Sim;
 using Silk.NET.OpenGL;
 
@@ -60,7 +61,7 @@ public sealed class BeamRenderer : IDisposable {
 	private readonly ShaderProgram _shader;
 	private readonly ShaderProgram _jaggedShader;
 	private readonly BeamAppearance _appearance;
-	private readonly Dictionary<int, GpuTexture> _profiles = new();
+	private readonly Dictionary<(int SubtypeId, bool HueTurned), GpuTexture> _profiles = new();
 	private readonly uint _vertexArray;
 	private readonly uint _vertexBuffer;
 	private readonly uint _jaggedVertexArray;
@@ -206,7 +207,11 @@ public sealed class BeamRenderer : IDisposable {
 
 	private void Draw(BeamTracer tracer, Matrix4x4 view, float nearPlane, ObjectDrawTable? filing) {
 		int halfWidth = _appearance.HalfWidth(tracer.SubtypeId);
-		if (halfWidth <= 0 || Profile(tracer.SubtypeId) is not { } profile) {
+
+		// Read every frame, so toggling the tweak recolours the next shot at once.
+		bool hueTurned = BeamAppearance.IsParticleBeam(tracer.SubtypeId)
+			&& TweakSettings.Current.GetSettingValue(TweakSettingDefinitions.ChangePbwBeamHue);
+		if (halfWidth <= 0 || Profile(tracer.SubtypeId, hueTurned) is not { } profile) {
 			return;
 		}
 
@@ -291,10 +296,11 @@ public sealed class BeamRenderer : IDisposable {
 
 	/// <summary>
 	/// The uploaded cross-section for one subtype id, built on first use. The profile is one texel
-	/// wide and as tall as the source frame's row count, so it is sampled purely by v.
+	/// wide and as tall as the source frame's row count, so it is sampled purely by v. With
+	/// <paramref name="hueTurned"/>, the profile through <see cref="BeamAppearance.TurnHue"/>.
 	/// </summary>
-	private GpuTexture? Profile(int subtypeId) {
-		if (_profiles.TryGetValue(subtypeId, out var cached)) {
+	private GpuTexture? Profile(int subtypeId, bool hueTurned) {
+		if (_profiles.TryGetValue((subtypeId, hueTurned), out var cached)) {
 			return cached;
 		}
 
@@ -303,8 +309,10 @@ public sealed class BeamRenderer : IDisposable {
 			return null;
 		}
 
-		var texture = new GpuTexture(_gl, texels, 1, texels.Length / 4);
-		_profiles[subtypeId] = texture;
+		var texture = hueTurned
+			? new GpuTexture(_gl, BeamAppearance.TurnHue(texels), 1, texels.Length / 4)
+			: new GpuTexture(_gl, texels, 1, texels.Length / 4);
+		_profiles[(subtypeId, hueTurned)] = texture;
 		return texture;
 	}
 

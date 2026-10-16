@@ -1,14 +1,15 @@
 using System.Numerics;
+using Herculan.Engine.Input;
 using Silk.NET.Input;
 using Silk.NET.Maths;
 
 namespace Herculan.Engine.Platform;
 
 /// <summary>
-/// The first connected gamepad as a mouse: its left stick moves the pointer, its right trigger is held as the left
-/// button and its left trigger as the right, and its other buttons are read as a skip, so a front end or the mission
-/// editor can be worked without a mouse (docs/herculan/herculan-key-bindings.md, "Gamepad in the front end"). This
-/// engine's own; retail has no gamepad. The stick moves the window's own cursor, so whatever reads the mouse sees the
+/// The first connected gamepad as a mouse: one stick moves the pointer, one trigger is held as the left button and the
+/// other as the right, as <see cref="Settings"/> chooses, and its other buttons are read as a skip, so a front end or the
+/// mission editor can be worked without a mouse (docs/herculan/herculan-key-bindings.md, "Gamepad in the front end").
+/// This engine's own; retail has no gamepad. The stick moves the window's own cursor, so whatever reads the mouse sees the
 /// pad's moves, and the mouse still works alongside it; each host decides what the held buttons reach.
 /// </summary>
 public sealed class GamepadPointer {
@@ -16,9 +17,9 @@ public sealed class GamepadPointer {
 	// diagonal is not slower than a straight push.
 	private const float StickDeadzone = 0.2f;
 
-	// How fast a stick pushed all the way moves the pointer, in window heights a second; the shell's canvas is a fixed
-	// 4:3 scaled into the window, so this is the same pace across it at any window size. The push is squared on its way
-	// to a speed, so a light push places the pointer finely.
+	// How fast a stick pushed all the way moves the pointer at the default CursorSpeed, in window heights a second; the
+	// shell's canvas is a fixed 4:3 scaled into the window, so this is the same pace across it at any window size. The
+	// push is squared on its way to a speed, so a light push places the pointer finely.
 	private const float FullSpeed = 1.2f;
 
 	// The longest update the stick is integrated over, so a stall does not throw the pointer across the window.
@@ -29,9 +30,11 @@ public sealed class GamepadPointer {
 	private const float PressPull = 0.5f;
 	private const float ReleasePull = 0.25f;
 
-	// GLFW's standard gamepad layout: the left and right triggers.
+	// GLFW's standard gamepad layout: the left and right triggers, and sticks.
 	private const int LeftTrigger = 0;
 	private const int RightTrigger = 1;
+	private const int LeftStick = 0;
+	private const int RightStick = 1;
 
 	// Where the pad last put the pointer, in window coordinates, kept to a fraction of a pixel: the window rounds the
 	// cursor to whole pixels, which would stall a slow push. Null until the pad first moves it, or once the mouse has
@@ -42,10 +45,13 @@ public sealed class GamepadPointer {
 	// held from working the menu bar does not click or skip once the bar is down.
 	private bool _waitForRelease;
 
-	/// <summary>Whether the right trigger is pulled as the left button.</summary>
+	/// <summary>Which stick moves the pointer and how fast, and which trigger is the left button; the player's, from the Controller window.</summary>
+	public GamepadMouseSettings Settings { get; set; } = new();
+
+	/// <summary>Whether the left button's trigger is pulled.</summary>
 	public bool ClickHeld { get; private set; }
 
-	/// <summary>Whether the left trigger is pulled as the right button.</summary>
+	/// <summary>Whether the right button's trigger is pulled.</summary>
 	public bool RightClickHeld { get; private set; }
 
 	/// <summary>
@@ -53,6 +59,12 @@ public sealed class GamepadPointer {
 	/// nothing.
 	/// </summary>
 	public bool SkipHeld { get; private set; }
+
+	/// <summary>
+	/// Holds every button and trigger as let go until each is, as standing down does, for a host whose menus the pad
+	/// worked while it stayed active.
+	/// </summary>
+	public void WaitForRelease() => _waitForRelease = true;
 
 	/// <summary>
 	/// Reads the pad, once an update before anything asks. While <paramref name="active"/> is clear, such as while the
@@ -73,20 +85,22 @@ public sealed class GamepadPointer {
 		// Silk's own deadzone is off, as the joystick layer turns it off: the stick's band is this class's own.
 		pad.Deadzone = new Deadzone(0f, DeadzoneMethod.Traditional);
 
-		float rightPull = Pull(pad, RightTrigger);
-		float leftPull = Pull(pad, LeftTrigger);
+		bool rightClicks = Settings.LeftClickTrigger == GamepadSide.Right;
+		float clickPull = Pull(pad, rightClicks ? RightTrigger : LeftTrigger);
+		float rightClickPull = Pull(pad, rightClicks ? LeftTrigger : RightTrigger);
 		bool skip = pad.Buttons.Any(button => button.Pressed && button.Name != ButtonName.Back);
 
 		if (_waitForRelease) {
-			_waitForRelease = pad.Buttons.Any(button => button.Pressed) || rightPull >= ReleasePull || leftPull >= ReleasePull;
+			_waitForRelease = pad.Buttons.Any(button => button.Pressed) || clickPull >= ReleasePull || rightClickPull >= ReleasePull;
 		}
 
-		ClickHeld = !_waitForRelease && Held(ClickHeld, rightPull);
-		RightClickHeld = !_waitForRelease && Held(RightClickHeld, leftPull);
+		ClickHeld = !_waitForRelease && Held(ClickHeld, clickPull);
+		RightClickHeld = !_waitForRelease && Held(RightClickHeld, rightClickPull);
 		SkipHeld = !_waitForRelease && skip;
 
-		if (mouse != null && pad.Thumbsticks.Count > 0) {
-			var stick = pad.Thumbsticks[0];
+		int stickIndex = Settings.CursorStick == GamepadSide.Right ? RightStick : LeftStick;
+		if (mouse != null && stickIndex < pad.Thumbsticks.Count) {
+			var stick = pad.Thumbsticks[stickIndex];
 			Move(mouse, new Vector2(stick.X, stick.Y), client, Math.Min(delta, LongestStep), confine);
 		}
 	}
@@ -104,7 +118,8 @@ public sealed class GamepadPointer {
 		}
 
 		float amount = Math.Min((push - StickDeadzone) / (1f - StickDeadzone), 1f);
-		var step = stick / push * (amount * amount * FullSpeed * client.Y * (float)delta);
+		float speed = FullSpeed * Settings.CursorSpeed / GamepadMouseSettings.DefaultCursorSpeed;
+		var step = stick / push * (amount * amount * speed * client.Y * (float)delta);
 
 		// A pointer more than a pixel from where the pad left it was moved by the mouse, and the pad carries on from there.
 		var from = _placed is { } placed && Vector2.Distance(placed, mouse.Position) <= 1f ? placed : mouse.Position;

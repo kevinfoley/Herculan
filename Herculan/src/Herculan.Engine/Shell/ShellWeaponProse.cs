@@ -23,6 +23,11 @@ internal static class ShellWeaponProse {
 	/// (docs/retail/simulation/rockets.md#flight--rocket_tickupdate-0040a538), printed as 320 m, to the
 	/// nearest 10 m as the prose prints every other range: the files give the four guidance kinds 510,
 	/// 420, 420 and 360 m and the racks nothing or "Varies".</item>
+	/// <item><b>Warhead damage.</b> The four guidance kinds' rounds carry one <c>PROJ.DAT</c> figure
+	/// pair, 400 shield and 1600 armour (docs/retail/formats/proj-dat.md#the-retail-records), where
+	/// the prose gives 3000, 2250, 2500 and 3500. Each prints the sum, 2000, to the nearest 100. The
+	/// splash factor is not added: it is a share of the armour figure, not damage on top of it
+	/// (docs/retail/simulation/damage-system.md#direct-fire-damage-armor-then-part-deterministic-shield-gated).</item>
 	/// <item><b>Power consumption</b>, re-rated by this engine against each weapon's cost per shot —
 	/// HERCULAN's ratings, not retail data:
 	/// <c>ELFW</c> Very High (as <c>ELF2</c>), <c>L500</c> Medium (as <c>L300</c> and <c>L400</c>),
@@ -67,13 +72,13 @@ internal static class ShellWeaponProse {
 		["Recharge: Slow   Nominal Power: 1250 Gigawatts"] =
 			"Recharge: Medium Nominal Power: 1250 Gigawatts",
 		["Range: 510 m   Warhead Damage: 3000"] =
-			"Range: 320 m   Warhead Damage: 3000",
+			"Range: 320 m   Warhead Damage: 2000",
 		["Range: 420 m   Warhead Damage: 2250"] =
-			"Range: 320 m   Warhead Damage: 2250",
+			"Range: 320 m   Warhead Damage: 2000",
 		["Range: 420 m   Warhead Damage: 2500"] =
-			"Range: 320 m   Warhead Damage: 2500",
+			"Range: 320 m   Warhead Damage: 2000",
 		["Range: 360 m   Warhead Damage: 3500"] =
-			"Range: 320 m   Warhead Damage: 3500",
+			"Range: 320 m   Warhead Damage: 2000",
 		["Range: 320 m     Salvage Required: 8,000 kg"] =
 			"Range: 330 m     Salvage Required: 8,000 kg",
 		["Range:           Salvage Required: 6,000 kg"] =
@@ -112,13 +117,13 @@ internal static class ShellWeaponProse {
 		["Rechargement: Lent   Puissance: 1 250 giga-watts"] =
 			"Rechargement: Moyen  Puissance: 1 250 giga-watts",
 		["Port\u0082e: 510 m   D\u0082g\u0083ts caus\u0082s par les ogives: 3 000"] =
-			"Port\u0082e: 320 m   D\u0082g\u0083ts caus\u0082s par les ogives: 3 000",
+			"Port\u0082e: 320 m   D\u0082g\u0083ts caus\u0082s par les ogives: 2 000",
 		["Port\u0082e: 420 m   D\u0082g\u0083ts caus\u0082s par les ogives: 2 250"] =
-			"Port\u0082e: 320 m   D\u0082g\u0083ts caus\u0082s par les ogives: 2 250",
+			"Port\u0082e: 320 m   D\u0082g\u0083ts caus\u0082s par les ogives: 2 000",
 		["Port\u0082e: 420 m   D\u0082g\u0083ts caus\u0082s par les ogives: 2 500"] =
-			"Port\u0082e: 320 m   D\u0082g\u0083ts caus\u0082s par les ogives: 2 500",
+			"Port\u0082e: 320 m   D\u0082g\u0083ts caus\u0082s par les ogives: 2 000",
 		["Port\u0082e: 360 m   D\u0082g\u0083ts caus\u0082s par les ogives: 3 500"] =
-			"Port\u0082e: 320 m   D\u0082g\u0083ts caus\u0082s par les ogives: 3 500",
+			"Port\u0082e: 320 m   D\u0082g\u0083ts caus\u0082s par les ogives: 2 000",
 		["Port\u0082e: 320 m     R\u0082cup. n\u0082cessaire: 8 000 kg"] =
 			"Port\u0082e: 330 m     R\u0082cup. n\u0082cessaire: 8 000 kg",
 		["Port\u0082e:           R\u0082cup. n\u0082cessaire: 6 000 kg"] =
@@ -157,13 +162,13 @@ internal static class ShellWeaponProse {
 		["Ladezeit: Langsam  Nominalenergie: 1250 Gigawatt"] =
 			"Ladezeit: Mittel   Nominalenergie: 1250 Gigawatt",
 		["Reichweite: 510 m  Sprengkopfst\u0084rke: 3000"] =
-			"Reichweite: 320 m  Sprengkopfst\u0084rke: 3000",
+			"Reichweite: 320 m  Sprengkopfst\u0084rke: 2000",
 		["Reichweite: 420 m  Sprengkopfst\u0084rke: 2250"] =
-			"Reichweite: 320 m  Sprengkopfst\u0084rke: 2250",
+			"Reichweite: 320 m  Sprengkopfst\u0084rke: 2000",
 		["Reichweite: 420 m  Sprengkopfst\u0084rke: 2500"] =
-			"Reichweite: 320 m  Sprengkopfst\u0084rke: 2500",
+			"Reichweite: 320 m  Sprengkopfst\u0084rke: 2000",
 		["Reichweite: 360 m  Sprengkopfst\u0084rke: 3500"] =
-			"Reichweite: 320 m  Sprengkopfst\u0084rke: 3500",
+			"Reichweite: 320 m  Sprengkopfst\u0084rke: 2000",
 		["Reichweite: 320 m  Erforderl. Material: 8.000 kg"] =
 			"Reichweite: 330 m  Erforderl. Material: 8.000 kg",
 		["Reichweite:        Erforderl. Material: 6.000 kg"] =

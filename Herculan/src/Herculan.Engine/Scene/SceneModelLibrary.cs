@@ -559,14 +559,15 @@ public sealed class SceneModelLibrary {
 
 	/// <summary>
 	/// The hit geometry a structure type's shape carries, as distinct from the geometry it is drawn
-	/// from: the coarse collision volume in its <c>.DGS</c> record and that record's own stated
-	/// bounding radius. Both are null/zero for an <see cref="BaseShapeSource.AnimatedLibrary"/> type,
-	/// whose shape is an ordinary DTS and has neither — see <see cref="Sim.BaseObject"/> for why
-	/// that costs nothing on retail data.
+	/// from: its bounding radius, the <c>shape+8</c> <c>SimObject_GetShapeRadius</c> (<c>0046b80c</c>)
+	/// reads, and the coarse collision volume in its <c>.DGS</c> record. A
+	/// <see cref="BaseShapeSource.StaticLibrary"/> type takes both from that record; an
+	/// <see cref="BaseShapeSource.AnimatedLibrary"/> type's shape is an ordinary <c>BASES_AN.DTS</c>
+	/// root, whose radius is its own <see cref="TSBasePart.Radius"/> and which has no volume.
 	/// </summary>
 	public (int BoundingRadius, ShapeVolume? Volume) GridShapeCollision(BaseType type) =>
 		type.Source == BaseShapeSource.AnimatedLibrary
-			? (0, null)
+			? (Root(BaseTypeTable.AnimatedLibraryName, type.ShapeIndex) is TSBasePart root ? root.Radius : 0, null)
 			: GridShapeCollision(BaseTypeTable.StaticLibraryName, type.ShapeIndex) ?? (0, null);
 
 	/// <summary>

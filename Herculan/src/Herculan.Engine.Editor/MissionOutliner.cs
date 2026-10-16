@@ -107,10 +107,13 @@ internal sealed class MissionOutliner {
 			return;
 		}
 
+		// Both wrapped, as their lines run well past the panel's width.
 		if (Mission.ObjectiveTextRefs.Count > 0) {
 			ImGui.TextDisabled("Briefing list:");
 			foreach (int line in Mission.ObjectiveTextRefs) {
-				ImGui.BulletText(Mission.TextAt(line));
+				ImGui.BulletText(string.Empty);
+				ImGui.SameLine();
+				ImGui.TextWrapped(Mission.TextAt(line));
 			}
 
 			ImGui.Spacing();
@@ -118,11 +121,29 @@ internal sealed class MissionOutliner {
 
 		for (int i = 0; i < Mission.Objectives.Count; i++) {
 			var selection = new ObjectiveSelection(i);
-			if (ImGui.Selectable($"{MissionText.DescribeObjective(Mission.Objectives[i], i)}##objective{i}",
+			if (WrappedSelectable(MissionText.DescribeObjective(Mission.Objectives[i], i), $"objective{i}",
 					_selection.Is(selection))) {
 				_selection.Current = selection;
 			}
 		}
+	}
+
+	/// <summary>
+	/// A <see cref="ImGui.Selectable(string, bool)"/> whose label wraps at the panel's edge: a label-less selectable
+	/// as tall as the wrapped text, with the text drawn over it.
+	/// </summary>
+	private static bool WrappedSelectable(string text, string id, bool selected) {
+		float width = ImGui.GetContentRegionAvail().X;
+		var start = ImGui.GetCursorScreenPos();
+		float height = ImGui.CalcTextSize(text, false, width).Y;
+		bool clicked = ImGui.Selectable($"##{id}", selected, ImGuiSelectableFlags.None, new Vector2(0f, height));
+		var next = ImGui.GetCursorScreenPos();
+		ImGui.SetCursorScreenPos(start);
+		ImGui.PushTextWrapPos(ImGui.GetCursorPosX() + width);
+		ImGui.TextUnformatted(text);
+		ImGui.PopTextWrapPos();
+		ImGui.SetCursorScreenPos(next);
+		return clicked;
 	}
 
 	private void DrawGroups() {

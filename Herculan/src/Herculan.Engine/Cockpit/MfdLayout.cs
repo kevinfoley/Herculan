@@ -357,10 +357,9 @@ public static class MfdLayout {
 	public const int WireframeViewIndex = 2;
 
 	/// <summary>
-	/// <c>COLORS.DAT</c> id the Targeting Pod's component highlight is filled with, and the last thing
-	/// the status screen paints: a flat rect over the <c>.PDG</c> region holding the component the pod
-	/// has singled out, the region's own rect grown one device pixel on every side. It goes down after
-	/// the damage tints, so the highlight blots the region out rather than outlining it.
+	/// <c>COLORS.DAT</c> id of the Targeting Pod's component highlight, the last thing the status screen
+	/// paints: a one-pixel outline just outside the <c>.PDG</c> region holding the component the pod has
+	/// singled out (docs/retail/simulation/mfd.md#region-tints).
 	///
 	/// <para>Drawn only for a hostile subject on F5 with the pod's component-present flag set
 	/// (<c>CockpitView+0x27c</c>), so the player's own machine on F1 never shows one. See

@@ -3,6 +3,7 @@ using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Host.Shell.Tabs;
 using Herculan.Engine.Install;
+using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
 using Herculan.Engine.Sim;
 using Herculan.Engine.World;
@@ -28,7 +29,7 @@ namespace Herculan.Engine.Host.Shell;
 /// <para>The pointer is polled once per update, and each change in its position or in either button
 /// becomes one of the events VSHELL's queue carries, which <see cref="ShellPointer"/> delivers as
 /// <c>EventQueue_Pump</c> (<c>00469ba4</c>) does: two changes inside one update arrive together, move first. A gamepad's
-/// left stick moves the same pointer and its right trigger is held as the left button (<see cref="Platform.GamepadPointer"/>).</para>
+/// stick moves the same pointer and one of its triggers is held as the left button (<see cref="Platform.GamepadPointer"/>).</para>
 /// </summary>
 sealed class ShellHost : IDisposable {
 	/// <summary>The movie <c>Shell_Main</c> (<c>00401525</c>) opens on the disc at startup to tell that the disc is there.</summary>
@@ -91,7 +92,7 @@ sealed class ShellHost : IDisposable {
 		code is MissionResults.DebriefExitCode or DebriefDestroyedCode or MissionResults.DemoExitCode;
 
 	/// <summary>
-	/// Runs the front end until its window closes. Returns the exit code and, when <c>Rock &amp; Roll &gt;</c>,
+	/// Runs the front end's turn in <paramref name="window"/> until it ends. Returns the exit code and, when <c>Rock &amp; Roll &gt;</c>,
 	/// <c>Begin Mission</c>, <c>INSTANT ACTION</c> or the debrief's <c>REPLAY MISSION?</c> closed it, the mission
 	/// to run — <c>Shell_SetExitCode(2)</c> (<c>0040876a</c>), the code the retail launcher answers by starting the simulator.
 	/// <c>VIEW DEMO</c> closes it with <see cref="DemoExitCode"/> and no mission.
@@ -113,7 +114,8 @@ sealed class ShellHost : IDisposable {
 	/// <para>Retail ignores <c>WM_CLOSE</c> while the startup sequence runs (<c>Shell_CloseAllowed</c> (<c>0046c098</c>) clear); this
 	/// window closes.</para>
 	/// </summary>
-	public static (int ExitCode, ShellLaunch? Launch, ShellCampaignMode? Mode) Run(HostSession session, string? paletteName, string? screenshotPath = null,
+	public static (int ExitCode, ShellLaunch? Launch, ShellCampaignMode? Mode) Run(HostSession session, HostWindow window,
+			string? paletteName, string? screenshotPath = null,
 			ShellCampaignMode? forcedMode = null, int startTab = ShellScreen.MainMenuTab,
 			int startBay = 0, bool startPractice = false, bool silentAudio = false, bool writePreferences = true,
 			bool startWindowed = false, bool moviesEnabled = true, int returnCode = StartupCode, bool missionPicker = false) {
@@ -137,12 +139,13 @@ sealed class ShellHost : IDisposable {
 			return (1, null, forcedMode);
 		}
 
-		using var host = new ShellHost(session, content, art, paletteName, screenshotPath, forcedMode, startTab, startBay,
-			startPractice, silentAudio, writePreferences, startWindowed, moviesEnabled, returnCode, missionPicker);
+		using var host = new ShellHost(session, window, content, art, paletteName, screenshotPath, forcedMode, startTab,
+			startBay, startPractice, silentAudio, writePreferences, startWindowed, moviesEnabled, returnCode, missionPicker);
 		return host.RunWindow();
 	}
 
-	private ShellHost(HostSession session, GameContent content, ShellArt art, string? paletteName, string? screenshotPath,
+	private ShellHost(HostSession session, HostWindow window, GameContent content, ShellArt art, string? paletteName,
+			string? screenshotPath,
 			ShellCampaignMode? forcedMode, int startTab, int startBay, bool startPractice, bool silentAudio, bool writePreferences,
 			bool startWindowed, bool moviesEnabled, int returnCode, bool missionPicker) {
 		_returnCode = returnCode;
@@ -198,7 +201,7 @@ sealed class ShellHost : IDisposable {
 		// The Settings menu's restart: the shell closes with SettingsRestartCode, which the caller answers by
 		// running it again on the session's folders. The Editor item closes it with EditorExitCode, which the caller
 		// answers with the mission editor.
-		_window = new FrontEndWindow(session, "HERCULAN Engine — shell", screenshotPath,
+		_window = new FrontEndWindow(session, window, "HERCULAN Engine — shell", screenshotPath,
 			() => _outcome.ExitCode = SettingsRestartCode, () => _outcome.ExitCode = EditorExitCode);
 
 		_startup = new StartupScreen(_canvas, content, _audio, repaint);
@@ -262,10 +265,9 @@ sealed class ShellHost : IDisposable {
 		_movies.Attach(gl, _audio.Sound, _audio.Backend);
 
 		// The startup (Shell_WinMain, 00406507) goes full screen when option 6 is set, before the shell's screens
-		// are built. --shell-windowed keeps the window, which retail's -d does not.
-		if (_game.Options[Prefs.DisplayModeOption] != 0 && !_startWindowed) {
-			_window.ToggleFullScreen();
-		}
+		// are built, on a window that opens windowed; this one may come from a turn that left it full screen, and is
+		// taken to whichever the option asks. --shell-windowed keeps the window, which retail's -d does not.
+		_window.StartFullScreen(_game.Options[Prefs.DisplayModeOption] != 0 && !_startWindowed);
 
 		if (_window.Keyboard is { } keyboard) {
 			keyboard.KeyDown += (_, key, _) => _keys.KeyDown(key);
@@ -404,6 +406,9 @@ sealed class ShellHost : IDisposable {
 		gl.ClearColor(0f, 0f, 0f, 1f);
 		gl.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
+		// The pointer at the window's top left raises the menu bar, but not while a movie plays.
+		bool revealOnHover = !_movies.Active;
+
 		// QUIT's blank fills the whole client area with palette index 0, strip and all. The startup blanks
 		// the same way just before it shows the sequence, and nothing is drawn before then but the intro
 		// movies; CREDITS blanks round its movie.
@@ -414,14 +419,14 @@ sealed class ShellHost : IDisposable {
 			gl.ClearColor(blank.R / 255f, blank.G / 255f, blank.B / 255f, 1f);
 			gl.Clear(ClearBufferMask.ColorBufferBit);
 			_movies.DrawMovie(layout);
-			_window.DrawMenuBar();
+			_window.DrawMenuBar(revealOnHover);
 			return;
 		}
 
 		_canvas.Draw(layout, _screen);
 		_movies.DrawLocationPicture(layout);
 		_movies.DrawMovie(layout);
-		_window.DrawMenuBar();
+		_window.DrawMenuBar(revealOnHover);
 		_window.FrameDrawn(gl);
 	}
 

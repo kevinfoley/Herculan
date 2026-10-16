@@ -145,11 +145,18 @@ public static class MissionLoader {
 	/// throws <see cref="MissingHandoffFileException"/> when either is not there, as the original
 	/// asserts on each.</para>
 	/// </summary>
-	public static Mission Load(GameContent content, string scriptPath) {
-		byte[] scriptBytes = File.ReadAllBytes(scriptPath);
-		var script = new ScriptDatTransformer().Parse(scriptBytes) as ScriptDat
+	public static Mission Load(GameContent content, string scriptPath) => Load(content, ReadScript(scriptPath), scriptPath);
+
+	/// <summary>Parses the handoff at <paramref name="scriptPath"/>, throwing <see cref="InvalidDataException"/> when it does not.</summary>
+	public static ScriptDat ReadScript(string scriptPath) =>
+		new ScriptDatTransformer().Parse(File.ReadAllBytes(scriptPath)) as ScriptDat
 			?? throw new InvalidDataException($"{scriptPath} did not parse as a script.dat.");
 
+	/// <summary>
+	/// <see cref="Load(GameContent, string)"/> over a <paramref name="script"/> already read from
+	/// <paramref name="scriptPath"/>, which still locates the files beside it.
+	/// </summary>
+	public static Mission Load(GameContent content, ScriptDat script, string scriptPath) {
 		var header = ScriptDatHeader.From(script);
 		var mechNames = UnitTypeNames.LoadMechs(content);
 		var flyerNames = UnitTypeNames.LoadFlyers(content);

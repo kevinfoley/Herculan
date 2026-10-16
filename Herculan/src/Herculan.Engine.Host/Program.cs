@@ -42,11 +42,13 @@ if (options.InstallSource != null && options.InstallDestination != null) {
 var localization = new LocalizationTable();
 HostLog.Localization = localization;
 TweakSettings.Current.LoadFromDisk();
-EngineWindow.Icons = WindowIcon.Load();
+HostWindow.Icons = WindowIcon.Load();
 
 // The one font every ImGui window the host opens is drawn in.
 string imguiFontPath = Path.Combine(AppContext.BaseDirectory,
 	"Assets", "Fonts", "Open_Sans", "static", "OpenSans-Regular.ttf");
+string imguiItalicFontPath = Path.Combine(AppContext.BaseDirectory,
+	"Assets", "Fonts", "Open_Sans", "static", "OpenSans-Italic.ttf");
 
 // An install named on the command line is never second-guessed, and a --screenshot run has nobody to ask,
 // so only a search that came up empty, or --ask-install's skipped one, asks the player.
@@ -85,7 +87,7 @@ if (options.Es1.Staged) {
 if (!options.AskForInstall) {
 	GameInstall.Remember(installRoot);
 }
-using var session = new HostSession(installRoot, localization, imguiFontPath) {
+using var session = new HostSession(installRoot, localization, imguiFontPath, imguiItalicFontPath) {
 	RememberInstall = !options.AskForInstall,
 	SavePrintScreens = options.SavePrintScreens,
 };

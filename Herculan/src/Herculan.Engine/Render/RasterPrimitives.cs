@@ -41,6 +41,30 @@ public static class RasterPrimitives {
 	}
 
 	/// <summary>
+	/// A one-device-pixel rect outline — <c>Raster_FillRect</c> (<c>004865f8</c>) with the brush in outline mode (4),
+	/// handed the inclusive rect <c>{x0, y0, x1, y1}</c>: its four edges, both ends included
+	/// (docs/retail/rendering/polygon-fill.md#rectangles). The rect is relative to (<paramref name="left"/>,
+	/// <paramref name="top"/>). Every edge is axis-aligned, so each goes down as one span rather than through
+	/// <see cref="AddLine"/>: the top and bottom rows across the full width, the side columns between them.
+	/// </summary>
+	public static void AddRectOutline(int x0, int y0, int x1, int y1, Vector3 color, float left, float top,
+			Action<float, float, float, float, Vector3> fillRect) {
+		(x0, x1) = (Math.Min(x0, x1), Math.Max(x0, x1));
+		(y0, y1) = (Math.Min(y0, y1), Math.Max(y0, y1));
+		fillRect(left + x0, top + y0, left + x1 + 1, top + y0 + 1, color);
+		if (y1 > y0) {
+			fillRect(left + x0, top + y1, left + x1 + 1, top + y1 + 1, color);
+		}
+
+		if (y1 - y0 > 1) {
+			fillRect(left + x0, top + y0 + 1, left + x0 + 1, top + y1, color);
+			if (x1 > x0) {
+				fillRect(left + x1, top + y0 + 1, left + x1 + 1, top + y1, color);
+			}
+		}
+	}
+
+	/// <summary>
 	/// A filled ellipse — <c>Raster_DrawEllipse</c> (<c>00488070</c>) with the brush in fill mode (0), handed the rect
 	/// <c>centre ± (halfWidth, halfHeight)</c>. Its midpoint walk writes <c>2 * halfHeight</c> rows of spans, from the
 	/// top row down and from the bottom row up at once, starting <c>halfHeight</c> above the centre, so the shape is
