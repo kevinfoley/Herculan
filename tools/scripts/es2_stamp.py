@@ -11,6 +11,11 @@ binary's retail file, which tools/scripts/retail_binaries.py locates. `check` vo
 extent has moved (a late-entry fix, a re-analysis) or whose bytes no longer hash the same (a
 different build in that file), because the read it records was of other bytes.
 
+`--via raw` stamps a straight-line stub that has no Ghidra function yet (a frameless vtable slot
+target): its extent is decoded from the image up to the first RET. `check` verifies such a stamp
+against that decode, listed as PENDING, until the function exists; from then on against the
+function list, which voids the stamp if Ghidra's function spans other bytes.
+
 Usage:
     python tools/scripts/es2_stamp.py stamp HddButton_OnClick --via decompile
     python tools/scripts/es2_stamp.py stamp 0044a178 --scope callees --via both
@@ -50,7 +55,9 @@ from retail_binaries import Image
 
 SCOPES = ("body", "callees")
 EVIDENCE = ("data", "retail")
-VIA = ("decompile", "disasm", "both")
+VIA = ("decompile", "disasm", "both", "raw")
+# The longest stub --via raw reads: a run of padding NOPs and a few instructions before the RET.
+RAW_LIMIT = 32
 
 # A sentence that says who calls the function. That is only ever known from a search or from reading
 # the caller, so the sentence has to say which.
@@ -114,6 +121,29 @@ def digest(image: Image, start: int, size: int) -> str:
     raise SystemExit("%08x+%d is not inside one initialised section" % (start, size))
 
 
+def raw_extent(image: Image, start: int) -> int | None:
+    """The length of the straight-line stub at start, decoded from the image with capstone: its
+    instructions up to and including the first RET. None when a branch, call or interrupt, or a byte
+    capstone cannot decode, comes first, or there is no RET within RAW_LIMIT bytes. A stub entered
+    only through a vtable slot has no Ghidra function until `es2_naming.py apply --define` makes
+    one, and that function spans these same bytes, since the stub has no other flow."""
+    import capstone
+    off = image.off_of(start)
+    if off is None:
+        return None
+    md = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
+    end = start
+    for i in md.disasm(image.data[off:off + RAW_LIMIT], start):
+        if i.address != end:
+            return None
+        end = i.address + i.size
+        if i.mnemonic == "ret":
+            return end - start
+        if i.mnemonic.startswith(("j", "call", "loop", "int", "iret", "ret", "hlt", "lcall", "ljmp")):
+            return None
+    return None
+
+
 def parse_negative(text: str) -> dict:
     """'claim :: data|search :: how' -> {claim, evidence, how}."""
     parts = [p.strip() for p in text.split("::")]
@@ -150,8 +180,19 @@ def cmd_stamp(args) -> int:
         if entry["type"] != "function":
             raise SystemExit("%08x is a %s entry; stamps are for functions" % (target, entry["type"]))
         size = extents.get(target)
-        if size is None:
-            raise SystemExit("%08x is not a function start in the function list" % target)
+        if args.via == "raw":
+            raw = raw_extent(image, target)
+            if raw is None:
+                raise SystemExit("%08x is not a straight-line stub ending in a RET within %d bytes; "
+                                 "--via raw reads only those" % (target, RAW_LIMIT))
+            if size is not None and size != raw:
+                raise SystemExit("%08x: the function list's extent is %d bytes, the stub %d; stamp it --via disasm"
+                                 % (target, size, raw))
+            size = raw
+        elif size is None:
+            raise SystemExit("%08x is not a function start in the function list%s" % (
+                target, "; a straight-line stub with no Ghidra function yet takes --via raw"
+                if raw_extent(image, target) else ""))
 
         stamp = {
             "bytes": "%08x+%d" % (target, size),
@@ -191,8 +232,12 @@ def cmd_stamp(args) -> int:
 
 
 def cmd_check(args) -> int:
+    """A --via raw stamp whose address has no Ghidra function yet is checked against the stub's
+    extent decoded from the image instead, and listed as pending; once `apply --define` has made the
+    function and the dumps are regenerated, it is checked against the function list like any other."""
     void = 0
     total = 0
+    pending = 0
     for binary in (args.binary,) if args.binary else es2_symbols.BINARIES:
         stamped = [e for e in es2_symbols.entries(binary) if "verified" in e]
         if not stamped:
@@ -215,7 +260,18 @@ def cmd_check(args) -> int:
                 if n.get("evidence") not in EVIDENCE or not n.get("claim") or not n.get("how"):
                     problems.append("malformed negative %r" % n)
             now = extents.get(start)
-            if now != size:
+            if now is None and v.get("via") == "raw":
+                now = raw_extent(image, start)
+                if now == size and not problems and digest(image, start, size) == v["sha1"]:
+                    pending += 1
+                    print("PENDING  %s %s  raw stub, no Ghidra function yet (es2_naming.py apply --define)"
+                          % (e["address"], e.get("name", "")))
+                    continue
+                if now != size:
+                    problems.append("raw stub extent is now %s, stamped %d" % (now, size))
+                elif digest(image, start, size) != v["sha1"]:
+                    problems.append("bytes no longer hash to %s" % v["sha1"])
+            elif now != size:
                 problems.append("function extent is now %s, stamped %d"
                                 % ("gone" if now is None else now, size))
             elif digest(image, start, size) != v["sha1"]:
@@ -223,7 +279,7 @@ def cmd_check(args) -> int:
             if problems:
                 void += 1
                 print("VOID  %s %s  %s" % (e["address"], e.get("name", ""), "; ".join(problems)))
-    print("%d stamp(s) checked, %d void" % (total, void))
+    print("%d stamp(s) checked, %d void" % (total, void) + (", %d pending a Ghidra function" % pending if pending else ""))
     return 1 if void else 0
 
 
@@ -273,7 +329,9 @@ def main() -> int:
                         "retail observation settles. Never a search result: that is an Open item in the doc")
     s.add_argument("--via", required=True, choices=VIA,
                    help="how the body was read: the decompile, the disassembly, or both. A claim that rests on an "
-                        "argument value, a register, or where one function ends wants the disassembly")
+                        "argument value, a register, or where one function ends wants the disassembly. raw: the "
+                        "capstone disassembly of a straight-line stub up to its RET, which needs no Ghidra function, "
+                        "so a stub can be stamped before apply --define creates one")
     s.add_argument("--read-callers", action="store_true",
                    help="every caller the description names was itself read this session, not found by a search")
     s.add_argument("--own-negatives", action="store_true",
