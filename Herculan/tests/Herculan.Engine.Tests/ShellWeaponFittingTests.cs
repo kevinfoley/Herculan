@@ -16,7 +16,9 @@ namespace Herculan.Engine.Tests;
 public class ShellWeaponFittingTests {
 	private const int Atc20 = 1;
 	private const int Atc35 = 2;
+	private const int Laser500 = 0xc;
 	private const int Rack = 0xd;
+	private const int LastRack = 0xf;
 	private const int RazorLauncher = 0x10;
 
 	[Fact]
@@ -49,17 +51,20 @@ public class ShellWeaponFittingTests {
 		Assert.Equal(1, hangar.WeaponsOwned(Atc35));
 	}
 
+	// The stock unit starts at EO, so both arms of the reset have to write: a fit that left guidance alone fails every row.
 	[Theory]
-	[InlineData(Rack, 1)]
-	[InlineData(RazorLauncher, ShellWeaponUnit.NoGuidance)]
-	[InlineData(Atc20, ShellWeaponUnit.NoGuidance)]
-	public void FitResetsGuidanceToArhForTheThreeRacksOnly(int weapon, int guidance) {
-		var hangar = Hangar(new[] { 0 }, (weapon, new[] { 100 }));
+	[InlineData(Laser500, false)]
+	[InlineData(Rack, true)]
+	[InlineData(LastRack, true)]
+	[InlineData(RazorLauncher, false)]
+	[InlineData(Atc20, false)]
+	public void FitResetsGuidanceToArhForTheThreeRacksOnly(int weapon, bool arh) {
+		var hangar = Hangar(new[] { 0 }, MissileType.Eo, (weapon, new[] { 100 }));
 		var machine = hangar.Bay(0)!;
 
 		hangar.FitMount(machine, 0, weapon);
 
-		Assert.Equal(guidance, machine.Mount(0)!.Guidance);
+		Assert.Equal(arh ? MissileType.Arh.Id : ShellWeaponUnit.NoGuidance, machine.Mount(0)!.Guidance);
 	}
 
 	[Fact]
@@ -164,27 +169,41 @@ public class ShellWeaponFittingTests {
 
 		screen.ShowGuidance((int)ShellWeaponsButton.Eo);
 
-		Assert.Equal(3, machine.Mount(0)!.Guidance);
+		Assert.Equal(MissileType.Eo.Id, machine.Mount(0)!.Guidance);
 	}
 
 	[Fact]
-	public void TheSteppersWrapThroughTheMounts() {
+	public void TheSteppersStepAndWrapThroughTheMounts() {
 		var hangar = Hangar(new[] { 0, 0, 0 });
 		var screen = new ShellWeaponsScreen(hangar, 0);
 
+		// From none, > takes the first; then a plain step each way, then the wrap each way.
+		Assert.True(screen.NextHardpoint());
+		Assert.Equal(0, screen.SelectedHardpoint);
+		Assert.True(screen.NextHardpoint());
+		Assert.Equal(1, screen.SelectedHardpoint);
+		Assert.True(screen.PreviousHardpoint());
+		Assert.Equal(0, screen.SelectedHardpoint);
 		Assert.True(screen.PreviousHardpoint());
 		Assert.Equal(2, screen.SelectedHardpoint);
 		Assert.True(screen.NextHardpoint());
 		Assert.Equal(0, screen.SelectedHardpoint);
-		Assert.True(screen.PreviousHardpoint());
-		Assert.Equal(2, screen.SelectedHardpoint);
+
+		// From none, < takes the last.
+		var fresh = new ShellWeaponsScreen(hangar, 0);
+		Assert.True(fresh.PreviousHardpoint());
+		Assert.Equal(2, fresh.SelectedHardpoint);
 	}
 
 	/// <summary>
 	/// One machine in bay 0 with a mount per entry of <paramref name="mounts"/> (0 for empty), and each
 	/// named weapon unlocked with one unit per condition listed, in file order.
 	/// </summary>
-	private static ShellHangar Hangar(int[] mounts, params (int Weapon, int[] Conditions)[] stock) {
+	private static ShellHangar Hangar(int[] mounts, params (int Weapon, int[] Conditions)[] stock) =>
+		Hangar(mounts, MissileType.None, stock);
+
+	/// <summary>The same hangar, with every stock unit carrying <paramref name="stockGuidance"/> rather than none.</summary>
+	private static ShellHangar Hangar(int[] mounts, MissileType stockGuidance, params (int Weapon, int[] Conditions)[] stock) {
 		var save = new PlayerSave();
 		save.HercBay[0] = BayEntry(mounts);
 		save.Inventory = new Inventory {
@@ -195,7 +214,7 @@ public class ShellWeaponFittingTests {
 					Id = WeaponLUT.GetById(entry.Weapon),
 					FitCondition = (short)condition,
 					Condition = 100,
-					Guidance = MissileType.None,
+					Guidance = stockGuidance,
 				}).ToArray(),
 			}).ToArray(),
 		};

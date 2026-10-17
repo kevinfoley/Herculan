@@ -240,7 +240,9 @@ public class CockpitDamageShakeTests {
 	/// Every theater's impact palette builds ramp tables the <i>same shape</i> as its ordinary ones.
 	/// <see cref="SceneRenderer.SetImpactRamps"/> drops a table that does not match, because the row
 	/// counts are uniforms uploaded once and the swap does not re-derive them — so a mismatch here
-	/// would silently cost the whole scene half of its flash.
+	/// would silently cost the whole scene half of its flash. And they are not the same table: a flash
+	/// that swapped in an identical lookup would show nothing, and matching shapes are exactly the
+	/// condition under which that failure would be invisible.
 	/// </summary>
 	[Theory]
 	[InlineData(0)]
@@ -272,26 +274,7 @@ public class CockpitDamageShakeTests {
 		Assert.NotNull(impactPalette);
 		Assert.Equal(ordinaryPalette.Height, impactPalette.Height);
 		Assert.Equal(ordinaryPalette.ShadeRows, impactPalette.ShadeRows);
-	}
-
-	/// <summary>
-	/// And they are not the same table. A flash that swapped in an identical lookup would show
-	/// nothing, and the shapes matching above is exactly the condition under which that failure would
-	/// be invisible.
-	/// </summary>
-	[Fact]
-	public void TheImpactRampIsADifferentTable() {
-		if (Content() is not { } content) {
-			return;
-		}
-
-		var theater = TheaterDescriptor.LoadByWorldIndex(content, 0);
-		if (Shading(content, theater.PaletteName, theater.PaletteName) is not { } ordinary
-			|| Shading(content, theater.PaletteName, theater.ImpactPaletteName) is not { } impact) {
-			return;
-		}
-
-		Assert.NotEqual(PaletteRampTable.Build(ordinary)!.Pixels, PaletteRampTable.Build(impact)!.Pixels);
+		Assert.NotEqual(ordinaryPalette.Pixels, impactPalette.Pixels);
 	}
 
 	/// <summary>

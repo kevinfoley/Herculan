@@ -5,6 +5,8 @@ using HercWorks.Core.Data.Struct.Herc;
 using HercWorks.Core.Data.Struct.Vshell.Hercs;
 using HercWorks.Core.Data.Struct.Vshell.Sav;
 using HercWorks.Core.Io.Transform.Shell;
+using Herculan.Engine.Content;
+using Herculan.Engine.Install;
 using Herculan.Engine.Shell;
 using Xunit;
 
@@ -535,24 +537,34 @@ public class ShellRepairScreenTests {
 		Assert.Equal(60, screen.Machine.Condition(ShellRepairCategory.Internal, 4));
 	}
 
-	/// <summary><c>gam\damage.dat</c> round-trips: the walk is fixed-length apart from its one count.</summary>
+	/// <summary>
+	/// The retail <c>gam\damage.dat</c> round-trips byte for byte, and <see cref="RetailValues"/> is
+	/// that file, so every cost figure in this class is tied to the real data. Skips without an install.
+	/// </summary>
 	[Fact]
-	public void RoundTripsTheComponentValueTable() {
+	public void RoundTripsTheRetailValueTableAndRetailValuesIsIt() {
+		if (GameInstall.Locate(null) is not { } root
+			|| GameContent.MountShell(root).Read(ShellRepairCosts.CatalogFolder, ShellRepairCosts.ValuesResourceName)
+				is not { } bytes) {
+			return;
+		}
+
 		var transformer = new DamageRepairCostTransformer();
-		byte[] bytes = transformer.Write(RetailValues())!;
-
-		// Two scale words, six shares, nine shares, a count and 33 values.
-		Assert.Equal(2 * (1 + 6 + 9 + 1 + 1 + 33), bytes.Length);
-
 		var parsed = transformer.Parse(bytes)!;
-		Assert.Equal(800, parsed.ChassisScale);
-		Assert.Equal(1000, parsed.WeaponScale);
-		Assert.Equal(33, parsed.WeaponValue.Length);
-		Assert.Equal(RetailValues().ExternalGroupPercent, parsed.ExternalGroupPercent);
-		Assert.Equal(RetailValues().InternalPercent, parsed.InternalPercent);
+		Assert.Equal(bytes, transformer.Write(parsed));
+
+		var values = RetailValues();
+		Assert.Equal(parsed.ChassisScale, values.ChassisScale);
+		Assert.Equal(parsed.ExternalGroupPercent, values.ExternalGroupPercent);
+		Assert.Equal(parsed.InternalPercent, values.InternalPercent);
+		Assert.Equal(parsed.WeaponScale, values.WeaponScale);
+		Assert.Equal(parsed.WeaponValue.Length, values.WeaponValue.Length);
 	}
 
-	/// <summary>The retail file's own contents, which every figure above is derived from.</summary>
+	/// <summary>
+	/// The retail file's own contents, which every figure above is derived from, with the weapon
+	/// column zeroed: no test here prices a weapon.
+	/// </summary>
 	private static DamageRepairCost RetailValues() => new() {
 		ChassisScale = 800,
 		ExternalGroupPercent = new short[] { 100, 50, 50, 50, 100, 100 },

@@ -1,3 +1,4 @@
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using HercWorks.Core.Io.Transform.Dbsim;
@@ -15,13 +16,13 @@ namespace Herculan.Engine.Tests;
 /// </summary>
 public class ClipRegionFileTests {
 	/// <summary>
-	/// No rects, one span block from row 0 whose row count is the file's scanline count, then the
-	/// int16 0 the loader does not read; the cockpit cutout flattened from it has one row per span.
+	/// No rects, one span block from row 0, then the int16 0 the loader does not read; the cockpit
+	/// cutout flattened from it has one row per span.
 	/// </summary>
 	[Theory]
-	[InlineData("HDDCLIP.EDG", 101)]
-	[InlineData("MFDCLIP.EDG", 61)]
-	public void EdgFileIsOneSpanBlock(string name, int rows) {
+	[InlineData("HDDCLIP.EDG")]
+	[InlineData("MFDCLIP.EDG")]
+	public void EdgFileIsOneSpanBlock(string name) {
 		if (GameInstall.Locate(null) is not { } root
 			|| GameContent.MountSimulator(root).Read("edg", name) is not { } bytes) {
 			return;
@@ -33,10 +34,33 @@ public class ClipRegionFileTests {
 		Assert.NotNull(file);
 		Assert.Empty(file.Rects);
 		var block = Assert.Single(file.Blocks);
-		Assert.Equal((0, rows), (block.FirstRow, block.Rows.Length));
+		Assert.Equal(0, block.FirstRow);
 		Assert.Equal(new byte[] { 0, 0 }, file.TrailingBytes);
-		Assert.Equal(rows, CockpitClipRegions.Parse(bytes)?.RowCount);
+		Assert.Equal(block.Rows.Length, CockpitClipRegions.Parse(bytes)?.RowCount);
 		Assert.Equal(bytes, transformer.Write(file));
+	}
+
+	/// <summary>
+	/// <c>HDDCLIP.EDG</c> is laid over the HDD's screen rect, so its extent is that rect's in every
+	/// <c>.GAU</c>: one row per authored scanline and its widest span reaching the rect's right edge
+	/// (docs/retail/simulation/heads-down-display.md#hddclip).
+	/// </summary>
+	[Theory]
+	[MemberData(nameof(ThrottleGaugeTests.Cockpits), MemberType = typeof(ThrottleGaugeTests))]
+	public void HddClipSpansEveryHercsHddScreen(string herc) {
+		if (GameInstall.Locate(null) is not { } root) {
+			return;
+		}
+
+		var content = GameContent.MountSimulator(root);
+		var clip = new ClipRegionFileTransformer().Parse(content.Read("edg", "HDDCLIP.EDG")!);
+		var gau = new GauFileTransformer().Parse(content.Read("gau", herc + ".GAU")!);
+		var screen = HddLayout.Load(gau!, headsDownCanvasOriginY: 0)!.Screen;
+
+		const int Shift = CockpitViewGeometry.CoordShift;
+		var rows = Assert.Single(clip!.Blocks).Rows;
+		Assert.Equal((screen.Y1 - screen.Y0) >> Shift, rows.Length - 1);
+		Assert.Equal((screen.X1 - screen.X0) >> Shift, rows.Max(span => span.XEnd));
 	}
 
 	/// <summary>

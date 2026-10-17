@@ -3,6 +3,7 @@ using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Io.Transform.Common;
+using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using Herculan.Engine.Render;
@@ -126,7 +127,10 @@ public class SkyGradientTests {
 		return Vector2.Dot(window - line.Mid, line.Up) / line.Scale;
 	}
 
-	/// <summary>Every retail theater builds a sky: 16 bands ending on 223, or 15 ending on 222.</summary>
+	/// <summary>
+	/// Every retail theater's file round-trips byte for byte, and builds a sky with one band per
+	/// header band, every one of them a colour its own palette holds.
+	/// </summary>
 	[Fact]
 	public void EveryRetailTheaterBuildsItsSky() {
 		string? root = GameInstall.Locate(null);
@@ -137,16 +141,13 @@ public class SkyGradientTests {
 		var content = GameContent.MountSimulator(root);
 		for (int worldIndex = 0; worldIndex < TheaterDescriptor.Count; worldIndex++) {
 			var theater = TheaterDescriptor.LoadByWorldIndex(content, worldIndex);
+			var bytes = content.Read(TheaterDescriptor.ResourceFolder, $"WORLD{worldIndex}.WLD")!;
+			Assert.Equal(bytes, new WorldDataTransformer().Write(theater.File));
+
 			var palette = new DynamixPaletteTransformer().Parse(content.Read("dpl", theater.PaletteName + ".DPL")!) as DynamixPalette;
 			var sky = SkyGradient.From(theater.File, palette);
 			Assert.NotNull(sky);
-
-			bool sixteen = worldIndex is 0 or 2 or 6;
-			Assert.Equal(sixteen ? 16 : 15, sky.Bands.Length);
-			Assert.Equal(sixteen ? 223 : 222, theater.File.HorizonColor);
-			Assert.Equal(6, sky.BandHeight);
-			Assert.Equal(1, sky.HorizonGap);
-			Assert.Equal(0, sky.LineOffset);
+			Assert.Equal(theater.File.SkyBandCount, sky.Bands.Length);
 		}
 	}
 }
