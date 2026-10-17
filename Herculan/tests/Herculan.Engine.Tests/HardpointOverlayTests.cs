@@ -100,8 +100,8 @@ public class HardpointOverlayTests {
 	}
 
 	/// <summary>
-	/// Both files round-trip byte for byte. The writer is independent of the reader, so a field the
-	/// reader misordered would come back transposed here rather than cancelling out.
+	/// Both files round-trip byte for byte, which pins the field widths and counts. The writer mirrors
+	/// the reader field for field, so a field order swapped in both would cancel out here.
 	/// </summary>
 	[Theory]
 	[InlineData("ARM_HOTS.DAT")]
