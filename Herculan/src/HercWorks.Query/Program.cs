@@ -39,6 +39,12 @@ internal static class Program {
 		  text <mission>... [--ids LO-HI]  the named missions' .ENG text records in file order, each with
 		                                   its decoded condition; a later record of an id replaces the
 		                                   line when its condition holds
+		  records <mission> [--row N]      the mission's .MSN records as read, row by row in file order, each
+		                                   with its index in the row and its named fields; raw: no condition
+		                                   applied, no variant drawn, no repeated GUID merged
+		  header <mission>                 the mission's row #2 records as read, beside the script.dat
+		                                   header its load writes with every campaign flag zero and every
+		                                   roll 0
 
 		  census                           every entry of every archive in the install's VOL folder
 		                                   through the HercWorks reader bound to it, written back and
@@ -57,6 +63,7 @@ internal static class Program {
 		  --with-point      orders: list only groups with an order that names a row #6 point
 		  --ids LO-HI       text: list only the records whose id is in this range (--ids 200-204);
 		                    routes: only the routes whose GUID is in it
+		  --row N           records: list only row #N, 1-17
 		  --json            print the raw result as JSON
 
 		A type is a decimal or 0x-hex index, a name matched whole and then as a prefix, or all
@@ -73,7 +80,7 @@ internal static class Program {
 	}
 
 	internal static int Run(string[] args, TextWriter output) {
-		string? install = null, type = null, against = null, ids = null;
+		string? install = null, type = null, against = null, ids = null, rowOption = null;
 		bool json = false, variants = false, routeSwitch = false, withPoint = false;
 		var positional = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
@@ -89,6 +96,9 @@ internal static class Program {
 					break;
 				case "--ids" when i + 1 < args.Length:
 					ids = args[++i];
+					break;
+				case "--row" when i + 1 < args.Length:
+					rowOption = args[++i];
 					break;
 				case "--json":
 					json = true;
@@ -165,7 +175,7 @@ internal static class Program {
 			return 0;
 		}
 
-		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats"
+		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats" or "records" or "header"
 				&& positional.Skip(1).FirstOrDefault(n => !data.Missions.Any(m => string.Equals(m.Name, n, StringComparison.OrdinalIgnoreCase))) is { } unknown) {
 			return Fail($"No mission is named {unknown}; `missions` lists them.");
 		}
@@ -176,6 +186,42 @@ internal static class Program {
 			if (bounds.Length != 2 || !short.TryParse(bounds[0], out lowId) || !short.TryParse(bounds[1], out highId)) {
 				return Fail("--ids takes a range, LO-HI.");
 			}
+		}
+
+		if (command is "records" or "header") {
+			if (positional.Count != 2) {
+				return Fail($"{command} takes one mission name.");
+			}
+
+			var mission = data.Missions.First(m => string.Equals(m.Name, positional[1], StringComparison.OrdinalIgnoreCase));
+			if (command == "header") {
+				var header = RecordQuery.Header(mission);
+				if (json) {
+					WriteJson(output, header);
+				} else {
+					RecordQuery.WriteHeader(output, header);
+				}
+
+				return 0;
+			}
+
+			int? rowNumber = null;
+			if (rowOption != null) {
+				if (!int.TryParse(rowOption, out int n) || n < 1 || n > RecordQuery.RowCount) {
+					return Fail($"--row takes a row number, 1-{RecordQuery.RowCount}.");
+				}
+
+				rowNumber = n;
+			}
+
+			var records = RecordQuery.Records(mission, rowNumber);
+			if (json) {
+				WriteJson(output, records);
+			} else {
+				RecordQuery.WriteRecords(output, records);
+			}
+
+			return 0;
 		}
 
 		if (command == "routes") {

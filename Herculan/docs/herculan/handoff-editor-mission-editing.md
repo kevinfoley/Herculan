@@ -20,7 +20,7 @@ Whether DBSIM can read a grown file is settled (it can — [gap 2](#2-three-cons
 - `MissionPlacement.Kind` + `SlotIndex` address a block-7/8/9 record exactly, and `GroupIndex` addresses block 11, so the editor's selection already identifies the record to edit.
 - `HercWorks.UI.MissionScriptForm.OnSaveAs` — a working save path, with VOL entry-prefix preservation and an advisory cross-block ref-range validator.
 - `MissionGenerator` (Core) builds a `script.dat` from an `.MSN` as VSHELL does, and `MissionFileTransformer` round-trips `.MSN` files.
-- `HercWorks.Query actions|orders|objectives` — the corpus cross-check for anything the editor shows.
+- `HercWorks.Query actions|orders|objectives` — the corpus cross-check for anything the editor shows; `records <MISSION> [--row N]` and `header <MISSION>` dump one mission's raw `.MSN` records, and row 2 beside the header it generates.
 - `MissionLoader.Load(content, script, path)` loads from a `ScriptDat` already parsed: `EditorMission.Open` hands it the one a `MissionDocument` generated, or a plain file's as read, and keeps it as `Document`; the mission check runs over that document as opened.
 - Round-trip coverage: `TrainingLaunchTests.LoadsEveryRetailMission` writes a `script.dat` from each of the 62 `.MSN` files and checks `ScriptDatTransformer` rewrites it byte-exact, and `ScriptDatRoundTripTests` rewrites the install's `DATA\script.dat` and every `sav\script%d.dat` as a prefix of the file read (they keep stale tails past block 13). Both skip silently without an install.
 
