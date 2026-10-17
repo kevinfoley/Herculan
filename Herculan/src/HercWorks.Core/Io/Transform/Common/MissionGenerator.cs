@@ -89,6 +89,9 @@ public sealed class MissionGenerator {
 	/// </summary>
 	public short[] Header { get; } = new short[10];
 
+	/// <summary>Which <c>.MSN</c> and <c>.ENG</c> records supplied each exported record and <c>mission.str</c> line.</summary>
+	public MissionProvenance Provenance { get; } = new();
+
 	/// <summary>
 	/// Loads a mission. <paramref name="flags"/> is the campaign flag array the row-1 comparisons read,
 	/// and row 2 zeroes the entries it names in it. <paramref name="clearList"/> is <c>DAT_0048545a</c>:
@@ -410,8 +413,10 @@ public sealed class MissionGenerator {
 
 			if (existing == -1) {
 				_strings.Add((id, body));
+				Provenance.LineAdded(i);
 			} else {
 				_strings[existing] = (_strings[existing].Id, body);
+				Provenance.LineReplaced(existing, i);
 			}
 		}
 	}
@@ -519,32 +524,42 @@ public sealed class MissionGenerator {
 	private static short Ref(IReadOnlyList<short[]> row, short guid) => Find(row, guid, row.Count, exported: true);
 
 	/// <summary>
-	/// Adds a record, or when an earlier record has its GUID hands both to <paramref name="merge"/> —
-	/// the compaction every GUID-keyed row shares. The slot the original read into is reused.
+	/// Adds record <paramref name="index"/> of <c>.MSN</c> row <paramref name="msnRow"/>, or when an earlier
+	/// record has its GUID hands both to <paramref name="merge"/> — the compaction every GUID-keyed row
+	/// shares. The slot the original read into is reused.
 	/// </summary>
-	private static void AddOrMerge(List<short[]> row, short[] record, Action<short[], short[]> merge) {
+	private void AddOrMerge(List<short[]> row, int msnRow, int index, short[] record, Action<short[], short[]> merge) {
 		int existing = Find(row, record[MapObject.GUIDWord], row.Count, exported: false);
 		if (existing == -1) {
 			row.Add(record);
+			Provenance.Added(msnRow, index, record);
 		} else {
+			Provenance.Merging(msnRow, existing, index);
 			merge(record, row[existing]);
 		}
 	}
 
 	/// <summary>The whole-record replace rows 3, 6, 7 and 9 use for a repeated GUID.</summary>
-	private static void Replace(short[] source, short[] target) => Array.Copy(source, target, target.Length);
+	private void Replace(short[] source, short[] target) {
+		Array.Copy(source, target, target.Length);
+		Provenance.Wrote(0, target.Length);
+	}
 
 	/// <summary>Copies each word of <paramref name="source"/> in the range that is not <paramref name="unset"/>.</summary>
-	private static void Overlay(short[] source, short[] target, int first, int count, short unset) {
+	private void Overlay(short[] source, short[] target, int first, int count, short unset) {
 		for (int i = first; i < first + count; i++) {
 			if (source[i] != unset) {
 				target[i] = source[i];
+				Provenance.Wrote(i, 1);
 			}
 		}
 	}
 
-	private static void Copy(short[] source, short[] target, int first, int count) =>
-		Array.Copy(source, first, target, first, count);
+	/// <summary>A variant's copy of words from <paramref name="source"/>, a record of <paramref name="row"/>, into <paramref name="target"/>.</summary>
+	private void Copy(IReadOnlyList<short[]> row, int source, short[] target, int first, int count) {
+		Array.Copy(row[source], first, target, first, count);
+		Provenance.CopiedFromVariant(source, first, count);
+	}
 
 	/// <summary>Row 3, 8 bytes: GUID, condition, a word, the value row 4 fetches.</summary>
 	private void ReadVariants(Cursor reader) {
@@ -552,7 +567,7 @@ public sealed class MissionGenerator {
 		for (int i = 0; i < count; i++) {
 			short[] record = reader.Words(4);
 			if (Gate(record[VariantValue8.ConditionRefWord], _conditions.Count)) {
-				AddOrMerge(_variants, record, Replace);
+				AddOrMerge(_variants, 3, i, record, Replace);
 			}
 		}
 	}
@@ -568,6 +583,7 @@ public sealed class MissionGenerator {
 			short[] record = reader.Words(72);
 			if (_texts.Count == 0) {
 				_textSlot0 = record;
+				Provenance.TextPackage(i, record.Length);
 			}
 
 			if (!Gate(record[MissionText144.ConditionRefWord], _conditions.Count)) {
@@ -607,7 +623,7 @@ public sealed class MissionGenerator {
 
 			short variantKey = record[MapPoint22.VariantKeyWord];
 			if (variantKey != -1 && VariantSource(_points, variantKey, _points.Count) is >= 0 and var source) {
-				Copy(_points[source], record, MapPoint22.XWord, 6);
+				Copy(_points, source, record, MapPoint22.XWord, 6);
 			}
 
 			if (record[MapPoint22.SumFlagWord] != 0) {
@@ -621,7 +637,7 @@ public sealed class MissionGenerator {
 				}
 			}
 
-			AddOrMerge(_points, record, Replace);
+			AddOrMerge(_points, 6, i, record, Replace);
 		}
 	}
 
@@ -643,10 +659,10 @@ public sealed class MissionGenerator {
 
 			short variantKey = record[Heading10.VariantKeyWord];
 			if (variantKey != -1 && VariantSource(_headings, variantKey, _headings.Count) is >= 0 and var source) {
-				record[Heading10.DegreesWord] = _headings[source][Heading10.DegreesWord];
+				Copy(_headings, source, record, Heading10.DegreesWord, 1);
 			}
 
-			AddOrMerge(_headings, record, Replace);
+			AddOrMerge(_headings, 7, i, record, Replace);
 		}
 	}
 
@@ -681,13 +697,17 @@ public sealed class MissionGenerator {
 					group.Words[4] = _waypointGroups[source].Words[4];
 					group.Points.Clear();
 					group.Points.AddRange(_waypointGroups[source].Points);
+					Provenance.CopiedFromVariant(source, 4, 1);
 				}
 			}
 
 			int existing = FindGroup(_waypointGroups, group.Words[MapObject.GUIDWord], _waypointGroups.Count, exported: false);
 			if (existing == -1) {
 				_waypointGroups.Add(group);
+				Provenance.Added(8, i, group.Words);
 			} else {
+				Provenance.Merging(8, existing, i);
+				Provenance.Wrote(0, group.Words.Length);
 				_waypointGroups[existing] = group;
 			}
 		}
@@ -707,7 +727,7 @@ public sealed class MissionGenerator {
 				record[TriggerArea12.SecondPointOrRadiusWord] = Ref(_points, record[TriggerArea12.SecondPointOrRadiusWord]);
 			}
 
-			AddOrMerge(_areas, record, Replace);
+			AddOrMerge(_areas, 9, i, record, Replace);
 		}
 	}
 
@@ -736,7 +756,7 @@ public sealed class MissionGenerator {
 				}
 			}
 
-			AddOrMerge(_actions, record, (source, target) => {
+			AddOrMerge(_actions, 10, i, record, (source, target) => {
 				Overlay(source, target, MissionAction82.TypeWord, 10, -1);
 				Overlay(source, target, MissionAction82.CounterPairsWord, 20, -1);
 				Overlay(source, target, MissionAction82.TextRefsWord, 5, -1);
@@ -761,7 +781,7 @@ public sealed class MissionGenerator {
 				}
 			}
 
-			AddOrMerge(_timers, record, (source, target) => {
+			AddOrMerge(_timers, 11, i, record, (source, target) => {
 				Overlay(source, target, ActionTimer30.PrimaryActionRefWord, 1, -1);
 				Overlay(source, target, ActionTimer30.DelayWord, 1, 0);
 				Overlay(source, target, ActionTimer30.SequenceRefsWord, 10, -1);
@@ -788,17 +808,16 @@ public sealed class MissionGenerator {
 				record[MechRosterEntry144.EngagementActionRefWord] = Ref(_actions, record[MechRosterEntry144.EngagementActionRefWord]);
 				record[MechRosterEntry144.DefeatActionRefWord] = Ref(_actions, record[MechRosterEntry144.DefeatActionRefWord]);
 			} else if (VariantSource(_hercs, record[MechRosterEntry144.VariantKeyWord], _hercs.Count) is >= 0 and var source) {
-				var from = _hercs[source];
-				Copy(from, record, MechRosterEntry144.AiRadarActiveWord, 20);
-				Copy(from, record, MechRosterEntry144.WeaponRefsWord, 10);
-				Copy(from, record, MechRosterEntry144.PositionRefWord, 2);
-				record[MechRosterEntry144.TypeIndexWord] = from[MechRosterEntry144.TypeIndexWord];
-				Copy(from, record, MechRosterEntry144.OutOfActionReportWord, 20);
-				Copy(from, record, MechRosterEntry144.WeaponSecondaryWord, 10);
-				Copy(from, record, MechRosterEntry144.Constant2Word, 4);
+				Copy(_hercs, source, record, MechRosterEntry144.AiRadarActiveWord, 20);
+				Copy(_hercs, source, record, MechRosterEntry144.WeaponRefsWord, 10);
+				Copy(_hercs, source, record, MechRosterEntry144.PositionRefWord, 2);
+				Copy(_hercs, source, record, MechRosterEntry144.TypeIndexWord, 1);
+				Copy(_hercs, source, record, MechRosterEntry144.OutOfActionReportWord, 20);
+				Copy(_hercs, source, record, MechRosterEntry144.WeaponSecondaryWord, 10);
+				Copy(_hercs, source, record, MechRosterEntry144.Constant2Word, 4);
 			}
 
-			AddOrMerge(_hercs, record, (source, target) => {
+			AddOrMerge(_hercs, 12, i, record, (source, target) => {
 				Overlay(source, target, MechRosterEntry144.AiRadarActiveWord, 20, 0);
 				Overlay(source, target, MechRosterEntry144.WeaponRefsWord, 10, -1);
 				Overlay(source, target, MechRosterEntry144.WeaponSecondaryWord, 10, HercNoGuidance);
@@ -830,12 +849,11 @@ public sealed class MissionGenerator {
 				record[FlyerRosterEntry102.EngagementActionRefWord] = Ref(_actions, record[FlyerRosterEntry102.EngagementActionRefWord]);
 				record[FlyerRosterEntry102.DefeatActionRefWord] = Ref(_actions, record[FlyerRosterEntry102.DefeatActionRefWord]);
 			} else if (VariantSource(_flyers, record[FlyerRosterEntry102.VariantKeyWord], _flyers.Count) is >= 0 and var source) {
-				var from = _flyers[source];
-				Copy(from, record, FlyerRosterEntry102.FlagSpanWord, 23);
-				Copy(from, record, FlyerRosterEntry102.OutOfActionReportWord, 23);
+				Copy(_flyers, source, record, FlyerRosterEntry102.FlagSpanWord, 23);
+				Copy(_flyers, source, record, FlyerRosterEntry102.OutOfActionReportWord, 23);
 			}
 
-			AddOrMerge(_flyers, record, (source, target) => {
+			AddOrMerge(_flyers, 13, i, record, (source, target) => {
 				Overlay(source, target, FlyerRosterEntry102.FlagSpanWord, 20, 0);
 				Overlay(source, target, FlyerRosterEntry102.PositionRefWord, 3, -1);
 				Overlay(source, target, FlyerRosterEntry102.OutOfActionReportWord, 22, -1);
@@ -862,12 +880,11 @@ public sealed class MissionGenerator {
 				record[BaseRosterEntry62.EngagementActionRefWord] = Ref(_actions, record[BaseRosterEntry62.EngagementActionRefWord]);
 				record[BaseRosterEntry62.DefeatActionRefWord] = Ref(_actions, record[BaseRosterEntry62.DefeatActionRefWord]);
 			} else if (VariantSource(_bases, record[BaseRosterEntry62.VariantKeyWord], _bases.Count) is >= 0 and var source) {
-				var from = _bases[source];
-				Copy(from, record, BaseRosterEntry62.TypeIndexWord, 3);
-				Copy(from, record, BaseRosterEntry62.OutOfActionReportWord, 23);
+				Copy(_bases, source, record, BaseRosterEntry62.TypeIndexWord, 3);
+				Copy(_bases, source, record, BaseRosterEntry62.OutOfActionReportWord, 23);
 			}
 
-			AddOrMerge(_bases, record, (source, target) => {
+			AddOrMerge(_bases, 14, i, record, (source, target) => {
 				Overlay(source, target, BaseRosterEntry62.TypeIndexWord, 3, -1);
 				Overlay(source, target, BaseRosterEntry62.OutOfActionReportWord, 22, -1);
 				Overlay(source, target, BaseRosterEntry62.StartingConditionWord, 1, 100);
@@ -901,10 +918,10 @@ public sealed class MissionGenerator {
 					_ => record[subject],
 				};
 			} else if (VariantSource(_orders, record[MissionOrder22.VariantKeyWord], _orders.Count) is >= 0 and var source) {
-				Copy(_orders[source], record, MissionOrder22.VerbWord, 7);
+				Copy(_orders, source, record, MissionOrder22.VerbWord, 7);
 			}
 
-			AddOrMerge(_orders, record, (source, target) => Overlay(source, target, MissionOrder22.VerbWord, 7, -1));
+			AddOrMerge(_orders, 15, i, record, (source, target) => Overlay(source, target, MissionOrder22.VerbWord, 7, -1));
 		}
 	}
 
@@ -942,7 +959,7 @@ public sealed class MissionGenerator {
 				record[slot] = Ref(_orders, record[slot]);
 			}
 
-			AddOrMerge(_groups, record, (source, target) => {
+			AddOrMerge(_groups, 16, i, record, (source, target) => {
 				Overlay(source, target, MissionGroup164.PaintsGroundWord, 20, 0);
 				Overlay(source, target, MissionGroup164.MemberRefsWord, 30, -1);
 				Overlay(source, target, MissionGroup164.MemberKindWord, 5, -1);
@@ -1006,6 +1023,7 @@ public sealed class MissionGenerator {
 			};
 
 			_objectives.Add(record);
+			Provenance.Added(17, i, record);
 		}
 	}
 
