@@ -16,7 +16,8 @@ namespace Herculan.Engine.Tests;
 /// every component left with no internal. See docs/retail/formats/collision-spheres.md and
 /// docs/retail/formats/dmg-damage-file.md.
 ///
-/// <para>Every test skips silently when no Earthsiege 2 install can be found.</para>
+/// <para>The tests that read the retail files skip silently when no Earthsiege 2 install can be
+/// found.</para>
 /// </summary>
 [Collection(SimTimestepCollection.Name)]
 public class WeaponMountFitTests {
@@ -49,28 +50,30 @@ public class WeaponMountFitTests {
 
 	/// <summary>
 	/// The replacement copies the type's model rather than writing into it, moves every sphere by
-	/// the offset, and leaves the radius alone.
+	/// the offset, keeps each radius and derives the bound again — and only for the first cluster,
+	/// node by node, that carries the component.
 	/// </summary>
 	[Fact]
 	public void ReplaceClusterCopiesTheSharedModel() {
-		if (ComputerWarningTests.Content() is not { } content) {
-			return;
-		}
-
-		var model = CollisionModelReader.Load(content, "ACHILLES");
-		if (model.Length == 0) {
-			return;
-		}
+		var placeholder = new ColliderCluster(19, Array.Empty<ColliderSphere>());
+		var neighbour = new ColliderCluster(5, new[] { new ColliderSphere(1, 2, 3, 40) });
+		var model = new[] {
+			new ColliderNode(3, new[] { neighbour, placeholder }),
+			new ColliderNode(4, new[] { placeholder }),
+		};
 
 		var spheres = new[] { new ColliderSphere(0, -250, 0, 80), new ColliderSphere(0, 100, 0, 90) };
 		var fitted = CollisionModel.ReplaceCluster(model, 19, spheres, new Vec3i(10, 20, 30));
 
-		var before = model.SelectMany(n => n.Clusters).First(c => c.ComponentIndex == 19);
-		var after = fitted.SelectMany(n => n.Clusters).First(c => c.ComponentIndex == 19);
-		Assert.Empty(before.Spheres);
+		Assert.Empty(model[0].Clusters[1].Spheres);
+		var replaced = fitted[0].Clusters[1];
 		Assert.Equal(new[] { new ColliderSphere(10, -230, 30, 80), new ColliderSphere(10, 120, 30, 90) },
-			after.Spheres);
-		Assert.NotEqual(0, after.Bound.Radius);
+			replaced.Spheres);
+		Assert.NotEqual(0, replaced.Bound.Radius);
+
+		Assert.Equal(neighbour, fitted[0].Clusters[0]);
+		Assert.Same(model[1].Clusters, fitted[1].Clusters);
+		Assert.Empty(fitted[1].Clusters[0].Spheres);
 	}
 
 	/// <summary>

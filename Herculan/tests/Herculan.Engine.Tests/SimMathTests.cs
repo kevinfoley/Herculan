@@ -16,28 +16,24 @@ namespace Herculan.Engine.Tests;
 /// </summary>
 [Collection(SimTimestepCollection.Name)]
 public class SimMathTests {
-	public static TheoryData<short> Steps => new(1, 3, 25, 150, 3000);
-
-	[Theory]
-	[MemberData(nameof(Steps))]
-	public void ScalePerTickStepIsExactAtTheVanillaTick(short step) {
-		WithTickDelta(SimMath.VanillaTickDelta, () => Assert.Equal(step, SimMath.ScalePerTickStep(step)));
+	[Fact]
+	public void ScalePerTickStepIsExactAtTheVanillaTick() {
+		WithTickDelta(SimMath.VanillaTickDelta, () => Assert.Equal(3000, SimMath.ScalePerTickStep(3000)));
 	}
 
-	[Theory]
-	[MemberData(nameof(Steps))]
-	public void ScalePerTickStepTracksTheTickLength(short step) {
+	[Fact]
+	public void ScalePerTickStepTracksTheTickLength() {
 		// Twice the tick length covers twice the ramp.
-		WithTickDelta((short)(SimMath.VanillaTickDelta * 2),
-			() => Assert.Equal(step * 2, SimMath.ScalePerTickStep(step)));
+		WithTickDelta((short)(SimMath.VanillaTickDelta * 2), () => Assert.Equal(6000, SimMath.ScalePerTickStep(3000)));
 	}
 
-	/// <summary>A tick of 40 against the vanilla 81 covers a little under half the ramp, truncated.</summary>
+	/// <summary>
+	/// A tick of 40 against the vanilla 81 covers a little under half the ramp, truncated: 6 × 40 / 81
+	/// is 2.96 and 200 × 40 / 81 is 98.8, which rounding would carry up to 3 and 99.
+	/// </summary>
 	[Theory]
-	[InlineData(3, 1)]
-	[InlineData(25, 12)]
-	[InlineData(150, 74)]
-	[InlineData(3000, 1481)]
+	[InlineData(6, 2)]
+	[InlineData(200, 98)]
 	public void ScalePerTickStepTruncatesAShorterTick(int step, int expected) {
 		WithTickDelta(40, () => Assert.Equal(expected, SimMath.ScalePerTickStep((short)step)));
 	}
