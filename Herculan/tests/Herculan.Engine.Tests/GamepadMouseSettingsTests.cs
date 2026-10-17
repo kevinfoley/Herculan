@@ -5,18 +5,24 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>How a gamepad's mouse settings are kept in <c>herculan-joystick.cfg</c>'s <c>[Gamepad]</c> section.</summary>
 public class GamepadMouseSettingsTests {
-	[Fact]
-	public void ChangedSettingsSurviveASaveWithNoDeviceSection() {
+	/// <summary>
+	/// The stick and the trigger are set to opposite sides, one of them the default, so each case catches
+	/// a setting that is dropped, and either catches the two being read from each other's key.
+	/// </summary>
+	[Theory]
+	[InlineData(GamepadSide.Left, GamepadSide.Right)]
+	[InlineData(GamepadSide.Right, GamepadSide.Left)]
+	public void ChangedSettingsSurviveASaveWithNoDeviceSection(GamepadSide stick, GamepadSide trigger) {
 		string path = Path.GetTempFileName();
 		try {
 			var file = new JoystickMapFile {
-				Mouse = new GamepadMouseSettings { CursorStick = GamepadSide.Left, LeftClickTrigger = GamepadSide.Left, CursorSpeed = 250 },
+				Mouse = new GamepadMouseSettings { CursorStick = stick, LeftClickTrigger = trigger, CursorSpeed = 250 },
 			};
 			file.Save(path);
 
 			var read = JoystickMapFile.Load(path);
-			Assert.Equal(GamepadSide.Left, read.Mouse.CursorStick);
-			Assert.Equal(GamepadSide.Left, read.Mouse.LeftClickTrigger);
+			Assert.Equal(stick, read.Mouse.CursorStick);
+			Assert.Equal(trigger, read.Mouse.LeftClickTrigger);
 			Assert.Equal(250, read.Mouse.CursorSpeed);
 			Assert.NotNull(read.For(isGamepad: true, guid: null));
 		} finally {
