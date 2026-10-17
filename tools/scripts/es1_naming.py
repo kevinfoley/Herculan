@@ -74,8 +74,10 @@ def entry_map(binary, image, fns):
     return out
 
 
-def find_vtables(binary):
-    """({vt: [slot function, from +4]}, {vt: [store addresses]})."""
+def find_vtables(binary, zero_led=False):
+    """({vt: [slot function, from +4]}, {vt: [store addresses]}). With zero_led, a stored table whose
+    first slots are 0 (pure virtuals, as DRAWABLE's in the ES1 simulator) is kept too, those slots as
+    0; otherwise a table ends at its first zero slot and one that starts with a zero is skipped."""
     b = x32(binary)
     image = b.image()
     fns = N.functions(binary)
@@ -94,12 +96,15 @@ def find_vtables(binary):
         if v < code_end or image.dword(v) != 0:
             continue
         slots = []
+        while zero_led and len(slots) < 8 and image.dword(v + 4 + 4 * len(slots)) == 0:
+            slots.append(0)
+        lead = len(slots)
         while len(slots) < 128:
             w = image.dword(v + 4 + 4 * len(slots))
             if not w or w >= code_end:
                 break
             slots.append(enters.get(w, w))
-        if slots:
+        if len(slots) > lead:
             tables[v] = slots
     return tables, {v: stores[v] for v in tables}, enters
 

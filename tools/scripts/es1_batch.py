@@ -22,9 +22,11 @@ targets, the rest of the line being stamped.
 
 `precheck` runs es2_stamp.py's wording checks over each stamp line against the descriptions the
 file's insert and edit JSONs will write (known_symbols for the rest), with that line's flags, reading
-and writing no file but those: REFUSE for a sentence the stamp would stop on, UNUSED for a
---read-callers or --own-negatives no target of its line needs, and es2_naming.py's SHAPE warnings. A
-subagent runs it on its own command file before handing it in.
+and writing no file but those: REFUSE for a sentence the stamp would stop on, RAW for a --via raw
+target that is not a straight-line stub (it goes after the regeneration, --via disasm), UNUSED for a
+--read-callers or --own-negatives no target of its line needs, and es2_naming.py's SHAPE warnings,
+which --fix first rewrites in the batch JSONs. A subagent runs it on its own command file before
+handing it in.
 
 Only those tools and subcommands run; any other line (grep, git, shell) is skipped with a note,
 since the file is a subagent's output. Comment and blank lines are ignored.
@@ -38,7 +40,7 @@ tools give: `es1_boilerplate.py bounds` over the range with a 0x100 margin, the 
 Usage:
     python tools/scripts/es1_batch.py brief N LO HI --scratch DIR [--notes NOTES.md] [--auto] [--out FILE]
     python tools/scripts/es1_batch.py run COMMANDS.txt [--from N] [--no-precheck]
-    python tools/scripts/es1_batch.py precheck COMMANDS.txt
+    python tools/scripts/es1_batch.py precheck COMMANDS.txt [--fix]
     python tools/scripts/es1_batch.py list COMMANDS.txt
 """
 from __future__ import annotations
@@ -137,6 +139,35 @@ def batch_items(steps):
     return out
 
 
+def fix_shapes(steps):
+    """Rewrites the SHAPE forms in the file's insert and edit JSONs in place, printing each; returns
+    how many. Those are the batch's scratch files, never a known_symbols file."""
+    import es2_naming
+    n = 0
+    for s in steps:
+        if not (s.kind == "write" and s.argv[0] == "es2_naming.py" and s.argv[1] in ("insert", "edit")):
+            continue
+        path = json_path(s.argv[2])
+        data = json.loads(path.read_text(encoding="utf-8"))
+        changed = False
+        for e in data:
+            holder, key = (e, "description") if "description" in e else \
+                (e, "value") if e.get("field") == "description" else (e.get("fields") or {}, "description")
+            d = holder.get(key)
+            if not d:
+                continue
+            for text, want in es2_naming.shape_warnings(d):
+                d = d.replace(text, want)
+                print("  fixed %s %s: '%s' -> '%s'" % (e["binary"], e["address"], text, want))
+                n += 1
+            if d != holder[key]:
+                holder[key] = d
+                changed = True
+        if changed:
+            path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return n
+
+
 def precheck(steps, start=1):
     """Runs es2_stamp.py's wording checks over each stamp line from step `start` on, against the
     descriptions the file's inserts and edits will write (the known_symbols text for the rest), with
@@ -158,8 +189,9 @@ def precheck(steps, start=1):
         if sub == "insert":
             types[key] = e["type"]
     es2_naming.print_shape_warnings([e for _, e in items])
+    from retail_binaries import Image
     parser = es2_stamp.build_parser()
-    known = {}
+    known, images = {}, {}
     problems = 0
     for i, s in enumerate(steps, 1):
         if i < start or s.argv[:2] != ["es2_stamp.py", "stamp"]:
@@ -170,6 +202,8 @@ def precheck(steps, start=1):
             ents = es2_symbols.entries(b)
             known[b] = ({e["address"].lower(): e for e in ents}, {e["name"]: e["address"].lower() for e in ents if e.get("name")})
         by_addr, by_name = known[b]
+        if a.via == "raw" and b not in images:
+            images[b] = (Image(b), es2_stamp.function_extents(b))
         negatives = [es2_stamp.parse_negative(n) for n in a.negative]
         used = {"callers": False, "negs": False}
         for t in (t for arg in a.target for t in arg.split("+") if t):
@@ -184,6 +218,18 @@ def precheck(steps, start=1):
                 print("  step %d: %s %s is a %s entry; stamps are for functions" % (i, b, t, kind))
                 problems += 1
                 continue
+            if a.via == "raw":
+                image, extents = images[b]
+                raw = es2_stamp.raw_extent(image, int(addr, 16))
+                if raw is None:
+                    print("  RAW step %d (line %d): %s %s is not a straight-line stub ending in a RET within %d "
+                          "bytes; stamp it --via disasm after the '# after regen' line"
+                          % (i, s.line, b, addr, es2_stamp.RAW_LIMIT))
+                    problems += 1
+                elif extents.get(int(addr, 16)) not in (None, raw):
+                    print("  RAW step %d (line %d): %s %s has a Ghidra function of %d bytes, the stub %d; "
+                          "stamp it --via disasm" % (i, s.line, b, addr, extents[int(addr, 16)], raw))
+                    problems += 1
             callers, negs = es2_stamp.claim_findings(descs.get((b, addr), (entry or {}).get("description", "")), negatives)
             for found, flag, label, key in ((callers, a.read_callers, "--read-callers", "callers"),
                                             (negs, a.own_negatives, "--own-negatives", "negs")):
@@ -256,6 +302,8 @@ def cmd_list(args):
 
 def cmd_precheck(args):
     steps, _ = parse(args.file)
+    if args.fix:
+        print("%d SHAPE form(s) rewritten" % fix_shapes(steps))
     bad = precheck(steps)
     print("%d problem(s)" % bad)
     return 1 if bad else 0
@@ -404,6 +452,7 @@ def main():
     r.add_argument("--no-precheck", action="store_true", help="skip the wording precheck of the stamp lines")
     pc = sub.add_parser("precheck", help="the stamp lines' wording checks against the batch JSONs; writes nothing")
     pc.add_argument("file")
+    pc.add_argument("--fix", action="store_true", help="first rewrite the SHAPE forms in the batch JSONs in place")
     ls = sub.add_parser("list", help="print the steps the run would take, numbered")
     ls.add_argument("file")
     args = p.parse_args()

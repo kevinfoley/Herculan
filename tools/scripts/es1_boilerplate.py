@@ -87,7 +87,8 @@ class Image:
         self.fns = {int(a, 16): v for a, v in N.functions(self.binary).items()}
         self.ext = N.Extents(self.binary)
         self.mem = self.img.sections[0][2]
-        tables, _stores, self.enters = V.find_vtables(self.binary)
+        # zero_led: a table opening with pure virtuals still ends the one before it.
+        tables, _stores, self.enters = V.find_vtables(self.binary, zero_led=True)
         self.data_start = N.x32_data_start(self.b.dump("disasm_full.txt"), self.mem)
         self.entries = {int(e["address"], 16): e for e in S.entries(self.binary)}
         self.fresh = fresh_range
@@ -210,7 +211,12 @@ def is_stub(key):
 def split_scores(names):
     """{copy name: base}: each '<base><Tag>Copy' name split where the base recurs with the most tags
     and the tag with the most bases; a tag must start with a capital, recur under two bases, and leave
-    a base with a method part ('Class_Method'). A name no split fits is its own base less 'Copy'."""
+    a base with a method part ('Class_Method'), and the base or one of the tag's bases must be an
+    original's name, or the tag or the base recur three times. A name whose whole stem is itself the
+    base of tagged copies is untagged. Those two tests keep an untagged copy whole:
+    'TSObj_GetRadiusCopy' and 'Drawable_GetRadiusCopy' would otherwise make 'Radius' a tag under
+    'TSObj_Get' and 'Drawable_Get', neither a function. A name no split fits is its own base less
+    'Copy'."""
     copies = [n for n in names if n.endswith("Copy") and len(n) > 4]
     originals = {n for n in names if not n.endswith("Copy")}
     splits = {}
@@ -225,8 +231,12 @@ def split_scores(names):
             by_base[b].add(t)
     out = {}
     for n, ss in splits.items():
+        if by_base[n[:-4]]:
+            out[n] = n[:-4]       # the whole stem is the base of tagged copies: this one is untagged
+            continue
         good = [(len(by_base[b]) + len(by_tag[t]) + (b in originals), b) for b, t in ss
-                if len(by_tag[t]) >= 2 or len(by_base[b]) >= 2]
+                if (len(by_tag[t]) >= 2 or len(by_base[b]) >= 2)
+                and (b in originals or by_tag[t] & originals or len(by_tag[t]) >= 3 or len(by_base[b]) >= 3)]
         out[n] = max(good)[1] if good else n[:-4]
     return out
 
