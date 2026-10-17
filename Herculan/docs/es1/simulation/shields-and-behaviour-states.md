@@ -35,7 +35,32 @@ A machine's behaviour block is at `+0x47`, ES2's `+0x4d` ([the mech's behaviour 
 
 ## The HERC's state table
 
-`Behaviour_BuildStateTable` (`0000fee4`) fills the twenty `0x28`-byte descriptors of `BehaviourStateTable` (`000af26c`): name, dwell, the 16 flag bytes `Behaviour_ExpandFlagBits` (`00010578`) unpacks from a 16-bit mask, the think, move and reassess functions at `+0x18`, `+0x1c` and `+0x20`, each one function pointer where ES2's is a three-dword member-function triple, and a closing dword at `+0x24`. The states, in order: `deciding`, `player`, `attacking`, `flanking`, `facing off`, `attacking base`, `attacking flyer`, `patrolling`, `travelling`, `bulldog travel`, `search destroy`, `sleeping`, `skirting`, `guarding`, `driving off en`, `ramming`, `fleeing`, `in limbo`, `dead`, `disabled`. The dwell is 50000 for the five combat states and `driving off en`, 30000 for `fleeing`, 0 for `deciding`, `dead` and `disabled`, and 10 for the rest. ES2's table ([the 22 states](../../retail/simulation/ai-dispatch.md#the-22-states)) also has `player fly` and `following`, and holds `fleeing` for 15000.
+`Behaviour_BuildStateTable` (`0000fee4`) fills the twenty `0x28`-byte descriptors of `BehaviourStateTable` (`000af26c`): name, dwell, the 16 flag bytes `Behaviour_ExpandFlagBits` (`00010578`) unpacks from a 16-bit mask, the think, move and reassess functions at `+0x18`, `+0x1c` and `+0x20`, each one function pointer where ES2's is a three-dword member-function triple, and at `+0x24` the `int16` ES2 keeps at `+0x3c`, the squad line's string index. ES2's table ([the 22 states](../../retail/simulation/ai-dispatch.md#the-22-states)) also has `player fly` and `following`, holds `fleeing` for 15000, and gives `skirting` the mask 3. The move is `Mech_MovementTick` (`00014844`) wherever the table says walk; the functions are [the HERC's AI](mech-ai.md)'s:
+
+| # | Name | Think | Move | Reassess | Dwell | Mask | `+0x24` |
+|---|---|---|---|---|---|---|---|
+| 0 | `deciding` | — | — | `Mech_AiSelectBehaviour` | 0 | 0 | 3 |
+| 1 | `player` | `Mech_BehaviourPlayerThink` | walk | — | 10 | 1 | 3 |
+| 2 | `attacking` | `Mech_BehaviourAttackThink` | walk | `Mech_AiCombatReassess` | 50000 | 2 | 0 |
+| 3 | `flanking` | `Mech_BehaviourFlankThink` | walk | `Mech_AiCombatReassess` | 50000 | 2 | 0 |
+| 4 | `facing off` | `Mech_BehaviourFaceOffThink` | walk | `Mech_AiCombatReassess` | 50000 | 2 | 0 |
+| 5 | `attacking base` | `Mech_BehaviourAttackBaseThink` | walk | `Mech_AiCombatReassess` | 50000 | 2 | 0 |
+| 6 | `attacking flyer` | `Mech_BehaviourAttackFlyerThink` | walk | `Mech_AiCombatReassess` | 50000 | 2 | 0 |
+| 7 | `patrolling` | `Mech_BehaviourPatrolThink` | walk | `Mech_AiSelectBehaviour` | 10 | 1 | 3 |
+| 8 | `travelling` | `Mech_BehaviourTravelThink` | walk | `Mech_AiSelectBehaviour` | 10 | 1 | 3 |
+| 9 | `bulldog travel` | `Mech_BehaviourTravelThink` | walk | `Mech_AiSelectBehaviour` | 10 | 9 | 3 |
+| 10 | `search destroy` | `Mech_BehaviourSearchDestroyThink` | walk | `Mech_AiSelectBehaviour` | 10 | 1 | 3 |
+| 11 | `sleeping` | `Mech_BehaviourSleepThink` | walk | `Mech_AiSelectBehaviour` | 10 | 9 | 3 |
+| 12 | `skirting` | `Mech_BehaviourSkirtThink` | walk | `Mech_AiSelectBehaviour` | 10 | 1 | 0 |
+| 13 | `guarding` | `Mech_BehaviourGuardThink` | walk | `Mech_AiSelectBehaviour` | 10 | 5 | 3 |
+| 14 | `driving off en` | `Mech_BehaviourDriveOffThink` | walk | `Mech_AiSelectBehaviour` | 50000 | 6 | 0 |
+| 15 | `ramming` | `Mech_BehaviourRamThink` | `Mech_BehaviourRamTick` | `Mech_AiSelectBehaviour` | 10 | 9 | 0 |
+| 16 | `fleeing` | `Mech_BehaviourFleeThink` | walk | `Mech_AiCombatReassess` | 30000 | `0x12` | 5 |
+| 17 | `in limbo` | — | — | — | 10 | `0x21` | 6 |
+| 18 | `dead` | `Mech_BehaviourInertThink` | walk | — | 0 | `0x21` | 6 |
+| 19 | `disabled` | `Mech_BehaviourInertThink` | walk | — | 0 | `0x21` | 7 |
+
+Descriptor *n* is `000af26c` + `0x28` × *n*.
 
 ## The aircraft's state table
 

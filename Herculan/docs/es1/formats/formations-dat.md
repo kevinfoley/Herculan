@@ -32,7 +32,7 @@ None of the loaders checks the file's length.
 
 ## Where a member stands
 
-`Mech_ApplyFormationOffset` (`00012ed0`), `Flyer_ApplyFormationOffset` (`0001b524`) and `Base_ApplyFormationOffset` (`00004474`), each given the object and a position in stack order, do nothing when the object's member slot, its `int16` at `+0x43`, is 0. Otherwise each takes the slot's offset for the formation whose number is at `+2` of the object's group (`+0x3f`) and adds it to the position with `Formation_RotateAndAddOffset` (`0000d9a0`). `es2_xref.py` finds them called directly, the mech's from `Mech_AttachToGroup` (`00013124`, [the HERC's construction](../simulation/mech.md#construction)), which writes the group and the slot before it places the machine, and `00019660`, the flyer's from `0001b574` and `0001ba88`, the structure's from `000044a4`.
+`Mech_ApplyFormationOffset` (`00012ed0`), `Flyer_ApplyFormationOffset` (`0001b524`) and `Base_ApplyFormationOffset` (`00004474`), each given the object and a position in stack order, do nothing when the object's member slot, its `int16` at `+0x43`, is 0. Otherwise each takes the slot's offset for the formation whose number is at `+2` of the object's group (`+0x3f`) and adds it to the position with `Formation_RotateAndAddOffset` (`0000d9a0`). `es2_xref.py` finds them called directly, the mech's from `Mech_AttachToGroup` (`00013124`, [the HERC's construction](../simulation/mech.md#construction)), which writes the group and the slot before it places the machine, and `Ai_KeepFormation` (`00019660`, [navigation](../simulation/mech-ai.md#navigation)), the flyer's from `0001b574` and `0001ba88`, the structure's from `000044a4`.
 
 | Function | Arguments, stack order | Returns |
 |---|---|---|
@@ -58,5 +58,5 @@ A formation past the file's count reads past its records.
 
 ## Open
 
-- **Open:** the other callers of the three, `00019660`, `0001b574`, `0001ba88` and `000044a4`, and so what fills a flyer's or a structure's `+0x43` and `+0x3f`; a HERC's are `Mech_AttachToGroup`'s.
+- **Open:** the other callers of the three, `0001b574`, `0001ba88` and `000044a4`, and so what fills a flyer's or a structure's `+0x43` and `+0x3f`; a HERC's are `Mech_AttachToGroup`'s.
 - **Open:** `ES1GO 000553bc` and `000552e0`, the shell's heading from a path leg and its rotation, and how they round; and what fills the map's `+0x58`, `+0x9e`, `+0xa2` and `+0xa4`.
