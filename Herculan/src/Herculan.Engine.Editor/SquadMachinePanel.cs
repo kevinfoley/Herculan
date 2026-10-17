@@ -36,7 +36,7 @@ internal sealed class SquadMachinePanel {
 		if (_fitter.SquadSlot(0) is { } slot) {
 			DrawMachine(slot);
 		} else {
-			ImGui.TextDisabled("Group 0 names no herc record.");
+			EditorText.Note("Group 0 names no herc record.");
 		}
 	}
 
@@ -70,7 +70,7 @@ internal sealed class SquadMachinePanel {
 			ImGui.EndCombo();
 		}
 
-		ImGui.TextDisabled("A new chassis comes with its stock fit.");
+		EditorText.Note("A new chassis comes with its stock fit.");
 		int capacity = MachineFitter.Capacity(record.TypeIndex);
 		for (int mount = 0; mount < capacity && mount < record.WeaponRefs.Length; mount++) {
 			DrawMount(slot, record.TypeIndex, mount, record.WeaponRefs[mount],
@@ -80,7 +80,7 @@ internal sealed class SquadMachinePanel {
 		ImGui.EndDisabled();
 		ImGui.PopID();
 		if (reason != null) {
-			ImGui.TextDisabled(reason);
+			EditorText.Note(reason);
 		}
 
 		if (_fitter.Failure is { } failure) {

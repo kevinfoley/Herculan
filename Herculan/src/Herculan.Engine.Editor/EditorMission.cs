@@ -36,7 +36,8 @@ internal sealed class EditorMission {
 		Sides = new SideChanger(document, source, index, Mover);
 		Deleter = new ObjectDeleter(document, source, index, Mover, Rebuild);
 		Fitter = new MachineFitter(document, source, Mover, Rebuild, shellContent);
-		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter, new SquadMachinePanel(Fitter, squad));
+		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter, new SquadMachinePanel(Fitter, squad),
+			SimStrings.Load(content));
 	}
 
 	/// <summary>

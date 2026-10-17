@@ -60,7 +60,7 @@ internal sealed class MissionOutliner {
 		}
 
 		if (_lint.Findings.Count == 0) {
-			ImGui.TextDisabled("None found.");
+			EditorText.Note("None found.");
 			return;
 		}
 
@@ -108,7 +108,7 @@ internal sealed class MissionOutliner {
 
 		// Both wrapped, as their lines run well past the panel's width.
 		if (Mission.ObjectiveTextRefs.Count > 0) {
-			ImGui.TextDisabled("Briefing list:");
+			EditorText.Note("Briefing list:");
 			foreach (int line in Mission.ObjectiveTextRefs) {
 				ImGui.BulletText(string.Empty);
 				ImGui.SameLine();

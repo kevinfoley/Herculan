@@ -204,10 +204,9 @@ public readonly record struct MfdStatusSubject(
 			case Sim.BaseObject structure: {
 				var type = structure.Type;
 				int damage = structure.DamageFraction;
-				int nameGroup = type.IsVehicle ? MfdLayout.VehicleNameGroup : MfdLayout.StructureNameGroup;
 				return new MfdStatusSubject(
 					Present: true, Identified: true, Own: own, Hostile: hostile,
-					Name: strings?.Text(nameGroup, type.SilhouetteIndex) ?? "",
+					Name: BaseName(type, strings) ?? "",
 					Condition: ConditionFromDamage(damage), Damage: damage, Distance: distance,
 					SilhouetteKind: MfdSilhouetteKind.Silhouette,
 					SilhouetteBank: type.IsVehicle ? MfdLayout.VehicleBank : MfdLayout.StructureBank,
@@ -246,6 +245,13 @@ public readonly record struct MfdStatusSubject(
 		int units = viewer.Position.ApproxDistanceTo(subject.Position);
 		return v110 ? MfdScanner.WorldUnitsToMetres(units) : units;
 	}
+
+	/// <summary>
+	/// The name the status screen prints for a structure or ground vehicle of <paramref name="type"/>: its silhouette's
+	/// line in the structure or vehicle name group of <paramref name="strings"/>, or null without one.
+	/// </summary>
+	public static string? BaseName(World.BaseType type, StringFile? strings) =>
+		strings?.Text(type.IsVehicle ? MfdLayout.VehicleNameGroup : MfdLayout.StructureNameGroup, type.SilhouetteIndex);
 
 	/// <summary>
 	/// A flyer's printed name — its type record's own string, which sits at the same <c>+0x12</c> the

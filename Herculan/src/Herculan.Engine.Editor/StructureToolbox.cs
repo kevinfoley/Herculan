@@ -117,15 +117,15 @@ internal sealed class StructureToolbox {
 		ImGui.Checkbox(selectedGroup is { } group ? $"Join the selected group {group}" : "Join the selected group", ref _join);
 		ImGui.EndDisabled();
 		if (whyNotJoin != null) {
-			ImGui.TextDisabled(whyNotJoin);
+			EditorText.Note(whyNotJoin);
 		} else if (selectedGroup == null) {
-			ImGui.TextDisabled("Select a structure group, or one of its structures, to join it.");
+			EditorText.Note("Select a structure group, or one of its structures, to join it.");
 		}
 
 		bool joining = _join && _joinGroup != null;
 		ImGui.BeginDisabled(joining);
 		ImGui.AlignTextToFramePadding();
-		ImGui.Text("Side:");
+		ImGui.Text("Team:");
 		foreach (var side in Enum.GetValues<MissionSide>()) {
 			ImGui.SameLine();
 			if (ImGui.RadioButton(side.ToString(), _side == side)) {
@@ -135,7 +135,7 @@ internal sealed class StructureToolbox {
 
 		ImGui.EndDisabled();
 		if (joining) {
-			ImGui.TextDisabled("It takes the group's side.");
+			EditorText.Note("It takes the group's team.");
 		}
 
 		ImGui.BeginDisabled(!enabled || _chosen < 0);

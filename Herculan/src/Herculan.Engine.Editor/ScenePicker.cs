@@ -15,10 +15,14 @@ internal sealed record Pickable(SceneObject SceneObject, Vector3 LocalCenter, fl
 
 /// <summary>
 /// Turns a click in the viewport into a selection. Three kinds of target, tried in order: a
-/// waypoint (a small mark with no volume, so picked in screen space), then an object (ray against
-/// its bounding sphere), then the trigger area under the ground the ray reaches. That order puts
-/// the smallest target first, so a waypoint sitting inside an area, beside a building, can still be
-/// clicked.
+/// waypoint (a small mark with no volume, so picked in screen space), then an object, then the trigger
+/// area under the ground the ray reaches. That order puts the smallest target first, so a waypoint
+/// sitting inside an area, beside a building, can still be clicked.
+///
+/// <para>An object is picked by its triangles, with its bounding sphere only to find the candidates: the
+/// nearest triangle the ray meets wins. A structure's ground plane (its shadow and floor plates) counts only
+/// when the ray meets nothing solid, so a Herc standing on a base's pad, inside the base's sphere, is
+/// picked rather than the base. A model with no triangles, only billboards, is picked by its sphere.</para>
 /// </summary>
 internal sealed class ScenePicker {
 	private List<Pickable> _pickables;
@@ -51,21 +55,41 @@ internal sealed class ScenePicker {
 
 		var (origin, direction) = Ray(camera, screen, viewport);
 
-		Pickable? best = null;
-		float bestDistance = float.MaxValue;
+		Pickable? solid = null, plane = null;
+		float solidDistance = float.MaxValue, planeDistance = float.MaxValue;
 		bool skipWaiting = settings.WaitingGroups == WaitingGroupDisplay.Hidden;
 		foreach (var pickable in _pickables) {
 			if (skipWaiting && _index.IsWaiting(pickable.SceneObject)) {
 				continue;
 			}
 
-			if (RaySphere(origin, direction, pickable.CenterRender, pickable.RadiusRender, out float t) && t < bestDistance) {
-				bestDistance = t;
-				best = pickable;
+			if (!RaySphere(origin, direction, pickable.CenterRender, pickable.RadiusRender, out float sphereT)) {
+				continue;
+			}
+
+			var model = pickable.SceneObject.Model!;
+			if (model.TriangleVertexCount == 0) {
+				Keep(pickable, sphereT, ref solid, ref solidDistance);
+				continue;
+			}
+
+			// The ray in the model's own space: its direction is not renormalised, so a hit's distance along it
+			// is the render-space distance.
+			if (!Matrix4x4.Invert(MissionScene.TransformOf(pickable.SceneObject), out var toModel)) {
+				continue;
+			}
+
+			var localOrigin = Vector3.Transform(origin, toModel);
+			var localDirection = Vector3.TransformNormal(direction, toModel);
+			if (NearestTriangle(model.Mesh, model.TriangleVertexCount, localOrigin, localDirection) is { } t) {
+				Keep(pickable, t, ref solid, ref solidDistance);
+			} else if (model.GroundMesh is { } groundMesh
+					&& NearestTriangle(groundMesh.Vertices, groundMesh.TriangleVertexCount, localOrigin, localDirection) is { } planeT) {
+				Keep(pickable, planeT, ref plane, ref planeDistance);
 			}
 		}
 
-		if (best != null) {
+		if ((solid ?? plane) is { } best) {
 			return new ObjectSelection(best.SceneObject);
 		}
 
@@ -144,6 +168,47 @@ internal sealed class ScenePicker {
 		}
 
 		return ((min + max) * 0.5f, Vector3.Distance(min, max) * 0.5f);
+	}
+
+	private static void Keep(Pickable pickable, float t, ref Pickable? best, ref float bestDistance) {
+		if (t < bestDistance) {
+			bestDistance = t;
+			best = pickable;
+		}
+	}
+
+	// The distance along the ray to the nearest of the first <count> vertices' triangles it meets, front or back face
+	// (Moller-Trumbore), or null.
+	private static float? NearestTriangle(MeshVertex[] mesh, int count, Vector3 origin, Vector3 direction) {
+		float? nearest = null;
+		for (int i = 0; i + 2 < count && i + 2 < mesh.Length; i += 3) {
+			Vector3 a = mesh[i].Position, edge1 = mesh[i + 1].Position - a, edge2 = mesh[i + 2].Position - a;
+			Vector3 p = Vector3.Cross(direction, edge2);
+			float determinant = Vector3.Dot(edge1, p);
+			if (MathF.Abs(determinant) < 1e-12f) {
+				continue;
+			}
+
+			float inverse = 1f / determinant;
+			Vector3 s = origin - a;
+			float u = Vector3.Dot(s, p) * inverse;
+			if (u < 0f || u > 1f) {
+				continue;
+			}
+
+			Vector3 q = Vector3.Cross(s, edge1);
+			float v = Vector3.Dot(direction, q) * inverse;
+			if (v < 0f || u + v > 1f) {
+				continue;
+			}
+
+			float t = Vector3.Dot(edge2, q) * inverse;
+			if (t >= 0f && (nearest == null || t < nearest)) {
+				nearest = t;
+			}
+		}
+
+		return nearest;
 	}
 
 	private static bool RaySphere(Vector3 origin, Vector3 direction, Vector3 center, float radius, out float t) {

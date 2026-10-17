@@ -1,4 +1,6 @@
 using System.Numerics;
+using HercWorks.Core.Data.File;
+using Herculan.Engine.Cockpit;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
 using Herculan.Engine.Render;
@@ -24,19 +26,21 @@ internal sealed class PropertiesPanel {
 	private readonly SideChanger _sides;
 	private readonly ObjectDeleter _deleter;
 	private readonly SquadMachinePanel _machine;
+	private readonly StringFile? _strings;
 
 	// A position being typed, and the object it is for, until its field lets go.
 	private SceneObject? _draftFor;
 	private Vec3i _draft;
 
 	public PropertiesPanel(MissionIndex index, SelectionState selection, PointMover mover, SideChanger sides,
-			ObjectDeleter deleter, SquadMachinePanel machine) {
+			ObjectDeleter deleter, SquadMachinePanel machine, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
 		_sides = sides;
 		_deleter = deleter;
 		_machine = machine;
+		_strings = strings;
 	}
 
 	private Mission Mission => _index.Mission;
@@ -81,16 +85,16 @@ internal sealed class PropertiesPanel {
 
 	private void DrawObject(SceneObject sel) {
 		var placement = sel.Placement;
-		ImGui.TextWrapped(placement.TypeName ?? $"{placement.Kind} #{placement.TypeIndex}");
-		ImGui.Separator();
-		ImGui.Text($"Kind: {placement.Kind}");
-		ImGui.Text($"Type index: {placement.TypeIndex}");
-		ImGui.Text(placement.IsPlayerLance ? "Player squad" : $"Roster slot: {placement.SlotIndex}");
-		SideField(placement.GroupIndex);
+		ImGui.TextWrapped(Title(sel));
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Group:");
 		ImGui.SameLine();
 		GroupLink(placement.GroupIndex);
+		ImGui.Separator();
+		ImGui.Text($"Kind: {placement.Kind}");
+		ImGui.Text($"Type index: {placement.TypeIndex}");
+		ImGui.Text(placement.IsPlayerLance ? "Player squad" : $"Roster slot: {placement.SlotIndex}");
+		TeamField(placement.GroupIndex, ofMember: true);
 
 		if (sel.Model is { } model) {
 			ImGui.Separator();
@@ -155,7 +159,7 @@ internal sealed class PropertiesPanel {
 		}
 
 		if (blockers.Fixed is { } reason) {
-			ImGui.TextDisabled($"Cannot be deleted: {reason}");
+			EditorText.Note($"Cannot be deleted: {reason}");
 			return;
 		}
 
@@ -229,7 +233,7 @@ internal sealed class PropertiesPanel {
 		if (_mover.WhyFixed(sel) is { } reason) {
 			ImGui.Text($"Position: {pos.X}, {pos.Y}, {pos.Z} units");
 			ImGui.Text($"          {Meters(pos)}");
-			ImGui.TextDisabled(reason);
+			EditorText.Note(reason);
 			return;
 		}
 
@@ -248,10 +252,10 @@ internal sealed class PropertiesPanel {
 		if (ownHeight) {
 			changed |= PositionField("Z", ref z, ref done);
 		} else {
-			ImGui.TextDisabled($"Z: {pos.Z}, from the ground under it");
+			EditorText.Note($"Z: {pos.Z}, from the ground under it");
 		}
 
-		ImGui.TextDisabled(Meters(pos));
+		EditorText.Note(Meters(pos));
 
 		if (changed) {
 			_draftFor = sel;
@@ -283,34 +287,50 @@ internal sealed class PropertiesPanel {
 	}
 
 	/// <summary>
-	/// The group's side, as a choice that changes it when it can be changed (<see cref="SideChanger"/>), as one undo
-	/// step. The side is the group's, so the view says when other members change with it.
+	/// The group's team (block 11's side), as a choice that changes it when it can be changed (<see cref="SideChanger"/>),
+	/// as one undo step. The team is the group's, so a member's view shows it fixed, and the group's view says when other
+	/// members change with it. The player's squad's is shown fixed, with no note.
 	/// </summary>
-	private void SideField(int group) {
+	private void TeamField(int group, bool ofMember) {
 		var current = _index.SideOf(group);
 		string? reason = _sides.WhyFixed(group);
-		if (reason != null || current is not { } side) {
-			ImGui.Text($"Side: {current?.ToString() ?? "?"}");
-			if (reason != null) {
-				ImGui.TextDisabled(reason);
-			}
-
+		if (current is not { } team) {
+			ImGui.Text("Team: ?");
 			return;
 		}
 
 		ImGui.AlignTextToFramePadding();
-		ImGui.Text("Side:");
+		ImGui.Text("Team:");
+		ImGui.BeginDisabled(ofMember || reason != null);
 		foreach (var option in Enum.GetValues<MissionSide>()) {
 			ImGui.SameLine();
-			if (ImGui.RadioButton(option + "##side", side == option)) {
+			if (ImGui.RadioButton(option + "##team", team == option)) {
 				_sides.Set(group, option);
 			}
 		}
 
-		int members = group < _index.GroupMembers.Count ? _index.GroupMembers[group].Count : 0;
-		if (members > 1) {
-			ImGui.TextDisabled($"The side is its group's: all {members} members change with it.");
+		ImGui.EndDisabled();
+		int members = group >= 0 && group < _index.GroupMembers.Count ? _index.GroupMembers[group].Count : 0;
+		if (ofMember) {
+			EditorText.Note("Team controlled by group");
+		} else if (reason != null && group != 0) {
+			EditorText.Note(reason);
+		} else if (reason == null && members > 1) {
+			EditorText.Note($"All {members} members change with it.");
 		}
+	}
+
+	// The object's name: a mech's or flyer's type name, or for a structure or ground vehicle its type and the name the
+	// MFD's status screen prints for it (MfdStatusSubject.BaseName).
+	private string Title(SceneObject sel) {
+		var placement = sel.Placement;
+		if (sel.Object is Sim.BaseObject structure) {
+			string kind = structure.Type.IsVehicle ? "Ground vehicle" : "Base";
+			string? name = MfdStatusSubject.BaseName(structure.Type, _strings);
+			return $"{kind} type {placement.TypeIndex}: {(string.IsNullOrWhiteSpace(name) ? "(no name)" : name)}";
+		}
+
+		return placement.TypeName ?? $"{placement.Kind} type {placement.TypeIndex}";
 	}
 
 	private static bool PositionField(string label, ref int value, ref bool done) {
@@ -326,7 +346,7 @@ internal sealed class PropertiesPanel {
 
 	private void DrawGroup(int group) {
 		ImGui.TextWrapped(MissionText.DescribeGroup(_index, group));
-		SideField(group);
+		TeamField(group, ofMember: false);
 		if (group == 0) {
 			_machine.DrawPlayer();
 		}
@@ -497,7 +517,7 @@ internal sealed class PropertiesPanel {
 
 		if (record.Areas.Count == 0 && links.TimersFiringIt.Count == 0 && links.EngagedObjects.Count == 0
 				&& links.DefeatedObjects.Count == 0) {
-			ImGui.TextDisabled("nothing in this mission fires it");
+			EditorText.Note("nothing in this mission fires it");
 		}
 
 		ImGui.Unindent();
@@ -544,12 +564,12 @@ internal sealed class PropertiesPanel {
 				.Select(entry => entry.Text) ?? Array.Empty<string>());
 			int posts = record.CounterRefs.Count(reference => reference >= 0);
 			ImGui.TextWrapped($"message {record.MessageId}: {(text.Length > 0 ? text : "(no text)")}");
-			ImGui.TextDisabled(posts == 0 ? "never posted: the action names no counter" : $"posted {posts}x");
+			EditorText.Note(posts == 0 ? "never posted: the action names no counter" : $"posted {posts}x");
 			any = true;
 		}
 
 		if (!any) {
-			ImGui.TextDisabled("nothing waits on it");
+			EditorText.Note("nothing waits on it");
 		}
 
 		ImGui.Unindent();
@@ -568,7 +588,7 @@ internal sealed class PropertiesPanel {
 		}
 
 		if (!any) {
-			ImGui.TextDisabled("no action");
+			EditorText.Note("no action");
 		}
 	}
 
@@ -622,7 +642,7 @@ internal sealed class PropertiesPanel {
 		} else if (groupSubject) {
 			GroupLink(objective.SubjectRef);
 		} else {
-			ImGui.TextDisabled($"kind {(int)objective.SubjectKind}, which no case reads");
+			EditorText.Note($"kind {(int)objective.SubjectKind}, which no case reads");
 		}
 
 		ImGui.TextWrapped(MissionText.ObjectiveCondition(objective.ConditionCode, groupSubject));
@@ -635,7 +655,7 @@ internal sealed class PropertiesPanel {
 			if (objective.RouteRef >= 0) {
 				RouteLink(objective.RouteRef);
 			} else {
-				ImGui.TextDisabled("none");
+				EditorText.Note("none");
 			}
 
 			int group = _index.OrderGroupOf(objective);
@@ -688,7 +708,7 @@ internal sealed class PropertiesPanel {
 		};
 
 		ImGui.Text($"Point: {setup.Point.X}, {setup.Point.Y}");
-		ImGui.TextDisabled($"from {source}");
+		EditorText.Note($"from {source}");
 		if (setup.AuthoredPoint != setup.Point) {
 			ImGui.TextWrapped($"Authored at {setup.AuthoredPoint.X}, {setup.AuthoredPoint.Y}; painting its ground "
 				+ "moves it to a fixed spot in its terrain tile.");
@@ -696,7 +716,7 @@ internal sealed class PropertiesPanel {
 
 		ImGui.Text($"Heading: {MissionText.Heading(setup.Heading)}");
 		if (setup.HeadingFromRoute) {
-			ImGui.TextDisabled("names none: the bearing of its route's first leg");
+			EditorText.Note("names none: the bearing of its route's first leg");
 		}
 
 		string kind = _index.KindOf(group)?.ToString().ToLowerInvariant() ?? "?";
@@ -722,7 +742,7 @@ internal sealed class PropertiesPanel {
 	/// <summary>What dragging the group's move handles moves with it (<see cref="PointMover"/>), or why it cannot be moved.</summary>
 	private void DrawGroupMove(int group, MissionGroupSetup setup) {
 		if (_mover.WhyFixed(group) is { } reason) {
-			ImGui.TextDisabled(reason);
+			EditorText.Note(reason);
 			return;
 		}
 
@@ -824,7 +844,7 @@ internal sealed class PropertiesPanel {
 		if (_mover.TargetOf(selected) is not WaypointTarget waypoint) {
 			if (selected.Waypoint >= 0 && _mover.WhyReadOnly is { } readOnly) {
 				ImGui.Separator();
-				ImGui.TextDisabled(readOnly);
+				EditorText.Note(readOnly);
 			}
 
 			return;
@@ -875,7 +895,7 @@ internal sealed class PropertiesPanel {
 		if (_index.ObjectAt(kind, slot) is { } placed) {
 			ObjectLink(placed);
 		} else {
-			ImGui.TextDisabled($"{kind.ToString().ToLowerInvariant()} slot {slot} (not placed)");
+			EditorText.Note($"{kind.ToString().ToLowerInvariant()} slot {slot} (not placed)");
 		}
 	}
 
