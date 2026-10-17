@@ -39,17 +39,14 @@ public class ComputerWarningTests {
 
 	/// <summary>
 	/// A machine shelled until it comes apart says each latched warning exactly once, however many
-	/// hits land in the same band.
+	/// hits land in the same band. Exactly once is also the positive control: a run that never
+	/// reached a band would count zero.
 	/// </summary>
 	[Fact]
 	public void EachLatchedWarningIsSaidOnce() {
 		if (Shell(player: true) is not { } log) {
 			return;
 		}
-
-		// The positive control: this is worthless as a "said once" check if the run never reached the
-		// bands at all.
-		Assert.NotEmpty(log.Said);
 
 		foreach (int id in LatchedWarnings) {
 			Assert.True(1 == log.Said.Count(said => said == id), $"id 0x{id:x} — log [{string.Join(",", log.Said.Select(v => $"0x{v:x}"))}]");
@@ -71,9 +68,9 @@ public class ComputerWarningTests {
 	}
 
 	/// <summary>
-	/// <c>ENEMY TARGET DESTROYED</c> needs both halves of its predicate: the player's own machine
-	/// landed the shot, and the thing that died is what the player had selected. Killing something
-	/// the player was not boxing is silent.
+	/// <c>ENEMY TARGET DESTROYED</c> needs the thing that died to be what the player had selected: the
+	/// player's machine kills one it was not boxing in silence, then the one it was, which is announced
+	/// once.
 	/// </summary>
 	[Fact]
 	public void TheKillAnnouncementNeedsTheVictimToBeTheSelectedTarget() {
