@@ -3727,7 +3727,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ai_KnowsObject",
-      "description": "(machine, object) in stack order, callee-cleaned: 1 when the object's byte +0x8f is set and Math_DistanceBetweenPoints (00063c20)(object +0x20, machine +0x20) is below 1000000, or when the machine's byte +0xbc + the object's int16 +0x45 is set; otherwise 0. ES2's Ai_KnowsObject (DBSIM 00411c58). es2_xref finds three calls, from Ai_IsTargetable (0000dce8), 0000f744 and 00041b1c.",
+      "description": "(machine, object) in stack order, callee-cleaned: 1 when the object's byte +0x8f is set and Math_DistanceBetweenPoints (00063c20)(object +0x20, machine +0x20) is below 1000000, or when the machine's byte +0xbc + the object's int16 +0x45 is set; otherwise 0. ES2's Ai_KnowsObject (DBSIM 00411c58). es2_xref finds three calls, from Ai_IsTargetable (0000dce8), Mission_IsClearOfThreats (0000f744) and 00041b1c.",
       "source": "Herculan/docs/es1/simulation/sim-object-base.md#what-an-ai-machine-knows-and-may-target; ES1DBSIM disassembly at 0000d808",
       "verified": {
         "bytes": "0000d808+120",
@@ -3757,7 +3757,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_AiTick",
-      "description": "(machine), callee-cleaned: with a behaviour descriptor at +0x47, calls the machine's vtable (at +2) slot +0x20 when the dword count at +0x4c is 0; FUN_00064178 on the countdown object at +0x4b unless the descriptor's byte +8 is set; slot +0x18; then, when +0xa9 is set, clears it, and otherwise calls slot +0x1c and zeroes +0x4c when that answers non-zero; and last FUN_0000fe84 on +0x47. Does nothing without a descriptor. ES2's Mech_AiTick (DBSIM 00411cec) with ES1's offsets, 6 below ES2's, and its slots, 4 above.",
+      "description": "(machine), callee-cleaned: with a behaviour descriptor at +0x47, calls the machine's vtable (at +2) slot +0x20 when the dword count at +0x4c is 0; FUN_00064178 on the countdown object at +0x4b unless the descriptor's byte +8 is set; slot +0x18; then, when +0xa9 is set, clears it, and otherwise calls slot +0x1c and zeroes +0x4c when that answers non-zero; and last Behaviour_CountTick on +0x47. Does nothing without a descriptor. ES2's Mech_AiTick (DBSIM 00411cec) with ES1's offsets, 6 below ES2's, and its slots, 4 above.",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#the-tick",
       "verified": {
         "bytes": "0000d8e8+181",
@@ -4112,18 +4112,588 @@
       }
     },
     {
+      "address": "0000eb68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorMissionStatusCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0000eb68",
+      "verified": {
+        "bytes": "0000eb68+40",
+        "sha1": "77e5321a37c3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000eb90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorMissionStatusCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00091672: byte for byte the code of ConfigPart_DtorMountsCopy (0000a798), relocated operands aside, storing 00091672 and 000916a6 where that stores 00090f0e and 00090eda.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0000eb90",
+      "verified": {
+        "bytes": "0000eb90+63",
+        "sha1": "26da5386e7b6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000ebcf",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagMissionStatusCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00091672; the code of ConfigPart_GetClassTagMountsCopy (0000a78e).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0000ebcf",
+      "verified": {
+        "bytes": "0000ebcf+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000ebd8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorMissionStatusCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000916a6 (entered at its padding 0000ebd5): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 000916a6 where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0000ebd8",
+      "verified": {
+        "bytes": "0000ebd8+42",
+        "sha1": "466001481877",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000ec04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_OrderSubjectObject",
+      "description": "(group), callee-cleaned: returns the group's target, the dword +0x1c, as an object; the code of Group_OrderSubjectPtr (0001ce94). ES2's Group_OrderSubjectObject (DBSIM 00412bbc) reads the current order's subject.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000ec04",
+      "verified": {
+        "bytes": "0000ec04+15",
+        "sha1": "393a187cebc9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000ec14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_OrderSubjectGroup",
+      "description": "(group), callee-cleaned: returns the group's target, the dword +0x1c, as a group record; the code of Group_OrderSubjectPtr (0001ce94). ES2's Group_OrderSubjectGroup (DBSIM 00412bd0) reads the current order's subject.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000ec14",
+      "verified": {
+        "bytes": "0000ec14+15",
+        "sha1": "393a187cebc9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000ec24",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_IsWipedOut",
+      "description": "(group), callee-cleaned: 1 when every member (array +0xe, count +0x12) is disarmed (+0x9f), immobilised (+0x9e) or destroyed (+0x93), 0 at the first that is none of them. ES2's Group_IsWipedOut (DBSIM 00412be4). es2_xref finds one call, from Group_NoRivalOrderOnSubject (0000ef2c).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000ec24",
+      "verified": {
+        "bytes": "0000ec24+153",
+        "sha1": "c0e5fde6cc41",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000ecc0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_ConditionTier",
+      "description": "(group), callee-cleaned: the group's 0-4 condition tier. With lost the members immobilised (+0x9e) or destroyed (+0x93) and mean the average over every member of its slot +0x44 overall damage: 4 when all are lost; else 3 when (lost << 10) / count reaches 500 or mean reaches 0xc1; else 2 at 0xfa or 0x81; else 1 when mean reaches 0x33; else 0. ES2's Group_ConditionTier (DBSIM 00412c8c), whose tier 3 is at 650/1024 lost.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000ecc0",
+      "verified": {
+        "bytes": "0000ecc0+279",
+        "sha1": "6a84331fa0f1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000edd8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_OrderSubjectEngaged",
+      "description": "(group), callee-cleaned: when the group's target kind +0x1a is 0, Group_AnyMemberEngaged (0000ee18) of Group_OrderSubjectGroup (0000ec14); otherwise the target object's (by Group_OrderSubjectObject (0000ec04)) byte +0x98. ES2's Group_OrderSubjectEngaged (DBSIM 00412d4c). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000edd8",
+      "verified": {
+        "bytes": "0000edd8+62",
+        "sha1": "2b581c4ea959",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000ee18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_AnyMemberEngaged",
+      "description": "(group), callee-cleaned: 1 when any member (array +0xe, count +0x12) has its engaged byte +0x98 set, otherwise 0. ES2's Group_AnyMemberEngaged (DBSIM 00412d90).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000ee18",
+      "verified": {
+        "bytes": "0000ee18+108",
+        "sha1": "e7a69ba42091",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000ee84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_OrderSubjectCondition",
+      "description": "(group), callee-cleaned: the 0-4 condition of the group's target. Kind +0x1a 0: Group_ConditionTier (0000ecc0) of Group_OrderSubjectGroup (0000ec14). Otherwise, with the object Group_OrderSubjectObject (0000ec04): 4 when it is destroyed (+0x93) or collapsed (+0xae), else its slot +0x44 overall damage banded below 0x32, 0x80 and 0xc0 as 0, 1, 2, else 3. ES2's Group_OrderSubjectCondition (DBSIM 00412dc4).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000ee84",
+      "verified": {
+        "bytes": "0000ee84+166",
+        "sha1": "166db08ee4f4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000ef2c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_NoRivalOrderOnSubject",
+      "description": "(group), callee-cleaned: walks the MissionGroups_Count 0x28-byte records at MissionGroups (000bc476) and returns 0 at the first other group whose side byte +0x14 differs, whose target +0x1c is the same pointer, and that Group_IsWipedOut (0000ec24) does not answer 1 for; otherwise 1. ES2's Group_NoRivalOrderOnSubject (DBSIM 00412e74) compares the current orders' subjects. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000ef2c",
+      "verified": {
+        "bytes": "0000ef2c+127",
+        "sha1": "b26dce13037b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000efac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_AnyMemberObjectiveSighted",
+      "description": "(group), callee-cleaned: 1 when any member (array +0xe, count +0x12) has its byte +0x99 set, otherwise 0. ES2's Group_AnyMemberObjectiveSighted (DBSIM 00412ef4) on +0x9f.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000efac",
+      "verified": {
+        "bytes": "0000efac+108",
+        "sha1": "79be2c427456",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f018",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_AnyMemberDataLinked",
+      "description": "(group), callee-cleaned: 1 when any member (array +0xe, count +0x12) has its byte +0x9a set, otherwise 0. ES2's Group_AnyMemberDataLinked (DBSIM 00412f28) on +0xa0.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000f018",
+      "verified": {
+        "bytes": "0000f018+108",
+        "sha1": "41d349dc3d86",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f084",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_AnyMemberScoredAKill",
+      "description": "(group), callee-cleaned: 1 when any member (array +0xe, count +0x12) has its byte +0xa0 set, otherwise 0. ES2's Group_AnyMemberScoredAKill (DBSIM 00412f5c) on +0xa6.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-groups-target-and-its-condition; ES1DBSIM decompile at 0000f084",
+      "verified": {
+        "bytes": "0000f084+108",
+        "sha1": "6391d16bde9f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f0f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_StatusLineIndex",
+      "description": "(group, verb), callee-cleaned: the group report, a line index. With tier Group_ConditionTier (0000ecc0) held to at most 3, c Group_OrderSubjectCondition (0000ee84) and a Group_OrderSubjectArrivedAndClear (0000f99c): verbs 0-6 as ES2's Group_StatusLineIndex (DBSIM 00412f90), the route cursor at the group's +6; verb 7: !a or c 4, tier+5; c 0 and tier < 2, 1; c < 2 and tier <= 2, 2; c < 3 and tier <= 2, 3; else 4. Verb 8: c 4, tier+1; c >= 1 and tier 0, 5; else tier+5. Verb 9: c 4 and tier 0, 1; c >= 2, max(tier, 1) + 1; c 1 and tier < 2, tier+5; else max(tier, 2) + 5. The result less 1 is returned; a verb outside 0-9 (unsigned bound, jump table 000916d8) gives -2. es2_xref finds one call, from Mission_WriteResults (0001d698).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-group-report--group_statuslineindex-0000f0f0; ES1DBSIM decompile and disassembly at 0000f0f0",
+      "verified": {
+        "bytes": "0000f0f0+843",
+        "sha1": "c0fa17d15a03",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000f43c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_StatusForAlert",
+      "description": "(quiet, machine) in stack order, callee-cleaned: Mission_Status (0000f4e8)(machine, quiet, the int16 header word 3 at 000bc4a2), returned as it is. ES2's Mission_StatusForAlert (DBSIM 00413180) also records a published answer as the status raised. es2_xref finds two calls, from Mission_PollStatus (0000f454) and 00059f8f, in bytes of 00059df8 Ghidra has not disassembled, which pushes LocalPlayerMech (000b5b86) and 1.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-status--mission_status-0000f4e8; ES1DBSIM decompile at 0000f43c, disassembly at 00059f87",
+      "verified": {
+        "bytes": "0000f43c+24",
+        "sha1": "85f7f797b953",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f454",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_PollStatus",
+      "description": "(machine), callee-cleaned: Math_CountdownTimerTick on MissionAlertTimer (000af7a0), then on MissionPollTimer (000af79c); unless the second returns 0 it returns -1. Otherwise s = Mission_StatusForAlert (0000f43c)(0, machine); when Mission_StatusWorthRaising (00091700)[s] is non-zero and s differs from Mission_StatusRaised (000bc49a): MissionAlertArmed (000bc4b0) is set and MissionAlertTimer_Count (000af7a1) loaded with 10000 if it was clear, and when that counter is 0 or s is 2, s is stored in Mission_StatusRaised and returned. Otherwise MissionPollTimer_Count (000af79d) is loaded with 10000 and -1 returned. ES2's Mission_PollStatus (DBSIM 004131ac), which also evaluates every tick outside the mission box. es2_xref finds one call, from 00059700, which pushes LocalPlayerMech (000b5b86).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454; ES1DBSIM decompile at 0000f454",
+      "verified": {
+        "bytes": "0000f454+147",
+        "sha1": "c3355a76713c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f4e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_Status",
+      "description": "(machine, quiet, selector) in stack order, callee-cleaned: 2 when the machine is destroyed (+0x93); 3 when immobilised (+0x9e); with g its group (+0x3f), when g's int16 +4 is 6 and Group_OrderSubjectCondition (0000ee84)(g) is 3 or more, 6 if Mission_IsClearOfThreats (0000f744)(machine) else 4; unless quiet, 8 when SimObject_IsFarOutsideMissionBox (0000f704) and 7 when SimObject_IsOutsideMissionBox (0000f724) answer 1. Otherwise a jump table at 0009173c behind an unsigned bound against 9 tests the selector: 0 the machine's +0x99, 1 and 2 no waypoint after g's route cursor (by Route_WaypointAt (0001cfb8)), 3 the machine's +0x9a, 4 and 5 Group_OrderSubjectArrivedAndClear (0000f99c)(g), 6, 8 and 9 Group_OrderSubjectCondition(g) == 4, 7 Group_OrderSubjectRouteExhausted (0000f930)(g) and Group_OrderSubjectArrivedAndClear(g). A test that holds gives 9, or 10 when the machine is not clear of threats; otherwise it is 4 when not clear, else the int16 Mission_StatusBySelector (00091728)[selector]. ES2's Mission_Status (DBSIM 004135e8) evaluates its objective records at that point.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-status--mission_status-0000f4e8; ES1DBSIM decompile and disassembly at 0000f4e8",
+      "verified": {
+        "bytes": "0000f4e8+461",
+        "sha1": "1034224c3850",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000f6b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_IsOutsideBox",
+      "description": "(margin, point) in stack order, callee-cleaned: 0 when the point's int32 X and Y lie strictly inside Mission_Box (000af7a4: least X, least Y, greatest X, greatest Y) widened by the margin on every side, otherwise 1. ES2's Mission_IsOutsideBox (DBSIM 0041373c).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-mission-box; ES1DBSIM decompile at 0000f6b8",
+      "verified": {
+        "bytes": "0000f6b8+75",
+        "sha1": "693707b6b019",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f704",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_IsFarOutsideMissionBox",
+      "description": "(object), callee-cleaned: Mission_IsOutsideBox (0000f6b8)(170000, object +0x20). ES2's SimObject_IsFarOutsideMissionBox (DBSIM 00413780) uses 110000.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-mission-box; ES1DBSIM decompile at 0000f704",
+      "verified": {
+        "bytes": "0000f704+31",
+        "sha1": "a51de662d947",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f724",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_IsOutsideMissionBox",
+      "description": "(object), callee-cleaned: Mission_IsOutsideBox (0000f6b8)(60000, object +0x20). ES2's SimObject_IsOutsideMissionBox (DBSIM 0041379c) uses 0.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-mission-box; ES1DBSIM decompile at 0000f724",
+      "verified": {
+        "bytes": "0000f724+31",
+        "sha1": "cb5b475542ae",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f744",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mission_IsClearOfThreats",
+      "description": "(subject), callee-cleaned: walks LiveObjectList (000bc416) up to LiveObjectList_Count (000bc41c) or a null entry, returning 1 at the end. It skips an object whose group's (+0x3f) action +0x16 is set, whose group's side byte +0x14 is the subject's group's, or that is disarmed (+0x9f), immobilised (+0x9e) or destroyed (+0x93). With k = Ai_KnowsObject (0000d808)(object, subject): when the subject's group is not the group of LocalPlayerMech (000b5b86) and Group_IsOrderTarget (0001ce3c)(the object's group, subject) answers non-zero, it returns 0 if Route_WaypointAt (0001cfb8) finds a waypoint after that group's route cursor (+6) or if k; and it returns 0 when k and Math_DistanceBetweenPoints of the two +0x20 is below 100000 when the object's +0x15e is the subject, 80000 otherwise. ES2's Mission_IsClearOfThreats (DBSIM 004137b4).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#clear-of-threats; ES1DBSIM decompile at 0000f744",
+      "verified": {
+        "bytes": "0000f744+365",
+        "sha1": "52246b3eb575",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f8b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_AllMembersClearOfThreats",
+      "description": "(group), callee-cleaned: 0 at the first member (array +0xe, count +0x12) that is not destroyed (+0x93) and that Mission_IsClearOfThreats (0000f744) answers 0 for, otherwise 1. ES2's Group_AllMembersClearOfThreats (DBSIM 00413950) first answers 0 for a written-off group.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#clear-of-threats; ES1DBSIM decompile at 0000f8b4",
+      "verified": {
+        "bytes": "0000f8b4+124",
+        "sha1": "18cc8d77bda2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f930",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_OrderSubjectRouteExhausted",
+      "description": "(group), callee-cleaned: whether Route_WaypointAt (0001cfb8) finds no waypoint after the route cursor (+6) of the target group (by Group_OrderSubjectGroup (0000ec14)) when the target kind +0x1a is 0, otherwise of the target object's (by Group_OrderSubjectObject (0000ec04)) group (+0x3f). ES2's Group_OrderSubjectRouteExhausted (DBSIM 004139a0).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#clear-of-threats; ES1DBSIM decompile at 0000f930",
+      "verified": {
+        "bytes": "0000f930+106",
+        "sha1": "4702f0d74467",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000f99c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Group_OrderSubjectArrivedAndClear",
+      "description": "(group), callee-cleaned: target kind +0x1a 0: 1 when the target group's (by Group_OrderSubjectGroup (0000ec14)) action +0x16 is clear and Group_AllMembersClearOfThreats (0000f8b4) answers non-zero; otherwise 1 when the target object's (by Group_OrderSubjectObject (0000ec04)) group's action is clear and Mission_IsClearOfThreats (0000f744) answers non-zero; else 0. ES2's Group_OrderSubjectArrivedAndClear (DBSIM 00413a08), which tests the deployment gate.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#clear-of-threats; ES1DBSIM decompile at 0000f99c",
+      "verified": {
+        "bytes": "0000f99c+129",
+        "sha1": "e09acd448b37",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fa20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorShieldsCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000fa20",
+      "verified": {
+        "bytes": "0000fa20+40",
+        "sha1": "9d2ddfaa167c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000fa48",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorShieldsCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00091766: byte for byte the code of ConfigPart_DtorMountsCopy (0000a798), relocated operands aside, storing 00091766 and 0009179a where that stores 00090f0e and 00090eda.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000fa48",
+      "verified": {
+        "bytes": "0000fa48+63",
+        "sha1": "563c5472fffb",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000fa87",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagShieldsCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00091766; the code of ConfigPart_GetClassTagMountsCopy (0000a78e).",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000fa87",
+      "verified": {
+        "bytes": "0000fa87+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0000fa90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorShieldsCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 0009179a (entered at its padding 0000fa8d): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 0009179a where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000fa90",
+      "verified": {
+        "bytes": "0000fa90+42",
+        "sha1": "00569cf46883",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0000fabc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shield_Init",
+      "description": "(block, value), callee-cleaned: the four int16 of a shield block: capacity +6 = value, balance +4 = 0x200, front +0 and rear +2 = value >> 1. es2_xref finds one call, from Mech_Constructor (00011330), on the machine's +0x1b8 with the type record's +0xc0. ES2's Shield_Init (DBSIM 00413a90) also stores a base capacity.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-shields; ES1DBSIM decompile at 0000fabc, disassembly at 000115a5",
+      "verified": {
+        "bytes": "0000fabc+40",
+        "sha1": "6e9f211cf734",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fae4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shield_BalanceAdjust",
+      "description": "(block, direction), callee-cleaned: adds 0x66 to the balance +4 for a non-zero direction, -0x66 for 0, clamped to [0, 0x400]. ES2's Shield_BalanceAdjust (DBSIM 00413af8).",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-shields; ES1DBSIM decompile at 0000fae4",
+      "verified": {
+        "bytes": "0000fae4+71",
+        "sha1": "2085b8bf2f62",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fb2c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shield_RechargeTick",
+      "description": "(block, request), callee-cleaned: granted = the request held to at most 4 and to the deficit capacity +6 - (front +0 + rear +2); Math_RateLimitedMoveToward moves the front toward Math_Q10Multiply(front + rear + granted, balance +4) by 0x41; rear = front + rear + granted - front; returns request - granted. ES2's Shield_RechargeTick (DBSIM 00413b38) grants at most 5 and steps by 10000 when the deficit is negative.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-shields; ES1DBSIM decompile at 0000fb2c",
+      "verified": {
+        "bytes": "0000fb2c+136",
+        "sha1": "385f9d44b22a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fbb4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shield_BalanceInputRead",
+      "description": "(block), callee-cleaned: copies the 15-byte state block ShieldsGauge_GetStateBlock (00039334) returns for the gauge at CockpitViewInstance +0x1e5; when its byte 0xd is set calls Shield_BalanceAdjust (0000fae4)(block, 1) and clears it, else when byte 0xe is set calls it with 0 and clears that; then writes (front << 10) / capacity, (rear << 10) / capacity and the balance into the copy's three dwords and hands it to ShieldsGauge_SetStateBlock (000392d0). ES2's Shield_BalanceInputRead (DBSIM 00413bc8) divides by the base capacity, its gauge at +0x1e9.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-shields; ES1DBSIM decompile at 0000fbb4",
+      "verified": {
+        "bytes": "0000fbb4+181",
+        "sha1": "32fdc523d748",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fc6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_ShieldAbsorb_Explosive",
+      "description": "(pair, damage, front) in stack order, callee-cleaned: subtracts Math_Q10Multiply(1000, damage) from the front charge, or from the rear (pair +2) when front is 0, and stores 0 if the result is negative. It sets no return value. ES2's Mech_ShieldAbsorb_Explosive (DBSIM 00413c68) returns the overflow times 0x400 / 1000. es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-shields; ES1DBSIM disassembly at 0000fc6c",
+      "verified": {
+        "bytes": "0000fc6c+59",
+        "sha1": "eaf7326934d7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000fca8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_ShieldAbsorb_DirectFire",
+      "description": "(pair, damage, length, frame, machine) in stack order, callee-cleaned: with the type record at the machine's +0x188, puts the point {0, 0, +0x18} through the frame; when its Y is below the length (unsigned) and its distance off the axis plus the radius +0x1a is below twice the radius (unsigned), it takes the frame's transpose, rotates the negated translation into it, picks the front charge or, for a Y below 1, the rear, takes min(damage, charge) off both, and returns Y - (radius - offAxis) + 1, or 1 when that is not positive; otherwise 0. ES2's Mech_ShieldAbsorb_DirectFire (DBSIM 00413cc4). es2_xref finds one call, from 00013b44.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-shields; ES1DBSIM decompile at 0000fca8",
+      "verified": {
+        "bytes": "0000fca8+340",
+        "sha1": "ef236ab5d1e3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0000fdfc",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Behaviour_SetState",
-      "description": "(block, descriptor) in stack order, callee-cleaned: installs a behaviour state in the block a machine carries at +0x47. Stores the descriptor at +0, zeroes the int +9, adds 0xd to the int16 000bc426 and seeds the countdown +5 to descriptor +4 plus that word's low four bits, clears the 0x10 bytes at +0x35, sets +0x36 to 1 and clears the 0x28 bytes at +0xd. ES2's Behaviour_SetState (DBSIM 00413e50), whose block sits at +0x4d.",
+      "description": "(block, descriptor) in stack order, callee-cleaned: installs a behaviour state in the block a machine carries at +0x47. Stores the descriptor at +0, zeroes the int +9, adds 0xd to the int16 Behaviour_DwellJitter (000bc426) and seeds the countdown +5 to descriptor +4 plus that word's low four bits, clears the 0x10 bytes at +0x35, sets +0x36 to 1 and clears the 0x28 bytes at +0xd. ES2's Behaviour_SetState (DBSIM 00413e50), whose block sits at +0x4d.",
       "source": "ES1DBSIM decompile at 0000fdfc, against ES2's Behaviour_SetState",
       "verified": {
         "bytes": "0000fdfc+136",
         "sha1": "617cb6558803",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0000fe84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Behaviour_CountTick",
+      "description": "(block), callee-cleaned: when the byte +0x36 is set it clears it; otherwise it sets +0x35 to 1 and adds 1 to the int32 +9. ES2's Behaviour_CountTick (DBSIM 00413eb0). es2_xref finds one call, from Mech_AiTick (0000d8e8).",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-behaviour-block; ES1DBSIM decompile at 0000fe84",
+      "verified": {
+        "bytes": "0000fe84+53",
+        "sha1": "7ddef4861e05",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000febc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorStateTableCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0000febc",
+      "verified": {
+        "bytes": "0000febc+40",
+        "sha1": "042e5d47d8dc",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -4157,12 +4727,102 @@
       }
     },
     {
+      "address": "000105b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_BuildStateTable",
+      "description": "Static constructor (its pointer is at 000adbf8): fills the seven 0x24-byte descriptors of FlyerBehaviourStateTable (000af58c): name from the strings at 000918a0, dwell, the 16 flag bytes Behaviour_ExpandFlagBitsFlyerStatesCopy (000107b8) unpacks from a mask, and the think, move and reassess function pointers at +0x18, +0x1c and +0x20. deciding (0, mask 0, reassess 0001c46c), attacking (50000, 1, 0001c3f8, 0001b084, 0001c46c), patrolling (5000, 0, 0001c21c, 0001b084, 0001c46c), search and destroy (5000, 0, 0001c14c, 0001b084, 0001c46c), sleeping (500, 1, none), scouting (5000, 0, 0001c2d8, 0001b084, 0001c46c), dead (500, 1, none). ES2's Flyer_BuildStateTable (DBSIM 00414c68), whose 0x3c-byte descriptors take member-function triples.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-aircrafts-state-table; ES1DBSIM decompile at 000105b0",
+      "verified": {
+        "bytes": "000105b0+520",
+        "sha1": "3201aaf9a748",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000107b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Behaviour_ExpandFlagBitsFlyerStatesCopy",
+      "description": "(out, mask) in stack order, callee-cleaned: byte for byte the code of Behaviour_ExpandFlagBits (00010578), relocated operands aside. ES2's Behaviour_ExpandFlagBits (DBSIM 00415028).",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000107b8",
+      "verified": {
+        "bytes": "000107b8+54",
+        "sha1": "bce89b0e3683",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000107f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_ApplySquadCondition",
+      "description": "(header, hardpoint conditions, internal conditions, external conditions) in stack order, callee-cleaned: writes (100 - condition) * maximum / 100 into the damage arrays of the header (internals at +0, components at +4, .DMG table at +0xc): components 0-12 from the external span against their armour, 13-18 zeroed; internals 0-8 from the internal span against their maxima, 9-11 zeroed; components 19-28 from the hardpoint span against armour plus internal 12+n's maximum, -1 past the armour with the rest to that internal, -1 past its maximum. ES2's Mech_ApplySquadCondition (DBSIM 00415068). es2_xref finds one call, from DBSim_SpawnMissionObjects (0001e638).",
+      "source": "Herculan/docs/es1/simulation/damage-readouts.md#the-functions; ES1DBSIM decompile at 000107f0",
+      "verified": {
+        "bytes": "000107f0+458",
+        "sha1": "3fbfa3690cb5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000109bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_FillDamageReadouts",
+      "description": "(header, buffer), callee-cleaned: int16 Q8 readings: entries 1-19 components 0-18 as (damage << 8) / armour, 0x100 for -1; 20-31 internals 0-11, 0 for a zero maximum, 0x100 for -1, else (damage << 8) / maximum; 32-41 component 19+n with internal 12+n, ((damage + internal damage) << 8) / (armour + internal maximum), each -1 counted at its maximum. Entry 0 is not written. ES2's Component_FillDamageReadouts (DBSIM 004151a4). es2_xref finds one call, from Mech_ReadDamageReadouts (0001583c).",
+      "source": "Herculan/docs/es1/simulation/damage-readouts.md#the-functions; ES1DBSIM decompile at 000109bc",
+      "verified": {
+        "bytes": "000109bc+448",
+        "sha1": "8c7bb872b964",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00010b7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_ReadEntryDamage",
+      "description": "(header, index, kind) in stack order, callee-cleaned: one entry as (damage << 8) / maximum, 0x100 for -1 or a zero maximum: kind 0 internal index against its maximum, kind 1 component index against its armour, kind 2 component index + 19 against component index's armour. ES2's Component_ReadEntryDamage (DBSIM 004152ec), which takes the kind before the index. es2_xref finds one call, from Mech_ReadEntryDamage (00015868).",
+      "source": "Herculan/docs/es1/simulation/damage-readouts.md#the-functions; ES1DBSIM decompile at 00010b7c",
+      "verified": {
+        "bytes": "00010b7c+187",
+        "sha1": "80fce85942e9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00010c38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_WeightedArmorRemaining",
+      "description": "(header), callee-cleaned: the sum of (maximum - damage) * weight / maximum over components 0-18 whose occupancy flag (header +8) is set, against their armour and SalvageComponentWeights (000918e8), and over internals 0-11 whose maximum is not 0, against SalvageInternalWeights (00091910); an entry below 0 or at 150 or more adds nothing. ES2's Mech_WeightedArmorRemaining (DBSIM 0041537c), the same weights. es2_xref finds one call, from Mech_SalvageValue (00014034).",
+      "source": "Herculan/docs/es1/simulation/damage-readouts.md#the-functions; ES1DBSIM decompile at 00010c38",
+      "verified": {
+        "bytes": "00010c38+295",
+        "sha1": "5c122b816d0e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00011330",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Mech_Constructor",
-      "description": "(mech, type) in stack order, callee-cleaned: builds a mech of the chassis type. Takes mech from the pool g_MechPool (000af68c) when null, returning 0 when that gives none; 00002ac8(mech, the type's g_MechTypeTable record + 0xc6); vtable 00091a6a at +2; ObjectList_Add (0000db10)(LiveObjectList (000bc416), mech); 00009b8c(+0x19c, 0x15, 0x1c); three 5-byte elements at +0x1ee by __vec_ctor; vtable 00091ae6, type tag 7, the record (0x1c4 bytes, by MechTypeSlot_GetIndex) at +0x188, 10000 at +0x228; 0000fabc(+0x1b8, record +0xc0); 00001f48(mech, record +0x12) into +0x1c0, and for record +0x1c and +0x24 into +0x1c4 and +0x1c8 unless negative; a TSObj per byte of the record's +0x72 list below 0x80, from pool 000af044 on shape 000bc1d8[byte], at +0x1cc with the count at +0x1d0; Behaviour_SetState(+0x47) by the byte +0x9d; then Damage_LoadMechDmgFile (00009a2c)(dmg\\<g_MechTypeNames[record +0x6c]>) into +0x190, 00009580(col\\<same name>) into +0x18c and 00009c28(+0x19c, that, +0x190, mech). One call found by es2_xref, from DBSim_SpawnMissionObjects (0001e638). ES2's Mech_Constructor (DBSIM 00415bb0), whose record is 0x21e bytes and whose damage arrays are 0x1d by 0x16.",
+      "description": "(mech, type) in stack order, callee-cleaned: builds a mech of the chassis type. Takes mech from the pool g_MechPool (000af68c) when null, returning 0 when that gives none; 00002ac8(mech, the type's g_MechTypeTable record + 0xc6); vtable 00091a6a at +2; ObjectList_Add (0000db10)(LiveObjectList (000bc416), mech); 00009b8c(+0x19c, 0x15, 0x1c); three 5-byte elements at +0x1ee by __vec_ctor; vtable 00091ae6, type tag 7, the record (0x1c4 bytes, by MechTypeSlot_GetIndex) at +0x188, 10000 at +0x228; Shield_Init (0000fabc)(+0x1b8, record +0xc0); 00001f48(mech, record +0x12) into +0x1c0, and for record +0x1c and +0x24 into +0x1c4 and +0x1c8 unless negative; a TSObj per byte of the record's +0x72 list below 0x80, from pool 000af044 on shape 000bc1d8[byte], at +0x1cc with the count at +0x1d0; Behaviour_SetState(+0x47) by the byte +0x9d; then Damage_LoadMechDmgFile (00009a2c)(dmg\\<g_MechTypeNames[record +0x6c]>) into +0x190, 00009580(col\\<same name>) into +0x18c and 00009c28(+0x19c, that, +0x190, mech). One call found by es2_xref, from DBSim_SpawnMissionObjects (0001e638). ES2's Mech_Constructor (DBSIM 00415bb0), whose record is 0x21e bytes and whose damage arrays are 0x1d by 0x16.",
       "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-load",
       "verified": {
         "bytes": "00011330+1322",
@@ -4207,7 +4867,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_SalvageValue",
-      "description": "(machine), callee-cleaned: 0 when the byte +0xad is set. Otherwise, for each hardpoint of the list at +0x198 (pointer array at +0, int16 count at +4) whose reading FUN_0000a16c(+0x19c, 0x13 + the byte +0x17 of the hardpoint's +0x18) is below 0x80, passes the pair {the int16 +0x56 of the hardpoint's +0x1c, ((0x100 - reading) * 100) >> 8} to Salvage_QueueWeapon; then returns Math_Q10Multiply(FUN_00010c38(+0x19c), the type record's (+0x188) int16 +0x54), that second value halved when component 0 reads 0x100. ES2's Mech_SalvageValue (DBSIM 00418e60) with the machine's fields 0x6a lower from the type record on.",
+      "description": "(machine), callee-cleaned: 0 when the byte +0xad is set. Otherwise, for each hardpoint of the list at +0x198 (pointer array at +0, int16 count at +4) whose reading FUN_0000a16c(+0x19c, 0x13 + the byte +0x17 of the hardpoint's +0x18) is below 0x80, passes the pair {the int16 +0x56 of the hardpoint's +0x1c, ((0x100 - reading) * 100) >> 8} to Salvage_QueueWeapon; then returns Math_Q10Multiply(Mech_WeightedArmorRemaining(+0x19c), the type record's (+0x188) int16 +0x54), that second value halved when component 0 reads 0x100. ES2's Mech_SalvageValue (DBSIM 00418e60) with the machine's fields 0x6a lower from the type record on.",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#what-the-results-read",
       "verified": {
         "bytes": "00014034+273",
@@ -4252,7 +4912,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ReadDamageReadouts",
-      "description": "(machine, buffer), callee-cleaned: stores the type record's (+0x188) int16 +0x6c in the buffer's first entry, then FUN_000109bc(machine + 0x19c, buffer). ES2's Mech_ReadDamageReadouts (DBSIM 0041b4ec), whose type record and component damage are at +0x1f2 and +0x206.",
+      "description": "(machine, buffer), callee-cleaned: stores the type record's (+0x188) int16 +0x6c in the buffer's first entry, then Component_FillDamageReadouts(machine + 0x19c, buffer). ES2's Mech_ReadDamageReadouts (DBSIM 0041b4ec), whose type record and component damage are at +0x1f2 and +0x206.",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#what-the-results-read",
       "verified": {
         "bytes": "0001583c+43",
@@ -4267,7 +4927,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ReadEntryDamage",
-      "description": "(machine, a, b) in stack order, callee-cleaned (RET 0xc): returns 00010b7c(machine + 0x19c, a, b). Player_DependentCondition (0002e334) passes (machine, n, 0), where ES2's passes kind 0 and index n. ES2's Mech_ReadEntryDamage (DBSIM 0041b514), on the machine's +0x206.",
+      "description": "(machine, a, b) in stack order, callee-cleaned (RET 0xc): returns Component_ReadEntryDamage (00010b7c)(machine + 0x19c, a, b). Player_DependentCondition (0002e334) passes (machine, n, 0), where ES2's passes kind 0 and index n. ES2's Mech_ReadEntryDamage (DBSIM 0041b514), on the machine's +0x206.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules",
       "verified": {
         "bytes": "00015868+27",
@@ -5107,7 +5767,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_WriteResults",
-      "description": "(player), callee-cleaned: with g the player's group (+0x3f) and w the dword at 000bc4a2 (script.dat header word 3), gets the outcome from FUN_0000f0f0(g, w); opens data\\results.dat through Path_ApplyAltDrive and FileWStream_Ctor (severity-5 assert, world.cpp line 0x58) and writes, through the stream's slot +0x18, the outcome as an int16, the int32 Math_Q10Multiply(Mission_TotalSalvage (0001d434)(g, w), 2500) + MissionVars flag 7 (000bc4c6) * 25000, the int16 Salvage_PairCount (000bc4b2) and that many pairs of int16 from Salvage_Pairs (000bc4b4), then Group_WriteStatusBlocks (0001d2c8)(g, stream); then opens data\\mission.var (assert at line 0x6d) and writes the 200 bytes of MissionVars (000bc4b8). ES2's Mission_WriteResults (DBSIM 0042412c), which writes whether its evaluation of the player answers 9, counter 20 for flag 7 and 2,000 bytes of counters. es2_xref finds one call, from 0005b568.",
+      "description": "(player), callee-cleaned: with g the player's group (+0x3f) and w the dword at 000bc4a2 (script.dat header word 3), gets the outcome from Group_StatusLineIndex(g, w); opens data\\results.dat through Path_ApplyAltDrive and FileWStream_Ctor (severity-5 assert, world.cpp line 0x58) and writes, through the stream's slot +0x18, the outcome as an int16, the int32 Math_Q10Multiply(Mission_TotalSalvage (0001d434)(g, w), 2500) + MissionVars flag 7 (000bc4c6) * 25000, the int16 Salvage_PairCount (000bc4b2) and that many pairs of int16 from Salvage_Pairs (000bc4b4), then Group_WriteStatusBlocks (0001d2c8)(g, stream); then opens data\\mission.var (assert at line 0x6d) and writes the 200 bytes of MissionVars (000bc4b8). ES2's Mission_WriteResults (DBSIM 0042412c), which writes whether its evaluation of the player answers 9, counter 20 for flag 7 and 2,000 bytes of counters. es2_xref finds one call, from 0005b568.",
       "source": "Herculan/docs/es1/simulation/world.md#writing-the-results--mission_writeresults-0001d698",
       "verified": {
         "bytes": "0001d698+437",
@@ -5122,7 +5782,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DBSim_LoadScriptDat",
-      "description": "(): the world load's first pass over the shell's handoff, ES2's DBSim_LoadScriptDat (DBSIM 00424308) in role. Clears the roster slot arrays (000af7b4, 000af818 and 000af87c, 100 bytes each; 000af8e0, 000af914, 000af948, 000af97c and 000af9b0, 50 each); reads data\\mission.var's 200 bytes into MissionVars (000bc4b8) and zeroes the word at 000bc4c6; reads data\\player.mec, a word to 000af9fa, a count to 000af9e2 and that many 0x7e-byte entries at 000af9e4, then 0x11 bytes to 000af9e8; opens data\\script.dat (Path_WithExtension with \"dat\"; severity-5 assert, world.cpp line 0xb2) and reads the 20-byte header into ScriptDatHeader (000bc49c), the points (12 bytes each, tracking the least and greatest X and Y at 000af7a4-000af7b0), the headings as value << 14 in 16 bits, the waypoint groups as pointers to their points, the trigger areas through TriggerArea_Resolve into 10-byte records, and the actions into 16-byte records with the count of area refs up to the first negative one; of the mechs (98 bytes), flyers (56) and bases (16) it keeps only the type at +0x28, +0x2c and +0; of the groups (82 bytes) it marks, from the second record on, each member ref at +0x34 live in the roster +0x28 names, a base member also storing the group's +0x44. The player.mec entries are then marked live as mech slots after the block's count, and calls not read follow.",
+      "description": "(): the world load's first pass over the shell's handoff, ES2's DBSim_LoadScriptDat (DBSIM 00424308) in role. Clears the roster slot arrays (000af7b4, 000af818 and 000af87c, 100 bytes each; 000af8e0, 000af914, 000af948, 000af97c and 000af9b0, 50 each); reads data\\mission.var's 200 bytes into MissionVars (000bc4b8) and zeroes the word at 000bc4c6; reads data\\player.mec, a word to 000af9fa, a count to 000af9e2 and that many 0x7e-byte entries at 000af9e4, then 0x11 bytes to 000af9e8; opens data\\script.dat (Path_WithExtension with \"dat\"; severity-5 assert, world.cpp line 0xb2) and reads the 20-byte header into ScriptDatHeader (000bc49c), the points (12 bytes each, tracking the least and greatest X and Y at Mission_Box (000af7a4)-000af7b0), the headings as value << 14 in 16 bits, the waypoint groups as pointers to their points, the trigger areas through TriggerArea_Resolve into 10-byte records, and the actions into 16-byte records with the count of area refs up to the first negative one; of the mechs (98 bytes), flyers (56) and bases (16) it keeps only the type at +0x28, +0x2c and +0; of the groups (82 bytes) it marks, from the second record on, each member ref at +0x34 live in the roster +0x28 names, a base member also storing the group's +0x44. The player.mec entries are then marked live as mech slots after the block's count, and calls not read follow.",
       "source": "Herculan/docs/es1/formats/script-dat.md#reading",
       "verified": {
         "bytes": "0001d850+3505",
@@ -5167,7 +5827,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DBSim_SpawnMissionObjects",
-      "description": "(): the world load's second pass over the shell's handoff, building the mission's objects, ES2's DBSim_SpawnMissionObjects (DBSIM 004253d8) in role. Sets the word at 000bc49a to 0xffff, reopens data\\script (Path_WithExtension) and reads past the 20-byte header and blocks 1-5 into a 2000-byte stack buffer. Block 6 (98-byte mechs) and then the player.mec entries, between WeaponModels_LoadShapeChunks and WeaponModels_FreeShapeChunks: each live slot (000af7b4) gets Mech_Constructor (00011330)(null, type); a record gives the position from its point ref +0x3e, the point's Z plus the type record's (+0x188) int16 +0x16 with no ground query, or the sentinel at 000afa00 (0, 0, -1), and the rotation (0, 0, heading) from its heading ref +0x40 or the sentinel at 000afa10 (-0x8000, -0x8000, 0), into +0x20 and +6, zeroing the int16 +0x2c; then FUN_00012c00(mech, +0x46, +0x2a) in stack order, +0x91 set when +0 is not 0, the action refs +0x5c and +0x5e as 16-byte action pointers into +0x16c and +0x170, +0x42 and +0x44 into +0x174 and +0x176, FUN_00012f20(mech, +0x60), and +2 into +0x1e6 when not negative. A player.mec entry (0x7e bytes from 000af9e4) takes both sentinels, FUN_00012c00(mech, +0x20, +8), FUN_000107f0(mech +0x19c, +0x6a, +0x56, +0x3c) and its +0 into +0x232; the one whose index is the word at 000af9fa is stored at PlayerMech (000bc42a) with +0x9d set to 1. Block 7 (56-byte flyers), each live slot (000af8e0): FUN_0001ac58(null, +0x2c), point ref +0x28 with no height added, heading ref +0x2a, actions +0x32 and +0x34, pair +0x2e and +0x30. Block 8 (16-byte bases), each live slot (000af948): FUN_00003cbc(the slot's byte at 000af9b0, record), point ref +2, heading ref +4, actions +0xa and +0xc, pair +6 and +8. Block 9: one 82-byte record per element of MissionGroups (000bc476): member refs +0x34 remapped through the slot-to-pool map their kind +0x28 names (000af818, 000af914, 000af97c), the first record's replaced by the mech map's entries at block-6 count + k for each player.mec entry k and -1 after, and its +0x2c made 8 when 11; the target ref +0x48 remapped for target kinds 1-3; the heading from ref +0x30, or Math_HeadingToward (00063cc8) from the route's first waypoint to its second when it has two or more, else 0; then DBSim_BuildGroupRecord (0001cff4)(group, the point ref +0x2e's point, MissionGroups, heading, the action ref +0x4a's action, the route ref +0x32's waypoint group, record) in stack order. Closes the file. es2_xref finds one call, from Sim_StartMission (0005a9dc).",
+      "description": "(): the world load's second pass over the shell's handoff, building the mission's objects, ES2's DBSim_SpawnMissionObjects (DBSIM 004253d8) in role. Sets the word at Mission_StatusRaised (000bc49a) to 0xffff, reopens data\\script (Path_WithExtension) and reads past the 20-byte header and blocks 1-5 into a 2000-byte stack buffer. Block 6 (98-byte mechs) and then the player.mec entries, between WeaponModels_LoadShapeChunks and WeaponModels_FreeShapeChunks: each live slot (000af7b4) gets Mech_Constructor (00011330)(null, type); a record gives the position from its point ref +0x3e, the point's Z plus the type record's (+0x188) int16 +0x16 with no ground query, or the sentinel at 000afa00 (0, 0, -1), and the rotation (0, 0, heading) from its heading ref +0x40 or the sentinel at 000afa10 (-0x8000, -0x8000, 0), into +0x20 and +6, zeroing the int16 +0x2c; then FUN_00012c00(mech, +0x46, +0x2a) in stack order, +0x91 set when +0 is not 0, the action refs +0x5c and +0x5e as 16-byte action pointers into +0x16c and +0x170, +0x42 and +0x44 into +0x174 and +0x176, FUN_00012f20(mech, +0x60), and +2 into +0x1e6 when not negative. A player.mec entry (0x7e bytes from 000af9e4) takes both sentinels, FUN_00012c00(mech, +0x20, +8), Mech_ApplySquadCondition(mech +0x19c, +0x6a, +0x56, +0x3c) and its +0 into +0x232; the one whose index is the word at 000af9fa is stored at PlayerMech (000bc42a) with +0x9d set to 1. Block 7 (56-byte flyers), each live slot (000af8e0): FUN_0001ac58(null, +0x2c), point ref +0x28 with no height added, heading ref +0x2a, actions +0x32 and +0x34, pair +0x2e and +0x30. Block 8 (16-byte bases), each live slot (000af948): FUN_00003cbc(the slot's byte at 000af9b0, record), point ref +2, heading ref +4, actions +0xa and +0xc, pair +6 and +8. Block 9: one 82-byte record per element of MissionGroups (000bc476): member refs +0x34 remapped through the slot-to-pool map their kind +0x28 names (000af818, 000af914, 000af97c), the first record's replaced by the mech map's entries at block-6 count + k for each player.mec entry k and -1 after, and its +0x2c made 8 when 11; the target ref +0x48 remapped for target kinds 1-3; the heading from ref +0x30, or Math_HeadingToward (00063cc8) from the route's first waypoint to its second when it has two or more, else 0; then DBSim_BuildGroupRecord (0001cff4)(group, the point ref +0x2e's point, MissionGroups, heading, the action ref +0x4a's action, the route ref +0x32's waypoint group, record) in stack order. Closes the file. es2_xref finds one call, from Sim_StartMission (0005a9dc).",
       "source": "Herculan/docs/es1/formats/script-dat.md#the-second-pass",
       "verified": {
         "bytes": "0001e638+2948",
@@ -13322,6 +13982,36 @@
       }
     },
     {
+      "address": "000392d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsGauge_SetStateBlock",
+      "description": "(gauge, block), callee-cleaned: copies the 15-byte block over the gauge's +0x7e (three dwords and three bytes) and sets +0x75 to 2 when the three dwords differ from those it held. ES2's ShieldsGauge_SetStateBlock (DBSIM 00443858), which keeps the block at +0xb5 and zeroes the two readings until the power-up is done.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-shields; ES1DBSIM decompile at 000392d0",
+      "verified": {
+        "bytes": "000392d0+100",
+        "sha1": "3c10f2ca5a23",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00039334",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShieldsGauge_GetStateBlock",
+      "description": "(gauge), callee-cleaned: returns gauge + 0x7e, the 15-byte state block. ES2's ShieldsGauge_GetStateBlock (DBSIM 004438e0) at +0xb5.",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-shields; ES1DBSIM decompile at 00039334",
+      "verified": {
+        "bytes": "00039334+10",
+        "sha1": "fd361f87bee6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00039c50",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -15421,7 +16111,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RenderFrame",
-      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; ObjList_RebuildFrame (00020de0)(); Cockpit_DrawFrame (0002cf28)(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view 000b5b8a), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); 000155a8(000b5b86); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
+      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; ObjList_RebuildFrame (00020de0)(); Cockpit_DrawFrame (0002cf28)(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view 000b5b8a), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); 000155a8(LocalPlayerMech (000b5b86)); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
       "source": "ES1DBSIM decompile at 00059c08, against ES2's Sim_RenderFrame",
       "verified": {
         "bytes": "00059c08+280",
@@ -15496,7 +16186,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_StartMission",
-      "description": "(): the mission start Sim_Main (00059350) calls once. Among its steps: Subsystem_RunPhase(2), DBSim_LoadScriptDat, then ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; 000441cc, 00063e64, DBSim_SpawnMissionObjects (0001e638); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); stores the object count ObjList_Count (00092558) at ObjList_ZoneShapeCount (000bc596), the list prefix ObjList_RebuildFrame keeps; takes as the player 000b5b86 the last element of pool g_MechPool (000af68c) with byte +0x9d set; builds a 0x4a-byte TSCamera per int16 +0x12 of its type record into 000bda9e and the main camera 000b5b8a, whose +0x36 it sets to 2; draws a first frame with Sim_RenderFrame after Palette_BlendRangeByPitch with step 8 unless an element of pool g_BasePool (000aed70) with a zero type-record byte +0x14 lies within 40000 of the player, when it calls 00057cf4 instead. Its sound-driver, preferences, canvas and cockpit set-up go through unnamed callees.",
+      "description": "(): the mission start Sim_Main (00059350) calls once. Among its steps: Subsystem_RunPhase(2), DBSim_LoadScriptDat, then ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; 000441cc, 00063e64, DBSim_SpawnMissionObjects (0001e638); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); stores the object count ObjList_Count (00092558) at ObjList_ZoneShapeCount (000bc596), the list prefix ObjList_RebuildFrame keeps; takes as the player LocalPlayerMech (000b5b86) the last element of pool g_MechPool (000af68c) with byte +0x9d set; builds a 0x4a-byte TSCamera per int16 +0x12 of its type record into 000bda9e and the main camera 000b5b8a, whose +0x36 it sets to 2; draws a first frame with Sim_RenderFrame after Palette_BlendRangeByPitch with step 8 unless an element of pool g_BasePool (000aed70) with a zero type-record byte +0x14 lies within 40000 of the player, when it calls 00057cf4 instead. Its sound-driver, preferences, canvas and cockpit set-up go through unnamed callees.",
       "source": "ES1DBSIM decompile at 0005a9dc"
     },
     {
@@ -24047,6 +24737,42 @@
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#arming-chaining-and-linking; the image at 00091598"
     },
     {
+      "address": "00091700",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mission_StatusWorthRaising",
+      "description": "20 int16 indexed by status, non-zero for 2, 3, 6, 7, 8, 9 and 18: Mission_PollStatus (0000f454) raises only those. ES2's table at DBSIM 0049935c holds the same.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454; ES1DBSIM image bytes at 00091700"
+    },
+    {
+      "address": "00091728",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mission_StatusBySelector",
+      "description": "10 int16 indexed by header word 3, the status Mission_Status (0000f4e8) gives a clear machine whose selector's test does not hold: 12, 11, 11, 15, 13, 14, 16, 14, 16, 16.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-status--mission_status-0000f4e8; ES1DBSIM image bytes at 00091728"
+    },
+    {
+      "address": "000918e8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SalvageComponentWeights",
+      "description": "19 int16, the weight of components 0-18 in Mech_WeightedArmorRemaining (00010c38): 3000, 3000, 1000, 1000, 2000, 2000, 1000, 2000, 2000, 1000, 1000, 500, 500, 2000, 2000, 1000, 1000, 500, 500, ES2's values at DBSIM 00499fe0.",
+      "source": "Herculan/docs/es1/simulation/damage-readouts.md#globals; ES1DBSIM image bytes at 000918e8"
+    },
+    {
+      "address": "00091910",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SalvageInternalWeights",
+      "description": "12 int16, the weight of internals 0-11 in Mech_WeightedArmorRemaining (00010c38): 1500, 1500, 0, 0, 1000, 3000, 1000, 1000, 1000, 0, 1500, 1500, ES2's values at DBSIM 0049a006.",
+      "source": "Herculan/docs/es1/simulation/damage-readouts.md#globals; ES1DBSIM image bytes at 00091910"
+    },
+    {
       "address": "00091dac",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -24983,6 +25709,15 @@
       "source": "ES1DBSIM decompile at 0000fee4"
     },
     {
+      "address": "000af58c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "FlyerBehaviourStateTable",
+      "description": "The aircraft's seven behaviour state descriptors, 0x24 bytes each, filled at startup by Flyer_BuildStateTable (000105b0): +0 name, +4 dwell, +8 sixteen flag bytes, +0x18 think, +0x1c move, +0x20 reassess. ES2's FlyerBehaviourStateTable (DBSIM 00499cf8).",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-aircrafts-state-table; ES1DBSIM decompile at 000105b0"
+    },
+    {
       "address": "000af68c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -24999,6 +25734,51 @@
       "name": "g_FlyerPool",
       "description": "Pointer to the pool DBSim_BuildGroupRecord (0001cff4) takes a flyer group's members and a kind-2 target from with Pool_Nth (00063a78); each such member goes to FUN_0001b574 with the group.",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#the-group-record"
+    },
+    {
+      "address": "000af79c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MissionPollTimer",
+      "description": "The mission status poll's countdown record, its int16 counter a byte later (MissionPollTimer_Count (000af79d)), which Mission_PollStatus (0000f454) ticks and reloads with 10000. ES2's MissionPollTimer (DBSIM 004a9ee6).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454; ES1DBSIM decompile at 0000f454"
+    },
+    {
+      "address": "000af79d",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MissionPollTimer_Count",
+      "description": "int16: the counter of MissionPollTimer (000af79c), which Mission_PollStatus (0000f454) loads with 10000 when it raises nothing.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454; ES1DBSIM decompile at 0000f454"
+    },
+    {
+      "address": "000af7a0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MissionAlertTimer",
+      "description": "The mission status alert delay's countdown record, its int16 counter a byte later (MissionAlertTimer_Count (000af7a1)), which Mission_PollStatus (0000f454) ticks. ES2's MissionAlertTimer (DBSIM 004a9ee9).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454; ES1DBSIM decompile at 0000f454"
+    },
+    {
+      "address": "000af7a1",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MissionAlertTimer_Count",
+      "description": "int16: the counter of MissionAlertTimer (000af7a0), which Mission_PollStatus (0000f454) loads with 10000 as it arms MissionAlertArmed (000bc4b0) and tests for 0 before raising a status.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454; ES1DBSIM decompile at 0000f454"
+    },
+    {
+      "address": "000af7a4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mission_Box",
+      "description": "Four int32: the least X, least Y, greatest X and greatest Y of block 1's points, which DBSim_LoadScriptDat (0001d850) fills and Mission_IsOutsideBox (0000f6b8) tests against. ES2's Mission_Box (DBSIM 004aa6c4).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-mission-box; Herculan/docs/es1/formats/script-dat.md#reading"
     },
     {
       "address": "000afa40",
@@ -25406,6 +26186,15 @@
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
     },
     {
+      "address": "000b5b86",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LocalPlayerMech",
+      "description": "Pointer to the player's machine: 00059700 pushes it for Mission_PollStatus (0000f454), and Mission_IsClearOfThreats (0000f744) compares the subject's group with its group (+0x3f). ES2's LocalPlayerMech (DBSIM 004d256a).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#globals; ES1DBSIM disassembly at 00059a05 and decompile at 0000f744"
+    },
+    {
       "address": "000b5bc6",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -25793,6 +26582,15 @@
       "source": "Herculan/docs/es1/simulation/world.md#globals"
     },
     {
+      "address": "000bc426",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Behaviour_DwellJitter",
+      "description": "int16: Behaviour_SetState (0000fdfc) adds 0xd to it and adds its low four bits to each new state's dwell countdown. ES2's Behaviour_DwellJitter (DBSIM 004a9bf4).",
+      "source": "Herculan/docs/es1/simulation/shields-and-behaviour-states.md#the-behaviour-block; ES1DBSIM decompile at 0000fdfc"
+    },
+    {
       "address": "000bc42a",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -25883,12 +26681,21 @@
       "source": "Herculan/docs/es1/formats/script-dat.md#reading"
     },
     {
+      "address": "000bc49a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mission_StatusRaised",
+      "description": "int16: the mission status last raised, which Mission_PollStatus (0000f454) compares and stores and DBSim_SpawnMissionObjects (0001e638) sets to 0xffff. ES2's Mission_StatusForAlert (DBSIM 00413180) and Mission_PollStatus (DBSIM 004131ac) keep theirs at DBSIM 004a9ed0.",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454; ES1DBSIM decompile at 0000f454"
+    },
+    {
       "address": "000bc49c",
       "binary": "ES1DBSIM",
       "type": "data",
       "confidence": "high",
       "name": "ScriptDatHeader",
-      "description": "The 20-byte header DBSim_LoadScriptDat (0001d850) reads from data\\script.dat: ten int16 header words, word 0 the theater, word 1 the zone, words 8 and 9 the world file's. Mission_WriteResults (0001d698) passes the dword at 000bc4a2, word 3, to FUN_0000f0f0 and Mission_TotalSalvage. ES2's ScriptDatHeader (DBSIM 004a9ed2).",
+      "description": "The 20-byte header DBSim_LoadScriptDat (0001d850) reads from data\\script.dat: ten int16 header words, word 0 the theater, word 1 the zone, words 8 and 9 the world file's. Mission_WriteResults (0001d698) passes the dword at 000bc4a2, word 3, to Group_StatusLineIndex and Mission_TotalSalvage. ES2's ScriptDatHeader (DBSIM 004a9ed2).",
       "source": "Herculan/docs/es1/simulation/world.md#globals"
     },
     {
@@ -25908,6 +26715,15 @@
       "name": "UnlimitedAmmoFlag",
       "description": "int16, script.dat header word 5 (ScriptDatHeader (000bc49c) + 0xa): with MissionModeFlag (000bc4a0) at 0 and this at 1, WeaponMounts_ArbitrateEnergy (0000cc2c) returns the budget it was given and WeaponMounts_FireTrigger (0000d2bc) passes a free-shot flag of 1. ES2's UnlimitedAmmoFlag (DBSIM 004a9edc).",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#energy--weaponmounts_arbitrateenergy-0000cc2c; ES1DBSIM disassembly at 0000cd82"
+    },
+    {
+      "address": "000bc4b0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MissionAlertArmed",
+      "description": "Byte: set by Mission_PollStatus (0000f454) the first time a status worth raising appears, when it loads MissionAlertTimer_Count (000af7a1) with 10000. ES2's MissionAlertArmed (DBSIM 004a9eec).",
+      "source": "Herculan/docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454; ES1DBSIM decompile at 0000f454"
     },
     {
       "address": "000bc4b2",

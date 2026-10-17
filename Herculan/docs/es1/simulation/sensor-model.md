@@ -4,7 +4,7 @@
 
 ## Where the object file starts and ends
 
-The code is `0000e218`–`0000eb67`. It opens with `HeapPtr_DtorDetectionCopy` (`0000e218`), a lone copy of the 40-byte destructor that opens each run of `ConfigPart`'s copies ([module copies](../formats/compiler.md#vtables)), after the zero fill that ends [the object base's file](sim-object-base.md#where-the-object-file-starts-and-ends); `es2_xref.py` finds no reference to it ([Open](#open)). `Detection_Sweep`'s `RET 4` at `0000eb63` is followed by two zero bytes and, at `0000eb68`, a run of `ConfigPart`'s copies, which opens the next file ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)). The file has no static initializer, and no assert in it names a source path. Its functions are ES2's from `004123ac` to `004128f8`, in the same order.
+The code is `0000e218`–`0000eb67`. It opens with `HeapPtr_DtorDetectionCopy` (`0000e218`), a lone copy of the 40-byte destructor that opens each run of `ConfigPart`'s copies ([module copies](../formats/compiler.md#vtables)), after the zero fill that ends [the object base's file](sim-object-base.md#where-the-object-file-starts-and-ends); `es2_xref.py` finds no reference to it ([Open](#open)). `Detection_Sweep`'s `RET 4` at `0000eb63` is followed by two zero bytes and, at `0000eb68`, a run of `ConfigPart`'s copies, which opens [the mission status's file](mission-status.md#where-the-object-file-starts-and-ends) ([where object files meet](../formats/compiler.md#where-object-files-meet-in-the-code)). The file has no static initializer, and no assert in it names a source path. Its functions are ES2's from `004123ac` to `004128f8`, in the same order.
 
 ## The fields
 

@@ -5310,7 +5310,13 @@
       "confidence": "high",
       "name": "Group_OrderSubjectObject",
       "description": "The object a group's current order names -- order+0x0e read as an object pointer. Valid when the order's kind discriminator (order+0x0c) is 1, 2 or 3.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00412bbc+18",
+        "sha1": "a6fc14d04005",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00412bd0",
@@ -5319,7 +5325,13 @@
       "confidence": "high",
       "name": "Group_OrderSubjectGroup",
       "description": "The group record a group's current order names -- order+0x0e read as a group pointer. Valid when the order's kind discriminator (order+0x0c) is 0. Identical code to Group_OrderSubjectObject; the two exist as separately typed accessors.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00412bd0+18",
+        "sha1": "a6fc14d04005",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00412be4",
@@ -5346,7 +5358,13 @@
       "confidence": "high",
       "name": "Group_ConditionTier",
       "description": "A mission group's 0-4 condition tier: 4 when every member is immobilised (+0xa4) or destroyed (+0x99); else 3 when the lost fraction reaches 650/1024 or the mean overall damage across all members reaches 0xc1; else 2 at 250/1024 or 0x81; else 1 at mean damage 0x33; else 0. The mean includes dead members.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00412c8c+191",
+        "sha1": "fed5f75b175b",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00412d4c",
@@ -5375,7 +5393,13 @@
       "confidence": "high",
       "name": "Group_OrderSubjectCondition",
       "description": "The 0-4 condition tier of the subject a group's current order names. For an order naming an object (order+0x0c in 1..3): 4 when destroyed (+0x99) or collapsed (+0xb4), otherwise the object's vtable +0x40 overall damage banded at 0x32/0x80/0xc0. For an order naming a group (order+0x0c == 0): Group_ConditionTier over its members.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00412dc4+146",
+        "sha1": "33e213bc1884",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00412e58",
@@ -5392,8 +5416,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_NoRivalOrderOnSubject",
-      "description": "Whether no other mission group on the opposite side, still holding live members, has a current order naming the same subject pointer as this group's. The second half of order verb 2's (guarding) completion test.",
-      "source": "docs/retail/simulation/ai-goals.md"
+      "description": "(group): 1 unless another of the 0x7a-byte mission groups has a different side byte (+0x12), a current order whose subject (+0x0e) is the same pointer as this group's current order's, and is not wiped out by Group_IsWipedOut (00412be4); 0 at the first such group.",
+      "source": "docs/retail/simulation/ai-goals.md",
+      "verified": {
+        "bytes": "00412e74+125",
+        "sha1": "a1828f78cb67",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00412ef4",
@@ -5634,7 +5664,13 @@
       "name": "Shield_RechargeTick",
       "description": "Shield recharge primitive: clamps the request to at most 5 units/tick and to the remaining deficit, redistributes front/rear via balance using Math_RateLimitedMoveToward, returns the unclaimed portion.",
       "source": "docs/retail/simulation/damage-system.md",
-      "signature": "short __cdecl Shield_RechargeTick(void *shieldState, short request)"
+      "signature": "short __cdecl Shield_RechargeTick(void *shieldState, short request)",
+      "verified": {
+        "bytes": "00413b38+143",
+        "sha1": "916ea0d043a3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413bc8",
@@ -5659,7 +5695,13 @@
       "name": "Mech_ShieldAbsorb_Explosive",
       "description": "Explosion path own separate shield-absorption implementation (parallel to, not shared with, Mech_ShieldAbsorb_DirectFire). scaledDamage = Math_Q10Multiply(1000, damage) comes off the chosen facing (a zero front argument selects the second short, the rear); a negative facing clamps to 0 and the function returns overflow*0x400/1000. THE TWO SCALES ARE EXACT INVERSES -- 1000/1024 in and 1024/1000 out -- so a blast overflow is its own face value and the exchange rate matches direct fire. Reading the input scale as >>8 makes this look like a 4x amplification and a retail bug; the instruction is Math_Q10Multiply and there is no bug.",
       "source": "docs/retail/simulation/damage-system.md",
-      "signature": "int __cdecl Mech_ShieldAbsorb_Explosive(short *shieldPair, short front, short damage)"
+      "signature": "int __cdecl Mech_ShieldAbsorb_Explosive(short *shieldPair, short front, short damage)",
+      "verified": {
+        "bytes": "00413c68+89",
+        "sha1": "f24bfad986fc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413cc4",
@@ -5668,7 +5710,13 @@
       "confidence": "high",
       "name": "Mech_ShieldAbsorb_DirectFire",
       "description": "Direct-fire shield absorption: picks front/rear zone by where the muzzle sits in the mech frame, absorbed = min(incomingDamage, remainingShieldInZone), hard cap not threshold gate. Unlike Mech_ShieldAbsorb_Explosive it scales neither its input nor its output. Returns the ray's entry point into the hit cylinder, so a fully absorbed shot still stops the ray.",
-      "source": "docs/retail/simulation/damage-system.md"
+      "source": "docs/retail/simulation/damage-system.md",
+      "verified": {
+        "bytes": "00413cc4+393",
+        "sha1": "4dbe55d5deef",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413e50",
@@ -5769,8 +5817,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_WeightedArmorRemaining",
-      "description": "Sum of (maxArmor - damage) * weight / maxArmor over a machine's live components, against the weight table at 00499fe0. maxArmor is the component's .DMG record; a component at or past 150 damage contributes nothing.",
-      "source": "docs/retail/simulation/component-damage.md"
+      "description": "(header): the sum of (maximum - damage) * weight / maximum over components 0-18 whose occupancy flag (header +8) is set, against their .DMG armour and the int16 weights at 00499fe0, and over internals 0-11 whose maximum is not 0, against that maximum and the weights at 0049a006; an entry below 0 or at 150 damage or more adds nothing.",
+      "source": "docs/retail/simulation/component-damage.md",
+      "verified": {
+        "bytes": "0041537c+207",
+        "sha1": "6eb5f081832e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041544c",
@@ -15762,8 +15816,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShieldsGauge_SetStateBlock",
-      "description": "Write-back counterpart to ShieldsGauge_GetStateBlock: overwrites the 15-byte state block at param_1+0xb5 from param_2 (called by Shield_BalanceInputRead with the freshly computed front/rear percentages and a cleared click-flag pair), and sets the dirty flag at +0xb0=2 if the values actually changed. Also zeroes the front/rear fields when the gauge's +0x8d 'shields down' flag is set.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "(gauge, block): write-back counterpart to ShieldsGauge_GetStateBlock (004438e0). Copies the 15-byte block over the gauge's +0xb5 (three dwords, a word and a byte); while the widget's power-up-done byte +0x8d is clear it moves the two reading dwords +0xb5 and +0xb9 to +0xcc and +0xd0 and zeroes them; and it sets +0xb0 to 2 when the block's first three dwords differ from those the gauge held.",
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "00443858+135",
+        "sha1": "6791a1364f97",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004438e0",
@@ -15771,8 +15831,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShieldsGauge_GetStateBlock",
-      "description": "Trivial accessor: returns param_1+0xb5, the start of ShieldsGauge's 15-byte live state block (front charge, rear charge, balance, then the two click flags ShieldsGauge_OnClick sets). Shield_BalanceInputRead copies out of this pointer directly rather than through a richer accessor.",
-      "source": "docs/retail/simulation/cockpit-input.md"
+      "description": "(gauge): returns gauge + 0xb5, the start of ShieldsGauge's 15-byte state block: front reading, rear reading, balance, then the two click flags at block +0xd and +0xe.",
+      "source": "docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "004438e0+13",
+        "sha1": "c7cfe7e9ae4e",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004438f0",

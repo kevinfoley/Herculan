@@ -42,7 +42,7 @@ ES1's group record is `0x28` bytes, where ES2's is `0x7a` ([ES2's](../../retail/
 | Offset | Type | Field | From |
 |---|---|---|---|
 | `+0x00` | `int16` | the members' kind: 0 mechs, 1 flyers, 2 bases | `.MSN` `0x2e` |
-| `+0x02`, `+0x04` | `int16` | copied, no reader read ([Open](#open)) | `.MSN` `0x30`, `0x32` |
+| `+0x02`, `+0x04` | `int16` | copied; `Mission_Status` tests the player's group's `+0x04` for 6 ([the status](mission-status.md#the-status--mission_status-0000f4e8)), `+0x02` has no reader read ([Open](#open)) | `.MSN` `0x30`, `0x32` |
 | `+0x06` | `int16` | the route cursor's index, 0 from the element constructor | |
 | `+0x08` | ptr | the route, a waypoint group | the argument *route*: `.MSN` `0x38` |
 | `+0x0c` | `int16` | the heading | the argument *heading*: `.MSN` `0x36`, or the route's first leg |
@@ -70,7 +70,7 @@ ES2's four accessors read the current one of the group's ten orders; ES1's read 
 | `Group_OrderTargetPosition` (`0001cde0`) | that member's position | the target's position | the first waypoint of the group's route |
 | `Group_IsOrderTarget` (`0001ce3c`), (group, object) | whether the object's group is the target | whether the object is the target | 0 |
 
-`Group_OrderSubjectPtr` (`0001ce94`) returns `+0x1c`; `es2_xref.py` finds no branch or stored pointer to it.
+`Group_OrderSubjectPtr` (`0001ce94`) returns `+0x1c`; `es2_xref.py` finds no branch or stored pointer to it. What the target's condition is and whether it is clear of threats are [the mission status's](mission-status.md#the-groups-target-and-its-condition) tests.
 
 `Group_NearestLiveMember` (`0001cea4`), (group, object): ES2's ([radio callouts](../../retail/simulation/ai-targeting.md#radio-callouts)), the member other than the object, neither destroyed nor immobilised, nearest it by `Math_DistanceBetweenPoints` if nearer than 100000, otherwise 0.
 
@@ -80,7 +80,7 @@ The route functions `Route_AdvanceCursor` (`0001c8c0`), `Route_NextWaypointClose
 
 `Group_TickMembers` (`0001cf60`) runs `Mech_AiTick` (`0000d8e8`) on each member; there is no order to advance. `es2_xref.py` finds one call, from `00059700`.
 
-`Mech_AiTick` is ES2's ([the AI tick](../../retail/simulation/ai-dispatch.md#the-ai-tick--mech_aitick-00411cec)) on ES1's fields: with a descriptor at `+0x47`, it calls slot `+0x20` (reassess) when the count `+0x4c` is 0; `00064178` on the countdown object `+0x4b` unless the descriptor's byte `+8` is set; slot `+0x18` (move); then slot `+0x1c` (think), zeroing the count when it answers non-zero, unless `+0xa9` is set, which it clears instead; and last `0000fe84` on the block at `+0x47`.
+`Mech_AiTick` is ES2's ([the AI tick](../../retail/simulation/ai-dispatch.md#the-ai-tick--mech_aitick-00411cec)) on ES1's fields: with a descriptor at `+0x47`, it calls slot `+0x20` (reassess) when the count `+0x4c` is 0; `00064178` on the countdown object `+0x4b` unless the descriptor's byte `+8` is set; slot `+0x18` (move); then slot `+0x1c` (think), zeroing the count when it answers non-zero, unless `+0xa9` is set, which it clears instead; and last `Behaviour_CountTick` (`0000fe84`, [the behaviour block](shields-and-behaviour-states.md#the-behaviour-block)) on the block at `+0x47`.
 
 ## The squad order broadcast
 
@@ -98,9 +98,9 @@ The route functions `Route_AdvanceCursor` (`0001c8c0`), `Route_NextWaypointClose
 
 **`Mission_TotalSalvage` (`0001d434`)**, (group, *w*): ES2's ([what the mission leaves the shell](../../retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)). It walks the mech pool, the dword at `000af68c`, from its end with `Pool_Prev`, and sums `Mech_SalvageValue` (`00014034`) over every machine whose group's side byte differs from the group's and that is destroyed or immobilised. It ignores *w*.
 
-`Mech_SalvageValue` is ES2's ([what a wreck is worth](../../retail/simulation/component-damage.md#what-a-wreck-is-worth--mech_salvagevalue-00418e60)): 0 when `+0xad` is set; otherwise, for each hardpoint whose component reading (`0000a16c` on `+0x19c`, component `0x13` plus the byte `+0x17` of the hardpoint's `+0x18`) is below `0x80`, it passes the pair {the `int16` at `+0x56` of the hardpoint's `+0x1c`, ((`0x100` − reading) × 100) >> 8} to `Salvage_QueueWeapon` (`0001f7e8`, [small functions](world.md#small-functions)), and it returns `Math_Q10Multiply`(`00010c38` on `+0x19c`, the type record's `+0x54`), the second halved when component 0 reads `0x100`.
+`Mech_SalvageValue` is ES2's ([what a wreck is worth](../../retail/simulation/component-damage.md#what-a-wreck-is-worth--mech_salvagevalue-00418e60)): 0 when `+0xad` is set; otherwise, for each hardpoint whose component reading (`0000a16c` on `+0x19c`, component `0x13` plus the byte `+0x17` of the hardpoint's `+0x18`) is below `0x80`, it passes the pair {the `int16` at `+0x56` of the hardpoint's `+0x1c`, ((`0x100` − reading) × 100) >> 8} to `Salvage_QueueWeapon` (`0001f7e8`, [small functions](world.md#small-functions)), and it returns `Math_Q10Multiply`(`Mech_WeightedArmorRemaining` (`00010c38`, [the readouts](damage-readouts.md)) on `+0x19c`, the type record's `+0x54`), the second halved when component 0 reads `0x100`.
 
-**`Group_WriteStatusBlocks` (`0001d2c8`)**, (group, stream): ES2's ([the status blocks](../../retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)). For each member in order, `Mech_ReadDamageReadouts` (`0001583c`) fills a buffer with the type record's `+0x6c` and then `000109bc`'s readouts of `+0x19c`; entries 1–13, 20–29 and 32–41 are each written as ((`0x100` − *r*) × 100) >> 8 through the stream's slot `+0x18`, and then the 6 bytes at `+0x23a`: 72 bytes a member.
+**`Group_WriteStatusBlocks` (`0001d2c8`)**, (group, stream): ES2's ([the status blocks](../../retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)). For each member in order, `Mech_ReadDamageReadouts` (`0001583c`) fills a buffer with the type record's `+0x6c` and then `Component_FillDamageReadouts`' (`000109bc`, [the readouts](damage-readouts.md)) readouts of `+0x19c`; entries 1–13, 20–29 and 32–41 are each written as ((`0x100` − *r*) × 100) >> 8 through the stream's slot `+0x18`, and then the 6 bytes at `+0x23a`: 72 bytes a member.
 
 ## The module's start
 
@@ -126,8 +126,8 @@ Callees of other modules read for them: `Mech_AiTick` (`0000d8e8`), `Mech_Salvag
 
 ## Open
 
-- **Open:** what reads the group's point `+0x20`, heading `+0x0c` and `+0x02`, `+0x04`, and whether anything clears the action `+0x16`, which stands where ES2's [deployment gate](../../retail/simulation/mission-deployment.md#the-deployment-gate--group0x14) does.
-- **Open:** the callees not read: `00013124`, `0001b574` and `000044a4`, which take a mech, flyer or base member with its ref's position and the group; `00015a5c`, which decides `0001d4d0`'s name; `0000a16c`, `00010c38` and `000109bc`, the component readings; `00064178` and `0000fe84`, the AI tick's countdown and last call.
+- **Open:** what reads the group's point `+0x20`, heading `+0x0c` and `+0x02`, and whether anything clears the action `+0x16`, which stands where ES2's [deployment gate](../../retail/simulation/mission-deployment.md#the-deployment-gate--group0x14) does.
+- **Open:** the callees not read: `00013124`, `0001b574` and `000044a4`, which take a mech, flyer or base member with its ref's position and the group; `00015a5c`, which decides `0001d4d0`'s name and which `es2_xref.py` finds calling `Mission_IsClearOfThreats` (`0000f744`); `0000a16c`, a component reading; `00064178`, the AI tick's countdown.
 - **Open:** five of the eleven calls `es2_xref.py` finds to `Action_Activate`, from `00003978`, `00013250` (two), `00018e50` and `0001b290`. Three others are the sensor model's engagement, from `Detection_ShareContact` (`0000e618`) and twice from `Detection_Sweep` (`0000e85c`) ([the sensor model](sensor-model.md#looking-around--detection_sweep-0000e85c)), and the last three are `Action_TestTrigger`, `Actions_EvaluateTriggers` (`0001f87c`, [trigger areas](world.md#trigger-areas--actions_evaluatetriggers-0001f87c)) and `Sim_RaycastObjectList` (`0001f1d0`), which fires a struck enemy's `+0x16c` action.
 - **Open:** whether anything changes a group's target after the load; ES1's target is set once, by `DBSim_BuildGroupRecord`, in the functions read.
 - **Open:** the machine fields above are not in `known_structs.json`, which holds no ES1 layout; nor are the group record, the action and the trigger area.

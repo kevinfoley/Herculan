@@ -18,12 +18,12 @@ The module's functions run in ES2's order, from `Mission_WriteResults` to the `G
 
 ES2's writer ([what the mission leaves the shell](../../retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)), given the player's machine. `es2_xref.py` finds one call, from `0005b568`, which also calls `GndTex_Free` ([the ground texture](../rendering/ground-and-sky.md#loading-the-ground-texture)). With *g* the player's group (`+0x3f`) and *w* header word 3 of `data\script.dat` (the dword at `000bc4a2`):
 
-1. It asks `0000f0f0` (*g*, *w*) for the outcome.
+1. It asks `Group_StatusLineIndex` (`0000f0f0`)(*g*, *w*) for the outcome, the squad's report line for verb *w* ([the group report](mission-status.md#the-group-report--group_statuslineindex-0000f0f0)).
 2. It opens `data\results.dat` through `Path_ApplyAltDrive` and `FileWStream_Ctor`, asserting at severity 5 (`world.cpp` line `0x58`) when it cannot, and writes:
 
 | Bytes | Field |
 |---|---|
-| 2 | the outcome, as `0000f0f0` returned it |
+| 2 | the outcome, as `Group_StatusLineIndex` returned it |
 | 4 | `Math_Q10Multiply`(`Mission_TotalSalvage`(*g*, *w*), 2500) + flag 7 × 25000 |
 | 2 | the number of salvage pairs, the `int16` at `000bc4b2` |
 | 4 × that | each pair at `000bc4b4`, two `int16` |
@@ -37,7 +37,7 @@ Where ES2's differs:
 
 | | ES1 | ES2 |
 |---|---|---|
-| the outcome | `0000f0f0`'s answer for the player's group and header word 3, written as it is | 1 when its objectives' evaluation for the player answers 9, otherwise 0 |
+| the outcome | `Group_StatusLineIndex`'s answer for the player's group and header word 3, written as it is | 1 when its objectives' evaluation for the player answers 9, otherwise 0 |
 | the salvage bonus | 25,000 per unit of flag 7 (`000bc4c6`), which `DBSim_LoadScriptDat` zeroes at the load | per unit of counter 20 |
 | `mission.var` | the 100 flags, 200 bytes | 1,000 counters, 2,000 bytes |
 
@@ -147,15 +147,14 @@ Callees of other modules read for them: `RaycastShapeMinDistance_Clear` (`000208
 
 ## Open
 
-- **Open:** the callees read for none of this module's functions: `00012c00`, `00012f20`, `000107f0`, `0001ac58` and `00003cbc` from the second pass ([its Open](../formats/script-dat.md#open)); `00019300`, the friendly-fire complaint, where ES2's sweep calls `Mech_AiFriendlyFireComplaint`; `00013a7c`, a blast on one mech, where ES2's calls slot `+0x70`; `00063b5c`, which rescales the march's direction, where ES2's calls `Math_NormalizeVec3ToLength`; and the five readers of the header mode at offset 4 besides `Damage_ScaleByDifficulty`.
+- **Open:** the callees read for none of this module's functions: `00012c00`, `00012f20`, `0001ac58` and `00003cbc` from the second pass ([its Open](../formats/script-dat.md#open)); `00019300`, the friendly-fire complaint, where ES2's sweep calls `Mech_AiFriendlyFireComplaint`; `00013a7c`, a blast on one mech, where ES2's calls slot `+0x70`; `00063b5c`, which rescales the march's direction, where ES2's calls `Math_NormalizeVec3ToLength`; and the five readers of the header mode at offset 4 besides `Damage_ScaleByDifficulty`.
 - **Open:** the callers `es2_xref.py` finds and this batch did not read: `00007198`, `00007f84` and `000088cc` (the shot sweep); `00018278` (the blast); `00059700` (the trigger test), and so what it passes where ES2's passes the player's mech; `0002d624` (the scan range); `0005b568`, which calls `Mission_WriteResults` and the two no-ops in the order ES2's `Sim_Shutdown` calls its counterparts.
 - **Open:** whether `GO.EXE`'s `0000f39c`, `0000f515` and `0000f5c4` are its copies of the three queries: they stand before its `GridShape` functions in the queries' order, but compile differently and `0000f5c4` is 851 bytes to `GridShape_Raycast`'s 413. `es2_xref.py --binary ES1GO` finds two calls to `0000f39c` and none to the other two.
 - **Open:** the module's two static constructors, the dwords at `000adc10` and `000adc14`, have no Ghidra function and no entry: `0001fa98`, a lone `RET`, and `0002018c`, which passes 1 and `00092414`, the entry beside `GridShape`'s name and load function, to `ClassItem_RegisterBucket` in stack order.
 - **Open:** whether the base's and the flyer's hit tests test the owner's group's side byte before scaling, as the mech's does: their `CMP byte [reg+0x14], 0` at `00003a8b` and `0001b3df` is all that was read.
 - **Open:** whether anything writes the header word at offset 4 after the read: a grep of the disassembly finds six reads of `000bc4a0` by address and no store, and the block base `000bc49c` passed to `FileRStream_Read` and `World_LoadTheater`. ES2's `DBSim_LoadScriptDat` zeroes its word there. If nothing does, a career mission, mode 1, always takes the difficulty table's last entry.
 - **Open:** what the owner's `+0x98` set by a strike on an enemy is, what the slots `+0x54` and `+0x68` are on each class, and what reads `000afa1c` and `000afa18`, where the shot sweep stores `RaycastShapeMinDistance`.
-- **Open:** what `0000f0f0` computes from the player's group and header word 3, and so what the outcome and word 3 mean. Its counterpart is the objectives' evaluation ES2's writer calls ([ES2's outcome](../../retail/simulation/mission-objectives.md#what-the-mission-leaves-the-shell--mission_writeresults-0042412c)); the body is not read.
-- **Open:** how `GO.EXE` reads `data\results.dat`.
+- **Open:** how `GO.EXE` reads `data\results.dat`, and so what each outcome, a line index of the squad's report, means to the career.
 - **Open:** which of ES2's modules holds its group functions (`0042313c`–`00423f30`): its `WORLD.CPP` asserts sit in `Mission_WriteResults` and `DBSim_LoadScriptDat`, after them.
 - **Open:** the player object's field `+0x3f`, its group, has no `known_structs.json` layout: no ES1 object layout is recorded there ([the object fields](mission-groups.md#the-object-fields)).
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in DOSBox-X's debugger, `BP <CS>:0001d698` set during a mission fires once as the mission ends, and after `F5` the install's `DATA\RESULTS.DAT` has just been rewritten with 8 + 4 × pairs + 72 × squad machines bytes: 80 for a one-HERC squad that salvaged nothing.
