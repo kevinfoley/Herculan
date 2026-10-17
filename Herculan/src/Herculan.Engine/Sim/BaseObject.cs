@@ -1,5 +1,5 @@
 ﻿using HercWorks.Core.Data.File.Dbsim;
-using Herculan.Engine.Sim.Anim;
+using Herculan.Engine.Anim;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.World;
 
@@ -89,7 +89,7 @@ public sealed partial class BaseObject : SimObject {
 	/// </param>
 	/// <param name="keepSeekFraction">
 	/// Whether the constructor's seed of <see cref="SeededThread"/> keeps its sub-tick remainder — see
-	/// <see cref="AnimationThread.SeekToPosition"/>.
+	/// <see cref="SeekRounding.KeepRemainder"/>.
 	/// </param>
 	public BaseObject(BaseType type, ShapeVolume? volume, ColliderNode[]? collision, int shapeRadius,
 			int animCellCount = 1, ShapeAnimation? animation = null, short startingCondition = 100,
@@ -118,7 +118,8 @@ public sealed partial class BaseObject : SimObject {
 				// The constructor's own seed for the second thread: parked a little over a third of
 				// the way through its sequence rather than at its start.
 				if (i == SeededThread) {
-					_threads[i]!.SeekToPosition(i, SeededThreadPosition, keepSeekFraction);
+					_threads[i]!.SeekToPosition(i, SeededThreadPosition,
+						keepSeekFraction ? SeekRounding.KeepRemainder : SeekRounding.Truncate);
 				}
 			}
 		}

@@ -1,7 +1,7 @@
 using HercWorks.Core.Data.File.Dts;
 using HercWorks.Core.Data.File.Dts.Bsp;
 using HercWorks.Core.Data.File.Dts.Part;
-using Herculan.Engine.Sim.Anim;
+using Herculan.Engine.Anim;
 
 namespace Herculan.Engine.Scene;
 

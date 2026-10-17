@@ -315,7 +315,7 @@ What the game seam has to carry, from what is already known to differ:
 - the display modes;
 - the shell, which shares little beyond the data layer.
 
-The two games share a core and each has its own assembly ([`planning.md`](planning.md#how-the-two-games-share-code)). What crosses the core's seams for the items above is designed at the start of phase 2, against the ES1 code that needs it.
+The two games share a core and each has its own assembly ([`planning.md`](planning.md#how-the-two-games-share-code)). What crosses the core's seams for the items above is designed at the start of phase 2, against the ES1 code that needs it. The first slice, a mission with the player's HERC under the player's control against enemy HERCs, and the seams it needs are in [`plan-es1-first-mission.md`](plan-es1-first-mission.md).
 
 ## Open
 

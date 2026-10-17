@@ -91,6 +91,18 @@ public static class SimMath {
 	public static int Q14Multiply(int a, short b) => (int)(((long)a * b) >> 14);
 
 	/// <summary>
+	/// ES1's <c>Math_Q14Multiply</c> (<c>ES1DBSIM 0005e838</c>), which rounds to nearest where
+	/// <see cref="Q14Multiply"/> truncates: <c>0x2000</c> added to the 64-bit product before the shift, or
+	/// <c>0xffffdfff</c>, unsigned, when the product overflows 32 bits. See
+	/// docs/es1/simulation/fixed-point-math.md, "The primitives".
+	/// </summary>
+	public static int Q14MultiplyRounded(int a, short b) {
+		long product = (long)a * b;
+		long half = product == (int)product ? 0x2000 : 0xffffdfffL;
+		return (int)((product + half) >> 14);
+	}
+
+	/// <summary>
 	/// <c>Math_IntegrateRateOverTick</c> (<c>00467820</c>) — "apply a per-unit-time rate as this
 	/// tick's delta": <c>Q8Multiply(TickDelta, rate)</c>, clamped to signed 16-bit range. Called on
 	/// velocity- and acceleration-like fields to get a position or speed delta.

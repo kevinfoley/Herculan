@@ -4,7 +4,7 @@ using HercWorks.Core.Data.File.Dts.Part;
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.Struct;
 
-namespace Herculan.Engine.Sim.Anim;
+namespace Herculan.Engine.Anim;
 
 /// <summary>One keyframe transform: an euler rotation and a translation, both in model space.</summary>
 /// <remarks>
@@ -222,9 +222,8 @@ public sealed class ShapeAnimation {
 	/// frame's duration. Zero for a sequence with no ground movement, and for turn-in-place, which
 	/// carries rotation only.
 	///
-	/// <para><b>Not something the original computes.</b> It is the stride the
-	/// <see cref="Settings.TweakSettingDefinitions.ShowAccurateSpeed"/> readout reads
-	/// (<see cref="MechObject.GroundSpeedKph"/>). The real motion pulses from frame to frame within a
+	/// <para><b>Not something the original computes.</b> It is the stride ES2's accurate speed
+	/// readout tweak reads (<c>MechObject.GroundSpeedKph</c>). The real motion pulses from frame to frame within a
 	/// stride; this is the stride's mean. See docs/retail/simulation/mech-locomotion.md, "Resulting
 	/// speed".</para>
 	/// </summary>
@@ -301,7 +300,7 @@ public sealed class ShapeAnimation {
 	///
 	/// <para>Every root carries one of its own, and they differ: APOCA's root 0 declares 8 sequences
 	/// over a 12-node tree and its root 4 declares 1 over a 9-node tree, renumbered. This is root 0's
-	/// alone, which poses every root once <see cref="Scene.MechDetailRootRemap"/> has put the others
+	/// alone, which poses every root once ES2's <c>Scene.MechDetailRootRemap</c> has put the others
 	/// on its numbering.</para>
 	/// </summary>
 	public static ShapeAnimation? FromModel(DynamixThreeSpaceModel? model) {

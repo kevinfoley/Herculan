@@ -1,6 +1,6 @@
 using Herculan.Engine.Numerics;
 
-namespace Herculan.Engine.Sim.Anim;
+namespace Herculan.Engine.Anim;
 
 /// <summary>
 /// One machine's animated shape: its <see cref="ShapeAnimation"/> plus the threads playing on it,
@@ -56,7 +56,7 @@ public sealed class ShapeInstance {
 	/// priority and reads the first one's ramped root transform into the node array; a caller that
 	/// wants that root motion asks the
 	/// thread for it directly (<see cref="AnimationThread.ReadRoot"/>), as
-	/// <see cref="MechObject.IntegrateMotion"/> and <see cref="BaseObject.StepAnimation"/> both do.
+	/// ES2's <c>MechObject.IntegrateMotion</c> and <c>BaseObject.StepAnimation</c> both do.
 	///
 	/// <para>A thread whose rate is zero is unmoved by this, which is why a turret thread parked by
 	/// <see cref="AnimationThread.SeekToPosition"/> stays where the seek put it.</para>

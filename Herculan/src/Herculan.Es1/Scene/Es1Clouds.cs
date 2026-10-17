@@ -125,15 +125,15 @@ public sealed class Es1Clouds {
 			int distance = random.Next(0x10000) << DistanceShift;
 			short bearing = unchecked((short)random.Next(0x10000));
 			_positions[i] = new Vec3i(
-				camera.X + Es1Math.Q14Multiply(distance, SimTrig.Cos(bearing)),
-				camera.Y + Es1Math.Q14Multiply(distance, SimTrig.Sin(bearing)),
+				camera.X + SimMath.Q14MultiplyRounded(distance, SimTrig.Cos(bearing)),
+				camera.Y + SimMath.Q14MultiplyRounded(distance, SimTrig.Sin(bearing)),
 				Height);
 		}
 
 		short heading = unchecked((short)random.Next(0x10000));
 		int speed = 50 + random.Next(100);
-		_wind = new Vec3i(Es1Math.Q14Multiply(speed, SimTrig.Cos(heading)),
-			Es1Math.Q14Multiply(speed, SimTrig.Sin(heading)), 0);
+		_wind = new Vec3i(SimMath.Q14MultiplyRounded(speed, SimTrig.Cos(heading)),
+			SimMath.Q14MultiplyRounded(speed, SimTrig.Sin(heading)), 0);
 		FrameAbove = random.Next(3);
 		_last = camera;
 	}

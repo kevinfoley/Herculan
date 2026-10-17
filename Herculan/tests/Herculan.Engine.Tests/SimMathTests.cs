@@ -47,6 +47,19 @@ public class SimMathTests {
 		WithTickDelta(8, () => Assert.Equal(0, SimMath.ScalePerTickStep(0)));
 	}
 
+	/// <summary>
+	/// ES1's rounded Q14 multiply, hand-worked from its disassembly (<c>ES1DBSIM 0005e838</c>). Catches the
+	/// overflow branch dropped for a plain <c>+ 0x2000</c>: 0x10000000 × 16 is 2³², which overflows, so it
+	/// gains 0xffffdfff and shifts to 524287 where a rounding would give 262144.
+	/// </summary>
+	[Theory]
+	[InlineData(0x10000000, 16, 524287)]
+	[InlineData(3, 0x2000, 2)] // 1.5 rounds up.
+	[InlineData(-3, 0x2000, -1)] // −1.5 rounds up too: the half is added, not taken toward zero.
+	public void Q14MultiplyRoundedFollowsEs1sAdd(int a, short b, int expected) {
+		Assert.Equal(expected, SimMath.Q14MultiplyRounded(a, b));
+	}
+
 	private static void WithTickDelta(short delta, System.Action body) {
 		short previous = SimMath.TickDelta;
 		SimMath.TickDelta = delta;

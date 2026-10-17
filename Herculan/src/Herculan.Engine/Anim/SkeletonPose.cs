@@ -1,6 +1,6 @@
 using Herculan.Engine.Numerics;
 
-namespace Herculan.Engine.Sim.Anim;
+namespace Herculan.Engine.Anim;
 
 /// <summary>
 /// One node of a machine's skeleton on the frame it was sampled: which transform it is, which
@@ -13,8 +13,8 @@ namespace Herculan.Engine.Sim.Anim;
 public readonly record struct SkeletonJoint(int TransformId, int ParentId, Vec3i World);
 
 /// <summary>
-/// Samples every node of an animating machine into world space — the debug counterpart to
-/// <see cref="MechObject.EyePosition"/>, which asks the same question about one node only.
+/// Samples every node of an animating machine into world space — the debug counterpart to ES2's
+/// <c>MechObject.EyePosition</c>, which asks the same question about one node only.
 ///
 /// <para>It shows the whole skeleton, including the nodes no geometry hangs from, which the drawn
 /// model cannot. Overlaid on a posed machine (the external view, <c>[V]</c>) it is also the check
@@ -28,21 +28,21 @@ public readonly record struct SkeletonJoint(int TransformId, int ParentId, Vec3i
 /// </summary>
 public static class SkeletonPose {
 	/// <summary>
-	/// Every transform in <paramref name="mech"/>'s shape, in world units, on the frame its thread is
-	/// currently showing. Empty when the machine has no animation data.
+	/// Every transform in <paramref name="shape"/>, in world units, on the frame its threads are
+	/// currently showing, placed by the machine's <paramref name="world"/> transform. Empty when the
+	/// machine has no animated shape.
 	///
 	/// <para>Nodes no thread places come back at the machine's own origin:
 	/// <see cref="ShapeInstance.NodeTransform"/> accumulates nothing for them and returns identity,
 	/// which is indistinguishable from a node genuinely posed at the origin. A cluster of joints
 	/// sitting exactly on the origin is that case, not a collapsed skeleton.</para>
 	/// </summary>
-	public static SkeletonJoint[] Build(MechObject mech) {
-		if (mech.Shape is not { } shape || mech.Animation is not { } animation) {
+	public static SkeletonJoint[] Build(ShapeInstance? shape, in Transform3 world) {
+		if (shape == null) {
 			return Array.Empty<SkeletonJoint>();
 		}
 
-		var parents = animation.ParentTransform;
-		var world = mech.WorldTransform;
+		var parents = shape.Animation.ParentTransform;
 
 		var joints = new SkeletonJoint[parents.Length];
 		for (int id = 0; id < parents.Length; id++) {
@@ -55,9 +55,11 @@ public static class SkeletonPose {
 	}
 
 	/// <summary>
-	/// The transform the machine's camera node sits on — the one <see cref="MechObject.EyePosition"/>
+	/// The transform the machine's camera node sits on — the one ES2's <c>MechObject.EyePosition</c>
 	/// rides — or -1 when the shape does not carry it.
 	/// </summary>
-	public static int CameraTransformId(MechObject mech) =>
-		mech.Animation?.TransformIdOfPart(mech.Type.CameraPartId) ?? -1;
+	/// <param name="animation">The machine's animation data, or null when it has none.</param>
+	/// <param name="cameraPartId">The shape part id the machine's type names as its camera node.</param>
+	public static int CameraTransformId(ShapeAnimation? animation, int cameraPartId) =>
+		animation?.TransformIdOfPart(cameraPartId) ?? -1;
 }

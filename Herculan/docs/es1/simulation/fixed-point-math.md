@@ -26,7 +26,7 @@ The tables the trigonometry reads are identical: the cosine quarter-turn table (
 | Q16 multiply | `Math_Q16Multiply` (`00073574`) and its copy `Math_Q16Multiply2` (`0007358c`): `0x8000` added before the shift | `Math_Q16Multiply` and its copy `Math_Q16Multiply2`: truncated |
 | Q16 divide | `Math_Q16Divide` (`00073534`): divides the magnitudes, adds 1 when the remainder is at least half the divisor rounded up, then restores the sign | `Math_Q16Divide`: signed `IDIV`, truncated toward zero |
 
-The Q8, Q10 and Q14 multiplies add half a unit (`0x80`, `0x200`, `0x2000`) when the product fits in 32 bits; when it does not, `SBB ECX,ECX` / `XOR ECX,half` adds `0xffffff7f`, `0xfffffdff` or `0xffffdfff` instead. The rounding is general in ES1: of `ES1DBSIM`'s 27 `SHRD EAX,EDX` instructions, 25 follow a rounding add and the other 2 (`0007e0ae`, `0007e41c`) normalise a mantissa. Of DBSIM's 26, the 20 in the matrix routines above follow a rounding add and the 6 in the primitives do not.
+The Q8, Q10 and Q14 multiplies add half a unit (`0x80`, `0x200`, `0x2000`) when the product fits in 32 bits; when it does not, `SBB ECX,ECX` / `XOR ECX,half` adds `0xffffff7f`, `0xfffffdff` or `0xffffdfff` instead. The add is `ADD EAX,ECX` / `ADC EDX,0`, so the value goes into the 64-bit product unsigned: an overflowing product gains almost 2³² before the shift, where a rounding of it would add half a unit. The rounding is general in ES1: of `ES1DBSIM`'s 27 `SHRD EAX,EDX` instructions, 25 follow a rounding add and the other 2 (`0007e0ae`, `0007e41c`) normalise a mantissa. Of DBSIM's 26, the 20 in the matrix routines above follow a rounding add and the 6 in the primitives do not.
 
 ## The tick length — `Time_BeginSimTick` (`00063f40`)
 

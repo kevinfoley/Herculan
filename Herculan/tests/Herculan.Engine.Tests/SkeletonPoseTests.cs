@@ -1,10 +1,10 @@
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Io.Transform.Dbsim;
+using Herculan.Engine.Anim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Sim;
-using Herculan.Engine.Sim.Anim;
 using Herculan.Engine.Terrain;
 using Xunit;
 
@@ -40,12 +40,12 @@ public class SkeletonPoseTests {
 			world.Tick();
 		}
 
-		int cameraNode = SkeletonPose.CameraTransformId(mech);
+		int cameraNode = SkeletonPose.CameraTransformId(mech.Animation, mech.Type.CameraPartId);
 		if (cameraNode < 0) {
 			return;
 		}
 
-		var joints = SkeletonPose.Build(mech);
+		var joints = SkeletonPose.Build(mech.Shape, mech.WorldTransform);
 		var node = mech.CameraNodeTransform;
 		Assert.Equal(new Vec3i(node.X, node.Y, node.Z), joints[cameraNode].World);
 	}
@@ -62,7 +62,7 @@ public class SkeletonPoseTests {
 		}
 
 		FlatWorld(mech);
-		var joints = SkeletonPose.Build(mech);
+		var joints = SkeletonPose.Build(mech.Shape, mech.WorldTransform);
 		if (mech.Animation is not { } animation) {
 			return;
 		}
@@ -98,7 +98,7 @@ public class SkeletonPoseTests {
 
 			sampled.Controls = new MechControls(0, -MechControls.AxisFull);
 			sampledWorld.Tick();
-			SkeletonPose.Build(sampled);
+			SkeletonPose.Build(sampled.Shape, sampled.WorldTransform);
 		}
 
 		Assert.Equal(plain.Position, sampled.Position);

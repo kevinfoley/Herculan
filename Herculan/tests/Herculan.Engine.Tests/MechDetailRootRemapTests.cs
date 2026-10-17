@@ -3,10 +3,10 @@ using HercWorks.Core.Data.File.Dts;
 using HercWorks.Core.Data.File.Dts.Part;
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Io.Transform.Dbsim;
+using Herculan.Engine.Anim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using Herculan.Engine.Scene;
-using Herculan.Engine.Sim.Anim;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

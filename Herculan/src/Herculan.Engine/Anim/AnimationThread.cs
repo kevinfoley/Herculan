@@ -1,6 +1,6 @@
 using Herculan.Engine.Numerics;
 
-namespace Herculan.Engine.Sim.Anim;
+namespace Herculan.Engine.Anim;
 
 /// <summary>
 /// One playing animation on a shape — DBSIM's 0x52-byte animation thread (constructed by
@@ -318,27 +318,14 @@ public sealed class AnimationThread {
 	///
 	/// <para>This is how the torso is aimed. Its threads never advance — the mech constructor gives
 	/// them a rate of zero — and the twist and pitch sequences are one full sweep of their node, so
-	/// setting a position in the sequence <i>is</i> setting an angle. See
-	/// <see cref="MechObject.TorsoTwistTick"/>.</para>
+	/// setting a position in the sequence <i>is</i> setting an angle. See ES2's
+	/// <c>MechObject.TorsoTwistTick</c>.</para>
 	///
-	/// <para>Not retail, with <paramref name="keepFraction"/> set — the
-	/// <see cref="Settings.TweakSettingDefinitions.SmootherTurretMovement"/> tweak: the sub-tick
-	/// remainder the original's Q14 scale-down truncates away is kept, and
-	/// <see cref="FrameFraction"/> spends it, so a seeked pose is no longer quantised to a whole
-	/// animation tick (docs/retail/simulation/torso-aim.md, "Angle to pose"). On OUTLAW that is
-	/// 1747 drawn twist poses from centre to limit where retail has 170, and the drawn view moves
-	/// every tick from half stick up rather than from three quarters. Clear, it is the original's
-	/// arithmetic exactly. Playback is untouched: only a seek produces a remainder, and the
-	/// locomotion thread is never seeked.</para>
-	///
-	/// <para>What stepping is left comes from the cosine table, not the animation.
-	/// <see cref="SimTrig.Cos"/> quantises a rotation to its 16-BAM step, so the drawn view still moves
-	/// in 0.101° increments and a twist under about 2°/s still steps. The Q10 <see cref="FrameFraction"/>
-	/// is fine enough to carry the fraction past that point: one Q10 unit is 8 binary angle across a
-	/// torso sweep's 45° keyframe interval.</para>
+	/// <para>The position is scaled across the sequence's ticks by the arithmetic
+	/// <paramref name="rounding"/> names, the one place the two games' threads differ.</para>
 	/// </summary>
-	/// <param name="keepFraction">Keep the sub-tick remainder; false is the original's truncation.</param>
-	public void SeekToPosition(int sequence, short position, bool keepFraction) {
+	/// <param name="rounding">How the position's product with the sequence's length is rounded.</param>
+	public void SeekToPosition(int sequence, short position, SeekRounding rounding) {
 		var target = _animation.Sequences[sequence];
 
 		int total = 0;
@@ -347,13 +334,20 @@ public sealed class AnimationThread {
 		}
 
 		// The original walks off the end of the frame list if this ever exceeds the total; it cannot,
-		// since position is a 14-bit fraction and this scales it by total - 1. The original's own
-		// Q14Multiply is that product shifted down; the shift is taken apart here so the bits it
-		// throws away can be kept.
-		int scaled = position * (short)(total - 1);
-		int remaining = scaled >> SeekFractionBits;
-		// The tweak keeps the sub-tick remainder rather than truncating to a whole animation tick.
-		int fraction = keepFraction ? scaled & ((1 << SeekFractionBits) - 1) : 0;
+		// since position is a 14-bit fraction and this scales it by total - 1.
+		int remaining;
+		int fraction = 0;
+		if (rounding == SeekRounding.RoundToNearest) {
+			remaining = SimMath.Q14MultiplyRounded(total - 1, position);
+		} else {
+			// DBSIM's own Q14Multiply is this product shifted down; the shift is taken apart here so
+			// the bits it throws away can be kept.
+			int scaled = position * (short)(total - 1);
+			remaining = scaled >> SeekFractionBits;
+			if (rounding == SeekRounding.KeepRemainder) {
+				fraction = scaled & ((1 << SeekFractionBits) - 1);
+			}
+		}
 
 		int frame = 0;
 		while (frame < target.FrameCount - 1 && remaining >= target.FrameDurations[frame]) {

@@ -87,8 +87,8 @@ public sealed class Es1GroundSpecks {
 			short angle = unchecked((short)random.Next(0x10000));
 			int twiceRadius = unchecked((short)random.Next(0x10000)) * 2;
 			_points[i] = new Vec3i(
-				centre.X + Es1Math.Q14Multiply(twiceRadius, SimTrig.Cos(angle)),
-				centre.Y + Es1Math.Q14Multiply(twiceRadius, SimTrig.Cos(unchecked((short)(angle - BinaryAngle.QuarterTurn)))),
+				centre.X + SimMath.Q14MultiplyRounded(twiceRadius, SimTrig.Cos(angle)),
+				centre.Y + SimMath.Q14MultiplyRounded(twiceRadius, SimTrig.Cos(unchecked((short)(angle - BinaryAngle.QuarterTurn)))),
 				0);
 		}
 	}

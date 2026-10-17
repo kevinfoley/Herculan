@@ -1,9 +1,9 @@
 using System.Numerics;
+using Herculan.Engine.Anim;
 using Herculan.Engine.Host.Debugging;
 using Herculan.Engine.Render;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Sim;
-using Herculan.Engine.Sim.Anim;
 using Silk.NET.OpenGL;
 
 namespace Herculan.Engine.Host.Simulator.Rendering;
@@ -165,7 +165,7 @@ sealed class WorldPassRenderer : IDisposable {
 			return;
 		}
 
-		var joints = SkeletonPose.Build(_pilotMech);
+		var joints = SkeletonPose.Build(_pilotMech.Shape, _pilotMech.WorldTransform);
 		_debugOptions.SkeletonJointCount = joints.Length;
 		if (joints.Length == 0) {
 			return;
@@ -176,7 +176,7 @@ sealed class WorldPassRenderer : IDisposable {
 
 		// The node the eye rides, flagged in its own colour: it is the one joint whose motion the player
 		// actually feels, so it wants to be findable among the rest.
-		int cameraNode = SkeletonPose.CameraTransformId(_pilotMech);
+		int cameraNode = SkeletonPose.CameraTransformId(_pilotMech.Animation, _pilotMech.Type.CameraPartId);
 		if (cameraNode >= 0 && cameraNode < joints.Length) {
 			_wireframe.DrawLines(view,
 				SkeletonWireframe.Marker(joints[cameraNode].World, SkeletonWireframe.CameraCrossMeters),

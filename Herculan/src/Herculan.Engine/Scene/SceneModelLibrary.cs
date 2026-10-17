@@ -7,11 +7,11 @@ using HercWorks.Core.Data.File.Dts.Anim;
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
+using Herculan.Engine.Anim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Gl;
 using Herculan.Engine.Render;
 using Herculan.Engine.Sim;
-using Herculan.Engine.Sim.Anim;
 using Herculan.Engine.World;
 
 namespace Herculan.Engine.Scene;

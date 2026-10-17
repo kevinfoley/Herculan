@@ -1,5 +1,5 @@
-﻿using Herculan.Engine.Numerics;
-using Herculan.Engine.Sim.Anim;
+﻿using Herculan.Engine.Anim;
+using Herculan.Engine.Numerics;
 using Herculan.Engine.World;
 
 namespace Herculan.Engine.Sim;
