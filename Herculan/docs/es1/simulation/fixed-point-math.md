@@ -28,16 +28,27 @@ The tables the trigonometry reads are identical: the cosine quarter-turn table (
 
 The Q8, Q10 and Q14 multiplies add half a unit (`0x80`, `0x200`, `0x2000`) when the product fits in 32 bits; when it does not, `SBB ECX,ECX` / `XOR ECX,half` adds `0xffffff7f`, `0xfffffdff` or `0xffffdfff` instead. The rounding is general in ES1: of `ES1DBSIM`'s 27 `SHRD EAX,EDX` instructions, 25 follow a rounding add and the other 2 (`0007e0ae`, `0007e41c`) normalise a mantissa. Of DBSIM's 26, the 20 in the matrix routines above follow a rounding add and the 6 in the primitives do not.
 
+## The tick length — `Time_BeginSimTick` (`00063f40`)
+
+**ES1's simulation tick is counted in tenths of a second, where ES2's is in eighths ([timer units](../../retail/simulation/dbsim-physics-notes.md#timer-units)): `SimTickDelta` (`000bdbd0`) is Q8 with 1.0 = a tenth of the timer ticks a second that `Time_InitSimClock` computes, 100 ms when the timer runs at that rate ([Open](#open)). One countdown count is then 100/256 ms, about 0.39 ms, and a reload of 10000 lasts 3.9 seconds.** It is measured with the PC timer rather than ES2's `GetTickCount`:
+
+- **`Time_InitSimClock` (`00063e64`)**, which `Sim_StartMission` calls ([the mission start](main-loop.md#the-mission-start--sim_startmission-0005a9dc)), sets `SimTickDelta` and `SimTickDelta2` (`000bdbd2`) to `0x100`, and on its first call registers `Time_SimClockTimerTick` (`00063e3c`) with `Timer_AddCallback` at count 1, keeps the timer structure `000bdd0c` points to in `000981c0`, and sets `SimClock_TicksPerSecond` (`000bba44`) and `000bba40` to `1000000 / Math_Q14Multiply(w, 0x35a1)`, *w* that structure's word `+4` (the formula [the frame meter](debug-monitor.md) uses), `SimClock_TicksPer100ms` (`000bba42`) and the two divisors `000bdbd4` and `000bdbd6` to a tenth of that, and the countdown `SimClock_Countdown` (`000bba46`) to `SimClock_TicksPerSecond`.
+- **`Time_SimClockTimerTick` (`00063e3c`)**, the timer callback, takes 1 from `SimClock_Countdown` while it is not 0, adds 1 to the dword `000981c8`, and adds 1 to the clock `000981c4` on every second call.
+- **`Time_BeginSimTick` (`00063f40`)**, once a frame from `Sim_Main` unless a tape plays ([the frame](main-loop.md#the-frame)), waits until `SimClock_Countdown` (read through `Time_GetSimClockCountdown`, `00063e34`) is at least 2 below `SimClock_TicksPerSecond`, then takes the elapsed ticks *e* = `SimClock_TicksPerSecond` − `SimClock_Countdown`, sets `SimTickDelta` = `Time_ElapsedToQ8Clamped` (`00063f04`)(*e*, `000bdbd4`) and `SimTickDelta2` the same with `000bdbd6`, and reloads the countdown.
+- **`Time_ElapsedToQ8Clamped` (`00063f04`)**, (elapsed, unit): (elapsed << 8) / unit, clamped to `0x40`–`0x1c2`, ES2's (`00467790`).
+
+So a frame waits for two timer ticks, a tick is 25 to 176 ms by the clamp (ES2's: 31 to 220 ms), and the countdown stops at 0 after a second without a frame. The two divisors start equal, so the two deltas are equal while they stay so ([Open](#open)). A replay takes each frame's delta from the tape instead ([the tick](main-loop.md#the-tick--sim_maintick-00059700)).
+
 ## Rate over tick
 
-The rate-over-tick helpers differ as well. ES1's `Math_IntegrateRateOverTick` (`00063fa4`), which the bullet tick calls where ES2's `Bullet_TickUpdate` calls ES2's, multiplies the rate by the short at `000bdbd0` through the rounding Q8 multiply, then sign-extends the product from 16 bits before its ±0x7fff clamp, so an out-of-range product wraps where ES2's saturates. `Math_IntegrateRateOverTick2` (`00063fe0`) does the same with the short at `000bdbd2`, where ES2's reads `004d3bea`.
+The rate-over-tick helpers differ as well. ES1's `Math_IntegrateRateOverTick` (`00063fa4`), which the bullet tick calls where ES2's `Bullet_TickUpdate` calls ES2's, multiplies the rate by `SimTickDelta` through the rounding Q8 multiply, then sign-extends the product from 16 bits before its ±0x7fff clamp, so an out-of-range product wraps where ES2's saturates. `Math_IntegrateRateOverTick2` (`00063fe0`) does the same with `SimTickDelta2`, where ES2's reads `004d3bea`.
 
 ## Helpers that match
 
 These C helpers do the same as ES2's of the same name, read side by side:
 
 - `Math_Atan2Guarded` (`00063ca0`) and `Math_HeadingToward` (`00063cc8`), which take their arguments in ES2's order;
-- `Math_CountdownTimerTick` (`0006410c`), whose tick delta is the short at `000bdbd0`;
+- `Math_CountdownTimerTick` (`0006410c`), whose tick delta is `SimTickDelta`;
 - `Math_DistanceBetweenPoints` (`00063c20`), which subtracts in line where ES2's calls `Vec3_Subtract`;
 - `Math_RateLimitedMoveToward` (`0005e598`) and its `int32` form `Math_RateLimitedMoveTowardInt` (`0005e608`), which take their arguments in the reverse of ES2's order ([calling conventions](../formats/compiler.md#calling-conventions));
 - the generator ([ES2's](../../retail/simulation/random-generator.md)): `Math_RandomNext` (`00063af4`) and `Math_RandomBelow` (`00063b3c`) over the same 56-short state with its cursors at `+0x70` and `+0x71`, and `Math_RandomSeed` (`00063aa4`), whose 112-byte seed table (`00098150`) is ES2's at `004a6958`. ES1's seeding calls nothing after the copy, where ES2's calls an empty function.
@@ -70,4 +81,5 @@ then adds the velocity to the position and returns it. An error and a velocity t
 
 - **Open:** no caller of `Slew_Ctor`, `Slew_Step` or `Math_RateLimitedMoveTowardInt` found by `es2_xref.py`.
 
-- **Open:** what the shorts at `000bdbd0` and `000bdbd2` hold, and what sets them. `0006410c` subtracts the first where `Math_CountdownTimerTick` subtracts `SimTickDelta`; `Math_IntegrateRateOverTick` (`00063fa4`) multiplies by the first and `Math_IntegrateRateOverTick2` (`00063fe0`) by the second, as ES2's `Math_IntegrateRateOverTick2` does by `004d3bea`.
+- **Open:** the PC timer's rate, the word `+4` of the structure `000bdd0c` points to ([the frame meter's Open](debug-monitor.md#open)), and whether `Timer_AddCallback`'s count 1 runs `Time_SimClockTimerTick` at that rate, as `Time_InitSimClock`'s arithmetic takes it to; the tick's length in milliseconds rests on it, the frame's two-tick wait and the clock `000981c4`'s rate depend on it.
+- **Open:** whether anything changes the divisors `000bdbd4` and `000bdbd6` after `Time_InitSimClock`: `es2_xref.py` finds no other store to either.

@@ -98,7 +98,7 @@ A volume is one open `.VOL` archive. ES1's archives have ES2's layout ([VOL arch
 
 `VolRStream_SetGroup(mask, extension, dir, dirFirst)` makes the group on its first call and refills it on later ones through `VolumeGroup_SetGroup`. That removes the volumes whose program mask shares no bit with `mask`, then loads each file matching `vol\*<extension>`, once under `dir` and once without it (`dir` first when `dirFirst` is nonzero), whose `vol\<name>` is not loaded already, passing `mask` to the volume loader. It tests the limit of 10 once, before it scans; the install's `VOL\` holds seven volumes. `VolRStream_LoadVolume` adds one named volume, with the mask `0xffffffff`, unless one of that name is loaded.
 
-`main` (`00059350`) sets the volume buffer size to `0x200` and then calls `VolRStream_SetGroup` with mask 1 and extension `.vol`, so of the install's archives the simulator loads `SIMVOL0`, `SIMSOUND`, `SIMVOICE` and `ZONES`. When that call makes the group, `VolumeGroup_Ctor` sets the buffer size to `0x400` before it loads a volume.
+`main` (`00059350`) sets the volume buffer size to `0x200` and then calls `VolRStream_SetGroup` with mask 1, extension `.vol`, the directory `ALT_DRIVE` names (null unless `-c` was given) and `dirFirst` set when `PREFER_ALT` is ([starting](../simulation/main-loop.md#starting--sim_main-00059350)), so of the install's archives the simulator loads `SIMVOL0`, `SIMSOUND`, `SIMVOICE` and `ZONES`. When that call makes the group, `VolumeGroup_Ctor` sets the buffer size to `0x400` before it loads a volume.
 
 ## The RLE and LZH filters
 
@@ -147,7 +147,7 @@ The base class, the three file classes and the two filters are `ES1DBSIM`'s code
 
 - **Open:** `BuffRStream` (`ES1DBSIM` vtable `0009eb96`, `ES1GO` `0008b04e`) beyond `BuffRStream_Ctor`, `BuffRStream_InitBuffer` and `BuffRStream_SetSource`.
 - **Open:** which program loads `DETECT.VOL`, whose program mask `0x10000` shares no bit with either `main`'s.
-- **Open:** where the directory and the `dirFirst` flag that each `main` passes to `VolRStream_SetGroup` come from.
+- **Open:** where the directory and the `dirFirst` flag that `GO.EXE`'s `main` passes to `VolRStream_SetGroup` come from.
 - **Open:** what `RLERStream` holds from `+0xf` to `+0x8d`; its twelve functions use none of it, and ES2's class has the same gap.
 - **Open:** what each `GetCapabilities` query asks; no caller's use of the answers has been read.
 - **Open:** a caller of `ES1DBSIM`'s `VolRStream_DeleteGroup`: `es2_xref` finds none, at its entry or at its padding.

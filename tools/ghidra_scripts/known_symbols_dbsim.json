@@ -21955,8 +21955,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Config_BuildPath",
-      "description": "(name): 'data\\' + name, or 'tapes\\' + name while TapePlayback is set, built in the static buffer 004d2980, which it returns. prefs.cfg and keyjoy.cfg are opened through it.",
-      "source": "DBSIM decompile at 0045eea4"
+      "description": "(name): 'data\\' + name, or 'tapes\\' + name while TapePlayback is set, built in the static buffer 004d2980, which it returns.",
+      "source": "DBSIM decompile at 0045eea4",
+      "verified": {
+        "bytes": "0045eea4+89",
+        "sha1": "79948e95a4cd",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045ef00",
@@ -22158,8 +22164,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_DispatchCommand",
-      "description": "The simulator's command dispatcher: every queued command code passes through here, and Sim_PollPlayerInput also calls it directly (passing 0x14 for one of the MFD cases). Offers the code to the cockpit widget tree (CockpitWidgets_HandleCommand), then to Sim_HandleWindowKey, then its own switch, and finally to the player mech's vtable +0x2c. Codes are PC set-1 scancodes with 0x200 added for Alt -- 0x26 is L, 0x29 is backquote, 0x11/0x211 are W and Alt+W, 0x02-0x0b and 0x202-0x20b the two number-key banks. Case 0x0e/0x14 latch g_CenterTurretMode and clear g_CenterBodyMode; case 0x2b does the reverse and caches g_CenterBodyTargetHeading. Both also clear the auto-turret-tracking flag at mech+0x202 -> +0x14.",
-      "source": "docs/retail/simulation/mech-locomotion.md; docs/retail/simulation/weapon-mounts.md; docs/retail/simulation/cockpit-input.md"
+      "description": "(code): the simulator's command dispatcher. Returns 0 while 004d25e8 is 0. Offers the code to CockpitWidgets_HandleCommand, then Sim_HandleWindowKey, then its own cases: 0x21f toggles 004d2576 while DAT_0049ef60, TapePlayback or TapeRecording is set; 0x28 TargetSelect_Nearest; 1 (unless the camera's +0x4a lock) queues view command 3 with ViewChain_PendingView 2; 0x0e sets g_CenterTurretMode, clears g_CenterBodyMode and the auto-track byte (+0x202)+0x14 and toggles the console's auto-track when its +0xb3 is set; 0x0f and 0x1c call ViewChain_ToggleCameraControl in view 4 (the manager's +0x14); 0x10 shows Mission_StatusForAlert(LocalPlayerMech, 1) in a StatusAlertPanel, adding 1 when the answer equals AlertPanel_EndsMissionButton[status], and clears MissionAlertArmed; 0x14 toggles the console's auto-track; 0x19 runs PausePanel(0) and adds its answer; 0x35 and 0x835 the on-line manual; 0x2b the legs mode; 0x2f the V step; 0x31 the next squadmate in view 3; 0x58 and 0x219 PreferencesPanel_Raise; with DAT_0049ef60 the developer keys 0x431/0x419, 0x414, 0x24e, 0x421, 0x634/0x633, 0x620 and 0x631; 0x402 flips ThrottleLeverMode with a throttle lever and SimOptions byte 004d1fca 1; 0x410 runs PausePanel(1), adds its answer and sets 004d2582 on a non-zero one; 0x82f Cam_SetMode 3 from mode 1. Any other code goes to slot +0x2c of ViewChain_Viewed (LocalPlayerMech when DAT_0049ef5c is set). Returns 1 for a code it reaches its own switch with, plus the answer added.",
+      "source": "docs/retail/simulation/mech-locomotion.md; docs/retail/simulation/weapon-mounts.md; docs/retail/simulation/cockpit-input.md",
+      "verified": {
+        "bytes": "0045fdac+2488",
+        "sha1": "427bfec498ff",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00460764",
@@ -22167,8 +22179,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_PollPlayerInput",
-      "description": "Reads the input device struct (axes at +0x0e steer, +0x10 throttle, +0x12 torso twist, +0x14 torso pitch) and dispatches player control: Mech_ApplyThrottleInput, Mech_TorsoTwistTick, Mech_TorsoPitchTick. Also hosts the keyboard command switch.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "description": "(block): the player's controls. Sim_DispatchCommand on the command word, its answer being 2 the return value; CockpitView_PollViewDevice. With InputDrivesCamera clear the machine takes the axes +0x0e, +0x10, +0x12, +0x14; with it set the camera takes the two axes +0x22/+0x26 point at and the trigger +0x0d, and the pitch +0x14 when Input_GetDevice(3) and the capability block's +4 answer. The gunsight drag on the rect at +4 of CockpitViewInstance+0x1f5 while +0x0b holds. Cam_Steer on ViewObjectPtr. With the player's root motion enabled: for a walker (type record +0x50 0), Mech_ApplyThrottleInput and the turret (auto-track through Player_ResolveTargetAimPoint and Cockpit_TargetAnglesFromCameraBone, Mech_CenterTorsoTick, or Mech_TorsoTwistTick and Mech_TorsoPitchTick), or under g_CenterBodyMode the legs-centering steer; for the RAZOR, Razor_ApplyFlightInput unless 004d2576. Mech_PlayerFireTick when the camera is not driven. Then the eight button bytes: each pressed one claims a 21-byte array indexed by its byte, is latched with Input_LatchButton and switches on SimOptions[ControlsOptionBase + 4 + i], actions 2-20.",
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00460764+2109",
+        "sha1": "9462a8d15c30",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00460fa1",
@@ -22287,8 +22305,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_Shutdown",
-      "description": "The simulator's exit path, run by Sim_Run however the main loop ends: closes the tape files, Mission_WriteResults(LocalPlayerMech), then the exit code at 004d283c -- 6 under DemoMode, 0 with the quit flag 004d2582, else 4 when the player's +0x99 is set and MissionModeFlag (004a9ed6) is, else 3 -- then Sim_ShutdownNoOp1 and Sim_ShutdownNoOp2.",
-      "source": "docs/retail/command-line.md#exit-codes"
+      "description": "No arguments, the simulator's exit path: CockpitMouseLive = 0; with TapeFile open, closes the checkpoint file 004d2562 when open and then the tape, clearing both; Mission_WriteResults(LocalPlayerMech); the exit code at 004d283c -- 6 under DemoMode, 0 with the quit flag 004d2582, else 4 when the player's +0x99 is set and MissionModeFlag (004a9ed6) is, else 3; then Sim_ShutdownNoOp1 and Sim_ShutdownNoOp2.",
+      "source": "docs/retail/command-line.md#exit-codes",
+      "verified": {
+        "bytes": "00461eec+170",
+        "sha1": "b3943a0f36d3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00462003",

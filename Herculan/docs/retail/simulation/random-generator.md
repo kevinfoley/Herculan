@@ -26,14 +26,7 @@ Sixty-two `PUSH 0x4d261d` in the image besides the seeding one hand the simulati
 
 **The zone's roll comes first.** DBSIM plays one mission per run: `Sim_Run` (`0045f144`) calls `Sim_InitMissionSession` once. That loads the zone inside `DBSim_LoadScriptDat` (`Terrain_LoadZone` at `004252f7`) before `DBSim_SpawnMissionObjects` (`0046171f`) builds the first object, and every caller `es2_xref.py` finds for the functions below is a pass of the tick, a method of a live object, the spawn or the zone loader. So the zone's material roll ([`../rendering/terrain-texturing.md`](../rendering/terrain-texturing.md#retail-numbers)) takes the head of the stream, and a zone scatters the same way on every load ([Open](#open)). The spawn's `Mech_ApplyStartingCondition` draws next.
 
-**Everything else draws inside `Sim_MainTick` (`0045f464`)**, whose passes run in a fixed order:
-
-1. `Input_BuildPlayerDevice`.
-2. Unless `004d2576` is set: the effect pools — explosions, smoke balls, smoke, fire, debris, meteors — then the projectiles (vtable `+0x14`), then every structure whose group has entered the mission (vtable `+0x18`), each pool walked last to first with `Pool_Prev`.
-3. The same gate: the mission's groups in order, `Group_DeploymentCheck` for one still to arrive and otherwise `Group_OrderTick`, which runs `Mech_AiTick` (`00411cec`) on each member in turn: reassess, move, then think.
-4. `Sim_PollPlayerInput` — the player's commands, control laws and fire.
-5. Unless `004d2576`: `ActionTimers_Tick` and `Actions_EvaluateTriggers`; then `ViewChain_Apply`; then, the same gate, `Sim_DetectionTick` and `Mech_PerTickSystemsUpdate` for every deployed machine still standing, last to first.
-6. `Mission_PollStatus`, and on status 3 `Group_ApplyOutnumberedDamage` on the player's group.
+**Everything else draws inside `Sim_MainTick` (`0045f464`)**, whose passes run in the fixed order [the tick](main-loop.md#the-tick) lists: the input build, the effect, projectile and structure pools, the group pass, the player's input poll, the triggers and the per-machine pass, and the status poll.
 
 The 62 sites, by function, with the callers `es2_xref.py` finds:
 

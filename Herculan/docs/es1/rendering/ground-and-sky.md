@@ -81,7 +81,7 @@ so table 0 is the 16-entry palette row that holds the ground colour, unchanged, 
 
 `TRENCHES.64K` holds only palette indices 244 to 253 and `CRACKS.64K` 242 to 250, inside the 240–255 the draw expects ([below](#the-textured-ground)).
 
-`GndTex_Free` (`000297f0`), when `00092c70` is set, frees the selector with `GndTex_FreeSelector` (`000298fe`), the texture and the buffer, and clears `00092c70`, `00092c72` and both pointers. `0005a7b8` and `0005b568` call it. `GndTex_FreeSelector` zeroes ES, FS and GS and calls `AX=3502h` with the selector in `BX`; the `JZ` that would skip that tests the flags its caller left, which `GndTex_Free`'s test of `00092c70` leaves clear, so it always calls it.
+`GndTex_Free` (`000297f0`), when `00092c70` is set, frees the selector with `GndTex_FreeSelector` (`000298fe`), the texture and the buffer, and clears `00092c70`, `00092c72` and both pointers. `Sim_AssertCleanupHook` (`0005a7b8`) and `Sim_Shutdown` (`0005b568`) call it ([the main loop](../simulation/main-loop.md)). `GndTex_FreeSelector` zeroes ES, FS and GS and calls `AX=3502h` with the selector in `BX`; the `JZ` that would skip that tests the flags its caller left, which `GndTex_Free`'s test of `00092c70` leaves clear, so it always calls it.
 
 ### The textured ground
 

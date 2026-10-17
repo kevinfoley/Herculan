@@ -44,7 +44,7 @@ The rest is ES2's, statement for statement after the compiler: `Palette_SetActiv
 
 ## Open
 
-- **Open:** what the dword `000981c4`, the module's clock, counts and what advances it.
+- **Open:** the rate of the dword `000981c4`, the module's clock, which `Time_SimClockTimerTick` advances every second timer tick ([the tick length](../simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)).
 - **Open:** what `00057cf4`, `00057ffc` and `00058414` are, which call the cross fade as ES2's lift start and death flash do, and whether ES1 ships the palettes they fade between.
 - **Open:** what writes `PaletteFade_FirstEntry` (`000bc60c`): a grep of the disassembly by address finds its five reads in `Palette_StepCrossFade` and no store, so the fade starts at entry 0 unless something reaches it through a pointer.
 - **Open:** what calls `Palette_ReadRange`, `Palette_ReadShadeRampRanges` and `PaletteCycle_Unregister`. `es2_xref.py` finds no branch to any of them; the three dwords it finds holding `Palette_ReadShadeRampRanges`'s address, at `000ad6ed`, `000ad893` and `000ad8b3`, are each a `0x280` (640) word with a zero word before it, inside tables of screen sizes (640 × 350, 640 × 480).

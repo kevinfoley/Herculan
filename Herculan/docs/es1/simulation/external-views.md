@@ -49,4 +49,4 @@ The object's frame is `Context_GetTransform` of its `+6` block, and `centre.z` i
 ## Open
 
 - **Open:** what the main camera's `+0x12`–`+0x21` hold. In a camera built on `TSCamera_Ctor` (`0005b99c`), `+0x12` is `TSContext`'s vptr ([object layout](../formats/compiler.md#object-layout)) and `+0x16`, `+0x1a` and `+0x1e` hold three of the constructor's arguments, which for the missile camera are its viewport, 7 and `0x80` in that order ([the missile camera](mfd-missile-camera.md#the-viewport-and-the-camera)); what builds `000b5b8a` is unread.
-- **Open:** what `0005771c` and `0005a0c0`, the two calls of `Cam_Steer` found by `es2_xref`, steer it with, and what `0005771c`, `00057820` and `00057ffc` place with `Cam_Update`.
+- **Open:** what `0005771c`, one of the two calls of `Cam_Steer` found by `es2_xref`, steers it with (the other, `Sim_PollPlayerInput`'s, is [the player's controls](main-loop.md#the-players-controls--sim_pollplayerinput-0005a0c0)), and what `0005771c`, `00057820` and `00057ffc` place with `Cam_Update`.

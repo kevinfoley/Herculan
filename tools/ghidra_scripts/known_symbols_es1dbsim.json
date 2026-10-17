@@ -52,7 +52,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cam_AttachOrbit",
-      "description": "(camera, centre, object) in stack order, callee-cleaned: copies the 6-byte orbit centre to +0x38, stores object at +0x32, zeroes the orbit angles +0x26/+0x28/+0x2a, the distance +0x22, the angle rates +0x2c/+0x2e/+0x30 and the zoom rate +0x24, and sets the mode +0x36 to 1. ES2's Cam_AttachOrbit (DBSIM 0040109c) without its lock test. One call found by es2_xref, from 0005923c.",
+      "description": "(camera, centre, object) in stack order, callee-cleaned: copies the 6-byte orbit centre to +0x38, stores object at +0x32, zeroes the orbit angles +0x26/+0x28/+0x2a, the distance +0x22, the angle rates +0x2c/+0x2e/+0x30 and the zoom rate +0x24, and sets the mode +0x36 to 1. ES2's Cam_AttachOrbit (DBSIM 0040109c) without its lock test. One call found by es2_xref, from Cam_AttachTo (0005923c).",
       "source": "Herculan/docs/es1/simulation/external-views.md#the-camera",
       "verified": {
         "bytes": "000003d0+130",
@@ -97,7 +97,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cam_Update",
-      "description": "(camera), callee-cleaned: places the camera by its mode +0x36. Mode 0, free: pitch +0x0c += +0x2c, clamped to +-0x3000 with +0x2c zeroed, roll +0x0e += +0x2e, heading +0x10 += +0x30; position +0 = that view's BuildEulerRotationMatrixQ14 applied to (0, int16 +0x24, 0) plus the position, its z raised to 100. Mode 1, orbit: distance +0x22 = clamp(+0x22 + +0x24, 2500, 30000); +0x2a += +0x30, +0x26 += +0x2c (clamped to +-0x3000, +0x2c zeroed), +0x28 += +0x2e; view = (+0x26, +0x28, +0x2a + the object's int16 +0x0a); eye = the object's frame (Context_GetTransform of object +6) applied to the centre +0x38, plus the view's rotation of (0, -distance, 0). When the eye's z is under 100: with the zoom rate +0x24 under 1 it restores the position, view and orbit angles it started the call with and returns; otherwise the pitch becomes Math_AsinBam((centre z - 100) * 0x4000 / distance), in the view and in +0x26, and the eye is recomputed. Mode 2, attached: through the object's vtable (+2) slot +0x28 node, Transform_Concat with the frame, the eye +0x3e applied and Transform_RotationToEuler plus +0x44/+0x46/+0x48 as the view; with a null node the frame applied to +0x3e and the object's own euler triple +6. ES2's Cam_Update (DBSIM 004011a0), which keeps the chase ring and mode 3, tests terrain height plus 0x226 where this tests 100, and keeps position and view at +4 and +0x10. Sim_Main calls it each frame on the main camera 000b5b8a.",
+      "description": "(camera), callee-cleaned: places the camera by its mode +0x36. Mode 0, free: pitch +0x0c += +0x2c, clamped to +-0x3000 with +0x2c zeroed, roll +0x0e += +0x2e, heading +0x10 += +0x30; position +0 = that view's BuildEulerRotationMatrixQ14 applied to (0, int16 +0x24, 0) plus the position, its z raised to 100. Mode 1, orbit: distance +0x22 = clamp(+0x22 + +0x24, 2500, 30000); +0x2a += +0x30, +0x26 += +0x2c (clamped to +-0x3000, +0x2c zeroed), +0x28 += +0x2e; view = (+0x26, +0x28, +0x2a + the object's int16 +0x0a); eye = the object's frame (Context_GetTransform of object +6) applied to the centre +0x38, plus the view's rotation of (0, -distance, 0). When the eye's z is under 100: with the zoom rate +0x24 under 1 it restores the position, view and orbit angles it started the call with and returns; otherwise the pitch becomes Math_AsinBam((centre z - 100) * 0x4000 / distance), in the view and in +0x26, and the eye is recomputed. Mode 2, attached: through the object's vtable (+2) slot +0x28 node, Transform_Concat with the frame, the eye +0x3e applied and Transform_RotationToEuler plus +0x44/+0x46/+0x48 as the view; with a null node the frame applied to +0x3e and the object's own euler triple +6. ES2's Cam_Update (DBSIM 004011a0), which keeps the chase ring and mode 3, tests terrain height plus 0x226 where this tests 100, and keeps position and view at +4 and +0x10. Sim_Main calls it each frame on the main camera ViewObjectPtr (000b5b8a).",
       "source": "Herculan/docs/es1/simulation/external-views.md#the-camera",
       "verified": {
         "bytes": "000004b8+1277",
@@ -142,7 +142,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cam_Steer",
-      "description": "(camera, trigger, throttle, steer) in stack order, callee-cleaned: ES2's Cam_Steer (DBSIM 00401c74) with no lock test. Mode 0: Cam_ApproachRate(-steer, +0x30); with trigger set Cam_ApproachZoom(-throttle, +0x24) and Cam_ApproachRate(0, +0x2c), otherwise Cam_ApproachZoom(0, +0x24) and Cam_ApproachRate(throttle, +0x2c). Mode 1: the same with steer for the heading rate and throttle for the zoom rate. Other modes: nothing. Two calls found by es2_xref, from 0005771c and 0005a0c0.",
+      "description": "(camera, trigger, throttle, steer) in stack order, callee-cleaned: ES2's Cam_Steer (DBSIM 00401c74) with no lock test. Mode 0: Cam_ApproachRate(-steer, +0x30); with trigger set Cam_ApproachZoom(-throttle, +0x24) and Cam_ApproachRate(0, +0x2c), otherwise Cam_ApproachZoom(0, +0x24) and Cam_ApproachRate(throttle, +0x2c). Mode 1: the same with steer for the heading rate and throttle for the zoom rate. Other modes: nothing. Two calls found by es2_xref, from 0005771c and Sim_PollPlayerInput (0005a0c0).",
       "source": "Herculan/docs/es1/simulation/external-views.md#the-camera",
       "verified": {
         "bytes": "00000a04+189",
@@ -2062,7 +2062,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GrenadeMount_TriggerHeld",
-      "description": "(mount, input) in stack order, callee-cleaned: the grenade's trigger slot +0x34, a hold-to-throw. With +0x46 clear, a press (input byte +0x15) sets +0x46 and the dword +0x81 to 20000, and it returns 0. With +0x46 set, while pressed it adds 1000 to +0x81 and returns 0 until that passes 100000; then, or on a release, it returns 1, calling 0004d8c8(1, 1) when still pressed. ES2's GrenadeMount_TriggerHeld (DBSIM 0040e71c), which reads +0x0d and calls Input_LatchButton.",
+      "description": "(mount, input) in stack order, callee-cleaned: the grenade's trigger slot +0x34, a hold-to-throw. With +0x46 clear, a press (input byte +0x15) sets +0x46 and the dword +0x81 to 20000, and it returns 0. With +0x46 set, while pressed it adds 1000 to +0x81 and returns 0 until that passes 100000; then, or on a release, it returns 1, calling Input_LatchButton (0004d8c8)(1, 1) when still pressed. ES2's GrenadeMount_TriggerHeld (DBSIM 0040e71c), which reads +0x0d and calls Input_LatchButton.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#triggers; ES1DBSIM disassembly at 0000ad54",
       "verified": {
         "bytes": "0000ad54+127",
@@ -3382,7 +3382,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMounts_FireTrigger",
-      "description": "(manager, machine, trigger) in stack order, callee-cleaned: with the signed byte +0x1d not negative: the free-shot flag is 1 when the word MissionModeFlag (000bc4a0) is 0 and UnlimitedAmmoFlag (000bc4a6) is 1; the partner is the mount at the armed index + its hardpoint's (+0x18) byte +0x16 when the armed mount's +0x4b is set. It returns unless the armed mount's slot +0x30 answers non-zero, and the partner's when there is one, and then unless both slots +0x34(mount, trigger) do; then the armed mount's slot +0x2c(mount, free-shot flag, machine), the byte +0x18 cleared when its slot +0x30 now answers 0, the words maybe_WeaponChain_EoStepPending (000b5bc8) and maybe_WeaponChain_EoHold (000b5bc6) set to 1 when its slot +0x64(mount, 0) answers 3, and the partner's slot +0x2c the same way, +0x18 cleared again when the armed mount's +0x30 answers 0. Returns nothing. ES2's WeaponMounts_FireTrigger (DBSIM 00410dbc), which returns 1 when it fired. es2_xref finds one call, from 0005a0c0, and two dwords holding its padding entry 0000d2bb, at 0003d7fc and 0003d8f0.",
+      "description": "(manager, machine, trigger) in stack order, callee-cleaned: with the signed byte +0x1d not negative: the free-shot flag is 1 when the word MissionModeFlag (000bc4a0) is 0 and UnlimitedAmmoFlag (000bc4a6) is 1; the partner is the mount at the armed index + its hardpoint's (+0x18) byte +0x16 when the armed mount's +0x4b is set. It returns unless the armed mount's slot +0x30 answers non-zero, and the partner's when there is one, and then unless both slots +0x34(mount, trigger) do; then the armed mount's slot +0x2c(mount, free-shot flag, machine), the byte +0x18 cleared when its slot +0x30 now answers 0, the words maybe_WeaponChain_EoStepPending (000b5bc8) and maybe_WeaponChain_EoHold (000b5bc6) set to 1 when its slot +0x64(mount, 0) answers 3, and the partner's slot +0x2c the same way, +0x18 cleared again when the armed mount's +0x30 answers 0. Returns nothing. ES2's WeaponMounts_FireTrigger (DBSIM 00410dbc), which returns 1 when it fired. es2_xref finds one call, from Sim_PollPlayerInput (0005a0c0), and two dwords holding its padding entry 0000d2bb, at 0003d7fc and 0003d8f0.",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#firing--weaponmounts_firetrigger-0000d2bc; ES1DBSIM disassembly at 0000d2bc",
       "verified": {
         "bytes": "0000d2bc+330",
@@ -4027,7 +4027,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_DetectionTick",
-      "description": "No arguments: three passes over LiveObjectList (000bc416), LiveObjectList_Count (000bc41c) entries or to a null one. First, for each object whose group's (+0x3f) dword +0x16 is 0, Math_CountdownTimerTick (0006410c) on +0x178 and on +0x17b; when the second answers 0, stores 10000 + Math_RandomBelow (00063b3c)(000b5bd4, 1000) at its counter +0x17c and runs Detection_DecayContacts (0000e41c)(object). Second, for each object whose group's +0x16 is 0, with the bytes +0x9e and +0x93 and its group's side byte +0x14 clear: Detection_Sweep (0000e85c)(object), except that an object with +0x9d set is held back, and the last one held is swept after the walk. Third, clears every object's byte +0x9c. ES2's Sim_DetectionTick (DBSIM 004123ac). es2_xref finds one call, from 00059700.",
+      "description": "No arguments: three passes over LiveObjectList (000bc416), LiveObjectList_Count (000bc41c) entries or to a null one. First, for each object whose group's (+0x3f) dword +0x16 is 0, Math_CountdownTimerTick (0006410c) on +0x178 and on +0x17b; when the second answers 0, stores 10000 + Math_RandomBelow (00063b3c)(000b5bd4, 1000) at its counter +0x17c and runs Detection_DecayContacts (0000e41c)(object). Second, for each object whose group's +0x16 is 0, with the bytes +0x9e and +0x93 and its group's side byte +0x14 clear: Detection_Sweep (0000e85c)(object), except that an object with +0x9d set is held back, and the last one held is swept after the walk. Third, clears every object's byte +0x9c. ES2's Sim_DetectionTick (DBSIM 004123ac). es2_xref finds one call, from Sim_MainTick (00059700).",
       "source": "Herculan/docs/es1/simulation/sensor-model.md#the-tick--sim_detectiontick-0000e240; ES1DBSIM disassembly at 0000e240",
       "verified": {
         "bytes": "0000e240+473",
@@ -4372,7 +4372,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_StatusForAlert",
-      "description": "(quiet, machine) in stack order, callee-cleaned: Mission_Status (0000f4e8)(machine, quiet, the int16 header word 3 at 000bc4a2), returned as it is. ES2's Mission_StatusForAlert (DBSIM 00413180) also records a published answer as the status raised. es2_xref finds two calls, from Mission_PollStatus (0000f454) and 00059f8f, in bytes of 00059df8 Ghidra has not disassembled, which pushes LocalPlayerMech (000b5b86) and 1.",
+      "description": "(quiet, machine) in stack order, callee-cleaned: Mission_Status (0000f4e8)(machine, quiet, the int16 header word 3 at 000bc4a2), returned as it is. ES2's Mission_StatusForAlert (DBSIM 00413180) also records a published answer as the status raised. es2_xref finds two calls, from Mission_PollStatus (0000f454) and 00059f8f, in bytes of Sim_DispatchCommand (00059df8) Ghidra has not disassembled, which pushes LocalPlayerMech (000b5b86) and 1.",
       "source": "Herculan/docs/es1/simulation/mission-status.md#the-status--mission_status-0000f4e8; ES1DBSIM decompile at 0000f43c, disassembly at 00059f87",
       "verified": {
         "bytes": "0000f43c+24",
@@ -4387,7 +4387,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_PollStatus",
-      "description": "(machine), callee-cleaned: Math_CountdownTimerTick on MissionAlertTimer (000af7a0), then on MissionPollTimer (000af79c); unless the second returns 0 it returns -1. Otherwise s = Mission_StatusForAlert (0000f43c)(0, machine); when Mission_StatusWorthRaising (00091700)[s] is non-zero and s differs from Mission_StatusRaised (000bc49a): MissionAlertArmed (000bc4b0) is set and MissionAlertTimer_Count (000af7a1) loaded with 10000 if it was clear, and when that counter is 0 or s is 2, s is stored in Mission_StatusRaised and returned. Otherwise MissionPollTimer_Count (000af79d) is loaded with 10000 and -1 returned. ES2's Mission_PollStatus (DBSIM 004131ac), which also evaluates every tick outside the mission box. es2_xref finds one call, from 00059700, which pushes LocalPlayerMech (000b5b86).",
+      "description": "(machine), callee-cleaned: Math_CountdownTimerTick on MissionAlertTimer (000af7a0), then on MissionPollTimer (000af79c); unless the second returns 0 it returns -1. Otherwise s = Mission_StatusForAlert (0000f43c)(0, machine); when Mission_StatusWorthRaising (00091700)[s] is non-zero and s differs from Mission_StatusRaised (000bc49a): MissionAlertArmed (000bc4b0) is set and MissionAlertTimer_Count (000af7a1) loaded with 10000 if it was clear, and when that counter is 0 or s is 2, s is stored in Mission_StatusRaised and returned. Otherwise MissionPollTimer_Count (000af79d) is loaded with 10000 and -1 returned. ES2's Mission_PollStatus (DBSIM 004131ac), which also evaluates every tick outside the mission box. es2_xref finds one call, from Sim_MainTick (00059700), which pushes LocalPlayerMech (000b5b86).",
       "source": "Herculan/docs/es1/simulation/mission-status.md#the-poll--mission_pollstatus-0000f454; ES1DBSIM decompile at 0000f454",
       "verified": {
         "bytes": "0000f454+147",
@@ -5662,7 +5662,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_TorsoTwistTick",
-      "description": "(machine, axis), callee-cleaned: target = Math_Q8Multiply (0005e7f8)(type record +0x1e, axis); the rate +0x22a moves toward it by Math_RateLimitedMoveToward (0005e598) at Math_IntegrateRateOverTick (00063fa4)(+0x20) while |rate| is under |target|, otherwise takes it; the twist +0x22e adds Math_IntegrateRateOverTick(mean of the rates), clamped to +/- the record's +0x22; the thread +0x1c4 is seeked to (unsigned)twist >> 2 of sequence +0x1c with AnimThread_SeekToPosition (000620c4); then Mech_TorsoTwistServoSound (00014afc) through its padding entry 00014afa for the player's machine (+0x9d). es2_xref finds three calls, from Mech_CenterTorsoTick (000186f8), Cockpit_TargetAnglesFromCameraBone (00018b78) and 0005a0c0. ES2's Mech_TorsoTwistTick (DBSIM 0041a550), which also takes a snap target and flag.",
+      "description": "(machine, axis), callee-cleaned: target = Math_Q8Multiply (0005e7f8)(type record +0x1e, axis); the rate +0x22a moves toward it by Math_RateLimitedMoveToward (0005e598) at Math_IntegrateRateOverTick (00063fa4)(+0x20) while |rate| is under |target|, otherwise takes it; the twist +0x22e adds Math_IntegrateRateOverTick(mean of the rates), clamped to +/- the record's +0x22; the thread +0x1c4 is seeked to (unsigned)twist >> 2 of sequence +0x1c with AnimThread_SeekToPosition (000620c4); then Mech_TorsoTwistServoSound (00014afc) through its padding entry 00014afa for the player's machine (+0x9d). es2_xref finds three calls, from Mech_CenterTorsoTick (000186f8), Cockpit_TargetAnglesFromCameraBone (00018b78) and Sim_PollPlayerInput (0005a0c0). ES2's Mech_TorsoTwistTick (DBSIM 0041a550), which also takes a snap target and flag.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-turret; ES1DBSIM decompile at 000149ac",
       "verified": {
         "bytes": "000149ac+334",
@@ -5692,7 +5692,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_TorsoPitchTick",
-      "description": "(machine, range, axis) in stack order, callee-cleaned: the steps of Mech_TorsoTwistTick (000149ac) on the pitch rate +0x22c and pitch +0x230 with the type record's +0x26 and +0x28, clamped to [+0x2c, +0x2a], seeking the thread +0x1c8 in sequence +0x24; then gun convergence for each mount: range 0 zeroes the dword +0x24 and bytes +0x28 and +0x29, otherwise Math_EulerToward (00063d2c) from WeaponMount_MuzzleOffset (0000b918) less the record's +0x66 in Z to (0, range, 0) fills them; then Mech_TorsoPitchServoSound (00014dc4) for the player's machine (+0x9d). es2_xref finds three calls, from Mech_CenterTorsoTick (000186f8), Cockpit_TargetAnglesFromCameraBone (00018b78) and 0005a0c0. ES2's Mech_TorsoPitchTick (DBSIM 0041a808) with Mech_ConvergeGunsOnRange (DBSIM 0041a74c), which takes a snap target and flag and gates the convergence.",
+      "description": "(machine, range, axis) in stack order, callee-cleaned: the steps of Mech_TorsoTwistTick (000149ac) on the pitch rate +0x22c and pitch +0x230 with the type record's +0x26 and +0x28, clamped to [+0x2c, +0x2a], seeking the thread +0x1c8 in sequence +0x24; then gun convergence for each mount: range 0 zeroes the dword +0x24 and bytes +0x28 and +0x29, otherwise Math_EulerToward (00063d2c) from WeaponMount_MuzzleOffset (0000b918) less the record's +0x66 in Z to (0, range, 0) fills them; then Mech_TorsoPitchServoSound (00014dc4) for the player's machine (+0x9d). es2_xref finds three calls, from Mech_CenterTorsoTick (000186f8), Cockpit_TargetAnglesFromCameraBone (00018b78) and Sim_PollPlayerInput (0005a0c0). ES2's Mech_TorsoPitchTick (DBSIM 0041a808) with Mech_ConvergeGunsOnRange (DBSIM 0041a74c), which takes a snap target and flag and gates the convergence.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-turret; ES1DBSIM decompile at 00014ba0",
       "verified": {
         "bytes": "00014ba0+548",
@@ -5752,7 +5752,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_PerTickSystemsUpdate",
-      "description": "(machine), callee-cleaned: the pool +0x228 gains Math_IntegrateRateOverTick (00063fa4)(15), Math_Q10Multiply (0005e818)-scaled by 200 with +0xa5 set or 600 with +0xa4 set; the manager's (+0x198) energy slot (vptr +0x10, slot +4)(manager, pool - 1500), Shield_RechargeTick (0000fb2c)(+0x1b8, left), and the pool = rest + 1500 clamped to [0, 10000]. The player's +0xaa clears when front and rear each exceed 300. Timer_CountDown (00064178) on +0x208, +0x20d and +0x212 (expiry zeroes +0x217), Math_CountdownTimerTick (0006410c) on +0x200 and +0x21b (expiry: 4000 and +0x21e zeroed); Mech_ComputeCombatRating (000189f0)(machine) while +0x8e is clear. Mech_GetEcmPodSwitch (00014eb4) sets the target's (+0x15e) +0x9c, Mech_IsEcmSwitchedOn (00014e68) sets +0x9b. The five lock flags at the manager's +6 and +0x95 cleared, WeaponMounts_RoundsByMissileType (0000be6c); with a target: the ECM roll on +0x1fd against a jamming HERC (& 0xfff < 0x334: +0x96 and 5000, else 1500), the reload min(distance >> 2, 0x7fff), and unless +0x97 is set or the twist-adjusted bearing (Math_HeadingToward (00063cc8)) is outside +/-0x3000, ES2's countdowns +0x1ee, +0x1fa, +0x1f1, +0x1f4 set the flags; otherwise the first three reload and +0x97 clears at the end. For the player's machine, +0x95 from the armed mount's subtype (slot +0x64) and Mech_LockTonePlay (0001552c). es2_xref finds one call, from 00059700. ES2's Mech_PerTickSystemsUpdate (DBSIM 0041aa5c), with the spawn reactor rate, 500 held back, a line-of-sight test and the Targeting Pod's weight.",
+      "description": "(machine), callee-cleaned: the pool +0x228 gains Math_IntegrateRateOverTick (00063fa4)(15), Math_Q10Multiply (0005e818)-scaled by 200 with +0xa5 set or 600 with +0xa4 set; the manager's (+0x198) energy slot (vptr +0x10, slot +4)(manager, pool - 1500), Shield_RechargeTick (0000fb2c)(+0x1b8, left), and the pool = rest + 1500 clamped to [0, 10000]. The player's +0xaa clears when front and rear each exceed 300. Timer_CountDown (00064178) on +0x208, +0x20d and +0x212 (expiry zeroes +0x217), Math_CountdownTimerTick (0006410c) on +0x200 and +0x21b (expiry: 4000 and +0x21e zeroed); Mech_ComputeCombatRating (000189f0)(machine) while +0x8e is clear. Mech_GetEcmPodSwitch (00014eb4) sets the target's (+0x15e) +0x9c, Mech_IsEcmSwitchedOn (00014e68) sets +0x9b. The five lock flags at the manager's +6 and +0x95 cleared, WeaponMounts_RoundsByMissileType (0000be6c); with a target: the ECM roll on +0x1fd against a jamming HERC (& 0xfff < 0x334: +0x96 and 5000, else 1500), the reload min(distance >> 2, 0x7fff), and unless +0x97 is set or the twist-adjusted bearing (Math_HeadingToward (00063cc8)) is outside +/-0x3000, ES2's countdowns +0x1ee, +0x1fa, +0x1f1, +0x1f4 set the flags; otherwise the first three reload and +0x97 clears at the end. For the player's machine, +0x95 from the armed mount's subtype (slot +0x64) and Mech_LockTonePlay (0001552c). es2_xref finds one call, from Sim_MainTick (00059700). ES2's Mech_PerTickSystemsUpdate (DBSIM 0041aa5c), with the spawn reactor rate, 500 held back, a line-of-sight test and the Targeting Pod's weight.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0; ES1DBSIM decompile at 00014ee0",
       "verified": {
         "bytes": "00014ee0+1612",
@@ -7537,7 +7537,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_TickMembers",
-      "description": "(group), callee-cleaned: Mech_AiTick (0000d8e8) on each member of the group (array +0xe, count +0x12). ES2's Group_OrderTick (DBSIM 00423a74) first advances the group's current order; an ES1 group has none to advance. es2_xref finds one call, from 00059700.",
+      "description": "(group), callee-cleaned: Mech_AiTick (0000d8e8) on each member of the group (array +0xe, count +0x12). ES2's Group_OrderTick (DBSIM 00423a74) first advances the group's current order; an ES1 group has none to advance. es2_xref finds one call, from Sim_MainTick (00059700).",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#the-tick",
       "verified": {
         "bytes": "0001cf60+86",
@@ -7642,7 +7642,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Group_ApplyOutnumberedDamage",
-      "description": "(group), callee-cleaned: Mech_ApplyOutnumberedDamage (00015a5c) on each member of the group (array +0xe, count +0x12). ES2's Group_ApplyOutnumberedDamage (DBSIM 00423f08). es2_xref finds one call, from 00059700.",
+      "description": "(group), callee-cleaned: Mech_ApplyOutnumberedDamage (00015a5c) on each member of the group (array +0xe, count +0x12). ES2's Group_ApplyOutnumberedDamage (DBSIM 00423f08). es2_xref finds one call, from Sim_MainTick (00059700).",
       "source": "Herculan/docs/es1/simulation/mission-groups.md#going-out-of-the-fight",
       "verified": {
         "bytes": "0001d4d0+84",
@@ -7732,7 +7732,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_WriteResults",
-      "description": "(player), callee-cleaned: with g the player's group (+0x3f) and w the dword at 000bc4a2 (script.dat header word 3), gets the outcome from Group_StatusLineIndex(g, w); opens data\\results.dat through Path_ApplyAltDrive and FileWStream_Ctor (severity-5 assert, world.cpp line 0x58) and writes, through the stream's slot +0x18, the outcome as an int16, the int32 Math_Q10Multiply(Mission_TotalSalvage (0001d434)(g, w), 2500) + MissionVars flag 7 (000bc4c6) * 25000, the int16 Salvage_PairCount (000bc4b2) and that many pairs of int16 from Salvage_Pairs (000bc4b4), then Group_WriteStatusBlocks (0001d2c8)(g, stream); then opens data\\mission.var (assert at line 0x6d) and writes the 200 bytes of MissionVars (000bc4b8). ES2's Mission_WriteResults (DBSIM 0042412c), which writes whether its evaluation of the player answers 9, counter 20 for flag 7 and 2,000 bytes of counters. es2_xref finds one call, from 0005b568.",
+      "description": "(player), callee-cleaned: with g the player's group (+0x3f) and w the dword at 000bc4a2 (script.dat header word 3), gets the outcome from Group_StatusLineIndex(g, w); opens data\\results.dat through Path_ApplyAltDrive and FileWStream_Ctor (severity-5 assert, world.cpp line 0x58) and writes, through the stream's slot +0x18, the outcome as an int16, the int32 Math_Q10Multiply(Mission_TotalSalvage (0001d434)(g, w), 2500) + MissionVars flag 7 (000bc4c6) * 25000, the int16 Salvage_PairCount (000bc4b2) and that many pairs of int16 from Salvage_Pairs (000bc4b4), then Group_WriteStatusBlocks (0001d2c8)(g, stream); then opens data\\mission.var (assert at line 0x6d) and writes the 200 bytes of MissionVars (000bc4b8). ES2's Mission_WriteResults (DBSIM 0042412c), which writes whether its evaluation of the player answers 9, counter 20 for flag 7 and 2,000 bytes of counters. es2_xref finds one call, from Sim_Shutdown (0005b568).",
       "source": "Herculan/docs/es1/simulation/world.md#writing-the-results--mission_writeresults-0001d698",
       "verified": {
         "bytes": "0001d698+437",
@@ -7777,7 +7777,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_ShutdownNoOp2",
-      "description": "(): a lone RET. es2_xref finds one call, from 0005b568 at 0005b67f, after its call of Sim_ShutdownNoOp1 (0001f1bc). ES2's Sim_ShutdownNoOp2 (DBSIM 00425344), where es2_xref finds the one call from ES2's Sim_Shutdown after its Sim_ShutdownNoOp1 call.",
+      "description": "(): a lone RET. es2_xref finds one call, from Sim_Shutdown (0005b568) at 0005b67f, after its call of Sim_ShutdownNoOp1 (0001f1bc). ES2's Sim_ShutdownNoOp2 (DBSIM 00425344), where es2_xref finds the one call from ES2's Sim_Shutdown after its Sim_ShutdownNoOp1 call.",
       "source": "Herculan/docs/es1/simulation/world.md#small-functions",
       "verified": {
         "bytes": "0001e634+1",
@@ -7807,7 +7807,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_ShutdownNoOp1",
-      "description": "(): a lone RET. es2_xref finds one call, from 0005b568 at 0005b67a, the call before its Sim_ShutdownNoOp2 call. ES2's Sim_ShutdownNoOp1 (DBSIM 00426514).",
+      "description": "(): a lone RET. es2_xref finds one call, from Sim_Shutdown (0005b568) at 0005b67a, the call before its Sim_ShutdownNoOp2 call. ES2's Sim_ShutdownNoOp1 (DBSIM 00426514).",
       "source": "Herculan/docs/es1/simulation/world.md#small-functions",
       "verified": {
         "bytes": "0001f1bc+1",
@@ -7897,7 +7897,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Actions_EvaluateTriggers",
-      "description": "(object), callee-cleaned: for each of the MissionActions_Count (000bc494) 16-byte actions at MissionActions (000bc496), by its type +0: 0, Action_TestTrigger (0001ccb4)(action, object +0x20); 1, Action_TestTriggerForGroup (0001cd30)(the object's group +0x3f, action); 2 and 3, the same for each 0x28-byte group of MissionGroups (000bc476, count MissionGroups_Count (000bc47a)) whose side byte +0x14 is 0 or 1; 4 and 5, for each whose kind +0 is 0 or 1; those four skip a group whose +0x16 is set and stop at the first group that answers; any other type is offered nothing. A non-zero answer goes to Action_Activate (0001cc5c). ES2's Actions_EvaluateTriggers (DBSIM 00426b70) less its types 6-10. es2_xref finds one call, from 00059700.",
+      "description": "(object), callee-cleaned: for each of the MissionActions_Count (000bc494) 16-byte actions at MissionActions (000bc496), by its type +0: 0, Action_TestTrigger (0001ccb4)(action, object +0x20); 1, Action_TestTriggerForGroup (0001cd30)(the object's group +0x3f, action); 2 and 3, the same for each 0x28-byte group of MissionGroups (000bc476, count MissionGroups_Count (000bc47a)) whose side byte +0x14 is 0 or 1; 4 and 5, for each whose kind +0 is 0 or 1; those four skip a group whose +0x16 is set and stop at the first group that answers; any other type is offered nothing. A non-zero answer goes to Action_Activate (0001cc5c). ES2's Actions_EvaluateTriggers (DBSIM 00426b70) less its types 6-10. es2_xref finds one call, from Sim_MainTick (00059700).",
       "source": "Herculan/docs/es1/simulation/world.md#trigger-areas--actions_evaluatetriggers-0001f87c",
       "verified": {
         "bytes": "0001f87c+537",
@@ -9202,7 +9202,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitChassis_SelectByName",
-      "description": "(name) callee-cleaned: compares name with stricmp against the eight chassis names at 00092644 (ROADRUNNER, GUNSLINGER, RAPTOR, TOMAHAWK, PATRIOT, PANTHER, HERCULES, COLOSSUS) and for the first that matches stores its index at the word CockpitOverride_Index (000925f4) and name's address at CockpitOverride_Name (000925f8), the cockpit chassis CockpitClock_Ctor and CockpitViewManager_Ctor (00021dd4) take in place of the HERC's own. es2_xref finds one call, from 00058e74's case for the command-line option -C, passing the text after the C.",
+      "description": "(name) callee-cleaned: compares name with stricmp against the eight chassis names at 00092644 (ROADRUNNER, GUNSLINGER, RAPTOR, TOMAHAWK, PATRIOT, PANTHER, HERCULES, COLOSSUS) and for the first that matches stores its index at the word CockpitOverride_Index (000925f4) and name's address at CockpitOverride_Name (000925f8), the cockpit chassis CockpitClock_Ctor and CockpitViewManager_Ctor (00021dd4) take in place of the HERC's own. es2_xref finds one call, from Sim_ParseCommandLine (00058e74)'s case for the command-line option -C, passing the text after the C.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-cockpit-clock",
       "verified": {
         "bytes": "00024394+62",
@@ -10762,7 +10762,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GndTex_Free",
-      "description": "No arguments: when 00092c70 is set, GndTex_FreeSelector (000298fe), frees the texture 00092c74 and the buffer 000b0d96, and clears 00092c70, 00092c72 and both pointers. Callers found by es2_xref: 0005a7b8 and 0005b568.",
+      "description": "No arguments: when 00092c70 is set, GndTex_FreeSelector (000298fe), frees the texture 00092c74 and the buffer 000b0d96, and clears 00092c70, 00092c72 and both pointers. Callers found by es2_xref: Sim_AssertCleanupHook (0005a7b8) and Sim_Shutdown (0005b568).",
       "source": "Herculan/docs/es1/rendering/ground-and-sky.md#loading-the-ground-texture",
       "verified": {
         "bytes": "000297f0+64",
@@ -11557,7 +11557,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_PollViewDevice",
-      "description": "(cockpit, device) in stack order, callee-cleaned: with +0x23a set, Cockpit_PickEdgeCursor (0002dcc8)(cockpit, device + 2) through its padding entry; the device bytes +0x19, +0x1a, +0x1b and +0x1c each queue view command 1, 0, 4 and 5 with CockpitViewManager_QueueViewCommand (00022634) on CockpitViewManager_Published (00021f98)'s manager; when the byte +0xb is set and CockpitView_DeviceButtonLatch (00092f33) was clear, in view 1 (the manager's +0x10) calls the +0x10 slot (key) of the vtable at +0x76 of +0x1f5 with 0x0f; the latch then follows +0xb. Returns 1. es2_xref finds one call, from 0005a0c0. ES2's CockpitView_PollViewDevice (DBSIM 00432b14), whose bytes +0x1e-+0x21 queue 1, 0, 5 and 4.",
+      "description": "(cockpit, device) in stack order, callee-cleaned: with +0x23a set, Cockpit_PickEdgeCursor (0002dcc8)(cockpit, device + 2) through its padding entry; the device bytes +0x19, +0x1a, +0x1b and +0x1c each queue view command 1, 0, 4 and 5 with CockpitViewManager_QueueViewCommand (00022634) on CockpitViewManager_Published (00021f98)'s manager; when the byte +0xb is set and CockpitView_DeviceButtonLatch (00092f33) was clear, in view 1 (the manager's +0x10) calls the +0x10 slot (key) of the vtable at +0x76 of +0x1f5 with 0x0f; the latch then follows +0xb. Returns 1. es2_xref finds one call, from Sim_PollPlayerInput (0005a0c0). ES2's CockpitView_PollViewDevice (DBSIM 00432b14), whose bytes +0x1e-+0x21 queue 1, 0, 5 and 4.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
       "verified": {
         "bytes": "0002d1a0+171",
@@ -11572,7 +11572,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitWidgets_HandleCommand",
-      "description": "(cockpit, code) in stack order, callee-cleaned (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94); Ghidra's listing leaves the case bodies from 0002d2fa on as undefined bytes. 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block 00037b50(the pod gauge +0x1d8) returns and hands the copy to 00037b14(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): 0004a1b4(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then 00045d0c(object, 3). 0x13 (R): Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from 00059df8. ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
+      "description": "(cockpit, code) in stack order, callee-cleaned (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94); Ghidra's listing leaves the case bodies from 0002d2fa on as undefined bytes. 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block 00037b50(the pod gauge +0x1d8) returns and hands the copy to 00037b14(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): 0004a1b4(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then 00045d0c(object, 3). 0x13 (R): Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from Sim_DispatchCommand (00059df8). ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
       "verified": {
         "bytes": "0002d24c+910",
@@ -11662,7 +11662,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TargetSelect_Cycle",
-      "description": "(cockpit), callee-cleaned: with the selection +0x20c 0, takes the first object of LiveObjectList (000bc416) when it passes TargetSelect_CanTarget (0002d624) and TargetSelect_InForwardCone (0002d71c); otherwise walks on with ObjectList_Next (0000dba4) from the selection, or from that first object, until an object passes both or the walk is back at its start. A different object becomes +0x20c and goes to the roving gunsight +0x1f1 as in TargetSelect_SetObject (0002d78c): the block's dword +6 and byte +0x24 = 1 through Gunsight_GetStateBlock (00035180) and Gunsight_SetValues (00035090). Returns +0x20c. es2_xref finds calls from CockpitWidgets_HandleCommand (0002d24c) and TargetSelect_SetObject through the padding entry 0002d896, and from 0003ab08 and 0005a0c0. ES2's TargetSelect_Cycle (DBSIM 0043349c), which TargetSelect_SetObject runs in the same place and which builds a shortlist by bearing and range instead.",
+      "description": "(cockpit), callee-cleaned: with the selection +0x20c 0, takes the first object of LiveObjectList (000bc416) when it passes TargetSelect_CanTarget (0002d624) and TargetSelect_InForwardCone (0002d71c); otherwise walks on with ObjectList_Next (0000dba4) from the selection, or from that first object, until an object passes both or the walk is back at its start. A different object becomes +0x20c and goes to the roving gunsight +0x1f1 as in TargetSelect_SetObject (0002d78c): the block's dword +6 and byte +0x24 = 1 through Gunsight_GetStateBlock (00035180) and Gunsight_SetValues (00035090). Returns +0x20c. es2_xref finds calls from CockpitWidgets_HandleCommand (0002d24c) and TargetSelect_SetObject through the padding entry 0002d896, and from 0003ab08 and Sim_PollPlayerInput (0005a0c0). ES2's TargetSelect_Cycle (DBSIM 0043349c), which TargetSelect_SetObject runs in the same place and which builds a shortlist by bearing and range instead.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-target-selection",
       "verified": {
         "bytes": "0002d898+214",
@@ -11842,7 +11842,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cockpit_PickEdgeCursor",
-      "description": "(cockpit, point) in stack order, callee-cleaned: while the dword 000b5b76 is set, takes the point from Input_GetCursorPos (0004d910) instead; rebases it as point - the canvas context's (+4) +0x210/+0x214 + its +0x220/+0x224; zeroes +0x22a and, for the first of the strips +0x216, +0x21a, +0x21e whose rect holds the point (bounds inclusive), stores the arrow by the published manager's view +0x10: the bottom 4 in view 0 and 3 in view 1, the left 6 in view 0 and 5 in view 3, the right 5 in view 0 and 6 in view 2. es2_xref finds one call, from CockpitView_PollViewDevice (0002d1a0) through the padding entry 0002dcc5. ES2's Cockpit_PickEdgeCursor (DBSIM 00433b20), offsets 4 higher, which does nothing while Cockpit_CursorsLive is clear.",
+      "description": "(cockpit, point) in stack order, callee-cleaned: while the dword TapePlayback (000b5b76) is set, takes the point from Input_GetCursorPos (0004d910) instead; rebases it as point - the canvas context's (+4) +0x210/+0x214 + its +0x220/+0x224; zeroes +0x22a and, for the first of the strips +0x216, +0x21a, +0x21e whose rect holds the point (bounds inclusive), stores the arrow by the published manager's view +0x10: the bottom 4 in view 0 and 3 in view 1, the left 6 in view 0 and 5 in view 3, the right 5 in view 0 and 6 in view 2. es2_xref finds one call, from CockpitView_PollViewDevice (0002d1a0) through the padding entry 0002dcc5. ES2's Cockpit_PickEdgeCursor (DBSIM 00433b20), offsets 4 higher, which does nothing while Cockpit_CursorsLive is clear.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#the-screen-edges-and-the-cursors",
       "verified": {
         "bytes": "0002dcc8+381",
@@ -16457,18 +16457,183 @@
       }
     },
     {
+      "address": "0004c650",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorAppInputCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0004c650",
+      "verified": {
+        "bytes": "0004c650+40",
+        "sha1": "f42a7c4939d9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004c678",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorAppInputCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000957a6: byte for byte the code of ConfigPart_DtorMountsCopy (0000a798), relocated operands aside, storing 000957a6 and 000957da where that stores 00090f0e and 00090eda.",
+      "source": "Herculan/docs/es1/simulation/input.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0004c678",
+      "verified": {
+        "bytes": "0004c678+63",
+        "sha1": "70ffaf09d3c9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004c6b7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagAppInputCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 000957a6; the code of ConfigPart_GetClassTagMountsCopy (0000a78e).",
+      "source": "Herculan/docs/es1/simulation/input.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0004c6b7",
+      "verified": {
+        "bytes": "0004c6b7+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0004c6c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorAppInputCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000957da (entered at its padding 0004c6bd): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 000957da where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/input.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0004c6c0",
+      "verified": {
+        "bytes": "0004c6c0+42",
+        "sha1": "c9704f4554e9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004c6ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_KeyjoyAxisKey",
+      "description": "(code), callee-cleaned: the keyboard subscriber SimInput_SetEnabled registers against KeyjoyWantedCodes (0009586c). Under DemoMode sets DemoAbort and returns 1. With the preferences byte 000bd56c set and Ctrl (0x400) without Alt (0x200), returns 1 after looking the low byte up in the four dwords at 00095898 (targets after them): I (0x17) subtracts 0x40 from Input_KeyThrottleStep (00095896), M (0x32) adds 0x40, their key-ups nothing. With SimInput_Enabled (00095818) set it folds the code's index in the 28-byte list into 0-13 and, for one found, a press sets Input_KeyHeld (000b1844)[i] and clears 000b1854[i], a release sets 000b1854[i] while 000b1864[i] is clear and otherwise clears all three; stores the Alt bit in Input_KeyAltHeld (000b18a0); returns 1 except for Enter (0x1c). Returns 2 otherwise. Ghidra's extent ends at 0004c7fb, before its last two returns. ES2's Input_KeyjoyAxisKey (DBSIM 0045a308).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-axis-keys--input_keyjoyaxiskey-0004c6ec; ES1DBSIM decompile and disassembly at 0004c6ec",
+      "verified": {
+        "bytes": "0004c6ec+297",
+        "sha1": "01fff4e5f982",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004c818",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_BuildKeyboardAxes",
+      "description": "(slow, out) in stack order, callee-cleaned: zeroes out's four dwords and bytes +0x10/+0x11; for keys 0-11 held, sets the seen byte 000b1864[i] and adds the KeyboardAxisDeltas (000b1874) pair shifted left 6, or 8 while Input_KeyAltHeld is set or for keys 0-7 when slow is 0: keys 0-7 into out+0/+4, a diagonal KeyboardAxisDiagonalFlags (0009588c) first zeroing the pair and ending the group, and the first held of keys 8-11 into out+8/+0xc, ending the loop. Then out+0x10 = key 12 (Space) held, out+0x11 = key 13 (Enter) held, +0x12/+0x13 zeroed, and keys both held and release-pending have their held and seen bytes cleared. ES2's Input_BuildKeyboardAxes (DBSIM 0045a4b0).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-keyboard-axes--input_buildkeyboardaxes-0004c818; ES1DBSIM decompile at 0004c818",
+      "verified": {
+        "bytes": "0004c818+321",
+        "sha1": "3897dcff1557",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004c95c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_BuildSourceTable",
+      "description": "No arguments: 0004b1c0 on 0004b484(0, 0x10000)+4; 0006c3b4(0006c6e4, 0009581c); SimInput_SetEnabled(1); 0004b1c0 on 0004c1e0(0)+0x3a, and 0006bdbc/0006bdf0 with the bounds 319, 199; 0004a724; Input_LiveBlockPtr (000b1840) = 0004c2d0(). Fills the source table: 000b17e0-000b17ec the block's axes 000b17b9-000b17bf, 000b17f0-000b17fc its buttons 000b17c1-000b17c4, 000b1800-000b180c the keyboard pairs 000b188c-000b1898, 000b1810-000b181c the live block's +0xd, +0x11, +0x15, +0x19, 000b1820-000b182c 000b189c-000b189f, 000b1830-000b183c the live block's +0x1d-+0x20. Clears Input_ButtonLatch (000bd634-000bd637) and calls Keyjoy_LoadConfig (0004d918). ES2's Input_BuildSourceTable (DBSIM 0045a5c0).",
+      "source": "Herculan/docs/es1/simulation/input.md#setting-up--input_buildsourcetable-0004c95c; ES1DBSIM decompile at 0004c95c",
+      "verified": {
+        "bytes": "0004c95c+439",
+        "sha1": "36b85451aa96",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004cb14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_BuildPlayerDevice",
+      "description": "No arguments: the per-tick input build into PlayerInputBlock (000b17ac, 0x2b bytes), which it returns. Reads the live block's command word, skipping zero-scancode words through 0004c458(1, word), masks it with SimCommandMask (000958b8). During playback reads a 14-byte record and an int32 count from TapeFile, sets DemoAbort under DemoMode for a live command, passes the word to Sim_HandleWindowKey, and on a short read or command 0x412 sets DemoAbort, closes the tape, clears TapePlayback and sets maybe_CockpitMouseLive; otherwise feeds each 14-byte mouse event to 00044830 with its point to Input_CursorPos, and fills the command word, axes +0xd-+0x13, buttons +0x15-+0x1c from bit 0-7 and +0x29 (the delta), bits 8-11 being the source buttons. Live: Input_BuildKeyboardAxes (0004c818)(slow, 000b188c), slow in Input_StickMode 1 without InputDrivesCamera or under maybe_WeaponChain_EoHold. 000444d0 gives the mouse events; source button 1 pressed with a mode set calls Input_ToggleStickMode once (latch 000958bc). The missile arm 000958bf, the keyboard pair moves and the Tilt and Missile reversals are ES2's; then, live, preferences option 7 (000bd569) picks each axis's and button's source (options 9 and 10, 000bd56b and 000bd56c, adding the third axis and dropping the stick's Y), the copy, and the latches Input_ButtonLatch/Input_ButtonLatchState (000bd634, Input_ButtonLatchState (000bd638)), and the pointer, mouse bytes, buttons 4-7 and command word from the live block. Recording appends the frame to <TapeStem>.tap (mode ab, assert appinput.cpp 0x2bd). The camera-axis pointers +0x1d/+0x21, the latched-row zeroing, option 10's Input_KeyThrottleStep as the throttle, and Backturn. ES2's Input_BuildPlayerDevice (DBSIM 0045a7f4).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-input-build--input_buildplayerdevice-0004cb14; ES1DBSIM decompile at 0004cb14",
+      "verified": {
+        "bytes": "0004cb14+3299",
+        "sha1": "0d33338ac5da",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004d7f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_ReadMaskedKeyboardCommand",
+      "description": "(out), callee-cleaned: 0004c458(1, out), repeated while it returns non-zero with *out non-zero and its low byte zero; then *out &= the word at 00095918 (0x47ff). No reference found by es2_xref. ES2's Input_ReadMaskedKeyboardCommand (DBSIM 0045b640).",
+      "source": "Herculan/docs/es1/simulation/input.md#small-functions; ES1DBSIM decompile at 0004d7f8",
+      "verified": {
+        "bytes": "0004d7f8+51",
+        "sha1": "b89ecee33cc3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004d82c",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "SimInput_SetEnabled",
-      "description": "(enabled), callee-cleaned: when enabled differs from the flag 00095818, returns 0 when 0004c62c returns 0; turning input on, unless 00095894 is set, registers 0004c6ec against 0009586c with 0006c2bb, whose answer it returns; flips the flag; turning it off clears the three 14-byte blocks at 000b1844, 000b1854 and 000b1864 with memset. Returns 1 otherwise. ES2's SimInput_SetEnabled (DBSIM 0045b670), which registers two listeners and clears 15-byte blocks.",
+      "description": "(enabled), callee-cleaned: when enabled differs from the flag SimInput_Enabled (00095818), returns 0 when 0004c62c returns 0; turning input on, unless 00095894 is set, registers Input_KeyjoyAxisKey (0004c6ec) against KeyjoyWantedCodes (0009586c) with 0006c2bb, whose answer it returns; flips the flag; turning it off clears the three 14-byte blocks at Input_KeyHeld (000b1844), 000b1854 and 000b1864 with memset. Returns 1 otherwise. ES2's SimInput_SetEnabled (DBSIM 0045b670), which registers two listeners and clears 15-byte blocks.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
       "verified": {
         "bytes": "0004d82c+156",
         "sha1": "ca5a3814cc94",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004d8c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_LatchButton",
+      "description": "(state, button) in stack order, callee-cleaned: Input_ButtonLatch (000bd634)[button - 1] = 1 and Input_ButtonLatchState (000bd638)[button - 1] = state. ES2's Input_LatchButton (DBSIM 0045b718), for four buttons.",
+      "source": "Herculan/docs/es1/simulation/input.md#small-functions; ES1DBSIM decompile at 0004d8c8",
+      "verified": {
+        "bytes": "0004d8c8+25",
+        "sha1": "6ddea56f4bfe",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004d8e1",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_ToggleStickMode",
+      "description": "Frameless, no arguments, Ghidra's function starting on the three 0x90 bytes before its first instruction at 0004d8e4: while the preferences byte 000bd56a is set, Input_StickMode (00095819) becomes 2 when it is 1 and 1 otherwise; returns the mode in AL.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-stick-mode; ES1DBSIM disassembly at 0004d8e1",
+      "verified": {
+        "bytes": "0004d8e1+44",
+        "sha1": "42a71ba65ad9",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -16484,6 +16649,51 @@
         "sha1": "36aeabc63882",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0004d918",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyjoy_LoadConfig",
+      "description": "No arguments: opens Config_BuildPath (00059300)('keyjoy.cfg') with mode rt and reads it a word at a time with fscanf ' %s', comparing each with Str_CompareNoCaseN against the seven words of the table 00095948: '=' arms a value, '#' skips the line, TILT, BACKTURN and MISSILE choose the key, DEFAULT with a value armed disarms it and REVERSE with a value armed sets Keyjoy_TiltReversed (0009580c), Keyjoy_BackturnReversed (00095810) or Keyjoy_MissileReversed (00095814); the read ends at a DEFAULT or REVERSE that comes before its '=', and at a REVERSE before any key word. ES2's Keyjoy_LoadConfig (DBSIM 0045b78c) reads four keys through GetPrivateProfileStringA.",
+      "source": "Herculan/docs/es1/simulation/input.md#keyjoycfg--keyjoy_loadconfig-0004d918; ES1DBSIM decompile at 0004d918",
+      "verified": {
+        "bytes": "0004d918+355",
+        "sha1": "ae2eef7a1f0c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004da7c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_InitKeyboardAxisTable",
+      "description": "Frameless static initializer, the static constructor table's entry 000adc60: writes the 12 (dx, dy) byte pairs of KeyboardAxisDeltas (000b1874), keypad 7 (-1,-1), 8 (0,-1), 9 (1,-1), 4 (-1,0), 6 (1,0), 1 (-1,1), 2 (0,1), 3 (1,1), M (0,-1), J (-1,0), K (1,0), I (0,1), the last as the word 1 at 000b188b. ES2's Input_InitKeyboardAxisTable (DBSIM 0045b888) writes 14.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-keyboard-axes--input_buildkeyboardaxes-0004c818; ES1DBSIM disassembly at 0004da7c",
+      "verified": {
+        "bytes": "0004da7c+146",
+        "sha1": "b91b3d2ac92b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004db10",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AppInput_ExitNoOp",
+      "description": "Frameless: RET. The exit table's entry 000adcc4.",
+      "source": "Herculan/docs/es1/simulation/input.md#where-the-object-file-starts-and-ends; ES1DBSIM disassembly at 0004db10",
+      "verified": {
+        "bytes": "0004db10+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "raw"
       }
     },
     {
@@ -16537,7 +16747,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sound_Shutdown",
-      "description": "Unless the sound manager 000959ac is null: calls vtable +8 (the destructor) with flags 3 on each non-null sound object of 000bd63c, count 000bd72c, then 0004f3d4(manager). es2_naming.py callers lists 0005a7b8 and 0005b568. ES2's Sound_Shutdown (DBSIM 00462630).",
+      "description": "Unless the sound manager 000959ac is null: calls vtable +8 (the destructor) with flags 3 on each non-null sound object of 000bd63c, count 000bd72c, then 0004f3d4(manager). es2_naming.py callers lists Sim_AssertCleanupHook (0005a7b8) and Sim_Shutdown (0005b568). ES2's Sound_Shutdown (DBSIM 00462630).",
       "source": "ES1DBSIM decompile at 0004de08 and vtables 00095c46, 00095c82, 00095cd6",
       "verified": {
         "bytes": "0004de08+72",
@@ -18002,6 +18212,21 @@
       }
     },
     {
+      "address": "00057414",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Main_StaticInit",
+      "description": "Frameless static initializer, the static constructor table's entry 000adc74: memset of the 0x78-byte block from SimDisplay (000b5b5c), then the dword 000b5ba6 = 1, the byte 000b5b68 = 1, the dword 000b5b6a = 0, the words 000b5bb2, 000b5bb6 and 000b5bb4 = -1, 000b5bb8 = 1, ViewChain_View (000b5b8e) and ViewChain_PendingView (000b5bba) = 2, DemoAbort (000b5bd2), DemoMode (000b5bd0), Sim_AltDriveAllowed (000b5bce) and 000b5bca = 0, and Math_RandomSeed (00063aa4) on 000b5bd4 and on 000b5c48. ES2's Main_StaticInit (DBSIM 0045cad8) also seeds two generators.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#functions; ES1DBSIM disassembly at 00057414",
+      "verified": {
+        "bytes": "00057414+139",
+        "sha1": "3700e08d9793",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0005760c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -18017,12 +18242,117 @@
       }
     },
     {
+      "address": "00058d94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorMainCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00058d94",
+      "verified": {
+        "bytes": "00058d94+40",
+        "sha1": "6396bd7f47cf",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00058dbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorMainCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00096d1e: byte for byte the code of ConfigPart_DtorMountsCopy (0000a798), relocated operands aside, storing 00096d1e and 00096d52 where that stores 00090f0e and 00090eda.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00058dbc",
+      "verified": {
+        "bytes": "00058dbc+63",
+        "sha1": "f506a124ca28",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00058dfb",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagMainCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00096d1e; the code of ConfigPart_GetClassTagMountsCopy (0000a78e).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00058dfb",
+      "verified": {
+        "bytes": "00058dfb+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00058e04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorMainCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00096d52 (entered at its padding 00058e01): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00096d52 where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00058e04",
+      "verified": {
+        "bytes": "00058e04+42",
+        "sha1": "62e3a651b81d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00058e30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_PreParseCommandLine",
+      "description": "(argv, argc) in stack order, callee-cleaned: sets Sim_AltDriveAllowed (000b5bce) to 1 for each of argv[1..argc-1] that starts '-c'. The first of main's two passes over the arguments, as ES2's WinMain_ParseSwitches (DBSIM 0045e6b0) is, which also takes -X, -Z and -v.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-command-line; ES1DBSIM decompile at 00058e30",
+      "verified": {
+        "bytes": "00058e30+65",
+        "sha1": "c43044d7e7e6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00058e74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_ParseCommandLine",
+      "description": "(argv, argc) in stack order, callee-cleaned: for each argument starting '-', looks its next character up in the 16 dwords at 00096e88 by REPNE SCASD and jumps to the target 16 dwords after (cases at 00058ec8-0005921c, outside Ghidra's extent): B sets 000b5bcc; D sets DemoMode (000b5bd0) and TapePlayback (000b5b76) and opens tapes\\<0005771c's name>.tap (Config_BuildPath (00059300), Path_ApplyAltDrive (000592a4), fopen rb) as TapeFile (000b5b82), unpacking as -p does, both flags cleared when it does not open; S sets 000b5b67; m sets 000bda94; C calls CockpitChassis_SelectByName (00024394) with the rest; s toggles 000b5b68; P sets 000b5b69; t passes atol of the rest to 0003ea50; V, W and T store atol of the rest in 000b5bb2, 000b5bb4 and 000b5bb6; p takes the rest as TapeStem (000b5b7a) unless set, opens <stem>.tap rb as TapeFile, sets TapePlayback and unpacks seven files with 0005756c (data\\script.dat, data\\player.mec, data\\mission.var, Config_BuildPath of prefs.cfg, data\\restore.dat, data\\object.str, Config_BuildPath of keyjoy.cfg); r opens <stem>.tap wb, packs the same seven with 000574a0 (from data\\, keyjoy.cfg without a folder), closes it and sets TapeRecording (000b5b78); d opens <stem>.dmp as DmpFile (000b5b7e), wb while recording (closing it at once) and rb otherwise; l sets g_LowMemory (000bda98); e compares the rest with 'eggplant' and 'EGGPLANT' and sets Sim_EggplantGiven (000b5bc4) on a match. ES2's Sim_ParseCommandLine (DBSIM 0045e73c).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-command-line; ES1DBSIM decompile and disassembly at 00058e74",
+      "verified": {
+        "bytes": "00058e74+965",
+        "sha1": "c8ad27676748",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005923c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Cam_AttachTo",
+      "description": "(object), callee-cleaned: the object's slot +0x34 gives two offsets, which Cam_AttachEye (00000454) and Cam_AttachOrbit (000003d0) set on ViewObjectPtr (000b5b8a) with the object. ES2's Cam_AttachTo (DBSIM 0045ed94), which takes them from slot +0x30.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#small-functions; ES1DBSIM decompile at 0005923c",
+      "verified": {
+        "bytes": "0005923c+66",
+        "sha1": "f8ecdb63af5d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00059280",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "View_GetActiveObject",
-      "description": "Frameless, no arguments: returns the dword at 000b5b8a. ES2's View_GetActiveObject (DBSIM 0045eddc), which returns ViewObjectPtr.",
+      "description": "Frameless, no arguments: returns the dword at ViewObjectPtr (000b5b8a). ES2's View_GetActiveObject (DBSIM 0045eddc), which returns ViewObjectPtr.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
       "verified": {
         "bytes": "00059280+6",
@@ -18032,13 +18362,49 @@
       }
     },
     {
+      "address": "00059288",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mem_TrackPeakUse",
+      "description": "No arguments: Mem_PeakUse (00096f08) = the larger of itself and the heap's size less its bytes free, the dwords 000ae4b0 and 000ae4b8 (+4 and +0xc of the heap object 000ae4ac).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-frame; ES1DBSIM decompile at 00059288",
+      "verified": {
+        "bytes": "00059288+27",
+        "sha1": "befb9e558a80",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000592a4",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Path_ApplyAltDrive",
-      "description": "(path), callee-cleaned: copies the prefix at 000b5d9c into the buffer 000b5da0, appends path less a leading drive (a ':' at path[1]), and returns the buffer. main (Sim_Main (00059350)) copies into the prefix the ALT_DRIVE environment value when PREFER_ALT is set and the empty string otherwise, discarding the ALT_DRIVE value while 000b5bce is 0. The files built with it include data\\results.dat, data\\mission.var and data\\mem.got.",
-      "source": "ES1DBSIM decompile at 000592a4 and 00059350"
+      "description": "(path), callee-cleaned: copies the prefix at 000b5d9c into the buffer 000b5da0, appends path less a leading drive (a ':' at path[1]), and returns the buffer. ES2's Path_PrefixBaseDir (DBSIM 0045ede4).",
+      "source": "ES1DBSIM decompile at 000592a4 and 00059350",
+      "verified": {
+        "bytes": "000592a4+91",
+        "sha1": "6e6649540a50",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00059300",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Config_BuildPath",
+      "description": "(name), callee-cleaned: 'data\\' + name, or 'tapes\\' + name while TapePlayback (000b5b76) is set, built with strcat in the buffer 000b5dc0, which it returns. ES2's Config_BuildPath (DBSIM 0045eea4).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#small-functions; ES1DBSIM decompile at 00059300",
+      "verified": {
+        "bytes": "00059300+79",
+        "sha1": "4980293dad41",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00059350",
@@ -18046,7 +18412,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_Main",
-      "description": "(a, b), main.cpp: the simulator's main. Mem_InitHeap(6000000), asserting at severity 5 (line 0xe3) when it gives 100000 bytes or fewer; 00058e30(b, a); copies to 000b5d9c, for 00056ecc, the ALT_DRIVE variable (taken as null unless 000b5bce is set) when PREFER_ALT is set and the string at 00096f6a otherwise; writes the heap size (4 bytes) to data\\mem_got and an int16 0 to data\\exit_cfg, asserting (lines 0xf1, 0xf9) when either does not open; 00058e74(b, a). With 000b5bc4 clear it closes the files at 000b5b82 and 000b5b7e, Mem_HeapOff, prints 'To play EarthSiege, type ES' and exits with 1. Otherwise Subsystem_RunPhase(0), VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup(PREFER_ALT set, ALT_DRIVE, 00096fde, 1), Subsystem_RunPhase(1); an assert (line 0x136) when the heap is under 0x26e8f0 bytes, g_LowMemory set when under 0x3c45b0; Sim_StartMission (0005a9dc), Subsystem_RunPhase(3); then each frame Subsystem_RunPhase(4), 00058574, 00063f40 while 000b5b76 is 0, leaving when 000b5bd2 or 00059700() is non-zero, else Cam_Update (000004b8)(000b5b8a), Sim_RenderFrame unless 000b5b76 and 000b5b92 are both set, Sim_EndFrame (00059b40) and Subsystem_RunPhase(6). After the loop 0005b568, Mem_HeapOff, and with 000b5bc4 set and 000b5b9e clear, bit 0 of the byte SimDisplay (000b5b5c) points at cleared.",
+      "description": "(argc, argv), main.cpp: the simulator's main. Mem_InitHeap(6000000), asserting at severity 5 (line 0xe3) when it gives 100000 bytes or fewer; Sim_PreParseCommandLine (00058e30)(argv, argc); copies to 000b5d9c, for 00056ecc, the ALT_DRIVE variable (taken as null unless Sim_AltDriveAllowed (000b5bce) is set) when PREFER_ALT is set and the empty string otherwise; writes the heap size (4 bytes) to data\\mem.got and an int16 0 to data\\exit.cfg, asserting (lines 0xf1, 0xf9) when either does not open; Sim_ParseCommandLine (00058e74)(argv, argc). With Sim_EggplantGiven (000b5bc4) clear it closes TapeFile (000b5b82) and DmpFile (000b5b7e), Mem_HeapOff, prints 'To play EarthSiege, type ES.' and exits with 1. Otherwise Subsystem_RunPhase(0), VolumeGroup_SetBufferSize(0x200), VolRStream_SetGroup with PREFER_ALT set, the ALT_DRIVE value, '.vol' and 1 in stack order, Subsystem_RunPhase(1); an assert (line 0x136) when the heap is under 0x26e8f0 bytes, g_LowMemory set when under 0x3c45b0; Sim_StartMission (0005a9dc), Subsystem_RunPhase(3); then each frame Subsystem_RunPhase(4), 00058574, Time_BeginSimTick (00063f40) while TapePlayback (000b5b76) is 0, leaving when DemoAbort (000b5bd2) or Sim_MainTick (00059700) is non-zero, else Cam_Update (000004b8)(ViewObjectPtr (000b5b8a)), Sim_RenderFrame unless TapePlayback and Sim_Frozen (000b5b92) are both set, Sim_EndFrame (00059b40) and Subsystem_RunPhase(6). After the loop Sim_Shutdown (0005b568), Mem_HeapOff, and with Sim_EggplantGiven set and Sim_QuitFlag (000b5b9e) clear, bit 0 of the byte SimDisplay (000b5b5c) points at cleared.",
       "source": "ES1DBSIM decompile at 00059350",
       "verified": {
         "bytes": "00059350+773",
@@ -18056,12 +18422,162 @@
       }
     },
     {
+      "address": "00059658",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_DebugBreak",
+      "description": "Frameless, no arguments: INT3 while the word 000b5bcc, which -B sets, is non-zero. No Ghidra function; no reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#small-functions; ES1DBSIM disassembly at 00059658",
+      "verified": {
+        "bytes": "00059658+12",
+        "sha1": "0b5e30876afc",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059664",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorMainTickCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00059664",
+      "verified": {
+        "bytes": "00059664+40",
+        "sha1": "e5666563c60f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005968c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorMainTickCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00097022: byte for byte the code of ConfigPart_DtorMountsCopy (0000a798), relocated operands aside, storing 00097022 and 00097056 where that stores 00090f0e and 00090eda.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0005968c",
+      "verified": {
+        "bytes": "0005968c+63",
+        "sha1": "2ce394e363ca",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000596cb",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagMainTickCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00097022; the code of ConfigPart_GetClassTagMountsCopy (0000a78e).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000596cb",
+      "verified": {
+        "bytes": "000596cb+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000596d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorMainTickCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00097056 (entered at its padding 000596d1): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00097056 where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 000596d4",
+      "verified": {
+        "bytes": "000596d4+42",
+        "sha1": "368ccd748639",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059700",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_MainTick",
+      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92): each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools 000aef68 (0000693c), 000aefd4 (00006b28) and 000aeef8 (000064b8), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool 000af0b4 through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and 0005894c; unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel 00046efc(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by 00045d0c(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700; ES1DBSIM decompile and disassembly at 00059700",
+      "verified": {
+        "bytes": "00059700+931",
+        "sha1": "f3b367f2c256",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00059aa4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorFrameCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00059aa4",
+      "verified": {
+        "bytes": "00059aa4+40",
+        "sha1": "2b3eef7411d9",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059acc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorFrameCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 0009708a: byte for byte the code of ConfigPart_DtorMountsCopy (0000a798), relocated operands aside, storing 0009708a and 000970be where that stores 00090f0e and 00090eda.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00059acc",
+      "verified": {
+        "bytes": "00059acc+63",
+        "sha1": "16c9ef848e4f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059b0b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagFrameCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 0009708a; the code of ConfigPart_GetClassTagMountsCopy (0000a78e).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00059b0b",
+      "verified": {
+        "bytes": "00059b0b+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00059b14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorFrameCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000970be (entered at its padding 00059b11): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 000970be where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00059b14",
+      "verified": {
+        "bytes": "00059b14+42",
+        "sha1": "5c36abbd0ea3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00059b40",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Sim_EndFrame",
-      "description": "No arguments: sets 000bda96 to 1 when 000b5b92 is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); Palette_CycleAnimatedRanges (00028260); Palette_FlushDirtyRange (00027f74); on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); 00059288. Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, 00057820, four, 00057ffc, one, and 00058414, three.",
+      "description": "No arguments: sets 000bda96 to 1 when Sim_Frozen (000b5b92) is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); Palette_CycleAnimatedRanges (00028260); Palette_FlushDirtyRange (00027f74); on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); Mem_TrackPeakUse (00059288). Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, 00057820, four, 00057ffc, one, and 00058414, three.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904",
       "verified": {
         "bytes": "00059b40+200",
@@ -18076,7 +18592,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RenderFrame",
-      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; ObjList_RebuildFrame (00020de0)(); Cockpit_DrawFrame (0002cf28)(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view 000b5b8a), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); Player_PerFrameCockpitUpdate (000155a8)(LocalPlayerMech (000b5b86)); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
+      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; ObjList_RebuildFrame (00020de0)(); Cockpit_DrawFrame (0002cf28)(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view ViewObjectPtr (000b5b8a)), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); Player_PerFrameCockpitUpdate (000155a8)(LocalPlayerMech (000b5b86)); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
       "source": "ES1DBSIM decompile at 00059c08, against ES2's Sim_RenderFrame",
       "verified": {
         "bytes": "00059c08+280",
@@ -18086,18 +18602,258 @@
       }
     },
     {
+      "address": "00059d20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorSimCommandCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00059d20",
+      "verified": {
+        "bytes": "00059d20+40",
+        "sha1": "3bf020bc3a9d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059d48",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorSimCommandCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 000970f2: byte for byte the code of ConfigPart_DtorMountsCopy (0000a798), relocated operands aside, storing 000970f2 and 00097126 where that stores 00090f0e and 00090eda.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00059d48",
+      "verified": {
+        "bytes": "00059d48+63",
+        "sha1": "b57c32445083",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059d87",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagSimCommandCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 000970f2; the code of ConfigPart_GetClassTagMountsCopy (0000a78e).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00059d87",
+      "verified": {
+        "bytes": "00059d87+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00059d90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorSimCommandCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00097126 (entered at its padding 00059d8d): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00097126 where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 00059d90",
+      "verified": {
+        "bytes": "00059d90+42",
+        "sha1": "572605c16ad7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059dbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ViewChain_ToggleCameraControl",
+      "description": "Frameless, no arguments: flips the word 000b5bb8 between 0 and 1, and sets ViewChain_CaptionFrames (000b5bc0) to 2 when ViewObjectPtr's +0x32 is LocalPlayerMech. No Ghidra function. ES2's ViewChain_ToggleCameraControl (DBSIM 0045fd2c).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8; ES1DBSIM disassembly at 00059dbc",
+      "verified": {
+        "bytes": "00059dbc+47",
+        "sha1": "8a6e71af9e08",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059dec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_HandleWindowKey",
+      "description": "Frameless: MOVZX EAX,WORD PTR [ESP + 4], XOR EAX,EAX and RET 4: takes a code and returns 0. ES2's Sim_HandleWindowKey (DBSIM 0045fd60) handles Alt+Enter and Ctrl+B.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8; ES1DBSIM disassembly at 00059dec",
+      "verified": {
+        "bytes": "00059dec+10",
+        "sha1": "9907aee74e84",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059df8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_DispatchCommand",
+      "description": "(block), callee-cleaned: the block's command word goes to CockpitWidgets_HandleCommand (0002d24c), then to Sim_HandleWindowKey (00059dec), then to the 15 codes at 00097180 (REPNE SCASD, targets 15 dwords after, case bodies 00059e5d-0005a0ae outside Ghidra's extent): 0x21f toggles Sim_Frozen while TapePlayback or TapeRecording is set; 0x2f queues view command 3 (ViewChain_PendingView 2) in ViewChain_View 1 or 3 and 2 (pending 3) in view 2; 0x31, in view 3 with the view manager's +0x10 at 4, steps ViewChain_Viewed through LiveObjectList with ObjectList_Next to an object with +0x28 not negative in the player's group and, when it differs, calls 00058a44, sets the camera's +0x36 to 1, ViewChain_Chosen and ViewChain_CaptionFrames 2; 0x0f and 0x1c call ViewChain_ToggleCameraControl (00059dbc) with the manager's +0x10 at 4; 0x0e sets g_CenterTurretMode; 0x10 shows Mission_StatusForAlert(1, LocalPlayerMech) in the panel 00046efc and clears MissionAlertArmed; 0x01 queues view command 3, Sound_Play(0x2d) and pending view 2; 0x401 and 0x410 raise the panel with 1 and set Sim_QuitFlag (000b5b9e) on a non-zero answer; 0x19 raises it with 0; 0x219 and 0x58 call 00057820; 0x402 flips ThrottleLeverMode between 1 and -1; 0x52 calls Input_ToggleStickMode (0004d8e1). Any other code goes to slot +0x30 of ViewChain_Viewed. Returns 1 for a handled code plus the panel's answer (Ctrl+Esc, Ctrl+Q, P) or 1 when Q's answer ends the mission. ES2's Sim_DispatchCommand (DBSIM 0045fdac).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8; ES1DBSIM decompile and disassembly at 00059df8",
+      "verified": {
+        "bytes": "00059df8+712",
+        "sha1": "0345a21bb942",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005a0c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_PollPlayerInput",
+      "description": "(block), callee-cleaned: the player's controls. Sim_DispatchCommand (00059df8)(block), its answer being 2 the return value; CockpitView_PollViewDevice (0002d1a0). With InputDrivesCamera (000b5b90) clear the machine takes the axes +0xd, +0xf, +0x11 and +0x13; with it set the camera takes the int16s +0x1d and +0x21 point at and the byte +0x15. The gunsight drag: while +0xb is set it arms with the pointer (+2, +6) inside the rect of CockpitViewInstance's +0x1f1, then adds dx*dx>>6 to the twist and dy*dy>>5 to the pitch (000b5de4, 000b5de8, signed by direction); +0xa set with +0xb zeroes the player's +0x22e and +0x230. Cam_Steer (00000a04) on ViewObjectPtr. When ViewChain_Viewed's +0x162 is 2 and the camera is not driven, 0001b794(viewed, throttle, steer) and viewed +0xa9 = 1; otherwise, with the player's +0x33 set, Mech_ApplyThrottleInput, then g_CenterTurretMode = 1 when the player's +0x9e is set, else with no twist or pitch, the mounts' +0x14 set and a live target +0x15e, Cockpit_TargetAnglesFromCameraBone on the target's +0x20 plus its slot +0x34 offset; then Mech_CenterTorsoTick when centering, else Mech_TorsoTwistTick and Mech_TorsoPitchTick unless tracking. With the camera not driven, WeaponMounts_FireTrigger(mounts, player, block). Button +0x17 calls TargetSelect_Cycle once a press (latch 000971fc); button +0x18 in Input_StickMode 1 zeroes the throttle +0x226 and sets +0x8d, in mode 2 sets g_CenterTurretMode. ES2's Sim_PollPlayerInput (DBSIM 00460764).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-players-controls--sim_pollplayerinput-0005a0c0; ES1DBSIM decompile and disassembly at 0005a0c0",
+      "verified": {
+        "bytes": "0005a0c0+1109",
+        "sha1": "1d9dad6684e6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0005a518",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorInitCopy",
+      "description": "(p, flags), callee-cleaned: byte for byte the code of HeapPtr_DtorGunlistCopy (0000baf0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0005a518",
+      "verified": {
+        "bytes": "0005a518+40",
+        "sha1": "e354949a47ff",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005a540",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorInitCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00097202: byte for byte the code of ConfigPart_DtorMountsCopy (0000a798), relocated operands aside, storing 00097202 and 00097236 where that stores 00090f0e and 00090eda.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0005a540",
+      "verified": {
+        "bytes": "0005a540+63",
+        "sha1": "de44e1400455",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005a57f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagInitCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 00097202; the code of ConfigPart_GetClassTagMountsCopy (0000a78e).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0005a57f",
+      "verified": {
+        "bytes": "0005a57f+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0005a588",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorInitCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable 00097236 (entered at its padding 0005a585): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing 00097236 where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0005a588",
+      "verified": {
+        "bytes": "0005a588+42",
+        "sha1": "dabcb35eb40b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005a5b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimInput_PushDisable",
+      "description": "Frameless, no arguments: stores SimInput_Enabled (00095818) at 000b5df8[the byte 00097280], adds 1 to that byte, and calls SimInput_SetEnabled (0004d82c)(0). Sim_StartMission stores it in the hook 00094d80, which 00045f00 calls. No Ghidra function.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#small-functions; ES1DBSIM disassembly at 0005a5b4",
+      "verified": {
+        "bytes": "0005a5b4+34",
+        "sha1": "8814c9b3cfbe",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005a5d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimInput_PopEnable",
+      "description": "Frameless, no arguments: takes 1 from the byte 00097280 and calls SimInput_SetEnabled (0004d82c) with 000b5df8[that byte]. Sim_StartMission stores it in the hook 00094d84, which 000460b8 calls. No Ghidra function.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#small-functions; ES1DBSIM disassembly at 0005a5d8",
+      "verified": {
+        "bytes": "0005a5d8+27",
+        "sha1": "aa8356a126ca",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0005a5f4",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Sim_CreateDisplay",
-      "description": "Builds the simulator's display; its one caller found by es2_xref is Sim_StartMission (0005af1a). A 0x90-byte GLDisplay_CtorAndOpen(display, 0, 'VGA_8'), two __vec_ctor arrays of four 8-byte elements (constructor 0005a79c) at +0x48 and +0x68, Raster_SelectRenderTarget(display), +0x88 = 0, +0x8c = 1, +0x3c = 1 and +0x34 = 0, each passed to the driver's routine at 0009df18 and 0009df1c (stored at 00098dda and 00098dd2) while the display is current; the pairs {0, 0}, {0, 200}, {0, 400}, {0, 600} at +0x48 and 32 zero bytes at +0x68. Then builds the render context 000b5b6e with GLViewport_Ctor (00069a84)(0), its origin +0x220/+0x224 (-160, -100) and +0x208 = 1 (its clip block's mode +0x204), stores the block at the display's +0x44, passes it to Raster_SetClipBlock while current, and installs the context with Raster_InstallRenderContext.",
+      "description": "Builds the simulator's display; its one caller found by es2_xref is Sim_StartMission (0005af1a). A 0x90-byte GLDisplay_CtorAndOpen(display, 0, 'VGA_8'), two __vec_ctor arrays of four 8-byte elements (constructor DisplayPageOrigin_ElementCtor (0005a79c)) at +0x48 and +0x68, Raster_SelectRenderTarget(display), +0x88 = 0, +0x8c = 1, +0x3c = 1 and +0x34 = 0, each passed to the driver's routine at 0009df18 and 0009df1c (stored at 00098dda and 00098dd2) while the display is current; the pairs {0, 0}, {0, 200}, {0, 400}, {0, 600} at +0x48 and 32 zero bytes at +0x68. Then builds the render context 000b5b6e with GLViewport_Ctor (00069a84)(0), its origin +0x220/+0x224 (-160, -100) and +0x208 = 1 (its clip block's mode +0x204), stores the block at the display's +0x44, passes it to Raster_SetClipBlock while current, and installs the context with Raster_InstallRenderContext.",
       "source": "ES1DBSIM decompile and disassembly at 0005a5f4; es2_xref caller",
       "verified": {
         "bytes": "0005a5f4+424",
         "sha1": "d470565f4ef9",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "0005a79c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DisplayPageOrigin_ElementCtor",
+      "description": "(p), callee-cleaned: returns p, or operator_new (000015a4)(8) when p is null. The element constructor of Sim_CreateDisplay's two __vec_ctor arrays at the display's +0x48 and +0x68.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc; ES1DBSIM disassembly at 0005a79c",
+      "verified": {
+        "bytes": "0005a79c+27",
+        "sha1": "b5664e71b1f2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005a7b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_AssertCleanupHook",
+      "description": "No arguments: Sound_Shutdown; 0006a5fc on the display 000bdd28 when set; closes TapeFile (000b5b82) and then DmpFile (000b5b7e) when set, clearing both; GndTex_Free; writes an int16 0 to data\\exit.cfg through Path_ApplyAltDrive and FileWStream_Ctor, asserting (init.cpp line 100, severity 5) when it does not open. Sim_StartMission hands it to 0005730c. ES2's Sim_AssertCleanupHook (DBSIM 004611f8).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc; ES1DBSIM decompile at 0005a7b8",
+      "verified": {
+        "bytes": "0005a7b8+207",
+        "sha1": "db293aa94673",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -18151,8 +18907,74 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_StartMission",
-      "description": "(): the mission start Sim_Main (00059350) calls once. Among its steps: Subsystem_RunPhase(2), DBSim_LoadScriptDat, then ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; 000441cc, 00063e64, DBSim_SpawnMissionObjects (0001e638); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); stores the object count ObjList_Count (00092558) at ObjList_ZoneShapeCount (000bc596), the list prefix ObjList_RebuildFrame keeps; takes as the player LocalPlayerMech (000b5b86) the last element of pool g_MechPool (000af68c) with byte +0x9d set; builds a 0x4a-byte TSCamera per int16 +0x12 of its type record into 000bda9e and the main camera 000b5b8a, whose +0x36 it sets to 2; draws a first frame with Sim_RenderFrame after Palette_BlendRangeByPitch with step 8 unless an element of pool g_BasePool (000aed70) with a zero type-record byte +0x14 lies within 40000 of the player, when it calls 00057cf4 instead. Its sound-driver, preferences, canvas and cockpit set-up go through unnamed callees.",
-      "source": "ES1DBSIM decompile at 0005a9dc"
+      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to 0005730c; Input_BuildSourceTable (0004c95c); Sim_InputDriver (000b5baa) = 0006c6f8(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through 0006c871) for Sound_Init, else digital device 0; 0004e498; with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks 00094d80 and 00094d84 = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from 00057640; DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; 000441cc; maybe_CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), 0006a824(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with 000b5b67 set), +0x34 = +0x88, +0x3c = 3 without 000b5b67; ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and 00057c08(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, maybe_CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
+      "source": "ES1DBSIM decompile at 0005a9dc",
+      "verified": {
+        "bytes": "0005a9dc+2808",
+        "sha1": "701bd3de5837",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005b4d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSOrthoCamera_DtorInitCopy",
+      "description": "(camera, flags), callee-cleaned: slot +4 of the vtable 000972de: byte for byte the code of TSOrthoCamera_Dtor (0005ba24), relocated operands aside, storing 000972de and 00097362 where that stores 0009741e and 0009740e.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0005b4d4",
+      "verified": {
+        "bytes": "0005b4d4+50",
+        "sha1": "136ce28d2025",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005b508",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSCamera_DtorInitCopy",
+      "description": "(camera, flags), callee-cleaned: slot +4 of the vtable 00097362 (entered at its padding 0005b506): byte for byte the code of TSCamera_Dtor (0005b970), relocated operands aside, storing 00097362 where that stores 0009740e. ES2's TSCamera_Dtor (DBSIM 0048d841).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0005b508",
+      "verified": {
+        "bytes": "0005b508+43",
+        "sha1": "f903b2067e66",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005b534",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_ReleaseSessionObjects",
+      "description": "Frameless, no arguments: 0006c758(Sim_InputDriver (000b5baa), 3), then, when the render context 000b5b6e is set, its vtable slot +0x1c with flags 3. No Ghidra function; no reference found by es2_xref. ES2's Sim_ReleaseSessionObjects (DBSIM 00461e74).",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#small-functions; ES1DBSIM disassembly at 0005b534",
+      "verified": {
+        "bytes": "0005b534+52",
+        "sha1": "a1c63bf1ac03",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005b568",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Sim_Shutdown",
+      "description": "No arguments: maybe_CockpitMouseLive (000bd512) = 0; with TapeFile (000b5b82) open, closes DmpFile (000b5b7e) when open and then the tape, clearing both; GndTex_Free; Mission_WriteResults (0001d698)(LocalPlayerMech); the exit code, 6 under DemoMode (000b5bd0), 0 with Sim_QuitFlag (000b5b9e), else 4 when the player's +0x93 is set and MissionModeFlag (000bc4a0) is not 0, else 3, written as an int16 to data\\exit.cfg (assert init.cpp line 0x1a4, severity 5); Sound_Shutdown; Sim_ShutdownNoOp1 and Sim_ShutdownNoOp2. ES2's Sim_Shutdown (DBSIM 00461eec) keeps the code for WinMain.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-end--sim_shutdown-0005b568; ES1DBSIM decompile at 0005b568",
+      "verified": {
+        "bytes": "0005b568+290",
+        "sha1": "0c631fa9dac1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0005b68c",
@@ -21851,6 +22673,81 @@
       }
     },
     {
+      "address": "00063e34",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Time_GetSimClockCountdown",
+      "description": "Frameless, no arguments: returns SimClock_Countdown (000bba46) in AX.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40; ES1DBSIM disassembly at 00063e34",
+      "verified": {
+        "bytes": "00063e34+7",
+        "sha1": "16bc192f1990",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00063e3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Time_SimClockTimerTick",
+      "description": "Frameless, no arguments, the timer callback Time_InitSimClock registers: takes 1 from SimClock_Countdown (000bba46) while it is not 0, adds 1 to the dword 000981c8, and adds 1 to the dword 000981c4 when 000981c8 was odd. No Ghidra function.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40; ES1DBSIM disassembly at 00063e3c",
+      "verified": {
+        "bytes": "00063e3c+39",
+        "sha1": "d915292f3290",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00063e64",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Time_InitSimClock",
+      "description": "No arguments: SimTickDelta and SimTickDelta2 (000bdbd2) = 0x100; while 000981c0 is 0, stores there the pointer at 000bdd0c, registers Time_SimClockTimerTick (00063e3c) with Timer_AddCallback (0006d289) at count 1, sets SimClock_TicksPerSecond (000bba44) and 000bba40 to 1000000 / Math_Q14Multiply(that structure's word +4, 0x35a1), SimClock_TicksPer100ms (000bba42), 000bdbd4, 000bdbd6 and 000bdbd8 to a tenth of it, and SimClock_Countdown (000bba46) to SimClock_TicksPerSecond. ES2's Time_InitSimClock (DBSIM 0046773c) works from GetTickCount.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40; ES1DBSIM disassembly at 00063e64",
+      "verified": {
+        "bytes": "00063e64+157",
+        "sha1": "fb883d515a8a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00063f04",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Time_ElapsedToQ8Clamped",
+      "description": "(elapsed, unit) in stack order, callee-cleaned: (elapsed << 8) / unit clamped to 0x40-0x1c2, returned in AX. ES2's Time_ElapsedToQ8Clamped (DBSIM 00467790).",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40; ES1DBSIM disassembly at 00063f04",
+      "verified": {
+        "bytes": "00063f04+57",
+        "sha1": "21242cce578c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00063f40",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Time_BeginSimTick",
+      "description": "No arguments: spins until Time_GetSimClockCountdown (00063e34) is at least 2 below SimClock_TicksPerSecond (000bba44), then stores the elapsed ticks SimClock_TicksPerSecond - SimClock_Countdown at 000bdbd8, sets SimTickDelta = Time_ElapsedToQ8Clamped (00063f04)(elapsed, 000bdbd4) and SimTickDelta2 (000bdbd2) the same with 000bdbd6, and reloads SimClock_Countdown (000bba46). ES2's Time_BeginSimTick (DBSIM 004677bc), which waits 40 ms of GetTickCount.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40; ES1DBSIM disassembly at 00063f40",
+      "verified": {
+        "bytes": "00063f40+99",
+        "sha1": "f9429a2b7fed",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00063fa4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -21871,7 +22768,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_IntegrateRateOverTick2",
-      "description": "(rate), callee-cleaned: Math_IntegrateRateOverTick with the short at 000bdbd2; the clamps return 0x8001 or 0x7fff in AX. ES2's Math_IntegrateRateOverTick2 (DBSIM 00467858).",
+      "description": "(rate), callee-cleaned: Math_IntegrateRateOverTick with the short at SimTickDelta2 (000bdbd2); the clamps return 0x8001 or 0x7fff in AX. ES2's Math_IntegrateRateOverTick2 (DBSIM 00467858).",
       "source": "Herculan/docs/es1/simulation/fixed-point-math.md#rate-over-tick",
       "verified": {
         "bytes": "00063fe0+69",
@@ -24100,7 +24997,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Timer_AddCallback",
-      "description": "(count, callback), C convention: while the dword 0009bd40 is non-zero, takes the lowest clear bit of the 16-bit slot mask 0009cd64, sets it, stores count in that slot of the two dword tables 0009ce6c and 0009cdec and callback in the table 0009cd6c, and returns the slot + 1; returns 0 when 0009bd40 is 0 or every slot is taken. FrameRate_Update registers FrameRate_TimerTick with it; es2_xref also finds calls from 0004e434, SoundManager_LoadDrivers (0004ef8c), 00050d98, 00063e64 and Ttm_AllocHandles (00069780).",
+      "description": "(count, callback), C convention: while the dword 0009bd40 is non-zero, takes the lowest clear bit of the 16-bit slot mask 0009cd64, sets it, stores count in that slot of the two dword tables 0009ce6c and 0009cdec and callback in the table 0009cd6c, and returns the slot + 1; returns 0 when 0009bd40 is 0 or every slot is taken. FrameRate_Update registers FrameRate_TimerTick with it; es2_xref also finds calls from 0004e434, SoundManager_LoadDrivers (0004ef8c), 00050d98, Time_InitSimClock (00063e64) and Ttm_AllocHandles (00069780).",
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
       "verified": {
         "bytes": "0006d289+78",
@@ -27692,6 +28589,87 @@
       "source": "es1_naming.py vtables ES1DBSIM; the image at 00093aae"
     },
     {
+      "address": "0009580c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Keyjoy_TiltReversed",
+      "description": "dword: keyjoy.cfg's Tilt = Reverse; negates the keyboard's pitch.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00095810",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Keyjoy_BackturnReversed",
+      "description": "dword: keyjoy.cfg's Backturn = Reverse; negates the steering while the throttle axis is positive.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00095814",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Keyjoy_MissileReversed",
+      "description": "dword: keyjoy.cfg's Missile = Reverse; stops the keyboard pitch's negation while a round is flown.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00095818",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimInput_Enabled",
+      "description": "byte: whether SimInput_SetEnabled has the axis keys on.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00095819",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Input_StickMode",
+      "description": "byte: 0, 1 (movement) or 2 (turret), preferences option 8, copied in by its handler 0004ad88 and flipped by Input_ToggleStickMode.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "0009586c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "KeyjoyWantedCodes",
+      "description": "28 bytes: the axis keys' codes, then the same with 0x80. ES2's KeyjoyWantedCodes.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "0009588c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "KeyboardAxisDiagonalFlags",
+      "description": "8 bytes, 1 for keypad 7, 9, 1 and 3. ES2's KeyboardAxisDiagonalFlags.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00095896",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Input_KeyThrottleStep",
+      "description": "int16: Ctrl+I and Ctrl+M's throttle steps, which Input_BuildPlayerDevice gives the throttle axis under option 10 and clears.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000958b8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimCommandMask",
+      "description": "word 0x47ff, which Input_BuildPlayerDevice ANDs the command word with. ES2's SimCommandMask.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
       "address": "0009680c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -27708,6 +28686,15 @@
       "name": "g_VolumeGroup",
       "description": "The volume group VolRStream_Open looks a path up in when the path does not open as a file: made by VolRStream_SetGroup, filled by VolRStream_LoadVolume and deleted by VolRStream_DeleteGroup. ES2's g_VolumeGroup (DBSIM 004a0d30).",
       "source": "Herculan/docs/es1/formats/streams.md#volrstream"
+    },
+    {
+      "address": "00096f08",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mem_PeakUse",
+      "description": "dword: the heap's highest use, which Mem_TrackPeakUse (00059288) raises each frame.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
       "address": "000973d3",
@@ -28394,13 +29381,58 @@
       "source": "Herculan/docs/es1/simulation/mfd-nav-map.md#where-the-object-file-starts-and-ends; es2_xref finds 00036c05, 00036d38 and 00036e9f"
     },
     {
+      "address": "000b17ac",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PlayerInputBlock",
+      "description": "The 0x2b-byte input block Input_BuildPlayerDevice fills and returns: +0 command word, +2/+6 pointer, +0xa-+0xc mouse bytes, +0xd/+0xf/+0x11/+0x13 the four axes, +0x15-+0x1c eight buttons, +0x1d/+0x21 the camera-axis pointers, +0x29 a replay's delta. ES2's PlayerInputBlock.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
       "address": "000b17d8",
       "binary": "ES1DBSIM",
       "type": "data",
       "confidence": "high",
       "name": "Input_CursorPos",
-      "description": "The point Input_GetCursorPos (0004d910) returns, which Cockpit_PickEdgeCursor (0002dcc8) reads while the dword 000b5b76 is set. ES2's Input_CursorPos.",
+      "description": "The point Input_GetCursorPos (0004d910) returns, which Cockpit_PickEdgeCursor (0002dcc8) reads while the dword TapePlayback (000b5b76) is set. ES2's Input_CursorPos.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#callees-of-other-modules"
+    },
+    {
+      "address": "000b1840",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Input_LiveBlockPtr",
+      "description": "The live device block 0004c2d0 returns, which Input_BuildSourceTable and Input_BuildPlayerDevice store.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b1844",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Input_KeyHeld",
+      "description": "14 bytes: the axis keys' held bytes; the release-pending and seen blocks follow at 000b1854 and 000b1864. ES2's 004d2418.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b1874",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "KeyboardAxisDeltas",
+      "description": "12 (dx, dy) byte pairs, written by Input_InitKeyboardAxisTable. ES2's KeyboardAxisDeltas.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b18a0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Input_KeyAltHeld",
+      "description": "int16: the Alt bit of the last axis key, which Input_BuildKeyboardAxes reads.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
     },
     {
       "address": "000b5adc",
@@ -28430,13 +29462,112 @@
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-view-manager"
     },
     {
+      "address": "000b5b76",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TapePlayback",
+      "description": "int16: 1 while a tape plays (-p, -D); Config_BuildPath gives tapes\\ and Input_BuildPlayerDevice reads the tape while it is set. ES2's TapePlayback.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5b78",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TapeRecording",
+      "description": "int16: 1 after -r packed the tape; Input_BuildPlayerDevice appends a frame each tick while it is set. ES2's TapeRecording.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5b7a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TapeStem",
+      "description": "char *: the tape's name from -p, -r or -D, the first given; .tap and .dmp are added to it.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5b7e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DmpFile",
+      "description": "FILE *: the .dmp file -d opens.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5b82",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TapeFile",
+      "description": "FILE *: the tape -p or -D opens for reading. ES2's TapeFile.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
       "address": "000b5b86",
       "binary": "ES1DBSIM",
       "type": "data",
       "confidence": "high",
       "name": "LocalPlayerMech",
-      "description": "Pointer to the player's machine: 00059700 pushes it for Mission_PollStatus (0000f454), and Mission_IsClearOfThreats (0000f744) compares the subject's group with its group (+0x3f). ES2's LocalPlayerMech (DBSIM 004d256a).",
+      "description": "Pointer to the player's machine: Sim_MainTick (00059700) pushes it for Mission_PollStatus (0000f454), and Mission_IsClearOfThreats (0000f744) compares the subject's group with its group (+0x3f). ES2's LocalPlayerMech (DBSIM 004d256a).",
       "source": "Herculan/docs/es1/simulation/mission-status.md#globals; ES1DBSIM disassembly at 00059a05 and decompile at 0000f744"
+    },
+    {
+      "address": "000b5b8a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ViewObjectPtr",
+      "description": "The main camera Sim_StartMission builds; Cam_Update places it each frame. ES2's ViewObjectPtr.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5b8e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ViewChain_View",
+      "description": "int16: the chain of views' current view, 2 from Main_StaticInit; Sim_DispatchCommand's V and N test it. ES2's ViewChain_View.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5b90",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "InputDrivesCamera",
+      "description": "int16: while set Sim_PollPlayerInput gives the camera the controls and Input_BuildPlayerDevice points the camera axes at the movement pair. ES2's InputDrivesCamera.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5b92",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Sim_Frozen",
+      "description": "int16: Alt+S's freeze, toggled while a tape records or plays; Sim_MainTick skips the pools, groups and systems while it is set, and Sim_Main skips Sim_RenderFrame while it and TapePlayback are set. ES2's 004d2576.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5b9c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Sim_StepOnce",
+      "description": "int16: Sim_MainTick clears it and sets Sim_Frozen when it is set. ES2's 004d2580.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5b9e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Sim_QuitFlag",
+      "description": "int16: set by Ctrl+Esc or Ctrl+Q answered yes; Sim_Shutdown gives exit code 0 while it is set. ES2's 004d2582.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
       "address": "000b5ba4",
@@ -28446,6 +29577,60 @@
       "name": "g_CenterTurretMode",
       "description": "Player_PerFrameCockpitUpdate (000155a8) sets it to 1 when the gunsight's target becomes none with TRACK's latch (the manager's +0x14) set. ES2's g_CenterTurretMode, which ES2 sets after a countdown.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-cockpit; ES1DBSIM image at 000b5ba4"
+    },
+    {
+      "address": "000b5baa",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Sim_InputDriver",
+      "description": "The object Sim_StartMission makes with 0006c6f8(0, 0x26d3) and Sim_ReleaseSessionObjects deletes.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5bb0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "LiftStart_Pending",
+      "description": "int16: Sim_StartMission sets it when a structure on side 0 lies within 40000 of the player, and then calls 00057cf4 and 00057ffc.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5bba",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ViewChain_PendingView",
+      "description": "int16: the view the chain goes to after the queued view command. ES2's ViewChain_PendingView.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5bbc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ViewChain_Chosen",
+      "description": "The object N chose; Sim_StartMission sets it to the player. ES2's ViewChain_Chosen.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5bc0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ViewChain_CaptionFrames",
+      "description": "int16: set to 2 by N and ViewChain_ToggleCameraControl. ES2's ViewChain_CaptionFrames.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5bc4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Sim_EggplantGiven",
+      "description": "int16: set by -eggplant; without it Sim_Main exits with 1.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
       "address": "000b5bc6",
@@ -28464,6 +29649,33 @@
       "name": "maybe_WeaponChain_EoStepPending",
       "description": "int16: WeaponMounts_FireTrigger (0000d2bc) sets it to 1 with maybe_WeaponChain_EoHold (000b5bc6); WeaponMounts_SetSelection (0000cb00) clears it when the selection changes; while it is set and maybe_WeaponChain_EoHold (000b5bc6) is clear, WeaponMounts_PerFrameUpdate (0000cf78) steps the selection and clears single fire. ES2's 004d25ac.",
       "source": "Herculan/docs/es1/simulation/weapon-mounts.md#firing--weaponmounts_firetrigger-0000d2bc; ES1DBSIM disassembly at 0000cf78"
+    },
+    {
+      "address": "000b5bce",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Sim_AltDriveAllowed",
+      "description": "int16: set by -c; without it Sim_Main takes ALT_DRIVE as null.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5bd0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DemoMode",
+      "description": "int16: set by -D; Sim_Shutdown gives exit code 6. ES2's DemoMode.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b5bd2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DemoAbort",
+      "description": "int16: ends Sim_Main's loop; set by a key under DemoMode and by the tape's end. ES2's DemoAbort.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
       "address": "000b5e04",
@@ -28689,6 +29901,33 @@
       "name": "Poly_ScreenCount",
       "description": "The ring's point count (uint16), set by the projectors and the near-plane clips. ES2's DBSIM 006cbc86.",
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000bba42",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimClock_TicksPer100ms",
+      "description": "int16: a tenth of SimClock_TicksPerSecond, set by Time_InitSimClock.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bba44",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimClock_TicksPerSecond",
+      "description": "int16: 1000000 / the timer period in microseconds, set by Time_InitSimClock; the countdown's reload.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bba46",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimClock_Countdown",
+      "description": "int16: counted down by Time_SimClockTimerTick and reloaded by Time_BeginSimTick each frame.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40; ES1DBSIM disassembly"
     },
     {
       "address": "000bc18a",
@@ -29276,6 +30515,33 @@
       "source": "ES1DBSIM decompile at 0002b46c"
     },
     {
+      "address": "000bd512",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "medium",
+      "name": "maybe_CockpitMouseLive",
+      "description": "byte: Sim_StartMission clears it and sets it at the end unless a tape plays, the tape's end sets it, and Sim_Shutdown clears it, where ES2's set and clear CockpitMouseLive.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd634",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Input_ButtonLatch",
+      "description": "4 bytes: the press-once latches of buttons 1-4; Input_ButtonLatchState follows at Input_ButtonLatchState (000bd638).",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd638",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Input_ButtonLatchState",
+      "description": "4 bytes: the state each latched button is masked in.",
+      "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
       "address": "000bda98",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -29283,6 +30549,24 @@
       "name": "g_LowMemory",
       "description": "int16: set to 1 at 000595b1 in Sim_Main (00059350) when the heap Mem_InitHeap (00001524) returns is under 0x3c45b0 bytes; a search of the disassembly dump for the address finds that store and 14 compares. When it is set Mech_LoadResources (000198f0) loads no texture banks and MechType_InitOne (00019cf0) skips record +0x48's count of shape roots.",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#low-memory"
+    },
+    {
+      "address": "000bda9a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ViewChain_Viewed",
+      "description": "The object the controls and views follow: Sim_StartMission sets it to the player, N steps it, and Sim_DispatchCommand passes unclaimed codes to its slot +0x30. ES2's ViewChain_Viewed.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bda9e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ViewChain_SquadCameras",
+      "description": "One camera pointer per member of the player's group, built by Sim_StartMission. ES2's ViewChain_SquadCameras.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
     },
     {
       "address": "000bdb4a",
@@ -29364,6 +30648,15 @@
       "name": "SimTickDelta",
       "description": "int16: the length of the simulation tick that Timer_CountDown (00064178) subtracts.",
       "source": "Herculan/docs/es1/simulation/mech-ai.md#globals; ES1DBSIM decompile at 00064178"
+    },
+    {
+      "address": "000bdbd2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimTickDelta2",
+      "description": "int16: the second tick delta, which Time_BeginSimTick computes with the divisor 000bdbd6 and Math_IntegrateRateOverTick2 (00063fe0) multiplies by. ES2's 004d3bea.",
+      "source": "Herculan/docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40; ES1DBSIM disassembly"
     },
     {
       "address": "000bdbde",

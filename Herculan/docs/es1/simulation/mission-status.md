@@ -101,11 +101,11 @@ A selector outside 0–9 holds nothing and reads its status past the table's ten
 
 Where ES2's differs: ES2's evaluates its objective records and ignores the selector it is passed; it has the 500 ms hold and the `SYSTEM.STR` post when not quiet; its box margins are 110000 and 0; and it has no test of the group's `+4`. ES1's gives ES2's numbers 2, 3, 7, 8, 9 and 10 for the same cases and never 5; 4 and 6 it also gives from the `+4` arm, and 11 to 16 are its own ([Open](#open)).
 
-**`Mission_StatusForAlert` (`0000f43c`)**, (quiet, machine): `Mission_Status`(machine, quiet, `ScriptDatHeader` word 3, `000bc4a2`). ES2's (`00413180`) also records the answer as the status already raised when it publishes. `es2_xref.py` finds two calls: `Mission_PollStatus`, quiet 0, and `00059f87`, in bytes of `00059df8` Ghidra has not disassembled, with quiet 1 and `LocalPlayerMech`, which hands the answer to `00046efc`.
+**`Mission_StatusForAlert` (`0000f43c`)**, (quiet, machine): `Mission_Status`(machine, quiet, `ScriptDatHeader` word 3, `000bc4a2`). ES2's (`00413180`) also records the answer as the status already raised when it publishes. `es2_xref.py` finds two calls: `Mission_PollStatus`, quiet 0, and `00059f87`, `Q`'s case in `Sim_DispatchCommand` (`00059df8`), in bytes Ghidra has not disassembled, with quiet 1 and `LocalPlayerMech`, which shows the answer in the status panel `00046efc` and clears `MissionAlertArmed` ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)).
 
 ## The poll — `Mission_PollStatus` (`0000f454`)
 
-(machine): ES2's ([the poll](../../retail/simulation/mission-objectives.md#the-poll--mission_pollstatus-004131ac)) on ES1's globals. It ticks `MissionAlertTimer` (`000af7a0`) and `MissionPollTimer` (`000af79c`) with `Math_CountdownTimerTick`, and only when the poll interval has run out asks `Mission_StatusForAlert`(0, machine). A status whose entry in `Mission_StatusWorthRaising` (`00091700`) is set (2, 3, 6, 7, 8, 9 and 18, ES2's) and that differs from `Mission_StatusRaised` (`000bc49a`) arms the alert delay once (`MissionAlertArmed`, `000bc4b0`; the delay's counter `000af7a1` set to 10000), and is returned, and recorded as raised, when that counter is 0 or the status is 2. Otherwise the poll interval's counter `000af79d` is set to 10000 and it returns −1. ES2's also evaluates every tick while the machine is outside the mission box. `es2_xref.py` finds one call, from `00059700`, with `LocalPlayerMech`. [`DBSim_SpawnMissionObjects`](../formats/script-dat.md#the-second-pass) sets `Mission_StatusRaised` to `0xffff`.
+(machine): ES2's ([the poll](../../retail/simulation/mission-objectives.md#the-poll--mission_pollstatus-004131ac)) on ES1's globals. It ticks `MissionAlertTimer` (`000af7a0`) and `MissionPollTimer` (`000af79c`) with `Math_CountdownTimerTick`, and only when the poll interval has run out asks `Mission_StatusForAlert`(0, machine). A status whose entry in `Mission_StatusWorthRaising` (`00091700`) is set (2, 3, 6, 7, 8, 9 and 18, ES2's) and that differs from `Mission_StatusRaised` (`000bc49a`) arms the alert delay once (`MissionAlertArmed`, `000bc4b0`; the delay's counter `000af7a1` set to 10000), and is returned, and recorded as raised, when that counter is 0 or the status is 2. Otherwise the poll interval's counter `000af79d` is set to 10000 and it returns −1. ES2's also evaluates every tick while the machine is outside the mission box. `es2_xref.py` finds one call, from `Sim_MainTick` (`00059700`), with `LocalPlayerMech`, whether the machine is destroyed or not ([the tick](main-loop.md#the-tick--sim_maintick-00059700)). [`DBSim_SpawnMissionObjects`](../formats/script-dat.md#the-second-pass) sets `Mission_StatusRaised` to `0xffff`.
 
 ## The mission box
 
@@ -133,15 +133,15 @@ ES2's functions in that stretch with no counterpart in the file: `Group_AllMembe
 | `Mission_Box`, four `int32` | `000af7a4` |
 | `Mission_StatusRaised`, `int16` | `000bc49a` |
 | `MissionAlertArmed`, byte | `000bc4b0` |
-| `LocalPlayerMech`, the player's machine, which `00059700` passes to `Mission_PollStatus` | `000b5b86` |
+| `LocalPlayerMech`, the player's machine, which `Sim_MainTick` passes to `Mission_PollStatus` | `000b5b86` |
 | `Mission_StatusWorthRaising`, 20 `int16` | `00091700` |
 | `Mission_StatusBySelector`, 10 `int16` | `00091728` |
 
 ## Open
 
-- **Open:** what statuses 11 to 16 put on screen, and what `00059df8` and `00046efc` do with the answer: `00059f87` passes quiet 1, as ES2's [Q] does.
+- **Open:** what statuses 11 to 16 put on screen, which turns on the status panel `00046efc`, unread.
 - **Open:** whether anything in ES1 posts `MISSION FAILED`, `MISSION SUCCESSFUL` or the boundary lines; this file posts nothing. A retail check: walk the HERC out past the mission area and note whether a computer line comes up with the boundary panel.
-- **Open:** what writes the machine's `+0x99` and `+0x9a`, which selectors 0 and 3 test, and what clears `MissionAlertArmed`; ES2's player think writes its `+0x9f` and `+0xa0`, and its [Q] path clears the latch.
+- **Open:** what writes the machine's `+0x99` and `+0x9a`, which selectors 0 and 3 test, and what clears `MissionAlertArmed` besides `Q`'s case; ES2's player think writes its `+0x9f` and `+0xa0`.
 - **Open:** which values header word 3 takes in the retail missions; selectors outside 0–9 read past both tables.
 - **Open:** what reaches `Group_NoRivalOrderOnSubject` and `Group_OrderSubjectEngaged`, to which `es2_xref.py` finds no branch or stored pointer. Its stored-pointer hits for `Group_OrderSubjectCondition` (`00035c20`, `0005447a`, `00054e02`), `Group_AnyMemberScoredAKill` (`00062502`) and `Group_OrderSubjectArrivedAndClear` (`000874e7`) were not read.
-- **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in a mission, `BP <CS>:0000f4e8` fires at a steady interval, 10000 counts of a countdown whose tick delta is [Open](fixed-point-math.md#open) (about five seconds at ES2's rate), and walking out of the mission area makes the boundary panel come up within one such interval of crossing a line 60000 units past the outermost mission point.
+- **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in a mission, `BP <CS>:0000f4e8` fires at a steady interval, 10000 counts of a countdown, about 3.9 seconds ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)), and walking out of the mission area makes the boundary panel come up within one such interval of crossing a line 60000 units past the outermost mission point.

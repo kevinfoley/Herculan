@@ -49,7 +49,7 @@ ES1's group record is `0x28` bytes, where ES2's is `0x7a` ([ES2's](../../retail/
 | `+0x0c` | `int16` | the heading | the argument *heading*: `.MSN` `0x36`, or the route's first leg |
 | `+0x0e`, `+0x12` | ptr, `int16` | the member array and its count | |
 | `+0x14` | byte | the side: `Mission_TotalSalvage` counts a machine whose group's byte differs from the player's group's | `.MSN` `0x4a`'s low byte |
-| `+0x16` | ptr | the action; the shot sweep, the blast and the trigger test skip the group's members while it is set ([`world.md`](world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)) | the argument *action*: `.MSN` `0x50` |
+| `+0x16` | ptr | the action, ES2's [deployment gate](../../retail/simulation/mission-deployment.md#the-deployment-gate--group0x14): the members do not tick, and the shot sweep, the blast and the trigger test skip them, while it is set; `Sim_MainTick` clears it once the action has fired ([the tick](main-loop.md#the-tick--sim_maintick-00059700)) ([`world.md`](world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)) | the argument *action*: `.MSN` `0x50` |
 | `+0x1a` | `int16` | the target's kind: 0 a group, 1 a mech, 2 a flyer, 3 a base | `.MSN` `0x4c` |
 | `+0x1c` | ptr | the target | `.MSN` `0x4e` |
 | `+0x20` | ptr | the group's point | the argument *point*: `.MSN` `0x34` |
@@ -79,7 +79,7 @@ The route functions `Route_AdvanceCursor` (`0001c8c0`), `Route_NextWaypointClose
 
 ## The tick
 
-`Group_TickMembers` (`0001cf60`) runs `Mech_AiTick` (`0000d8e8`) on each member; there is no order to advance. `es2_xref.py` finds one call, from `00059700`.
+`Group_TickMembers` (`0001cf60`) runs `Mech_AiTick` (`0000d8e8`) on each member; there is no order to advance. `es2_xref.py` finds one call, from `Sim_MainTick` (`00059700`), for each group with no action; a group whose action has fired (`+0xa`) has the action cleared there and ticks from the next tick on ([the tick](main-loop.md#the-tick--sim_maintick-00059700)).
 
 `Mech_AiTick` is ES2's ([the AI tick](../../retail/simulation/ai-dispatch.md#the-ai-tick--mech_aitick-00411cec)) on ES1's fields: with a descriptor at `+0x47`, it calls slot `+0x20` (reassess) when the count `+0x4c` is 0; `Timer_CountDown` (`00064178`) on the countdown object `+0x4b` unless the descriptor's byte `+8` is set; slot `+0x18` (move); then slot `+0x1c` (think), zeroing the count when it answers non-zero, unless `+0xa9` is set, which it clears instead; and last `Behaviour_CountTick` (`0000fe84`, [the behaviour block](shields-and-behaviour-states.md#the-behaviour-block)) on the block at `+0x47`.
 
@@ -91,7 +91,7 @@ The route functions `Route_AdvanceCursor` (`0001c8c0`), `Route_NextWaypointClose
 
 `Group_ReportIfAllOutOfAction` (`0001d524`), (group, object): ES2's ([the out-of-action report](../../retail/simulation/mission-deployment.md#the-out-of-action-report)) with one pair where ES2's has ten. It returns at the first member other than the object that is neither destroyed nor immobilised; otherwise, when the flag number `+0x24` is not negative, it writes that flag of `000bc4b8` by the operation `+0x26`: 2 adds 1, 1 sets 0, `0xd` to `0x10` store the operation less `0xc`, any other writes nothing. The operation is looked up by `REPNE SCASD` in the six dwords at `0009222c` (2, 1, `0xd`, `0xe`, `0xf`, `0x10`) with their targets after them. `es2_xref.py` finds one call, from `Mech_ReportOutOfAction` (`0000d77c`, [the out-of-action report](sim-object-base.md#the-out-of-action-report--mech_reportoutofaction-0000d77c)).
 
-`Group_ApplyOutnumberedDamage` (`0001d4d0`) calls `Mech_ApplyOutnumberedDamage` (`00015a5c`, [small functions](mech.md#small-functions)) on each member, as ES2's (`00423f08`) does; `es2_xref.py` finds one call, from `00059700`.
+`Group_ApplyOutnumberedDamage` (`0001d4d0`) calls `Mech_ApplyOutnumberedDamage` (`00015a5c`, [small functions](mech.md#small-functions)) on each member, as ES2's (`00423f08`) does; `es2_xref.py` finds one call, from `Sim_MainTick` (`00059700`), on status 3.
 
 ## What the results read
 
@@ -127,7 +127,7 @@ Callees of other modules read for them: `Mech_AiTick` (`0000d8e8`), `Mech_Salvag
 
 ## Open
 
-- **Open:** what reads the group's point `+0x20` and heading `+0x0c`, and whether anything clears the action `+0x16`, which stands where ES2's [deployment gate](../../retail/simulation/mission-deployment.md#the-deployment-gate--group0x14) does.
+- **Open:** what reads the group's point `+0x20` and heading `+0x0c`.
 - **Open:** the callees not read: `0001b574` and `000044a4`, which take a flyer or base member with its ref's position and the group.
 - **Open:** three of the eleven calls `es2_xref.py` finds to `Action_Activate`, from `00003978` and `0001b290`; `Ai_ChooseWeapon` (`00018e50`) fires a machine's `+0x170` action when it runs out of weapons ([the AI's weapons](mech-ai.md#weapons)). Two are `Mech_ComponentDamageWrite`'s (`00013250`), firing the machine's `+0x170` action when it goes out of the fight ([the damage write](mech.md#the-damage-write--mech_componentdamagewrite-00013250)); three others are the sensor model's engagement, from `Detection_ShareContact` (`0000e618`) and twice from `Detection_Sweep` (`0000e85c`) ([the sensor model](sensor-model.md#looking-around--detection_sweep-0000e85c)), and the last three are `Action_TestTrigger`, `Actions_EvaluateTriggers` (`0001f87c`, [trigger areas](world.md#trigger-areas--actions_evaluatetriggers-0001f87c)) and `Sim_RaycastObjectList` (`0001f1d0`), which fires a struck enemy's `+0x16c` action.
 - **Open:** whether anything changes a group's target after the load; ES1's target is set once, by `DBSim_BuildGroupRecord`, in the functions read.

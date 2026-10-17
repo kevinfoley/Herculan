@@ -33,7 +33,7 @@ No arguments; ES2's (`004123ac`, [passes](../../retail/simulation/target-selecti
 2. For each object whose group's action is clear, neither immobilised nor destroyed, on side 0, it runs `Detection_Sweep`, holding back the player's machine (`+0x9d`) to sweep it last.
 3. It clears every object's `+0x9c`.
 
-`es2_xref.py` finds one call, from `00059700`.
+`es2_xref.py` finds one call, from `Sim_MainTick` (`00059700`, [the tick](main-loop.md#the-tick--sim_maintick-00059700)), unless the simulation is frozen.
 
 ## Looking around — `Detection_Sweep` (`0000e85c`)
 
