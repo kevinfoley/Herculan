@@ -34,6 +34,11 @@ Usage:
     python tools/scripts/es2_xref.py --binary VSHELL 004a1b2c
     python tools/scripts/es2_xref.py --binary ES1DBSIM 000015a4
     python tools/scripts/es2_xref.py --quiet 0040ac3c   # summary lines only
+    python tools/scripts/es2_xref.py --binary ES1DBSIM --range 00015e40-00019853 --table
+
+--range adds every function entry in the range (a padding entry is searched with its prologue), and
+--table prints one row per target: the branch, stored-pointer and vtable-slot counts and the
+functions the branches come from. All targets share one pass over the image.
 
 Exit status is 1 if every address given is unreferenced, so it can gate a claim.
 """
@@ -125,21 +130,38 @@ def enclosing(names, bounds, addr: int):
 
 def vtable_slots(binary: str, target: int):
     """Vtable slots holding the address, as (vtable, slot offset, slot name)."""
+    return all_vtable_slots(binary).get(target, [])
+
+
+_SLOTS = {}
+
+
+def all_vtable_slots(binary: str):
+    """address -> [(vtable, slot offset, slot name)] over the whole vtable dump, read once."""
+    if binary in _SLOTS:
+        return _SLOTS[binary]
+    out, current = {}, "?"
     path = retail_binaries.get(binary).dump("vtables_full.txt")
-    if not os.path.exists(path):
-        return []
-    out, current = [], "?"
-    want = "%08x" % target
-    with open(path, encoding="utf-8", errors="replace") as fh:
-        for line in fh:
-            head = VTABLE_HEAD.match(line)
-            if head:
-                current = head.group(1)
-                continue
-            slot = VTABLE_SLOT.match(line)
-            if slot and slot.group(4) == want:
-                out.append((current, int(slot.group(1), 16), slot.group(3)))
+    if os.path.exists(path):
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                head = VTABLE_HEAD.match(line)
+                if head:
+                    current = head.group(1)
+                    continue
+                slot = VTABLE_SLOT.match(line)
+                if slot:
+                    out.setdefault(int(slot.group(4), 16), []).append((current, int(slot.group(1), 16), slot.group(3)))
+    _SLOTS[binary] = out
     return out
+
+
+def range_targets(image: Image, names, bounds, spec: str):
+    """The function entries in LO-HI (inclusive) from the disassembly's FUNCTION headers, leaving out
+    a Ghidra function on the 0x90 padding before a prologue, which is searched with its prologue."""
+    lo, hi = (int(x, 16) for x in spec.split("-"))
+    return ["%08x" % a for a in bounds if lo <= a <= hi
+            and not (names[a].startswith("thunk_") and image.read(a, 1) == b"\x90")]
 
 
 def resolve(token: str, binary: str):
@@ -157,10 +179,13 @@ def resolve(token: str, binary: str):
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("targets", nargs="+", help="hex addresses or known_symbols names")
+    ap.add_argument("targets", nargs="*", help="hex addresses or known_symbols names")
     ap.add_argument("--binary", default="DBSIM", type=str.upper, choices=retail_binaries.IDS,
                     help="default DBSIM")
     ap.add_argument("--quiet", action="store_true", help="one summary line per target")
+    ap.add_argument("--range", help="also every function entry in LO-HI (hex, inclusive) from the disassembly dump")
+    ap.add_argument("--table", action="store_true",
+                    help="one row per target: branch, stored-pointer and slot counts and the calling functions")
     args = ap.parse_args()
 
     image = Image(args.binary)
@@ -170,21 +195,36 @@ def main() -> int:
               % os.path.relpath(retail_binaries.get(args.binary).dump("disasm_full.txt"), retail_binaries.ASSETS))
     if not os.path.exists(retail_binaries.get(args.binary).dump("vtables_full.txt")):
         print("(no vtable dump: vtable slots are among the stored pointers, unnamed)")
+    tokens = list(args.targets) + (range_targets(image, names, bounds, args.range) if args.range else [])
+    if not tokens:
+        ap.error("give targets or --range")
+
+    # One brute-force rel32 pass for every target's entries together.
+    targets = [resolve(t, args.binary) for t in tokens]
+    entries_of = {t: image.entries_of(t) for t in targets}
+    all_calls = rel32_sites_any(image, {e for es in entries_of.values() for e in es})
+    slots_by = all_vtable_slots(args.binary)
 
     any_referenced = False
-    for token in args.targets:
-        target = resolve(token, args.binary)
+    for token, target in zip(tokens, targets):
         label = enclosing(names, bounds, target) or token
-        entries = image.entries_of(target)
+        entries = entries_of[target]
 
         def via(hit: int) -> str:
             return "" if hit == target else "  (to %08x)" % hit
 
-        calls = rel32_sites_any(image, set(entries))
+        calls = [c for c in all_calls if c[2] in entries]
         dwords = [(o, va, sec, hit) for hit in entries for o, va, sec in dword_sites(image, hit)]
-        slots = [(vt, slot, name, hit) for hit in entries for vt, slot, name in vtable_slots(args.binary, hit)]
+        slots = [(vt, slot, name, hit) for hit in entries for vt, slot, name in slots_by.get(hit, [])]
         total = len(calls) + len(dwords)
         any_referenced |= total > 0
+
+        if args.table:
+            callers = sorted({(enclosing(names, bounds, site) or "%08x" % site).split("+")[0] for site, _k, _h in calls})
+            print("%08x  %-40s %3d br  %3d ptr  %2d slot  %s" % (
+                target, label, len(calls), len(dwords), len(slots),
+                "UNREFERENCED" if total == 0 else ", ".join(callers)))
+            continue
 
         print("%08x  %s" % (target, label))
         if len(entries) > 1:

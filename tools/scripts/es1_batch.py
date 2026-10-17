@@ -37,7 +37,12 @@ the range holds, its leads, the docs to read) taken from a notes file. --auto ap
 tools give: `es1_boilerplate.py bounds` over the range with a 0x100 margin, the function counts,
 `es2_naming.py match`'s candidates, and the docs that name one of the range's function addresses.
 
+`next` proposes the range: from START, whole object files as `es1_boilerplate.py bounds` places
+them, until about --target functions, a file never split; it prints each file's counts and evidence
+and the held rows (--held) inside.
+
 Usage:
+    python tools/scripts/es1_batch.py next START [--target 60] [--window HEX] [--held a+b]
     python tools/scripts/es1_batch.py brief N LO HI --scratch DIR [--notes NOTES.md] [--auto] [--out FILE]
     python tools/scripts/es1_batch.py run COMMANDS.txt [--from N] [--no-precheck]
     python tools/scripts/es1_batch.py precheck COMMANDS.txt [--fix]
@@ -380,6 +385,56 @@ def stop(i, why):
 FUNC_LINE = re.compile(r"^([0-9a-f]{8})\s+\d+\s+(?:(\S+)\s+)?(\S+)$")
 
 
+def cmd_next(args):
+    """Proposes the next batch's range: object files from START, by `es1_boilerplate.py bounds`'
+    start list (zero fill ends and destructor copies), taken whole until about --target functions.
+    Prints each file's counts and evidence lines, the held rows inside, and the brief command."""
+    binary, lo = args.binary, int(args.start, 16)
+    hi = lo + int(args.window, 16)
+    _, bounds = run(["es1_boilerplate.py", "bounds", binary, "%08x" % lo, "%08x" % hi])
+    m = re.search(r"starts the zero fill and destructor copies place: ([0-9a-f, ]+)", bounds)
+    starts = sorted({lo} | {int(a, 16) for a in (m.group(1).split(", ") if m else []) if int(a, 16) >= lo})
+    # Each evidence line at the code address it is about: after "->" for a table entry, else its first.
+    evidence = [(int(e.group(1), 16), l.strip()) for l in bounds.splitlines()
+                for e in [re.search(r"-> ([0-9a-f]{8})", l) or re.search(r"\b([0-9a-f]{8})\b", l)]
+                if e and not l.startswith(binary) and "starts the" not in l]
+    _, funcs = run(["es2_naming.py", "funcs", binary, "%08x" % lo, "%08x" % hi])
+    rows = [(int(r[0], 16), r[1] or "") for r in (m_.groups() for m_ in map(FUNC_LINE.match, funcs.splitlines()) if m_)
+            if "p" not in (r[1] or "")]
+    if len(starts) < 2:
+        print("no object-file start found in %08x-%08x after %08x; widen --window" % (lo, hi, lo))
+        return 1
+    held = {int(h, 16) for h in args.held.split("+") if h} if args.held else set()
+    # The target counts functions still to read (not stamped); a file with none ends the batch.
+    files, total, why = [], 0, "the window ends"
+    for a, b in zip(starts, starts[1:]):
+        fs = [r for r in rows if a <= r[0] < b]
+        n = sum("S" not in r[1] for r in fs)
+        if files and n == 0:
+            why = "the next file is all stamped"
+            break
+        if files and (total + n > args.target * 1.5 or total >= args.target):
+            why = "the target is reached"
+            break
+        files.append((a, b - 1, len(fs), sum("*" in r[1] for r in fs), len(fs) - n))
+        total += n
+    end = files[-1][1]
+    print("%s %08x-%08x: %d object file(s), %d functions to read, %d in all (padding entries left out); "
+          "stopped because %s" % (binary, lo, end, len(files), total, sum(f[2] for f in files), why))
+    for a, b, n, unnamed, stamped in files:
+        print("  %08x-%08x  %3d functions, %3d unnamed, %3d stamped" % (a, b, n, unnamed, stamped))
+        for at, line in evidence:
+            if a <= at <= b and not line.startswith("zero fill"):
+                print("      " + line)
+    inside = sorted(h for h in held if lo <= h <= end)
+    if inside:
+        print("  held rows inside: " + " ".join("%08x" % h for h in inside))
+    nxt = starts[len(files)] if len(files) < len(starts) else None
+    print("next file after it: %s" % ("%08x" % nxt if nxt is not None else "past the window"))
+    print("brief: py tools/scripts/es1_batch.py brief N %08x %08x --scratch <dir> --notes <notes> --auto" % (lo, end))
+    return 0
+
+
 def auto_leads(binary, lo, hi):
     """The mechanical part of a batch's notes: the object-file evidence over the range with a 0x100
     margin, its function counts, es2_naming.py match's candidates, and the docs that already name one of
@@ -450,13 +505,20 @@ def main():
     r.add_argument("file")
     r.add_argument("--from", dest="start", type=int, default=1, help="resume at this step number")
     r.add_argument("--no-precheck", action="store_true", help="skip the wording precheck of the stamp lines")
+    nx = sub.add_parser("next", help="propose the next batch's range: whole object files from START to about --target functions")
+    nx.add_argument("start", help="the address the batch starts at, a file's first byte")
+    nx.add_argument("--target", type=int, default=60, help="about how many functions (default 60)")
+    nx.add_argument("--window", default="10000", help="hex bytes past START to look for file starts (default 10000)")
+    nx.add_argument("--binary", default="ES1DBSIM")
+    nx.add_argument("--held", help="held rows to report when inside, a+b+c")
     pc = sub.add_parser("precheck", help="the stamp lines' wording checks against the batch JSONs; writes nothing")
     pc.add_argument("file")
     pc.add_argument("--fix", action="store_true", help="first rewrite the SHAPE forms in the batch JSONs in place")
     ls = sub.add_parser("list", help="print the steps the run would take, numbered")
     ls.add_argument("file")
     args = p.parse_args()
-    return {"run": cmd_run, "list": cmd_list, "brief": cmd_brief, "precheck": cmd_precheck}[args.cmd](args)
+    return {"run": cmd_run, "list": cmd_list, "brief": cmd_brief, "precheck": cmd_precheck,
+            "next": cmd_next}[args.cmd](args)
 
 
 if __name__ == "__main__":

@@ -24,6 +24,9 @@ address operands by different rules (insn_streams).
       labels, locals and Ghidra variable numbers normalised: whether one binary's function is a
       copy of the other's, and where the two differ. An ES1 function against an ES2 one is headed
       with the cross-compiler match's similarity score.
+  diff BIN BIN2 a:b [c:d ...]
+      The same for several chosen pairs in one run (a:b+c:d also works), each headed with both
+      names; the decompiles are read once.
   match BIN BIN2 [--min N] [--fuzzy R] [--all]
       BIN's unnamed functions (every function with --all) of at least N instructions (default 6)
       whose disassembly, with every address operand masked, equals a BIN2 function's; with
@@ -155,7 +158,16 @@ def names(binary):
     return {e["address"].lower(): e["name"] for e in entries(binary) if e.get("name")}
 
 
+_BODIES, _XTOKENS = {}, {}
+
+
 def bodies(binary):
+    if binary not in _BODIES:
+        _BODIES[binary] = _bodies(binary)
+    return _BODIES[binary]
+
+
+def _bodies(binary):
     src = os.path.join(ANALYSIS, f"{binary}_decomp_full.c")
     os.makedirs(CACHE, exist_ok=True)
     cache = os.path.join(CACHE, f"{binary}_bodies.pkl")
@@ -409,8 +421,19 @@ def normalised(binary, addr, known=None):
 
 
 def cmd_diff(args):
-    """diff BIN addr BIN2 addr2: unified diff of the two normalised bodies (empty when they match)."""
+    """diff BIN addr BIN2 addr2: unified diff of the two normalised bodies (empty when they match).
+    diff BIN BIN2 a:b [c:d ...] (or a:b+c:d): the same for each pair, each headed with both names."""
     import difflib
+    if len(args) >= 3 and args[1].upper() in retail_binaries.IDS:
+        b1, b2 = args[0], args[1]
+        k1, k2 = names(b1), names(b2)
+        for pair in (p for arg in args[2:] for p in re.split(r"[+,]", arg) if p):
+            x, _, y = pair.partition(":")
+            x, y = x.lower().zfill(8), y.lower().zfill(8)
+            print(f"===== {b1} {x} {k1.get(x, '')}  /  {b2} {y} {k2.get(y, '')}")
+            cmd_diff([b1, x, b2, y])
+            print()
+        return
     (b1, a1, b2, a2) = args[:4]
     a1, a2 = a1.lower().zfill(8), a2.lower().zfill(8)
     t1, t2 = normalised(b1, a1), normalised(b2, a2)
@@ -1325,6 +1348,13 @@ XSHINGLE = 4
 
 
 def xtokens(binary):
+    """_xtokens, read once per process (diff --pairs asks for it once per pair)."""
+    if binary not in _XTOKENS:
+        _XTOKENS[binary] = _xtokens(binary)
+    return _XTOKENS[binary]
+
+
+def _xtokens(binary):
     """{function: tokens} of every decompiled body for the cross-compiler match: normalised, with
     the binary's own names substituted, the signature line dropped, types and casts reduced to T,
     locals and register artefacts (extraout_EAX, unaff_ESI) to v, and parameters to p, since the two
