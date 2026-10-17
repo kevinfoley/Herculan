@@ -35,7 +35,7 @@ The slot functions in this file ([the slots](weapon-mount-classes.md#the-slots))
 
 ## The manager
 
-The machine holds its manager at `+0x198`, where ES2's holds it at `+0x202`. `00012c00`, the function ES2's `Mech_ConfigureLoadout` (`004175dc`) pairs with, builds it: with the machine's byte `+0x9d` set, the local manager through `WeaponMounts_CtorLocal`; otherwise the `0x14`-byte base through `MechLoadout_ConstructWeaponMounts` (`0000c31c`) alone, which stores the base table `WeaponMountsBaseVtable` (`000912f2`). ES2's tests `+0xa3`.
+The machine holds its manager at `+0x198`, where ES2's holds it at `+0x202`. `Mech_ConfigureLoadout` (`00012c00`, [construction](mech.md#construction)) builds it: with the machine's byte `+0x9d` set, the local manager through `WeaponMounts_CtorLocal`; otherwise the `0x14`-byte base through `MechLoadout_ConstructWeaponMounts` (`0000c31c`) alone, which stores the base table `WeaponMountsBaseVtable` (`000912f2`). ES2's tests `+0xa3`.
 
 | ES1 | ES2 | Holds |
 |---|---|---|
@@ -53,12 +53,12 @@ Each table holds a zero dword and one slot, the energy turn. `000912f2`'s is the
 
 Two functions walk a manager's mount array, skipping holes:
 
-- **`WeaponMounts_RoundsByMissileType` (`0000be6c`)**, (manager, rounds), is ES2's (`0040fbdc`, [missile lock](../../retail/simulation/missile-lock.md)) on slot `+0x64`: it zeroes the five `int16` at rounds and adds each mount's rounds to its subtype's entry unless the subtype is 5. `es2_xref.py` finds one call, from `00014ee0`.
+- **`WeaponMounts_RoundsByMissileType` (`0000be6c`)**, (manager, rounds), is ES2's (`0040fbdc`, [missile lock](../../retail/simulation/missile-lock.md)) on slot `+0x64`: it zeroes the five `int16` at rounds and adds each mount's rounds to its subtype's entry unless the subtype is 5. `es2_xref.py` finds one call, from `Mech_PerTickSystemsUpdate` (`00014ee0`, [the systems tick](mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0)).
 - **`WeaponMounts_FindEcmMount` (`0000be04`)**, (manager), returns the first mount whose template's (`+0x1c`) `int16` `+0x56` is 13, the ECM, or 0. `es2_xref.py` finds calls from `Mech_IsEcmSwitchedOn` (`00014e68`) and `Mech_GetEcmPodSwitch` (`00014eb4`) ([the ECM](weapon-mount-classes.md#the-ecm)). ES2's `MechLoadout_FileEquipmentPods` (`0040fb2c`) instead files its five pods into an array at `mech+0x307` once the mounts are built ([equipment pods](../../retail/simulation/equipment-pods.md)).
 
 ## Building it — `WeaponMounts_CtorLocal` (`0000c808`)
 
-(manager, ammunition types, weapon ids, hardpoints, count, machine): allocates `0x35` bytes when given none, runs `MechLoadout_ConstructWeaponMounts`(manager, 1, ammunition types, weapon ids, hardpoints, count, machine), where `00012c00` passes 0 in the second place for a base manager (the factory passes it on to the mount constructors, which never read it: [the constructors](weapon-mount-classes.md#the-constructors)), and then builds the three chains as ES2's does ([the manager](../../retail/simulation/weapon-mounts.md#the-manager--mech0x202)):
+(manager, ammunition types, weapon ids, hardpoints, count, machine): allocates `0x35` bytes when given none, runs `MechLoadout_ConstructWeaponMounts`(manager, 1, ammunition types, weapon ids, hardpoints, count, machine), where `Mech_ConfigureLoadout` passes 0 in the second place for a base manager (the factory passes it on to the mount constructors, which never read it: [the constructors](weapon-mount-classes.md#the-constructors)), and then builds the three chains as ES2's does ([the manager](../../retail/simulation/weapon-mounts.md#the-manager--mech0x202)):
 
 1. `__vec_ctor` runs **`ARRAY_short_Ctor` (`0000c96c`)**, by its padding entry `0000c96a`, over the three 6-byte arrays from `+0x1f`; it allocates 6 bytes when given none and clears the dword at `+0`.
 2. It stores `0009158a` at `+0x10`, and gives each array the count and `operator_new`(count × 2).
@@ -78,7 +78,7 @@ These are ES2's ([arming, chaining and linking](../../retail/simulation/weapon-m
 - **`WeaponMounts_ToggleChainMember` (`0000d5e4`)**, (manager, row), reads only the row's low 16 bits: the first mount whose hardpoint's byte `+7` is the row and whose template's `int32` `+0x30` is above 0 has its chain entry flipped, and, when its priority slot `+0x4c` answers 0, its wake slot `+0x40` called; it returns 1, or 0 when no mount matches. A right click on a row reaches it ([the energy row](cockpit-weapon-gauges.md#the-energy-row)).
 - **`WeaponMounts_ToggleLink` (`0000d41c`)**, (manager): with a mount armed, flips `+0x4b` on it and on the mount its partner offset names, when that offset is not 0, the partner exists and the two templates' `+0x56` agree.
 - **`WeaponMounts_SetTrackLatch` (`0000d408`)**, (manager), stores 1 at `+0x14`.
-- **`WeaponMounts_MountForHardpointSlot` (`0000ca04`)**, (manager, slot), returns the first mount whose hardpoint's byte `+0x17` is the slot, or 0. `es2_xref.py` finds one call, from `00013b44`.
+- **`WeaponMounts_MountForHardpointSlot` (`0000ca04`)**, (manager, slot), returns the first mount whose hardpoint's byte `+0x17` is the slot, or 0. `es2_xref.py` finds one call, from `Mech_DirectFireHitTest` (`00013b44`, [the hit test](mech.md#the-hit-test--mech_directfirehittest-00013b44)).
 - **`WeaponMounts_IdleAllCapacitors` (`0000d1c4`)**, (manager), calls each mount's wake slot `+0x40`.
 - **`WeaponMounts_DemandFullChargeOnArmed` (`0000d22c`)**, (manager), calls the armed mount's full-charge slot `+0x44` and clears every other mount's `+0x43`. `es2_xref.py` finds no reference to it, nor to ES2's `WeaponMounts_DemandFullChargeOnArmed_Dead` (`00410d50`) ([Open](#open)).
 
@@ -93,7 +93,7 @@ These are ES2's ([arming, chaining and linking](../../retail/simulation/weapon-m
 | `0x4a`, `0x4e` | the same, with whether the code was `0x4e` |
 | `0x202`–`0x20a` | `WeaponMounts_ToggleChainMember` with the code less `0x202` |
 
-ES2's (`00410f78`) handles the same codes with ten row codes, `0x202`–`0x20b`. `es2_xref.py` finds one call, from `00011050`, which passes the manager of `PlayerMech` (`000bc42a`).
+ES2's (`00410f78`) handles the same codes with ten row codes, `0x202`–`0x20b`. `es2_xref.py` finds one call, from `Mech_HandleCommand` (`00011050`, [the cockpit](mech.md#the-cockpit)), which passes the manager of `PlayerMech` (`000bc42a`).
 
 ## Readiness
 
@@ -110,7 +110,7 @@ ES2's (`00410f78`) handles the same codes with ten row codes, `0x202`–`0x20b`.
 3. It reads the console panel's dword block through `00037ed4` (the panel at `CockpitViewInstance`'s `+0x1dd`, ES2's `+0x1e1`): the chain in the low `int16`, TRACK in byte 2, LINK in byte 3. With `+0x16` set it clears it and puts its own chain in the block; otherwise `WeaponMounts_SetChain` takes the block's. TRACK sets or clears `+0x14`, LINK runs `WeaponMounts_ToggleLink`; it clears byte 3 and writes the block back through `00037e78`.
 4. For each mount: armed is the index against `+0x1d`. A linked mount that is neither destroyed (`+0x49`) nor unselectable (`+0x4c` clear) counts as armed when its partner is the armed one; one that is either has both halves' `+0x4b` flipped and hands the selection to its partner. It then calls the gauge push, slot `+0x54`, with (mount, ready, in the current chain, armed), ready from `WeaponMounts_MountIsReady`.
 
-`es2_xref.py` finds one call, from `000155a8`, which passes its machine's manager `+0x198`.
+`es2_xref.py` finds one call, from `Player_PerFrameCockpitUpdate` (`000155a8`, [the cockpit](mech.md#the-cockpit)), which passes its machine's manager `+0x198` and the distance to its target.
 
 ## Energy — `WeaponMounts_ArbitrateEnergy` (`0000cc2c`)
 

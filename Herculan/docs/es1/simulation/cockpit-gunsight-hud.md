@@ -45,16 +45,16 @@ ES2's builds a second waypoint indicator, its children 2 and 3 over a rect that 
 
 | Offset | Holds | Written by |
 |---|---|---|
-| 0, 2, 4 | the machine's `int16` `+0xa` (its heading), `+0x22e` and `+0x230` | `000155a8`, through `Gunsight_SetValues` |
+| 0, 2, 4 | the machine's `int16` `+0xa` (its heading), `+0x22e` and `+0x230` (its turret twist and pitch) | `Player_PerFrameCockpitUpdate` (`000155a8`), through `Gunsight_SetValues` |
 | 6 | the selected object, or 0 | `Gunsight_UpdateAndPaint`, `TargetSelect_SetObject`, `TargetSelect_Cycle` |
 | `0xa`, `0xe`, `0x12` | the object's position, its `+0x20`–`+0x2b` | `Gunsight_UpdateAndPaint` |
 | `0x16` | its heading, `+0xa` | the same |
 | `0x1c` | its shape's radius: the `int16` `+8` of the dword `+4` of its `+0x2e`, ES2's chain 6 lower | the same |
 | `0x20` | 2000 | the same |
 | `0x24` | 1 once a selection reaches the gunsight | `TargetSelect_SetObject`, `TargetSelect_Cycle` ([the target selection](cockpit-panel.md#the-target-selection)) |
-| `0x25` | the machine's byte `+0x95`, at ES2's lock byte `+0x9b` less 6 | `000155a8` |
+| `0x25` | the machine's lock lamp `+0x95`, ES2's `+0x9b` | `Player_PerFrameCockpitUpdate` |
 
-`000155a8`, read only around its call, copies the block with `Gunsight_GetStateBlock`, stores `+0x230` at offset 4 and, unless the machine's byte `+0x9e` is set, `+0xa` and `+0x22e` at 0 and 2, stores `+0x95` at `0x25`, and hands the copy to `Gunsight_SetValues` ([Open](#open)). ES2's block ([the state block](../../retail/simulation/hud-target-indicator.md#where-the-selection-reaches-the-hud)) takes the target's aim point and the pod flag from the cockpit's target block.
+`Player_PerFrameCockpitUpdate` copies the block with `Gunsight_GetStateBlock`, stores the pitch at offset 4 and, unless the machine is immobilized (`+0x9e`), the heading and the twist at 0 and 2; takes the selected object at offset 6 as the machine's own target `+0x15e` when it differs; stores the lamp at `0x25`; and hands the copy to `Gunsight_SetValues` ([the HERC's cockpit](mech.md#the-cockpit)). ES2's block ([the state block](../../retail/simulation/hud-target-indicator.md#where-the-selection-reaches-the-hud)) takes the target's aim point and the pod flag from the cockpit's target block.
 
 **`Gunsight_SetValues` (`00035090`)** hands each changed value's delta to slot `+0x10` of a child, ES2's `+0xc` ([live values](../../retail/simulation/cockpit-gunsight-hud.md#live-values)): offset 0's (new − old) to the heading tape (child 1) and the waypoint indicator (child 7), offset 2's (old − new) to the rotation indicator (child 2) and offset 4's to the vertical bar (child 3), then copies the block over the gunsight's. So the vertical bar tracks the machine's `+0x230` as ES2's hidden bar tracks the pitch.
 
@@ -209,7 +209,6 @@ The callees read for the builder, the paint and the waypoint indicator, outside 
 
 ## Open
 
-- **Open:** `000155a8`, the caller of `Gunsight_SetValues` that fills the block's first three values, read only around the call; what the machine's `+0x22e` and `+0x230` are (ES2's turret twist and pitch are its `+0x298` and `+0x29a`), and what its bytes `+0x95` and `+0x9e` mean (ES2's missile lock `+0x9b` and immobilised byte `+0xa4` sit 6 higher).
 - **Open:** `00055bc2`, which the builder passes {2*p*.x, *p*.y, 0} and 1, and `00055c6f`, which it calls when the mouse flag is set and which on its way in stores the point's x and y at `000962e8` and `000962ec` and the third value at `000962f0`: read in part, where ES2's builder calls a stub.
 - **Open:** the art of `hudhslid`, `hudvslid` and `hudhtick`: what frames 1 and 2 of the slide bars show, and whether the heading tape's strip is drawn so that its 19/18 travel and the jump at north do not show. What the point `000b16d4` holds is in [ES1's pick](terrain.md#open).
 - **Open:** which render context is installed when `Gunsight_UpdateAndPaint` runs, which the target box draws through; ES2's box draws through the canopy's ([why the box goes behind the cockpit frame](../../retail/simulation/hud-target-indicator.md#why-the-box-goes-behind-the-cockpit-frame)).

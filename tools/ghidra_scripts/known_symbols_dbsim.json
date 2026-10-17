@@ -5881,7 +5881,13 @@
       "confidence": "high",
       "name": "Mech_GetShieldByHeading",
       "description": "Mech vtable +0x34. Given a heading angle, returns the front (+0x222) or rear (+0x224) shield value by which side is within +/-90 degrees.",
-      "source": "docs/retail/simulation/damage-system.md"
+      "source": "docs/retail/simulation/damage-system.md",
+      "verified": {
+        "bytes": "004154d0+50",
+        "sha1": "9a4053d504e3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00415504",
@@ -5948,7 +5954,13 @@
       "confidence": "high",
       "name": "Mech_GetAimPoint",
       "description": "The mech vtable +0x30: first triple (0, type+0x64, type+0x66), the pilot's eye; second (0, type+0x68, type+0x6a), the outside view's orbit centre.",
-      "source": "docs/retail/simulation/external-views.md#the-camera-object--cam"
+      "source": "docs/retail/simulation/external-views.md#the-camera-object--cam",
+      "verified": {
+        "bytes": "004155c4+65",
+        "sha1": "ce51cdf84c27",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00415608",
@@ -6024,7 +6036,13 @@
       "confidence": "high",
       "name": "Mech_ApplyThrottleInput",
       "description": "Player throttle handler. Integrates the stick axis into mech+0x290 (throttle, Q10, clamped +/-0x400) at Q8(0x91,-axis) per tick, converts it to a desired speed via Q10(maxRev or maxFwd, throttle), then calls Mech_LocomotionTick. ThrottleLeverMode (0049a06e) gates the clamp: at 0 it spans the full +/-0x400, so the axis held down runs through zero into reverse.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "004160dc+407",
+        "sha1": "7c8a3d22a7ab",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00416274",
@@ -6135,9 +6153,15 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_SpreadImpactDamage",
-      "description": "Spreads one impact over the whole machine instead of aiming it. Each of the 29 live components draws its own (rand & 0xff) < odds roll; a component that is caught takes Math_Q8Multiply(rand(maxDamage) + maxDamage/2, Component_TotalArmor(i)) through vtable +0x74, so the share scales with what that component had to lose. maxDamage 0 returns immediately. Callers: the collapse landing in Mech_LocomotionTick (150, 120) and Mech_ApplyStartingCondition. Args derived from disassembly: [EBP+8] mech, [EBP+0xc] and [EBP+0x10] words, plain RET.",
+      "description": "Spreads one impact over the whole machine instead of aiming it. Each of the 29 live components draws its own (rand & 0xff) < odds roll; a component that is caught takes Math_Q8Multiply(rand(maxDamage) + maxDamage/2, Component_TotalArmor(i)) through vtable +0x74, so the share scales with what that component had to lose. maxDamage 0 returns immediately. es2_xref finds three calls: the collapse landing in Mech_LocomotionTick (150, 120), Mech_ApplyStartingCondition and Mech_ApplyOutnumberedDamage. Args derived from disassembly: [EBP+8] mech, [EBP+0xc] and [EBP+0x10] words, plain RET.",
       "source": "docs/retail/simulation/component-damage.md",
-      "signature": "void __cdecl Mech_SpreadImpactDamage(MechObject *mech, short maxDamage, short odds)"
+      "signature": "void __cdecl Mech_SpreadImpactDamage(MechObject *mech, short maxDamage, short odds)",
+      "verified": {
+        "bytes": "00417a04+164",
+        "sha1": "1069c45ff0c5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00417aa8",
@@ -6187,8 +6211,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ComponentDamageWrite",
-      "description": "Mech vtable +0x74. Shared damage-write/cascade endpoint for both damage pathways. Also latches the two reactor-damage flags off dependent-subpiece 5: mech+0xaa past 50% damage, mech+0xab at 75%+, each with an alert sound for the player; the check is gated on BOTH flags being clear, so once the first latches the second can only be reached by a single hit that crosses both thresholds at once. 8-level percentage bucketing with alert sounds, leg-pair status tracking (dependent-array slots {0,1} front legs, {10,11} rear legs on 4-legged types), mech-death trigger on enough destroyed limbs.",
-      "source": "docs/retail/simulation/component-damage.md"
+      "description": "(mech, component, damage, attacker): Mech vtable +0x74, the shared damage endpoint. Returns at once for the locally piloted machine (+0xa3) while Sim_DamageToPlayerDisabled answers non-zero, and for a component whose occupancy flag (+0x20e) is clear. Snapshots each mount's Component_ReadDamagePercent (.GL +0x17 + 19), and for the player internal 4's reading; sets g_DebrisAlternate to typeRec + 0x212; Component_ApplyDamageAndCascade. For the player, 0x0c when internal 4 reaches 0x100, else 0x03 when it leaves 0. Each mount's slot +0x68 with its readings before and after, 0x10 for the player when one reaches 0x100. Mech_ComputeShieldCapacity. Not for a flyer (typeRec+0x50): the leg readings of internals 0 and 1, and 10 and 11 when typeRec+0x4a is above 2; a leg at 0x100 queues its ground shape on g_FlatObjDeleteQueue; unless immobilised (+0xa4), half the legs gone, while +0x99 is clear, credits the attacker through its slot +0x60 with 0 (and posts 0x2f when the attacker is LocalPlayerMech and the mech its +0x1a4), runs Mech_ReportOutOfAction, the defeat action and the disabled state; then latches +0xa4 and releases its target (+0x1a4, the holder's +0x1a2, +0x9d); otherwise the averaged sides latch +0xa9 at 0x8d or more (0x13) or +0xa8 past 0x50 (8), each message for the player while its latch was clear. Death, while +0x99 is clear, when Component_IsFullyDestroyed answers for component 0 or 1, or internal 9 or 8 reads 0x100: +0x99 set, 30000 to component 0 through the slot, the attacker credited with the sampled +0xa4, the report and the defeat action when that was clear, the target released, the scanner +0x96 cleared, 0x2e on the 0x2f test, and the dead state for a non-flyer, or with typeRec+0x4c set +0x38 set, Z -100000, in limbo and every ground shape queued with the count zeroed. Then, while +0xaa and +0xab are clear, internal 5 latches +0xab past 0xc0 or +0xaa past 0x80, with 4 for the player. Ends with Sim_FlushDeleteQueue.",
+      "source": "docs/retail/simulation/component-damage.md",
+      "verified": {
+        "bytes": "00417de4+2540",
+        "sha1": "210315924977",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004187d0",
@@ -6198,7 +6228,13 @@
       "name": "Mech_ApplyExplosiveDamage",
       "description": "Mech vtable +0x70. Args (weaponDamage, hitPos, blastRadius, attacker). Front/rear facing classification (<0x4000 BAM) -> Mech_ShieldAbsorb_Explosive -> per-component roll at 0x802-in-0x1000 across up to 29 slots -> component world position via vtable +0x58 -> linear distance falloff (overflow * (blastRadius-distance)/blastRadius) via mech vtable +0x74. Structurally different from the direct-fire path: many random components with falloff, versus one deterministic component without.",
       "source": "docs/retail/simulation/damage-system.md",
-      "signature": "void __cdecl Mech_ApplyExplosiveDamage(MechObject *this, short damage, int *hitPoint, short blastRadius, int *attacker)"
+      "signature": "void __cdecl Mech_ApplyExplosiveDamage(MechObject *this, short damage, int *hitPoint, short blastRadius, int *attacker)",
+      "verified": {
+        "bytes": "004187d0+245",
+        "sha1": "72af03f201c2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004188c8",
@@ -6207,7 +6243,13 @@
       "confidence": "high",
       "name": "Mech_ApplyDirectFireDamage",
       "description": "Splits the armor damage by the PROJ.DAT splash factor (Math_Q10Multiply(shotData+8, shotData+4)) -- NOT a per-weapon-type effectiveness scale. The remainder goes to component health via mech vtable +0x74; the split-off share, when nonzero, becomes a 500-unit secondary explosion through the struck object's OWN +0x70 (a direct call, not a sweep). Also rolls to destroy the struck weapon mount on a damage-band change.",
-      "source": "docs/retail/simulation/damage-system.md"
+      "source": "docs/retail/simulation/damage-system.md",
+      "verified": {
+        "bytes": "004188c8+733",
+        "sha1": "125e61a1172c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00418ba8",
@@ -6241,7 +6283,13 @@
       "confidence": "high",
       "name": "Mech_IntegrateMotion",
       "description": "Sets the animation playback rate from mech+0x2a0, then advances the object by dt = Math_IntegrateRateOverTick(100) via SimObject_ApplyRootMotion.",
-      "source": "docs/retail/simulation/mech-locomotion.md"
+      "source": "docs/retail/simulation/mech-locomotion.md",
+      "verified": {
+        "bytes": "00418f40+51",
+        "sha1": "36525ba918ea",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00418f74",
@@ -6266,7 +6314,13 @@
       "confidence": "high",
       "name": "Mech_PlaceLegsOnGround",
       "description": "Per-leg terrain placement over the mech animated node hierarchy. For each entry of mech+0x238 still holding a ground shape: moves the shape to the world position of the node typeRec+0x77[i] names, gives it the machine's heading (euler +0x10) and clears its +0x32 matrix-valid flag -- unconditionally. Then, within 15000 of the camera or for the player, tests the footfall for kind-0 entries (typeRec+0x72[i]) against the gait's thresholds and plays sound 0x1d on a plant.",
-      "source": "docs/retail/simulation/ground-shapes.md#a-hercs-shapes"
+      "source": "docs/retail/simulation/ground-shapes.md#a-hercs-shapes",
+      "verified": {
+        "bytes": "004195c8+809",
+        "sha1": "6d88ba97cca6",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004198f4",
@@ -6300,7 +6354,13 @@
       "confidence": "high",
       "name": "Mech_TorsoTwistTick",
       "description": "Torso/turret twist (yaw): rate at mech+0x294, angle at mech+0x298, clamped to +/- typeRec[+0x22]. Rates dt-scaled via Math_IntegrateRateOverTick. Only ACCELERATION is rate-limited -- when |Q8(axis, typeRec[+0x1e])| <= |rate| the rate snaps to it, so releasing or reversing the stick stops the turret dead. Args are (mech, axis, snapTarget, snapEnable); with snapEnable set the turret stops on the tick its angle crosses snapTarget, which is how Mech_CenterTorsoTick lands on centre. Ends by seeking the twist thread (mech+0x230) to (unsigned)angle >> 2 via AnimThread_SeekToPosition -- the turret has no rotation of its own. See docs/retail/simulation/torso-aim.md.",
-      "source": "docs/retail/simulation/torso-aim.md"
+      "source": "docs/retail/simulation/torso-aim.md",
+      "verified": {
+        "bytes": "0041a550+383",
+        "sha1": "dd87bb6378f3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041a6d0",
@@ -6309,7 +6369,13 @@
       "confidence": "high",
       "name": "Mech_TorsoTwistServoSoundTest",
       "description": "Run at the end of Mech_TorsoTwistTick for the locally piloted machine only (mech+0xa3), with that tick's axis input. When |axis| exceeds 0xc0, the twist angle (mech+0x298) differs from the one recorded last call and the static byte at 0049a1c9 is clear, it tests Sound_IsPlaying(0x21) and sets the byte if that sound is not playing; it clears the byte when the axis is zero or the angle has stopped moving; it records the angle in the static word at 0049a1ca. It never starts or stops a sound, and es2_xref.py finds no other reference to either static. See docs/retail/simulation/torso-aim.md.",
-      "source": "docs/retail/simulation/torso-aim.md"
+      "source": "docs/retail/simulation/torso-aim.md",
+      "verified": {
+        "bytes": "0041a6d0+123",
+        "sha1": "2527fa52a4d2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041a74c",
@@ -6333,7 +6399,13 @@
       "confidence": "high",
       "name": "Mech_TorsoPitchTick",
       "description": "Torso/turret pitch: rate at mech+0x296, angle at mech+0x29a, clamped to the asymmetric range [typeRec+0x2c, typeRec+0x2a]. Same shape as Mech_TorsoTwistTick, on the pitch thread (mech+0x234) and typeRec[+0x24..+0x2c]. Its third argument is the range to the current target, passed straight to Mech_ConvergeGunsOnRange for gun convergence. See docs/retail/simulation/torso-aim.md.",
-      "source": "docs/retail/simulation/torso-aim.md"
+      "source": "docs/retail/simulation/torso-aim.md",
+      "verified": {
+        "bytes": "0041a808+393",
+        "sha1": "b881c649613c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041a994",
@@ -6342,7 +6414,13 @@
       "confidence": "high",
       "name": "Mech_TorsoPitchServoSoundTest",
       "description": "Run at the end of Mech_TorsoPitchTick for the locally piloted machine only (mech+0xa3), with that tick's axis input. When |axis| exceeds 0xc0, the pitch angle (mech+0x29a) differs from the one recorded last call and the static byte at 0049a1cc is clear, it tests Sound_IsPlaying(0x21) and sets the byte if that sound is not playing; it clears the byte when the axis is zero or the angle has stopped moving; it records the angle in the static word at 0049a1ce. It never starts or stops a sound, and es2_xref.py finds no other reference to either static. See docs/retail/simulation/torso-aim.md.",
-      "source": "docs/retail/simulation/torso-aim.md"
+      "source": "docs/retail/simulation/torso-aim.md",
+      "verified": {
+        "bytes": "0041a994+123",
+        "sha1": "6f29e802e3c9",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041aa10",
@@ -6387,7 +6465,13 @@
       "confidence": "high",
       "name": "Mech_LockTonePlay",
       "description": "Turns mech+0x9b (lock acquired) into the cockpit lock tone: Sound_Play(0x15) on a 0x40-coarse-tick blink cadence while set, 0x14 when clear but the target just changed (+0x9d), 0x16 once on loss. Called from the tail of Mech_PerTickSystemsUpdate for the locally-piloted machine only.",
-      "source": "docs/retail/simulation/missile-lock.md"
+      "source": "docs/retail/simulation/missile-lock.md",
+      "verified": {
+        "bytes": "0041b0bc+115",
+        "sha1": "c8f1ea76b4c8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041b130",
@@ -6476,7 +6560,13 @@
       "confidence": "high",
       "name": "Player_ResolveTargetAimPoint",
       "description": "Resolves the point the HUD aims at on the selected target. With a targeting computer fitted (mech+0x30b) and the target inside 30000 units it asks the pod for a component aim point and component id; otherwise it takes the target's vtable +0x24 aim node transformed by the target's own rotation, falls back to the raw origin, and writes 0 to the component id.",
-      "source": "docs/retail/simulation/hud-target-indicator.md"
+      "source": "docs/retail/simulation/hud-target-indicator.md",
+      "verified": {
+        "bytes": "0041b728+217",
+        "sha1": "8ea5dfabf2d5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0041b804",
@@ -8622,7 +8712,13 @@
       "confidence": "high",
       "name": "Mech_Dtor",
       "description": "MECH vtable +0x08 (0049a282): the deleting destructor, (this, flags). Three RTL destructor-count decrements (MECH, ACTOR, DET_ANIM_OBJ), AnimObj_Dtor(this, 0), then on flags bit 0 ObjList_SwapRemove(&maybe_GlobalLiveObjectList, this).",
-      "source": "DBSIM disassembly at 00427127"
+      "source": "DBSIM disassembly at 00427127",
+      "verified": {
+        "bytes": "00427127+72",
+        "sha1": "985e130fc8a1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004271bf",

@@ -45,7 +45,7 @@ The machines' fields stand 6 bytes below ES2's ([the object fields](mission-grou
 - **`Group_OrderSubjectRouteExhausted` (`0000f930`)**, (group): 1 when the target group's route, or the target object's group's route, has no waypoint after its cursor, as ES2's (`004139a0`).
 - **`Group_OrderSubjectArrivedAndClear` (`0000f99c`)**, (group): 1 when the target group's action `+0x16` is clear and `Group_AllMembersClearOfThreats` answers 1, or the target object's group's action is clear and `Mission_IsClearOfThreats` answers 1, as ES2's (`00413a08`) with the action where ES2's tests its deployment gate.
 
-`es2_xref.py` finds `Mission_IsClearOfThreats` called by `Mission_Status` (three times), `Group_AllMembersClearOfThreats`, `Group_OrderSubjectArrivedAndClear` and `00015a5c`, the callee of [`maybe_Group_ApplyOutnumberedDamage`](mission-groups.md#going-out-of-the-fight).
+`es2_xref.py` finds `Mission_IsClearOfThreats` called by `Mission_Status` (three times), `Group_AllMembersClearOfThreats`, `Group_OrderSubjectArrivedAndClear` and `Mech_ApplyOutnumberedDamage` (`00015a5c`, [small functions](mech.md#small-functions)), the callee of [`Group_ApplyOutnumberedDamage`](mission-groups.md#going-out-of-the-fight).
 
 ## The group report — `Group_StatusLineIndex` (`0000f0f0`)
 

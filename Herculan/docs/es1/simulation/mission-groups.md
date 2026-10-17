@@ -11,7 +11,7 @@ The machines' fields these functions read stand 6 bytes below ES2's up to `+0xad
 | `+0x20` | `+0x26` | the position |
 | `+0x3f` | `+0x45` | the group |
 | `+0x47` | `+0x4d` | the behaviour descriptor, its countdown object at `+0x4b` and count at `+0x4c` |
-| `+0x90` | | the byte the broadcast scores verbs 4 and 7 by, where ES2's reads the radar's state |
+| `+0x90` | `+0x96` | the radar, on or off ([the HERC's fields](mech.md#the-fields)); the broadcast scores verbs 4 and 7 by it |
 | `+0x93` | `+0x99` | destroyed |
 | `+0x9e` | `+0xa4` | immobilised |
 | `+0xa9` | `+0xaf` | skip the next think |
@@ -54,7 +54,7 @@ ES1's group record is `0x28` bytes, where ES2's is `0x7a` ([ES2's](../../retail/
 | `+0x20` | ptr | the group's point | the argument *point*: `.MSN` `0x34` |
 | `+0x24`, `+0x26` | `int16` | the group's out-of-action (flag, operation) pair, [below](#going-out-of-the-fight) | `.MSN` `0x54`, `0x56` |
 
-The members are the non-negative ones of the eight refs at `.MSN` `0x3a`–`0x49`, in order, in an array of that many pointers from `operator_new`. Each is `Pool_Nth` (`00063a78`) of the pool its kind names, the dword at `000af68c`, `000af72c` or `000aed70`, and is passed with its ref's position among the eight (0–7) and the group to `00013124`, `0001b574` or `000044a4` ([Open](#open)). The target resolves by its kind: a group as the groups array's base plus the index × `0x28`, a mech, flyer or base as `Pool_Nth` of the dword at `000af68c`, `000af72c` or `000aed70`. `Pool_Nth`, (pool, *n*), walks the pool with `Pool_Prev` from 0 and returns the element *n* + 1 steps in, or 0 when the walk ends first, as ES2's does; it keeps *n* in `DX` across the calls.
+The members are the non-negative ones of the eight refs at `.MSN` `0x3a`–`0x49`, in order, in an array of that many pointers from `operator_new`. Each is `Pool_Nth` (`00063a78`) of the pool its kind names, the dword at `000af68c`, `000af72c` or `000aed70`, and is passed with its ref's position among the eight (0–7) and the group to `Mech_AttachToGroup` (`00013124`, [construction](mech.md#construction)), `0001b574` or `000044a4` ([Open](#open)). The target resolves by its kind: a group as the groups array's base plus the index × `0x28`, a mech, flyer or base as `Pool_Nth` of the dword at `000af68c`, `000af72c` or `000aed70`. `Pool_Nth`, (pool, *n*), walks the pool with `Pool_Prev` from 0 and returns the element *n* + 1 steps in, or 0 when the walk ends first, as ES2's does; it keeps *n* in `DX` across the calls.
 
 ES2's group has twenty member refs, ten counter pairs, and the target as the subject of each of its ten orders, which it works through ([the tick](../../retail/simulation/ai-goals.md#the-tick--group_ordertick-00423a74)).
 
@@ -90,7 +90,7 @@ The route functions `Route_AdvanceCursor` (`0001c8c0`), `Route_NextWaypointClose
 
 `Group_ReportIfAllOutOfAction` (`0001d524`), (group, object): ES2's ([the out-of-action report](../../retail/simulation/mission-deployment.md#the-out-of-action-report)) with one pair where ES2's has ten. It returns at the first member other than the object that is neither destroyed nor immobilised; otherwise, when the flag number `+0x24` is not negative, it writes that flag of `000bc4b8` by the operation `+0x26`: 2 adds 1, 1 sets 0, `0xd` to `0x10` store the operation less `0xc`, any other writes nothing. The operation is looked up by `REPNE SCASD` in the six dwords at `0009222c` (2, 1, `0xd`, `0xe`, `0xf`, `0x10`) with their targets after them. `es2_xref.py` finds one call, from `Mech_ReportOutOfAction` (`0000d77c`, [the out-of-action report](sim-object-base.md#the-out-of-action-report--mech_reportoutofaction-0000d77c)).
 
-`maybe_Group_ApplyOutnumberedDamage` (`0001d4d0`) calls `00015a5c` on each member; `es2_xref.py` finds one call, from `00059700`. ES2's `Group_ApplyOutnumberedDamage` (`00423f08`) is the same loop ([Open](#open)).
+`Group_ApplyOutnumberedDamage` (`0001d4d0`) calls `Mech_ApplyOutnumberedDamage` (`00015a5c`, [small functions](mech.md#small-functions)) on each member, as ES2's (`00423f08`) does; `es2_xref.py` finds one call, from `00059700`.
 
 ## What the results read
 
@@ -120,15 +120,15 @@ The four functions at `0001c824`–`0001c8bf` are the copy of `ConfigPart`'s des
 | `Route_WaypointAt`, `DBSim_BuildGroupRecord` | `0001cfb8`, `0001cff4` | `00423b0c`, `00423b34` |
 | `MissionGroups_Allocate`, `MissionGroup_ElementCtor` | `0001d260`, `0001d288` | `00423d38`, `004240e4` |
 | `Group_WriteStatusBlocks`, `Mission_TotalSalvage` | `0001d2c8`, `0001d434` | `00423d68`, `00423e88` |
-| `maybe_Group_ApplyOutnumberedDamage`, `Group_ReportIfAllOutOfAction` | `0001d4d0`, `0001d524` | `00423f08`, `00423f30` |
+| `Group_ApplyOutnumberedDamage`, `Group_ReportIfAllOutOfAction` | `0001d4d0`, `0001d524` | `00423f08`, `00423f30` |
 
 Callees of other modules read for them: `Mech_AiTick` (`0000d8e8`), `Mech_SalvageValue` (`00014034`), `Mech_ReadDamageReadouts` (`0001583c`) and `Pool_Nth` (`00063a78`), ES2's `00411cec`, `00418e60`, `0041b4ec` and `00471ba4`.
 
 ## Open
 
 - **Open:** what reads the group's point `+0x20`, heading `+0x0c` and `+0x02`, and whether anything clears the action `+0x16`, which stands where ES2's [deployment gate](../../retail/simulation/mission-deployment.md#the-deployment-gate--group0x14) does.
-- **Open:** the callees not read: `00013124`, `0001b574` and `000044a4`, which take a mech, flyer or base member with its ref's position and the group; `00015a5c`, which decides `0001d4d0`'s name and which `es2_xref.py` finds calling `Mission_IsClearOfThreats` (`0000f744`); `0000a16c`, a component reading; `00064178`, the AI tick's countdown.
-- **Open:** five of the eleven calls `es2_xref.py` finds to `Action_Activate`, from `00003978`, `00013250` (two), `00018e50` and `0001b290`. Three others are the sensor model's engagement, from `Detection_ShareContact` (`0000e618`) and twice from `Detection_Sweep` (`0000e85c`) ([the sensor model](sensor-model.md#looking-around--detection_sweep-0000e85c)), and the last three are `Action_TestTrigger`, `Actions_EvaluateTriggers` (`0001f87c`, [trigger areas](world.md#trigger-areas--actions_evaluatetriggers-0001f87c)) and `Sim_RaycastObjectList` (`0001f1d0`), which fires a struck enemy's `+0x16c` action.
+- **Open:** the callees not read: `0001b574` and `000044a4`, which take a flyer or base member with its ref's position and the group; `0000a16c`, a component reading; `00064178`, the AI tick's countdown.
+- **Open:** three of the eleven calls `es2_xref.py` finds to `Action_Activate`, from `00003978`, `00018e50` and `0001b290`. Two are `Mech_ComponentDamageWrite`'s (`00013250`), firing the machine's `+0x170` action when it goes out of the fight ([the damage write](mech.md#the-damage-write--mech_componentdamagewrite-00013250)); three others are the sensor model's engagement, from `Detection_ShareContact` (`0000e618`) and twice from `Detection_Sweep` (`0000e85c`) ([the sensor model](sensor-model.md#looking-around--detection_sweep-0000e85c)), and the last three are `Action_TestTrigger`, `Actions_EvaluateTriggers` (`0001f87c`, [trigger areas](world.md#trigger-areas--actions_evaluatetriggers-0001f87c)) and `Sim_RaycastObjectList` (`0001f1d0`), which fires a struck enemy's `+0x16c` action.
 - **Open:** whether anything changes a group's target after the load; ES1's target is set once, by `DBSim_BuildGroupRecord`, in the functions read.
 - **Open:** the machine fields above are not in `known_structs.json`, which holds no ES1 layout; nor are the group record, the action and the trigger area.
 - **Open:** a positive control in the running game for this module, as for [`world.cpp`'s](world.md#open).

@@ -124,7 +124,7 @@ It does no speed rescale, writes neither ES2's HUD speed scale at `+0xc2` nor it
 ## Open
 
 - **Open:** which of `data\script.dat`'s records the loop in `DBSim_LoadScriptDat` that allocates chassis slots takes its types from.
-- **Open:** which ES1 functions read offsets 10, 20–66, 72–121, 124–147 and 150–190, and whether each means what ES2's field does. The data alone puts them at ES2's offsets.
+- **Open:** which ES1 functions read offsets 44, 66, 78, 80, 86–97, 106, 124–147, 158–169 and 176–189, and whether each means what ES2's field does. The data alone puts them at ES2's offsets. The HERC's own functions read 10, 20–42, 72–76, 82, 84, 98–104, 108–121, 150–156, 170–174 and 190 in the roles ES2's gives them ([the HERC](../simulation/mech.md)).
 - **Open:** what `g_LowMemory`'s other 12 readers change; which roots a skip of two leaves for close range; and what a root's `+0x26` draws with when the banks were not loaded.
 - **Open:** the four handlers of `Shape_RemapTransformIds` (`00019aef`–`00019b93`, undefined bytes in Ghidra), read here only as far as its tag and handler tables at `00091e14`.
 - **Open:** what fills and reads the ten `CONFIG_PART`s at `+0xd4`.

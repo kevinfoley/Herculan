@@ -47,9 +47,9 @@ A group is 10 bytes: the throw count at `+0`, the piece count at `+2`, the piece
 1. draws *n* = `Math_RandomBelow` (`00063b3c`)(throw count), 0 to throw count − 1, from the generator at `000b5bd4`;
 2. *n* times, draws *r* = `Math_RandomBelow`(total weight), walks the pieces from the first, taking each one's weight off *r* while *r* is greater than that piece's weight, and throws the piece it stops at: `00006168` with 0, the second argument and the piece's root shape, then `00006480` with the result ([Open](#open)).
 
-ES2's `Debris_ThrowGroup` (`004086bc`) throws exactly the throw count, or every piece once when the count is 0, with the same weighted walk. In ES1 a throw count of 0 would divide by zero in `Math_RandomBelow`; every retail group's is 3 to 7. `es2_xref.py` finds five calls of `Debris_ThrowGroup`, in `00003978`, `00003a58`, `00009cd4`, `00013b44` and `0001b370`.
+ES2's `Debris_ThrowGroup` (`004086bc`) throws exactly the throw count, or every piece once when the count is 0, with the same weighted walk. In ES1 a throw count of 0 would divide by zero in `Math_RandomBelow`; every retail group's is 3 to 7. `es2_xref.py` finds five calls of `Debris_ThrowGroup`, in `00003978`, `00003a58`, `00009cd4`, `Mech_DirectFireHitTest` (`00013b44`) and `0001b370`. The HERC's hit test throws group 1 at the impact for a hit that leaves the struck component's damage band as it was and group 2 for one that changes it, unless the component is gone ([the hit test](../simulation/mech.md#the-hit-test--mech_directfirehittest-00013b44)).
 
 ## Open
 
 - **Open:** what `00006168` and `00006480` do with a thrown piece, what the `0x4e`-byte piece object holds, and how it moves and ends.
-- **Open:** which destroyed things throw which group: the five callers of `Debris_ThrowGroup`.
+- **Open:** which group the other four callers of `Debris_ThrowGroup` throw, and for what.

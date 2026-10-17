@@ -63,16 +63,16 @@ An object takes its position and rotation from its record's refs. A point ref th
 | `0x00` (`0x08`) | when not 0, the mech's `+0x91` is set to 1, where ES2's sets its radar setting `+0x97` |
 | `0x02` (`0x0a`) | when not negative, stored at `+0x1e6`, where ES2's stores its cruise speed at `+0x252` |
 | `0x28` (`0x30`) | the type |
-| `0x2a` (`0x32`), `0x46` (`0x4e`) | passed with the mech to `00012c00` as (mech, `0x46`, `0x2a`) in stack order, where ES2's passes its fit and ammunition ([Open](#open)) |
+| `0x2a` (`0x32`), `0x46` (`0x4e`) | the weapon fit and the ammunition types, ten `int16` each, passed with the mech to `Mech_ConfigureLoadout` (`00012c00`, [construction](../simulation/mech.md#construction)) as (mech, `0x46`, `0x2a`) in stack order, as ES2's passes its fit and ammunition |
 | `0x3e` (`0x46`) | the point ref; the position's Z is the point's Z plus the type record's (`+0x188`) `int16` at `+0x16` |
 | `0x40` (`0x48`) | the heading ref |
 | `0x42`, `0x44` (`0x4a`, `0x4c`) | stored at `+0x174` and `+0x176` |
 | `0x5c`, `0x5e` (`0x64`, `0x66`) | action refs: a pointer to the 16-byte action at `+0x16c` and `+0x170`, or 0 for a negative ref |
-| `0x60` (`0x68`) | passed with the mech to `00012f20`, where ES2's passes its starting condition ([Open](#open)) |
+| `0x60` (`0x68`) | the starting condition, passed with the mech to `Mech_ApplyStartingCondition` (`00012f20`, [construction](../simulation/mech.md#construction)) |
 
 The second pass does not read record offsets `0x04`–`0x27` and `0x5a` (`.MSN` `0x0c`–`0x2f` and `0x62`).
 
-A `data\player.mec` entry *k* builds the squad's machine at slot block count + *k*, with both sentinels; its `+8` and `+0x20` go to `00012c00` as the record's `0x2a` and `0x46` do, its three condition spans `+0x3c`, `+0x56` and `+0x6a` go to `Mech_ApplySquadCondition` (`000107f0`, [the squad's condition](../simulation/damage-readouts.md)) with the mech's `+0x19c` as (`+0x19c`, `+0x6a`, `+0x56`, `+0x3c`) in stack order, as ES2's pass does, and its `+0` to the mech's `+0x232`, where ES2's stores the pilot index at `+0x29c`. The entry whose index is the word `data\player.mec` opens with (`000af9fa`) is the player's: the mech goes to `000bc42a` and its `+0x9d` is set to 1. Unlike ES2's, the position takes no ground height and no lift for a type that flies ([placement](../../retail/formats/script-dat.md#placement--the-actual-rule)).
+A `data\player.mec` entry *k* builds the squad's machine at slot block count + *k*, with both sentinels; its `+8` and `+0x20` go to `Mech_ConfigureLoadout` as the record's `0x2a` and `0x46` do, its three condition spans `+0x3c`, `+0x56` and `+0x6a` go to `Mech_ApplySquadCondition` (`000107f0`, [the squad's condition](../simulation/damage-readouts.md)) with the mech's `+0x19c` as (`+0x19c`, `+0x6a`, `+0x56`, `+0x3c`) in stack order, as ES2's pass does, and its `+0` to the mech's `+0x232`, where ES2's stores the pilot index at `+0x29c`. The entry whose index is the word `data\player.mec` opens with (`000af9fa`) is the player's: the mech goes to `000bc42a` and its `+0x9d` is set to 1. Unlike ES2's, the position takes no ground height and no lift for a type that flies ([placement](../../retail/formats/script-dat.md#placement--the-actual-rule)).
 
 **Block 7.** For each live flyer slot (`000af8e0`), `0001ac58` with no object and the 56-byte record's type at `0x2c` (`.MSN` `0x34`); the point ref `0x28` with no height added, the heading ref `0x2a`, the action refs `0x32` and `0x34` (`.MSN` `0x3a`, `0x3c`) to `+0x16c` and `+0x170`, and `0x2e` and `0x30` (`.MSN` `0x36`, `0x38`) to `+0x174` and `+0x176`. `0x36` (`.MSN` `0x3e`) is not read.
 
@@ -95,7 +95,7 @@ Besides the theater and world words above, the simulator reads header word 7 as 
 
 ## Open
 
-- **Open:** the second pass's callees, not read: `00012c00` (the mech's two ten-word arrays), `00012f20` (record `0x60`), `0001ac58` (a flyer from its type) and `00003cbc` (a base from its record). ES2's pass makes the matching calls to `Mech_ConfigureLoadout`, `Mech_ApplyStartingCondition`, `Flyer_Constructor` and `Base_Construct`; `es2_naming.py match` pairs `00012c00` with `Mech_ConfigureLoadout` above its threshold.
+- **Open:** the second pass's callees, not read: `0001ac58` (a flyer from its type) and `00003cbc` (a base from its record), where ES2's pass calls `Flyer_Constructor` and `Base_Construct`.
 - **Open:** what reads an object's `+0x174`/`+0x176` pair and its `+0x16c`/`+0x170` actions, besides `Sim_RaycastObjectList` (`0001f1d0`), which fires the struck object's `+0x16c` ([shots](../simulation/world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)); what the mech's `+0x91` and `+0x1e6` are to ES1; and who fills the slot-to-pool maps `000af818`, `000af914` and `000af97c` the second pass reads, which `DBSim_LoadScriptDat`'s unread calls after the blocks may do.
 - **Open:** what the group's `+4` is, and why the squad's 11 there becomes 8. `Mission_Status` tests the player's group's for 6 ([the status](../simulation/mission-status.md#the-status--mission_status-0000f4e8)).
 - **Open:** whether ES1's headings are degrees; the second pass stores the shifted value as an object's rotation `+0xa` and as a group's heading.
