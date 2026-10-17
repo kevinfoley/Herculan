@@ -27,8 +27,9 @@ address operands by different rules (insn_streams).
   diff BIN BIN2 a:b [c:d ...]
       The same for several chosen pairs in one run (a:b+c:d also works), each headed with both
       names; the decompiles are read once.
-  match BIN BIN2 [--min N] [--fuzzy R] [--all]
-      BIN's unnamed functions (every function with --all) of at least N instructions (default 6)
+  match BIN BIN2 [--range lo-hi] [--only a+b...] [--min N] [--fuzzy R] [--all]
+      BIN's unnamed functions (every function with --all), in the range or the list, of at least N
+      instructions (default 6)
       whose disassembly, with every address operand masked, equals a BIN2 function's; with
       --fuzzy R, the three closest named BIN2 functions at a difflib ratio of at least R when there
       is no exact match. Under a unique exact named match it lists the unnamed BIN callees and
@@ -150,8 +151,25 @@ LABEL = re.compile(r"\b(?:thunk_)?(FUN|DAT|PTR|LAB|_DAT)_([0-9a-f]{8})\b")
 DECL = re.compile(r"^  [A-Za-z_][\w ]*?[\w*]+ \**[A-Za-z_]\w*(?:\s*\[\w+\])?;(?:\s*/\*.*\*/)?$")
 
 
+_PENDING = {}
+
+
+def add_pending(batch, default_binary):
+    """Treat a batch's entries as known_symbols entries for the rest of this process, without
+    writing them: es1_naming.py twin reads a batch the session has not inserted yet."""
+    for e in batch:
+        b = e.get("binary", default_binary).upper()
+        _PENDING.setdefault(b, {})[e["address"].lower()] = {**e, "binary": b}
+
+
 def entries(binary=None):
-    return S.entries(binary)
+    base = S.entries(binary)
+    extra = [e for b, d in _PENDING.items() if binary is None or b == binary.upper() for e in d.values()]
+    if not extra:
+        return base
+    over = {(e["binary"], e["address"].lower()) for e in extra}
+    return [e for e in base
+            if (e.get("binary", binary or "").upper(), e["address"].lower()) not in over] + extra
 
 
 def names(binary):
@@ -410,6 +428,8 @@ def normalised(binary, addr, known=None):
     t = compact(body, known)
     t = re.sub(r"\bPTR_\w*?[0-9a-f]{8}\b", "PTR_?", t)
     t = re.sub(r"\b(?:thunk_)?(FUN|DAT|LAB|_DAT)_[0-9a-f]{8}\b", r"\1_?", t)
+    # A string's label is its text and its address; the address is a relocated operand.
+    t = re.sub(r"\b(s_\w*?)_[0-9a-f]{8}\b", r"\1_?", t)
     t = re.sub(r"\b(?:local|auStack|uStack|iStack|puStack|pcStack|in_stack)_[0-9a-f]+\b", "local_?", t)
     t = re.sub(r"\b(?:[a-z]{1,3}Var)\d+\b", "var?", t)
     own = known.get(addr)
@@ -1529,7 +1549,8 @@ def cmd_xmatch(args):
 
 
 def cmd_match(args):
-    """match BIN BIN2 [--min N] [--fuzzy R] [--all]: BIN's unnamed functions whose normalised
+    """match BIN BIN2 [--range lo-hi] [--only a+b...] [--min N] [--fuzzy R] [--all]: BIN's unnamed
+    (with --all, every) function, in the range or the list, whose normalised
     instruction stream equals (or, with --fuzzy, is at least R similar to) a named BIN2 function's,
     with the BIN2 name and the callee/global names that pair up position by position. An ES1 BIN
     against ES2 targets goes to cmd_xmatch."""
@@ -1547,7 +1568,13 @@ def cmd_match(args):
     by_key = {}
     for a, ins in s2.items():
         by_key.setdefault(tuple(i[1] for i in ins), []).append(a)
-    todo = [a for a in sorted(s1) if ("--all" in args or a not in k1) and len(s1[a]) >= mn]
+    lo, hi = 0, 1 << 32
+    if "--range" in args:
+        r = args[args.index("--range") + 1].split("-")
+        lo, hi = int(r[0], 16), int(r[1], 16) if len(r) > 1 and r[1] else 1 << 32
+    only = set(addrs(args[args.index("--only") + 1].split("+"))) if "--only" in args else None
+    todo = [a for a in sorted(s1) if ("--all" in args or a not in k1) and len(s1[a]) >= mn
+            and (a in only if only is not None else lo <= int(a, 16) < hi)]
     for a in todo:
         key = tuple(i[1] for i in s1[a])
         hits = [(x, 1.0) for x in by_key.get(key, [])]

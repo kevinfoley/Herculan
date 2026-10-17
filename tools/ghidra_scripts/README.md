@@ -147,6 +147,7 @@ Reference-manager searches see only what Ghidra has already disassembled and typ
 | `ES2DumpString` | `addr` `maxLen` `out` | One NUL-terminated string at a raw address, whether or not Ghidra defined it as a string. |
 | `ES2DumpStrings` | `spec` | Batch form; a `P` prefix on an address dereferences a pointer there first. |
 | `ES2DumpStringPtrArray` | `addr` `count` `out` | An array of pointers-to-strings. |
+| `tools/scripts/es2_peek.py` | `BIN` `addr` `[count]` `[--strings\|--words\|--bytes]` | Python, no Ghidra session: a table of dwords from the image file, each resolved to its known-symbols name, the function it enters or lies inside, the function a `0x90` padding run falls through to, or the printable string it points at (without a count, up to the first 0 dword); or consecutive strings, words or bytes. For vtables, label tables and `REPNE SCASD` case tables. |
 | `ES2FileOffsetRange` | `out` `startOff` `[endOff]` | Maps a raw PE **file offset** range onto addresses and reports what is there, with both the mapped bytes and the `FileBytes` bytes, so the file-offset reading can be checked against the mapped-address reading. |
 
 ### Vtables and class structure

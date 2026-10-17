@@ -24,6 +24,8 @@ Borland-only subcommands (rtti, vtables, classes, stats) refuse them.
            nearest pair after it, as in BIN (padding thunks aside), taken only when its decompile
            agrees; each round's pairs anchor the next;
         a=b: given, for what those miss (ES1GO's game code is laid out apart from ES1DBSIM's).
+      A batch.json's BIN entries count as named whether or not they are inserted yet, so a batch's
+      twins can be prepared from its own JSON before any known_symbols write.
       Every pair is diffed with es2_naming.py diff's normalisation, BIN2's labels named through the
       pairs found. A pair whose decompiles differ is held back with the diff command to read; after
       reading it, a=b! accepts it as the same statements. An accepted pair gets BIN's description
@@ -225,6 +227,10 @@ def cmd_twin(args):
             if not x.startswith("--") and args[i - 1] != "--out" and "=" not in x]
     if not out_path:
         raise SystemExit("twin needs --out FILE for the BIN2 batch")
+    for x in rest:
+        if x.endswith(".json"):
+            with open(x, encoding="utf-8") as f:
+                N.add_pending([e for e in json.load(f) if e.get("binary", b1).upper() == b1.upper()], b1)
     es1 = {e["address"]: e for e in N.entries(b1)}
     k1, k2 = N.names(b1), N.names(b2)
     by_name2 = {n: a for a, n in k2.items()}
