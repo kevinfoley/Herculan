@@ -38,7 +38,7 @@ Until its step lands, each of these does nothing, tagged `// PLACEHOLDER:` in co
 Made with the user:
 
 1. **The animation classes are the core's.** `ShapeAnimation`, `AnimationThread`, `ShapeInstance` and `SkeletonPose` are in `Herculan.Engine.Anim`, since the 3Space classes belong to the core ([how the two games share code](planning.md#how-the-two-games-share-code)). ES1's are ES2's but for one rounding: a seek scales the position with ES1's rounding Q14 multiply ([differences](../es1/rendering/dts-node-posing.md#differences-from-es2)). The caller of a seek names its arithmetic (`SeekRounding`), so neither game's behaviour changes and the core tests no game.
-2. **The tick is paced as retail paces it.** ES1 runs one tick a frame, its length the time the frame took (`SimTickDelta`, Q8 with 1.0 = 100 ms, held to 25–176 ms), and a frame waits at least two PC timer ticks ([the tick length](../es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)). An ES1 pacer runs a tick once the minimum frame time has passed, with the elapsed time as the tick's length under retail's clamp, and draws every host frame from the latest tick, as retail draws no frame between ticks. The minimum frame time rests on the timer's rate; step 4's RE reads it ([Open](#open)).
+2. **The tick is paced as retail paces it.** ES1 runs one tick a frame, its length the time the frame took (`SimTickDelta`, Q8 with 1.0 = 100 ms, held to 25–176 ms), and a frame waits at least two PC timer ticks ([the tick length](../es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)). An ES1 pacer runs a tick once the minimum frame time has passed, with the elapsed time as the tick's length under retail's clamp, and draws every host frame from the latest tick, as retail draws no frame between ticks. The timer runs at 120 interrupts a second ([the PC timer](../es1/simulation/timer.md#the-rate)), so the minimum frame time is two of them, 16.7 ms.
 3. **The view is view 0 as retail builds it.** The world is drawn in the window and with the projection of the chassis's `.VUE` record, clipped by its clip regions, under the canopy art from `db0\<chassis>` ([the view manager](../es1/simulation/cockpit-views.md#the-view-manager), [the canopy art](../es1/simulation/cockpit-views.md#loading-and-freeing-the-canopy-art)), from the eye-point camera `Cam_AttachTo` attaches. The instruments come in step 6. The viewer's free camera stays on a key, as an engine aid with no retail counterpart.
 4. **The sensor model is ported** from [`sensor-model.md`](../es1/simulation/sensor-model.md): the AI's target choice reads the contacts and radar flags `Sim_DetectionTick` sets.
 5. **The player's mechanics come before the AI**: movement, the joystick, the cockpit, then weapons and damage, so each is checked against retail on its own; the AI is the last step.
@@ -79,12 +79,11 @@ After step 8 the order returns to the handoff's: flyers, structures, the mission
 
 Each is cheap to see and settles something a step rests on:
 
-- **The PC timer's rate**: a breakpoint on `Time_InitSimClock` (`00063e64`) under DOSBox-X confirms the rate step 2 reads from the code ([the runtime](../es1/simulation/main-loop.md#open)).
+- **The PC timer's rate**: breakpoints on `Pit_SetDivisor` (`0006d18c`) and `Time_InitSimClock` (`00063e64`) under DOSBox-X confirm the divisor 9,939 and the 120 interrupts a second step 2 read from the code ([the PC timer](../es1/simulation/timer.md#open)).
 - **Walking speed**: the time a HERC of one chassis takes at full throttle between two of a zone's placed shapes, against the port after step 4.
 - **Starting positions**: the player's and an enemy group's position at a mission's start, against the port after step 3.
 
 ## Open
 
 - **Open:** every placeholder [the slice leaves out](#what-the-slice-leaves-out), each an **Unported:** item in `ROADMAP.md` once its step lands.
-- **Open:** the PC timer's rate, on which the pacer's minimum frame time rests (decision 2), until step 2 reads it.
 - **Open:** whether the retail missions' group order words (`.MSN` group `0x32`) include any the HERC state table does not handle ([`mech-ai.md#open`](../es1/simulation/mech-ai.md#open)); `HercWorks.Query` over the 62 `.MSN` answers it before step 8.

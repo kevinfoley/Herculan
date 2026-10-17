@@ -36,7 +36,7 @@ The memory, driver and slot listings at `0004e858` and the grenade distance at `
 
 `FrameRate_Update` (`00060214`) measures how long each frame took and prints the rate on the monochrome screen. Called once a frame, it:
 
-- **On its first call** registers `FrameRate_TimerTick` (`000601fc`) with `Timer_AddCallback` (`0006d289`) at count 1, sets `FrameRate_TicksPerSecond` (`000b5e2c`) to `1000000 / Math_Q14Multiply(w, 0x35a1)`, where `w` is the word at `+4` of the structure `000bdd0c` points to, loads `FrameRate_Countdown` (`000b5e24`) with 32000, and returns.
+- **On its first call** registers `FrameRate_TimerTick` (`000601fc`) with `Timer_AddCallback` (`0006d289`) at count 1, sets `FrameRate_TicksPerSecond` (`000b5e2c`) to `1000000 / Math_Q14Multiply(w, 0x35a1)`, where `w` is the PC timer's divisor, so 120 ([the rate](timer.md#the-rate)), loads `FrameRate_Countdown` (`000b5e24`) with 32000, and returns.
 - **On every later call** takes the ticks elapsed, `e = 32000 − FrameRate_Countdown`, reloads the countdown with 32000, and prints. `FrameRate_TimerTick` decrements the countdown each time the timer calls it, stopping at 0.
 
 | `e` | Row 4 shows | Best and worst |
@@ -54,7 +54,7 @@ For a frame longer than a second the figure is the frame's length in seconds, to
 
 `FrameRate_GetFrameCount` (`0006020c`) returns the count, and the tape player in `vcr.cpp` (`00000c84`) puts it in its `Playback error. Frame #%ld` message.
 
-`Timer_AddCallback` (`0006d289`) takes `(count, callback)`: while the dword `0009bd40` is non-zero it takes the lowest free one of 16 slots in the mask `0009cd64`, stores `count` in that slot of the tables `0009ce6c` and `0009cdec` and `callback` in `0009cd6c`, and returns the slot number plus 1; it returns 0 when the dword is 0 or every slot is taken.
+`Timer_AddCallback` (`0006d289`) at count 1 runs `FrameRate_TimerTick` on every interrupt of the PC timer ([callbacks](timer.md#callbacks)).
 
 ## The component panel
 
@@ -76,7 +76,5 @@ The four are frameless, with no Ghidra function, and print through `Mono_Printf`
 ## Open
 
 - **Open:** no caller of `FrameRate_Update` or `Mono_ShowCursor` found by `es2_xref.py`, so whether the meter ever runs in a retail build, and what then calls it, is open.
-- **Open:** what the word at `+4` of the structure `000bdd0c` points to is. `0x35a1 / 0x4000` is 0.838, the length in microseconds of one count of the PC's 1.193 MHz timer, so with `w` the timer's divisor the formula is the timer's interrupt rate; neither the structure nor the divisor has been read.
-- **Open:** how the timer interrupt runs `Timer_AddCallback`'s slots and what `count` and the two tables it fills are; the meter's arithmetic assumes `FrameRate_TimerTick` runs at `ticksPerSecond`.
 - **Open:** no write to `Mono_Screen` other than `MonoScreen_Ctor`'s found by a search of the disassembly for `000b5e70` and `000b5e71`.
 - **Open:** `ES1GO`'s copy of `Mono_Clear`, and whether `GO.EXE` has a frame-rate meter; the twin search found none.

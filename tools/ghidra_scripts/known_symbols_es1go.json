@@ -4852,7 +4852,7 @@
       "type": "function",
       "confidence": "medium",
       "name": "maybe_SncList_Dtor",
-      "description": "(player, flags), callee-cleaned: returns for a null player; deletes the line lists +0x11 when set (__vec_delete (0005547c) with StrList_Dtor (000202b4), 6-byte elements); passes the timer slot, the word +0, to 000565b7; destroys the +0x15 object through its slot +0x1c with 3 when set; releases the script +3 with ShellSnc_Release (00045a04); frees the player with operator_delete (00001a44) when flags bit 0 is set. es2_xref finds one call, from 00020fff.",
+      "description": "(player, flags), callee-cleaned: returns for a null player; deletes the line lists +0x11 when set (__vec_delete (0005547c) with StrList_Dtor (000202b4), 6-byte elements); passes the timer slot, the word +0, to Timer_RemoveCallback (000565b7); destroys the +0x15 object through its slot +0x1c with 3 when set; releases the script +3 with ShellSnc_Release (00045a04); frees the player with operator_delete (00001a44) when flags bit 0 is set. es2_xref finds one call, from 00020fff.",
       "source": "Herculan/docs/es1/formats/snc-lip-sync.md#playing-it",
       "verified": {
         "bytes": "00045758+169",
@@ -4957,7 +4957,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellSound_Init",
-      "description": "Returns at once while 0007fd08 is set. Opens resource.cfg (Path_ApplyAltDrive, FileRStream_Ctor), asserting 'ERROR: Run soundset first.' (src\\system.cpp line 0x151, severity 5) when it fails, and reads [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress with 00026d71 and 00026bac, the driver numbers and ports through 000638d1 with '%X'. Closes it and returns when the [SoundFX] driver is 0. Otherwise makes the sound manager 00082768 with 00041f64(0), stores the six values in the driver defaults block (00082328, 00082320, 0008231c, 00082324, 00082330, 0008232c), calls 0004240a(manager), 000430cd(manager, 0x5f), 00043b0f(manager, 200000) and SoundManager_SetSampleNames (00042e16) with the 20 names at 000828c0, and makes the button sound 0007fd00 with SoundManager_CreateObject (000429db)(manager, 2, 0, 9), loading it with SoundObject_LoadSample (00043d8a). es2_xref finds one call, from 00045df5 in 00045d24.",
+      "description": "Returns at once while 0007fd08 is set. Opens resource.cfg (Path_ApplyAltDrive, FileRStream_Ctor), asserting 'ERROR: Run soundset first.' (src\\system.cpp line 0x151, severity 5) when it fails, and reads [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress with 00026d71 and 00026bac, the driver numbers and ports through sscanf (000638d1) with '%X'. Closes it and returns when the [SoundFX] driver is 0. Otherwise makes the sound manager 00082768 with 00041f64(0), stores the six values in the driver defaults block (00082328, 00082320, 0008231c, 00082324, 00082330, 0008232c), calls 0004240a(manager), 000430cd(manager, 0x5f), 00043b0f(manager, 200000) and SoundManager_SetSampleNames (00042e16) with the 20 names at 000828c0, and makes the button sound 0007fd00 with SoundManager_CreateObject (000429db)(manager, 2, 0, 9), loading it with SoundObject_LoadSample (00043d8a). es2_xref finds one call, from 00045df5 in 00045d24.",
       "source": "Herculan/docs/es1/formats/sound-samples.md#the-shells-names",
       "verified": {
         "bytes": "00046235+634",
@@ -4987,7 +4987,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_Shutdown",
-      "description": "(): when the timer slot word 000829e4 compares unequal to -1 (zero-extended, it always does) passes it to 000565b7; calls Ttm_CloseAll (00046a3f); deletes the handle table 000829e0 when there is one. es2_xref finds one call, from 0003c081.",
+      "description": "(): when the timer slot word 000829e4 compares unequal to -1 (zero-extended, it always does) passes it to Timer_RemoveCallback (000565b7); calls Ttm_CloseAll (00046a3f); deletes the handle table 000829e0 when there is one. es2_xref finds one call, from 0003c081.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
       "verified": {
         "bytes": "000464e8+70",
@@ -5092,7 +5092,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Ttm_AllocHandles",
-      "description": "(timer count): allocates the handle table 000829e0, a dword per handle of the count 000829dc, and zeroes it; stores 000ab784 at 000829d8, or 0005d6b4(0, 0x4da6) when that is 0, and frees the table and returns 0 when 000829d8 is still 0; compares the word 000829e4, zero-extended, with -1, which it never equals, and so always stores Timer_AddCallback(count, Ttm_TimerTick (00046681)) there; returns 1. es2_xref finds one call, from 0003ba47, with a count of 2.",
+      "description": "(timer count): allocates the handle table 000829e0, a dword per handle of the count 000829dc, and zeroes it; stores 000ab784 at 000829d8, or DVTimer_Ctor (0005d6b4)(0, 0x4da6) when that is 0, and frees the table and returns 0 when 000829d8 is still 0; compares the word 000829e4, zero-extended, with -1, which it never equals, and so always stores Timer_AddCallback(count, Ttm_TimerTick (00046681)) there; returns 1. es2_xref finds one call, from 0003ba47, with a count of 2.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-shell",
       "verified": {
         "bytes": "0004670e+225",
@@ -6687,6 +6687,21 @@
       "verified": {
         "bytes": "0004f498+105",
         "sha1": "ea4a1cf4a5bb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004f594",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Assert_AddHook",
+      "description": "(hook), its argument removed by this function: pushes an 8-byte node {next, hook} from operator_new onto the list at 000a0bd8, printing 'Assert: assert_abort_notify: Can...' through 0004e108 and calling 0004ed2e when the allocation fails. The code of ES1DBSIM's Assert_AddHook (0005730c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-timer-object--dvtimer; ES1DBSIM decompile at 0005730c",
+      "verified": {
+        "bytes": "0004f594+64",
+        "sha1": "4687007bef96",
         "scope": "body",
         "via": "decompile"
       }
@@ -9044,18 +9059,123 @@
       }
     },
     {
+      "address": "0005640c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Pit_SetDivisor",
+      "description": "(divisor), C convention: 0 while Pit_Timer (0008728c) is 0; otherwise zeroes Pit_ChainAccumulator (00087292), stores the divisor in Pit_Divisor (00087290) and, with interrupts off, writes 0x34 to port 0x43 (counter 0, low then high byte, mode 2) and the divisor's low and high bytes to port 0x40, and returns 1. A divisor of 0 is 65536, the BIOS's 18.2 Hz. The code of ES1DBSIM's Pit_SetDivisor (0006d18c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-interrupt--pit_timerinterrupt-0006d391; ES1DBSIM disassembly at 0006d18c",
+      "verified": {
+        "bytes": "0005640c+54",
+        "sha1": "8aa4094e6f59",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00056442",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Pit_InstallHandler",
+      "description": "(divisor, timer), C convention: when Pit_Timer (0008728c) is already set, clears the timer's +0 and returns 0. Otherwise clears both callback masks (Timer_CallbackMask (000882ac), Timer_DelayedMask (000882b0)), keeps DS in 000872a0 and 000872a4, saves interrupt 8's protected-mode vector (INT 21h AX=2502h) at 00087294/00087298 and its real-mode vector (AX=2503h) at 0008729a, sets Pit_Timer to the timer, and Pit_SetDivisor (0005640c)(divisor); when that answers, installs Pit_TimerInterrupt (00056611) for interrupt 8 with INT 21h AX=2506h (gaining control in protected mode in either mode), sets bit 0 of the timer's +0 and returns EAX as the call leaves it. The same statements as ES1DBSIM's Pit_InstallHandler (0006d1c2) in different code.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-interrupt--pit_timerinterrupt-0006d391; ES1GO disassembly at 00056442",
+      "verified": {
+        "bytes": "00056442+133",
+        "sha1": "92bd48366dc7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000564c7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Pit_RemoveHandler",
+      "description": "No arguments: while Pit_Timer (0008728c) is set, Pit_SetDivisor (0005640c)(0), the BIOS rate; restores interrupt 8's saved protected-mode and real-mode vectors together (INT 21h AX=2507h); clears bit 0 of the timer's +0, sets Pit_Timer to 0, enables interrupts and returns 1. DVTimer_Ctor registers it with atexit. The code of ES1DBSIM's Pit_RemoveHandler (0006d247), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-interrupt--pit_timerinterrupt-0006d391; ES1DBSIM disassembly at 0006d247",
+      "verified": {
+        "bytes": "000564c7+66",
+        "sha1": "a3340f16acd8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00056509",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Timer_AddCallback",
-      "description": "(count, callback), C convention: while the dword 0008728c is non-zero, takes the lowest clear bit of the 16-bit slot mask 000882ac, sets it, stores count in that slot of the two dword tables 000883b4 and 00088334 and callback in the table 000882b4, and returns the slot + 1; returns 0 when 0008728c is 0 or every slot is taken. es2_xref finds calls from 000093b3, 000119fc, 000203fc, 0004240a, maybe_SncList_Init (00045337), Ttm_AllocHandles (0004670e) and three from 00045d24. The code of ES1DBSIM's Timer_AddCallback (0006d289), relocated operands aside.",
+      "description": "(count, callback), C convention: while the dword Pit_Timer (0008728c) is non-zero, takes the lowest clear bit of the 16-bit slot mask Timer_CallbackMask (000882ac), sets it, stores count in that slot of the two dword tables 000883b4 and 00088334 and callback in the table 000882b4, and returns the slot + 1; returns 0 when Pit_Timer (0008728c) is 0 or every slot is taken. es2_xref finds calls from 000093b3, 000119fc, 000203fc, 0004240a, maybe_SncList_Init (00045337), Ttm_AllocHandles (0004670e) and three from 00045d24. The code of ES1DBSIM's Timer_AddCallback (0006d289), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
       "verified": {
         "bytes": "00056509+78",
         "sha1": "df9d4ede9d06",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00056557",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_AddDelayedCallback",
+      "description": "(delay, repeats, period, callback), C convention: while Pit_Timer (0008728c) is set, takes the lowest clear bit of the 16-slot mask Timer_DelayedMask (000882b0), sets it, stores the delay in 00088434, the repeat count in 00088474, the period in 000883f4 and 00088374 and the callback in 000882f4 at that slot, and returns the slot + 1; 0 when no timer is installed or every slot is taken. No caller found by es2_xref. The code of ES1DBSIM's Timer_AddDelayedCallback (0006d2d7), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#callbacks; ES1DBSIM disassembly at 0006d2d7",
+      "verified": {
+        "bytes": "00056557+96",
+        "sha1": "fe197e04737a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000565b7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_RemoveCallback",
+      "description": "(slot), C convention: for a slot of 1 to 16, clears bit slot - 1 of Timer_CallbackMask (000882ac) and returns 1 when it was set; 0 otherwise. The code of ES1DBSIM's Timer_RemoveCallback (0006d337), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#callbacks; ES1DBSIM disassembly at 0006d337",
+      "verified": {
+        "bytes": "000565b7+45",
+        "sha1": "bcce3e485244",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000565e4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Timer_RemoveDelayedCallback",
+      "description": "(slot), C convention: for a slot of 1 to 16, clears bit slot - 1 of Timer_DelayedMask (000882b0) and returns 1 when it was set; 0 otherwise. No caller found by es2_xref. The code of ES1DBSIM's Timer_RemoveDelayedCallback (0006d364), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#callbacks; ES1DBSIM disassembly at 0006d364",
+      "verified": {
+        "bytes": "000565e4+45",
+        "sha1": "4b33df55657a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00056611",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Pit_TimerInterrupt",
+      "description": "Interrupt 8's handler, which Pit_InstallHandler (00056442) installs: saves every register, loads DS and ES from 000872a0, switches to the stack whose top is Pit_Countdown (000882a8) (selector 000872a4), takes 1 off Pit_Countdown (000882a8) while it is above 0, then runs the periodic slots of Timer_CallbackMask (000882ac: callback 000882b4, counter 00088334, period 000883b4) and the delayed slots of Timer_DelayedMask (000882b0) as ES1DBSIM's Pit_TimerInterrupt (0006d391) does, with interrupts left off and no re-entry count or interrupt count. Then it adds Pit_Divisor (00087290) to Pit_ChainAccumulator (00087292) and, when the 16-bit sum carries, jumps to the saved protected-mode handler (00087294); otherwise it sends the interrupt controller its end of interrupt (0x20 to port 0x20) and returns with IRETD. ES1DBSIM's sends the end of interrupt on entry, every time.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-interrupt--pit_timerinterrupt-0006d391; ES1GO capstone disassembly at 00056611",
+      "verified": {
+        "bytes": "00056611+250",
+        "sha1": "604f8e0b6f0d",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -11018,6 +11138,81 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0005d6b4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVTimer_Ctor",
+      "description": "(this, divisor) in stack order, its arguments removed by this function: allocates 6 bytes for a null this, returning 0 when that fails; GL_ClaimGlobal (00066bf0)(this, this, 0), so the first timer built takes GL slot 0 (000ab784); when the slot holds this, DVTimer_Init (0005d74c)(this, divisor), and when that answers non-zero, atexit (0006b620)(Pit_RemoveHandler (000564c7)) and Assert_AddHook (0004f594)(DVTimer_AssertRemoveHook (0005d70c), pushed as its padding entry 0005d709). Returns this. es2_xref finds calls from 00025a31 and Ttm_AllocHandles (0004670e). The code of ES1DBSIM's DVTimer_Ctor (0006c6f8), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-timer-object--dvtimer; ES1GO disassembly at 0005d6b4",
+      "verified": {
+        "bytes": "0005d6b4+85",
+        "sha1": "c9b4f37c34c5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d70c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVTimer_AssertRemoveHook",
+      "description": "(argument), frameless, its argument removed by this function, entered at its padding 0005d709: Pit_RemoveHandler (000564c7). DVTimer_Ctor passes it to Assert_AddHook. The code of ES1DBSIM's DVTimer_AssertRemoveHook (0006c750), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-timer-object--dvtimer; ES1GO disassembly at 0005d709",
+      "verified": {
+        "bytes": "0005d70c+8",
+        "sha1": "edb76204d600",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005d714",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVTimer_Dtor",
+      "description": "(this, flags) in stack order, its arguments removed by this function: for a non-null this, when GL slot 0 (000ab784) is set, Pit_RemoveHandler (000564c7) and the slot cleared, whichever timer it holds; operator_delete when flags bit 0 is set. The code of ES1DBSIM's DVTimer_Dtor (0006c758), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-timer-object--dvtimer; ES1DBSIM disassembly at 0006c758",
+      "verified": {
+        "bytes": "0005d714+55",
+        "sha1": "1e75642b29ab",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d74c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVTimer_Init",
+      "description": "(this, divisor) in stack order, its arguments removed by this function: Pit_InstallHandler (00056442)(divisor, this); when that answers non-zero, the divisor to the word +4. Returns +0 & 1, the installed bit. The code of ES1DBSIM's DVTimer_Init (0006c790), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-timer-object--dvtimer; ES1DBSIM disassembly at 0006c790",
+      "verified": {
+        "bytes": "0005d74c+43",
+        "sha1": "777468cf504a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d778",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVTimer_SetRate",
+      "description": "(this, divisor) in stack order, its arguments removed by this function: Pit_SetDivisor (0005640c)(divisor); when that answers non-zero, the divisor to the word +4 and returns 1, else 0. es2_xref finds calls from 00045a68 and 00046094. The code of ES1DBSIM's DVTimer_SetRate (0006c7bc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-timer-object--dvtimer; ES1DBSIM disassembly at 0006c7bc",
+      "verified": {
+        "bytes": "0005d778+47",
+        "sha1": "a6c00eede4f2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005d7d4",
       "binary": "ES1GO",
       "type": "function",
@@ -11403,6 +11598,99 @@
       "name": "fscanf",
       "description": "Symantec C++ runtime `fscanf`, from `scanf.c`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 33 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0006386d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "scanf",
+      "description": "Symantec C++ runtime scanf, from scanf.c: (format, ...): _sfmt (000638f3)(0006f67c, fgetc (0004e0c0), stdin (_iob), format, the arguments after it), the source's call with 0006f67c where the source passes ungetc. No caller found by es2_xref. The code of ES1DBSIM's scanf (0006c80d), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1DBSIM decompile at 0006c80d",
+      "verified": {
+        "bytes": "0006386d+35",
+        "sha1": "6ec74f55e776",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00063890",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "sgetc",
+      "description": "Symantec C++ runtime sgetc, scanf.c's static: (pointer to a string pointer): the character it points at, advancing it, or -1 at the terminating NUL. sscanf (000638d1) passes it to _sfmt. The code of ES1DBSIM's sgetc (0006c830), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1DBSIM decompile at 0006c830",
+      "verified": {
+        "bytes": "00063890+33",
+        "sha1": "a2a05842d917",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000638b1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "sungetc",
+      "description": "Symantec C++ runtime sungetc, scanf.c's static: (c, pointer to a string pointer): -1 for c = -1; otherwise steps the pointer back, stores c there and returns it sign-extended from a byte. sscanf (000638d1) passes it to _sfmt. The code of ES1DBSIM's sungetc (0006c851), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1DBSIM decompile at 0006c851",
+      "verified": {
+        "bytes": "000638b1+32",
+        "sha1": "f2dca64a9b2a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000638d1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "sscanf",
+      "description": "Symantec C++ runtime sscanf, from scanf.c: (string, format, ...): _sfmt (000638f3)(sungetc (000638b1), sgetc (00063890), the string's address, format, the arguments after it). es2_xref finds four calls, all from ShellSound_Init. The code of ES1DBSIM's sscanf (0006c871), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1GO decompile at 000638d1",
+      "verified": {
+        "bytes": "000638d1+34",
+        "sha1": "282b853dd037",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000638f3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "_sfmt",
+      "description": "Symantec C++ runtime _sfmt, scanf.c's static input formatter: (unget, get, source, format, arguments). Walks the format: white space skips input white space through the ctype table 0008b15d, a literal must match, and a % takes *, a width and h, l or L, then finds the conversion among the 19 dwords at 0008af0c by REPNE SCASD, the source's 19 cases (i b o d u x p X s c e E f g G [ n % NUL), and jumps to its target 19 dwords after, bytes Ghidra has not disassembled. On a mismatch it ungets the offending character; when input ends it returns -1 at the earliest point Ghidra shows, the source's EOF. The code of ES1DBSIM's _sfmt (0006c893), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1DBSIM decompile at 0006c893"
+    },
+    {
+      "address": "00063e71",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_Scanf_ReadFloat",
+      "description": "(state): es2_xref finds one call, from _sfmt (000638f3). Caps the state's width +8 at 0x41 and, while the width lasts, dispatches the input character through a table Ghidra has not recovered. In the place of scanf.c's floating-point conversion, which the source reaches through __pscanfloat for e, E, f, g and G. The same statements as ES1DBSIM's maybe_Scanf_ReadFloat (0006ce11) in different code.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1GO decompile at 00063e71"
+    },
+    {
+      "address": "000640d9",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "_scanre",
+      "description": "Symantec C++ runtime _scanre, scanf.c's static for the [ conversion: (state): builds a 256-byte table from the format's set up to ], inverted after ^, then copies input characters while the width lasts and the table admits them, storing each with a NUL after it unless assignment is suppressed (flag bit 1), and counts one assignment when any matched. Returns 1 when any character matched. The code of ES1DBSIM's _scanre (0006d079), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/compiler.md#identification; ES1DBSIM decompile at 0006d079",
+      "verified": {
+        "bytes": "000640d9+274",
+        "sha1": "10aa59b40df2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "000641ec",
@@ -13424,6 +13712,21 @@
       }
     },
     {
+      "address": "0006b620",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "atexit",
+      "description": "Symantec C++ runtime atexit: (function): points _atexitp (000ab4f2) at 000ab4f6 on first use, and while the list has room (the pointer at most 000ab575) advances it by 4 and stores the function there, returning 0; returns 1 when the list is full. The same statements as ES1DBSIM's atexit (0007d628) in different code.",
+      "source": "Herculan/docs/es1/formats/compiler.md#static-construction-and-exit; ES1GO decompile at 0006b620",
+      "verified": {
+        "bytes": "0006b620+66",
+        "sha1": "4866a931ce8d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0006bc60",
       "binary": "ES1GO",
       "type": "function",
@@ -14475,6 +14778,60 @@
       "name": "Mouse_CallbackEvents",
       "description": "32 bytes: each callback's event mask. ES1DBSIM's Mouse_CallbackEvents is at 00096378.",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "0008728c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Pit_Timer",
+      "description": "The DVTimer whose handler is installed, set by Pit_InstallHandler and cleared by Pit_RemoveHandler; 0 when none is. Pit_SetDivisor, Timer_AddCallback and Timer_AddDelayedCallback refuse while it is 0. ES1DBSIM's Pit_Timer is at 0009bd40.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-interrupt--pit_timerinterrupt-0006d391; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00087290",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Pit_Divisor",
+      "description": "uint16: the divisor Pit_SetDivisor last programmed into counter 0; Pit_TimerInterrupt adds it to Pit_ChainAccumulator each interrupt. ES1DBSIM's Pit_Divisor is at 0009bd44.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-interrupt--pit_timerinterrupt-0006d391; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00087292",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Pit_ChainAccumulator",
+      "description": "uint16: zeroed by Pit_SetDivisor; Pit_TimerInterrupt adds Pit_Divisor each interrupt and passes the interrupt on to the saved handler whenever the sum carries past 65535. ES1DBSIM's Pit_ChainAccumulator is at 0009bd46.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-interrupt--pit_timerinterrupt-0006d391; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000882a8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Pit_Countdown",
+      "description": "dword just above the top of Pit_TimerInterrupt's stack: the handler takes 1 off it each interrupt while it is above 0. ES1DBSIM's Pit_Countdown is at 0009cd5c.",
+      "source": "Herculan/docs/es1/simulation/timer.md#the-interrupt--pit_timerinterrupt-0006d391; ES1GO capstone disassembly at 00056611"
+    },
+    {
+      "address": "000882ac",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Timer_CallbackMask",
+      "description": "dword, 16 slots used: the periodic callbacks Timer_AddCallback has taken and Timer_RemoveCallback has not freed; cleared by Pit_InstallHandler. Per slot: callback 000882b4, counter 00088334, period 000883b4. ES1DBSIM's Timer_CallbackMask is at 0009cd64.",
+      "source": "Herculan/docs/es1/simulation/timer.md#callbacks; ES1GO disassembly"
+    },
+    {
+      "address": "000882b0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Timer_DelayedMask",
+      "description": "dword, 16 slots used: the delayed callbacks Timer_AddDelayedCallback has taken; cleared by Pit_InstallHandler, a slot freed by Timer_RemoveDelayedCallback or by Pit_TimerInterrupt when its repeats run out. Per slot: callback 000882f4, counter 00088374, period 000883f4, delay 00088434, repeats 00088474. ES1DBSIM's Timer_DelayedMask is at 0009cd68.",
+      "source": "Herculan/docs/es1/simulation/timer.md#callbacks; ES1DBSIM disassembly"
     },
     {
       "address": "000941e8",

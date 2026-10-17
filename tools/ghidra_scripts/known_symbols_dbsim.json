@@ -21271,7 +21271,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Kind0InputDevice_Ctor",
-      "description": "(this, word): InputDriverKind0_Ctor(this, word), then registers the InputDevice sub-object at this+6 as kind 0 with InputDevice_Register(this+6, 0, this+6), counts one live destructor (*Rtl_DtorCountPtr += 1) and returns this -- the kind-0 sibling of KeyboardInputDevice_Ctor and MouseInputDevice_Ctor. No caller, stored pointer or vtable slot found by es2_xref.",
+      "description": "(this, word): DVTimer_Ctor(this, word), then registers the InputDevice sub-object at this+6 as kind 0 with InputDevice_Register(this+6, 0, this+6), counts one live destructor (*Rtl_DtorCountPtr += 1) and returns this -- the kind-0 sibling of KeyboardInputDevice_Ctor and MouseInputDevice_Ctor. No caller, stored pointer or vtable slot found by es2_xref.",
       "source": "DBSIM decompile at 0045bfcc",
       "verified": {
         "bytes": "0045bfcc+49",
@@ -22290,7 +22290,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_ReleaseSessionObjects",
-      "description": "(): InputDriverKind0_Dtor(*004d258e, 3), the 6-byte input driver Sim_InitMissionSession builds, then, when Sim_RenderContext is set, adds Rtl_GetPolymorphicDtorCount(context, 0) to *Rtl_DtorCountPtr and calls its vtable +0x18 destructor with flags 3. Sits before Sim_Shutdown. No reference found by es2_xref.",
+      "description": "(): DVTimer_Dtor(*004d258e, 3), the 6-byte input driver Sim_InitMissionSession builds, then, when Sim_RenderContext is set, adds Rtl_GetPolymorphicDtorCount(context, 0) to *Rtl_DtorCountPtr and calls its vtable +0x18 destructor with flags 3. Sits before Sim_Shutdown. No reference found by es2_xref.",
       "source": "DBSIM decompile at 00461e74",
       "verified": {
         "bytes": "00461e74+117",
@@ -32053,7 +32053,7 @@
       "type": "function",
       "confidence": "high",
       "name": "GL_ClaimGlobal",
-      "description": "(this, index, instance): clears this+0 and stores instance at GL global index (006c5f38 + index*4, the table GL_GetGlobal reads) when that slot is still empty, so the first object constructed for an index becomes GL_GetGlobal(index)'s and is the one its own init runs for. MouseDriver_Ctor passes 2, KeyboardDriver_Ctor 1, InputDriverKind0_Ctor 0, GLDisplay_Ctor 7 (the current display).",
+      "description": "(this, index, instance): clears this+0 and stores instance at GL global index (006c5f38 + index*4, the table GL_GetGlobal reads) when that slot is still empty, so the first object constructed for an index becomes GL_GetGlobal(index)'s and is the one its own init runs for. MouseDriver_Ctor passes 2, KeyboardDriver_Ctor 1, DVTimer_Ctor 0, GLDisplay_Ctor 7 (the current display).",
       "source": "DBSIM decompile at 00480484"
     },
     {
@@ -32080,7 +32080,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MouseDriver_Dtor",
-      "description": "(this, flags): when GL_GetGlobal2 returns non-zero, Mouse_Shutdown(this) and GL_ClearGlobal(this, 2); Mem_Delete when flags bit 0 is set. MouseInputDevice_Dtor runs it. The InputDriverKind0_Dtor shape.",
+      "description": "(this, flags): when GL_GetGlobal2 returns non-zero, Mouse_Shutdown(this) and GL_ClearGlobal(this, 2); Mem_Delete when flags bit 0 is set. MouseInputDevice_Dtor runs it. The DVTimer_Dtor shape.",
       "source": "DBSIM decompile at 00480548"
     },
     {
@@ -32334,35 +32334,53 @@
       "binary": "DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "InputDriverKind0_Ctor",
-      "description": "(this, word): GL_ClaimGlobal(this, 0, this); when this is GL_GetGlobal0's instance, InputDriverKind0_Init(this, word) and, if that returns non-zero, Assert_AddHook(00480ab7, an empty function). Returns this. Sim_InitMissionSession builds a 6-byte one with 0x26d3 into 004d258e; 0045bfcc runs it before InputDevice_Register(this+6, kind 0). The MouseDriver_Ctor shape.",
-      "source": "DBSIM disassembly at 004809e4"
+      "name": "DVTimer_Ctor",
+      "description": "(this, divisor): GL_ClaimGlobal(this, 0, this); when this is GL_GetGlobal0's instance, DVTimer_Init (00480a6c)(this, divisor) and, if that returns non-zero, Assert_AddHook(DVTimer_AssertHookNoOp (00480ab7)); counts one live destructor (*Rtl_DtorCountPtr += 1) and returns this. RTTI 'DVTimer' (class record 004621e6). es2_xref finds calls from Sim_InitMissionSession and Kind0InputDevice_Ctor (0045bfcc). ES1's DVTimer_Ctor (ES1DBSIM 0006c6f8) builds the same object and its init programs the PC timer, where this one's stores the divisor and returns the bit. The MouseDriver_Ctor shape.",
+      "source": "DBSIM disassembly at 004809e4",
+      "verified": {
+        "bytes": "004809e4+70",
+        "sha1": "8d2aa16fd9d0",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00480a2c",
       "binary": "DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "InputDriverKind0_Dtor",
-      "description": "(this, flags): when GL_GetGlobal0 returns non-zero, the empty InputDriverKind0_DtorNoOp and GL_ClearGlobal(this, 0); Mem_Delete when flags bit 0 is set. 00461e74 runs it on 004d258e with 3.",
-      "source": "DBSIM decompile at 00480a2c"
+      "name": "DVTimer_Dtor",
+      "description": "(this, flags): decrements *Rtl_DtorCountPtr; for a non-null this, when GL_GetGlobal0 returns non-zero, the empty DVTimer_DtorNoOp (00480abc)(this) and GL_ClearGlobal(this, 0); Mem_Delete when flags bit 0 is set. RTTI 'DVTimer''s destructor (class record 004621e6 +0x28). es2_xref finds one call, from Sim_ReleaseSessionObjects. ES1's DVTimer_Dtor (ES1DBSIM 0006c758) removes its interrupt handler where this calls the empty function.",
+      "source": "DBSIM decompile at 00480a2c",
+      "verified": {
+        "bytes": "00480a2c+61",
+        "sha1": "554f437b1467",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00480a6c",
       "binary": "DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "InputDriverKind0_Init",
-      "description": "(this, word): stores the int16 at this+4 and returns this+0 & 1. GL_ClaimGlobal has just cleared this+0, so from InputDriverKind0_Ctor it returns 0 and the assert hook is never added.",
-      "source": "DBSIM disassembly at 00480a6c"
+      "name": "DVTimer_Init",
+      "description": "(this, divisor): stores the int16 at this+4 and returns this+0 & 1. GL_ClaimGlobal has just cleared this+0, so from DVTimer_Ctor it returns 0 and the assert hook is never added. ES1's DVTimer_Init (ES1DBSIM 0006c790) installs the PC timer's interrupt handler at that divisor first.",
+      "source": "DBSIM disassembly at 00480a6c",
+      "verified": {
+        "bytes": "00480a6c+21",
+        "sha1": "4485b47c52bd",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00480a84",
       "binary": "DBSIM",
       "type": "function",
-      "confidence": "medium",
-      "name": "maybe_InputDriverKind0_SetWord",
-      "description": "(this, word): stores the int16 at this+4 and returns 1: InputDriverKind0_Init's store with a constant result. Sits between InputDriverKind0_Init and GL_ClearGlobal; the InputDriverKind0 owner is placement. No caller found by es2_xref.",
+      "confidence": "high",
+      "name": "DVTimer_SetRate",
+      "description": "(this, divisor): stores the int16 at this+4 and returns 1. ES1's DVTimer_SetRate (ES1DBSIM 0006c7bc) programs the PC timer with the divisor before the store. No caller found by es2_xref.",
       "source": "DBSIM decompile and disassembly at 00480a84",
       "verified": {
         "bytes": "00480a84+25",
@@ -32386,17 +32404,23 @@
       "type": "function",
       "confidence": "high",
       "name": "GL_GetGlobal0",
-      "description": "GL_GetGlobal(0), the kind-0 input driver's slot of 006c5f38; returns it in EAX (the decompile drops it).",
-      "source": "DBSIM disassembly at 00480aae"
+      "description": "GL_GetGlobal(0), the DVTimer's slot of 006c5f38; returns it in EAX (the decompile drops it).",
+      "source": "DBSIM disassembly at 00480aae",
+      "verified": {
+        "bytes": "00480aae+9",
+        "sha1": "ca94e6291d29",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00480ab7",
       "binary": "DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "InputDriverKind0_AssertHookNoOp",
-      "description": "Empty body. InputDriverKind0_Ctor passes it to Assert_AddHook (pointer at 00480a13) when InputDriverKind0_Init returns non-zero.",
-      "source": "DBSIM disassembly at 00480ab7; InputDriverKind0_Ctor decompile",
+      "name": "DVTimer_AssertHookNoOp",
+      "description": "Empty body. DVTimer_Ctor passes it to Assert_AddHook (pointer at 00480a13) when DVTimer_Init returns non-zero.",
+      "source": "DBSIM disassembly at 00480ab7; DVTimer_Ctor decompile",
       "verified": {
         "bytes": "00480ab7+5",
         "sha1": "74c0a4a36986",
@@ -32409,9 +32433,15 @@
       "binary": "DBSIM",
       "type": "function",
       "confidence": "high",
-      "name": "InputDriverKind0_DtorNoOp",
-      "description": "Empty body. InputDriverKind0_Dtor calls it before GL_ClearGlobal.",
-      "source": "DBSIM disassembly at 00480abc"
+      "name": "DVTimer_DtorNoOp",
+      "description": "Empty body. es2_xref finds one call, from DVTimer_Dtor (00480a2c), before its GL_ClearGlobal.",
+      "source": "DBSIM disassembly at 00480abc",
+      "verified": {
+        "bytes": "00480abc+5",
+        "sha1": "74c0a4a36986",
+        "scope": "body",
+        "via": "disasm"
+      }
     },
     {
       "address": "00480ac4",

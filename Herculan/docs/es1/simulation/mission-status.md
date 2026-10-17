@@ -16,8 +16,8 @@ The machines' fields stand 6 bytes below ES2's ([the object fields](mission-grou
 | `+0x3f` | `+0x45` | the group: its route cursor `+6` (index) and `+8` (route), member array `+0xe` and count `+0x12`, side byte `+0x14`, action `+0x16`, target kind `+0x1a` and target `+0x1c` ([the group record](mission-groups.md#the-group-record)) |
 | `+0x93` | `+0x99` | destroyed |
 | `+0x98` | `+0x9e` | engaged |
-| `+0x99` | `+0x9f` | the byte the selector-0 status tests, ES2's "objective sighted" |
-| `+0x9a` | `+0xa0` | the byte the selector-3 status tests, ES2's data link |
+| `+0x99` | `+0x9f` | the byte the selector-0 status tests, ES2's "objective sighted", which `Mech_BehaviourPlayerThink` sets ([the player's think](mech-ai.md#the-players-think--mech_behaviourplayerthink-00015f80)) |
+| `+0x9a` | `+0xa0` | the byte the selector-3 status tests, ES2's data link, which `Mech_BehaviourPlayerThink` sets at the link's fourth step |
 | `+0x9e` | `+0xa4` | immobilised |
 | `+0x9f` | `+0xa5` | disarmed |
 | `+0xa0` | `+0xa6` | ES2's "scored a kill" |
@@ -141,7 +141,7 @@ ES2's functions in that stretch with no counterpart in the file: `Group_AllMembe
 
 - **Open:** what statuses 11 to 16 put on screen, which turns on the status panel `00046efc`, unread.
 - **Open:** whether anything in ES1 posts `MISSION FAILED`, `MISSION SUCCESSFUL` or the boundary lines; this file posts nothing. A retail check: walk the HERC out past the mission area and note whether a computer line comes up with the boundary panel.
-- **Open:** what writes the machine's `+0x99` and `+0x9a`, which selectors 0 and 3 test, and what clears `MissionAlertArmed` besides `Q`'s case; ES2's player think writes its `+0x9f` and `+0xa0`.
+- **Open:** what clears `MissionAlertArmed` besides `Q`'s case.
 - **Open:** which values header word 3 takes in the retail missions; selectors outside 0–9 read past both tables.
 - **Open:** what reaches `Group_NoRivalOrderOnSubject` and `Group_OrderSubjectEngaged`, to which `es2_xref.py` finds no branch or stored pointer. Its stored-pointer hits for `Group_OrderSubjectCondition` (`00035c20`, `0005447a`, `00054e02`), `Group_AnyMemberScoredAKill` (`00062502`) and `Group_OrderSubjectArrivedAndClear` (`000874e7`) were not read.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: in a mission, `BP <CS>:0000f4e8` fires at a steady interval, 10000 counts of a countdown, about 3.9 seconds ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)), and walking out of the mission area makes the boundary panel come up within one such interval of crossing a line 60000 units past the outermost mission point.

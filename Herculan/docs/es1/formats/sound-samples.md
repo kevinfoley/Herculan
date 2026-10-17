@@ -131,8 +131,8 @@ ES2's loader plays a file that is not RIFF as raw 8-bit unsigned mono at 11,025 
 
 | Function | Address | Does |
 |---|---|---|
-| `HmiTimer_Install` | `00050d98` | (*a*, offset, selector), C convention: keeps the far pointer selector:offset in `HmiTimer_Callback` (`000b1ee0`) and registers `HmiTimer_Tick` with `Timer_AddCallback` (`0006d289`) at a count of ⌊⌊1000000 / `Math_Q14Multiply`(*w*, `0x35a1`)⌋ / 60⌋, *w* the word the frame meter's formula reads ([the frame-rate meter](../simulation/debug-monitor.md#the-frame-rate-meter)), keeping the slot in `HmiTimer_Slot` (`000b1edc`) |
-| `HmiTimer_Remove` | `00050e00` | passes the slot to `0006d337`, which `Ttm_ManagerDtor` gives its own slot |
+| `HmiTimer_Install` | `00050d98` | (*a*, offset, selector), C convention: keeps the far pointer selector:offset in `HmiTimer_Callback` (`000b1ee0`) and registers `HmiTimer_Tick` with `Timer_AddCallback` (`0006d289`) at a count of ⌊⌊1000000 / `Math_Q14Multiply`(*w*, `0x35a1`)⌋ / 60⌋, *w* the PC timer's divisor, so a count of 2: every second interrupt, 60 times a second ([the rate](../simulation/timer.md#the-rate)), keeping the slot in `HmiTimer_Slot` (`000b1edc`) |
+| `HmiTimer_Remove` | `00050e00` | passes the slot to `Timer_RemoveCallback` (`0006d337`, [callbacks](../simulation/timer.md#callbacks)), which `Ttm_ManagerDtor` gives its own slot |
 | `HmiTimer_Enable`, `HmiTimer_Disable` | `00050d80`, `00050d8c` | set `HmiTimer_Enabled` (`000b1ed8`) to 1 and 0 |
 | `HmiTimer_Tick` | `00050d38` | while enabled and not already inside the callback (the count `000b1ee8`), calls the callback through the far pointer |
 | `HmiTimer_NoOp`, `HmiHook_NoOp` | `00050e10`, `00050e14` | return at once |

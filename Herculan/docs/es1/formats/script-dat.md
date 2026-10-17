@@ -45,10 +45,20 @@ A block record is the listed fields in `.MSN` order, so an offset into it is the
 | 6, 7, 8 | the type of each record, from block offsets `0x28`, `0x2c` and `0` (`.MSN` `0x30`, `0x34` and `0x08`) |
 | 9 | from the second record on, each member ref (block `0x34`, `.MSN` `0x3a`) that is not negative marks its slot live in the roster block `0x28` names; a base member also stores block `0x44` (`.MSN` `0x4a`) for the slot, which is passed with the base's type to `000045a4` |
 
-5. It marks each `data\player.mec` entry live as a mech slot after the block's count, as ES2's pass marks the squad ([placement](../../retail/formats/script-dat.md#placement--the-actual-rule)).
-6. Among the calls that follow, `Terrain_LoadZoneShapes` (`00020238`) loads the shapes of the zone in header word 1, from the shape library of the theater in word 0 ([`zone-terrain.md`](zone-terrain.md#the-simulators-load)), and `World_LoadTheater` (`000251c4`) the theater's palette and world file, which words 0, 8 and 9 name ([`wld-world.md`](wld-world.md#which-file)).
+5. **The slot-to-pool maps.** For each roster it numbers the live slots from 0 in slot order and stores each slot's number in the roster's map, a signed byte a slot: mechs `000af818`, flyers `000af914`, bases `000af97c`. The mech numbering runs on past the block's count through one slot for each `data\player.mec` entry, in entry order, each of which it marks live, sets in `000af87c` and gives the entry's `+4` as its type, as ES2's pass adds the squad ([placement](../../retail/formats/script-dat.md#placement--the-actual-rule)). The second pass builds one object for each live slot in slot order and replaces a group's member and target refs with the map's number, which the group resolves with `Pool_Nth` ([the group record](../simulation/mission-groups.md#the-group-record)), so the number stands for the slot's object. A target ref that names a slot no group lists keeps the map's 0, and so the roster's first object.
+6. It registers the type of each live slot (`MechTypeSlot_Allocate`, `FlyerType_Register`, and `000045a4` with a base's kept byte), and makes the pools to the live counts: `g_MechPool` (`000af68c`) of `0x24f`-byte mechs and `g_FlyerPool` (`000af72c`) of `0x1d7`-byte flyers with `Pool_Init`, the bases through `00004574`, and `LiveObjectList` with room for all three.
+7. Among the calls that follow, `Terrain_LoadZoneShapes` (`00020238`) loads the shapes of the zone in header word 1, from the shape library of the theater in word 0 ([`zone-terrain.md`](zone-terrain.md#the-simulators-load)), and `World_LoadTheater` (`000251c4`) the theater's palette and world file, which words 0, 8 and 9 name ([`wld-world.md`](wld-world.md#which-file)).
 
-The headings in the two `.MSN` files walked by hand (`SM_SCT50`, `B0_C2_60`) are multiples of 45 from 0 to 315. Shifted left 14 into 16 bits, a value keeps only its two low bits, so 45 and 225 both become `0x4000` ([Open](#open)).
+**A stored heading turns a machine by quarter turns of its value's two low bits, so a heading of 180 faces the way 0 does.** The mission load reads the 10-byte heading records as they are and a variant copies the value unchanged ([the layout](msn-mission-file.md#the-layout)), and `WriteScriptDatFile` writes the record's `0x08` as it is. The reader shifts it left 14 (`SHL EAX,0xe` at `0001dd69`) and keeps the low 16 bits, so a value *h* becomes the binary angle (*h* mod 4) × `0x4000`, and the second pass gives it to an object's rotation `+0xa` and to a group's heading. The headings in the two `.MSN` files walked by hand (`SM_SCT50`, `B0_C2_60`) are multiples of 45 from 0 to 315:
+
+| `.MSN` heading | Binary angle |
+|---|---|
+| 0, 180 | 0 |
+| 45, 225 | `0x4000` |
+| 90, 270 | `0x8000` |
+| 135, 315 | `0xc000` |
+
+A group with no heading ref takes the bearing of its route's first leg instead, at full precision ([the second pass](#the-second-pass)). ES2's simulator multiplies its stored degrees by 182 ([ES2's blocks](../../retail/formats/script-dat.md#the-13-block-structure)). A retail check is [Open](#open).
 
 ### The second pass
 
@@ -96,6 +106,6 @@ Besides the theater and world words above, the simulator reads header word 7 as 
 ## Open
 
 - **Open:** the second pass's callees, not read: `0001ac58` (a flyer from its type) and `00003cbc` (a base from its record), where ES2's pass calls `Flyer_Constructor` and `Base_Construct`.
-- **Open:** what reads an object's `+0x174`/`+0x176` pair and its `+0x16c`/`+0x170` actions, besides `Sim_RaycastObjectList` (`0001f1d0`), which fires the struck object's `+0x16c` ([shots](../simulation/world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)); what the mech's `+0x91` and `+0x1e6` are to ES1; and who fills the slot-to-pool maps `000af818`, `000af914` and `000af97c` the second pass reads, which `DBSim_LoadScriptDat`'s unread calls after the blocks may do.
-- **Open:** whether ES1's headings are degrees; the second pass stores the shifted value as an object's rotation `+0xa` and as a group's heading.
+- **Open:** what reads an object's `+0x174`/`+0x176` pair and its `+0x16c`/`+0x170` actions, besides `Sim_RaycastObjectList` (`0001f1d0`), which fires the struck object's `+0x16c` ([shots](../simulation/world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)); and what the mech's `+0x91` and `+0x1e6` are to ES1.
+- **Open:** a retail check of the stored heading, and which headings the retail missions hold: in a mission whose `.MSN` gives two machines' own records the headings 0 and 180, both face the same way at the start, and one at 90 faces the opposite way. `HercWorks.Query` has no listing of the heading row's values.
 - **Open:** what header words 4 to 6 mean to the simulator, and what the other five readers of the mode at offset 4 do with it. Word 3 selects the question the mission status asks and the verb of the squad's report that `Mission_WriteResults` writes as the outcome ([the mission status](../simulation/mission-status.md)). What reads `000bc4b8`'s flags during a mission besides that writer's flag 7: the actions and the groups' out-of-action reports write them ([mission groups](../simulation/mission-groups.md)), and `Mission_WriteResults` writes them back to `data\mission.var`.

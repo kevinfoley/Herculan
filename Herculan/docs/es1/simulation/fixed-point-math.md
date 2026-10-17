@@ -30,14 +30,22 @@ The Q8, Q10 and Q14 multiplies add half a unit (`0x80`, `0x200`, `0x2000`) when 
 
 ## The tick length — `Time_BeginSimTick` (`00063f40`)
 
-**ES1's simulation tick is counted in tenths of a second, where ES2's is in eighths ([timer units](../../retail/simulation/dbsim-physics-notes.md#timer-units)): `SimTickDelta` (`000bdbd0`) is Q8 with 1.0 = a tenth of the timer ticks a second that `Time_InitSimClock` computes, 100 ms when the timer runs at that rate ([Open](#open)). One countdown count is then 100/256 ms, about 0.39 ms, and a reload of 10000 lasts 3.9 seconds.** It is measured with the PC timer rather than ES2's `GetTickCount`:
+**ES1's simulation tick is counted in tenths of a second, where ES2's is in eighths ([timer units](../../retail/simulation/dbsim-physics-notes.md#timer-units)): `SimTickDelta` (`000bdbd0`) is Q8 with 1.0 = 12 interrupts of the PC timer, which the simulator runs at 120 a second ([the rate](timer.md#the-rate)), so 1.0 is 100 ms. One countdown count is then 100/256 ms, about 0.39 ms, and a reload of 10000 lasts 3.9 seconds.** It is measured with the PC timer rather than ES2's `GetTickCount`:
 
-- **`Time_InitSimClock` (`00063e64`)**, which `Sim_StartMission` calls ([the mission start](main-loop.md#the-mission-start--sim_startmission-0005a9dc)), sets `SimTickDelta` and `SimTickDelta2` (`000bdbd2`) to `0x100`, and on its first call registers `Time_SimClockTimerTick` (`00063e3c`) with `Timer_AddCallback` at count 1, keeps the timer structure `000bdd0c` points to in `000981c0`, and sets `SimClock_TicksPerSecond` (`000bba44`) and `000bba40` to `1000000 / Math_Q14Multiply(w, 0x35a1)`, *w* that structure's word `+4` (the formula [the frame meter](debug-monitor.md) uses), `SimClock_TicksPer100ms` (`000bba42`) and the two divisors `000bdbd4` and `000bdbd6` to a tenth of that, and the countdown `SimClock_Countdown` (`000bba46`) to `SimClock_TicksPerSecond`.
-- **`Time_SimClockTimerTick` (`00063e3c`)**, the timer callback, takes 1 from `SimClock_Countdown` while it is not 0, adds 1 to the dword `000981c8`, and adds 1 to the clock `000981c4` on every second call.
+- **`Time_InitSimClock` (`00063e64`)**, which `Sim_StartMission` calls ([the mission start](main-loop.md#the-mission-start--sim_startmission-0005a9dc)), sets `SimTickDelta` and `SimTickDelta2` (`000bdbd2`) to `0x100`, and on its first call registers `Time_SimClockTimerTick` (`00063e3c`) with `Timer_AddCallback` at count 1, keeps the timer structure `000bdd0c` points to in `000981c0`, and sets `SimClock_TicksPerSecond` (`000bba44`) and `000bba40` to `1000000 / Math_Q14Multiply(w, 0x35a1)`, *w* that structure's word `+4`, the timer's divisor, which makes it 120 ([the rate](timer.md#the-rate)), `SimClock_TicksPer100ms` (`000bba42`) and the two divisors `000bdbd4` and `000bdbd6` to a tenth of that, 12, and the countdown `SimClock_Countdown` (`000bba46`) to `SimClock_TicksPerSecond`.
+- **`Time_SimClockTimerTick` (`00063e3c`)**, the timer callback, which runs on every interrupt ([callbacks](timer.md#callbacks)), takes 1 from `SimClock_Countdown` while it is not 0, adds 1 to the dword `000981c8`, and adds 1 to the clock `000981c4` on every second call, 60 times a second.
 - **`Time_BeginSimTick` (`00063f40`)**, once a frame from `Sim_Main` unless a tape plays ([the frame](main-loop.md#the-frame)), waits until `SimClock_Countdown` (read through `Time_GetSimClockCountdown`, `00063e34`) is at least 2 below `SimClock_TicksPerSecond`, then takes the elapsed ticks *e* = `SimClock_TicksPerSecond` − `SimClock_Countdown`, sets `SimTickDelta` = `Time_ElapsedToQ8Clamped` (`00063f04`)(*e*, `000bdbd4`) and `SimTickDelta2` the same with `000bdbd6`, and reloads the countdown.
 - **`Time_ElapsedToQ8Clamped` (`00063f04`)**, (elapsed, unit): (elapsed << 8) / unit, clamped to `0x40`–`0x1c2`, ES2's (`00467790`).
 
-So a frame waits for two timer ticks, a tick is 25 to 176 ms by the clamp (ES2's: 31 to 220 ms), and the countdown stops at 0 after a second without a frame. The two divisors start equal, so the two deltas are equal while they stay so ([Open](#open)). A replay takes each frame's delta from the tape instead ([the tick](main-loop.md#the-tick--sim_maintick-00059700)).
+So a frame waits for two interrupts, 8.3 to 16.7 ms after the last frame's reload, and at most 60 frames run in a second. With *e* interrupts elapsed the tick is (*e* × 256) / 12 held to `0x40`–`0x1c2`:
+
+| *e* | Real time | `SimTickDelta` | Tick |
+|---|---|---|---|
+| 2 | 16.7 ms | `0x40` (42 held up) | 25 ms |
+| 3 to 21 | 25 to 175 ms | 64 to 448 | the real time, rounded down to a 256th of 100 ms |
+| 22 and more | 183 ms and more | `0x1c2` (held down) | 175.8 ms |
+
+A frame drawn within two interrupts therefore advances the simulation 25 ms in 16.7 ms: at 60 frames a second the game runs half again as fast as real time ([Open](#open)). The clamp's range is 25 to 176 ms (ES2's: 31 to 220 ms), and the countdown stops at 0 after a second without a frame. The two divisors start equal, so the two deltas are equal while they stay so ([Open](#open)). A replay takes each frame's delta from the tape instead ([the tick](main-loop.md#the-tick--sim_maintick-00059700)).
 
 ## Rate over tick
 
@@ -81,5 +89,5 @@ then adds the velocity to the position and returns it. An error and a velocity t
 
 - **Open:** no caller of `Slew_Ctor`, `Slew_Step` or `Math_RateLimitedMoveTowardInt` found by `es2_xref.py`.
 
-- **Open:** the PC timer's rate, the word `+4` of the structure `000bdd0c` points to ([the frame meter's Open](debug-monitor.md#open)), and whether `Timer_AddCallback`'s count 1 runs `Time_SimClockTimerTick` at that rate, as `Time_InitSimClock`'s arithmetic takes it to; the tick's length in milliseconds rests on it, the frame's two-tick wait and the clock `000981c4`'s rate depend on it.
+- **Open:** a retail check of the two-interrupt frame: under DOSBox-X with enough cycles for 60 frames a second, a 10000-count countdown (the mission status poll, [`mission-status.md`](mission-status.md#open)) runs out in 2.6 seconds of wall time rather than 3.9, and a HERC covers a measured distance in two thirds of the time it takes at 40 frames a second or fewer.
 - **Open:** whether anything changes the divisors `000bdbd4` and `000bdbd6` after `Time_InitSimClock`: `es2_xref.py` finds no other store to either.

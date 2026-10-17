@@ -278,7 +278,7 @@ The movement functions ([movement](mech-locomotion.md)), `Mech_ApplyFormationOff
 | `FlatObjVtableMechCopy`, the shadows' table | `00091b66` |
 | `Mech_HandleCommandCodes`, 19 codes and their targets | `000919d0` |
 | `Shape_StampTransformIdTags`, ten tags and their targets | `00091c04` |
-| `ThrottleLeverMode`, `int16`, 0 | `000919ce` |
+| `ThrottleLeverMode`, `int16`, 0 in the image, set by preferences option 10 and `Ctrl+1` ([the throttle](mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc)) | `000919ce` |
 | `Mech_DrawEnabled`, `int16` | `000bc428` |
 | `DevKeys_MoveStep`, `DevKeys_TurnStep`, `int16` | `000af6f6`, `000af6f8` |
 | `g_MechDeleteQueue` | `000af690` |

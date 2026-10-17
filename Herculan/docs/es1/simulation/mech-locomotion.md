@@ -25,7 +25,12 @@ Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-e
 | 1 | 0 to `0x400` | as read |
 | −1 | −`0x400` to 0 | negated |
 
-A search of the disassembly for `000919ce` finds the two reads here and no store ([Open](#open)). The multiplies round ([the primitives](fixed-point-math.md#the-primitives)).
+A scan of the image's bytes for `ThrottleLeverMode`'s address finds the two reads here and three stores, in two pieces of code:
+
+- **Preferences option 10** (`000bd56c`), the option that has `Ctrl+I` and `Ctrl+M` step the throttle ([the input build](input.md#the-input-build--input_buildplayerdevice-0004cb14)). Its handler, `Input_SetThrottleLeverMode` (`0004ad94`), sets 1 when the option is on and 0 when it is off. `Prefs_Load` (`0004a744`) calls every option's handler with its value once it has read the 17 option bytes of `data\prefs.cfg` (all 0 when the file does not open), and `Prefs_SetOption` (`0004a914`) calls it when it applies option 10; `0004afe8` registers the handler with `Prefs_SetHandler` (`0004ac4c`) before its call of `Prefs_Load`. ES2's handler, `Input_SetThrottleLeverMode` (`00459d20`), sets 1 only for a value of 1 with a throttle control fitted.
+- **`Ctrl+1`** ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)) sets −1 when it is above 0 and 1 otherwise: from 0 the first press makes the throttle forward only, and each press after switches it between forward only and reverse only.
+
+The multiplies round ([the primitives](fixed-point-math.md#the-primitives)).
 
 ## The control law — `Mech_LocomotionTick` (`00012038`)
 
@@ -117,7 +122,7 @@ The thresholds are the file's offsets 150–156, where a foot plants, and 170–
 
 ## Open
 
-- **Open:** what writes `ThrottleLeverMode`, which a search of the disassembly for its address finds read twice, in `Mech_ApplyThrottleInput`; a store through a base was not searched for. At 0 the throttle spans both directions.
+- **Open:** a retail check of `Ctrl+1` with option 10 off: from standstill the first press keeps the throttle from going into reverse, and a second press keeps it from going forward.
 - **Open:** which sample sound `0x1f` is, and whether a retail fall plays it. A retail check: have the player's HERC's legs shot out; between the sound as it starts to fall and the thump as it lands, a third sound plays as its body passes 400 units above the ground.
 - **Open:** a retail check of the pace: from a full-speed run, pull the throttle to zero at once. ES1's code keeps the full running pace until the HERC drops to a walk and then the walk-to-run pace until it stops, where ES2's slows its legs every tick.
 - **Open:** the callees `000038b8` and `0000375c` (the structures' ray and walk tests), unread.

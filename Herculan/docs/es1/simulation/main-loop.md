@@ -3,9 +3,9 @@
 **ES1's simulator runs ES2's main loop ([ES2's](../../retail/simulation/main-loop.md)) as a DOS program: it plays one mission per run, starts it with no loading picture, draws a frame for every simulation tick, and leaves its exit code in `data\exit.cfg` for `GO.EXE` where ES2's returns it.** What a player would see differently:
 
 - every timer in the simulation runs in tenths of a second, so a countdown of 10000 counts lasts 3.9 seconds where ES2's lasts 4.9 ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40));
-- a frame waits for two ticks of the PC timer, where ES2's waits 40 ms ([Open](#open));
+- a frame waits for two interrupts of the PC timer, which runs at 120 a second, so at most 60 frames are drawn a second, where ES2's waits 40 ms; a frame drawn within two interrupts still counts as 25 ms of play, so at 60 frames a second the game runs half again as fast as real time ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40));
 - `Alt+S` freezes the simulation only while a tape records or plays, and the mission's trigger areas still fire while it is frozen;
-- the keys differ: keypad 0 switches what the stick drives ([the stick mode](input.md#the-stick-mode)), `Ctrl+Esc` quits as `Ctrl+Q` does, `Esc` plays a sound as it leaves the outside view, `Ctrl+1` flips the throttle's direction without ES2's test for a throttle lever, and `'`, `\`, `/` and the developer keys of ES2's `-SPRUNKNOWN` have no case ([commands](#commands--sim_dispatchcommand-00059df8));
+- the keys differ: keypad 0 switches what the stick drives ([the stick mode](input.md#the-stick-mode)), `Ctrl+Esc` quits as `Ctrl+Q` does, `Esc` plays a sound as it leaves the outside view, `Ctrl+1` turns the throttle into a forward-only one and then switches it between forward only and reverse only, with or without the throttle-lever option, where ES2's needs a throttle lever, and `'`, `\`, `/` and the developer keys of ES2's `-SPRUNKNOWN` have no case ([commands](#commands--sim_dispatchcommand-00059df8));
 - holding the mouse's second button while the first is down snaps the turret straight ahead, and a disabled HERC's turret swings back to center every tick ([the player's controls](#the-players-controls--sim_pollplayerinput-0005a0c0));
 - a mission whose HERC starts within 40000 of a friendly structure opens with the lift, where ES2's lift depends on its block's `+0x54` instead ([the mission start](#the-mission-start--sim_startmission-0005a9dc)).
 
@@ -73,8 +73,8 @@ Where ES2's parsers differ ([ES2's switches](../../retail/command-line.md#dbsim)
 `Sim_Main` calls it once. ES2's counterpart puts up a loading picture first ([ES2's](../../retail/simulation/mission-loading.md#showing-it)); ES1's shows nothing until the first frame. In order:
 
 1. Hands `Sim_AssertCleanupHook` (`0005a7b8`) to `0005730c`, where ES2's registers its hook with `Assert_AddHook`. The hook runs `Sound_Shutdown`, `0006a5fc` on the current display, closes the tape and `.dmp` files, `GndTex_Free`, and writes an `int16` 0 to `data\exit.cfg` (`init.cpp` line 100).
-2. `Input_BuildSourceTable` ([setting up](input.md#setting-up--input_buildsourcetable-0004c95c)); `Sim_InputDriver` (`000b5baa`) = `0006c6f8`(0, `0x26d3`).
-3. **Sound.** With `000b5b68` set it reads `resource.cfg` (through `Path_ApplyAltDrive`) with `Profile_GetString` (`000511a4`) and `Profile_GetInt` (`00050ffc`) ([profile files](../formats/profile-files.md)): `[SoundFX]`'s `Driver#`, `IRQ`, `DMA` and `PortAddress` and `[Music]`'s `Driver#` and `PortAddress`, the hexadecimal ones through `0006c871` with `%X`, and passes them to `Sound_Init`; with it clear, digital device 0 ([the driver](../formats/sound-samples.md#the-driver)). Then `0004e498`, and with no sound manager (`000959ac`) `Prefs_SetOption`(1, 0, *i*) for options 0, 1 and 2.
+2. `Input_BuildSourceTable` ([setting up](input.md#setting-up--input_buildsourcetable-0004c95c)); `Sim_Timer` (`000b5baa`) = `DVTimer_Ctor` (`0006c6f8`)(0, `0x26d3`), the PC timer at 120 interrupts a second ([the rate](timer.md#the-rate)).
+3. **Sound.** With `000b5b68` set it reads `resource.cfg` (through `Path_ApplyAltDrive`) with `Profile_GetString` (`000511a4`) and `Profile_GetInt` (`00050ffc`) ([profile files](../formats/profile-files.md)): `[SoundFX]`'s `Driver#`, `IRQ`, `DMA` and `PortAddress` and `[Music]`'s `Driver#` and `PortAddress`, the hexadecimal ones through `sscanf` (`0006c871`) with `%X`, and passes them to `Sound_Init`; with it clear, digital device 0 ([the driver](../formats/sound-samples.md#the-driver)). Then `0004e498`, and with no sound manager (`000959ac`) `Prefs_SetOption`(1, 0, *i*) for options 0, 1 and 2.
 4. `Light_ResetSystem`, `00075858`, `00066e00`, `Widget_LoadStylesAndFonts`; the two hooks at `00094d80` and `00094d84` = `SimInput_PushDisable` (`0005a5b4`) and `SimInput_PopEnable` (`0005a5d8`) ([small functions](#small-functions)); `Mono_Clear` with `-m`.
 5. Subsystem phase 2; the cursor `00057640` returns; `DBSim_LoadScriptDat`; `ObjList_Add` of each `Zone_ShapeObjects` entry up to `Zone_ShapeCount` or the first null; `000441cc`; `maybe_CockpitMouseLive` (`000bd512`) = 0; `Time_InitSimClock` (`00063e64`, [the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)).
 6. `DBSim_SpawnMissionObjects` ([the second pass](../formats/script-dat.md#the-second-pass)) with option 1 set to 0 around it (`Prefs_SetOption`(1, 0, 1), then `Prefs_RevertOption`(1, 1)).
@@ -125,7 +125,7 @@ Where ES2's differs ([ES2's tick](../../retail/simulation/main-loop.md#the-tick)
 
 ## Commands — `Sim_DispatchCommand` (`00059df8`)
 
-(block): the block's command word, a set-1 scancode plus `0x200` for `Alt` and `0x400` for `Ctrl` ([keyboard commands](../../retail/simulation/cockpit-input.md#keyboard-commands-are-scancodes)), goes to `CockpitWidgets_HandleCommand` ([keys](cockpit-panel.md)), then to `Sim_HandleWindowKey` (`00059dec`), which answers 0 for every code, then to its own cases, found by `REPNE SCASD` in the 15 dwords at `00097180` with their targets 15 dwords after (bytes Ghidra has not disassembled, `00059e5d`–`0005a0ae`); a code it has no case for goes to slot `+0x30` of `ViewChain_Viewed`. It returns 1 for a code it handles plus the second term below.
+(block): the block's command word, a set-1 scancode plus `0x200` for `Alt` and `0x400` for `Ctrl` ([keyboard commands](../../retail/simulation/cockpit-input.md#keyboard-commands-are-scancodes)), goes to `CockpitWidgets_HandleCommand` ([keys](cockpit-panel.md)), then to `Sim_HandleWindowKey` (`00059dec`), which answers 0 for every code, then to its own cases, found by `REPNE SCASD` in the 15 dwords at `00097180` with their targets 15 dwords after; a code it has no case for goes to slot `+0x30` of `ViewChain_Viewed` (the player's HERC's is `Mech_HandleCommand`, [the cockpit](mech.md#the-cockpit)), whose answer it returns. It returns 1 for a code it handles plus the second term below.
 
 | Code | Key | Effect |
 |---|---|---|
@@ -139,7 +139,7 @@ Where ES2's differs ([ES2's tick](../../retail/simulation/main-loop.md#the-tick)
 | `0x401`, `0x410` | `Ctrl+Esc`, `Ctrl+Q` | The panel `00046efc`(0, 0, 1, 1); its answer is the second term, and a non-zero one sets `Sim_QuitFlag` (`000b5b9e`) |
 | `0x19` | `P` | The panel `00046efc`(0, 0, 1, 0); its answer is the second term |
 | `0x219`, `0x58` | `Alt+P`, `F12` | `00057820`, where ES2's raises the preferences panel |
-| `0x402` | `Ctrl+1` | Flips `ThrottleLeverMode` between 1 and -1 |
+| `0x402` | `Ctrl+1` | `ThrottleLeverMode` (`000919ce`) = −1 when it is above 0, and 1 otherwise ([the throttle](mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc)) |
 | `0x52` | keypad 0 | `Input_ToggleStickMode` ([the stick mode](input.md#the-stick-mode)) |
 
 A result of 2 ends the mission ([the tick](#the-tick--sim_maintick-00059700)), so `Ctrl+Q` answered yes ends it with `Sim_QuitFlag` set, and `Sim_Shutdown` gives exit code 0.
@@ -177,7 +177,7 @@ Where ES2's differs ([ES2's](../../retail/simulation/joystick-input.md#while-the
 - **`Path_ApplyAltDrive` (`000592a4`)**, (path): the prefix at `000b5d9c` + the path less a leading drive, in the buffer `000b5da0`.
 - **`Cam_AttachTo` (`0005923c`)**, (object): slot `+0x34` of the object gives the eye and orbit offsets, which `Cam_AttachEye` and `Cam_AttachOrbit` set on `ViewObjectPtr`, as ES2's (`0045ed94`) with slot `+0x30`.
 - **`SimInput_PushDisable` (`0005a5b4`)** pushes `SimInput_Enabled` (`00095818`) on the byte stack at `000b5df8`, its depth at `00097280`, and turns the keys off with `SimInput_SetEnabled`(0); **`SimInput_PopEnable` (`0005a5d8`)** pops it back through `SimInput_SetEnabled`. `00045f00` calls the first through `00094d80` and `000460b8` the second through `00094d84`.
-- **`Sim_ReleaseSessionObjects` (`0005b534`)**: `0006c758`(`Sim_InputDriver`, 3) and, with the render context `000b5b6e` set, its slot `+0x1c` with 3, ES2's (`00461e74`). No reference to it found by `es2_xref.py`.
+- **`Sim_ReleaseSessionObjects` (`0005b534`)**: `DVTimer_Dtor` (`0006c758`)(`Sim_Timer`, 3) and, with the render context `000b5b6e` set, its slot `+0x1c` with 3, ES2's (`00461e74`). No reference to it found by `es2_xref.py`.
 - **`Sim_DebugBreak` (`00059658`)**: `INT3` while `-B`'s `000b5bcc` is set. No reference to it found by `es2_xref.py`.
 - The cameras' destructors: `TSOrthoCamera_DtorInitCopy` (`0005b4d4`), slot `+4` of `000972de`, and `TSCamera_DtorInitCopy` (`0005b508`), slot `+4` of `00097362`, the module's copies of the library's ([module copies](../formats/compiler.md#vtables)).
 
@@ -216,7 +216,7 @@ The flags lie in the block `Main_StaticInit` zeroes, `000b5b5c`–`000b5bd3`.
 | `ViewChain_View`, `ViewChain_PendingView`, `ViewChain_Chosen`, `ViewChain_CaptionFrames` | `000b5b8e`, `000b5bba`, `000b5bbc`, `000b5bc0` |
 | `InputDrivesCamera`, `int16` | `000b5b90` |
 | `Sim_Frozen`, `Sim_StepOnce`, `Sim_QuitFlag`, `int16` | `000b5b92`, `000b5b9c`, `000b5b9e` |
-| `Sim_InputDriver` | `000b5baa` |
+| `Sim_Timer`, the PC timer ([the PC timer](timer.md)) | `000b5baa` |
 | `LiftStart_Pending`, `int16` | `000b5bb0` |
 | `Sim_EggplantGiven`, `DemoMode`, `DemoAbort`, `Sim_AltDriveAllowed`, `int16` | `000b5bc4`, `000b5bd0`, `000b5bd2`, `000b5bce` |
 | `ViewChain_Viewed`, the object the controls and views follow | `000bda9a` |
@@ -226,8 +226,7 @@ The flags lie in the block `Main_StaticInit` zeroes, `000b5b5c`–`000b5bd3`.
 
 ## Open
 
-- **Open:** the callees read for none of this file's functions: `00058574` in the frame; `0005894c` and `00058a44` (in `ViewChain_Apply`'s and `ViewChain_ViewObject`'s places), `00058414` (status 2), `00057820` (`F12`), `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0003ea50` (`-t`), `0005730c`, `0004e498`, `0004e294`, `00057640`, `000441cc`, `00075858`, `00066e00`, `0006a824`, `0006c6f8`, `0006c758`, `0006a5fc`, the status panel `00046efc` and `00045d0c`, and `0001b794` (the flyer's controls).
-- **Open:** what the PC timer's rate is, and so how long a frame's two ticks and the clock `000981c4` last ([the tick length](fixed-point-math.md#open)).
+- **Open:** the callees read for none of this file's functions: `00058574` in the frame; `0005894c` and `00058a44` (in `ViewChain_Apply`'s and `ViewChain_ViewObject`'s places), `00058414` (status 2), `00057820` (`F12`), `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0003ea50` (`-t`), `0005730c`, `0004e498`, `0004e294`, `00057640`, `000441cc`, `00075858`, `00066e00`, `0006a824`, `0006a5fc`, the status panel `00046efc` and `00045d0c`, and `0001b794` (the flyer's controls).
 - **Open:** what `000b5b69` (`-P`) and `-V`, `-W` and `-T`'s words feed, and what sets `Sim_StepOnce`; `es2_xref.py` finds only the stores above and the tick's test, and a store through the block's base `000b5b5c` is not covered by that search.
 - **Open:** what `000b5bb8`, which `ViewChain_ToggleCameraControl` flips, and the camera's mode 2 select, and what the bit `Sim_Main` clears in the display's first byte does.
 - **Open:** which retail missions place a friendly structure within 40000 of the player's start, and so open with the lift (`00057cf4` and `00057ffc` unread). A retail check: such a mission brightens through a palette shift before play starts, and one that does not starts at once.

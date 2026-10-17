@@ -19,7 +19,7 @@ The code is `0004c650`–`0004db13`, `appinput.cpp` by its assert at `0004d56a`.
 (code): the keyboard subscriber `SimInput_SetEnabled` registers against the 28 codes at `KeyjoyWantedCodes` (`0009586c`): keypad 7, 8, 9, 4, 6, 1, 2, 3, `M`, `J`, `K`, `I`, `Space` and `Enter`, then the same fourteen with the key-up bit `0x80`. It answers 1 or 2, ES2's claim and pass-on results ([ES2's](../../retail/simulation/cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes)):
 
 1. Under `DemoMode` it sets `DemoAbort` and answers 1, where ES2's answers 2.
-2. With preferences option 10 (`000bd56c`) on and `Ctrl` held without `Alt`, it answers 1 after looking the scancode up in the four dwords at `00095898`: `I` subtracts `0x40` from `Input_KeyThrottleStep` (`00095896`), `M` adds `0x40`, and their key-ups and every other code do nothing. ES2 keeps its `Ctrl` digits in a separate subscriber.
+2. With preferences option 10 (`000bd56c`) on and `Ctrl` held without `Alt`, it answers 1 after looking the scancode up in the four dwords at `00095898`: `I` subtracts `0x40` from `Input_KeyThrottleStep` (`00095896`), `M` adds `0x40`, and their key-ups and every other code do nothing. ES2 keeps its `Ctrl` digits in a separate subscriber. Option 10's handler also narrows the throttle to forward only ([the throttle](mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc)).
 3. With `SimInput_Enabled` (`00095818`) set it folds the code's index into 0–13 and updates the three 14-byte key-state blocks, held `Input_KeyHeld` (`000b1844`), release-pending `000b1854` and seen `000b1864`, as ES2's do, stores the `Alt` bit in `Input_KeyAltHeld` (`000b18a0`), and answers 1 except for `Enter`.
 4. Otherwise 2.
 
@@ -90,7 +90,7 @@ Preferences option 7 (`000bd569`) chooses one of six. *Mode* is the stick mode; 
 
 ### The stick mode
 
-`Input_StickMode` (`00095819`), 0, 1 or 2, is preferences option 8: the option's handler `0004ad88`, which `0004afe8` registers, copies the value in. **`Input_ToggleStickMode` (`0004d8e1`)**, while option 8 (`000bd56a`) is not 0, sets the mode to 2 when it is 1 and to 1 otherwise, and returns it. Keypad 0 ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)) and source button 1 call it.
+`Input_StickMode` (`00095819`), 0, 1 or 2, is preferences option 8: the option's handler `Input_SetStickMode` (`0004ad88`), which `0004afe8` registers with `Prefs_SetHandler` (`0004ac4c`), copies the value in. **`Input_ToggleStickMode` (`0004d8e1`)**, while option 8 (`000bd56a`) is not 0, sets the mode to 2 when it is 1 and to 1 otherwise, and returns it. Keypad 0 ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)) and source button 1 call it.
 
 ### Recording and playback
 

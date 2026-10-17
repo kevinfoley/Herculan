@@ -46,13 +46,13 @@ ES1's group record is `0x28` bytes, where ES2's is `0x7a` ([ES2's](../../retail/
 | `+0x04` | `int16` | the order: the AI state its members take ([choosing a state](mech-ai.md#choosing-a-state--mech_aiselectbehaviour-0001892c)); `Mission_Status` tests the player's group's for 6 ([the status](mission-status.md#the-status--mission_status-0000f4e8)) | `.MSN` `0x32` |
 | `+0x06` | `int16` | the route cursor's index, 0 from the element constructor | |
 | `+0x08` | ptr | the route, a waypoint group | the argument *route*: `.MSN` `0x38` |
-| `+0x0c` | `int16` | the heading | the argument *heading*: `.MSN` `0x36`, or the route's first leg |
+| `+0x0c` | `int16` | the heading: `Mech_AttachToGroup` turns a member whose rotation holds the sentinel to it ([construction](mech.md#construction)) | the argument *heading*: `.MSN` `0x36`, or the route's first leg |
 | `+0x0e`, `+0x12` | ptr, `int16` | the member array and its count | |
 | `+0x14` | byte | the side: `Mission_TotalSalvage` counts a machine whose group's byte differs from the player's group's | `.MSN` `0x4a`'s low byte |
 | `+0x16` | ptr | the action, ES2's [deployment gate](../../retail/simulation/mission-deployment.md#the-deployment-gate--group0x14): the members do not tick, and the shot sweep, the blast and the trigger test skip them, while it is set; `Sim_MainTick` clears it once the action has fired ([the tick](main-loop.md#the-tick--sim_maintick-00059700)) ([`world.md`](world.md#shots-against-objects--sim_raycastobjectlist-0001f1d0)) | the argument *action*: `.MSN` `0x50` |
 | `+0x1a` | `int16` | the target's kind: 0 a group, 1 a mech, 2 a flyer, 3 a base | `.MSN` `0x4c` |
 | `+0x1c` | ptr | the target | `.MSN` `0x4e` |
-| `+0x20` | ptr | the group's point | the argument *point*: `.MSN` `0x34` |
+| `+0x20` | ptr | the group's point: `Mech_AttachToGroup` places a member whose position holds the sentinel there, or at the route's waypoint when it is 0 ([construction](mech.md#construction)) | the argument *point*: `.MSN` `0x34` |
 | `+0x24`, `+0x26` | `int16` | the group's out-of-action (flag, operation) pair, [below](#going-out-of-the-fight) | `.MSN` `0x54`, `0x56` |
 
 The members are the non-negative ones of the eight refs at `.MSN` `0x3a`–`0x49`, in order, in an array of that many pointers from `operator_new`. Each is `Pool_Nth` (`00063a78`) of the pool its kind names, the dword at `000af68c`, `000af72c` or `000aed70`, and is passed with its ref's position among the eight (0–7) and the group to `Mech_AttachToGroup` (`00013124`, [construction](mech.md#construction)), `0001b574` or `000044a4` ([Open](#open)). The target resolves by its kind: a group as the groups array's base plus the index × `0x28`, a mech, flyer or base as `Pool_Nth` of the dword at `000af68c`, `000af72c` or `000aed70`. `Pool_Nth`, (pool, *n*), walks the pool with `Pool_Prev` from 0 and returns the element *n* + 1 steps in, or 0 when the walk ends first, as ES2's does; it keeps *n* in `DX` across the calls.
@@ -127,7 +127,6 @@ Callees of other modules read for them: `Mech_AiTick` (`0000d8e8`), `Mech_Salvag
 
 ## Open
 
-- **Open:** what reads the group's point `+0x20` and heading `+0x0c`.
 - **Open:** the callees not read: `0001b574` and `000044a4`, which take a flyer or base member with its ref's position and the group.
 - **Open:** three of the eleven calls `es2_xref.py` finds to `Action_Activate`, from `00003978` and `0001b290`; `Ai_ChooseWeapon` (`00018e50`) fires a machine's `+0x170` action when it runs out of weapons ([the AI's weapons](mech-ai.md#weapons)). Two are `Mech_ComponentDamageWrite`'s (`00013250`), firing the machine's `+0x170` action when it goes out of the fight ([the damage write](mech.md#the-damage-write--mech_componentdamagewrite-00013250)); three others are the sensor model's engagement, from `Detection_ShareContact` (`0000e618`) and twice from `Detection_Sweep` (`0000e85c`) ([the sensor model](sensor-model.md#looking-around--detection_sweep-0000e85c)), and the last three are `Action_TestTrigger`, `Actions_EvaluateTriggers` (`0001f87c`, [trigger areas](world.md#trigger-areas--actions_evaluatetriggers-0001f87c)) and `Sim_RaycastObjectList` (`0001f1d0`), which fires a struck enemy's `+0x16c` action.
 - **Open:** whether anything changes a group's target after the load; ES1's target is set once, by `DBSim_BuildGroupRecord`, in the functions read.
