@@ -1,6 +1,6 @@
 # DBSIM.EXE — animated shapes and animation threads
 
-**ES1's simulator poses an animated shape and plays its animations as ES2's does.** Its animated shape instance, animation threads and sequence frame steps are the functions [`../../retail/rendering/dts-node-posing.md`](../../retail/rendering/dts-node-posing.md) describes, built by a different compiler: each ES1 function below decompiles to the same statements as its ES2 twin once the two compilers' differences are set aside, and the record layouts are ES2's. That covers the shape instance's fields, the thread's `0x52` bytes, and the animation list and sequence fields the thread reads. This page gives ES1's addresses and the differences. Addresses are `ES1DBSIM` image addresses ([`../formats/x32-executable.md`](../formats/x32-executable.md#the-image)).
+**ES1's simulator poses an animated shape and plays its animations as ES2's does.** Its animated shape instance, animation threads and sequence frame steps are the functions [`../../retail/rendering/dts-node-posing.md`](../../retail/rendering/dts-node-posing.md) describes, built by a different compiler: each ES1 function below decompiles to the same statements as its ES2 twin once the two compilers' differences are set aside, and the record layouts are ES2's. That covers the shape instance's fields, the thread's `0x52` bytes, and the animation list and sequence fields the thread reads. This page gives ES1's addresses and the differences. The object classes that build an instance and its threads and step them are [the 3Space object classes](../simulation/object-classes.md). Addresses are `ES1DBSIM` image addresses ([`../formats/x32-executable.md`](../formats/x32-executable.md#the-image)).
 
 ## Differences from ES2
 
@@ -57,4 +57,3 @@
 
 - **Open:** no caller of `ShapeInst_ReadRootTransform` or `AnimThread_ElapsedTicks` found by `es2_xref.py`.
 - **Open:** what the byte `00097fe8` is for, as for ES2's.
-- **Open:** the callers in ES1's game objects, `00001da0`–`0000205c`, which construct the instance and its threads and step them.

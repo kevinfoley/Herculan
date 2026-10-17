@@ -107,14 +107,20 @@ Built once, per LOD root, by `MechType_InitOne`:
 - `GunLayout_CollectHardpointBones` (`0040fc50`) walks the `.GL` and emits each record's bone id (`+0x00`), or `-1` when its mounting code (`.GL +6`) is 4, the invisible mounting.
 - `MechType_BindHardpointSlots` (`0040304c`) resolves each id through the shape's vtable `+0x24` to the **address of the part slot** holding the part whose id (`part+6`) is that id, and stores null for `-1`. The result is a `{void **slots; short count}` pair per root, at `typeRec+0xe6`.
 
-Applied every frame by `Mech_SpliceHardpointShapes` (`004030d0`), for each root:
+Applied every frame by `Mech_SpliceHardpointShapes` (`004030d0`), which `Mech_Draw` calls for each root with the root's slot list, the machine's mount array (the manager's `+4`, holes kept) and the blank records. It walks the slots and the mount array together, stops at the end of the slots, and takes nothing from the mounts past the array's count:
 
 ```c
-replacement = mount->shape ? mount->shape : blankRecord;   // blanks from typeRec+0xec, 0x18 apart
-replacement[+4] = (*slot)[+4];                             // inherit TSBasePart.Transform
-replacement[+6] = (*slot)[+6];                             // inherit the part id
-*slot = replacement;
+for each slot, with the mount entry at the same index while the array lasts:
+    if (*slot) {                                           // the slot holds a part
+        replacement = mount ? mount : blankRecord;         // blanks from typeRec+0xec, 0x18 apart
+        replacement[+4] = (*slot)[+4];                     // inherit TSBasePart.Transform
+        replacement[+6] = (*slot)[+6];                     // inherit the part id
+        *slot = replacement;
+    }
+    blankRecord += 0x18;                                   // for every slot a mount entry was taken for
 ```
+
+The replacement is the mount object itself, the array's entry, not a shape the mount holds: a mount is a `CONFIG_PART` with its weapon model at `+0x10`, so the part list draws the gun in the slot's turn ([how the gun is lit](effect-lights.md#a-part-drawn-through-a-saved-state-shades-the-effect-lights-in-another-nodes-frame)).
 
 **The match is on the part id, not on the transform node.** Verified against every retail chassis, where the ids are exactly the visible hardpoints' bones:
 

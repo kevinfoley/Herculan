@@ -1,0 +1,123 @@
+# DBSIM.EXE — the HERC's movement: throttle, gait, root motion, collision and footfalls
+
+**ES1's HERC moves as ES2's does: the throttle sets a speed, a gait machine picks the walk, run, stop and turn sequences and their pace from it, and all the ground the HERC covers comes from those sequences' root motion ([ES2's locomotion](../../retail/simulation/mech-locomotion.md)).** What a player would see differently:
+
+- it walks on flat ground: no slope slows it, speeds it or slides it, and no slide landing hurts it;
+- its control law cuts its speed for leg damage only, where ES2's also cuts it for reactor damage;
+- below speed 45 it cannot turn while moving, and its turn rate rises from nothing at 45 to its peak at half its top speed, where ES2's starts at half its peak; the peak is the chassis file's turn rate, where ES2's turns 1600/1024 times as fast;
+- its legs take a new pace only once its speed stops changing, except while it speeds up in a walk, where ES2's follow every change of speed: a HERC slowing from a run keeps its running pace until its speed falls under the walk-to-run speed;
+- its footfall code tests the player's own HERC alone, with no bob of the view, and sounds once more as the player's HERC falls and its body comes down.
+
+Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-executable.md#the-image)); ES2's are DBSIM's. Every function here removes its own arguments, so argument lists are in stack order, the machine first and the other arguments in the reverse of ES2's order ([calling conventions](../formats/compiler.md#calling-conventions)). The machine's fields are [the HERC's](mech.md#the-fields); the type record is at the machine's `+0x188`, its offset *N* being the chassis file's offset *N* − 2 ([the layout](../formats/chassis-dat.md#the-layout)).
+
+## The throttle — `Mech_ApplyThrottleInput` (`00011afc`)
+
+(machine, throttle axis, steer), from `Sim_PollPlayerInput` (`0005a0c0`, [the player's controls](main-loop.md#the-players-controls--sim_pollplayerinput-0005a0c0)), the one call `es2_xref.py` finds. ES2's ([the control law](../../retail/simulation/mech-locomotion.md#control-law-mech_locomotiontick)) without its first block, which reads the axis as an absolute lever position: ES1's always reads it as a rate.
+
+1. The axis is negated when `ThrottleLeverMode` (`000919ce`) is negative.
+2. The steer is negated when |axis| is at most `0x3c` and the throttle `+0x226` is 0 or more, or when |axis| is above `0x3c` and the axis is 0 or less, as ES2's.
+3. The step is `Math_Q8Multiply`(−axis, `0x91`). When it is not 0, `+0x8d` is set and the throttle moves by it, clamped to the range below; when the throttle is not 0 and the new value has the other sign, the throttle becomes 0 instead, so a sign change waits a tick at zero. (The zero test is of the throttle's low 12 bits, which inside the clamp is a test for 0.)
+4. `Mech_LocomotionTick`(machine, 0, `Math_Q10Multiply`(throttle, the negated reverse top speed `+0x04` when the throttle is negative, else the forward top speed `+0x06`), steer).
+
+| `ThrottleLeverMode` | Throttle range | Axis |
+|---|---|---|
+| 0, the image's value | −`0x400` to `0x400` | as read |
+| 1 | 0 to `0x400` | as read |
+| −1 | −`0x400` to 0 | negated |
+
+A search of the disassembly for `000919ce` finds the two reads here and no store ([Open](#open)). The multiplies round ([the primitives](fixed-point-math.md#the-primitives)).
+
+## The control law — `Mech_LocomotionTick` (`00012038`)
+
+(machine, avoidance argument, desired speed, steer): ES2's control law and gait machine on these fields:
+
+| Type record | File offset | Field |
+|---|---|---|
+| `+0x02` | 0 | the top turn rate |
+| `+0x04`, `+0x06` | 2, 4 | the reverse and forward top speeds |
+| `+0x08`, `+0x0a` | 6, 8 | the speed and turn-rate steps, per tick |
+| `+0x0e`, `+0x10` | 12, 14 | the walk and run sequences |
+| `+0x12`, `+0x14` | 16, 18 | the forward and reverse stop sequences |
+| `+0x2e` | 44 | the walk-to-run speed `thr` |
+| `+0x46` | 68 | the death sequence |
+| `+0x6e` | 108 | the reverse walk-to-run speed `thrRev` |
+| `+0x7c` | 122 | the turn-in-place sequence |
+
+The machine's speed is `+0x224`, its turn rate `+0x222`, its heading `+0x0a`, the locomotion thread `+0x1c0` and the playback rate `+0x236`.
+
+### The speed
+
+1. **Immobilized** (`+0x9e`): the desired speed and the steer are 0.
+2. **Otherwise**, while `Timer_CountDown` (`00064178`) of the unstick countdown `+0x203` runs, the desired speed is the reverse top speed when `+0xa8` is set and the forward one when not; once it has run out, the desired speed is clamped to the two. ES2's adds the slope term before its clamp and clears its unstick direction (ES2's `+0xae`) when the countdown has run out; ES1's leaves `+0xa8` as it is, for `Mech_AiObstacleAvoidance` to read ([obstacle avoidance](#obstacle-avoidance--mech_aiobstacleavoidance-00011c80)).
+3. **A machine other than the player's** (`PlayerMech`, `000bc42a`) that is not immobilized runs `Mech_AiObstacleAvoidance`(machine, avoidance argument, &desired, &steer).
+4. **The legs**: `+0xa3` scales the desired speed by `Math_Q10Multiply` 400, otherwise `+0xa2` by 750. ES2's also scales it for its two reactor grades, and adds the Turbo Pod's term.
+5. The steer is clamped to ±`0x100`, and the speed moves toward the desired speed by `+0x08` with `Math_RateLimitedMoveToward` (`0005e598`).
+
+### The gait machine
+
+ES2's ([the gait state machine](../../retail/simulation/mech-locomotion.md#the-gait-state-machine)) on the sequences above, row for row, including the turn-in-place exclusion, the speed frozen through a transition frame, the fall of an immobilized machine (rate 100, then `0x78`, sounds `0x1e` and `0x29`, `+0xae` latched and `Mech_SpreadImpactDamage` (`00013078`)(machine, `0x78`, `0x96`) once the sequence has played out) and the thresholds `thr` and `thrRev`, except in three rows, where ES1's leaves the playback rate as it was:
+
+| Speed magnitude against last tick's | Playing | ES1 | ES2 |
+|---|---|---|---|
+| rising | anything but the walk and the two stop sequences | drop any request | drop any request; rate `S` |
+| falling | the run, `S` at or above `thr` | drop any request | the same; rate `S` |
+| falling | the walk, `S` not 0 | drop a pending run request | the same; rate `S` |
+
+So the rate follows the speed only while the speed holds steady and while it rises in the walk; the stop and downshift rows set it as ES2's do. After the machine there is no crawl lift: a speed of 1 to 44 plays at its own rate, where ES2's lifts a rate under 60 to 60.
+
+### Turning
+
+The turn target is `Math_Q8Multiply`(steer, tent), and the turn rate moves toward it by `+0x0a`; the heading takes the turn rate and `+0x2c`, the rotation word, is cleared. The tent is 0 when a gait row held the turn this tick or |`S`| is under 45; otherwise, with *h* = (forward top speed − 45) >> 1 and *s* = |`S`| − 45, it is *T* × *s* / *h* up to *s* = *h* and *T* − *T* × (*s* − *h*) / (2 × (forward top speed − 45 − *h*)) above, *T* the top turn rate: 0 at speed 45, *T* at half way to the top speed, *T* / 2 at the top speed. ES2's takes a speed of 1 to 44 as 45, rises from *T* / 2 as *T* × (*s* + *h*) / (2*h*), and scales the tent by `Math_Q10Multiply` 1600 before the steer.
+
+## Obstacle avoidance — `Mech_AiObstacleAvoidance` (`00011c80`)
+
+(machine, flags, desired speed, steer), ES2's ([obstacle avoidance](../../retail/simulation/ai-navigation.md#obstacle-avoidance--mech_aiobstacleavoidance-00416274)), `es2_xref.py` finding its one call in `Mech_LocomotionTick` for a machine other than the player's. It runs when the machine moves or is asked to, and not backwards unless the unstick countdown `+0x204` runs; the left and right distances start at 22000.
+
+1. **The probes**, with flags bit 0 clear: the two rays of ES2's geometry, from (∓1500, 0, 0) to (∓10000, 20000, 0) in the machine's frame, at no ground height, each through `Sim_RaycastShapes` (`00020b70`, [the zone shapes](terrain.md#the-tests-against-the-shapes)) and `000038b8`(−1, 0, to, from, result), the nearer result kept, where ES2's walks the terrain as its second test.
+2. **Other objects**, with flags bit 0 clear: each live object but itself whose group holds no action (`+0x16`) and whose slot `+0x60` answers non-zero, at Q10(distance, 2000); one nearer than either side's figure and within ±`0x2000` of the heading replaces the right figure when its bearing is negative and the left one otherwise. ES2's reads slot `+0x7c`.
+3. **Resolving it**: when either figure is under 22000, the left takes the unstick side `+0x1e8` when `+0xa8` is set and both are under 22000; the steer gains ±(22000 − nearer) × 2000 / 22000, negative when the left is the nearer or equal, and the desired speed becomes 0 when the nearer is negative.
+
+ES2's also keeps out of the player's line of fire, forces a side when the unstick direction is set and nothing is near, gains 700 or 1000, and sets the speed to half the top or to the reverse top inside 0 or 3000.
+
+## The move
+
+**`Mech_MovementTick` (`00014844`)**, (machine), the move of the HERC's behavior states (`es2_xref.py` finds 17 stored pointers in `Behaviour_BuildStateTable`), is ES2's ([what a refused move does](../../retail/simulation/mech-locomotion.md#what-a-refused-move-does)) with no ground height and no slide: `SimObject_PushTransform` (`00002184`) and `SimObject_PopTransform` (`00002248`) save and restore the transform ([saving and restoring the transform](object-classes.md#saving-and-restoring-the-transform)); a refused move unsticks a machine other than the player's with `+0x204` = 20000 (ES2's 10000), the side ±5000 at random in `+0x1e8` and `+0xa8` from the speed's sign, and plays `0x29` for the player's; it zeroes the throttle, sets `+0x8d`, and bounces or cuts to the stop sequence as ES2's; then `Mech_PlaceLegsOnGround`. It returns 1.
+
+**`Mech_IntegrateMotion` (`00014148`)**, (machine): ES2's (`00418f40`): `AnimThread_SetPlaybackRate` (`000626c8`)(thread `+0x1c0`, rate `+0x236`), then `SimObject_ApplyRootMotionIfEnabled` (`0000215c`, [root motion](object-classes.md#animation-threads-and-root-motion))(machine, `Math_IntegrateRateOverTick` (`00063fa4`)(100)).
+
+### How fast it walks
+
+The root-motion step's time is `Math_IntegrateRateOverTick`(100), 100 × `SimTickDelta` / 256 rounded. `SimTickDelta` is Q8 with 1.0 a tenth of a second by the clock's timer rate ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)), so the step is the tick's length in milliseconds, 25 to 176 by its clamp; ES2's same call gives 0.8 of the tick's milliseconds, its unit being 125 ms. The thread advances step × rate / 256 animation ticks (`AnimThread_Advance`, `00062718`, ES2's), so at a steady playback rate *r* the animation plays 1000 × *r* / 256 ≈ 3.906 × *r* ticks a second, against ES2's 3.125 × *r* ([resulting speed](../../retail/simulation/mech-locomotion.md#resulting-speed)).
+
+In a steady walk or run the rate is the speed `S`, so the HERC covers
+
+  3.906 × `S` × *G* world units a second,
+
+*G* being the sequence's root translation per animation tick over a cycle. `S` is the chassis file's speed scale as written: ES1's chassis load does no rescale ([the load](../formats/chassis-dat.md#the-load)). A stop or step-off sequence plays at ±100 and a turn in place at Q10(350, steer), as ES2's.
+
+## Collision — `Mech_CollisionTest` (`00014174`)
+
+(machine), ES2's ([collision](../../retail/simulation/mech-locomotion.md#collision)) without the steep-ground test and the slide, and with no structure record:
+
+1. **An object in the way**: each live object but itself whose group holds no action and whose slot `+0x60` is not 0, closer than its own and the machine's slot `+0x60` together. It calls the object's slot `+0x6c` (`+0xab`, run into) and, when the object's target class is 0, a HERC, does ES2's collision damage ([a collision](../../retail/simulation/damage-system.md#a-collision--mech_collisiontest-00418f74)): masses `+0x4e`, Q10(300, impulse) above 200, the point at the two machines' midpoint in X and Y and the lower of their eye nodes' (the record's `+0xc` part, with no fallback for a missing part) heights, and `Mech_ApplyExplosiveDamage`(machine, other, 1200, point, damage) and the same with the two swapped. It returns 1.
+2. **The structures**: `0000375c`(radius, position), where ES2's calls `Structure_GatherWalkCandidates`, 1 when it answers non-zero.
+3. **The zone's shapes**: otherwise `Zone_WalkCollisionTest` (`00020860`, [a point](terrain.md#a-point--zone_walkcollisiontest-00020860))(radius, position)'s answer.
+
+## Shadows and footfalls — `Mech_PlaceLegsOnGround` (`000144dc`)
+
+(machine): ES2's (`004195c8`) on the shadows at `+0x1cc` (count `+0x1d0`, [the shadows](mech.md#the-shadows)), with no test for a missing locomotion thread or part: a part the node lookup answers 0 for is read at address `0x14`. Each shadow takes the position of its part's node through the machine's frame, the machine's heading and a cleared rotation word, as ES2's ([a HERC's shadows](../../retail/simulation/ground-shapes.md#a-hercs-shadows)).
+
+The footfalls are ES2's ([footfalls](../../retail/simulation/mech-locomotion.md#footfalls)) on the latches `+0x24a` + *i* and `+0x24e`, with these differences:
+
+- **Only the player's machine** (`+0x9d`) is tested, and its sound plays at its position (`Sound_PlayAt`, `0004deb8`) at any distance. ES2's tests any machine within 15000 of the view as well, and plays only within 15000.
+- **No step kick.**
+- **The death arm sounds**: while the death sequence plays, the body's entry (kind 2) plays sound `0x1f` once when its part's world Z falls below the record's `+0x9e`, file offset 156, 400 on every retail chassis but `COLOSSUS`, whose is 800 ([the layout](../formats/chassis-dat.md#the-layout)), the latch `+0x24e` being the one `Mech_Constructor` sets ([construction](mech.md#construction)). ES2's sets no sound there.
+
+The thresholds are the file's offsets 150–156, where a foot plants, and 170–174, where it arms ([the layout](../formats/chassis-dat.md#the-layout)): for walking (and turning and stopping) forward, walking backward and running in turn, the foot's fore-and-aft position in the machine's frame against each, and for the fall the body's height against 156. `es2_xref.py` finds two calls: `Mech_MovementTick` and `Mech_BehaviourRamTick` (`00018278`).
+
+## Open
+
+- **Open:** what writes `ThrottleLeverMode`, which a search of the disassembly for its address finds read twice, in `Mech_ApplyThrottleInput`; a store through a base was not searched for. At 0 the throttle spans both directions.
+- **Open:** which sample sound `0x1f` is, and whether a retail fall plays it. A retail check: have the player's HERC's legs shot out; between the sound as it starts to fall and the thump as it lands, a third sound plays as its body passes 400 units above the ground.
+- **Open:** a retail check of the pace: from a full-speed run, pull the throttle to zero at once. ES1's code keeps the full running pace until the HERC drops to a walk and then the walk-to-run pace until it stops, where ES2's slows its legs every tick.
+- **Open:** the callees `000038b8` and `0000375c` (the structures' ray and walk tests), unread.

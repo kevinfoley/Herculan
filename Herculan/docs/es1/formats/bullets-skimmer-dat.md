@@ -61,12 +61,11 @@ The projectile records are those of type 2 whose subtype id is the bullet's ([th
 
 1. reads 34 bytes of `dat\<name>` into the record's `+0x00` with `Ovl_ReadFile`, which asserts when the file does not open or the read fails;
 2. loads `dts\<name>` with `Shape_LoadDts` into `+0x2a`, and stores in the shape's `+0x26` the `dba\enemy` bank, the fourth of the four [chassis texture banks](chassis-dat.md#the-load) at `000bc45c`;
-3. loads `dmg\<name>` with `Damage_LoadMechDmgFile` ([`dmg-damage-file.md`](dmg-damage-file.md#the-load)) into `+0x22` and `col\<name>` with `00009580` into `+0x26`.
+3. loads `dmg\<name>` with `Damage_LoadMechDmgFile` ([`dmg-damage-file.md`](dmg-damage-file.md#the-load)) into `+0x22` and `col\<name>` with `Collision_RegisterObject` (`00009580`, [the loadout's join](dmg-damage-file.md#the-loadouts-join)) into `+0x26`.
 
 ES2's reads 46 bytes into a `0x70`-byte record, keeps the damage file, collision model and shape at `+0x2e`, `+0x32` and `+0x36`, writes the address of a fixed bank slot, and reads `fm\<name>`; ES1's has no flight model file.
 
 ## Open
 
 - **Open:** what ES1's bullet fire and tick read of `+0x02`, `+0x04` and `+0x08`, and what the flyer code reads of `SKIMMER.DAT`'s offsets 0–17 and the zeroes at 18–33. The values sit at ES2's offsets with ES2's kind of value.
-- **Open:** `00009580`, the collision-model load the flyer's path and ES2's twin suggest; `Mech_Constructor` (`00011330`) calls it on `col\<name>` too.
 - **Open:** whether any mission places a `HOVTANK`. Once type 1 has a record, step 1 finds no `dat\HOVTANK` and its severity-5 assert ends the program ([`HOVTANK.DMG`](dmg-damage-file.md#hovtankdmg)).

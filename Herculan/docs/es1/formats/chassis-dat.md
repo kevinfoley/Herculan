@@ -32,7 +32,7 @@ Little-endian, read whole. File offset *N* is the type record's `+N+2`, as in ES
 | 22, 24 | hit cylinder's centre height and radius | 750 and 1500 on `ROADRUNN`, `GUNSLING`, `SCORPION` and `MONGOOSE`; 1000 and 1000 on `SPIDER`; 1000 and 2500 on the rest |
 | 26–32 | twist sequence, rate, rate step, limit | 0, 1000, 1000, 14000; `RAPTOR`'s step 250; `BULLDOG`'s limit 32767; `SPIDER` −1, 1500, 300, 14000 |
 | 34–42 | pitch sequence, rate, rate step, limit up, limit down | 5, 800, 800, 6000, −4000; `RAPTOR` 700 and 175; up 3500 and down −2000 on `GUNSLING`, `SCORPION` and `MONGOOSE`, 8500 and −8000 on `ROADRUNN`; `BULLDOG` 7 and down −2000; `SPIDER` −1, 1000, 200 |
-| 44 | walk-to-run speed | [per chassis](#per-chassis-values) |
+| **44** | walk-to-run speed | [per chassis](#per-chassis-values) |
 | **46**–65 | the parts [whose nodes renumber the crude roots](../../retail/rendering/mech-shape-drawing.md#the-crude-roots-are-renumbered-at-load), signed bytes ended by a negative one | 1–5 and 12–17; `MONGOOSE` adds 10, 88 and 99; `BULLDOG` 1–5 and 12–25; `SPIDER` 1–4, 12, 14, 15 and 18–23 |
 | 66 | the base of the [AI combat rating](../../retail/simulation/ai-targeting.md#relative-combat-rating) | 1000 |
 | **68** | the death sequence | 7; `BULLDOG` 2, `SPIDER` 1 |
@@ -47,19 +47,19 @@ Little-endian, read whole. File offset *N* is the type record's `+N+2`, as in ES
 | 98, 100 | the pilot's eye, fore/aft and lift | 200 on types 0–7 (`RAPTOR` 300) and 0 on the rest; the lift [per chassis](#per-chassis-values) |
 | 102, 104 | the outside view's orbit centre, fore/aft and height | 0; 1400 on `ROADRUNN`, `GUNSLING`, `SCORPION` and `MONGOOSE`, 2600 on `BULLDOG`, 800 on `SPIDER`, 1600 on the rest |
 | 106 | — | 0; the load overwrites it with the type number |
-| 108 | reverse walk-to-run speed | [per chassis](#per-chassis-values) |
+| **108** | reverse walk-to-run speed | [per chassis](#per-chassis-values) |
 | 110 | body radius | 750 |
 | 112–121 | [the shadows](../../retail/simulation/ground-shapes.md#a-hercs-shadows): kind bytes from 112 ended by a negative one, part bytes from 117 | kinds 0, 0, 2 on parts 14, 15, 12; `BULLDOG` 0, 0, 0, 0 on 14, 15, 22, 23; `SPIDER` none |
 | **122** | turn-in-place sequence | 6; `BULLDOG` and `SPIDER` 1 |
 | 124–147 | twelve AI rating penalties | 500 |
 | **148** | the texture group | [per chassis](#per-chassis-values) |
-| 150–156 | footfall heights: walk, reverse, run, landing | 325, −700, 50, 400 on `ROADRUNN` and `GUNSLING`; 325, −850, 50, 400 on `SCORPION` and `MONGOOSE`; 150, −350, 75, 800 on `COLOSSUS`; 160, 100, −100, 400 on `BULLDOG`; 100, 100, −100, 400 on `SPIDER`; 125, −300, 50, 400 on the rest |
+| **150**–**156** | where a foot plants: walking forward, walking backward and running (a fore-and-aft position), and where the falling body sounds (a height) | 325, −700, 50, 400 on `ROADRUNN` and `GUNSLING`; 325, −850, 50, 400 on `SCORPION` and `MONGOOSE`; 150, −350, 75, 800 on `COLOSSUS`; 160, 100, −100, 400 on `BULLDOG`; 100, 100, −100, 400 on `SPIDER`; 125, −300, 50, 400 on the rest |
 | 158–169 | — | 0 |
-| 170–174 | footfall rearm heights: walk, reverse, run | 375, −750, 250 on `ROADRUNN` and `GUNSLING`; 375, −700, 250 on `SCORPION` and `MONGOOSE`; 200, −425, 275 on `COLOSSUS`; 250, 500, −125 on `BULLDOG`; 125, 500, −125 on `SPIDER`; 175, −400, 250 on the rest |
+| **170**–**174** | where a foot arms its next plant: walking forward, walking backward, running | 375, −750, 250 on `ROADRUNN` and `GUNSLING`; 375, −700, 250 on `SCORPION` and `MONGOOSE`; 200, −425, 275 on `COLOSSUS`; 250, 500, −125 on `BULLDOG`; 125, 500, −125 on `SPIDER`; 175, −400, 250 on the rest |
 | 176–189 | — | 0 |
 | 190 | shield capacity | 3500; `SPIDER` 0 |
 
-`Mech_LocomotionTick` (`00012038`) reads offsets 0–8, 12–18, 68 and 122 in the roles ES2's gives them. `BULLDOG` holds the values ES2's `PITBULL` holds where ES2 marks the PITBULL out: four legs, a twist limit of 32767, death sequence 2, mass 20000, four shadows and mounts that cannot be knocked out. `SPIDER` holds ES2's `SPIDER`'s in the fields that mark it out: no twist or pitch sequence, no legs, no wreck, mass 0, no shadows and no shield.
+`Mech_LocomotionTick` (`00012038`) reads offsets 0–8, 12–18, 44, 68, 108 and 122 in the roles ES2's gives them, 44 and 108 being the walk-to-run speeds its gait machine shifts at ([the control law](../simulation/mech-locomotion.md#the-control-law--mech_locomotiontick-00012038)), and `Mech_PlaceLegsOnGround` (`000144dc`) reads 150–156 and 170–174 ([shadows and footfalls](../simulation/mech-locomotion.md#shadows-and-footfalls--mech_placelegsonground-000144dc)). `BULLDOG` holds the values ES2's `PITBULL` holds where ES2 marks the PITBULL out: four legs, a twist limit of 32767, death sequence 2, mass 20000, four shadows and mounts that cannot be knocked out. `SPIDER` holds ES2's `SPIDER`'s in the fields that mark it out: no twist or pitch sequence, no legs, no wreck, mass 0, no shadows and no shield.
 
 ### Per-chassis values
 
@@ -124,8 +124,8 @@ It does no speed rescale, writes neither ES2's HUD speed scale at `+0xc2` nor it
 ## Open
 
 - **Open:** which of `data\script.dat`'s records the loop in `DBSim_LoadScriptDat` that allocates chassis slots takes its types from.
-- **Open:** which ES1 functions read offsets 44, 66, 78, 80, 86–97, 106, 124–147, 158–169 and 176–189, and whether each means what ES2's field does. The data alone puts them at ES2's offsets. The HERC's own functions read 10, 20–42, 72–76, 82, 84, 98–104, 108–121, 150–156, 170–174 and 190 in the roles ES2's gives them ([the HERC](../simulation/mech.md)).
+- **Open:** which ES1 functions read offsets 66, 78, 80, 86–97, 106, 124–147, 158–169 and 176–189, and whether each means what ES2's field does. The data alone puts them at ES2's offsets. The HERC's own functions read 10, 20–42, 72–76, 82, 84, 98–104, 108–121, 150–156, 170–174 and 190 in the roles ES2's gives them ([the HERC](../simulation/mech.md)).
 - **Open:** what `g_LowMemory`'s other 12 readers change; which roots a skip of two leaves for close range; and what a root's `+0x26` draws with when the banks were not loaded.
 - **Open:** the four handlers of `Shape_RemapTransformIds` (`00019aef`–`00019b93`, undefined bytes in Ghidra), read here only as far as its tag and handler tables at `00091e14`.
-- **Open:** what fills and reads the ten `CONFIG_PART`s at `+0xd4`.
+- **Open:** whether anything gives the ten `CONFIG_PART`s at `+0xd4` a model after `ConfigPart_Ctor` builds them with none; `Mech_Draw` hands them to `Mech_SpliceHardpointShapes` as the parts an empty hardpoint takes ([the hardpoints](../simulation/object-classes.md#the-hardpoints--mech_splicehardpointshapes-00002654)).
 - **Open:** whether ES2's simulator reads its own file offset 70, which is 2 in `OUTLAW`, `PITBULL` and `SPIDER`, the three ES2 files compared for this page.

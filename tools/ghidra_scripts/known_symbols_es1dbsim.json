@@ -437,6 +437,66 @@
       }
     },
     {
+      "address": "00001718",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Context_SetFromTransform",
+      "description": "(block, transform) in stack order, callee-cleaned: sets an orientation block from a 0x20-byte transform: Transform_RotationToEuler of the transform's rotation into the three int16 Euler angles at +0, the transform copied to +6, and the word +0x26 set to 1, saying the rotation matches the angles. es2_naming.py match finds no ES2 counterpart; es2_xref finds no branch to it, its one stored-pointer hit (00001717 at 000584ed) being a call's displacement.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-fields; ES1DBSIM decompile at 00001718",
+      "verified": {
+        "bytes": "00001718+76",
+        "sha1": "7b34296d0604",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001764",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TinyObj_GetPosition",
+      "description": "(object), callee-cleaned: slot +8 of TINY_OBJ's and TS_TINY_OBJ's tables (TinyObjVtable (0009022a), TSTinyObjVtable (0009024a)): copies the two position dwords +6 and +0xa into the static triple TinyObj_PositionBuffer (000ae4c4), whose third dword (000ae4cc) it zeroes on the first call under the latch TinyObj_PositionBufferInit (000ae4c0), and returns the triple. ES2's TinyObj_GetPosition (DBSIM 00401f08), whose fields are +0xc and +0x10.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-light-objects; ES1DBSIM decompile at 00001764",
+      "verified": {
+        "bytes": "00001764+65",
+        "sha1": "92fcebf13274",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000017a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TinyObj_InstallModelTransform",
+      "description": "(object), callee-cleaned: slot +4 of TINY_OBJ's table TinyObjVtable (0009022a): takes the position from the object's slot +8, builds a Q14 rotation from the Euler triple (0, 0, the heading +0xe) with BuildEulerRotationMatrixQ14 and installs the two with Raster_SetModelTransform. ES2's TinyObj_InstallModelTransform (DBSIM 00401f50).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-light-objects; ES1DBSIM decompile at 000017a8",
+      "verified": {
+        "bytes": "000017a8+95",
+        "sha1": "22082df0e6f7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001808",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_SetModelTransformFromPose",
+      "description": "(object), callee-cleaned: slot +4 of REG_OBJ's table RegObjVtable (0009027a): builds a rotation from the Euler angles at +0x12 with BuildEulerRotationMatrixQ14, takes the translation from +6, +0xa and +0xe (the TSContext at +6) and installs the transform with Raster_SetModelTransform. ES2's Raster_SetModelTransformFromPose (DBSIM 00401fa8).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-light-objects; ES1DBSIM decompile at 00001808",
+      "verified": {
+        "bytes": "00001808+75",
+        "sha1": "c9c765f9b181",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00001854",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -452,16 +512,211 @@
       }
     },
     {
+      "address": "00001870",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTinyObj_Ctor",
+      "description": "(object, shape) in stack order, callee-cleaned: TS_TINY_OBJ's constructor, allocating 0x14 bytes when object is null (0 when that fails): DRAWABLE's table DrawableBaseVtable (0009020a) at +2, TINY_OBJ's TinyObjVtable (0009022a) with the position dwords +6 and +0xa and the heading +0xe zeroed, TS_TINY_OBJ's TSTinyObjVtable (0009024a), and TSShapeInstance_Ctor (00063080)(0, shape) at +0x10. ES2's TSTinyObj_Ctor (DBSIM 0040201c). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-constructors; ES1DBSIM decompile at 00001870",
+      "verified": {
+        "bytes": "00001870+98",
+        "sha1": "c3d09a4d106d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000018d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_Dtor",
+      "description": "(object, flags), callee-cleaned (RET 8): slot +0xc of DRAWABLE's table DrawableBaseVtable (0009020a) (entered at its padding 000018d2): stores that table at +2 and returns; it tests nothing and frees nothing. Drawable_DtorMechCopy (00011ae8) and Drawable_DtorCopy (000206b4) are its code. ES2's Drawable_Dtor (DBSIM 00478615) deletes on flags bit 0.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-destructors; ES1DBSIM disassembly at 000018d4",
+      "verified": {
+        "bytes": "000018d4+19",
+        "sha1": "a7a40f54322f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000018e8",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "TSObj_ReturnZero",
-      "description": "(object), callee-cleaned (RET 4), frameless: returns 0. Slot +0x10 of TS_OBJ's vtable 000902ea, MAT_OBJ's 000902ca and three others.",
+      "description": "(object), callee-cleaned (RET 4), frameless: returns 0. Slot +0x10 of TS_OBJ's vtable TSObjVtable (000902ea), MAT_OBJ's MatObjVtable (000902ca) and three others.",
       "source": "ES1DBSIM disassembly at 000018e8",
       "verified": {
         "bytes": "000018e8+5",
         "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000018ed",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Drawable_GetRadius",
+      "description": "Frameless: three NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +0x14 of DRAWABLE's table DrawableBaseVtable (0009020a) and of TinyObjVtable (0009022a) and TSTinyObjVtable (0009024a), and, entered at 000018f0, of RegObjVtable (0009027a), TSRegObjVtable (000902aa) and MatObjVtable (000902ca). Drawable_GetRadiusMechCopy (00011ade) and Drawable_GetRadiusCopy (000206aa) are its code. ES2's Drawable_GetRadiusZero (DBSIM 004785c6).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM disassembly at 000018ed",
+      "verified": {
+        "bytes": "000018ed+8",
+        "sha1": "798c51aa7ee3",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000018f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TinyObj_Dtor",
+      "description": "(object, flags), callee-cleaned: slot +0xc of TINY_OBJ's table TinyObjVtable (0009022a) (entered at its padding 000018f5): for a non-null object stores TinyObjVtable (0009022a) and DRAWABLE's DrawableBaseVtable (0009020a) at +2 and calls operator_delete on flags bit 0. Byte for byte the code of MatObj_Dtor (00001cb0) with TINY_OBJ's table for MAT_OBJ's. ES2's TinyObj_Dtor (DBSIM 00402f94).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-destructors; ES1DBSIM decompile at 000018f8",
+      "verified": {
+        "bytes": "000018f8+42",
+        "sha1": "e26ae92bf3e6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001924",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTinyObj_Draw",
+      "description": "(object), callee-cleaned: slot +4 of TS_TINY_OBJ's table TSTinyObjVtable (0009024a): TinyObj_InstallModelTransform (000017a8)(object), then the shape instance at +0x10 through its slot +0x20. ES2's TSTinyObj_Draw (DBSIM 00402e98).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-light-objects; ES1DBSIM decompile at 00001924",
+      "verified": {
+        "bytes": "00001924+31",
+        "sha1": "a4d4a420bc7c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001944",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTinyObj_Dtor",
+      "description": "(object, flags), callee-cleaned: slot +0xc of TS_TINY_OBJ's table TSTinyObjVtable (0009024a): for a non-null object stores TSTinyObjVtable (0009024a), destroys the shape instance at +0x10 through its slot +0x1c with 3, stores TINY_OBJ's and DRAWABLE's tables and calls operator_delete on flags bit 0. ES2's TSTinyObj_Dtor (DBSIM 00402eb3).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-destructors; ES1DBSIM decompile at 00001944",
+      "verified": {
+        "bytes": "00001944+68",
+        "sha1": "a65be26b68b3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001988",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSRegObj_Ctor",
+      "description": "(object, shape) in stack order, callee-cleaned: TS_REG_OBJ's constructor, allocating 0x20 bytes when object is null (0 when that fails): DRAWABLE's table at +2, TSContext_CtorWithFrame (0005b7d0)(object + 6, a zero orientation, a zero position), REG_OBJ's tables RegObjContextVtable (0009026a) at +0x18 and RegObjVtable (0009027a) at +2, TS_REG_OBJ's TSRegObjContextVtable (0009029a) and TSRegObjVtable (000902aa), and TSShapeInstance_Ctor (00063080)(0, shape) at +0x1c. ES2's TSRegObj_Ctor (DBSIM 004020b8). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-constructors; ES1DBSIM decompile at 00001988",
+      "verified": {
+        "bytes": "00001988+149",
+        "sha1": "6290ecca4def",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001a20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "REG_OBJ_DtorThunk",
+      "description": "Frameless this-adjusting thunk, slot +4 of REG_OBJ's second table RegObjContextVtable (0009026a) (the TSContext's, at the object's +0x18): ADD DWORD PTR [ESP+4],-6, then JMP to RegObj_Dtor (00001a38) through its padding 00001a36. ES2's REG_OBJ_DtorThunk (DBSIM 00402e3a) subtracts 0xc.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM disassembly at 00001a20",
+      "verified": {
+        "bytes": "00001a20+24",
+        "sha1": "f06bd823e498",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00001a2a",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "RegObj_GetPosition",
+      "description": "Frameless: two NOPs, then MOV EAX,[ESP+4], ADD EAX,6 and RET 4: returns the object + 6, the TSContext's position. Slot +8 of REG_OBJ's table RegObjVtable (0009027a) and of TS_REG_OBJ's TSRegObjVtable (000902aa). ES2's RegObj_GetPosition (DBSIM 00402cef) returns +0x10.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-light-objects; ES1DBSIM disassembly at 00001a2a",
+      "verified": {
+        "bytes": "00001a2a+12",
+        "sha1": "9b20cdd92ed1",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00001a38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "RegObj_Dtor",
+      "description": "(object, flags), callee-cleaned: slot +0xc of REG_OBJ's table RegObjVtable (0009027a) (entered at its padding 00001a36): for a non-null object stores RegObjContextVtable (0009026a) at +0x18 and RegObjVtable (0009027a) at +2, runs TSContext_Dtor (0005b878)(object + 6, 0), stores DRAWABLE's table and calls operator_delete on flags bit 0. ES2's RegObj_Dtor (DBSIM 00402e02).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-destructors; ES1DBSIM decompile at 00001a38",
+      "verified": {
+        "bytes": "00001a38+62",
+        "sha1": "c8c7f5c9d21b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001a78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TS_REG_OBJ_DtorThunk",
+      "description": "Frameless this-adjusting thunk, slot +4 of TS_REG_OBJ's second table TSRegObjContextVtable (0009029a) (at the object's +0x18): ADD DWORD PTR [ESP+4],-6, then JMP to TSRegObj_Dtor (00001aa4) through its padding 00001aa3. ES2's TS_REG_OBJ_DtorThunk (DBSIM 00402d9c) subtracts 0xc.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM disassembly at 00001a78",
+      "verified": {
+        "bytes": "00001a78+44",
+        "sha1": "ab6a63d2d2e5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00001a84",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSRegObj_Draw",
+      "description": "(object), callee-cleaned: slot +4 of TS_REG_OBJ's table TSRegObjVtable (000902aa): Raster_SetModelTransformFromPose (00001808)(object), then the shape instance at +0x1c through its slot +0x20. ES2's TSRegObj_Draw (DBSIM 00402cd4).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-light-objects; ES1DBSIM decompile at 00001a84",
+      "verified": {
+        "bytes": "00001a84+31",
+        "sha1": "881922b20744",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001aa4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSRegObj_Dtor",
+      "description": "(object, flags), callee-cleaned: slot +0xc of TS_REG_OBJ's table TSRegObjVtable (000902aa): for a non-null object stores TSRegObjContextVtable (0009029a) at +0x18 and TSRegObjVtable (000902aa) at +2, destroys the shape instance at +0x1c through its slot +0x1c with 3, stores REG_OBJ's two tables, runs TSContext_Dtor (0005b878)(object + 6, 0), stores DRAWABLE's table and calls operator_delete on flags bit 0. ES2's TSRegObj_Dtor (DBSIM 00402cfa).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-destructors; ES1DBSIM decompile at 00001aa4",
+      "verified": {
+        "bytes": "00001aa4+95",
+        "sha1": "4b657ec45199",
         "scope": "body",
         "via": "both"
       }
@@ -472,7 +727,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSObj_Ctor",
-      "description": "(object, shape) in stack order, callee-cleaned: TS_OBJ's constructor, allocating 0x3b bytes when object is null. Installs DRAWABLE's vtable 0009020a at +2, zeroes the Context at +6 (its Euler angles at +0, its translation at +0x1a and its cached-rotation word +0x26), installs MAT_OBJ's vtable 000902ca and then TS_OBJ's 000902ea, stores TSShapeInstance_Ctor(0, shape) at +0x2e (0 for a null shape) and clears the 8 bytes at +0x32. ES2's TS_OBJ is 0x41 bytes with the shape instance at +0x34.",
+      "description": "(object, shape) in stack order, callee-cleaned: TS_OBJ's constructor, allocating 0x3b bytes when object is null. Installs DRAWABLE's vtable DrawableBaseVtable (0009020a) at +2, zeroes the Context at +6 (its Euler angles at +0, its translation at +0x1a and its cached-rotation word +0x26), installs MAT_OBJ's vtable MatObjVtable (000902ca) and then TS_OBJ's TSObjVtable (000902ea), stores TSShapeInstance_Ctor(0, shape) at +0x2e (0 for a null shape) and clears the 8 bytes at +0x32. ES2's TS_OBJ is 0x41 bytes with the shape instance at +0x34.",
       "source": "ES1DBSIM decompile at 00001b04, vtables 000902ca and 000902ea",
       "verified": {
         "bytes": "00001b04+406",
@@ -487,7 +742,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MatObj_GetPosition",
-      "description": "(object): returns object + 0x20, the translation of the orientation block at +6. Slot +8 of MAT_OBJ's vtable 000902ca.",
+      "description": "(object): returns object + 0x20, the translation of the orientation block at +6. Slot +8 of MAT_OBJ's vtable MatObjVtable (000902ca).",
       "source": "ES1DBSIM decompile at 00001c9c",
       "verified": {
         "bytes": "00001c9c+20",
@@ -497,12 +752,27 @@
       }
     },
     {
+      "address": "00001cb0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MatObj_Dtor",
+      "description": "(object, flags), callee-cleaned: slot +0xc of MAT_OBJ's table MatObjVtable (000902ca): for a non-null object stores MatObjVtable (000902ca) and DRAWABLE's DrawableBaseVtable (0009020a) at +2 and calls operator_delete on flags bit 0. MatObj_DtorMechCopy (00011ab4) is its code. ES2's MatObj_Dtor (DBSIM 0046b97d).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-destructors; ES1DBSIM decompile at 00001cb0",
+      "verified": {
+        "bytes": "00001cb0+42",
+        "sha1": "3372148a17f8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00001cdc",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "TSObj_Render",
-      "description": "(object): TS_OBJ's draw, slot +4 of its vtable 000902ea: SimObject_InstallModelTransform (00001854)(object), then slot +0x20 of the shape instance at +0x2e. TSObj_RenderCopy (00020550) is the same code.",
+      "description": "(object): TS_OBJ's draw, slot +4 of its vtable TSObjVtable (000902ea): SimObject_InstallModelTransform (00001854)(object), then slot +0x20 of the shape instance at +0x2e. TSObj_RenderCopy (00020550) is the same code.",
       "source": "ES1DBSIM decompile at 00001cdc; es2_naming diff against 00020550, identical",
       "verified": {
         "bytes": "00001cdc+31",
@@ -517,7 +787,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSObj_GetPosition",
-      "description": "(object): returns object + 0x20, the translation of the orientation block at +6. Slot +8 of TS_OBJ's vtable 000902ea.",
+      "description": "(object): returns object + 0x20, the translation of the orientation block at +6. Slot +8 of TS_OBJ's vtable TSObjVtable (000902ea).",
       "source": "ES1DBSIM decompile at 00001cfc",
       "verified": {
         "bytes": "00001cfc+20",
@@ -527,18 +797,198 @@
       }
     },
     {
+      "address": "00001d10",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_Dtor",
+      "description": "(object, flags), callee-cleaned: slot +0xc of TS_OBJ's table TSObjVtable (000902ea): for a non-null object stores TSObjVtable (000902ea), destroys the shape instance at +0x2e through its slot +0x1c with 3, stores MAT_OBJ's MatObjVtable (000902ca) and DRAWABLE's DrawableBaseVtable (0009020a) and calls operator_delete on flags bit 0. TSObj_DtorMechCopy (00011a58) is its code. ES2's TSObj_Dtor (DBSIM 0046b890).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-destructors; ES1DBSIM decompile at 00001d10",
+      "verified": {
+        "bytes": "00001d10+72",
+        "sha1": "2c55ceeb3f79",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00001d58",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "TSObj_GetRadius",
-      "description": "(object): the int16 at +8 of the shape (+4) of the shape instance at +0x2e, sign-extended; 0 when there is no instance or no shape. Slot +0x14 of TS_OBJ's vtable 000902ea, the radius WorldShades_DistanceBand and ObjList_DrawFrameObjects read.",
+      "description": "(object): the int16 at +8 of the shape (+4) of the shape instance at +0x2e, sign-extended; 0 when there is no instance or no shape. Slot +0x14 of TS_OBJ's vtable TSObjVtable (000902ea), the radius WorldShades_DistanceBand and ObjList_DrawFrameObjects read.",
       "source": "ES1DBSIM decompile at 00001d58",
       "verified": {
         "bytes": "00001d58+71",
         "sha1": "81f34db4094a",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00001da0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObjectBase_ConstructShaped",
+      "description": "(object, shape) in stack order, callee-cleaned: TS_OBJ's constructor for an animated shape, allocating 0x3b bytes when object is null (0 when that fails): DRAWABLE's table DrawableBaseVtable (0009020a) at +2, the orientation block at +6 zeroed with its rotation word +0x2c at 0, MAT_OBJ's MatObjVtable (000902ca), TS_OBJ's TSObjVtable (000902ea), ShapeInst_Construct (00061224)(0, shape) at +0x2e (0 for a null shape), +0x32..+0x39 cleared and +0x33 set to 1, the byte that enables threads and root motion. ES2's SimObjectBase_ConstructShaped (DBSIM 00402278). es2_xref finds two calls, from SimObjectBase_ConstructAnimated (00002970) and SimObjectBase_ConstructWithDetailTable (00002ac8).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-constructors; ES1DBSIM decompile at 00001da0",
+      "verified": {
+        "bytes": "00001da0+421",
+        "sha1": "84c51d706dd7",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001f48",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_AddThread",
+      "description": "(object, sequence) in stack order, callee-cleaned: AnimThread_Ctor (000619f0)(0, the animation list +0x2a of the shape +4 of the instance +0x2e), AnimThread_SetSequence (0006200c)(thread, 0, 0, sequence), AnimThread_SetPlaybackRate (000626c8)(thread, 0) and ShapeInst_RegisterThread (00061560)(instance, thread); returns the thread. It tests neither the sequence nor the allocation. ES2's ShapeInst_AddThread (DBSIM 00402374), which allocates with Mem_New. es2_xref finds six calls, from 00003cbc, Mech_Constructor (00011330) and WeaponMount_CtorBase.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#animation-threads-and-root-motion; ES1DBSIM disassembly at 00001f48",
+      "verified": {
+        "bytes": "00001f48+77",
+        "sha1": "de3bf98f74bc",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00001f98",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimObj_Dtor",
+      "description": "(object, flags), callee-cleaned: slot +0xc of ANIM_OBJ's tables AnimObjVtable (0009030a) and AnimObjVtableDetAnimObjCopy (000903e6): for a non-null object stores AnimObjVtable (0009030a); while +0x33 is set takes each thread off the instance +0x2e (ShapeInst_RemoveThread on the slot +0x1a until it is empty) and calls operator_delete on each, destroys the instance through its slot +0x1c with 3 and zeroes +0x2e; then stores TS_OBJ's TSObjVtable (000902ea), destroys any instance left the same way, stores MAT_OBJ's and DRAWABLE's tables and calls operator_delete on the object on flags bit 0. ES2's AnimObj_Dtor (DBSIM 00402400). es2_xref finds 12 calls.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-destructors; ES1DBSIM decompile at 00001f98",
+      "verified": {
+        "bytes": "00001f98+196",
+        "sha1": "0f143341b455",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000205c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_ApplyRootMotion",
+      "description": "(object, time, instance) in stack order, callee-cleaned: seeds the instance's root with the identity (ShapeInst_SeedRootTransform), ShapeInstance_StepAnimation (00061944)(instance, time), reads node 0's world transform (instance +0x16), puts its translation through Context_GetTransform (000016e8)(object + 6) with Transform_ApplyToPoint into the position +0x20, adds Transform_RotationToEuler of its rotation to the angles +6..+0xa, clears the rotation word +0x2c, and resets node 0 to the identity. ES2's SimObject_ApplyRootMotion (DBSIM 0040250c), which builds the rotation inline. es2_xref finds its one call in SimObject_ApplyRootMotionIfEnabled (0000215c).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#animation-threads-and-root-motion; ES1DBSIM decompile at 0000205c",
+      "verified": {
+        "bytes": "0000205c+255",
+        "sha1": "9f8d77f7f3ec",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000215c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_ApplyRootMotionIfEnabled",
+      "description": "(object, time) in stack order, callee-cleaned: SimObject_ApplyRootMotion (0000205c)(object, time, the instance +0x2e) when the byte +0x33 is set, nothing otherwise. ES2's SimObject_ApplyRootMotionIfEnabled (DBSIM 00402604). es2_xref finds five calls: Mech_IntegrateMotion, Mech_ConfigureLoadout, Mech_ComponentDamageWrite, 00002df8 and 00003058.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#animation-threads-and-root-motion; ES1DBSIM decompile at 0000215c",
+      "verified": {
+        "bytes": "0000215c+37",
+        "sha1": "8e4d55ee9157",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002184",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_PushTransform",
+      "description": "(object), callee-cleaned: copies the 0x20-byte transform Context_GetTransform (000016e8)(object + 6) returns to SimObjectSave_Transform (000ae4d0); each of the instance's ten thread slots (+0x1a) that holds a thread, 0x52 bytes whole, to SimObjectSave_AnimThreads (000ae4f0) at slot x 0x52; and with memmove the instance's node count (+0xc) of dirty flags (+0xe), 12-byte locals (+0x12) and 32-byte world transforms (+0x16) to SimObjectSave_NodeDirtyFlags (000ae824), SimObjectSave_NodeLocals (000ae844) and SimObjectSave_NodeTransforms (000ae9ac). ES2's SimObject_PushTransform (DBSIM 00402628), which copies each thread field by field.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM decompile at 00002184",
+      "verified": {
+        "bytes": "00002184+196",
+        "sha1": "148dc61b0fc2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002248",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_PopTransform",
+      "description": "(object), callee-cleaned: copies back what SimObject_PushTransform (00002184) saved: the transform over Context_GetTransform (000016e8)(object + 6), each saved thread over the record its slot holds, and the dirty flags, locals and world transforms over the instance's arrays. It leaves the Euler angles +6..+0xa as they are. ES2's SimObject_PopTransform (DBSIM 004027fc).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM decompile at 00002248",
+      "verified": {
+        "bytes": "00002248+194",
+        "sha1": "436f4310c98c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000230c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObject_StaticInit",
+      "description": "Frameless static initializer (static constructor table entry 000adbbc), no Ghidra function before this batch's define: __vec_ctor over SimObjectSave_AnimThreads (000ae4f0, 10 of 0x52 bytes, AnimThread_ElementCtor entered at 0000234e), SimObjectSave_NodeLocals (000ae844, 30 of 12, maybe_Point3SPair_CtorTSObjCopy at 0000243e) and SimObjectSave_NodeTransforms (000ae9ac, 30 of 0x20, Transform_CtorTSObjCopy at 000024b7), then RET. ES2's SimObject_StaticInit (DBSIM 00402bb8).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM disassembly at 0000230c",
+      "verified": {
+        "bytes": "0000230c+66",
+        "sha1": "cd107755021c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00002350",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AnimThread_ElementCtor",
+      "description": "(thread), callee-cleaned: the 0x52-byte animation thread's empty constructor, allocating 0x52 bytes when thread is null and inlining its members' constructors at +0x22, +0x28 and +0x2e; returns thread. SimObject_StaticInit (0000230c) passes its padding entry 0000234e to __vec_ctor. ES2's AnimThread_ElementCtor (DBSIM 00402c36) returns its argument.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM decompile at 00002350",
+      "verified": {
+        "bytes": "00002350+238",
+        "sha1": "c00da4b0c254",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002440",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "medium",
+      "name": "maybe_Point3SPair_CtorTSObjCopy",
+      "description": "(p), callee-cleaned: byte for byte the code of maybe_Point3SPair_Ctor (00061374), relocated operands aside. SimObject_StaticInit (0000230c) passes its padding entry 0000243e to __vec_ctor. ES2's maybe_Point3SPair_Ctor (DBSIM 004921da).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM disassembly at 00002440",
+      "verified": {
+        "bytes": "00002440+119",
+        "sha1": "4b82c5573330",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000024b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_CtorTSObjCopy",
+      "description": "(transform), callee-cleaned: byte for byte the code of Transform_Ctor (000613ec), relocated operands aside. SimObject_StaticInit (0000230c) passes its padding entry 000024b7 to __vec_ctor. ES2's Transform_Ctor (DBSIM 00495026).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM disassembly at 000024b8",
+      "verified": {
+        "bytes": "000024b8+115",
+        "sha1": "e9d6bdc593fa",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -562,7 +1012,7 @@
       "type": "function",
       "confidence": "high",
       "name": "HeapBlockOwner_Dtor",
-      "description": "(owner, flags), callee-cleaned: operator_delete of the block at owner + 4, then of owner itself when flags bit 0 is set; returns at once for a null owner. The destructor of the holder ShapeInstance_CtorCellFrames builds: destructors such as 00000338 (which ends in TSBase_Dtor) and 000028e0 run it on the holder at their +0x10 with flags 0. ES2's HeapBlockOwner_Dtor (DBSIM 00403020).",
+      "description": "(owner, flags), callee-cleaned: operator_delete of the block at owner + 4, then of owner itself when flags bit 0 is set; returns at once for a null owner. The destructor of the holder ShapeInstance_CtorCellFrames builds: destructors such as 00000338 (which ends in TSBase_Dtor) and ConfigPart_DtorDetAnimObjCopy (000028e0) run it on the holder at their +0x10 with flags 0. ES2's HeapBlockOwner_Dtor (DBSIM 00403020).",
       "source": "ES1DBSIM decompile at 00002598, against ES2's HeapBlockOwner_Dtor",
       "verified": {
         "bytes": "00002598+41",
@@ -587,6 +1037,21 @@
       }
     },
     {
+      "address": "00002654",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mech_SpliceHardpointShapes",
+      "description": "(slot list, blank parts, mount array) in stack order, callee-cleaned: walks the slot list ({pointers, int16 count}) and the mount array ({pointers, int16 count}) together and stops at the end of the slots; while the mount array lasts, a slot whose part is not null takes the mount, or the current blank part when the mount entry is null, the replacement taking the slot part's +4 and +6, and the blank cursor moves 0x18 for each slot a mount entry was taken for. ES2's Mech_SpliceHardpointShapes (DBSIM 004030d0). es2_xref finds its one call in Mech_Draw (00012ac4).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-hardpoints--mech_splicehardpointshapes-00002654; ES1DBSIM disassembly at 00002654",
+      "verified": {
+        "bytes": "00002654+195",
+        "sha1": "17bb214699e2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00002718",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -597,6 +1062,216 @@
       "verified": {
         "bytes": "00002718+109",
         "sha1": "82985f2be9d1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002788",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_CreateArray",
+      "description": "(array, models, source) in stack order, callee-cleaned: stores source at array +6 and its int16 count (+4) at array +4, allocates count pointers at array +0 and fills each with a new 0x18-byte CONFIG_PART built inline (the tables 0009032a, 0009034e and TSPartBaseVtableDetAnimObjCopy (0009037a), ShapeInstance_CtorCellFrames (0000252c) on +0x10 with the next model, then ConfigPartVtableDetAnimObjCopy (000903ae)); the model cursor steps for each element whether its allocation succeeded or not. ES2's ConfigPart_CreateArray (DBSIM 004031d4). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#configurable-parts--config_part; ES1DBSIM decompile at 00002788",
+      "verified": {
+        "bytes": "00002788+289",
+        "sha1": "942becc83d5d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000028ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorDetAnimObjCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable TSPartBaseVtableDetAnimObjCopy (0009037a) (entered at its padding 000028a9): byte for byte the code of TSPartBase_Dtor (0005d614), relocated operands aside, storing TSPartBaseVtableDetAnimObjCopy (0009037a) where that stores 000974aa. ES2's TSPartBase_Dtor (DBSIM 0049224b).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM disassembly at 000028ac",
+      "verified": {
+        "bytes": "000028ac+42",
+        "sha1": "68bc1a2cad1c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000028d6",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagDetAnimObjCopy",
+      "description": "Frameless: two NOPs, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable ConfigPartVtableDetAnimObjCopy (000903ae), this file's copy of ConfigPart's table; the code of ConfigPart_GetClassTagMountsCopy (0000a78e).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM disassembly at 000028d6",
+      "verified": {
+        "bytes": "000028d6+7",
+        "sha1": "caf3d3407fd2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000028e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorDetAnimObjCopy",
+      "description": "(part, flags), callee-cleaned: slot +0x1c of the vtable ConfigPartVtableDetAnimObjCopy (000903ae) (entered at its padding 000028dd): for a non-null part stores ConfigPartVtableDetAnimObjCopy (000903ae), runs HeapBlockOwner_Dtor (00002598)(part + 0x10, 0), stores TSPartBaseVtableDetAnimObjCopy (0009037a), runs TSBase_Dtor (0005ba58)(part, 0) and calls operator_delete on part when flags bit 0 is set. The code of ConfigPart_DtorMountsCopy (0000a798). ES2's ConfigPart_Dtor (DBSIM 00420730).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#configurable-parts--config_part; ES1DBSIM decompile at 000028e0",
+      "verified": {
+        "bytes": "000028e0+63",
+        "sha1": "f9e299f69b22",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002920",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPartArray_StepFrame",
+      "description": "(array, index) in stack order, callee-cleaned: the index'th part of the array (array +0): the first word of its cell frames (+0x14) becomes (word + 1) modulo the first word the array at its model's (+0x10) +0x20 holds, and it answers whether that wrapped to 0. ES2's ConfigPartArray_StepFrame (DBSIM 004032d4). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#configurable-parts--config_part; ES1DBSIM decompile at 00002920",
+      "verified": {
+        "bytes": "00002920+80",
+        "sha1": "0671365b4527",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002970",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObjectBase_ConstructAnimated",
+      "description": "(object, shape) in stack order, callee-cleaned: DET_ANIM_OBJ's constructor for an animated shape, allocating 0x3f bytes when object is null (0 when that fails): SimObjectBase_ConstructShaped (00001da0)(object, shape), ANIM_OBJ's table copy AnimObjVtableDetAnimObjCopy (000903e6), DET_ANIM_OBJ's DetAnimObjVtable (00090406), and the LOD table +0x3b set to 0. ES2's SimObjectBase_ConstructAnimated (DBSIM 0040332c). es2_xref finds two calls, both from 00003cbc.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-constructors; ES1DBSIM decompile at 00002970",
+      "verified": {
+        "bytes": "00002970+82",
+        "sha1": "145b4938bb14",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000029c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_RenderDetAnimObjCopy",
+      "description": "(object): slot +4 of the vtable AnimObjVtableDetAnimObjCopy (000903e6) (entered at its padding 000029c2): byte for byte the code of TSObj_Render (00001cdc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM disassembly at 000029c4",
+      "verified": {
+        "bytes": "000029c4+31",
+        "sha1": "e7b74ef7e603",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000029e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetPositionDetAnimObjCopy",
+      "description": "(object): slot +8 of the vtables AnimObjVtableDetAnimObjCopy (000903e6) and DetAnimObjVtable (00090406) (entered at its padding 000029e3): byte for byte the code of TSObj_GetPosition (00001cfc), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM disassembly at 000029e4",
+      "verified": {
+        "bytes": "000029e4+20",
+        "sha1": "a1b95c43ba5f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000029f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_ReturnZeroDetAnimObjCopy",
+      "description": "Frameless: XOR EAX,EAX and RET 4: returns 0. Slot +0x10 of the vtables AnimObjVtableDetAnimObjCopy (000903e6) and DetAnimObjVtable (00090406); the code of TSObj_ReturnZero (000018e8).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM disassembly at 000029f8",
+      "verified": {
+        "bytes": "000029f8+5",
+        "sha1": "0f864a8a1b9e",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00002a00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSObj_GetRadiusDetAnimObjCopy",
+      "description": "(object): slot +0x14 of the vtables AnimObjVtableDetAnimObjCopy (000903e6) and DetAnimObjVtable (00090406) (entered at its padding 000029fd): byte for byte the code of TSObj_GetRadius (00001d58), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM disassembly at 00002a00",
+      "verified": {
+        "bytes": "00002a00+71",
+        "sha1": "81f34db4094a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002a48",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DetAnimObj_Dtor",
+      "description": "(object, flags), callee-cleaned: slot +0xc of DET_ANIM_OBJ's table DetAnimObjVtable (00090406) (entered at its padding 00002a47): for a non-null object stores DetAnimObjVtable (00090406), runs AnimObj_Dtor (00001f98)(object, 0) and calls operator_delete on flags bit 0. DetAnimObj_DtorMechCopy (00011a0c) is its code. ES2's DetAnimObj_Dtor (DBSIM 00426f98).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-destructors; ES1DBSIM decompile at 00002a48",
+      "verified": {
+        "bytes": "00002a48+43",
+        "sha1": "9de8737f018e",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002a74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObjectBase_ConstructStatic",
+      "description": "(object, shape) in stack order, callee-cleaned: DET_ANIM_OBJ's constructor for a static shape, allocating 0x3f bytes when object is null (0 when that fails): TSObj_Ctor (00001b04)(object, shape), ANIM_OBJ's table copy AnimObjVtableDetAnimObjCopy (000903e6), DET_ANIM_OBJ's DetAnimObjVtable (00090406), and the LOD table +0x3b set to 0; +0x33 stays clear. ES2's SimObjectBase_ConstructStatic (DBSIM 00403368). es2_xref finds calls from 00003cbc and 0001ac58.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-constructors; ES1DBSIM decompile at 00002a74",
+      "verified": {
+        "bytes": "00002a74+82",
+        "sha1": "e1cd1c11094c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002ac8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SimObjectBase_ConstructWithDetailTable",
+      "description": "(object, LOD table) in stack order, callee-cleaned: allocating 0x3f bytes when object is null (0 when that fails): SimObjectBase_ConstructShaped (00001da0)(object, the table's first root), ANIM_OBJ's table copy AnimObjVtableDetAnimObjCopy (000903e6), DET_ANIM_OBJ's DetAnimObjVtable (00090406), and the table at +0x3b. ES2's SimObjectBase_ConstructWithDetailTable (DBSIM 004033a4). es2_xref finds its one call in Mech_Constructor (00011330).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-constructors; ES1DBSIM decompile at 00002ac8",
+      "verified": {
+        "bytes": "00002ac8+102",
+        "sha1": "00e6ab3b9ab8",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00002b30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shape_DrawAtDetailLevel",
+      "description": "(object), callee-cleaned: slot +4 of DET_ANIM_OBJ's table DetAnimObjVtable (00090406) and of the HERC file's 00091a6a and 00091b86. SimObject_InstallModelTransform (00001854); with a LOD table at +0x3b whose root count (+0xc) is not 0: size = (shape radius (+8) << Raster_FocalShift) / max(Math_FastMagnitude3D(g_EyeInModelSpace) - radius, 1), at least 1, scaled by Math_Q10Multiply with the int16 g_ShapeDetailSizeScaleQ10 (000903e0); the root index starts at the lesser of the int16 g_ShapeDetailBias (000903e2) and the count less 1 and steps, with the threshold cursor from the table's +4, while it is under the count less 1 and the size is under the threshold; that root goes into the instance's +4. Then the transform again, the instance's slot +0x20, and root 0 put back. ES2's Shape_DrawAtDetailLevel (DBSIM 004033e4).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-lod-root--shape_drawatdetaillevel-00002b30; ES1DBSIM disassembly at 00002b30",
+      "verified": {
+        "bytes": "00002b30+329",
+        "sha1": "79bba531d5db",
         "scope": "body",
         "via": "both"
       }
@@ -1307,12 +1982,87 @@
       }
     },
     {
+      "address": "00008eb0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_CopyClusterSpheres",
+      "description": "(cluster, offset, source cluster) in stack order, callee-cleaned: the cluster's sphere count (+0) becomes the source's and, when it is not 0, +2 a new array of that many 8-byte spheres (__vec_new with 00008e68) holding the source's spheres with the int16 offset triple added to each centre. ES2's Collision_CopyClusterSpheres (DBSIM 0040c834).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 00008eb0",
+      "verified": {
+        "bytes": "00008eb0+162",
+        "sha1": "22da6bc5ffae",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000091bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_CollectNodeComponents",
+      "description": "(node, out) in stack order, callee-cleaned: writes each of the node's 16-byte clusters' (+6, count +4) component index (cluster +6) to out and returns the count. ES2's Collision_CollectNodeComponents (DBSIM 0040cacc).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 000091bc",
+      "verified": {
+        "bytes": "000091bc+92",
+        "sha1": "baa446b8fd9c",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009218",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_CollectNodeAnchors",
+      "description": "(node, points, node ids, components) in stack order, callee-cleaned: for each of the node's 16-byte clusters (+6, count +4), the cluster's component index (+6), the address of its bound centre (+8) and the node's own int16 (+0); returns the count. ES2's Collision_CollectNodeAnchors (DBSIM 0040cafc).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 00009218",
+      "verified": {
+        "bytes": "00009218+118",
+        "sha1": "fd07ce210709",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009290",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_CollectComponentIds",
+      "description": "(model, out) in stack order, callee-cleaned: Collision_CollectNodeComponents (000091bc) over each 10-byte node of the model (+2, count +0), each writing after the last; returns the total. ES2's Collision_CollectComponentIds (DBSIM 0040cb48). es2_xref finds no branch or stored pointer to it.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 00009290",
+      "verified": {
+        "bytes": "00009290+82",
+        "sha1": "79bcef7de26f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000092e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_CollectComponentAnchors",
+      "description": "(model, points, node ids, components) in stack order, callee-cleaned: Collision_CollectNodeAnchors (00009218) over each 10-byte node of the model (+2, count +0), each writing after the last; returns the total. ES2's Collision_CollectComponentAnchors (DBSIM 0040cb84). es2_xref finds its one call in Mech_ConfigureLoadout (00012c00).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 000092e4",
+      "verified": {
+        "bytes": "000092e4+105",
+        "sha1": "d994b2c8b174",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00009350",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "CollisionTable_Reserve",
-      "description": "(n), callee-cleaned: returns the int16 count at 00090da0 and adds n to it. ES2's CollisionTable_Reserve (DBSIM 0040cbd4).",
+      "description": "(n), callee-cleaned: returns the int16 count at CollisionTable_Count (00090da0) and adds n to it. ES2's CollisionTable_Reserve (DBSIM 0040cbd4).",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
       "verified": {
         "bytes": "00009350+24",
@@ -1327,7 +2077,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CollisionTable_Alloc",
-      "description": "No arguments: when the int16 count 00090da0 is not 0, allocates count * 6 bytes to 000bc2ac. ES2's CollisionTable_Alloc (DBSIM 0040cbec). Caller found by es2_xref: DBSim_LoadScriptDat.",
+      "description": "No arguments: when the int16 count CollisionTable_Count (00090da0) is not 0, allocates count * 6 bytes to CollisionTable_Array (000bc2ac). ES2's CollisionTable_Alloc (DBSIM 0040cbec). Caller found by es2_xref: DBSim_LoadScriptDat.",
       "source": "Herculan/docs/es1/formats/bases-dat.md#the-collision-models",
       "verified": {
         "bytes": "00009368+34",
@@ -1402,13 +2152,103 @@
       "type": "function",
       "confidence": "high",
       "name": "Collision_LoadRecordArray",
-      "description": "(slot, stream) in stack order, callee-cleaned, collide.cpp: a severity-5 assert (line 0xee, 'collision data load') when the stream status is set; reads the int16 node count into the 6-byte slot's +0 and, for a count not 0, allocates count * 10 bytes at +2 and reads each node with Collision_ReadNode (000093c8) and then Collision_ComputeAllBoundingSpheres (000094a0). ES2's Collision_LoadRecordArray (DBSIM 0040ccf8). Callers found by es2_xref: Base_LoadResources (000046ac), once per BASES.DAT type over dat\\basecol, and 00009580.",
+      "description": "(slot, stream) in stack order, callee-cleaned, collide.cpp: a severity-5 assert (line 0xee, 'collision data load') when the stream status is set; reads the int16 node count into the 6-byte slot's +0 and, for a count not 0, allocates count * 10 bytes at +2 and reads each node with Collision_ReadNode (000093c8) and then Collision_ComputeAllBoundingSpheres (000094a0). ES2's Collision_LoadRecordArray (DBSIM 0040ccf8). Callers found by es2_xref: Base_LoadResources (000046ac), once per BASES.DAT type over dat\\basecol, and Collision_RegisterObject (00009580).",
       "source": "Herculan/docs/es1/formats/bases-dat.md#the-collision-models",
       "verified": {
         "bytes": "000094f0+144",
         "sha1": "58a268cbe467",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00009580",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_RegisterObject",
+      "description": "(path), callee-cleaned: opens the path with VolRStream_CtorFromPath, asserting at severity 5 (collide.cpp line 0x101) when the stream's status is set, takes the next 6-byte slot of CollisionTable_Array (000bc2ac) by CollisionTable_Cursor (00090da2), which it increments, loads the stream into it with Collision_LoadRecordArray (000094f0), destroys the stream and returns the slot. ES2's Collision_RegisterObject (DBSIM 0040cd88). es2_xref finds two calls: Mech_Constructor (00011330) and FlyerType_LoadResources (0001c6c8).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM disassembly at 00009580",
+      "verified": {
+        "bytes": "00009580+114",
+        "sha1": "17f9ad4e0618",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000095f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ReplaceClusterIfMatch",
+      "description": "(cluster, count, offsets, template clusters) in stack order, callee-cleaned: at the first of count templates whose component (+6) is the cluster's, Collision_CopyClusterSpheres (00008eb0)(cluster, that entry's offset, template); answers whether one matched. ES2's Collision_ReplaceClusterIfMatch (DBSIM 0040ce28).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 000095f4",
+      "verified": {
+        "bytes": "000095f4+139",
+        "sha1": "6630fd3c9dcd",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009680",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ReplaceNodeCluster",
+      "description": "(node, count, offsets, template clusters) in stack order, callee-cleaned: Collision_ReplaceClusterIfMatch (000095f4) over the node's 16-byte clusters (+6, count +4) until one matches; answers whether one did. ES2's Collision_ReplaceNodeCluster (DBSIM 0040ce78).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 00009680",
+      "verified": {
+        "bytes": "00009680+103",
+        "sha1": "a22d2e6289fa",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000096e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Collision_ReplaceClusters",
+      "description": "(model, count, offsets, template clusters) in stack order, callee-cleaned: Collision_ReplaceNodeCluster (00009680) over the model's 10-byte nodes (+2, count +0); for the first node that replaced a cluster, Collision_ComputeAllBoundingSpheres (000094a0)(node), and it returns. ES2's Collision_ReplaceClusters (DBSIM 0040cec0). es2_xref finds its one call in Mech_ConfigureLoadout (00012c00).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 000096e8",
+      "verified": {
+        "bytes": "000096e8+76",
+        "sha1": "13e588b36143",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009734",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_AllDependentsDestroyed",
+      "description": "(piece, internal damage) in stack order, callee-cleaned: 0 as soon as one of the piece's dependents (the list +8, count +6, the internal index at each entry's +2) has a damage entry that is not negative, else 1. ES2's Component_AllDependentsDestroyed (DBSIM 0040cf10).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-damage-header; ES1DBSIM decompile at 00009734",
+      "verified": {
+        "bytes": "00009734+101",
+        "sha1": "30301b495c27",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0000979c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_SpillIntoDependents",
+      "description": "(piece, internal maxima, damage, internal damage) in stack order, callee-cleaned: repeatedly sums the spill weights (+0) of the piece's dependents whose damage entry is not negative; with a non-zero sum draws Math_RandomBelow (00063b3c)(000b5bd4, sum), walks the live entries subtracting weights to the one the draw falls on and runs Component_AddDamage (00009c88)(the damage argument, that internal's maximum, its entry), going round again while that destroys it. Answers 1 when the sum was 0. ES2's Component_SpillIntoDependents (DBSIM 0040cf44).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-damage-header; ES1DBSIM decompile at 0000979c",
+      "verified": {
+        "bytes": "0000979c+243",
+        "sha1": "243b7dfae640",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -1427,6 +2267,21 @@
       }
     },
     {
+      "address": "000098e8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercPiece_CopyRecord",
+      "description": "(piece, source) in stack order, callee-cleaned: copies the 18-byte piece record, then gives the copy a dependent list of its own: operator_new of count (+6) x 4 bytes at +8, the source's list copied in. ES2's HercPiece_CopyRecord (DBSIM 0040d050).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 000098e8",
+      "verified": {
+        "bytes": "000098e8+71",
+        "sha1": "c75005f26a9a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00009930",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1442,12 +2297,27 @@
       }
     },
     {
+      "address": "000099e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercPiece_SetInternalMaxima",
+      "description": "(table, count, maxima, internal indices) in stack order, callee-cleaned: for each of count, the table's maxima array (+4) at the next index takes the next maximum. ES2's HercPiece_SetInternalMaxima (DBSIM 0040d128). es2_xref finds its one call in Mech_ConfigureLoadout (00012c00).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 000099e4",
+      "verified": {
+        "bytes": "000099e4+72",
+        "sha1": "e065ccd33d01",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00009a2c",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Damage_LoadMechDmgFile",
-      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath, asserting at severity 5 (damage.cpp line 0x85) when the stream status is set; takes the 12-byte slot of the table at 000bc2b0 numbered by the word 00090dfe, which it increments; reads the file into it with HercPiece_LoadTable (00009930); destroys the stream and returns the slot. DBSIM's Damage_LoadMechDmgFile (0040d160), without its exception frame.",
+      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath, asserting at severity 5 (damage.cpp line 0x85) when the stream status is set; takes the 12-byte slot of the table at DmgTable_Array (000bc2b0) numbered by the word DmgTable_Cursor (00090dfe), which it increments; reads the file into it with HercPiece_LoadTable (00009930); destroys the stream and returns the slot. DBSIM's Damage_LoadMechDmgFile (0040d160), without its exception frame.",
       "source": "es2_naming.py diff ES1DBSIM 00009a2c DBSIM 0040d160; Herculan/docs/es1/formats/dmg-damage-file.md#the-load",
       "verified": {
         "bytes": "00009a2c+112",
@@ -1462,11 +2332,101 @@
       "type": "function",
       "confidence": "high",
       "name": "DmgTable_Reserve",
-      "description": "(n), callee-cleaned: returns the int16 count at 00090e00 and adds n to it. ES2's DmgTable_Reserve (DBSIM 0040d200).",
+      "description": "(n), callee-cleaned: returns the int16 count at DmgTable_Count (00090e00) and adds n to it. ES2's DmgTable_Reserve (DBSIM 0040d200).",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#which-files",
       "verified": {
         "bytes": "00009a9c+24",
         "sha1": "c106162a323b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009ab4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DmgTable_Alloc",
+      "description": "No arguments: when the int16 DmgTable_Count (00090e00) is not 0, allocates count x 12 bytes to DmgTable_Array (000bc2b0). ES2's DmgTable_Alloc (DBSIM 0040d218). Caller found by es2_xref: DBSim_LoadScriptDat.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-load; ES1DBSIM decompile at 00009ab4",
+      "verified": {
+        "bytes": "00009ab4+32",
+        "sha1": "88f5b4f44dd5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009ad4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercPiece_ReplacePieces",
+      "description": "(table, count, template pieces, component indices) in stack order, callee-cleaned: for each of count, HercPiece_CopyRecord (000098e8)(the table's piece at the next index, 18 bytes apart from the table's +0, the next template). ES2's HercPiece_ReplacePieces (DBSIM 0040d240). es2_xref finds its one call in Mech_ConfigureLoadout (00012c00).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 00009ad4",
+      "verified": {
+        "bytes": "00009ad4+82",
+        "sha1": "ddb646556060",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009b28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercPiece_BindComponentAnchors",
+      "description": "(table, points, node ids, components, count) in stack order, callee-cleaned: for each of count, the table's piece at the next component index takes the next node id at +0xc and the next point at +0xe. ES2's HercPiece_BindComponentAnchors (DBSIM 0040d284). es2_xref finds its one call in Mech_ConfigureLoadout (00012c00).",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM decompile at 00009b28",
+      "verified": {
+        "bytes": "00009b28+98",
+        "sha1": "6ab52a41be2d",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009b8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_AllocDamageArrays",
+      "description": "(header, internals, components) in stack order, callee-cleaned: allocates 0x1c bytes when header is null (0 when that fails); +0 a zeroed array of internals int16, +4 a zeroed array of components int16, +8 an array of components int16 with every byte 1, the component count at +0x18 and the internal count at +0x1a; returns header. ES2's Component_AllocDamageArrays (DBSIM 0040d2cc). es2_xref finds two calls: Mech_Constructor (00011330) and 0001ac58.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-damage-header; ES1DBSIM disassembly at 00009b8c",
+      "verified": {
+        "bytes": "00009b8c+155",
+        "sha1": "7b16038c95b3",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009c28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_LinkMaxRefData",
+      "description": "(header, model, table, machine) in stack order, callee-cleaned: the table at +0xc, the model at +0x10, the machine at +0x14; when maybe_ComponentDependencyList (00090e04) is null, makes it: a 6-byte record holding operator_new(0x14) at +0, the capacity byte 10 at +4 and a zero count byte at +5. ES2's Component_LinkMaxRefData (DBSIM 0040d354), whose list has room for 20. es2_xref finds two calls: Mech_Constructor (00011330) and 0001ac58.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-damage-header; ES1DBSIM decompile at 00009c28",
+      "verified": {
+        "bytes": "00009c28+93",
+        "sha1": "690e378f9179",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00009c88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Component_AddDamage",
+      "description": "(damage, maximum, entry) in stack order, callee-cleaned: for an entry not negative adds the damage to it as an int16 and, when that reaches the maximum, writes entry - maximum back through the damage pointer and stores -1; answers whether the entry is negative. ES2's Component_AddDamage (DBSIM 0040d3ec) sums in 32 bits and stores only a sum under the maximum, so an ES1 sum past 32767 wraps negative with neither -1 nor the excess written.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-damage-header; ES1DBSIM decompile at 00009c88",
+      "verified": {
+        "bytes": "00009c88+76",
+        "sha1": "02424916ecc5",
         "scope": "body",
         "via": "both"
       }
@@ -1567,7 +2527,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_CtorBase",
-      "description": "(mount, projectile record, template, hardpoint record, machine) in stack order, callee-cleaned: with the hardpoint's byte +6 below 4, the model is WeaponMount_ShapeForMountingCode (0000bd70)(template, that byte), else 0. Stores the table copies 00090e8a, 00090eae and 00090eda, runs ShapeInstance_CtorCellFrames(mount + 0x10, model), stores 00090f0e and then WeaponMountBaseVtableMountsCopy (00090f42); keeps the hardpoint record at +0x18, the template at +0x1c and the projectile record at +0x20; +0x5b and +0x5f get 00001f48(machine, the hardpoint's dword +2 or +4), or 0 when its int16 +2 or +4 is negative; with a model at +0x10, passes WeaponMount_MuzzleOffset (0000b918)(mount) and the model to 0000a308. Then zeroes 6 bytes at +0x24 and at +0x2a, the int16 +0x31, 8 bytes at +0x33 and at +0x3b and 0x18 bytes at +0x43, and sets +0x4c to 1. ES2's WeaponMount_CtorBase (DBSIM 0040df30), which also writes the refire scale 0x400 at +0x63.",
+      "description": "(mount, projectile record, template, hardpoint record, machine) in stack order, callee-cleaned: with the hardpoint's byte +6 below 4, the model is WeaponMount_ShapeForMountingCode (0000bd70)(template, that byte), else 0. Stores the table copies 00090e8a, 00090eae and 00090eda, runs ShapeInstance_CtorCellFrames(mount + 0x10, model), stores 00090f0e and then WeaponMountBaseVtableMountsCopy (00090f42); keeps the hardpoint record at +0x18, the template at +0x1c and the projectile record at +0x20; +0x5b and +0x5f get ShapeInst_AddThread (00001f48)(machine, the hardpoint's dword +2 or +4), or 0 when its int16 +2 or +4 is negative; with a model at +0x10, passes WeaponMount_MuzzleOffset (0000b918)(mount) and the model to 0000a308. Then zeroes 6 bytes at +0x24 and at +0x2a, the int16 +0x31, 8 bytes at +0x33 and at +0x3b and 0x18 bytes at +0x43, and sets +0x4c to 1. ES2's WeaponMount_CtorBase (DBSIM 0040df30), which also writes the refire scale 0x400 at +0x63.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#the-constructors; ES1DBSIM disassembly at 0000a530",
       "verified": {
         "bytes": "0000a530+564",
@@ -5032,7 +5992,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_HandleCommand",
-      "description": "(machine, code), callee-cleaned, slot +0x30 of MechVtable (00091ae6): 1 when WeaponMounts_HandleCommand (0000d4b4)(the manager +0x198 of PlayerMech (000bc42a), code) takes the code; otherwise REPNE SCASD over the 19 codes at Mech_HandleCommandCodes (000919d0), 0 for any other, 1 after the case: 0x4c zeroes PlayerMech's throttle +0x226 and sets +0x8d; 0x619 runs Mech_ApplyOutnumberedDamage (00015a5c) on PlayerMech through its padding entry 00015a5a; 0x602-0x60a load DevKeys_MoveStep (000af6f6) and DevKeys_TurnStep (000af6f8) from the int16 tables at 00090d8c and 00090da0 by the code; 0x24d, 0x24b, 0x248 and 0x250 move the machine by the move step along +X, -X, +Y and -Y of its frame (Context_GetTransform (000016e8), Transform_ApplyToShortPoint (0005e858), stored at +0x20); 0x44b and 0x44d turn the heading +0xa by plus or minus the turn step and clear +0x2c; 0x1a and 0x1b call Shield_BalanceAdjust (0000fae4)(PlayerMech + 0x1b8, code is 0x1b). ES2's Mech_HandleCommand (DBSIM 004157c8), which gates the movement codes on the developer keys, presses the shield gauge's child for 0x1a/0x1b, and has no 0x619.",
+      "description": "(machine, code), callee-cleaned, slot +0x30 of MechVtable (00091ae6): 1 when WeaponMounts_HandleCommand (0000d4b4)(the manager +0x198 of PlayerMech (000bc42a), code) takes the code; otherwise REPNE SCASD over the 19 codes at Mech_HandleCommandCodes (000919d0), 0 for any other, 1 after the case: 0x4c zeroes PlayerMech's throttle +0x226 and sets +0x8d; 0x619 runs Mech_ApplyOutnumberedDamage (00015a5c) on PlayerMech through its padding entry 00015a5a; 0x602-0x60a load DevKeys_MoveStep (000af6f6) and DevKeys_TurnStep (000af6f8) from the int16 tables at 00091990 and 000919a4, read as 00090d8c and 00090da0 plus twice the code; 0x24d, 0x24b, 0x248 and 0x250 move the machine by the move step along +X, -X, +Y and -Y of its frame (Context_GetTransform (000016e8), Transform_ApplyToShortPoint (0005e858), stored at +0x20); 0x44b and 0x44d turn the heading +0xa by plus or minus the turn step and clear +0x2c; 0x1a and 0x1b call Shield_BalanceAdjust (0000fae4)(PlayerMech + 0x1b8, code is 0x1b). ES2's Mech_HandleCommand (DBSIM 004157c8), which gates the movement codes on the developer keys, presses the shield gauge's child for 0x1a/0x1b, and has no 0x619.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-cockpit; ES1DBSIM disassembly at 00011050",
       "verified": {
         "bytes": "00011050+614",
@@ -5092,7 +6052,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_Constructor",
-      "description": "(mech, type) in stack order, callee-cleaned: builds a mech of the chassis type. Takes mech from the pool g_MechPool (000af68c) when null, returning 0 when that gives none; 00002ac8(mech, the type's g_MechTypeTable record + 0xc6); vtable 00091a6a at +2, 0xffff at +0x162, +0x92 and +0xa1 set; ObjectList_Add (0000db10)(LiveObjectList (000bc416), mech); +0x16c and +0x170 zeroed, 0xffff at +0x174; 00009b8c(+0x19c, 0x15, 0x1c); five 3-byte countdowns at +0x1ee by __vec_ctor (000610cb) with MechLockTimer_ElementCtor (00011904); vtable MechVtable (00091ae6), the word 7 at +0, the record (0x1c4 bytes, by MechTypeSlot_GetIndex (00019a30)) at +0x188, the words +0x222 to +0x230 zeroed but 10000 at +0x228, +0x162 zeroed; Shield_Init (0000fabc)(+0x1b8, record +0xc0); 00001f48(mech, record +0x12) into +0x1c0; +0xad set when the record's +0x54 is 0; the word +6 zeroed in the entries the record's +0x12 and +0x14 index in the pointer array at +6 of the shape's +0x2a; 00001f48 for record +0x1c and +0x24 into +0x1c4 and +0x1c8 unless negative; a TSObj per byte of the record's +0x72 list below 0x80, from pool 000af044 on shape 000bc1d8[byte], with vtable FlatObjVtableMechCopy (00091b66) and Z -100000, at +0x1cc with the count at +0x1d0; Behaviour_SetState (0000fdfc)(+0x47, state 0, or state 1 at 000af294 when +0x9d is set); +0x234 and +0x1d2 zeroed; then Damage_LoadMechDmgFile (00009a2c)(dmg\\<g_MechTypeNames[record +0x6c]>) into +0x190, 00009580(col\\<same name>) into +0x18c and 00009c28(+0x19c, that, +0x190, mech); the bytes +0x24a-+0x24d cleared and +0x24e set. One call found by es2_xref, from DBSim_SpawnMissionObjects (0001e638). ES2's Mech_Constructor (DBSIM 00415bb0), whose record is 0x21e bytes and whose damage arrays are 0x1d by 0x16.",
+      "description": "(mech, type) in stack order, callee-cleaned: builds a mech of the chassis type. Takes mech from the pool g_MechPool (000af68c) when null, returning 0 when that gives none; SimObjectBase_ConstructWithDetailTable (00002ac8)(mech, the type's g_MechTypeTable record + 0xc6); vtable 00091a6a at +2, 0xffff at +0x162, +0x92 and +0xa1 set; ObjectList_Add (0000db10)(LiveObjectList (000bc416), mech); +0x16c and +0x170 zeroed, 0xffff at +0x174; Component_AllocDamageArrays (00009b8c)(+0x19c, 0x15, 0x1c); five 3-byte countdowns at +0x1ee by __vec_ctor (000610cb) with MechLockTimer_ElementCtor (00011904); vtable MechVtable (00091ae6), the word 7 at +0, the record (0x1c4 bytes, by MechTypeSlot_GetIndex (00019a30)) at +0x188, the words +0x222 to +0x230 zeroed but 10000 at +0x228, +0x162 zeroed; Shield_Init (0000fabc)(+0x1b8, record +0xc0); ShapeInst_AddThread (00001f48)(mech, record +0x12) into +0x1c0; +0xad set when the record's +0x54 is 0; the word +6 zeroed in the entries the record's +0x12 and +0x14 index in the pointer array at +6 of the shape's +0x2a; ShapeInst_AddThread (00001f48) for record +0x1c and +0x24 into +0x1c4 and +0x1c8 unless negative; a TSObj per byte of the record's +0x72 list below 0x80, from pool 000af044 on shape 000bc1d8[byte], with vtable FlatObjVtableMechCopy (00091b66) and Z -100000, at +0x1cc with the count at +0x1d0; Behaviour_SetState (0000fdfc)(+0x47, state 0, or state 1 at 000af294 when +0x9d is set); +0x234 and +0x1d2 zeroed; then Damage_LoadMechDmgFile (00009a2c)(dmg\\<g_MechTypeNames[record +0x6c]>) into +0x190, Collision_RegisterObject (00009580)(col\\<same name>) into +0x18c and Component_LinkMaxRefData (00009c28)(+0x19c, that, +0x190, mech); the bytes +0x24a-+0x24d cleared and +0x24e set. One call found by es2_xref, from DBSim_SpawnMissionObjects (0001e638). ES2's Mech_Constructor (DBSIM 00415bb0), whose record is 0x21e bytes and whose damage arrays are 0x1d by 0x16.",
       "source": "Herculan/docs/es1/simulation/mech.md#construction",
       "verified": {
         "bytes": "00011330+1322",
@@ -5122,7 +6082,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimObject_DtorMechCopy",
-      "description": "(object, flags), callee-cleaned (RET 8), slot +0xc of 00091a6a, the object base's table in ACTOR's place: stores 00091a6a and then 00091b86 at +2 and calls 00001f98(object, 0); it frees nothing whatever the flags.",
+      "description": "(object, flags), callee-cleaned (RET 8), slot +0xc of 00091a6a, the object base's table in ACTOR's place: stores 00091a6a and then 00091b86 at +2 and calls AnimObj_Dtor (00001f98)(object, 0); it frees nothing whatever the flags.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-other-tables; ES1DBSIM disassembly at 00011870",
       "verified": {
         "bytes": "00011870+34",
@@ -5212,7 +6172,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_Dtor",
-      "description": "(machine, flags), callee-cleaned, slot +0xc of MechVtable (00091ae6): with the machine non-null stores MechVtable, 00091a6a and 00091b86 at +2 in turn, calls 00001f98(machine, 0), and on flags bit 0 queues the machine on g_MechDeleteQueue (000af690) with ObjectPool_QueueForDelete (00063760). ES2's Mech_Dtor (DBSIM 00427127), which counts three class levels, calls AnimObj_Dtor and takes the machine off the live object list.",
+      "description": "(machine, flags), callee-cleaned, slot +0xc of MechVtable (00091ae6): with the machine non-null stores MechVtable, 00091a6a and 00091b86 at +2 in turn, calls AnimObj_Dtor (00001f98)(machine, 0), and on flags bit 0 queues the machine on g_MechDeleteQueue (000af690) with ObjectPool_QueueForDelete (00063760). ES2's Mech_Dtor (DBSIM 00427127), which counts three class levels, calls AnimObj_Dtor and takes the machine off the live object list.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-classes; ES1DBSIM disassembly at 00011920",
       "verified": {
         "bytes": "00011920+62",
@@ -5272,7 +6232,7 @@
       "type": "function",
       "confidence": "high",
       "name": "DetAnimObj_DtorMechCopy",
-      "description": "(object, flags), callee-cleaned, slot +0xc of 00091b86, the table Mech_Dtor (00011920) stores in DET_ANIM_OBJ's place: with the object non-null stores 00091b86 at +2, calls 00001f98(object, 0), and operator_delete (000015f8)s the object on flags bit 0.",
+      "description": "(object, flags), callee-cleaned, slot +0xc of 00091b86, the table Mech_Dtor (00011920) stores in DET_ANIM_OBJ's place: with the object non-null stores 00091b86 at +2, calls AnimObj_Dtor (00001f98)(object, 0), and operator_delete (000015f8)s the object on flags bit 0.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-other-tables; ES1DBSIM disassembly at 00011a0c",
       "verified": {
         "bytes": "00011a0c+43",
@@ -5407,13 +6367,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_LocomotionTick",
-      "description": "(mech, avoidance arg, desired speed, steer) in stack order, callee-cleaned: the HERC control law and gait machine, with the type record at +0x188. An immobilised machine (+0x9e) has desired speed and steer zeroed. Otherwise, while Timer_CountDown (00064178)(mech + 0x203) reports the timer running, the desired speed becomes the type's +4 when +0xa8 is set and +6 when not; once it reports 0 the desired speed is clamped to [+4, +6]. A machine other than the player (PlayerMech (000bc42a)) that is not immobilised runs Mech_AiObstacleAvoidance (00011c80). Damage scales the desired speed by Q10 400 (+0xa3) or 750 (+0xa2), steer is clamped to +/-0x100, and the speed +0x224 moves toward the desired speed by typeRec +8 (Math_RateLimitedMoveToward). The gait machine then compares |speed| with last tick's on the locomotion thread +0x1c0, cutting to or requesting the type's sequences +0xe, +0x10, +0x12, +0x14, +0x46 and +0x7c with AnimThread_SetSequence (0006200c) and AnimThread_SetTarget (0006265c) and setting the playback rate +0x236: an immobilised machine off +0x7c falls to +0x46, requesting it at rate 100 with Sound_PlayAt 0x1e at +0x20 unless +0xae is latched, then running at rate 0x78 and, once the sequence has played, latching +0xae, calling Mech_SpreadImpactDamage (00013078)(mech, 0x78, 0x96) and playing 0x29. The turn rate +0x222 then moves by typeRec +0xa toward Q8(steer, tent): the tent is 0 when a gait branch set its step flag this tick or |speed| is below 45; otherwise it rises from 0 at 45 to typeRec +2 midway between 45 and the top speed +6, and falls to half that at the top speed. The heading +0xa takes the turn rate and +0x2c, the orientation block's cached-rotation word, is cleared. ES2's Mech_LocomotionTick (DBSIM 00416a04) adds the terrain slope, the Turbo Pod and the minimum playback rate, and peaks its tent at Q10(1600).",
+      "description": "(mech, avoidance arg, desired speed, steer) in stack order, callee-cleaned: the HERC control law and gait machine, with the type record at +0x188. An immobilised machine (+0x9e) has desired speed and steer zeroed. Otherwise, while Timer_CountDown (00064178)(mech + 0x203) reports the timer running, the desired speed becomes the type's +4 when +0xa8 is set and +6 when not; once it reports 0 the desired speed is clamped to [+4, +6] and +0xa8 is left as it is. A machine other than the player (PlayerMech (000bc42a)) that is not immobilised runs Mech_AiObstacleAvoidance (00011c80). Leg damage scales the desired speed by Q10 400 (+0xa3) or 750 (+0xa2), steer is clamped to +/-0x100, and the speed +0x224 moves toward the desired speed by typeRec +8 (Math_RateLimitedMoveToward). The gait machine then compares |speed| with last tick's on the locomotion thread +0x1c0, cutting to or requesting the type's sequences +0xe, +0x10, +0x12, +0x14, +0x46 and +0x7c with AnimThread_SetSequence (0006200c) and AnimThread_SetTarget (0006265c), shifting at the walk-to-run speeds +0x2e and +0x6e (file offsets 44 and 108), and setting the playback rate +0x236: an immobilised machine off +0x7c falls to +0x46, requesting it at rate 100 with Sound_PlayAt 0x1e at +0x20 unless +0xae is latched, then running at rate 0x78 and, once the sequence has played, latching +0xae, calling Mech_SpreadImpactDamage (00013078)(mech, 0x78, 0x96) and playing 0x29. Rising off the walk and stop sequences, falling on the run at or above +0x2e, and falling on the walk at a non-zero speed leave the playback rate as it was. The turn rate +0x222 then moves by typeRec +0xa toward Q8(steer, tent): the tent is 0 when a gait branch set its step flag this tick or |speed| is below 45; otherwise it rises from 0 at 45 to typeRec +2 midway between 45 and the top speed +6, and falls to half that at the top speed. The heading +0xa takes the turn rate and +0x2c, the orientation block's cached-rotation word, is cleared. ES2's Mech_LocomotionTick (DBSIM 00416a04) clears its unstick direction when the countdown has run out, adds the terrain slope and the Turbo Pod, scales for reactor damage too, sets the playback rate to the speed in those three branches, lifts a crawl's rate to 60, takes a speed of 1 to 44 as 45 with its tent rising from half, and scales the tent by Q10(1600).",
       "source": "ES1DBSIM decompile at 00012038, against ES2's Mech_LocomotionTick",
       "verified": {
         "bytes": "00012038+2699",
         "sha1": "a829f82bf0c5",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -5422,7 +6382,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_Draw",
-      "description": "(machine), callee-cleaned, slot +4 of MechVtable (00091ae6): while Mech_DrawEnabled (000bc428) is set, 00002654(entry, type record + 0xd4, the manager +0x198) for each 6-byte CONNECT_INFO entry of the record's +0xce, the root count +0xd2 of them, then 00002b30(machine). ES2's Mech_Draw (DBSIM 004174c8), which calls Mech_SpliceHardpointShapes and Shape_DrawAtDetailLevel at those places.",
+      "description": "(machine), callee-cleaned, slot +4 of MechVtable (00091ae6): while Mech_DrawEnabled (000bc428) is set, Mech_SpliceHardpointShapes (00002654)(entry, type record + 0xd4, the manager +0x198) for each 6-byte CONNECT_INFO entry of the record's +0xce, the root count +0xd2 of them, then Shape_DrawAtDetailLevel (00002b30)(machine). ES2's Mech_Draw (DBSIM 004174c8), which calls Mech_SpliceHardpointShapes and Shape_DrawAtDetailLevel at those places.",
       "source": "Herculan/docs/es1/simulation/mech.md#small-functions; ES1DBSIM decompile at 00012ac4",
       "verified": {
         "bytes": "00012ac4+148",
@@ -5452,7 +6412,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ConfigureLoadout",
-      "description": "(machine, ammunition types, weapon fit) in stack order, callee-cleaned: builds the manager at +0x198 from Mech_GetGunLayout (0001a0f8), with WeaponMounts_CtorLocal (0000c808) for a machine whose +0x9d is set and MechLoadout_ConstructWeaponMounts (0000c31c) otherwise; 0000215c(machine, 0); for each fitted mount, with the template +0x1c, WeaponMount_MuzzleOffset (0000b918) and the component .GL +0x17 + 0x13 and internal +0xc: when the mount has a model (+0x10), Shape_StampTransformId (00012b58) with the node of the part WeaponMount_HardpointBoneId (0000ac40) names (the shape's slot +0x24); the template cluster's component and piece's internal, the piece's parent byte, then 000096e8 on +0x18c and 00009ad4 and 000099e4 on +0x190. Then 000092e4 on +0x18c into 00009b28 on +0x190, and clears the occupancy flag (+0x1a4) of each of 28 components whose piece's +6 is 0. es2_xref finds one call, from DBSim_SpawnMissionObjects (0001e638), and the address as a dword at 00096bcb, 00096be3 and 000ad900. ES2's Mech_ConfigureLoadout (DBSIM 004175dc), which goes on to file the pods and size the shields and reactor.",
+      "description": "(machine, ammunition types, weapon fit) in stack order, callee-cleaned: builds the manager at +0x198 from Mech_GetGunLayout (0001a0f8), with WeaponMounts_CtorLocal (0000c808) for a machine whose +0x9d is set and MechLoadout_ConstructWeaponMounts (0000c31c) otherwise; SimObject_ApplyRootMotionIfEnabled (0000215c)(machine, 0); for each fitted mount, with the template +0x1c, WeaponMount_MuzzleOffset (0000b918) and the component .GL +0x17 + 0x13 and internal +0xc: when the mount has a model (+0x10), Shape_StampTransformId (00012b58) with the node of the part WeaponMount_HardpointBoneId (0000ac40) names (the shape's slot +0x24); the template cluster's component and piece's internal, the piece's parent byte, then Collision_ReplaceClusters (000096e8) on +0x18c and HercPiece_ReplacePieces (00009ad4) and HercPiece_SetInternalMaxima (000099e4) on +0x190. Then Collision_CollectComponentAnchors (000092e4) on +0x18c into HercPiece_BindComponentAnchors (00009b28) on +0x190, and clears the occupancy flag (+0x1a4) of each of 28 components whose piece's +6 is 0. es2_xref finds one call, from DBSim_SpawnMissionObjects (0001e638), and the address as a dword at 00096bcb, 00096be3 and 000ad900. ES2's Mech_ConfigureLoadout (DBSIM 004175dc), which goes on to file the pods and size the shields and reactor.",
       "source": "Herculan/docs/es1/simulation/mech.md#construction; ES1DBSIM decompile at 00012c00",
       "verified": {
         "bytes": "00012c00+718",
@@ -5542,7 +6502,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_ComponentDamageWrite",
-      "description": "(machine, attacker, damage, component) in stack order, callee-cleaned: the damage endpoint. Returns at once for the player's machine (+0x9d) while MissionModeFlag (000bc4a0) is 0 and the header word at 000bc4a8 is 1, or for a component whose occupancy flag (+0x1a4) is clear. Then 00009f7c(+0x19c, damage, component); WeaponMount_Destroy (0000b968)(mount, 0, machine) for each mount not yet destroyed (+0x49) whose component flag reads 0. Legs, for internals 0 and 1, and 10 and 11 when the type record's +0x4a is above 2: a side at 0x100 destroys its shadow (+0x1cc) through its slot +0xc with 3; unless immobilised (+0x9e), half the legs gone runs, while +0x93 is clear, the attacker's slot +0x64(attacker, 0, machine), Mech_ReportOutOfAction (0000d77c), Action_Activate (0001cc5c) of +0x170 and Behaviour_SetState (0000fdfc)(+0x47, disabled 000af564), then sets +0x9e, posts Computer_PostMessage (0001a154)(7) when the attacker is LocalPlayerMech (000b5b86) and its +0x15e is the machine, and for LocalPlayerMech itself sets the heading from the camera node's yaw (Transform_RotationToEuler (0005e988)), clears +0x2c and the twist +0x22e, seeks the twist thread +0x1c4 to 0 with AnimThread_SeekToPosition (000620c4) and runs 0000215c(machine, 1); otherwise the averaged sides latch +0xa3 at 0xc1 or more and +0xa2 past 0x80. Death, while +0x93 is clear, when 00009f30 reports component 0 or 1 or internal 9 reads 0x100: +0x93 set, the attacker's slot +0x64 with +0x9e, the report and action when +0x9e was clear, +0x90 cleared, message 3 on the same test as 7, then dead (000af53c), or for a type with +0x4c set +0x32 set, Z -100000, in limbo (000af514) and every shadow destroyed with the count +0x1d0 zeroed. Last, while +0xa4 and +0xa5 are clear, internal 5 latches +0xa5 past 0xc0 or +0xa4 past 0x80. es2_xref finds six calls: Mech_ApplyStartingCondition (00012f20) twice, Mech_SpreadImpactDamage (00013078), Mech_ApplyExplosiveDamage (00013a7c), Mech_DirectFireHitTest (00013b44) and Mech_BehaviourRamTick (00018278). ES2's Mech_ComponentDamageWrite (DBSIM 00417de4), which also posts the damage warnings, recomputes the shields, grades the legs at 0x8d and 0x50, kills on life support and finishes component 0.",
+      "description": "(machine, attacker, damage, component) in stack order, callee-cleaned: the damage endpoint. Returns at once for the player's machine (+0x9d) while MissionModeFlag (000bc4a0) is 0 and the header word at 000bc4a8 is 1, or for a component whose occupancy flag (+0x1a4) is clear. Then 00009f7c(+0x19c, damage, component); WeaponMount_Destroy (0000b968)(mount, 0, machine) for each mount not yet destroyed (+0x49) whose component flag reads 0. Legs, for internals 0 and 1, and 10 and 11 when the type record's +0x4a is above 2: a side at 0x100 destroys its shadow (+0x1cc) through its slot +0xc with 3; unless immobilised (+0x9e), half the legs gone runs, while +0x93 is clear, the attacker's slot +0x64(attacker, 0, machine), Mech_ReportOutOfAction (0000d77c), Action_Activate (0001cc5c) of +0x170 and Behaviour_SetState (0000fdfc)(+0x47, disabled 000af564), then sets +0x9e, posts Computer_PostMessage (0001a154)(7) when the attacker is LocalPlayerMech (000b5b86) and its +0x15e is the machine, and for LocalPlayerMech itself sets the heading from the camera node's yaw (Transform_RotationToEuler (0005e988)), clears +0x2c and the twist +0x22e, seeks the twist thread +0x1c4 to 0 with AnimThread_SeekToPosition (000620c4) and runs SimObject_ApplyRootMotionIfEnabled (0000215c)(machine, 1); otherwise the averaged sides latch +0xa3 at 0xc1 or more and +0xa2 past 0x80. Death, while +0x93 is clear, when 00009f30 reports component 0 or 1 or internal 9 reads 0x100: +0x93 set, the attacker's slot +0x64 with +0x9e, the report and action when +0x9e was clear, +0x90 cleared, message 3 on the same test as 7, then dead (000af53c), or for a type with +0x4c set +0x32 set, Z -100000, in limbo (000af514) and every shadow destroyed with the count +0x1d0 zeroed. Last, while +0xa4 and +0xa5 are clear, internal 5 latches +0xa5 past 0xc0 or +0xa4 past 0x80. es2_xref finds six calls: Mech_ApplyStartingCondition (00012f20) twice, Mech_SpreadImpactDamage (00013078), Mech_ApplyExplosiveDamage (00013a7c), Mech_DirectFireHitTest (00013b44) and Mech_BehaviourRamTick (00018278). ES2's Mech_ComponentDamageWrite (DBSIM 00417de4), which also posts the damage warnings, recomputes the shields, grades the legs at 0x8d and 0x50, kills on life support and finishes component 0.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-damage-write--mech_componentdamagewrite-00013250; ES1DBSIM decompile at 00013250",
       "verified": {
         "bytes": "00013250+2090",
@@ -5602,7 +6562,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_IntegrateMotion",
-      "description": "(machine), callee-cleaned: AnimThread_SetPlaybackRate (000626c8)(the locomotion thread +0x1c0, the rate +0x236), then 0000215c(machine, Math_IntegrateRateOverTick (00063fa4)(100)). es2_xref finds three calls: Mech_MovementTick (00014844) twice and Mech_BehaviourRamTick (00018278). ES2's Mech_IntegrateMotion (DBSIM 00418f40).",
+      "description": "(machine), callee-cleaned: AnimThread_SetPlaybackRate (000626c8)(the locomotion thread +0x1c0, the rate +0x236), then SimObject_ApplyRootMotionIfEnabled (0000215c)(machine, Math_IntegrateRateOverTick (00063fa4)(100)). es2_xref finds three calls: Mech_MovementTick (00014844) twice and Mech_BehaviourRamTick (00018278). ES2's Mech_IntegrateMotion (DBSIM 00418f40).",
       "source": "Herculan/docs/es1/simulation/mech.md#movement; ES1DBSIM decompile at 00014148",
       "verified": {
         "bytes": "00014148+43",
@@ -5632,13 +6592,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_PlaceLegsOnGround",
-      "description": "(machine), callee-cleaned: for each shadow at +0x1cc (count +0x1d0) still held, the translation of the node of the part the type record's byte +0x77 + i names (shape slot +0x24) through the machine's frame becomes its position +0x20, the heading its +0xa, and +0x2c is cleared. For the player's machine (+0x9d) the footfall tests follow, ES2's on the step latches +0x24a and on and the record's +0x98 and +0xac thresholds, playing Sound_PlayAt (0004deb8)(machine + 0x20, 0x1d) on a plant. es2_xref finds two calls: Mech_MovementTick (00014844) and Mech_BehaviourRamTick (00018278). ES2's Mech_PlaceLegsOnGround (DBSIM 004195c8), which tests the thread and the part, plays within 15000 of the camera too and kicks the cockpit.",
+      "description": "(machine), callee-cleaned: for each shadow at +0x1cc (count +0x1d0) still held, the translation of the node of the part the type record's byte +0x77 + i names (shape slot +0x24) through the machine's frame becomes its position +0x20, the heading its +0xa, and +0x2c is cleared; a part the lookup answers 0 for is read at address 0x14. For the player's machine (+0x9d) the footfall tests follow, ES2's on the step latches +0x24a and on and the record's +0x98 and +0xac thresholds, playing Sound_PlayAt (0004deb8)(machine + 0x20, 0x1d) on a plant; and while the death sequence +0x46 plays, a kind-2 entry plays 0x1f once, latched on +0x24e, when its point's world Z falls below the record's +0x9e. es2_xref finds two calls: Mech_MovementTick (00014844) and Mech_BehaviourRamTick (00018278). ES2's Mech_PlaceLegsOnGround (DBSIM 004195c8), which tests the thread and the part, tests machines within 15000 of the camera too, plays only within 15000, kicks the cockpit, and sets no sound for the death arm.",
       "source": "Herculan/docs/es1/simulation/mech.md#movement; ES1DBSIM decompile at 000144dc",
       "verified": {
         "bytes": "000144dc+869",
         "sha1": "7a96b3033678",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -5647,7 +6607,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_MovementTick",
-      "description": "(machine), callee-cleaned: 00002184(machine), Mech_IntegrateMotion (00014148), and when Mech_CollisionTest (00014174) refuses: 00002248(machine); a machine other than the player's gets the unstick counter +0x204 = 20000, +0x1e8 = 5000 or -5000 by Math_RandomNext (00063af4)(000b5bd4) bit 0 and +0xa8 = speed above 0, the player's Sound_Play (0004de84)(0x29); the throttle +0x226 zeroed and +0x8d set; outside a transition frame (thread +0x50 bit 2 clear) the speed becomes -speed clamped to [type record +0x6e, +6], the rate +0x236 negated, and a second refused integrate restores again and zeroes the speed; inside one, AnimThread_SetSequence (0006200c)(thread, 0, 0, the record's +0x12). Then Mech_PlaceLegsOnGround (000144dc); returns 1. es2_xref finds 17 stored pointers, the move of Behaviour_BuildStateTable's states. ES2's Mech_MovementTick (DBSIM 0041a360), which also takes the ground height, slides the player and unsticks for 10000.",
+      "description": "(machine), callee-cleaned: SimObject_PushTransform (00002184)(machine), Mech_IntegrateMotion (00014148), and when Mech_CollisionTest (00014174) refuses: SimObject_PopTransform (00002248)(machine); a machine other than the player's gets the unstick counter +0x204 = 20000, +0x1e8 = 5000 or -5000 by Math_RandomNext (00063af4)(000b5bd4) bit 0 and +0xa8 = speed above 0, the player's Sound_Play (0004de84)(0x29); the throttle +0x226 zeroed and +0x8d set; outside a transition frame (thread +0x50 bit 2 clear) the speed becomes -speed clamped to [type record +0x6e, +6], the rate +0x236 negated, and a second refused integrate restores again and zeroes the speed; inside one, AnimThread_SetSequence (0006200c)(thread, 0, 0, the record's +0x12). Then Mech_PlaceLegsOnGround (000144dc); returns 1. es2_xref finds 17 stored pointers, the move of Behaviour_BuildStateTable's states. ES2's Mech_MovementTick (DBSIM 0041a360), which also takes the ground height, slides the player and unsticks for 10000.",
       "source": "Herculan/docs/es1/simulation/mech.md#movement; ES1DBSIM decompile at 00014844",
       "verified": {
         "bytes": "00014844+357",
@@ -7222,7 +8182,7 @@
       "type": "function",
       "confidence": "high",
       "name": "FlyerType_LoadResources",
-      "description": "(type), callee-cleaned: with the name from the table at 000bc468 and the 0x2e-byte record at 000bc46c + FlyerType_RecordIndex (0001c678) * 0x2e: Ovl_ReadFile(dat\\<name>, 1, 0x22, record); Shape_LoadDts(dts\\<name>) into +0x2a, the shape's +0x26 = the dba\\enemy bank at 000bc45c; Damage_LoadMechDmgFile (00009a2c)(dmg\\<name>) into +0x22; 00009580(col\\<name>) into +0x26. ES2's FlyerType_LoadResources (DBSIM 00422ed0), which reads 0x2e bytes into a 0x70-byte record, writes a fixed bank-slot address and reads fm\\<name>.",
+      "description": "(type), callee-cleaned: with the name from the table at 000bc468 and the 0x2e-byte record at 000bc46c + FlyerType_RecordIndex (0001c678) * 0x2e: Ovl_ReadFile(dat\\<name>, 1, 0x22, record); Shape_LoadDts(dts\\<name>) into +0x2a, the shape's +0x26 = the dba\\enemy bank at 000bc45c; Damage_LoadMechDmgFile (00009a2c)(dmg\\<name>) into +0x22; Collision_RegisterObject (00009580)(col\\<name>) into +0x26. ES2's FlyerType_LoadResources (DBSIM 00422ed0), which reads 0x2e bytes into a 0x70-byte record, writes a fixed bank-slot address and reads fm\\<name>.",
       "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load-1",
       "verified": {
         "bytes": "0001c6c8+168",
@@ -8272,7 +9232,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Drawable_GetRadiusCopy",
-      "description": "(object), callee-cleaned (RET 4), frameless: returns 0; two NOPs, then xor eax,eax and ret 4, the code at 000018f0 (no Ghidra function there) in slot +0x14 of MAT_OBJ's vtable 000902ca. Slot +0x14 of terrain.cpp's vtable copies 0009251a and 0009253a.",
+      "description": "(object), callee-cleaned (RET 4), frameless: returns 0; two NOPs, then xor eax,eax and ret 4, the code at 000018f0 (no Ghidra function there) in slot +0x14 of MAT_OBJ's vtable MatObjVtable (000902ca). Slot +0x14 of terrain.cpp's vtable copies 0009251a and 0009253a.",
       "source": "Herculan/docs/es1/formats/zone-terrain.md#the-zone-shape-object",
       "verified": {
         "bytes": "000206aa+7",
@@ -8287,7 +9247,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Drawable_DtorCopy",
-      "description": "(object, flags) in stack order, callee-cleaned: slot +0xc of 0009253a, terrain.cpp's copy of DRAWABLE's vtable 0009020a, entered at its padding 000206b1 (es2_xref finds that dword at 00092546): stores 0009253a at object +2 and returns, freeing nothing whatever the flags. Identical after normalisation to DRAWABLE's destructor 000018d4.",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0xc of 0009253a, terrain.cpp's copy of DRAWABLE's vtable DrawableBaseVtable (0009020a), entered at its padding 000206b1 (es2_xref finds that dword at 00092546): stores 0009253a at object +2 and returns, freeing nothing whatever the flags. Identical after normalisation to DRAWABLE's destructor Drawable_Dtor (000018d4).",
       "source": "Herculan/docs/es1/formats/zone-terrain.md#the-zone-shape-object",
       "verified": {
         "bytes": "000206b4+19",
@@ -28952,6 +29912,195 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0009020a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DrawableBaseVtable",
+      "description": "DRAWABLE's table: 0 at +4 and +8, Drawable_Dtor (000018d4) at +0xc, TSObj_ReturnZero (000018e8) at +0x10, Drawable_GetRadius (000018ed) at +0x14. Every constructor in 000016e8-00002c7b stores it first. ES2's DrawableBaseVtable.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 0009020a"
+    },
+    {
+      "address": "0009022a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TinyObjVtable",
+      "description": "TINY_OBJ's table: TinyObj_InstallModelTransform (000017a8), TinyObj_GetPosition (00001764), TinyObj_Dtor (000018f8), then DRAWABLE's two. ES2's TinyObjVtable.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 0009022a"
+    },
+    {
+      "address": "0009024a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TSTinyObjVtable",
+      "description": "TS_TINY_OBJ's table: TSTinyObj_Draw (00001924), TinyObj_GetPosition, TSTinyObj_Dtor (00001944), then DRAWABLE's two. ES2's TSTinyObjVtable.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 0009024a"
+    },
+    {
+      "address": "0009026a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "RegObjContextVtable",
+      "description": "REG_OBJ's table for its TSContext, stored at the object's +0x18: REG_OBJ_DtorThunk (00001a20) at +4.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 0009026a"
+    },
+    {
+      "address": "0009027a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "RegObjVtable",
+      "description": "REG_OBJ's table: Raster_SetModelTransformFromPose (00001808), RegObj_GetPosition (00001a2a), RegObj_Dtor (00001a38), TSObj_ReturnZero, Drawable_GetRadius entered at 000018f0. ES2's RegObjVtable.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 0009027a"
+    },
+    {
+      "address": "0009029a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TSRegObjContextVtable",
+      "description": "TS_REG_OBJ's table for its TSContext, stored at the object's +0x18: TS_REG_OBJ_DtorThunk (00001a78) at +4.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 0009029a"
+    },
+    {
+      "address": "000902aa",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TSRegObjVtable",
+      "description": "TS_REG_OBJ's table: TSRegObj_Draw (00001a84), RegObj_GetPosition, TSRegObj_Dtor (00001aa4), TSObj_ReturnZero, Drawable_GetRadius entered at 000018f0. ES2's TSRegObjVtable.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 000902aa"
+    },
+    {
+      "address": "000902ca",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MatObjVtable",
+      "description": "MAT_OBJ's table: SimObject_InstallModelTransform (00001854), MatObj_GetPosition (00001c9c), MatObj_Dtor (00001cb0), TSObj_ReturnZero, Drawable_GetRadius entered at 000018f0. ES2's MatObjVtable.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 000902ca"
+    },
+    {
+      "address": "000902ea",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TSObjVtable",
+      "description": "TS_OBJ's table: TSObj_Render (00001cdc), TSObj_GetPosition (00001cfc), TSObj_Dtor (00001d10), TSObj_ReturnZero, TSObj_GetRadius (00001d58). ES2's TSObjVtable.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 000902ea"
+    },
+    {
+      "address": "0009030a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AnimObjVtable",
+      "description": "ANIM_OBJ's table: TS_OBJ's slots with AnimObj_Dtor (00001f98) at +0xc. AnimObj_Dtor stores it. ES2's AnimObjVtable.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 0009030a"
+    },
+    {
+      "address": "0009037a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TSPartBaseVtableDetAnimObjCopy",
+      "description": "This file's copy of TSPartBase's table, TSPartBase_DtorDetAnimObjCopy (000028ac) at +0x1c; ConfigPart_CreateArray (00002788) and ConfigPart_DtorDetAnimObjCopy (000028e0) store it.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 0009037a"
+    },
+    {
+      "address": "000903ae",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ConfigPartVtableDetAnimObjCopy",
+      "description": "One of the 44 copies of ConfigPart's table: ConfigPart_GetClassTagDetAnimObjCopy (000028d6) at +4, ConfigPart_DtorDetAnimObjCopy (000028e0) at +0x1c, ConfigPart_Render (00002718) at +0x20. ConfigPart_CreateArray (00002788) stores it.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 000903ae"
+    },
+    {
+      "address": "000903e0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ShapeDetailSizeScaleQ10",
+      "description": "int16, 1024 in the image: the Q10 scale Shape_DrawAtDetailLevel (00002b30) puts on a shape's projected size before its threshold walk. A search of the disassembly for the address finds that read and one store, in 00057c08. ES2's g_ShapeDetailSizeScaleQ10.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-lod-root--shape_drawatdetaillevel-00002b30; ES1DBSIM image at 000903e0"
+    },
+    {
+      "address": "000903e2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ShapeDetailBias",
+      "description": "int16, 0 in the image: the root index Shape_DrawAtDetailLevel (00002b30) starts its walk at, held under the root count. A search of the disassembly for the address finds that read and one store, in 00057c08. ES2's g_ShapeDetailBias.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-lod-root--shape_drawatdetaillevel-00002b30; ES1DBSIM image at 000903e2"
+    },
+    {
+      "address": "000903e6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AnimObjVtableDetAnimObjCopy",
+      "description": "This file's copy of ANIM_OBJ's table: TSObj_RenderDetAnimObjCopy (000029c4), TSObj_GetPositionDetAnimObjCopy (000029e4), AnimObj_Dtor (00001f98), TSObj_ReturnZeroDetAnimObjCopy (000029f8), TSObj_GetRadiusDetAnimObjCopy (00002a00). The three DET_ANIM_OBJ constructors store it before DetAnimObjVtable.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 000903e6"
+    },
+    {
+      "address": "00090406",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DetAnimObjVtable",
+      "description": "DET_ANIM_OBJ's table: Shape_DrawAtDetailLevel (00002b30), TSObj_GetPositionDetAnimObjCopy, DetAnimObj_Dtor (00002a48), TSObj_ReturnZeroDetAnimObjCopy, TSObj_GetRadiusDetAnimObjCopy. ES2's DetAnimObjVtable.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-classes; ES1DBSIM image at 00090406"
+    },
+    {
+      "address": "00090da0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CollisionTable_Count",
+      "description": "int16: the collision slots reserved, which CollisionTable_Reserve (00009350) returns and adds to and CollisionTable_Alloc (00009368) allocates 6 bytes each of.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM image at 00090da0"
+    },
+    {
+      "address": "00090da2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CollisionTable_Cursor",
+      "description": "int16: the next collision slot Collision_RegisterObject (00009580) fills, which it increments.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM image at 00090da2"
+    },
+    {
+      "address": "00090dfe",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DmgTable_Cursor",
+      "description": "int16: the next 12-byte .DMG slot Damage_LoadMechDmgFile (00009a2c) fills, which it increments.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-load; ES1DBSIM image at 00090dfe"
+    },
+    {
+      "address": "00090e00",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DmgTable_Count",
+      "description": "int16: the .DMG slots reserved, which DmgTable_Reserve (00009a9c) returns and adds to and DmgTable_Alloc (00009ab4) allocates 12 bytes each of.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-load; ES1DBSIM image at 00090e00"
+    },
+    {
+      "address": "00090e04",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "medium",
+      "name": "maybe_ComponentDependencyList",
+      "description": "Pointer to the 6-byte list Component_LinkMaxRefData (00009c28) makes on its first call: an array of 0x14 bytes at +0, the capacity byte 10 at +4 and the count byte at +5. ES2's maybe_ComponentDependencyList, whose capacity is 20; its ES1 readers are unread.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-damage-header; ES1DBSIM image at 00090e04"
+    },
+    {
       "address": "00090f42",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -30311,6 +31460,69 @@
       "source": "Herculan/docs/es1/formats/dts-shape.md"
     },
     {
+      "address": "000ae4c0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TinyObj_PositionBufferInit",
+      "description": "byte: set by TinyObj_GetPosition (00001764) on its first call, when it zeroes the third dword of TinyObj_PositionBuffer (000ae4c4).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-light-objects; ES1DBSIM image at 000ae4c0"
+    },
+    {
+      "address": "000ae4c4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "TinyObj_PositionBuffer",
+      "description": "Three int32: the position TinyObj_GetPosition (00001764) returns, the two stored components and a zero.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-light-objects; ES1DBSIM image at 000ae4c4"
+    },
+    {
+      "address": "000ae4d0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimObjectSave_Transform",
+      "description": "0x20 bytes: the transform SimObject_PushTransform (00002184) saves and SimObject_PopTransform (00002248) restores.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM image at 000ae4d0"
+    },
+    {
+      "address": "000ae4f0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimObjectSave_AnimThreads",
+      "description": "Ten 0x52-byte animation thread records SimObject_PushTransform (00002184) saves and SimObject_PopTransform (00002248) restores. Vector-constructed by SimObject_StaticInit (0000230c). ES2's SimObjectSave_AnimThreads.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM image at 000ae4f0"
+    },
+    {
+      "address": "000ae824",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimObjectSave_NodeDirtyFlags",
+      "description": "32 bytes: the shape instance's node dirty flags SimObject_PushTransform (00002184) saves and SimObject_PopTransform (00002248) restores.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM image at 000ae824"
+    },
+    {
+      "address": "000ae844",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimObjectSave_NodeLocals",
+      "description": "Thirty 12-byte local node records SimObject_PushTransform (00002184) saves and SimObject_PopTransform (00002248) restores. Vector-constructed by SimObject_StaticInit (0000230c). ES2's SimObjectSave_NodeLocals.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM image at 000ae844"
+    },
+    {
+      "address": "000ae9ac",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "SimObjectSave_NodeTransforms",
+      "description": "Thirty 0x20-byte node transforms SimObject_PushTransform (00002184) saves and SimObject_PopTransform (00002248) restores. Vector-constructed by SimObject_StaticInit (0000230c). ES2's SimObjectSave_NodeTransforms.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#saving-and-restoring-the-transform; ES1DBSIM image at 000ae9ac"
+    },
+    {
       "address": "000aed70",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -30451,7 +31663,7 @@
       "type": "data",
       "confidence": "high",
       "name": "DevKeys_MoveStep",
-      "description": "int16: the distance the movement codes of Mech_HandleCommand (00011050) move the machine; Mech_ResetMissionGlobals (00010e10) sets it from 00091996 and codes 0x602-0x60a from the table at 00090d8c.",
+      "description": "int16: the distance the movement codes of Mech_HandleCommand (00011050) move the machine; Mech_ResetMissionGlobals (00010e10) sets it from 00091996 and codes 0x602-0x60a from the int16 table at 00091990, read as 00090d8c plus twice the code.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-cockpit; ES1DBSIM image at 000af6f6"
     },
     {
@@ -30460,7 +31672,7 @@
       "type": "data",
       "confidence": "high",
       "name": "DevKeys_TurnStep",
-      "description": "int16: the angle codes 0x44b and 0x44d of Mech_HandleCommand (00011050) turn the machine; Mech_ResetMissionGlobals (00010e10) sets it from 000919aa and codes 0x602-0x60a from the table at 00090da0.",
+      "description": "int16: the angle codes 0x44b and 0x44d of Mech_HandleCommand (00011050) turn the machine; Mech_ResetMissionGlobals (00010e10) sets it from 000919aa and codes 0x602-0x60a from the int16 table at 000919a4, read as 00090da0 plus twice the code.",
       "source": "Herculan/docs/es1/simulation/mech.md#the-cockpit; ES1DBSIM image at 000af6f8"
     },
     {
@@ -31569,6 +32781,24 @@
       "name": "g_BulletTypeTable",
       "description": "Pointer to dat\\bullets's 10-byte records, read by Bullet_LoadResources (00007bb0); the count is the int16 at 000bc1fa.",
       "source": "Herculan/docs/es1/formats/bullets-skimmer-dat.md#the-load"
+    },
+    {
+      "address": "000bc2ac",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CollisionTable_Array",
+      "description": "Pointer to the 6-byte collision slots CollisionTable_Alloc (00009368) allocates and Collision_RegisterObject (00009580) fills.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-loadouts-join; ES1DBSIM image at 000bc2ac"
+    },
+    {
+      "address": "000bc2b0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DmgTable_Array",
+      "description": "Pointer to the 12-byte .DMG slots DmgTable_Alloc (00009ab4) allocates and Damage_LoadMechDmgFile (00009a2c) fills.",
+      "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-load; ES1DBSIM image at 000bc2b0"
     },
     {
       "address": "000bc2bc",
