@@ -7235,6 +7235,51 @@
       }
     },
     {
+      "address": "00050fe6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_Reset",
+      "description": "No arguments, frameless: INT 33h function 0 while the mouse is installed, returning its AX, and 0 otherwise. The code of ES1DBSIM's Mouse_Reset (00055a67), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "00050fe6+15",
+        "sha1": "5b94784cf360",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00050ff5",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_DisableDriver",
+      "description": "No arguments, frameless: INT 33h function 0x1f while the mouse is installed, returning its AX plus 1, and 0 otherwise. The code of ES1DBSIM's Mouse_DisableDriver (00055a76), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "00050ff5+26",
+        "sha1": "dcc3bf42bcfb",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005100f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_EnableDriver",
+      "description": "No arguments, frameless: INT 33h function 0x20 while the mouse is installed, returning its AX, and 0 otherwise. The code of ES1DBSIM's Mouse_EnableDriver (00055a90), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0005100f+20",
+        "sha1": "bdd417beb08c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00051037",
       "binary": "ES1GO",
       "type": "function",
@@ -7247,6 +7292,111 @@
         "sha1": "113c0e0ab67d",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0005106d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_SetLimitsAndSensitivity",
+      "description": "(record), C convention: INT 33h functions 7, 8 and 0x1a from the record. The code of ES1DBSIM's Mouse_SetLimitsAndSensitivity (00055aee), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0005106d+70",
+        "sha1": "035bbf1295f3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000510b3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_GetSensitivity",
+      "description": "(record), C convention: INT 33h function 0x1b into the record's words +0x10, +0x12 and +0x14. The code of ES1DBSIM's Mouse_GetSensitivity (00055b34), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "000510b3+31",
+        "sha1": "481cce219099",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000510d2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_SetLimits",
+      "description": "(record), C convention: INT 33h functions 7 and 8 from the record. The code of ES1DBSIM's Mouse_SetLimits (00055b53), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "000510d2+51",
+        "sha1": "ed0eff3ee4b7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00051105",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_ReadState",
+      "description": "No arguments, frameless: copies the last event's position and buttons into the installed state record and clears the status dword's bit 1. The code of ES1DBSIM's Mouse_ReadState (00055b86), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "00051105+60",
+        "sha1": "708239b607e3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00051141",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_PostEvent",
+      "description": "(event, mask), C convention: calls the mouse event handler as a far procedure with the event in registers. The code of ES1DBSIM's Mouse_PostEvent (00055bc2), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "00051141+42",
+        "sha1": "f2c15b281376",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005116b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_AddCallback",
+      "description": "(callback, mask), C convention: registers callback in the lowest free of 32 slots and returns the slot + 1. The code of ES1DBSIM's Mouse_AddCallback (00055bec), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0005116b+73",
+        "sha1": "9a6526e0558e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000511b4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_RemoveCallback",
+      "description": "(slot), C convention: frees callback slot slot - 1. The code of ES1DBSIM's Mouse_RemoveCallback (00055c35), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "000511b4+18",
+        "sha1": "d557e6dc74c4",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -9604,7 +9754,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_Render",
-      "description": "(shape), callee-cleaned: stores the cell frame array +0x1c in 000ab61e (ES2's ShapeRender_BindCellFrames, inline), calls 000592d8 with the node transforms +0x18; when the byte 000884e0 is set calls 00059444 on the shape and draws nothing for 0, and for 2 while the render context 000ab612's +0x208 is 1 clears +0x208 around the draw; the draw swaps the active bitmap array 000ab66c for the shape's +0x26, calls 0005980c on the shape and restores it. The vtable 000884e6's slot +0x20, and 0007e580's. The code of ES1DBSIM's TSShape_Render (00062fcc), relocated operands aside.",
+      "description": "(shape), callee-cleaned: stores the cell frame array +0x1c in 000ab61e (ES2's ShapeRender_BindCellFrames, inline), calls ShapeInst_BindNodeTransformArray (000592d8) with the node transforms +0x18; when the byte 000884e0 is set calls 00059444 on the shape and draws nothing for 0, and for 2 while the render context 000ab612's +0x208 is 1 clears +0x208 around the draw; the draw swaps the active bitmap array 000ab66c for the shape's +0x26, calls TSPartList_Render (0005980c) on the shape and restores it. The vtable 000884e6's slot +0x20, and 0007e580's. The code of ES1DBSIM's TSShape_Render (00062fcc), relocated operands aside.",
       "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
       "verified": {
         "bytes": "0005877c+177",
@@ -9788,6 +9938,66 @@
       }
     },
     {
+      "address": "0005929c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTransformState_Dtor",
+      "description": "(state, flags) in stack order, callee-cleaned: destroys the ten TSContexts at +0x34 with __vec_dtor and deletes state when bit 0 of flags is set. The code of ES1DBSIM's TSTransformState_Dtor (00052814), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#the-transform-states; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0005929c+48",
+        "sha1": "febe4fc89a7a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000592d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_BindNodeTransformArray",
+      "description": "(a, nodeTransforms) in stack order, callee-cleaned: binds a shape's per-node transform array and saves the renderer's state into slot 0 of the transform states. The code of ES1DBSIM's ShapeInst_BindNodeTransformArray (00052850), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "000592d8+64",
+        "sha1": "92b03ae90205",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059318",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGroup_BindNodeTransform",
+      "description": "(part, out) in stack order, callee-cleaned: ShapeNode_InstallTransform (00059334)(part, the part's transform id +4, out). The code of ES1DBSIM's TSGroup_BindNodeTransform (00052890), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "00059318+27",
+        "sha1": "ce35458caa73",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059334",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeNode_InstallTransform",
+      "description": "(part, transformId, out) in stack order, callee-cleaned, entered also at its padding 00059333: composes and installs a node's transform, or restores the state saved for it. The code of ES1DBSIM's ShapeNode_InstallTransform (000528ac), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "00059334+221",
+        "sha1": "42118560d35e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00059418",
       "binary": "ES1GO",
       "type": "function",
@@ -9863,6 +10073,66 @@
       }
     },
     {
+      "address": "0005980c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartList_Render",
+      "description": "(list), callee-cleaned: binds the list's node and draws each child through its slot +0x20 in order. The code of ES1DBSIM's TSPartList_Render (00052e18), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0005980c+112",
+        "sha1": "880e341084e1",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005987c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartList_FindPart",
+      "description": "(list, id) in stack order, callee-cleaned: the list when its id number (+6) is id, else the first non-zero answer of its children's slot +0x24, or 0. The code of ES1DBSIM's TSPartList_FindPart (00052e88), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0005987c+132",
+        "sha1": "d13b8962aeb2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059900",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartList_FindPartSlot",
+      "description": "(list, id) in stack order, callee-cleaned: the address of the pointer-array entry whose child's id number is id, else the first non-zero answer of the children's slot +0x28, or 0. The code of ES1DBSIM's TSPartList_FindPartSlot (00052f0c), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "00059900+195",
+        "sha1": "add3e7991ac0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000599c4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSCellAnimPart_Render",
+      "description": "(part), callee-cleaned: draws the one child the part's sequence picks from the bound cell frames. The code of ES1DBSIM's TSCellAnimPart_Render (00052fd0), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "000599c4+88",
+        "sha1": "7f6b4c1e1379",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00059a1c",
       "binary": "ES1GO",
       "type": "function",
@@ -9920,6 +10190,51 @@
         "sha1": "befe7eb55c94",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00059c44",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPPart_RenderNode",
+      "description": "(part, node) in stack order, callee-cleaned, entered also at its padding 00059c41: walks a TSBSPPart's tree from node, the front entry first when the eye is behind the node's plane. The code of ES1DBSIM's TSBSPPart_RenderNode (00053240), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "00059c44+289",
+        "sha1": "683a84d06cfe",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059d68",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPPart_Render",
+      "description": "(part), callee-cleaned: binds the part's node, copies the eye for the plane tests and walks the tree from node 0 with TSBSPPart_RenderNode (00059c44). The code of ES1DBSIM's TSBSPPart_Render (00053364), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "00059d68+66",
+        "sha1": "2ac1b53dd019",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059ddc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTransformState_Ctor",
+      "description": "(state), callee-cleaned: allocates 0x110 bytes for a null state and builds its ten TSContexts at +0x34 with __vec_ctor. The code of ES1DBSIM's TSTransformState_Ctor (000533d8), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#the-transform-states; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "00059ddc+212",
+        "sha1": "d31b3b3c5b00",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -13406,6 +13721,51 @@
       }
     },
     {
+      "address": "000736ac",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_WriteRowTransparent",
+      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 23. The code of ES1DBSIM's VGA8_WriteRowTransparent (00051f1c) but for the row's offset, which it reads from the row table 00088852 where ES1DBSIM's multiplies the row by 0xa0.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; es2_naming.py diff ES1DBSIM ES1GO 00051f1c:000736ac",
+      "verified": {
+        "bytes": "000736ac+542",
+        "sha1": "aa7eec31cd1b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000738ca",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_WriteRow",
+      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 22. The code of ES1DBSIM's VGA8_WriteRow (00052138) but for the row's offset, which it reads from the row table 00088852 where ES1DBSIM's multiplies the row by 0xa0.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; es2_naming.py diff ES1DBSIM ES1GO 00052138:000738ca",
+      "verified": {
+        "bytes": "000738ca+286",
+        "sha1": "2139dcf683c0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000739e8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ReadRow",
+      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 21. The code of ES1DBSIM's VGA8_ReadRow (00052254) but for the row's offset, which it reads from the row table 00088852 where ES1DBSIM's multiplies the row by 0xa0.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; es2_naming.py diff ES1DBSIM ES1GO 00052254:000739e8",
+      "verified": {
+        "bytes": "000739e8+336",
+        "sha1": "c91e8d3d37e2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00074650",
       "binary": "ES1GO",
       "type": "function",
@@ -13772,6 +14132,111 @@
         "sha1": "e77db9867766",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0007cd3c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGroup_RenderPolys",
+      "description": "(group), callee-cleaned: binds the group's node, installs the poly brushes and the group's arrays and draws each poly through its slot +0x20 in order. The code of ES1DBSIM's TSGroup_RenderPolys (00054928), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0007cd3c+265",
+        "sha1": "6ad95b358f0a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007ce48",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPGroup_Ctor",
+      "description": "(group), callee-cleaned: TSBSPGroup's constructor over TSGroup_Ctor (0007cbc8), clearing +0x28 and the node array +0x2a. The code of ES1DBSIM's TSBSPGroup_Ctor (00054a34), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0007ce48+56",
+        "sha1": "8d50552ab490",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007ce80",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPGroup_Dtor",
+      "description": "(group, flags) in stack order, callee-cleaned: deletes the node array +0x2a and runs TSGroup_Dtor (0007cc9c). The code of ES1DBSIM's TSBSPGroup_Dtor (00054a6c), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0007ce80+55",
+        "sha1": "466d564d4ba3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007ceb8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPGroup_RenderNode",
+      "description": "(group, node) in stack order, callee-cleaned, entered also at its padding 0007ceb7: draws a node's far side, its poly, then its near side. The code of ES1DBSIM's TSBSPGroup_RenderNode (00054aa4), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0007ceb8+279",
+        "sha1": "b5c64401133d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007cfd0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPGroup_Render",
+      "description": "(group), callee-cleaned: TSGroup_RenderPolys' set-up, drawing through TSBSPGroup_RenderNode (0007ceb8) from node 0. The code of ES1DBSIM's TSBSPGroup_Render (00054bbc), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0007cfd0+223",
+        "sha1": "ac2d247f918f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007d0b0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSAliasSolidPoly_Render",
+      "description": "(poly), callee-cleaned: TSSolidPoly_Render (0007c400) drawing, the fill through PolyFill_FillThenOutline_Thunk. The code of ES1DBSIM's TSAliasSolidPoly_Render (00054c9c), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0007d0b0+207",
+        "sha1": "1c37731515ae",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0007d180",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSAliasShadedPoly_Render",
+      "description": "(poly), callee-cleaned: TSShadedPoly_Render (0007c7f8) drawing, the fill through PolyFill_FillThenOutline_Thunk. The code of ES1DBSIM's TSAliasShadedPoly_Render (00054d6c), relocated operands aside.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py match ES1DBSIM ES1GO: exact",
+      "verified": {
+        "bytes": "0007d180+402",
+        "sha1": "232712d62fa6",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {

@@ -113,6 +113,30 @@ Where ES2's differs ([ES2's tape](../../retail/formats/tap-input-tape.md#the-str
 
 Opens `Config_BuildPath`(`keyjoy.cfg`) in mode `rt`, so `tapes\keyjoy.cfg` during playback, and reads it a word at a time (`fscanf` `" %s"`), comparing each with `Str_CompareNoCaseN` against the seven words of `0009591c`–`0009593e`: `=` arms a value; `#` skips the rest of the line (`" %[^\n]"`); `TILT`, `BACKTURN` and `MISSILE` choose the key; `DEFAULT` with a value armed disarms it, and `REVERSE` with a value armed sets the key's flag, `Keyjoy_TiltReversed` (`0009580c`), `Keyjoy_BackturnReversed` (`00095810`) or `Keyjoy_MissileReversed` (`00095814`). `DEFAULT` or `REVERSE` with no value armed, or `REVERSE` with no key, stops the read. ES2's reads four keys, `Rudder` among them, through `GetPrivateProfileStringA` from `data\` ([the keyjoy switches](../../retail/simulation/joystick-input.md#the-keyjoy-switches)).
 
+## The mouse driver
+
+**ES1 talks to the DOS mouse driver itself, through `INT 33h`, and keeps the pointer's last position and buttons where the input code reads them.** ES2 gets the mouse from Windows. The functions are at `00055978`–`00055d1f`, hand-written code with `ENTER` frames or none and no `0x90` padding, after the class-item code and before `Volume_Ctor` ([where the object files start and end](../formats/dts-shape.md#where-the-object-files-start-and-end)). Every one but `Mouse_Detect` does nothing while `Mouse_StatusPtr` (`000962e0`) is 0, before `Mouse_Install`.
+
+| Function | Address | Arguments, C convention | Does |
+|---|---|---|---|
+| `Mouse_Detect` | `00055978` | | asks the extender for the real-mode vector `0x33` (`INT 21h` `AX=2503h`, `CL=0x33`) and returns 0 when it is 0 or points at an `IRET` (`0xcf`), read through the selector `0009003a`; otherwise `INT 33h` functions `0x20` and 0, returning 1 when the reset answers non-zero |
+| `Mouse_Install` | `000559c9` | (status, state) | unless installed, and when function 0 answers non-zero: keeps both pointers (`Mouse_StatusPtr`, `Mouse_StatePtr` `000962e4`), sets bit 0 of the status dword, stores `DS` where `Mouse_EventHandler` reloads it (`00096398`, `000967e7`), and makes the extender calls `INT 21h` `AX=2509h`, `250Dh` and `250Eh`, the last with `EDX` `0x7f` |
+| `Mouse_SetEventsEnabled` | `00055a2c` | (enabled) | the same three calls, `EDX` `0x7f` when enabled and 0 when not |
+| `Mouse_Reset`, `Mouse_DisableDriver`, `Mouse_EnableDriver` | `00055a67`, `00055a76`, `00055a90` | | `INT 33h` functions 0, `0x1f` (its `AX` + 1 returned) and `0x20` |
+| `Mouse_SetDoubleX`, `Mouse_GetDoubleX` | `00055aa4`, `00055ab2` | (double) | `Mouse_DoubleX` (`000962dc`): while set, x goes to the driver doubled and comes back halved |
+| `Mouse_SetPosition` | `00055ab8` | (*x*, *y*) | stores the point as the last position, x doubled while `Mouse_DoubleX` is set, and moves the driver's pointer there, function 4 |
+| `Mouse_SetLimitsAndSensitivity`, `Mouse_SetLimits` | `00055aee`, `00055b53` | (record) | functions 7 and 8 with the record's {`+0`, `+8`} and {`+4`, `+0xc`} as the x and y limits, and the first also function `0x1a` with its words `+0x10`, `+0x12` and `+0x14` |
+| `Mouse_GetSensitivity` | `00055b34` | (record) | function `0x1b` into the record's `+0x10`, `+0x12` and `+0x14` |
+| `Mouse_ReadState` | `00055b86` | | with interrupts off, copies the last x, y and buttons to the state's `+0`, `+4` and `+8` and clears bit 1 of the status dword |
+| `Mouse_AddCallback` | `00055bec` | (callback, mask) | takes the lowest free of 32 slots in `Mouse_CallbackMask` (`000962f4`), keeps the callback in `Mouse_Callbacks` (`000962f8`) and the mask's low byte in `Mouse_CallbackEvents` (`00096378`), and returns the slot + 1 |
+| `Mouse_RemoveCallback` | `00055c35` | (slot) | frees slot − 1 |
+| `Mouse_EnableButtonMap`, `Mouse_DisableButtonMap` | `00055c4d`, `00055c5e` | | set and clear `Mouse_ButtonMapOn` (`000962f2`), returning 1 |
+| `Mouse_PostEvent` | `00055bc2` | (event, mask) | calls `Mouse_EventHandler` as the driver would, with the event's x, y and buttons (`+0`, `+4`, the word `+8`) and the mask |
+
+**`Mouse_EventHandler` (`00055c6f`)** is a far procedure taking an event in the driver's registers: `AX` the event mask, `BX` the buttons, `CX` x and `DX` y. It reloads `DS` and `ES`, and unless the byte `0009639a` is set switches to its own stack (`000967e3`) and saves every register. With `Mouse_ButtonMapOn` set the buttons become the entry of the eight-dword table `000967eb` their low three bits pick. It stores the buttons in `Mouse_Buttons` (`000962f0`), x, halved while `Mouse_DoubleX` is set, in `Mouse_X` (`000962e8`) and y in `Mouse_Y` (`000962ec`), sets bit 1 of the status dword, and calls each registered callback whose event byte shares a bit with the mask, passing `000962e8`, the record {x, y, buttons}. With all 32 slots taken, `Mouse_AddCallback` stores no callback but still writes the mask byte and sets a mask bit, at an index whose upper half is what `ECX` held.
+
+`es2_xref.py` finds the calls: `Mouse_Detect` from `0006bbc0`; `Mouse_Install` and `Mouse_SetDoubleX` from `0006bd10`; `Mouse_Reset` from `0006bbc8`, `0006bd84` and `Mouse_ResetThunk` (`00055c47`, whose address is stored at `0006bcab`); `Mouse_SetLimitsAndSensitivity` from `0006bdf0`, `Mouse_GetSensitivity` from `0006bdbc` and `Mouse_SetLimits` from `0006be40`; `Mouse_ReadState` from `0004c26c`; `Mouse_DisableDriver` and `Mouse_EnableDriver` from `0004ad54`; `Mouse_AddCallback` from `000441cc` and `Mouse_RemoveCallback` from `000442b4`; `Mouse_PostEvent` from `Gau_RovingGunsightWidget` ([the gunsight](cockpit-gunsight-hud.md)) and `Mouse_EventHandler` from `Mouse_PostEvent`. It finds none to `Mouse_SetEventsEnabled`, `Mouse_GetDoubleX` or the button map's two.
+
 ## Small functions
 
 - **`Input_ReadMaskedKeyboardCommand` (`0004d7f8`)**, (out): ES2's, through `0004c458`(1, out) and the mask `00095918` (`0x47ff`). No reference to it found by `es2_xref.py`.

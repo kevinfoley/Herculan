@@ -105,6 +105,26 @@ In the file a `TSBSPGroup`'s BSP node is four `int16`s — plane constant, poly,
 
 A chunk whose tag is not `tag` stops `Shape_LoadAllRoots` and `BaseType_ResolveShape` with a severity-5 assert, which is fatal (`Internal Error`), before it is loaded or skipped.
 
+### Chunk headers
+
+**Every chunk opens with an 8-byte header, its class's tag and the length of its body, and the body is padded to an even length with a zero byte.** The same framing carries the fonts, cursors and bitmaps of [`dfn-hfn-dci.md`](dfn-hfn-dci.md). While a chunk is read or written, `ClassItem_CurrentFrame` points at a frame on the stack of the call handling it: the tag at `+0`, the stream position the chunk starts at `+4`, the position it ends at `+8`, and at `+0xc` a byte set when the length is even. `ClassItem_TagTotalSize` (`0047a434`) gives a chunk's whole size: the length plus 8, rounded up to even. A tag whose byte 3 has its high nibble set takes the length as the whole size, and such a chunk is written with no header.
+
+**Reading.** `ClassItem_LoadResource` (`0047a038`), `(stream, mode)`:
+
+1. points the frame pointer at a frame of its own, keeping the one it found;
+2. reads the header with `ClassItem_ReadTypeTag` (`0047a5a8`): it records the start position, fills the tag with {−1, 0}, reads 8 bytes over it, and for a tag the registry holds sets the end to the position after the header plus the length rounded up to even, and `+0xc` to whether the length is even;
+3. for a tag other than −1, finds the registry entry with `ClassItem_FindHandler` (`0047a394`), which walks the buckets `ClassItem_RegisterBucket` (`00479fac`) appended, each `{entries, count}` of 12-byte `{tag, load function, name}` entries, and returns the first entry whose tag matches; with one, calls its load function with `(stream, mode)`;
+4. reads byte by byte to the frame's end (`ClassItem_CloseItem`, `0047a730`), stopping when the stream's status is not 0, so a load that read short leaves the stream at the next chunk. For a tag the registry lacks, which no probe below takes, nothing writes the frame's end, and this read runs to whatever the stack held there;
+5. puts the frame pointer back and returns the object, or 0.
+
+A tag the registry lacks goes to the probe buckets when there are any (`ClassItem_RegisterProbeBucket`, `00479fdc`, which also raises `ClassItem_ProbeHeaderSize`, `004a16b0`, to the largest header size its entries give): `ClassItem_ReadTypeTag` copies the 8 bytes to `ClassItem_ProbeHeader` (`006c59a8`), reads `ClassItem_ProbeHeaderSize` − 8 bytes more after them, and `ClassItem_TryEveryLoader` (`0047a3d8`) calls each probe entry's function with (the probe header, the tag, the stream) until one answers non-zero. That one may rewrite the tag: the frame takes the tag, ends at the start plus its length, with `+0xc` clear, and the stream seeks back to the start, so the chunk's load function reads the file from its first byte. `es2_xref.py` finds no caller of `ClassItem_RegisterProbeBucket`. `ClassItem_PeekTypeTag` reads a header the same way and seeks back to where it started.
+
+**Writing.** `ClassItem_StoreItem` (`0047a0a0`), `(item, stream, mode)`, takes a frame of its own and runs three steps on the stream, or, when the item's body length (its vtable `+4`) is 0 and the stream answers `GetCapabilities` query 3 with 0, on a buffered stream it puts over it:
+
+1. `ClassItem_OpenItemForWrite` (`0047a52c`), `(stream, tag, length)`: the tag at `+0`, the position at `+4`, the position plus `ClassItem_TagTotalSize` at `+8`, `+0xc` set for an even length; then the header, unless the tag's byte 3 has its high nibble set;
+2. the item's write slot, `(item, stream, mode)`;
+3. `ClassItem_CloseItemForWrite` (`0047a68c`): for a chunk opened with length 0, so that its end is its start plus 8, measures the body written, adds it to the end, writes a zero pad byte when it is odd, seeks to the start plus 4, writes the measured length and seeks back to the end; for any other, a zero pad byte when `+0xc` is clear.
+
 ### Arenas
 
 An arena is a block handed out front to back, `{base, limit, cursor}`. `Arena_Alloc` (`0047a1bc`) returns `base + cursor` and advances the cursor, and falls back to the general allocator when the arena is null or has no room; it does not clear what it returns. DBSIM carries a second copy, `Arena_AllocDup` (`0047a17c`), which the shape readers call. The arenas form a stack of 12-byte entries at `006c59ec`, its depth at `004a16d8`, and the current arena `006c58b4`, which every load function and reader allocates from, points at the top entry.

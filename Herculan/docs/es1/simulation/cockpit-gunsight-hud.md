@@ -35,7 +35,7 @@ With *o* the block's origin (`int32` 0 and 1) and *p* the reticle point (`int32`
 | 6 | `Gunsight_UnusedChild_Ctor` (`00034710`) | the reticle's | `+0x24` = the state block |
 | 7 | `HudWaypointIndicator_Ctor` (`0003475c`) | the tape's | limits ±`0xe38` |
 
-The limits go through each child's set-limits slot, `+0x14`, with (child, max, min). Between child 0 and child 1 it moves the pointer to *p*: `Cursor_SyncPosition` (`000669dc`)(*p*), then, when `Input_GetMouseDevice_Thunk` (`0004c634`) returns non-zero, `Mouse_SetPosition`(*p*.x, *p*.y), and then `00055bc2`({2*p*.x, *p*.y, `int16` 0}, 1), which calls `00055c6f` when the mouse flag `000962e0` is set ([Open](#open)). ES2's moves the pointer to *p*.x and a row of its own, and calls `Stub_ReturnZeroCopy` where ES1's calls `00055bc2`.
+The limits go through each child's set-limits slot, `+0x14`, with (child, max, min). Between child 0 and child 1 it moves the pointer to *p*: `Cursor_SyncPosition` (`000669dc`)(*p*), then, when `Input_GetMouseDevice_Thunk` (`0004c634`) returns non-zero, `Mouse_SetPosition`(*p*.x, *p*.y), and then `Mouse_PostEvent` (`00055bc2`)({2*p*.x, *p*.y, `int16` 0}, 1): a movement event with no button down, as if the driver had sent it, so the pointer's last position becomes (2*p*.x, *p*.y), which is *p* while the mouse's x doubling is on, and the callbacks registered for movement run ([the mouse driver](input.md#the-mouse-driver)). ES2's moves the pointer to *p*.x and a row of its own, and calls `Stub_ReturnZeroCopy` where ES1's calls `Mouse_PostEvent`.
 
 Last it builds the `ATT` label at `+0xcc`: `Label_Ctor` with `ColorSchemePanels`' `cpblack` (`00092d60`), `Label_SetRect`(label, 2, {x0 − 3, y0 + 10, x0 + 12, y0 + 15}, {0, 0}) about the heading tape's top-left, centred, and the fill colour `+0x1c` 0x38. It zeroes the dword `+0x64`, the state block and the condition `+0x68`, and returns the gunsight.
 
@@ -209,7 +209,6 @@ The callees read for the builder, the paint and the waypoint indicator, outside 
 
 ## Open
 
-- **Open:** `00055bc2`, which the builder passes {2*p*.x, *p*.y, 0} and 1, and `00055c6f`, which it calls when the mouse flag is set and which on its way in stores the point's x and y at `000962e8` and `000962ec` and the third value at `000962f0`: read in part, where ES2's builder calls a stub.
 - **Open:** the art of `hudhslid`, `hudvslid` and `hudhtick`: what frames 1 and 2 of the slide bars show, and whether the heading tape's strip is drawn so that its 19/18 travel and the jump at north do not show. What the point `000b16d4` holds is in [ES1's pick](terrain.md#open).
 - **Open:** which render context is installed when `Gunsight_UpdateAndPaint` runs, which the target box draws through; ES2's box draws through the canopy's ([why the box goes behind the cockpit frame](../../retail/simulation/hud-target-indicator.md#why-the-box-goes-behind-the-cockpit-frame)).
 - **Open:** what the target's side colours 1 and 0x35 look like in each theater's palette, and which side is 0.

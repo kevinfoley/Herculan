@@ -56,6 +56,23 @@ For a frame longer than a second the figure is the frame's length in seconds, to
 
 `Timer_AddCallback` (`0006d289`) takes `(count, callback)`: while the dword `0009bd40` is non-zero it takes the lowest free one of 16 slots in the mask `0009cd64`, stores `count` in that slot of the tables `0009ce6c` and `0009cdec` and `callback` in `0009cd6c`, and returns the slot number plus 1; it returns 0 when the dword is 0 or every slot is taken.
 
+## The component panel
+
+**A developer panel lists a HERC's components on the monochrome screen with a value beside each, and lets a cursor walk the list and raise or lower the value it is on by 32.** ES2's simulator has the same five functions in the same order, `MonoComponentPanel_*` (`DBSIM 0045c630`–`0045c860`), printing through its own `Mono_Printf`; `es2_xref.py` finds no reference to any of them in either game.
+
+`MonoComponentPanel_Init` (`000523b8`), (block), keeps the block at `MonoComponentPanel_Block` (`000bd900`), whose `int16` values start at `+2`, clears the screen with `Mono_Clear`, and walks 41 entries: for each it prints the label from `MonoComponentPanel_Labels` (`00095ffc`) at column `MonoComponentPanel_LabelColumn` (`000bd908`) and row `MonoComponentPanel_Row` (`000bd90a`), zeroes the value and prints `%d` with 0 at column `MonoComponentPanel_ValueColumn` (`000bd90c`), and moves down a row; on reaching row `0x17` it goes back to row 1 with both columns `0x28` further right. The columns start at 2 and `0x1e`, the row at 1. It then puts the cursor `MonoComponentPanel_Cursor` (`000bd904`) back on the first value and prints `>` at column 1, row 1. ES2's prints `%d` with no value passed.
+
+ES1's label table holds 33 pointers, where ES2's holds 41: `FRONT_COCKPIT`, `REAR_COCKPIT`, `LEFT_BRACKET`, `RIGHT_BRACKET`, `LEFT_SHOULDER`, `RIGHT_SHOULDER`, `CROTCH`, `LEFT_QUAD`, `RIGHT_QUAD`, `LEFT_SHIN`, `RIGHT_SHIN`, `LEFT_FOOT`, `RIGHT_FOOT`, `LEFT_LEG_ACTUATOR`, `RIGHT_LEG_ACTUATOR`, `LEFT_ARM_ACTUATOR`, `RIGHT_ARM_ACTUATOR`, `SENSORS`, `ENGINE`, `HYDRAULICS`, `GYROS`, `LIFE_SUPPORT`, `PILOT` and `WEAPON 1` to `WEAPON 10`. The walk still runs to 41, so labels 33 to 40 are the bytes after the table, the panel's own format strings, read as pointers, and the 41st is 0.
+
+| Function | Address | Does |
+|---|---|---|
+| `MonoComponentPanel_CursorDown` | `000524c0` | prints a space over the `>`; unless the cursor is on the 41st value (`+0x52`), moves it to the next value and the row down one, going to row 1 of the next column pair after row `0x16`; prints `>` |
+| `MonoComponentPanel_CursorUp` | `00052540` | the same upward: unless on the first value, to the previous one, and to row `0x16` of the previous column pair from row 1 |
+| `MonoComponentPanel_IncreaseValue` | `000525b8` | adds `0x20` to the value, holds it to `0xff`, and prints it with `%d     ` |
+| `MonoComponentPanel_DecreaseValue` | `00052600` | subtracts `0x20`, holds it to 0, and prints it the same way |
+
+The four are frameless, with no Ghidra function, and print through `Mono_Printf`.
+
 ## Open
 
 - **Open:** no caller of `FrameRate_Update` or `Mono_ShowCursor` found by `es2_xref.py`, so whether the meter ever runs in a retail build, and what then calls it, is open.

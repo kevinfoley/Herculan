@@ -28,7 +28,7 @@ child->vtable[+0x1c]();
 
 ## `TSBitmapPart_Render` (`004762e8`)
 
-The bitmap tag (`part+0x10`) indexes the bound bank directly. The rest is a screen-space blit of a rotated, scaled quad, built from four things:
+The bitmap tag (`part+0x10`) indexes the bound bank directly. Nothing is drawn when the bank's entry is null, when the part's centre in view space is not beyond the near plane, or when the centre after the perspective divide has an x or a y outside −1000 to 1000. The rest is a screen-space blit of a rotated, scaled quad, built from four things:
 
 **Scale.** `scale = (radius * 4 << focalShift) / depth`, where `radius` is `TSBasePart.Radius` and `depth` is the part's centre in view space. Every dimension below is `Math_Q8Multiply`'d by it. Since the projection maps a view-plane length `L` at depth `D` to `(L << focalShift) / D` pixels, the projection constant cancels: **one bitmap pixel spans `radius / 64` world units**, whatever the field of view is.
 

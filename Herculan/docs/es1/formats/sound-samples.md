@@ -125,6 +125,21 @@ A failure formats `SoundManager::loadDrivers: %s` with `0006f23d`'s text for the
 
 ES2's loader plays a file that is not RIFF as raw 8-bit unsigned mono at 11,025 Hz ([ES2's sample format](../../retail/formats/sound-samples.md#sample-format)).
 
+### The digital driver's timer
+
+**The HMI code runs its timed work from the game's timer: it hands the game a far callback, which the game registers at a count of a sixtieth of the timer's rate.** What a count means to the timer is [Open](../simulation/debug-monitor.md#open). The functions at `00050d38`–`00050e1f`, after the sound files and before [the profile file](profile-files.md), are what the HMI code calls for it:
+
+| Function | Address | Does |
+|---|---|---|
+| `HmiTimer_Install` | `00050d98` | (*a*, offset, selector), C convention: keeps the far pointer selector:offset in `HmiTimer_Callback` (`000b1ee0`) and registers `HmiTimer_Tick` with `Timer_AddCallback` (`0006d289`) at a count of ⌊⌊1000000 / `Math_Q14Multiply`(*w*, `0x35a1`)⌋ / 60⌋, *w* the word the frame meter's formula reads ([the frame-rate meter](../simulation/debug-monitor.md#the-frame-rate-meter)), keeping the slot in `HmiTimer_Slot` (`000b1edc`) |
+| `HmiTimer_Remove` | `00050e00` | passes the slot to `0006d337`, which `Ttm_ManagerDtor` gives its own slot |
+| `HmiTimer_Enable`, `HmiTimer_Disable` | `00050d80`, `00050d8c` | set `HmiTimer_Enabled` (`000b1ed8`) to 1 and 0 |
+| `HmiTimer_Tick` | `00050d38` | while enabled and not already inside the callback (the count `000b1ee8`), calls the callback through the far pointer |
+| `HmiTimer_NoOp`, `HmiHook_NoOp` | `00050e10`, `00050e14` | return at once |
+| `HmiLock_RegionStart`, `HmiLock_RegionEnd` | `00050e18`, `00050e1c` | a `RET` each: the HMI code passes the four bytes between them as a region to lock and unlock (`X32_UnlockRegion`, `00060b91`) |
+
+`es2_xref.py` finds the calls of all but the tick and the markers in the HMI code at `0006d4f5`–`0006da46`, and none to `HmiTimer_TickUnguarded` (`00050d60`) or its copy `HmiTimer_TickUnguarded2` (`00050d70`), which call the callback while enabled with no count. The file ends with the second marker and three zero bytes.
+
 ## The banks
 
 `SHELL0.VOL`'s `sos\` holds five files in the HMI library's own formats, which the programs hand to its drivers without reading a field: `MELODIC.BNK`, `DRUM.BNK` and `DONS.BNK`, 5,404 bytes each with `ADLIB-` from byte 2, and `DRUM32.DIG` and `DRUM.DIG`, which open with `HMIDIGIP`. `DONS.BNK` is `MELODIC.BNK` up to byte 67.

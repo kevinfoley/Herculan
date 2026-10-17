@@ -69,7 +69,9 @@ So with `VGA_8`:
 | `0x00140009` | `TSGouraudPoly` | `0009b22a` | `TSGouraudPoly_Render` (`00054578`) | a ramp number |
 | `0x0014000f` | `TSTexture4Poly` | `0009b1d2` | `TSTexture4Poly_Render` (`0005410c`) | a frame of the shape's bitmap bank |
 
-The load functions in `g_TSObjectTypeRegistry` (`0009efa8`, entries `{tag, load function, name}`) store the vtables; the three `TSAlias*Poly` types have their own (`0009b266`, `0009b292`, `0009b2be`), whose render slots `00054c9c`, `00054d6c` and `00054f00` are not read here ([Open](#open)).
+The load functions in `g_TSObjectTypeRegistry` (`0009efa8`, entries `{tag, load function, name}`) store the vtables. The three `TSAlias*Poly` types have their own (`0009b266`, `0009b292`, `0009b2be`), whose render slots, `TSAliasSolidPoly_Render` (`00054c9c`), `TSAliasShadedPoly_Render` (`00054d6c`) and `TSAliasGouraudPoly_Render` (`00054f00`), are the code of the solid, shaded and Gouraud renders but for the fill, which goes through `PolyFill_FillThenOutline_Thunk` (`0005d3c0`) to the same `PolyFill_FillThenOutline`; so an alias poly draws as its plain type does. ES2's `TSAlias*Poly` renders (DBSIM `00475bc4`, `00475c80`, `00475de0`) also fill through the thunk. A plain poly's slot `+0x20` in the base vtable `0009b132` is `TSPoly_Render` (`00054038`) and `TSNullObj`'s (`0009b0da`) is `TSNullObj_Render` (`00054034`), each a `RET 4`.
+
+A group draws its polys as ES2's `TSGroup_RenderPolys` does ([poly order](../../retail/rendering/dts-texture-binding.md#poly-order-within-a-group)): ES1's (`00054928`) installs the group's node, swaps the render context's line and fill brushes (`+0x228`, `+0x22c`) for `PolyFill_LineBrush` and `PolyFill_FillBrush` and its `+0x20c` for 0, binds the group's surfaces, points and indexes, draws each poly through its slot `+0x20` in file order, and puts the three back. `TSBSPGroup_Render` (`00054bbc`) does the same through `TSBSPGroup_RenderNode` (`00054aa4`), ES2's walk ([`TSBSPGroup` poly order](../../retail/rendering/dts-texture-binding.md#tsbspgroup-poly-order)), with the vtable `00096282` that `TSBSPGroup_Ctor` (`00054a34`) and `TSBSPGroup_Dtor` (`00054a6c`) store.
 
 **`TSSolidPoly_Render`** puts the chosen fill and line entries in the brush (`000b5f04`) and the line colour (`PolyFill_LineColour`) as they are, with brush mode 0, and fills. A value with flag 0 is a palette index; one with flag `0x0400` is entry 0 of the ramp the value names. ES2's passes both through the `.RMP`'s unlit row first.
 
@@ -265,6 +267,9 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 | `VGA8_BitmapEdgeStepRows`, `VGA8_BitmapEdgeStepColumns`, `VGA8_BitmapEdgeSetupRows`, `VGA8_BitmapEdgeSetupColumns` | `000539e4`, `00053a3c`, `00053a94`, `00053c18` | the row pair is ES2's `Raster_BitmapEdgeStep` and `Raster_BitmapEdgeSetup` (DBSIM `0048a944`, `0048a9a0`) |
 | `TSSolidPoly_Render`, `TSTexture4Poly_Render` | `0005403c`, `0005410c` | |
 | `TSShadedPoly_Render`, `TSGouraudPoly_Render` | `000543e4`, `00054578` | |
+| `TSNullObj_Render`, `TSPoly_Render`, `TSTexture4Poly_PointElementCtor` | `00054034`, `00054038`, `000543c8` | the first two with no Ghidra function; the last the element constructor of `TSTexture4Poly_Render`'s point buffers, `VGA8_BitmapPolyPointCtor`'s code |
+| `TSGroup_RenderPolys`, `TSBSPGroup_Ctor`, `TSBSPGroup_Dtor`, `TSBSPGroup_RenderNode`, `TSBSPGroup_Render` | `00054928`, `00054a34`, `00054a6c`, `00054aa4`, `00054bbc` | ES2's `004758c8`, `004759b4`, `004759e0`, `00475a20`, `00475af8`; `ES1GO` `0007cd3c`–`0007cfd0` |
+| `TSAliasSolidPoly_Render`, `TSAliasShadedPoly_Render`, `TSAliasGouraudPoly_Render` | `00054c9c`, `00054d6c`, `00054f00` | `ES1GO` has the first two at `0007d0b0` and `0007d180` |
 | `Sim_Main`, `Light_CreateMissionSun`, `TSLight_Dtor`, `TSSunLight_Dtor` | `00059350`, `0005a888`, `0005a964`, `0005a99c` | |
 | `Sim_CreateDisplay`, `Sim_StartMission` | `0005a5f4`, `0005a9dc` | |
 | `Point3I_DistanceBetween`, `Colour_Distance` | `00064698`, `000644c8` | |
@@ -288,7 +293,6 @@ In `000364f8`'s second view, which draws through `ObjList_DrawFrameObjects` with
 - **Open:** which render context is installed while `Sim_RenderFrame` draws the scene: it installs none, and `0002cf28`, which it calls before the draw, is not read. `Sim_CreateDisplay` installs `000b5b6e`, in clip mode 1; the bitmap fills walk columns in any mode but 2, and all three of `VGA_8`'s blit paths skip index 0, so the mode decides only the clipping.
 - **Open:** no reference found by `es2_xref.py` to `Raster_InstallDriverTable`'s other caller `00073285`, to `GLDisplay_CtorAndOpen`'s other caller `00069a68`, or to `GLDisplay_Ctor` (`0006a3a8`), so no other path to a display driver is known.
 - **Open:** what `Sim_CreateDisplay`'s display field `+0x68` selects.
-- **Open:** the `TSAlias*Poly` renderers `00054c9c`, `00054d6c` and `00054f00`.
 - **Open:** which entries carry kind 1.
 - **Open:** what the blend byte `000b5b65` is set to.
 - **Open:** which classes carry type tags 1 to 9 in ES1: what the array at `000bc416` and the pools `000af0b4`, `000aeef8` and `000aef68` hold, and what each one's constructor stores at `+0`.

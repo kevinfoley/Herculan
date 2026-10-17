@@ -23,7 +23,7 @@ Confirmed `typeId` values, each written as the envelope's 4 bytes read **big-end
 
 Each resource is one record: the envelope, a `uint32` size of what follows, and that many bytes, rounded up to an even length with one zero byte. A bitmap array's body is an `int32` frame count, then that many [bitmap records](#the-bitmap-record), each rounded up the same way: `GLBitmapArray_ReadFromStream` (`00482d70`) reads the count as one dword and loads each element with `ClassItem_LoadResource`; a `.DBM` is one bitmap record. All 358 bitmap arrays and 10 `.DBM` in v1.0's archives end there except `dba\CORNERS.DBA`, which carries 606 bytes past its 24 frames: a bitmap body without its record header, then three whole bitmap records ([Open](#open)).
 
-`.DFN`/`.HFN`/`.DCI` are dispatched by a generic class-registry loader in `DBSIM.EXE` (`ClassItem_ReadTypeTag` (`0047a5a8`) → `ClassItem_FindHandler` (`0047a394`)). Specific loaders: `Panel_LoadWrapper` (`00430f58`, fonts), `Cursor_LoadWrapper` (`00430fb0`, cursors).
+`.DFN`/`.HFN`/`.DCI` load through the class-item reader, which picks the class from the record's tag ([chunk headers](dts-shape.md#chunk-headers)). Specific loaders: `Panel_LoadWrapper` (`00430f58`, fonts), `Cursor_LoadWrapper` (`00430fb0`, cursors).
 
 ### The bitmap record
 

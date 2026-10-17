@@ -592,7 +592,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ConfigPart_Render",
-      "description": "(part), callee-cleaned: with a shape at +0x10, saves 000bd912 and 000bdb5e, stores the shape's +0x26 in 000bdb5e, calls 00052890(part, a local frame), stores the part's +0x14 in 000bd912, calls 00052e18(shape), restores both globals and calls 0005298c(part, the local frame); with none it returns. Slot +0x20 of ConfigPart's tables. ES2's ConfigPart_Render (DBSIM 0040316c), which calls TSGroup_BindNodeTransform, TSPartList_Render and Render_NoOp in those places.",
+      "description": "(part), callee-cleaned: with a shape at +0x10, saves 000bd912 and 000bdb5e, stores the shape's +0x26 in 000bdb5e, calls TSGroup_BindNodeTransform (00052890)(part, a local frame), stores the part's +0x14 in 000bd912, calls TSPartList_Render (00052e18)(shape), restores both globals and calls Render_NoOp (0005298c)(part, the local frame); with none it returns. Slot +0x20 of ConfigPart's tables. ES2's ConfigPart_Render (DBSIM 0040316c), which calls TSGroup_BindNodeTransform, TSPartList_Render and Render_NoOp in those places.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#functions; ES1DBSIM disassembly at 00002718",
       "verified": {
         "bytes": "00002718+109",
@@ -14977,7 +14977,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Gau_RovingGunsightWidget",
-      "description": "(gunsight, cockpit, block) in stack order, callee-cleaned: the gunsight's constructor, run on the .GAU block at 1104. Allocates 0xd0 bytes with operator_new when gunsight is null (returning null when that fails), runs PanelGauge_Ctor (00031318)(gunsight, cockpit, block), the inlined constructors of the 0x26-byte state block at +0x7a, and stores HUDVtable (00093842) at +0x76. With o the block's int32 0-1 and p its int32 12-13 it appends with Gunsight_AddChild (00034e94), by its padding entry 00034e91: Gunsight_ClickSurface_Ctor (000345bc) over int32 15-18 + o; then, after Cursor_SyncPosition (000669dc)(p), Mouse_SetPosition (00055ab8)(p.x, p.y) when Input_GetMouseDevice_Thunk (0004c634) returns non-zero and 00055bc2({2 p.x, p.y, int16 0}, 1), HudHeadingTape_Ctor (00033c20) over int32 4-7 + o, limits 0xe38 and 0xf1c8 through its slot +0x14; HudRotationIndicator_Ctor (00033968) over that rect with x0 + 15, y0 + 10, x1 - 15, y1 + 10, limits 0x38e3 and 0xc71d; HudSlideBarV_Ctor (00033ac4) over int32 8-11 + o, limits 8000 and 0xe0c0; Gunsight_Reticle_Ctor (00033f1c) over p - int32 14 to p + int32 14, + o, its +0x1c/+0x20 set to p; Gunsight_TargetIndicator_Ctor (0003403c) and Gunsight_UnusedChild_Ctor (00034710) over the same rect, each with +0x24 = gunsight + 0x7a; HudWaypointIndicator_Ctor (0003475c) over the tape's rect, limits 0xe38 and 0xf1c8. Then +0xcc = Label_Ctor (00030f44)(0, the font at 00092d60), Label_SetRect (00031080)(label, 2, {x0 - 3, y0 + 10, x0 + 12, y0 + 15} of child 1's top-left, {0, 0}) and the label's +0x1c = 0x38; zeroes +0x64, the state block (memset (00060b40)) and the int16 +0x68; returns gunsight. ES2's Gau_RovingGunsightWidget (DBSIM 0043c7d8). es2_xref finds one call, from Gau_RovingGunsightWrapper (0002ce28).",
+      "description": "(gunsight, cockpit, block) in stack order, callee-cleaned: the gunsight's constructor, run on the .GAU block at 1104. Allocates 0xd0 bytes with operator_new when gunsight is null (returning null when that fails), runs PanelGauge_Ctor (00031318)(gunsight, cockpit, block), the inlined constructors of the 0x26-byte state block at +0x7a, and stores HUDVtable (00093842) at +0x76. With o the block's int32 0-1 and p its int32 12-13 it appends with Gunsight_AddChild (00034e94), by its padding entry 00034e91: Gunsight_ClickSurface_Ctor (000345bc) over int32 15-18 + o; then, after Cursor_SyncPosition (000669dc)(p), Mouse_SetPosition (00055ab8)(p.x, p.y) when Input_GetMouseDevice_Thunk (0004c634) returns non-zero and Mouse_PostEvent (00055bc2)({2 p.x, p.y, int16 0}, 1), HudHeadingTape_Ctor (00033c20) over int32 4-7 + o, limits 0xe38 and 0xf1c8 through its slot +0x14; HudRotationIndicator_Ctor (00033968) over that rect with x0 + 15, y0 + 10, x1 - 15, y1 + 10, limits 0x38e3 and 0xc71d; HudSlideBarV_Ctor (00033ac4) over int32 8-11 + o, limits 8000 and 0xe0c0; Gunsight_Reticle_Ctor (00033f1c) over p - int32 14 to p + int32 14, + o, its +0x1c/+0x20 set to p; Gunsight_TargetIndicator_Ctor (0003403c) and Gunsight_UnusedChild_Ctor (00034710) over the same rect, each with +0x24 = gunsight + 0x7a; HudWaypointIndicator_Ctor (0003475c) over the tape's rect, limits 0xe38 and 0xf1c8. Then +0xcc = Label_Ctor (00030f44)(0, the font at 00092d60), Label_SetRect (00031080)(label, 2, {x0 - 3, y0 + 10, x0 + 12, y0 + 15} of child 1's top-left, {0, 0}) and the label's +0x1c = 0x38; zeroes +0x64, the state block (memset (00060b40)) and the int16 +0x68; returns gunsight. ES2's Gau_RovingGunsightWidget (DBSIM 0043c7d8). es2_xref finds one call, from Gau_RovingGunsightWrapper (0002ce28).",
       "source": "Herculan/docs/es1/simulation/cockpit-gunsight-hud.md#building-the-gunsight; ES1DBSIM disassembly at 00034aec",
       "verified": {
         "bytes": "00034aec+924",
@@ -17102,6 +17102,381 @@
       }
     },
     {
+      "address": "00050d38",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiTimer_Tick",
+      "description": "No arguments, frameless, with no Ghidra function: while HmiTimer_Enabled (000b1ed8) is set and the reentry count HmiTimer_Busy (000b1ee8) is 0, raises the count, makes a far call through the far pointer HmiTimer_Callback (000b1ee0) and lowers the count. es2_xref finds its address stored at 00050de3, in HmiTimer_Install (00050d98), which registers it with Timer_AddCallback (0006d289).",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d38",
+      "verified": {
+        "bytes": "00050d38+37",
+        "sha1": "c681997f9efa",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00050d60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiTimer_TickUnguarded",
+      "description": "No arguments, frameless, with no Ghidra function: while HmiTimer_Enabled (000b1ed8) is set, makes a far call through HmiTimer_Callback (000b1ee0), with no reentry count. HmiTimer_TickUnguarded2 (00050d70) has the same bytes. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d60",
+      "verified": {
+        "bytes": "00050d60+16",
+        "sha1": "b6a4a40ec74f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00050d70",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiTimer_TickUnguarded2",
+      "description": "No arguments, frameless, with no Ghidra function: the bytes of HmiTimer_TickUnguarded (00050d60). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d70",
+      "verified": {
+        "bytes": "00050d70+16",
+        "sha1": "b6a4a40ec74f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00050d80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiTimer_Enable",
+      "description": "No arguments, frameless: sets HmiTimer_Enabled (000b1ed8) to 1. es2_xref finds calls from the HMI code at 0006d4f5, 0006d5c2, 0006d5e6, 0006d78c and 0006d8d5.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d80",
+      "verified": {
+        "bytes": "00050d80+11",
+        "sha1": "41c290e1569c",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00050d8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiTimer_Disable",
+      "description": "No arguments, frameless: sets HmiTimer_Enabled (000b1ed8) to 0. es2_xref finds calls from the HMI code at 0006d4f5, 0006d5c2, 0006d5e6, 0006d78c and 0006d8d5.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050d8c",
+      "verified": {
+        "bytes": "00050d8c+11",
+        "sha1": "9a8fe02d3b9b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00050d98",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiTimer_Install",
+      "description": "(a, offset, selector), C convention: stores the far pointer selector:offset in HmiTimer_Callback (000b1ee0, the selector at 000b1ee4) and registers HmiTimer_Tick (00050d38) with Timer_AddCallback (0006d289) at a count of (1000000 / Math_Q14Multiply(word +4 of the structure 000bdd0c points to, 0x35a1)) / 60, keeping the slot in the word HmiTimer_Slot (000b1edc). es2_xref finds one call, from the HMI code at 0006d4f5.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM decompile and disassembly at 00050d98",
+      "verified": {
+        "bytes": "00050d98+102",
+        "sha1": "e53af2372149",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00050e00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiTimer_Remove",
+      "description": "No arguments, frameless: passes the dword at HmiTimer_Slot (000b1edc) to 0006d337, the call Ttm_ManagerDtor gives its timer slot. es2_xref finds one call, from the HMI code at 0006d5c2.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e00",
+      "verified": {
+        "bytes": "00050e00+15",
+        "sha1": "d11c63df4133",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00050e10",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiTimer_NoOp",
+      "description": "Frameless: RET. es2_xref finds one call, from the HMI code at 0006da46, which passes it one argument.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e10",
+      "verified": {
+        "bytes": "00050e10+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00050e14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiHook_NoOp",
+      "description": "Frameless: RET, with no Ghidra function. es2_xref finds one call, from 0006dacf in the HMI code, a CALL followed by RETF.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e14",
+      "verified": {
+        "bytes": "00050e14+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00050e18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiLock_RegionStart",
+      "description": "Frameless: RET, with no Ghidra function: a marker. es2_xref finds its address stored at 0006fafd, 0006fb05, 0006fd22 and 0006fd2a, where the HMI code takes HmiLock_RegionEnd (00050e1c) less it as a size and passes it with this address, made a far pointer by maybe_MK_FP (0006d4e2), to a region call: X32_UnlockRegion (00060b91) at 0006fd3b.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e18 and 0006fd1c",
+      "verified": {
+        "bytes": "00050e18+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00050e1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HmiLock_RegionEnd",
+      "description": "Frameless: RET, with no Ghidra function, followed by three zero bytes: the end marker of the region HmiLock_RegionStart (00050e18) opens. es2_xref finds its address stored at 0006faf8 and 0006fd1d.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly at 00050e1c",
+      "verified": {
+        "bytes": "00050e1c+1",
+        "sha1": "8bf7b464aaa2",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00050e20",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Profile_Load",
+      "description": "(name), callee-cleaned: loads a profile file into memory. Clears the dirty flag Profile_Dirty (00095d10). When the file opens as a FileRStream, copies name to Profile_FileName (000bd8e6), mallocs its size plus 2000 bytes into Profile_Buffer (000bd8e2), reads the file into it, sets Profile_TextEnd (000bd8f8) to the buffer plus the size plus 1 and Profile_BufferEnd (000bd8fc) to its last byte, and splits the text into a list of 12-byte nodes {line, next, previous} from operator_new, its head at Profile_Lines (000bd8f4): bytes below 0x20 or above 0x7e before a line are skipped, a line runs while its bytes are 0x20 to 0x7e, and the byte that ends it is overwritten with 0. When the file does not open, mallocs 2000 bytes, sets the text end to the buffer's start and the buffer end to its last byte, copies the name and leaves the list empty.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-file-in-memory; ES1DBSIM decompile at 00050e20",
+      "verified": {
+        "bytes": "00050e20+475",
+        "sha1": "6457aa2b3385",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00050ffc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Profile_GetInt",
+      "description": "(file, default, key, section) in stack order, callee-cleaned: Windows' GetPrivateProfileInt with its arguments in that order reversed. Returns default when section, key or file is null. Loads file with Profile_Load (00050e20) when Profile_FileName is empty, and when it names another file saves that one first with Profile_Save (00051478) while Profile_Dirty is set and loads this one. Finds the first line beginning '[section]' and, among the lines after it up to one beginning '[', the first beginning 'key=', the comparisons ignoring case (Str_CompareNoCaseN over the pattern's length); returns atol of what follows that line's first '=', or default when the section or the key is missing.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#reading-a-value; ES1DBSIM decompile and disassembly at 00050ffc",
+      "verified": {
+        "bytes": "00050ffc+422",
+        "sha1": "1562d222129b",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000511a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Profile_GetString",
+      "description": "(file, size, buffer, default, key, section) in stack order, callee-cleaned: Windows' GetPrivateProfileString with its arguments in that order reversed. Loads the file as Profile_GetInt (00050ffc) does. With the key found in the section, copies what follows the line's first '=' into buffer and returns its length; with key null, copies each line of the section, each ended by a 0, into buffer and returns the length less 1, or, when they reach size - 1 bytes, ends the buffer with two 0 bytes and returns size - 1. Otherwise, and when section or file is null, copies default into buffer and returns its length. Only the section listing is held to size.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#reading-a-value; ES1DBSIM decompile at 000511a4",
+      "verified": {
+        "bytes": "000511a4+722",
+        "sha1": "43657638983f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051478",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Profile_Save",
+      "description": "(name), callee-cleaned, entered also at its padding 00051476: writes the profile in memory to name. Returns 0 when the FileWStream's status is not 0 after opening. Otherwise writes each line of Profile_Lines followed by CR LF through the stream's write slot +0x18, freeing each node, empties the list and Profile_FileName, frees Profile_Buffer, closes the stream and returns 1.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-file-in-memory; ES1DBSIM decompile at 00051478",
+      "verified": {
+        "bytes": "00051478+228",
+        "sha1": "5a77714e5ab0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005155c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Profile_DeleteSection",
+      "description": "(header), callee-cleaned: finds the first line beginning with header, ignoring case, and unlinks it and the lines after it up to the next one beginning '[' from Profile_Lines, without freeing them; returns 1 whether or not it finds it.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#writing-a-value; ES1DBSIM decompile at 0005155c",
+      "verified": {
+        "bytes": "0005155c+255",
+        "sha1": "bd0a51e1d583",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005165c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Profile_FindOrAddSection",
+      "description": "(header), callee-cleaned: returns the first line node of Profile_Lines beginning with header, ignoring case; with none, copies header to Profile_TextEnd (000bd8f8), advances it past the copy and its 0, and appends a node for it to the list, returning that node.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#writing-a-value; ES1DBSIM decompile at 0005165c",
+      "verified": {
+        "bytes": "0005165c+212",
+        "sha1": "486d8e3bf7b1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051730",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Profile_WriteString",
+      "description": "(file, value, key, section) in stack order, callee-cleaned: Windows' WritePrivateProfileString with its arguments in that order reversed. Returns 0 for a null file. Loads it with Profile_Load (00050e20) when Profile_FileName is empty, and when that names another file saves it with Profile_Save (00051478) and loads this one. With section, key and value all null, returns Profile_Save(file). Returns 0 for a null section or a null value. Sets Profile_Dirty (00095d10); with key null returns Profile_DeleteSection (0005155c) of '[section]'. Otherwise takes the section's line from Profile_FindOrAddSection (0005165c) and looks for 'key=' among the lines after it up to one beginning '['. When the section lacks the key, writes 'key=' and the value at Profile_TextEnd and links a node for it after the last line it looked at. With one whose value is at least as long, clears the old value with 00072ecc(old, 0, length) and copies the new over it; with a longer value, writes the line anew at Profile_TextEnd and replaces the node, freeing the old one. Returns 1 while more than 0x95 bytes are left between Profile_TextEnd and Profile_BufferEnd, and otherwise Profile_Save(file). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#writing-a-value; ES1DBSIM decompile at 00051730",
+      "verified": {
+        "bytes": "00051730+1024",
+        "sha1": "0d6825fa683e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051b30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dongle_PrintStatus",
+      "description": "(status), callee-cleaned: looks status up among the nine dwords at 00095e40 (-999, -5, -4, -3, -2, -1, 0, 1, 2) with REPNE SCASD and jumps through the table after them to printf one message: 'Invalid Dongle Service requested', 'Write to dongle failed', 'Attempting Memo operations on a non-memo Hasp', 'Hasp does not match given password', 'Invalid Address given to dongle', 'Dongle Timed-Out', 'Dongle is okay', 'Dongle is Missing' or 'Dongle has the wrong Password' (00095d28-00095e0b); any other prints 'BOGUS STATUS CODE %d'. Ghidra has the case blocks from 00051b6f as undefined bytes. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-dongle; ES1DBSIM disassembly at 00051b30",
+      "verified": {
+        "bytes": "00051b30+189",
+        "sha1": "1629717e0fb0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00051bf0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dongle_IsOk",
+      "description": "No arguments: builds a dongle object on its stack with Dongle_Ctor (0007303c), returns 1 when Dongle_Check (00073078) answers 0 and 0 otherwise, and destroys the object with Dongle_Dtor (00073058) and flags 2. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-dongle; ES1DBSIM disassembly at 00051bf0",
+      "verified": {
+        "bytes": "00051bf0+54",
+        "sha1": "a44808c42e39",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00051c28",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dongle_VersionString",
+      "description": "Frameless, with no Ghidra function and no arguments. It calls 00072faa with 000b1eec, which decodes the string at 0009de3e with the key 0009de3a into it, and returns 000b1eec. The image's bytes decode to 'Dongle Version!'. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-dongle; ES1DBSIM disassembly at 00051c28 and 00072faa",
+      "verified": {
+        "bytes": "00051c28+20",
+        "sha1": "deb739d6ccb8",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00051c3c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_CopyRectBetweenPages",
+      "description": "(rect, offset), C convention: the VGA_8 driver's slot 20 (000a7bc0). ES1GO's VGA8_CopyRectBetweenPages (ES1GO 000733bc) with each row's offset computed as the row times 0xa0, where the shell's reads its row table; the pages' offsets and pans are 0009e600, 0009e604, 0009e60c and 0009e610, and the row-by-row path calls slots 21 and 22 through 0009df28 and 0009df2c.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; es2_naming.py diff ES1DBSIM ES1GO 00051c3c:000733bc",
+      "verified": {
+        "bytes": "00051c3c+733",
+        "sha1": "bd18d3ea1ce2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00051f1c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_WriteRowTransparent",
+      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 23 (000a7bcc): writes the run of pixels to row y, columns x0 to x1, of the draw page (offset 0009e604, pan 0009e610, the row times 0xa0), a plane at a time, every fourth pixel, leaving a pixel whose byte is 0 unwritten. While the current clip block's mode (+0x204 of the block 00098d64 points at) is 2 it writes the run once for each region of the block's list holding the row, cut to it: a rect region (type 0) to its columns, a span region (type 2) to its span on that row, any other passed over; in any other mode once, uncut.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; ES1DBSIM decompile at 00051f1c",
+      "verified": {
+        "bytes": "00051f1c+540",
+        "sha1": "752f72592dff",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00052138",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_WriteRow",
+      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 22 (000a7bc8): writes the pixels to row y, columns x0 to x1, of the draw page (offset 0009e604, pan 0009e610, the row times 0xa0), a plane at a time through the sequencer's map mask, every byte written.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; ES1DBSIM decompile at 00052138",
+      "verified": {
+        "bytes": "00052138+284",
+        "sha1": "b442b6fa0d2a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00052254",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ReadRow",
+      "description": "(pixels, y, x0, x1), C convention: the VGA_8 driver's slot 21 (000a7bc4): reads row y, columns x0 to x1, of the source page (offset 0009e600, pan 0009e60c, the row times 0xa0) into the pixels, a plane at a time through the graphics controller's read map select (port 3CE index 4).",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; ES1DBSIM decompile at 00052254",
+      "verified": {
+        "bytes": "00052254+334",
+        "sha1": "19e28d1c3b2d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000523a4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17112,6 +17487,96 @@
       "verified": {
         "bytes": "000523a4+10",
         "sha1": "274492f35595",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000523ae",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Vga_WaitRetraceEnd",
+      "description": "Frameless, with no Ghidra function: MOV DX,0x3da / IN AL,DX / TEST AL,8 / JNZ: spins while the VGA input-status register reports vertical retrace. ES2's Vga_WaitRetraceEnd (DBSIM 0045c626), the same instructions. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; ES1DBSIM disassembly at 000523ae",
+      "verified": {
+        "bytes": "000523ae+10",
+        "sha1": "d7c468856834",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000523b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MonoComponentPanel_Init",
+      "description": "(block), callee-cleaned: ES2's MonoComponentPanel_Init (DBSIM 0045c630): stores block at MonoComponentPanel_Block (000bd900) and block + 2 at the cursor MonoComponentPanel_Cursor (000bd904), Mono_Clear (00060d78), then for each of the 41 label pointers at MonoComponentPanel_Labels (00095ffc) prints the label with Mono_Printf at (MonoComponentPanel_LabelColumn, MonoComponentPanel_Row) (the words MonoComponentPanel_LabelColumn (000bd908), MonoComponentPanel_Row (000bd90a)), zeroes the value at the cursor and prints it with '%d' at MonoComponentPanel_ValueColumn (000bd90c), steps the row and the cursor, and on reaching row 0x17 goes back to row 1 with both columns 0x28 further right; then puts the cursor back at block + 2, the columns at 2 and 0x1e and the row at 1, and prints '>' at (1, 1). ES2's passes '%d' no value. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; es2_naming.py diff ES1DBSIM 000523b8 DBSIM 0045c630; ES1DBSIM disassembly",
+      "verified": {
+        "bytes": "000523b8+262",
+        "sha1": "6b7ca7bae704",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000524c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MonoComponentPanel_CursorDown",
+      "description": "No arguments, frameless, with no Ghidra function: ES2's MonoComponentPanel_CursorDown (DBSIM 0045c71c): prints ' ' at (MonoComponentPanel_LabelColumn - 1, MonoComponentPanel_Row); unless the cursor is at MonoComponentPanel_Block + 0x52, advances it by 2 and the row by 1, going to row 1 with both columns 0x28 further right on reaching row 0x17; prints '>' at the row. Mono_Printf (00060e78) throughout. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; ES1DBSIM disassembly at 000524c0",
+      "verified": {
+        "bytes": "000524c0+128",
+        "sha1": "b332f146b8c5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00052540",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MonoComponentPanel_CursorUp",
+      "description": "No arguments, frameless, with no Ghidra function: ES2's MonoComponentPanel_CursorUp (DBSIM 0045c79c): prints ' ' at (MonoComponentPanel_LabelColumn - 1, MonoComponentPanel_Row); unless the cursor is at MonoComponentPanel_Block + 2, moves it back 2 and the row up 1, going to row 0x16 with both columns 0x28 further left on reaching row 0; prints '>' at the row. Mono_Printf (00060e78) throughout. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; ES1DBSIM disassembly at 00052540",
+      "verified": {
+        "bytes": "00052540+120",
+        "sha1": "3d26465b9b0b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000525b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MonoComponentPanel_IncreaseValue",
+      "description": "No arguments, frameless, with no Ghidra function: ES2's MonoComponentPanel_IncreaseValue (DBSIM 0045c81c): adds 0x20 to the int16 at the cursor, holds it to 0xff and prints it with '%d     ' at (MonoComponentPanel_ValueColumn, MonoComponentPanel_Row) through Mono_Printf (00060e78). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; ES1DBSIM disassembly at 000525b8",
+      "verified": {
+        "bytes": "000525b8+70",
+        "sha1": "5e174869fa12",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00052600",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "MonoComponentPanel_DecreaseValue",
+      "description": "No arguments, frameless, with no Ghidra function: ES2's MonoComponentPanel_DecreaseValue (DBSIM 0045c860): subtracts 0x20 from the int16 at the cursor, holds it to 0 and prints it with '%d     ' at (MonoComponentPanel_ValueColumn, MonoComponentPanel_Row) through Mono_Printf (00060e78). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; ES1DBSIM disassembly at 00052600",
+      "verified": {
+        "bytes": "00052600+68",
+        "sha1": "2d133b3a32ce",
         "scope": "body",
         "via": "disasm"
       }
@@ -17147,6 +17612,126 @@
       }
     },
     {
+      "address": "00052690",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_ShowPage",
+      "description": "(page), C convention: the VGA_8 driver's slot 18. ES1GO's VGA8_ShowPage (ES1GO 00070216) with the simulator's globals (the wait mode 00098dba, the pan switch 00098dbe, the page tables 0009e5ce and 0009e5f6, the flag 00098d96, the routines at 0009df50 and 0009df4c while 00098d6c is set, the 8 bytes 00098d70 and 00098d9a) and two differences: while the word 000bda96 is 1 it skips the wait for the next retrace and the write of the pan to the attribute controller, and it also stores the page at 00098dd2. The offset goes to 0009e608 and the pan >> 1 to 0009e614.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; ES1DBSIM disassembly at 00052690; es2_naming.py diff ES1DBSIM ES1GO 00052690:00070216",
+      "verified": {
+        "bytes": "00052690+269",
+        "sha1": "f81d0df911e0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0005279d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "VGA8_SetPageOrigin",
+      "description": "(page, point), C convention: the VGA_8 driver's slot 15. The code of ES1GO's VGA8_SetPageOrigin (ES1GO 00070313), relocated operands aside: the page's offset, the row table 0009df8e's word for point.y plus point.x >> 2, to 0009e5ce + 4 * page, and its pan, (point.x & 3) * 2 while 00098dbe is set and 0 otherwise, to the byte 0009e5f6 + page; then VGA8_SetDrawPage (0005266a), VGA8_SetSourcePage (00052644) or VGA8_ShowPage (00052690) when the page is the current draw (00098dda), source (00098dd6) or visible (00098dd2) page.",
+      "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines; ES1DBSIM disassembly at 0005279d; es2_naming.py match ES1DBSIM ES1GO",
+      "verified": {
+        "bytes": "0005279d+117",
+        "sha1": "c64de9a7027e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00052814",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTransformState_Dtor",
+      "description": "(state, flags) in stack order, callee-cleaned: for a non-null state, destroys the ten 0x16-byte TSContexts at +0x34 with __vec_dtor (000610fd) and TSTransformState_ContextDtor (00052844), and deletes state when bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#the-transform-states; ES1DBSIM disassembly at 00052814",
+      "verified": {
+        "bytes": "00052814+48",
+        "sha1": "c3ee8f93b223",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00052844",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTransformState_ContextDtor",
+      "description": "(context, flags), frameless, with no Ghidra function: loads the vptr at the context's +0x12 and jumps to its slot +4, the context's destructor, with the arguments as they are.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#the-transform-states; ES1DBSIM disassembly at 00052844",
+      "verified": {
+        "bytes": "00052844+10",
+        "sha1": "093ed721cbbb",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00052850",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeInst_BindNodeTransformArray",
+      "description": "(a, nodeTransforms) in stack order, callee-cleaned: ES2's ShapeInst_BindNodeTransformArray (DBSIM 00475fd8): stores the array in g_ShapeNodeWorldTransforms (000bd90e); when it is not null, clears the 0x32-byte flag block g_ShapeNodeTransformCacheFlags (000bd916), saves the renderer's state into slot 0 of g_TSTransformStates (000b1f6c) with Raster_SaveState, sets the block's first byte and sets the installed slot 000bd948 to 0.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; es2_naming.py diff ES1DBSIM 00052850 DBSIM 00475fd8",
+      "verified": {
+        "bytes": "00052850+64",
+        "sha1": "e60b59fe9106",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00052890",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGroup_BindNodeTransform",
+      "description": "(part, out) in stack order, callee-cleaned: ShapeNode_InstallTransform (000528ac)(part, the part's transform id +4, out). ES2's TSGroup_BindNodeTransform (DBSIM 00476014).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; es2_naming.py diff ES1DBSIM 00052890 DBSIM 00476014",
+      "verified": {
+        "bytes": "00052890+27",
+        "sha1": "ce35458caa73",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000528ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeNode_InstallTransform",
+      "description": "(part, transformId, out) in stack order, callee-cleaned, entered also at its padding 000528ab: ES2's ShapeNode_InstallTransform (DBSIM 00476030). Stores at out + 0x20 the slot installed before it, 000bd948, or -1 when it changes nothing. For a non-negative id whose slot, id + 1, is not the one installed: the first time since the bind (its flag at 000bd917 + id clear) sets the flag, Transform_Concat(g_ShapeNodeWorldTransforms + id * 0x20, g_ShapeObjectModelTransformPtr (000b1f8c), out), Raster_SetModelTransform(out) and Raster_SaveState into slot id + 1 of g_TSTransformStates (0x110 bytes each); later Raster_RestoreState of that slot. A negative id, while a node's state is installed, restores slot 0 and sets the installed slot to 0.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; es2_naming.py diff ES1DBSIM 000528ac DBSIM 00476030",
+      "verified": {
+        "bytes": "000528ac+221",
+        "sha1": "30a163d67dfa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005298c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Render_NoOp",
+      "description": "Frameless: RET 8, removing the (part, out) the part draws pass it after drawing. ES2's Render_NoOp (DBSIM 00476118).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; ES1DBSIM disassembly at 0005298c",
+      "verified": {
+        "bytes": "0005298c+3",
+        "sha1": "a4f5248d9b7d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00052990",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17174,6 +17759,36 @@
         "sha1": "74c0ade21c13",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "000529bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBounds_ScreenVisibility",
+      "description": "(bounds), callee-cleaned: ES2's TSBounds_ScreenVisibility (DBSIM 0047613c), statement for statement: returns 0 unless the near plane Raster_NearPlane is below the radius (+8) plus the centre's (+0xa, +0xc, +0xe) view depth; rebuilds TSBounds_RadiusScale (000b56b8) = 0x1000000 / Math_CosBam(Math_Atan2Bam(1 << Raster_FocalShift, width)) when the render context's (000bdbda) width differs from TSBounds_CachedViewWidth (000960a0); projects the centre and the scaled radius, and returns 0 when the box 3 pixels wider than the circle misses the clip rect (+0x210 to +0x21c), 2 when it lies strictly inside it in clip mode (+0x208) 1, and 1 otherwise.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; es2_naming.py diff ES1DBSIM 000529bc DBSIM 0047613c",
+      "verified": {
+        "bytes": "000529bc+465",
+        "sha1": "ebe7f81e9bcd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00052b90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBitmapPart_Render",
+      "description": "(part), callee-cleaned: the draw slot +0x20 of TSBitmapPart. Binds the part's node with TSGroup_BindNodeTransform (00052890), takes the bitmap the tag +0x10 names in the active bank (000bdb5e, its pointer array at +8) and returns at once when it is null. Otherwise, when the centre's view depth is beyond Raster_NearPlane: s = Raster_PerspectiveScale of the depth and the radius * 4, the centre projected to the screen, less Math_Q8Multiply(s, x offset +0x12) and Math_Q8Multiply(s, y offset +0x13), both read signed, and the size {Math_Q8Multiply(s, columns +6), Math_Q8Multiply(s, rows +4)}; when both are below 200, Bitmap_BlitScaled (00067178)(bitmap, size, 0, point). Ends with Render_NoOp (0005298c). ES2's (DBSIM 004762e8) rotates and squashes the quad, reads the y offset unsigned and culls a centre outside +-1000 after the divide instead of the 200 limit.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; ES1DBSIM disassembly at 00052b90; es2_naming.py diff ES1DBSIM 00052b90 DBSIM 004762e8",
+      "verified": {
+        "bytes": "00052b90+303",
+        "sha1": "318992445d0a",
+        "scope": "body",
+        "via": "both"
       }
     },
     {
@@ -17222,6 +17837,66 @@
       }
     },
     {
+      "address": "00052e18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartList_Render",
+      "description": "(list), callee-cleaned: ES2's TSPartList_Render (DBSIM 004766fc): binds the list's node with TSGroup_BindNodeTransform (00052890), calls each of its +0x10 children's draw slot +0x20 from the pointer array +0x12 in order, and ends with Render_NoOp (0005298c).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py diff ES1DBSIM 00052e18 DBSIM 004766fc",
+      "verified": {
+        "bytes": "00052e18+112",
+        "sha1": "2f40f0c766a0",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00052e88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartList_FindPart",
+      "description": "(list, id) in stack order, callee-cleaned: ES2's TSPartList_FindPart (DBSIM 00476744): returns the list when its id number (+6) is id, else each child's find slot +0x24 in order until one answers non-zero, and that answer, or 0.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; ES1DBSIM disassembly at 00052e88",
+      "verified": {
+        "bytes": "00052e88+132",
+        "sha1": "d13b8962aeb2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00052f0c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartList_FindPartSlot",
+      "description": "(list, id) in stack order, callee-cleaned: ES2's TSPartList_FindPartSlot (DBSIM 00476784): returns the address of the first entry of the pointer array +0x12 whose child's id number (+6) is id, else each child's slot +0x28 in order until one answers non-zero, and that answer, or 0. The list's own id is not tested.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; ES1DBSIM disassembly at 00052f0c",
+      "verified": {
+        "bytes": "00052f0c+195",
+        "sha1": "add3e7991ac0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00052fd0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSCellAnimPart_Render",
+      "description": "(part), callee-cleaned: ES2's TSCellAnimPart_Render (DBSIM 004767e4): binds the part's node with TSGroup_BindNodeTransform (00052890), draws through slot +0x20 the one child cellFrames[sequence +0x16] % child count, the cell frames at 000bd912, and ends with Render_NoOp (0005298c).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py diff ES1DBSIM 00052fd0 DBSIM 004767e4",
+      "verified": {
+        "bytes": "00052fd0+88",
+        "sha1": "7aa096a001d7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00053028",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17252,18 +17927,48 @@
       }
     },
     {
+      "address": "00053094",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSDetailPart_SetSizeScale",
+      "description": "(scale), frameless, with no Ghidra function: stores the word scale in g_TSDetailPartSizeScaleQ10 (0009615a) and returns with RET 4. ES2's TSDetailPart_SetSizeScale (DBSIM 0047689c). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; ES1DBSIM disassembly at 00053094",
+      "verified": {
+        "bytes": "00053094+14",
+        "sha1": "c0782649f1be",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
       "address": "000530a4",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "TSDetailPart_SetBias",
-      "description": "(bias), callee-cleaned, frameless: stores its argument at 0009615c and returns. ES2's TSDetailPart_SetBias (DBSIM 004768ac).",
+      "description": "(bias), callee-cleaned, frameless: stores its argument at g_TSDetailPartBias (0009615c) and returns. ES2's TSDetailPart_SetBias (DBSIM 004768ac).",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#the-slots; ES1DBSIM disassembly at 000530a4",
       "verified": {
         "bytes": "000530a4+12",
         "sha1": "865e7007915e",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "000530b0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSDetailPart_Render",
+      "description": "(part), callee-cleaned: ES2's TSDetailPart_Render (DBSIM 004768bc): binds the part's node with TSGroup_BindNodeTransform (00052890); size = (radius << Raster_FocalShift) / max(Math_FastMagnitude3D(g_EyeInModelSpace) - radius, 1), at least 1; t = Math_Q10Multiply(size, g_TSDetailPartSizeScaleQ10 (0009615a)); from i = g_TSDetailPartBias (0009615c), steps i while i < count - 1 and the threshold i (+0x16) is below t; draws child min(i - bias, count - 1) through slot +0x20 and ends with Render_NoOp (0005298c).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py diff ES1DBSIM 000530b0 DBSIM 004768bc",
+      "verified": {
+        "bytes": "000530b0+267",
+        "sha1": "6bb53a49ce9c",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -17292,6 +17997,81 @@
       "verified": {
         "bytes": "000531f8+69",
         "sha1": "c1c85ccaa349",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053240",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPPart_RenderNode",
+      "description": "(part, node) in stack order, callee-cleaned, entered also at its padding 0005323d: ES2's TSBSPPart_RenderNode (DBSIM 00476a1c) with no depth-buffer flag. For the 14-byte node at +0x18 and its transform id at +0x1c: d = DotProductVec3Int(the node's normal, the eye 000b56ac), or for an id other than -1 Transform_LocalPointDotNormal (000733c0)(the eye, g_ShapeNodeWorldTransforms + id * 0x20, the normal), less the node's int32 coefficient; with d < 0 the front entry (+0xa) first and the back (+0xc) second, otherwise the back first. An entry below 0 draws nothing, one with bit 0x4000 draws child (entry & 0x3fff) through slot +0x20, and any other recurses into that node.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py diff ES1DBSIM 00053240 DBSIM 00476a1c",
+      "verified": {
+        "bytes": "00053240+289",
+        "sha1": "25052b8a81ca",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00053364",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPPart_Render",
+      "description": "(part), callee-cleaned: ES2's TSBSPPart_Render (DBSIM 00476b0c): binds the part's node with TSGroup_BindNodeTransform (00052890), copies g_EyeInModelSpace to 000b56ac, walks the tree from node 0 with TSBSPPart_RenderNode (00053240) and ends with Render_NoOp (0005298c).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py diff ES1DBSIM 00053364 DBSIM 00476b0c",
+      "verified": {
+        "bytes": "00053364+66",
+        "sha1": "e8fe6e589825",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000533a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTransformState_StaticInit",
+      "description": "No arguments, frameless, with no Ghidra function: the static initializer (static constructor table entry 000adc6c): __vec_ctor (000610cb)(TSTransformState_Ctor's padding entry 000533d7, 0x34, 0x110, g_TSTransformStates (000b1f6c)), 52 states of 0x110 bytes. ES2's TSTransformState_StaticInit (DBSIM 00476b64).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#the-transform-states; ES1DBSIM disassembly at 000533a8",
+      "verified": {
+        "bytes": "000533a8+23",
+        "sha1": "012ab15178f6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000533c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTransformState_StaticDtor",
+      "description": "No arguments, frameless, with no Ghidra function: the exit routine (exit table entry 000adccc): __vec_dtor (000610fd)(TSTransformState_Dtor (00052814), 0x34, 0x110, g_TSTransformStates (000b1f6c)). ES2's TSTransformState_StaticDtor (DBSIM 00476ba4).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#the-transform-states; ES1DBSIM disassembly at 000533c0",
+      "verified": {
+        "bytes": "000533c0+23",
+        "sha1": "f98dca5dd95a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000533d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTransformState_Ctor",
+      "description": "(state), callee-cleaned, entered also at its padding 000533d7: allocates 0x110 bytes when state is null and returns 0 when that fails; the inlined constructors of its members test the allocation again at sizes 0x20, 0x14, 0xc and 8; builds the ten 0x16-byte TSContexts at +0x34 with __vec_ctor (000610cb) and TSContext_Ctor; returns state. ES2's TSTransformState_Ctor (DBSIM 00476bc0).",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#the-transform-states; ES1DBSIM decompile at 000533d8",
+      "verified": {
+        "bytes": "000533d8+212",
+        "sha1": "fa365d8ab8a4",
         "scope": "body",
         "via": "decompile"
       }
@@ -17417,6 +18197,36 @@
       }
     },
     {
+      "address": "00054034",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSNullObj_Render",
+      "description": "Frameless: RET 4, with no Ghidra function. Slot +0x20 of the vtable 0009b0da, which es2_xref finds stored at 00067512 and 00067545, in TSNullObj's load function. ES2's TSNullObj_Render (DBSIM 00474da4).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; ES1DBSIM disassembly at 00054034",
+      "verified": {
+        "bytes": "00054034+3",
+        "sha1": "6d2a7422bc83",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00054038",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPoly_Render",
+      "description": "Frameless: RET 4, with no Ghidra function. Slot +0x20 of the vtable 0009b132, which es2_xref finds stored 16 times by the poly classes' load functions from 00067603 to 0006824b, and of 000929ea and 00092b5a. ES2's TSPoly_Render (DBSIM 00474dac).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; ES1DBSIM disassembly at 00054038",
+      "verified": {
+        "bytes": "00054038+3",
+        "sha1": "6d2a7422bc83",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
       "address": "0005403c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17442,6 +18252,21 @@
       "verified": {
         "bytes": "0005410c+697",
         "sha1": "7b34aa99e2da",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000543c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSTexture4Poly_PointElementCtor",
+      "description": "(p), callee-cleaned, entered also at its padding 000543c5-000543c7: returns p, or 8 new bytes when p is null; the code of VGA8_BitmapPolyPointCtor (00053864). es2_xref finds the padding entries stored at 000542cb and 000542ed, in TSTexture4Poly_Render (0005410c), which builds its texture point buffers with it, and at 0000acec and 000184b4.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; ES1DBSIM disassembly at 000543c8",
+      "verified": {
+        "bytes": "000543c8+27",
+        "sha1": "c2b0b1068e47",
         "scope": "body",
         "via": "decompile"
       }
@@ -17492,6 +18317,21 @@
       }
     },
     {
+      "address": "0005485c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorGroupCopy",
+      "description": "(part, flags) in stack order, callee-cleaned, entered also at its padding 0005485b: slot +0x1c of the vtable 0009621a, a copy of TSPartBase's table that TSGroup_Ctor and TSGroup_Dtor store: stores 0009621a, runs TSBase_Dtor(part, 0) and deletes part when bit 0 of flags is set. The code of TSPartBase_Dtor (0005d614), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#where-the-object-files-start-and-end; ES1DBSIM disassembly at 0005485c",
+      "verified": {
+        "bytes": "0005485c+42",
+        "sha1": "c61a740f01b5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00054888",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17502,6 +18342,126 @@
       "verified": {
         "bytes": "00054888+160",
         "sha1": "9da5f0906bb3",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054928",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSGroup_RenderPolys",
+      "description": "(group), callee-cleaned: TSGroup's draw slot +0x20. ES2's TSGroup_RenderPolys (DBSIM 004758c8): binds the group's node with TSGroup_BindNodeTransform (00052890); saves the render context's (000bdbda) line brush +0x228, fill brush +0x22c and +0x20c, installs PolyFill_LineBrush and PolyFill_FillBrush and sets +0x20c to 0; binds the surfaces +0x18 (000b6732), the colour count +0x22 (000b672c), the points +0x14 (Poly_ShortPoints) and the indexes +0x10 (Poly_IndexList, 000bdb62 when null), clearing Poly_PointState over the colour count; calls each of the +0x26 polys' draw slot +0x20 from +0x1c in order; puts the three back and ends with Render_NoOp (0005298c).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py diff ES1DBSIM 00054928 DBSIM 004758c8",
+      "verified": {
+        "bytes": "00054928+265",
+        "sha1": "56a4ff553904",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054a34",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPGroup_Ctor",
+      "description": "(group), callee-cleaned: allocates 0x2e bytes when group is null, returning 0 when that fails; runs TSGroup_Ctor (000547b4), stores the vtable 00096282 and clears the word +0x28 and the node array +0x2a. ES2's TSBSPGroup_Ctor (DBSIM 004759b4). es2_xref finds one call, from 00068908.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py diff ES1DBSIM 00054a34 DBSIM 004759b4",
+      "verified": {
+        "bytes": "00054a34+56",
+        "sha1": "634f0f42e865",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054a6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPGroup_Dtor",
+      "description": "(group, flags) in stack order, callee-cleaned: slot +0x1c of 00096282. For a non-null group stores 00096282, deletes the node array +0x2a, runs TSGroup_Dtor (00054888)(group, 0) and deletes group when bit 0 of flags is set. ES2's TSBSPGroup_Dtor (DBSIM 004759e0).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py diff ES1DBSIM 00054a6c DBSIM 004759e0",
+      "verified": {
+        "bytes": "00054a6c+55",
+        "sha1": "80b724e87dec",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054aa4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPGroup_RenderNode",
+      "description": "(group, node) in stack order, callee-cleaned, entered also at its padding 00054aa3: ES2's TSBSPGroup_RenderNode (DBSIM 00475a20): for the 10-byte node at +0x2a, d = DotProductVec3Int(the node poly's normal point, g_EyeInModelSpace) less the node's int32 constant; with d < 0 the +6 entry, the node's poly, then the +8 entry, otherwise +8 first. An entry below 0 draws nothing, one with bit 0x4000 draws poly (entry & 0x3fff) through slot +0x20, any other recurses.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py diff ES1DBSIM 00054aa4 DBSIM 00475a20",
+      "verified": {
+        "bytes": "00054aa4+279",
+        "sha1": "517a165c3bd8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054bbc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSBSPGroup_Render",
+      "description": "(group), callee-cleaned, entered also at its padding 00054bbb: slot +0x20 of 00096282. ES2's TSBSPGroup_Render (DBSIM 00475af8): TSGroup_RenderPolys' set-up and restore, drawing through TSBSPGroup_RenderNode (00054aa4) from node 0 in place of the poly walk.",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py diff ES1DBSIM 00054bbc DBSIM 00475af8",
+      "verified": {
+        "bytes": "00054bbc+223",
+        "sha1": "bec13980a81d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054c9c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSAliasSolidPoly_Render",
+      "description": "(poly), callee-cleaned: the draw slot of TSAliasSolidPoly's vtable 0009b266. The code of TSSolidPoly_Render (0005403c), relocated operands aside, but for the fill, which goes through PolyFill_FillThenOutline_Thunk (0005d3c0) where that calls PolyFill_FillThenOutline (0005d2f0). ES2's TSAliasSolidPoly_Render (DBSIM 00475bc4).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py match ES1DBSIM ES1GO and diff ES1DBSIM 00054c9c DBSIM 00475bc4",
+      "verified": {
+        "bytes": "00054c9c+207",
+        "sha1": "91102f7103f2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054d6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSAliasShadedPoly_Render",
+      "description": "(poly), callee-cleaned: the draw slot of TSAliasShadedPoly's vtable 0009b292. The code of TSShadedPoly_Render (000543e4), relocated operands aside, but for the fill, which goes through PolyFill_FillThenOutline_Thunk (0005d3c0) where that calls PolyFill_FillThenOutline (0005d2f0). ES2's TSAliasShadedPoly_Render (DBSIM 00475c80).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py match ES1DBSIM ES1GO and diff ES1DBSIM 00054d6c DBSIM 00475c80",
+      "verified": {
+        "bytes": "00054d6c+402",
+        "sha1": "76a8a6b22b6b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00054f00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSAliasGouraudPoly_Render",
+      "description": "(poly), callee-cleaned: the draw slot of TSAliasGouraudPoly's vtable 0009b2be. The code of TSGouraudPoly_Render (00054578), relocated operands aside, but for the fill, which goes through PolyFill_FillThenOutline_Thunk (0005d3c0) where that calls PolyFill_FillThenOutline (0005d2f0). ES2's TSAliasGouraudPoly_Render (DBSIM 00475de0).",
+      "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types; es2_naming.py match ES1DBSIM ES1GO and diff ES1DBSIM 00054f00 DBSIM 00475de0",
+      "verified": {
+        "bytes": "00054f00+570",
+        "sha1": "7254c07a5b1c",
         "scope": "body",
         "via": "decompile"
       }
@@ -17522,12 +18482,27 @@
       }
     },
     {
+      "address": "00055170",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_RegisterProbeBucket",
+      "description": "(count, entries) in stack order, callee-cleaned: ES2's ClassItem_RegisterProbeBucket (DBSIM 00479fdc): when count is not 0, raises ClassItem_ProbeHeaderSize (000962bc) over the 12-byte entries' +8 dwords as ES2's does, appends {entries, count} to the probe buckets at 000bd9f8 and increments their count 000962b8. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#chunk-headers; es2_naming.py diff ES1DBSIM 00055170 DBSIM 00479fdc",
+      "verified": {
+        "bytes": "00055170+112",
+        "sha1": "16ab37d68033",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000551e0",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_LoadResource",
-      "description": "(mode, stream) in stack order, callee-cleaned: loads one class item. Points ClassItem_CurrentFrame (000b5adc) at a frame on its stack, reads the 8-byte type tag with 00055754, and for a tag other than -1 looks its handler up with 000554e2 and calls the handler's load function (+4) with (mode, stream); then runs 0005591d on the stream, restores the frame pointer and returns the item, or 0. ES2's ClassItem_LoadResource (DBSIM 0047a038), statement for statement.",
+      "description": "(mode, stream) in stack order, callee-cleaned: loads one class item. Points ClassItem_CurrentFrame (000b5adc) at a frame on its stack, reads the 8-byte type tag with ClassItem_ReadTypeTag (00055754), and for a tag other than -1 looks its handler up with 000554e2 and calls the handler's load function (+4) with (mode, stream); then runs 0005591d on the stream, restores the frame pointer and returns the item, or 0. ES2's ClassItem_LoadResource (DBSIM 0047a038), statement for statement.",
       "source": "ES1DBSIM decompile at 000551e0, against ES2's ClassItem_LoadResource",
       "verified": {
         "bytes": "000551e0+101",
@@ -17542,7 +18517,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_StoreItem",
-      "description": "(item, mode, stream) in stack order, callee-cleaned: writes one class item. Points ClassItem_CurrentFrame at a frame on its stack and restores it on exit. When the item's body length (vtable +8) is 0 and the stream's slot +0x10 answers query 3 with 0, it makes a stream over the stream on its stack (00073f34(local, 0, 0, stream)), opens the item in it (000556cc) with the item's tag (vtable +4), calls the item's write slot (+0x14) with (mode, that stream), closes the item (00055860) and destroys the stream (00073fd0, flags 2); otherwise it runs the same open, write and close on the stream itself. ES2's ClassItem_StoreItem (DBSIM 0047a0a0).",
+      "description": "(item, mode, stream) in stack order, callee-cleaned: writes one class item. Points ClassItem_CurrentFrame at a frame on its stack and restores it on exit. When the item's body length (vtable +8) is 0 and the stream's slot +0x10 answers query 3 with 0, it makes a stream over the stream on its stack (00073f34(local, 0, 0, stream)), opens the item in it (ClassItem_OpenItemForWrite (000556cc)) with the item's tag (vtable +4), calls the item's write slot (+0x14) with (mode, that stream), closes the item (ClassItem_CloseItemForWrite (00055860)) and destroys the stream (00073fd0, flags 2); otherwise it runs the same open, write and close on the stream itself. ES2's ClassItem_StoreItem (DBSIM 0047a0a0).",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "00055248+176",
@@ -17572,7 +18547,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_PeekTypeTag",
-      "description": "(tag, stream) in stack order, callee-cleaned: saves the stream position (slot +8), reads the 8-byte type tag into tag (-1, 0 beforehand) through the read slot (+0x1c) and, when no handler is registered for it (through the thunk to 000554e4) and 000962b8 is set, copies it to 000bda48, reads the rest of the header (000962bc less 8 bytes) into 000bda50 and calls 00055568 through its thunk; seeks back (slot +0xc) unless the status (+0) is 2; returns status == 0. ES2's ClassItem_PeekTypeTag (DBSIM 0047a1fc).",
+      "description": "(tag, stream) in stack order, callee-cleaned: saves the stream position (slot +8), reads the 8-byte type tag into tag (-1, 0 beforehand) through the read slot (+0x1c) and, when no handler is registered for it (through the thunk to ClassItem_FindHandler (000554e4)) and 000962b8 is set, copies it to ClassItem_ProbeHeader (000bda48), reads the rest of the header (ClassItem_ProbeHeaderSize (000962bc) less 8 bytes) into 000bda50 and calls ClassItem_TryEveryLoader (00055568) through its thunk; seeks back (slot +0xc) unless the status (+0) is 2; returns status == 0. ES2's ClassItem_PeekTypeTag (DBSIM 0047a1fc).",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "0005533c+167",
@@ -17612,6 +18587,21 @@
       }
     },
     {
+      "address": "00055468",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ArenaStack_PushAlloc",
+      "description": "(size), callee-cleaned: ES2's ArenaStack_PushAlloc (DBSIM 0047a324), through Arena_Alloc (000552f8)(the current arena 000bd954, size) where ES2's calls Arena_AllocDup: carves size bytes from the current arena, increments the depth 000962c0, stores {block, size, 0} in the entry at 000b5ae0 + depth * 12, makes it the current arena and returns block. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#chunk-headers; ES1DBSIM disassembly at 00055468",
+      "verified": {
+        "bytes": "00055468+82",
+        "sha1": "8be2b19142cb",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "000554bc",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17624,6 +18614,36 @@
         "sha1": "3eef4bf9dfd1",
         "scope": "body",
         "via": "both"
+      }
+    },
+    {
+      "address": "000554e4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_FindHandler",
+      "description": "(tag), callee-cleaned, entered also at its padding 000554e2: ES2's ClassItem_FindHandler (DBSIM 0047a394): returns the first 12-byte {tag, load function, name} entry, in the buckets ClassItem_RegisterBucket appends at 000bd958 (count 000962b4), whose tag matches, or 0.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#chunk-headers; es2_naming.py diff ES1DBSIM 000554e4 DBSIM 0047a394",
+      "verified": {
+        "bytes": "000554e4+131",
+        "sha1": "01af4818d67a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00055568",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_TryEveryLoader",
+      "description": "(tag, stream) in stack order, callee-cleaned, entered also at its padding 00055567: ES2's ClassItem_TryEveryLoader (DBSIM 0047a3d8): calls each probe bucket entry's function (+4) with (stream, tag, ClassItem_ProbeHeader (000bda48)) in stack order and returns 1 at the first that answers non-zero, 0 when none does.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#chunk-headers; es2_naming.py diff ES1DBSIM 00055568 DBSIM 0047a3d8",
+      "verified": {
+        "bytes": "00055568+132",
+        "sha1": "55bfe584864e",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -17662,7 +18682,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_DebugPrintType",
-      "description": "(item, indent, unused) in stack order, callee-cleaned: prints indent spaces and 'Class type: %d:%d' with the high and low words of the item's tag (vtable +4) to stdout, then ' \"%s\"' with the name in the handler entry 000554e4 finds for the tag, when it finds one, and a newline. ES2's ClassItem_DebugPrintType (DBSIM 0047a488).",
+      "description": "(item, indent, unused) in stack order, callee-cleaned: prints indent spaces and 'Class type: %d:%d' with the high and low words of the item's tag (vtable +4) to stdout, then ' \"%s\"' with the name in the handler entry ClassItem_FindHandler (000554e4) finds for the tag, when it finds one, and a newline. ES2's ClassItem_DebugPrintType (DBSIM 0047a488).",
       "source": "Herculan/docs/es1/formats/dts-shape.md",
       "verified": {
         "bytes": "00055648+130",
@@ -17672,16 +18692,361 @@
       }
     },
     {
+      "address": "000556cc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_OpenItemForWrite",
+      "description": "(length, tag, stream) in stack order, callee-cleaned, entered also at its padding 000556ca: ES2's ClassItem_OpenItemForWrite (DBSIM 0047a52c), calling the stream's slots directly: fills the frame at ClassItem_CurrentFrame with the tag, the position (slot +8), the position plus ClassItem_TagTotalSize (000555ec) of {tag, length}, and a byte set when length is even, and unless the tag's byte 3 has its high nibble set writes the 8-byte header through the write slot +0x18.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#chunk-headers; es2_naming.py diff ES1DBSIM 000556cc DBSIM 0047a52c",
+      "verified": {
+        "bytes": "000556cc+136",
+        "sha1": "6f3199b3df69",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00055754",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_ReadTypeTag",
+      "description": "(tag, stream) in stack order, callee-cleaned: ES2's ClassItem_ReadTypeTag (DBSIM 0047a5a8), calling the stream's slots directly: records the position (slot +8) as the frame's start, fills tag with {-1, 0} and reads 8 bytes over it (slot +0x1c). With a handler ClassItem_FindHandler (000554e4) the frame takes the tag, ends at the position plus the length rounded up to even, and its +0xc is set for an even length. With none and probe buckets registered (000962b8), copies the header to ClassItem_ProbeHeader (000bda48), reads ClassItem_ProbeHeaderSize - 8 more bytes to 000bda50 and, when ClassItem_TryEveryLoader (00055568) answers non-zero, sets the frame to the tag, its end to the start plus the tag's length and +0xc to 0, and seeks back to the start (slot +0xc).",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#chunk-headers; es2_naming.py diff ES1DBSIM 00055754 DBSIM 0047a5a8",
+      "verified": {
+        "bytes": "00055754+265",
+        "sha1": "fdb4f49b1e2f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00055860",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_CloseItemForWrite",
+      "description": "(stream), callee-cleaned, entered also at its padding 0005585d: ES2's ClassItem_CloseItemForWrite (DBSIM 0047a68c), writing through the stream's slot +0x18 and seeking through +0xc directly: unless the tag's byte 3 has its high nibble set, for a frame whose end is its start plus 8 measures the body, adds it to the end, writes a 0 pad byte and bumps the end when it is odd, seeks to the start plus 4, writes the measured length and seeks back to the end; otherwise writes a 0 pad byte when +0xc is clear.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#chunk-headers; es2_naming.py diff ES1DBSIM 00055860 DBSIM 0047a68c",
+      "verified": {
+        "bytes": "00055860+189",
+        "sha1": "16e1a168cec5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00055920",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ClassItem_CloseItem",
+      "description": "(stream), callee-cleaned, entered also at its padding 0005591d: ES2's ClassItem_CloseItem (DBSIM 0047a730), calling the stream's slots directly: while the stream's status (+0) is 0 and its position (slot +8) is below the end (+8) of the frame at ClassItem_CurrentFrame, reads one byte (slot +0x1c) onto its stack.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#chunk-headers; es2_naming.py diff ES1DBSIM 00055920 DBSIM 0047a730",
+      "verified": {
+        "bytes": "00055920+88",
+        "sha1": "ae9c3e19e607",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00055978",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_Detect",
+      "description": "No arguments, frameless, with no Ghidra function: issues INT 21h with AX 2503h and CL 0x33, and returns 0 when the EBX it answers is 0 or when the byte at the real-mode address EBX gives (its high word times 16 plus its low word), read through the selector at 0009003a, is an IRET (0xcf); otherwise issues INT 33h function 0x20 and then function 0, and returns 1 when that answers non-zero and 0 otherwise. es2_xref finds one call, from 0006bbc0.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055978",
+      "verified": {
+        "bytes": "00055978+81",
+        "sha1": "a1ec940d0384",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000559c9",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_Install",
+      "description": "(status, state), C convention: returns when Mouse_StatusPtr (000962e0) is set, or when INT 33h function 0 answers 0. Otherwise stores DS at 00096398 and 000967e7, state at Mouse_StatePtr (000962e4) and status at Mouse_StatusPtr, sets bit 0 of the dword status points at, and makes three INT 21h calls: AX 2509h; AX 250Dh with EBX the first call's BX in its high word and 0x14 in its low; and AX 250Eh with that EBX, EDI the second call's EAX, EDX 0x7f and ECX 0. es2_xref finds one call, from 0006bd21.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 000559c9",
+      "verified": {
+        "bytes": "000559c9+99",
+        "sha1": "9d93baa007e0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055a2c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_SetEventsEnabled",
+      "description": "(enabled), C convention: Mouse_Install's three INT 21h calls again, with EDX 0x7f when enabled is not 0 and 0 when it is. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055a2c",
+      "verified": {
+        "bytes": "00055a2c+59",
+        "sha1": "7b7431f313dc",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055a67",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_Reset",
+      "description": "No arguments, frameless: while Mouse_StatusPtr (000962e0) is set issues INT 33h function 0 and returns its AX; otherwise returns 0. es2_xref finds calls from Mouse_ResetThunk (00055c47), 0006bbc8 and 0006bd84.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055a67",
+      "verified": {
+        "bytes": "00055a67+15",
+        "sha1": "e3323bad9a9e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055a76",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_DisableDriver",
+      "description": "No arguments, frameless: while Mouse_StatusPtr (000962e0) is set issues INT 33h function 0x1f and returns its AX, zero-extended, plus 1; otherwise returns 0. es2_xref finds one call, from 0004ad54.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055a76",
+      "verified": {
+        "bytes": "00055a76+26",
+        "sha1": "9d300faa28ed",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055a90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_EnableDriver",
+      "description": "No arguments, frameless: while Mouse_StatusPtr (000962e0) is set issues INT 33h function 0x20 and returns its AX; otherwise returns 0. es2_xref finds one call, from 0004ad54.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055a90",
+      "verified": {
+        "bytes": "00055a90+20",
+        "sha1": "d654b3816278",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055aa4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_SetDoubleX",
+      "description": "(double), C convention: stores double in Mouse_DoubleX (000962dc). es2_xref finds one call, from 0006bd30.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055aa4",
+      "verified": {
+        "bytes": "00055aa4+14",
+        "sha1": "0f55cdc1d896",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055ab2",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_GetDoubleX",
+      "description": "No arguments, frameless, with no Ghidra function: returns Mouse_DoubleX (000962dc). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055ab2",
+      "verified": {
+        "bytes": "00055ab2+6",
+        "sha1": "38608dab81f7",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
       "address": "00055ab8",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Mouse_SetPosition",
-      "description": "(x, y), C convention: when 000962e0 is set, stores x, doubled while 000962dc is set, and y at 000962e8 and 000962ec and issues INT 33h with AX 4, CX x and DX y, the mouse driver's set-cursor-position function.",
+      "description": "(x, y), C convention: when Mouse_StatusPtr (000962e0) is set, stores x, doubled while Mouse_DoubleX (000962dc) is set, and y at Mouse_X (000962e8) and Mouse_Y (000962ec) and issues INT 33h with AX 4, CX x and DX y, the mouse driver's set-cursor-position function.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
       "verified": {
         "bytes": "00055ab8+54",
         "sha1": "3c4806d718f5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055aee",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_SetLimitsAndSensitivity",
+      "description": "(record), C convention: INT 33h function 7 with the record's +0 and +8 as the horizontal limits, both doubled while Mouse_DoubleX (000962dc) is set, function 8 with +4 and +0xc as the vertical limits, and function 0x1a with the words +0x10, +0x12 and +0x14 in BX, CX and DX. es2_xref finds one call, from 0006bdf0.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055aee",
+      "verified": {
+        "bytes": "00055aee+70",
+        "sha1": "56c69c30c8ce",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055b34",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_GetSensitivity",
+      "description": "(record), C convention: INT 33h function 0x1b, storing BX, CX and DX in the record's words +0x10, +0x12 and +0x14. es2_xref finds one call, from 0006bdbc.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055b34",
+      "verified": {
+        "bytes": "00055b34+31",
+        "sha1": "481cce219099",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055b53",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_SetLimits",
+      "description": "(record), C convention: Mouse_SetLimitsAndSensitivity (00055aee) without its function 0x1a: INT 33h function 7 with +0 and +8, doubled while Mouse_DoubleX is set, and function 8 with +4 and +0xc. es2_xref finds one call, from 0006be40.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055b53",
+      "verified": {
+        "bytes": "00055b53+51",
+        "sha1": "02b4e804282b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055b86",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_ReadState",
+      "description": "No arguments, frameless: while Mouse_StatusPtr (000962e0) and Mouse_StatePtr (000962e4) are set, with interrupts off copies Mouse_X (000962e8) and Mouse_Y (000962ec) to the state's +0 and +4 and the word Mouse_Buttons (000962f0) to its +8, and clears bit 1 of the status dword. es2_xref finds one call, from 0004c26c.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055b86",
+      "verified": {
+        "bytes": "00055b86+60",
+        "sha1": "b5219efc2115",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055bc2",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_PostEvent",
+      "description": "(event, mask), C convention: while Mouse_StatusPtr (000962e0) is set, calls Mouse_EventHandler (00055c6f) as a far procedure with the event's dwords +0 and +4 in ECX and EDX, its word +8 in BX and mask in AX, as the driver would. es2_xref finds one call, from Gau_RovingGunsightWidget.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055bc2",
+      "verified": {
+        "bytes": "00055bc2+42",
+        "sha1": "38b818634404",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055bec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_AddCallback",
+      "description": "(callback, mask), C convention: while Mouse_StatusPtr (000962e0) is set takes the lowest clear bit i of Mouse_CallbackMask (000962f4), stores callback at Mouse_Callbacks (000962f8) + 4i and the low byte of mask at Mouse_CallbackEvents (00096378) + i, sets the bit and returns i + 1. With all 32 bits set it stores no callback and still writes the mask byte and sets a bit, at the index left in ECX, whose low word it cleared. es2_xref finds one call, from 000441cc.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055bec",
+      "verified": {
+        "bytes": "00055bec+73",
+        "sha1": "fe705dc40972",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055c35",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_RemoveCallback",
+      "description": "(slot), C convention: clears bit slot - 1 of Mouse_CallbackMask (000962f4). es2_xref finds one call, from 000442b4.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055c35",
+      "verified": {
+        "bytes": "00055c35+18",
+        "sha1": "1e254c042a9f",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055c47",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_ResetThunk",
+      "description": "No arguments, frameless, with no Ghidra function: CALL Mouse_Reset (00055a67), RET. es2_xref finds its address stored at 0006bcab.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055c47",
+      "verified": {
+        "bytes": "00055c47+6",
+        "sha1": "211809a31c50",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00055c4d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_EnableButtonMap",
+      "description": "No arguments, frameless, with no Ghidra function: sets the word Mouse_ButtonMapOn (000962f2) to 1 and returns 1. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055c4d",
+      "verified": {
+        "bytes": "00055c4d+17",
+        "sha1": "f45191451279",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00055c5e",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_DisableButtonMap",
+      "description": "No arguments, frameless, with no Ghidra function: sets the word Mouse_ButtonMapOn (000962f2) to 0 and returns 1. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055c5e",
+      "verified": {
+        "bytes": "00055c5e+17",
+        "sha1": "ef75bbfdbc61",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00055c6f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_EventHandler",
+      "description": "Far procedure, the event in registers as the INT 33h driver passes one (AX the event mask, BX the buttons, CX x, DX y): loads DS and ES from the word at 00096398 and, unless the byte 0009639a is set, switches to the stack 000967e3 and saves every register; with bit 0 of Mouse_ButtonMapOn (000962f2) set replaces the buttons by the table 000967eb's entry for their low three bits; stores the buttons at Mouse_Buttons (000962f0), x, halved while Mouse_DoubleX (000962dc) is set, at Mouse_X (000962e8) and y at Mouse_Y (000962ec); sets bit 1 of the status dword Mouse_StatusPtr points at; and calls with the address Mouse_X (000962e8) each callback of Mouse_Callbacks whose bit of Mouse_CallbackMask is set and whose event byte shares a bit with the mask; then restores and returns far. es2_xref finds one call, from Mouse_PostEvent (00055bc2).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055c6f",
+      "verified": {
+        "bytes": "00055c6f+177",
+        "sha1": "5a0d8dd0b4d5",
         "scope": "body",
         "via": "disasm"
       }
@@ -21943,7 +23308,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TSShape_Render",
-      "description": "(shape), callee-cleaned: stores the cell frame array +0x1c in 000bd912 (ES2's ShapeRender_BindCellFrames, inline), calls 00052850 with the node transforms +0x18; when the byte 00097fe8 is set calls 000529bc on the shape and draws nothing for 0, and for 2 while the render context 000bdbda's +0x208 is 1 clears +0x208 around the draw; the draw swaps the active bitmap array 000bdb5e for the shape's +0x26, calls 00052e18 on the shape and restores it. The vtable 00097fee's slot +0x20, and 000923da's. ES2's TSShape_Render (DBSIM 004909ac), which calls its accessors and ShapeInst_BindNodeTransformArray, TSBounds_ScreenVisibility and TSPartList_Render in those places.",
+      "description": "(shape), callee-cleaned: stores the cell frame array +0x1c in 000bd912 (ES2's ShapeRender_BindCellFrames, inline), calls ShapeInst_BindNodeTransformArray (00052850) with the node transforms +0x18; when the byte 00097fe8 is set calls TSBounds_ScreenVisibility (000529bc) on the shape and draws nothing for 0, and for 2 while the render context 000bdbda's +0x208 is 1 clears +0x208 around the draw; the draw swaps the active bitmap array 000bdb5e for the shape's +0x26, calls TSPartList_Render (00052e18) on the shape and restores it. The vtable 00097fee's slot +0x20, and 000923da's. ES2's TSShape_Render (DBSIM 004909ac), which calls its accessors and ShapeInst_BindNodeTransformArray, TSBounds_ScreenVisibility and TSPartList_Render in those places.",
       "source": "Herculan/docs/es1/rendering/dts-node-posing.md",
       "verified": {
         "bytes": "00062fcc+177",
@@ -24997,7 +26362,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Timer_AddCallback",
-      "description": "(count, callback), C convention: while the dword 0009bd40 is non-zero, takes the lowest clear bit of the 16-bit slot mask 0009cd64, sets it, stores count in that slot of the two dword tables 0009ce6c and 0009cdec and callback in the table 0009cd6c, and returns the slot + 1; returns 0 when 0009bd40 is 0 or every slot is taken. FrameRate_Update registers FrameRate_TimerTick with it; es2_xref also finds calls from 0004e434, SoundManager_LoadDrivers (0004ef8c), 00050d98, Time_InitSimClock (00063e64) and Ttm_AllocHandles (00069780).",
+      "description": "(count, callback), C convention: while the dword 0009bd40 is non-zero, takes the lowest clear bit of the 16-bit slot mask 0009cd64, sets it, stores count in that slot of the two dword tables 0009ce6c and 0009cdec and callback in the table 0009cd6c, and returns the slot + 1; returns 0 when 0009bd40 is 0 or every slot is taken. FrameRate_Update registers FrameRate_TimerTick with it; es2_xref also finds calls from 0004e434, SoundManager_LoadDrivers (0004ef8c), HmiTimer_Install (00050d98), Time_InitSimClock (00063e64) and Ttm_AllocHandles (00069780).",
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter",
       "verified": {
         "bytes": "0006d289+78",
@@ -25100,6 +26465,51 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0007303c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dongle_Ctor",
+      "description": "(this), callee-cleaned: returns this, or a new 1-byte object when this is null.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-dongle; ES1DBSIM disassembly at 0007303c",
+      "verified": {
+        "bytes": "0007303c+27",
+        "sha1": "1c661c09d17d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00073058",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dongle_Dtor",
+      "description": "(this, flags), callee-cleaned: deletes this when it is not null and bit 0 of flags is set.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-dongle; ES1DBSIM disassembly at 00073058",
+      "verified": {
+        "bytes": "00073058+31",
+        "sha1": "caff9e4f91a2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00073078",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dongle_Check",
+      "description": "(this), callee-cleaned: calls 00082698(1, 0x13d, 0, 0, 0, four answer pointers), the seed 0x13d and the 0 from the dwords 0009dec0 and 0009dec4, and returns 1 when the first answer is 0; then calls 00082698(2, 0x13d, 0, 0x6fc3, 0x7b7f, four answer pointers), the two passwords from 0009decc and 0009ded0, and returns 0 when the answers are 0xcb57, 0x753c, 0x648e and 0xc042 and 2 otherwise: Dongle_PrintStatus's 'okay', 'Missing' and 'wrong Password'.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-dongle; ES1DBSIM disassembly at 00073078",
+      "verified": {
+        "bytes": "00073078+174",
+        "sha1": "e2a834de0f66",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "00073234",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -25142,6 +26552,21 @@
         "sha1": "f7648bf773b4",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "000733c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_LocalPointDotNormal",
+      "description": "(point, transform, normal), C convention: subtracts the transform's int32 translation (+0x14, +0x18, +0x1c) from the int32 point, rotates the difference by the transform's int16 Q14 matrix (+0 to +0x11, each axis rounded with +0x2000 >> 14) and returns its dot product with the int16 normal in EDX:EAX. ES2's Transform_LocalPointDotNormal (DBSIM 004910b4), identical after normalisation.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py diff ES1DBSIM 000733c0 DBSIM 004910b4",
+      "verified": {
+        "bytes": "000733c0+224",
+        "sha1": "9dab90fc1453",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -28670,6 +30095,141 @@
       "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
     },
     {
+      "address": "00095d10",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Profile_Dirty",
+      "description": "byte: set by Profile_WriteString, cleared by Profile_Load; Profile_GetInt and Profile_GetString save the file in memory before loading another only while it is set.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-file-in-memory; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00095ffc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MonoComponentPanel_Labels",
+      "description": "41 pointers to the panel's label strings, the first at 00095e88.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; ES1DBSIM disassembly"
+    },
+    {
+      "address": "0009615a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_TSDetailPartSizeScaleQ10",
+      "description": "int16: the Q10 factor TSDetailPart_Render applies to a detail part's projected size, 0x400 in the image; TSDetailPart_SetSizeScale writes it.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; ES1DBSIM disassembly"
+    },
+    {
+      "address": "0009615c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_TSDetailPartBias",
+      "description": "dword: the level TSDetailPart_Render starts its walk at and subtracts from the index it reaches; TSDetailPart_SetBias writes it.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000962bc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ClassItem_ProbeHeaderSize",
+      "description": "dword: the largest header size the probe buckets' entries give, which ClassItem_RegisterProbeBucket raises and ClassItem_ReadTypeTag and ClassItem_PeekTypeTag read past the 8-byte header.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#chunk-headers; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000962dc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_DoubleX",
+      "description": "dword: while set, x positions and limits go to the driver doubled and come back halved.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000962e0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_StatusPtr",
+      "description": "dword: the status dword Mouse_Install was given, 0 until then: bit 0 set by Mouse_Install, bit 1 set by Mouse_EventHandler and cleared by Mouse_ReadState; every mouse function but Mouse_Detect does nothing while it is 0.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000962e4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_StatePtr",
+      "description": "dword: the state record Mouse_Install was given, which Mouse_ReadState fills: x at +0, y at +4, the buttons at +8.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000962e8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_X",
+      "description": "dword: the pointer's x from the last event, or from Mouse_SetPosition; the event record the callbacks get starts here, Mouse_Y at +4 and Mouse_Buttons at +8.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000962ec",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_Y",
+      "description": "dword: the pointer's y from the last event, or from Mouse_SetPosition.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000962f0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_Buttons",
+      "description": "word: the button state from the last event.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000962f2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_ButtonMapOn",
+      "description": "word: while bit 0 is set, Mouse_EventHandler maps the buttons through the table at 000967eb.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000962f4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_CallbackMask",
+      "description": "dword: a bit per callback slot in use, 32 slots.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000962f8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_Callbacks",
+      "description": "32 dwords: the callbacks Mouse_AddCallback registers, called by Mouse_EventHandler with the address of Mouse_X.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00096378",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_CallbackEvents",
+      "description": "32 bytes: each callback's event mask.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
       "address": "0009680c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -29433,6 +30993,51 @@
       "name": "Input_KeyAltHeld",
       "description": "int16: the Alt bit of the last axis key, which Input_BuildKeyboardAxes reads.",
       "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b1ed8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiTimer_Enabled",
+      "description": "dword: HmiTimer_Tick calls HmiTimer_Callback only while it is set; HmiTimer_Enable sets it to 1 and HmiTimer_Disable to 0.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b1edc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiTimer_Slot",
+      "description": "word: the Timer_AddCallback slot HmiTimer_Install keeps and HmiTimer_Remove passes on.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b1ee0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiTimer_Callback",
+      "description": "6 bytes: the far pointer HmiTimer_Install stores, the offset dword at +0 and the selector word at +4, which HmiTimer_Tick calls.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b1ee8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "HmiTimer_Busy",
+      "description": "dword: HmiTimer_Tick's reentry count, raised around its call through HmiTimer_Callback.",
+      "source": "Herculan/docs/es1/formats/sound-samples.md#the-digital-drivers-timer; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000b1f6c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_TSTransformStates",
+      "description": "52 TSTransformStates of 0x110 bytes: slot 0 the renderer state ShapeInst_BindNodeTransformArray saves, slot id + 1 the state ShapeNode_InstallTransform saves for node id.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#the-transform-states; ES1DBSIM disassembly"
     },
     {
       "address": "000b5adc",
@@ -30540,6 +32145,123 @@
       "name": "Input_ButtonLatchState",
       "description": "4 bytes: the state each latched button is masked in.",
       "source": "Herculan/docs/es1/simulation/input.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd8e2",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Profile_Buffer",
+      "description": "dword: the block Profile_Load mallocs, the file's text and 2000 bytes more.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-file-in-memory; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd8e6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Profile_FileName",
+      "description": "14 bytes before Profile_Lines: the name of the file in memory, copied whole by Profile_Load and emptied by Profile_Save.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-file-in-memory; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd8f4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Profile_Lines",
+      "description": "dword: the head of the profile's line list, 12-byte nodes {line, next, previous}.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-file-in-memory; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd8f8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Profile_TextEnd",
+      "description": "dword: where Profile_WriteString and Profile_FindOrAddSection write a new line in Profile_Buffer.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-file-in-memory; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd8fc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Profile_BufferEnd",
+      "description": "dword: the last byte of Profile_Buffer.",
+      "source": "Herculan/docs/es1/formats/profile-files.md#the-file-in-memory; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd900",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MonoComponentPanel_Block",
+      "description": "dword: the block MonoComponentPanel_Init was given, its 41 int16 values from +2.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd904",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MonoComponentPanel_Cursor",
+      "description": "dword: the value of MonoComponentPanel_Block the panel's cursor is on.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd908",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MonoComponentPanel_LabelColumn",
+      "description": "word: the column the panel prints its labels at, the cursor's '>' one to the left.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd90a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MonoComponentPanel_Row",
+      "description": "word: the row of the panel's cursor, 1 to 0x16.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd90c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "MonoComponentPanel_ValueColumn",
+      "description": "word: the column the panel prints its values at.",
+      "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-component-panel; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd90e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ShapeNodeWorldTransforms",
+      "description": "dword: the per-node transform array, 0x20 bytes per node, ShapeInst_BindNodeTransformArray binds.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd916",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ShapeNodeTransformCacheFlags",
+      "description": "0x32 bytes: a byte per state slot, set once that slot's node transform has been composed since the bind.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bda48",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ClassItem_ProbeHeader",
+      "description": "The header bytes ClassItem_ReadTypeTag and ClassItem_PeekTypeTag hand the probe functions: the 8-byte tag, then the rest from 000bda50.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#chunk-headers; ES1DBSIM disassembly"
     },
     {
       "address": "000bda98",

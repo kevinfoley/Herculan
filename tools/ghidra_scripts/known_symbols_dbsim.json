@@ -26772,8 +26772,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSAliasSolidPoly_Render",
-      "description": "The DBSIM copy of VSHELL's TSAliasSolidPoly_Render (00423816).",
-      "source": "es2_naming.py diff DBSIM 00475bc4 VSHELL 00423816: differs only in callee labels and decompiler typing; RTTI TSAliasSolidPoly vtable slot"
+      "description": "TSAliasSolidPoly vtable +0x1c. picks the face's colour pair from the surface table (DAT_006c697a, index +0xc) by TSPoly_FrontBackVisibilityTest of the normal (+4) and centre (+6): the front pair (+0, +4) when it answers 1 or more, the back pair (+8, +0xc) otherwise; draws nothing when both colours' top byte is 0x14. Otherwise stores the vertex count (+8) and first index (+0xa), projects with Poly_ProjectShapeVertices and clips to the near plane when it answers 1, and fills with PolyFill_FillBrush 0 through PolyFill_FillThenOutline_Thunk, passing 1 for a back face.",
+      "source": "es2_naming.py diff DBSIM 00475bc4 VSHELL 00423816: differs only in callee labels and decompiler typing; RTTI TSAliasSolidPoly vtable slot",
+      "verified": {
+        "bytes": "00475bc4+187",
+        "sha1": "d02e954515b1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00475c80",
@@ -26781,8 +26787,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSAliasShadedPoly_Render",
-      "description": "The DBSIM copy of VSHELL's TSAliasShadedPoly_Render (004238d9).",
-      "source": "es2_naming.py diff DBSIM 00475c80 VSHELL 004238d9: differs only in callee labels and decompiler typing; RTTI TSAliasShadedPoly vtable slot"
+      "description": "TSAliasShadedPoly vtable +0x1c. picks the face's colour pair from the surface table (DAT_006c697a, index +0xc) by TSPoly_FrontBackVisibilityTest of the normal (+4) and centre (+6): the front pair (+0, +4) when it answers 1 or more, the back pair (+8, +0xc) otherwise; draws nothing when both colours' top byte is 0x14. Otherwise stores the vertex count (+8) and first index (+0xa), first ORs the face's shade (Light_ComputeShadeForFace of the normal, negated for a back face, & 0xff) << 16 into both colours, then projects with Poly_ProjectShapeVertices and clips to the near plane when it answers 1, and fills with PolyFill_FillBrush 0 through PolyFill_FillThenOutline_Thunk, passing 1 for a back face.",
+      "source": "es2_naming.py diff DBSIM 00475c80 VSHELL 004238d9: differs only in callee labels and decompiler typing; RTTI TSAliasShadedPoly vtable slot",
+      "verified": {
+        "bytes": "00475c80+351",
+        "sha1": "a68f9e602388",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00475de0",
@@ -26790,8 +26802,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSAliasGouraudPoly_Render",
-      "description": "The DBSIM copy of VSHELL's TSAliasGouraudPoly_Render (00423a48).",
-      "source": "es2_naming.py diff DBSIM 00475de0 VSHELL 00423a48: differs only in callee labels and decompiler typing; RTTI TSAliasGouraudPoly vtable slot"
+      "description": "TSAliasGouraudPoly vtable +0x1c. picks the face's colour pair from the surface table (DAT_006c697a, index +0xc) by TSPoly_FrontBackVisibilityTest of the normal (+4) and centre (+6): the front pair (+0, +4) when it answers 1 or more, the back pair (+8, +0xc) otherwise; draws nothing when both colours' top byte is 0x14. Otherwise stores the vertex count (+8) and first index (+0xa), first computes a shade per vertex (Light_ComputeShadeForFace of each vertex normal from index +0xe, negated for a back face, & 0xff) into a stack buffer, then projects with Poly_ProjectShapeVertices and clips to the near plane with the shades (Poly_ClipRingToNearPlaneWithShade) when it answers 1, and fills with PolyFill_FillBrush 1 and the shade buffer at DAT_006c60e4 through PolyFill_FillThenOutline_Thunk, passing 1 for a back face.",
+      "source": "es2_naming.py diff DBSIM 00475de0 VSHELL 00423a48: differs only in callee labels and decompiler typing; RTTI TSAliasGouraudPoly vtable slot",
+      "verified": {
+        "bytes": "00475de0+477",
+        "sha1": "b54718194159",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00475fd8",
@@ -26898,8 +26916,14 @@
       "type": "function",
       "confidence": "high",
       "name": "TSBitmapPart_Render",
-      "description": "TSBitmapPart vtable +0x1c. Resolves the part's bitmap tag against the shape's bound DBA, then blits a screen-space quad: scale = (Radius*4 << focalShift)/depth (so one bitmap pixel spans Radius/64 world units, the focal shift cancelling), rotated by the screen angle of the model's own +Z axis, height interpolated between the bitmap's cols and rows by how much of that axis survives in the view plane, anchored so the part's Center lands on bitmap pixel (x offset, y offset*height/rows). Identified via g_TSObjectTypeRegistry tag 0x00140013 -> ctor 0048fa68 -> vtable 004a62d0.",
-      "source": "docs/retail/rendering/dts-billboards.md"
+      "description": "TSBitmapPart vtable +0x1c. Binds the part's node (TSGroup_BindNodeTransform), resolves the part's bitmap tag (+0x10) against the shape's bound DBA and draws nothing when that entry is null, when the centre's view depth is not beyond the near plane (DAT_006c60b0), or when the centre after Raster_PerspectiveDivide has an x or a y outside -1000 to 1000. Otherwise blits a screen-space quad through Bitmap_BlitRotatedUnpacked: scale = (Radius*4 << focalShift)/depth (so one bitmap pixel spans Radius/64 world units, the focal shift cancelling), rotated by the screen angle of the model's own +Z axis, height interpolated between the bitmap's cols and rows by how much of that axis survives in the view plane, anchored so the part's Center lands on bitmap pixel (x offset +0x12, read signed; y offset +0x13, read unsigned, times height/rows). Ends with Render_NoOp. Identified via g_TSObjectTypeRegistry tag 0x00140013 -> ctor 0048fa68 -> vtable 004a62d0.",
+      "source": "docs/retail/rendering/dts-billboards.md",
+      "verified": {
+        "bytes": "004762e8+796",
+        "sha1": "0f426d9bcad1",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00476604",
@@ -27046,7 +27070,13 @@
       "confidence": "high",
       "name": "TSDetailPart_Render",
       "description": "Detail-level selection. size = (radius << DAT_006c60ac) / max(Math_FastMagnitude3D(viewOffset) - radius, 1); t = Math_Q10Multiply(g_TSDetailPartSizeScaleQ10, size); i starts at the STRUCTURE DETAIL bias g_TSDetailPartBias and advances while details[i] < t; renders parts[min(i - bias, count-1)]. Thresholds are ascending and index-aligned with Parts, so part 0 is the coarsest and the last is the finest; bias 0 is MAXIMUM.",
-      "source": "docs/retail/rendering/dts-texture-binding.md"
+      "source": "docs/retail/rendering/dts-texture-binding.md",
+      "verified": {
+        "bytes": "004768bc+226",
+        "sha1": "4d514bd77c36",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004769a0",
@@ -28730,8 +28760,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_LoadResource",
-      "description": "Generic polymorphic resource loader entry point (stream, mode). Reads an 8-byte type tag via ClassItem_ReadTypeTag, looks up a handler via ClassItem_FindHandler, calls its loadFn.",
-      "source": "memory project_es2_exe_recon"
+      "description": "(stream, mode): loads one class item. Points ClassItem_CurrentFrame at a frame on its stack, keeping the previous one; reads the 8-byte type tag with ClassItem_ReadTypeTag (0047a5a8); for a tag other than -1 looks the registry entry up with ClassItem_FindHandler (0047a394) and, when there is one, calls its load function (+4) with (stream, mode); then reads to the frame's end with ClassItem_CloseItem (0047a730), puts the frame pointer back and returns the object, or 0.",
+      "source": "memory project_es2_exe_recon",
+      "verified": {
+        "bytes": "0047a038+102",
+        "sha1": "e39de5faf135",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a0a0",
@@ -28853,8 +28889,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_FindHandler",
-      "description": "Searches a registry of (idArray, count) bucket pairs for a matching type tag, returns a 12-byte {id, loadFn, extra} descriptor.",
-      "source": "memory project_es2_exe_recon"
+      "description": "(tag): walks the {entries, count} buckets ClassItem_RegisterBucket appends at 006c58b8 (count 004a16a8) and returns the first 12-byte {tag, load function, name} entry whose tag matches, or 0.",
+      "source": "memory project_es2_exe_recon",
+      "verified": {
+        "bytes": "0047a394+68",
+        "sha1": "0c329d851785",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a3d8",
@@ -28863,7 +28905,13 @@
       "confidence": "high",
       "name": "ClassItem_TryEveryLoader",
       "description": "(stream, tag): walks the 004a16ac registry buckets at 006c5958 ({entries, count}) and calls each 12-byte {id, loadFn, extra} entry's loadFn with (006c59a8, tag, stream), returning 1 at the first that returns nonzero and 0 when none does. ClassItem_PeekTypeTag and ClassItem_ReadTypeTag fall back to it for a tag no handler is registered for.",
-      "source": "DBSIM decompile at 0047a3d8"
+      "source": "DBSIM decompile at 0047a3d8",
+      "verified": {
+        "bytes": "0047a3d8+89",
+        "sha1": "fea4ff3eca67",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a434",
@@ -28931,8 +28979,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_ReadTypeTag",
-      "description": "Reads the 8-byte type tag from a resource stream, called by ClassItem_LoadResource.",
-      "source": "memory project_es2_exe_recon"
+      "description": "(stream, tag): records the stream position (vtable +4) as the start (+4) of the frame at ClassItem_CurrentFrame, sets tag to {-1, 0} and reads 8 bytes over it through the read slot (+0x18). For a tag ClassItem_FindHandler (0047a394) finds, stores the tag at the frame's +0, its end (+8) as the position after the header plus the length rounded up to even, and +0xc set when the length is even. For one it does not find, while ClassItem_ProbeBucketCount (004a16ac) is non-zero, copies the tag to ClassItem_ProbeHeader (006c59a8), reads ClassItem_ProbeHeaderSize (004a16b0) - 8 bytes more (none when that is below 9) to 006c59b0 with Stream_Read, and when ClassItem_TryEveryLoader (0047a3d8) answers non-zero stores the tag, which the probe may have rewritten, at +0, the start plus its length as the end, clears +0xc and seeks (vtable +8) back to the start. Otherwise it leaves the frame's tag and end as they were.",
+      "source": "memory project_es2_exe_recon",
+      "verified": {
+        "bytes": "0047a5a8+227",
+        "sha1": "e5105c5bad39",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a68c",
@@ -28955,8 +29009,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ClassItem_CloseItem",
-      "description": "(stream): reads one byte at a time with Stream_ReadByte until the stream position (vtable +4) reaches the end offset (+8) of the item frame ClassItem_CurrentFrame points at, or the stream status goes non-zero. ClassItem_LoadResource runs it after the item's loader, so an item whose loader read short still leaves the stream at its end. The DBSIM copy of VSHELL's ClassItem_CloseItem (ClassItem::closeItem) without its assert and overrun report.",
-      "source": "DBSIM decompile at 0047a730 and 0047a038"
+      "description": "(stream): reads one byte at a time with Stream_ReadByte until the stream position (vtable +4) reaches the end offset (+8) of the item frame ClassItem_CurrentFrame points at, or the stream status goes non-zero. ClassItem_LoadResource (0047a038) runs it after the item's loader, so an item whose loader read short still leaves the stream at its end.",
+      "source": "DBSIM decompile at 0047a730 and 0047a038",
+      "verified": {
+        "bytes": "0047a730+56",
+        "sha1": "9abd1d3880a4",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0047a768",
@@ -37808,7 +37868,13 @@
       "confidence": "high",
       "name": "Transform_LocalPointDotNormal",
       "description": "(point, transform, normal): subtracts the transform's int32 translation (+0x14/+0x18/+0x1c) from the int32 point, rotates the difference by the transform's int16 Q14 matrix (+0..+0x11, each axis rounded with +0x2000 >> 14) and returns its dot product with the int16 normal as a 64-bit value (EDX:EAX). TSBSPPart_RenderNode calls it.",
-      "source": "DBSIM decompile at 004910b4"
+      "source": "DBSIM decompile at 004910b4",
+      "verified": {
+        "bytes": "004910b4+224",
+        "sha1": "9dab90fc1453",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00491194",

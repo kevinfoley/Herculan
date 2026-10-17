@@ -18,7 +18,33 @@
 
 **Popping the last arena leaves none.** `ArenaStack_Pop` (`000554bc`) tests the depth with a signed test and stores null in the current arena when it has gone negative, so a load function's `Arena_Alloc` then falls back to `operator_new`. ES2's branch for that can never run ([arenas](../../retail/formats/dts-shape.md#arenas)).
 
-**`TSPartBase` has two vtables and two destructors**, as `TSBase` has eleven vtables ([vtables](compiler.md#vtables)). `000974aa`, which the load functions install, holds `TSPartBase_Dtor` (`0005d614`) in its destructor slot; `000960f6`, which `TSPartList_Ctor` (`00052cc0`) installs, holds `TSPartBase_DtorCopy` (`00052d68`), the same code. Their other slots hold the same functions, `000974aa`'s tag slot entering through the padding before `TSPartBase_GetClassTag`. The load functions install `TSBase`'s `0009747e`, and `TSPartList_Ctor` its `000960ca`.
+**`TSPartBase` has three vtables and three destructors**, as `TSBase` has eleven vtables ([vtables](compiler.md#vtables)). `000974aa`, which the load functions install, holds `TSPartBase_Dtor` (`0005d614`) in its destructor slot; `000960f6`, which `TSPartList_Ctor` (`00052cc0`) installs, holds `TSPartBase_DtorCopy` (`00052d68`), and `0009621a`, which `TSGroup_Ctor` (`000547b4`) and `TSGroup_Dtor` (`00054888`) install, `TSPartBase_DtorGroupCopy` (`0005485c`), both the same code. Their other slots hold the same functions, `000974aa`'s tag slot entering through the padding before `TSPartBase_GetClassTag`. The load functions install `TSBase`'s `0009747e`, and `TSPartList_Ctor` its `000960ca`.
+
+## Drawing and finding parts
+
+**The parts draw and search as ES2's do, through slots one place later**: draw `+0x20`, find `+0x24`, find a slot `+0x28` ([the draw path](../../retail/rendering/dts-node-posing.md#the-draw-path), [poly order](../../retail/rendering/dts-texture-binding.md#poly-order-within-a-group)). Each draw installs the part's own node first (`TSGroup_BindNodeTransform`, [node transforms](../rendering/dts-node-posing.md#differences-from-es2)) and ends with `Render_NoOp` (`0005298c`, `RET 8`).
+
+| Class | ES1 | ES2 (DBSIM) | Difference |
+|---|---|---|---|
+| `TSPartList` | `TSPartList_Render` (`00052e18`), `TSPartList_FindPart` (`00052e88`), `TSPartList_FindPartSlot` (`00052f0c`) | `004766fc`, `00476744`, `00476784` | none |
+| `TSCellAnimPart` | `TSCellAnimPart_Render` (`00052fd0`) | `004767e4` | the cell frames at `000bd912` |
+| `TSDetailPart` | `TSDetailPart_Render` (`000530b0`) | `004768bc` | none; `g_TSDetailPartSizeScaleQ10` is the `int16` at `0009615a`, `0x400` in the image, set only by `TSDetailPart_SetSizeScale` (`00053094`, no reference found by `es2_xref.py`), and `g_TSDetailPartBias` the dword at `0009615c` ([level selection](../../retail/rendering/dts-texture-binding.md#tsdetailpart-level-selection-and-structure-detail)) |
+| `TSBSPPart` | `TSBSPPart_Render` (`00053364`), `TSBSPPart_RenderNode` (`00053240`) | `00476b0c`, `00476a1c` | no depth-buffer flag, below |
+| `TSBitmapPart` | `TSBitmapPart_Render` (`00052b90`) | `004762e8` | upright and unsquashed, below |
+
+**A BSP part's walk has no depth-buffer flag.** ES2's chooses the order of a node's two sides by whether the eye is behind its plane, compared with `maybe_g_DepthBufferEnabled`; ES1's has only the comparison, and takes the front entry (`+0xa`) first when the eye is behind the plane and the back (`+0xc`) first otherwise, ES2's order with the flag at its image value of 0 ([child selection](../../retail/rendering/dts-texture-binding.md#tsbsppart-child-selection)). The eye is copied to `000b56ac`, and a node with a transform is tested through `Transform_LocalPointDotNormal` (`000733c0`), ES2's (`004910b4`).
+
+**A bitmap part is drawn upright and unsquashed, and not at all once it would be 200 pixels wide or high.** ES1's `TSBitmapPart_Render` takes the bitmap and the scale *s* as ES2's does ([the billboard](../../retail/rendering/dts-billboards.md#tsbitmappart_render-004762e8)), and then draws it with `Bitmap_BlitScaled` (`00067178`), flags 0, at {`Math_Q8Multiply`(*s*, columns), `Math_Q8Multiply`(*s*, rows)}, its top-left corner the projected centre less `Math_Q8Multiply`(*s*, x offset) and `Math_Q8Multiply`(*s*, y offset), both offsets read signed. It draws only when both sizes are below 200. It neither turns the bitmap with the model's Z axis nor shortens it as that axis points at the viewer, reads the y offset signed where ES2's reads it unsigned, and has no test of the divided centre against ±1000; a null bitmap returns without `Render_NoOp`.
+
+## Chunk headers
+
+The chunk framing is ES2's ([chunk headers](../../retail/formats/dts-shape.md#chunk-headers)), calling the stream's slots directly as the class reads do ([above](#differences-from-es2)) and taking the arguments in reverse: `ClassItem_ReadTypeTag` (`00055754`) `(tag, stream)`, `ClassItem_OpenItemForWrite` (`000556cc`) `(length, tag, stream)`, `ClassItem_TryEveryLoader` (`00055568`) `(tag, stream)`, which passes a probe `(stream, tag, header)`. The registry's buckets are at `000bd958` (count `000962b4`), the probe buckets at `000bd9f8` (count `000962b8`), `ClassItem_ProbeHeaderSize` at `000962bc` and `ClassItem_ProbeHeader` at `000bda48`; `es2_xref.py` finds no reference to `ClassItem_RegisterProbeBucket` (`00055170`). `ArenaStack_PushAlloc` (`00055468`), with no reference found either, carves its block with `Arena_Alloc` where ES2's calls `Arena_AllocDup`.
+
+## Where the object files start and end
+
+**`00052814`–`0005513b`**, between the zero fill after `VGA8_SetPageOrigin` ([the page routines](../rendering/screen-pages.md#the-simulators-own-page-routines)) and the two zero bytes after `TSAliasGouraudPoly_Render`'s `RET 4` at `00055137`, holds in order: the part draws and finds and the transform states (`00052814`–`000534ab`), with the static initializer and exit routine at `000533a8` and `000533c0` before `TSTransformState_Ctor`; `VGA_8`'s bitmap fill and `Raster_FillRect` (`000534ac`–`00054033`); `TSNullObj_Render` and `TSPoly_Render` (`00054034`, `00054038`, each a `RET 4`); the poly renders, `TSGroup` and `TSBSPGroup`, and the `TSAlias*Poly` renders ([poly types](../rendering/polygon-shading.md#the-four-poly-types)). ES2's counterpart, `DBSIM 004758c8`–`00476bc0`, runs from the group renders to `TSTransformState_Ctor`. The code holds two copies of `TSPartBase`'s table, `000960f6` and `0009621a`, with no zero fill between their users, so whether it is one object file is [Open](#open).
+
+**`0005513c`–`0005617f`**, from the zero bytes after `00055137` to the three after `Volume_FindEntry`'s `RET 0xc` at `0005617a`, holds the class-item and arena functions (`0005513c`–`00055977`), [the mouse driver](../simulation/input.md#the-mouse-driver) (`00055978`–`00055d1f`) and the volume class (`00055d20`–`0005617f`, [streams](streams.md#the-volume-class)).
 
 ## Functions
 
@@ -58,8 +84,13 @@
 | `ClassItem_RegisterBucket` | `0005513c` | the buckets at `000bd958`, their count at `000962b4` |
 | `ClassItem_StoreItem`, `ClassItem_ItemTotalSize`, `ClassItem_DebugPrintType` | `00055248`, `00055610`, `00055648` | |
 | `__vec_delete` | `00061088` | the Symantec runtime's, from `vecnew.cpp` |
-
-The draw and find functions of `TSBitmapPart`, `TSPartList`, `TSCellAnimPart`, `TSDetailPart` and `TSBSPPart` are among the functions from `00052990` to `000533d8`.
+| `Render_NoOp`, `TSBitmapPart_Render` | `0005298c`, `00052b90` | [drawing parts](#drawing-and-finding-parts) |
+| `TSPartList_Render`, `TSPartList_FindPart`, `TSPartList_FindPartSlot`, `TSCellAnimPart_Render` | `00052e18`, `00052e88`, `00052f0c`, `00052fd0` | `ES1GO` `0005980c`, `0005987c`, `00059900`, `000599c4` |
+| `TSDetailPart_SetSizeScale`, `TSDetailPart_Render` | `00053094`, `000530b0` | `TSDetailPart_SetSizeScale` has no Ghidra function |
+| `TSBSPPart_RenderNode`, `TSBSPPart_Render`, `Transform_LocalPointDotNormal` | `00053240`, `00053364`, `000733c0` | `ES1GO` `00059c44`, `00059d68` for the first two |
+| `TSPartBase_DtorGroupCopy` | `0005485c` | |
+| `ClassItem_RegisterProbeBucket`, `ArenaStack_PushAlloc`, `ClassItem_FindHandler`, `ClassItem_TryEveryLoader` | `00055170`, `00055468`, `000554e4`, `00055568` | [chunk headers](#chunk-headers); the last two entered also at their padding, `000554e2` and `00055567` |
+| `ClassItem_OpenItemForWrite`, `ClassItem_ReadTypeTag`, `ClassItem_CloseItemForWrite`, `ClassItem_CloseItem` | `000556cc`, `00055754`, `00055860`, `00055920` | |
 
 ## Globals
 
@@ -70,7 +101,9 @@ The draw and find functions of `TSBitmapPart`, `TSPartList`, `TSCellAnimPart`, `
 
 ## Open
 
-- **Open:** the draw and find functions from `00052990` to `000533d8`: `TSBitmapPart`'s draw (`00052b90`), `TSPartList`'s (`00052e18`, `00052e88`, `00052f0c`), `TSCellAnimPart`'s (`00052fd0`), `TSDetailPart`'s (`000530b0`) and `TSBSPPart`'s (`00053240`, `00053364`), and `000529bc`, `00052890` and `0005298c`, which they call.
+- **Open:** how many `TSBSPPart` and `TSBSPGroup` chunks ES1's volumes hold, which decides whether the walk's difference from ES2's shows: neither `HercWorks.Query` nor `HercWorks.Core` lists shape chunks by class.
+- **Open:** what a bitmap part looks like in ES1 from close by, where ES2's would be drawn and ES1's is not once it reaches 200 pixels; a retail check is a weapon's impact or an explosion sprite seen from a few meters.
+- **Open:** whether `00052814`–`0005513b` is one object file, with two copies of `TSPartBase`'s table, and whether `0005513c`–`0005617f` is one, the class items, the hand-written mouse code and the volume class; no assert names a source file in either.
 - **Open:** the `ClassItem` vtable `0009745a`, which the load functions store before `TSBase`'s.
 - **Open:** what `operator_delete` does with the address `TSBSPPart_Dtor` and `TSShape_Dtor` pass it, 4 bytes before an arena block, and whether a loaded `TSBSPPart` or `TSShape` is ever destroyed.
 - **Open:** no reference to `Shape_LoadDtsCopy` found by `es2_xref.py`.

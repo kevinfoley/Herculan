@@ -39,7 +39,7 @@ The shell's display, the object at `000ab616`, is made by `Shell_CreateDisplay` 
 
 The two are ES2's `Region_CopyRectBetweenPages` (DBSIM `00487ad0`) and `Region_CopySpansBetweenPages` (DBSIM `00487c01`), statement for statement.
 
-`VGA8_CopyRectBetweenPages` (`000733bc`), `VGA_8`'s slot 20, given an inclusive rect and an offset, copies the rect of the source page, moved back by the offset, onto the rect of the draw page. When the two pages' pans differ in their low two bits, (*offset.x* + `00088ed4` − `00088ed0`) & 3 not 0, it copies row by row: for each row *y* the routine at slot 21 (`00086604`) reads the source row *y* − *offset.y*, columns *x0* − *offset.x* to *x1* − *offset.x*, into a stack buffer, and slot 22 (`00086608`) writes it to row *y*, columns *x0* to *x1*. Otherwise it copies through the VGA latches, in write mode 1 (graphics controller register 5 set to `0x41`, put back to `0x40` after), a byte per four columns with the planes the edges cover enabled: a rect whose two ends fall in one group of four columns with the plane mask from the 4 × 4 table `00088ee0`, any other as its partial left group (`00088ef0`), its whole groups with all four planes, and its partial right group (`00088ef4`), the row stride being `0008884a`. In the one-group case it reads source row *y* + *offset.y*, where the other cases read *y* − *offset.y*; every copy in this doc passes the offset (0, 0).
+`VGA8_CopyRectBetweenPages` (`000733bc`), `VGA_8`'s slot 20, given an inclusive rect and an offset, copies the rect of the source page, moved back by the offset, onto the rect of the draw page. When the two pages' pans differ in their low two bits, (*offset.x* + `00088ed4` − `00088ed0`) & 3 not 0, it copies row by row: for each row *y* the routine at slot 21 (`00086604`, `VGA_8`'s `VGA8_ReadRow`) reads the source row *y* − *offset.y*, columns *x0* − *offset.x* to *x1* − *offset.x*, into a stack buffer, and slot 22 (`00086608`, `VGA8_WriteRow`) writes it to row *y*, columns *x0* to *x1*. Otherwise it copies through the VGA latches, in write mode 1 (graphics controller register 5 set to `0x41`, put back to `0x40` after), a byte per four columns with the planes the edges cover enabled: a rect whose two ends fall in one group of four columns with the plane mask from the 4 × 4 table `00088ee0`, any other as its partial left group (`00088ef0`), its whole groups with all four planes, and its partial right group (`00088ef4`), the row stride being `0008884a`. In the one-group case it reads source row *y* + *offset.y*, where the other cases read *y* − *offset.y*; every copy in this doc passes the offset (0, 0).
 
 ## Dirty boxes
 
@@ -129,6 +129,26 @@ Because *f_x* keeps its new value, a row cut at its left, *L* + *l* not 0, start
 
 The cockpit's script draws add their boxes with delay 1. `TtmScript_FixRect` (`ES1DBSIM 00079c38`) passes `DirtyBox_Add` the rect's *x0* and *y0* as the box's corner and its *x1* and *y1* as its width and height, with delay 0.
 
+### The simulator's own page routines
+
+**Eight of the simulator's `VGA_8` routines are not in its library but among its game objects, and four of them address video memory as 640 pixels a row.** `VGA_8`'s table (`ES1DBSIM 000a7b70`) holds them in slots 15, 16, 17, 18 and 20 to 23; `VGA_4`'s (`000a7ae0`) holds the same slots 15 to 18. Each is the shell's routine with the simulator's globals unless a difference is given:
+
+| Slot | `ES1DBSIM` | The shell's (`ES1GO`) | Difference |
+|---|---|---|---|
+| 15 | `VGA8_SetPageOrigin` (`0005279d`) | `00070313` | none; the row table is `0009df8e` |
+| 16, 17 | `VGA8_SetSourcePage`, `VGA8_SetDrawPage` (`00052644`, `0005266a`) | `000701d4`, `000701f5` | each also stores the page ([above](#the-simulator)) |
+| 18 | `VGA8_ShowPage` (`00052690`) | `00070216` | while the word `000bda96` is 1 it neither waits for the next retrace nor writes the pan; it also stores the page at `00098dd2`, the offset at `0009e608` and the pan >> 1 at `0009e614` |
+| 20 | `VGA8_CopyRectBetweenPages` (`00051c3c`) | `000733bc` | a row's offset is the row × `0xa0` |
+| 21 | `VGA8_ReadRow` (`00052254`) | `000739e8` | the same |
+| 22 | `VGA8_WriteRow` (`00052138`) | `000738ca` | the same |
+| 23 | `VGA8_WriteRowTransparent` (`00051f1c`) | `000736ac` | the same |
+
+**Slots 21 to 23** take (pixels, *y*, *x0*, *x1*), C convention, and work a plane at a time on every fourth pixel. `VGA8_ReadRow` reads row *y*, columns *x0* to *x1*, of the source page into the pixels through the graphics controller's read map select (port `3CE` index 4). `VGA8_WriteRow` writes the pixels to that run of the draw page through the sequencer's map mask. `VGA8_WriteRowTransparent` writes them leaving a pixel whose byte is 0 as it was: in clip mode 2 (`+0x204` of the clip block `00098d64` points at) once for each region of the block's list that holds row *y*, cut to it, a rect region (type 0) to its columns and a span region (type 2) to its span on the row, passing over any other type; in any other mode once, uncut.
+
+Where the shell's routines take a row's offset from the row table, which the driver's slot 7 fills in steps of its width argument / 4, the simulator's four multiply the row by `0xa0`, 160 bytes. The table's step for a 320-pixel display is 80 ([the display drivers](polygon-shading.md#the-display-drivers)); what slot 7 is given in the simulator, and so whether the two agree, is [Open](#open).
+
+The code runs from `00051c3c` to `00052813` in two pieces. `VGA8_CopyRectBetweenPages` closes the code from `00050e20` ([profile files](../formats/profile-files.md#where-the-object-file-starts-and-ends)); the other three row routines, `00051f1c`–`000523a3`, stand between two zero fills. From `000523a4` to `00052813`, between zero fills at `000523a1` and `00052811`, is ES2's `DBSIM 0045c61c`–`0045c860` in order: `Vga_WaitVerticalRetrace` (`000523a4`), `Vga_WaitRetraceEnd` (`000523ae`), the monochrome component panel (`000523b8`–`00052643`, [the component panel](../simulation/debug-monitor.md#the-component-panel)), and then the four page routines.
+
 ## Functions
 
 | ES1GO | Address | Notes |
@@ -145,13 +165,16 @@ The cockpit's script draws add their boxes with delay 1. `TtmScript_FixRect` (`E
 | `Bitmap_BlitScaledClipDispatch`, `Raster_FillSpanList` | `00065f34`, `0006a1ac` | |
 | `VGA8_SetSourcePage`, `VGA8_SetDrawPage`, `VGA8_ShowPage`, `VGA8_SetPageOrigin` | `000701d4`, `000701f5`, `00070216`, `00070313` | |
 | `VGA8_CopyRectBetweenPages` | `000733bc` | |
+| `VGA8_WriteRowTransparent`, `VGA8_WriteRow`, `VGA8_ReadRow` | `000736ac`, `000738ca`, `000739e8` | slots 23, 22 and 21 ([the simulator's](#the-simulators-own-page-routines), but for the row table) |
 | `VGA8_BlitBitmapScaled`, `VGA8_BlitScaledRow`, `VGA8_ScaleStepSetup` | `00074b18`, `00074cbd`, `00074f77` | the last two take their arguments in registers and the caller's frame |
 
 ## Open
 
 - **Open:** whether a mission's dirty boxes are ever copied, and what bounds the list if they are not: `es2_xref.py` finds no reference to the simulator's `DirtyList_Flush` (`ES1DBSIM 00083e80`). The boxes of a script redrawing the same frames merge.
-- **Open:** the simulator's `VGA_8` slot 29 (`ES1DBSIM 0008c744`, with `0008c8d0` and `0008cb75`) is not the shell's code: its instructions differ in length and the decompile handles the flags elsewhere. Its slot 18 (`ES1DBSIM 00052690`) is the shell's `VGA8_ShowPage` with a test of a word and a store more.
-- **Open:** what the routines at slots 21 and 22 (`00086604`, `00086608`; `VGA_8`'s `000739e8` and `000738ca`) and 30 and 31 (`00086628`, `0008662c`; `00070388` and `0007045f`) do, and the bytes `00084428` and `00084452` `VGA8_ShowPage` swaps round the second pair; what sets `00084472`, `00084476` and `00084424`.
+- **Open:** the simulator's `VGA_8` slot 29 (`ES1DBSIM 0008c744`, with `0008c8d0` and `0008cb75`) is not the shell's code: its instructions differ in length and the decompile handles the flags elsewhere.
+- **Open:** what the routines at slots 30 and 31 (`00086628`, `0008662c`; `00070388` and `0007045f`) do, and the bytes `00084428` and `00084452` `VGA8_ShowPage` swaps round them; what sets `00084472`, `00084476` and `00084424`.
+- **Open:** the width the simulator's display passes `VGA_8`'s slot 7 (`ES1DBSIM 0008b39c`), which sets the row table's step: the simulator's slots 20 to 23 take a row as 160 bytes whatever it is; and whether a mission calls them at all. A retail check: a breakpoint on `ES1DBSIM 00051c3c` during a mission.
+- **Open:** what sets the word `000bda96` that makes the simulator's `VGA8_ShowPage` skip the pan; `CockpitView_ProcessViewCommand` stores 0 there after its retrace wait ([the view command](../simulation/cockpit-views.md#cockpitview_processviewcommand-000226f0)).
 - **Open:** `Shell_PresentFrame`'s steps 3, 5 and 7: `00020a70`, `0004bbe9`, `00050ed4`, `00027bc9` and `00051037`, and the bytes `0007fcd5`, `0007fcd6`, `0007fcd7` and `0007fd07`.
 - **Open:** `Shell_CreateDisplay`'s `0005a388`, `0005a5d0`, `0005a77c` and `000512a0`, the `0x20` bytes at `+0x64`, and what `00045d24`, which calls it and registers the frame tick, is.
 - **Open:** which screens `0002141c`, `000217a9`, `00021a6e`, `0003b138`, `0003c1b7`, `0001907e`, `00019b54`, `0001c067`, `0001c270` and `0003c7d8` are, which add dirty boxes or fix rects.

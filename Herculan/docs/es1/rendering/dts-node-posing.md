@@ -12,9 +12,15 @@
 
 **A seek rounds where ES2's truncates.** `AnimThread_SeekToPosition` scales the position with ES1's `Math_Q14Multiply`, which rounds to nearest where ES2's truncates ([the primitives](../simulation/fixed-point-math.md#the-primitives)), so a seek can land one animation tick further into the sequence than ES2's does for the same position.
 
-**The shape renders inline three of ES2's calls.** `TSShape_Render` (`00062fcc`) and `TSShapeInstance_Render` (`00063148`) store the cell frames to `000bd912`, read the render context from `000bdbda` and swap the active bitmap array at `000bdb5e` inline, where ES2's call `ShapeRender_BindCellFrames`, `Raster_GetRenderContext` and the bitmap-array accessors ([drawing a shape](../../retail/rendering/dts-node-posing.md#drawing-a-shape)). They call `00052850`, `000529bc` and `00052e18` where ES2's call `ShapeInst_BindNodeTransformArray`, `TSBounds_ScreenVisibility` and `TSPartList_Render`; the last two are among the part functions [`../formats/dts-shape.md`](../formats/dts-shape.md#open) lists. Their test runs while the byte `00097fe8` is set, which is 1 in the image; a grep of the disassembly for its address finds only these two reads.
+**The shape renders inline three of ES2's calls.** `TSShape_Render` (`00062fcc`) and `TSShapeInstance_Render` (`00063148`) store the cell frames to `000bd912`, read the render context from `000bdbda` and swap the active bitmap array at `000bdb5e` inline, where ES2's call `ShapeRender_BindCellFrames`, `Raster_GetRenderContext` and the bitmap-array accessors ([drawing a shape](../../retail/rendering/dts-node-posing.md#drawing-a-shape)). The calls they keep are ES2's: `ShapeInst_BindNodeTransformArray` (`00052850`), `TSBounds_ScreenVisibility` (`000529bc`) and `TSPartList_Render` (`00052e18`, [drawing parts](../formats/dts-shape.md#drawing-and-finding-parts)). Their screen test runs while the byte `00097fe8` is set, which is 1 in the image; a grep of the disassembly for its address finds only these two reads.
+
+**A node's transform is installed as ES2's does it** ([the draw path](../../retail/rendering/dts-node-posing.md#the-draw-path)): every part's draw starts with `TSGroup_BindNodeTransform` (`00052890`), which passes the part's transform id to `ShapeNode_InstallTransform` (`000528ac`), and the two take their arguments in reverse, `(part, out)` and `(part, id, out)` in stack order. `ShapeNode_InstallTransform` stores at `out + 0x20` the state slot installed before it, or −1 when it changes nothing. The globals are `g_ShapeNodeWorldTransforms` (`000bd90e`), the flag block `g_ShapeNodeTransformCacheFlags` (`000bd916`, the flag for node *id* at `000bd917` + *id*), the installed slot `000bd948` and `g_ShapeObjectModelTransformPtr` (`000b1f8c`), slot 0's `+0x20`. `TSBounds_ScreenVisibility` keeps its width and factor at `000960a0` and `000b56b8`.
 
 **ES1's shape-instance constructor fills no static transform.** ES2's also sets a static transform at `DBSIM 006c572c` to the identity on every construction; ES1's sets only the instance's world slot 0.
+
+## The transform states
+
+`g_TSTransformStates` (`000b1f6c`) is ES2's 52 states of `0x110` bytes, slot 0 the object's and slot *id* + 1 node *id*'s. `TSTransformState_StaticInit` (`000533a8`, static constructor table entry `000adc6c`) builds them with `__vec_ctor` and `TSTransformState_Ctor` (`000533d8`, passed as its padding entry `000533d7`), which allocates for itself and builds the state's ten `TSContext`s at `+0x34` with `__vec_ctor`; ES2's builds them with `Rtl_VectorNew`. `TSTransformState_StaticDtor` (`000533c0`, exit table entry `000adccc`) destroys them with `__vec_dtor` and `TSTransformState_Dtor` (`00052814`), which destroys the ten contexts through `TSTransformState_ContextDtor` (`00052844`), a jump to slot `+4` of the vtable at each context's `+0x12`. The initializer and its exit routine stand in the middle of their code, not at its end ([where the object files start and end](../formats/dts-shape.md#where-the-object-files-start-and-end)).
 
 ## Functions
 
@@ -42,6 +48,10 @@
 | `Anim_BlendKeyframeTransforms` | `000763ec` | |
 | `TSShape_Render` | `00062fcc` | `TSShape`'s vtable `00097fee` slot `+0x20` ([`../formats/dts-shape.md`](../formats/dts-shape.md)) |
 | `TSShapeInstance_Dtor`, `TSShapeInstance_Render` | `00063110`, `00063148` | the vtable `00098072`; `ANShapeInstance_Dtor` and `ANShapeInstance_Render` call them as their base's |
+| `ShapeInst_BindNodeTransformArray`, `TSGroup_BindNodeTransform`, `ShapeNode_InstallTransform` | `00052850`, `00052890`, `000528ac` | ES2's `00475fd8`, `00476014`, `00476030`; `ES1GO` `000592d8`, `00059318`, `00059334` |
+| `TSBounds_ScreenVisibility` | `000529bc` | ES2's `0047613c` |
+| `TSTransformState_Dtor`, `TSTransformState_ContextDtor` | `00052814`, `00052844` | `TSTransformState_ContextDtor` has no Ghidra function |
+| `TSTransformState_StaticInit`, `TSTransformState_StaticDtor`, `TSTransformState_Ctor` | `000533a8`, `000533c0`, `000533d8` | ES2's `00476b64`, `00476ba4`, `00476bc0`; the first two have no Ghidra function; `ES1GO` has the destructor and constructor at `0005929c` and `00059ddc` |
 
 ## Open
 
