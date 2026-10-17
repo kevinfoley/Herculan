@@ -79,7 +79,7 @@ public static class ScriptDatLint {
 			int gap = Array.FindIndex(action.AreaRefs, value => value < 0);
 			if (gap >= 0 && action.AreaRefs.Skip(gap).Any(value => value >= 0)) {
 				findings.Add(new(ScriptBlock.Actions, i,
-					$"Action {i} names a trigger area after its first unset slot ({gap}); DBSIM never tests it."));
+					$"Action {i} references a trigger area after its first unset slot ({gap}); DBSIM never tests it."));
 			}
 		}
 
@@ -146,7 +146,7 @@ public static class ScriptDatLint {
 
 			if (objective.SubjectKind is < 0 or > 3) {
 				findings.Add(new(ScriptBlock.Objectives, i,
-					$"Objective {i} names subject kind {objective.SubjectKind}, which has no case: it answers whatever the record before it answered."));
+					$"Objective {i} has subject kind {objective.SubjectKind}, which has no case: it answers whatever the record before it answered."));
 			}
 		}
 
@@ -167,7 +167,7 @@ public static class ScriptDatLint {
 		// route and reads that order's +0x08 with no null test (004260f6).
 		if (group.HeadingRef < 0 && !slotZeroOrder) {
 			findings.Add(new(ScriptBlock.Groups, i,
-				$"Group {i} names neither a heading nor a slot-0 order; DBSIM faults loading it."));
+				$"Group {i} has neither a heading nor a slot-0 order; DBSIM faults loading it."));
 		}
 
 		// Record 0 is the player squad placeholder: DBSIM never reads its member list (it fills the

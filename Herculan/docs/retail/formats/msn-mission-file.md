@@ -141,7 +141,7 @@ Ordered waypoint list, heavily referenced by row #15 (470 real instances across 
 | nested | ref→row #6 | 2 bytes/entry; resolved to row #6 GUIDs |
 
 
-Spatial validation: consecutive waypoints have median distance 191,245 units, against 323,406 for every pair of row-6 points in the same mission, confirming authored path structure. 109 of the 446 records with two or more waypoints (24%) form closed loops (first = last waypoint).
+Spatial validation: consecutive waypoints have median distance 191,245 units, against 323,406 for every pair of row-6 points in the same mission, confirming authored path structure. 109 of the 446 records with two or more waypoints (24%) form closed loops (first = last waypoint), every one by naming the same row-6 GUID first and last. 13 records list a single waypoint, 6 of them the route of a group's slot-0 order, and `C5_05`'s route 44, a patrol, lists one point twice: a closed route of one waypoint (`HercWorks.Query routes`).
 
 ## Row #15 field decode — the order record (`DAT_00470658`, 22 bytes/record)
 

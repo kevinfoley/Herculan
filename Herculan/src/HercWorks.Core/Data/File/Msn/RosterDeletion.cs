@@ -104,7 +104,7 @@ public static class RosterDeletion {
 	public static MsnEdit Delete(MissionDocument document, int row, short guid) {
 		var check = Check(document, row, guid);
 		if (!check.Allowed) {
-			throw new InvalidOperationException($"Row {row}'s GUID {guid} is named or needed by the mission, or is in the player's squad.");
+			throw new InvalidOperationException($"Row {row}'s GUID {guid} is referenced or needed by the mission, or is in the player's squad.");
 		}
 
 		return document.Change(() => Take(document, row, guid, check));

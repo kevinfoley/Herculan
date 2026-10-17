@@ -118,7 +118,7 @@ internal sealed class ObjectDeleter {
 	public string? Delete(SceneObject placed) {
 		var blockers = BlockersOf(placed);
 		if (!blockers.None) {
-			return blockers.Fixed ?? "the mission names it or needs it; its Properties view says what.";
+			return blockers.Fixed ?? "the mission references or needs it; its Properties view says what.";
 		}
 
 		var source = _source!;

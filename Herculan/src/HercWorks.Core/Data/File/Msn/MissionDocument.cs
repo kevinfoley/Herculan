@@ -356,8 +356,7 @@ public sealed class MissionDocument {
 	/// variant supplies, that alternative, which every route drawing it shares.
 	/// </summary>
 	public MsnEdit SetWaypoint(short route, int entry, short point) {
-		var source = SlotOf(RouteRow, route).Word(RouteListWord);
-		var record = (WaypointGroup)RecordAt(source.CopiedFrom ?? source.Record)!;
+		var record = ListRecord(route);
 		if (entry < 0 || entry >= record.Waypoints.Length) {
 			throw new InvalidOperationException($"Route {route}'s list has no entry {entry}.");
 		}
@@ -366,6 +365,29 @@ public sealed class MissionDocument {
 		record.Waypoints[entry] = point;
 		return End(before);
 	}
+
+	/// <summary>
+	/// Replaces route GUID <paramref name="route"/>'s whole waypoint list with <paramref name="waypoints"/>, row-6 GUIDs in
+	/// route order, in the record whose list the route holds, as <see cref="SetWaypoint"/> chooses it.
+	/// </summary>
+	public MsnEdit SetWaypoints(short route, short[] waypoints) {
+		var record = ListRecord(route);
+		var before = Begin(RouteRow);
+		record.Waypoints = (short[])waypoints.Clone();
+		return End(before);
+	}
+
+	/// <summary>
+	/// A copy of the waypoint list route GUID <paramref name="route"/> holds in the generation: the row-6 GUIDs of the record
+	/// <see cref="SetWaypoints"/> writes, entry for entry as <c>script.dat</c> block 3 lists them.
+	/// </summary>
+	public short[] Waypoints(short route) => (short[])ListRecord(route).Waypoints.Clone();
+
+	/// <summary>
+	/// Whether a variant supplies route GUID <paramref name="route"/>'s list, so that the list is a GUID <c>-1</c>
+	/// alternative every route drawing it shares, and an edit of it changes them all.
+	/// </summary>
+	public bool WaypointsShared(short route) => SlotOf(RouteRow, route).Word(RouteListWord).CopiedFrom != null;
 
 	/// <summary>
 	/// Appends <paramref name="record"/> to row <paramref name="row"/> under a new GUID, <paramref name="guid"/>: the row's
@@ -431,6 +453,13 @@ public sealed class MissionDocument {
 		_slots.TryGetValue((row, guid), out var slot)
 			? slot
 			: throw new InvalidOperationException($"No record of row {row} with GUID {guid} reaches script.dat.");
+
+	// The row-8 record whose waypoint list route GUID <route> holds: its last surviving record, or the variant alternative
+	// it copies the list from.
+	private WaypointGroup ListRecord(short route) {
+		var source = SlotOf(RouteRow, route).Word(RouteListWord);
+		return (WaypointGroup)RecordAt(source.CopiedFrom ?? source.Record)!;
+	}
 
 	private IEnumerable<MapObject> Records(int row) => MsnRows.Get(Mission, row).Cast<MapObject>();
 

@@ -27,6 +27,7 @@ internal sealed class PropertiesPanel {
 	private readonly ObjectDeleter _deleter;
 	private readonly SquadMachinePanel _machine;
 	private readonly MissionView _mission;
+	private readonly RouteView _route;
 	private readonly StringFile? _strings;
 
 	// A position being typed, and the object it is for, until its field lets go.
@@ -34,7 +35,8 @@ internal sealed class PropertiesPanel {
 	private Vec3i _draft;
 
 	public PropertiesPanel(MissionIndex index, SelectionState selection, PointMover mover, SideChanger sides,
-			ObjectDeleter deleter, SquadMachinePanel machine, MissionView mission, StringFile? strings) {
+			ObjectDeleter deleter, SquadMachinePanel machine, MissionView mission, RouteEditor routes, RoutePlacing placing,
+			StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -42,6 +44,9 @@ internal sealed class PropertiesPanel {
 		_deleter = deleter;
 		_machine = machine;
 		_mission = mission;
+		_route = new RouteView(index, selection, mover, routes, placing, GroupLink,
+			(names, ownRoute) => References(names, ownRoute));
+		machine.References = names => References(names);
 		_strings = strings;
 	}
 
@@ -71,7 +76,7 @@ internal sealed class PropertiesPanel {
 				DrawAction(action.Action);
 				break;
 			case RouteSelection route:
-				DrawRoute(route);
+				_route.Draw(route);
 				break;
 			case ObjectiveSelection objective:
 				DrawObjective(objective.Objective);
@@ -143,8 +148,8 @@ internal sealed class PropertiesPanel {
 	}
 
 	/// <summary>
-	/// A Delete button (<see cref="ObjectDeleter"/>), or why the object cannot be deleted, with what names or needs it as
-	/// links. The delete itself waits for the frame's ImGui to be rendered (<see cref="ObjectDeleter.Request"/>).
+	/// A Delete button (<see cref="ObjectDeleter"/>), or why the object cannot be deleted, with what references or needs it
+	/// as links. The delete itself waits for the frame's ImGui to be rendered (<see cref="ObjectDeleter.Request"/>).
 	/// </summary>
 	private void DeleteControls(SceneObject sel) {
 		ImGui.Separator();
@@ -156,9 +161,9 @@ internal sealed class PropertiesPanel {
 
 			foreach (var (group, _) in blockers.RemovedGroups.Where(removed => removed.Group >= 0)) {
 				ImGui.PushID($"goes{group}");
-				ImGui.TextWrapped("It is the last member of");
+				ImGui.AlignTextToFramePadding();
+				ImGui.Text("Deleted with it, as it is the last member:");
 				GroupLink(group);
-				ImGui.TextWrapped("which is deleted with it.");
 				ImGui.PopID();
 			}
 
@@ -171,14 +176,50 @@ internal sealed class PropertiesPanel {
 		}
 
 		ImGui.PushID("delete");
-		ImGui.TextWrapped("Cannot be deleted while these name or need it:");
-		Namers(blockers.Object, "it");
-		foreach (int action in blockers.OwnActions) {
-			ImGui.PushID($"own{action}");
+		ImGui.TextWrapped("Cannot be deleted while these reference or need it:");
+		References(blockers.Object, fired: blockers.OwnActions);
+		foreach (var (group, names) in blockers.RemovedGroups.Where(removed => removed.Names.Any)) {
+			ImGui.PushID($"last{group}");
+			ImGui.Spacing();
+			if (group >= 0) {
+				ImGui.TextWrapped("It is the last member of its group, which would go with it. These reference the group:");
+			} else {
+				ImGui.TextWrapped("It is the last member of a group this state of the mission leaves out, which would go "
+					+ "with it. These reference the group:");
+			}
+
+			References(names);
+			ImGui.PopID();
+		}
+
+		ImGui.PopID();
+	}
+
+	/// <summary>
+	/// What references something, one short line per record: an objective or an action by its link alone, and a group by
+	/// its link and what of it references, its orders (<paramref name="names"/>) and its own route field
+	/// (<paramref name="ownRoute"/>, block-11 indices) on its one line. <paramref name="fired"/> are the actions it fires
+	/// when engaged or defeated, by block-5 index, -1 for one this state of the mission leaves out.
+	/// </summary>
+	private void References(DeleteNamers names, IReadOnlyList<int>? ownRoute = null, IReadOnlyList<int>? fired = null) {
+		foreach (int objective in names.Objectives) {
+			ImGui.PushID($"objective{objective}");
+			Link($"Objective {objective}", new ObjectiveSelection(objective));
+			ImGui.PopID();
+		}
+
+		foreach (int action in names.Actions) {
+			ImGui.PushID($"target{action}");
+			ActionLink(action);
+			ImGui.PopID();
+		}
+
+		foreach (int action in fired ?? []) {
+			ImGui.PushID($"fired{action}");
 			if (action >= 0) {
 				ActionLink(action);
-				ImGui.SameLine();
-				ImGui.Text("is fired by it");
+				ImGui.SameLine(0f, 0f);
+				ImGui.Text(": fired by it");
 			} else {
 				ImGui.TextWrapped("An action it fires, which this state of the mission leaves out");
 			}
@@ -186,50 +227,27 @@ internal sealed class PropertiesPanel {
 			ImGui.PopID();
 		}
 
-		foreach (var (group, names) in blockers.RemovedGroups.Where(removed => removed.Names.Any)) {
-			ImGui.PushID($"last{group}");
-			ImGui.TextWrapped("It is the last member of");
-			if (group >= 0) {
-				GroupLink(group);
-			} else {
-				ImGui.TextWrapped("a group this state of the mission leaves out,");
+		var groups = names.Orders.Select(order => order.Group).Concat(ownRoute ?? []).Distinct().ToList();
+		foreach (int group in groups) {
+			var parts = names.Orders.Where(order => order.Group == group).Select(order => $"order {order.Slot}").ToList();
+			if (ownRoute?.Contains(group) == true) {
+				parts.Add("own route");
 			}
 
-			ImGui.TextWrapped("which would be deleted with it, and is named by:");
-			Namers(names, "the group");
-			ImGui.PopID();
-		}
-
-		ImGui.PopID();
-	}
-
-	// The objectives, actions and orders naming something, as links.
-	private void Namers(DeleteNamers names, string what) {
-		foreach (int objective in names.Objectives) {
-			ImGui.PushID($"objective{objective}");
-			ObjectiveLink(objective);
-			ImGui.PopID();
-		}
-
-		foreach (int action in names.Actions) {
-			ImGui.PushID($"target{action}");
-			ActionLink(action);
-			ImGui.SameLine();
-			ImGui.Text($"targets {what}");
-			ImGui.PopID();
-		}
-
-		foreach (var order in names.Orders) {
-			ImGui.PushID($"order{order.Group}.{order.Slot}");
-			GroupLink(order.Group);
-			ImGui.TextWrapped($"names {what} in order {order.Slot} ({MissionText.OrderVerb(order.Order.Verb)})");
+			ImGui.PushID($"group{group}");
+			Link(ShortGroup(group), new GroupSelection(group));
+			ImGui.SameLine(0f, 0f);
+			ImGui.Text($": {string.Join(", ", parts)}");
 			ImGui.PopID();
 		}
 
 		if (names.Elsewhere > 0) {
-			ImGui.TextWrapped($"{names.Elsewhere} more record(s) of the .MSN that this state of the mission leaves out");
+			ImGui.TextWrapped($"{names.Elsewhere} more, which this state of the mission leaves out");
 		}
 	}
+
+	// A group's identity alone, as a reference list names it.
+	private static string ShortGroup(int group) => group == 0 ? "Group 0 (player squad)" : $"Group {group}";
 
 	/// <summary>
 	/// The object's position, as fields that move it when it can be moved (<see cref="PointMover"/>). A field's edit
@@ -571,7 +589,7 @@ internal sealed class PropertiesPanel {
 				.Select(entry => entry.Text) ?? Array.Empty<string>());
 			int posts = record.CounterRefs.Count(reference => reference >= 0);
 			ImGui.TextWrapped($"message {record.MessageId}: {(text.Length > 0 ? text : "(no text)")}");
-			EditorText.Note(posts == 0 ? "never posted: the action names no counter" : $"posted {posts}x");
+			EditorText.Note(posts == 0 ? "never posted: the action references no counter" : $"posted {posts}x");
 			any = true;
 		}
 
@@ -758,11 +776,11 @@ internal sealed class PropertiesPanel {
 		}
 
 		int sharers = _mover.SharersOf(target);
-		string others = $"{sharers} other record(s) (trigger areas, groups, waypoints) naming its point";
+		string others = $"{sharers} other record(s) (trigger areas, groups, waypoints) referencing its point";
 		if (setup.PointSource == MissionGroupPointSource.OwnPoint) {
 			ImGui.TextWrapped(sharers > 0
-				? $"Its point is named by {sharers} other record(s) (trigger areas, groups, waypoints), which move with it. Alt+drag moves the group alone."
-				: "Nothing else names its point.");
+				? $"Its point is referenced by {sharers} other record(s) (trigger areas, groups, waypoints), which move with it. Alt+drag moves the group alone."
+				: "Nothing else references its point.");
 		} else if (_mover.StartOf(group) != null) {
 			ImGui.TextWrapped("Dragging moves its route's first waypoint, the start of the route"
 				+ (sharers > 0 ? $", and the {others} with it" : "")
@@ -808,61 +826,6 @@ internal sealed class PropertiesPanel {
 			}
 
 			ObjectiveLink(objective);
-		}
-	}
-
-	private void DrawRoute(RouteSelection selected) {
-		if (_index.Route(selected.Route) is not { } route) {
-			return;
-		}
-
-		ImGui.Text($"Route {route.Reference}");
-		ImGui.Separator();
-		ImGui.Text(route.Closed ? "Closed: a loop walked for ever" : "Open: walking it to the end completes the order");
-
-		if (route.WalkedBy.Count > 0) {
-			ImGui.Text("Walked by:");
-			foreach (int group in route.WalkedBy) {
-				GroupLink(group);
-			}
-		} else {
-			ImGui.TextWrapped("Walked by no group: only later order slots name it, and a group only ever "
-				+ "walks its first order's route.");
-		}
-
-		if (route.NamedBy.Count > 0) {
-			ImGui.Text("Named in a later order by:");
-			foreach (int group in route.NamedBy) {
-				GroupLink(group);
-			}
-		}
-
-		ImGui.Separator();
-		int count = route.Closed ? route.Points.Count - 1 : route.Points.Count;
-		ImGui.Text($"Waypoints: {count}");
-		for (int i = 0; i < count; i++) {
-			var point = route.Points[i];
-			bool isSelected = selected.Waypoint == i;
-			if (ImGui.Selectable($"{i}: {point.X}, {point.Y}##wp{i}", isSelected)) {
-				_selection.Current = new RouteSelection(route.Reference, i);
-			}
-		}
-
-		if (_mover.TargetOf(selected) is not WaypointTarget waypoint) {
-
-			return;
-		}
-
-		ImGui.Separator();
-		int sharers = _mover.SharersOf(waypoint);
-		ImGui.TextWrapped(sharers > 0
-			? $"Its point is named by {sharers} other record(s) (trigger areas, groups, other waypoints), which move "
-				+ "with it. Alt+drag moves the waypoint alone."
-			: "Nothing else names its point.");
-
-		if (selected.Waypoint <= 1 && route.WalkedBy.Any(group => _index.SetupOf(group)?.PointSource == MissionGroupPointSource.RouteStart)) {
-			ImGui.TextWrapped("A group with no point of its own starts on the first waypoint, facing along the first "
-				+ "leg, and moves and turns with them.");
 		}
 	}
 

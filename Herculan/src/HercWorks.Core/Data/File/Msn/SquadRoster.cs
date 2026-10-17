@@ -70,7 +70,7 @@ public static class SquadRoster {
 		}
 
 		return after - 1 > MaxSquadmates
-			? $"Group 0 names a Herc in member slot {positions + 1}, which a squadmate in slot {positions} would join to the squad, past its {MaxSquadmates} squadmates."
+			? $"Group 0 references a Herc in member slot {positions + 1}, which a squadmate in slot {positions} would join to the squad, past its {MaxSquadmates} squadmates."
 			: null;
 	}
 
@@ -132,7 +132,7 @@ public static class SquadRoster {
 		}
 
 		if (check.Needed) {
-			throw new InvalidOperationException($"Squadmate {member} is named or needed by the mission.");
+			throw new InvalidOperationException($"Squadmate {member} is referenced or needed by the mission.");
 		}
 
 		var script = document.Script;

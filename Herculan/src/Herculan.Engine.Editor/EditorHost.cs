@@ -190,7 +190,7 @@ public sealed class EditorHost {
 		_saving.Mission = _mission;
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, Delete deletes the selected object, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), Delete deletes the selected object or route or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -275,7 +275,7 @@ public sealed class EditorHost {
 		} else if (button == MouseButton.Left) {
 			_leftDownPos = mouse.Position;
 			_leftDownOverViewport = !ImGui.GetIO().WantCaptureMouse;
-			if (_leftDownOverViewport && _mission != null) {
+			if (_leftDownOverViewport && _mission != null && !_mission.Placing.Active) {
 				bool alt = _keyboard != null && (_keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight));
 				_mission.Gizmo.TryBegin(_camera, mouse.Position, Viewport, detach: alt);
 			}
@@ -290,7 +290,12 @@ public sealed class EditorHost {
 			}
 		} else if (button == MouseButton.Left && _mission != null) {
 			bool click = _leftDownOverViewport && Vector2.Distance(mouse.Position, _leftDownPos) < 4f;
-			if (_mission.Gizmo.Dragging) {
+			if (_mission.Placing.Active) {
+				// While a route is placed, a click places its next waypoint and picks nothing.
+				if (click) {
+					_mission.Placing.Click(_camera, mouse.Position, _mission.Picker.GroundAt(_camera, mouse.Position, Viewport));
+				}
+			} else if (_mission.Gizmo.Dragging) {
 				// A press on a handle that moved nothing still counts toward a double-click, whose second press often
 				// lands on the handles drawn over what the first selected; it leaves the selection as it is.
 				if (!_mission.Gizmo.End() && click && IsDoubleClick(mouse.Position)
@@ -347,7 +352,11 @@ public sealed class EditorHost {
 		bool escape = _keyboard?.IsKeyPressed(Key.Escape) == true;
 		bool escapePressed = escape && !_escapeHeld;
 		_escapeHeld = escape;
-		if (escapePressed && !_saving.IsOpen && !_newMission.IsOpen) {
+		bool escapeFree = escapePressed && !_saving.IsOpen && !_newMission.IsOpen;
+		if (escapeFree && _mission?.Placing.Active == true) {
+			// Esc cancels the route being placed, and goes no further.
+			_mission.Placing.Cancel();
+		} else if (escapeFree) {
 			var exit = _launch.FromGame ? EditorExit.BackToGame : EditorExit.Closed;
 			if (_saving.Leave(_launch.FromGame ? "returning to the game" : "quitting", () => Close(exit))) {
 				return;
@@ -419,8 +428,9 @@ public sealed class EditorHost {
 		_drawables = Upload(_gl, _renderer, mission);
 	}
 
-	// V toggles the top-down view, Delete deletes the selected object, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes,
-	// Ctrl+S saves, unless a text field or a prompt has the keyboard. None of them while a drag is under way.
+	// V toggles the top-down view, Delete deletes the selected object or route or removes the selected waypoint, Ctrl+Z
+	// undoes and Ctrl+Y or Ctrl+Shift+Z redoes, Ctrl+S saves, unless a text field or a prompt has the keyboard. None of them
+	// while a drag is under way. While a route is placed, Enter finishes it, and Delete, Undo and Redo do nothing.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
 		if (_mission?.Gizmo.Dragging == true || _saving.IsOpen || _newMission.IsOpen
 				|| (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
@@ -433,8 +443,23 @@ public sealed class EditorHost {
 			return;
 		}
 
-		if (key == Key.Delete && !control && _mission?.Selection.Current is ObjectSelection { Object: var selected }) {
-			_mission.Deleter.Request(selected);
+		bool placing = _mission?.Placing.Active == true;
+		if (placing && key is Key.Enter or Key.KeypadEnter) {
+			_mission!.Placing.RequestFinish();
+			return;
+		}
+
+		if (key == Key.Delete && !control && !placing) {
+			if (_mission?.Selection.Current is ObjectSelection { Object: var selected }) {
+				_mission.Deleter.Request(selected);
+			} else if (_mission?.Selection.Current is RouteSelection { Route: var route, Waypoint: var waypoint }) {
+				if (waypoint < 0) {
+					_mission.Routes.RequestDelete(route);
+				} else {
+					_mission.Routes.RequestRemove(route, waypoint);
+				}
+			}
+
 			return;
 		}
 
@@ -445,9 +470,9 @@ public sealed class EditorHost {
 		bool shift = keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight);
 		if (key == Key.S && !shift) {
 			_saving.Save();
-		} else if (key == Key.Z && !shift) {
+		} else if (key == Key.Z && !shift && !placing) {
 			_mission.Mover.Undo();
-		} else if (key == Key.Y || (key == Key.Z && shift)) {
+		} else if ((key == Key.Y || (key == Key.Z && shift)) && !placing) {
 			_mission.Mover.Redo();
 		}
 	}
@@ -543,6 +568,7 @@ public sealed class EditorHost {
 				ScaledImGui.Scaled(CompassSize));
 			_mission.Overlay.DrawLabels(_camera, _settings, _mission.Selection);
 			_mission.GroupOverlay.DrawLabels(_camera, _settings, _mission.Selection);
+			_mission.Placing.DrawLabels(_camera, display, menuBarHeight);
 			if (_mission.Mover.WhyReadOnly != null) {
 				DrawReadOnlyBanner(display, menuBarHeight);
 			}
@@ -550,8 +576,10 @@ public sealed class EditorHost {
 			_mission.Outliner.Draw(display, menuBarHeight);
 			_mission.Properties.Draw(display, menuBarHeight);
 			int? structureGroup = SelectedStructureGroup(_mission);
-			_toolbox.Draw(display, enabled: !_mission.Gizmo.Dragging && _mission.Placer.WhyNoAdd == null, structureGroup,
-				structureGroup is { } joinable ? _mission.Placer.WhyNotJoin(joinable) : null, _mission.Placer.WhyNoAdd);
+			_toolbox.Draw(display,
+				enabled: !_mission.Gizmo.Dragging && !_mission.Placing.Active && _mission.Placer.WhyNoAdd == null, structureGroup,
+				structureGroup is { } joinable ? _mission.Placer.WhyNotJoin(joinable) : null, _mission.Placer.WhyNoAdd,
+				_mission.Placing.DrawToolboxEntry);
 		}
 
 		_settingsPanel.Draw();
@@ -618,7 +646,14 @@ public sealed class EditorHost {
 		mission.Overlay.Draw(wireframe, _camera, aspect, _settings, selection);
 		mission.GroupOverlay.DrawObjects(wireframe, _camera, aspect, _settings, selection);
 		mission.GroupOverlay.DrawSelectedGroup(wireframe, _camera, aspect, selection);
-		mission.Gizmo.Draw(wireframe, _camera, aspect, _mouse?.Position ?? new Vector2(-1f), Viewport);
+		if (mission.Placing.Active) {
+			var pointer = _mouse != null && !ImGui.GetIO().WantCaptureMouse
+				? mission.Picker.GroundAt(_camera, _mouse.Position, Viewport)
+				: null;
+			mission.Placing.Draw(wireframe, _camera, aspect, pointer);
+		} else {
+			mission.Gizmo.Draw(wireframe, _camera, aspect, _mouse?.Position ?? new Vector2(-1f), Viewport);
+		}
 	}
 
 	private void OnClosing() {
@@ -643,9 +678,8 @@ public sealed class EditorHost {
 		return group > 0 && mission.Index.KindOf(group) == MissionUnitKind.Base ? group : null;
 	}
 
-	// The delete, the machine fit, the squadmate add or remove, the theater or time of day and the Undo or Redo the frame's
-	// panels and menus asked for;
-	// none while a drag is under way.
+	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the route edit, the finished
+	// route and the Undo or Redo the frame's panels, menus and keys asked for; none while a drag is under way.
 	private void RunEditRequests(EditorMission mission) {
 		var deleting = mission.Deleter.TakeRequest();
 		var step = _pendingStep;
@@ -661,6 +695,8 @@ public sealed class EditorHost {
 		mission.Fitter.RunRequest();
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
+		mission.Routes.RunRequest();
+		mission.Placing.RunRequest();
 
 		if (step == true) {
 			mission.Mover.Undo();
@@ -842,11 +878,12 @@ public sealed class EditorHost {
 		}
 
 		if (ImGui.BeginMenu("Edit", _mission != null)) {
-			if (ImGui.MenuItem("Undo", "Ctrl+Z", false, _mission!.Mover.CanUndo && !_mission.Gizmo.Dragging)) {
+			bool idle = !_mission!.Gizmo.Dragging && !_mission.Placing.Active;
+			if (ImGui.MenuItem("Undo", "Ctrl+Z", false, _mission.Mover.CanUndo && idle)) {
 				_pendingStep = true;
 			}
 
-			if (ImGui.MenuItem("Redo", "Ctrl+Y", false, _mission.Mover.CanRedo && !_mission.Gizmo.Dragging)) {
+			if (ImGui.MenuItem("Redo", "Ctrl+Y", false, _mission.Mover.CanRedo && idle)) {
 				_pendingStep = false;
 			}
 

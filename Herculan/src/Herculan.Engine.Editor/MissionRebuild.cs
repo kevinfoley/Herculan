@@ -27,10 +27,12 @@ namespace Herculan.Engine.Editor;
 /// drawing is told what left and what joined the scene.</para>
 ///
 /// <para>The selection survives when what it names does: an object by identity, or else the object now standing for the
-/// same record; a group by its row-16 GUID; anything else is checked against the new index, and is cleared when it is
-/// gone.</para>
+/// same record; a group by its row-16 GUID, and a route by its row-8 GUID; anything else is checked against the new
+/// index, and is cleared when it is gone.</para>
 /// </summary>
 internal sealed class MissionRebuild {
+	private const int RouteBlock = 3;
+	private const int RouteRow = 8;
 	private const int GroupBlock = 11;
 	private const int GroupRow = 16;
 
@@ -91,8 +93,9 @@ internal sealed class MissionRebuild {
 		var source = _source ?? throw new InvalidOperationException("A plain script.dat is not edited.");
 		Remember(source);
 		short selectedGroup = _selection.Current is GroupSelection { Group: var group } ? source.GuidOf(GroupBlock, group) : (short)-1;
+		short selectedRoute = _selection.Current is RouteSelection { Route: var route } ? source.GuidOf(RouteBlock, route) : (short)-1;
 		var result = edit();
-		Rebuild(source, selectedGroup);
+		Rebuild(source, selectedGroup, selectedRoute);
 		return result;
 	}
 
@@ -127,7 +130,7 @@ internal sealed class MissionRebuild {
 		}
 	}
 
-	private void Rebuild(MissionDocument source, short selectedGroup) {
+	private void Rebuild(MissionDocument source, short selectedGroup, short selectedRoute) {
 		// The squad the launch would build from this generation, which the load below places.
 		if (_squad?.PlayerMec(source.Generator) is { } squadFile) {
 			File.WriteAllBytes(MissionLoader.PlayerPathFor(_scene.Mission.SourcePath), squadFile);
@@ -174,7 +177,7 @@ internal sealed class MissionRebuild {
 			Added?.Invoke(joined);
 		}
 
-		Reselect(source, selectedGroup, replacing);
+		Reselect(source, selectedGroup, selectedRoute, replacing);
 		Rebuilt?.Invoke();
 	}
 
@@ -231,16 +234,18 @@ internal sealed class MissionRebuild {
 	}
 
 	// Keeps the selection on what it named, or on <replacing>, the object now standing for the record a selected object
-	// stood for; or clears it.
-	private void Reselect(MissionDocument source, short selectedGroup, SceneObject? replacing) {
+	// stood for; or clears it. A route is kept by its row-8 GUID, as a route delete moves every later route down one, and
+	// its waypoint while the route still has one there.
+	private void Reselect(MissionDocument source, short selectedGroup, short selectedRoute, SceneObject? replacing) {
 		_selection.Current = _selection.Current switch {
 			ObjectSelection { Object: var placed } when _index.Objects.Any(kept => ReferenceEquals(kept, placed)) => _selection.Current,
 			ObjectSelection when replacing != null => new ObjectSelection(replacing),
 			GroupSelection when selectedGroup != -1 && source.ExportedIndex(GroupRow, selectedGroup) is { } group =>
 				new GroupSelection(group),
 			AreaSelection { Area: var area } when _index.Area(area) != null => _selection.Current,
-			RouteSelection { Route: var route, Waypoint: var waypoint } when _index.Route(route) is { } kept
-				&& waypoint < kept.Points.Count => _selection.Current,
+			RouteSelection { Waypoint: var waypoint } when selectedRoute != -1
+					&& source.ExportedIndex(RouteRow, selectedRoute) is { } route && _index.Route(route) is { } kept =>
+				new RouteSelection(route, waypoint < kept.Points.Count ? waypoint : -1),
 			ActionSelection { Action: var action } when action < _index.Mission.Actions.Count => _selection.Current,
 			TimerSelection { Timer: var timer } when timer < _index.Mission.ActionTimers.Count => _selection.Current,
 			ObjectiveSelection { Objective: var objective } when objective < _index.Mission.Objectives.Count => _selection.Current,
@@ -252,8 +257,8 @@ internal sealed class MissionRebuild {
 
 /// <summary>
 /// One step of <see cref="PointMover"/>'s undo history that adds or removes <c>.MSN</c> records — an add
-/// (<see cref="StructurePlacer"/>) or a delete (<see cref="ObjectDeleter"/>): the rows it changed, put back on undo and
-/// redo through <see cref="MissionRebuild"/>.
+/// (<see cref="StructurePlacer"/>), a delete (<see cref="ObjectDeleter"/>) or a route edit (<see cref="RouteEditor"/>): the
+/// rows it changed, put back on undo and redo through <see cref="MissionRebuild"/>.
 /// </summary>
 internal sealed record RecordsEdit(MissionRebuild Rebuild, MsnEdit Change) : IEditorEdit {
 	public void Undo() => Rebuild.Undo(Change);

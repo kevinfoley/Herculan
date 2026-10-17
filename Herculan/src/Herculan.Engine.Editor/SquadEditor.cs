@@ -78,7 +78,7 @@ internal sealed class SquadEditor {
 		}
 
 		if (SquadRoster.Check(_source!, member) is not var (_, check)) {
-			return ("Its record is not one of its own: group 0 names it again, or it is all the group holds.", DeleteNamers.None, false);
+			return ("Its record is not one of its own: group 0 references it more than once, or it is all the group holds.", DeleteNamers.None, false);
 		}
 
 		var names = _deleter.Resolve(_source!, check.Namers);
@@ -106,7 +106,7 @@ internal sealed class SquadEditor {
 
 		var player = _fitter.Record(_fitter.SquadSlot(0) ?? -1);
 		if (player == null || _fitter.StockFit(player.TypeIndex) is not var (weapons, guidance)) {
-			return "Group 0 names no player's machine to take the chassis of.";
+			return "Group 0 references no player's machine to take the chassis of.";
 		}
 
 		var source = _source!;
@@ -120,7 +120,7 @@ internal sealed class SquadEditor {
 		}
 
 		if (names.Any || ownActions) {
-			return "The mission names or needs it; its view says what.";
+			return "The mission references or needs it; its view says what.";
 		}
 
 		var source = _source!;

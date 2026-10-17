@@ -24,7 +24,8 @@ internal sealed record ToolboxRequest(int TypeIndex, MissionSide Side, bool AtPo
 /// group's side. While an entry is dragged over the view, the structure it would
 /// add is drawn on the ground under the pointer (<see cref="DropPreview"/>). The mobile ground vehicles (<see cref="BaseType.IsVehicle"/>) are
 /// not offered: they drive, and a group of them is given orders the toolbox has no way to set. What the add writes is
-/// <see cref="StructurePlacer"/>'s.
+/// <see cref="StructurePlacer"/>'s. Above the structures the window holds the route tool's New route
+/// (<see cref="RoutePlacing"/>).
 /// </summary>
 internal sealed class StructureToolbox {
 	// Where it first opens and how big, in pixels on a 100% display (ScaledImGui.Scaled): beside the Mission panel,
@@ -81,13 +82,20 @@ internal sealed class StructureToolbox {
 	/// <param name="selectedGroup">The structure group the selection is or belongs to, which an add can join; or null.</param>
 	/// <param name="whyNotJoin">Why <paramref name="selectedGroup"/> cannot take another member, or null when it can.</param>
 	/// <param name="whyNoAdd">Why nothing can be added to the mission at all, shown at the top, or null.</param>
-	public void Draw(Vector2 display, bool enabled, int? selectedGroup, string? whyNotJoin, string? whyNoAdd = null) {
+	/// <param name="routeEntry">Draws the route tool's entry (<see cref="RoutePlacing.DrawToolboxEntry"/>) above the structures, or null.</param>
+	public void Draw(Vector2 display, bool enabled, int? selectedGroup, string? whyNotJoin, string? whyNoAdd = null,
+			Action? routeEntry = null) {
 		_joinGroup = selectedGroup != null && whyNotJoin == null ? selectedGroup : null;
 		ImGui.SetNextWindowPos(new Vector2(ScaledImGui.Scaled(MissionOutliner.PanelWidth + Margin),
 			display.Y - ScaledImGui.Scaled(Height + Margin)), ImGuiCond.FirstUseEver);
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(Width), ScaledImGui.Scaled(Height)), ImGuiCond.FirstUseEver);
 		if (ImGui.Begin("Toolbox")) {
 			EditorText.Reason(whyNoAdd);
+			if (routeEntry != null) {
+				routeEntry();
+				ImGui.Separator();
+				ImGui.Text("Structures");
+			}
 
 			DrawContents(enabled, selectedGroup, whyNotJoin);
 		}

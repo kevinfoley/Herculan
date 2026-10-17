@@ -384,6 +384,12 @@ internal sealed class PointMover {
 		Record(new Edit(this, target, change, before, position));
 	}
 
+	/// <summary>
+	/// The block-3 list entries route <paramref name="route"/>'s waypoints came from, in order, or null when they cannot be
+	/// told apart (<see cref="PointFollowers.WaypointEntries"/>).
+	/// </summary>
+	public int[]? WaypointEntries(int route) => _followers.WaypointEntries(route);
+
 	public void Undo() => Step(History.TakeUndo(), edit => edit.Undo());
 
 	/// <summary>

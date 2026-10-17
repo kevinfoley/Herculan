@@ -28,6 +28,12 @@ internal sealed class SquadMachinePanel {
 		_squad = squad;
 	}
 
+	/// <summary>
+	/// Draws what references something as links, one line per record, as the object delete view lists it; set by the
+	/// Properties panel, which holds the links.
+	/// </summary>
+	public Action<DeleteNamers>? References { get; set; }
+
 	/// <summary>The player's machine: which Herc the player pilots, then group 0's first member's record.</summary>
 	public void DrawPlayer() {
 		DrawPlayerMachine();
@@ -106,7 +112,7 @@ internal sealed class SquadMachinePanel {
 		if (_fitter.SquadSlot(0) is { } slot) {
 			DrawMachine(slot);
 		} else {
-			EditorText.Note("Group 0 names no herc record.");
+			EditorText.Note("Group 0 references no herc record.");
 		}
 	}
 
@@ -155,7 +161,7 @@ internal sealed class SquadMachinePanel {
 		if (_fitter.SquadSlot(member) is { } slot) {
 			DrawMachine(slot);
 		} else {
-			EditorText.Note($"Group 0's member slot {member} names no herc record.");
+			EditorText.Note($"Group 0's member slot {member} references no herc record.");
 		}
 
 		var (reason, names, ownActions) = _editor.WhyNoRemove(member);
@@ -164,29 +170,16 @@ internal sealed class SquadMachinePanel {
 				_editor.RequestRemove(member);
 			}
 		} else if (reason == null) {
-			EditorText.Note($"Cannot be removed while the mission names or needs it: {Needs(names, ownActions)}.");
+			ImGui.TextWrapped("Cannot be removed while these reference or need it:");
+			References?.Invoke(names);
+			if (ownActions) {
+				ImGui.TextWrapped("An action it fires when engaged or defeated");
+			}
 		} else if (_fitter.SquadSlot(member) is not { } fixedSlot || reason != _fitter.WhyFixed(fixedSlot)) {
 			EditorText.Reason(reason, "Cannot be removed: ");
 		}
 
 		ImGui.PopID();
-	}
-
-	// What names or needs a squadmate, by the block indices this state exports them at.
-	private static string Needs(DeleteNamers names, bool ownActions) {
-		var needs = names.Objectives.Select(objective => $"objective {objective}")
-			.Concat(names.Actions.Select(action => $"action {action}"))
-			.Concat(names.Orders.Select(order => $"group {order.Group}'s order {order.Slot}"))
-			.ToList();
-		if (names.Elsewhere > 0) {
-			needs.Add($"{names.Elsewhere} record(s) this state of the mission leaves out");
-		}
-
-		if (ownActions) {
-			needs.Add("an action it fires when engaged or defeated");
-		}
-
-		return string.Join(", ", needs);
 	}
 
 	// The chassis choice and the fit of the record at block-7 slot <slot>.

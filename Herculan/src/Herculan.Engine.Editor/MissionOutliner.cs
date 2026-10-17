@@ -34,6 +34,9 @@ internal sealed class MissionOutliner {
 	/// <summary>Lists <paramref name="lint"/>'s findings in place of the last ones, for a mission built again.</summary>
 	public void Recheck(MissionLint lint) => _lint = lint;
 
+	/// <summary>The route-placing mode the Routes list's New route starts; set once the mission's tools are built.</summary>
+	public RoutePlacing? Placing { get; set; }
+
 	public void Draw(Vector2 display, float menuBarHeight) {
 		ImGui.SetNextWindowPos(new Vector2(0f, menuBarHeight));
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), display.Y - menuBarHeight));
@@ -229,6 +232,15 @@ internal sealed class MissionOutliner {
 	private void DrawRoutes() {
 		if (!ImGui.CollapsingHeader($"Routes ({_index.Routes.Count})###routes")) {
 			return;
+		}
+
+		if (Placing is { } placing) {
+			ImGui.BeginDisabled(placing.Active || placing.WhyNoStart != null);
+			if (ImGui.SmallButton("New route")) {
+				placing.BeginNew();
+			}
+
+			ImGui.EndDisabled();
 		}
 
 		foreach (var route in _index.Routes) {

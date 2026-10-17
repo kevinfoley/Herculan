@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
@@ -34,6 +35,9 @@ internal sealed class EditorRoute {
 
 	/// <summary>The groups that name it only in a later order slot, which no group walks.</summary>
 	public IReadOnlyList<int> NamedBy { get; }
+
+	/// <summary>Whether any group's order names it, in any slot.</summary>
+	public bool InAnOrder => WalkedBy.Count > 0 || NamedBy.Count > 0;
 
 	/// <summary>Stands waypoint <paramref name="index"/> at <paramref name="point"/>.</summary>
 	public void Move(int index, Vec3i point) => _points[index] = point;
@@ -74,6 +78,7 @@ internal sealed record ActionLinks(
 /// are the groups' sides, which <see cref="SideChanger"/> sets.
 /// </summary>
 internal sealed class MissionIndex {
+	private readonly ScriptDat _document;
 	private readonly Dictionary<(MissionUnitKind, int), SceneObject> _bySlot = new();
 	private ActionLinks[] _actionLinks = [];
 	private List<MissionTriggerArea> _areas = new();
@@ -83,7 +88,9 @@ internal sealed class MissionIndex {
 	private List<List<SceneObject>> _members = new();
 	private List<MissionSide> _sides = new();
 
-	public MissionIndex(MissionScene scene, SquadMessages? commandMessages) {
+	/// <param name="document">The <c>script.dat</c> the scene was loaded from, whose block 3 lists the routes no order names.</param>
+	public MissionIndex(MissionScene scene, ScriptDat document, SquadMessages? commandMessages) {
+		_document = document;
 		CommandMessages = commandMessages;
 		Mission = scene.Mission;
 		Reload(scene.Mission, scene.Objects);
@@ -116,7 +123,7 @@ internal sealed class MissionIndex {
 		_setups = mission.GroupSetups.ToList();
 		_sides = mission.GroupSides.ToList();
 		_basePads = mission.BasePads.ToList();
-		Routes = BuildRoutes(mission);
+		Routes = BuildRoutes(mission, _document);
 
 		_actionLinks = new ActionLinks[mission.Actions.Count];
 		for (int i = 0; i < _actionLinks.Length; i++) {
@@ -157,7 +164,10 @@ internal sealed class MissionIndex {
 	/// <summary>The base pads, as the editor's moves have left their groups.</summary>
 	public IReadOnlyList<MissionBasePad> BasePads => _basePads;
 
-	/// <summary>Every route some order names, once each, in block-3 order.</summary>
+	/// <summary>
+	/// Every route in block 3 with a waypoint that resolves, once each, in block-3 order: those orders name, and those
+	/// only an objective or a group's own route field names, or nothing, such as a route just created.
+	/// </summary>
 	public IReadOnlyList<EditorRoute> Routes { get; private set; } = [];
 
 	/// <summary>The route the player's squad walks, or null.</summary>
@@ -320,7 +330,7 @@ internal sealed class MissionIndex {
 		return byReference.Values.ToList();
 	}
 
-	private static List<EditorRoute> BuildRoutes(Mission mission) {
+	private static List<EditorRoute> BuildRoutes(Mission mission, ScriptDat document) {
 		var points = new SortedDictionary<int, IReadOnlyList<Vec3i>>();
 		var walkedBy = new Dictionary<int, List<int>>();
 		var namedBy = new Dictionary<int, List<int>>();
@@ -341,6 +351,21 @@ internal sealed class MissionIndex {
 				if (!groups.Contains(group)) {
 					groups.Add(group);
 				}
+			}
+		}
+
+		// The routes no order names, resolved as the loader resolves an order's: a ref past block 1's end is dropped.
+		for (int route = 0; route < document.WaypointGroups.Length; route++) {
+			if (points.ContainsKey(route)) {
+				continue;
+			}
+
+			var resolved = document.WaypointGroups[route].Waypoints
+				.Where(reference => reference >= 0 && reference < mission.Coordinates.Count)
+				.Select(reference => mission.Coordinates[reference])
+				.ToArray();
+			if (resolved.Length > 0) {
+				points[route] = resolved;
 			}
 		}
 

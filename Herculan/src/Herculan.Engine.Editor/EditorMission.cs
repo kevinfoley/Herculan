@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker, the two side panels and the move, add, delete and theater tools, all sharing one
+/// index, the overlays, the picker, the two side panels and the move, add, delete, route and theater tools, all sharing one
 /// selection. An edit that adds or removes records builds the CPU state again in place (<see cref="Rebuild"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -39,8 +39,12 @@ internal sealed class EditorMission {
 		Fitter = new MachineFitter(document, source, Mover, Rebuild, shellContent);
 		Squad = new SquadEditor(document, source, index, Mover, Rebuild, Fitter, Deleter);
 		Theater = new TheaterChanger(document, source, scene, index, Mover, Rebuild);
+		Routes = new RouteEditor(source, index, Mover, Rebuild, Selection, Deleter);
+		Placing = new RoutePlacing(Routes, index, drape);
+		Outliner.Placing = Placing;
 		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter, new SquadMachinePanel(Fitter, Squad, squad),
-			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content)), SimStrings.Load(content));
+			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content)), Routes, Placing,
+			SimStrings.Load(content));
 	}
 
 	/// <summary>
@@ -107,6 +111,12 @@ internal sealed class EditorMission {
 	/// <summary>Changes the mission's theater and time of day in <see cref="Source"/>, reloading the scene's world, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public TheaterChanger Theater { get; }
 
+	/// <summary>Creates, edits and deletes routes in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public RouteEditor Routes { get; }
+
+	/// <summary>The route-placing mode, which takes the view's clicks while it is on.</summary>
+	public RoutePlacing Placing { get; }
+
 	/// <summary>The window title, the name marked <c>*</c> when <paramref name="unsaved"/> changes are held.</summary>
 	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Mission.Header.ZoneIndex}";
 
@@ -136,7 +146,7 @@ internal sealed class EditorMission {
 			sceneObject.Object.Position = PointFollowers.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
 		}
 
-		var index = new MissionIndex(scene, SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
+		var index = new MissionIndex(scene, document, SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
 		return new EditorMission(content, name, document, source, scene, index, TerrainMaterialTable.Load(content), squad,
 			shellContent);
