@@ -9,50 +9,66 @@ namespace Herculan.Engine.Tests;
 
 /// <summary>
 /// The Core readers for <c>.STR</c>, <c>keyjoy.cfg</c>, <c>prefs.cfg</c>, <c>drive.cfg</c> and
-/// <c>zoneNNNN.dat</c>, over synthetic files so the tests need no Earthsiege 2 install.
+/// <c>zoneNNNN.dat</c>, over synthetic files so the tests need no Earthsiege 2 install. The binary ones are
+/// built by hand from their documented layouts rather than by the writer, so a reader and writer that agreed
+/// on a wrong layout would fail.
 /// </summary>
 public class ConfigAndStringFileTests {
+	/// <summary>
+	/// A table of a group of two strings, one carrying attributes, an empty group, and a group holding an empty
+	/// string, read into its groups and written back byte for byte.
+	/// </summary>
 	[Fact]
-	public void StringFileRoundTripsEveryGroupWithItsAttributes() {
-		var file = new StringFile {
-			Groups = [
-				[new StringFile.Entry("FIRST", []), new StringFile.Entry("SECOND", [3, 7])],
-				[],
-				[new StringFile.Entry("", [1])],
-			],
-		};
+	public void StringFileReadsAndWritesEveryGroupWithItsAttributes() {
+		byte[] bytes = StringTable();
 		var transformer = new StringFileTransformer();
 
-		byte[] bytes = transformer.Write(file)!;
 		StringFile parsed = Assert.IsType<StringFile>(transformer.Parse(bytes));
 
 		Assert.Equal(3, parsed.GroupCount);
+		Assert.Equal("FIRST", parsed.Text(0, 0));
 		Assert.Equal("SECOND", parsed.Text(0, 1));
 		Assert.Equal(new byte[] { 3, 7 }, parsed.Group(0)[1].Attributes);
 		Assert.Empty(parsed.Group(1));
+		Assert.Equal(string.Empty, parsed.Text(2, 0));
+		Assert.Equal(new byte[] { 1 }, parsed.Group(2)[0].Attributes);
 		Assert.Null(parsed.Text(5, 0));
 		Assert.Equal(bytes, transformer.Write(parsed));
 	}
 
-	[Fact]
-	public void StringFileRejectsATruncatedTableRatherThanShiftingLaterGroups() {
-		byte[] bytes = new StringFileTransformer().Write(new StringFile {
-			Groups = [[new StringFile.Entry("ONE", [])], [new StringFile.Entry("TWO", [])]],
-		})!;
+	/// <summary>
+	/// A table whose walk does not end exactly at its declared length reads as null rather than as a partial
+	/// table, since group indices are positional. Each row trips a different check: a declared length past the
+	/// file, then, with the length declared to match, the last string running into the end, its attribute
+	/// missing, its whole entry missing, and a stray byte after the last group.
+	/// </summary>
+	[Theory]
+	[InlineData(-2, false)]
+	[InlineData(-2, true)]
+	[InlineData(-1, true)]
+	[InlineData(-5, true)]
+	[InlineData(1, true)]
+	public void StringFileRejectsATableItsWalkDoesNotFinish(int lengthChange, bool declared) {
+		byte[] whole = StringTable();
+		byte[] bytes = new byte[whole.Length + lengthChange];
+		Array.Copy(whole, bytes, Math.Min(whole.Length, bytes.Length));
+		if (declared) {
+			BitConverter.GetBytes(bytes.Length - 4).CopyTo(bytes, 0);
+		}
 
-		Assert.Null(new StringFileTransformer().Parse(bytes[..^2]));
+		Assert.Null(new StringFileTransformer().Parse(bytes));
 	}
 
 	[Fact]
 	public void KeyjoyReadsOnlyReverseAsSetWhateverItsCaseAndComments() {
-		const string text = "; shipped comment\r\n[Keyjoy]\r\nTilt = reverse ; inverted\r\nBacKTurn=Default\r\n"
-			+ "Missile=REVERSE\r\n[Other]\r\nRudder=Reverse\r\n";
+		const string text = "; shipped comment\r\n[Keyjoy]\r\nTilt = reverse ; inverted\r\nBacKTurn=REVERSE\r\n"
+			+ "Missile=Default\r\n[Other]\r\nRudder=Reverse\r\n";
 
 		Keyjoy parsed = Assert.IsType<Keyjoy>(new KeyjoyTransformer().Parse(Encoding.ASCII.GetBytes(text)));
 
 		Assert.True(parsed.ReverseTilt);
-		Assert.False(parsed.ReverseBackturn);
-		Assert.True(parsed.ReverseMissile);
+		Assert.True(parsed.ReverseBackturn);
+		Assert.False(parsed.ReverseMissile);
 		Assert.False(parsed.ReverseRudder);
 	}
 
@@ -69,10 +85,12 @@ public class ConfigAndStringFileTests {
 		Assert.True(parsed.ReverseRudder);
 	}
 
+	/// <summary>A file of exactly the option array reads; one byte short does not; a longer one keeps its tail.</summary>
 	[Fact]
-	public void PrefsRejectsAShortFileAndKeepsALongOnesTail() {
+	public void PrefsNeedsTheWholeArrayAndKeepsALongOnesTail() {
 		var transformer = new PrefsTransformer();
 		Assert.Null(transformer.Parse(new byte[Prefs.Length - 1]));
+		Assert.NotNull(transformer.Parse(new byte[Prefs.Length]));
 
 		byte[] bytes = new byte[Prefs.Length + 3];
 		bytes[Prefs.HercDetailOption] = 4;
@@ -84,13 +102,16 @@ public class ConfigAndStringFileTests {
 		Assert.Equal(bytes, transformer.Write(parsed));
 	}
 
+	/// <summary>The disc's directory is the first whitespace-delimited token, as <c>fscanf("%s")</c> reads it.</summary>
 	[Fact]
 	public void DriveTakesTheFirstToken() {
-		Drive parsed = Assert.IsType<Drive>(new DriveTransformer().Parse(Encoding.ASCII.GetBytes("  D:\\ES2\r\nignored")));
+		var transformer = new DriveTransformer();
+		Drive parsed = Assert.IsType<Drive>(transformer.Parse(Encoding.ASCII.GetBytes("  D:\\ES2\r\nC:\\SIERRA\\ES2")));
 
 		Assert.Equal("D:\\ES2", parsed.Directory);
-		Assert.Equal("ignored", parsed.InstallDirectory);
-		Assert.Null(new DriveTransformer().Parse(Encoding.ASCII.GetBytes(" \r\n"))!.Directory);
+		Assert.Equal("C:\\SIERRA\\ES2", parsed.InstallDirectory);
+		Assert.Equal("D:\\ES2", transformer.Parse(Encoding.ASCII.GetBytes("D:\\ES2 extra"))!.Directory);
+		Assert.Null(transformer.Parse(Encoding.ASCII.GetBytes(" \r\n"))!.Directory);
 	}
 
 	[Fact]
@@ -108,16 +129,45 @@ public class ConfigAndStringFileTests {
 		Assert.Equal("D:\\\r\nC:\\Program Files\\ES2", Encoding.ASCII.GetString(transformer.Write(spaced)!));
 	}
 
+	/// <summary>
+	/// The four <c>int32</c>s in docs/retail/formats/zone-terrain.md's order — width shift, height shift, cell
+	/// shift, height scale — read and written back; one byte short reads as null.
+	/// </summary>
 	[Fact]
-	public void ZoneDatRoundTripsItsFourInts() {
+	public void ZoneDatReadsAndWritesItsFourInts() {
+		byte[] bytes = [8, 0, 0, 0, 7, 0, 0, 0, 14, 0, 0, 0, 120, 0, 0, 0];
 		var transformer = new ZoneDatTransformer();
-		var source = new ZoneDat { WidthShift = 8, HeightShift = 7, CellShift = 14, HeightScale = 120 };
 
-		byte[] bytes = transformer.Write(source)!;
 		ZoneDat parsed = Assert.IsType<ZoneDat>(transformer.Parse(bytes));
 
-		Assert.Equal(ZoneDatTransformer.Size, bytes.Length);
 		Assert.Equal((8, 7, 14, 120), (parsed.WidthShift, parsed.HeightShift, parsed.CellShift, parsed.HeightScale));
+		Assert.Equal(bytes, transformer.Write(parsed));
 		Assert.Null(transformer.Parse(bytes[..^1]));
+	}
+
+	/// <summary>
+	/// Three groups built by hand from docs/retail/formats/str-strings.md#layout: an <c>int32</c> content
+	/// length, then per group an <c>int16</c> count, and per string an <c>int16</c> length counting the NUL,
+	/// the text, the NUL, a <c>uint8</c> attribute count and the attributes.
+	/// </summary>
+	private static byte[] StringTable() {
+		var content = new List<byte>();
+		void Short(int value) => content.AddRange(BitConverter.GetBytes((short)value));
+		void Entry(string text, params byte[] attributes) {
+			Short(text.Length + 1);
+			content.AddRange(Encoding.ASCII.GetBytes(text));
+			content.Add(0);
+			content.Add((byte)attributes.Length);
+			content.AddRange(attributes);
+		}
+
+		Short(2);
+		Entry("FIRST");
+		Entry("SECOND", 3, 7);
+		Short(0);
+		Short(1);
+		Entry("", 1);
+
+		return [.. BitConverter.GetBytes(content.Count), .. content];
 	}
 }

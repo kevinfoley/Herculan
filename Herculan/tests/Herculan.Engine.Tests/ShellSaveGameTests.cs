@@ -49,13 +49,21 @@ public class ShellSaveGameTests : IDisposable {
 		Assert.Equal(new PlayerSaveTransform().Write(Game()), File.ReadAllBytes(Path.Combine(Sav, "GAME_3.SAV")));
 	}
 
-	/// <summary>The directory's leading length is the physical file less four, as <c>GameFileStr_Write</c> patches it.</summary>
+	/// <summary>
+	/// The directory's leading length is the physical file less four, as <c>GameFileStr_Write</c> patches it: a
+	/// longer directory already there keeps its tail, and the length counts the tail too.
+	/// </summary>
 	[Fact]
 	public void PatchesTheDirectoryLengthToTheFile() {
+		Directory.CreateDirectory(Sav);
+		string path = Path.Combine(Sav, ShellSaveSlots.DirectoryFileName);
+		File.WriteAllBytes(path, new byte[1000]);
+
 		ShellSaveSlots.SaveGame(_root, Slots(), 0, " 1. A", false, Game(), NoWorkingFiles, out _);
 
-		byte[] bytes = File.ReadAllBytes(Path.Combine(Sav, ShellSaveSlots.DirectoryFileName));
-		Assert.Equal(bytes.Length - 4, BitConverter.ToInt32(bytes, 0));
+		byte[] bytes = File.ReadAllBytes(path);
+		Assert.Equal(1000, bytes.Length);
+		Assert.Equal(1000 - 4, BitConverter.ToInt32(bytes, 0));
 	}
 
 	/// <summary>The autosave keeps its own label whatever is passed, and is slot 11 in training.</summary>
@@ -82,7 +90,8 @@ public class ShellSaveGameTests : IDisposable {
 	/// </summary>
 	[Fact]
 	public void DropsAStaleTailFromTheGame() {
-		const int TailLength = PlayerSave.CampaignFlagCount * 2 + 2 + 20;
+		// The flag array's 2000 bytes, the game state's 2 and the 20-byte block.
+		const int TailLength = 2022;
 		var game = Game();
 		game.CampaignStateTail = Enumerable.Range(0, TailLength + 100).Select(i => (byte)i).ToArray();
 
@@ -171,12 +180,21 @@ public class ShellSaveGameTests : IDisposable {
 		Assert.Equal(new byte[] { 1, 2, 7, 7, 7 }, File.ReadAllBytes(path));
 	}
 
-	/// <summary>A slot the directory does not list, or a file that cannot be opened, writes nothing and says why.</summary>
+	/// <summary>
+	/// A slot the directory does not list, or a file that cannot be written, writes nothing and says why — for an
+	/// IO error and for a refused open alike.
+	/// </summary>
 	[Fact]
 	public void ReportsASlotItCannotWrite() {
 		Assert.Null(ShellSaveSlots.SaveGame(_root, Slots(), 12, null, false, Game(), NoWorkingFiles, out string? missing));
 		Assert.NotNull(missing);
 		Assert.False(Directory.Exists(Sav));
+
+		// A file where the save folder should be is an IO error.
+		File.WriteAllBytes(Sav, []);
+		Assert.Null(ShellSaveSlots.SaveGame(_root, Slots(), 1, " 2. E", false, Game(), NoWorkingFiles, out string? notAFolder));
+		Assert.NotNull(notAFolder);
+		File.Delete(Sav);
 
 		// A folder where the save should be makes the open fail.
 		Directory.CreateDirectory(Path.Combine(Sav, "GAME_1.SAV"));
