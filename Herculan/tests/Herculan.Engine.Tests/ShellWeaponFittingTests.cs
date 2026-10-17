@@ -16,7 +16,9 @@ namespace Herculan.Engine.Tests;
 public class ShellWeaponFittingTests {
 	private const int Atc20 = 1;
 	private const int Atc35 = 2;
+	private const int Laser500 = 0xc;
 	private const int Rack = 0xd;
+	private const int LastRack = 0xf;
 	private const int RazorLauncher = 0x10;
 
 	[Fact]
@@ -49,12 +51,17 @@ public class ShellWeaponFittingTests {
 		Assert.Equal(1, hangar.WeaponsOwned(Atc35));
 	}
 
+	/// <summary>
+	/// Every unit starts on EO, so each row shows the reset rather than a value the unit already had:
+	/// ARH at both ends of the three racks, none on the laser below them and on the Razor's launcher above.
+	/// </summary>
 	[Theory]
+	[InlineData(Laser500, ShellWeaponUnit.NoGuidance)]
 	[InlineData(Rack, 1)]
+	[InlineData(LastRack, 1)]
 	[InlineData(RazorLauncher, ShellWeaponUnit.NoGuidance)]
-	[InlineData(Atc20, ShellWeaponUnit.NoGuidance)]
 	public void FitResetsGuidanceToArhForTheThreeRacksOnly(int weapon, int guidance) {
-		var hangar = Hangar(new[] { 0 }, (weapon, new[] { 100 }));
+		var hangar = Hangar(new[] { 0 }, MissileType.Eo, (weapon, new[] { 100 }));
 		var machine = hangar.Bay(0)!;
 
 		hangar.FitMount(machine, 0, weapon);
@@ -101,14 +108,16 @@ public class ShellWeaponFittingTests {
 		Assert.Equal(1, hangar.WeaponsOwned(Atc20));
 	}
 
+	/// <summary>The list empties and the value is added to what the pool already holds.</summary>
 	[Fact]
 	public void ScrappingAWeaponsStockEmptiesItsList() {
 		var hangar = Hangar(new[] { 0 }, (Atc20, new[] { 100, 100 }));
+		hangar.SalvageKilograms = 500;
 
 		hangar.ScrapStock(Atc20, valueTons: 3);
 
 		Assert.Equal(0, hangar.WeaponsOwned(Atc20));
-		Assert.Equal(3000, hangar.SalvageKilograms);
+		Assert.Equal(3500, hangar.SalvageKilograms);
 	}
 
 	[Fact]
@@ -184,7 +193,11 @@ public class ShellWeaponFittingTests {
 	/// One machine in bay 0 with a mount per entry of <paramref name="mounts"/> (0 for empty), and each
 	/// named weapon unlocked with one unit per condition listed, in file order.
 	/// </summary>
-	private static ShellHangar Hangar(int[] mounts, params (int Weapon, int[] Conditions)[] stock) {
+	private static ShellHangar Hangar(int[] mounts, params (int Weapon, int[] Conditions)[] stock) =>
+		Hangar(mounts, MissileType.None, stock);
+
+	/// <summary>The same, with every stock unit carrying <paramref name="guidance"/>.</summary>
+	private static ShellHangar Hangar(int[] mounts, MissileType guidance, params (int Weapon, int[] Conditions)[] stock) {
 		var save = new PlayerSave();
 		save.HercBay[0] = BayEntry(mounts);
 		save.Inventory = new Inventory {
@@ -195,7 +208,7 @@ public class ShellWeaponFittingTests {
 					Id = WeaponLUT.GetById(entry.Weapon),
 					FitCondition = (short)condition,
 					Condition = 100,
-					Guidance = MissileType.None,
+					Guidance = guidance,
 				}).ToArray(),
 			}).ToArray(),
 		};
