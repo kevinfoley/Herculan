@@ -10,8 +10,7 @@ namespace HercWorks.Core.Data.File.Msn;
 ///
 /// <para>Each record carries a condition, so a mission can hold several and have the campaign's
 /// progress decide which apply. Of its 41 words, the first is that condition, the next ten are
-/// header values (a word left at its "unset" value, 1 for the first and 0 for the rest, changes
-/// nothing) and the last thirty are flag indices (<c>-1</c> for none). VSHELL applies each record the
+/// header values (a word left at its unset value, <see cref="Unset"/>, changes nothing) and the last thirty are flag indices (<c>-1</c> for none). VSHELL applies each record the
 /// moment it reads it and keeps nothing, which is why no other row refers to these.</para>
 ///
 /// <para>Kept here as raw words so a file round-trips unchanged; the load that applies them is
@@ -34,4 +33,10 @@ public class MissionSettingsPatch {
 
 	/// <summary>Where the thirty flag indices to clear start in <see cref="Data"/>.</summary>
 	public const int ClearListStart = 11;
+
+	/// <summary>
+	/// Header word <paramref name="word"/>'s unset value, which a record leaves to change nothing and which the header
+	/// holds when no record sets the word: 1 for the theater, word 0, and 0 for the rest.
+	/// </summary>
+	public static short Unset(int word) => (short)(word == 0 ? 1 : 0);
 }

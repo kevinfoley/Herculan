@@ -24,6 +24,20 @@ internal static class EditorText {
 		}
 	}
 
+	/// <summary>
+	/// Why a control is disabled, as a note led by <paramref name="lead"/>; nothing for null, or for a plain
+	/// <c>script.dat</c>'s read-only reason (<see cref="PointMover.ReadOnlyReason"/>), which the viewport's banner says once
+	/// for every control (<see cref="EditorHost"/>).
+	/// </summary>
+	public static void Reason(string? reason, string lead = "") {
+		if (reason != null && !IsReadOnly(reason)) {
+			Note(lead + reason);
+		}
+	}
+
+	/// <summary>Whether <paramref name="reason"/> is a plain <c>script.dat</c>'s read-only reason, which no view repeats.</summary>
+	public static bool IsReadOnly(string? reason) => reason == PointMover.ReadOnlyReason;
+
 	/// <summary>A note, wrapped at the window's edge.</summary>
 	public static void Note(string text) {
 		ImGui.PushStyleColor(ImGuiCol.Text, NoteColor);

@@ -66,7 +66,11 @@ internal sealed class SquadMachinePanel {
 		}
 
 		ImGui.EndDisabled();
-		EditorText.Note(noAdd ?? "A new squadmate is the player's machine's chassis, with its stock fit.");
+		if (noAdd == null) {
+			EditorText.Note("A new squadmate is the player's machine's chassis, with its stock fit.");
+		} else {
+			EditorText.Reason(noAdd);
+		}
 		Failures();
 	}
 
@@ -162,7 +166,7 @@ internal sealed class SquadMachinePanel {
 		} else if (reason == null) {
 			EditorText.Note($"Cannot be removed while the mission names or needs it: {Needs(names, ownActions)}.");
 		} else if (_fitter.SquadSlot(member) is not { } fixedSlot || reason != _fitter.WhyFixed(fixedSlot)) {
-			EditorText.Note($"Cannot be removed: {reason}");
+			EditorText.Reason(reason, "Cannot be removed: ");
 		}
 
 		ImGui.PopID();
@@ -214,9 +218,7 @@ internal sealed class SquadMachinePanel {
 
 		ImGui.EndDisabled();
 		ImGui.PopID();
-		if (reason != null) {
-			EditorText.Note(reason);
-		}
+		EditorText.Reason(reason);
 	}
 
 	// Why the last fit, add or remove could not be made.

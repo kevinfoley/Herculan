@@ -71,6 +71,9 @@ public sealed class ScaledImGui : IDisposable {
 	/// <summary>The font's bold face at the ordinary size, or null when the constructor was given none; rebuilt as <see cref="ItalicFont"/> is.</summary>
 	public ImFontPtr? BoldFont { get; private set; }
 
+	/// <summary>The bold face at <see cref="LargeFontScale"/> times the size, drawn at <see cref="LargeFontSize"/>; null without a bold face.</summary>
+	public ImFontPtr? LargeBoldFont { get; private set; }
+
 	/// <summary>The size <see cref="LargeFont"/> is drawn at in the current ImGui frame, as <see cref="Scaled(float)"/>.</summary>
 	public static float LargeFontSize => ImGui.GetFontSize() * LargeFontScale;
 
@@ -174,6 +177,7 @@ public sealed class ScaledImGui : IDisposable {
 			LargeFont = fonts.AddFontFromFileTTF(_fontPath, pixels * LargeFontScale);
 			ItalicFont = _italicFontPath != null ? fonts.AddFontFromFileTTF(_italicFontPath, pixels) : null;
 			BoldFont = _boldFontPath != null ? fonts.AddFontFromFileTTF(_boldFontPath, pixels) : null;
+			LargeBoldFont = _boldFontPath != null ? fonts.AddFontFromFileTTF(_boldFontPath, pixels * LargeFontScale) : null;
 		});
 		ImGui.GetIO().FontGlobalScale = _builtClientScale / _builtContentScale;
 		ImGui.GetStyle().ScaleAllSizes(_builtClientScale);

@@ -9,6 +9,9 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal abstract record EditorSelection;
 
+/// <summary>The mission as a whole: its header's theater and time of day.</summary>
+internal sealed record MissionSelection : EditorSelection;
+
 /// <summary>One placed object.</summary>
 internal sealed record ObjectSelection(SceneObject Object) : EditorSelection;
 

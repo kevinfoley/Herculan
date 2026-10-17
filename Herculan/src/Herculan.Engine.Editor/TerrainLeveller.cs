@@ -21,7 +21,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class TerrainLeveller {
 	private readonly HeightGrid _terrain;
-	private readonly MissionModels _models;
+	private readonly MissionScene _scene;
 	private readonly MissionIndex _index;
 	private readonly TerrainMaterialTable _materials;
 	private readonly MissionOverlay _overlay;
@@ -37,7 +37,7 @@ internal sealed class TerrainLeveller {
 	public TerrainLeveller(MissionScene scene, MissionIndex index, TerrainMaterialTable materials, MissionOverlay overlay,
 			Action<SceneObject, Vec3i, int> place) {
 		_terrain = scene.World.Terrain;
-		_models = scene.Models;
+		_scene = scene;
 		_index = index;
 		_materials = materials;
 		_overlay = overlay;
@@ -119,8 +119,10 @@ internal sealed class TerrainLeveller {
 			_overlay.Redrape();
 		}
 
-		var (first, count) = TerrainMeshBuilder.Rebuild(_models.TerrainMesh, _terrain, _models.TerrainBank,
-			_models.TerrainShading, minX, minY, maxX, maxY);
+		// The scene's models as they stand: a change of theater builds the mesh again in its bank and shading.
+		var models = _scene.Models;
+		var (first, count) = TerrainMeshBuilder.Rebuild(models.TerrainMesh, _terrain, models.TerrainBank,
+			models.TerrainShading, minX, minY, maxX, maxY);
 		Changed?.Invoke(first, count);
 	}
 

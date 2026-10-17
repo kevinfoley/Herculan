@@ -80,6 +80,9 @@ internal sealed class MissionRebuild {
 	/// <summary>Raised once a rebuild is done, for whatever reads the index's groups.</summary>
 	public event Action? Rebuilt;
 
+	/// <summary>Every object a rebuild has filed, in the scene or kept for an undo or redo to put back.</summary>
+	public IEnumerable<SceneObject> Built => _built.Values.SelectMany(objects => objects);
+
 	/// <summary>
 	/// Makes <paramref name="edit"/>, which writes the <c>.MSN</c> and generates again, then builds the editor's state
 	/// again from the generated file. An edit that throws has put the records back, and nothing is rebuilt.
@@ -241,6 +244,7 @@ internal sealed class MissionRebuild {
 			ActionSelection { Action: var action } when action < _index.Mission.Actions.Count => _selection.Current,
 			TimerSelection { Timer: var timer } when timer < _index.Mission.ActionTimers.Count => _selection.Current,
 			ObjectiveSelection { Objective: var objective } when objective < _index.Mission.Objectives.Count => _selection.Current,
+			MissionSelection => _selection.Current,
 			_ => null
 		};
 	}

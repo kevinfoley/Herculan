@@ -251,6 +251,30 @@ public class MissionDocumentTests {
 		Assert.Equal(drawn, document.Script.Coordinates[0].X);
 	}
 
+	/// <summary>
+	/// Catches a header edit written into a row-2 record that a later one overrides, so the generated header keeps the
+	/// later record's theater and the edit shows nothing.
+	/// </summary>
+	[Fact]
+	public void HeaderWordIsWrittenWhereTheGenerationReadsIt() {
+		var document = Open(new SyntheticMsn().Add(2, Patch(theater: 1)).Add(2, Patch(theater: 3)));
+
+		document.SetHeaderWord(0, 2);
+		document.SetHeaderWord(9, 1);
+
+		Assert.Equal(2, document.Script.TheaterIndex);
+		Assert.Equal(1, document.Script.TheaterVariant);
+	}
+
+	// An unconditioned row-2 record setting the theater alone, clearing no flag.
+	private static short[] Patch(short theater) {
+		var words = new short[MissionSettingsPatch.Words];
+		words[0] = -1;
+		words[MissionSettingsPatch.HeaderWordsStart] = theater;
+		Array.Fill(words, (short)-1, MissionSettingsPatch.ClearListStart, MissionSettingsPatch.Words - MissionSettingsPatch.ClearListStart);
+		return words;
+	}
+
 	private static MissionDocument Open(SyntheticMsn msn, Func<Func<short, int>>? newRoll = null) =>
 		MissionDocument.Read(msn.Bytes(), null, new MissionGeneration(new short[MissionGenerator.CampaignFlagCount],
 			new short?[MissionGeneration.HeaderWords], newRoll ?? (() => _ => 0)));

@@ -87,9 +87,7 @@ internal sealed class StructureToolbox {
 			display.Y - ScaledImGui.Scaled(Height + Margin)), ImGuiCond.FirstUseEver);
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(Width), ScaledImGui.Scaled(Height)), ImGuiCond.FirstUseEver);
 		if (ImGui.Begin("Toolbox")) {
-			if (whyNoAdd != null) {
-				ImGui.TextWrapped(whyNoAdd);
-			}
+			EditorText.Reason(whyNoAdd);
 
 			DrawContents(enabled, selectedGroup, whyNotJoin);
 		}
@@ -117,7 +115,7 @@ internal sealed class StructureToolbox {
 		ImGui.Checkbox(selectedGroup is { } group ? $"Join the selected group {group}" : "Join the selected group", ref _join);
 		ImGui.EndDisabled();
 		if (whyNotJoin != null) {
-			EditorText.Note(whyNotJoin);
+			EditorText.Reason(whyNotJoin);
 		} else if (selectedGroup == null) {
 			EditorText.Note("Select a structure group, or one of its structures, to join it.");
 		}

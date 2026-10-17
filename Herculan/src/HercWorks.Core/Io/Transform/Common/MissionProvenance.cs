@@ -34,6 +34,20 @@ public sealed class MissionProvenance {
 
 	private SlotProvenance? _textPackage;
 
+	/// <summary>The row-2 records whose condition passed, in read order, and the one each header word holds the write of.</summary>
+	private readonly List<MsnRecordId> _headerPatches = new();
+	private readonly Dictionary<int, MsnRecordId> _headerWords = new();
+
+	/// <summary>The row-2 records whose condition passed, which patched the header, in read order.</summary>
+	public IReadOnlyList<MsnRecordId> HeaderPatches => _headerPatches;
+
+	/// <summary>
+	/// The row-2 record whose write header word <paramref name="word"/> (<c>script.dat</c> offset <c>word * 2</c>) holds:
+	/// the last of <see cref="HeaderPatches"/> that sets it, or null when none does and the word keeps its unset value. A
+	/// launch that writes over the word after the load (<see cref="Data.File.Msn.MissionGeneration"/>) is not one.
+	/// </summary>
+	public MsnRecordId? HeaderWord(int word) => _headerWords.TryGetValue(word, out var record) ? record : null;
+
 	/// <summary>
 	/// The exported record at <paramref name="index"/> of <c>script.dat</c> block <paramref name="block"/>
 	/// (1 to 13), or null past the block's end. Block 13 is one record, row 4's slot 0, at index 0.
@@ -129,6 +143,12 @@ public sealed class MissionProvenance {
 		var record = new MsnRecordId(4, index);
 		_textPackage = new SlotProvenance(13, 0, record, Own(record, wordCount));
 	}
+
+	/// <summary>Row-2 record <paramref name="index"/> passed its condition and patches the header.</summary>
+	internal void HeaderPatched(int index) => _headerPatches.Add(new MsnRecordId(2, index));
+
+	/// <summary>Row-2 record <paramref name="index"/> wrote header word <paramref name="word"/>.</summary>
+	internal void HeaderWordWritten(int word, int index) => _headerWords[word] = new MsnRecordId(2, index);
 
 	/// <summary><c>.ENG</c> record <paramref name="engRecord"/> added as a new <c>mission.str</c> line.</summary>
 	internal void LineAdded(int engRecord) {

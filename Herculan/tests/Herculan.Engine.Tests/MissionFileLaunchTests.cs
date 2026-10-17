@@ -1,4 +1,8 @@
+using HercWorks.Core.Data.File.Msn;
+using HercWorks.Core.Data.File.Msn.Script;
+using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
+using Herculan.Engine.Editor;
 using Herculan.Engine.Install;
 using Herculan.Engine.Shell;
 using Xunit;
@@ -6,7 +10,7 @@ using Xunit;
 namespace Herculan.Engine.Tests;
 
 /// <summary>
-/// <see cref="MissionFileLaunch.Open"/> against a real install. Skips silently without one, as the rest of the suite does.
+/// <see cref="MissionFileLaunch.Open"/>, and the editor's open through it, against a real install. Skips silently without one, as the rest of the suite does.
 /// </summary>
 public class MissionFileLaunchTests {
 	/// <summary>
@@ -41,4 +45,47 @@ public class MissionFileLaunchTests {
 		Assert.Equal(File.ReadAllBytes(Path.Combine(directory, "mission.str")), document.MissionText);
 		Assert.Equal(File.ReadAllBytes(Path.Combine(directory, "player.mec")), squad!.PlayerMec(document.Generator));
 	}
+
+	/// <summary>
+	/// The editor's open of a practice mission (<see cref="MissionOpener.Open"/>), whose document shows the theater and
+	/// time of day the mission's row 2 patches while the handoff the launch wrote keeps theater 1 and the rest of the
+	/// practice header. Catches the editor's generation writing theater 1 over a mission that is not a campaign one again,
+	/// a game launch losing that retail overwrite, and the editor dropping the practice screen's other header words.
+	/// TRAIN5 patches a theater other than 1.
+	/// </summary>
+	[Fact]
+	public void EditorShowsAPracticeMissionsOwnTheaterWhereTheLaunchWritesTheater1() {
+		if (GameInstall.Locate(null) is not { } root) {
+			return;
+		}
+
+		string directory = Path.Combine(Path.GetTempPath(), "herculan-tests", nameof(EditorShowsAPracticeMissionsOwnTheaterWhereTheLaunchWritesTheater1));
+		foreach (string file in new[] { "script.dat", "mission.str" }) {
+			if (File.Exists(Path.Combine(directory, file))) {
+				File.Delete(Path.Combine(directory, file));
+			}
+		}
+
+		string? script = MissionOpener.Open(GameContent.MountShell(root), root, "TRAIN5.MSN", directory, out var document, out _,
+			out string? failure);
+
+		Assert.True(script != null, failure);
+		var handoff = (ScriptDat)new ScriptDatTransformer().Parse(File.ReadAllBytes(script))!;
+		var shown = document!.Script;
+		Assert.Equal(ShellTrainingLaunch.PracticeTheater, handoff.TheaterIndex);
+		Assert.Equal(Patched(document, MissionOpener.TheaterWord), shown.TheaterIndex);
+		Assert.NotEqual(handoff.TheaterIndex, shown.TheaterIndex);
+		Assert.Equal(Patched(document, MissionOpener.VariantWord), shown.TheaterVariant);
+		for (int offset = 0; offset < ScriptDat.HeaderSize; offset++) {
+			if (offset / 2 != MissionOpener.TheaterWord && offset / 2 != MissionOpener.VariantWord) {
+				Assert.Equal(handoff.HeaderBytes[offset], shown.HeaderBytes[offset]);
+			}
+		}
+	}
+
+	// Header word <word> as the document's row 2 patches it: the supplying record's, else the word's unset value.
+	private static short Patched(MissionDocument document, int word) =>
+		document.Provenance.HeaderWord(word) is { } supplier
+			? document.Mission.SettingsPatches![supplier.Index].Data[MissionSettingsPatch.HeaderWordsStart + word]
+			: MissionSettingsPatch.Unset(word);
 }

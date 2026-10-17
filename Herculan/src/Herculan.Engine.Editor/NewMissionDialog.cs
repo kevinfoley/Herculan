@@ -5,38 +5,45 @@ using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
 
-/// <summary>What File &gt; New mission was asked for: the mission's name, its zone, and whether it is played by night.</summary>
-internal sealed record NewMissionRequest(string Name, ZoneChoice Zone, bool Night);
+/// <summary>What File &gt; New mission was asked for: the mission's name, its zone, its theater, and whether it is played by night.</summary>
+internal sealed record NewMissionRequest(string Name, ZoneChoice Zone, short Theater, bool Night);
 
 /// <summary>
 /// File &gt; New mission's modal: a name, taken as Save As takes one but never an archive mission's
 /// (<see cref="MissionSaving.WhyNotNewName"/>), and asking first when the install already has a saved mission of that
-/// name; a zone from the ones the install has (<see cref="MissionZones"/>), with the theaters the retail missions in it
-/// are played on; and day or night. The dialog only asks: the host builds and opens the mission (<see cref="TakeRequest"/>)
+/// name; a zone from the ones the install has (<see cref="MissionZones"/>); a theater (<see cref="TheaterNames"/>); and
+/// day or night. The dialog only asks: the host builds and opens the mission (<see cref="TakeRequest"/>)
 /// and reports back through <see cref="Creating"/> and <see cref="Failure"/>.
 /// </summary>
 internal sealed class NewMissionDialog {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
 	private const float PanelWidth = 640f;
 	private const float ListHeight = 300f;
+	private const float TheaterWidth = 160f;
 
 	private readonly MissionSaving _saving;
 	private readonly Func<IReadOnlyList<ZoneChoice>> _listZones;
+	private readonly Func<IReadOnlyList<string>> _listTheaters;
 	private IReadOnlyList<ZoneChoice>? _zones;
+	private IReadOnlyList<string>? _theaters;
 	private bool _open;
 	private bool _raised;
 	private bool _askingReplace;
 	private string _typedName = "";
 	private string? _problem;
 	private int _zone;
+	private int _theater;
 	private bool _night;
 	private NewMissionRequest? _request;
 
 	/// <param name="saving">The save path, whose name rules a new mission takes.</param>
 	/// <param name="listZones">Lists the zones; called the first time the dialog opens.</param>
-	public NewMissionDialog(MissionSaving saving, Func<IReadOnlyList<ZoneChoice>> listZones) {
+	/// <param name="listTheaters">Labels the theaters, in theater order; called the first time the dialog opens.</param>
+	public NewMissionDialog(MissionSaving saving, Func<IReadOnlyList<ZoneChoice>> listZones,
+			Func<IReadOnlyList<string>> listTheaters) {
 		_saving = saving;
 		_listZones = listZones;
+		_listTheaters = listTheaters;
 	}
 
 	/// <summary>The mission being built and opened, which the dialog names in place of its fields until that ends.</summary>
@@ -50,6 +57,7 @@ internal sealed class NewMissionDialog {
 
 	public void Open() {
 		_zones ??= _listZones();
+		_theaters ??= _listTheaters();
 		_open = true;
 		_askingReplace = false;
 		_problem = null;
@@ -142,6 +150,22 @@ internal sealed class NewMissionDialog {
 		}
 
 		Spacer();
+		var theaters = _theaters ?? [];
+		ImGui.AlignTextToFramePadding();
+		ImGui.TextUnformatted("Theater:");
+		ImGui.SameLine();
+		ImGui.SetNextItemWidth(ScaledImGui.Scaled(TheaterWidth));
+		if (ImGui.BeginCombo("##theater", _theater < theaters.Count ? theaters[_theater] : $"{_theater}")) {
+			for (int i = 0; i < theaters.Count; i++) {
+				if (ImGui.Selectable(theaters[i], i == _theater)) {
+					_theater = i;
+				}
+			}
+
+			ImGui.EndCombo();
+		}
+
+		ImGui.SameLine();
 		if (ImGui.RadioButton("Day", !_night)) {
 			_night = false;
 		}
@@ -152,9 +176,7 @@ internal sealed class NewMissionDialog {
 		}
 
 		Spacer();
-		ImGui.TextWrapped("The mission is the player's machine alone, with one nav point to reach. It opens, and plays, "
-			+ "as any mission the campaign does not list: as INSTANT ACTION, which plays it on theater "
-			+ $"{ShellTrainingLaunch.PracticeTheater} with the practice screen's time of day, whatever is chosen here.");
+		ImGui.TextWrapped("The mission is the player's machine alone, with one nav point to reach.");
 		Problem(_problem);
 		Problem(Failure);
 		Spacer();
@@ -199,7 +221,7 @@ internal sealed class NewMissionDialog {
 
 	private void Ask(string name) {
 		var zones = _zones!;
-		_request = new NewMissionRequest(name, zones[Math.Clamp(_zone, 0, zones.Count - 1)], _night);
+		_request = new NewMissionRequest(name, zones[Math.Clamp(_zone, 0, zones.Count - 1)], (short)_theater, _night);
 	}
 
 	private static void Problem(string? problem) {

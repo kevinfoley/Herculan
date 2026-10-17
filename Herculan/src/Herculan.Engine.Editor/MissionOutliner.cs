@@ -6,8 +6,9 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The Mission panel down the left of the window: every group (with its members), trigger area,
-/// action, timer, route and objective as a list, under the mission check's findings. It is the only way to reach the parts of a mission that are not
+/// The Mission panel down the left of the window: the mission itself (its theater and time of day,
+/// <see cref="MissionView"/>), then the mission check's findings, then every group (with its members), trigger area,
+/// action, timer, route and objective as a list. It is the only way to reach the parts of a mission that are not
 /// standing somewhere — an action with no area, a group not yet in the mission — and the other way
 /// to make a selection. A double-click also frames the record in the view (<see cref="SelectionState.Focus"/>).
 /// </summary>
@@ -38,6 +39,8 @@ internal sealed class MissionOutliner {
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), display.Y - menuBarHeight));
 		ImGui.Begin("Mission", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse);
 
+		var mission = new MissionSelection();
+		Choose(mission, ImGui.Selectable("Mission##mission", _selection.Is(mission)));
 		DrawProblems();
 		DrawGroups();
 		DrawAreas();

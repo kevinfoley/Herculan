@@ -22,6 +22,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// is unset in every record of the GUID, since an overlay cannot carry an unset value.</para>
 /// </summary>
 public sealed class MissionDocument {
+	private const int SettingsRow = 2;
 	private const int PointRow = 6;
 	private const int HeadingRow = 7;
 	private const int RouteRow = 8;
@@ -302,6 +303,50 @@ public sealed class MissionDocument {
 
 		var before = Begin(field.Row);
 		field.Set(RecordAt(source.Record)!, value);
+		return End(before);
+	}
+
+	/// <summary>
+	/// Sets header word <paramref name="word"/> (<c>script.dat</c> offset <c>word * 2</c>) as row 2 patches it to
+	/// <paramref name="value"/>. Row 2 overlays one header, so the record written is, as for an overlay field, the last
+	/// surviving row-2 record that sets the word (<see cref="MissionProvenance.HeaderWord"/>), else the first surviving
+	/// one, else a record appended unconditioned that sets nothing else. The word's unset value
+	/// (<see cref="MissionSettingsPatch.Unset"/>) is written into every row-2 record that sets the word, whatever its
+	/// condition, since a record cannot carry it over another's. A launch that writes over the word
+	/// (<see cref="MissionGeneration"/>) still does.
+	/// </summary>
+	public MsnEdit SetHeaderWord(int word, short value) {
+		if (word is < 0 or >= MissionGeneration.HeaderWords) {
+			throw new ArgumentOutOfRangeException(nameof(word), word, $"The header has {MissionGeneration.HeaderWords} words.");
+		}
+
+		var patches = Mission.SettingsPatches ?? [];
+		int at = MissionSettingsPatch.HeaderWordsStart + word;
+		short unset = MissionSettingsPatch.Unset(word);
+		var before = Begin(SettingsRow);
+		if (value == unset) {
+			foreach (var patch in patches) {
+				patch.Data[at] = unset;
+			}
+
+			return End(before);
+		}
+
+		var survivors = Provenance.HeaderPatches;
+		if ((Provenance.HeaderWord(word) ?? (survivors.Count > 0 ? survivors[0] : (MsnRecordId?)null)) is { } supplier) {
+			patches[supplier.Index].Data[at] = value;
+			return End(before);
+		}
+
+		var data = new short[MissionSettingsPatch.Words];
+		data[0] = -1;
+		for (int header = 0; header < MissionGeneration.HeaderWords; header++) {
+			data[MissionSettingsPatch.HeaderWordsStart + header] = MissionSettingsPatch.Unset(header);
+		}
+
+		Array.Fill(data, (short)-1, MissionSettingsPatch.ClearListStart, MissionSettingsPatch.Words - MissionSettingsPatch.ClearListStart);
+		data[at] = value;
+		Add(SettingsRow, new MissionSettingsPatch { Data = data });
 		return End(before);
 	}
 

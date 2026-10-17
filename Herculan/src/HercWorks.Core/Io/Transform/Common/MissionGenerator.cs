@@ -353,13 +353,11 @@ public sealed class MissionGenerator {
 				continue;
 			}
 
-			if (patch[1] != 1) {
-				Header[0] = patch[1];
-			}
-
-			for (int word = 1; word < Header.Length; word++) {
-				if (patch[1 + word] != 0) {
+			Provenance.HeaderPatched(i);
+			for (int word = 0; word < Header.Length; word++) {
+				if (patch[1 + word] != MissionSettingsPatch.Unset(word)) {
 					Header[word] = patch[1 + word];
+					Provenance.HeaderWordWritten(word, i);
 				}
 			}
 

@@ -40,6 +40,12 @@ public sealed record SceneObject(SimObject Object, SceneModel? Model, MissionPla
 	/// when an edit renumbers the records, keeping the object.
 	/// </summary>
 	public MissionPlacement Placement { get; set; } = Placement;
+
+	/// <summary>Its shared model; replaced when the scene changes theater (<see cref="MissionScene.ChangeTheater"/>).</summary>
+	public SceneModel? Model { get; internal set; } = Model;
+
+	/// <summary>Its LOD chain; replaced with <see cref="Model"/>.</summary>
+	public ShapeDetailChain? Detail { get; internal set; } = Detail;
 }
 
 /// <summary>
@@ -59,13 +65,24 @@ public sealed record SceneObject(SimObject Object, SceneModel? Model, MissionPla
 /// at all.</para>
 /// </summary>
 public sealed class MissionScene {
-	// Builds one placement's object from the tables Load read, for CreateObject.
-	private readonly Func<MissionPlacement, SceneObject?> _spawn;
+	// What Load read that building an object again, or dressing the scene in another theater, reads again.
+	private readonly GameContent _content;
+	private readonly TerrainMaterialTable _materials;
+	private readonly int _cockpitScheme;
+	private readonly SpawnTables _tables;
+
+	// The models every object is built from, in the theater's palette.
+	private SceneModelLibrary _library;
 
 	private MissionScene(Mission mission, SimWorld world, FlyCameraObject camera,
 			IReadOnlyList<SceneObject> objects, TheaterDescriptor theater, SceneObject? playerObject,
-			BeamAppearance? beams, MissionModels models, Func<MissionPlacement, SceneObject?> spawn) {
-		_spawn = spawn;
+			BeamAppearance? beams, MissionModels models, GameContent content, TerrainMaterialTable materials,
+			int cockpitScheme, SpawnTables tables, SceneModelLibrary library) {
+		_content = content;
+		_materials = materials;
+		_cockpitScheme = cockpitScheme;
+		_tables = tables;
+		_library = library;
 		Beams = beams;
 		Mission = mission;
 		World = world;
@@ -110,20 +127,20 @@ public sealed class MissionScene {
 	public TargetSelection? Targeting { get; private set; }
 
 	/// <summary>The theater descriptor this scene was built against — it names the terrain bank and the palette.</summary>
-	public TheaterDescriptor Theater { get; }
+	public TheaterDescriptor Theater { get; private set; }
 
 	/// <summary>
 	/// Beam widths, colours and the shared cross-section, or null when either resource is missing —
 	/// in which case beams still fire and still do damage, they just are not drawn. Loaded here
 	/// because its colours are palette indices and the theater owns the palette.
 	/// </summary>
-	public BeamAppearance? Beams { get; }
+	public BeamAppearance? Beams { get; private set; }
 
 	/// <summary>
 	/// What the scene draws with: every model, the terrain mesh and bank, and the theater's atmosphere and
 	/// shading — see <see cref="MissionModels"/>.
 	/// </summary>
-	public MissionModels Models { get; }
+	public MissionModels Models { get; private set; }
 
 	/// <summary>How many placed objects have no model the engine can build yet.</summary>
 	public int UnmodelledCount => Objects.Count(o => o.Model == null);
@@ -190,23 +207,14 @@ public sealed class MissionScene {
 			IsV110 = content.IsV110
 		};
 		world.Mission.LoadCounters(mission.Counters);
-		var models = new SceneModelLibrary(content, theater,
-			CockpitPalette.ReadSchemeIndex(content, mission.Player?.TypeName));
+		int cockpitScheme = CockpitPalette.ReadSchemeIndex(content, mission.Player?.TypeName);
+		var models = new SceneModelLibrary(content, theater, cockpitScheme);
 		var baseTypes = BaseTypeTable.Load(content);
 
 		// The theater's ground-shape set, which FlatObj_LoadResources loads at the end of
 		// World_LoadTheater -- before a single object exists, which matters here: a HERC takes its
 		// shadows as it joins the world below, and each is built with its root's radius.
-		var groundShapeModels = new IReadOnlyList<SceneModel>[models.ShapeCount(theater.FlatSetName + ".DTS")];
-		var groundShapeRadii = new int[groundShapeModels.Length];
-		var groundShapeFrames = new int[groundShapeModels.Length];
-		for (int i = 0; i < groundShapeModels.Length; i++) {
-			groundShapeModels[i] = models.GroundShape(theater.FlatSetName, i);
-			groundShapeRadii[i] = models.GroundShapeRadius(theater.FlatSetName, i);
-			groundShapeFrames[i] = groundShapeModels[i].Count;
-		}
-
-		world.BindGroundShapes(groundShapeRadii, groundShapeFrames);
+		var groundShapeModels = BindGroundShapes(models, theater, world);
 
 		// The structure hit-sphere table, read straight after the type table as Base_LoadResources
 		// reads it, and sized by it: BASECOL.DAT carries no count of its own.
@@ -221,12 +229,12 @@ public sealed class MissionScene {
 		// BASES.DAT. Every transport in the mission shares the one table.
 		var transportArmament = TransportArmament.Load(
 			content.Read(TransportArmament.ResourceFolder, TransportArmament.SlotResource), weapons);
+		var tables = new SpawnTables(baseTypes, baseCollision, weapons, transportArmament);
 
 		var objects = new List<SceneObject>(mission.Placements.Count);
 		SceneObject? playerObject = null;
 		foreach (var placement in mission.Placements) {
-			var spawned = Spawn(placement, models, baseTypes, baseCollision, weapons, transportArmament,
-				world.Random, world.Tweaks);
+			var spawned = Spawn(placement, models, tables, world.Random, world.Tweaks);
 			if (spawned == null) {
 				continue;
 			}
@@ -377,9 +385,8 @@ public sealed class MissionScene {
 		world.Add(camera);
 
 		var sceneModels = MissionModels.Build(content, theater, materials, models, world, objects, groundShapeModels);
-		return new MissionScene(mission, world, camera, objects, theater, playerObject, beams, sceneModels,
-			placement => Spawn(placement, models, baseTypes, baseCollision, weapons, transportArmament, world.Random,
-				world.Tweaks));
+		return new MissionScene(mission, world, camera, objects, theater, playerObject, beams, sceneModels, content,
+			materials, cockpitScheme, tables, models);
 	}
 
 	/// <summary>
@@ -390,7 +397,55 @@ public sealed class MissionScene {
 	/// ground, added to <see cref="World"/> or listed in <see cref="Objects"/>, and its actions are not bound. Null for a
 	/// type the install has nothing for, as in <see cref="Load"/>.
 	/// </summary>
-	public SceneObject? CreateObject(MissionPlacement placement) => _spawn(placement);
+	public SceneObject? CreateObject(MissionPlacement placement) => Spawn(placement, _library, _tables, World.Random, World.Tweaks);
+
+	/// <summary>
+	/// Dresses the scene in theater <paramref name="theaterIndex"/>'s <paramref name="variant"/> in place of the one it
+	/// was loaded with, as <c>World_LoadTheater</c> (<c>0042e010</c>) would have loaded it at the start
+	/// (docs/retail/formats/wld-world.md): the palette and shade ramp every model is built through, the terrain bank, the
+	/// sky and fog, the ground-shape set and the beam colours, with each of <paramref name="objects"/>' models built again
+	/// through them and <see cref="Models"/> built again for them. The terrain as it stands, the objects and the simulation
+	/// are kept; a HERC's shadow already on the ground keeps the radius its set gave it. The mission editor's, for a
+	/// mission whose theater or time of day is changed: the simulator never changes theater once a mission is loaded.
+	/// <paramref name="objects"/> are every object to dress, which for the editor are more than <see cref="Objects"/>.
+	/// </summary>
+	public void ChangeTheater(int theaterIndex, int variant, IReadOnlyList<SceneObject> objects) {
+		var theater = TheaterDescriptor.Load(_content, theaterIndex, variant);
+		var library = new SceneModelLibrary(_content, theater, _cockpitScheme);
+		var groundShapeModels = BindGroundShapes(library, theater, World);
+		foreach (var sceneObject in objects) {
+			(sceneObject.Model, sceneObject.Detail) = ModelOf(sceneObject.Placement, library, _tables.BaseTypes);
+		}
+
+		Models = MissionModels.Build(_content, theater, _materials, library, World, objects, groundShapeModels);
+		Theater = theater;
+		Beams = BeamAppearance.Load(_content, theater.PaletteName);
+		World.BeamTable = Beams;
+		World.Theater = theaterIndex;
+		_library = library;
+	}
+
+	/// <summary>
+	/// Loads <paramref name="theater"/>'s ground-shape set from <paramref name="models"/>, one model per cell of each root,
+	/// and binds each root's radius and cell count into <paramref name="world"/>.
+	/// </summary>
+	private static IReadOnlyList<SceneModel>[] BindGroundShapes(SceneModelLibrary models, TheaterDescriptor theater, SimWorld world) {
+		var groundShapeModels = new IReadOnlyList<SceneModel>[models.ShapeCount(theater.FlatSetName + ".DTS")];
+		var groundShapeRadii = new int[groundShapeModels.Length];
+		var groundShapeFrames = new int[groundShapeModels.Length];
+		for (int i = 0; i < groundShapeModels.Length; i++) {
+			groundShapeModels[i] = models.GroundShape(theater.FlatSetName, i);
+			groundShapeRadii[i] = models.GroundShapeRadius(theater.FlatSetName, i);
+			groundShapeFrames[i] = groundShapeModels[i].Count;
+		}
+
+		world.BindGroundShapes(groundShapeRadii, groundShapeFrames);
+		return groundShapeModels;
+	}
+
+	/// <summary>The tables <see cref="Load"/> reads that building an object reads besides the model library.</summary>
+	private sealed record SpawnTables(BaseTypeTable BaseTypes, BaseCollisionTable BaseCollision, WeaponCatalog? Weapons,
+		TransportArmament? TransportArmament);
 
 	/// <summary>
 	/// Where one node of an animating object's shape stands, in render space: the node's own posed
@@ -640,11 +695,10 @@ public sealed class MissionScene {
 	/// mission — since an object with no identity has nothing to stand in for. A known type whose
 	/// <i>model</i> cannot be built still spawns: it is really there, and the scene reports it.
 	/// </summary>
-	private static SceneObject? Spawn(MissionPlacement placement, SceneModelLibrary models,
-			BaseTypeTable baseTypes, BaseCollisionTable baseCollision, WeaponCatalog? weapons,
-			TransportArmament? transportArmament, SimRandom random, TweakSettings tweaks) {
-		var (simObject, model, detail) = Create(placement, models, baseTypes, baseCollision, weapons,
-			transportArmament, random, tweaks);
+	private static SceneObject? Spawn(MissionPlacement placement, SceneModelLibrary models, SpawnTables tables,
+			SimRandom random, TweakSettings tweaks) {
+		var (simObject, model, detail) = Create(placement, models, tables.BaseTypes, tables.BaseCollision, tables.Weapons,
+			tables.TransportArmament, random, tweaks);
 		if (simObject == null) {
 			return null;
 		}
@@ -707,10 +761,7 @@ public sealed class MissionScene {
 					return (null, null, null);
 				}
 
-				// Every root, not just the one that is drawn at the moment: which of them that is
-				// changes with the distance to the eye, every frame — see Render.ShapeDetail.
-				var roots = models.MechDetailRoots(placement.TypeName);
-				var model = roots.Count > 0 ? roots[0] : null;
+				var (model, detail) = MechModel(models, placement.TypeName);
 				return (
 					new MechObject(placement.TypeName, simData, model?.ShapeRadius ?? 0,
 						new MechLoadout(
@@ -725,9 +776,7 @@ public sealed class MissionScene {
 						models.MechWeaponCellCount,
 						models.FlightModelFor(placement.TypeName)),
 					model,
-					roots.Count > 1
-						? new ShapeDetailChain(roots, models.MechShapeRadius(placement.TypeName))
-						: null);
+					detail);
 			}
 
 			case MissionUnitKind.Flyer: {
@@ -778,6 +827,25 @@ public sealed class MissionScene {
 			default:
 				return (null, null, null);
 		}
+	}
+
+	/// <summary>The model and LOD chain <see cref="Create"/> builds a placement's object with, from <paramref name="models"/>.</summary>
+	private static (SceneModel? Model, ShapeDetailChain? Detail) ModelOf(MissionPlacement placement, SceneModelLibrary models,
+			BaseTypeTable baseTypes) => placement.Kind switch {
+		MissionUnitKind.Mech when placement.TypeName != null => MechModel(models, placement.TypeName),
+		MissionUnitKind.Flyer when placement.TypeName != null => (models.Flyer(placement.TypeName), null),
+		MissionUnitKind.Base when baseTypes[placement.TypeIndex] is { } type => (models.Base(type), null),
+		_ => (null, null)
+	};
+
+	/// <summary>
+	/// A machine's model, its root 0, and its LOD chain: every root, not just the one that is drawn at the moment, since
+	/// which of them that is changes with the distance to the eye, every frame (see Render.ShapeDetail).
+	/// </summary>
+	private static (SceneModel? Model, ShapeDetailChain? Detail) MechModel(SceneModelLibrary models, string typeName) {
+		var roots = models.MechDetailRoots(typeName);
+		return (roots.Count > 0 ? roots[0] : null,
+			roots.Count > 1 ? new ShapeDetailChain(roots, models.MechShapeRadius(typeName)) : null);
 	}
 
 	/// <summary>

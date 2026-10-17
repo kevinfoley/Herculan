@@ -97,17 +97,6 @@ public static class MissionFileLaunch {
 				msn, text, directory, random, new short[MissionGenerator.ClearListLength], generating, out piloted, out why),
 			out document, out squad, out failure);
 
-	/// <summary>
-	/// The theater a launch of mission <paramref name="name"/> writes over its header: the stage's campaign index for a
-	/// campaign mission, and <see cref="ShellTrainingLaunch.PracticeTheater"/> for a practice mission or one
-	/// <c>gam\career.dat</c> does not list, which loads as <c>INSTANT ACTION</c>.
-	/// </summary>
-	public static short LaunchTheater(GameContent shellContent, string name) =>
-		ShellCampaignLaunch.Find(shellContent, name) is var (stage, _) && stage > 0
-			&& ShellTrainingLaunch.CareerStages(shellContent) is { } stages && stage < stages.Count
-			? stages[stage].CampaignIndex
-			: ShellTrainingLaunch.PracticeTheater;
-
 	private delegate string? HandoffWriter(SimRandom random, MissionGenerating generating, out MissionSquad? squad,
 		out string? failure);
 

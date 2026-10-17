@@ -18,7 +18,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class PropertiesPanel {
 	// In pixels on a 100% display (ScaledImGui.Scaled).
-	private const float PanelWidth = 340f;
+	public const float PanelWidth = 340f;
 
 	private readonly MissionIndex _index;
 	private readonly SelectionState _selection;
@@ -26,6 +26,7 @@ internal sealed class PropertiesPanel {
 	private readonly SideChanger _sides;
 	private readonly ObjectDeleter _deleter;
 	private readonly SquadMachinePanel _machine;
+	private readonly MissionView _mission;
 	private readonly StringFile? _strings;
 
 	// A position being typed, and the object it is for, until its field lets go.
@@ -33,13 +34,14 @@ internal sealed class PropertiesPanel {
 	private Vec3i _draft;
 
 	public PropertiesPanel(MissionIndex index, SelectionState selection, PointMover mover, SideChanger sides,
-			ObjectDeleter deleter, SquadMachinePanel machine, StringFile? strings) {
+			ObjectDeleter deleter, SquadMachinePanel machine, MissionView mission, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
 		_sides = sides;
 		_deleter = deleter;
 		_machine = machine;
+		_mission = mission;
 		_strings = strings;
 	}
 
@@ -53,6 +55,9 @@ internal sealed class PropertiesPanel {
 		ImGui.Begin("Properties", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoCollapse);
 
 		switch (_selection.Current) {
+			case MissionSelection:
+				_mission.Draw();
+				break;
 			case ObjectSelection selected:
 				DrawObject(selected.Object);
 				break;
@@ -161,7 +166,7 @@ internal sealed class PropertiesPanel {
 		}
 
 		if (blockers.Fixed is { } reason) {
-			EditorText.Note($"Cannot be deleted: {reason}");
+			EditorText.Reason(reason, "Cannot be deleted: ");
 			return;
 		}
 
@@ -235,7 +240,7 @@ internal sealed class PropertiesPanel {
 		if (_mover.WhyFixed(sel) is { } reason) {
 			ImGui.Text($"Position: {pos.X}, {pos.Y}, {pos.Z} units");
 			ImGui.Text($"          {Meters(pos)}");
-			EditorText.Note(reason);
+			EditorText.Reason(reason);
 			return;
 		}
 
@@ -316,7 +321,7 @@ internal sealed class PropertiesPanel {
 		if (ofMember) {
 			EditorText.Note("Team controlled by group");
 		} else if (reason != null && group != 0) {
-			EditorText.Note(reason);
+			EditorText.Reason(reason);
 		} else if (reason == null && members > 1) {
 			EditorText.Note($"All {members} members change with it.");
 		}
@@ -744,7 +749,7 @@ internal sealed class PropertiesPanel {
 	/// <summary>What dragging the group's move handles moves with it (<see cref="PointMover"/>), or why it cannot be moved.</summary>
 	private void DrawGroupMove(int group, MissionGroupSetup setup) {
 		if (_mover.WhyFixed(group) is { } reason) {
-			EditorText.Note(reason);
+			EditorText.Reason(reason);
 			return;
 		}
 
@@ -844,10 +849,6 @@ internal sealed class PropertiesPanel {
 		}
 
 		if (_mover.TargetOf(selected) is not WaypointTarget waypoint) {
-			if (selected.Waypoint >= 0 && _mover.WhyReadOnly is { } readOnly) {
-				ImGui.Separator();
-				EditorText.Note(readOnly);
-			}
 
 			return;
 		}

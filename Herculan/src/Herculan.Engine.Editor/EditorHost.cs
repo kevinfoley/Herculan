@@ -166,7 +166,8 @@ public sealed class EditorHost {
 			VolMissionBrowser.Merge(MissionFileLaunch.List(launch.ShellContent()), SavedMissions.List(launch.InstallRoot)));
 		_saving = new MissionSaving(launch.InstallRoot, launch.ShellContent, _missionCache);
 		_saving.Saved += _volBrowser.Refresh;
-		_newMission = new NewMissionDialog(_saving, () => MissionZones.List(launch.SimulatorContent, launch.ShellContent()));
+		_newMission = new NewMissionDialog(_saving, () => MissionZones.List(launch.SimulatorContent),
+			() => TheaterNames.Labels(launch.SimulatorContent));
 		_toolbox = new StructureToolbox(launch.SimulatorContent);
 
 		string scriptPath = launch.ScriptPath ?? MissionLoader.DefaultScriptPath(launch.InstallRoot);
@@ -183,7 +184,7 @@ public sealed class EditorHost {
 		if (_mission != null) {
 			ReportLoaded(_mission);
 			_editorCamera.ResetTo(_mission.Scene.Camera.Position, _mission.Scene.Camera.Heading);
-			_mission.Selection.FocusRequested += Frame;
+			Follow(_mission);
 		}
 
 		_saving.Mission = _mission;
@@ -390,6 +391,34 @@ public sealed class EditorHost {
 		return drawables;
 	}
 
+	// What Upload hooked <drawables> to, unhooked, for drawables about to be replaced while the mission stays.
+	private static void Unhook(EditorMission mission, MissionDrawables drawables) {
+		mission.Mover.Moved -= drawables.Move;
+		mission.Mover.TerrainChanged -= drawables.UploadTerrain;
+		mission.Rebuild.Added -= drawables.Add;
+		mission.Rebuild.Removed -= drawables.Remove;
+		mission.Rebuild.Rebuilt -= drawables.RefreshWaiting;
+	}
+
+	// Listens to <mission> for what the host does for it: framing a double-clicked selection, and uploading its scene again
+	// when its world changes.
+	private void Follow(EditorMission mission) {
+		mission.Selection.FocusRequested += Frame;
+		mission.Theater.WorldChanged += () => ReloadWorld(mission);
+	}
+
+	// Uploads <mission>'s scene again once its theater or time of day has dressed it in another world
+	// (TheaterChanger), freeing the uploads it replaces. The camera, the selection and the view settings stay.
+	private void ReloadWorld(EditorMission mission) {
+		if (_gl == null || _renderer == null || _drawables == null || !ReferenceEquals(mission, _mission)) {
+			return;
+		}
+
+		Unhook(mission, _drawables);
+		_drawables.Dispose();
+		_drawables = Upload(_gl, _renderer, mission);
+	}
+
 	// V toggles the top-down view, Delete deletes the selected object, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes,
 	// Ctrl+S saves, unless a text field or a prompt has the keyboard. None of them while a drag is under way.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
@@ -514,6 +543,10 @@ public sealed class EditorHost {
 				ScaledImGui.Scaled(CompassSize));
 			_mission.Overlay.DrawLabels(_camera, _settings, _mission.Selection);
 			_mission.GroupOverlay.DrawLabels(_camera, _settings, _mission.Selection);
+			if (_mission.Mover.WhyReadOnly != null) {
+				DrawReadOnlyBanner(display, menuBarHeight);
+			}
+
 			_mission.Outliner.Draw(display, menuBarHeight);
 			_mission.Properties.Draw(display, menuBarHeight);
 			int? structureGroup = SelectedStructureGroup(_mission);
@@ -610,7 +643,8 @@ public sealed class EditorHost {
 		return group > 0 && mission.Index.KindOf(group) == MissionUnitKind.Base ? group : null;
 	}
 
-	// The delete, the machine fit, the squadmate add or remove and the Undo or Redo the frame's panels and menus asked for;
+	// The delete, the machine fit, the squadmate add or remove, the theater or time of day and the Undo or Redo the frame's
+	// panels and menus asked for;
 	// none while a drag is under way.
 	private void RunEditRequests(EditorMission mission) {
 		var deleting = mission.Deleter.TakeRequest();
@@ -626,6 +660,7 @@ public sealed class EditorHost {
 
 		mission.Fitter.RunRequest();
 		mission.Squad.RunRequest();
+		mission.Theater.RunRequest();
 
 		if (step == true) {
 			mission.Mover.Undo();
@@ -671,7 +706,7 @@ public sealed class EditorHost {
 		EditorMission opened;
 		try {
 			ClearMissionCache();
-			if (MissionFileLaunch.Open(_launch.ShellContent(), _launch.InstallRoot, name, _missionCache, out var source,
+			if (MissionOpener.Open(_launch.ShellContent(), _launch.InstallRoot, name, _missionCache, out var source,
 					out var squad, out string? failure) is not { } generated) {
 				_volBrowser.Failure = failure;
 				Console.Error.WriteLine($"Cannot load {name}: {failure}");
@@ -701,11 +736,11 @@ public sealed class EditorHost {
 		}
 
 		var zone = request.Zone;
-		var (msn, text) = NewMission.Build(zone.Theater, zone.Zone, request.Night, zone.Width, zone.Height);
+		var (msn, text) = NewMission.Build(request.Theater, zone.Zone, request.Night, zone.Width, zone.Height);
 		EditorMission opened;
 		try {
 			ClearMissionCache();
-			if (MissionFileLaunch.OpenNew(_launch.ShellContent(), _launch.InstallRoot, request.Name,
+			if (MissionOpener.OpenNew(_launch.ShellContent(), _launch.InstallRoot, request.Name,
 					new MissionFileTransformer().Write(msn) ?? throw new InvalidDataException("The new mission does not write."),
 					new MissionStringFileTransformer().Write(text), _missionCache, out var source, out var squad,
 					out string? failure) is not { } generated) {
@@ -736,7 +771,7 @@ public sealed class EditorHost {
 	private void SwapTo(GL gl, SceneRenderer renderer, EditorMission opened) {
 		_drawables?.Dispose();
 		_mission = opened;
-		opened.Selection.FocusRequested += Frame;
+		Follow(opened);
 		_drawables = Upload(gl, renderer, opened);
 		_editorCamera.ResetTo(opened.Scene.Camera.Position, opened.Scene.Camera.Heading);
 		ReportLoaded(opened);
@@ -882,9 +917,24 @@ public sealed class EditorHost {
 		return height;
 	}
 
+	// A plain script.dat opens read-only: every edit control is disabled, and this says why once, in the 3D viewport's
+	// top-right corner, beside the Properties panel and under the floating windows.
+	private void DrawReadOnlyBanner(Vector2 display, float menuBarHeight) {
+		const string text = "SCRIPT.DAT READ-ONLY";
+		var font = _imgui?.LargeBoldFont ?? _imgui?.LargeFont ?? ImGui.GetFont();
+		float size = ScaledImGui.LargeFontSize;
+		var extent = font.CalcTextSizeA(size, float.MaxValue, 0f, text);
+		float margin = ScaledImGui.Scaled(CompassMargin);
+		var at = new Vector2(display.X - ScaledImGui.Scaled(PropertiesPanel.PanelWidth) - margin - extent.X, menuBarHeight + margin);
+		ImGui.GetBackgroundDrawList().AddText(font, size, at, ImGui.GetColorU32(ReadOnlyBannerColor), text);
+	}
+
+	// A dark yellow-grey.
+	private static readonly Vector4 ReadOnlyBannerColor = new(0.58f, 0.55f, 0.35f, 1f);
+
 	// Says, over a File menu item that saves, why it is disabled.
 	private void WhyNoSave() {
-		if (_saving.WhyNoSave is { } why && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+		if (_saving.WhyNoSave is { } why && !EditorText.IsReadOnly(why) && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
 			ImGui.SetTooltip(why);
 		}
 	}
