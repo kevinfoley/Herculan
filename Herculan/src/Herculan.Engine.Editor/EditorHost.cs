@@ -28,8 +28,8 @@ public enum EditorExit {
 /// <param name="FontPath">The font every ImGui window is drawn in.</param>
 public sealed record EditorLaunch(string InstallRoot, GameContent SimulatorContent, Func<GameContent> ShellContent, string FontPath) {
 	/// <summary>
-	/// The handoff to open first, or null for the install's <c>DATA\script.dat</c>. When it is missing or does not
-	/// load, the editor opens with no mission and File &gt; Load from VOL up.
+	/// The handoff to open first, read-only, or null for the install's <c>DATA\script.dat</c>. When it is missing or does
+	/// not load, the editor opens with no mission and File &gt; Load from VOL up.
 	/// </summary>
 	public string? ScriptPath { get; init; }
 
@@ -75,8 +75,8 @@ public sealed class EditorHost {
 	private readonly EditorCamera _editorCamera = new();
 
 	// A mission opened from the archives is generated as the shell would generate it, into this scratch directory
-	// rather than the install's DATA\, so opening one leaves the install's own handoff alone. The simulator's
-	// settings are still read from DATA\.
+	// rather than the install's DATA\, so opening one leaves the install's own handoff alone, and is held as its .MSN,
+	// which its edits write. The simulator's settings are still read from DATA\.
 	private readonly string _installData;
 	private readonly string _missionCache = Path.Combine(Path.GetTempPath(), "herculan-editor");
 
@@ -162,7 +162,7 @@ public sealed class EditorHost {
 		}
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, Delete deletes the selected object, Ctrl+Z/Ctrl+Y undo/redo, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, Ctrl+Z/Ctrl+Y undo/redo, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -468,8 +468,8 @@ public sealed class EditorHost {
 			_mission.Outliner.Draw(display, menuBarHeight);
 			_mission.Properties.Draw(display, menuBarHeight);
 			int? structureGroup = SelectedStructureGroup(_mission);
-			_toolbox.Draw(display, enabled: !_mission.Gizmo.Dragging, structureGroup,
-				structureGroup is { } joinable ? _mission.Placer.WhyNotJoin(joinable) : null);
+			_toolbox.Draw(display, enabled: !_mission.Gizmo.Dragging && _mission.Placer.WhyNoAdd == null, structureGroup,
+				structureGroup is { } joinable ? _mission.Placer.WhyNotJoin(joinable) : null, _mission.Placer.WhyNoAdd);
 		}
 
 		_settingsPanel.Draw();
@@ -566,8 +566,8 @@ public sealed class EditorHost {
 			: "There is no ground under the pointer.";
 	}
 
-	// Generates the handoff for the archive mission <name> into the scratch directory and swaps the editor over to
-	// it. On failure the open mission stays, and the browser says why.
+	// Generates the handoff for the archive mission <name> into the scratch directory, holds the mission as its .MSN and
+	// swaps the editor over to it. On failure the open mission stays, and the browser says why.
 	private void LoadFromVol(string name) {
 		if (_gl == null || _renderer == null) {
 			return;
@@ -576,14 +576,15 @@ public sealed class EditorHost {
 		EditorMission opened;
 		try {
 			ClearMissionCache();
-			if (MissionFileLaunch.Write(_launch.ShellContent(), _launch.InstallRoot, name, _missionCache, out string? failure)
-					is not { } generated) {
+			if (MissionFileLaunch.Open(_launch.ShellContent(), _launch.InstallRoot, name, _missionCache, out var source,
+					out string? failure) is not { } generated) {
 				_volBrowser.Failure = failure;
 				Console.Error.WriteLine($"Cannot load {name}: {failure}");
 				return;
 			}
 
-			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData);
+			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
+				source);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			_volBrowser.Failure = ex.Message;
@@ -617,7 +618,8 @@ public sealed class EditorHost {
 	private static void ReportLoaded(EditorMission opened) {
 		Console.WriteLine(
 			$"Mission {opened.Name}: zone {opened.Mission.Header.ZoneIndex}, theater {opened.Mission.Header.TheaterIndex}. " +
-			$"Placed {opened.Scene.Objects.Count} objects, {opened.Scene.UnmodelledCount} without a model.");
+			$"Placed {opened.Scene.Objects.Count} objects, {opened.Scene.UnmodelledCount} without a model."
+			+ (opened.Mover.WhyReadOnly is { } readOnly ? $" {readOnly}" : ""));
 	}
 
 	// Draws the main menu bar and returns its height, which is what the rest of the frame's overlays

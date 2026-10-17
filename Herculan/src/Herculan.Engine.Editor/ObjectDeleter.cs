@@ -24,7 +24,17 @@ internal sealed record DeleteBlockers(string? Fixed, IReadOnlyList<int> Objectiv
 
 /// <summary>
 /// Deletes a placed structure, mech or flyer from the open mission, whether it was loaded with it or added since, as one
-/// step of <see cref="PointMover"/>'s undo history. The delete unlinks the object rather than removing its record: every
+/// step of <see cref="PointMover"/>'s undo history.
+///
+/// <para>It refuses every delete for now (<see cref="NotPorted"/>). A mission is held as its <c>.MSN</c>, with
+/// <c>script.dat</c> generated from it (<see cref="HercWorks.Core.Data.File.Msn.MissionDocument"/>), and a delete written
+/// into the generated file would be lost at the next generation; one written into the <c>.MSN</c> removes the object's
+/// records, which renumbers every later record of its block, and the editor does not yet rebuild its index and the
+/// scene's placements from the generated file
+/// (docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document, "Regenerating on each edit").
+/// What follows is the delete as it ran on a <c>script.dat</c> document, which the port replaces.</para>
+///
+/// <para>The delete unlinks the object rather than removing its record: every
 /// block-11 member ref naming its roster slot is set to <c>-1</c>, and a roster slot no block-11 record names never spawns
 /// (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 1). Its block-7/8/9 record stays, so no record after
 /// it is renumbered and no ref to one changes, and the roster counts DBSIM's slot caps bound
@@ -70,9 +80,17 @@ internal sealed class ObjectDeleter {
 
 	private Mission Mission => _index.Mission;
 
+	/// <summary>Why no object of a mission held as its <c>.MSN</c> is deleted yet: see the class summary.</summary>
+	public const string NotPorted = "deleting is not yet ported to the .MSN the mission is held as: a delete renumbers the "
+		+ "generated records, and the editor does not yet rebuild its index from them.";
+
 	/// <summary>What keeps <paramref name="placed"/> from being deleted; <see cref="DeleteBlockers.None"/> when nothing does.</summary>
 	public DeleteBlockers BlockersOf(SceneObject placed) {
 		var placement = placed.Placement;
+		if (_mover.WhyReadOnly is { } readOnly) {
+			return DeleteBlockers.Because(readOnly);
+		}
+
 		if (placement.IsPlayerLance) {
 			return DeleteBlockers.Because("the player's squad is placed from group 0 and player.mec, with no roster record.");
 		}
@@ -111,7 +129,7 @@ internal sealed class ObjectDeleter {
 		var lastMemberOf = links.Select(link => link.Group).Distinct()
 			.Where(group => IsLastMember(group, slot) && !Removable(group))
 			.ToList();
-		return new DeleteBlockers(null, _index.ObjectivesOfObject(placed).ToList(), actions, own, orders, lastMemberOf);
+		return new DeleteBlockers(NotPorted, _index.ObjectivesOfObject(placed).ToList(), actions, own, orders, lastMemberOf);
 	}
 
 	/// <summary>Deletes <paramref name="placed"/> and clears the selection. Answers why it could not, or null when it did.</summary>

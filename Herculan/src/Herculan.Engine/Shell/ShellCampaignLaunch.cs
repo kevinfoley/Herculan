@@ -1,4 +1,5 @@
 using HercWorks.Core.Data.File.Dat.Shell;
+using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Data.Struct.Herc;
@@ -45,10 +46,12 @@ public static class ShellCampaignLaunch {
 	/// campaign flag array, which the load seeds and the mission's header patch clears in place;
 	/// <paramref name="clearList"/> is the row-2 clear list the shell keeps across loads;
 	/// <paramref name="skill"/> is the player pilot's skill, the mission's difficulty. <paramref name="roll"/> is
-	/// VSHELL's <c>ShellRandom_Below</c> (<c>004659ec</c>), a draw in <c>[0, n)</c>.
+	/// VSHELL's <c>ShellRandom_Below</c> (<c>004659ec</c>), a draw in <c>[0, n)</c>. <paramref name="generating"/> is told
+	/// what the mission load is handed.
 	/// </summary>
 	public static ShellCampaignMission? Write(string directory, GameContent content, int stage, int mission, short skill,
-			short[] flags, short[] clearList, Func<short, int> roll, out string? failure, string? missionPath = null) {
+			short[] flags, short[] clearList, Func<short, int> roll, out string? failure, string? missionPath = null,
+			MissionGenerating? generating = null) {
 		if (ShellTrainingLaunch.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count
 				|| (missionPath ?? ShellTrainingLaunch.MissionPath(content, stage, mission)) is not { } path) {
 			failure = $"gam\\career.dat or missions.bin has no stage {stage} mission {mission}.";
@@ -66,12 +69,11 @@ public static class ShellCampaignLaunch {
 		flags[2] = (short)mission;
 		ShellTrainingLaunch.SeedDrawnFlags(flags, roll);
 
+		// The theater from the stage's campaign, both training cheats off, and the pilot's skill as the difficulty.
+		short?[] header = [stages[stage].CampaignIndex, null, null, null, null, 0, 0, skill, null, null];
+		generating?.Invoke(msn, text, flags, header);
 		var loaded = MissionGenerator.Load(msn, text, flags, clearList, roll);
-		var header = loaded.Header;
-		header[5] = 0;
-		header[6] = 0;
-		header[7] = skill;
-		header[0] = stages[stage].CampaignIndex;
+		MissionGeneration.WriteHeader(loaded.Header, header);
 
 		Directory.CreateDirectory(directory);
 		string scriptPath = CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName);

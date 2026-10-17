@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Sav;
 using HercWorks.Core.Data.Struct.Vshell.Sav;
 using HercWorks.Core.Io;
@@ -16,6 +17,14 @@ namespace Herculan.Engine.Shell;
 /// </summary>
 public sealed record ShellTrainingHandoff(string ScriptPath, string MissionPath, PlayerSave Game, ShellHangar Hangar,
 	int SquadPositions);
+
+/// <summary>
+/// Told what a mission load is about to hand <see cref="MissionGenerator.Load"/>: the <c>.MSN</c>, its <c>.ENG</c> or
+/// null, the campaign flags as seeded, before the load's row 2 clears any, and the header words the load writes over
+/// once it has generated (<see cref="MissionGeneration.WriteHeader"/>). The flags are the load's own array, which it
+/// goes on to change.
+/// </summary>
+public delegate void MissionGenerating(byte[] msn, byte[]? text, short[] flags, short?[] header);
 
 /// <summary>
 /// <c>Begin Mission</c>'s path from the button to the simulator, in training mode, which
@@ -74,11 +83,12 @@ public static class ShellTrainingLaunch {
 	/// <see cref="Load"/> of its mission. <paramref name="random"/> is VSHELL's generator, which both draw from.
 	/// </summary>
 	public static ShellTrainingHandoff? Write(string directory, GameContent content, SimulatorPreferences options,
-			int row, bool instantAction, SimRandom random, short[] clearList, PlayerSave? held, out string? failure) {
+			int row, bool instantAction, SimRandom random, short[] clearList, PlayerSave? held, out string? failure,
+			MissionGenerating? generating = null) {
 		int Roll(short bound) => random.NextBelow(bound);
 		return NewCareer(content, options, row, Roll, held, out failure) is var (game, hangar)
 			? Load(directory, content, options, row, MissionPath(content, 0, row), instantAction, Roll, clearList, game, hangar,
-				out failure)
+				out failure, generating)
 			: null;
 	}
 
@@ -109,12 +119,12 @@ public static class ShellTrainingLaunch {
 	/// dialog's typed one. <paramref name="row"/> is the practice screen's lit row, <c>PracticeScreen_SelectedRow</c>
 	/// (<c>00479bb8</c>), which picks the player's machine. <paramref name="clearList"/> is the row-2 clear list the shell
 	/// keeps across loads (<see cref="MissionGenerator.Load"/>), and <paramref name="instantAction"/> is
-	/// <c>InstantAction_Active</c> (<c>0047363c</c>), which <c>INSTANT ACTION</c> sets. Null, with the reason, when the
-	/// install lacks a file the original would open.
+	/// <c>InstantAction_Active</c> (<c>0047363c</c>), which <c>INSTANT ACTION</c> sets. <paramref name="generating"/> is
+	/// told what the mission load is handed. Null, with the reason, when the install lacks a file the original would open.
 	/// </summary>
 	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
 			string? missionPath, bool instantAction, Func<short, int> roll, short[] clearList, PlayerSave game,
-			ShellHangar hangar, out string? failure) {
+			ShellHangar hangar, out string? failure, MissionGenerating? generating = null) {
 		if (missionPath == null) {
 			failure = $"gam\\career.dat or missions.bin has no stage-0 mission {row}.";
 			return null;
@@ -129,14 +139,10 @@ public static class ShellTrainingLaunch {
 		var flags = new short[MissionGenerator.CampaignFlagCount];
 		SeedDrawnFlags(flags, roll);
 
+		var header = PracticeHeader(options);
+		generating?.Invoke(msn, text, flags, header);
 		var mission = MissionGenerator.Load(msn, text, flags, clearList, roll);
-		var header = mission.Header;
-		header[5] = options[AmmoOption];
-		header[6] = options[DamageOption];
-		header[7] = options[DifficultyOption];
-		header[8] = 0;
-		header[9] = options[TimeOfDayOption];
-		header[0] = 1;
+		MissionGeneration.WriteHeader(mission.Header, header);
 
 		Directory.CreateDirectory(directory);
 		string scriptPath = CaseInsensitivePath.Combine(directory, MissionLoader.ScriptFileName);
@@ -182,6 +188,15 @@ public static class ShellTrainingLaunch {
 		failure = null;
 		return new ShellTrainingHandoff(scriptPath, missionPath, game, hangar, positions);
 	}
+
+	/// <summary>
+	/// The header words a training load writes over the loaded header: word 0 set to 1, then the ammunition, damage,
+	/// difficulty and time-of-day options into words 5 to 7 and 9, and word 8 cleared.
+	/// </summary>
+	private static short?[] PracticeHeader(SimulatorPreferences options) => [
+		1, null, null, null, null,
+		options[AmmoOption], options[DamageOption], options[DifficultyOption], 0, options[TimeOfDayOption],
+	];
 
 	/// <summary>
 	/// Flag 3's source, <c>00482606</c>, which the startup memset from <c>MissionScreenView</c> clears.

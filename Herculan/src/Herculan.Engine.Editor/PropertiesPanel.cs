@@ -784,6 +784,11 @@ internal sealed class PropertiesPanel {
 		}
 
 		if (_mover.TargetOf(selected) is not WaypointTarget waypoint) {
+			if (selected.Waypoint >= 0 && _mover.WhyReadOnly is { } readOnly) {
+				ImGui.Separator();
+				ImGui.TextDisabled(readOnly);
+			}
+
 			return;
 		}
 

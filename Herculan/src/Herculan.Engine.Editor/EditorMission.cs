@@ -1,4 +1,6 @@
+using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Msn.Script;
+using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Scene;
 using Herculan.Engine.Terrain;
@@ -12,10 +14,11 @@ namespace Herculan.Engine.Editor;
 /// builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
-	private EditorMission(string name, ScriptDat document, MissionScene scene, MissionIndex index,
+	private EditorMission(string name, ScriptDat document, MissionDocument? source, MissionScene scene, MissionIndex index,
 			TerrainMaterialTable materials) {
 		Name = name;
 		Document = document;
+		Source = source;
 		Scene = scene;
 		Index = index;
 
@@ -24,10 +27,10 @@ internal sealed class EditorMission {
 		Picker = new ScenePicker(scene, index, Overlay);
 		GroupOverlay = new GroupOverlay(index, drape, Picker);
 		Outliner = new MissionOutliner(index, new MissionLint(index, document), Selection);
-		Mover = new PointMover(document, scene, index, Picker, Overlay, materials);
+		Mover = new PointMover(document, source, scene, index, Picker, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
-		Placer = new StructurePlacer(document, scene, index, Picker, Mover, Selection);
-		Sides = new SideChanger(document, index, Mover);
+		Placer = new StructurePlacer(document, source, scene, index, Picker, Mover, Selection);
+		Sides = new SideChanger(document, source, index, Mover);
 		Deleter = new ObjectDeleter(document, index, Picker, Mover, Selection);
 		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter);
 	}
@@ -36,11 +39,17 @@ internal sealed class EditorMission {
 	public string Name { get; }
 
 	/// <summary>
-	/// The file as parsed, which <see cref="Scene"/> was loaded from: what an edit changes and a save writes. It keeps
-	/// every record as written, including what loading resolves away — a ref past the end of its block, a slot DBSIM
-	/// never reads.
+	/// The <c>script.dat</c> <see cref="Scene"/> was loaded from: <see cref="Source"/>'s generated file, whose blocks each
+	/// edit's generation replaces, or a plain <c>script.dat</c> as parsed. It keeps every record as written, including what
+	/// loading resolves away — a ref past the end of its block, a slot DBSIM never reads.
 	/// </summary>
 	public ScriptDat Document { get; }
+
+	/// <summary>
+	/// The mission as its <c>.MSN</c> and <c>.ENG</c>, which every edit writes; null for a plain <c>script.dat</c>, which
+	/// opens read-only (docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document).
+	/// </summary>
+	public MissionDocument? Source { get; }
 
 	public MissionScene Scene { get; }
 
@@ -61,28 +70,40 @@ internal sealed class EditorMission {
 
 	public PropertiesPanel Properties { get; }
 
-	/// <summary>The edits made to <see cref="Document"/>, and their undo history.</summary>
+	/// <summary>The edits made to <see cref="Source"/>, and their undo history.</summary>
 	public PointMover Mover { get; }
 
 	public MoveGizmo Gizmo { get; }
 
-	/// <summary>Adds structures to <see cref="Document"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Adds structures to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public StructurePlacer Placer { get; }
 
 	public SideChanger Sides { get; }
 
-	/// <summary>Deletes objects from <see cref="Document"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	/// <summary>Deletes objects, as steps of <see cref="Mover"/>'s undo history; refuses every delete until it is ported to <see cref="Source"/>.</summary>
 	public ObjectDeleter Deleter { get; }
 
 	public string WindowTitle => $"HERCULAN Mission Editor — {Name}, zone {Mission.Header.ZoneIndex}";
 
 	/// <summary>
-	/// Opens the handoff at <paramref name="scriptPath"/>. <paramref name="dataDirectory"/> is where the
-	/// simulator's settings are when they are not beside the script — see <see cref="MissionScene.Load"/>. Throws
+	/// Opens the handoff at <paramref name="scriptPath"/>. Given <paramref name="source"/>, the mission it holds as its
+	/// <c>.MSN</c>, its generated <c>script.dat</c> and <c>mission.str</c> are written over the handoff's and the scene is
+	/// loaded from them; without one the <c>script.dat</c> there opens read-only. <paramref name="dataDirectory"/> is where
+	/// the simulator's settings are when they are not beside the script — see <see cref="MissionScene.Load"/>. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
 	/// </summary>
-	public static EditorMission Open(GameContent content, string scriptPath, string name, string? dataDirectory = null) {
-		var document = MissionLoader.ReadScript(scriptPath);
+	public static EditorMission Open(GameContent content, string scriptPath, string name, string? dataDirectory = null,
+			MissionDocument? source = null) {
+		ScriptDat document;
+		if (source != null) {
+			File.WriteAllBytes(scriptPath, source.ScriptBytes);
+			File.WriteAllBytes(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", MissionLoader.TextFileName),
+				source.MissionText);
+			document = source.Script;
+		} else {
+			document = MissionLoader.ReadScript(scriptPath);
+		}
+
 		var scene = MissionScene.Load(content, scriptPath, dataDirectory, document);
 		foreach (var sceneObject in scene.Objects) {
 			sceneObject.Object.Position = PointFollowers.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);
@@ -90,6 +111,6 @@ internal sealed class EditorMission {
 
 		var index = new MissionIndex(scene, SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
-		return new EditorMission(name, document, scene, index, TerrainMaterialTable.Load(content));
+		return new EditorMission(name, document, source, scene, index, TerrainMaterialTable.Load(content));
 	}
 }

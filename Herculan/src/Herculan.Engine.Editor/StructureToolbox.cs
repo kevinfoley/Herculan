@@ -80,12 +80,17 @@ internal sealed class StructureToolbox {
 	/// <param name="enabled">False while nothing can be added, such as during a move.</param>
 	/// <param name="selectedGroup">The structure group the selection is or belongs to, which an add can join; or null.</param>
 	/// <param name="whyNotJoin">Why <paramref name="selectedGroup"/> cannot take another member, or null when it can.</param>
-	public void Draw(Vector2 display, bool enabled, int? selectedGroup, string? whyNotJoin) {
+	/// <param name="whyNoAdd">Why nothing can be added to the mission at all, shown at the top, or null.</param>
+	public void Draw(Vector2 display, bool enabled, int? selectedGroup, string? whyNotJoin, string? whyNoAdd = null) {
 		_joinGroup = selectedGroup != null && whyNotJoin == null ? selectedGroup : null;
 		ImGui.SetNextWindowPos(new Vector2(ScaledImGui.Scaled(MissionOutliner.PanelWidth + Margin),
 			display.Y - ScaledImGui.Scaled(Height + Margin)), ImGuiCond.FirstUseEver);
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(Width), ScaledImGui.Scaled(Height)), ImGuiCond.FirstUseEver);
 		if (ImGui.Begin("Toolbox")) {
+			if (whyNoAdd != null) {
+				ImGui.TextWrapped(whyNoAdd);
+			}
+
 			DrawContents(enabled, selectedGroup, whyNotJoin);
 		}
 
