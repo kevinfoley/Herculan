@@ -7,12 +7,12 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// File &gt; Export script.dat: the edited mission as a simulator handoff in a folder the user names, for
 /// Herculan.Engine.Host or DBSIM to run directly. It writes the document's generated <c>script.dat</c> and
-/// <c>mission.str</c>, and copies the rest of the handoff the open wrote (<c>player.mec</c>, and <c>mission.var</c> for
-/// a campaign mission) from the editor's scratch folder as they are. It never writes the install's own <c>DATA\</c>,
+/// <c>mission.str</c>, and copies the rest of the handoff from the editor's scratch folder as it is: <c>player.mec</c>, as
+/// the open wrote it or an edit built it again (<see cref="MissionRebuild"/>), and <c>mission.var</c>, as the open wrote it. It never writes the install's own <c>DATA\</c>,
 /// which holds the game's own handoff (docs/herculan/handoff-editor-mission-editing.md#what-a-saved-scriptdat-reaches).
 /// </summary>
 internal static class HandoffExport {
-	// The handoff files the open wrote that no edit changes.
+	// The handoff files the document does not hold.
 	private static readonly string[] Copied = [MissionLoader.PlayerFileName, MissionLoader.CountersFileName];
 
 	/// <summary>Why the handoff cannot be exported into <paramref name="folder"/>, or null when it can.</summary>

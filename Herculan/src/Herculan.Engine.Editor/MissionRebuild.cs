@@ -2,6 +2,7 @@ using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Content;
 using Herculan.Engine.Scene;
+using Herculan.Engine.Shell;
 using Herculan.Engine.World;
 
 namespace Herculan.Engine.Editor;
@@ -17,14 +18,17 @@ namespace Herculan.Engine.Editor;
 /// and stands each of its placements on a scene object: the one already built for the same <c>.MSN</c> record, matched
 /// by the GUID of the record that created its slot (<see cref="MissionDocument.GuidOf"/>) and by type, its
 /// <see cref="SceneObject.Placement"/> pointed at the new indices; or, for a record no object was built for, a new one
-/// (<see cref="MissionScene.CreateObject"/>). The player's squad is matched by its order in <c>player.mec</c>. Every
+/// (<see cref="MissionScene.CreateObject"/>). A mech's object is reused only for the same weapon fit, since its loadout
+/// is built with it. The player's squad is matched by its order in <c>player.mec</c>, which is built again first from the
+/// generation, as the launch builds it (<see cref="MissionSquad"/>), when the squad pilots Hercs the mission supplies. Every
 /// object built is kept, so an undone delete stands the same object, model and all, where it stood, and a step of the
 /// undo history naming it still names what is in the scene. Terrain and models are not loaded again. The index, the
 /// pick spheres, the overlays' lines, the followers and the mission check are then built over the new mission, and the
 /// drawing is told what left and what joined the scene.</para>
 ///
-/// <para>The selection survives when what it names does: an object by identity, a group by its row-16 GUID; anything
-/// else is checked against the new index, and is cleared when it is gone.</para>
+/// <para>The selection survives when what it names does: an object by identity, or else the object now standing for the
+/// same record; a group by its row-16 GUID; anything else is checked against the new index, and is cleared when it is
+/// gone.</para>
 /// </summary>
 internal sealed class MissionRebuild {
 	private const int GroupBlock = 11;
@@ -43,13 +47,17 @@ internal sealed class MissionRebuild {
 	private readonly PointMover _mover;
 	private readonly MissionOutliner _outliner;
 	private readonly SelectionState _selection;
+	private readonly MissionSquad? _squad;
+
+	// The record the selected object stood for when the edit began, whose new object is selected when it was replaced.
+	private (int Row, int Key)? _selectedKey;
 
 	// Every object built for the mission, by the .MSN record it stands for, the latest first.
 	private readonly Dictionary<(int Row, int Key), List<SceneObject>> _built = new();
 
 	public MissionRebuild(GameContent content, ScriptDat document, MissionDocument? source, MissionScene scene,
 			MissionIndex index, MissionOverlay overlay, ScenePicker picker, PointMover mover, MissionOutliner outliner,
-			SelectionState selection) {
+			SelectionState selection, MissionSquad? squad) {
 		_content = content;
 		_document = document;
 		_source = source;
@@ -60,6 +68,7 @@ internal sealed class MissionRebuild {
 		_mover = mover;
 		_outliner = outliner;
 		_selection = selection;
+		_squad = squad;
 	}
 
 	/// <summary>Raised with each object a rebuild puts in the scene, for whatever draws it.</summary>
@@ -99,8 +108,13 @@ internal sealed class MissionRebuild {
 	// Files every object in the scene under the record it stands for in the generation about to be replaced.
 	private void Remember(MissionDocument source) {
 		int squad = 0;
+		_selectedKey = null;
 		foreach (var placed in _index.Objects) {
 			var key = KeyOf(source, placed.Placement, ref squad);
+			if (_selection.Current is ObjectSelection { Object: var selected } && ReferenceEquals(selected, placed)) {
+				_selectedKey = key;
+			}
+
 			if (!_built.TryGetValue(key, out var objects)) {
 				_built[key] = objects = new List<SceneObject>();
 			}
@@ -111,17 +125,27 @@ internal sealed class MissionRebuild {
 	}
 
 	private void Rebuild(MissionDocument source, short selectedGroup) {
+		// The squad the launch would build from this generation, which the load below places.
+		if (_squad?.PlayerMec(source.Generator) is { } squadFile) {
+			File.WriteAllBytes(MissionLoader.PlayerPathFor(_scene.Mission.SourcePath), squadFile);
+		}
+
 		var mission = MissionLoader.Load(_content, _document, _scene.Mission.SourcePath);
 		var terrain = _scene.World.Terrain;
 		var before = _index.Objects.ToHashSet(ReferenceEqualityComparer.Instance);
 		var objects = new List<SceneObject>(mission.Placements.Count);
 		var placedNow = new HashSet<object>(ReferenceEqualityComparer.Instance);
+		SceneObject? replacing = null;
 		int squad = 0;
 		foreach (var placement in mission.Placements) {
 			var key = KeyOf(source, placement, ref squad);
 			var placed = Reuse(key, placement, placedNow) ?? Build(key, placement);
 			if (placed == null) {
 				continue;
+			}
+
+			if (key == _selectedKey) {
+				replacing = placed;
 			}
 
 			placedNow.Add(placed);
@@ -147,19 +171,22 @@ internal sealed class MissionRebuild {
 			Added?.Invoke(joined);
 		}
 
-		Reselect(source, selectedGroup);
+		Reselect(source, selectedGroup, replacing);
 		Rebuilt?.Invoke();
 	}
 
-	// The object built for the record a placement stands for, of the placement's type, and not yet placed by this
-	// rebuild. A type that differs is a variant drawn differently after the edit, and needs an object of its own.
+	// The object built for the record a placement stands for, of the placement's type and weapon fit, and not yet placed
+	// by this rebuild. A type that differs is a variant drawn differently after the edit, or a chassis changed, and a fit
+	// that differs a fit changed (MachineFitter); either needs an object of its own.
 	private SceneObject? Reuse((int Row, int Key) key, MissionPlacement placement, HashSet<object> placedNow) {
 		if (!_built.TryGetValue(key, out var objects)) {
 			return null;
 		}
 
 		var found = objects.Find(built => !placedNow.Contains(built) && built.Placement.Kind == placement.Kind
-			&& built.Placement.TypeIndex == placement.TypeIndex && built.Placement.TypeName == placement.TypeName);
+			&& built.Placement.TypeIndex == placement.TypeIndex && built.Placement.TypeName == placement.TypeName
+			&& built.Placement.WeaponRefs.SequenceEqual(placement.WeaponRefs)
+			&& built.Placement.WeaponSecondary.SequenceEqual(placement.WeaponSecondary));
 		if (found != null) {
 			objects.Remove(found);
 			objects.Insert(0, found);
@@ -200,10 +227,12 @@ internal sealed class MissionRebuild {
 		return guid != -1 ? (block + 5, guid) : (-block, placement.SlotIndex);
 	}
 
-	// Keeps the selection on what it named, or clears it.
-	private void Reselect(MissionDocument source, short selectedGroup) {
+	// Keeps the selection on what it named, or on <replacing>, the object now standing for the record a selected object
+	// stood for; or clears it.
+	private void Reselect(MissionDocument source, short selectedGroup, SceneObject? replacing) {
 		_selection.Current = _selection.Current switch {
 			ObjectSelection { Object: var placed } when _index.Objects.Any(kept => ReferenceEquals(kept, placed)) => _selection.Current,
+			ObjectSelection when replacing != null => new ObjectSelection(replacing),
 			GroupSelection when selectedGroup != -1 && source.ExportedIndex(GroupRow, selectedGroup) is { } group =>
 				new GroupSelection(group),
 			AreaSelection { Area: var area } when _index.Area(area) != null => _selection.Current,

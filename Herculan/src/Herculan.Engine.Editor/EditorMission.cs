@@ -3,6 +3,7 @@ using HercWorks.Core.Data.File.Msn.Script;
 using HercWorks.Core.Io;
 using Herculan.Engine.Content;
 using Herculan.Engine.Scene;
+using Herculan.Engine.Shell;
 using Herculan.Engine.Terrain;
 using Herculan.Engine.World;
 
@@ -16,7 +17,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class EditorMission {
 	private EditorMission(GameContent content, string name, ScriptDat document, MissionDocument? source, MissionScene scene,
-			MissionIndex index, TerrainMaterialTable materials) {
+			MissionIndex index, TerrainMaterialTable materials, MissionSquad? squad, Func<GameContent>? shellContent) {
 		Name = name;
 		Document = document;
 		Source = source;
@@ -30,11 +31,12 @@ internal sealed class EditorMission {
 		Outliner = new MissionOutliner(index, new MissionLint(index, document), Selection);
 		Mover = new PointMover(document, source, scene, index, Picker, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
-		Rebuild = new MissionRebuild(content, document, source, scene, index, Overlay, Picker, Mover, Outliner, Selection);
+		Rebuild = new MissionRebuild(content, document, source, scene, index, Overlay, Picker, Mover, Outliner, Selection, squad);
 		Placer = new StructurePlacer(document, source, scene, index, Mover, Rebuild, Selection);
 		Sides = new SideChanger(document, source, index, Mover);
 		Deleter = new ObjectDeleter(document, source, index, Mover, Rebuild);
-		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter);
+		Fitter = new MachineFitter(document, source, Mover, Rebuild, shellContent);
+		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter, new SquadMachinePanel(Fitter, squad));
 	}
 
 	/// <summary>
@@ -92,6 +94,9 @@ internal sealed class EditorMission {
 	/// <summary>Deletes objects from <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public ObjectDeleter Deleter { get; }
 
+	/// <summary>Changes the squad's chassis and weapon fits in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public MachineFitter Fitter { get; }
+
 	/// <summary>The window title, the name marked <c>*</c> when <paramref name="unsaved"/> changes are held.</summary>
 	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Mission.Header.ZoneIndex}";
 
@@ -99,11 +104,13 @@ internal sealed class EditorMission {
 	/// Opens the handoff at <paramref name="scriptPath"/>. Given <paramref name="source"/>, the mission it holds as its
 	/// <c>.MSN</c>, its generated <c>script.dat</c> and <c>mission.str</c> are written over the handoff's and the scene is
 	/// loaded from them; without one the <c>script.dat</c> there opens read-only. <paramref name="dataDirectory"/> is where
-	/// the simulator's settings are when they are not beside the script — see <see cref="MissionScene.Load"/>. Throws
+	/// the simulator's settings are when they are not beside the script — see <see cref="MissionScene.Load"/>.
+	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the handoff's <c>player.mec</c> again after
+	/// an edit, and <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
 	/// </summary>
 	public static EditorMission Open(GameContent content, string scriptPath, string name, string? dataDirectory = null,
-			MissionDocument? source = null) {
+			MissionDocument? source = null, MissionSquad? squad = null, Func<GameContent>? shellContent = null) {
 		ScriptDat document;
 		if (source != null) {
 			File.WriteAllBytes(scriptPath, source.ScriptBytes);
@@ -121,6 +128,7 @@ internal sealed class EditorMission {
 
 		var index = new MissionIndex(scene, SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
-		return new EditorMission(content, name, document, source, scene, index, TerrainMaterialTable.Load(content));
+		return new EditorMission(content, name, document, source, scene, index, TerrainMaterialTable.Load(content), squad,
+			shellContent);
 	}
 }

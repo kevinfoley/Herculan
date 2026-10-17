@@ -80,9 +80,16 @@ public sealed partial class ShellHangar {
 		machine.SetMount(slot, unit);
 		if (unit != null) {
 			machine.SetCondition(ShellRepairCategory.Hardpoint, slot, unit.FitCondition);
-			unit.Guidance = weaponId is >= FirstGuidedRack and <= LastGuidedRack ? ArhGuidance : ShellWeaponUnit.NoGuidance;
+			unit.Guidance = FitGuidance(weaponId);
 		}
 	}
+
+	/// <summary>
+	/// The guidance kind <see cref="FitMount"/> gives a unit of <paramref name="weaponId"/> as it fits it: ARH for the three
+	/// missile racks and none for everything else, the Razor's launcher included.
+	/// </summary>
+	public static int FitGuidance(int weaponId) =>
+		weaponId is >= FirstGuidedRack and <= LastGuidedRack ? ArhGuidance : ShellWeaponUnit.NoGuidance;
 
 	/// <summary>The weapons <c>Herc_FitMount</c> fits with a guidance kind — the three missile racks, <c>0xd</c> to <c>0xf</c>.</summary>
 	private const int FirstGuidedRack = 0xd;

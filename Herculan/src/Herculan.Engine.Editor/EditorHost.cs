@@ -606,7 +606,7 @@ public sealed class EditorHost {
 		return group > 0 && mission.Index.KindOf(group) == MissionUnitKind.Base ? group : null;
 	}
 
-	// The delete and the Undo or Redo the frame's panels and menus asked for; none while a drag is under way.
+	// The delete, the machine fit and the Undo or Redo the frame's panels and menus asked for; none while a drag is under way.
 	private void RunEditRequests(EditorMission mission) {
 		var deleting = mission.Deleter.TakeRequest();
 		var step = _pendingStep;
@@ -618,6 +618,8 @@ public sealed class EditorHost {
 		if (deleting != null && mission.Deleter.Delete(deleting) is { } reason) {
 			Console.Error.WriteLine($"Cannot delete {MissionText.Describe(deleting)}: {reason}");
 		}
+
+		mission.Fitter.RunRequest();
 
 		if (step == true) {
 			mission.Mover.Undo();
@@ -664,14 +666,14 @@ public sealed class EditorHost {
 		try {
 			ClearMissionCache();
 			if (MissionFileLaunch.Open(_launch.ShellContent(), _launch.InstallRoot, name, _missionCache, out var source,
-					out string? failure) is not { } generated) {
+					out var squad, out string? failure) is not { } generated) {
 				_volBrowser.Failure = failure;
 				Console.Error.WriteLine($"Cannot load {name}: {failure}");
 				return;
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
-				source);
+				source, squad, _launch.ShellContent);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			_volBrowser.Failure = ex.Message;
@@ -699,12 +701,14 @@ public sealed class EditorHost {
 			ClearMissionCache();
 			if (MissionFileLaunch.OpenNew(_launch.ShellContent(), _launch.InstallRoot, request.Name,
 					new MissionFileTransformer().Write(msn) ?? throw new InvalidDataException("The new mission does not write."),
-					new MissionStringFileTransformer().Write(text), _missionCache, out var source, out string? failure) is not { } generated) {
+					new MissionStringFileTransformer().Write(text), _missionCache, out var source, out var squad,
+					out string? failure) is not { } generated) {
 				Fail(failure);
 				return;
 			}
 
-			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source);
+			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source, squad,
+				_launch.ShellContent);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			Fail(ex.Message);

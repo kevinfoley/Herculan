@@ -122,6 +122,29 @@ public class MissionDocumentTests {
 		Assert.Equal((short)2, bases[^1].GUID);
 	}
 
+	/// <summary>
+	/// Catches row 12's overlay record built with its weapon fit or ammunition types at anything but the merge's unset values
+	/// (<c>-1</c> and 5), so changing a variant-keyed herc's chassis — as the training missions' player machines are — would
+	/// also overwrite the fit and a launcher's guidance it drew.
+	/// </summary>
+	[Fact]
+	public void VariantKeyedHercKeepsTheFitItDrewWhenItsChassisIsOverlaid() {
+		var document = Open(new SyntheticMsn()
+			.Add(1, Condition(guid: 10, condition: -1, type: 3, lower: 7, upper: 0, operand: 1))
+			.Add(1, Condition(guid: 11, condition: 10, type: 2, lower: 0, upper: 5, operand: 0))
+			.Add(12, Mech(-1, type: 0, condition: 11, weapons: [15, 8, 8], ammo: [1]))
+			.Add(12, Mech(2, type: -1, variant: 7)));
+
+		document.SetField(MsnField.MechType, 2, 4);
+
+		var herc = document.Script.Mechs[0];
+		Assert.Equal(4, herc.TypeIndex);
+		Assert.Equal(new short[] { 15, 8, 8, -1, -1, -1, -1, -1, -1, -1 }, herc.WeaponRefs);
+		Assert.Equal((short)1, herc.WeaponSecondary[0]);
+		Assert.Equal(3, document.Mission.Mechs!.Length);
+		Assert.Equal(0, document.Mission.Mechs[0].TypeIndex);
+	}
+
 	/// <summary>Catches a new GUID taken from the row's record count, which can be one already in use, merging the new record into it.</summary>
 	[Fact]
 	public void AppendTakesAFreshGuidAndIsExportedLast() {

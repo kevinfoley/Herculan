@@ -307,8 +307,8 @@ internal sealed class MissionSaving {
 		+ $"{Path.GetFileName(SavedMissions.MissionPath(_installRoot, name))}{SavedMissions.BackupExtension}.";
 
 	private void DrawExportFolder() {
-		ImGui.TextWrapped("Writes the generated script.dat and mission.str, with the player.mec and mission.var the open "
-			+ "wrote, into a folder of your choosing, which Herculan.Engine.Host or DBSIM can run. Not the install's DATA folder.");
+		ImGui.TextWrapped("Writes the generated script.dat and mission.str, with the squad's player.mec and the mission.var, "
+			+ "into a folder of your choosing, which Herculan.Engine.Host or DBSIM can run. Not the install's DATA folder.");
 		Spacer();
 		if (ImGui.IsWindowAppearing()) {
 			ImGui.SetKeyboardFocusHere();

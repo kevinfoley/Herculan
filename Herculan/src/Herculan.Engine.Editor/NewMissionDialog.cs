@@ -5,14 +5,14 @@ using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
 
-/// <summary>What File &gt; New mission was asked for: the mission's name, its zone, and whether it is flown by night.</summary>
+/// <summary>What File &gt; New mission was asked for: the mission's name, its zone, and whether it is played by night.</summary>
 internal sealed record NewMissionRequest(string Name, ZoneChoice Zone, bool Night);
 
 /// <summary>
 /// File &gt; New mission's modal: a name, taken as Save As takes one but never an archive mission's
 /// (<see cref="MissionSaving.WhyNotNewName"/>), and asking first when the install already has a saved mission of that
 /// name; a zone from the ones the install has (<see cref="MissionZones"/>), with the theaters the retail missions in it
-/// are flown on; and day or night. The dialog only asks: the host builds and opens the mission (<see cref="TakeRequest"/>)
+/// are played on; and day or night. The dialog only asks: the host builds and opens the mission (<see cref="TakeRequest"/>)
 /// and reports back through <see cref="Creating"/> and <see cref="Failure"/>.
 /// </summary>
 internal sealed class NewMissionDialog {
@@ -114,7 +114,18 @@ internal sealed class NewMissionDialog {
 		}
 
 		ImGui.SetNextItemWidth(-1f);
+		bool nameWrong = _problem != null;
+		if (nameWrong) {
+			ImGui.PushStyleColor(ImGuiCol.FrameBg, ProblemFieldColor);
+			ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, ProblemFieldHoveredColor);
+			ImGui.PushStyleColor(ImGuiCol.FrameBgActive, ProblemFieldHoveredColor);
+		}
+
 		bool entered = ImGui.InputText("##name", ref _typedName, 32, ImGuiInputTextFlags.EnterReturnsTrue);
+		if (nameWrong) {
+			ImGui.PopStyleColor(3);
+		}
+
 		Spacer();
 
 		ImGui.TextUnformatted("Zone:");
@@ -142,7 +153,7 @@ internal sealed class NewMissionDialog {
 
 		Spacer();
 		ImGui.TextWrapped("The mission is the player's machine alone, with one nav point to reach. It opens, and plays, "
-			+ "as any mission the campaign does not list: as INSTANT ACTION, which flies it on theater "
+			+ "as any mission the campaign does not list: as INSTANT ACTION, which plays it on theater "
 			+ $"{ShellTrainingLaunch.PracticeTheater} with the practice screen's time of day, whatever is chosen here.");
 		Problem(_problem);
 		Problem(Failure);
@@ -217,5 +228,9 @@ internal sealed class NewMissionDialog {
 
 	private static void Spacer() => ImGui.Dummy(new Vector2(0f, ScaledImGui.Scaled(6f)));
 
-	private static readonly Vector4 ProblemColor = new(1f, 0.45f, 0.4f, 1f);
+	private static readonly Vector4 ProblemColor = new(1f, 0.27f, 0.2f, 1f);
+
+	// The name field's background while the name is what is wrong.
+	private static readonly Vector4 ProblemFieldColor = new(0.36f, 0.2f, 0.2f, 1f);
+	private static readonly Vector4 ProblemFieldHoveredColor = new(0.44f, 0.25f, 0.25f, 1f);
 }

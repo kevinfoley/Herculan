@@ -74,6 +74,22 @@ public sealed class MsnField {
 	public static MsnField BasePosition { get; } = new(14, BaseRosterEntry62.PositionRefWord, -1,
 		record => ((BaseRosterEntry62)record).PositionRef, (record, value) => ((BaseRosterEntry62)record).PositionRef = value);
 
+	/// <summary>A mech's chassis, row 12's <see cref="MechRosterEntry144.TypeIndex"/>.</summary>
+	public static MsnField MechType { get; } = new(12, MechRosterEntry144.TypeIndexWord, -1,
+		record => ((MechRosterEntry144)record).TypeIndex, (record, value) => ((MechRosterEntry144)record).TypeIndex = value);
+
+	/// <summary>Weapon slot <paramref name="slot"/> of a mech's fit, row 12's <see cref="MechRosterEntry144.WeaponRefs"/>.</summary>
+	public static MsnField MechWeapon(int slot) => new(12, MechRosterEntry144.WeaponRefsWord + slot, -1,
+		record => ((MechRosterEntry144)record).WeaponRefs[slot], (record, value) => ((MechRosterEntry144)record).WeaponRefs[slot] = value);
+
+	/// <summary>
+	/// The ammunition type of weapon slot <paramref name="slot"/>, row 12's <see cref="MechRosterEntry144.WeaponSecondary"/>,
+	/// whose unset value is the filler 5.
+	/// </summary>
+	public static MsnField MechAmmo(int slot) => new(12, MechRosterEntry144.WeaponSecondaryWord + slot, 5,
+		record => ((MechRosterEntry144)record).WeaponSecondary[slot],
+		(record, value) => ((MechRosterEntry144)record).WeaponSecondary[slot] = value);
+
 	/// <summary>A group's point, row 16's <see cref="MissionGroup164.PositionRef"/>.</summary>
 	public static MsnField GroupPosition { get; } = new(16, MissionGroup164.PositionRefWord, -1,
 		record => ((MissionGroup164)record).PositionRef, (record, value) => ((MissionGroup164)record).PositionRef = value);

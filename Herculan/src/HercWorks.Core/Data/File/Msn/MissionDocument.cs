@@ -70,6 +70,12 @@ public sealed class MissionDocument {
 	/// <summary>Which records supplied the generated files, from the last generation.</summary>
 	public MissionProvenance Provenance { get; private set; } = new();
 
+	/// <summary>
+	/// The last generation's run, which answers what the shell reads back from a loaded mission besides the files: its
+	/// squad positions and group 0's machines (<see cref="MissionGenerator.SquadPositions"/>, <see cref="MissionGenerator.Herc"/>).
+	/// </summary>
+	public MissionGenerator Generator { get; private set; } = null!;
+
 	/// <summary>Writes the files, generates from them and replaces <see cref="Script"/>'s blocks with what was generated.</summary>
 	public void Regenerate() {
 		byte[] msn = new MissionFileTransformer().Write(Mission) ?? throw new InvalidOperationException("The mission file does not write.");
@@ -82,6 +88,7 @@ public sealed class MissionDocument {
 		ScriptBytes = script;
 		MissionText = generator.WriteMissionText();
 		Provenance = generator.Provenance;
+		Generator = generator;
 		CopyBlocks(parsed, Script);
 
 		_slots.Clear();
@@ -107,6 +114,13 @@ public sealed class MissionDocument {
 
 	/// <summary>The <c>script.dat</c> index row <paramref name="row"/>'s GUID <paramref name="guid"/> was exported at, or null when it was not.</summary>
 	public int? ExportedIndex(int row, short guid) => _slots.TryGetValue((row, guid), out var slot) ? slot.Index : null;
+
+	/// <summary>
+	/// Whether a variant supplies <paramref name="field"/> of GUID <paramref name="guid"/>, so that <see cref="SetField"/> writes
+	/// it in an overlay record, which cannot carry the field's unset value. Throws as <see cref="SetField"/> does for a GUID no
+	/// record exports.
+	/// </summary>
+	public bool SuppliedByVariant(MsnField field, short guid) => SlotOf(field.Row, guid).Word(field.Word).CopiedFrom != null;
 
 	/// <summary>The GUID-keyed record <paramref name="id"/> names, or null for one of rows 4 and 17, which have no GUID.</summary>
 	public MapObject? RecordAt(MsnRecordId id) => MsnRows.Get(Mission, id.Row).GetValue(id.Index) as MapObject;

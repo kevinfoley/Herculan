@@ -162,12 +162,34 @@ public static class ShellTrainingLaunch {
 		ShellWorkingFiles.WriteMissionFile(scriptPath, mission.WriteScriptDat());
 		ShellWorkingFiles.WriteMissionFile(CaseInsensitivePath.Combine(directory, MissionLoader.TextFileName), mission.WriteMissionText());
 
+		int positions = BuildSquad(content, options, row, instantAction, mission, hangar);
+
+		// The flag array as the load left it is the career's.
+		for (int i = 0; i < flags.Length; i++) {
+			game.SetCampaignFlag(i, flags[i]);
+		}
+
+		var flagBytes = new byte[flags.Length * 2];
+		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
+		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
+		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
+
+		failure = null;
+		return new ShellTrainingHandoff(scriptPath, missionPath, game, hangar, positions);
+	}
+
+	/// <summary>
+	/// The squad half of the training load, between the write of <c>script.dat</c> and the export: the positions in play from
+	/// <paramref name="mission"/>'s group 0, the player's machine into bay 0, and a machine, a bay and a position for each
+	/// wingman, into <paramref name="hangar"/>, which <see cref="NewCareer"/> left. Returns the positions in play. See
+	/// docs/retail/shell/main-menu.md#starting-a-practice-mission.
+	/// </summary>
+	internal static int BuildSquad(GameContent content, SimulatorPreferences options, int row, bool instantAction,
+			MissionGenerator mission, ShellHangar hangar) {
 		int positions = mission.SquadPositions;
 		hangar.SetPositionsInPlay(positions);
 
-		// MsnGen_BuildPlayerHerc (0041c58d): the first four rows, and INSTANT ACTION, fly group 0's first member; the rest fly
-		// a stock fit of the chassis the Herc Type option holds.
-		var player = row < FirstChosenChassisRow || instantAction
+		var player = PilotsMissionMachine(row, instantAction)
 			? Machine(mission.Herc(mission.SquadMember(0)))
 			: StockFit(content, options[ShellPracticeScreen.HercTypeOption]);
 		if (player != null) {
@@ -188,19 +210,14 @@ public static class ShellTrainingLaunch {
 			hangar.SetSquadPosition(member, member + 1);
 		}
 
-		// The flag array as the load left it is the career's.
-		for (int i = 0; i < flags.Length; i++) {
-			game.SetCampaignFlag(i, flags[i]);
-		}
-
-		var flagBytes = new byte[flags.Length * 2];
-		Buffer.BlockCopy(flags, 0, flagBytes, 0, flagBytes.Length);
-		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, ShellMissionLaunch.MissionVarFileName), flagBytes);
-		File.WriteAllBytes(CaseInsensitivePath.Combine(directory, MissionLoader.PlayerFileName), ShellMissionLaunch.ExportPlayerMec(hangar));
-
-		failure = null;
-		return new ShellTrainingHandoff(scriptPath, missionPath, game, hangar, positions);
+		return positions;
 	}
+
+	/// <summary>
+	/// <c>MsnGen_BuildPlayerHerc</c> (<c>0041c58d</c>)'s choice: on the first four rows, and in <c>INSTANT ACTION</c>, the
+	/// player pilots group 0's first member; on the rest, a stock fit of the chassis the Herc Type option holds.
+	/// </summary>
+	public static bool PilotsMissionMachine(int row, bool instantAction) => row < FirstChosenChassisRow || instantAction;
 
 	/// <summary>The theater a training load writes over the mission's own, whatever it patched.</summary>
 	public const short PracticeTheater = 1;
@@ -398,8 +415,11 @@ public static class ShellTrainingLaunch {
 		return machine;
 	}
 
-	/// <summary>The stock fit of a chassis, <c>gam\ini_*.dat</c> read through <c>HercRecord_ReadCatalogForm</c>.</summary>
-	private static ShellBayMachine? StockFit(GameContent content, int chassis) =>
+	/// <summary>
+	/// The stock fit of a chassis, <c>gam\ini_*.dat</c> read through <c>HercRecord_ReadCatalogForm</c>; null for a chassis
+	/// past the nine, or an install without the file.
+	/// </summary>
+	public static ShellBayMachine? StockFit(GameContent content, int chassis) =>
 		chassis >= 0 && chassis < StockFits.Length
 			&& content.Read(ShellRepairCosts.CatalogFolder, StockFits[chassis]) is { } bytes
 			&& new InitHercTransformer().Parse(bytes)?.Data is { } record

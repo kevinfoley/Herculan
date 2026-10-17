@@ -92,6 +92,36 @@ internal sealed class SyntheticMsn {
 		return words;
 	}
 
+	/// <summary>
+	/// A row-12 herc of <paramref name="type"/>, its fit <paramref name="weapons"/> and <paramref name="ammo"/> from the first
+	/// slot and the rest <c>-1</c> and the filler 5, every action and counter pair unset, pristine.
+	/// </summary>
+	public static short[] Mech(short guid, short type, short condition = -1, short variant = -1, short[]? weapons = null,
+			short[]? ammo = null) {
+		var words = Enumerable.Repeat((short)-1, 72).ToArray();
+		words[MapObject.GUIDWord] = guid;
+		words[MechRosterEntry144.ConditionRefWord] = condition;
+		words[MechRosterEntry144.VariantKeyWord] = variant;
+		words[MechRosterEntry144.AiRadarActiveWord] = 0;
+		words[MechRosterEntry144.AiRadarActiveWord + 1] = 0;
+		for (int word = MechRosterEntry144.AiRadarActiveWord + 2; word < MechRosterEntry144.TypeIndexWord; word++) {
+			words[word] = 0;
+		}
+
+		words[MechRosterEntry144.TypeIndexWord] = type;
+		words[MechRosterEntry144.OutOfActionReportWord - 1] = 0; // the pair count
+		for (int slot = 0; slot < 10; slot++) {
+			words[MechRosterEntry144.WeaponSecondaryWord + slot] = ammo != null && slot < ammo.Length ? ammo[slot] : (short)5;
+			if (weapons != null && slot < weapons.Length) {
+				words[MechRosterEntry144.WeaponRefsWord + slot] = weapons[slot];
+			}
+		}
+
+		words[MechRosterEntry144.Constant2Word] = 2;
+		words[MechRosterEntry144.StartingConditionWord] = 100;
+		return words;
+	}
+
 	/// <summary>A row-14 structure of type 0, every action and counter pair unset, pristine.</summary>
 	public static short[] Base(short guid, short position = -1, short condition = -1, short variant = -1) {
 		var words = Enumerable.Repeat((short)-1, 31).ToArray();

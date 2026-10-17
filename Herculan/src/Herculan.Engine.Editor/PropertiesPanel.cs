@@ -23,18 +23,20 @@ internal sealed class PropertiesPanel {
 	private readonly PointMover _mover;
 	private readonly SideChanger _sides;
 	private readonly ObjectDeleter _deleter;
+	private readonly SquadMachinePanel _machine;
 
 	// A position being typed, and the object it is for, until its field lets go.
 	private SceneObject? _draftFor;
 	private Vec3i _draft;
 
 	public PropertiesPanel(MissionIndex index, SelectionState selection, PointMover mover, SideChanger sides,
-			ObjectDeleter deleter) {
+			ObjectDeleter deleter, SquadMachinePanel machine) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
 		_sides = sides;
 		_deleter = deleter;
+		_machine = machine;
 	}
 
 	private Mission Mission => _index.Mission;
@@ -106,6 +108,8 @@ internal sealed class PropertiesPanel {
 
 		if (!placement.IsPlayerLance) {
 			ImGui.Text($"Starting condition: {placement.StartingCondition}%");
+		} else if (ReferenceEquals(placement, Mission.Player)) {
+			_machine.DrawPlayer();
 		}
 
 		if (_index.IsWaiting(sel)) {
@@ -323,6 +327,10 @@ internal sealed class PropertiesPanel {
 	private void DrawGroup(int group) {
 		ImGui.TextWrapped(MissionText.DescribeGroup(_index, group));
 		SideField(group);
+		if (group == 0) {
+			_machine.DrawPlayer();
+		}
+
 		ImGui.Separator();
 
 		int waitsOn = group < Mission.GroupDeploymentActions.Count ? Mission.GroupDeploymentActions[group] : -1;
