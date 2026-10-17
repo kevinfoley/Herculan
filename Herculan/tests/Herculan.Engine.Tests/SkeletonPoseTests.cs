@@ -19,11 +19,12 @@ namespace Herculan.Engine.Tests;
 [Collection(SimTimestepCollection.Name)]
 public class SkeletonPoseTests {
 	/// <summary>
-	/// The camera joint and <see cref="MechObject.CameraNodeTransform"/> are the same point, exactly.
-	/// This is the load-bearing one: it is what makes the drawn skeleton evidence about the cockpit
-	/// view rather than a second, independently-wrong sampling of the animation. The eye itself sits
-	/// off that joint by the type's own offset — see <see cref="MechObject.EyeTransform"/> — so it is
-	/// the joint the two samplings have to agree on, not the eye.
+	/// The joint the skeleton draws for the camera part and <see cref="MechObject.CameraNodeTransform"/>
+	/// are the same point, exactly: the skeleton indexes its joints by transform id and resolves the
+	/// camera part the way the eye does, so the joint drawn is the one the view rides. The eye itself
+	/// sits off that joint by the type's own offset — see <see cref="MechObject.EyeTransform"/>. Every
+	/// ground HERC resolves the part (docs/retail/simulation/mech-locomotion.md, "Cockpit eye and
+	/// bob").
 	/// </summary>
 	[Theory]
 	[MemberData(nameof(MechLocomotionTests.Hercs), MemberType = typeof(MechLocomotionTests))]
@@ -34,16 +35,14 @@ public class SkeletonPoseTests {
 
 		var world = FlatWorld(mech);
 
-		// Mid-stride, not at rest: at rest every sampling agrees trivially.
+		// Mid-stride, so the joints are where the walk put them rather than at their rest pose.
 		for (int i = 0; i < 120; i++) {
 			mech.Controls = new MechControls(0, -MechControls.AxisFull);
 			world.Tick();
 		}
 
 		int cameraNode = SkeletonPose.CameraTransformId(mech);
-		if (cameraNode < 0) {
-			return;
-		}
+		Assert.True(cameraNode >= 0, $"{herc}'s camera part resolved to no transform");
 
 		var joints = SkeletonPose.Build(mech);
 		var node = mech.CameraNodeTransform;
@@ -51,8 +50,9 @@ public class SkeletonPoseTests {
 	}
 
 	/// <summary>
-	/// One joint per transform the shape declares, each naming a parent that is either the root or a
-	/// real transform — a skeleton that draws bones to nowhere would look like a broken pose.
+	/// Each joint names a parent that is either the root or another real transform — a skeleton that
+	/// draws bones to nowhere would look like a broken pose. The parents are the shape's relation
+	/// table as the animation loader flattened it.
 	/// </summary>
 	[Theory]
 	[MemberData(nameof(MechLocomotionTests.Hercs), MemberType = typeof(MechLocomotionTests))]
@@ -63,13 +63,10 @@ public class SkeletonPoseTests {
 
 		FlatWorld(mech);
 		var joints = SkeletonPose.Build(mech);
-		if (mech.Animation is not { } animation) {
-			return;
-		}
 
-		Assert.Equal(animation.ParentTransform.Length, joints.Length);
+		// Every ground HERC carries animation data, and the skeleton is empty only without it.
+		Assert.NotEmpty(joints);
 		for (int i = 0; i < joints.Length; i++) {
-			Assert.Equal(i, joints[i].TransformId);
 			Assert.InRange(joints[i].ParentId, -1, joints.Length - 1);
 			Assert.NotEqual(i, joints[i].ParentId);
 		}

@@ -37,7 +37,8 @@ public class CdMusicTests {
 
 	/// <summary>
 	/// Six audio tracks, 2 to 7, each running to the next one's start; the data track is left out.
-	/// Track 7 is the one <c>% 5 + 2</c> never reaches.
+	/// Track 7 is the one <c>% 5 + 2</c> never reaches. The disc's id names its rip cache's directory, so
+	/// it is the layout's: the same table gives the same id, and one track moved by a frame another.
 	/// </summary>
 	[Fact]
 	public void TheRetailTocHasSixAudioTracks() {
@@ -46,7 +47,13 @@ public class CdMusicTests {
 		Assert.Equal(new[] { 2, 3, 4, 5, 6, 7 }, tracks.Keys.Order());
 		Assert.Equal((172283L, 10865L), tracks[2]);
 		Assert.Equal((234006L, 11019L), tracks[7]);
-		Assert.Equal(16, discId.Length);
+
+		var moved = RetailToc();
+		moved[4 + 2 * 8 + 7]++;
+		CdRipMusicSource.ParseToc(RetailToc(), out string again);
+		CdRipMusicSource.ParseToc(moved, out string other);
+		Assert.Equal(discId, again);
+		Assert.NotEqual(discId, other);
 	}
 
 	/// <summary>A track written by the cache reads back identical through the file source.</summary>
@@ -79,20 +86,25 @@ public class CdMusicTests {
 	}
 
 	/// <summary>
-	/// A track counts as cached only when its file holds the whole track: one cut short, or only an
-	/// interrupted write's <c>.partial</c>, is ripped again.
+	/// A track counts as cached only when its file holds the whole track: one written short, one whose data
+	/// stops before the length its header gives, or only an interrupted write's <c>.partial</c>, is ripped
+	/// again. The answer is in track order whatever order the table holds them in.
 	/// </summary>
 	[Fact]
 	public void OnlyAWholeTrackCountsAsCached() {
 		string directory = Directory.CreateTempSubdirectory("herculan-music").FullName;
 		try {
-			var tracks = new Dictionary<int, (long, long)> { [2] = (0, 10), [3] = (10, 10), [4] = (20, 10) };
+			var tracks = new Dictionary<int, (long, long)> { [5] = (30, 10), [4] = (20, 10), [3] = (10, 10), [2] = (0, 10) };
 			WaveFileMusicSource.Write(WaveFileMusicSource.PathFor(directory, 2), Filled(2, 10 * MusicTrack.FramesPerSector));
 			WaveFileMusicSource.Write(WaveFileMusicSource.PathFor(directory, 3), Filled(3, 9 * MusicTrack.FramesPerSector));
 			File.WriteAllBytes(WaveFileMusicSource.PathFor(directory, 4) + ".partial", new byte[100]);
+			WaveFileMusicSource.Write(WaveFileMusicSource.PathFor(directory, 5), Filled(5, 10 * MusicTrack.FramesPerSector));
+			using (var cut = File.OpenWrite(WaveFileMusicSource.PathFor(directory, 5))) {
+				cut.SetLength(cut.Length - 4);
+			}
 
-			Assert.Equal(new[] { 3, 4 }, CdRipMusicSource.UncachedTracks(tracks, directory));
-			Assert.Equal(new[] { 2, 3, 4 }, CdRipMusicSource.UncachedTracks(tracks, Path.Combine(directory, "other-disc")));
+			Assert.Equal(new[] { 3, 4, 5 }, CdRipMusicSource.UncachedTracks(tracks, directory));
+			Assert.Equal(new[] { 2, 3, 4, 5 }, CdRipMusicSource.UncachedTracks(tracks, Path.Combine(directory, "other-disc")));
 		} finally {
 			Directory.Delete(directory, recursive: true);
 		}

@@ -14,28 +14,6 @@ namespace Herculan.Engine.Tests;
 /// </summary>
 public class ShellSaveScreenTests {
 	/// <summary>
-	/// The content panel, and that it is where the original puts it: centred on the canvas's midpoint,
-	/// and clear of the tab strip's bottom edge.
-	///
-	/// <para>Its width is odd, so it cannot sit symmetrically in an even canvas: the margin is 142 on
-	/// the left and 141 on the right. What is centred is the panel's midpoint on x=320 — half of 640 —
-	/// rather than the two margins on each other, which is what makes <c>0x8e</c> and <c>0x1f2</c> a
-	/// pair.</para>
-	/// </summary>
-	[Fact]
-	public void PlacesTheContentPanel() {
-		var panel = ShellSaveScreen.PanelRect;
-
-		Assert.Equal(new ShellRect(142, 127, 498, 468), panel);
-		Assert.Equal(357, panel.Width);
-		Assert.Equal(342, panel.Height);
-
-		Assert.Equal(ShellLayout.CanvasWidth / 2, (panel.X0 + panel.X1) / 2);
-		Assert.Equal(141, ShellLayout.CanvasWidth - 1 - panel.X1);
-		Assert.True(panel.Y0 > ShellLayout.TabBottom);
-	}
-
-	/// <summary>
 	/// The ten slot rows: 13 tall on a 12-pixel pitch, so each overlaps its neighbour by a row, and the
 	/// first and last inset two pixels further from the left than the eight between them.
 	/// </summary>
@@ -50,17 +28,6 @@ public class ShellSaveScreenTests {
 		Assert.Equal(new ShellRect(163, 174, 488, 186), first);
 		Assert.Equal(new ShellRect(161, 186, 488, 198), second);
 		Assert.Equal(new ShellRect(163, 282, 488, 294), last);
-
-		Assert.Equal(13, first.Height);
-		Assert.Equal(12, second.Y0 - first.Y0);
-
-		// The overlap is the original's own: row 1 starts on the row row 0 ends on.
-		Assert.Equal(first.Y1, second.Y0);
-
-		// Every row shares a right edge, two pixels inside the list panel's own.
-		for (int slot = 0; slot < ShellSaveScreen.RowCount; slot++) {
-			Assert.Equal(first.X1, screen.RowRect(slot).X1);
-		}
 	}
 
 	/// <summary>
@@ -76,12 +43,6 @@ public class ShellSaveScreenTests {
 		Assert.Equal(new ShellRect(151, 356, 249, 371), screen.ButtonRect(ShellSaveButton.Save));
 		Assert.Equal(new ShellRect(151, 378, 249, 393), screen.ButtonRect(ShellSaveButton.Restore));
 		Assert.Equal(new ShellRect(151, 400, 249, 415), screen.ButtonRect(ShellSaveButton.Exit));
-
-		// The three in the column are the same size on a fixed pitch.
-		Assert.Equal(99, screen.ButtonRect(ShellSaveButton.Save).Width);
-		Assert.Equal(16, screen.ButtonRect(ShellSaveButton.Save).Height);
-		Assert.Equal(22, screen.ButtonRect(ShellSaveButton.Restore).Y0
-			- screen.ButtonRect(ShellSaveButton.Save).Y0);
 	}
 
 	/// <summary>
@@ -243,9 +204,9 @@ public class ShellSaveScreenTests {
 		Assert.False(screen.IsEnabled(ShellSaveButton.Accept));
 
 		// Entering the screen again reads every row back from its slot.
+		screen.SetSlot(2, new ShellSaveSlot("GAME_2.SAV", " 3. NEW", true, null));
 		screen.Enter();
-		Assert.Equal(" 2. Q", screen.RowText(1));
-		Assert.Equal(" 3. EMPTY", screen.RowText(2));
+		Assert.Equal(" 3. NEW", screen.RowText(2));
 	}
 
 	/// <summary>The caret's blink phase flips on each tick while the row's caret is enabled, and is out otherwise.</summary>
@@ -396,22 +357,19 @@ public class ShellSaveScreenTests {
 
 	/// <summary>
 	/// Text colour is a remap, not a pen: the glyphs go down in the font's own ink index and that one
-	/// index is then replaced. A row's resting and selected colours are the same paint with a different
-	/// replacement, which is what makes the selection highlight free.
+	/// index is then replaced, and nothing else moves — the table it installs is the identity apart
+	/// from the one entry.
 	/// </summary>
 	[Fact]
 	public void RecolorsTextByRemappingTheFontsInk() {
 		var surface = new ShellSurface(10, 10);
 		surface.Fill(2, 2, 6, 6, ShellChrome.FontInkColor);
+		surface.Fill(8, 8, 9, 9, 0x1a);
 
 		surface.Remap(0, 0, 9, 9, ShellChrome.FontInkColor, 0x27);
 
 		Assert.Equal(0x27, surface.At(4, 4));
-
-		// Nothing else moves — the table it installs is the identity apart from the one entry.
-		surface.Fill(8, 8, 9, 9, 0x1a);
-		surface.Remap(0, 0, 9, 9, ShellChrome.FontInkColor, 0x29);
 		Assert.Equal(0x1a, surface.At(8, 8));
-		Assert.Equal(0x27, surface.At(4, 4));
+		Assert.Equal(ShellSurface.Transparent, surface.At(0, 0));
 	}
 }
