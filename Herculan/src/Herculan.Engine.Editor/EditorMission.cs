@@ -36,7 +36,8 @@ internal sealed class EditorMission {
 		Sides = new SideChanger(document, source, index, Mover);
 		Deleter = new ObjectDeleter(document, source, index, Mover, Rebuild);
 		Fitter = new MachineFitter(document, source, Mover, Rebuild, shellContent);
-		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter, new SquadMachinePanel(Fitter, squad),
+		Squad = new SquadEditor(document, source, index, Mover, Rebuild, Fitter, Deleter);
+		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter, new SquadMachinePanel(Fitter, Squad, squad),
 			SimStrings.Load(content));
 	}
 
@@ -97,6 +98,9 @@ internal sealed class EditorMission {
 
 	/// <summary>Changes the squad's chassis and weapon fits in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public MachineFitter Fitter { get; }
+
+	/// <summary>Adds and removes the player's squadmates in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public SquadEditor Squad { get; }
 
 	/// <summary>The window title, the name marked <c>*</c> when <paramref name="unsaved"/> changes are held.</summary>
 	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Mission.Header.ZoneIndex}";

@@ -28,9 +28,14 @@ public sealed record MsnNamers(IReadOnlyList<MsnRecordId> Objectives, IReadOnlyL
 /// </param>
 public sealed record RosterDeleteCheck(bool InSquad, MsnNamers Namers, IReadOnlyList<MsnRecordId> FiredActions,
 		IReadOnlyList<short> MemberOf, IReadOnlyList<(short Group, MsnNamers Namers)> EmptiedGroups) {
+	/// <summary>
+	/// Whether the mission names or needs it: an objective, action or order naming it or a group the delete would remove,
+	/// or an action of its own it fires.
+	/// </summary>
+	public bool Needed => Namers.Any || FiredActions.Count > 0 || EmptiedGroups.Any(group => group.Namers.Any);
+
 	/// <summary>Whether nothing refuses the delete.</summary>
-	public bool Allowed => !InSquad && !Namers.Any && FiredActions.Count == 0
-		&& EmptiedGroups.All(group => !group.Namers.Any);
+	public bool Allowed => !InSquad && !Needed;
 }
 
 /// <summary>
@@ -46,8 +51,9 @@ public sealed record RosterDeleteCheck(bool InSquad, MsnNamers Namers, IReadOnly
 /// so the delete is refused while an objective, an action or an order names the object, or names a group the delete
 /// would remove, and while the object fires an action of its own when engaged or defeated, which would then never
 /// fire. Every record counts whatever its condition, since one that fails in the generation's state names the object
-/// in another. The player's squad is refused too: a practice load builds the player's machine and wingmen from its
-/// row-12 records (docs/retail/shell/main-menu.md#starting-a-practice-mission).</para>
+/// in another. The player's squad is refused too: a practice load builds the player's machine and squadmates from its
+/// row-12 records (docs/retail/shell/main-menu.md#starting-a-practice-mission); <see cref="SquadRoster.Remove"/> removes a
+/// squadmate.</para>
 /// </summary>
 public static class RosterDeletion {
 	private const int ActionRow = 10;
@@ -101,16 +107,22 @@ public static class RosterDeletion {
 			throw new InvalidOperationException($"Row {row}'s GUID {guid} is named or needed by the mission, or is in the player's squad.");
 		}
 
-		return document.Change(() => {
-			document.Remove(row, guid);
-			foreach (short group in check.MemberOf) {
-				if (check.EmptiedGroups.Any(emptied => emptied.Group == group)) {
-					document.Remove(GroupRow, group);
-				} else {
-					document.ClearMember(group, guid);
-				}
+		return document.Change(() => Take(document, row, guid, check));
+	}
+
+	/// <summary>
+	/// The record edits of a delete <paramref name="check"/> allowed: every record of the GUID out of its row, and the GUID
+	/// out of every group naming it, a group it leaves empty removed. Made inside the caller's <see cref="MissionDocument.Change"/>.
+	/// </summary>
+	internal static void Take(MissionDocument document, int row, short guid, RosterDeleteCheck check) {
+		document.Remove(row, guid);
+		foreach (short group in check.MemberOf) {
+			if (check.EmptiedGroups.Any(emptied => emptied.Group == group)) {
+				document.Remove(GroupRow, group);
+			} else {
+				document.ClearMember(group, guid);
 			}
-		});
+		}
 	}
 
 	// What names <guid> as an objective's or order's subject of <subjectKind>, or as an action's target of <actionType>.

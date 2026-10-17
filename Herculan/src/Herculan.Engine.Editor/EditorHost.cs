@@ -35,6 +35,9 @@ public sealed record EditorLaunch(string InstallRoot, GameContent SimulatorConte
 	/// </summary>
 	public string? ScriptPath { get; init; }
 
+	/// <summary>The bold face of <see cref="FontPath"/>'s font, for the panels' emphasised notes; null for none.</summary>
+	public string? BoldFontPath { get; init; }
+
 	/// <summary>
 	/// The game's window, which the editor takes as a turn and leaves open for the game; null for a window of its own,
 	/// where the editor last closed on its own (<see cref="EditorSettings.Window"/>), or maximized the first time.
@@ -247,10 +250,11 @@ public sealed class EditorHost {
 		// is backface-culled.
 		gl.Disable(EnableCap.CullFace);
 
-		_imgui = new ScaledImGui(gl, _window, input, _launch.FontPath) {
+		_imgui = new ScaledImGui(gl, _window, input, _launch.FontPath, boldFontPath: _launch.BoldFontPath) {
 			HeldAsMouseButtons = () => (_padPointer.ClickHeld, _padPointer.RightClickHeld),
 		};
 		_input = input;
+		EditorText.BoldFont = () => _imgui?.BoldFont;
 
 		if (_mouse != null) {
 			_mouse.MouseDown += OnMouseDown;
@@ -606,7 +610,8 @@ public sealed class EditorHost {
 		return group > 0 && mission.Index.KindOf(group) == MissionUnitKind.Base ? group : null;
 	}
 
-	// The delete, the machine fit and the Undo or Redo the frame's panels and menus asked for; none while a drag is under way.
+	// The delete, the machine fit, the squadmate add or remove and the Undo or Redo the frame's panels and menus asked for;
+	// none while a drag is under way.
 	private void RunEditRequests(EditorMission mission) {
 		var deleting = mission.Deleter.TakeRequest();
 		var step = _pendingStep;
@@ -620,6 +625,7 @@ public sealed class EditorHost {
 		}
 
 		mission.Fitter.RunRequest();
+		mission.Squad.RunRequest();
 
 		if (step == true) {
 			mission.Mover.Undo();

@@ -8,6 +8,22 @@ internal static class EditorText {
 	// Lighter than ImGui's own disabled grey, which is hard to read at the panels' size.
 	private static readonly Vector4 NoteColor = new(0.68f, 0.68f, 0.68f, 1f);
 
+	/// <summary>The bold face to draw <see cref="Emphasis"/> in, read each frame since the fonts are rebuilt with the window's scale.</summary>
+	public static Func<ImFontPtr?>? BoldFont { get; set; }
+
+	/// <summary>A note the user must not miss, in the bold face (the ordinary one when there is none), wrapped.</summary>
+	public static void Emphasis(string text) {
+		var bold = BoldFont?.Invoke();
+		if (bold is { } font) {
+			ImGui.PushFont(font);
+		}
+
+		ImGui.TextWrapped(text);
+		if (bold != null) {
+			ImGui.PopFont();
+		}
+	}
+
 	/// <summary>A note, wrapped at the window's edge.</summary>
 	public static void Note(string text) {
 		ImGui.PushStyleColor(ImGuiCol.Text, NoteColor);

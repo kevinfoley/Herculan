@@ -111,6 +111,7 @@ static class Launcher {
 			() => shellContent ??= GameContent.MountShell(session.InstallRoot, session.Disc),
 			session.ImGuiFontPath) {
 			Window = window,
+			BoldFontPath = Path.Combine(Path.GetDirectoryName(session.ImGuiFontPath)!, "OpenSans-Bold.ttf"),
 		});
 	}
 

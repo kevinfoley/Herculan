@@ -114,6 +114,8 @@ internal sealed class PropertiesPanel {
 			ImGui.Text($"Starting condition: {placement.StartingCondition}%");
 		} else if (ReferenceEquals(placement, Mission.Player)) {
 			_machine.DrawPlayer();
+		} else {
+			_machine.DrawSquadmateObject(placement.SlotIndex);
 		}
 
 		if (_index.IsWaiting(sel)) {
@@ -348,7 +350,7 @@ internal sealed class PropertiesPanel {
 		ImGui.TextWrapped(MissionText.DescribeGroup(_index, group));
 		TeamField(group, ofMember: false);
 		if (group == 0) {
-			_machine.DrawPlayer();
+			_machine.DrawSquad();
 		}
 
 		ImGui.Separator();
@@ -716,7 +718,7 @@ internal sealed class PropertiesPanel {
 
 		ImGui.Text($"Heading: {MissionText.Heading(setup.Heading)}");
 		if (setup.HeadingFromRoute) {
-			EditorText.Note("names none: the bearing of its route's first leg");
+			EditorText.Note("No heading of its own: it faces along its route's first leg.");
 		}
 
 		string kind = _index.KindOf(group)?.ToString().ToLowerInvariant() ?? "?";
@@ -751,10 +753,10 @@ internal sealed class PropertiesPanel {
 		}
 
 		int sharers = _mover.SharersOf(target);
-		string others = $"{sharers} other record(s) naming its point — trigger areas, groups, waypoints —";
+		string others = $"{sharers} other record(s) (trigger areas, groups, waypoints) naming its point";
 		if (setup.PointSource == MissionGroupPointSource.OwnPoint) {
 			ImGui.TextWrapped(sharers > 0
-				? $"Its point is named by {others} which move with it. Alt+drag moves the group alone."
+				? $"Its point is named by {sharers} other record(s) (trigger areas, groups, waypoints), which move with it. Alt+drag moves the group alone."
 				: "Nothing else names its point.");
 		} else if (_mover.StartOf(group) != null) {
 			ImGui.TextWrapped("Dragging moves its route's first waypoint, the start of the route"
@@ -796,7 +798,7 @@ internal sealed class PropertiesPanel {
 		foreach (int objective in objectives) {
 			if (!any) {
 				ImGui.Separator();
-				ImGui.Text("Objectives asked of it:");
+				ImGui.Text("Related objectives:");
 				any = true;
 			}
 
@@ -853,7 +855,7 @@ internal sealed class PropertiesPanel {
 		ImGui.Separator();
 		int sharers = _mover.SharersOf(waypoint);
 		ImGui.TextWrapped(sharers > 0
-			? $"Its point is named by {sharers} other record(s) — trigger areas, groups, other waypoints — which move "
+			? $"Its point is named by {sharers} other record(s) (trigger areas, groups, other waypoints), which move "
 				+ "with it. Alt+drag moves the waypoint alone."
 			: "Nothing else names its point.");
 

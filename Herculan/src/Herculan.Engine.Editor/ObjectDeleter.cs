@@ -78,7 +78,8 @@ internal sealed class ObjectDeleter {
 		}
 
 		if (placement.IsPlayerLance) {
-			return DeleteBlockers.Because("the player's squad is placed from group 0 and player.mec, with no roster record.");
+			return DeleteBlockers.Because("the player's squad is placed from group 0 and player.mec, with no roster record; "
+				+ "group 0's view adds and removes squadmates.");
 		}
 
 		var source = _source!;
@@ -134,9 +135,11 @@ internal sealed class ObjectDeleter {
 		return null;
 	}
 
-	// The records naming something, as the block indices this state exports them at: an order through each group slot
-	// running it.
-	private DeleteNamers Resolve(MissionDocument source, MsnNamers namers) {
+	/// <summary>
+	/// The records naming something, as the block indices this state exports them at: an order through each group slot
+	/// running it.
+	/// </summary>
+	public DeleteNamers Resolve(MissionDocument source, MsnNamers namers) {
 		int elsewhere = 0;
 		List<int> Exported(IReadOnlyList<MsnRecordId> records) {
 			var indices = new List<int>();

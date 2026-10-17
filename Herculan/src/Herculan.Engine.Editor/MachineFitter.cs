@@ -6,11 +6,11 @@ using Herculan.Engine.Shell;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// Changes the chassis and the weapon fit of a herc of the player's squad: a row-12 record of the <c>.MSN</c>, addressed by
-/// the <c>script.dat</c> block-7 slot it was exported to, as one step of <see cref="PointMover"/>'s undo history each. The
-/// choices are the shell's: the nine chassis the practice screen's Herc Type steps through, and in each mount the weapons
-/// the weapons screen lets the player fit there (docs/herculan/handoff-editor-mission-editing.md#in-place, "The player's
-/// machine").
+/// Changes the chassis and the weapon fit of a herc of the player's squad, the player's machine or a squadmate: a row-12
+/// record of the <c>.MSN</c>, addressed by the <c>script.dat</c> block-7 slot it was exported to, as one step of
+/// <see cref="PointMover"/>'s undo history each. The choices are the shell's: the nine chassis the practice screen's Herc
+/// Type steps through, and in each mount the weapons the weapons screen lets the player fit there
+/// (docs/herculan/handoff-editor-mission-editing.md#in-place, "The player's squad").
 ///
 /// <list type="bullet">
 /// <item>A chassis change resets the fit to that chassis's stock fit (<see cref="ShellTrainingLaunch.StockFit"/>, as a
@@ -28,7 +28,7 @@ namespace Herculan.Engine.Editor;
 /// edit's fields in one <see cref="MissionDocument.Change"/>, and builds the editor's state again
 /// (<see cref="MissionRebuild"/>), which builds the squad's <c>player.mec</c> again first. A field a variant supplies that
 /// the edit would unset keeps the variant's value, except a launcher's guidance, which is written SARH (0): the editor's
-/// choice (docs/herculan/handoff-editor-mission-editing.md#gaps-in-what-is-in-place, "The player's machine").</para>
+/// choice (docs/herculan/handoff-editor-mission-editing.md#gaps-in-what-is-in-place, "The player's squad").</para>
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered, since the rebuild
 /// changes what the panels list.</para>
@@ -77,8 +77,8 @@ internal sealed class MachineFitter {
 	/// <summary>
 	/// The block-7 slot of the herc group 0's member slot <paramref name="member"/> names, as the squad build reads it
 	/// (<see cref="HercWorks.Core.Io.Transform.Common.MissionGenerator.Herc"/>): the player's, slot 0, a negative ref naming
-	/// the first record; a wingman's only while set, since the squad's positions end at the first unset one. Null otherwise,
-	/// and for a ref past the block.
+	/// the first record; a squadmate's only while set, since the squad's positions end at the first unset one. Null
+	/// otherwise, and for a ref past the block.
 	/// </summary>
 	public int? SquadSlot(int member) {
 		if (_document.Groups.Length == 0 || member < 0 || member >= _document.Groups[0].MemberRefs.Length
@@ -128,18 +128,37 @@ internal sealed class MachineFitter {
 		}
 	}
 
-	private string? SetChassis(int slot, int chassis) {
+	/// <summary>
+	/// The ten slots' weapons and ammunition types of <paramref name="chassis"/>'s stock fit as a row-12 record carries
+	/// them: each mount below the capacity its weapon or <c>None</c> (0) and its guidance, every slot past it <c>-1</c> with
+	/// the filler 5. Null when the install has no stock fit for it.
+	/// </summary>
+	public (short[] Weapons, short[] Guidance)? StockFit(int chassis) {
 		if (_shellContent == null || ShellTrainingLaunch.StockFit(_shellContent(), chassis) is not { } stock) {
-			return $"The install has no stock fit for chassis {chassis}.";
+			return null;
 		}
 
 		int capacity = Capacity(chassis);
-		var fields = new List<(MsnField, short)> { (MsnField.MechType, (short)chassis) };
+		var weapons = new short[Slots];
+		var guidance = new short[Slots];
 		for (int mount = 0; mount < Slots; mount++) {
 			bool fitted = mount < capacity;
-			fields.Add((MsnField.MechWeapon(mount), fitted ? (short)stock.WeaponAt(mount) : NoSlot));
-			fields.Add((MsnField.MechAmmo(mount),
-				(short)(fitted ? stock.Mount(mount)?.Guidance ?? ShellWeaponUnit.NoGuidance : ShellWeaponUnit.NoGuidance)));
+			weapons[mount] = fitted ? (short)stock.WeaponAt(mount) : NoSlot;
+			guidance[mount] = (short)(fitted ? stock.Mount(mount)?.Guidance ?? ShellWeaponUnit.NoGuidance : ShellWeaponUnit.NoGuidance);
+		}
+
+		return (weapons, guidance);
+	}
+
+	private string? SetChassis(int slot, int chassis) {
+		if (StockFit(chassis) is not var (weapons, guidance)) {
+			return $"The install has no stock fit for chassis {chassis}.";
+		}
+
+		var fields = new List<(MsnField, short)> { (MsnField.MechType, (short)chassis) };
+		for (int mount = 0; mount < Slots; mount++) {
+			fields.Add((MsnField.MechWeapon(mount), weapons[mount]));
+			fields.Add((MsnField.MechAmmo(mount), guidance[mount]));
 		}
 
 		return Write(slot, fields);

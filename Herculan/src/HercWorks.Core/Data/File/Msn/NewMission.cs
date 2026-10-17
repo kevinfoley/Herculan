@@ -141,23 +141,20 @@ public static class NewMission {
 
 	/// <summary>
 	/// <c>TRAIN1.MSN</c>'s player record, mech 46, with the variant it draws resolved: its key 43 names one table whose
-	/// bound is 1, so every load copies the one alternative, an OUTLAW (type 0) with weapon 8 in slots 0 to 2, radar
-	/// active, ammunition type 5 throughout, pristine. Written whole, as a GUID-only record.
+	/// bound is 1, so every load copies the one alternative, an OUTLAW (type 0) with weapon 8 in slots 0 to 2 and
+	/// ammunition type 5 throughout (<see cref="SquadRoster.Machine"/>). Written whole, as a GUID-only record.
 	/// </summary>
 	private static MechRosterEntry144 PlayerMachine(short guid) {
 		var weapons = Unset(10);
 		weapons[0] = weapons[1] = weapons[2] = 8;
-		return new MechRosterEntry144 {
-			GUID = guid, ConditionRef = -1, VariantKey = -1, CompoundConditionPartner = -1, AiRadarActive = 1, AiCruiseSpeed = 0,
-			DeadZone = new short[18], TypeIndex = 0, WeaponRefs = weapons, PositionRef = -1, HeadingRef = -1, PairCount = 0,
-			OutOfActionReport = Unset(20), WeaponSecondary = Enumerable.Repeat((short)5, 10).ToArray(), Constant2 = 2,
-			EngagementActionRef = -1, DefeatActionRef = -1, StartingCondition = 100,
-		};
+		var record = SquadRoster.Machine(0, weapons, Enumerable.Repeat((short)5, 10).ToArray());
+		record.GUID = guid;
+		return record;
 	}
 
 	/// <summary>
 	/// <c>TRAIN1.MSN</c>'s group 59, the player's squad of one: human, formation 0, its paints-ground flag set, the
-	/// player's machine in slot 0 and slot 1 empty, so no wingman
+	/// player's machine in slot 0 and slot 1 empty, so no squadmate
 	/// (docs/retail/shell/main-menu.md#starting-a-practice-mission), the patrol in order slot 0. It names the start point
 	/// and the heading, as <c>TRAIN8.MSN</c>'s squad names its own.
 	/// </summary>
