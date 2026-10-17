@@ -8,7 +8,7 @@ Feasibility and scope for three features in the editor, `Herculan.Engine.Editor`
 
 ## Headline
 
-None of this is a from-scratch build. `MissionLoader` resolves almost every mission feature the editor could show into `Mission`, and the editor already shows and selects trigger areas, routes, the mission box, groups, objectives, timers and the action wiring ([In place](#in-place)); what is left of the first feature is the same kind of drawing and UI work. The `script.dat` writer exists and is complete: `ScriptDatTransformer.Write` covers all 13 blocks, and `HercWorks.UI.MissionScriptForm` already drives it through an open/edit/Save As UI. The editor keeps the parsed document (`EditorMission.Document`) beside the scene loaded from it, moves roster objects, route waypoints and groups in it, adds structures to it and deletes objects from it ([In place](#in-place), "Moving objects, waypoints and groups", "Adding structures" and "Deleting objects"); what is left is moving area corners through the same machinery, adding the other kinds of object, and a Save.
+None of this is a from-scratch build. `MissionLoader` resolves almost every mission feature the editor could show into `Mission`, and the editor already shows and selects trigger areas, routes, the mission box, groups, objectives, timers and the action wiring ([In place](#in-place)); what is left of the first feature is the same kind of drawing and UI work. The `script.dat` writer exists and is complete: `ScriptDatTransformer.Write` covers all 13 blocks, and `HercWorks.UI.MissionScriptForm` already drives it through an open/edit/Save As UI. The editor keeps the parsed document (`EditorMission.Document`) beside the scene loaded from it, moves roster objects, route waypoints and groups in it, adds structures to it and deletes objects from it ([In place](#in-place), "Moving objects, waypoints and groups", "Adding structures" and "Deleting objects"); what is left of editing is moving area corners through the same machinery and a Save. Building a mission from nothing needs much more: an `.MSN` model, a new-mission path, and the creation and field editing of every record kind ([Authoring a mission from scratch](#authoring-a-mission-from-scratch)).
 
 Whether DBSIM can read a grown file is settled (it can — [gap 2](#2-three-consequences-of-appending)).
 
@@ -26,7 +26,7 @@ Whether DBSIM can read a grown file is settled (it can — [gap 2](#2-three-cons
 
 ## What a saved `script.dat` reaches
 
-VSHELL writes `data\script.dat` afresh from the `.MSN` every time it loads a campaign or practice mission, and so does this engine's own campaign launch (`ShellCampaignLaunch`, through `MissionGenerator`). An edited `script.dat` is therefore played by: the editor and `Herculan.Engine.Host` opening that file directly; DBSIM run directly over `data\`; and a save slot, since `Career_LoadSlot` (`00412bbf`) copies `sav\script%d.dat` into `data\` and the replay flies it as-is ([`../retail/formats/save-games.md`](../retail/formats/save-games.md#the-slot-handoff)). It does not change a campaign mission. That needs `.MSN` editing — GUID-keyed rows, conditions and variants, the `.ENG` text — a separate and larger project this plan does not cover.
+VSHELL writes `data\script.dat` afresh from the `.MSN` every time it loads a campaign or practice mission, and so does this engine's own campaign launch (`ShellCampaignLaunch`, through `MissionGenerator`). An edited `script.dat` is therefore played by: the editor and `Herculan.Engine.Host` opening that file directly; DBSIM run directly over `data\`; and a save slot, since `Career_LoadSlot` (`00412bbf`) copies `sav\script%d.dat` into `data\` and the replay flies it as-is ([`../retail/formats/save-games.md`](../retail/formats/save-games.md#the-slot-handoff)). It does not change a campaign mission. That needs the editor to hold the `.MSN` ([The `.MSN` layer](#the-msn-layer)).
 
 ## Mission features to show and select
 
@@ -54,7 +54,7 @@ Counts below are over the 62 retail `.MSN` files with campaign conditions not ap
 - **Waypoint height.** A moved waypoint's point is written with Z 0, as 1487 of the 1488 retail waypoints have it. DBSIM reads a waypoint's Z as the starting altitude of a flight standing on its route's first waypoint, and the heads-down map projects the player's route icons with it ([`../retail/simulation/ai-goals.md`](../retail/simulation/ai-goals.md#the-route-cursor-is-loaded-once)); everything else works in the ground plane. A waypoint has no field or handle for it; only a flyer group standing on its route's first waypoint sets it, through the group's Z handle. This engine's heads-down map places route icons by X and Y alone.
 - **Waypoint and group views.** The route view lists its waypoints' coordinates and the group view its point read-only, with no typed fields as an object's view has, and neither warns when a waypoint or a group is moved outside the mission box as opened, though that grows the box and the heads-down map's frame as an object does (the box overlay shows it).
 - **Area tint.** Only a selected area is tinted. A selected action's areas are outlined, not tinted: `SceneRenderer.Highlight` holds one region. The tint is painted on the terrain alone, not on a structure's ground plane (its shadow and floor plates) inside the area.
-- **Adding.** Only structures can be added. A herc, a flyer or a ground vehicle (which drives, and whose group needs orders the Toolbox has no way to set) cannot. An added structure's type is fixed once it is added.
+- **Adding.** Only structures can be added, and an added structure's type is fixed once it is added. A herc, a flyer or a ground vehicle (which drives, and whose group needs orders the Toolbox has no way to set) cannot ([Per row](#per-row)).
 - **Deleting.** A group's last member cannot be deleted, except a just-added structure's own group while it is block 11's last record (so of two structures added one after the other, the first cannot be deleted while the second's group stands): that needs the group's block-11 record removed, every ref to a later group renumbered (objective and order subjects, action targets) and the index rebuilt. Nothing the mission names is deleted together with what names it. A deleted object's record stays in its roster, still counted against DBSIM's slot caps, and an add appends a record rather than reusing it.
 - **Framing.** A double-click on a link in the Properties panel selects without framing. A timer stands nowhere and is not framed.
 - **Top-down view.** It is the perspective camera at its pitch limit, 88 degrees down rather than 90, not an orthographic map: things stand up from the ground toward the edges of the view, and a point's place on screen shifts with its height. It frames the zone's grid as it opens, not whatever window size it is later resized to.
@@ -84,7 +84,7 @@ Size: medium–large.
 
 - **Drop-pod and on-foot arrival points.** Picked at run time relative to the player's position and heading when the action fires; nothing static to draw.
 - **Detection and engagement ranges** (50,000 and 100,000 units). Simulation constants, not mission data; a per-object debug ring at most.
-- **Variants and conditions.** `script.dat` is already resolved; these exist only in the `.MSN`.
+- **Variants and conditions.** `script.dat` is already resolved; these exist only in the `.MSN`, which the editor does not hold ([The `.MSN` layer](#the-msn-layer)).
 
 ## Gaps on the write path
 
@@ -111,6 +111,56 @@ Points are shared on purpose. In 45 of the 62 retail missions a route waypoint i
 
 An object move re-places that object's items and pick sphere. After every change to block 1, `PointFollowers` places again, by the loader's rules, whatever stands on a point that moved: route points, trigger areas, each group's point and heading (its own point, else its route's first waypoint, facing along the first leg when it names no heading) with the members spread from it, a paints-ground group's pad outline, and objects whose roster record names the point. The positions it moves are editor copies in `MissionIndex`; `Mission` and the mission check stay as loaded (a `MissionPlacement.Position`, the orders' routes and the actions' areas go stale, and nothing in the editor reads a position from them). The ground is levelled and the pads painted again where the structures and pads now stand (`TerrainLeveller`).
 
+## Authoring a mission from scratch
+
+Everything in [In place](#in-place) moves something, changes a group's side, or adds or unlinks a structure; every other field of every record is shown read-only or not at all. This is what building a mission from nothing needs beyond that.
+
+### The `.MSN` layer
+
+The editor's document is the `script.dat` VSHELL writes once it has filtered and resolved the `.MSN`, and opening a VOL mission generates one. What the `.MSN` holds beyond that has no place in the document:
+
+| `.MSN` part | What it carries |
+|---|---|
+| [Row 1](../retail/formats/msn-mission-file.md#the-conditions--row-1) | the campaign-flag comparisons and random draws every record's condition names |
+| [Row 2](../retail/formats/msn-mission-file.md#the-header-patch--row-2) | the header words, patched by condition, and flags to clear |
+| Row 3 | the briefing and debrief movie ids |
+| Row 4 | the objective, briefing and intelligence lines and the briefing movie. `script.dat` keeps only the objective lines, as block 13, which the outliner lists read-only |
+| [Row 5](../retail/formats/msn-mission-file.md#row-5--the-debrief) | the debrief lines and movie |
+| [`.ENG`](../retail/formats/msn-mission-file.md#the-eng-string-table) | every line of the mission's text, with conditioned replacements. The editor reads `mission.str`, already resolved, and edits none of it |
+| [Variants](../retail/formats/msn-mission-file.md#variants) and [repeated GUIDs](../retail/formats/msn-mission-file.md#repeated-guids) | random alternatives and condition-dependent overrides, resolved before `script.dat` is written |
+| GUIDs | how `.MSN` records name each other, where `script.dat` names by array position |
+
+A mission the shell loads, practice or campaign, is an `.MSN`. A practice mission needs at least row 2's header, row 4's text, group 0's row-12 squad and the `.ENG`; a campaign mission uses rows 1, 3 and 5 and variants too. A mission authored from nothing therefore needs an `.MSN` model in the editor, whatever a `script.dat` save does.
+
+### Mission level
+
+- **No new mission.** The editor opens an existing `script.dat` or a VOL `.MSN`; nothing starts an empty mission on a chosen zone.
+- **The header** ([`../retail/formats/script-dat.md`](../retail/formats/script-dat.md#header-format)) is not editable: theater, zone, day or night variant, objective type (offset 6, which picks the player's objective arm) and training mission number. The difficulty and the two training cheats are overwritten at every shell load.
+- **The player's squad.** In the `.MSN` group 0's members are row-12 records, from which a practice load builds the player's machine and wingmen ([`../retail/shell/main-menu.md`](../retail/shell/main-menu.md#starting-a-practice-mission)). The editor treats the squad as fixed, so the player's chassis, weapon fit and wingmen cannot be set.
+
+### Per row
+
+Beyond [Gaps in what is in place](#gaps-in-what-is-in-place):
+
+| Row (block) | Missing |
+|---|---|
+| 7 (2), headings | a heading for an object or a group (the Scope's heading entry and turn handle) |
+| 8 (3), routes | creating a route; adding, inserting and removing waypoints; opening or closing the loop; naming it from an order or a group |
+| 9 (4), trigger areas | creating and deleting; moving corners (the Scope's area-corner moves); switching box and circle; the radius |
+| 10 (5), actions | creating; the type, verb, areas, target, counter writes and `COMMAND<n>.STR` message |
+| 11 (6), timers | creating; the delay, the action that starts it, the actions it fires |
+| 12 (7), mechs | adding; the type, weapon fit, ammunition types, AI radar and cruise speed, starting condition, engaged and defeated actions, out-of-action counter writes |
+| 13 (8), flyers and ground vehicles | adding; the type, defeated action and out-of-action counter writes |
+| 14 (9), structures | the starting condition (0 in 29% of retail records), engaged and defeated actions, out-of-action counter writes (698 retail records write one) |
+| 15 (10), orders | creating and editing: the verb, formation, route, subject and the action that ends it. A mech or flyer group with no order does nothing |
+| 16 (11), groups | creating one for a mech or a flyer; the formation id, paints-ground flag, heading, route, members beyond a structure join, the ten order slots, deployment action, out-of-action counter writes and map-shown flag; deleting one ([Deleting](#gaps-in-what-is-in-place)) |
+| 17 (12), objectives | creating and deleting; mandatory or failure, the condition, subject, route, failure text and counter writes; the player's objective lines (block 13, row 4) |
+
+### Counters and caps
+
+- **Mission counters.** Actions, objectives and out-of-action reports write counters, which persist into the campaign flags the next mission's row 1 tests ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store)). Nothing lists which counters a mission writes, so nothing helps choose a free one or wire it to a condition.
+- **Slot caps.** Adding mechs and flyers needs the refusal structure adds have, against `ScriptDatLint`'s 100 mech and 50 flyer slots.
+
 ## Scope
 
 | Slice | Size |
@@ -119,7 +169,13 @@ An object move re-places that object's items and pick sphere. After every change
 | Waiting groups as translucent ghosts | small–medium |
 | Action graph | medium–large |
 | Save (in place, with a `.bak`) and Save As, the mission check run first | small |
-| Write the edited mission as an `.MSN` — wanted; feasibility not yet looked at ([What a saved `script.dat` reaches](#what-a-saved-scriptdat-reaches)) | not sized |
+| Hold the mission as an `.MSN` and write it, with its `.ENG` — wanted; feasibility not yet looked at ([The `.MSN` layer](#the-msn-layer)) | not sized |
+| New mission on a chosen zone, and the header fields | small–medium |
+| The player's squad: chassis, weapon fit, wingmen | small–medium |
+| Create and edit routes, trigger areas, actions, timers and objectives | medium |
+| Edit roster and group fields; create a group's orders | medium |
+| Mission text: objective, briefing, intelligence and debrief lines, failure text | medium, after the `.MSN` model |
+| Counter overview | small |
 | Area-corner moves, with their overlay lines rebuilt | small |
 | Waypoint and group typed fields and mission-box warning | small |
 | Mission check re-run after each edit | small |
@@ -133,3 +189,4 @@ An object move re-places that object's items and pick sphere. After every change
 
 1. Area-corner moves through the same `ScriptPointRefs.Place`.
 2. Save, which turns the edits into a file DBSIM can be run over.
+3. The least a practice mission authored from nothing needs, in order: a new mission with its header, the player's squad, hercs added in groups with orders, routes, and objectives with their lines and failure text. Then trigger areas, actions and timers for scripted events, and the campaign layer (conditions, variants, debrief) last.
