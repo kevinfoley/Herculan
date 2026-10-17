@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker, the two side panels and the move, add, delete, route and theater tools, all sharing one
+/// index, the overlays, the picker, the two side panels and the move, add, delete, route, order and theater tools, all sharing one
 /// selection. An edit that adds or removes records builds the CPU state again in place (<see cref="Rebuild"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -41,9 +41,12 @@ internal sealed class EditorMission {
 		Theater = new TheaterChanger(document, source, scene, index, Mover, Rebuild);
 		Routes = new RouteEditor(source, index, Mover, Rebuild, Selection, Deleter);
 		Placing = new RoutePlacing(Routes, index, drape);
+		Hercs = new HercPlacer(document, source, scene, index, Mover, Rebuild, Selection, Fitter, UnitTypeNames.LoadMechs(content));
+		Orders = new OrderEditor(document, source, Mover, Rebuild);
 		Outliner.Placing = Placing;
-		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter, new SquadMachinePanel(Fitter, Squad, squad),
-			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content)), Routes, Placing,
+		Properties = new PropertiesPanel(index, document, Selection, Mover, Sides, Deleter,
+			new SquadMachinePanel(Fitter, Squad, squad),
+			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content)), Routes, Placing, Orders,
 			SimStrings.Load(content));
 	}
 
@@ -62,7 +65,7 @@ internal sealed class EditorMission {
 
 	/// <summary>
 	/// The mission as its <c>.MSN</c> and <c>.ENG</c>, which every edit writes; null for a plain <c>script.dat</c>, which
-	/// opens read-only (docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document).
+	/// opens read-only (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document).
 	/// </summary>
 	public MissionDocument? Source { get; }
 
@@ -96,6 +99,12 @@ internal sealed class EditorMission {
 
 	/// <summary>Adds structures to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public StructurePlacer Placer { get; }
+
+	/// <summary>Adds hercs outside the player's squad to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public HercPlacer Hercs { get; }
+
+	/// <summary>Edits groups' order slots in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public OrderEditor Orders { get; }
 
 	public SideChanger Sides { get; }
 

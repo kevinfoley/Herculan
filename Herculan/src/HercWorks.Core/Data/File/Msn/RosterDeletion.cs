@@ -42,10 +42,11 @@ public sealed record RosterDeleteCheck(bool InSquad, MsnNamers Namers, IReadOnly
 /// Deletes a roster object — a row-12 mech, row-13 flyer or row-14 structure — from a <see cref="MissionDocument"/> as
 /// record edits: every record of its GUID is removed from its row, whatever its condition, and the GUID is cleared from
 /// every row-16 member slot naming it under the group's roster, in every record of the group's GUID. A group left with
-/// no member in any record loses all its row-16 records. Nothing is renumbered: <c>.MSN</c> refs name GUIDs and the
+/// no member in any record loses all its row-16 records, and each order it names that no slot of any group names after it
+/// loses its row-15 records. Nothing is renumbered: <c>.MSN</c> refs name GUIDs and the
 /// generation resolves every index again. The variant alternatives a deleted record drew from are GUID <c>-1</c>
 /// records shared by every record drawing them, and stay. Removing a record that draws a variant moves every later
-/// draw (docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document, "Conditions and variants").
+/// draw (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "Conditions and variants").
 ///
 /// <para>A GUID with no record resolves to <c>-1</c> (<c>Msn_ResolveRow6Ref</c> (<c>00415b44</c>) and its siblings),
 /// so the delete is refused while an objective, an action or an order names the object, or names a group the delete
@@ -118,9 +119,23 @@ public static class RosterDeletion {
 		document.Remove(row, guid);
 		foreach (short group in check.MemberOf) {
 			if (check.EmptiedGroups.Any(emptied => emptied.Group == group)) {
-				document.Remove(GroupRow, group);
+				RemoveGroup(document, group);
 			} else {
 				document.ClearMember(group, guid);
+			}
+		}
+	}
+
+	// Removes every row-16 record of <group>, and the records of each order it names that no slot of any group names
+	// after it, as GroupOrders.Remove takes an order no slot names: an order no group names is never run, and the route it
+	// names could not be deleted while it stays.
+	private static void RemoveGroup(MissionDocument document, short group) {
+		var orders = (document.Mission.Groups ?? []).Where(record => record.GUID == group)
+			.SelectMany(record => record.OrderRefs).Where(order => order != -1).Distinct().ToList();
+		document.Remove(GroupRow, group);
+		foreach (short order in orders) {
+			if (GroupOrders.SlotsNaming(document, order) == 0 && (document.Mission.Orders ?? []).Any(record => record.GUID == order)) {
+				document.Remove(OrderRow, order);
 			}
 		}
 	}

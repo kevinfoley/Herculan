@@ -1,0 +1,133 @@
+using HercWorks.Core.Data.File.Msn;
+using HercWorks.Core.Data.File.Msn.Script;
+using Herculan.Engine.Numerics;
+using Herculan.Engine.Scene;
+using Herculan.Engine.World;
+
+namespace Herculan.Engine.Editor;
+
+/// <summary>
+/// Adds a herc outside the player's squad to the open mission, as one step of <see cref="PointMover"/>'s undo history,
+/// through <see cref="HercGroups"/>'s record edits: in a new group of its own, standing on a route of one waypoint where it
+/// was put and hunting the player's squad, or joining the selected herc group. The editor's state is then built again from
+/// the generated file (<see cref="MissionRebuild"/>), which builds the herc's object for the record, and the herc is
+/// selected (docs/herculan/handoff-editor-mission-editing.md#in-place, "Adding hercs").
+///
+/// <para>A Human chassis (types 0 to 8) comes with its stock fit, as a Herc Type choice gives it
+/// (<see cref="MachineFitter.StockFit"/>); a Cybrid with the fit the most retail records of its type carry
+/// (<see cref="HercGroups.CybridFit"/>).</para>
+/// </summary>
+internal sealed class HercPlacer {
+	private const int MechRow = 12;
+	private const int GroupBlock = 11;
+
+	private readonly ScriptDat _document;
+	private readonly MissionDocument? _source;
+	private readonly MissionScene _scene;
+	private readonly MissionIndex _index;
+	private readonly PointMover _mover;
+	private readonly MissionRebuild _rebuild;
+	private readonly SelectionState _selection;
+	private readonly MachineFitter _fitter;
+	private readonly UnitTypeNames _names;
+
+	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
+	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, to which nothing is added.</param>
+	/// <param name="names">The <c>nam\MECHS.NAM</c> type names, which a ghost's model is found by.</param>
+	public HercPlacer(ScriptDat document, MissionDocument? source, MissionScene scene, MissionIndex index, PointMover mover,
+			MissionRebuild rebuild, SelectionState selection, MachineFitter fitter, UnitTypeNames names) {
+		_document = document;
+		_source = source;
+		_scene = scene;
+		_index = index;
+		_mover = mover;
+		_rebuild = rebuild;
+		_selection = selection;
+		_fitter = fitter;
+		_names = names;
+	}
+
+	/// <summary>
+	/// Why no herc can be added, or null when one can: the mission is read-only, or block 7 is full with the squad's
+	/// machines counted (<see cref="HercGroups.WhyNoAdd"/>).
+	/// </summary>
+	public string? WhyNoAdd => _mover.WhyReadOnly ?? HercGroups.WhyNoAdd(_source!, SquadSize);
+
+	/// <summary>
+	/// Adds a herc of <c>MECHS.NAM</c> type <paramref name="typeIndex"/> on <paramref name="side"/> at
+	/// (<paramref name="x"/>, <paramref name="y"/>), in a group of its own or, given <paramref name="joinGroup"/>, as a
+	/// member of that herc group; and selects it. Answers why it could not, or null when it did.
+	/// </summary>
+	public string? Add(int typeIndex, MissionSide side, int x, int y, int? joinGroup = null) {
+		if (WhyNoAdd is { } refused) {
+			return refused;
+		}
+
+		if (FitOf(typeIndex) is not var (weapons, ammo)) {
+			return HercGroups.IsCybrid(typeIndex) ? $"There is no herc type {typeIndex}." : $"The install has no stock fit for chassis {typeIndex}.";
+		}
+
+		var source = _source!;
+		var herc = HercGroups.Machine((short)typeIndex, weapons, ammo);
+		int squad = SquadSize;
+		short mech = -1;
+		if (joinGroup is { } joined) {
+			if (WhyNotJoin(joined) is { } reason) {
+				return reason;
+			}
+
+			short group = source.GuidOf(GroupBlock, joined);
+			return Commit(typeIndex, () => HercGroups.Join(source, group, herc, squad, out mech), () => mech);
+		}
+
+		return Commit(typeIndex, () => HercGroups.Create(source, herc, (short)side, x, y, squad, out mech, out _), () => mech);
+	}
+
+	/// <summary>Why a herc cannot be added to group <paramref name="group"/>, by block-11 index, or null when it can.</summary>
+	public string? WhyNotJoin(int group) =>
+		_mover.WhyReadOnly is { } readOnly ? readOnly
+			: group < 0 || group >= _document.Groups.Length || _source!.GuidOf(GroupBlock, group) == -1 ? $"Group {group} is not in the file."
+			: HercGroups.WhyNoJoin(_source, _source.GuidOf(GroupBlock, group));
+
+	/// <summary>
+	/// The herc <see cref="Add"/> would add of <paramref name="typeIndex"/> on <paramref name="side"/>, built the same way
+	/// but in no roster slot or group and recorded nowhere, for <see cref="DropPreview"/> to draw; null for a type the
+	/// install has nothing for.
+	/// </summary>
+	public SceneObject? Ghost(int typeIndex, MissionSide side) =>
+		FitOf(typeIndex) is var (weapons, ammo)
+			? _scene.CreateObject(new MissionPlacement(MissionUnitKind.Mech, typeIndex, _names[typeIndex], -1, -1, Vec3i.Zero, 0,
+				weapons, ammo, Side: side, OutOfActionReport: OutOfActionReport.None))
+			: null;
+
+	// The weapons and ammunition types a new herc of <type> is fitted with, or null when there are none to give.
+	private (short[] Weapons, short[] Ammo)? FitOf(int type) =>
+		HercGroups.IsCybrid(type) ? HercGroups.CybridFit(type) : _fitter.StockFit(type);
+
+	// The machines player.mec brings, which share block 7's slots, as the mission check counts them.
+	private int SquadSize => _index.Mission.Placements.Count(placement => placement.IsPlayerLance);
+
+	// Makes an add's change and rebuilds from it, then records it as one step and selects the object the rebuild built
+	// for the herc's row-12 GUID; or, when it built none, puts the records back and says why.
+	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> mech) {
+		var source = _source!;
+		MsnEdit change;
+		try {
+			change = _rebuild.Run(add);
+		} catch (InvalidOperationException ex) {
+			return ex.Message;
+		}
+
+		int? slot = source.ExportedIndex(MechRow, mech());
+		if (slot is not { } exported || _index.ObjectAt(MissionUnitKind.Mech, exported) is not { } placed) {
+			_rebuild.Undo(change);
+			return slot == null
+				? "The added herc was not generated; nothing was added."
+				: $"The install has no herc type {typeIndex}.";
+		}
+
+		_mover.Record(new RecordsEdit(_rebuild, change));
+		_selection.Current = new ObjectSelection(placed);
+		return null;
+	}
+}

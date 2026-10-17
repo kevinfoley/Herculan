@@ -102,6 +102,26 @@ public sealed class MsnField {
 	public static MsnField GroupMember(int slot) => new(16, MissionGroup164.MemberRefsWord + slot, -1,
 		record => ((MissionGroup164)record).MemberRefs[slot], (record, value) => ((MissionGroup164)record).MemberRefs[slot] = value);
 
+	/// <summary>Order slot <paramref name="slot"/> of a group, row 16's <see cref="MissionGroup164.OrderRefs"/>.</summary>
+	public static MsnField GroupOrder(int slot) => new(16, MissionGroup164.OrderRefsWord + slot, -1,
+		record => ((MissionGroup164)record).OrderRefs[slot], (record, value) => ((MissionGroup164)record).OrderRefs[slot] = value);
+
+	/// <summary>An order's verb, row 15's <see cref="MissionOrder22.Verb"/>.</summary>
+	public static MsnField OrderVerb { get; } = new(15, MissionOrder22.VerbWord, -1,
+		record => ((MissionOrder22)record).Verb, (record, value) => ((MissionOrder22)record).Verb = value);
+
+	/// <summary>An order's route, row 15's <see cref="MissionOrder22.RouteRef"/>.</summary>
+	public static MsnField OrderRoute { get; } = new(15, MissionOrder22.RouteRefWord, -1,
+		record => ((MissionOrder22)record).RouteRef, (record, value) => ((MissionOrder22)record).RouteRef = value);
+
+	/// <summary>What an order's subject is, row 15's <see cref="MissionOrder22.SubjectKind"/>.</summary>
+	public static MsnField OrderSubjectKind { get; } = new(15, MissionOrder22.SubjectKindWord, -1,
+		record => ((MissionOrder22)record).SubjectKind, (record, value) => ((MissionOrder22)record).SubjectKind = value);
+
+	/// <summary>An order's subject, row 15's <see cref="MissionOrder22.SubjectRef"/>.</summary>
+	public static MsnField OrderSubject { get; } = new(15, MissionOrder22.SubjectRefWord, -1,
+		record => ((MissionOrder22)record).SubjectRef, (record, value) => ((MissionOrder22)record).SubjectRef = value);
+
 	/// <summary>The roster row's own-point field: <see cref="MechPosition"/>, <see cref="FlyerPosition"/> or <see cref="BasePosition"/>.</summary>
 	public static MsnField RosterPosition(int row) => row switch {
 		12 => MechPosition,

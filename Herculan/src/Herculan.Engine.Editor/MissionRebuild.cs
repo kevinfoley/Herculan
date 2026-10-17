@@ -12,7 +12,7 @@ namespace Herculan.Engine.Editor;
 /// records: an add, a delete, and the undo and redo of either (<see cref="RecordsEdit"/>). Removing a record moves every
 /// later generated record of its block down one, and an add's records are exported last, so the indices the index, the
 /// scene objects' placements and the selection hold no longer name what they named
-/// (docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document, "Regenerating on each edit").
+/// (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "Regenerating on each edit").
 ///
 /// <para>A rebuild loads a <see cref="Mission"/> from the generated <c>script.dat</c> (<see cref="MissionLoader.Load(GameContent, ScriptDat, string)"/>)
 /// and stands each of its placements on a scene object: the one already built for the same <c>.MSN</c> record, matched
@@ -256,9 +256,10 @@ internal sealed class MissionRebuild {
 }
 
 /// <summary>
-/// One step of <see cref="PointMover"/>'s undo history that adds or removes <c>.MSN</c> records — an add
-/// (<see cref="StructurePlacer"/>), a delete (<see cref="ObjectDeleter"/>) or a route edit (<see cref="RouteEditor"/>): the
-/// rows it changed, put back on undo and redo through <see cref="MissionRebuild"/>.
+/// One step of <see cref="PointMover"/>'s undo history that the editor's state is built again after — an add
+/// (<see cref="StructurePlacer"/>, <see cref="HercPlacer"/>), a delete (<see cref="ObjectDeleter"/>), a route edit
+/// (<see cref="RouteEditor"/>) or an order edit (<see cref="OrderEditor"/>): the rows it changed, put back on undo and redo
+/// through <see cref="MissionRebuild"/>.
 /// </summary>
 internal sealed record RecordsEdit(MissionRebuild Rebuild, MsnEdit Change) : IEditorEdit {
 	public void Undo() => Rebuild.Undo(Change);

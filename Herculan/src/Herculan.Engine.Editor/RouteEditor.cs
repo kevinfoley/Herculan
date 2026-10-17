@@ -20,7 +20,7 @@ internal sealed record RouteDeleteBlockers(string? Fixed, DeleteNamers Names, IR
 /// through <see cref="RouteEditing"/>'s record edits on the mission's <c>.MSN</c>; the editor's state is then built again
 /// from the generated file (<see cref="MissionRebuild"/>), since a new route's records are exported last and a delete moves
 /// every later route, and every later point when a point goes with it, down one
-/// (docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document, "The tools").
+/// (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "The tools").
 ///
 /// <para>A waypoint here is one the route view lists, by its index in <see cref="EditorRoute.Points"/>; it is mapped to its
 /// block-3 list entry (<see cref="PointMover.WaypointEntries"/>), which is the <c>.MSN</c> list's entry, as the generation

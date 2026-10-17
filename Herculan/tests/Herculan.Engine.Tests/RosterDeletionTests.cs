@@ -178,6 +178,36 @@ public class RosterDeletionTests {
 		Assert.Equal(100, script.Coordinates[script.Bases[document.ExportedIndex(14, 3)!.Value].PositionRef].X);
 	}
 
+	/// <summary>
+	/// Catches a group removed with its last member but its orders left behind, which no group runs and whose route then
+	/// cannot be deleted, and an order removed that another group still names.
+	/// </summary>
+	[Fact]
+	public void LastMemberTakesTheOrdersOnlyItsGroupNamed() {
+		var own = GroupOrder(20, group: 2);
+		own[MissionOrder22.RouteRefWord] = 5;
+		var emptied = Group(1, Structures, position: -1, condition: -1, 7);
+		emptied[MissionGroup164.OrderRefsWord] = 20;
+		emptied[MissionGroup164.OrderRefsWord + 1] = 21;
+		var kept = Group(2, Structures, position: -1, condition: -1, 8);
+		kept[MissionGroup164.OrderRefsWord] = 21;
+		var document = Open(new SyntheticMsn()
+			.Add(6, Point(1, 100))
+			.Add(8, Route(5, 1))
+			.Add(14, Base(7))
+			.Add(14, Base(8))
+			.Add(15, own)
+			.Add(15, GroupOrder(21, group: 2))
+			.Add(16, emptied)
+			.Add(16, kept));
+
+		RosterDeletion.Delete(document, 14, 7);
+
+		Assert.DoesNotContain(document.Mission.Orders!, record => record.GUID == 20);
+		Assert.Contains(document.Mission.Orders!, record => record.GUID == 21);
+		Assert.False(RouteEditing.Namers(document, 5).Any);
+	}
+
 	private static MissionDocument Open(SyntheticMsn msn) =>
 		MissionDocument.Read(msn.Bytes(), null, new MissionGeneration(new short[MissionGenerator.CampaignFlagCount],
 			new short?[MissionGeneration.HeaderWords], () => _ => 0));

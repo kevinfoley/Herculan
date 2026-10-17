@@ -1,5 +1,6 @@
 using System.Numerics;
 using HercWorks.Core.Data.File;
+using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Platform;
@@ -28,15 +29,17 @@ internal sealed class PropertiesPanel {
 	private readonly SquadMachinePanel _machine;
 	private readonly MissionView _mission;
 	private readonly RouteView _route;
+	private readonly OrderSlotsView _orders;
 	private readonly StringFile? _strings;
 
 	// A position being typed, and the object it is for, until its field lets go.
 	private SceneObject? _draftFor;
 	private Vec3i _draft;
 
-	public PropertiesPanel(MissionIndex index, SelectionState selection, PointMover mover, SideChanger sides,
-			ObjectDeleter deleter, SquadMachinePanel machine, MissionView mission, RouteEditor routes, RoutePlacing placing,
-			StringFile? strings) {
+	/// <param name="document">The generated <c>script.dat</c>, whose records the order view offers as routes and subjects.</param>
+	public PropertiesPanel(MissionIndex index, ScriptDat document, SelectionState selection, PointMover mover,
+			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, MissionView mission, RouteEditor routes,
+			RoutePlacing placing, OrderEditor orders, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -46,6 +49,7 @@ internal sealed class PropertiesPanel {
 		_mission = mission;
 		_route = new RouteView(index, selection, mover, routes, placing, GroupLink,
 			(names, ownRoute) => References(names, ownRoute));
+		_orders = new OrderSlotsView(index, document, orders, RouteLink, ActionLink, SubjectLink);
 		machine.References = names => References(names);
 		_strings = strings;
 	}
@@ -406,52 +410,7 @@ internal sealed class PropertiesPanel {
 		}
 
 		ObjectiveLinks(_index.ObjectivesOfGroup(group));
-
-		if (group >= Mission.GroupOrders.Count) {
-			return;
-		}
-
-		ImGui.Separator();
-		ImGui.Text("Orders:");
-		var orders = Mission.GroupOrders[group];
-		for (int slot = 0; slot < orders.Count; slot++) {
-			if (orders[slot] is not { } order) {
-				continue;
-			}
-
-			ImGui.PushID(slot);
-			ImGui.BulletText($"{slot}: {MissionText.OrderVerb(order.Verb)}");
-			if (order.SubjectKind != MissionOrderSubject.None && order.SubjectRef >= 0) {
-				ImGui.Indent();
-				ImGui.AlignTextToFramePadding();
-				ImGui.Text("subject:");
-				ImGui.SameLine();
-				SubjectLink(order.SubjectKind, order.SubjectRef);
-				ImGui.Unindent();
-			}
-
-			if (order.RouteRef >= 0) {
-				ImGui.Indent();
-				ImGui.AlignTextToFramePadding();
-				ImGui.Text(slot == 0 ? "route:" : "route (never walked):");
-				ImGui.SameLine();
-				RouteLink(order.RouteRef);
-				ImGui.Unindent();
-			}
-
-			if (order.ActionRef >= 0) {
-				ImGui.Indent();
-				ImGui.AlignTextToFramePadding();
-				ImGui.Text("ends when");
-				ImGui.SameLine();
-				ActionLink(order.ActionRef);
-				ImGui.SameLine();
-				ImGui.Text("fires");
-				ImGui.Unindent();
-			}
-
-			ImGui.PopID();
-		}
+		_orders.Draw(group);
 	}
 
 	private void DrawArea(int reference) {

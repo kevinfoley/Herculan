@@ -53,7 +53,7 @@ internal sealed record GroupTarget(int Group, bool Detach = false) : MoveTarget;
 /// undo history. A committed move writes the mission's <c>.MSN</c> (<see cref="MissionDocument"/>), which generates
 /// <c>script.dat</c> again into the document the editor reads; a drag's preview writes that generated document alone,
 /// and the commit's generation replaces what it wrote
-/// (docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document, "The tools"). After every change to
+/// (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "The tools"). After every change to
 /// the document's points, <see cref="PointFollowers"/> places again whatever else stands on them, and after every move,
 /// previews included, <see cref="TerrainLeveller"/> levels the ground under the structures where they now stand. Its
 /// history also holds the edits made elsewhere (<see cref="Record(IEditorEdit)"/>), so that Undo and Redo step through

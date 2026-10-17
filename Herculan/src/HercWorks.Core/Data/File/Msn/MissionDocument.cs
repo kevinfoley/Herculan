@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// A mission held as its <c>.MSN</c> and <c>.ENG</c>, with the <c>script.dat</c> and <c>mission.str</c> generated from
 /// them (<see cref="Regenerate"/>) and the provenance that maps each generated record back to the <c>.MSN</c> records
 /// that supplied it. An edit writes the <c>.MSN</c> record that supplied the value and generates again; the design is
-/// docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document.
+/// docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document.
 ///
 /// <para>Every edit returns an <see cref="MsnEdit"/> holding the rows it changed, which <see cref="Undo"/> and
 /// <see cref="Redo"/> put back. Several edits made inside one <see cref="Change"/> come back as one, and are all put back
@@ -404,6 +404,35 @@ public sealed class MissionDocument {
 		record.GUID = guid;
 		var before = Begin(row);
 		Add(row, record);
+		return End(before);
+	}
+
+	/// <summary>
+	/// Appends a copy of every record of row <paramref name="row"/>'s GUID <paramref name="guid"/>, in file order and each
+	/// under its own condition, under one new GUID, <paramref name="copy"/>: the row's largest plus one. The copy survives
+	/// and merges as the GUID does in every state. A copied record that draws a variant draws again, which moves every later
+	/// draw (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "Conditions and variants");
+	/// row 15's records draw none in retail.
+	/// </summary>
+	public MsnEdit AppendCopy(int row, short guid, out short copy) {
+		var records = Records(row).Where(record => record.GUID == guid).ToList();
+		if (records.Count == 0) {
+			throw new InvalidOperationException($"Row {row} has no record with GUID {guid}.");
+		}
+
+		short largest = Records(row).Max(existing => existing.GUID);
+		if (largest == short.MaxValue) {
+			throw new InvalidOperationException($"Row {row}'s GUIDs already reach {short.MaxValue}.");
+		}
+
+		copy = (short)(largest + 1);
+		var before = Begin(row);
+		foreach (var record in records) {
+			var copied = (MapObject)MsnRows.CopyRecord(record);
+			copied.GUID = copy;
+			Add(row, copied);
+		}
+
 		return End(before);
 	}
 

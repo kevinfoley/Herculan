@@ -13,7 +13,7 @@ namespace Herculan.Engine.Editor;
 /// 0 degrees. Each record is appended to the <c>.MSN</c> unconditioned, with no variant key and a new GUID
 /// (<see cref="MissionDocument.Append"/>), and <c>script.dat</c> is generated again; the editor's state is then built
 /// again from the generated file (<see cref="MissionRebuild"/>), which builds the structure's object for the record
-/// (docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document, "The tools").
+/// (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "The tools").
 ///
 /// <para>The records take the shape the retail missions give a lone structure most often — 148 of their 537 structure
 /// groups (<c>HercWorks.Query orders</c>): one member, in formation 0, standing on the group's own point and facing its
@@ -67,8 +67,11 @@ internal sealed class StructurePlacer {
 		_selection = selection;
 	}
 
-	/// <summary>Why nothing can be added to the mission at all, or null when something can.</summary>
-	public string? WhyNoAdd => _mover.WhyReadOnly;
+	/// <summary>Why no structure can be added, or null when one can: the mission is read-only, or block 9 is full.</summary>
+	public string? WhyNoAdd => _mover.WhyReadOnly
+		?? (_document.Bases.Length >= ScriptDatLint.BaseSlotCap
+			? $"The mission already has {_document.Bases.Length} structures, as many as DBSIM holds."
+			: null);
 
 	/// <summary>
 	/// Adds a structure of <c>BASES.DAT</c> type <paramref name="typeIndex"/> on <paramref name="side"/>, standing on
@@ -77,12 +80,8 @@ internal sealed class StructurePlacer {
 	/// null when it did.
 	/// </summary>
 	public string? Add(int typeIndex, MissionSide side, int x, int y, int? joinGroup = null) {
-		if (WhyNoAdd is { } readOnly) {
-			return readOnly;
-		}
-
-		if (_document.Bases.Length >= ScriptDatLint.BaseSlotCap) {
-			return $"The mission already has {_document.Bases.Length} structures, as many as DBSIM holds.";
+		if (WhyNoAdd is { } refused) {
+			return refused;
 		}
 
 		if (joinGroup is { } joined) {

@@ -77,18 +77,25 @@ public static class RouteEditing {
 		}
 
 		short created = -1;
-		var change = document.Change(() => {
-			var list = waypoints.Select(at => AppendPoint(document, at)).ToList();
-			if (closed) {
-				list.Add(list[0]);
-			}
-
-			document.Append(RouteRow, new WaypointGroup {
-				ConditionRef = -1, VariantKey = -1, Unk06 = -1, Waypoints = list.ToArray(),
-			}, out created);
-		});
+		var change = document.Change(() => created = Append(document, waypoints, closed));
 		route = created;
 		return change;
+	}
+
+	/// <summary>
+	/// The record edits of <see cref="Create"/>, made inside the caller's <see cref="MissionDocument.Change"/>, which
+	/// checks the waypoint count: a point per waypoint and the route listing them. Answers the route's GUID.
+	/// </summary>
+	internal static short Append(MissionDocument document, IReadOnlyList<(int X, int Y)> waypoints, bool closed) {
+		var list = waypoints.Select(at => AppendPoint(document, at)).ToList();
+		if (closed) {
+			list.Add(list[0]);
+		}
+
+		document.Append(RouteRow, new WaypointGroup {
+			ConditionRef = -1, VariantKey = -1, Unk06 = -1, Waypoints = list.ToArray(),
+		}, out short route);
+		return route;
 	}
 
 	/// <summary>

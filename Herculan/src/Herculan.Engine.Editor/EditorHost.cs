@@ -68,7 +68,7 @@ public sealed class EditorHost {
 	private readonly VolMissionBrowser _volBrowser;
 	private readonly MissionSaving _saving;
 	private readonly NewMissionDialog _newMission;
-	private readonly StructureToolbox _toolbox;
+	private readonly EditorToolbox _toolbox;
 	private readonly Camera _camera = new();
 
 	// How much room the top-down view leaves round the zone, as a share of the height that fits it exactly.
@@ -168,7 +168,7 @@ public sealed class EditorHost {
 		_saving.Saved += _volBrowser.Refresh;
 		_newMission = new NewMissionDialog(_saving, () => MissionZones.List(launch.SimulatorContent),
 			() => TheaterNames.Labels(launch.SimulatorContent));
-		_toolbox = new StructureToolbox(launch.SimulatorContent);
+		_toolbox = new EditorToolbox(launch.SimulatorContent);
 
 		string scriptPath = launch.ScriptPath ?? MissionLoader.DefaultScriptPath(launch.InstallRoot);
 		Console.WriteLine($"HERCULAN Mission Editor — loading {scriptPath} from {launch.InstallRoot}");
@@ -190,7 +190,7 @@ public sealed class EditorHost {
 		_saving.Mission = _mission;
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), Delete deletes the selected object or route or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a herc or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), Delete deletes the selected object or route or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -575,11 +575,10 @@ public sealed class EditorHost {
 
 			_mission.Outliner.Draw(display, menuBarHeight);
 			_mission.Properties.Draw(display, menuBarHeight);
-			int? structureGroup = SelectedStructureGroup(_mission);
+			var (joinable, whyNotJoin) = JoinableGroup(_mission);
 			_toolbox.Draw(display,
-				enabled: !_mission.Gizmo.Dragging && !_mission.Placing.Active && _mission.Placer.WhyNoAdd == null, structureGroup,
-				structureGroup is { } joinable ? _mission.Placer.WhyNotJoin(joinable) : null, _mission.Placer.WhyNoAdd,
-				_mission.Placing.DrawToolboxEntry);
+				enabled: !_mission.Gizmo.Dragging && !_mission.Placing.Active, joinable, whyNotJoin,
+				_mission.Hercs.WhyNoAdd, _mission.Placer.WhyNoAdd, _mission.Placing.DrawToolboxEntry);
 		}
 
 		_settingsPanel.Draw();
@@ -599,7 +598,7 @@ public sealed class EditorHost {
 		// After the frame's ImGui, as a load is: an add, a delete, and the undo or redo of either, change what the panels
 		// list.
 		if (_toolbox.TakeRequest() is { } request) {
-			AddStructure(request);
+			AddFromToolbox(request);
 		}
 
 		if (_mission != null) {
@@ -668,17 +667,22 @@ public sealed class EditorHost {
 		_closePending = true;
 	}
 
-	// The structure group the selection is, or a structure of: what a Toolbox add can join. Group 0 is the player's squad.
-	private static int? SelectedStructureGroup(EditorMission mission) {
+	// The herc or structure group the selection is, or a member of: what a Toolbox add can join, and why it cannot, by the
+	// placer of its kind. The player's squad, group 0, is offered so the Toolbox can say why it takes no herc.
+	private static (int? Group, string? WhyNot) JoinableGroup(EditorMission mission) {
 		int group = mission.Selection.Current switch {
 			GroupSelection selected => selected.Group,
 			ObjectSelection { Object.Placement: var placement } => placement.GroupIndex,
 			_ => -1
 		};
-		return group > 0 && mission.Index.KindOf(group) == MissionUnitKind.Base ? group : null;
+		return mission.Index.KindOf(group) switch {
+			MissionUnitKind.Base when group > 0 => (group, mission.Placer.WhyNotJoin(group)),
+			MissionUnitKind.Mech => (group, mission.Hercs.WhyNotJoin(group)),
+			_ => (null, null)
+		};
 	}
 
-	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the route edit, the finished
+	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the route edit, the order edit, the finished
 	// route and the Undo or Redo the frame's panels, menus and keys asked for; none while a drag is under way.
 	private void RunEditRequests(EditorMission mission) {
 		var deleting = mission.Deleter.TakeRequest();
@@ -696,6 +700,7 @@ public sealed class EditorHost {
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
 		mission.Routes.RunRequest();
+		mission.Orders.RunRequest();
 		mission.Placing.RunRequest();
 
 		if (step == true) {
@@ -705,7 +710,7 @@ public sealed class EditorHost {
 		}
 	}
 
-	// Stands the structure a Toolbox drag would add on the ground under the pointer, from the drag as the last frame's
+	// Stands what a Toolbox drag would add on the ground under the pointer, from the drag as the last frame's
 	// panels left it; not while the pointer is over a panel, where letting go adds nothing.
 	private void UpdateDropPreview(EditorMission mission) {
 		var drag = _toolbox.Drag;
@@ -717,7 +722,7 @@ public sealed class EditorHost {
 
 	// Adds what the toolbox asked for on the ground under the pointer, or at the middle of the view, else under the
 	// camera when the middle of the view is sky.
-	private void AddStructure(ToolboxRequest request) {
+	private void AddFromToolbox(ToolboxRequest request) {
 		if (_mission == null || _mission.Gizmo.Dragging) {
 			return;
 		}
@@ -727,9 +732,9 @@ public sealed class EditorHost {
 			? picker.GroundAt(_camera, _mouse?.Position ?? Viewport / 2f, Viewport)
 			: picker.GroundAt(_camera, Viewport / 2f, Viewport)
 				?? new Numerics.Vec3i((int)_editorCamera.WorldPosition.X, (int)_editorCamera.WorldPosition.Y, 0);
-		_toolbox.Status = ground is { } at
-			? _mission.Placer.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group)
-			: "There is no ground under the pointer.";
+		_toolbox.Status = ground is not { } at ? "There is no ground under the pointer."
+			: request.Kind == ToolboxKind.Herc ? _mission.Hercs.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group)
+			: _mission.Placer.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group);
 	}
 
 	// Generates the handoff for the archive mission <name> into the scratch directory, holds the mission as its .MSN and
