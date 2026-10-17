@@ -13,11 +13,11 @@ public class RazorPitchInvertTests {
 	private static readonly JoystickCapabilities Stick = new(Present: true, ButtonCount: 4,
 		HasThrottle: false, HasRudder: false, HasHat: false);
 
-	// JOYSTICK on movement in the RAZOR's block, which puts stick Y on the elevator; on turret in the walker's.
-	private static SimulatorPreferences Bindings() {
+	// JOYSTICK on movement in the RAZOR's block, which puts stick Y on the elevator; the walker's block as given.
+	private static SimulatorPreferences Bindings(JoystickAxisAssignment walkerStick = JoystickAxisAssignment.Turret) {
 		var preferences = SimulatorPreferences.Defaults();
-		preferences.Set(Prefs.RazorControlsBase, 1, apply: false);
-		preferences.Set(Prefs.HercControlsBase, 2, apply: false);
+		preferences.Set(Prefs.RazorControlsBase, (byte)JoystickAxisAssignment.Movement, apply: false);
+		preferences.Set(Prefs.HercControlsBase, (byte)walkerStick, apply: false);
 		return preferences;
 	}
 
@@ -32,11 +32,17 @@ public class RazorPitchInvertTests {
 		Assert.Equal(-0x40, inverted.Axes.Throttle);
 	}
 
-	[Fact]
-	public void AHercsTurretIsLeftAlone() {
-		var input = new JoystickBindings { InvertRazorPitch = true }
-			.Resolve(new JoystickReading(StickY: 0x40), Stick, Bindings());
+	/// <summary>
+	/// In a walker the switch reverses nothing, wherever the stick's Y lands: on game axis 1 itself, the throttle, when
+	/// the stick drives movement, or on the turret's pitch when it drives the turret.
+	/// </summary>
+	[Theory]
+	[InlineData(JoystickAxisAssignment.Movement)]
+	[InlineData(JoystickAxisAssignment.Turret)]
+	public void AWalkersStickIsLeftAlone(JoystickAxisAssignment walkerStick) {
+		var axes = new JoystickBindings { InvertRazorPitch = true }
+			.Resolve(new JoystickReading(StickY: 0x40), Stick, Bindings(walkerStick)).Axes;
 
-		Assert.Equal(0x40, input.Axes.TorsoPitch);
+		Assert.Equal(0x40, walkerStick == JoystickAxisAssignment.Movement ? axes.Throttle : axes.TorsoPitch);
 	}
 }

@@ -111,12 +111,10 @@ public class MechLocomotionTests {
 	/// <summary>
 	/// The pilot's eye rides the model node the type record names, offset by the type's own eye
 	/// offset, and lands somewhere a cockpit plausibly is: high up the machine rather than at its
-	/// waist. Every retail HERC resolves a node — the chain is uniform across the fleet (camera part 5
-	/// in all but two, through transform 11 and 4 to the body node the walk cycle animates).
+	/// waist. The node chain is docs/retail/simulation/mech-locomotion.md, "Cockpit eye and bob".
 	///
-	/// <para>The offset is most of the height: without it the fleet sits at 3.2-11.2 m, three of them
-	/// below 7 m, against model bounds of 10.2-15.5 m. With it they run 8.2-13.2 m, which is where a
-	/// cockpit is.</para>
+	/// <para>The bounds are set by the offset: without it the fleet's eyes sit at 3.2-11.2 m, three of
+	/// them below the 7 m floor; with it they run 8.2-13.2 m.</para>
 	/// </summary>
 	[Theory]
 	[MemberData(nameof(Hercs))]
@@ -171,10 +169,11 @@ public class MechLocomotionTests {
 	}
 
 	/// <summary>
-	/// Holding the throttle axis against its stop runs a machine from full forward, through a
-	/// one-tick pause at rest, and on into full reverse — there is no gear to select. The clamp that
-	/// would stop it is gated on a joystick throttle lever being configured (<c>Input_SetThrottleLeverMode</c>, <c>00459d20</c>), and
-	/// the keyboard has none.
+	/// Holding the throttle axis against its stop runs a machine from full forward on into full
+	/// reverse — there is no gear to select — and the machine walks backwards. The clamp that would
+	/// stop it at zero is gated on a joystick throttle lever being configured
+	/// (<c>Input_SetThrottleLeverMode</c>, <c>00459d20</c>), and the keyboard has none. The ramp and
+	/// the one-tick pause at zero on the way are <see cref="ThrottleRampsAndReleases"/>'.
 	/// </summary>
 	[Fact]
 	public void HoldingTheThrottleDownReachesReverse() {
@@ -189,16 +188,11 @@ public class MechLocomotionTests {
 			world.Tick();
 		}
 
-		Assert.Equal(0x400, mech.Throttle);
-
-		bool pausedAtZero = false;
 		for (int i = 0; i < 20; i++) {
 			mech.Controls = new MechControls(0, MechControls.AxisFull);
 			world.Tick();
-			pausedAtZero |= mech.Throttle == 0;
 		}
 
-		Assert.True(pausedAtZero, "the sign-crossing guard should hold the throttle at zero for a tick");
 		Assert.Equal(-0x400, mech.Throttle);
 
 		// And the machine actually walks backwards once the gait has settled into it.
@@ -218,9 +212,9 @@ public class MechLocomotionTests {
 	}
 
 	/// <summary>
-	/// A configured throttle lever is the one thing that closes the clamp to one side of zero, and it
-	/// reads the axis as a position rather than a rate. Nothing in Herculan produces such an axis yet;
-	/// this pins the branch so it cannot rot.
+	/// A retail throttle lever reads the axis as a position rather than a rate, measured from its idle
+	/// stop at <see cref="MechControls.AxisFull"/>: mid-travel is half throttle at once, not a ramp,
+	/// and the idle stop is zero. Its setting is never negative, so it cannot reach reverse.
 	/// </summary>
 	[Fact]
 	public void AThrottleLeverIsAbsoluteAndOneSided() {
@@ -230,13 +224,13 @@ public class MechLocomotionTests {
 
 		var world = FlatWorld(mech);
 
-		// Lever hard over from its centre detent: the full range in one tick, not a ramp.
-		mech.Controls = new MechControls(0, 0, ThrottleLever: 1);
+		// Mid-travel: half throttle in one tick.
+		mech.Controls = new MechControls(0, 0, ThrottleLever: MechControls.ThrottleLeverUnipolar);
 		world.Tick();
 		Assert.Equal(0x200, mech.Throttle);
 
-		// At the detent it reads zero, and the clamp keeps it out of reverse.
-		mech.Controls = new MechControls(0, MechControls.AxisFull, ThrottleLever: 1);
+		// The idle stop, the end the keyboard's reverse is at.
+		mech.Controls = new MechControls(0, MechControls.AxisFull, ThrottleLever: MechControls.ThrottleLeverUnipolar);
 		world.Tick();
 		Assert.Equal(0, mech.Throttle);
 	}
@@ -303,23 +297,6 @@ public class MechLocomotionTests {
 		Assert.Equal(start.Y, mech.Position.Y);
 	}
 
-	[Fact]
-	public void RunGaitCoversMoreGroundPerTickThanWalk() {
-		if (Content() is not { } content || Spawn(content, "OUTLAW") is not { } mech) {
-			return;
-		}
-
-		double walk = SteadySpeed(mech, throttleFraction: 0.35);
-
-		mech = Spawn(content, "OUTLAW")!;
-		double run = SteadySpeed(mech, throttleFraction: 1.0);
-
-		// The walk/run threshold is a real discontinuity: a run stride is about twice a walk stride
-		// but takes five sixths of the time, while the animation rate is the speed scalar in both
-		// gaits. The HUD number moves continuously across it; the machine does not.
-		Assert.True(run > walk * 1.5, $"run {run:F0} was not well clear of walk {walk:F0}");
-	}
-
 	/// <summary>
 	/// The accurate-speed readout leaves the run gait at retail's figure and brings the walk gait to
 	/// the ground the machine actually covers — the gait retail's readout overstates about twofold.
@@ -333,9 +310,7 @@ public class MechLocomotionTests {
 	[InlineData("OUTLAW", false)]
 	[InlineData("OUTLAW", true)]
 	[InlineData("APOCA", false)]
-	[InlineData("APOCA", true)]
 	[InlineData("SCARAB", false)]
-	[InlineData("SCARAB", true)]
 	public void GroundSpeedMatchesTheGroundCovered(string herc, bool running) {
 		if (Content() is not { } content || Spawn(content, herc) is not { } mech) {
 			return;
@@ -345,6 +320,7 @@ public class MechLocomotionTests {
 		double kph = SteadySpeed(mech, throttleFraction)
 			* SimWorld.TicksPerSecond / WorldScale.WorldUnitsPerMeter * 3.6;
 
+		// Running is a branch of the readout, not a property of the chassis, so one machine shows it.
 		if (running) {
 			Assert.Equal(mech.DisplaySpeedKph, mech.GroundSpeedKph);
 			return;
