@@ -26,6 +26,9 @@ Borland-only subcommands (rtti, vtables, classes, stats) refuse them.
         a=b: given, for what those miss (ES1GO's game code is laid out apart from ES1DBSIM's).
       A batch.json's BIN entries count as named whether or not they are inserted yet, so a batch's
       twins can be prepared from its own JSON before any known_symbols write.
+      An exact pair is held when one of its operands maps elsewhere than that address's name in
+      both binaries, or, unnamed, than the majority of the other equal-code pairs (those already
+      named alike included) send it: equal masked code is not enough for a lone load-and-return.
       Every pair is diffed with es2_naming.py diff's normalisation, BIN2's labels named through the
       pairs found. A pair whose decompiles differ is held back with the diff command to read; after
       reading it, a=b! accepts it as the same statements. An accepted pair gets BIN's description
@@ -41,6 +44,7 @@ Borland-only subcommands (rtti, vtables, classes, stats) refuse them.
 from __future__ import annotations
 
 import bisect
+import collections
 import json
 import os
 import re
@@ -259,23 +263,51 @@ def cmd_twin(args):
             for p, q in zip(v1, v2):
                 addr_map.setdefault(p, q)
 
+    def operand_pairs(a, b):
+        return [(p, q) for (_, _, v1), (_, _, v2) in zip(s1[a], s2[b]) for p, q in zip(v1, v2)]
+
     fn_targets = [a for a in targets if es1[a]["type"] == "function"]
-    # 1. exact
+    # 1. exact. Every equal-code pair votes on where its operands go in BIN2; a pair named alike in
+    # both votes too, and a name already in both settles the address. A new pair that sends an
+    # operand elsewhere than the settled or majority answer is held: two lone load-and-returns of
+    # different globals have equal masked code.
+    votes, voters, conflicts = {}, {}, {}
     for a in fn_targets:
         if k1[a] in by_name2:
-            # Already twinned: its operands still pair the batch's globals when the code is equal.
             b = by_name2[k1[a]]
             if a in s1 and b in s2 and [i[1] for i in s1[a]] == [i[1] for i in s2[b]]:
-                operand_map(a, b)
+                voters[a] = b
             continue
         cands = [x for x in by_key.get(tuple(i[1] for i in s1.get(a, [])), []) if x not in k2] if a in s1 else []
         if a in pairs:
             if pairs[a] in cands:
-                operand_map(a, pairs[a])
+                voters[a] = pairs[a]
             continue
         if len(cands) == 1:
             pairs[a], how[a] = cands[0], "exact"
-            operand_map(a, cands[0])
+            voters[a] = cands[0]
+    for a, b in voters.items():
+        for p, q in operand_pairs(a, b):
+            votes.setdefault(p, collections.Counter())[q] += 1
+    settled = {}
+    for p, c in votes.items():
+        if p in k1 and k1[p] in by_name2:
+            settled[p] = by_name2[k1[p]]
+        else:
+            top = c.most_common(2)
+            if len(top) == 1 or top[0][1] > top[1][1]:
+                settled[p] = top[0][0]
+    for a, b in voters.items():
+        bad = [(p, q) for p, q in operand_pairs(a, b) if p in settled and settled[p] != q]
+        if bad and how.get(a) == "exact" and a not in accepted:
+            p, q = bad[0]
+            conflicts[a] = (f"{a} {k1[a]} -> {b} (exact): its operand {p} is {q} here, but "
+                            f"{settled[p]} by {'its name' if p in k1 and k1[p] in by_name2 else 'the other pairs'}; "
+                            f"pass {a}={b}! only if the code is the twin after all")
+            del pairs[a], how[a]
+            continue
+        for p, q in operand_pairs(a, b):
+            addr_map.setdefault(p, settled.get(p, q))
     # anchors: everything named alike in both, plus this run's pairs
     anchors = {a: by_name2[n] for a, n in k1.items() if n in by_name2}
     anchors.update(pairs)
@@ -286,7 +318,7 @@ def cmd_twin(args):
         t2 = find_vtables(b2)[0]
         vmap = pair_vtables(t1, t2, anchors, k1, k2)
         for a in fn_targets:
-            if a in pairs or k1[a] in by_name2:
+            if a in pairs or k1[a] in by_name2 or a in conflicts:
                 continue
             exact = set(by_key.get(tuple(i[1] for i in s1.get(a, [])), []))
             for v, s in t1.items():
@@ -319,7 +351,7 @@ def cmd_twin(args):
         anc_keys = [a for a, _ in anc]
         found = 0
         for a in fn_targets:
-            if a in pairs or k1[a] in by_name2 or a not in i1:
+            if a in pairs or k1[a] in by_name2 or a not in i1 or a in conflicts:
                 continue
             j = bisect.bisect_left(anc_keys, a)
             tries = []
@@ -352,6 +384,9 @@ def cmd_twin(args):
             continue
         if k1[a] in by_name2:
             print(f"{a} {k1[a]}: already named in {b2} at {by_name2[k1[a]]}")
+            continue
+        if a in conflicts:
+            held.append(conflicts[a])
             continue
         if a not in pairs:
             held.append(f"{a} {k1[a]}: no twin found")
