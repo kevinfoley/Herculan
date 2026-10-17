@@ -7285,7 +7285,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_SetPosition",
-      "description": "(x, y), C convention: when 00086860 is set, stores x, doubled while 0008685c is set, and y at 00086868 and 0008686c and issues INT 33h with AX 4, CX x and DX y, the mouse driver's set-cursor-position function. The code of ES1DBSIM's Mouse_SetPosition (00055ab8), relocated operands aside.",
+      "description": "(x, y), C convention: when Mouse_StatusPtr (00086860) is set, stores x, doubled while Mouse_DoubleX (0008685c) is set, and y at Mouse_X (00086868) and Mouse_Y (0008686c) and issues INT 33h with AX 4, CX x and DX y, the mouse driver's set-cursor-position function. The code of ES1DBSIM's Mouse_SetPosition (00055ab8), relocated operands aside.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#callees-of-other-modules",
       "verified": {
         "bytes": "00051037+54",
@@ -9993,6 +9993,21 @@
       "verified": {
         "bytes": "00059334+221",
         "sha1": "42118560d35e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00059414",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Render_NoOp",
+      "description": "Frameless: RET 8, removing two dword arguments. es2_xref finds its seven calls in the part and group draws. The code of ES1DBSIM's Render_NoOp (0005298c), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; ES1DBSIM disassembly at 0005298c",
+      "verified": {
+        "bytes": "00059414+3",
+        "sha1": "a4f5248d9b7d",
         "scope": "body",
         "via": "disasm"
       }
@@ -13349,6 +13364,21 @@
       }
     },
     {
+      "address": "0006b4d0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Transform_LocalPointDotNormal",
+      "description": "(point, transform, normal), C convention: subtracts the transform's int32 translation (+0x14, +0x18, +0x1c) from the int32 point, rotates the difference by the transform's int16 Q14 matrix (+0 to +0x11, each axis rounded with +0x2000 >> 14) and returns its dot product with the int16 normal in EDX:EAX. The code of ES1DBSIM's Transform_LocalPointDotNormal (000733c0), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/dts-shape.md#drawing-and-finding-parts; es2_naming.py diff ES1DBSIM 000733c0 DBSIM 004910b4",
+      "verified": {
+        "bytes": "0006b4d0+224",
+        "sha1": "9dab90fc1453",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0006b5b0",
       "binary": "ES1GO",
       "type": "function",
@@ -14366,6 +14396,87 @@
       "source": "ES1GO decompile at 00001b6c and 00051c74"
     },
     {
+      "address": "0008685c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_DoubleX",
+      "description": "dword: while set, x positions and limits go to the driver doubled and come back halved. ES1DBSIM's Mouse_DoubleX is at 000962dc.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00086860",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_StatusPtr",
+      "description": "dword: the status dword Mouse_Install was given, 0 until then: bit 0 set by Mouse_Install, bit 1 set by Mouse_EventHandler and cleared by Mouse_ReadState; every mouse function but Mouse_Detect does nothing while it is 0. ES1DBSIM's Mouse_StatusPtr is at 000962e0.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00086864",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_StatePtr",
+      "description": "dword: the state record Mouse_Install was given, which Mouse_ReadState fills: x at +0, y at +4, the buttons at +8. ES1DBSIM's Mouse_StatePtr is at 000962e4.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00086868",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_X",
+      "description": "dword: the pointer's x from the last event, or from Mouse_SetPosition; the event record the callbacks get starts here, Mouse_Y at +4 and Mouse_Buttons at +8. ES1DBSIM's Mouse_X is at 000962e8.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "0008686c",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_Y",
+      "description": "dword: the pointer's y from the last event, or from Mouse_SetPosition. ES1DBSIM's Mouse_Y is at 000962ec.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00086870",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_Buttons",
+      "description": "word: the button state from the last event. ES1DBSIM's Mouse_Buttons is at 000962f0.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00086874",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_CallbackMask",
+      "description": "dword: a bit per callback slot in use, 32 slots. ES1DBSIM's Mouse_CallbackMask is at 000962f4.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "00086878",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_Callbacks",
+      "description": "32 dwords: the callbacks Mouse_AddCallback registers, called by Mouse_EventHandler with the address of Mouse_X. ES1DBSIM's Mouse_Callbacks is at 000962f8.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000868f8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Mouse_CallbackEvents",
+      "description": "32 bytes: each callback's event mask. ES1DBSIM's Mouse_CallbackEvents is at 00096378.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly"
+    },
+    {
       "address": "000941e8",
       "binary": "ES1GO",
       "type": "data",
@@ -14400,6 +14511,15 @@
       "name": "Raster_WorldToView",
       "description": "The installed camera's world-to-view transform (0x20 bytes), built by Raster_InstallViewProjection; the byte at 000a0c20 is its first-use flag. ES2's DBSIM 006c6018. ES1DBSIM's Raster_WorldToView is at 000b5e04.",
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000a0c44",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_TSTransformStates",
+      "description": "52 TSTransformStates of 0x110 bytes: slot 0 the renderer state ShapeInst_BindNodeTransformArray saves, slot id + 1 the state ShapeNode_InstallTransform saves for node id. ES1DBSIM's g_TSTransformStates is at 000b1f6c.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#the-transform-states; ES1DBSIM disassembly"
     },
     {
       "address": "000a4480",
@@ -14589,6 +14709,24 @@
       "name": "Bitmap_UnpackScratch",
       "description": "The buffer a packed bitmap is unpacked into for drawing: Bitmap_Blit puts it in the bitmap's data pointer +0xe for the blit and deletes it afterwards unless Bitmap_UseCallerScratch is set. ES1DBSIM's Bitmap_UnpackScratch is at 000bdbe2.",
       "source": "ES1GO decompile at 000ab60e"
+    },
+    {
+      "address": "000ab61a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ShapeNodeWorldTransforms",
+      "description": "dword: the per-node transform array, 0x20 bytes per node, ShapeInst_BindNodeTransformArray binds. ES1DBSIM's g_ShapeNodeWorldTransforms is at 000bd90e.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000ab622",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_ShapeNodeTransformCacheFlags",
+      "description": "0x32 bytes: a byte per state slot, set once that slot's node transform has been composed since the bind. ES1DBSIM's g_ShapeNodeTransformCacheFlags is at 000bd916.",
+      "source": "Herculan/docs/es1/rendering/dts-node-posing.md#differences-from-es2; ES1DBSIM disassembly"
     },
     {
       "address": "000ab658",

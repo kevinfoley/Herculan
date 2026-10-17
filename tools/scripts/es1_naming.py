@@ -263,6 +263,10 @@ def cmd_twin(args):
     # 1. exact
     for a in fn_targets:
         if k1[a] in by_name2:
+            # Already twinned: its operands still pair the batch's globals when the code is equal.
+            b = by_name2[k1[a]]
+            if a in s1 and b in s2 and [i[1] for i in s1[a]] == [i[1] for i in s2[b]]:
+                operand_map(a, b)
             continue
         cands = [x for x in by_key.get(tuple(i[1] for i in s1.get(a, [])), []) if x not in k2] if a in s1 else []
         if a in pairs:
