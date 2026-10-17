@@ -71,6 +71,8 @@ test.
 - `MechDetailRootRemap`'s `TSBSPPart` per-node branch and its exact-type `TSGroup` test.
 - `ShellRepairCosts.ItemCost`'s early return: every caller prices to 100.
 - `ShellPointer.Release`'s right-button arm fires on a tab with no press there first.
+- The cockpit's world viewport riding the pan vertically, `CockpitInput.PopUp`, and the press
+  tracking's surface check.
 - `CdRipMusicSource.UncachedTracks`' zero-length-track filter, `GameContent.MaxArchives`,
   `StreamedCdAudio.GetPosition`'s fallback and `ResumeAt(0)` returning false.
 - `PlayerSaveRoundTripTests.BuildSave` gives `ChassisType` and `ChassisIndex` the same value, and the
