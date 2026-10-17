@@ -13,7 +13,7 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="MissionDocument.SetField"/>, docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document,
 /// "The tools"), which generates <c>script.dat</c> again; the index's copy (<see cref="MissionIndex.SideOf"/>) and each
 /// member's simulation object are then set from the generated field. A member's <see cref="MissionPlacement.Side"/>
-/// stays as loaded. The player's squad, group 0, is left alone: the editor's choice, as a squad that changed sides
+/// keeps the side the index was last built with (<see cref="MissionRebuild"/>). The player's squad, group 0, is left alone: the editor's choice, as a squad that changed sides
 /// would leave the player fighting their own.</para>
 /// </summary>
 internal sealed class SideChanger {

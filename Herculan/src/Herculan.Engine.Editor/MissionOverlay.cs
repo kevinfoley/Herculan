@@ -53,24 +53,31 @@ internal sealed class MissionOverlay {
 	public MissionOverlay(MissionIndex index, DrapedLines drape) {
 		_index = index;
 		_drape = drape;
+		Rebuild();
+	}
 
-		foreach (var area in index.Areas) {
+	/// <summary>Lays every line again from the index, for an index built again (<see cref="MissionIndex.Reload"/>).</summary>
+	public void Rebuild() {
+		_areas.Clear();
+		foreach (var area in _index.Areas) {
 			_areas.Add((area, AreaLines(area), AreaColor(area)));
 		}
 
-		var playerRoute = index.PlayerRoute;
-		foreach (var route in index.Routes) {
+		_routes.Clear();
+		var playerRoute = _index.PlayerRoute;
+		foreach (var route in _index.Routes) {
 			var lines = new List<Vector3>();
-			drape.AddPolyline(lines, route.Points);
+			_drape.AddPolyline(lines, route.Points);
 			var color = !route.Walked ? UnwalkedRouteColor : route == playerRoute ? PlayerRouteColor : RouteColor;
 			_routes.Add((route, lines, color));
 		}
 
-		foreach (var pad in index.BasePads) {
+		_pads.Clear();
+		foreach (var pad in _index.BasePads) {
 			_pads.Add((pad, PadLines(pad)));
 		}
 
-		SetBox(MissionBox.Of(index.Mission.Coordinates));
+		SetBox(MissionBox.Of(_index.Mission.Coordinates));
 	}
 
 	/// <summary>

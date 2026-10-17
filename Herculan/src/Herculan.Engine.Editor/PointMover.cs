@@ -14,10 +14,16 @@ namespace Herculan.Engine.Editor;
 internal abstract record MoveTarget;
 
 /// <summary>
-/// One step of <see cref="PointMover"/>'s undo history that is not a move — an added object
-/// (<see cref="StructurePlacer"/>), a side change (<see cref="SideChanger"/>). Each puts the <c>.MSN</c> back as the step
-/// found or left it (<see cref="MissionDocument.Undo"/>, which generates <c>script.dat</c> again), and the index and the
-/// scene with it; the history then places again what stands on the generated points and levels the ground.
+/// One step of <see cref="PointMover"/>'s undo history that is not a move — a side change (<see cref="SideChanger"/>),
+/// or an add or a delete (<see cref="RecordsEdit"/>). Each puts the <c>.MSN</c> back as the step found or left it
+/// (<see cref="MissionDocument.Undo"/>, which generates <c>script.dat</c> again), and the index and the scene with it;
+/// the history then places again what stands on the generated points and levels the ground.
+///
+/// <para>A step that holds block indices — a move's target, a side change's group — keeps them valid without being
+/// told of later edits: the history is undone last first, so a step is only ever undone or redone with the <c>.MSN</c>
+/// as it stood when the step was made, and generating from the same records gives the same indices. Every step that
+/// adds or removes records rebuilds the editor's index from the generated file as it is undone or redone
+/// (<see cref="MissionRebuild"/>), so the index the step reads is that generation's.</para>
 /// </summary>
 internal interface IEditorEdit {
 	void Undo();
@@ -86,11 +92,12 @@ internal sealed class PointMover {
 
 	private readonly ScriptDat _document;
 	private readonly MissionDocument? _source;
+	private readonly MissionScene _scene;
 	private readonly HeightGrid _terrain;
 	private readonly MissionIndex _index;
 	private readonly ScenePicker _picker;
 	private readonly MissionOverlay _overlay;
-	private readonly PointFollowers _followers;
+	private PointFollowers _followers;
 	private readonly TerrainLeveller _leveller;
 	private readonly List<IEditorEdit> _undo = new();
 	private readonly List<IEditorEdit> _redo = new();
@@ -106,6 +113,7 @@ internal sealed class PointMover {
 			MissionOverlay overlay, TerrainMaterialTable materials) {
 		_document = document;
 		_source = source;
+		_scene = scene;
 		_terrain = scene.World.Terrain;
 		_index = index;
 		_picker = picker;
@@ -377,6 +385,12 @@ internal sealed class PointMover {
 
 	public void Undo() => Step(_undo, _redo, edit => edit.Undo());
 
+	/// <summary>
+	/// Builds again what places followers from the index (<see cref="PointFollowers"/>), for an index built again
+	/// (<see cref="MissionIndex.Reload"/>).
+	/// </summary>
+	public void Rebuild() => _followers = new PointFollowers(_document, _scene, _index, _overlay, Place);
+
 	public void Redo() => Step(_redo, _undo, edit => edit.Redo());
 
 	/// <summary>
@@ -600,7 +614,8 @@ internal sealed class PointMover {
 		}
 	}
 
-	private void Place(SceneObject sceneObject, Vec3i position, int heading) {
+	/// <summary>Stands <paramref name="sceneObject"/> at a position and heading, for whatever draws and picks it.</summary>
+	public void Place(SceneObject sceneObject, Vec3i position, int heading) {
 		sceneObject.Object.Position = position;
 		sceneObject.Object.Heading = heading;
 		_picker.Move(sceneObject);

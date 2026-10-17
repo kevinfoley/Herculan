@@ -93,6 +93,9 @@ public sealed class EditorHost {
 	private string? _pendingLoad;
 	private bool _loadNoticeDrawn;
 
+	// An Undo (true) or Redo (false) chosen from the Edit menu, made once the frame's ImGui is rendered.
+	private bool? _pendingStep;
+
 	private GL? _gl;
 	private SceneRenderer? _renderer;
 	private WireframeRenderer? _wireframe;
@@ -162,7 +165,7 @@ public sealed class EditorHost {
 		}
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, Ctrl+Z/Ctrl+Y undo/redo, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, Delete deletes the selected object, Ctrl+Z/Ctrl+Y undo/redo, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -339,11 +342,10 @@ public sealed class EditorHost {
 		var drawables = new MissionDrawables(gl, renderer, mission, _settings);
 		mission.Mover.Moved += drawables.Move;
 		mission.Mover.TerrainChanged += drawables.UploadTerrain;
-		mission.Placer.Added += drawables.Add;
+		mission.Rebuild.Added += drawables.Add;
+		mission.Rebuild.Removed += drawables.Remove;
+		mission.Rebuild.Rebuilt += drawables.RefreshWaiting;
 		_dropPreview = new DropPreview(mission, drawables);
-		mission.Placer.Removed += drawables.Remove;
-		mission.Deleter.Added += drawables.Add;
-		mission.Deleter.Removed += drawables.Remove;
 		return drawables;
 	}
 
@@ -361,10 +363,7 @@ public sealed class EditorHost {
 		}
 
 		if (key == Key.Delete && !control && _mission?.Selection.Current is ObjectSelection { Object: var selected }) {
-			if (_mission.Deleter.Delete(selected) is { } reason) {
-				Console.Error.WriteLine($"Cannot delete {MissionText.Describe(selected)}: {reason}");
-			}
-
+			_mission.Deleter.Request(selected);
 			return;
 		}
 
@@ -481,9 +480,14 @@ public sealed class EditorHost {
 			return;
 		}
 
-		// After the frame's ImGui, as a load is: the add changes what the panels list.
+		// After the frame's ImGui, as a load is: an add, a delete, and the undo or redo of either, change what the panels
+		// list.
 		if (_toolbox.TakeRequest() is { } request) {
 			AddStructure(request);
+		}
+
+		if (_mission != null) {
+			RunEditRequests(_mission);
 		}
 
 		if (_pendingLoad != null) {
@@ -537,6 +541,26 @@ public sealed class EditorHost {
 			_ => -1
 		};
 		return group > 0 && mission.Index.KindOf(group) == MissionUnitKind.Base ? group : null;
+	}
+
+	// The delete and the Undo or Redo the frame's panels and menus asked for; none while a drag is under way.
+	private void RunEditRequests(EditorMission mission) {
+		var deleting = mission.Deleter.TakeRequest();
+		var step = _pendingStep;
+		_pendingStep = null;
+		if (mission.Gizmo.Dragging) {
+			return;
+		}
+
+		if (deleting != null && mission.Deleter.Delete(deleting) is { } reason) {
+			Console.Error.WriteLine($"Cannot delete {MissionText.Describe(deleting)}: {reason}");
+		}
+
+		if (step == true) {
+			mission.Mover.Undo();
+		} else if (step == false) {
+			mission.Mover.Redo();
+		}
 	}
 
 	// Stands the structure a Toolbox drag would add on the ground under the pointer, from the drag as the last frame's
@@ -644,11 +668,11 @@ public sealed class EditorHost {
 
 		if (ImGui.BeginMenu("Edit", _mission != null)) {
 			if (ImGui.MenuItem("Undo", "Ctrl+Z", false, _mission!.Mover.CanUndo && !_mission.Gizmo.Dragging)) {
-				_mission.Mover.Undo();
+				_pendingStep = true;
 			}
 
 			if (ImGui.MenuItem("Redo", "Ctrl+Y", false, _mission.Mover.CanRedo && !_mission.Gizmo.Dragging)) {
-				_mission.Mover.Redo();
+				_pendingStep = false;
 			}
 
 			ImGui.EndMenu();

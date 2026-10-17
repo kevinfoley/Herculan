@@ -162,6 +162,20 @@ internal sealed class MissionDrawables : IDisposable {
 		}
 	}
 
+	/// <summary>Lists again which drawn objects' groups wait on an action, for an index built again.</summary>
+	public void RefreshWaiting() {
+		foreach (var item in WaitingItems) {
+			item.Visible = true;
+		}
+
+		WaitingItems.Clear();
+		foreach (var (sceneObject, draw) in _objects) {
+			if (_isWaiting(sceneObject)) {
+				WaitingItems.AddRange(draw.Items);
+			}
+		}
+	}
+
 	/// <summary>Re-places <paramref name="sceneObject"/>'s items where its simulation object now stands.</summary>
 	public void Move(SceneObject sceneObject) {
 		if (!_objects.TryGetValue(sceneObject, out var draw)) {

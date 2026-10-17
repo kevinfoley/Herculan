@@ -19,7 +19,7 @@ internal sealed class MissionOutliner {
 	private static readonly Vector4 SelectedFindingColor = new(1f, 0.85f, 0.1f, 1f);
 
 	private readonly MissionIndex _index;
-	private readonly MissionLint _lint;
+	private MissionLint _lint;
 	private readonly SelectionState _selection;
 
 	public MissionOutliner(MissionIndex index, MissionLint lint, SelectionState selection) {
@@ -29,6 +29,9 @@ internal sealed class MissionOutliner {
 	}
 
 	private Mission Mission => _index.Mission;
+
+	/// <summary>Lists <paramref name="lint"/>'s findings in place of the last ones, for a mission built again.</summary>
+	public void Recheck(MissionLint lint) => _lint = lint;
 
 	public void Draw(Vector2 display, float menuBarHeight) {
 		ImGui.SetNextWindowPos(new Vector2(0f, menuBarHeight));

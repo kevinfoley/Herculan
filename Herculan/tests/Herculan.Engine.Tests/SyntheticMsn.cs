@@ -80,6 +80,18 @@ internal sealed class SyntheticMsn {
 	/// <summary>A row-9 circle trigger area about row-6 GUID <paramref name="point"/>.</summary>
 	public static short[] Circle(short guid, short point) => [guid, -1, -1, 1, point, 100];
 
+	/// <summary>A row-10 action of trigger type <paramref name="type"/> on target <paramref name="target"/>, testing no area and writing no counter.</summary>
+	public static short[] Action(short guid, short type, short target = -1) {
+		var words = Enumerable.Repeat((short)-1, 41).ToArray();
+		words[MapObject.GUIDWord] = guid;
+		words[MissionAction82.TypeWord] = type;
+		words[MissionAction82.TypeWord + 1] = 0; // the verb
+		words[MissionAction82.CounterPairsWord - 1] = 0; // the pair count
+		words[MissionAction82.MessageIdWord] = 0;
+		words[MissionAction82.TargetRefWord] = target;
+		return words;
+	}
+
 	/// <summary>A row-14 structure of type 0, every action and counter pair unset, pristine.</summary>
 	public static short[] Base(short guid, short position = -1, short condition = -1, short variant = -1) {
 		var words = Enumerable.Repeat((short)-1, 31).ToArray();

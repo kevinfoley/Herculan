@@ -21,7 +21,6 @@ internal sealed class PointFollowers {
 	private readonly ScriptDat _document;
 	private readonly HeightGrid _terrain;
 	private readonly MissionIndex _index;
-	private readonly IReadOnlyList<SceneObject> _objects;
 	private readonly MissionOverlay _overlay;
 	private readonly Action<SceneObject, Vec3i, int> _place;
 	private readonly Dictionary<int, int[]> _waypointEntries = new();
@@ -33,7 +32,6 @@ internal sealed class PointFollowers {
 		_document = document;
 		_terrain = scene.World.Terrain;
 		_index = index;
-		_objects = index.Objects;
 		_overlay = overlay;
 		_place = place;
 
@@ -240,7 +238,7 @@ internal sealed class PointFollowers {
 
 	// An object whose roster record names a point that moved stands on it again.
 	private void SyncOwnPoints(HashSet<int> changed) {
-		foreach (var sceneObject in _objects) {
+		foreach (var sceneObject in _index.Objects) {
 			if (sceneObject.Placement.IsPlayerLance || OwnPointRef(sceneObject.Placement) is not { } reference
 					|| !changed.Contains(reference) || Coordinate(reference) is not { } point) {
 				continue;

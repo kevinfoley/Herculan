@@ -21,7 +21,7 @@ internal sealed record Pickable(SceneObject SceneObject, Vector3 LocalCenter, fl
 /// clicked.
 /// </summary>
 internal sealed class ScenePicker {
-	private readonly List<Pickable> _pickables;
+	private List<Pickable> _pickables;
 	private readonly Dictionary<string, (Vector3 LocalCenter, float Radius)> _modelBounds = new();
 	private readonly MissionOverlay _overlay;
 	private readonly HeightGrid _terrain;
@@ -98,16 +98,9 @@ internal sealed class ScenePicker {
 		return new Pickable(sceneObject, bounds.LocalCenter, MathF.Max(bounds.Radius, 1f));
 	}
 
-	/// <summary>Makes an object an edit added pickable.</summary>
-	public void Add(SceneObject sceneObject) {
-		if (PickableFor(sceneObject) is { } pickable) {
-			_pickables.Add(pickable);
-		}
-	}
-
-	/// <summary>Stops an object an edit removed being picked.</summary>
-	public void Remove(SceneObject sceneObject) =>
-		_pickables.RemoveAll(pickable => ReferenceEquals(pickable.SceneObject, sceneObject));
+	/// <summary>Makes <paramref name="objects"/> what is picked, each where its simulation object now stands.</summary>
+	public void Rebuild(IEnumerable<SceneObject> objects) =>
+		_pickables = objects.Select(PickableFor).OfType<Pickable>().ToList();
 
 	/// <summary>
 	/// The ground under window pixel <paramref name="screen"/> (+Y down), in world units, or null when the view ray

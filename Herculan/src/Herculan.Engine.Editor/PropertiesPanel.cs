@@ -129,14 +129,22 @@ internal sealed class PropertiesPanel {
 
 	/// <summary>
 	/// A Delete button (<see cref="ObjectDeleter"/>), or why the object cannot be deleted, with what names or needs it as
-	/// links. Drawn last, as nothing of the view follows a delete.
+	/// links. The delete itself waits for the frame's ImGui to be rendered (<see cref="ObjectDeleter.Request"/>).
 	/// </summary>
 	private void DeleteControls(SceneObject sel) {
 		ImGui.Separator();
 		var blockers = _deleter.BlockersOf(sel);
 		if (blockers.None) {
 			if (ImGui.Button("Delete")) {
-				_deleter.Delete(sel);
+				_deleter.Request(sel);
+			}
+
+			foreach (var (group, _) in blockers.RemovedGroups.Where(removed => removed.Group >= 0)) {
+				ImGui.PushID($"goes{group}");
+				ImGui.TextWrapped("It is the last member of");
+				GroupLink(group);
+				ImGui.TextWrapped("which is deleted with it.");
+				ImGui.PopID();
 			}
 
 			return;
@@ -149,41 +157,63 @@ internal sealed class PropertiesPanel {
 
 		ImGui.PushID("delete");
 		ImGui.TextWrapped("Cannot be deleted while these name or need it:");
-		foreach (int objective in blockers.Objectives) {
-			ObjectiveLink(objective);
-		}
-
-		foreach (int action in blockers.Actions) {
-			ImGui.PushID($"target{action}");
-			ActionLink(action);
-			ImGui.SameLine();
-			ImGui.Text("targets it");
-			ImGui.PopID();
-		}
-
+		Namers(blockers.Object, "it");
 		foreach (int action in blockers.OwnActions) {
 			ImGui.PushID($"own{action}");
-			ActionLink(action);
-			ImGui.SameLine();
-			ImGui.Text("is fired by it");
+			if (action >= 0) {
+				ActionLink(action);
+				ImGui.SameLine();
+				ImGui.Text("is fired by it");
+			} else {
+				ImGui.TextWrapped("An action it fires, which this state of the mission leaves out");
+			}
+
 			ImGui.PopID();
 		}
 
-		foreach (var order in blockers.Orders) {
-			ImGui.PushID($"order{order.Group}.{order.Slot}");
-			GroupLink(order.Group);
-			ImGui.TextWrapped($"names it in order {order.Slot} ({MissionText.OrderVerb(order.Order.Verb)})");
-			ImGui.PopID();
-		}
-
-		foreach (int group in blockers.LastMemberOf) {
+		foreach (var (group, names) in blockers.RemovedGroups.Where(removed => removed.Names.Any)) {
 			ImGui.PushID($"last{group}");
-			GroupLink(group);
-			ImGui.TextWrapped("would be left with no members, which DBSIM does not run safely");
+			ImGui.TextWrapped("It is the last member of");
+			if (group >= 0) {
+				GroupLink(group);
+			} else {
+				ImGui.TextWrapped("a group this state of the mission leaves out,");
+			}
+
+			ImGui.TextWrapped("which would be deleted with it, and is named by:");
+			Namers(names, "the group");
 			ImGui.PopID();
 		}
 
 		ImGui.PopID();
+	}
+
+	// The objectives, actions and orders naming something, as links.
+	private void Namers(DeleteNamers names, string what) {
+		foreach (int objective in names.Objectives) {
+			ImGui.PushID($"objective{objective}");
+			ObjectiveLink(objective);
+			ImGui.PopID();
+		}
+
+		foreach (int action in names.Actions) {
+			ImGui.PushID($"target{action}");
+			ActionLink(action);
+			ImGui.SameLine();
+			ImGui.Text($"targets {what}");
+			ImGui.PopID();
+		}
+
+		foreach (var order in names.Orders) {
+			ImGui.PushID($"order{order.Group}.{order.Slot}");
+			GroupLink(order.Group);
+			ImGui.TextWrapped($"names {what} in order {order.Slot} ({MissionText.OrderVerb(order.Order.Verb)})");
+			ImGui.PopID();
+		}
+
+		if (names.Elsewhere > 0) {
+			ImGui.TextWrapped($"{names.Elsewhere} more record(s) of the .MSN that this state of the mission leaves out");
+		}
 	}
 
 	/// <summary>

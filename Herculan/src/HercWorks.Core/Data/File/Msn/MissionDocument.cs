@@ -349,6 +349,23 @@ public sealed class MissionDocument {
 		return End(before);
 	}
 
+	/// <summary>
+	/// Unsets every member slot naming roster GUID <paramref name="member"/> in every record of row-16 group GUID
+	/// <paramref name="group"/>, whatever its condition, since an overlay cannot carry an unset value.
+	/// </summary>
+	public MsnEdit ClearMember(short group, short member) {
+		var before = Begin(GroupRow);
+		foreach (var record in Records(GroupRow).Cast<MissionGroup164>().Where(record => record.GUID == group)) {
+			for (int slot = 0; slot < record.MemberRefs.Length; slot++) {
+				if (record.MemberRefs[slot] == member) {
+					record.MemberRefs[slot] = -1;
+				}
+			}
+		}
+
+		return End(before);
+	}
+
 	// ---- Internals --------------------------------------------------------------------------------
 
 	private SlotProvenance SlotOf(int row, short guid) =>

@@ -65,39 +65,44 @@ internal sealed record ActionLinks(
 	IReadOnlyList<OrderSlot> OrdersItEnds);
 
 /// <summary>
-/// The editor's cross-reference over one loaded mission, built once: which actions name which
-/// trigger area, which groups walk which route, what fires each action and what each one sets off.
-/// Which record names which is never recomputed. Where things stand is: the routes' points, the trigger areas, the
-/// group setups and the base pads here are the editor's own copies, which <see cref="PointFollowers"/> keeps in step
-/// with the document as its points move, and so are the groups' sides, which <see cref="SideChanger"/> sets. The objects
-/// and groups an edit adds (<see cref="StructurePlacer"/>) are
-/// listed here beside the loaded ones, and an object a delete unlinks (<see cref="ObjectDeleter"/>) is taken off;
-/// <see cref="Mission"/> stays as loaded.
+/// The editor's cross-reference over the mission: which actions name which trigger area, which groups walk which
+/// route, what fires each action and what each one sets off. Built from a loaded <see cref="World.Mission"/> and its
+/// placed objects, and built again from the regenerated one after an edit that adds or removes records
+/// (<see cref="Reload"/>, <see cref="MissionRebuild"/>). Between those, which record names which is never recomputed,
+/// and where things stand is the editor's own: the routes' points, the trigger areas, the group setups and the base
+/// pads here are copies, which <see cref="PointFollowers"/> keeps in step with the document as its points move, and so
+/// are the groups' sides, which <see cref="SideChanger"/> sets.
 /// </summary>
 internal sealed class MissionIndex {
 	private readonly Dictionary<(MissionUnitKind, int), SceneObject> _bySlot = new();
-	private readonly ActionLinks[] _actionLinks;
-	private readonly List<MissionTriggerArea> _areas;
-	private readonly List<MissionGroupSetup> _setups;
-	private readonly List<MissionBasePad> _basePads;
-	private readonly List<SceneObject> _objects;
-	private readonly List<List<SceneObject>> _members;
-
-	// Every group's side, and the kind of each group an edit added, past the loaded mission's.
-	private readonly List<MissionSide> _sides;
-	private readonly List<MissionUnitKind> _addedKinds = new();
+	private ActionLinks[] _actionLinks = [];
+	private List<MissionTriggerArea> _areas = new();
+	private List<MissionGroupSetup> _setups = new();
+	private List<MissionBasePad> _basePads = new();
+	private List<SceneObject> _objects = new();
+	private List<List<SceneObject>> _members = new();
+	private List<MissionSide> _sides = new();
 
 	public MissionIndex(MissionScene scene, SquadMessages? commandMessages) {
-		Mission = scene.Mission;
 		CommandMessages = commandMessages;
-		_objects = scene.Objects.ToList();
+		Mission = scene.Mission;
+		Reload(scene.Mission, scene.Objects);
+	}
 
-		_members = new List<List<SceneObject>>(Mission.GroupKinds.Count);
-		for (int i = 0; i < Mission.GroupKinds.Count; i++) {
+	/// <summary>
+	/// Builds the index again over <paramref name="mission"/> and <paramref name="objects"/>, its placed objects in
+	/// spawn order, each <see cref="SceneObject.Placement"/> naming its record in <paramref name="mission"/>.
+	/// </summary>
+	public void Reload(Mission mission, IReadOnlyList<SceneObject> objects) {
+		Mission = mission;
+		_objects = objects.ToList();
+		_bySlot.Clear();
+		_members = new List<List<SceneObject>>(mission.GroupKinds.Count);
+		for (int i = 0; i < mission.GroupKinds.Count; i++) {
 			_members.Add(new List<SceneObject>());
 		}
 
-		foreach (var placed in scene.Objects) {
+		foreach (var placed in objects) {
 			if (placed.Placement.GroupIndex >= 0 && placed.Placement.GroupIndex < _members.Count) {
 				_members[placed.Placement.GroupIndex].Add(placed);
 			}
@@ -107,19 +112,19 @@ internal sealed class MissionIndex {
 			}
 		}
 
-		_areas = BuildAreas(Mission);
-		_setups = Mission.GroupSetups.ToList();
-		_sides = Mission.GroupSides.ToList();
-		_basePads = Mission.BasePads.ToList();
-		Routes = BuildRoutes(Mission);
+		_areas = BuildAreas(mission);
+		_setups = mission.GroupSetups.ToList();
+		_sides = mission.GroupSides.ToList();
+		_basePads = mission.BasePads.ToList();
+		Routes = BuildRoutes(mission);
 
-		_actionLinks = new ActionLinks[Mission.Actions.Count];
+		_actionLinks = new ActionLinks[mission.Actions.Count];
 		for (int i = 0; i < _actionLinks.Length; i++) {
-			_actionLinks[i] = BuildLinks(i, scene.Objects);
+			_actionLinks[i] = BuildLinks(i, objects);
 		}
 	}
 
-	public Mission Mission { get; }
+	public Mission Mission { get; private set; }
 
 	/// <summary>
 	/// The speakerless message set an action's message is looked up in — <c>COMMAND&lt;n&gt;.STR</c>,
@@ -127,7 +132,7 @@ internal sealed class MissionIndex {
 	/// </summary>
 	public SquadMessages? CommandMessages { get; }
 
-	/// <summary>Every placed object, in spawn order, then those an edit added.</summary>
+	/// <summary>Every placed object, in spawn order.</summary>
 	public IReadOnlyList<SceneObject> Objects => _objects;
 
 	/// <summary>Each group's placed members, by block-11 record index.</summary>
@@ -135,82 +140,13 @@ internal sealed class MissionIndex {
 
 	/// <summary>A group's roster, by block-11 record index, or null for an index the mission does not have.</summary>
 	public MissionUnitKind? KindOf(int group) =>
-		group >= 0 && group < Mission.GroupKinds.Count ? Mission.GroupKinds[group]
-			: group >= Mission.GroupKinds.Count && group - Mission.GroupKinds.Count < _addedKinds.Count
-				? _addedKinds[group - Mission.GroupKinds.Count]
-				: null;
+		group >= 0 && group < Mission.GroupKinds.Count ? Mission.GroupKinds[group] : null;
 
 	/// <summary>A group's side, by block-11 record index, or null for an index the mission does not have.</summary>
 	public MissionSide? SideOf(int group) => group >= 0 && group < _sides.Count ? _sides[group] : null;
 
 	/// <summary>Sets a group's side, as <see cref="SideChanger"/> has written it into the document.</summary>
 	public void SetSide(int group, MissionSide side) => _sides[group] = side;
-
-	/// <summary>
-	/// Lists a group an edit appended to block 11 as record <paramref name="group"/>, which must be the next index, with
-	/// no members yet.
-	/// </summary>
-	public void AddGroup(int group, MissionUnitKind kind, MissionSide side, MissionGroupSetup setup) {
-		if (group != _members.Count || group != _setups.Count || group != _sides.Count) {
-			throw new InvalidOperationException($"Group {group} is not the next group; {_members.Count} are listed.");
-		}
-
-		_addedKinds.Add(kind);
-		_sides.Add(side);
-		_members.Add(new List<SceneObject>());
-		_setups.Add(setup);
-	}
-
-	/// <summary>Takes the last group <see cref="AddGroup"/> listed off the list again; its members must be gone.</summary>
-	public void RemoveLastAddedGroup() {
-		if (_addedKinds.Count == 0) {
-			throw new InvalidOperationException("No added group to remove.");
-		}
-
-		_addedKinds.RemoveAt(_addedKinds.Count - 1);
-		_sides.RemoveAt(_sides.Count - 1);
-		_members.RemoveAt(_members.Count - 1);
-		_setups.RemoveAt(_setups.Count - 1);
-	}
-
-	/// <summary>Lists an object an edit added, in its group and under its roster slot.</summary>
-	public void AddObject(SceneObject placed) {
-		_objects.Add(placed);
-		_members[placed.Placement.GroupIndex].Add(placed);
-		_bySlot[(placed.Placement.Kind, placed.Placement.SlotIndex)] = placed;
-	}
-
-	/// <summary>Takes an object <see cref="AddObject"/> listed off every list again.</summary>
-	public void RemoveObject(SceneObject placed) {
-		_objects.Remove(placed);
-		_members[placed.Placement.GroupIndex].Remove(placed);
-		_bySlot.Remove((placed.Placement.Kind, placed.Placement.SlotIndex));
-	}
-
-	/// <summary>
-	/// Takes any placed object, loaded or added, off every list, as a delete does (<see cref="ObjectDeleter"/>), and
-	/// answers where it stood in <see cref="Objects"/> and in its group's members, for <see cref="RestoreObject"/>.
-	/// </summary>
-	public (int Object, int Member) DetachObject(SceneObject placed) {
-		var members = _members[placed.Placement.GroupIndex];
-		var at = (Object: _objects.FindIndex(o => ReferenceEquals(o, placed)),
-			Member: members.FindIndex(o => ReferenceEquals(o, placed)));
-		_objects.RemoveAt(at.Object);
-		members.RemoveAt(at.Member);
-		var key = (placed.Placement.Kind, placed.Placement.SlotIndex);
-		if (_bySlot.TryGetValue(key, out var listed) && ReferenceEquals(listed, placed)) {
-			_bySlot.Remove(key);
-		}
-
-		return at;
-	}
-
-	/// <summary>Puts an object <see cref="DetachObject"/> took off back where it stood.</summary>
-	public void RestoreObject(SceneObject placed, (int Object, int Member) at) {
-		_objects.Insert(at.Object, placed);
-		_members[placed.Placement.GroupIndex].Insert(at.Member, placed);
-		_bySlot[(placed.Placement.Kind, placed.Placement.SlotIndex)] = placed;
-	}
 
 	/// <summary>
 	/// Every trigger area some action tests, once each, in block-4 order. An area no action names, or
@@ -222,7 +158,7 @@ internal sealed class MissionIndex {
 	public IReadOnlyList<MissionBasePad> BasePads => _basePads;
 
 	/// <summary>Every route some order names, once each, in block-3 order.</summary>
-	public IReadOnlyList<EditorRoute> Routes { get; }
+	public IReadOnlyList<EditorRoute> Routes { get; private set; } = [];
 
 	/// <summary>The route the player's squad walks, or null.</summary>
 	public EditorRoute? PlayerRoute => Routes.FirstOrDefault(route => route.WalkedBy.Contains(0));

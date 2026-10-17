@@ -34,7 +34,13 @@ public sealed record ShapeDetailChain(IReadOnlyList<SceneModel> Roots, int Shape
 /// only <c>Mech_Constructor</c> installs a detail table on an object.
 /// </param>
 public sealed record SceneObject(SimObject Object, SceneModel? Model, MissionPlacement Placement,
-	ShapeDetailChain? Detail = null);
+	ShapeDetailChain? Detail = null) {
+	/// <summary>
+	/// The mission record it came from. Settable for the mission editor, which points it at the record's new indices
+	/// when an edit renumbers the records, keeping the object.
+	/// </summary>
+	public MissionPlacement Placement { get; set; } = Placement;
+}
 
 /// <summary>
 /// Assembles a playable scene from a real mission: the zone and theater the mission names, its
@@ -242,13 +248,7 @@ public sealed class MissionScene {
 
 			// Settling an object onto the terrain before it joins the world is a placement step, not
 			// a simulation step -- a mech's own tick now walks it, which is not what spawning wants.
-			spawned.Object.Position = new Vec3i(spawned.Object.Position.X, spawned.Object.Position.Y,
-				spawned.Object switch {
-					FlyerObject => spawned.Object.Position.Z,
-					MechObject mech => MechSpawnHeight(terrain, mech,
-						placement.GroundPoint ?? spawned.Object.Position),
-					_ => terrain.HeightAtWorld(spawned.Object.Position.X, spawned.Object.Position.Y)
-				});
+			spawned.Object.Position = SpawnPosition(terrain, spawned.Object, placement);
 
 			world.Add(spawned.Object);
 			objects.Add(spawned);
@@ -599,6 +599,27 @@ public sealed class MissionScene {
 		WorldScale.ToRenderMatrix(sceneObject.Object.WorldFrame);
 
 	/// <summary>
+	/// Where the spawn pass stands <paramref name="simObject"/>, built for <paramref name="placement"/>, on
+	/// <paramref name="terrain"/>: at the placement's point, a flyer at the point's height or the hover height for a Z of
+	/// 0, a mech at its spawn height (<see cref="MechSpawnHeight"/>), anything else on the ground.
+	/// </summary>
+	public static Vec3i SpawnPosition(HeightGrid terrain, SimObject simObject, MissionPlacement placement) {
+		var at = SpawnPoint(simObject, placement);
+		return new Vec3i(at.X, at.Y, simObject switch {
+			FlyerObject => at.Z,
+			MechObject mech => MechSpawnHeight(terrain, mech, placement.GroundPoint ?? at),
+			_ => terrain.HeightAtWorld(at.X, at.Y)
+		});
+	}
+
+	// The placement's point, with the original's hover-height substitution for a flyer at Z 0, applied at spawn because
+	// that is where it happens in Flyer_AttachToGroup (00421ee8) — see FlyerObject.DefaultHoverHeight.
+	private static Vec3i SpawnPoint(SimObject simObject, MissionPlacement placement) =>
+		simObject is FlyerObject && placement.Position.Z == 0
+			? new Vec3i(placement.Position.X, placement.Position.Y, FlyerObject.DefaultHoverHeight)
+			: placement.Position;
+
+	/// <summary>
 	/// A mech's spawn height — <c>Mech_AttachToGroup</c> (<c>00417aa8</c>): the ground under
 	/// <paramref name="groundPoint"/> plus the chassis' ride height, and <see cref="FlyerSpawnLift"/>
 	/// more for a flyer. See docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 5.
@@ -628,7 +649,7 @@ public sealed class MissionScene {
 			return null;
 		}
 
-		simObject.Position = placement.Position;
+		simObject.Position = SpawnPoint(simObject, placement);
 		simObject.Heading = placement.Heading;
 		simObject.Side = placement.Side;
 
@@ -659,13 +680,6 @@ public sealed class MissionScene {
 			if (placement.SquadCondition is { } condition) {
 				machine.Damage?.ApplySquadCondition(condition);
 			}
-		}
-
-		// The original's hover-height substitution, applied at spawn because that is where it
-		// happens in Flyer_AttachToGroup (00421ee8) — see FlyerObject.DefaultHoverHeight.
-		if (simObject is FlyerObject && placement.Position.Z == 0) {
-			simObject.Position = new Vec3i(
-				placement.Position.X, placement.Position.Y, FlyerObject.DefaultHoverHeight);
 		}
 
 		return new SceneObject(simObject, model, placement, detail);

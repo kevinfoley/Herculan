@@ -11,8 +11,8 @@ namespace Herculan.Engine.Editor;
 /// Adds a structure to the open mission, as one step of <see cref="PointMover"/>'s undo history: a row-14 roster record,
 /// and a row-16 group of its own that places it, standing on a row-6 point appended for it and facing a row-7 heading of
 /// 0 degrees. Each record is appended to the <c>.MSN</c> unconditioned, with no variant key and a new GUID
-/// (<see cref="MissionDocument.Append"/>), and <c>script.dat</c> is generated again; a record with a new GUID is exported
-/// last in its block, and the scene object takes the indices the generation gave it
+/// (<see cref="MissionDocument.Append"/>), and <c>script.dat</c> is generated again; the editor's state is then built
+/// again from the generated file (<see cref="MissionRebuild"/>), which builds the structure's object for the record
 /// (docs/herculan/handoff-editor-mission-editing.md#holding-the-msn-as-the-document, "The tools").
 ///
 /// <para>The records take the shape the retail missions give a lone structure most often — 148 of their 537 structure
@@ -49,29 +49,23 @@ internal sealed class StructurePlacer {
 	private readonly MissionScene _scene;
 	private readonly HeightGrid _terrain;
 	private readonly MissionIndex _index;
-	private readonly ScenePicker _picker;
 	private readonly PointMover _mover;
+	private readonly MissionRebuild _rebuild;
 	private readonly SelectionState _selection;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, to which nothing is added.</param>
 	public StructurePlacer(ScriptDat document, MissionDocument? source, MissionScene scene, MissionIndex index,
-			ScenePicker picker, PointMover mover, SelectionState selection) {
+			PointMover mover, MissionRebuild rebuild, SelectionState selection) {
 		_document = document;
 		_source = source;
 		_scene = scene;
 		_terrain = scene.World.Terrain;
 		_index = index;
-		_picker = picker;
 		_mover = mover;
+		_rebuild = rebuild;
 		_selection = selection;
 	}
-
-	/// <summary>Raised with each object an add or a redo puts in the scene, for whatever draws it.</summary>
-	public event Action<SceneObject>? Added;
-
-	/// <summary>Raised with each object an undo takes out of the scene, for whatever draws it.</summary>
-	public event Action<SceneObject>? Removed;
 
 	/// <summary>Why nothing can be added to the mission at all, or null when something can.</summary>
 	public string? WhyNoAdd => _mover.WhyReadOnly;
@@ -91,50 +85,23 @@ internal sealed class StructurePlacer {
 			return $"The mission already has {_document.Bases.Length} structures, as many as DBSIM holds.";
 		}
 
-		if (_index.GroupMembers.Count != _document.Groups.Length) {
-			return "The mission's records are not as the editor loaded them; nothing was added.";
-		}
-
 		if (joinGroup is { } joined) {
 			return Join(typeIndex, joined, x, y);
 		}
 
 		var source = _source!;
 		var position = new Vec3i(x, y, _terrain.HeightAtWorld(x, y));
-		short structure = -1, group = -1;
-		MsnEdit change;
-		try {
-			change = source.Change(() => {
-				source.Append(PointRow, Point(position), out short point);
-				short heading = source.ShareableHeading(0);
-				if (heading == -1) {
-					source.Append(HeadingRow, new Heading10 { ConditionRef = -1, VariantKey = -1, Unk06 = -1, Degrees = 0 }, out heading);
-				}
+		short structure = -1;
+		return Commit(typeIndex, () => source.Change(() => {
+			source.Append(PointRow, Point(position), out short point);
+			short heading = source.ShareableHeading(0);
+			if (heading == -1) {
+				source.Append(HeadingRow, new Heading10 { ConditionRef = -1, VariantKey = -1, Unk06 = -1, Degrees = 0 }, out heading);
+			}
 
-				source.Append(BaseRow, Structure(typeIndex), out structure);
-				source.Append(GroupRow, Group(structure, point, heading, side), out group);
-			});
-		} catch (InvalidOperationException ex) {
-			return ex.Message;
-		}
-
-		if (source.ExportedIndex(BaseRow, structure) is not { } slot || source.ExportedIndex(GroupRow, group) is not { } groupIndex
-				|| groupIndex != _index.GroupMembers.Count) {
-			source.Undo(change);
-			return "The added records were not generated as the last of their blocks; nothing was added.";
-		}
-
-		if (_scene.CreateObject(Placement(typeIndex, side, slot, groupIndex, position)) is not { } placed) {
-			source.Undo(change);
-			return $"The install has no structure type {typeIndex}.";
-		}
-
-		var setup = new MissionGroupSetup(position, position, MissionGroupPointSource.OwnPoint, 0, false, Formation, false);
-		var edit = new AddEdit(this, placed, groupIndex, setup, change);
-		Show(edit);
-		_mover.Record(edit);
-		_selection.Current = new ObjectSelection(placed);
-		return null;
+			source.Append(BaseRow, Structure(typeIndex), out structure);
+			source.Append(GroupRow, Group(structure, point, heading, side), out _);
+		}), () => structure);
 	}
 
 	/// <summary>
@@ -163,36 +130,37 @@ internal sealed class StructurePlacer {
 		var source = _source!;
 		short groupGuid = source.GuidOf(GroupBlock, group);
 		int memberSlot = source.FreeMemberSlot(groupGuid);
-		var side = _index.SideOf(group) ?? MissionSide.Human;
-		int heading = _index.SetupOf(group)?.Heading ?? 0;
 		var position = new Vec3i(x, y, _terrain.HeightAtWorld(x, y));
 		short structure = -1;
+		return Commit(typeIndex, () => source.Change(() => {
+			source.Append(PointRow, Point(position), out short point);
+			var record = Structure(typeIndex);
+			record.PositionRef = point;
+			source.Append(BaseRow, record, out structure);
+			source.SetField(MsnField.GroupMember(memberSlot), groupGuid, structure);
+		}), () => structure);
+	}
+
+	// Makes an add's change and rebuilds from it, then records it as one step and selects the object the rebuild built
+	// for the structure's row-14 GUID; or, when it built none, puts the records back and says why.
+	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> structure) {
+		var source = _source!;
 		MsnEdit change;
 		try {
-			change = source.Change(() => {
-				source.Append(PointRow, Point(position), out short point);
-				var record = Structure(typeIndex);
-				record.PositionRef = point;
-				source.Append(BaseRow, record, out structure);
-				source.SetField(MsnField.GroupMember(memberSlot), groupGuid, structure);
-			});
+			change = _rebuild.Run(add);
 		} catch (InvalidOperationException ex) {
 			return ex.Message;
 		}
 
-		if (source.ExportedIndex(BaseRow, structure) is not { } slot) {
-			source.Undo(change);
-			return "The added record was not generated; nothing was added.";
+		int? slot = source.ExportedIndex(BaseRow, structure());
+		if (slot is not { } exported || _index.ObjectAt(MissionUnitKind.Base, exported) is not { } placed) {
+			_rebuild.Undo(change);
+			return slot == null
+				? "The added structure was not generated; nothing was added."
+				: $"The install has no structure type {typeIndex}.";
 		}
 
-		if (_scene.CreateObject(Placement(typeIndex, side, slot, group, position, heading)) is not { } placed) {
-			source.Undo(change);
-			return $"The install has no structure type {typeIndex}.";
-		}
-
-		var edit = new AddEdit(this, placed, group, null, change);
-		Show(edit);
-		_mover.Record(edit);
+		_mover.Record(new RecordsEdit(_rebuild, change));
 		_selection.Current = new ObjectSelection(placed);
 		return null;
 	}
@@ -203,12 +171,8 @@ internal sealed class StructurePlacer {
 	/// type the install has nothing for.
 	/// </summary>
 	public SceneObject? Ghost(int typeIndex, MissionSide side) =>
-		_scene.CreateObject(Placement(typeIndex, side, -1, -1, Vec3i.Zero));
-
-	private static MissionPlacement Placement(int typeIndex, MissionSide side, int slot, int group, Vec3i position,
-			int heading = 0) =>
-		new(MissionUnitKind.Base, typeIndex, null, slot, group, position, heading, Array.Empty<short>(), Array.Empty<short>(),
-			Side: side, OutOfActionReport: new OutOfActionReport(Unset(10), Unset(10)));
+		_scene.CreateObject(new MissionPlacement(MissionUnitKind.Base, typeIndex, null, -1, -1, Vec3i.Zero, 0,
+			Array.Empty<short>(), Array.Empty<short>(), Side: side, OutOfActionReport: new OutOfActionReport(Unset(10), Unset(10))));
 
 	// The point a new structure stands on, at the ground's height.
 	private static MapPoint22 Point(Vec3i position) =>
@@ -250,47 +214,4 @@ internal sealed class StructurePlacer {
 	}
 
 	private static short[] Unset(int count) => Enumerable.Repeat((short)-1, count).ToArray();
-
-	// Puts an added structure, and its group when it has one of its own, in the index, the picker and the scene's
-	// drawing.
-	private void Show(AddEdit edit) {
-		if (edit.Setup is { } setup) {
-			_index.AddGroup(edit.Group, MissionUnitKind.Base, edit.Placed.Placement.Side, setup);
-		}
-
-		_index.AddObject(edit.Placed);
-		_picker.Add(edit.Placed);
-		Added?.Invoke(edit.Placed);
-	}
-
-	// Takes them out again, and the selection off them.
-	private void Hide(AddEdit edit) {
-		if (_selection.Current is ObjectSelection { Object: var selected } && ReferenceEquals(selected, edit.Placed)
-				|| edit.Setup != null && _selection.Current is GroupSelection { Group: var group } && group == edit.Group) {
-			_selection.Current = null;
-		}
-
-		Removed?.Invoke(edit.Placed);
-		_picker.Remove(edit.Placed);
-		_index.RemoveObject(edit.Placed);
-		if (edit.Setup != null) {
-			_index.RemoveLastAddedGroup();
-		}
-	}
-
-	// One add, undone and redone as a whole: Setup is the group the add made, null when it joined Group instead. The undo
-	// history is last in, first out, so everything made after the add has been undone before the add is, and the .MSN
-	// rows are as the add left them.
-	private sealed record AddEdit(StructurePlacer Placer, SceneObject Placed, int Group, MissionGroupSetup? Setup,
-			MsnEdit Change) : IEditorEdit {
-		public void Undo() {
-			Placer.Hide(this);
-			Placer._source!.Undo(Change);
-		}
-
-		public void Redo() {
-			Placer._source!.Redo(Change);
-			Placer.Show(this);
-		}
-	}
 }

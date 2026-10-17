@@ -10,12 +10,13 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker, the two side panels and the move, add and delete tools, all sharing one selection. Opening another mission
-/// builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
+/// index, the overlays, the picker, the two side panels and the move, add and delete tools, all sharing one selection. An
+/// edit that adds or removes records builds the CPU state again in place (<see cref="Rebuild"/>). Opening another
+/// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
-	private EditorMission(string name, ScriptDat document, MissionDocument? source, MissionScene scene, MissionIndex index,
-			TerrainMaterialTable materials) {
+	private EditorMission(GameContent content, string name, ScriptDat document, MissionDocument? source, MissionScene scene,
+			MissionIndex index, TerrainMaterialTable materials) {
 		Name = name;
 		Document = document;
 		Source = source;
@@ -29,9 +30,10 @@ internal sealed class EditorMission {
 		Outliner = new MissionOutliner(index, new MissionLint(index, document), Selection);
 		Mover = new PointMover(document, source, scene, index, Picker, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
-		Placer = new StructurePlacer(document, source, scene, index, Picker, Mover, Selection);
+		Rebuild = new MissionRebuild(content, document, source, scene, index, Overlay, Picker, Mover, Outliner, Selection);
+		Placer = new StructurePlacer(document, source, scene, index, Mover, Rebuild, Selection);
 		Sides = new SideChanger(document, source, index, Mover);
-		Deleter = new ObjectDeleter(document, index, Picker, Mover, Selection);
+		Deleter = new ObjectDeleter(document, source, index, Mover, Rebuild);
 		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter);
 	}
 
@@ -53,7 +55,8 @@ internal sealed class EditorMission {
 
 	public MissionScene Scene { get; }
 
-	public Mission Mission => Scene.Mission;
+	/// <summary>The mission as the index last built it: as loaded, or as generated after an edit that added or removed records.</summary>
+	public Mission Mission => Index.Mission;
 
 	/// <summary>The mission's own features, cross-referenced once.</summary>
 	public MissionIndex Index { get; }
@@ -75,12 +78,15 @@ internal sealed class EditorMission {
 
 	public MoveGizmo Gizmo { get; }
 
+	/// <summary>Builds the CPU state again after an edit that adds or removes records of <see cref="Source"/>.</summary>
+	public MissionRebuild Rebuild { get; }
+
 	/// <summary>Adds structures to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public StructurePlacer Placer { get; }
 
 	public SideChanger Sides { get; }
 
-	/// <summary>Deletes objects, as steps of <see cref="Mover"/>'s undo history; refuses every delete until it is ported to <see cref="Source"/>.</summary>
+	/// <summary>Deletes objects from <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public ObjectDeleter Deleter { get; }
 
 	public string WindowTitle => $"HERCULAN Mission Editor — {Name}, zone {Mission.Header.ZoneIndex}";
@@ -111,6 +117,6 @@ internal sealed class EditorMission {
 
 		var index = new MissionIndex(scene, SquadMessages.LoadCommand(content, scene.Mission.Header.TrainingMissionNumber));
 		// The scene's own copy is not kept; a base pad's tile is sized by its material when the ground is levelled again.
-		return new EditorMission(name, document, source, scene, index, TerrainMaterialTable.Load(content));
+		return new EditorMission(content, name, document, source, scene, index, TerrainMaterialTable.Load(content));
 	}
 }

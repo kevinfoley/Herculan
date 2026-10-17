@@ -23,7 +23,6 @@ internal sealed class TerrainLeveller {
 	private readonly HeightGrid _terrain;
 	private readonly MissionModels _models;
 	private readonly MissionIndex _index;
-	private readonly IReadOnlyList<SceneObject> _objects;
 	private readonly TerrainMaterialTable _materials;
 	private readonly MissionOverlay _overlay;
 	private readonly Action<SceneObject, Vec3i, int> _place;
@@ -40,7 +39,6 @@ internal sealed class TerrainLeveller {
 		_terrain = scene.World.Terrain;
 		_models = scene.Models;
 		_index = index;
-		_objects = index.Objects;
 		_materials = materials;
 		_overlay = overlay;
 		_place = place;
@@ -73,7 +71,7 @@ internal sealed class TerrainLeveller {
 		_levelledFor = footprints;
 		_terrain.RestoreUnlevelledHeights();
 		_terrain.RestoreUnpaintedMaterials();
-		foreach (var sceneObject in _objects) {
+		foreach (var sceneObject in _index.Objects) {
 			if (sceneObject.Object is BaseObject structure) {
 				_terrain.MarkStructureFootprint(structure.Position.X, structure.Position.Y, structure.ShapeRadius);
 			}
@@ -128,7 +126,7 @@ internal sealed class TerrainLeveller {
 
 	// Stands each structure and walking mech on the ground as it now is.
 	private void Settle() {
-		foreach (var sceneObject in _objects) {
+		foreach (var sceneObject in _index.Objects) {
 			var position = sceneObject.Object.Position;
 			var settled = sceneObject.Object switch {
 				BaseObject => new Vec3i(position.X, position.Y, _terrain.HeightAtWorld(position.X, position.Y)),
@@ -145,7 +143,7 @@ internal sealed class TerrainLeveller {
 	// Where every input to the flattening pass stands: each structure, and each pad's anchor.
 	private int[] Footprints() {
 		var footprints = new List<int>();
-		foreach (var sceneObject in _objects) {
+		foreach (var sceneObject in _index.Objects) {
 			if (sceneObject.Object is BaseObject structure) {
 				footprints.Add(structure.Position.X);
 				footprints.Add(structure.Position.Y);
