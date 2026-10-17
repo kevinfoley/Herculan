@@ -45,6 +45,10 @@ public class MecFileRoundTripTests {
 		Assert.Equal(original, transformer.Write(parsed));
 	}
 
+	/// <summary>
+	/// The entries' fields, read against the hand-built values. The two entries have different slot counts,
+	/// so each is read to its own length, and the three condition blocks are checked at their edges.
+	/// </summary>
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
@@ -53,44 +57,38 @@ public class MecFileRoundTripTests {
 
 		MecFile parsed = Assert.IsType<MecFile>(transformer.Parse(BuildMec(withWeaponFlags)));
 
-		Assert.Equal(0, parsed.PlayerEntryIndex);
-		MecEntry entry = Assert.Single(parsed.Entries);
-		Assert.Equal(7, entry.PilotNameIndex);
-		Assert.Equal(2, entry.Skill);
-		Assert.Equal(5, entry.MechType);
-		Assert.Equal(2, entry.SlotCount);
-		Assert.Equal(new short[] { 3, 0 }, entry.WeaponRefs);
-		Assert.Equal(new short[] { 1, 5 }, entry.WeaponAmmoTypes);
-		Assert.Equal(26, entry.ExternalConditions.Length);
-		Assert.Equal(20, entry.InternalConditions.Length);
-		Assert.Equal(20, entry.HardpointConditions.Length);
+		Assert.Equal(1, parsed.PlayerEntryIndex);
+		Assert.Equal(2, parsed.Entries.Length);
+
+		MecEntry squadmate = parsed.Entries[0];
+		Assert.Equal((7, 2, 5, 2), (squadmate.PilotNameIndex, squadmate.Skill, squadmate.MechType, squadmate.SlotCount));
+		Assert.Equal(new short[] { 3, 0 }, squadmate.WeaponRefs);
+		Assert.Equal(new short[] { 1, 5 }, squadmate.WeaponAmmoTypes);
+		Assert.Equal((1, 26), (squadmate.ExternalConditions[0], squadmate.ExternalConditions[^1]));
+		Assert.Equal((27, 46), (squadmate.InternalConditions[0], squadmate.InternalConditions[^1]));
+		Assert.Equal((47, 66), (squadmate.HardpointConditions[0], squadmate.HardpointConditions[^1]));
+
+		MecEntry player = parsed.Entries[1];
+		Assert.Equal((9, 3, 8, 3), (player.PilotNameIndex, player.Skill, player.MechType, player.SlotCount));
+		Assert.Equal(new short[] { 4, 6, 2 }, player.WeaponRefs);
+		Assert.Equal(new short[] { 5, 5, 5 }, player.WeaponAmmoTypes);
+		Assert.Equal(101, player.ExternalConditions[0]);
 	}
 
 	/// <summary>
-	/// One entry with two weapon slots, laid out exactly as VSHELL's <c>FUN_004106b7</c> writes it:
-	/// the pilot's two fields, the mech type, the slot count, the two per-slot arrays, a literal
-	/// zero, then the three blocks that are one contiguous 66-byte span in the HERC record. An empty
-	/// hardpoint is weapon id 0 paired with ammo type 5, which is why slot 1 reads that way.
+	/// Two entries laid out exactly as VSHELL's <c>FUN_004106b7</c> writes them, the player's second: the
+	/// pilot's two fields, the mech type, the slot count, the two per-slot arrays, a literal zero, then the
+	/// three blocks that are one contiguous 66-byte span in the HERC record. An empty hardpoint is weapon id 0
+	/// paired with ammo type 5, which is why the first entry's slot 1 reads that way.
 	/// </summary>
 	private static byte[] BuildMec(bool withWeaponFlags) {
 		var bytes = new List<byte>();
 
-		AddShort(bytes, 0); // PlayerEntryIndex
-		AddShort(bytes, 1); // entry count
+		AddShort(bytes, 1); // PlayerEntryIndex
+		AddShort(bytes, 2); // entry count
 
-		AddShort(bytes, 7); // pilot name index into esnames.bin
-		AddShort(bytes, 2); // pilot skill tier
-		AddShort(bytes, 5); // mech type
-		AddShort(bytes, 2); // slot count
-		AddShort(bytes, 3);
-		AddShort(bytes, 0); // empty hardpoint
-		AddShort(bytes, 1);
-		AddShort(bytes, 5); // the empty hardpoint's filler ammo type
-		AddShort(bytes, 0); // Unk3A, a literal zero in every export
-
-		for (int i = 0; i < 26 + 20 + 20; i++) {
-			bytes.Add((byte)(i + 1));
-		}
+		AddEntry(bytes, pilotNameIndex: 7, skill: 2, mechType: 5, weapons: [3, 0], ammo: [1, 5], firstCondition: 1);
+		AddEntry(bytes, pilotNameIndex: 9, skill: 3, mechType: 8, weapons: [4, 6, 2], ammo: [5, 5, 5], firstCondition: 101);
 
 		if (withWeaponFlags) {
 			AddShort(bytes, WeaponCatalogSize);
@@ -100,6 +98,27 @@ public class MecFileRoundTripTests {
 		}
 
 		return bytes.ToArray();
+	}
+
+	private static void AddEntry(List<byte> bytes, short pilotNameIndex, short skill, short mechType, short[] weapons,
+			short[] ammo, int firstCondition) {
+		AddShort(bytes, pilotNameIndex);
+		AddShort(bytes, skill);
+		AddShort(bytes, mechType);
+		AddShort(bytes, (short)weapons.Length);
+		foreach (short weapon in weapons) {
+			AddShort(bytes, weapon);
+		}
+
+		foreach (short type in ammo) {
+			AddShort(bytes, type);
+		}
+
+		AddShort(bytes, 0); // Unk3A, a literal zero in every export
+
+		for (int i = 0; i < 26 + 20 + 20; i++) {
+			bytes.Add((byte)(firstCondition + i));
+		}
 	}
 
 	private static void AddShort(List<byte> bytes, short value) {

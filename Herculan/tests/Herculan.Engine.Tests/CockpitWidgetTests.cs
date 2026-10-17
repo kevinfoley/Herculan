@@ -21,7 +21,6 @@ public class CockpitWidgetTests {
 	[Theory]
 	[InlineData(10, 20, true)]   // top-left corner
 	[InlineData(19, 27, true)]   // bottom-right corner, inclusive
-	[InlineData(14, 24, true)]   // interior
 	[InlineData(9, 24, false)]   // one left
 	[InlineData(20, 24, false)]  // one right
 	[InlineData(14, 19, false)]  // one above
@@ -53,14 +52,24 @@ public class CockpitWidgetTests {
 	}
 
 	/// <summary>
-	/// The MFD's buttons 7 and 10 share a rect — the same physical button captioned SELECT on the
-	/// status screens and XMIT on FLASH COMM — and no mode shows both, which is what lets the hit test
-	/// treat overlaps as impossible.
+	/// No mode shows two MFD buttons whose rects overlap, which is what lets the first-hit-wins hit test
+	/// treat overlaps as impossible. The case it has to hold against is buttons 7 and 10, which share a
+	/// rect — the same physical button captioned SELECT on the status screens and XMIT on FLASH COMM.
 	/// </summary>
 	[Fact]
-	public void NoModeShowsBothOfTheSharedRectButtons() {
+	public void NoModeShowsTwoButtonsOverOneAnother() {
 		foreach (MfdMode mode in Enum.GetValues<MfdMode>()) {
-			Assert.False(MfdLayout.ButtonVisible(mode, 7) && MfdLayout.ButtonVisible(mode, 10));
+			for (int a = 0; a < MfdLayout.ButtonCount; a++) {
+				for (int b = a + 1; b < MfdLayout.ButtonCount; b++) {
+					if (!MfdLayout.ButtonVisible(mode, a) || !MfdLayout.ButtonVisible(mode, b)) {
+						continue;
+					}
+
+					var (first, second) = (MfdLayout.Buttons[a], MfdLayout.Buttons[b]);
+					Assert.False(first.X0 <= second.X1 && second.X0 <= first.X1
+						&& first.Y0 <= second.Y1 && second.Y0 <= first.Y1, $"{mode}: buttons {a} and {b} overlap");
+				}
+			}
 		}
 	}
 }

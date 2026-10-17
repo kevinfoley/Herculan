@@ -51,7 +51,11 @@ public class ShellWeaponFittingTests {
 		Assert.Equal(1, hangar.WeaponsOwned(Atc35));
 	}
 
-	// The stock unit starts at EO, so both arms of the reset have to write: a fit that left guidance alone fails every row.
+	/// <summary>
+	/// Every unit starts on EO, so each row shows the reset rather than a value the unit already had:
+	/// ARH at both ends of the three racks, none on the laser below them, the Razor's launcher above
+	/// them, or a gun.
+	/// </summary>
 	[Theory]
 	[InlineData(Laser500, false)]
 	[InlineData(Rack, true)]
@@ -106,14 +110,16 @@ public class ShellWeaponFittingTests {
 		Assert.Equal(1, hangar.WeaponsOwned(Atc20));
 	}
 
+	/// <summary>The list empties and the value is added to what the pool already holds.</summary>
 	[Fact]
 	public void ScrappingAWeaponsStockEmptiesItsList() {
 		var hangar = Hangar(new[] { 0 }, (Atc20, new[] { 100, 100 }));
+		hangar.SalvageKilograms = 500;
 
 		hangar.ScrapStock(Atc20, valueTons: 3);
 
 		Assert.Equal(0, hangar.WeaponsOwned(Atc20));
-		Assert.Equal(3000, hangar.SalvageKilograms);
+		Assert.Equal(3500, hangar.SalvageKilograms);
 	}
 
 	[Fact]

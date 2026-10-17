@@ -79,22 +79,6 @@ public class CockpitInputTests {
 	}
 
 	/// <summary>
-	/// §4 times releases, not holds: <c>Widget_OnMouseUp</c> runs on every release, so a button held for a
-	/// second still clicks.
-	/// </summary>
-	[Fact]
-	public void HoldingLongStillClicks() {
-		var input = new CockpitInput();
-		Press(input, 50);
-		Frame(input);
-
-		Frame(input, deltaSeconds: 1.0);
-
-		Release(input, 50);
-		Assert.Single(Frame(input));
-	}
-
-	/// <summary>
 	/// §4's double-click flag: a release inside <see cref="CockpitInput.DoubleClickSeconds"/> of the previous
 	/// one marks its click, and one after the window does not.
 	/// </summary>
@@ -114,7 +98,11 @@ public class CockpitInputTests {
 		Assert.False(Assert.Single(Frame(input, deltaSeconds: CockpitInput.DoubleClickSeconds * 1.1f)).DoubleClick);
 	}
 
-	/// <summary>A press held across frames stays armed until it is released.</summary>
+	/// <summary>
+	/// A press held across frames stays armed until it is released, however long that takes: §4 times
+	/// releases, not holds, and <c>Widget_OnMouseUp</c> runs on every release, so a button held for a
+	/// second still clicks.
+	/// </summary>
 	[Fact]
 	public void PressSurvivesAcrossFrames() {
 		var input = new CockpitInput();
@@ -122,46 +110,35 @@ public class CockpitInputTests {
 		Assert.Empty(Frame(input));
 		Assert.Equal(A, input.Pressed);
 
+		Frame(input, deltaSeconds: 1.0);
 		Release(input, 50);
 		Assert.Single(Frame(input));
 		Assert.Null(input.Pressed);
 	}
 
 	/// <summary>
-	/// The press stays armed while the pointer wanders off the widget and back — the original does not
-	/// cancel on leave, it only checks where the release lands.
-	/// </summary>
-	[Fact]
-	public void WanderingOffAndBackStillClicks() {
-		var input = new CockpitInput();
-		Press(input, 50);
-		input.Enqueue(500, 10, CockpitMouseButtons.Left);
-		input.Enqueue(50, 10, CockpitMouseButtons.Left);
-		Release(input, 50);
-
-		Assert.Single(Frame(input));
-	}
-
-	/// <summary>
 	/// Moving the pointer with no button held changes nothing. DBSIM has no hover state — its cockpit
-	/// listener does not even subscribe to plain movement (§3) — so neither does this.
+	/// listener does not even subscribe to plain movement (§3) — so neither does this. The pointer ends
+	/// over a widget, which is where a hover state would show.
 	/// </summary>
 	[Fact]
 	public void MovingWithNoButtonHeldChangesNothing() {
 		var input = new CockpitInput();
 
-		input.Enqueue(50, 10, CockpitMouseButtons.None);
-		input.Enqueue(150, 10, CockpitMouseButtons.None);
 		input.Enqueue(500, 10, CockpitMouseButtons.None);
-		Frame(input);
+		input.Enqueue(150, 10, CockpitMouseButtons.None);
+		input.Enqueue(50, 10, CockpitMouseButtons.None);
 
+		Assert.Empty(Frame(input));
 		Assert.Null(input.Depressed);
 		Assert.Null(input.Pressed);
 	}
 
 	/// <summary>
 	/// <c>Widget_TrackPressedWidget</c> (<c>00452954</c>)'s whole behaviour: a held widget draws depressed, pops back up when the
-	/// pointer slides off it, and depresses again when it comes back — all while the press stays armed.
+	/// pointer slides off it, and depresses again when it comes back — all while the press stays armed,
+	/// so letting go back on it still clicks. The original does not cancel on leave; it only checks where
+	/// the release lands.
 	/// </summary>
 	[Fact]
 	public void HeldWidgetDepressesAndPopsBackUpAsThePointerMoves() {
@@ -172,13 +149,13 @@ public class CockpitInputTests {
 		Assert.Equal(A, input.Depressed);
 		Assert.Equal(A, input.Pressed);
 
-		// Still held, but dragged off onto the neighbouring widget.
+		// Still held, but dragged off onto the neighbouring widget, which does not depress on the way
+		// past: only the widget the press armed can.
 		input.Enqueue(150, 10, CockpitMouseButtons.Left);
 		Frame(input);
 		Assert.Null(input.Depressed);
 		Assert.Equal(A, input.Pressed);
 
-		// B does not depress on the way past: only the widget the press armed can.
 		input.Enqueue(500, 10, CockpitMouseButtons.Left);
 		Frame(input);
 		Assert.Null(input.Depressed);
@@ -186,9 +163,16 @@ public class CockpitInputTests {
 		input.Enqueue(50, 10, CockpitMouseButtons.Left);
 		Frame(input);
 		Assert.Equal(A, input.Depressed);
+
+		Release(input, 50);
+		Assert.Single(Frame(input));
 	}
 
-	/// <summary>Releasing clears the depressed look whether or not the click fired.</summary>
+	/// <summary>
+	/// A release that fires its click also pops the widget back up. A release anywhere else needs no
+	/// test of its own: the pointer has already left the widget, which pops it up before the release
+	/// is handled.
+	/// </summary>
 	[Fact]
 	public void ReleaseClearsTheDepressedLook() {
 		var input = new CockpitInput();
@@ -197,30 +181,31 @@ public class CockpitInputTests {
 		Release(input, 50);
 		Assert.Single(Frame(input));
 		Assert.Null(input.Depressed);
-
-		Press(input, 50);
-		Release(input, 500);
-		Assert.Empty(Frame(input));
-		Assert.Null(input.Depressed);
 	}
 
-	/// <summary>The right button completes its own click, and reports itself as the button that did.</summary>
+	/// <summary>
+	/// The right button arms nothing on its press and fires on whatever its release is over, reporting
+	/// itself as the button that did — pressed over A and let go over B, it clicks B. The left button
+	/// would fire nothing there.
+	/// </summary>
 	[Fact]
 	public void RightButtonClicksAreReportedSeparately() {
 		var input = new CockpitInput();
 		input.Enqueue(50, 10, CockpitMouseButtons.Right);
-		input.Enqueue(50, 10, CockpitMouseButtons.None);
+		Assert.Empty(Frame(input));
+		Assert.Null(input.Pressed);
 
-		Assert.Equal(new[] { new CockpitClick(A, CockpitMouseButtons.Right, 50f, 10f) }, Frame(input));
+		input.Enqueue(150, 10, CockpitMouseButtons.None);
+		Assert.Equal(new[] { new CockpitClick(B, CockpitMouseButtons.Right, 150f, 10f) }, Frame(input));
 	}
 
 	/// <summary>
-	/// Events queue up between drains rather than being handled as they arrive (§3), so a whole click
-	/// enqueued mid-frame is still one click when the frame gets to it. The second release follows the
+	/// Events queue up between drains rather than being handled as they arrive (§3), so every click
+	/// enqueued since the last drain completes in the next one, in order. The second release follows the
 	/// first inside the double-click window, so it is a double-click on whichever widget it lands.
 	/// </summary>
 	[Fact]
-	public void EventsAreProcessedOnlyOnDrain() {
+	public void ADrainCompletesEveryClickQueuedSinceTheLast() {
 		var input = new CockpitInput();
 		Press(input, 50);
 		Release(input, 50);
@@ -235,16 +220,28 @@ public class CockpitInputTests {
 			Frame(input));
 	}
 
-	/// <summary>Reset drops an armed press, so a release arriving afterwards completes nothing.</summary>
+	/// <summary>
+	/// Reset forgets everything in flight: the armed press, the button it remembers as held — so the
+	/// next press after it is seen as one — and any events queued but not yet drained, so a press
+	/// queued before it cannot pair with a release after it.
+	/// </summary>
 	[Fact]
-	public void ResetDisarmsAnInFlightPress() {
+	public void ResetForgetsEverythingInFlight() {
 		var input = new CockpitInput();
 		Press(input, 50);
 		Frame(input);
 
 		input.Reset();
-		Release(input, 50);
+		Assert.Null(input.Pressed);
+		Assert.Null(input.Depressed);
 
+		Press(input, 150);
+		Release(input, 150);
+		Assert.Equal(B, Assert.Single(Frame(input)).Id);
+
+		Press(input, 50);
+		input.Reset();
+		Release(input, 50);
 		Assert.Empty(Frame(input));
 	}
 

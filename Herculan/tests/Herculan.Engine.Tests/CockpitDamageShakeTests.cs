@@ -79,8 +79,7 @@ public class CockpitDamageShakeTests {
 
 	/// <summary>
 	/// The window is <c>0x3c</c> coarse ticks and then both halves go back — the view to rest and the
-	/// palette to the theater's. The count is held throughout, so this is also what says it is an edge,
-	/// not a level: re-arming on a steady count would make the shake permanent.
+	/// palette to the theater's.
 	/// </summary>
 	[Fact]
 	public void TheShakeEndsAfterItsWindow() {
@@ -198,40 +197,35 @@ public class CockpitDamageShakeTests {
 	}
 
 	/// <summary>
-	/// The flash alternates rather than staying on: <c>Palette_ToggleImpact</c> swaps the two
-	/// palettes each time the 0-9 tick timer expires, so the screen strobes.
-	/// </summary>
-	[Fact]
-	public void TheFlashAlternatesWhileTheShakeRuns() {
-		var shake = new CockpitHitShake();
-		shake.Update(Frame, cockpitHits: 1);
-
-		var seen = new HashSet<bool>();
-		for (int frame = 0; frame < 40; frame++) {
-			shake.Update(Frame, cockpitHits: 1);
-			seen.Add(shake.FlashActive);
-		}
-
-		Assert.Equal(2, seen.Count);
-	}
-
-	/// <summary>
 	/// Leaving the cockpit drops a shake outright rather than pausing it — the original's view mode 4
-	/// clears the end tick where every other path lets it run down.
+	/// clears the end tick where every other path lets it run down. Reset on a theater phase, where the
+	/// toggle's partner is the impact palette, so a shake left running would bring the flash back.
 	/// </summary>
 	[Fact]
 	public void ResetDropsAShakeInProgress() {
+		var shake = new CockpitHitShake();
+		Assert.True(AdvanceToFlashPhase(shake, flashActive: false), "the flash should go off between toggles");
+
+		shake.Reset(cockpitHits: 1);
+
+		Assert.Equal(0, shake.OffsetPixels);
+		Assert.False(FlashSeenOver(shake, frames: 60, hits: 1), "a dropped shake's flash should not come back");
+	}
+
+	/// <summary>
+	/// And the reset disarms the flash toggle too, so a hit landing on the first frame back in the
+	/// cockpit starts a fresh shake. A toggle left armed would be taken for a running shake, and the
+	/// new one would seed no band.
+	/// </summary>
+	[Fact]
+	public void AHitOnTheFirstFrameBackStartsAFreshShake() {
 		var shake = new CockpitHitShake();
 		shake.Update(Frame, cockpitHits: 1);
 		Advance(shake, Frame * 5);
 
 		shake.Reset(cockpitHits: 1);
 
-		Assert.Equal(0, shake.OffsetPixels);
-		Assert.False(shake.FlashActive);
-
-		// And it stays down: a reset shake is not waiting to resume on the next frame.
-		Assert.All(OffsetsOver(shake, frames: 30), offset => Assert.Equal(0, offset));
+		Assert.Contains(OffsetsOver(shake, frames: 30, hits: 2), offset => offset > 0);
 	}
 
 	// ---- the palette the flash swaps to -----------------------------------------------------

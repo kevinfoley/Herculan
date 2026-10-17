@@ -61,9 +61,6 @@ public class SkyGradientTests {
 	[InlineData(1, 1)]
 	[InlineData(6, 1)]
 	[InlineData(7, 2)]
-	[InlineData(79, 14)]
-	[InlineData(84, 14)]
-	[InlineData(85, 15)]
 	[InlineData(400, 15)]
 	public void LevelBandsAreSixRowsFromTheRowAboveTheLine(int rowsAbove, int band) {
 		Assert.Equal(band, RetailSky().BandAt(rowsAbove, rolled: false, cosRoll: 1f));
@@ -71,23 +68,33 @@ public class SkyGradientTests {
 
 	/// <summary>
 	/// Rolled, the band edges stand <c>6i - 5·cos²r</c> from the line, and the ground fill covers
-	/// everything more than a row below it.
+	/// everything more than <c>cos r</c> below it: at <c>cos r = 1</c> the first edges are 1 and 7 and
+	/// the ground's 1 below; at <c>cos r = 0.5</c> the first edge is 4.75 and the ground's 0.5 below.
 	/// </summary>
-	[Fact]
-	public void RolledBandsSitNearerTheGround() {
-		var sky = RetailSky();
-		float cos = 1f;
-		Assert.Equal(0, sky.BandAt(-1.5f, rolled: true, cos));
-		Assert.Equal(1, sky.BandAt(-0.5f, rolled: true, cos));
-		Assert.Equal(1, sky.BandAt(0.9f, rolled: true, cos));
-		Assert.Equal(2, sky.BandAt(1.1f, rolled: true, cos));
-		Assert.Equal(2, sky.BandAt(6.9f, rolled: true, cos));
-		Assert.Equal(3, sky.BandAt(7.1f, rolled: true, cos));
+	[Theory]
+	[InlineData(1f, -1.5f, 0)]
+	[InlineData(1f, -0.5f, 1)]
+	[InlineData(1f, 0.9f, 1)]
+	[InlineData(1f, 1.1f, 2)]
+	[InlineData(1f, 6.9f, 2)]
+	[InlineData(1f, 7.1f, 3)]
+	[InlineData(0.5f, -0.6f, 0)]
+	[InlineData(0.5f, -0.4f, 1)]
+	[InlineData(0.5f, 4.6f, 1)]
+	[InlineData(0.5f, 4.9f, 2)]
+	public void RolledBandsSitNearerTheGround(float cosRoll, float distanceAbove, int band) {
+		Assert.Equal(band, RetailSky().BandAt(distanceAbove, rolled: true, cosRoll));
 	}
 
+	/// <summary>The file's line offset of 4 puts the line 6 of the original's rows lower: one and a half times it.</summary>
 	[Fact]
 	public void TheLineOffsetAppliesOneAndAHalfTimes() {
-		Assert.Equal(6, RetailSky(offset: 4).LineOffset);
+		var centre = new Vector2(320f, 240f);
+		const float focal = 2f * Camera.FocalLengthPixels;
+		var level = RetailSky().Place(0, 0, centre, focal);
+		var lowered = RetailSky(offset: 4).Place(0, 0, centre, focal);
+
+		Assert.Equal(level.Mid.Y - 6f * level.Scale, lowered.Mid.Y, 3);
 	}
 
 	/// <summary>

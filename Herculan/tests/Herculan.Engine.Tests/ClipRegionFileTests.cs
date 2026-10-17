@@ -35,6 +35,7 @@ public class ClipRegionFileTests {
 		Assert.Empty(file.Rects);
 		var block = Assert.Single(file.Blocks);
 		Assert.Equal(0, block.FirstRow);
+		Assert.NotEmpty(block.Rows);
 		Assert.Equal(new byte[] { 0, 0 }, file.TrailingBytes);
 		Assert.Equal(block.Rows.Length, CockpitClipRegions.Parse(bytes)?.RowCount);
 		Assert.Equal(bytes, transformer.Write(file));
@@ -65,13 +66,21 @@ public class ClipRegionFileTests {
 
 	/// <summary>
 	/// A file that ends inside its counts, or carries a negative count, reads as null rather than
-	/// throwing, so a missing cutout is never mistaken for an empty one. A well-formed empty file
-	/// (<c>APOCA.HD1</c>'s shape) reads as no spans.
+	/// throwing, so a missing cutout is never mistaken for an empty one. Each row is caught by a
+	/// different check: a rect count whose rects run past the end, a row count of -1, and a second
+	/// block whose header is missing after the first block's spans.
 	/// </summary>
+	[Theory]
+	[InlineData(new byte[] { 1, 0, 0, 0 })]
+	[InlineData(new byte[] { 0, 0, 1, 0, 0, 0, 0xff, 0xff })]
+	[InlineData(new byte[] { 0, 0, 2, 0, 0, 0, 1, 0, 5, 0, 9, 0 })]
+	public void MalformedFileReadsAsNull(byte[] bytes) {
+		Assert.Null(CockpitClipRegions.Parse(bytes));
+	}
+
+	/// <summary>A well-formed empty file (<c>APOCA.HD1</c>'s shape) reads as no spans, not as a missing one.</summary>
 	[Fact]
-	public void MalformedFileReadsAsNull() {
-		Assert.Null(CockpitClipRegions.Parse([0, 0, 1, 0, 0, 0]));          // a block with no header
-		Assert.Null(CockpitClipRegions.Parse([0, 0, 1, 0, 0, 0, 0xff, 0xff])); // rowCount -1
+	public void AnEmptyFileReadsAsNoSpans() {
 		Assert.Equal(0, CockpitClipRegions.Parse([0, 0, 0, 0, 0, 0])?.SpanCount);
 	}
 }

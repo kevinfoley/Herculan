@@ -39,12 +39,13 @@ public class PlayerSaveRoundTripTests {
 	}
 
 	/// <summary>
-	/// Skill and rank are separate 0-3 fields two shorts apart, with the squad slot between them.
-	/// Distinct values here would come back equal if the reader collapsed them, and a reader that
-	/// mistook the esnames index for the name length would not reach them at all.
+	/// A pilot record's fields, each in its own place. The round trip cannot see a reader and writer that
+	/// agree on a wrong order, so the fields are read here against the hand-built values. Skill and rank are
+	/// separate 0-3 fields two shorts apart, with the squad slot between them, and a reader that mistook the
+	/// esnames index for the name length would not reach them at all.
 	/// </summary>
 	[Fact]
-	public void ReadsSkillAndRankAsSeparateFields() {
+	public void ReadsThePilotRecordsFields() {
 		var transformer = new PlayerSaveTransform();
 
 		PlayerSave parsed = Assert.IsType<PlayerSave>(transformer.Parse(BuildSave()));
@@ -53,9 +54,12 @@ public class PlayerSaveRoundTripTests {
 		PilotEntry first = parsed.Squadmates[0];
 		Assert.Equal("DUGGAN", first.Name);
 		Assert.Equal(7, first.NameIndex);
+		Assert.Equal(-1, first.Bay);
+		Assert.Equal(1, first.OnStrength);
 		Assert.Equal(PilotSkill.Veteran.Id, first.Skill!.Id);
 		Assert.Equal(PilotRank.Captain.Id, first.Rank!.Id);
 		Assert.Equal(11, first.SquadPosition);
+		Assert.Equal(100, first.Condition);
 
 		// The three kill counters and their career totals, in file order.
 		Assert.Equal(1, first.HercKills);
@@ -67,16 +71,28 @@ public class PlayerSaveRoundTripTests {
 		Assert.Equal(9, first.MissionsFlown);
 	}
 
-	/// <summary>The career block is 76 shorts; 77 leaves the squad segment two bytes adrift.</summary>
+	/// <summary>
+	/// Every block lands on its own fields: the career block's last short, both ends of the squad, the
+	/// eight shorts before the player, the player's own record, the hangar bay and the salvage pool. The
+	/// career block is 76 shorts, and 77 leaves everything after it two bytes adrift; a wrong count before
+	/// the player's record misreads the player alone.
+	/// </summary>
 	[Fact]
-	public void CareerBlockIs152Bytes() {
-		var transformer = new PlayerSaveTransform();
+	public void EveryBlockLandsOnItsOwnFields() {
+		PlayerSave parsed = Assert.IsType<PlayerSave>(new PlayerSaveTransform().Parse(BuildSave()));
 
-		PlayerSave parsed = Assert.IsType<PlayerSave>(transformer.Parse(BuildSave()));
+		Assert.Equal(CareerBlockShorts - 1, parsed.CareerBlock[^1]);
+		Assert.Equal("DUGGAN", parsed.Squadmates![0].Name);
+		Assert.Equal("PILOT" + (SquadSize - 1), parsed.Squadmates[^1].Name);
+		Assert.Equal(Enumerable.Range(100, PrePlayerShorts).Select(i => (short)i), parsed.SquadTailAndPlayerHead);
+		Assert.Equal(("CYRIX", 5, 12), (parsed.PlayerPilot!.Name, parsed.PlayerPilot.RosterId, parsed.PlayerPilot.NameIndex));
 
-		Assert.Equal(CareerBlockShorts, parsed.CareerBlock.Length);
-		Assert.Equal(PrePlayerShorts, parsed.SquadTailAndPlayerHead.Length);
-		Assert.Equal(SquadSize, parsed.Squadmates!.Length);
+		var bay = Assert.Single(parsed.HercBay);
+		Assert.Equal(2, bay.Key);
+		Assert.Equal((60, 2, 3, 1),
+			(bay.Value.BuildPercent, bay.Value.BuildMissionsLeft, bay.Value.MountCapacity, bay.Value.MountsOccupied));
+		Assert.Equal(107000, parsed.SalvageTotal);
+		Assert.Equal(64, parsed.CampaignStateTail!.Length);
 	}
 
 	/// <summary>
