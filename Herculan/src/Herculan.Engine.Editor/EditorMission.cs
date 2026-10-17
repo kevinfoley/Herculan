@@ -37,8 +37,11 @@ internal sealed class EditorMission {
 		Properties = new PropertiesPanel(index, Selection, Mover, Sides, Deleter);
 	}
 
-	/// <summary>What the window title calls the mission: the <c>.MSN</c> it was generated from, or the file opened.</summary>
-	public string Name { get; }
+	/// <summary>
+	/// What the window title calls the mission: the <c>.MSN</c> it was generated from, without its extension, which a
+	/// Save writes and a Save As renames; or the file opened.
+	/// </summary>
+	public string Name { get; set; }
 
 	/// <summary>
 	/// The <c>script.dat</c> <see cref="Scene"/> was loaded from: <see cref="Source"/>'s generated file, whose blocks each
@@ -89,7 +92,8 @@ internal sealed class EditorMission {
 	/// <summary>Deletes objects from <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public ObjectDeleter Deleter { get; }
 
-	public string WindowTitle => $"HERCULAN Mission Editor — {Name}, zone {Mission.Header.ZoneIndex}";
+	/// <summary>The window title, the name marked <c>*</c> when <paramref name="unsaved"/> changes are held.</summary>
+	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Mission.Header.ZoneIndex}";
 
 	/// <summary>
 	/// Opens the handoff at <paramref name="scriptPath"/>. Given <paramref name="source"/>, the mission it holds as its

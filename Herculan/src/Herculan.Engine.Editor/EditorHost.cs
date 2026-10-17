@@ -61,6 +61,7 @@ public sealed class EditorHost {
 	private readonly EditorSettings _settings = EditorSettings.Load();
 	private readonly EditorSettingsPanel _settingsPanel;
 	private readonly VolMissionBrowser _volBrowser;
+	private readonly MissionSaving _saving;
 	private readonly StructureToolbox _toolbox;
 	private readonly Camera _camera = new();
 
@@ -92,6 +93,12 @@ public sealed class EditorHost {
 	// "Loading" line, so the window says what it is doing before it stops to do it.
 	private string? _pendingLoad;
 	private bool _loadNoticeDrawn;
+
+	// A load the browser asked for that the unsaved-changes prompt has let through, started once the frame is rendered.
+	private string? _approvedLoad;
+
+	// Whether Esc was down last frame: it acts as it goes down, so one held through a prompt's Cancel does not ask again.
+	private bool _escapeHeld;
 
 	// An Undo (true) or Redo (false) chosen from the Edit menu, made once the frame's ImGui is rendered.
 	private bool? _pendingStep;
@@ -144,7 +151,10 @@ public sealed class EditorHost {
 		_flyFarPlane = _camera.FarPlane;
 		_padPointer = new GamepadPointer { Settings = JoystickMapFile.LoadIn(_installData).Mouse };
 		_settingsPanel = new EditorSettingsPanel(_settings);
-		_volBrowser = new VolMissionBrowser(() => MissionFileLaunch.List(launch.ShellContent()));
+		_volBrowser = new VolMissionBrowser(() =>
+			VolMissionBrowser.Merge(MissionFileLaunch.List(launch.ShellContent()), SavedMissions.List(launch.InstallRoot)));
+		_saving = new MissionSaving(launch.InstallRoot, launch.ShellContent, _missionCache);
+		_saving.Saved += _volBrowser.Refresh;
 		_toolbox = new StructureToolbox(launch.SimulatorContent);
 
 		string scriptPath = launch.ScriptPath ?? MissionLoader.DefaultScriptPath(launch.InstallRoot);
@@ -164,8 +174,10 @@ public sealed class EditorHost {
 			_mission.Selection.FocusRequested += Frame;
 		}
 
+		_saving.Mission = _mission;
+
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, Delete deletes the selected object, Ctrl+Z/Ctrl+Y undo/redo, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a structure from the Toolbox onto the ground to add it, Delete deletes the selected object, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -176,6 +188,7 @@ public sealed class EditorHost {
 		_window.Render += OnRender;
 		_window.Closing += OnClosing;
 		_window.FocusChanged += focused => _focused = focused;
+		_window.CloseRequested = OnCloseRequested;
 	}
 
 	/// <summary>Runs the editor until its window closes or its turn in the game's ends, and returns how it ended.</summary>
@@ -195,7 +208,17 @@ public sealed class EditorHost {
 		return host._exit;
 	}
 
-	private string WindowTitle => _mission?.WindowTitle ?? "HERCULAN Mission Editor";
+	private string WindowTitle => _mission?.Title(_saving.Dirty) ?? "HERCULAN Mission Editor";
+
+	// The window being closed: let through when nothing is unsaved, else refused while the unsaved-changes prompt asks.
+	private bool OnCloseRequested() {
+		if (!_saving.Dirty) {
+			return true;
+		}
+
+		_saving.Leave(_launch.FromGame ? "closing the game" : "quitting", () => Close(EditorExit.Closed));
+		return false;
+	}
 
 	private void OnLoad(GL gl, IInputContext input) {
 		_gl = gl;
@@ -307,9 +330,14 @@ public sealed class EditorHost {
 			PadButton(_padPointer.RightClickHeld, ref _padRightHeld, MouseButton.Right);
 		}
 
-		if (_keyboard?.IsKeyPressed(Key.Escape) == true) {
-			Close(_launch.FromGame ? EditorExit.BackToGame : EditorExit.Closed);
-			return;
+		bool escape = _keyboard?.IsKeyPressed(Key.Escape) == true;
+		bool escapePressed = escape && !_escapeHeld;
+		_escapeHeld = escape;
+		if (escapePressed && !_saving.IsOpen) {
+			var exit = _launch.FromGame ? EditorExit.BackToGame : EditorExit.Closed;
+			if (_saving.Leave(_launch.FromGame ? "returning to the game" : "quitting", () => Close(exit))) {
+				return;
+			}
 		}
 
 		Vector2 lookDelta = Vector2.Zero;
@@ -350,9 +378,9 @@ public sealed class EditorHost {
 	}
 
 	// V toggles the top-down view, Delete deletes the selected object, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes,
-	// unless a text field has the keyboard, which has its own undo. None of them while a drag is under way.
+	// Ctrl+S saves, unless a text field or a prompt has the keyboard. None of them while a drag is under way.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
-		if (_mission?.Gizmo.Dragging == true || (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
+		if (_mission?.Gizmo.Dragging == true || _saving.IsOpen || (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
 			return;
 		}
 
@@ -372,7 +400,9 @@ public sealed class EditorHost {
 		}
 
 		bool shift = keyboard.IsKeyPressed(Key.ShiftLeft) || keyboard.IsKeyPressed(Key.ShiftRight);
-		if (key == Key.Z && !shift) {
+		if (key == Key.S && !shift) {
+			_saving.Save();
+		} else if (key == Key.Z && !shift) {
 			_mission.Mover.Undo();
 		} else if (key == Key.Y || (key == Key.Z && shift)) {
 			_mission.Mover.Redo();
@@ -473,7 +503,11 @@ public sealed class EditorHost {
 
 		_settingsPanel.Draw();
 		_volBrowser.Draw();
+		_saving.Draw();
 		_imgui?.Render();
+		if (_window.Title != WindowTitle) {
+			_window.Title = WindowTitle;
+		}
 
 		if (_closePending) {
 			_window.Close();
@@ -493,8 +527,13 @@ public sealed class EditorHost {
 		if (_pendingLoad != null) {
 			_loadNoticeDrawn = true;
 		} else if (_volBrowser.TakeRequest() is { } requested) {
-			_pendingLoad = requested;
-			_volBrowser.Loading = requested;
+			_saving.Leave($"opening {requested}", () => _approvedLoad = requested);
+		}
+
+		if (_approvedLoad != null && _pendingLoad == null) {
+			_pendingLoad = _approvedLoad;
+			_volBrowser.Loading = _approvedLoad;
+			_approvedLoad = null;
 		}
 	}
 
@@ -618,6 +657,7 @@ public sealed class EditorHost {
 
 		_drawables?.Dispose();
 		_mission = opened;
+		_saving.Mission = opened;
 		opened.Selection.FocusRequested += Frame;
 		_drawables = Upload(_gl, _renderer, opened);
 		_editorCamera.ResetTo(opened.Scene.Camera.Position, opened.Scene.Camera.Heading);
@@ -658,9 +698,28 @@ public sealed class EditorHost {
 				_volBrowser.Open();
 			}
 
+			ImGui.Separator();
+			bool saveable = _saving.WhyNoSave == null && _mission?.Gizmo.Dragging != true;
+			if (ImGui.MenuItem("Save", "Ctrl+S", false, saveable)) {
+				_saving.Save();
+			}
+
+			WhyNoSave();
+			if (ImGui.MenuItem("Save As...", null, false, saveable)) {
+				_saving.SaveAs();
+			}
+
+			WhyNoSave();
+			if (ImGui.MenuItem("Export script.dat...", null, false, saveable)) {
+				_saving.Export();
+			}
+
+			WhyNoSave();
+			ImGui.Separator();
+
 			// Outside the game there is no game to go back to.
 			if (ImGui.MenuItem("Back to game", null, false, _launch.FromGame)) {
-				Close(EditorExit.BackToGame);
+				_saving.Leave("returning to the game", () => Close(EditorExit.BackToGame));
 			}
 
 			ImGui.EndMenu();
@@ -740,5 +799,12 @@ public sealed class EditorHost {
 		float height = ImGui.GetWindowSize().Y;
 		ImGui.EndMainMenuBar();
 		return height;
+	}
+
+	// Says, over a File menu item that saves, why it is disabled.
+	private void WhyNoSave() {
+		if (_saving.WhyNoSave is { } why && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+			ImGui.SetTooltip(why);
+		}
 	}
 }

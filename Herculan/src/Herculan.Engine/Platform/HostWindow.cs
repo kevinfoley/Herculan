@@ -511,10 +511,26 @@ public sealed class HostWindow : IDisposable {
 		}
 	}
 
-	// The player closing the window, or Silk's own close as the window is destroyed: either way no turn runs after.
+	// The player closing the window, or Silk's own close as the window is destroyed: either way no turn runs after,
+	// unless the turn refuses a close the player asked for (EngineWindow.CloseRequested).
 	private void OnNativeClosing() {
+		if (_turn is { Ended: false, CloseRequested: not null } turn && CanRefuseClose && !turn.CloseRequested()) {
+			RefuseClose();
+			return;
+		}
+
 		Closed = true;
 		_turn?.End();
+	}
+
+	private bool CanRefuseClose => _window.Native?.Glfw != null;
+
+	// Clears GLFW's close flag from inside its close callback, which is how GLFW lets a program refuse a close: Silk's
+	// callback only raises Closing, and its IsClosing, which the turn loop reads next, is that flag.
+	private unsafe void RefuseClose() {
+		if (_window.Native?.Glfw is { } native) {
+			Glfw.GetApi().SetWindowShouldClose((WindowHandle*)native, false);
+		}
 	}
 
 	// Whether the window is maximized or minimized, asked of GLFW rather than Silk's WindowState, which is updated

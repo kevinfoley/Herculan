@@ -99,8 +99,6 @@ internal sealed class PointMover {
 	private readonly MissionOverlay _overlay;
 	private PointFollowers _followers;
 	private readonly TerrainLeveller _leveller;
-	private readonly List<IEditorEdit> _undo = new();
-	private readonly List<IEditorEdit> _redo = new();
 
 	// Block 1 as it stood before a drag of a shared point or a group began writing into it, and the dragged group's
 	// ref, until the drag commits or is cancelled.
@@ -142,9 +140,12 @@ internal sealed class PointMover {
 	/// <summary>Why the mission cannot be edited at all, or null when it can.</summary>
 	public string? WhyReadOnly => _source == null ? ReadOnlyReason : null;
 
-	public bool CanUndo => _undo.Count > 0;
+	/// <summary>The undo history, which also says whether the mission has changed since it was last saved or opened.</summary>
+	public EditHistory History { get; } = new();
 
-	public bool CanRedo => _redo.Count > 0;
+	public bool CanUndo => History.CanUndo;
+
+	public bool CanRedo => History.CanRedo;
 
 	/// <summary>What <paramref name="selection"/> names that can be moved: a movable object, a waypoint or a group, else null.</summary>
 	public MoveTarget? TargetOf(EditorSelection? selection) => selection switch {
@@ -383,7 +384,7 @@ internal sealed class PointMover {
 		Record(new Edit(this, target, change, before, position));
 	}
 
-	public void Undo() => Step(_undo, _redo, edit => edit.Undo());
+	public void Undo() => Step(History.TakeUndo(), edit => edit.Undo());
 
 	/// <summary>
 	/// Builds again what places followers from the index (<see cref="PointFollowers"/>), for an index built again
@@ -391,28 +392,24 @@ internal sealed class PointMover {
 	/// </summary>
 	public void Rebuild() => _followers = new PointFollowers(_document, _scene, _index, _overlay, Place);
 
-	public void Redo() => Step(_redo, _undo, edit => edit.Redo());
+	public void Redo() => Step(History.TakeRedo(), edit => edit.Redo());
 
 	/// <summary>
 	/// Adds an edit made elsewhere, already applied, to the history as one step, and places and levels after it as
 	/// after a move.
 	/// </summary>
 	public void Record(IEditorEdit edit) {
-		_undo.Add(edit);
-		_redo.Clear();
+		History.Add(edit);
 		_followers.Sync();
 		_overlay.SetBox(MissionBox.Of(Points()));
 		_leveller.Relevel();
 	}
 
-	private void Step(List<IEditorEdit> from, List<IEditorEdit> to, Action<IEditorEdit> apply) {
-		if (from.Count == 0) {
+	private void Step(IEditorEdit? edit, Action<IEditorEdit> apply) {
+		if (edit == null) {
 			return;
 		}
 
-		var edit = from[^1];
-		from.RemoveAt(from.Count - 1);
-		to.Add(edit);
 		apply(edit);
 		_followers.Sync();
 		_overlay.SetBox(MissionBox.Of(Points()));

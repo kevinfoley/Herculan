@@ -92,6 +92,13 @@ public sealed class EngineWindow : IDisposable {
 		}
 	}
 
+	/// <summary>
+	/// Asked when the player closes the window while this turn runs, before anything ends; false keeps the window and
+	/// the turn open, as though it had not been closed. It is asked between frames, outside any ImGui frame, and only
+	/// where the window can refuse a close (GLFW's, <see cref="HostWindow"/>); null lets every close through.
+	/// </summary>
+	public Func<bool>? CloseRequested { get; set; }
+
 	/// <summary>Whether the turn has ended (<see cref="Closing"/>).</summary>
 	internal bool Ended { get; private set; }
 

@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Herculan.Engine\Herculan.Engine.csproj" />
+    <ProjectReference Include="..\..\src\Herculan.Engine.Editor\Herculan.Engine.Editor.csproj" />
   </ItemGroup>
 
 </Project>

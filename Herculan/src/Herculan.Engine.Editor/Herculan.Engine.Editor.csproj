@@ -14,4 +14,8 @@
     <ProjectReference Include="..\Herculan.Engine\Herculan.Engine.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Herculan.Engine.Tests" />
+  </ItemGroup>
+
 </Project>
