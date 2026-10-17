@@ -125,6 +125,7 @@ Central spatial-reference table: `{GUID, X, Y, Z}` points (2,661 real instances 
 | `0x0E` | Y (int32) | range 17,968–3,800,672 |
 | `0x12` | Z (int32) | range 0–35,400 (altitude) |
 
+490 points in 56 missions are named by no record of any row. `TRAIN1` to `TRAIN7` carry four each, and they are the mission box: their least and greatest X and Y are block 1's extent, a rectangle around everything the missions name ([`../simulation/heads-down-display.md`](../simulation/heads-down-display.md#the-maps-frame-of-reference)).
 
 ## Row #8 field decode — the waypoint group (`DAT_00470656`, 10 fixed bytes + nested-count×2 bytes/record)
 
@@ -400,7 +401,7 @@ count x {
 
 A line ending `" \n"` is authored to break there; the reader that copies these into a mission strips one trailing newline.
 
-`Msn_LoadEngText` (`0041768c`) loads it between rows 2 and 3, from the mission's path with everything from its first `.` replaced by the language's extension — `.eng`, or `.fre`/`.ger` by `Shell_Language` (`0048227a`), which a command-line switch sets. v1.0 ships only `.eng`; v1.10 adds the other two for every mission but `DEMO2` ([`../retail-builds.md`](../retail-builds.md#how-a-language-is-chosen)). A record whose condition fails is skipped, and one whose id is already loaded replaces that entry's text. `MissionStr_Write` (`004179f0`) writes every record that stays into `data\mission.str` as an ordinary [`.STR`](str-strings.md) of one group — the length of the rest, the count, then each line's length with its NUL, the line, and an attribute count of 0 — and rows #4, #10 and #17 have their ids renumbered to match, which is why `script.dat`'s refs are small where these are not.
+`Msn_LoadEngText` (`0041768c`) loads it between rows 2 and 3, from the mission's path with everything from its first `.` replaced by the language's extension — `.eng`, or `.fre`/`.ger` by `Shell_Language` (`0048227a`), which a command-line switch sets. v1.0 ships only `.eng`; v1.10 adds the other two for every mission but `DEMO2` ([`../retail-builds.md`](../retail-builds.md#how-a-language-is-chosen)). A record whose condition fails is skipped, and one whose id is already loaded replaces that entry's text. `MissionStr_Write` (`004179f0`) writes every record that stays into `data\mission.str` as an ordinary [`.STR`](str-strings.md) of one group — the length of the rest, the count, then each line's length with its NUL, the line, and an attribute count of 0 — and rows #4, #10 and #17 have their ids renumbered to match, which is why `script.dat`'s refs are small where these are not. DBSIM reads at most 50 of its lines (`DBSim_LoadScriptDat` (`00424308`)); the most records any retail `.ENG` holds is `C1_09`'s 49.
 
 A conditioned record is how a mission varies a line: an unconditioned record of the id comes first and later records of the same id replace it, so the line reads as the last record whose condition held.
 

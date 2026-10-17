@@ -1,5 +1,7 @@
 using System.Numerics;
+using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io;
+using HercWorks.Core.Io.Transform.Common;
 using Herculan.Engine.Content;
 using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
@@ -62,6 +64,7 @@ public sealed class EditorHost {
 	private readonly EditorSettingsPanel _settingsPanel;
 	private readonly VolMissionBrowser _volBrowser;
 	private readonly MissionSaving _saving;
+	private readonly NewMissionDialog _newMission;
 	private readonly StructureToolbox _toolbox;
 	private readonly Camera _camera = new();
 
@@ -96,6 +99,11 @@ public sealed class EditorHost {
 
 	// A load the browser asked for that the unsaved-changes prompt has let through, started once the frame is rendered.
 	private string? _approvedLoad;
+
+	// A new mission File > New mission asked for, built and opened as a load is: at the start of the frame after the one
+	// that drew the dialog's "Creating" line.
+	private NewMissionRequest? _pendingNew;
+	private bool _newNoticeDrawn;
 
 	// Whether Esc was down last frame: it acts as it goes down, so one held through a prompt's Cancel does not ask again.
 	private bool _escapeHeld;
@@ -155,6 +163,7 @@ public sealed class EditorHost {
 			VolMissionBrowser.Merge(MissionFileLaunch.List(launch.ShellContent()), SavedMissions.List(launch.InstallRoot)));
 		_saving = new MissionSaving(launch.InstallRoot, launch.ShellContent, _missionCache);
 		_saving.Saved += _volBrowser.Refresh;
+		_newMission = new NewMissionDialog(_saving, () => MissionZones.List(launch.SimulatorContent, launch.ShellContent()));
 		_toolbox = new StructureToolbox(launch.SimulatorContent);
 
 		string scriptPath = launch.ScriptPath ?? MissionLoader.DefaultScriptPath(launch.InstallRoot);
@@ -333,7 +342,7 @@ public sealed class EditorHost {
 		bool escape = _keyboard?.IsKeyPressed(Key.Escape) == true;
 		bool escapePressed = escape && !_escapeHeld;
 		_escapeHeld = escape;
-		if (escapePressed && !_saving.IsOpen) {
+		if (escapePressed && !_saving.IsOpen && !_newMission.IsOpen) {
 			var exit = _launch.FromGame ? EditorExit.BackToGame : EditorExit.Closed;
 			if (_saving.Leave(_launch.FromGame ? "returning to the game" : "quitting", () => Close(exit))) {
 				return;
@@ -380,7 +389,8 @@ public sealed class EditorHost {
 	// V toggles the top-down view, Delete deletes the selected object, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes,
 	// Ctrl+S saves, unless a text field or a prompt has the keyboard. None of them while a drag is under way.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
-		if (_mission?.Gizmo.Dragging == true || _saving.IsOpen || (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
+		if (_mission?.Gizmo.Dragging == true || _saving.IsOpen || _newMission.IsOpen
+				|| (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
 			return;
 		}
 
@@ -464,6 +474,12 @@ public sealed class EditorHost {
 			_volBrowser.Loading = null;
 		}
 
+		if (_pendingNew != null && _newNoticeDrawn) {
+			CreateMission(_pendingNew);
+			_pendingNew = null;
+			_newNoticeDrawn = false;
+		}
+
 		if (_renderer == null || _wireframe == null) {
 			return;
 		}
@@ -504,6 +520,7 @@ public sealed class EditorHost {
 		_settingsPanel.Draw();
 		_volBrowser.Draw();
 		_saving.Draw();
+		_newMission.Draw();
 		_imgui?.Render();
 		if (_window.Title != WindowTitle) {
 			_window.Title = WindowTitle;
@@ -534,6 +551,13 @@ public sealed class EditorHost {
 			_pendingLoad = _approvedLoad;
 			_volBrowser.Loading = _approvedLoad;
 			_approvedLoad = null;
+		}
+
+		if (_pendingNew != null) {
+			_newNoticeDrawn = true;
+		} else if (_newMission.TakeRequest() is { } asked) {
+			_pendingNew = asked;
+			_newMission.Creating = asked.Name;
 		}
 	}
 
@@ -655,14 +679,56 @@ public sealed class EditorHost {
 			return;
 		}
 
+		SwapTo(_gl, _renderer, opened);
+		_saving.Mission = opened;
+		_volBrowser.Close();
+	}
+
+	// Builds the new mission File > New mission asked for (NewMission, in HercWorks.Core), generates its handoff into the
+	// scratch directory as a VOL load does, from the .MSN held in memory, and swaps the editor over to it, unsaved. On
+	// failure the open mission stays, and the dialog says why.
+	private void CreateMission(NewMissionRequest request) {
+		if (_gl == null || _renderer == null) {
+			return;
+		}
+
+		var zone = request.Zone;
+		var (msn, text) = NewMission.Build(zone.Theater, zone.Zone, request.Night, zone.Width, zone.Height);
+		EditorMission opened;
+		try {
+			ClearMissionCache();
+			if (MissionFileLaunch.OpenNew(_launch.ShellContent(), _launch.InstallRoot, request.Name,
+					new MissionFileTransformer().Write(msn) ?? throw new InvalidDataException("The new mission does not write."),
+					new MissionStringFileTransformer().Write(text), _missionCache, out var source, out string? failure) is not { } generated) {
+				Fail(failure);
+				return;
+			}
+
+			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source);
+		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
+				or UnauthorizedAccessException) {
+			Fail(ex.Message);
+			return;
+		}
+
+		SwapTo(_gl, _renderer, opened);
+		_saving.OpenNew(opened);
+		_newMission.Close();
+
+		void Fail(string? reason) {
+			_newMission.Creating = null;
+			_newMission.Failure = reason;
+			Console.Error.WriteLine($"Cannot create {request.Name}: {reason}");
+		}
+	}
+
+	// Puts <opened> in the editor in place of the open mission, its drawing uploaded and the camera where its scene starts.
+	private void SwapTo(GL gl, SceneRenderer renderer, EditorMission opened) {
 		_drawables?.Dispose();
 		_mission = opened;
-		_saving.Mission = opened;
 		opened.Selection.FocusRequested += Frame;
-		_drawables = Upload(_gl, _renderer, opened);
+		_drawables = Upload(gl, renderer, opened);
 		_editorCamera.ResetTo(opened.Scene.Camera.Position, opened.Scene.Camera.Heading);
-		_window.Title = WindowTitle;
-		_volBrowser.Close();
 		ReportLoaded(opened);
 	}
 
@@ -694,6 +760,11 @@ public sealed class EditorHost {
 		}
 
 		if (ImGui.BeginMenu("File")) {
+			bool idle = _pendingLoad == null && _pendingNew == null && _mission?.Gizmo.Dragging != true;
+			if (ImGui.MenuItem("New mission...", null, false, idle)) {
+				_saving.Leave("starting a new mission", _newMission.Open);
+			}
+
 			if (ImGui.MenuItem("Load from VOL", null, false, _pendingLoad == null)) {
 				_volBrowser.Open();
 			}

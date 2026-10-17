@@ -21,4 +21,17 @@ namespace HercWorks.Core.Data.File.Msn;
 public class MissionSettingsPatch {
 	/// <summary>Raw 41-short (82-byte) record, preserved verbatim for round-trip fidelity.</summary>
 	public short[] Data { get; set; } = new short[41];
+
+	/// <summary>The words <see cref="Data"/> holds: a condition, ten header words, thirty flag indices.</summary>
+	public const int Words = 41;
+
+	/// <summary>
+	/// Where the ten header words start in <see cref="Data"/>, after the condition: <c>script.dat</c> header offset
+	/// <c>o</c> is <c>Data[HeaderWordsStart + o / 2]</c>. What each word means is
+	/// <see cref="Script.ScriptDat"/>'s and docs/retail/formats/script-dat.md#header-format's.
+	/// </summary>
+	public const int HeaderWordsStart = 1;
+
+	/// <summary>Where the thirty flag indices to clear start in <see cref="Data"/>.</summary>
+	public const int ClearListStart = 11;
 }

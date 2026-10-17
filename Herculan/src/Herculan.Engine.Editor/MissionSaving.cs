@@ -84,6 +84,12 @@ internal sealed class MissionSaving {
 		}
 	}
 
+	/// <summary>Takes <paramref name="mission"/>, a new mission no file holds yet, as the one saved, and as unsaved until it is.</summary>
+	public void OpenNew(EditorMission mission) {
+		Mission = mission;
+		mission.Mover.History.MarkNeverSaved();
+	}
+
 	/// <summary>Whether a prompt is up, which takes the keyboard.</summary>
 	public bool IsOpen => _prompt != Prompt.None;
 
@@ -278,12 +284,27 @@ internal sealed class MissionSaving {
 	}
 
 	private void DrawReplace() {
-		string name = _request!.Name;
-		ImGui.TextWrapped($"The install already has a saved {name}. Replace it? The one there is kept as "
-			+ $"{Path.GetFileName(SavedMissions.MissionPath(_installRoot, name))}{SavedMissions.BackupExtension}.");
+		ImGui.TextWrapped(ReplaceQuestion(_request!.Name));
 		Spacer();
 		Confirm("Replace");
 	}
+
+	/// <summary>
+	/// Why a new mission cannot be named <paramref name="name"/>, or null when it can: a name Save As takes
+	/// (<see cref="SavedMissions.WhyNotName"/>) that no archive mission has. A new mission opens as a mission no archive
+	/// holds, and the game would play it under an archive mission's name as that mission, in its career position.
+	/// </summary>
+	public string? WhyNotNewName(string name) =>
+		SavedMissions.WhyNotName(name)
+		?? (InArchive(name) ? $"The archives have a mission named {name}; a new mission takes a name of its own." : null);
+
+	/// <summary>Whether naming a mission <paramref name="name"/> means its save replaces another mission's saved files.</summary>
+	public bool HasSaved(string name) => SavedMissions.Exists(_installRoot, name);
+
+	/// <summary>The question asked before a save replaces the saved mission <paramref name="name"/>.</summary>
+	public string ReplaceQuestion(string name) =>
+		$"The install already has a saved {name}. Replace it? The one there is kept as "
+		+ $"{Path.GetFileName(SavedMissions.MissionPath(_installRoot, name))}{SavedMissions.BackupExtension}.";
 
 	private void DrawExportFolder() {
 		ImGui.TextWrapped("Writes the generated script.dat and mission.str, with the player.mec and mission.var the open "

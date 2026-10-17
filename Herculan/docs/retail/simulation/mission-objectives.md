@@ -62,7 +62,7 @@ else if (!quiet && outside box)            7
 else                                       EvaluateObjectives()
 ```
 
-The box is block 1's own extent, `Mission_Box` (`004aa6c4`), which `DBSim_LoadScriptDat` (`00424308`) accumulates as it reads the coordinates; `Mission_IsOutsideBox` (`0041373c`) tests a position against it widened by a margin, 0 for answer 7 and 110000 for answer 8. The Heads-Down Display's map is framed by the same one ([`heads-down-display.md`](heads-down-display.md)).
+The box is block 1's own extent, `Mission_Box` (`004aa6c4`), which `DBSim_LoadScriptDat` (`00424308`) accumulates as it reads the coordinates; `Mission_IsOutsideBox` (`0041373c`) tests a position against it widened by a margin, 0 for answer 7 and 110000 for answer 8, and only a position strictly inside counts as in: one on the box's edge is outside. The Heads-Down Display's map is framed by the same one ([`heads-down-display.md`](heads-down-display.md)).
 
 **`quiet` is the third argument, and it means "just answer the question".** Set, the function skips the 500 ms hold, both box arms and the `SYSTEM.STR` post, and only computes. The poll clears it; the player's own [Q] clears nothing else and sets it — so **a [Q] can never answer 7 or 8**, and a player standing outside the mission box is told how the objectives stand as though they were inside it.
 

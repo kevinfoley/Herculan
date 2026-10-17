@@ -5193,7 +5193,13 @@
       "confidence": "high",
       "name": "Mission_IsOutsideBox",
       "description": "(point, margin): returns 1 when the point's x and y are not strictly inside Mission_Box (004aa6c4) widened by margin on every side, 0 when they are. It reads the box and writes nothing; DBSim_LoadScriptDat builds the box inline. SimObject_IsOutsideMissionBox and SimObject_IsFarOutsideMissionBox call it for Mission_Status's two box arms.",
-      "source": "DBSIM decompile and disassembly at 0041373c"
+      "source": "DBSIM decompile and disassembly at 0041373c",
+      "verified": {
+        "bytes": "0041373c+66",
+        "sha1": "9ecb6b16316c",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00413780",

@@ -135,6 +135,19 @@ public static class ShellTrainingLaunch {
 			return null;
 		}
 
+		return Load(directory, content, options, row, missionPath, msn, text, instantAction, roll, clearList, game, hangar,
+			out failure, generating);
+	}
+
+	/// <summary>
+	/// <see cref="Load(string, GameContent, SimulatorPreferences, int, string?, bool, Func{short, int}, short[], PlayerSave,
+	/// ShellHangar, out string?, MissionGenerating?)"/> for a mission already read: the <c>.MSN</c> <paramref name="msn"/>
+	/// and its text <paramref name="text"/>, or null, named <paramref name="missionPath"/>. The original reads every mission
+	/// from its archives; this engine's mission editor hands one it holds in memory (<see cref="MissionFileLaunch.OpenNew"/>).
+	/// </summary>
+	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
+			string missionPath, byte[] msn, byte[]? text, bool instantAction, Func<short, int> roll, short[] clearList,
+			PlayerSave game, ShellHangar hangar, out string? failure, MissionGenerating? generating = null) {
 		// MsnGen_SeedCampaignFlags: a training load clears the flag array first.
 		var flags = new short[MissionGenerator.CampaignFlagCount];
 		SeedDrawnFlags(flags, roll);
@@ -189,12 +202,15 @@ public static class ShellTrainingLaunch {
 		return new ShellTrainingHandoff(scriptPath, missionPath, game, hangar, positions);
 	}
 
+	/// <summary>The theater a training load writes over the mission's own, whatever it patched.</summary>
+	public const short PracticeTheater = 1;
+
 	/// <summary>
-	/// The header words a training load writes over the loaded header: word 0 set to 1, then the ammunition, damage,
+	/// The header words a training load writes over the loaded header: word 0 set to <see cref="PracticeTheater"/>, then the ammunition, damage,
 	/// difficulty and time-of-day options into words 5 to 7 and 9, and word 8 cleared.
 	/// </summary>
 	private static short?[] PracticeHeader(SimulatorPreferences options) => [
-		1, null, null, null, null,
+		PracticeTheater, null, null, null, null,
 		options[AmmoOption], options[DamageOption], options[DifficultyOption], 0, options[TimeOfDayOption],
 	];
 
