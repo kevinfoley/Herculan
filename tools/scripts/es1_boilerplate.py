@@ -5,7 +5,7 @@ HeapPtr_Dtor copies, the GLRegion destructors, the CTL no-op slots), and the fra
 vtables hold (Herculan/docs/es1/formats/compiler.md#vtables). A batch runs it first over its range and
 names by hand only what it leaves.
 
-  scan BIN LO HI --module TAG[@ADDR] [--module TAG@ADDR ...] [--out batch.json] [--source TEXT] [--fresh]
+  scan BIN LO HI --module TAG[@ADDR][=DOC#ANCHOR] [--module ...] [--out batch.json] [--source TEXT] [--fresh]
 
 Units, over LO..HI inclusive: every Ghidra function entry (not the 0x90 padding thunks before a
 prologue), every vtable slot target with no Ghidra function (a frameless stub, entered at its first
@@ -32,9 +32,10 @@ A unit of either kind that its slot pairs with a named one takes that base befor
 non-stub unit whose matches carry two bases, and a unit whose best pairings do, are reported as ties.
 
 --module TAG names the range's object file, or TAG@ADDR one starting at ADDR, for a range spanning
-several. --out writes the proposals as an insert-ready batch (confidence high) and the unnamed stubs
-to <out>.unnamed.json for the batch to name; both carry --source (a doc section) before the
-disassembly reference. Printed after them: the --define list (units with no Ghidra function) and the
+several; TAG@ADDR=DOC#ANCHOR also gives that file's entries their source doc section, and --source
+is the section for a module that names none. --out writes the proposals as an insert-ready batch
+(confidence high) and the unnamed stubs to <out>.unnamed.json for the batch to name; both carry the
+doc section before the disassembly reference. Printed after them: the --define list (units with no Ghidra function) and the
 es2_stamp.py commands, --via raw for those. --fresh treats the range's own entries as unnamed and
 compares each proposal with the name it has: a positive control over a range already named.
 It writes nothing under tools/ghidra_scripts/.
@@ -252,11 +253,16 @@ def stub_summary(ins):
 
 
 def module_of(modules, a):
-    tag = modules[0][0]
-    for t, start in modules:
-        if start <= a:
-            tag = t
-    return tag
+    return module_at(modules, a)[0]
+
+
+def module_at(modules, a):
+    """The (tag, start, source) of the object file holding a."""
+    found = modules[0]
+    for m in modules:
+        if m[1] <= a:
+            found = m
+    return found
 
 
 def scan(args):
@@ -265,8 +271,9 @@ def scan(args):
     img = x.img
     modules = []
     for m in args.module:
+        m, _, src = m.partition("=")
         t, _, at = m.partition("@")
-        modules.append((t, int(at, 16) if at else lo))
+        modules.append((t, int(at, 16) if at else lo, src or args.source))
     modules.sort(key=lambda m: m[1])
     names = x.known
     base_of = split_scores(set(names.values()))
@@ -404,7 +411,8 @@ def scan(args):
         return d
 
     def source(a):
-        return (args.source + "; " if args.source else "") + f"{x.binary} disassembly at {a:08x}"
+        doc = module_at(modules, a)[2]
+        return (doc + "; " if doc else "") + f"{x.binary} disassembly at {a:08x}"
 
     proposals, unnamed, ties, notes = [], [], [], []
     taken = set(names.values())
@@ -651,9 +659,11 @@ def main():
     s.add_argument("lo")
     s.add_argument("hi", help="last address of the range, inclusive")
     s.add_argument("--module", action="append", required=True,
-                   help="TAG for the range's object file, or TAG@ADDR for one starting at ADDR")
+                   help="TAG for the range's object file, or TAG@ADDR for one starting at ADDR; "
+                        "=DOC#ANCHOR after either gives that file's entries their own source")
     s.add_argument("--out", help="write the insert-ready batch here (and <out>.unnamed.json)")
-    s.add_argument("--source", default="", help="the doc section for each entry's source field")
+    s.add_argument("--source", default="",
+                   help="the doc section for the source field of entries whose --module gives none")
     s.add_argument("--fresh", action="store_true",
                    help="treat the range's entries as unnamed and compare the proposals with them")
     s.set_defaults(fn=scan)

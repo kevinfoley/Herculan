@@ -62,6 +62,9 @@ RAW_LIMIT = 32
 # A sentence that says who calls the function. That is only ever known from a search or from reading
 # the caller, so the sentence has to say which.
 CALLER_RE = re.compile(r"\b(called (by|from)|calls? (it|this)|callers?|reached (only )?(from|through))\b", re.I)
+# "calls Name (addr) ... calls it again": the function's own call to a callee it has just named, where
+# "it" is that callee, not a claim about who calls the function.
+OWN_CALL_RE = re.compile(r"\bcalls? `?[A-Za-z_][A-Za-z0-9_]*`? \(", re.I)
 # A sentence that states an absence or an exclusivity about other code -- who calls, reads, writes or
 # reaches something -- which is the shape a search result takes. Negatives about the function's own
 # body ("returns 0 when the index is not -1") are left alone.
@@ -87,7 +90,8 @@ def claim_findings(description: str, negatives: list[dict]) -> tuple[list[str], 
     for s in sentences(description):
         if SEARCH_RE.search(s):
             continue
-        if CALLER_RE.search(s):
+        if any(not (re.match(r"calls? (it|this)$", m.group(0), re.I) and OWN_CALL_RE.search(s[:m.start()]))
+               for m in CALLER_RE.finditer(s)):
             callers.append(s)
         elif NEGATIVE_RE.search(s) and not any(c and c in s.lower() for c in claims):
             negs.append(s)
@@ -321,7 +325,8 @@ def cmd_list(args) -> int:
     return 0
 
 
-def main() -> int:
+def build_parser() -> argparse.ArgumentParser:
+    """The command line, also used by es1_batch.py precheck to read a command file's stamp lines."""
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
 
@@ -356,8 +361,11 @@ def main() -> int:
     l = sub.add_parser("list", help="list stamped entries")
     l.add_argument("--binary", choices=es2_symbols.BINARIES)
     l.set_defaults(fn=cmd_list)
+    return ap
 
-    args = ap.parse_args()
+
+def main() -> int:
+    args = build_parser().parse_args()
     return args.fn(args)
 
 

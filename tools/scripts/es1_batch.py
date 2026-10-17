@@ -16,21 +16,35 @@ A batch subagent cannot touch the known_symbols files, so it lists the writes in
    which `--via raw` cannot read), then `es2_stamp.py check`.
 6. The paths to stage, the untracked handoff docs left out.
 
+Before step 1 (or the --from step) it runs `precheck` and stops with nothing written on a problem
+(--no-precheck skips it). A refused stamp line also prints the line again with only the refused
+targets, the rest of the line being stamped.
+
+`precheck` runs es2_stamp.py's wording checks over each stamp line against the descriptions the
+file's insert and edit JSONs will write (known_symbols for the rest), with that line's flags, reading
+and writing no file but those: REFUSE for a sentence the stamp would stop on, UNUSED for a
+--read-callers or --own-negatives no target of its line needs, and es2_naming.py's SHAPE warnings. A
+subagent runs it on its own command file before handing it in.
+
 Only those tools and subcommands run; any other line (grep, git, shell) is skipped with a note,
 since the file is a subagent's output. Comment and blank lines are ignored.
 
 `brief` writes the batch subagent's brief: tools/scripts/es1_batch_brief.md, the rules every batch
 shares, with the batch number, range and scratch folder filled in and the batch's own section (what
-the range holds, its leads, the docs to read) taken from a notes file.
+the range holds, its leads, the docs to read) taken from a notes file. --auto appends the leads the
+tools give: `es1_boilerplate.py bounds` over the range with a 0x100 margin, the function counts,
+`es2_naming.py match`'s candidates, and the docs that name one of the range's function addresses.
 
 Usage:
-    python tools/scripts/es1_batch.py brief N LO HI --scratch DIR [--notes NOTES.md] [--out FILE]
-    python tools/scripts/es1_batch.py run COMMANDS.txt [--from N]
+    python tools/scripts/es1_batch.py brief N LO HI --scratch DIR [--notes NOTES.md] [--auto] [--out FILE]
+    python tools/scripts/es1_batch.py run COMMANDS.txt [--from N] [--no-precheck]
+    python tools/scripts/es1_batch.py precheck COMMANDS.txt
     python tools/scripts/es1_batch.py list COMMANDS.txt
 """
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import shlex
 import subprocess
@@ -108,6 +122,96 @@ def parse(path):
     return steps, skipped
 
 
+def json_path(p):
+    p = Path(p)
+    return p if p.is_absolute() else REPO / p
+
+
+def batch_items(steps):
+    """The entries and edits of the file's insert and edit JSONs, as (subcommand, item) pairs."""
+    out = []
+    for s in steps:
+        if s.kind == "write" and s.argv[0] == "es2_naming.py" and s.argv[1] in ("insert", "edit"):
+            for e in json.loads(json_path(s.argv[2]).read_text(encoding="utf-8")):
+                out.append((s.argv[1], e))
+    return out
+
+
+def precheck(steps, start=1):
+    """Runs es2_stamp.py's wording checks over each stamp line from step `start` on, against the
+    descriptions the file's inserts and edits will write (the known_symbols text for the rest), with
+    that line's flags. Reads known_symbols, writes nothing. Prints a REFUSE line for each sentence the
+    stamp would stop on, UNUSED for a --read-callers or --own-negatives no target of its line needs, and
+    es2_naming.py's SHAPE warnings; returns the number of REFUSE and target problems."""
+    import es2_naming
+    import es2_stamp
+    import es2_symbols
+    descs, names, types = {}, {}, {}
+    items = batch_items(steps)
+    for sub, e in items:
+        key = (e["binary"], e["address"].lower())
+        fields = e if sub == "insert" else (e.get("fields") or {e["field"]: e["value"]})
+        if "description" in fields:
+            descs[key] = fields["description"]
+        if fields.get("name"):
+            names[(e["binary"], fields["name"])] = key[1]
+        if sub == "insert":
+            types[key] = e["type"]
+    es2_naming.print_shape_warnings([e for _, e in items])
+    parser = es2_stamp.build_parser()
+    known = {}
+    problems = 0
+    for i, s in enumerate(steps, 1):
+        if i < start or s.argv[:2] != ["es2_stamp.py", "stamp"]:
+            continue
+        a = parser.parse_args(s.argv[1:])
+        b = a.binary
+        if b not in known:
+            ents = es2_symbols.entries(b)
+            known[b] = ({e["address"].lower(): e for e in ents}, {e["name"]: e["address"].lower() for e in ents if e.get("name")})
+        by_addr, by_name = known[b]
+        negatives = [es2_stamp.parse_negative(n) for n in a.negative]
+        used = {"callers": False, "negs": False}
+        for t in (t for arg in a.target for t in arg.split("+") if t):
+            addr = t.lower() if re.fullmatch(r"[0-9a-fA-F]{8}", t) else names.get((b, t)) or by_name.get(t)
+            entry = by_addr.get(addr) if addr else None
+            kind = types.get((b, addr)) or (entry or {}).get("type")
+            if not addr or not kind:
+                print("  step %d: %s %s has no entry in the file's inserts or in known_symbols" % (i, b, t))
+                problems += 1
+                continue
+            if kind != "function":
+                print("  step %d: %s %s is a %s entry; stamps are for functions" % (i, b, t, kind))
+                problems += 1
+                continue
+            callers, negs = es2_stamp.claim_findings(descs.get((b, addr), (entry or {}).get("description", "")), negatives)
+            for found, flag, label, key in ((callers, a.read_callers, "--read-callers", "callers"),
+                                            (negs, a.own_negatives, "--own-negatives", "negs")):
+                if found:
+                    used[key] = True
+                    if not flag:
+                        problems += 1
+                        for sent in found:
+                            print("  REFUSE step %d (line %d): %s %s needs %s or a reword:\n      %s"
+                                  % (i, s.line, b, addr, label, sent))
+        for key, flag, label in (("callers", a.read_callers, "--read-callers"), ("negs", a.own_negatives, "--own-negatives")):
+            if flag and not used[key]:
+                print("  UNUSED step %d (line %d): no target needs %s; drop it" % (i, s.line, label))
+    return problems
+
+
+def stamp_retry_line(argv, refused):
+    """The stamp line again with only the refused targets, its options kept."""
+    takes_value = {"--binary", "--scope", "--via", "--negative"}
+    opts, it = [], iter(argv[2:])
+    for tok in it:
+        if tok in takes_value:
+            opts += [tok, shlex.quote(next(it, ""))]
+        elif tok.startswith("--"):
+            opts.append(tok)
+    return " ".join(["py", "tools/scripts/es2_stamp.py", "stamp", "+".join(refused)] + opts)
+
+
 def run(argv, write=False):
     script = SCRIPTS / argv[0]
     cmd = [sys.executable, str(script)] + argv[1:] + (["--write"] if write else [])
@@ -150,10 +254,25 @@ def cmd_list(args):
     return 0
 
 
+def cmd_precheck(args):
+    steps, _ = parse(args.file)
+    bad = precheck(steps)
+    print("%d problem(s)" % bad)
+    return 1 if bad else 0
+
+
 def cmd_run(args):
     steps, skipped = parse(args.file)
     for n, line in skipped:
         print("skip line %d (not a write, stamp or apply): %s" % (n, line))
+    if not args.no_precheck:
+        print("precheck (es2_stamp's wording checks on the stamp lines, before any write):")
+        bad = precheck(steps, args.start)
+        if bad:
+            print("\nSTOPPED before step %d: %d precheck problem(s). Fix those lines (or reword the JSON) and "
+                  "run again; nothing was written." % (args.start, bad))
+            return 1
+        print("   clean")
     for i, s in enumerate(steps, 1):
         if i < args.start:
             continue
@@ -193,6 +312,11 @@ def cmd_run(args):
             code, out = run(s.argv)
             show(out, 60 if code else 10)
             if code:
+                refused = list(dict.fromkeys(re.findall(r"^([0-9a-f]{8}) .*\bREFUSED\b", out, re.M)))
+                if s.argv[:2] == ["es2_stamp.py", "stamp"] and refused:
+                    print("\n   The line's other targets are stamped. Replace line %d with the refused ones only, "
+                          "adding the flag they need or rewording them:\n   %s"
+                          % (s.line, stamp_retry_line(s.argv, refused)))
                 return stop(i, "it was refused or failed; rerun that line with the change it needs")
     print("\nDone. To stage (handoff docs left out):")
     for p in stage_list():
@@ -205,10 +329,48 @@ def stop(i, why):
     return 1
 
 
+FUNC_LINE = re.compile(r"^([0-9a-f]{8})\s+\d+\s+(?:(\S+)\s+)?(\S+)$")
+
+
+def auto_leads(binary, lo, hi):
+    """The mechanical part of a batch's notes: the object-file evidence over the range with a 0x100
+    margin, its function counts, es2_naming.py match's candidates, and the docs that already name one of
+    its function addresses. Leads only; the notes still give what the range is and its Open items."""
+    a, b = int(lo, 16), int(hi, 16)
+    out = ["**Leads the tools found** (`es1_batch.py brief --auto`; each is a lead to settle, not a fact):", ""]
+    _, bounds = run(["es1_boilerplate.py", "bounds", binary, "%08x" % max(0, a - 0x100), "%08x" % (b + 0x100)])
+    out += ["`es1_boilerplate.py bounds %s %08x %08x`:" % (binary, max(0, a - 0x100), b + 0x100), "```",
+            *[l for l in bounds.splitlines() if l.strip() and not l.startswith("warning:")], "```", ""]
+    _, funcs = run(["es2_naming.py", "funcs", binary, lo, hi])
+    rows = [m.groups() for m in map(FUNC_LINE.match, funcs.splitlines()) if m]
+    mark = lambda r, c: c in (r[1] or "")  # noqa: E731
+    real = [r for r in rows if not mark(r, "p")]
+    out += ["`es2_naming.py funcs`: %d functions (padding entries left out), %d unnamed, %d stamped."
+            % (len(real), sum(mark(r, "*") for r in real), sum(mark(r, "S") for r in real)), ""]
+    _, match = run(["es2_naming.py", "match", binary, "DBSIM+VSHELL", "--range", "%s-%s" % (lo, hi)])
+    cands = [l.rstrip() for l in match.splitlines() if re.match(r"[0-9a-f]{8} ", l) or l.startswith(binary + " against")]
+    out += ["`es2_naming.py match %s DBSIM+VSHELL --range %s-%s`:" % (binary, lo, hi), "```", *cands, "```", ""]
+    addrs = {r[0] for r in real}
+    hits = {}
+    if addrs:
+        rx = re.compile(r"(?<![0-9a-fA-F])(" + "|".join(sorted(addrs)) + r")(?![0-9a-fA-F])")
+        for p in sorted((REPO / "Herculan" / "docs").rglob("*.md")):
+            if p.name.startswith("handoff-"):
+                continue
+            found = sorted(set(rx.findall(p.read_text(encoding="utf-8", errors="replace"))))
+            if found:
+                hits[p.relative_to(REPO).as_posix()] = found
+    out.append("Docs naming one of the range's function addresses (an Open item there may be this batch's to close):")
+    out += ["- `%s`: %s" % (p, ", ".join("`%s`" % f for f in found)) for p, found in hits.items()] or ["- none"]
+    return "\n".join(out)
+
+
 def cmd_brief(args):
     """Fills es1_batch_brief.md with the batch number, range, scratch folder and the batch's own notes."""
     text = (SCRIPTS / "es1_batch_brief.md").read_text(encoding="utf-8")
     notes = Path(args.notes).read_text(encoding="utf-8").strip() if args.notes else ""
+    if args.auto:
+        notes = (notes + "\n\n" if notes else "") + auto_leads(args.binary, args.lo.lower().zfill(8), args.hi.lower().zfill(8))
     scratch = args.scratch.replace("/", "\\")
     for k, v in (("BATCH", str(args.batch)), ("LO", args.lo.lower().zfill(8)), ("HI", args.hi.lower().zfill(8)),
                  ("SCRATCH", scratch), ("NOTES", notes)):
@@ -233,13 +395,19 @@ def main():
     b.add_argument("--scratch", required=True, help="the batch's scratch folder, named in the brief")
     b.add_argument("--notes", help="a file with the batch's own section: its range's contents, leads, docs to read")
     b.add_argument("--out", help="where to write the brief (default <scratch>/brief.md)")
+    b.add_argument("--auto", action="store_true",
+                   help="append the tools' leads: bounds, function counts, match candidates, docs naming the range")
+    b.add_argument("--binary", default="ES1DBSIM", help="the binary --auto reads (default ES1DBSIM)")
     r = sub.add_parser("run", help="run the file's commands, then apply, regenerate and check")
     r.add_argument("file")
     r.add_argument("--from", dest="start", type=int, default=1, help="resume at this step number")
+    r.add_argument("--no-precheck", action="store_true", help="skip the wording precheck of the stamp lines")
+    pc = sub.add_parser("precheck", help="the stamp lines' wording checks against the batch JSONs; writes nothing")
+    pc.add_argument("file")
     ls = sub.add_parser("list", help="print the steps the run would take, numbered")
     ls.add_argument("file")
     args = p.parse_args()
-    return {"run": cmd_run, "list": cmd_list, "brief": cmd_brief}[args.cmd](args)
+    return {"run": cmd_run, "list": cmd_list, "brief": cmd_brief, "precheck": cmd_precheck}[args.cmd](args)
 
 
 if __name__ == "__main__":

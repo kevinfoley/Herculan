@@ -90,7 +90,9 @@ address operands by different rules (insn_streams).
       Stamps are kept, since the rewrite only names what the address denoted. insert, edit and
       relink undo a doubling they write ("Name (Name (00012345))" -> "Name (00012345)", "Name (Name)"
       -> "Name"), printing each, and print CHECK for a new "Name, Name (00012345)", which is a
-      doubling unless both arguments really are that object.
+      doubling unless both arguments really are that object. insert and edit print SHAPE for a
+      description that writes a name with its address as "(Name, 00012345)" or "Name's (00012345)",
+      which relink and the doubling checks do not recognise: write "Name (00012345)".
   mentions batch.json
       FUN_/DAT_/bare-address mentions of the batch's named addresses in docs/src/tests.
   fixrefs batch.json [--write]
@@ -773,6 +775,26 @@ DOUBLED = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*) \(\1(?: \(([0-9a-f]{8})\))?\)"
 # 'Name, Name (00012345)': a doubling too, or two arguments that really are the same object
 # (MonoScreen_Ctor(Mono_Screen, Mono_Screen (000b5e70))), so undouble() only reports it.
 REPEATED = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*), \1 \([0-9a-f]{8}\)")
+# '(Name, 00012345)' and "Name's (00012345)": a name and its address written other than 'Name (00012345)',
+# the one form relink_bare and the doubling checks recognise. Not after an identifier, which makes the
+# first an argument list.
+SHAPES = (re.compile(r"(?<![A-Za-z0-9_)])\(([A-Za-z_][A-Za-z0-9_]*), ([0-9a-f]{8})\)"),
+          re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)'s \(([0-9a-f]{8})\)"))
+
+
+def shape_warnings(description):
+    """[(text, 'Name (addr)')] for each SHAPES match whose name is a symbol (an underscore or a capital)."""
+    return [(m.group(0), f"{m.group(1)} ({m.group(2)})") for rx in SHAPES for m in rx.finditer(description)
+            if "_" in m.group(1) or any(c.isupper() for c in m.group(1))]
+
+
+def print_shape_warnings(items):
+    """SHAPE lines for batch entries or edits whose description holds a SHAPES form; advisory."""
+    for e in items:
+        d = e.get("description", e.get("value") if e.get("field") == "description" else
+                  (e.get("fields") or {}).get("description", ""))
+        for text, want in shape_warnings(d or ""):
+            print(f"  SHAPE {e['binary']} {e['address']} {e.get('name', '')}: '{text}' -> write '{want}'")
 
 
 def undouble(before, after, binary):
@@ -809,6 +831,7 @@ def undouble(before, after, binary):
 def cmd_insert(args):
     with open(args[0], encoding="utf-8") as f:
         new = json.load(f)
+    print_shape_warnings(new)
     texts = {}
     for binary, batch in by_binary(new).items():
         text, nl = S.read_text(binary)
@@ -956,6 +979,7 @@ def cmd_relink(args):
 def cmd_edit(args):
     with open(args[0], encoding="utf-8") as f:
         edits = json.load(f)
+    print_shape_warnings(edits)
     texts = {}
     for binary, part in by_binary(edits).items():
         text, nl = S.read_text(binary)
