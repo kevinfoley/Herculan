@@ -6,7 +6,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Properties panel's view of a route: whether it is a loop, which groups walk it, its waypoints, and the edits that
 /// make a route (<see cref="RouteEditor"/>, <see cref="RoutePlacing"/>): add waypoints after the last, insert one after the
-/// selected one, remove the selected one, close or open the loop, delete the route.
+/// selected one, remove the selected one, close or open the loop, delete the route; and the selected waypoint's X and Y as
+/// typed fields (<see cref="PointFields"/>).
 /// </summary>
 internal sealed class RouteView {
 	// The heads-down map marks the player's route from its second waypoint and at most nine of them
@@ -20,6 +21,9 @@ internal sealed class RouteView {
 	private readonly RoutePlacing _placing;
 	private readonly Action<int> _groupLink;
 	private readonly Action<DeleteNamers, IReadOnlyList<int>> _references;
+
+	// The selected waypoint's point being typed.
+	private readonly PointFields _point = new();
 
 	/// <param name="groupLink">Draws a link that selects a group.</param>
 	/// <param name="references">Draws what references something, one line per record, given the groups whose own route field references it.</param>
@@ -126,13 +130,30 @@ internal sealed class RouteView {
 		EditorText.Reason(_editor.Failure);
 	}
 
-	// What dragging the selected waypoint's move handles moves with it (PointMover).
+	// The selected waypoint's X and Y as fields, which move it when one lets go as a plain drag of its move handles does,
+	// its point with whatever else references it (PointMover); and what that moves with it.
 	private void DrawMove(EditorRoute route, RouteSelection selected) {
-		if (_mover.TargetOf(selected) is not WaypointTarget waypoint) {
+		int count = route.Closed ? route.Points.Count - 1 : route.Points.Count;
+		if (selected.Waypoint < 0 || selected.Waypoint >= count) {
 			return;
 		}
 
+		var target = _mover.TargetOf(selected) as WaypointTarget;
+		var at = route.Points[selected.Waypoint];
 		ImGui.Separator();
+		ImGui.Text($"Waypoint {selected.Waypoint}, in world units:");
+		ImGui.PushID("waypoint");
+		var typed = _point.Draw((route.Reference, selected.Waypoint), at, withZ: false, enabled: target != null && !_placing.Active);
+		ImGui.PopID();
+		if (typed is { } draft && target != null) {
+			_mover.Commit(target, at, draft.X, draft.Y, 0);
+		}
+
+		PointFields.BoxWarning(_mover.LoadedBox, route.Points[selected.Waypoint]);
+		if (target is not { } waypoint) {
+			return;
+		}
+
 		int sharers = _mover.SharersOf(waypoint);
 		ImGui.TextWrapped(sharers > 0
 			? $"Its point is referenced by {sharers} other record(s) (trigger areas, groups, other waypoints), which move "

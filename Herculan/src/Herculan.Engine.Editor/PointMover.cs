@@ -364,6 +364,12 @@ internal sealed class PointMover {
 	}
 
 	/// <summary>
+	/// Whether group <paramref name="group"/> stands on a block-1 point, its own or its route's first waypoint's
+	/// (<see cref="StartOf"/>), rather than at the origin.
+	/// </summary>
+	public bool StandsOnPoint(int group) => Coordinate(_document.Groups[group].PositionRef) != null || StartOf(group) != null;
+
+	/// <summary>
 	/// Stands <paramref name="target"/> at <paramref name="position"/> as a drag does before it lets go. An object or a
 	/// detached waypoint moves for the eye alone, the document unchanged until <see cref="Commit"/>; a waypoint moving
 	/// its shared point, or a group, writes into the generated document, so what follows it does, and <see cref="Commit"/>

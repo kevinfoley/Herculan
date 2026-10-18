@@ -39,9 +39,8 @@ internal sealed class PropertiesPanel {
 	private readonly PanelLinks _links;
 	private readonly StringFile? _strings;
 
-	// A position being typed, and the object it is for, until its field lets go.
-	private SceneObject? _draftFor;
-	private Vec3i _draft;
+	// An object's or a group's point being typed.
+	private readonly PointFields _point = new();
 
 	/// <param name="document">The generated <c>script.dat</c>, whose records the order view offers as routes and subjects.</param>
 	public PropertiesPanel(MissionIndex index, ScriptDat document, SelectionState selection, PointMover mover,
@@ -273,45 +272,21 @@ internal sealed class PropertiesPanel {
 			return;
 		}
 
-		if (!ReferenceEquals(_draftFor, sel)) {
-			_draftFor = null;
-		}
-
-		var shown = _draftFor != null ? _draft : pos;
-		int x = shown.X, y = shown.Y, z = shown.Z;
 		bool ownHeight = PointMover.HasOwnHeight(sel);
-		bool changed = false, done = false;
-
 		ImGui.Text("Position, in world units:");
-		changed |= PositionField("X", ref x, ref done);
-		changed |= PositionField("Y", ref y, ref done);
-		if (ownHeight) {
-			changed |= PositionField("Z", ref z, ref done);
-		} else {
+		ImGui.PushID("position");
+		var typed = _point.Draw(sel, pos, ownHeight);
+		ImGui.PopID();
+		if (!ownHeight) {
 			EditorText.Note($"Z: {pos.Z}, from the ground under it");
 		}
 
 		EditorText.Note(Meters(pos));
-
-		if (changed) {
-			_draftFor = sel;
-			_draft = new Vec3i(x, y, z);
+		if (typed is { } draft) {
+			_mover.Commit(new ObjectTarget(sel), pos, draft.X, draft.Y, draft.Z);
 		}
 
-		if (done && _draftFor != null) {
-			var draft = _draft;
-			_draftFor = null;
-			if (draft.X != pos.X || draft.Y != pos.Y || (ownHeight && draft.Z != pos.Z)) {
-				_mover.Commit(new ObjectTarget(sel), pos, draft.X, draft.Y, draft.Z);
-			}
-		}
-
-		pos = sel.Object.Position;
-		var box = _mover.LoadedBox;
-		if (!box.IsEmpty && (pos.X < box.MinX || pos.X > box.MaxX || pos.Y < box.MinY || pos.Y > box.MaxY)) {
-			ImGui.TextWrapped("Outside the mission box as opened: the box, the heads-down map's frame and the abort "
-				+ "line grow to take it in.");
-		}
+		PointFields.BoxWarning(_mover.LoadedBox, sel.Object.Position);
 
 		var placement = sel.Placement;
 		if (placement.Kind is MissionUnitKind.Mech or MissionUnitKind.Flyer
@@ -367,13 +342,6 @@ internal sealed class PropertiesPanel {
 		}
 
 		return placement.TypeName ?? $"{placement.Kind} type {placement.TypeIndex}";
-	}
-
-	private static bool PositionField(string label, ref int value, ref bool done) {
-		ImGui.SetNextItemWidth(ScaledImGui.Scaled(140f));
-		bool changed = ImGui.InputInt(label + "##position", ref value, 0, 0);
-		done |= ImGui.IsItemDeactivatedAfterEdit();
-		return changed;
 	}
 
 	private static string Meters(Vec3i pos) =>
@@ -492,11 +460,25 @@ internal sealed class PropertiesPanel {
 			_ => "no point and no route: the origin"
 		};
 
-		ImGui.Text($"Point: {setup.Point.X}, {setup.Point.Y}");
+		// The authored point, which a move writes; a flyer group's Z is where its first member flies (PointMover.PositionOf).
+		var target = new GroupTarget(group);
+		var at = _mover.PositionOf(target);
+		ImGui.Text("Point, in world units:");
+		ImGui.PushID("point");
+		var typed = _point.Draw(target, at, _mover.HasOwnHeight(target), enabled: _mover.WhyFixed(group) == null);
+		ImGui.PopID();
 		EditorText.Note($"from {source}");
 		if (setup.AuthoredPoint != setup.Point) {
-			ImGui.TextWrapped($"Authored at {setup.AuthoredPoint.X}, {setup.AuthoredPoint.Y}; painting its ground "
-				+ "moves it to a fixed spot in its terrain tile.");
+			ImGui.TextWrapped($"It stands at {setup.Point.X}, {setup.Point.Y}: painting its ground moves it to a fixed "
+				+ "spot in its terrain tile.");
+		}
+
+		if (typed is { } draft) {
+			_mover.Commit(target, at, draft.X, draft.Y, draft.Z);
+		}
+
+		if (_mover.StandsOnPoint(group)) {
+			PointFields.BoxWarning(_mover.LoadedBox, _mover.PositionOf(target));
 		}
 
 		ImGui.Text($"Heading: {MissionText.Heading(setup.Heading)}");

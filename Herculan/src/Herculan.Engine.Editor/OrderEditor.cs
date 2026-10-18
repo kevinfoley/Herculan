@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Msn.Script;
+using Herculan.Engine.Sim;
 
 namespace Herculan.Engine.Editor;
 
@@ -83,7 +84,8 @@ internal sealed class OrderEditor {
 	public string? WhyNoRouteNone(int group, int slot) => WhyFixed(group) ?? GroupOrders.WhyNoRoute(_source!, Guid(group), slot, -1);
 
 	/// <summary>Asks for a new order after <paramref name="group"/>'s last (<see cref="GroupOrders.NewOrder"/>).</summary>
-	public void RequestAdd(int group) => Ask(group, (source, guid) => GroupOrders.Add(source, guid, GroupOrders.NewOrder(source, guid), out _));
+	public void RequestAdd(int group) =>
+		Ask(group, (source, guid) => GroupOrders.Add(source, guid, GroupOrders.NewOrder(source, guid, BaseObject.IsGroundVehicle), out _));
 
 	/// <summary>Asks for the order in <paramref name="group"/>'s slot <paramref name="slot"/> to be removed.</summary>
 	public void RequestRemove(int group, int slot) => Ask(group, (source, guid) => GroupOrders.Remove(source, guid, slot));

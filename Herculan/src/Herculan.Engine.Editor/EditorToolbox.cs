@@ -44,7 +44,8 @@ internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, Mis
 /// the pointer, a flyer above it; a double-click, or Add with an entry chosen, asks for it at the middle of the view, which
 /// a gamepad's pointer reaches as easily. The side it fights on is chosen above the lists, or it joins the selected group
 /// instead, a herc a herc group, a flyer a flyer group, and a ground vehicle or a structure a structure group, taking that
-/// group's side. While an entry is dragged over the view, what it would add is drawn where it would stand
+/// group's side; while the group cannot take the entry chosen or dragged, by the check its add refuses by, the choice to
+/// join is disabled with the reason under it. While an entry is dragged over the view, what it would add is drawn where it would stand
 /// (<see cref="DropPreview"/>). What an add writes is <see cref="HercPlacer"/>'s, <see cref="FlyerPlacer"/>'s,
 /// <see cref="VehiclePlacer"/>'s and <see cref="StructurePlacer"/>'s. Above the lists the window holds the route tool's
 /// New route (<see cref="RoutePlacing"/>) and the trigger-area tool's New box and New circle (<see cref="AreaPlacing"/>).
@@ -59,6 +60,11 @@ internal sealed class EditorToolbox {
 	private readonly (ToolboxKind Kind, int TypeIndex, string Name)[] _entries;
 	private MissionSide _side = MissionSide.Human;
 	private bool _join;
+
+	// The group the selection is or belongs to, as the last frame drawn was told, and why an entry of each kind cannot
+	// join it; and the group an add joins when "Join the selected group" is ticked, null while the entry chosen cannot.
+	private int? _selectedGroup;
+	private Func<ToolboxKind, string?>? _whyNotJoin;
 	private int? _joinGroup;
 	private (ToolboxKind Kind, int TypeIndex)? _chosen;
 	private (ToolboxKind Kind, int TypeIndex)? _dragging;
@@ -155,7 +161,11 @@ internal sealed class EditorToolbox {
 
 	/// <param name="enabled">False while nothing can be added, such as during a move.</param>
 	/// <param name="selectedGroup">The herc, flyer or structure group the selection is or belongs to, which an add can join; or null.</param>
-	/// <param name="whyNotJoin">Why <paramref name="selectedGroup"/> cannot take another member, or null when it can.</param>
+	/// <param name="groupKind">The entry kind <paramref name="selectedGroup"/>'s members are, whose join is checked while no entry is chosen.</param>
+	/// <param name="whyNotJoin">
+	/// Why <paramref name="selectedGroup"/> cannot take an entry of a kind, or null when it can: the check that kind's add
+	/// refuses by. The checkbox is disabled, with the reason under it, while the entry chosen or dragged is refused.
+	/// </param>
 	/// <param name="whyNoHerc">Why no herc can be added (<see cref="HercPlacer.WhyNoAdd"/>), shown in the Hercs section, or null.</param>
 	/// <param name="whyNoFlyer">Why no flyer can be added (<see cref="FlyerPlacer.WhyNoAdd"/>), shown in the Flyers section, or null.</param>
 	/// <param name="whyNoVehicle">Why no ground vehicle can be added (<see cref="VehiclePlacer.WhyNoAdd"/>), shown in the Ground vehicles section, or null.</param>
@@ -164,13 +174,18 @@ internal sealed class EditorToolbox {
 	/// Draws the placing tools' entries (<see cref="RoutePlacing.DrawToolboxEntry"/>, <see cref="AreaPlacing.DrawToolboxEntry"/>)
 	/// above the lists, or null.
 	/// </param>
-	public void Draw(Vector2 display, bool enabled, int? selectedGroup, string? whyNotJoin, string? whyNoHerc,
-			string? whyNoFlyer, string? whyNoVehicle, string? whyNoStructure, Action? routeEntry = null) {
+	public void Draw(Vector2 display, bool enabled, int? selectedGroup, ToolboxKind groupKind,
+			Func<ToolboxKind, string?>? whyNotJoin, string? whyNoHerc, string? whyNoFlyer, string? whyNoVehicle,
+			string? whyNoStructure, Action? routeEntry = null) {
 		_whyNoHerc = whyNoHerc;
 		_whyNoFlyer = whyNoFlyer;
 		_whyNoVehicle = whyNoVehicle;
 		_whyNoStructure = whyNoStructure;
-		_joinGroup = selectedGroup != null && whyNotJoin == null ? selectedGroup : null;
+		_selectedGroup = selectedGroup;
+		_whyNotJoin = whyNotJoin;
+		var joinKind = (_dragging ?? _chosen)?.Kind ?? groupKind;
+		string? whyNot = selectedGroup != null ? whyNotJoin?.Invoke(joinKind) : null;
+		_joinGroup = selectedGroup != null && whyNot == null ? selectedGroup : null;
 		ImGui.SetNextWindowPos(new Vector2(ScaledImGui.Scaled(MissionOutliner.PanelWidth + Margin),
 			display.Y - ScaledImGui.Scaled(Height + Margin)), ImGuiCond.FirstUseEver);
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(Width), ScaledImGui.Scaled(Height)), ImGuiCond.FirstUseEver);
@@ -180,7 +195,7 @@ internal sealed class EditorToolbox {
 				ImGui.Separator();
 			}
 
-			DrawContents(enabled, selectedGroup, whyNotJoin);
+			DrawContents(enabled, selectedGroup, whyNot);
 		}
 
 		ImGui.End();
@@ -202,8 +217,14 @@ internal sealed class EditorToolbox {
 
 	private void DrawContents(bool enabled, int? selectedGroup, string? whyNotJoin) {
 		ImGui.TextWrapped("Drag an entry onto the ground, or double-click it to add it in the middle of the view.");
-		ImGui.BeginDisabled(_joinGroup == null);
-		ImGui.Checkbox(selectedGroup is { } group ? $"Join the selected group {group}" : "Join the selected group", ref _join);
+		// Unticked while it cannot join, since an add then gets a group of its own; ticked again once it can.
+		bool canJoin = _joinGroup != null;
+		bool join = _join && canJoin;
+		ImGui.BeginDisabled(!canJoin);
+		if (ImGui.Checkbox(selectedGroup is { } group ? $"Join the selected group {group}" : "Join the selected group", ref join)) {
+			_join = join;
+		}
+
 		ImGui.EndDisabled();
 		if (whyNotJoin != null) {
 			EditorText.Reason(whyNotJoin);
@@ -302,8 +323,21 @@ internal sealed class EditorToolbox {
 			_ => _whyNoStructure
 		} == null;
 
+	// Asks for an entry of <kind> to be added, joining the selected group when the checkbox is ticked and enabled as drawn.
+	// A double-click can choose an entry of another kind in the frame it asks for it, so the join is checked again for
+	// <kind>, and a refusal is shown rather than adding it in a group of its own.
 	private void Request(ToolboxKind kind, int typeIndex, bool atPointer) {
-		_request = new ToolboxRequest(kind, typeIndex, _side, atPointer, _join ? _joinGroup : null);
+		int? group = null;
+		if (_join && _joinGroup is { } joining) {
+			if (_selectedGroup != null && _whyNotJoin?.Invoke(kind) is { } refused) {
+				Status = refused;
+				return;
+			}
+
+			group = joining;
+		}
+
+		_request = new ToolboxRequest(kind, typeIndex, _side, atPointer, group);
 		Status = null;
 	}
 

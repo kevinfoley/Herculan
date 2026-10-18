@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The Properties panel's view of a trigger area: its shape, a box's corners or a circle's centre and radius as typed
-/// fields, what shares their points, the actions testing it, and the edits that make one (<see cref="AreaEditor"/>,
+/// fields (<see cref="PointFields"/>), what shares their points, whether one stands outside the mission box as opened, the actions testing it, and the edits that make one (<see cref="AreaEditor"/>,
 /// <see cref="PointMover"/>): switch box and circle, move a corner, the centre or the radius, delete the area; and a new action
 /// testing it (<see cref="ActionEditor"/>). A field
 /// applies when it loses the focus, as one step of the undo history, through the same <see cref="PointMover.Commit"/> a
@@ -23,9 +23,8 @@ internal sealed class TriggerAreaView {
 	private readonly Action<int> _drawAction;
 	private readonly Action<DeleteNamers> _references;
 
-	// A corner or centre being typed, and which, until its field lets go; and the same for a radius.
-	private (int Area, int Corner)? _cornerDraftFor;
-	private Vec3i _cornerDraft;
+	// A corner or centre being typed; and a radius being typed, and for which area, until its field lets go.
+	private readonly PointFields _corners = new();
 	private int? _radiusDraftFor;
 	private int _radiusDraft;
 
@@ -117,33 +116,18 @@ internal sealed class TriggerAreaView {
 			: "As a circle it becomes the circle about its middle, as wide as its longer side.");
 	}
 
-	// A corner's or the centre's X and Y as fields, which move its point when one lets go, and what shares the point.
+	// A corner's or the centre's X and Y as fields, which move its point when one lets go, what shares the point, and
+	// whether it stands outside the mission box as opened. The box is of block 1's points alone, so a circle's edge past
+	// it grows nothing and only the centre is tested.
 	private void DrawCorner(int reference, int corner, string label, Vec3i at, bool fixedNow) {
-		var key = (reference, corner);
-		if (_cornerDraftFor is { } draftFor && draftFor != key && !ImGui.IsAnyItemActive()) {
-			_cornerDraftFor = null;
-		}
-
-		var shown = _cornerDraftFor == key ? _cornerDraft : at;
-		int x = shown.X, y = shown.Y;
-		bool changed = false, done = false;
+		var point = new Vec3i(at.X, at.Y, 0);
 		ImGui.PushID($"corner{corner}");
 		ImGui.Text($"{label}, in world units:");
-		changed |= Field("X", ref x, ref done);
-		changed |= Field("Y", ref y, ref done);
-		if (changed) {
-			_cornerDraftFor = key;
-			_cornerDraft = new Vec3i(x, y, 0);
+		if (_corners.Draw((reference, corner), point, withZ: false) is { } draft) {
+			_mover.Commit(new AreaCornerTarget(reference, corner), point, draft.X, draft.Y, 0);
 		}
 
-		if (done && _cornerDraftFor == key) {
-			var draft = _cornerDraft;
-			_cornerDraftFor = null;
-			if (draft.X != at.X || draft.Y != at.Y) {
-				_mover.Commit(new AreaCornerTarget(reference, corner), new Vec3i(at.X, at.Y, 0), draft.X, draft.Y, 0);
-			}
-		}
-
+		PointFields.BoxWarning(_mover.LoadedBox, point);
 		if (!fixedNow && _mover.SharersOf(new AreaCornerTarget(reference, corner)) is > 0 and var sharers) {
 			string what = label == "Centre" ? "the centre" : "the corner";
 			EditorText.Note($"Its point is referenced by {sharers} other record(s) (waypoints, other areas, groups), which move "

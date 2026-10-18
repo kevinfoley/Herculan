@@ -596,10 +596,11 @@ public sealed class EditorHost {
 
 			_mission.Outliner.Draw(display, menuBarHeight);
 			_mission.Properties.Draw(display, menuBarHeight);
-			var (joinable, whyNotJoin) = JoinableGroup(_mission);
+			var (joinable, joinKind) = JoinableGroup(_mission);
 			var mission = _mission;
 			_toolbox.Draw(display,
-				enabled: !mission.Gizmo.Dragging && !mission.PlacingAny, joinable, whyNotJoin,
+				enabled: !mission.Gizmo.Dragging && !mission.PlacingAny, joinable, joinKind,
+				joinable is { } group ? kind => WhyNotJoin(mission, group, kind) : null,
 				mission.Hercs.WhyNoAdd, mission.Flyers.WhyNoAdd, mission.Vehicles.WhyNoAdd, mission.Placer.WhyNoAdd,
 				() => {
 					mission.Placing.DrawToolboxEntry();
@@ -696,23 +697,31 @@ public sealed class EditorHost {
 		_closePending = true;
 	}
 
-	// The herc, flyer or structure group the selection is, or a member of: what a Toolbox add can join, and why it cannot, by
-	// the placer of its kind. The player's squad, group 0, is offered so the Toolbox can say why it takes no herc. A structure
-	// group's is a structure's: a ground vehicle joins every group a structure joins, and refuses a fifth member of a convoy
-	// when it is added (VehiclePlacer.WhyNotJoin).
-	private static (int? Group, string? WhyNot) JoinableGroup(EditorMission mission) {
+	// The herc, flyer or structure group the selection is, or a member of, which a Toolbox add can join, and the Toolbox
+	// entry kind its members are, whose join the Toolbox checks while no entry is chosen. The player's squad, group 0, is
+	// offered so the Toolbox can say why it takes no herc.
+	private static (int? Group, ToolboxKind Kind) JoinableGroup(EditorMission mission) {
 		int group = mission.Selection.Current switch {
 			GroupSelection selected => selected.Group,
 			ObjectSelection { Object.Placement: var placement } => placement.GroupIndex,
 			_ => -1
 		};
 		return mission.Index.KindOf(group) switch {
-			MissionUnitKind.Base when group > 0 => (group, mission.Placer.WhyNotJoin(group)),
-			MissionUnitKind.Mech => (group, mission.Hercs.WhyNotJoin(group)),
-			MissionUnitKind.Flyer => (group, mission.Flyers.WhyNotJoin(group)),
-			_ => (null, null)
+			MissionUnitKind.Base when group > 0 => (group, ToolboxKind.Structure),
+			MissionUnitKind.Mech => (group, ToolboxKind.Herc),
+			MissionUnitKind.Flyer => (group, ToolboxKind.Flyer),
+			_ => (null, ToolboxKind.Structure)
 		};
 	}
+
+	// Why an entry of <kind> cannot join <group>: the WhyNotJoin of the placer that kind's add goes through, which its Add
+	// refuses by, so the Toolbox's checkbox and the add agree.
+	private static string? WhyNotJoin(EditorMission mission, int group, ToolboxKind kind) => kind switch {
+		ToolboxKind.Herc => mission.Hercs.WhyNotJoin(group),
+		ToolboxKind.Flyer => mission.Flyers.WhyNotJoin(group),
+		ToolboxKind.Vehicle => mission.Vehicles.WhyNotJoin(group),
+		_ => mission.Placer.WhyNotJoin(group)
+	};
 
 	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the route edit, the trigger-area
 	// edit, the order edit, the action or timer edit, the objective or text edit, the finished route or area and the Undo or Redo the frame's panels,

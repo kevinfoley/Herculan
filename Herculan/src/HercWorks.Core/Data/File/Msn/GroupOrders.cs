@@ -84,15 +84,18 @@ public static class GroupOrders {
 	public static bool Shared(MissionDocument document, short order) => SlotsNaming(document, order) > 1;
 
 	/// <summary>
-	/// The order a new slot of <paramref name="group"/> gets: for the player's squad, patrol (<see cref="Patrol"/>) naming
-	/// no subject; for any other group, search/destroy on the player's squad, as a new herc group's first order
-	/// (<see cref="HercGroups"/>). Either on slot 0's route, or none when the group has no order yet.
+	/// The order a new slot of <paramref name="group"/> gets, this editor's choice of a retail shape: for the player's squad,
+	/// patrol (<see cref="Patrol"/>) naming no subject; for a convoy (<see cref="VehicleGroups.IsConvoy"/>, by
+	/// <paramref name="isGroundVehicle"/>), travel (<see cref="VehicleGroups.Travel"/>) naming no subject, the shape of 11 of
+	/// the 12 retail convoys' slot-0 orders and of a new convoy's first (<see cref="VehicleGroups"/>); for any other group,
+	/// search/destroy on the player's squad, as a new herc group's first order (<see cref="HercGroups"/>). Each on slot 0's
+	/// route, or none when the group has no order yet.
 	/// </summary>
-	public static MissionOrder22 NewOrder(MissionDocument document, short group) {
+	public static MissionOrder22 NewOrder(MissionDocument document, short group, Func<int, bool> isGroundVehicle) {
 		short squad = document.GuidOf(GroupBlock, 0);
 		short route = RouteOf(document, Orders(document, group)[0]);
-		return group == squad || squad == -1
-			? HercGroups.Order(Patrol, route, -1, -1)
+		return group == squad || squad == -1 ? HercGroups.Order(Patrol, route, -1, -1)
+			: VehicleGroups.IsConvoy(document, group, isGroundVehicle) ? HercGroups.Order(VehicleGroups.Travel, route, -1, -1)
 			: HercGroups.Order(HercGroups.SearchDestroy, route, HercGroups.GroupSubject, squad);
 	}
 
@@ -121,9 +124,10 @@ public static class GroupOrders {
 			return "The group is not in this state of the mission.";
 		}
 
+		// A first order has no slot-0 route to take (NewOrder), so it runs none.
 		int filled = Filled(Orders(document, group));
 		return filled >= Slots ? $"All {Slots} order slots are filled."
-			: filled == 0 ? WhyNoFirstRoute(document, group, NewOrder(document, group).RouteRef)
+			: filled == 0 ? WhyNoFirstRoute(document, group, -1)
 			: null;
 	}
 

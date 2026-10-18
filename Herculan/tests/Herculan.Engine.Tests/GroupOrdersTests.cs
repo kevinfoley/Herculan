@@ -1,5 +1,6 @@
 using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Io.Transform.Common;
+using Herculan.Engine.Sim;
 using Xunit;
 using static Herculan.Engine.Tests.SyntheticMsn;
 
@@ -114,6 +115,34 @@ public class GroupOrdersTests {
 		Assert.Equal(HercGroups.GroupSubject, order.SubjectKind);
 		Assert.Equal(0, order.SubjectRef);
 		Assert.Throws<InvalidOperationException>(() => GroupOrders.SetSubject(document, 10, 0, -1, -1));
+	}
+
+	/// <summary>
+	/// Catches a convoy's new order made search/destroy on the squad, as any other group's, or travel given a subject, and
+	/// a structure group led by a building given travel: the convoy test read from the group's member kind alone.
+	/// </summary>
+	[Fact]
+	public void AConvoysNewOrderTravelsItsRoute() {
+		const short transport = 0x2d;
+		var vehicle = Base(1);
+		vehicle[BaseRosterEntry62.TypeIndexWord] = transport;
+		var walking = Order(20, verb: 5);
+		walking[MissionOrder22.RouteRefWord] = 5;
+		var document = Open(Mission()
+			.Add(6, Point(1, 100))
+			.Add(8, Route(5, 1))
+			.Add(14, Base(0))
+			.Add(14, vehicle)
+			.Add(15, walking)
+			.Add(16, Orders(Group(10, Structures, position: -1, condition: -1, 1, 0), 20))
+			.Add(16, Orders(Group(11, Structures, position: -1, condition: -1, 0, 1), 20)));
+
+		var convoy = GroupOrders.NewOrder(document, 10, BaseObject.IsGroundVehicle);
+		Assert.Equal((VehicleGroups.Travel, (short)-1, (short)-1), (convoy.Verb, convoy.SubjectKind, convoy.SubjectRef));
+		Assert.Equal(5, convoy.RouteRef);
+
+		var bases = GroupOrders.NewOrder(document, 11, BaseObject.IsGroundVehicle);
+		Assert.Equal((HercGroups.SearchDestroy, HercGroups.GroupSubject), (bases.Verb, bases.SubjectKind));
 	}
 
 	// Group 0, the squad: the player's machine, facing a heading of its own.
