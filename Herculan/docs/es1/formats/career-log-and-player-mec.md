@@ -53,7 +53,7 @@ So the shell adds at most one career between a load and the next, and a later ne
 
 ## The player file
 
-`PlayerMec_Write` (`0002299e`) deletes entry 4 of the file-name table, `data\player.mec`, opens it as a `FileRWStream` with no test that it opened, writes it with `PlayerMec_WriteEntries` (`00022a05`), closes it, calls `00014f28` and destroys the stream. `es2_xref.py` finds three calls: from `0002c057`, `0002d327` and `MsnGen_LoadMission`.
+`PlayerMec_Write` (`0002299e`) deletes entry 4 of the file-name table, `data\player.mec`, opens it as a `FileRWStream` with no test that it opened, writes it with `PlayerMec_WriteEntries` (`00022a05`), closes it, saves the career record with `CareerRecord_SaveCurrent` (`00014f28`) and destroys the stream. `CareerRecord_SaveCurrent` writes a single mission's record to `car\sm_play.gam` (`SingleMission_SaveRecord`, `00014f54`, [the squad](msn-mission-file.md#the-squad)) and in mode 1 calls `000168b0` with the roster and its current record. `es2_xref.py` finds three calls to `PlayerMec_Write`: from `0002c057`, `0002d327` and `MsnGen_LoadMission`.
 
 ```
 int16    the player's entry
@@ -66,16 +66,39 @@ n x {
 17 bytes the weapons' available bytes
 ```
 
-`PlayerMec_WriteEntries`, given the stream, takes the career record `00014ef4` returns ([the career record](bst-battle-sets.md#the-career-record)) and keeps the record's word `+0x12` and the word `00080894`. It writes the record's word `+0xe` and the count `00015bfb` returns for the record, and calls `00015ad4` with the record and its four bytes at `+0xe`. Then, *n* times:
+`PlayerMec_WriteEntries`, given the stream, takes the record `CareerRecord_Current` (`00014ef4`) returns, the single mission's `SingleMission_Record` (`0009b014`) in mode 0 and the roster's current record in mode 1 ([the career record](bst-battle-sets.md#the-career-record)), and keeps its current pilot `+0x12` and the hangar's selected slot `Hangar_SelectedSlot` (`00080894`). It writes the record's player entry `+0xe` and the count *n* of its pilot entries on strength with a HERC slot (`CareerRecord_CountPilots`, `00015bfb`, [pilot entries](bst-battle-sets.md#pilot-entries)), and makes the player's entry the current pilot with `CareerRecord_SelectPilot` (`00015ad4`), which selects its slot. Then, *n* times, for the current pilot:
 
-1. it writes the two pilot words with `PlayerMec_WritePilotWords` (`0001548f`) for the entry the record's word `+0x12` names;
-2. with *h* the HERC in hangar slot `00080894` ([the HERC lists](car-hercs-and-stock.md#the-herc-lists)), when the slot is not −1 and holds one: in mode 0 it calls `00024c3c`(*h*, 100) and `00024c14`(*h*, 100, 9, `0x784`), and in any other mode `00024c14`(*h*, `0001618d`(record, its four bytes at `+0xe`), 9, `0x784`) ([Open](#open));
-3. it writes *h* with `Herc_Write` (`000233ce`, [the HERC record](car-hercs-and-stock.md#the-herc-record)) when there is one, and nothing in its place otherwise;
-4. it calls `00015b0a` with the record.
+1. its two pilot words, with `PlayerMec_WritePilotWords` (`0001548f`, below);
+2. with *h* the HERC in the selected slot ([the HERC lists](car-hercs-and-stock.md#the-herc-lists)), when the slot is not −1 and holds one: in mode 0 every status word of *h* set to 100, by `Herc_SetAllStatus`(*h*, 100) (`00024c3c`) and `Herc_SetStatus`(*h*, 100, 9, `0x784`) (`00024c14`) for the internal word 9 the first leaves; in mode 1 internal word 9 set to the condition of the player's entry, `Herc_SetStatus`(*h*, `PilotEntry_Condition`(record, `+0xe`), 9, `0x784`), whichever entry is being written ([the HERC record](car-hercs-and-stock.md#the-herc-record));
+3. *h* with `Herc_Write` (`000233ce`) when there is one, and nothing in its place otherwise;
+4. the next entry on strength with a slot, modulo 4, becomes the current pilot (`CareerRecord_NextPilot`, `00015b0a`), selecting its slot.
 
-It then writes the record's 17 weapon bytes with `CareerRecord_WriteWeaponFlags` (`000160ac`, [equipment availability](bst-battle-sets.md#equipment-availability)), calls `00015ad4` with the record, the kept word `+0x12` and the kept `00080894`, and restores `00080894`.
+So the entries run from the player's on in entry order. It then writes the record's 17 weapon bytes with `CareerRecord_WriteWeaponFlags` (`000160ac`, [equipment availability](bst-battle-sets.md#equipment-availability)), selects the kept current pilot again, and restores `Hangar_SelectedSlot`.
 
-`PlayerMec_WritePilotWords`, given an entry, the record's word `+0xe` and the stream: when the two are equal, it writes in mode 0 `Math_RandomBelow`(`0009aec0`, 11) and 0, and in any other mode the word `+0x40` of the careers-log entry the roster `0009b218` holds at `+1`, then, with the record `0009b23b` + `0x1f7` × [`0009b21f`] and `00015ad4` called on it and its four bytes at `+0xe`, the word at the record's `+0x21` + `0x25` × its word `+0x12`. For any other entry it writes `00015f50`(record, entry), the record being `0009b014` in mode 0 and `0009b23b` + `0x1f7` × [`0009b21f`] otherwise, and then the entry itself in mode 0 or the word at that record's `+0x21` + `0x25` × entry otherwise. The mode is the word `000aad56`; a career is mode 1 ([equipment availability](bst-battle-sets.md#equipment-availability)).
+`PlayerMec_WritePilotWords`, given an entry, the player's entry `+0xe` and the stream, writes two words by the mode `Shell_Mode` (`000aad56`, [the mode](msn-mission-file.md#the-mode-and-the-mission-parameters)):
+
+| Entry | Word | Mode 0 | Mode 1 |
+|---|---|---|---|
+| the player's | 1 | `Math_RandomBelow`(`Shell_RandomState`, 11) | the word `+0x40` of the careers-log entry the roster `0009b218` holds at `+1` |
+| the player's | 2 | 0 | its rank `+0xd`, after `CareerRecord_SelectPilot` on it |
+| any other | 1 | `PilotEntry_NameIndex` (`00015f50`): 3 × its name group `+0` plus its name `+2`, or −1 for entry 0 | the same |
+| any other | 2 | the entry's number | its rank `+0xd` |
+
+### A single mission's file
+
+**A single mission's player file holds the player's stock HERC and each squadmate's HERC as the mission gives it, every one undamaged, with drawn pilot names.** For a mode-0 load of a mission whose first group has *n* members, at most four ([the squad](msn-mission-file.md#the-squad)), every byte is:
+
+| Field | Value |
+|---|---|
+| the player's entry | 0 |
+| entry count | *n*, less any squadmate whose HERC found no empty hangar slot |
+| entry 0, words 1 and 2 | a draw below 11, the load's last draw ([the order](msn-mission-file.md#the-order-of-the-loads-draws)), and 0 |
+| entry *k*, words 1 and 2 | 3 × (4(*k* − 1) + a draw below 4) + a draw below 3, and *k* |
+| entry 0's HERC | the HERC `car\sm_init.dat` holds in the slot the player's mech type names: its chassis, mount count, weapons, per-mount words and `+0x2c`, 2 in every retail record ([the retail HERC lists](car-hercs-and-stock.md#the-retail-herc-lists)) |
+| entry *k*'s HERC | the chassis the member's mech type `0x30` gives, its mount count from the table at `000803c8`, that many weapons from the mech's `0x32` and per-mount words from its `0x4e`, a `-1` written as it is, and `+0x2c` the mech's `0x62` |
+| per-mount words | as above, but a 5 on a weapon 9, 10 or 11 is written 0 |
+| the 66-byte block | 33 words of 100: `PlayerMec_WriteEntries` sets each word but those of mounts past the mount count, which `sm_init.dat`'s records and `HercStatus_Ctor` hold at 100 |
+| the 17 bytes | `bst\tech_sng.dat`'s: 1 for weapons 0 to 4 and 6 to 13, 0 for weapons 5 and 14 to 16 ([the retail files](bst-battle-sets.md#the-retail-files)) |
 
 ### The simulator's read
 
@@ -98,7 +121,7 @@ It reads every entry with a HERC record and does not test *m*, which has room fo
 ES2's file ([ES2's player file](../../retail/shell/campaign-loop.md#launching-a-mission--game_exportmissionhandoff-0040f0d4)) has the same header and the same entry shape, with these differences:
 
 - ES2 writes the player's entry as a literal 0; ES1 writes the career record's word `+0xe`.
-- ES2's two pilot fields are the pilot's name index and skill; ES1's are `PlayerMec_WritePilotWords`' ([Open](#open)).
+- ES2's two pilot fields are the pilot's name index and skill; ES1's are a name index, the player's drawn in a single mission and taken from the careers log in a career, and the rank in a career or the entry's number in a single mission.
 - ES2's arrays are as long as the HERC's mount capacity, an empty hardpoint writing weapon 0 and ammunition type 5; ES1's are as long as the mount count, an empty mount being weapon 17.
 - ES2's word after the arrays is a literal 0; ES1's is the HERC's word `+0x2c`.
 - ES2's file ends with an `int16` 33 and 33 unlock bytes; ES1's with 17 available bytes and no count.
@@ -126,6 +149,6 @@ The 66-byte blocks hold words such as 50, 64, 70, 75, 80 and 95. Read as the pla
 
 - **Open:** what reads `car\CAREER1.MEC`: the byte searches above find its name in no executable, and its entries match neither the player file's layout nor the hangar list's.
 - **Open:** what the careers-log entry's word `+0x40` is: `Career_New` passes its second argument, and the player file's first pilot word is that word in mode 1. What `0002ae96` is, whose message word 100 deletes a career, and what `0003750d` does with the current name.
-- **Open:** what `PlayerMec_WriteEntries`' callees do: `00014ef4` (which record), `00015bfb` (the count), `00015ad4` (which entry and slot it selects), `00015b0a`, `00024c3c`, `00024c14`, `0001618d`, `00015f50` and `00014f28`; and so what the two pilot words are. Whether an entry is ever written without a HERC record, which the simulator's read would take as the next entry's words.
+- **Open:** whether an entry is ever written without a HERC record, which the simulator's read takes the next entry's words for: in a single mission it can when the player's machine has a type other than 0 to 7, a slot `sm_init.dat` does not fill, and in a career when a pilot's slot holds none. The record of the first group's first member holds type 1, 6 or 7 in 12 of the 14 single missions and takes a variant's in `SM_ESC50.MSN` and `SM_SCT50.MSN`, whose candidates are not walked.
 - **Open:** what the simulator does with the two pilot words, the mount words, the word `+0x3a` and the 17 bytes at `000af9e8`.
 - **Open:** what `00020ae3` and `00020fff`, which `es2_xref.py` finds calling `CareerLog_FreeEntries`, do with the log.

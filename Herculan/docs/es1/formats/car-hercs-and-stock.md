@@ -28,7 +28,9 @@ HERC count x {
 
 `es2_xref.py` finds three calls to `Hangar_LoadFile`: from `Career_New` with `car\car_init.dat` ([starting a career](bst-battle-sets.md#starting-a-career)), from `MsnGen_LoadMission` in mode 0 with `car\sm_init.dat` ([loading a mission](msn-mission-file.md#loading-a-mission)), and from `00014fd6`, which `Shell_ProcessMissionResults` calls outside mode 1. `Hangar_ReadFromSave` (`00028bd6`), given *n* and a path, opens the file as a `FileRStream`, calls `00028db6` *n* times and then `Hangar_Read`.
 
-`Hangar_Write` (`00029107`) writes the five header fields as read. When the mode word `000aad56` is not 0 it then writes the HERC count and, for each slot below the slot count that holds a HERC, the slot and the HERC (`Herc_Write`). In mode 0 it writes a count of 8 and then, for each of slots 0 to 7 that holds a HERC, the slot and the HERC, so the count it writes is 8 whatever the slots hold.
+`Hangar_Write` (`00029107`) writes the five header fields as read. When the mode word `000aad56` is not 0 it then writes the HERC count and, for each slot below the slot count that holds a HERC, the slot and the HERC (`Herc_Write`). In mode 0 it writes a count of 8 and then, for each of slots 0 to 7 that holds a HERC, the slot and the HERC, so the count it writes is 8 whatever the slots hold. `Hangar_SaveFile` (`0002909c`), given a path, writes the hangar there through a `FileRWStream`, asserting at severity 5 (`mechman.cpp` line `0x132`) when it cannot open it; a single mission's load saves it as `car\sm_play.mec` ([the squad](msn-mission-file.md#the-squad)).
+
+`Hangar_AddHerc` (`00029d0f`) puts a HERC in the first empty slot below the slot count (`Hangar_FindFreeSlot`, `0002983a`), builds its diagram unless the byte `0007fd09` is set, adds 1 to the HERC count and returns the slot, or returns −1 and stores nothing when no slot is empty. The second header word, `Hangar_SelectedSlot` (`00080894`), is the slot of the career record's current pilot ([pilot entries](bst-battle-sets.md#pilot-entries)), the HERC `data\player.mec`'s writer writes next.
 
 ### The HERC record
 
@@ -39,11 +41,13 @@ HERC count x {
 | `+0x04` | 2*n* | per mount, its weapon; 17 (`0x11`) is an empty mount |
 | `+0x18` | 2*n* | per mount, a word ([Open](#open)) |
 | `+0x2c` | 2 | a word ([Open](#open)) |
-| `+0x2e` | 66 | 33 `int16`, 100 in every retail record |
+| `+0x2e` | 66 | the status block: 13 external words, 10 internal words and 10 per-mount words, 100 in every retail record |
 
-`Herc_ReadFromStream` reads the fields in that order straight into the `0xa8`-byte HERC, which has room for ten mounts. `Herc_Write` (`000233ce`) writes them in the same order; before it writes the per-mount words it sets to 0 the word of each mount whose weapon is 9, 10 or 11 and whose word is 5, as `Herc_BuildDiagram` does. The weapon numbers are those of the [equipment state](bst-battle-sets.md#equipment-availability), whose 17 weapons end at 16, so 17 is one past them.
+`Herc_ReadFromStream` reads the fields in that order straight into the `0xa8`-byte HERC, which has room for ten mounts.
 
-`Herc_Ctor`, given a HERC (or none, when it allocates `0xa8` bytes) and a chassis, sets up the 66-byte block at `+0x2e` with `0001a29c` and the object at `+0x72`, stores the chassis at `+0`, and for a chassis other than −1 takes the mount count from the eight words at `000803c8`, 3, 3, 4, 5, 6, 7, 8 and 9, and gives every mount weapon 17 and word 0; for −1 the mount count is 0. It sets `+0x2c` to 2 and `+0x70` to −1 and zeroes `+0x94` to `+0xa7`. ES2's HERC carries a 66-byte status block of the same size ([ES2's status block](../../retail/formats/save-games.md#the-66-byte-status-block)).
+The status block's three parts are the three spans the simulator reads, 26, 20 and 20 bytes ([the simulator's read](career-log-and-player-mec.md#the-simulators-read)). The shell addresses a word by an index and a kind: `0x785` an external area, the truncated mean of the external words the −1-ended list at `0007ef54` + 8 × index names (`HercStatus_ExternalAverage`, `0001a3ba`); `0x784` internal word *index* at `+0x1a` + 2 × index; `0x786` the per-mount word of mount *index* at `+0x2e` + 2 × index. `HercStatus_Get` (`00015896`) reads one, `HercStatus_Set` (`0001a492`) writes one (an external area through `0001a42c`), and `Herc_SetStatus` (`00024c14`) and `Herc_GetMountStatus` (`00024b23`) do it on a HERC's block. Internal word 9 carries a pilot's condition: a career's player file writes the player's condition into every HERC's, and the results read it back as each pilot's ([the player file](career-log-and-player-mec.md#the-player-file), [after a mission](bst-battle-sets.md#after-a-mission)). `HercStatus_Ctor` (`0001a29c`) sets every word of a block to 100 but internal word 9, which it leaves as it was, and `Herc_SetAllStatus` (`00024c3c`), given a HERC and a value, sets the external words, internal words 0 to 8 and the per-mount words of the mounts below the mount count to the value, or to 100 for a mount whose weapon `00024ab7` gives as 17. `Herc_Write` (`000233ce`) writes them in the same order; before it writes the per-mount words it sets to 0 the word of each mount whose weapon is 9, 10 or 11 and whose word is 5, as `Herc_BuildDiagram` does. The weapon numbers are those of the [equipment state](bst-battle-sets.md#equipment-availability), whose 17 weapons end at 16, so 17 is one past them.
+
+`Herc_Ctor`, given a HERC (or none, when it allocates `0xa8` bytes) and a chassis, sets up the status block at `+0x2e` with `HercStatus_Ctor` and the object at `+0x72`, stores the chassis at `+0`, and for a chassis other than −1 takes the mount count from the eight words at `000803c8`, 3, 3, 4, 5, 6, 7, 8 and 9, and gives every mount weapon 17 and word 0; for −1 the mount count is 0. It sets `+0x2c` to 2 and `+0x70` to −1 and zeroes `+0x94` to `+0xa7`. ES2's HERC carries a 66-byte status block of the same size ([ES2's status block](../../retail/formats/save-games.md#the-66-byte-status-block)).
 
 ### The retail HERC lists
 
@@ -109,7 +113,7 @@ Every value is 100.
 
 ## Open
 
-- **Open:** what the header words `00080894` (7 in `SM_INIT.DAT`), `00080898` and the dword `0008089c` are; what the per-mount words (5, or 0 and 1 on weapons 9 and 10) and the word `+0x2c` are; and whether the 33 words at `+0x2e` divide as ES2's status block does.
+- **Open:** what the header words `00080896`, `00080898` and the dword `0008089c` are; what the per-mount words (5, or 0 and 1 on weapons 9 and 10), which the simulator takes as ammunition types ([the second pass](script-dat.md#the-second-pass)), and the word `+0x2c` are to the shell; and which external areas the lists at `0007ef54` group.
 - **Open:** that a stock slot is a weapon number and a value that unit's condition, and what reads the stacks to offer the units; `00016c1e`'s use of `Inventory_Read`.
-- **Open:** what `00028db6` reads, which `Hangar_ReadFromSave` calls once per HERC list it passes over; `0002909c`'s `car\sm_play.mec` is in [the mission file's Open](msn-mission-file.md#open).
+- **Open:** what `00028db6` reads, which `Hangar_ReadFromSave` calls once per HERC list it passes over.
 - **Open:** whether the install's loose `CAR\SM_INIT.DAT` or the archive's is the one `VolRStream_CtorFromPath` opens.

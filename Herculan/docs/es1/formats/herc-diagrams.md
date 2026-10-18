@@ -42,9 +42,9 @@ Four lookups take a weapon, a mount and a chassis, with no bounds test on the mo
 
 `Herc_BuildDiagram` (`00023883`) builds a HERC's diagram. `es2_xref.py` finds seven calls: from `Herc_Read`, when a HERC list is read ([the HERC lists](car-hercs-and-stock.md#the-herc-lists)), and from `000241f9`, `00028e50`, `00029d0f`, `00029d68` and twice `00029e01`. It sets `+0x70` to −1, clears `0007ff98`, takes the chassis's `RES32\<chassis>WEP1.DBA` and `<chassis>OUTL.DBA` banks into `+0x9c` and `+0xa0`, loading each the first time a chassis needs it into the tables at `0007ff9c` and `0007ffbc`, and calls `00023605` with the HERC and the word `Herc_Read` hands it. For chassis 7 it makes a 34-byte element at `+0x98`; for the others `+0x98` is null. It makes the mount arrays, 38-byte elements at `+0xa4` (`00023d70`) and 34-byte elements at `+0x94` (`00023f2c`), and for each mount:
 
-1. when `00024b23`(HERC, mount) is 0, makes the mount empty (weapon 17) and calls `00024c14`(HERC, 100, mount, `0x786`);
+1. when the mount's status word is 0 (`Herc_GetMountStatus`, `00024b23`, [the HERC record](car-hercs-and-stock.md#the-herc-record)), makes the mount empty (weapon 17) and sets the word to 100 (`Herc_SetStatus`(HERC, 100, mount, `0x786`), `00024c14`);
 2. calls `HercLayout_FindFrame`, and passes the record's second point (`HercLayout_FindSecondPoint`) to `000216e0` for the mount's `+0x94` element;
-3. sets the mount's `+0xa4` element with `MountPicture_Set` (`00022d78`), giving it what `00024b23` returns for the mount;
+3. sets the mount's `+0xa4` element with `MountPicture_Set` (`00022d78`), giving it the mount's status word;
 4. on chassis 7, when mount 2 or 3 is not empty, passes the point (`0x56`, `0x19`) to `000216e0` for the `+0x98` element and sets the byte `0007ff8e`;
 5. sets to 0 the mount's word when its weapon is 9, 10 or 11 and the word is 5.
 
@@ -104,7 +104,7 @@ ES2's `gam\arm_hots.dat` holds the same kind of per-mount areas as `int32` corne
 
 ## Open
 
-- **Open:** what the frame of a mount picture record selects and what `000216e0` does with the points; what the `+0x94` and `+0x98` elements draw; what `00024b23`, `00024c14`, `00023605`, `00024788` and `00024b86` compute; and what `HercLayout_FindFirstPoint` serves, to which `es2_xref.py` finds no branch and no stored pointer.
+- **Open:** what the frame of a mount picture record selects and what `000216e0` does with the points; what the `+0x94` and `+0x98` elements draw; what `00023605`, `00024788` and `00024b86` compute; and what `HercLayout_FindFirstPoint` serves, to which `es2_xref.py` finds no branch and no stored pointer.
 - **Open:** which six component groups and which damage levels the mark lists are, through `000389fb` and `00024b86`, and what the word `+0x38` of the canvas set to `0007fccc` does to the first of the two blits.
 - **Open:** what reads the areas at `0008003c`: a search of the disassembly for the address finds only `HercHotspots_Load` and `HercHotspots_Free`.
 - **Open:** what `CONFIG.DAT` and `TEST.DAT` are.

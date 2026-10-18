@@ -9,7 +9,7 @@ ES1's world file sets up a mission's surroundings: the sky backdrop and its bitm
 - the palette is `dpl\world<M>`, M = 6*t* + 2*v*;
 - the world file and the palette-cycle file are `wld\world<N>` and `cyc\world<N>`, N = M + *d*.
 
-ES2's are both `world<N>`, N = 2 × word 0 + word 9 ([ES2's load](../../retail/formats/wld-world.md#the-load)). Words 8 and 9 come from the mission's header patches in mode 1 and from `000aacc2` and `000aacc4` otherwise ([header patches](msn-mission-file.md#header-patches)).
+ES2's are both `world<N>`, N = 2 × word 0 + word 9 ([ES2's load](../../retail/formats/wld-world.md#the-load)). Words 8 and 9 come from the mission's header patches in mode 1 and from the MISSION PARAMS menu's VISIBILITY and TIME OF DAY otherwise ([the mission parameters](msn-mission-file.md#the-mode-and-the-mission-parameters)).
 
 `SIMVOL0.VOL` holds `WORLD0.WLD` to `WORLD23.WLD`, six per theater in the order of `Terrain_TheaterNames` (`000924a0`): `desert`, `temper`, `ice`, `urban` ([which theater](zone-terrain.md#which-zone-and-which-theater)). Its `dpl\` holds `WORLD<M>.DPL` for every even M to 22, and `WORLD1.DPL` and `WORLD3.DPL`.
 

@@ -13,10 +13,82 @@ ES1's missions are the `.MSN` files in `ZONES.VOL`'s `MSN\` folder. The shell, `
 5. reads the eleven rows with `MsnGen_ParseMsnFile` (`0003276c`), which always returns 1;
 6. copies header words 3 and 4 to `000aad5a` and `000aad5c`, and overrides the header words the mode sets ([Header patches](#header-patches));
 7. writes the 200 bytes of flags to `data\mission.var` through a `FileWStream` (assert at line `0x505`), and the mission to `data\script.dat` with `WriteScriptDatFile` (`0003445b`), laid out in [`script-dat.md`](script-dat.md);
-8. in mode 0 builds a squad from the first group: it loads `car\sm_init.dat` into the hangar with `Hangar_LoadFile` (`00028c25`, [the HERC lists](car-hercs-and-stock.md#the-herc-lists)), fills a `0x25`-byte record at `0009b028` for each member ref of the first group up to the first `-1`, taking the member's mech record through `MsnGen_HercArrayIndex` (`0003581a`), and passes `car\sm_play.mec` to `0002909c` ([Open](#open)). The records from `0009b028` are the pilot entries of the [career record](bst-battle-sets.md#the-career-record) at `0009b014`, which the load sets up with `CareerRecord_Init` (`000158ff`), its equipment from `bst\tech_sng.dat`;
-9. frees the arrays of conditions, points, headings, waypoint groups (with their waypoint lists), mechs, groups and bases. It does not free the trigger areas, actions or flyers.
+8. counts the first group's member refs before its first `-1` into `Squad_MemberCount` (`0007ebc8`), which `CareerRecord_MarkTopPilots` reads ([a career's missions](bst-battle-sets.md#a-careers-missions)). The count stops at nothing but a `-1`: a group with eight members reads on into its `0x4a` word;
+9. in mode 0 builds the squad from those members ([The squad](#the-squad));
+10. writes `data\player.mec` with `PlayerMec_Write` (`0002299e`, [the player file](career-log-and-player-mec.md#the-player-file)), in either mode;
+11. frees the arrays of conditions, points, headings, waypoint groups (with their waypoint lists), mechs, groups and bases. It does not free the trigger areas, actions or flyers.
 
-The mode is the word `000aad56`. In steps 4 and 6, mode 1 takes its values from the `0x1f7`-byte record at `0009b23b + 0x1f7 × [0009b21f]` and any other mode from the words at `000aacbc`–`000aacc4`; step 8 runs only in mode 0.
+### The mode and the mission parameters
+
+**A mission started from the main menu's INSTANT ACTION or SINGLE MISSION is a single mission, one started from RESUME or CAREER a career's, and a single mission takes five of its header words from the MISSION PARAMS menu: AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY.**
+
+The mode is `Shell_Mode` (`000aad56`), 0 for a single mission and 1 for a career. In steps 4 and 6, mode 1 takes its values from the `0x1f7`-byte record at `0009b23b + 0x1f7 × [0009b21f]` and mode 0 from the words at `000aacbc`–`000aacc4`; step 9 runs only in mode 0. `MainMenu_OnMessage` (`0002a70a`), the handler of the main menu, `dlg\menu1000.dlg` ([the menu dialogs](dlg-menu-dialogs.md)), stores it:
+
+| Button | Id | Mode | Then |
+|---|---|---|---|
+| INSTANT ACTION | 1499 | 0 | `000aad5a` to −1 and `SingleMission_Start` ([single missions](bst-battle-sets.md#single-missions)), so the list is drawn at random |
+| SINGLE MISSION | 1100 | 0 | the SINGLE MISSION menu, `dlg\menu1100.dlg` |
+| RESUME | 1700 | 1 | a career's resume |
+| CAREER | 1200 | 1 | the career menu |
+
+In the SINGLE MISSION menu, `MissionMenu_OnMessage` (`0002b375`) keeps the value of its list control (id 1101), which the two arrows step, in `000aad5a`, and BRIEFING (1501) calls `SingleMission_Start`, which passes `000aad5a` to `SingleMission_BuildPath` as the list index. Step 6 of the load then stores header word 3 there; in `SM_SCR01.MSN` it is 4, the index of the list in `msn\sing_msn.dat` that names the mission. `Mission_ReadRestore` (`00036512`) also writes the mode, reading it back from `data\restore.dat` ([which file](eng-mission-text.md#which-file)); the other 37 instructions `es2_xref.py` finds holding the mode's address read it.
+
+The five words are the MISSION PARAMS menu's settings, `dlg\menu1110.dlg`, and options 12 to 16 of `data\prefs.cfg`:
+
+| Word | Header word | Button | Option | Values | The simulator's reading |
+|---|---|---|---|---|---|
+| `MissionParams_Ammo` (`000aacbc`) | 5 | AMMO | 12 | 0, 1 | [Open](#open) |
+| `MissionParams_Damage` (`000aacbe`) | 6 | DAMAGE | 13 | 0, 1 | [Open](#open) |
+| `MissionParams_Difficulty` (`000aacc0`) | 7 | DIFFICULTY | 14 | 0 to 3 | the [difficulty scale](../simulation/world.md#the-difficulty-scale--damage_scalebydifficulty-0001f82c)'s index |
+| `MissionParams_Visibility` (`000aacc2`) | 8 | VISIBILITY | 15 | 0, 1 | the [world file](wld-world.md#which-file)'s *d* and the [contact scan range](../simulation/world.md#small-functions) |
+| `MissionParams_TimeOfDay` (`000aacc4`) | 9 | TIME OF DAY | 16 | 0 to 2 | the world file's *v*; also flag 3 in either mode |
+
+The shell keeps 17 option bytes with a handler each: `Prefs_Load` (`000081ca`) reads the 17 bytes of `data\prefs.cfg` into `Prefs_Options` (`000aa24e`), zeroes them when the file does not open, calls each option's handler (`Prefs_Handlers`, `000aa272`) and copies them into `Prefs_Committed` (`000aa260`). At start-up `00020630` copies options 12 to 16 into the five words, and `0003c7d8` copies them in again at `0003e718`, keeping copies at `+0x26`–`+0x2e` of the object in `EBX` there, the offsets CANCEL puts the words back from. `MissionParams_OnMessage` (`0002b4fe`) handles the menu's buttons:
+
+- AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY (ids 1111 to 1115) each add 1 to their word modulo the number of its values, show it in controls 1116 to 1120 and store it in their option with `Prefs_SetOption` (`00008378`), which calls the option's handler;
+- CANCEL (99) puts back the five words from the menu's `+0x26`–`+0x2e` and the options from `Prefs_Committed` (`Prefs_RevertAll`, `00008316`), then does what ACCEPT does;
+- ACCEPT (100) copies the options into `Prefs_Committed` (`Prefs_CommitAll`, `000082b0`) and writes all 17 to `data\prefs.cfg` (`Prefs_Save`, `00008267`).
+
+### The draws
+
+**Every random choice the load makes comes from one generator whose state at the load depends on the second the shell started and on every draw since, so a port can make retail's choices only from a known state.**
+
+#### The shell's generator
+
+`Math_RandomNext` (`00038723`) is the simulator's generator ([the helpers that match](../simulation/fixed-point-math.md#helpers-that-match), ES2's [algorithm](../../retail/simulation/random-generator.md#the-algorithm)) over the shell's own state, `Shell_RandomState` (`0009aec0`). `Math_RandomBelow` (`00038774`) is `(Math_RandomNext(state) & 0x7fff) % bound` and returns 0 without a draw for a bound of 0. `Math_RandomSeed` (`000386c8`) sets the cursors `+0x70` to `0x18` and `+0x71` to `0x37` and copies the 112-byte `Math_RandomSeedTable` (`00081720`), which is the simulator's and ES2's seed table byte for byte.
+
+The static initializer `00020b68` seeds `Shell_RandomState` and a second state, `Shell_RandomState2` (`0009af34`), with `Math_RandomSeed`. At start-up `00020630` seeds `Shell_RandomState` again with `Math_RandomSeedAndSkip` (`000386f4`), which seeds it and discards *n* draws, *n* being `time` (`0005cf78`) modulo 128: the seconds since 1970 that the C library's `time` makes from the DOS clock and date. So a session starts at one of 128 states, as ES2's shell does from the tick count ([ES2's shell generator](../../retail/shell/campaign-loop.md#the-shells-generator)). `es2_xref.py` finds `Shell_RandomState`'s address in the load's functions below, in `PilotEntry_InitRandom` ([pilot entries](bst-battle-sets.md#pilot-entries)) and in `MenuWindow_Ctor` (a random background for menu 9999), `DigitalDialog_ShowMessage`, `TtmScript_RunPage`, `TtmScript_RunSoundCommand`, `StrList_PickRandom`, `SingleMission_BuildPath`, `Mission_BuildPathFromFiles`, `000120f9`, `000162f4` and `00037bf0`: the menus, the animation scripts and the mission's path draw on it between start-up and a load.
+
+#### The order of the load's draws
+
+In mode 0, in this order:
+
+1. flags 4, 5 and 6, each `Math_RandomBelow`(12) ([The flags](#the-flags));
+2. in the conditions row, in file order, each type-1 condition whose parent passes `Msn_ConditionFilterGate`, a draw below its word `0x06`, kept at its `0x08`;
+3. in the rows of points, headings, waypoint groups, mechs, flyers and bases, in that order and in file order, each record whose condition passes and whose variant key is not `-1`: `Msn_PickVariant`'s draws, one below the word `0x0a` of each type-3 condition whose `0x06` is the key, in condition order, until one has a type-2 record whose range holds the draw ([Variants](#filtering-variants-and-repeats));
+4. the theater, header word 0, a draw below 4;
+5. for each squad member after the first, four to six draws ([The squad](#the-squad));
+6. the player's pilot word, a draw below 11 ([a single mission's file](career-log-and-player-mec.md#a-single-missions-file)), the load's last.
+
+Mode 1 makes the draws of steps 1 to 3 and none of 4 to 6.
+
+### The squad
+
+**In a single mission the player takes the hangar's stock HERC of the chassis the mission gives the player's machine, and each squadmate the HERC the mission gives its own machine, with a random name and rank.**
+
+Step 9 builds the squad from the first group's members, *n* of them, `Squad_MemberCount`:
+
+1. It loads `car\sm_init.dat` into the hangar with `Hangar_LoadFile` (`00028c25`, [the HERC lists](car-hercs-and-stock.md#the-herc-lists)): slots 0 to 7 hold a HERC of chassis 0 to 7, and the slot count is 11.
+2. It sets up `SingleMission_Record` (`0009b014`), the [career record](bst-battle-sets.md#the-career-record) a single mission uses, with `CareerRecord_Init`: every pilot entry through `PilotEntry_Init` ([pilot entries](bst-battle-sets.md#pilot-entries)), so each is on strength with no HERC, and the equipment from `bst\tech_sng.dat`.
+3. For each member *i* from 0 to *n* − 1, with *m* its mech record, the record `MsnGen_HercArrayIndex` (`0003581a`) gives for the ref, which is block-6 record *ref* of `data\script.dat`, it fills an entry set up by `PilotEntry_Init`:
+   - the first member, the player, gets name words 0 and 0 and the slot numbered by *m*'s type `0x30`, which `sm_init.dat` fills with its HERC of that chassis. *m*'s weapons and words are not used;
+   - each other member gets the name group (`+0`) a draw below 4 plus 4(*i* − 1), the name within it (`+2`) a draw below 3, the rank (`+0xd`) a draw below 6, and `+0x17`, `+0x19` and `+0x1b` from `PilotEntry_DrawForRank` (`00015402`): with *r* the rank and *t* the threshold `PilotRankThresholds`[*r*] (0, 1, 5, 15, 30, −1), `+0x17` is *t* plus a draw below *t* + 1, no draw for *r* = 5, and for *r* not 0, `+0x19` and `+0x1b` are draws below 5*r* and 10*r*. It gets a new HERC: `Herc_Ctor` (`00022f5e`) for chassis −1, then the chassis *m*'s `0x30`, the mount count of that chassis from the table at `000803c8` ([the HERC record](car-hercs-and-stock.md#the-herc-record)), for each mount *k* the weapon *m*'s `0x32` + 2*k* and the word *m*'s `0x4e` + 2*k*, `+0x2c` *m*'s `0x62`, and every status word 100 but internal word 9 (`Herc_SetAllStatus`(*h*, 100), `00024c3c`). `Hangar_AddHerc` (`00029d0f`) stores it in the first empty slot, 8 for the first squadmate, and the entry takes that slot; with no empty slot left the entry's slot is −1 and the HERC is kept nowhere.
+   
+   It then copies the entry over pilot entry *i* of the record, at `0009b028` + `0x25` × *i*. Nothing bounds *i* at the record's four entries: a fifth member's entry lands on the equipment state at `+0xa8`. The first group of each of the 14 single missions holds 1 to 4 member refs, `SM_SCT50.MSN`'s 4.
+4. It makes the player's entry, the record's `+0xe`, 0, the current pilot (`CareerRecord_SelectPilot`, `00015ad4`), which sets the hangar's selected slot `Hangar_SelectedSlot` (`00080894`) to the player's.
+5. It writes the hangar to `car\sm_play.mec` with `Hangar_SaveFile` (`0002909c`), which in mode 0 holds slots 0 to 7 only ([the HERC lists](car-hercs-and-stock.md#the-herc-lists)).
+
+`PlayerMec_Write` ends, in mode 0, by writing `SingleMission_Record` whole to `car\sm_play.gam` (`SingleMission_SaveRecord`, `00014f54`); after the mission `Shell_ProcessMissionResults` reads both `car\` files back ([after a mission](bst-battle-sets.md#after-a-mission)). A byte search of `DBSIM.EXE` finds no `sm_play`, where the same search finds `player.mec`.
 
 ### The flags
 
@@ -27,10 +99,10 @@ The conditions compare against 100 `int16` flags at `000ab244`, which the load s
 | all | kept as they are | 0 |
 | 1 | the record's word at `+6` | 99 |
 | 2 | the record's word at `+8` | 0 |
-| 3 | `000aacc4` | `000aacc4` |
+| 3 | TIME OF DAY, `000aacc4` | TIME OF DAY, `000aacc4` |
 | 4, 5, 6 | each a draw below 12 | each a draw below 12 |
 
-The draws are `Math_RandomBelow` (`00038774`) on the shell's generator at `0009aec0`, the generator the conditions' own draws and the variant picks use. No row writes a flag: the header patch has no flag list ([Header patches](#header-patches)), so `data\mission.var` is the array as seeded.
+The draws are the load's first ([the draws](#the-draws)). No row writes a flag: the header patch has no flag list ([Header patches](#header-patches)), so `data\mission.var` is the array as seeded.
 
 ## The layout
 
@@ -78,10 +150,10 @@ After the rows the mode overrides some of the words:
 | Word | Mode 1 | Otherwise |
 |---|---|---|
 | 0 | the word of the table at `00080f14` (1, 2, 2, 0, 0, 3, 3, 3) indexed by the record's word at `+6`, flag 1's | a draw below 4 |
-| 5, 6, 7 | 0, 0, 2 | `000aacbc`, `000aacbe`, `000aacc0` |
-| 8, 9 | the patch's | `000aacc2`, `000aacc4` |
+| 5, 6, 7 | 0, 0, 2 | AMMO, DAMAGE and DIFFICULTY ([the mission parameters](#the-mode-and-the-mission-parameters)) |
+| 8, 9 | the patch's | VISIBILITY and TIME OF DAY |
 
-`WriteScriptDatFile` writes the mode in place of word 2. So of a mission's own patches, words 1, 3 and 4 reach the simulator in either mode, and words 8 and 9 in mode 1. Word 0 is the theater and word 1 the zone whose shapes the simulator and the shell's map load ([`zone-terrain.md`](zone-terrain.md#which-zone-and-which-theater)), and words 0, 8 and 9 name the theater's world file ([`wld-world.md`](wld-world.md#which-file)); what the others mean is [Open](#open).
+`WriteScriptDatFile` writes the mode in place of word 2. So of a mission's own patches, words 1, 3 and 4 reach the simulator in either mode, and words 8 and 9 in mode 1, and a single mission's theater is drawn. Word 0 is the theater and word 1 the zone whose shapes the simulator and the shell's map load ([`zone-terrain.md`](zone-terrain.md#which-zone-and-which-theater)), and words 0, 8 and 9 name the theater's world file ([`wld-world.md`](wld-world.md#which-file)); what words 4 to 6 mean to the simulator is [Open](#open).
 
 ### Actions
 
@@ -222,8 +294,8 @@ An 88-byte mech is the record above to `0x4d`, then one word at `0x4e` where tha
 
 - **Open:** what reads [the other layout](#a-file-in-another-layout), and so what its header words and its mechs' word at `0x4e` mean. The byte search and the path builders that turned up no reader are in [`bst-battle-sets.md`](bst-battle-sets.md#open).
 - **Open:** whether the word pairs at mech `0x4a`/`0x4c`, flyer `0x36`/`0x38` and base `0x0e`/`0x10` are each one (counter ref, operation) pair of ES2's out-of-action report ([out-of-action report](../../retail/simulation/mission-deployment.md#the-out-of-action-report)), as action `0x1a`/`0x1c` and group `0x54`/`0x56` are ([mission groups](../simulation/mission-groups.md)), and whether mech `0x4e`–`0x61`, `0x62` and `0x68`, flyer `0x3e` and base `0x16` are ES2's ammunition types, constant and starting condition. The simulator's second pass stores each pair in its object's `+0x174`/`+0x176` and the action refs mech `0x64`/`0x66`, flyer `0x3a`/`0x3c` and base `0x12`/`0x14` as its `+0x16c`/`+0x170` action pointers, the first of which a struck enemy fires; it hands mech `0x4e`–`0x61` and `0x68` to callees not read, and does not read `0x62` or flyer `0x3e` ([the second pass](script-dat.md#the-second-pass)).
-- **Open:** what the exported fields mean that no code read so far uses: the 20 words at mech and flyer `0x08` and group `0x06`, of which the simulator's second pass reads only mech `0x08` and `0x0a` ([the second pass](script-dat.md#the-second-pass)), an action's type and verb, the group word `0x52`, and header words 2 and 4 to 7. The simulator's mission status reads group `0x32` and header word 3 ([the status](../simulation/mission-status.md#the-status--mission_status-0000f4e8)).
+- **Open:** what the exported fields mean that no code read so far uses: the 20 words at mech and flyer `0x08` and group `0x06`, of which the simulator's second pass reads only mech `0x08` and `0x0a` ([the second pass](script-dat.md#the-second-pass)), an action's type and verb, the group word `0x52`, and header words 4 to 6. The simulator's mission status reads group `0x32` and header word 3 ([the status](../simulation/mission-status.md#the-status--mission_status-0000f4e8)).
 - **Open:** whether a group's `0x50` action holds the group out of the mission until it fires, as ES2's group action `0x70` does: the simulator keeps it at the group's `+0x16`, and the functions that sweep objects for shots, blasts and trigger areas skip the group's members while it is set ([the group record](../simulation/mission-groups.md#the-group-record)). And whether `0x30` and `0x32`, which the simulator copies to the group record's `+2` and `+4`, hold an order's verb and formation. In `B0_C2_60.MSN` the first group, the squad, holds 0 at `0x4a` and the groups that name it or one of its mechs at `0x4e` hold 1.
-- **Open:** the squad the mode-0 load builds: the pilot entries at `0009b028` and the functions that fill them (`000151c8`, `00015402`, `Herc_Ctor` (`00022f5e`), `00024c3c`, `00029d0f`, `00015ad4`), and what `0002909c` writes to `car\sm_play.mec`.
-- **Open:** what the modes other than 1, a career's, are; what the words at `000aacbc`–`000aacc4` the other modes use are, what reads header word 4 at `000aad5c`, and what header word 3 at `000aad5a` means: `Career_StartMission` copies it to the career record's `+0xc`, and `SingleMission_Start` passes the word to `SingleMission_BuildPath` as a list index ([single missions](bst-battle-sets.md#single-missions)).
+- **Open:** what reads header word 4 at `000aad5c`, and whether header word 3, which step 6 stores at `000aad5a` and `Career_StartMission` copies to the career record's `+0xc`, is in every single mission the index of the `msn\sing_msn.dat` list that names it, as `SM_SCR01.MSN`'s 4 is.
+- **Open:** a set of the three `data\` files retail's shell wrote for `SM_SCR01.MSN` holds DIFFICULTY 2 in `data\script.dat`'s word 7 beside a `data\prefs.cfg` whose option 14 is 0, written after it; the simulator's `0004a7fc` (`ES1DBSIM`) writes its own 17 options to `data\prefs.cfg`. A retail check: set DIFFICULTY in MISSION PARAMS, ACCEPT, and read `data\prefs.cfg`'s byte 14 before the mission starts and after it ends.
 - **Open:** whether a retail group's `0x4e` names a later group, which the load resolves against slots not yet read.

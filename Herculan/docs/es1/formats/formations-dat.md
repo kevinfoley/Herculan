@@ -48,7 +48,7 @@ ES2's structure slot also carries a heading that turns the structure, and its fo
 
 `ShellMap_PlaceSquad` (`ES1GO 0000cab1`, `src\shellmap.cpp`) places the player's squad on the briefing's map, the second half of ES2's [squad placement](../../retail/shell/mission-map.md#the-squads-positions) without its `player.mec` read. Given the map's object, it:
 
-1. sets the squad size `+0xc6` from the word at `ES1GO 0007ebc8`;
+1. sets the squad size `+0xc6` from `Squad_MemberCount` (`ES1GO 0007ebc8`), the number of the first group's members ([loading a mission](msn-mission-file.md#loading-a-mission));
 2. opens `dat\mforms`, asserting at severity 5 (line `0x59e`) when the stream status is set, reads the count into a local it does not use, and reads formation + 1 records of `0x1c` bytes one over another into one buffer, which ends holding the formation's, the formation being the map's `+0x9e`;
 3. takes a heading: the map's `+0xa4`, when it is not negative, indexes the `int16` table at `+0x58`; otherwise, with a path at `+0x6a` of two points or more, `ES1GO 000553bc` of its first leg less `0x4000`; otherwise 0. `Math_BuildRotation2D` turns it into a rotation;
 4. takes an anchor: point `+0xa2` of the 12-byte points at `+0x52`, or the path's first point when `+0xa2` is −1;

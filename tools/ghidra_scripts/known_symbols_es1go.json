@@ -637,7 +637,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Tech_Unlock",
-      "description": "(state, missions) in stack order, callee-cleaned: copies entry 0x2d of the text table 0009afa8 (eng\\watext.bin, NONE) into 0007d7e0 through sprintf %s. The grade test passes, except when the mode word 000aad56 is 1 and missions is not 0, where it passes when Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) is below 2. Each of the 8 chassis entries (state + 4 + 5 * i: int16 first, int16 second, byte unlocked) that is locked and holds no -1 unlocks when first <= missions with the grade test passing, or second <= missions; each of the 17 weapon entries (state + 0x2c) the same with == for <=. Unlocking sets the byte, copies the item's name (table 0009afa8 entry 0x1b + i for a chassis, 0xd5 + i for a weapon) into 0007d7e0, and stores the kind (0, 1) at state +0 and the index at +2. es2_xref finds two calls: Tech_LoadFile (00001dd4) with 0, and Shell_ProcessMissionResults (00038eb5) with the career record's missions played.",
+      "description": "(state, missions) in stack order, callee-cleaned: copies entry 0x2d of the text table 0009afa8 (eng\\watext.bin, NONE) into 0007d7e0 through sprintf %s. The grade test passes, except when the mode word Shell_Mode (000aad56) is 1 and missions is not 0, where it passes when Mission_OutcomeGrade (00036837)(000aad58, 000aad5e) is below 2. Each of the 8 chassis entries (state + 4 + 5 * i: int16 first, int16 second, byte unlocked) that is locked and holds no -1 unlocks when first <= missions with the grade test passing, or second <= missions; each of the 17 weapon entries (state + 0x2c) the same with == for <=. Unlocking sets the byte, copies the item's name (table 0009afa8 entry 0x1b + i for a chassis, 0xd5 + i for a weapon) into 0007d7e0, and stores the kind (0, 1) at state +0 and the index at +2. es2_xref finds two calls: Tech_LoadFile (00001dd4) with 0, and Shell_ProcessMissionResults (00038eb5) with the career record's missions played.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#equipment-availability",
       "verified": {
         "bytes": "00001f78+503",
@@ -1172,6 +1172,81 @@
       }
     },
     {
+      "address": "000081ca",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_Load",
+      "description": "(): reads 17 bytes of data\\prefs.cfg (through Path_ApplyAltDrive) into the options Prefs_Options (000aa24e) with a FileRStream, or zeroes them when the file does not open; for each option calls its handler from Prefs_Handlers (000aa272) with the value when it has one, and copies the value into the committed copy Prefs_Committed (000aa260).",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters",
+      "verified": {
+        "bytes": "000081ca+157",
+        "sha1": "8ff383cdfcfd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00008267",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_Save",
+      "description": "(): writes the 17 options at Prefs_Options (000aa24e) to data\\prefs.cfg (through Path_ApplyAltDrive) with a FileWStream when it opens.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters",
+      "verified": {
+        "bytes": "00008267+73",
+        "sha1": "1b7a357a9df7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000082b0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_CommitAll",
+      "description": "(apply), its argument removed by this function: for each of the 17 options that differs from its committed copy Prefs_Committed (000aa260), calls the option's handler from Prefs_Handlers (000aa272) with it when apply is set and there is one, and copies the option into the copy.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters",
+      "verified": {
+        "bytes": "000082b0+102",
+        "sha1": "1cbdd7188048",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00008316",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_RevertAll",
+      "description": "(apply), its argument removed by this function: for each of the 17 options that differs from its committed copy Prefs_Committed (000aa260), copies the copy back into the option and calls the option's handler from Prefs_Handlers (000aa272) with it when apply is set and there is one.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters",
+      "verified": {
+        "bytes": "00008316+98",
+        "sha1": "02056b593d93",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00008378",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_SetOption",
+      "description": "(apply, value, index) in stack order, its arguments removed by this function: stores the byte value as option index of Prefs_Options (000aa24e), then calls the option's handler from Prefs_Handlers (000aa272) with value when apply is set and there is one.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters",
+      "verified": {
+        "bytes": "00008378+52",
+        "sha1": "3ae6d7d58281",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "000087ce",
       "binary": "ES1GO",
       "type": "function",
@@ -1267,7 +1342,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellMap_PlaceSquad",
-      "description": "(map), callee-cleaned, src\\shellmap.cpp: sets the squad size +0xc6 from the word 0007ebc8; opens dat\\mforms (severity-5 assert, line 0x59e, when the stream status is set), reads the count into a local and then formation + 1 records of 0x1c bytes into one buffer, the formation being +0x9e; heading: +0xa4, when not negative, indexes the int16 table +0x58, else with a path +0x6a of two points or more 000553bc of its first leg less 0x4000, else 0, made a rotation by Math_BuildRotation2D; anchor: point +0xa2 of the 12-byte points +0x52, or the path's first point when +0xa2 is -1. Each of the eight member refs at +0xa8 that is not -1 and is below +0xc6 gets the anchor at +0xd4 + 12 * k, plus for k above 0 the record's int16 slot k with z 0 turned by 000552e0. The second half of VSHELL's ShellMap_ReadSquadHeader (00424db0), without its player.mec read. Caller found by es2_xref: 0000c068.",
+      "description": "(map), callee-cleaned, src\\shellmap.cpp: sets the squad size +0xc6 from the word Squad_MemberCount (0007ebc8); opens dat\\mforms (severity-5 assert, line 0x59e, when the stream status is set), reads the count into a local and then formation + 1 records of 0x1c bytes into one buffer, the formation being +0x9e; heading: +0xa4, when not negative, indexes the int16 table +0x58, else with a path +0x6a of two points or more 000553bc of its first leg less 0x4000, else 0, made a rotation by Math_BuildRotation2D; anchor: point +0xa2 of the 12-byte points +0x52, or the path's first point when +0xa2 is -1. Each of the eight member refs at +0xa8 that is not -1 and is below +0xc6 gets the anchor at +0xd4 + 12 * k, plus for k above 0 the record's int16 slot k with z 0 turned by 000552e0. The second half of VSHELL's ShellMap_ReadSquadHeader (00424db0), without its player.mec read. Caller found by es2_xref: 0000c068.",
       "source": "Herculan/docs/es1/formats/formations-dat.md#the-shells-squad",
       "verified": {
         "bytes": "0000cab1+958",
@@ -2072,6 +2147,111 @@
       }
     },
     {
+      "address": "00014e88",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorScreenshotCopy",
+      "description": "(region, flags): slot +0x1c of the vtable 0007eb9a: byte for byte the code of GLRegion_Dtor (00046d7b), relocated operands aside, storing 0007eb9a and 0007eb2a where that stores 00082b0c and 00082ada.",
+      "source": "ES1GO disassembly at 00014e88",
+      "verified": {
+        "bytes": "00014e88+73",
+        "sha1": "1f64e04c1ebb",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00014ed1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Screenshot_StaticInit",
+      "description": "(): constructs the 0x1a-byte object at 0009ae30 with 000500ac, which stores the vtable 000866da and zeroes the object's dwords +0xa, +0xe and +0x16 and its word +0x14. The static constructor table's entry 0009a244 holds it.",
+      "source": "ES1GO disassembly at 00014ed1",
+      "verified": {
+        "bytes": "00014ed1+15",
+        "sha1": "09a5ee60f1fd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00014ee0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Screenshot_StaticExit",
+      "description": "(): 00050198(0009ae30, 2), the destructor of the object Screenshot_StaticInit (00014ed1) constructs, with flags 2. The exit table's entry 0009a28c holds it.",
+      "source": "ES1GO disassembly at 00014ee0",
+      "verified": {
+        "bytes": "00014ee0+17",
+        "sha1": "eb0990abd004",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00014ef4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_Current",
+      "description": "(): the career record the shell works on: the single mission's record SingleMission_Record (0009b014) when the mode word Shell_Mode (000aad56) is 0, otherwise the roster's record 0009b23b + 0x1f7 x [0009b21f], with 0009b218 left in EDX. es2_xref finds 54 calls.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#the-career-record",
+      "verified": {
+        "bytes": "00014ef4+52",
+        "sha1": "654f68eac7f8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00014f28",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_SaveCurrent",
+      "description": "(): in mode 0 (the word Shell_Mode (000aad56)) SingleMission_SaveRecord (00014f54); otherwise 000168b0(0009b218, the dword 0009b21f). es2_xref finds six calls, PlayerMec_Write (0002299e)'s among them.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-squad",
+      "verified": {
+        "bytes": "00014f28+44",
+        "sha1": "7c3d6c4c2df4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00014f54",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SingleMission_SaveRecord",
+      "description": "(): writes the 0x1f7 bytes of the single mission's record SingleMission_Record (0009b014) to entry 9 of the file-name table 0009afb8, car\\sm_play.gam (through Path_ApplyAltDrive), with a FileWStream, asserting at severity 5 (career.cpp line 0x58) when it does not open.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-squad",
+      "verified": {
+        "bytes": "00014f54+130",
+        "sha1": "037e8f025c33",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00014fd6",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SingleMission_RestoreRecord",
+      "description": "(): reads car\\sm_play.gam (file-name entry 9) into the record SingleMission_Record (0009b014) with a FileRStream, asserting at severity 5 (career.cpp line 0x61) when it does not open, closes it, and loads entry 10, car\\sm_play.mec, into the hangar with Hangar_LoadFile (00028c25). es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
+      "verified": {
+        "bytes": "00014fd6+154",
+        "sha1": "35aec9d0bd27",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00015070",
       "binary": "ES1GO",
       "type": "function",
@@ -2102,16 +2282,121 @@
       }
     },
     {
+      "address": "000151c8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotEntry_Init",
+      "description": "(entry), its argument removed by this function: sets up a 0x25-byte pilot entry with no draw: the words +0 and +2 to -1, +4 and +6 to 0, the slot +8 to -1, the byte +0xa to 1, the words +0xb, +0x11, +0x13, +0x15, +0x17, +0x19, +0x1b, +0x1d and +0x1f to 0, +0xf to 100 and the dword +0x21 to 0; then PilotEntry_ApplyGains (00015317).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "000151c8+96",
+        "sha1": "95e87da47d9f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015228",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotEntry_InitRandom",
+      "description": "(entry), its argument removed by this function: sets +0 to +0xa, +0xf, +0x11 to +0x15 and +0x21 as PilotEntry_Init (000151c8) does, and the rest with draws on the generator Shell_RandomState (0009aec0) through Math_RandomBelow (00038774), in this order: d, a draw below 2, into +0x1d and +0xb; +0x1f, a draw below 5 plus 5 x d; +0x17, (a draw below 3 plus 1) x +0x1f; +0x1b, (a draw below 2 plus 1) x +0x1f; +0x19, a draw below 2 x +0x1f. Then PilotEntry_ApplyGains (00015317).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "00015228+239",
+        "sha1": "e7219357ffde",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015317",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotEntry_ApplyGains",
+      "description": "(entry), its argument removed by this function: when the byte +0xa is set, adds the words +0x11, +0x13 and +0x15 to +0x17, +0x19 and +0x1b and to the words 0009ae5c, 0009ae5e and 0009ae60; then sets the rank +0xd to the number of the thresholds at PilotRankThresholds (0007ebd4) (0, 1, 5, 15, 30, ended by -1) below +0x17, at most 4.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "00015317+193",
+        "sha1": "c3a4d50d2c9c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000153d8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotEntry_ReadGains",
+      "description": "(entry, stream) in stack order, its arguments removed by this function: reads 6 bytes into the words +0x11 to +0x15 through the stream's slot +0x1c, then PilotEntry_ApplyGains (00015317).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
+      "verified": {
+        "bytes": "000153d8+42",
+        "sha1": "cb16aac7bee1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015402",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotEntry_DrawForRank",
+      "description": "(entry), its argument removed by this function: with r the rank +0xd and t the word PilotRankThresholds (0007ebd4)[r], sets +0x17 to t plus Math_RandomBelow (00038774)(Shell_RandomState (0009aec0), t + 1), a bound of 0 for r = 5, where t is -1, and so no draw; then, when r is not 0, +0x19 to a draw below 5r and +0x1b to a draw below 10r, and otherwise both to 0. es2_xref finds one call, from MsnGen_LoadMission (00035873).",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-squad",
+      "verified": {
+        "bytes": "00015402+141",
+        "sha1": "a65881116e18",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0001548f",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "PlayerMec_WritePilotWords",
-      "description": "(entry, player, stream) in stack order, callee-cleaned: writes two int16 through the stream's slot +0x18. When entry equals player: in mode 0 (the word 000aad56) Math_RandomBelow(0009aec0, 11) and 0; otherwise the word +0x40 of the careers-log entry the roster 0009b218 holds at +1, then, after 00015ad4(record, its dword +0xe) on the record 0009b23b + 0x1f7 x [0009b21f], the word at that record's +0x21 + 0x25 x its word +0x12. For any other entry: 00015f50(record, entry), the record being 0009b014 in mode 0 and 0009b23b + 0x1f7 x [0009b21f] otherwise, then entry in mode 0 or the word at that record's +0x21 + 0x25 x entry otherwise. es2_xref finds one call, from PlayerMec_WriteEntries (00022a05).",
+      "description": "(entry, player, stream) in stack order, callee-cleaned: writes two int16 through the stream's slot +0x18. When entry equals player: in mode 0 (the word Shell_Mode (000aad56)) Math_RandomBelow(Shell_RandomState (0009aec0), 11) and 0; otherwise the word +0x40 of the careers-log entry the roster 0009b218 holds at +1, then, after CareerRecord_SelectPilot (00015ad4)(record, its dword +0xe) on the record 0009b23b + 0x1f7 x [0009b21f], the word at that record's +0x21 + 0x25 x its word +0x12. For any other entry: PilotEntry_NameIndex (00015f50)(record, entry), the record being SingleMission_Record (0009b014) in mode 0 and 0009b23b + 0x1f7 x [0009b21f] otherwise, then entry in mode 0 or the word at that record's +0x21 + 0x25 x entry otherwise. es2_xref finds one call, from PlayerMec_WriteEntries (00022a05).",
       "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#the-player-file",
       "verified": {
         "bytes": "0001548f+510",
         "sha1": "96f463954ad6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001568d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_ReadPilotResults",
+      "description": "(stream), its argument removed by this function: zeroes the words 0009ae5c, 0009ae5e and 0009ae60, then for each pilot entry 0 to 3 of the record CareerRecord_Current (00014ef4) returns whose byte +0xa is set and slot +8 is not -1: for entry 0, or in any mode but 0 (the word Shell_Mode (000aad56)), calls 00028e50(stream, slot) and sets the entry's condition +0xf to 00024b86(h, 9, 0x784) for the HERC h in the slot, or to 0 when the slot holds none; otherwise reads a 66-byte status block set up by HercStatus_Ctor (0001a29c) from the stream through its slot +0x1c and sets +0xf to its internal word 9, HercStatus_Get (00015896)(block, 9, 0x784). Then PilotEntry_ReadGains (000153d8)(entry, stream). es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
+      "verified": {
+        "bytes": "0001568d+521",
+        "sha1": "a412c24726fa",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015896",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercStatus_Get",
+      "description": "(block, index, kind) in stack order, its arguments removed by this function: for kind 0x785 HercStatus_ExternalAverage (0001a3ba)(block, index); for 0x784 the internal word +0x1a + 2 x index; for 0x786 the per-mount word +0x2e + 2 x index; for any other kind the kind.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
+      "verified": {
+        "bytes": "00015896+105",
+        "sha1": "acf55bb2cc3c",
         "scope": "body",
         "via": "decompile"
       }
@@ -2122,7 +2407,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_Init",
-      "description": "(record), callee-cleaned: zeroes bytes +0 and +1 and the words +2, +6, +8, +0xa, +0xe and +0x12, sets +4 to 0x6a4 and the word 000aad58 to 0, zeroes the 100 words at +0x12d (CareerRecord_ClearWords (000161ae)), clears the equipment state at +0xa8 (Tech_Clear (00001ee3)) and loads it with Tech_LoadFile (00001dd4) from bst\\tech_0.dat when the mode word 000aad56 is 1 and bst\\tech_sng.dat otherwise, then sets the state's words +0 and +2 (record +0xa8, +0xaa) to -1. It sets the pilot count +0x10 to 4 and for each 0x25-byte pilot entry from +0x14 calls 000151c8 when the mode is 0 or the entry is the one +0xe names, and 00015228 otherwise. es2_xref finds two calls: Career_New (000163ac) with a roster record (roster + 0x23 + 0x1f7 * i), and MsnGen_LoadMission (00035873) with 0009b014.",
+      "description": "(record), callee-cleaned: zeroes bytes +0 and +1 and the words +2, +6, +8, +0xa, +0xe and +0x12, sets +4 to 0x6a4 and the word 000aad58 to 0, zeroes the 100 words at +0x12d (CareerRecord_ClearWords (000161ae)), clears the equipment state at +0xa8 (Tech_Clear (00001ee3)) and loads it with Tech_LoadFile (00001dd4) from bst\\tech_0.dat when the mode word Shell_Mode (000aad56) is 1 and bst\\tech_sng.dat otherwise, then sets the state's words +0 and +2 (record +0xa8, +0xaa) to -1. It sets the pilot count +0x10 to 4 and for each 0x25-byte pilot entry from +0x14 calls PilotEntry_Init (000151c8) when the mode is 0 or the entry is the one +0xe names, and PilotEntry_InitRandom (00015228) otherwise. es2_xref finds two calls: Career_New (000163ac) with a roster record (roster + 0x23 + 0x1f7 * i), and MsnGen_LoadMission (00035873) with SingleMission_Record (0009b014).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#the-career-record",
       "verified": {
         "bytes": "000158ff+234",
@@ -2192,6 +2477,81 @@
       }
     },
     {
+      "address": "00015ad4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_SelectPilot",
+      "description": "(record, entry) in stack order, its arguments removed by this function: sets the current pilot word +0x12 to entry and, when entry is not -1, the hangar's selected slot Hangar_SelectedSlot (00080894) to the entry's slot +8. es2_xref finds 18 calls.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "00015ad4+54",
+        "sha1": "8f591bbb1f88",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015b0a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_NextPilot",
+      "description": "(record), its argument removed by this function: steps the current pilot +0x12 by 1, modulo 4, until it names an entry whose byte +0xa is set and slot +8 is not -1, which can be the entry it started from; when +0x12 has changed, sets the hangar's selected slot Hangar_SelectedSlot (00080894) to that entry's slot.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "00015b0a+123",
+        "sha1": "61e1e53f97f4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015b85",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_PrevPilot",
+      "description": "(record), its argument removed by this function: CareerRecord_NextPilot (00015b0a) stepping back: +0x12 goes down by 1, from 0 to 3, until it names an entry whose byte +0xa is set and slot +8 is not -1; when it has changed, sets Hangar_SelectedSlot (00080894) to that entry's slot. es2_xref finds one call, from 00029946.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "00015b85+118",
+        "sha1": "3da8ad3bf02a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015bfb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_CountPilots",
+      "description": "(record), its argument removed by this function: the number of pilot entries 0 to 3 whose byte +0xa is set and slot +8 is not -1.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "00015bfb+62",
+        "sha1": "e249694bcce1",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00015c39",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_FindPilotBySlot",
+      "description": "(record, slot) in stack order, its arguments removed by this function: -1 for a slot of -1; otherwise the first pilot entry, 0 to 3, whose slot +8 is slot, or -1.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "00015c39+90",
+        "sha1": "89c3fd925732",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00015c93",
       "binary": "ES1GO",
       "type": "function",
@@ -2212,13 +2572,88 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_MarkTopPilots",
-      "description": "(record), callee-cleaned: bubble-sorts a stack copy of the three pilot entry indexes at 0007ec9c (1, 2, 3) by each entry's word +0xd (record + 0x14 + 0x25 * i + 0xd), greatest first, swapping with Word_Swap (00015c93); then for each place p of the three sets the entry's byte +0xa (record + 0x1e + 0x25 * i) to 1 when p + 1 is below the word 0007ebc8, and to 0 otherwise. es2_xref finds one call, from Career_StartMission (00016e93).",
+      "description": "(record), callee-cleaned: bubble-sorts a stack copy of the three pilot entry indexes at 0007ec9c (1, 2, 3) by each entry's word +0xd (record + 0x14 + 0x25 * i + 0xd), greatest first, swapping with Word_Swap (00015c93); then for each place p of the three sets the entry's byte +0xa (record + 0x1e + 0x25 * i) to 1 when p + 1 is below the word Squad_MemberCount (0007ebc8), and to 0 otherwise. es2_xref finds one call, from Career_StartMission (00016e93).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions",
       "verified": {
         "bytes": "00015cbb+252",
         "sha1": "d1e3a44e8247",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "00015db7",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_CountLostPilots",
+      "description": "(record), its argument removed by this function: adds 1 to the word 0007ebca for each pilot entry 0 to 3 whose byte +0xa is set, slot +8 is not -1 and condition +0xf (PilotEntry_Condition (0001618d)) is 0. es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
+      "verified": {
+        "bytes": "00015db7+84",
+        "sha1": "bef110778a33",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015e0b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_ReplaceLostPilots",
+      "description": "(record), its argument removed by this function: for each pilot entry i, 0 to 3, whose byte +0xa is set, slot +8 is not -1 and condition +0xf (PilotEntry_Condition (0001618d)) is 0, adds 1 to the word 0007ebca and, when i is not the player's entry +0xe: with k its word +4 and v its word +6, calls 0002a20d with the entry's dword +8, sets the entry up again with PilotEntry_InitRandom (00015228), then sets +0 to the word 0009b223 + 8 x (i - 1) + 2k, +2 and +6 to v and +4 to (k + 1) mod 3, and when that is 0, +6 to (v + 1) mod 3. es2_xref finds one call, from CareerRecord_FinishMission (000160cb).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
+      "verified": {
+        "bytes": "00015e0b+325",
+        "sha1": "ca75d12e33ff",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00015f50",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotEntry_NameIndex",
+      "description": "(record, entry) in stack order, its arguments removed by this function: 36 for an entry of -1, -1 for entry 0, and otherwise 3 x the entry's word +0 plus its word +2, the index of its name among car\\names.dat's twelve groups of three.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "00015f50+112",
+        "sha1": "00bafdc0d859",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00015fc0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotEntry_Name",
+      "description": "(record, entry) in stack order, its arguments removed by this function: 0 when the pilot names 0007ebc4 are not loaded, otherwise name +2 of group +0 in them (PilotNames_Load (00015070)).",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "00015fc0+77",
+        "sha1": "fea7abfec1b5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001600d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "BarGraph_NoOpCareerCopy",
+      "description": "(a, b) in stack order, callee-cleaned: byte for byte the code of BarGraph_NoOp (00003de0), relocated operands aside.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#the-career-record; ES1GO disassembly at 0001600d",
+      "verified": {
+        "bytes": "0001600d+14",
+        "sha1": "1550088044a9",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -2242,11 +2677,41 @@
       "type": "function",
       "confidence": "high",
       "name": "CareerRecord_FinishMission",
-      "description": "(record), callee-cleaned: takes n = 00015bfb(record) and the share 0007fcf0 / n (unsigned); n times calls 00015b0a(record) and stores the share at dword +0x21 of the pilot entry the word +0x12 names (record + 0x35 + 0x25 * i); then calls 00015e0b(record) and adds 1 to the missions played, the word +0xa. es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
+      "description": "(record), callee-cleaned: takes n = CareerRecord_CountPilots (00015bfb)(record) and the share 0007fcf0 / n (unsigned); n times calls CareerRecord_NextPilot (00015b0a)(record) and stores the share at dword +0x21 of the pilot entry the word +0x12 names (record + 0x35 + 0x25 * i); then calls CareerRecord_ReplaceLostPilots (00015e0b)(record) and adds 1 to the missions played, the word +0xa. es2_xref finds one call, from Shell_ProcessMissionResults (00038eb5).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
       "verified": {
         "bytes": "000160cb+109",
         "sha1": "58c00d43f097",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00016138",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_CampaignWord",
+      "description": "(record), its argument removed by this function: the word +0 of the campaign the record's +6 names in the battle set 000a02cc, or -1 when the set has no campaign array or +6 is negative or not below the campaign count.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#battle-sets",
+      "verified": {
+        "bytes": "00016138+85",
+        "sha1": "387294131573",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001618d",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "PilotEntry_Condition",
+      "description": "(record, entry) in stack order, its arguments removed by this function: the entry's condition, its word +0xf.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "0001618d+33",
+        "sha1": "ee3aec3f8b88",
         "scope": "body",
         "via": "decompile"
       }
@@ -2267,12 +2732,27 @@
       }
     },
     {
+      "address": "000161dc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "CareerRecord_PlayerHasNoHerc",
+      "description": "(record), its argument removed by this function: 1 when the slot +8 of the pilot entry +0xe names is -1, otherwise 0.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries",
+      "verified": {
+        "bytes": "000161dc+49",
+        "sha1": "15097217acf5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000163ac",
       "binary": "ES1GO",
       "type": "function",
       "confidence": "high",
       "name": "Career_New",
-      "description": "(roster, a, b) in stack order, callee-cleaned: stores at roster + 1 the pointer CareerLog_FindOrAdd (00018099)(0009b20c, a, b) returns; sets the roster's word +5 to the word 0007fcec, the words +7 and +9 to 0 and the byte +0 to 1, and the dword 0007fcf0 to 60000; calls 00016677(roster); loads car\\c_armory.dat into the stock the dword 000aad62 points to with Inventory_LoadFile (00027e02) and car\\car_init.dat with Hangar_LoadFile (00028c25); opens a FileRWStream (FileRWStream_Ctor, 0005aae4) on each of the names at the pointer's +0x42 and +0x53 through Path_ApplyAltDrive (00020989), asserting at severity 5 (Assert_Report (0004f498), career.cpp lines 0x2d1 and 0x2d8) when one does not open, and writes the roster's byte +0, word +5 and 0x18 bytes from +0xb to the first; for each of the 41 0x1f7-byte records from roster + 0x23 calls CareerRecord_Init (000158ff), and for the record the word +7 names sets its byte +0 to 1, calls 000166ed(roster), stores 0007fcf0 at its +0x129, copies its 100 words at +0x12d into the flags at 000ab244 and stores the word 0007fcf8 at its +0x1f5; writes each record and the stock (Inventory_Write (00027f88)) to the first file and the hangar (Hangar_Write (00029107)) to the second; closes both (FileRWStream_Close, 0005abc4), calls 00015ad4(that record, its four bytes at +0xe) and 00016fdd(roster), and destroys both streams (FileRWStream_Dtor, 0005ab24).",
+      "description": "(roster, a, b) in stack order, callee-cleaned: stores at roster + 1 the pointer CareerLog_FindOrAdd (00018099)(0009b20c, a, b) returns; sets the roster's word +5 to the word 0007fcec, the words +7 and +9 to 0 and the byte +0 to 1, and the dword 0007fcf0 to 60000; calls 00016677(roster); loads car\\c_armory.dat into the stock the dword 000aad62 points to with Inventory_LoadFile (00027e02) and car\\car_init.dat with Hangar_LoadFile (00028c25); opens a FileRWStream (FileRWStream_Ctor, 0005aae4) on each of the names at the pointer's +0x42 and +0x53 through Path_ApplyAltDrive (00020989), asserting at severity 5 (Assert_Report (0004f498), career.cpp lines 0x2d1 and 0x2d8) when one does not open, and writes the roster's byte +0, word +5 and 0x18 bytes from +0xb to the first; for each of the 41 0x1f7-byte records from roster + 0x23 calls CareerRecord_Init (000158ff), and for the record the word +7 names sets its byte +0 to 1, calls 000166ed(roster), stores 0007fcf0 at its +0x129, copies its 100 words at +0x12d into the flags at 000ab244 and stores the word 0007fcf8 at its +0x1f5; writes each record and the stock (Inventory_Write (00027f88)) to the first file and the hangar (Hangar_Write (00029107)) to the second; closes both (FileRWStream_Close, 0005abc4), calls CareerRecord_SelectPilot (00015ad4)(that record, its four bytes at +0xe) and 00016fdd(roster), and destroys both streams (FileRWStream_Dtor, 0005ab24).",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#starting-a-career",
       "verified": {
         "bytes": "000163ac+715",
@@ -2732,6 +3212,51 @@
       }
     },
     {
+      "address": "0001a29c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercStatus_Ctor",
+      "description": "(block), its argument removed by this function: allocates 0x42 bytes when block is null, returning null when that fails; sets the 13 external words +0 to +0x18, internal words 0 to 8 (+0x1a to +0x2a) and the 10 per-mount words +0x2e to +0x40 to 100, leaving internal word 9 (+0x2c) as it was.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
+      "verified": {
+        "bytes": "0001a29c+135",
+        "sha1": "3bf6ce9e7995",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001a3ba",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercStatus_ExternalAverage",
+      "description": "(block, area) in stack order, its arguments removed by this function: the mean, truncated, of the external words the -1-terminated word list at 0007ef54 + 8 x area names.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
+      "verified": {
+        "bytes": "0001a3ba+114",
+        "sha1": "13e4030529e9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001a492",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "HercStatus_Set",
+      "description": "(block, value, index, kind) in stack order, its arguments removed by this function: for kind 0x785 0001a42c(block, value, index); for 0x784 sets the internal word +0x1a + 2 x index to value; for 0x786 the per-mount word +0x2e + 2 x index; any other kind changes nothing.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
+      "verified": {
+        "bytes": "0001a492+97",
+        "sha1": "b517ccf1893b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0001a716",
       "binary": "ES1GO",
       "type": "function",
@@ -2902,7 +3427,7 @@
       "type": "function",
       "confidence": "high",
       "name": "StrList_PickRandom",
-      "description": "(list), callee-cleaned: the name Math_RandomBelow(0009aec0, the count +0) indexes in the pointer array +2.",
+      "description": "(list), callee-cleaned: the name Math_RandomBelow(Shell_RandomState (0009aec0), the count +0) indexes in the pointer array +2.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#name-lists",
       "verified": {
         "bytes": "00020289+43",
@@ -3187,7 +3712,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PlayerMec_Write",
-      "description": "(): removes entry 4 of the file-name table 0009afb8, data\\player.mec, opens it as a FileRWStream with no test that it opened, writes it with PlayerMec_WriteEntries (00022a05), closes it (FileRWStream_Close), calls 00014f28 and destroys the stream. es2_xref finds three calls: from 0002c057, 0002d327 and MsnGen_LoadMission.",
+      "description": "(): removes entry 4 of the file-name table 0009afb8, data\\player.mec, opens it as a FileRWStream with no test that it opened, writes it with PlayerMec_WriteEntries (00022a05), closes it (FileRWStream_Close), calls CareerRecord_SaveCurrent (00014f28) and destroys the stream. es2_xref finds three calls: from 0002c057, 0002d327 and MsnGen_LoadMission.",
       "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#the-player-file",
       "verified": {
         "bytes": "0002299e+103",
@@ -3202,7 +3727,7 @@
       "type": "function",
       "confidence": "high",
       "name": "PlayerMec_WriteEntries",
-      "description": "(stream), callee-cleaned: with r the career record 00014ef4 returns, keeps r's word +0x12 and the word 00080894; writes through the stream's slot +0x18 r's word +0xe and the count n that 00015bfb(r) returns; calls 00015ad4(r, r's dword +0xe). Then n times: writes the pilot words with PlayerMec_WritePilotWords (0001548f)(r's word +0x12, r's word +0xe, stream); with h the HERC in hangar slot 00080894 of the array 000808a0, when the slot is not -1 and holds one, calls in mode 0 (the word 000aad56) 00024c3c(h, 100) and 00024c14(h, 100, 9, 0x784), and otherwise 00024c14(h, 0001618d(r, r's dword +0xe), 9, 0x784); writes h with Herc_Write (000233ce) when there is one, and nothing in its place otherwise; calls 00015b0a(r). Then writes r's 17 weapon bytes with CareerRecord_WriteWeaponFlags (000160ac), calls 00015ad4(r, the kept word +0x12 and the kept 00080894 as one dword) and restores 00080894. es2_xref finds one call, from PlayerMec_Write (0002299e).",
+      "description": "(stream), callee-cleaned: with r the career record CareerRecord_Current (00014ef4) returns, keeps r's word +0x12 and the word Hangar_SelectedSlot (00080894); writes through the stream's slot +0x18 r's word +0xe and the count n that CareerRecord_CountPilots (00015bfb)(r) returns; calls CareerRecord_SelectPilot (00015ad4)(r, r's dword +0xe). Then n times: writes the pilot words with PlayerMec_WritePilotWords (0001548f)(r's word +0x12, r's word +0xe, stream); with h the HERC in hangar slot Hangar_SelectedSlot (00080894) of the array 000808a0, when the slot is not -1 and holds one, calls in mode 0 (the word Shell_Mode (000aad56)) Herc_SetAllStatus (00024c3c)(h, 100) and Herc_SetStatus (00024c14)(h, 100, 9, 0x784), and otherwise Herc_SetStatus (00024c14)(h, PilotEntry_Condition (0001618d)(r, r's dword +0xe), 9, 0x784); writes h with Herc_Write (000233ce) when there is one, and nothing in its place otherwise; calls CareerRecord_NextPilot (00015b0a)(r). Then writes r's 17 weapon bytes with CareerRecord_WriteWeaponFlags (000160ac), calls CareerRecord_SelectPilot (00015ad4)(r, the kept word +0x12 and the kept Hangar_SelectedSlot (00080894) as one dword) and restores Hangar_SelectedSlot (00080894). es2_xref finds one call, from PlayerMec_Write (0002299e).",
       "source": "Herculan/docs/es1/formats/career-log-and-player-mec.md#the-player-file",
       "verified": {
         "bytes": "00022a05+588",
@@ -3232,7 +3757,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_Ctor",
-      "description": "(herc, chassis) in stack order, callee-cleaned: allocates 0xa8 bytes when herc is null (returning null when that fails); sets up the 66-byte block at +0x2e with 0001a29c and the object at +0x72; stores chassis at +0 and, for a chassis other than -1, the mount count from the word table at 000803c8 (3, 3, 4, 5, 6, 7, 8, 9) at +2, giving each mount weapon 0x11 (+4 words) and word 0 (+0x18 words); for -1 the mount count is 0. Sets +0x2c to 2 and +0x70 to -1 and zeroes +0x94 to +0xa7.",
+      "description": "(herc, chassis) in stack order, callee-cleaned: allocates 0xa8 bytes when herc is null (returning null when that fails); sets up the 66-byte block at +0x2e with HercStatus_Ctor (0001a29c) and the object at +0x72; stores chassis at +0 and, for a chassis other than -1, the mount count from the word table at 000803c8 (3, 3, 4, 5, 6, 7, 8, 9) at +2, giving each mount weapon 0x11 (+4 words) and word 0 (+0x18 words); for -1 the mount count is 0. Sets +0x2c to 2 and +0x70 to -1 and zeroes +0x94 to +0xa7.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
       "verified": {
         "bytes": "00022f5e+614",
@@ -3292,7 +3817,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Herc_BuildDiagram",
-      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears 0007ff98; stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with Resource_LoadBitmapArray (0004b7df) into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls 00023605(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with 00023d70) and 0x22-byte elements at +0x94 (with 00023f2c). Per mount: when 00024b23(herc, mount) is 0 sets the weapon to 0x11 and calls 00024c14(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to 000216e0 for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and 00024b23's value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to 000216e0 for the +0x98 element and sets the byte 0007ff8e; sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and 0007ff8e is clear, passes 0, 0 to 000216e0 for it. es2_xref finds seven calls: from Herc_Read (00023501), 000241f9, 00028e50, 00029d0f, 00029d68, and twice from 00029e01.",
+      "description": "(herc, word) in stack order, callee-cleaned: sets +0x70 to -1 and clears 0007ff98; stores the chassis's RES32 WEP1 and OUTL banks at +0x9c and +0xa0, loading each with Resource_LoadBitmapArray (0004b7df) into 0007ff9c or 0007ffbc + 4 * chassis when it is 0; calls 00023605(herc, word); for chassis 7 makes a 0x22-byte element at +0x98, else stores null there; when the mount count is not 0 makes 0x26-byte elements at +0xa4 (__vec_new (0005542c) with 00023d70) and 0x22-byte elements at +0x94 (with 00023f2c). Per mount: when Herc_GetMountStatus (00024b23)(herc, mount) is 0 sets the weapon to 0x11 and calls Herc_SetStatus (00024c14)(herc, 100, mount, 0x786); calls HercLayout_FindFrame (00022086), passes HercLayout_FindSecondPoint (0002219f)'s point to 000216e0 for the +0x94 element, and sets the +0xa4 element with MountPicture_Set (00022d78) and Herc_GetMountStatus (00024b23)'s value; on chassis 7, when mount 2 or 3 is not 0x11, passes the point 0x56, 0x19 to 000216e0 for the +0x98 element and sets the byte 0007ff8e; sets to 0 the mount's +0x18 word when its weapon is 9 to 11 and the word is 5. Last, when +0x98 is set and 0007ff8e is clear, passes 0, 0 to 000216e0 for it. es2_xref finds seven calls: from Herc_Read (00023501), 000241f9, 00028e50, Hangar_AddHerc (00029d0f), 00029d68, and twice from 00029e01.",
       "source": "Herculan/docs/es1/formats/herc-diagrams.md#the-mount-pictures",
       "verified": {
         "bytes": "00023883+1261",
@@ -3312,6 +3837,51 @@
       "verified": {
         "bytes": "00024366+507",
         "sha1": "f7470aef683e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024b23",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_GetMountStatus",
+      "description": "(herc, mount) in stack order, its arguments removed by this function: 0 for a mount of -1, otherwise the mount's word in the status block, +0x5c + 2 x mount.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
+      "verified": {
+        "bytes": "00024b23+46",
+        "sha1": "ae0212926d14",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024c14",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_SetStatus",
+      "description": "(herc, value, index, kind) in stack order, its arguments removed by this function: HercStatus_Set (0001a492)(herc + 0x2e, value, index, kind).",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
+      "verified": {
+        "bytes": "00024c14+40",
+        "sha1": "7742222e72cb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00024c3c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Herc_SetAllStatus",
+      "description": "(herc, value) in stack order, its arguments removed by this function: sets the status block's 13 external words (+0x2e), its internal words 0 to 8 (+0x48) and, for each mount below the count +2, the mount's word at +0x5c to value, or to 100 for a mount 00024ab7(herc, mount) answers 0x11 for. It leaves internal word 9 (+0x5a) as it is.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-record",
+      "verified": {
+        "bytes": "00024c3c+176",
+        "sha1": "86de3e784e8b",
         "scope": "body",
         "via": "decompile"
       }
@@ -3487,7 +4057,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_Clear",
-      "description": "(), C convention: when 000808a0 is set, destroys each HERC in it below the slot count 00080890 with 000232a4(herc, 3), zeroing its pointer, and frees the array; calls 00022981 when the dword 0009a30c is below the dword 0007e738; sets 00080890 and 00080892 to 0, 00080894 and 00080896 to -1, and 00080898 and the dword 0008089c to 0.",
+      "description": "(), C convention: when 000808a0 is set, destroys each HERC in it below the slot count 00080890 with 000232a4(herc, 3), zeroing its pointer, and frees the array; calls 00022981 when the dword 0009a30c is below the dword 0007e738; sets 00080890 and 00080892 to 0, Hangar_SelectedSlot (00080894) and 00080896 to -1, and 00080898 and the dword 0008089c to 0.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00028b19+189",
@@ -3517,7 +4087,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_LoadFile",
-      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath (0004d064), reads it with Hangar_Read (00028c50) and destroys the stream. es2_xref finds three calls: from 00014fd6, Career_New (000163ac) and MsnGen_LoadMission.",
+      "description": "(path), callee-cleaned: opens path with VolRStream_CtorFromPath (0004d064), reads it with Hangar_Read (00028c50) and destroys the stream. es2_xref finds three calls: from SingleMission_RestoreRecord (00014fd6), Career_New (000163ac) and MsnGen_LoadMission.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00028c25+43",
@@ -3532,11 +4102,26 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_Read",
-      "description": "(stream), callee-cleaned: Hangar_Clear (00028b19); reads through the stream's slot +0x1c the int16 slot count into 00080890, then Hangar_AllocSlots (00028ac9); the int16s 00080894, 00080896 and 00080898, the dword 0008089c and the int16 HERC count 00080892; per HERC an int16 slot, a HERC from Herc_Ctor (00022f5e)(null, -1) stored in the slot of 000808a0 with no bounds test, read with Herc_Read (00023501) given 00080898 when the slot is 00080896 and 00080898 is not 0, and 0 otherwise. es2_xref finds calls from Hangar_ReadFromSave (00028bd6) and Hangar_LoadFile (00028c25).",
+      "description": "(stream), callee-cleaned: Hangar_Clear (00028b19); reads through the stream's slot +0x1c the int16 slot count into 00080890, then Hangar_AllocSlots (00028ac9); the int16s Hangar_SelectedSlot (00080894), 00080896 and 00080898, the dword 0008089c and the int16 HERC count 00080892; per HERC an int16 slot, a HERC from Herc_Ctor (00022f5e)(null, -1) stored in the slot of 000808a0 with no bounds test, read with Herc_Read (00023501) given 00080898 when the slot is 00080896 and 00080898 is not 0, and 0 otherwise. es2_xref finds calls from Hangar_ReadFromSave (00028bd6) and Hangar_LoadFile (00028c25).",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00028c50+358",
         "sha1": "5cea3facf5cd",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0002909c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_SaveFile",
+      "description": "(path), its argument removed by this function: opens path as a FileRWStream, asserting at severity 5 (mechman.cpp line 0x132) when it cannot, writes the hangar with Hangar_Write (00029107), and closes and destroys the stream.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
+      "verified": {
+        "bytes": "0002909c+107",
+        "sha1": "173206525cb1",
         "scope": "body",
         "via": "decompile"
       }
@@ -3547,13 +4132,82 @@
       "type": "function",
       "confidence": "high",
       "name": "Hangar_Write",
-      "description": "(stream), callee-cleaned: writes through the stream's slot +0x18 the words 00080890, 00080894, 00080896 and 00080898 and the dword 0008089c; then, when the mode word 000aad56 is 0, a count of 8 and, for each of slots 0-7 of 000808a0 that holds a HERC, the slot and the HERC (Herc_Write (000233ce)); otherwise the count 00080892 and the same for each slot below 00080890.",
+      "description": "(stream), callee-cleaned: writes through the stream's slot +0x18 the words 00080890, Hangar_SelectedSlot (00080894), 00080896 and 00080898 and the dword 0008089c; then, when the mode word Shell_Mode (000aad56) is 0, a count of 8 and, for each of slots 0-7 of 000808a0 that holds a HERC, the slot and the HERC (Herc_Write (000233ce)); otherwise the count 00080892 and the same for each slot below 00080890.",
       "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
       "verified": {
         "bytes": "00029107+467",
         "sha1": "132f8726ae0b",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0002983a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_FindFreeSlot",
+      "description": "(): the first slot below the slot count 00080890 whose pointer in the array 000808a0 is null, or -1.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
+      "verified": {
+        "bytes": "0002983a+53",
+        "sha1": "a5cc87a38269",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00029d0f",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Hangar_AddHerc",
+      "description": "(herc), its argument removed by this function: stores herc in the slot Hangar_FindFreeSlot (0002983a) gives, builds its diagram with Herc_BuildDiagram (00023883)(herc, 0) unless the byte 0007fd09 is set, adds 1 to the HERC count 00080892, and returns the slot; with no free slot it stores nothing and returns -1.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists",
+      "verified": {
+        "bytes": "00029d0f+89",
+        "sha1": "2b73ecebf0d5",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0002a70a",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MainMenu_OnMessage",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the main menu, dlg\\menu1000.dlg, which the menu table names MainMenu (00081be8). By the message's code +6, through the REPNE SCASD table at 000809b8: 1499, INSTANT ACTION, sets the mode word Shell_Mode (000aad56) to 0, 0007fce8 to 1000 and 000aad5a to -1, calls SingleMission_Start (00036807) and 0002a523, formats anm\\esiege3.anm into 000aacfe and sets the byte 0007fcd7 to 1; 1700, RESUME, sets the mode to 1, 0007fce8 to 1000 and 000aad5a to -1 and goes on from 0002a78e to a career's resume; 1100, SINGLE MISSION, sets the mode to 0 and 0007fce8 to 1100; 1200, CAREER, the mode to 1 and 0007fce8 to 1200; 1300, OPTIONS, 0007fce8 to 1000; 1003, EXIT TO DOS, sets the word 0007fcac to 0 and the byte 0007fd05 to 1.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "0002b375",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MissionMenu_OnMessage",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the SINGLE MISSION menu, dlg\\menu1100.dlg, which the menu table names MissionMenu (00081c2c). By the message's code +6, through the REPNE SCASD table at 00080a54: 1101 stores the message's word +4 in 000aad5a; 101 and 102, the arrows, step the control 1101 of the menu's window +6 back (its slot +0x1c) or on (+0x20) and store its value (+0x2c) in 000aad5a; 1501, BRIEFING, stores that value in 000aad5a, calls SingleMission_Start (00036807) and 0002a523, formats anm\\esiege3.anm into 000aacfe, sets the byte 0007fcd7 to 1 and the code to 1499.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters",
+      "verified": {
+        "bytes": "0002b375+393",
+        "sha1": "8fc047432a50",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0002b4fe",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MissionParams_OnMessage",
+      "description": "(menu, message) in stack order, its arguments removed by this function: the handler of the MISSION PARAMS menu, dlg\\menu1110.dlg, which the menu table names MissionOptionsAlert (00081f2c). By the message's code +6, through the REPNE SCASD table at 00080a74: 1111 to 1115, its buttons AMMO, DAMAGE, DIFFICULTY, VISIBILITY and TIME OF DAY, add 1 to the word MissionParams_Ammo (000aacbc), MissionParams_Damage (000aacbe), MissionParams_Difficulty (000aacc0), MissionParams_Visibility (000aacc2) or MissionParams_TimeOfDay (000aacc4) modulo 2, 2, 4, 2 or 3, show it in the control 1116 to 1120 of the menu's window +6 (0001bda4 finds it; the control's slot +0x24) and pass it to Prefs_SetOption (00008378)(1, word, 12 to 16); 99, CANCEL, copies the menu's words +0x26 to +0x2e back into the five words and calls Prefs_RevertAll (00008316)(1), then runs on into 100; 100, ACCEPT, calls Prefs_CommitAll (000082b0)(1) and Prefs_Save (00008267) and sets the code to 1100. Ghidra holds the case bodies from 0002b603 as undefined bytes.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters",
+      "verified": {
+        "bytes": "0002b4fe+671",
+        "sha1": "f7ebc801ef46",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -3757,7 +4411,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Msn_PickVariant",
-      "description": "(key), callee-cleaned: for each condition record (00080f24, 00080f4e of them) of type 3 whose +6 is key, draws Math_RandomBelow (00038774) on the generator 0009aec0 below its +0xa into its +0xc and returns the index of the first type-2 record whose parent (+2) is its GUID and whose unsigned range +6..+8 holds the draw; with none it goes on to the next such type-3 record, and returns -1 after the last. VSHELL's Msn_PickVariant (00415fc3).",
+      "description": "(key), callee-cleaned: for each condition record (00080f24, 00080f4e of them) of type 3 whose +6 is key, draws Math_RandomBelow (00038774) on the generator Shell_RandomState (0009aec0) below its +0xa into its +0xc and returns the index of the first type-2 record whose parent (+2) is its GUID and whose unsigned range +6..+8 holds the draw; with none it goes on to the next such type-3 record, and returns -1 after the last. VSHELL's Msn_PickVariant (00415fc3).",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
       "verified": {
         "bytes": "000318d5+295",
@@ -3982,7 +4636,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WriteScriptDatFile",
-      "description": "(stream), callee-cleaned: writes the loaded mission to stream (data\\script.dat): the header words 000ab21a-000ab22c with the third replaced by the mode 000aad56, then for points, headings, waypoint groups, trigger areas, actions, mechs, flyers, bases and groups the count of records whose GUID is not -1 and each one's exported fields. VSHELL's WriteScriptDatFile (0041ac54), over nine blocks.",
+      "description": "(stream), callee-cleaned: writes the loaded mission to stream (data\\script.dat): the header words 000ab21a-000ab22c with the third replaced by the mode Shell_Mode (000aad56), then for points, headings, waypoint groups, trigger areas, actions, mechs, flyers, bases and groups the count of records whose GUID is not -1 and each one's exported fields. VSHELL's WriteScriptDatFile (0041ac54), over nine blocks.",
       "source": "Herculan/docs/es1/formats/script-dat.md#writing",
       "verified": {
         "bytes": "0003445b+5055",
@@ -4012,13 +4666,13 @@
       "type": "function",
       "confidence": "high",
       "name": "MsnGen_LoadMission",
-      "description": "(path), callee-cleaned: reads the .MSN entry whole into a buffer and reads it through a memory stream made by MemRWStream_Ctor (0005da60); opens data\\script.dat as a FileRWStream (severity-5 assert, mg.cpp line 0x4c5); reads the revision word, formatting an error string nothing reads when it is not 5; seeds the flags at 000ab244 by the mode 000aad56; parses with MsnGen_ParseMsnFile (0003276c); sets the header words the mode overrides; writes the 200 flag bytes to data\\mission.var (FileWStream, assert at line 0x505) and the mission through WriteScriptDatFile (0003445b); in mode 0 passes car\\sm_init.dat to Hangar_LoadFile (00028c25), fills a 0x25-byte record at 0009b028 per member ref of the first group up to its first -1 through functions not read, and passes car\\sm_play.mec to 0002909c; and frees the condition, point, heading, waypoint, mech, group and base arrays. VSHELL's MsnGen_LoadMission (0041c73d) in role.",
+      "description": "(path), its argument removed by this function: reads the .MSN entry whole into a buffer and reads it through a memory stream made by MemRWStream_Ctor (0005da60); opens data\\script.dat as a FileRWStream (severity-5 assert, mg.cpp line 0x4c5); reads the revision word, formatting an error string nothing reads when it is not 5; seeds the flags at 000ab244 by the mode Shell_Mode (000aad56), flag 3 from MissionParams_TimeOfDay (000aacc4) and flags 4 to 6 each a Math_RandomBelow (00038774)(Shell_RandomState (0009aec0), 12); parses with MsnGen_ParseMsnFile (0003276c); copies header words 3 and 4 to 000aad5a and 000aad5c and sets the header words the mode overrides, word 0 a draw below 4 outside mode 1; writes the 200 flag bytes to data\\mission.var (FileWStream, assert at line 0x505) and the mission through WriteScriptDatFile (0003445b); counts the first group's member refs before its first -1 into Squad_MemberCount (0007ebc8). In mode 0 it then loads car\\sm_init.dat with Hangar_LoadFile (00028c25), sets up the record SingleMission_Record (0009b014) with CareerRecord_Init (000158ff), and fills pilot entry i at 0009b028 + 0x25 x i for each member i: PilotEntry_Init (000151c8), then with m the mech record MsnGen_HercArrayIndex (0003581a) gives for the ref, for i = 0 the words +0 and +2 0 and the slot +8 m's type +0x30; for i > 0 +0 a draw below 4 plus ((i - 1) x 12) / 3, +2 a draw below 3, +0xd a draw below 6, PilotEntry_DrawForRank (00015402), and a HERC from Herc_Ctor (00022f5e)(0, -1) with m's type as chassis, the mount count of the table 000803c8 for it, per mount m's +0x32 weapon and +0x4e word, m's +0x62 as +0x2c, Herc_SetAllStatus (00024c3c)(h, 100), its slot from Hangar_AddHerc (00029d0f). Then CareerRecord_SelectPilot (00015ad4)(SingleMission_Record (0009b014), its word +0xe) and Hangar_SaveFile (0002909c)(car\\sm_play.mec). In every mode it then calls PlayerMec_Write (0002299e), and frees the condition, point, heading, waypoint, mech, group and base arrays. VSHELL's MsnGen_LoadMission (0041c73d) in role.",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#loading-a-mission",
       "verified": {
         "bytes": "00035873+2305",
         "sha1": "7f89a5321d6c",
         "scope": "body",
-        "via": "both"
+        "via": "decompile"
       }
     },
     {
@@ -4072,7 +4726,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_WriteRestore",
-      "description": "(): writes data\\restore.dat (file-name entry 8 through Text_GetString and Path_ApplyAltDrive) through a FileRWStream, a severity-5 assert at mission.cpp line 0x55 when it does not open: the words 000aad56 and 000aad5a, then the .msn path at 000aad14 and the .eng path at 000aad2a, each as an int16 length counting the NUL and the string with its NUL.",
+      "description": "(): writes data\\restore.dat (file-name entry 8 through Text_GetString and Path_ApplyAltDrive) through a FileRWStream, a severity-5 assert at mission.cpp line 0x55 when it does not open: the words Shell_Mode (000aad56) and 000aad5a, then the .msn path at 000aad14 and the .eng path at 000aad2a, each as an int16 length counting the NUL and the string with its NUL.",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#which-file",
       "verified": {
         "bytes": "0003634b+371",
@@ -4102,7 +4756,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_ReadRestore",
-      "description": "(): reads data\\restore.dat (file-name entry 8) through a FileRStream, a severity-5 assert at mission.cpp line 0x75 when it does not open: a word into 000aad56, a word into 000aad5e (Mission_WriteRestore wrote it from 000aad5a), then two int16-length-prefixed strings into 000aad14 (the .msn path) and 000aad2a (the .eng path).",
+      "description": "(): reads data\\restore.dat (file-name entry 8) through a FileRStream, a severity-5 assert at mission.cpp line 0x75 when it does not open: a word into Shell_Mode (000aad56), a word into 000aad5e (Mission_WriteRestore wrote it from 000aad5a), then two int16-length-prefixed strings into 000aad14 (the .msn path) and 000aad2a (the .eng path).",
       "source": "Herculan/docs/es1/formats/eng-mission-text.md#which-file",
       "verified": {
         "bytes": "00036512+311",
@@ -4117,7 +4771,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SingleMission_BuildPath",
-      "description": "(index), callee-cleaned: when index is -1 takes the list Math_RandomBelow(0009aec0, word 00081084) indexes, else list index, of the array 00081080; formats StrList_PickRandom (00020289)'s draw from it as msn\\%s into 000aad14; Mission_SetTextPath.",
+      "description": "(index), callee-cleaned: when index is -1 takes the list Math_RandomBelow(Shell_RandomState (0009aec0), word 00081084) indexes, else list index, of the array 00081080; formats StrList_PickRandom (00020289)'s draw from it as msn\\%s into 000aad14; Mission_SetTextPath.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#single-missions",
       "verified": {
         "bytes": "00036649+120",
@@ -4132,7 +4786,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mission_BuildPathFromFiles",
-      "description": "(pattern), callee-cleaned: counts the files findfirst/findnext match; copies each match's name (find block +0x1e) into a new 20-byte buffer; formats the one Math_RandomBelow(0009aec0, count) picks as msn\\%s into 000aad14; Mission_SetTextPath; frees the names. es2_xref finds no branch to it; its one stored-pointer hit, 000097e5, lies inside the instruction at 000097e4.",
+      "description": "(pattern), callee-cleaned: counts the files findfirst/findnext match; copies each match's name (find block +0x1e) into a new 20-byte buffer; formats the one Math_RandomBelow(Shell_RandomState (0009aec0), count) picks as msn\\%s into 000aad14; Mission_SetTextPath; frees the names. es2_xref finds no branch to it; its one stored-pointer hit, 000097e5, lies inside the instruction at 000097e4.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#single-missions",
       "verified": {
         "bytes": "000366c1+326",
@@ -4217,6 +4871,36 @@
       }
     },
     {
+      "address": "000386c8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_RandomSeed",
+      "description": "(state), its argument removed by this function: ES1DBSIM's Math_RandomSeed (00063aa4), identical after normalisation: sets the cursors +0x70 to 0x18 and +0x71 to 0x37 and copies the 112-byte seed table Math_RandomSeedTable (00081720), ES1DBSIM's 00098150 byte for byte, over the state's 56 shorts.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator",
+      "verified": {
+        "bytes": "000386c8+44",
+        "sha1": "220df56746b9",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000386f4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Math_RandomSeedAndSkip",
+      "description": "(state, n) in stack order, its arguments removed by this function: Math_RandomSeed (000386c8)(state), then n steps of Math_RandomNext (00038723), their results dropped. DBSIM's Math_RandomSeedAndSkip (00492da8) without its empty call. es2_xref finds one call, from 00020630.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator",
+      "verified": {
+        "bytes": "000386f4+47",
+        "sha1": "12f1f906352d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00038723",
       "binary": "ES1GO",
       "type": "function",
@@ -4237,7 +4921,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Math_RandomBelow",
-      "description": "(state, int16 bound) in stack order, callee-cleaned: 0 when bound is 0, otherwise (Math_RandomNext(state) & 0x7fff) % bound. ES1DBSIM's Math_RandomBelow (00063b3c) has no test for 0. The shell's mission load draws on the generator at 0009aec0.",
+      "description": "(state, int16 bound) in stack order, callee-cleaned: 0 when bound is 0, otherwise (Math_RandomNext(state) & 0x7fff) % bound. ES1DBSIM's Math_RandomBelow (00063b3c) has no test for 0. The shell's mission load draws on the generator at Shell_RandomState (0009aec0).",
       "source": "Herculan/docs/es1/formats/msn-mission-file.md#filtering-variants-and-repeats",
       "verified": {
         "bytes": "00038774+51",
@@ -4267,7 +4951,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_ProcessMissionResults",
-      "description": "(), C convention: in mode 1 (000aad56) calls 00016c1e(0009b218), otherwise 00014fd6(). Opens data\\results.dat (filename table entry 7, Path_ApplyAltDrive, FileRStream; severity-5 assert at shell.cpp line 199) and reads a word to 000aad58, a dword to 0007fcf4, a word count to 000817cc and that many pairs of words (a, b), each passed in mode 1 to Inventory_Add (00028311)(000aad62, &b, a); calls 0001568d(stream). Reads data\\mission.var (entry 5, FileRWStream; assert at line 0xd7) whole into the 100 flags at 000ab244 and sets flag 0 to 000aad58. In mode 1 it then calls 00038e48(), adds 0007fcf4 to 0007fcf0, calls 00028375(000aad62), CareerRecord_FinishMission (000160cb) and Tech_Unlock (00001f78)(record + 0xa8, record word +0xa) on the record 0009b23b + 0x1f7 * [0009b21f], calls 00029e01() and sets the record's word +4 to 0x6ae; otherwise it calls 00015db7(00014ef4()). es2_xref finds one call, from 0003ba47.",
+      "description": "(), C convention: in mode 1 (Shell_Mode (000aad56)) calls 00016c1e(0009b218), otherwise SingleMission_RestoreRecord (00014fd6)(). Opens data\\results.dat (filename table entry 7, Path_ApplyAltDrive, FileRStream; severity-5 assert at shell.cpp line 199) and reads a word to 000aad58, a dword to 0007fcf4, a word count to 000817cc and that many pairs of words (a, b), each passed in mode 1 to Inventory_Add (00028311)(000aad62, &b, a); calls CareerRecord_ReadPilotResults (0001568d)(stream). Reads data\\mission.var (entry 5, FileRWStream; assert at line 0xd7) whole into the 100 flags at 000ab244 and sets flag 0 to 000aad58. In mode 1 it then calls 00038e48(), adds 0007fcf4 to 0007fcf0, calls 00028375(000aad62), CareerRecord_FinishMission (000160cb) and Tech_Unlock (00001f78)(record + 0xa8, record word +0xa) on the record 0009b23b + 0x1f7 * [0009b21f], calls 00029e01() and sets the record's word +4 to 0x6ae; otherwise it calls CareerRecord_CountLostPilots (00015db7)(CareerRecord_Current (00014ef4)()). es2_xref finds one call, from 0003ba47.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#after-a-mission",
       "verified": {
         "bytes": "00038eb5+729",
@@ -5587,7 +6271,7 @@
       "type": "function",
       "confidence": "high",
       "name": "TtmScript_RunSoundCommand",
-      "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: returns 1 for every opcode. 0xc21f, when the byte 0007fcb9 is non-zero and +0x41 is 0: destroys the sound object +0x1a8 (its +0x3b table's +8 slot with 3), formats TtmScript_BuildPath (00047138)(script, string) with \"%s\" into 000aad40 and, when the sound manager 00082768 exists and SoundManager_SetSampleName(manager, 0xe, that) succeeds, stores SoundManager_CreateObject(manager, 2, 0, 0xe) at +0x1a8. 0xc220, when 0007fcb9 is non-zero, +0x41 is 0 and +0x1a8 holds an object: calls its +0x2c slot with Math_RandomBelow(0009aec0, 25) + 10 and its +0x10 slot, and sets +0x41 to 1. Any other opcode, 0xc102 among them, goes straight to the return.",
+      "description": "(script, string, seven arguments, opcode) in stack order, callee-cleaned: returns 1 for every opcode. 0xc21f, when the byte 0007fcb9 is non-zero and +0x41 is 0: destroys the sound object +0x1a8 (its +0x3b table's +8 slot with 3), formats TtmScript_BuildPath (00047138)(script, string) with \"%s\" into 000aad40 and, when the sound manager 00082768 exists and SoundManager_SetSampleName(manager, 0xe, that) succeeds, stores SoundManager_CreateObject(manager, 2, 0, 0xe) at +0x1a8. 0xc220, when 0007fcb9 is non-zero, +0x41 is 0 and +0x1a8 holds an object: calls its +0x2c slot with Math_RandomBelow(Shell_RandomState (0009aec0), 25) + 10 and its +0x10 slot, and sets +0x41 to 1. Any other opcode, 0xc102 among them, goes straight to the return.",
       "source": "Herculan/docs/es1/formats/ttm-scripts.md#the-commands",
       "verified": {
         "bytes": "0004a0e0+307",
@@ -11102,6 +11786,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0005cf78",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "time",
+      "description": "(t), C calling convention: the C library's time: the seconds of the clock (INT 21h function 2Ch) and the days of the date (function 2Ah) since 1980, plus 0x12cf0870, the seconds from 1970 to 1980 and seven hours more; stored at t when t is not null, and returned. The code of ES1DBSIM's 000757a0.",
+      "source": "ES1GO disassembly at 0005cf78",
+      "verified": {
+        "bytes": "0005cf78+119",
+        "sha1": "4a49810edcb4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0005d509",
       "binary": "ES1GO",
       "type": "function",
@@ -14645,6 +15344,24 @@
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#moving-on"
     },
     {
+      "address": "0007ebc8",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Squad_MemberCount",
+      "description": "int16, the number of member refs of the mission's first group before its first -1, which MsnGen_LoadMission (00035873) counts in every mode after writing data\\script.dat; CareerRecord_MarkTopPilots (00015cbb) reads it.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#loading-a-mission"
+    },
+    {
+      "address": "0007ebd4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "PilotRankThresholds",
+      "description": "Six int16, 0, 1, 5, 15, 30 and -1: PilotEntry_ApplyGains (00015317) sets a pilot entry's rank +0xd to the number of them below its word +0x17, and PilotEntry_DrawForRank (00015402) draws +0x17 from the rank's entry.",
+      "source": "Herculan/docs/es1/formats/bst-battle-sets.md#pilot-entries"
+    },
+    {
       "address": "0007ec80",
       "binary": "ES1GO",
       "type": "data",
@@ -14652,6 +15369,24 @@
       "name": "Career_OutcomeThresholds",
       "description": "int16[10]: 4, 4, 4, 3, 3, 3, 4, 3, 3, 3. Career_OutcomeChoice (000159e9) gives outcome 1 when the word 000aad58 exceeds the entry the word 000aad5e indexes.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions"
+    },
+    {
+      "address": "00080894",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Hangar_SelectedSlot",
+      "description": "int16, the hangar's selected slot, the header word Hangar_Read (00028c50) reads and Hangar_Write (00029107) writes second: CareerRecord_SelectPilot (00015ad4), CareerRecord_NextPilot (00015b0a) and CareerRecord_PrevPilot (00015b85) set it to the current pilot's slot.",
+      "source": "Herculan/docs/es1/formats/car-hercs-and-stock.md#the-herc-lists"
+    },
+    {
+      "address": "00081720",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Math_RandomSeedTable",
+      "description": "The 112-byte table Math_RandomSeed (000386c8) copies into a generator state: ES1DBSIM's 00098150, DBSIM's 004a6958 and VSHELL's 0047f7b4 byte for byte.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator"
     },
     {
       "address": "00083c04",
@@ -14841,6 +15576,33 @@
       "name": "g_TSObjectTypeRegistry",
       "description": "The shape class registry: 18 entries of 12 bytes {tag, load function, name}, followed at 000942c0 by their count, 0x12. Light_ResetSystem (000641ec) registers it with ClassItem_RegisterBucket. The same tags, names and order as ES1DBSIM's g_TSObjectTypeRegistry (0009efa8).",
       "source": "Herculan/docs/es1/formats/dts-shape.md"
+    },
+    {
+      "address": "0009aec0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_RandomState",
+      "description": "The state of the shell's generator, 0x72 bytes: 56 int16 and the cursors +0x70 and +0x71 that Math_RandomNext (00038723) steps. The static initializer 00020b68 seeds it with Math_RandomSeed (000386c8), and 00020630 at start-up with Math_RandomSeedAndSkip (000386f4) and time (0005cf78)'s result modulo 128. es2_xref finds its address at 47 operand sites.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator"
+    },
+    {
+      "address": "0009af34",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_RandomState2",
+      "description": "A second generator state of the layout of Shell_RandomState (0009aec0), which the static initializer 00020b68 seeds with Math_RandomSeed (000386c8). es2_xref finds no other reference to its address.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-shells-generator"
+    },
+    {
+      "address": "0009b014",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "SingleMission_Record",
+      "description": "The 0x1f7-byte career record a single mission uses, its pilot entries from 0009b028: MsnGen_LoadMission (00035873) sets it up with CareerRecord_Init (000158ff) in mode 0 and fills its squad; CareerRecord_Current (00014ef4) returns it in mode 0; SingleMission_SaveRecord (00014f54) writes it to car\\sm_play.gam and SingleMission_RestoreRecord (00014fd6) reads it back.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-squad"
     },
     {
       "address": "000a02cc",
@@ -15048,6 +15810,87 @@
       "name": "Poly_ScreenCount",
       "description": "The ring's point count (uint16), set by the projectors and the near-plane clips. ES2's DBSIM 006cbc86. ES1DBSIM's Poly_ScreenCount is at 000bba3e.",
       "source": "Herculan/docs/es1/rendering/view-transform-and-projection.md"
+    },
+    {
+      "address": "000aa24e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Prefs_Options",
+      "description": "The 17 option bytes of data\\prefs.cfg, the option's index its offset, as Prefs_Load (000081ca) reads them; Prefs_SetOption (00008378) sets one.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aa260",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Prefs_Committed",
+      "description": "The committed copy of the 17 options Prefs_Options (000aa24e): Prefs_Load (000081ca) and Prefs_CommitAll (000082b0) write it, Prefs_RevertAll (00008316) copies it back.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aa272",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Prefs_Handlers",
+      "description": "17 dwords, a handler per option of Prefs_Options (000aa24e) or 0, which Prefs_Load (000081ca), Prefs_SetOption (00008378), Prefs_CommitAll (000082b0) and Prefs_RevertAll (00008316) call with the option's value.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aacbc",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MissionParams_Ammo",
+      "description": "int16, the MISSION PARAMS menu's AMMO setting, 0 or 1: data\\prefs.cfg option 12, which 00020630 at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 5 outside mode 1.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aacbe",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MissionParams_Damage",
+      "description": "int16, the MISSION PARAMS menu's DAMAGE setting, 0 or 1: data\\prefs.cfg option 13, which 00020630 at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 6 outside mode 1.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aacc0",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MissionParams_Difficulty",
+      "description": "int16, the MISSION PARAMS menu's DIFFICULTY setting, 0 to 3: data\\prefs.cfg option 14, which 00020630 at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 7 outside mode 1.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aacc2",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MissionParams_Visibility",
+      "description": "int16, the MISSION PARAMS menu's VISIBILITY setting, 0 or 1: data\\prefs.cfg option 15, which 00020630 at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) writes it as header word 8 outside mode 1.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aacc4",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "MissionParams_TimeOfDay",
+      "description": "int16, the MISSION PARAMS menu's TIME OF DAY setting, 0 to 2: data\\prefs.cfg option 16, which 00020630 at start-up and 0003c7d8 copy in and MissionParams_OnMessage (0002b4fe) steps. MsnGen_LoadMission (00035873) seeds flag 3 with it in every mode and writes it as header word 9 outside mode 1.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
+    },
+    {
+      "address": "000aad56",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shell_Mode",
+      "description": "The shell's mode word, int16: 0 for a single mission, 1 for a career. MainMenu_OnMessage (0002a70a) stores 0 for INSTANT ACTION and SINGLE MISSION and 1 for RESUME and CAREER, and Mission_ReadRestore (00036512) reads it from data\\restore.dat; the other 37 instructions es2_xref finds holding its address read it.",
+      "source": "Herculan/docs/es1/formats/msn-mission-file.md#the-mode-and-the-mission-parameters"
     },
     {
       "address": "000ab60a",

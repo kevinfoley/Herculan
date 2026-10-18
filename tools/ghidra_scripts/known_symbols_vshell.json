@@ -21361,7 +21361,13 @@
       "confidence": "high",
       "name": "ShellRandom_Reset",
       "description": "Cursors to 0x18/0x37 and the 112-byte seed table from 0047f7b4, byte-identical to DBSIM's.",
-      "source": "docs/retail/shell/campaign-loop.md"
+      "source": "docs/retail/shell/campaign-loop.md",
+      "verified": {
+        "bytes": "00465950+41",
+        "sha1": "b24d35a54c19",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0046597c",
@@ -21369,8 +21375,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShellRandom_Seed",
-      "description": "(state, n): ShellRandom_Reset then n steps. Startup passes GetTickCount() & 0x7f.",
-      "source": "docs/retail/shell/campaign-loop.md"
+      "description": "(state, n): ShellRandom_Reset (00465950)(state) and ShellRandom_SeedNoOp, then n steps of ShellRandom_Next (004659a8), their results dropped. es2_xref finds one call, from EsGlobal_Init (004073bc) at 004075a1, which passes the generator 00482325 and GetTickCount() & 0x7f.",
+      "source": "docs/retail/shell/campaign-loop.md",
+      "verified": {
+        "bytes": "0046597c+44",
+        "sha1": "51824571a626",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004659a8",
