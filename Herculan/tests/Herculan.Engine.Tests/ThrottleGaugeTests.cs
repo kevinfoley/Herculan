@@ -22,7 +22,7 @@ public class ThrottleGaugeTests {
 	/// <summary>
 	/// Full forward puts the knob at the top of the track and full reverse at the bottom, which is
 	/// the manual's own description of the control and the direction the original's two sign flips
-	/// settle on.
+	/// settle on, and a zero setting centres it: "Centered is stopped", as the manual puts it.
 	/// </summary>
 	[Theory]
 	[MemberData(nameof(Cockpits))]
@@ -33,23 +33,9 @@ public class ThrottleGaugeTests {
 
 		Assert.Equal(track.Top, track.KnobTopFor(ThrottleTrack.Full));
 		Assert.Equal(track.Bottom, track.KnobBottomFor(-ThrottleTrack.Full));
-		Assert.True(track.KnobTopFor(0) > track.Top && track.KnobBottomFor(0) < track.Bottom);
-	}
 
-	/// <summary>
-	/// A zero setting centres the knob on the track — <c>00447e24</c> seeds the knob's bottom edge at
-	/// <c>trackBottom - (trackHeight - knobHeight)/2</c>, which is the same place. "Centered is
-	/// stopped", as the manual puts it.
-	/// </summary>
-	[Theory]
-	[MemberData(nameof(Cockpits))]
-	public void NeutralCentresTheKnob(string herc) {
-		if (Track(herc) is not { } track) {
-			return;
-		}
-
-		int constructorSeed = track.Bottom - (track.Bottom - track.Top - track.KnobHeight) / 2;
-		Assert.InRange(track.KnobBottomFor(0), constructorSeed - 1, constructorSeed + 1);
+		// The gaps above and below the knob agree to within the pixel an odd travel cannot split.
+		Assert.InRange((track.KnobTopFor(0) - track.Top) - (track.Bottom - track.KnobBottomFor(0)), -1, 1);
 	}
 
 	/// <summary>

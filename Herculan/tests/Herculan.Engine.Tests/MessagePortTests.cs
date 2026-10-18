@@ -1,6 +1,7 @@
 using System.Text;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
+using Herculan.Engine.Sim;
 using Xunit;
 
 namespace Herculan.Engine.Tests;
@@ -20,7 +21,9 @@ public class MessagePortTests {
 
 		Assert.True(port.Ticker.HasText);
 		Assert.Equal(new[] { Message }, spoken);
-		Assert.Single(tones);
+
+		// Message 0 is the general internal-damage line, one of the two that sound strcfail.
+		Assert.Equal(new[] { SoundId.StructuralFailure }, tones);
 	}
 
 	[Fact]

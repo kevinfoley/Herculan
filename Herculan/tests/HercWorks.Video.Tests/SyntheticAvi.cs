@@ -3,11 +3,11 @@ namespace HercWorks.Video.Tests;
 /// <summary>
 /// Builds AVI files in memory for the tests to parse.
 ///
-/// <para>The suite deliberately does not read anything out of <c>ES2/AVI/</c>. Those files are not
-/// in the repository, so a test that needed them would pass or fail depending on whether someone
-/// had the game installed. Everything here is assembled byte by byte instead, which also makes it
-/// possible to build the malformed cases — a chunk that lies about its length, a hundred nested
-/// lists — that no real file contains.</para>
+/// <para>The files in <c>ES2/AVI/</c> are not in the repository, so the tests that depend on
+/// parsing behaviour are built on these instead, and the retail checks reached through
+/// <see cref="RetailFiles"/> are the extra ones. Assembling files byte by byte also makes it
+/// possible to build the malformed cases — a chunk that lies about its length, lists nested two
+/// hundred deep — that no real file contains.</para>
 /// </summary>
 internal sealed class SyntheticAvi {
 	private readonly List<byte> _movi = [];
@@ -61,6 +61,22 @@ internal sealed class SyntheticAvi {
 		AddChunk(record, "00dc", video);
 		AddChunk(record, "01wb", audio);
 		AddList(_movi, [.. record]);
+		return this;
+	}
+
+	/// <summary>Adds a video packet wrapped in <paramref name="depth"/> nested <c>rec </c> lists.</summary>
+	internal SyntheticAvi AddNestedVideo(int depth, params byte[] data) {
+		var payload = new List<byte>();
+		AddChunk(payload, "00dc", data);
+		for (int i = 0; i < depth; i++) {
+			var record = new List<byte>();
+			record.AddRange("rec "u8.ToArray());
+			record.AddRange(payload);
+			payload.Clear();
+			AddList(payload, [.. record]);
+		}
+
+		_movi.AddRange(payload);
 		return this;
 	}
 

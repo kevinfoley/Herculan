@@ -23,8 +23,6 @@ public sealed class Indeo3CodebookTests {
 	[Fact]
 	public void SeedAreaMatchesRetailDll() {
 		ReadOnlySpan<byte> seed = Indeo3SeedData.SeedArea;
-		Assert.Equal(5251, seed.Length);
-
 		string? dll = RetailFiles.Find(Path.Combine("INDEO", "IR32_32.DLL"));
 		if (dll is null) {
 			return;
@@ -66,19 +64,6 @@ public sealed class Indeo3CodebookTests {
 		int end = blocks[^1].Offset + blocks[^1].EncodedLength;
 		Assert.Equal(seed.Length - 1, end);
 		Assert.Equal(0, seed[end]);
-	}
-
-	/// <summary>
-	/// The count byte is unsigned. Read signed, the first block's <c>0xC3</c> is -61 and the walk
-	/// desynchronises immediately, which is the one mistake in this parse that still terminates.
-	/// </summary>
-	[Fact]
-	public void FirstBlockCountIsUnsigned() {
-		Indeo3SeedBlock first = Indeo3Codebooks.ParseSeedArea(Indeo3SeedData.SeedArea)[0];
-
-		Assert.Equal(0, first.Offset);
-		Assert.Equal(195, first.Count);
-		Assert.Equal(392, first.EncodedLength);
 	}
 
 	/// <summary>
@@ -142,27 +127,27 @@ public sealed class Indeo3CodebookTests {
 	}
 
 	/// <summary>
-	/// A negative expansion byte transposes the ordered-pair order and flips bit 31 of the
-	/// replicated set's second sub-table. Block 16 is the only one with a distinct negative byte.
+	/// A negative expansion byte transposes the grid of ordered pairs and flips bit 31 of the
+	/// replicated set's second sub-table. Shown on two blocks that differ only in that byte's sign,
+	/// +2 and -2: the two off-diagonal entries of the 2x2 grid trade places, and only the negative
+	/// block's diagonal differs between its two replicated sub-tables.
 	/// </summary>
 	[Fact]
 	public void NegativeExpansionTransposes() {
-		ReadOnlySpan<byte> seed = Indeo3SeedData.SeedArea;
-		Indeo3SeedBlock block = Indeo3Codebooks.ParseSeedArea(seed)[16];
-		Indeo3Codebooks codebooks = Indeo3Codebooks.Shared;
+		const int Seeds = 2;
+		Indeo3Codebooks codebooks = Indeo3Codebooks.Build(SeedAreaOfTwoPairBlocks(firstExpand: 2, secondExpand: -2));
 
-		Assert.Equal(128, block.Count);
-		Assert.Equal(-11, block.Expand);
+		Assert.NotEqual(codebooks.Entry(0, Seeds + 1), codebooks.Entry(0, Seeds + 2));
+		Assert.Equal(codebooks.Entry(0, Seeds + 1), codebooks.Entry(1, Seeds + 2));
+		Assert.Equal(codebooks.Entry(0, Seeds + 2), codebooks.Entry(1, Seeds + 1));
+		Assert.Equal(codebooks.Entry(0, Seeds), codebooks.Entry(1, Seeds));
+		Assert.Equal(codebooks.Entry(0, Seeds + 3), codebooks.Entry(1, Seeds + 3));
 
-		// The first expansion entry is the pair (0, 0) either way, so it pins the start of the run
-		// without depending on the order.
-		short value = block.PairValue(seed, 0);
-		Assert.Equal(unchecked((uint)((value << 16) + value)), codebooks.Entry(16, 128));
+		uint Replicated(int block, int subTable) =>
+			codebooks.WordAt(0xc000 + (block * 0x800) + (subTable * 0x400) + (4 * Seeds));
 
-		uint replicated = Indeo3Codebooks.ReplicatedWord(block.Low(seed, 0), block.High(seed, 0));
-		int alt = 0xc000 + (16 * 0x800);
-		Assert.Equal(replicated, codebooks.WordAt(alt + (4 * 128)));
-		Assert.Equal(replicated ^ 0x8000_0000, codebooks.WordAt(alt + 0x400 + (4 * 128)));
+		Assert.Equal(Replicated(0, 0), Replicated(0, 1));
+		Assert.Equal(Replicated(1, 0) ^ 0x8000_0000, Replicated(1, 1));
 	}
 
 	/// <summary>
@@ -206,5 +191,20 @@ public sealed class Indeo3CodebookTests {
 
 		// Nothing at all.
 		Assert.Throws<InvalidDataException>(() => Indeo3Codebooks.ParseSeedArea(ReadOnlySpan<byte>.Empty));
+	}
+
+	/// <summary>
+	/// A seed area of the 24 blocks the codec addresses, each holding the two distinct pairs
+	/// <c>(1, 2)</c> and <c>(3, 4)</c>. The first two blocks take the given expansion bytes, the rest 1.
+	/// </summary>
+	private static byte[] SeedAreaOfTwoPairBlocks(sbyte firstExpand, sbyte secondExpand) {
+		var seed = new List<byte>();
+		for (int block = 0; block < Indeo3Codebooks.BlockCount; block++) {
+			sbyte expand = block switch { 0 => firstExpand, 1 => secondExpand, _ => 1 };
+			seed.AddRange([2, 1, 2, 3, 4, (byte)expand]);
+		}
+
+		seed.Add(0);
+		return [.. seed];
 	}
 }

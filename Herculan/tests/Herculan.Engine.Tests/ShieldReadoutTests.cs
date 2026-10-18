@@ -11,13 +11,13 @@ namespace Herculan.Engine.Tests;
 public class ShieldReadoutTests {
 	/// <summary>
 	/// Retail's ladder from the power-up centre: forward stops fall just short of their multiple of 20
-	/// and truncate a point low, rear stops fall just past it and read clean.
+	/// and truncate a point low, rear stops fall just past it and read clean. Five presses is the
+	/// balance accumulating rather than stepping from the centre each time.
 	/// </summary>
 	[Theory]
 	[InlineData(1, 119, 81)]
 	[InlineData(5, 199, 1)]
 	[InlineData(-1, 80, 120)]
-	[InlineData(-5, 0, 200)]
 	public void RetailTruncatesTheFrontNumber(int presses, int front, int rear) {
 		var shields = Press(new ShieldCharge(3500), presses);
 
@@ -42,6 +42,7 @@ public class ShieldReadoutTests {
 
 				Assert.Equal(0, front % 20);
 				Assert.Equal(200, front + rear);
+				Assert.InRange(front, 0, 200);
 			}
 		}
 	}

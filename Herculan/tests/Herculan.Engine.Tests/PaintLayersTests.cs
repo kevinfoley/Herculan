@@ -20,17 +20,21 @@ public class PaintLayersTests {
 		Assert.Equal(1, layers.LayerOf(null, 1));
 	}
 
-	/// <summary>A poly painted after the logo stays on the logo's layer, so the logo never covers it.</summary>
+	/// <summary>
+	/// A poly painted after the logo stays on the logo's layer even where it lies over the wall: only the
+	/// run it would join, which starts at the logo, is tested.
+	/// </summary>
 	[Fact]
 	public void PolysAfterTheCutStayOnItsLayer() {
-		var layers = PaintLayers.Assign(Quad(0, 0, 4).Concat(Quad(1, 1, 2)).Concat(Quad(2, 10, 12)));
+		var layers = PaintLayers.Assign(Quad(0, 0, 4).Concat(Quad(1, 1, 2)).Concat(Quad(2, 2.5f, 3.5f)));
 
 		Assert.Equal(1, layers.LayerOf(null, 2));
 	}
 
 	/// <summary>
-	/// A logo standing a little off its wall's plane still lies over it — <c>BASES.DGS</c> shape 1's is
-	/// 19.4 DTS units behind it at one edge — and one well clear of it does not.
+	/// A logo standing a little off its wall's plane, as the retail ones do, still lies over it, and one
+	/// well clear of it does not: 0.2 and 0.6 render units are about 33 and 100 DTS units, either side of
+	/// the tolerance.
 	/// </summary>
 	[Theory]
 	[InlineData(0.2f, true)]

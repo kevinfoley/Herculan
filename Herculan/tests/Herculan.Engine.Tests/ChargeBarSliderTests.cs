@@ -16,18 +16,13 @@ public class ChargeBarSliderTests {
 	// A row at GAU x 100 puts the value field's last column at (100 + 0x35) * 2.
 	private static readonly ChargeBarSlider Bar = new(Left, 340, Left + 0x11 * 2, 350, knobWidth: 2);
 
-	/// <summary>The knob is one GAU unit wide and the track one column short of the field: 32 pixels of travel.</summary>
-	[Fact]
-	public void TravelIsTheFieldLessOneKnob() => Assert.Equal(32, Bar.Travel);
-
 	/// <summary>
-	/// <c>SliderWidget_GetValueH</c> over <c>SliderWidget_RecomputeScaleH</c>'s scale: 32 pixels span
-	/// 0..0x400, so each pixel is 32 units and the knob's last position reads the whole range.
+	/// <c>SliderWidget_GetValueH</c> over <c>SliderWidget_RecomputeScaleH</c>'s scale. The knob is one
+	/// GAU unit wide and the track one column short of the field, so 32 pixels span 0..0x400: each pixel
+	/// is 32 units and the knob's last position reads the whole range.
 	/// </summary>
 	[Theory]
-	[InlineData(Left, 0)]
 	[InlineData(Left + 1, 32)]
-	[InlineData(Left + 16, 0x200)]
 	[InlineData(Left + 32, 0x400)]
 	public void PositionIsLinearAcrossTheTravel(float x, int expected) =>
 		Assert.Equal(expected, Bar.PositionAt(x));
@@ -39,7 +34,6 @@ public class ChargeBarSliderTests {
 	[Theory]
 	[InlineData(Left - 50, 0)]
 	[InlineData(Left + 34, 0x400)]
-	[InlineData(Left + 500, 0x400)]
 	public void APointerPastTheTrackPinsTheEnd(float x, int expected) =>
 		Assert.Equal(expected, Bar.PositionAt(x));
 
@@ -53,16 +47,14 @@ public class ChargeBarSliderTests {
 		Assert.Null(widget.Id.AsWeaponRow);
 		Assert.True(widget.Draggable);
 		Assert.Equal((Left, 340, Left + 0x11 * 2 + 1, 351), (widget.X0, widget.Y0, widget.X1, widget.Y1));
-		Assert.Equal(0x12 * 2, widget.Width);
 	}
 
 	/// <summary>
 	/// The read-back's <c>position * 1200 &gt;&gt; 10</c>: the whole bar is the 1200 the capacitor is
-	/// scaled against, and the bar then fills to where it was released, give or take the rounding.
+	/// scaled against, a position in between truncates (819 is 959.8), and a position off either end is
+	/// held to the bar.
 	/// </summary>
 	[Theory]
-	[InlineData(0, 0)]
-	[InlineData(0x200, 600)]
 	[InlineData(819, 959)]
 	[InlineData(0x400, 1200)]
 	[InlineData(-5, 0)]

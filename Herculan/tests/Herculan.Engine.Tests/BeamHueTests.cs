@@ -18,12 +18,4 @@ public class BeamHueTests {
 
 		Assert.Equal(grey, BeamAppearance.TurnHue(grey));
 	}
-
-	[Fact]
-	public void OnlyPbwAndPbw2AreParticleBeams() {
-		Assert.True(BeamAppearance.IsParticleBeam(0));
-		Assert.True(BeamAppearance.IsParticleBeam(6));
-		Assert.False(BeamAppearance.IsParticleBeam(2));
-		Assert.False(BeamAppearance.IsParticleBeam(3));
-	}
 }

@@ -32,6 +32,9 @@ public sealed partial class MechObject : SimObject {
 	private readonly ComponentDamage? _damage;
 	private readonly Func<int, int>? _weaponModelCellCount;
 
+	/// <summary>This machine's own hit-sphere model, with every fitted weapon's spheres in its mount's cluster — see <see cref="FitWeaponsToModels"/>.</summary>
+	internal IReadOnlyList<ColliderNode> Collision => _collision;
+
 	/// <param name="hardpoints">
 	/// The chassis' own <c>gl\&lt;HERC&gt;.GL</c> hardpoint list — where each weapon physically sits,
 	/// which cockpit row it owns, and which slot of <paramref name="loadout"/> it draws from. Without

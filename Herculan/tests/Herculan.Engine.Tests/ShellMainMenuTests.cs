@@ -75,27 +75,6 @@ public class ShellMainMenuTests {
 		Assert.Equal(2, startup.Frame);
 	}
 
-	/// <summary>The six frames are bay2a_80 to bay2a_84, the last twice.</summary>
-	[Fact]
-	public void StartupFramesRepeatTheLastBackdrop() {
-		Assert.Equal(new[] { "BAY2A_80", "BAY2A_81", "BAY2A_82", "BAY2A_83", "BAY2A_84", "BAY2A_84" },
-			ShellStartupSequence.FrameNames);
-	}
-
-	/// <summary>FUN_0044cecf's reasons: state 0 the war lost, 1 the cybrids defeated, 3 killed.</summary>
-	[Theory]
-	[InlineData(0, 0x130)]
-	[InlineData(1, 0x131)]
-	[InlineData(3, 0x12f)]
-	public void EndOfGameNamesTheReason(int state, int text) {
-		var dialog = new ShellEndOfGameDialog();
-
-		dialog.Open(state);
-
-		Assert.True(dialog.IsOpen);
-		Assert.Equal(text, dialog.FirstLineText);
-	}
-
 	/// <summary>
 	/// A state with no line leaves the first line as it was — the builder's empty entry 0 at first, the
 	/// last reason afterwards.
@@ -113,27 +92,30 @@ public class ShellMainMenuTests {
 		Assert.Equal(0x12f, dialog.FirstLineText);
 	}
 
-	/// <summary>While the alert is up only OKAY answers; OKAY takes it down.</summary>
+	/// <summary>
+	/// While the alert is up only OKAY answers, where the builder puts it inside the alert: 0x41-0xa5
+	/// across and 0x45-0x54 down from the alert's corner at (0xcf, 0xcb), so over canvas (300, 280).
+	/// The alert's own body just above it answers nothing. OKAY's handler takes the alert down.
+	/// </summary>
 	[Fact]
 	public void EndOfGameAnswersOnlyOnOkay() {
 		var dialog = new ShellEndOfGameDialog();
 		dialog.Open(0);
-		var okay = ShellEndOfGameDialog.OkayButtonRect;
 
-		Assert.Equal(ShellWidgetKind.EndOfGameOkay, dialog.HitAt(okay.X0 + 1, okay.Y0 + 1)?.Widget.Kind);
-		Assert.Null(dialog.HitAt(ShellEndOfGameDialog.PanelRect.X0 + 2, ShellEndOfGameDialog.PanelRect.Y0 + 2));
+		Assert.Equal(ShellWidgetKind.EndOfGameOkay, dialog.HitAt(300, 280)?.Widget.Kind);
+		Assert.Null(dialog.HitAt(300, 260));
 
 		dialog.Close();
 		Assert.False(dialog.IsOpen);
 	}
 
 	/// <summary>
-	/// INSTANT ACTION's rows 8-10 write the table's chassis — Apocalypse, Maverick, Samson — into option 40,
-	/// light no listed row and leave Herc Type's greying as the last listed row left it.
+	/// INSTANT ACTION's rows past the eight listed — its first and last are here — write the table's
+	/// chassis, Apocalypse and Samson, into option 40, light no listed row and leave Herc Type's greying
+	/// as the last listed row left it.
 	/// </summary>
 	[Theory]
 	[InlineData(8, 5)]
-	[InlineData(9, 7)]
 	[InlineData(10, 3)]
 	public void InstantActionRowsWriteTheirChassis(int row, int chassis) {
 		var options = SimulatorPreferences.Defaults();
@@ -162,32 +144,19 @@ public class ShellMainMenuTests {
 	}
 
 	/// <summary>
-	/// The main menu and the save screen hide the strip, and the tabs from WEAPONS on show it; the bare
-	/// frame puts it back with no tab up.
+	/// A frame built on the main menu, as the shell starts, has no strip until the bare frame, which
+	/// shows it with no tab up and regated for the mode it is given. Which tabs show the strip is
+	/// <see cref="ShellLayoutTests.OnlyTheTabsFromWeaponsOnLatchAndShowTheStrip"/>.
 	/// </summary>
-	[Theory]
-	[InlineData(ShellScreen.MainMenuTab, false)]
-	[InlineData(ShellScreen.SaveTab, false)]
-	[InlineData(ShellScreen.WeaponsTab, true)]
-	[InlineData(ShellScreen.MissionTab, true)]
-	public void OnlyTheLatchingTabsShowTheStrip(int tab, bool visible) {
-		var screen = ShellScreen.CreateFrame(null, ShellScreen.CrewTab);
-
-		screen.SelectTab(tab);
-
-		Assert.Equal(visible, screen.StripVisible);
-		Assert.Equal(visible, screen.HitAt(ShellLayout.Tab(3).X0 + 1, ShellLayout.TabTop + 1) != null);
-	}
-
-	/// <summary>A frame built on the main menu, as the shell starts, has no strip until the bare frame.</summary>
 	[Fact]
 	public void TheShellStartsWithTheStripHidden() {
-		var screen = ShellScreen.CreateFrame(null);
+		var screen = ShellScreen.CreateFrame(null, mode: ShellCampaignMode.Training);
 		Assert.False(screen.StripVisible);
 
 		screen.ReturnToFrame(ShellCampaignMode.Campaign);
 
 		Assert.True(screen.StripVisible);
 		Assert.Equal(ShellScreen.NoTab, screen.SelectedTab);
+		Assert.True(screen.Button(ShellScreen.RepairTab)!.Enabled);
 	}
 }

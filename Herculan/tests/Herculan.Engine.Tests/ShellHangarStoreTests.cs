@@ -20,9 +20,15 @@ namespace Herculan.Engine.Tests;
 /// stock reversed in the parsed model, so the reversal is pinned rather than tolerated.</para>
 /// </summary>
 public class ShellHangarStoreTests {
+	/// <summary>
+	/// The synthetic save's two units of weapon 3 differ, so the reversal shows in the bytes rather than
+	/// passing unseen.
+	/// </summary>
 	[Fact]
 	public void StoresAnUnchangedSyntheticSaveBackAsItWasRead() {
-		AssertStoresBack(PlayerSaveRoundTripTests.BuildSave(), "synthetic");
+		byte[] original = PlayerSaveRoundTripTests.BuildSave();
+
+		Assert.NotEqual(original, AssertStoresBack(original, "synthetic"));
 	}
 
 	/// <summary>Every save slot of a real install; skips silently without one, as the rest of the suite does.</summary>
@@ -42,19 +48,10 @@ public class ShellHangarStoreTests {
 		}
 	}
 
-	/// <summary>Two stores in a row reverse every stock twice, which is the file again byte for byte.</summary>
-	[Fact]
-	public void TwoStoresGiveTheOriginalBytes() {
-		byte[] original = PlayerSaveRoundTripTests.BuildSave();
-
-		byte[] once = StoreUnchanged(original);
-		Assert.NotEqual(original, once);
-		Assert.Equal(original, StoreUnchanged(once));
-	}
-
 	/// <summary>
 	/// What the screens change reaches the file: an order into an empty bay with its price off the pool
-	/// and its build time left to go, and a squad member moved to another bay and position.
+	/// — 20 t from the synthetic save's 107 000 kg — and its build time left to go, and a squad member
+	/// moved to another bay and position.
 	/// </summary>
 	[Fact]
 	public void StoresWhatTheScreensChange() {
@@ -65,9 +62,8 @@ public class ShellHangarStoreTests {
 		save.SquadTailAndPlayerHead[0] = 0;
 		var hangar = ShellHangar.From(save);
 		var member = Assert.Single(hangar.SquadMembers);
-		int salvage = hangar.SalvageKilograms;
 
-		int price = hangar.Order(bay: 5, chassisType: 1, priceTons: 20, buildMissions: 3);
+		hangar.Order(bay: 5, chassisType: 1, priceTons: 20, buildMissions: 3);
 		ShellHangar.SetBay(member, 5);
 		hangar.SetSquadPosition(0, 2);
 		hangar.Store(save);
@@ -76,7 +72,7 @@ public class ShellHangarStoreTests {
 		reread.SquadTailAndPlayerHead[0] = 0;
 		var reloaded = ShellHangar.From(reread);
 
-		Assert.Equal(salvage - price, reloaded.SalvageKilograms);
+		Assert.Equal(87_000, reloaded.SalvageKilograms);
 		var ordered = Assert.IsType<ShellBayMachine>(reloaded.Bay(5));
 		Assert.Equal(1, ordered.ChassisType);
 		Assert.Equal(0, ordered.BuildPercent);
@@ -112,7 +108,8 @@ public class ShellHangarStoreTests {
 		Assert.Equal(onStrength - 1, reread.MachinesOnStrength);
 	}
 
-	private static void AssertStoresBack(byte[] original, string name) {
+	/// <summary>Asserts an unchanged store gives the file with each stock reversed, and returns those bytes.</summary>
+	private static byte[] AssertStoresBack(byte[] original, string name) {
 		var transformer = new PlayerSaveTransform();
 
 		var expected = Assert.IsType<PlayerSave>(transformer.Parse(original));
@@ -128,6 +125,7 @@ public class ShellHangarStoreTests {
 		Assert.True(want.Length == got.Length, $"{name}: stored {got.Length} bytes, expected {want.Length}");
 		int first = Enumerable.Range(0, want.Length).FirstOrDefault(i => want[i] != got[i], -1);
 		Assert.True(first == -1, $"{name}: first difference at byte 0x{first:x}");
+		return want;
 	}
 
 	/// <summary>The save parsed, read into a hangar, stored straight back and written.</summary>

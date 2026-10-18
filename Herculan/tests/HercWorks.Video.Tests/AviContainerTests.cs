@@ -161,35 +161,23 @@ public class AviContainerTests {
 	}
 
 	/// <summary>
-	/// Deeply nested lists are cut off at the configured depth rather than recursing to a stack
-	/// overflow. Catches the absence of a depth cap on the leaf walk.
+	/// A packet buried in lists nested past the depth limit is skipped rather than descended to,
+	/// while one a couple of lists down is read as usual, and the loose packet beside either is kept.
+	/// Catches the absence of a depth cap on the leaf walk.
 	/// </summary>
-	[Fact]
-	public void StopsDescendingAtTheNestingLimit() {
-		// A movie list containing many nested LISTs, with a packet buried at the bottom.
-		var inner = new List<byte>();
-		inner.AddRange("00dc"u8.ToArray());
-		inner.AddRange(BitConverter.GetBytes(2));
-		inner.AddRange(new byte[] { 9, 9 });
+	[Theory]
+	[InlineData(2, 2)]
+	[InlineData(200, 1)]
+	public void StopsDescendingAtTheNestingLimit(int depth, int expectedPackets) {
+		byte[] bytes = new SyntheticAvi()
+			.AddVideo(1)
+			.AddNestedVideo(depth, 9, 9)
+			.Build();
 
-		byte[] payload = [.. inner];
-		for (int i = 0; i < 200; i++) {
-			var wrapped = new List<byte>();
-			wrapped.AddRange("LIST"u8.ToArray());
-			wrapped.AddRange(BitConverter.GetBytes(payload.Length + 4));
-			wrapped.AddRange("rec "u8.ToArray());
-			wrapped.AddRange(payload);
-			payload = [.. wrapped];
-		}
+		AviFile? avi = AviFile.Open(bytes);
 
-		var avi = new SyntheticAvi();
-		byte[] bytes = avi.AddVideo(1).Build();
-		int moviAt = IndexOf(bytes, "movi"u8.ToArray());
-		Assert.True(moviAt > 0);
-
-		// The point is only that this returns without throwing and without unbounded recursion.
-		Exception? thrown = Record.Exception(() => AviFile.Open(bytes));
-		Assert.Null(thrown);
+		Assert.NotNull(avi);
+		Assert.Equal(expectedPackets, avi.VideoPackets.Count);
 	}
 
 	/// <summary>

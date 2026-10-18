@@ -38,8 +38,9 @@ public class InputTapeRecorderTests : IDisposable {
 			recorder.SetDiscreteStick(1, JoystickHat.North);
 			recorder.EmitTick(81, stick);
 
-			// Held input carries on; the discrete input does not.
-			recorder.EmitTick(81, stick);
+			// Held input carries on; the discrete input does not. The panel frame repeats this tick's
+			// delta, which is not the vanilla 81 a recorder starts from.
+			recorder.EmitTick(70, stick);
 			recorder.EmitPanel(stick);
 			Assert.Equal(3, recorder.FrameCount);
 		}
@@ -65,12 +66,18 @@ public class InputTapeRecorderTests : IDisposable {
 		var second = tape.Frames[1];
 		Assert.False(InputTapePlayer.HasDiscreteInput(second));
 		Assert.Equal(new PilotAxes(-128, 64, 10, -20), InputTapePlayer.AxesOf(second));
-		Assert.Equal(81, tape.Frames[2].TickDelta);
+		Assert.Equal(70, tape.Frames[2].TickDelta);
 	}
 
+	/// <summary>
+	/// A stick that is not there records no capabilities, whatever else its description carries — the
+	/// fields are only read for a present one.
+	/// </summary>
 	[Fact]
 	public void AStickThatIsNotThereIsRecordedWithNoCapabilities() {
-		Assert.Equal(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0 },
-			InputTapeRecorder.CapabilityBlock(JoystickCapabilities.None));
+		var absent = new JoystickCapabilities(Present: false, ButtonCount: 4, HasThrottle: true, HasRudder: true,
+			HasHat: true);
+
+		Assert.Equal(new byte[] { 1, 0, 0, 0, 0, 0, 0, 0 }, InputTapeRecorder.CapabilityBlock(absent));
 	}
 }

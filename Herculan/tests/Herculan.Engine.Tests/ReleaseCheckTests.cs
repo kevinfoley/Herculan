@@ -33,14 +33,22 @@ public class ReleaseCheckTests {
 	public void SameOrOlderTagIsUpToDate(string tag) =>
 		Assert.Equal(ReleaseCheckStatus.UpToDate, ReleaseCheck.Interpret($$"""{"tag_name":"{{tag}}"}""", Current).Status);
 
-	[Fact]
-	public void PrereleaseIsNotAnnounced() =>
-		Assert.Equal(ReleaseCheckStatus.UpToDate,
-			ReleaseCheck.Interpret("""{"tag_name":"v1.0.0","prerelease":true}""", Current).Status);
-
 	[Theory]
-	[InlineData("""{"tag_name":"v1.0.0/../../evil"}""")]
+	[InlineData("prerelease")]
+	[InlineData("draft")]
+	public void PrereleaseOrDraftIsNotAnnounced(string flag) =>
+		Assert.Equal(ReleaseCheckStatus.UpToDate,
+			ReleaseCheck.Interpret($$"""{"tag_name":"v1.0.0","{{flag}}":true}""", Current).Status);
+
+	/// <summary>
+	/// Each row fails at a different check. The first tag's version would parse once its suffix is dropped,
+	/// so only the tag pattern keeps its path out of the release page's URL.
+	/// </summary>
+	[Theory]
+	[InlineData("""{"tag_name":"v1.0.0-x/../../evil"}""")]
+	[InlineData("""{"tag_name":100}""")]
 	[InlineData("""{"message":"Not Found"}""")]
+	[InlineData("[]")]
 	[InlineData("not json")]
 	public void UnusableResponseFails(string json) =>
 		Assert.Equal(ReleaseCheckStatus.Failed, ReleaseCheck.Interpret(json, Current).Status);

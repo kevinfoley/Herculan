@@ -10,20 +10,20 @@ namespace Herculan.Engine.Tests;
 /// scanner's ground range in metres with it on. See <see cref="MfdStatusSubject.Range"/>.
 /// </summary>
 public class MfdStatusRangeTests {
-	// A subject 10000 units east of the viewer and 3000 above it, so the height difference shows.
+	// A subject 10000 units east of the viewer and 3000 above it, so the height difference shows:
+	// the 3D estimate is 10000 + 3000 * (1/4 + 1/16 + 1/32), each term truncated, = 11030 units.
 	private static readonly Vec3i ViewerAt = new(0, 0, 0);
 	private static readonly Vec3i SubjectAt = new(10000, 0, 3000);
 
-	private static int Units => SimMath.FastMagnitude3D(10000, 0, 3000);
-
 	[Fact]
 	public void V10PrintsRawWorldUnits() {
-		Assert.Equal(Units, MfdStatusSubject.Range(new Marker(SubjectAt), new Marker(ViewerAt), v110: false, scannerRange: false));
+		Assert.Equal(11030, MfdStatusSubject.Range(new Marker(SubjectAt), new Marker(ViewerAt), v110: false, scannerRange: false));
 	}
 
+	/// <summary>11030 units is 11 whole thousands, at 6 m each.</summary>
 	[Fact]
 	public void V110PrintsTheSameRangeInMetres() {
-		Assert.Equal(Units / 1000 * 6,
+		Assert.Equal(66,
 			MfdStatusSubject.Range(new Marker(SubjectAt), new Marker(ViewerAt), v110: true, scannerRange: false));
 	}
 

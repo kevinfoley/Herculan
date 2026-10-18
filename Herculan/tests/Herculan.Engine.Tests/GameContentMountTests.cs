@@ -75,29 +75,23 @@ public class GameContentMountTests : IDisposable {
 		Assert.Null(GameInstall.ReadDiscFile(Install, disc, Path.Combine("AVI", "PT3.AVI"), 100));
 	}
 
+	/// <summary>
+	/// A loose file in the install answers before the archives, matched ignoring case, and needs no archive entry
+	/// of its own; a name it does not cover still comes from the archive, and the folder listing is the archives'.
+	/// </summary>
 	[Fact]
-	public void ALooseFileInTheInstallAnswersBeforeTheArchives() {
+	public void ALooseFileAnswersBeforeTheArchivesIgnoringCase() {
 		WriteVol(Install, "A.VOL", Voln.DbsimProgram, 0x05, ("X.DAT", "archive"), ("Y.DAT", "archive"));
-		WriteFile(Path.Combine(Install, "DAT", "X.DAT"), "loose");
-
-		var content = GameContent.MountSimulator(Install);
-
-		Assert.Equal("loose", Text(content, "X.DAT"));
-		Assert.Equal("archive", Text(content, "Y.DAT"));
-	}
-
-	[Fact]
-	public void ALooseFileIsMatchedIgnoringCaseAndNeedsNoArchiveEntry() {
-		WriteVol(Install, "A.VOL", Voln.DbsimProgram, 0x05, ("X.DAT", "archive"));
 		WriteFile(Path.Combine(Install, "dat", "x.dat"), "loose");
 		WriteFile(Path.Combine(Install, "dat", "new.dat"), "new");
 
 		var content = GameContent.MountSimulator(Install);
 
 		Assert.Equal("loose", Text(content, "X.DAT"));
+		Assert.Equal("archive", Text(content, "Y.DAT"));
 		Assert.Equal("new", Text(content, "NEW.DAT"));
 		Assert.True(content.Contains("DAT", "NEW.DAT"));
-		Assert.Equal(new[] { "X.DAT" }, content.ListFolder("DAT"));
+		Assert.Equal(new[] { "X.DAT", "Y.DAT" }, content.ListFolder("DAT"));
 	}
 
 	[Fact]

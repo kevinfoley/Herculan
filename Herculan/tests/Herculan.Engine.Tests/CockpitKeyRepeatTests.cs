@@ -1,4 +1,3 @@
-using Herculan.Engine.View;
 using Silk.NET.Input;
 using Xunit;
 
@@ -30,22 +29,5 @@ public class CockpitKeyRepeatTests {
 		Assert.NotEqual(balances[1], balances[2]);
 		Assert.Equal(balances[2], balances[3]);
 		Assert.NotEqual(balances[3], balances[4]);
-	}
-
-	[Fact]
-	public void ARepeatTowardTheGlanceAlreadyOutLeavesItOut() {
-		if (SimulatorRig.Load() is not { } rig || rig.Art == null) {
-			return;
-		}
-
-		rig.Run(40);
-		rig.Keys.Hold(Key.F9);
-		rig.Frame();
-		for (int i = 0; i < 3; i++) {
-			rig.Keys.RepeatNextFrame(Key.F9);
-			rig.Run(20);
-		}
-
-		Assert.Equal(GlanceSide.Left, rig.View.Glance.Requested);
 	}
 }

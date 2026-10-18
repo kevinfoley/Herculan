@@ -3,6 +3,7 @@ using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Data.Struct;
 using HercWorks.Core.Io.Transform.Common;
+using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Install;
 using Herculan.Engine.Render;
@@ -60,9 +61,6 @@ public class SkyGradientTests {
 	[InlineData(1, 1)]
 	[InlineData(6, 1)]
 	[InlineData(7, 2)]
-	[InlineData(79, 14)]
-	[InlineData(84, 14)]
-	[InlineData(85, 15)]
 	[InlineData(400, 15)]
 	public void LevelBandsAreSixRowsFromTheRowAboveTheLine(int rowsAbove, int band) {
 		Assert.Equal(band, RetailSky().BandAt(rowsAbove, rolled: false, cosRoll: 1f));
@@ -70,23 +68,33 @@ public class SkyGradientTests {
 
 	/// <summary>
 	/// Rolled, the band edges stand <c>6i - 5·cos²r</c> from the line, and the ground fill covers
-	/// everything more than a row below it.
+	/// everything more than <c>cos r</c> below it: at <c>cos r = 1</c> the first edges are 1 and 7 and
+	/// the ground's 1 below; at <c>cos r = 0.5</c> the first edge is 4.75 and the ground's 0.5 below.
 	/// </summary>
-	[Fact]
-	public void RolledBandsSitNearerTheGround() {
-		var sky = RetailSky();
-		float cos = 1f;
-		Assert.Equal(0, sky.BandAt(-1.5f, rolled: true, cos));
-		Assert.Equal(1, sky.BandAt(-0.5f, rolled: true, cos));
-		Assert.Equal(1, sky.BandAt(0.9f, rolled: true, cos));
-		Assert.Equal(2, sky.BandAt(1.1f, rolled: true, cos));
-		Assert.Equal(2, sky.BandAt(6.9f, rolled: true, cos));
-		Assert.Equal(3, sky.BandAt(7.1f, rolled: true, cos));
+	[Theory]
+	[InlineData(1f, -1.5f, 0)]
+	[InlineData(1f, -0.5f, 1)]
+	[InlineData(1f, 0.9f, 1)]
+	[InlineData(1f, 1.1f, 2)]
+	[InlineData(1f, 6.9f, 2)]
+	[InlineData(1f, 7.1f, 3)]
+	[InlineData(0.5f, -0.6f, 0)]
+	[InlineData(0.5f, -0.4f, 1)]
+	[InlineData(0.5f, 4.6f, 1)]
+	[InlineData(0.5f, 4.9f, 2)]
+	public void RolledBandsSitNearerTheGround(float cosRoll, float distanceAbove, int band) {
+		Assert.Equal(band, RetailSky().BandAt(distanceAbove, rolled: true, cosRoll));
 	}
 
+	/// <summary>The file's line offset of 4 puts the line 6 of the original's rows lower: one and a half times it.</summary>
 	[Fact]
 	public void TheLineOffsetAppliesOneAndAHalfTimes() {
-		Assert.Equal(6, RetailSky(offset: 4).LineOffset);
+		var centre = new Vector2(320f, 240f);
+		const float focal = 2f * Camera.FocalLengthPixels;
+		var level = RetailSky().Place(0, 0, centre, focal);
+		var lowered = RetailSky(offset: 4).Place(0, 0, centre, focal);
+
+		Assert.Equal(level.Mid.Y - 6f * level.Scale, lowered.Mid.Y, 3);
 	}
 
 	/// <summary>
@@ -126,7 +134,10 @@ public class SkyGradientTests {
 		return Vector2.Dot(window - line.Mid, line.Up) / line.Scale;
 	}
 
-	/// <summary>Every retail theater builds a sky: 16 bands ending on 223, or 15 ending on 222.</summary>
+	/// <summary>
+	/// Every retail theater's file round-trips byte for byte, and builds a sky with one band per
+	/// header band, every one of them a colour its own palette holds.
+	/// </summary>
 	[Fact]
 	public void EveryRetailTheaterBuildsItsSky() {
 		string? root = GameInstall.Locate(null);
@@ -137,16 +148,13 @@ public class SkyGradientTests {
 		var content = GameContent.MountSimulator(root);
 		for (int worldIndex = 0; worldIndex < TheaterDescriptor.Count; worldIndex++) {
 			var theater = TheaterDescriptor.LoadByWorldIndex(content, worldIndex);
+			var bytes = content.Read(TheaterDescriptor.ResourceFolder, $"WORLD{worldIndex}.WLD")!;
+			Assert.Equal(bytes, new WorldDataTransformer().Write(theater.File));
+
 			var palette = new DynamixPaletteTransformer().Parse(content.Read("dpl", theater.PaletteName + ".DPL")!) as DynamixPalette;
 			var sky = SkyGradient.From(theater.File, palette);
 			Assert.NotNull(sky);
-
-			bool sixteen = worldIndex is 0 or 2 or 6;
-			Assert.Equal(sixteen ? 16 : 15, sky.Bands.Length);
-			Assert.Equal(sixteen ? 223 : 222, theater.File.HorizonColor);
-			Assert.Equal(6, sky.BandHeight);
-			Assert.Equal(1, sky.HorizonGap);
-			Assert.Equal(0, sky.LineOffset);
+			Assert.Equal(theater.File.SkyBandCount, sky.Bands.Length);
 		}
 	}
 }

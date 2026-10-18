@@ -62,7 +62,8 @@ jobs:
         id: version
         run: |
           $tag = "${{ github.ref_name }}".TrimStart('v')
-          $props = ([xml](Get-Content Directory.Build.props)).Project.PropertyGroup.Version
+          # The one Version element; .Project.PropertyGroup.Version gives one entry per PropertyGroup.
+          $props = ([xml](Get-Content Directory.Build.props)).SelectSingleNode('/Project/PropertyGroup/Version').InnerText.Trim()
           if ($tag -ne $props) {
             Write-Error "Tag $tag does not match <Version>$props</Version> in Herculan/Directory.Build.props."
             exit 1

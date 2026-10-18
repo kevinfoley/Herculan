@@ -75,8 +75,8 @@ sealed class JoystickSource : IJoystickSource {
 
 	/// <summary>
 	/// Opens the joystick layer. <paramref name="dataDirectory"/> is the game's <c>data</c> folder,
-	/// where the map file lives beside <c>keyjoy.cfg</c>; for a device the file has no map for, the
-	/// device's own reported shape supplies the defaults, once it reports one.
+	/// where the map file lives beside <c>keyjoy.cfg</c>; for a device the file has no map for,
+	/// <see cref="ControllerDevice.Defaults"/> applies, once the device reports its shape.
 	///
 	/// <para>Returns a source even when nothing is attached — a stick plugged in later is picked up on
 	/// a following frame, and until then <see cref="Capabilities"/> reads
@@ -110,8 +110,8 @@ sealed class JoystickSource : IJoystickSource {
 	}
 
 	/// <summary>
-	/// The map in force — the one the install's file holds for the device, or one derived from what the
-	/// device currently reports. Null until a device has reported a shape, which is not the same thing
+	/// The map in force — the one the install's file holds for the device, or its defaults: a gamepad's
+	/// own map, or for a joystick one derived from what it currently reports. Null until a device has reported a shape, which is not the same thing
 	/// as being connected.
 	/// </summary>
 	public JoystickDeviceMap? Map {
@@ -130,8 +130,9 @@ sealed class JoystickSource : IJoystickSource {
 				return null;
 			}
 
+			// The same defaults the Controller window offers: a gamepad's own map, else retail's order for the counts.
 			if (_derived is null || shape != _derivedFor) {
-				_derived = JoystickDeviceMap.ForDevice(shape.Item1, shape.Item2, shape.Item3);
+				_derived = device.Defaults();
 				_derivedFor = shape;
 			}
 

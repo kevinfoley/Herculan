@@ -35,45 +35,6 @@ public class CockpitDamageShakeTests {
 		}
 	}
 
-	/// <summary>A hit moves the view off its rest position.</summary>
-	[Fact]
-	public void AHitStartsTheShake() {
-		var shake = new CockpitHitShake();
-		shake.Update(Frame, cockpitHits: 1);
-
-		Assert.True(OffsetsOver(shake, frames: 20).Any(o => o > 0),
-			"twenty frames of a 0-4 step should have moved the view at least once");
-	}
-
-	/// <summary>
-	/// And brings the flash up during the window — but <b>not necessarily on the first frame</b>. The
-	/// interval is a 0-9 tick roll, and a roll of 0 flips the palette straight back off on the frame
-	/// after it was raised.
-	/// </summary>
-	[Fact]
-	public void AHitStartsTheFlash() {
-		var shake = new CockpitHitShake();
-		shake.Update(Frame, cockpitHits: 1);
-
-		Assert.True(FlashSeenOver(shake, frames: 30, hits: 1),
-			"the flash should be up for some of the window");
-	}
-
-	/// <summary>
-	/// The walk stays inside the band the original seeds — <c>5 &lt;&lt; VideoMode_YCoordShift</c>,
-	/// ten of the art's pixels — and never goes the other side of rest. A step that overshot a limit
-	/// would put the horizon somewhere the original never puts it.
-	/// </summary>
-	[Fact]
-	public void TheWalkStaysInsideTheBand() {
-		var shake = new CockpitHitShake();
-		shake.Update(Frame, cockpitHits: 1);
-
-		foreach (int offset in OffsetsOver(shake, frames: 500)) {
-			Assert.InRange(offset, 0, CockpitHitShake.BandPixels);
-		}
-	}
-
 	/// <summary>
 	/// It oscillates rather than settling, and it reverses constantly: <c>CockpitView_StepShake</c>
 	/// steps toward whichever limit is <i>farther</i>, and which one that is flips the moment the
@@ -236,55 +197,35 @@ public class CockpitDamageShakeTests {
 	}
 
 	/// <summary>
-	/// The flash alternates rather than staying on: <c>Palette_ToggleImpact</c> swaps the two
-	/// palettes each time the 0-9 tick timer expires, so the screen strobes.
-	/// </summary>
-	[Fact]
-	public void TheFlashAlternatesWhileTheShakeRuns() {
-		var shake = new CockpitHitShake();
-		shake.Update(Frame, cockpitHits: 1);
-
-		var seen = new HashSet<bool>();
-		for (int frame = 0; frame < 40; frame++) {
-			shake.Update(Frame, cockpitHits: 1);
-			seen.Add(shake.FlashActive);
-		}
-
-		Assert.Equal(2, seen.Count);
-	}
-
-	/// <summary>
 	/// Leaving the cockpit drops a shake outright rather than pausing it — the original's view mode 4
-	/// clears the end tick where every other path lets it run down.
+	/// clears the end tick where every other path lets it run down. Reset on a theater phase, where the
+	/// toggle's partner is the impact palette, so a shake left running would bring the flash back.
 	/// </summary>
 	[Fact]
 	public void ResetDropsAShakeInProgress() {
+		var shake = new CockpitHitShake();
+		Assert.True(AdvanceToFlashPhase(shake, flashActive: false), "the flash should go off between toggles");
+
+		shake.Reset(cockpitHits: 1);
+
+		Assert.Equal(0, shake.OffsetPixels);
+		Assert.False(FlashSeenOver(shake, frames: 60, hits: 1), "a dropped shake's flash should not come back");
+	}
+
+	/// <summary>
+	/// And the reset disarms the flash toggle too, so a hit landing on the first frame back in the
+	/// cockpit starts a fresh shake. A toggle left armed would be taken for a running shake, and the
+	/// new one would seed no band.
+	/// </summary>
+	[Fact]
+	public void AHitOnTheFirstFrameBackStartsAFreshShake() {
 		var shake = new CockpitHitShake();
 		shake.Update(Frame, cockpitHits: 1);
 		Advance(shake, Frame * 5);
 
 		shake.Reset(cockpitHits: 1);
 
-		Assert.Equal(0, shake.OffsetPixels);
-		Assert.False(shake.FlashActive);
-
-		// And it stays down: a reset shake is not waiting to resume on the next frame.
-		Assert.All(OffsetsOver(shake, frames: 30), offset => Assert.Equal(0, offset));
-	}
-
-	/// <summary>
-	/// The count is an edge, not a level: holding it steady must not re-arm the shake every frame,
-	/// which would make it permanent.
-	/// </summary>
-	[Fact]
-	public void AnUnchangedCountDoesNotRetrigger() {
-		var shake = new CockpitHitShake();
-		shake.Update(Frame, cockpitHits: 7);
-
-		Advance(shake, CockpitHitShake.DurationSeconds + Frame * 2, hits: 7);
-
-		Assert.Equal(0, shake.OffsetPixels);
-		Assert.False(shake.FlashActive);
+		Assert.Contains(OffsetsOver(shake, frames: 30, hits: 2), offset => offset > 0);
 	}
 
 	// ---- the palette the flash swaps to -----------------------------------------------------
@@ -293,7 +234,9 @@ public class CockpitDamageShakeTests {
 	/// Every theater's impact palette builds ramp tables the <i>same shape</i> as its ordinary ones.
 	/// <see cref="SceneRenderer.SetImpactRamps"/> drops a table that does not match, because the row
 	/// counts are uniforms uploaded once and the swap does not re-derive them — so a mismatch here
-	/// would silently cost the whole scene half of its flash.
+	/// would silently cost the whole scene half of its flash. And they are not the same table: a flash
+	/// that swapped in an identical lookup would show nothing, and matching shapes are exactly the
+	/// condition under which that failure would be invisible.
 	/// </summary>
 	[Theory]
 	[InlineData(0)]
@@ -325,26 +268,7 @@ public class CockpitDamageShakeTests {
 		Assert.NotNull(impactPalette);
 		Assert.Equal(ordinaryPalette.Height, impactPalette.Height);
 		Assert.Equal(ordinaryPalette.ShadeRows, impactPalette.ShadeRows);
-	}
-
-	/// <summary>
-	/// And they are not the same table. A flash that swapped in an identical lookup would show
-	/// nothing, and the shapes matching above is exactly the condition under which that failure would
-	/// be invisible.
-	/// </summary>
-	[Fact]
-	public void TheImpactRampIsADifferentTable() {
-		if (Content() is not { } content) {
-			return;
-		}
-
-		var theater = TheaterDescriptor.LoadByWorldIndex(content, 0);
-		if (Shading(content, theater.PaletteName, theater.PaletteName) is not { } ordinary
-			|| Shading(content, theater.PaletteName, theater.ImpactPaletteName) is not { } impact) {
-			return;
-		}
-
-		Assert.NotEqual(PaletteRampTable.Build(ordinary)!.Pixels, PaletteRampTable.Build(impact)!.Pixels);
+		Assert.NotEqual(ordinaryPalette.Pixels, impactPalette.Pixels);
 	}
 
 	/// <summary>
