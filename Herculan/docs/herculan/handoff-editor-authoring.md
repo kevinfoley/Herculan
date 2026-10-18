@@ -131,7 +131,8 @@ Beyond [Gaps in what is in place](handoff-editor-mission-editing.md#gaps-in-what
 | Edit roster and group fields | medium |
 | Mission text: debrief lines, action lines, the briefing and debrief movies | small–medium |
 | Counter overview | small |
-| Waypoint and group typed fields and mission-box warning | small |
+| A line-length check against the mission screen's wrap, and a line's trailing newline | small |
+| Ordering objectives; deleting a group directly; clearing a reference that refuses a delete | small each |
 | Mission check re-run after each move and side change, as it is after an add or a delete | small |
 | Tint every area of a selected action; tint ground planes too | small |
 | Orthographic top-down view | small–medium |
