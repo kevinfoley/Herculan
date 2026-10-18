@@ -7590,9 +7590,15 @@
       "type": "function",
       "confidence": "high",
       "name": "ActionTimer_Tick",
-      "description": "One script.dat block-6 action timer per frame -- the second of the four ways a mission action activates. Counts the millisecond countdown at timer+0x2c down through Timer_CountDown, but only while the primary action at timer+0x00 has activated or the record names none (in which case it runs from mission start). On expiry it calls Action_Activate on each of the ten resolved action pointers at timer+0x04..+0x28 and re-arms the countdown with 30000, which through the <<11 in ActionTimer_SetDelay is about seventeen hours -- so a timer effectively activates once. This is why an action carrying no trigger area of its own is ordinary rather than dead.",
+      "description": "One script.dat block-6 action timer per frame -- the second of the four ways a mission action activates. Counts the countdown at timer+0x2c down through Timer_CountDown, in the simulation's timer unit, but only while the primary action at timer+0x00 is null or has activated (its +0x0a set), so a timer naming none runs from mission start. When the countdown reads 0 it calls Action_Activate on each non-null one of the ten action pointers at timer+0x04..+0x28 and re-arms the countdown through ActionTimer_SetDelay with 30000, which is 30,000 seconds, about 8.3 hours -- so a timer effectively activates once. This is why an action carrying no trigger area of its own is ordinary rather than dead.",
       "source": "docs/retail/simulation/mission-deployment.md",
-      "signature": "void __cdecl ActionTimer_Tick(int *timer)"
+      "signature": "void __cdecl ActionTimer_Tick(int *timer)",
+      "verified": {
+        "bytes": "004230a4+94",
+        "sha1": "c12af8c316e5",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423104",
@@ -7600,8 +7606,14 @@
       "type": "function",
       "confidence": "high",
       "name": "DBSim_BuildActionTimerRecord",
-      "description": "Small helper called once per row11 (action timer) record inside DBSim_LoadScriptDat: builds a resolved in-memory action timer from a primary-action ref + the delay short + a 10-slot ref array, all already resolved to row10-array pointers by the caller.",
-      "source": "docs/retail/formats/script-dat.md"
+      "description": "(record, primary, refs, delay): builds one in-memory block-6 action timer from pointers already resolved into the block-5 array: the primary action at +0x00, the ten fired actions copied from refs to +0x04..+0x28, and the delay short stored at +0x2c through ActionTimer_SetDelay.",
+      "source": "docs/retail/formats/script-dat.md",
+      "verified": {
+        "bytes": "00423104+56",
+        "sha1": "fe2374c770d3",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0042313c",
@@ -7656,9 +7668,15 @@
       "type": "function",
       "confidence": "high",
       "name": "TriggerArea_Resolve",
-      "description": "Load-time resolve of one script.dat block-4 (row #9) record into the 10-byte trigger-area record TriggerArea_ContainsPoint reads: type flag at +0, pointer to block-1 coordinate RefA at +2, and at +6 either a pointer to coordinate RefB (type 0) or the record's literal times 10 (other types).",
+      "description": "Load-time resolve of one script.dat block-4 (row #9) record into the 10-byte trigger-area record TriggerArea_ContainsPoint reads: the record's first word, the type flag, at +0; a pointer to the block-1 coordinate its second word indexes at +2; and at +6 either a pointer to the coordinate its third word indexes (type 0) or that word sign-extended (MOVSX) and multiplied by 10 (any other type), the radius.",
       "source": "docs/retail/simulation/mission-deployment.md",
-      "signature": "void __cdecl TriggerArea_Resolve(short *area, short *record, int coordinateBase)"
+      "signature": "void __cdecl TriggerArea_Resolve(short *area, short *record, int coordinateBase)",
+      "verified": {
+        "bytes": "00423358+74",
+        "sha1": "d3262345bb15",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004233a4",
@@ -7700,7 +7718,13 @@
       "name": "Action_TestTrigger",
       "description": "Tests a position against one action's trigger areas. Returns 1 immediately if the action has already activated (+0x0a set); otherwise offers the position to each resolved block-4 area (count at +0x04, pointer array at +0x06) via TriggerArea_ContainsPoint and calls Action_Activate on the first hit.",
       "source": "docs/retail/simulation/mission-deployment.md",
-      "signature": "short __cdecl Action_TestTrigger(int *action, int *position)"
+      "signature": "short __cdecl Action_TestTrigger(int *action, int *position)",
+      "verified": {
+        "bytes": "004234b8+79",
+        "sha1": "1988b5b0e937",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00423508",
@@ -8093,8 +8117,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Actions_EvaluateTriggers",
-      "description": "Per-frame mission trigger evaluator, called by Sim_MainTick with the player's mech. Walks the whole block-5 action array and, per action type (+0x00), picks whose position Action_TestTrigger is offered: 0 the player's mech, 1 every member of the player's group, 2/3 every member of every deployed group of side 0 (human) / side 1 (Cybrid), 4/5/6 every deployed mech / flyer / base group, 7/8/9 the action's own resolved target object at +0x36, 10 every member of the action's target group. Groups whose +0x14 action pointer is still set are skipped as subjects -- an undeployed group cannot trip a trigger.",
-      "source": "docs/retail/simulation/mission-deployment.md"
+      "description": "(mech): the per-frame mission trigger evaluator; es2_xref finds one call, from Sim_MainTick. Walks the whole block-5 action array (stride 0x3a) and, per action type (+0x00), picks whose position Action_TestTrigger is offered: 0 the mech's own (+0x26), 1 every member of its group (+0x45) through Action_TestTriggerForGroup, 2/3 every member of every mission group (stride 0x7a) of side +0x12 0 (human) / 1 (Cybrid), 4/5/6 of kind +0 0 / 1 / 2 (mech, flyer, base), 7/8/9 the position (+0x26) of the action's own resolved target object at +0x36, 10 every member of the action's target group at +0x36; any other type tests nothing. Types 2 to 6 skip a group whose +0x14 action pointer is still set, so an undeployed group cannot trip a trigger, and stop at the first group that answers. Neither type 7-9 nor 10 tests +0x36 for null. A non-zero answer goes to Action_Activate.",
+      "source": "docs/retail/simulation/mission-deployment.md",
+      "verified": {
+        "bytes": "00426b70+825",
+        "sha1": "57e7c9780bdc",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00426eac",
@@ -21550,7 +21580,13 @@
       "name": "Timer_CountDown",
       "description": "Generic countdown step in the simulation's timer unit (about 0.49 ms per count, not a millisecond): subtracts SimTickDelta from the int at p+1, clamps at 0, returns it. Taking p+1 rather than p is why the AI behaviour block's dwell countdown sits at an unaligned +0x05 with a spare byte at +0x04. Mech_AiTick passes &block+0x04, so descriptor+0x04 is a dwell time in timer units.",
       "source": "docs/retail/simulation/ai-dispatch.md",
-      "signature": "undefined4 __cdecl Timer_CountDown(int p)"
+      "signature": "undefined4 __cdecl Timer_CountDown(int p)",
+      "verified": {
+        "bytes": "004679a4+28",
+        "sha1": "015749fcec66",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004679c0",
@@ -21558,8 +21594,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ActionTimer_SetDelay",
-      "description": "(timer, value): stores value << 11 at timer+1, converting the file's delay into the simulation's timer counts. DBSim_BuildActionTimerRecord and ActionTimer_Tick call it.",
-      "source": "DBSIM decompile at 004679c0"
+      "description": "(timer, value): stores the short value sign-extended (MOVSX) and shifted left 11 as an int at timer+1, converting the file's delay in seconds into the simulation's timer counts, 2048 a second; a stored value past 32767 is negative. DBSim_BuildActionTimerRecord and ActionTimer_Tick call it.",
+      "source": "DBSIM decompile at 004679c0",
+      "verified": {
+        "bytes": "004679c0+18",
+        "sha1": "dfc276a52379",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "004679d8",

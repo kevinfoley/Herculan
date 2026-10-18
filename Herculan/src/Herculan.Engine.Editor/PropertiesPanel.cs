@@ -29,9 +29,14 @@ internal sealed class PropertiesPanel {
 	private readonly SquadMachinePanel _machine;
 	private readonly MissionView _mission;
 	private readonly RouteView _route;
+	private readonly TriggerAreaView _area;
 	private readonly OrderSlotsView _orders;
 	private readonly ObjectiveView _objective;
 	private readonly ObjectiveEditor _objectives;
+	private readonly ActionView _action;
+	private readonly ActionEditor _actions;
+	private readonly TimerView _timer;
+	private readonly PanelLinks _links;
 	private readonly StringFile? _strings;
 
 	// A position being typed, and the object it is for, until its field lets go.
@@ -41,7 +46,8 @@ internal sealed class PropertiesPanel {
 	/// <param name="document">The generated <c>script.dat</c>, whose records the order view offers as routes and subjects.</param>
 	public PropertiesPanel(MissionIndex index, ScriptDat document, SelectionState selection, PointMover mover,
 			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, MissionView mission, RouteEditor routes,
-			RoutePlacing placing, OrderEditor orders, ObjectiveEditor objectives, StringFile? strings) {
+			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
+			ActionEditor actions, TimerEditor timers, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -49,11 +55,16 @@ internal sealed class PropertiesPanel {
 		_deleter = deleter;
 		_machine = machine;
 		_mission = mission;
-		_route = new RouteView(index, selection, mover, routes, placing, GroupLink,
+		_links = new PanelLinks(index, selection);
+		_actions = actions;
+		_action = new ActionView(index, document, actions, selection, _links);
+		_timer = new TimerView(index, document, timers, _links);
+		_route = new RouteView(index, selection, mover, routes, placing, _links.Group,
 			(names, ownRoute) => References(names, ownRoute));
-		_orders = new OrderSlotsView(index, document, orders, RouteLink, ActionLink, SubjectLink);
+		_area = new TriggerAreaView(index, mover, areas, areaPlacing, actions, _action.DrawSummary, names => References(names));
+		_orders = new OrderSlotsView(index, document, orders, _links.Route, _links.Action, _links.Subject);
 		_objectives = objectives;
-		_objective = new ObjectiveView(index, document, objectives, GroupLink, SlotLink, RouteLink);
+		_objective = new ObjectiveView(index, document, objectives, _links.Group, _links.Slot, _links.Route);
 		machine.References = names => References(names);
 		_strings = strings;
 	}
@@ -78,10 +89,10 @@ internal sealed class PropertiesPanel {
 				DrawGroup(group.Group);
 				break;
 			case AreaSelection area:
-				DrawArea(area.Area);
+				_area.Draw(area.Area);
 				break;
 			case ActionSelection action:
-				DrawAction(action.Action);
+				_action.Draw(action.Action);
 				break;
 			case RouteSelection route:
 				_route.Draw(route);
@@ -90,7 +101,7 @@ internal sealed class PropertiesPanel {
 				_objective.Draw(objective.Objective);
 				break;
 			case TimerSelection timer:
-				DrawTimer(timer.Timer);
+				_timer.Draw(timer.Timer);
 				break;
 			default:
 				ImGui.TextWrapped("Nothing selected. Click a mech, flyer, building, trigger area or waypoint "
@@ -107,7 +118,7 @@ internal sealed class PropertiesPanel {
 		ImGui.AlignTextToFramePadding();
 		ImGui.Text("Group:");
 		ImGui.SameLine();
-		GroupLink(placement.GroupIndex);
+		_links.Group(placement.GroupIndex);
 		ImGui.Separator();
 		ImGui.Text($"Kind: {placement.Kind}");
 		ImGui.Text($"Type index: {placement.TypeIndex}");
@@ -141,12 +152,7 @@ internal sealed class PropertiesPanel {
 				+ "that fires, and this position is a placeholder unless the group arrives in place.");
 		}
 
-		if (placement.EngagementActionRef >= 0 || placement.DefeatActionRef >= 0) {
-			ImGui.Separator();
-			LabelledActionLink("When engaged, fires", placement.EngagementActionRef);
-			LabelledActionLink("When defeated, fires", placement.DefeatActionRef);
-		}
-
+		DrawOwnActions(placement);
 		if (placement.OutOfActionReport is { } report) {
 			OutOfActionWrites("When out of the fight", report);
 		}
@@ -171,7 +177,7 @@ internal sealed class PropertiesPanel {
 				ImGui.PushID($"goes{group}");
 				ImGui.AlignTextToFramePadding();
 				ImGui.Text("Deleted with it, as it is the last member:");
-				GroupLink(group);
+				_links.Group(group);
 				ImGui.PopID();
 			}
 
@@ -212,20 +218,20 @@ internal sealed class PropertiesPanel {
 	private void References(DeleteNamers names, IReadOnlyList<int>? ownRoute = null, IReadOnlyList<int>? fired = null) {
 		foreach (int objective in names.Objectives) {
 			ImGui.PushID($"objective{objective}");
-			Link($"Objective {objective}", new ObjectiveSelection(objective));
+			_links.Link($"Objective {objective}", new ObjectiveSelection(objective));
 			ImGui.PopID();
 		}
 
 		foreach (int action in names.Actions) {
 			ImGui.PushID($"target{action}");
-			ActionLink(action);
+			_links.Action(action);
 			ImGui.PopID();
 		}
 
 		foreach (int action in fired ?? []) {
 			ImGui.PushID($"fired{action}");
 			if (action >= 0) {
-				ActionLink(action);
+				_links.Action(action);
 				ImGui.SameLine(0f, 0f);
 				ImGui.Text(": fired by it");
 			} else {
@@ -243,7 +249,7 @@ internal sealed class PropertiesPanel {
 			}
 
 			ImGui.PushID($"group{group}");
-			Link(ShortGroup(group), new GroupSelection(group));
+			_links.ShortGroup(group);
 			ImGui.SameLine(0f, 0f);
 			ImGui.Text($": {string.Join(", ", parts)}");
 			ImGui.PopID();
@@ -253,9 +259,6 @@ internal sealed class PropertiesPanel {
 			ImGui.TextWrapped($"{names.Elsewhere} more, which this state of the mission leaves out");
 		}
 	}
-
-	// A group's identity alone, as a reference list names it.
-	private static string ShortGroup(int group) => group == 0 ? "Group 0 (player squad)" : $"Group {group}";
 
 	/// <summary>
 	/// The object's position, as fields that move it when it can be moved (<see cref="PointMover"/>). A field's edit
@@ -385,17 +388,7 @@ internal sealed class PropertiesPanel {
 		}
 
 		ImGui.Separator();
-
-		int waitsOn = group < Mission.GroupDeploymentActions.Count ? Mission.GroupDeploymentActions[group] : -1;
-		if (waitsOn >= 0) {
-			ImGui.AlignTextToFramePadding();
-			ImGui.Text("Not in the mission until");
-			ImGui.SameLine();
-			ActionLink(waitsOn);
-			ImGui.TextWrapped($"fires; then arrives {MissionText.Arrival(Mission.Actions[waitsOn].Verb)}.");
-		} else {
-			ImGui.Text("In the mission from the start.");
-		}
+		DrawDeployment(group);
 
 		if (_index.SetupOf(group) is { } setup) {
 			ImGui.Separator();
@@ -406,7 +399,7 @@ internal sealed class PropertiesPanel {
 		var members = group < _index.GroupMembers.Count ? _index.GroupMembers[group] : Array.Empty<SceneObject>();
 		ImGui.Text($"Members: {members.Count}");
 		foreach (var member in members) {
-			ObjectLink(member);
+			_links.Object(member);
 		}
 
 		if (group < Mission.GroupOutOfActionReports.Count) {
@@ -417,194 +410,78 @@ internal sealed class PropertiesPanel {
 		_orders.Draw(group);
 	}
 
-	private void DrawArea(int reference) {
-		if (_index.Area(reference) is not { } area) {
+	/// <summary>
+	/// The action the group waits on before it is in the mission, a choice of none or any action
+	/// (<see cref="ActionEditor.RequestDeployment"/>), with a link and how the group arrives. The player's squad has none: no
+	/// retail squad record carries one (<see cref="HercWorks.Core.Data.File.Msn.ActionWiring"/>).
+	/// </summary>
+	private void DrawDeployment(int group) {
+		int waitsOn = _index.DeploymentActionOf(group);
+		if (group == 0 && waitsOn < 0) {
+			ImGui.Text("In the mission from the start.");
 			return;
 		}
 
-		ImGui.Text($"Trigger area {reference}");
-		ImGui.Separator();
-
-		if (area.Shape == MissionTriggerShape.Circle) {
-			ImGui.Text("Circle");
-			ImGui.Text($"Centre: {area.A.X}, {area.A.Y}");
-			ImGui.Text($"Radius: {MissionText.Distance(area.Radius)}");
-		} else {
-			ImGui.Text("Box (height ignored)");
-			ImGui.Text($"X: {Math.Min(area.A.X, area.B.X)} to {Math.Max(area.A.X, area.B.X)}");
-			ImGui.Text($"Y: {Math.Min(area.A.Y, area.B.Y)} to {Math.Max(area.A.Y, area.B.Y)}");
-			ImGui.Text($"Size: {MissionText.Distance(Math.Abs(area.B.X - area.A.X))} by "
-				+ $"{MissionText.Distance(Math.Abs(area.B.Y - area.A.Y))}");
-		}
-
-		foreach (int action in _index.ActionsTesting(reference)) {
-			ImGui.Separator();
-			ImGui.PushID(action);
-			DrawAction(action);
-			ImGui.PopID();
-		}
-	}
-
-	private void DrawAction(int action) {
-		if (action < 0 || action >= Mission.Actions.Count) {
-			return;
-		}
-
-		var record = Mission.Actions[action];
-		var links = _index.LinksOf(action);
-
+		string? why = _actions.WhyNoDeployment(group);
 		ImGui.AlignTextToFramePadding();
-		if (_selection.Current is ActionSelection { Action: var current } && current == action) {
-			ImGui.Text($"Action {action}");
+		ImGui.Text("Waits on:");
+		ImGui.SameLine();
+		ImGui.SetNextItemWidth(-1f);
+		ImGui.BeginDisabled(why != null);
+		if (ActionChoice.Draw("##deployment", waitsOn, Mission.Actions.Count) is { } chosen) {
+			_actions.RequestDeployment(group, chosen);
+		}
+
+		ImGui.EndDisabled();
+		if (waitsOn >= 0) {
+			_links.Action(waitsOn);
+			ImGui.TextWrapped($"Not in the mission until that action fires; then it arrives {MissionText.Arrival(Mission.Actions[waitsOn].Verb)}.");
 		} else {
-			ActionLink(action);
+			ImGui.Text("In the mission from the start.");
 		}
 
-		ImGui.Spacing();
-		ImGui.Text("Fires when:");
-		ImGui.Indent();
-		if (record.Areas.Count > 0) {
-			ImGui.TextWrapped($"{MissionText.TriggerSubject(record.Type)} enters");
-			foreach (var area in record.Areas) {
-				AreaLink(area.Reference);
-			}
-		}
-
-		if (record.Type >= MissionAction.SubjectTargetMech && record.TargetRef >= 0) {
-			ImGui.AlignTextToFramePadding();
-			ImGui.Text("target:");
-			ImGui.SameLine();
-			if (record.Type == MissionAction.SubjectTargetGroup) {
-				GroupLink(record.TargetRef);
-			} else {
-				var kind = record.Type switch {
-					MissionAction.SubjectTargetMech => MissionUnitKind.Mech,
-					MissionAction.SubjectTargetFlyer => MissionUnitKind.Flyer,
-					_ => MissionUnitKind.Base
-				};
-				SlotLink(kind, record.TargetRef);
-			}
-		}
-
-		foreach (int timer in links.TimersFiringIt) {
-			TimerLink(timer);
-			ImGui.TextWrapped("runs out");
-		}
-
-		foreach (var placed in links.EngagedObjects) {
-			ImGui.Text("engaged:");
-			ImGui.SameLine();
-			ObjectLink(placed);
-		}
-
-		foreach (var placed in links.DefeatedObjects) {
-			ImGui.Text("defeated:");
-			ImGui.SameLine();
-			ObjectLink(placed);
-		}
-
-		if (record.Areas.Count == 0 && links.TimersFiringIt.Count == 0 && links.EngagedObjects.Count == 0
-				&& links.DefeatedObjects.Count == 0) {
-			EditorText.Note("nothing in this mission fires it");
-		}
-
-		ImGui.Unindent();
-
-		ImGui.Spacing();
-		ImGui.Text("Then:");
-		ImGui.Indent();
-		bool any = false;
-
-		foreach (int group in links.WaitingGroups) {
-			GroupLink(group);
-			ImGui.TextWrapped($"arrives {MissionText.Arrival(record.Verb)}");
-			any = true;
-		}
-
-		foreach (var ends in links.OrdersItEnds) {
-			ImGui.PushID($"order{ends.Group}.{ends.Slot}");
-			GroupLink(ends.Group);
-			ImGui.TextWrapped($"moves on from order {ends.Slot} ({MissionText.OrderVerb(ends.Order.Verb)})");
-			ImGui.PopID();
-			any = true;
-		}
-
-		foreach (int timer in links.TimersItStarts) {
-			TimerLink(timer);
-			ImGui.TextWrapped("starts, and when it runs out fires");
-			ImGui.Indent();
-			TimerSequence(timer);
-			ImGui.Unindent();
-			any = true;
-		}
-
-		for (int i = 0; i < record.CounterRefs.Count && i < record.CounterOps.Count; i++) {
-			if (record.CounterRefs[i] >= 0) {
-				ImGui.Text($"counter {record.CounterRefs[i]}: {MissionText.ActionCounterOp(record.CounterOps[i])}");
-				any = true;
-			}
-		}
-
-		if (record.MessageId >= 0) {
-			// Posted once per counter the action names, so one naming none never says it — see
-			// docs/retail/simulation/mission-deployment.md#the-four-ways-an-action-activates.
-			string text = string.Join(" ", _index.CommandMessages?.Instruction(record.MessageId)
-				.Select(entry => entry.Text) ?? Array.Empty<string>());
-			int posts = record.CounterRefs.Count(reference => reference >= 0);
-			ImGui.TextWrapped($"message {record.MessageId}: {(text.Length > 0 ? text : "(no text)")}");
-			EditorText.Note(posts == 0 ? "never posted: the action references no counter" : $"posted {posts}x");
-			any = true;
-		}
-
-		if (!any) {
-			EditorText.Note("nothing waits on it");
-		}
-
-		ImGui.Unindent();
+		EditorText.Reason(why);
+		EditorText.Reason(_actions.Failure);
 	}
 
-	/// <summary>The actions a timer fires, as links, skipping unset and out-of-range slots.</summary>
-	private void TimerSequence(int timer) {
-		bool any = false;
-		foreach (short fired in Mission.ActionTimers[timer].SequenceRefs) {
-			if (fired >= 0 && fired < Mission.Actions.Count) {
-				ImGui.PushID($"timer{timer}.{fired}");
-				ActionLink(fired);
-				ImGui.PopID();
-				any = true;
-			}
-		}
-
-		if (!any) {
-			EditorText.Note("no action");
-		}
-	}
-
-	private void DrawTimer(int timer) {
-		if (timer < 0 || timer >= Mission.ActionTimers.Count) {
+	/// <summary>
+	/// The actions a roster object fires when engaged and when defeated, each a choice of none or any action
+	/// (<see cref="ActionEditor.RequestObjectAction"/>), with a link. Not for a machine of the player's squad, which is built
+	/// from <c>player.mec</c>: no retail squad record carries either.
+	/// </summary>
+	private void DrawOwnActions(MissionPlacement placement) {
+		if (placement.IsPlayerLance) {
 			return;
 		}
 
-		var record = Mission.ActionTimers[timer];
-		ImGui.Text($"Timer {timer}");
 		ImGui.Separator();
-		ImGui.Text($"Delay: {record.Delay >> MissionActionTimer.DelayShift} s");
-		if (record.PrimaryActionRef >= 0) {
-			ImGui.AlignTextToFramePadding();
-			ImGui.Text("Counts down once");
-			ImGui.SameLine();
-			ActionLink(record.PrimaryActionRef);
-			ImGui.SameLine();
-			ImGui.Text("fires");
-		} else {
-			ImGui.Text("Counts down from the start of the mission");
+		string? why = _actions.WhyNoObjectAction(placement);
+		OwnAction("When engaged, fires", placement, defeated: false, placement.EngagementActionRef, why);
+		OwnAction("When defeated, fires", placement, defeated: true, placement.DefeatActionRef, why);
+		EditorText.Note("Engaged: an enemy within 50,000 units spots it, or shoots it. Defeated: put out of the fight, "
+			+ "or for a herc, left with no working weapon.");
+		EditorText.Reason(why);
+		EditorText.Reason(_actions.Failure);
+	}
+
+	private void OwnAction(string label, MissionPlacement placement, bool defeated, int current, string? why) {
+		ImGui.PushID(label);
+		ImGui.AlignTextToFramePadding();
+		ImGui.Text($"{label}:");
+		string? noNone = _actions.WhyNoNone(placement, defeated);
+		ImGui.SameLine();
+		ImGui.SetNextItemWidth(-1f);
+		ImGui.BeginDisabled(why != null);
+		if (ActionChoice.Draw("##own", current, Mission.Actions.Count, offerNone: noNone == null, whyNoNone: noNone) is { } chosen) {
+			_actions.RequestObjectAction(placement, defeated, chosen);
 		}
 
-		ImGui.Spacing();
-		ImGui.Text("When it runs out, fires:");
-		ImGui.Indent();
-		TimerSequence(timer);
-		ImGui.Unindent();
+		ImGui.EndDisabled();
+		if (current >= 0) {
+			_links.Action(current);
+		}
+
+		ImGui.PopID();
 	}
 
 	/// <summary>The group's own point, heading and formation.</summary>
@@ -708,7 +585,7 @@ internal sealed class PropertiesPanel {
 		ImGui.PushID("objectives");
 		bool any = false;
 		foreach (int objective in objectives) {
-			ObjectiveLink(objective);
+			_links.Objective(objective);
 			any = true;
 		}
 
@@ -727,76 +604,4 @@ internal sealed class PropertiesPanel {
 		EditorText.Reason(_objectives.Failure);
 		ImGui.PopID();
 	}
-
-	private void LabelledActionLink(string label, int action) {
-		if (action < 0) {
-			return;
-		}
-
-		ImGui.AlignTextToFramePadding();
-		ImGui.Text($"{label}:");
-		ImGui.SameLine();
-		ActionLink(action);
-	}
-
-	private void SubjectLink(MissionOrderSubject kind, int reference) {
-		switch (kind) {
-			case MissionOrderSubject.Group:
-				GroupLink(reference);
-				break;
-			case MissionOrderSubject.Mech:
-				SlotLink(MissionUnitKind.Mech, reference);
-				break;
-			case MissionOrderSubject.Flyer:
-				SlotLink(MissionUnitKind.Flyer, reference);
-				break;
-			default:
-				SlotLink(MissionUnitKind.Base, reference);
-				break;
-		}
-	}
-
-	private void SlotLink(MissionUnitKind kind, int slot) {
-		if (_index.ObjectAt(kind, slot) is { } placed) {
-			ObjectLink(placed);
-		} else {
-			EditorText.Note($"{kind.ToString().ToLowerInvariant()} slot {slot} (not placed)");
-		}
-	}
-
-	private void ObjectLink(SceneObject placed) =>
-		Link(MissionText.Describe(placed), new ObjectSelection(placed));
-
-	private void GroupLink(int group) =>
-		Link(MissionText.DescribeGroup(_index, group), new GroupSelection(group));
-
-	private void ActionLink(int action) => Link($"Action {action}", new ActionSelection(action));
-
-	private void AreaLink(int area) {
-		string shape = _index.Area(area)?.Shape == MissionTriggerShape.Circle ? "circle" : "box";
-		Link($"Area {area} ({shape})", new AreaSelection(area));
-	}
-
-	private void RouteLink(int route) => Link($"Route {route}", new RouteSelection(route));
-
-	private void TimerLink(int timer) =>
-		Link($"Timer {timer} ({MissionText.TimerSummary(Mission.ActionTimers[timer])})", new TimerSelection(timer));
-
-	private void ObjectiveLink(int objective) =>
-		Link(MissionText.DescribeObjective(Mission.Objectives[objective], objective), new ObjectiveSelection(objective));
-
-	/// <summary>
-	/// A clickable label that selects <paramref name="target"/>. The ID is the label itself, which is
-	/// unique within each view's own ID scope (the views push one per repeated block).
-	/// </summary>
-	private void Link(string label, EditorSelection target) {
-		ImGui.PushStyleColor(ImGuiCol.Text, LinkColor);
-		if (ImGui.Selectable(label, false, ImGuiSelectableFlags.None, ImGui.CalcTextSize(label))) {
-			_selection.Current = target;
-		}
-
-		ImGui.PopStyleColor();
-	}
-
-	private static readonly Vector4 LinkColor = new(0.55f, 0.78f, 1f, 1f);
 }

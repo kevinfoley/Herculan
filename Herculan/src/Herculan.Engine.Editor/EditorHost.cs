@@ -190,7 +190,7 @@ public sealed class EditorHost {
 		_saving.Mission = _mission;
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a herc, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), Delete deletes the selected object, route or objective or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's, group's or trigger area's arrows to move it (Alt detaches a waypoint, group or area corner from what shares its point), drag a herc, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), New box or New circle then a drag on the ground places a trigger area (Esc cancels), Delete deletes the selected object, route, trigger area, action, timer or objective or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -275,7 +275,10 @@ public sealed class EditorHost {
 		} else if (button == MouseButton.Left) {
 			_leftDownPos = mouse.Position;
 			_leftDownOverViewport = !ImGui.GetIO().WantCaptureMouse;
-			if (_leftDownOverViewport && _mission != null && !_mission.Placing.Active) {
+			if (_leftDownOverViewport && _mission != null && _mission.AreaPlacing.Active) {
+				// While an area is placed, a press on the ground starts its drag, and picks and moves nothing.
+				_mission.AreaPlacing.Press(_mission.Picker.GroundAt(_camera, mouse.Position, Viewport));
+			} else if (_leftDownOverViewport && _mission != null && !_mission.Placing.Active) {
 				bool alt = _keyboard != null && (_keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight));
 				_mission.Gizmo.TryBegin(_camera, mouse.Position, Viewport, detach: alt);
 			}
@@ -295,6 +298,11 @@ public sealed class EditorHost {
 				if (click) {
 					_mission.Placing.Click(_camera, mouse.Position, _mission.Picker.GroundAt(_camera, mouse.Position, Viewport));
 				}
+			} else if (_mission.AreaPlacing.Active) {
+				// Let go over a panel, the area ends at the ground last under the pointer.
+				_mission.AreaPlacing.Release(ImGui.GetIO().WantCaptureMouse
+					? null
+					: _mission.Picker.GroundAt(_camera, mouse.Position, Viewport));
 			} else if (_mission.Gizmo.Dragging) {
 				// A press on a handle that moved nothing still counts toward a double-click, whose second press often
 				// lands on the handles drawn over what the first selected; it leaves the selection as it is.
@@ -356,6 +364,9 @@ public sealed class EditorHost {
 		if (escapeFree && _mission?.Placing.Active == true) {
 			// Esc cancels the route being placed, and goes no further.
 			_mission.Placing.Cancel();
+		} else if (escapeFree && _mission?.AreaPlacing.Active == true) {
+			// Esc cancels the trigger area being placed, and goes no further.
+			_mission.AreaPlacing.Cancel();
 		} else if (escapeFree) {
 			var exit = _launch.FromGame ? EditorExit.BackToGame : EditorExit.Closed;
 			if (_saving.Leave(_launch.FromGame ? "returning to the game" : "quitting", () => Close(exit))) {
@@ -428,9 +439,10 @@ public sealed class EditorHost {
 		_drawables = Upload(_gl, _renderer, mission);
 	}
 
-	// V toggles the top-down view, Delete deletes the selected object, route or objective or removes the selected waypoint, Ctrl+Z
-	// undoes and Ctrl+Y or Ctrl+Shift+Z redoes, Ctrl+S saves, unless a text field or a prompt has the keyboard. None of them
-	// while a drag is under way. While a route is placed, Enter finishes it, and Delete, Undo and Redo do nothing.
+	// V toggles the top-down view, Delete deletes the selected object, route, trigger area, action, timer or objective or removes the selected
+	// waypoint, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes, Ctrl+S saves, unless a text field or a prompt has the keyboard.
+	// None of them while a drag is under way. While a route is placed, Enter finishes it; while a route or an area is placed,
+	// Delete, Undo and Redo do nothing.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
 		if (_mission?.Gizmo.Dragging == true || _saving.IsOpen || _newMission.IsOpen
 				|| (_imgui != null && ImGui.GetIO().WantCaptureKeyboard)) {
@@ -443,8 +455,8 @@ public sealed class EditorHost {
 			return;
 		}
 
-		bool placing = _mission?.Placing.Active == true;
-		if (placing && key is Key.Enter or Key.KeypadEnter) {
+		bool placing = _mission?.PlacingAny == true;
+		if (_mission?.Placing.Active == true && key is Key.Enter or Key.KeypadEnter) {
 			_mission!.Placing.RequestFinish();
 			return;
 		}
@@ -460,6 +472,12 @@ public sealed class EditorHost {
 				}
 			} else if (_mission?.Selection.Current is ObjectiveSelection { Objective: var objective }) {
 				_mission.Objectives.RequestDelete(objective);
+			} else if (_mission?.Selection.Current is AreaSelection { Area: var area }) {
+				_mission.Areas.RequestDelete(area);
+			} else if (_mission?.Selection.Current is ActionSelection { Action: var action }) {
+				_mission.Actions.RequestDelete(action);
+			} else if (_mission?.Selection.Current is TimerSelection { Timer: var timer }) {
+				_mission.Timers.RequestDelete(timer);
 			}
 
 			return;
@@ -571,6 +589,7 @@ public sealed class EditorHost {
 			_mission.Overlay.DrawLabels(_camera, _settings, _mission.Selection);
 			_mission.GroupOverlay.DrawLabels(_camera, _settings, _mission.Selection);
 			_mission.Placing.DrawLabels(_camera, display, menuBarHeight);
+			_mission.AreaPlacing.DrawLabels(_camera, display, menuBarHeight);
 			if (_mission.Mover.WhyReadOnly != null) {
 				DrawReadOnlyBanner(display, menuBarHeight);
 			}
@@ -578,10 +597,15 @@ public sealed class EditorHost {
 			_mission.Outliner.Draw(display, menuBarHeight);
 			_mission.Properties.Draw(display, menuBarHeight);
 			var (joinable, whyNotJoin) = JoinableGroup(_mission);
+			var mission = _mission;
 			_toolbox.Draw(display,
-				enabled: !_mission.Gizmo.Dragging && !_mission.Placing.Active, joinable, whyNotJoin,
-				_mission.Hercs.WhyNoAdd, _mission.Flyers.WhyNoAdd, _mission.Vehicles.WhyNoAdd, _mission.Placer.WhyNoAdd,
-				_mission.Placing.DrawToolboxEntry);
+				enabled: !mission.Gizmo.Dragging && !mission.PlacingAny, joinable, whyNotJoin,
+				mission.Hercs.WhyNoAdd, mission.Flyers.WhyNoAdd, mission.Vehicles.WhyNoAdd, mission.Placer.WhyNoAdd,
+				() => {
+					mission.Placing.DrawToolboxEntry();
+					ImGui.Separator();
+					mission.AreaPlacing.DrawToolboxEntry();
+				});
 		}
 
 		_settingsPanel.Draw();
@@ -648,11 +672,13 @@ public sealed class EditorHost {
 		mission.Overlay.Draw(wireframe, _camera, aspect, _settings, selection);
 		mission.GroupOverlay.DrawObjects(wireframe, _camera, aspect, _settings, selection);
 		mission.GroupOverlay.DrawSelectedGroup(wireframe, _camera, aspect, selection);
-		if (mission.Placing.Active) {
+		if (mission.PlacingAny) {
 			var pointer = _mouse != null && !ImGui.GetIO().WantCaptureMouse
 				? mission.Picker.GroundAt(_camera, _mouse.Position, Viewport)
 				: null;
 			mission.Placing.Draw(wireframe, _camera, aspect, pointer);
+			mission.AreaPlacing.Hover(pointer);
+			mission.AreaPlacing.Draw(wireframe, _camera, aspect);
 		} else {
 			mission.Gizmo.Draw(wireframe, _camera, aspect, _mouse?.Position ?? new Vector2(-1f), Viewport);
 		}
@@ -688,9 +714,9 @@ public sealed class EditorHost {
 		};
 	}
 
-	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the route edit, the order edit,
-	// the objective or text edit, the finished route and the Undo or Redo the frame's panels, menus and keys asked for; none
-	// while a drag is under way.
+	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the route edit, the trigger-area
+	// edit, the order edit, the action or timer edit, the objective or text edit, the finished route or area and the Undo or Redo the frame's panels,
+	// menus and keys asked for; none while a drag is under way.
 	private void RunEditRequests(EditorMission mission) {
 		var deleting = mission.Deleter.TakeRequest();
 		var step = _pendingStep;
@@ -707,10 +733,14 @@ public sealed class EditorHost {
 		mission.Squad.RunRequest();
 		mission.Theater.RunRequest();
 		mission.Routes.RunRequest();
+		mission.Areas.RunRequest();
 		mission.Orders.RunRequest();
+		mission.Actions.RunRequest();
+		mission.Timers.RunRequest();
 		mission.Objectives.RunRequest();
 		mission.Texts.RunRequest();
 		mission.Placing.RunRequest();
+		mission.AreaPlacing.RunRequest();
 
 		if (step == true) {
 			mission.Mover.Undo();
@@ -896,7 +926,7 @@ public sealed class EditorHost {
 		}
 
 		if (ImGui.BeginMenu("Edit", _mission != null)) {
-			bool idle = !_mission!.Gizmo.Dragging && !_mission.Placing.Active;
+			bool idle = !_mission!.Gizmo.Dragging && !_mission.PlacingAny;
 			if (ImGui.MenuItem("Undo", "Ctrl+Z", false, _mission.Mover.CanUndo && idle)) {
 				_pendingStep = true;
 			}

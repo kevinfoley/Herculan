@@ -26,6 +26,7 @@ public sealed class MissionDocument {
 	private const int PointRow = 6;
 	private const int HeadingRow = 7;
 	private const int RouteRow = 8;
+	private const int AreaRow = 9;
 	private const int GroupRow = 16;
 
 	/// <summary>Row 8's word 4, its waypoint count and the list after it, as <see cref="SlotProvenance.Word"/> takes it.</summary>
@@ -390,6 +391,22 @@ public sealed class MissionDocument {
 	public bool WaypointsShared(short route) => SlotOf(RouteRow, route).Word(RouteListWord).CopiedFrom != null;
 
 	/// <summary>
+	/// The row-9 record that supplies trigger area GUID <paramref name="area"/>: its last surviving record, which row 9's
+	/// replace of a repeated GUID leaves the slot holding whole. Row 9 draws no variant (it has no variant key). Throws
+	/// <see cref="InvalidOperationException"/> for a GUID no record exports.
+	/// </summary>
+	public TriggerArea12 AreaRecord(short area) =>
+		(TriggerArea12)RecordAt(SlotOf(AreaRow, area).Word(TriggerArea12.ShapeWord).Record)!;
+
+	/// <summary>Rewrites, through <paramref name="write"/>, the row-9 record <see cref="AreaRecord"/> answers.</summary>
+	public MsnEdit SetArea(short area, Action<TriggerArea12> write) {
+		var record = AreaRecord(area);
+		var before = Begin(AreaRow);
+		write(record);
+		return End(before);
+	}
+
+	/// <summary>
 	/// Appends <paramref name="record"/> to row <paramref name="row"/> under a new GUID, <paramref name="guid"/>: the row's
 	/// largest plus one, since GUIDs are per row. A record with a new GUID merges with none, so once it survives it is
 	/// exported last in its block.
@@ -456,6 +473,20 @@ public sealed class MissionDocument {
 		}
 
 		MsnRows.Set(Mission, row, shrunk);
+		return End(before);
+	}
+
+	/// <summary>
+	/// Rewrites, through <paramref name="write"/>, every record of row <paramref name="row"/>'s GUID <paramref name="guid"/>,
+	/// whatever its condition: for a word the generation neither exports nor merges, such as a pair count, which each record
+	/// keeps for its own pairs.
+	/// </summary>
+	public MsnEdit RewriteEvery<T>(int row, short guid, Action<T> write) where T : MapObject {
+		var before = Begin(row);
+		foreach (var record in Records(row).Where(record => record.GUID == guid).Cast<T>()) {
+			write(record);
+		}
+
 		return End(before);
 	}
 

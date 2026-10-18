@@ -7,8 +7,8 @@ using ImGuiNET;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The group view's orders: each filled slot of the ten with its verb, route and subject as choices that change them
-/// (<see cref="OrderEditor"/>), the action that ends it as a link, and buttons that add an order after the last, remove
+/// The group view's orders: each filled slot of the ten with its verb, route, subject and the action that ends it as choices
+/// that change them (<see cref="OrderEditor"/>), each with a link, and buttons that add an order after the last, remove
 /// one or move one up or down. What each field does is docs/retail/simulation/ai-goals.md's.
 /// </summary>
 internal sealed class OrderSlotsView {
@@ -109,16 +109,23 @@ internal sealed class OrderSlotsView {
 			_subjectLink((MissionOrderSubject)order.SubjectKind, order.SubjectRef);
 		}
 
-		if (order.ActionRef >= 0) {
-			ImGui.AlignTextToFramePadding();
-			ImGui.Text("Ends when");
-			ImGui.SameLine();
-			_actionLink(order.ActionRef);
-			ImGui.SameLine();
-			ImGui.Text("fires");
+		DrawEnding(group, slot.Slot, order.ActionRef, locked);
+		ImGui.Unindent();
+	}
+
+	// The action that moves the group on from this order when it fires, none or any action, with a link.
+	private void DrawEnding(int group, int slot, short action, bool locked) {
+		Label("Ends when");
+		ImGui.BeginDisabled(locked);
+		if (ActionChoice.Draw("##ends", action, _index.Mission.Actions.Count) is { } chosen) {
+			_editor.RequestAction(group, slot, chosen);
 		}
 
-		ImGui.Unindent();
+		ImGui.EndDisabled();
+		if (action >= 0) {
+			_actionLink(action);
+			EditorText.Note("When it fires, the group moves on to its next order.");
+		}
 	}
 
 	private void DrawVerb(int group, int slot, short verb, bool noSubject) {

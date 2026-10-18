@@ -49,6 +49,19 @@ internal sealed record WaypointTarget(EditorRoute Route, int Index, bool WithLas
 internal sealed record GroupTarget(int Group, bool Detach = false) : MoveTarget;
 
 /// <summary>
+/// Corner <paramref name="Corner"/> of trigger area <paramref name="Area"/>, by block-4 record index: 0 a box's first corner
+/// or a circle's centre (row 9's <c>0x08</c>), 1 a box's second corner (<c>0x0A</c>). <paramref name="Detach"/> when the
+/// move gives the corner a point of its own rather than moving the point it names.
+/// </summary>
+internal sealed record AreaCornerTarget(int Area, int Corner, bool Detach = false) : MoveTarget;
+
+/// <summary>
+/// The radius of circle trigger area <paramref name="Area"/>, by block-4 record index, dragged by a point on its edge: the
+/// radius is that point's ground-plane distance from the centre.
+/// </summary>
+internal sealed record AreaRadiusTarget(int Area) : MoveTarget;
+
+/// <summary>
 /// Moves what stands on a <c>script.dat</c> block-1 point — a placed object, a route's waypoint or a group — and keeps an
 /// undo history. A committed move writes the mission's <c>.MSN</c> (<see cref="MissionDocument"/>), which generates
 /// <c>script.dat</c> again into the document the editor reads; a drag's preview writes that generated document alone,
@@ -80,11 +93,19 @@ internal sealed record GroupTarget(int Group, bool Detach = false) : MoveTarget;
 /// paints-ground group's pad and, for group 0, the player's squad follow (<see cref="PointFollowers"/>). The move is of
 /// the authored point, which a paints-ground structure group's snap then puts in its tile. Only a flyer group's height
 /// is read from the point (rule 5), so only a flyer group's is the mission's to set; any other keeps the point's Z.</para>
+///
+/// <para>A trigger area's corner, or a circle's centre, moves as a waypoint does: the point it names moves, and whatever
+/// shares it, or a detached move gives it a point of its own, which its row-9 record then names
+/// (<see cref="MissionDocument.SetArea"/>); its point is written with Z 0, which the area test ignores
+/// (docs/retail/simulation/mission-deployment.md#the-areas--block-4-resolved-by-triggerarea_resolve-00423358). A
+/// circle's radius moves through the same preview and commit, writing row 9's stored radius
+/// (<see cref="TriggerAreaEditing.SetRadius"/>).</para>
 /// </summary>
 internal sealed class PointMover {
-	// script.dat's blocks 1, 3, 7 to 9 and 11, by number.
+	// script.dat's blocks 1, 3, 4, 7 to 9 and 11, by number.
 	private const int PointBlock = 1;
 	private const int RouteBlock = 3;
+	private const int AreaBlock = 4;
 	private const int GroupBlock = 11;
 
 	// Row 8's word 4, its waypoint count and the list after it, as SlotProvenance.Word takes it.
@@ -104,6 +125,9 @@ internal sealed class PointMover {
 	// ref, until the drag commits or is cancelled.
 	private ScriptCoordinate[]? _beforeDrag;
 	private short[]? _refsBeforeDrag;
+
+	// A dragged circle's stored radius as the drag found it, until the drag commits or is cancelled.
+	private short? _radiusBeforeDrag;
 
 	/// <param name="document">The <c>script.dat</c> the scene was loaded from: <paramref name="source"/>'s generated one, when there is a source.</param>
 	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, which is not edited.</param>
@@ -156,6 +180,55 @@ internal sealed class PointMover {
 		GroupSelection { Group: var group } when WhyFixed(group) == null => new GroupTarget(group),
 		_ => null
 	};
+
+	/// <summary>
+	/// Everything of <paramref name="selection"/> the move handles drag: a trigger area's corners, or a circle's centre and
+	/// radius, the radius first, so its small handle wins where the centre's arrow crosses it; else <see cref="TargetOf"/>'s
+	/// one target, or none.
+	/// </summary>
+	public IReadOnlyList<MoveTarget> TargetsOf(EditorSelection? selection) {
+		if (selection is AreaSelection { Area: var reference }) {
+			if (WhyFixedArea(reference) != null || _index.Area(reference) is not { } area) {
+				return [];
+			}
+
+			return area.Shape == MissionTriggerShape.Circle
+				? [new AreaRadiusTarget(reference), new AreaCornerTarget(reference, 0)]
+				: [new AreaCornerTarget(reference, 0), new AreaCornerTarget(reference, 1)];
+		}
+
+		return TargetOf(selection) is { } target ? [target] : [];
+	}
+
+	/// <summary>Why trigger area <paramref name="area"/>, by block-4 index, cannot be moved or edited, or null when it can.</summary>
+	public string? WhyFixedArea(int area) {
+		if (WhyReadOnly is { } readOnly) {
+			return readOnly;
+		}
+
+		return _index.Area(area) == null || _source!.GuidOf(AreaBlock, area) == -1
+			? $"Trigger area {area}'s record is not in the file."
+			: null;
+	}
+
+	/// <summary>
+	/// How many other fields name the point <paramref name="target"/>'s corner names — waypoints, other areas, groups —
+	/// which move with it unless it is detached.
+	/// </summary>
+	public int SharersOf(AreaCornerTarget target) => PointNamers(ReadRefs(target)[0]) - 1;
+
+	/// <summary>
+	/// Sets circle trigger area <paramref name="area"/>'s radius to <paramref name="radius"/> world units, as one step of the
+	/// undo history, as a drag of its radius handle does.
+	/// </summary>
+	public void CommitRadius(int area, int radius) {
+		if (_index.Area(area) is not { } circle) {
+			return;
+		}
+
+		var target = new AreaRadiusTarget(area);
+		Commit(target, PositionOf(target), circle.A.X + radius, circle.A.Y, 0);
+	}
 
 	/// <summary>
 	/// Why <paramref name="sceneObject"/> cannot be given a point of its own, or null when it can. The player's squad
@@ -246,6 +319,9 @@ internal sealed class PointMover {
 		WaypointTarget waypoint => waypoint.Route.Points[waypoint.Index],
 		GroupTarget { Group: var group } when _index.SetupOf(group) is { AuthoredPoint: var point } =>
 			IsFlyerGroup(group) ? new Vec3i(point.X, point.Y, FlyerHeight(point.Z)) : point,
+		AreaCornerTarget corner when _index.Area(corner.Area) is { } area =>
+			corner.Corner == 0 ? new Vec3i(area.A.X, area.A.Y, 0) : new Vec3i(area.B.X, area.B.Y, 0),
+		AreaRadiusTarget radius when _index.Area(radius.Area) is { } area => new Vec3i(area.A.X + area.Radius, area.A.Y, 0),
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
 
@@ -255,7 +331,7 @@ internal sealed class PointMover {
 	/// </summary>
 	public Vector3 HandleOrigin(MoveTarget target) {
 		var position = PositionOf(target);
-		return target is WaypointTarget || (target is GroupTarget && !HasOwnHeight(target))
+		return target is WaypointTarget or AreaCornerTarget or AreaRadiusTarget || (target is GroupTarget && !HasOwnHeight(target))
 			? WorldScale.ToRender(new Vec3i(position.X, position.Y, _terrain.HeightAtWorld(position.X, position.Y) + DrapedLines.LiftWorld))
 			: WorldScale.ToRender(position);
 	}
@@ -267,7 +343,7 @@ internal sealed class PointMover {
 	/// </summary>
 	public Vec3i Standing(MoveTarget target, int x, int y, int z) => target switch {
 		ObjectTarget { Object: var sceneObject } => PointFollowers.Standing(_terrain, sceneObject, x, y, z),
-		WaypointTarget => new Vec3i(x, y, 0),
+		WaypointTarget or AreaCornerTarget or AreaRadiusTarget => new Vec3i(x, y, 0),
 		GroupTarget group => new Vec3i(x, y, HasOwnHeight(group) ? z : PositionOf(group).Z),
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
@@ -294,9 +370,14 @@ internal sealed class PointMover {
 	/// or <see cref="Cancel"/> settles it.
 	/// </summary>
 	public void Preview(MoveTarget target, Vec3i position) {
-		if (target is WaypointTarget { Detach: false } waypoint) {
+		if (target is WaypointTarget { Detach: false } or AreaCornerTarget { Detach: false }) {
 			_beforeDrag ??= Snapshot(_document.Coordinates);
-			WritePoints(waypoint, position);
+			WritePoints(target, position);
+			_followers.Sync();
+		} else if (target is AreaRadiusTarget radius) {
+			var record = _document.TriggerAreas[radius.Area];
+			_radiusBeforeDrag ??= record.SecondPointOrRadius;
+			record.SecondPointOrRadius = TriggerAreaEditing.StoredRadius(RadiusAt(radius, position));
 			_followers.Sync();
 		} else if (target is GroupTarget group) {
 			// Each step starts again from the document as the drag found it, so a detached group appends one point at
@@ -330,11 +411,34 @@ internal sealed class PointMover {
 			_beforeDrag = null;
 			_refsBeforeDrag = null;
 			_followers.Sync();
+		} else if (TakeRadiusPreview(target)) {
+			_followers.Sync();
 		} else {
 			Stand(target, before);
 		}
 
 		_leveller.Relevel();
+	}
+
+	// Puts back the stored radius a radius drag's preview wrote into the generated document, and says whether there was one.
+	private bool TakeRadiusPreview(MoveTarget target) {
+		if (_radiusBeforeDrag is not { } stored) {
+			return false;
+		}
+
+		if (target is AreaRadiusTarget radius) {
+			_document.TriggerAreas[radius.Area].SecondPointOrRadius = stored;
+		}
+
+		_radiusBeforeDrag = null;
+		return true;
+	}
+
+	// The radius, in world units, a radius handle at <position> gives: its ground-plane distance from the centre.
+	private int RadiusAt(AreaRadiusTarget target, Vec3i position) {
+		var centre = _index.Area(target.Area)?.A ?? position;
+		double dx = (double)position.X - centre.X, dy = (double)position.Y - centre.Y;
+		return (int)Math.Min(Math.Round(Math.Sqrt(dx * dx + dy * dy)), int.MaxValue);
 	}
 
 	/// <summary>
@@ -344,7 +448,9 @@ internal sealed class PointMover {
 	/// </summary>
 	public void Commit(MoveTarget target, Vec3i before, int x, int y, int z) {
 		if (_source == null || target is ObjectTarget { Object: var sceneObject } && WhyFixed(sceneObject) != null
-				|| target is GroupTarget { Group: var fixedGroup } && WhyFixed(fixedGroup) != null) {
+				|| target is GroupTarget { Group: var fixedGroup } && WhyFixed(fixedGroup) != null
+				|| target is AreaCornerTarget { Area: var cornerArea } && WhyFixedArea(cornerArea) != null
+				|| target is AreaRadiusTarget { Area: var radiusArea } && WhyFixedArea(radiusArea) != null) {
 			Cancel(target, before);
 			return;
 		}
@@ -362,6 +468,13 @@ internal sealed class PointMover {
 
 		_beforeDrag = null;
 		_refsBeforeDrag = null;
+		TakeRadiusPreview(target);
+		if (target is AreaRadiusTarget radius
+				&& TriggerAreaEditing.StoredRadius(RadiusAt(radius, position)) == _document.TriggerAreas[radius.Area].SecondPointOrRadius) {
+			// Within the stored radius's tens of units of where it was: nothing to write.
+			_followers.Sync();
+			return;
+		}
 
 		MsnEdit change;
 		try {
@@ -369,7 +482,7 @@ internal sealed class PointMover {
 		} catch (InvalidOperationException ex) {
 			Console.Error.WriteLine($"Cannot move {Describe(target)}: {ex.Message}");
 			_followers.Sync();
-			if (target is ObjectTarget or WaypointTarget { Detach: true }) {
+			if (target is ObjectTarget or WaypointTarget { Detach: true } or AreaCornerTarget { Detach: true }) {
 				Stand(target, before);
 			}
 
@@ -377,7 +490,7 @@ internal sealed class PointMover {
 			return;
 		}
 
-		if (target is ObjectTarget or WaypointTarget { Detach: true }) {
+		if (target is ObjectTarget or WaypointTarget { Detach: true } or AreaCornerTarget { Detach: true }) {
 			Stand(target, position);
 		}
 
@@ -439,8 +552,8 @@ internal sealed class PointMover {
 		}
 	}
 
-	// Writes a waypoint's new position into each point it names, in the generated document, for a preview.
-	private void WritePoints(WaypointTarget target, Vec3i position) {
+	// Writes a waypoint's or an area corner's new position into each point it names, in the generated document, for a preview.
+	private void WritePoints(MoveTarget target, Vec3i position) {
 		foreach (short reference in ReadRefs(target).Distinct()) {
 			var point = _document.Coordinates[reference];
 			point.X = position.X;
@@ -449,18 +562,21 @@ internal sealed class PointMover {
 		}
 	}
 
-	// Writes a move into the .MSN: a shared waypoint's point records; a group's (WriteGroup); or a point of its own for an
-	// object or a detached waypoint (GiveOwnPoint).
+	// Writes a move into the .MSN: a shared waypoint's or area corner's point records; a group's (WriteGroup); a circle's
+	// stored radius; or a point of its own for an object, a detached waypoint or a detached corner (GiveOwnPoint).
 	private void Write(MoveTarget target, Vec3i position) {
 		switch (target) {
-			case WaypointTarget { Detach: false } shared:
-				foreach (short reference in ReadRefs(shared).Distinct()) {
+			case WaypointTarget { Detach: false } or AreaCornerTarget { Detach: false }:
+				foreach (short reference in ReadRefs(target).Distinct()) {
 					_source!.SetPoint(PointGuid(reference), position.X, position.Y, position.Z);
 				}
 
 				break;
 			case GroupTarget group:
 				WriteGroup(group, position);
+				break;
+			case AreaRadiusTarget radius:
+				TriggerAreaEditing.SetRadius(_source!, _source!.GuidOf(AreaBlock, radius.Area), RadiusAt(radius, position));
 				break;
 			default:
 				GiveOwnPoint(target, position);
@@ -502,6 +618,16 @@ internal sealed class PointMover {
 					}
 				}
 
+				break;
+			case AreaCornerTarget corner when placed[0] != points[0]:
+				short own = placed[0];
+				source.SetArea(source.GuidOf(AreaBlock, corner.Area), record => {
+					if (corner.Corner == 0) {
+						record.PointRef = own;
+					} else {
+						record.SecondPointOrRadius = own;
+					}
+				});
 				break;
 		}
 	}
@@ -614,6 +740,13 @@ internal sealed class PointMover {
 
 				_overlay.MoveRoute(waypoint.Route);
 				break;
+			case AreaCornerTarget corner when _index.Area(corner.Area) is { } area:
+				var moved = corner.Corner == 0
+					? area with { A = position, B = area.Shape == MissionTriggerShape.Circle ? position : area.B }
+					: area with { B = position };
+				_index.SetArea(moved);
+				_overlay.MoveArea(moved);
+				break;
 		}
 	}
 
@@ -629,6 +762,8 @@ internal sealed class PointMover {
 		ObjectTarget { Object: var sceneObject } => MissionText.Describe(sceneObject),
 		WaypointTarget waypoint => $"waypoint {waypoint.Index} of route {waypoint.Route.Reference}",
 		GroupTarget group => $"group {group.Group}",
+		AreaCornerTarget corner => $"corner {corner.Corner} of trigger area {corner.Area}",
+		AreaRadiusTarget radius => $"the radius of trigger area {radius.Area}",
 		_ => target.ToString()
 	};
 
@@ -641,6 +776,9 @@ internal sealed class PointMover {
 		WaypointTarget waypoint => Array.ConvertAll(WaypointEntries(waypoint),
 			entry => _document.WaypointGroups[waypoint.Route.Reference].Waypoints[entry]),
 		GroupTarget group => new[] { _document.Groups[group.Group].PositionRef },
+		AreaCornerTarget corner => new[] {
+			corner.Corner == 0 ? _document.TriggerAreas[corner.Area].PointRef : _document.TriggerAreas[corner.Area].SecondPointOrRadius
+		},
 		_ => throw new ArgumentOutOfRangeException(nameof(target))
 	};
 
@@ -651,6 +789,12 @@ internal sealed class PointMover {
 				break;
 			case GroupTarget group:
 				_document.Groups[group.Group].PositionRef = refs[0];
+				break;
+			case AreaCornerTarget { Corner: 0 } corner:
+				_document.TriggerAreas[corner.Area].PointRef = refs[0];
+				break;
+			case AreaCornerTarget corner:
+				_document.TriggerAreas[corner.Area].SecondPointOrRadius = refs[0];
 				break;
 			case WaypointTarget waypoint:
 				int[] entries = WaypointEntries(waypoint);

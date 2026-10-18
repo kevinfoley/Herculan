@@ -119,7 +119,7 @@ internal sealed class MissionIndex {
 			}
 		}
 
-		_areas = BuildAreas(mission);
+		_areas = BuildAreas(_document);
 		_setups = mission.GroupSetups.ToList();
 		_sides = mission.GroupSides.ToList();
 		_basePads = mission.BasePads.ToList();
@@ -156,8 +156,8 @@ internal sealed class MissionIndex {
 	public void SetSide(int group, MissionSide side) => _sides[group] = side;
 
 	/// <summary>
-	/// Every trigger area some action tests, once each, in block-4 order. An area no action names, or
-	/// that sits behind its action's first unset slot, is never tested and is not listed.
+	/// Every trigger area of block 4 whose points resolve, once each, in block-4 order: those actions test, and those no
+	/// action names, or that sit behind an action's first unset slot, which are never tested, such as an area just created.
 	/// </summary>
 	public IReadOnlyList<MissionTriggerArea> Areas => _areas;
 
@@ -319,16 +319,20 @@ internal sealed class MissionIndex {
 		_ => null
 	};
 
-	private static List<MissionTriggerArea> BuildAreas(Mission mission) {
-		var byReference = new SortedDictionary<int, MissionTriggerArea>();
-		foreach (var action in mission.Actions) {
-			foreach (var area in action.Areas) {
-				byReference.TryAdd(area.Reference, area);
+	// Every block-4 record resolved as the loader resolves an action's (MissionLoader.TriggerArea).
+	private static List<MissionTriggerArea> BuildAreas(ScriptDat document) {
+		var areas = new List<MissionTriggerArea>(document.TriggerAreas.Length);
+		for (short reference = 0; reference < document.TriggerAreas.Length; reference++) {
+			if (MissionLoader.TriggerArea(document, reference) is { } area) {
+				areas.Add(area);
 			}
 		}
 
-		return byReference.Values.ToList();
+		return areas;
 	}
+
+	/// <summary>Whether an action tests <paramref name="areaReference"/>.</summary>
+	public bool Tested(int areaReference) => ActionsTesting(areaReference).Any();
 
 	private static List<EditorRoute> BuildRoutes(Mission mission, ScriptDat document) {
 		var points = new SortedDictionary<int, IReadOnlyList<Vec3i>>();

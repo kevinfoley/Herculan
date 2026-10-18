@@ -52,8 +52,11 @@ internal sealed class RoutePlacing {
 	/// <summary>Why the last finish could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
+	/// <summary>Whether another placing mode is on, which this one does not start during; set once the mission's tools are built.</summary>
+	public Func<bool>? Blocked { get; set; }
+
 	/// <summary>Why placing cannot start, or null when it can.</summary>
-	public string? WhyNoStart => _editor.WhyReadOnly;
+	public string? WhyNoStart => _editor.WhyReadOnly ?? (Blocked?.Invoke() == true ? "A trigger area is being placed." : null);
 
 	/// <summary>Whether the waypoints go to an existing route rather than a new one.</summary>
 	public bool Appending => _route != -1;

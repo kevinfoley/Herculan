@@ -47,7 +47,7 @@ internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, Mis
 /// group's side. While an entry is dragged over the view, what it would add is drawn where it would stand
 /// (<see cref="DropPreview"/>). What an add writes is <see cref="HercPlacer"/>'s, <see cref="FlyerPlacer"/>'s,
 /// <see cref="VehiclePlacer"/>'s and <see cref="StructurePlacer"/>'s. Above the lists the window holds the route tool's
-/// New route (<see cref="RoutePlacing"/>).
+/// New route (<see cref="RoutePlacing"/>) and the trigger-area tool's New box and New circle (<see cref="AreaPlacing"/>).
 /// </summary>
 internal sealed class EditorToolbox {
 	// Where it first opens and how big, in pixels on a 100% display (ScaledImGui.Scaled): beside the Mission panel,
@@ -160,7 +160,10 @@ internal sealed class EditorToolbox {
 	/// <param name="whyNoFlyer">Why no flyer can be added (<see cref="FlyerPlacer.WhyNoAdd"/>), shown in the Flyers section, or null.</param>
 	/// <param name="whyNoVehicle">Why no ground vehicle can be added (<see cref="VehiclePlacer.WhyNoAdd"/>), shown in the Ground vehicles section, or null.</param>
 	/// <param name="whyNoStructure">Why no structure can be added (<see cref="StructurePlacer.WhyNoAdd"/>), shown in the Structures section, or null.</param>
-	/// <param name="routeEntry">Draws the route tool's entry (<see cref="RoutePlacing.DrawToolboxEntry"/>) above the lists, or null.</param>
+	/// <param name="routeEntry">
+	/// Draws the placing tools' entries (<see cref="RoutePlacing.DrawToolboxEntry"/>, <see cref="AreaPlacing.DrawToolboxEntry"/>)
+	/// above the lists, or null.
+	/// </param>
 	public void Draw(Vector2 display, bool enabled, int? selectedGroup, string? whyNotJoin, string? whyNoHerc,
 			string? whyNoFlyer, string? whyNoVehicle, string? whyNoStructure, Action? routeEntry = null) {
 		_whyNoHerc = whyNoHerc;

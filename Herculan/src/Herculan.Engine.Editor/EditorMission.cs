@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker, the two side panels and the move, add, delete, route, order, objective, text and theater tools, all sharing one
+/// index, the overlays, the picker, the two side panels and the move, add, delete, route, trigger area, action, timer, order, objective, text and theater tools, all sharing one
 /// selection. An edit that adds or removes records builds the CPU state again in place (<see cref="Rebuild"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -41,18 +41,27 @@ internal sealed class EditorMission {
 		Theater = new TheaterChanger(document, source, scene, index, Mover, Rebuild);
 		Routes = new RouteEditor(source, index, Mover, Rebuild, Selection, Deleter);
 		Placing = new RoutePlacing(Routes, index, drape);
+		Areas = new AreaEditor(source, index, Mover, Rebuild, Selection, Deleter);
+		AreaPlacing = new AreaPlacing(Areas, drape);
+		Placing.Blocked = () => AreaPlacing.Active;
+		AreaPlacing.Blocked = () => Placing.Active;
 		Hercs = new HercPlacer(document, source, scene, index, Mover, Rebuild, Selection, Fitter, UnitTypeNames.LoadMechs(content));
 		Flyers = new FlyerPlacer(document, source, scene, index, Mover, Rebuild, Selection, UnitTypeNames.LoadFlyers(content));
 		Vehicles = new VehiclePlacer(document, source, index, Mover, Rebuild, Selection, Placer);
 		Orders = new OrderEditor(document, source, Mover, Rebuild);
 		Objectives = new ObjectiveEditor(source, Mover, Rebuild, Selection);
 		Texts = new MissionTextEditor(source, Mover, Rebuild);
+		Actions = new ActionEditor(source, Mover, Rebuild, Selection, Deleter);
+		Timers = new TimerEditor(source, Mover, Rebuild, Selection);
 		Outliner.Placing = Placing;
+		Outliner.AreaPlacing = AreaPlacing;
 		Outliner.Objectives = Objectives;
+		Outliner.Actions = Actions;
+		Outliner.Timers = Timers;
 		Properties = new PropertiesPanel(index, document, Selection, Mover, Sides, Deleter,
 			new SquadMachinePanel(Fitter, Squad, squad),
 			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content), new MissionTextView(Texts)),
-			Routes, Placing, Orders, Objectives, SimStrings.Load(content));
+			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, SimStrings.Load(content));
 	}
 
 	/// <summary>
@@ -123,6 +132,15 @@ internal sealed class EditorMission {
 	/// <summary>Edits the objective, briefing and intelligence lines of <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public MissionTextEditor Texts { get; }
 
+	/// <summary>
+	/// Creates, edits and deletes actions in <see cref="Source"/>, and wires them into groups and objects, as steps of
+	/// <see cref="Mover"/>'s undo history.
+	/// </summary>
+	public ActionEditor Actions { get; }
+
+	/// <summary>Creates, edits and deletes action timers in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public TimerEditor Timers { get; }
+
 	public SideChanger Sides { get; }
 
 	/// <summary>Deletes objects from <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
@@ -142,6 +160,15 @@ internal sealed class EditorMission {
 
 	/// <summary>The route-placing mode, which takes the view's clicks while it is on.</summary>
 	public RoutePlacing Placing { get; }
+
+	/// <summary>Creates, reshapes and deletes trigger areas in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public AreaEditor Areas { get; }
+
+	/// <summary>The area-placing mode, which takes the view's presses and releases while it is on.</summary>
+	public AreaPlacing AreaPlacing { get; }
+
+	/// <summary>Whether a route or a trigger area is being placed, while which the view picks and moves nothing.</summary>
+	public bool PlacingAny => Placing.Active || AreaPlacing.Active;
 
 	/// <summary>The window title, the name marked <c>*</c> when <paramref name="unsaved"/> changes are held.</summary>
 	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Mission.Header.ZoneIndex}";

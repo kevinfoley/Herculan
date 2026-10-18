@@ -1,8 +1,8 @@
 namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
-/// Edits a group's ten order slots in a <see cref="MissionDocument"/>, as record edits: a slot's verb, route and subject,
-/// and adding, removing and moving orders. What each field means is docs/retail/simulation/ai-goals.md's.
+/// Edits a group's ten order slots in a <see cref="MissionDocument"/>, as record edits: a slot's verb, route, subject and
+/// ending action, and adding, removing and moving orders. What each field means is docs/retail/simulation/ai-goals.md's.
 ///
 /// <list type="bullet">
 /// <item>The slots stay filled from slot 0 without a gap: <c>Group_OrderTick</c> (<c>00423a74</c>) moves a group on only
@@ -297,6 +297,16 @@ public static class GroupOrders {
 			document.SetField(MsnField.OrderSubjectKind, order, kind);
 			document.SetField(MsnField.OrderSubject, order, kind == -1 ? (short)-1 : subject);
 		});
+	}
+
+	/// <summary>
+	/// Sets the action that ends the order in <paramref name="group"/>'s slot <paramref name="slot"/>, moving the group on to
+	/// its next order when it fires (docs/retail/simulation/ai-goals.md), to row-10 GUID <paramref name="action"/>, or none for
+	/// <c>-1</c>. An order another slot names is copied first, as for its other fields.
+	/// </summary>
+	public static MsnEdit SetAction(MissionDocument document, short group, int slot, short action) {
+		ActionWiring.CheckAction(document, action);
+		return document.Change(() => document.SetField(MsnField.OrderAction, Own(document, group, slot), action));
 	}
 
 	// Row-15 GUID <order> as generated, or null when it is not exported.

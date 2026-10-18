@@ -73,6 +73,20 @@ public static class ScriptDatLint {
 
 			if (TargetCount(script, action.Type) is { } targets) {
 				Ref(findings, ScriptBlock.Actions, i, $"Action {i} target ref", action.TargetRef, targets, "targets");
+
+				// DBSim_SpawnMissionObjects (004253d8) resolves a type 7-10 target through Mission_ResolveRefByKind
+				// (00425348), which indexes with no range test, and Actions_EvaluateTriggers then reads a position through
+				// the result: an unset ref names no object of the mission.
+				if (action.TargetRef == -1) {
+					findings.Add(new(ScriptBlock.Actions, i,
+						$"Action {i} is type {action.Type} but has no target; DBSIM resolves the unset ref to no object of the mission."));
+				}
+			}
+
+			// Action_Activate (00423430) queues the message inside its counter loop, once per pair naming a counter.
+			if (action.MessageId > 0 && action.CounterRefs.All(counter => counter < 0)) {
+				findings.Add(new(ScriptBlock.Actions, i,
+					$"Action {i} has a message but writes no counter, so DBSIM never posts it."));
 			}
 
 			// DBSim_LoadScriptDat counts an action's areas up to the first negative ref and allocates

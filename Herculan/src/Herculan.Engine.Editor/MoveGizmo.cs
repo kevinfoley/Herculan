@@ -5,10 +5,11 @@ using Herculan.Engine.Render;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The move handles drawn on the selected object, waypoint or group (<see cref="PointMover.TargetOf"/>): an arrow along
-/// world X (red) and world Y (green), a square in the ground plane between them that moves it both ways at once, and for
-/// a flyer or a flyer group an arrow up world Z (blue) — the one height the mission sets
-/// (<see cref="PointMover.HasOwnHeight(MoveTarget)"/>).
+/// The move handles drawn on the selected object, waypoint or group, or on each corner of the selected trigger area
+/// (<see cref="PointMover.TargetsOf"/>): an arrow along world X (red) and world Y (green), a square in the ground plane
+/// between them that moves it both ways at once, and for a flyer or a flyer group an arrow up world Z (blue) — the one
+/// height the mission sets (<see cref="PointMover.HasOwnHeight(MoveTarget)"/>). A circle's radius has a handle of its own,
+/// a diamond on its edge, dragged in the ground plane.
 /// Dragging one previews the move through <see cref="PointMover.Preview"/> and commits it, as one undo step, on release.
 /// The handles keep one size on screen however far away the target is, and draw through the terrain and other objects.
 /// </summary>
@@ -18,6 +19,7 @@ internal sealed class MoveGizmo {
 	private static readonly Vector3 ZColor = new(0.35f, 0.55f, 1f);
 	private static readonly Vector3 PlaneColor = new(1f, 0.85f, 0.1f);
 	private static readonly Vector3 HotColor = new(1f, 1f, 0.6f);
+	private static readonly Vector3 RadiusColor = new(0.3f, 0.9f, 0.95f);
 
 	// Render-space directions of world X, Y and Z (WorldScale.ToRender).
 	private static readonly Vector3 WorldX = Vector3.UnitX;
@@ -33,6 +35,9 @@ internal sealed class MoveGizmo {
 
 	/// <summary>How close, in window pixels, the pointer must be to an arrow to take it.</summary>
 	private const float GrabPixels = 8f;
+
+	/// <summary>The radius handle's half-width, as a share of an arrow's length.</summary>
+	private const float DiamondSize = 0.08f;
 
 	private readonly SelectionState _selection;
 	private readonly PointMover _mover;
@@ -50,23 +55,35 @@ internal sealed class MoveGizmo {
 		_mover = mover;
 	}
 
-	private enum Handle { None, X, Y, Z, Plane }
+	private enum Handle { None, X, Y, Z, Plane, Radius }
 
 	/// <summary>Whether a drag is under way, which the viewport's click-to-select leaves alone.</summary>
 	public bool Dragging => _dragging != Handle.None;
 
-	/// <summary>The selection, when it can be moved.</summary>
-	private MoveTarget? Movable => _mover.TargetOf(_selection.Current);
+	/// <summary>What of the selection can be moved: none, one target, or a trigger area's corners and radius.</summary>
+	private IReadOnlyList<MoveTarget> Movables => _mover.TargetsOf(_selection.Current);
 
+	/// <summary>Draws the dragged target's handles, or every movable target's, the one under the pointer lit.</summary>
 	public void Draw(WireframeRenderer wireframe, Camera camera, float aspect, Vector2 pointer, Vector2 viewport) {
-		var target = _target ?? Movable;
-		if (target == null) {
+		if (_target != null) {
+			DrawTarget(wireframe, camera, aspect, _target, _dragging);
 			return;
 		}
 
+		var movables = Movables;
+		var (hotTarget, hotHandle) = HandleUnder(camera, movables, pointer, viewport);
+		foreach (var target in movables) {
+			DrawTarget(wireframe, camera, aspect, target, ReferenceEquals(target, hotTarget) ? hotHandle : Handle.None);
+		}
+	}
+
+	private void DrawTarget(WireframeRenderer wireframe, Camera camera, float aspect, MoveTarget target, Handle hot) {
 		var origin = _mover.HandleOrigin(target);
 		float length = Length(camera, origin);
-		var hot = Dragging ? _dragging : HandleAt(camera, target, pointer, viewport);
+		if (target is AreaRadiusTarget) {
+			DrawDiamond(wireframe, camera, aspect, origin, length, hot == Handle.Radius ? HotColor : RadiusColor);
+			return;
+		}
 
 		DrawArrow(wireframe, camera, aspect, origin, WorldX, length, hot == Handle.X ? HotColor : XColor);
 		DrawArrow(wireframe, camera, aspect, origin, WorldY, length, hot == Handle.Y ? HotColor : YColor);
@@ -87,11 +104,12 @@ internal sealed class MoveGizmo {
 
 	/// <summary>
 	/// Starts a drag when <paramref name="pointer"/> is on a handle of the selection, and says whether it did.
-	/// <paramref name="detach"/> gives a dragged waypoint or group a point of its own rather than moving the one it stands
-	/// on.
+	/// <paramref name="detach"/> gives a dragged waypoint, group or area corner a point of its own rather than moving the one
+	/// it stands on.
 	/// </summary>
 	public bool TryBegin(Camera camera, Vector2 pointer, Vector2 viewport, bool detach) {
-		if (Movable is not { } target) {
+		var (target, handle) = HandleUnder(camera, Movables, pointer, viewport);
+		if (target == null || handle == Handle.None) {
 			return false;
 		}
 
@@ -99,18 +117,14 @@ internal sealed class MoveGizmo {
 			target = target switch {
 				WaypointTarget waypoint => waypoint with { Detach = true },
 				GroupTarget group => group with { Detach = true },
+				AreaCornerTarget corner => corner with { Detach = true },
 				_ => target
 			};
 		}
 
-		var handle = HandleAt(camera, target, pointer, viewport);
-		if (handle == Handle.None) {
-			return false;
-		}
-
 		_origin = _mover.HandleOrigin(target);
 		var ray = Ray(camera, pointer, viewport);
-		if (handle == Handle.Plane) {
+		if (handle is Handle.Plane or Handle.Radius) {
 			if (OnPlane(ray, _origin.Y) is not { } grab) {
 				return false;
 			}
@@ -137,7 +151,7 @@ internal sealed class MoveGizmo {
 
 		var ray = Ray(camera, pointer, viewport);
 		Vector3 delta;
-		if (_dragging == Handle.Plane) {
+		if (_dragging is Handle.Plane or Handle.Radius) {
 			if (OnPlane(ray, _origin.Y) is not { } at) {
 				return;
 			}
@@ -171,10 +185,32 @@ internal sealed class MoveGizmo {
 		return moved;
 	}
 
+	// The first of <targets> with a handle under the pointer, and that handle; (null, None) when none has.
+	private (MoveTarget? Target, Handle Handle) HandleUnder(Camera camera, IReadOnlyList<MoveTarget> targets, Vector2 pointer,
+			Vector2 viewport) {
+		foreach (var target in targets) {
+			var handle = HandleAt(camera, target, pointer, viewport);
+			if (handle != Handle.None) {
+				return (target, handle);
+			}
+		}
+
+		return (null, Handle.None);
+	}
+
 	private Handle HandleAt(Camera camera, MoveTarget target, Vector2 pointer, Vector2 viewport) {
 		var origin = _mover.HandleOrigin(target);
 		float length = Length(camera, origin);
 		var project = new Projection(camera, viewport);
+		if (target is AreaRadiusTarget) {
+			// The diamond, picked in screen space within its own size or the grab distance, whichever is larger.
+			if (project.ToScreen(origin) is not { } centre || project.ToScreen(origin + WorldX * length * DiamondSize) is not { } tip) {
+				return Handle.None;
+			}
+
+			float reach = MathF.Max(Vector2.Distance(centre, tip), GrabPixels);
+			return Vector2.Distance(pointer, centre) <= reach ? Handle.Radius : Handle.None;
+		}
 
 		// The square first: it sits between the arrows, where a near miss on either would otherwise take it.
 		if (OnPlane(Ray(camera, pointer, viewport), origin.Y) is { } onPlane) {
@@ -222,6 +258,15 @@ internal sealed class MoveGizmo {
 		origin + (WorldX * PlaneFar + WorldY * PlaneFar) * length,
 		origin + (WorldX * PlaneNear + WorldY * PlaneFar) * length,
 	};
+
+	// A diamond in the ground plane about <origin>.
+	private static void DrawDiamond(WireframeRenderer wireframe, Camera camera, float aspect, Vector3 origin, float length,
+			Vector3 color) {
+		float size = length * DiamondSize;
+		Vector3 east = origin + WorldX * size, north = origin + WorldY * size, west = origin - WorldX * size, south = origin - WorldY * size;
+		Span<Vector3> lines = stackalloc Vector3[] { east, north, north, west, west, south, south, east };
+		wireframe.DrawLines(camera, lines, color, aspect);
+	}
 
 	private static void DrawArrow(WireframeRenderer wireframe, Camera camera, float aspect, Vector3 origin,
 			Vector3 axis, float length, Vector3 color) {

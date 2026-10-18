@@ -407,10 +407,11 @@ public static class MissionLoader {
 	/// <summary>
 	/// One block-4 record resolved — <c>TriggerArea_Resolve</c> (<c>00423358</c>). The type flag
 	/// picks what the record's second field is: another coordinate, making a box, or a literal that
-	/// is scaled by ten into a radius.
+	/// is scaled by ten into a radius. Null for a reference outside block 4, or a record naming a point block 1 does not
+	/// have.
 	/// </summary>
-	private static MissionTriggerArea? TriggerArea(ScriptDat script, short reference) {
-		if (reference >= script.TriggerAreas.Length) {
+	public static MissionTriggerArea? TriggerArea(ScriptDat script, short reference) {
+		if (reference < 0 || reference >= script.TriggerAreas.Length) {
 			return null;
 		}
 

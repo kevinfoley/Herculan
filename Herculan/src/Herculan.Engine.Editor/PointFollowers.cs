@@ -1,3 +1,4 @@
+using HercWorks.Core.Data.File.Msn;
 using HercWorks.Core.Data.File.Msn.Script;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Scene;
@@ -119,7 +120,7 @@ internal sealed class PointFollowers {
 		}
 	}
 
-	// A circle's second corner is its centre, as the loader resolves it.
+	// A circle's second corner is its centre, and its radius the record's stored one scaled, as the loader resolves them.
 	private void SyncAreas() {
 		foreach (var area in _index.Areas.ToList()) {
 			if (area.Reference < 0 || area.Reference >= _document.TriggerAreas.Length) {
@@ -127,10 +128,12 @@ internal sealed class PointFollowers {
 			}
 
 			var record = _document.TriggerAreas[area.Reference];
+			bool circle = area.Shape == MissionTriggerShape.Circle;
 			var a = Coordinate(record.PointRef) ?? area.A;
-			var b = area.Shape == MissionTriggerShape.Circle ? a : Coordinate(record.SecondPointOrRadius) ?? area.B;
-			if (a != area.A || b != area.B) {
-				var moved = area with { A = a, B = b };
+			var b = circle ? a : Coordinate(record.SecondPointOrRadius) ?? area.B;
+			int radius = circle ? TriggerAreaEditing.Radius(record.SecondPointOrRadius) : area.Radius;
+			if (a != area.A || b != area.B || radius != area.Radius) {
+				var moved = area with { A = a, B = b, Radius = radius };
 				_index.SetArea(moved);
 				_overlay.MoveArea(moved);
 			}

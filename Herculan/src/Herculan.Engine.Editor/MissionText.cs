@@ -53,14 +53,14 @@ internal static class MissionText {
 	/// docs/retail/simulation/mission-deployment.md#trigger-areas--actions_evaluatetriggers-00426b70.
 	/// </summary>
 	public static string TriggerSubject(short type) => type switch {
-		MissionAction.SubjectPlayer => "the player's machine",
-		MissionAction.SubjectPlayerGroup => "any machine of the player's group",
+		MissionAction.SubjectPlayer => "the player's Herc",
+		MissionAction.SubjectPlayerGroup => "any machine of the player's squad",
 		MissionAction.SubjectHumanGroups => "any member of a deployed human group",
 		MissionAction.SubjectCybridGroups => "any member of a deployed Cybrid group",
-		MissionAction.SubjectMechGroups => "any member of a deployed mech group",
+		MissionAction.SubjectMechGroups => "any member of a deployed herc group",
 		MissionAction.SubjectFlyerGroups => "any member of a deployed flyer group",
 		MissionAction.SubjectBaseGroups => "any member of a deployed structure group",
-		MissionAction.SubjectTargetMech => "its target mech",
+		MissionAction.SubjectTargetMech => "its target herc",
 		MissionAction.SubjectTargetFlyer => "its target flyer",
 		MissionAction.SubjectTargetBase => "its target structure",
 		MissionAction.SubjectTargetGroup => "any member of its target group",
@@ -185,6 +185,28 @@ internal static class MissionText {
 		return timer.PrimaryActionRef >= 0
 			? $"{seconds} s after action {timer.PrimaryActionRef} fires"
 			: $"{seconds} s into the mission";
+	}
+
+	/// <summary>A duration of <paramref name="seconds"/> in hours, minutes and seconds, leaving out the parts that are 0.</summary>
+	public static string Duration(int seconds) {
+		if (seconds < 60) {
+			return $"{seconds} s";
+		}
+
+		var parts = new List<string>();
+		if (seconds >= 3600) {
+			parts.Add($"{seconds / 3600} h");
+		}
+
+		if (seconds / 60 % 60 != 0) {
+			parts.Add($"{seconds / 60 % 60} min");
+		}
+
+		if (seconds % 60 != 0) {
+			parts.Add($"{seconds % 60} s");
+		}
+
+		return string.Join(" ", parts);
 	}
 
 	/// <summary>A distance in world units, with metres beside it.</summary>

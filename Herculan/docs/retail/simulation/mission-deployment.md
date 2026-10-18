@@ -52,9 +52,9 @@ Walks the whole action array and, per action, picks whose position `Action_TestT
 
 #### The areas — block 4, resolved by `TriggerArea_Resolve` (`00423358`)
 
-A block-4 record resolves to a 10-byte area ([`script-dat.md`](../formats/script-dat.md#the-13-block-structure), block 4). `TriggerArea_ContainsPoint` (`004233a4`) tests a position against it:
+A block-4 record resolves to a 10-byte area ([`script-dat.md`](../formats/script-dat.md#the-13-block-structure), block 4); a circle's radius is the record's third word sign-extended and multiplied by 10, so a stored word past 32767 reads as a negative radius. `TriggerArea_ContainsPoint` (`004233a4`) tests a position against it:
 
-- **type 0** — axis-aligned XY box strictly between the two coordinates. Z is ignored, so a box catches anything standing over its footprint however high.
+- **type 0** — axis-aligned XY box strictly between the two coordinates, taking the smaller and the larger of the two on each axis, so either corner order catches the same ground. Z is ignored, so a box catches anything standing over its footprint however high.
 - **type != 0** — ground-plane distance from the coordinate is less than the stored radius.
 
 A populated slot behind the action's first negative ref is never tested ([`script-dat.md`](../formats/script-dat.md#block-5-in-memory--58-bytes-0x3a)).

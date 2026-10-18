@@ -22,6 +22,7 @@ internal sealed class MissionOverlay {
 	private static readonly Vector3 PlayerTriggerColor = new(1f, 0.62f, 0.1f);
 	private static readonly Vector3 GroupTriggerColor = new(0.95f, 0.3f, 0.3f);
 	private static readonly Vector3 TargetTriggerColor = new(0.85f, 0.45f, 1f);
+	private static readonly Vector3 UntestedTriggerColor = new(0.5f, 0.55f, 0.62f);
 	private static readonly Vector3 RouteColor = new(0.3f, 0.85f, 1f);
 	private static readonly Vector3 PlayerRouteColor = new(0.4f, 1f, 0.45f);
 	private static readonly Vector3 UnwalkedRouteColor = new(0.5f, 0.55f, 0.62f);
@@ -178,7 +179,7 @@ internal sealed class MissionOverlay {
 
 	/// <summary>
 	/// What colour an area draws in: by who trips it, read off the first action that tests it — the
-	/// player's side of the fight, everyone else's groups, or one named target.
+	/// player's side of the fight, everyone else's groups, or one named target — or grey when no action tests it.
 	/// </summary>
 	private Vector3 AreaColor(MissionTriggerArea area) {
 		foreach (int action in _index.ActionsTesting(area.Reference)) {
@@ -189,7 +190,7 @@ internal sealed class MissionOverlay {
 			};
 		}
 
-		return GroupTriggerColor;
+		return UntestedTriggerColor;
 	}
 
 	private void AddBox(MissionBox box, Vector3 color) {

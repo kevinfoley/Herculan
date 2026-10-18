@@ -8,7 +8,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Mission panel down the left of the window: the mission itself (its theater and time of day,
 /// <see cref="MissionView"/>), then the mission check's findings, then every group (with its members), trigger area,
-/// action, timer, route and objective as a list. It is the only way to reach the parts of a mission that are not
+/// action, timer, route and objective as a list, the trigger areas and routes with the buttons that start placing a new
+/// one, and the actions, timers and objectives with the buttons that create one. It is the only way to reach the parts of a mission that are not
 /// standing somewhere — an action with no area, a group not yet in the mission — and the other way
 /// to make a selection. A double-click also frames the record in the view (<see cref="SelectionState.Focus"/>).
 /// </summary>
@@ -37,8 +38,17 @@ internal sealed class MissionOutliner {
 	/// <summary>The route-placing mode the Routes list's New route starts; set once the mission's tools are built.</summary>
 	public RoutePlacing? Placing { get; set; }
 
+	/// <summary>The area-placing mode the Trigger areas list's New box and New circle start; set once the mission's tools are built.</summary>
+	public AreaPlacing? AreaPlacing { get; set; }
+
 	/// <summary>What the Objectives list's New objective asks to create an objective; set once the mission's tools are built.</summary>
 	public ObjectiveEditor? Objectives { get; set; }
+
+	/// <summary>What the Actions list's New action asks to create an action; set once the mission's tools are built.</summary>
+	public ActionEditor? Actions { get; set; }
+
+	/// <summary>What the Timers list's New timer asks to create a timer; set once the mission's tools are built.</summary>
+	public TimerEditor? Timers { get; set; }
 
 	public void Draw(Vector2 display, float menuBarHeight) {
 		ImGui.SetNextWindowPos(new Vector2(0f, menuBarHeight));
@@ -95,6 +105,15 @@ internal sealed class MissionOutliner {
 	private void DrawTimers() {
 		if (!ImGui.CollapsingHeader($"Timers ({Mission.ActionTimers.Count})###timers")) {
 			return;
+		}
+
+		if (Timers is { } timers) {
+			ImGui.BeginDisabled(timers.WhyReadOnly != null);
+			if (ImGui.SmallButton("New timer")) {
+				timers.RequestCreate();
+			}
+
+			ImGui.EndDisabled();
 		}
 
 		for (int i = 0; i < Mission.ActionTimers.Count; i++) {
@@ -218,13 +237,15 @@ internal sealed class MissionOutliner {
 			return;
 		}
 
+		AreaPlacing?.DrawStartButtons(small: true);
 		foreach (var area in _index.Areas) {
 			string shape = area.Shape == MissionTriggerShape.Circle
 				? $"circle, {MissionText.Distance(area.Radius)}"
 				: "box";
-			string actions = string.Join(", ", _index.ActionsTesting(area.Reference));
+			var testing = _index.ActionsTesting(area.Reference).ToList();
+			string actions = testing.Count > 0 ? $"action {string.Join(", ", testing)}" : "no action";
 			var selection = new AreaSelection(area.Reference);
-			Choose(selection, ImGui.Selectable($"Area {area.Reference}: {shape}, action {actions}##area{area.Reference}",
+			Choose(selection, ImGui.Selectable($"Area {area.Reference}: {shape}, {actions}##area{area.Reference}",
 				_selection.Is(selection)));
 		}
 	}
@@ -232,6 +253,15 @@ internal sealed class MissionOutliner {
 	private void DrawActions() {
 		if (!ImGui.CollapsingHeader($"Actions ({Mission.Actions.Count})###actions")) {
 			return;
+		}
+
+		if (Actions is { } actions) {
+			ImGui.BeginDisabled(actions.WhyReadOnly != null);
+			if (ImGui.SmallButton("New action")) {
+				actions.RequestCreate();
+			}
+
+			ImGui.EndDisabled();
 		}
 
 		for (int i = 0; i < Mission.Actions.Count; i++) {

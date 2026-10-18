@@ -23,6 +23,7 @@ public class MissionAction82 : MapObject {
 
 	/// <summary>0x08 — how a group waiting on this action arrives.</summary>
 	public short Verb { get; set; }
+	public const int VerbWord = 0x08 / 2;
 
 	/// <summary>0x0A-0x19 — refs into row #9 (<see cref="TriggerArea12"/>), <c>-1</c> for none. DBSIM stops at the first <c>-1</c>.</summary>
 	public short[] AreaRefs { get; set; } = new short[8];

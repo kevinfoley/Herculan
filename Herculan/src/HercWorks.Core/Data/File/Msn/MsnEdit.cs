@@ -148,6 +148,80 @@ public sealed class MsnField {
 	public static MsnField OrderSubject { get; } = new(15, MissionOrder22.SubjectRefWord, -1,
 		record => ((MissionOrder22)record).SubjectRef, (record, value) => ((MissionOrder22)record).SubjectRef = value);
 
+	/// <summary>An order's ending action, row 15's <see cref="MissionOrder22.ActionRef"/>.</summary>
+	public static MsnField OrderAction { get; } = new(15, MissionOrder22.ActionRefWord, -1,
+		record => ((MissionOrder22)record).ActionRef, (record, value) => ((MissionOrder22)record).ActionRef = value);
+
+	/// <summary>A group's deployment action, row 16's <see cref="MissionGroup164.DeploymentActionRef"/>.</summary>
+	public static MsnField GroupDeployment { get; } = new(16, MissionGroup164.DeploymentActionRefWord, -1,
+		record => ((MissionGroup164)record).DeploymentActionRef,
+		(record, value) => ((MissionGroup164)record).DeploymentActionRef = value);
+
+	/// <summary>An action's type, row 10's <see cref="MissionAction82.Type"/>.</summary>
+	public static MsnField ActionType { get; } = new(10, MissionAction82.TypeWord, -1,
+		record => ((MissionAction82)record).Type, (record, value) => ((MissionAction82)record).Type = value);
+
+	/// <summary>An action's verb, row 10's <see cref="MissionAction82.Verb"/>.</summary>
+	public static MsnField ActionVerb { get; } = new(10, MissionAction82.VerbWord, -1,
+		record => ((MissionAction82)record).Verb, (record, value) => ((MissionAction82)record).Verb = value);
+
+	/// <summary>Area slot <paramref name="slot"/> of an action, row 10's <see cref="MissionAction82.AreaRefs"/>.</summary>
+	public static MsnField ActionArea(int slot) => new(10, MissionAction82.AreaRefsWord + slot, -1,
+		record => ((MissionAction82)record).AreaRefs[slot], (record, value) => ((MissionAction82)record).AreaRefs[slot] = value);
+
+	/// <summary>The counter of pair <paramref name="slot"/> of an action, in row 10's <see cref="MissionAction82.CounterPairs"/>.</summary>
+	public static MsnField ActionCounter(int slot) => new(10, MissionAction82.CounterPairsWord + slot * 2, -1,
+		record => ((MissionAction82)record).CounterPairs[slot * 2],
+		(record, value) => ((MissionAction82)record).CounterPairs[slot * 2] = value);
+
+	/// <summary>The operation of pair <paramref name="slot"/> of an action, in row 10's <see cref="MissionAction82.CounterPairs"/>.</summary>
+	public static MsnField ActionCounterOp(int slot) => new(10, MissionAction82.CounterPairsWord + slot * 2 + 1, -1,
+		record => ((MissionAction82)record).CounterPairs[slot * 2 + 1],
+		(record, value) => ((MissionAction82)record).CounterPairs[slot * 2 + 1] = value);
+
+	/// <summary>An action's message, plus one, row 10's <see cref="MissionAction82.MessageId"/>, whose unset value is 0.</summary>
+	public static MsnField ActionMessage { get; } = new(10, MissionAction82.MessageIdWord, 0,
+		record => ((MissionAction82)record).MessageId, (record, value) => ((MissionAction82)record).MessageId = value);
+
+	/// <summary>An action's target, row 10's <see cref="MissionAction82.TargetRef"/>.</summary>
+	public static MsnField ActionTarget { get; } = new(10, MissionAction82.TargetRefWord, -1,
+		record => ((MissionAction82)record).TargetRef, (record, value) => ((MissionAction82)record).TargetRef = value);
+
+	/// <summary>The action that starts a timer, row 11's <see cref="ActionTimer30.PrimaryActionRef"/>.</summary>
+	public static MsnField TimerStart { get; } = new(11, ActionTimer30.PrimaryActionRefWord, -1,
+		record => ((ActionTimer30)record).PrimaryActionRef, (record, value) => ((ActionTimer30)record).PrimaryActionRef = value);
+
+	/// <summary>A timer's delay, row 11's <see cref="ActionTimer30.Delay"/>, whose unset value is 0.</summary>
+	public static MsnField TimerDelay { get; } = new(11, ActionTimer30.DelayWord, 0,
+		record => ((ActionTimer30)record).Delay, (record, value) => ((ActionTimer30)record).Delay = value);
+
+	/// <summary>Fired slot <paramref name="slot"/> of a timer, row 11's <see cref="ActionTimer30.SequenceRefs"/>.</summary>
+	public static MsnField TimerFired(int slot) => new(11, ActionTimer30.SequenceRefsWord + slot, -1,
+		record => ((ActionTimer30)record).SequenceRefs[slot], (record, value) => ((ActionTimer30)record).SequenceRefs[slot] = value);
+
+	/// <summary>
+	/// The action a roster object of row <paramref name="row"/> (12 to 14) fires when engaged, or with
+	/// <paramref name="defeated"/> when defeated: the records' <c>EngagementActionRef</c> and <c>DefeatActionRef</c>.
+	/// </summary>
+	public static MsnField RosterAction(int row, bool defeated) => (row, defeated) switch {
+		(12, false) => new(12, MechRosterEntry144.EngagementActionRefWord, -1,
+			record => ((MechRosterEntry144)record).EngagementActionRef,
+			(record, value) => ((MechRosterEntry144)record).EngagementActionRef = value),
+		(12, true) => new(12, MechRosterEntry144.DefeatActionRefWord, -1,
+			record => ((MechRosterEntry144)record).DefeatActionRef, (record, value) => ((MechRosterEntry144)record).DefeatActionRef = value),
+		(13, false) => new(13, FlyerRosterEntry102.EngagementActionRefWord, -1,
+			record => ((FlyerRosterEntry102)record).EngagementActionRef,
+			(record, value) => ((FlyerRosterEntry102)record).EngagementActionRef = value),
+		(13, true) => new(13, FlyerRosterEntry102.DefeatActionRefWord, -1,
+			record => ((FlyerRosterEntry102)record).DefeatActionRef, (record, value) => ((FlyerRosterEntry102)record).DefeatActionRef = value),
+		(14, false) => new(14, BaseRosterEntry62.EngagementActionRefWord, -1,
+			record => ((BaseRosterEntry62)record).EngagementActionRef,
+			(record, value) => ((BaseRosterEntry62)record).EngagementActionRef = value),
+		(14, true) => new(14, BaseRosterEntry62.DefeatActionRefWord, -1,
+			record => ((BaseRosterEntry62)record).DefeatActionRef, (record, value) => ((BaseRosterEntry62)record).DefeatActionRef = value),
+		_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters."),
+	};
+
 	/// <summary>The roster row's own-point field: <see cref="MechPosition"/>, <see cref="FlyerPosition"/> or <see cref="BasePosition"/>.</summary>
 	public static MsnField RosterPosition(int row) => row switch {
 		12 => MechPosition,

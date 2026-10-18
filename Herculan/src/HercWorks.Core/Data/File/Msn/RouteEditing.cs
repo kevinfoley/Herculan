@@ -294,7 +294,7 @@ public static class RouteEditing {
 
 	// Removes the records of each of <points> that no field names any more. A sum-flag point names two others by the low
 	// words of its X and Y (unused in retail, MapPoint22.SumFlag), and keeps them too.
-	private static void RemoveLeftBehind(MissionDocument document, IEnumerable<short> points) {
+	internal static void RemoveLeftBehind(MissionDocument document, IEnumerable<short> points) {
 		foreach (short point in points.Where(point => point != -1).Distinct()) {
 			var records = document.Mission.Points ?? [];
 			bool summed = records.Any(record => record.SumFlag != 0 && ((short)record.X == point || (short)record.Y == point));
@@ -304,7 +304,8 @@ public static class RouteEditing {
 		}
 	}
 
-	private static short AppendPoint(MissionDocument document, (int X, int Y) at) {
+	// Appends a row-6 point at (at.X, at.Y, 0), unconditioned, drawing no variant and under a new GUID, and answers its GUID.
+	internal static short AppendPoint(MissionDocument document, (int X, int Y) at) {
 		document.Append(PointRow, new MapPoint22 { ConditionRef = -1, VariantKey = -1, Unk06 = -1, X = at.X, Y = at.Y, Z = 0 },
 			out short point);
 		return point;

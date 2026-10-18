@@ -30,12 +30,19 @@ namespace Herculan.Engine.Editor;
 /// generation's after a text edit.</para>
 ///
 /// <para>The selection survives when what it names does: an object by identity, or else the object now standing for the
-/// same record; a group by its row-16 GUID, a route by its row-8 GUID, and an objective by its row-17 record; anything
-/// else is checked against the new index, and is cleared when it is gone.</para>
+/// same record; a group by its row-16 GUID, a route by its row-8 GUID, a trigger area by its row-9 GUID, an action by its row-10
+/// GUID, a timer by its row-11 GUID, and an objective by its row-17 record; anything else is checked against the new index,
+/// and is cleared when it is gone.</para>
 /// </summary>
 internal sealed class MissionRebuild {
 	private const int RouteBlock = 3;
+	private const int AreaBlock = 4;
+	private const int ActionBlock = 5;
+	private const int TimerBlock = 6;
 	private const int RouteRow = 8;
+	private const int AreaRow = 9;
+	private const int ActionRow = 10;
+	private const int TimerRow = 11;
 	private const int GroupBlock = 11;
 	private const int GroupRow = 16;
 
@@ -97,9 +104,12 @@ internal sealed class MissionRebuild {
 		Remember(source);
 		short selectedGroup = _selection.Current is GroupSelection { Group: var group } ? source.GuidOf(GroupBlock, group) : (short)-1;
 		short selectedRoute = _selection.Current is RouteSelection { Route: var route } ? source.GuidOf(RouteBlock, route) : (short)-1;
+		short selectedArea = _selection.Current is AreaSelection { Area: var area } ? source.GuidOf(AreaBlock, area) : (short)-1;
+		short selectedAction = _selection.Current is ActionSelection { Action: var action } ? source.GuidOf(ActionBlock, action) : (short)-1;
+		short selectedTimer = _selection.Current is TimerSelection { Timer: var timer } ? source.GuidOf(TimerBlock, timer) : (short)-1;
 		var selectedObjective = SelectedObjective(source);
 		var result = edit();
-		Rebuild(source, selectedGroup, selectedRoute, selectedObjective);
+		Rebuild(source, new SelectedKeys(selectedGroup, selectedRoute, selectedArea, selectedAction, selectedTimer), selectedObjective);
 		return result;
 	}
 
@@ -134,7 +144,10 @@ internal sealed class MissionRebuild {
 		}
 	}
 
-	private void Rebuild(MissionDocument source, short selectedGroup, short selectedRoute, SelectedObjectiveRecord? selectedObjective) {
+	// The GUIDs that keep a selected group, route, trigger area, action or timer selected across a rebuild, -1 for none.
+	private readonly record struct SelectedKeys(short Group, short Route, short Area, short Action, short Timer);
+
+	private void Rebuild(MissionDocument source, SelectedKeys selected, SelectedObjectiveRecord? selectedObjective) {
 		// The squad the launch would build from this generation, which the load below places, and the text the load reads.
 		if (_squad?.PlayerMec(source.Generator) is { } squadFile) {
 			File.WriteAllBytes(MissionLoader.PlayerPathFor(_scene.Mission.SourcePath), squadFile);
@@ -182,7 +195,7 @@ internal sealed class MissionRebuild {
 			Added?.Invoke(joined);
 		}
 
-		Reselect(source, selectedGroup, selectedRoute, selectedObjective, replacing);
+		Reselect(source, selected, selectedObjective, replacing);
 		Rebuilt?.Invoke();
 	}
 
@@ -265,20 +278,27 @@ internal sealed class MissionRebuild {
 
 	// Keeps the selection on what it named, or on <replacing>, the object now standing for the record a selected object
 	// stood for; or clears it. A route is kept by its row-8 GUID, as a route delete moves every later route down one, and
-	// its waypoint while the route still has one there.
-	private void Reselect(MissionDocument source, short selectedGroup, short selectedRoute,
-			SelectedObjectiveRecord? selectedObjective, SceneObject? replacing) {
+	// its waypoint while the route still has one there; a trigger area, an action and a timer by their row-9, 10 and 11 GUIDs
+	// likewise.
+	private void Reselect(MissionDocument source, SelectedKeys selected, SelectedObjectiveRecord? selectedObjective,
+			SceneObject? replacing) {
 		_selection.Current = _selection.Current switch {
 			ObjectSelection { Object: var placed } when _index.Objects.Any(kept => ReferenceEquals(kept, placed)) => _selection.Current,
 			ObjectSelection when replacing != null => new ObjectSelection(replacing),
-			GroupSelection when selectedGroup != -1 && source.ExportedIndex(GroupRow, selectedGroup) is { } group =>
+			GroupSelection when selected.Group != -1 && source.ExportedIndex(GroupRow, selected.Group) is { } group =>
 				new GroupSelection(group),
-			AreaSelection { Area: var area } when _index.Area(area) != null => _selection.Current,
-			RouteSelection { Waypoint: var waypoint } when selectedRoute != -1
-					&& source.ExportedIndex(RouteRow, selectedRoute) is { } route && _index.Route(route) is { } kept =>
+			AreaSelection when selected.Area != -1 && source.ExportedIndex(AreaRow, selected.Area) is { } area
+					&& _index.Area(area) != null =>
+				new AreaSelection(area),
+			RouteSelection { Waypoint: var waypoint } when selected.Route != -1
+					&& source.ExportedIndex(RouteRow, selected.Route) is { } route && _index.Route(route) is { } kept =>
 				new RouteSelection(route, waypoint < kept.Points.Count ? waypoint : -1),
-			ActionSelection { Action: var action } when action < _index.Mission.Actions.Count => _selection.Current,
-			TimerSelection { Timer: var timer } when timer < _index.Mission.ActionTimers.Count => _selection.Current,
+			ActionSelection when selected.Action != -1 && source.ExportedIndex(ActionRow, selected.Action) is { } action
+					&& action < _index.Mission.Actions.Count =>
+				new ActionSelection(action),
+			TimerSelection when selected.Timer != -1 && source.ExportedIndex(TimerRow, selected.Timer) is { } timer
+					&& timer < _index.Mission.ActionTimers.Count =>
+				new TimerSelection(timer),
 			ObjectiveSelection when Objective(source, selectedObjective) is { } objective => new ObjectiveSelection(objective),
 			MissionSelection => _selection.Current,
 			_ => null
@@ -289,7 +309,8 @@ internal sealed class MissionRebuild {
 /// <summary>
 /// One step of <see cref="PointMover"/>'s undo history that the editor's state is built again after — an add
 /// (<see cref="StructurePlacer"/>, <see cref="HercPlacer"/>, <see cref="FlyerPlacer"/>, <see cref="VehiclePlacer"/>), a delete (<see cref="ObjectDeleter"/>), a route edit
-/// (<see cref="RouteEditor"/>), an order edit (<see cref="OrderEditor"/>), an objective edit (<see cref="ObjectiveEditor"/>)
+/// (<see cref="RouteEditor"/>), a trigger-area edit (<see cref="AreaEditor"/>), an order edit (<see cref="OrderEditor"/>), an action or wiring edit
+/// (<see cref="ActionEditor"/>), a timer edit (<see cref="TimerEditor"/>), an objective edit (<see cref="ObjectiveEditor"/>)
 /// or a text edit (<see cref="MissionTextEditor"/>): the rows and text it changed, put back on undo and redo through
 /// <see cref="MissionRebuild"/>.
 /// </summary>

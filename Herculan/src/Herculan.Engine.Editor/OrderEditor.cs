@@ -8,7 +8,7 @@ internal sealed record EditableOrder(int Slot, short Guid, ScriptOrder Order, bo
 
 /// <summary>
 /// Edits a group's ten order slots, each edit one step of <see cref="PointMover"/>'s undo history, through
-/// <see cref="GroupOrders"/>'s record edits on the mission's <c>.MSN</c>: a slot's verb, route and subject, and adding,
+/// <see cref="GroupOrders"/>'s record edits on the mission's <c>.MSN</c>: a slot's verb, route, subject and ending action, and adding,
 /// removing and moving orders (docs/herculan/handoff-editor-mission-editing.md#in-place, "Orders"). Every edit builds the
 /// editor's state again (<see cref="MissionRebuild"/>), which keeps the group selected by its GUID: an order's verb, route
 /// and subject decide which routes are walked, what the group overlay draws and what the mission check finds, all of which
@@ -20,6 +20,7 @@ internal sealed record EditableOrder(int Slot, short Guid, ScriptOrder Order, bo
 /// </summary>
 internal sealed class OrderEditor {
 	private const int RouteBlock = 3;
+	private const int ActionBlock = 5;
 	private const int MechBlock = 7;
 	private const int BaseBlock = 9;
 	private const int OrderBlock = 10;
@@ -109,6 +110,13 @@ internal sealed class OrderEditor {
 			3 => Resolved(source, BaseBlock, subject),
 			_ => -1,
 		}));
+
+	/// <summary>
+	/// Asks for block-5 action <paramref name="action"/>, or <c>-1</c> for none, to end the order in <paramref name="group"/>'s
+	/// slot <paramref name="slot"/>.
+	/// </summary>
+	public void RequestAction(int group, int slot, int action) =>
+		Ask(group, (source, guid) => GroupOrders.SetAction(source, guid, slot, action < 0 ? (short)-1 : Resolved(source, ActionBlock, action)));
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {
