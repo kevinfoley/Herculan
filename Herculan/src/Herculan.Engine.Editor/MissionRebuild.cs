@@ -257,7 +257,7 @@ internal sealed class MissionRebuild {
 
 /// <summary>
 /// One step of <see cref="PointMover"/>'s undo history that the editor's state is built again after — an add
-/// (<see cref="StructurePlacer"/>, <see cref="HercPlacer"/>), a delete (<see cref="ObjectDeleter"/>), a route edit
+/// (<see cref="StructurePlacer"/>, <see cref="HercPlacer"/>, <see cref="FlyerPlacer"/>), a delete (<see cref="ObjectDeleter"/>), a route edit
 /// (<see cref="RouteEditor"/>) or an order edit (<see cref="OrderEditor"/>): the rows it changed, put back on undo and redo
 /// through <see cref="MissionRebuild"/>.
 /// </summary>

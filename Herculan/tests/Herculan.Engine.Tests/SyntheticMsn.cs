@@ -122,6 +122,17 @@ internal sealed class SyntheticMsn {
 		return words;
 	}
 
+	/// <summary>A row-13 flyer of type 0, its flag span clear and every ref and counter pair unset.</summary>
+	public static short[] Flyer(short guid) {
+		var words = Enumerable.Repeat((short)-1, 51).ToArray();
+		words[MapObject.GUIDWord] = guid;
+		Array.Fill(words, (short)0, FlyerRosterEntry102.FlagSpanWord, 20);
+		words[0x34 / 2] = 0; // the type
+		words[0x36 / 2] = 0; // the pair count
+		words[FlyerRosterEntry102.UnkVal_100Word] = 100;
+		return words;
+	}
+
 	/// <summary>A row-14 structure of type 0, every action and counter pair unset, pristine.</summary>
 	public static short[] Base(short guid, short position = -1, short condition = -1, short variant = -1) {
 		var words = Enumerable.Repeat((short)-1, 31).ToArray();

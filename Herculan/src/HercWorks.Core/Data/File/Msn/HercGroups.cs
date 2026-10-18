@@ -17,7 +17,8 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <c>HercWorks.Query records</c> over the raw <c>.MSN</c> files with no condition applied: the non-squad herc records (662
 /// row-12 records drawing no variant, not group 0's, not a variant alternative group 0 draws, of a type), the records of
 /// non-squad herc groups naming a member (433 row-16 records), and those groups' orders (453 row-15 records). Each count is
-/// beside its constant.</para>
+/// beside its constant; the group and the order are built as <see cref="FlyerGroups"/> builds a flyer's
+/// (<see cref="NewGroups"/>).</para>
 ///
 /// <para>A herc joining a group takes the group's first member slot no record of the group's GUID fills in any state
 /// (<see cref="MissionDocument.FreeMemberSlot"/>), and its side; its record names no point, so it stands in its formation
@@ -45,19 +46,17 @@ public static class HercGroups {
 	public const int LastJoinSlot = 7;
 
 	private const int MechRow = 12;
-	private const int OrderRow = 15;
-	private const int GroupRow = 16;
 	private const int GroupBlock = 11;
 	private const short MechRoster = 0;
 
-	/// <summary>Search/destroy, the verb of 290 of the 433 groups' slot-0 orders (docs/retail/simulation/ai-goals.md).</summary>
+	/// <summary>
+	/// Search/destroy, the verb of 290 of the 433 herc groups' slot-0 orders and of 67 of the flyer groups' 81 orders
+	/// (docs/retail/simulation/ai-goals.md).
+	/// </summary>
 	public const short SearchDestroy = 0;
 
 	/// <summary>An order's subject kind naming a row-16 group.</summary>
 	public const short GroupSubject = 0;
-
-	/// <summary>Formation 0: 283 of the 433 group records (3 in 146); 421 of the 453 orders.</summary>
-	private const short Formation = 0;
 
 	/// <summary>Radar active: 662 of the 662 herc records.</summary>
 	private const short AiRadarActive = 1;
@@ -70,12 +69,6 @@ public static class HercGroups {
 
 	/// <summary>The constant at <c>0x88</c>: 2 in all 662.</summary>
 	private const short Constant2 = 2;
-
-	/// <summary>The paints-ground flag set: 416 of the 433 group records. DBSIM reads it of a structure group alone.</summary>
-	private const short PaintsGround = 1;
-
-	/// <summary>Map shown unset: 432 of the 433 group records.</summary>
-	private const short MapShown = -1;
 
 	/// <summary>
 	/// A Cybrid type's weapon fit and ammunition types: the fit the most retail records of that type carry, among the 662
@@ -129,7 +122,7 @@ public static class HercGroups {
 	public static MechRosterEntry144 Machine(short type, short[] weapons, short[] ammo) => new() {
 		GUID = -1, ConditionRef = -1, VariantKey = -1, CompoundConditionPartner = -1, AiRadarActive = AiRadarActive,
 		AiCruiseSpeed = AiCruiseSpeed, DeadZone = new short[18], TypeIndex = type, WeaponRefs = weapons, PositionRef = -1,
-		HeadingRef = -1, PairCount = 0, OutOfActionReport = Unset(20), WeaponSecondary = ammo, Constant2 = Constant2,
+		HeadingRef = -1, PairCount = 0, OutOfActionReport = NewGroups.Unset(20), WeaponSecondary = ammo, Constant2 = Constant2,
 		EngagementActionRef = -1, DefeatActionRef = -1, StartingCondition = StartingCondition,
 	};
 
@@ -156,21 +149,7 @@ public static class HercGroups {
 			throw new InvalidOperationException(reason);
 		}
 
-		short squad = document.GuidOf(GroupBlock, 0);
-		if (squad == -1) {
-			throw new InvalidOperationException("The mission has no group 0, the player's squad, for the new group to hunt.");
-		}
-
-		short mechGuid = -1, groupGuid = -1;
-		var change = document.Change(() => {
-			short route = RouteEditing.Append(document, [(x, y)], closed: false);
-			document.Append(OrderRow, Order(SearchDestroy, route, GroupSubject, squad), out short order);
-			document.Append(MechRow, herc, out mechGuid);
-			document.Append(GroupRow, Group(mechGuid, route, order, side), out groupGuid);
-		});
-		mech = mechGuid;
-		group = groupGuid;
-		return change;
+		return NewGroups.Create(document, MechRow, herc, MechRoster, side, x, y, out mech, out group);
 	}
 
 	/// <summary>
@@ -183,15 +162,8 @@ public static class HercGroups {
 			return "The player's squad takes squadmates in its own view.";
 		}
 
-		if (group == -1 || document.ExportedIndex(GroupRow, group) is not { } index
-				|| document.Script.Groups[index].MemberKind != MechRoster) {
-			return "It is not a herc group.";
-		}
-
-		int slot = document.FreeMemberSlot(group);
-		return slot < 0 || slot > LastJoinSlot
-			? $"Its formation has places for {LastJoinSlot + 1} hercs, and each is taken."
-			: null;
+		return NewGroups.WhyNoJoin(document, group, MechRoster, LastJoinSlot, "It is not a herc group.",
+			$"Its formation has places for {LastJoinSlot + 1} hercs, and each is taken.");
 	}
 
 	/// <summary>
@@ -204,46 +176,23 @@ public static class HercGroups {
 			throw new InvalidOperationException(reason);
 		}
 
-		int slot = document.FreeMemberSlot(group);
-		short mechGuid = -1;
-		var change = document.Change(() => {
-			document.Append(MechRow, herc, out mechGuid);
-			document.SetField(MsnField.GroupMember(slot), group, mechGuid);
-		});
-		mech = mechGuid;
-		return change;
+		return NewGroups.Join(document, MechRow, group, herc, out mech);
 	}
 
 	/// <summary>
 	/// An order, unconditioned and drawing no variant: <paramref name="verb"/> on <paramref name="route"/>, with subject
-	/// <paramref name="subject"/> of <paramref name="subjectKind"/>, in formation 0, naming no point (422 of the 453 orders)
-	/// and no action that ends it (445 of 453).
+	/// <paramref name="subject"/> of <paramref name="subjectKind"/>, in formation 0, naming no point (422 of the herc groups'
+	/// 453 orders, 80 of the flyer groups' 81) and no action that ends it (445 of 453, 80 of 81).
 	/// </summary>
 	public static MissionOrder22 Order(short verb, short route, short subjectKind, short subject) => new() {
-		GUID = -1, ConditionRef = -1, VariantKey = -1, CompoundConditionPartner = -1, Verb = verb, FormationId = Formation,
+		GUID = -1, ConditionRef = -1, VariantKey = -1, CompoundConditionPartner = -1, Verb = verb, FormationId = NewGroups.Formation,
 		PointRef = -1, RouteRef = route, SubjectKind = subjectKind, SubjectRef = subjectKind == -1 ? (short)-1 : subject,
 		ActionRef = -1,
 	};
 
-	// The new herc group: the herc in slot 0 and the order in slot 0, on <side>. It names no point and no heading (402 and
-	// 405 of the 433 records name none) and walks its order's route; its own route field names that route too, as 377 of the
-	// 433 do. No deployment action, so it is in the mission from the start, and no out-of-action counter writes (427 of 433).
-	private static MissionGroup164 Group(short mech, short route, short order, short side) {
-		var members = Unset(20);
-		members[0] = mech;
-		var orders = Unset(10);
-		orders[0] = order;
-		return new MissionGroup164 {
-			ConditionRef = -1, CompoundConditionPartner = -1, PaintsGround = PaintsGround, NearConstant = 0,
-			DeadZone = new short[18], MemberKind = MechRoster, FormationId = Formation, PositionRef = -1, HeadingRef = -1,
-			RouteRef = route, MemberRefs = members, OrderRefs = orders, Side = side, DeploymentActionRef = -1, PairCount = 0,
-			OutOfActionReport = Unset(20), MapShown = MapShown,
-		};
-	}
-
 	// A fit of the weapons given from slot 0, every later slot -1.
 	private static short[] Fit(params short[] weapons) {
-		var fit = Unset(10);
+		var fit = NewGroups.Unset(10);
 		weapons.CopyTo(fit, 0);
 		return fit;
 	}
@@ -256,6 +205,4 @@ public static class HercGroups {
 	}
 
 	private static short[] Filler() => Enumerable.Repeat((short)5, 10).ToArray();
-
-	private static short[] Unset(int count) => Enumerable.Repeat((short)-1, count).ToArray();
 }

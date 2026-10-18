@@ -63,6 +63,7 @@ A supplier with a condition holds the edit only in the states it survives in, wh
 | `RouteEditor` and `RoutePlacing`, through `RouteEditing` (Core) | a new route appends a row-6 point per waypoint and a row-8 record listing them (`Append`); a list edit appends a point for each new waypoint and replaces the whole list in the record whose list the route holds, its last surviving record or the variant alternative it draws (`MissionDocument.SetWaypoints`); a waypoint removal, and a delete, which removes every row-8 record of the GUID (`Remove`), remove each row-6 point the route named that `CountPointRefs` then finds named by nothing, all as one `Change`. A delete is refused while `RouteEditing.Namers` finds an order, an objective or a group naming the route in any record |
 | `SquadEditor`, through `SquadRoster` (Core) | an add appends a row-12 record (`Append`) and names it in group 0's member slot just past the squadmates' run, in the record supplying that slot (`SetField`); a remove writes each later squadmate's GUID into the slot before it (`SetField`), unsets the run's last slot in every record of the group, and takes the squadmate's records as `RosterDeletion` does, all as one `Change`. Refused by `RosterDeletion.Check`'s namers and own actions, past three squadmates, and for a record group 0 names twice |
 | `HercPlacer`, through `HercGroups` (Core) | a new herc appends a row-6 point and a row-8 route (`RouteEditing`), a row-15 order, a row-12 herc and a row-16 group naming them, each unconditioned with no variant key and a new GUID (`Append`); a join appends the herc and names it in the group's first member slot no record of the group's GUID fills, in the record supplying that slot (`SetField`); either as one `Change`. Refused past DBSIM's block-7 slots counted with the squad's, for group 0, and past member slot 7 |
+| `FlyerPlacer`, through `FlyerGroups` (Core) | as `HercPlacer` writes, through the same builders (`NewGroups`), with a row-13 flyer in a row-16 group of flyers. Refused past DBSIM's block-8 slots, for a group not of flyers, and past member slot 3 |
 | `OrderEditor`, through `GroupOrders` (Core) | row 15's `Verb`, `RouteRef`, `SubjectKind` and `SubjectRef` in the record supplying each (`SetField`), in a copy of the order first when another slot names it (`MissionDocument.AppendCopy`, the copy named in the slot); row 16's `OrderRefs` in the record supplying each slot: an add appends a row-15 record and names it after the last filled slot, a remove writes each later order into the slot before it, unsets the last slot in every record of the group and removes the order's records when no slot names it any more, and a move swaps two slots; each as one `Change`. A remove of a group's last order is refused by `GroupOrders.WhyNoRemove`, a first order with no route in a group with no point by `WhyNoFirstRoute`, and None as the subject of a verb that `NeedsSubject`; a verb change to such a verb on an order with no subject writes group 0 as its subject in the same `Change` |
 
 **Regenerating on each edit.** Each `MissionDocument` edit writes the `MissionFile`, keeping copies of the rows it changed for undo (`MsnEdit`), then writes the file, generates from it, parses the output as a `ScriptDat` and copies its header and blocks into `MissionDocument.Script`, the one `ScriptDat` everything reading the document holds (`PointFollowers`, the tools' own checks). Edits made inside one `MissionDocument.Change` come back as one `MsnEdit`, and are all put back when one of them fails. Undo and Redo write a step's rows back and generate again. Writing, generating and parsing touch arrays of a few hundred records; the scene's terrain and models are not reloaded, except that a change of theater or time of day builds the models and the terrain mesh again ([In place](handoff-editor-mission-editing.md#in-place), "The mission's theater and time of day"). A move and a side change keep every generated record where it was, so the incremental scene updates apply as they are. A Save writes the `.MSN` and the `.ENG` as they stand, and an export writes the generated `script.dat` and `mission.str`; neither builds anything.
@@ -97,16 +98,16 @@ Beyond [Gaps in what is in place](handoff-editor-mission-editing.md#gaps-in-what
 | 10 (5), actions | creating; the type, verb, areas, target, counter writes and `COMMAND<n>.STR` message |
 | 11 (6), timers | creating; the delay, the action that starts it, the actions it fires |
 | 12 (7), mechs | the type, weapon fit and ammunition types of any herc outside the player's squad once added; AI radar and cruise speed, starting condition, engaged and defeated actions, out-of-action counter writes |
-| 13 (8), flyers and ground vehicles | adding; the type, defeated action and out-of-action counter writes |
-| 14 (9), structures | the starting condition (0 in 29% of retail records), engaged and defeated actions, out-of-action counter writes (698 retail records write one) |
+| 13 (8), flyers | the type of a flyer once added; its defeated action and out-of-action counter writes |
+| 14 (9), structures and ground vehicles | adding a ground vehicle; the starting condition (0 in 29% of retail records), engaged and defeated actions, out-of-action counter writes (698 retail records write one) |
 | 15 (10), orders | the formation, the point and the action that ends it |
-| 16 (11), groups | creating one for a flyer; the formation id, paints-ground flag, heading, own route, members beyond a structure or herc join, deployment action, out-of-action counter writes and map-shown flag; deleting one other than with its last member ([Deleting](handoff-editor-mission-editing.md#gaps-in-what-is-in-place)) |
+| 16 (11), groups | creating one for a ground vehicle; the formation id, paints-ground flag, heading, own route, members beyond a structure, herc or flyer join, deployment action, out-of-action counter writes and map-shown flag; deleting one other than with its last member ([Deleting](handoff-editor-mission-editing.md#gaps-in-what-is-in-place)) |
 | 17 (12), objectives | creating and deleting; mandatory or failure, the condition, subject, route, failure text and counter writes; the player's objective lines (block 13, row 4) |
 
 ### Counters and caps
 
 - **Mission counters.** Actions, objectives and out-of-action reports write counters, which persist into the campaign flags the next mission's row 1 tests ([`../retail/shell/campaign-loop.md`](../retail/shell/campaign-loop.md#the-campaign-flag-array-is-the-msn-condition-store)). Nothing lists which counters a mission writes, so nothing helps choose a free one or wire it to a condition.
-- **Slot caps.** Adding flyers needs the refusal structure and herc adds have, against `ScriptDatLint`'s 50 flyer slots.
+- **Slot caps.** Each add is refused past DBSIM's slots for its block, as the mission check counts them (`ScriptDatLint`: 100 mechs with the squad's, 50 flyers, 140 structures); a ground vehicle, a block-9 record, will take the structures' refusal.
 
 ## Scope
 
@@ -127,13 +128,13 @@ Beyond [Gaps in what is in place](handoff-editor-mission-editing.md#gaps-in-what
 | Tint every area of a selected action; tint ground planes too | small |
 | Orthographic top-down view | small–medium |
 | Heading entry and a turn handle | small |
-| Add flyers and ground vehicles, each group with an order | small–medium |
+| Add ground vehicles, each group with an order | small |
 
 ## Suggested sequencing
 
 What a new mission needs to become a mission, in order:
 
-1. **Next:** flyers, added in groups with a first order as hercs are, then ground vehicles.
+1. **Next:** ground vehicles, added in groups with a first order as hercs and flyers are.
 2. Objectives with their text: the objective list, failure text and briefing.
 3. Trigger areas, their corner moves through the same point placement included, actions and timers.
 4. The campaign layer (conditions, variants, debrief) last.

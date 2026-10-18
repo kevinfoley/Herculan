@@ -253,19 +253,22 @@ public readonly record struct MfdStatusSubject(
 	public static string? BaseName(World.BaseType type, StringFile? strings) =>
 		strings?.Text(type.IsVehicle ? MfdLayout.VehicleNameGroup : MfdLayout.StructureNameGroup, type.SilhouetteIndex);
 
+	private static string FlyerName(Sim.FlyerObject flyer) => FlyerTypeName(flyer.SimData, flyer.Name);
+
 	/// <summary>
-	/// A flyer's printed name — its type record's own string, which sits at the same <c>+0x12</c> the
-	/// paint reads. Falls back to the model name when the <c>.DAT</c> is missing.
+	/// The name the status screen prints for a flyer of <c>nam\FLYERS.NAM</c> type <paramref name="typeName"/> whose
+	/// <c>dat\&lt;type&gt;.DAT</c> is <paramref name="data"/>: the type record's own string, which sits at the same
+	/// <c>+0x12</c> the paint reads. Falls back to the type name when the <c>.DAT</c> is missing.
 	/// </summary>
-	private static string FlyerName(Sim.FlyerObject flyer) {
-		if (flyer.SimData?.NameBytes is { Length: > 0 } bytes) {
+	public static string FlyerTypeName(HercWorks.Core.Data.File.Dat.Sim.FlyerSimData? data, string typeName) {
+		if (data?.NameBytes is { Length: > 0 } bytes) {
 			string name = System.Text.Encoding.ASCII.GetString(bytes).TrimEnd('\0', ' ');
 			if (name.Length > 0) {
 				return name.ToUpperInvariant();
 			}
 		}
 
-		return flyer.Name.ToUpperInvariant();
+		return typeName.ToUpperInvariant();
 	}
 
 	/// <summary>
