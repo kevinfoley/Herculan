@@ -9,7 +9,9 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// Builds again what the editor holds by <c>script.dat</c> block index after an edit that adds or removes <c>.MSN</c>
-/// records: an add, a delete, and the undo and redo of either (<see cref="RecordsEdit"/>). Removing a record moves every
+/// records: an add, a delete, and the undo and redo of either (<see cref="RecordsEdit"/>); a change of the campaign state
+/// the mission is shown in (<see cref="CampaignState"/>), which conditions records in and out; and the undo or redo of a
+/// step made in another campaign state (<see cref="IIndexedEdit"/>). Removing a record moves every
 /// later generated record of its block down one, and an add's records are exported last, so the indices the index, the
 /// scene objects' placements and the selection hold no longer name what they named
 /// (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "Regenerating on each edit").
@@ -59,7 +61,6 @@ internal sealed class MissionRebuild {
 	private readonly PointMover _mover;
 	private readonly MissionOutliner _outliner;
 	private readonly SelectionState _selection;
-	private readonly MissionSquad? _squad;
 
 	// The record the selected object stood for when the edit began, whose new object is selected when it was replaced.
 	private (int Row, int Key)? _selectedKey;
@@ -80,8 +81,14 @@ internal sealed class MissionRebuild {
 		_mover = mover;
 		_outliner = outliner;
 		_selection = selection;
-		_squad = squad;
+		Squad = squad;
 	}
+
+	/// <summary>
+	/// Which Hercs the squad pilots and how its <c>player.mec</c> is built again, which Draw again replaces
+	/// (<see cref="CampaignState"/>); null for a plain <c>script.dat</c>.
+	/// </summary>
+	public MissionSquad? Squad { get; set; }
 
 	/// <summary>Raised with each object a rebuild puts in the scene, for whatever draws it.</summary>
 	public event Action<SceneObject>? Added;
@@ -149,7 +156,7 @@ internal sealed class MissionRebuild {
 
 	private void Rebuild(MissionDocument source, SelectedKeys selected, SelectedObjectiveRecord? selectedObjective) {
 		// The squad the launch would build from this generation, which the load below places, and the text the load reads.
-		if (_squad?.PlayerMec(source.Generator) is { } squadFile) {
+		if (Squad?.PlayerMec(source.Generator) is { } squadFile) {
 			File.WriteAllBytes(MissionLoader.PlayerPathFor(_scene.Mission.SourcePath), squadFile);
 		}
 

@@ -55,7 +55,26 @@ public sealed class MissionDocument {
 	/// <summary>The <c>.ENG</c>, or null when the mission has none; the first text edit of such a mission gives it one.</summary>
 	public MissionStringFile? Text { get; private set; }
 
-	public MissionGeneration Generation { get; }
+	/// <summary>What every generation hands the generator besides the files: the campaign flags, the draws and the header words the launch writes over.</summary>
+	public MissionGeneration Generation { get; private set; }
+
+	/// <summary>
+	/// Generates again with <paramref name="generation"/> in place of <see cref="Generation"/>, replacing <see cref="Script"/>'s
+	/// blocks in place, so whatever holds the document reads the new generation. It changes neither the <c>.MSN</c> nor the
+	/// <c>.ENG</c>, and is no <see cref="MsnEdit"/>. When the generation fails, the one before stands, generated again, and
+	/// the failure is rethrown.
+	/// </summary>
+	public void SetGeneration(MissionGeneration generation) {
+		var before = Generation;
+		Generation = generation;
+		try {
+			Regenerate();
+		} catch {
+			Generation = before;
+			Regenerate();
+			throw;
+		}
+	}
 
 	/// <summary>
 	/// The generated <c>script.dat</c>: one object for the document's life, whose header and blocks each generation

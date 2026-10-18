@@ -44,6 +44,29 @@ internal static class MissionOpener {
 	}
 
 	/// <summary>
+	/// How <see cref="Open"/> opens <paramref name="name"/>, which <see cref="OpenAgain"/> repeats: at its career position,
+	/// or as <c>INSTANT ACTION</c> when <c>gam\career.dat</c> does not list it, or when <paramref name="unlisted"/>, as
+	/// <see cref="OpenNew"/> opens a new mission.
+	/// </summary>
+	public static MissionLaunchMode ModeOf(Func<GameContent> shellContent, string installRoot, string name, bool unlisted) =>
+		new(shellContent, installRoot, Path.GetFileNameWithoutExtension(name),
+			unlisted ? null : MissionFileLaunch.PositionOf(shellContent(), name));
+
+	/// <summary>
+	/// The mission <paramref name="msn"/> and its text <paramref name="text"/> opened again as <paramref name="mode"/> opened
+	/// it, through <see cref="MissionFileLaunch.OpenAt"/>, with new draws, its handoff written into
+	/// <paramref name="directory"/>; the document then showing the mission's own theater and time of day, as
+	/// <see cref="Open"/>'s does.
+	/// </summary>
+	public static string? OpenAgain(MissionLaunchMode mode, byte[] msn, byte[]? text, string directory,
+			out MissionDocument? document, out MissionSquad? squad, out string? failure) {
+		string? script = MissionFileLaunch.OpenAt(mode.ShellContent(), mode.InstallRoot, mode.Name, mode.Position, msn, text,
+			directory, out document, out squad, out failure);
+		document = OwnWorld(document, squad);
+		return script;
+	}
+
+	/// <summary>
 	/// <paramref name="opened"/>, generated again writing nothing over the theater and time of day when it was loaded in
 	/// training mode, which <paramref name="squad"/> says: a squad that is not the career's.
 	/// </summary>
@@ -52,3 +75,10 @@ internal static class MissionOpener {
 			? new MissionDocument(opened.Mission, opened.Text, opened.Generation.WithoutOverwrite(TheaterWord, VariantWord))
 			: opened;
 }
+
+/// <summary>
+/// How the editor opened a mission (<see cref="MissionOpener.ModeOf"/>): VSHELL's mount, the install, the mission's name
+/// without its extension, and the career position it was loaded at, or null for a mission loaded as <c>INSTANT ACTION</c>.
+/// </summary>
+internal sealed record MissionLaunchMode(Func<GameContent> ShellContent, string InstallRoot, string Name,
+	(int Stage, int Mission)? Position);

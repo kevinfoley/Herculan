@@ -266,6 +266,35 @@ public class MissionDocumentTests {
 		Assert.Equal(1, document.Script.TheaterVariant);
 	}
 
+	/// <summary>
+	/// Catches a generation set without generating again, or generated into a new <c>ScriptDat</c> that whatever holds
+	/// <see cref="MissionDocument.Script"/> never sees: a structure conditioned on flag 100 joins the same object once the
+	/// flag is set. Also catches <see cref="MissionGenerator.Flags"/> answering the flags as handed in rather than as the
+	/// load left them, which <c>mission.var</c> is written from: every load clears flag 0 (an empty clear list names it).
+	/// </summary>
+	[Fact]
+	public void SettingTheGenerationRegeneratesTheScriptInPlace() {
+		const short OpGreater = 0x11d;
+		var document = Open(new SyntheticMsn()
+			.Add(1, Condition(guid: 20, condition: -1, type: 0, lower: 100, upper: OpGreater, operand: 0))
+			.Add(6, Point(1, 100))
+			.Add(14, Base(1))
+			.Add(14, Base(2, condition: 20))
+			.Add(16, Group(1, kind: 2, position: 1, condition: -1, 1, 2)));
+		var script = document.Script;
+		Assert.Single(script.Bases);
+
+		var flags = document.Generation.Flags.ToArray();
+		flags[0] = 7;
+		flags[100] = 1;
+		document.SetGeneration(document.Generation.WithFlags(flags));
+
+		Assert.Same(script, document.Script);
+		Assert.Equal(2, script.Bases.Length);
+		Assert.Equal(7, document.Generation.Flags[0]);
+		Assert.Equal(0, document.Generator.Flags[0]);
+	}
+
 	// An unconditioned row-2 record setting the theater alone, clearing no flag.
 	private static short[] Patch(short theater) {
 		var words = new short[MissionSettingsPatch.Words];

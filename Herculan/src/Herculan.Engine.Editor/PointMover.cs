@@ -20,15 +20,31 @@ internal abstract record MoveTarget;
 /// the history then places again what stands on the generated points and levels the ground.
 ///
 /// <para>A step that holds block indices — a move's target, a side change's group — keeps them valid without being
-/// told of later edits: the history is undone last first, so a step is only ever undone or redone with the <c>.MSN</c>
-/// as it stood when the step was made, and generating from the same records gives the same indices. Every step that
-/// adds or removes records rebuilds the editor's index from the generated file as it is undone or redone
-/// (<see cref="MissionRebuild"/>), so the index the step reads is that generation's.</para>
+/// told of later edits as long as the campaign state stands: the history is undone last first, so a step is only ever
+/// undone or redone with the <c>.MSN</c> as it stood when the step was made, and generating from the same records with the
+/// same <see cref="MissionGeneration"/> gives the same indices. Every step that adds or removes records rebuilds the
+/// editor's index from the generated file as it is undone or redone (<see cref="MissionRebuild"/>), so the index the step
+/// reads is that generation's. A change of the campaign state (<see cref="CampaignState"/>) is no step and changes which
+/// records are generated, so a step holding indices remembers the generation it was made under
+/// (<see cref="IIndexedEdit"/>); undone or redone under another, it puts its <c>.MSN</c> rows back and the editor's state is
+/// built again in full through <see cref="MissionRebuild"/> in place of its own scene update.</para>
 /// </summary>
 internal interface IEditorEdit {
 	void Undo();
 
 	void Redo();
+}
+
+/// <summary>
+/// A step of the history that holds <c>script.dat</c> block indices, which only the generation it was made under
+/// (<see cref="MadeUnder"/>) is sure to give again (<see cref="IEditorEdit"/>).
+/// </summary>
+internal interface IIndexedEdit : IEditorEdit {
+	/// <summary>The document's generation when the step was made.</summary>
+	MissionGeneration MadeUnder { get; }
+
+	/// <summary>The <c>.MSN</c> rows the step changed.</summary>
+	MsnEdit Change { get; }
 }
 
 /// <summary>A placed object, moved through a point of its roster record's own.</summary>
@@ -500,7 +516,7 @@ internal sealed class PointMover {
 			Stand(target, position);
 		}
 
-		Record(new Edit(this, target, change, before, position));
+		Record(new Edit(this, target, change, before, position, _source.Generation));
 	}
 
 	/// <summary>
@@ -509,7 +525,7 @@ internal sealed class PointMover {
 	/// </summary>
 	public int[]? WaypointEntries(int route) => _followers.WaypointEntries(route);
 
-	public void Undo() => Step(History.TakeUndo(), edit => edit.Undo());
+	public void Undo() => Step(History.TakeUndo(), undo: true);
 
 	/// <summary>
 	/// Builds again what places followers from the index (<see cref="PointFollowers"/>), for an index built again
@@ -517,7 +533,13 @@ internal sealed class PointMover {
 	/// </summary>
 	public void Rebuild() => _followers = new PointFollowers(_document, _scene, _index, _overlay, Place);
 
-	public void Redo() => Step(History.TakeRedo(), edit => edit.Redo());
+	public void Redo() => Step(History.TakeRedo(), undo: false);
+
+	/// <summary>
+	/// What builds the editor's state again in full, for a step that holds block indices undone or redone under another
+	/// generation than it was made under (<see cref="IIndexedEdit"/>). Set once, as it is built after this.
+	/// </summary>
+	public MissionRebuild? FullRebuild { get; set; }
 
 	/// <summary>
 	/// Adds an edit made elsewhere, already applied, to the history as one step, and places and levels after it as
@@ -525,20 +547,38 @@ internal sealed class PointMover {
 	/// </summary>
 	public void Record(IEditorEdit edit) {
 		History.Add(edit);
+		Settle();
+	}
+
+	/// <summary>
+	/// Places again what stands on the generated points, rebuilds the mission box overlay and levels the ground, as after
+	/// every step: for a change made outside the history (<see cref="CampaignState"/>).
+	/// </summary>
+	public void Settle() {
 		_followers.Sync();
 		_overlay.SetBox(MissionBox.Of(Points()));
 		_leveller.Relevel();
 	}
 
-	private void Step(IEditorEdit? edit, Action<IEditorEdit> apply) {
+	private void Step(IEditorEdit? edit, bool undo) {
 		if (edit == null) {
 			return;
 		}
 
-		apply(edit);
-		_followers.Sync();
-		_overlay.SetBox(MissionBox.Of(Points()));
-		_leveller.Relevel();
+		if (edit is IIndexedEdit indexed && !ReferenceEquals(indexed.MadeUnder, _source!.Generation)) {
+			var rebuild = FullRebuild ?? throw new InvalidOperationException("No rebuild is set for a step made in another campaign state.");
+			if (undo) {
+				rebuild.Undo(indexed.Change);
+			} else {
+				rebuild.Redo(indexed.Change);
+			}
+		} else if (undo) {
+			edit.Undo();
+		} else {
+			edit.Redo();
+		}
+
+		Settle();
 	}
 
 	// Puts the .MSN back as one side of a move left it, which generates the document again.
@@ -850,8 +890,9 @@ internal sealed class PointMover {
 		NewPoint,
 	}
 
-	// One move: the .MSN rows it changed, and where the target stood on either side of it.
-	private sealed record Edit(PointMover Mover, MoveTarget Target, MsnEdit Change, Vec3i Before, Vec3i After) : IEditorEdit {
+	// One move: the .MSN rows it changed, where the target stood on either side of it, and the generation it was made under.
+	private sealed record Edit(PointMover Mover, MoveTarget Target, MsnEdit Change, Vec3i Before, Vec3i After,
+			MissionGeneration MadeUnder) : IIndexedEdit {
 		public void Undo() => Mover.Restore(Target, Change, undo: true, Before);
 
 		public void Redo() => Mover.Restore(Target, Change, undo: false, After);

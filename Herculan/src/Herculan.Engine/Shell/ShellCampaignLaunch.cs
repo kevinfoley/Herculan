@@ -58,9 +58,26 @@ public static class ShellCampaignLaunch {
 			return null;
 		}
 
-		missionPath = path;
-		if (ShellTrainingLaunch.ReadMission(content, missionPath) is not (byte[] msn, var text)) {
-			failure = $"{missionPath} is not in any mounted archive.";
+		if (ShellTrainingLaunch.ReadMission(content, path) is not (byte[] msn, var text)) {
+			failure = $"{path} is not in any mounted archive.";
+			return null;
+		}
+
+		return Load(directory, content, stage, mission, path, msn, text, skill, flags, clearList, roll, out failure, generating);
+	}
+
+	/// <summary>
+	/// <see cref="Write"/> for a mission already read: the <c>.MSN</c> <paramref name="msn"/> and its text
+	/// <paramref name="text"/>, or null, named <paramref name="missionPath"/>, loaded at career position
+	/// (<paramref name="stage"/>, <paramref name="mission"/>), which seeds the flags and picks the theater. The original
+	/// reads every mission from its archives; this engine's mission editor hands one it holds in memory
+	/// (<see cref="MissionFileLaunch.OpenAt"/>).
+	/// </summary>
+	public static ShellCampaignMission? Load(string directory, GameContent content, int stage, int mission, string missionPath,
+			byte[] msn, byte[]? text, short skill, short[] flags, short[] clearList, Func<short, int> roll, out string? failure,
+			MissionGenerating? generating = null) {
+		if (ShellTrainingLaunch.CareerStages(content) is not { } stages || stage < 0 || stage >= stages.Count) {
+			failure = $"gam\\career.dat or missions.bin has no stage {stage} mission {mission}.";
 			return null;
 		}
 

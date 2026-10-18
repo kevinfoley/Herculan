@@ -143,7 +143,7 @@ public static class ShellTrainingLaunch {
 	/// <see cref="Load(string, GameContent, SimulatorPreferences, int, string?, bool, Func{short, int}, short[], PlayerSave,
 	/// ShellHangar, out string?, MissionGenerating?)"/> for a mission already read: the <c>.MSN</c> <paramref name="msn"/>
 	/// and its text <paramref name="text"/>, or null, named <paramref name="missionPath"/>. The original reads every mission
-	/// from its archives; this engine's mission editor hands one it holds in memory (<see cref="MissionFileLaunch.OpenNew"/>).
+	/// from its archives; this engine's mission editor hands one it holds in memory (<see cref="MissionFileLaunch.OpenAt"/>).
 	/// </summary>
 	public static ShellTrainingHandoff? Load(string directory, GameContent content, SimulatorPreferences options, int row,
 			string missionPath, byte[] msn, byte[]? text, bool instantAction, Func<short, int> roll, short[] clearList,

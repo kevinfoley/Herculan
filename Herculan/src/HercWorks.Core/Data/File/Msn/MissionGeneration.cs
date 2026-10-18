@@ -4,7 +4,7 @@ namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
 /// What a <see cref="MissionDocument"/> hands the generator besides the mission's files, the same for every generation
-/// so each regeneration resolves the mission the same way
+/// until <see cref="MissionDocument.SetGeneration"/> replaces it, so each regeneration resolves the mission the same way
 /// (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "Conditions and variants"): the
 /// campaign flag array as the load is given it, copied for each run because row 2 clears flags in it; a fresh clear list
 /// per run; the draws, from a roll <see cref="NewRoll"/> makes anew for each run, so each draws the same sequence; and
@@ -53,6 +53,9 @@ public sealed class MissionGeneration {
 
 		return new MissionGeneration(_flags, header, NewRoll);
 	}
+
+	/// <summary>These inputs, but handing the load the campaign flags <paramref name="flags"/>.</summary>
+	public MissionGeneration WithFlags(IReadOnlyList<short> flags) => new(flags, _header, NewRoll);
 
 	/// <summary>Loads <paramref name="msn"/> and its <c>.ENG</c> <paramref name="text"/> with these inputs, the header words written over.</summary>
 	public MissionGenerator Run(byte[] msn, byte[]? text) {

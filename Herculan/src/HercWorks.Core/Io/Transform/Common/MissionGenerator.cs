@@ -89,6 +89,12 @@ public sealed class MissionGenerator {
 	/// </summary>
 	public short[] Header { get; } = new short[10];
 
+	/// <summary>
+	/// The campaign flag array the load was handed, as the load left it: row 2's clear list zeroed in it. A launch writes
+	/// this into <c>mission.var</c>.
+	/// </summary>
+	public IReadOnlyList<short> Flags => _flags;
+
 	/// <summary>Which <c>.MSN</c> and <c>.ENG</c> records supplied each exported record and <c>mission.str</c> line.</summary>
 	public MissionProvenance Provenance { get; } = new();
 

@@ -48,6 +48,9 @@ internal sealed class TheaterChanger {
 	/// <summary>Whether the mission is played by night: the generated header's variant 1.</summary>
 	public bool Night => _document.TheaterVariant != 0;
 
+	/// <summary>The generated header's theater variant, which <see cref="Night"/> reads.</summary>
+	public int Variant => _document.TheaterVariant;
+
 	/// <summary>Why the theater cannot be changed, or null when it can.</summary>
 	public string? WhyTheaterFixed =>
 		_mover.WhyReadOnly ?? (_source!.Generation.Header[MissionOpener.TheaterWord] != null ? "The campaign stage sets the theater." : null);
@@ -102,6 +105,23 @@ internal sealed class TheaterChanger {
 		return null;
 	}
 
+	/// <summary>
+	/// Dresses the scene in the world the generated header picks when it is not <paramref name="theater"/> and
+	/// <paramref name="variant"/>, the world it is dressed in: for a change of the campaign state, which can condition
+	/// a row-2 record in or out (<see cref="CampaignState"/>). <see cref="Failure"/> says why it could not.
+	/// </summary>
+	public void Follow(int theater, int variant) {
+		if (_document.TheaterIndex == theater && _document.TheaterVariant == variant) {
+			return;
+		}
+
+		try {
+			Reload();
+		} catch (Exception ex) when (ex is FileNotFoundException or InvalidDataException or ArgumentOutOfRangeException) {
+			Failure = ex.Message;
+		}
+	}
+
 	// Dresses the scene in the world the generated header picks: every object in it, and every object an edit has built
 	// that an undo or redo can put back.
 	private void Reload() {
@@ -110,6 +130,8 @@ internal sealed class TheaterChanger {
 		WorldChanged?.Invoke();
 	}
 
+	// Holds no block index, and a row-2 record conditions nothing else in or out, so it is undone and redone as it is in
+	// any campaign state (IIndexedEdit).
 	private sealed record WorldEdit(TheaterChanger Changer, MsnEdit Change) : IEditorEdit {
 		public void Undo() {
 			Changer._source!.Undo(Change);
