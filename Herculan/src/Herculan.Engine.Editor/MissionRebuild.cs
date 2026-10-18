@@ -26,9 +26,12 @@ namespace Herculan.Engine.Editor;
 /// pick spheres, the overlays' lines, the followers and the mission check are then built over the new mission, and the
 /// drawing is told what left and what joined the scene.</para>
 ///
+/// <para>The generated <c>mission.str</c> is written over the handoff's before the load, so the mission's text is the
+/// generation's after a text edit.</para>
+///
 /// <para>The selection survives when what it names does: an object by identity, or else the object now standing for the
-/// same record; a group by its row-16 GUID, and a route by its row-8 GUID; anything else is checked against the new
-/// index, and is cleared when it is gone.</para>
+/// same record; a group by its row-16 GUID, a route by its row-8 GUID, and an objective by its row-17 record; anything
+/// else is checked against the new index, and is cleared when it is gone.</para>
 /// </summary>
 internal sealed class MissionRebuild {
 	private const int RouteBlock = 3;
@@ -94,8 +97,9 @@ internal sealed class MissionRebuild {
 		Remember(source);
 		short selectedGroup = _selection.Current is GroupSelection { Group: var group } ? source.GuidOf(GroupBlock, group) : (short)-1;
 		short selectedRoute = _selection.Current is RouteSelection { Route: var route } ? source.GuidOf(RouteBlock, route) : (short)-1;
+		var selectedObjective = SelectedObjective(source);
 		var result = edit();
-		Rebuild(source, selectedGroup, selectedRoute);
+		Rebuild(source, selectedGroup, selectedRoute, selectedObjective);
 		return result;
 	}
 
@@ -130,12 +134,13 @@ internal sealed class MissionRebuild {
 		}
 	}
 
-	private void Rebuild(MissionDocument source, short selectedGroup, short selectedRoute) {
-		// The squad the launch would build from this generation, which the load below places.
+	private void Rebuild(MissionDocument source, short selectedGroup, short selectedRoute, SelectedObjectiveRecord? selectedObjective) {
+		// The squad the launch would build from this generation, which the load below places, and the text the load reads.
 		if (_squad?.PlayerMec(source.Generator) is { } squadFile) {
 			File.WriteAllBytes(MissionLoader.PlayerPathFor(_scene.Mission.SourcePath), squadFile);
 		}
 
+		File.WriteAllBytes(MissionLoader.TextPathFor(_scene.Mission.SourcePath), source.MissionText);
 		var mission = MissionLoader.Load(_content, _document, _scene.Mission.SourcePath);
 		var terrain = _scene.World.Terrain;
 		var before = _index.Objects.ToHashSet(ReferenceEqualityComparer.Instance);
@@ -172,13 +177,38 @@ internal sealed class MissionRebuild {
 		_picker.Rebuild(objects);
 		_overlay.Rebuild();
 		_mover.Rebuild();
-		_outliner.Recheck(new MissionLint(_index, _document));
+		_outliner.Recheck(new MissionLint(_index, _document, source.Provenance.Lines.Count));
 		foreach (var joined in objects.Where(placed => !before.Contains(placed))) {
 			Added?.Invoke(joined);
 		}
 
-		Reselect(source, selectedGroup, selectedRoute, replacing);
+		Reselect(source, selectedGroup, selectedRoute, selectedObjective, replacing);
 		Rebuilt?.Invoke();
+	}
+
+	// The selected objective's row-17 record, which keeps it selected across the edit: the record itself, which an edit
+	// keeps as it is, its index in the row, and the row's length, which an undo or redo restores copies of.
+	private sealed record SelectedObjectiveRecord(MissionObjective58 Record, int Index, int RowLength);
+
+	private SelectedObjectiveRecord? SelectedObjective(MissionDocument source) =>
+		_selection.Current is ObjectiveSelection { Objective: var objective } && ObjectiveEditing.RecordOf(source, objective) is { } index
+				&& source.Mission.Objectives is { } row && row[index] is { } record
+			? new SelectedObjectiveRecord(record, index, row.Length)
+			: null;
+
+	// The block-12 index the objective <selected> stood for is exported at now: its record's, found by identity, or, when the
+	// row was put back as copies by an undo or redo, by its index while the row keeps its length; null when it is gone.
+	private static int? Objective(MissionDocument source, SelectedObjectiveRecord? selected) {
+		if (selected == null || source.Mission.Objectives is not { } row) {
+			return null;
+		}
+
+		int index = Array.FindIndex(row, record => ReferenceEquals(record, selected.Record));
+		if (index < 0 && row.Length == selected.RowLength) {
+			index = selected.Index;
+		}
+
+		return index >= 0 ? ObjectiveEditing.ExportedIndex(source, index) : null;
 	}
 
 	// The object built for the record a placement stands for, of the placement's type and weapon fit, and not yet placed
@@ -236,7 +266,8 @@ internal sealed class MissionRebuild {
 	// Keeps the selection on what it named, or on <replacing>, the object now standing for the record a selected object
 	// stood for; or clears it. A route is kept by its row-8 GUID, as a route delete moves every later route down one, and
 	// its waypoint while the route still has one there.
-	private void Reselect(MissionDocument source, short selectedGroup, short selectedRoute, SceneObject? replacing) {
+	private void Reselect(MissionDocument source, short selectedGroup, short selectedRoute,
+			SelectedObjectiveRecord? selectedObjective, SceneObject? replacing) {
 		_selection.Current = _selection.Current switch {
 			ObjectSelection { Object: var placed } when _index.Objects.Any(kept => ReferenceEquals(kept, placed)) => _selection.Current,
 			ObjectSelection when replacing != null => new ObjectSelection(replacing),
@@ -248,7 +279,7 @@ internal sealed class MissionRebuild {
 				new RouteSelection(route, waypoint < kept.Points.Count ? waypoint : -1),
 			ActionSelection { Action: var action } when action < _index.Mission.Actions.Count => _selection.Current,
 			TimerSelection { Timer: var timer } when timer < _index.Mission.ActionTimers.Count => _selection.Current,
-			ObjectiveSelection { Objective: var objective } when objective < _index.Mission.Objectives.Count => _selection.Current,
+			ObjectiveSelection when Objective(source, selectedObjective) is { } objective => new ObjectiveSelection(objective),
 			MissionSelection => _selection.Current,
 			_ => null
 		};
@@ -258,8 +289,9 @@ internal sealed class MissionRebuild {
 /// <summary>
 /// One step of <see cref="PointMover"/>'s undo history that the editor's state is built again after — an add
 /// (<see cref="StructurePlacer"/>, <see cref="HercPlacer"/>, <see cref="FlyerPlacer"/>, <see cref="VehiclePlacer"/>), a delete (<see cref="ObjectDeleter"/>), a route edit
-/// (<see cref="RouteEditor"/>) or an order edit (<see cref="OrderEditor"/>): the rows it changed, put back on undo and redo
-/// through <see cref="MissionRebuild"/>.
+/// (<see cref="RouteEditor"/>), an order edit (<see cref="OrderEditor"/>), an objective edit (<see cref="ObjectiveEditor"/>)
+/// or a text edit (<see cref="MissionTextEditor"/>): the rows and text it changed, put back on undo and redo through
+/// <see cref="MissionRebuild"/>.
 /// </summary>
 internal sealed record RecordsEdit(MissionRebuild Rebuild, MsnEdit Change) : IEditorEdit {
 	public void Undo() => Rebuild.Undo(Change);

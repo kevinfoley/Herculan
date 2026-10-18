@@ -37,6 +37,9 @@ internal sealed class MissionOutliner {
 	/// <summary>The route-placing mode the Routes list's New route starts; set once the mission's tools are built.</summary>
 	public RoutePlacing? Placing { get; set; }
 
+	/// <summary>What the Objectives list's New objective asks to create an objective; set once the mission's tools are built.</summary>
+	public ObjectiveEditor? Objectives { get; set; }
+
 	public void Draw(Vector2 display, float menuBarHeight) {
 		ImGui.SetNextWindowPos(new Vector2(0f, menuBarHeight));
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), display.Y - menuBarHeight));
@@ -112,9 +115,21 @@ internal sealed class MissionOutliner {
 			return;
 		}
 
+		// A new objective's subject is the current selection.
+		if (Objectives is { } objectives) {
+			string? why = objectives.WhyNoCreate(_selection.Current);
+			ImGui.BeginDisabled(why != null);
+			if (ImGui.SmallButton("New objective")) {
+				objectives.RequestCreate(_selection.Current);
+			}
+
+			ImGui.EndDisabled();
+			EditorText.Reason(why);
+		}
+
 		// Both wrapped, as their lines run well past the panel's width.
 		if (Mission.ObjectiveTextRefs.Count > 0) {
-			EditorText.Note("Briefing list:");
+			EditorText.Note("Objective lines (F11), edited in the Mission view:");
 			foreach (int line in Mission.ObjectiveTextRefs) {
 				ImGui.BulletText(string.Empty);
 				ImGui.SameLine();

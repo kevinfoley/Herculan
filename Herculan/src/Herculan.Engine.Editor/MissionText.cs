@@ -31,6 +31,24 @@ internal static class MissionText {
 	}
 
 	/// <summary>
+	/// An order's or objective's subject as a choice names it: kind -1 none, 0 a group, 1 a herc, 2 a flyer and 3 a
+	/// structure, the numbering both records share, by block index.
+	/// </summary>
+	public static string SubjectName(MissionIndex index, short kind, int subject) {
+		if (kind == -1 || subject < 0) {
+			return "None";
+		}
+
+		return kind switch {
+			0 => DescribeGroup(index, subject),
+			1 => index.ObjectAt(MissionUnitKind.Mech, subject) is { } herc ? Describe(herc) : $"Herc slot {subject} (not placed)",
+			3 => index.ObjectAt(MissionUnitKind.Base, subject) is { } structure ? Describe(structure) : $"Structure slot {subject} (not placed)",
+			2 => index.ObjectAt(MissionUnitKind.Flyer, subject) is { } flyer ? Describe(flyer) : $"Flyer slot {subject} (not placed)",
+			_ => $"Subject kind {kind}, slot {subject}",
+		};
+	}
+
+	/// <summary>
 	/// Whose position an action's trigger areas are offered — the type table in
 	/// docs/retail/simulation/mission-deployment.md#trigger-areas--actions_evaluatetriggers-00426b70.
 	/// </summary>

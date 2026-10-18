@@ -51,8 +51,8 @@ public sealed class MissionDocument {
 
 	public MissionFile Mission { get; }
 
-	/// <summary>The <c>.ENG</c>, or null when the mission has none.</summary>
-	public MissionStringFile? Text { get; }
+	/// <summary>The <c>.ENG</c>, or null when the mission has none; the first text edit of such a mission gives it one.</summary>
+	public MissionStringFile? Text { get; private set; }
 
 	public MissionGeneration Generation { get; }
 
@@ -204,7 +204,7 @@ public sealed class MissionDocument {
 		} catch {
 			_change = null;
 			for (int i = made.Count - 1; i >= 0; i--) {
-				made[i].WriteTo(Mission, after: false);
+				WriteBack(made[i], after: false);
 			}
 
 			Regenerate();
@@ -215,15 +215,15 @@ public sealed class MissionDocument {
 		return MsnEdit.Combine(made);
 	}
 
-	/// <summary>Puts back the rows <paramref name="edit"/> changed as it found them, and generates again.</summary>
+	/// <summary>Puts back the rows and text <paramref name="edit"/> changed as it found them, and generates again.</summary>
 	public void Undo(MsnEdit edit) {
-		edit.WriteTo(Mission, after: false);
+		WriteBack(edit, after: false);
 		Regenerate();
 	}
 
-	/// <summary>Puts back the rows <paramref name="edit"/> changed as it left them, and generates again.</summary>
+	/// <summary>Puts back the rows and text <paramref name="edit"/> changed as it left them, and generates again.</summary>
 	public void Redo(MsnEdit edit) {
-		edit.WriteTo(Mission, after: true);
+		WriteBack(edit, after: true);
 		Regenerate();
 	}
 
@@ -476,7 +476,111 @@ public sealed class MissionDocument {
 		return End(before);
 	}
 
+	// ---- Rows 4 and 17, and the text --------------------------------------------------------------
+
+	/// <summary>
+	/// Rewrites record <paramref name="index"/> of row <paramref name="row"/>, 4 or 17, through <paramref name="write"/>.
+	/// Neither row has a GUID, nothing names one of their records and neither repeats or overlays, so the record is the one
+	/// that supplies everything it exports, whatever its condition (docs/retail/formats/msn-mission-file.md#row-17-field-decode--the-objective-record-dat_0047064a-58-bytesrecord).
+	/// </summary>
+	public MsnEdit Rewrite<T>(int row, int index, Action<T> write) where T : class {
+		CheckUnkeyed(row);
+		var records = MsnRows.Get(Mission, row);
+		if (index < 0 || index >= records.Length || records.GetValue(index) is not T record) {
+			throw new InvalidOperationException($"Row {row} has no record {index}.");
+		}
+
+		var before = Begin(row);
+		write(record);
+		return End(before);
+	}
+
+	/// <summary>Appends <paramref name="record"/> to row <paramref name="row"/>, 4 or 17, as its last record.</summary>
+	public MsnEdit AppendUnkeyed(int row, object record) {
+		CheckUnkeyed(row);
+		var before = Begin(row);
+		Add(row, record);
+		return End(before);
+	}
+
+	/// <summary>
+	/// Removes record <paramref name="index"/> of row <paramref name="row"/>, 4 or 17. Nothing names one of their records, so
+	/// the records after it moving down one changes no ref.
+	/// </summary>
+	public MsnEdit RemoveUnkeyed(int row, int index) {
+		CheckUnkeyed(row);
+		var records = MsnRows.Get(Mission, row);
+		if (index < 0 || index >= records.Length) {
+			throw new InvalidOperationException($"Row {row} has no record {index}.");
+		}
+
+		var before = Begin(row);
+		var shrunk = Array.CreateInstance(records.GetType().GetElementType()!, records.Length - 1);
+		Array.Copy(records, 0, shrunk, 0, index);
+		Array.Copy(records, index + 1, shrunk, index, records.Length - index - 1);
+		MsnRows.Set(Mission, row, shrunk);
+		return End(before);
+	}
+
+	/// <summary>
+	/// Appends copies of <paramref name="entries"/> to the <c>.ENG</c>, in order, giving the mission an <c>.ENG</c> when it has
+	/// none. A record whose id no earlier surviving record has places a new <c>mission.str</c> line, after every other
+	/// (docs/retail/formats/msn-mission-file.md#the-eng-string-table).
+	/// </summary>
+	public MsnEdit AppendText(IEnumerable<MissionStringFile.StringEntry> entries) {
+		var before = BeginText();
+		Text ??= new MissionStringFile { Strings = [] };
+		Text.Strings = [.. Text.Strings ?? [], .. MsnRows.CopyText([.. entries])!];
+		return End(before);
+	}
+
+	/// <summary>
+	/// Sets the text of <c>.ENG</c> record <paramref name="record"/>, by its index in the file, to <paramref name="text"/>,
+	/// NUL-terminated as the files store it.
+	/// </summary>
+	public MsnEdit SetText(int record, string text) {
+		var strings = Text?.Strings ?? [];
+		if (record < 0 || record >= strings.Length) {
+			throw new InvalidOperationException($"The mission's text has no record {record}.");
+		}
+
+		var before = BeginText();
+		Text!.Strings![record].Val = text + "\0";
+		Text.Strings[record].Len = (short)(text.Length + 1);
+		return End(before);
+	}
+
+	/// <summary>Removes every <c>.ENG</c> record whose id is one of <paramref name="ids"/>, whatever its condition.</summary>
+	public MsnEdit RemoveText(IReadOnlyCollection<short> ids) {
+		var before = BeginText();
+		if (Text?.Strings is { } strings) {
+			Text.Strings = strings.Where(entry => !ids.Contains(entry.Guid)).ToArray();
+		}
+
+		return End(before);
+	}
+
 	// ---- Internals --------------------------------------------------------------------------------
+
+	private static void CheckUnkeyed(int row) {
+		if (row is not (4 or 17)) {
+			throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 4 and 17 are the rows with no GUID.");
+		}
+	}
+
+	// Writes each row and the text an edit changed as one side of it left them.
+	private void WriteBack(MsnEdit edit, bool after) {
+		edit.WriteTo(Mission, after);
+		if (edit.TextSide(after, out var strings)) {
+			if (strings == null) {
+				Text = null;
+			} else if (Text == null) {
+				Text = new MissionStringFile { Strings = strings };
+			} else {
+				Text.Strings = strings;
+			}
+		}
+	}
 
 	private SlotProvenance SlotOf(int row, short guid) =>
 		_slots.TryGetValue((row, guid), out var slot)
@@ -500,22 +604,26 @@ public sealed class MissionDocument {
 		MsnRows.Set(Mission, row, grown);
 	}
 
-	// The rows an edit is about to change, copied.
-	private Dictionary<int, Array> Begin(params int[] rows) =>
-		rows.Distinct().ToDictionary(row => row, row => MsnRows.Copy(MsnRows.Get(Mission, row)));
+	// What an edit is about to change, copied: the rows, and the text when it is about to change that.
+	private sealed record Snapshot(Dictionary<int, Array> Rows, bool Text, MissionStringFile.StringEntry[]? TextBefore);
 
-	// The edit that changed the rows Begin copied, once it has; generates again, and puts the rows back if that fails.
-	private MsnEdit End(Dictionary<int, Array> before) {
+	private Snapshot Begin(params int[] rows) =>
+		new(rows.Distinct().ToDictionary(row => row, row => MsnRows.Copy(MsnRows.Get(Mission, row))), false, null);
+
+	private Snapshot BeginText() => new([], true, MsnRows.CopyText(Text?.Strings));
+
+	// The edit that changed what Begin copied, once it has; generates again, and puts it back if that fails.
+	private MsnEdit End(Snapshot before) {
 		var rows = new SortedDictionary<int, (Array Before, Array After)>();
-		foreach (var (row, records) in before) {
+		foreach (var (row, records) in before.Rows) {
 			rows[row] = (records, MsnRows.Copy(MsnRows.Get(Mission, row)));
 		}
 
-		var edit = new MsnEdit(rows);
+		var edit = new MsnEdit(rows, before.Text ? new TextSides(before.TextBefore, MsnRows.CopyText(Text?.Strings)) : null);
 		try {
 			Regenerate();
 		} catch {
-			edit.WriteTo(Mission, after: false);
+			WriteBack(edit, after: false);
 			Regenerate();
 			throw;
 		}

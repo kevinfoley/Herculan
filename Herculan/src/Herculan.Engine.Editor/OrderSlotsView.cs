@@ -198,21 +198,7 @@ internal sealed class OrderSlotsView {
 		}
 	}
 
-	// A subject as the combo names it.
-	private string SubjectName(short kind, short subject) {
-		if (kind == NoSubject || subject < 0) {
-			return "None";
-		}
-
-		return kind switch {
-			GroupSubject => MissionText.DescribeGroup(_index, subject),
-			HercSubject => _index.ObjectAt(MissionUnitKind.Mech, subject) is { } herc ? MissionText.Describe(herc) : $"Herc slot {subject} (not placed)",
-			StructureSubject => _index.ObjectAt(MissionUnitKind.Base, subject) is { } structure
-				? MissionText.Describe(structure)
-				: $"Structure slot {subject} (not placed)",
-			_ => $"Flyer slot {subject}",
-		};
-	}
+	private string SubjectName(short kind, short subject) => MissionText.SubjectName(_index, kind, subject);
 
 	// A field's label, with the choice after it filling the rest of the line.
 	private static void Label(string text) {

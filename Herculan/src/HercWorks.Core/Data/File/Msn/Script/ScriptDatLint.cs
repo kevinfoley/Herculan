@@ -41,12 +41,13 @@ public static class ScriptDatLint {
 	/// <inheritdoc cref="MechSlotCap"/>
 	public const int BaseSlotCap = 140;
 
-	/// <summary>Runs every check over <paramref name="script"/>, in block order.</summary>
+	/// <summary>Runs every check over <paramref name="script"/>, in block order, then over <c>mission.str</c>'s length.</summary>
 	/// <param name="squadSize">
 	/// How many machines <c>player.mec</c> brings, which share the block-7 slot cap; 0 when the
 	/// caller does not know, in which case that cap is checked against the roster alone.
 	/// </param>
-	public static List<ScriptLintFinding> Check(ScriptDat script, int squadSize = 0) {
+	/// <param name="textLines">How many lines the <c>mission.str</c> beside it has; 0 when the caller does not know, which checks nothing.</param>
+	public static List<ScriptLintFinding> Check(ScriptDat script, int squadSize = 0, int textLines = 0) {
 		var findings = new List<ScriptLintFinding>();
 
 		int points = script.Coordinates.Length;
@@ -148,6 +149,12 @@ public static class ScriptDatLint {
 				findings.Add(new(ScriptBlock.Objectives, i,
 					$"Objective {i} has subject kind {objective.SubjectKind}, which has no case: it answers whatever the record before it answered."));
 			}
+		}
+
+		// DBSim_LoadScriptDat (00424308) reads at most 50 lines of mission.str.
+		if (textLines > MissionTextEditing.LineCap) {
+			findings.Add(new(ScriptBlock.ObjectiveLines, -1,
+				$"mission.str has {textLines} lines; DBSIM reads only the first {MissionTextEditing.LineCap}."));
 		}
 
 		return findings;

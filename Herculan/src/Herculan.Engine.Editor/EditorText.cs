@@ -44,4 +44,24 @@ internal static class EditorText {
 		ImGui.TextWrapped(text);
 		ImGui.PopStyleColor();
 	}
+
+	/// <summary>Why an input is refused, wrapped, in a strong red, under the field <see cref="PushProblemField"/> tinted.</summary>
+	public static void Problem(string text) {
+		ImGui.PushStyleColor(ImGuiCol.Text, ProblemColor);
+		ImGui.TextWrapped(text);
+		ImGui.PopStyleColor();
+	}
+
+	/// <summary>Tints the next field's background as the one to change; <see cref="PopProblemField"/> after it.</summary>
+	public static void PushProblemField() {
+		ImGui.PushStyleColor(ImGuiCol.FrameBg, ProblemFieldColor);
+		ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, ProblemFieldHoveredColor);
+		ImGui.PushStyleColor(ImGuiCol.FrameBgActive, ProblemFieldHoveredColor);
+	}
+
+	public static void PopProblemField() => ImGui.PopStyleColor(3);
+
+	private static readonly Vector4 ProblemColor = new(1f, 0.27f, 0.2f, 1f);
+	private static readonly Vector4 ProblemFieldColor = new(0.36f, 0.2f, 0.2f, 1f);
+	private static readonly Vector4 ProblemFieldHoveredColor = new(0.44f, 0.25f, 0.25f, 1f);
 }

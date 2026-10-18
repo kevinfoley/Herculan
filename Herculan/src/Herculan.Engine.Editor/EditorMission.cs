@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker, the two side panels and the move, add, delete, route, order and theater tools, all sharing one
+/// index, the overlays, the picker, the two side panels and the move, add, delete, route, order, objective, text and theater tools, all sharing one
 /// selection. An edit that adds or removes records builds the CPU state again in place (<see cref="Rebuild"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -29,7 +29,7 @@ internal sealed class EditorMission {
 		Overlay = new MissionOverlay(index, drape);
 		Picker = new ScenePicker(scene, index, Overlay);
 		GroupOverlay = new GroupOverlay(index, drape, Picker);
-		Outliner = new MissionOutliner(index, new MissionLint(index, document), Selection);
+		Outliner = new MissionOutliner(index, new MissionLint(index, document, source?.Provenance.Lines.Count ?? 0), Selection);
 		Mover = new PointMover(document, source, scene, index, Picker, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
 		Rebuild = new MissionRebuild(content, document, source, scene, index, Overlay, Picker, Mover, Outliner, Selection, squad);
@@ -45,11 +45,14 @@ internal sealed class EditorMission {
 		Flyers = new FlyerPlacer(document, source, scene, index, Mover, Rebuild, Selection, UnitTypeNames.LoadFlyers(content));
 		Vehicles = new VehiclePlacer(document, source, index, Mover, Rebuild, Selection, Placer);
 		Orders = new OrderEditor(document, source, Mover, Rebuild);
+		Objectives = new ObjectiveEditor(source, Mover, Rebuild, Selection);
+		Texts = new MissionTextEditor(source, Mover, Rebuild);
 		Outliner.Placing = Placing;
+		Outliner.Objectives = Objectives;
 		Properties = new PropertiesPanel(index, document, Selection, Mover, Sides, Deleter,
 			new SquadMachinePanel(Fitter, Squad, squad),
-			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content)), Routes, Placing, Orders,
-			SimStrings.Load(content));
+			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content), new MissionTextView(Texts)),
+			Routes, Placing, Orders, Objectives, SimStrings.Load(content));
 	}
 
 	/// <summary>
@@ -113,6 +116,12 @@ internal sealed class EditorMission {
 
 	/// <summary>Edits groups' order slots in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public OrderEditor Orders { get; }
+
+	/// <summary>Creates, edits and deletes objectives in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public ObjectiveEditor Objectives { get; }
+
+	/// <summary>Edits the objective, briefing and intelligence lines of <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public MissionTextEditor Texts { get; }
 
 	public SideChanger Sides { get; }
 

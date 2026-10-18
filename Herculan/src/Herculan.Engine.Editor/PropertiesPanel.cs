@@ -30,6 +30,8 @@ internal sealed class PropertiesPanel {
 	private readonly MissionView _mission;
 	private readonly RouteView _route;
 	private readonly OrderSlotsView _orders;
+	private readonly ObjectiveView _objective;
+	private readonly ObjectiveEditor _objectives;
 	private readonly StringFile? _strings;
 
 	// A position being typed, and the object it is for, until its field lets go.
@@ -39,7 +41,7 @@ internal sealed class PropertiesPanel {
 	/// <param name="document">The generated <c>script.dat</c>, whose records the order view offers as routes and subjects.</param>
 	public PropertiesPanel(MissionIndex index, ScriptDat document, SelectionState selection, PointMover mover,
 			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, MissionView mission, RouteEditor routes,
-			RoutePlacing placing, OrderEditor orders, StringFile? strings) {
+			RoutePlacing placing, OrderEditor orders, ObjectiveEditor objectives, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -50,6 +52,8 @@ internal sealed class PropertiesPanel {
 		_route = new RouteView(index, selection, mover, routes, placing, GroupLink,
 			(names, ownRoute) => References(names, ownRoute));
 		_orders = new OrderSlotsView(index, document, orders, RouteLink, ActionLink, SubjectLink);
+		_objectives = objectives;
+		_objective = new ObjectiveView(index, document, objectives, GroupLink, SlotLink, RouteLink);
 		machine.References = names => References(names);
 		_strings = strings;
 	}
@@ -83,7 +87,7 @@ internal sealed class PropertiesPanel {
 				_route.Draw(route);
 				break;
 			case ObjectiveSelection objective:
-				DrawObjective(objective.Objective);
+				_objective.Draw(objective.Objective);
 				break;
 			case TimerSelection timer:
 				DrawTimer(timer.Timer);
@@ -147,7 +151,7 @@ internal sealed class PropertiesPanel {
 			OutOfActionWrites("When out of the fight", report);
 		}
 
-		ObjectiveLinks(_index.ObjectivesOfObject(sel));
+		ObjectiveLinks(_index.ObjectivesOfObject(sel), new ObjectSelection(sel));
 		DeleteControls(sel);
 	}
 
@@ -409,7 +413,7 @@ internal sealed class PropertiesPanel {
 			OutOfActionWrites("When all of it is out of the fight", Mission.GroupOutOfActionReports[group]);
 		}
 
-		ObjectiveLinks(_index.ObjectivesOfGroup(group));
+		ObjectiveLinks(_index.ObjectivesOfGroup(group), new GroupSelection(group));
 		_orders.Draw(group);
 	}
 
@@ -603,86 +607,6 @@ internal sealed class PropertiesPanel {
 		ImGui.Unindent();
 	}
 
-	private void DrawObjective(int index) {
-		if (index < 0 || index >= Mission.Objectives.Count) {
-			return;
-		}
-
-		var objective = Mission.Objectives[index];
-		bool groupSubject = objective.SubjectKind == MissionObjectiveSubject.Group;
-
-		ImGui.Text($"Objective {index}");
-		ImGui.Separator();
-		ImGui.TextWrapped(objective.Required == MissionObjective.Mandatory
-			? "Mandatory: the mission needs this to come true."
-			: "Failure condition: the mission is lost the moment this comes true.");
-
-		ImGui.Spacing();
-		ImGui.AlignTextToFramePadding();
-		ImGui.Text("Subject:");
-		ImGui.SameLine();
-		if (MissionIndex.UnitKindOf(objective.SubjectKind) is { } kind) {
-			SlotLink(kind, objective.SubjectRef);
-		} else if (groupSubject) {
-			GroupLink(objective.SubjectRef);
-		} else {
-			EditorText.Note($"kind {(int)objective.SubjectKind}, which no case reads");
-		}
-
-		ImGui.TextWrapped(MissionText.ObjectiveCondition(objective.ConditionCode, groupSubject));
-
-		if (objective.ConditionCode == MissionObjective.ConditionOrderComplete) {
-			ImGui.Indent();
-			ImGui.AlignTextToFramePadding();
-			ImGui.Text("route:");
-			ImGui.SameLine();
-			if (objective.RouteRef >= 0) {
-				RouteLink(objective.RouteRef);
-			} else {
-				EditorText.Note("none");
-			}
-
-			int group = _index.OrderGroupOf(objective);
-			if (group >= 0) {
-				int slot = _index.SlotOnRoute(group, objective.RouteRef);
-				ImGui.AlignTextToFramePadding();
-				ImGui.Text("asked of");
-				ImGui.SameLine();
-				GroupLink(group);
-				ImGui.TextWrapped(slot >= 0
-					? $"about its order slot {slot}, the first to run that route"
-					: "none of its orders runs that route, so this never comes true");
-			}
-
-			ImGui.Unindent();
-		}
-
-		var lines = Mission.DescriptionOf(objective).Where(line => line.Length > 0).ToList();
-		if (lines.Count > 0) {
-			ImGui.Separator();
-			ImGui.Text($"Failure text (mission.str line {objective.TextRef}):");
-			foreach (string line in lines) {
-				ImGui.TextWrapped(line);
-			}
-		}
-
-		bool writes = false;
-		for (int i = 0; i < objective.CounterRefs.Count && i < objective.CounterOps.Count; i++) {
-			// A slot is applied only when both its ref and its operation are non-negative.
-			if (objective.CounterRefs[i] < 0 || objective.CounterOps[i] < 0) {
-				continue;
-			}
-
-			if (!writes) {
-				ImGui.Separator();
-				ImGui.Text("The first time it comes true:");
-				writes = true;
-			}
-
-			ImGui.BulletText($"counter {objective.CounterRefs[i]}: {MissionText.ObjectiveCounterOp(objective.CounterOps[i])}");
-		}
-	}
-
 	/// <summary>The group's own point, heading and formation.</summary>
 	private void DrawSetup(int group, MissionGroupSetup setup) {
 		string source = setup.PointSource switch {
@@ -774,18 +698,34 @@ internal sealed class PropertiesPanel {
 		}
 	}
 
-	/// <summary>Links to the objectives asked of the selection, or nothing when none is.</summary>
-	private void ObjectiveLinks(IEnumerable<int> objectives) {
+	/// <summary>
+	/// Links to the objectives asked of the selection, and a button that adds one about <paramref name="subject"/>, the
+	/// selection itself (<see cref="ObjectiveEditor"/>).
+	/// </summary>
+	private void ObjectiveLinks(IEnumerable<int> objectives, EditorSelection subject) {
+		ImGui.Separator();
+		ImGui.Text("Related objectives:");
+		ImGui.PushID("objectives");
 		bool any = false;
 		foreach (int objective in objectives) {
-			if (!any) {
-				ImGui.Separator();
-				ImGui.Text("Related objectives:");
-				any = true;
-			}
-
 			ObjectiveLink(objective);
+			any = true;
 		}
+
+		if (!any) {
+			EditorText.Note("None.");
+		}
+
+		string? why = _objectives.WhyNoCreate(subject);
+		ImGui.BeginDisabled(why != null);
+		if (ImGui.Button("Add objective")) {
+			_objectives.RequestCreate(subject);
+		}
+
+		ImGui.EndDisabled();
+		EditorText.Reason(why);
+		EditorText.Reason(_objectives.Failure);
+		ImGui.PopID();
 	}
 
 	private void LabelledActionLink(string label, int action) {

@@ -5311,7 +5311,13 @@
       "confidence": "high",
       "name": "Msn_ResolveTextRef",
       "description": "The .ENG-record member of Msn_ResolveRow6Ref's family: a text id to its data\\mission.str line.",
-      "source": "docs/retail/formats/msn-mission-file.md"
+      "source": "docs/retail/formats/msn-mission-file.md",
+      "verified": {
+        "bytes": "00415a7c+103",
+        "sha1": "02b7ea2c1709",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00415ae3",
@@ -5617,7 +5623,13 @@
       "confidence": "high",
       "name": "Msn_LoadEngText",
       "description": "Loads the mission's .eng (.fre/.ger by Shell_Language) between rows 2 and 3: condition-filtered, a repeated id replacing the text. DAT_00470664 is the count kept.",
-      "source": "docs/retail/formats/msn-mission-file.md"
+      "source": "docs/retail/formats/msn-mission-file.md",
+      "verified": {
+        "bytes": "0041768c+868",
+        "sha1": "863a79d2f273",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004179f0",

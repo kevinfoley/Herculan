@@ -3,32 +3,46 @@ using System.Reflection;
 namespace HercWorks.Core.Data.File.Msn;
 
 /// <summary>
-/// One edit of a <see cref="MissionDocument"/>'s <see cref="MissionFile"/>: each row it changed, as the row stood before
-/// and after, every record copied. <see cref="MissionDocument.Undo"/> and <see cref="MissionDocument.Redo"/> put a row
-/// back as one side left it. A history of these is undone last first, so the rows an undo restores are the ones its
-/// edit left.
+/// One edit of a <see cref="MissionDocument"/>'s <see cref="MissionFile"/> and <c>.ENG</c>: each row it changed, as the
+/// row stood before and after, every record copied, and the <c>.ENG</c>'s records the same way when it changed them.
+/// <see cref="MissionDocument.Undo"/> and <see cref="MissionDocument.Redo"/> put a row back as one side left it. A history
+/// of these is undone last first, so the rows an undo restores are the ones its edit left.
 /// </summary>
 public sealed class MsnEdit {
 	private readonly SortedDictionary<int, (Array Before, Array After)> _rows;
 
-	internal MsnEdit(SortedDictionary<int, (Array Before, Array After)> rows) => _rows = rows;
+	/// <summary>The <c>.ENG</c>'s records before and after, null on a side where the mission had no <c>.ENG</c>; null when the edit left the text alone.</summary>
+	private readonly TextSides? _text;
+
+	internal MsnEdit(SortedDictionary<int, (Array Before, Array After)> rows, TextSides? text = null) {
+		_rows = rows;
+		_text = text;
+	}
 
 	/// <summary>The rows the edit changed.</summary>
 	public IEnumerable<int> Rows => _rows.Keys;
 
+	/// <summary>Whether the edit changed the mission's <c>.ENG</c>.</summary>
+	public bool ChangesText => _text != null;
+
 	/// <summary>
-	/// The edits <paramref name="edits"/> made one after another, as one: each row as the first edit to change it found
-	/// it, and as the last left it.
+	/// The edits <paramref name="edits"/> made one after another, as one: each row, and the text, as the first edit to
+	/// change it found it, and as the last left it.
 	/// </summary>
 	public static MsnEdit Combine(IEnumerable<MsnEdit> edits) {
 		var rows = new SortedDictionary<int, (Array Before, Array After)>();
+		TextSides? text = null;
 		foreach (var edit in edits) {
 			foreach (var (row, sides) in edit._rows) {
 				rows[row] = rows.TryGetValue(row, out var first) ? (first.Before, sides.After) : sides;
 			}
+
+			if (edit._text is { } changed) {
+				text = text == null ? changed : new TextSides(text.Before, changed.After);
+			}
 		}
 
-		return new MsnEdit(rows);
+		return new MsnEdit(rows, text);
 	}
 
 	/// <summary>Writes each changed row of <paramref name="file"/> as the edit found it, or as it left it.</summary>
@@ -37,7 +51,19 @@ public sealed class MsnEdit {
 			MsnRows.Set(file, row, MsnRows.Copy(after ? sides.After : sides.Before));
 		}
 	}
+
+	/// <summary>
+	/// The <c>.ENG</c>'s records as the edit found them, or as it left it, copied, for <paramref name="text"/> to hold;
+	/// null for a side where the mission had no <c>.ENG</c>. False when the edit left the text alone.
+	/// </summary>
+	internal bool TextSide(bool after, out MissionStringFile.StringEntry[]? text) {
+		text = _text == null ? null : MsnRows.CopyText(after ? _text.After : _text.Before);
+		return _text != null;
+	}
 }
+
+/// <summary>A <c>.ENG</c>'s records before and after an edit, null on a side where the mission had no <c>.ENG</c>.</summary>
+internal sealed record TextSides(MissionStringFile.StringEntry[]? Before, MissionStringFile.StringEntry[]? After);
 
 /// <summary>
 /// A field of a GUID-keyed <c>.MSN</c> record that an edit writes through <see cref="MissionDocument.SetField"/>: its
@@ -185,6 +211,12 @@ internal static class MsnRows {
 			default: throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 1 to 4 and 6 to 17 hold records.");
 		}
 	}
+
+	/// <summary>A copy of a <c>.ENG</c>'s records, or null for none.</summary>
+	public static MissionStringFile.StringEntry[]? CopyText(MissionStringFile.StringEntry[]? entries) =>
+		entries == null ? null : Array.ConvertAll(entries, entry => new MissionStringFile.StringEntry {
+			Guid = entry.Guid, ConditionRef = entry.ConditionRef, ParentRef = entry.ParentRef, Len = entry.Len, Val = entry.Val,
+		});
 
 	/// <summary>A copy of <paramref name="records"/> sharing nothing with it: each record and each array it holds copied.</summary>
 	public static Array Copy(Array records) {

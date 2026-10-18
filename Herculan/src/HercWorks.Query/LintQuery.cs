@@ -8,8 +8,9 @@ internal sealed record LintQueryMission(string Mission, IReadOnlyList<ScriptLint
 /// <summary>
 /// <c>lint</c>: <see cref="ScriptDatLint"/> over the <c>script.dat</c> each mission's load writes, built
 /// by <see cref="MissionGenerator"/> with every campaign flag zero and every roll 0 — one variant per
-/// mission, as the engine's training launch builds it. The squad is not known, so the block-7 slot
-/// cap is checked against the roster alone.
+/// mission, as the engine's training launch builds it, and the length of the <c>mission.str</c> it
+/// writes beside it. The squad is not known, so the block-7 slot cap is checked against the roster
+/// alone.
 /// </summary>
 internal static class LintQuery {
 	public static IReadOnlyList<LintQueryMission> Run(RetailData data, IReadOnlyCollection<string> missions) =>
@@ -23,7 +24,7 @@ internal static class LintQuery {
 			new short[MissionGenerator.CampaignFlagCount], new short[MissionGenerator.ClearListLength], _ => 0);
 		var script = new ScriptDatTransformer().Parse(generator.WriteScriptDat()) as ScriptDat
 			?? throw new InvalidDataException($"{mission.Name}'s script.dat did not parse.");
-		return ScriptDatLint.Check(script);
+		return ScriptDatLint.Check(script, textLines: generator.TextLines.Count);
 	}
 
 	public static void Write(TextWriter output, IReadOnlyList<LintQueryMission> missions) {

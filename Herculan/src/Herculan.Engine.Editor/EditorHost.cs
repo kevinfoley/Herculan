@@ -190,7 +190,7 @@ public sealed class EditorHost {
 		_saving.Mission = _mission;
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a herc, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), Delete deletes the selected object or route or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a herc, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), Delete deletes the selected object, route or objective or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -428,7 +428,7 @@ public sealed class EditorHost {
 		_drawables = Upload(_gl, _renderer, mission);
 	}
 
-	// V toggles the top-down view, Delete deletes the selected object or route or removes the selected waypoint, Ctrl+Z
+	// V toggles the top-down view, Delete deletes the selected object, route or objective or removes the selected waypoint, Ctrl+Z
 	// undoes and Ctrl+Y or Ctrl+Shift+Z redoes, Ctrl+S saves, unless a text field or a prompt has the keyboard. None of them
 	// while a drag is under way. While a route is placed, Enter finishes it, and Delete, Undo and Redo do nothing.
 	private void OnKeyDown(IKeyboard keyboard, Key key, int scancode) {
@@ -458,6 +458,8 @@ public sealed class EditorHost {
 				} else {
 					_mission.Routes.RequestRemove(route, waypoint);
 				}
+			} else if (_mission?.Selection.Current is ObjectiveSelection { Objective: var objective }) {
+				_mission.Objectives.RequestDelete(objective);
 			}
 
 			return;
@@ -686,8 +688,9 @@ public sealed class EditorHost {
 		};
 	}
 
-	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the route edit, the order edit, the finished
-	// route and the Undo or Redo the frame's panels, menus and keys asked for; none while a drag is under way.
+	// The delete, the machine fit, the squadmate add or remove, the theater or time of day, the route edit, the order edit,
+	// the objective or text edit, the finished route and the Undo or Redo the frame's panels, menus and keys asked for; none
+	// while a drag is under way.
 	private void RunEditRequests(EditorMission mission) {
 		var deleting = mission.Deleter.TakeRequest();
 		var step = _pendingStep;
@@ -705,6 +708,8 @@ public sealed class EditorHost {
 		mission.Theater.RunRequest();
 		mission.Routes.RunRequest();
 		mission.Orders.RunRequest();
+		mission.Objectives.RunRequest();
+		mission.Texts.RunRequest();
 		mission.Placing.RunRequest();
 
 		if (step == true) {

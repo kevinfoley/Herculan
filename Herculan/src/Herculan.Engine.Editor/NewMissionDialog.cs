@@ -124,14 +124,12 @@ internal sealed class NewMissionDialog {
 		ImGui.SetNextItemWidth(-1f);
 		bool nameWrong = _problem != null;
 		if (nameWrong) {
-			ImGui.PushStyleColor(ImGuiCol.FrameBg, ProblemFieldColor);
-			ImGui.PushStyleColor(ImGuiCol.FrameBgHovered, ProblemFieldHoveredColor);
-			ImGui.PushStyleColor(ImGuiCol.FrameBgActive, ProblemFieldHoveredColor);
+			EditorText.PushProblemField();
 		}
 
 		bool entered = ImGui.InputText("##name", ref _typedName, 32, ImGuiInputTextFlags.EnterReturnsTrue);
 		if (nameWrong) {
-			ImGui.PopStyleColor(3);
+			EditorText.PopProblemField();
 		}
 
 		Spacer();
@@ -226,9 +224,7 @@ internal sealed class NewMissionDialog {
 
 	private static void Problem(string? problem) {
 		if (problem != null) {
-			ImGui.PushStyleColor(ImGuiCol.Text, ProblemColor);
-			ImGui.TextWrapped(problem);
-			ImGui.PopStyleColor();
+			EditorText.Problem(problem);
 		}
 	}
 
@@ -249,10 +245,4 @@ internal sealed class NewMissionDialog {
 	}
 
 	private static void Spacer() => ImGui.Dummy(new Vector2(0f, ScaledImGui.Scaled(6f)));
-
-	private static readonly Vector4 ProblemColor = new(1f, 0.27f, 0.2f, 1f);
-
-	// The name field's background while the name is what is wrong.
-	private static readonly Vector4 ProblemFieldColor = new(0.36f, 0.2f, 0.2f, 1f);
-	private static readonly Vector4 ProblemFieldHoveredColor = new(0.44f, 0.25f, 0.25f, 1f);
 }
