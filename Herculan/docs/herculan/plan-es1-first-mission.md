@@ -32,6 +32,11 @@ Until its step lands, each of these does nothing, tagged `// PLACEHOLDER:` in co
 - **The joystick**, until step 5.
 - **Flyers and bases as simulation objects.** Blocks 7 and 8 are not spawned (their constructors `0001ac58` and `00003cbc` are unread); the zone's placed shapes still draw.
 - **The mission's end.** The status panel that ends the mission (`00046efc`) is unread; the mission runs until the window closes.
+- **The HERCs' crude roots and their weapon models**, until step 3b: every HERC draws root 0 at any distance, since the scale and bias `Shape_DrawAtDetailLevel` reads are set by `00057c08` and the crude roots' renumbering has unread handlers (`00019aef`–`00019b93`); and no weapon model is drawn on a hardpoint, since `0000a308`, which moves a model's points to its mount point, is unread.
+- **The cockpit's colour scheme**, until step 3b: which `dpl\cockpit` entries `CockpitViewManager_LoadViews` installs is unread, so the canopy draws through the theater's palette alone.
+- **The textured faces' column walk**, until step 3b: the HERCs' textured faces are mapped with perspective (decision 8).
+- **The tick's placement of the shadows**, until step 4: `Mech_PlaceLegsOnGround`'s placement runs once after the spawn.
+- **The shell's after-mission files and a career's load**: a single mission's load writes no `car\sm_play.mec` or `car\sm_play.gam`, which only the shell reads back, and a career's mode 1 waits for the shell.
 
 ## Decisions
 
@@ -44,6 +49,7 @@ Made with the user:
 5. **The player's mechanics come before the AI**: movement, the joystick, the cockpit, then weapons and damage, so each is checked against retail on its own; the AI is the last step.
 6. **A named mission loads as a single mission, and the simulator runs on the install's `data\` files.** The shell's mode-0 load writes `data\script.dat`, `data\mission.var` and `data\player.mec` into the install, and the simulator reads whatever those files hold, as `DBSIM.EXE` does, so it also runs on a set retail's shell wrote. A career's mode 1 waits for the shell. `--theater` and `--world` override header words 0, 8 and 9, as engine aids.
 7. **The 320×200 screen is shown at 4:3**, as a CRT showed it, with the `.VUE` projection in the 320×200 screen's pixels.
+8. **A textured face is filled as retail fills it**, column by column with the texture interpolated in screen space ([bitmap fills](../es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7)), the walk run in the fragment shader as the clouds' is. The perspective-correct mapping the core's renderer already does stays behind a code path for a tweak ([Open](#open)).
 
 ## Steps
 
@@ -66,6 +72,8 @@ Each step is one subagent brief, one review (diff, both builds, the tests), one 
 **Step 2b — RE: the single-mission load.** What the shell's mode-0 load hands the simulator and the docs leave Open: what sets the mode `000aad56` and the words `000aacbc`–`000aacc4` that become header words 5–9 for a single mission; the shell's generator at `0009aec0`, its seed and the order of the load's draws; and the mode-0 squad build, from `car\sm_init.dat` through `car\sm_play.mec` to `data\player.mec` (`MsnGen_LoadMission`'s step 8 and `PlayerMec_Write`'s mode-0 path), so that a port writes the three `data\` files as retail does (decision 6).
 
 **Step 3 — port: the mission's machines and the forward view.** In `HercWorks.Core`, models of ES1's `script.dat` blocks and `data\player.mec`, and the shell's mode-0 load that writes them and `data\mission.var` from an `Es1MissionFile` as `MsnGen_LoadMission` (`ES1GO 00035873`) and `WriteScriptDatFile` (`ES1GO 0003445b`) do; in `Herculan.Es1`, the simulator's read of the three files, the simulation world (object pool, groups, the player's machine), the HERC constructed from its chassis file, its loadout configured (`Mech_ConfigureLoadout`, the mount manager and its mounts) and placed by `Mech_AttachToGroup`, drawn posed at rest with its weapon shapes and shadows; and view 0 (decision 3). The user's check: the HERCs stand where retail's do at a mission's start, by landmarks, and the forward view's window, canopy and field of view match retail's.
+
+**Step 3b — RE, then port: what step 3 stopped at.** An ES1DBSIM batch on `0000a308` (a weapon model moved to its mount point), `00057c08` (the detail scale and bias `Shape_DrawAtDetailLevel` reads) and the crude roots' remap handlers `00019aef`–`00019b93`, the `dpl\cockpit` entries `CockpitViewManager_LoadViews` installs, and the order of `+0x9d` against `Mech_ConfigureLoadout` in `DBSim_SpawnMissionObjects`; and in `ES1GO`, the two places retail's `SM_SCR01` set departs from the documented load ([`msn-mission-file.md#open`](../es1/formats/msn-mission-file.md#open)). Then the port: the weapon models on their hardpoints, the detail levels, the cockpit's colours, and the column walk (decision 8) with the perspective-correct code path. The user's check: the HERCs' weapons, their look at a distance, the canopy's colours and the textured faces against retail's.
 
 **Step 4 — port: the tick and the player's movement.** The pacer (decision 2), `Sim_MainTick`'s order with the slice's placeholders, ES1's input build from the keyboard, `Sim_PollPlayerInput`, the throttle, `Mech_LocomotionTick`, the gait and leg animation, root motion, `Mech_CollisionTest` against the zone's shapes and other machines, ground placement, the turret ticks and torso centring. ES1's rounding fixed-point primitives join the core's `SimMath`. The user's check: walking and running pace, the legs' animation, turning and the turret, against the same chassis in retail.
 
@@ -90,4 +98,5 @@ Each is cheap to see and settles something a step rests on:
 ## Open
 
 - **Open:** every placeholder [the slice leaves out](#what-the-slice-leaves-out), each an **Unported:** item in `ROADMAP.md` once its step lands.
-- **Open:** whether the retail missions' group order words (`.MSN` group `0x32`) include any the HERC state table does not handle ([`mech-ai.md#open`](../es1/simulation/mech-ai.md#open)); `HercWorks.Query` over the 62 `.MSN` answers it before step 8.
+- **Open:** whether the HERC state table handles every group order word the retail missions hold ([`mech-ai.md#open`](../es1/simulation/mech-ai.md#open)): `HercWorks.Query orders` over the 77 `.MSN` finds −1, 1, 3, 6, 8, 10 and 11 at group `0x32`; checked against the table before step 8.
+- **Open:** a tweak that maps textured faces with perspective in place of retail's column walk (decision 8): the code path that selects it lands with step 3b; the tweak's setting, its name and its localized strings are not built.

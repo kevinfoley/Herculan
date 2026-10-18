@@ -69,15 +69,11 @@ if (installRoot == null) {
 	return 1;
 }
 
-// A Metaltech: Earthsiege install runs that game's viewer, the one part of it ported so far, and is not remembered:
-// the remembered install is the one a bare launch runs, and that is still Earthsiege 2's front end.
+// A Metaltech: Earthsiege install runs that game's mission, the part of it ported so far, and is not remembered: the
+// remembered install is the one a bare launch runs, and that is still Earthsiege 2's front end. With no mission named it
+// runs on the install's data\ files, as DBSIM.EXE does.
 if (RetailGameDetector.Detect(installRoot) == RetailGame.Earthsiege1) {
-	if (options.MissionPath == null) {
-		HostLog.Fail("A Metaltech: Earthsiege install needs a mission named after it, such as B0_C2_60.");
-		return 1;
-	}
-
-	return Es1ZoneViewer.Run(installRoot, options.MissionPath, options.Es1.ToTheater());
+	return Es1ZoneViewer.Run(installRoot, options.MissionPath, options.Es1.ToOverrides());
 }
 if (options.Es1.Staged) {
 	HostLog.Fail("--theater and --world are for a Metaltech: Earthsiege install.");

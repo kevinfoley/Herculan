@@ -3,6 +3,7 @@ using Herculan.Engine.Input;
 using Herculan.Engine.Install;
 using Herculan.Engine.Shell;
 using Herculan.Engine.Sim;
+using Herculan.Es1.Host;
 using Herculan.Es1.World;
 
 namespace Herculan.Engine.Host;
@@ -380,17 +381,15 @@ sealed class HostOptions {
 					}
 				}
 			} else if (args[i] == "--theater") {
-				// Metaltech: Earthsiege only: header word 0, the theater. An ES1 mission does not fix its own: the shell
-				// takes it from a table in a campaign and draws it otherwise (docs/es1/formats/msn-mission-file.md#header-patches),
-				// and neither is ported, so a mission shown alone needs one named.
+				// Metaltech: Earthsiege only: header word 0, the theater, over the one data\script.dat holds, which a single
+				// mission's load draws (docs/es1/formats/msn-mission-file.md#header-patches). An engine aid.
 				if (HostArguments.TryReadInt(args, ref i, 0, Es1Theater.Names.Count - 1, errors, out int theater)) {
 					options.Es1.Theater = theater;
 				}
 				options.Es1.Staged = true;
 			} else if (args[i] == "--world") {
 				// Metaltech: Earthsiege only: header words 9 and 8, which pick the theater's palette and world file
-				// (docs/es1/formats/wld-world.md#which-file). Outside a campaign the shell takes both from globals whose
-				// writers are Open, so a mission shown alone needs them named.
+				// (docs/es1/formats/wld-world.md#which-file), over the ones data\script.dat holds. An engine aid.
 				if (HostArguments.TryReadInt(args, ref i, 0, Es1Theater.WorldVariants - 1, errors, out int variant)
 						&& HostArguments.TryReadInt(args, ref i, 0, Es1Theater.WorldDetails - 1, errors, out int detail, "--world")) {
 					options.Es1.WorldVariant = variant;
@@ -443,10 +442,10 @@ sealed class ShellOptions {
 sealed class Es1Options {
 	/// <summary>Whether <c>--theater</c> or <c>--world</c> was given, which an Earthsiege 2 install refuses.</summary>
 	public bool Staged { get; set; }
-	public int Theater { get; set; }
-	public int WorldVariant { get; set; }
-	public int WorldDetail { get; set; }
+	public int? Theater { get; set; }
+	public int? WorldVariant { get; set; }
+	public int? WorldDetail { get; set; }
 
-	/// <summary>The theater and world file the flags name, 0 for each one not given.</summary>
-	public Es1Theater ToTheater() => new(Theater, WorldVariant, WorldDetail);
+	/// <summary>The header words the flags override, null for each one not given.</summary>
+	public Es1HeaderOverrides ToOverrides() => new(Theater, WorldVariant, WorldDetail);
 }

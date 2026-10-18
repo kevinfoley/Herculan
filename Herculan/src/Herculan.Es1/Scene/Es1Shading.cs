@@ -6,11 +6,17 @@ using Herculan.Engine.Render;
 namespace Herculan.Es1.Scene;
 
 /// <summary>
-/// How ES1's simulator colours a zone shape's faces (docs/es1/rendering/polygon-shading.md#the-zone-shapes): a solid face
+/// How ES1's simulator colours a shape's faces (docs/es1/rendering/polygon-shading.md#the-distance-bands): a solid face
 /// draws its palette index unchanged, and a shaded face takes entry (light · length) &gt;&gt; 8 of its ramp, which
-/// <c>WorldShades_ApplyForObject</c> (<c>ES1DBSIM 00025d44</c>) re-points before each shape by its distance band. Each
-/// band is one block of <see cref="Table"/>, and a drawn shape reads its band's (<see cref="SceneItem.RampBlock"/>). The
-/// light is <see cref="Es1Sun"/>'s.
+/// <c>WorldShades_ApplyForObject</c> (<c>ES1DBSIM 00025d44</c>) re-points before each object by its type tag's
+/// <c>SHADES.DAT</c> list and its distance band. Each (tag, band) is one block of <see cref="Table"/>, and a drawn object
+/// reads its own (<see cref="SceneItem.RampBlock"/>, <see cref="Block"/>). The light is <see cref="Es1Sun"/>'s.
+///
+/// <para>A ramp the tag's list does not name keeps whatever the last object drawn left it at, and a block holds the
+/// palette's own range for it. That is the original's state for every face this step draws: a zone shape's shaded faces
+/// are all on ramp 14, which only tag 0's list names (docs/es1/rendering/polygon-shading.md#the-theater-shapes-faces),
+/// and a HERC's root 0 shades only on ramps 0, 2, 4, 6, 8 and 12, which tag 7's list names, and ramp 200, which no list
+/// names. The flyers' and bases' tags, whose lists also name ramps 0 to 12, have no object in this step.</para>
 /// </summary>
 public sealed class Es1Shading {
 	/// <summary>
@@ -23,12 +29,20 @@ public sealed class Es1Shading {
 	/// <summary>The type tag every zone shape object carries (docs/es1/formats/zone-terrain.md#the-zone-shape-object).</summary>
 	public const byte ZoneShapeTag = 0;
 
-	private readonly int[] _thresholds;
+	/// <summary>The tags whose bands the table holds, in block order: the zone shapes' and the HERCs'.</summary>
+	public static IReadOnlyList<byte> Tags { get; } = [ZoneShapeTag, 7];
 
-	private Es1Shading(SurfaceShading surfaces, SurfaceRampTable? table, int[] thresholds) {
+	private readonly int[] _tag0Thresholds;
+	private readonly int[] _taggedThresholds;
+	private readonly int _bands;
+
+	private Es1Shading(SurfaceShading surfaces, SurfaceRampTable? table, int[] tag0Thresholds, int[] taggedThresholds,
+			int bands) {
 		Surfaces = surfaces;
 		Table = table;
-		_thresholds = thresholds;
+		_tag0Thresholds = tag0Thresholds;
+		_taggedThresholds = taggedThresholds;
+		_bands = bands;
 	}
 
 	/// <summary>
@@ -38,8 +52,8 @@ public sealed class Es1Shading {
 	public SurfaceShading Surfaces { get; }
 
 	/// <summary>
-	/// The shaded faces' colours, one block per distance band, or null without a palette, a world file or
-	/// <c>dat\shades</c>; the shaded faces then draw through the palette's own ramps, unbanded.
+	/// The shaded faces' colours, one block per (tag, band) in <see cref="Tags"/> order, or null without a palette, a
+	/// world file or <c>dat\shades</c>; the shaded faces then draw through the palette's own ramps, unbanded.
 	/// </summary>
 	public SurfaceRampTable? Table { get; }
 
@@ -51,52 +65,61 @@ public sealed class Es1Shading {
 		}
 
 		var surfaces = new SurfaceShading(ShadeRamp.FromRows(IdentityShadeLevels, 1, rows), palette);
-		int[] thresholds = world?.DistanceBandsB ?? [];
+		int[] tag0 = world?.DistanceBandsB ?? [];
+		int[] tagged = world?.DistanceBandsA ?? [];
 		if (palette is not { ShadeRamps.Count: > 0 } || world == null || shades == null || world.RampRows < 1) {
-			return new Es1Shading(surfaces, null, thresholds);
+			return new Es1Shading(surfaces, null, tag0, tagged, 0);
 		}
 
 		var ranges = LevelRanges(world);
-		var pairs = shades.Lists.FirstOrDefault(list => list.Tag == ZoneShapeTag)?.Pairs ?? [];
 		int bands = world.RampRows;
 
-		// Block b is the raster's ramp table once WorldShades_ApplyForObject has re-pointed the tag's ramps at band b
+		// Block (t, b) is the raster's ramp table once WorldShades_ApplyForObject has re-pointed tag t's ramps at band b
 		// (Palette_SetRampsToRange: a range's consecutive indices).
-		var blocks = new IReadOnlyList<short[]>[bands];
-		for (int band = 0; band < bands; band++) {
-			var ramps = palette.ShadeRamps.ToArray();
-			foreach (var (ramp, column) in pairs) {
-				if (ramp < ramps.Length && column * bands + band < ranges.Length) {
-					var (start, length) = ranges[column * bands + band];
-					ramps[ramp] = Enumerable.Range(start, Math.Max((int)length, 0)).Select(i => (short)i).ToArray();
+		var blocks = new IReadOnlyList<short[]>[Tags.Count * bands];
+		for (int t = 0; t < Tags.Count; t++) {
+			var pairs = shades.Lists.FirstOrDefault(list => list.Tag == Tags[t])?.Pairs ?? [];
+			for (int band = 0; band < bands; band++) {
+				var ramps = palette.ShadeRamps.ToArray();
+				foreach (var (ramp, column) in pairs) {
+					if (ramp < ramps.Length && column * bands + band < ranges.Length) {
+						var (start, length) = ranges[column * bands + band];
+						ramps[ramp] = Enumerable.Range(start, Math.Max((int)length, 0)).Select(i => (short)i).ToArray();
+					}
 				}
-			}
 
-			blocks[band] = ramps;
+				blocks[t * bands + band] = ramps;
+			}
 		}
 
-		byte? Entry(int ramp, int shade, int band) =>
-			ramp < blocks[band].Count && blocks[band][ramp] is { Length: > 0 } entries
+		byte? Entry(int ramp, int shade, int block) =>
+			ramp < blocks[block].Count && blocks[block][ramp] is { Length: > 0 } entries
 				? (byte)entries[shade * entries.Length >> 8]
 				: null;
 
-		// No theater shape has a TSGouraudPoly (docs/es1/rendering/polygon-shading.md#the-theater-shapes-faces), so its
-		// single block is the ramps as the palette loads them.
-		var table = SurfaceRampTable.FromIndices(bands, Entry,
+		var table = SurfaceRampTable.FromIndices(blocks.Length, Entry,
 			(ramp, shade) => ramp < palette.ShadeRamps.Count && palette.ShadeRamps[ramp] is { Length: > 0 } entries
 				? (byte)entries[shade * entries.Length >> 8]
 				: null,
 			palette);
-		return new Es1Shading(surfaces, table, thresholds);
+		return new Es1Shading(surfaces, table, tag0, tagged, bands);
+	}
+
+	/// <summary>The block an object of <paramref name="tag"/> at <paramref name="distance"/> reads, or null without a table.</summary>
+	public int? Block(byte tag, int distance) {
+		int t = Tags.ToList().IndexOf(tag);
+		return Table != null && t >= 0 ? t * _bands + Math.Min(Band(tag, distance), _bands - 1) : null;
 	}
 
 	/// <summary>
-	/// <c>WorldShades_DistanceBand</c> (<c>00025cb4</c>) for a zone shape: how many of the tag-0 thresholds the distance
-	/// has reached, unsigned, at most one fewer than there are. A zone shape adds no distance offset.
+	/// <c>WorldShades_DistanceBand</c> (<c>00025cb4</c>): how many of the tag's thresholds the distance has reached,
+	/// unsigned, at most one fewer than there are; tag 0 reads <c>WorldShades_BandsTag0</c> and any other tag
+	/// <c>WorldShades_BandsTagged</c>. Neither tag here adds a distance offset.
 	/// </summary>
-	public int Band(int distance) {
+	public int Band(byte tag, int distance) {
+		var thresholds = tag == ZoneShapeTag ? _tag0Thresholds : _taggedThresholds;
 		int band = 0;
-		while (band < _thresholds.Length - 1 && (uint)distance >= (uint)_thresholds[band]) {
+		while (band < thresholds.Length - 1 && (uint)distance >= (uint)thresholds[band]) {
 			band++;
 		}
 
@@ -104,11 +127,13 @@ public sealed class Es1Shading {
 	}
 
 	/// <summary>
-	/// <c>WorldShades_IsBeyondLastBand</c> (<c>00025f38</c>) for a zone shape: whether the distance exceeds the tag-0
-	/// table's last threshold, unsigned, which leaves the shape undrawn.
+	/// <c>WorldShades_IsBeyondLastBand</c> (<c>00025f38</c>): whether the distance exceeds the tag's table's last threshold,
+	/// unsigned, which leaves the object undrawn.
 	/// </summary>
-	public bool IsBeyondLastBand(int distance) =>
-		_thresholds.Length > 0 && (uint)_thresholds[^1] < (uint)distance;
+	public bool IsBeyondLastBand(byte tag, int distance) {
+		var thresholds = tag == ZoneShapeTag ? _tag0Thresholds : _taggedThresholds;
+		return thresholds.Length > 0 && (uint)thresholds[^1] < (uint)distance;
+	}
 
 	/// <summary>
 	/// <c>WorldShades_LevelRanges</c> (<c>000afdbc</c>) as <c>Palette_InterpolateIndexRanges</c> (<c>000289e0</c>) expands

@@ -99,6 +99,38 @@ public abstract class Es1WalkedFileTransformer<T> : ByteTransformer<T> where T :
 		}
 	}
 
+	/// <summary>
+	/// A HERC record at the cursor, as <c>Herc_ReadFromStream</c> (<c>ES1GO 0002352f</c>) reads it
+	/// (docs/es1/formats/car-hercs-and-stock.md#the-herc-record).
+	/// </summary>
+	protected Data.File.Dat.Shell.Es1HercRecord ReadHerc() {
+		var herc = new Data.File.Dat.Shell.Es1HercRecord { Chassis = ReadInt16() };
+		short mounts = ReadInt16();
+		if (mounts < 0) {
+			throw new InvalidDataException($"The mount count at {Index - 2} is {mounts}.");
+		}
+
+		herc.Weapons = ReadInt16s(mounts);
+		herc.MountWords = ReadInt16s(mounts);
+		herc.Word = ReadInt16();
+		herc.Status = ReadInt16s(Data.File.Dat.Shell.Es1HercRecord.StatusLength);
+		return herc;
+	}
+
+	/// <summary>Writes a HERC record in <see cref="ReadHerc"/>'s layout.</summary>
+	protected static void WriteHerc(BinaryWriter w, Data.File.Dat.Shell.Es1HercRecord herc) {
+		if (herc.MountWords.Length != herc.Weapons.Length || herc.Status.Length != Data.File.Dat.Shell.Es1HercRecord.StatusLength) {
+			throw new InvalidDataException("A HERC needs one mount word per weapon and a 33-word status block.");
+		}
+
+		w.Write(herc.Chassis);
+		w.Write(checked((short)herc.Weapons.Length));
+		WriteInt16s(w, herc.Weapons);
+		WriteInt16s(w, herc.MountWords);
+		w.Write(herc.Word);
+		WriteInt16s(w, herc.Status);
+	}
+
 	private void Require(int count) {
 		if (Index + count > Bytes!.Length) {
 			throw new InvalidDataException($"The file ends at {Bytes.Length}, inside a field read at {Index}.");

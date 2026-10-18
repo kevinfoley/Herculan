@@ -42,32 +42,6 @@ public class Es1HercListTransformer : Es1WalkedFileTransformer<Es1HercList> {
 		}
 	}
 
-	private Es1HercRecord ReadHerc() {
-		var herc = new Es1HercRecord { Chassis = ReadInt16() };
-		short mounts = ReadInt16();
-		if (mounts < 0) {
-			throw new InvalidDataException($"The mount count at {Index - 2} is {mounts}.");
-		}
-
-		herc.Weapons = ReadInt16s(mounts);
-		herc.MountWords = ReadInt16s(mounts);
-		herc.Word = ReadInt16();
-		herc.Status = ReadInt16s(Es1HercRecord.StatusLength);
-		return herc;
-	}
-
-	private static void WriteHerc(BinaryWriter w, Es1HercRecord herc) {
-		if (herc.MountWords.Length != herc.Weapons.Length || herc.Status.Length != Es1HercRecord.StatusLength) {
-			throw new InvalidDataException("A HERC needs one mount word per weapon and a 33-word status block.");
-		}
-
-		w.Write(herc.Chassis);
-		w.Write(checked((short)herc.Weapons.Length));
-		WriteInt16s(w, herc.Weapons);
-		WriteInt16s(w, herc.MountWords);
-		w.Write(herc.Word);
-		WriteInt16s(w, herc.Status);
-	}
 }
 
 /// <summary>
