@@ -123,6 +123,23 @@ internal static class TextReport {
 			$"{rows.Sum(r => r.Bases),6}  {rows.Sum(r => r.Groups),6}  {rows.Sum(r => r.TextRecords ?? 0)}");
 	}
 
+	/// <summary>ES1's eleven rows, in file order (docs/es1/formats/msn-mission-file.md#the-layout).</summary>
+	public static void Es1Missions(TextWriter o, RetailData data, IReadOnlyList<Es1MissionSummary> rows) {
+		var headings = new[] { "Cond", "Patch", "Point", "Head", "Waypt", "Area", "Action", "Mech", "Flyer", "Base", "Group" }
+			.Select((h, i) => $"{i + 1}:{h}").ToList();
+		string Line(string name, IEnumerable<int> counts, string tail) =>
+			$"{name,-10}" + string.Concat(counts.Select((c, i) => $" {c.ToString().PadLeft(headings[i].Length)}")) + tail;
+
+		o.WriteLine($"{rows.Count} missions in {data.MissionArchivePath}");
+		o.WriteLine();
+		o.WriteLine($"{"Mission",-10} " + string.Join(" ", headings));
+		foreach (var r in rows) {
+			o.WriteLine(Line(r.Mission, r.Rows, r.OtherLayout ? "  other layout: header words, no row 2" : ""));
+		}
+
+		o.WriteLine(Line("Total", Enumerable.Range(0, headings.Count).Select(i => rows.Sum(r => r.Rows[i])), ""));
+	}
+
 	public static void Actions(TextWriter o, IReadOnlyList<ActionQueryMission> missions) {
 		foreach (var m in missions) {
 			o.WriteLine($"{m.Mission}: {m.Actions.Count} actions");
@@ -349,8 +366,8 @@ internal static class TextReport {
 		}
 	}
 
-	private static string Label(int type, string? name) => name == null ? $"0x{type:x2}" : $"0x{type:x2} {name}";
+	internal static string Label(int type, string? name) => name == null ? $"0x{type:x2}" : $"0x{type:x2} {name}";
 
-	private static string Cond(short guid, string? text, bool decode) =>
+	internal static string Cond(short guid, string? text, bool decode) =>
 		decode && text != null ? $"cond {guid} ({text})" : $"cond {guid}";
 }

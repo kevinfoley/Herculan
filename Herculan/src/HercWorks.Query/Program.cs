@@ -1,6 +1,7 @@
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using HercWorks.Core.Io.Transform;
 
 namespace HercWorks.Query;
 
@@ -10,56 +11,64 @@ namespace HercWorks.Query;
 /// </summary>
 internal static class Program {
 	private const string Usage = """
-		HercWorks.Query — search the retail .MSN missions.
+		HercWorks.Query — search the retail .MSN missions of an Earthsiege 2 or a Metaltech: Earthsiege
+		(ES1) install. The install is ES1's when its root holds GO.EXE, else ES2's. Rows are numbered in
+		each game's own order: ES2's #1-#17, ES1's 1-11.
 
-		  structures --type <index|name>   row #14 records of a BASES.DAT type
-		  mechs      --type <index|name>   row #12 records of a MECHS.NAM type
-		  flyers     --type <index|name>   row #13 records of a FLYERS.NAM type
-		  flag <n>                         every record testing or writing campaign flag n
+		Both games:
+		  structures --type <index|name>   base records of a BASES.DAT type: ES2's row #14, ES1's row 10
+		  mechs      --type <index|name>   mech records of a MECHS.NAM type: ES2's row #12, ES1's row 8
+		  flyers     --type <index|name>   flyer records of a FLYERS.NAM type: ES2's row #13, ES1's row 9
 		  types structures|mechs|flyers    list a roster's type table
-		  missions                         every mission's record count per roster row
+		  missions                         every mission's record count per row: ES2's rows #1, #12, #13,
+		                                   #14, #16 and its .ENG; all eleven of ES1's, and which files are
+		                                   in the other layout
+		  patches [<mission>...]           every row #2 header patch, of every mission or of those named:
+		                                   its condition and ten header words; ES1's with its theater
+		                                   (word 0) and zone (word 1), and an other-layout file's own words
+		  orders [<mission>...]            ES2: every row #16 group's row #15 orders, of every mission or
+		                                   of those named: verb, formation, point, route, subject and the
+		                                   action that ends each. ES1: every row 11 group's order (0x32),
+		                                   formation (0x30), member kind (0x2e), side word, target and
+		                                   action, after a census of the order values
+		  conditions [<mission>...]        every row #1 condition, of every mission or of those named:
+		                                   the test, draw or variant table, its chain, and what it gates
+		  repeats [<mission>...]           every GUID two or more unconditioned records carry in ES2's
+		                                   rows #3, #6, #7, #8 or #9 or ES1's rows 3 to 6, where the last
+		                                   replaces the rest
+		  census                           every entry of every archive in the install's VOL folder
+		                                   through the HercWorks reader bound to it, written back and
+		                                   compared: per archive and type, how many round-trip, parse,
+		                                   fail or have no reader, then each failure's cursor offset
+
+		ES2 only (over an ES1 install each prints one line saying why, and exits 0):
+		  flag <n>                         every record testing or writing campaign flag n
 		  actions [<mission>...]           every row #10 action of every mission, or of those named:
 		                                   its trigger subject, areas, verb, the records firing it and
 		                                   the groups waiting on it
-		  orders [<mission>...]            every row #16 group's row #15 orders, of every mission or of
-		                                   those named: verb, formation, point, route, subject and the
-		                                   action that ends each
 		  routes [<mission>...]            every row #8 route, of every mission or of those named: its
 		                                   waypoints' coordinates and leg lengths, whether it closes on
 		                                   itself, and the group orders and objectives naming it
 		  objectives [<mission>...]        every row #17 objective, of every mission or of those named:
 		                                   mandatory or failure, condition, subject, route, failure
 		                                   text and counter writes
-		  conditions [<mission>...]        every row #1 condition, of every mission or of those named:
-		                                   the test, draw or variant table, its chain, and what it gates
-		  repeats [<mission>...]           every GUID two or more unconditioned records carry in rows
-		                                   #3, #6, #7, #8 or #9, where the last replaces the rest
 		  lint [<mission>...]              the mission check over the script.dat each mission's load
 		                                   writes, every campaign flag zero and every roll 0
 		  text <mission>... [--ids LO-HI]  the named missions' .ENG text records in file order, each with
 		                                   its decoded condition; a later record of an id replaces the
 		                                   line when its condition holds
 
-		  census                           every entry of every archive in the install's VOL folder
-		                                   through the HercWorks reader bound to it, written back and
-		                                   compared: per archive and type, how many round-trip, parse,
-		                                   fail or have no reader, then each failure's cursor offset
-
-		  census                           every entry of every archive in the install's VOL folder
-		                                   through the HercWorks reader bound to it, written back and
-		                                   compared: per archive and type, how many round-trip, parse,
-		                                   fail or have no reader, then each failure's cursor offset
-
 		Options:
 		  --install <dir>   the install to read (default: the nearest ES2\ folder above the working
-		                    directory). ZONES.VOL and SIMVOL0.VOL are read from <dir>\VOL, or from the
-		                    VOL folder of the directory <dir>\DATA\drive.cfg names.
+		                    directory; name an ES1 install to read ES1's). ZONES.VOL and SIMVOL0.VOL are
+		                    read from <dir>\VOL, or from the VOL folder of the directory <dir>\DATA\drive.cfg
+		                    names.
 		  --against <dir>   census: count the entries whose folder, name and bytes match an entry of
 		                    this install's archives
 		  --variants        decode the condition on each conditioned record ("flag 625 > 0")
-		  --route-switch    orders: list only groups with a later order naming a route other than
+		  --route-switch    orders, ES2: list only groups with a later order naming a route other than
 		                    slot 0's
-		  --with-point      orders: list only groups with an order that names a row #6 point
+		  --with-point      orders, ES2: list only groups with an order that names a row #6 point
 		  --ids LO-HI       text: list only the records whose id is in this range (--ids 200-204);
 		                    routes: only the routes whose GUID is in it
 		  --json            print the raw result as JSON
@@ -142,6 +151,12 @@ internal static class Program {
 		}
 
 		var data = RetailData.Load(install);
+		bool es1 = data.Game == RetailGame.Earthsiege1;
+		if (es1 && Es2Only(command) is { } why) {
+			output.WriteLine(why);
+			return 0;
+		}
+
 		if (command == "flag") {
 			if (positional.Count < 2 || !short.TryParse(positional[1], out short flag) || flag < 0) {
 				return Fail("flag takes a flag index, 0-999.");
@@ -152,6 +167,20 @@ internal static class Program {
 				WriteJson(output, result);
 			} else {
 				TextReport.Flag(output, data, result);
+			}
+
+			return 0;
+		}
+
+		if (command == "missions" && es1) {
+			var counts = data.Es1Missions.Select(m => new Es1MissionSummary(m.Name, m.OtherLayout, [
+				m.File.Conditions.Length, m.File.HeaderPatches.Length, m.File.Points.Length, m.File.Headings.Length,
+				m.File.WaypointGroups.Length, m.File.TriggerAreas.Length, m.File.Actions.Length, m.File.Mechs.Length,
+				m.File.Flyers.Length, m.File.Bases.Length, m.File.Groups.Length])).ToList();
+			if (json) {
+				WriteJson(output, counts);
+			} else {
+				TextReport.Es1Missions(output, data, counts);
 			}
 
 			return 0;
@@ -170,9 +199,20 @@ internal static class Program {
 			return 0;
 		}
 
-		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats"
-				&& positional.Skip(1).FirstOrDefault(n => !data.Missions.Any(m => string.Equals(m.Name, n, StringComparison.OrdinalIgnoreCase))) is { } unknown) {
+		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats" or "patches"
+				&& positional.Skip(1).FirstOrDefault(n => !data.MissionNames.Contains(n, StringComparer.OrdinalIgnoreCase)) is { } unknown) {
 			return Fail($"No mission is named {unknown}; `missions` lists them.");
+		}
+
+		if (command == "patches") {
+			var patches = PatchQuery.Run(data, positional.Skip(1).ToList());
+			if (json) {
+				WriteJson(output, patches);
+			} else {
+				PatchQuery.Write(output, patches);
+			}
+
+			return 0;
 		}
 
 		short lowId = short.MinValue, highId = short.MaxValue;
@@ -221,7 +261,7 @@ internal static class Program {
 		}
 
 		if (command == "repeats") {
-			var repeats = RepeatQuery.Run(data, positional.Skip(1).ToList());
+			var repeats = es1 ? RepeatQuery.RunEs1(data, positional.Skip(1).ToList()) : RepeatQuery.Run(data, positional.Skip(1).ToList());
 			if (json) {
 				WriteJson(output, repeats);
 			} else {
@@ -232,11 +272,26 @@ internal static class Program {
 		}
 
 		if (command == "conditions") {
-			var conditions = ConditionQuery.Run(data, positional.Skip(1).ToList());
+			var conditions = es1 ? ConditionQuery.RunEs1(data, positional.Skip(1).ToList()) : ConditionQuery.Run(data, positional.Skip(1).ToList());
 			if (json) {
 				WriteJson(output, conditions);
 			} else {
 				ConditionQuery.Write(output, conditions);
+			}
+
+			return 0;
+		}
+
+		if (command == "orders" && es1) {
+			if (routeSwitch || withPoint) {
+				return Fail("--route-switch and --with-point filter ES2's row #15 order records; ES1 missions have no such row.");
+			}
+
+			var es1Orders = Es1OrderQuery.Run(data, positional.Skip(1).ToList());
+			if (json) {
+				WriteJson(output, es1Orders);
+			} else {
+				Es1OrderQuery.Write(output, es1Orders);
 			}
 
 			return 0;
@@ -306,6 +361,17 @@ internal static class Program {
 			return Fail($"No {Roster.Noun(kind)} type is named {type}; `types {command}` lists them.");
 		}
 
+		if (es1) {
+			var es1Query = Es1TypeQuery.Run(data, kind, types);
+			if (json) {
+				WriteJson(output, es1Query);
+			} else {
+				Es1TypeQuery.Write(output, data, es1Query, variants);
+			}
+
+			return 0;
+		}
+
 		var query = TypeQuery.Run(data, kind, types);
 		if (json) {
 			WriteJson(output, query);
@@ -315,6 +381,20 @@ internal static class Program {
 
 		return 0;
 	}
+
+	/// <summary>
+	/// The line an ES2-only command prints over an ES1 install: why it has no ES1 answer (docs/es1/formats/msn-mission-file.md#the-layout).
+	/// Null for a command that answers for both games.
+	/// </summary>
+	private static string? Es2Only(string command) => command switch {
+		"text" => "ES1 missions have no text rows: their .ENG holds the shell's briefing, objectives and debriefing, which the mission load does not read.",
+		"objectives" => "ES1 missions have no objectives row (ES2's row #17).",
+		"flag" => "flag reads ES2's campaign flags and the rows that write them; it has no ES1 counterpart.",
+		"actions" => "actions reads ES2's row #10 actions, their counters, messages and timers; it has no ES1 counterpart.",
+		"routes" => "routes reads ES2's row #8 routes and the row #15 orders and row #17 objectives naming them; it has no ES1 counterpart.",
+		"lint" => "lint checks the script.dat ES2's mission load writes; it has no ES1 counterpart.",
+		_ => null,
+	};
 
 	private static RosterKind? RosterOf(string word) => word.ToLowerInvariant() switch {
 		"structures" or "bases" => RosterKind.Base,

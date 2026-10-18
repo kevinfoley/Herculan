@@ -2,7 +2,9 @@ using HercWorks.Core.Data.File;
 using HercWorks.Core.Data.File.Cfg;
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Msn;
+using HercWorks.Core.Data.File.Msn.Es1;
 using HercWorks.Core.Io;
+using HercWorks.Core.Io.Transform;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using HercWorks.Vol;
@@ -16,15 +18,31 @@ namespace HercWorks.Query;
 /// <param name="EngBytes">The <c>.ENG</c> as stored, or null when the mission has none.</param>
 internal sealed record Mission(string Name, MissionFile File, MissionStringFile? Text, byte[] MsnBytes, byte[]? EngBytes);
 
+/// <summary>One retail ES1 mission, its <c>.MSN</c> read by <see cref="Es1MissionFileTransformer"/>.</summary>
+/// <param name="Name">The file name without its extension, <c>SM_SCR01</c>.</param>
+internal sealed record Es1Mission(string Name, Es1MissionFile File) {
+	/// <summary>Whether the file is in the other layout (<see cref="Es1MissionFile.HeaderWords"/> set).</summary>
+	public bool OtherLayout => File.HeaderWords != null;
+}
+
 /// <summary>One mission's record counts, for <c>missions</c>.</summary>
 /// <param name="TextRecords">The <c>.ENG</c>'s record count, null when the mission has none.</param>
 internal sealed record MissionSummary(string Mission, int Conditions, int Mechs, int Flyers, int Bases, int Groups, int? TextRecords);
+
+/// <summary>One ES1 mission's record count in each of its eleven rows, in file order, for <c>missions</c>.</summary>
+internal sealed record Es1MissionSummary(string Mission, bool OtherLayout, IReadOnlyList<int> Rows);
 
 /// <summary>
 /// Everything a query reads out of an install, parsed by HercWorks.Core: every <c>MSN\*.MSN</c> and its
 /// <c>.ENG</c> out of <c>ZONES.VOL</c>, and the type tables that name what the rosters place —
 /// <c>dat\BASES.DAT</c>, <c>nam\MECHS.NAM</c>, <c>nam\FLYERS.NAM</c> and <c>str\STRINGS0.STR</c> — out
 /// of <c>SIMVOL0.VOL</c>.
+///
+/// <para>The install's game is <see cref="RetailGameDetector.Detect"/>'s. An ES1 install's missions are
+/// read by <see cref="Es1MissionFileTransformer"/> into <see cref="Es1Missions"/>, without their
+/// <c>.ENG</c>, which holds the shell's briefing rather than rows the load reads
+/// (docs/es1/formats/msn-mission-file.md); its <c>BASES.DAT</c> by <see cref="Es1BasesDatTransformer"/>.
+/// <see cref="Missions"/> then is empty.</para>
 ///
 /// <para>Each archive is opened by name, from the install's <c>VOL</c> folder and then from the
 /// <c>VOL</c> folder of the directory its <c>DATA\drive.cfg</c> names, which is where a v1.10 Minimum
@@ -41,24 +59,41 @@ internal sealed class RetailData {
 	public const int StructureNameGroup = 23;
 	public const int VehicleNameGroup = 24;
 
-	private RetailData(string installRoot, string missionArchive, IReadOnlyList<Mission> missions,
-			BasesDat? bases, NameList? mechs, NameList? flyers, StringFile? strings) {
+	/// <summary>ES1's <c>STRINGS0.STR</c> group of structure type names (docs/es1/formats/bases-dat.md#the-type-record).</summary>
+	public const int Es1StructureNameGroup = 20;
+
+	private RetailData(RetailGame game, string installRoot, string missionArchive, IReadOnlyList<Mission> missions,
+			IReadOnlyList<Es1Mission> es1Missions, BasesDat? bases, Es1BasesDat? es1Bases, NameList? mechs, NameList? flyers,
+			StringFile? strings) {
+		Game = game;
 		InstallRoot = installRoot;
 		MissionArchivePath = missionArchive;
 		Missions = missions;
+		Es1Missions = es1Missions;
 		Bases = bases;
+		Es1Bases = es1Bases;
 		MechNames = mechs;
 		FlyerNames = flyers;
 		SimStrings = strings;
 	}
 
+	/// <summary>The game the install holds, which decides whether <see cref="Missions"/> or <see cref="Es1Missions"/> is filled.</summary>
+	public RetailGame Game { get; }
+
 	public string InstallRoot { get; }
 	public string MissionArchivePath { get; }
 
-	/// <summary>The missions, ordered by name.</summary>
+	/// <summary>An ES2 install's missions, ordered by name; empty for an ES1 install.</summary>
 	public IReadOnlyList<Mission> Missions { get; }
 
+	/// <summary>An ES1 install's missions, ordered by name; empty for an ES2 install.</summary>
+	public IReadOnlyList<Es1Mission> Es1Missions { get; }
+
+	/// <summary>Every mission's name, of whichever game the install holds.</summary>
+	public IEnumerable<string> MissionNames => Game == RetailGame.Earthsiege1 ? Es1Missions.Select(m => m.Name) : Missions.Select(m => m.Name);
+
 	public BasesDat? Bases { get; }
+	public Es1BasesDat? Es1Bases { get; }
 	public NameList? MechNames { get; }
 	public NameList? FlyerNames { get; }
 	public StringFile? SimStrings { get; }
@@ -85,10 +120,13 @@ internal sealed class RetailData {
 		string zones = FindArchive(installRoot, MissionArchive)
 			?? throw new FileNotFoundException($"No {ArchiveFolder}\\{MissionArchive} in {installRoot} or the directory its drive.cfg names.");
 
+		var game = RetailGameDetector.Detect(installRoot);
 		var zonesVol = VolFileReader.ParseVolFile(zones);
 		var msnTransformer = new MissionFileTransformer();
+		var es1MsnTransformer = new Es1MissionFileTransformer();
 		var engTransformer = new MissionStringFileTransformer();
 		var missions = new List<Mission>();
+		var es1Missions = new List<Es1Mission>();
 		foreach (var entry in EntriesIn(zonesVol, "MSN")) {
 			string fileName = entry.FileName!.Trim();
 			if (!fileName.EndsWith(".MSN", StringComparison.OrdinalIgnoreCase)) {
@@ -97,6 +135,12 @@ internal sealed class RetailData {
 
 			string name = Path.GetFileNameWithoutExtension(fileName);
 			byte[] msn = entry.RawBytes ?? throw new InvalidDataException($"{fileName} is empty.");
+			if (game == RetailGame.Earthsiege1) {
+				es1Missions.Add(new Es1Mission(name.ToUpperInvariant(), es1MsnTransformer.Parse(msn)
+					?? throw new InvalidDataException($"{fileName} is empty.")));
+				continue;
+			}
+
 			var file = msnTransformer.Parse(msn)
 				?? throw new InvalidDataException($"{fileName} is empty.");
 			byte[]? eng = Find(zonesVol, "MSN", name + ".ENG")?.RawBytes;
@@ -105,27 +149,46 @@ internal sealed class RetailData {
 		}
 
 		missions.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
+		es1Missions.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
 
 		BasesDat? bases = null;
+		Es1BasesDat? es1Bases = null;
 		NameList? mechs = null, flyers = null;
 		StringFile? strings = null;
 		if (FindArchive(installRoot, SimulatorArchive) is { } sim) {
 			var simVol = VolFileReader.ParseVolFile(sim);
-			bases = Find(simVol, "DAT", "BASES.DAT") is { RawBytes: { } b } ? new BasesDatTransformer().Parse(b) : null;
+			if (Find(simVol, "DAT", "BASES.DAT") is { RawBytes: { } b }) {
+				if (game == RetailGame.Earthsiege1) {
+					es1Bases = new Es1BasesDatTransformer().Parse(b);
+				} else {
+					bases = new BasesDatTransformer().Parse(b);
+				}
+			}
+
 			mechs = Find(simVol, "NAM", "MECHS.NAM") is { RawBytes: { } m } ? new NameListTransformer().Parse(m) : null;
 			flyers = Find(simVol, "NAM", "FLYERS.NAM") is { RawBytes: { } f } ? new NameListTransformer().Parse(f) : null;
 			strings = Find(simVol, "STR", "STRINGS0.STR") is { RawBytes: { } s } ? new StringFileTransformer().Parse(s) : null;
 		}
 
-		return new RetailData(Path.GetFullPath(installRoot), Path.GetFullPath(zones), missions, bases, mechs, flyers, strings);
+		return new RetailData(game, Path.GetFullPath(installRoot), Path.GetFullPath(zones), missions, es1Missions,
+			bases, es1Bases, mechs, flyers, strings);
 	}
 
 	/// <summary>
-	/// The name a structure type's MFD readout gives it: <c>STRINGS0.STR</c> group 23 or 24, picked
+	/// The name a structure type's MFD readout gives it. ES2's: <c>STRINGS0.STR</c> group 23 or 24, picked
 	/// by its texture selector, at its silhouette index (docs/retail/simulation/mfd.md#viewport-and-condition-per-class).
+	/// ES1's: group 20 at the type record's index (docs/es1/formats/bases-dat.md#the-type-record).
 	/// </summary>
 	public string? StructureName(int typeIndex) {
-		if (Bases is not { } bases || SimStrings is not { } strings || typeIndex < 0 || typeIndex >= bases.Types.Length) {
+		if (SimStrings is not { } strings || typeIndex < 0) {
+			return null;
+		}
+
+		if (Es1Bases is { } es1Bases) {
+			return typeIndex < es1Bases.Types.Length ? strings.Text(Es1StructureNameGroup, es1Bases.Types[typeIndex].TypeIndex) : null;
+		}
+
+		if (Bases is not { } bases || typeIndex >= bases.Types.Length) {
 			return null;
 		}
 
@@ -137,7 +200,7 @@ internal sealed class RetailData {
 	public int TypeCount(RosterKind kind) => kind switch {
 		RosterKind.Mech => MechNames?.Names.Length ?? 0,
 		RosterKind.Flyer => FlyerNames?.Names.Length ?? 0,
-		_ => Bases?.Types.Length ?? 0,
+		_ => Bases?.Types.Length ?? Es1Bases?.Types.Length ?? 0,
 	};
 
 	/// <summary>A roster type's name, or null when the table has none for it.</summary>
