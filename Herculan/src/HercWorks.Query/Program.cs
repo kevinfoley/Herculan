@@ -45,6 +45,10 @@ internal static class Program {
 		  header <mission>                 the mission's row #2 records as read, beside the script.dat
 		                                   header its load writes with every campaign flag zero and every
 		                                   roll 0
+		  values --row N --field X [<mission>...]
+		                                   how many records of typed row #N (1, 3, 4, 6-17), of every mission
+		                                   or of those named, carry each value of field X, most first; raw, as
+		                                   records reads them
 
 		  census                           every entry of every archive in the install's VOL folder
 		                                   through the HercWorks reader bound to it, written back and
@@ -63,7 +67,17 @@ internal static class Program {
 		  --with-point      orders: list only groups with an order that names a row #6 point
 		  --ids LO-HI       text: list only the records whose id is in this range (--ids 200-204);
 		                    routes: only the routes whose GUID is in it
-		  --row N           records: list only row #N, 1-17
+		  --row N           records: list only row #N, 1-17; values: the row to count
+		  --field X         values: a property of the row's record type, any case (--field TypeIndex); an
+		                    array takes an element index (--field OrderRefs[0]), and without one each
+		                    whole array is a value. An unknown field lists the row's fields
+		  --non-squad       values: leave out the player's squad: row #16's group 0 and every later
+		                    record with its GUID, the row #12 records those name and the alternatives
+		                    their variant keys draw; row #15 keeps the orders a group outside it names
+		  --kind K          values: mech, flyer or structure — row #16 groups naming a member of that
+		                    member kind, row #15 orders such a group names
+		  --where F=V       values: count only the records whose field F (as --field names it) prints
+		  --where F!=V      as V, or does not; repeatable, all must hold (--where TypeIndex!=-1)
 		  --json            print the raw result as JSON
 
 		A type is a decimal or 0x-hex index, a name matched whole and then as a prefix, or all
@@ -80,9 +94,10 @@ internal static class Program {
 	}
 
 	internal static int Run(string[] args, TextWriter output) {
-		string? install = null, type = null, against = null, ids = null, rowOption = null;
-		bool json = false, variants = false, routeSwitch = false, withPoint = false;
+		string? install = null, type = null, against = null, ids = null, rowOption = null, field = null, kindOption = null;
+		bool json = false, variants = false, routeSwitch = false, withPoint = false, nonSquad = false;
 		var positional = new List<string>();
+		var where = new List<string>();
 		for (int i = 0; i < args.Length; i++) {
 			switch (args[i].ToLowerInvariant()) {
 				case "--install" when i + 1 < args.Length:
@@ -99,6 +114,18 @@ internal static class Program {
 					break;
 				case "--row" when i + 1 < args.Length:
 					rowOption = args[++i];
+					break;
+				case "--field" when i + 1 < args.Length:
+					field = args[++i];
+					break;
+				case "--kind" when i + 1 < args.Length:
+					kindOption = args[++i];
+					break;
+				case "--where" when i + 1 < args.Length:
+					where.Add(args[++i]);
+					break;
+				case "--non-squad":
+					nonSquad = true;
 					break;
 				case "--json":
 					json = true;
@@ -175,7 +202,7 @@ internal static class Program {
 			return 0;
 		}
 
-		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats" or "records" or "header"
+		if (command is "actions" or "orders" or "routes" or "objectives" or "conditions" or "text" or "lint" or "repeats" or "records" or "header" or "values"
 				&& positional.Skip(1).FirstOrDefault(n => !data.Missions.Any(m => string.Equals(m.Name, n, StringComparison.OrdinalIgnoreCase))) is { } unknown) {
 			return Fail($"No mission is named {unknown}; `missions` lists them.");
 		}
@@ -219,6 +246,24 @@ internal static class Program {
 				WriteJson(output, records);
 			} else {
 				RecordQuery.WriteRecords(output, records);
+			}
+
+			return 0;
+		}
+
+		if (command == "values") {
+			if (rowOption == null || !int.TryParse(rowOption, out int row) || field == null) {
+				return Fail("values needs --row N and --field X.");
+			}
+
+			if (ValueQuery.Run(data, positional.Skip(1).ToList(), row, field, kindOption, nonSquad, where, out string? error) is not { } values) {
+				return Fail(error!);
+			}
+
+			if (json) {
+				WriteJson(output, values);
+			} else {
+				ValueQuery.Write(output, values);
 			}
 
 			return 0;

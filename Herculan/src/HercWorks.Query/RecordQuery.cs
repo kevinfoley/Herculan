@@ -152,15 +152,20 @@ internal static class RecordQuery {
 	/// in declaration order.
 	/// </summary>
 	private static IEnumerable<string> Fields(object record) =>
-		record.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance)
-			.OrderBy(p => p.DeclaringType != typeof(MapObject))
-			.ThenBy(p => p.MetadataToken)
-			.Select(p => $"{p.Name}={Value(p.GetValue(record))}");
+		Properties(record.GetType()).Select(p => $"{p.Name}={Value(p.GetValue(record))}");
 
-	private static string Value(object? value) => value switch {
+	/// <summary>A record type's public properties in the order <c>records</c> writes them.</summary>
+	public static IEnumerable<PropertyInfo> Properties(Type recordType) =>
+		recordType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+			.OrderBy(p => p.DeclaringType != typeof(MapObject))
+			.ThenBy(p => p.MetadataToken);
+
+	/// <summary>A field's value as <c>records</c> writes it: an array <see cref="Compact(IEnumerable{string})"/>, a counter pair <c>ref:op</c>.</summary>
+	public static string Value(object? value) => value switch {
 		null => "null",
 		short[] words => Compact(words.Select(w => w.ToString())),
-		CounterPair[] pairs => Compact(pairs.Select(p => $"{p.CounterRef}:{p.Op}")),
+		CounterPair[] pairs => Compact(pairs.Select(Value)),
+		CounterPair pair => $"{pair.CounterRef}:{pair.Op}",
 		_ => value.ToString() ?? "",
 	};
 
