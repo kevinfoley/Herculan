@@ -43,6 +43,7 @@ internal sealed class EditorMission {
 		Placing = new RoutePlacing(Routes, index, drape);
 		Hercs = new HercPlacer(document, source, scene, index, Mover, Rebuild, Selection, Fitter, UnitTypeNames.LoadMechs(content));
 		Flyers = new FlyerPlacer(document, source, scene, index, Mover, Rebuild, Selection, UnitTypeNames.LoadFlyers(content));
+		Vehicles = new VehiclePlacer(document, source, index, Mover, Rebuild, Selection, Placer);
 		Orders = new OrderEditor(document, source, Mover, Rebuild);
 		Outliner.Placing = Placing;
 		Properties = new PropertiesPanel(index, document, Selection, Mover, Sides, Deleter,
@@ -106,6 +107,9 @@ internal sealed class EditorMission {
 
 	/// <summary>Adds flyers to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public FlyerPlacer Flyers { get; }
+
+	/// <summary>Adds ground vehicles to <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public VehiclePlacer Vehicles { get; }
 
 	/// <summary>Edits groups' order slots in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public OrderEditor Orders { get; }

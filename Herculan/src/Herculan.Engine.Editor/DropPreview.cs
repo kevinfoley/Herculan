@@ -4,12 +4,13 @@ using Herculan.Engine.Scene;
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// The herc, flyer or structure a Toolbox drag would add, drawn at the ground point under the pointer while the drag is
-/// over the view: built as the add builds it (<see cref="HercPlacer.Ghost"/>, <see cref="FlyerPlacer.Ghost"/>,
-/// <see cref="StructurePlacer.Ghost"/>) and drawn through <see cref="MissionDrawables"/>, but not listed in the index or
-/// the picker, so nothing selects or levels it. It stands where the add's object will stand on a point at Z 0
-/// (<see cref="PointFollowers.Standing"/>, <see cref="PointFollowers.Settled"/>): a herc at its ride height above the
-/// ground as it is, a flyer at 5,000 units, a structure on the ground before the add levels it.
+/// The herc, flyer, ground vehicle or structure a Toolbox drag would add, drawn at the ground point under the pointer while
+/// the drag is over the view: built as the add builds it (<see cref="HercPlacer.Ghost"/>, <see cref="FlyerPlacer.Ghost"/>,
+/// <see cref="VehiclePlacer.Ghost"/>, <see cref="StructurePlacer.Ghost"/>) and drawn through <see cref="MissionDrawables"/>,
+/// but not listed in the index or the picker, so nothing selects or levels it. It stands where the add's object will stand
+/// on a point at Z 0 (<see cref="PointFollowers.Standing"/>, <see cref="PointFollowers.Settled"/>): a herc at its ride
+/// height above the ground as it is, a flyer at 5,000 units, a ground vehicle or a structure on the ground before the add
+/// levels it.
 /// </summary>
 internal sealed class DropPreview {
 	private readonly EditorMission _mission;
@@ -35,6 +36,7 @@ internal sealed class DropPreview {
 				? wanted.Kind switch {
 					ToolboxKind.Herc => _mission.Hercs.Ghost(wanted.TypeIndex, wanted.Side),
 					ToolboxKind.Flyer => _mission.Flyers.Ghost(wanted.TypeIndex, wanted.Side),
+					ToolboxKind.Vehicle => _mission.Vehicles.Ghost(wanted.TypeIndex, wanted.Side),
 					_ => _mission.Placer.Ghost(wanted.TypeIndex, wanted.Side)
 				}
 				: null;

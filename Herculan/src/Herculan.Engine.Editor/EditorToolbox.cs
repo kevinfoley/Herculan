@@ -3,22 +3,24 @@ using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
+using Herculan.Engine.Sim;
 using Herculan.Engine.World;
 using ImGuiNET;
 
 namespace Herculan.Engine.Editor;
 
 /// <summary>
-/// What a Toolbox entry adds: a herc (<see cref="HercPlacer"/>), a flyer (<see cref="FlyerPlacer"/>) or a structure
-/// (<see cref="StructurePlacer"/>).
+/// What a Toolbox entry adds: a herc (<see cref="HercPlacer"/>), a flyer (<see cref="FlyerPlacer"/>), a ground vehicle
+/// (<see cref="VehiclePlacer"/>) or a structure (<see cref="StructurePlacer"/>).
 /// </summary>
 internal enum ToolboxKind {
 	Herc,
 	Flyer,
+	Vehicle,
 	Structure,
 }
 
-/// <summary>What the toolbox asks the editor to add: a herc, flyer or structure type, its side, where, and to which group.</summary>
+/// <summary>What the toolbox asks the editor to add: a herc, flyer, ground vehicle or structure type, its side, where, and to which group.</summary>
 /// <param name="AtPointer">
 /// Whether it goes on the ground under the pointer, where an entry was dragged and let go over the view; otherwise on
 /// the ground at the middle of the view.
@@ -33,17 +35,19 @@ internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, Mis
 /// The Toolbox window: what the editor can add to the open mission. The hercs are the mech types of <c>nam\MECHS.NAM</c>
 /// under the names the MFD prints for them (<see cref="MfdStatusSubject"/>); the flyers the types of <c>nam\FLYERS.NAM</c>
 /// the install has a <c>dat\&lt;type&gt;.DAT</c> for, under the names the MFD prints (<see cref="MfdStatusSubject.FlyerTypeName"/>),
-/// the others named in a note: with no data they cannot fly or be shot (docs/retail/simulation/ai-flyers.md); and the
-/// structures the types of <c>dat\BASES.DAT</c> under the names the MFD status screen prints
+/// the others named in a note: with no data they cannot fly or be shot (docs/retail/simulation/ai-flyers.md); the ground
+/// vehicles the types of <c>dat\BASES.DAT</c> <see cref="BaseObject.IsGroundVehicle"/> answers true for, under the names the
+/// MFD prints (<see cref="MfdStatusSubject.BaseName"/>), the other vehicle types (<see cref="BaseType.IsVehicle"/>), for
+/// which DBSIM builds no object (docs/retail/simulation/structure-behaviour.md#five-classes-one-switch), named in a note;
+/// and the structures the other types of <c>dat\BASES.DAT</c> under the names the MFD status screen prints
 /// (<see cref="BaseType.SilhouetteIndex"/>). An entry dragged out and let go over the view asks for it on the ground under
 /// the pointer, a flyer above it; a double-click, or Add with an entry chosen, asks for it at the middle of the view, which
 /// a gamepad's pointer reaches as easily. The side it fights on is chosen above the lists, or it joins the selected group
-/// instead, a herc a herc group, a flyer a flyer group and a structure a structure group, taking that group's side. While
-/// an entry is dragged over the view, what it would add is drawn where it would stand (<see cref="DropPreview"/>). The
-/// mobile ground vehicles (<see cref="BaseType.IsVehicle"/>) are not offered: they drive, and their groups are a step of
-/// their own (docs/herculan/handoff-editor-authoring.md#suggested-sequencing). What an add writes is
-/// <see cref="HercPlacer"/>'s, <see cref="FlyerPlacer"/>'s and <see cref="StructurePlacer"/>'s. Above the lists the window
-/// holds the route tool's New route (<see cref="RoutePlacing"/>).
+/// instead, a herc a herc group, a flyer a flyer group, and a ground vehicle or a structure a structure group, taking that
+/// group's side. While an entry is dragged over the view, what it would add is drawn where it would stand
+/// (<see cref="DropPreview"/>). What an add writes is <see cref="HercPlacer"/>'s, <see cref="FlyerPlacer"/>'s,
+/// <see cref="VehiclePlacer"/>'s and <see cref="StructurePlacer"/>'s. Above the lists the window holds the route tool's
+/// New route (<see cref="RoutePlacing"/>).
 /// </summary>
 internal sealed class EditorToolbox {
 	// Where it first opens and how big, in pixels on a 100% display (ScaledImGui.Scaled): beside the Mission panel,
@@ -63,9 +67,13 @@ internal sealed class EditorToolbox {
 	// The flyer types not offered, which the install has no data for; null when it has data for each.
 	private readonly string? _flyersLeftOut;
 
-	// Why no herc, no flyer and no structure can be added, as the last frame drawn was told.
+	// The vehicle types not offered, which DBSIM builds no object for; null when there are none.
+	private readonly string? _vehiclesLeftOut;
+
+	// Why no herc, no flyer, no ground vehicle and no structure can be added, as the last frame drawn was told.
 	private string? _whyNoHerc;
 	private string? _whyNoFlyer;
+	private string? _whyNoVehicle;
 	private string? _whyNoStructure;
 
 	public EditorToolbox(GameContent content) {
@@ -96,6 +104,23 @@ internal sealed class EditorToolbox {
 
 		var types = BaseTypeTable.Load(content);
 		var strings = SimStrings.Load(content);
+		var vehiclesLeftOut = new List<string>();
+		for (int i = 0; i < types.Count; i++) {
+			if (types[i] is { IsVehicle: true } vehicle) {
+				string? name = MfdStatusSubject.BaseName(vehicle, strings);
+				string label = string.IsNullOrWhiteSpace(name) ? $"Type {i}" : $"{name} ({i})";
+				if (BaseObject.IsGroundVehicle(i)) {
+					entries.Add((ToolboxKind.Vehicle, i, label));
+				} else {
+					vehiclesLeftOut.Add(label);
+				}
+			}
+		}
+
+		_vehiclesLeftOut = vehiclesLeftOut.Count > 0
+			? $"Not offered: {string.Join(", ", vehiclesLeftOut)}. DBSIM builds nothing for these types."
+			: null;
+
 		for (int i = 0; i < types.Count; i++) {
 			if (types[i] is { IsVehicle: false } type) {
 				string? name = strings?.Text(MfdLayout.StructureNameGroup, type.SilhouetteIndex);
@@ -133,12 +158,14 @@ internal sealed class EditorToolbox {
 	/// <param name="whyNotJoin">Why <paramref name="selectedGroup"/> cannot take another member, or null when it can.</param>
 	/// <param name="whyNoHerc">Why no herc can be added (<see cref="HercPlacer.WhyNoAdd"/>), shown in the Hercs section, or null.</param>
 	/// <param name="whyNoFlyer">Why no flyer can be added (<see cref="FlyerPlacer.WhyNoAdd"/>), shown in the Flyers section, or null.</param>
+	/// <param name="whyNoVehicle">Why no ground vehicle can be added (<see cref="VehiclePlacer.WhyNoAdd"/>), shown in the Ground vehicles section, or null.</param>
 	/// <param name="whyNoStructure">Why no structure can be added (<see cref="StructurePlacer.WhyNoAdd"/>), shown in the Structures section, or null.</param>
 	/// <param name="routeEntry">Draws the route tool's entry (<see cref="RoutePlacing.DrawToolboxEntry"/>) above the lists, or null.</param>
 	public void Draw(Vector2 display, bool enabled, int? selectedGroup, string? whyNotJoin, string? whyNoHerc,
-			string? whyNoFlyer, string? whyNoStructure, Action? routeEntry = null) {
+			string? whyNoFlyer, string? whyNoVehicle, string? whyNoStructure, Action? routeEntry = null) {
 		_whyNoHerc = whyNoHerc;
 		_whyNoFlyer = whyNoFlyer;
+		_whyNoVehicle = whyNoVehicle;
 		_whyNoStructure = whyNoStructure;
 		_joinGroup = selectedGroup != null && whyNotJoin == null ? selectedGroup : null;
 		ImGui.SetNextWindowPos(new Vector2(ScaledImGui.Scaled(MissionOutliner.PanelWidth + Margin),
@@ -171,14 +198,14 @@ internal sealed class EditorToolbox {
 	}
 
 	private void DrawContents(bool enabled, int? selectedGroup, string? whyNotJoin) {
-		ImGui.TextWrapped("Drag a herc, a flyer or a structure onto the ground, or double-click it to add it in the middle of the view.");
+		ImGui.TextWrapped("Drag an entry onto the ground, or double-click it to add it in the middle of the view.");
 		ImGui.BeginDisabled(_joinGroup == null);
 		ImGui.Checkbox(selectedGroup is { } group ? $"Join the selected group {group}" : "Join the selected group", ref _join);
 		ImGui.EndDisabled();
 		if (whyNotJoin != null) {
 			EditorText.Reason(whyNotJoin);
 		} else if (selectedGroup == null) {
-			EditorText.Note("Select a herc, flyer or structure group, or one of its members, to join it.");
+			EditorText.Note("Select a group, or one of its members, to join it.");
 		}
 
 		bool joining = _join && _joinGroup != null;
@@ -225,6 +252,15 @@ internal sealed class EditorToolbox {
 			}
 		}
 
+		if (ImGui.CollapsingHeader("Ground vehicles", ImGuiTreeNodeFlags.DefaultOpen)) {
+			EditorText.Note("A new ground vehicle gets a convoy of its own, which drives its route. Add waypoints to its route to set it moving.");
+			EditorText.Reason(_whyNoVehicle);
+			DrawEntries(ToolboxKind.Vehicle, Allowed(ToolboxKind.Vehicle, enabled));
+			if (_vehiclesLeftOut != null) {
+				EditorText.Note(_vehiclesLeftOut);
+			}
+		}
+
 		if (ImGui.CollapsingHeader("Structures", ImGuiTreeNodeFlags.DefaultOpen)) {
 			EditorText.Reason(_whyNoStructure);
 			DrawEntries(ToolboxKind.Structure, Allowed(ToolboxKind.Structure, enabled));
@@ -259,6 +295,7 @@ internal sealed class EditorToolbox {
 		enabled && kind switch {
 			ToolboxKind.Herc => _whyNoHerc,
 			ToolboxKind.Flyer => _whyNoFlyer,
+			ToolboxKind.Vehicle => _whyNoVehicle,
 			_ => _whyNoStructure
 		} == null;
 

@@ -190,7 +190,7 @@ public sealed class EditorHost {
 		_saving.Mission = _mission;
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a herc, a flyer or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), Delete deletes the selected object or route or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's or group's arrows to move it (Alt detaches a waypoint or group from what shares its point), drag a herc, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), Delete deletes the selected object or route or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -578,7 +578,8 @@ public sealed class EditorHost {
 			var (joinable, whyNotJoin) = JoinableGroup(_mission);
 			_toolbox.Draw(display,
 				enabled: !_mission.Gizmo.Dragging && !_mission.Placing.Active, joinable, whyNotJoin,
-				_mission.Hercs.WhyNoAdd, _mission.Flyers.WhyNoAdd, _mission.Placer.WhyNoAdd, _mission.Placing.DrawToolboxEntry);
+				_mission.Hercs.WhyNoAdd, _mission.Flyers.WhyNoAdd, _mission.Vehicles.WhyNoAdd, _mission.Placer.WhyNoAdd,
+				_mission.Placing.DrawToolboxEntry);
 		}
 
 		_settingsPanel.Draw();
@@ -668,7 +669,9 @@ public sealed class EditorHost {
 	}
 
 	// The herc, flyer or structure group the selection is, or a member of: what a Toolbox add can join, and why it cannot, by
-	// the placer of its kind. The player's squad, group 0, is offered so the Toolbox can say why it takes no herc.
+	// the placer of its kind. The player's squad, group 0, is offered so the Toolbox can say why it takes no herc. A structure
+	// group's is a structure's: a ground vehicle joins every group a structure joins, and refuses a fifth member of a convoy
+	// when it is added (VehiclePlacer.WhyNotJoin).
 	private static (int? Group, string? WhyNot) JoinableGroup(EditorMission mission) {
 		int group = mission.Selection.Current switch {
 			GroupSelection selected => selected.Group,
@@ -737,6 +740,7 @@ public sealed class EditorHost {
 			: request.Kind switch {
 				ToolboxKind.Herc => _mission.Hercs.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group),
 				ToolboxKind.Flyer => _mission.Flyers.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group),
+				ToolboxKind.Vehicle => _mission.Vehicles.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group),
 				_ => _mission.Placer.Add(request.TypeIndex, request.Side, at.X, at.Y, request.Group)
 			};
 	}

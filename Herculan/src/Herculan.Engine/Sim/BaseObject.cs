@@ -300,6 +300,13 @@ public sealed partial class BaseObject : SimObject {
 		: PlainTypes.Contains(typeIndex) ? StructureClass.Plain
 		: StructureClass.Unclassified;
 
+	/// <summary>
+	/// Whether <c>BASES.DAT</c> type <paramref name="typeIndex"/> is built as a <see cref="StructureClass.GroundVehicle"/>: a
+	/// structure group whose first member is one is a convoy, which drives its route
+	/// (docs/retail/simulation/ground-vehicles.md#the-ground-vehicle-tick--0046a5d0).
+	/// </summary>
+	public static bool IsGroundVehicle(int typeIndex) => GroundVehicleTypes.Contains(typeIndex);
+
 	/// <summary>The first arm of <c>Base_Construct</c>'s switch, as its own case labels.</summary>
 	private static readonly HashSet<int> PlainTypes = new() {
 		0, 1, 2, 3, 4, 7, 9, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
