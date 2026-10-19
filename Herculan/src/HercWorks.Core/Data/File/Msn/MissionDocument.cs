@@ -529,12 +529,17 @@ public sealed class MissionDocument {
 	// ---- Rows 4 and 17, and the text --------------------------------------------------------------
 
 	/// <summary>
-	/// Rewrites record <paramref name="index"/> of row <paramref name="row"/>, 4 or 17, through <paramref name="write"/>.
-	/// Neither row has a GUID, nothing names one of their records and neither repeats or overlays, so the record is the one
-	/// that supplies everything it exports, whatever its condition (docs/retail/formats/msn-mission-file.md#row-17-field-decode--the-objective-record-dat_0047064a-58-bytesrecord).
+	/// Rewrites record <paramref name="index"/> of row <paramref name="row"/>, 1, 4 or 17, through <paramref name="write"/>.
+	/// Rows 4 and 17 have no GUID, nothing names one of their records and neither repeats or overlays, so the record is the
+	/// one that supplies everything it exports, whatever its condition (docs/retail/formats/msn-mission-file.md#row-17-field-decode--the-objective-record-dat_0047064a-58-bytesrecord).
+	/// A row-1 record is read on its own, a repeated GUID merging nothing (docs/retail/formats/msn-mission-file.md#the-conditions--row-1),
+	/// so it too is the record that decides what it tests.
 	/// </summary>
 	public MsnEdit Rewrite<T>(int row, int index, Action<T> write) where T : class {
-		CheckUnkeyed(row);
+		if (row != 1) {
+			CheckUnkeyed(row);
+		}
+
 		var records = MsnRows.Get(Mission, row);
 		if (index < 0 || index >= records.Length || records.GetValue(index) is not T record) {
 			throw new InvalidOperationException($"Row {row} has no record {index}.");

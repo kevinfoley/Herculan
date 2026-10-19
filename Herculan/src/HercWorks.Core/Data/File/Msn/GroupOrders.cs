@@ -170,7 +170,19 @@ public static class GroupOrders {
 			return slot == 0 ? WhyNoFirstRoute(document, group, RouteOf(document, orders[1])) : null;
 		}
 
-		var record = document.Script.Groups[document.ExportedIndex(GroupRow, group)!.Value];
+		return WhyNeedsFirstOrder(document, group);
+	}
+
+	/// <summary>
+	/// Why <paramref name="group"/> cannot be left with no order in slot 0, or null when it can: the mission check's two group
+	/// findings, and the editor's rule for a flyer group.
+	/// </summary>
+	public static string? WhyNeedsFirstOrder(MissionDocument document, short group) {
+		if (document.ExportedIndex(GroupRow, group) is not { } index) {
+			return null;
+		}
+
+		var record = document.Script.Groups[index];
 		bool members = record.MemberRefs.Any(member => member >= 0);
 		bool squad = group == document.GuidOf(GroupBlock, 0);
 		return record.HeadingRef < 0 ? "With no heading of its own, the group needs a first order: DBSIM faults loading it."
@@ -322,8 +334,8 @@ public static class GroupOrders {
 		Exported(document, order) is { RouteRef: >= 0 and var route } ? document.GuidOf(RouteBlock, route) : (short)-1;
 
 	// The order in <group>'s slot <slot> for an edit to write: the slot's own, or, when another slot names it too, a copy
-	// named in the slot instead. Made inside the caller's change.
-	private static short Own(MissionDocument document, short group, int slot) {
+	// named in the slot instead. Made inside the caller's change; RecordConditions writes an order's condition through it too.
+	internal static short Own(MissionDocument document, short group, int slot) {
 		short order = slot is >= 0 and < Slots ? Orders(document, group)[slot] : (short)-1;
 		if (order == -1) {
 			throw new InvalidOperationException($"There is no order in slot {slot}.");

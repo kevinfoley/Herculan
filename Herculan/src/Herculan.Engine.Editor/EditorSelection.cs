@@ -36,6 +36,9 @@ internal sealed record ObjectiveSelection(int Objective) : EditorSelection;
 /// <summary>One action timer, by block-6 record index.</summary>
 internal sealed record TimerSelection(int Timer) : EditorSelection;
 
+/// <summary>One condition, by its row-1 GUID: row 1 reaches no <c>script.dat</c> block, so the GUID is its identity.</summary>
+internal sealed record ConditionSelection(short Guid) : EditorSelection;
+
 /// <summary>
 /// The editor's one current selection, shared by everything that can change it: a click in the
 /// viewport, the outliner and the links in the Properties panel.

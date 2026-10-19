@@ -36,6 +36,9 @@ internal sealed class PropertiesPanel {
 	private readonly ActionView _action;
 	private readonly ActionEditor _actions;
 	private readonly TimerView _timer;
+	private readonly ConditionView _condition;
+	private readonly PresenceEditor _presence;
+	private readonly PresentWhenView _presentWhen;
 	private readonly PanelLinks _links;
 	private readonly StringFile? _strings;
 
@@ -46,7 +49,7 @@ internal sealed class PropertiesPanel {
 	public PropertiesPanel(MissionIndex index, ScriptDat document, SelectionState selection, PointMover mover,
 			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, MissionView mission, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
-			ActionEditor actions, TimerEditor timers, StringFile? strings) {
+			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
@@ -58,12 +61,15 @@ internal sealed class PropertiesPanel {
 		_actions = actions;
 		_action = new ActionView(index, document, actions, selection, _links);
 		_timer = new TimerView(index, document, timers, _links);
+		_condition = new ConditionView(conditions, _links);
+		_presence = presence;
+		_presentWhen = new PresentWhenView(presence, _links, (names, ownRoute) => References(names, ownRoute));
 		_route = new RouteView(index, selection, mover, routes, placing, _links.Group,
 			(names, ownRoute) => References(names, ownRoute));
 		_area = new TriggerAreaView(index, mover, areas, areaPlacing, actions, _action.DrawSummary, names => References(names));
-		_orders = new OrderSlotsView(index, document, orders, _links.Route, _links.Action, _links.Subject);
+		_orders = new OrderSlotsView(index, document, orders, _links.Route, _links.Action, _links.Subject, _presentWhen, presence);
 		_objectives = objectives;
-		_objective = new ObjectiveView(index, document, objectives, _links.Group, _links.Slot, _links.Route);
+		_objective = new ObjectiveView(index, document, objectives, _links.Group, _links.Slot, _links.Route, _presentWhen, presence);
 		machine.References = names => References(names);
 		_strings = strings;
 	}
@@ -102,6 +108,9 @@ internal sealed class PropertiesPanel {
 			case TimerSelection timer:
 				_timer.Draw(timer.Timer);
 				break;
+			case ConditionSelection condition:
+				_condition.Draw(condition.Guid);
+				break;
 			default:
 				ImGui.TextWrapped("Nothing selected. Click a mech, flyer, building, trigger area or waypoint "
 					+ "in the scene, or pick from the Mission list.");
@@ -118,6 +127,7 @@ internal sealed class PropertiesPanel {
 		ImGui.Text("Group:");
 		ImGui.SameLine();
 		_links.Group(placement.GroupIndex);
+		_presentWhen.Draw(_presence.ObjectTarget(sel));
 		ImGui.Separator();
 		ImGui.Text($"Kind: {placement.Kind}");
 		ImGui.Text($"Type index: {placement.TypeIndex}");
@@ -350,6 +360,7 @@ internal sealed class PropertiesPanel {
 
 	private void DrawGroup(int group) {
 		ImGui.TextWrapped(MissionText.DescribeGroup(_index, group));
+		_presentWhen.Draw(_presence.GroupTarget(group));
 		TeamField(group, ofMember: false);
 		if (group == 0) {
 			_machine.DrawSquad();

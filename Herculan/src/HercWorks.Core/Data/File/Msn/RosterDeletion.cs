@@ -140,6 +140,9 @@ public static class RosterDeletion {
 		}
 	}
 
+	/// <summary>The objectives, actions (type 10) and orders naming row-16 group GUID <paramref name="group"/> as their subject or target.</summary>
+	public static MsnNamers GroupNamers(MissionDocument document, short group) => NamersOf(0, 10, group, document.Mission);
+
 	// What names <guid> as an objective's or order's subject of <subjectKind>, or as an action's target of <actionType>.
 	private static MsnNamers NamersOf(short subjectKind, short actionType, short guid, MissionFile mission) {
 		var objectives = new List<MsnRecordId>();

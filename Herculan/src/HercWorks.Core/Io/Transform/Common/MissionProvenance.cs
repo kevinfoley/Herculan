@@ -286,6 +286,9 @@ public sealed class SlotProvenance {
 		return _words[word];
 	}
 
+	/// <summary>Every record whose write some word of the slot holds (<see cref="WordSource.Record"/>), in no particular order.</summary>
+	public IEnumerable<MsnRecordId> Suppliers => _words.Select(word => word.Record).Distinct();
+
 	internal int WordCount => _words.Length;
 
 	internal WordSource WordAt(int word) => _words[word];

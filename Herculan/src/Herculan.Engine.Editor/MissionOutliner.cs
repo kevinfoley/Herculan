@@ -1,4 +1,5 @@
 using System.Numerics;
+using HercWorks.Core.Data.File.Msn;
 using Herculan.Engine.Platform;
 using Herculan.Engine.World;
 using ImGuiNET;
@@ -8,8 +9,8 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Mission panel down the left of the window: the mission itself (its theater and time of day,
 /// <see cref="MissionView"/>), then the mission check's findings, then every group (with its members), trigger area,
-/// action, timer, route and objective as a list, the trigger areas and routes with the buttons that start placing a new
-/// one, and the actions, timers and objectives with the buttons that create one. It is the only way to reach the parts of a mission that are not
+/// action, timer, route, objective and condition as a list, the trigger areas and routes with the buttons that start placing a new
+/// one, and the actions, timers, objectives and conditions with the buttons that create one. It is the only way to reach the parts of a mission that are not
 /// standing somewhere — an action with no area, a group not yet in the mission — and the other way
 /// to make a selection. A double-click also frames the record in the view (<see cref="SelectionState.Focus"/>).
 /// </summary>
@@ -19,6 +20,9 @@ internal sealed class MissionOutliner {
 
 	private static readonly Vector4 FindingLinkColor = new(0.55f, 0.78f, 1f, 1f);
 	private static readonly Vector4 SelectedFindingColor = new(1f, 0.85f, 0.1f, 1f);
+
+	// A condition that fails in the campaign state shown, dimmed.
+	private static readonly Vector4 FailingConditionColor = new(0.55f, 0.55f, 0.55f, 1f);
 
 	private readonly MissionIndex _index;
 	private MissionLint _lint;
@@ -50,6 +54,9 @@ internal sealed class MissionOutliner {
 	/// <summary>What the Timers list's New timer asks to create a timer; set once the mission's tools are built.</summary>
 	public TimerEditor? Timers { get; set; }
 
+	/// <summary>What the Conditions list reads and its New flag test and New draw ask; set once the mission's tools are built.</summary>
+	public ConditionEditor? Conditions { get; set; }
+
 	public void Draw(Vector2 display, float menuBarHeight) {
 		ImGui.SetNextWindowPos(new Vector2(0f, menuBarHeight));
 		ImGui.SetNextWindowSize(new Vector2(ScaledImGui.Scaled(PanelWidth), display.Y - menuBarHeight));
@@ -64,6 +71,7 @@ internal sealed class MissionOutliner {
 		DrawTimers();
 		DrawRoutes();
 		DrawObjectives();
+		DrawConditions();
 
 		ImGui.End();
 	}
@@ -162,6 +170,43 @@ internal sealed class MissionOutliner {
 			var selection = new ObjectiveSelection(i);
 			Choose(selection, WrappedSelectable(MissionText.DescribeObjective(Mission.Objectives[i], i), $"objective{i}",
 				_selection.Is(selection)));
+		}
+	}
+
+	/// <summary>
+	/// Every row-1 condition, in file order, as the conditions the other records' condition fields reference, dimmed when it
+	/// fails in the campaign state shown; none for a plain <c>script.dat</c>, which has no row 1.
+	/// </summary>
+	private void DrawConditions() {
+		if (Conditions is not { Listed: { } records, Source: { } source } conditions
+				|| !ImGui.CollapsingHeader($"Conditions ({records.Count})###conditions")) {
+			return;
+		}
+
+		ImGui.BeginDisabled(conditions.WhyReadOnly != null);
+		if (ImGui.SmallButton("New flag test")) {
+			conditions.RequestCreateFlagTest();
+		}
+
+		ImGui.SameLine();
+		if (ImGui.SmallButton("New draw")) {
+			conditions.RequestCreateDraw();
+		}
+
+		ImGui.EndDisabled();
+		for (int i = 0; i < records.Count; i++) {
+			var record = records[i];
+			var selection = new ConditionSelection(record.GUID);
+			bool holds = conditions.Holds(record.GUID);
+			if (!holds) {
+				ImGui.PushStyleColor(ImGuiCol.Text, FailingConditionColor);
+			}
+
+			Choose(selection, WrappedSelectable($"Condition {record.GUID}: {ConditionEditing.Describe(source.Mission, record)}",
+				$"condition{i}", _selection.Is(selection)));
+			if (!holds) {
+				ImGui.PopStyleColor();
+			}
 		}
 	}
 

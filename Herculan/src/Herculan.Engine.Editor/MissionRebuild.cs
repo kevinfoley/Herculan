@@ -33,7 +33,7 @@ namespace Herculan.Engine.Editor;
 ///
 /// <para>The selection survives when what it names does: an object by identity, or else the object now standing for the
 /// same record; a group by its row-16 GUID, a route by its row-8 GUID, a trigger area by its row-9 GUID, an action by its row-10
-/// GUID, a timer by its row-11 GUID, and an objective by its row-17 record; anything else is checked against the new index,
+/// GUID, a timer by its row-11 GUID, a condition by its row-1 GUID, and an objective by its row-17 record; anything else is checked against the new index,
 /// and is cleared when it is gone.</para>
 /// </summary>
 internal sealed class MissionRebuild {
@@ -307,6 +307,7 @@ internal sealed class MissionRebuild {
 					&& timer < _index.Mission.ActionTimers.Count =>
 				new TimerSelection(timer),
 			ObjectiveSelection when Objective(source, selectedObjective) is { } objective => new ObjectiveSelection(objective),
+			ConditionSelection { Guid: var condition } when ConditionEditing.IndexOf(source, condition) != null => _selection.Current,
 			MissionSelection => _selection.Current,
 			_ => null
 		};
@@ -317,7 +318,7 @@ internal sealed class MissionRebuild {
 /// One step of <see cref="PointMover"/>'s undo history that the editor's state is built again after — an add
 /// (<see cref="StructurePlacer"/>, <see cref="HercPlacer"/>, <see cref="FlyerPlacer"/>, <see cref="VehiclePlacer"/>), a delete (<see cref="ObjectDeleter"/>), a route edit
 /// (<see cref="RouteEditor"/>), a trigger-area edit (<see cref="AreaEditor"/>), an order edit (<see cref="OrderEditor"/>), an action or wiring edit
-/// (<see cref="ActionEditor"/>), a timer edit (<see cref="TimerEditor"/>), an objective edit (<see cref="ObjectiveEditor"/>)
+/// (<see cref="ActionEditor"/>), a timer edit (<see cref="TimerEditor"/>), a condition edit (<see cref="ConditionEditor"/>), a Present when set (<see cref="PresenceEditor"/>), an objective edit (<see cref="ObjectiveEditor"/>)
 /// or a text edit (<see cref="MissionTextEditor"/>): the rows and text it changed, put back on undo and redo through
 /// <see cref="MissionRebuild"/>.
 /// </summary>

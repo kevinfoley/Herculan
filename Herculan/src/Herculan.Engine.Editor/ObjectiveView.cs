@@ -20,6 +20,8 @@ internal sealed class ObjectiveView {
 	private readonly Action<MissionUnitKind, int> _slotLink;
 	private readonly Action<int> _routeLink;
 	private readonly LineField _lines = new();
+	private readonly PresentWhenView _presentWhen;
+	private readonly PresenceEditor _presence;
 
 	// A counter being typed, and the objective and pair it is for, until its field lets go.
 	private (int Objective, int Slot)? _counterFor;
@@ -29,14 +31,17 @@ internal sealed class ObjectiveView {
 	/// <param name="groupLink">Draws a link that selects a group, by block-11 index.</param>
 	/// <param name="slotLink">Draws a link that selects the object in a roster slot.</param>
 	/// <param name="routeLink">Draws a link that selects a route, by block-3 index.</param>
+	/// <param name="presentWhen">Draws the objective's Present when (<paramref name="presence"/>'s target).</param>
 	public ObjectiveView(MissionIndex index, ScriptDat document, ObjectiveEditor editor, Action<int> groupLink,
-			Action<MissionUnitKind, int> slotLink, Action<int> routeLink) {
+			Action<MissionUnitKind, int> slotLink, Action<int> routeLink, PresentWhenView presentWhen, PresenceEditor presence) {
 		_index = index;
 		_document = document;
 		_editor = editor;
 		_groupLink = groupLink;
 		_slotLink = slotLink;
 		_routeLink = routeLink;
+		_presentWhen = presentWhen;
+		_presence = presence;
 	}
 
 	private Mission Mission => _index.Mission;
@@ -50,6 +55,7 @@ internal sealed class ObjectiveView {
 		bool locked = _editor.WhyFixed(index) != null;
 
 		ImGui.Text($"Objective {index}");
+		_presentWhen.Draw(_presence.ObjectiveTarget(index));
 		ImGui.Separator();
 		ImGui.BeginDisabled(locked);
 		bool mandatory = objective.Required == MissionObjective.Mandatory;

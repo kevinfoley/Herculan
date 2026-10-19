@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// One opened mission and everything the editor builds over it on the CPU: the scene, the cross-reference
-/// index, the overlays, the picker, the two side panels and the move, add, delete, route, trigger area, action, timer, order, objective, text, theater and campaign state tools, all sharing one
+/// index, the overlays, the picker, the two side panels and the move, add, delete, route, trigger area, action, timer, condition, presence, order, objective, text, theater and campaign state tools, all sharing one
 /// selection. An edit that adds or removes records builds the CPU state again in place (<see cref="Rebuild"/>), and a
 /// change of theater or time of day dresses the scene in its world again in place (<see cref="Theater"/>). Opening another
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
@@ -56,16 +56,19 @@ internal sealed class EditorMission {
 		Texts = new MissionTextEditor(source, Mover, Rebuild);
 		Actions = new ActionEditor(source, Mover, Rebuild, Selection, Deleter);
 		Timers = new TimerEditor(source, Mover, Rebuild, Selection);
+		Conditions = new ConditionEditor(source, index, Mover, Rebuild, Selection, Deleter);
+		Presence = new PresenceEditor(source, Mover, Rebuild, Selection, Deleter);
 		Outliner.Placing = Placing;
 		Outliner.AreaPlacing = AreaPlacing;
 		Outliner.Objectives = Objectives;
 		Outliner.Actions = Actions;
 		Outliner.Timers = Timers;
+		Outliner.Conditions = Conditions;
 		Properties = new PropertiesPanel(index, document, Selection, Mover, Sides, Deleter,
 			new SquadMachinePanel(Fitter, Squad, squad),
 			new MissionView(() => Name, () => document.ZoneIndex, Theater, TheaterNames.Labels(content),
 				new CampaignStateView(Campaign), new MissionTextView(Texts)),
-			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, SimStrings.Load(content));
+			Routes, Placing, Areas, AreaPlacing, Orders, Objectives, Actions, Timers, Conditions, Presence, SimStrings.Load(content));
 	}
 
 	/// <summary>
@@ -144,6 +147,12 @@ internal sealed class EditorMission {
 
 	/// <summary>Creates, edits and deletes action timers in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
 	public TimerEditor Timers { get; }
+
+	/// <summary>Creates, edits and deletes conditions in <see cref="Source"/>, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public ConditionEditor Conditions { get; }
+
+	/// <summary>Sets which campaign states a record of <see cref="Source"/> is present in, as steps of <see cref="Mover"/>'s undo history.</summary>
+	public PresenceEditor Presence { get; }
 
 	public SideChanger Sides { get; }
 

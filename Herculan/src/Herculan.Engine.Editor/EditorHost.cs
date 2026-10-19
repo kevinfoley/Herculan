@@ -190,7 +190,7 @@ public sealed class EditorHost {
 		_saving.Mission = _mission;
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
-			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's, group's or trigger area's arrows to move it (Alt detaches a waypoint, group or area corner from what shares its point), drag a herc, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), New box or New circle then a drag on the ground places a trigger area (Esc cancels), Delete deletes the selected object, route, trigger area, action, timer or objective or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
+			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's, group's or trigger area's arrows to move it (Alt detaches a waypoint, group or area corner from what shares its point), drag a herc, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), New box or New circle then a drag on the ground places a trigger area (Esc cancels), Delete deletes the selected object, route, trigger area, action, timer, objective or condition or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
 			+ (launch.FromGame ? "Esc returns to the game." : "Esc quits."));
 
 		_window = launch.Window is { } window
@@ -439,7 +439,7 @@ public sealed class EditorHost {
 		_drawables = Upload(_gl, _renderer, mission);
 	}
 
-	// V toggles the top-down view, Delete deletes the selected object, route, trigger area, action, timer or objective or removes the selected
+	// V toggles the top-down view, Delete deletes the selected object, route, trigger area, action, timer, objective or condition or removes the selected
 	// waypoint, Ctrl+Z undoes and Ctrl+Y or Ctrl+Shift+Z redoes, Ctrl+S saves, unless a text field or a prompt has the keyboard.
 	// None of them while a drag is under way. While a route is placed, Enter finishes it; while a route or an area is placed,
 	// Delete, Undo and Redo do nothing.
@@ -478,6 +478,8 @@ public sealed class EditorHost {
 				_mission.Actions.RequestDelete(action);
 			} else if (_mission?.Selection.Current is TimerSelection { Timer: var timer }) {
 				_mission.Timers.RequestDelete(timer);
+			} else if (_mission?.Selection.Current is ConditionSelection { Guid: var condition }) {
+				_mission.Conditions.RequestDelete(condition);
 			}
 
 			return;
@@ -747,6 +749,8 @@ public sealed class EditorHost {
 		mission.Orders.RunRequest();
 		mission.Actions.RunRequest();
 		mission.Timers.RunRequest();
+		mission.Conditions.RunRequest();
+		mission.Presence.RunRequest();
 		mission.Objectives.RunRequest();
 		mission.Texts.RunRequest();
 		mission.Placing.RunRequest();

@@ -23,18 +23,23 @@ internal sealed class OrderSlotsView {
 	private readonly Action<int> _routeLink;
 	private readonly Action<int> _actionLink;
 	private readonly Action<MissionOrderSubject, int> _subjectLink;
+	private readonly PresentWhenView _presentWhen;
+	private readonly PresenceEditor _presence;
 
 	/// <param name="routeLink">Draws a link that selects a route, by block-3 index.</param>
 	/// <param name="actionLink">Draws a link that selects an action, by block-5 index.</param>
 	/// <param name="subjectLink">Draws a link that selects an order's subject.</param>
+	/// <param name="presentWhen">Draws each slot's Present when (<paramref name="presence"/>'s target).</param>
 	public OrderSlotsView(MissionIndex index, ScriptDat document, OrderEditor editor, Action<int> routeLink,
-			Action<int> actionLink, Action<MissionOrderSubject, int> subjectLink) {
+			Action<int> actionLink, Action<MissionOrderSubject, int> subjectLink, PresentWhenView presentWhen, PresenceEditor presence) {
 		_index = index;
 		_document = document;
 		_editor = editor;
 		_routeLink = routeLink;
 		_actionLink = actionLink;
 		_subjectLink = subjectLink;
+		_presentWhen = presentWhen;
+		_presence = presence;
 	}
 
 	public void Draw(int group) {
@@ -110,6 +115,7 @@ internal sealed class OrderSlotsView {
 		}
 
 		DrawEnding(group, slot.Slot, order.ActionRef, locked);
+		_presentWhen.Draw(_presence.OrderTarget(group, slot.Slot));
 		ImGui.Unindent();
 	}
 

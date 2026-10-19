@@ -39,13 +39,16 @@ public sealed class MissionGenerator {
 	/// <summary><c>maybe_CampaignFlagArray</c>'s length in <c>int16</c>s.</summary>
 	public const int CampaignFlagCount = 1000;
 
-	/// <summary>The row-1 comparison opcodes, <c>0x119</c>-<c>0x11e</c>.</summary>
-	private const short OpEqual = 0x119;
-	private const short OpNotEqual = 0x11a;
-	private const short OpLess = 0x11b;
-	private const short OpLessOrEqual = 0x11c;
-	private const short OpGreater = 0x11d;
-	private const short OpGreaterOrEqual = 0x11e;
+	/// <summary>
+	/// The row-1 comparison opcodes, <c>0x119</c>-<c>0x11e</c>, each named by the test it makes of the flag against the
+	/// operand (<see cref="Compare"/>): <see cref="OpGreater"/> holds when the flag is greater.
+	/// </summary>
+	public const short OpEqual = 0x119;
+	public const short OpNotEqual = 0x11a;
+	public const short OpLess = 0x11b;
+	public const short OpLessOrEqual = 0x11c;
+	public const short OpGreater = 0x11d;
+	public const short OpGreaterOrEqual = 0x11e;
 
 	/// <summary>What <c>Msn_ConditionParentValue</c> (<c>004159d0</c>) answers for a type-3 parent: a range test that always passes.</summary>
 	private const short AnyVariant = -99;
@@ -97,6 +100,14 @@ public sealed class MissionGenerator {
 
 	/// <summary>Which <c>.MSN</c> and <c>.ENG</c> records supplied each exported record and <c>mission.str</c> line.</summary>
 	public MissionProvenance Provenance { get; } = new();
+
+	/// <summary>
+	/// Row 1 as the load read it, one entry per record in file order (its index in <see cref="MissionFile.Conditions"/>):
+	/// whether it survived, and for a type-1 survivor the draw it made. Reading it changes nothing the load writes.
+	/// </summary>
+	public IReadOnlyList<ConditionOutcome> Conditions => _outcomes;
+
+	private readonly List<ConditionOutcome> _outcomes = new();
 
 	/// <summary>
 	/// Loads a mission. <paramref name="flags"/> is the campaign flag array the row-1 comparisons read,
@@ -202,6 +213,7 @@ public sealed class MissionGenerator {
 		int count = reader.Short();
 		for (int i = 0; i < count; i++) {
 			short[] record = reader.Words(7);
+			int survivors = _conditions.Count;
 			switch (record[MissionCondition14.TypeWord]) {
 				case 0:
 					if (Gate(record[condition], _conditions.Count)) {
@@ -234,6 +246,10 @@ public sealed class MissionGenerator {
 
 					break;
 			}
+
+			bool survived = _conditions.Count > survivors;
+			_outcomes.Add(new ConditionOutcome(survived,
+				survived && record[MissionCondition14.TypeWord] == 1 ? record[upper] : (short?)null));
 		}
 	}
 
@@ -1309,6 +1325,11 @@ public sealed class MissionGenerator {
 		public void Skip(int count) => _at += Math.Max(count, 0);
 	}
 }
+
+/// <summary>One row-1 record as the load read it (<see cref="MissionGenerator.Conditions"/>).</summary>
+/// <param name="Survived">Whether it survived, so that a condition ref naming its GUID passes.</param>
+/// <param name="Draw">For a type-1 survivor, the draw it made, below its bound; null otherwise.</param>
+public readonly record struct ConditionOutcome(bool Survived, short? Draw);
 
 /// <summary>
 /// One row-12 record as <c>MsnGen_LoadMission</c> builds a squad machine from it: its chassis, ten
