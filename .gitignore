@@ -60,6 +60,7 @@ tools/scripts/rename_symbol/obj/
 tools/scripts/indeo4_reference/bin/
 tools/scripts/indeo4_reference/obj/
 *.csproj.user
+*.pubxml.user
 ES1/
 Herculan/src/HercWorks.Disc/bin/
 Herculan/src/HercWorks.Disc/obj/
