@@ -3377,6 +3377,216 @@
       }
     },
     {
+      "address": "0001fcb0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_ClaimInstance",
+      "description": "(keyboard), C convention: when Keyboard_Instance (0007f63e) is 0, makes it keyboard, sets the keyboard's status dword to 1 and returns 1; otherwise returns Keyboard_Instance. The code of ES1DBSIM's Keyboard_ClaimInstance (0006c084), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#installing--keyboard_ctor-0006c600",
+      "verified": {
+        "bytes": "0001fcb0+36",
+        "sha1": "e86afc2666c6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001fd10",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_SetMode",
+      "description": "(mode), C convention: returns 0 with no Keyboard_Instance (0007f63e). With interrupts off, unhooks the current mode (0x10000: Keyboard_UnhookInt9 (000200cb); 0x20000: Keyboard_UnhookInt15 (00020136)); sets Keyboard_Modifiers (0007f642) from INT 16h function 2's shift-flag byte, as its low byte, with 0x800 for Caps Lock (0x40), 0x2000 for Scroll Lock (0x10) and 0x1000 for Num Lock (0x20); hooks the new mode (0x10000: Keyboard_HookInt9 (00020086); 0x20000: Keyboard_HookInt15 (000200e8); 0x40000: none) and stores the mode in the status dword's bits 0x70000, returning 1. Any other mode sets the interrupt flag again and returns 0. es2_xref finds calls from Keyboard_Install (0005d668) and 00025ce6. The code of ES1DBSIM's Keyboard_SetMode (0006c0e8), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#installing--keyboard_ctor-0006c600",
+      "verified": {
+        "bytes": "0001fd10+157",
+        "sha1": "7fac09ba9ba5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001fdad",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_PostCode",
+      "description": "(code), C convention: with Keyboard_Instance (0007f63e) set, passes the code's low word to Keyboard_Dispatch (0005cde4) in EAX, as a key from the interrupt handler. The code of ES1DBSIM's Keyboard_PostCode (0006c185), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20",
+      "verified": {
+        "bytes": "0001fdad+27",
+        "sha1": "129c6ee300dc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001fdc8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "KeyQueue_Push",
+      "description": "(code), C convention: when (KeyQueue_Head (0007f746) + 1) mod 128 is not KeyQueue_Tail (0007f74a), advances the head to it, stores the word there in KeyQueue (0007f646) and sets status bit 2 of Keyboard_Instance (0007f63e); otherwise drops the word and sets status bits 2 and 0x80000. Returns 1. es2_xref finds a call from KeyQueue_Subscriber (0005d6a0). The code of ES1DBSIM's KeyQueue_Push (0006c1a0), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20",
+      "verified": {
+        "bytes": "0001fdc8+88",
+        "sha1": "944d17ea522e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001fe20",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "KeyQueue_Pop",
+      "description": "No arguments: 0 with no Keyboard_Instance (0007f63e). When KeyQueue_Tail (0007f74a) is not KeyQueue_Head (0007f746), advances the tail mod 128 and returns the word there in KeyQueue (0007f646), first clearing status bit 2 when the ring is then empty; when they are equal, clears status bit 2 and returns 0. The code of ES1DBSIM's KeyQueue_Pop (0006c1f8), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-command-word",
+      "verified": {
+        "bytes": "0001fe20+74",
+        "sha1": "ed49c1c68a82",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001feb1",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_SetTranslateTable",
+      "description": "(table), C convention: with Keyboard_Instance (0007f63e) set, stores table in Keyboard_TranslateTable (0007f74e), which Keyboard_Dispatch (0005cde4) looks a byte's low seven bits up in. No caller found by es2_xref. The code of ES1DBSIM's Keyboard_SetTranslateTable (0006c289), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20",
+      "verified": {
+        "bytes": "0001feb1+24",
+        "sha1": "a7aa2daf9940",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001fee3",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_AddSubscriber",
+      "description": "(callback, codes), C convention: with Keyboard_Instance (0007f63e) set and Keyboard_SubscriberCount (0007fb52) below 32, stores callback in Keyboard_Subscribers (0007fb56)[count], increments the count, and sets bit (old count) in Keyboard_CodeMasks (0007f752)[byte] for each byte of the NUL-terminated codes, returning 1; otherwise returns 0. It does not look for the callback among the slots. The code of ES1DBSIM's Keyboard_AddSubscriber (0006c2bb), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20",
+      "verified": {
+        "bytes": "0001fee3+79",
+        "sha1": "4d69b40d74bb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ff32",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_RemoveSubscriber",
+      "description": "(callback), C convention: with Keyboard_Instance (0007f63e) set, finds the highest slot of Keyboard_Subscribers (0007fb56) holding callback, decrements Keyboard_SubscriberCount (0007fb52), moves the later slots down one and, in each of the 256 dwords of Keyboard_CodeMasks (0007f752), drops that slot's bit and moves the higher bits down one, returning 1; returns 0 when no slot holds it. No caller found by es2_xref. The code of ES1DBSIM's Keyboard_RemoveSubscriber (0006c30a), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20",
+      "verified": {
+        "bytes": "0001ff32+170",
+        "sha1": "0da868f2f33d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0001ffdc",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_AddSubscriberCodes",
+      "description": "(callback, codes), C convention: with Keyboard_Instance (0007f63e) set, finds the highest slot of Keyboard_Subscribers (0007fb56) holding callback and sets its bit in Keyboard_CodeMasks (0007f752)[byte] for each byte of the NUL-terminated codes, returning 1; returns 0 when no slot holds it. The code of ES1DBSIM's Keyboard_AddSubscriberCodes (0006c3b4), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-simulators-two-subscribers",
+      "verified": {
+        "bytes": "0001ffdc+84",
+        "sha1": "2e7c0866e67c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020030",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_RemoveSubscriberCodes",
+      "description": "(callback, codes), C convention: Keyboard_AddSubscriberCodes (0001ffdc) clearing the slot's bit for each code instead of setting it. No caller found by es2_xref. The code of ES1DBSIM's Keyboard_RemoveSubscriberCodes (0006c408), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20",
+      "verified": {
+        "bytes": "00020030+86",
+        "sha1": "ee65e27a471b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020086",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_HookInt9",
+      "description": "No arguments: stores DS at 0007f63a and 0007f63c (the handlers' data and stack selectors), saves interrupt 9's protected-mode vector (INT 21h AX=2502h) at 0007f630 and its real-mode vector (2503h) at 0007f636, and sets its handler at 0005cda8 to take it in protected mode (2506h). Keyboard_SetMode (0001fd10) hooks mode 0x10000 with it; the same statements as ES1DBSIM's Keyboard_HookInt9 (0006c45e) in different code.",
+      "source": "Herculan/docs/es1/simulation/input.md#installing--keyboard_ctor-0006c600",
+      "verified": {
+        "bytes": "00020086+69",
+        "sha1": "56e04c78df23",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000200cb",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_UnhookInt9",
+      "description": "No arguments: puts interrupt 9's saved vectors back, the protected-mode one from 0007f630 and the real-mode one from 0007f636 (INT 21h AX=2507h). The code of ES1DBSIM's Keyboard_UnhookInt9 (0006c4a3), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#installing--keyboard_ctor-0006c600",
+      "verified": {
+        "bytes": "000200cb+29",
+        "sha1": "33b5f8032965",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000200e8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_HookInt15",
+      "description": "No arguments: Keyboard_HookInt9 (00020086) for interrupt 0x15 with its handler at 0005cd10, first clearing Keyboard_PrefixCount (0007f644). Keyboard_SetMode (0001fd10) hooks mode 0x20000 with it; the same statements as ES1DBSIM's Keyboard_HookInt15 (0006c4c0) in different code.",
+      "source": "Herculan/docs/es1/simulation/input.md#installing--keyboard_ctor-0006c600",
+      "verified": {
+        "bytes": "000200e8+78",
+        "sha1": "aecb04bfe398",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00020136",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_UnhookInt15",
+      "description": "No arguments: Keyboard_UnhookInt9 (000200cb) for interrupt 0x15. The code of ES1DBSIM's Keyboard_UnhookInt15 (0006c50e), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#installing--keyboard_ctor-0006c600",
+      "verified": {
+        "bytes": "00020136+29",
+        "sha1": "5e197ea6e4e1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00020154",
       "binary": "ES1GO",
       "type": "function",
@@ -5306,6 +5516,21 @@
       }
     },
     {
+      "address": "000440e8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "SoundObject_GetVolume",
+      "description": "(object), its argument removed by this function: with the byte +0x15 clear, the byte +0x31, the volume the set-volume slot +0x2c stores; with it set, the word +0x32 * 10000 / the manager's (+0x11) byte +0x241, scaled by 0x7fff; the same statements as ES1DBSIM's SoundObject_GetVolume (0005049c) in different code.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-music--music_tick-000585dc",
+      "verified": {
+        "bytes": "000440e8+66",
+        "sha1": "50af5a8bfca8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004412a",
       "binary": "ES1GO",
       "type": "function",
@@ -5331,6 +5556,36 @@
       "verified": {
         "bytes": "0004423b+321",
         "sha1": "97da37f96042",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000443c2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MidiSound_IsPlaying",
+      "description": "(object), its argument removed by this function, slot +0x30 of the MidiSound vtable 000825bc: 1 when the song handle +0x19 is not -1 and 0005f9dd(handle) answers 0, else 0; the same statements as ES1DBSIM's MidiSound_IsPlaying (00050730) in different code.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574",
+      "verified": {
+        "bytes": "000443c2+46",
+        "sha1": "4d99a8408e37",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000443f0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "MidiSound_SetVolume",
+      "description": "(object, volume) in stack order, its arguments removed by this function, slot +0x2c of the MidiSound vtable 000825bc: a signed byte below 0 stores 0 at +0x31 and calls 0005f56b(0); otherwise it stores the volume, 100 at most, at +0x31 and calls 0005f56b(+0x31 * 127 * the manager's (+0x11) byte +0x241 / 10000); the same statements as ES1DBSIM's MidiSound_SetVolume (0005075c) in different code.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-music--music_tick-000585dc",
+      "verified": {
+        "bytes": "000443f0+111",
+        "sha1": "fed21c4745c2",
         "scope": "body",
         "via": "decompile"
       }
@@ -5376,6 +5631,21 @@
       "verified": {
         "bytes": "000446ab+699",
         "sha1": "070aaa464a31",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044966",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "DigiSound_IsPlaying",
+      "description": "(object), its argument removed by this function, slot +0x30 of the DigiSound vtable 0008261c: 1 when the voice +0x19 is not -1 and 0005e755(the driver handle 000ab4e0, voice) answers 0, else 0; the same statements as ES1DBSIM's DigiSound_IsPlaying (00050c18) in different code.",
+      "source": "Herculan/docs/es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574",
+      "verified": {
+        "bytes": "00044966+52",
+        "sha1": "9b2082764c4b",
         "scope": "body",
         "via": "decompile"
       }
@@ -11786,6 +12056,21 @@
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
     },
     {
+      "address": "0005cde4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_Dispatch",
+      "description": "The byte in EAX. With Keyboard_TranslateTable (0007f74e) set, replaces the low seven bits by its entry, keeping bit 0x80. Sets bit 0x8000 of Keyboard_Modifiers (0007f642) while Keyboard_PrefixCount (0007f644) is not 0 and clears it otherwise; ors the modifiers' high byte into the code. By the byte's low seven bits: 0x2a and 0x36 set (press) or clear (release) modifier bits 2 and 1, 0x3a flips 0x40 on a press, and after those three 0x800 = (bit 1 or bit 2) xor bit 0x40; 0x38 sets or clears 0x200, 0x1d 0x400; 0x45 flips 0x1000 and 0x46 0x2000 on a press. Then, from the highest set bit of Keyboard_CodeMasks (0007f752)[low byte] down, calls Keyboard_Subscribers (0007fb56)[bit] with the code pushed (the callback removes it): an answer of 2 goes on to the next bit, any other returns 1; no bit left returns 0. es2_xref finds calls from Keyboard_PostCode (0001fdad) and, in bytes it places after __FLTLNG, from the interrupt handlers at 0005cd10 and 0005cda8. The code of ES1DBSIM's Keyboard_Dispatch (0007de20), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20",
+      "verified": {
+        "bytes": "0005cde4+403",
+        "sha1": "852382a412bc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0005cf78",
       "binary": "ES1GO",
       "type": "function",
@@ -11798,6 +12083,36 @@
         "sha1": "4a49810edcb4",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "0005d4e8",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dos_KeyAvailable",
+      "description": "No arguments: INT 21h function 0x0b (standard input status), its AL sign-extended and negated, so 1 when a key waits and 0 otherwise. The code of ES1DBSIM's Dos_KeyAvailable (0006c52c), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-command-word",
+      "verified": {
+        "bytes": "0005d4e8+12",
+        "sha1": "5f6482a7a129",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d4f4",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Dos_ReadKeyNoEcho",
+      "description": "Calls 00065344, then INT 21h function 8, DOS's unechoed character read, and returns AL zero-extended to AX. The code of ES1DBSIM's Dos_ReadKeyNoEcho (0006c538), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-command-word",
+      "verified": {
+        "bytes": "0005d4f4+21",
+        "sha1": "c75e01317e51",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -11835,6 +12150,66 @@
       "name": "dos_getdiskfreespace",
       "description": "Symantec C++ runtime `dos_getdiskfreespace`, from `getdos.ASM`: Symantec C++ 6.1's library code for it matches here whole, relocated operands masked, and the search over the image finds it at this address only. The match covers 40 bytes from here.",
       "source": "Herculan/docs/es1/formats/compiler.md#identification"
+    },
+    {
+      "address": "0005d62c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_Dtor",
+      "description": "(this, flags) in stack order, its arguments removed by this function: for a non-null this, when GL slot 1 (000ab788) is not 0, Keyboard_Release (0005d695)(this) and clears the slot; frees this when flags bit 0 is set. The code of ES1DBSIM's Keyboard_Dtor (0006c670), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-input-devices",
+      "verified": {
+        "bytes": "0005d62c+58",
+        "sha1": "1c1c6c2a55c9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d668",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_Install",
+      "description": "(this, mode) in stack order, its arguments removed by this function: Keyboard_ClaimInstance (0001fcb0)(this) and, when it answers non-zero, Keyboard_SetMode (0001fd10)(mode); returns bit 0 of this's status dword. The code of ES1DBSIM's Keyboard_Install (0006c6ac), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#installing--keyboard_ctor-0006c600",
+      "verified": {
+        "bytes": "0005d668+45",
+        "sha1": "9f85edcf35b7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d695",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "Keyboard_Release",
+      "description": "(this), its argument removed by this function: Keyboard_Uninstall (0001fcd4). es2_xref finds a call from Keyboard_Dtor (0005d62c). The code of ES1DBSIM's Keyboard_Release (0006c6d9), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-input-devices",
+      "verified": {
+        "bytes": "0005d695+11",
+        "sha1": "62de6a44b669",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0005d6a0",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "KeyQueue_Subscriber",
+      "description": "(code), its argument removed by this function: KeyQueue_Push (0001fdc8)(code), answering its 1, so the code goes no further. The keyboard's first subscriber. The code of ES1DBSIM's KeyQueue_Subscriber (0006c6e4), relocated operands aside.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-simulators-two-subscribers",
+      "verified": {
+        "bytes": "0005d6a0+18",
+        "sha1": "d84304c126c7",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0005d6b4",
@@ -15369,6 +15744,96 @@
       "name": "Career_OutcomeThresholds",
       "description": "int16[10]: 4, 4, 4, 3, 3, 3, 4, 3, 3, 3. Career_OutcomeChoice (000159e9) gives outcome 1 when the word 000aad58 exceeds the entry the word 000aad5e indexes.",
       "source": "Herculan/docs/es1/formats/bst-battle-sets.md#a-careers-missions"
+    },
+    {
+      "address": "0007f63e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Keyboard_Instance",
+      "description": "Pointer to the installed keyboard's status dword (Keyboard_ClaimInstance (0001fcb0)): bit 0 installed, bit 2 KeyQueue not empty, 0x80000 a word dropped from a full queue, 0x70000 the mode. 0 when none. ES1DBSIM's Keyboard_Instance is at 0009b6aa.",
+      "source": "Herculan/docs/es1/simulation/input.md#installing--keyboard_ctor-0006c600"
+    },
+    {
+      "address": "0007f642",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Keyboard_Modifiers",
+      "description": "Word: low byte the Shift bits 1 and 2 and Caps Lock 0x40; high byte 0x200 Alt, 0x400 Ctrl, 0x800 Shift xor Caps Lock, 0x1000 Num Lock, 0x2000 Scroll Lock, 0x8000 a key after E0 (INT 15h mode). Keyboard_SetMode (0001fd10) seeds it and Keyboard_Dispatch (0005cde4) keeps it and ors its high byte into each code. ES1DBSIM's Keyboard_Modifiers is at 0009b6ae.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20"
+    },
+    {
+      "address": "0007f644",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Keyboard_PrefixCount",
+      "description": "Word: The interrupt 0x15 handler at 0005cd10 adds 2 for an E0 byte and halves it after each byte; Keyboard_HookInt15 (000200e8) clears it; Keyboard_Dispatch (0005cde4) sets Keyboard_Modifiers' 0x8000 while it is not 0. The data of ES1DBSIM's Keyboard_PrefixCount (0009b6b0).",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20"
+    },
+    {
+      "address": "0007f646",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "KeyQueue",
+      "description": "128 code words, a ring: KeyQueue_Push (0001fdc8) writes at KeyQueue_Head (0007f746) after advancing it and KeyQueue_Pop (0001fe20) reads at KeyQueue_Tail (0007f74a) after advancing it, so it holds 127. ES1DBSIM's KeyQueue is at 0009b6b2.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20"
+    },
+    {
+      "address": "0007f746",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "KeyQueue_Head",
+      "description": "Dword: KeyQueue (0007f646)'s last written index, which KeyQueue_Push (0001fdc8) advances mod 128. ES1DBSIM's KeyQueue_Head is at 0009b7b2.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20"
+    },
+    {
+      "address": "0007f74a",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "KeyQueue_Tail",
+      "description": "Dword: KeyQueue (0007f646)'s last read index, which KeyQueue_Pop (0001fe20) advances mod 128. ES1DBSIM's KeyQueue_Tail is at 0009b7b6.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20"
+    },
+    {
+      "address": "0007f74e",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Keyboard_TranslateTable",
+      "description": "Pointer to a byte table Keyboard_Dispatch (0005cde4) looks a byte's low seven bits up in while it is not 0; Keyboard_SetTranslateTable (0001feb1) sets it. ES1DBSIM's Keyboard_TranslateTable is at 0009b7ba.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20"
+    },
+    {
+      "address": "0007f752",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Keyboard_CodeMasks",
+      "description": "256 dwords, by a code's low byte: bit i set when subscriber i (Keyboard_Subscribers (0007fb56)) wants the code. Keyboard_AddSubscriber (0001fee3), Keyboard_AddSubscriberCodes (0001ffdc), Keyboard_RemoveSubscriberCodes (00020030) and Keyboard_RemoveSubscriber (0001ff32) write it; Keyboard_Dispatch (0005cde4) walks it from the highest bit. ES1DBSIM's Keyboard_CodeMasks is at 0009b7be.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20"
+    },
+    {
+      "address": "0007fb52",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Keyboard_SubscriberCount",
+      "description": "Dword: the slots of Keyboard_Subscribers (0007fb56) in use, at most 32. ES1DBSIM's Keyboard_SubscriberCount is at 0009bbbe.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20"
+    },
+    {
+      "address": "0007fb56",
+      "binary": "ES1GO",
+      "type": "data",
+      "confidence": "high",
+      "name": "Keyboard_Subscribers",
+      "description": "32 callback pointers, oldest first; Keyboard_Dispatch (0005cde4) calls slot i for bit i of Keyboard_CodeMasks (0007f752), from the highest. ES1DBSIM's Keyboard_Subscribers is at 0009bbc2.",
+      "source": "Herculan/docs/es1/simulation/input.md#a-key--keyboard_int9handler-0007dde4-and-keyboard_dispatch-0007de20"
     },
     {
       "address": "00080894",

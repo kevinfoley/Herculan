@@ -6,6 +6,8 @@
 - a frame waits for two interrupts of the PC timer, which runs at 120 a second, so at most 60 frames are drawn a second, where ES2's waits 40 ms; a frame drawn within two interrupts still counts as 25 ms of play, so at 60 frames a second the game runs half again as fast as real time ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40));
 - `Alt+S` freezes the simulation only while a tape records or plays, and the mission's trigger areas still fire while it is frozen;
 - the keys differ: keypad 0 switches what the stick drives ([the stick mode](input.md#the-stick-mode)), `Ctrl+Esc` quits as `Ctrl+Q` does, `Esc` plays a sound as it leaves the outside view, `Ctrl+1` turns the throttle into a forward-only one and then switches it between forward only and reverse only, with or without the throttle-lever option, where ES2's needs a throttle lever, and `'`, `\`, `/` and the developer keys of ES2's `-SPRUNKNOWN` have no case ([commands](#commands--sim_dispatchcommand-00059df8));
+- the music is MIDI and follows the fight: one of three calm songs, picked at random, fades into its battle song when an enemy machine is in sight or close and back again once none is, checked every 5 seconds, where ES2 plays one CD track a mission ([the music](#the-music--music_tick-000585dc));
+- sound `0x2d`, ES2's engine hum, is silent in the outside view and starts again in the cockpit once the opening sound `0x13` has ended, where ES2's outside view turns it up ([the frame's sounds](#the-frames-sounds--sim_framesoundtick-00058574));
 - holding the mouse's second button while the first is down snaps the turret straight ahead, and a disabled HERC's turret swings back to center every tick ([the player's controls](#the-players-controls--sim_pollplayerinput-0005a0c0));
 - a mission whose HERC starts within 40000 of a friendly structure opens with the lift, where ES2's lift depends on its block's `+0x54` instead ([the mission start](#the-mission-start--sim_startmission-0005a9dc)).
 
@@ -94,14 +96,50 @@ Where ES2's parsers differ ([ES2's switches](../../retail/command-line.md#dbsim)
 
 Each pass of `Sim_Main`'s loop:
 
-1. Subsystem phase 4; `00058574`; `Time_BeginSimTick` (`00063f40`) unless `TapePlayback` is set ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)).
+1. Subsystem phase 4 ([the phases](#the-subsystem-phases)); `Sim_FrameSoundTick` (`00058574`, [the frame's sounds](#the-frames-sounds--sim_framesoundtick-00058574)); `Time_BeginSimTick` (`00063f40`) unless `TapePlayback` is set ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)).
 2. It leaves the loop when `DemoAbort` (`000b5bd2`) is set or `Sim_MainTick` ([the tick](#the-tick--sim_maintick-00059700)) answers non-zero.
 3. `Cam_Update`(`ViewObjectPtr`) ([`Cam_Update`](external-views.md#cam_update)).
-4. `Sim_RenderFrame` (`00059c08`, [the draw](../rendering/ground-and-sky.md)), skipped while a tape plays with the simulation frozen.
+4. `Sim_RenderFrame` (`00059c08`, [the draw](../rendering/ground-and-sky.md)), which runs subsystem phase 5 first, skipped while a tape plays with the simulation frozen.
 5. `Sim_EndFrame` (`00059b40`, [the frame's end](cockpit-views.md#cockpitview_stepviewtransition-00022904)), which ends with `Mem_TrackPeakUse` (`00059288`): `Mem_PeakUse` (`00096f08`) = the larger of itself and the heap's size less its bytes free (`000ae4b0` − `000ae4b8`, the heap object's `+4` and `+0xc`, [the heap](memory.md#the-heap)).
-6. Subsystem phase 6.
+6. Subsystem phase 6: `Vcr_FlushCheckpoints` ([the phases](#the-subsystem-phases)).
 
 ES2's loop also counts the frames, sleeps while the window has lost the focus, and draws every frame ([ES2's frame](../../retail/simulation/main-loop.md#the-frame)).
+
+### The subsystem phases
+
+`RegisterSubsystemLoader` (`00000ac4`), (phase, function), appends a 6-byte {function, `int16` phase} record to the table at `000bbcb0`, its count the `int16` at `0009011c`; `Subsystem_RunPhase` (`00000af4`), (phase), calls each function registered at that phase in table order, as ES2's (`00401d94`). `Sim_Main` runs phases 0 and 1 around the volume group, 3 once after `Sim_StartMission`, and 4 and 6 each frame; `Sim_StartMission` runs 2 and `Sim_RenderFrame` 5.
+
+`es2_xref.py` finds 26 calls of `RegisterSubsystemLoader`, each in a static initializer that pushes the function and the phase just before the call, and every access `es2_xref.py --decode` finds to the table and its count lies in the two functions above. Of the 26:
+
+- 16 register at phase 2, the resource loads (for one, [the weapons' load](../formats/weapons-dat-sim.md));
+- 9 at phase 5, the pools' delete flushes (for one, [the explosions'](../formats/explos-dat.md));
+- one at phase 6: `Vcr_StaticInit` (`00000d3c`, the static constructor table's entry `000adbb4`) registers `Vcr_FlushCheckpoints` (`00000c84`), ES2's ([the checkpoint file](../../retail/formats/tap-input-tape.md#the-checkpoint-file)). While recording with the `.dmp` file open, it opens `<stem>.dmp` in mode `ab` (assert `vcr.cpp` line `0x30`, severity 5), writes the buffer `000adcd8` up to its total `0009018c`, closes the file, and puts the cursor `00090188` back on the buffer and the total to 0. In playback it formats `Playback error. Frame #%ld` with `FrameRate_GetFrameCount` into a stack buffer and discards it, where ES2's does nothing;
+- none at phase 0, 1, 3 or 4, so those four runs call none of the functions found ([Open](#open)).
+
+`Vcr_Checkpoint` (`00000bd4`), (label, size, data), fills the buffer: while recording it copies the data onto the buffer at the cursor, advancing the cursor and the total; in playback it reads `size` bytes from the `.dmp` file into the buffer and, when they differ from the data, formats the label into a stack buffer and sets `00090190`. It is ES2's ([the checkpoint file](../../retail/formats/tap-input-tape.md#the-checkpoint-file)); what calls it is [Open](#open).
+
+### The frame's sounds — `Sim_FrameSoundTick` (`00058574`)
+
+No arguments; ES2's frame has no counterpart. In order:
+
+1. `Music_Tick` ([the music](#the-music--music_tick-000585dc)).
+2. **Sound `0x2d`.** In the view manager's view 4 (its `+0x10`), the outside view, with `0x2d` playing, `Sound_Stop`(`0x2d`); in any other view, with neither `0x2d` nor `0x13`, the sound `Sim_StartMission` plays last, playing, `Sound_Play`(`0x2d`). ES2's power-up plays its engine hum `0x2d` with the start-up sequence `0x13` and loops the hum all mission ([the cockpit power-up](../../retail/simulation/audio.md#the-cockpit-power-up)); its outside view sets the hum's volume to 100 ([the external view's step](cockpit-views.md#cockpitview_stepviewtransition-00022904)).
+3. `Sound_UpdateListener` (`0004df98`)(`ViewObjectPtr`) keeps the camera in `Sound_Listener` (`000bd730`), whose first three dwords are its position ([the camera](external-views.md#the-camera)). With a sound manager (`000959ac`) it places each catalog row (the count `000bd72c`) whose dword `000b1a84`[row] is not 0 at the point `000b1b74` + 12·row with `SoundObject_SetPosition` and zeroes the dword; and on every tenth call (the countdown `000959b4`) it builds the rotation of (0, 0, 0) with `BuildEulerRotationMatrixQ14`, puts the camera's position with it, and passes that frame to `0004fb60`(manager, frame).
+
+`Sound_IsPlaying` (`0004e05c`), (id): 0 without a sound manager, else slot `+0x30` of the sound object `000bd63c`[id]. `MidiSound_IsPlaying` (`00050730`) and `DigiSound_IsPlaying` (`00050c18`), the slot of the two classes ([sound objects](../formats/sound-samples.md#sound-objects)), answer 1 when the object's voice `+0x19` is not −1 and the driver's query of it, `0006f225`(voice) for a song and `0006df9d`(`000bd8c8`, voice) for a sample, answers 0.
+
+#### The music — `Music_Tick` (`000585dc`)
+
+**One of three calm songs, picked at random, gives way to its battle song when an enemy machine is in sight or close, and the battle song gives way back when none is and no flyer is far off.** No arguments. It does nothing without a sound manager or with preferences option 0 (`000bd562`) clear. A song is a catalog row ([the catalog](../formats/sound-samples.md#the-simulators-catalog)): a calm one *s* from 0 to 2, its battle one *s* + 3. *Now* is the clock `000981c4`, 60 a second ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)), so 300 is 5 seconds. In order:
+
+1. **The first call**, `Music_Song` (`00096d0c`) still −1: `Music_Song` = `Math_RandomBelow`(`000b5c48`, 3); `Sound_Preload`(song); `Music_SongObject` (`00096d14`) = `000bd63c`[song]; `Music_Battle` (`00096d0e`) = 0; `Music_NextCheck` (`00096d10`) = now + 300.
+2. **The switch**, while `Music_Switching` (`00096d18`) is set: when the song's volume (`SoundObject_GetVolume`, `0005049c`) is not 0, it sets the volume 15 lower through the object's slot `+0x2c` and returns. `MidiSound_SetVolume` (`0005075c`), that slot of a song, keeps the value between 0 and 100 at `+0x31` and sets the MIDI driver's volume to it × 127 × the manager's `+0x241` / 10,000 through `0006edb3`, so a song at 100 fades out over seven frames. At 0: `Sound_Stop`(song); `Music_Song` + 3 while `Music_Battle` is set, − 3 while it is clear; `Sound_Preload`; the new object at volume 100; `Music_Switching` = 0.
+3. **The check**, once `Music_NextCheck` is less than now. An object of `LiveObjectList` is seen when it is neither disabled (`+0x9e`) nor destroyed (`+0x93`), its group (`+0x3f`) has no action (`+0x16`) and side byte `+0x14` 1, and either `TargetSelect_CanTarget` and `TargetSelect_InForwardCone` both answer non-zero for it from `CockpitViewInstance` or it lies within 25000 of the player. In the battle song the first seen ends the call. In the calm song the first seen sets `Music_Switching` and `Music_Battle`, `Music_NextCheck` = now + 300, and ends the walk. In the battle song with none seen it sets `Music_Switching` and walks `g_FlyerPool` last to first: the first flyer neither disabled nor destroyed and more than `0x49f0` (18928) from the player, of either side, clears it again. With it still set, `Music_Battle` = 0 and `Music_NextCheck` = now + 300.
+4. When the song is not playing, `Sound_Play`(song), so a song that ends starts again.
+
+`es2_xref.py` finds calls of `Music_Tick` from `Sim_FrameSoundTick` and from `0004ad0c`, (on), which calls `0004e294`(on) and then, with *on* not 0 and the byte `000b1734` clear, `Music_Tick` ([Open](#open)).
+
+`SoundObject_GetVolume` (`0005049c`), (object): the byte `+0x31`, or for a placed sound (`+0x15`) the word `+0x32` × 10,000 / the manager's `+0x241`. ES2 keeps ten music rows in its catalog but plays the CD ([ids 0-9 are music](../../retail/simulation/audio.md#ids-0-9-are-music)).
 
 ## The tick — `Sim_MainTick` (`00059700`)
 
@@ -116,12 +154,20 @@ No arguments. In order:
    - the groups, in order: one with no action (`+0x16`) runs `Group_TickMembers` ([the tick](mission-groups.md#the-tick)); one whose action has fired (its `+0xa` set) has the action cleared, so its members tick from the next tick on.
 3. `Sim_StepOnce` (`000b5b9c`), when set, is cleared and the freeze set.
 4. `Sim_PollPlayerInput` ([below](#the-players-controls--sim_pollplayerinput-0005a0c0)); a non-zero answer ends the tick with 1.
-5. `Actions_EvaluateTriggers`(`LocalPlayerMech`) ([trigger areas](world.md#trigger-areas--actions_evaluatetriggers-0001f87c)), frozen or not, and `0005894c`, where ES2's runs `ViewChain_Apply`.
+5. `Actions_EvaluateTriggers`(`LocalPlayerMech`) ([trigger areas](world.md#trigger-areas--actions_evaluatetriggers-0001f87c)), frozen or not, and `ViewChain_Apply` (`0005894c`, [the views](#the-views--viewchain_apply-0005894c)).
 6. Unless frozen: `Sim_DetectionTick` ([the sensor model](sensor-model.md)) and `Mech_PerTickSystemsUpdate` ([the systems tick](mech.md#the-systems-tick--mech_perticksystemsupdate-00014ee0)) for each machine of `g_MechPool`, last to first, whose group has no action and that is not destroyed (`+0x93`).
 7. `Mission_PollStatus`(`LocalPlayerMech`) ([the poll](mission-status.md#the-poll--mission_pollstatus-0000f454)), destroyed or not. Status 2 calls `00058414` and ends the tick with 1. Another status of 0 or more puts up the status panel `00046efc`(0, 0, 1, status) after, for status 3, `Group_ApplyOutnumberedDamage` on the player's group ([going out of the fight](mission-groups.md#going-out-of-the-fight)), which shows status `0x12` instead when it destroys the player; it runs the panel through slot `+0xc` of its `+0x314`, ends the tick with 1 when the answer equals the word at `00097158`[status], and destroys the panel with `00045d0c`(panel, 3).
 8. Otherwise 0.
 
 Where ES2's differs ([ES2's tick](../../retail/simulation/main-loop.md#the-tick)): ES2's ticks the effect pools first, the projectiles next and only the structures whose group has arrived, and queues a finished effect for deletion; it runs its action timers and gates the triggers on the freeze; and with the player destroyed it runs the death camera in place of the poll, where ES1's polls and hands status 2 to `00058414`.
+
+### The views — `ViewChain_Apply` (`0005894c`)
+
+No arguments; ES2's ([moving between views](../../retail/simulation/external-views.md#moving-between-views--viewchain_apply)), on the view manager's step flag `+0x18` (`CockpitViewManagerPublished`), which `CockpitView_ProcessViewCommand` sets when it stages a command and `CockpitView_StepViewTransition` clears ([switching views](cockpit-views.md#cockpitview_processviewcommand-000226f0)). `ViewChain_CameraControlPreferred` is `000b5bb8`, 1 from `Main_StaticInit`. Against ES2's, it has no view 4, ES1 having no chase view; view 2 views the player alone, ES1 having no `Ctrl+F`; and it sets the camera's mode with no lock test, the camera having no lock ([the camera](external-views.md#the-camera)). View 3 sets `ViewChain_CaptionFrames` to 2 as ES2's does, and the caption is drawn while it counts down.
+
+**`ViewChain_ViewObject` (`00058a44`)**, (object), is ES2's ([one camera per squadmate](../../retail/simulation/external-views.md#one-camera-per-squadmate--viewchain_viewobject)) on the squad cameras (`000bda9e`, their count the player's group's `+0x12`) and the spare `ViewChain_SpareCamera` (`000b5d38`). It builds the spare on its first call (the guard `000b5d34`): `TSCamera_CtorDefault`, the vtable `00096c5a` at `+0x12`, and `+0x32`, `+0x36`, `+0x44`, `+0x46` and `+0x48` zeroed. It copies the current camera into a free one with `TSCamera_CopyFrom` (`00057af8`), (camera, from): `00057bb4`(camera, from), then the fields `+0x22` to `+0x49` one by one, where ES2's copies them inline. `ViewChain_Apply`'s two calls enter it through the three `NOP`s at `00058a41`.
+
+**`ViewChain_DrawCaption` (`00058b68`)** is ES2's caption ([what the external view shows](../../retail/simulation/external-views.md#what-the-external-view-shows)) on a 320 × 200 screen with no shift for wider modes: the font `000bd556`; the band's top row halfway between the bottom of `ExternalView_GetRect`'s rect (`+0xc`) and row 199, less half the font's height (`+10`), and at most 198 less that height; the band, columns 0 to 319, filled with the brush {0, `0x3f`} with the context's clip mode and translation (`+0x208`, `+0x20c`) at 0 and put back after. The two runs start at x = the words `00096c3c` and `00096c3e`, on the band's bottom row; their texts are the strings `000bd4c4`[0] and [1], the name (`000bd3e0` for the player, `Squad_PilotName` for a squadmate, the empty string `00096d19` otherwise) and `000bd4c4`[2] while `InputDrivesCamera` is set, [3] while it is clear. `es2_xref.py` also finds two calls of it from `00057820`.
 
 ## Commands — `Sim_DispatchCommand` (`00059df8`)
 
@@ -131,7 +177,7 @@ Where ES2's differs ([ES2's tick](../../retail/simulation/main-loop.md#the-tick)
 |---|---|---|
 | `0x21f` | `Alt+S` | Toggles `Sim_Frozen` while `TapePlayback` or `TapeRecording` is set |
 | `0x2f` | `V` | In view (`ViewChain_View`, `000b5b8e`) 1 or 3 queues view command 3 and sets `ViewChain_PendingView` (`000b5bba`) to 2; in view 2 queues 2 and sets 3 ([the chain of views](../../retail/simulation/external-views.md#the-chain-of-views)) |
-| `0x31` | `N` | In view 3 with the view manager's `+0x10` at 4: the next object of `LiveObjectList` after `ViewChain_Viewed` (`ObjectList_Next`) whose `+0x28` is not negative and whose group is the player's; when it is not the viewed one, `00058a44`(object), the camera's mode 1, `ViewChain_Chosen` = it and `ViewChain_CaptionFrames` (`000b5bc0`) = 2 |
+| `0x31` | `N` | In view 3 with the view manager's `+0x10` at 4: the next object of `LiveObjectList` after `ViewChain_Viewed` (`ObjectList_Next`) whose `+0x28` is not negative and whose group is the player's; when it is not the viewed one, `ViewChain_ViewObject`(object) ([the views](#the-views--viewchain_apply-0005894c)), the camera's mode 1, `ViewChain_Chosen` = it and `ViewChain_CaptionFrames` (`000b5bc0`) = 2 |
 | `0x0f`, `0x1c` | `Tab`, `Enter` | With the view manager's `+0x10` at 4, `ViewChain_ToggleCameraControl` (`00059dbc`) |
 | `0x0e` | `Backspace` | `g_CenterTurretMode` = 1 |
 | `0x10` | `Q` | `Mission_StatusForAlert`(1, `LocalPlayerMech`)'s status in the panel `00046efc`, as in the tick; the second term is 1 when the answer ends the mission; `MissionAlertArmed` = 0 |
@@ -144,7 +190,7 @@ Where ES2's differs ([ES2's tick](../../retail/simulation/main-loop.md#the-tick)
 
 A result of 2 ends the mission ([the tick](#the-tick--sim_maintick-00059700)), so `Ctrl+Q` answered yes ends it with `Sim_QuitFlag` set, and `Sim_Shutdown` gives exit code 0.
 
-`ViewChain_ToggleCameraControl` (`00059dbc`), frameless: flips `000b5bb8` between 0 and 1, and sets `ViewChain_CaptionFrames` to 2 when the camera's object `+0x32` is the player.
+`ViewChain_ToggleCameraControl` (`00059dbc`), frameless: flips `ViewChain_CameraControlPreferred` (`000b5bb8`) between 0 and 1, and sets `ViewChain_CaptionFrames` to 2 when the camera's object `+0x32` is the player.
 
 Where ES2's differs ([ES2's keys](../../retail/command-line.md#-sprunknown-the-developer-keys)): ES2's has `'` (`TargetSelect_Nearest`), `\` (center legs), `/` (the manual) and `0x14` (auto-track); its `Backspace` also clears the legs mode and the auto-track; its `V`, `N` and `Esc` refuse while the camera is locked and its `V` steps view 4 too; its `Ctrl+1` needs a throttle lever; `Alt+S` also answers the developer flag; and `F12` raises its preferences panel.
 
@@ -185,6 +231,11 @@ Where ES2's differs ([ES2's](../../retail/simulation/joystick-input.md#while-the
 
 | ES1 | Address | ES2 |
 |---|---|---|
+| `Vcr_Checkpoint`, `Vcr_FlushCheckpoints`, `Vcr_StaticInit`, in `vcr.cpp` | `00000bd4`, `00000c84`, `00000d3c` | `Vcr_Checkpoint` (`00401dc0`), `Vcr_FlushCheckpoints` (`00401e5c`), `Vcr_StaticInit` (`00401ef8`) |
+| `Sound_UpdateListener`, `Sound_IsPlaying`, `SoundObject_GetVolume`, `MidiSound_IsPlaying`, `MidiSound_SetVolume`, `DigiSound_IsPlaying` | `0004df98`, `0004e05c`, `0005049c`, `00050730`, `0005075c`, `00050c18` | |
+| `TSCamera_CopyFrom`, in the file before | `00057af8` | |
+| `Sim_FrameSoundTick`, `Music_Tick`, in the file before | `00058574`, `000585dc` | |
+| `ViewChain_Apply`, `ViewChain_ViewObject`, `ViewChain_DrawCaption`, in the file before | `0005894c`, `00058a44`, `00058b68` | `0045de14`, `0045df18`, `0045e1ec` |
 | `HeapPtr_DtorMainCopy`, `ConfigPart_DtorMainCopy`, `ConfigPart_GetClassTagMainCopy`, `TSPartBase_DtorMainCopy` | `00058d94`, `00058dbc`, `00058dfb`, `00058e04` | |
 | `Sim_PreParseCommandLine`, `Sim_ParseCommandLine` | `00058e30`, `00058e74` | `WinMain_ParseSwitches` (`0045e6b0`), `Sim_ParseCommandLine` (`0045e73c`) |
 | `Cam_AttachTo`, `View_GetActiveObject`, `Mem_TrackPeakUse` | `0005923c`, `00059280`, `00059288` | `0045ed94`, `0045eddc` |
@@ -219,6 +270,12 @@ The flags lie in the block `Main_StaticInit` zeroes, `000b5b5c`–`000b5bd3`.
 | `Sim_Timer`, the PC timer ([the PC timer](timer.md)) | `000b5baa` |
 | `LiftStart_Pending`, `int16` | `000b5bb0` |
 | `Sim_EggplantGiven`, `DemoMode`, `DemoAbort`, `Sim_AltDriveAllowed`, `int16` | `000b5bc4`, `000b5bd0`, `000b5bd2`, `000b5bce` |
+| `ViewChain_CameraControlPreferred` | `000b5bb8` |
+| `ViewChain_SpareCamera`, a `0x4a`-byte camera, and its guard byte | `000b5d38`, `000b5d34` |
+| `Music_Song`, `Music_Battle`, `int16` | `00096d0c`, `00096d0e` |
+| `Music_NextCheck`, `Music_SongObject` | `00096d10`, `00096d14` |
+| `Music_Switching`, byte | `00096d18` |
+| `Sound_Listener`, the camera | `000bd730` |
 | `ViewChain_Viewed`, the object the controls and views follow | `000bda9a` |
 | the squad cameras, one dword a member | `000bda9e` |
 | `maybe_CockpitMouseLive`, byte | `000bd512` |
@@ -226,9 +283,12 @@ The flags lie in the block `Main_StaticInit` zeroes, `000b5b5c`–`000b5bd3`.
 
 ## Open
 
-- **Open:** the callees read for none of this file's functions: `00058574` in the frame; `0005894c` and `00058a44` (in `ViewChain_Apply`'s and `ViewChain_ViewObject`'s places), `00058414` (status 2), `00057820` (`F12`), `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0003ea50` (`-t`), `0005730c`, `0004e498`, `0004e294`, `00057640`, `000441cc`, `00075858`, `00066e00`, `0006a824`, `0006a5fc`, the status panel `00046efc` and `00045d0c`, and `0001b794` (the flyer's controls).
+- **Open:** the callees read for none of this file's functions: `00058414` (status 2), `00057820` (`F12`), `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0003ea50` (`-t`), `0005730c`, `0004e498`, `0004e294`, `00057640`, `000441cc`, `00075858`, `00066e00`, `0006a824`, `0006a5fc`, the status panel `00046efc` and `00045d0c`, and `0001b794` (the flyer's controls).
 - **Open:** what `000b5b69` (`-P`) and `-V`, `-W` and `-T`'s words feed, and what sets `Sim_StepOnce`; `es2_xref.py` finds only the stores above and the tick's test, and a store through the block's base `000b5b5c` is not covered by that search.
-- **Open:** what `000b5bb8`, which `ViewChain_ToggleCameraControl` flips, and the camera's mode 2 select, and what the bit `Sim_Main` clears in the display's first byte does.
+- **Open:** what the bit `Sim_Main` clears in the display's first byte does.
+- **Open:** the callees of [the frame's sounds](#the-frames-sounds--sim_framesoundtick-00058574) and [the views](#the-views--viewchain_apply-0005894c) read for none of this file's functions: `0004fb60` (the listener's frame), `0004dee4` (it sets `000b1a84` and `000b1b74`), `0006edb3`, `0006f225` and `0006df9d` (the HMI calls), and `00057bb4` (the camera copy's first half); and `0004ad0c`'s callers and what `000b1734` is.
+- **Open:** which songs ES1's catalog rows 0 to 5 name, which of them `Music_Tick` takes as calm and which as battle, and what ES1's rows `0x13` and `0x2d` hold. A retail check: in a mission with enemies, the music changes within about 5 seconds of the first enemy coming within 25000 or into view ahead.
+- **Open:** a registration `es2_xref.py` cannot see, such as a call of `RegisterSubsystemLoader` through a pointer, at phase 0, 1, 3 or 4; and a caller of `Vcr_Checkpoint`, for which `es2_xref.py` finds no branch, only the dwords at `0002f350` and `00073eeb` in the image, not examined.
 - **Open:** which retail missions place a friendly structure within 40000 of the player's start, and so open with the lift (`00057cf4` and `00057ffc` unread). A retail check: such a mission brightens through a palette shift before play starts, and one that does not starts at once.
 - **Open:** whether `Ctrl+Esc`, keypad 0 and `Esc`'s sound reach `Sim_DispatchCommand` in retail as the table says. A retail check: in a mission, `Ctrl+Esc` raises the same panel as `Ctrl+Q`.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: `BP <CS>:00059700` fires once a frame; after a mission ends, `DATA\EXIT.CFG` holds 3 (`03 00`) and after `Ctrl+Q` answered yes 0.

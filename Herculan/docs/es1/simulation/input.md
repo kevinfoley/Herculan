@@ -14,6 +14,63 @@ Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-e
 
 The code is `0004c650`–`0004db13`, `appinput.cpp` by its assert at `0004d56a`. It opens with a run of `ConfigPart`'s copies ([module copies](../formats/compiler.md#vtables)) after the static initializer `0004c64c` (static constructor table entry `000adc5c`) of the file before and its three zero bytes: `HeapPtr_DtorAppInputCopy` (`0004c650`), `ConfigPart_DtorAppInputCopy` (`0004c678`, slot `+0x1c` of `000957a6`), `ConfigPart_GetClassTagAppInputCopy` (`0004c6b7`) and `TSPartBase_DtorAppInputCopy` (`0004c6c0`, slot `+0x1c` of `000957da`). It ends with the static initializer `Input_InitKeyboardAxisTable` (`0004da7c`, entry `000adc60`) and its exit routine `AppInput_ExitNoOp` (`0004db10`, exit table entry `000adcc4`), a lone `RET`, followed by three zero bytes. Its functions are ES2's from `Input_KeyjoyAxisKey` (`0045a308`) to `Input_InitKeyboardAxisTable` (`0045b888`) in order, less ES2's preferences, joystick set-up, command queue and mouse fitting ([functions](#functions)).
 
+## The keyboard
+
+**ES1 reads the keyboard from the hardware: its own `INT 9` handler takes each byte from port `0x60`, adds the modifier bits, and offers the code to a list of subscribers, newest first. The oldest subscriber is a queue of 128 words, and the command word is one word from it a tick.** ES2 gets its keys from Windows messages and keeps its unclaimed codes in a ring the same way ([ES2's](../../retail/simulation/cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes)). The library's code runs from `0006c084` to `0006c6f3`, with four Symantec runtime functions ([identification](../formats/compiler.md#identification)) and two drive functions among it, and the two interrupt handlers are at `0007dd4c`–`0007de1c`, before `Keyboard_Dispatch` (`0007de20`). The library's functions from `0006c084` to `0006c538` take their arguments in the C convention; `Keyboard_Ctor` and the functions after it remove theirs.
+
+### Installing — `Keyboard_Ctor` (`0006c600`)
+
+`KeyboardInputDevice_Ctor` (`0004b484`)(0, `0x10000`), from `Input_BuildSourceTable`, allocates 14 bytes, builds the keyboard at `+0` with `Keyboard_Ctor`(this, mode), registers `+4` as input device kind 1 (`InputDevice_Register`, `0004b0b4`), and keeps the mode at `+9` and a drain flag, 0, at `+0xd`. `Keyboard_Ctor` claims GL slot 1 (`GL_ClaimGlobal`(this, this, 1)). When the slot holds it, `Keyboard_Install` (`0006c6ac`) makes it `Keyboard_Instance` (`0009b6aa`) with the status dword 1, unless another one is (`Keyboard_ClaimInstance`, `0006c084`), and calls `Keyboard_SetMode`(mode). With the instance installed, `Keyboard_Ctor` registers `Keyboard_Uninstall` (`0006c0a8`) as an exit routine (`Keyboard_UninstallAtExit`, `0006c5f0`) and an assert hook (`Keyboard_UninstallOnAssert`, `0006c5f8`), and registers `KeyQueue_Subscriber` (`0006c6e4`) as the first subscriber with an empty list of codes.
+
+**`Keyboard_SetMode` (`0006c0e8`)**, (mode), with interrupts off: unhooks the current mode's vector; seeds `Keyboard_Modifiers` (`0009b6ae`) from the BIOS's shift flags (`INT 16h` function 2), the flag byte as its low byte plus `0x800` for Caps Lock, `0x1000` for Num Lock and `0x2000` for Scroll Lock; hooks the new mode's vector; and stores the mode in the status bits `0x70000`, returning 1, or 0 for no known mode. Mode `0x10000`, the simulator's, hooks `INT 9`: `Keyboard_HookInt9` (`0006c45e`) saves the protected-mode and real-mode vectors (`INT 21h` `AX=2502h` and `2503h`) and takes the interrupt in protected mode with `Keyboard_Int9Handler` (`0007dde4`, `2506h`). Mode `0x20000` hooks `INT 15h` the same way (`Keyboard_HookInt15`, `0006c4c0`) with `Keyboard_Int15Handler` (`0007dd4c`), and mode `0x40000` hooks nothing. `Keyboard_UnhookInt9` (`0006c4a3`) and `Keyboard_UnhookInt15` (`0006c50e`) put the saved vector back (`2507h`). `Keyboard_Uninstall` unhooks, clears the status dword and releases the instance.
+
+### A key — `Keyboard_Int9Handler` (`0007dde4`) and `Keyboard_Dispatch` (`0007de20`)
+
+The handler switches to its own stack (`000a11e0`), reads one byte from port `0x60`, passes it to `Keyboard_Dispatch` in `EAX`, sends the interrupt controller its end of interrupt (`0x20` to port `0x20`) and returns from the interrupt. It does not jump on to the saved vector, so the BIOS's key buffer and shift flags stand still while the simulator runs. `Keyboard_Dispatch`, the byte in `EAX`:
+
+1. With `Keyboard_TranslateTable` (`0009b7ba`) set, the byte's low seven bits are replaced by the table's entry, the key-up bit `0x80` kept.
+2. Bit `0x8000` of `Keyboard_Modifiers` is set while the `INT 15h` handler's prefix count `Keyboard_PrefixCount` (`0009b6b0`) is not 0, and cleared otherwise.
+3. The code is the byte, bit `0x80` set for a key-up, or'd with the high byte of `Keyboard_Modifiers` as it stood before this byte.
+4. A modifier key then updates `Keyboard_Modifiers`, by the byte's low seven bits: `0x2a` (left `Shift`) and `0x36` (right `Shift`) set bits `2` and `1` on a press and clear them on a release, and `0x3a` (`Caps Lock`) flips `0x40` on a press; after any of the three, `0x800` is set when exactly one of "a `Shift` held" and "`Caps Lock` on" holds, and cleared otherwise. `0x38` (`Alt`) sets `0x200` on a press and clears it on a release, `0x1d` (`Ctrl`) the same with `0x400`; `0x45` (`Num Lock`) flips `0x1000` and `0x46` (`Scroll Lock`) `0x2000` on a press.
+5. **The subscribers.** `Keyboard_CodeMasks` (`0009b7be`), 256 dwords indexed by the code's low byte, holds bit *i* for each subscriber *i* that wants the code. From the highest set bit down, it calls that subscriber's callback (`Keyboard_Subscribers`, `0009bbc2`, 32 slots, `Keyboard_SubscriberCount` `0009bbbe`) with the code as its one argument, which the callback removes. An answer of 2 passes the code to the next lower bit; any other answer ends the walk and the dispatch returns 1. A code with no bit left returns 0.
+
+The `INT 15h` handler (function `0x4f`) dispatches the same way, but counts an `E0` prefix in `Keyboard_PrefixCount` instead of dispatching it, so that `0x8000` marks the key after it, and lets the BIOS process a key the dispatch returns 0 for. The `INT 9` handler drops the answer.
+
+| Function | Address | Arguments | Does |
+|---|---|---|---|
+| `Keyboard_AddSubscriber` | `0006c2bb` | (callback, codes) | when a keyboard is installed and fewer than 32 are registered, appends the callback and sets its bit for each byte of the NUL-terminated codes, returning 1; otherwise 0 |
+| `Keyboard_AddSubscriberCodes`, `Keyboard_RemoveSubscriberCodes` | `0006c3b4`, `0006c408` | (callback, codes) | set or clear the bit of the newest slot holding the callback for each of the codes, returning 1; 0 when no slot holds it |
+| `Keyboard_RemoveSubscriber` | `0006c30a` | (callback) | removes the newest slot holding the callback, moving the later slots and their bits down one |
+| `Keyboard_SetTranslateTable` | `0006c289` | (table) | sets `Keyboard_TranslateTable` |
+| `Keyboard_PostCode` | `0006c185` | (code) | dispatches the code's low word as if typed |
+| `KeyQueue_Push` | `0006c1a0` | (code) | appends the word to `KeyQueue` (`0009b6b2`, 128 words, write index `KeyQueue_Head` `0009b7b2`, read index `KeyQueue_Tail` `0009b7b6`) and sets status bit `2`; when the ring holds 127, drops it and sets bits `2` and `0x80000`; returns 1 |
+| `KeyQueue_Pop` | `0006c1f8` | | the next word, or 0 when empty; clears status bit `2` when the ring empties |
+| `KeyQueue_Subscriber` | `0006c6e4` | (code), removing it | `KeyQueue_Push`, answering 1 |
+
+`es2_xref.py` finds calls to `Keyboard_AddSubscriber` from `Keyboard_Ctor` and `SimInput_SetEnabled`, and to `Keyboard_AddSubscriberCodes` from `Input_BuildSourceTable`. `KeyboardInputDevice_SetMode` (`0004b648`), (device, mode), calls `Keyboard_SetMode` and keeps the mode at `+9`.
+
+### The simulator's two subscribers
+
+`Input_BuildSourceTable` gives `KeyQueue_Subscriber` the 78 make codes of `KeyQueueWantedCodes` (`0009581c`): `Esc` to `]` (`0x01`–`0x1b`), `Enter` (`0x1c`), `A` to `` ` `` (`0x1e`–`0x29`), `\` to `/` (`0x2b`–`0x35`), keypad `*` (`0x37`), `Caps Lock` (`0x3a`), `F1` to `F10` (`0x3b`–`0x44`), the keypad's thirteen keys `0x47`–`0x53` and `F11` and `F12` (`0x57`, `0x58`). The list has no key-up, `Ctrl`, `Shift`, `Alt`, `Space`, `Num Lock` or `Scroll Lock`. It then registers `Input_KeyjoyAxisKey` through `SimInput_SetEnabled`(1), so a code on both lists is offered to the axis keys first:
+
+- **A code of the axis keys' 28** ([below](#the-axis-keys--input_keyjoyaxiskey-0004c6ec)): answer 1 keeps it out of the queue; answer 2 passes it on, and the queue takes it when it is a make code on its list. So while `SimInput_Enabled` is set, `Enter` reaches both the axis keys (the held button) and the queue (the command `0x1c`), and keypad 7, 8, 9, 4, 6, 1, 2 and 3 and `M`, `J`, `K` and `I` reach the axis keys only. While it is clear, in the cockpit's downward view ([the slide](cockpit-views.md#cockpitview_stepviewtransition-00022904)) and between `SimInput_PushDisable` and `SimInput_PopEnable`, they all reach the queue as commands, and `Space` and the key-ups reach neither.
+- **Any other code on the queue's list** reaches the queue.
+- **The rest** reach neither.
+
+So `Alt`+keypad 8 is full throttle travel while the keys are on, and the command `0x248`, `Mech_HandleCommand`'s step along +Y ([the cockpit](mech.md#the-cockpit)), while they are off; the same holds for the other move and turn codes on the keypad, except that with preferences option 10 on the axis keys claim `Ctrl` without `Alt` whether the keys are on or off, so `Ctrl`+keypad 4 and 6 (`0x44b`, `0x44d`) never reach the queue, and under `DemoMode` they claim all 28. Keypad 0 and 5 are not among the 28 and are always commands.
+
+Every `SimInput_SetEnabled`(1) after a (0) registers `Input_KeyjoyAxisKey` again, in a new slot, since `Keyboard_AddSubscriber` appends without looking for the callback; the copies answer alike, so the walk is unchanged. With all 32 slots taken, `Keyboard_AddSubscriber` returns 0, which `SimInput_SetEnabled` returns.
+
+### The command word
+
+`Input_PollDeviceBlock` ([the live block](#the-live-block--input_polldeviceblock-0004c2d0)) reads one word a tick: `Input_ReadKeyboardCommand` (`0004c458`)(1, out) answers 0 while the keyboard device is disabled and otherwise stores `Input_ReadDeviceEvent` (`0004b51c`)'s word. In mode `0x10000` that is `KeyQueue_Pop` while status bit `2` is set and 0 otherwise; with the device's drain flag set, which `KeyboardInputDevice_Ctor` clears, it then empties the queue. Modes `0x20000` and `0x40000` read DOS as well: `Dos_KeyAvailable` (`0006c52c`, `INT 21h` function `0x0b`), then `Dos_ReadKeyNoEcho` (`0006c538`, function 8), read again with `0x8000` set when it gives 0, and `0x4000` set. The live block clears `0x1000` and `0x2000` from the word, and `Input_BuildPlayerDevice` masks it with `0x47ff`, dropping `0x800`, so a shifted key is the plain key, as in ES2. Keys typed faster than the tick wait their turn, 127 at most.
+
+**Modifiers.** The command word carries `0x200` for either `Alt` and `0x400` for either `Ctrl`, as they stood when the key's byte arrived; `Input_KeyjoyAxisKey` sees the same bits.
+
+**Repeat.** Neither the handler nor the dispatch compares a byte with the one before, so each make code of a held key's typematic repeat is dispatched again: the axis keys set the key held again, which changes nothing, and a queued key queues its command again, one a tick. The delay and rate are the keyboard's ([Open](#open)).
+
+**Extended keys.** The `E0` prefix reaches `Keyboard_Dispatch` as the code `0xe0`, which no subscriber wants and which no modifier case matches, and the byte after it is the plain key. So the grey arrows are keypad 8, 2, 4 and 6, grey `Home`, `Page Up`, `End` and `Page Down` keypad 7, 9, 1 and 3, grey `Insert` keypad 0 (the stick mode) and grey `Delete` keypad `.`, grey `Enter` is `Enter` and grey `/` is `/`, and the right `Ctrl` and `Alt` are the left ones. The `Shift` bytes a keyboard sends around a grey key move only `0x800`.
+
 ## The axis keys — `Input_KeyjoyAxisKey` (`0004c6ec`)
 
 (code): the keyboard subscriber `SimInput_SetEnabled` registers against the 28 codes at `KeyjoyWantedCodes` (`0009586c`): keypad 7, 8, 9, 4, 6, 1, 2, 3, `M`, `J`, `K`, `I`, `Space` and `Enter`, then the same fourteen with the key-up bit `0x80`. It answers 1 or 2, ES2's claim and pass-on results ([ES2's](../../retail/simulation/cockpit-input.md#how-a-keystroke-becomes-one-of-those-codes)):
@@ -33,7 +90,7 @@ ES2's list has fifteen keys, keypad `-` and `+` in place of `Enter`, and ES2's p
 
 ## Setting up — `Input_BuildSourceTable` (`0004c95c`)
 
-`Sim_StartMission` calls it first ([the mission start](main-loop.md#the-mission-start--sim_startmission-0005a9dc)). In order: `0004b484`(0, `0x10000`) and `0004b1c0` on its `+4`; `0006c3b4`(`0006c6e4`, `0009581c`); `SimInput_SetEnabled`(1); `0004c1e0`(0), `0004b1c0` on its `+0x3a`, and `0006bdbc`/`0006bdf0` with the bounds (·, ·, 319, 199); `0004a724`; `Input_LiveBlockPtr` (`000b1840`) = `0004c2d0`(). It then fills the source table, as ES2's:
+`Sim_StartMission` calls it first ([the mission start](main-loop.md#the-mission-start--sim_startmission-0005a9dc)). In order: the keyboard, `KeyboardInputDevice_Ctor`(0, `0x10000`), enabled (`InputDevice_Enable`, `0004b1c0`, on its `+4`), and `Keyboard_AddSubscriberCodes`(`KeyQueue_Subscriber`, `KeyQueueWantedCodes`) ([the keyboard](#the-keyboard)); `SimInput_SetEnabled`(1); the mouse, `MouseInputDevice_Ctor` (`0004c1e0`)(0), which builds the mouse driver's object at `+0` (`0006bbc8`) and registers `+0x3a` as input device kind 2, enabled on its `+0x3a`, and `0006bdbc`/`0006bdf0` with the bounds (·, ·, 319, 199); `0004a724`; `Input_LiveBlockPtr` (`000b1840`) = `Input_PollDeviceBlock`(). It then fills the source table, as ES2's:
 
 | Pointers | Point at |
 |---|---|
@@ -45,6 +102,29 @@ ES2's list has fifteen keys, keypad `-` and `+` in place of `Enter`, and ES2's p
 | `000b1830`–`000b183c` | the live block's buttons `+0x1d`–`+0x20` |
 
 It clears the four press-once latches `Input_ButtonLatch` (`000bd634`–`000bd637`) and ends with `Keyjoy_LoadConfig` ([below](#keyjoycfg--keyjoy_loadconfig-0004d918)).
+
+### The input devices
+
+ES2's registry ([ES2's](../../retail/simulation/joystick-input.md#sources-and-destinations--input_buildsourcetable-0045a5c0)): `InputDevice_Register` (`0004b0b4`)(device, owner, kind) keeps the owner in `Input_DeviceTable` (`000bd5dc`)[kind], clears its byte in `Input_DeviceEnabled` (`000bd600`)[kind] and records the kind, kind 0 at `000bd60a`, 1 (the keyboard) at `000bd60e`, 2 (the mouse) at `000bd612`, 3 or 5 (the first joystick) at `000bd616` and 4 or 6 (the second) at `000bd61a`; for kinds 2 to 6 it first disables the device recorded there. `InputDevice_Enable` (`0004b1c0`), for kinds 2 to 6, disables the device recorded for its kind and records this one, then sets its byte `+0` and the enabled byte; `InputDevice_Disable` (`0004b2a4`) clears both and `InputDevice_IsEnabled` (`0004b2c0`) returns `+0`. `Input_DeviceSlot` (`0004b2d0`) returns `Input_DeviceTable`[kind]. `Input_GetKeyboardDevice` (`0004b310`), `Input_GetJoystickDevice` (`0004b370`) and `Input_GetJoystick2Device` (`0004b3a0`) return the recorded keyboard, less 4, and joysticks, less `0x78`, or 0, as `Input_GetMouseDevice` does the mouse; `Input_GetKeyboardDevice_Thunk` (`0004c62c`) calls the first. The keyboard's and the mouse's destructors, `IMKeyboard_Dtor` (`0004b4d4`) and `MouseInputDevice_Dtor` (`0004c220`), clear the enabled byte and the recorded kind, run `Keyboard_Dtor` (`0006c670`, which uninstalls the instance through `Keyboard_Release` (`0006c6d9`) and frees GL slot 1) or `0006bcd4`, and free the object for flag bit 0.
+
+## The live block — `Input_PollDeviceBlock` (`0004c2d0`)
+
+No arguments; `Input_BuildPlayerDevice` calls it first each tick and `Input_BuildSourceTable` once. It zeroes `Input_LiveBlock` (`000b1774`, `0x29` bytes), fills it and returns it:
+
+| Offset | Holds |
+|---|---|
+| `+0` | one word from the keyboard ([the command word](#the-command-word)), `0x1000` and `0x2000` cleared |
+| `+2`, `+6` | the mouse's x and y, `int32` |
+| `+0xa`, `+0xb`, `+0xc` | 1 for the mouse's buttons 0, 1 and 2, bits 0, 1 and 2 of its button word |
+| `+0xd`, `+0x11`, `+0x15`, `+0x19` | the joysticks' four axis dwords |
+| `+0x1d`–`+0x24` | the joysticks' eight button bytes, their record's `+0x10`–`+0x17` |
+| `+0x25` | `Input_ReadKeyboardCommand`'s answer, 1 while the keyboard device is enabled |
+| `+0x26`, `+0x27` | the joysticks' record bytes `+0x18` and `+0x19` |
+| `+0x28` | `Input_ReadMouseState`'s answer, 1 while the mouse device is enabled |
+
+In order: the keyboard; `Input_PollJoysticks` (`0004bd90`); for each of the two joysticks, `Input_ReadJoystickState` (`0004c4ac`)(kind 3 or 4, record), which copies the `0x1c`-byte record that slot `+4` of the enabled device's vtable (at its `+0x87`) returns and answers 0 for a disabled device or no record, and `Input_MergeJoystickRecord` (`0004c3cc`)(record), which ors it into `+0xd`–`+0x27`; the mouse through `Input_ReadMouseState` (`0004c51c`)(2, record), whose record is `Mouse_ReadState`'s when `MouseInputDevice_ReadNewState` (`0004c26c`) finds bit 1 of the mouse's status set (an event since the last read) and otherwise the last one, kept at `Input_LastMouseRecord` (`000b17a0`). So the pointer and the buttons hold their last state between mouse events. ES2's ([ES2's](../../retail/simulation/joystick-input.md#sources-and-destinations--input_buildsourcetable-0045a5c0)) reads one joystick.
+
+`Input_PollJoysticks` polls the first joystick device through `0006b614`; with two, it polls the first with its `+0x6f` and `+0x73` set from the bytes `0009571c` and `0009571d` for the call and put back after, and copies its four axis dwords `+4`–`+0x10` and its button byte `+0x14` into the second's, the byte also into the second's `+0x25`.
 
 ## The input block
 
@@ -66,7 +146,7 @@ ES2's block holds the trigger apart at `+0x0d` and its axes from `+0x0e` ([sourc
 
 No arguments; `Sim_MainTick` calls it first each tick ([the tick](main-loop.md#the-tick--sim_maintick-00059700)). In order:
 
-1. Zeroes the block. Reads the live block's command word, skipping words with a zero scancode byte through `0004c458`(1, word) as `Input_ReadMaskedKeyboardCommand` does, masks it with `SimCommandMask` (`000958b8`, `0x47ff`) and stores it back.
+1. Zeroes the block and refills the live block (`Input_PollDeviceBlock`). Reads its command word, skipping words with a zero scancode byte through `Input_ReadKeyboardCommand`(1, word) as `Input_ReadMaskedKeyboardCommand` does, masks it with `SimCommandMask` (`000958b8`, `0x47ff`) and stores it back.
 2. **Playback** ([below](#recording-and-playback)) fills the block from the tape.
 3. **Live**: `Input_BuildKeyboardAxes`(slow, `000b188c`), *slow* set in stick mode 1 with the camera not driven, or while `maybe_WeaponChain_EoHold` is set; the source buttons are the live block's `+0x1d`.
 4. `000444d0` gives the frame's mouse events. Button 1 of the sources pressed, with a stick mode set, runs `Input_ToggleStickMode` once a press (latch `000958bc`).
@@ -139,8 +219,8 @@ Opens `Config_BuildPath`(`keyjoy.cfg`) in mode `rt`, so `tapes\keyjoy.cfg` durin
 
 ## Small functions
 
-- **`Input_ReadMaskedKeyboardCommand` (`0004d7f8`)**, (out): ES2's, through `0004c458`(1, out) and the mask `00095918` (`0x47ff`). No reference to it found by `es2_xref.py`.
-- **`SimInput_SetEnabled` (`0004d82c`)**, (enabled), ES2's with one subscriber: turning the keys on, unless `00095894` is set, registers `Input_KeyjoyAxisKey` against its 28 codes through `0006c2bb`; turning them off clears the three key-state blocks. `SimInput_PushDisable` and `SimInput_PopEnable` ([small functions](main-loop.md#small-functions)) wrap it.
+- **`Input_ReadMaskedKeyboardCommand` (`0004d7f8`)**, (out): ES2's, through `Input_ReadKeyboardCommand`(1, out) and the mask `00095918` (`0x47ff`). No reference to it found by `es2_xref.py`.
+- **`SimInput_SetEnabled` (`0004d82c`)**, (enabled), ES2's with one subscriber: turning the keys on, unless `00095894` is set, registers `Input_KeyjoyAxisKey` against its 28 codes through `Keyboard_AddSubscriber` ([the simulator's two subscribers](#the-simulators-two-subscribers)) and returns its answer; turning them off clears the three key-state blocks. `SimInput_PushDisable` and `SimInput_PopEnable` ([small functions](main-loop.md#small-functions)) wrap it.
 - **`Input_LatchButton` (`0004d8c8`)**, (state, button 1–4): `Input_ButtonLatch`[button − 1] = 1 and `Input_ButtonLatchState`[button − 1] = state, ES2's for four buttons. `es2_xref.py` finds calls from `00007198`, `00045f00`, `00046670`, `00049bbc` and `GrenadeMount_TriggerHeld`.
 - **`Input_GetCursorPos` (`0004d910`)** returns `Input_CursorPos`.
 
@@ -154,6 +234,30 @@ Opens `Config_BuildPath`(`keyjoy.cfg`) in mode `rt`, so `tapes\keyjoy.cfg` durin
 | `Input_GetCursorPos`, `Keyjoy_LoadConfig`, `Input_InitKeyboardAxisTable`, `AppInput_ExitNoOp` | `0004d910`, `0004d918`, `0004da7c`, `0004db10` | `0045b734`, `0045b78c`, `0045b888` |
 
 Ghidra ends `Input_KeyjoyAxisKey` at `0004c7fb`, before its last two returns (to `0004c815`). The class tag, `Input_InitKeyboardAxisTable` and `AppInput_ExitNoOp` have no Ghidra function.
+
+The input devices, the file before (its functions not listed here are unread):
+
+| ES1 | Address | ES2 |
+|---|---|---|
+| `InputDevice_Register`, `InputDevice_Enable`, `InputDevice_Disable`, `InputDevice_IsEnabled`, `Input_DeviceSlot` | `0004b0b4`, `0004b1c0`, `0004b2a4`, `0004b2c0`, `0004b2d0` | `0045bd88`, `0045be34`, `0045bec4`, `0045bedc`, `0045bee8` |
+| `Input_GetKeyboardDevice`, `KeyboardInputDevice_Ctor`, `IMKeyboard_Dtor`, `Input_ReadDeviceEvent` | `0004b310`, `0004b484`, `0004b4d4`, `0004b51c` | `0045bf24`, `0045c000`, `0045c03c`, `0045c084` |
+| `MouseInputDevice_Ctor`, `MouseInputDevice_Dtor`, `MouseInputDevice_ReadNewState` | `0004c1e0`, `0004c220`, `0004c26c` | `0045c1b8`, `0045c1e4`, `0045c22c` |
+| `Input_PollDeviceBlock`, `Input_ReadKeyboardCommand`, `Input_ReadJoystickState`, `Input_ReadMouseState`, `Input_GetKeyboardDevice_Thunk` | `0004c2d0`, `0004c458`, `0004c4ac`, `0004c51c`, `0004c62c` | `0045ba8c`, `0045bba8`, `0045bbf4`, `0045bc58`, `0045bd68` |
+| `Input_GetJoystickDevice`, `Input_GetJoystick2Device`, `KeyboardInputDevice_SetMode`, `Input_PollJoysticks`, `Input_MergeJoystickRecord` | `0004b370`, `0004b3a0`, `0004b648`, `0004bd90`, `0004c3cc` | |
+
+The keyboard library, which ES2 does not have:
+
+| ES1 | Address |
+|---|---|
+| `Keyboard_ClaimInstance`, `Keyboard_Uninstall`, `Keyboard_SetMode`, `Keyboard_PostCode` | `0006c084`, `0006c0a8`, `0006c0e8`, `0006c185` |
+| `KeyQueue_Push`, `KeyQueue_Pop`, `Keyboard_SetTranslateTable`, `Keyboard_AddSubscriber` | `0006c1a0`, `0006c1f8`, `0006c289`, `0006c2bb` |
+| `Keyboard_RemoveSubscriber`, `Keyboard_AddSubscriberCodes`, `Keyboard_RemoveSubscriberCodes` | `0006c30a`, `0006c3b4`, `0006c408` |
+| `Keyboard_HookInt9`, `Keyboard_UnhookInt9`, `Keyboard_HookInt15`, `Keyboard_UnhookInt15` | `0006c45e`, `0006c4a3`, `0006c4c0`, `0006c50e` |
+| `Dos_KeyAvailable`, `Dos_ReadKeyNoEcho`, `Keyboard_UninstallAtExit`, `Keyboard_UninstallOnAssert` | `0006c52c`, `0006c538`, `0006c5f0`, `0006c5f8` |
+| `Keyboard_Ctor`, `Keyboard_Dtor`, `Keyboard_Install`, `Keyboard_Release`, `KeyQueue_Subscriber` | `0006c600`, `0006c670`, `0006c6ac`, `0006c6d9`, `0006c6e4` |
+| `Keyboard_Int15Handler`, `Keyboard_Int9Handler`, `Keyboard_Dispatch` | `0007dd4c`, `0007dde4`, `0007de20` |
+
+Ghidra's thunks `0004b2a2`, `0004c3cb`, `0004c455`, `0004c4a9` and `0006c6aa` are the `0x90` byte before `InputDevice_Disable`, `Input_MergeJoystickRecord`, `Input_ReadKeyboardCommand`, `Input_ReadJoystickState` and `Keyboard_Install`, an entry some of their callers use. The two handlers and the two uninstall stubs have no Ghidra function. `GO.EXE` links the same keyboard library: `es1_naming.py twin` pairs 21 of its functions with `GO.EXE`'s, `Keyboard_Dispatch` with `0005cde4`.
 
 ## Globals
 
@@ -173,10 +277,21 @@ Ghidra ends `Input_KeyjoyAxisKey` at `0004c7fb`, before its last two returns (to
 | `Input_KeyThrottleStep`, `int16` | `00095896` |
 | `SimCommandMask` | `000958b8` |
 | `Input_ButtonLatch`, `Input_ButtonLatchState`, 4 bytes each | `000bd634`, `000bd638` |
+| `Input_LiveBlock`, `0x29` bytes; `Input_LastMouseRecord`, 10 bytes | `000b1774`, `000b17a0` |
+| `Input_DeviceTable`, dwords by kind; `Input_DeviceEnabled`, bytes by kind | `000bd5dc`, `000bd600` |
+| `KeyQueueWantedCodes`, 78 bytes and a 0 | `0009581c` |
+| `Keyboard_Instance`, the status dword's pointer | `0009b6aa` |
+| `Keyboard_Modifiers`, `Keyboard_PrefixCount`, words | `0009b6ae`, `0009b6b0` |
+| `KeyQueue`, 128 words; `KeyQueue_Head`, `KeyQueue_Tail` | `0009b6b2`, `0009b7b2`, `0009b7b6` |
+| `Keyboard_TranslateTable` | `0009b7ba` |
+| `Keyboard_CodeMasks`, 256 dwords | `0009b7be` |
+| `Keyboard_SubscriberCount`, `Keyboard_Subscribers`, 32 dwords | `0009bbbe`, `0009bbc2` |
 
 ## Open
 
-- **Open:** the callees read for none of this file's functions: `0004b484`, `0004b1c0`, `0006c3b4`, `0006c6e4`, `0004c1e0`, `0006bdbc`, `0006bdf0`, `0004a724`, `0004c2d0` (the live block), `0004c458` (the keyboard read), `000444d0` and `00044830` (the mouse events), and the registration `0006c2bb`; so what the live block's fields come from, and whether answer 1 keeps a key out of the command word.
-- **Open:** whether the gunsight drag can arm in ES1: ES2's never does, because its mouse record clears `+0x0b` before the pointer moves ([the gunsight drag](../../retail/simulation/joystick-input.md#the-gunsight-drag)); ES1's `+0xa`/`+0xb` come from the live block, unread. A retail check: hold the right mouse button over the gunsight and drag; the turret follows when it arms.
+- **Open:** the callees read for none of this file's functions: `0006bbc8` and `0006bcd4` (the mouse driver's object), `0006bdbc`, `0006bdf0`, `0004a724`, `0006b614` (the joystick poll), and `000444d0` and `00044830` (the mouse events).
+- **Open:** `es2_xref.py` finds no call to `Keyboard_PostCode`, `Keyboard_RemoveSubscriber`, `Keyboard_RemoveSubscriberCodes`, `Keyboard_SetTranslateTable` or `KeyboardInputDevice_SetMode`, and one read of `00095894` (`SimInput_SetEnabled`'s) with no write.
+- **Open:** the keyboard's repeat delay and rate in ES1: the disassembly's one `INT 16h` is function 2, and a grep of it finds no `OUT` to port `0x60`, so the simulator is not seen setting them. A retail check: hold `]` and time the shield-balance gauge's steps, one a repeat ([the cockpit](mech.md#the-cockpit)).
+- **Open:** a retail check of the gunsight drag, which ES2's never arms because its mouse record clears `+0x0b` before the pointer moves ([the gunsight drag](../../retail/simulation/joystick-input.md#the-gunsight-drag)). ES1's `+0xb` is the right mouse button, held from one mouse event to the next ([the live block](#the-live-block--input_polldeviceblock-0004c2d0)), so the drag arms while it is held over the gunsight: hold the right button over the gunsight and drag; the turret follows.
 - **Open:** what preferences options 7 to 10 are called on the preferences panel and which values the panel offers.
 - **Open:** a positive control in the running game for the done checklist ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)): with option 10 on, each `Ctrl+I` moves the throttle gauge one step forward and each `Ctrl+M` one step back (`0x40` of axis a press, `Mech_ApplyThrottleInput`'s Q8 with `0x91`).

@@ -52,7 +52,7 @@ For a frame longer than a second the figure is the frame's length in seconds, to
 
 `FrameRate_PrintRate` (`00060198`) prints `Best:` on row 3 and `Worst:` on row 5 as `%s%2d.%02d fps.`, or as `%s--.-- fps.` when the rate is 999.99 or 0.00, the values the two start from. After the rows the meter adds 1 to `FrameRate_FrameCount` (`000b5e28`) and prints `Frame # %d` on row 1.
 
-`FrameRate_GetFrameCount` (`0006020c`) returns the count, and the tape player in `vcr.cpp` (`00000c84`) puts it in its `Playback error. Frame #%ld` message.
+`FrameRate_GetFrameCount` (`0006020c`) returns the count, and `Vcr_FlushCheckpoints` (`00000c84`, [the subsystem phases](main-loop.md#the-subsystem-phases)) puts it in its `Playback error. Frame #%ld` message.
 
 `Timer_AddCallback` (`0006d289`) at count 1 runs `FrameRate_TimerTick` on every interrupt of the PC timer ([callbacks](timer.md#callbacks)).
 
