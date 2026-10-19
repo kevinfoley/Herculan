@@ -6204,7 +6204,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Movie_PlayQueue",
-      "description": "Plays every queued movie from read index MovieQueue_ReadIndex, each through Avi_Play with its palette and rect, lighting the MISSION tab around it while the frame is up, then runs the entry's callback and frees it. Sets MovieQueue_Running = 1 for the whole run and clears it only when it finds the ring empty -- the shell's main loop (Shell_Main) calls it with 1 once a pass -- or while it waits on the insert-CD panel (InsertCdPanel). Also called directly after enqueuing by the startup (Shell_BuildScreensAndStart), Game_ProcessMissionResults and MainMenu_OnCredits.",
+      "description": "Plays every queued movie from read index MovieQueue_ReadIndex, each through Avi_Play with its palette and rect, lighting the MISSION tab before it while the frame is up unless it is the lunar drop (0x55), then runs the entry's callback and frees it. Sets MovieQueue_Running = 1 for the whole run and clears it only when it finds the ring empty -- the shell's main loop (Shell_Main) calls it with 1 once a pass -- or while it waits on the insert-CD panel (InsertCdPanel). Also called directly after enqueuing by the startup (Shell_BuildScreensAndStart), Game_ProcessMissionResults and MainMenu_OnCredits.",
       "source": "docs/retail/shell/movies-and-sound.md#input-while-a-movie-plays"
     },
     {
@@ -10647,8 +10647,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Shell_SetPaletteScope",
-      "description": "Hides PaletteScopeWidget, writes the palette index to its +0x45 and shows it again, which installs that palette.",
-      "source": "docs/retail/shell/screen-layout.md#the-palette"
+      "description": "Shows PaletteScopeWidget, which paints its black fill below the strip, writes the palette index to its +0x45 and hides it again, which installs that palette.",
+      "source": "docs/retail/shell/screen-layout.md#the-palette",
+      "verified": {
+        "bytes": "00439da0+43",
+        "sha1": "26d024aec138",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "00439dcb",
@@ -12234,7 +12240,13 @@
       "confidence": "medium",
       "name": "maybe_Mission_UpdateLocationTab",
       "description": "At stage 5 enqueues movie 0x55 (the lunar drop), installs palette 2 through the scope and fades the music out and stops it; below it, loads frame 0 of MissionLocationDbaTable[stage - 1] into the location picture (DAT_0048d7e0), shows it and installs the theater palette stage + 0xe. Movie_PlayQueue calls it after an entry with the location flag.",
-      "source": "docs/retail/shell/movies-and-sound.md#the-shells-movies"
+      "source": "docs/retail/shell/movies-and-sound.md#the-shells-movies",
+      "verified": {
+        "bytes": "0044409f+271",
+        "sha1": "12d1a47a7718",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004441ae",
@@ -12270,7 +12282,13 @@
       "confidence": "high",
       "name": "Mission_Leave",
       "description": "The teardown dispatcher's mission arm (00439ea7 case 7): frees the pictures, hides the report texts, clears the four career text boxes and hides the screen's panels.",
-      "source": "docs/retail/shell/mission-screen.md#the-mission-screen"
+      "source": "docs/retail/shell/mission-screen.md#the-mission-screen",
+      "verified": {
+        "bytes": "00444a05+140",
+        "sha1": "c88e3de5a7e8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00444ba9",
