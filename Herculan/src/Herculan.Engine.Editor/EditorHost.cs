@@ -191,6 +191,7 @@ public sealed class EditorHost {
 
 		_imgui = new ScaledImGui(gl, _window, input, _launch.FontPath) {
 			HeldAsMouseButtons = () => (_padPointer.ClickHeld, _padPointer.RightClickHeld),
+			PointerOverride = () => _padPointer.Override,
 		};
 		_input = input;
 
@@ -210,7 +211,7 @@ public sealed class EditorHost {
 			_lookNeedsResync = true;
 			mouse.Cursor.CursorMode = CursorMode.Disabled;
 		} else if (button == MouseButton.Left) {
-			_leftDownPos = mouse.Position;
+			_leftDownPos = _padPointer.PositionOf(mouse);
 			_leftDownOverViewport = !ImGui.GetIO().WantCaptureMouse;
 		}
 	}
@@ -222,10 +223,11 @@ public sealed class EditorHost {
 				mouse.Cursor.CursorMode = CursorMode.Normal;
 			}
 		} else if (button == MouseButton.Left && _leftDownOverViewport && _mission != null
-				&& Vector2.Distance(mouse.Position, _leftDownPos) < 4f) {
+				&& Vector2.Distance(_padPointer.PositionOf(mouse), _leftDownPos) < 4f) {
 			var size = _window.FramebufferSize;
-			_mission.Selection.Current = _mission.Picker.Pick(_camera, mouse.Position, new Vector2(size.X, size.Y), _settings);
-			Console.WriteLine($"[pick] {_mission.Selection.Current?.ToString() ?? "nothing"} at {mouse.Position}");
+			var at = _padPointer.PositionOf(mouse);
+			_mission.Selection.Current = _mission.Picker.Pick(_camera, at, new Vector2(size.X, size.Y), _settings);
+			Console.WriteLine($"[pick] {_mission.Selection.Current?.ToString() ?? "nothing"} at {at}");
 		}
 	}
 

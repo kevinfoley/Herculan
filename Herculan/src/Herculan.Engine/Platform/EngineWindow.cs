@@ -183,10 +183,10 @@ public sealed class EngineWindow : IDisposable {
 		Ended = true;
 		Closing?.Invoke();
 		if (_input != null) {
-			// A pointer grabbed for looking is let go, so the next turn does not inherit it; a full-screen confinement
-			// stays with the window.
+			// A pointer grabbed for looking is let go, and one hidden for a gamepad's own pointer (GamepadPointer) shown,
+			// so the next turn does not inherit either; a full-screen confinement stays with the window.
 			foreach (var mouse in _input.Mice) {
-				if (mouse.Cursor.CursorMode == CursorMode.Disabled) {
+				if (mouse.Cursor.CursorMode is CursorMode.Disabled or CursorMode.Hidden) {
 					mouse.Cursor.CursorMode = CursorMode.Normal;
 				}
 			}
