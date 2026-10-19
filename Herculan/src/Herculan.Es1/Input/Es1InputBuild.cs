@@ -23,14 +23,16 @@ public sealed class Es1InputBuild {
 	private byte _missileArm;
 
 	/// <summary>
-	/// <c>Input_BuildSourceTable</c>'s part after the devices: the live block polled once, the four latches cleared,
-	/// and <paramref name="keyjoy"/>, <c>Keyjoy_LoadConfig</c>'s read. Option 10 goes to the axis keys, which read it
-	/// for <c>Ctrl+I</c> and <c>Ctrl+M</c>.
+	/// <c>Input_BuildSourceTable</c>'s part from the joystick devices on: the devices built on <paramref name="port"/>
+	/// (<c>Input_CreateJoystickDevices</c>, which <c>Prefs_Init</c> runs last), the live block polled once, the four
+	/// latches cleared, and <paramref name="keyjoy"/>, <c>Keyjoy_LoadConfig</c>'s read. Option 10 goes to the axis
+	/// keys, which read it for <c>Ctrl+I</c> and <c>Ctrl+M</c>.
 	/// </summary>
 	public Es1InputBuild(Es1KeyboardInput keyboard, Es1HostMouse mouse, Es1Preferences preferences,
-		Es1KeyjoyConfig keyjoy, Es1ControlsState controls) {
+		Es1KeyjoyConfig keyjoy, Es1ControlsState controls, IEs1GamePort port) {
 		_keyboard = keyboard;
-		_poll = new Es1DevicePoll(keyboard, mouse);
+		Joysticks = Es1JoystickDevices.Create(preferences, port);
+		_poll = new Es1DevicePoll(keyboard, mouse, Joysticks);
 		_preferences = preferences;
 		_keyjoy = keyjoy;
 		Controls = controls;
@@ -38,6 +40,9 @@ public sealed class Es1InputBuild {
 		LiveBlock = _poll.Poll();
 		controls.Latches.Clear();
 	}
+
+	/// <summary>The joystick devices option 7 and option 9 name.</summary>
+	public Es1JoystickDevices Joysticks { get; }
 
 	/// <summary>The controls' state, which the simulation also writes.</summary>
 	public Es1ControlsState Controls { get; }

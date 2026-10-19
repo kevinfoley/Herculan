@@ -1,8 +1,7 @@
-using Herculan.Engine.Input;
 using Silk.NET.GLFW;
 using Silk.NET.Input;
 
-namespace Herculan.Engine.Host;
+namespace Herculan.Engine.Input;
 
 /// <summary>
 /// One connected controller as the joystick layer reads it, positional axes, buttons and hats, from whichever of
@@ -19,7 +18,7 @@ namespace Herculan.Engine.Host;
 /// docs/herculan/joystick-config.md, "Gamepads"). A joystick's axes and buttons are in whatever order its driver
 /// reports.</para>
 /// </summary>
-sealed class ControllerDevice {
+public sealed class ControllerDevice {
 	/// <summary>A gamepad's axes: the left stick's X and Y, the right stick's X and Y, then the two triggers.</summary>
 	private const int GamepadAxes = 6;
 
@@ -59,8 +58,8 @@ sealed class ControllerDevice {
 	public string Name => (_gamepad?.Name ?? _joystick!.Name) is { } name && !string.IsNullOrWhiteSpace(name) ? name : "?";
 
 	/// <summary>
-	/// How many axes it reports. A joystick reports none until the frame after it connects (see
-	/// <see cref="JoystickSource"/>); a gamepad always reports its six.
+	/// How many axes it reports. A joystick reports none until the first input update after it connects, a frame after
+	/// it is published; a gamepad always reports its six.
 	/// </summary>
 	public int AxisCount => _gamepad != null ? GamepadAxes : _joystick!.Axes.Count;
 
@@ -135,8 +134,8 @@ sealed class ControllerDevice {
 
 	/// <summary>
 	/// Whether button <paramref name="index"/> is kept off the eight the bindings name: a gamepad's Back and Start, which
-	/// are the host's own (<see cref="GamepadHostButtons"/>), and its sticks' clicks, which open its radials
-	/// (<see cref="Simulator.PadRadial"/>). A map that names one, written before it was kept, reads it as never pressed.
+	/// are the host's own, and its sticks' clicks, which open the host's radials. A map that names one, written before it
+	/// was kept, reads it as never pressed.
 	/// </summary>
 	public bool Reserved(int index) =>
 		IsGamepad && index is GamepadBack or GamepadStart or GamepadLeftStick or GamepadRightStick;
@@ -220,7 +219,7 @@ sealed class ControllerDevice {
 
 	/// <summary>
 	/// The map for this device's reported counts that applies when the file has none; null until a joystick has
-	/// reported them (see <see cref="JoystickSource"/>).
+	/// reported them (see <see cref="AxisCount"/>).
 	/// </summary>
 	public JoystickDeviceMap? Defaults() =>
 		IsGamepad ? JoystickDeviceMap.ForGamepad()

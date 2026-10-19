@@ -121,7 +121,7 @@ public class Es1InputBuildTests {
 		var input = new Es1KeyboardInput(0);
 		var mouse = new Es1HostMouse();
 		var prefs = Es1Preferences.FromFile(null);
-		var build = new Es1InputBuild(input, mouse, prefs, Es1KeyjoyConfig.Parse(""), new Es1ControlsState(prefs));
+		var build = new Es1InputBuild(input, mouse, prefs, Es1KeyjoyConfig.Parse(""), new Es1ControlsState(prefs), Es1NoStickPort.Instance);
 
 		mouse.OnButton(MouseButton.Right, true);
 		Assert.Equal(new byte[] { 0, 1, 0 }, build.Build().MouseButtons);
@@ -132,7 +132,7 @@ public class Es1InputBuildTests {
 	}
 
 	private static Es1InputBuild NewBuild(Es1KeyboardInput input, Es1Preferences prefs, string keyjoy = "") =>
-		new(input, new Es1HostMouse(), prefs, Es1KeyjoyConfig.Parse(keyjoy), new Es1ControlsState(prefs));
+		new(input, new Es1HostMouse(), prefs, Es1KeyjoyConfig.Parse(keyjoy), new Es1ControlsState(prefs), Es1NoStickPort.Instance);
 
 	private static Es1Preferences Prefs(params (int Option, byte Value)[] options) {
 		var bytes = new byte[Es1Preferences.OptionCount];

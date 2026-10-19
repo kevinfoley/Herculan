@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Numerics;
+using Herculan.Engine.Input;
 using Herculan.Engine.Platform;
 using ImGuiNET;
 using Silk.NET.Input;

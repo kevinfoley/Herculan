@@ -57,6 +57,24 @@ public sealed class Es1Preferences {
 	/// <summary>Option 9 on, <see cref="ThirdAxisOption"/>.</summary>
 	public bool ThirdAxis => _options[ThirdAxisOption] != 0;
 
+	/// <summary>
+	/// <c>Prefs_SetOption</c> (<c>0004a914</c>)(1, 0, 9), <c>Input_CreateJoystickDevices</c>'s clear of option 9 under
+	/// option 7 = 2, in memory only (docs/es1/simulation/joystick.md#building-the-devices). <c>Prefs_Init</c> registers no
+	/// handler for option 9, so none runs. The old byte <c>Prefs_SetOption</c> saves at <c>000bd586</c> is not kept, as
+	/// this type keeps none of <c>Prefs_Load</c>'s copies.
+	/// </summary>
+	public void ClearThirdAxis() => _options[ThirdAxisOption] = 0;
+
+	/// <summary>The largest option 7 that names a stick model (docs/es1/simulation/joystick.md#building-the-devices).</summary>
+	public const int LastStickModel = 5;
+
+	/// <summary>
+	/// <b>This engine's own:</b> option 7 set to <paramref name="model"/> for the run, in memory only, after the file's
+	/// read and before the joystick devices are built; the <c>--stick-model</c> engine aid, which has no retail
+	/// counterpart, until the in-mission preferences panel sets option 7.
+	/// </summary>
+	public void OverrideStickConfiguration(byte model) => _options[StickConfigurationOption] = model;
+
 	/// <summary>Option 10 on, <see cref="ThrottleKeysOption"/>.</summary>
 	public bool ThrottleKeys => _options[ThrottleKeysOption] != 0;
 }

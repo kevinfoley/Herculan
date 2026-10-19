@@ -26,10 +26,10 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 
 /// <summary>
 /// Runs an ES1 mission as far as this engine ports one: the shell's single-mission load when a mission is named, the
-/// simulator's world load from the install's <c>data\</c> files, the tick under the keyboard and the mouse's buttons,
+/// simulator's world load from the install's <c>data\</c> files, the tick under the keyboard, the mouse's buttons and a controller,
 /// and the forward view of the player's machine (docs/herculan/plan-es1-first-mission.md, step 4). This class
 /// composes: the load and its files are <see cref="Es1SingleMission"/> and <see cref="Es1MissionFiles"/>, the world
-/// <see cref="Es1World"/>, the tick <see cref="Es1SimulationRunner"/>, the zone <see cref="Es1ZoneScene"/>, the draw
+/// <see cref="Es1World"/>, the tick <see cref="Es1SimulationRunner"/>, built by <see cref="Es1SimulationStart"/>, the zone <see cref="Es1ZoneScene"/>, the draw
 /// <see cref="Es1WorldDraw"/>, and the view <see cref="Es1ForwardView"/>.
 ///
 /// <para>Each host frame runs the tick when the clock answers one, then places the camera and the draw from the latest
@@ -58,7 +58,7 @@ public static class Es1ZoneViewer {
 	/// the files that writes, or with no mission named runs it on the files the install's <c>data\</c> holds, as
 	/// <c>DBSIM.EXE</c> does. Returns the process exit code.
 	/// </summary>
-	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides) {
+	public static int Run(string installRoot, string? missionName, Es1HeaderOverrides overrides, int? stickModel) {
 		if (missionName != null) {
 			var random = Es1ShellRandom.AtStartup(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
 			if (Es1SingleMission.Start(installRoot, Es1SingleMission.MountShell(installRoot), missionName, random,
@@ -73,6 +73,10 @@ public static class Es1ZoneViewer {
 		if (Es1MissionFiles.Read(installRoot, out string? error) is not { } files) {
 			Console.Error.WriteLine(error);
 			return 1;
+		}
+
+		if (stickModel is { } model) {
+			files.Preferences.OverrideStickConfiguration((byte)model);
 		}
 
 		var header = files.Script.Header;
@@ -127,11 +131,11 @@ public static class Es1ZoneViewer {
 
 		Console.WriteLine("Keypad drives the HERC; F free camera (RMB + mouse to look, WASD/arrows, Q/E, Shift), " +
 			"G textured/banded ground, Esc quits.");
-		Show(installRoot, files.Preferences, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {missionName ?? "data\\script.dat"}, zone {header[1]}");
+		Show(installRoot, files.Preferences, stickModel != null, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {missionName ?? "data\\script.dat"}, zone {header[1]}");
 		return 0;
 	}
 
-	private static void Show(string installRoot, Es1Preferences preferences, GameContent content, Es1ZoneScene scene,
+	private static void Show(string installRoot, Es1Preferences preferences, bool stickModelFromFlag, GameContent content, Es1ZoneScene scene,
 			Es1World world, Es1CockpitViews? views, string title) {
 		using var window = new EngineWindow(title);
 
@@ -144,7 +148,7 @@ public static class Es1ZoneViewer {
 		var disposables = new List<IDisposable>();
 		IKeyboard? keyboard = null;
 		IMouse? mouse = null;
-		Es1SimulationRunner? simulation = null;
+		Es1SimulationStart? simulation = null;
 
 		var camera = new Camera();
 		var eye = world.LocalPlayer is { } player ? new Es1EyeCamera(player) : null;
@@ -193,7 +197,7 @@ public static class Es1ZoneViewer {
 			keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
 			mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
 			if (world.LocalPlayer != null) {
-				simulation = new Es1SimulationRunner(world, installRoot, preferences, keyboard, mouse);
+				simulation = new Es1SimulationStart(world, installRoot, preferences, stickModelFromFlag, input, keyboard, mouse);
 				disposables.Add(simulation);
 			}
 
@@ -224,7 +228,7 @@ public static class Es1ZoneViewer {
 				return;
 			}
 
-			if (simulation?.AdvanceHostFrame(deltaSeconds) == true) {
+			if (simulation?.Advance()?.AdvanceHostFrame(deltaSeconds) == true) {
 				window.Close();
 				return;
 			}

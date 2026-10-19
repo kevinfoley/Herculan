@@ -16,8 +16,9 @@ public sealed class Es1SimulationRunner : IDisposable {
 	private readonly Es1HostMouse _hostMouse = new();
 
 	/// <param name="preferences">The install's <c>data\prefs.cfg</c> as the simulator reads it.</param>
+	/// <param name="port">The game port the joystick devices are built on, and detect their axes on, once.</param>
 	public Es1SimulationRunner(Es1World world, string installRoot, Es1Preferences preferences, IKeyboard? keyboard,
-			IMouse? mouse) {
+			IMouse? mouse, IEs1GamePort port) {
 		var keyboardInput = new Es1KeyboardInput(Es1HostKeyboard.ReadBiosShiftFlags(keyboard));
 		_hostKeyboard = new Es1HostKeyboard(keyboardInput.Keyboard);
 		if (keyboard != null) {
@@ -29,7 +30,7 @@ public sealed class Es1SimulationRunner : IDisposable {
 		}
 
 		var input = new Es1InputBuild(keyboardInput, _hostMouse, preferences, Es1KeyjoyConfig.Load(installRoot),
-			new Es1ControlsState(preferences));
+			new Es1ControlsState(preferences), port);
 		Simulation = new Es1Simulation(world, input);
 	}
 

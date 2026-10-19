@@ -189,7 +189,27 @@ public sealed record JoystickDeviceMap {
 		HasHat: HatIndex != Unmapped);
 
 	/// <summary>
-	/// Builds one frame's <see cref="JoystickReading"/> from a device's raw state.
+	/// Builds one frame's <see cref="JoystickReading"/> from a device's raw state: <see cref="ReadPositions"/>, with each
+	/// axis put through <see cref="JoystickReading.ApplyResponse"/> at this map's <see cref="Deadzone"/>.
+	/// </summary>
+	/// <param name="axis"><inheritdoc cref="ReadPositions" path="/param[@name='axis']"/></param>
+	/// <param name="button"><inheritdoc cref="ReadPositions" path="/param[@name='button']"/></param>
+	/// <param name="hat"><inheritdoc cref="ReadPositions" path="/param[@name='hat']"/></param>
+	public JoystickReading Read(Func<int, float> axis, Func<int, bool> button, JoystickHat hat) {
+		var positions = ReadPositions(axis, button, hat);
+		return new JoystickReading(
+			JoystickReading.ApplyResponse(positions.StickX, Deadzone),
+			JoystickReading.ApplyResponse(positions.StickY, Deadzone),
+			JoystickReading.ApplyResponse(positions.Throttle, Deadzone),
+			JoystickReading.ApplyResponse(positions.Rudder, Deadzone),
+			positions.Hat,
+			positions.Buttons);
+	}
+
+	/// <summary>
+	/// Builds one frame's <see cref="JoystickPositions"/> from a device's raw state: each role's axis where the device
+	/// holds it, inverted as the map says, with no deadzone or response curve; the hat resolved by
+	/// <see cref="HatDiagonals"/>; and the eight logical buttons from <see cref="Buttons"/>.
 	/// </summary>
 	/// <param name="axis">
 	/// One device axis as a signed fraction of full travel, <c>-1</c> to <c>+1</c>, or 0 for an index
@@ -199,14 +219,14 @@ public sealed record JoystickDeviceMap {
 	/// </param>
 	/// <param name="button">Whether a device button is held.</param>
 	/// <param name="hat">The hat's direction, already resolved to the four cardinals or a diagonal.</param>
-	public JoystickReading Read(Func<int, float> axis, Func<int, bool> button, JoystickHat hat) {
+	public JoystickPositions ReadPositions(Func<int, float> axis, Func<int, bool> button, JoystickHat hat) {
 		int ReadAxis(int index, bool invert) {
 			if (index == Unmapped) {
 				return 0;
 			}
 
 			int raw = (int)MathF.Round(Math.Clamp(axis(index), -1f, 1f) * JoystickReading.RawFull);
-			return JoystickReading.ApplyResponse(invert ? -raw : raw, Deadzone);
+			return invert ? -raw : raw;
 		}
 
 		byte buttons = 0;
@@ -216,7 +236,7 @@ public sealed record JoystickDeviceMap {
 			}
 		}
 
-		return new JoystickReading(
+		return new JoystickPositions(
 			ReadAxis(StickXAxis, InvertStickX),
 			ReadAxis(StickYAxis, InvertStickY),
 			ReadAxis(ThrottleAxis, InvertThrottle),

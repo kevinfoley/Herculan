@@ -31,23 +31,47 @@ public sealed class Es1LiveBlock {
 
 	/// <summary><c>+0x28</c>: <c>Input_ReadMouseState</c>'s answer, the mouse device enabled.</summary>
 	public bool MouseEnabled { get; init; }
+
+	/// <summary>
+	/// <c>Input_MergeJoystickRecord</c> (<c>0004c3cc</c>)(record): ors the record's four axis dwords into <c>+0xd</c>,
+	/// <c>+0x11</c>, <c>+0x15</c> and <c>+0x19</c>, its eight button bytes into <c>+0x1d</c>–<c>+0x24</c>, and its masks
+	/// <c>+0x18</c> and <c>+0x19</c> into <c>+0x26</c> and <c>+0x27</c>, bitwise as retail does
+	/// (docs/es1/simulation/joystick.md#what-each-configuration-reads).
+	/// </summary>
+	public void MergeJoystickRecord(Es1JoystickRecord record) {
+		for (int i = 0; i < StickAxes.Length; i++) {
+			StickAxes[i] |= record.Axes[i];
+		}
+
+		for (int i = 0; i < StickButtons.Length; i++) {
+			StickButtons[i] |= record.Buttons[i];
+		}
+
+		StickExtra[0] |= record.AxisMask;
+		StickExtra[1] |= record.ButtonMask;
+	}
 }
 
 /// <summary>
-/// <c>Input_PollDeviceBlock</c> (<c>ES1DBSIM 0004c2d0</c>) over the simulator's keyboard and the host's mouse
-/// (docs/es1/simulation/input.md#the-live-block--input_polldeviceblock-0004c2d0): a fresh <see cref="Es1LiveBlock"/>
-/// a call.
+/// <c>Input_PollDeviceBlock</c> (<c>ES1DBSIM 0004c2d0</c>) over the simulator's keyboard, its joystick devices and the
+/// host's mouse (docs/es1/simulation/input.md#the-live-block--input_polldeviceblock-0004c2d0): a fresh
+/// <see cref="Es1LiveBlock"/> a call.
 /// </summary>
 public sealed class Es1DevicePoll {
 	/// <summary>The bits the live block clears from the command word, Num Lock's and Scroll Lock's.</summary>
 	private const ushort LockBits = Es1Keyboard.NumLockBit | Es1Keyboard.ScrollLockBit;
 
+	/// <summary>The joystick kinds the poll reads, in the order of their recorded slots, <c>000bd616</c> and <c>000bd61a</c>.</summary>
+	private static readonly int[] JoystickKinds = [Es1JoystickDevices.FirstKind, Es1JoystickDevices.SecondKind];
+
 	private readonly Es1KeyboardInput _keyboard;
 	private readonly Es1HostMouse _mouse;
+	private readonly Es1JoystickDevices _joysticks;
 
-	public Es1DevicePoll(Es1KeyboardInput keyboard, Es1HostMouse mouse) {
+	public Es1DevicePoll(Es1KeyboardInput keyboard, Es1HostMouse mouse, Es1JoystickDevices joysticks) {
 		_keyboard = keyboard;
 		_mouse = mouse;
+		_joysticks = joysticks;
 	}
 
 	/// <summary>
@@ -58,23 +82,27 @@ public sealed class Es1DevicePoll {
 
 	/// <summary>
 	/// One poll, in retail's order: the keyboard's word with <c>0x1000</c> and <c>0x2000</c> cleared and <c>+0x25</c>;
-	/// the joysticks; the mouse's buttons 0, 1 and 2 from <see cref="Es1HostMouse.Buttons"/> and <c>+0x28</c>.
+	/// the joysticks' poll, then each device's record, kind 3's and then kind 4's, merged when it answers; the mouse's
+	/// buttons 0, 1 and 2 from <see cref="Es1HostMouse.Buttons"/> and <c>+0x28</c>.
 	/// </summary>
 	public Es1LiveBlock Poll() {
 		ushort word = (ushort)(ReadKeyboardCommand() & ~LockBits);
-
-		// PLACEHOLDER: Input_PollJoysticks (0004bd90), Input_ReadJoystickState (0004c4ac) and
-		// Input_MergeJoystickRecord (0004c3cc) fill +0xd-+0x27 from the joysticks' records; they read 0 until plan step 5.
-
-		// PLACEHOLDER: the pointer at +2/+6 reads 0 until plan step 6 maps the host cursor into the 320x200 screen;
-		// the cockpit's gunsight is its one reader on step 4's path.
-		ushort buttons = _mouse.Buttons;
 		var block = new Es1LiveBlock {
 			CommandWord = word,
 			KeyboardEnabled = true,
 			MouseEnabled = true,
 		};
 
+		_joysticks.Poll();
+		foreach (int kind in JoystickKinds) {
+			if (_joysticks.ReadJoystickState(kind) is { } record) {
+				block.MergeJoystickRecord(record);
+			}
+		}
+
+		// PLACEHOLDER: the pointer at +2/+6 reads 0 until plan step 6 maps the host cursor into the 320x200 screen;
+		// the cockpit's gunsight is its one reader on step 4's path.
+		ushort buttons = _mouse.Buttons;
 		block.MouseButtons[0] = (byte)((buttons & Es1HostMouse.LeftBit) != 0 ? 1 : 0);
 		block.MouseButtons[1] = (byte)((buttons & Es1HostMouse.RightBit) != 0 ? 1 : 0);
 		block.MouseButtons[2] = (byte)((buttons & Es1HostMouse.MiddleBit) != 0 ? 1 : 0);
