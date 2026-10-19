@@ -14,7 +14,7 @@ Borland-only subcommands (rtti, vtables, classes, stats) refuse them.
       table, or by a regex over their names. A table stored only from bytes Ghidra never disassembled
       is not found, and a data block shaped like a table is listed as one.
 
-  twin BIN BIN2 (addr[+addr...] | batch.json | a=b | a=b!)... --out twins.json
+  twin BIN BIN2 (addr[+addr...] | batch.json | a=b | a=b!)... --out twins.json [--by-order]
       For each named BIN function or data entry, its twin in BIN2, written as an insert batch:
         1. exact: BIN2's one unnamed function whose disassembly, address operands masked, equals
            it (es2_naming.py match's insn_streams);
@@ -23,6 +23,11 @@ Borland-only subcommands (rtti, vtables, classes, stats) refuse them.
         3. order: the function as far past the nearest pair before it, or as far short of the
            nearest pair after it, as in BIN (padding thunks aside), taken only when its decompile
            agrees; each round's pairs anchor the next;
+        4. with --by-order, for code compiled differently (ES1GO's device code has no 0x90 padding):
+           the function at the same position whatever its decompile, between the two nearest pairs
+           when as many functions lie between them in both binaries, and otherwise counted from the
+           pair before (or back from the pair after), labelled as a guess; every such pair is held
+           with its diff, to accept with a=b!;
         a=b: given, for what those miss (ES1GO's game code is laid out apart from ES1DBSIM's).
       A batch.json's BIN entries count as named whether or not they are inserted yet, so a batch's
       twins can be prepared from its own JSON before any known_symbols write.
@@ -33,7 +38,9 @@ Borland-only subcommands (rtti, vtables, classes, stats) refuse them.
       pairs found. A pair whose decompiles differ is held back with the diff command to read; after
       reading it, a=b! accepts it as the same statements. An accepted pair gets BIN's description
       with BIN2's addresses: those its operands (exact) or its decompile's labels, in order, pair
-      with, and any BIN address already named alike in BIN2. A final "ES2's ..." sentence is dropped
+      with, any function this run pairs and does not hold, and any BIN address already named alike
+      in BIN2; an address tagged with another binary
+      ("VSHELL 00405739", "VSHELL DVJoystick_TrackMax (00405b5d)") stays. A final "ES2's ..." sentence is dropped
       and the description closes with "The code of BIN's Name (addr), relocated operands aside."
       (disassembly equal) or "; the same statements as BIN's Name (addr) in different code." An entry
       whose description still names a BIN address, or whose twin is already named otherwise, goes
@@ -56,6 +63,9 @@ import retail_binaries  # noqa: E402
 
 STORE = re.compile(r"^([0-9a-f]{8})\s+[0-9a-f]+\s+MOV dword ptr \[[^\]]*\],0x([0-9a-f]+)\s*$")
 HEX8 = re.compile(r"(?<![0-9A-Za-z_+])([0-9a-f]{8})(?![0-9A-Za-z_])")
+# The text before an address that names its binary: "VSHELL 00405739", "(VSHELL 00405739)",
+# "VSHELL's 00405739", and with a name between, "VSHELL DVJoystick_TrackMax (00405b5d)".
+TAGGED = re.compile(r"\b(DBSIM|VSHELL|ES1DBSIM|ES1GO)(?:'s)? (?:[A-Za-z_][\w:~]* \()?$")
 
 
 def x32(binary):
@@ -376,6 +386,37 @@ def cmd_twin(args):
                     break
         if not found:
             break
+    # 4. --by-order, for what step 3 left: the function at the same position whatever its decompile.
+    # Between two anchors whose intervals hold as many functions in both binaries, that position is
+    # the twin's unless the code was reordered; where the counts differ (BIN2's code laid out apart, or
+    # a function without a Ghidra function on one side) or one anchor is missing, the count from the
+    # anchor before, else back from the one after, is only a guess. A pair whose decompile differs is
+    # held below with its diff and taken only through a=b!; one that comes out identical once the
+    # other pairs name its labels is accepted like step 3's.
+    if "--by-order" in args:
+        anc = sorted((a, b) for a, b in anchors.items() if a in i1 and b in i2)
+        anc_keys = [a for a, _ in anc]
+        for a in fn_targets:
+            if a in pairs or k1[a] in by_name2 or a not in i1 or a in conflicts:
+                continue
+            j = bisect.bisect_left(anc_keys, a)
+            lo = anc[j - 1] if j > 0 else None
+            hi = anc[j] if j < len(anc) else None
+            tries = []
+            if lo and hi and i1[hi[0]] - i1[lo[0]] == i2[hi[1]] - i2[lo[1]]:
+                tries.append((i2[lo[1]] + i1[a] - i1[lo[0]],
+                              f"by order between {k1.get(lo[0], lo[0])} and {k1.get(hi[0], hi[0])}"))
+            else:
+                odd = " (the interval's lengths differ)" if lo and hi else ""
+                if lo:
+                    tries.append((i2[lo[1]] + i1[a] - i1[lo[0]], f"by order after {k1.get(lo[0], lo[0])}{odd}"))
+                if hi:
+                    tries.append((i2[hi[1]] - (i1[hi[0]] - i1[a]), f"by order before {k1.get(hi[0], hi[0])}{odd}"))
+            for pos, label in tries:
+                if 0 <= pos < len(o2) and o2[pos] not in k2 and o2[pos] not in taken:
+                    pairs[a], how[a] = o2[pos], label
+                    taken.add(o2[pos])
+                    break
     # decompile label pairing for the pairs operands did not map
     batch, held, stamp = [], [], []
     for a in targets:
@@ -426,11 +467,14 @@ def cmd_twin(args):
 
         def sub(m, d=d):
             x = m.group(1)
-            before = d[:m.start()]
-            if N.BINARY_TAG.search(before) or x == a:
+            tag = TAGGED.search(d[:m.start()])
+            # Another binary's address, or BIN2's own, stays; one tagged BIN is mapped like an untagged one.
+            if (tag and tag.group(1) != b1.upper()) or x == a:
                 return x
             if x in addr_map:
                 return addr_map[x]
+            if x in pairs and x not in unpaired:
+                return pairs[x]
             if x in k1 and k1[x] in by_name2:
                 return by_name2[k1[x]]
             unmapped.append(x)
