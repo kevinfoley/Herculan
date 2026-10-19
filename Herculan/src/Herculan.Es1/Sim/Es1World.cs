@@ -16,7 +16,7 @@ namespace Herculan.Es1.Sim;
 /// (docs/es1/formats/script-dat.md#the-second-pass), and <see cref="LocalPlayer"/> the machine <c>Sim_StartMission</c>
 /// takes for <c>LocalPlayerMech</c> (docs/es1/simulation/main-loop.md#the-mission-start--sim_startmission-0005a9dc).
 ///
-/// <para>No tick runs on it: PLACEHOLDER: step 4 ports <c>Sim_MainTick</c>.</para>
+/// <para><see cref="Es1Simulation"/> runs the tick on it.</para>
 /// </summary>
 public sealed class Es1World {
 	/// <summary>The position sentinel a negative point ref gives, <c>000afa00</c>.</summary>
@@ -41,8 +41,11 @@ public sealed class Es1World {
 	/// <summary><c>g_MechPool</c>'s machines in the order they were built, which <c>Pool_Nth</c> counts.</summary>
 	public List<Es1Mech> MechPool { get; } = new();
 
-	/// <summary><c>LiveObjectList</c>, the objects <c>ObjectList_Add</c> has added.</summary>
-	public List<object> LiveObjects { get; } = new();
+	/// <summary>The globals the machines' ticks read: the clock, the generator, the live objects and the shapes they walk into.</summary>
+	public Es1SimGlobals Globals { get; } = new();
+
+	/// <inheritdoc cref="Es1SimGlobals.LiveObjects"/>
+	public List<IEs1SimObject> LiveObjects => Globals.LiveObjects;
 
 	/// <summary><c>MissionGroups</c> (<c>000bc476</c>).</summary>
 	public List<Es1MissionGroup> Groups { get; } = new();
@@ -135,7 +138,7 @@ public sealed class Es1World {
 				continue;
 			}
 
-			var mech = new Es1Mech(type);
+			var mech = new Es1Mech(type, Globals.DwellJitter);
 			MechPool.Add(mech);
 			LiveObjects.Add(mech);
 
@@ -166,12 +169,9 @@ public sealed class Es1World {
 			};
 		}
 
-		// PLACEHOLDER: no tick places the shadows; Mech_PlaceLegsOnGround runs in Mech_MovementTick each tick, which step 4
-		// ports. Until then its placement half runs once here, so a machine standing still casts the shadows its first
-		// tick would give it.
-		foreach (var mech in MechPool) {
-			mech.PlaceShadows();
-		}
+		// The spawn places no shadow: Mech_PlaceLegsOnGround's callers are the move and the ram's tick
+		// (docs/es1/simulation/mech-locomotion.md#shadows-and-footfalls--mech_placelegsonground-000144dc), so the shadows
+		// stay at their build depth until the machine's first move, as retail's do.
 	}
 
 	/// <summary>A block-6 record's machine: its point and heading, its two words, its loadout and its actions.</summary>

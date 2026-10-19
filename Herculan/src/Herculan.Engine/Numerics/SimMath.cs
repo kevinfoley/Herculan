@@ -96,10 +96,60 @@ public static class SimMath {
 	/// <c>0xffffdfff</c>, unsigned, when the product overflows 32 bits. See
 	/// docs/es1/simulation/fixed-point-math.md, "The primitives".
 	/// </summary>
-	public static int Q14MultiplyRounded(int a, short b) {
-		long product = (long)a * b;
-		long half = product == (int)product ? 0x2000 : 0xffffdfffL;
-		return (int)((product + half) >> 14);
+	public static int Q14MultiplyRounded(int a, short b) => RoundedShift((long)a * b, 14);
+
+	/// <summary>
+	/// ES1's <c>Math_Q8Multiply</c> (<c>ES1DBSIM 0005e7f8</c>), which rounds where <see cref="Q8Multiply"/> truncates, and
+	/// takes its second operand as 16 bits (<c>MOVSX ECX,word ptr [EBP+0xc]</c>): <c>0x80</c> added to the 64-bit product
+	/// before the shift, or <c>0xffffff7f</c>, unsigned, when the product overflows 32 bits. See
+	/// docs/es1/simulation/fixed-point-math.md, "The primitives".
+	/// </summary>
+	public static int Q8MultiplyRounded(int a, short b) => RoundedShift((long)a * b, 8);
+
+	/// <summary>
+	/// ES1's <c>Math_Q10Multiply</c> (<c>ES1DBSIM 0005e818</c>), which rounds where <see cref="Q10Multiply"/> truncates,
+	/// and takes its second operand as 16 bits (<c>MOVSX ECX,word ptr [EBP+0xc]</c>): <c>0x200</c> added to the 64-bit
+	/// product before the shift, or <c>0xfffffdff</c>, unsigned, when the product overflows 32 bits. See
+	/// docs/es1/simulation/fixed-point-math.md, "The primitives".
+	/// </summary>
+	public static int Q10MultiplyRounded(int a, short b) => RoundedShift((long)a * b, 10);
+
+	/// <summary>
+	/// ES1's <c>Math_Q16Multiply</c> (<c>ES1DBSIM 00073574</c>) and its copy <c>Math_Q16Multiply2</c> (<c>0007358c</c>),
+	/// which round where <see cref="Q16Multiply"/> truncates: <c>0x8000</c> added to the 64-bit product before the shift,
+	/// with no overflow branch. See docs/es1/simulation/fixed-point-math.md, "The primitives".
+	/// </summary>
+	public static int Q16MultiplyRounded(int a, int b) => (int)(((long)a * b + 0x8000) >> 16);
+
+	/// <summary>
+	/// ES1's <c>Math_Q16Divide</c> (<c>ES1DBSIM 00073534</c>), which rounds where <see cref="Q16Divide"/> truncates:
+	/// <c>|a| &lt;&lt; 16</c> divided unsigned by <c>|b|</c>, 1 added when the remainder is at least <c>|b|</c> halved
+	/// and rounded up, the sign restored when exactly one operand is negative. Retail's <c>DIV</c> faults on a quotient
+	/// past 32 bits; this keeps its low 32 bits, as <see cref="Q16Divide"/> does. See
+	/// docs/es1/simulation/fixed-point-math.md, "The primitives".
+	/// </summary>
+	public static int Q16DivideRounded(int a, int b) {
+		bool negative = (a < 0) != (b < 0);
+		ulong dividend = (ulong)(uint)Abs(a) << 16;
+		uint divisor = (uint)Abs(b);
+		uint quotient = (uint)(dividend / divisor);
+		uint halfLessOne = (divisor >> 1) + (divisor & 1) - 1;
+		if (halfLessOne < dividend % divisor) {
+			quotient++;
+		}
+
+		return negative ? (int)(0 - quotient) : (int)quotient;
+	}
+
+	/// <summary>
+	/// The rounding of ES1's Q8, Q10 and Q14 multiplies: <c>SBB ECX,ECX</c> / <c>XOR ECX,half</c> makes the half unit
+	/// when <c>IMUL</c> leaves the product in 32 bits and its complement when it does not, and <c>ADD EAX,ECX</c> /
+	/// <c>ADC EDX,0</c> adds that unsigned, so an overflowing product gains almost 2³² before the shift.
+	/// </summary>
+	private static int RoundedShift(long product, int shift) {
+		uint half = 1u << (shift - 1);
+		uint add = product == (int)product ? half : ~half;
+		return (int)((product + add) >> shift);
 	}
 
 	/// <summary>

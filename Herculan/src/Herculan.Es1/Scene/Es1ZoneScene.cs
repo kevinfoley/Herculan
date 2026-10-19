@@ -7,6 +7,7 @@ using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
+using Herculan.Es1.Sim;
 using Herculan.Es1.View;
 using Herculan.Es1.World;
 
@@ -88,6 +89,14 @@ public sealed class Es1ZoneScene {
 	public IReadOnlyList<Es1PlacedShape> Shapes { get; }
 
 	/// <summary>
+	/// The zone's records as the walk test reads them, in file order: each record's frame with its library shape's radius
+	/// (<c>shape+8</c>) and collision volume, read from the same <c>.DGS</c> record as its model
+	/// (docs/es1/simulation/terrain.md#the-tests-against-the-shapes). A record past the library, whose shape retail reads
+	/// past the library's end, has no volume and a radius of 0 here, so it refuses nothing.
+	/// </summary>
+	public Es1ZoneShapes ZoneShapes { get; private init; } = Es1ZoneShapes.Empty;
+
+	/// <summary>
 	/// Loads the scene for <paramref name="zone"/> in <paramref name="theater"/>, with <paramref name="scheme"/> installed
 	/// in the live palette when there is one.
 	///
@@ -135,7 +144,18 @@ public sealed class Es1ZoneScene {
 			}
 		}
 
+		var libraryShapes = library?.Shapes ?? Array.Empty<GridShape>();
+		var volumes = libraryShapes
+			.Select(shape => shape.Collision.IsSolid ? new Es1GridShape(shape.Collision) : null)
+			.ToArray();
+		var zoneShapes = shapes
+			.Select(shape => shape.ShapeIndex >= 0 && shape.ShapeIndex < libraryShapes.Length
+				? new Es1ShapeObject(shape.Frame, libraryShapes[shape.ShapeIndex].BoundingRadius, volumes[shape.ShapeIndex])
+				: new Es1ShapeObject(shape.Frame, 0, null))
+			.ToArray();
+
 		return new Es1ZoneScene(theater, zone, theaterPalette, palette, shading, world, models, shapes) {
+			ZoneShapes = new Es1ZoneShapes(zoneShapes),
 			Horizon = world != null ? Es1Horizon.From(world, palette) : null,
 			Ground = world != null ? LoadGround(content, world) : null,
 			Skyline = world is { SkyBank.Length: > 0 }

@@ -46,6 +46,15 @@ public sealed class Es1MechType {
 		HardpointSlots = roots.Select(BindHardpointSlots).ToArray();
 	}
 
+	/// <summary>A record on <paramref name="chassis"/> with no shape roots, posed through <paramref name="animation"/>; for tests.</summary>
+	internal Es1MechType(Es1HercSimDat chassis, ShapeAnimation animation) {
+		Name = "";
+		Chassis = chassis;
+		Roots = [];
+		Animation = animation;
+		HardpointSlots = [];
+	}
+
 	/// <summary>The type number, <c>MECHS.NAM</c>'s index, which the load stores at <c>+0x6c</c>.</summary>
 	public short Type { get; }
 

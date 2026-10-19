@@ -104,6 +104,12 @@ public sealed class Es1WeaponMount {
 	/// <inheritdoc cref="PitchThread"/>
 	public AnimationThread? YawThread { get; }
 
+	/// <summary>
+	/// <c>+0x24</c>–<c>+0x29</c>, the convergence angles, pitch, roll and yaw, which <see cref="Es1Turret.ConvergeGuns"/>
+	/// writes each pitch tick and the constructor zeroes.
+	/// </summary>
+	public (short Pitch, short Roll, short Yaw) Convergence { get; set; }
+
 	/// <summary><c>+0x49</c>, destroyed.</summary>
 	public bool Destroyed { get; set; }
 

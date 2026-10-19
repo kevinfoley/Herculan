@@ -63,6 +63,34 @@ public class SimMathTests {
 		Assert.Equal(expected, SimMath.Q14MultiplyRounded(a, b));
 	}
 
+	/// <summary>
+	/// ES1's rounded Q8 and Q10 multiplies, hand-worked: 0x10000000 × 16 is 2³² and 0x10000000 × 64 is 2³⁴, which
+	/// overflow, so they gain <c>0xffffff7f</c> and <c>0xfffffdff</c> before the shift. Catches either left on a plain
+	/// half-unit add (as the Q10 multiply was), or the complement sign-extended rather than added unsigned (which gives
+	/// the rounding's 2²⁴ less one).
+	/// </summary>
+	[Fact]
+	public void Q8AndQ10MultiplyRoundedAddTheComplementUnsignedOnOverflow() {
+		Assert.Equal(0x1ffffff, SimMath.Q8MultiplyRounded(0x10000000, 16));
+		Assert.Equal(0x13fffff, SimMath.Q10MultiplyRounded(0x10000000, 64));
+		Assert.Equal(2, SimMath.Q10MultiplyRounded(3, 0x200)); // 1.5 rounds up.
+	}
+
+	/// <summary>
+	/// ES1's rounded Q16 divide, hand-worked: the magnitudes are divided and rounded half away from zero, then the
+	/// sign restored. Catches a truncating divide (−43690 for 2 / −3), and a signed rounding such as
+	/// <c>((a &lt;&lt; 16) + b / 2) / b</c>, which takes −0.5 to 0.
+	/// </summary>
+	[Theory]
+	[InlineData(1, 3, 21845)] // 0.333 rounds down: the remainder 1 is under 2, three halved and rounded up.
+	[InlineData(2, 3, 43691)]
+	[InlineData(2, -3, -43691)]
+	[InlineData(-2, -3, 43691)]
+	[InlineData(-1, 0x20000, -1)] // −0.5
+	public void Q16DivideRoundedRoundsTheMagnitude(int a, int b, int expected) {
+		Assert.Equal(expected, SimMath.Q16DivideRounded(a, b));
+	}
+
 	private static void WithTickDelta(short delta, System.Action body) {
 		short previous = SimMath.TickDelta;
 		SimMath.TickDelta = delta;

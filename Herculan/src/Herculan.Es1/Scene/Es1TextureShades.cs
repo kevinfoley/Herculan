@@ -2,7 +2,6 @@ using HercWorks.Core.Data.File.Dyn;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
-using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.Scene;
 
@@ -50,12 +49,12 @@ public static class Es1TextureShades {
 		}
 
 		var reference = Channels(palette, holder[(holder.Length - 1) * level / (TableCount - 1)]);
-		var middle = Channels(palette, holder[Es1Math.Q10Multiply(holder.Length - 1, MiddleFactor)]);
+		var middle = Channels(palette, holder[SimMath.Q10MultiplyRounded(holder.Length - 1, MiddleFactor)]);
 		var own = Channels(palette, c);
 		var target = new int[3];
 		for (int k = 0; k < 3; k++) {
 			int ratio = middle[k] == 0 ? 0 : (reference[k] << 10) / middle[k];
-			target[k] = Es1Math.Q10Multiply(own[k], ratio);
+			target[k] = SimMath.Q10MultiplyRounded(own[k], (short)ratio); // Retail keeps the ratio in a word.
 		}
 
 		int best = c;

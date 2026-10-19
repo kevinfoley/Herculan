@@ -26,14 +26,17 @@
 
 Until its step lands, each of these does nothing, tagged `// PLACEHOLDER:` in code:
 
-- **The cockpit's instruments**, until step 6. The canopy art is drawn from step 3; the widgets, gauges, MFDs and `.TTM` scripts are not, and the cockpit's keys, the gunsight's target selection and the throttle gauge's exchange, which `Player_PerFrameCockpitUpdate` runs ([`mech.md#the-cockpit`](../es1/simulation/mech.md#the-cockpit)), do nothing: the player has no target.
-- **Firing and damage**, until step 7. The mounts are built and fitted; no machine fires, no damage is applied, and the flags the status and the AI read (`+0x93`, `+0x9e`, `+0x9f`) stay clear. Collision damage and the ram blast do nothing.
-- **The AI**, until step 8. Machines other than the player's stand where they were placed.
+- **The cockpit's instruments**, until step 6. The canopy art is drawn from step 3; the widgets, gauges, MFDs and `.TTM` scripts are not, and the cockpit's keys, the gunsight's target selection and the throttle gauge's exchange, which `Player_PerFrameCockpitUpdate` runs ([`mech.md#the-cockpit`](../es1/simulation/mech.md#the-cockpit)), do nothing: the player has no target, so the turret's tracking does nothing either.
+- **The views and the mouse**, until step 6: `ViewChain_Apply`, `CockpitView_PollViewDevice` and the view, status-panel and preferences commands take their keys and do nothing; the pointer reads 0, the frame's mouse events (`000444d0`) are not read, and the gunsight drag does not arm. The mouse's buttons are read, so the two-button turret snap works.
+- **The player's think**, until step 6: `Mech_BehaviourPlayerThink` posts the cockpit's messages and raises the flags the mission's end reads; it answers 0.
+- **Firing and damage**, until step 7. The mounts are built and fitted; no machine fires, no damage is applied, and the flags the status and the AI read (`+0x93`, `+0x9e`, `+0x9f`) stay clear. Collision damage and the ram blast do nothing; a collision still refuses the move. The systems tick, `Mech_PerTickSystemsUpdate` (energy, shields, countdowns, ECM and lock), does not run.
+- **The AI**, until step 8. Every machine is built in `deciding`, whose reassess installs `player` for the player's machine and nothing for the others, so they stand where they were placed; their shadows are placed by that reassess, where retail's state's move would place them. Obstacle avoidance, the trigger areas and the sensor model do nothing.
+- **Sound**, no step yet: the footfalls, the fall, the refused move's thump, the turret's servo, the frame's engine hum and the adaptive music (`Sim_FrameSoundTick`, [the frame's sounds](../es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574)) play nothing; their latches and state run ([Open](#open)).
+- **Tapes**, no step yet: `-p`, `-r` and `-D` are not taken, so the input build's recording and playback and `DemoMode` do nothing.
 - **The joystick**, until step 5.
 - **Flyers and bases as simulation objects.** Blocks 7 and 8 are not spawned (their constructors `0001ac58` and `00003cbc` are unread); the zone's placed shapes still draw.
 - **The mission's end.** The status panel that ends the mission (`00046efc`) is unread; the mission runs until the window closes.
-- **Two unread edge cases of step 3b**, no step yet: a cockpit scheme above 7, whose `0x40` word retail reads past its table ([the color scheme](../es1/simulation/cockpit-views.md#the-color-scheme)), keeps the second range's colour at `0x40`; and with no `data\prefs.cfg`, what `Prefs_Load` leaves in option 6 is unread, so the finest detail is taken.
-- **The tick's placement of the shadows**, until step 4: `Mech_PlaceLegsOnGround`'s placement runs once after the spawn.
+- **An unread edge case of step 3b**, no step yet: a cockpit scheme above 7, whose `0x40` word retail reads past its table ([the color scheme](../es1/simulation/cockpit-views.md#the-color-scheme)), keeps the second range's colour at `0x40`.
 - **The shell's after-mission files and a career's load**: a single mission's load writes no `car\sm_play.mec` or `car\sm_play.gam`, which only the shell reads back, and a career's mode 1 waits for the shell.
 
 ## Decisions
@@ -81,7 +84,7 @@ Each step is one subagent brief, one review (diff, both builds, the tests), one 
 
 **Step 7 — weapons and damage.** RE of `damage.cpp` to `gunlist.cpp`, `collide.cpp`, the round modules `rocket.cpp` and `bullet.cpp`, and the impact effects `explo.cpp` and `debris.cpp`, limited to what firing, a hit and its effect run; then the port: the player's trigger, the mounts' firing, the rounds, `Mech_DirectFireHitTest`, blasts, `Mech_ComponentDamageWrite` and its cascade, collision damage, and the effects. The user's check: the player's weapons against standing enemy HERCs, their refire, damage and destruction against retail's.
 
-**Step 8 — the AI.** `Group_TickMembers`, `Mech_AiTick`, the HERC state table and its states, the steering, formation and routes, the actions and triggers that gate a group's tick, the sensor model and `Ai_SelectTarget`, and the AI's aim and fire. States that need what the slice leaves out (attacking a flyer, the unread skirting `000038b8`) keep their transitions and do nothing, tagged. The user's check: an enemy group finds the player, closes, flanks and fights as retail's does.
+**Step 8 — the AI.** The HERC state table's AI states and `Mech_AiSelectBehaviour`'s AI arm (the table, `Mech_AiTick` and `Group_TickMembers` run from step 4), the steering, formation and routes, the actions and triggers that gate a group's tick, the sensor model and `Ai_SelectTarget`, and the AI's aim and fire. States that need what the slice leaves out (attacking a flyer) keep their transitions and do nothing, tagged. The skirting's structure probe, `Structure_RaycastShapes` (`000038b8`), answers 0 while no base is spawned ([the structures' tests](../es1/simulation/terrain.md#the-structures-tests)). The user's check: an enemy group finds the player, closes, flanks and fights as retail's does.
 
 After step 8, by the module rows of [step 0.7](plan-es1-support.md#phase-0--tooling-and-measurement), each module taken to [done](plan-es1-support.md#when-a-module-is-done) before the next:
 
@@ -102,5 +105,6 @@ Each is cheap to see and settles something a step rests on:
 ## Open
 
 - **Open:** every placeholder [the slice leaves out](#what-the-slice-leaves-out), each an **Unported:** item in `ROADMAP.md` once its step lands.
+- **Open:** a step for ES1's sound, which the slice and the order after step 8 lack: the samples and songs `Sound_Play`, `Sound_PlayAt` and `Sound_Stop` play, the listener, and `Music_Tick`'s adaptive music ([the frame's sounds](../es1/simulation/main-loop.md#the-frames-sounds--sim_framesoundtick-00058574)).
 - **Open:** whether the HERC state table handles every group order word the retail missions hold ([`mech-ai.md#open`](../es1/simulation/mech-ai.md#open)): `HercWorks.Query orders` over the 77 `.MSN` finds −1, 1, 3, 6, 8, 10 and 11 at group `0x32`; checked against the table before step 8.
 - **Open:** a tweak that maps textured faces with perspective in place of retail's column walk (decision 8): the code path that selects it lands with step 3b; the tweak's setting, its name and its localized strings are not built.

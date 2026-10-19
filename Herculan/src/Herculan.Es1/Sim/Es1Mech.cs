@@ -41,7 +41,7 @@ public sealed class Es1Shadow(int root, int partId) {
 /// it (docs/es1/simulation/mech.md#construction) and the second pass places it (docs/es1/formats/script-dat.md#the-second-pass).
 /// The fields are the ones this step reads and writes; the rest of the object comes with the steps that use it.
 /// </summary>
-public sealed class Es1Mech {
+public sealed class Es1Mech : IEs1SimObject {
 	/// <summary>The rotation sentinel's first angle, which <c>Mech_AttachToGroup</c> tests at <c>+6</c>.</summary>
 	public const short RotationSentinel = -32768;
 
@@ -51,11 +51,14 @@ public sealed class Es1Mech {
 	/// <summary>The energy pool the constructor fills, <c>+0x228</c>.</summary>
 	public const short InitialEnergy = 10000;
 
+	/// <summary>The footfall latches <c>+0x24a</c>–<c>+0x24e</c>.</summary>
+	public const int FootfallLatchCount = 5;
+
 	/// <summary>
-	/// <c>Mech_Constructor</c>: steps 1, 5, 7, 8 and 11, with the others' call sites kept. <paramref name="type"/> is the
-	/// chassis' type record.
+	/// <c>Mech_Constructor</c>: steps 1, 5, 7, 8, 9 and 11, with the others' call sites kept. <paramref name="type"/> is the
+	/// chassis' type record; <paramref name="jitter"/> is <c>Behaviour_DwellJitter</c>, which step 9 steps.
 	/// </summary>
-	public Es1Mech(Es1MechType type) {
+	public Es1Mech(Es1MechType type, Es1DwellJitter jitter) {
 		Type = type;
 
 		// Step 1: SimObjectBase_ConstructWithDetailTable on the record's roots, an animated instance on root 0.
@@ -70,11 +73,13 @@ public sealed class Es1Mech {
 		// Step 6. PLACEHOLDER: Shield_Init (0000fabc) on the record's shield capacity; step 7 ports the shields.
 
 		// Step 7: the locomotion thread on the record's +0x12 (file offset 16, the forward stop sequence) with no test of
-		// the sequence; the twist and pitch threads for a sequence that is not negative.
-		// PLACEHOLDER: the word +6 of the two stop sequences (+0x12, +0x14) is zeroed, which root motion reads; step 4,
-		// which ports root motion, ports it.
+		// the sequence; the priority (word +6) of the two stop sequences, +0x12 and +0x14, zeroed in the shape's own
+		// sequence table, so for every machine of the shape; the twist and pitch threads for a sequence that is not
+		// negative.
 		if (Shape != null) {
 			LocomotionThread = Shape.AddThread(type.Chassis.AnimId_StopMove);
+			Shape.Animation.Sequences[type.Chassis.AnimId_StopMove].ClearPriority();
+			Shape.Animation.Sequences[type.Chassis.AnimId_StopReverse].ClearPriority();
 			TwistThread = type.Chassis.AnimId_TorsoTwist >= 0 ? Shape.AddThread(type.Chassis.AnimId_TorsoTwist) : null;
 			PitchThread = type.Chassis.AnimId_TorsoPitch >= 0 ? Shape.AddThread(type.Chassis.AnimId_TorsoPitch) : null;
 		}
@@ -87,17 +92,113 @@ public sealed class Es1Mech {
 			Shadows.Add(new Es1Shadow((sbyte)bytes[i], (sbyte)bytes[i + 5]));
 		}
 
-		// Step 9. PLACEHOLDER: the behaviour state, deciding or player; step 8 ports the state table.
+		// Step 9: deciding, or player when +0x9d is set. The second pass sets +0x9d after the constructor, so every machine
+		// is built deciding, whose reassess installs player for the player's machine (Es1MechBehaviour).
+		Behaviour.SetState(Es1MechBehaviour.States[IsPlayer ? Es1MechBehaviour.Player : Es1MechBehaviour.Deciding], jitter);
 		// Step 10. PLACEHOLDER: dmg\<name> and col\<name> loaded and bound (Damage_LoadMechDmgFile, Collision_RegisterObject,
 		// Component_LinkMaxRefData); step 4 (collision) and step 7 (damage) port them.
-		// Step 11: the footfall latches are step 4's.
+		// Step 11: the latches +0x24a to +0x24d clear and the death sequence's +0x24e set.
+		FootfallLatches[FootfallLatchCount - 1] = true;
+
+		Locomotion = new Es1Locomotion(this);
+		Turret = new Es1Turret(this);
 	}
+
+	/// <summary>The machine's throttle, control law and root-motion step.</summary>
+	public Es1Locomotion Locomotion { get; }
+
+	/// <summary>The machine's turret ticks and centring.</summary>
+	public Es1Turret Turret { get; }
+
+	/// <summary><c>+0x22a</c>, the twist rate.</summary>
+	public short TwistRate { get; set; }
+
+	/// <summary><c>+0x22c</c>, the pitch rate.</summary>
+	public short PitchRate { get; set; }
+
+	/// <summary><c>+0x22e</c>, the twist, which selects the position in the twist thread's sequence (docs/retail/simulation/torso-aim.md#angle-to-pose).</summary>
+	public short Twist { get; set; }
+
+	/// <summary><c>+0x230</c>, the pitch, likewise for the pitch thread.</summary>
+	public short Pitch { get; set; }
+
+	/// <summary><c>+0x226</c>, the throttle, ±<c>0x400</c> (docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc).</summary>
+	public short Throttle { get; set; }
+
+	/// <summary><c>+0x8d</c>, the throttle changed, so the cockpit's gauge follows.</summary>
+	public bool ThrottleChanged { get; set; }
+
+	/// <summary><c>+0x224</c>, the speed, on the chassis file's scale; the playback rate's in a steady gait.</summary>
+	public short Speed { get; set; }
+
+	/// <summary><c>+0x222</c>, the turn rate, added to the heading every tick.</summary>
+	public short TurnRate { get; set; }
+
+	/// <summary><c>+0x236</c>, the locomotion thread's playback rate, Q8.</summary>
+	public short PlaybackRate { get; set; }
+
+	/// <summary><c>+0x9e</c>, immobilized: the control law takes its inputs away and the machine falls.</summary>
+	public bool Immobilized { get; set; }
+
+	/// <summary><c>+0xa2</c>, the milder leg grade, which cuts the desired speed to Q10 750.</summary>
+	public bool LegsDamaged { get; set; }
+
+	/// <summary><c>+0xa3</c>, the severe leg grade, which cuts the desired speed to Q10 400.</summary>
+	public bool LegsCrippled { get; set; }
+
+	/// <summary>
+	/// The unstick countdown, the <c>int32</c> at <c>+0x204</c> of the long countdown at <c>+0x203</c> that
+	/// <c>Timer_CountDown</c> steps; while it runs the machine walks at a top speed.
+	/// </summary>
+	public int UnstickCountdown { get; set; }
+
+	/// <summary><c>+0xa8</c>, the unstick direction: set walks it out backwards.</summary>
+	public bool UnstickReverse { get; set; }
+
+	/// <summary><c>+0x1e8</c>, the unstick side, ±5000.</summary>
+	public short UnstickSide { get; set; }
+
+	/// <summary><c>+0x47</c>, the behaviour block.</summary>
+	public Es1BehaviourBlock Behaviour { get; } = new();
+
+	/// <summary><c>+0xa9</c>: <c>Mech_AiTick</c> skips the think once, clearing it.</summary>
+	public bool ThinkSuppressed { get; set; }
+
+	/// <summary><c>+0xab</c>, something ran into it.</summary>
+	public bool RanInto { get; set; }
+
+	/// <summary><c>+0x24a</c>–<c>+0x24e</c>, the footfall latches, the last the death sequence's (<see cref="Es1Footfalls"/>).</summary>
+	public bool[] FootfallLatches { get; } = new bool[FootfallLatchCount];
+
+	/// <summary><c>+0x162</c>, the target class: the constructor's step 5 stores 0, a HERC.</summary>
+	public short TargetClass => 0;
+
+	/// <summary>Slot <c>+0x60</c>, <c>Mech_GetBodyRadius</c> (<c>00010ec8</c>): the record's <c>+0x70</c> (file offset 110).</summary>
+	public short BodyRadius => Type.Chassis.BodyRadius;
+
+	/// <summary>Slot <c>+0x6c</c>: <see cref="RanInto"/> set.</summary>
+	public void RunInto() => RanInto = true;
+
+	/// <summary><c>+0xae</c>, collapsed: the death sequence has played out.</summary>
+	public bool Collapsed { get; set; }
+
+	/// <summary>
+	/// <c>+0x2c</c>, the word that says the rotation is built from the angles
+	/// (docs/es1/simulation/object-classes.md#the-fields); the control law clears it as it turns the heading.
+	/// </summary>
+	public short RotationWord { get; set; }
 
 	/// <summary><c>+0x188</c>, the type record.</summary>
 	public Es1MechType Type { get; }
 
 	/// <summary><c>+0x2e</c>, the animated shape instance; null for a shape with no animation.</summary>
 	public ShapeInstance? Shape { get; }
+
+	/// <summary>
+	/// <c>+0x33</c>, set when the instance is an animated one (docs/es1/simulation/object-classes.md#the-fields): here,
+	/// when <see cref="Shape"/> is built.
+	/// </summary>
+	public bool IsAnimated => Shape != null;
 
 	/// <summary><c>+0x1c0</c>, <c>+0x1c4</c> and <c>+0x1c8</c>: the locomotion, twist and pitch threads.</summary>
 	public AnimationThread? LocomotionThread { get; }
@@ -218,18 +319,5 @@ public sealed class Es1Mech {
 
 		int transformId = animation.TransformIdOfPart(partId);
 		return transformId >= 0 ? Shape.NodeTransform(transformId) : Transform3.Identity;
-	}
-
-	/// <summary>
-	/// The placement half of <c>Mech_PlaceLegsOnGround</c> (<c>000144dc</c>): each shadow at its part's node through the
-	/// machine's frame, with the machine's heading (docs/es1/simulation/mech-locomotion.md#shadows-and-footfalls--mech_placelegsonground-000144dc).
-	/// </summary>
-	public void PlaceShadows() {
-		var frame = Frame;
-		foreach (var shadow in Shadows) {
-			var node = PartTransform(shadow.PartId);
-			shadow.Position = frame.TransformPoint(node.X, node.Y, node.Z);
-			shadow.Heading = Rotation.Z;
-		}
 	}
 }

@@ -3,6 +3,7 @@ using HercWorks.Core.Data.File.Msn.Es1;
 using HercWorks.Core.Io;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Shell;
+using Herculan.Es1.Input;
 
 namespace Herculan.Es1.Sim;
 
@@ -10,7 +11,7 @@ namespace Herculan.Es1.Sim;
 /// The three files the shell hands the simulator in the install's <c>data\</c>, as <c>DBSim_LoadScriptDat</c>
 /// (<c>ES1DBSIM 0001d850</c>) opens them (docs/es1/formats/script-dat.md#reading): <c>data\mission.var</c>,
 /// <c>data\player.mec</c> and <c>data\script.dat</c>, each under a severity-5 assert when it does not open; and the
-/// detail setting of <c>data\prefs.cfg</c> (<see cref="DetailOption"/>).
+/// options of <c>data\prefs.cfg</c> (<see cref="Preferences"/>, and the detail setting, <see cref="DetailOption"/>).
 /// </summary>
 /// <param name="Flags">The 100 flags of <c>data\mission.var</c>.</param>
 /// <param name="Player">The squad of <c>data\player.mec</c>.</param>
@@ -42,6 +43,12 @@ public sealed record Es1MissionFiles(short[] Flags, Es1PlayerMec Player, Es1Scri
 	/// the file is missing or shorter.
 	/// </summary>
 	public byte? DetailOption { get; init; }
+
+	/// <summary>
+	/// The 17 option bytes of <c>data\prefs.cfg</c> as <c>Prefs_Load</c> reads them, all 0 when the file is missing,
+	/// from the same read as <see cref="DetailOption"/>, which keeps its own rule for a missing or short file.
+	/// </summary>
+	public Es1Preferences Preferences { get; init; } = Es1Preferences.Default;
 
 	/// <summary>A file in the install's <c>data\</c>, matched ignoring case.</summary>
 	public static string DataPath(string installRoot, string name) => CaseInsensitivePath.Combine(installRoot, DataFolder, name);
@@ -96,11 +103,12 @@ public sealed record Es1MissionFiles(short[] Flags, Es1PlayerMec Player, Es1Scri
 		}
 
 		string prefsPath = DataPath(installRoot, PrefsName);
-		byte[] prefs = File.Exists(prefsPath) ? File.ReadAllBytes(prefsPath) : [];
+		byte[]? prefs = File.Exists(prefsPath) ? File.ReadAllBytes(prefsPath) : null;
 
 		error = null;
 		return new Es1MissionFiles(flags, player, script) {
-			DetailOption = prefs.Length > DetailOptionOffset ? prefs[DetailOptionOffset] : null,
+			DetailOption = prefs is { Length: > DetailOptionOffset } ? prefs[DetailOptionOffset] : null,
+			Preferences = Es1Preferences.FromFile(prefs),
 		};
 	}
 }

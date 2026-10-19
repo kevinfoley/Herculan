@@ -92,7 +92,13 @@ public sealed class AnimSequence {
 	}
 
 	/// <inheritdoc cref="ANSequence.Priority"/>
-	public short Priority { get; }
+	public short Priority { get; private set; }
+
+	/// <summary>
+	/// Sets <see cref="Priority"/> to 0 for every instance of the shape, as both games' <c>Mech_Constructor</c> does to a
+	/// HERC's two stop sequences (docs/retail/rendering/dts-node-posing.md, "Several threads on one shape").
+	/// </summary>
+	public void ClearPriority() => Priority = 0;
 
 	/// <summary>Each frame's length in animation ticks.</summary>
 	public short[] FrameDurations { get; }

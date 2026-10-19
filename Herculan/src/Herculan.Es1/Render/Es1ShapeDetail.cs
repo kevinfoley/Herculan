@@ -31,15 +31,13 @@ public readonly record struct Es1DetailSetting(int SizeScaleQ10, int RootBias, i
 	/// The outputs for option value <paramref name="value"/>: the first key it is at most picks the slot. A byte is never
 	/// above the last key, 300, so every value picks one.
 	///
-	/// <para>PLACEHOLDER: with no <c>data\prefs.cfg</c> (<paramref name="value"/> null) the engine takes the last slot,
-	/// the finest; what <c>Prefs_Load</c> leaves in the option without the file is unread.</para>
+	/// <para>With no <c>data\prefs.cfg</c> (<paramref name="value"/> null) the option is 0: <c>Prefs_Load</c>
+	/// (<c>0004a744</c>) zeroes all 17 options when the file does not open
+	/// (docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc).</para>
 	/// </summary>
 	public static Es1DetailSetting FromOption(byte? value) {
-		int slot = Keys.Length - 1;
-		if (value is { } option) {
-			slot = Array.FindIndex(Keys, key => option <= key);
-		}
-
+		byte option = value ?? 0;
+		int slot = Array.FindIndex(Keys, key => option <= key);
 		return new Es1DetailSetting(ScaleValues[slot], RootBiasValues[slot], MountBiasValues[slot]);
 	}
 }
@@ -65,7 +63,7 @@ public static class Es1ShapeDetail {
 		}
 
 		int size = ShapeDetail.ProjectedSize(radius, distance, 1 << FocalShift);
-		int scaled = Es1Math.Q10Multiply(size, setting.SizeScaleQ10);
+		int scaled = SimMath.Q10MultiplyRounded(size, (short)setting.SizeScaleQ10); // g_ShapeDetailSizeScaleQ10 is a word.
 		int root = Math.Min(setting.RootBias, rootCount - 1);
 		for (int j = 0; root < rootCount - 1 && j < thresholds.Count && scaled < thresholds[j]; j++) {
 			root++;
