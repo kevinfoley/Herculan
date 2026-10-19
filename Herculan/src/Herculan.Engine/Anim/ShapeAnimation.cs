@@ -300,7 +300,7 @@ public sealed class ShapeAnimation {
 	///
 	/// <para>Every root carries one of its own, and they differ: APOCA's root 0 declares 8 sequences
 	/// over a 12-node tree and its root 4 declares 1 over a 9-node tree, renumbered. This is root 0's
-	/// alone, which poses every root once ES2's <c>Scene.MechDetailRootRemap</c> has put the others
+	/// alone, which poses every root once <see cref="MechDetailRootRemap"/> has put the others
 	/// on its numbering.</para>
 	/// </summary>
 	public static ShapeAnimation? FromModel(DynamixThreeSpaceModel? model) {

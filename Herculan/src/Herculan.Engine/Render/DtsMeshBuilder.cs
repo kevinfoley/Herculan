@@ -445,7 +445,7 @@ public static partial class DtsMeshBuilder {
 		/// The animation list every part is placed through, in place of the one the root's own
 		/// <see cref="ANShape"/> carries, or null to use that one. Set for a machine's crude LOD roots,
 		/// whose transform ids are root 0's once renumbered — see
-		/// <see cref="Scene.MechDetailRootRemap"/>.
+		/// <see cref="Anim.MechDetailRootRemap"/>.
 		/// </summary>
 		public ANAnimList? PoseList { get; init; }
 
@@ -504,7 +504,7 @@ public static partial class DtsMeshBuilder {
 	/// </param>
 	/// <param name="poseList">
 	/// The animation list to place parts through instead of the root's own — root 0's, for a
-	/// machine's renumbered crude root (<see cref="Scene.MechDetailRootRemap"/>). Null for every
+	/// machine's renumbered crude root (<see cref="Anim.MechDetailRootRemap"/>). Null for every
 	/// other shape.
 	/// </param>
 	public static MeshBuild BuildRoot(TSObject root, TextureAtlas? atlas = null,

@@ -6,7 +6,6 @@ using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Anim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Install;
-using Herculan.Engine.Scene;
 using Xunit;
 
 namespace Herculan.Engine.Tests;

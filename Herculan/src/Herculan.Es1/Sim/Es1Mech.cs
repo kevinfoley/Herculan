@@ -179,7 +179,7 @@ public sealed class Es1Mech {
 			}
 
 			// The hardpoint's node, found through the shape's slot +0x24, stamped onto the model (Shape_StampTransformId).
-			if (Type.Roots.Count > 0 && Es1MechType.FindPart(Type.Roots[0], mount.Hardpoint.BoneId) is { } part) {
+			if (Type.Roots.Count > 0 && MechDetailRootRemap.FindPart(Type.Roots[0], mount.Hardpoint.BoneId) is { } part) {
 				mount.ModelTransformId = part.Transform;
 			}
 

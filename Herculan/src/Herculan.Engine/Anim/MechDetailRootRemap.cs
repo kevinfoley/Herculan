@@ -1,15 +1,19 @@
 using HercWorks.Core.Data.File.Dts;
 using HercWorks.Core.Data.File.Dts.Bsp;
 using HercWorks.Core.Data.File.Dts.Part;
-using Herculan.Engine.Anim;
 
-namespace Herculan.Engine.Scene;
+namespace Herculan.Engine.Anim;
 
 /// <summary>
-/// Port of <c>MechType_RemapDetailRootTransforms</c> (<c>00420090</c>): rewrites every LOD root of a
-/// machine's shape after the first onto root 0's node numbering, in place, once at load, so every
-/// root can be posed through root 0's one animation. See docs/retail/rendering/mech-shape-drawing.md,
-/// "The crude roots are renumbered at load".
+/// Port of <c>MechType_RemapDetailRootTransforms</c> (<c>00420090</c>; ES1's <c>ES1DBSIM 00019ba0</c>):
+/// rewrites every LOD root of a machine's shape after the first onto root 0's node numbering, in place,
+/// once at load, so every root can be posed through root 0's one animation. See
+/// docs/retail/rendering/mech-shape-drawing.md, "The crude roots are renumbered at load", and for ES1
+/// docs/es1/formats/chassis-dat.md, "The load" step 4.
+///
+/// <para>Both games' walks are the same on the parsed classes: ES1's reads the class tag through vtable
+/// <c>+4</c> and finds a part through the root's <c>+0x24</c> where ES2's use <c>+0</c> and <c>+0x20</c>,
+/// which is dispatch only.</para>
 /// </summary>
 public static class MechDetailRootRemap {
 	/// <summary>
@@ -19,8 +23,8 @@ public static class MechDetailRootRemap {
 
 	/// <summary>
 	/// Renumbers <paramref name="roots"/> 1 onward through the parts <paramref name="partIds"/> lists,
-	/// the chassis <c>.DAT</c>'s signed bytes ended by a negative one
-	/// (<c>HercSimDat.ModelLoDBoneIds</c>). Does nothing to a shape with one root.
+	/// the chassis <c>.DAT</c>'s signed bytes ended by a negative one at file offset 46
+	/// (<c>ModelLoDBoneIds</c> in either game's chassis record). Does nothing to a shape with one root.
 	///
 	/// <para>The original reads root 0's part without a null check, and indexes its 50-byte row with
 	/// whatever transform id it meets. This engine skips a part root 0 does not have and treats an
@@ -70,7 +74,7 @@ public static class MechDetailRootRemap {
 	/// (<c>00476120</c>): the part itself when its id matches, else the first match among its
 	/// children, depth first.
 	/// </summary>
-	private static TSBasePart? FindPart(TSObject? node, int partId) {
+	public static TSBasePart? FindPart(TSObject? node, int partId) {
 		if (node is not TSBasePart part) {
 			return null;
 		}
@@ -91,7 +95,7 @@ public static class MechDetailRootRemap {
 	}
 
 	/// <summary>
-	/// <c>Shape_RemapTransformIds</c> (<c>0041ff88</c>), which switches on the exact class tag:
+	/// <c>Shape_RemapTransformIds</c> (<c>0041ff88</c>; <c>ES1DBSIM 00019ac4</c>), which switches on the exact class tag:
 	/// a <see cref="TSGroup"/> (not a <see cref="TSBSPGroup"/>) and a <see cref="TSCellAnimPart"/>
 	/// have their own id remapped, a <see cref="TSBSPPart"/> its per-node entries, and every list
 	/// class is descended into except through a <see cref="TSGroup"/>.
@@ -128,7 +132,7 @@ public static class MechDetailRootRemap {
 	}
 
 	/// <summary>
-	/// <c>Shape_RemapTransformId</c> (<c>0041ff68</c>): a negative id stays, any other becomes its
+	/// <c>Shape_RemapTransformId</c> (<c>0041ff68</c>; <c>ES1DBSIM 00019aa0</c>): a negative id stays, any other becomes its
 	/// map entry, which is -1 where the map was never set.
 	/// </summary>
 	private static short RemapTransformId(short id, sbyte[] map) =>
