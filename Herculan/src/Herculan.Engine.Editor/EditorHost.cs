@@ -253,6 +253,7 @@ public sealed class EditorHost {
 
 		_imgui = new ScaledImGui(gl, _window, input, _launch.FontPath, boldFontPath: _launch.BoldFontPath) {
 			HeldAsMouseButtons = () => (_padPointer.ClickHeld, _padPointer.RightClickHeld),
+			PointerOverride = () => _padPointer.Override,
 		};
 		_input = input;
 		EditorText.BoldFont = () => _imgui?.BoldFont;
@@ -273,14 +274,14 @@ public sealed class EditorHost {
 			_lookNeedsResync = true;
 			mouse.Cursor.CursorMode = CursorMode.Disabled;
 		} else if (button == MouseButton.Left) {
-			_leftDownPos = mouse.Position;
+			_leftDownPos = _padPointer.PositionOf(mouse);
 			_leftDownOverViewport = !ImGui.GetIO().WantCaptureMouse;
 			if (_leftDownOverViewport && _mission != null && _mission.AreaPlacing.Active) {
 				// While an area is placed, a press on the ground starts its drag, and picks and moves nothing.
-				_mission.AreaPlacing.Press(_mission.Picker.GroundAt(_camera, mouse.Position, Viewport));
+				_mission.AreaPlacing.Press(_mission.Picker.GroundAt(_camera, _leftDownPos, Viewport));
 			} else if (_leftDownOverViewport && _mission != null && !_mission.Placing.Active) {
 				bool alt = _keyboard != null && (_keyboard.IsKeyPressed(Key.AltLeft) || _keyboard.IsKeyPressed(Key.AltRight));
-				_mission.Gizmo.TryBegin(_camera, mouse.Position, Viewport, detach: alt);
+				_mission.Gizmo.TryBegin(_camera, _leftDownPos, Viewport, detach: alt);
 			}
 		}
 	}
@@ -292,33 +293,34 @@ public sealed class EditorHost {
 				mouse.Cursor.CursorMode = CursorMode.Normal;
 			}
 		} else if (button == MouseButton.Left && _mission != null) {
-			bool click = _leftDownOverViewport && Vector2.Distance(mouse.Position, _leftDownPos) < 4f;
+			var at = _padPointer.PositionOf(mouse);
+			bool click = _leftDownOverViewport && Vector2.Distance(at, _leftDownPos) < 4f;
 			if (_mission.Placing.Active) {
 				// While a route is placed, a click places its next waypoint and picks nothing.
 				if (click) {
-					_mission.Placing.Click(_camera, mouse.Position, _mission.Picker.GroundAt(_camera, mouse.Position, Viewport));
+					_mission.Placing.Click(_camera, at, _mission.Picker.GroundAt(_camera, at, Viewport));
 				}
 			} else if (_mission.AreaPlacing.Active) {
 				// Let go over a panel, the area ends at the ground last under the pointer.
 				_mission.AreaPlacing.Release(ImGui.GetIO().WantCaptureMouse
 					? null
-					: _mission.Picker.GroundAt(_camera, mouse.Position, Viewport));
+					: _mission.Picker.GroundAt(_camera, at, Viewport));
 			} else if (_mission.Gizmo.Dragging) {
 				// A press on a handle that moved nothing still counts toward a double-click, whose second press often
 				// lands on the handles drawn over what the first selected; it leaves the selection as it is.
-				if (!_mission.Gizmo.End() && click && IsDoubleClick(mouse.Position)
+				if (!_mission.Gizmo.End() && click && IsDoubleClick(at)
 						&& _mission.Selection.Current is { } current) {
 					_mission.Selection.Focus(current);
 				}
 			} else if (click) {
-				var picked = _mission.Picker.Pick(_camera, mouse.Position, Viewport, _settings);
-				if (IsDoubleClick(mouse.Position) && picked != null) {
+				var picked = _mission.Picker.Pick(_camera, at, Viewport, _settings);
+				if (IsDoubleClick(at) && picked != null) {
 					_mission.Selection.Focus(picked);
 				} else {
 					_mission.Selection.Current = picked;
 				}
 
-				Console.WriteLine($"[pick] {picked?.ToString() ?? "nothing"} at {mouse.Position}");
+				Console.WriteLine($"[pick] {picked?.ToString() ?? "nothing"} at {at}");
 			}
 		}
 	}
@@ -393,7 +395,7 @@ public sealed class EditorHost {
 
 		// After the camera, so the object stays under the pointer while the view moves too.
 		if (_mission?.Gizmo.Dragging == true && _mouse != null) {
-			_mission.Gizmo.Drag(_camera, _mouse.Position, Viewport);
+			_mission.Gizmo.Drag(_camera, _padPointer.PositionOf(_mouse), Viewport);
 		}
 	}
 
@@ -681,7 +683,7 @@ public sealed class EditorHost {
 		mission.GroupOverlay.DrawSelectedGroup(wireframe, _camera, aspect, selection);
 		if (mission.PlacingAny) {
 			var pointer = _mouse != null && !ImGui.GetIO().WantCaptureMouse
-				? mission.Picker.GroundAt(_camera, _mouse.Position, Viewport)
+				? mission.Picker.GroundAt(_camera, _padPointer.PositionOf(_mouse), Viewport)
 				: null;
 			mission.Placing.Draw(wireframe, _camera, aspect, pointer);
 			mission.AreaPlacing.Hover(pointer);
@@ -774,7 +776,7 @@ public sealed class EditorHost {
 	private void UpdateDropPreview(EditorMission mission) {
 		var drag = _toolbox.Drag;
 		var ground = drag != null && !_toolbox.DragOverPanel && _mouse != null
-			? mission.Picker.GroundAt(_camera, _mouse.Position, Viewport)
+			? mission.Picker.GroundAt(_camera, _padPointer.PositionOf(_mouse), Viewport)
 			: null;
 		_dropPreview?.Update(drag, ground);
 	}

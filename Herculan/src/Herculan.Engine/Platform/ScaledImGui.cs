@@ -112,6 +112,13 @@ public sealed class ScaledImGui : IDisposable {
 	/// </summary>
 	public Func<(bool Left, bool Right)>? HeldAsMouseButtons { get; set; }
 
+	/// <summary>
+	/// Where the pointer is, in window coordinates, when it is not the mouse's cursor, such as a
+	/// <see cref="GamepadPointer.Override"/>; null for the mouse's own. Read once a frame before the frame starts. While it
+	/// is set ImGui draws its own arrow there, since the window's cursor is hidden.
+	/// </summary>
+	public Func<Vector2?>? PointerOverride { get; set; }
+
 	/// <summary>Starts the next ImGui frame, first building the controller again if the display's scale changed.</summary>
 	public void Update(float deltaSeconds) {
 		// Compared loosely: the client scale is a ratio of two sizes, which a resize need not update together.
@@ -130,6 +137,7 @@ public sealed class ScaledImGui : IDisposable {
 			feed(io);
 		}
 
+		FeedPointer(PointerOverride?.Invoke());
 		if (HeldAsMouseButtons is { } held) {
 			var (left, right) = held();
 			FeedMouseButton(ImGuiMouseButton.Left, MouseButton.Left, left);
@@ -162,6 +170,23 @@ public sealed class ScaledImGui : IDisposable {
 		var io = ImGui.GetIO();
 		io.MouseDown[(int)button] = !down;
 		io.AddMouseButtonEvent((int)button, down);
+	}
+
+	// The controller writes io.MousePos from the mouse just before NewFrame, so a pointer elsewhere goes in as an event, as
+	// FeedMouseButton's buttons do, with io.MousePos first set to ImGui's "no pointer" so the event is not dropped as a
+	// repeat of the last frame's position. The event has to be taken in the frame it is queued, or that frame keeps the
+	// controller's position: ImGui's trickling holds a move queued after a key's or a button's change over to the next
+	// frame, and the gamepad's navigation keys change on every frame the stick moves, so the pointer would flick between
+	// the two. So trickling is off while the pointer is elsewhere; a press and release within one frame are then missed,
+	// which no stick or trigger is quick enough to make.
+	private static void FeedPointer(Vector2? pointer) {
+		var io = ImGui.GetIO();
+		io.MouseDrawCursor = pointer != null;
+		io.ConfigInputTrickleEventQueue = pointer == null;
+		if (pointer is { } at) {
+			io.MousePos = new Vector2(-float.MaxValue, -float.MaxValue);
+			io.AddMousePosEvent(at.X, at.Y);
+		}
 	}
 
 	// The font is baked at the display's pixel size, and drawn at the window-coordinate size: on Windows the two are

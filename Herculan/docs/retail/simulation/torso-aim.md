@@ -68,9 +68,9 @@ The intra-frame offset lands on a whole animation tick, because the scale-down t
 
 ### Three threads per machine
 
-`Mech_Constructor` (`00415bb0`) builds them in this order, skipping any whose sequence id is negative: locomotion on `typeRec+0x12` at `mech+0x22c`, twist on `+0x1c` at `+0x230`, pitch on `+0x24` at `+0x234`.
+`Mech_Constructor` (`00415bb0`) builds them in this order, skipping any whose sequence id is negative: locomotion on `typeRec+0x12` at `mech+0x22c`, twist on `+0x1c` at `+0x230`, pitch on `+0x24` at `+0x234`. Between the locomotion thread and the twist it zeroes the priority of the two stop sequences, `typeRec+0x12` and `+0x14`.
 
-The shape re-ranks them by their sequences' priority on every step, and registration order only breaks ties; the three cover disjoint nodes on every retail chassis, so the ranking decides which thread carries root motion rather than any pose. Both are in [`dts-node-posing.md`](../rendering/dts-node-posing.md#several-threads-on-one-shape).
+The shape re-ranks them by their sequences' priority on every step, and registration order only breaks ties. With the stop sequences zeroed, every locomotion sequence has a lower priority (0) than the twist and pitch, so locomotion stays first and carries root motion on every step; the three cover disjoint nodes on every retail chassis, so the ranking decides no pose. Both are in [`dts-node-posing.md`](../rendering/dts-node-posing.md#several-threads-on-one-shape).
 
 ### The angle is not the drawn direction
 
