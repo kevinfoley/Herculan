@@ -17492,12 +17492,27 @@
       }
     },
     {
+      "address": "0004a724",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_ClearHandlersAndInit",
+      "description": "No arguments: zeroes the 17 dwords of Prefs_HandlerTable (000bd598) and runs Prefs_Init (0004afe8). es2_xref finds one call, from Input_BuildSourceTable (0004c95c).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-preferences-start-up",
+      "verified": {
+        "bytes": "0004a724+30",
+        "sha1": "8dbdbea137b7",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004a744",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Prefs_Load",
-      "description": "(copy): reads the 17 option bytes of data\\prefs.cfg (through Path_ApplyAltDrive (000592a4)) into 000bd562, zeroing them when the file does not open; then for each option calls its handler from the table 000bd598 with the value when one is set, copies the value to 000bd574 when copy is non-zero, and copies 000bd574's byte to 000bd586.",
+      "description": "(copy): reads the 17 option bytes of data\\prefs.cfg (through Path_ApplyAltDrive (000592a4)) into 000bd562, zeroing them when the file does not open; then for each option calls its handler from the table Prefs_HandlerTable (000bd598) with the value when one is set, copies the value to 000bd574 when copy is non-zero, and copies 000bd574's byte to 000bd586.",
       "source": "Herculan/docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc; ES1DBSIM decompile at 0004a744",
       "verified": {
         "bytes": "0004a744+183",
@@ -17512,7 +17527,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_SetOption",
-      "description": "(apply, value, index) in stack order, callee-cleaned: writes one option: saves the old byte at 000bd586[index], stores value at 000bd562[index], and when apply is non-zero and the handler 000bd598[index] is set calls it with value. ES2's Prefs_SetOption (DBSIM 0045993c).",
+      "description": "(apply, value, index) in stack order, callee-cleaned: writes one option: saves the old byte at 000bd586[index], stores value at 000bd562[index], and when apply is non-zero and the handler Prefs_HandlerTable (000bd598)[index] is set calls it with value. ES2's Prefs_SetOption (DBSIM 0045993c).",
       "source": "ES1DBSIM decompile at 0004a914, against ES2's Prefs_SetOption",
       "verified": {
         "bytes": "0004a914+56",
@@ -17572,7 +17587,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_SetHandler",
-      "description": "(handler, option) in stack order, frameless, its arguments removed by this function: stores the handler in the table 000bd598 at the option's index, the handler Prefs_SetOption (0004a914) and Prefs_Load (0004a744) call with the option's value.",
+      "description": "(handler, option) in stack order, frameless, its arguments removed by this function: stores the handler in the table Prefs_HandlerTable (000bd598) at the option's index, the handler Prefs_SetOption (0004a914) and Prefs_Load (0004a744) call with the option's value.",
       "source": "Herculan/docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc; ES1DBSIM disassembly at 0004ac4c",
       "verified": {
         "bytes": "0004ac4c+19",
@@ -17582,12 +17597,72 @@
       }
     },
     {
+      "address": "0004ac60",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HeapPtr_DtorInputDevicesCopy",
+      "description": "(p, flags), its arguments removed by this function: byte for byte the code of HeapPtr_DtorAppInputCopy (0004c650), relocated operands aside. Opens the object file of the input devices.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "0004ac60+40",
+        "sha1": "999e28368d0f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004ac88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_DtorInputDevicesCopy",
+      "description": "(part, flags), its arguments removed by this function: slot +0x1c of the vtable 0009565a: byte for byte the code of ConfigPart_DtorAppInputCopy (0004c678), relocated operands aside, storing 0009565a and 0009568e.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "0004ac88+63",
+        "sha1": "01d6f1aa30b2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004acc7",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ConfigPart_GetClassTagInputDevicesCopy",
+      "description": "Frameless: a NOP, then XOR EAX,EAX and RET 4: returns 0. Slot +4 of the vtable 0009565a; the code of ConfigPart_GetClassTagAppInputCopy (0004c6b7).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "0004acc7+6",
+        "sha1": "828f6bab1234",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0004acd0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "TSPartBase_DtorInputDevicesCopy",
+      "description": "(part, flags), its arguments removed by this function: slot +0x1c of the vtable 0009568e (entered at its padding 0004accd): byte for byte the code of TSPartBase_DtorAppInputCopy (0004c6c0), relocated operands aside, storing 0009568e.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "0004acd0+42",
+        "sha1": "879194259e75",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004ad88",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Input_SetStickMode",
-      "description": "(value), frameless, its argument removed by this function: Input_StickMode (00095819) = the value's low byte. Preferences option 8's handler: 0004afe8 registers it with Prefs_SetHandler (0004ac4c).",
+      "description": "(value), frameless, its argument removed by this function: Input_StickMode (00095819) = the value's low byte. Preferences option 8's handler: Prefs_Init (0004afe8) registers it with Prefs_SetHandler (0004ac4c).",
       "source": "Herculan/docs/es1/simulation/input.md#the-stick-mode; ES1DBSIM disassembly at 0004ad88",
       "verified": {
         "bytes": "0004ad88+12",
@@ -17602,7 +17677,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_SetThrottleLeverMode",
-      "description": "(value), frameless, its argument removed by this function: ThrottleLeverMode (000919ce) = 1 when the value's low byte is non-zero, else 0. Preferences option 10's handler: 0004afe8 registers it with Prefs_SetHandler (0004ac4c). ES2's Input_SetThrottleLeverMode (DBSIM 00459d20), which also asks whether a throttle control is fitted.",
+      "description": "(value), frameless, its argument removed by this function: ThrottleLeverMode (000919ce) = 1 when the value's low byte is non-zero, else 0. Preferences option 10's handler: Prefs_Init (0004afe8) registers it with Prefs_SetHandler (0004ac4c). ES2's Input_SetThrottleLeverMode (DBSIM 00459d20), which also asks whether a throttle control is fitted.",
       "source": "Herculan/docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc; ES1DBSIM disassembly at 0004ad94",
       "verified": {
         "bytes": "0004ad94+25",
@@ -17617,13 +17692,88 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_LimitDetailInLowMemory",
-      "description": "(value), frameless, its argument removed by this function: the handler of preferences option 6. With g_LowMemory (000bda98) set and the option byte 000bd568 above 160: while the byte 000b1734 is set, Prefs_SetOption (0004a914)(1, 160, 6); otherwise 0004a900(6), the panel 00046efc(0, 0, 1, 0x11), its +0x314's slot +0xc on it, and 000472b0(panel, 3). It reads the option from 000bd568 and not its argument. 0004afe8 registers it with Prefs_SetHandler (0004ac4c) for option 6.",
+      "description": "(value), frameless, its argument removed by this function: the handler of preferences option 6. With g_LowMemory (000bda98) set and the option byte 000bd568 above 160: while the byte PrefsInitInProgress (000b1734) is set, Prefs_SetOption (0004a914)(1, 160, 6); otherwise 0004a900(6), the panel 00046efc(0, 0, 1, 0x11), its +0x314's slot +0xc on it, and 000472b0(panel, 3). It reads the option from 000bd568 and not its argument. Prefs_Init (0004afe8) registers it with Prefs_SetHandler (0004ac4c) for option 6.",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
       "verified": {
         "bytes": "0004adb0+91",
         "sha1": "770f2abe2765",
         "scope": "body",
         "via": "disasm"
+      }
+    },
+    {
+      "address": "0004ae0c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Joystick_LoadCalibration",
+      "description": "(path, device) in stack order, its arguments removed by this function: fopens path with mode rb; when it opens, freads 0x40 bytes into a stack block and fcloses it, the fread's count unchecked; otherwise fills the block with min 0, max 0x50, center band low edge 0x28 and high edge 0x50 for each of the four axes. Then DVJoystick_SetRanges (0006b868)(device, block) and the word +0x66, the normalisation's shift, = 7. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-calibration-file",
+      "verified": {
+        "bytes": "0004ae0c+130",
+        "sha1": "359a391375cf",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004ae90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Joystick_SaveCalibration",
+      "description": "(path, device) in stack order, its arguments removed by this function: DVJoystick_GetRanges (0006b890)(device, block) into a 0x40-byte stack block, fopen(path, wb), fwrite of the block, fclose; the fopen's answer is passed on untested, and the block is left as the stack held it when the device is disabled. es2_xref finds one call, from 00049f30.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-calibration-file",
+      "verified": {
+        "bytes": "0004ae90+70",
+        "sha1": "9f52577c397b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004aed8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Voice_ArchiveExists",
+      "description": "No arguments: fopens vol\\simvoice.vol with mode rb, fcloses it when it opened and returns 1, otherwise 0. ES2's Voice_ArchiveExists (DBSIM 00459d6c) builds a localised name; this one uses the fixed path. es2_xref finds one call, from Prefs_Init (0004afe8).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-preferences-start-up",
+      "verified": {
+        "bytes": "0004aed8+52",
+        "sha1": "fa13b7724034",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004af0c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_CreateJoystickDevices",
+      "description": "No arguments: builds the joystick devices preferences option 7 (000bd569) names, each with mode 1: 1 IMJoystick1_Ctor (0004be30); 2 that and IMJoystick2_Ctor (0004be94); 3 IMThrustmasterFCS_Ctor (0004bef8); 4 IMFlightstick_Ctor (0004c054); 5 IMFlightstickPro_Ctor (0004c114); any other value none. With option 9 (000bd56b) set, option 7 of 2 clears option 9 through Prefs_SetOption (0004a914)(1, 0, 9), and any other value builds IMThrustmasterRCS_Ctor (0004bfe0) as the second device. For each device built, Joystick_LoadCalibration (0004ae0c)(Path_ApplyAltDrive (000592a4)(data\\joy1.cal or data\\joy2.cal), device), then InputDevice_Enable (0004b1c0) on its +0x78. es2_xref finds one call, from Prefs_Init (0004afe8).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#building-the-devices",
+      "verified": {
+        "bytes": "0004af0c+220",
+        "sha1": "1c0c4733a520",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004afe8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_Init",
+      "description": "No arguments: sets PrefsInitInProgress (000b1734); registers through Prefs_SetHandler (0004ac4c) 0004ad0c for option 0, 0004acfc for 1, 0004ad30 for 2, 0004ad54 for 0xb, Input_SetStickMode (0004ad88) for 8, Input_SetThrottleLeverMode (0004ad94) for 10 and Prefs_LimitDetailInLowMemory (0004adb0) for 6. Prefs_Load (0004a744)(1); under DemoMode it clears DemoMode for that load, sets it again, runs Prefs_Load(0) and 0004aaf0(0009570c, 7). Sets VoiceArchivePresent (000956bf) from Voice_ArchiveExists (0004aed8) and, when that is 0, Prefs_SetOption (0004a914)(1, 0, 2). Then Input_CreateJoystickDevices (0004af0c), 000956be = 0xf0, and clears PrefsInitInProgress. ES2's Prefs_Init (DBSIM 0045a19c). es2_xref finds one call, from Prefs_ClearHandlersAndInit (0004a724).",
+      "source": "Herculan/docs/es1/simulation/input.md#the-preferences-start-up",
+      "verified": {
+        "bytes": "0004afe8+204",
+        "sha1": "eaaa705664bd",
+        "scope": "body",
+        "via": "decompile"
       }
     },
     {
@@ -17762,6 +17912,21 @@
       }
     },
     {
+      "address": "0004b3d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_IsKindEnabled",
+      "description": "Frameless, with no Ghidra function: (kind), its argument removed by this function: returns the byte Input_DeviceEnabled (000bd600)[kind]. ES2's Input_IsKindEnabled (DBSIM 0045bf74). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#functions",
+      "verified": {
+        "bytes": "0004b3d0+13",
+        "sha1": "917c866e7ddc",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
       "address": "0004b440",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17837,18 +18002,393 @@
       }
     },
     {
+      "address": "0004b66c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "KeyboardInputDevice_GetMode",
+      "description": "(device), its argument removed by this function: returns the dword at device+9, the mode KeyboardInputDevice_SetMode (0004b648) stores. ES2's KeyboardInputDevice_GetReadMode (DBSIM 0045c16c), the same statements. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#functions",
+      "verified": {
+        "bytes": "0004b66c+15",
+        "sha1": "a406aaa0b02b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004b67c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetKeyboardDeviceUnchecked",
+      "description": "Frameless, with no Ghidra function: Input_DeviceSlot (0004b2d0)(1) less 4, or 0 when the slot is 0. ES2's Input_GetKeyboardDeviceUnchecked (DBSIM 0045c178). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#functions",
+      "verified": {
+        "bytes": "0004b67c+25",
+        "sha1": "c53b55395b99",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004b698",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetKeyboardDevice2",
+      "description": "Frameless, with no Ghidra function: 0 when the dword 000bd60e, the recorded keyboard kind, is 0; otherwise Input_DeviceSlot (0004b2d0) of it less 4, or 0 when that slot is 0. ES2's Input_GetKeyboardDevice2 (DBSIM 0045c190). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#functions",
+      "verified": {
+        "bytes": "0004b698+39",
+        "sha1": "c118def1a89a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004b6c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "JoystickDevice_Ctor",
+      "description": "(this, mode, mask, port, kind) in stack order, its arguments removed by this function: allocates 0x8b bytes through operator_new (000015a4) for a null this, returning 0 when that fails. DVJoystick_Ctor (0006b42c)(this, mask, port, kind); InputDevice_Register (0004b0b4)(this+0x78, this+0x78, kind); vtable IMJoystickVtable (00095756) at +0x87, mode at +0x7d, 0 at +0x81 and +0x73. For each axis bit in the low byte of mask that DVJoystick_Init left in +0x6f and that JoystickClaimedAxes (0009571c) lacks, sets it there, counts it into +0x73 and adds 1 to JoystickClaimedAxisCount (0009571d). Then +0x6f = the low byte of mask, +0x85 and +0x86 = 0; returns this. ES2's JoystickDevice_Ctor (DBSIM 0045c27c) takes the mode last and claims no axes. es2_xref finds calls from IMJoystick1_Ctor (0004be30), IMJoystick2_Ctor (0004be94), IMThrustmasterFCS_Ctor (0004bef8), IMThrustmasterRCS_Ctor (0004bfe0) and IMFlightstick_Ctor (0004c054).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-device-object",
+      "verified": {
+        "bytes": "0004b6c0+231",
+        "sha1": "7ce90f3c4e9d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004b7a8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "JoystickDevice_Dtor",
+      "description": "(this, flags), its arguments removed by this function: returns for a null this; stores the vtable IMJoystickVtable (00095756) at +0x87, clears Input_DeviceEnabled (000bd600)[the kind at +0x79], clears 000bd616 and 000bd61a where either holds that kind, clears the bits of the byte +0x6f in JoystickClaimedAxes (0009571c) and subtracts the byte +0x73 from JoystickClaimedAxisCount (0009571d); DVJoystick_Dtor (0006b470)(this, 0), and operator_delete (000015f8) for flags bit 0. ES2's JoystickDevice_Dtor (DBSIM 0045c2c4), which clears one recorded kind and releases no axes. es2_xref finds two calls, from 00048e98.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-device-object",
+      "verified": {
+        "bytes": "0004b7a8+125",
+        "sha1": "bdf178ba093a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004b828",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Joystick_ReadWithResponse",
+      "description": "Slot +4 of IMJoystickVtable (00095756), (device), its argument removed by this function: mode +0x7d 0 or 1 reads DVJoystick_ReadAxes (0006b638), 2 DVJoystick_ReadAxesDigital (0006b7bc), into JoystickAxisBuffer (000b1754). With s the word +0x66 and k = (1 << (s + 8)) / ((1 << s) - 0x19), for each axis in the mask +0x6f: when k is non-zero, 0x19 is taken off the value's size (0 within +/-0x19) and the value becomes (k * v) >> 8, stored back into the buffer; mode 1 then gives (int16 v)^2 >> (s - 1) with v's sign, 0 when under 0x19 in size, modes 0 and 2 the value as it stands. An axis outside the mask gives 0. These are JoystickRecord (000b1738)'s dwords +0 to +0xc. Its bytes +0x10 to +0x13 are 1 for each button that is in the mask +0x85 and set in the buffer's button byte (000b1764); +0x14 to +0x17 are cleared; +0x18, +0x19 and +0x1a take the bytes +0x6f, +0x85 and +0x86. Returns the record. ES2's Joystick_ReadWithResponse (DBSIM 0045c314), whose mode 1 skips the rescale and divides the square by 41, and which expands eight buttons and a hat and keeps a change flag.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-record",
+      "verified": {
+        "bytes": "0004b828+487",
+        "sha1": "22f8c04e9fef",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004ba10",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetDevice",
+      "description": "(kind), its argument removed by this function: Input_DeviceSlot (0004b2d0)(kind) less 0x78, the joystick device's offset to its object base, or 0 when the slot is 0. ES2's Input_GetDevice (DBSIM 0045c508), which takes off 0x1f. es2_xref finds two dwords matching its address and its padding entry, at 0003a2bd and 00061263, both inside instructions, and no call.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#functions",
+      "verified": {
+        "bytes": "0004ba10+32",
+        "sha1": "95cfc85b3b4b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004ba30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetJoystickDeviceFrameless",
+      "description": "Frameless, with no Ghidra function: 0 when the dword 000bd616, the recorded first-joystick kind, is 0; otherwise Input_DeviceSlot (0004b2d0) of it less 0x78, or 0 when that slot is 0. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#functions",
+      "verified": {
+        "bytes": "0004ba30+39",
+        "sha1": "065fd0a51295",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004ba58",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetJoystick2DeviceFrameless",
+      "description": "Frameless, with no Ghidra function: Input_GetJoystickDeviceFrameless (0004ba30) for the dword 000bd61a, the recorded second-joystick kind. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#functions",
+      "verified": {
+        "bytes": "0004ba58+39",
+        "sha1": "3182233f0af3",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004ba80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "JoystickDevice_TrackRange",
+      "description": "(device, axes) in stack order, its arguments removed by this function: while bit 0 of +0 is set, DVJoystick_ReadRaw (0006be9f), then for each axis bit in the byte axes lowers the axis's min +0x26 to its raw count +4 when the count is below it and raises its max +0x36 when the count is above it. DVJoystick_TrackRange (0006b8b8) with an axis mask. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibration-steps",
+      "verified": {
+        "bytes": "0004ba80+231",
+        "sha1": "1c6ff1d8353d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004bb68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "JoystickDevice_TrackMax",
+      "description": "(device, axes) in stack order, its arguments removed by this function: JoystickDevice_TrackRange (0004ba80) for the max +0x36 alone. es2_xref finds one call, from 00049a7c.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibration-steps",
+      "verified": {
+        "bytes": "0004bb68+147",
+        "sha1": "5adbd8e5d618",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004bbfc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "JoystickDevice_TrackMin",
+      "description": "(device, axes) in stack order, its arguments removed by this function: JoystickDevice_TrackRange (0004ba80) for the min +0x26 alone. es2_xref finds one call, from 00049a7c.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibration-steps",
+      "verified": {
+        "bytes": "0004bbfc+147",
+        "sha1": "57af15f3fb88",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004bc90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "JoystickDevice_TrackCenterBand",
+      "description": "(device, axes) in stack order, its arguments removed by this function: while bit 0 of +0 is set, DVJoystick_ReadRaw (0006be9f), then for each axis bit in the byte axes lowers the center band's low edge +0x46 to the raw count +4 when the count is below it, adding 1 when the edge then stands 1 below the min +0x26, and raises the high edge +0x56 to the count when the count is above it, adding 1 when the edge then stands 1 above the max +0x36. DVJoystick_TrackRange2 (0006ba68) with an axis mask and those two adjustments. es2_xref finds one call, from 00049a7c.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibration-steps",
+      "verified": {
+        "bytes": "0004bc90+254",
+        "sha1": "0239ccd7c0ed",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0004bd90",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Input_PollJoysticks",
-      "description": "No arguments: takes Input_GetJoystickDevice (0004b370) and Input_GetJoystick2Device (0004b3a0), the second as the first when the first is 0. With one device, 0006b614(device). With two, sets the first's dwords +0x6f and +0x73 from the bytes 0009571c and 0009571d, calls 0006b614(first), stores the saved low bytes back into those dwords, and copies the first's dwords +4, +8, +0xc, +0x10 and byte +0x14 to the second's, the byte also to the second's +0x25. es2_xref finds a call from Input_PollDeviceBlock (0004c2d0).",
+      "description": "No arguments: takes Input_GetJoystickDevice (0004b370) and Input_GetJoystick2Device (0004b3a0), the second as the first when the first is 0. With one device, DVJoystick_Poll (0006b614)(device). With two, sets the first's dwords +0x6f and +0x73 from the bytes JoystickClaimedAxes (0009571c) and JoystickClaimedAxisCount (0009571d), calls DVJoystick_Poll (0006b614)(first), stores the saved low bytes back into those dwords, and copies the first's dwords +4, +8, +0xc, +0x10 and byte +0x14 to the second's, the byte also to the second's +0x25. es2_xref finds a call from Input_PollDeviceBlock (0004c2d0).",
       "source": "Herculan/docs/es1/simulation/input.md#the-live-block--input_polldeviceblock-0004c2d0",
       "verified": {
         "bytes": "0004bd90+157",
         "sha1": "255765ea5854",
         "scope": "body",
         "via": "decompile"
+      }
+    },
+    {
+      "address": "0004be30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "IMJoystick1_Ctor",
+      "description": "(this, mode), its arguments removed by this function: allocates 0x8b bytes through operator_new (000015a4) for a null this, returning 0 when that fails; JoystickDevice_Ctor (0004b6c0)(this, mode, 3, 0x201, 3); vtable IMJoystickVtable (00095756) at +0x87 and buttons 3 at +0x85; returns this. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
+      "verified": {
+        "bytes": "0004be30+70",
+        "sha1": "a3dcfa0f2df5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004be78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetJoystickDeviceUnchecked",
+      "description": "Frameless, with no Ghidra function: Input_DeviceSlot (0004b2d0)(3) less 0x78, or 0 when the slot is 0. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#functions",
+      "verified": {
+        "bytes": "0004be78+25",
+        "sha1": "af388dbe7848",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004be94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "IMJoystick2_Ctor",
+      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 0xc, 0x201, 4) and buttons 0xc at +0x85. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
+      "verified": {
+        "bytes": "0004be94+70",
+        "sha1": "62db88fdfb60",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004bedc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetJoystick2DeviceUnchecked",
+      "description": "Frameless, with no Ghidra function: Input_DeviceSlot (0004b2d0)(4) less 0x78, or 0 when the slot is 0. No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#functions",
+      "verified": {
+        "bytes": "0004bedc+25",
+        "sha1": "0f0d2a51ff60",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004bef8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "IMThrustmasterFCS_Ctor",
+      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 0xb, 0x201, 3), then vtable IMThrustmasterFCSVtable (00095766) at +0x87, 1 at +0x81, buttons 0xf at +0x85 and 1 at +0x86. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
+      "verified": {
+        "bytes": "0004bef8+86",
+        "sha1": "450377f8a330",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004bf50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "IMThrustmasterFCS_ReadState",
+      "description": "Slot +4 of IMThrustmasterFCSVtable (00095766), (device), its argument removed by this function: Joystick_ReadWithResponse (0004b828), then reads axis 3's normalised value +0x21 and clears JoystickRecord (000b1738)'s +0xc. A non-zero value v sets one hat byte: with t = -1 << s (s the word +0x66) and q = t >> 2, below t - (t >> 3) +0x14, below 1q more +0x16, 2q more +0x15, 3q more +0x17 (-112, -80, -48 and -16 for s = 7). Returns the record.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#hats-and-throttles",
+      "verified": {
+        "bytes": "0004bf50+142",
+        "sha1": "515fd1109775",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004bfe0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "IMThrustmasterRCS_Ctor",
+      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 4, 0x201, 4), then vtable IMThrustmasterRCSVtable (00095776) at +0x87, 4 at +0x81 and buttons 0 at +0x85. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
+      "verified": {
+        "bytes": "0004bfe0+82",
+        "sha1": "c06ecf728081",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004c034",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "IMThrustmasterRCS_ReadState",
+      "description": "Slot +4 of IMThrustmasterRCSVtable (00095776), (device), its argument removed by this function: Joystick_ReadWithResponse (0004b828), then negates JoystickRecord (000b1738)'s +8, the third axis, and returns the record.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#hats-and-throttles",
+      "verified": {
+        "bytes": "0004c034+32",
+        "sha1": "497ace37f1e8",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004c054",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "IMFlightstick_Ctor",
+      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 0xb, 0x201, 3), then vtable IMFlightstickVtable (00095786) at +0x87, 2 at +0x81 and buttons 3 at +0x85. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c), 00048e98 and IMFlightstickPro_Ctor (0004c114).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
+      "verified": {
+        "bytes": "0004c054+79",
+        "sha1": "9217cbd40740",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004c0a4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "IMFlightstick_ReadState",
+      "description": "Slot +4 of IMFlightstickVtable (00095786), (device), its argument removed by this function: Joystick_ReadWithResponse (0004b828); then from the low word of axis 3's normalised value +0x21, t = int16(2 * value + (1 << s)) with s the word +0x66; JoystickRecord (000b1738)'s +0xc = (t * t) >> (s - 1) with t's sign, 0 when under 0x40 in size. Returns the record.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#hats-and-throttles",
+      "verified": {
+        "bytes": "0004c0a4+109",
+        "sha1": "c4b42efd57f1",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004c114",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "IMFlightstickPro_Ctor",
+      "description": "(this, mode), its arguments removed by this function: allocates 0x8b bytes through operator_new (000015a4) for a null this, returning 0 when that fails; IMFlightstick_Ctor (0004c054)(this, mode); then vtable IMFlightstickProVtable (00095796) at +0x87, 3 at +0x81, buttons 0xf at +0x85 and 1 at +0x86; returns this. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
+      "verified": {
+        "bytes": "0004c114+77",
+        "sha1": "546a46d3d260",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004c164",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "IMFlightstickPro_ReadState",
+      "description": "Slot +4 of IMFlightstickProVtable (00095796), (device), its argument removed by this function: IMFlightstick_ReadState (0004c0a4); then, when JoystickRecord (000b1738)'s button bytes +0x10 and +0x11 are both set, sets one hat byte from +0x12 and +0x13 (both +0x14, +0x12 alone +0x15, +0x13 alone +0x16, neither +0x17) and clears +0x10 to +0x13. Returns the record.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#hats-and-throttles",
+      "verified": {
+        "bytes": "0004c164+121",
+        "sha1": "e7cf79872436",
+        "scope": "body",
+        "via": "disasm"
       }
     },
     {
@@ -18097,7 +18637,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Input_BuildSourceTable",
-      "description": "No arguments: InputDevice_Enable (0004b1c0) on KeyboardInputDevice_Ctor (0004b484)(0, 0x10000)+4; Keyboard_AddSubscriberCodes (0006c3b4)(KeyQueue_Subscriber (0006c6e4), KeyQueueWantedCodes (0009581c)); SimInput_SetEnabled(1); InputDevice_Enable (0004b1c0) on MouseInputDevice_Ctor (0004c1e0)(0)+0x3a, and 0006bdbc/0006bdf0 with the bounds 319, 199; 0004a724; Input_LiveBlockPtr (000b1840) = Input_PollDeviceBlock (0004c2d0)(). Fills the source table: 000b17e0-000b17ec the block's axes 000b17b9-000b17bf, 000b17f0-000b17fc its buttons 000b17c1-000b17c4, 000b1800-000b180c the keyboard pairs 000b188c-000b1898, 000b1810-000b181c the live block's +0xd, +0x11, +0x15, +0x19, 000b1820-000b182c 000b189c-000b189f, 000b1830-000b183c the live block's +0x1d-+0x20. Clears Input_ButtonLatch (000bd634-000bd637) and calls Keyjoy_LoadConfig (0004d918). ES2's Input_BuildSourceTable (DBSIM 0045a5c0).",
+      "description": "No arguments: InputDevice_Enable (0004b1c0) on KeyboardInputDevice_Ctor (0004b484)(0, 0x10000)+4; Keyboard_AddSubscriberCodes (0006c3b4)(KeyQueue_Subscriber (0006c6e4), KeyQueueWantedCodes (0009581c)); SimInput_SetEnabled(1); InputDevice_Enable (0004b1c0) on MouseInputDevice_Ctor (0004c1e0)(0)+0x3a, and 0006bdbc/0006bdf0 with the bounds 319, 199; Prefs_ClearHandlersAndInit (0004a724); Input_LiveBlockPtr (000b1840) = Input_PollDeviceBlock (0004c2d0)(). Fills the source table: 000b17e0-000b17ec the block's axes 000b17b9-000b17bf, 000b17f0-000b17fc its buttons 000b17c1-000b17c4, 000b1800-000b180c the keyboard pairs 000b188c-000b1898, 000b1810-000b181c the live block's +0xd, +0x11, +0x15, +0x19, 000b1820-000b182c 000b189c-000b189f, 000b1830-000b183c the live block's +0x1d-+0x20. Clears Input_ButtonLatch (000bd634-000bd637) and calls Keyjoy_LoadConfig (0004d918). ES2's Input_BuildSourceTable (DBSIM 0045a5c0).",
       "source": "Herculan/docs/es1/simulation/input.md#setting-up--input_buildsourcetable-0004c95c; ES1DBSIM decompile at 0004c95c",
       "verified": {
         "bytes": "0004c95c+439",
@@ -20392,7 +20932,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_Detect",
-      "description": "No arguments, frameless, with no Ghidra function: issues INT 21h with AX 2503h and CL 0x33, and returns 0 when the EBX it answers is 0 or when the byte at the real-mode address EBX gives (its high word times 16 plus its low word), read through the selector at 0009003a, is an IRET (0xcf); otherwise issues INT 33h function 0x20 and then function 0, and returns 1 when that answers non-zero and 0 otherwise. es2_xref finds one call, from 0006bbc0.",
+      "description": "No arguments, frameless, with no Ghidra function: issues INT 21h with AX 2503h and CL 0x33, and returns 0 when the EBX it answers is 0 or when the byte at the real-mode address EBX gives (its high word times 16 plus its low word), read through the selector at 0009003a, is an IRET (0xcf); otherwise issues INT 33h function 0x20 and then function 0, and returns 1 when that answers non-zero and 0 otherwise. es2_xref finds one call, from Mouse_DetectThunk (0006bbc0).",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055978",
       "verified": {
         "bytes": "00055978+81",
@@ -28067,6 +28607,381 @@
       }
     },
     {
+      "address": "0006b414",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_DetectOnStack",
+      "description": "No arguments: reserves a 0x78-byte joystick object on the stack, uninitialised, passes it to DVJoystick_Detect (0006be74) and returns that function's answer, left in EAX. The detection reads the object's port word +0x6d, which this function leaves as the stack held it. ES2's DVJoystick_NoOp (VSHELL 00405739) is the Windows build's copy, whose detection stub returns 0. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection",
+      "verified": {
+        "bytes": "0006b414+22",
+        "sha1": "041da8ba4317",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b42c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_Ctor",
+      "description": "DVJoystick constructor, (this, mask, port, kind) in stack order, callee-cleaned: allocates 0x78 bytes through operator_new (000015a4) for a null this, runs GL_ClaimGlobal (0007d5bc)(this, this, kind), and when GL slot kind (000bdd0c + kind * 4) holds this runs DVJoystick_Init (0006b4bc)(this, mask, port, kind); returns this. ES2's DVJoystick_Ctor (VSHELL 0040574d) less its assert for a slot already taken. es2_xref finds one call, from JoystickDevice_Ctor (0004b6c0).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection",
+      "verified": {
+        "bytes": "0006b42c+68",
+        "sha1": "45db2fd7c8b2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b470",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_Dtor",
+      "description": "DVJoystick destructor, (this, flags), callee-cleaned: returns for a null this; when GL slot +0x68 (000bdd0c + index * 4) is non-zero, runs DVJoystick_Shutdown (0006b604) through the 0x90 byte before it and clears the slot, without comparing it with this; then operator_delete (000015f8) for flags bit 0. ES2's DVJoystick_Dtor (VSHELL 004057b8) less its assert. es2_xref finds one call, from JoystickDevice_Dtor (0004b7a8).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection",
+      "verified": {
+        "bytes": "0006b470+76",
+        "sha1": "e1c312483a09",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b4bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_Init",
+      "description": "(this, mask, port, kind) in stack order, callee-cleaned: stores kind at +0x68 and the word port at +0x6d; clears +0x25, +0x14, the word +0x66 and +0x77; for each of the four axes zeroes +0x15 and +4 and sets min +0x26 and the band's low edge +0x46 to 0x7fffffff, max +0x36 and the band's high edge +0x56 to 0x80000000. Then DVJoystick_Detect (0006be74): 0 returns 0 with +0 untouched. A mask of 0xf takes the detected mask byte +0x6f; +0x6f is ANDed with the mask, and when the result is 0 or differs from the mask the dword +0 is cleared and 0 returned; otherwise +0x73 = the number of bits set in +0x6f's low four, bit 0 of +0 set, and 1 returned. ES2's DVJoystick_Init (VSHELL 00405823) with the game-port detection where that one calls joyGetDevCapsA.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection",
+      "verified": {
+        "bytes": "0006b4bc+327",
+        "sha1": "b274f8fed73a",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b604",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_Shutdown",
+      "description": "(this), callee-cleaned: clears bit 0 of the byte +0. ES2's DVJoystick_Shutdown (VSHELL 0040591c). DVJoystick_Dtor (0006b470) calls it through the 0x90 byte at 0006b603.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection",
+      "verified": {
+        "bytes": "0006b604+15",
+        "sha1": "9bf355fa8cc8",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b614",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_Poll",
+      "description": "(this), callee-cleaned: when bit 0 of +0 is set, DVJoystick_ReadRaw (0006be9f)(this) and then DVJoystick_ReadButtons (0006bf10)(this). The counterpart of ES2's DVJoystick_PollButtons (VSHELL 00405927), which polls through joyGetPos. es2_xref finds two calls, both from Input_PollJoysticks (0004bd90).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#reading-the-axes",
+      "verified": {
+        "bytes": "0006b614+35",
+        "sha1": "f80f7932dcd0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b638",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_ReadAxes",
+      "description": "(this, out), callee-cleaned: returns 0 when bit 0 of +0 is clear. Otherwise, for each axis i whose bit is set in the mask +0x6f, takes v = the raw count +4[i] held to at most max +0x36[i] (it first stores the count held to at least min +0x26[i], then overwrites that with the count held to the max, so a reading under min passes); then with the shift s = the word +0x66, lo = +0x46[i] and hi = +0x56[i]: below lo, ((v - lo) << s) / (lo - min); above hi, ((v - hi) << s) / (max - hi); otherwise 0; a zero divisor gives 0, IDIV truncates toward zero. Each result goes to +0x15[i]; then the 17 bytes +0x15 to +0x25 (four dwords, the button byte) are copied to out and AL = 1 returned. ES2's DVJoystick_ReadAxes (VSHELL 004059fa) maps Windows' range instead.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#normalising-an-axis",
+      "verified": {
+        "bytes": "0006b638+388",
+        "sha1": "e2f7d67427a7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b7bc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_ReadAxesDigital",
+      "description": "(this, out), callee-cleaned: returns 0 when bit 0 of +0 is clear. Otherwise, for all four axes whatever the mask, +0x15[i] = -1 when the raw count +4[i] is below the band's low edge +0x46[i], 1 when above its high edge +0x56[i], else 0; copies the 17 bytes +0x15 to +0x25 to out and returns AL = 1. ES2's DVJoystick_ReadAxesDigital (VSHELL 00405a63) gives 1 or 0 from Windows' position instead.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#normalising-an-axis",
+      "verified": {
+        "bytes": "0006b7bc+171",
+        "sha1": "6ed8bbf7efb8",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b868",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_SetRanges",
+      "description": "(this, src), callee-cleaned: when bit 0 of +0 is set and src is non-null, memmove (00060998)(this + 0x26, src, 0x40), the calibration block. ES2's DVJoystick_SetRanges (VSHELL 00405ac7). es2_xref finds calls from 00049a7c, 00049f30, 0004a0e8 and Joystick_LoadCalibration (0004ae0c).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibrating",
+      "verified": {
+        "bytes": "0006b868+40",
+        "sha1": "8b807d3aa118",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b890",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_GetRanges",
+      "description": "(this, dst), callee-cleaned: when bit 0 of +0 is set and dst is non-null, memmove (00060998)(dst, this + 0x26, 0x40). ES2's DVJoystick_GetRanges (VSHELL 00405aea). es2_xref finds calls from 00049bbc, 00049f30 and Joystick_SaveCalibration (0004ae90).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibrating",
+      "verified": {
+        "bytes": "0006b890+40",
+        "sha1": "8fc93dd612f5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b8b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_TrackRange",
+      "description": "(this), callee-cleaned: when bit 0 of +0 is set, DVJoystick_ReadRaw (0006be9f), then for all four axes whatever the mask lowers min +0x26[i] to the raw count +4[i] when the count is below it and raises max +0x36[i] to the count when above. ES2's DVJoystick_TrackRange (VSHELL 00405b0d). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibrating",
+      "verified": {
+        "bytes": "0006b8b8+196",
+        "sha1": "210130139ece",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b97c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_TrackMax",
+      "description": "(this), callee-cleaned: DVJoystick_TrackRange (0006b8b8) for the maxima +0x36 alone. ES2's DVJoystick_TrackMax (VSHELL 00405b5d). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibrating",
+      "verified": {
+        "bytes": "0006b97c+116",
+        "sha1": "a3ceba22e3ab",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006b9f0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_TrackMin",
+      "description": "(this), callee-cleaned: DVJoystick_TrackRange (0006b8b8) for the minima +0x26 alone. ES2's DVJoystick_TrackMin (VSHELL 00405b93). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibrating",
+      "verified": {
+        "bytes": "0006b9f0+117",
+        "sha1": "d440ace6cae6",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006ba68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_TrackRange2",
+      "description": "(this), callee-cleaned: DVJoystick_TrackRange (0006b8b8) on the center band, lowering its low edge +0x46[i] and raising its high edge +0x56[i] to each raw count outside them. ES2's VSHELL DVJoystick_TrackRange2 (00405bc9). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibrating",
+      "verified": {
+        "bytes": "0006ba68+196",
+        "sha1": "cfbc3d80331e",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006bb2c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_WaitForFlag",
+      "description": "(this), callee-cleaned: saves the button-read delay +0x77, sets it to 0x80, calls DVJoystick_ReadButtons (0006bf10) until the button byte +0x14 is non-zero, then restores +0x77. ES2's DVJoystick_WaitForFlag (VSHELL 00405c19). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibrating",
+      "verified": {
+        "bytes": "0006bb2c+60",
+        "sha1": "214ca432b666",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006bb68",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_WaitForFlagClear",
+      "description": "(this), callee-cleaned: DVJoystick_WaitForFlag (0006bb2c) waiting for the button byte +0x14 to be 0. ES2's DVJoystick_WaitForFlagClear (VSHELL 00405c48). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#calibrating",
+      "verified": {
+        "bytes": "0006bb68+60",
+        "sha1": "8f1ffdaa6f98",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006bba4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_ReadFlag",
+      "description": "(this), callee-cleaned: DVJoystick_ReadButtons (0006bf10), then returns the button byte +0x14 in AL. ES2's DVJoystick_ReadFlag (VSHELL 00405c77). es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#reading-the-buttons",
+      "verified": {
+        "bytes": "0006bba4+26",
+        "sha1": "61f103ba8c61",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006bbc0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Mouse_DetectThunk",
+      "description": "A frameless stub, without arguments: calls Mouse_Detect (00055978) and returns its answer. The first code of the mouse driver object's file, after the joystick class's file and its two zero bytes. es2_xref finds no reference to it.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#where-the-object-files-start-and-end",
+      "verified": {
+        "bytes": "0006bbc0+6",
+        "sha1": "4ebc1102aed0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006be74",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_Detect",
+      "description": "(joystick), C convention, hand-written with an ENTER frame: with ESI = joystick and EAX = 0, DVJoystick_DetectGamePort (0006bf4d); returns 1 when the axis mask +0x6f is then non-zero. Otherwise DVJoystick_DetectBios (0006bfc2), returning 1 when +0x6f is non-zero and 0 when it is 0. The counterpart of ES2's DVJoystick_ReturnZero (VSHELL 00405724).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection",
+      "verified": {
+        "bytes": "0006be74+43",
+        "sha1": "8c726af853f7",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006be9f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_ReadRaw",
+      "description": "(joystick), C convention, hand-written, keeping every register: with the BIOS byte +0x6c at 1, DVJoystick_ReadRawBios (0006c038). Otherwise, with interrupts off: writes the port word +0x6d (OUT), reads it until every bit of the axis mask +0x6f reads 1, up to 0x10000 reads, returning with nothing stored when they run out; then reads it with a fresh count of 0x10000 shared by all axes, and at each read where masked bits have dropped pushes the bits and the count left. Interrupts back on, it stores for each pushed group, at +4 + bit * 4 of each bit, the number of reads since the second count began less 1, until +0x73 axes are stored. When the second count runs out first, it pops its saved registers as groups and restores registers from the wrong stack slots. The counterpart of ES2's DVJoystick_ReadRawNoOp (VSHELL 0040572b).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#reading-the-axes",
+      "verified": {
+        "bytes": "0006be9f+113",
+        "sha1": "84ed41a6f563",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006bf10",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_ReadButtons",
+      "description": "(joystick), C convention, hand-written, keeping every register but ECX: when the delay byte +0x77 is non-zero, first runs a LOOP of +0x77 * 256 iterations; then with the BIOS byte +0x6c at 1, DVJoystick_ReadButtonsBios (0006c05f); otherwise, with interrupts off, reads the port word +0x6d and stores its inverted high four bits, moved to bits 0-3, in +0x14 and +0x25. The counterpart of ES2's DVJoystick_PollNoOp (VSHELL 00405732).",
+      "source": "Herculan/docs/es1/simulation/joystick.md#reading-the-buttons",
+      "verified": {
+        "bytes": "0006bf10+61",
+        "sha1": "6b1e0f913d58",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006bf4d",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_DetectGamePort",
+      "description": "Hand-written, frameless, taking the joystick in ESI and keeping EAX to EDX: with interrupts off, clears the axis mask +0x6f and its count +0x73, writes the port word +0x6d (OUT), and reads it until bits 0-3 all read 1, up to 0x10000 reads, returning when they run out. Then reads it with a fresh count of 0x10000: bits that drop within 0xfa0 (4000) reads of that count's start are ORed into +0x6f and counted into +0x73, later drops are passed over, until all four have dropped or the count runs out; interrupts back on.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection",
+      "verified": {
+        "bytes": "0006bf4d+117",
+        "sha1": "77108b1c013d",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006bfc2",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_DetectBios",
+      "description": "Hand-written, frameless, taking the joystick in ESI and keeping EAX to EDX: INT 15h with AX 8404h, DX 1 and EBX loaded from DVJoystick_BiosDriverEbx (0009b698); returns on carry. Otherwise sets mask bit 0 when AX is non-zero and at most 0xfa0, bit 1 for BX, bit 2 when CX is non-zero and BX at most 0xfa0 (the limit is tested on BX), and bit 3 for DX, counting each into +0x73, and sets the BIOS byte +0x6c to 1 when +0x73 is non-zero.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection",
+      "verified": {
+        "bytes": "0006bfc2+118",
+        "sha1": "c1f43ce875f0",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006c038",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_ReadRawBios",
+      "description": "Hand-written, frameless, taking the joystick in ESI and keeping EAX to EDX: INT 15h with AX 8400h, DX 1 and EBX loaded from DVJoystick_BiosDriverEbx (0009b698), storing the returned EAX, EBX, ECX and EDX whole in the four raw axes +4, +8, +0xc and +0x10, whatever the mask.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#reading-the-axes",
+      "verified": {
+        "bytes": "0006c038+39",
+        "sha1": "cf1049641369",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0006c05f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "DVJoystick_ReadButtonsBios",
+      "description": "Hand-written, frameless, taking the joystick in ESI and keeping EAX, EBX and EDX: INT 15h with AX 8400h, DX 0 and EBX loaded from DVJoystick_BiosDriverEbx (0009b698), storing AL inverted and shifted right by 4 in the button bytes +0x14 and +0x25.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#reading-the-buttons",
+      "verified": {
+        "bytes": "0006c05f+36",
+        "sha1": "cfe3c4c9bdaf",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0006c084",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -32693,6 +33608,78 @@
       "source": "es1_naming.py vtables ES1DBSIM; the image at 00093aae"
     },
     {
+      "address": "000956bf",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "VoiceArchivePresent",
+      "description": "byte: Voice_ArchiveExists (0004aed8)'s answer, which Prefs_Init (0004afe8) stores. ES2's VoiceArchivePresent.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-preferences-start-up"
+    },
+    {
+      "address": "0009571c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "JoystickClaimedAxes",
+      "description": "byte, 0 in the image: the game-port axes the joystick devices have claimed, bits 0-3. es2_xref --decode finds JoystickDevice_Ctor (0004b6c0) setting bits, JoystickDevice_Dtor (0004b7a8) clearing them and Input_PollJoysticks (0004bd90) reading it.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-device-object"
+    },
+    {
+      "address": "0009571d",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "JoystickClaimedAxisCount",
+      "description": "byte, 0 in the image: how many axes JoystickClaimedAxes (0009571c) holds. es2_xref --decode finds JoystickDevice_Ctor (0004b6c0) adding, JoystickDevice_Dtor (0004b7a8) subtracting and Input_PollJoysticks (0004bd90) reading.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-device-object"
+    },
+    {
+      "address": "00095756",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "IMJoystickVtable",
+      "description": "The vtable JoystickDevice_Ctor (0004b6c0), IMJoystick1_Ctor (0004be30), IMJoystick2_Ctor (0004be94) and JoystickDevice_Dtor (0004b7a8) store at +0x87: 0 at +0, Joystick_ReadWithResponse (0004b828) through its padding at +4, 0 at +8.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes"
+    },
+    {
+      "address": "00095766",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "IMThrustmasterFCSVtable",
+      "description": "The vtable IMThrustmasterFCS_Ctor (0004bef8) stores at +0x87: IMThrustmasterFCS_ReadState (0004bf50) through its padding at +4.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes"
+    },
+    {
+      "address": "00095776",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "IMThrustmasterRCSVtable",
+      "description": "The vtable IMThrustmasterRCS_Ctor (0004bfe0) stores at +0x87: IMThrustmasterRCS_ReadState (0004c034) through its padding at +4.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes"
+    },
+    {
+      "address": "00095786",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "IMFlightstickVtable",
+      "description": "The vtable IMFlightstick_Ctor (0004c054) stores at +0x87: IMFlightstick_ReadState (0004c0a4) through its padding at +4.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes"
+    },
+    {
+      "address": "00095796",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "IMFlightstickProVtable",
+      "description": "The vtable IMFlightstickPro_Ctor (0004c114) stores at +0x87: IMFlightstickPro_ReadState (0004c164) through its padding at +4.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-classes"
+    },
+    {
       "address": "0009580c",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -33105,6 +34092,15 @@
       "name": "FrameRate_Worst",
       "description": "Two int16, whole then hundredths: the lowest rate FrameRate_Update has measured, from 999.99.",
       "source": "Herculan/docs/es1/simulation/debug-monitor.md#the-frame-rate-meter"
+    },
+    {
+      "address": "0009b698",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "DVJoystick_BiosDriverEbx",
+      "description": "dword, 0 in the image: the EBX DVJoystick_DetectBios (0006bfc2), DVJoystick_ReadRawBios (0006c038) and DVJoystick_ReadButtonsBios (0006c05f) pass to INT 15h. es2_xref --decode finds those three reads and no write; GO.EXE's copy of the library has a driver query that writes its copy.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#construction-and-detection"
     },
     {
       "address": "0009b6aa",
@@ -33996,6 +34992,33 @@
       "name": "MfdMapScreen_ViewAngles",
       "description": "Three int16, {0xc000, 0, 0} from MfdMapScreen_StaticInit (00036e9c): the NAV MAP camera's orientation at construction, and the first word its paint copies into the camera's pitch. ES2's MfdMapScreen_ViewAngles (DBSIM 0049c454).",
       "source": "Herculan/docs/es1/simulation/mfd-nav-map.md#where-the-object-file-starts-and-ends; es2_xref finds 00036c05, 00036d38 and 00036e9f"
+    },
+    {
+      "address": "000b1734",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PrefsInitInProgress",
+      "description": "byte, 1 while Prefs_Init (0004afe8) runs. ES2's PrefsInitInProgress.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-preferences-start-up"
+    },
+    {
+      "address": "000b1738",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "JoystickRecord",
+      "description": "0x1c bytes: the record every joystick device's read slot returns: four axis dwords, eight button bytes from +0x10, and at +0x18 to +0x1a the device's axis mask, button mask and +0x86.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-record"
+    },
+    {
+      "address": "000b1754",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "JoystickAxisBuffer",
+      "description": "17 bytes: the four axis values and the button byte DVJoystick_ReadAxes (0006b638) or DVJoystick_ReadAxesDigital (0006b7bc) copies out for Joystick_ReadWithResponse (0004b828), which rewrites the values in place.",
+      "source": "Herculan/docs/es1/simulation/joystick.md#the-record"
     },
     {
       "address": "000b1774",
@@ -35265,6 +36288,15 @@
       "name": "maybe_CockpitMouseLive",
       "description": "byte: Sim_StartMission clears it and sets it at the end unless a tape plays, the tape's end sets it, and Sim_Shutdown clears it, where ES2's set and clear CockpitMouseLive.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#globals; ES1DBSIM disassembly"
+    },
+    {
+      "address": "000bd598",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Prefs_HandlerTable",
+      "description": "17 dwords, one handler per preferences option, which Prefs_SetHandler (0004ac4c) stores and Prefs_ClearHandlersAndInit (0004a724) zeroes.",
+      "source": "Herculan/docs/es1/simulation/input.md#the-preferences-start-up"
     },
     {
       "address": "000bd5dc",

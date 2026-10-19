@@ -90,7 +90,7 @@ ES2's list has fifteen keys, keypad `-` and `+` in place of `Enter`, and ES2's p
 
 ## Setting up — `Input_BuildSourceTable` (`0004c95c`)
 
-`Sim_StartMission` calls it first ([the mission start](main-loop.md#the-mission-start--sim_startmission-0005a9dc)). In order: the keyboard, `KeyboardInputDevice_Ctor`(0, `0x10000`), enabled (`InputDevice_Enable`, `0004b1c0`, on its `+4`), and `Keyboard_AddSubscriberCodes`(`KeyQueue_Subscriber`, `KeyQueueWantedCodes`) ([the keyboard](#the-keyboard)); `SimInput_SetEnabled`(1); the mouse, `MouseInputDevice_Ctor` (`0004c1e0`)(0), which builds the mouse driver's object at `+0` (`0006bbc8`) and registers `+0x3a` as input device kind 2, enabled on its `+0x3a`, and `0006bdbc`/`0006bdf0` with the bounds (·, ·, 319, 199); `0004a724`; `Input_LiveBlockPtr` (`000b1840`) = `Input_PollDeviceBlock`(). It then fills the source table, as ES2's:
+`Sim_StartMission` calls it first ([the mission start](main-loop.md#the-mission-start--sim_startmission-0005a9dc)). In order: the keyboard, `KeyboardInputDevice_Ctor`(0, `0x10000`), enabled (`InputDevice_Enable`, `0004b1c0`, on its `+4`), and `Keyboard_AddSubscriberCodes`(`KeyQueue_Subscriber`, `KeyQueueWantedCodes`) ([the keyboard](#the-keyboard)); `SimInput_SetEnabled`(1); the mouse, `MouseInputDevice_Ctor` (`0004c1e0`)(0), which builds the mouse driver's object at `+0` (`0006bbc8`) and registers `+0x3a` as input device kind 2, enabled on its `+0x3a`, and `0006bdbc`/`0006bdf0` with the bounds (·, ·, 319, 199); `Prefs_ClearHandlersAndInit` (`0004a724`), which reloads the preferences and builds the joystick devices ([below](#the-preferences-start-up)); `Input_LiveBlockPtr` (`000b1840`) = `Input_PollDeviceBlock`(). It then fills the source table, as ES2's:
 
 | Pointers | Point at |
 |---|---|
@@ -105,7 +105,11 @@ It clears the four press-once latches `Input_ButtonLatch` (`000bd634`–`000bd63
 
 ### The input devices
 
-ES2's registry ([ES2's](../../retail/simulation/joystick-input.md#sources-and-destinations--input_buildsourcetable-0045a5c0)): `InputDevice_Register` (`0004b0b4`)(device, owner, kind) keeps the owner in `Input_DeviceTable` (`000bd5dc`)[kind], clears its byte in `Input_DeviceEnabled` (`000bd600`)[kind] and records the kind, kind 0 at `000bd60a`, 1 (the keyboard) at `000bd60e`, 2 (the mouse) at `000bd612`, 3 or 5 (the first joystick) at `000bd616` and 4 or 6 (the second) at `000bd61a`; for kinds 2 to 6 it first disables the device recorded there. `InputDevice_Enable` (`0004b1c0`), for kinds 2 to 6, disables the device recorded for its kind and records this one, then sets its byte `+0` and the enabled byte; `InputDevice_Disable` (`0004b2a4`) clears both and `InputDevice_IsEnabled` (`0004b2c0`) returns `+0`. `Input_DeviceSlot` (`0004b2d0`) returns `Input_DeviceTable`[kind]. `Input_GetKeyboardDevice` (`0004b310`), `Input_GetJoystickDevice` (`0004b370`) and `Input_GetJoystick2Device` (`0004b3a0`) return the recorded keyboard, less 4, and joysticks, less `0x78`, or 0, as `Input_GetMouseDevice` does the mouse; `Input_GetKeyboardDevice_Thunk` (`0004c62c`) calls the first. The keyboard's and the mouse's destructors, `IMKeyboard_Dtor` (`0004b4d4`) and `MouseInputDevice_Dtor` (`0004c220`), clear the enabled byte and the recorded kind, run `Keyboard_Dtor` (`0006c670`, which uninstalls the instance through `Keyboard_Release` (`0006c6d9`) and frees GL slot 1) or `0006bcd4`, and free the object for flag bit 0.
+ES2's registry ([ES2's](../../retail/simulation/joystick-input.md#sources-and-destinations--input_buildsourcetable-0045a5c0)): `InputDevice_Register` (`0004b0b4`)(device, owner, kind) keeps the owner in `Input_DeviceTable` (`000bd5dc`)[kind], clears its byte in `Input_DeviceEnabled` (`000bd600`)[kind] and records the kind, kind 0 at `000bd60a`, 1 (the keyboard) at `000bd60e`, 2 (the mouse) at `000bd612`, 3 or 5 (the first joystick) at `000bd616` and 4 or 6 (the second) at `000bd61a`; for kinds 2 to 6 it first disables the device recorded there. `InputDevice_Enable` (`0004b1c0`), for kinds 2 to 6, disables the device recorded for its kind and records this one, then sets its byte `+0` and the enabled byte; `InputDevice_Disable` (`0004b2a4`) clears both and `InputDevice_IsEnabled` (`0004b2c0`) returns `+0`. `Input_DeviceSlot` (`0004b2d0`) returns `Input_DeviceTable`[kind]. `Input_GetKeyboardDevice` (`0004b310`), `Input_GetJoystickDevice` (`0004b370`) and `Input_GetJoystick2Device` (`0004b3a0`) return the recorded keyboard, less 4, and joysticks, less `0x78`, or 0, as `Input_GetMouseDevice` does the mouse; `Input_GetKeyboardDevice_Thunk` (`0004c62c`) calls the first. The keyboard's and the mouse's destructors, `IMKeyboard_Dtor` (`0004b4d4`) and `MouseInputDevice_Dtor` (`0004c220`), clear the enabled byte and the recorded kind, run `Keyboard_Dtor` (`0006c670`, which uninstalls the instance through `Keyboard_Release` (`0006c6d9`) and frees GL slot 1) or `0006bcd4`, and free the object for flag bit 0. The joystick devices, kinds 3 and 4, their classes and the record they return are [the joystick page's](joystick.md#the-joystick-devices), with the file's boundaries and its small getters ([functions](joystick.md#functions)).
+
+### The preferences start-up
+
+**`Prefs_ClearHandlersAndInit` (`0004a724`)** zeroes the 17 handlers of `Prefs_HandlerTable` (`000bd598`) and runs **`Prefs_Init` (`0004afe8`)**, ES2's ([ES2's](../../retail/simulation/preferences.md#dataprefscfg--the-option-array)) with ES1's options. In order: `PrefsInitInProgress` (`000b1734`) = 1; the handlers, through `Prefs_SetHandler`, `0004ad0c` for option 0, `0004acfc` for 1, `0004ad30` for 2, `0004ad54` for `0xb`, `Input_SetStickMode` for 8, `Input_SetThrottleLeverMode` for 10 and `Prefs_LimitDetailInLowMemory` for 6; `Prefs_Load`(1), or under `DemoMode` `Prefs_Load`(1) with `DemoMode` cleared for it, then `Prefs_Load`(0) and `0004aaf0`(`0009570c`, 7); `VoiceArchivePresent` (`000956bf`) = `Voice_ArchiveExists` (`0004aed8`), and option 2 set to 0 (`Prefs_SetOption`(1, 0, 2)) when that is 0; the joystick devices (`Input_CreateJoystickDevices`, [building the devices](joystick.md#building-the-devices)); `000956be` = 240 ([the ground](../rendering/ground-and-sky.md)); `PrefsInitInProgress` = 0. Since `Input_BuildSourceTable` calls it, each mission start reloads `data\prefs.cfg` and builds the joystick devices again.
 
 ## The live block — `Input_PollDeviceBlock` (`0004c2d0`)
 
@@ -122,9 +126,9 @@ No arguments; `Input_BuildPlayerDevice` calls it first each tick and `Input_Buil
 | `+0x26`, `+0x27` | the joysticks' record bytes `+0x18` and `+0x19` |
 | `+0x28` | `Input_ReadMouseState`'s answer, 1 while the mouse device is enabled |
 
-In order: the keyboard; `Input_PollJoysticks` (`0004bd90`); for each of the two joysticks, `Input_ReadJoystickState` (`0004c4ac`)(kind 3 or 4, record), which copies the `0x1c`-byte record that slot `+4` of the enabled device's vtable (at its `+0x87`) returns and answers 0 for a disabled device or no record, and `Input_MergeJoystickRecord` (`0004c3cc`)(record), which ors it into `+0xd`–`+0x27`; the mouse through `Input_ReadMouseState` (`0004c51c`)(2, record), whose record is `Mouse_ReadState`'s when `MouseInputDevice_ReadNewState` (`0004c26c`) finds bit 1 of the mouse's status set (an event since the last read) and otherwise the last one, kept at `Input_LastMouseRecord` (`000b17a0`). So the pointer and the buttons hold their last state between mouse events. ES2's ([ES2's](../../retail/simulation/joystick-input.md#sources-and-destinations--input_buildsourcetable-0045a5c0)) reads one joystick.
+In order: the keyboard; `Input_PollJoysticks` (`0004bd90`); for each of the two joysticks, `Input_ReadJoystickState` (`0004c4ac`)(kind 3 or 4, record), which copies the `0x1c`-byte record that slot `+4` of the enabled device's vtable (at its `+0x87`) returns ([the record](joystick.md#the-record)) and answers 0 for a disabled device or no record, and `Input_MergeJoystickRecord` (`0004c3cc`)(record), which ors it into `+0xd`–`+0x27`; the mouse through `Input_ReadMouseState` (`0004c51c`)(2, record), whose record is `Mouse_ReadState`'s when `MouseInputDevice_ReadNewState` (`0004c26c`) finds bit 1 of the mouse's status set (an event since the last read) and otherwise the last one, kept at `Input_LastMouseRecord` (`000b17a0`). So the pointer and the buttons hold their last state between mouse events. ES2's ([ES2's](../../retail/simulation/joystick-input.md#sources-and-destinations--input_buildsourcetable-0045a5c0)) reads one joystick.
 
-`Input_PollJoysticks` polls the first joystick device through `0006b614`; with two, it polls the first with its `+0x6f` and `+0x73` set from the bytes `0009571c` and `0009571d` for the call and put back after, and copies its four axis dwords `+4`–`+0x10` and its button byte `+0x14` into the second's, the byte also into the second's `+0x25`.
+`Input_PollJoysticks` polls the first joystick device through `DVJoystick_Poll` (`0006b614`), which times the game port's axes and reads its buttons ([the joystick library](joystick.md#reading-the-axes)); with two, it polls the first with its `+0x6f` and `+0x73` set from the bytes `0009571c` and `0009571d` for the call and put back after, and copies its four axis dwords `+4`–`+0x10` and its button byte `+0x14` into the second's, the byte also into the second's `+0x25`.
 
 ## The input block
 
@@ -159,7 +163,7 @@ No arguments; `Sim_MainTick` calls it first each tick ([the tick](main-loop.md#t
 
 ### The joystick configurations
 
-Preferences option 7 (`000bd569`) chooses one of six. *Mode* is the stick mode; the third and fourth stick axes are the live block's `+0x15` and `+0x19`; "or kb" means the keyboard's source when the stick's reads 0:
+Preferences option 7 (`000bd569`) chooses one of six; it also picks the joystick device's class, and which live-block fields each class fills is [the joystick page's](joystick.md#what-each-configuration-reads). *Mode* is the stick mode; the third and fourth stick axes are the live block's `+0x15` and `+0x19`; "or kb" means the keyboard's source when the stick's reads 0:
 
 | Option 7 | Mode 2 | Mode 0 or 1 | Buttons 0–3 |
 |---|---|---|---|
@@ -170,7 +174,7 @@ Preferences option 7 (`000bd569`) chooses one of six. *Mode* is the stick mode; 
 
 ### The stick mode
 
-`Input_StickMode` (`00095819`), 0, 1 or 2, is preferences option 8: the option's handler `Input_SetStickMode` (`0004ad88`), which `0004afe8` registers with `Prefs_SetHandler` (`0004ac4c`), copies the value in. **`Input_ToggleStickMode` (`0004d8e1`)**, while option 8 (`000bd56a`) is not 0, sets the mode to 2 when it is 1 and to 1 otherwise, and returns it. Keypad 0 ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)) and source button 1 call it.
+`Input_StickMode` (`00095819`), 0, 1 or 2, is preferences option 8: the option's handler `Input_SetStickMode` (`0004ad88`), which `Prefs_Init` (`0004afe8`) registers with `Prefs_SetHandler` (`0004ac4c`), copies the value in. **`Input_ToggleStickMode` (`0004d8e1`)**, while option 8 (`000bd56a`) is not 0, sets the mode to 2 when it is 1 and to 1 otherwise, and returns it. Keypad 0 ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)) and source button 1 call it.
 
 ### Recording and playback
 
@@ -235,7 +239,7 @@ Opens `Config_BuildPath`(`keyjoy.cfg`) in mode `rt`, so `tapes\keyjoy.cfg` durin
 
 Ghidra ends `Input_KeyjoyAxisKey` at `0004c7fb`, before its last two returns (to `0004c815`). The class tag, `Input_InitKeyboardAxisTable` and `AppInput_ExitNoOp` have no Ghidra function.
 
-The input devices, the file before (its functions not listed here are unread):
+The two files before, the input devices' (`0004ac60`–`0004c2cf`, [where it starts and ends](joystick.md#where-the-object-files-start-and-end), the rest of its functions on [the joystick page](joystick.md#functions)) and the live block's (`0004c2d0`–`0004c64f`, after the zero byte at `0004c2cf`); their functions not listed here or there are unread:
 
 | ES1 | Address | ES2 |
 |---|---|---|
@@ -289,7 +293,7 @@ Ghidra's thunks `0004b2a2`, `0004c3cb`, `0004c455`, `0004c4a9` and `0006c6aa` ar
 
 ## Open
 
-- **Open:** the callees read for none of this file's functions: `0006bbc8` and `0006bcd4` (the mouse driver's object), `0006bdbc`, `0006bdf0`, `0004a724`, `0006b614` (the joystick poll), and `000444d0` and `00044830` (the mouse events).
+- **Open:** the callees read for none of this file's functions: `0006bbc8` and `0006bcd4` (the mouse driver's object), `0006bdbc`, `0006bdf0`, and `000444d0` and `00044830` (the mouse events).
 - **Open:** `es2_xref.py` finds no call to `Keyboard_PostCode`, `Keyboard_RemoveSubscriber`, `Keyboard_RemoveSubscriberCodes`, `Keyboard_SetTranslateTable` or `KeyboardInputDevice_SetMode`, and one read of `00095894` (`SimInput_SetEnabled`'s) with no write.
 - **Open:** the keyboard's repeat delay and rate in ES1: the disassembly's one `INT 16h` is function 2, and a grep of it finds no `OUT` to port `0x60`, so the simulator is not seen setting them. A retail check: hold `]` and time the shield-balance gauge's steps, one a repeat ([the cockpit](mech.md#the-cockpit)).
 - **Open:** a retail check of the gunsight drag, which ES2's never arms because its mouse record clears `+0x0b` before the pointer moves ([the gunsight drag](../../retail/simulation/joystick-input.md#the-gunsight-drag)). ES1's `+0xb` is the right mouse button, held from one mouse event to the next ([the live block](#the-live-block--input_polldeviceblock-0004c2d0)), so the drag arms while it is held over the gunsight: hold the right button over the gunsight and drag; the turret follows.

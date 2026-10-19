@@ -21287,7 +21287,13 @@
       "confidence": "high",
       "name": "Input_IsKindEnabled",
       "description": "(kind): returns the enabled byte at 004d2510 + kind.",
-      "source": "DBSIM decompile at 0045bf74"
+      "source": "DBSIM decompile at 0045bf74",
+      "verified": {
+        "bytes": "0045bf74+14",
+        "sha1": "e8f4e7759e33",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045bfcc",

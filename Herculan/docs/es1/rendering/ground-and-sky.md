@@ -52,7 +52,7 @@ The sky's colours are ES2's: bands of `+0x54` rows from the horizon colour `+0x2
 
 `Hzline_FillGround` (`000267d8`), given the `hzline`, the canvas origin's x (0 when there is none) and the camera, paints nothing while both ends of the line lie below the view's bottom row. Otherwise:
 
-- when the `hzline`'s byte `+0x70` is set and the preferences byte `000bd567` is greater than `000956be`, it draws [the textured ground](#the-textured-ground) with `GndTex_Draw` (`00029120`) and returns. `World_LoadTheater` sets `+0x70` to 1 ([the load](../formats/wld-world.md#the-load)), and `0004afe8` stores 240 in `000956be`. `000bd567` is the value of the preferences panel's option 5 (`00047f84`, case 5);
+- when the `hzline`'s byte `+0x70` is set and the preferences byte `000bd567` is greater than `000956be`, it draws [the textured ground](#the-textured-ground) with `GndTex_Draw` (`00029120`) and returns. `World_LoadTheater` sets `+0x70` to 1 ([the load](../formats/wld-world.md#the-load)), and `Prefs_Init` (`0004afe8`) stores 240 in `000956be`. `000bd567` is the value of the preferences panel's option 5 (`00047f84`, case 5);
 - otherwise it paints [colour bands](#the-banded-ground).
 
 ### The banded ground
