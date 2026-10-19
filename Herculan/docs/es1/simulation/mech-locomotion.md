@@ -28,7 +28,7 @@ Addresses are `ES1DBSIM` image addresses ([the X-32 executable](../formats/x32-e
 A scan of the image's bytes for `ThrottleLeverMode`'s address finds the two reads here and three stores, in two pieces of code:
 
 - **Preferences option 10** (`000bd56c`), the option that has `Ctrl+I` and `Ctrl+M` step the throttle ([the input build](input.md#the-input-build--input_buildplayerdevice-0004cb14)). Its handler, `Input_SetThrottleLeverMode` (`0004ad94`), sets 1 when the option is on and 0 when it is off. `Prefs_Load` (`0004a744`) calls every option's handler with its value once it has read the 17 option bytes of `data\prefs.cfg` (all 0 when the file does not open), and `Prefs_SetOption` (`0004a914`) calls it when it applies option 10; `Prefs_Init` (`0004afe8`) registers the handler with `Prefs_SetHandler` (`0004ac4c`) before its call of `Prefs_Load`. ES2's handler, `Input_SetThrottleLeverMode` (`00459d20`), sets 1 only for a value of 1 with a throttle control fitted.
-- **`Ctrl+1`** ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)) sets −1 when it is above 0 and 1 otherwise: from 0 the first press makes the throttle forward only, and each press after switches it between forward only and reverse only.
+- **`Ctrl+1`** ([commands](main-loop.md#commands--sim_dispatchcommand-00059df8)) sets −1 when it is above 0 and 1 otherwise: from 0 the first press makes the throttle forward only, and each press after switches it between forward only and reverse only. Reverse only also negates the axis, so the control that opens the throttle forward (keypad 8, the stick pushed forward) drives the HERC backward, and the one that closes it (keypad 2, the stick pulled back) only brings it back to a stop. The clamp runs only on a tick whose step is not 0, so a throttle the press leaves outside the new range holds until a throttle control moves it: a HERC walking forward when reverse only comes on keeps walking, and the first step of either control stops it.
 
 The multiplies round ([the primitives](fixed-point-math.md#the-primitives)).
 
@@ -122,7 +122,7 @@ The thresholds are the file's offsets 150–156, where a foot plants, and 170–
 
 ## Open
 
-- **Open:** a retail check of `Ctrl+1` with option 10 off: from standstill the first press keeps the throttle from going into reverse, and a second press keeps it from going forward.
+- **Open:** a retail check of `Ctrl+1` with option 10 off: from standstill the first press keeps keypad 2 from backing the HERC up; after a second press keypad 8 backs it up and keypad 2 stops it.
 - **Open:** which sample sound `0x1f` is, and whether a retail fall plays it. A retail check: have the player's HERC's legs shot out; between the sound as it starts to fall and the thump as it lands, a third sound plays as its body passes 400 units above the ground.
 - **Open:** a retail check of the pace: from a full-speed run, pull the throttle to zero at once. ES1's code keeps the full running pace until the HERC drops to a walk and then the walk-to-run pace until it stops, where ES2's slows its legs every tick.
 - **Open:** what stops a walker at a structure of types 5, 6 or 8, which `Structure_GatherWalkCandidates` leaves out: whether step 1's slot `+0x60` answers non-zero for one, as ES2's object sweep does for the types its volume gather leaves out.
