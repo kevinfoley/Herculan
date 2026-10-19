@@ -566,8 +566,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Structure_DrawWithDetailBias",
-      "description": "The Draw slot (+0x00) of all five structure vtables -- Structure, StructureRadar, StructureArmed, StructureEmplacement and StructureType0x22. Pushes g_TSDetailBiasFromStructureDetail into the TSDetailPart bias via TSDetailPart_SetBias, calls Shape_DrawAtDetailLevel, then restores the bias to 0. This is how the STRUCTURE DETAIL preference reaches TSDetailPart level selection. Ghidra has not defined it as a function, so it appears as Shape_DrawAtDetailLevel+0x110 in containment-based cross-references.",
-      "source": "docs/retail/rendering/mech-shape-drawing.md"
+      "description": "(structure): TSDetailPart_SetBias (004768ac)(g_TSDetailBiasFromStructureDetail (004a9638)), Shape_DrawAtDetailLevel (004033e4)(structure), TSDetailPart_SetBias(0). es2_xref finds its address in five vtable slots.",
+      "source": "docs/retail/rendering/mech-shape-drawing.md",
+      "verified": {
+        "bytes": "004034f4+37",
+        "sha1": "9523413ba801",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0040351c",
@@ -1791,8 +1797,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Debris_Draw",
-      "description": "Debris vtable draw slot: installs the piece's model transform and renders its shape.",
-      "source": "docs/retail/simulation/destruction-effects.md"
+      "description": "(piece): TSDetailPart_SetBias (004768ac)(the piece's dword +0x50), SimObject_InstallModelTransform (00401fe4)(piece), the shape instance's draw slot, TSDetailPart_SetBias(0). es2_xref finds its address in one vtable slot.",
+      "source": "docs/retail/simulation/destruction-effects.md",
+      "verified": {
+        "bytes": "00408e6c+45",
+        "sha1": "6c9b3b9157bb",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00408e9c",
@@ -3233,8 +3245,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Shape_TranslatePointLists",
-      "description": "Adds a point offset into a shape's own geometry, recursing on the part-list types and, at a group, marking the points its polys actually reference (poly+6, plus poly+8 entries from the index list at poly+0x0a) and adding the offset to those only. Used to move a freshly-loaded weapon model to its hardpoint's mount point.",
-      "source": "docs/retail/simulation/weapon-mounts.md"
+      "description": "(part, offset): adds the int16 triple at offset to the points of part's tree, by its class tag (vtable +0): TSPartList, TSShape, TSCellAnimPart, TSDetailPart and TSBSPPart (0x140007, 0x140008, 0x14000b, 0x14000c, 0x140015) recurse into each child (pointer array +0x12, count +0x10); TSGroup and TSBSPGroup (0x140014, 0x14000a) memset one byte per point (count +0x22) at 004a98f0 to 0, mark for each poly (pointer array +0x1c, count +0x26) whose tag is 0x140001 to 0x140003, 0x140009 or 0x14000f its point +6 and the +8 entries of the int16 index list +0x10 from its +0xa, and add offset's x, y and z to each marked point of the list at +0x14, 6 bytes each; 0x140006 calls it again with the same arguments; any other tag, 0x140005, 0x1e0003 and 0x1e0005 among them, returns. es2_xref finds calls from WeaponMount_CtorBase (0040df30) and from itself.",
+      "source": "Herculan/docs/retail/simulation/weapon-mounts.md#the-muzzle-flash",
+      "verified": {
+        "bytes": "0040dd4c+396",
+        "sha1": "4fb9ea912757",
+        "scope": "body",
+        "via": "both"
+      }
     },
     {
       "address": "0040ded8",
@@ -7590,8 +7608,14 @@
       "type": "function",
       "confidence": "high",
       "name": "Flyer_Draw",
-      "description": "Flyer vtable +0x00. Sets the shared draw-state global from DAT_004a9e48, calls Shape_DrawAtDetailLevel, clears it again.",
-      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice"
+      "description": "(flyer): TSDetailPart_SetBias (004768ac)(the dword 004a9e48), Shape_DrawAtDetailLevel (004033e4)(flyer), TSDetailPart_SetBias(0). es2_xref finds its address in one vtable slot.",
+      "source": "docs/retail/simulation/ai-dispatch.md; flyer AI slice",
+      "verified": {
+        "bytes": "004215cc+37",
+        "sha1": "451c1942ad5f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004215f4",
@@ -21762,8 +21786,14 @@
       "type": "function",
       "confidence": "high",
       "name": "ShapeDetail_ApplyHercDetailSetting",
-      "description": "Applies the HERC DETAIL preference (DAT_004d1fc5, 0-4) to three globals through three key/value table pairs: g_ShapeDetailSizeScaleQ10 (2000 in every slot), g_ShapeDetailBias {4,3,2,1,0} and g_TSDetailBiasFromHercDetail {2,2,1,1,0}. Called from Sim_RenderFrame when the byte changes and unconditionally at mission bring-up (00461ddc); both sites push the preference byte itself, with nothing in between.",
-      "source": "docs/retail/rendering/mech-shape-drawing.md"
+      "description": "(setting): takes the first of the five keys of g_HercDetailScaleKeys (0049eff4, 0 to 4) the setting is at most and stores that slot of g_HercDetailScaleValues (0049effe) at g_ShapeDetailSizeScaleQ10 (00497368); then the same over g_HercDetailBiasKeys (0049f008), storing that slot of g_HercDetailBiasValues (0049f012) at g_ShapeDetailBias (0049736c) and of g_HercDetailTSDetailBiasValues (0049f01c) at g_TSDetailBiasFromHercDetail (004a98ec). A setting above 4 stores nothing. es2_xref finds calls from Sim_RenderFrame (0045fb9c) and Sim_InitMissionSession (004614fc).",
+      "source": "Herculan/docs/retail/rendering/mech-shape-drawing.md#the-three-tunables",
+      "verified": {
+        "bytes": "0045d474+123",
+        "sha1": "07b739b30be8",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "0045d4f0",

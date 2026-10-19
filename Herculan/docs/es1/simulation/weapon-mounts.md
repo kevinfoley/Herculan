@@ -35,7 +35,7 @@ The slot functions in this file ([the slots](weapon-mount-classes.md#the-slots))
 
 ## The manager
 
-The machine holds its manager at `+0x198`, where ES2's holds it at `+0x202`. `Mech_ConfigureLoadout` (`00012c00`, [construction](mech.md#construction)) builds it: with the machine's byte `+0x9d` set, the local manager through `WeaponMounts_CtorLocal`; otherwise the `0x14`-byte base through `MechLoadout_ConstructWeaponMounts` (`0000c31c`) alone, which stores the base table `WeaponMountsBaseVtable` (`000912f2`). ES2's tests `+0xa3`.
+The machine holds its manager at `+0x198`, where ES2's holds it at `+0x202`. `Mech_ConfigureLoadout` (`00012c00`, [construction](mech.md#construction)) builds it: with the machine's byte `+0x9d` set, the local manager through `WeaponMounts_CtorLocal`; otherwise the `0x14`-byte base through `MechLoadout_ConstructWeaponMounts` (`0000c31c`) alone, which stores the base table `WeaponMountsBaseVtable` (`000912f2`). ES2's tests `+0xa3`. The mission's second pass sets the player's `+0x9d` before it configures the loadout, so the player's machine gets the local manager ([the second pass](../formats/script-dat.md#the-second-pass)).
 
 | ES1 | ES2 | Holds |
 |---|---|---|

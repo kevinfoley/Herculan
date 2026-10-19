@@ -109,7 +109,35 @@ Each takes (object, flags), returns at once for a null object (except `Drawable_
 
 `DET_ANIM_OBJ`'s draw, (object): ES2's ([the LOD root](../../retail/rendering/mech-shape-drawing.md#the-lod-root-is-chosen-per-frame-per-object)) on ES1's fields and globals. With a LOD table at `+0x3b` whose root count (`+0xc`) is not 0, it measures the shape's radius (`+8` of the instance's shape) against `Math_FastMagnitude3D` of `g_EyeInModelSpace` (`000b5ed4`) after `SimObject_InstallModelTransform`, takes (radius << `Raster_FocalShift`) / max(distance − radius, 1), at least 1, scales it by `Math_Q10Multiply` with `g_ShapeDetailSizeScaleQ10` (`000903e0`, `int16`), starts the root index at the lesser of `g_ShapeDetailBias` (`000903e2`, `int16`) and the root count less 1, and walks the thresholds (`+4`, `int32`) from the first as ES2's does. It installs that root in the instance, installs the transform again, draws the instance through its slot `+0x20` and puts root 0 back. ES1's multiply rounds ([the primitives](fixed-point-math.md#the-primitives)).
 
-The image holds the scale 1024 and the bias 0. A search of the disassembly for the two addresses finds the two reads here and one store of each, in `00057c08`, which takes them from tables indexed by its argument ([Open](#open)). The thresholds are `g_ShapeDetailThresholds` (`00091dac`), which the chassis load puts in the type record's `+0xca` ([the load](../formats/chassis-dat.md#the-load)).
+The image holds the scale 1024 and the bias 0; the detail setting replaces both before the first frame ([below](#the-detail-setting--shapedetail_applydetailsetting-00057c08)). The thresholds are `g_ShapeDetailThresholds` (`00091dac`), seven `int32` {75, 60, 45, 25, 18, 12, 6}, which the chassis load puts in the type record's `+0xca` ([the load](../formats/chassis-dat.md#the-load)), and the roots after root 0 draw through root 0's nodes because that load renumbers them ([the crude roots](../../retail/rendering/mech-shape-drawing.md#the-crude-roots-are-renumbered-at-load)).
+
+**A port draws a HERC's LOD root by these steps, each frame.** With *r* root 0's radius (shape `+8`) and *d* `Math_FastMagnitude3D` of the eye in the model's space: *size* = (*r* << the view's focal shift) / max(*d* − *r*, 1), 1 when that is 0; *t* = `Math_Q10Multiply`(*size*, scale), ES1's rounding multiply; *i* = min(bias, root count − 1), *j* = 0; while *i* < root count − 1 and *t* < thresholds[*j*], *i* and *j* both go up by 1. Root *i* is drawn, and root 0 put back. The main view's focal shift is 8 ([the main camera](main-loop.md#the-mission-start--sim_startmission-0005a9dc), step 12), so *size* is the root's radius in 320 × 200 pixels at its near face.
+
+### The detail setting — `ShapeDetail_ApplyDetailSetting` (`00057c08`)
+
+**One preferences option sets how fine every shaped object is drawn: which LOD root a HERC starts from and how soon it steps down, and how fine the detail parts of HERCs' weapons, structures and flyers are.** `ShapeDetail_ApplyDetailSetting`, (value), is ES2's `ShapeDetail_ApplyHercDetailSetting` (`0045d474`, [the three tunables](../../retail/rendering/mech-shape-drawing.md#the-three-tunables)) with ES1's keys and two more outputs. It takes the first of five keys the value is at most, in two key tables, and copies that slot of each value table, the normal ones or, while `g_LowMemory` (`000bda98`) is set, the low-memory ones. A value above the last key leaves every output as it was.
+
+| Keys | Output | Normal | Low memory |
+|---|---|---|---|
+| `ShapeDetail_ScaleKeys` (`00096bc4`): 50, 100, 150, 200, 300 | `g_ShapeDetailSizeScaleQ10` (`000903e0`), the LOD scale | `ShapeDetail_ScaleValues` (`00096bd0`): 2000 in all five | `ShapeDetail_ScaleValuesLowMemory` (`00096c0c`): 2000, 3000, 4000, 4000, 4000 |
+| `ShapeDetail_BiasKeys` (`00096bdc`): 50, 100, 150, 200, 300 | `g_ShapeDetailBias` (`000903e2`), the first LOD root | `ShapeDetail_RootBiasValues` (`00096be8`): 4, 3, 2, 1, 0 | `ShapeDetail_RootBiasValuesLowMemory` (`00096c18`): 2, 1, 0, 0, 0 |
+| the same | `g_TSDetailBiasForMounts` (`000bc2b8`) | `ShapeDetail_MountBiasValues` (`00096bf4`): 2, 2, 1, 1, 0 | `ShapeDetail_MountBiasValuesLowMemory` (`00096c24`): 1, 1, 0, 0, 0 |
+| the same | `g_TSDetailBiasForStructures` (`000bc198`) and `g_TSDetailBiasForFlyers` (`000bc460`) | `ShapeDetail_ObjectBiasValues` (`00096c00`): 2, 2, 1, 1, 0 | `ShapeDetail_ObjectBiasValuesLowMemory` (`00096c30`): 2, 1, 1, 1, 1 |
+
+Each table is five `int16` and a zero word; the scale and the root bias are `int16`, the three detail-part biases `int32`. ES2's keys are 0 to 4, its HERC DETAIL setting's, and it writes the first three outputs from the first three normal columns; its structures take their bias from its STRUCTURE DETAIL setting ([`TSDetailPart` levels](../../retail/rendering/dts-texture-binding.md#tsdetailpart-level-selection-and-structure-detail)).
+
+The value is preferences option 6, the byte `000bd568`, which `Prefs_Load` (`0004a744`) reads from byte 6 of `data\prefs.cfg` and the in-mission preferences panel shows on its slider at `+0x33c` (`00047f84`, case 6). `Sim_StartMission` stores it in `000b5b72` and `000b5b74` and calls the function with it before the first frame ([the mission start](main-loop.md#the-mission-start--sim_startmission-0005a9dc), step 15); `Sim_RenderFrame` (`00059c08`) copies it into `000b5b72` each frame after subsystem phase 5 and, when that differs from `000b5b74`, calls the function with it and copies it into `000b5b74`. The option's handler, which `0004afe8` registers with `Prefs_SetHandler` (`0004ac4c`), is `Prefs_LimitDetailInLowMemory` (`0004adb0`): with `g_LowMemory` set and the option above 160 it sets the option to 160 while the options are being loaded (the byte `000b1734` set), and otherwise calls `0004a900`(6) and raises the status panel `00046efc`(0, 0, 1, `0x11`), runs it through slot `+0xc` of its `+0x314` and destroys it with `000472b0`(panel, 3). A low-memory option therefore reaches the fourth slot of each table at most.
+
+The three detail-part biases reach `TSDetailPart_Render` through `TSDetailPart_SetBias` (`000530a4`), set around one class's draw and put back to 0 after it, as in ES2's:
+
+| Draw | ES1 | Bias | ES2's |
+|---|---|---|---|
+| a structure's, slot `+4` of the three tables `00003cbc` stores (`00090522`, `0009059e`, `0009061a`) | `Structure_DrawWithDetailBias` (`00002d18`): the bias, `Shape_DrawAtDetailLevel`, 0 | `g_TSDetailBiasForStructures` | `Structure_DrawWithDetailBias` (`004034f4`), from STRUCTURE DETAIL |
+| a flyer's, slot `+4` of `00091fea`, which `0001ac58` stores | `Flyer_Draw` (`0001ac34`), the same | `g_TSDetailBiasForFlyers` | `Flyer_Draw` (`004215cc`) |
+| a debris piece's, slot `+4` of `000908e6`, which `00006168` stores | `Debris_Draw` (`000065c4`): the bias, `SimObject_InstallModelTransform`, the instance `+0x2e`'s slot `+0x20`, 0 | the piece's own `+0x4a` | `Debris_Draw` (`00408e6c`), from its `+0x50` |
+| a fitted weapon's | `WeaponMount_RenderWithDetailBias` ([the mount classes](weapon-mount-classes.md#the-slots)) | `g_TSDetailBiasForMounts` | `WeaponMount_RenderWithDetailBias` |
+
+These are the four callers of `TSDetailPart_SetBias` `es2_xref.py` finds.
 
 ### The hardpoints — `Mech_SpliceHardpointShapes` (`00002654`)
 
@@ -157,12 +185,13 @@ A `CONFIG_PART` is a `0x18`-byte shape part whose `+0x10` holds a model and `+0x
 |---|---|
 | the class tables, [above](#the-classes) | `0009020a`–`00090406` |
 | `g_ShapeDetailSizeScaleQ10`, `g_ShapeDetailBias`, `int16` | `000903e0`, `000903e2` |
+| the detail setting's tables and detail-part biases, [above](#the-detail-setting--shapedetail_applydetailsetting-00057c08) | `00096bc4`–`00096c3b`, `000bc198`, `000bc2b8`, `000bc460` |
 | `TinyObj_PositionBuffer` and its latch | `000ae4c4`, `000ae4c0` |
 | the save buffers, [above](#saving-and-restoring-the-transform) | `000ae4d0`–`000ae9ac` |
 
 ## Open
 
-- **Open:** what writes the LOD scale and bias: `00057c08` stores both from tables it indexes by its argument, one of two selected by `g_LowMemory` (`000bda98`), and writes three more globals; it and its caller are unread.
+- **Open:** what preferences option 6 is called in the panel and the manual, and what `0004a900` and the status panel's message `0x11` do when a low-memory run asks for more than 160. A retail check: the preferences panel's slider that changes how near HERCs switch to their crude models, and the manual's name for it.
 - **Open:** what reaches `Context_SetFromTransform`, `TSTinyObj_Ctor`, `TSRegObj_Ctor`, `ConfigPart_CreateArray` and `ConfigPartArray_StepFrame`, to which `es2_xref.py` finds no branch or stored pointer (the one dword it finds holding `00001717`, at `000584ed`, is a call's displacement in `Sim_Main`'s loop); and whether anything else uses the `TINY_OBJ` and `REG_OBJ` tables, which only these files' constructors and destructors store.
-- **Open:** the callers `es2_xref.py` finds and this batch did not read: `00003cbc` and `0001ac58` (the `DET_ANIM_OBJ` constructors and `ShapeInst_AddThread`), `00002df8` and `00003058` (root motion), `00002d18` and `0001ac34` (`Shape_DrawAtDetailLevel`).
+- **Open:** the callers `es2_xref.py` finds and this batch did not read: `00003cbc` and `0001ac58` (the `DET_ANIM_OBJ` constructors and `ShapeInst_AddThread`), `00002df8` and `00003058` (root motion).
 - **Open:** a positive control in the running game ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed: `BP <CS>:00002654` fires once per LOD root for each HERC drawn in a frame, and with a fitted weapon at a hardpoint the slot's part afterwards is the mount, so the weapon shows on the HERC.

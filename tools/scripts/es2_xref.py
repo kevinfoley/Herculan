@@ -40,6 +40,16 @@ Usage:
 --table prints one row per target: the branch, stored-pointer and vtable-slot counts and the
 functions the branches come from. All targets share one pass over the image.
 
+--decode names, for each stored pointer, the disassembled instruction that covers it and its use of
+the address: READ, WRITE, READ+WRITE (an add, inc, xchg...), ADDRESS (an immediate or LEA: the
+address is taken, so a write may follow through a register), or data when no disassembled
+instruction covers it. It works for a global as well as a function, and reads only the
+disassembly dump, so a site in code Ghidra did not disassemble shows as data. A global's field is
+its own address: give `000af818+4` as `000af81c`. For field accesses through a base register use
+es2_fieldscan.py.
+
+    python tools/scripts/es2_xref.py --binary ES1DBSIM --decode 000af818
+
 Exit status is 1 if every address given is unreferenced, so it can gate a claim.
 """
 
@@ -156,6 +166,79 @@ def all_vtable_slots(binary: str):
     return out
 
 
+INSN_LINE = re.compile(r"^([0-9a-f]{8})\s+([0-9a-f]+)\s+(\S+)\s*(.*?)\s*(?:;.*)?$")
+
+# Mnemonics whose first (destination) operand is written. The ones in RMW also read it first.
+WRITES = {"MOV", "POP", "FST", "FSTP", "FIST", "FISTP", "FNSTSW", "FSTSW", "FNSTCW", "FSTCW",
+          "FBSTP", "FNSAVE", "FSAVE", "FNSTENV", "FSTENV", "SGDT", "SIDT", "STR"}
+RMW = {"ADD", "SUB", "ADC", "SBB", "AND", "OR", "XOR", "INC", "DEC", "NEG", "NOT", "SHL", "SHR",
+       "SAR", "SAL", "ROL", "ROR", "RCL", "RCR", "XCHG", "XADD", "CMPXCHG", "BTS", "BTR", "BTC",
+       "SHLD", "SHRD"}
+
+
+def load_instructions(binary: str):
+    """(sorted starts, start -> (length, mnemonic, operands)) from the disassembly dump."""
+    path = retail_binaries.get(binary).dump("disasm_full.txt")
+    insns = {}
+    if os.path.exists(path):
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                m = INSN_LINE.match(line)
+                if m and len(m.group(2)) % 2 == 0:
+                    insns[int(m.group(1), 16)] = (len(m.group(2)) // 2, m.group(3), m.group(4))
+    return sorted(insns), insns
+
+
+def split_operands(text: str):
+    """Top-level comma split: a memory operand's own commas sit inside brackets."""
+    out, depth, cur = [], 0, ""
+    for ch in text:
+        depth += ch == "["
+        depth -= ch == "]"
+        if ch == "," and depth == 0:
+            out.append(cur.strip())
+            cur = ""
+        else:
+            cur += ch
+    return out + ([cur.strip()] if cur.strip() else [])
+
+
+def classify(mnemonic: str, operands: str, addr: int) -> str:
+    """READ, WRITE, READ+WRITE or ADDRESS for the instruction's use of `addr`, or ? when the
+    address is not visible in its operands (an immediate split across fields, a far pointer)."""
+    pat = re.compile(r"(?<![0-9a-fA-Fx])0x0*%x(?![0-9a-fA-F])" % addr)
+    ops = split_operands(operands)
+    for i, op in enumerate(ops):
+        if not pat.search(op):
+            continue
+        if "[" not in op:
+            return "ADDRESS"
+        if mnemonic == "LEA":
+            return "ADDRESS"
+        if i == 0 and mnemonic in RMW:
+            return "READ+WRITE"
+        if i == 0 and (mnemonic in WRITES or mnemonic.startswith("SET")):
+            return "WRITE"
+        if mnemonic == "XCHG":
+            return "READ+WRITE"
+        return "READ"
+    return "?"
+
+
+def decode_site(starts, insns, va: int, addr: int):
+    """The instruction covering a stored-pointer hit and its use of the address, or None when the
+    hit lies outside the disassembly (data, or code Ghidra did not disassemble)."""
+    import bisect
+    i = bisect.bisect_right(starts, va) - 1
+    if i < 0:
+        return None
+    start = starts[i]
+    length, mnemonic, operands = insns[start]
+    if not start < va <= start + length - 4:
+        return None
+    return start, classify(mnemonic, operands, addr), "%s %s" % (mnemonic, operands)
+
+
 def range_targets(image: Image, names, bounds, spec: str):
     """The function entries in LO-HI (inclusive) from the disassembly's FUNCTION headers, leaving out
     a Ghidra function on the 0x90 padding before a prologue, which is searched with its prologue."""
@@ -186,7 +269,10 @@ def main() -> int:
     ap.add_argument("--range", help="also every function entry in LO-HI (hex, inclusive) from the disassembly dump")
     ap.add_argument("--table", action="store_true",
                     help="one row per target: branch, stored-pointer and slot counts and the calling functions")
+    ap.add_argument("--decode", action="store_true",
+                    help="name each stored pointer's instruction and whether it reads, writes or takes the address")
     args = ap.parse_args()
+    starts, insns = load_instructions(args.binary) if args.decode else ([], {})
 
     image = Image(args.binary)
     names, bounds = load_functions(args.binary)
@@ -219,10 +305,18 @@ def main() -> int:
         total = len(calls) + len(dwords)
         any_referenced |= total > 0
 
+        decoded = {va: decode_site(starts, insns, va, hit) for _o, va, _s, hit in dwords
+                   if args.decode and va is not None}
+
         if args.table:
             callers = sorted({(enclosing(names, bounds, site) or "%08x" % site).split("+")[0] for site, _k, _h in calls})
-            print("%08x  %-40s %3d br  %3d ptr  %2d slot  %s" % (
-                target, label, len(calls), len(dwords), len(slots),
+            uses = ""
+            if args.decode:
+                kinds = [d[1] if d else "data" for d in decoded.values()]
+                uses = "  [%s]" % " ".join("%d %s" % (kinds.count(k), k) for k in
+                                           ("READ", "WRITE", "READ+WRITE", "ADDRESS", "?", "data") if k in kinds)
+            print("%08x  %-40s %3d br  %3d ptr  %2d slot%s  %s" % (
+                target, label, len(calls), len(dwords), len(slots), uses,
                 "UNREFERENCED" if total == 0 else ", ".join(callers)))
             continue
 
@@ -235,7 +329,12 @@ def main() -> int:
                 print("    %-4s from %08x  %s%s" % (kind, site, enclosing(names, bounds, site) or "", via(hit)))
             for offset, va, section, hit in dwords:
                 where = "%08x" % va if va is not None else "(headers)"
-                print("    dword at %s  section %s  raw %08x%s" % (where, section, offset, via(hit)))
+                use = ""
+                if args.decode and va is not None:
+                    d = decoded[va]
+                    use = ("  %-10s %08x  %s  %s" % (d[1], d[0], enclosing(names, bounds, d[0]) or "", d[2])
+                           if d else "  data (no disassembled instruction covers it)")
+                print("    dword at %s  section %s  raw %08x%s%s" % (where, section, offset, via(hit), use))
             for vtable, slot, slot_name, hit in slots:
                 print("    vtable %s +0x%03x (%s)%s" % (vtable, slot, slot_name, via(hit)))
 

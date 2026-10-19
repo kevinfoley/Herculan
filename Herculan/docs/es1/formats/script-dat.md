@@ -82,7 +82,15 @@ An object takes its position and rotation from its record's refs. A point ref th
 
 The second pass does not read record offsets `0x04`–`0x27` and `0x5a` (`.MSN` `0x0c`–`0x2f` and `0x62`).
 
-A `data\player.mec` entry *k* builds the squad's machine at slot block count + *k*, with both sentinels; its `+8` and `+0x20` go to `Mech_ConfigureLoadout` as the record's `0x2a` and `0x46` do, its three condition spans `+0x3c`, `+0x56` and `+0x6a` go to `Mech_ApplySquadCondition` (`000107f0`, [the squad's condition](../simulation/damage-readouts.md)) with the mech's `+0x19c` as (`+0x19c`, `+0x6a`, `+0x56`, `+0x3c`) in stack order, as ES2's pass does, and its `+0` to the mech's `+0x232`, where ES2's stores the pilot index at `+0x29c`. The entry whose index is the word `data\player.mec` opens with (`000af9fa`) is the player's: the mech goes to `000bc42a` and its `+0x9d` is set to 1. Unlike ES2's, the position takes no ground height and no lift for a type that flies ([placement](../../retail/formats/script-dat.md#placement--the-actual-rule)).
+A `data\player.mec` entry *k* builds the squad's machine at slot block count + *k*, in this order:
+
+1. `Mech_Constructor`;
+2. for the entry whose index is the word `data\player.mec` opens with (`000af9fa`), the player's: the mech goes to `000bc42a` and its `+0x9d`, the locally piloted byte, is set to 1 (`0001e93d`–`0001e94a`);
+3. both sentinels as the position and rotation;
+4. `Mech_ConfigureLoadout` (`0001eaa5`) with the entry's `+0x20` and `+8`, in the places of the record's `0x46` and `0x2a`;
+5. its three condition spans `+0x3c`, `+0x56` and `+0x6a` to `Mech_ApplySquadCondition` (`000107f0`, [the squad's condition](../simulation/damage-readouts.md)) with the mech's `+0x19c` as (`+0x19c`, `+0x6a`, `+0x56`, `+0x3c`) in stack order, as ES2's pass does, and its `+0` to the mech's `+0x232`, where ES2's stores the pilot index at `+0x29c`.
+
+So the player's machine has `+0x9d` set when its loadout is configured, and the loadout builds it the local mount manager ([the manager](../simulation/weapon-mounts.md#the-manager)); the pass sets `+0x9d` on no other machine. A block-6 record's machine takes the same first steps without step 2, its position and rotation from its refs. Unlike ES2's, the position takes no ground height and no lift for a type that flies ([placement](../../retail/formats/script-dat.md#placement--the-actual-rule)).
 
 **Block 7.** For each live flyer slot (`000af8e0`), `0001ac58` with no object and the 56-byte record's type at `0x2c` (`.MSN` `0x34`); the point ref `0x28` with no height added, the heading ref `0x2a`, the action refs `0x32` and `0x34` (`.MSN` `0x3a`, `0x3c`) to `+0x16c` and `+0x170`, and `0x2e` and `0x30` (`.MSN` `0x36`, `0x38`) to `+0x174` and `+0x176`. `0x36` (`.MSN` `0x3e`) is not read.
 

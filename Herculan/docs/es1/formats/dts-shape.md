@@ -28,7 +28,7 @@
 |---|---|---|---|
 | `TSPartList` | `TSPartList_Render` (`00052e18`), `TSPartList_FindPart` (`00052e88`), `TSPartList_FindPartSlot` (`00052f0c`) | `004766fc`, `00476744`, `00476784` | none |
 | `TSCellAnimPart` | `TSCellAnimPart_Render` (`00052fd0`) | `004767e4` | the cell frames at `000bd912` |
-| `TSDetailPart` | `TSDetailPart_Render` (`000530b0`) | `004768bc` | none; `g_TSDetailPartSizeScaleQ10` is the `int16` at `0009615a`, `0x400` in the image, set only by `TSDetailPart_SetSizeScale` (`00053094`, no reference found by `es2_xref.py`), and `g_TSDetailPartBias` the dword at `0009615c` ([level selection](../../retail/rendering/dts-texture-binding.md#tsdetailpart-level-selection-and-structure-detail)) |
+| `TSDetailPart` | `TSDetailPart_Render` (`000530b0`) | `004768bc` | none; `g_TSDetailPartSizeScaleQ10` is the `int16` at `0009615a`, `0x400` in the image, set only by `TSDetailPart_SetSizeScale` (`00053094`, no reference found by `es2_xref.py`), and `g_TSDetailPartBias` the dword at `0009615c`, which four draws set around themselves ([the detail setting](../simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08), [level selection](../../retail/rendering/dts-texture-binding.md#tsdetailpart-level-selection-and-structure-detail)) |
 | `TSBSPPart` | `TSBSPPart_Render` (`00053364`), `TSBSPPart_RenderNode` (`00053240`) | `00476b0c`, `00476a1c` | no depth-buffer flag, below |
 | `TSBitmapPart` | `TSBitmapPart_Render` (`00052b90`) | `004762e8` | upright and unsquashed, below |
 

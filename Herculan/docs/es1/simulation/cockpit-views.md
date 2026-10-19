@@ -35,13 +35,40 @@ ES2's view functions are `CockpitViewManager_Ctor` (`00429660`) to `CockpitView_
 
 1. The first time, while `CockpitPaletteSingleton` (`000925f0`) is 0, it loads `dpl\cockpit` (`Palette_LoadDpl` on `ResourcePath_BuildFolderName` of the folder `000980d0` names) there and sets `ExternalView_DefaultRect` (`000afb24`) to {0, 30, 319, 170, −160, −75}, the rect and the projection pair of a `.VUE` record, copying it to `ExternalView_Rect` (`000afb3c`). ES2's is {0, 0, 319, 194, −160, −90}, each value shifted by the video mode's coordinate shift.
 2. The scheme word `+0x23` and the name are the chassis type's: the type record `+0x188` of the machine, its `+0x6c` and the 8 characters at its `+0x58`. When `CockpitOverride_Name` (`000925f8`) is set, the `-C` option's ([the cockpit clock](../formats/ttm-scripts.md#the-cockpit-clock)), `CockpitOverride_Index` (`000925f4`) and that name replace them.
-3. `CockpitViewManager_LoadViews` (`00021fb0`) with the name, which is ES2's sequence ([`LoadViews`](../../retail/simulation/cockpit-views.md#cockpitviewmanager_loadviews-sequence)) without the span tables: the `.VUE` records, each view's clip regions ([which files](../formats/hd-ed-clip-regions.md#which-files)), `CockpitCanopy_LoadViewBitmap` for each view unless `g_LowMemory` (`000bda98`) is set, the cockpit (`Cockpit_LoadPanel`) and the scheme's colors. It ends by making `ExternalView_ClipBlock` (`000afb94`) a block of one region, `ExternalView_ClipRegion` (`000afd98`), whose rect is `ExternalView_Rect`'s.
+3. `CockpitViewManager_LoadViews` (`00021fb0`) with the name, which is ES2's sequence ([`LoadViews`](../../retail/simulation/cockpit-views.md#cockpitviewmanager_loadviews-sequence)) without the span tables: the `.VUE` records, each view's clip regions ([which files](../formats/hd-ed-clip-regions.md#which-files)), `CockpitCanopy_LoadViewBitmap` for each view unless `g_LowMemory` (`000bda98`) is set, the cockpit (`Cockpit_LoadPanel`) and the scheme's colors ([below](#the-color-scheme)). It ends by making `ExternalView_ClipBlock` (`000afb94`) a block of one region, `ExternalView_ClipRegion` (`000afd98`), whose rect is `ExternalView_Rect`'s.
 4. `+0x14` = −1, `+0x18` = 0, `+0x19` = 0, `+0x32` = 0.
 5. `CockpitShakeStripRegion` (`000afb78`), a rect region, gets the rect {0, 200, 320, 210}, and `CockpitShakeStripPixels` (`000afb90`) gets `Region_PixelCount` bytes from `operator new` to save it in ([the view shake](#the-view-shake)).
 
 It does not set the current view `+0x10`, which ES2's sets to −1 ([Open](#open)). `Sim_StartMission` then calls `CockpitView_SetView` with view 1 and then view 0, ES2's order ([both canopies resident](../../retail/simulation/cockpit-views.md#heads-down-pan--cockpitview_stepviewtransition-0042a9c0)).
 
 **`CockpitViewManager_StaticInit` (`00024c28`)**, the module's static initializer (the dword at `000adc1c`), with no frame: `__vec_ctor` of the four 32-byte `CockpitVueRecords` with `CockpitVueRecord_ElementCtor` (`00024cc4`, by its padding entry `00024cc2`), which allocates `0x20` bytes when given none and returns the record; and the two static regions, `CockpitShakeStripRegion` and `ExternalView_ClipRegion`, each given the vtables `000926ee`, `00092712`, `0009273a` and `00092762` in turn and 0 at `+4`, the region type. **`CockpitViewManager_StaticDtor` (`00024c90`)**, its exit routine (the dword at `000adcac`), stores the vtables back in reverse order on both. ES2's (`0042db40`, `0042dc40`) count destructors where ES1's store vtables, and ES2's initializer also stores the rect {0, 210, 320, 240} at `0049ac54`, which ES2's constructor shifts.
+
+### The color scheme
+
+**Each of the eight HERCs the player can pilot paints its cockpit in colors of its own, taken from `dpl\cockpit` into the live palette when the cockpit is built.** The scheme *s* is the manager's `+0x23`, the chassis type number 0 to 7 (`ROADRUNN` to `COLOSSUS`, [which files](../formats/chassis-dat.md#which-files)), or the `-C` chassis's index. `CockpitViewManager_LoadViews`, after `Cockpit_LoadPanel`, with *e* the colors of `CockpitPaletteSingleton` (`000925f0`, its dword `+8`, four bytes an entry, [the layout](../../retail/formats/dpl-palette.md#layout)):
+
+1. `Palette_InstallRange`(*e* + 32*s*, 16, `0x20`): live entries `0x20`–`0x2f` take `dpl\cockpit` entries 32*s* to 32*s* + 15;
+2. `Palette_InstallRange`(*e* + 32*s* + 16, 16, `0x40`): live entries `0x40`–`0x4f` take entries 32*s* + 16 to 32*s* + 31;
+3. `Palette_InstallRange`(&*c*, 1, `0x40`), *c* being `Palette_GetEntry`(the `int16` `CockpitScheme_ColorIndices` (`000925dc`)[*s*]) of the live palette after steps 1 and 2: live entry `0x40` is overwritten with the color of the live entry the table names;
+4. `Palette_FlushDirtyRange`, which sends the changed entries to the display ([the upload](../rendering/palette.md#differences-from-es2));
+5. slot `+0x1c` of the `dpl\cockpit` palette with 3, its destructor, which in `GLPalette`'s table (`0009b3b6`) is `GLPalette_Dtor` (`00069258`): the colors and the palette are freed. `CockpitPaletteSingleton` keeps the freed pointer.
+
+`Palette_InstallRange` (`00027e98`), (source, count, base), copies *count* colors to the live palette from entry *base* and widens the dirty range over them; `Palette_GetEntry` (`00027f54`), (index), returns the live palette's color at the `int16` index ([the palette module](../rendering/palette.md)).
+
+`CockpitScheme_ColorIndices` holds eight words, `0x2c`, `0x25`, `0x2d`, `0x27`, `0x2d`, `0x2d`, `0x2d`, `0x28`, each inside step 1's range, so entry `0x40` becomes `dpl\cockpit` entry 32*s* + the word − `0x20`:
+
+| *s* | Chassis | `0x20`–`0x2f` | `0x40`–`0x4f` | `0x40` |
+|---|---|---|---|---|
+| 0 | `ROADRUNN` | 0–15 | 16–31 | 12 |
+| 1 | `GUNSLING` | 32–47 | 48–63 | 37 |
+| 2 | `RAPTOR` | 64–79 | 80–95 | 77 |
+| 3 | `TOMAHAWK` | 96–111 | 112–127 | 103 |
+| 4 | `PATRIOT` | 128–143 | 144–159 | 141 |
+| 5 | `PANTHER` | 160–175 | 176–191 | 173 |
+| 6 | `HERCULES` | 192–207 | 208–223 | 205 |
+| 7 | `COLOSSUS` | 224–239 | 240–255 | 232 |
+
+The eight schemes read `dpl\cockpit` entries 0 to 255 between them. For a type above 7 the word read is past the table's end, in `CockpitViewShakeArmed` and the globals after it. ES2's installs one window of 24 colors at entry 42 from entry 32 + 24*s*, its scheme being the type record's file offset 80 ([ES2's palette](../../retail/rendering/cockpit-canopy-palette.md#palette)); ES1's files hold 0 at offset 80 and its scheme is the type number.
 
 ## Loading and freeing the canopy art
 
@@ -166,6 +193,7 @@ The next object file's: `CockpitClipRegions_Load` (`00024d44`); `GLBase_DtorClip
 | | Address |
 |---|---|
 | `CockpitPaletteSingleton`, the `dpl\cockpit` palette | `000925f0` |
+| `CockpitScheme_ColorIndices`, eight `int16`, [the color scheme](#the-color-scheme) | `000925dc` |
 | `CockpitOverride_Index` (`int16`) and `CockpitOverride_Name` | `000925f4`, `000925f8` |
 | `CockpitViewShakeArmed`, `CockpitShakeReseedAfterSlide` (bytes) | `000925ec`, `000925ed` |
 | `CockpitViewCanvasOrigin`, the current view's canvas origin, two `int32` | `000afa9c` |

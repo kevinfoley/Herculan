@@ -1277,6 +1277,21 @@
       }
     },
     {
+      "address": "00002d18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Structure_DrawWithDetailBias",
+      "description": "(object), its argument removed by this function: TSDetailPart_SetBias (000530a4)(g_TSDetailBiasForStructures (000bc198)), Shape_DrawAtDetailLevel (00002b30)(object), TSDetailPart_SetBias(0). Slot +4 of the three structure tables 00090522, 0009059e and 0009061a, which 00003cbc stores. ES2's Structure_DrawWithDetailBias (DBSIM 004034f4).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
+      "verified": {
+        "bytes": "00002d18+33",
+        "sha1": "b0a41e918157",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0000441c",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -1877,6 +1892,21 @@
       }
     },
     {
+      "address": "000065c4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Debris_Draw",
+      "description": "(piece), its argument removed by this function: TSDetailPart_SetBias (000530a4)(the piece's dword +0x4a), SimObject_InstallModelTransform (00001854)(piece), the shape instance +0x2e's slot +0x20, TSDetailPart_SetBias(0). Slot +4 of the debris table 000908e6, which 00006168 and 00006210 store. ES2's Debris_Draw (DBSIM 00408e6c), whose bias is at +0x50.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
+      "verified": {
+        "bytes": "000065c4+46",
+        "sha1": "f74da6fed11a",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "000065f4",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -2462,12 +2492,27 @@
       }
     },
     {
+      "address": "0000a308",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Shape_TranslatePointLists",
+      "description": "(offset, part) in stack order, its arguments removed by this function: adds the int16 triple at offset to the points of part's tree. Takes the part's class tag from its vtable +4 and finds it among the eleven dwords at Shape_TranslatePointListsTags (00090e08) with REPNE SCASD, jumping through the eleven targets after them: 0x1e0005, 0x1e0003 and 0x140005 return; 0x14000a and 0x140014 (TSBSPGroup, TSGroup) memset one byte per point (count +0x22) of Shape_TranslatePointMarks (000af178) to 0, mark for each poly (pointer array +0x1c, count +0x26) whose tag is one of the five at Shape_TranslatePointPolyTags (00090e60) its point +6 and the +8 entries of the int16 index list +0x10 from its +0xa, and add offset's x, y and z to each marked point of the list at +0x14, 6 bytes each; 0x140006 calls itself with the same arguments; 0x140015, 0x140008, 0x140007, 0x14000b and 0x14000c recurse into each child (pointer array +0x12, count +0x10); any other tag returns. The cases are jump targets inside the function, 0000a333-0000a4bf, ending at its RET 8. ES2's Shape_TranslatePointLists (DBSIM 0040dd4c), whose tag comes from vtable +0 and whose arguments are (part, offset). es2_xref finds calls from WeaponMount_CtorBase (0000a530) and from itself.",
+      "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#moving-the-model-to-its-mount-point--shape_translatepointlists-0000a308",
+      "verified": {
+        "bytes": "0000a308+449",
+        "sha1": "98159d5eefa6",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "0000a4cc",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_RenderWithDetailBias",
-      "description": "(mount), callee-cleaned: slot +0x20 of the mount vtables: TSDetailPart_SetBias (000530a4)(the dword at 000bc2b8), ConfigPart_Render (00002718)(mount), TSDetailPart_SetBias(0). ES2's WeaponMount_RenderWithDetailBias (DBSIM 0040ded8), slot +0x1c.",
+      "description": "(mount), callee-cleaned: slot +0x20 of the mount vtables: TSDetailPart_SetBias (000530a4)(the dword at g_TSDetailBiasForMounts (000bc2b8)), ConfigPart_Render (00002718)(mount), TSDetailPart_SetBias(0). ES2's WeaponMount_RenderWithDetailBias (DBSIM 0040ded8), slot +0x1c.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#the-slots; ES1DBSIM disassembly at 0000a4cc",
       "verified": {
         "bytes": "0000a4cc+33",
@@ -2527,7 +2572,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_CtorBase",
-      "description": "(mount, projectile record, template, hardpoint record, machine) in stack order, callee-cleaned: with the hardpoint's byte +6 below 4, the model is WeaponMount_ShapeForMountingCode (0000bd70)(template, that byte), else 0. Stores the table copies 00090e8a, 00090eae and 00090eda, runs ShapeInstance_CtorCellFrames(mount + 0x10, model), stores 00090f0e and then WeaponMountBaseVtableMountsCopy (00090f42); keeps the hardpoint record at +0x18, the template at +0x1c and the projectile record at +0x20; +0x5b and +0x5f get ShapeInst_AddThread (00001f48)(machine, the hardpoint's dword +2 or +4), or 0 when its int16 +2 or +4 is negative; with a model at +0x10, passes WeaponMount_MuzzleOffset (0000b918)(mount) and the model to 0000a308. Then zeroes 6 bytes at +0x24 and at +0x2a, the int16 +0x31, 8 bytes at +0x33 and at +0x3b and 0x18 bytes at +0x43, and sets +0x4c to 1. ES2's WeaponMount_CtorBase (DBSIM 0040df30), which also writes the refire scale 0x400 at +0x63.",
+      "description": "(mount, projectile record, template, hardpoint record, machine) in stack order, callee-cleaned: with the hardpoint's byte +6 below 4, the model is WeaponMount_ShapeForMountingCode (0000bd70)(template, that byte), else 0. Stores the table copies 00090e8a, 00090eae and 00090eda, runs ShapeInstance_CtorCellFrames(mount + 0x10, model), stores 00090f0e and then WeaponMountBaseVtableMountsCopy (00090f42); keeps the hardpoint record at +0x18, the template at +0x1c and the projectile record at +0x20; +0x5b and +0x5f get ShapeInst_AddThread (00001f48)(machine, the hardpoint's dword +2 or +4), or 0 when its int16 +2 or +4 is negative; with a model at +0x10, passes WeaponMount_MuzzleOffset (0000b918)(mount) and the model to Shape_TranslatePointLists (0000a308). Then zeroes 6 bytes at +0x24 and at +0x2a, the int16 +0x31, 8 bytes at +0x33 and at +0x3b and 0x18 bytes at +0x43, and sets +0x4c to 1. ES2's WeaponMount_CtorBase (DBSIM 0040df30), which also writes the refire scale 0x400 at +0x63.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#the-constructors; ES1DBSIM disassembly at 0000a530",
       "verified": {
         "bytes": "0000a530+564",
@@ -3427,7 +3472,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WeaponMount_Destroy",
-      "description": "(mount, throw, machine) in stack order, callee-cleaned: with the destroyed byte +0x49 clear, clears the model +0x10, sets +0x49, and transforms WeaponMount_MuzzleOffset (0000b918)(mount) by the hardpoint bone's node frame (slot +0x24 of the shape instance under the machine's +0x2e) concatenated with Context_GetTransform(machine + 6). With throw non-zero and the hardpoint's byte +6 below 4, it takes the point +0x14 of the machine's slot +0x28 answer through Context_GetTransform(machine + 6), a Math_EulerToward bearing from it to the mount point, creates 00006168(0, the mount point, WeaponModels_Mechwpn2Roots (000bc2c8)[the template's int16 +0x26]), stores the dword at 000bc2b8 in its +0x4a, calls 00006378(it, the bearing's third int16, the hardpoint record's dword +0x18), and gives it the frame's angles at +6 and 0 at +0x2c. ES2's WeaponMount_Destroy (DBSIM 0040f57c), which throws a visible gun whatever its third argument and takes that argument as the debris' lifetimes. es2_xref.py finds calls from Mech_ComponentDamageWrite (00013250) (throw 0) and Mech_DirectFireHitTest (00013b44) (throw 1).",
+      "description": "(mount, throw, machine) in stack order, callee-cleaned: with the destroyed byte +0x49 clear, clears the model +0x10, sets +0x49, and transforms WeaponMount_MuzzleOffset (0000b918)(mount) by the hardpoint bone's node frame (slot +0x24 of the shape instance under the machine's +0x2e) concatenated with Context_GetTransform(machine + 6). With throw non-zero and the hardpoint's byte +6 below 4, it takes the point +0x14 of the machine's slot +0x28 answer through Context_GetTransform(machine + 6), a Math_EulerToward bearing from it to the mount point, creates 00006168(0, the mount point, WeaponModels_Mechwpn2Roots (000bc2c8)[the template's int16 +0x26]), stores the dword at g_TSDetailBiasForMounts (000bc2b8) in its +0x4a, calls 00006378(it, the bearing's third int16, the hardpoint record's dword +0x18), and gives it the frame's angles at +6 and 0 at +0x2c. ES2's WeaponMount_Destroy (DBSIM 0040f57c), which throws a visible gun whatever its third argument and takes that argument as the debris' lifetimes. es2_xref.py finds calls from Mech_ComponentDamageWrite (00013250) (throw 0) and Mech_DirectFireHitTest (00013b44) (throw 1).",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#losing-a-mount; ES1DBSIM disassembly at 0000b968",
       "verified": {
         "bytes": "0000b968+387",
@@ -7882,13 +7927,13 @@
       "type": "function",
       "confidence": "high",
       "name": "Shape_RemapTransformIds",
-      "description": "(nodeCount, map, part) in stack order, callee-cleaned: takes the part's class tag from its vtable +4, finds it among the ten tags at 00091e14 (0x140005, 0x1e0005, 0x140006 return; 0x140014, 0x140015 and 0x14000b each have a handler; 0x1e0003, 0x140008, 0x140007 and 0x14000c share one) and jumps through the handler table after them; returns for any other tag. The handlers (00019aef to 00019b93) are undefined bytes in Ghidra and were not read. ES2's Shape_RemapTransformIds (DBSIM 0041ff88), whose tag comes from vtable +0 and whose arguments are (part, map, nodeCount).",
+      "description": "(nodeCount, map, part) in stack order, its arguments removed by this function: ES2's Shape_RemapTransformIds (DBSIM 0041ff88), whose tag comes from vtable +0 and whose arguments are (part, map, nodeCount). Takes the part's class tag from its vtable +4, finds it among the ten tags at Shape_RemapTransformIdsTags (00091e14) with REPNE SCASD and jumps through the ten targets after them: 0x140005, 0x1e0005 and 0x140006 return; 0x140014 (TSGroup) passes (map, part+4) to Shape_RemapTransformId (00019aa0) and returns; 0x140015 (TSBSPPart) passes each int16 of the array +0x1c (count +0x16) that is above 0, below nodeCount and maps to a byte above -1, then visits the children; 0x14000b (TSCellAnimPart) passes part+4, then visits the children; 0x1e0003, 0x140008, 0x140007 and 0x14000c visit the children only, calling itself (entered at its padding 00019ac3) with nodeCount, map and each pointer of the array +0x12 (count +0x10); any other tag returns. The cases are jump targets inside the function, 00019aef-00019b93, ending at its RET 0xc.",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load",
       "verified": {
         "bytes": "00019ac4+217",
         "sha1": "1890ade28d1a",
         "scope": "body",
-        "via": "disasm"
+        "via": "both"
       }
     },
     {
@@ -8097,6 +8142,21 @@
       "verified": {
         "bytes": "0001a188+65",
         "sha1": "3fd813513b83",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0001ac34",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Flyer_Draw",
+      "description": "(flyer), its argument removed by this function: TSDetailPart_SetBias (000530a4)(g_TSDetailBiasForFlyers (000bc460)), Shape_DrawAtDetailLevel (00002b30)(flyer), TSDetailPart_SetBias(0). Slot +4 of the flyer table 00091fea, which 0001ac58 and 0001af3c store. ES2's Flyer_Draw (DBSIM 004215cc).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
+      "verified": {
+        "bytes": "0001ac34+33",
+        "sha1": "4c3e2ab8cdd8",
         "scope": "body",
         "via": "both"
       }
@@ -9997,13 +10057,13 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitViewManager_LoadViews",
-      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array CockpitVueRecords (000afaa4), whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls CockpitCanopy_LoadViewBitmap (00022184)(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores CockpitView_Ctor (0002ae5c)(0, +0x25) at +0x1b and calls Cockpit_LoadPanel (0002c9d8) with it and name; with the scheme word +0x23, Palette_InstallRange (00027e98)s 16 colours at index 0x20 from the dword +8 of CockpitPaletteSingleton (000925f0) plus scheme x 0x80, 16 at 0x40 from 0x40 bytes further, and one at 0x40 from Palette_GetEntry (00027f54) of the word 000925dc[scheme]; calls Palette_FlushDirtyRange (00027f74), and the slot +0x1c of CockpitPaletteSingleton (000925f0) with 3 when it is set; sets ExternalView_ClipBlock (000afb94) to 1 and 000afb98 to 000afd9c, copies the dwords ExternalView_Rect (000afb3c)-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from CockpitViewManager_Ctor (00021dd4), through the padding before the prologue.",
-      "source": "Herculan/docs/es1/formats/hd-ed-clip-regions.md#which-files",
+      "description": "(manager, name) in stack order, callee-cleaned: opens vue\\<name> (ResourcePath_BuildFolderName (00060698) on 0009266c, VolRStream_CtorFromPath (000567cc)), reads the int32 view count into +0 through the read slot +0x1c and count x 32 bytes with VolRStream_Read (00056d70) into the array CockpitVueRecords (000afaa4), whose address it stores at +4; allocates 0x10 bytes for +8 and 0x810, four 0x204-byte region blocks, for +0xc; per view i writes i with ltoa (00064720) over the third character of the string edg (00092670), making the folder ed<i>, loads ed<i>\\<name> into block i with CockpitClipRegions_Load (00024d44), then calls CockpitCanopy_LoadViewBitmap (00022184)(manager, i), or with g_LowMemory (000bda98) set clears slot i of +8 instead. Then stores CockpitView_Ctor (0002ae5c)(0, +0x25) at +0x1b and calls Cockpit_LoadPanel (0002c9d8) with it and name; with s the scheme word +0x23 and e the dword +8 of CockpitPaletteSingleton (000925f0), calls Palette_InstallRange (00027e98) with (e + s x 0x80, 16, 0x20), then (e + s x 0x80 + 0x40, 16, 0x40), then (the address of c, 1, 0x40), c being the colour Palette_GetEntry (00027f54) returns for the int16 CockpitScheme_ColorIndices (000925dc)[s], so entry 0x40 is overwritten; calls Palette_FlushDirtyRange (00027f74), and when CockpitPaletteSingleton is set its slot +0x1c with 3, leaving the pointer as it was; sets ExternalView_ClipBlock (000afb94) to 1 and 000afb98 to 000afd9c, copies the dwords ExternalView_Rect (000afb3c)-000afb48 to 000afda0-000afdac, and destroys the stream with VolRStream_Dtor (00056824). es2_xref finds one call, from CockpitViewManager_Ctor (00021dd4), through the padding before the prologue.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-color-scheme",
       "verified": {
         "bytes": "00021fb0+465",
         "sha1": "f607fb7bcc52",
         "scope": "body",
-        "via": "decompile"
+        "via": "both"
       }
     },
     {
@@ -17447,6 +17507,21 @@
       }
     },
     {
+      "address": "0004adb0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_LimitDetailInLowMemory",
+      "description": "(value), frameless, its argument removed by this function: the handler of preferences option 6. With g_LowMemory (000bda98) set and the option byte 000bd568 above 160: while the byte 000b1734 is set, Prefs_SetOption (0004a914)(1, 160, 6); otherwise 0004a900(6), the panel 00046efc(0, 0, 1, 0x11), its +0x314's slot +0xc on it, and 000472b0(panel, 3). It reads the option from 000bd568 and not its argument. 0004afe8 registers it with Prefs_SetHandler (0004ac4c) for option 6.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
+      "verified": {
+        "bytes": "0004adb0+91",
+        "sha1": "770f2abe2765",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
       "address": "0004b340",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -20657,6 +20732,21 @@
       }
     },
     {
+      "address": "00057c08",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ShapeDetail_ApplyDetailSetting",
+      "description": "(value), its argument removed by this function: the detail setting. Walks ShapeDetail_ScaleKeys (00096bc4: 50, 100, 150, 200, 300) and stores at g_ShapeDetailSizeScaleQ10 (000903e0) the slot of the first key value is at most of ShapeDetail_ScaleValues (00096bd0), or of ShapeDetail_ScaleValuesLowMemory (00096c0c) while g_LowMemory (000bda98) is set; then walks ShapeDetail_BiasKeys (00096bdc, the same keys) and stores that slot of ShapeDetail_RootBiasValues (00096be8) at g_ShapeDetailBias (000903e2), of ShapeDetail_MountBiasValues (00096bf4) at g_TSDetailBiasForMounts (000bc2b8), and of ShapeDetail_ObjectBiasValues (00096c00) at g_TSDetailBiasForStructures (000bc198) and g_TSDetailBiasForFlyers (000bc460), each from its LowMemory table (ShapeDetail_RootBiasValuesLowMemory (00096c18), ShapeDetail_MountBiasValuesLowMemory (00096c24), ShapeDetail_ObjectBiasValuesLowMemory (00096c30)) while g_LowMemory is set. A value above 300 stores nothing. es2_xref finds calls from Sim_RenderFrame (00059c08) and Sim_StartMission (0005a9dc), each passing the option byte 000bd568. ES2's ShapeDetail_ApplyHercDetailSetting (DBSIM 0045d474), whose keys are 0 to 4 and which has no structure or flyer output or low-memory tables.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08",
+      "verified": {
+        "bytes": "00057c08+235",
+        "sha1": "85566e5469ab",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00058d94",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -21007,7 +21097,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_RenderFrame",
-      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, 00057c08(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; ObjList_RebuildFrame (00020de0)(); Cockpit_DrawFrame (0002cf28)(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view ViewObjectPtr (000b5b8a)), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); Player_PerFrameCockpitUpdate (000155a8)(LocalPlayerMech (000b5b86)); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
+      "description": "No arguments: the frame draw. Subsystem_RunPhase(5); when the option byte 000bd568 (Prefs option 6) differs from its copy 000b5b74, ShapeDetail_ApplyDetailSetting (00057c08)(option) and the copy is updated; adds CockpitView_GetShakeOffset's pair into the render context 000b5b6e's +0x220/+0x224; ObjList_RebuildFrame (00020de0)(); Cockpit_DrawFrame (0002cf28)(CockpitViewInstance); when the view manager's +0x10 is not 1 or its byte +0x18 is set, Raster_InstallViewProjection (0005bf68)(view ViewObjectPtr (000b5b8a)), Raster_SetModelTransform(0), Scene_DrawTerrainPass (00025b68)(view) and ObjList_DrawFrameObjects (00021008)(000b5b65, view); Player_PerFrameCockpitUpdate (000155a8)(LocalPlayerMech (000b5b86)); slot +0xc of the vtable at +0x76 of CockpitViewInstance's +0x1f1; slot +0x10 of CockpitView_GetSquadMessagePort's port; then takes the shake offset back out. ES2's Sim_RenderFrame (DBSIM 0045fb9c) has the same order with more steps.",
       "source": "ES1DBSIM decompile at 00059c08, against ES2's Sim_RenderFrame",
       "verified": {
         "bytes": "00059c08+280",
@@ -21322,7 +21412,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_StartMission",
-      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; 0004e498; with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks 00094d80 and 00094d84 = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from 00057640; DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; 000441cc; maybe_CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), 0006a824(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with 000b5b67 set), +0x34 = +0x88, +0x3c = 3 without 000b5b67; ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and 00057c08(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, maybe_CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
+      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; 0004e498; with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks 00094d80 and 00094d84 = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from 00057640; DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; 000441cc; maybe_CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), 0006a824(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with 000b5b67 set), +0x34 = +0x88, +0x3c = 3 without 000b5b67; ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, maybe_CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
       "source": "ES1DBSIM decompile at 0005a9dc",
       "verified": {
         "bytes": "0005a9dc+2808",
@@ -30409,7 +30499,7 @@
       "type": "data",
       "confidence": "high",
       "name": "g_ShapeDetailSizeScaleQ10",
-      "description": "int16, 1024 in the image: the Q10 scale Shape_DrawAtDetailLevel (00002b30) puts on a shape's projected size before its threshold walk. A search of the disassembly for the address finds that read and one store, in 00057c08. ES2's g_ShapeDetailSizeScaleQ10.",
+      "description": "int16, 1024 in the image: the Q10 scale Shape_DrawAtDetailLevel (00002b30) puts on a shape's projected size before its threshold walk. A search of the disassembly for the address finds that read and one store, in ShapeDetail_ApplyDetailSetting (00057c08). ES2's g_ShapeDetailSizeScaleQ10.",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-lod-root--shape_drawatdetaillevel-00002b30; ES1DBSIM image at 000903e0"
     },
     {
@@ -30418,7 +30508,7 @@
       "type": "data",
       "confidence": "high",
       "name": "g_ShapeDetailBias",
-      "description": "int16, 0 in the image: the root index Shape_DrawAtDetailLevel (00002b30) starts its walk at, held under the root count. A search of the disassembly for the address finds that read and one store, in 00057c08. ES2's g_ShapeDetailBias.",
+      "description": "int16, 0 in the image: the root index Shape_DrawAtDetailLevel (00002b30) starts its walk at, held under the root count. A search of the disassembly for the address finds that read and one store, in ShapeDetail_ApplyDetailSetting (00057c08). ES2's g_ShapeDetailBias.",
       "source": "Herculan/docs/es1/simulation/object-classes.md#the-lod-root--shape_drawatdetaillevel-00002b30; ES1DBSIM image at 000903e2"
     },
     {
@@ -30483,6 +30573,24 @@
       "name": "maybe_ComponentDependencyList",
       "description": "Pointer to the 6-byte list Component_LinkMaxRefData (00009c28) makes on its first call: an array of 0x14 bytes at +0, the capacity byte 10 at +4 and the count byte at +5. ES2's maybe_ComponentDependencyList, whose capacity is 20; its ES1 readers are unread.",
       "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-damage-header; ES1DBSIM image at 00090e04"
+    },
+    {
+      "address": "00090e08",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shape_TranslatePointListsTags",
+      "description": "Eleven class tags (0x1e0005, 0x1e0003, 0x140005, 0x14000a, 0x140014, 0x140006, 0x140015, 0x140008, 0x140007, 0x14000b, 0x14000c) followed by their eleven case targets inside Shape_TranslatePointLists (0000a308), which searches them with REPNE SCASD.",
+      "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#moving-the-model-to-its-mount-point--shape_translatepointlists-0000a308"
+    },
+    {
+      "address": "00090e60",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shape_TranslatePointPolyTags",
+      "description": "Five poly class tags (0x140001, 0x140002, 0x140003, 0x140009, 0x14000f) followed by five targets, all 0000a393, the case of Shape_TranslatePointLists (0000a308) that marks a poly's points.",
+      "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#moving-the-model-to-its-mount-point--shape_translatepointlists-0000a308"
     },
     {
       "address": "00090f42",
@@ -30800,6 +30908,15 @@
       "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load"
     },
     {
+      "address": "00091e14",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shape_RemapTransformIdsTags",
+      "description": "Ten class tags (0x140005, 0x1e0005, 0x140006, 0x140014, 0x140015, 0x14000b, 0x1e0003, 0x140008, 0x140007, 0x14000c) followed by their ten case targets inside Shape_RemapTransformIds (00019ac4), which searches them with REPNE SCASD.",
+      "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load"
+    },
+    {
       "address": "000922c4",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -30852,6 +30969,15 @@
       "name": "ObjList_SortNodes",
       "description": "Pointer to the 0x1d-byte sort nodes ObjList_AllocSortNodes (00021560) allocates; ObjList_SortAndDraw (00021d04) draws the tree from the first. ObjList_FreeSortNodes (000215c8) frees them. ES2's ObjList_SortNodes (DBSIM 0049ac40).",
       "source": "Herculan/docs/es1/simulation/terrain.md#globals"
+    },
+    {
+      "address": "000925dc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "CockpitScheme_ColorIndices",
+      "description": "Eight int16 {0x2c, 0x25, 0x2d, 0x27, 0x2d, 0x2d, 0x2d, 0x28}, one per cockpit color scheme: the live palette entry whose color CockpitViewManager_LoadViews (00021fb0) copies into entry 0x40 after installing the scheme.",
+      "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-color-scheme"
     },
     {
       "address": "000925ec",
@@ -31781,6 +31907,96 @@
       "source": "Herculan/docs/es1/formats/streams.md#volrstream"
     },
     {
+      "address": "00096bc4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShapeDetail_ScaleKeys",
+      "description": "Five int16 keys {50, 100, 150, 200, 300} and a zero word: ShapeDetail_ApplyDetailSetting (00057c08) takes the slot of the first its value is at most for the LOD scale.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
+      "address": "00096bd0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShapeDetail_ScaleValues",
+      "description": "Five int16 {2000, 2000, 2000, 2000, 2000} and a zero word: g_ShapeDetailSizeScaleQ10's value per slot of ShapeDetail_ScaleKeys (00096bc4) while g_LowMemory is clear.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
+      "address": "00096bdc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShapeDetail_BiasKeys",
+      "description": "Five int16 keys {50, 100, 150, 200, 300} and a zero word: ShapeDetail_ApplyDetailSetting (00057c08) takes the slot of the first its value is at most for the root bias and the three detail-part biases.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
+      "address": "00096be8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShapeDetail_RootBiasValues",
+      "description": "Five int16 {4, 3, 2, 1, 0} and a zero word: g_ShapeDetailBias's value per slot of ShapeDetail_BiasKeys (00096bdc) while g_LowMemory is clear.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
+      "address": "00096bf4",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShapeDetail_MountBiasValues",
+      "description": "Five int16 {2, 2, 1, 1, 0} and a zero word: g_TSDetailBiasForMounts's value per slot of ShapeDetail_BiasKeys (00096bdc) while g_LowMemory is clear.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
+      "address": "00096c00",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShapeDetail_ObjectBiasValues",
+      "description": "Five int16 {2, 2, 1, 1, 0} and a zero word: the value of g_TSDetailBiasForStructures and g_TSDetailBiasForFlyers per slot of ShapeDetail_BiasKeys (00096bdc) while g_LowMemory is clear.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
+      "address": "00096c0c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShapeDetail_ScaleValuesLowMemory",
+      "description": "Five int16 {2000, 3000, 4000, 4000, 4000} and a zero word: ShapeDetail_ScaleValues' counterpart while g_LowMemory is set.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
+      "address": "00096c18",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShapeDetail_RootBiasValuesLowMemory",
+      "description": "Five int16 {2, 1, 0, 0, 0} and a zero word: ShapeDetail_RootBiasValues' counterpart while g_LowMemory is set.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
+      "address": "00096c24",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShapeDetail_MountBiasValuesLowMemory",
+      "description": "Five int16 {1, 1, 0, 0, 0} and a zero word: ShapeDetail_MountBiasValues' counterpart while g_LowMemory is set.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
+      "address": "00096c30",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ShapeDetail_ObjectBiasValuesLowMemory",
+      "description": "Five int16 {2, 1, 1, 1, 1} and a zero word: ShapeDetail_ObjectBiasValues' counterpart while g_LowMemory is set.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
       "address": "00096f08",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -32022,6 +32238,15 @@
       "name": "WeaponMount_ShotEuler",
       "description": "The firing angles WeaponMount_PrepareShot (0000add4) extracts from the shot transform with Transform_RotationToEuler, passed to the fire dispatches' shot functions. ES2's 004a98e4.",
       "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#firing"
+    },
+    {
+      "address": "000af178",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Shape_TranslatePointMarks",
+      "description": "One byte per point of the group Shape_TranslatePointLists (0000a308) is moving: cleared for the group's point count, set for each point a poly of a listed class uses. ES2's 004a98f0.",
+      "source": "Herculan/docs/es1/simulation/weapon-mount-classes.md#moving-the-model-to-its-mount-point--shape_translatepointlists-0000a308"
     },
     {
       "address": "000af1dc",
@@ -33212,6 +33437,15 @@
       "source": "Herculan/docs/es1/formats/bases-dat.md#the-load"
     },
     {
+      "address": "000bc198",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_TSDetailBiasForStructures",
+      "description": "int32: the TSDetailPart bias Structure_DrawWithDetailBias (00002d18) sets around a structure's draw. es2_xref --decode finds that read and one write, in ShapeDetail_ApplyDetailSetting (00057c08). ES2's g_TSDetailBiasFromStructureDetail in role.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
+    },
+    {
       "address": "000bc1b0",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -33255,6 +33489,15 @@
       "name": "DmgTable_Array",
       "description": "Pointer to the 12-byte .DMG slots DmgTable_Alloc (00009ab4) allocates and Damage_LoadMechDmgFile (00009a2c) fills.",
       "source": "Herculan/docs/es1/formats/dmg-damage-file.md#the-load; ES1DBSIM image at 000bc2b0"
+    },
+    {
+      "address": "000bc2b8",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_TSDetailBiasForMounts",
+      "description": "int32: the TSDetailPart bias WeaponMount_RenderWithDetailBias (0000a4cc) sets around a fitted weapon's draw and WeaponMount_Destroy (0000b968) gives a thrown gun. es2_xref --decode finds those two reads and one write, in ShapeDetail_ApplyDetailSetting (00057c08). ES2's g_TSDetailBiasFromHercDetail.",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
     },
     {
       "address": "000bc2bc",
@@ -33435,6 +33678,15 @@
       "name": "g_MechTextureGroupSlots",
       "description": "Four dwords, the banks dba\\light, medium, heavy and enemy that Mech_LoadResources loads when g_LowMemory (000bda98) is 0; MechType_InitOne stores the one a chassis' texture group (record +0x96) picks at each root's +0x26. ES2's g_MechTextureGroupSlots (DBSIM 004a9df6) is seven 8-byte slots whose address is stored instead.",
       "source": "Herculan/docs/es1/formats/chassis-dat.md#the-load"
+    },
+    {
+      "address": "000bc460",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "g_TSDetailBiasForFlyers",
+      "description": "int32: the TSDetailPart bias Flyer_Draw (0001ac34) sets around a flyer's draw. es2_xref --decode finds that read and one write, in ShapeDetail_ApplyDetailSetting (00057c08).",
+      "source": "Herculan/docs/es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08"
     },
     {
       "address": "000bc476",
