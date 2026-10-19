@@ -10,7 +10,7 @@ namespace Herculan.Engine.Editor;
 /// editor shows a mission loaded in training mode, a practice mission or one played as <c>INSTANT ACTION</c>, on the theater and by the time
 /// of day its own row 2 sets (<see cref="OwnWorld"/>) where the launch writes theater 1 and the practice screen's time of
 /// day over them (docs/retail/formats/script-dat.md#the-training-fields): a departure from <c>INSTANT ACTION</c> the user chose, which
-/// the planned menu for playing user-made missions honours (docs/herculan/handoff-editor-authoring.md#mission-level). A campaign mission is
+/// the planned menu for playing user-made missions honours (docs/herculan/handoff-editor-viewing.md#theater-and-time-of-day). A campaign mission is
 /// shown as the launch loads it, on its stage's theater by its own time of day.
 ///
 /// <para>The launch is unchanged and its handoff on disk keeps the launch's header until

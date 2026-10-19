@@ -7,7 +7,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// A mission held as its <c>.MSN</c> and <c>.ENG</c>, with the <c>script.dat</c> and <c>mission.str</c> generated from
 /// them (<see cref="Regenerate"/>) and the provenance that maps each generated record back to the <c>.MSN</c> records
 /// that supplied it. An edit writes the <c>.MSN</c> record that supplied the value and generates again; the design is
-/// docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document.
+/// docs/herculan/handoff-editor-document.md#holding-the-msn-as-the-document.
 ///
 /// <para>Every edit returns an <see cref="MsnEdit"/> holding the rows it changed, which <see cref="Undo"/> and
 /// <see cref="Redo"/> put back. Several edits made inside one <see cref="Change"/> come back as one, and are all put back
@@ -447,7 +447,7 @@ public sealed class MissionDocument {
 	/// Appends a copy of every record of row <paramref name="row"/>'s GUID <paramref name="guid"/>, in file order and each
 	/// under its own condition, under one new GUID, <paramref name="copy"/>: the row's largest plus one. The copy survives
 	/// and merges as the GUID does in every state. A copied record that draws a variant draws again, which moves every later
-	/// draw (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "Conditions and variants");
+	/// draw (docs/herculan/handoff-editor-document.md#conditions-and-variants);
 	/// row 15's records draw none in retail.
 	/// </summary>
 	public MsnEdit AppendCopy(int row, short guid, out short copy) {

@@ -46,7 +46,7 @@ public sealed record RosterDeleteCheck(bool InSquad, MsnNamers Namers, IReadOnly
 /// loses its row-15 records. Nothing is renumbered: <c>.MSN</c> refs name GUIDs and the
 /// generation resolves every index again. The variant alternatives a deleted record drew from are GUID <c>-1</c>
 /// records shared by every record drawing them, and stay. Removing a record that draws a variant moves every later
-/// draw (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "Conditions and variants").
+/// draw (docs/herculan/handoff-editor-document.md#conditions-and-variants).
 ///
 /// <para>A GUID with no record resolves to <c>-1</c> (<c>Msn_ResolveRow6Ref</c> (<c>00415b44</c>) and its siblings),
 /// so the delete is refused while an objective, an action or an order names the object, or names a group the delete

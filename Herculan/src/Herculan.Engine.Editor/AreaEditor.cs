@@ -19,7 +19,7 @@ internal sealed record AreaDeleteBlockers(string? Fixed, DeleteNamers Names) {
 /// history, through <see cref="TriggerAreaEditing"/>'s record edits on the mission's <c>.MSN</c>; the editor's state is then
 /// built again from the generated file (<see cref="MissionRebuild"/>), since a new area's records are exported last and a
 /// shape change or a delete adds or removes points, which moves every later point of block 1
-/// (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "The tools"). A corner, centre or radius
+/// (docs/herculan/handoff-editor-document.md#the-tools). A corner, centre or radius
 /// move is <see cref="PointMover"/>'s, which rebuilds nothing.
 ///
 /// <para>Areas are taken by their block-4 index, as the panels list them, and written as the row-9 GUID of the record that

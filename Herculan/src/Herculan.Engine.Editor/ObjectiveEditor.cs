@@ -6,7 +6,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Creates, edits and deletes the open mission's objectives, each edit one step of <see cref="PointMover"/>'s undo
 /// history, through <see cref="ObjectiveEditing"/>'s and <see cref="MissionTextEditing"/>'s record edits on the mission's
-/// <c>.MSN</c> and <c>.ENG</c> (docs/herculan/handoff-editor-mission-editing.md#in-place, "Objectives"). Every edit builds
+/// <c>.MSN</c> and <c>.ENG</c> (docs/herculan/handoff-editor-mission-logic.md#objectives). Every edit builds
 /// the editor's state again (<see cref="MissionRebuild"/>): block 12 changes, a create or a delete adds or removes a
 /// record, and a text edit changes <c>mission.str</c>.
 ///

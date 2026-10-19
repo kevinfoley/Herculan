@@ -8,7 +8,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// The campaign state the editor shows a mission in: the campaign flags its row-1 conditions test, as the load hands them
-/// in, and the load's random draws (docs/herculan/handoff-editor-mission-editing.md#in-place, "The campaign state"). A flag
+/// in, and the load's random draws (docs/herculan/handoff-editor-conditions.md#the-campaign-state). A flag
 /// typed in, or Draw again, which opens the mission again as its open loaded it with new draws
 /// (<see cref="MissionOpener.OpenAgain"/>), replaces the document's generation (<see cref="MissionDocument.SetGeneration"/>),
 /// writes the handoff's <c>mission.var</c> as the launch writes it for that generation, and builds the editor's state again

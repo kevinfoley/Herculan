@@ -3,8 +3,7 @@ namespace HercWorks.Core.Data.File.Msn;
 /// <summary>
 /// The least a mission needs to load, play and end cleanly, as an <c>.MSN</c> and its <c>.ENG</c>, for the mission
 /// editor's File &gt; New mission: the player's machine alone, on a route of two points, with one mandatory objective
-/// that is met when the player reaches the second (docs/herculan/handoff-editor-mission-editing.md#in-place,
-/// "New mission"). What DBSIM reads of each record is docs/retail/formats/script-dat.md's, and how a mission ends
+/// that is met when the player reaches the second (docs/herculan/handoff-editor-viewing.md#new-mission). What DBSIM reads of each record is docs/retail/formats/script-dat.md's, and how a mission ends
 /// docs/retail/simulation/mission-objectives.md's.
 ///
 /// <para>Every record copies one in a retail practice mission, cited where it is built, with the chosen theater,

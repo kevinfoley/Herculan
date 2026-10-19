@@ -40,7 +40,7 @@ internal sealed record DeleteBlockers(string? Fixed, DeleteNamers Object, IReadO
 /// mission's <c>.MSN</c>, which remove the object's records and the group it leaves empty and generate
 /// <c>script.dat</c> again; the editor's state is then built again from the generated file (<see cref="MissionRebuild"/>),
 /// since every later record of the object's block, and of block 11 when its group goes, moves down one
-/// (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "The tools").
+/// (docs/herculan/handoff-editor-document.md#the-tools).
 ///
 /// <para>What refuses a delete is <see cref="RosterDeletion"/>'s: an objective, an action or an order naming the object
 /// or the group it would leave empty, an action of its own it fires when engaged or defeated, and the player's squad.

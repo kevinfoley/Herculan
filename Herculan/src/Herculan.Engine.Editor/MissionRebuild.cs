@@ -14,7 +14,7 @@ namespace Herculan.Engine.Editor;
 /// step made in another campaign state (<see cref="IIndexedEdit"/>). Removing a record moves every
 /// later generated record of its block down one, and an add's records are exported last, so the indices the index, the
 /// scene objects' placements and the selection hold no longer name what they named
-/// (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "Regenerating on each edit").
+/// (docs/herculan/handoff-editor-document.md#rebuilding-after-an-edit).
 ///
 /// <para>A rebuild loads a <see cref="Mission"/> from the generated <c>script.dat</c> (<see cref="MissionLoader.Load(GameContent, ScriptDat, string)"/>)
 /// and stands each of its placements on a scene object: the one already built for the same <c>.MSN</c> record, matched

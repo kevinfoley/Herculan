@@ -44,8 +44,7 @@ public sealed record VariantTable(short Guid, short Key, short Bound, short Requ
 /// from, or just after the alternative it copies, and setting a record's table moves the table's alternatives read after it
 /// to just before it. A GUID <c>-1</c> record is never exported or merged, so no <c>script.dat</c> index moves.</item>
 /// <item>Making a table, setting a record's table and taking it away each change whether the record draws, which changes
-/// what every later draw comes out as (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document,
-/// "Conditions and variants").</item>
+/// what every later draw comes out as (docs/herculan/handoff-editor-document.md#conditions-and-variants).</item>
 /// </list>
 /// </summary>
 public static class VariantEditing {

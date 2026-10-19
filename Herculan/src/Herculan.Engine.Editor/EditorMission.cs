@@ -89,7 +89,7 @@ internal sealed class EditorMission {
 
 	/// <summary>
 	/// The mission as its <c>.MSN</c> and <c>.ENG</c>, which every edit writes; null for a plain <c>script.dat</c>, which
-	/// opens read-only (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document).
+	/// opens read-only (docs/herculan/handoff-editor-document.md#a-plain-scriptdat).
 	/// </summary>
 	public MissionDocument? Source { get; }
 

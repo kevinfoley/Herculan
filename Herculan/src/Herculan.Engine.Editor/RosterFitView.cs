@@ -9,7 +9,7 @@ namespace Herculan.Engine.Editor;
 
 /// <summary>
 /// In the view of a herc, flyer, structure or ground vehicle outside the player's squad, its type and a herc's weapon fit
-/// (docs/herculan/handoff-editor-mission-editing.md#in-place, "Variants"): a herc's chassis over every type of
+/// (docs/herculan/handoff-editor-roster.md#type-and-fit): a herc's chassis over every type of
 /// <c>nam\MECHS.NAM</c> with its mounts (<see cref="MachineFitView"/>, <see cref="MachineFitter"/>); a flyer's type over
 /// the flyers the Toolbox offers; a structure's or ground vehicle's within its kind (<see cref="UnitTypeCatalog.ChoicesFor"/>),
 /// each under the name the Toolbox lists it by (<see cref="RosterTypeEditor"/>).

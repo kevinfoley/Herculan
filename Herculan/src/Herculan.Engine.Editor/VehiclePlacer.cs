@@ -13,7 +13,7 @@ namespace Herculan.Engine.Editor;
 /// (<see cref="StructurePlacer"/>), where it stands as a building unless it is the group's first member
 /// (docs/retail/simulation/ground-vehicles.md#the-ground-vehicle-tick--0046a5d0). The editor's state is then built again
 /// from the generated file (<see cref="MissionRebuild"/>), which builds the vehicle's object for the record, and the vehicle
-/// is selected (docs/herculan/handoff-editor-mission-editing.md#in-place, "Adding ground vehicles"). A convoy is a structure
+/// is selected (docs/herculan/handoff-editor-roster.md#ground-vehicles). A convoy is a structure
 /// group whose first member is of a type <see cref="BaseObject.IsGroundVehicle"/> answers true for.
 /// </summary>
 internal sealed class VehiclePlacer {

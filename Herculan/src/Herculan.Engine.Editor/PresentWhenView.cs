@@ -9,7 +9,7 @@ namespace Herculan.Engine.Editor;
 /// it holds in the campaign state shown; each record's condition when the GUID's records differ; and notes on what the
 /// condition changes: what loses its reference to the record where it is absent, the variant picks a variant-keyed record
 /// moves, and the fields another record present only under its own condition supplies
-/// (docs/herculan/handoff-editor-mission-editing.md#in-place, "Present when"). Each choice is a set
+/// (docs/herculan/handoff-editor-conditions.md#present-when). Each choice is a set
 /// (<see cref="PresenceEditor"/>).
 /// </summary>
 internal sealed class PresentWhenView {

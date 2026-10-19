@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 /// through <see cref="HercGroups"/>'s record edits: in a new group of its own, standing on a route of one waypoint where it
 /// was put and hunting the player's squad, or joining the selected herc group. The editor's state is then built again from
 /// the generated file (<see cref="MissionRebuild"/>), which builds the herc's object for the record, and the herc is
-/// selected (docs/herculan/handoff-editor-mission-editing.md#in-place, "Adding hercs").
+/// selected (docs/herculan/handoff-editor-roster.md#hercs).
 ///
 /// <para>It comes with the fit a new herc of its type gets (<see cref="MachineFitter.NewHercFit"/>), as a chassis change gives
 /// it.</para>

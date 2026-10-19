@@ -16,7 +16,7 @@ public sealed record ConditionNamers(IReadOnlyList<MsnRecordId> Records, IReadOn
 /// Creates, edits and deletes a <see cref="MissionDocument"/>'s conditions, row 1, as record edits: flag tests (type 0),
 /// draws (type 1) and ranges over a draw (type 2). How the load reads row 1 is
 /// docs/retail/formats/msn-mission-file.md#the-conditions--row-1, and what changing a draw does to every later one
-/// docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document, "Conditions and variants".
+/// docs/herculan/handoff-editor-document.md#conditions-and-variants.
 ///
 /// <list type="bullet">
 /// <item>Row 1 is read in order, each record tested against the survivors before it, so a condition can require, and a

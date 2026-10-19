@@ -13,7 +13,7 @@ namespace Herculan.Engine.Editor;
 /// A variant table's view, in the Properties panel's view of its condition: its key and bound, each alternative with its
 /// chance, a summary and Remove, Add alternative, what is left over, which alternative the editor shows, the records drawing
 /// from it, the other tables of its key, and Delete; and, in the view of a herc, flyer, structure or ground vehicle outside
-/// the squad, which table it is drawn from (docs/herculan/handoff-editor-mission-editing.md#in-place, "Variants"). Each
+/// the squad, which table it is drawn from (docs/herculan/handoff-editor-conditions.md#variants). Each
 /// choice is an edit (<see cref="VariantEditor"/>) or, for the alternative shown, the campaign state's
 /// (<see cref="CampaignState.RequestShown"/>). How a record draws is docs/retail/formats/msn-mission-file.md#variants.
 /// </summary>

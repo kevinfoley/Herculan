@@ -10,8 +10,7 @@ namespace Herculan.Engine.Editor;
 /// Changes the chassis and the weapon fit of a herc: a row-12 record of the <c>.MSN</c>, addressed by the
 /// <c>script.dat</c> block-7 slot it was exported to, as one step of <see cref="PointMover"/>'s undo history each. For the
 /// player's squad the choices are the shell's: the nine chassis the practice screen's Herc Type steps through, and in each
-/// mount the weapons the weapons screen lets the player fit there (docs/herculan/handoff-editor-mission-editing.md#in-place,
-/// "The player's squad"). A herc outside the squad is offered every type of <c>nam\MECHS.NAM</c> (<see cref="RosterFitView"/>).
+/// mount the weapons the weapons screen lets the player fit there (docs/herculan/handoff-editor-roster.md#the-players-squad). A herc outside the squad is offered every type of <c>nam\MECHS.NAM</c> (<see cref="RosterFitView"/>).
 ///
 /// <list type="bullet">
 /// <item>A chassis change resets the fit to the one a new herc of that type gets (<see cref="NewHercFit"/>): a Human

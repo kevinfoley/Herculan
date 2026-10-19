@@ -73,7 +73,7 @@ public static class MissionFileLaunch {
 	/// string, string, string, out string?)"/> does, and holds the mission as a <see cref="MissionDocument"/> for the
 	/// mission editor: the <c>.MSN</c> and <c>.ENG</c> the load read, generated with the flags and header words the load
 	/// used and draws from VSHELL's generator as it stood when the load began drawing, so the document's every generation
-	/// draws what this handoff's did (docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document).
+	/// draws what this handoff's did (docs/herculan/handoff-editor-document.md#conditions-and-variants).
 	/// <paramref name="squad"/> says which Hercs the squad pilots and builds its <c>player.mec</c> again. Returns the handoff's
 	/// <c>script.dat</c>, or null with the reason.
 	/// </summary>

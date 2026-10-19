@@ -11,7 +11,7 @@ namespace Herculan.Engine.Editor;
 /// <see cref="FlyerGroups"/>'s record edits: in a new group of its own, standing on a route of one waypoint where it was put
 /// and hunting the player's squad, or joining the selected flyer group. The editor's state is then built again from the
 /// generated file (<see cref="MissionRebuild"/>), which builds the flyer's object for the record, and the flyer is
-/// selected (docs/herculan/handoff-editor-mission-editing.md#in-place, "Adding flyers").
+/// selected (docs/herculan/handoff-editor-roster.md#flyers).
 /// </summary>
 internal sealed class FlyerPlacer {
 	private const int FlyerRow = 13;

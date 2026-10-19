@@ -7,7 +7,7 @@ namespace Herculan.Engine.Editor;
 /// Adds and removes the player's squadmates, group 0's members after the player's machine, as one step of
 /// <see cref="PointMover"/>'s undo history each, through <see cref="SquadRoster"/>'s record edits; the editor's state is
 /// then built again (<see cref="MissionRebuild"/>), which builds the handoff's <c>player.mec</c> again first
-/// (docs/herculan/handoff-editor-mission-editing.md#in-place, "The player's squad").
+/// (docs/herculan/handoff-editor-roster.md#the-players-squad).
 ///
 /// <para>A new squadmate is the player's machine's chassis as the mission holds it now, with that chassis's stock fit
 /// (<see cref="MachineFitter.StockFit"/>), as a Herc Type choice gives it. An add is refused past

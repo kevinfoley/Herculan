@@ -5,7 +5,7 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// Edits the open mission's objective, briefing and intelligence lines (row 4) and their text, each edit one step of
 /// <see cref="PointMover"/>'s undo history, through <see cref="MissionTextEditing"/>'s record edits on the mission's
-/// <c>.MSN</c> and <c>.ENG</c> (docs/herculan/handoff-editor-mission-editing.md#in-place, "The mission's text"). Every
+/// <c>.MSN</c> and <c>.ENG</c> (docs/herculan/handoff-editor-mission-logic.md#the-missions-text). Every
 /// edit builds the editor's state again (<see cref="MissionRebuild"/>), which reloads <c>mission.str</c> and block 13.
 /// The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>). A mission opened from a plain
 /// <c>script.dat</c> edits nothing (<see cref="PointMover.WhyReadOnly"/>).

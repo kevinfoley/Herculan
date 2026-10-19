@@ -10,8 +10,7 @@ namespace Herculan.Engine.Editor;
 /// spawns with, so changing it for one object changes it for every member of its group.
 ///
 /// <para>The change writes row 16's <see cref="MissionGroup164.Side"/> in the record of the group's GUID that supplies it
-/// (<see cref="MissionDocument.SetField"/>, docs/herculan/handoff-editor-authoring.md#holding-the-msn-as-the-document,
-/// "The tools"), which generates <c>script.dat</c> again; the index's copy (<see cref="MissionIndex.SideOf"/>) and each
+/// (<see cref="MissionDocument.SetField"/>, docs/herculan/handoff-editor-document.md#the-tools), which generates <c>script.dat</c> again; the index's copy (<see cref="MissionIndex.SideOf"/>) and each
 /// member's simulation object are then set from the generated field. A member's <see cref="MissionPlacement.Side"/>
 /// keeps the side the index was last built with (<see cref="MissionRebuild"/>). The player's squad, group 0, is left alone: the editor's choice, as a squad that changed sides
 /// would leave the player fighting their own.</para>

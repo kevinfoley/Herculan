@@ -7,8 +7,7 @@ namespace Herculan.Engine.Editor;
 /// Changes the type of a flyer, a structure or a ground vehicle outside the player's squad, a row-13 or row-14 record of the
 /// <c>.MSN</c>, as one step of <see cref="PointMover"/>'s undo history each, through <see cref="RosterFit.Write"/>: in the
 /// variant alternative the record draws its type from when asked and the table is one the editor edits, so every record
-/// drawing it changes, else in the record that supplies it (docs/herculan/handoff-editor-mission-editing.md#in-place,
-/// "Variants"). A herc's chassis is <see cref="MachineFitter"/>'s. Each edit builds the editor's state again
+/// drawing it changes, else in the record that supplies it (docs/herculan/handoff-editor-roster.md#type-and-fit). A herc's chassis is <see cref="MachineFitter"/>'s. Each edit builds the editor's state again
 /// (<see cref="MissionRebuild"/>), which builds a new object for the record, as its type differs.
 ///
 /// <para>The edits run when <see cref="RunRequest"/> is called, once the frame's ImGui is rendered. A plain
