@@ -35,6 +35,7 @@ public class FlyerRosterEntry102 : MapObject {
 
 	/// <summary>0x34 — the flyer type, an index into <c>nam\FLYERS.NAM</c>.</summary>
 	public short TypeIndex { get; set; }
+	public const int TypeIndexWord = 0x34 / 2;
 
 	/// <summary>0x36 — how many of the pairs in <see cref="OutOfActionReport"/> are filled, from the front. Not exported to <c>script.dat</c>; a variant does not copy it.</summary>
 	public short PairCount { get; set; }

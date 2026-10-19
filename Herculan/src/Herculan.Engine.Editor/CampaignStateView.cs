@@ -50,6 +50,10 @@ internal sealed class CampaignStateView {
 		ImGui.EndDisabled();
 		EditorText.Reason(why);
 		EditorText.Note("Draw again loads the mission again with new random draws, flags 4 to 6 among them. The other flags keep what is set here.");
+		if (_state.ChosenTables > 0) {
+			EditorText.Note($"{_state.ChosenTables} variant table(s) show a chosen alternative in place of their draw, until Draw again.");
+		}
+
 		EditorText.Reason(_state.Failure);
 	}
 

@@ -510,6 +510,81 @@ public sealed class MissionDocument {
 	}
 
 	/// <summary>
+	/// The variant alternative that supplies <paramref name="field"/> of GUID <paramref name="guid"/>'s generated record: the
+	/// GUID <c>-1</c> record it was copied from (<see cref="WordSource.CopiedFrom"/>), or null when the field is the record's
+	/// own or an overlay's. Throws as <see cref="SetField"/> does for a GUID no record exports.
+	/// </summary>
+	public MsnRecordId? AlternativeOf(MsnField field, short guid) => SlotOf(field.Row, guid).Word(field.Word).CopiedFrom;
+
+	/// <summary>
+	/// Sets <paramref name="field"/> to <paramref name="value"/> in the variant alternative <see cref="AlternativeOf"/> answers,
+	/// so every record that draws it, now and in every other state, gets the value; <see cref="SetField"/> writes an overlay
+	/// for the one GUID instead. The alternative is copied whole, so an unset value is written as any other. Throws
+	/// <see cref="InvalidOperationException"/> when no alternative supplies the field.
+	/// </summary>
+	public MsnEdit SetAlternativeField(MsnField field, short guid, short value) {
+		var alternative = AlternativeOf(field, guid)
+			?? throw new InvalidOperationException($"No variant alternative supplies that field of row {field.Row}'s GUID {guid}.");
+		var before = Begin(field.Row);
+		field.Set(RecordAt(alternative)!, value);
+		return End(before);
+	}
+
+	/// <summary>
+	/// Puts <paramref name="record"/> at <paramref name="index"/> of row <paramref name="row"/>, the records from there on
+	/// moving up one: for a variant alternative, a GUID <c>-1</c> record, which a record draws only when it is read before it
+	/// (docs/retail/formats/msn-mission-file.md#variants). A GUID <c>-1</c> record is never exported or merged, so no
+	/// <c>script.dat</c> index moves.
+	/// </summary>
+	public MsnEdit Insert(int row, int index, MapObject record) {
+		var records = MsnRows.Get(Mission, row);
+		if (index < 0 || index > records.Length) {
+			throw new InvalidOperationException($"Row {row} has no place {index}.");
+		}
+
+		var before = Begin(row);
+		var grown = Array.CreateInstance(records.GetType().GetElementType()!, records.Length + 1);
+		Array.Copy(records, 0, grown, 0, index);
+		grown.SetValue(record, index);
+		Array.Copy(records, index, grown, index + 1, records.Length - index);
+		MsnRows.Set(Mission, row, grown);
+		return End(before);
+	}
+
+	/// <summary>
+	/// Removes record <paramref name="index"/> of GUID-keyed row <paramref name="row"/> alone, for a variant alternative, which
+	/// has no GUID of its own to remove it by (<see cref="Remove"/>).
+	/// </summary>
+	public MsnEdit RemoveAt(int row, int index) {
+		var records = MsnRows.Get(Mission, row);
+		if (index < 0 || index >= records.Length) {
+			throw new InvalidOperationException($"Row {row} has no record {index}.");
+		}
+
+		var before = Begin(row);
+		var shrunk = Array.CreateInstance(records.GetType().GetElementType()!, records.Length - 1);
+		Array.Copy(records, 0, shrunk, 0, index);
+		Array.Copy(records, index + 1, shrunk, index, records.Length - index - 1);
+		MsnRows.Set(Mission, row, shrunk);
+		return End(before);
+	}
+
+	/// <summary>
+	/// Rewrites, through <paramref name="write"/>, record <paramref name="index"/> of GUID-keyed row <paramref name="row"/>
+	/// alone: a variant alternative, or the one record of a GUID that carries its variant key.
+	/// </summary>
+	public MsnEdit RewriteAt<T>(int row, int index, Action<T> write) where T : MapObject {
+		var records = MsnRows.Get(Mission, row);
+		if (index < 0 || index >= records.Length || records.GetValue(index) is not T record) {
+			throw new InvalidOperationException($"Row {row} has no record {index}.");
+		}
+
+		var before = Begin(row);
+		write(record);
+		return End(before);
+	}
+
+	/// <summary>
 	/// Unsets every member slot naming roster GUID <paramref name="member"/> in every record of row-16 group GUID
 	/// <paramref name="group"/>, whatever its condition, since an overlay cannot carry an unset value.
 	/// </summary>

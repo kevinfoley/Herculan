@@ -30,7 +30,7 @@ public sealed record ConditionNamers(IReadOnlyList<MsnRecordId> Records, IReadOn
 /// (<see cref="MissionDocument.Append"/>).</item>
 /// <item>A field is written in the record itself (<see cref="MissionDocument.Rewrite{T}"/>).</item>
 /// <item>A variant table (type 3) and a range over one, which the other rows' variant keys draw by key rather than
-/// reference by GUID, are not edited (<see cref="WhyFixed"/>).</item>
+/// reference by GUID, are edited through <see cref="VariantEditing"/>, and not here (<see cref="WhyFixed"/>).</item>
 /// <item>A condition is deleted only while nothing references it (<see cref="Namers"/>): a record whose condition names a
 /// GUID with no surviving record is dropped in every state. Deleting a draw, or one a draw requires, changes the draws
 /// every later draw and variant pick gets.</item>
@@ -219,12 +219,12 @@ public static class ConditionEditing {
 
 		var record = Record(document, guid);
 		return Records(document).Count(other => other.GUID == guid) > 1 ? $"More than one record carries condition {guid}."
-			: InVariantTable(document, guid) ? "Variant tables are edited in a later step."
+			: InVariantTable(document, guid) ? "A variant table and its ranges are edited in the table's view."
 			: record.Type is < FlagTest or > VariantTable ? $"Its type, {record.Type}, is none the load reads."
 			: null;
 	}
 
-	/// <summary>Whether <paramref name="guid"/> is a variant table (type 3) or a range over one, which the editor does not edit yet.</summary>
+	/// <summary>Whether <paramref name="guid"/> is a variant table (type 3) or a range over one, which <see cref="VariantEditing"/> edits.</summary>
 	public static bool InVariantTable(MissionDocument document, short guid) =>
 		IndexOf(document, guid) != null && Record(document, guid) is var record
 			&& (record.Type == VariantTable || (record.Type == Range && ParentOf(document, guid)?.Type == VariantTable));

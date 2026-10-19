@@ -104,6 +104,14 @@ public sealed class MsnField {
 	public static MsnField MechType { get; } = new(12, MechRosterEntry144.TypeIndexWord, -1,
 		record => ((MechRosterEntry144)record).TypeIndex, (record, value) => ((MechRosterEntry144)record).TypeIndex = value);
 
+	/// <summary>A flyer's type, row 13's <see cref="FlyerRosterEntry102.TypeIndex"/>.</summary>
+	public static MsnField FlyerType { get; } = new(13, FlyerRosterEntry102.TypeIndexWord, -1,
+		record => ((FlyerRosterEntry102)record).TypeIndex, (record, value) => ((FlyerRosterEntry102)record).TypeIndex = value);
+
+	/// <summary>A structure's or ground vehicle's type, row 14's <see cref="BaseRosterEntry62.TypeIndex"/>.</summary>
+	public static MsnField BaseType { get; } = new(14, BaseRosterEntry62.TypeIndexWord, -1,
+		record => ((BaseRosterEntry62)record).TypeIndex, (record, value) => ((BaseRosterEntry62)record).TypeIndex = value);
+
 	/// <summary>Weapon slot <paramref name="slot"/> of a mech's fit, row 12's <see cref="MechRosterEntry144.WeaponRefs"/>.</summary>
 	public static MsnField MechWeapon(int slot) => new(12, MechRosterEntry144.WeaponRefsWord + slot, -1,
 		record => ((MechRosterEntry144)record).WeaponRefs[slot], (record, value) => ((MechRosterEntry144)record).WeaponRefs[slot] = value);
@@ -222,7 +230,15 @@ public sealed class MsnField {
 		_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters."),
 	};
 
-	/// <summary>The roster row's own-point field: <see cref="MechPosition"/>, <see cref="FlyerPosition"/> or <see cref="BasePosition"/>.</summary>
+	/// <summary>The roster row's type field: <see cref="MechType"/>, <see cref="FlyerType"/> or <see cref="BaseType"/>.</summary>
+	public static MsnField RosterType(int row) => row switch {
+		12 => MechType,
+		13 => FlyerType,
+		14 => BaseType,
+		_ => throw new ArgumentOutOfRangeException(nameof(row), row, "Rows 12 to 14 are the rosters."),
+	};
+
+	/// <summary>The roster row's own-point field:<see cref="MechPosition"/>, <see cref="FlyerPosition"/> or <see cref="BasePosition"/>.</summary>
 	public static MsnField RosterPosition(int row) => row switch {
 		12 => MechPosition,
 		13 => FlyerPosition,

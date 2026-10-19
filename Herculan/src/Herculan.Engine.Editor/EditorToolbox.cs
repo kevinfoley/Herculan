@@ -1,9 +1,6 @@
 using System.Numerics;
-using HercWorks.Core.Io.Transform.Dbsim;
-using Herculan.Engine.Cockpit;
 using Herculan.Engine.Content;
 using Herculan.Engine.Platform;
-using Herculan.Engine.Sim;
 using Herculan.Engine.World;
 using ImGuiNET;
 
@@ -32,15 +29,8 @@ internal sealed record ToolboxRequest(ToolboxKind Kind, int TypeIndex, MissionSi
 internal readonly record struct ToolboxDrag(ToolboxKind Kind, int TypeIndex, MissionSide Side);
 
 /// <summary>
-/// The Toolbox window: what the editor can add to the open mission. The hercs are the mech types of <c>nam\MECHS.NAM</c>
-/// under the names the MFD prints for them (<see cref="MfdStatusSubject"/>); the flyers the types of <c>nam\FLYERS.NAM</c>
-/// the install has a <c>dat\&lt;type&gt;.DAT</c> for, under the names the MFD prints (<see cref="MfdStatusSubject.FlyerTypeName"/>),
-/// the others named in a note: with no data they cannot fly or be shot (docs/retail/simulation/ai-flyers.md); the ground
-/// vehicles the types of <c>dat\BASES.DAT</c> <see cref="BaseObject.IsGroundVehicle"/> answers true for, under the names the
-/// MFD prints (<see cref="MfdStatusSubject.BaseName"/>), the other vehicle types (<see cref="BaseType.IsVehicle"/>), for
-/// which DBSIM builds no object (docs/retail/simulation/structure-behaviour.md#five-classes-one-switch), named in a note;
-/// and the structures the other types of <c>dat\BASES.DAT</c> under the names the MFD status screen prints
-/// (<see cref="BaseType.SilhouetteIndex"/>). An entry dragged out and let go over the view asks for it on the ground under
+/// The Toolbox window: what the editor can add to the open mission, the herc, flyer, ground vehicle and structure types of
+/// <see cref="UnitTypeCatalog"/>, with the types it leaves out named in a note. An entry dragged out and let go over the view asks for it on the ground under
 /// the pointer, a flyer above it; a double-click, or Add with an entry chosen, asks for it at the middle of the view, which
 /// a gamepad's pointer reaches as easily. The side it fights on is chosen above the lists, or it joins the selected group
 /// instead, a herc a herc group, a flyer a flyer group, and a ground vehicle or a structure a structure group, taking that
@@ -83,58 +73,10 @@ internal sealed class EditorToolbox {
 	private string? _whyNoStructure;
 
 	public EditorToolbox(GameContent content) {
-		var entries = new List<(ToolboxKind, int, string)>();
-		var mechs = UnitTypeNames.LoadMechs(content);
-		for (int i = 0; i < mechs.Count; i++) {
-			entries.Add((ToolboxKind.Herc, i, mechs[i] is { Length: > 0 } name ? $"{name.ToUpperInvariant()} ({i})" : $"Type {i}"));
-		}
-
-		var flyers = UnitTypeNames.LoadFlyers(content);
-		var leftOut = new List<string>();
-		for (int i = 0; i < flyers.Count; i++) {
-			if (flyers[i] is not { Length: > 0 } flyer) {
-				continue;
-			}
-
-			if (content.Read("dat", flyer + ".DAT") is not { } data) {
-				leftOut.Add(flyer.ToUpperInvariant());
-				continue;
-			}
-
-			entries.Add((ToolboxKind.Flyer, i, $"{MfdStatusSubject.FlyerTypeName(new FlyerSimDataTransformer().Parse(data), flyer)} ({i})"));
-		}
-
-		_flyersLeftOut = leftOut.Count > 0
-			? $"Not offered: {string.Join(", ", leftOut)}. The install has no data for them to fly or be shot with."
-			: null;
-
-		var types = BaseTypeTable.Load(content);
-		var strings = SimStrings.Load(content);
-		var vehiclesLeftOut = new List<string>();
-		for (int i = 0; i < types.Count; i++) {
-			if (types[i] is { IsVehicle: true } vehicle) {
-				string? name = MfdStatusSubject.BaseName(vehicle, strings);
-				string label = string.IsNullOrWhiteSpace(name) ? $"Type {i}" : $"{name} ({i})";
-				if (BaseObject.IsGroundVehicle(i)) {
-					entries.Add((ToolboxKind.Vehicle, i, label));
-				} else {
-					vehiclesLeftOut.Add(label);
-				}
-			}
-		}
-
-		_vehiclesLeftOut = vehiclesLeftOut.Count > 0
-			? $"Not offered: {string.Join(", ", vehiclesLeftOut)}. DBSIM builds nothing for these types."
-			: null;
-
-		for (int i = 0; i < types.Count; i++) {
-			if (types[i] is { IsVehicle: false } type) {
-				string? name = strings?.Text(MfdLayout.StructureNameGroup, type.SilhouetteIndex);
-				entries.Add((ToolboxKind.Structure, i, string.IsNullOrWhiteSpace(name) ? $"Type {i}" : $"{name} ({i})"));
-			}
-		}
-
-		_entries = entries.ToArray();
+		var catalog = new UnitTypeCatalog(content);
+		_entries = catalog.Entries.ToArray();
+		_flyersLeftOut = catalog.FlyersLeftOut;
+		_vehiclesLeftOut = catalog.VehiclesLeftOut;
 	}
 
 	/// <summary>

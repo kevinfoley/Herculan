@@ -17,6 +17,11 @@ namespace Herculan.Engine.Editor;
 ///
 /// <para>Draw again keeps every flag as it stands but those the launch draws, 4 to 6, which take the new load's draws. The requests run when <see cref="RunRequest"/> is called, once the
 /// frame's panels are drawn, as the other edits do.</para>
+///
+/// <para>The alternative a variant table's view shows in place of its draw (<see cref="RequestShown"/>) is part of the state
+/// too: the generation's forced picks (<see cref="MissionGeneration.WithPick"/>), which still draw, so nothing else the
+/// generation draws changes. It is kept through a flag change and an edit, ignored once its table or range is gone, and
+/// cleared by Draw again, whose generation forces nothing.</para>
 /// </summary>
 internal sealed class CampaignState {
 	// The flags every load draws (ShellTrainingLaunch's SeedDrawnFlags).
@@ -35,6 +40,7 @@ internal sealed class CampaignState {
 
 	private (int Flag, short Value)? _flagRequested;
 	private bool _drawRequested;
+	private (short Table, short? Range)? _shownRequested;
 
 	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, which has no state to set.</param>
 	/// <param name="mode">How the mission was opened, which Draw again opens it by again; null when it cannot be.</param>
@@ -96,14 +102,29 @@ internal sealed class CampaignState {
 	/// <summary>Asks for the mission to be opened again with new draws.</summary>
 	public void RequestDrawAgain() => _drawRequested = true;
 
+	/// <summary>The range GUID whose alternative variant table <paramref name="table"/> shows in place of its draw, or null when it shows what it draws.</summary>
+	public short? ShownAlternative(short table) => _source?.Generation.Picks.TryGetValue(table, out short range) == true ? range : null;
+
+	/// <summary>How many variant tables show a chosen alternative in place of their draw.</summary>
+	public int ChosenTables => _source is { } source ? source.Generation.Picks.Keys.Count(table => VariantEditing.IsTable(source, table)) : 0;
+
+	/// <summary>Asks for variant table <paramref name="table"/> to show range <paramref name="range"/>'s alternative, or what it draws for null.</summary>
+	public void RequestShown(short table, short? range) => _shownRequested = (table, range);
+
 	/// <summary>Makes the change asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {
 		var flag = _flagRequested;
 		bool draw = _drawRequested;
+		var shown = _shownRequested;
 		_flagRequested = null;
 		_drawRequested = false;
+		_shownRequested = null;
 		if (_source == null || _mover.WhyReadOnly != null) {
 			return;
+		}
+
+		if (shown is var (table, range) && ShownAlternative(table) != range) {
+			Failure = Apply(_source.Generation.WithPick(table, range), squad: null);
 		}
 
 		if (flag is var (index, value) && Flag(index) != value) {

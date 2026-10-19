@@ -80,9 +80,21 @@ public sealed class MissionGenerator {
 	private readonly short[] _flags;
 	private readonly Func<short, int> _roll;
 
-	private MissionGenerator(short[] flags, Func<short, int> roll) {
+	/// <summary>Each surviving row-1 record's index in the file, beside <see cref="_conditions"/>.</summary>
+	private readonly List<int> _conditionIndex = new();
+
+	/// <summary>The alternatives the caller forces, by type-3 GUID: the GUID of the range whose alternative each table picks.</summary>
+	private readonly IReadOnlyDictionary<short, short> _forced;
+
+	/// <summary>The pick of the draw under way, for the record that asked (<see cref="VariantPicks"/>).</summary>
+	private (int? Table, int? Range) _lastPick;
+
+	private readonly Dictionary<MsnRecordId, VariantPick> _picks = new();
+
+	private MissionGenerator(short[] flags, Func<short, int> roll, IReadOnlyDictionary<short, short>? forced = null) {
 		_flags = flags;
 		_roll = roll;
+		_forced = forced ?? new Dictionary<short, short>();
 	}
 
 	/// <summary>
@@ -110,14 +122,25 @@ public sealed class MissionGenerator {
 	private readonly List<ConditionOutcome> _outcomes = new();
 
 	/// <summary>
+	/// What each record of rows 6 to 8 and 12 to 15 that draws by a variant key drew, by its row and index in the file: the
+	/// table whose range held the draw, that range, and the record copied from. Reading it changes nothing the load writes.
+	/// </summary>
+	public IReadOnlyDictionary<MsnRecordId, VariantPick> VariantPicks => _picks;
+
+	/// <summary>
 	/// Loads a mission. <paramref name="flags"/> is the campaign flag array the row-1 comparisons read,
 	/// and row 2 zeroes the entries it names in it. <paramref name="clearList"/> is <c>DAT_0048545a</c>:
 	/// row 2 writes into it and the entries it holds are then cleared from the flags. The original never
 	/// resets it, so what one load leaves there the next load clears again — the caller keeps it.
 	/// <paramref name="roll"/> is VSHELL's <c>ShellRandom_Below</c> (<c>004659ec</c>), a draw in <c>[0, n)</c>.
 	/// <paramref name="text"/> is the <c>.ENG</c> beside the mission, or null for none.
+	///
+	/// <para><paramref name="forced"/> is the editor's preview, nothing the original has: for a type-3 GUID, the GUID of a
+	/// range over it whose alternative the table picks whatever it draws. The table still draws, so every later draw is the
+	/// one it would be (<see cref="PickVariant"/>). The game's own loads pass none.</para>
 	/// </summary>
-	public static MissionGenerator Load(byte[] msn, byte[]? text, short[] flags, short[] clearList, Func<short, int> roll) {
+	public static MissionGenerator Load(byte[] msn, byte[]? text, short[] flags, short[] clearList, Func<short, int> roll,
+			IReadOnlyDictionary<short, short>? forced = null) {
 		if (flags.Length < CampaignFlagCount) {
 			throw new ArgumentException($"The campaign flag array holds {CampaignFlagCount} entries.", nameof(flags));
 		}
@@ -126,7 +149,7 @@ public sealed class MissionGenerator {
 			throw new ArgumentException($"The clear list holds {ClearListLength} entries.", nameof(clearList));
 		}
 
-		var generator = new MissionGenerator(flags, roll);
+		var generator = new MissionGenerator(flags, roll, forced);
 		var reader = new Cursor(msn);
 		if (reader.Short() != Revision) {
 			throw new InvalidDataException("Not a revision 5 mission file.");
@@ -248,6 +271,10 @@ public sealed class MissionGenerator {
 			}
 
 			bool survived = _conditions.Count > survivors;
+			if (survived) {
+				_conditionIndex.Add(i);
+			}
+
 			_outcomes.Add(new ConditionOutcome(survived,
 				survived && record[MissionCondition14.TypeWord] == 1 ? record[upper] : (short?)null));
 		}
@@ -307,13 +334,15 @@ public sealed class MissionGenerator {
 	/// <c>Msn_PickVariant</c> (<c>00415fc3</c>), which a record's variant field (<c>0x04</c>) goes through: the type-3 record
 	/// whose <c>0x06</c> matches is rolled against its <c>0x0a</c>, the roll stored at its <c>0x0c</c>, and
 	/// the type-2 child whose range holds the roll is the answer — its row-1 index. It rolls again on
-	/// every call, and returns <c>-1</c> when no type-3 record's child claims the roll.
+	/// every call, and returns <c>-1</c> when no type-3 record's child claims the roll. A table <see cref="_forced"/> names
+	/// takes the forced range once it has drawn, its draw stored as that range's low end.
 	/// </summary>
 	private int PickVariant(short variant) {
 		const int type = MissionCondition14.TypeWord;
 		const int lower = MissionCondition14.FlagIndexOrRangeLowerWord;
 		const int upper = MissionCondition14.OperatorOrRangeUpperOrResultWord;
 		const int draw = MissionCondition14.LatestDrawWord;
+		_lastPick = (null, null);
 		for (int parent = 0; parent < _conditions.Count; parent++) {
 			var record = _conditions[parent];
 			if (record[type] != 3 || record[lower] != variant) {
@@ -321,39 +350,58 @@ public sealed class MissionGenerator {
 			}
 
 			record[draw] = (short)_roll(record[MissionCondition14.ComparisonOperandWord]);
-			for (int child = 0; child < _conditions.Count; child++) {
+			int picked = _forced.TryGetValue(record[MapObject.GUIDWord], out short forced) ? Child(record, forced) : -1;
+			if (picked >= 0) {
+				record[draw] = _conditions[picked][lower];
+			}
+
+			for (int child = 0; picked < 0 && child < _conditions.Count; child++) {
 				var candidate = _conditions[child];
 				if (candidate[type] == 2 && candidate[MissionCondition14.ConditionRefWord] == record[MapObject.GUIDWord]
 					&& (ushort)candidate[lower] <= record[draw] && record[draw] <= (ushort)candidate[upper]) {
-					return child;
+					picked = child;
 				}
+			}
+
+			if (picked >= 0) {
+				_lastPick = (_conditionIndex[parent], _conditionIndex[picked]);
+				return picked;
 			}
 		}
 
 		return -1;
 	}
+
+	/// <summary>The surviving range of GUID <paramref name="range"/> over type-3 record <paramref name="table"/>, or <c>-1</c>.</summary>
+	private int Child(short[] table, short range) =>
+		_conditions.FindIndex(candidate => candidate[MissionCondition14.TypeWord] == 2 && candidate[MapObject.GUIDWord] == range
+			&& candidate[MissionCondition14.ConditionRefWord] == table[MapObject.GUIDWord]);
 
 	/// <summary>
 	/// <c>Msn_VariantSourceRow6</c> (<c>00416120</c>) and its six siblings: the variant picked, then the first of the row's first
 	/// <paramref name="count"/> records whose condition is that variant's GUID. That record is what a
-	/// record with a variant field copies its fields from.
+	/// record with a variant field copies its fields from. What record <paramref name="index"/> of <c>.MSN</c> row
+	/// <paramref name="msnRow"/>, the record asking, drew goes to <see cref="VariantPicks"/>.
 	/// </summary>
-	private int VariantSource(IReadOnlyList<short[]> row, short variant, int count) {
+	private int VariantSource(IReadOnlyList<short[]> row, short variant, int count, int msnRow, int index) {
 		int picked = PickVariant(variant);
-		if (picked < 0) {
-			return -1;
-		}
-
-		short guid = _conditions[picked][MapObject.GUIDWord];
-		for (int i = 0; i < count; i++) {
+		int source = -1;
+		for (int i = 0; picked >= 0 && i < count; i++) {
 			// Word 1 is the condition ref of every row with a variant key.
-			if (row[i][1] == guid) {
-				return i;
+			if (row[i][1] == _conditions[picked][MapObject.GUIDWord]) {
+				source = i;
+				break;
 			}
 		}
 
-		return -1;
+		Picked(msnRow, index, source);
+		return source;
 	}
+
+	/// <summary>Files what record <paramref name="index"/> of <paramref name="msnRow"/> drew: <see cref="_lastPick"/>, and slot <paramref name="source"/> of its row or none.</summary>
+	private void Picked(int msnRow, int index, int source) =>
+		_picks[new MsnRecordId(msnRow, index)] = new VariantPick(_lastPick.Table, _lastPick.Range,
+			source >= 0 ? Provenance.CreatedAt(msnRow, source) : null);
 
 	// ---- Row 2: the header patches --------------------------------------------------------------
 
@@ -642,7 +690,7 @@ public sealed class MissionGenerator {
 			}
 
 			short variantKey = record[MapPoint22.VariantKeyWord];
-			if (variantKey != -1 && VariantSource(_points, variantKey, _points.Count) is >= 0 and var source) {
+			if (variantKey != -1 && VariantSource(_points, variantKey, _points.Count, 6, i) is >= 0 and var source) {
 				Copy(_points, source, record, MapPoint22.XWord, 6);
 			}
 
@@ -678,7 +726,7 @@ public sealed class MissionGenerator {
 			}
 
 			short variantKey = record[Heading10.VariantKeyWord];
-			if (variantKey != -1 && VariantSource(_headings, variantKey, _headings.Count) is >= 0 and var source) {
+			if (variantKey != -1 && VariantSource(_headings, variantKey, _headings.Count, 7, i) is >= 0 and var source) {
 				Copy(_headings, source, record, Heading10.DegreesWord, 1);
 			}
 
@@ -713,6 +761,7 @@ public sealed class MissionGenerator {
 					}
 				}
 
+				Picked(8, i, source);
 				if (source >= 0) {
 					group.Words[4] = _waypointGroups[source].Words[4];
 					group.Points.Clear();
@@ -827,7 +876,7 @@ public sealed class MissionGenerator {
 				record[MechRosterEntry144.HeadingRefWord] = Ref(_headings, record[MechRosterEntry144.HeadingRefWord]);
 				record[MechRosterEntry144.EngagementActionRefWord] = Ref(_actions, record[MechRosterEntry144.EngagementActionRefWord]);
 				record[MechRosterEntry144.DefeatActionRefWord] = Ref(_actions, record[MechRosterEntry144.DefeatActionRefWord]);
-			} else if (VariantSource(_hercs, record[MechRosterEntry144.VariantKeyWord], _hercs.Count) is >= 0 and var source) {
+			} else if (VariantSource(_hercs, record[MechRosterEntry144.VariantKeyWord], _hercs.Count, 12, i) is >= 0 and var source) {
 				Copy(_hercs, source, record, MechRosterEntry144.AiRadarActiveWord, 20);
 				Copy(_hercs, source, record, MechRosterEntry144.WeaponRefsWord, 10);
 				Copy(_hercs, source, record, MechRosterEntry144.PositionRefWord, 2);
@@ -868,7 +917,7 @@ public sealed class MissionGenerator {
 				record[FlyerRosterEntry102.HeadingRefWord] = Ref(_headings, record[FlyerRosterEntry102.HeadingRefWord]);
 				record[FlyerRosterEntry102.EngagementActionRefWord] = Ref(_actions, record[FlyerRosterEntry102.EngagementActionRefWord]);
 				record[FlyerRosterEntry102.DefeatActionRefWord] = Ref(_actions, record[FlyerRosterEntry102.DefeatActionRefWord]);
-			} else if (VariantSource(_flyers, record[FlyerRosterEntry102.VariantKeyWord], _flyers.Count) is >= 0 and var source) {
+			} else if (VariantSource(_flyers, record[FlyerRosterEntry102.VariantKeyWord], _flyers.Count, 13, i) is >= 0 and var source) {
 				Copy(_flyers, source, record, FlyerRosterEntry102.FlagSpanWord, 23);
 				Copy(_flyers, source, record, FlyerRosterEntry102.OutOfActionReportWord, 23);
 			}
@@ -899,7 +948,7 @@ public sealed class MissionGenerator {
 				record[BaseRosterEntry62.HeadingRefWord] = Ref(_headings, record[BaseRosterEntry62.HeadingRefWord]);
 				record[BaseRosterEntry62.EngagementActionRefWord] = Ref(_actions, record[BaseRosterEntry62.EngagementActionRefWord]);
 				record[BaseRosterEntry62.DefeatActionRefWord] = Ref(_actions, record[BaseRosterEntry62.DefeatActionRefWord]);
-			} else if (VariantSource(_bases, record[BaseRosterEntry62.VariantKeyWord], _bases.Count) is >= 0 and var source) {
+			} else if (VariantSource(_bases, record[BaseRosterEntry62.VariantKeyWord], _bases.Count, 14, i) is >= 0 and var source) {
 				Copy(_bases, source, record, BaseRosterEntry62.TypeIndexWord, 3);
 				Copy(_bases, source, record, BaseRosterEntry62.OutOfActionReportWord, 23);
 			}
@@ -937,7 +986,7 @@ public sealed class MissionGenerator {
 					3 => Ref(_bases, record[subject]),
 					_ => record[subject],
 				};
-			} else if (VariantSource(_orders, record[MissionOrder22.VariantKeyWord], _orders.Count) is >= 0 and var source) {
+			} else if (VariantSource(_orders, record[MissionOrder22.VariantKeyWord], _orders.Count, 15, i) is >= 0 and var source) {
 				Copy(_orders, source, record, MissionOrder22.VerbWord, 7);
 			}
 
@@ -1330,6 +1379,12 @@ public sealed class MissionGenerator {
 /// <param name="Survived">Whether it survived, so that a condition ref naming its GUID passes.</param>
 /// <param name="Draw">For a type-1 survivor, the draw it made, below its bound; null otherwise.</param>
 public readonly record struct ConditionOutcome(bool Survived, short? Draw);
+
+/// <summary>What one variant-keyed record drew (<see cref="MissionGenerator.VariantPicks"/>).</summary>
+/// <param name="Table">The row-1 index of the type-3 record whose range held the draw; null when no table's did.</param>
+/// <param name="Range">The row-1 index of that range; null with <paramref name="Table"/>.</param>
+/// <param name="Source">The record of its own row it copied from, the first conditioned on the range read before it; null when none was.</param>
+public readonly record struct VariantPick(int? Table, int? Range, MsnRecordId? Source);
 
 /// <summary>
 /// One row-12 record as <c>MsnGen_LoadMission</c> builds a squad machine from it: its chassis, ten

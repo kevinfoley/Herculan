@@ -13,9 +13,8 @@ namespace Herculan.Engine.Editor;
 /// the generated file (<see cref="MissionRebuild"/>), which builds the herc's object for the record, and the herc is
 /// selected (docs/herculan/handoff-editor-mission-editing.md#in-place, "Adding hercs").
 ///
-/// <para>A Human chassis (types 0 to 8) comes with its stock fit, as a Herc Type choice gives it
-/// (<see cref="MachineFitter.StockFit"/>); a Cybrid with the fit the most retail records of its type carry
-/// (<see cref="HercGroups.CybridFit"/>).</para>
+/// <para>It comes with the fit a new herc of its type gets (<see cref="MachineFitter.NewHercFit"/>), as a chassis change gives
+/// it.</para>
 /// </summary>
 internal sealed class HercPlacer {
 	private const int MechRow = 12;
@@ -63,7 +62,7 @@ internal sealed class HercPlacer {
 			return refused;
 		}
 
-		if (FitOf(typeIndex) is not var (weapons, ammo)) {
+		if (_fitter.NewHercFit(typeIndex) is not var (weapons, ammo)) {
 			return HercGroups.IsCybrid(typeIndex) ? $"There is no herc type {typeIndex}." : $"The install has no stock fit for chassis {typeIndex}.";
 		}
 
@@ -95,14 +94,10 @@ internal sealed class HercPlacer {
 	/// install has nothing for.
 	/// </summary>
 	public SceneObject? Ghost(int typeIndex, MissionSide side) =>
-		FitOf(typeIndex) is var (weapons, ammo)
+		_fitter.NewHercFit(typeIndex) is var (weapons, ammo)
 			? _scene.CreateObject(new MissionPlacement(MissionUnitKind.Mech, typeIndex, _names[typeIndex], -1, -1, Vec3i.Zero, 0,
 				weapons, ammo, Side: side, OutOfActionReport: OutOfActionReport.None))
 			: null;
-
-	// The weapons and ammunition types a new herc of <type> is fitted with, or null when there are none to give.
-	private (short[] Weapons, short[] Ammo)? FitOf(int type) =>
-		HercGroups.IsCybrid(type) ? HercGroups.CybridFit(type) : _fitter.StockFit(type);
 
 	// The machines player.mec brings, which share block 7's slots, as the mission check counts them.
 	private int SquadSize => _index.Mission.Placements.Count(placement => placement.IsPlayerLance);

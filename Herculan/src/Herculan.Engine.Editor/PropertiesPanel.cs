@@ -27,6 +27,7 @@ internal sealed class PropertiesPanel {
 	private readonly SideChanger _sides;
 	private readonly ObjectDeleter _deleter;
 	private readonly SquadMachinePanel _machine;
+	private readonly RosterFitView _fit;
 	private readonly MissionView _mission;
 	private readonly RouteView _route;
 	private readonly TriggerAreaView _area;
@@ -39,6 +40,7 @@ internal sealed class PropertiesPanel {
 	private readonly ConditionView _condition;
 	private readonly PresenceEditor _presence;
 	private readonly PresentWhenView _presentWhen;
+	private readonly VariantView _variants;
 	private readonly PanelLinks _links;
 	private readonly StringFile? _strings;
 
@@ -47,21 +49,24 @@ internal sealed class PropertiesPanel {
 
 	/// <param name="document">The generated <c>script.dat</c>, whose records the order view offers as routes and subjects.</param>
 	public PropertiesPanel(MissionIndex index, ScriptDat document, SelectionState selection, PointMover mover,
-			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, MissionView mission, RouteEditor routes,
+			SideChanger sides, ObjectDeleter deleter, SquadMachinePanel machine, RosterFitView fit, MissionView mission, RouteEditor routes,
 			RoutePlacing placing, AreaEditor areas, AreaPlacing areaPlacing, OrderEditor orders, ObjectiveEditor objectives,
-			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, StringFile? strings) {
+			ActionEditor actions, TimerEditor timers, ConditionEditor conditions, PresenceEditor presence, VariantEditor variants,
+			CampaignState campaign, Func<HercWorks.Core.Data.File.Msn.MapObject, string> alternatives, StringFile? strings) {
 		_index = index;
 		_selection = selection;
 		_mover = mover;
 		_sides = sides;
 		_deleter = deleter;
 		_machine = machine;
+		_fit = fit;
 		_mission = mission;
 		_links = new PanelLinks(index, selection);
 		_actions = actions;
 		_action = new ActionView(index, document, actions, selection, _links);
 		_timer = new TimerView(index, document, timers, _links);
-		_condition = new ConditionView(conditions, _links);
+		_variants = new VariantView(variants, campaign, conditions, _links, alternatives);
+		_condition = new ConditionView(conditions, _links, _variants);
 		_presence = presence;
 		_presentWhen = new PresentWhenView(presence, _links, (names, ownRoute) => References(names, ownRoute));
 		_route = new RouteView(index, selection, mover, routes, placing, _links.Group,
@@ -128,11 +133,16 @@ internal sealed class PropertiesPanel {
 		ImGui.SameLine();
 		_links.Group(placement.GroupIndex);
 		_presentWhen.Draw(_presence.ObjectTarget(sel));
+		_variants.DrawDrawnFrom(sel);
 		ImGui.Separator();
 		ImGui.Text($"Kind: {placement.Kind}");
-		ImGui.Text($"Type index: {placement.TypeIndex}");
+		if (!_fit.Covers(sel)) {
+			ImGui.Text($"Type index: {placement.TypeIndex}");
+		}
+
 		ImGui.Text(placement.IsPlayerLance ? "Player squad" : $"Roster slot: {placement.SlotIndex}");
 		TeamField(placement.GroupIndex, ofMember: true);
+		_fit.Draw(sel);
 
 		if (sel.Model is { } model) {
 			ImGui.Separator();

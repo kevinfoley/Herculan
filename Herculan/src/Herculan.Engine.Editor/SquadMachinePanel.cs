@@ -1,6 +1,3 @@
-using HercWorks.Core.Data.Struct;
-using HercWorks.Core.Data.Struct.Herc;
-using Herculan.Engine.Platform;
 using Herculan.Engine.Shell;
 using ImGuiNET;
 
@@ -9,21 +6,19 @@ namespace Herculan.Engine.Editor;
 /// <summary>
 /// The Properties panel's view of the player's squad, under the squad's objects and group 0: which Hercs the player and
 /// the squadmates pilot in this mission, and the mission's group-0 machines, each as a chassis choice and one row per
-/// mount the chassis has, edited through <see cref="MachineFitter"/>; and the squadmates added and removed through
+/// mount the chassis has, edited through <see cref="MachineFitter"/> (drawn by <see cref="MachineFitView"/>); and the squadmates added and removed through
 /// <see cref="SquadEditor"/>.
 /// </summary>
 internal sealed class SquadMachinePanel {
-	// In pixels on a 100% display (ScaledImGui.Scaled).
-	private const float WeaponWidth = 150f;
-	private const float GuidanceWidth = 70f;
-
 	private readonly MachineFitter _fitter;
+	private readonly MachineFitView _fit;
 	private readonly SquadEditor _editor;
 	private readonly MissionSquad? _squad;
 
 	/// <param name="squad">Which Hercs the mission's squad pilots, or null for a plain <c>script.dat</c>.</param>
 	public SquadMachinePanel(MachineFitter fitter, SquadEditor editor, MissionSquad? squad) {
 		_fitter = fitter;
+		_fit = new MachineFitView(fitter);
 		_editor = editor;
 		_squad = squad;
 	}
@@ -183,36 +178,8 @@ internal sealed class SquadMachinePanel {
 	}
 
 	// The chassis choice and the fit of the record at block-7 slot <slot>.
-	private void DrawMachine(int slot) {
-		if (_fitter.Record(slot) is not { } record) {
-			return;
-		}
-
-		string? reason = _fitter.WhyFixed(slot);
-		ImGui.PushID(slot);
-		ImGui.BeginDisabled(reason != null);
-		ImGui.SetNextItemWidth(ScaledImGui.Scaled(WeaponWidth));
-		if (ImGui.BeginCombo("Chassis", ChassisName(record.TypeIndex))) {
-			foreach (int chassis in MachineFitter.Chassis) {
-				if (ImGui.Selectable(ChassisName(chassis), chassis == record.TypeIndex) && chassis != record.TypeIndex) {
-					_fitter.RequestChassis(slot, chassis);
-				}
-			}
-
-			ImGui.EndCombo();
-		}
-
-		EditorText.Note("A new chassis comes with its stock fit.");
-		int capacity = MachineFitter.Capacity(record.TypeIndex);
-		for (int mount = 0; mount < capacity && mount < record.WeaponRefs.Length; mount++) {
-			DrawMount(slot, record.TypeIndex, mount, record.WeaponRefs[mount],
-				mount < record.WeaponSecondary.Length ? record.WeaponSecondary[mount] : (short)ShellWeaponUnit.NoGuidance);
-		}
-
-		ImGui.EndDisabled();
-		ImGui.PopID();
-		EditorText.Reason(reason);
-	}
+	private void DrawMachine(int slot) =>
+		_fit.Draw(slot, MachineFitter.Chassis, ChassisName, "A new chassis comes with its stock fit.");
 
 	// Why the last fit, add or remove could not be made.
 	private void Failures() {
@@ -225,45 +192,5 @@ internal sealed class SquadMachinePanel {
 		}
 	}
 
-	// One mount: the weapons its socket takes, and for a launcher the guidance kinds.
-	private void DrawMount(int slot, int chassis, int mount, short weapon, short guidance) {
-		ImGui.PushID(mount);
-		ImGui.AlignTextToFramePadding();
-		ImGui.Text($"Slot {mount}:");
-		ImGui.SameLine();
-		ImGui.SetNextItemWidth(ScaledImGui.Scaled(WeaponWidth));
-		if (ImGui.BeginCombo("##weapon", WeaponName(weapon))) {
-			foreach (int option in _fitter.WeaponsFor(chassis, mount)) {
-				if (ImGui.Selectable(WeaponName(option), option == weapon) && option != weapon) {
-					_fitter.RequestWeapon(slot, mount, option);
-				}
-			}
-
-			ImGui.EndCombo();
-		}
-
-		if (ShellWeaponsScreen.TakesGuidance(weapon)) {
-			ImGui.SameLine();
-			ImGui.SetNextItemWidth(ScaledImGui.Scaled(GuidanceWidth));
-			if (ImGui.BeginCombo("##guidance", GuidanceName(guidance))) {
-				foreach (int kind in ShellWeaponsScreen.GuidanceKinds) {
-					if (ImGui.Selectable(GuidanceName(kind), kind == guidance) && kind != guidance) {
-						_fitter.RequestGuidance(slot, mount, kind);
-					}
-				}
-
-				ImGui.EndCombo();
-			}
-		}
-
-		ImGui.PopID();
-	}
-
-	private static string ChassisName(int chassis) => HercLUT.GetById((short)chassis)?.Name ?? $"type {chassis}";
-
-	private static string WeaponName(int weapon) => weapon == -1 ? "(no slot)" : WeaponLUT.GetById(weapon)?.Name ?? $"weapon {weapon}";
-
-	// A launcher left at the filler, as a stock fit leaves the Razor's, reads "Default".
-	private static string GuidanceName(int kind) =>
-		kind == ShellWeaponUnit.NoGuidance ? "Default" : MissileType.GetById(kind)?.Abbrev ?? $"kind {kind}";
+	private static string ChassisName(int chassis) => MachineFitView.ChassisName(chassis);
 }

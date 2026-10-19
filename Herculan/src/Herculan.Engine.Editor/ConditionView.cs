@@ -8,12 +8,13 @@ namespace Herculan.Engine.Editor;
 /// The Properties panel's view of a condition, a row-1 record: its kind; a flag test's flag, operator and value, a draw's bound
 /// and the number it drew, or a range's draw and ends; what it requires; whether it holds in the campaign state shown; what
 /// references it, as links; and Delete, refused while anything does. Each a field or choice that changes it
-/// (<see cref="ConditionEditor"/>). A variant table and a range over one are shown read-only. What each kind tests is
-/// docs/retail/formats/msn-mission-file.md#the-conditions--row-1.
+/// (<see cref="ConditionEditor"/>). A variant table is its table's view (<see cref="VariantView"/>), and a range over one is
+/// shown read-only, its chance set there. What each kind tests is docs/retail/formats/msn-mission-file.md#the-conditions--row-1.
 /// </summary>
 internal sealed class ConditionView {
 	private readonly ConditionEditor _editor;
 	private readonly PanelLinks _links;
+	private readonly VariantView _variants;
 
 	// A number being typed, and the field it is for, until the field lets go.
 	private string? _draftFor;
@@ -22,9 +23,10 @@ internal sealed class ConditionView {
 	// The condition drawn, whose GUID keeps one condition's draft out of another's field.
 	private short _shown = -1;
 
-	public ConditionView(ConditionEditor editor, PanelLinks links) {
+	public ConditionView(ConditionEditor editor, PanelLinks links, VariantView variants) {
 		_editor = editor;
 		_links = links;
+		_variants = variants;
 	}
 
 	public void Draw(short guid) {
@@ -39,9 +41,14 @@ internal sealed class ConditionView {
 		ImGui.Text($"Condition {guid}");
 		ImGui.Text(KindName(source, record));
 		ImGui.Separator();
+		if (record.Type == ConditionEditing.VariantTable) {
+			_variants.DrawTable(guid);
+			return;
+		}
+
 		if (ConditionEditing.InVariantTable(source, guid)) {
 			ImGui.TextWrapped(ConditionEditing.Describe(source.Mission, record));
-			EditorText.Note("Variant tables are edited in a later step.");
+			EditorText.Note("Its chance is set in its table's view.");
 		} else {
 			EditorText.Reason(why);
 		}

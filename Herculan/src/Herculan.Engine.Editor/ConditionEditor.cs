@@ -151,7 +151,7 @@ internal sealed class ConditionEditor {
 				continue;
 			}
 
-			shown.Add(Exported(record.Row, slot.Index));
+			shown.Add(Identity(record.Row, slot.Index));
 		}
 
 		var resolved = _deleter.Resolve(source, new MsnNamers([], [], orders));
@@ -172,8 +172,8 @@ internal sealed class ConditionEditor {
 			leftOut.Select(pair => (pair.Key, pair.Value)).ToList());
 	}
 
-	// A record the editor's state exports at <index> of the block row <row> is written to, by its identity.
-	private ConditionUse Exported(int row, int index) => row switch {
+	/// <summary>A record the editor's state exports at <paramref name="index"/> of the block row <paramref name="row"/> is written to, by its identity.</summary>
+	public ConditionUse Identity(int row, int index) => row switch {
 		6 => new ConditionUse($"Point {index}", null),
 		7 => new ConditionUse($"Heading {index}", null),
 		8 => new ConditionUse($"Route {index}", new RouteSelection(index)),
