@@ -5642,7 +5642,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mech_Constructor",
-      "description": "The Mech class constructor -- assigns a fully-populated 34-slot vtable at 0x0049a282 (by far the largest of the base-constructor-helper's 13 callers). Calls Damage_LoadMechDmgFile, Shield_Init, Component_AllocHealthArrays, Component_LinkMaxRefData.",
+      "description": "The Mech class constructor -- assigns a fully-populated 34-slot vtable at 0x0049a282 (by far the largest of the base-constructor-helper's 13 callers). Calls Damage_LoadMechDmgFile, Shield_Init, Component_AllocHealthArrays, Component_LinkMaxRefData. Registers the locomotion thread on typeRec+0x12, then zeroes the priority (+6) of the shape's own sequences typeRec+0x12 and +0x14 (00415dbc, 00415dd5) before registering the twist (+0x1c) and pitch (+0x24) threads.",
       "source": "memory project_es2_exe_recon"
     },
     {
