@@ -29,7 +29,7 @@ public sealed class Es1CloudLayer : IDisposable {
 	private readonly GpuTexture?[] _frames;
 	private readonly Vector2[] _frameTexels;
 
-	/// <summary>Uploads the cloud bank's frames in the theater's palette, index 0 left transparent.</summary>
+	/// <summary>Uploads the cloud bank's frames in the live palette, index 0 left transparent.</summary>
 	public Es1CloudLayer(GL gl, Es1Clouds clouds, DynamixPalette palette) {
 		_gl = gl;
 		_clouds = clouds;

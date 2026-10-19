@@ -7,6 +7,7 @@ using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
+using Herculan.Es1.View;
 using Herculan.Es1.World;
 
 namespace Herculan.Es1.Scene;
@@ -23,10 +24,11 @@ public readonly record struct Es1PlacedShape(int ShapeIndex, Transform3 Frame);
 /// <c>World_LoadTheater</c> the palette and world file (docs/es1/formats/script-dat.md#reading).
 /// </summary>
 public sealed class Es1ZoneScene {
-	private Es1ZoneScene(Es1Theater theater, short zone, DynamixPalette? palette, Es1Shading shading,
-			Es1WorldData? world, IReadOnlyList<MeshBuild?> models, IReadOnlyList<Es1PlacedShape> shapes) {
+	private Es1ZoneScene(Es1Theater theater, short zone, DynamixPalette? theaterPalette, DynamixPalette? palette,
+			Es1Shading shading, Es1WorldData? world, IReadOnlyList<MeshBuild?> models, IReadOnlyList<Es1PlacedShape> shapes) {
 		Theater = theater;
 		Zone = zone;
+		TheaterPalette = theaterPalette;
 		Palette = palette;
 		Shading = shading;
 		World = world;
@@ -55,7 +57,19 @@ public sealed class Es1ZoneScene {
 	/// <summary>The zone, header word 1; negative loads no shapes.</summary>
 	public short Zone { get; }
 
-	/// <summary><c>dpl\</c><see cref="Es1Theater.PaletteName"/>, or null when the install lacks it.</summary>
+	/// <summary>
+	/// <c>dpl\</c><see cref="Es1Theater.PaletteName"/> as loaded, the first palette made active, which the texture colour
+	/// tables follow (docs/es1/rendering/polygon-shading.md#the-texture-colour-tables); null when the install lacks it.
+	/// </summary>
+	public DynamixPalette? TheaterPalette { get; }
+
+	/// <summary>
+	/// The live palette every palette index on the screen shows through: <see cref="TheaterPalette"/> with the cockpit's
+	/// scheme installed when the mission has one (docs/es1/simulation/cockpit-views.md#the-color-scheme), and every colour
+	/// the scene, the HERCs and the canopy are converted to is taken from it. Retail installs the scheme at
+	/// <c>Sim_StartMission</c> step 13, after the world load, and the display shows each index through the DAC as it then
+	/// stands; this engine converts indices to colours as it builds, so the scheme is installed before the scene is built.
+	/// </summary>
 	public DynamixPalette? Palette { get; }
 
 	/// <summary>How the shapes are coloured, from <see cref="Palette"/>, <see cref="World"/> and <c>datshades</c>.</summary>
@@ -74,16 +88,18 @@ public sealed class Es1ZoneScene {
 	public IReadOnlyList<Es1PlacedShape> Shapes { get; }
 
 	/// <summary>
-	/// Loads the scene for <paramref name="zone"/> in <paramref name="theater"/>.
+	/// Loads the scene for <paramref name="zone"/> in <paramref name="theater"/>, with <paramref name="scheme"/> installed
+	/// in the live palette when there is one.
 	///
 	/// <para>The simulator builds an object for every record whatever its shape index, which it does not check against
 	/// the library's count; a record past the library is kept here and has no model to draw.</para>
 	/// </summary>
 	/// <exception cref="FileNotFoundException">The zone file is missing, which retail asserts on (<c>terrain.cpp</c> line <c>0x32</c>).</exception>
-	public static Es1ZoneScene Load(GameContent content, Es1Theater theater, short zone) {
-		var palette = content.Read("dpl", theater.PaletteName + ".DPL") is { } paletteBytes
+	public static Es1ZoneScene Load(GameContent content, Es1Theater theater, short zone, Es1CockpitScheme? scheme = null) {
+		var theaterPalette = content.Read("dpl", theater.PaletteName + ".DPL") is { } paletteBytes
 			? new DynamixPaletteTransformer().Parse(paletteBytes)
 			: null;
+		var palette = theaterPalette != null && scheme is { } installed ? installed.Install(theaterPalette) : theaterPalette;
 
 		var world = content.Read("wld", theater.WorldName + ".WLD") is { } worldBytes
 			? new Es1WorldDataTransformer().Parse(worldBytes)
@@ -119,7 +135,7 @@ public sealed class Es1ZoneScene {
 			}
 		}
 
-		return new Es1ZoneScene(theater, zone, palette, shading, world, models, shapes) {
+		return new Es1ZoneScene(theater, zone, theaterPalette, palette, shading, world, models, shapes) {
 			Horizon = world != null ? Es1Horizon.From(world, palette) : null,
 			Ground = world != null ? LoadGround(content, world) : null,
 			Skyline = world is { SkyBank.Length: > 0 }

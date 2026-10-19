@@ -206,7 +206,7 @@ public static partial class DtsMeshBuilder {
 
 		var offset = ResolveGroupOffset(detailPart, animList);
 		var detail = new PartDetail(detailPart.Radius, detailPart.Details ?? Array.Empty<short>(),
-			parts.Length, WorldScale.DtsToRender(offset.X, offset.Y, offset.Z));
+			parts.Length, WorldScale.DtsToRender(offset.X, offset.Y, offset.Z), detailPart.Transform);
 
 		var outer = sink.Gate;
 		for (int level = 0; level < parts.Length; level++) {

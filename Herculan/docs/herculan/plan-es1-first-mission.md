@@ -32,9 +32,7 @@ Until its step lands, each of these does nothing, tagged `// PLACEHOLDER:` in co
 - **The joystick**, until step 5.
 - **Flyers and bases as simulation objects.** Blocks 7 and 8 are not spawned (their constructors `0001ac58` and `00003cbc` are unread); the zone's placed shapes still draw.
 - **The mission's end.** The status panel that ends the mission (`00046efc`) is unread; the mission runs until the window closes.
-- **The HERCs' crude roots and their weapon models**, until step 3b: every HERC draws root 0 at any distance, where retail picks a root by the detail setting ([the LOD root](../es1/simulation/object-classes.md#the-lod-root--shape_drawatdetaillevel-00002b30), [the detail setting](../es1/simulation/object-classes.md#the-detail-setting--shapedetail_applydetailsetting-00057c08)) after renumbering the crude roots at load ([the load](../es1/formats/chassis-dat.md#the-load), step 4); and no weapon model is drawn on a hardpoint, where retail moves each mount's model to its mount point once ([`Shape_TranslatePointLists`](../es1/simulation/weapon-mount-classes.md#moving-the-model-to-its-mount-point--shape_translatepointlists-0000a308)).
-- **The cockpit's colour scheme**, until step 3b: the canopy draws through the theater's palette alone, where retail installs the chassis's `dpl\cockpit` entries ([the color scheme](../es1/simulation/cockpit-views.md#the-color-scheme)).
-- **The textured faces' column walk**, until step 3b: the HERCs' textured faces are mapped with perspective (decision 8).
+- **Two unread edge cases of step 3b**, no step yet: a cockpit scheme above 7, whose `0x40` word retail reads past its table ([the color scheme](../es1/simulation/cockpit-views.md#the-color-scheme)), keeps the second range's colour at `0x40`; and with no `data\prefs.cfg`, what `Prefs_Load` leaves in option 6 is unread, so the finest detail is taken.
 - **The tick's placement of the shadows**, until step 4: `Mech_PlaceLegsOnGround`'s placement runs once after the spawn.
 - **The shell's after-mission files and a career's load**: a single mission's load writes no `car\sm_play.mec` or `car\sm_play.gam`, which only the shell reads back, and a career's mode 1 waits for the shell.
 
@@ -85,7 +83,13 @@ Each step is one subagent brief, one review (diff, both builds, the tests), one 
 
 **Step 8 — the AI.** `Group_TickMembers`, `Mech_AiTick`, the HERC state table and its states, the steering, formation and routes, the actions and triggers that gate a group's tick, the sensor model and `Ai_SelectTarget`, and the AI's aim and fire. States that need what the slice leaves out (attacking a flyer, the unread skirting `000038b8`) keep their transitions and do nothing, tagged. The user's check: an enemy group finds the player, closes, flanks and fights as retail's does.
 
-After step 8 the order returns to the handoff's: flyers, structures, the mission's end, then the shell.
+After step 8, by the module rows of [step 0.7](plan-es1-support.md#phase-0--tooling-and-measurement), each module taken to [done](plan-es1-support.md#when-a-module-is-done) before the next:
+
+1. Flyers: `mechsys.cpp` to `flyersys.cpp` and `flyersys.cpp`.
+2. Effects and structures: `explo.cpp`, `debris.cpp`, `base.cpp`.
+3. The mission's end: the status panel `00046efc` and what it closes.
+4. The rest of the cockpit: the weapon-row file from `00037810` (the pod row, console buttons, select gadgets and slider from `000380fc`, [`cockpit-weapon-gauges.md#open`](../es1/simulation/cockpit-weapon-gauges.md#open)), the files from `00038f0c` and `000397f0`, the display's run at `00039bb4`, `phdd.cpp`, `alert.cpp`, `cal_alrt.cpp`.
+5. `vcr.cpp`, `memory.cpp` and the rest of the library region ([`handoff-es1-library-region.md`](handoff-es1-library-region.md)); then the shell.
 
 ## Retail checks
 

@@ -22,7 +22,8 @@ namespace Herculan.Engine.Render;
 /// distance to the view-space translation the part's node transform installs
 /// (<c>TSGroup_BindNodeTransform</c> ahead of the measure), not to the object's origin.
 /// </param>
-public sealed class PartDetail(short radius, short[] thresholds, int levelCount, Vector3 origin) {
+/// <param name="transformId">The part's own node, <c>TSBasePart.Transform</c> (<c>part+4</c>), which the measure is taken in.</param>
+public sealed class PartDetail(short radius, short[] thresholds, int levelCount, Vector3 origin, short transformId = -1) {
 	/// <summary>
 	/// <c>g_TSDetailPartSizeScaleQ10</c> (<c>004a1034</c>) — Q10 one, the image's value. Whether
 	/// anything changes it at run time is open; see the doc.
@@ -72,6 +73,9 @@ public sealed class PartDetail(short radius, short[] thresholds, int levelCount,
 
 	/// <summary>Where the part's own node sits in the shape at rest, in render units.</summary>
 	public Vector3 Origin { get; } = origin;
+
+	/// <summary>The part's own node, which the original measures the eye in; -1 for none.</summary>
+	public short TransformId { get; } = transformId;
 
 	/// <summary>
 	/// The level drawn at <paramref name="viewDistance"/>, in <c>[0, LevelCount)</c>.

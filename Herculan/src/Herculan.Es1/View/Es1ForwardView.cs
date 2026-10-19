@@ -17,12 +17,8 @@ namespace Herculan.Es1.View;
 ///
 /// <para>Retail blits the canopy once per view change and draws the world over it each frame inside the clip regions
 /// (docs/es1/simulation/cockpit-views.md#cockpitview_setview-00022558). Here the world is drawn first and the canopy over
-/// it with each pixel inside the window and its clip regions left transparent, which shows the same pixels.</para>
-///
-/// <para>PLACEHOLDER: the canopy is coloured through the theater's palette alone. <c>CockpitViewManager_LoadViews</c>
-/// installs the chassis' colour scheme from <c>dpl\cockpit</c> into the live palette, but which entries it installs is not
-/// in docs/es1/simulation/cockpit-views.md (ES2's is <c>Palette_InstallRange</c>(42, 24, ...),
-/// docs/retail/rendering/cockpit-canopy-palette.md#palette); step 6's batch reads it.</para>
+/// it with each pixel inside the window and its clip regions left transparent, which shows the same pixels. The canopy's
+/// indices show through the live palette, the chassis' scheme installed (<see cref="Es1CockpitScheme"/>).</para>
 /// </summary>
 public sealed class Es1ForwardView : IDisposable {
 	/// <summary>The shape the page is shown at.</summary>

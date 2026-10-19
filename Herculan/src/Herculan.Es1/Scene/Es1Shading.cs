@@ -57,7 +57,10 @@ public sealed class Es1Shading {
 	/// </summary>
 	public SurfaceRampTable? Table { get; }
 
-	/// <summary>Builds the shading from the theater's palette, world file and <c>dat\shades</c>.</summary>
+	/// <summary>
+	/// Builds the shading from the live palette, world file and <c>dat\shades</c>: the indices from the palette's ramps,
+	/// which the cockpit's scheme does not change, and their colours from the palette's entries.
+	/// </summary>
 	public static Es1Shading For(DynamixPalette? palette, Es1WorldData? world, WorldShades? shades) {
 		var rows = new byte[IdentityShadeLevels * ShadeRamp.RowLength];
 		for (int i = 0; i < rows.Length; i++) {

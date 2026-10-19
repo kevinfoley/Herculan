@@ -13372,7 +13372,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_CtorBase",
-      "description": "(port, rect) in stack order, callee-cleaned: MsgPort's constructor. MessagePort_QueueInit (0002e4e0) on the queue +0 and the log +0x1ec (allocating 0x246 bytes when that is null); builds the box at +0x437 as a type-0 rectangle region (the module's vtable copies 000930d6, 000930fa, 00093122, then 0009314a at +0x437, 0 at +0x43b); stores MsgPortVtable (00093172) at +0x464 and the rect's four dwords at +0x43f..+0x44b; clears +0x432, +0x436, +0x44f, +0x450 and +0x461..+0x463; then, when StrTable_FirstString (00045114)(SystemStringTable (SystemStringTable (000b0e54))) returns 0, SystemMessages_Index (0002f1ec)(port, 0, -1). ES2's MessagePort_CtorBase (DBSIM 00435490), which loads no file.",
+      "description": "(port, rect) in stack order, callee-cleaned: MsgPort's constructor. MessagePort_QueueInit (0002e4e0) on the queue +0 and the log +0x1ec (allocating 0x246 bytes when that is null); builds the box at +0x437 as a type-0 rectangle region (the module's vtable copies 000930d6, 000930fa, 00093122, then 0009314a at +0x437, 0 at +0x43b); stores MsgPortVtable (00093172) at +0x464 and the rect's four dwords at +0x43f..+0x44b; clears +0x432, +0x436, +0x44f, +0x450 and +0x461..+0x463; then, when StrTable_FirstString (00045114)(SystemStringTable (000b0e54)) returns 0, SystemMessages_Index (0002f1ec)(port, 0, -1). ES2's MessagePort_CtorBase (DBSIM 00435490), which loads no file.",
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#building-the-two-ports",
       "verified": {
         "bytes": "0002eb80+386",
@@ -19357,13 +19357,13 @@
       "type": "function",
       "confidence": "high",
       "name": "TSTexture4Poly_Render",
-      "description": "(this), callee-cleaned: TSTexture4Poly's vtable (0009b1d2) slot +0x20. Picks the front or back value by ES2's -1 rule, takes that frame of the active bitmap bank (000bdb5e +8), and fills through the brush {7, 4, corners, the frame's bitmap header, table} at the render context's +0x22c (then PolyFill_FillBrush): the texture points are the frame's corners (0,0), (cols-1,0), (cols-1,rows-1), (0,rows-1) at 000b58d8 (Poly_ClipRingToNearPlaneWithUV into 000b59dc when clipped); table is 0 while 000973f4 is 0, else 000973f0[(000973f4 - 1) * light / 255] with Light_ComputeShadeForFace's light, the normal negated for a back face.",
+      "description": "(this), callee-cleaned: TSTexture4Poly's vtable (0009b1d2) slot +0x20. Picks the front or back value by ES2's -1 rule, takes that frame of the active bitmap bank (000bdb5e +8), and fills through the brush {7, the ring's point count, corners, the frame's bitmap header, table} at the render context's +0x22c (then PolyFill_FillBrush): the texture points are the frame's corners (0,0), (cols-1,0), (cols-1,rows-1), (0,rows-1) at 000b58d8 (Poly_ClipRingToNearPlaneWithUV into 000b59dc when clipped, the count then the clip's); table is 0 while 000973f4 is 0, else 000973f0[(000973f4 - 1) * light / 255] with Light_ComputeShadeForFace's light, the normal negated for a back face. Fills with PolyFill_FillThenOutline (0005d2f0)(reversed), reversed 0 for the front value and 1 for the back value, with no winding test.",
       "source": "Herculan/docs/es1/rendering/polygon-shading.md#the-four-poly-types",
       "verified": {
         "bytes": "0005410c+697",
         "sha1": "7b34aa99e2da",
         "scope": "body",
-        "via": "decompile"
+        "via": "disasm"
       }
     },
     {

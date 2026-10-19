@@ -391,6 +391,9 @@ public static partial class DtsMeshBuilder {
 			? QuadUvWeights(points, indexes, listStart)
 			: null;
 
+		WalkRing? walk = rect is { } walkFrame ? WalkRingOf(ring, frameCorner, walkFrame, atlas!.FrameSize(look.Frame),
+			atlas, points, localPoints, look.LitAsBack) : null;
+
 		// A triangle fan from the ring's first slot, which is how Raster_FillContourPolygon
 		// (004879c0) splits a Gouraud poly; every other fill covers a convex poly whichever way it is
 		// split.
@@ -423,7 +426,7 @@ public static partial class DtsMeshBuilder {
 					UvAt(frame, frameCorner[i + 2]) * weights.Item3,
 					faceNormal: face.Normal,
 					uvWeights: quadWeights == null ? default : weights) {
-					Leaf = sink.Leaf, Ground = ground, Dependency = borrowed?.Gate ?? FacingGate.None
+					Leaf = sink.Leaf, Ground = ground, Dependency = borrowed?.Gate ?? FacingGate.None, Walk = walk
 				});
 			} else {
 				// The fan's corners are ring slots 0, i+1 and i+2, and the normal list is indexed by
@@ -561,6 +564,31 @@ public static partial class DtsMeshBuilder {
 		}
 
 		return new[] { 1f / (1f - s), 1f / (1f - t), 1f / s, 1f / t };
+	}
+
+	/// <summary>
+	/// A textured face's ring as its fill receives it: the slots' points, and each slot's frame corner as a texture
+	/// point in texels, (0, 0), (columns − 1, 0), (columns − 1, rows − 1) and (0, rows − 1)
+	/// (docs/es1/rendering/polygon-shading.md#the-four-poly-types). Null when a slot's point does not resolve.
+	/// </summary>
+	private static WalkRing? WalkRingOf(int[] ring, int[] frameCorner, AtlasRect frame, (int Width, int Height) size,
+			TextureAtlas atlas, Vector3[] points, Vector3[] localPoints, bool litAsBack) {
+		var rest = new Vector3[ring.Length];
+		var local = new Vector3[ring.Length];
+		var texturePoints = new Vector2[ring.Length];
+		var far = new Vector2(size.Width - 1, size.Height - 1);
+		for (int j = 0; j < ring.Length; j++) {
+			if (ring[j] < 0 || ring[j] >= points.Length) {
+				return null;
+			}
+
+			rest[j] = points[ring[j]];
+			local[j] = localPoints[ring[j]];
+			texturePoints[j] = QuadCorners[frameCorner[j]] * far;
+		}
+
+		return new WalkRing(rest, local, texturePoints, (int)MathF.Round(frame.U0 * atlas.Width),
+			(int)MathF.Round(frame.V0 * atlas.Height), size.Width, size.Height, litAsBack);
 	}
 
 	/// <summary>

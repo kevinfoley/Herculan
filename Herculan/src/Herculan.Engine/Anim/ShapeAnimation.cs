@@ -426,7 +426,7 @@ public sealed class ShapeAnimation {
 	}
 
 	/// <summary>The first <c>ANAnimList</c> in a root, depth first — the root's own.</summary>
-	internal static ANAnimList? FirstAnimList(TSObject? root) =>
+	public static ANAnimList? FirstAnimList(TSObject? root) =>
 		root == null ? null : FirstAnimList(new[] { root });
 
 	private static ANAnimList? FirstAnimList(IEnumerable<TSObject> chunks) {

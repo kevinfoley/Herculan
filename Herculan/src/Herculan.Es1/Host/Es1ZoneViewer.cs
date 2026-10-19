@@ -35,7 +35,7 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 /// and <see cref="BandedDetail"/>, the ground between textured and banded.</para>
 /// </summary>
 public static class Es1ZoneViewer {
-	/// <summary>Option 5 while the ground is textured: its largest value.</summary>
+	/// <summary>Option 5 while the ground is textured: its largest value, which the viewer starts at, the user's choice.</summary>
 	private const int TexturedDetail = 255;
 
 	/// <summary>Option 5 while the ground is banded: the largest value below 240, which draws 248 of 250 points.</summary>
@@ -80,21 +80,27 @@ public static class Es1ZoneViewer {
 		// ES1's own volume code is unread (docs/es1/formats/zone-terrain.md#open), and its CD drive comes from ALT_DRIVE,
 		// not drive.cfg, so no disc is mounted.
 		var content = GameContent.MountInstall(installRoot, disc: null, Voln.DbsimProgram);
+		// The HERCs and the cockpit are loaded before the zone, unlike retail, so the scene is built in the live palette
+		// with the player chassis' scheme installed (Es1ZoneScene.Palette); with no player's machine nothing is installed.
 		Es1World world;
 		Es1ZoneScene scene;
+		Es1CockpitViews? views;
 		try {
 			var script = Es1MissionScript.Read(files);
-			scene = Es1ZoneScene.Load(content, theater, header[1]);
 			var formations = new Es1MechFormationsTransformer().Parse(content.ReadRequired("dat", "MFORMS.DAT"))
 				?? new Es1MechFormations();
 			world = Es1World.Spawn(script, content, formations);
+			views = world.LocalPlayer is { } machine ? Es1CockpitViews.Load(content, machine.Type.CockpitName) : null;
+			var scheme = views?.CockpitPalette is { } cockpit
+				? new Es1CockpitScheme(cockpit, world.LocalPlayer!.Type.Type)
+				: (Es1CockpitScheme?)null;
+			scene = Es1ZoneScene.Load(content, theater, header[1], scheme);
 		} catch (Exception ex) when (ex is InvalidDataException or FileNotFoundException) {
 			Console.Error.WriteLine($"Cannot load the mission: {ex.Message}");
 			return 1;
 		}
 
 		var player = world.LocalPlayer;
-		var views = player != null ? Es1CockpitViews.Load(content, player.Type.CockpitName) : null;
 		if (views != null) {
 			// Sim_StartMission's order (docs/es1/simulation/cockpit-views.md#the-view-manager).
 			views.SetView(1);
@@ -160,8 +166,8 @@ public static class Es1ZoneViewer {
 				SunShadeSlope = Es1Sun.ShadeSlope,
 			};
 			renderer.SetShadeRamps(scene.Shading.Table ?? SurfaceRampTable.Build(scene.Shading.Surfaces));
-			renderer.SetPaletteRamp(scene.Palette != null
-				? Es1TextureShades.RampTable(scene.Palette)
+			renderer.SetPaletteRamp(scene.TheaterPalette != null && scene.Palette != null
+				? Es1TextureShades.RampTable(scene.TheaterPalette, scene.Palette)
 				: PaletteRampTable.Build(scene.Shading.Surfaces));
 
 			models = Es1MechModels.Upload(gl, content, world.Types.Values.OfType<Es1MechType>(), scene);

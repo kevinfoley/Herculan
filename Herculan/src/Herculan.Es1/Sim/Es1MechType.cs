@@ -8,6 +8,7 @@ using HercWorks.Core.Data.File.Dyn;
 using HercWorks.Core.Io.Transform.Common;
 using HercWorks.Core.Io.Transform.Dbsim;
 using Herculan.Engine.Anim;
+using HercWorks.Core.Data.File.Dts.Bsp;
 using Herculan.Engine.Content;
 
 namespace Herculan.Es1.Sim;
@@ -100,9 +101,7 @@ public sealed class Es1MechType {
 			return null;
 		}
 
-		// PLACEHOLDER: MechType_RemapDetailRootTransforms (00019ba0) is not run, and with it no root after root 0 is drawn
-		// (see Es1MechModels): its Shape_RemapTransformIds handlers (00019aef-00019b93) are unread
-		// (docs/es1/formats/chassis-dat.md#open). Step 4's batch or a targeted read replaces it.
+		RemapDetailRootTransforms(roots, chassis.ModelLoDBoneIds);
 		var gunLayout = content.Read("gl", name + ".GL") is { } glBytes ? new GunLayoutTransformer().Parse(glBytes) : null;
 		int group = chassis.TextureGroup;
 		var bank = group >= 0 && group < TextureBanks.Count && content.Read("dba", TextureBanks[group] + ".DBA") is { } bankBytes
@@ -123,6 +122,79 @@ public sealed class Es1MechType {
 			? (short?)null
 			: h.BoneId).ToArray();
 	}
+
+	/// <summary>The length of one root's map, and the most part ids the list holds.</summary>
+	private const int RemapLength = 50;
+
+	/// <summary>
+	/// Step 4, <c>MechType_RemapDetailRootTransforms</c> (<c>00019ba0</c>, docs/es1/formats/chassis-dat.md#the-load): every
+	/// root after root 0 renumbered onto root 0's nodes, in place, through the part ids at <c>+0x30</c> (file offset 46),
+	/// signed bytes ended by a negative one. A part root 0 lacks is skipped and a transform id past the 50-byte map is
+	/// unmapped, where retail reads through a null part or past its map; the core's port of ES2's walk sits in ES2's own
+	/// code, which this assembly does not reference.
+	/// </summary>
+	private static void RemapDetailRootTransforms(IReadOnlyList<TSObject> roots, IReadOnlyList<byte> partIds) {
+		var maps = new sbyte[roots.Count][];
+		for (int level = 1; level < roots.Count; level++) {
+			maps[level] = Enumerable.Repeat((sbyte)-1, RemapLength).ToArray();
+		}
+
+		for (int i = 0; i < partIds.Count && i < RemapLength && (sbyte)partIds[i] >= 0; i++) {
+			if (FindPart(roots[0], (sbyte)partIds[i]) is not { } reference) {
+				continue;
+			}
+
+			for (int level = 1; level < roots.Count; level++) {
+				if (FindPart(roots[level], (sbyte)partIds[i]) is { Transform: >= 0 and < RemapLength } part) {
+					maps[level][part.Transform] = (sbyte)reference.Transform;
+				}
+			}
+		}
+
+		// Root 0's keyframe count, the int16 at +0x10 of its +0x2a.
+		int nodeCount = ShapeAnimation.FirstAnimList(roots.Count > 0 ? roots[0] : null)?.Transforms?.Length ?? 0;
+		for (int level = 1; level < roots.Count; level++) {
+			RemapTransformIds(roots[level], maps[level], nodeCount);
+		}
+	}
+
+	/// <summary>
+	/// <c>Shape_RemapTransformIds</c> (<c>00019ac4</c>) by the class: a <c>TSGroup</c>'s own id and no further; each
+	/// per-node entry of a <c>TSBSPPart</c> above 0, below the node count and mapped to a byte that is not negative, then
+	/// its children; a <c>TSCellAnimPart</c>'s own id, then its children; the children of an <c>ANShape</c>,
+	/// <c>TSShape</c>, <c>TSPartList</c> or <c>TSDetailPart</c>; nothing for any other class, a <c>TSBSPGroup</c> among them.
+	/// </summary>
+	private static void RemapTransformIds(TSObject? node, sbyte[] map, int nodeCount) {
+		switch (node) {
+			case TSGroup group when node.GetType() == typeof(TSGroup):
+				group.Transform = RemapTransformId(group.Transform, map);
+				return;
+			case TSBSPPart bsp:
+				var transforms = bsp.Transforms ?? [];
+				for (int i = 0; i < transforms.Length; i++) {
+					short id = transforms[i];
+					if (id > 0 && id < nodeCount && id < map.Length && map[id] >= 0) {
+						transforms[i] = map[id];
+					}
+				}
+
+				break;
+			case TSCellAnimPart cell:
+				cell.Transform = RemapTransformId(cell.Transform, map);
+				break;
+			case TSPartList:
+				break;
+			default:
+				return;
+		}
+
+		foreach (var child in ((TSPartList)node).Parts ?? []) {
+			RemapTransformIds(child, map, nodeCount);
+		}
+	}
+
+	/// <summary><c>Shape_RemapTransformId</c> (<c>00019aa0</c>): a negative id stays; any other becomes its signed map byte, so an unset one becomes -1.</summary>
+	private static short RemapTransformId(short id, sbyte[] map) => id < 0 ? id : id < map.Length ? map[id] : (short)-1;
 
 	/// <summary>The part of <paramref name="partId"/> under <paramref name="node"/>, depth first, as the part lists' find slots search.</summary>
 	public static TSBasePart? FindPart(TSObject? node, int partId) {

@@ -77,27 +77,56 @@ public sealed class Es1World {
 		var weapons = new Es1WeaponsSimTransformer().Parse(content.ReadRequired("dat", "WEAPONS.DAT"))
 			?? throw new InvalidDataException("dat\\WEAPONS.DAT does not read.");
 
-		// WeaponModels_LoadShapeChunks (0000bc60): dts\mechwpns's chunks, which exist while the HERCs are built.
+		// WeaponModels_LoadShapeChunks (0000bc60): dts\mechwpns's chunks, which exist while the HERCs are built. Each
+		// mount reads its model from its chunk afresh, so the move to its mount point lands in its copy alone.
 		var weaponModels = content.Read("dts", "MECHWPNS.DTS") is { } modelBytes
-			? (new DTSModelTransformer().Parse(modelBytes) as DynamixThreeSpaceModel)?.Roots ?? []
-			: [];
+			? new WeaponModelChunks(modelBytes)
+			: new WeaponModelChunks([]);
 
 		var world = new Es1World(script, types);
 		world.SpawnObjects(content, weapons, weaponModels, formations);
 		return world;
 	}
 
-	private void SpawnObjects(GameContent content, Es1Weapons weapons, IReadOnlyList<TSObject> weaponModels,
+	/// <summary>
+	/// The top-level chunks of <c>dts\mechwpns</c>, by the offset each starts at, which <c>WeaponMount_ShapeForMountingCode</c>
+	/// loads a mount's model from (docs/es1/simulation/weapon-mounts.md#the-weapon-models).
+	/// </summary>
+	private sealed class WeaponModelChunks {
+		private readonly byte[] _bytes;
+		private readonly List<int> _starts = new();
+
+		public WeaponModelChunks(byte[] bytes) {
+			_bytes = bytes;
+			var reader = new DTSModelTransformer();
+			int index = 0;
+			while (index < bytes.Length) {
+				int start = index;
+				if (reader.ReadOneObject(bytes, ref index) != null) {
+					_starts.Add(start);
+				}
+			}
+		}
+
+		/// <summary>A fresh read of chunk <paramref name="index"/>, or null past the chunks.</summary>
+		public TSObject? Read(int index) {
+			if (index < 0 || index >= _starts.Count) {
+				return null;
+			}
+
+			int at = _starts[index];
+			return new DTSModelTransformer().ReadOneObject(_bytes, ref at);
+		}
+	}
+
+	private void SpawnObjects(GameContent content, Es1Weapons weapons, WeaponModelChunks weaponModels,
 			Es1MechFormations formations) {
 		StatusRaised = StatusRaisedAtStart;
 		var dat = Script.Files.Script;
 		var entries = Script.Player.Entries;
 
 		// WeaponMount_ShapeForMountingCode (0000bd70): chunk template[0x22 + code × 2].
-		TSObject? ModelFor(Weapons.WeaponMountTemplate template, int code) {
-			int index = template.ModelShapeIndex(code);
-			return index >= 0 && index < weaponModels.Count ? weaponModels[index] : null;
-		}
+		TSObject? ModelFor(Weapons.WeaponMountTemplate template, int code) => weaponModels.Read(template.ModelShapeIndex(code));
 
 		// Block 6, then the squad.
 		int slots = dat.Mechs.Length + entries.Length;
@@ -182,17 +211,16 @@ public sealed class Es1World {
 	/// </summary>
 	private void SpawnSquadMech(Es1Mech mech, int entry, Es1Weapons weapons,
 			Func<Weapons.WeaponMountTemplate, int, TSObject?> modelFor) {
-		mech.Position = PositionSentinel;
-		mech.Rotation = RotationSentinel;
-		var source = Script.Player.Entries[entry];
-
-		// PLACEHOLDER: the order of +0x9d against Mech_ConfigureLoadout in DBSim_SpawnMissionObjects is unread. It is set
-		// first here, since the local manager, which the loadout builds only for a machine with +0x9d set, is the player's
-		// (docs/es1/simulation/weapon-mounts.md#the-manager).
+		// Right after the constructor, before the sentinels and the loadout, so the loadout builds the player's machine the
+		// local mount manager (docs/es1/formats/script-dat.md#the-second-pass).
 		if (entry == Script.Player.PlayerEntry) {
 			PlayerMech = mech;
 			mech.IsPlayer = true;
 		}
+
+		mech.Position = PositionSentinel;
+		mech.Rotation = RotationSentinel;
+		var source = Script.Player.Entries[entry];
 
 		// The entry's 0x7e-byte record as the first pass read it, which the loadout's slot index reads unchecked: the
 		// weapons at +8, the mount words at +0x20.

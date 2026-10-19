@@ -2,6 +2,7 @@ using HercWorks.Core.Data.File.Dyn;
 using Herculan.Engine.Content;
 using Herculan.Engine.Numerics;
 using Herculan.Engine.Render;
+using Herculan.Es1.Sim;
 
 namespace Herculan.Es1.Scene;
 
@@ -49,12 +50,12 @@ public static class Es1TextureShades {
 		}
 
 		var reference = Channels(palette, holder[(holder.Length - 1) * level / (TableCount - 1)]);
-		var middle = Channels(palette, holder[Q10Rounded(holder.Length - 1, MiddleFactor)]);
+		var middle = Channels(palette, holder[Es1Math.Q10Multiply(holder.Length - 1, MiddleFactor)]);
 		var own = Channels(palette, c);
 		var target = new int[3];
 		for (int k = 0; k < 3; k++) {
 			int ratio = middle[k] == 0 ? 0 : (reference[k] << 10) / middle[k];
-			target[k] = Q10Rounded(own[k], ratio);
+			target[k] = Es1Math.Q10Multiply(own[k], ratio);
 		}
 
 		int best = c;
@@ -71,9 +72,6 @@ public static class Es1TextureShades {
 		return (byte)best;
 	}
 
-	/// <summary>ES1's <c>Math_Q10Multiply</c>, rounded (docs/es1/simulation/fixed-point-math.md#the-primitives).</summary>
-	private static int Q10Rounded(int a, int b) => (int)(((long)a * b + 0x200) >> 10);
-
 	/// <summary>An entry's three channels, the dword's low bytes as the palette holds them (<c>Palette_UnpackColour</c>).</summary>
 	private static int[] Channels(DynamixPalette palette, int index) =>
 		palette.Colors.TryGetValue(index, out var entry) ? [entry.Array[0], entry.Array[1], entry.Array[2]] : [0, 0, 0];
@@ -82,9 +80,11 @@ public static class Es1TextureShades {
 	/// The renderer's palette-by-row table over 256 shade rows, one per light the shader can pick: the scene shader takes
 	/// row <c>floor(light × 255 / 256)</c>, so row <c>r</c> stands for light <c>r</c> + 1 and holds table
 	/// (8 − 1) · (<c>r</c> + 1) / 255, <c>TSTexture4Poly_Render</c>'s pick (docs/es1/rendering/polygon-shading.md#the-four-poly-types).
+	/// The tables are built from <paramref name="first"/>, the first palette made active, and their entries shown in
+	/// <paramref name="live"/>'s colours.
 	/// </summary>
-	public static PaletteRampTable? RampTable(DynamixPalette palette) {
-		var tables = Build(palette);
+	public static PaletteRampTable? RampTable(DynamixPalette first, DynamixPalette live) {
+		var tables = Build(first);
 		const int rows = 256;
 		var bytes = new byte[rows * ShadeRamp.RowLength];
 		for (int row = 0; row < rows; row++) {
@@ -92,6 +92,6 @@ public static class Es1TextureShades {
 			Array.Copy(table, 0, bytes, row * ShadeRamp.RowLength, ShadeRamp.RowLength);
 		}
 
-		return PaletteRampTable.Build(new SurfaceShading(ShadeRamp.FromRows(rows, 1, bytes), palette));
+		return PaletteRampTable.Build(new SurfaceShading(ShadeRamp.FromRows(rows, 1, bytes), live));
 	}
 }

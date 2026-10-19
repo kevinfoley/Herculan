@@ -69,8 +69,14 @@ public readonly record struct CellGate(short Sequence, short Frame, PartDetail? 
 /// <param name="Leaf">The <see cref="TSBSPPart"/> child this segment is, or null — see <see cref="BspLeaf"/>.</param>
 /// <param name="Ground">Whether this segment is the shape's ground plane — see <see cref="MeshCell.Ground"/>.</param>
 /// <param name="Layer">The paint layer of its slot it is — see <see cref="MeshCell.Layer"/>.</param>
+/// <param name="WalkFaces">
+/// Per triangle, in <paramref name="Vertices"/>' order, the textured face it was fanned out of, in the node's own space,
+/// or null for a triangle that is no such face's; null when no triangle is. The table a renderer that fills textured
+/// faces by the original's column walk reads — see <see cref="TextureWalkFace"/>.
+/// </param>
 public readonly record struct MeshSegment(int TransformId, CellGate Gate, MeshVertex[] Vertices,
-	int TriangleVertexCount, int PointVertexCount = 0, BspLeaf? Leaf = null, bool Ground = false, int Layer = 0);
+	int TriangleVertexCount, int PointVertexCount = 0, BspLeaf? Leaf = null, bool Ground = false, int Layer = 0,
+	TextureWalkFace?[]? WalkFaces = null);
 
 /// <summary>
 /// One cell's share of a shape's geometry, at the rest pose <see cref="DtsMeshBuilder.BuildRoot"/>
@@ -255,6 +261,9 @@ public static partial class DtsMeshBuilder {
 		/// </summary>
 		public bool LitAsBack { get; }
 
+		/// <summary>The textured face this triangle was fanned out of, or null — see <see cref="WalkRing"/>.</summary>
+		public WalkRing? Walk { get; init; }
+
 		public Triangle(Vector3 a, Vector3 b, Vector3 c, Vector3 color, int rank, int polyId,
 				Vector3 localA, Vector3 localB, Vector3 localC, int transformId, CellGate gate,
 				PolyFace face, int side, bool litAsBack = false,
@@ -296,6 +305,16 @@ public static partial class DtsMeshBuilder {
 	/// a <see cref="Triangle"/> is kept in. See <see cref="MeshVertex.FaceCenter"/>.
 	/// </summary>
 	private readonly record struct PolyFace(Vector3? Normal, Vector3 Center, Vector3 LocalCenter);
+
+	/// <summary>
+	/// A textured face's ring in both spaces a <see cref="Triangle"/> is kept in, with its texture points and frame —
+	/// what <see cref="TextureWalkFace"/> is made from for whichever space is emitted.
+	/// </summary>
+	private sealed record WalkRing(Vector3[] Rest, Vector3[] Local, Vector2[] TexturePoints, int FrameX, int FrameY,
+			int Columns, int Rows, bool LitAsBack) {
+		public TextureWalkFace In(bool local) =>
+			new(local ? Local : Rest, TexturePoints, FrameX, FrameY, Columns, Rows, LitAsBack);
+	}
 
 	/// <summary>
 	/// One edge of a flat solid poly's outline pass, in the same two spaces a <see cref="Triangle"/>

@@ -121,9 +121,9 @@ public static partial class DtsMeshBuilder {
 	/// layer, which is only for stable output — nothing reads the order.
 	/// </summary>
 	private static MeshSegment[] EmitSegments(Collector sink) =>
-		Partition(sink, local: true, (key, vertices, triangleVertices, pointVertices) =>
+		Partition(sink, local: true, (key, vertices, triangleVertices, pointVertices, walkFaces) =>
 			new MeshSegment(key.TransformId, key.Gate, vertices, triangleVertices, pointVertices, key.Leaf,
-				key.Ground, key.Layer));
+				key.Ground, key.Layer, walkFaces));
 
 	/// <summary>
 	/// The same split by cell, <see cref="TSBSPPart"/> child and paint layer alone, at the baked rest
@@ -131,7 +131,7 @@ public static partial class DtsMeshBuilder {
 	/// nothing poses. See <see cref="MeshCell"/>.
 	/// </summary>
 	private static MeshCell[] EmitCells(Collector sink) =>
-		Partition(sink, local: false, (key, vertices, triangleVertices, pointVertices) =>
+		Partition(sink, local: false, (key, vertices, triangleVertices, pointVertices, _) =>
 				new MeshCell(key.Gate, vertices, triangleVertices, pointVertices, key.Leaf, key.Ground, key.Layer))
 			.GroupBy(cell => (cell.Gate, cell.Leaf, cell.Ground, cell.Layer))
 			.Select(MergeCells)
@@ -187,7 +187,7 @@ public static partial class DtsMeshBuilder {
 	/// <see cref="BspTree.Whole"/> child, so its layers are painted as a part's are.</para>
 	/// </summary>
 	private static T[] Partition<T>(Collector sink, bool local,
-			Func<PieceKey, MeshVertex[], int, int, T> make) {
+			Func<PieceKey, MeshVertex[], int, int, TextureWalkFace?[]?, T> make) {
 		var kept = DropCoincidentTwins(sink.Triangles, leavesApart: true);
 		var edges = SurvivingOutlines(kept, sink.Outlines);
 
@@ -232,8 +232,13 @@ public static partial class DtsMeshBuilder {
 			int triangleVertices = list.Count * 3;
 			int lineVertices = nodeEdges.Count * 2;
 			var vertices = new MeshVertex[triangleVertices + lineVertices + nodePoints.Count];
+			TextureWalkFace?[]? walkFaces = null;
 			for (int i = 0; i < list.Count; i++) {
 				EmitTriangle(list[i], local, vertices, i * 3);
+				if (list[i].Walk is { } walk) {
+					walkFaces ??= new TextureWalkFace?[list.Count];
+					walkFaces[i] = walk.In(local);
+				}
 			}
 
 			for (int i = 0; i < nodeEdges.Count; i++) {
@@ -244,7 +249,7 @@ public static partial class DtsMeshBuilder {
 				EmitPoint(nodePoints[i], local, vertices, triangleVertices + lineVertices + i);
 			}
 
-			pieces[next++] = make(key, vertices, triangleVertices, nodePoints.Count);
+			pieces[next++] = make(key, vertices, triangleVertices, nodePoints.Count, walkFaces);
 		}
 
 		return pieces;

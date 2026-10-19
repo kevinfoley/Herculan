@@ -12,8 +12,8 @@ namespace Herculan.Es1.Render;
 /// <summary>
 /// ES1's backdrop as <c>Scene_DrawTerrainPass</c> (<c>ES1DBSIM 00025b68</c>) paints it before any shape: the sky, the
 /// ground below the horizon line, the skyline on it, the clouds and the scattered points
-/// (docs/es1/rendering/ground-and-sky.md). Backdrop.glsl runs each rule per pixel at the window's resolution; this
-/// sets it up from the camera each frame. A speck's pixels are the original's 320-column pixels scaled to the window.
+/// (docs/es1/rendering/ground-and-sky.md). Backdrop.glsl runs each rule per pixel at the window's resolution, the
+/// user's choice, where retail fills the 320-column page; this sets it up from the camera each frame. A speck's pixels are the original's 320-column pixels scaled to the window.
 ///
 /// <para>What draws with the palette entries the pitch gradient rewrites is Open
 /// (docs/es1/rendering/ground-and-sky.md#open), so that is not run.</para>
@@ -54,8 +54,9 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	private readonly Random _random = new();
 
 	/// <summary>
-	/// Uploads the scene's backdrop tables; <paramref name="ground"/>, <paramref name="skyline"/>,
-	/// <paramref name="clouds"/> and <paramref name="specks"/> are null where the theater has none.
+	/// Uploads the scene's backdrop tables, their indices shown in <paramref name="palette"/>, the live one;
+	/// <paramref name="ground"/>, <paramref name="skyline"/>, <paramref name="clouds"/> and <paramref name="specks"/> are
+	/// null where the theater has none.
 	/// </summary>
 	public Es1Backdrop(GL gl, Es1Horizon horizon, Es1TexturedGround? ground, Es1Skyline? skyline,
 			Es1Clouds? clouds, Es1GroundSpecks? specks, DynamixPalette palette) {
@@ -103,7 +104,8 @@ public sealed class Es1Backdrop : ISceneBackdrop, IDisposable {
 	/// </summary>
 	public int GroundDetail { get; set; } = 255;
 
-	/// <summary>The preferences byte <c>000bd566</c>: (count · (it + 1)) &gt;&gt; 8 of the clouds are drawn.</summary>
+	/// <summary>The preferences byte <c>000bd566</c>: (count · (it + 1)) &gt;&gt; 8 of the clouds are drawn. It is the most,
+	/// 255, the user's choice.</summary>
 	public int CloudDetail { get; set; } = 255;
 
 	public void Draw(Camera camera, int viewportX, int viewportY, int viewportWidth, int viewportHeight) {

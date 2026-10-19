@@ -45,8 +45,10 @@ public sealed class Es1WorldDraw {
 			_zoneItems.Add((new SceneItem(mesh, WorldScale.ToRenderMatrix(shape.Frame)), shape));
 		}
 
+		// Sim_StartMission applies the detail setting before the first frame.
+		var detail = Es1DetailSetting.FromOption(world.Script.Files.DetailOption);
 		foreach (var mech in world.MechPool) {
-			_mechs.Add(new MechItems(mech, models));
+			_mechs.Add(new MechItems(gl, scene, mech, models, detail));
 			foreach (var shadow in mech.Shadows) {
 				if (shadow.Root >= 0 && shadow.Root < models.ShadowRoots.Count && models.ShadowRoots[shadow.Root] is { } mesh) {
 					_shadowItems.Add((new SceneItem(mesh, Matrix4x4.Identity), shadow));
@@ -85,34 +87,60 @@ public sealed class Es1WorldDraw {
 	private static MeshBuild? ModelOf(Es1ZoneScene scene, Es1PlacedShape shape) =>
 		shape.ShapeIndex >= 0 && shape.ShapeIndex < scene.Models.Count ? scene.Models[shape.ShapeIndex] : null;
 
-	/// <summary>One HERC's items: a piece per node, cell and BSP child of its drawn root, each posed through its node.</summary>
+	/// <summary>
+	/// One HERC's items: a piece per node, cell and BSP child of each root, and of each fitted mount's model, each posed
+	/// through its node. <c>Mech_Draw</c> (<c>00012ac4</c>) splices the hardpoints of every root and draws the root
+	/// <c>Shape_DrawAtDetailLevel</c> picks (docs/es1/simulation/object-classes.md#drawing): the pieces of that root, and in
+	/// each of its hardpoint slots the mount's model under the node stamped on it, a blank part drawing nothing.
+	/// </summary>
 	private sealed class MechItems {
 		private readonly Es1Mech _mech;
-		private readonly List<(SceneItem Item, Es1MechPiece Piece)> _pieces = new();
+		private readonly Es1DetailSetting _detail;
+		private readonly List<(SceneItem Item, Es1MechPiece Piece, int Root)> _pieces = new();
+		private readonly List<(SceneItem Item, Es1MechPiece Piece, int Hardpoint, int TransformId)> _mountPieces = new();
 		private readonly Dictionary<BspTree, BspDrawGroup> _groups = new();
 		private Transform3 _frame;
 
-		public MechItems(Es1Mech mech, Es1MechModels models) {
+		public MechItems(GL gl, Es1ZoneScene scene, Es1Mech mech, Es1MechModels models, Es1DetailSetting detail) {
 			_mech = mech;
+			_detail = detail;
 			uint? texture = models.Textures.TryGetValue(mech.Type.Type, out uint handle) ? handle : null;
-			foreach (var piece in models.PiecesOf(mech.Type.Type)) {
-				var item = new SceneItem(piece.Mesh, Matrix4x4.Identity, texture);
-				if (piece.Leaf is { } leaf) {
-					if (!_groups.TryGetValue(leaf.Tree, out var group)) {
-						group = new BspDrawGroup(leaf.Tree, FrameToWorld);
-						_groups[leaf.Tree] = group;
-					}
+			var roots = models.PiecesOf(mech.Type.Type);
+			for (int root = 0; root < roots.Count; root++) {
+				foreach (var piece in roots[root]) {
+					_pieces.Add((NewItem(piece, texture), piece, root));
+				}
+			}
 
-					item.BspGroup = group;
-					item.BspLeaf = leaf.Index;
-					item.PaintLayer = piece.Layer;
+			var mounts = mech.Mounts?.Mounts ?? [];
+			for (int h = 0; h < mounts.Count; h++) {
+				if (mounts[h] is not { } mount) {
+					continue;
 				}
 
-				_pieces.Add((item, piece));
+				foreach (var piece in models.PiecesOfMount(gl, mount, scene)) {
+					_mountPieces.Add((NewItem(piece, models.WeaponTexture), piece, h, mount.ModelTransformId));
+				}
 			}
 		}
 
-		public IEnumerable<SceneItem> Items => _pieces.Select(entry => entry.Item);
+		public IEnumerable<SceneItem> Items => _pieces.Select(entry => entry.Item).Concat(_mountPieces.Select(entry => entry.Item));
+
+		private SceneItem NewItem(Es1MechPiece piece, uint? texture) {
+			var item = new SceneItem(piece.Mesh, Matrix4x4.Identity, texture) { TextureWalk = piece.TextureWalk };
+			if (piece.Leaf is { } leaf) {
+				if (!_groups.TryGetValue(leaf.Tree, out var group)) {
+					group = new BspDrawGroup(leaf.Tree, FrameToWorld);
+					_groups[leaf.Tree] = group;
+				}
+
+				item.BspGroup = group;
+				item.BspLeaf = leaf.Index;
+				item.PaintLayer = piece.Layer;
+			}
+
+			return item;
+		}
 
 		public void Update(Camera camera, Es1Shading shading, Es1Mech? ridden) {
 			_frame = _mech.Frame;
@@ -124,21 +152,51 @@ public sealed class Es1WorldDraw {
 				&& !shading.IsBeyondLastBand((byte)Es1Mech.TypeTag, distance)
 				&& _mech.Group?.Action == null;
 			int? block = shading.Block((byte)Es1Mech.TypeTag, distance);
-			foreach (var (item, piece) in _pieces) {
+
+			var type = _mech.Type;
+			int root = Es1ShapeDetail.SelectRoot(type.Roots.Count, type.ShapeRadius,
+				Es1ShapeDetail.EyeDistance(_frame, camera.Position), _detail, Es1MechType.DetailThresholds);
+
+			// Every component intact stands each cell-animation part on cell 0; a HERC body's detail parts draw with bias 0.
+			foreach (var (item, piece, pieceRoot) in _pieces) {
 				item.Transform = FrameToWorld(piece.TransformId);
 				item.RampBlock = block;
+				item.Visible = drawn && pieceRoot == root && OnScreen(piece.Gate, camera, 0);
+			}
 
-				// Every component intact stands each cell-animation part on cell 0. PLACEHOLDER: a TSDetailPart draws its
-				// finest level; no HERC's root 0 holds one, and the detail bias ES1 sets is step 6's (TSDetailPart_SetBias).
-				item.Visible = drawn && (!piece.Gate.IsGated || piece.Gate.Frame == 0)
-					&& (!piece.Gate.IsDetailGated || piece.Gate.Level == 0);
+			// A mount's private cell frames start at 0; firing, which steps them, is step 7's.
+			var slots = root < type.HardpointSlots.Count ? type.HardpointSlots[root] : [];
+			foreach (var (item, piece, hardpoint, transformId) in _mountPieces) {
+				item.Transform = FrameToWorld(transformId);
+				item.RampBlock = block;
+				item.Visible = drawn && hardpoint < slots.Length && slots[hardpoint] != null
+					&& OnScreen(piece.Gate, camera, _detail.MountBias, transformId);
 			}
 		}
 
-		/// <summary>A node's posed transform in front of the machine's frame, in render space; the frame alone for -1.</summary>
-		private Matrix4x4 FrameToWorld(int transformId) =>
-			WorldScale.ToRenderMatrix(transformId < 0 || _mech.Shape == null
-				? _frame
-				: Transform3.Concat(_mech.Shape.NodeTransform(transformId), _frame));
+		/// <summary>
+		/// Whether a piece's cell is cell 0 and its <c>TSDetailPart</c>, if any, picks its level with
+		/// <paramref name="bias"/> from the eye's distance in the part's node, <paramref name="node"/> when given (a mount's
+		/// model, whose parts all carry the stamped node).
+		/// </summary>
+		private bool OnScreen(CellGate gate, Camera camera, int bias, int? node = null) {
+			if (gate.IsGated && gate.Frame != 0) {
+				return false;
+			}
+
+			if (gate.Detail is not { } detail) {
+				return true;
+			}
+
+			int eye = Es1ShapeDetail.EyeDistance(NodeFrame(node ?? detail.TransformId), camera.Position);
+			return detail.Select(eye, 1 << Es1ShapeDetail.FocalShift, bias) == gate.Level;
+		}
+
+		/// <summary>A node's posed transform in front of the machine's frame, in world units; the frame alone for -1.</summary>
+		private Transform3 NodeFrame(int transformId) =>
+			transformId < 0 || _mech.Shape == null ? _frame : Transform3.Concat(_mech.Shape.NodeTransform(transformId), _frame);
+
+	/// <summary>A node's posed transform in front of the machine's frame, in render space; the frame alone for -1.</summary>
+		private Matrix4x4 FrameToWorld(int transformId) => WorldScale.ToRenderMatrix(NodeFrame(transformId));
 	}
 }

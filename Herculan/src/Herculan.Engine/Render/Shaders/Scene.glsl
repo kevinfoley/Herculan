@@ -39,6 +39,8 @@ flat VARYING float vShadeRamp;
 flat VARYING float vSolidPaletteIndex;
 // The fill ramp a shaded poly's outline is tested against, or -1. See MeshVertex.OutlineFillRamp.
 flat VARYING float vOutlineFillRamp;
+// The face's facing, the vertex stage's front/back decision below: 1 front, -1 back. Read by the column walk.
+flat VARYING float vFacing;
 VARYING float vLightShade;
 VARYING float vViewDistance;
 
@@ -222,6 +224,7 @@ void main() {
 	vShadeRamp = aShadeRamp;
 	vSolidPaletteIndex = aSolidPaletteIndex;
 	vOutlineFillRamp = aOutlineFillRamp;
+	vFacing = sideSign;
 	// Depth along the view axis, not distance from the eye. That is the quantity the original
 	// fogs against: its view space is (across, depth, up) — Raster_PerspectiveDivide (0048c4f0)
 	// divides components 0 and 2 by component 1 to project — and Terrain_DrawCellQuad hands
@@ -341,6 +344,182 @@ float gridCoverage() {
 
 #endif
 
+// The textured faces' column walk, for an item with a SceneItem.TextureWalk: VGA8_FillBitmapPolygon (ES1DBSIM 000534ac)
+// in clip mode 1 (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7), evaluated for this one
+// fragment over the whole face its triangle was fanned out of, gl_PrimitiveID naming the triangle's record in
+// TextureWalkTable. The face's ring is cut at the near plane as Poly_ClipRingToNearPlaneWithUV cuts it
+// (docs/retail/rendering/view-transform-and-projection.md#clipping-at-the-near-plane) and projected with the vertex
+// stage's matrices; then the column's two edges, the span between them and the span's nearest texel are found by the
+// doc's steps. Retail steps integers from integer screen points; this evaluates the same lines in float at the
+// fragment's column and row, and departs from it in these places:
+//   - the projected points keep their fractions, where retail's are whole pixels;
+//   - an edge's row is the ceiling of its line at the column, less WALK_EPSILON so that a row the line meets exactly is
+//     not pushed one down by rounding, where retail keeps the ceiling exact with a remainder;
+//   - u and v are interpolated in float, where retail steps 16.16 values whose step Math_Q16Divide truncates;
+//   - the cut at the clip rect's top (VGA8_BitmapPolyClipTop) is not made: the edges are evaluated where the cut leaves
+//     them, without its truncating division;
+//   - "the walk ends when A's row exceeds B's" is tested at this column alone, which for a convex ring happens only at
+//     its far end;
+//   - only fragments the triangles rasterize are evaluated, so a pixel the walk would fill past their edges stays as
+//     it was.
+// An edge whose next vertex is in its own column is passed over, the next edge starting from that vertex's own row and
+// texture point. No winding test is made (docs/es1/rendering/polygon-shading.md#the-four-poly-types): a copy drawing the
+// front value walks its ring as projected, and one drawing the back value walks the screen ring reversed, as
+// Raster_DrawPolygonReversed reverses it, its texture points left in slot order; a ring the walk cannot fill draws
+// nothing.
+uniform bool uTextureWalk;
+uniform samplerBuffer uTextureWalkFaces;
+uniform mat4 uModel;
+uniform mat4 uView;
+uniform mat4 uProjection;
+uniform vec2 uViewportOrigin;
+uniform vec2 uViewportSize;
+uniform float uNearPlane;
+
+// TextureWalkTable.TexelsPerTriangle and MaxCorners; a ring of four cut at a plane keeps at most five points.
+#define WALK_TEXELS 8
+#define WALK_CORNERS 4
+#define WALK_POINTS 8
+#define WALK_EPSILON (1.0 / 1024.0)
+
+vec2 walkScreen[WALK_POINTS];
+vec2 walkTexture[WALK_POINTS];
+int walkCount;
+
+// A ring point in the walk's screen space: whole numbers at pixel centres, x to the right and y down from the
+// viewport's top-left, as retail's screen points are.
+void walkPut(vec3 view, vec2 texturePoint) {
+	vec4 clip = uProjection * vec4(view, 1.0);
+	vec2 local = (clip.xy / clip.w * 0.5 + 0.5) * uViewportSize;
+	walkScreen[walkCount] = vec2(local.x - 0.5, uViewportSize.y - local.y - 0.5);
+	walkTexture[walkCount] = texturePoint;
+	walkCount++;
+}
+
+// The row and texture point of the edge chain running from `from` by `step` toward `far`, at column x. False past the
+// chain's end.
+bool walkEdge(int from, int step, int far, float x, out float s, out vec2 texturePoint) {
+	s = 0.0;
+	texturePoint = vec2(0.0);
+	int i = from;
+	for (int e = 0; e < WALK_POINTS; e++) {
+		if (i == far) {
+			return false;
+		}
+
+		int j = i + step;
+		j = j < 0 ? j + walkCount : (j >= walkCount ? j - walkCount : j);
+		vec2 a = walkScreen[i];
+		vec2 b = walkScreen[j];
+		if (x >= a.x && x < b.x) {
+			float k = x - a.x;
+			float span = b.x - a.x;
+			s = ceil(a.y + k * (b.y - a.y) / span - WALK_EPSILON);
+			texturePoint = walkTexture[i] + k * (walkTexture[j] - walkTexture[i]) / span;
+			return true;
+		}
+
+		i = j;
+	}
+
+	return false;
+}
+
+// 1 with the atlas texel the walk gives this fragment in `at`; 0 when the walk leaves the fragment unpainted; -1 when
+// the triangle is no walked face's, and fills through its own mapping.
+int walkTexel(out ivec2 at) {
+	at = ivec2(0);
+	int base = gl_PrimitiveID * WALK_TEXELS;
+	vec4 header = texelFetch(uTextureWalkFaces, base);
+	int count = int(header.x + 0.5);
+	if (count < 3) {
+		return -1;
+	}
+
+	vec2 frameSize = texelFetch(uTextureWalkFaces, base + 1).xy;
+	vec4 points01 = texelFetch(uTextureWalkFaces, base + 6);
+	vec4 points23 = texelFetch(uTextureWalkFaces, base + 7);
+	vec2 points[WALK_CORNERS] = vec2[WALK_CORNERS](points01.xy, points01.zw, points23.xy, points23.zw);
+	vec3 view[WALK_CORNERS];
+	for (int i = 0; i < WALK_CORNERS; i++) {
+		view[i] = i < count
+			? (uView * (uModel * vec4(texelFetch(uTextureWalkFaces, base + 2 + i).xyz, 1.0))).xyz
+			: vec3(0.0);
+	}
+
+	// Poly_ClipRingToNearPlaneWithUV: each edge from the previous corner to this one emits the crossing when one end
+	// is in front of the plane, then this corner when it is in front; the texture point is cut with the same t.
+	walkCount = 0;
+	for (int i = 0; i < count; i++) {
+		int p = i == 0 ? count - 1 : i - 1;
+		float depthP = -view[p].z;
+		float depthI = -view[i].z;
+		bool frontP = depthP > uNearPlane;
+		bool frontI = depthI > uNearPlane;
+		if (frontP != frontI) {
+			float t = (uNearPlane - depthP) / (depthI - depthP);
+			walkPut(mix(view[p], view[i], t), mix(points[p], points[i], t));
+		}
+
+		if (frontI) {
+			walkPut(view[i], points[i]);
+		}
+	}
+
+	if (walkCount < 3) {
+		return 0;
+	}
+
+	// The back value: drawn by a copy lit as the back from the front (TextureWalkFace.LitAsBack), or seen from the back.
+	if (header.w > 0.5 || vFacing < 0.0) {
+		for (int i = 0; i < walkCount / 2; i++) {
+			int j = walkCount - 1 - i;
+			vec2 screen = walkScreen[i];
+			walkScreen[i] = walkScreen[j];
+			walkScreen[j] = screen;
+		}
+	}
+
+	// Step 1, and the first corners with the smallest and the largest column.
+	int near = 0;
+	int far = 0;
+	float lowY = walkScreen[0].y;
+	float highY = lowY;
+	for (int i = 1; i < walkCount; i++) {
+		vec2 point = walkScreen[i];
+		near = point.x < walkScreen[near].x ? i : near;
+		far = point.x > walkScreen[far].x ? i : far;
+		lowY = min(lowY, point.y);
+		highY = max(highY, point.y);
+	}
+
+	float x = gl_FragCoord.x - uViewportOrigin.x - 0.5;
+	float y = uViewportSize.y - (gl_FragCoord.y - uViewportOrigin.y) - 0.5;
+	if (walkScreen[near].x >= walkScreen[far].x || lowY >= highY || x < walkScreen[near].x
+			|| x >= walkScreen[far].x) {
+		return 0;
+	}
+
+	// Steps 3 and 4: edge A forward, edge B backward; the far corner's column is never reached.
+	float a;
+	float b;
+	vec2 pointA;
+	vec2 pointB;
+	if (!walkEdge(near, 1, far, x, a, pointA) || !walkEdge(near, -1, far, x, b, pointB) || a > b
+			|| y < a || y > b) {
+		return 0;
+	}
+
+	// Step 5: the middles of n equal steps from A to B, and the nearest texel. Nothing in retail bounds the address;
+	// the middles stay inside the frame, and the clamp keeps a rounding slip out of the atlas's next frame.
+	float n = b - a + 1.0;
+	vec2 stepPoint = (pointB - pointA) / n;
+	vec2 texturePoint = pointA + stepPoint * 0.5 + (y - a) * stepPoint;
+	ivec2 texel = clamp(ivec2(floor(texturePoint + 0.5)), ivec2(0), ivec2(frameSize) - 1);
+	at = ivec2(header.yz) + texel;
+	return 1;
+}
+
 void main() {
 	if (uPaintRankTest && texelFetch(uPaintRank, ivec2(gl_FragCoord.xy), 0).r > uGroundShapeRank) {
 		discard;
@@ -374,18 +553,29 @@ void main() {
 	bool textured = uTextureEnabled && vTextured > 0.5;
 	bool texturedExact = false;
 	if (textured) {
-		// A textured quad's corners carry homogeneous UVs so that both of its triangles
-		// resolve to the one projective map the original's quad rasterizer walks — see
-		// MeshVertex.UvWeight. Everything else carries a plain coordinate and weight 0.
-		vec2 uv = vUvWeight > 0.0 ? vUV / vUvWeight : vUV;
+		ivec2 walkAt;
+		int walked = uTextureWalk ? walkTexel(walkAt) : -1;
+		if (walked == 0) {
+			discard;
+		}
 
-		vec4 texel = texture(uTexture, uv);
+		vec4 texel;
+		if (walked > 0) {
+			texel = texelFetch(uTexture, walkAt, 0);
+		} else {
+			// A textured quad's corners carry homogeneous UVs so that both of its triangles
+			// resolve to the one projective map the original's quad rasterizer walks — see
+			// MeshVertex.UvWeight. Everything else carries a plain coordinate and weight 0.
+			vec2 uv = vUvWeight > 0.0 ? vUV / vUvWeight : vUV;
+			texel = texture(uTexture, uv);
+		}
 
 		// Palette index 0 decodes to alpha 0 in a bank whose frames are cutouts — the lattice
 		// girders on a structure. The original's span routine skips that index rather than
 		// writing it, so the hole is a hole and not a black polygon. See
-		// SceneModelLibrary.LoadAtlas.
-		if (texel.a < 0.5) {
+		// SceneModelLibrary.LoadAtlas. A walked face is brush mode 7, which writes index 0 through
+		// its colour table, so it never skips one.
+		if (walked < 1 && texel.a < 0.5) {
 			discard;
 		}
 

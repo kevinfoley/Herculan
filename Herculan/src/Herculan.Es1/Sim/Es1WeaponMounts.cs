@@ -1,7 +1,10 @@
 using HercWorks.Core.Data.File.Dat.Sim;
 using HercWorks.Core.Data.File.Dbsim;
 using HercWorks.Core.Data.File.Dts;
+using HercWorks.Core.Data.File.Dts.Anim;
+using HercWorks.Core.Data.File.Dts.Part;
 using Herculan.Engine.Anim;
+using Herculan.Engine.Numerics;
 
 namespace Herculan.Es1.Sim;
 
@@ -50,9 +53,12 @@ public sealed class Es1WeaponMount {
 		PitchThread = hardpoint.ConvergencePitchNode >= 0 ? addThread(hardpoint.ConvergencePitchNode) : null;
 		YawThread = hardpoint.ConvergenceYawNode >= 0 ? addThread(hardpoint.ConvergenceYawNode) : null;
 
-		// PLACEHOLDER: the model's points are not moved to WeaponMount_MuzzleOffset, which WeaponMount_CtorBase hands with
-		// the model to 0000a308, unread (docs/es1/simulation/weapon-mount-classes.md#open); so the model is not drawn (see
-		// Es1MechModels) until that function is read.
+		// Step 4: the model moved to the mount point, once, in this mount's own copy.
+		if (model != null) {
+			var offset = MountPointOffset;
+			TranslatePointLists(model, (short)offset.X, (short)offset.Y, (short)offset.Z);
+		}
+
 		Selectable = kind != Es1MountKind.Ecm;
 		switch (kind) {
 			case Es1MountKind.Energy:
@@ -83,7 +89,10 @@ public sealed class Es1WeaponMount {
 	/// <summary><c>+0x20</c>, the projectile record; null for the ECM, and for <c>GREN</c>'s index past the table (docs/es1/formats/weapons-dat-sim.md#open).</summary>
 	public ProjectileData.Projectile? Projectile { get; }
 
-	/// <summary><c>+0x10</c>, the weapon's model, a root of <c>dts\mechwpns</c>; null for the invisible mounting.</summary>
+	/// <summary>
+	/// <c>+0x10</c>, the weapon's model, a root of <c>dts\mechwpns</c> read for this mount alone and moved to its mount
+	/// point; null for the invisible mounting.
+	/// </summary>
 	public TSObject? Model { get; }
 
 	/// <summary>The transform id <c>Mech_ConfigureLoadout</c> stamps on the model's parts: the hardpoint bone's part's in the machine's shape.</summary>
@@ -112,6 +121,95 @@ public sealed class Es1WeaponMount {
 
 	/// <summary><c>+0x34</c> and <c>+0x3c</c>, the power-level hand-off bytes the energy constructor sets.</summary>
 	public bool PowerHandOff { get; set; }
+
+	/// <summary>
+	/// <c>WeaponMount_MuzzleOffset</c> (<c>0000b918</c>), ES2's (docs/es1/simulation/weapon-mount-classes.md#the-slots):
+	/// the hardpoint's mount point plus <c>WeaponMountTemplate_SideMuzzleOffset</c> (<c>0000bbd4</c>), the template's
+	/// vertical figure (tail <c>0x28</c>) for mounting codes 0 and 1, its lateral one (tail <c>0x24</c>) for 2 and 3, with
+	/// the sign the code picks (docs/retail/simulation/weapon-firing.md#where-the-shot-comes-from--weaponmount_prepareshot-0040e788).
+	/// </summary>
+	public Vec3i MountPointOffset {
+		get {
+			int lateral = 0;
+			int vertical = 0;
+			if (Template.Tail is { Length: >= 0x2a } tail) {
+				switch (Hardpoint.MountingCode) {
+					case 0:
+						vertical = BitConverter.ToInt16(tail, 0x28);
+						break;
+					case 1:
+						vertical = -BitConverter.ToInt16(tail, 0x28);
+						break;
+					case 2:
+						lateral = -BitConverter.ToInt16(tail, 0x24);
+						break;
+					case 3:
+						lateral = BitConverter.ToInt16(tail, 0x24);
+						break;
+				}
+			}
+
+			return new Vec3i(Hardpoint.Offset[0] + lateral, Hardpoint.Offset[1], Hardpoint.Offset[2] + vertical);
+		}
+	}
+
+	/// <summary>
+	/// <c>Shape_TranslatePointLists</c> (<c>0000a308</c>,
+	/// docs/es1/simulation/weapon-mount-classes.md#moving-the-model-to-its-mount-point--shape_translatepointlists-0000a308):
+	/// a part list, shape, cell-animation, detail or BSP part passes the offset to each child; a group or BSP group adds it,
+	/// as 16-bit sums, to each point a <c>TSPoly</c>-class poly uses, its centre and its corners; any other part is left.
+	/// The core's reader keeps no alias poly, so a point only an alias poly uses is not moved, as in retail. Indices past
+	/// the group's lists are skipped, where retail reads past them; no retail model holds one.
+	/// </summary>
+	public static void TranslatePointLists(TSObject? part, short x, short y, short z) {
+		switch (part) {
+			case TSGroup group:
+				MoveGroupPoints(group, x, y, z);
+				break;
+			case ANShape:
+				break;
+			case TSPartList { Parts: { } children }:
+				foreach (var child in children) {
+					TranslatePointLists(child, x, y, z);
+				}
+
+				break;
+		}
+	}
+
+	/// <summary>A group's half of <see cref="TranslatePointLists"/>: mark the points the polys use, then move the marked ones.</summary>
+	private static void MoveGroupPoints(TSGroup group, short x, short y, short z) {
+		if (group.Points is not { } points) {
+			return;
+		}
+
+		var marks = new bool[points.Length];
+		var indexes = group.Indexes ?? [];
+		foreach (var poly in (group.Polys ?? []).OfType<TSPoly>()) {
+			Mark(marks, poly.Center);
+			for (int k = 0; k < poly.VertexCount; k++) {
+				int at = poly.VertexList + k;
+				if (at >= 0 && at < indexes.Length) {
+					Mark(marks, indexes[at]);
+				}
+			}
+		}
+
+		for (int i = 0; i < points.Length; i++) {
+			if (marks[i]) {
+				var point = points[i];
+				point.X = (short)(point.X + x);
+				point.Y = (short)(point.Y + y);
+				point.Z = (short)(point.Z + z);
+			}
+		}
+	}
+
+	private static void Mark(bool[] marks, int index) {
+		if (index >= 0 && index < marks.Length) {
+			marks[index] = true;
+		}
+	}
 }
 
 /// <summary>

@@ -126,6 +126,15 @@ public sealed class SceneItem {
 	/// A child's layers are painted in ascending order, each over the ones before it.
 	/// </summary>
 	public int PaintLayer { get; set; }
+
+	/// <summary>
+	/// The faces <see cref="Mesh"/>'s textured triangles were fanned out of (<see cref="TextureWalkTable"/>), or null.
+	/// With a table, a textured triangle whose face it holds is filled the way Earthsiege's <c>VGA8_FillBitmapPolygon</c>
+	/// (<c>ES1DBSIM 000534ac</c>) fills brush mode 7, column by column in screen space with no perspective
+	/// (docs/es1/rendering/polygon-shading.md#bitmap-fills-brush-modes-5-and-7); without one, through the mesh's own
+	/// mapping (<see cref="MeshVertex.UvWeight"/>). Only Earthsiege's HERCs set it; Earthsiege 2's items never do.
+	/// </summary>
+	public GpuTextureWalkTable? TextureWalk { get; set; }
 }
 
 /// <summary>
@@ -513,6 +522,14 @@ public sealed class SceneRenderer : IDisposable {
 		_shader.SetInt("uPaintRank", PaintRankUnit);
 		_shader.SetInt("uPaintRankTest", 0);
 
+		// The same for the walked faces' samplerBuffer, and what their walk projects with (SceneItem.TextureWalk).
+		_shader.SetInt("uTextureWalkFaces", TextureWalkUnit);
+		_shader.SetInt("uTextureWalk", 0);
+		_shader.SetVector2("uViewportSize", new Vector2(System.Math.Max(viewportWidth, 1), System.Math.Max(viewportHeight, 1)));
+		_shader.SetVector2("uViewportOrigin", new Vector2(viewportX, viewportY));
+		_shader.SetFloat("uNearPlane", camera.NearPlane);
+		bool walking = false;
+
 		if (_hasGrid) {
 			_shader.SetVector3("uGridColor", Grid.Color);
 			_shader.SetFloat("uGridSpacing", MathF.Max(Grid.SpacingMeters, 0.001f));
@@ -840,12 +857,26 @@ public sealed class SceneRenderer : IDisposable {
 				_shader.SetInt("uTextureEnabled", 0);
 			}
 
+			if (item.TextureWalk is { } walk) {
+				_gl.ActiveTexture(TextureUnit.Texture0 + TextureWalkUnit);
+				_gl.BindTexture(TextureTarget.TextureBuffer, walk.Handle);
+				_gl.ActiveTexture(TextureUnit.Texture0);
+			}
+
+			if (walking != (item.TextureWalk != null)) {
+				walking = item.TextureWalk != null;
+				_shader.SetInt("uTextureWalk", walking ? 1 : 0);
+			}
+
 			item.Mesh.Draw();
 		}
 	}
 
 	/// <summary>The texture unit the terrain's paint ranks are sampled from.</summary>
 	private const int PaintRankUnit = 3;
+
+	/// <summary>The texture unit an item's <see cref="SceneItem.TextureWalk"/> is sampled from.</summary>
+	private const int TextureWalkUnit = 4;
 
 	/// <summary>
 	/// This pass's side of the original's submit: rebuilds the zone's visible region for the pass's
