@@ -130,7 +130,7 @@ internal sealed class ActionView {
 					_editor.RequestType(action, type);
 				}
 
-				if (why != null && !EditorText.IsReadOnly(why) && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+				if (why != null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
 					ImGui.SetTooltip(why);
 				}
 			}

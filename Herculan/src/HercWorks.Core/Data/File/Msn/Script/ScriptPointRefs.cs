@@ -1,8 +1,9 @@
 namespace HercWorks.Core.Data.File.Msn.Script;
 
 /// <summary>
-/// The fields of a <see cref="ScriptDat"/> that name a block-1 point, and how to give one of them a point of its own
-/// without moving anything else that names the same point.
+/// How to give a field of a <see cref="ScriptDat"/> that names a block-1 point a point of its own without moving anything
+/// else that names the same point. The mission editor places a drag's preview this way in the <c>script.dat</c> generated
+/// from the <c>.MSN</c>, which the drag's commit then writes (docs/herculan/handoff-editor-document.md#the-tools).
 ///
 /// <para>Every other block names block 1 by array position, so a point appended at the end shifts nothing. Block 1's
 /// extent is also the mission box and frames the heads-down map
@@ -10,12 +11,10 @@ namespace HercWorks.Core.Data.File.Msn.Script;
 /// both, and a point moved in place can shrink them.</para>
 /// </summary>
 public static class ScriptPointRefs {
-	/// <summary>
-	/// How many fields name block-1 point <paramref name="point"/>: route waypoints, a trigger area's first corner or
-	/// centre and a box's second corner, the three rosters' positions, an order's point, a group's point and an
-	/// objective's point. Every record counts, read or not, so the count never misses a reader.
-	/// </summary>
-	public static int Count(ScriptDat script, int point) {
+	// How many fields name block-1 point <point>: route waypoints, a trigger area's first corner or centre and a box's
+	// second corner, the three rosters' positions, an order's point, a group's point and an objective's point. Every
+	// record counts, read or not, so the count never misses a reader.
+	private static int Count(ScriptDat script, int point) {
 		int count = 0;
 		foreach (var route in script.WaypointGroups) {
 			count += route.Waypoints.Count(reference => reference == point);

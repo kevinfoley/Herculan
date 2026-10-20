@@ -31,7 +31,8 @@ internal sealed class ConditionView {
 	}
 
 	public void Draw(short guid) {
-		if (_editor.Source is not { } source || ConditionEditing.IndexOf(source, guid) == null) {
+		var source = _editor.Source;
+		if (ConditionEditing.IndexOf(source, guid) == null) {
 			return;
 		}
 
@@ -119,7 +120,7 @@ internal sealed class ConditionView {
 			_editor.RequestValue(guid, (short)typedValue);
 		}
 
-		EditorText.Note($"Holds while {ConditionEditing.Describe(_editor.Source!.Mission, record)}.");
+		EditorText.Note($"Holds while {ConditionEditing.Describe(_editor.Source.Mission, record)}.");
 	}
 
 	// The bound and New range over this draw.

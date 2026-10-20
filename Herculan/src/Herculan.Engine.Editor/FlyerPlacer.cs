@@ -18,7 +18,7 @@ internal sealed class FlyerPlacer {
 	private const int GroupBlock = 11;
 
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
@@ -27,9 +27,9 @@ internal sealed class FlyerPlacer {
 	private readonly UnitTypeNames _names;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
-	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, to which nothing is added.</param>
+	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="names">The <c>nam\FLYERS.NAM</c> type names, which a ghost's model is found by.</param>
-	public FlyerPlacer(ScriptDat document, MissionDocument? source, MissionScene scene, MissionIndex index, PointMover mover,
+	public FlyerPlacer(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
 			MissionRebuild rebuild, SelectionState selection, UnitTypeNames names) {
 		_document = document;
 		_source = source;
@@ -42,10 +42,10 @@ internal sealed class FlyerPlacer {
 	}
 
 	/// <summary>
-	/// Why no flyer can be added, or null when one can: the mission is read-only, or block 8 is full
+	/// Why no flyer can be added, or null when one can: block 8 is full
 	/// (<see cref="FlyerGroups.WhyNoAdd"/>).
 	/// </summary>
-	public string? WhyNoAdd => _mover.WhyReadOnly ?? FlyerGroups.WhyNoAdd(_source!);
+	public string? WhyNoAdd => FlyerGroups.WhyNoAdd(_source);
 
 	/// <summary>
 	/// Adds a flyer of <c>FLYERS.NAM</c> type <paramref name="typeIndex"/> on <paramref name="side"/> above
@@ -61,7 +61,7 @@ internal sealed class FlyerPlacer {
 			return $"There is no flyer type {typeIndex}.";
 		}
 
-		var source = _source!;
+		var source = _source;
 		var flyer = FlyerGroups.Machine((short)typeIndex);
 		short added = -1;
 		if (joinGroup is { } joined) {
@@ -78,8 +78,7 @@ internal sealed class FlyerPlacer {
 
 	/// <summary>Why a flyer cannot be added to group <paramref name="group"/>, by block-11 index, or null when it can.</summary>
 	public string? WhyNotJoin(int group) =>
-		_mover.WhyReadOnly is { } readOnly ? readOnly
-			: group < 0 || group >= _document.Groups.Length || _source!.GuidOf(GroupBlock, group) == -1 ? $"Group {group} is not in the file."
+		group < 0 || group >= _document.Groups.Length || _source.GuidOf(GroupBlock, group) == -1 ? $"Group {group} is not in the file."
 			: FlyerGroups.WhyNoJoin(_source, _source.GuidOf(GroupBlock, group));
 
 	/// <summary>
@@ -96,7 +95,7 @@ internal sealed class FlyerPlacer {
 	// Makes an add's change and rebuilds from it, then records it as one step and selects the object the rebuild built
 	// for the flyer's row-13 GUID; or, when it built none, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> flyer) {
-		var source = _source!;
+		var source = _source;
 		MsnEdit change;
 		try {
 			change = _rebuild.Run(add);

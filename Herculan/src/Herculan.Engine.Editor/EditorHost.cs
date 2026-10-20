@@ -30,10 +30,11 @@ public enum EditorExit {
 /// <param name="FontPath">The font every ImGui window is drawn in.</param>
 public sealed record EditorLaunch(string InstallRoot, GameContent SimulatorContent, Func<GameContent> ShellContent, string FontPath) {
 	/// <summary>
-	/// The handoff to open first, read-only, or null for the install's <c>DATA\script.dat</c>. When it is missing or does
-	/// not load, the editor opens with no mission and File &gt; Load from VOL up.
+	/// The mission to open first, named as File &gt; Load from VOL lists it (<c>C1_05</c> or <c>C1_05.MSN</c>), a mission saved
+	/// into the install's <c>MSN\</c> folder included; null for none. The editor starts with no mission and that list up,
+	/// which names the mission being loaded, or says why when no mission has the name or it does not load.
 	/// </summary>
-	public string? ScriptPath { get; init; }
+	public string? Mission { get; init; }
 
 	/// <summary>The bold face of <see cref="FontPath"/>'s font, for the panels' emphasised notes; null for none.</summary>
 	public string? BoldFontPath { get; init; }
@@ -170,24 +171,18 @@ public sealed class EditorHost {
 			() => TheaterNames.Labels(launch.SimulatorContent));
 		_toolbox = new EditorToolbox(launch.SimulatorContent);
 
-		string scriptPath = launch.ScriptPath ?? MissionLoader.DefaultScriptPath(launch.InstallRoot);
-		Console.WriteLine($"HERCULAN Mission Editor — loading {scriptPath} from {launch.InstallRoot}");
-		try {
-			_mission = EditorMission.Open(launch.SimulatorContent, scriptPath, Path.GetFileName(scriptPath));
-		} catch (Exception ex) when (ex is MissingHandoffFileException or FileNotFoundException or DirectoryNotFoundException
-				or InvalidDataException) {
-			Console.Error.WriteLine($"Cannot load {scriptPath}: {ex.Message}");
-			_volBrowser.Open();
-			_volBrowser.Failure = $"No mission open: {ex.Message}";
+		Console.WriteLine($"HERCULAN Mission Editor on {launch.InstallRoot}");
+		_volBrowser.Open();
+		if (launch.Mission is { } named) {
+			if (_volBrowser.Find(named) is { } found) {
+				// Loaded as a pick from the list is, once the first frame has drawn its "Loading" line.
+				_pendingLoad = found.File;
+				_volBrowser.Loading = found.File;
+			} else {
+				_volBrowser.Failure = $"No mission is named {named}.";
+				Console.Error.WriteLine(_volBrowser.Failure);
+			}
 		}
-
-		if (_mission != null) {
-			ReportLoaded(_mission);
-			_editorCamera.ResetTo(_mission.Scene.Camera.Position, _mission.Scene.Camera.Heading);
-			Follow(_mission);
-		}
-
-		_saving.Mission = _mission;
 
 		Console.WriteLine("RMB + mouse to look, WASD/arrows to move, Q/E down/up, Shift boosts, click to select, "
 			+ "double-click to frame, V toggles top-down, drag a selected object's, waypoint's, group's or trigger area's arrows to move it (Alt detaches a waypoint, group or area corner from what shares its point), drag a herc, a flyer, a ground vehicle or a structure from the Toolbox onto the ground to add it, New route then clicks on the ground place a route (Enter finishes, Esc cancels), New box or New circle then a drag on the ground places a trigger area (Esc cancels), Delete deletes the selected object, route, trigger area, action, timer, objective or condition or removes the selected waypoint, Ctrl+Z/Ctrl+Y undo/redo, Ctrl+S saves, "
@@ -481,7 +476,7 @@ public sealed class EditorHost {
 			} else if (_mission?.Selection.Current is TimerSelection { Timer: var timer }) {
 				_mission.Timers.RequestDelete(timer);
 			} else if (_mission?.Selection.Current is ConditionSelection { Guid: var condition }) {
-				if (_mission.Source is { } source && VariantEditing.IsTable(source, condition)) {
+				if (VariantEditing.IsTable(_mission.Source, condition)) {
 					_mission.Variants.RequestDelete(condition);
 				} else {
 					_mission.Conditions.RequestDelete(condition);
@@ -598,10 +593,6 @@ public sealed class EditorHost {
 			_mission.GroupOverlay.DrawLabels(_camera, _settings, _mission.Selection);
 			_mission.Placing.DrawLabels(_camera, display, menuBarHeight);
 			_mission.AreaPlacing.DrawLabels(_camera, display, menuBarHeight);
-			if (_mission.Mover.WhyReadOnly != null) {
-				DrawReadOnlyBanner(display, menuBarHeight);
-			}
-
 			_mission.Outliner.Draw(display, menuBarHeight);
 			_mission.Properties.Draw(display, menuBarHeight);
 			var (joinable, joinKind) = JoinableGroup(_mission);
@@ -819,7 +810,7 @@ public sealed class EditorHost {
 			}
 
 			opened = EditorMission.Open(_launch.SimulatorContent, generated, Path.GetFileNameWithoutExtension(name), _installData,
-				source, squad, _launch.ShellContent);
+				source!, squad!, _launch.ShellContent);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
 			_volBrowser.Failure = ex.Message;
@@ -853,7 +844,7 @@ public sealed class EditorHost {
 				return;
 			}
 
-			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source, squad,
+			opened = EditorMission.Open(_launch.SimulatorContent, generated, request.Name, _installData, source!, squad!,
 				_launch.ShellContent);
 		} catch (Exception ex) when (ex is MissingHandoffFileException or InvalidDataException or IOException
 				or UnauthorizedAccessException) {
@@ -898,8 +889,7 @@ public sealed class EditorHost {
 	private static void ReportLoaded(EditorMission opened) {
 		Console.WriteLine(
 			$"Mission {opened.Name}: zone {opened.Mission.Header.ZoneIndex}, theater {opened.Mission.Header.TheaterIndex}. " +
-			$"Placed {opened.Scene.Objects.Count} objects, {opened.Scene.UnmodelledCount} without a model."
-			+ (opened.Mover.WhyReadOnly is { } readOnly ? $" {readOnly}" : ""));
+			$"Placed {opened.Scene.Objects.Count} objects, {opened.Scene.UnmodelledCount} without a model.");
 	}
 
 	// Draws the main menu bar and returns its height, which is what the rest of the frame's overlays
@@ -1023,24 +1013,9 @@ public sealed class EditorHost {
 		return height;
 	}
 
-	// A plain script.dat opens read-only: every edit control is disabled, and this says why once, in the 3D viewport's
-	// top-right corner, beside the Properties panel and under the floating windows.
-	private void DrawReadOnlyBanner(Vector2 display, float menuBarHeight) {
-		const string text = "SCRIPT.DAT READ-ONLY";
-		var font = _imgui?.LargeBoldFont ?? _imgui?.LargeFont ?? ImGui.GetFont();
-		float size = ScaledImGui.LargeFontSize;
-		var extent = font.CalcTextSizeA(size, float.MaxValue, 0f, text);
-		float margin = ScaledImGui.Scaled(CompassMargin);
-		var at = new Vector2(display.X - ScaledImGui.Scaled(PropertiesPanel.PanelWidth) - margin - extent.X, menuBarHeight + margin);
-		ImGui.GetBackgroundDrawList().AddText(font, size, at, ImGui.GetColorU32(ReadOnlyBannerColor), text);
-	}
-
-	// A dark yellow-grey.
-	private static readonly Vector4 ReadOnlyBannerColor = new(0.58f, 0.55f, 0.35f, 1f);
-
 	// Says, over a File menu item that saves, why it is disabled.
 	private void WhyNoSave() {
-		if (_saving.WhyNoSave is { } why && !EditorText.IsReadOnly(why) && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+		if (_saving.WhyNoSave is { } why && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
 			ImGui.SetTooltip(why);
 		}
 	}

@@ -101,8 +101,8 @@ static class Launcher {
 	}
 
 	/// <summary>
-	/// The mission editor's turn, on the install's <c>DATA\script.dat</c>, in the window the shell left. Returns how
-	/// it ended.
+	/// The mission editor's turn, in the window the shell left, with no mission open and File &gt; Load from VOL's list
+	/// up. Returns how it ended.
 	/// </summary>
 	private static EditorExit RunEditor(HostSession session, HostWindow window) {
 		GameContent? shellContent = null;

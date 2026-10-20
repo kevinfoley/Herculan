@@ -70,6 +70,19 @@ public sealed class MissionSavingTests : IDisposable {
 	}
 
 	/// <summary>
+	/// Catches the editor host's mission argument matched only as the list spells it, so <c>c1_01</c> or a saved mission
+	/// named without its <c>.MSN</c> would not open, or matched by prefix.
+	/// </summary>
+	[Fact]
+	public void MissionArgumentFindsTheListedMissionByName() {
+		var listed = VolMissionBrowser.Merge(["C1_01.MSN", "C1_010.MSN"], ["MINE.MSN"]);
+
+		Assert.Equal("C1_01.MSN", VolMissionBrowser.Find(listed, "c1_01")?.File);
+		Assert.Equal("MINE.MSN", VolMissionBrowser.Find(listed, "mine.msn")?.File);
+		Assert.Null(VolMissionBrowser.Find(listed, "C1_0"));
+	}
+
+	/// <summary>
 	/// Catches the unsaved mark tracking edits made rather than the state reached: an undo back to the save is clean, and
 	/// one past it is not.
 	/// </summary>

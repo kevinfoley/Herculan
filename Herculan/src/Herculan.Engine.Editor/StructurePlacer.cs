@@ -45,7 +45,7 @@ internal sealed class StructurePlacer {
 	private const int GroupBlock = 11;
 
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly HeightGrid _terrain;
 	private readonly MissionIndex _index;
@@ -54,8 +54,8 @@ internal sealed class StructurePlacer {
 	private readonly SelectionState _selection;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
-	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, to which nothing is added.</param>
-	public StructurePlacer(ScriptDat document, MissionDocument? source, MissionScene scene, MissionIndex index,
+	/// <param name="source">The mission as its <c>.MSN</c>.</param>
+	public StructurePlacer(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index,
 			PointMover mover, MissionRebuild rebuild, SelectionState selection) {
 		_document = document;
 		_source = source;
@@ -67,11 +67,10 @@ internal sealed class StructurePlacer {
 		_selection = selection;
 	}
 
-	/// <summary>Why no structure can be added, or null when one can: the mission is read-only, or block 9 is full.</summary>
-	public string? WhyNoAdd => _mover.WhyReadOnly
-		?? (_document.Bases.Length >= ScriptDatLint.BaseSlotCap
-			? $"The mission already has {_document.Bases.Length} structures, as many as DBSIM holds."
-			: null);
+	/// <summary>Why no structure can be added, or null when one can: block 9 is full.</summary>
+	public string? WhyNoAdd => _document.Bases.Length >= ScriptDatLint.BaseSlotCap
+		? $"The mission already has {_document.Bases.Length} structures, as many as DBSIM holds."
+		: null;
 
 	/// <summary>
 	/// Adds a structure of <c>BASES.DAT</c> type <paramref name="typeIndex"/> on <paramref name="side"/>, standing on
@@ -88,7 +87,7 @@ internal sealed class StructurePlacer {
 			return Join(typeIndex, joined, x, y);
 		}
 
-		var source = _source!;
+		var source = _source;
 		var position = new Vec3i(x, y, _terrain.HeightAtWorld(x, y));
 		short structure = -1;
 		return Commit(typeIndex, () => source.Change(() => {
@@ -110,7 +109,7 @@ internal sealed class StructurePlacer {
 	public string? WhyNotJoin(int group) =>
 		WhyNoAdd is { } readOnly ? readOnly
 			: group <= 0 || group >= _document.Groups.Length || _index.KindOf(group) != MissionUnitKind.Base
-				|| _source!.GuidOf(GroupBlock, group) == -1
+				|| _source.GuidOf(GroupBlock, group) == -1
 				? $"Group {group} is not a structure group."
 				: _source.FreeMemberSlot(_source.GuidOf(GroupBlock, group)) < 0
 					? $"Group {group} has each of its 20 member slots filled by one of its records."
@@ -126,7 +125,7 @@ internal sealed class StructurePlacer {
 			return reason;
 		}
 
-		var source = _source!;
+		var source = _source;
 		short groupGuid = source.GuidOf(GroupBlock, group);
 		int memberSlot = source.FreeMemberSlot(groupGuid);
 		var position = new Vec3i(x, y, _terrain.HeightAtWorld(x, y));
@@ -143,7 +142,7 @@ internal sealed class StructurePlacer {
 	// Makes an add's change and rebuilds from it, then records it as one step and selects the object the rebuild built
 	// for the structure's row-14 GUID; or, when it built none, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> structure) {
-		var source = _source!;
+		var source = _source;
 		MsnEdit change;
 		try {
 			change = _rebuild.Run(add);

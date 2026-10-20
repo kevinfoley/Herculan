@@ -44,7 +44,8 @@ internal sealed class RosterFitView {
 
 	/// <summary>Draws the type, and a herc's fit, of <paramref name="placed"/>, when <see cref="Covers"/> it.</summary>
 	public void Draw(SceneObject placed) {
-		if (_variants.Source is not { } source || _variants.RecordOf(placed) is not var (row, guid)) {
+		var source = _variants.Source;
+		if (_variants.RecordOf(placed) is not var (row, guid)) {
 			return;
 		}
 

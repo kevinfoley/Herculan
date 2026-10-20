@@ -56,7 +56,7 @@ internal sealed class RoutePlacing {
 	public Func<bool>? Blocked { get; set; }
 
 	/// <summary>Why placing cannot start, or null when it can.</summary>
-	public string? WhyNoStart => _editor.WhyReadOnly ?? (Blocked?.Invoke() == true ? "A trigger area is being placed." : null);
+	public string? WhyNoStart => Blocked?.Invoke() == true ? "A trigger area is being placed." : null;
 
 	/// <summary>Whether the waypoints go to an existing route rather than a new one.</summary>
 	public bool Appending => _route != -1;

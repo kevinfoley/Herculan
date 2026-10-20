@@ -23,11 +23,10 @@ internal sealed record ConditionUses(IReadOnlyList<ConditionUse> Shown, IReadOnl
 /// selection keeps a condition by its row-1 GUID, which is its identity in the editor: row 1 reaches no <c>script.dat</c>
 /// block.
 ///
-/// <para>The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>). A mission opened from a plain
-/// <c>script.dat</c> has no conditions to show (<see cref="Listed"/>) and edits nothing.</para>
+/// <para>The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).</para>
 /// </summary>
 internal sealed class ConditionEditor {
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
@@ -35,7 +34,7 @@ internal sealed class ConditionEditor {
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public ConditionEditor(MissionDocument? source, MissionIndex index, PointMover mover, MissionRebuild rebuild,
+	public ConditionEditor(MissionDocument source, MissionIndex index, PointMover mover, MissionRebuild rebuild,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
@@ -45,20 +44,17 @@ internal sealed class ConditionEditor {
 		_deleter = deleter;
 	}
 
-	/// <summary>The mission as its <c>.MSN</c>, whose row 1 the views read; null for a plain <c>script.dat</c>.</summary>
-	public MissionDocument? Source => _source;
+	/// <summary>The mission as its <c>.MSN</c>, whose row 1 the views read.</summary>
+	public MissionDocument Source => _source;
 
-	/// <summary>Row 1's records in file order, or null for a plain <c>script.dat</c>, which has none.</summary>
-	public IReadOnlyList<MissionCondition14>? Listed => _source == null ? null : ConditionEditing.Records(_source);
+	/// <summary>Row 1's records in file order.</summary>
+	public IReadOnlyList<MissionCondition14> Listed => ConditionEditing.Records(_source);
 
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why no condition can be created at all, or null when one can.</summary>
-	public string? WhyReadOnly => _mover.WhyReadOnly;
-
 	/// <summary>Why <paramref name="guid"/> cannot be edited, or null when it can.</summary>
-	public string? WhyFixed(short guid) => WhyReadOnly ?? ConditionEditing.WhyFixed(_source!, guid);
+	public string? WhyFixed(short guid) => ConditionEditing.WhyFixed(_source, guid);
 
 	/// <summary>Asks for a new flag test, which is then selected.</summary>
 	public void RequestCreateFlagTest() => Create((MissionDocument source, out short guid) => ConditionEditing.CreateFlagTest(source, out guid));
@@ -106,10 +102,7 @@ internal sealed class ConditionEditor {
 	/// editor's state holds by its identity, a link where it has a view, and the rest counted by kind.
 	/// </summary>
 	public ConditionUses UsesOf(short guid) {
-		if (_source is not { } source) {
-			return new ConditionUses([], [], 0);
-		}
-
+		var source = _source;
 		var namers = ConditionEditing.Namers(source, guid);
 		var shown = new List<ConditionUse>();
 		var leftOut = new Dictionary<string, int>();
@@ -217,17 +210,13 @@ internal sealed class ConditionEditor {
 
 	private void Create(Creating create) {
 		_requested = () => {
-			if (WhyReadOnly is { } readOnly) {
-				return readOnly;
-			}
-
 			short created = -1;
-			return Commit(() => create(_source!, out created), () => created);
+			return Commit(() => create(_source, out created), () => created);
 		};
 	}
 
 	private void Ask(short guid, Func<MissionDocument, MsnEdit> edit) =>
-		_requested = () => WhyFixed(guid) ?? Commit(() => edit(_source!), () => guid);
+		_requested = () => WhyFixed(guid) ?? Commit(() => edit(_source), () => guid);
 
 	// Makes the change, rebuilding from it, records it as one step of the history, and selects the condition of row-1 GUID
 	// <selected> while row 1 still carries it.
@@ -241,7 +230,7 @@ internal sealed class ConditionEditor {
 
 		_mover.Record(new RecordsEdit(_rebuild, change));
 		short guid = selected();
-		_selection.Current = guid != -1 && ConditionEditing.IndexOf(_source!, guid) != null ? new ConditionSelection(guid) : null;
+		_selection.Current = guid != -1 && ConditionEditing.IndexOf(_source, guid) != null ? new ConditionSelection(guid) : null;
 		return null;
 	}
 }

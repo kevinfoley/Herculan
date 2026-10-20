@@ -19,13 +19,13 @@ internal sealed class SideChanger {
 	private const int GroupBlock = 11;
 
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
-	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, which is not edited.</param>
-	public SideChanger(ScriptDat document, MissionDocument? source, MissionIndex index, PointMover mover) {
+	/// <param name="source">The mission as its <c>.MSN</c>.</param>
+	public SideChanger(ScriptDat document, MissionDocument source, MissionIndex index, PointMover mover) {
 		_document = document;
 		_source = source;
 		_index = index;
@@ -34,9 +34,8 @@ internal sealed class SideChanger {
 
 	/// <summary>Why <paramref name="group"/>'s side cannot be changed, or null when it can.</summary>
 	public string? WhyFixed(int group) =>
-		_mover.WhyReadOnly is { } readOnly ? readOnly
-			: group == 0 ? "The player's squad is group 0, whose side the editor leaves alone."
-			: group < 0 || group >= _document.Groups.Length || _source!.GuidOf(GroupBlock, group) == -1 ? $"Group {group} is not in the file."
+		group == 0 ? "The player's squad is group 0, whose side the editor leaves alone."
+			: group < 0 || group >= _document.Groups.Length || _source.GuidOf(GroupBlock, group) == -1 ? $"Group {group} is not in the file."
 			: null;
 
 	/// <summary>Puts <paramref name="group"/> on <paramref name="side"/>, unless it is there already or cannot change.</summary>
@@ -47,7 +46,7 @@ internal sealed class SideChanger {
 
 		MsnEdit change;
 		try {
-			change = _source!.SetField(MsnField.GroupSide, _source.GuidOf(GroupBlock, group), (short)side);
+			change = _source.SetField(MsnField.GroupSide, _source.GuidOf(GroupBlock, group), (short)side);
 		} catch (InvalidOperationException ex) {
 			Console.Error.WriteLine($"Cannot change group {group}'s side: {ex.Message}");
 			return;
@@ -69,12 +68,12 @@ internal sealed class SideChanger {
 	// The group by its block-11 index, which the .MSN as the step found or left it generates again (IEditorEdit).
 	private sealed record SideEdit(SideChanger Changer, int Group, MsnEdit Change) : IEditorEdit {
 		public void Undo() {
-			Changer._source!.Undo(Change);
+			Changer._source.Undo(Change);
 			Changer.Apply(Group);
 		}
 
 		public void Redo() {
-			Changer._source!.Redo(Change);
+			Changer._source.Redo(Change);
 			Changer.Apply(Group);
 		}
 	}

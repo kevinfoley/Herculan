@@ -7,16 +7,15 @@ namespace Herculan.Engine.Editor;
 /// <see cref="PointMover"/>'s undo history, through <see cref="MissionTextEditing"/>'s record edits on the mission's
 /// <c>.MSN</c> and <c>.ENG</c> (docs/herculan/handoff-editor-mission-logic.md#the-missions-text). Every
 /// edit builds the editor's state again (<see cref="MissionRebuild"/>), which reloads <c>mission.str</c> and block 13.
-/// The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>). A mission opened from a plain
-/// <c>script.dat</c> edits nothing (<see cref="PointMover.WhyReadOnly"/>).
+/// The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>).
 /// </summary>
 internal sealed class MissionTextEditor {
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
 	private Func<string?>? _requested;
 
-	public MissionTextEditor(MissionDocument? source, PointMover mover, MissionRebuild rebuild) {
+	public MissionTextEditor(MissionDocument source, PointMover mover, MissionRebuild rebuild) {
 		_source = source;
 		_mover = mover;
 		_rebuild = rebuild;
@@ -25,43 +24,40 @@ internal sealed class MissionTextEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why no line can be edited, or null when lines can.</summary>
-	public string? WhyReadOnly => _mover.WhyReadOnly;
-
-	/// <summary>How many lines the generated <c>mission.str</c> has, or null for a plain <c>script.dat</c>.</summary>
-	public int? LineCount => _source == null ? null : MissionTextEditing.Lines(_source);
+	/// <summary>How many lines the generated <c>mission.str</c> has.</summary>
+	public int LineCount => MissionTextEditing.Lines(_source);
 
 	/// <summary><paramref name="list"/>'s filled slots, with the id each references and its text, null for an id with no text in this state.</summary>
 	public IReadOnlyList<(int Slot, short Id, string? Text)> Lines(MissionTextList list) =>
-		_source == null ? [] : MissionTextEditing.Filled(_source, list)
+		MissionTextEditing.Filled(_source, list)
 			.Select(entry => (entry.Slot, entry.Id, MissionTextEditing.LineText(_source, entry.Id)))
 			.ToList();
 
 	/// <summary>Whether another record references the line in <paramref name="list"/>'s slot <paramref name="slot"/> too, so an edit copies it first.</summary>
 	public bool Shared(MissionTextList list, int slot) =>
-		_source != null && MissionTextEditing.PackageRecord(_source) is { } record
+		MissionTextEditing.PackageRecord(_source) is { } record
 			&& MissionTextEditing.Shared(_source, TextOwner.Package(record, list, slot));
 
 	/// <summary>Why no line can be added to <paramref name="list"/>, or null when one can.</summary>
-	public string? WhyNoAdd(MissionTextList list) => WhyReadOnly ?? MissionTextEditing.WhyNoAdd(_source!, list);
+	public string? WhyNoAdd(MissionTextList list) => MissionTextEditing.WhyNoAdd(_source, list);
 
 	/// <summary>Asks for an empty line after <paramref name="list"/>'s last.</summary>
 	public void RequestAdd(MissionTextList list) =>
-		Ask(() => WhyNoAdd(list) ?? Commit(() => MissionTextEditing.AddLine(_source!, list, out _)));
+		Ask(() => WhyNoAdd(list) ?? Commit(() => MissionTextEditing.AddLine(_source, list, out _)));
 
 	/// <summary>Asks for the line in <paramref name="list"/>'s slot <paramref name="slot"/> to be removed, the later lines moving up.</summary>
 	public void RequestRemove(MissionTextList list, int slot) =>
-		Ask(() => WhyReadOnly ?? Commit(() => MissionTextEditing.RemoveLine(_source!, list, slot)));
+		Ask(() => Commit(() => MissionTextEditing.RemoveLine(_source, list, slot)));
 
 	/// <summary>Asks for the lines in <paramref name="list"/>'s slots <paramref name="slot"/> and <paramref name="to"/> to trade places.</summary>
 	public void RequestMove(MissionTextList list, int slot, int to) =>
-		Ask(() => WhyReadOnly ?? Commit(() => MissionTextEditing.MoveLine(_source!, list, slot, to)));
+		Ask(() => Commit(() => MissionTextEditing.MoveLine(_source, list, slot, to)));
 
 	/// <summary>Asks for the line in <paramref name="list"/>'s slot <paramref name="slot"/> to read <paramref name="text"/>.</summary>
 	public void RequestText(MissionTextList list, int slot, string text) =>
-		Ask(() => WhyReadOnly ?? (MissionTextEditing.PackageRecord(_source!) is { } record
-			? Commit(() => MissionTextEditing.SetLine(_source!, TextOwner.Package(record, list, slot), 0, text))
-			: "The mission has no text package."));
+		Ask(() => MissionTextEditing.PackageRecord(_source) is { } record
+			? Commit(() => MissionTextEditing.SetLine(_source, TextOwner.Package(record, list, slot), 0, text))
+			: "The mission has no text package.");
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {

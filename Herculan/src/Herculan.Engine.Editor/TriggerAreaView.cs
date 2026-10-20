@@ -83,7 +83,7 @@ internal sealed class TriggerAreaView {
 		}
 
 		ImGui.Spacing();
-		ImGui.BeginDisabled(_actions.WhyReadOnly != null || _placing.Active);
+		ImGui.BeginDisabled(_placing.Active);
 		if (ImGui.Button("New action testing this area")) {
 			_actions.RequestCreate(reference);
 		}

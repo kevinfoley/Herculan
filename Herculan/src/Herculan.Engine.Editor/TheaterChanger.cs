@@ -20,7 +20,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class TheaterChanger {
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
@@ -28,8 +28,8 @@ internal sealed class TheaterChanger {
 	private (int Word, short Value)? _requested;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
-	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, which is not edited.</param>
-	public TheaterChanger(ScriptDat document, MissionDocument? source, MissionScene scene, MissionIndex index, PointMover mover,
+	/// <param name="source">The mission as its <c>.MSN</c>.</param>
+	public TheaterChanger(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index, PointMover mover,
 			MissionRebuild rebuild) {
 		_document = document;
 		_source = source;
@@ -53,11 +53,11 @@ internal sealed class TheaterChanger {
 
 	/// <summary>Why the theater cannot be changed, or null when it can.</summary>
 	public string? WhyTheaterFixed =>
-		_mover.WhyReadOnly ?? (_source!.Generation.Header[MissionOpener.TheaterWord] != null ? "The campaign stage sets the theater." : null);
+		_source.Generation.Header[MissionOpener.TheaterWord] != null ? "The campaign stage sets the theater." : null;
 
 	/// <summary>Why the time of day cannot be changed, or null when it can.</summary>
 	public string? WhyTimeFixed =>
-		_mover.WhyReadOnly ?? (_source!.Generation.Header[MissionOpener.VariantWord] != null ? "The launch sets the time of day." : null);
+		_source.Generation.Header[MissionOpener.VariantWord] != null ? "The launch sets the time of day." : null;
 
 	/// <summary>Why the last change asked for could not be made, or null.</summary>
 	public string? Failure { get; private set; }
@@ -85,7 +85,7 @@ internal sealed class TheaterChanger {
 			return null;
 		}
 
-		var source = _source!;
+		var source = _source;
 		MsnEdit change;
 		try {
 			change = source.SetHeaderWord(word, value);
@@ -116,12 +116,12 @@ internal sealed class TheaterChanger {
 	// Puts row 2 back as the step found or left it, and dresses the scene in the world the header then picks.
 	private sealed record WorldEdit(TheaterChanger Changer, MsnEdit Change) : IEditorEdit {
 		public void Undo() {
-			Changer._source!.Undo(Change);
+			Changer._source.Undo(Change);
 			Changer.Reload();
 		}
 
 		public void Redo() {
-			Changer._source!.Redo(Change);
+			Changer._source.Redo(Change);
 			Changer.Reload();
 		}
 	}

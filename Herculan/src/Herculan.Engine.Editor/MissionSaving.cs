@@ -94,10 +94,10 @@ internal sealed class MissionSaving {
 	public bool IsOpen => _prompt != Prompt.None;
 
 	/// <summary>Whether the open mission has changed since it was last saved or opened.</summary>
-	public bool Dirty => _mission?.Source != null && _mission.Mover.History.Dirty;
+	public bool Dirty => _mission?.Mover.History.Dirty == true;
 
 	/// <summary>Why Save, Save As and Export are unavailable, or null when they are.</summary>
-	public string? WhyNoSave => _mission == null ? "No mission is open." : _mission.Mover.WhyReadOnly;
+	public string? WhyNoSave => _mission == null ? "No mission is open." : null;
 
 	/// <summary>Saves the mission under its own name.</summary>
 	public void Save() {
@@ -275,7 +275,7 @@ internal sealed class MissionSaving {
 
 	private void DrawOverride() {
 		string name = _request!.Name;
-		bool withText = _mission!.Source!.Text != null;
+		bool withText = _mission!.Source.Text != null;
 		string files = Relative(SavedMissions.MissionPath(_installRoot, name)) + (withText ? $" and {Relative(TextPath(name))}" : "");
 		ImGui.TextWrapped($"Saving writes {files} into the install, which the game then loads instead of the archive's "
 			+ $"{name}; delete {(withText ? "them" : "it")} to go back.");
@@ -379,7 +379,7 @@ internal sealed class MissionSaving {
 	private List<ScriptLintFinding> Check() {
 		var mission = _mission!;
 		int squad = mission.Mission.Placements.Count(placement => placement.IsPlayerLance);
-		return ScriptDatLint.Check(mission.Source!.Script, squad, mission.Source.Provenance.Lines.Count);
+		return ScriptDatLint.Check(mission.Source.Script, squad, mission.Source.Provenance.Lines.Count);
 	}
 
 	private bool InArchive(string name) =>
@@ -388,7 +388,7 @@ internal sealed class MissionSaving {
 
 	private void Write(SaveRequest request) {
 		var mission = _mission!;
-		var document = mission.Source!;
+		var document = mission.Source;
 		try {
 			byte[] msn = new MissionFileTransformer().Write(document.Mission)
 				?? throw new InvalidOperationException("The mission file does not write.");
@@ -410,7 +410,7 @@ internal sealed class MissionSaving {
 	}
 
 	private void RunExport(string folder) {
-		var document = _mission!.Source!;
+		var document = _mission!.Source;
 		try {
 			var written = HandoffExport.Write(folder, _installRoot, _handoffDirectory, document.ScriptBytes, document.MissionText);
 			Console.WriteLine($"Exported {_mission.Name} as {string.Join(", ", written)}.");

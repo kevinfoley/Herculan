@@ -51,7 +51,7 @@ internal sealed class MissionRebuild {
 
 	private readonly GameContent _content;
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly MissionIndex _index;
 	private readonly MissionOverlay _overlay;
@@ -66,9 +66,9 @@ internal sealed class MissionRebuild {
 	// Every object built for the mission, by the .MSN record it stands for, the latest first.
 	private readonly Dictionary<(int Row, int Key), List<SceneObject>> _built = new();
 
-	public MissionRebuild(GameContent content, ScriptDat document, MissionDocument? source, MissionScene scene,
+	public MissionRebuild(GameContent content, ScriptDat document, MissionDocument source, MissionScene scene,
 			MissionIndex index, MissionOverlay overlay, ScenePicker picker, PointMover mover, MissionOutliner outliner,
-			SelectionState selection, MissionSquad? squad) {
+			SelectionState selection, MissionSquad squad) {
 		_content = content;
 		_document = document;
 		_source = source;
@@ -82,8 +82,8 @@ internal sealed class MissionRebuild {
 		Squad = squad;
 	}
 
-	/// <summary>Which Hercs the squad pilots and how its <c>player.mec</c> is built again; null for a plain <c>script.dat</c>.</summary>
-	public MissionSquad? Squad { get; }
+	/// <summary>Which Hercs the squad pilots and how its <c>player.mec</c> is built again.</summary>
+	public MissionSquad Squad { get; }
 
 	/// <summary>Raised with each object a rebuild puts in the scene, for whatever draws it.</summary>
 	public event Action<SceneObject>? Added;
@@ -102,7 +102,7 @@ internal sealed class MissionRebuild {
 	/// again from the generated file. An edit that throws has put the records back, and nothing is rebuilt.
 	/// </summary>
 	public T Run<T>(Func<T> edit) {
-		var source = _source ?? throw new InvalidOperationException("A plain script.dat is not edited.");
+		var source = _source;
 		Remember(source);
 		short selectedGroup = _selection.Current is GroupSelection { Group: var group } ? source.GuidOf(GroupBlock, group) : (short)-1;
 		short selectedRoute = _selection.Current is RouteSelection { Route: var route } ? source.GuidOf(RouteBlock, route) : (short)-1;
@@ -117,13 +117,13 @@ internal sealed class MissionRebuild {
 
 	/// <summary>Puts back the rows <paramref name="change"/> changed as it found them, and rebuilds.</summary>
 	public void Undo(MsnEdit change) => Run(() => {
-		_source!.Undo(change);
+		_source.Undo(change);
 		return change;
 	});
 
 	/// <summary>Puts back the rows <paramref name="change"/> changed as it left them, and rebuilds.</summary>
 	public void Redo(MsnEdit change) => Run(() => {
-		_source!.Redo(change);
+		_source.Redo(change);
 		return change;
 	});
 
@@ -151,7 +151,7 @@ internal sealed class MissionRebuild {
 
 	private void Rebuild(MissionDocument source, SelectedKeys selected, SelectedObjectiveRecord? selectedObjective) {
 		// The squad the launch would build from this generation, which the load below places, and the text the load reads.
-		if (Squad?.PlayerMec(source.Generator) is { } squadFile) {
+		if (Squad.PlayerMec(source.Generator) is { } squadFile) {
 			File.WriteAllBytes(MissionLoader.PlayerPathFor(_scene.Mission.SourcePath), squadFile);
 		}
 

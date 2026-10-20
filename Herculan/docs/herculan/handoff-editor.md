@@ -4,7 +4,7 @@ The editor, `Herculan.Engine.Editor`, run on its own by `Herculan.Engine.Host.Ed
 
 | Doc | Covers |
 |---|---|
-| [handoff-editor-document.md](handoff-editor-document.md) | how the `.MSN` is held, which record each edit writes, the edit tools, regeneration and rebuild, read-only `script.dat`, saving and export |
+| [handoff-editor-document.md](handoff-editor-document.md) | how the `.MSN` is held, which record each edit writes, the edit tools, regeneration and rebuild, saving and export |
 | [handoff-editor-viewing.md](handoff-editor-viewing.md) | opening, New mission, theater and time of day, selection, camera, picking, overlays, groups, waiting groups, the mission check |
 | [handoff-editor-placement.md](handoff-editor-placement.md) | moving objects, waypoints, groups and area corners; routes; trigger areas |
 | [handoff-editor-roster.md](handoff-editor-roster.md) | adding hercs, flyers, ground vehicles and structures; type and fit; sides; deleting; the player's squad |
@@ -22,7 +22,6 @@ These hold for every edit in the docs above unless the doc says otherwise:
 - The Delete key deletes the selection, as the view's Delete does, unless a text field has the keyboard or a drag is under way.
 - A delete or removal is refused while another record references what it removes, in any record and whatever its condition; the view lists each referrer as a link, one per line.
 - An edit writes a field in the record that supplies it ([Which record an edit writes](handoff-editor-document.md#which-record-an-edit-writes)).
-- A plain `script.dat` opens read-only and none of it applies ([A plain `script.dat`](handoff-editor-document.md#a-plain-scriptdat)).
 - "The editor's choice" marks behaviour this engine chose where retail gives no answer; "the user's choice" one the user decided.
 - Retail counts are over the 62 `.MSN` files with campaign conditions not applied, from `HercWorks.Query`.
 

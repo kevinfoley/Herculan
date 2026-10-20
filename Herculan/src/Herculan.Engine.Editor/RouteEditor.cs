@@ -24,8 +24,7 @@ internal sealed record RouteDeleteBlockers(string? Fixed, DeleteNamers Names, IR
 ///
 /// <para>A waypoint here is one the route view lists, by its index in <see cref="EditorRoute.Points"/>; it is mapped to its
 /// block-3 list entry (<see cref="PointMover.WaypointEntries"/>), which is the <c>.MSN</c> list's entry, as the generation
-/// writes one for one. A route whose waypoints cannot be told apart from its entries is not edited. A mission opened
-/// from a plain <c>script.dat</c> edits nothing (<see cref="PointMover.WhyReadOnly"/>).</para>
+/// writes one for one. A route whose waypoints cannot be told apart from its entries is not edited.</para>
 ///
 /// <para>The view's edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>), since the rebuild changes
 /// what the panels list; <see cref="RoutePlacing"/> calls <see cref="Create"/> and <see cref="Extend"/> at the same
@@ -35,7 +34,7 @@ internal sealed class RouteEditor {
 	private const int RouteBlock = 3;
 	private const int RouteRow = 8;
 
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
@@ -43,7 +42,7 @@ internal sealed class RouteEditor {
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public RouteEditor(MissionDocument? source, MissionIndex index, PointMover mover, MissionRebuild rebuild,
+	public RouteEditor(MissionDocument source, MissionIndex index, PointMover mover, MissionRebuild rebuild,
 			SelectionState selection, ObjectDeleter deleter) {
 		_source = source;
 		_index = index;
@@ -56,21 +55,14 @@ internal sealed class RouteEditor {
 	/// <summary>Why the last edit run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
 
-	/// <summary>Why no route can be created or edited at all, or null when one can.</summary>
-	public string? WhyReadOnly => _mover.WhyReadOnly;
-
 	/// <summary>The row-8 GUID of block-3 route <paramref name="route"/>, or <c>-1</c>.</summary>
-	public short GuidOf(int route) => _source?.GuidOf(RouteBlock, route) ?? -1;
+	public short GuidOf(int route) => _source.GuidOf(RouteBlock, route);
 
 	/// <summary>The block-3 index row-8 GUID <paramref name="route"/> is exported at, or null.</summary>
-	public int? IndexOf(short route) => _source?.ExportedIndex(RouteRow, route);
+	public int? IndexOf(short route) => _source.ExportedIndex(RouteRow, route);
 
 	/// <summary>Why route <paramref name="route"/>'s waypoints cannot be edited, or null when they can.</summary>
 	public string? WhyFixed(int route) {
-		if (WhyReadOnly is { } readOnly) {
-			return readOnly;
-		}
-
 		if (GuidOf(route) == -1) {
 			return $"Route {route}'s record is not in the file.";
 		}
@@ -81,27 +73,23 @@ internal sealed class RouteEditor {
 	}
 
 	/// <summary>Whether route <paramref name="route"/>'s list is a variant's, shared by every route that can draw it.</summary>
-	public bool Shared(int route) => WhyFixed(route) == null && _source!.WaypointsShared(GuidOf(route));
+	public bool Shared(int route) => WhyFixed(route) == null && _source.WaypointsShared(GuidOf(route));
 
 	/// <summary>Why no waypoint can be inserted after waypoint <paramref name="waypoint"/> of <paramref name="route"/>, or null.</summary>
 	public string? WhyNoInsert(int route, int waypoint) =>
-		WhyFixed(route) ?? RouteEditing.WhyNoInsert(_source!, GuidOf(route), Entry(route, waypoint));
+		WhyFixed(route) ?? RouteEditing.WhyNoInsert(_source, GuidOf(route), Entry(route, waypoint));
 
 	/// <summary>Why waypoint <paramref name="waypoint"/> of <paramref name="route"/> cannot be removed, or null.</summary>
 	public string? WhyNoRemove(int route, int waypoint) =>
-		WhyFixed(route) ?? RouteEditing.WhyNoRemove(_source!, GuidOf(route), Entry(route, waypoint));
+		WhyFixed(route) ?? RouteEditing.WhyNoRemove(_source, GuidOf(route), Entry(route, waypoint));
 
 	/// <summary>Why <paramref name="route"/> cannot be closed (<paramref name="closed"/>) or opened, or null.</summary>
 	public string? WhyNoClose(int route, bool closed) =>
-		WhyFixed(route) ?? RouteEditing.WhyNoClose(_source!, GuidOf(route), closed);
+		WhyFixed(route) ?? RouteEditing.WhyNoClose(_source, GuidOf(route), closed);
 
 	/// <summary>What keeps <paramref name="route"/> from being deleted; <see cref="RouteDeleteBlockers.None"/> when nothing does.</summary>
 	public RouteDeleteBlockers BlockersOf(int route) {
-		if (WhyReadOnly is { } readOnly) {
-			return RouteDeleteBlockers.Because(readOnly);
-		}
-
-		var source = _source!;
+		var source = _source;
 		short guid = GuidOf(route);
 		if (guid == -1) {
 			return RouteDeleteBlockers.Because($"route {route}'s record is not in the file.");
@@ -127,7 +115,7 @@ internal sealed class RouteEditor {
 		short guid = GuidOf(route);
 		int entry = Entry(route, waypoint);
 		_requested = () => WhyNoInsert(route, waypoint)
-			?? Commit(() => RouteEditing.InsertAfter(_source!, guid, entry), guid, waypoint + 1);
+			?? Commit(() => RouteEditing.InsertAfter(_source, guid, entry), guid, waypoint + 1);
 	}
 
 	/// <summary>Asks for waypoint <paramref name="waypoint"/> of <paramref name="route"/> to be removed.</summary>
@@ -135,14 +123,14 @@ internal sealed class RouteEditor {
 		short guid = GuidOf(route);
 		int entry = Entry(route, waypoint);
 		_requested = () => WhyNoRemove(route, waypoint)
-			?? Commit(() => RouteEditing.RemoveAt(_source!, guid, entry), guid, -1);
+			?? Commit(() => RouteEditing.RemoveAt(_source, guid, entry), guid, -1);
 	}
 
 	/// <summary>Asks for <paramref name="route"/> to be closed into a loop, or opened.</summary>
 	public void RequestClosed(int route, bool closed) {
 		short guid = GuidOf(route);
 		_requested = () => WhyNoClose(route, closed)
-			?? Commit(() => RouteEditing.SetClosed(_source!, guid, closed), guid, -1);
+			?? Commit(() => RouteEditing.SetClosed(_source, guid, closed), guid, -1);
 	}
 
 	/// <summary>Asks for <paramref name="route"/> to be deleted.</summary>
@@ -154,7 +142,7 @@ internal sealed class RouteEditor {
 				return blockers.Fixed ?? "The mission references it; its view says what.";
 			}
 
-			return Commit(() => RouteEditing.Delete(_source!, guid), -1, -1);
+			return Commit(() => RouteEditing.Delete(_source, guid), -1, -1);
 		};
 	}
 
@@ -171,15 +159,11 @@ internal sealed class RouteEditor {
 	/// than <see cref="RouteEditing.MinWaypoints"/> waypoints, adds nothing. Answers why it could not, or null.
 	/// </summary>
 	public string? Create(IReadOnlyList<Vec3i> waypoints, bool closed) {
-		if (WhyReadOnly is { } readOnly) {
-			return readOnly;
-		}
-
 		if (waypoints.Count < RouteEditing.MinWaypoints) {
 			return null;
 		}
 
-		var source = _source!;
+		var source = _source;
 		var at = waypoints.Select(point => (point.X, point.Y)).ToList();
 		short route = -1;
 		return Commit(() => RouteEditing.Create(source, at, closed, out route), () => route, -1);
@@ -191,11 +175,7 @@ internal sealed class RouteEditor {
 	/// not a failure.
 	/// </summary>
 	public string? Extend(short route, IReadOnlyList<Vec3i> waypoints, bool close) {
-		if (WhyReadOnly is { } readOnly) {
-			return readOnly;
-		}
-
-		var source = _source!;
+		var source = _source;
 		if (IndexOf(route) == null) {
 			return "The route is no longer in the mission.";
 		}

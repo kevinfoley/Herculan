@@ -48,6 +48,20 @@ internal sealed class VolMissionBrowser {
 			.ToList();
 	}
 
+	/// <summary>
+	/// The mission of <paramref name="missions"/> named <paramref name="name"/>, as the list names it, with or without its
+	/// <c>.MSN</c> and in any case; null for none.
+	/// </summary>
+	public static BrowsedMission? Find(IEnumerable<BrowsedMission> missions, string name) {
+		string file = Path.GetExtension(name).Equals(MissionFileLaunch.MissionExtension, StringComparison.OrdinalIgnoreCase)
+			? name
+			: name + MissionFileLaunch.MissionExtension;
+		return missions.FirstOrDefault(mission => mission.File.Equals(file, StringComparison.OrdinalIgnoreCase));
+	}
+
+	/// <summary>The listed mission named <paramref name="name"/>, as <see cref="Find(IEnumerable{BrowsedMission}, string)"/> finds it.</summary>
+	public BrowsedMission? Find(string name) => Find(_missions ??= _listMissions(), name);
+
 	/// <summary>Lists the missions again the next time the window is drawn, after a save has added one.</summary>
 	public void Refresh() => _missions = null;
 

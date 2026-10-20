@@ -50,7 +50,7 @@ internal sealed class AreaPlacing {
 	public Func<bool>? Blocked { get; set; }
 
 	/// <summary>Why placing cannot start, or null when it can.</summary>
-	public string? WhyNoStart => _editor.WhyReadOnly ?? (Blocked?.Invoke() == true ? "A route is being placed." : null);
+	public string? WhyNoStart => Blocked?.Invoke() == true ? "A route is being placed." : null;
 
 	/// <summary>What the mode asks of the user, in the Toolbox and over the view.</summary>
 	public string Hint => Circle ? CircleHint : BoxHint;

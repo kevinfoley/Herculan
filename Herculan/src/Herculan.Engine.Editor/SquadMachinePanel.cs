@@ -13,10 +13,10 @@ internal sealed class SquadMachinePanel {
 	private readonly MachineFitter _fitter;
 	private readonly MachineFitView _fit;
 	private readonly SquadEditor _editor;
-	private readonly MissionSquad? _squad;
+	private readonly MissionSquad _squad;
 
-	/// <param name="squad">Which Hercs the mission's squad pilots, or null for a plain <c>script.dat</c>.</param>
-	public SquadMachinePanel(MachineFitter fitter, SquadEditor editor, MissionSquad? squad) {
+	/// <param name="squad">Which Hercs the mission's squad pilots.</param>
+	public SquadMachinePanel(MachineFitter fitter, SquadEditor editor, MissionSquad squad) {
 		_fitter = fitter;
 		_fit = new MachineFitView(fitter);
 		_editor = editor;
@@ -112,7 +112,7 @@ internal sealed class SquadMachinePanel {
 	}
 
 	// Which Herc the player pilots in this mission, by the launch's own rule (MissionSquad).
-	private string? WhichHerc() => _squad?.PlayerMachine switch {
+	private string? WhichHerc() => _squad.PlayerMachine switch {
 		PlayerMachineSource.Mission => "In this mission the player pilots the Herc below.",
 		PlayerMachineSource.HercType => $"In this mission the player pilots a stock {ChassisName(_squad.HercTypeChassis)}, "
 			+ "the Herc Type chosen on the practice screen, not the Herc below.",
@@ -121,14 +121,14 @@ internal sealed class SquadMachinePanel {
 
 	// A campaign mission's squad is the career's (MissionSquad), whatever group 0 holds.
 	private void CampaignNote() {
-		if (_squad?.PlayerMachine == PlayerMachineSource.CareerSquad) {
+		if (_squad.PlayerMachine == PlayerMachineSource.CareerSquad) {
 			EditorText.Emphasis("In campaign missions, the default HERCs and loadouts selected here are not used.");
 		}
 	}
 
 	// Which Hercs the squadmates pilot in a training-mode load, by the launch's own rule (MissionSquad): group 0's. A
 	// campaign mission says so once, through CampaignNote.
-	private string? WhereSquadmatesComeFrom() => _squad?.PlayerMachine switch {
+	private string? WhereSquadmatesComeFrom() => _squad.PlayerMachine switch {
 		PlayerMachineSource.Mission or PlayerMachineSource.HercType =>
 			"In this mission the player's squadmates pilot the Hercs below, group 0's members after the player's machine.",
 		_ => null,
@@ -137,7 +137,7 @@ internal sealed class SquadMachinePanel {
 	// The squad build's retail bug, where the squadmates are group 0's: the last squadmate listed never goes on strength
 	// (docs/retail/shell/main-menu.md#starting-a-practice-mission).
 	private string? LeftBehind(int squadmates) {
-		if (squadmates == 0 || _squad?.PlayerMachine is not (PlayerMachineSource.Mission or PlayerMachineSource.HercType)) {
+		if (squadmates == 0 || _squad.PlayerMachine is not (PlayerMachineSource.Mission or PlayerMachineSource.HercType)) {
 			return null;
 		}
 

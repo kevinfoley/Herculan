@@ -17,8 +17,8 @@ namespace Herculan.Engine.Editor;
 /// mission builds a new one of these rather than resetting this one; <see cref="MissionDrawables"/> is its GPU half.
 /// </summary>
 internal sealed class EditorMission {
-	private EditorMission(GameContent content, string name, ScriptDat document, MissionDocument? source, MissionScene scene,
-			MissionIndex index, TerrainMaterialTable materials, MissionSquad? squad, Func<GameContent>? shellContent) {
+	private EditorMission(GameContent content, string name, ScriptDat document, MissionDocument source, MissionScene scene,
+			MissionIndex index, TerrainMaterialTable materials, MissionSquad squad, Func<GameContent> shellContent) {
 		Name = name;
 		Document = document;
 		Source = source;
@@ -29,7 +29,7 @@ internal sealed class EditorMission {
 		Overlay = new MissionOverlay(index, drape);
 		Picker = new ScenePicker(scene, index, Overlay);
 		GroupOverlay = new GroupOverlay(index, drape, Picker);
-		Outliner = new MissionOutliner(index, new MissionLint(index, document, source?.Provenance.Lines.Count ?? 0), Selection);
+		Outliner = new MissionOutliner(index, new MissionLint(index, document, source.Provenance.Lines.Count), Selection);
 		Mover = new PointMover(document, source, scene, index, Picker, Overlay, materials);
 		Gizmo = new MoveGizmo(Selection, Mover);
 		Rebuild = new MissionRebuild(content, document, source, scene, index, Overlay, Picker, Mover, Outliner, Selection, squad);
@@ -73,22 +73,21 @@ internal sealed class EditorMission {
 
 	/// <summary>
 	/// What the window title calls the mission: the <c>.MSN</c> it was generated from, without its extension, which a
-	/// Save writes and a Save As renames; or the file opened.
+	/// Save writes and a Save As renames.
 	/// </summary>
 	public string Name { get; set; }
 
 	/// <summary>
 	/// The <c>script.dat</c> <see cref="Scene"/> was loaded from: <see cref="Source"/>'s generated file, whose blocks each
-	/// edit's generation replaces, or a plain <c>script.dat</c> as parsed. It keeps every record as written, including what
+	/// edit's generation replaces. It keeps every record as written, including what
 	/// loading resolves away — a ref past the end of its block, a slot DBSIM never reads.
 	/// </summary>
 	public ScriptDat Document { get; }
 
 	/// <summary>
-	/// The mission as its <c>.MSN</c> and <c>.ENG</c>, which every edit writes; null for a plain <c>script.dat</c>, which
-	/// opens read-only (docs/herculan/handoff-editor-document.md#a-plain-scriptdat).
+	/// The mission as its <c>.MSN</c> and <c>.ENG</c>, which every edit writes.
 	/// </summary>
-	public MissionDocument? Source { get; }
+	public MissionDocument Source { get; }
 
 	public MissionScene Scene { get; }
 
@@ -193,26 +192,20 @@ internal sealed class EditorMission {
 	public string Title(bool unsaved) => $"HERCULAN Mission Editor — {Name}{(unsaved ? "*" : "")}, zone {Mission.Header.ZoneIndex}";
 
 	/// <summary>
-	/// Opens the handoff at <paramref name="scriptPath"/>. Given <paramref name="source"/>, the mission it holds as its
-	/// <c>.MSN</c>, its generated <c>script.dat</c> and <c>mission.str</c> are written over the handoff's and the scene is
-	/// loaded from them; without one the <c>script.dat</c> there opens read-only. <paramref name="dataDirectory"/> is where
-	/// the simulator's settings are when they are not beside the script — see <see cref="MissionScene.Load"/>.
+	/// Opens the handoff at <paramref name="scriptPath"/> as <paramref name="source"/>, the mission it holds as its
+	/// <c>.MSN</c>: the document's generated <c>script.dat</c> and <c>mission.str</c> are written over the handoff's and the
+	/// scene is loaded from them. <paramref name="dataDirectory"/> is where the simulator's settings are when they are not
+	/// beside the script — see <see cref="MissionScene.Load"/>.
 	/// <paramref name="squad"/> is which Hercs the mission's squad pilots, which builds the handoff's <c>player.mec</c> again after
 	/// an edit, and <paramref name="shellContent"/> VSHELL's mount, which holds the shell's chassis and weapon tables. Throws
 	/// <see cref="MissingHandoffFileException"/> as <see cref="MissionLoader.Load"/> does.
 	/// </summary>
-	public static EditorMission Open(GameContent content, string scriptPath, string name, string? dataDirectory = null,
-			MissionDocument? source = null, MissionSquad? squad = null, Func<GameContent>? shellContent = null) {
-		ScriptDat document;
-		if (source != null) {
-			File.WriteAllBytes(scriptPath, source.ScriptBytes);
-			File.WriteAllBytes(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", MissionLoader.TextFileName),
-				source.MissionText);
-			document = source.Script;
-		} else {
-			document = MissionLoader.ReadScript(scriptPath);
-		}
-
+	public static EditorMission Open(GameContent content, string scriptPath, string name, string dataDirectory,
+			MissionDocument source, MissionSquad squad, Func<GameContent> shellContent) {
+		File.WriteAllBytes(scriptPath, source.ScriptBytes);
+		File.WriteAllBytes(CaseInsensitivePath.Combine(Path.GetDirectoryName(scriptPath) ?? ".", MissionLoader.TextFileName),
+			source.MissionText);
+		var document = source.Script;
 		var scene = MissionScene.Load(content, scriptPath, dataDirectory, document);
 		foreach (var sceneObject in scene.Objects) {
 			sceneObject.Object.Position = PointFollowers.Settled(scene.World.Terrain, sceneObject.Object, sceneObject.Object.Position);

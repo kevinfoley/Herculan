@@ -113,12 +113,9 @@ internal sealed class MissionOutliner {
 		}
 
 		if (Timers is { } timers) {
-			ImGui.BeginDisabled(timers.WhyReadOnly != null);
 			if (ImGui.SmallButton("New timer")) {
 				timers.RequestCreate();
 			}
-
-			ImGui.EndDisabled();
 		}
 
 		for (int i = 0; i < Mission.ActionTimers.Count; i++) {
@@ -171,16 +168,19 @@ internal sealed class MissionOutliner {
 	}
 
 	/// <summary>
-	/// Every row-1 condition, in file order, as the conditions the other records' condition fields reference; none for a
-	/// plain <c>script.dat</c>, which has no row 1.
+	/// Every row-1 condition, in file order, as the conditions the other records' condition fields reference.
 	/// </summary>
 	private void DrawConditions() {
-		if (Conditions is not { Listed: { } records, Source: { } source } conditions
-				|| !ImGui.CollapsingHeader($"Conditions ({records.Count})###conditions")) {
+		if (Conditions is not { } conditions) {
 			return;
 		}
 
-		ImGui.BeginDisabled(conditions.WhyReadOnly != null);
+		var records = conditions.Listed;
+		if (!ImGui.CollapsingHeader($"Conditions ({records.Count})###conditions")) {
+			return;
+		}
+
+		var source = conditions.Source;
 		if (ImGui.SmallButton("New flag test")) {
 			conditions.RequestCreateFlagTest();
 		}
@@ -190,7 +190,6 @@ internal sealed class MissionOutliner {
 			conditions.RequestCreateDraw();
 		}
 
-		ImGui.EndDisabled();
 		for (int i = 0; i < records.Count; i++) {
 			var record = records[i];
 			var selection = new ConditionSelection(record.GUID);
@@ -290,12 +289,9 @@ internal sealed class MissionOutliner {
 		}
 
 		if (Actions is { } actions) {
-			ImGui.BeginDisabled(actions.WhyReadOnly != null);
 			if (ImGui.SmallButton("New action")) {
 				actions.RequestCreate();
 			}
-
-			ImGui.EndDisabled();
 		}
 
 		for (int i = 0; i < Mission.Actions.Count; i++) {

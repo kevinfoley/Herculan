@@ -21,7 +21,7 @@ internal sealed class VehiclePlacer {
 	private const int GroupBlock = 11;
 
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
@@ -29,9 +29,9 @@ internal sealed class VehiclePlacer {
 	private readonly StructurePlacer _structures;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s, which the scene was loaded from.</param>
-	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, to which nothing is added.</param>
+	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="structures">Adds a vehicle to a structure group that is not a convoy, and builds its ghost.</param>
-	public VehiclePlacer(ScriptDat document, MissionDocument? source, MissionIndex index, PointMover mover,
+	public VehiclePlacer(ScriptDat document, MissionDocument source, MissionIndex index, PointMover mover,
 			MissionRebuild rebuild, SelectionState selection, StructurePlacer structures) {
 		_document = document;
 		_source = source;
@@ -43,10 +43,10 @@ internal sealed class VehiclePlacer {
 	}
 
 	/// <summary>
-	/// Why no ground vehicle can be added, or null when one can: the mission is read-only, or block 9 is full
+	/// Why no ground vehicle can be added, or null when one can: block 9 is full
 	/// (<see cref="VehicleGroups.WhyNoAdd"/>).
 	/// </summary>
-	public string? WhyNoAdd => _mover.WhyReadOnly ?? VehicleGroups.WhyNoAdd(_source!);
+	public string? WhyNoAdd => VehicleGroups.WhyNoAdd(_source);
 
 	/// <summary>
 	/// Adds a ground vehicle of <c>BASES.DAT</c> type <paramref name="typeIndex"/> on <paramref name="side"/> at
@@ -62,7 +62,7 @@ internal sealed class VehiclePlacer {
 			return $"Structure type {typeIndex} is not a ground vehicle.";
 		}
 
-		var source = _source!;
+		var source = _source;
 		var vehicle = VehicleGroups.Machine((short)typeIndex);
 		short added = -1;
 		if (joinGroup is { } joined) {
@@ -88,8 +88,7 @@ internal sealed class VehiclePlacer {
 	/// (<see cref="StructurePlacer.WhyNotJoin"/>).
 	/// </summary>
 	public string? WhyNotJoin(int group) =>
-		_mover.WhyReadOnly is { } readOnly ? readOnly
-			: IsConvoy(group) ? VehicleGroups.WhyNoJoin(_source!, _source!.GuidOf(GroupBlock, group), BaseObject.IsGroundVehicle)
+		IsConvoy(group) ? VehicleGroups.WhyNoJoin(_source, _source.GuidOf(GroupBlock, group), BaseObject.IsGroundVehicle)
 			: _structures.WhyNotJoin(group);
 
 	/// <summary>
@@ -100,13 +99,13 @@ internal sealed class VehiclePlacer {
 
 	// Whether block-11 group <group> is a convoy in the generated file.
 	private bool IsConvoy(int group) =>
-		_source != null && group >= 0 && group < _document.Groups.Length
+		group >= 0 && group < _document.Groups.Length
 		&& VehicleGroups.IsConvoy(_source, _source.GuidOf(GroupBlock, group), BaseObject.IsGroundVehicle);
 
 	// Makes an add's change and rebuilds from it, then records it as one step and selects the object the rebuild built
 	// for the vehicle's row-14 GUID; or, when it built none, puts the records back and says why.
 	private string? Commit(int typeIndex, Func<MsnEdit> add, Func<short> vehicle) {
-		var source = _source!;
+		var source = _source;
 		MsnEdit change;
 		try {
 			change = _rebuild.Run(add);

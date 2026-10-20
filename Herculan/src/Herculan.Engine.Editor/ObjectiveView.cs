@@ -194,7 +194,7 @@ internal sealed class ObjectiveView {
 
 		var lines = _editor.FailureLines(index);
 		if (locked) {
-			// A plain script.dat's, as its mission.str has it.
+			// An objective no record of the .MSN supplies, as its mission.str has it.
 			foreach (string line in Mission.DescriptionOf(Mission.Objectives[index]).Where(line => line.Length > 0)) {
 				ImGui.TextWrapped(line);
 			}

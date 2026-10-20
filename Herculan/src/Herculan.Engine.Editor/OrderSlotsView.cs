@@ -239,7 +239,7 @@ internal sealed class OrderSlotsView {
 	}
 
 	private static void Tooltip(string? reason) {
-		if (reason != null && !EditorText.IsReadOnly(reason) && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+		if (reason != null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
 			ImGui.SetTooltip(reason);
 		}
 	}

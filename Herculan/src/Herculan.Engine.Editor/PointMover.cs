@@ -70,8 +70,7 @@ internal sealed record AreaRadiusTarget(int Area) : MoveTarget;
 /// the document's points, <see cref="PointFollowers"/> places again whatever else stands on them, and after every move,
 /// previews included, <see cref="TerrainLeveller"/> levels the ground under the structures where they now stand. Its
 /// history also holds the edits made elsewhere (<see cref="Record(IEditorEdit)"/>), so that Undo and Redo step through
-/// every edit in the order it was made. A mission opened from a plain <c>script.dat</c> has no <c>.MSN</c> and moves
-/// nothing (<see cref="WhyReadOnly"/>).
+/// every edit in the order it was made.
 ///
 /// <para>An object is given a point of its own (<see cref="MissionDocument.PlacePoint"/>), which its roster record's ref
 /// then names and which wins over its group's, so the object alone moves
@@ -112,7 +111,7 @@ internal sealed class PointMover {
 	private const int RouteListWord = 4;
 
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionScene _scene;
 	private readonly HeightGrid _terrain;
 	private readonly MissionIndex _index;
@@ -129,9 +128,9 @@ internal sealed class PointMover {
 	// A dragged circle's stored radius as the drag found it, until the drag commits or is cancelled.
 	private short? _radiusBeforeDrag;
 
-	/// <param name="document">The <c>script.dat</c> the scene was loaded from: <paramref name="source"/>'s generated one, when there is a source.</param>
-	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, which is not edited.</param>
-	public PointMover(ScriptDat document, MissionDocument? source, MissionScene scene, MissionIndex index, ScenePicker picker,
+	/// <param name="document">The <c>script.dat</c> the scene was loaded from: <paramref name="source"/>'s generated one.</param>
+	/// <param name="source">The mission as its <c>.MSN</c>.</param>
+	public PointMover(ScriptDat document, MissionDocument source, MissionScene scene, MissionIndex index, ScenePicker picker,
 			MissionOverlay overlay, TerrainMaterialTable materials) {
 		_document = document;
 		_source = source;
@@ -157,13 +156,6 @@ internal sealed class PointMover {
 	/// <summary>The mission box as the mission was opened, which a point outside of grows.</summary>
 	public MissionBox LoadedBox { get; }
 
-	/// <summary>Why nothing in a mission opened from a plain <c>script.dat</c> is edited.</summary>
-	public const string ReadOnlyReason = "Opened read-only: a plain script.dat has no .MSN to edit. File > Load from VOL "
-		+ "opens a mission the editor can change.";
-
-	/// <summary>Why the mission cannot be edited at all, or null when it can.</summary>
-	public string? WhyReadOnly => _source == null ? ReadOnlyReason : null;
-
 	/// <summary>The undo history, which also says whether the mission has changed since it was last saved or opened.</summary>
 	public EditHistory History { get; } = new();
 
@@ -174,7 +166,7 @@ internal sealed class PointMover {
 	/// <summary>What <paramref name="selection"/> names that can be moved: a movable object, a waypoint or a group, else null.</summary>
 	public MoveTarget? TargetOf(EditorSelection? selection) => selection switch {
 		ObjectSelection { Object: var selected } when WhyFixed(selected) == null => new ObjectTarget(selected),
-		RouteSelection { Waypoint: >= 0 } waypoint when _source != null && _index.Route(waypoint.Route) is { } route
+		RouteSelection { Waypoint: >= 0 } waypoint when _index.Route(waypoint.Route) is { } route
 				&& waypoint.Waypoint < route.Points.Count && _followers.WaypointEntries(route.Reference) != null =>
 			new WaypointTarget(route, waypoint.Waypoint, waypoint.Waypoint == 0 && route.Closed),
 		GroupSelection { Group: var group } when WhyFixed(group) == null => new GroupTarget(group),
@@ -201,15 +193,10 @@ internal sealed class PointMover {
 	}
 
 	/// <summary>Why trigger area <paramref name="area"/>, by block-4 index, cannot be moved or edited, or null when it can.</summary>
-	public string? WhyFixedArea(int area) {
-		if (WhyReadOnly is { } readOnly) {
-			return readOnly;
-		}
-
-		return _index.Area(area) == null || _source!.GuidOf(AreaBlock, area) == -1
+	public string? WhyFixedArea(int area) =>
+		_index.Area(area) == null || _source.GuidOf(AreaBlock, area) == -1
 			? $"Trigger area {area}'s record is not in the file."
 			: null;
-	}
 
 	/// <summary>
 	/// How many other fields name the point <paramref name="target"/>'s corner names — waypoints, other areas, groups —
@@ -237,16 +224,12 @@ internal sealed class PointMover {
 	/// </summary>
 	public string? WhyFixed(SceneObject sceneObject) {
 		var placement = sceneObject.Placement;
-		if (WhyReadOnly is { } readOnly) {
-			return readOnly;
-		}
-
 		if (placement.IsPlayerLance) {
 			return "The player's squad stands at group 0's point; it has no roster record of its own. Move group 0 to move it.";
 		}
 
 		return RecordRef(placement.Kind, placement.SlotIndex) == null
-				|| _source!.GuidOf(RosterBlock(placement.Kind), placement.SlotIndex) == -1
+				|| _source.GuidOf(RosterBlock(placement.Kind), placement.SlotIndex) == -1
 			? $"Its {placement.Kind.ToString().ToLowerInvariant()} roster slot {placement.SlotIndex} is not in the file."
 			: null;
 	}
@@ -256,12 +239,8 @@ internal sealed class PointMover {
 	/// with no structure placed has no pad to snap by and nothing standing on its point.
 	/// </summary>
 	public string? WhyFixed(int group) {
-		if (WhyReadOnly is { } readOnly) {
-			return readOnly;
-		}
-
 		if (group < 0 || group >= _document.Groups.Length || _index.SetupOf(group) is not { } setup
-				|| _source!.GuidOf(GroupBlock, group) == -1) {
+				|| _source.GuidOf(GroupBlock, group) == -1) {
 			return $"Group {group}'s record is not in the file.";
 		}
 
@@ -295,10 +274,8 @@ internal sealed class PointMover {
 		return StartOf(target.Group) is { } start ? SharersOf(start) : 0;
 	}
 
-	// How many fields name block-1 point <reference>: every .MSN record naming its point's GUID, whatever its condition,
-	// or, for a plain script.dat, its own fields.
-	private int PointNamers(short reference) =>
-		_source != null ? _source.CountPointRefs(_source.GuidOf(PointBlock, reference)) : ScriptPointRefs.Count(_document, reference);
+	// How many fields name block-1 point <reference>: every .MSN record naming its point's GUID, whatever its condition.
+	private int PointNamers(short reference) => _source.CountPointRefs(_source.GuidOf(PointBlock, reference));
 
 	/// <summary>Whether a point's Z is the mission's to set for <paramref name="sceneObject"/>: only a flyer's is.</summary>
 	public static bool HasOwnHeight(SceneObject sceneObject) => sceneObject.Object is FlyerObject;
@@ -453,7 +430,7 @@ internal sealed class PointMover {
 	/// <paramref name="before"/> is where it stood before any <see cref="Preview"/> of this move.
 	/// </summary>
 	public void Commit(MoveTarget target, Vec3i before, int x, int y, int z) {
-		if (_source == null || target is ObjectTarget { Object: var sceneObject } && WhyFixed(sceneObject) != null
+		if (target is ObjectTarget { Object: var sceneObject } && WhyFixed(sceneObject) != null
 				|| target is GroupTarget { Group: var fixedGroup } && WhyFixed(fixedGroup) != null
 				|| target is AreaCornerTarget { Area: var cornerArea } && WhyFixedArea(cornerArea) != null
 				|| target is AreaRadiusTarget { Area: var radiusArea } && WhyFixedArea(radiusArea) != null) {
@@ -553,9 +530,9 @@ internal sealed class PointMover {
 	// Puts the .MSN back as one side of a move left it, which generates the document again.
 	private void Restore(MoveTarget moved, MsnEdit change, bool undo, Vec3i position) {
 		if (undo) {
-			_source!.Undo(change);
+			_source.Undo(change);
 		} else {
-			_source!.Redo(change);
+			_source.Redo(change);
 		}
 
 		_followers.Sync();
@@ -583,7 +560,7 @@ internal sealed class PointMover {
 		switch (target) {
 			case WaypointTarget { Detach: false } or AreaCornerTarget { Detach: false }:
 				foreach (short reference in ReadRefs(target).Distinct()) {
-					_source!.SetPoint(PointGuid(reference), position.X, position.Y, position.Z);
+					_source.SetPoint(PointGuid(reference), position.X, position.Y, position.Z);
 				}
 
 				break;
@@ -591,7 +568,7 @@ internal sealed class PointMover {
 				WriteGroup(group, position);
 				break;
 			case AreaRadiusTarget radius:
-				TriggerAreaEditing.SetRadius(_source!, _source!.GuidOf(AreaBlock, radius.Area), RadiusAt(radius, position));
+				TriggerAreaEditing.SetRadius(_source, _source.GuidOf(AreaBlock, radius.Area), RadiusAt(radius, position));
 				break;
 			default:
 				GiveOwnPoint(target, position);
@@ -604,7 +581,7 @@ internal sealed class PointMover {
 	// them more often than not, and move as one. A field a variant supplies names a point every record drawing that
 	// variant shares, so none of its namers counts as moving and a point is appended.
 	private void GiveOwnPoint(MoveTarget target, Vec3i position) {
-		var source = _source!;
+		var source = _source;
 		short[] refs = ReadRefs(target);
 		short[] points = Array.ConvertAll(refs, PointGuid);
 		int moving = FromVariant(target) ? 0 : 1;
@@ -659,7 +636,7 @@ internal sealed class PointMover {
 			WaypointTarget waypoint => (RouteBlock, waypoint.Route.Reference, RouteListWord),
 			_ => (0, 0, 0)
 		};
-		return block > 0 && _source!.Provenance.Slot(block, index)?.Word(word).CopiedFrom != null;
+		return block > 0 && _source.Provenance.Slot(block, index)?.Word(word).CopiedFrom != null;
 	}
 
 	// How a group moves, as the generated document stands: the point it stands on, its own or its route's first
@@ -698,7 +675,7 @@ internal sealed class PointMover {
 
 	// A group's move written into the .MSN.
 	private void WriteGroup(GroupTarget target, Vec3i position) {
-		var source = _source!;
+		var source = _source;
 		var (move, own, start, z) = PlanGroup(target, position);
 		switch (move) {
 			case GroupMove.OwnPoint:
@@ -722,7 +699,7 @@ internal sealed class PointMover {
 	}
 
 	// The row-6 GUID of block-1 point <reference>, or -1 for none.
-	private short PointGuid(short reference) => _source!.GuidOf(PointBlock, reference);
+	private short PointGuid(short reference) => _source.GuidOf(PointBlock, reference);
 
 	// The script.dat block a roster kind's records are in: 7 mechs, 8 flyers, 9 structures; its .MSN row is 5 more.
 	private static int RosterBlock(MissionUnitKind kind) => kind switch {

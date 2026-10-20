@@ -13,7 +13,7 @@ namespace Herculan.Engine.Editor;
 /// <para>Objectives are taken by their block-12 index, as the panels list them, and written as the row-17 records that
 /// were exported there; subjects and routes by their block index, written as the GUIDs of the records that created them.
 /// The edits wait for the frame's ImGui to be rendered (<see cref="RunRequest"/>), since the rebuild changes what the
-/// panels list. A mission opened from a plain <c>script.dat</c> edits nothing (<see cref="PointMover.WhyReadOnly"/>).</para>
+/// panels list.</para>
 /// </summary>
 internal sealed class ObjectiveEditor {
 	private const int RouteBlock = 3;
@@ -21,13 +21,13 @@ internal sealed class ObjectiveEditor {
 	private const int BaseBlock = 9;
 	private const int GroupBlock = 11;
 
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
 	private readonly SelectionState _selection;
 	private Func<string?>? _requested;
 
-	public ObjectiveEditor(MissionDocument? source, PointMover mover, MissionRebuild rebuild, SelectionState selection) {
+	public ObjectiveEditor(MissionDocument source, PointMover mover, MissionRebuild rebuild, SelectionState selection) {
 		_source = source;
 		_mover = mover;
 		_rebuild = rebuild;
@@ -39,7 +39,7 @@ internal sealed class ObjectiveEditor {
 
 	/// <summary>Why <paramref name="objective"/> cannot be edited, or null when it can.</summary>
 	public string? WhyFixed(int objective) =>
-		_mover.WhyReadOnly ?? (Record(objective) == null ? $"Objective {objective} is not in the file." : null);
+		Record(objective) == null ? $"Objective {objective} is not in the file." : null;
 
 	/// <summary>
 	/// The subject an objective about <paramref name="selection"/> would have, as its kind (0 a group, 1 a herc, 3 a
@@ -65,12 +65,8 @@ internal sealed class ObjectiveEditor {
 
 	/// <summary>Why no objective can be created about <paramref name="selection"/>, or null when one can.</summary>
 	public string? WhyNoCreate(EditorSelection? selection) {
-		if (_mover.WhyReadOnly is { } readOnly) {
-			return readOnly;
-		}
-
 		return SubjectOf(selection, out string? whyNot) is { } subject
-			? ObjectiveEditing.WhyNoCreate(_source!, subject.Kind, Guid(subject.Kind, subject.Index))
+			? ObjectiveEditing.WhyNoCreate(_source, subject.Kind, Guid(subject.Kind, subject.Index))
 			: whyNot;
 	}
 
@@ -86,59 +82,59 @@ internal sealed class ObjectiveEditor {
 			}
 
 			int record = -1;
-			return Commit(() => ObjectiveEditing.Create(_source!, subject.Kind, Guid(subject.Kind, subject.Index), out record),
+			return Commit(() => ObjectiveEditing.Create(_source, subject.Kind, Guid(subject.Kind, subject.Index), out record),
 				() => record);
 		};
 	}
 
 	/// <summary>Why <paramref name="objective"/> cannot be deleted, or null when it can.</summary>
 	public string? WhyNoDelete(int objective) =>
-		WhyFixed(objective) ?? ObjectiveEditing.WhyNoDelete(_source!, Record(objective)!.Value);
+		WhyFixed(objective) ?? ObjectiveEditing.WhyNoDelete(_source, Record(objective)!.Value);
 
 	/// <summary>Asks for <paramref name="objective"/> to be deleted.</summary>
-	public void RequestDelete(int objective) => Ask(objective, record => ObjectiveEditing.Delete(_source!, record), keep: false);
+	public void RequestDelete(int objective) => Ask(objective, record => ObjectiveEditing.Delete(_source, record), keep: false);
 
 	/// <summary>Asks for <paramref name="objective"/> to be mandatory, or a failure condition.</summary>
 	public void RequestRequired(int objective, bool mandatory) =>
-		Ask(objective, record => ObjectiveEditing.SetRequired(_source!, record, mandatory));
+		Ask(objective, record => ObjectiveEditing.SetRequired(_source, record, mandatory));
 
 	/// <summary>Asks for <paramref name="objective"/>'s condition to be <paramref name="code"/>.</summary>
 	public void RequestCondition(int objective, short code) =>
-		Ask(objective, record => ObjectiveEditing.SetCondition(_source!, record, code));
+		Ask(objective, record => ObjectiveEditing.SetCondition(_source, record, code));
 
 	/// <summary>Asks for <paramref name="objective"/>'s subject to be <paramref name="kind"/>'s record <paramref name="index"/>, by its block index.</summary>
 	public void RequestSubject(int objective, short kind, int index) =>
-		Ask(objective, record => ObjectiveEditing.SetSubject(_source!, record, kind, Guid(kind, index)));
+		Ask(objective, record => ObjectiveEditing.SetSubject(_source, record, kind, Guid(kind, index)));
 
 	/// <summary>Asks for <paramref name="objective"/>'s route to be block-3 route <paramref name="route"/>.</summary>
 	public void RequestRoute(int objective, int route) =>
-		Ask(objective, record => ObjectiveEditing.SetRoute(_source!, record, Resolved(RouteBlock, route)));
+		Ask(objective, record => ObjectiveEditing.SetRoute(_source, record, Resolved(RouteBlock, route)));
 
 	/// <summary>The routes, by block-3 index, condition 0 of <paramref name="objective"/> can be about (<see cref="ObjectiveEditing.RouteChoices"/>).</summary>
 	public IReadOnlyList<int> RouteChoices(int objective) =>
-		_source == null ? [] : ObjectiveEditing.RouteChoices(_source, objective);
+		ObjectiveEditing.RouteChoices(_source, objective);
 
 	/// <summary>Why no counter write can be added to <paramref name="objective"/>, or null when one can.</summary>
 	public string? WhyNoAddPair(int objective) =>
-		WhyFixed(objective) ?? ObjectiveEditing.WhyNoAddPair(_source!, Record(objective)!.Value);
+		WhyFixed(objective) ?? ObjectiveEditing.WhyNoAddPair(_source, Record(objective)!.Value);
 
 	/// <summary>Asks for a counter write after <paramref name="objective"/>'s last.</summary>
-	public void RequestAddPair(int objective) => Ask(objective, record => ObjectiveEditing.AddPair(_source!, record));
+	public void RequestAddPair(int objective) => Ask(objective, record => ObjectiveEditing.AddPair(_source, record));
 
 	/// <summary>Asks for <paramref name="objective"/>'s counter write <paramref name="slot"/> to be <paramref name="counter"/> and <paramref name="op"/>.</summary>
 	public void RequestPair(int objective, int slot, short counter, short op) =>
-		Ask(objective, record => ObjectiveEditing.SetPair(_source!, record, slot, counter, op));
+		Ask(objective, record => ObjectiveEditing.SetPair(_source, record, slot, counter, op));
 
 	/// <summary>Asks for <paramref name="objective"/>'s counter write <paramref name="slot"/> to be removed.</summary>
 	public void RequestRemovePair(int objective, int slot) =>
-		Ask(objective, record => ObjectiveEditing.RemovePair(_source!, record, slot));
+		Ask(objective, record => ObjectiveEditing.RemovePair(_source, record, slot));
 
 	/// <summary>
 	/// The text of each line of <paramref name="objective"/>'s failure text as it is shown, or null for a line it has no text
 	/// for in the editor; empty when it has no failure text.
 	/// </summary>
 	public IReadOnlyList<string?> FailureLines(int objective) {
-		if (_source == null || Record(objective) is not { } record) {
+		if (Record(objective) is not { } record) {
 			return [];
 		}
 
@@ -149,18 +145,18 @@ internal sealed class ObjectiveEditor {
 
 	/// <summary>Whether another record references <paramref name="objective"/>'s failure text too, so an edit copies it first.</summary>
 	public bool TextShared(int objective) =>
-		_source != null && Record(objective) is { } record && MissionTextEditing.Shared(_source, TextOwner.Objective(record));
+		Record(objective) is { } record && MissionTextEditing.Shared(_source, TextOwner.Objective(record));
 
 	/// <summary>Asks for line <paramref name="line"/> of <paramref name="objective"/>'s failure text to read <paramref name="text"/>.</summary>
 	public void RequestText(int objective, int line, string text) =>
-		Ask(objective, record => MissionTextEditing.SetLine(_source!, TextOwner.Objective(record), line, text));
+		Ask(objective, record => MissionTextEditing.SetLine(_source, TextOwner.Objective(record), line, text));
 
 	/// <summary>Why <paramref name="objective"/> cannot be given a failure text, or null when it can.</summary>
 	public string? WhyNoGiveText(int objective) =>
-		WhyFixed(objective) ?? ObjectiveEditing.WhyNoText(_source!, Record(objective)!.Value);
+		WhyFixed(objective) ?? ObjectiveEditing.WhyNoText(_source, Record(objective)!.Value);
 
 	/// <summary>Asks for <paramref name="objective"/>, which has no failure text, to be given one of three empty lines.</summary>
-	public void RequestGiveText(int objective) => Ask(objective, record => ObjectiveEditing.GiveText(_source!, record));
+	public void RequestGiveText(int objective) => Ask(objective, record => ObjectiveEditing.GiveText(_source, record));
 
 	/// <summary>Makes the edit asked for since the last call, if any; <see cref="Failure"/> says why one could not be made.</summary>
 	public void RunRequest() {
@@ -184,18 +180,18 @@ internal sealed class ObjectiveEditor {
 	}
 
 	// The row-17 index of the record block-12 objective <objective> was exported from, or null.
-	private int? Record(int objective) => _source == null ? null : ObjectiveEditing.RecordOf(_source, objective);
+	private int? Record(int objective) => ObjectiveEditing.RecordOf(_source, objective);
 
 	// The GUID of the record that created <kind>'s block record <index>, or -1.
-	private short Guid(short kind, int index) => _source?.GuidOf(kind switch {
+	private short Guid(short kind, int index) => _source.GuidOf(kind switch {
 		ObjectiveEditing.GroupSubject => GroupBlock,
 		ObjectiveEditing.HercSubject => MechBlock,
 		_ => BaseBlock,
-	}, index) ?? -1;
+	}, index);
 
 	// The GUID of the record that created block <block>'s record <index>; throws for one no record created.
 	private short Resolved(int block, int index) =>
-		_source!.GuidOf(block, index) is not -1 and var guid ? guid
+		_source.GuidOf(block, index) is not -1 and var guid ? guid
 			: throw new InvalidOperationException($"Record {index} of block {block} is not in the file.");
 
 	// Makes the change, rebuilding from it, records it as one step of the history, and selects the objective row-17
@@ -209,7 +205,7 @@ internal sealed class ObjectiveEditor {
 		}
 
 		_mover.Record(new RecordsEdit(_rebuild, change));
-		if (selected != null && ObjectiveEditing.ExportedIndex(_source!, selected()) is { } exported) {
+		if (selected != null && ObjectiveEditing.ExportedIndex(_source, selected()) is { } exported) {
 			_selection.Current = new ObjectiveSelection(exported);
 		}
 

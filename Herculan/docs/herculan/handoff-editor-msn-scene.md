@@ -42,7 +42,6 @@ The document is already the `.MSN` ([`MissionDocument`](handoff-editor-document.
 | Editors and placers | take block indices and call `GuidOf`; select results through `ExportedIndex` | take GUIDs; select the GUID they wrote |
 | `ConditionEditing.Outcome`, `VariantEditing.DrawingNow`, `VariantView` | `Generator.Conditions`, `Generator.VariantPicks`, `Provenance.ExportedSlot` | the layout's presence and the option it shows |
 | `MissionSquad.PlayerMec` in a rebuild | rebuilds `player.mec` per edit | not needed for display; still built for Export and the game's handoff |
-| plain `script.dat` (read-only path) | `MissionLoader.ReadScript`, `ScriptPointRefs`, `WhyReadOnly` | [question 3](#3-a-plain-scriptdat) |
 
 ### Views
 
@@ -100,9 +99,9 @@ A herc, flyer or structure with a variant key takes its type, fit, point and hea
 
 ### 3. A plain `script.dat`
 
-`DATA\script.dat` and a save slot's `script%d.dat` have no `.MSN`. Today the editor starts on `DATA\script.dat`, read-only.
+`DATA\script.dat` and a save slot's `script%d.dat` have no `.MSN`.
 
-**Decided: dropped.** Keeping it means keeping the whole `script.dat`-based scene, index and read-only path beside the new one, for files nobody can edit. The editor then starts with no mission and the VOL list up, and `Herculan.Engine.Host.Editor`'s command line names a mission, as the list does, instead of a file. `Herculan.Engine.Host` still plays any `script.dat`, an exported one included.
+**Decided: dropped** ([step 3a](#steps)). Keeping it would mean keeping the whole `script.dat`-based scene, index and read-only path beside the new one, for files nobody can edit. The editor starts with no mission and the VOL list up, and `Herculan.Engine.Host.Editor`'s command line names a mission, as the list does ([Opening a mission](handoff-editor-viewing.md#opening-a-mission)). `Herculan.Engine.Host` still plays any `script.dat`, an exported one included.
 
 ### 4. Positions
 
@@ -122,13 +121,16 @@ Each step builds at 0 warnings, passes `dotnet test`, leaves the editor usable, 
 
 1. **Remove the preview** (done). Reasons that refuse a record the generation dropped say it is "not shown in the editor", until step 5 makes them unreachable.
 2. **Core layout and shared rules** (done). `MissionLayout` with presence and suppliers by the answers to questions 1 and 2; the merge span table shared with `MissionGenerator`; the placement helper out of `MissionLoader`; `HercWorks.Query repeats` extended to rows 10 to 16 with conditions. No editor change. Tests only where a named edit would break them (a layout that merges a variation into the base; a keyed herc placed at its own point instead of its option's).
+
+3a. **Drop the plain `script.dat`** (done), per [question 3](#3-a-plain-scriptdat): `EditorMission.Source` is never null, and the editor has no read-only mode.
+
 3. **Selections and links by GUID.** Every selection, link, picker and editor entry point takes GUIDs; the views still read the generated `Mission`, converting at their edge, and say plainly when the generation has no such record. `MissionRebuild`'s reselection goes.
 4. **Edits choose their record from the layout.** `MissionDocument`'s supplier lookups (`SlotOf`, `ListRecord`, `AreaRecord`, `SuppliedByVariant`, `AlternativeOf`, `SetHeaderWord`'s provenance) read the layout, so an edit works on any record; the `.ENG` line supplier likewise. `handoff-editor-document.md`'s [Which record an edit writes](handoff-editor-document.md#which-record-an-edit-writes) is rewritten to match.
-5. **The scene from the `.MSN`.** World-only load, objects from the layout placed through `MissionPlacementRules` (`LayoutPresence.Group` counts group 0 as a claimant where `ClaimMembers` skips it; the two agree once the squad is placed apart, per question 5), the new `MissionIndex`, `SceneSync` in place of `MissionRebuild`, picker, both overlays, followers, mover and leveller on the new index, the outliner listing every record with conditional rows marked, the Problems list mapped through provenance. Plain `script.dat` per question 3. The largest step; its brief may split it into objects and groups first, then routes and areas.
+5. **The scene from the `.MSN`.** World-only load, objects from the layout placed through `MissionPlacementRules` (`LayoutPresence.Group` counts group 0 as a claimant where `ClaimMembers` skips it; the two agree once the squad is placed apart, per question 5), the new `MissionIndex`, `SceneSync` in place of `MissionRebuild`, picker, both overlays, followers, mover and leveller on the new index, the outliner listing every record with conditional rows marked, the Problems list mapped through provenance. The largest step; its brief may split it into objects and groups first, then routes and areas.
 6. **Views on the layout.** Every Properties view reads the layout and the new index; the conditional line in every view; `Placement` no longer read for editor data; `ExportedIndex`, `ExportedSlot`, `GuidOf` and `Generator.Conditions`/`VariantPicks` gone from the editor.
-7. **Docs.** Throughout, each step updates the handoffs it changes; this last pass rewrites [handoff-editor-document.md](handoff-editor-document.md)'s provenance, regeneration and rebuild sections and drops A plain `script.dat`, updates [handoff-editor-viewing.md](handoff-editor-viewing.md) and [handoff-editor.md](handoff-editor.md), and drains this handoff into them.
+7. **Docs.** Throughout, each step updates the handoffs it changes; this last pass rewrites [handoff-editor-document.md](handoff-editor-document.md)'s provenance, regeneration and rebuild sections, updates [handoff-editor-viewing.md](handoff-editor-viewing.md) and [handoff-editor.md](handoff-editor.md), and drains this handoff into them.
 
-Class sizes stay under about 1,500 lines; `PointMover` and `EditorHost` shrink (no `script.dat` writes, no read-only path).
+Class sizes stay under about 1,500 lines; `PointMover` shrinks (no `script.dat` writes).
 
 ## Open
 

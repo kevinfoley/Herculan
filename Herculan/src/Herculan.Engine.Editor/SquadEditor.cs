@@ -20,7 +20,7 @@ namespace Herculan.Engine.Editor;
 /// </summary>
 internal sealed class SquadEditor {
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
@@ -28,7 +28,7 @@ internal sealed class SquadEditor {
 	private readonly ObjectDeleter _deleter;
 	private Func<string?>? _requested;
 
-	public SquadEditor(ScriptDat document, MissionDocument? source, MissionIndex index, PointMover mover,
+	public SquadEditor(ScriptDat document, MissionDocument source, MissionIndex index, PointMover mover,
 			MissionRebuild rebuild, MachineFitter fitter, ObjectDeleter deleter) {
 		_document = document;
 		_source = source;
@@ -48,11 +48,7 @@ internal sealed class SquadEditor {
 	/// <summary>Why a squadmate cannot be added, or null when one can.</summary>
 	public string? WhyNoAdd {
 		get {
-			if (_mover.WhyReadOnly is { } readOnly) {
-				return readOnly;
-			}
-
-			if (SquadRoster.WhyNoAdd(_source!) is { } reason) {
+			if (SquadRoster.WhyNoAdd(_source) is { } reason) {
 				return reason;
 			}
 
@@ -73,15 +69,11 @@ internal sealed class SquadEditor {
 	/// what names or needs it.
 	/// </summary>
 	public (string? Fixed, DeleteNamers Names, bool OwnActions) WhyNoRemove(int member) {
-		if (_mover.WhyReadOnly is { } readOnly) {
-			return (readOnly, DeleteNamers.None, false);
-		}
-
-		if (SquadRoster.Check(_source!, member) is not var (_, check)) {
+		if (SquadRoster.Check(_source, member) is not var (_, check)) {
 			return ("Its record is not one of its own: group 0 references it more than once, or it is all the group holds.", DeleteNamers.None, false);
 		}
 
-		var names = _deleter.Resolve(_source!, check.Namers);
+		var names = _deleter.Resolve(_source, check.Namers);
 		return (null, names, check.FiredActions.Count > 0);
 	}
 
@@ -109,7 +101,7 @@ internal sealed class SquadEditor {
 			return "Group 0 references no player's machine to take the chassis of.";
 		}
 
-		var source = _source!;
+		var source = _source;
 		return Commit(() => SquadRoster.Add(source, SquadRoster.Machine(player.TypeIndex, weapons, guidance), out _));
 	}
 
@@ -123,7 +115,7 @@ internal sealed class SquadEditor {
 			return "The mission references or needs it; its view says what.";
 		}
 
-		var source = _source!;
+		var source = _source;
 		return Commit(() => SquadRoster.Remove(source, member));
 	}
 

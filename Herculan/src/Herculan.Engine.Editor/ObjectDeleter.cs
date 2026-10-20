@@ -45,8 +45,7 @@ internal sealed record DeleteBlockers(string? Fixed, DeleteNamers Object, IReadO
 /// <para>What refuses a delete is <see cref="RosterDeletion"/>'s: an objective, an action or an order naming the object
 /// or the group it would leave empty, an action of its own it fires when engaged or defeated, and the player's squad.
 /// The squad's machines are not roster objects at all in the scene: each <c>player.mec</c> entry is placed from block
-/// 11's record 0 (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 6). A mission opened from a plain
-/// <c>script.dat</c> deletes nothing (<see cref="PointMover.WhyReadOnly"/>).</para>
+/// 11's record 0 (docs/retail/formats/script-dat.md#placement--the-actual-rule, rule 6).</para>
 ///
 /// <para>A delete asked for from the Properties panel or the Delete key waits for the frame's ImGui to be rendered
 /// (<see cref="Request"/>, <see cref="TakeRequest"/>), since the rebuild changes what the panels list.</para>
@@ -55,13 +54,13 @@ internal sealed class ObjectDeleter {
 	private const int GroupRow = 16;
 
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly MissionIndex _index;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
 	private SceneObject? _requested;
 
-	public ObjectDeleter(ScriptDat document, MissionDocument? source, MissionIndex index, PointMover mover,
+	public ObjectDeleter(ScriptDat document, MissionDocument source, MissionIndex index, PointMover mover,
 			MissionRebuild rebuild) {
 		_document = document;
 		_source = source;
@@ -73,16 +72,12 @@ internal sealed class ObjectDeleter {
 	/// <summary>What keeps <paramref name="placed"/> from being deleted; <see cref="DeleteBlockers.None"/> when nothing does.</summary>
 	public DeleteBlockers BlockersOf(SceneObject placed) {
 		var placement = placed.Placement;
-		if (_mover.WhyReadOnly is { } readOnly) {
-			return DeleteBlockers.Because(readOnly);
-		}
-
 		if (placement.IsPlayerLance) {
 			return DeleteBlockers.Because("the player's squad is placed from group 0 and player.mec, with no roster record; "
 				+ "group 0's view adds and removes squadmates.");
 		}
 
-		var source = _source!;
+		var source = _source;
 		int block = RosterBlock(placement.Kind);
 		short guid = source.GuidOf(block, placement.SlotIndex);
 		if (guid == -1) {
@@ -121,7 +116,7 @@ internal sealed class ObjectDeleter {
 			return blockers.Fixed ?? "the mission references or needs it; its Properties view says what.";
 		}
 
-		var source = _source!;
+		var source = _source;
 		int block = RosterBlock(placed.Placement.Kind);
 		short guid = source.GuidOf(block, placed.Placement.SlotIndex);
 		MsnEdit change;

@@ -28,14 +28,14 @@ internal sealed class OrderEditor {
 	private const int GroupBlock = 11;
 
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
 	private Func<string?>? _requested;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s.</param>
-	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, which is not edited.</param>
-	public OrderEditor(ScriptDat document, MissionDocument? source, PointMover mover, MissionRebuild rebuild) {
+	/// <param name="source">The mission as its <c>.MSN</c>.</param>
+	public OrderEditor(ScriptDat document, MissionDocument source, PointMover mover, MissionRebuild rebuild) {
 		_document = document;
 		_source = source;
 		_mover = mover;
@@ -47,8 +47,7 @@ internal sealed class OrderEditor {
 
 	/// <summary>Why <paramref name="group"/>'s orders cannot be edited, or null when they can.</summary>
 	public string? WhyFixed(int group) =>
-		_mover.WhyReadOnly is { } readOnly ? readOnly
-			: group < 0 || group >= _document.Groups.Length || _source!.GuidOf(GroupBlock, group) == -1 ? $"Group {group} is not in the file."
+		group < 0 || group >= _document.Groups.Length || _source.GuidOf(GroupBlock, group) == -1 ? $"Group {group} is not in the file."
 			: null;
 
 	/// <summary>The filled order slots of <paramref name="group"/>, by block-11 index, in slot order.</summary>
@@ -64,24 +63,24 @@ internal sealed class OrderEditor {
 				continue;
 			}
 
-			short guid = _source?.GuidOf(OrderBlock, refs[slot]) ?? -1;
-			slots.Add(new EditableOrder(slot, guid, _document.Orders[refs[slot]], _source != null && GroupOrders.Shared(_source, guid)));
+			short guid = _source.GuidOf(OrderBlock, refs[slot]);
+			slots.Add(new EditableOrder(slot, guid, _document.Orders[refs[slot]], GroupOrders.Shared(_source, guid)));
 		}
 
 		return slots;
 	}
 
 	/// <summary>Why no order can be added to <paramref name="group"/>, or null when one can.</summary>
-	public string? WhyNoAdd(int group) => WhyFixed(group) ?? GroupOrders.WhyNoAdd(_source!, Guid(group));
+	public string? WhyNoAdd(int group) => WhyFixed(group) ?? GroupOrders.WhyNoAdd(_source, Guid(group));
 
 	/// <summary>Why the order in <paramref name="group"/>'s slot <paramref name="slot"/> cannot be removed, or null when it can.</summary>
-	public string? WhyNoRemove(int group, int slot) => WhyFixed(group) ?? GroupOrders.WhyNoRemove(_source!, Guid(group), slot);
+	public string? WhyNoRemove(int group, int slot) => WhyFixed(group) ?? GroupOrders.WhyNoRemove(_source, Guid(group), slot);
 
 	/// <summary>Why the orders in <paramref name="group"/>'s slots <paramref name="slot"/> and <paramref name="to"/> cannot trade places, or null.</summary>
-	public string? WhyNoMove(int group, int slot, int to) => WhyFixed(group) ?? GroupOrders.WhyNoMove(_source!, Guid(group), slot, to);
+	public string? WhyNoMove(int group, int slot, int to) => WhyFixed(group) ?? GroupOrders.WhyNoMove(_source, Guid(group), slot, to);
 
 	/// <summary>Why <paramref name="group"/>'s slot <paramref name="slot"/> cannot run no route, or null when it can.</summary>
-	public string? WhyNoRouteNone(int group, int slot) => WhyFixed(group) ?? GroupOrders.WhyNoRoute(_source!, Guid(group), slot, -1);
+	public string? WhyNoRouteNone(int group, int slot) => WhyFixed(group) ?? GroupOrders.WhyNoRoute(_source, Guid(group), slot, -1);
 
 	/// <summary>Asks for a new order after <paramref name="group"/>'s last (<see cref="GroupOrders.NewOrder"/>).</summary>
 	public void RequestAdd(int group) =>
@@ -131,10 +130,10 @@ internal sealed class OrderEditor {
 	// Asks for <edit> of <group>'s orders, made by its row-16 GUID once the frame is drawn; refused while the orders are fixed.
 	private void Ask(int group, Func<MissionDocument, short, MsnEdit> edit) {
 		short guid = Guid(group);
-		_requested = () => WhyFixed(group) ?? Commit(() => edit(_source!, guid));
+		_requested = () => WhyFixed(group) ?? Commit(() => edit(_source, guid));
 	}
 
-	private short Guid(int group) => _source?.GuidOf(GroupBlock, group) ?? -1;
+	private short Guid(int group) => _source.GuidOf(GroupBlock, group);
 
 	// The GUID of the record that created block <block>'s record <index>; throws for one no record created.
 	private static short Resolved(MissionDocument source, int block, int index) =>

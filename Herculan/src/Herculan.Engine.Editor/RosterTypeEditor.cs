@@ -14,12 +14,12 @@ namespace Herculan.Engine.Editor;
 /// <c>script.dat</c> edits nothing.</para>
 /// </summary>
 internal sealed class RosterTypeEditor {
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
 	private Func<string?>? _requested;
 
-	public RosterTypeEditor(MissionDocument? source, PointMover mover, MissionRebuild rebuild) {
+	public RosterTypeEditor(MissionDocument source, PointMover mover, MissionRebuild rebuild) {
 		_source = source;
 		_mover = mover;
 		_rebuild = rebuild;
@@ -30,14 +30,14 @@ internal sealed class RosterTypeEditor {
 
 	/// <summary>Why roster row <paramref name="row"/>'s GUID <paramref name="guid"/>'s type cannot be changed, or null when it can.</summary>
 	public string? WhyFixed(int row, short guid) =>
-		_mover.WhyReadOnly ?? (_source!.ExportedIndex(row, guid) == null ? "It is not in the mission as shown." : null);
+		_source.ExportedIndex(row, guid) == null ? "It is not in the mission as shown." : null;
 
 	/// <summary>
 	/// The variant alternative a type change of roster row <paramref name="row"/>'s GUID <paramref name="guid"/> asked to write
 	/// the alternative changes (<see cref="RosterFit.DrawnAlternative"/>); null when its type is its own, or it cannot change.
 	/// </summary>
 	public MsnRecordId? DrawnAlternative(int row, short guid) =>
-		WhyFixed(row, guid) == null ? RosterFit.DrawnAlternative(_source!, guid, [MsnField.RosterType(row)]) : null;
+		WhyFixed(row, guid) == null ? RosterFit.DrawnAlternative(_source, guid, [MsnField.RosterType(row)]) : null;
 
 	/// <summary>
 	/// Asks for roster row <paramref name="row"/>'s GUID <paramref name="guid"/> to become type <paramref name="type"/>, written
@@ -48,7 +48,7 @@ internal sealed class RosterTypeEditor {
 			return reason;
 		}
 
-		var source = _source!;
+		var source = _source;
 		var fields = new[] { (MsnField.RosterType(row), (short)type) };
 		if (!RosterFit.Differs(source, guid, fields)) {
 			return null;

@@ -19,21 +19,16 @@ internal sealed class MissionTextView {
 	public MissionTextView(MissionTextEditor editor) => _editor = editor;
 
 	public void Draw() {
-		if (_editor.LineCount is not { } count) {
-			return;
-		}
-
 		ImGui.Separator();
 		ImGui.Text("Text");
-		EditorText.Note($"{count} of the {MissionTextEditing.LineCap} lines the simulator reads.");
-		bool locked = _editor.WhyReadOnly != null;
-		DrawList(MissionTextList.Objectives, "Objective lines", locked);
-		DrawList(MissionTextList.Briefing, "Briefing", locked);
-		DrawList(MissionTextList.Intelligence, "Intelligence report", locked);
+		EditorText.Note($"{_editor.LineCount} of the {MissionTextEditing.LineCap} lines the simulator reads.");
+		DrawList(MissionTextList.Objectives, "Objective lines");
+		DrawList(MissionTextList.Briefing, "Briefing");
+		DrawList(MissionTextList.Intelligence, "Intelligence report");
 		EditorText.Reason(_editor.Failure);
 	}
 
-	private void DrawList(MissionTextList list, string heading, bool locked) {
+	private void DrawList(MissionTextList list, string heading) {
 		if (!ImGui.CollapsingHeader($"{heading}###{list}", ImGuiTreeNodeFlags.DefaultOpen)) {
 			return;
 		}
@@ -50,7 +45,7 @@ internal sealed class MissionTextView {
 		for (int i = 0; i < lines.Count; i++) {
 			var (slot, _, text) = lines[i];
 			ImGui.PushID(slot);
-			DrawLine(list, slot, text, i > 0 ? lines[i - 1].Slot : -1, i < lines.Count - 1 ? lines[i + 1].Slot : -1, locked);
+			DrawLine(list, slot, text, i > 0 ? lines[i - 1].Slot : -1, i < lines.Count - 1 ? lines[i + 1].Slot : -1);
 			ImGui.PopID();
 		}
 
@@ -66,8 +61,7 @@ internal sealed class MissionTextView {
 	}
 
 	// One line; <before> and <after> are the filled slots either side of it, -1 for none.
-	private void DrawLine(MissionTextList list, int slot, string? text, int before, int after, bool locked) {
-		ImGui.BeginDisabled(locked);
+	private void DrawLine(MissionTextList list, int slot, string? text, int before, int after) {
 		if (text == null) {
 			EditorText.Note("No text shown in the editor.");
 		} else if (_lines.Draw("##line", $"{list}.{slot}", text) is { } typed) {
@@ -92,7 +86,6 @@ internal sealed class MissionTextView {
 			_editor.RequestRemove(list, slot);
 		}
 
-		ImGui.EndDisabled();
 		if (_editor.Shared(list, slot)) {
 			EditorText.Note("Another record uses this line too: a change here gives this slot its own copy.");
 		}

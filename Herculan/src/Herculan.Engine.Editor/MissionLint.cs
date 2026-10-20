@@ -11,8 +11,8 @@ internal sealed record EditorFinding(ScriptLintFinding Finding, EditorSelection?
 /// tied to the selection that shows its record.
 /// </summary>
 internal sealed class MissionLint {
-	/// <param name="textLines">How many lines the generated <c>mission.str</c> has, or 0 for a plain <c>script.dat</c>, whose is not checked.</param>
-	public MissionLint(MissionIndex index, ScriptDat script, int textLines = 0) {
+	/// <param name="textLines">How many lines the generated <c>mission.str</c> has.</param>
+	public MissionLint(MissionIndex index, ScriptDat script, int textLines) {
 		int squad = index.Mission.Placements.Count(placement => placement.IsPlayerLance);
 		Findings = ScriptDatLint.Check(script, squad, textLines)
 			.Select(finding => new EditorFinding(finding, TargetOf(finding, index, script)))

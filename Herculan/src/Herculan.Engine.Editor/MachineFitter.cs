@@ -45,18 +45,18 @@ internal sealed class MachineFitter {
 	private const short NoSlot = -1;
 
 	private readonly ScriptDat _document;
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
-	private readonly Func<GameContent>? _shellContent;
+	private readonly Func<GameContent> _shellContent;
 	private ShellArmingLayouts? _layouts;
 	private Func<string?>? _requested;
 
 	/// <param name="document">The generated <c>script.dat</c>, <paramref name="source"/>'s.</param>
-	/// <param name="source">The mission as its <c>.MSN</c>, or null for a plain <c>script.dat</c>, which is not edited.</param>
+	/// <param name="source">The mission as its <c>.MSN</c>.</param>
 	/// <param name="shellContent">VSHELL's mount of the install, which holds the stock fits and the arming layouts.</param>
-	public MachineFitter(ScriptDat document, MissionDocument? source, PointMover mover, MissionRebuild rebuild,
-			Func<GameContent>? shellContent) {
+	public MachineFitter(ScriptDat document, MissionDocument source, PointMover mover, MissionRebuild rebuild,
+			Func<GameContent> shellContent) {
 		_document = document;
 		_source = source;
 		_mover = mover;
@@ -94,10 +94,7 @@ internal sealed class MachineFitter {
 
 	/// <summary>Why the record at block-7 slot <paramref name="slot"/> cannot be edited, or null when it can.</summary>
 	public string? WhyFixed(int slot) =>
-		_mover.WhyReadOnly is { } readOnly ? readOnly
-			: Record(slot) == null || _source!.GuidOf(MechBlock, slot) == -1 ? $"Herc slot {slot} is not in the file."
-			: _shellContent == null ? "The install's shell files are not mounted."
-			: null;
+		Record(slot) == null || _source.GuidOf(MechBlock, slot) == -1 ? $"Herc slot {slot} is not in the file." : null;
 
 	/// <summary>
 	/// The weapons mount <paramref name="mount"/> of <paramref name="chassis"/> takes, in the weapons screen's order; none
@@ -118,7 +115,7 @@ internal sealed class MachineFitter {
 	/// </summary>
 	public MsnRecordId? DrawnAlternative(int slot) =>
 		WhyFixed(slot) == null
-			? RosterFit.DrawnAlternative(_source!, _source!.GuidOf(MechBlock, slot), FitFields(slot))
+			? RosterFit.DrawnAlternative(_source, _source.GuidOf(MechBlock, slot), FitFields(slot))
 			: null;
 
 	/// <summary>Whether some of the fields the herc's view edits are drawn from an alternative and some are its own.</summary>
@@ -127,7 +124,7 @@ internal sealed class MachineFitter {
 			return false;
 		}
 
-		short guid = _source!.GuidOf(MechBlock, slot);
+		short guid = _source.GuidOf(MechBlock, slot);
 		var drawn = FitFields(slot).Select(field => VariantEditing.WhyNoDrawnField(_source, field, guid) == null).ToList();
 		return drawn.Contains(true) && drawn.Contains(false);
 	}
@@ -161,7 +158,7 @@ internal sealed class MachineFitter {
 	/// the filler 5. Null when the install has no stock fit for it.
 	/// </summary>
 	public (short[] Weapons, short[] Guidance)? StockFit(int chassis) {
-		if (_shellContent == null || ShellTrainingLaunch.StockFit(_shellContent(), chassis) is not { } stock) {
+		if (ShellTrainingLaunch.StockFit(_shellContent(), chassis) is not { } stock) {
 			return null;
 		}
 
@@ -199,7 +196,7 @@ internal sealed class MachineFitter {
 			return reason;
 		}
 
-		var source = _source!;
+		var source = _source;
 		short guid = source.GuidOf(MechBlock, slot);
 		if (!RosterFit.Differs(source, guid, fields)) {
 			return null;
@@ -235,5 +232,5 @@ internal sealed class MachineFitter {
 		}
 	}
 
-	private ShellArmingLayouts? Layouts() => _layouts ??= _shellContent is { } content ? ShellArmingLayouts.Load(content()) : null;
+	private ShellArmingLayouts? Layouts() => _layouts ??= ShellArmingLayouts.Load(_shellContent());
 }

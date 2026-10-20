@@ -26,7 +26,7 @@ internal sealed record PresenceLosers(DeleteNamers Names, IReadOnlyList<int> Mem
 /// squad build reads group 0's members, and the editor leaves the squad's presence alone as it leaves its wiring (the
 /// editor's choice). A route has none: no retail route a GUID other than <c>-1</c> carries is conditioned
 /// (<c>HercWorks.Query values --row 8 --field GUID --where ConditionRef!=-1</c>), so a route is present in every state (the
-/// user's choice). A plain <c>script.dat</c> has no target at all.</para>
+/// user's choice).</para>
 ///
 /// <para>What loses its reference to an absent record is what the delete checks list for its kind: an object's
 /// <see cref="RosterDeletion.Check"/> namers and the groups its member slots are in, a group's
@@ -40,7 +40,7 @@ internal sealed class PresenceEditor {
 	private const int GroupRow = 16;
 	private const int ObjectiveRow = 17;
 
-	private readonly MissionDocument? _source;
+	private readonly MissionDocument _source;
 	private readonly PointMover _mover;
 	private readonly MissionRebuild _rebuild;
 	private readonly SelectionState _selection;
@@ -48,7 +48,7 @@ internal sealed class PresenceEditor {
 	private Func<string?>? _requested;
 	private PresenceTarget? _asked;
 
-	public PresenceEditor(MissionDocument? source, PointMover mover, MissionRebuild rebuild, SelectionState selection,
+	public PresenceEditor(MissionDocument source, PointMover mover, MissionRebuild rebuild, SelectionState selection,
 			ObjectDeleter deleter) {
 		_source = source;
 		_mover = mover;
@@ -57,8 +57,8 @@ internal sealed class PresenceEditor {
 		_deleter = deleter;
 	}
 
-	/// <summary>The mission as its <c>.MSN</c>; null for a plain <c>script.dat</c>.</summary>
-	public MissionDocument? Source => _source;
+	/// <summary>The mission as its <c>.MSN</c>.</summary>
+	public MissionDocument Source => _source;
 
 	/// <summary>Why the last set run could not be made, or null.</summary>
 	public string? Failure { get; private set; }
@@ -67,33 +67,33 @@ internal sealed class PresenceEditor {
 	public PresenceTarget? FailureFor { get; private set; }
 
 	/// <summary>Why <paramref name="target"/>'s presence cannot be set, or null when it can.</summary>
-	public string? WhyFixed(PresenceTarget target) => _mover.WhyReadOnly ?? RecordConditions.WhyFixed(_source!, target);
+	public string? WhyFixed(PresenceTarget target) => RecordConditions.WhyFixed(_source, target);
 
-	/// <summary>A roster object's target; null for one of the player's squad or a plain <c>script.dat</c>'s.</summary>
+	/// <summary>A roster object's target; null for one of the player's squad.</summary>
 	public PresenceTarget? ObjectTarget(SceneObject placed) {
 		var placement = placed.Placement;
-		if (_source is not { } source || placement.IsPlayerLance) {
+		if (placement.IsPlayerLance) {
 			return null;
 		}
 
 		int block = placement.Kind switch { MissionUnitKind.Mech => 7, MissionUnitKind.Flyer => 8, _ => 9 };
-		short guid = source.GuidOf(block, placement.SlotIndex);
+		short guid = _source.GuidOf(block, placement.SlotIndex);
 		return guid == -1 ? null : PresenceTarget.Of(block + 5, guid);
 	}
 
 	/// <summary>Block-11 group <paramref name="group"/>'s target; null for the player's squad.</summary>
 	public PresenceTarget? GroupTarget(int group) =>
-		_source is { } source && group != 0 && source.GuidOf(GroupBlock, group) is not -1 and var guid
+		group != 0 && _source.GuidOf(GroupBlock, group) is not -1 and var guid
 			? PresenceTarget.Of(GroupRow, guid)
 			: null;
 
 	/// <summary>The target of the order in block-11 group <paramref name="group"/>'s slot <paramref name="slot"/>.</summary>
 	public PresenceTarget? OrderTarget(int group, int slot) =>
-		_source is { } source && source.GuidOf(GroupBlock, group) is not -1 and var guid ? PresenceTarget.OrderSlot(guid, slot) : null;
+		_source.GuidOf(GroupBlock, group) is not -1 and var guid ? PresenceTarget.OrderSlot(guid, slot) : null;
 
 	/// <summary>Block-12 objective <paramref name="objective"/>'s target, its row-17 record.</summary>
 	public PresenceTarget? ObjectiveTarget(int objective) =>
-		_source is { } source && ObjectiveEditing.RecordOf(source, objective) is { } record ? PresenceTarget.Objective(record) : null;
+		ObjectiveEditing.RecordOf(_source, objective) is { } record ? PresenceTarget.Objective(record) : null;
 
 	/// <summary>Asks for <paramref name="target"/> to be present only while row-1 GUID <paramref name="condition"/> holds, or always for -1.</summary>
 	public void Request(PresenceTarget target, short condition) =>
@@ -123,7 +123,7 @@ internal sealed class PresenceEditor {
 
 	/// <summary>What loses its reference to <paramref name="target"/> where it is absent; null for an objective, which nothing references.</summary>
 	public PresenceLosers? LosersOf(PresenceTarget target) {
-		var source = _source!;
+		var source = _source;
 		short guid = RecordConditions.GuidOf(source, target);
 		if (guid == -1) {
 			return null;
@@ -155,7 +155,7 @@ internal sealed class PresenceEditor {
 				return reason;
 			}
 
-			var source = _source!;
+			var source = _source;
 			short condition = -1, written = -1;
 			MsnEdit change;
 			try {

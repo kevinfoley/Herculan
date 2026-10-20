@@ -58,7 +58,8 @@ internal sealed class VariantView {
 
 	/// <summary>Draws table <paramref name="guid"/>'s view, after the condition view's title.</summary>
 	public void DrawTable(short guid) {
-		if (_editor.Source is not { } source || VariantEditing.Table(source, guid) is not { } table) {
+		var source = _editor.Source;
+		if (VariantEditing.Table(source, guid) is not { } table) {
 			return;
 		}
 
@@ -97,7 +98,8 @@ internal sealed class VariantView {
 	/// table or chooses no alternative its table reads.
 	/// </summary>
 	public bool DrawRange(short range) {
-		if (_editor.Source is not { } source || VariantEditing.TableOfRange(source, range) is not { } guid
+		var source = _editor.Source;
+		if (VariantEditing.TableOfRange(source, range) is not { } guid
 				|| VariantEditing.Table(source, guid) is not { } table) {
 			return false;
 		}
@@ -151,7 +153,8 @@ internal sealed class VariantView {
 	/// alternatives, or New table from it, with a link to the table and the alternative the editor shows.
 	/// </summary>
 	public void DrawDrawnFrom(SceneObject placed) {
-		if (_editor.Source is not { } source || _editor.RecordOf(placed) is not var (row, guid)) {
+		var source = _editor.Source;
+		if (_editor.RecordOf(placed) is not var (row, guid)) {
 			return;
 		}
 

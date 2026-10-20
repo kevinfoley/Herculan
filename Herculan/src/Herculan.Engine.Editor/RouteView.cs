@@ -198,7 +198,7 @@ internal sealed class RouteView {
 		ImGui.BeginDisabled(reason != null);
 		bool clicked = ImGui.Button(label);
 		ImGui.EndDisabled();
-		if (reason != null && !EditorText.IsReadOnly(reason) && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
+		if (reason != null && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled)) {
 			ImGui.SetTooltip(reason);
 		}
 

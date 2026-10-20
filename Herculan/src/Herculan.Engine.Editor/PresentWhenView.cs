@@ -24,12 +24,13 @@ internal sealed class PresentWhenView {
 		_references = references;
 	}
 
-	/// <summary>Draws <paramref name="target"/>'s Present when; nothing for null, which the squad and a plain <c>script.dat</c> have.</summary>
+	/// <summary>Draws <paramref name="target"/>'s Present when; nothing for null, which the squad has.</summary>
 	public void Draw(PresenceTarget? target) {
-		if (target == null || _editor.Source is not { } source) {
+		if (target == null) {
 			return;
 		}
 
+		var source = _editor.Source;
 		var records = RecordConditions.Records(source, target);
 		if (records.Count == 0) {
 			return;
