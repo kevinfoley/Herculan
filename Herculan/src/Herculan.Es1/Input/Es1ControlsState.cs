@@ -27,8 +27,10 @@ public sealed class Es1ControlsState {
 	/// <summary><c>ThrottleLeverMode</c> (<c>000919ce</c>): 0, 1 (forward only) or −1 (reverse only).</summary>
 	public short ThrottleLeverMode { get; set; }
 
-	/// <summary><c>InputDrivesCamera</c> (<c>000b5b90</c>): the camera has the controls.</summary>
-	// PLACEHOLDER: false until the views of plan step 6 set it.
+	/// <summary>
+	/// <c>InputDrivesCamera</c> (<c>000b5b90</c>): the camera has the controls. Clear at the start; the chain of views
+	/// sets it (<see cref="View.Es1ViewChain"/>).
+	/// </summary>
 	public bool InputDrivesCamera { get; set; }
 
 	/// <summary><c>maybe_WeaponChain_EoHold</c>: a round is being flown.</summary>

@@ -60,7 +60,7 @@ public static class TransformerRegistry {
 				|| ExtIs(e, FileType.Hd0) || ExtIs(e, FileType.Hd1) || ExtIs(e, FileType.Hd2) || ExtIs(e, FileType.Hd3)
 				|| ExtIs(e, FileType.Ed0) || ExtIs(e, FileType.Ed1) || ExtIs(e, FileType.Ed2) || ExtIs(e, FileType.Ed3),
 			() => new Dbsim.ClipRegionFileTransformer()),
-		new("HUD Layout", e => ExtIs(e, FileType.Gau), () => new Dbsim.GauFileTransformer()),
+		new(HudLayoutLabel, e => ExtIs(e, FileType.Gau), () => new Dbsim.GauFileTransformer()),
 		new("Herc Collider", e => ExtIs(e, FileType.Col), () => new Dbsim.HercColliderTransformer()),
 		new("3D Model (DTS)", e => ExtIs(e, FileType.Dts), () => new Dbsim.DTSModelTransformer()),
 		new("Herc Debris Data", e => NameEndsWith(e, "_DEB.DAT"), () => new Dbsim.DebrisHercTransformer()),
@@ -132,6 +132,9 @@ public static class TransformerRegistry {
 			() => new Common.DynamixBitmapArrayTransformer()),
 	};
 
+	/// <summary>The label of the cockpit layout reader, <c>gau\[chassis].GAU</c>, in each game's table.</summary>
+	public const string HudLayoutLabel = "HUD Layout";
+
 	/// <summary>The label of the chassis stats reader, <c>dat\[chassis].dat</c>, in each game's table.</summary>
 	public const string HercSimDataLabel = "Herc Sim Data";
 
@@ -168,6 +171,9 @@ public static class TransformerRegistry {
 		["Component Value Table"] = new(() => new Shell.Es1DamageRepairCostTransformer()),
 		// docs/es1/formats/bnd-notes.md#bndcambnd: 20 bytes, the camera's constants, where ES2's file is 24.
 		["Camera Config"] = new(() => new Bnd.Es1CamTransformer()),
+		// docs/es1/formats/gau-cockpit-layout.md: ES2's 1,700 bytes with nine weapon rows, five console buttons and the
+		// gunsight's block at 1104.
+		[HudLayoutLabel] = new(() => new Dbsim.Es1GauFileTransformer()),
 		// docs/es1/formats/hd-ed-clip-regions.md: the clip-region layout, whose rects are two rows, for the .EDG files and the
 		// cockpit views' ed0\ to ed3\ (#which-files).
 		["Clip Regions"] = new(() => new Dbsim.Es1ClipRegionsTransformer(),

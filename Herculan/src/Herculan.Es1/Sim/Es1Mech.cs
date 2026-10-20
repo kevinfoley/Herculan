@@ -227,6 +227,20 @@ public sealed class Es1Mech : IEs1SimObject {
 	/// <summary><c>+0x9d</c>, the player's machine.</summary>
 	public bool IsPlayer { get; set; }
 
+	/// <summary><c>+0x90</c>, the radar, on or off; no constructor step writes it (docs/es1/simulation/mech.md#construction).</summary>
+	public bool RadarOn { get; set; }
+
+	/// <summary>
+	/// <c>Mech_ToggleRadarMode</c> (<c>000157f4</c>): for the player's machine (<c>+0x9d</c>) the radar flipped
+	/// (docs/es1/simulation/mech.md#the-cockpit). PLACEHOLDER: the sound it then plays, <c>0x1b</c> with the radar off and
+	/// <c>0x1a</c> with it on, for any machine; no plan step ports ES1's sound yet.
+	/// </summary>
+	public void ToggleRadarMode() {
+		if (IsPlayer) {
+			RadarOn = !RadarOn;
+		}
+	}
+
 	/// <summary><c>+0x91</c>, set when the record's <c>.MSN</c> <c>0x08</c> is not 0 (docs/es1/formats/script-dat.md#open).</summary>
 	public bool Word08Set { get; set; }
 

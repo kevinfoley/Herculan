@@ -28,14 +28,17 @@ public sealed class Es1SimulationStart : IDisposable {
 	private readonly Es1Preferences _preferences;
 	private readonly bool _stickModelFromFlag;
 	private readonly IKeyboard? _keyboard;
-	private readonly IMouse? _mouse;
+	private readonly Es1HostMouse? _mouse;
 	private readonly MappedController _controller;
+	private readonly View.Es1ViewChain? _viewChain;
 	private int _frames;
 
 	/// <param name="preferences">The install's <c>data\prefs.cfg</c>, with <c>--stick-model</c>'s option 7 applied.</param>
 	/// <param name="stickModelFromFlag">Whether option 7 came from <c>--stick-model</c>.</param>
+	/// <param name="viewChain">The views and cameras the mission start built, handed to the simulation.</param>
 	public Es1SimulationStart(Es1World world, string installRoot, Es1Preferences preferences, bool stickModelFromFlag,
-			IInputContext input, IKeyboard? keyboard, IMouse? mouse) {
+			IInputContext input, IKeyboard? keyboard, Es1HostMouse? mouse, View.Es1ViewChain? viewChain = null) {
+		_viewChain = viewChain;
 		_world = world;
 		_installRoot = installRoot;
 		_preferences = preferences;
@@ -61,7 +64,7 @@ public sealed class Es1SimulationStart : IDisposable {
 		}
 
 		var port = Es1ControllerPort.Over(_controller);
-		Runner = new Es1SimulationRunner(_world, _installRoot, _preferences, _keyboard, _mouse, port);
+		Runner = new Es1SimulationRunner(_world, _installRoot, _preferences, _keyboard, _mouse, port, _viewChain);
 		Console.WriteLine(Describe(port));
 		return Runner;
 	}

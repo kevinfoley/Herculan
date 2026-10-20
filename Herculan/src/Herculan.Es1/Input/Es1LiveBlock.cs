@@ -83,13 +83,15 @@ public sealed class Es1DevicePoll {
 	/// <summary>
 	/// One poll, in retail's order: the keyboard's word with <c>0x1000</c> and <c>0x2000</c> cleared and <c>+0x25</c>;
 	/// the joysticks' poll, then each device's record, kind 3's and then kind 4's, merged when it answers; the mouse's
-	/// buttons 0, 1 and 2 from <see cref="Es1HostMouse.Buttons"/> and <c>+0x28</c>.
+	/// pointer and buttons 0, 1 and 2 from the driver's last record (<see cref="Es1HostMouse"/>) and <c>+0x28</c>.
 	/// </summary>
 	public Es1LiveBlock Poll() {
 		ushort word = (ushort)(ReadKeyboardCommand() & ~LockBits);
 		var block = new Es1LiveBlock {
 			CommandWord = word,
 			KeyboardEnabled = true,
+			PointerX = _mouse.X,
+			PointerY = _mouse.Y,
 			MouseEnabled = true,
 		};
 
@@ -100,8 +102,6 @@ public sealed class Es1DevicePoll {
 			}
 		}
 
-		// PLACEHOLDER: the pointer at +2/+6 reads 0 until plan step 6 maps the host cursor into the 320x200 screen;
-		// the cockpit's gunsight is its one reader on step 4's path.
 		ushort buttons = _mouse.Buttons;
 		block.MouseButtons[0] = (byte)((buttons & Es1HostMouse.LeftBit) != 0 ? 1 : 0);
 		block.MouseButtons[1] = (byte)((buttons & Es1HostMouse.RightBit) != 0 ? 1 : 0);

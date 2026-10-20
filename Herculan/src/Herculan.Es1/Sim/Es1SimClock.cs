@@ -14,10 +14,11 @@ namespace Herculan.Es1.Sim;
 /// each as <c>Time_SimClockTimerTick</c> (<c>00063e3c</c>) does.</para>
 ///
 /// <para><b>Not retail:</b> a tick is due once <see cref="InterruptsPerTick"/>, three, interrupts have passed since the
-/// last reload, where <c>Time_BeginSimTick</c> waits for two. Retail's floor counts a two-interrupt frame as 25 ms, so
-/// on a machine that keeps up it plays at 1.5 times real time; three interrupts are 25 ms, so the game plays in real
-/// time as on the hardware of its day. The user's choice, docs/herculan/plan-es1-first-mission.md#decisions,
-/// decision 2; listed in <c>KNOWN_ISSUES.md</c>.</para>
+/// last reload, where <c>Time_BeginSimTick</c> spins while the countdown is above <see cref="TicksPerSecond"/> − 2, a
+/// wait of two. Retail's floor counts a two-interrupt frame as 25 ms, so on a machine that keeps up it plays at 1.5
+/// times real time (the frame's retrace wait, ported, ends before the second interrupt there); three interrupts are
+/// 25 ms, so the game plays in real time as on the hardware of its day. The user's choice,
+/// docs/herculan/plan-es1-first-mission.md#decisions, decision 2; listed in <c>KNOWN_ISSUES.md</c>.</para>
 /// </summary>
 public sealed class Es1SimClock {
 	/// <summary>The divisor <c>Sim_StartMission</c> builds the timer with, <c>DVTimer_Ctor(0, 0x26d3)</c> (docs/es1/simulation/timer.md#the-rate).</summary>
@@ -38,6 +39,9 @@ public sealed class Es1SimClock {
 	/// <summary>The time past the last whole interrupt, in <see cref="TimeSpan"/> ticks times <see cref="TicksPerSecond"/>.</summary>
 	private long _phase;
 
+	/// <summary>The interrupts counted since the clock was built, <c>Time_SimClockTimerTick</c>'s calls.</summary>
+	private long _interrupts;
+
 	/// <summary>
 	/// <c>Time_InitSimClock</c>: both deltas 1.0 (<c>0x100</c>), <see cref="TicksPerSecond"/> from the divisor
 	/// (<c>1000000 / Math_Q14Multiply(divisor, 0x35a1)</c>, 120), the two units and <see cref="ElapsedInterrupts"/> a
@@ -46,7 +50,7 @@ public sealed class Es1SimClock {
 	public Es1SimClock() {
 		TickDelta = 0x100;
 		TickDelta2 = 0x100;
-		TicksPerSecond = (short)(1000000 / SimMath.Q14MultiplyRounded(TimerDivisor, 0x35a1));
+		TicksPerSecond = InterruptsPerSecond;
 		short perTenth = (short)(TicksPerSecond / 10);
 		_unit = perTenth;
 		_unit2 = perTenth;
@@ -54,8 +58,21 @@ public sealed class Es1SimClock {
 		_countdown = TicksPerSecond;
 	}
 
+	/// <summary>
+	/// The PC timer's interrupts a second as the simulator derives them from <see cref="TimerDivisor"/>,
+	/// <c>1000000 / Math_Q14Multiply(divisor, 0x35a1)</c>, 120: <c>Time_InitSimClock</c>'s and <c>CockpitMouse_Init</c>'s.
+	/// </summary>
+	public static short InterruptsPerSecond => (short)(1000000 / SimMath.Q14MultiplyRounded(TimerDivisor, 0x35a1));
+
 	/// <summary><c>SimClock_TicksPerSecond</c> (<c>000bba44</c>): the PC timer's interrupts a second, 120.</summary>
 	public short TicksPerSecond { get; }
+
+	/// <summary>
+	/// The clock <c>000981c4</c>, which <c>Time_SimClockTimerTick</c> (<c>00063e3c</c>) adds 1 to on every second
+	/// interrupt, 60 times a second (docs/es1/simulation/fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40),
+	/// counted from this clock's construction.
+	/// </summary>
+	public uint Clock => (uint)(_interrupts / 2);
 
 	/// <summary><c>SimTickDelta</c> (<c>000bdbd0</c>): the last tick's length, Q8 with 1.0 = 100 ms, held to <c>0x40</c>–<c>0x1c2</c>.</summary>
 	public short TickDelta { get; private set; }
@@ -73,11 +90,7 @@ public sealed class Es1SimClock {
 	/// Returns whether a tick is due; at most one is per call.
 	/// </summary>
 	public bool AdvanceHostFrame(TimeSpan elapsed) {
-		ArgumentOutOfRangeException.ThrowIfLessThan(elapsed, TimeSpan.Zero);
-		_phase += elapsed.Ticks * TicksPerSecond;
-		long interrupts = _phase / TimeSpan.TicksPerSecond;
-		_phase -= interrupts * TimeSpan.TicksPerSecond;
-		_countdown = (short)Math.Max(0L, _countdown - interrupts);
+		Hold(elapsed);
 		if (_countdown > TicksPerSecond - InterruptsPerTick) {
 			return false;
 		}
@@ -87,6 +100,22 @@ public sealed class Es1SimClock {
 		TickDelta2 = ElapsedToQ8Clamped(ElapsedInterrupts, _unit2);
 		_countdown = TicksPerSecond;
 		return true;
+	}
+
+	/// <summary>
+	/// Counts the interrupts in <paramref name="elapsed"/> as <see cref="AdvanceHostFrame"/> does, running the countdown
+	/// down and stopping it at 0, without asking whether a tick is due: the PC timer runs on while retail's frame stands
+	/// in a routine that waits for the monitor, a view's slide (docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904)
+	/// or the frame's last retrace wait (docs/es1/simulation/cockpit-views.md#cockpitview_processviewcommand-000226f0),
+	/// so the tick after it measures that time.
+	/// </summary>
+	public void Hold(TimeSpan elapsed) {
+		ArgumentOutOfRangeException.ThrowIfLessThan(elapsed, TimeSpan.Zero);
+		_phase += elapsed.Ticks * TicksPerSecond;
+		long interrupts = _phase / TimeSpan.TicksPerSecond;
+		_phase -= interrupts * TimeSpan.TicksPerSecond;
+		_interrupts += interrupts;
+		_countdown = (short)Math.Max(0L, _countdown - interrupts);
 	}
 
 	/// <summary>

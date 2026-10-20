@@ -1,4 +1,5 @@
 using Herculan.Es1.Input;
+using Herculan.Es1.View;
 
 namespace Herculan.Es1.Sim;
 
@@ -24,9 +25,11 @@ public sealed class Es1Simulation {
 	/// <summary>The commands' codes the tick acts on or takes: <c>Alt+S</c>, <c>Backspace</c>, <c>Ctrl+1</c> and keypad 0.</summary>
 	public const ushort AltS = 0x21f, Backspace = 0x0e, Ctrl1 = 0x402, Keypad0 = 0x52;
 
-	/// <summary>The view, status-panel and preferences commands, which do nothing until their steps.</summary>
-	public const ushort V = 0x2f, N = 0x31, Tab = 0x0f, Enter = 0x1c, Q = 0x10, Esc = 0x01, CtrlEsc = 0x401, CtrlQ = 0x410,
-		P = 0x19, AltP = 0x219, F12 = 0x58;
+	/// <summary>The view commands.</summary>
+	public const ushort V = 0x2f, N = 0x31, Tab = 0x0f, Enter = 0x1c, Esc = 0x01;
+
+	/// <summary>The status-panel and preferences commands, which do nothing until their steps.</summary>
+	public const ushort Q = 0x10, CtrlEsc = 0x401, CtrlQ = 0x410, P = 0x19, AltP = 0x219, F12 = 0x58;
 
 	/// <summary><c>ViewChain_Viewed</c>'s target class that is a flyer.</summary>
 	private const short FlyerClass = 2;
@@ -44,23 +47,30 @@ public sealed class Es1Simulation {
 	private bool _cycleHeld;
 
 	/// <summary>The simulation of <paramref name="world"/>, whose <c>LocalPlayerMech</c> it requires.</summary>
+	/// <param name="viewChain">The views and cameras the mission start built on the player's machine; with none, a chain with no view manager.</param>
 	/// <exception cref="ArgumentException">The world has no player's machine.</exception>
-	public Es1Simulation(Es1World world, Es1InputBuild input)
+	public Es1Simulation(Es1World world, Es1InputBuild input, Es1ViewChain? viewChain = null)
 		: this(world.Globals, world.Groups,
 			world.LocalPlayer ?? throw new ArgumentException("The world has no player's machine.", nameof(world)),
-			world.PlayerMech, input) {
+			world.PlayerMech, input, viewChain) {
 	}
 
 	/// <param name="playerMech"><c>PlayerMech</c>, the all-stop's machine; <paramref name="localPlayer"/> when null.</param>
 	internal Es1Simulation(Es1SimGlobals globals, IReadOnlyList<Es1MissionGroup> groups,
-			Es1Mech localPlayer, Es1Mech? playerMech, Es1InputBuild input) {
+			Es1Mech localPlayer, Es1Mech? playerMech, Es1InputBuild input, Es1ViewChain? viewChain = null) {
 		Globals = globals;
 		_groups = groups;
 		LocalPlayer = localPlayer;
 		_playerMech = playerMech ?? localPlayer;
-		Viewed = localPlayer;
+		ViewChain = viewChain ?? new Es1ViewChain(localPlayer, null);
 		Input = input;
 	}
+
+	/// <summary>The chain of views, its cameras and the view manager its keys queue commands on.</summary>
+	public Es1ViewChain ViewChain { get; }
+
+	/// <summary><c>CockpitViewInstance</c> (<c>00092d1c</c>), the view manager's cockpit; null with no cockpit loaded.</summary>
+	public Es1Cockpit? Cockpit => ViewChain.Manager?.Cockpit;
 
 	public Es1SimGlobals Globals { get; }
 
@@ -73,11 +83,11 @@ public sealed class Es1Simulation {
 	/// <summary><c>LocalPlayerMech</c> (<c>000b5b86</c>).</summary>
 	public Es1Mech LocalPlayer { get; }
 
-	/// <summary>
-	/// <c>ViewChain_Viewed</c> (<c>000bda9a</c>), the object the controls and the views follow: the player's machine
-	/// <c>Sim_StartMission</c> sets. PLACEHOLDER: step 6's views (<c>N</c>) change it.
-	/// </summary>
-	public Es1Mech Viewed { get; }
+	/// <inheritdoc cref="Es1ViewChain.Viewed"/>
+	public Es1Mech Viewed {
+		get => ViewChain.Viewed;
+		set => ViewChain.Viewed = value;
+	}
 
 	/// <summary><c>Sim_Frozen</c> (<c>000b5b92</c>): the pools, the groups, the detection and the systems tick do not run.</summary>
 	public bool Frozen { get; set; }
@@ -162,8 +172,8 @@ public sealed class Es1Simulation {
 			return true;
 		}
 
-		// 5. PLACEHOLDER: Actions_EvaluateTriggers (0001f87c)(LocalPlayerMech), plan step 8; ViewChain_Apply
-		// (0005894c), the views, plan step 6.
+		// 5. PLACEHOLDER: Actions_EvaluateTriggers (0001f87c)(LocalPlayerMech), plan step 8. Then the views.
+		ViewChain.Apply(Controls);
 
 		// 6. PLACEHOLDER: unless frozen, Sim_DetectionTick (the sensor model), plan step 8, and Mech_PerTickSystemsUpdate
 		// (00014ee0) for each machine of g_MechPool, last to first, whose group holds no action and that is not
@@ -182,13 +192,16 @@ public sealed class Es1Simulation {
 	internal short DispatchCommand(Es1PlayerInputBlock block) {
 		ushort code = block.CommandWord;
 
-		short cockpitTook = CockpitWidgetsHandleCommand(code);
+		// With no cockpit loaded retail would read through a null CockpitViewInstance; here the cockpit takes nothing.
+		short cockpitTook = Cockpit?.HandleCommand(code) ?? 0;
 		if (cockpitTook != 0) {
 			return cockpitTook;
 		}
 
 		// Sim_HandleWindowKey (00059dec) answers 0 for every code.
 
+		var chain = ViewChain;
+		var views = chain.Manager;
 		short second = 0;
 		switch (code) {
 			case AltS:
@@ -197,9 +210,36 @@ public sealed class Es1Simulation {
 				}
 
 				break;
-			case V or N or Tab or Enter or Esc:
-				// PLACEHOLDER: the view commands (ViewChain_View, ViewChain_ToggleCameraControl, ViewChain_ViewObject) do
-				// nothing until plan step 6's views.
+			case V:
+				if (chain.View is Es1ViewChain.FreeView or Es1ViewChain.OutsideView) {
+					views?.QueueViewCommand(3);
+					chain.PendingView = Es1ViewChain.CockpitView;
+				} else if (chain.View == Es1ViewChain.CockpitView) {
+					views?.QueueViewCommand(2);
+					chain.PendingView = Es1ViewChain.OutsideView;
+				}
+
+				break;
+			case N:
+				if (views?.CurrentView == Es1CockpitViews.ExternalView && chain.View == Es1ViewChain.OutsideView
+						&& NextSquadObject() is { } next && !ReferenceEquals(next, chain.Viewed)) {
+					chain.ViewObject(next, Controls);
+					chain.Camera.Mode = Es1Camera.Orbit;
+					chain.CaptionFrames = Es1ViewChain.CaptionFrameCount;
+					chain.Chosen = next;
+				}
+
+				break;
+			case Tab or Enter:
+				if (views?.CurrentView == Es1CockpitViews.ExternalView) {
+					chain.ToggleCameraControl();
+				}
+
+				break;
+			case Esc:
+				views?.QueueViewCommand(3);
+				// PLACEHOLDER: Sound_Play(0x2d), the engine hum; no plan step ports ES1's sound yet.
+				chain.PendingView = Es1ViewChain.CockpitView;
 				break;
 			case Backspace:
 				CenterTurretMode = true;
@@ -231,8 +271,7 @@ public sealed class Es1Simulation {
 	/// </summary>
 	internal bool PollPlayerInput(Es1PlayerInputBlock block) {
 		short answer = DispatchCommand(block);
-
-		// PLACEHOLDER: CockpitView_PollViewDevice (0002d1a0)(CockpitViewInstance, block), plan step 6.
+		Cockpit?.PollViewDevice(block);
 
 		// The axes: the machine's, or with the camera driven the camera's two and the trigger.
 		bool cameraDriven = Controls.InputDrivesCamera;
@@ -250,7 +289,9 @@ public sealed class Es1Simulation {
 
 		(twist, pitch) = GunsightDrag(block, twist, pitch);
 
-		CamSteer(trigger, cameraX, cameraY);
+		// Cam_Steer (00000a04)(ViewObjectPtr, trigger, throttle, steer): the axis +0x21 points at as the throttle, +0x1d's as
+		// the steering.
+		ViewChain.Camera.Steer(trigger, cameraY, cameraX);
 
 		if (Viewed.TargetClass == FlyerClass && !cameraDriven) {
 			// PLACEHOLDER: 0001b794(viewed, throttle, steering) and the viewed object's +0xa9 set, the flyer's controls;
@@ -265,7 +306,7 @@ public sealed class Es1Simulation {
 		if (block.Buttons[2] == 0) {
 			_cycleHeld = false;
 		} else if (!_cycleHeld) {
-			// PLACEHOLDER: TargetSelect_Cycle (CockpitViewInstance), plan step 6.
+			// PLACEHOLDER: TargetSelect_Cycle (CockpitViewInstance), plan step 6b.
 			_cycleHeld = true;
 		}
 
@@ -291,7 +332,7 @@ public sealed class Es1Simulation {
 		var clock = Globals.Clock;
 		player.Locomotion.ApplyThrottleInput(clock, throttle, steer, Controls.ThrottleLeverMode);
 
-		// PLACEHOLDER: the target +0x15e, which plan step 6's gunsight selects; with none its range is 0.
+		// PLACEHOLDER: the target +0x15e, which plan step 6b's target selection selects; with none its range is 0.
 		const int range = 0;
 		const bool tracking = false;
 		if (player.Immobilized) {
@@ -299,7 +340,7 @@ public sealed class Es1Simulation {
 		} else if (twist == 0 && pitch == 0) {
 			// PLACEHOLDER: with the mounts' auto-track latch +0x14 and a live target, the target's +0x20 plus its slot
 			// +0x34 offset to Cockpit_TargetAnglesFromCameraBone, the centring cleared and the axis ticks skipped; with no
-			// target until plan step 6, it never tracks.
+			// target until plan step 6b, it never tracks.
 		} else {
 			CenterTurretMode = false;
 		}
@@ -355,24 +396,31 @@ public sealed class Es1Simulation {
 	}
 
 	/// <summary>
-	/// PLACEHOLDER: <c>CockpitWidgets_HandleCommand</c> (CockpitViewInstance, code), the panel's keys
-	/// (docs/es1/simulation/cockpit-panel.md), takes nothing until plan step 6.
+	/// <c>N</c>'s walk: from <see cref="Viewed"/> on through <c>LiveObjectList</c> with <c>ObjectList_Next</c>
+	/// (<c>0000dba4</c>), which wraps, to the first object whose height (<c>+0x28</c>) is not negative and whose group is
+	/// the player's, the player included. Retail's walk has no end and spins forever when no object passes; this one gives
+	/// up after a full turn of the list and answers null, an engine guard. An object that is not a HERC, which the slice
+	/// never lists (blocks 7 and 8 are not spawned), is passed over.
 	/// </summary>
-	private static short CockpitWidgetsHandleCommand(ushort code) => 0;
+	private Es1Mech? NextSquadObject() {
+		var live = Globals.LiveObjects;
+		int at = live.IndexOf(Viewed);
+		var group = LocalPlayer.Group;
+		for (int step = 1; step <= live.Count; step++) {
+			var candidate = live[(at + step) % live.Count];
+			if (candidate.Position.Z >= 0 && ReferenceEquals(candidate.Group, group) && candidate is Es1Mech mech) {
+				return mech;
+			}
+		}
 
-	/// <summary>
-	/// <c>Cam_Steer</c> (<c>00000a04</c>)(<c>ViewObjectPtr</c>, trigger, the camera's two axes): the main camera is in
-	/// mode 2, the eye, in which it steers nothing (docs/es1/simulation/external-views.md#the-camera).
-	/// PLACEHOLDER: modes 0 and 1, the outside views' camera, come with plan step 6's views.
-	/// </summary>
-	private static void CamSteer(byte trigger, short x, short y) {
+		return null;
 	}
 
 	/// <summary>
-	/// PLACEHOLDER: whether the pointer lies inside the rect <c>+0</c>–<c>+0xc</c> of the gunsight gadget
-	/// (<c>CockpitViewInstance</c> <c>+0x1f1</c>), plan step 6; with no gadget, and the pointer reading 0, never.
+	/// Whether the pointer lies inside the rect <c>+0</c>–<c>+0xc</c> of the roving gunsight (<c>CockpitViewInstance</c>
+	/// <c>+0x1f1</c>), edges included. With no cockpit, where retail would read through a null one, never.
 	/// </summary>
-	private static bool InsideGunsightGadget(int x, int y) => false;
+	private bool InsideGunsightGadget(int x, int y) => Cockpit?.GunsightRect.Contains(x, y) == true;
 
 	/// <summary>
 	/// <c>Group_TickMembers</c> (<c>0001cf60</c>): <c>Mech_AiTick</c> on each member

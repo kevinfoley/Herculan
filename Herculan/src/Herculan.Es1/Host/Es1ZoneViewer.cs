@@ -26,22 +26,29 @@ public sealed record Es1HeaderOverrides(int? Theater, int? WorldVariant, int? Wo
 
 /// <summary>
 /// Runs an ES1 mission as far as this engine ports one: the shell's single-mission load when a mission is named, the
-/// simulator's world load from the install's <c>data\</c> files, the tick under the keyboard, the mouse's buttons and a controller,
-/// and the forward view of the player's machine (docs/herculan/plan-es1-first-mission.md, step 4). This class
+/// simulator's world load from the install's <c>data\</c> files, the tick under the keyboard, the mouse and a controller,
+/// and the cockpit's views of the player's machine on the display's pages, with its screen edges and cursors
+/// (docs/herculan/plan-es1-first-mission.md, steps 4 and 6a). This class
 /// composes: the load and its files are <see cref="Es1SingleMission"/> and <see cref="Es1MissionFiles"/>, the world
 /// <see cref="Es1World"/>, the tick <see cref="Es1SimulationRunner"/>, built by <see cref="Es1SimulationStart"/>, the zone <see cref="Es1ZoneScene"/>, the draw
-/// <see cref="Es1WorldDraw"/>, and the view <see cref="Es1ForwardView"/>.
+/// <see cref="Es1WorldDraw"/>, the display and its views <see cref="Es1VideoMemory"/> and <see cref="Es1ViewManager"/>,
+/// the frame on them <see cref="Es1FrameLoop"/>, and the monitor <see cref="Es1Monitor"/>.
 ///
-/// <para>Each host frame runs the tick when the clock answers one, then places the camera and the draw from the latest
-/// tick, as <c>Sim_Main</c>'s frame does (docs/es1/simulation/main-loop.md#the-frame).</para>
+/// <para>Each host frame runs the tick when the clock answers one, and after it the camera, the world drawn into the
+/// display's draw page and the frame's end, as <c>Sim_Main</c>'s frame does (docs/es1/simulation/main-loop.md#the-frame);
+/// and every host frame shows the monitor's picture of the display. The GL context is current in the window's update
+/// as in its render, both on the one thread, so the tick's 3D pass is drawn there.</para>
 ///
 /// <para><b>Not retail, awaiting the user's decision:</b> with no player's machine (the free camera only) no tick runs.
 /// Retail's controls read <c>LocalPlayerMech</c> unchecked, so retail has no behaviour to port for this case.</para>
 ///
 /// <para>F switches to a free camera, an engine aid with no retail counterpart, which shows the world over the whole
 /// window with the player's machine drawn; the simulator still reads every key, so the keys the free camera moves by
-/// also drive the machine. G switches the preferences' option 5 between <see cref="TexturedDetail"/>
-/// and <see cref="BandedDetail"/>, the ground between textured and banded. Esc quits.</para>
+/// also drive the machine. While the cockpit is shown the host's pointer is hidden over the window, the cockpit's cursor
+/// standing in for it; the free camera shows it, and hides it while the right button looks. G switches the preferences' option 5 between <see cref="TexturedDetail"/>
+/// and <see cref="BandedDetail"/>, the ground between textured and banded. Closing the window quits; so does Esc with no player's machine, since
+/// with one Esc is the simulator's key (docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8), and
+/// retail's way out, the <c>Ctrl+Q</c> panel, is plan step 6a2's.</para>
 /// </summary>
 public static class Es1ZoneViewer {
 	/// <summary>Option 5 while the ground is textured: its largest value, which the viewer starts at, the user's choice.</summary>
@@ -115,12 +122,6 @@ public static class Es1ZoneViewer {
 		}
 
 		var player = world.LocalPlayer;
-		if (views != null) {
-			// Sim_StartMission's order (docs/es1/simulation/cockpit-views.md#the-view-manager).
-			views.SetView(1);
-			views.SetView(0);
-		}
-
 		Console.WriteLine(
 			$"Zone {header[1]}, theater {theater.Name}, world {theater.WorldName}: {scene.Shapes.Count} shapes, " +
 			$"{world.MechPool.Count} HERCs in {world.Groups.Count} groups" +
@@ -130,7 +131,7 @@ public static class Es1ZoneViewer {
 		}
 
 		Console.WriteLine("Keypad drives the HERC; F free camera (RMB + mouse to look, WASD/arrows, Q/E, Shift), " +
-			"G textured/banded ground, Esc quits.");
+			"G textured/banded ground; close the window to quit" + (player == null ? " (or Esc)." : "."));
 		Show(installRoot, files.Preferences, stickModel != null, content, scene, world, views, $"HERCULAN — Metaltech: Earthsiege — {missionName ?? "data\\script.dat"}, zone {header[1]}");
 		return 0;
 	}
@@ -143,7 +144,8 @@ public static class Es1ZoneViewer {
 		SceneRenderer? renderer = null;
 		Es1Backdrop? backdrop = null;
 		Es1WorldDraw? draw = null;
-		Es1ForwardView? forward = null;
+		Es1Monitor? monitor = null;
+		Es1FrameLoop? frameLoop = null;
 		Es1MechModels? models = null;
 		var disposables = new List<IDisposable>();
 		IKeyboard? keyboard = null;
@@ -151,17 +153,35 @@ public static class Es1ZoneViewer {
 		Es1SimulationStart? simulation = null;
 
 		var camera = new Camera();
-		var eye = world.LocalPlayer is { } player ? new Es1EyeCamera(player) : null;
-		var freeCamera = new EditorCamera();
-		if (eye != null) {
-			freeCamera.ResetTo(eye.Update().Position, eye.Update().View.Z);
+		var cockpitCamera = new Camera();
+
+		// Sim_StartMission's steps 9 to 13 that build no GL object: the views and their cockpit, and the chain of views
+		// with its cameras, the main one on the player's eye.
+		var player = world.LocalPlayer;
+		// The mouse driver, which the host's mouse is attached to once the window has one; and step 5's
+		// CockpitMouse_Init on it, which runs before the cockpit is built.
+		var hostMouse = new Es1HostMouse();
+		Es1ViewManager? manager = null;
+		if (views != null && player != null) {
+			var display = new Es1VideoMemory();
+			var cockpitMouse = new Es1CockpitMouse(display.Cursor);
+			cockpitMouse.Init(hostMouse);
+			manager = new Es1ViewManager(views, display, player, cockpitMouse);
 		}
 
-		bool free = eye == null || views == null;
+		var chain = player != null ? new Es1ViewChain(player, manager, Es1ViewCaption.Load(content)) : null;
+		var freeCamera = new EditorCamera();
+		if (chain != null) {
+			chain.Camera.Update();
+			freeCamera.ResetTo(chain.Camera.Position, chain.Camera.View.Z);
+		}
+
+		bool free = manager == null;
 		bool looking = false;
 		bool lookNeedsResync = false;
 		bool groundKeyHeld = false;
-		bool freeKeyHeld = false;		Vector2 lastMousePos = Vector2.Zero;
+		bool freeKeyHeld = false;
+		Vector2 lastMousePos = Vector2.Zero;
 
 		window.Load += (gl, input) => {
 			glContext = gl;
@@ -189,15 +209,36 @@ public static class Es1ZoneViewer {
 			models = Es1MechModels.Upload(gl, content, world.Types.Values.OfType<Es1MechType>(), scene);
 			disposables.Add(models);
 			draw = new Es1WorldDraw(gl, scene, world, models, disposables);
-			if (views != null) {
-				forward = new Es1ForwardView(gl, views, scene.Palette);
-				disposables.Add(forward);
+			if (manager != null && chain != null) {
+				monitor = new Es1Monitor(gl, manager.Display);
+				disposables.Add(monitor);
+				monitor.SetPalette(scene.Palette);
+				monitor.Fit(window.FramebufferSize);
+				var worldDraw = draw;
+				var sceneRenderer = renderer;
+				monitor.WorldPass = (x, y, width, height) =>
+					DrawWorld(gl, sceneRenderer, backdrop, worldDraw, cockpitCamera, x, y, width, height);
+				// Cam_Update on ViewObjectPtr, whichever camera the views have made it, drawn with the installed window's
+				// projection; the machine the camera rides in is left out of the draw.
+				frameLoop = new Es1FrameLoop(manager, () => {
+					var viewCamera = chain.Camera;
+					viewCamera.Update();
+					viewCamera.ApplyTo(cockpitCamera, manager.Window);
+					worldDraw.Update(cockpitCamera, viewCamera.MountedObject);
+				});
+				frameLoop.StartMission(Es1CursorImage.Load(content, "CURSOR"));
 			}
 
 			keyboard = input.Keyboards.Count > 0 ? input.Keyboards[0] : null;
 			mouse = input.Mice.Count > 0 ? input.Mice[0] : null;
+			hostMouse.Pointer = () => Es1Monitor.Pointer(window.FramebufferSize, window.ClientSize);
+			if (mouse != null) {
+				hostMouse.Attach(mouse);
+			}
+
 			if (world.LocalPlayer != null) {
-				simulation = new Es1SimulationStart(world, installRoot, preferences, stickModelFromFlag, input, keyboard, mouse);
+				simulation = new Es1SimulationStart(world, installRoot, preferences, stickModelFromFlag, input, keyboard, hostMouse,
+					chain);
 				disposables.Add(simulation);
 			}
 
@@ -223,15 +264,21 @@ public static class Es1ZoneViewer {
 		};
 
 		window.Update += deltaSeconds => {
-			if (keyboard?.IsKeyPressed(Key.Escape) == true) {
+			// With a simulation running, Esc is the simulator's view key; the window's close quits.
+			if (simulation == null && keyboard?.IsKeyPressed(Key.Escape) == true) {
 				window.Close();
 				return;
 			}
 
-			if (simulation?.Advance()?.AdvanceHostFrame(deltaSeconds) == true) {
+			var runner = simulation?.Advance();
+			bool ended = frameLoop != null
+				? frameLoop.AdvanceHostFrame(deltaSeconds, runner)
+				: runner?.AdvanceHostFrame(TimeSpan.FromSeconds(deltaSeconds)) == Es1SimulationRunner.Frame.MissionEnded;
+			if (ended) {
 				window.Close();
 				return;
 			}
+
 			scene.Clouds?.Advance(deltaSeconds);
 
 			bool groundKey = keyboard?.IsKeyPressed(Key.G) == true;
@@ -242,7 +289,7 @@ public static class Es1ZoneViewer {
 			groundKeyHeld = groundKey;
 
 			bool freeKey = keyboard?.IsKeyPressed(Key.F) == true;
-			if (freeKey && !freeKeyHeld && eye != null && views != null) {
+			if (freeKey && !freeKeyHeld && manager != null) {
 				free = !free;
 				camera = new Camera();
 			}
@@ -266,11 +313,15 @@ public static class Es1ZoneViewer {
 			if (free) {
 				freeCamera.Update(deltaSeconds, keyboard, lookDelta, looking, acceptKeyboardInput: true);
 				freeCamera.ApplyTo(camera);
-			} else {
-				eye!.ApplyTo(camera, views!.Window);
 			}
 
-			draw?.Update(camera, free ? null : eye?.Machine);
+			// The host's pointer is hidden over the window while the cockpit's cursor stands in for it.
+			if (mouse != null && !looking) {
+				var mode = !free && monitor != null ? CursorMode.Hidden : CursorMode.Normal;
+				if (mouse.Cursor.CursorMode != mode) {
+					mouse.Cursor.CursorMode = mode;
+				}
+			}
 		};
 
 		window.Render += (_, _) => {
@@ -279,16 +330,18 @@ public static class Es1ZoneViewer {
 			}
 
 			var size = window.FramebufferSize;
-			if (free || forward == null) {
+			if (free || monitor == null) {
+				draw.Update(camera, null);
 				renderer.Clear();
 				DrawWorld(glContext!, renderer, backdrop, draw, camera, 0, 0, size.X, size.Y);
 				return;
 			}
 
-			forward.Render(size, (x, y, width, height) => DrawWorld(glContext!, renderer, backdrop, draw, camera, x, y, width, height));
+			monitor.Present(size);
 		};
 
 		window.Closing += () => {
+			hostMouse.Detach();
 			renderer?.Dispose();
 			foreach (var disposable in disposables) {
 				disposable.Dispose();

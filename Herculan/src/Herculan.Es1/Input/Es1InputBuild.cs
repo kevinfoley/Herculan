@@ -47,6 +47,9 @@ public sealed class Es1InputBuild {
 	/// <summary>The controls' state, which the simulation also writes.</summary>
 	public Es1ControlsState Controls { get; }
 
+	/// <summary>The cockpit's mouse, whose queue step 4 drains (<c>CockpitMouse_ProcessQueue</c>); none with no cockpit.</summary>
+	public Es1CockpitMouse? CockpitMouse { get; set; }
+
 	/// <summary><c>Input_LiveBlockPtr</c> (<c>000b1840</c>): the last poll, as the build left it.</summary>
 	public Es1LiveBlock LiveBlock { get; private set; }
 
@@ -78,7 +81,9 @@ public sealed class Es1InputBuild {
 		int[] kb = [keys.FirstX, keys.FirstY, keys.SecondX, keys.SecondY];
 		int[] stick = live.StickAxes;
 
-		// 4. PLACEHOLDER: 000444d0's mouse events for the frame, which only the tape's recording reads, until plan step 6.
+		// 4. The frame's mouse events on the cockpit's widgets; what CockpitMouse_ProcessQueue returns only the tape's
+		// recording reads, and tapes are not taken.
+		CockpitMouse?.ProcessQueue();
 		if (live.StickButtons[1] == 0) {
 			_toggleHeld = false;
 		} else if (modeAtEntry != 0 && !_toggleHeld) {
