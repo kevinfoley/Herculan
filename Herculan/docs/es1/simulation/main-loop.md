@@ -137,7 +137,7 @@ No arguments; ES2's frame has no counterpart. In order:
 3. **The check**, once `Music_NextCheck` is less than now. An object of `LiveObjectList` is seen when it is neither disabled (`+0x9e`) nor destroyed (`+0x93`), its group (`+0x3f`) has no action (`+0x16`) and side byte `+0x14` 1, and either `TargetSelect_CanTarget` and `TargetSelect_InForwardCone` both answer non-zero for it from `CockpitViewInstance` or it lies within 25000 of the player. In the battle song the first seen ends the call. In the calm song the first seen sets `Music_Switching` and `Music_Battle`, `Music_NextCheck` = now + 300, and ends the walk. In the battle song with none seen it sets `Music_Switching` and walks `g_FlyerPool` last to first: the first flyer neither disabled nor destroyed and more than `0x49f0` (18928) from the player, of either side, clears it again. With it still set, `Music_Battle` = 0 and `Music_NextCheck` = now + 300.
 4. When the song is not playing, `Sound_Play`(song), so a song that ends starts again.
 
-`es2_xref.py` finds calls of `Music_Tick` from `Sim_FrameSoundTick` and from `0004ad0c`, (on), which calls `0004e294`(on) and then, with *on* not 0 and the byte `000b1734` clear, `Music_Tick` ([Open](#open)).
+`es2_xref.py` finds calls of `Music_Tick` from `Sim_FrameSoundTick` and from `Prefs_ApplyMusicOption` (`0004ad0c`, preferences option 0's handler, [the option array](preferences.md#the-option-array)), (on), which calls `0004e294`(on) and then, with *on* not 0 and the byte `000b1734` clear, `Music_Tick` ([Open](#open)).
 
 `SoundObject_GetVolume` (`0005049c`), (object): the byte `+0x31`, or for a placed sound (`+0x15`) the word `+0x32` × 10,000 / the manager's `+0x241`. ES2 keeps ten music rows in its catalog but plays the CD ([ids 0-9 are music](../../retail/simulation/audio.md#ids-0-9-are-music)).
 
@@ -197,7 +197,7 @@ The strings are `STRINGS0`'s, the pointers `000bd4c4`[0] to [3] (group 32) and `
 | `0x01` | `Esc` | Queues view command 3, `Sound_Play`(`0x2d`), `ViewChain_PendingView` = 2 |
 | `0x401`, `0x410` | `Ctrl+Esc`, `Ctrl+Q` | The status panel (0, 0, 1, 1), `QUIT TO DOS?`; its answer, 1 for `QUIT`, is the second term, and a non-zero one sets `Sim_QuitFlag` (`000b5b9e`) |
 | `0x19` | `P` | The status panel (0, 0, 1, 0), `PAUSE`, whose one button answers 0; its answer is the second term |
-| `0x219`, `0x58` | `Alt+P`, `F12` | `00057820`, where ES2's raises the preferences panel |
+| `0x219`, `0x58` | `Alt+P`, `F12` | `PreferencesPanel_Raise` (`00057820`): the preferences panel over the outside view ([raising the panel](preferences.md#raising-the-panel--preferencespanel_raise-00057820)) |
 | `0x402` | `Ctrl+1` | `ThrottleLeverMode` (`000919ce`) = −1 when it is above 0, and 1 otherwise ([the throttle](mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc)) |
 | `0x52` | keypad 0 | `Input_ToggleStickMode` ([the stick mode](input.md#the-stick-mode)) |
 
@@ -295,7 +295,7 @@ The flags lie in the block `Main_StaticInit` zeroes, `000b5b5c`–`000b5bd3`.
 
 ## Open
 
-- **Open:** the callees read for none of this file's functions: `00058414` (status 2), `00057820` (`F12`), `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0003ea50` (`-t`), `0005730c`, `0004e498`, `0004e294`, `00075858`, `00066e00`, `0006a5fc`, and `0001b794` (the flyer's controls).
+- **Open:** the callees read for none of this file's functions: `00058414` (status 2), `0005771c` (the demo tape's name), `0005756c` and `000574a0` (the bundle) and `00057cf4` and `00057ffc` (the lift), all in the file before; `00056ecc` (the drive prefix), `0003ea50` (`-t`), `0005730c`, `0004e498`, `0004e294`, `00075858`, `00066e00`, `0006a5fc`, and `0001b794` (the flyer's controls).
 - **Open:** what `000b5b69` (`-P`) and `-V`, `-W` and `-T`'s words feed, and what sets `Sim_StepOnce`; `es2_xref.py` finds only the stores above and the tick's test, and a store through the block's base `000b5b5c` is not covered by that search.
 - **Open:** what the bit `Sim_Main` clears in the display's first byte does.
 - **Open:** the callees of [the frame's sounds](#the-frames-sounds--sim_framesoundtick-00058574) and [the views](#the-views--viewchain_apply-0005894c) read for none of this file's functions: `0004fb60` (the listener's frame), `0004dee4` (it sets `000b1a84` and `000b1b74`), `0006edb3`, `0006f225` and `0006df9d` (the HMI calls); and `0004ad0c`'s callers and what `000b1734` is.

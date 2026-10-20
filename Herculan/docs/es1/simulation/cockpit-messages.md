@@ -167,7 +167,7 @@ Read for this file and named with it:
 
 ## Open
 
-- **Open:** which preference `0004ad30` serves, and what reads `000959e4`: `es2_xref.py` finds `0004ad30`'s address stored at `0004b00e`, and `MessagePort_ShowEnabled` read in `MessagePort_Tick` and `MessageTicker_Update` and written in `0004ad30`.
+- **Open:** what reads `000959e4`, which `Prefs_ApplyRadioOption` (`0004ad30`), preferences option 2's handler, sets with `MessagePort_ShowEnabled` ([the option array](preferences.md#the-option-array)); `es2_xref.py` finds `MessagePort_ShowEnabled` read in `MessagePort_Tick` and `MessageTicker_Update` and written in `0004ad30`.
 - **Open:** what makes a pilot-channel line ready, and what runs the channel's slot `+0x10`: `es2_fieldscan.py --writes-only 462` finds, besides this file's writes, stores of the ready latch in `0003e488` and `0003e574`, unread, where ES2's comm box makes a squadmate's line ready ([its speakerless set](../../retail/simulation/cockpit-messages.md#its-speakerless-set)); `Cockpit_DrawFrame` calls the channel's slot `+0x14` and the ticker's `+0x10`. The same functions are where a squadmate's spoken line would start: `SIMVOICE.VOL` holds 147 `simvoice\` pilot lines that `SpeechLine_Load` loads ([voice lines](../formats/sound-samples.md#voice-lines)).
 - **Open:** the posters `es2_xref.py` finds in `0003d12c` and `0003da08`, unread, and the digit `0003dab4` passes `SystemMessages_Index`.
 - **Open:** what `str\system.str`, `commandr.str` and the pilot files hold in ES1, and whether any system id above `0x21`, which plays no tone, is posted.

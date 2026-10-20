@@ -84,7 +84,7 @@ The names are ES2's, by the block, the order of the calls and the field; the con
 
 **`Cockpit_PushCanvasContext` (`0002b00c`) and `Cockpit_PopRenderContext` (`0002b03c`)** are ES2's: the push adds 1 to `CockpitContextStackIndex` (`00092d7d`, −1 in the image), saves the installed render context (`000bdbda`) at that index of `CockpitContextStack` (`000b0df4`) and installs the canvas context `+4`; the pop reinstalls the saved one and takes 1 from the index.
 
-**`Cockpit_DrawFrame` (`0002cf28`)**, (cockpit), once a frame from `Sim_RenderFrame` ([the cockpit's scripts](../formats/ttm-scripts.md#the-simulator)), does nothing while the byte `Cockpit_SkipFrameDraw` (`00092d7c`) is set. `es2_xref.py` finds two writes of it, both in `00057820`, which sets it for one `Sim_RenderFrame` and `Sim_EndFrame` between two `CockpitView_SetView` calls and clears it before a second `Sim_RenderFrame`. Otherwise:
+**`Cockpit_DrawFrame` (`0002cf28`)**, (cockpit), once a frame from `Sim_RenderFrame` ([the cockpit's scripts](../formats/ttm-scripts.md#the-simulator)), does nothing while the byte `Cockpit_SkipFrameDraw` (`00092d7c`) is set. `es2_xref.py` finds two writes of it, both in `PreferencesPanel_Raise` (`00057820`, [raising the panel](preferences.md#raising-the-panel--preferencespanel_raise-00057820)), which sets it for one `Sim_RenderFrame` and `Sim_EndFrame` between two `CockpitView_SetView` calls and clears it before a second `Sim_RenderFrame`. Otherwise:
 
 1. the first time (`+0x23a` clear) it calls `CockpitView_BuildScrollTriggers` and sets `+0x23a`;
 2. it ticks the clock (slot `+0xc` of `+0x1f9`) and calls `Cockpit_HitShakeTick`;

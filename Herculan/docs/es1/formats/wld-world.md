@@ -130,7 +130,7 @@ y = centre.y + Q14(2r · cos(a − 0x4000))
 z = 0
 ```
 
-with `Math_CosBam` and `Math_Q14Multiply`. `PointScatter_Update` (`00026e8c`), given the object and the centre, scatters the points the first time (setting `+4`), and when `000bd567` is less than `000956be` stores count × `000bd567` / `000956be` at `+7` and calls `00026fe0`. `Scene_DrawTerrainPass` calls it each frame with the camera, so the centre is the camera's position; `000bd567` is a preferences value and `000956be` holds 240 ([the ground](../rendering/ground-and-sky.md#the-ground)). `PointScatter_Draw` (`00026fe0`) draws them ([the scattered points](../rendering/ground-and-sky.md#the-scattered-points)).
+with `Math_CosBam` and `Math_Q14Multiply`. `PointScatter_Update` (`00026e8c`), given the object and the centre, scatters the points the first time (setting `+4`), and when `000bd567` is less than `000956be` stores count × `000bd567` / `000956be` at `+7` and calls `00026fe0`. `Scene_DrawTerrainPass` calls it each frame with the camera, so the centre is the camera's position; `000bd567` is preferences option 5, the preferences panel's GROUND ([its rows](../simulation/preferences.md#its-rows)), and `000956be` holds 240 ([the ground](../rendering/ground-and-sky.md#the-ground)). `PointScatter_Draw` (`00026fe0`) draws them ([the scattered points](../rendering/ground-and-sky.md#the-scattered-points)).
 
 ES2 has no `gndtex.cpp`: its ground is textured from the bank its fourth string names through `Terrain_BindTextureBank` ([terrain texturing](../../retail/rendering/terrain-texturing.md#the-answer-end-to-end)), where ES1's is a flat textured plane ([the textured ground](../rendering/ground-and-sky.md#the-textured-ground)).
 

@@ -10222,7 +10222,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitView_SetView",
-      "description": "(manager, view) in stack order, callee-cleaned: for a view below 5, CockpitView_ApplyViewState (000222c0); for any view but 4, with g_LowMemory (000bda98) set CockpitCanopy_LoadViewBitmap (00022184) first and CockpitCanopy_FreeViewBitmap (0002226c) last, Bitmap_Blit (00067048) of frame 0 of the view's bitmap array at (0, 0) with flags 2 for view 3 and 0 otherwise, the installed render context's +0x208 set to 0 for the blit, and CockpitView_InvalidateWidgets (0002b4a0)(+0x1b); stores the view at +0x10. ES2's CockpitView_SetView (DBSIM 0042a1f0) without its layout-mode branches. es2_xref finds calls from CockpitView_ProcessViewCommand (000226f0), four, 00057820, two, and Sim_StartMission (0005a9dc), two.",
+      "description": "(manager, view) in stack order, callee-cleaned: for a view below 5, CockpitView_ApplyViewState (000222c0); for any view but 4, with g_LowMemory (000bda98) set CockpitCanopy_LoadViewBitmap (00022184) first and CockpitCanopy_FreeViewBitmap (0002226c) last, Bitmap_Blit (00067048) of frame 0 of the view's bitmap array at (0, 0) with flags 2 for view 3 and 0 otherwise, the installed render context's +0x208 set to 0 for the blit, and CockpitView_InvalidateWidgets (0002b4a0)(+0x1b); stores the view at +0x10. ES2's CockpitView_SetView (DBSIM 0042a1f0) without its layout-mode branches. es2_xref finds calls from CockpitView_ProcessViewCommand (000226f0), four, PreferencesPanel_Raise (00057820), two, and Sim_StartMission (0005a9dc), two.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_setview-00022558",
       "verified": {
         "bytes": "00022558+219",
@@ -10402,7 +10402,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ExternalView_SetRect",
-      "description": "(offset, rect) in stack order, callee-cleaned: stores rect's four ints at ExternalView_Rect (000afb3c) and at 000afda0 and offset's two at 000afb4c; when CockpitViewManager_Published (00021f98) answers a manager in view 4 (+0x10), also writes the six to the installed render context's (000bdbda) +0x210..+0x224. ES2's ExternalView_SetRect (DBSIM 0042d89c). es2_xref finds one call, from 00057820.",
+      "description": "(offset, rect) in stack order, callee-cleaned: stores rect's four ints at ExternalView_Rect (000afb3c) and at 000afda0 and offset's two at 000afb4c; when CockpitViewManager_Published (00021f98) answers a manager in view 4 (+0x10), also writes the six to the installed render context's (000bdbda) +0x210..+0x224. ES2's ExternalView_SetRect (DBSIM 0042d89c). es2_xref finds one call, from PreferencesPanel_Raise (00057820).",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-external-view",
       "verified": {
         "bytes": "00024a00+124",
@@ -10417,7 +10417,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ExternalView_ResetRect",
-      "description": "No arguments: ExternalView_SetRect (00024a00)'s stores with ExternalView_DefaultRect (000afb24) as the source. ES2's ExternalView_ResetRect (DBSIM 0042d944). es2_xref finds one call, from 00057820.",
+      "description": "No arguments: ExternalView_SetRect (00024a00)'s stores with ExternalView_DefaultRect (000afb24) as the source. ES2's ExternalView_ResetRect (DBSIM 0042d944). es2_xref finds one call, from PreferencesPanel_Raise (00057820).",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-external-view",
       "verified": {
         "bytes": "00024a7c+124",
@@ -10447,7 +10447,7 @@
       "type": "function",
       "confidence": "high",
       "name": "View_FillOutside3dRect",
-      "description": "(manager), callee-cleaned, its argument unread: with the brush {0, 0x3f} at the installed render context's (000bdbda) +0x22c and the context's +0x208/+0x20c at 0, fills with Raster_FillRect (00053d9c), each when not empty, the bands around ExternalView_Rect (000afb3c) on a 320 x 200 screen: {0, 0, 319, top - 1}, {0, bottom + 1, 319, 199}, {0, top, left - 1, bottom} and {right + 1, top, 319, bottom}; then puts +0x208/+0x20c back. ES2's View_FillOutside3dRect (DBSIM 0042da08), which takes COLORS.DAT id 19 and the viewport's size. es2_xref finds calls from CockpitView_ApplyViewState (000222c0), CockpitViewManager_FlushBorderFill (00024af8) and 00057820, two.",
+      "description": "(manager), callee-cleaned, its argument unread: with the brush {0, 0x3f} at the installed render context's (000bdbda) +0x22c and the context's +0x208/+0x20c at 0, fills with Raster_FillRect (00053d9c), each when not empty, the bands around ExternalView_Rect (000afb3c) on a 320 x 200 screen: {0, 0, 319, top - 1}, {0, bottom + 1, 319, 199}, {0, top, left - 1, bottom} and {right + 1, top, 319, bottom}; then puts +0x208/+0x20c back. ES2's View_FillOutside3dRect (DBSIM 0042da08), which takes COLORS.DAT id 19 and the viewport's size. es2_xref finds calls from CockpitView_ApplyViewState (000222c0), CockpitViewManager_FlushBorderFill (00024af8) and PreferencesPanel_Raise (00057820), two.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#the-external-view",
       "verified": {
         "bytes": "00024b18+264",
@@ -18262,7 +18262,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_CtorBase",
-      "description": "(panel, rect, keepsScreen) in stack order, its arguments removed by this function: the in-mission panels' base constructor. Allocates 0x10 bytes when the panel is null; builds the rect region at +0x10 (vtables 00094d8a to 00094dfe, type 0), StringTable_Ctor (00044f14) at +0x30, GLViewport_Ctor at +0x44, the title bar rect at +0x2ba and GLCursor_Ctor at +0x2ca; stores AlertVtable (00094e26) at +0x314; clears the widget count +0x2b5 and the close byte +0x2b9; copies the rect to +0 and to the render context's rect +0x254, sets its clip mode +0x24c and translation flag +0x250 to 1, +0x264 and +0x268 to 0 and its brush +0x270 to Alert_FillBrush (000b1718); the region's rect is (0, 0, x1 - x0, y1 - y0); with keepsScreen set, a buffer of Rect_PixelCount(region) bytes at +0x28, asserting 'Alert: can't allocate buffer.' (alert.cpp line 0x3b) when operator_new fails, else 0; +0x2c = 0; Widget_ActiveRoot kept at +0x285; CTLWindow_Ctor (00043cac)(0, panel) at +0x281; the display's draw page (+0x3c of 000bdd28) at +0x289; -1 at +0x2e3 (the cancel widget) and 1 at +0x313. ES2's AlertPanel_CtorBase (DBSIM 00454174), whose vptr is at +0 and its rect at +4. es2_xref finds calls from StatusAlertPanel_Ctor (00046efc), 00047578, 00048408, 00049154 and ObjectivesPanel_Ctor (0004a1b4).",
+      "description": "(panel, rect, keepsScreen) in stack order, its arguments removed by this function: the in-mission panels' base constructor. Allocates 0x10 bytes when the panel is null; builds the rect region at +0x10 (vtables 00094d8a to 00094dfe, type 0), StringTable_Ctor (00044f14) at +0x30, GLViewport_Ctor at +0x44, the title bar rect at +0x2ba and GLCursor_Ctor at +0x2ca; stores AlertVtable (00094e26) at +0x314; clears the widget count +0x2b5 and the close byte +0x2b9; copies the rect to +0 and to the render context's rect +0x254, sets its clip mode +0x24c and translation flag +0x250 to 1, +0x264 and +0x268 to 0 and its brush +0x270 to Alert_FillBrush (000b1718); the region's rect is (0, 0, x1 - x0, y1 - y0); with keepsScreen set, a buffer of Rect_PixelCount(region) bytes at +0x28, asserting 'Alert: can't allocate buffer.' (alert.cpp line 0x3b) when operator_new fails, else 0; +0x2c = 0; Widget_ActiveRoot kept at +0x285; CTLWindow_Ctor (00043cac)(0, panel) at +0x281; the display's draw page (+0x3c of 000bdd28) at +0x289; -1 at +0x2e3 (the cancel widget) and 1 at +0x313. ES2's AlertPanel_CtorBase (DBSIM 00454174), whose vptr is at +0 and its rect at +4. es2_xref finds calls from StatusAlertPanel_Ctor (00046efc), PreferencesPanel_Ctor (00047578), ControlsPanel_Ctor (00048408), 00049154 and ObjectivesPanel_Ctor (0004a1b4).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988",
       "verified": {
         "bytes": "00045988+770",
@@ -18337,7 +18337,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Alert_Dtor",
-      "description": "(panel, flags) in stack order, its arguments removed by this function: the in-mission panels' base destructor. Stores AlertVtable (00094e26) at +0x314; frees each of the +0x2b5 widgets at +0x28d and the screen buffer +0x28 when set; destroys +0x2c when set through its slot +0x1c with 3; frees the title label +0x40; clears +0x2ce; GLCursor_Dtor(+0x2ca, 2); stores the vtables 00094e7e and 00094dae at the render context +0x44; OwnedArray_Dtor (00044f48)(+0x30, 2); stores 00094dfe, 00094dd6 and 00094dae at the region +0x10. It tests neither the panel nor the flags and frees nothing of the panel itself. ES2's Alert_Dtor (DBSIM 00454394). es2_xref finds calls from CockpitWidgets_HandleCommand, Sim_DispatchCommand and Sim_MainTick, each with 3 after a panel's run, and from GeneralAlert_Dtor (000472b0), 00047a14, 000487b4, 00049678 and ObjectivesPanel_Dtor (0004a480) with 0.",
+      "description": "(panel, flags) in stack order, its arguments removed by this function: the in-mission panels' base destructor. Stores AlertVtable (00094e26) at +0x314; frees each of the +0x2b5 widgets at +0x28d and the screen buffer +0x28 when set; destroys +0x2c when set through its slot +0x1c with 3; frees the title label +0x40; clears +0x2ce; GLCursor_Dtor(+0x2ca, 2); stores the vtables 00094e7e and 00094dae at the render context +0x44; OwnedArray_Dtor (00044f48)(+0x30, 2); stores 00094dfe, 00094dd6 and 00094dae at the region +0x10. It tests neither the panel nor the flags and frees nothing of the panel itself. ES2's Alert_Dtor (DBSIM 00454394). es2_xref finds calls from CockpitWidgets_HandleCommand, Sim_DispatchCommand and Sim_MainTick, each with 3 after a panel's run, and from GeneralAlert_Dtor (000472b0), PreferencesPanel_Dtor (00047a14), ControlsPanel_Dtor (000487b4), 00049678 and ObjectivesPanel_Dtor (0004a480) with 0.",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c",
       "verified": {
         "bytes": "00045d0c+220",
@@ -18382,7 +18382,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_Enter",
-      "description": "(panel) in stack order, its argument removed by this function: puts a panel up. Copies the 0x2b bytes of PlayerInputBlock to +0x2e8; Input_LatchButton (0004d8c8)(1, 1) to (1, 4); AlertPanel_SetFocus (00046470)(panel, -1); Widget_ClearPressed (00044310)(the panel's root +0x281); keeps the render context 000bdbda at +0x27d and installs the panel's +0x44; sets the display's source and draw pages to its +0x88; keeps Cursor_FollowsMouse at +0x2de and sets it; calls AlertPanel_EnterHook (00094d80) when set; the first time, loads dci\\alert into AlertPanel_CursorImage (00094d7c) with Cursor_LoadWrapper; hides the cursor (slot 31); with a buffer at +0x28, Region_Save of the region +0x14 into it, its rect moved by the panel's origin for the call; the panel's slot +4; AlertPanel_LoadCursor (000463c0)(panel, the alert cursor); shows the cursor (slot 30); adds 1 to AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Enter (DBSIM 00454630) without the message ports and the present timer. es2_xref finds calls from StatusAlertPanel_RunModal (0004730c), 00047a88, 00048810, 000496f0 and ObjectivesPanel_RunModal (0004a4ec).",
+      "description": "(panel) in stack order, its argument removed by this function: puts a panel up. Copies the 0x2b bytes of PlayerInputBlock to +0x2e8; Input_LatchButton (0004d8c8)(1, 1) to (1, 4); AlertPanel_SetFocus (00046470)(panel, -1); Widget_ClearPressed (00044310)(the panel's root +0x281); keeps the render context 000bdbda at +0x27d and installs the panel's +0x44; sets the display's source and draw pages to its +0x88; keeps Cursor_FollowsMouse at +0x2de and sets it; calls AlertPanel_EnterHook (00094d80) when set; the first time, loads dci\\alert into AlertPanel_CursorImage (00094d7c) with Cursor_LoadWrapper; hides the cursor (slot 31); with a buffer at +0x28, Region_Save of the region +0x14 into it, its rect moved by the panel's origin for the call; the panel's slot +4; AlertPanel_LoadCursor (000463c0)(panel, the alert cursor); shows the cursor (slot 30); adds 1 to AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Enter (DBSIM 00454630) without the message ports and the present timer. es2_xref finds calls from StatusAlertPanel_RunModal (0004730c), PreferencesPanel_Run (00047a88), ControlsPanel_Run (00048810), 000496f0 and ObjectivesPanel_RunModal (0004a4ec).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down",
       "verified": {
         "bytes": "00045f00+439",
@@ -18397,7 +18397,7 @@
       "type": "function",
       "confidence": "high",
       "name": "AlertPanel_Leave",
-      "description": "(panel) in stack order, its argument removed by this function: takes a panel down. Clears Cursor_FollowsMouse and hides the cursor; with a buffer at +0x28, Region_Restore of the region +0x14 at +0x18; AlertPanel_RestoreCursorImage (00046428); Cursor_FollowsMouse back from +0x2de, showing the cursor when it is set; calls AlertPanel_LeaveHook (00094d84) when set; installs the render context +0x27d and makes +0x289 the display's draw page; WidgetRoot_Delete (00044350)(+0x281) and, when +0x285 is set, Widget_ClearPressed(+0x285); copies the 0x2b bytes at +0x2e8 back to PlayerInputBlock; with a mouse device, Mouse_SetPosition to the saved pointer +0x2ea, +0x2ee and Cursor_SyncPosition; takes 1 from AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Leave (DBSIM 004548ac) without the present, the two flags and the message ports. es2_xref finds calls from StatusAlertPanel_RunModal (0004730c), 00047a88, 00048810, 000496f0 and ObjectivesPanel_RunModal (0004a4ec).",
+      "description": "(panel) in stack order, its argument removed by this function: takes a panel down. Clears Cursor_FollowsMouse and hides the cursor; with a buffer at +0x28, Region_Restore of the region +0x14 at +0x18; AlertPanel_RestoreCursorImage (00046428); Cursor_FollowsMouse back from +0x2de, showing the cursor when it is set; calls AlertPanel_LeaveHook (00094d84) when set; installs the render context +0x27d and makes +0x289 the display's draw page; WidgetRoot_Delete (00044350)(+0x281) and, when +0x285 is set, Widget_ClearPressed(+0x285); copies the 0x2b bytes at +0x2e8 back to PlayerInputBlock; with a mouse device, Mouse_SetPosition to the saved pointer +0x2ea, +0x2ee and Cursor_SyncPosition; takes 1 from AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Leave (DBSIM 004548ac) without the present, the two flags and the message ports. es2_xref finds calls from StatusAlertPanel_RunModal (0004730c), PreferencesPanel_Run (00047a88), ControlsPanel_Run (00048810), 000496f0 and ObjectivesPanel_RunModal (0004a4ec).",
       "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down",
       "verified": {
         "bytes": "000460b8+305",
@@ -19052,16 +19052,331 @@
       }
     },
     {
-      "address": "00048ce4",
+      "address": "00047578",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_Ctor",
+      "description": "(panel, keepsScreen) in stack order, its arguments removed by this function: the preferences panel F12 raises. Allocates 0x38f bytes with operator_new when panel is null (returning 0 when that fails); AlertPanel_CtorBase (00045988)(panel, AlertPanel_SetRect (0004675c)(89, 319, 111, 0), keepsScreen), the rect (0, 111)-(319, 200); PrefsAlertVtable (000951ae) at +0x314; the plate, frame 0 of dba\\prf_alrt (ClassItem_LoadFromFile (0005760c)), at +0x2c; str\\prf_alrt into the string table +0x30 (StringTable_LoadFromFile (00044f78)) and its four groups with StringTable_LoadGroup (000450b0): the title to +0x348, nine captions to +0x34c, OFF and ON to +0x370, the three message words to +0x378. Nine buttons, PanelButton_Ctor (000467c8)(0, index, panel, rect) on the rects of the int16 tables 0009510c (x), 00095120 (y), 00095134 (w) and 00095148 (h), each with a caption label in WidgetFont_Cpylw at its +0x2c centered by Label_SetRect (00031080) with flags 2 and margin (0, -1); each registered with Widget_RegisterClickable (000443d4) on the root +0x281 and added to the widget list +0x28d, buttons 4 and 5 after the other seven. The title label at +0x40 in WidgetFont_Title on the title bar +0x2ba, ((319 - w - 20) >> 1, 4)-(that + w + 20, 21), w by HudFont_MeasureString (00069d0c), margin (0, -11). Four readout labels at +0x318 in WidgetFont_Green6x8 on the tables 0009515c to 00095174, flags 1, margin (2, -1), background 0x3f; three LED bar graphs (LedBarGraph_Ctor (00031e28)(0, 0xff, rect)) at +0x334 on the tables 0009517c to 00095194, their +0x20 0x3f, +0x2c 50 and +0x30 49. The cancel widget +0x2e3 is the last widget, DONE; the draw hook +0x384 and the seven repaint counters +0x388 are cleared. Returns the panel. ES2's PreferencesPanel_Ctor (DBSIM 004566c4), with nine rows of its own.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-preferences-panel--preferencespanel_ctor-00047578",
+      "verified": {
+        "bytes": "00047578+1180",
+        "sha1": "09de064507c1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00047a14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_Dtor",
+      "description": "(panel, flags) in stack order, its arguments removed by this function: returns for a null panel; stores PrefsAlertVtable (000951ae), frees the four readout labels +0x318 and the three bar graphs +0x334 with operator_delete, runs Alert_Dtor (00045d0c)(panel, 0) and frees the panel when bit 0 of flags is set. es2_xref finds one call, from PreferencesPanel_Raise (00057820), which passes 3.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-preferences-panel--preferencespanel_ctor-00047578",
+      "verified": {
+        "bytes": "00047a14+116",
+        "sha1": "9fceb1b8a95a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00047a88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_Run",
+      "description": "(panel), slot +0xc of PrefsAlertVtable (000951ae): the preferences panel's loop. With no sound manager (000959ac 0) puts widgets 0, 1 and 2 in state 2; clears the action +0x340; AlertPanel_Enter (00045f00); AlertPanel_SetFocus (00046470)(panel, 0); copies the panel from the page on the screen to the display's +0x8c (Region_CopyBetweenPages (00066914), the cursor hidden around it) and makes +0x88 the draw page again. Until the close byte +0x2b9 is set: Input_BuildPlayerDevice (0004cb14), the block to slot +0x14; then for an action: 0 Prefs_ToggleOption (0004a94c)(1, 0), 1 the same on option 1, 2 Prefs_StepOption (0004a988)(1, 3, 2) while VoiceArchivePresent (000956bf) is set, 3 Prefs_ToggleOption(1, 3), 4 to 6 Prefs_IncreaseOption (0004aa18)(1, 0x20, option 4 to 6), or Prefs_DecreaseOption (0004aa78) with the right-button byte +0x2e7 set, each of those setting its row's repaint counter +0x388 + row to 2; 7, CONTROLS, repaints widget 7, builds the controls panel on the stack (ControlsPanel_Ctor (00048408)(that, 0, 1)), runs it (ControlsPanel_Run (00048810)), repaints this panel through slot +4, focuses the cancel widget and destroys the controls panel (ControlsPanel_Dtor (000487b4), 2); 8, DONE, PreferencesPanel_Save (000483a0, by its padding 0004839d) and the close byte 3; the action back to -1; then PreferencesPanel_CallDrawHook (00048198, by its padding 00048195). AlertPanel_Leave (000460b8); with a draw hook and a screen buffer +0x28, copies the panel's region onto +0x8c under its own render context and sets the draw page back. Returns bit 0 of the close byte. ES2's PreferencesPanel_Run (DBSIM 00456d4c) with ES1's nine buttons.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-loop--preferencespanel_run-00047a88",
+      "verified": {
+        "bytes": "00047a88+1029",
+        "sha1": "cf460fdf620d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00047e90",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_Paint",
+      "description": "(panel), slot +4 of PrefsAlertVtable (000951ae): Bitmap_Blit (00067048)(the plate +0x2c, 0, the region's rect +0x18); the title through slot +8 with +0x348; each widget's paint, slot +4 of its +0x1c table; then PreferencesPanel_RefreshRow (00047f84, by its padding 00047f82) for rows 0 to 6. ES2's PreferencesPanel_Paint (DBSIM 004570e0).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-preferences-panel--preferencespanel_ctor-00047578",
+      "verified": {
+        "bytes": "00047e90+132",
+        "sha1": "2d5138e4b220",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00047f14",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_Tick",
+      "description": "(panel): calls each widget's per-frame slot +0x10 of its +0x1c table; then, for the first of the seven repaint counters +0x388 that is not 0, PreferencesPanel_RefreshRow (00047f84) for that row and 1 off the counter. The middle of ES2's PreferencesPanel_Present (DBSIM 00457180). es2_xref finds one call, from PreferencesPanel_CallDrawHook (00048198).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-loop--preferencespanel_run-00047a88",
+      "verified": {
+        "bytes": "00047f14+110",
+        "sha1": "239eb6d0c071",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00047f84",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "PreferencesPanel_RefreshRow",
-      "description": "(panel, row) in stack order, callee-cleaned: sets one of the panel's five readout labels from the panel's option bytes, between g_RasterRoutines slots 31 and 30 (0009df50, 0009df4c): row 1 Label_SetText(+0x384, caption +0x348[byte +0x39c]), row 2 (+0x388, +0x370[+0x39d]), row 3 (+0x38c, +0x338[+0x39e]), row 4 (+0x390, +0x338[+0x39f]), row 5 (+0x394, +0x340[+0x3a0]). es2_naming.py callers shows 00048810 running it after Prefs_SetOption on options 7 and 8. ES2's PreferencesPanel_RefreshRow (DBSIM 004571f4) has nine rows.",
-      "source": "ES1DBSIM decompile at 00048ce4, against ES2's PreferencesPanel_RefreshRow",
+      "description": "(panel, row) in stack order, its arguments removed by this function: rows 0, 1 and 3 Label_SetText (0003114c) on the readout +0x318, +0x31c or +0x324 with OFF or ON (+0x370) by preferences option 0, 1 or 3 (Prefs_Options (000bd562), 000bd563, 000bd565); row 2 the readout +0x320 with the message word +0x378 by option 2 (000bd564); rows 4, 5 and 6 slot +8 of the bar graph +0x334, +0x338 or +0x33c (its table at +0x28) with (0, option 4, 5 or 6). ES2's PreferencesPanel_RefreshRow (DBSIM 004571f4).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#its-rows",
+      "verified": {
+        "bytes": "00047f84+242",
+        "sha1": "21cee3e75009",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00048078",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_HandleEvent",
+      "description": "(panel, block), slot +0x14 of PrefsAlertVtable (000951ae): AlertPanel_HandleEvent (00046670) first, answering 1 when it acts; otherwise looks the block's command word up in the four dwords at 00095224, 0x0d and 0x4e (= and keypad +) and 0x0c and 0x4a (- and keypad -), the targets four dwords on. The first two press the focused widget +0x2df with AlertPanel_PressWidget (0004662c)(panel, 1, index), the other two with flags 2, when it is 4, 5 or 6; any of the four answers 1, any other code 0. ES2's preferences panel uses AlertPanel_HandleEvent alone.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-loop--preferencespanel_run-00047a88",
+      "verified": {
+        "bytes": "00048078+122",
+        "sha1": "47b72a579537",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000480f4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_OnClick",
+      "description": "(panel, flags, child), slot +0x10 of PrefsAlertVtable (000951ae), which a button's click calls: stores bit 1 of flags, the right button, at +0x2e7, and the child's index in the widget list +0x28d at the action +0x340. ES2's PreferencesPanel_OnClick (DBSIM 004573a8) also moves the focus and the highlight.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-loop--preferencespanel_run-00047a88",
+      "verified": {
+        "bytes": "000480f4+114",
+        "sha1": "3d3e0a390f72",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00048168",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_GetButtonCaption",
+      "description": "(panel, index), slot +0x18 of PrefsAlertVtable (000951ae): returns the caption +0x34c[index]. ES2's PreferencesPanel_GetButtonCaption (DBSIM 0045743c).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-preferences-panel--preferencespanel_ctor-00047578",
+      "verified": {
+        "bytes": "00048168+24",
+        "sha1": "9c564a6e9e12",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00048180",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_SetDrawHook",
+      "description": "(panel, hook): stores hook at +0x384. ES2's PreferencesPanel_SetDrawHook (DBSIM 00457450). es2_xref finds one call, from PreferencesPanel_Raise (00057820), which passes PreferencesPanel_OrbitViewHook (000577f8).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#raising-the-panel--preferencespanel_raise-00057820",
+      "verified": {
+        "bytes": "00048180+21",
+        "sha1": "9bf1166160d8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00048198",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_CallDrawHook",
+      "description": "(panel), once a pass of PreferencesPanel_Run (00047a88), and nothing while the hook +0x384 is 0: makes the display 000bdd28's +0x8c the draw page (g_RasterRoutines slot 17, 0009df18, mirrored to 00098dda); installs the render context +0x27d (Raster_InstallRenderContext (00069be0)), calls the hook and installs the panel's +0x44; with a screen buffer +0x28, makes +0x8c the source page and saves the region, its rect moved by the panel's corner, into the buffer (Region_Save (000665d6)); makes +0x88 the source page; PreferencesPanel_Tick (00047f14); shows +0x8c (slot 18, 0009df1c), draws on +0x88, swaps +0x88 and +0x8c, and makes the new +0x88 the source and draw page. ES2's PreferencesPanel_CallDrawHook (DBSIM 00457464) with the save, the tick and the page flip of ES2's PreferencesPanel_Present inside it.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-loop--preferencespanel_run-00047a88",
+      "verified": {
+        "bytes": "00048198+517",
+        "sha1": "296d5ad71803",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000483a0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_Save",
+      "description": "(panel), its argument removed by this function and not read: when any of the seven options PreferencesPanel_SaveList (0009519c) names, 0 to 6, differs from its load-time copy (Prefs_OptionChanged (0004ac2c)), writes those seven to data\\prefs.cfg with Prefs_SaveSelectedOptions (0004ab6c)(the list, 7). Entered by its padding 0004839d from PreferencesPanel_Run (00047a88). ES2's PreferencesPanel_Save (DBSIM 004574cc), over nine options.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#saving",
+      "verified": {
+        "bytes": "000483a0+52",
+        "sha1": "4884ac1db658",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000483d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_Revert",
+      "description": "(panel), its argument removed by this function and not read: when any of the seven options PreferencesPanel_SaveList (0009519c) names differs from its load-time copy (Prefs_OptionChanged (0004ac2c)), copies those seven back from it with Prefs_RevertSelectedOptions (0004aaf0)(the list, 7). No reference found by es2_xref. ES2's PreferencesPanel_Revert (DBSIM 004574e0) with seven options for ES2's nine.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#saving",
+      "verified": {
+        "bytes": "000483d4+52",
+        "sha1": "de35c6a33b7f",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00048408",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_Ctor",
+      "description": "(panel, rect, keepsScreen) in stack order, its arguments removed by this function: the controls panel the preferences panel's CONTROLS raises. Allocates 0x3a6 bytes with operator_new when panel is null (returning 0 when that fails); a 222 x 109 rect, centered by AlertPanel_CenterRect (0004679c) or at the rect's point by AlertPanel_SetRect (0004675c); AlertPanel_CtorBase (00045988)(panel, that rect, keepsScreen); ControlsAlertVtable (000952c6) at +0x314; the plate, frame 0 of dba\\ctl_alrt (ClassItem_LoadFromFile (0005760c)), at +0x2c; str\\ctl_alrt into the string table +0x30 (StringTable_LoadFromFile (00044f78)) and six groups with StringTable_LoadGroup (000450b0): the title to +0x318, seven captions to +0x31c, NO and YES to +0x338, OFF and ON to +0x340, ten stick models to +0x348, five stick controls to +0x370. Seven buttons, PanelButton_Ctor (000467c8)(0, index, panel, rect) on the int16 tables 00095244 (x), 00095254 (y), 00095264 (w) and 00095274 (h), each with a caption label in WidgetFont_Cpylw centered by Label_SetRect (00031080) with flags 2 and margin (0, -2), the word of the table 00095284, registered with Widget_RegisterClickable (000443d4) on the root +0x281 and added to the widget list +0x28d in order. The title label at +0x40 as the preferences panel's. Five readout labels at +0x384 in WidgetFont_Green6x8 on the tables 00095294 to 000952b8, flags 1, margin (2, -2), background 0x3f. Clears the action +0x398 and makes the last widget, DONE, the cancel widget +0x2e3. Returns the panel. es2_xref finds one call, from PreferencesPanel_Run (00047a88), passing (a stack object, 0, 1). ES2's ControlsPanel_Ctor (DBSIM 00457d1c) builds a panel of the same name with other rows.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-controls-panel--controlspanel_ctor-00048408",
+      "verified": {
+        "bytes": "00048408+939",
+        "sha1": "2a1a1ace13e8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000487b4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_Dtor",
+      "description": "(panel, flags) in stack order, its arguments removed by this function: returns for a null panel; stores ControlsAlertVtable (000952c6), frees the five readout labels +0x384 with operator_delete, runs Alert_Dtor (00045d0c)(panel, 0) and frees the panel when bit 0 of flags is set. es2_xref finds one call, from PreferencesPanel_Run (00047a88), which passes 2.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-controls-panel--controlspanel_ctor-00048408",
+      "verified": {
+        "bytes": "000487b4+89",
+        "sha1": "438bfe0c41cc",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00048810",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_Run",
+      "description": "(panel), slot +0xc of ControlsAlertVtable (000952c6): the controls panel's loop. Copies options 7, 8, 10, 9 and 11 to +0x39c to +0x3a0; +0x3a1 = 2 when option 7 is 2, else 0; +0x3a2 = option 8, or 1 for 0; +0x3a3 = option 9; +0x3a4 and +0x3a5 = options 7 and 9 as applied. AlertPanel_Enter (00045f00), AlertPanel_SetFocus (00046470)(panel, 0); until the close byte +0x2b9 is set: Input_BuildPlayerDevice (0004cb14), the block to slot +0x14; for the action +0x398 (the button index plus 1): 1 steps option 7 modulo 6, Prefs_StepOption (0004a988) or with the right-button byte +0x2e7 Prefs_StepOptionBack (0004a9d0), once more forward when that gives 0 with the block's button 0 (+0x15) held; for 0 it keeps option 8 at +0x3a2 and sets it to 0 (Prefs_SetOption (0004a914)), for any other puts it back when it is 0; at 2 it keeps the panel's option 9 at +0x3a3 and clears it, otherwise puts it back from +0x3a3 when that is set; 2, with option 7 not 0, steps option 8 modulo 3 forward or back until it is not 0; 3 toggles option 10 (Prefs_ToggleOption (0004a94c)); 4 toggles option 9 and, turned on with option 7 at 2, sets option 7 to 1 with +0x3a1 = 2, or turned off with +0x3a1 at 2, sets option 7 back to 2 and +0x3a1 = 0; 5 toggles option 11; 6, CALIBRATE, with option 9 set or option 7 not 0, ControlsPanel_ApplyDevices (00048e98), the calibration panel on the stack (00049154(that, panel, 1)), its loop 000496f0, the focus to the cancel widget, and its destructor 00049678(that, 2); 7, DONE, ControlsPanel_ApplyDevices and Prefs_CommitOptions (0004a83c)(1). Each changed row is redrawn with ControlsPanel_RefreshRow (00048ce4). Then each widget's per-frame slot +0x10. AlertPanel_Leave (000460b8); returns bit 0 of the close byte. ES2's ControlsPanel_Run (DBSIM 00458650) binds stick buttons.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#its-loop--controlspanel_run-00048810",
+      "verified": {
+        "bytes": "00048810+1094",
+        "sha1": "1d5ee92f73f8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00048c58",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_Paint",
+      "description": "(panel), slot +4 of ControlsAlertVtable (000952c6): Bitmap_Blit (00067048)(the plate +0x2c, 0, the region's rect +0x18); the title through slot +8 with +0x318; each widget's paint, slot +4 of its +0x1c table; then ControlsPanel_RefreshRow (00048ce4) for rows 1 to 5. ES2's ControlsPanel_Paint (DBSIM 00458c68), on twelve rows.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-controls-panel--controlspanel_ctor-00048408",
+      "verified": {
+        "bytes": "00048c58+138",
+        "sha1": "1a89ea5fb3b6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00048ce4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_RefreshRow",
+      "description": "(panel, row) in stack order, its arguments removed by this function: sets one of the controls panel's five readout labels from the panel's copies of the option bytes, between g_RasterRoutines slots 31 and 30 (0009df50, 0009df4c): row 1 Label_SetText(+0x384, the stick model +0x348[byte +0x39c]), row 2 (+0x388, the stick's control +0x370[+0x39d]), row 3 (+0x38c, NO or YES +0x338[+0x39e]), row 4 (+0x390, +0x338[+0x39f]), row 5 (+0x394, OFF or ON +0x340[+0x3a0]). ES2's ControlsPanel_RefreshRow (DBSIM 00458d20) has twelve rows.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-controls-panel--controlspanel_ctor-00048408",
       "verified": {
         "bytes": "00048ce4+201",
         "sha1": "20933309a6e6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00048db0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_OnClick",
+      "description": "(panel, flags, child), slot +0x10 of ControlsAlertVtable (000952c6), which a button's click calls: stores bit 1 of flags, the right button, at +0x2e7; for the child at index 0 to 6 of the widget list +0x28d stores index + 1 at the action +0x398, and for 6, DONE, also sets the close byte +0x2b9 to 3. ES2's ControlsPanel_OnClick (DBSIM 00458ebc) selects button rows.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#its-loop--controlspanel_run-00048810",
+      "verified": {
+        "bytes": "00048db0+205",
+        "sha1": "b1014d2594e6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00048e80",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_GetButtonCaption",
+      "description": "(panel, index), slot +0x18 of ControlsAlertVtable (000952c6): returns the caption +0x31c[index].",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-controls-panel--controlspanel_ctor-00048408",
+      "verified": {
+        "bytes": "00048e80+24",
+        "sha1": "06082fd623d6",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00048e98",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_ApplyDevices",
+      "description": "(panel): when the panel's option 7 (+0x39c) or option 9 (+0x39f) differs from the copy last applied (+0x3a4, +0x3a5), destroys the recorded joystick devices (Input_GetJoystickDevice_Thunk (0004c63c), Input_GetJoystick2Device_Thunk (0004c644), JoystickDevice_Dtor (0004b7a8) with 3) and builds them for option 7 (000bd569) as Input_CreateJoystickDevices (0004af0c) does, each constructor with mode 1: 1 IMJoystick1_Ctor (0004be30), 2 that and IMJoystick2_Ctor (0004be94), 3 IMThrustmasterFCS_Ctor (0004bef8), 4 IMFlightstick_Ctor (0004c054), 5 IMFlightstickPro_Ctor (0004c114); with option 9 (000bd56b) set, IMThrustmasterRCS_Ctor (0004bfe0) as the second, or for option 7 at 2 option 9 cleared (Prefs_SetOption (0004a914)(1, 0, 9)). The registers that held the destroyed devices are not cleared, so where no new first or second device is built, the destroyed one is the one passed on: the first gets Joystick_LoadCalibration (0004ae0c)(data\\joy1.cal through Path_ApplyAltDrive (000592a4)) and InputDevice_Enable (0004b1c0) on its +0x78, the second the same with joy2.cal as given. Then stores the applied copy. When option 11 (000bd56d) differs from the panel's +0x3a0 and there is a mouse device (Input_GetMouseDevice_Thunk (0004c634)), enables or disables its +0x3a by +0x3a0. Last, Prefs_SaveSelectedOptions (0004ab6c) with ControlsPanel_SaveList (00095348), options 7, 8, 10, 9 and 11. es2_xref finds three calls, from ControlsPanel_Run (00048810), two, and ControlsPanel_Revert (0004903c).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#rebuilding-the-joystick-devices--controlspanel_applydevices-00048e98",
+      "verified": {
+        "bytes": "00048e98+418",
+        "sha1": "26c9a1ffa0fd",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004903c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "ControlsPanel_Revert",
+      "description": "(panel): Prefs_RevertOption (0004aacc)(1, n) for options 7, 8, 10, 9 and 11; copies option 7 to +0x39c and +0x39d, option 10 to +0x39e, option 9 to +0x39f and option 11 to +0x3a0; then ControlsPanel_ApplyDevices (00048e98). No reference found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#rebuilding-the-joystick-devices--controlspanel_applydevices-00048e98",
+      "verified": {
+        "bytes": "0004903c+123",
+        "sha1": "7c966295cf1a",
         "scope": "body",
         "via": "decompile"
       }
@@ -19192,11 +19507,26 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_Load",
-      "description": "(copy): reads the 17 option bytes of data\\prefs.cfg (through Path_ApplyAltDrive (000592a4)) into 000bd562, zeroing them when the file does not open; then for each option calls its handler from the table Prefs_HandlerTable (000bd598) with the value when one is set, copies the value to 000bd574 when copy is non-zero, and copies 000bd574's byte to 000bd586.",
+      "description": "(copy): reads the 17 option bytes of data\\prefs.cfg (through Path_ApplyAltDrive (000592a4)) into Prefs_Options (000bd562), zeroing them when the file does not open; then for each option calls its handler from the table Prefs_HandlerTable (000bd598) with the value when one is set, copies the value to Prefs_LoadedOptions (000bd574) when copy is non-zero, and copies Prefs_LoadedOptions (000bd574)'s byte to Prefs_PreviousOptions (000bd586).",
       "source": "Herculan/docs/es1/simulation/mech-locomotion.md#the-throttle--mech_applythrottleinput-00011afc; ES1DBSIM decompile at 0004a744",
       "verified": {
         "bytes": "0004a744+183",
         "sha1": "c71cc2820fe9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a83c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_CommitOptions",
+      "description": "(apply): for each of the 17 options, where Prefs_Options (000bd562) differs from the load-time copy Prefs_LoadedOptions (000bd574), calls the option's handler from Prefs_HandlerTable (000bd598) with the value when apply is set and copies the value to the load-time copy; and copies every value to Prefs_PreviousOptions (000bd586). ES2's Prefs_CommitOptions (DBSIM 00459878) over 0x36 options.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#saving",
+      "verified": {
+        "bytes": "0004a83c+106",
+        "sha1": "3b453fdb528f",
         "scope": "body",
         "via": "decompile"
       }
@@ -19207,7 +19537,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_SetOption",
-      "description": "(apply, value, index) in stack order, callee-cleaned: writes one option: saves the old byte at 000bd586[index], stores value at 000bd562[index], and when apply is non-zero and the handler Prefs_HandlerTable (000bd598)[index] is set calls it with value. ES2's Prefs_SetOption (DBSIM 0045993c).",
+      "description": "(apply, value, index) in stack order, callee-cleaned: writes one option: saves the old byte at Prefs_PreviousOptions (000bd586)[index], stores value at Prefs_Options (000bd562)[index], and when apply is non-zero and the handler Prefs_HandlerTable (000bd598)[index] is set calls it with value. ES2's Prefs_SetOption (DBSIM 0045993c).",
       "source": "ES1DBSIM decompile at 0004a914, against ES2's Prefs_SetOption",
       "verified": {
         "bytes": "0004a914+56",
@@ -19222,7 +19552,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_ToggleOption",
-      "description": "(apply, index) in stack order, callee-cleaned: saves 000bd562[index] at 000bd586[index], then Prefs_SetOption(apply, value ^ 1, index); returns the new value. ES2's Prefs_ToggleOption (DBSIM 00459980).",
+      "description": "(apply, index) in stack order, callee-cleaned: saves Prefs_Options (000bd562)[index] at Prefs_PreviousOptions (000bd586)[index], then Prefs_SetOption(apply, value ^ 1, index); returns the new value. ES2's Prefs_ToggleOption (DBSIM 00459980).",
       "source": "ES1DBSIM decompile at 0004a94c, against ES2's Prefs_ToggleOption",
       "verified": {
         "bytes": "0004a94c+59",
@@ -19237,11 +19567,56 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_StepOption",
-      "description": "(apply, modulus, index) in stack order, callee-cleaned: saves 000bd562[index] at 000bd586[index], steps it forward, wrapping to 0 when it reaches modulus, and hands it to Prefs_SetOption(apply, value, index); returns the new value. ES2's Prefs_StepOption (DBSIM 004599b8).",
+      "description": "(apply, modulus, index) in stack order, callee-cleaned: saves Prefs_Options (000bd562)[index] at Prefs_PreviousOptions (000bd586)[index], steps it forward, wrapping to 0 when it reaches modulus, and hands it to Prefs_SetOption(apply, value, index); returns the new value. ES2's Prefs_StepOption (DBSIM 004599b8).",
       "source": "ES1DBSIM decompile at 0004a988, against ES2's Prefs_StepOption",
       "verified": {
         "bytes": "0004a988+69",
         "sha1": "53fb7d6b8962",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004a9d0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_StepOptionBack",
+      "description": "(apply, modulus, index) in stack order, its arguments removed by this function: saves Prefs_Options (000bd562)[index] at Prefs_PreviousOptions (000bd586)[index], takes 1 from it, giving modulus - 1 below 0, and hands it to Prefs_SetOption (0004a914)(apply, value, index). ES2's Prefs_StepOptionBack (DBSIM 004599f4).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array",
+      "verified": {
+        "bytes": "0004a9d0+71",
+        "sha1": "7af8d98f30bf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004aa18",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_IncreaseOption",
+      "description": "(apply, amount, index) in stack order, its arguments removed by this function: saves Prefs_Options (000bd562)[index] at Prefs_PreviousOptions (000bd586)[index]; the new value is 0 when it is 0xff, 0xff when adding amount would pass 0xff, and the value plus amount otherwise; Prefs_SetOption (0004a914)(apply, that, index). ES2's Prefs_IncreaseOption (DBSIM 00459a34).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array",
+      "verified": {
+        "bytes": "0004aa18+95",
+        "sha1": "93552328655e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004aa78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_DecreaseOption",
+      "description": "(apply, amount, index) in stack order, its arguments removed by this function: saves Prefs_Options (000bd562)[index] at Prefs_PreviousOptions (000bd586)[index]; the new value is 0xff when it is 0, 0 when it is below amount, and the value less amount otherwise; Prefs_SetOption (0004a914)(apply, that, index). ES2's Prefs_DecreaseOption (DBSIM 00459a90).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array",
+      "verified": {
+        "bytes": "0004aa78+84",
+        "sha1": "5e28d78114c6",
         "scope": "body",
         "via": "decompile"
       }
@@ -19252,11 +19627,56 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_RevertOption",
-      "description": "(apply, index) in stack order, callee-cleaned: Prefs_SetOption(apply, 000bd574[index], index), the shadow value, and returns it. ES2's Prefs_RevertOption (DBSIM 00459ad8).",
+      "description": "(apply, index) in stack order, callee-cleaned: Prefs_SetOption(apply, Prefs_LoadedOptions (000bd574)[index], index), the shadow value, and returns it. ES2's Prefs_RevertOption (DBSIM 00459ad8).",
       "source": "ES1DBSIM decompile at 0004aacc, against ES2's Prefs_RevertOption",
       "verified": {
         "bytes": "0004aacc+35",
         "sha1": "d67755ac21e5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004aaf0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_RevertSelectedOptions",
+      "description": "(indices, count) in stack order, its arguments removed by this function: for each of count int16 indices, copies Prefs_LoadedOptions (000bd574)[index] over Prefs_Options (000bd562)[index], calling no handler. es2_xref finds calls from Prefs_Init (0004afe8) and PreferencesPanel_Revert (000483d4). ES2's Prefs_RevertSelectedOptions (DBSIM 00459b04).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#saving",
+      "verified": {
+        "bytes": "0004aaf0+54",
+        "sha1": "e75cfde6a91a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004ab6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_SaveSelectedOptions",
+      "description": "(indices, count) in stack order, its arguments removed by this function: reads the 17 bytes of data\\prefs.cfg (through Path_ApplyAltDrive (000592a4)) into a buffer with FileRStream_Ctor (000655d0) and FileRStream_Read (0006584c), copies the options the count int16 indices name from Prefs_Options (000bd562) over it, or takes all 17 from Prefs_Options when the file does not open; writes the buffer back with FileWStream_Ctor (0006594c) and FileWStream_Write (00065bbc) when that opens. ES2's Prefs_SaveSelectedOptions (DBSIM 00459b78) over 0x36 bytes.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#saving",
+      "verified": {
+        "bytes": "0004ab6c+190",
+        "sha1": "4a6b56622f93",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004ac2c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_OptionChanged",
+      "description": "(index): whether Prefs_Options (000bd562)[index] differs from the load-time copy Prefs_LoadedOptions (000bd574)[index]. ES2's Prefs_OptionChanged (DBSIM 00459c38).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#saving",
+      "verified": {
+        "bytes": "0004ac2c+30",
+        "sha1": "a4de5c89f99f",
         "scope": "body",
         "via": "decompile"
       }
@@ -19337,6 +19757,66 @@
       }
     },
     {
+      "address": "0004acfc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_ApplySoundsOption",
+      "description": "(value), the handler Prefs_Init (0004afe8) registers for option 1: calls 0004e2c8(value).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array",
+      "verified": {
+        "bytes": "0004acfc+15",
+        "sha1": "cfa426e7cad5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004ad0c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_ApplyMusicOption",
+      "description": "(value), the handler Prefs_Init (0004afe8) registers for option 0: calls 0004e294(value), then Music_Tick (000585dc) when the value is not 0 and PrefsInitInProgress (000b1734) is clear.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array",
+      "verified": {
+        "bytes": "0004ad0c+35",
+        "sha1": "176a9312d054",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004ad30",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_ApplyRadioOption",
+      "description": "(value), frameless, its argument removed by this function: the handler Prefs_Init (0004afe8) registers for option 2: stores (value != 0) in the byte 000959e4 and (value != 1) in MessagePort_ShowEnabled (000930d2). The role of ES2's Prefs_ApplyPilotMessageOption (DBSIM 00459cc4).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array",
+      "verified": {
+        "bytes": "0004ad30+36",
+        "sha1": "97ea3c6d7974",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "0004ad54",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Prefs_ApplyMouseOption",
+      "description": "(value), the handler Prefs_Init (0004afe8) registers for option 11: when the value differs from Prefs_MouseOptionApplied (000956c0), stores it there and, when Input_GetMouseDevice_Thunk (0004c634) answers a device, calls Mouse_EnableDriver (00055a90) for a value that is not 0 and Mouse_DisableDriver (00055a76) for 0.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array",
+      "verified": {
+        "bytes": "0004ad54+51",
+        "sha1": "b9d2b81a873d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "0004ad88",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -19387,7 +19867,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Joystick_LoadCalibration",
-      "description": "(path, device) in stack order, its arguments removed by this function: fopens path with mode rb; when it opens, freads 0x40 bytes into a stack block and fcloses it, the fread's count unchecked; otherwise fills the block with min 0, max 0x50, center band low edge 0x28 and high edge 0x50 for each of the four axes. Then DVJoystick_SetRanges (0006b868)(device, block) and the word +0x66, the normalisation's shift, = 7. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "description": "(path, device) in stack order, its arguments removed by this function: fopens path with mode rb; when it opens, freads 0x40 bytes into a stack block and fcloses it, the fread's count unchecked; otherwise fills the block with min 0, max 0x50, center band low edge 0x28 and high edge 0x50 for each of the four axes. Then DVJoystick_SetRanges (0006b868)(device, block) and the word +0x66, the normalisation's shift, = 7. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and ControlsPanel_ApplyDevices (00048e98).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-calibration-file",
       "verified": {
         "bytes": "0004ae0c+130",
@@ -19447,7 +19927,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Prefs_Init",
-      "description": "No arguments: sets PrefsInitInProgress (000b1734); registers through Prefs_SetHandler (0004ac4c) 0004ad0c for option 0, 0004acfc for 1, 0004ad30 for 2, 0004ad54 for 0xb, Input_SetStickMode (0004ad88) for 8, Input_SetThrottleLeverMode (0004ad94) for 10 and Prefs_LimitDetailInLowMemory (0004adb0) for 6. Prefs_Load (0004a744)(1); under DemoMode it clears DemoMode for that load, sets it again, runs Prefs_Load(0) and 0004aaf0(0009570c, 7). Sets VoiceArchivePresent (000956bf) from Voice_ArchiveExists (0004aed8) and, when that is 0, Prefs_SetOption (0004a914)(1, 0, 2). Then Input_CreateJoystickDevices (0004af0c), 000956be = 0xf0, and clears PrefsInitInProgress. ES2's Prefs_Init (DBSIM 0045a19c). es2_xref finds one call, from Prefs_ClearHandlersAndInit (0004a724).",
+      "description": "No arguments: sets PrefsInitInProgress (000b1734); registers through Prefs_SetHandler (0004ac4c) Prefs_ApplyMusicOption (0004ad0c) for option 0, Prefs_ApplySoundsOption (0004acfc) for 1, Prefs_ApplyRadioOption (0004ad30) for 2, Prefs_ApplyMouseOption (0004ad54) for 0xb, Input_SetStickMode (0004ad88) for 8, Input_SetThrottleLeverMode (0004ad94) for 10 and Prefs_LimitDetailInLowMemory (0004adb0) for 6. Prefs_Load (0004a744)(1); under DemoMode it clears DemoMode for that load, sets it again, runs Prefs_Load(0) and Prefs_RevertSelectedOptions (0004aaf0)(0009570c, 7). Sets VoiceArchivePresent (000956bf) from Voice_ArchiveExists (0004aed8) and, when that is 0, Prefs_SetOption (0004a914)(1, 0, 2). Then Input_CreateJoystickDevices (0004af0c), 000956be = 0xf0, and clears PrefsInitInProgress. ES2's Prefs_Init (DBSIM 0045a19c). es2_xref finds one call, from Prefs_ClearHandlersAndInit (0004a724).",
       "source": "Herculan/docs/es1/simulation/input.md#the-preferences-start-up",
       "verified": {
         "bytes": "0004afe8+204",
@@ -19747,7 +20227,7 @@
       "type": "function",
       "confidence": "high",
       "name": "JoystickDevice_Dtor",
-      "description": "(this, flags), its arguments removed by this function: returns for a null this; stores the vtable IMJoystickVtable (00095756) at +0x87, clears Input_DeviceEnabled (000bd600)[the kind at +0x79], clears 000bd616 and 000bd61a where either holds that kind, clears the bits of the byte +0x6f in JoystickClaimedAxes (0009571c) and subtracts the byte +0x73 from JoystickClaimedAxisCount (0009571d); DVJoystick_Dtor (0006b470)(this, 0), and operator_delete (000015f8) for flags bit 0. ES2's JoystickDevice_Dtor (DBSIM 0045c2c4), which clears one recorded kind and releases no axes. es2_xref finds two calls, from 00048e98.",
+      "description": "(this, flags), its arguments removed by this function: returns for a null this; stores the vtable IMJoystickVtable (00095756) at +0x87, clears Input_DeviceEnabled (000bd600)[the kind at +0x79], clears 000bd616 and 000bd61a where either holds that kind, clears the bits of the byte +0x6f in JoystickClaimedAxes (0009571c) and subtracts the byte +0x73 from JoystickClaimedAxisCount (0009571d); DVJoystick_Dtor (0006b470)(this, 0), and operator_delete (000015f8) for flags bit 0. ES2's JoystickDevice_Dtor (DBSIM 0045c2c4), which clears one recorded kind and releases no axes. es2_xref finds two calls, from ControlsPanel_ApplyDevices (00048e98).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-device-object",
       "verified": {
         "bytes": "0004b7a8+125",
@@ -19897,7 +20377,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMJoystick1_Ctor",
-      "description": "(this, mode), its arguments removed by this function: allocates 0x8b bytes through operator_new (000015a4) for a null this, returning 0 when that fails; JoystickDevice_Ctor (0004b6c0)(this, mode, 3, 0x201, 3); vtable IMJoystickVtable (00095756) at +0x87 and buttons 3 at +0x85; returns this. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "description": "(this, mode), its arguments removed by this function: allocates 0x8b bytes through operator_new (000015a4) for a null this, returning 0 when that fails; JoystickDevice_Ctor (0004b6c0)(this, mode, 3, 0x201, 3); vtable IMJoystickVtable (00095756) at +0x87 and buttons 3 at +0x85; returns this. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and ControlsPanel_ApplyDevices (00048e98).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "0004be30+70",
@@ -19927,7 +20407,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMJoystick2_Ctor",
-      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 0xc, 0x201, 4) and buttons 0xc at +0x85. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 0xc, 0x201, 4) and buttons 0xc at +0x85. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and ControlsPanel_ApplyDevices (00048e98).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "0004be94+70",
@@ -19957,7 +20437,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMThrustmasterFCS_Ctor",
-      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 0xb, 0x201, 3), then vtable IMThrustmasterFCSVtable (00095766) at +0x87, 1 at +0x81, buttons 0xf at +0x85 and 1 at +0x86. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 0xb, 0x201, 3), then vtable IMThrustmasterFCSVtable (00095766) at +0x87, 1 at +0x81, buttons 0xf at +0x85 and 1 at +0x86. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and ControlsPanel_ApplyDevices (00048e98).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "0004bef8+86",
@@ -19987,7 +20467,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMThrustmasterRCS_Ctor",
-      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 4, 0x201, 4), then vtable IMThrustmasterRCSVtable (00095776) at +0x87, 4 at +0x81 and buttons 0 at +0x85. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 4, 0x201, 4), then vtable IMThrustmasterRCSVtable (00095776) at +0x87, 4 at +0x81 and buttons 0 at +0x85. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and ControlsPanel_ApplyDevices (00048e98).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "0004bfe0+82",
@@ -20017,7 +20497,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMFlightstick_Ctor",
-      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 0xb, 0x201, 3), then vtable IMFlightstickVtable (00095786) at +0x87, 2 at +0x81 and buttons 3 at +0x85. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c), 00048e98 and IMFlightstickPro_Ctor (0004c114).",
+      "description": "(this, mode), its arguments removed by this function: as IMJoystick1_Ctor (0004be30) with JoystickDevice_Ctor (0004b6c0)(this, mode, 0xb, 0x201, 3), then vtable IMFlightstickVtable (00095786) at +0x87, 2 at +0x81 and buttons 3 at +0x85. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c), ControlsPanel_ApplyDevices (00048e98) and IMFlightstickPro_Ctor (0004c114).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "0004c054+79",
@@ -20047,7 +20527,7 @@
       "type": "function",
       "confidence": "high",
       "name": "IMFlightstickPro_Ctor",
-      "description": "(this, mode), its arguments removed by this function: allocates 0x8b bytes through operator_new (000015a4) for a null this, returning 0 when that fails; IMFlightstick_Ctor (0004c054)(this, mode); then vtable IMFlightstickProVtable (00095796) at +0x87, 3 at +0x81, buttons 0xf at +0x85 and 1 at +0x86; returns this. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and 00048e98.",
+      "description": "(this, mode), its arguments removed by this function: allocates 0x8b bytes through operator_new (000015a4) for a null this, returning 0 when that fails; IMFlightstick_Ctor (0004c054)(this, mode); then vtable IMFlightstickProVtable (00095796) at +0x87, 3 at +0x81, buttons 0xf at +0x85 and 1 at +0x86; returns this. Class name from GO.EXE's vtable. es2_xref finds calls from Input_CreateJoystickDevices (0004af0c) and ControlsPanel_ApplyDevices (00048e98).",
       "source": "Herculan/docs/es1/simulation/joystick.md#the-classes",
       "verified": {
         "bytes": "0004c114+77",
@@ -20217,6 +20697,36 @@
       "verified": {
         "bytes": "0004c634+6",
         "sha1": "2bab5fdeb811",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004c63c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetJoystickDevice_Thunk",
+      "description": "Frameless, no arguments: calls Input_GetJoystickDevice (0004b370) and returns its result.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#rebuilding-the-joystick-devices--controlspanel_applydevices-00048e98",
+      "verified": {
+        "bytes": "0004c63c+6",
+        "sha1": "0a22090d1bd4",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004c644",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Input_GetJoystick2Device_Thunk",
+      "description": "Frameless, no arguments: calls Input_GetJoystick2Device (0004b3a0) and returns its result.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#rebuilding-the-joystick-devices--controlspanel_applydevices-00048e98",
+      "verified": {
+        "bytes": "0004c644+6",
+        "sha1": "dea974301578",
         "scope": "body",
         "via": "both"
       }
@@ -22672,7 +23182,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_DisableDriver",
-      "description": "No arguments, frameless: while Mouse_StatusPtr (000962e0) is set issues INT 33h function 0x1f and returns its AX, zero-extended, plus 1; otherwise returns 0. es2_xref finds one call, from 0004ad54.",
+      "description": "No arguments, frameless: while Mouse_StatusPtr (000962e0) is set issues INT 33h function 0x1f and returns its AX, zero-extended, plus 1; otherwise returns 0. es2_xref finds one call, from Prefs_ApplyMouseOption (0004ad54).",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055a76",
       "verified": {
         "bytes": "00055a76+26",
@@ -22687,7 +23197,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Mouse_EnableDriver",
-      "description": "No arguments, frameless: while Mouse_StatusPtr (000962e0) is set issues INT 33h function 0x20 and returns its AX; otherwise returns 0. es2_xref finds one call, from 0004ad54.",
+      "description": "No arguments, frameless: while Mouse_StatusPtr (000962e0) is set issues INT 33h function 0x20 and returns its AX; otherwise returns 0. es2_xref finds one call, from Prefs_ApplyMouseOption (0004ad54).",
       "source": "Herculan/docs/es1/simulation/input.md#the-mouse-driver; ES1DBSIM disassembly at 00055a90",
       "verified": {
         "bytes": "00055a90+20",
@@ -23492,6 +24002,36 @@
       }
     },
     {
+      "address": "000577f8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_OrbitViewHook",
+      "description": "Frameless, no arguments: Cam_Steer (00000a04)(ViewObjectPtr (000b5b8a), 0, 0, 0xffc0), Cam_Update (000004b8)(ViewObjectPtr), Sim_RenderFrame (00059c08). PreferencesPanel_Raise (00057820) installs it with PreferencesPanel_SetDrawHook (00048180). ES2's PreferencesPanel_OrbitViewHook (DBSIM 0045cfac), its Cam_Steer arguments in reverse order.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#raising-the-panel--preferencespanel_raise-00057820",
+      "verified": {
+        "bytes": "000577f8+37",
+        "sha1": "187850097857",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00057820",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PreferencesPanel_Raise",
+      "description": "No arguments: F12's and Alt+P's case. PreferencesPanel_Ctor (00047578)(0, 0); keeps Sim_Frozen (000b5b92) and sets it to 1; Display_FlipWithoutPan (000bda96) = 0; a local camera (TSCamera_CtorDefault (0005b944), vtable 00096c5a at +0x12, +0x32, +0x36, +0x44, +0x46 and +0x48 zeroed) copied from ViewObjectPtr (000b5b8a) with TSCamera_CopyFrom (00057af8); ExternalView_SetRect (00024a00)(the offset (-160, -50), the rect (0, 0)-(319, the panel's top - 1)). In view 4 (CockpitViewManagerInstance (000b5b60)'s +0x10): Cam_AttachTo (0005923c)(LocalPlayerMech (000b5b86)), the camera's mode +0x36 = 1, Cam_Update (000004b8), Sim_RenderFrame (00059c08). In any other view: frames of Sim_EndFrame (00059b40), Cam_Update and Sim_RenderFrame while CockpitViewManagerPublished (000bc5a0)'s +0x18 is set or its +0x14 is not -1; keeps the view; CockpitViewManager_QueueViewCommand (00022634)(manager, 2); then frames of Sim_EndFrame, Cam_Update and Sim_RenderFrame, attaching the camera the same way on the first frame that finds +0x18 set, until +0x18 has been set and is clear again. PreferencesPanel_SetDrawHook (00048180)(panel, PreferencesPanel_OrbitViewHook (000577f8)); the panel's run, slot +0xc; PreferencesPanel_Dtor (00047a14)(panel, 3); the display 000bdd28's +0x8c made the draw page (slot 17, 0009df18). The camera copied back, ExternalView_ResetRect (00024a7c). From view 4: View_FillOutside3dRect (00024b18)(CockpitViewManager_Published (00021f98)), ViewChain_DrawCaption (00058b68), Cam_Update, Sim_RenderFrame, Sim_EndFrame, and the fill and caption again. From another: Cam_Update, CockpitView_SetView (00022558)(manager, the kept view), Cockpit_SkipFrameDraw (00092d7c) = 1, Sim_RenderFrame, Sim_EndFrame, CockpitView_SetView again, Cockpit_SkipFrameDraw = 0, Sim_RenderFrame. Then Cursor_FollowsMouse (00094c5b) = 1, Sim_Frozen back, and the local camera's vtable 00096c6a and TSContext_Dtor (0005b878)(camera, 0). es2_xref finds one call, from Sim_DispatchCommand (00059df8). ES2's PreferencesPanel_Raise (DBSIM 0045cfd4).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#raising-the-panel--preferencespanel_raise-00057820",
+      "verified": {
+        "bytes": "00057820+675",
+        "sha1": "d3904f1d1de2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
       "address": "00057af8",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -23572,7 +24112,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Music_Tick",
-      "description": "No arguments; es2_xref finds calls from Sim_FrameSoundTick (00058574) and 0004ad0c. It does nothing without the sound manager 000959ac or with preferences option 0 (000bd562) clear. On the first call (Music_Song Music_Song (00096d0c) at -1) it picks song Math_RandomBelow (00063b3c)(000b5c48, 3), Sound_Preload (0004dde0), Music_SongObject (00096d14), Music_Battle (00096d0e) 0 and Music_NextCheck (00096d10) now + 300, now being 000981c4. While Music_Switching (00096d18) is set it lowers the song's SoundObject_GetVolume (0005049c) by 15 through slot +0x2c and returns, and at 0 Sound_Stop (0004df70) and moves Music_Song by +3 (battle) or -3 (calm), preloads it and sets it to 100. Past Music_NextCheck it walks LiveObjectList for an object not disabled (+0x9e) or destroyed (+0x93) whose group (+0x3f) has no action (+0x16) and side byte +0x14 1, seen when TargetSelect_CanTarget (0002d624) and TargetSelect_InForwardCone (0002d71c) answer non-zero from CockpitViewInstance or within 25000 of the player: in battle a seen one returns; calm, it starts the switch to battle. In battle with none seen it switches to calm unless g_FlyerPool holds a flyer not disabled or destroyed more than 0x49f0 from the player. Last, Sound_Play (0004de84)(song) when Sound_IsPlaying (0004e05c) answers 0.",
+      "description": "No arguments; es2_xref finds calls from Sim_FrameSoundTick (00058574) and Prefs_ApplyMusicOption (0004ad0c). It does nothing without the sound manager 000959ac or with preferences option 0 (Prefs_Options (000bd562)) clear. On the first call (Music_Song Music_Song (00096d0c) at -1) it picks song Math_RandomBelow (00063b3c)(000b5c48, 3), Sound_Preload (0004dde0), Music_SongObject (00096d14), Music_Battle (00096d0e) 0 and Music_NextCheck (00096d10) now + 300, now being 000981c4. While Music_Switching (00096d18) is set it lowers the song's SoundObject_GetVolume (0005049c) by 15 through slot +0x2c and returns, and at 0 Sound_Stop (0004df70) and moves Music_Song by +3 (battle) or -3 (calm), preloads it and sets it to 100. Past Music_NextCheck it walks LiveObjectList for an object not disabled (+0x9e) or destroyed (+0x93) whose group (+0x3f) has no action (+0x16) and side byte +0x14 1, seen when TargetSelect_CanTarget (0002d624) and TargetSelect_InForwardCone (0002d71c) answer non-zero from CockpitViewInstance or within 25000 of the player: in battle a seen one returns; calm, it starts the switch to battle. In battle with none seen it switches to calm unless g_FlyerPool holds a flyer not disabled or destroyed more than 0x49f0 from the player. Last, Sound_Play (0004de84)(song) when Sound_IsPlaying (0004e05c) answers 0.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-music--music_tick-000585dc",
       "verified": {
         "bytes": "000585dc+878",
@@ -23962,7 +24502,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_EndFrame",
-      "description": "No arguments: sets Display_FlipWithoutPan (000bda96) to 1 when Sim_Frozen (000b5b92) is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); Palette_CycleAnimatedRanges (00028260); Palette_FlushDirtyRange (00027f74); on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); Mem_TrackPeakUse (00059288). Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, 00057820, four, 00057ffc, one, and 00058414, three.",
+      "description": "No arguments: sets Display_FlipWithoutPan (000bda96) to 1 when Sim_Frozen (000b5b92) is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904)(CockpitViewManagerInstance (000b5b60)); Palette_CycleAnimatedRanges (00028260); Palette_FlushDirtyRange (00027f74); on SimDisplay (000b5b5c) makes +0x8c the visible page (+0x34, through 0009df1c) and +0x88 the draw page (+0x3c, through 0009df18), each copied to 00098dd2 or 00098dda while it is the current display 000bdd28, and swaps +0x88 and +0x8c; CockpitView_ProcessViewCommand (000226f0)(the manager); Mem_TrackPeakUse (00059288). Matched to ES2's Sim_EndFrame (DBSIM 0045fa98), which es2_xref finds calling CockpitView_StepViewTransition. es2_xref finds calls from Sim_Main (00059350), one, PreferencesPanel_Raise (00057820), four, 00057ffc, one, and 00058414, three.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904",
       "verified": {
         "bytes": "00059b40+200",
@@ -24082,7 +24622,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_DispatchCommand",
-      "description": "(block), callee-cleaned: the block's command word goes to CockpitWidgets_HandleCommand (0002d24c), then to Sim_HandleWindowKey (00059dec), then to the 15 codes at 00097180 (REPNE SCASD, targets 15 dwords after): 0x21f toggles Sim_Frozen while TapePlayback or TapeRecording is set; 0x2f queues view command 3 (ViewChain_PendingView 2) in ViewChain_View 1 or 3 and 2 (pending 3) in view 2; 0x31, in view 3 with the view manager's +0x10 at 4, steps ViewChain_Viewed through LiveObjectList with ObjectList_Next to an object with +0x28 not negative in the player's group and, when it differs, calls ViewChain_ViewObject (00058a44), sets the camera's +0x36 to 1, ViewChain_Chosen and ViewChain_CaptionFrames 2; 0x0f and 0x1c call ViewChain_ToggleCameraControl (00059dbc) with the manager's +0x10 at 4; 0x0e sets g_CenterTurretMode; 0x10 shows Mission_StatusForAlert(1, LocalPlayerMech) in the panel StatusAlertPanel_Ctor (00046efc) and clears MissionAlertArmed; 0x01 queues view command 3, Sound_Play(0x2d) and pending view 2; 0x401 and 0x410 raise the panel with 1 and set Sim_QuitFlag (000b5b9e) on a non-zero answer; 0x19 raises it with 0; 0x219 and 0x58 call 00057820; 0x402 sets ThrottleLeverMode (000919ce) to -1 when it is above 0 and to 1 otherwise; 0x52 calls Input_ToggleStickMode (0004d8e1). Any other code goes to slot +0x30 of ViewChain_Viewed, whose answer is returned. Returns 1 for a handled code plus the panel's answer (Ctrl+Esc, Ctrl+Q, P) or 1 when Q's answer ends the mission. ES2's Sim_DispatchCommand (DBSIM 0045fdac).",
+      "description": "(block), callee-cleaned: the block's command word goes to CockpitWidgets_HandleCommand (0002d24c), then to Sim_HandleWindowKey (00059dec), then to the 15 codes at 00097180 (REPNE SCASD, targets 15 dwords after): 0x21f toggles Sim_Frozen while TapePlayback or TapeRecording is set; 0x2f queues view command 3 (ViewChain_PendingView 2) in ViewChain_View 1 or 3 and 2 (pending 3) in view 2; 0x31, in view 3 with the view manager's +0x10 at 4, steps ViewChain_Viewed through LiveObjectList with ObjectList_Next to an object with +0x28 not negative in the player's group and, when it differs, calls ViewChain_ViewObject (00058a44), sets the camera's +0x36 to 1, ViewChain_Chosen and ViewChain_CaptionFrames 2; 0x0f and 0x1c call ViewChain_ToggleCameraControl (00059dbc) with the manager's +0x10 at 4; 0x0e sets g_CenterTurretMode; 0x10 shows Mission_StatusForAlert(1, LocalPlayerMech) in the panel StatusAlertPanel_Ctor (00046efc) and clears MissionAlertArmed; 0x01 queues view command 3, Sound_Play(0x2d) and pending view 2; 0x401 and 0x410 raise the panel with 1 and set Sim_QuitFlag (000b5b9e) on a non-zero answer; 0x19 raises it with 0; 0x219 and 0x58 call PreferencesPanel_Raise (00057820); 0x402 sets ThrottleLeverMode (000919ce) to -1 when it is above 0 and to 1 otherwise; 0x52 calls Input_ToggleStickMode (0004d8e1). Any other code goes to slot +0x30 of ViewChain_Viewed, whose answer is returned. Returns 1 for a handled code plus the panel's answer (Ctrl+Esc, Ctrl+Q, P) or 1 when Q's answer ends the mission. ES2's Sim_DispatchCommand (DBSIM 0045fdac).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#commands--sim_dispatchcommand-00059df8; ES1DBSIM decompile and disassembly at 00059df8",
       "verified": {
         "bytes": "00059df8+712",
@@ -35137,7 +35677,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Cockpit_SkipFrameDraw",
-      "description": "Byte: Cockpit_DrawFrame (0002cf28) returns at once while it is set. es2_xref finds two writes, both in 00057820, which sets it to 1 for one Sim_RenderFrame and Sim_EndFrame between two CockpitView_SetView calls and clears it before a second Sim_RenderFrame.",
+      "description": "Byte: Cockpit_DrawFrame (0002cf28) returns at once while it is set. es2_xref finds two writes, both in PreferencesPanel_Raise (00057820), which sets it to 1 for one Sim_RenderFrame and Sim_EndFrame between two CockpitView_SetView calls and clears it before a second Sim_RenderFrame.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#drawing-it"
     },
     {
@@ -35191,7 +35731,7 @@
       "type": "data",
       "confidence": "high",
       "name": "MessagePort_ShowEnabled",
-      "description": "Byte, 1 in the image: MessagePort_Tick (0002ef58) calls a port's show only while it is set, otherwise counting a due and ready message as shown. MessageTicker_Update (0002fab8) sets it to 1 around the ticker's tick; the frameless code at 0004ad30 stores (value != 1) in it.",
+      "description": "Byte, 1 in the image: MessagePort_Tick (0002ef58) calls a port's show only while it is set, otherwise counting a due and ready message as shown. MessageTicker_Update (0002fab8) sets it to 1 around the ticker's tick; the frameless code at Prefs_ApplyRadioOption (0004ad30) stores (value != 1) in it.",
       "source": "Herculan/docs/es1/simulation/cockpit-messages.md#the-lifecycle"
     },
     {
@@ -35632,7 +36172,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Cursor_FollowsMouse",
-      "description": "byte: the mouse callback at CockpitMouse_OnEvent (00044464) passes the pointer's position to Cursor_SyncPosition (000669dc) only while it is set. CockpitView_StepViewTransition (00022904) clears it for the external view and sets it on the return. es2_xref finds it also read by CockpitMouse_ProcessQueue (000444d0) and AlertPanel_Enter (00045f00) and written by AlertPanel_Enter (00045f00), AlertPanel_Leave (000460b8) and 00057820.",
+      "description": "byte: the mouse callback at CockpitMouse_OnEvent (00044464) passes the pointer's position to Cursor_SyncPosition (000669dc) only while it is set. CockpitView_StepViewTransition (00022904) clears it for the external view and sets it on the return. es2_xref finds it also read by CockpitMouse_ProcessQueue (000444d0) and AlertPanel_Enter (00045f00) and written by AlertPanel_Enter (00045f00), AlertPanel_Leave (000460b8) and PreferencesPanel_Raise (00057820).",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904"
     },
     {
@@ -35780,6 +36320,42 @@
       "source": "Herculan/docs/es1/simulation/alert-panels.md#the-status-panel--statusalertpanel_ctor-00046efc"
     },
     {
+      "address": "0009519c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PreferencesPanel_SaveList",
+      "description": "Seven int16 option indices, 0 to 6, which PreferencesPanel_Save (000483a0) and PreferencesPanel_Revert (000483d4) test and pass on.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#saving"
+    },
+    {
+      "address": "000951ae",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "PrefsAlertVtable",
+      "description": "The preferences panel's table: 0 at +0, PreferencesPanel_Paint (00047e90) at +4, AlertPanel_SetTitleText (000461ec) at +8, PreferencesPanel_Run (00047a88) at +0xc, PreferencesPanel_OnClick (000480f4) at +0x10, PreferencesPanel_HandleEvent (00048078) at +0x14, PreferencesPanel_GetButtonCaption (00048168) at +0x18, 0 at +0x1c; the paint, the click, the keys and the caption by their padding entries.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-preferences-panel--preferencespanel_ctor-00047578"
+    },
+    {
+      "address": "000952c6",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ControlsAlertVtable",
+      "description": "The controls panel's table: 0 at +0, ControlsPanel_Paint (00048c58) at +4, AlertPanel_SetTitleText (000461ec) at +8, ControlsPanel_Run (00048810) at +0xc, ControlsPanel_OnClick (00048db0) at +0x10, AlertPanel_HandleEvent (00046670) at +0x14, ControlsPanel_GetButtonCaption (00048e80) at +0x18, 0 at +0x1c; the paint, the run, the click and the caption by their padding entries.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-controls-panel--controlspanel_ctor-00048408"
+    },
+    {
+      "address": "00095348",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "ControlsPanel_SaveList",
+      "description": "Five int16 option indices, 7, 8, 10, 9 and 11, which ControlsPanel_ApplyDevices (00048e98) copies to the stack and saves.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#saving"
+    },
+    {
       "address": "000955d6",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -35796,6 +36372,15 @@
       "name": "VoiceArchivePresent",
       "description": "byte: Voice_ArchiveExists (0004aed8)'s answer, which Prefs_Init (0004afe8) stores. ES2's VoiceArchivePresent.",
       "source": "Herculan/docs/es1/simulation/input.md#the-preferences-start-up"
+    },
+    {
+      "address": "000956c0",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Prefs_MouseOptionApplied",
+      "description": "Byte: the option 11 value Prefs_ApplyMouseOption (0004ad54) last acted on.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array"
     },
     {
       "address": "0009571c",
@@ -38822,6 +39407,33 @@
       "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads"
     },
     {
+      "address": "000bd562",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Prefs_Options",
+      "description": "17 bytes: the preferences options, byte n option n, which Prefs_Load (0004a744) reads from data\\prefs.cfg. ES2's SimOptions (DBSIM 004d1fbc), 0x36 bytes.",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array"
+    },
+    {
+      "address": "000bd574",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Prefs_LoadedOptions",
+      "description": "17 bytes: the options as loaded or last committed, which Prefs_Load (0004a744) copies from Prefs_Options (000bd562) and Prefs_CommitOptions (0004a83c) updates; Prefs_OptionChanged (0004ac2c) compares against it. ES2's load-time shadow (DBSIM 004d1ff2).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array"
+    },
+    {
+      "address": "000bd586",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Prefs_PreviousOptions",
+      "description": "17 bytes: each option's value before its last write, which Prefs_SetOption (0004a914) and the step functions store. ES2's outgoing shadow (DBSIM 004d2028).",
+      "source": "Herculan/docs/es1/simulation/preferences.md#the-option-array"
+    },
+    {
       "address": "000bd598",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -38998,7 +39610,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Display_FlipWithoutPan",
-      "description": "int16: while it is 1, VGA8_ShowPage (00052690) returns after writing the CRTC's start address, neither waiting for the next retrace nor writing the pan. Sim_EndFrame (00059b40) sets it to 1 while Sim_Frozen (000b5b92) is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904) sets it to 0 when it runs a command, and CockpitView_ProcessViewCommand (000226f0) after its retrace wait. es2_xref finds one more writer, 00057820.",
+      "description": "int16: while it is 1, VGA8_ShowPage (00052690) returns after writing the CRTC's start address, neither waiting for the next retrace nor writing the pan. Sim_EndFrame (00059b40) sets it to 1 while Sim_Frozen (000b5b92) is 0 and to 0 otherwise; CockpitView_StepViewTransition (00022904) sets it to 0 when it runs a command, and CockpitView_ProcessViewCommand (000226f0) after its retrace wait. es2_xref finds one more writer, PreferencesPanel_Raise (00057820).",
       "source": "Herculan/docs/es1/rendering/screen-pages.md#the-simulators-own-page-routines"
     },
     {

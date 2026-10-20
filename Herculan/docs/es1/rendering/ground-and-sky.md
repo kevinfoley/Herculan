@@ -52,7 +52,7 @@ The sky's colours are ES2's: bands of `+0x54` rows from the horizon colour `+0x2
 
 `Hzline_FillGround` (`000267d8`), given the `hzline`, the canvas origin's x (0 when there is none) and the camera, paints nothing while both ends of the line lie below the view's bottom row. Otherwise:
 
-- when the `hzline`'s byte `+0x70` is set and the preferences byte `000bd567` is greater than `000956be`, it draws [the textured ground](#the-textured-ground) with `GndTex_Draw` (`00029120`) and returns. `World_LoadTheater` sets `+0x70` to 1 ([the load](../formats/wld-world.md#the-load)), and `Prefs_Init` (`0004afe8`) stores 240 in `000956be`. `000bd567` is the value of the preferences panel's option 5 (`00047f84`, case 5);
+- when the `hzline`'s byte `+0x70` is set and the preferences byte `000bd567` is greater than `000956be`, it draws [the textured ground](#the-textured-ground) with `GndTex_Draw` (`00029120`) and returns. `World_LoadTheater` sets `+0x70` to 1 ([the load](../formats/wld-world.md#the-load)), and `Prefs_Init` (`0004afe8`) stores 240 in `000956be`. `000bd567` is preferences option 5, the preferences panel's GROUND ([its rows](../simulation/preferences.md#its-rows));
 - otherwise it paints [colour bands](#the-banded-ground).
 
 ### The banded ground
@@ -125,7 +125,7 @@ Rolled, `GndTex_Draw` draws the rows in the roll-free frame and turns the bitmap
 
 ## The horizon skyline
 
-`Hzline_DrawWithOffset` draws the skyline last, with `Hzline_BlitHorizonStrip` (`00026ac8`), when either end row of the line plus the line offset is greater than 0, the `hzline`'s bank `+0x50` is loaded and the preferences byte `000bd565` (option 3, `00047f84` case 3) is non-zero. The bank is `dba\world<N>`, which only the world files with *d* 0 name ([the layout](../formats/wld-world.md#the-layout)). It is ES2's function (`Hzline_BlitHorizonStrip`, `0042f398`) without ES2's coordinate shifts.
+`Hzline_DrawWithOffset` draws the skyline last, with `Hzline_BlitHorizonStrip` (`00026ac8`), when either end row of the line plus the line offset is greater than 0, the `hzline`'s bank `+0x50` is loaded and the preferences byte `000bd565` (option 3, the preferences panel's HORIZON, [its rows](../simulation/preferences.md#its-rows)) is non-zero. The bank is `dba\world<N>`, which only the world files with *d* 0 name ([the layout](../formats/wld-world.md#the-layout)). It is ES2's function (`Hzline_BlitHorizonStrip`, `0042f398`) without ES2's coordinate shifts.
 
 Given the `hzline`, the canvas origin, the line offset, the camera and the bank, with *n* the bank's frame count (`+4`), its frames at `+8`, and *w* frame 0's column count, every frame taken as *w* wide:
 
@@ -179,7 +179,7 @@ The classes are ES2's chain, `ClassItem`, `TSBase`, `TSGroupItem`, `TSPoly`, `TS
 
 `Clouds_DriftAndDraw` (`00027d78`), slot `+0x34` of the subclass, given the camera:
 
-1. sets the number drawn `+0xf9` to (count · (`000bd566` + 1)) >> 8, `000bd566` being a preferences byte;
+1. sets the number drawn `+0xf9` to (count · (`000bd566` + 1)) >> 8, `000bd566` being preferences option 4, the preferences panel's SKY, 0 to 255 ([its rows](../simulation/preferences.md#its-rows));
 2. adds the wind to the position of each cloud drawn;
 3. calls `TexPoly_DrawAtPoints` (`00027724`), `TexPoly`'s slot `+0x34`, with the camera.
 
@@ -264,7 +264,7 @@ ES2's `TexPoly_DrawAtPoints` (`0042fa18`) also sets the depth fade to 0 and hold
 
 ## Open
 
-- **Open:** what the preferences panel's options 3 and 5 are called and which values they take; `0005b48a` also sets `000b5b96` to whether option 5 exceeds 240. Which option sets `000bd566`, the byte the number of clouds drawn scales by.
+- **Open:** what `000b5b96` does, which `0005b48a` sets to whether option 5 exceeds 240.
 - **Open:** what reads `TexPoly`'s ring tables (`+0x7d`, `+0x9b`, `+0xd7`, count `+0xf5`) and the angle triples at `+0x12`; of the functions this page describes, the set-up writes them and none of the others reads them. What `dba\clouds2`'s frames 0 to 2 show, and what writes the surface entry `+0x5d`, the frame seen from below, which the constructor zeroes.
 - **Open:** what draws with palette entries 64–79, which the pitch gradient rewrites, and what sets `000928ec` (`00057f89`, `00058407`) and `000928ee` (`00057e15`, `0005b3a3`).
 - **Open:** what the canvas origin pair at `000afa9c` holds, and what writes it (`00022384`, `0002252c`, `0002253c`, `000243f9`, `0002e131` hold its address).

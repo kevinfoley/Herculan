@@ -169,7 +169,7 @@ Each voice-line slot then gets `SoundManager_CreateObject`(manager, 0, 0, index)
 - **Open:** what plays `ROSEY1.SFX` and the eleven `res32\` `.RAW` files the shell's table does not name. `ES1GO`'s resource name builder, the function holding the reference at `ES1GO 00047170`, rewrites a `.RAW` extension, and is a lead.
 - **Open:** the sound object vtables' slots `+0x28`, `+0x2c` and `+0x30`; what the object's `+0x1f` and `+0x21` mean to the driver; the start block's `+0x10` (2 for every digital sound) and flags; and `+0x38` with the object's `+0x43` and `+0x47`.
 - **Open:** what `0006e055` and `0005049c` measure in `DigiSound_Play`'s choice of a sound to stop.
-- **Open:** what sets the byte `000959e4` that gates loading a voice line's sample, and what the caller of `ES1GO 000087ce` does with its answer.
+- **Open:** how the byte `000959e4`, which `Prefs_ApplyRadioOption` (`0004ad30`) sets for the preferences panel's `VOICE ONLY` and `TEXT / VOICE` ([the option array](../simulation/preferences.md#the-option-array)), gates loading a voice line's sample, and what the caller of `ES1GO 000087ce` does with its answer.
 - **Open:** `ES1GO 00041f64` and `ES1GO 0004240a`, which `ShellSound_Init` calls where `Sound_Init` calls `SoundManager_Ctor` and `SoundManager_LoadDrivers`.
 - **Open:** what `SOUNDS.STR`'s attribute bytes 0 and 1 set, through the slots `+0x28` and `+0x2c`.
 - **Open:** what reads `sos\DONS.BNK` and `sos\DRUM.DIG`. A case-insensitive search of both images for `dons` and the bank names finds `sos\melodic.bnk`, `sos\drum.bnk` and `sos\drum32.dig` in each, and no `dons` or `drum.dig`.

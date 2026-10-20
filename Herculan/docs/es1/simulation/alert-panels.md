@@ -16,7 +16,7 @@ Five object files lie between [the cockpit's mouse](cockpit-mouse.md#where-the-o
 
 `alert.cpp` opens with no run of `ConfigPart`'s copies ([module copies](../formats/compiler.md#vtables)). `es1_boilerplate.py bounds` reports a `RET 0x36e9` at `00046c8c` followed by a zero byte; those bytes are inside the this-adjusting thunks at `00046c88` and `00046c94` ([the slider](#the-slider)), not a file's end. ES2 keeps the style frame, the loaders and the color helpers in one run (`CornerFrame_Draw` `00453240` to `Raster_DrawLineColour` `00453798`) before its `StringTable_Ctor`.
 
-**The two members read here have files of their own.** The status panel's code, `00046efc`–`00047577`, starts on the 4-byte boundary after `alert.cpp`'s zero byte, with `StatusAlertPanel_Ctor` and no destructor copy; `StatusAlertPanel_GetButtonCaption`'s `RET 8` ends at `00047577`, on the boundary before the preferences panel's code at `00047578`, so no zero fill tells whether `00047578` opens another file ([Open](#open)). The objectives panel's file, `0004a18c`–`0004a723`, follows a `RET 4` at `0004a187` and two zero bytes: it opens with `HeapPtr_DtorObjectivesPanelCopy` (`0004a18c`), a lone copy of the 40-byte destructor that opens a run of `ConfigPart`'s copies ([module copies](../formats/compiler.md#vtables)), to which `es2_xref.py` finds no reference, and ends with `ObjectivesPanel_GetButtonCaption`'s `RET 8` at `0004a71f` and two zero bytes. No function of either file asserts, so neither names its source path, and neither has an entry in the static constructor table, whose entry after `Alert_StaticInit`'s (`000adc58`) holds `0004c64c` (`000adc5c`).
+**The two members read here have files of their own.** The status panel's code, `00046efc`–`00047577`, starts on the 4-byte boundary after `alert.cpp`'s zero byte, with `StatusAlertPanel_Ctor` and no destructor copy; `StatusAlertPanel_GetButtonCaption`'s `RET 8` ends at `00047577`, on the boundary before the preferences panel's code at `00047578`, so no zero fill tells whether `00047578` opens another file ([the preferences panel's files](preferences.md#where-the-object-files-start-and-end)). The objectives panel's file, `0004a18c`–`0004a723`, follows a `RET 4` at `0004a187` and two zero bytes: it opens with `HeapPtr_DtorObjectivesPanelCopy` (`0004a18c`), a lone copy of the 40-byte destructor that opens a run of `ConfigPart`'s copies ([module copies](../formats/compiler.md#vtables)), to which `es2_xref.py` finds no reference, and ends with `ObjectivesPanel_GetButtonCaption`'s `RET 8` at `0004a71f` and two zero bytes. No function of either file asserts, so neither names its source path, and neither has an entry in the static constructor table, whose entry after `Alert_StaticInit`'s (`000adc58`) holds `0004c64c` (`000adc5c`).
 
 ## The panel object — `AlertPanel_CtorBase` (`00045988`)
 
@@ -83,7 +83,7 @@ ES2's also cancels and pauses the squad message port, pauses the cockpit view's,
 
 ## The loop
 
-The loop is each member's, as in ES2. The two read here, `StatusAlertPanel_RunModal` (`0004730c`) and `ObjectivesPanel_RunModal` (`0004a4ec`), each slot `+0xc` of its member's table, are the same code: `AlertPanel_Enter`; `AlertPanel_SetFocus`(panel, 0), which puts the pointer on widget 0; then, until the close byte `+0x2b9` is set, `Input_BuildPlayerDevice` ([the input build](input.md#the-input-build--input_buildplayerdevice-0004cb14)), whose mouse events now go to the panel's root, its block handed to slot `+0x14`, the key handler, and slot `+0x10`, the per-frame paint, of each widget in turn; then `AlertPanel_Leave`; and it returns bit 0 of the close byte. So the loop calls neither `Sim_MainTick` nor `Sim_EndFrame`: the mission stands still, nothing presents a frame or flips a page, the panel's widgets draw straight onto the page on the screen, and the loop goes round as fast as the input build returns, with no wait. ES2's loops also service the press flashes and present ([ES2's](../../retail/simulation/alert-panels.md#keys-and-the-press-flash)). The other three members' loops are [Open](#open).
+The loop is each member's, as in ES2. The two read here, `StatusAlertPanel_RunModal` (`0004730c`) and `ObjectivesPanel_RunModal` (`0004a4ec`), each slot `+0xc` of its member's table, are the same code: `AlertPanel_Enter`; `AlertPanel_SetFocus`(panel, 0), which puts the pointer on widget 0; then, until the close byte `+0x2b9` is set, `Input_BuildPlayerDevice` ([the input build](input.md#the-input-build--input_buildplayerdevice-0004cb14)), whose mouse events now go to the panel's root, its block handed to slot `+0x14`, the key handler, and slot `+0x10`, the per-frame paint, of each widget in turn; then `AlertPanel_Leave`; and it returns bit 0 of the close byte. So the loop calls neither `Sim_MainTick` nor `Sim_EndFrame`: the mission stands still, nothing presents a frame or flips a page, the panel's widgets draw straight onto the page on the screen, and the loop goes round as fast as the input build returns, with no wait. ES2's loops also service the press flashes and present ([ES2's](../../retail/simulation/alert-panels.md#keys-and-the-press-flash)). The preferences and controls panels' loops are [`preferences.md`'s](preferences.md#the-loop--preferencespanel_run-00047a88); the preferences panel's draws a frame of the outside view and flips the pages each pass.
 
 ## Keys — `AlertPanel_HandleEvent` (`00046670`)
 
@@ -278,6 +278,10 @@ The status's row of `str\GNL_ALRT.STR`, which has one row for each status from 0
 
 Of the 72 retail `.ENG` files with an `OBJ:` block, `B0_C6_3A.ENG` holds 8 objectives and `B0_C7_2A.ENG` 10, so `F11` shows the first seven of each.
 
+## The preferences and controls panels
+
+`F12`'s and `Alt+P`'s preferences panel, `PreferencesPanel_Ctor` (`00047578`), and the controls panel its CONTROLS raises, `ControlsPanel_Ctor` (`00048408`), are members on this base, written up in [`preferences.md`](preferences.md).
+
 ## Functions
 
 | ES1 | Address | ES2 |
@@ -327,14 +331,13 @@ Of the 72 retail `.ENG` files with an `OBJ:` block, `B0_C6_3A.ENG` holds 8 objec
 
 ## Open
 
-- **Open:** the members `00047578`, `00048408` and `00049154`, and the preferences panel's `00057820`; the loops of the three (`00047a88`, `00048810` and `000496f0`, which call `AlertPanel_Enter` and `AlertPanel_Leave`), and which member builds a slider, `es2_xref.py` finding no call of `AlertSliderGadget_Ctor`.
-- **Open:** whether `00047578` opens an object file of its own: the status panel's last `RET 8` ends on the 4-byte boundary before it, with no zero fill and no destructor copy between them.
+- **Open:** which member builds a slider, `es2_xref.py` finding no call of `AlertSliderGadget_Ctor`: the preferences and controls panels build none, and the calibration panel, `00049154`, is not read ([`preferences.md`'s Open](preferences.md#open)).
 - **Open:** what passes status 5 to the status panel: of the six calls `es2_xref.py` finds, four pass constants, and `Mission_Status`, whose answers the other two pass, has no arm that answers 5 ([the status](mission-status.md#the-status--mission_status-0000f4e8)).
 - **Open:** whether the panels' render context clips what is drawn outside the panel's rect: the objectives panel's title-bar frame, whose corners are all at (−20, −20), and the last five columns of its 320-wide plate on a 315-wide panel. A retail check: `F11`'s `OBJECTIVES` has no bevelled frame around it, where `Q`'s `MISSION ALERT` has one.
 - **Open:** what the objectives panel shows when `data\object.str` is missing, which `StringTable_LoadFromFile` would be asked to open; the shell leaves the file as it was for a mission whose `.ENG` file has no `OBJ:` block ([the objectives](../formats/eng-mission-text.md#the-objectives)).
 - **Open:** what reaches `ObjectivesPanel_Dtor`, to which `es2_xref.py` finds no branch or stored pointer, nor to its padding `0004a47d`.
 - **Open:** whether a key's press of a panel button shows it pressed in retail. `AlertPanel_PressWidget` does not change the state. A retail check: on the pause panel (`P`), [Return] closes it with no pressed look on CONTINUE, where a held mouse press shows it.
-- **Open:** a press's move of the focus. A retail check: on the preferences panel (`F12`), a click near the edge of an option puts the pointer on the option's center, if that panel's options are these buttons.
+- **Open:** a press's move of the focus. A retail check: on the preferences panel (`F12`, [the panel](preferences.md#the-preferences-panel--preferencespanel_ctor-00047578)), a click near the edge of MUSIC puts the pointer on its center.
 - **Open:** [Alt+Tab] and keypad 0 in a panel. A retail check: on the `Ctrl+Q` panel, [Alt+Tab] from CONTINUE moves the pointer to QUIT's center, and keypad 0 does so only with preferences option 10 on.
 - **Open:** the slider's `+0x7a`, which its paint hands the bar graph.
 - **Open:** the object file `000451e0`–`00045987`, which `es2_naming.py match` pairs with ES2's screenshot code (`Screenshot_BuildPath`, `Screenshot_Save`).
