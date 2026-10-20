@@ -53,8 +53,12 @@ tweak.flyer_ignores_player_throttle.display_name  Cybrid-Flieger ignorieren Ihre
 tweak.flyer_ignores_player_throttle.description   Ein Cybrid-Flieger fliegt immer mit seiner normalen Reisegeschwindigkeit. Im Originalspiel werden alle Cybrid-Flieger der Mission langsamer, wenn Ihr Joystick einen Schubregler hat und die THROTTLE-Steuerung des Razor auf THROTTLE steht, auch wenn Sie keinen Razor fliegen.
 tweak.c2_05_stingray_closes_in.display_name  Delta-Einsatz 5 korrigieren
 tweak.c2_05_stingray_closes_in.description   Im Einsatz, in dem Sie den Raptor-II-Prototyp eskortieren, verlässt der Cybrid-Stingray, der ihn jagt, seine Kartenecke und hält direkt auf den Prototyp zu, sobald Sie den Prototyp zur Basis zurückgebracht haben. Im Originalspiel verlässt er die äußerste Nordostecke nie.
+tweak.c5_10_guards_hold.display_name  Luna-Einsatz 10 korrigieren
+tweak.c5_10_guards_hold.description   Im letzten Einsatz bewachen die Cybrids, die rund um die feindliche Basis erscheinen, diese: Sie sammeln sich nahe ihrem Kern und bekämpfen jeden, der sich nähert. Im Originalspiel bleiben sie stehen, wo sie erscheinen, und erwidern nie das Feuer, auch nicht unter Beschuss.
 tweak.faster_keyboard_aiming.display_name  Schnelleres Zielen mit der Tastatur
 tweak.faster_keyboard_aiming.description   Eine gehaltene Taste dreht und neigt den Geschützturm Ihres HERC so schnell wie ein ganz ausgelenkter Joystick. Im Originalspiel zielt eine Taste mit der halben Geschwindigkeit und der Coolie-Hat des Joysticks mit drei Vierteln davon.
+tweak.fix_gunsight_drag.display_name  Zielen mit Maus reparieren
+tweak.fix_gunsight_drag.description   Halten Sie die rechte Maustaste irgendwo im vorderen Fenster gedrückt und bewegen Sie die Maus, um den Geschützturm Ihres HERC auszurichten: Je weiter der Zeiger von der Stelle entfernt ist, an der Sie gedrückt haben, desto schneller dreht sich der Turm, bis zur Geschwindigkeit eines ganz ausgelenkten Joysticks. Das Originalspiel hat diese Steuerung, vergisst die rechte Taste aber, sobald sich die Maus bewegt, sodass sie nie funktioniert.
 tweak.fix_raptor2_perspective.display_name  Raptor-II-Perspektive korrigieren
 tweak.fix_raptor2_perspective.description   Setzt die Cockpitansicht des Raptor II in sein Cockpit. Im Originalspiel liegt die Ansicht über der Oberkante des HERC. Turmnachführung und Waffenkonvergenz wandern mit.
 tweak.reset_counters_on_replay.display_name  Flags bei „Einsatz noch mal?“ korrigieren

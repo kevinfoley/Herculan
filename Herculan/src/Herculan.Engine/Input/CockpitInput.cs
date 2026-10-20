@@ -110,6 +110,7 @@ public sealed class CockpitInput {
 
 	private readonly Queue<Event> _queue = new();
 	private CockpitMouseButtons _lastButtons;
+	private CockpitMouseButtons _lastQueuedButtons;
 	private float _elapsedSeconds;
 
 	private CockpitWidgetId? _pressed;
@@ -147,6 +148,13 @@ public sealed class CockpitInput {
 	public CockpitWidgetId? Depressed { get; private set; }
 
 	/// <summary>
+	/// Whether the last event queued was a right press — the right-button bit of the original's mouse record
+	/// (<c>006c5fdc</c>), which only <c>WM_RBUTTONDOWN</c> sets and the next mouse message of any kind clears, a
+	/// move included (docs/retail/simulation/gunsight-drag.md).
+	/// </summary>
+	public bool RightPressedLast { get; private set; }
+
+	/// <summary>
 	/// Every position a captured pointer reported during the last drain, oldest first — empty when
 	/// nothing is being dragged. The capture opens on the press that starts it, because the original
 	/// dispatches its drag handler straight from <c>Widget_OnMouseDown</c>: clicking anywhere on a
@@ -170,6 +178,10 @@ public sealed class CockpitInput {
 	/// <param name="windowY">Pointer y in window pixels.</param>
 	/// <param name="buttons">Every button held at this moment, not just the one that changed.</param>
 	public void Enqueue(float windowX, float windowY, CockpitMouseButtons buttons) {
+		RightPressedLast = buttons.HasFlag(CockpitMouseButtons.Right)
+			&& !_lastQueuedButtons.HasFlag(CockpitMouseButtons.Right);
+		_lastQueuedButtons = buttons;
+
 		if (_queue.Count >= QueueCapacity) {
 			return;
 		}
@@ -284,6 +296,8 @@ public sealed class CockpitInput {
 	public void Reset() {
 		_queue.Clear();
 		_lastButtons = CockpitMouseButtons.None;
+		_lastQueuedButtons = CockpitMouseButtons.None;
+		RightPressedLast = false;
 		_pressed = null;
 		Depressed = null;
 		_capturing = false;

@@ -34,6 +34,9 @@ public class GauFileTransformer : ByteTransformer<GAUFile> {
 	/// <summary>Bytes between the end of Throttle (offset 1064) and the start of HeadingTape (offset 1104) — see the GAUFile class doc comment.</summary>
 	private const int RemainderBeforeHeadingTapeLength = 40;
 
+	/// <summary>Byte offset of <see cref="HGunsightComplex"/>'s rect inside <see cref="GAUFile.RemainderBeforeHeadingTape"/>, which starts at content offset 1064.</summary>
+	private const int GunsightComplexRemainderOffset = 24;
+
 	/// <summary>Bytes between the end of HeadingTape (offset 1120) and the start of Reticle (offset 1136) — the two readout anchors.</summary>
 	private const int RemainderBeforeReticleLength = 16;
 
@@ -103,6 +106,17 @@ public class GauFileTransformer : ByteTransformer<GAUFile> {
 		// write-back it was and the round-trip is untouched.
 		gau.Throttle.SlideMode = IntLE(gau.RemainderBeforeHeadingTape, 0);
 		gau.Throttle.TickOffsetX = IntLE(gau.RemainderBeforeHeadingTape, 8);
+
+		// Offset 1088, the remainder's last four ints: the gunsight complex's own rect — see HGunsightComplex.
+		// Surfaced the same way, left in the remainder.
+		int complexX0 = IntLE(gau.RemainderBeforeHeadingTape, GunsightComplexRemainderOffset);
+		int complexY0 = IntLE(gau.RemainderBeforeHeadingTape, GunsightComplexRemainderOffset + 4);
+		int complexX1 = IntLE(gau.RemainderBeforeHeadingTape, GunsightComplexRemainderOffset + 8);
+		int complexY1 = IntLE(gau.RemainderBeforeHeadingTape, GunsightComplexRemainderOffset + 12);
+		gau.GunsightComplex = new HGunsightComplex {
+			Origin = new PixelPoint(complexX0, complexY0),
+			Size = new PixelSize(complexX1 - complexX0, complexY1 - complexY0),
+		};
 
 		gau.HeadingTape = ReadRect(() => new HHeadingTape());
 
