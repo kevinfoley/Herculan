@@ -15,7 +15,7 @@ The second opens with a run of `ConfigPart`'s copies ([module copies](../formats
 
 ## The root widget — `CTLWindow_Ctor` (`00043cac`)
 
-**The root is ES2's `CTLWindow` ([one flat hit-test registry](../../retail/simulation/cockpit-input.md#5-one-flat-hit-test-registry-for-the-whole-cockpit)) with its vptr after its data, and without the press-flash list.** `CTLWindow_Ctor`, (window, rect), allocates `0x356` bytes when given none, returning 0 when that fails; runs `GLViewport_Ctor` on `+0x17`; stores `CTLWindowVtable` (`00094bde`) at `+0x352`; copies the rect to `+0` and to the viewport's rect; sets the viewport's clip mode to 1; and clears the list's count. `es2_xref.py` finds calls from `Cockpit_LoadPanel` ([building it](cockpit-panel.md#building-it)), with the `.GAU` record's first 16 bytes, and from `00045988`.
+**The root is ES2's `CTLWindow` ([one flat hit-test registry](../../retail/simulation/cockpit-input.md#5-one-flat-hit-test-registry-for-the-whole-cockpit)) with its vptr after its data, and without the press-flash list.** `CTLWindow_Ctor`, (window, rect), allocates `0x356` bytes when given none, returning 0 when that fails; runs `GLViewport_Ctor` on `+0x17`; stores `CTLWindowVtable` (`00094bde`) at `+0x352`; copies the rect to `+0` and to the viewport's rect; sets the viewport's clip mode to 1; and clears the list's count. `es2_xref.py` finds calls from `Cockpit_LoadPanel` ([building it](cockpit-panel.md#building-it)), with the `.GAU` record's first 16 bytes, and from `AlertPanel_CtorBase` (`00045988`), with the panel's rect ([the panel object](alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988)).
 
 | ES1 | ES2 | Holds |
 |---|---|---|
@@ -34,14 +34,14 @@ The second opens with a run of `ConfigPart`'s copies ([module copies](../formats
 
 The root's operations, each ES2's on these offsets:
 
-- **`Widget_ClearPressed` (`00044310`)**, (root): makes the root the one the frame's mouse events go to, `Widget_ActiveRoot` (`00094c54`), and sets `Widget_PressedIndex` (`00094c58`) to −1. `es2_xref.py` finds calls from `Cockpit_LoadPanel`, `00045f00` and `000460b8`.
+- **`Widget_ClearPressed` (`00044310`)**, (root): makes the root the one the frame's mouse events go to, `Widget_ActiveRoot` (`00094c54`), and sets `Widget_PressedIndex` (`00094c58`) to −1. `es2_xref.py` finds calls from `Cockpit_LoadPanel`, `AlertPanel_Enter` (`00045f00`) and `AlertPanel_Leave` (`000460b8`), which hand the mouse to a panel's root and back ([putting a panel up](alert-panels.md#putting-a-panel-up-and-taking-it-down)).
 - **`Widget_RegisterClickable` (`000443d4`)**, (widget, root): appends the widget to the list and adds 1 to the count, with no bound check.
 - **`Widget_TranslateRootForView` (`00043d9c`)**, (root, delta): reads the display's attributes 0 and 1 (`GLDisplay_GetAttribute` on `000bdd28`) and drops the answers, adds the delta to the viewport's rect `+0x227`–`+0x233` and moves the root's rect by it with `Widget_OffsetRect` (`0004387c`), which adds the delta's *x* to *x0* and *x1* and its *y* to *y0* and *y1*. **`Widget_TranslateRootForView_Thunk` (`0004433c`)**, (*dx*, *dy*, root), passes the two words as the delta; `es2_xref.py` finds one call, from `CockpitWidgets_TranslateForView` ([drawing it](cockpit-panel.md#drawing-it)).
 - **`Widget_Repaint` (`0004410c`)**, (root, widget): sets `+0x223` to 1 and calls the widget's invalidate slot `+8`, ES2's `+4` ([painting is deferred](../../retail/simulation/cockpit-input.md#painting-is-deferred-two-frames)).
 - **`Widget_NotifySelfAndChildren` (`000440a0`)**, (root): clears `+0x223`, calls the root's slot `+4`, sets `+0x223` to 1 and calls slot `+4`, the paint, of each widget in the list. **`Widget_NotifySelfAndChildren_Thunk` (`00044328`)** calls it.
 - **`Widget_Show` (`00044404`)** and **`Widget_Hide` (`00044434`)**, (index, root): put the widget at that index of the list in state 0 or 2 and repaint it.
 - **`Widget_NoOp` (`00044338`)**, a `RET 4` between the two thunks, where ES2's (`00452bbc`) is.
-- **`WidgetRoot_Delete` (`00044350`)**, (root): for a root that is set, stores `CTLWindowVtableCockpitMouseCopy` (`00094c6a`) at `+0x352` and the second file's copies of `GLViewport`'s two vtables, `00094c7a` and then `00094ca2`, at `+0x17`, and frees the root with `operator_delete`. `es2_xref.py` finds one call, from `000460b8`. The copies' slots: `CTLWindow_Slot00NoOpCockpitMouseCopy` (`00044383`) at `+4` of `00094c6a`, `GLViewport_DtorCockpitMouseCopy` (`00044388`) at `+0x1c` of `00094c7a` and `GLBase_DtorCockpitMouseCopy` (`000443b0`) at `+0x1c` of `00094ca2`, the code of the library's `00069bb8` and `00069b94`, the destructor slots of `GLViewport`'s tables `0009b456` and `0009b42e`.
+- **`WidgetRoot_Delete` (`00044350`)**, (root): for a root that is set, stores `CTLWindowVtableCockpitMouseCopy` (`00094c6a`) at `+0x352` and the second file's copies of `GLViewport`'s two vtables, `00094c7a` and then `00094ca2`, at `+0x17`, and frees the root with `operator_delete`. `es2_xref.py` finds one call, from `AlertPanel_Leave`. The copies' slots: `CTLWindow_Slot00NoOpCockpitMouseCopy` (`00044383`) at `+4` of `00094c6a`, `GLViewport_DtorCockpitMouseCopy` (`00044388`) at `+0x1c` of `00094c7a` and `GLBase_DtorCockpitMouseCopy` (`000443b0`) at `+0x1c` of `00094ca2`, the code of the library's `00069bb8` and `00069b94`, the destructor slots of `GLViewport`'s tables `0009b456` and `0009b42e`.
 
 `es2_xref.py` finds no reference to `Widget_NotifySelfAndChildren_Thunk`, `Widget_NoOp`, `Widget_Show` or `Widget_Hide`, as for ES2's ([Open](#open)).
 
@@ -109,13 +109,16 @@ ES2's slider functions ([the symbol reference](../../retail/simulation/cockpit-i
 | `SliderWidget_SetValueH` (`00043ae4`), `SliderWidget_SetValueV` (`00043c08`) | `0045255c`, `00452644` | (slider, value): clamps the value to the range, puts the knob at *x0* + ((value − minimum) × scale ≫ 16), or *y1* less that, and calls the click slot `+0xc` with the value |
 | `SliderWidget_RecomputeScaleH` (`00043b4c`), `SliderWidget_RecomputeScaleV` (`00043c74`) | `004525a8`, `00452694` | (slider): scale = ((*x1* − the knob rect's width − *x0*) ≪ 16) / (maximum − minimum), or the same over the heights |
 
-`es2_xref.py` finds each horizontal one in nine stored pointers and each vertical one in three, `SliderWidget_RecomputeScaleH` called from `000386a0`, `0003ba74` and `000469ec`, and `SliderWidget_RecomputeScaleV` from `0003b2c8`.
+**`SliderWidget_CtorBase` (`000439d4`)**, (slider, knob length, position, maximum, minimum, rect), is ES2's (`004524a8`) in reverse: `Widget_CtorRect` on the rect, the knob's rect `+0x2e` constructed in place, `CTLSliderControlVtable` (`00094bb2`) at `+0x1c`, the scale 0, the minimum, the maximum, the position at `+0x28` and `+0x2a`, the knob length, and the drag flag `+0x19` set to 1. Its table's `+4` and `+8` are `CTLSliderControl_PaintNoOp` (`00043a5e`), two `NOP`s and `RET 4`, and `CTLSliderControl_InvalidateNoOp` (`00043a63`), a `NOP` and `RET 4`. `es2_xref.py` finds it called from `000386a0`, `0003b2c8`, `0003ba74` and `AlertSliderGadget_Ctor` (`000469ec`, [the slider](alert-panels.md#the-slider)). Ghidra's function at `000439d4` runs over the two stubs, which have none of their own.
+
+`es2_xref.py` finds each horizontal one in nine stored pointers and each vertical one in three, `SliderWidget_RecomputeScaleH` called from `000386a0`, `0003ba74` and `AlertSliderGadget_Ctor`, and `SliderWidget_RecomputeScaleV` from `0003b2c8`.
 
 ## Functions
 
 | ES1 | Address | ES2 |
 |---|---|---|
 | `Widget_HitTest`, `Widget_OffsetRect` | `000437d0`, `0004387c` | `00452388`, `0045240c` |
+| `SliderWidget_CtorBase`, `CTLSliderControl_PaintNoOp`, `CTLSliderControl_InvalidateNoOp` | `000439d4`, `00043a5e`, `00043a63` | `004524a8`, `0045571c`, `00455721` |
 | `SliderWidget_DragToPointH`, `SliderWidget_GetValueH`, `SliderWidget_SetValueH`, `SliderWidget_RecomputeScaleH` | `00043a68`, `00043ac8`, `00043ae4`, `00043b4c` | `004524f8`, `00452544`, `0045255c`, `004525a8` |
 | `SliderWidget_DragToPointV`, `SliderWidget_GetValueV`, `SliderWidget_SetValueV`, `SliderWidget_RecomputeScaleV` | `00043b80`, `00043be8`, `00043c08`, `00043c74` | `004525d8`, `00452628`, `00452644`, `00452694` |
 | `CTLWindow_Ctor`, `CTLWindow_Slot00NoOp`, `Widget_TranslateRootForView` | `00043cac`, `00043d96`, `00043d9c` | `004526c4`, `00452aad`, `00452734` |
@@ -128,7 +131,7 @@ ES2's slider functions ([the symbol reference](../../retail/simulation/cockpit-i
 | `Widget_RegisterClickable`, `Widget_Show`, `Widget_Hide` | `000443d4`, `00044404`, `00044434` | `00452c44`, `00452c64`, `00452c8c` |
 | `CockpitMouse_OnEvent`, `CockpitMouse_ProcessQueue`, `CockpitMouseQueue_Push`, `CockpitMouse_StaticInitNoOp` | `00044464`, `000444d0`, `00044830`, `0004487c` | `00452cb4`, `00452d18`, `00453034`, none |
 
-`CTLWindow_Slot00NoOp`, `ConfigPart_GetClassTagCockpitMouseCopy`, `CockpitMouse_Shutdown`, `Widget_NoOp`, `CTLWindow_Slot00NoOpCockpitMouseCopy` and `CockpitMouse_StaticInitNoOp` have no Ghidra function.
+`CTLSliderControl_PaintNoOp`, `CTLSliderControl_InvalidateNoOp`, `CTLWindow_Slot00NoOp`, `ConfigPart_GetClassTagCockpitMouseCopy`, `CockpitMouse_Shutdown`, `Widget_NoOp`, `CTLWindow_Slot00NoOpCockpitMouseCopy` and `CockpitMouse_StaticInitNoOp` have no Ghidra function.
 
 ## Globals
 
@@ -154,8 +157,7 @@ In the image `Cursor_FollowsMouse` is 1, and `CockpitMouse_LastEventTime`, `Cock
 
 ## Open
 
-- **Open:** the first file's functions not read here: `00043784`, `000438a4`, the button base table's slot functions `000439ae`–`000439cf`, `000439d4` to `00043a5e`, and the slider base's constructor, ES2's `SliderWidget_CtorBase` (`004524a8`).
-- **Open:** the panels that make a root of their own and hand it the mouse: `00045988`, which calls `CTLWindow_Ctor`, and `00045f00` and `000460b8`, which call `Widget_ClearPressed`, and `000460b8` also `WidgetRoot_Delete`.
+- **Open:** the first file's functions not read here: `00043784`, `000438a4`, and the button base table's slot functions `000439ae`–`000439cf`, with the slider base table's from `+0xc`.
 - **Open:** what `CockpitMouse_CanvasPoint` gives `0003b088` and `0004208c`, and the double-click's readers `0003a46c`, `0003ac04` and `0003fed8`.
 - **Open:** what reaches `CockpitMouse_Shutdown`, `Widget_NotifySelfAndChildren_Thunk`, `Widget_NoOp`, `Widget_Show`, `Widget_Hide` and `HeapPtr_DtorCockpitMouseCopy`, to none of which `es2_xref.py` finds a reference.
 - **Open:** a positive control in the running game ([when a module is done](../../herculan/plan-es1-support.md#when-a-module-is-done)). Proposed, by eye: in the forward view a left click on the screen's bottom rows pans down to the heads-down view, and there a left click on the top rows pans back up, the root's origin having moved with the view. In DOSBox-X's debugger, `BP <CS>:00044830` set during a mission fires as the mouse moves or a button changes, with the dword at `[ESP+4]` the clock `000981c4`.

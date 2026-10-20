@@ -692,6 +692,111 @@
       }
     },
     {
+      "address": "00002eed",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_LoadCursor",
+      "description": "(panel, cursor) in stack order, its arguments removed by this function: keeps Cursor_Bitmap less 4 at +0x2ce, Cursor_Hotspot at +0x2d2 and +0x2d6 and the cursor at +0x2da, then Cursor_SetImage (00050e40)(the cursor's +4 plus 4, or 0 when that is 0; the cursor + 8); the same statements as ES1DBSIM's AlertPanel_LoadCursor (000463c0) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down",
+      "verified": {
+        "bytes": "00002eed+111",
+        "sha1": "4208f122fafb",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000030fd",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_FocusChild",
+      "description": "(panel, widget) in stack order, its arguments removed by this function: finds the widget in the +0x28d list (count +0x2b5) and focuses its index with AlertPanel_SetFocus (00002fa2); does nothing for a widget not in the list. ES2's AlertPanel_FocusChild (DBSIM 00454d48). The same statements as ES1DBSIM's AlertPanel_FocusChild (00046584) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#focus",
+      "verified": {
+        "bytes": "000030fd+78",
+        "sha1": "7546c55029d8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000314b",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_FocusNext",
+      "description": "(panel) in stack order, its argument removed by this function: AlertPanel_SetFocus (00002fa2) with +0x2df plus 1, or 0 when that reaches the count +0x2b5; the same statements as ES1DBSIM's AlertPanel_FocusNext (000465d8) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#focus",
+      "verified": {
+        "bytes": "0000314b+49",
+        "sha1": "b7d0b0c1af2b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000317c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_FocusPrevious",
+      "description": "(panel) in stack order, its argument removed by this function: AlertPanel_SetFocus (00002fa2) with +0x2df less 1 (-1 stays -1), or the count +0x2b5 less 1 when that is below 0; the same statements as ES1DBSIM's AlertPanel_FocusPrevious (00046600) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#focus",
+      "verified": {
+        "bytes": "0000317c+54",
+        "sha1": "1f9e249ee1f5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000031b2",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_PressWidget",
+      "description": "(panel, flags, index) in stack order, its arguments removed by this function: unless the widget at that index of +0x28d is in state 2 or 3 (int16 +0x17), calls its click slot +0xc (vtable at +0x1c) with the flags; the same statements as ES1DBSIM's AlertPanel_PressWidget (0004662c) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#keys--alertpanel_handleevent-00046670",
+      "verified": {
+        "bytes": "000031b2+76",
+        "sha1": "f1ae0110099f",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00003309",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_SetRect",
+      "description": "(height, width, y, x) in stack order, its arguments removed by this function: writes (x, y, x + width, y + height) to the four int32 at 0009a33c, setting the first-use byte 0009a338, and returns its address; the same statements as ES1DBSIM's AlertPanel_SetRect (0004675c) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988",
+      "verified": {
+        "bytes": "00003309+147",
+        "sha1": "76100f89ba16",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0000339c",
+      "binary": "ES1GO",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_CenterRect",
+      "description": "(height, width) in stack order, its arguments removed by this function: AlertPanel_SetRect (00003309) at x = (0009a328 - width) >> 1 and y = (0009a32c - height) >> 1, the x1 and y1 of the rect at 0009a320; the same statements as ES1DBSIM's AlertPanel_CenterRect (0004679c) in different code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988",
+      "verified": {
+        "bytes": "0000339c+53",
+        "sha1": "9f7826fb0bb8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00003d7c",
       "binary": "ES1GO",
       "type": "function",

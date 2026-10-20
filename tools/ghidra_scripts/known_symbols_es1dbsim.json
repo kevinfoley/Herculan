@@ -12082,7 +12082,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Cursor_LoadWrapper",
-      "description": "(path), callee-cleaned: the code of Panel_LoadWrapper (0002adf4): opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), destroys the stream and returns the item. es2_xref finds two calls, from the cursor loop of ColorSchemePanels_LoadAll (0002aecc) and from 00045f00. ES2's Cursor_LoadWrapper (DBSIM 00430fb0).",
+      "description": "(path), callee-cleaned: the code of Panel_LoadWrapper (0002adf4): opens path with VolRStream_CtorFromPath, loads one class item with ClassItem_LoadResource(0, stream), destroys the stream and returns the item. es2_xref finds two calls, from the cursor loop of ColorSchemePanels_LoadAll (0002aecc) and from AlertPanel_Enter (00045f00). ES2's Cursor_LoadWrapper (DBSIM 00430fb0).",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#building-it",
       "verified": {
         "bytes": "0002ae28+52",
@@ -12697,7 +12697,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CockpitWidgets_HandleCommand",
-      "description": "(cockpit, code) in stack order, its arguments removed by this function (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94). 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block 00037b50(the pod gauge +0x1d8) returns and hands the copy to 00037b14(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4, by the view), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008, by the view). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): 0004a1b4(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then 00045d0c(object, 3). 0x13 (R): Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from Sim_DispatchCommand (00059df8). ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
+      "description": "(cockpit, code) in stack order, its arguments removed by this function (RET 8): returns 0 while +0x20b is set. With v the published manager's view +0x10, REPNE SCASD finds the code among the 24 dwords of CockpitWidgets_CommandCodes (00092f34) and jumps through the 24 after them (00092f94). 0 returns 0. 2-10 (keys 1-9): in view 1 as an unlisted code; otherwise row code-2: the pod row (+0x23b) flips bit 0 of the first word of the block 00037b50(the pod gauge +0x1d8) returns and hands the copy to 00037b14(gauge, copy); another row's gauge (+0x70 + 4*row), when set, goes to CockpitView_ArmWeaponByGauge (0002d098). 0x3b-0x40 (F1-F6) and 0x41-0x42 (F7, F8) press button code-0x3b of the MFD +0x1e9 or code-0x41 of +0x1f5 (the button at +0x14 + 4*index), calling the +0xc slot of the button's vtable at +0x1c with (button, 1) unless its int16 +0x17 is 2 or 3; F1-F6 then queue view command 1 from view 1 or 6 from views 2-3 (table 00092ff4, by the view), F7-F8 command 0. 0x43 (F9) queues 5 from view 0 or 6 from view 2; 0x44 (F10) 4 from view 0 or 6 from view 3. 0x01 (Esc) queues 0, 1 or 6 from views 0, 1 and 2-3 (table 00093008, by the view). 0x0f (Tab) returns 0 in view 4, takes the unlisted path in view 1, and otherwise runs TargetSelect_Cycle (0002d898). 0x57 (F11): 0004a1b4(0, 0, 1), the +0xc slot of the vtable at that object's +0x314, then Alert_Dtor (00045d0c)(object, 3). 0x13 (R): Mech_ToggleRadarMode (000157f4)(the machine +0x1ff of CockpitViewInstance (00092d1c)). An unlisted code goes to MfdFlashComm_HandleAltKey (0003a890)(+0x1e9, code), then in view 1 to the +0x10 slot (vtable at +0x76) of +0x1f5 alone, and in any other view to the +0x10 slots of +0x1d4 (when set), +0x1dd, +0x1e1, +0x1e5, +0x1ed, +0x1f1 and +0x1e9, stopping at the first that returns nonzero. Returns 1 for a code a case took or a slot accepted, else 0. es2_xref finds one call, from Sim_DispatchCommand (00059df8). ES2's CockpitWidgets_HandleCommand (DBSIM 00432bc8), which takes 0x02-0x0b and presses the row through Widget_PressChild, answers 0x27, Enter and Alt+D, steps the Targeting Pod on Tab and builds an objectives panel on F11.",
       "source": "Herculan/docs/es1/simulation/cockpit-panel.md#keys-and-the-view-device",
       "verified": {
         "bytes": "0002d24c+910",
@@ -13927,7 +13927,7 @@
       "type": "function",
       "confidence": "high",
       "name": "MessagePort_CopyBoxBetweenPages",
-      "description": "(port, direction) in stack order, callee-cleaned: while a line is up (+0x436) copies the port's box between the display's pages: Cockpit_PushCanvasContext, then the display (000bdd28) gets +0x88 as its source page (+0x38) and +0x8c as its draw page (+0x3c) for direction 0, the other way for 1, each mirrored to 00098dd6/00098dda and the routines 0009df14/0009df18 when that display is current. With the cursor hidden (g_RasterRoutines slot 31, 0009df50) it copies the region at +0x43b with Region_CopyBetweenPages (00066914)(region, {0, 0}), shows the cursor (slot 30) unless the view manager's +0x10 is 4 and 00094d78 is 0, restores the draw page and Cockpit_PopRenderContext. ES2's MessagePort_CopyBoxBetweenPages (DBSIM 00437164).",
+      "description": "(port, direction) in stack order, callee-cleaned: while a line is up (+0x436) copies the port's box between the display's pages: Cockpit_PushCanvasContext, then the display (000bdd28) gets +0x88 as its source page (+0x38) and +0x8c as its draw page (+0x3c) for direction 0, the other way for 1, each mirrored to 00098dd6/00098dda and the routines 0009df14/0009df18 when that display is current. With the cursor hidden (g_RasterRoutines slot 31, 0009df50) it copies the region at +0x43b with Region_CopyBetweenPages (00066914)(region, {0, 0}), shows the cursor (slot 30) unless the view manager's +0x10 is 4 and AlertPanel_OpenCount (00094d78) is 0, restores the draw page and Cockpit_PopRenderContext. ES2's MessagePort_CopyBoxBetweenPages (DBSIM 00437164).",
       "source": "ES1DBSIM decompile at 0002fcd4, against ES2's MessagePort_CopyBoxBetweenPages",
       "verified": {
         "bytes": "0002fcd4+298",
@@ -17297,6 +17297,51 @@
       }
     },
     {
+      "address": "000439d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "SliderWidget_CtorBase",
+      "description": "(slider, knob length, position, maximum, minimum, rect) in stack order, its arguments removed by this function: Widget_CtorRect (000438fc) on the rect, the knob's 16-byte rect at +0x2e constructed in place, CTLSliderControlVtable 00094bb2 at +0x1c, the scale +0x20 = 0, the int16 minimum +0x24, maximum +0x26, position +0x28 and +0x2a, knob length +0x2c, and the drag flag +0x19 = 1. ES2's SliderWidget_CtorBase (DBSIM 004524a8), arguments in reverse. es2_xref finds calls from 000386a0, 0003b2c8, 0003ba74 and AlertSliderGadget_Ctor (000469ec).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
+      "verified": {
+        "bytes": "000439d4+138",
+        "sha1": "347bc79d25c9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00043a5e",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLSliderControl_PaintNoOp",
+      "description": "Frameless: two NOPs and RET 4. Slot +4 of the slider base table 00094bb2. ES2's CTLSliderControl_PaintNoOp (DBSIM 0045571c).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base; ES1DBSIM disassembly at 00043a5e",
+      "verified": {
+        "bytes": "00043a5e+5",
+        "sha1": "193b9046c34c",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00043a63",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLSliderControl_InvalidateNoOp",
+      "description": "Frameless: a NOP and RET 4. Slot +8 of the slider base table 00094bb2. ES2's CTLSliderControl_InvalidateNoOp (DBSIM 00455721).",
+      "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base; ES1DBSIM disassembly at 00043a63",
+      "verified": {
+        "bytes": "00043a63+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
       "address": "00043a68",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -17347,7 +17392,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SliderWidget_RecomputeScaleH",
-      "description": "(slider) in stack order, its arguments removed by this function: sets the scale +0x20 to ((x1 - (the dword +0x36 - the dword +0x2e) - x0) << 16) / (the int16 maximum +0x26 - the int16 minimum +0x24). ES2's SliderWidget_RecomputeScaleH (DBSIM 004525a8). es2_xref finds six calls, from 000386a0, 0003ba74 and 000469ec.",
+      "description": "(slider) in stack order, its arguments removed by this function: sets the scale +0x20 to ((x1 - (the dword +0x36 - the dword +0x2e) - x0) << 16) / (the int16 maximum +0x26 - the int16 minimum +0x24). ES2's SliderWidget_RecomputeScaleH (DBSIM 004525a8). es2_xref finds six calls, from 000386a0, 0003ba74 and AlertSliderGadget_Ctor (000469ec).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-slider-base",
       "verified": {
         "bytes": "00043b4c+52",
@@ -17422,7 +17467,7 @@
       "type": "function",
       "confidence": "high",
       "name": "CTLWindow_Ctor",
-      "description": "(window, rect) in stack order, its arguments removed by this function: allocates 0x356 bytes when window is null, returning 0 when that fails; clears the hit-shape byte +0x10 (the inlined base constructors); runs GLViewport_Ctor (00069a84) on +0x17; stores CTLWindowVtable (00094bde) at +0x352; copies the rect's four dwords to +0..+0xc and to the viewport's rect +0x227..+0x233; sets the viewport's clip mode +0x21f to 1 and the int16 list count +0x250 to 0. ES2's CTLWindow_Ctor (DBSIM 004526c4), whose vptr is at +0x17 and viewport at +0x1b. es2_xref finds calls from Cockpit_LoadPanel (0002c9d8) and 00045988.",
+      "description": "(window, rect) in stack order, its arguments removed by this function: allocates 0x356 bytes when window is null, returning 0 when that fails; clears the hit-shape byte +0x10 (the inlined base constructors); runs GLViewport_Ctor (00069a84) on +0x17; stores CTLWindowVtable (00094bde) at +0x352; copies the rect's four dwords to +0..+0xc and to the viewport's rect +0x227..+0x233; sets the viewport's clip mode +0x21f to 1 and the int16 list count +0x250 to 0. ES2's CTLWindow_Ctor (DBSIM 004526c4), whose vptr is at +0x17 and viewport at +0x1b. es2_xref finds calls from Cockpit_LoadPanel (0002c9d8) and AlertPanel_CtorBase (00045988).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
       "verified": {
         "bytes": "00043cac+234",
@@ -17662,7 +17707,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Widget_ClearPressed",
-      "description": "(root) in stack order, its arguments removed by this function: stores the root in Widget_ActiveRoot (00094c54), the root CockpitMouse_ProcessQueue (000444d0) works on, and -1 in the int16 Widget_PressedIndex (00094c58). ES2's Widget_ClearPressed (DBSIM 00452b94). es2_xref finds calls from Cockpit_LoadPanel (0002c9d8), 00045f00 and 000460b8.",
+      "description": "(root) in stack order, its arguments removed by this function: stores the root in Widget_ActiveRoot (00094c54), the root CockpitMouse_ProcessQueue (000444d0) works on, and -1 in the int16 Widget_PressedIndex (00094c58). ES2's Widget_ClearPressed (DBSIM 00452b94). es2_xref finds calls from Cockpit_LoadPanel (0002c9d8), AlertPanel_Enter (00045f00) and AlertPanel_Leave (000460b8).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
       "verified": {
         "bytes": "00044310+21",
@@ -17722,7 +17767,7 @@
       "type": "function",
       "confidence": "high",
       "name": "WidgetRoot_Delete",
-      "description": "(root) in stack order, its arguments removed by this function: for a root that is set, stores CTLWindowVtableCockpitMouseCopy (00094c6a) at +0x352 and 00094c7a and then 00094ca2 at +0x17, and frees the root with operator_delete (000015f8). ES2's WidgetRoot_Delete (DBSIM 00452bdc). es2_xref finds one call, from 000460b8.",
+      "description": "(root) in stack order, its arguments removed by this function: for a root that is set, stores CTLWindowVtableCockpitMouseCopy (00094c6a) at +0x352 and 00094c7a and then 00094ca2 at +0x17, and frees the root with operator_delete (000015f8). ES2's WidgetRoot_Delete (DBSIM 00452bdc). es2_xref finds one call, from AlertPanel_Leave (000460b8).",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-root-widget--ctlwindow_ctor-00043cac",
       "verified": {
         "bytes": "00044350+51",
@@ -17927,6 +17972,156 @@
       }
     },
     {
+      "address": "00044954",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CornerFrame_Draw",
+      "description": "(style, rect by value) in stack order, its arguments removed by this function: draws a bevelled frame from a 64-byte STYLES.DAT record. Fills (x0+3, y0+3)-(x1-3, y1-3), ordered, with Raster_FillRect under the brush {0, style dword +0} at +0x22c of the render context the display's (000bdd28) +0x44 less 4 points at, then puts the brush back; then CornerFrame_DrawEdgeRing (00044adc) with (first, grow, inset) (1, 0, 0), (5, -2, 1) and (9, -4, 2), and CornerFrame_DrawCorners (00044c64), each given the rect by value through Rect_CopyCtor (00044aac). ES2's CornerFrame_Draw (DBSIM 00453240). es2_xref finds one call, from PanelButton_Paint (000468e0).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#drawing-a-frame-from-a-style",
+      "verified": {
+        "bytes": "00044954+343",
+        "sha1": "cc9b4c8481a2",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00044aac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtor",
+      "description": "(copy, rect) in stack order, its arguments removed by this function, also entered at its padding 00044aab: copies the four int32 of the rect into the copy, allocating 0x10 bytes with operator_new when the copy is null and returning 0 when that fails; returns the copy. CornerFrame_Draw (00044954) passes its rect by value through it.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#drawing-a-frame-from-a-style",
+      "verified": {
+        "bytes": "00044aac+46",
+        "sha1": "ba892b053691",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044adc",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CornerFrame_DrawEdgeRing",
+      "description": "(style, first, grow, inset, rect by value) in stack order, its arguments removed by this function, also entered at its padding 00044ada: one ring of four one-pixel edges with Raster_DrawLine, each under the pen {0, colour} at the render context's +0x228 (restored after) and skipped when that colour dword is 0. With left = x0 + inset, top = y0 + inset, w = x1 - x0 + grow and h = y1 - y0 + grow: dword style[first] the left edge (left, top+1)-(left, top+h-1), style[first+1] the top edge (left+1, top)-(left+w-1, top), style[first+2] the right edge at x = left+w, style[first+3] the bottom edge at y = top+h. ES2's CornerFrame_DrawEdgeRing (DBSIM 004533a4). es2_xref finds three calls, from CornerFrame_Draw (00044954).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#drawing-a-frame-from-a-style",
+      "verified": {
+        "bytes": "00044adc+392",
+        "sha1": "198a82c4f9cf",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044c64",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CornerFrame_DrawCorners",
+      "description": "(style, rect by value) in stack order, its arguments removed by this function: Bitmap_Blit with flags 0 of four frames of the dba\\corners bank WidgetCorners (000bd53e): frame int16 +0x34 at (x0, y0), +0x36 at (x1 - w, y0), +0x38 at (x0, y1 - h), +0x3a at (x1 - w, y1 - h), w and h being the style's int16 +0x3c and +0x3e. ES2's CornerFrame_DrawCorners (DBSIM 00453518). es2_xref finds one call, from CornerFrame_Draw (00044954).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#drawing-a-frame-from-a-style",
+      "verified": {
+        "bytes": "00044c64+235",
+        "sha1": "a24255a42a86",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044d50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitFont_Load",
+      "description": "(path, slot) in stack order, its arguments removed by this function: opens the path as a VolRStream (VolRStream_CtorFromPath), stores ClassItem_LoadResource's result in *slot and destroys the stream. ES2's CockpitFont_Load (DBSIM 004535ec), arguments in reverse. es2_xref finds seven calls, from Widget_LoadStylesAndFonts (00045e10), its fonts.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-resource-loaders-and-the-color-helpers",
+      "verified": {
+        "bytes": "00044d50+53",
+        "sha1": "94bdfca6f0b5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044d88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitCorners_Load",
+      "description": "(path, slot) in stack order, its arguments removed by this function: the same code as CockpitFont_Load (00044d50). ES2's CockpitCorners_Load (DBSIM 00453640). es2_xref finds one call, from Widget_LoadStylesAndFonts (00045e10), for dba\\corners.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-resource-loaders-and-the-color-helpers",
+      "verified": {
+        "bytes": "00044d88+53",
+        "sha1": "021eef25c3c5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044dc0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CockpitResource_Load",
+      "description": "(path, slot) in stack order, its arguments removed by this function: CockpitFont_Load (00044d50)'s body with VolRStream_Close before the stream's destructor. ES2's CockpitResource_Load (DBSIM 00453694). No caller, stored pointer or vtable slot found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-resource-loaders-and-the-color-helpers",
+      "verified": {
+        "bytes": "00044dc0+62",
+        "sha1": "e3931592c5d9",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044e00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FrameRectColour",
+      "description": "(colour, rect by value) in stack order, its arguments removed by this function, the colour an int16: installs the brush {4, colour} at the render context's (000bdbda) +0x22c, which makes Raster_FillRect draw the rect's four edges, fills the rect and puts the brush back. ES2's Raster_FrameRectColour (DBSIM 004536f4). No caller, stored pointer or vtable slot found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-resource-loaders-and-the-color-helpers",
+      "verified": {
+        "bytes": "00044e00+77",
+        "sha1": "6129fe1ab5c8",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044e50",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_FillFrameRectColours",
+      "description": "(frame colour, fill colour, rect by value) in stack order, its arguments removed by this function, the colours int16: Raster_FillRect on the rect under the brush {0, fill colour} and then under {4, frame colour}, the outline, at the render context's (000bdbda) +0x22c, then puts the brush back. ES2's Raster_FillFrameRectColours (DBSIM 00453738). No caller, stored pointer or vtable slot found by es2_xref.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-resource-loaders-and-the-color-helpers",
+      "verified": {
+        "bytes": "00044e50+112",
+        "sha1": "0e01eb5cf086",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00044ec0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Raster_DrawLineColour",
+      "description": "(colour, end, start) in stack order, each point two int32 by value, its arguments removed by this function, the colour an int16: Raster_DrawLine(start, end) under the pen {0, colour} at the render context's (000bdbda) +0x228, then puts the pen back. ES2's Raster_DrawLineColour (DBSIM 00453798). es2_xref finds four calls, from AlertPanel_SetTitleText (000461ec).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-resource-loaders-and-the-color-helpers",
+      "verified": {
+        "bytes": "00044ec0+81",
+        "sha1": "72f33eaf059c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00044f14",
       "binary": "ES1DBSIM",
       "type": "function",
@@ -18062,16 +18257,691 @@
       }
     },
     {
+      "address": "00045988",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_CtorBase",
+      "description": "(panel, rect, keepsScreen) in stack order, its arguments removed by this function: the in-mission panels' base constructor. Allocates 0x10 bytes when the panel is null; builds the rect region at +0x10 (vtables 00094d8a to 00094dfe, type 0), StringTable_Ctor (00044f14) at +0x30, GLViewport_Ctor at +0x44, the title bar rect at +0x2ba and GLCursor_Ctor at +0x2ca; stores AlertVtable (00094e26) at +0x314; clears the widget count +0x2b5 and the close byte +0x2b9; copies the rect to +0 and to the render context's rect +0x254, sets its clip mode +0x24c and translation flag +0x250 to 1, +0x264 and +0x268 to 0 and its brush +0x270 to Alert_FillBrush (000b1718); the region's rect is (0, 0, x1 - x0, y1 - y0); with keepsScreen set, a buffer of Rect_PixelCount(region) bytes at +0x28, asserting 'Alert: can't allocate buffer.' (alert.cpp line 0x3b) when operator_new fails, else 0; +0x2c = 0; Widget_ActiveRoot kept at +0x285; CTLWindow_Ctor (00043cac)(0, panel) at +0x281; the display's draw page (+0x3c of 000bdd28) at +0x289; -1 at +0x2e3 (the cancel widget) and 1 at +0x313. ES2's AlertPanel_CtorBase (DBSIM 00454174), whose vptr is at +0 and its rect at +4. es2_xref finds calls from 00046efc, 00047578, 00048408, 00049154 and 0004a1b4.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988",
+      "verified": {
+        "bytes": "00045988+770",
+        "sha1": "05a0e2c56d2e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045c8c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLBase_DtorAlertCopy",
+      "description": "(object, flags) in stack order, callee-cleaned: slot +0x1c of the vtable 00094dae (entered at its padding 00045c8a): byte for byte the code of GLBase_DtorMechviewCopy (00024318), relocated operands aside, storing 00094dae where that stores 00092712.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c; ES1DBSIM disassembly at 00045c8c",
+      "verified": {
+        "bytes": "00045c8c+34",
+        "sha1": "66678a917db2",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00045cb0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRegion_DtorAlertCopy",
+      "description": "(region, flags) in stack order, its arguments removed by this function, also entered at its padding: for a region that is set, stores 00094dd6 and then 00094dae at +0 and frees the region with operator_delete when bit 0 of the flags is set. Slot +0x1c of the vtable 00094dd6, the GLRegion table AlertPanel_CtorBase (00045988) stores; alert.cpp's copy of GLRegion's destructor.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c",
+      "verified": {
+        "bytes": "00045cb0+40",
+        "sha1": "58ab8952085b",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045cd8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLRectangleRegion_DtorAlertCopy",
+      "description": "(region, flags): slot +0x1c of the vtable 00094dfe: byte for byte the code of GLRectangleRegion_Dtor (0007999c), relocated operands aside, storing 00094dfe and 00094dd6 and 00094dae where that stores 0009f2ce and 0009f2a6 and 0009f27e.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c; ES1DBSIM disassembly at 00045cd8",
+      "verified": {
+        "bytes": "00045cd8+46",
+        "sha1": "ad2b40e893af",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00045d06",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_OnChildClickNoOp",
+      "description": "Frameless: two NOPs and RET 0xc. Slot +0x10 of AlertVtable (00094e26), the child-click slot. ES2's AlertPanel_OnChildClickNoOp (DBSIM 004558cb).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988; ES1DBSIM disassembly at 00045d06",
+      "verified": {
+        "bytes": "00045d06+5",
+        "sha1": "6038466433d0",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00045d0c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Alert_Dtor",
+      "description": "(panel, flags) in stack order, its arguments removed by this function: the in-mission panels' base destructor. Stores AlertVtable (00094e26) at +0x314; frees each of the +0x2b5 widgets at +0x28d and the screen buffer +0x28 when set; destroys +0x2c when set through its slot +0x1c with 3; frees the title label +0x40; clears +0x2ce; GLCursor_Dtor(+0x2ca, 2); stores the vtables 00094e7e and 00094dae at the render context +0x44; OwnedArray_Dtor (00044f48)(+0x30, 2); stores 00094dfe, 00094dd6 and 00094dae at the region +0x10. It tests neither the panel nor the flags and frees nothing of the panel itself. ES2's Alert_Dtor (DBSIM 00454394). es2_xref finds calls from CockpitWidgets_HandleCommand, Sim_DispatchCommand and Sim_MainTick, each with 3 after a panel's run, and from 000472b0, 00047a14, 000487b4, 00049678 and 0004a480 with 0.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c",
+      "verified": {
+        "bytes": "00045d0c+220",
+        "sha1": "928d2b049c44",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00045de8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "GLViewport_DtorAlertCopy",
+      "description": "(viewport, flags) in stack order, its arguments removed by this function: for a viewport that is set, stores 00094e7e and then 00094dae at +0 and frees it with operator_delete when bit 0 of the flags is set. Slot +0x1c of the vtable 00094e7e, the GLViewport table Alert_Dtor (00045d0c) stores at the panel's render context; alert.cpp's copy of GLViewport's destructor.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#destroying-a-panel--alert_dtor-00045d0c",
+      "verified": {
+        "bytes": "00045de8+40",
+        "sha1": "34fafd3b2576",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
       "address": "00045e10",
       "binary": "ES1DBSIM",
       "type": "function",
       "confidence": "high",
       "name": "Widget_LoadStylesAndFonts",
-      "description": "No arguments: WidgetStyles_Load (00044880)(dat\\styles); then dfn\\title, cpylw, active, pushed, inactive, green6x8 and red6x8 each through 00044d50 into the dwords 000bd542 to 000bd55a, four bytes apart; then dba\\corners through 00044d88 into 000bd53e. Caller found by es2_xref: Sim_StartMission (0005a9dc), at 0005abc2.",
+      "description": "No arguments: WidgetStyles_Load (00044880)(dat\\styles); then dfn\\title, cpylw, active, pushed, inactive, green6x8 and red6x8 each through CockpitFont_Load (00044d50) into the dwords WidgetFont_Title (000bd542) to WidgetFont_Red6x8 (000bd55a), four bytes apart; then dba\\corners through CockpitCorners_Load (00044d88) into WidgetCorners (000bd53e). Caller found by es2_xref: Sim_StartMission (0005a9dc), at 0005abc2.",
       "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads",
       "verified": {
         "bytes": "00045e10+239",
         "sha1": "80fcaf3fe996",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00045f00",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_Enter",
+      "description": "(panel) in stack order, its argument removed by this function: puts a panel up. Copies the 0x2b bytes of PlayerInputBlock to +0x2e8; Input_LatchButton (0004d8c8)(1, 1) to (1, 4); AlertPanel_SetFocus (00046470)(panel, -1); Widget_ClearPressed (00044310)(the panel's root +0x281); keeps the render context 000bdbda at +0x27d and installs the panel's +0x44; sets the display's source and draw pages to its +0x88; keeps Cursor_FollowsMouse at +0x2de and sets it; calls AlertPanel_EnterHook (00094d80) when set; the first time, loads dci\\alert into AlertPanel_CursorImage (00094d7c) with Cursor_LoadWrapper; hides the cursor (slot 31); with a buffer at +0x28, Region_Save of the region +0x14 into it, its rect moved by the panel's origin for the call; the panel's slot +4; AlertPanel_LoadCursor (000463c0)(panel, the alert cursor); shows the cursor (slot 30); adds 1 to AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Enter (DBSIM 00454630) without the message ports and the present timer. es2_xref finds calls from 0004730c, 00047a88, 00048810, 000496f0 and 0004a4ec.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down",
+      "verified": {
+        "bytes": "00045f00+439",
+        "sha1": "551312c9a5d2",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000460b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_Leave",
+      "description": "(panel) in stack order, its argument removed by this function: takes a panel down. Clears Cursor_FollowsMouse and hides the cursor; with a buffer at +0x28, Region_Restore of the region +0x14 at +0x18; AlertPanel_RestoreCursorImage (00046428); Cursor_FollowsMouse back from +0x2de, showing the cursor when it is set; calls AlertPanel_LeaveHook (00094d84) when set; installs the render context +0x27d and makes +0x289 the display's draw page; WidgetRoot_Delete (00044350)(+0x281) and, when +0x285 is set, Widget_ClearPressed(+0x285); copies the 0x2b bytes at +0x2e8 back to PlayerInputBlock; with a mouse device, Mouse_SetPosition to the saved pointer +0x2ea, +0x2ee and Cursor_SyncPosition; takes 1 from AlertPanel_OpenCount (00094d78). ES2's AlertPanel_Leave (DBSIM 004548ac) without the present, the two flags and the message ports. es2_xref finds calls from 0004730c, 00047a88, 00048810, 000496f0 and 0004a4ec.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down",
+      "verified": {
+        "bytes": "000460b8+305",
+        "sha1": "9fef5cf5b04e",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000461ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_SetTitleText",
+      "description": "(panel, text) in stack order, its arguments removed by this function, slot +8 of AlertVtable (00094e26): frames the title bar rect +0x2ba with Raster_DrawLineColour (00044ec0), the top (x0, y0)-(x1, y0) and left (x0, y0)-(x0, y1) edges in colour 0x10, the right (x1, y1)-(x1, y0) in 0x1b and the bottom (x1, y1)-(x0, y1) in 0x1c; Bitmap_Blit with flags 0 of WidgetCorners (000bd53e) frames 0 to 3 at (x0, y0), (x1 - 4, y0), (x0, y1 - 4) and (x1 - 4, y1 - 4); then Label_SetText (0003114c) on the title label +0x40. ES2's slot, AlertPanel_SetTitleText (DBSIM 00454b58), sets the text alone.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-title-bar--alertpanel_settitletext-000461ec",
+      "verified": {
+        "bytes": "000461ec+466",
+        "sha1": "05443a53cfae",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "000463c0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_LoadCursor",
+      "description": "(panel, cursor) in stack order, its arguments removed by this function, also entered at its padding 000463be: keeps Cursor_Bitmap less 4 at +0x2ce, Cursor_Hotspot at +0x2d2 and +0x2d6 and the cursor at +0x2da, then Cursor_SetImage (00066948)(the cursor's +4 plus 4, or 0 when that is 0; the cursor + 8). ES2's AlertPanel_LoadCursor (DBSIM 00454b70) without the scroll-window path.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down",
+      "verified": {
+        "bytes": "000463c0+104",
+        "sha1": "1f39600917d1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046428",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_RestoreCursorImage",
+      "description": "(panel) in stack order, its argument removed by this function: while +0x313 is set, Cursor_SetImage (00066948)(the kept bitmap +0x2ce plus 4, or 0 when it is 0; +0x2d2). ES2's AlertPanel_RestoreCursorImage (DBSIM 00454c10) without the scroll-window path. es2_xref finds one call, from AlertPanel_Leave (000460b8).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down",
+      "verified": {
+        "bytes": "00046428+70",
+        "sha1": "336810c21b45",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046470",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_SetFocus",
+      "description": "(panel, index) in stack order, its arguments removed by this function, also entered at its padding 0004646e: for index -1, with a mouse device (Input_GetMouseDevice_Thunk), runs Input_BuildPlayerDevice (0004cb14) and takes the first of the +0x2b5 widgets at +0x28d whose rect holds the block's pointer (+2, +6), edges included, else -1; for another index, puts the pointer on the widget's centre plus the panel's origin (x0 + ((x1 - x0) >> 1) + panel x0, likewise y) with Mouse_SetPosition when there is a mouse device and Cursor_SyncPosition either way. Stores the index at +0x2df. ES2's AlertPanel_SetFocus (DBSIM 00454c7c).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#focus",
+      "verified": {
+        "bytes": "00046470+275",
+        "sha1": "4cc2d6c33394",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046584",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_FocusChild",
+      "description": "(panel, widget) in stack order, its arguments removed by this function: finds the widget in the +0x28d list (count +0x2b5) and focuses its index with AlertPanel_SetFocus (00046470); does nothing for a widget not in the list. ES2's AlertPanel_FocusChild (DBSIM 00454d48). es2_xref finds one call, from PanelButton_OnClick (000469ac).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#focus",
+      "verified": {
+        "bytes": "00046584+83",
+        "sha1": "6e5b81b948c1",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000465d8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_FocusNext",
+      "description": "(panel) in stack order, its argument removed by this function: AlertPanel_SetFocus (00046470) with +0x2df plus 1, or 0 when that reaches the count +0x2b5. ES2's AlertPanel_FocusNext (DBSIM 00454d7c).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#focus",
+      "verified": {
+        "bytes": "000465d8+40",
+        "sha1": "7c943ba70a1c",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046600",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_FocusPrevious",
+      "description": "(panel) in stack order, its argument removed by this function: AlertPanel_SetFocus (00046470) with +0x2df less 1 (-1 stays -1), or the count +0x2b5 less 1 when that is below 0. ES2's AlertPanel_FocusPrevious (DBSIM 00454da0).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#focus",
+      "verified": {
+        "bytes": "00046600+44",
+        "sha1": "e21de965ff81",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004662c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_PressWidget",
+      "description": "(panel, flags, index) in stack order, its arguments removed by this function: unless the widget at that index of +0x28d is in state 2 or 3 (int16 +0x17), calls its click slot +0xc (vtable at +0x1c) with the flags. It makes no other call: ES2's AlertPanel_PressWidget (DBSIM 00454dcc), which refuses state 2 alone, also flashes the widget on the panel's root.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#keys--alertpanel_handleevent-00046670",
+      "verified": {
+        "bytes": "0004662c+66",
+        "sha1": "214870d91572",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "00046670",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_HandleEvent",
+      "description": "(panel, block) in stack order, its arguments removed by this function, slot +0x14 of AlertVtable (00094e26), also entered at its padding 0004666e: button 0 (+0x15) presses the focused widget +0x2df with AlertPanel_PressWidget (0004662c)(flags 1), or focuses widget 0 with AlertPanel_SetFocus (00046470) when the focus is -1, then Input_LatchButton (0004d8c8)(1, 1); else button 1 (+0x16) runs AlertPanel_FocusNext (000465d8) and Input_LatchButton(1, 2); else the command word, by REPNE SCASD in the 5 dwords at 00094eec: 0x01 presses the cancel widget +0x2e3 unless it is -1, 0x0f focuses the next, 0x20f the previous AlertPanel_FocusPrevious (00046600), 0x1c does what button 0 does without the latch, and 0x52 focuses the next while the preferences byte 000bd56c is set. Returns 1 when a case acts and 0 for any other code. ES2's AlertPanel_HandleEvent (DBSIM 00454e10), whose previous-widget code is 0x80f.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#keys--alertpanel_handleevent-00046670",
+      "verified": {
+        "bytes": "00046670+224",
+        "sha1": "0ee268f25731",
+        "scope": "body",
+        "via": "both"
+      }
+    },
+    {
+      "address": "0004675c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_SetRect",
+      "description": "(height, width, y, x) in stack order, its arguments removed by this function: writes (x, y, x + width, y + height) to AlertPanel_RectScratch (000b1724), setting its first-use byte 000b1720, and returns its address. ES2's AlertPanel_SetRect (DBSIM 00454ef8).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988",
+      "verified": {
+        "bytes": "0004675c+61",
+        "sha1": "cde5fbf84f4d",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004679c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertPanel_CenterRect",
+      "description": "(height, width) in stack order, its arguments removed by this function: AlertPanel_SetRect (0004675c) at x = (000b1710 - width) >> 1 and y = (000b1714 - height) >> 1, the x1 and y1 of AlertPanel_ScreenRect (000b1708), 319 and 199. ES2's AlertPanel_CenterRect (DBSIM 00454f34).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988",
+      "verified": {
+        "bytes": "0004679c+44",
+        "sha1": "bf8730b26695",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000467c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelButton_Ctor",
+      "description": "(button, index, owner, rect) in stack order, its arguments removed by this function: an in-mission panel's button. Allocates 0x54 bytes when given none, returning 0 when that fails; Widget_CtorRect (000438fc) on the rect with 00094f16 at +0x1c and the drag flag +0x19 = 0; the mixin's table 00094f3e at +0x24, the owner at +0x20, 00094f56 at +0x1c, the index at +0x28, state +0x17 = 0; then AlertSelectGadget_PanelGadgetVtable (00094f7e) at +0x24 and AlertSelectGadgetVtable (00094f96) at +0x1c; style records 0, 1 and 2 of the table at 00094ccc at +0x3c, +0x40 and +0x44, and the fonts WidgetFont_Active (000bd54a), WidgetFont_Pushed (000bd54e) and WidgetFont_Inactive (000bd552) (active, pushed, inactive) at +0x48, +0x4c and +0x50. ES2's PanelButton_Ctor (DBSIM 00454f64), which fills four fonts and no styles.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons",
+      "verified": {
+        "bytes": "000467c8+203",
+        "sha1": "8c5f15d34e18",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046893",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLButtonControl_PaintNoOpAlertCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +4 of the vtable 00094f16, and slot +4 of the vtable 00094f56; the code of CTLButtonControl_PaintNoOpGadgetsCopy (00031523). ES2's CTLButtonControl_PaintNoOp (DBSIM 00455545).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1DBSIM disassembly at 00046893",
+      "verified": {
+        "bytes": "00046893+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00046897",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_InvalidateNoOpAlertCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +8 of the vtable 00094f16; the code of CTLControl_InvalidateNoOpPanelCopy (0002dae3). ES2's CTLControl_InvalidateNoOp (DBSIM 00452ab7).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1DBSIM disassembly at 00046897",
+      "verified": {
+        "bytes": "00046897+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0004689b",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_OnClickNoOpAlertCopy",
+      "description": "Frameless: a NOP and RET 8. Slot +0xc of the vtable 00094f16, and slot +0xc of the vtable 00094fc2 (entered at 0004689c); the code of CTLControl_OnClickNoOpPanelCopy (0002dae7). ES2's CTLControl_OnClickNoOp (DBSIM 0045555e).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1DBSIM disassembly at 0004689b",
+      "verified": {
+        "bytes": "0004689b+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "0004689f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_FlushDeferredPaintNoOpAlertCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +0x10 of the vtable 00094f16, and slot +0x10 of the vtable 00094f56, and slot +0x10 of the vtable 00094fc2 (entered at 000468a0), and slot +0x10 of the vtable 00095006 (entered at 000468a0); the code of CTLControl_FlushDeferredPaintNoOpPanelCopy (0002daeb). ES2's CTLControl_FlushDeferredPaintNoOp (DBSIM 0045554a).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1DBSIM disassembly at 0004689f",
+      "verified": {
+        "bytes": "0004689f+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000468a3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_GetButtonValueAlertCopy",
+      "description": "Frameless: a NOP, then MOV AX,WORD PTR [0x94b84] and RET 4. Slot +0x14 of the vtable 00094f16, and slot +0x14 of the vtable 00094f56, and slot +0x14 of the vtable AlertSelectGadgetVtable (00094f96); the code of Widget_GetButtonValuePanelCopy (0002daef). ES2's Widget_GetButtonValue (DBSIM 00455530).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1DBSIM disassembly at 000468a3",
+      "verified": {
+        "bytes": "000468a3+10",
+        "sha1": "f62f57a4a511",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000468ad",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_SetValueNoOpAlertCopy",
+      "description": "Frameless: three NOPs and RET 8. Slot +0x18 of the vtable 00094f16, and slot +0x18 of the vtable 00094f56, and slot +0x18 of the vtable AlertSelectGadgetVtable (00094f96); the code of CTLControl_SetValueNoOpPanelCopy (0002daf9). ES2's CTLControl_SetValueNoOp (DBSIM 0045553b).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1DBSIM disassembly at 000468ad",
+      "verified": {
+        "bytes": "000468ad+6",
+        "sha1": "fe14fe2186bc",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000468b3",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLControl_DragMoveNoOpAlertCopy",
+      "description": "Frameless: a NOP and RET 8. Slot +0x1c of the vtable 00094f16, and slot +0x1c of the vtable 00094f56, and slot +0x1c of the vtable AlertSelectGadgetVtable (00094f96); the code of CTLControl_DragMoveNoOpPanelCopy (0002daff). ES2's CTLControl_DragMoveNoOp (DBSIM 00455540).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1DBSIM disassembly at 000468b3",
+      "verified": {
+        "bytes": "000468b3+4",
+        "sha1": "da32ac57381a",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "000468b8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Widget_InvalidateDeferredAlertCopy",
+      "description": "(gadget), callee-cleaned: slot +8 of the vtable 00094f56 (entered at its padding 000468b7), and slot +8 of the vtable AlertSelectGadgetVtable (00094f96) (entered at its padding 000468b7): byte for byte the code of Widget_InvalidateDeferredGadgetsCopy (00031528), relocated operands aside. ES2's Widget_InvalidateDeferred (DBSIM 00455524).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1DBSIM disassembly at 000468b8",
+      "verified": {
+        "bytes": "000468b8+16",
+        "sha1": "9e51e63401e5",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000468c8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSelectGadget_PaintThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x20 and a jump to PanelButton_Paint (000468e0) by its padding 000468de. Slot +4 of the mixin table AlertSelectGadget_PanelGadgetVtable (00094f7e). ES2's AlertSelectGadget_PaintThunk (DBSIM 004558c1).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1DBSIM disassembly at 000468c8",
+      "verified": {
+        "bytes": "000468c8+24",
+        "sha1": "ffedd86f0029",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000468d4",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSelectGadget_TickThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x20 and a jump to PanelButton_Tick (0004698c). Slot +8 of the mixin table AlertSelectGadget_PanelGadgetVtable (00094f7e). ES2's AlertSelectGadget_TickThunk (DBSIM 004558b7).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons; ES1DBSIM disassembly at 000468d4",
+      "verified": {
+        "bytes": "000468d4+184",
+        "sha1": "b2485e4ace95",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "000468e0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelButton_Paint",
+      "description": "(button) in stack order, its argument removed by this function, slot +4 of AlertSelectGadgetVtable (00094f96), also entered at its padding 000468de: hides the cursor (slot 31); CornerFrame_Draw (00044954) of the style for the state (+0x3c + 4 x int16 +0x17) on the button's rect, passed by value through Rect_CopyCtorAlertCopy (0004695c); the owner's (+0x20) slot +0x18 with (owner, index +0x28) for the caption; the caption label +0x2c's font set to the state's (+0x48 + 4 x state); Label_SetText; shows the cursor (slot 30). ES2's PanelButton_Paint (DBSIM 00454ff8) blits a plate picture for the state instead of a style's frame.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons",
+      "verified": {
+        "bytes": "000468e0+121",
+        "sha1": "9682cc406415",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004695c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Rect_CopyCtorAlertCopy",
+      "description": "(copy, rect) in stack order, its arguments removed by this function, also entered at its padding 00046959: the code of Rect_CopyCtor (00044aac), alert.cpp's copy. es2_xref finds one call, from PanelButton_Paint (000468e0).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons",
+      "verified": {
+        "bytes": "0004695c+46",
+        "sha1": "02a88a85a1ba",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "0004698c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelButton_Tick",
+      "description": "(button) in stack order, its argument removed by this function, slot +0x10 of AlertSelectGadgetVtable (00094f96), also entered at its padding 0004698a: while the paint counter byte +0x1b is above 0, calls the paint slot +4 and takes 1 from it. ES2's PanelButton_Tick (DBSIM 00455064).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons",
+      "verified": {
+        "bytes": "0004698c+30",
+        "sha1": "a96233aae1b4",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000469ac",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "PanelButton_OnClick",
+      "description": "(button, flags) in stack order, its arguments removed by this function, slot +0xc of AlertSelectGadgetVtable (00094f96), also entered at its padding 000469aa: the owner's (+0x20) slot +0x10 with (owner, flags, button); AlertPanel_FocusChild (00046584)(owner, button); its own invalidate slot +8; the mixin's (+0x24) slot +0xc, the click sound, on the mixin +0x20. ES2's PanelButton_OnClick (DBSIM 00455080), which does not move the focus.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons",
+      "verified": {
+        "bytes": "000469ac+61",
+        "sha1": "0fb5e229a013",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "000469ec",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSliderGadget_Ctor",
+      "description": "(slider, owner, rect) in stack order, its arguments removed by this function, also entered at its padding 000469e9: allocates 0x7e bytes when given none, returning 0 when that fails; SliderWidget_CtorBase (000439d4)(knob length 1, position 0, maximum 0x100, minimum 0, rect) with 00094fc2 at +0x1c and SliderWidget_RecomputeScaleH; the mixin's table 00094f3e at +0x42 and the owner at +0x3e; a rect region at +0x56 (vtables 00094d8a to 00094dfe); 00094fee at +0x42, 00095006 and then AlertSliderGadgetVtable (0009504a) at +0x1c, AlertSliderGadget_PanelSliderGadgetVtable (00095032) at +0x42; the first time, frame 0 of dba\\alrtslid (ClassItem_LoadFromFile) into AlertSlider_KnobBitmap (00094fbc), kept at +0x4e; knob length +0x2c = 7, the knob's rect +0x2e = (x0, y0 - 1, x0 + 7, y1 - 1) of the rect, copied to the region's rect +0x5e and to +0x6e; a buffer of the knob's rows x columns + 0x20 bytes at +0x52; LedBarGraph_Ctor (00031e28)(0, 0x400, the rect less the knob length on the right) with its +0x2c = 0x32, +0x30 = 0x31 and +0x20 = 0x3f, at +0x46; +0x4a and +0x7a = 0; the position +0x28 and +0x2a = x0; the maximum +0x26 = 0x400; SliderWidget_RecomputeScaleH (00043b4c). ES2's AlertSliderGadget_Ctor (DBSIM 004550b0), which scales the knob length by VideoMode_XCoordShift. es2_xref finds no call, only the dword at 00077189 inside the library's code.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider",
+      "verified": {
+        "bytes": "000469ec+643",
+        "sha1": "6b0f2214f7fe",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046c6f",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLSliderControl_PaintNoOpAlertCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +4 of the vtable 00094fc2, and slot +4 of the vtable 00095006; alert.cpp's copy of CTLSliderControl_PaintNoOp (00043a5e). ES2's CTLSliderControl_PaintNoOp (DBSIM 0045571c).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1DBSIM disassembly at 00046c6f",
+      "verified": {
+        "bytes": "00046c6f+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00046c73",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "CTLSliderControl_InvalidateNoOpAlertCopy",
+      "description": "Frameless: a NOP and RET 4. Slot +8 of the vtable 00094fc2; alert.cpp's copy of CTLSliderControl_InvalidateNoOp (00043a63). ES2's CTLSliderControl_InvalidateNoOp (DBSIM 00455721).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1DBSIM disassembly at 00046c73",
+      "verified": {
+        "bytes": "00046c73+4",
+        "sha1": "5d5ba9489eeb",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00046c78",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "HSliderGadget_InvalidateDeferred",
+      "description": "(slider) in stack order, its argument removed by this function, also entered at its padding 00046c77: +0x1b = 2. Slot +8 of 00095006 and of AlertSliderGadgetVtable (0009504a). ES2's HSliderGadget_InvalidateDeferred (DBSIM 004556d0).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider",
+      "verified": {
+        "bytes": "00046c78+16",
+        "sha1": "9e51e63401e5",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046c88",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSliderGadget_PaintThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x3e and a jump to AlertSliderGadget_Paint (00046cc8). Slot +4 of the mixin table AlertSliderGadget_PanelSliderGadgetVtable (00095032). ES2's AlertSliderGadget_PaintThunk (DBSIM 004558a3).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1DBSIM disassembly at 00046c88",
+      "verified": {
+        "bytes": "00046c88+10",
+        "sha1": "fc3ee4757af4",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00046c94",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSliderGadget_FlushDeferredPaintNoOpThunk",
+      "description": "Frameless: ADD dword ptr [ESP+4], -0x3e and a jump to AlertSliderGadget_FlushDeferredPaintNoOp (00046e65). Slot +8 of the mixin table AlertSliderGadget_PanelSliderGadgetVtable (00095032). ES2's AlertSliderGadget_FlushDeferredPaintNoOpThunk (DBSIM 00455899).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1DBSIM disassembly at 00046c94",
+      "verified": {
+        "bytes": "00046c94+10",
+        "sha1": "e9600b0af39b",
+        "scope": "body",
+        "via": "disasm"
+      }
+    },
+    {
+      "address": "00046ca0",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSliderGadget_OnClick",
+      "description": "(slider, value) in stack order, its arguments removed by this function, slot +0xc of AlertSliderGadgetVtable (0009504a), also entered at its padding 00046c9e: the owner's (+0x3e) slot +0x10 with (owner, value, slider), then its own invalidate slot +8. ES2's AlertSliderGadget_OnClick (DBSIM 0045586c).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider",
+      "verified": {
+        "bytes": "00046ca0+40",
+        "sha1": "0eb737d8ba7a",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046cc8",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSliderGadget_Paint",
+      "description": "(slider) in stack order, its argument removed by this function, slot +4 of AlertSliderGadgetVtable (0009504a): when the knob's x +0x2e differs from the position +0x28, Region_Restore of the region +0x5a at +0x6e from the buffer +0x52; the bar graph's (+0x46, vtable at +0x28) slots +0xc and +4, the second with +0x7a, and +0x4a = +0x7a; the knob's rect +0x2e/+0x36 from the position and the length +0x2c; the display's source page set to its draw page; the region's rect +0x5e to +0x6a set to the knob's and moved by the render context's +0x210/+0x214 for Region_Save into +0x52; Bitmap_Blit of the knob +0x4e with flags 0 at +0x2e; +0x6e and +0x72 = the knob's x0 and y0. ES2's AlertSliderGadget_Paint (DBSIM 00455348).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider",
+      "verified": {
+        "bytes": "00046cc8+413",
+        "sha1": "347ff2b9a390",
+        "scope": "body",
+        "via": "decompile"
+      }
+    },
+    {
+      "address": "00046e65",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "AlertSliderGadget_FlushDeferredPaintNoOp",
+      "description": "Frameless: three NOPs and RET 4. Slot +0x10 of AlertSliderGadgetVtable (0009504a). ES2's AlertSliderGadget_FlushDeferredPaintNoOp (DBSIM 004554a0).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider; ES1DBSIM disassembly at 00046e65",
+      "verified": {
+        "bytes": "00046e65+6",
+        "sha1": "0011b5e9ac52",
+        "scope": "body",
+        "via": "raw"
+      }
+    },
+    {
+      "address": "00046e6c",
+      "binary": "ES1DBSIM",
+      "type": "function",
+      "confidence": "high",
+      "name": "Alert_StaticInit",
+      "description": "No arguments, the static constructor table's entry 000adc58: sets AlertPanel_ScreenRect (000b1708) to the rect around the points (0, 0) and (319, 199), each coordinate ordered, so {0, 0, 319, 199}, and Alert_FillBrush (000b1718) to 0. ES2's Alert_StaticInit is DBSIM 004554a8.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988",
+      "verified": {
+        "bytes": "00046e6c+143",
+        "sha1": "b1ca060813db",
         "scope": "body",
         "via": "decompile"
       }
@@ -22537,7 +23407,7 @@
       "type": "function",
       "confidence": "high",
       "name": "ViewChain_DrawCaption",
-      "description": "No arguments: ES2's ViewChain_DrawCaption (DBSIM 0045e1ec) at 320 x 200. With the font 000bd556 and h its +10, the band's top row is half way from ExternalView_GetRect (00024c20)'s +0xc to 199, less h / 2, at most 0xc6 - h; it fills {0, top, 0x13f, top + h} with the brush {0, 0x3f} at the render context's +0x22c, its +0x208 and +0x20c zeroed and put back after. HudFont_DrawString (00069e38) draws at y top + h: 000bd4c4[0] + the name (000bd3e0 for LocalPlayerMech, Squad_PilotName (0002e2f4) for a squad member, 00096d19 otherwise) at x 00096c3c, and 000bd4c4[1] + 000bd4c4[2] with InputDrivesCamera set or [3] with it clear at x 00096c3e.",
+      "description": "No arguments: ES2's ViewChain_DrawCaption (DBSIM 0045e1ec) at 320 x 200. With the font WidgetFont_Green6x8 (000bd556) and h its +10, the band's top row is half way from ExternalView_GetRect (00024c20)'s +0xc to 199, less h / 2, at most 0xc6 - h; it fills {0, top, 0x13f, top + h} with the brush {0, 0x3f} at the render context's +0x22c, its +0x208 and +0x20c zeroed and put back after. HudFont_DrawString (00069e38) draws at y top + h: 000bd4c4[0] + the name (000bd3e0 for LocalPlayerMech, Squad_PilotName (0002e2f4) for a squad member, 00096d19 otherwise) at x 00096c3c, and 000bd4c4[1] + 000bd4c4[2] with InputDrivesCamera set or [3] with it clear at x 00096c3e.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-views--viewchain_apply-0005894c",
       "verified": {
         "bytes": "00058b68+498",
@@ -22807,7 +23677,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_MainTick",
-      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92): each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools 000aef68 (0000693c), 000aefd4 (00006b28) and 000aeef8 (000064b8), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool 000af0b4 through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel 00046efc(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by 00045d0c(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
+      "description": "No arguments: the simulation tick. The input block from Input_BuildPlayerDevice (0004cb14); during playback SimTickDelta = its int16 +0x29. Unless Sim_Frozen (000b5b92): each g_BasePool element through slot +0x1c; g_ExplosionPool (00005d74), the pools 000aef68 (0000693c), 000aefd4 (00006b28) and 000aeef8 (000064b8), an element whose tick answers non-zero destroyed through slot +0xc with 3; maybe_WeaponChain_EoHold = 0; the pool 000af0b4 through slot +0x18 the same way; then each group of MissionGroups: Group_TickMembers (0001cf60) when its action +0x16 is null, and the action cleared when that action's +0xa is non-zero. Sim_StepOnce (000b5b9c), when set, is cleared and Sim_Frozen set. A non-zero Sim_PollPlayerInput (0005a0c0) returns 1. Then Actions_EvaluateTriggers(LocalPlayerMech) and ViewChain_Apply (0005894c); unless frozen, Sim_DetectionTick and Mech_PerTickSystemsUpdate for each g_MechPool machine whose group +0x3f has no action +0x16 and whose +0x93 is clear. Mission_PollStatus(LocalPlayerMech): status 2 calls 00058414 and returns 1; another status of 0 or more (0x12 in place of 3 when Group_ApplyOutnumberedDamage on the player's group leaves the player destroyed) goes into the panel 00046efc(0, 0, 1, status), run through slot +0xc of its +0x314, and returns 1 when the answer equals the word at 00097158[status], the panel then destroyed by Alert_Dtor (00045d0c)(panel, 3). Returns 0 otherwise. ES2's Sim_MainTick (DBSIM 0045f464).",
       "source": "Herculan/docs/es1/simulation/main-loop.md#the-tick--sim_maintick-00059700; ES1DBSIM decompile and disassembly at 00059700",
       "verified": {
         "bytes": "00059700+931",
@@ -23092,7 +23962,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimInput_PushDisable",
-      "description": "Frameless, no arguments: stores SimInput_Enabled (00095818) at 000b5df8[the byte 00097280], adds 1 to that byte, and calls SimInput_SetEnabled (0004d82c)(0). Sim_StartMission stores it in the hook 00094d80, which 00045f00 calls. No Ghidra function.",
+      "description": "Frameless, no arguments: stores SimInput_Enabled (00095818) at 000b5df8[the byte 00097280], adds 1 to that byte, and calls SimInput_SetEnabled (0004d82c)(0). Sim_StartMission stores it in the hook AlertPanel_EnterHook (00094d80), which AlertPanel_Enter (00045f00) calls. No Ghidra function.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#small-functions; ES1DBSIM disassembly at 0005a5b4",
       "verified": {
         "bytes": "0005a5b4+34",
@@ -23107,7 +23977,7 @@
       "type": "function",
       "confidence": "high",
       "name": "SimInput_PopEnable",
-      "description": "Frameless, no arguments: takes 1 from the byte 00097280 and calls SimInput_SetEnabled (0004d82c) with 000b5df8[that byte]. Sim_StartMission stores it in the hook 00094d84, which 000460b8 calls. No Ghidra function.",
+      "description": "Frameless, no arguments: takes 1 from the byte 00097280 and calls SimInput_SetEnabled (0004d82c) with 000b5df8[that byte]. Sim_StartMission stores it in the hook AlertPanel_LeaveHook (00094d84), which AlertPanel_Leave (000460b8) calls. No Ghidra function.",
       "source": "Herculan/docs/es1/simulation/main-loop.md#small-functions; ES1DBSIM disassembly at 0005a5d8",
       "verified": {
         "bytes": "0005a5d8+27",
@@ -23212,7 +24082,7 @@
       "type": "function",
       "confidence": "high",
       "name": "Sim_StartMission",
-      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; 0004e498; with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks 00094d80 and 00094d84 = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from Cursor_LoadCursorResource (00057640); DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; CockpitMouse_Init (000441cc); CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), GLDisplay_SetAttribute (0006a824)(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with CmdLine_SinglePage (000b5b67) set), +0x34 = +0x88, +0x3c = 3 without CmdLine_SinglePage (000b5b67); ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
+      "description": "No arguments: the mission start. Hands Sim_AssertCleanupHook (0005a7b8) to Assert_AddHook (0005730c); Input_BuildSourceTable (0004c95c); Sim_Timer (000b5baa) = DVTimer_Ctor (0006c6f8)(0, 0x26d3); with the byte 000b5b68 set reads resource.cfg's [SoundFX] Driver#, IRQ, DMA and PortAddress and [Music] Driver# and PortAddress (hex through sscanf (0006c871)) for Sound_Init, else digital device 0; 0004e498; with no sound manager 000959ac, Prefs_SetOption(1, 0, i) for options 0-2; Light_ResetSystem, 00075858, 00066e00, Widget_LoadStylesAndFonts; the hooks AlertPanel_EnterHook (00094d80) and AlertPanel_LeaveHook (00094d84) = SimInput_PushDisable (0005a5b4) and SimInput_PopEnable (0005a5d8); Mono_Clear when 000bda94 is set; Subsystem_RunPhase(2); the cursor from Cursor_LoadCursorResource (00057640); DBSim_LoadScriptDat; ObjList_Add (00020d5c) of each Zone_ShapeObjects entry up to Zone_ShapeCount or the first null; CockpitMouse_Init (000441cc); CockpitMouseLive (000bd512) = 0; Time_InitSimClock (00063e64); DBSim_SpawnMissionObjects (0001e638) between Prefs_SetOption(1, 0, 1) and Prefs_RevertOption(1, 1); deletes every element of g_ExplosionPool and of 000aeef8; Light_CreateMissionSun (0005a888); ObjList_ZoneShapeCount (000bc596) = ObjList_Count (00092558); LocalPlayerMech (000b5b86) = the last element of g_MechPool (000af68c) with byte +0x9d set, also ViewChain_Viewed (000bda9a) and ViewChain_Chosen (000b5bbc); a 0x4a-byte camera (TSCamera_CtorDefault, vtable 000972de) per member of the player's group (count +0x12 of +0x3f) into ViewChain_SquadCameras (000bda9e); SimDisplay = Sim_CreateDisplay (0005a5f4), GLDisplay_SetAttribute (0006a824)(display, 0x280, 2), page origins 1-3 (0, 200), (320, 0), (320, 200) at +0x50 through the routine 0009df10, +0x88 = 0, +0x8c and +0x3c = 2 (0 with CmdLine_SinglePage (000b5b67) set), +0x34 = +0x88, +0x3c = 3 without CmdLine_SinglePage (000b5b67); ViewObjectPtr (000b5b8a) = TSCamera_Ctor(camera, (0, 0, 0), (0, -6000, 0), 0x100, 8, 000b5b6e), Cam_AttachTo (0005923c)(ViewChain_Viewed), mode +0x36 = 2; 000b5bca = 1; CockpitViewManager_Ctor(0, player), CockpitViewManager_Publish, WeaponMounts_BuildGauges, Cockpit_LoadSquadmatePilots, PaperDoll_BuildWeaponIcons into each machine's +0x194, Cursor_SetImage, Player_PerFrameCockpitUpdate, Cam_Update, CockpitView_SetView 1 then 0; LiftStart_Pending (000b5bb0) = 1 when a g_BasePool element whose group +0x3f has side byte +0x14 0 lies within 40000 of the player, then 00057cf4, otherwise 000928ee = 8, Palette_BlendRangeByPitch, Palette_FlushDirtyRange and Sim_RenderFrame; 000b5bca = 0; Palette_FlushDirtyRange; Widget_DrawToCockpit(0, {0, 0, 320, 400}, 1); the routine 0009df4c; 000b5b72/000b5b74 = option 6 and ShapeDetail_ApplyDetailSetting (00057c08)(option 6); 000b5b96 = option 5 > 240; 0004e294(1); with the lift 00057ffc; unless TapePlayback, CockpitMouseLive = 1; Sound_Play(0x13). ES2's Sim_InitMissionSession (DBSIM 004614fc).",
       "source": "ES1DBSIM decompile at 0005a9dc",
       "verified": {
         "bytes": "0005a9dc+2808",
@@ -34552,7 +35422,7 @@
       "type": "data",
       "confidence": "high",
       "name": "Cursor_FollowsMouse",
-      "description": "byte: the mouse callback at CockpitMouse_OnEvent (00044464) passes the pointer's position to Cursor_SyncPosition (000669dc) only while it is set. CockpitView_StepViewTransition (00022904) clears it for the external view and sets it on the return. es2_xref finds it also read by CockpitMouse_ProcessQueue (000444d0) and 00045f00 and written by 00045f00, 000460b8 and 00057820.",
+      "description": "byte: the mouse callback at CockpitMouse_OnEvent (00044464) passes the pointer's position to Cursor_SyncPosition (000669dc) only while it is set. CockpitView_StepViewTransition (00022904) clears it for the external view and sets it on the return. es2_xref finds it also read by CockpitMouse_ProcessQueue (000444d0) and AlertPanel_Enter (00045f00) and written by AlertPanel_Enter (00045f00), AlertPanel_Leave (000460b8) and 00057820.",
       "source": "Herculan/docs/es1/simulation/cockpit-views.md#cockpitview_stepviewtransition-00022904"
     },
     {
@@ -34599,6 +35469,96 @@
       "name": "CockpitMouse_LastEventTime",
       "description": "The clock 000981c4 at the last mouse event CockpitMouse_OnEvent (00044464) took while the queue was live; a move with the buttons unchanged is queued only when the clock has passed it.",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue"
+    },
+    {
+      "address": "00094d78",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertPanel_OpenCount",
+      "description": "int16: the number of in-mission panels up, which AlertPanel_Enter (00045f00) raises and AlertPanel_Leave (000460b8) lowers; es2_xref also finds MessagePort_CopyBoxBetweenPages (0002fdb2) reading it.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down"
+    },
+    {
+      "address": "00094d7c",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertPanel_CursorImage",
+      "description": "The dci\\alert cursor, which AlertPanel_Enter (00045f00) loads with Cursor_LoadWrapper the first time and passes to AlertPanel_LoadCursor (000463c0).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down"
+    },
+    {
+      "address": "00094d80",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertPanel_EnterHook",
+      "description": "A function AlertPanel_Enter (00045f00) calls when it is set: Sim_StartMission (0005a9dc) stores SimInput_PushDisable (0005a5b4).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down"
+    },
+    {
+      "address": "00094d84",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertPanel_LeaveHook",
+      "description": "A function AlertPanel_Leave (000460b8) calls when it is set: Sim_StartMission (0005a9dc) stores SimInput_PopEnable (0005a5d8).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#putting-a-panel-up-and-taking-it-down"
+    },
+    {
+      "address": "00094e26",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertVtable",
+      "description": "The in-mission panels' base vtable, which AlertPanel_CtorBase (00045988) and Alert_Dtor (00045d0c) store at +0x314: 0 at +0 and +4 (the paint), AlertPanel_SetTitleText (000461ec) at +8, 0 at +0xc (the run), AlertPanel_OnChildClickNoOp (00045d06) at +0x10, AlertPanel_HandleEvent (00046670) at +0x14 and 0 at +0x18 (the button caption). ES2's AlertVtable (DBSIM 0049e05c) one slot further on.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988"
+    },
+    {
+      "address": "00094f7e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertSelectGadget_PanelGadgetVtable",
+      "description": "The panel button's mixin table, which PanelButton_Ctor (000467c8) stores at +0x24: AlertSelectGadget_PaintThunk (000468c8) at +4, AlertSelectGadget_TickThunk (000468d4) at +8 and Widget_ClickSound (000314a0) at +0xc.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons"
+    },
+    {
+      "address": "00094f96",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertSelectGadgetVtable",
+      "description": "The panel button's table, which PanelButton_Ctor (000467c8) stores at +0x1c: PanelButton_Paint (000468e0) at +4, Widget_InvalidateDeferredAlertCopy (000468b8) at +8, PanelButton_OnClick (000469ac) at +0xc, PanelButton_Tick (0004698c) at +0x10, and the button base's value, set-value and drag copies from +0x14. ES2's AlertSelectGadgetVtable.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons"
+    },
+    {
+      "address": "00094fbc",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertSlider_KnobBitmap",
+      "description": "Frame 0 of dba\\alrtslid, which AlertSliderGadget_Ctor (000469ec) loads the first time and keeps in each slider at +0x4e.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider"
+    },
+    {
+      "address": "00095032",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertSliderGadget_PanelSliderGadgetVtable",
+      "description": "The panel slider's mixin table, which AlertSliderGadget_Ctor (000469ec) stores at +0x42: AlertSliderGadget_PaintThunk (00046c88) at +4, AlertSliderGadget_FlushDeferredPaintNoOpThunk (00046c94) at +8 and Widget_NoClickSound at +0xc.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider"
+    },
+    {
+      "address": "0009504a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertSliderGadgetVtable",
+      "description": "The panel slider's table, which AlertSliderGadget_Ctor (000469ec) stores at +0x1c: AlertSliderGadget_Paint (00046cc8) at +4, HSliderGadget_InvalidateDeferred (00046c78) at +8, AlertSliderGadget_OnClick (00046ca0) at +0xc, AlertSliderGadget_FlushDeferredPaintNoOp (00046e65) at +0x10, then SliderWidget_GetValueH, SliderWidget_SetValueH, SliderWidget_DragToPointH and SliderWidget_RecomputeScaleH. ES2's AlertSliderGadgetVtable.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-slider"
     },
     {
       "address": "000956bf",
@@ -36158,6 +37118,33 @@
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-frames-mouse-events--cockpitmouse_processqueue-000444d0"
     },
     {
+      "address": "000b1708",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertPanel_ScreenRect",
+      "description": "Four int32, {0, 0, 319, 199}, which Alert_StaticInit (00046e6c) sets; AlertPanel_CenterRect (0004679c) reads its x1 (000b1710) and y1 (000b1714).",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988"
+    },
+    {
+      "address": "000b1718",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "Alert_FillBrush",
+      "description": "The brush AlertPanel_CtorBase (00045988) gives each panel's render context at +0x270; Alert_StaticInit (00046e6c) stores 0 in its first dword. ES2's Alert_FillBrush.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988"
+    },
+    {
+      "address": "000b1724",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "AlertPanel_RectScratch",
+      "description": "Four int32, the rect AlertPanel_SetRect (0004675c) writes and returns; its first-use byte is 000b1720.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panel-object--alertpanel_ctorbase-00045988"
+    },
+    {
       "address": "000b1734",
       "binary": "ES1DBSIM",
       "type": "data",
@@ -37533,6 +38520,78 @@
       "name": "CockpitMouse_LastButtons",
       "description": "The buttons of the last mouse event CockpitMouse_OnEvent (00044464) took; a change of them is always queued.",
       "source": "Herculan/docs/es1/simulation/cockpit-mouse.md#the-callback-and-the-queue"
+    },
+    {
+      "address": "000bd53e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WidgetCorners",
+      "description": "The dba\\corners bank, which Widget_LoadStylesAndFonts (00045e10) loads through CockpitCorners_Load (00044d88); CornerFrame_DrawCorners (00044c64) and AlertPanel_SetTitleText (000461ec) blit its frames.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#drawing-a-frame-from-a-style"
+    },
+    {
+      "address": "000bd542",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WidgetFont_Title",
+      "description": "The dfn\\title font, which Widget_LoadStylesAndFonts (00045e10) loads first of seven, 4 bytes apart.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads"
+    },
+    {
+      "address": "000bd546",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WidgetFont_Cpylw",
+      "description": "The dfn\\cpylw font, which Widget_LoadStylesAndFonts (00045e10) loads second.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads"
+    },
+    {
+      "address": "000bd54a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WidgetFont_Active",
+      "description": "The dfn\\active font, which Widget_LoadStylesAndFonts (00045e10) loads; PanelButton_Ctor (000467c8) gives it to a button for state 0.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons"
+    },
+    {
+      "address": "000bd54e",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WidgetFont_Pushed",
+      "description": "The dfn\\pushed font, which Widget_LoadStylesAndFonts (00045e10) loads; PanelButton_Ctor (000467c8) gives it to a button for state 1.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons"
+    },
+    {
+      "address": "000bd552",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WidgetFont_Inactive",
+      "description": "The dfn\\inactive font, which Widget_LoadStylesAndFonts (00045e10) loads; PanelButton_Ctor (000467c8) gives it to a button for state 2.",
+      "source": "Herculan/docs/es1/simulation/alert-panels.md#the-panels-buttons"
+    },
+    {
+      "address": "000bd556",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WidgetFont_Green6x8",
+      "description": "The dfn\\green6x8 font, which Widget_LoadStylesAndFonts (00045e10) loads sixth.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads"
+    },
+    {
+      "address": "000bd55a",
+      "binary": "ES1DBSIM",
+      "type": "data",
+      "confidence": "high",
+      "name": "WidgetFont_Red6x8",
+      "description": "The dfn\\red6x8 font, which Widget_LoadStylesAndFonts (00045e10) loads last.",
+      "source": "Herculan/docs/es1/formats/styles-dat.md#the-loads"
     },
     {
       "address": "000bd598",

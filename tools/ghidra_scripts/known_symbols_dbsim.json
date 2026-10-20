@@ -19615,7 +19615,13 @@
       "name": "AlertPanel_SetTitleText",
       "description": "The alert panels' shared vtable slot +4: sets the title label at +0x44 to the given text.",
       "source": "docs/retail/simulation/mission-objectives.md",
-      "signature": "void __cdecl AlertPanel_SetTitleText(int panel, byte *text)"
+      "signature": "void __cdecl AlertPanel_SetTitleText(int panel, byte *text)",
+      "verified": {
+        "bytes": "00454b58+24",
+        "sha1": "945e1a7cc85f",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00454b70",
@@ -19755,7 +19761,13 @@
       "name": "AlertPanel_CenterRect",
       "description": "Centres a panel rect of the given size on the screen: ((screenW - w) >> 1, (screenH - h) >> 1) against DAT_004d1ef4/DAT_004d1ef8.",
       "source": "docs/retail/simulation/alert-panels.md",
-      "signature": "void * __cdecl AlertPanel_CenterRect(int width, int height)"
+      "signature": "void * __cdecl AlertPanel_CenterRect(int width, int height)",
+      "verified": {
+        "bytes": "00454f34+45",
+        "sha1": "b9286adbdc30",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00454f64",
@@ -19789,9 +19801,15 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelButton_Tick",
-      "description": "The per-pass slot the modal loop calls on each child: repaints while the auto-release counter at +0x1f is running down.",
+      "description": "(button): the panel button's per-frame slot: while the paint counter byte +0x1f is above 0, calls the paint slot +0 and takes 1 from the counter.",
       "source": "docs/retail/simulation/mission-objectives.md",
-      "signature": "void __cdecl PanelButton_Tick(int button)"
+      "signature": "void __cdecl PanelButton_Tick(int button)",
+      "verified": {
+        "bytes": "00455064+26",
+        "sha1": "6cef081b58e2",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "00455080",
@@ -19799,9 +19817,15 @@
       "type": "function",
       "confidence": "high",
       "name": "PanelButton_OnClick",
-      "description": "Forwards the click to the owner's slot +0xc with the button's own index, repaints, then sounds the shared widget click.",
+      "description": "(button, flags): the panel button's click slot. Calls the owner's (+0x24) slot +0xc, its OnChildClick, with (owner, button, flags), then the button's own slot +4 (invalidate), then the mixin's (+0x20) slot +8, the click sound, on the mixin.",
       "source": "docs/retail/simulation/alert-panels.md",
-      "signature": "void __cdecl PanelButton_OnClick(int button, undefined4 flags)"
+      "signature": "void __cdecl PanelButton_OnClick(int button, undefined4 flags)",
+      "verified": {
+        "bytes": "00455080+46",
+        "sha1": "8f8627b70d16",
+        "scope": "body",
+        "via": "decompile"
+      }
     },
     {
       "address": "004550b0",

@@ -126,7 +126,7 @@ The ticker's table `00092f0a`, which `Cockpit_LoadPanel` stores over the object 
 | `0x44` | `F10` | command 4 from view 0, 6 from view 3 |
 | 1 | `Esc` | command 0 from view 0, 1 from view 1, 6 from views 2 and 3, and none from view 4 (the jump table `00093008`) |
 | `0x0f` | `Tab` | returns 0 in view 4; in view 1, as an unlisted code; otherwise `TargetSelect_Cycle` |
-| `0x57` | `F11` | `0004a1b4`(0, 0, 1), slot `+0xc` of the table at that object's `+0x314`, then `00045d0c`(object, 3) |
+| `0x57` | `F11` | `0004a1b4`(0, 0, 1), slot `+0xc` of the table at that object's `+0x314`, then `Alert_Dtor` (`00045d0c`)(object, 3) ([destroying a panel](alert-panels.md#destroying-a-panel--alert_dtor-00045d0c)) |
 | `0x13` | `R` | `Mech_ToggleRadarMode` (`000157f4`, [the HERC's cockpit](mech.md#the-cockpit))(the machine) |
 
 A press takes button *i* from the instrument's `+0x14` + 4*i* and, unless its `int16` `+0x17` is 2 or 3, calls slot `+0xc` of the button's table at `+0x1c`, its click, with (button, 1), the left button's value. ES2's presses through `Widget_PressChild`, which skips state 2 alone and also starts the [press flash](../../retail/simulation/cockpit-input.md#the-press-flash); ES1's press starts none. An unlisted code goes to `MfdFlashComm_HandleAltKey` (`0003a890`)(the MFD `+0x1e9`, code); when that returns 0, in view 1 to the key slot (`+0x10` of the table at `+0x76`) of `+0x1f5` alone, and in any other view to the key slots of `+0x1d4` when set, `+0x1dd`, `+0x1e1`, `+0x1e5`, `+0x1ed`, `+0x1f1` and `+0x1e9`, stopping at the first that returns nonzero, ES2's chain in ES2's order. It returns 1 for a code a case took or a slot accepted, else 0. `es2_xref.py` finds one call, from `00059df8`.
@@ -255,7 +255,7 @@ Read for this module and named with it, each ES2's counterpart:
 ## Open
 
 - **Open:** what reads the seven globals `Cockpit_StaticInit` sets besides `Cockpit_ZeroOffset`: `es2_xref.py` finds no occurrence of `000b0da8`, `000b0db0`, `000b0db8`, `000b0dc4`, `000b0dc8`, `000b0dcc` or `000b0dd0` besides the initializer's own stores (its positive control, `CockpitCanvasContext` `000b0da4`, finds its seven).
-- **Open:** the callees `CockpitWidgets_HandleCommand` reaches and this batch did not read: `00037b50` and `00037b14` (the pod row's state), `0004a1b4` and `00045d0c` (`F11`), and `MfdFlashComm_HandleAltKey`'s seven handlers `0003a8ba`–`0003a991`.
+- **Open:** the callees `CockpitWidgets_HandleCommand` reaches and this batch did not read: `00037b50` and `00037b14` (the pod row's state), `0004a1b4` (`F11`), and `MfdFlashComm_HandleAltKey`'s seven handlers `0003a8ba`–`0003a991`.
 - **Open:** the callers `es2_xref.py` finds and this batch did not read: `0003ab08` (`TargetSelect_Cycle`), the four of `Cockpit_SetOffForwardCursor`, `0003ad08` (`CockpitView_FindArmedMountGauge`), and the callers of the squad and pilot helpers.
 - **Open:** the rate of the clock `000981c4` the hit shake runs on, which `Time_SimClockTimerTick` advances every second timer tick ([the tick length](fixed-point-math.md#the-tick-length--time_beginsimtick-00063f40)), against ES2's coarse ticks, which ES2's message port reads where ES1's reads `000981c4` ([the queue](cockpit-messages.md#the-queue)); and the value of the radar range `000bd4fc` (ES2's 200000).
 - **Open:** whether ES1 has a nearest-target command outside `panel.cpp`, where ES2's `004333c8` sits beside the selection.

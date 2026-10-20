@@ -139,7 +139,7 @@ With (*dx*, *dy*) the destination record's canvas origin less the current view's
 | 5, glance | none | over *n* = −(record 0's *x* + record 3's), *x* −= 10 the same way, then a last set at *n* − 2 × the columns moved, the remainder added with the sign opposite the steps: −320 for the retail 320, a multiple of 10 | the same; current view 3 |
 | 6, back from a glance | none | *x* by −(record 0's *x* + the current view's), 10 columns a step until the columns left reach 0 or pass it, then a last set at the end: 32 steps and 320 or −320 for the retail records | the same; current view 0 |
 
-The byte `Cursor_FollowsMouse` (`00094c5b`) lets the pointer move the drawn cursor: while it is set, `CockpitMouse_OnEvent` passes `Cursor_SyncPosition` the pointer of each mouse event that leaves the buttons as they were, and `CockpitMouse_ProcessQueue` the point of each recorded move of a replay ([the cockpit's mouse](cockpit-mouse.md#the-callback-and-the-queue)). `es2_xref.py` finds it also read by `00045f00` and written by `00045f00`, `000460b8` and `00057820` ([Open](#open)).
+The byte `Cursor_FollowsMouse` (`00094c5b`) lets the pointer move the drawn cursor: while it is set, `CockpitMouse_OnEvent` passes `Cursor_SyncPosition` the pointer of each mouse event that leaves the buttons as they were, and `CockpitMouse_ProcessQueue` the point of each recorded move of a replay ([the cockpit's mouse](cockpit-mouse.md#the-callback-and-the-queue)). A panel turns it on while it is up: `AlertPanel_Enter` (`00045f00`) keeps it and sets it, and `AlertPanel_Leave` (`000460b8`) clears it and then puts it back ([putting a panel up](alert-panels.md#putting-a-panel-up-and-taking-it-down)). `es2_xref.py` finds it also written by `00057820` ([Open](#open)).
 
 It then sets the command to −1 and the cooldown to 2, calls `CockpitView_SetShakeBand`(10) when `CockpitShakeReseedAfterSlide` is set, and returns the current view.
 
@@ -218,7 +218,6 @@ The next object file's: `CockpitClipRegions_Load` (`00024d44`); `GLBase_DtorClip
 ## Open
 
 - **Open:** the squad message port's slots `+0x14` and `+0x18`, which the view change calls.
-- **Open:** what `00045f00` and `000460b8` do with `Cursor_FollowsMouse`.
 - **Open:** the callers `es2_xref.py` finds and this batch did not read: `00057820` (the rect setters, `CockpitView_SetView`, `View_FillOutside3dRect`, and stores to `000bda96` and `00094c5b`; `F12`'s and `Alt+P`'s case, where ES2's raises the preferences panel: [commands](main-loop.md#commands--sim_dispatchcommand-00059df8)), and `00057ffc` and `00058414` (the shake), with the amplitudes they pass.
 - **Open:** what command 3's copy writes at column 320 of *v*: in a 640-pixel row that is page 2's column 0 when *v* is page 0, and past the row's end when *v* is page 2; how `VGA8_CopyRectBetweenPages` (`00051c3c`) addresses that column is not read, nor whether a frame draws over it before it is shown.
 - **Open:** what calls `ClipRegions_AppendRectAboveScreen`, to which `es2_xref.py` finds no reference, and `HeapPtr_DtorMechviewCopy`, likewise.
