@@ -297,7 +297,7 @@ public sealed class BeamRenderer : IDisposable {
 	/// <summary>
 	/// The uploaded cross-section for one subtype id, built on first use. The profile is one texel
 	/// wide and as tall as the source frame's row count, so it is sampled purely by v. With
-	/// <paramref name="hueTurned"/>, the profile through <see cref="BeamAppearance.TurnHue"/>.
+	/// <paramref name="hueTurned"/>, the profile through <see cref="BeamAppearance.ParticleBeamHue"/>.
 	/// </summary>
 	private GpuTexture? Profile(int subtypeId, bool hueTurned) {
 		if (_profiles.TryGetValue((subtypeId, hueTurned), out var cached)) {
@@ -310,7 +310,7 @@ public sealed class BeamRenderer : IDisposable {
 		}
 
 		var texture = hueTurned
-			? new GpuTexture(_gl, BeamAppearance.TurnHue(texels), 1, texels.Length / 4)
+			? new GpuTexture(_gl, BeamAppearance.ParticleBeamHue(subtypeId, texels), 1, texels.Length / 4)
 			: new GpuTexture(_gl, texels, 1, texels.Length / 4);
 		_profiles[(subtypeId, hueTurned)] = texture;
 		return texture;

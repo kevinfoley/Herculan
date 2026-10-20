@@ -130,14 +130,27 @@ public sealed class BeamAppearance {
 
 	/// <summary>Whether <paramref name="subtypeId"/> is PBW's or PBW2's.</summary>
 	public static bool IsParticleBeam(int subtypeId) => subtypeId is PbwSubtype or Pbw2Subtype;
+	/// <summary>Whether <paramref name="subtypeId"/> is PBW's.</summary>
+	public static bool IsPBW(int subtypeId) => subtypeId is PbwSubtype;
+	/// <summary>Whether <paramref name="subtypeId"/> is PBW2's.</summary>
+	public static bool IsPBW2(int subtypeId) => subtypeId is Pbw2Subtype;
 
 	/// <summary>
-	/// <paramref name="texels"/> with every texel's hue turned 180 degrees and its saturation, value and alpha kept,
-	/// for <see cref="Settings.TweakSettingDefinitions.ChangePbwBeamHue"/>; a HERCULAN colour, not retail's. A half
-	/// turn in HSV maps each channel <c>c</c> to <c>max + min - c</c>, so the fire ramp, dark orange (184, 92, 20)
-	/// to near-white (252, 248, 228), becomes dark blue (20, 112, 184) to (228, 232, 252).
+	/// <paramref name="texels"/> recoloured for <see cref="Settings.TweakSettingDefinitions.ChangePbwBeamHue"/>, after the
+	/// colours Metaltech: Earthsiege gives the two weapons: PBW's beam blue (<see cref="TurnHueHalf"/>) and PBW2's green
+	/// (<see cref="TurnHueThird"/>). Any other subtype comes back unchanged. The shades are HERCULAN's, not retail's.
 	/// </summary>
-	public static byte[] TurnHue(ReadOnlySpan<byte> texels) {
+	public static byte[] ParticleBeamHue(int subtypeId, ReadOnlySpan<byte> texels) =>
+		IsPBW(subtypeId) ? TurnHueHalf(texels)
+		: IsPBW2(subtypeId) ? TurnHueThird(texels)
+		: texels.ToArray();
+
+	/// <summary>
+	/// <paramref name="texels"/> with every texel's hue turned 180 degrees and its saturation, value and alpha kept. A
+	/// half turn in HSV maps each channel <c>c</c> to <c>max + min - c</c>, so the fire ramp, dark orange
+	/// (184, 92, 20) to near-white (252, 248, 228), becomes dark blue (20, 112, 184) to (228, 232, 252).
+	/// </summary>
+	public static byte[] TurnHueHalf(ReadOnlySpan<byte> texels) {
 		var turned = new byte[texels.Length];
 		for (int i = 0; i + 3 < texels.Length; i += 4) {
 			byte r = texels[i], g = texels[i + 1], b = texels[i + 2];
@@ -145,6 +158,23 @@ public sealed class BeamAppearance {
 			turned[i] = (byte)(sum - r);
 			turned[i + 1] = (byte)(sum - g);
 			turned[i + 2] = (byte)(sum - b);
+			turned[i + 3] = texels[i + 3];
+		}
+
+		return turned;
+	}
+
+	/// <summary>
+	/// <paramref name="texels"/> with every texel's hue turned 120 degrees, red toward green, and its saturation, value
+	/// and alpha kept. A third of a turn in HSV moves each channel's value to the next channel along, so the fire ramp,
+	/// dark orange (184, 92, 20) to near-white (252, 248, 228), becomes dark green (20, 184, 92) to (228, 252, 248).
+	/// </summary>
+	public static byte[] TurnHueThird(ReadOnlySpan<byte> texels) {
+		var turned = new byte[texels.Length];
+		for (int i = 0; i + 3 < texels.Length; i += 4) {
+			turned[i] = texels[i + 2];
+			turned[i + 1] = texels[i];
+			turned[i + 2] = texels[i + 1];
 			turned[i + 3] = texels[i + 3];
 		}
 

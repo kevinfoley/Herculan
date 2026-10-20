@@ -123,9 +123,10 @@ public static class TweakSettingDefinitions {
 	public static readonly TweakSettingDefinition<bool> ShuffleMissionMusic = new("tweak.shuffle_mission_music", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
 
 	/// <summary>
-	/// Turn the hue of the PBW and PBW2 beams by 180 degrees, so they draw blue instead of fire orange. Retail draws
-	/// every straight beam from the one <c>BEAMTEX.DBA</c> frame (docs/retail/formats/beam-dat.md), so a particle beam
-	/// differs from a laser only in width. The colour is HERCULAN's, not retail's. See <see cref="Content.BeamAppearance.TurnHue"/>.
+	/// Draw the PBW beam blue and the PBW2 beam green instead of fire orange, after the colours Metaltech: Earthsiege gives
+	/// them. Retail draws every straight beam from the one <c>BEAMTEX.DBA</c> frame (docs/retail/formats/beam-dat.md), so
+	/// a particle beam differs from a laser only in width. The shades are HERCULAN's, not retail's. See
+	/// <see cref="Content.BeamAppearance.ParticleBeamHue"/>.
 	/// </summary>
 	public static readonly TweakSettingDefinition<bool> ChangePbwBeamHue = new("tweak.change_pbw_beam_hue", TweakCategory.Cosmetic, defaultValue: false, recommendedValue: false);
 
